@@ -897,5 +897,1962 @@ export const generatedPublications: Publication[] = [
     "authorSlugs": [
       "nick-ingraham"
     ]
+  },
+  {
+    "id": "gen-10-1016-j-chpulm-2023-100005",
+    "authors": "Kierstin Hederstedt, Nathan Mesfin, Mikhail C.S.S. Higgins, Daniel J. Sturgeon, Westyn Branch-Elliman, Marva V. Foster, Hillary J. Mull",
+    "title": "Variation in Incidence of Pneumothorax Complications After Percutaneous Lung Biopsies Among Veterans Health Administration Hospitals",
+    "journal": "CHEST Pulmonary",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chpulm.2023.100005",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1002-pul2-70021",
+    "authors": "Juan V. Rodriguez, Haihua Zhang, Nathan Mesfin, Elizabeth S. Klings, Justin K. Lui",
+    "title": "Contribution of QRS Prolongation to Transplant‐Free Survival in Sarcoidosis‐Related Pulmonary Hypertension",
+    "journal": "Pulmonary Circulation",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/pul2.70021",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2026-03-043",
+    "authors": "Nathan Mesfin, Nicholas E. Ingraham, Benjamin Langworthy, R. Adams Dudley, Kathryn M. Pendleton",
+    "title": "National Retrospective Cohort Study Assessing Association of Hospital Transfer-In Prevalence With Hospital Outcomes",
+    "journal": "CHEST",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2026.03.043",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1371-journal-pone-0291542",
+    "authors": "Nathan Mesfin",
+    "title": "Addressing clinician moral distress: Implications from a mixed methods evaluation during Covid-19",
+    "journal": "PLOS ONE",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1371/JOURNAL.PONE.0291542",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-nate-mesfin-2023-i-want-a-dnr-but",
+    "authors": "Nathan Mesfin",
+    "title": "\"I WANT A DNR BUT MY DAUGHTER SAID NO:\" A QUALITATIVE STUDY OF GOALS OF CARE CONVERSATIONS DURING COVID",
+    "journal": "JOURNAL OF GENERAL INTERNAL MEDICINE",
+    "year": 2023,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-202206-1035rr",
+    "authors": "Nathan Mesfin",
+    "title": "New Frontiers in Therapeutics for Interstitial Lung Diseases",
+    "journal": "AMERICAN JOURNAL OF RESPIRATORY AND CRITICAL CARE MEDICINE",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/RCCM.202206-1035RR",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1089-jpm-2022-0394",
+    "authors": "Nathan Mesfin",
+    "title": "Impact of the COVID-19 Pandemic on Providing Recommendations During Goals-of-Care Conversations: A Multisite Survey",
+    "journal": "JOURNAL OF PALLIATIVE MEDICINE",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/JPM.2022.0394",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1177-02692163211022622",
+    "authors": "Nathan Mesfin",
+    "title": "Predictors to forgo resuscitative effort during Covid-19 critical illness at the height of the pandemic : A retrospective cohort study",
+    "journal": "PALLIATIVE MEDICINE",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/02692163211022622",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2021-02-077",
+    "authors": "Nathan Mesfin",
+    "title": "Fluid Responsiveness During Sepsis The Unintended Intervention",
+    "journal": "CHEST",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/J.CHEST.2021.02.077",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1177-0885066621993041",
+    "authors": "Nathan Mesfin",
+    "title": "Critical Care of Patients With Cardiopulmonary Complications of Sarcoidosis",
+    "journal": "JOURNAL OF INTENSIVE CARE MEDICINE",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/0885066621993041",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1177-1753466620971146",
+    "authors": "Nathan Mesfin",
+    "title": "ICU outcomes in Covid-19 patients with obesity",
+    "journal": "THERAPEUTIC ADVANCES IN RESPIRATORY DISEASE",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/1753466620971146",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-nate-mesfin-2018-the-ultimate-tipping-point-a",
+    "authors": "Nathan Mesfin",
+    "title": "The Ultimate Tipping Point: A Case of Cerebral Edema and Brain Death as a Complication of TIPS in a Cirrhotic Patient",
+    "journal": "AMERICAN JOURNAL OF GASTROENTEROLOGY",
+    "year": 2018,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2024-06-009",
+    "authors": "Nathan Mesfin",
+    "title": "Percutaneous Lung Biopsy Prevalence and Use of the Lung CT Scan and Reporting Data System in the Veterans Health Administration Lung Cancer Screening Program",
+    "journal": "CHEST",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/J.CHEST.2024.06.009",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2023-07-3345",
+    "authors": "Nathan Mesfin",
+    "title": "BALANCING RESTORATIVE AND COMFORT-ORIENTED CARE DURING PATIENTS' TERMINAL HOSPITALIZATION: AN EMPIRICAL STUDY",
+    "journal": "CHEST",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/J.CHEST.2023.07.3345",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-nate-mesfin-2023-hospital-variations-in-limitations-of",
+    "authors": "Nathan Mesfin",
+    "title": "HOSPITAL VARIATIONS IN LIMITATIONS OF CARE AMONG HOSPITALIZED PATIENTS WITH COVID-19: RESULTS FROM THE SCCM DISCOVERY VIRUS COVID-19 REGISTRY STUDY",
+    "journal": "CHEST",
+    "year": 2023,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-nate-mesfin-2023-temporal-variations-in-limitations-of",
+    "authors": "Nathan Mesfin",
+    "title": "TEMPORAL VARIATIONS IN LIMITATIONS OF CARE AMONG HOSPITALIZED PATIENTS: RESULTS FROM THE SCCM VIRAL INFECTION AND RESPIRATORY ILLNESS UNIVERSAL STUDY (VIRUS) COVID-19 REGISTRY",
+    "journal": "CHEST",
+    "year": 2023,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1177-0885066620962450",
+    "authors": "Malini Mahendra, Patrick McQuillen, R. Adams Dudley, Martina A. Steurer",
+    "title": "Variation in Arterial and Central Venous Catheter Use in Pediatric Intensive Care Units",
+    "journal": "Journal of Intensive Care Medicine",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/0885066620962450",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1177-0885066621995426",
+    "authors": "Anne M. Stey, Hemal K. Kanzaria, R. Adams Dudley, Karl Y. Bilimoria, M. Margaret Knudson, Rachael A. Callcut",
+    "title": "Emergency Department Length of Stay and Mortality in Critically Injured Patients",
+    "journal": "Journal of Intensive Care Medicine",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/0885066621995426",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1101-2021-12-23-21267853",
+    "authors": "Paul E Drawz, Malini DeSilva, Peter Bodurtha, Gabriela Vazquez Benitez, Anne Murray, Alanna M Chamberlain, R Adams Dudley, Stephen Waring, Anupam B Kharbanda, Daniel Murphy, Miriam Halstead Muscoplat, Victor Melendez, Karen L Margolis, Lynn McFarling, Roxana Lupu, Tyler N.A. Winkelman, Steve Johnson",
+    "title": "Effectiveness of BNT162b2 and mRNA-1273 Second Doses and Boosters for SARS-CoV-2 infection and SARS-CoV-2 Related Hospitalizations: A Statewide Report from the Minnesota Electronic Health Record Consortium",
+    "journal": "",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1101/2021.12.23.21267853",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1093-ajrccm-aamag159",
+    "authors": "Arianne K Baldomero, R Adams Dudley, Chris H Wendt",
+    "title": "Geographic Disparities in COPD Inhalers by Rurality, Drive Time, and Neighborhood Disadvantage",
+    "journal": "American Journal of Respiratory and Critical Care Medicine",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/ajrccm/aamag159",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-2196-86337",
+    "authors": "Tyler NA Winkelman, Kelly Bergmann, Peter Bodurtha, Alanna M Chamberlain, R Adams Dudley, David Haynes, Steven G Johnson, Thomas E Kottke, Karen L Margolis, Gabriela Vazquez Benitez, Devon Nerstad, Patrick Olson, James M Peacock, Nayanjot Kaur Rai, Stephen C Waring, Bjorn Westgard, Paul Englund Drawz",
+    "title": "Population Estimates and Hypertension and Diabetes Prevalence: Cross-Sectional Quantitative Study Comparing Electronic Health Record–Derived Counts, Census, and Centers for Disease Control and Prevention Population Level Analysis and Community Estimates",
+    "journal": "JMIR Public Health and Surveillance",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.2196/86337",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-surg-2014-06-069",
+    "authors": "Laura Torbeck, Reed G. Williams, Jennifer Choi, Connie C. Schmitz, Jeffrey G. Chipman, Gary L. Dunnington",
+    "title": "How much guidance is given in the operating room? Factors influencing faculty self-reports, resident perceptions, and faculty/resident agreement",
+    "journal": "Surgery (United States)",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.surg.2014.06.069",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25239321/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1371-journal-ppat-1002437",
+    "authors": "Ming Zeng, Peter J. Southern, Cavan S. Reilly, Greg J. Beilman, Jeffrey G. Chipman, Timothy W. Schacker, Ashley T. Haase",
+    "title": "Lymphoid tissue damage in HIV-1 infection depletes naïve T cells and limits T cell reconstitution after antiretroviral therapy",
+    "journal": "PLoS Pathogens",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1371/journal.ppat.1002437",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22241988/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-amjsurg-2010-02-006",
+    "authors": "Jeffrey G. Chipman, Travis P. Webb, Mohsen Shabahang, Stephanie F. Heller, Joan M. Vancamp, Amy L. Waer, Michael G. Luxenberg, Matthew Christenson, Connie C. Schmitz",
+    "title": "A multi-institutional study of the Family Conference Objective Structured Clinical Exam",
+    "journal": "American Journal of Surgery",
+    "year": 2011,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.amjsurg.2010.02.006",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20850709/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-surg-2010-04-006",
+    "authors": "Mara B. Antonoff, Jennifer A. Swanson, Robert D. Acton, Jeffrey G. Chipman, Michael A. Maddaus, Connie C. Schmitz, Jonathan D'Cunha",
+    "title": "Improving surgery intern confidence through the implementation of expanded orientation sessions",
+    "journal": "Surgery (United States)",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.surg.2010.04.006",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20627274/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2006-020",
+    "authors": "David E. Skarda, Jodie H. Taylor, Jeffrey G. Chipman, Matthew Larson, Jason V. Baker, Timothy W. Schacker, Gregory J. Beilman",
+    "title": "Inguinal lymph node biopsy in patients infected with the human immunodeficiency virus is safe",
+    "journal": "Surgical Infections",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2006.020",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17437362/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2006-11-001",
+    "authors": "Jeffrey G. Chipman, Gregory J. Beilman, Constance C. Schmitz, Susan C. Seatter",
+    "title": "Development and Pilot Testing of an OSCE for Difficult Conversations in Surgical Intensive Care",
+    "journal": "Journal of Surgical Education",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2006.11.001",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17462207/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2006-7-513",
+    "authors": "Jeffrey G. Chipman, Jodie H. Taylor, Melissa Thorson, David E. Skarda, Gregory J. Beilman",
+    "title": "Kinetic therapy beds are associated with more complications in patients with thoracolumbar spinal column injuries",
+    "journal": "Surgical Infections",
+    "year": 2006,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2006.7.513",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17233568/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1038-nature16933",
+    "authors": "Ramon Lorenzo-Redondo, Helen R. Fryer, Trevor Bedford, Eun Young Kim, John Archer, Sergei L. Kosakovsky Pond, Yoon Seok Chung, Sudhir Penugonda, Jeffrey G. Chipman, Courtney V. Fletcher, Timothy W. Schacker, Michael H. Malim, Andrew Rambaut, Ashley T. Haase, Angela R. McLean, Steven M. Wolinsky",
+    "title": "Persistent HIV-1 replication maintains the tissue reservoir during therapy",
+    "journal": "Nature",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1038/nature16933",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26814962/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2015-131",
+    "authors": "Samir S. Khariwala, Bin Le, Brendan H G Pierce, Rachel Isaksson Vogel, Jeffrey G. Chipman",
+    "title": "Antibiotic Use after Free Tissue Reconstruction of Head and Neck Defects",
+    "journal": "Surgical Infections",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2015.131",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26501794/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2014-144",
+    "authors": "Mary R. Kwaan, Genevieve B. Melton, Robert D. Madoff, Jeffrey G. Chipman",
+    "title": "Abdominoperineal resection, pelvic exenteration, and additional organ resection increase the risk of surgical site infection after elective colorectal surgery",
+    "journal": "Surgical Infections",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2014.144",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26237302/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-surg-2015-05-011",
+    "authors": "Elissa K. Butler, Tu M. Tran, Anthony T. Fuller, Fredrick Makumbi, Samuel Luboga, Sheila Kisakye, Michael M. Haglund, Jeffrey G. Chipman, Moses Galukande",
+    "title": "Pilot study of a population-based survey to assess the prevalence of surgical conditions in Uganda",
+    "journal": "Surgery (United States)",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.surg.2015.05.011",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26088920/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s00268-015-3191-5",
+    "authors": "Anthony T. Fuller, Elissa K. Butler, Tu M. Tran, Fredrick Makumbi, Samuel Luboga, Christine Muhumza, Jeffrey G. Chipman, Reinou S. Groen, Shailvi Gupta, Adam L. Kushner, Moses Galukande, Michael M. Haglund",
+    "title": "Surgeons OverSeas Assessment of Surgical Need (SOSAS) Uganda",
+    "journal": "World Journal of Surgery",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s00268-015-3191-5",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26316109/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2014-10-013",
+    "authors": "Robert D. Acton, Jeffrey G. Chipman, Michelle Lunden, Connie C. Schmitz",
+    "title": "Unanticipated teaching demands rise with simulation training",
+    "journal": "Journal of Surgical Education",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2014.10.013",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25467731/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2009-9931",
+    "authors": "Greg Beilman, Jeff Chipman",
+    "title": "Response to \"Power in the study of mortality and necrotizing soft tissue infections\"",
+    "journal": "Surgical Infections",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2009.9931",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25137481/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1073-pnas-1414926112",
+    "authors": "Meghan K. Rothenberger, Brandon F. Keele, Stephen W. Wietgrefe, Courtney V. Fletcher, Gregory J. Beilman, Jeffrey G. Chipman, Alexander Khoruts, Jacob D. Estes, Jodi Anderson, Samuel P. Callisto, Thomas E. Schmidt, Ann Thorkelson, Cavan Reilly, Katherine Perkey, Thomas G. Reimann, Netanya S. Utay, Krystelle Nganou Makamdop, Mario Stevenson, Daniel C. Douek, Ashley T. Haase, Timothy W. Schacker",
+    "title": "Large number of rebounding/founder HIV variants emerge from multifocal infection in lymphatic tissues after treatment interruption",
+    "journal": "Proceedings of the National Academy of Sciences of the United States of America",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1073/pnas.1414926112",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25713386/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2013-179",
+    "authors": "Meghan K. Rothenberger, C. Kityo Mutuluuza, F. Ssali, Jake Jasurda, Thomas Schmidt, Timothy W. Schacker, Greg J. Beilman, Jeffrey G. Chipman",
+    "title": "Inguinal Lymph Node and Anorectal Mucosal Biopsies for Human Immunodeficiency Virus Research Protocols in an Emerging Nation",
+    "journal": "Surgical Infections",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2013.179",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25650809/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1073-pnas-1318249111",
+    "authors": "Courtney V. Fletcher, Kathryn Staskus, Stephen W. Wietgrefe, Meghan Rothenberger, Cavan Reilly, Jeffrey G. Chipman, Greg J. Beilman, Alexander Khoruts, Ann Thorkelson, Thomas E. Schmidt, Jodi Anderson, Katherine Perkey, Mario Stevenson, Alan S. Perelson, Daniel C. Douek, Ashley T. Haase, Timothy W. Schacker",
+    "title": "Persistent HIV-1 replication is associated with lower antiretroviral drug concentrations in lymphatic tissues",
+    "journal": "Proceedings of the National Academy of Sciences of the United States of America",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1073/pnas.1318249111",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24469825/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jamcollsurg-2013-09-004",
+    "authors": "Genevieve B. Melton, Nora E. Burkart, Nathan G. Frey, Jeffrey G. Chipman, David A. Rothenberger, Selwyn M. Vickers",
+    "title": "Operative report teaching and synoptic operative reports",
+    "journal": "Journal of the American College of Surgeons",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jamcollsurg.2013.09.004",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1213-ane-0000000000000187",
+    "authors": "Monica I. Lupei, Jeffrey G. Chipman, Gregory J. Beilman, S. Cristina Oancea, Mojca R. Konia",
+    "title": "The association between ASA status and other risk stratification models on postoperative intensive care unit outcomes",
+    "journal": "Anesthesia and Analgesia",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1213/ANE.0000000000000187",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24781569/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1097-shk-0b013e3182657a21",
+    "authors": "Uroghupatei P. Iyegha, Joseph J. Greenberg, Kristine E. Mulier, Jeffrey Chipman, Mark George, Greg J. Beilman",
+    "title": "Environmental hypothermia in porcine polytrauma and hemorrhagic shock is safe",
+    "journal": "Shock",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/SHK.0b013e3182657a21",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22777118/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1182-blood-2012-03-418624",
+    "authors": "Ming Zeng, Mirko Paiardini, Jessica C. Engram, Greg J. Beilman, Jeffrey G. Chipman, Timothy W. Schacker, Guido Silvestri, Ashley T. Haase",
+    "title": "Critical role of CD4 T cells in maintaining lymphoid tissue structure for immune cell homeostasis and reconstitution",
+    "journal": "Blood",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1182/blood-2012-03-418624",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22613799/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2010-033",
+    "authors": "Matthew C. Byrnes, Titi Adegboyega, Andrew Riggle, Jeffrey Chipman, Greg Beilman, Patty Reicks, Kim Boeser, Eric Irwin",
+    "title": "Nasal swabs collected routinely to screen for colonization by methicillin-resistant Staphylococcus aureus in intensive care units are a sensitive screening test for the organism in clinical cultures",
+    "journal": "Surgical Infections",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2010.033",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20969468/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2010-032",
+    "authors": "Matthew C. Byrnes, Andrew Riggle, Greg Beilman, Jeffrey Chipman",
+    "title": "A novel technique to skin graft abdominal wall wounds surrounding enterocutaneous fistulas",
+    "journal": "Surgical Infections",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2010.032",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20849289/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-amjsurg-2009-12-014",
+    "authors": "Ciarn T. Bradley, Travis P. Webb, Connie C. Schmitz, Jeffrey G. Chipman, Karen J. Brasel",
+    "title": "Structured teaching versus experiential learning of palliative care for surgical residents",
+    "journal": "American Journal of Surgery",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.amjsurg.2009.12.014",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20538256/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ta-0b013e3181effe2a",
+    "authors": "Eric Irwin, Matthew Byrnes, Scott Schultz, Jeffrey Chipman, Alan Beal, Mark Ahrendt, Greg Beilman, J. Kevin Croston",
+    "title": "A systematic method for follow-up improves removal rates for retrievable inferior vena cava filters in a trauma patient population",
+    "journal": "Journal of Trauma - Injury, Infection and Critical Care",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/TA.0b013e3181effe2a",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20938273/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2008-054",
+    "authors": "Theodora A. Nemeth, Gregory J. Beilman, Carol L. Hamlin, Jeffrey G. Chipman",
+    "title": "Preoperative verification of timely antimicrobial prophylaxis does not improve compliance with guidelines",
+    "journal": "Surgical Infections",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2008.054",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20662740/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-jeff-chipman-2010-synthesis-versus-imitation",
+    "authors": "Robert D. Acton, Jeffrey G. Chipman, Julie Gilkeson, Connie C. Schmitz",
+    "title": "Synthesis versus imitation",
+    "journal": "Journal of Surgical Education",
+    "year": 2010,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20630429/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2008-076",
+    "authors": "Monica I. Lupei, Henry J. Mann, Gregory J. Beilman, Cristina Oancea, Jeffrey G. Chipman",
+    "title": "Inadequate antibiotic therapy in solid organ transplant recipients is associated with a higher mortality rate",
+    "journal": "Surgical Infections",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2008.076",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19785562/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2009-12-004",
+    "authors": "Jeffrey G. Chipman",
+    "title": "Things ain't what they used to be and probably never was (Will Rogers)",
+    "journal": "Journal of Surgical Education",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2009.12.004",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20421087/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jamcollsurg-2009-05-005",
+    "authors": "Jeffrey G. Chipman, Constance C. Schmitz",
+    "title": "Using Objective Structured Assessment of Technical Skills to Evaluate a Basic Skills Simulation Curriculum for First-Year Surgical Residents",
+    "journal": "Journal of the American College of Surgeons",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jamcollsurg.2009.05.005",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19717041/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-jeff-chipman-2009-changes-in-vasopressin-use-and",
+    "authors": "M. I. Lupei, G. J. Beilman, J. G. Chipman, H. J. Mann",
+    "title": "Changes in vasopressin use and outcomes in surgical intensive care unit patients with septic shock.",
+    "journal": "Chirurgia",
+    "year": 2009,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19943557/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2009-09-002",
+    "authors": "Mara B. Antonoff, Ryan C. Shelstad, Connie Schmitz, Jeffrey Chipman, Jonathan D'Cunha",
+    "title": "A Novel Critical Skills Curriculum for Surgical Interns Incorporating Simulation Training Improves Readiness for Acute Inpatient Care",
+    "journal": "Journal of Surgical Education",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2009.09.002",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20005496/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2009-03-032",
+    "authors": "Jeffrey G. Chipman, Robert D. Acton, Constance C. Schmitz",
+    "title": "Developing Surgical Skills Curricula",
+    "journal": "Journal of Surgical Education",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2009.03.032",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19712911/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2007-085",
+    "authors": "Mark E. George, Natasha M. Rueth, David E. Skarda, Jeffery G. Chipman, Robert R. Quickel, Greg J. Beilman",
+    "title": "Hyperbaric oxygen does not improve outcome in patients with necrotizing soft tissue infection",
+    "journal": "Surgical Infections",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2007.085",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/18991520/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1097-sih-0b013e31817e6149",
+    "authors": "Constance C. Schmitz, Jeffrey G. Chipman, Gregory J. Beilman, Michael G. Luxenberg",
+    "title": "Professionalism and communication in the intensive care unit",
+    "journal": "Simulation in Healthcare",
+    "year": 2008,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/SIH.0b013e31817e6149",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19088667/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2007-078",
+    "authors": "Nicholas Namias, Jonathan P. Meizoso, David H. Livingston, Charles Adams, Gregory J. Beilman, Walter Biffl, Juan J. Blondet, Patrick Blute, Jessica Bollinger, Susan A. Brundage, Jeffrey G. Chipman, Jeffrey A. Claridge, Raul Coimbra, Charles H. Cook, Joseph Cuschieri, Daniel L. Dent, Lynn Derting, Shaleagh Earl, Anthony Gerlach, Laura Hennessy, Jeanne Lee, Yanumei Li, Pamela Lipsett, Frederick Luchette, John E. Mazuski, Chet A. Morrison, Claudio Nunes, Kim Overton, Mary Ann Purtill, Marline Santos, Orla N. Smith, Sandy Swoboda, Ton That Hieu, Shirin Towfigh, Wael N. Yacoub, Charles J. Yowler",
+    "title": "Survey of surgical infections currently known (SOSICK)",
+    "journal": "Surgical Infections",
+    "year": 2008,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2007.078",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/18687044/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2007-12-006",
+    "authors": "Michael A. Maddaus, Jeffrey G. Chipman, Bryan A. Whitson, Shawn S. Groth, Connie C. Schmitz",
+    "title": "Rotation as a Course",
+    "journal": "Journal of Surgical Education",
+    "year": 2008,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2007.12.006",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/18439531/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-jeff-chipman-2004-early-surgery-for-thoracolumbar-spine",
+    "authors": "Jeffrey G. Chipman, William E. Deuser, Greg J. Beilman, Gregory J. Jurkovich",
+    "title": "Early Surgery for Thoracolumbar Spine Injuries Decreases Complications",
+    "journal": "Journal of Trauma - Injury, Infection and Critical Care",
+    "year": 2004,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/14749565/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1111-ajt-15119",
+    "authors": "Kendall R. McEachron, Gregory J. Beilman, Melena D. Bellin",
+    "title": "Sitagliptin treatment increases GLP-1 without improving diabetes outcomes after total pancreatectomy with islet autotransplantation",
+    "journal": "American Journal of Transplantation",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/ajt.15119",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-1111-ctr-13647",
+    "authors": "Kendall R. McEachron, Mariya E. Skube, Yi Yang, James S. Hodges, Joshua Wilhelm, Gregory Beilman, Srinath Chinnakotla, Sarah J. Schwarzenberg, Melena D. Bellin",
+    "title": "Utility of arginine stimulation testing in preoperative assessment of children undergoing total pancreatectomy with islet autotransplantation",
+    "journal": "Clinical Transplantation",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/ctr.13647",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-1111-tri-13762",
+    "authors": "Kendall R. McEachron, Yi Yang, James S. Hodges, Gregory J. Beilman, Varvara A. Kirchner, Timothy L. Pruett, Srinath Chinnakotla, Bernhard J. Hering, Melena D. Bellin",
+    "title": "Performance of modified Igls criteria to evaluate islet autograft function after total pancreatectomy with islet autotransplantation – a retrospective study",
+    "journal": "Transplant International",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/tri.13762",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-suronc-2020-11-016",
+    "authors": "Kendall R. McEachron, Jacob S. Ankeny, Alexandria Robbins, Ariella M. Altman, Schelomo Marmor, Donna D'Souza, Robben Schat, Benjamin Spilseth, Eric H. Jensen",
+    "title": "Surgical microwave ablation of otherwise non-resectable colorectal cancer liver metastases: Expanding opportunities for long term survival",
+    "journal": "Surgical Oncology",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.suronc.2020.11.016",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-1111-pedi-13168",
+    "authors": "Kendall R. McEachron, Neha Potlapalli, Arpana Rayannavar, Elissa M. Downs, Sarah J. Schwarzenberg, Varvara A. Kirchner, Gregory J. Beilman, Srinath Chinnakotla, Melena D. Bellin",
+    "title": "Early use of continuous glucose monitoring in children and adolescents after total pancreatectomy with islet autotransplantation",
+    "journal": "Pediatric Diabetes",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/pedi.13168",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-1097-mpa-0000000000002096",
+    "authors": "Kendall R. McEachron, Harika Nalluri, Gregory J. Beilman, Varvara A. Kirchner, Timothy L. Pruett, Martin L. Freeman, Guru Trikudanathan, Christopher Staley, Melena D. Bellin",
+    "title": "Decreased Intestinal Microbiota Diversity Is Associated With Increased Gastrointestinal Symptoms in Patients With Chronic Pancreatitis",
+    "journal": "Pancreas",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/MPA.0000000000002096",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-1136-tsaco-2025-001780",
+    "authors": "Kendall R McEachron, Todd W Costantini",
+    "title": "Invasive and non-invasive monitoring in the ICU",
+    "journal": "Trauma Surgery & Acute Care Open",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1136/tsaco-2025-001780",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-1093-ndt-gfv018",
+    "authors": "Safadi, S., Saad, A., Quint, P.S., Sethi, S., Leung, N., Kurtin, P., Nasr, S.H.",
+    "title": "Disappearance of immunoglobulins from persistent renal amyloid deposits following stem cell transplantation for heavy-and light-chain amyloidosis",
+    "journal": "Nephrology Dialysis Transplantation",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/ndt/gfv018",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-pulmoe-2022-05-007",
+    "authors": "M. Ippolito, B. Simone, S. Safadi, E. Spinuzza, T. Catania, G. Ingoglia, M. Milazzo, S.M. Raineri, A. Giarratano, C. Gregoretti, A. Cortegiani",
+    "title": "Effectiveness of a remote simulation training in mechanical ventilation among trainees",
+    "journal": "Pulmonology",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.pulmoe.2022.05.007",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s12947-020-00219-w",
+    "authors": "Aligholizadeh, E., Teeter, W., Patel, R., Hu, P., Fatima, S., Yang, S., Ramani, G., Safadi, S., Olivieri, P., Scalea, T., Murthi, S.",
+    "title": "A novel method of calculating stroke volume using point-of-care echocardiography",
+    "journal": "Cardiovascular Ultrasound",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s12947-020-00219-w",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1111-ctr-12482",
+    "authors": "Safadi, S., Dispenzieri, A., Amer, H., Gertz, M.A., Rajkumar, S.V., Hayman, S.R., Lacy, M.Q., Leung, N.",
+    "title": "Multiple myeloma after kidney transplantation",
+    "journal": "Clinical Transplantation",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/ctr.12482",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-34067-kid-0002322021",
+    "authors": "Sami Safadi, Sarah Murthi, Kianoush B. Kashani",
+    "title": "Use of Ultrasound to Assess Hemodynamics in Acutely Ill Patients",
+    "journal": "Kidney360",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.34067/KID.0002322021",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-ekir-2017-03-003",
+    "authors": "Safadi, S., Albright, R.C., Dillon, J.J., Williams, A.W., Alahdab, F., Brown, J.K., Severson, A.L., Kremers, W.K., Ryan, M.A., Hogan, M.C.",
+    "title": "Prospective Study of Routine Heparin Avoidance Hemodialysis in a Tertiary Acute Care Inpatient Practice",
+    "journal": "Kidney International Reports",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.ekir.2017.03.003",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-mayocp-2019-06-011",
+    "authors": "Safadi, S., Hommos, M.S., Enders, F.T., Lieske, J.C., Kashani, K.B.",
+    "title": "Risk Factors for Acute Kidney Injury in Hospitalized Non–Critically Ill Patients: A Population-Based Study",
+    "journal": "Mayo Clinic Proceedings",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.mayocp.2019.06.011",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-3389-fpubh-2019-00244",
+    "authors": "Britton, N., Miller, M.A., Safadi, S., Siegel, A., Levine, A.R., McCurdy, M.T.",
+    "title": "Tele-ultrasound in resource-limited settings: A systematic review",
+    "journal": "Frontiers in Public Health",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.3389/fpubh.2019.00244",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s13054-017-1847-2",
+    "authors": "Kashani, K.B., Mao, S.A., Safadi, S., Amiot, B.P., Glorioso, J.M., Lieske, J.C., Nyberg, S.L., Zhang, X.",
+    "title": "Association between kidney intracapsular pressure and ultrasound elastography",
+    "journal": "Critical Care",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s13054-017-1847-2",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1053-j-jrn-2014-09-003",
+    "authors": "Tucker, B.M., Safadi, S., Friedman, A.N.",
+    "title": "Is routine multivitamin supplementation necessary in US chronic adult hemodialysis patients? A systematic review",
+    "journal": "Journal of Renal Nutrition",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1053/j.jrn.2014.09.003",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-2196-15983",
+    "authors": "Tanner Skousen, Hani Safadi, Colleen Young, Elena Karahanna, Sami Safadi, Fouad Chebib",
+    "title": "Successful Moderation in Online Patient Communities: Inductive Case Study",
+    "journal": "Journal of Medical Internet Research",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.2196/15983",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2025-07-005",
+    "authors": "Sami Safadi, Roxana Amirahmadi, Abdulhakim Tlimat, Randal Rovinski, Junfeng Sun, Burton W. Lee, Nitin Seam, Abdulhakim Tlimat, Bashar Staitieh, Brian J. Clark, Burton W. Lee, Chandra Patel, Christian J. Woods, David C. Chu, Deepa Patel, Jonathan Kalehoff, Katrina Hawkins, Nitin Seam, Sami Safadi, Sandra Zaeh, Stephanie Maximous, Van Holden",
+    "title": "Quality of Human Expert vs Large Language Model-Generated Multiple-Choice Questions in the Field of Mechanical Ventilation",
+    "journal": "CHEST",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2025.07.005",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1038-s41467-023-44467-6",
+    "authors": "Debora L. Gisch, Michelle Brennan, Blue B. Lake, Jeannine Basta, Mark S. Keller, Ricardo Melo Ferreira, Shreeram Akilesh, Reetika Ghag, Charles Lu, Ying Hua Cheng, Kimberly S. Collins, Samir V. Parikh, Brad H. Rovin, Lynn Robbins, Lisa Stout, Kimberly Y. Conklin, Dinh Diep, Bo Zhang, Amanda Knoten, Daria Barwinska, Mahla Asghari, Angela R. Sabo, Michael J. Ferkowicz, Timothy A. Sutton, Katherine J. Kelly, Ian H. De Boer, Sylvia E. Rosas, Krzysztof Kiryluk, Jeffrey B. Hodgin, Fadhl Alakwaa, Seth Winfree, Nichole Jefferson, Aydın Türkmen, Joseph P. Gaut, Nils Gehlenborg, Carrie L. Phillips, Tarek M. El-Achkar, Pierre C. Dagher, Takashi Hato, Kun Zhang, Jonathan Himmelfarb, Matthias Kretzler, Shamim Mollah, Blue Lake, Alexander Morales, Isaac Stillman, Stewart Lecker, Steve Bogen, Ashish Verma, Guanghao Yu, Insa Schmidt, Joel Henderson, Laurence Beck, Pranav Yadati, Sushrut Waikar, Afolarin A. Amodu, Shana Maikhor, Titlayo Ilori, Mia R. Colona, Astrid Weins, Gearoid McMahon, Nir Hacohen, Anna Greka, Jamie L. Marshall, Paul J. Hoover, Vidya S. Viswanathan, Dana Crawford, Mark Aulisio, William Bush, Yijiang Chen, Anant Madabhushi, Charles O’Malley, Crystal Gadegbeku, Dianna Sendrey, Emilio Poggio, John O’Toole, John Sedor, Jonathan Taliercio, Lakeshia Bush, Leal Herlitz, Ellen Palmer, Jane Nguyen, Kassandra Spates-Harden, Leslie Cooperman, Stacey Jolly, Carissa Vinovskis, Andrew Bomback, Jonathan Barasch, Krzysztof Kiryluk, Paul Appelbaum, Vivette D’Agati, Cecilia Berrouet, Karla Mehl, Maya Sabatello, Ning Shang, Olivia Balderes, Pietro A. Canetta, Satoru Kudose, Joana de Pinho Gonçalves, Lukasz Migas, Raf Van de Plas, Roy Lardenoije, Laura Barisoni, Helmut Rennke, Abraham Verdoes, Angela Sabo, Debora Lidia Gisch, James Williams, Katherine Kelly, Kenneth Dunn, Michael Eadon, Michael Ferkowicz, Pierre Dagher, Seth Winfree, Sharon Bledsoe, Stephanie Wofford, Tarek Ashkar (El-Achkar), Timothy Sutton, William Bowen, Austen Slade, Elizabeth Record, Yinghua Cheng, Yashvardhan Jain, Bruce Herr, Ellen Quardokus, Ashley Wang, Celia Pamela Corona Villalobos, Chirag Parikh, Mohamed Atta, Steven Menez, Yumeng Wen, Alan Xu, Lauren Bernard, Camille Johansen, Sarah Chen, Sylvia Rosas, Isabel Donohoe, Jennifer Sun, Richard Knight, Anna Shpigel, Jack Bebiak, John Saul, Joseph Ardayfio, Robert Koewler, Roy Pinkeney, Taneisha Campbell, Evren Azeloglu, Girish Nadkarni, John He, Joji Tokita, Kirk Campbell, Marissa Patel, Sean Lefferts, Srinivas Ravi Iyengar, Stephen Ward, Steven Coca, Cijang He, Yuguang Xiong, Pottumarthi Prasad, Brad Rovin, John P. Shapiro, Samir Parikh, Sethu M. Madhavan, Jessica Lukowski, Dusan Velickovic, Ljiljana Pasa-Tolic, George (Holt) Oliver, Olga Troyanskaya, Rachel Sealfon, Weiguang Mao, Aaron Wong, Ari Pollack, Yury Goltsev, Brandon Ginley, Brendon Lutnick, Garry Nolan, Kavya Anjani, Tariq Mukatash, Zoltan G. Laszik, Baltazar Campos, Bijin Thajudeen, David Beyda, Erika Bracamonte, Frank Brosius, Gregory Woodhead, Katherine Mendoza, Nicole Marquez, Raymond Scott, Rebecca Tsosie, Milda Saunders, Adele Rike, E. Steve Woodle, Paul J. Lee, Rita R. Alloway, Tiffany Shi, Elena Hsieh, Jessica Kendrick, Joshua Thurman, Julia Wrobel, Laura Pyle, Petter Bjornstad, Nicholas Lucarelli, Pinaki Sarder, Amada Renteria, Ana Ricardo, Anand Srivastava, Devona Redmond, Eunice Carmona-Powell, James Bui, James Lash, Monica Fox, Natalie Meza, Ron Gaba, Suman Setty, Tanika Kelly, Chrysta Lienczewski, Dawit Demeke, Edgar Otto, Heather Ascani, Jeff Hodgin, Jennifer Schaub, John Hartman, Laura Mariani, Markus Bitzer, Michael Rose, Nikki Bonevich, Ninive Conser, Phillip McCown, Rachel Dull, Rajasree Menon, Rebecca Reamy, Sean Eddy, Ul Balis, Victoria Blanc, Viji Nair, Yongqun Oliver He, Zachary Wright, Becky Steck, Jinghui Luo, Renee Frey, Alyson Coleman, Dorisann Henderson-Brown, Jerica Berge, Maria Luiza Caramori, Oyedele Adeyi, Patrick Nachman, Sami Safadi, Siobhan Flanagan, Sisi Ma, Susan Klett, Susan Wolf, Tasma Harindhanavudhi, Via Rao, Amy Mottl, Anne Froment, Evan Zeitler, Peter Bream, Sara Kelley, Matthew Rosengart, Michele Elder, Paul Palevsky, Raghavan Murugan, Daniel E. Hall, Filitsa Bender, James Winters, John A. Kellum, Matthew Gilliam, Mitchell Tublin, Roderick Tan, Guanshi Zhang, Kumar Sharma, Manjeri Venkatachalam, Allen Hendricks, Asra Kermani, Jose Torrealba, Miguel Vazquez, Nancy Wang, Qi Cai, Richard Tyler Miller, Shihong Ma, Susan Hedayati, Andrew Hoofnagle, Artit Wangperawong, Ashley Berglund, Ashveena L. Dighe, Bessie Young, Brandon Larson, Brooke Berry, Charles Alpers, Christine Limonte, Christy Stutzke, Glenda Roberts, Ian de Boer, Jaime Snyder, Jimmy Phuong, Jonas Carson, Kasra Rezaei, Katherine Tuttle, Keith Brown, Kristina Blank, Natalya Sarkisova, Nichole Jefferson, Robyn McClelland, Sean Mooney, Yunbi Nam, Adam Wilcox, Christopher Park, Frederick Dowd, Kayleen Williams, Stephanie M. Grewenow, Stephen Daniel, Stuart Shankland, Annapurna Pamreddy, Hongping Ye, Richard Montellano, Shweta Bansal, Anil Pillai, Dianbo Zhang, Harold Park, Jiten Patel, Kamalanathan Sambandam, Mujeeb Basit, Natasha Wen, Orson W. Moe, Robert D. Toto, Simon C. Lee, Kavya Sharman, Richard M. Caprioli, Agnes Fogo, Jamie Allen, Jeffrey Spraggins, Katerina Djambazova, Mark de Caestecker, Martin Dufresne, Melissa Farrow, Anitha Vijayan, Brittany Minor, Gerald Nwanne, Joseph Gaut, Kristine Conlon, Madhurima Kaushal, Sabine M. Diettman, Angela M. Victoria Castro, Dennis Moledina, Francis P. Wilson, Gilbert Moeckel, Lloyd Cantley, Melissa Shaw, Vijayakumar Kakade, Tanima Arora, Sanjay Jain, Michael Rauchman, Michael T. Eadon",
+    "title": "The chromatin landscape of healthy and injured cell types in the human kidney",
+    "journal": "Nature communications",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1038/s41467-023-44467-6",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38199997/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1155-2014-108185",
+    "authors": "Sami Safadi, Michael Mao, John j. Dillon",
+    "title": "Ceftriaxone-Induced Acute Encephalopathy in a Peritoneal Dialysis Patient",
+    "journal": "Case Reports in Nephrology",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1155/2014/108185",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1053-j-ajkd-2023-08-015",
+    "authors": "Kidney Precision Medicine Project, Tarek M. El-Achkar, Michael T. Eadon, Matthias Kretzler, Jonathan Himmelfarb, Blue Lake, Kun Zhang, Stewart Lecker, Alexander Morales, Steve Bogen, Afolarin A. Amodu, Laurence Beck, Joel Henderson, Titlayo Ilori, Shana Maikhor, Ingrid Onul, Insa Schmidt, Ashish Verma, Sushrut Waikar, Pranav Yadati, Guanghao Yu, Mia R. Colona, Gearoid McMahon, Nir Hacohen, Anna Greka, Paul J. Hoover, Jamie L. Marshall, Mark Aulisio, William Bush, Yijiang Chen, Dana Crawford, Anant Madabhushi, Vidya S. Viswanathan, Lakeshia Bush, Leslie Cooperman, Crystal Gadegbeku, Leal Herlitz, Stacey Jolly, Jane Nguyen, Charles O'Malley, John O'Toole, Ellen Palmer, Emilio Poggio, Kassandra Spates-Harden, John Sedor, Dianna Sendrey, Maria Luiza Caramori, Oyedele Adeyi, Sami Safadi, Susan Wolf, Sami Safadi, Tasma Harindhanavudhi",
+    "title": "Precision Medicine in Nephrology",
+    "journal": "American Journal of Kidney Diseases",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1053/j.ajkd.2023.08.015",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37839688/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-4187-respcare-12072",
+    "authors": "Sami Safadi, Megan Acho, Stephanie I. Maximous, Michael B. Keller, Eric Kriner, Christian J. Woods, Junfeng Sun, Bashar S. Staitieh, Burton W. Lee",
+    "title": "Comparison of Web-Based and On-Site Lung Simulators for Education in Mechanical Ventilation",
+    "journal": "Respiratory care",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.4187/respcare.12072",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39379159/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1089-respcare-12540",
+    "authors": "Abdulhakim Tlimat, Cosmo Fowler, Sami Safadi, Robert B. Johnson, Sandeep Bodduluri, Peter Morris, Surya P. Bhatt",
+    "title": "Artificial Intelligence for the Detection of Patient– Ventilator Asynchrony",
+    "journal": "Respiratory care",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/respcare.12540",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40178919/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s40620-024-01950-7",
+    "authors": "Sami Safadi, Musab S. Hommos, Charat Thongprayoon, Callen D. Giesen, Michael Bernaba, Kianoush B. Kashani, John C. Lieske",
+    "title": "The role of biomarkers in early identification of acute kidney injury among non-critically ill patients",
+    "journal": "Journal of Nephrology",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s40620-024-01950-7",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38837000/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-2215-cjn-0000000000000276",
+    "authors": "Kidney Precision Medicine Project, Michael J. Ferkowicz, Ashish Verma, Daria Barwinska, Ricardo Melo Ferreira, Joel M. Henderson, Mary Kirkpatrick, Paolo S. Silva, Devin W. Steenkamp, Carrie L. Phillips, Sushrut S. Waikar, Timothy A. Sutton, Blue Lake, Kun Zhang, Stewart Lecker, Alexander Morales, Isaac Stillman, Steve Bogen, Afolarin A. Amodu, Laurence Beck, Joel Henderson, Titlayo Ilori, Shana Maikhor, Ingrid Onul, Insa Schmidt, Ashish Verma, Sushrut Waikar, Pranav Yadati, Guanghao Yu, Mia R. Colona, Gearoid McMahon, Astrid Weins, Nir Hacohen, Anna Greka, Paul J. Hoover, Jamie L. Marshall, Mark Aulisio, William Bush, Yijiang Chen, Dana Crawford, Anant Madabhushi, Vidya S. Viswanathan, Lakeshia Bush, Jerica Berge, Oyedele Adeyi, Patrick Nachman, Sami Safadi, Siobhan Flanagan, Sisi Ma, Susan Wolf, Tasma Harindhanavudhi",
+    "title": "Molecular Signatures of Glomerular Neovascularization in a Patient with Diabetic Kidney Disease",
+    "journal": "Clinical Journal of the American Society of Nephrology",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.2215/CJN.0000000000000276",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37533147/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1093-atsscholar-aapaf008",
+    "authors": "the Critical Care Education Research Consortium, Roxana Amirahmadi, Muhtadi Alnababteh, Michael Keller, Junfeng Sun, Kavitha Bagavathy, Sami Safadi, Bashar S. Staitieh, Stephanie I. Maximous, Eric Kriner, Christian J. Woods, Emil Oweis, Matthew P. Schreiber, Nitin Seam, Burton W. Lee, Abdulhakim Tlimat, Brian J. Clark, Chandra Patel, David C. Chu, Deepa Patel, Jonathan Kalehoff, Katrina Hawkins, Sandra Zaeh, Van Holden",
+    "title": "Ventilator waveform interpretation skills of attending intensivists relative to critical care fellows (VISA) study",
+    "journal": "ATS Scholar",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/atsscholar/aapaf008",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41955287/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2023-11-025",
+    "authors": "Anne C. Melzer, Abbie Begnaud",
+    "title": "Planting the Seeds for Lung Cancer Screening Starts With Knowledge Holders",
+    "journal": "CHEST",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2023.11.025",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-202212-2216st",
+    "authors": "Katrina Steiling, Hasmeena Kathuria, Chidiebere Peter Echieh, David E. Ost, M. Patricia Rivera, Abbie Begnaud, Juan C. Celedón, Marjory Charlot, Frank Dietrick, Narjust Duma, Kwun M. Fong, Jean G. Ford, Michael K. Gould, Fernando Holguin, Eliseo J. Pérez-Stable, Nichole T. Tanner, Carey Conley Thomson, Renda Soylemez Wiener, Juan Wisnivesky",
+    "title": "Research Priorities for Interventions to Address Health Disparities in Lung Nodule Management: An Official American Thoracic Society Research Statement",
+    "journal": "American Journal of Respiratory and Critical Care Medicine",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/rccm.202212-2216ST",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1158-1940-6207-capr-22-0314",
+    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
+    "title": "Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
+    "journal": "Cancer Prevention Research",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1158/1940-6207.CAPR-22-0314",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1158-1940-6207-22495161",
+    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
+    "title": "Supplementary Materials 2 from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
+    "journal": "",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1158/1940-6207.22495161",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1158-1940-6207-22495158",
+    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
+    "title": "Supplementary Materials 3 from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
+    "journal": "",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1158/1940-6207.22495158",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1158-1940-6207-22495164",
+    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
+    "title": "Supplementary Materials 1 from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
+    "journal": "",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1158/1940-6207.22495164",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1158-1940-6207-c-6534756-v1",
+    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
+    "title": "Data from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
+    "journal": "",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1158/1940-6207.c.6534756.v1",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-conctc-2022-100977",
+    "authors": "Abbie Begnaud, Steven S. Fu, Bruce Lindgren, Anne Melzer, Alexander J. Rothman, Kelsey Schertz, David M. Vock, Anne M. Joseph",
+    "title": "Latent constructs identified in older individuals who smoke cigarettes and are eligible for lung cancer screening: Factor analysis of baseline data from the PLUTO smoking cessation trial",
+    "journal": "Contemporary Clinical Trials Communications",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.conctc.2022.100977",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1093-ntr-ntag021",
+    "authors": "Rina I Horii, Alexander J Rothman, David M Vock, Anne M Joseph, Mariah Branson, Anne C Melzer, Abbie Begnaud, Steven S Fu",
+    "title": "When to Assess Responses to Treatments in Adaptive Interventions? An Experimental Analysis of Assessment Timing in a Smoking Cessation Treatment in the Context of Lung Cancer Screening",
+    "journal": "Nicotine and Tobacco Research",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/ntr/ntag021",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chpulm-2023-100027",
+    "authors": "Alireza Nathani, Abbie Begnaud",
+    "title": "Hurdles to Annual Low-Dose Chest CT Scan Adherence for Lung Cancer Screening Parallel Those to Initial Low-Dose Chest CT Scan Uptake",
+    "journal": "CHEST Pulmonary",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chpulm.2023.100027",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1097-lbr-0000000000001017",
+    "authors": "Sevak Keshishyan, Joseph Keenan, Erhan H. Dincer, Jennifer Wong, Abbie Begnaud, Alireza Nathani, Heidi Gibson, Sudarshan Setty, Roy J. Cho",
+    "title": "Navigating Atelectasis",
+    "journal": "Journal of Bronchology and Interventional Pulmonology",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/LBR.0000000000001017",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40591660/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1353-hpu-2025-a967331",
+    "authors": "Elijah Johnson, An Garagiola, Antony Stately, Abbie Begnaud",
+    "title": "Community-Based Screening Events to Increase Lung Cancer Screening in an Urban AI/AN Clinic",
+    "journal": "Journal of health care for the poor and underserved",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1353/hpu.2025.a967331",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40820774/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-pmedr-2025-103173",
+    "authors": "Abbie Begnaud, Wyatt Pickner, Antony Stately, Dylan Jennings, Ebiere Okah, Katelyn M. Tessier, Michael Businelle, Dana Carroll",
+    "title": "Knowledge and attitudes about lung cancer screening amongst American Indian adults who use commercial tobacco",
+    "journal": "Preventive Medicine Reports",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.pmedr.2025.103173",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40895342/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-202501-0011st",
+    "authors": "Louise M. Henderson, Roger Y. Kim, Nichole T. Tanner, Emily B. Tsai, Abbie Begnaud, Farouk Dako, Michael Gieske, Kimberly Kallianos, Ilana Richman, Lori C. Sakoda, Ronald G. Schwartz, Joseph Yeboah, Kwun M. Fong, Stephen Lam, Pyng Lee, Mary Pasquinelli, Robert A. Smith, Matthew Triplette, Lynn T. Tanoue, M. Patricia Rivera",
+    "title": "Lung Cancer Screening and Incidental Findings: A Research Agenda: An Official American Thoracic Society Research Statement",
+    "journal": "American Journal of Respiratory and Critical Care Medicine",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/rccm.202501-0011ST",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chpulm-2024-100096",
+    "authors": "Jeffrey Larson, Hyun Joo Kim, Rebecca Freese, Abbie Begnaud",
+    "title": "Does the Presence of Lung Incidental Findings on Low-Dose CT for Lung Cancer Screening Lead to Additional Testing?",
+    "journal": "CHEST Pulmonary",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chpulm.2024.100096",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1158-1940-6207-capr-25-0114",
+    "authors": "Abbie Begnaud, Frank G. Ondrey",
+    "title": "Evidence-Based Lung Cancer Screening in a Tailored Package",
+    "journal": "Cancer Prevention Research",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1158/1940-6207.CAPR-25-0114",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-rmed-2023-107126",
+    "authors": "COPDGene® Investigators – Core Units, COPDGene® Investigators – Clinical Centers, Thuonghien V. Tran, Gregory L. Kinney, Alejandro Comellas, Karin F. Hoth, Arianne K. Baldomero, A. James Mamary, Jeffrey L. Curtis, Nicola Hanania, Richard Casaburi, Kendra A. Young, Victor Kim, Barry Make, Emily S. Wan, Alejandro A. Diaz, John Hokanson, James D. Crapo, Edwin K. Silverman, Surya P. Bhatt, Elizabeth Regan, Spyridon Fortis, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel El Boueiz, Marilyn G. Foreman, Auyon Ghosh, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Wonji Kim, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Dmitry Prokopenko, Matthew Moll, Jarrett Morrow, Dandi Qiao, Aabida Saferali, Phuwanat Sakornsakolpat, Joseph Tashjian, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
+    "title": "Prevalence of abnormal spirometry in individuals with a smoking history and no known obstructive lung disease",
+    "journal": "Respiratory Medicine",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.rmed.2023.107126",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36717002/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1002-lrh2-10378",
+    "authors": "Sirin Yilmaz, Michele LeClaire, Abbie Begnaud, Warren McKinney, Kasey R. Boehmer, Cory Schaffhausen, Mark Linzer",
+    "title": "Developing LHS scholars’ competency around reducing burnout and moral injury",
+    "journal": "Learning Health Systems",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/lrh2.10378",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38249843/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s13187-024-02517-7",
+    "authors": "Manish R. Patel, Abbie Begnaud, Shanda H. Blackmon, Arkadiusz Z. Dudek, Naomi Fujioka, Janine C.K. Harewood, Pasi A. Jänne, Shirley Kern, Lacey Running Hawk, Ann M. Rusk, Fatima G. Wilder, Robert Winn, Nancy Torrison, Stephanie Searle",
+    "title": "Improving Patient Understanding and Outcomes in Lung Cancer Using an Animated Patient’s Guide with Visual Formats of Learning",
+    "journal": "Journal of Cancer Education",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s13187-024-02517-7",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39438400/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1177-21501319231212312",
+    "authors": "Camille Robichaux, Madison Anderson, Rebecca Freese, Antony Stately, Abbie Begnaud",
+    "title": "Lung Cancer Screening Outreach Program in an Urban Native American Clinic",
+    "journal": "Journal of Primary Care and Community Health",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/21501319231212312",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37994788/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamanetworkopen-2023-29903",
+    "authors": "Steven S. Fu, Alexander J. Rothman, David M. Vock, Bruce R. Lindgren, Daniel Almirall, Abbie Begnaud, Anne C. Melzer, Kelsey L. Schertz, Mariah Branson, David Haynes, Patrick Hammett, Anne M. Joseph",
+    "title": "Optimizing Longitudinal Tobacco Cessation Treatment in Lung Cancer Screening",
+    "journal": "JAMA Network Open",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamanetworkopen.2023.29903",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37615989/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-52768-2833-2725-1155",
+    "authors": "Monika K Kakol, Heidi Gibson, Alireza Nathani, Abbie Begnaud, Jennifer L Wong, Joseph C Keenan, H. Erhan Dincer, Roy J Cho",
+    "title": "Feasibility of using airway contrast in the measurement of anastomotic stenosis in lung transplant patients",
+    "journal": "Open Journal of Clinical and Medical Images",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.52768/2833-2725/1155",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s00520-025-09523-5",
+    "authors": "David Haynes, Eric Trempe, Allison Iwan, Eduardo Osegueda, Courtney Sarkin, Dori Cross, Abbie Begnaud, Kris Newcomer, Helen M. Parsons, Pinar Karaca Mandic",
+    "title": "Enhancing cancer care through digital social care referrals",
+    "journal": "Supportive Care in Cancer",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s00520-025-09523-5",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40471344/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chpulm-2025-100228",
+    "authors": "Milind Bhagat, Rebecca Freese, David Haynes, Abbie Begnaud",
+    "title": "Association of patient and neighborhood factors with lung cancer screening rates in Minnesota",
+    "journal": "CHEST Pulmonary",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chpulm.2025.100228",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1158-1940-6207-30701584",
+    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
+    "title": "Supplementary Materials 3 from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
+    "journal": "",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1158/1940-6207.30701584",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1158-1940-6207-30701590",
+    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
+    "title": "Supplementary Materials 1 from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
+    "journal": "",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1158/1940-6207.30701590",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1158-1940-6207-30701587",
+    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
+    "title": "Supplementary Materials 2 from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
+    "journal": "",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1158/1940-6207.30701587",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1136-tc-2024-058665",
+    "authors": "Dana Mowls Carroll, Dylan Jennings, Antony Stately, Amika Kamath, Katelyn M. Tessier, Crina Cotoc, Andrew Egbert, Abbie Begnaud, Michael Businelle, Dorothy Hatsukami, Wyatt Pickner",
+    "title": "Pilot randomised controlled trial of a culturally aligned smoking cessation app for American Indian persons",
+    "journal": "Tobacco control",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1136/tc-2024-058665",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38964856/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1097-jxx-0000000000001230",
+    "authors": "Lisa Carter-Bawa, Timothy J. Williamson, Nancy Alvey, Abbie Begnaud, Dannell Boatman, Deborah P. Brown, Deena Cook, Dusty Donaldson, Jill Feldman, Heidi A. Hamann, Ella Kazerooni, Lauren Kearney, Eugene Manley, Drew Moghanaki, Jamie S. Ostroff, James Pantelas, Elyse R. Park, Maureen Rigney, Lauren Rosenthal, Elizabeth Scharnetzki, Joan Shiller, Robert A. Smith, Anne L. Stangl, Erica T. Warner, Douglas E. Wood, Jamie L. Studts",
+    "title": "Confronting nihilism and stigma in lung cancer",
+    "journal": "Journal of the American Association of Nurse Practitioners",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/JXX.0000000000001230",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41441726/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1513-annalsats-202103-240rl",
+    "authors": "On behalf of the COPDGene and SPIROMICS Investigators, Anand S. Iyer, Trisha M. Parekh, Jacqueline O'Toole, Surya P. Bhatt, Michelle N. Eakin, Jerry A. Krishnan, Abebaw M. Yohannes, Prescott G. Woodruff, Christopher B. Cooper, Richard E. Kanner, Nicola A. Hanania, Mark T. Dransfield, Elizabeth A. Regan, Karin F. Hoth, Victor Kim, James D. Crapo, Edwin K. Silverman, Barry J. Make, Terri Beaty, Ferdouse Begum, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dmitry Prokopenko, Dandi Qiao, Phuwanat Sakornsakolpat, Emily S. Wan, Sungho Won, Juan Pablo Centeno, Jean Paul Charbonnier, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
+    "title": "Clinically Significant and Comorbid Anxiety and Depression Symptoms Predict Severe Respiratory Exacerbations in Smokers",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1513/AnnalsATS.202103-240RL",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34343034/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-202301-0067oc",
+    "authors": "COPDGene Investigators, Rahul Suryadevara, Andrew Gregory, Robin Lu, Zhonghui Xu, Aria Masoomi, Sharon M. Lutz, Seth Berman, Jeong H. Yun, Aabida Saferali, Min Hyung Ryu, Matthew Moll, Don D. Sin, Craig P. Hersh, Edwin K. Silverman, Jennifer Dy, Katherine A. Pratte, Russell P. Bowler, Peter J. Castaldi, Adel Boueiz, James D. Crapo, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel Boueiz, Marilyn G. Foreman, Auyon Ghosh, Lystra P. Hayden, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Wonji Kim, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Dmitry Prokopenko, Matthew Moll, Jarrett Morrow, Dandi Qiao, Elizabeth A. Regan, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
+    "title": "Blood-based Transcriptomic and Proteomic Biomarkers of Emphysema",
+    "journal": "American journal of respiratory and critical care medicine",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/rccm.202301-0067OC",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37917913/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-202401-0023oc",
+    "authors": "The COPDGene Investigators, Spyridon Fortis, Matthew Strand, Surya P. Bhatt, Patrick Ten Eyck, Linder Wendt, Trisha Parekh, Mei Lan K. Han, John E. Hokanson, Gregory Kinney, Jeffrey L. Curtis, Russell P. Bowler, Emily S. Wan, Ken M. Kunisaki, Chris H. Wendt, Elizabeth Regan, Mark Dransfield, James D. Crapo, Edwin K. Silverman, Alejandro P. Comellas, James D. Crapo, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel El Boueiz, Marilyn G. Foreman, Auyon Ghosh, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Wonji Kim, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Dmitry Prokopenko, Matthew Moll, Jarrett Morrow, Dandi Qiao, Elizabeth A. Regan, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Joanne Billings, Abbie Begnaud, Tadashi Allen",
+    "title": "Respiratory Exacerbations and Lung Function Decline in People with Smoking History and Normal Spirometry",
+    "journal": "American journal of respiratory and critical care medicine",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/rccm.202401-0023OC",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39946437/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s12931-021-01712-0",
+    "authors": "The COPDGene Investigators, Victor Kim, Wojciech R. Dolliver, Hrudaya P. Nath, Scott A. Grumley, Nina Terry, Asmaa Ahmed, Andrew Yen, Kathleen Jacobs, Seth Kligerman, Alejandro A. Diaz, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dmitry Prokopenko, Dandi Qiao, Elizabeth A. Regan, Phuwanat Sakornsakolpat, Edwin K. Silverman, Emily S. Wan, Sungho Won, Juan Pablo Centeno, Jean Paul Charbonnier, Harvey O. Coxson, Craig J. Galban, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
+    "title": "Mucus plugging on computed tomography and chronic bronchitis in chronic obstructive pulmonary disease",
+    "journal": "Respiratory research",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s12931-021-01712-0",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33865371/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2021-04-066",
+    "authors": "COPDGene Investigators, Divay Chandra, Aman Gupta, Gregory L. Kinney, Carl R. Fuhrman, Joseph K. Leader, Alejandro A. Diaz, Jessica Bon, R. Graham Barr, George Washko, Matthew Budoff, John Hokanson, Frank C. Sciurba, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Adel R. Boueiz, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dmitry Prokopenko, Dandi Qiao, Phuwanat Sakornsakolpat, Emily S. Wan, Sungho Won, Mustafa Al Qaisi, Harvey O. Coxson, Teresa Gray, Mei Lan K. Han, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
+    "title": "The Association Between Lung Hyperinflation and Coronary Artery Disease in Smokers",
+    "journal": "Chest",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2021.04.066",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33971144/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2021-05-007",
+    "authors": "COPDGene Investigators, Vickram Tejwani, Ashraf Fawzy, Nirupama Putcha, Peter J. Castaldi, Michael H. Cho, Katherine A. Pratte, Surya P. Bhatt, David A. Lynch, Stephen M. Humphries, Gregory L. Kinney, Franco R. D'Alessio, Nadia N. Hansel, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dmitry Prokopenko, Dandi Qiao, Phuwanat Sakornsakolpat, Emily S. Wan, Sungho Won, Juan Pablo Centeno, Jean Paul Charbonnier, Harvey O. Coxson, Craig J. Galban, Mei Lan K. Han, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
+    "title": "Emphysema Progression and Lung Function Decline Among Angiotensin Converting Enzyme Inhibitors and Angiotensin-Receptor Blockade Users in the COPDGene Cohort",
+    "journal": "Chest",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2021.05.007",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34029566/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s12931-022-02013-w",
+    "authors": "NHLBI Trans-Omics for Precision Medicine (TOPMed) Consortium, Auyon J. Ghosh, Brian D. Hobbs, Jeong H. Yun, Aabida Saferali, Matthew Moll, Zhonghui Xu, Robert P. Chase, Jarrett Morrow, John Ziniti, Frank Sciurba, Lucas Barwick, Andrew H. Limper, Kevin Flaherty, Gerard Criner, Kevin K. Brown, Robert A. Wise, Fernando J. Martinez, Daniel McGoldrick, Michael H. Cho, Dawn L. DeMeo, Edwin K. Silverman, Peter J. Castaldi, James D. Crapo, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dmitry Prokopenko, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
+    "title": "Lung tissue shows divergent gene expression between chronic obstructive pulmonary disease and idiopathic pulmonary fibrosis",
+    "journal": "Respiratory research",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s12931-022-02013-w",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35449067/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2022-09-022",
+    "authors": "COPDGene Investigators, Brigid A. Adviento, Elizabeth A. Regan, Barry J. Make, Mei Lan K. Han, Marilyn G. Foreman, Anand S. Iyer, Surya P. Bhatt, Victor Kim, Jessica Bon, Xavier Soler, Gregory L. Kinney, Nicola A. Hanania, Katherine E. Lowe, Kristen E. Holm, Abebaw M. Yohannes, Gen Shinozaki, Karin F. Hoth, Jess G. Fiedorowicz, James D. Crapo, Edwin K. Silverman, Terri H. Beaty, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel El Boueiz, Auyon Ghosh, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Wonji Kim, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Dmitry Prokopenko, Matthew Moll, Jarrett Morrow, Dandi Qiao, Aabida Saferali, Phuwanat Sakornsakolpat, Emily S. Wan, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
+    "title": "Clinical Markers Associated With Risk of Suicide or Drug Overdose Among Individuals With Smoking Exposure",
+    "journal": "Chest",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2022.09.022",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36167120/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1007-978-3-031-38412-7-2",
+    "authors": "Christine M. Lambert, Abbie Begnaud",
+    "title": "Lung Cancer Screening",
+    "journal": "Respiratory Medicine (Switzerland)",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/978-3-031-38412-7_2",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-abbie-begnaud-2017-randomized-electronic-promotion-of-lung",
+    "authors": "Begnaud A",
+    "title": "Randomized Electronic Promotion of Lung Cancer Screening: A Pilot",
+    "journal": "JCO Clinical Cancer Informatics",
+    "year": 2017,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1513-annalsats-201812-908rl",
+    "authors": "Katherine Janssen, Kelsey Schertz, Nathan Rubin, Abbie Begnaud",
+    "title": "Incidental Findings in a Decentralized Lung Cancer Screening Program",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1513/AnnalsATS.201812-908RL",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-lungcan-2015-10-009",
+    "authors": "Hiren J. Mehta, Abbie Begnaud, Andrea M. Penley, John Wynne, Paras Malhotra, Sebastian Fernandez-Bussy, Jessica M. Cope, Jonathan J. Shuster, Michael A. Jantz",
+    "title": "Treatment of isolated mediastinal and hilar recurrence of lung cancer with bronchoscopic endobronchial ultrasound guided intratumoral injection of chemotherapy with cisplatin",
+    "journal": "Lung Cancer",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.lungcan.2015.10.009",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26477968/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-2217-pme-2020-0130",
+    "authors": "Dana M Carroll, Carol Hernandez, Greg Braaten, Ellen Meier, Pamala Jacobson, Abbie Begnaud, Erin McGonagle, Linda Bane Frizzell, Dorothy K Hatsukami",
+    "title": "Recommendations to Researchers for Aiding in Increasing American Indian Representation in Genetic Research and Personalized Medicine",
+    "journal": "Personalized Medicine",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.2217/pme-2020-0130",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-cllc-2019-10-012",
+    "authors": "Abbie Begnaud, Ping Yang, Camille Robichaux, Nathan Rubin, Robert Kratzke, Anne Melzer, Constantin Aliferis, Pamala Jacobson",
+    "title": "Evidence That Established Lung Cancer Mortality Disparities in American Indians Are Not Due to Lung Cancer Genetic Testing and Targeted Therapy Disparities",
+    "journal": "Clinical Lung Cancer",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.cllc.2019.10.012",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31759888/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1378-chest-14-0823",
+    "authors": "Hiren J. Mehta, Paras Malhotra, Abbie Begnaud, Andrea M. Penley, Michael A. Jantz",
+    "title": "Treatment of alveolar-pleural fistula with endobronchial application of synthetic hydrogel",
+    "journal": "Chest",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1378/chest.14-0823",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25057803/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-ctarc-2021-100443",
+    "authors": "Anne C. Melzer, Abbie Begnaud, Bruce R. Lindgren, Kelsey L Schertz, Steven S. Fu, David M. Vock, Alexander J. Rothman, Anne M. Joseph",
+    "title": "Self-reported exercise capacity among current smokers eligible for lung cancer screening",
+    "journal": "Cancer Treatment Communications",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.ctarc.2021.100443",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34371253/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-14694-edbk-159195",
+    "authors": "Abbie Begnaud, Thomas Hall, Tadashi L Allen",
+    "title": "Lung Cancer Screening With Low-Dose CT",
+    "journal": "American Society of Clinical Oncology educational book. American Society of Clinical Oncology. Meeting",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.14694/EDBK_159195",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27249755/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-cct-2017-07-002",
+    "authors": "Steven S. Fu, Alexander J. Rothman, David M. Vock, Bruce Lindgren, Daniel Almirall, Abbie Begnaud, Anne Melzer, Kelsey Schertz, Susan Glaeser, Patrick Hammett, Anne M. Joseph",
+    "title": "Program for lung cancer screening and tobacco cessation",
+    "journal": "Contemporary Clinical Trials",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.cct.2017.07.002",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28687349/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-21037-jtd-2018-03-89",
+    "authors": "Abbie Begnaud, Robert A. Kratzke",
+    "title": "Meet the new boss",
+    "journal": "Journal of Thoracic Disease",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.21037/jtd.2018.03.89",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29708135/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-abbie-begnaud-2020-identify-patients-likely-to-benefit",
+    "authors": "Abbie Begnaud, Joseph Leishman, Tanner J. Caverly",
+    "title": "Identify patients likely to benefit from lung cancer screening",
+    "journal": "American family physician",
+    "year": 2020,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31939647/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s10554-021-02241-z",
+    "authors": "Pratik S Velangi, Barrett Kenny, Matthew Hooks, Adinan Kanda, Kelsey Schertz, Harmeet K Kharoud, Gurmandeep S. Sandhu, Rajat Kalra, Tadashi Allen, Abbie Begnaud, Prabhjot Singh Nijjar",
+    "title": "Impact of 2016 SCCT/STR guidelines for coronary artery calcium scoring of noncardiac chest CT scans on lung cancer screening CT reporting",
+    "journal": "International Journal of Cardiovascular Imaging",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s10554-021-02241-z",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33860401/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1513-annalsats-201406-268oc",
+    "authors": "Abbie Begnaud, John E. Connett, Eileen M. Harwood, Michael A. Jantz, Hiren J. Mehta",
+    "title": "Measuring central airway obstruction",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1513/AnnalsATS.201406-268OC",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25514623/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1513-annalsats-201503-131oc",
+    "authors": "Hiren J. Mehta, Abbie Begnaud, Andrea M. Penley, John Wynne, Paras Malhotra, Sebastian Fernandez-Bussy, Jessica Cope, Jonathan J. Shuster, Michael A. Jantz",
+    "title": "Restoration of patency to central airways occluded by malignant endobronchial tumors using intratumoral injection of cisplatin",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1513/AnnalsATS.201503-131OC",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26072968/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-201705-0909ci",
+    "authors": "Anne M. Joseph, Alexander J. Rothman, Daniel Almirall, Abbie Begnaud, Caroline Chiles, Paul M. Cinciripini, Steven S. Fu, Amanda L. Graham, Bruce R. Lindgren, Anne C. Melzer, Jamie S. Ostroff, Elizabeth L. Seaman, Kathryn L. Taylor, Benjamin A. Toll, Steven B. Zeliadt, David M. Vock",
+    "title": "Lung Cancer Screening and Smoking Cessation Clinical Trials SCALE (Smoking Cessation within the Context of Lung Cancer Screening) Collaboration",
+    "journal": "American journal of respiratory and critical care medicine",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/rccm.201705-0909CI",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28977754/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-201804-0663oc",
+    "authors": "for the COPDGene Investigators, Emily S. Wan, Elizabeth A. Regan, John Hokanson, Mei Lan K. Han, Richard Casaburi, Barry J. Make, James D. Crapo, Dawn L. DeMeo, Edwin K. Silverman, Spyridon Fortis, Ferdouse Begum, Peter J. Castaldi, Michael Cho, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dandi Qiao, Elizabeth A. Regan, Sungho Won, Phuwanat Sakornsakolpat, Dmitry Prokopenko, Mustafa Al Qaisi, Harvey O. Coxson, Teresa Gray, Eric A. Hoffman, Stephen Humphries, Francine L. Jacobson, Philip F. Judy, Ella A. Kazerooni, Alex Kluiber, David A. Lynch, John D. Newell, Elizabeth A. Regan, James C. Ross, Raul San Jose Estepar, Joyce Schroeder, Christine H Wendt, Joanne L Billings, Abbie Begnaud, Tadashi L Allen",
+    "title": "Longitudinal phenotypes and mortality in preserved ratio impaired spirometry in the COPDGene study",
+    "journal": "American journal of respiratory and critical care medicine",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/rccm.201804-0663OC",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29874098/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-201908-1600oc",
+    "authors": "Alexandra L. Young, Felix J.S. Bragman, Bojidar Rangelov, Meilan K. Han, Craig J. Galbán, David A. Lynch, David J. Hawkes, Daniel C. Alexander, John R. Hurst, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dandi Qiao, Elizabeth A. Regan, Edwin K. Silverman, Emily S. Wan, Sungho Won, Phuwanat Sakornsakolpat, Dmitry Prokopenko, Mustafa Al Qaisi, Harvey O. Coxson, Teresa Gray, Eric A. Hoffman, Stephen Humphries, Francine L. Jacobson, Philip F. Judy, Ella A. Kazerooni, Alex Kluiber, David A. Lynch, John D. Newell, Elizabeth A. Regan, James C. Ross, Raul San Jose Estepar, Joyce Schroeder, Jered Sieren, Douglas Stinson, Berend C. Stoel, Juerg Tschirren, Edwin Van Beek, Bram Van Ginneken, Eva Van Rikxoort, George Washko, Carla G. Wilson, Robert Jensen, Douglas Everett, Jim Crooks, Camille Moore, Matt Strand, Carla G. Wilson, John E. Hokanson, John Hughes, Gregory Kinney, Sharon M. Lutz, Katherine Pratte, Kendra A. Young, Surya Bhatt, Jessica Bon, Barry J. Make, Carlos Martinez, Susan Murray, Elizabeth A. Regan, Xavier Soler, Carla G. Wilson, Russell P. Bowler, Katerina Kechris, Farnoush Banaei-Kashani, Jeffrey L. Curtis, Carlos H. Martinez, Perry G. Pernicano, Nicola Hanania, Philip Alapat, Mustafa Atik, Venkata Bandi, Aladin Boriek, Kalpatha Guntupalli, Elizabeth Guy, Arun Nachiappan, Amit Parulekar, Dawn L. DeMeo, Craig P. Hersh, Francine L. Jacobson, George Washko, R. Graham Barr, John Austin, Belinda D'Souza, Gregory D.N. Pearson, Anna Rozenshtein, Byron Thomashow, Neil MacIntyre, H. Page McAdams, Lacey Washington, Charlene McEvoy, Joseph Tashjian, Robert Wise, Robert Brown, Nadia N. Hansel, Karen Horton, Allison Lambert, Nirupama Putcha, Richard Casaburi, Alessandra Adami, Matthew Budoff, Hans Fischer, Janos Porszasz, Harry Rossiter, William Stringer, Amir Sharafkhaneh, Charlie Lan, Christine Wendt, Brian Bell, Marilyn G. Foreman, Eugene Berkowitz, Gloria Westney, Russel P. Bowler, David A. Lynch, Richard Rosiello, David Pace, Gerard Criner, David Ciccolella, Francis Cordova, Chandra Dass, Gilbert D'Alonzo, Parag Desai, Michael Jacobs, Steven Kelsen, Victor Kim, A. James Mamary, Nathaniel Marchetti, Aditi Satti, Kartik Shenoy, Robert M. Steiner, Alex Swift, Irene Swift, Maria Elena Vega-Sanchez, Mark Dransfield, William Bailey, Surya Bhatt, Anand Iyer, Hrudaya Nath, J. Michael Wells, Joe Ramsdell, Paul Friedman, Xavier Soler, Andrew Yen, Alejandro P. Comellas, Karin F. Hoth, John D. Newell, Brad Thompson, Ella A. Kazerooni, Carlos H. Martinez, Joanne Billings, Abbie Begnaud, Tadashi Allen, Frank Sciurba, Jessica Bon, Divay Chandra, Carl Fuhrman, Joel Weissfeld, Antonio Anzueto, Sandra Adams, Diego Maselli-Caceres, Mario E. Ruiz",
+    "title": "Disease progression modeling in chronic obstructive pulmonary disease",
+    "journal": "American journal of respiratory and critical care medicine",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/rccm.201908-1600OC",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31657634/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-15326-jcopdf-7-1-2019-0138",
+    "authors": "COPDGene® Investigators, Craig P. Hersh, Soumya Zacharia, Ram Prakash Arivu Chelvan, Lystra P. Hayden, Ali Mirtar, Sara Zarei, Nirupama Putcha, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dandi Qiao, Elizabeth A. Regan, Edwin K. Silverman, Emily S. Wan, Sungho Won, Phuwanat Sakornsakolpat, Dmitry Prokopenko, Mustafa Al Qaisi, Harvey O. Coxson, Teresa Gray, Mei Lan K. Han, Eric A. Hoffman, Stephen Humphries, Francine L. Jacobson, Philip F. Judy, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Joanne Billings, Abbie Begnaud, Tadashi Allen",
+    "title": "Immunoglobulin E as a biomarker for the overlap of atopic asthma and chronic obstructive pulmonary disease",
+    "journal": "Chronic Obstructive Pulmonary Diseases",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.15326/jcopdf.7.1.2019.0138",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31999898/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jaci-2018-04-010",
+    "authors": "COPDGene and ECLIPSE Investigators, Jeong H. Yun, Andrew Lamb, Robert Chase, Dave Singh, Margaret M. Parker, Aabida Saferali, Jørgen Vestbo, Ruth Tal-Singer, Peter J. Castaldi, Edwin K. Silverman, Craig P. Hersh, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Robert Busch, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Nadia N. Hansel, Megan E. Hardin, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dandi Qiao, Stephanie Santorico, Emily S. Wan, Sungho Won, Mustafa Al Qaisi, Harvey O. Coxson, Teresa Gray, Mei Lan K. Han, Eric A. Hoffman, Stephen Humphries, Francine L. Jacobson, Philip F. Judy, Ella A. Kazerooni, Alex Kluiber",
+    "title": "Blood eosinophil count thresholds and exacerbations in patients with chronic obstructive pulmonary disease",
+    "journal": "Journal of Allergy and Clinical Immunology",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jaci.2018.04.010",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29709670/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2019-03-041",
+    "authors": "COPDGene Investigators, Victor Kim, Huaqing Zhao, Elizabeth Regan, Mei Lan K. Han, Barry J. Make, James D. Crapo, Paul W. Jones, Jeffrey L. Curtis, Edwin K. Silverman, Gerard J. Criner, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Robert Busch, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Nadia N. Hansel, Megan E. Hardin, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dandi Qiao, Stephanie Santorico, Emily S. Wan, Sungho Won, Jean Paul Charbonnier, Harvey O. Coxson, Eric A. Hoffman, Stephen Humphries, Francine L. Jacobson, Philip F. Judy, Ella A. Kazerooni, Alex Kluiber, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Joanne Billings, Abbie Begnaud, Tadashi Allen",
+    "title": "The St. George's Respiratory Questionnaire Definition of Chronic Bronchitis May Be a Better Predictor of COPD Exacerbations Compared With the Classic Definition",
+    "journal": "Chest",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2019.03.041",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31047955/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2021-01-084",
+    "authors": "COPDGene Investigators, Carrie L. Pistenmaa, P. Nardelli, S. Y. Ash, C. E. Come, A. A. Diaz, F. N. Rahaghi, R. G. Barr, K. A. Young, G. L. Kinney, J. P. Simmons, R. C. Wade, J. M. Wells, J. E. Hokanson, G. R. Washko, R. San José Estépar, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel El Boueiz, Marilyn G. Foreman, Auyon Ghosh, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Wonji Kim, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Dmitry Prokopenko, Matthew Moll, Jarrett Morrow, Dandi Qiao, Aabida Saferali, Phuwanat Sakornsakolpat, Emily S. Wan, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
+    "title": "Pulmonary Arterial Pruning and Longitudinal Change in Percent Emphysema and Lung Function",
+    "journal": "Chest",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2021.01.084",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33607083/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
   }
 ]
