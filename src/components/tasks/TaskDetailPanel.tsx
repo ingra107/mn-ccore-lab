@@ -1476,7 +1476,7 @@ function OverviewQuickAdd({
   const { typingPeers, broadcastTyping } = useTyping('task', taskId)
   const appendCh = (ch: string) => appendCharToInput(textareaRef, ch, setText)
   const postUpdate = usePostTaskUpdate(taskId)
-  const { showSuccess, showError } = useToast()
+  const { showSuccess, showError, showInfo } = useToast()
   const { tryLaunchCommand } = useLaunchCommands()
   const queryClient = useQueryClient()
 
@@ -1608,12 +1608,22 @@ function OverviewQuickAdd({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: v, visibility: 'author' }),
       })
-        .then((res) => { if (!res.ok) throw new Error(`/api/tasks comment ${res.status}`) })
-        .then(() => {
-          showSuccess('Asked Hermes'); reset()
+        .then(async (res) => {
+          if (!res.ok) throw new Error(`/api/tasks comment ${res.status}`)
+          return (await res.json().catch(() => ({}))) as { hermes?: { dispatched: boolean; reason?: string } }
+        })
+        .then((out) => {
+          reset()
           queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] })
           queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
           queryClient.invalidateQueries({ queryKey: ['activity'] })
+          if (out.hermes && !out.hermes.dispatched) {
+            showInfo(out.hermes.reason === 'empty'
+              ? 'Posted privately — add a question for Hermes'
+              : 'Posted privately, but Hermes could not be reached — try again')
+          } else {
+            showSuccess('Asked Hermes')
+          }
         })
         .catch((e) => {
           console.error('@hermes from task comment failed:', e)

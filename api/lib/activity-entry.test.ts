@@ -1090,6 +1090,26 @@ describe('Hermes — @hermes lands a placeholder activity entry + ai_request', (
     expect(placeholder!.visibility).toBe('author')
     expect(ctx.aiRequests.length).toBe(1) // dispatched as a task_comment
   })
+
+  // A short but real question used to be silently dropped by a `<= 5` guard; the
+  // composer still said "Asked Hermes". Now it dispatches and reports it.
+  it('a short @hermes question dispatches and reports dispatched:true', async () => {
+    const ctx = makeEnv(FX)
+    const res = await handleAddTaskComment('t1', natePostReq({ content: '@hermes fix?' }), NATE, ctx.env)
+    expect(ctx.aiRequests.length).toBe(1)
+    const out = await res.json() as { hermes?: { dispatched: boolean } }
+    expect(out.hermes?.dispatched).toBe(true)
+  })
+
+  // A bare @hermes with no question must NOT read as success — no dispatch, and
+  // the outcome is reported so the composer can say "add a question".
+  it('a bare @hermes does not dispatch and reports reason:empty', async () => {
+    const ctx = makeEnv(FX)
+    const res = await handleAddTaskComment('t1', natePostReq({ content: '@hermes' }), NATE, ctx.env)
+    expect(ctx.aiRequests.length).toBe(0)
+    const out = await res.json() as { hermes?: { dispatched: boolean; reason?: string } }
+    expect(out.hermes).toEqual({ dispatched: false, reason: 'empty' })
+  })
 })
 
 // ── delete cascade ────────────────────────────────────────────────────────────────

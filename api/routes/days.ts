@@ -80,5 +80,6 @@ export async function handlePostDayActivity(date: string, request: Request, user
     visibility: body.visibility === 'team' ? 'team' : 'author',
   });
   if (!posted.ok) return error(posted.error, posted.status);
-  return json({ data: posted.row }, 201);
+  // `hermes` tells the Today-bar composer whether an @hermes ask dispatched.
+  return json({ data: posted.row, ...(posted.hermes ? { hermes: posted.hermes } : {}) }, 201);
 }

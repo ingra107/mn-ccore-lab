@@ -120,7 +120,14 @@ export function MorningThoughtCompose() {
         appendDailyThought(content, 'hermes')
         // Surface the new thread + its Thinking… placeholder immediately.
         queryClient.invalidateQueries({ queryKey: ['day-activity', todayKey()] })
-        undoToast.showSuccess('Asked Hermes')
+        const out = await res.json().catch(() => ({})) as { hermes?: { dispatched: boolean; reason?: string } }
+        if (out.hermes && !out.hermes.dispatched) {
+          undoToast.showInfo(out.hermes.reason === 'empty'
+            ? 'Saved privately — add a question for Hermes'
+            : 'Saved privately, but Hermes could not be reached — try again')
+        } else {
+          undoToast.showSuccess('Asked Hermes')
+        }
       } catch (err) {
         console.error('Morning thought → Hermes failed:', err)
         undoToast.showError(`Sending to Hermes failed: ${err instanceof Error ? err.message : 'please try again.'}`)

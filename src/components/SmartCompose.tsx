@@ -279,7 +279,14 @@ export default function SmartCompose(props: SmartComposeProps) {
         if (!res.ok) throw new Error(`/api/tasks comment ${res.status}`)
         setVal('')
         queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
-        undoToast.showSuccess('Asked Hermes')
+        const out = await res.json().catch(() => ({})) as { hermes?: { dispatched: boolean; reason?: string } }
+        if (out.hermes && !out.hermes.dispatched) {
+          undoToast.showInfo(out.hermes.reason === 'empty'
+            ? 'Posted privately — add a question for Hermes'
+            : 'Posted privately, but Hermes could not be reached — try again')
+        } else {
+          undoToast.showSuccess('Asked Hermes')
+        }
       } catch (err) {
         console.error('@hermes from task compose failed:', err)
         undoToast.showError('@hermes failed — your message is still here, try again')

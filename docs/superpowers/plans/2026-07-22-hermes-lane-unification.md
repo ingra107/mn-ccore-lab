@@ -113,9 +113,17 @@ Verify: `tsc -b --force` clean; `test:api` 1196/1196 (+1); `test:lib` 175/175;
 a team surface, so it waits for Nick's go, then `npm run deploy:pages:gated`.
 
 Toggle-vs-prefix split (team toggle vs private typed prefix) is intentional per
-codex — fine while the toggle stays labeled "Queue for Claude". Two PRE-EXISTING
-items codex raised (a swallowed Hermes-dispatch error reported as success; a
-short-prompt `<=5` char no-op) affect ALL `@hermes`, not the flip → backlog.
+codex — fine while the toggle stays labeled "Queue for Claude".
+
+**Follow-up FIXED (2026-07-23, same day):** the two pre-existing `@hermes` items
+codex raised — a swallowed dispatch error shown as success, and a short-prompt
+`<=5` char silent no-op — are now fixed at the source. `dispatchHermes` returns
+`'dispatched' | 'empty'` (the arbitrary `<=5` threshold is gone; only a truly
+empty ask is skipped); `postActivityEntry` surfaces a `hermes: { dispatched,
+reason }` outcome that `handleAddTaskComment` + `handlePostDayActivity` return;
+the three composers report the truth ("Asked Hermes" vs "Posted privately — add a
+question" / "…Hermes could not be reached"). +2 tests. Fixes every `@hermes`
+surface, not just the flip.
 
 **Next after deploy: Phase 6** (delete `TaskHermesReplies`/`HermesThoughtReplies`/
 `HermesReplyList` + the `ai_requests` @hermes reader arm + `hermesRouting`'s @hermes

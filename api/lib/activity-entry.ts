@@ -129,6 +129,16 @@ export type PostActivityEntryResult =
        * response so a non-zero slots_full count is a visible signal.
        */
       linkSkipped?: 'already_linked' | 'slots_full';
+      /**
+       * Set only when the body carried an @hermes|@claude mention (dispatch was
+       * attempted). `dispatched:true` = the ai_request + "Thinking…" placeholder
+       * landed. `dispatched:false` = it did NOT — `reason:'empty'` (a bare
+       * "@hermes" with no question) or `reason:'error'` (dispatch threw; the
+       * durable comment still saved). Absent when there was no @hermes. The route
+       * surfaces it so the composer reports the truth instead of a false
+       * "Asked Hermes".
+       */
+      hermes?: { dispatched: boolean; reason?: 'empty' | 'error' };
     }
   | { ok: false; error: string; status: number };
 
@@ -396,6 +406,11 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     }
   }
 
+  // Hermes dispatch outcome, surfaced to the caller so a composer can tell the
+  // truth: a swallowed dispatch error or a truly-empty ask must NOT read as
+  // "Asked Hermes". undefined = the body carried no @hermes.
+  let hermes: { dispatched: boolean; reason?: 'empty' | 'error' } | undefined;
+
   // ── side effects: @mention notifications + Hermes dispatch ──────────────────
   if (fireSideEffects) {
     // Notifications. We PRESERVE the historical per-kind source_type semantics so
@@ -464,7 +479,7 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     // reply can't leak the note to the team.
     if (HERMES_DETECT_RE.test(body)) {
       try {
-        await dispatchHermes(env, {
+        const outcome = await dispatchHermes(env, {
           entityType,
           entityId,
           entryId: id,
@@ -478,13 +493,17 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
           // context so a follow-up ("make that email shorter") means something.
           threadRootId: parentId ?? id,
         });
+        hermes = outcome === 'dispatched' ? { dispatched: true } : { dispatched: false, reason: 'empty' };
       } catch (e) {
+        // The durable comment already persisted; a dispatch failure must not lose
+        // it. But it must NOT read as success either — signal it to the caller.
         console.error('postActivityEntry: Hermes dispatch failed:', e);
+        hermes = { dispatched: false, reason: 'error' };
       }
     }
   }
 
-  return { ok: true, row: row ?? {}, ...(linkSkipped ? { linkSkipped } : {}) };
+  return { ok: true, row: row ?? {}, ...(hermes ? { hermes } : {}), ...(linkSkipped ? { linkSkipped } : {}) };
 }
 
 // ── artifact key_link at-source: build the UPDATE statements ──────────────────
@@ -632,9 +651,12 @@ async function dispatchHermes(
     /** #98: the thread root this ask belongs to (a root's own id, or a reply's parent). */
     threadRootId?: string;
   },
-): Promise<void> {
+): Promise<'dispatched' | 'empty'> {
   const aiPrompt = args.body.replace(HERMES_STRIP_RE, '').trim();
-  if (aiPrompt.length <= 5) return;
+  // Only skip a truly empty ask (bare "@hermes"). The old `<= 5` guard silently
+  // dropped short real questions ("@hermes fix?"); the caller now SIGNALS the
+  // non-dispatch so the composer tells the user instead of a false success.
+  if (aiPrompt.length === 0) return 'empty';
 
   // source_type mirrors the legacy task-comment Hermes path so the listener
   // routes the response back correctly. Project entities use 'project_comment'
@@ -749,6 +771,8 @@ async function dispatchHermes(
     // that thread entirely — the conversation visibly came apart.
     parentId: args.threadRootId ?? null,
   });
+
+  return 'dispatched';
 }
 
 // ── Read-side visibility gate ──────────────────────────────────────────────────

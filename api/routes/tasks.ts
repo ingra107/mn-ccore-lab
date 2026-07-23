@@ -608,7 +608,8 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
   };
   // Surface the artifact at-source key_link outcome (top-level, mirroring the
   // create-path's `linkSkipped`) so a non-zero slots_full is a visible signal.
-  return json({ data: created, ...(posted.linkSkipped ? { linkSkipped: posted.linkSkipped } : {}) }, 201);
+  // `hermes` tells the composer whether an @hermes ask actually dispatched.
+  return json({ data: created, ...(posted.hermes ? { hermes: posted.hermes } : {}), ...(posted.linkSkipped ? { linkSkipped: posted.linkSkipped } : {}) }, 201);
 }
 
 // GET /api/tasks/:id/activity — the UNIFIED feed (Design C, v77).
