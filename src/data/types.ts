@@ -9,6 +9,7 @@ export interface Director {
   bio: string
   photoUrl?: string
   scholarId?: string // Google Scholar user ID (the ?user= parameter)
+  orcidId?: string // ORCID iD, e.g. "0000-0002-1825-0097" — primary publications source (#357)
 }
 
 export interface TeamMember {

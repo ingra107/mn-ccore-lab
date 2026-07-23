@@ -1,6 +1,10 @@
 import type { Publication } from './types'
+import { mergePublications } from './mergePublications'
+import { generatedPublications } from './publications.generated'
 
-export const publications: Publication[] = [
+/** Hand-maintained, authoritative publications. Curation (authorSlugs, topics,
+ *  featured) lives here and is never overwritten by the #357 auto-fetch. */
+export const curatedPublications: Publication[] = [
   // ── 2026 ─────────────────────────────────────────────────────────────────
 
   {
@@ -842,3 +846,14 @@ export const publications: Publication[] = [
     authorSlugs: ['nick-ingraham'],
   },
 ]
+
+// #357: the exported dataset = curated (authoritative) + auto-fetched pubs that
+// fill gaps. mergePublications never drops a curated entry, and with an empty
+// generatedPublications this equals `curatedPublications` exactly — a no-op
+// until `npm run fetch:publications` populates the generated file. Both the
+// dev-fallback render (useApiData) and the D1 seed (scripts/seed-d1.ts) import
+// `publications`, so both inherit the merge with no other change.
+export const publications: Publication[] = mergePublications(
+  curatedPublications,
+  generatedPublications,
+)

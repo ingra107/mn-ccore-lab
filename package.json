@@ -15,6 +15,7 @@
     "lint:activity-reads": "node scripts/check-activity-reads.mjs",
     "preview": "vite preview",
     "seed": "tsx scripts/seed-d1.ts",
+    "fetch:publications": "tsx scripts/fetch-publications.ts",
     "db:schema": "bash scripts/wrangler-d1 d1 execute mnccore-lab --file=api/bootstrap-schema.sql",
     "db:seed": "bash scripts/wrangler-d1 d1 execute mnccore-lab --file=scripts/seed.sql",
     "db:schema:remote": "bash scripts/wrangler-d1 d1 execute mnccore-lab --file=api/bootstrap-schema.sql --remote",
