@@ -40,6 +40,11 @@ export function dedupKeys(p: Publication): string[] {
   if (pmid) keys.push(`pmid:${pmid}`)
   const title = normalizeTitle(p.title)
   if (title) keys.push(`ty:${title}:${p.year ?? ''}`)
+  // Base title (strip a ": subtitle") under the SAME `ty:` namespace, so a short
+  // ORCID title ("Federation, not centralization") matches the base of a curated
+  // entry with the full subtitle ("Federation, Not Centralization: A New ...").
+  const base = normalizeTitle((p.title || '').split(':')[0])
+  if (base && base !== title) keys.push(`ty:${base}:${p.year ?? ''}`)
   return keys
 }
 

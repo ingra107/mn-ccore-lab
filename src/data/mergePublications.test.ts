@@ -76,4 +76,13 @@ describe('mergePublications', () => {
     const merged = mergePublications([], generated)
     expect(merged.map((p) => p.id)).toEqual(['g1'])
   })
+
+  it('drops a generated short-title dup of a curated entry that carries a subtitle', () => {
+    // ORCID often lists the base title only ("Federation, not centralization")
+    // while the curated entry has the full "Base: Subtitle" form.
+    const curated = [pub({ id: 'curated', title: 'Federation, Not Centralization: A New Paradigm', year: 2026 })]
+    const generated = [pub({ id: 'gen', title: 'Federation, not centralization', year: 2026 })]
+    const merged = mergePublications(curated, generated)
+    expect(merged.map((p) => p.id)).toEqual(['curated'])
+  })
 })

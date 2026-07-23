@@ -43,6 +43,7 @@ function isRealPublication(title: string): boolean {
   if (t.length < 6) return false
   if (/^\d+$/.test(t)) return false // conference abstract id, not a title
   if (/^(correction|author correction|erratum|corrigendum)\b/i.test(t)) return false
+  if (/\(preprint\)/i.test(t)) return false // preprints clutter/duplicate a published-pubs list
   return true
 }
 
@@ -90,43 +91,74 @@ function makeId(member: FetchMember, title: string, year: number | undefined, do
 }
 
 // ── ORCID (primary) ─────────────────────────────────────────────────────────
-// Public works summaries: https://pub.orcid.org/v3.0/{orcid}/works (no auth).
+// Public API, no auth. Two steps: the /works summary lists put-codes; the bulk
+// /works/{putCodes} endpoint (<=100 codes/call) returns FULL work records —
+// which is where `contributors` (the author list) lives; the summary omits them.
 async function fetchOrcid(member: FetchMember): Promise<Publication[]> {
-  const url = `https://pub.orcid.org/v3.0/${member.orcidId}/works`
-  const res = await fetch(url, { headers: { Accept: 'application/json' } })
-  if (!res.ok) throw new Error(`ORCID ${res.status} for ${member.orcidId}`)
-  const body = (await res.json()) as OrcidWorks
+  const sumRes = await fetch(`https://pub.orcid.org/v3.0/${member.orcidId}/works`, {
+    headers: { Accept: 'application/json' },
+  })
+  if (!sumRes.ok) throw new Error(`ORCID summary ${sumRes.status} for ${member.orcidId}`)
+  const summary = (await sumRes.json()) as OrcidWorks
+  const putCodes: number[] = []
+  for (const group of summary.group ?? []) {
+    const pc = group['work-summary']?.[0]?.['put-code']
+    if (typeof pc === 'number') putCodes.push(pc)
+  }
+  if (!putCodes.length) return []
+
   const out: Publication[] = []
-  for (const group of body.group ?? []) {
-    const summary = group['work-summary']?.[0]
-    if (!summary) continue
-    const title = summary.title?.title?.value?.trim()
-    if (!title || !isRealPublication(title)) continue
-    const year = numOrUndef(summary['publication-date']?.year?.value)
-    const journal = summary['journal-title']?.value?.trim() || ''
-    let doi: string | undefined
-    let pubmed: string | undefined
-    for (const ext of summary['external-ids']?.['external-id'] ?? []) {
-      const type = (ext['external-id-type'] || '').toLowerCase()
-      const val = ext['external-id-value']
-      if (!val) continue
-      if (type === 'doi' && !doi) doi = `https://doi.org/${val}`
-      if (type === 'pmid' && !pubmed) pubmed = `https://pubmed.ncbi.nlm.nih.gov/${val.replace(/\D/g, '')}/`
+  for (let i = 0; i < putCodes.length; i += 100) {
+    const chunk = putCodes.slice(i, i + 100)
+    const bulkRes = await fetch(
+      `https://pub.orcid.org/v3.0/${member.orcidId}/works/${chunk.join(',')}`,
+      { headers: { Accept: 'application/json' } },
+    )
+    if (!bulkRes.ok) throw new Error(`ORCID bulk ${bulkRes.status} for ${member.orcidId}`)
+    const bulk = (await bulkRes.json()) as OrcidBulk
+    for (const item of bulk.bulk ?? []) {
+      const pub = mapOrcidWork(member, item.work)
+      if (pub) out.push(pub)
     }
-    out.push({
-      id: makeId(member, title, year, doi),
-      authors: member.authorName || member.name,
-      title,
-      journal,
-      year: year ?? 0,
-      status: 'Published',
-      doi,
-      pubmed,
-      topics: [],
-      authorSlugs: [member.slug],
-    })
   }
   return out
+}
+
+function mapOrcidWork(member: FetchMember, work?: OrcidWork): Publication | null {
+  if (!work) return null
+  const title = work.title?.title?.value?.trim()
+  if (!title || !isRealPublication(title)) return null
+  const year = numOrUndef(work['publication-date']?.year?.value)
+  if (!year) return null // drop year-less works — can't place them on a dated list
+  let doi: string | undefined
+  let pubmed: string | undefined
+  for (const ext of work['external-ids']?.['external-id'] ?? []) {
+    const type = (ext['external-id-type'] || '').toLowerCase()
+    const val = ext['external-id-value']
+    if (!val) continue
+    if (type === 'doi' && !doi) doi = `https://doi.org/${val}`
+    if (type === 'pmid' && !pubmed) pubmed = `https://pubmed.ncbi.nlm.nih.gov/${val.replace(/\D/g, '')}/`
+  }
+  return {
+    id: makeId(member, title, year, doi),
+    authors: buildAuthors(work) || member.authorName || member.name,
+    title,
+    journal: work['journal-title']?.value?.trim() || '',
+    year,
+    status: 'Published',
+    doi,
+    pubmed,
+    topics: [],
+    authorSlugs: [member.slug],
+  }
+}
+
+/** Author string from ORCID contributors; '' if none listed (caller falls back). */
+function buildAuthors(work: OrcidWork): string {
+  const names = (work.contributors?.contributor ?? [])
+    .map((c) => c['credit-name']?.value?.trim())
+    .filter((n): n is string => Boolean(n))
+  return names.join(', ')
 }
 
 // ── Google Scholar (fenced fallback) ────────────────────────────────────────
@@ -258,16 +290,23 @@ function decodeEntities(s: string | undefined): string {
     .trim()
 }
 
-// ── ORCID response shape (only the fields we read) ───────────────────────────
+// ── ORCID response shapes (only the fields we read) ──────────────────────────
 interface OrcidWorks {
   group?: Array<{
-    'work-summary'?: Array<{
-      title?: { title?: { value?: string } }
-      'journal-title'?: { value?: string }
-      'publication-date'?: { year?: { value?: string } }
-      'external-ids'?: { 'external-id'?: Array<{ 'external-id-type'?: string; 'external-id-value'?: string }> }
-    }>
+    'work-summary'?: Array<{ 'put-code'?: number }>
   }>
+}
+
+interface OrcidBulk {
+  bulk?: Array<{ work?: OrcidWork }>
+}
+
+interface OrcidWork {
+  title?: { title?: { value?: string } }
+  'journal-title'?: { value?: string }
+  'publication-date'?: { year?: { value?: string } }
+  'external-ids'?: { 'external-id'?: Array<{ 'external-id-type'?: string; 'external-id-value'?: string }> }
+  contributors?: { contributor?: Array<{ 'credit-name'?: { value?: string } }> }
 }
 
 main().catch((err) => {
