@@ -876,9 +876,13 @@ export function ActivityEntryItem({
               not out-shout the message it hangs off. The count stays visible
               while COLLAPSED, which is the whole point: "so i can respond to
               somebody else" needs to work without expanding first. */}
-          {(onReply || (replyCount ?? 0) > 0) && !isReply && (
+          {/* The Reply control also shows on a REPLY so you can answer Hermes
+              in-thread (it opens the root's composer — the follow-up still
+              attaches to the root, so the thread stays one level). The reply
+              COUNT / expand toggle stays root-only. */}
+          {(onReply || ((replyCount ?? 0) > 0 && !isReply)) && (
             <div className="flex items-center gap-3" style={{ marginTop: 6 }}>
-              {(replyCount ?? 0) > 0 && onToggleThread && (
+              {(replyCount ?? 0) > 0 && !isReply && onToggleThread && (
                 <button
                   type="button"
                   onClick={onToggleThread}
@@ -907,7 +911,7 @@ export function ActivityEntryItem({
                     background: 'none', border: 'none', padding: 0,
                   }}
                 >
-                  Reply
+                  {isReply && isHermes ? 'Reply to Hermes' : 'Reply'}
                 </button>
               )}
             </div>

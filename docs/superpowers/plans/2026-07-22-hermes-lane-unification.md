@@ -792,7 +792,24 @@ Independent of the hide work; touches only new surface.
 - **Rollback:** revert the three composers; in-flight rows already in
   `activity_entries` stay there and render fine.
 
-### Phase 6 — deletions — **(B, after 5 + a 24h dogfood window)**
+### Phase 6 — deletions — **(B, after 5)**
+
+> 🔴 **CORRECTED 2026-07-23 — this list was written before Phase 5 shipped and is STALE in two ways;
+> the safety check Nick asked for caught it. Do NOT execute the list verbatim.**
+> 1. **KEEP `isHermesPrefix` + `HERMES_PREFIX_RE`.** They are NOT dead — all three composers
+>    (`SmartCompose:271`, `TaskDetailPanel:1597`, `MorningThoughtCompose:112`) still call
+>    `isHermesPrefix` to DETECT the typed prefix and route it to the comment endpoint with
+>    `visibility:'author'`. Deleting them breaks the whole Phase 5 feature. Only **`stripHermesPrefix`**
+>    is dead (0 live callers, verified) — delete it + its `hermesRouting.test.ts` cases, keep the rest.
+> 2. **The 24h dogfood is NOT needed.** Live check 2026-07-23: **zero pending `ai_requests`** anywhere,
+>    the 16 old `daily_thought` rows are already backfilled (Phase 4), and Nick confirmed the new path
+>    works in the UI. Nothing in-flight → nothing for the window to protect. Delete when ready.
+>
+> **Deletion is data-safe now, but it is still an ~8-file substrate swap** (3 reader files + hooks +
+> 3 mount sites + the `seen.ts` arm). Run it through `/substrate-swap` in a fresh session (twin-file
+> grep, build-verify each), KEEPING `isHermesPrefix`. Reader mounts verified 2026-07-23 to be exactly:
+> `TaskDetailPanel:613`, `today/TaskDetailDrawer:199`, `MyTasks/components/InlineDetail:238`
+> (TodayPage:495 already replaced by `DayActivityFeed`).
 
 This is a substrate swap. Load `/substrate-swap` before the commit (twin-file grep,
 state-transition matrix, tombstone decision doc).
@@ -812,9 +829,10 @@ Delete outright:
   `activity_entries`, so the seen system cannot see it any other way" ceases to be true —
   a Hermes answer is now an `activity_entries` row by `claude-ai` ≠ viewer, which the
   plain task/project arm at `:94-115` already badges.
-- `src/lib/hermesRouting.ts:25` (`HERMES_PREFIX_RE`), `:29-31` (`isHermesPrefix`),
-  `:41-44` (`stripHermesPrefix`). **KEEP** the `@backlog` half (`:26`, `:47-57`) —
-  `@backlog` is out of scope and still routes to `ai_requests`.
+- `src/lib/hermesRouting.ts`: delete ONLY **`stripHermesPrefix`** (`:41-44`) + its
+  `hermesRouting.test.ts` cases — it has 0 live callers after Phase 5. **KEEP `HERMES_PREFIX_RE`
+  (`:25`) + `isHermesPrefix` (`:29-31`)** — they are the live typed-prefix detector all three
+  composers route on (see the CORRECTED note above). **KEEP** the `@backlog` half (`:26`, `:47-57`).
 
 Doc updates in the same commit: CLAUDE.md Rules 70, 73, 77, **78** (78 is largely
 retired), the Hermes section, and the schema-version line in Quick Reference.
@@ -1069,6 +1087,37 @@ session's `SmartCompose` change **advertising a tag obliges routing it** (§9.6)
   **click through** to the thread. A badge that lights on your own question rather than on
   Hermes's answer is a lie — gate on the *reply*, not the root.
 - Drain via `useMarkSeen('day', todayKey())` on `TodayPage`.
+
+**9.5.1 — OWNER REQUIREMENT (Nick, 2026-07-23): the same badge story for TASKS, and drain-on-inline-view.**
+Phase 9 above badges the Today/day bar. Nick wants the parallel for tasks, and one clear-on-view rule:
+- A new comment/answer on a task raises the **My Tasks nav badge** (so he knows to look there),
+  **and** puts a "new" badge on that **task's row** on the Today page.
+- Seeing it clears it: if he **expands that task inline on the Today page** and the new comment is
+  in view, the task-row badge AND the nav badge **drain** — not only on opening the full task detail.
+- **What already exists (verify, don't rebuild):** `entity_seen` (v81) + the teal ● "new activity"
+  signal + the My Tasks nav badge through `navWithBadges` in `Sidebar.tsx` + `useAutoAcknowledge` on
+  task-detail-open. **The likely gap is the DRAIN trigger:** inline expand on the Today page must call
+  the seen-drain (`useMarkSeen` / auto-acknowledge), not just the full drawer. Also confirm a Hermes
+  ANSWER (a `claude-ai` reply) raises the task's unseen count — gate on the reply, not the root
+  (same badge-honesty rule as 9.5).
+- Sequence with Phase 9 (both ride the seen model); do NOT mint a new chip (Attention Canon).
+
+### 9.5.2 Thread UX (Nick, 2026-07-23) — `ActivityThread`, all feeds (task/project/day)
+
+- **SHIPPED (`d…` this session): reply-to-Hermes affordance.** Hermes's answer (a reply) now shows a
+  **"Reply to Hermes"** control, and the reply composer PRE-FILLS `@hermes ` on a Hermes thread. The
+  reply stays a custom-mode post to `POST /api/activity/:id/replies` (so a leading `@hermes` is NOT
+  re-intercepted by task mode); the server dispatches Hermes from that reply and answers in-thread.
+  Reply/answer both `visibility='author'`. Reply-poll (10s while a "Thinking…" reply exists) already
+  makes the follow-up answer appear on its own. `activityRender.tsx`, `ActivityThread.tsx`.
+- **TODO — click the thread ROOT box to expand/collapse.** Nick wants clicking anywhere on the root
+  entry to toggle the thread (progressive disclosure, space-saving), not only the small "N replies"
+  link; clicking the root again while expanded collapses it. Applies to Today, projects, tasks — every
+  `ActivityThread`. **Implementation note:** add a guarded `onClick` on the root card that calls
+  `onToggleThread` (only when `replyCount>0`), and BAIL when the click lands on an interactive child
+  (`e.target.closest('button, a, input, textarea, [role="button"]')`) so links / the Reply button /
+  edit-delete / mention chips still work. Follows the `hub-row-click-interactive-cells` pattern. Root
+  only (not replies). Small, but the interactive-guard is the part to get right — do it as its own change.
 
 ### 9.6 Wave 1, shipped separately — the `@workon` class fix
 

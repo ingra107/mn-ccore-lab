@@ -45,8 +45,19 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
   // is disorienting, and the reply you just wrote must land somewhere visible.
   const [expanded, setExpanded] = useState(false)
   const [composing, setComposing] = useState(false)
+  const [replyDraft, setReplyDraft] = useState('')
 
   const replyCount = root.reply_count ?? 0
+
+  // A Hermes thread = the root is an @hermes/@claude ask. Continuing it means
+  // talking to Hermes, and the reply must START with @hermes for the server to
+  // answer in-thread — so seed the composer with the token when it opens.
+  const isHermesThread = /^\s*@(hermes|claude)\b/i.test(root.body)
+  const openComposer = () => {
+    setComposing(true)
+    setExpanded(true)
+    setReplyDraft((d) => d || (isHermesThread ? '@hermes ' : ''))
+  }
 
   const { data: replies = [] } = useQuery<ActivityEntryItemRow[]>({
     queryKey: ['activity-replies', root.id],
@@ -101,7 +112,7 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
         replyCount={replyCount}
         threadExpanded={expanded}
         onToggleThread={replyCount > 0 ? () => setExpanded((v) => !v) : undefined}
-        onReply={() => { setComposing(true); setExpanded(true) }}
+        onReply={openComposer}
         onDelete={onDelete && canDeleteActivityEntry(user, root.actor_slug) ? () => onDelete(root) : undefined}
         onEdit={onEdit && canDeleteActivityEntry(user, root.actor_slug) ? (b: string) => onEdit(root, b) : undefined}
         onDismiss={onDismiss && canDeleteActivityEntry(user, root.actor_slug) ? () => onDismiss(root) : undefined}
@@ -118,6 +129,7 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
               entry={reply}
               isReply
               avatarSize="xs"
+              onReply={openComposer}
               onDelete={onDelete && canDeleteActivityEntry(user, reply.actor_slug) ? () => onDelete(reply) : undefined}
               onEdit={onEdit && canDeleteActivityEntry(user, reply.actor_slug) ? (b: string) => onEdit(reply, b) : undefined}
             />
@@ -128,6 +140,8 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
               bare
               autoFocus
               rows={2}
+              value={replyDraft}
+              onChange={setReplyDraft}
               // Custom mode, NOT task mode. Task mode intercepts a leading
               // @hermes and diverts it to the daily_thought lane before any
               // activity row is written — which would silently drop the reply
@@ -138,7 +152,7 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
               submitting={postReply.isPending}
               submitLabel="Reply"
               submittingLabel="Posting…"
-              onSubmit={async (content: string) => { await postReply.mutateAsync(content) }}
+              onSubmit={async (content: string) => { await postReply.mutateAsync(content); setReplyDraft('') }}
             />
           )}
         </div>
