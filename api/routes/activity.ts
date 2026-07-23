@@ -55,6 +55,7 @@ export async function handleGetActivity(url: URL, env: Env, canSeePb = false): P
 // project-visibility gate runs inside idempotentDelete via the row's
 // project_id.
 export async function handleDeleteActivityEntry(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  // activity-hidden-exempt: delete-auth lookup — a dismissed row is still deletable.
   const row = await env.DB.prepare(
     'SELECT id, actor_slug FROM activity_entries WHERE id = ?',
   ).bind(id).first<{ id: string; actor_slug: string }>();
@@ -97,6 +98,7 @@ export async function handleEditActivityEntry(id: string, request: Request, user
   const newBody = typeof payload.body === 'string' ? payload.body.trim() : '';
   if (!newBody) return error('body required', 400);
 
+  // activity-hidden-exempt: edit-auth lookup — the author can edit a dismissed entry.
   const row = await env.DB.prepare(
     'SELECT id, actor_slug, kind, metadata_json FROM activity_entries WHERE id = ?',
   ).bind(id).first<{ id: string; actor_slug: string; kind: string; metadata_json: string | null }>();
@@ -193,6 +195,10 @@ export async function handleCreateActivityReply(
   // entry the caller cannot see — turning the reply endpoint into an oracle for
   // the existence of other people's private notes.
   const vis = await activityVisibilityGate(request, env, 'ae');
+  // activity-hidden-exempt: parent-visibility check for a reply. Replying to a
+  // dismissed root is legitimate; postActivityEntry inherits the parent's
+  // hidden_at, so the reply is born hidden too — no leak. The visibility gate
+  // (author/team) is the real access control here; hidden is orthogonal.
   const visible = await env.DB.prepare(
     `SELECT ae.id FROM activity_entries ae WHERE ae.id = ? AND ${vis.clause}`,
   ).bind(parentId, ...vis.binds).first<{ id: string }>();

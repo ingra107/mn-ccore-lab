@@ -247,6 +247,8 @@ async function _postHermesResponse(
         : 'project';
 
   // Resolve the triggering entry to get entity_id + visibility + its thread.
+  // activity-hidden-exempt: Hermes response routing — the answer must land in
+  // the asking thread even if the user dismissed it while Hermes was thinking.
   const trigEntry = await env.DB.prepare(
     'SELECT entity_id, entity_type, visibility, parent_id, id FROM activity_entries WHERE id = ? LIMIT 1'
   ).bind(req.source_id).first<{ entity_id: string; entity_type: string; visibility: string; parent_id: string | null; id: string }>();
@@ -274,6 +276,8 @@ async function _postHermesResponse(
   // dispatchHermes writes the placeholder with parent_id = threadRootId, which
   // is non-null even for a TOP-LEVEL ask (a root's thread is itself) — so match
   // on threadRootId, not on trigEntry.parent_id.
+  // activity-hidden-exempt: placeholder resolution — the 'Thinking…' row must be
+  // found and updated even if the thread was dismissed, or it dangles forever.
   let placeholder = await env.DB.prepare(
     `SELECT id FROM activity_entries
      WHERE entity_type = ? AND entity_id = ? AND actor_slug = 'claude-ai'
@@ -286,6 +290,7 @@ async function _postHermesResponse(
   // placeholders predate parent_id and carry NULL. Entity-scoped like the old
   // lookup, so behaviour for those is exactly what it was.
   if (!placeholder) {
+    // activity-hidden-exempt: legacy placeholder fallback — same reason as above.
     placeholder = await env.DB.prepare(
       `SELECT id FROM activity_entries
        WHERE entity_type = ? AND entity_id = ? AND actor_slug = 'claude-ai'
@@ -415,6 +420,8 @@ async function _hermesNotifyLink(
         ? `/portal/my-tasks?openTask=${encodeURIComponent(req.source_id)}`
         : '/today';
     case 'task_comment': {
+      // activity-hidden-exempt: redirect-link routing — resolve the entity a
+      // notification points at regardless of the thread's dismiss state.
       const entry = await env.DB.prepare(
         'SELECT entity_id FROM activity_entries WHERE id = ? LIMIT 1'
       ).bind(req.source_id).first<{ entity_id: string }>();
@@ -423,6 +430,7 @@ async function _hermesNotifyLink(
     case 'project_comment':
       return req.project_slug ? `/portal/projects/${req.project_slug}` : '/portal/overview';
     case 'artifact_comment': {
+      // activity-hidden-exempt: redirect-link routing — same as task_comment above.
       const entry = await env.DB.prepare(
         'SELECT entity_id FROM activity_entries WHERE id = ? LIMIT 1'
       ).bind(req.source_id).first<{ entity_id: string }>();

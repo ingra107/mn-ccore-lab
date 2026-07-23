@@ -212,6 +212,8 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
   // gets derived against.
   let parentVisibility: Visibility | null = null;
   if (parentId) {
+    // activity-hidden-exempt: write-path parent resolution — reads the parent to
+    // INHERIT its hidden_at (and visibility) onto the reply; must see a hidden parent.
     const parent = await env.DB.prepare(
       'SELECT id, parent_id, entity_type, entity_id, kind, visibility FROM activity_entries WHERE id = ?'
     ).bind(parentId).first<{
@@ -319,8 +321,10 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     // live comment post; the live paths (routes/tasks.ts, ai-requests.ts) never
     // set sourceTable, so the at-source hook below covers every live comment.
     await env.DB.prepare(`INSERT OR IGNORE INTO activity_entries ${cols} ${vals}`).bind(...binds).run();
+    // activity-hidden-exempt: write-path read-back of the row just inserted
     row = await env.DB.prepare('SELECT * FROM activity_entries WHERE id = ?').bind(id).first<Record<string, unknown>>();
     if (!row) {
+      // activity-hidden-exempt: write-path read-back on UNIQUE(source_table,source_id) conflict
       row = await env.DB.prepare(
         'SELECT * FROM activity_entries WHERE source_table = ? AND source_id = ? LIMIT 1'
       ).bind(sourceTable, sourceId).first<Record<string, unknown>>();
@@ -357,6 +361,7 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
         row = (results[0]?.results as Record<string, unknown>[] | undefined)?.[0] ?? null;
         if (!row) {
           // Defensive: re-read if the batch driver didn't surface RETURNING rows.
+          // activity-hidden-exempt: write-path read-back of the row just inserted
           row = await env.DB.prepare('SELECT * FROM activity_entries WHERE id = ?').bind(id).first<Record<string, unknown>>();
         }
       }
@@ -643,6 +648,10 @@ async function dispatchHermes(
   let prompt = aiPrompt;
   if (args.threadRootId) {
     try {
+      // activity-hidden-exempt: Hermes thread transcript. Owner requirement
+      // (plan 9.1.5): "remember what we talked about this morning" must survive
+      // a dismiss — dismiss is a frontend verb, never "forget". Hermes must see
+      // hidden thread rows. Requester-scoped + visibility-gated below regardless.
       const priorRes = await env.DB.prepare(
         `SELECT actor_slug, body, created_at FROM activity_entries
           WHERE (id = ?1 OR parent_id = ?1)
