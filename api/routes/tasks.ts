@@ -9,7 +9,7 @@ import { applyMutation } from './mutations';
 // Fix 5: removed dead re-export — callers import directly from ../lib/task-cols
 // or via api/helpers.ts which already re-exports it (zero callers used this path).
 import { TASK_SELECT_COLS, TASK_SELECT_COLS_TYPED } from '../lib/task-cols';
-import { postActivityEntry, activityVisibilityGate } from '../lib/activity-entry';
+import { postActivityEntry, activityVisibilityGate, activityHiddenClause } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 
 // ── Fix 3: guardTaskProject ────────────────────────────────────────────────────
@@ -554,7 +554,7 @@ export async function handleGetTaskComments(taskId: string, request: Request, en
   const result = await env.DB.prepare(
     `SELECT id, entity_id AS task_id, actor_slug AS author_slug, body AS content, created_at
      FROM activity_entries
-     WHERE entity_type = 'task' AND entity_id = ? AND kind = 'comment' AND ${vis.clause}
+     WHERE entity_type = 'task' AND entity_id = ? AND kind = 'comment' AND hidden_at IS NULL AND ${vis.clause}
      ORDER BY created_at DESC, id DESC`
   ).bind(taskId, ...vis.binds).all();
   return json({ data: result.results || [] });
@@ -634,9 +634,9 @@ export async function handleGetTaskActivity(taskId: string, request: Request, en
   const result = await env.DB.prepare(
     `SELECT ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.kind, ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type, ae.metadata_json, ae.parent_id, ae.created_at,
             (SELECT COUNT(*) FROM activity_entries r
-              WHERE r.parent_id = ae.id AND ${visR.clause}) AS reply_count
+              WHERE r.parent_id = ae.id AND ${activityHiddenClause('r')} AND ${visR.clause}) AS reply_count
      FROM activity_entries ae
-     WHERE ae.entity_type = 'task' AND ae.entity_id = ? AND ae.parent_id IS NULL AND ${visAe.clause}
+     WHERE ae.entity_type = 'task' AND ae.entity_id = ? AND ae.parent_id IS NULL AND ${activityHiddenClause('ae')} AND ${visAe.clause}
      ORDER BY ae.created_at DESC, ae.id DESC`
   ).bind(...visR.binds, taskId, ...visAe.binds).all();
   return json({ data: result.results || [] });
@@ -669,7 +669,7 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
       // the comment it answers, reading as an out-of-context orphan.
       `SELECT id, body AS content, actor_slug AS author_slug, update_type, created_at
        FROM activity_entries
-       WHERE entity_type = 'task' AND entity_id = ? AND parent_id IS NULL AND ${vis.clause}
+       WHERE entity_type = 'task' AND entity_id = ? AND parent_id IS NULL AND hidden_at IS NULL AND ${vis.clause}
        ORDER BY created_at DESC, id DESC LIMIT 20`
     ).bind(taskId, ...vis.binds).all(),
     env.DB.prepare(
@@ -1244,7 +1244,7 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env, canSeePb = 
     )
   )) AND visibility = 'team'`
   const cols = `id, entity_id AS task_id, actor_slug AS author_slug, body AS content, update_type, created_at`
-  let query = `SELECT ${cols} FROM activity_entries WHERE entity_type = 'task' AND kind = 'update'`
+  let query = `SELECT ${cols} FROM activity_entries WHERE entity_type = 'task' AND kind = 'update' AND hidden_at IS NULL`
   const binds: unknown[] = []
   if (since) {
     query += ` AND created_at > ?${pbExclusion}`
@@ -1303,7 +1303,7 @@ export async function handleGetRecentTaskComments(url: URL, env: Env, canSeePb =
     q = `SELECT ${cols} FROM activity_entries ae
        LEFT JOIN tasks t ON ae.entity_id = t.id
        LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE ae.entity_type = 'task' AND ae.kind = 'comment' AND ${cursorClause}${pbFilter}
+       WHERE ae.entity_type = 'task' AND ae.kind = 'comment' AND ae.hidden_at IS NULL AND ${cursorClause}${pbFilter}
        ORDER BY ae.created_at ASC, ae.id ASC LIMIT ?`;
     result = sinceId
       ? await env.DB.prepare(q).bind(since, since, sinceId, limit).all()
@@ -1312,7 +1312,7 @@ export async function handleGetRecentTaskComments(url: URL, env: Env, canSeePb =
     q = `SELECT ${cols} FROM activity_entries ae
        LEFT JOIN tasks t ON ae.entity_id = t.id
        LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE ae.entity_type = 'task' AND ae.kind = 'comment'${pbFilter}
+       WHERE ae.entity_type = 'task' AND ae.kind = 'comment' AND ae.hidden_at IS NULL${pbFilter}
        ORDER BY ae.created_at DESC, ae.id DESC LIMIT ?`;
     result = await env.DB.prepare(q).bind(limit).all();
   }
@@ -1330,7 +1330,7 @@ export async function handleGetTaskUpdates(taskId: string, request: Request, env
   const result = await env.DB.prepare(
     `SELECT id, entity_id AS task_id, actor_slug AS author_slug, body AS content, update_type, created_at
      FROM activity_entries
-     WHERE entity_type = 'task' AND entity_id = ? AND kind = 'update' AND ${vis.clause}
+     WHERE entity_type = 'task' AND entity_id = ? AND kind = 'update' AND hidden_at IS NULL AND ${vis.clause}
      ORDER BY created_at DESC, id DESC`
   ).bind(taskId, ...vis.binds).all();
   return json({ data: result.results || [] });

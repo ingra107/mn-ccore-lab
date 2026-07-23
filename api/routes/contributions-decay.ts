@@ -53,12 +53,12 @@ export async function handleContributionsDecay(url: URL, env: Env): Promise<Resp
 
     // project updates → activity_entries kind='update', entity_type='project'
     env.DB.prepare(
-      "SELECT created_at FROM activity_entries WHERE entity_type='project' AND kind='update' AND actor_slug LIKE ? AND created_at > ?"
+      "SELECT created_at FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL AND actor_slug LIKE ? AND created_at > ?"
     ).bind(`%${slug}%`, cutoff).all(),
 
     // comments → activity_entries kind='comment'
     env.DB.prepare(
-      "SELECT created_at FROM activity_entries WHERE kind='comment' AND actor_slug LIKE ? AND created_at > ?"
+      "SELECT created_at FROM activity_entries WHERE kind='comment' AND hidden_at IS NULL AND actor_slug LIKE ? AND created_at > ?"
     ).bind(`%${slug}%`, cutoff).all(),
 
     env.DB.prepare(

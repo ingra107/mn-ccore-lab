@@ -3,7 +3,7 @@ import { json, error, generateId, logActivity, isPiRequest, resolveActor, assert
 import { ctToday } from '../lib/ct-date';
 import { nowInstant, dbStampToIso } from '../lib/time';
 import { applyMutation } from './mutations';
-import { activityVisibilityGate, postActivityEntry } from '../lib/activity-entry';
+import { activityVisibilityGate, activityHiddenClause, postActivityEntry } from '../lib/activity-entry';
 import { enumFieldsFor } from '../lib/enum-domains';
 import { PROJECT_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 
@@ -296,7 +296,7 @@ export async function handleGetProjects(url: URL, env: Env, user: AuthUser, apiK
       ? env.DB.prepare(
           `SELECT project_id, MAX(created_at) AS latest
              FROM activity_entries
-            WHERE project_id IS NOT NULL
+            WHERE project_id IS NOT NULL AND hidden_at IS NULL
             GROUP BY project_id`
         ).all<{ project_id: string; latest: string }>()
       : null,
@@ -339,6 +339,7 @@ export async function handleGetComments(projectId: string, request: Request, env
      FROM activity_entries ae
      LEFT JOIN team_members t ON t.slug = ae.actor_slug
      WHERE ae.entity_type = 'project' AND ae.entity_id = ? AND ae.kind = 'comment'
+       AND ${activityHiddenClause('ae')}
        AND ${vis.clause}
      ORDER BY ae.created_at DESC, ae.id DESC`
   ).bind(canonicalId, ...vis.binds).all();
@@ -362,6 +363,7 @@ export async function handleGetProjectUpdates(slug: string, request: Request, en
     `SELECT ae.id, ae.actor_slug AS author, ae.body AS content, ae.update_type, ae.created_at
      FROM activity_entries ae
      WHERE ae.entity_type = 'project' AND ae.entity_id = ? AND ae.kind = 'update'
+       AND ${activityHiddenClause('ae')}
        AND ${vis.clause}
      ORDER BY ae.created_at DESC, ae.id DESC`
   ).bind(canonicalId, ...vis.binds).all();
@@ -400,11 +402,12 @@ export async function handleGetProjectActivity(idOrSlug: string, request: Reques
     `SELECT ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.kind, ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type, ae.metadata_json, ae.parent_id, ae.created_at,
             CASE WHEN ae.entity_type = 'task' THEN COALESCE(t.short_title, t.title) END AS task_title,
             (SELECT COUNT(*) FROM activity_entries r
-              WHERE r.parent_id = ae.id AND ${visR.clause}) AS reply_count
+              WHERE r.parent_id = ae.id AND ${activityHiddenClause('r')} AND ${visR.clause}) AS reply_count
      FROM activity_entries ae
      LEFT JOIN tasks t ON ae.entity_type = 'task' AND t.id = ae.entity_id
      WHERE ae.project_id = ?
        AND ae.parent_id IS NULL
+       AND ${activityHiddenClause('ae')}
        AND ${vis.clause}
      ORDER BY ae.created_at DESC, ae.id DESC`
   ).bind(...visR.binds, canonicalId, ...vis.binds).all();
@@ -437,11 +440,11 @@ export async function handleProjectHealth(env: Env, canSeePb = false): Promise<R
   // Six aggregation queries — whole-table scans but one-shot.
   const [updatesAgg, tasksCompAgg, activityAgg, commentsAgg, tasksVelocityAgg, milestonesAgg] = await Promise.all([
     // project updates → activity_entries kind='update', entity_type='project'
-    env.DB.prepare("SELECT project_id, MAX(created_at) as latest FROM activity_entries WHERE entity_type='project' AND kind='update' GROUP BY project_id").all<{ project_id: string; latest: string }>(),
+    env.DB.prepare("SELECT project_id, MAX(created_at) as latest FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL GROUP BY project_id").all<{ project_id: string; latest: string }>(),
     env.DB.prepare('SELECT project_id, MAX(completed_at) as latest, COUNT(*) as done_count, SUM(CASE WHEN due_date IS NOT NULL AND completed_at <= due_date || \'T23:59:59\' THEN 1 ELSE 0 END) as on_time_count, SUM(CASE WHEN due_date IS NOT NULL THEN 1 ELSE 0 END) as with_due_count FROM tasks WHERE completed = 1 AND completed_at IS NOT NULL GROUP BY project_id').all<{ project_id: string; latest: string; done_count: number; on_time_count: number; with_due_count: number }>(),
     env.DB.prepare("SELECT related_id, MAX(timestamp) as latest FROM activity_log WHERE related_type = 'project' GROUP BY related_id").all<{ related_id: string; latest: string }>(),
     // project comments → activity_entries kind='comment', entity_type='project'
-    env.DB.prepare("SELECT project_id, MAX(created_at) as latest FROM activity_entries WHERE entity_type='project' AND kind='comment' GROUP BY project_id").all<{ project_id: string; latest: string }>(),
+    env.DB.prepare("SELECT project_id, MAX(created_at) as latest FROM activity_entries WHERE entity_type='project' AND kind='comment' AND hidden_at IS NULL GROUP BY project_id").all<{ project_id: string; latest: string }>(),
     env.DB.prepare('SELECT project_id, COUNT(*) as pending_count, SUM(CASE WHEN due_date IS NOT NULL AND due_date < ? THEN 1 ELSE 0 END) as overdue_count FROM tasks WHERE completed = 0 AND deleted_at IS NULL GROUP BY project_id').bind(nowIso).all<{ project_id: string; pending_count: number; overdue_count: number }>(),
     env.DB.prepare("SELECT project_id, MIN(target_date) as next_target FROM milestones WHERE status IN ('pending', 'in_progress') AND target_date IS NOT NULL GROUP BY project_id").all<{ project_id: string; next_target: string }>(),
   ]);
@@ -567,7 +570,7 @@ export async function handleRecentUpdates(url: URL, env: Env, canSeePb = false):
   // was frozen (P2-A, 2026-06-10). Column aliases preserve the legacy wire shape so PB's
   // pull_project_updates / d1_project_updates mirror keep working unchanged.
   const cols = `id, project_id, actor_slug AS author, body AS content, update_type, created_at`;
-  let query = `SELECT ${cols} FROM activity_entries WHERE entity_type='project' AND kind='update'`;
+  let query = `SELECT ${cols} FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL`;
   const binds: unknown[] = [];
   if (since) {
     query += ` AND created_at > ?${pbExclusion}`;

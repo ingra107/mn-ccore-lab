@@ -103,6 +103,7 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
          JOIN activity_entries ae
            ON ae.entity_type = es.entity_type AND ae.entity_id = es.entity_id
           AND ae.visibility = 'team'
+          AND ae.hidden_at IS NULL
           AND ae.actor_slug != es.viewer_slug
           AND ae.created_at > es.last_seen_at
          LEFT JOIN tasks t ON es.entity_type = 'task' AND t.id = es.entity_id

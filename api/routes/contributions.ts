@@ -14,12 +14,12 @@ export async function handleGetContributions(slug: string, url: URL, env: Env): 
 
     // Project updates authored (activity_entries kind='update', entity_type='project')
     env.DB.prepare(
-      "SELECT id, project_id AS project_id, body AS content, update_type, created_at FROM activity_entries WHERE entity_type='project' AND kind='update' AND actor_slug LIKE ? AND created_at > ? ORDER BY created_at DESC"
+      "SELECT id, project_id AS project_id, body AS content, update_type, created_at FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL AND actor_slug LIKE ? AND created_at > ? ORDER BY created_at DESC"
     ).bind(`%${slug}%`, cutoff).all(),
 
     // Comments made (activity_entries kind='comment')
     env.DB.prepare(
-      "SELECT id, body AS content, created_at FROM activity_entries WHERE kind='comment' AND actor_slug LIKE ? AND created_at > ? ORDER BY created_at DESC"
+      "SELECT id, body AS content, created_at FROM activity_entries WHERE kind='comment' AND hidden_at IS NULL AND actor_slug LIKE ? AND created_at > ? ORDER BY created_at DESC"
     ).bind(`%${slug}%`, cutoff).all(),
 
     // Decisions involved in

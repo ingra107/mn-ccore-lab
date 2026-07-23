@@ -31,7 +31,7 @@ export async function handleCadenceCheck(env: Env): Promise<Response> {
     ).first<{ c: number }>(),
 
     env.DB.prepare(
-      "SELECT COUNT(*) as c FROM activity_entries WHERE entity_type='project' AND kind='update' AND created_at > ?"
+      "SELECT COUNT(*) as c FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL AND created_at > ?"
     ).bind(sinceDate).first<{ c: number }>(),
 
     env.DB.prepare(

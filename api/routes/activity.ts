@@ -3,7 +3,7 @@ import { json, error, actorSlug, isPiRequest, resolveActor } from '../helpers';
 import { idempotentDelete } from '../lib/idempotent-delete';
 import { isTestFixture } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
-import { activityVisibilityGate, postActivityEntry } from '../lib/activity-entry';
+import { activityVisibilityGate, activityHiddenClause, postActivityEntry } from '../lib/activity-entry';
 
 // GET /api/activity?limit=20&actor=slug
 // AM-3 (SEC-T0-1): `canSeePb` true for PI/Nick/service. This endpoint stays
@@ -151,8 +151,8 @@ export async function handleGetActivityReplies(
   const rows = await env.DB.prepare(
     `SELECT ${REPLY_COLS}
        FROM activity_entries ae
-       JOIN activity_entries root ON root.id = ae.parent_id
-      WHERE ae.parent_id = ? AND ${vis.clause}
+       JOIN activity_entries root ON root.id = ae.parent_id AND ${activityHiddenClause('root')}
+      WHERE ae.parent_id = ? AND ${activityHiddenClause('ae')} AND ${vis.clause}
       ORDER BY ae.created_at ASC, ae.id ASC`,
   ).bind(parentId, ...vis.binds).all();
   const data = rows.results ?? [];

@@ -352,7 +352,7 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
       `SELECT ae.id, ae.body AS content, ae.update_type, ae.actor_slug AS author, ae.created_at, p.title as project_title
        FROM activity_entries ae
        LEFT JOIN projects p ON ae.project_id = p.id
-       WHERE ae.entity_type='project' AND ae.kind='update' AND ae.created_at > ?${pbFilterP}
+       WHERE ae.entity_type='project' AND ae.kind='update' AND ae.hidden_at IS NULL AND ae.created_at > ?${pbFilterP}
        ORDER BY ae.created_at DESC
        LIMIT 15`
     ).bind(prevDate).all<{ id: string; content: string; update_type: string; author: string; created_at: string; project_title: string }>(),

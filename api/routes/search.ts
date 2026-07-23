@@ -205,7 +205,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false, requ
     ).bind(like, like, limit).all(),
     // Project comments → activity_entries kind='comment', entity_type='project'
     env.DB.prepare(
-      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_id, ae.created_at, p.title as project_title, p.slug as project_slug FROM activity_entries ae JOIN projects p ON ae.project_id = p.id WHERE ae.entity_type='project' AND ae.kind='comment' AND ae.body LIKE ? AND ${vis.clause}${
+      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_id, ae.created_at, p.title as project_title, p.slug as project_slug FROM activity_entries ae JOIN projects p ON ae.project_id = p.id WHERE ae.entity_type='project' AND ae.kind='comment' AND ae.hidden_at IS NULL AND ae.body LIKE ? AND ${vis.clause}${
         joinedProjPred ? ` AND (${joinedProjPred})` : ''
       } LIMIT ?`
     ).bind(like, ...vis.binds, limit).all(),
@@ -214,17 +214,17 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false, requ
     ).bind(like, limit).all(),
     // Project notes (activity_entries kind='update', entity_type='project')
     env.DB.prepare(
-      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author, ae.update_type, ae.created_at, p.title as project_title, p.slug as project_slug FROM activity_entries ae JOIN projects p ON ae.project_id = p.id WHERE ae.entity_type='project' AND ae.kind='update' AND ae.body LIKE ? AND ${vis.clause}${
+      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author, ae.update_type, ae.created_at, p.title as project_title, p.slug as project_slug FROM activity_entries ae JOIN projects p ON ae.project_id = p.id WHERE ae.entity_type='project' AND ae.kind='update' AND ae.hidden_at IS NULL AND ae.body LIKE ? AND ${vis.clause}${
         joinedProjPred ? ` AND (${joinedProjPred})` : ''
       } LIMIT ?`
     ).bind(like, ...vis.binds, limit).all(),
     // Task notes (activity_entries kind='update', entity_type='task')
     env.DB.prepare(
-      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_slug, ae.update_type, ae.created_at, ae.entity_id AS task_id, t.title as task_title FROM activity_entries ae LEFT JOIN tasks t ON ae.entity_id = t.id WHERE ae.entity_type='task' AND ae.kind='update' AND ae.body LIKE ? AND ${vis.clause} LIMIT ?`
+      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_slug, ae.update_type, ae.created_at, ae.entity_id AS task_id, t.title as task_title FROM activity_entries ae LEFT JOIN tasks t ON ae.entity_id = t.id WHERE ae.entity_type='task' AND ae.kind='update' AND ae.hidden_at IS NULL AND ae.body LIKE ? AND ${vis.clause} LIMIT ?`
     ).bind(like, ...vis.binds, limit).all(),
     // Task comments (activity_entries kind='comment', entity_type='task')
     env.DB.prepare(
-      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_slug, ae.created_at, ae.entity_id AS task_id, t.title as task_title FROM activity_entries ae LEFT JOIN tasks t ON ae.entity_id = t.id WHERE ae.entity_type='task' AND ae.kind='comment' AND ae.body LIKE ? AND ${vis.clause} LIMIT ?`
+      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_slug, ae.created_at, ae.entity_id AS task_id, t.title as task_title FROM activity_entries ae LEFT JOIN tasks t ON ae.entity_id = t.id WHERE ae.entity_type='task' AND ae.kind='comment' AND ae.hidden_at IS NULL AND ae.body LIKE ? AND ${vis.clause} LIMIT ?`
     ).bind(like, ...vis.binds, limit).all(),
     // Decisions
     env.DB.prepare(

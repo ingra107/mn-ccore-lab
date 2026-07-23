@@ -52,6 +52,11 @@ import { fileURLToPath } from 'node:url';
 
 const API_DIR = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'api');
 const MARKER = 'activity-hidden-exempt:';
+// A REAL marker is a line comment `// activity-hidden-exempt: <reason>`. Require
+// the `//` so the token can be mentioned in prose (JSDoc, block comments,
+// strings) without being mistaken for a marker — e.g. activityHiddenClause's own
+// doc-comment references it and must not register as a dangling marker.
+const MARKER_RE = /\/\/.*activity-hidden-exempt:/;
 
 /** Walk api/ for .ts files, excluding *.test.ts. */
 function collectFiles(dir) {
@@ -211,7 +216,7 @@ for (const file of files) {
   // Marker line numbers in this file, consumed as reads claim them (top-down, so
   // a marker attaches to the NEAREST read below it and never to a second).
   const markerLines = new Set(
-    fileLines.map((l, idx) => (l.includes(MARKER) ? idx + 1 : 0)).filter(Boolean)
+    fileLines.map((l, idx) => (MARKER_RE.test(l) ? idx + 1 : 0)).filter(Boolean)
   );
   const takeMarker = (lit) => {
     for (let ln = Math.max(1, lit.startLine - MARKER_LOOKBACK); ln <= lit.endLine; ln++) {

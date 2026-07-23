@@ -16,7 +16,7 @@ export async function handleTeamPulse(url: URL, env: Env, isAuthed = false): Pro
   const [updates, completions, activeMembers] = await Promise.all([
     // Project updates by author (activity_entries since P2-C; legacy project_updates is frozen)
     env.DB.prepare(
-      "SELECT actor_slug as slug, COUNT(*) as count FROM activity_entries WHERE entity_type = 'project' AND kind = 'update' AND created_at > ? GROUP BY actor_slug"
+      "SELECT actor_slug as slug, COUNT(*) as count FROM activity_entries WHERE entity_type = 'project' AND kind = 'update' AND hidden_at IS NULL AND created_at > ? GROUP BY actor_slug"
     ).bind(cutoff).all<{ slug: string; count: number }>(),
 
     // Task completions by person

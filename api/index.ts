@@ -2998,7 +2998,7 @@ export default {
 
           // Get recent team activity (last 24 hours) — activity_entries kind='update'
           const recentUpdates = await env.DB.prepare(
-            "SELECT actor_slug AS author, body AS content, project_id FROM activity_entries WHERE entity_type='project' AND kind='update' AND created_at > datetime('now', '-1 day') AND actor_slug != ? ORDER BY created_at DESC LIMIT 5"
+            "SELECT actor_slug AS author, body AS content, project_id FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL AND created_at > datetime('now', '-1 day') AND actor_slug != ? ORDER BY created_at DESC LIMIT 5"
           ).bind(member.slug).all<{ author: string; content: string; project_id: string }>();
 
           // Get milestones with Future Me notes due within 3 days

@@ -331,7 +331,7 @@ export async function handleDeleteArtifact(
 // The unified feed for an artifact (every activity_entries kind, visibility-gated,
 // newest-first) — same shape as /api/tasks/:id/activity so the frontend reuses the
 // ActivityEntryItem renderer. Imported gate lives in activity-entry.ts.
-import { activityVisibilityGate, postActivityEntry } from '../lib/activity-entry';
+import { activityVisibilityGate, activityHiddenClause, postActivityEntry } from '../lib/activity-entry';
 
 export async function handleGetArtifactActivity(id: string, request: Request, env: Env): Promise<Response> {
   const artifact = await env.DB.prepare('SELECT id FROM artifacts WHERE id = ? LIMIT 1').bind(id).first<{ id: string }>();
@@ -340,7 +340,7 @@ export async function handleGetArtifactActivity(id: string, request: Request, en
   const result = await env.DB.prepare(
     `SELECT id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, created_at
      FROM activity_entries
-     WHERE entity_type = 'artifact' AND entity_id = ? AND ${vis.clause}
+     WHERE entity_type = 'artifact' AND entity_id = ? AND ${activityHiddenClause()} AND ${vis.clause}
      ORDER BY created_at DESC, id DESC`
   ).bind(id, ...vis.binds).all();
   return json({ data: result.results || [] });

@@ -319,7 +319,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
      WHERE p.deleted_at IS NULL AND p.status = 'active'
        AND NOT EXISTS (
          SELECT 1 FROM activity_entries ae
-         WHERE ae.entity_type='project' AND ae.kind='update' AND ae.project_id = p.id
+         WHERE ae.entity_type='project' AND ae.kind='update' AND ae.hidden_at IS NULL AND ae.project_id = p.id
            AND ae.created_at > datetime(${anchor}, '-${STALL_THRESHOLD_DAYS} days')
        )`
   ).first<{ c: number }>()
@@ -329,7 +329,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
      WHERE p.deleted_at IS NULL AND p.status = 'active'
        AND NOT EXISTS (
          SELECT 1 FROM activity_entries ae
-         WHERE ae.entity_type='project' AND ae.kind='update' AND ae.project_id = p.id
+         WHERE ae.entity_type='project' AND ae.kind='update' AND ae.hidden_at IS NULL AND ae.project_id = p.id
            AND ae.created_at > datetime(${anchor}, '-${STALL_THRESHOLD_DAYS + 7} days')
            AND ae.created_at <= datetime(${anchor}, '-7 days')
        )`
@@ -439,7 +439,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
        (SELECT COUNT(*) FROM tasks t
           WHERE t.project_id = p.id AND t.deleted_at IS NULL AND t.completed = 0) as open_tasks
      FROM projects p
-     LEFT JOIN activity_entries ae ON ae.entity_type='project' AND ae.kind='update' AND ae.project_id = p.id
+     LEFT JOIN activity_entries ae ON ae.entity_type='project' AND ae.kind='update' AND ae.hidden_at IS NULL AND ae.project_id = p.id
      WHERE p.deleted_at IS NULL AND p.status = 'active'
      GROUP BY p.id, p.slug, p.title`
   ).all<{ slug: string; title: string; last_update: string | null; open_tasks: number }>()
@@ -488,7 +488,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
        WHERE p.deleted_at IS NULL AND p.status = 'active'
          AND NOT EXISTS (
            SELECT 1 FROM activity_entries ae
-           WHERE ae.entity_type='project' AND ae.kind='update' AND ae.project_id = p.id
+           WHERE ae.entity_type='project' AND ae.kind='update' AND ae.hidden_at IS NULL AND ae.project_id = p.id
              AND ae.created_at > datetime(?, '-${STALL_THRESHOLD_DAYS} days')
              AND ae.created_at <= datetime(?, '+1 day')
          )`
