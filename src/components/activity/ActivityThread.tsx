@@ -33,9 +33,12 @@ interface ActivityThreadProps {
   invalidateKeys: unknown[][]
   onDelete?: (entry: ActivityEntryItemRow) => void
   onEdit?: (entry: ActivityEntryItemRow, body: string) => void
+  /** Dismiss (hide) or restore this root's whole thread. Feed passes it; gated
+   *  author-or-PI here, re-enforced server-side. Reversible single click. */
+  onDismiss?: (entry: ActivityEntryItemRow) => void
 }
 
-export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEdit }: ActivityThreadProps) {
+export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEdit, onDismiss }: ActivityThreadProps) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   // Auto-expand when the composer opens: replying to a thread you cannot see
@@ -93,6 +96,8 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
         onReply={() => { setComposing(true); setExpanded(true) }}
         onDelete={onDelete && canDeleteActivityEntry(user, root.actor_slug) ? () => onDelete(root) : undefined}
         onEdit={onEdit && canDeleteActivityEntry(user, root.actor_slug) ? (b: string) => onEdit(root, b) : undefined}
+        onDismiss={onDismiss && canDeleteActivityEntry(user, root.actor_slug) ? () => onDismiss(root) : undefined}
+        isHidden={!!root.hidden_at}
       />
 
       {(expanded || composing) && (

@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import { useMeetingLinkedTasks } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
-import { usePostProjectUpdate, useAddComment, useUpdateTask, useBulkUpdateTasks, useDeleteActivityEntry, useEditActivityEntry } from '../../hooks/useMutations'
+import { usePostProjectUpdate, useAddComment, useUpdateTask, useBulkUpdateTasks, useDeleteActivityEntry, useEditActivityEntry, useDismissThread } from '../../hooks/useMutations'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import { getPersonInfo } from '../../data/team'
@@ -42,6 +42,7 @@ import {
   type ActivityEntryItemRow,
 } from '../activity/activityRender'
 import { ActivityThread } from '../activity/ActivityThread'
+import { ShowHiddenToggle } from '../activity/ShowHiddenToggle'
 import { canDeleteActivityEntry } from '../activity/activityPermissions'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
@@ -100,20 +101,24 @@ export default function ActivityStream({ project, filter }: Props) {
   // Includes project-level activity_entries AND task rows rolled up by project_id.
   // Task-originated rows are additive — no de-dupe needed (task_comments /
   // task_updates were backfilled but never appeared in the project stream before).
-  const { data: unifiedEntries = [] } = useQuery<UnifiedEntryRow[]>({
-    queryKey: ['project-activity', slug],
+  // v102: "Show hidden" reveals dismissed threads (refetch with include_hidden).
+  const [showHidden, setShowHidden] = useState(false)
+  const { data: unified } = useQuery<{ entries: UnifiedEntryRow[]; hiddenCount: number }>({
+    queryKey: ['project-activity', slug, showHidden],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${slug}/activity`)
-      if (!res.ok) return []
-      const data = await res.json() as { data?: UnifiedEntryRow[] }
-      return (data.data || []).map((e) => ({
-        ...e,
-        _renderKind: deriveRenderKind(e.entity_type, e.kind),
-      }))
+      const res = await fetch(`/api/projects/${slug}/activity${showHidden ? '?include_hidden=1' : ''}`)
+      if (!res.ok) return { entries: [], hiddenCount: 0 }
+      const data = await res.json() as { data?: UnifiedEntryRow[]; hidden_count?: number }
+      return {
+        entries: (data.data || []).map((e) => ({ ...e, _renderKind: deriveRenderKind(e.entity_type, e.kind) })),
+        hiddenCount: data.hidden_count || 0,
+      }
     },
     staleTime: 30 * 1000,
     enabled: !!slug,
   })
+  const unifiedEntries = unified?.entries ?? []
+  const hiddenCount = unified?.hiddenCount ?? 0
 
   const { isAuthenticated, user } = useAuth()
   const { showSuccess } = useToast()
@@ -137,6 +142,7 @@ export default function ActivityStream({ project, filter }: Props) {
   // Server re-enforces author-or-PI on POST /api/activity/:id/delete.
   const deleteEntry = useDeleteActivityEntry()
   const editEntry = useEditActivityEntry()
+  const dismissThread = useDismissThread()
 
   // Note composer state (type pill)
   const [noteType, setNoteType] = useState('progress')
@@ -367,18 +373,33 @@ export default function ActivityStream({ project, filter }: Props) {
                         })
                     : undefined
                 }
+                onDismissEntry={
+                  event.kind === 'unified-entry' && canDeleteActivityEntry(user, event.row.actor_slug)
+                    ? () =>
+                        dismissThread.mutate({
+                          id: event.row.id,
+                          hidden: !event.row.hidden_at,
+                          projectSlug: slug,
+                          taskId: event.row.entity_type === 'task' ? event.row.entity_id : undefined,
+                        })
+                    : undefined
+                }
               />
             ))}
           </AnimatePresence>
         </div>
       )}
+
+      {/* "N dismissed — show / hide". Outside the empty-state branch so it stays
+          reachable when every visible thread has been dismissed. */}
+      <ShowHiddenToggle count={hiddenCount} showing={showHidden} onToggle={() => setShowHidden((v) => !v)} />
     </motion.div>
   )
 }
 
 // ── Per-event renderers ──────────────────────────────────────────────────
 
-function StreamItem({ event, onToggleAction, onDeleteEntry, onEditEntry }: { event: StreamEvent; onToggleAction: (task: TaskRow) => void; onDeleteEntry?: () => void; onEditEntry?: (body: string) => void }) {
+function StreamItem({ event, onToggleAction, onDeleteEntry, onEditEntry, onDismissEntry }: { event: StreamEvent; onToggleAction: (task: TaskRow) => void; onDeleteEntry?: () => void; onEditEntry?: (body: string) => void; onDismissEntry?: () => void }) {
   switch (event.kind) {
     case 'action':
       return <ActionItemRowView action={event.row} onToggle={onToggleAction} />
@@ -407,6 +428,7 @@ function StreamItem({ event, onToggleAction, onDeleteEntry, onEditEntry }: { eve
           invalidateKeys={[['project-activity']]}
           onDelete={onDeleteEntry ? () => onDeleteEntry() : undefined}
           onEdit={onEditEntry ? (_e, body) => onEditEntry(body) : undefined}
+          onDismiss={onDismissEntry ? () => onDismissEntry() : undefined}
         />
       )
     }

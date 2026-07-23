@@ -22,6 +22,9 @@ import EmptyState from '../../components/EmptyState'
 import MarkdownView from '../../components/MarkdownView'
 import HermesMark from '../../components/HermesMark'
 import { ActivityEntryItem, type ActivityEntryItemRow } from '../../components/activity/activityRender'
+import { ShowHiddenToggle } from '../../components/activity/ShowHiddenToggle'
+import { canDeleteActivityEntry } from '../../components/activity/activityPermissions'
+import { useDismissThread } from '../../hooks/useMutations'
 import { useAuth } from '../../hooks/useAuth'
 import { useToast } from '../../hooks/useToast'
 import { PATHS } from '../../constants/paths'
@@ -59,7 +62,7 @@ export default function ArtifactPage() {
   const { id = '' } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const qc = useQueryClient()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const { showSuccess, showError } = useToast()
 
   const [showHistory, setShowHistory] = useState(false)
@@ -85,17 +88,22 @@ export default function ArtifactPage() {
     { ogImage: `https://mn-ccore-lab.pages.dev/og/artifact/${id}` },
   )
 
-  const { data: activity = [] } = useQuery<ActivityEntryItemRow[]>({
-    queryKey: ['artifact-activity', id],
+  // v102: "Show hidden" reveals dismissed threads (refetch with include_hidden).
+  const [showHidden, setShowHidden] = useState(false)
+  const dismissThread = useDismissThread()
+  const { data: activityData } = useQuery<{ entries: ActivityEntryItemRow[]; hiddenCount: number }>({
+    queryKey: ['artifact-activity', id, showHidden],
     queryFn: async () => {
-      const res = await fetch(`/api/artifacts/${id}/activity`)
-      if (!res.ok) return []
-      const data = await res.json() as { data?: ActivityEntryItemRow[] }
-      return data.data || []
+      const res = await fetch(`/api/artifacts/${id}/activity${showHidden ? '?include_hidden=1' : ''}`)
+      if (!res.ok) return { entries: [], hiddenCount: 0 }
+      const data = await res.json() as { data?: ActivityEntryItemRow[]; hidden_count?: number }
+      return { entries: data.data || [], hiddenCount: data.hidden_count || 0 }
     },
     enabled: !!id,
     staleTime: 30 * 1000,
   })
+  const activity = activityData?.entries ?? []
+  const hiddenCount = activityData?.hiddenCount ?? 0
 
   const postComment = useMutation({
     mutationFn: async (payload: { content: string; visibility?: string }) => {
@@ -406,11 +414,19 @@ export default function ArtifactPage() {
               <ActivityEntryItem
                 key={entry.id}
                 entry={entry}
-                // Artifact feed: canonical defaults.
+                // Dismiss only on ROOTS (a reply hide is a 400 server-side) that
+                // the viewer may manage (author-or-PI). isHidden flips it to Restore.
+                onDismiss={
+                  !entry.parent_id && canDeleteActivityEntry(user, entry.actor_slug)
+                    ? () => dismissThread.mutate({ id: entry.id, hidden: !entry.hidden_at, artifactId: id })
+                    : undefined
+                }
+                isHidden={!!entry.hidden_at}
               />
             ))}
           </div>
         )}
+        <ShowHiddenToggle count={hiddenCount} showing={showHidden} onToggle={() => setShowHidden((v) => !v)} />
       </div>
     </PageContainer>
   )

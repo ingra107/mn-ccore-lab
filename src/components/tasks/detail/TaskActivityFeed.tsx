@@ -23,11 +23,12 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ActivityEntryItem, type ActivityEntryItemRow } from '../../activity/activityRender'
 import { ActivityThread } from '../../activity/ActivityThread'
+import { ShowHiddenToggle } from '../../activity/ShowHiddenToggle'
 import { canDeleteActivityEntry } from '../../activity/activityPermissions'
 import { filterMatchesKind, isRepliableKind, type TaskFeedFilter } from '../../../../shared/activityKinds'
 import type { StoredKind, UpdateType } from '../../../../shared/activityKinds'
 import { useAuth } from '../../../hooks/useAuth'
-import { useDeleteActivityEntry, useEditActivityEntry } from '../../../hooks/useMutations'
+import { useDeleteActivityEntry, useEditActivityEntry, useDismissThread } from '../../../hooks/useMutations'
 
 // ── Shape ────────────────────────────────────────────────────────────────────
 
@@ -74,24 +75,29 @@ interface TaskActivityFeedProps {
 
 export function TaskActivityFeed({ taskId, peekCount, hidePills, avatarSize }: TaskActivityFeedProps) {
   const [filter, setFilter] = useState<TaskFeedFilter>('all')
+  // v102: "Show hidden" reveals dismissed threads (refetch with include_hidden).
+  const [showHidden, setShowHidden] = useState(false)
 
   // Manual delete (Nick 2026-07-06): own entries, or any entry for the PI.
   // The server re-enforces author-or-PI on POST /api/activity/:id/delete.
   const { user } = useAuth()
   const deleteEntry = useDeleteActivityEntry()
   const editEntry = useEditActivityEntry()
+  const dismissThread = useDismissThread()
 
-  const { data: entries = [], isLoading } = useQuery<ActivityEntryItemRow[]>({
-    queryKey: ['task-activity', taskId],
+  const { data: feed, isLoading } = useQuery<{ entries: ActivityEntryItemRow[]; hiddenCount: number }>({
+    queryKey: ['task-activity', taskId, showHidden],
     queryFn: async () => {
-      const res = await fetch(`/api/tasks/${taskId}/activity`)
-      if (!res.ok) return []
-      const data = await res.json() as { data?: ActivityEntryItemRow[] }
-      return data.data || []
+      const res = await fetch(`/api/tasks/${taskId}/activity${showHidden ? '?include_hidden=1' : ''}`)
+      if (!res.ok) return { entries: [], hiddenCount: 0 }
+      const data = await res.json() as { data?: ActivityEntryItemRow[]; hidden_count?: number }
+      return { entries: data.data || [], hiddenCount: data.hidden_count || 0 }
     },
     staleTime: 30 * 1000,
     enabled: !!taskId,
   })
+  const entries = feed?.entries ?? []
+  const hiddenCount = feed?.hiddenCount ?? 0
 
   const filtered = useMemo(
     () =>
@@ -191,10 +197,18 @@ export function TaskActivityFeed({ taskId, peekCount, hidePills, avatarSize }: T
                 invalidateKeys={[['task-activity', taskId]]}
                 onDelete={(e) => deleteEntry.mutate({ id: e.id, taskId })}
                 onEdit={(e, body) => editEntry.mutate({ id: e.id, body, taskId })}
+                onDismiss={(e) => dismissThread.mutate({ id: e.id, hidden: !e.hidden_at, taskId })}
               />
             )
           ))}
         </div>
+      )}
+
+      {/* "N dismissed — show / hide" — full tab only (never the Overview peek).
+          Sits OUTSIDE the empty-state branch so it stays reachable even when
+          every visible thread has been dismissed away. */}
+      {!peekCount && !isLoading && (
+        <ShowHiddenToggle count={hiddenCount} showing={showHidden} onToggle={() => setShowHidden((v) => !v)} />
       )}
     </div>
   )

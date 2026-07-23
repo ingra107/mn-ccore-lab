@@ -129,6 +129,40 @@ export function useEditActivityEntry() {
   })
 }
 
+// ── Activity thread dismiss / restore (author or PI) ────────
+// POST /api/activity/:id/hide { hidden } — hides (dismiss) or restores a thread
+// ROOT + its replies. Reversible, so the UI offers a single-click toggle (no
+// two-step confirm like delete). The server enforces author-or-PI and that only
+// a root is hideable. Invalidation-only (like useDeleteActivityEntry): the feeds
+// filter hidden server-side, so a refetch drops/re-adds the row.
+export function useDismissThread() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { id: string; hidden: boolean; taskId?: string; projectSlug?: string; artifactId?: string }) =>
+      fetchApi(`/api/activity/${input.id}/hide`, {
+        method: 'POST',
+        body: JSON.stringify({ hidden: input.hidden }),
+      }),
+
+    onSettled: (_data, _err, input) => {
+      if (input.taskId) {
+        queryClient.invalidateQueries({ queryKey: ['task-activity', input.taskId] })
+        queryClient.invalidateQueries({ queryKey: ['task-detail', input.taskId] })
+      }
+      if (input.projectSlug) {
+        queryClient.invalidateQueries({ queryKey: ['project-activity', input.projectSlug] })
+      }
+      if (input.artifactId) {
+        queryClient.invalidateQueries({ queryKey: ['artifact-activity', input.artifactId] })
+      }
+      // A dismissed thread must not keep raising the teal ● "new activity" badge.
+      queryClient.invalidateQueries({ queryKey: ['unseen-activity'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 // ── Reaction mutations ─────────────────────────────────────
 
 export function useToggleReaction() {

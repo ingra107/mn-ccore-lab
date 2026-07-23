@@ -35,6 +35,8 @@ import {
   Pencil,
   Trash2,
   ChevronRight,
+  EyeOff,
+  Eye,
 } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { motion } from 'framer-motion'
@@ -236,6 +238,9 @@ export interface ActivityEntryItemRow {
   parent_id?: string | null
   /** #98: viewer-specific, computed per request — never stored. Roots only. */
   reply_count?: number
+  /** v102: NULL = visible, a timestamp = dismissed. Present only when a feed was
+   *  fetched with ?include_hidden=1 (else dismissed roots are filtered out). */
+  hidden_at?: string | null
   // Project-feed additions (undefined in task-feed context):
   /** Joined server-side for task rows: COALESCE(short_title, title). */
   task_title?: string | null
@@ -341,6 +346,15 @@ export interface ActivityEntryItemProps {
   onToggleThread?: () => void
   /** True when this card IS a reply — suppresses its own reply affordance. */
   isReply?: boolean
+
+  // ── v102 dismiss (root only) ─────────────────────────────────────────────────
+  /** Dismiss (hide) or restore this thread. Passed by ActivityThread only, and
+   *  only to entries the viewer may dismiss (author-or-PI). Reversible, so unlike
+   *  delete it is a single click, not a two-step confirm. */
+  onDismiss?: () => void
+  /** True when this root is currently dismissed — flips the label to "Restore"
+   *  and dims the card. Only meaningful while a feed shows hidden (include_hidden). */
+  isHidden?: boolean
 }
 
 // ── DeleteEntryButton ─────────────────────────────────────────────────────────
@@ -383,6 +397,48 @@ export function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
       } as React.CSSProperties}
     >
       <Trash2 size={11} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
+    </button>
+  )
+}
+
+// Quiet "dismissed" tag shown on a shown-hidden root (feed opened with
+// include_hidden) so it reads as retained-but-hidden, not live.
+function DismissedTag() {
+  return (
+    <span
+      aria-label="Dismissed — hidden from the feed"
+      className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded"
+      style={{ fontSize: META_FONT_SIZE, color: 'var(--slate)', background: 'rgba(100,116,139,0.1)', opacity: 0.85, flexShrink: 0 }}
+    >
+      <EyeOff size={8} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
+      dismissed
+    </span>
+  )
+}
+
+// Hover-revealed dismiss / restore toggle (thread ROOT only). Dismiss hides the
+// whole thread from feeds but RETAINS the rows; it is reversible ("Show hidden" →
+// Restore), so — unlike delete — it is a single click with no two-step confirm.
+function DismissEntryButton({ isHidden, onClick }: { isHidden?: boolean; onClick: () => void }) {
+  const label = isHidden ? 'Restore to feed' : 'Dismiss thread'
+  const Icon = isHidden ? Eye : EyeOff
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onClick() }}
+      title={label}
+      aria-label={label}
+      className="inline-flex items-center justify-center cursor-pointer hov-color ae-dismiss"
+      style={{
+        width: 18, height: 18, flexShrink: 0, background: 'transparent', border: 'none',
+        borderRadius: 'var(--radius-sm)', color: 'var(--slate)',
+        // A restored-state eye stays visible (it's the affordance to re-hide a
+        // shown-hidden row); a dismiss eye is a quiet hover action like edit.
+        opacity: isHidden ? 0.85 : 0.45, padding: 0,
+        '--hov-color': 'var(--teal)',
+      } as React.CSSProperties}
+    >
+      <Icon size={11} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
     </button>
   )
 }
@@ -579,6 +635,8 @@ export function ActivityEntryItem({
   threadExpanded,
   onToggleThread,
   isReply,
+  onDismiss,
+  isHidden,
 }: ActivityEntryItemProps) {
   const isTask = entry.entity_type === 'task'
   const isHermes = entry.actor_slug === 'claude-ai'
@@ -646,6 +704,10 @@ export function ActivityEntryItem({
     ...(isHermes
       ? { border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderLeft: `3px solid ${barColor}` }
       : { borderLeft: `3px solid ${barColor}`, boxShadow: '0 0 0 1px color-mix(in srgb, var(--slate) 15%, transparent)' }),
+    // Dismissed (shown-hidden) roots read as "not in the live feed" via a DASHED
+    // muted spine — NOT a whole-card opacity dim, which would compound with the
+    // colored child spans and fail AA (CLAUDE.md compound-opacity rule).
+    ...(isHidden ? { borderLeft: '3px dashed var(--border-subtle)' } : {}),
     ...taskOriginStyle,
   }
 
@@ -702,7 +764,9 @@ export function ActivityEntryItem({
             </span>
             <HermesMark size={10} variant="icon" aria-hidden="true" />
             {entry.visibility === 'author' && <AuthorOnlyBadge />}
+            {isHidden && <DismissedTag />}
             <EntryTime ts={entry.created_at} className="ml-auto" />
+            {onDismiss && <DismissEntryButton isHidden={isHidden} onClick={onDismiss} />}
             {onDelete && <DeleteEntryButton onDelete={onDelete} />}
           </div>
         </div>
@@ -768,8 +832,10 @@ export function ActivityEntryItem({
             </span>
             {nameBadge}
             {entry.visibility === 'author' && <AuthorOnlyBadge />}
+            {isHidden && <DismissedTag />}
             <EntryTime ts={entry.created_at} className="ml-auto" />
             {onEdit && !editing && <EditEntryButton onClick={() => setEditing(true)} />}
+            {onDismiss && <DismissEntryButton isHidden={isHidden} onClick={onDismiss} />}
             {onDelete && <DeleteEntryButton onDelete={onDelete} />}
           </div>
 
