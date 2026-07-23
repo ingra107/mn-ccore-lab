@@ -77,7 +77,36 @@ member, `hidden_by` recorded), and §7 Q5 (`day` in `SEEN_TYPES` — recommendat
 
 ---
 
-## 0.5 PHASE 1 EXECUTION LOG (2026-07-22 PM — updates §2.5, §9.2)
+## 0.5 EXECUTION LOG (2026-07-22 PM — updates §2.5, §9.2)
+
+### ✅ PHASE 2 COMPLETE + DEPLOYED (live = `e6dc831a`, probe PASS) — 2026-07-22
+
+The WRITE side of the dismiss mechanism is done and live. `POST /api/activity/:id/hide`
+`{ hidden: boolean }` (route contract **254 → 255**, author-or-PI, symmetric) hides/restores
+a thread ROOT + its replies in one cascade UPDATE; a reply → 400; hidden is RETAINED
+(searchable + reachable by Hermes's transcript, per owner 9.1.5). INHERITANCE is wired:
+`postActivityEntry` inherits `hidden_at` from the parent (bound LAST, index 14, so §2.3's
+positional test stays green), so a reply posted AFTER a dismiss is born hidden — no leak.
+The three feeds (task/project/artifact) gained `?include_hidden=1` + a `hidden_count` (marked
+exempt) and now SELECT `ae.hidden_at`. Frontend: an eye toggle on each root (single click —
+reversible), a dashed muted spine + "dismissed" tag on shown-hidden roots (NOT card opacity —
+compound-opacity rule), one shared `ShowHiddenToggle` ("N dismissed — show/hide") across all
+three feeds, and `useDismissThread` (invalidation-only, drains the teal ● unseen badge).
+
+Gates: `check-activity-reads` **50 reads / 33 guarded / 17 exempt / 0 unguarded**; `tsc -b`
+clean; `typecheck:api` PASS; **`test:api` 1185/1185** (+9 hide/inheritance/cascade/auth tests
+through the real endpoint). Prod probes (PB_API_KEY in-place): fake-id hide → 404 (route wired,
+auth passed), missing body → 400, project feed returns `hidden_count`. Commits: `955fae12`
+(2a backend) · `e6dc831a` (2b UI).
+
+**Next: Phase 3** (the `day` entity + `POST /api/days/:date/activity` + delete the `ai-requests`
+`source_type` allowlist, gating on "source_id resolves to an activity_entries row" instead;
+`context = NULL` for `day` is the cross-repo-safety line). Then 4 (backfill 16 rows) → 5 (writer
+flip, RISKIEST — codex consult) → 8 (Quick Capture) → 9 (nav badge) → 10 (retrieval — codex
+consult; §9.11's leak constraints non-negotiable) → 6 (deletions, after 24h dogfood).
+⚠️ Still open from before this session: Nick's empirical `@workon` confirm (Wave 1, `650bdf19`).
+
+---
 
 ### ✅ PHASE 1 COMPLETE + DEPLOYED (live = `e5d5ba32`, probe PASS)
 
