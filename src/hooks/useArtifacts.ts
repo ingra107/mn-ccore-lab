@@ -45,6 +45,31 @@ export function useArtifactGallery(tag?: string) {
   })
 }
 
+/**
+ * Ids of shelved artifacts whose TITLE or BODY matches `q`.
+ *
+ * Only ids come back: bodies are far too big to ship to a card grid, so the
+ * match happens server-side and the page unions these ids into the shelf it
+ * already holds. Empty/blank `q` never hits the network.
+ */
+export function useArtifactBodySearch(q: string) {
+  const term = q.trim()
+  return useQuery<string[]>({
+    queryKey: ['artifact-search', term],
+    queryFn: async () => {
+      const res = await fetch(`/api/artifacts/search?q=${encodeURIComponent(term)}`)
+      if (!res.ok) return []
+      const data = await res.json() as { data?: string[] }
+      return data.data ?? []
+    },
+    enabled: term.length > 0,
+    staleTime: 30 * 1000,
+    // keep the last matches on screen while the next query is in flight, so
+    // typing does not flash the shelf empty between keystrokes
+    placeholderData: (prev) => prev,
+  })
+}
+
 /** Distinct tags + usage counts — filter chips + editor autocomplete. */
 export function useArtifactTags() {
   return useQuery<ArtifactTagCount[]>({

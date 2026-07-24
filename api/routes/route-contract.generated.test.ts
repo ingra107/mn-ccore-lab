@@ -126,11 +126,14 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   GET    /api/artifact-tags          — distinct tags + counts.
     //   POST   /api/artifacts/:id/tags     — add a collection tag (authed team).
     //   DELETE /api/artifacts/:id/tags/:tag — remove a collection tag (authed team).
+    // 263 as of 2026-07-24 — artifact body search (+1, backlog #913):
+    //   GET    /api/artifacts/search?q=   — ids of shelved artifacts whose title
+    //                                       or body matches; ids only, never bodies.
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(262)
+    expect(ROUTE_REGISTRY).toHaveLength(263)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

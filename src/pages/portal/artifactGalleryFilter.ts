@@ -6,8 +6,10 @@
 //
 // Scope: the gallery feed carries metadata only — title, tags, author, dates.
 // Bodies are deliberately absent (an html artifact runs to tens of KB; loading
-// every one to render a card grid would be wasteful), so this does NOT search
-// the text inside an artifact. That needs a server-side index.
+// every one to render a card grid would be wasteful), so the text INSIDE an
+// artifact is matched server-side instead (`/api/artifacts/search`, which
+// returns ids only) and passed in here as `bodyMatchIds`. Metadata matching
+// stays local so it lands on the keystroke; body matches join a beat later.
 
 import type { GalleryArtifact } from '../../hooks/useArtifacts'
 import { getPersonInfo } from '../../data/team'
@@ -31,11 +33,16 @@ function searchableText(a: GalleryArtifact): string {
  * search is AND across whitespace-separated terms, so "aims grant" finds the
  * grant-writing Aims Funnel regardless of word order. The two compose: search
  * runs within the selected shelf.
+ *
+ * `bodyMatchIds` are ids the server matched on title or body text. An artifact
+ * shows if its metadata matches locally OR its body matched server-side —
+ * either is a real answer to "where's that thing about X".
  */
 export function filterArtifacts(
   artifacts: GalleryArtifact[],
   selectedTags: Set<string>,
   query: string,
+  bodyMatchIds?: Iterable<string>,
 ): GalleryArtifact[] {
   const byTag = selectedTags.size === 0
     ? artifacts
@@ -44,7 +51,9 @@ export function filterArtifacts(
   const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   if (terms.length === 0) return byTag
 
+  const fromBody = new Set(bodyMatchIds ?? [])
   return byTag.filter((a) => {
+    if (fromBody.has(a.id)) return true
     const haystack = searchableText(a)
     return terms.every((term) => haystack.includes(term))
   })

@@ -58,7 +58,7 @@ import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
 import { handleGetHermesDayIndex } from './routes/hermes';
 import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRefireLaunch, handleClaimLaunch, handleListPendingLaunches } from './routes/launch-log';
-import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleDeleteArtifact, handleAddArtifactComment, handleGetArtifactGallery, handleGetArtifactTags, handleAddArtifactTag, handleRemoveArtifactTag } from './routes/artifacts';
+import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleDeleteArtifact, handleAddArtifactComment, handleGetArtifactGallery, handleSearchArtifacts, handleGetArtifactTags, handleAddArtifactTag, handleRemoveArtifactTag } from './routes/artifacts';
 import { escapeHtml } from './lib/escapeHtml';
 import { handlePBCapture, handlePBDefer, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
@@ -1097,6 +1097,14 @@ defineRoute({
   entity: 'artifacts',
   visibility: 'na',
   handler: (c) => handleGetArtifactGallery(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/artifacts/search',
+  auth: 'authed',
+  entity: 'artifacts',
+  visibility: 'na',
+  handler: (c) => handleSearchArtifacts(U(c), E(c)),
 });
 defineRoute({
   method: 'GET',

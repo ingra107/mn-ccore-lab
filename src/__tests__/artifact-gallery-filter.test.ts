@@ -62,4 +62,19 @@ describe('filterArtifacts', () => {
   it('returns nothing rather than everything when a term matches nothing', () => {
     expect(filterArtifacts(SHELF, none, 'zzzznotathing')).toEqual([])
   })
+
+  it('includes an artifact the server matched on its body text', () => {
+    // "no-PHI sandbox" appears inside the teaching card, in no title or tag
+    expect(filterArtifacts(SHELF, none, 'sandbox')).toEqual([])
+    expect(filterArtifacts(SHELF, none, 'sandbox', ['art_teach'])).toEqual([TEACHING])
+  })
+
+  it('still honours the tag chips over a body match', () => {
+    expect(filterArtifacts(SHELF, new Set(['grant-writing']), 'sandbox', ['art_teach'])).toEqual([])
+  })
+
+  it('ignores body matches when the search box is empty', () => {
+    // a stale id from an in-flight request must not filter the resting shelf
+    expect(filterArtifacts(SHELF, none, '', ['art_teach'])).toHaveLength(2)
+  })
 })

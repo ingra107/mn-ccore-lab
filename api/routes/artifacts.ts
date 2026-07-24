@@ -162,6 +162,58 @@ export async function handleGetArtifactGallery(url: URL, env: Env): Promise<Resp
   return json({ data: rows, count: rows.length });
 }
 
+// ── GET /api/artifacts/search?q=<text> ──────────────────────────────────────────
+// Finds shelved artifacts by words INSIDE them, and returns nothing but ids.
+//
+// WHY ids only: the gallery feed (above) deliberately carries no `body_md` —
+// an html artifact runs to tens of KB, and the card grid loads every row at
+// once. Bodies must therefore never ride a list response. So the search happens
+// where the bodies already are, and the client unions these ids into the shelf
+// it already holds. It also leaves the gallery's own caching untouched.
+//
+// Terms are ANDed and each must appear in the title or the body, so
+// "sedation protocol" finds an artifact mentioning both, in any order. LIKE is
+// right at this shelf's size; if the shelf grows into the hundreds this is the
+// seam to put an FTS5 index behind, with the same response shape.
+//
+// MUST be registered before GET /api/artifacts/:id (the catch-all).
+const MAX_SEARCH_TERMS = 6;
+const MAX_TERM_LEN = 64;
+
+/** Escapes the LIKE wildcards so a literal % or _ in a query matches itself. */
+function likeTerm(term: string): string {
+  return `%${term.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
+}
+
+export async function handleSearchArtifacts(url: URL, env: Env): Promise<Response> {
+  const raw = (url.searchParams.get('q') || '').trim().toLowerCase();
+  const terms = raw.split(/\s+/).filter(Boolean).slice(0, MAX_SEARCH_TERMS)
+    .map((t) => t.slice(0, MAX_TERM_LEN));
+
+  // An empty query means "no opinion", not "everything" — the client is showing
+  // the whole shelf already, and returning every id would say the same thing at
+  // the cost of a scan.
+  if (terms.length === 0) return json({ data: [], count: 0 });
+
+  const clauses = terms.map(() => "(LOWER(a.title) LIKE ? ESCAPE '\\' OR LOWER(a.body_md) LIKE ? ESCAPE '\\')");
+  const binds: string[] = [];
+  for (const term of terms) {
+    const like = likeTerm(term);
+    binds.push(like, like);
+  }
+
+  const query =
+    'SELECT a.id FROM artifacts a ' +
+    // same curation gate as the gallery: untagged artifacts are not on the shelf
+    'WHERE a.id IN (SELECT artifact_id FROM artifact_tags) ' +
+    `AND ${clauses.join(' AND ')} ` +
+    'ORDER BY a.updated_at DESC, a.id DESC';
+
+  const result = await env.DB.prepare(query).bind(...binds).all();
+  const ids = ((result.results as { id: string }[] | undefined) || []).map((r) => r.id);
+  return json({ data: ids, count: ids.length });
+}
+
 // ── GET /api/artifact-tags ──────────────────────────────────────────────────────
 // Distinct tags with usage counts, busiest-first then alphabetical. Feeds the
 // gallery filter chips and the per-artifact editor autocomplete. { data, count }.

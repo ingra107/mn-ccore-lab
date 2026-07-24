@@ -17,7 +17,8 @@ import HermesMark from '../../components/HermesMark'
 import { Chip } from '../../components/ui/Chip'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { usePageMeta } from '../../hooks/usePageMeta'
-import { useArtifactGallery, useArtifactTags } from '../../hooks/useArtifacts'
+import { useArtifactGallery, useArtifactTags, useArtifactBodySearch } from '../../hooks/useArtifacts'
+import { useDebounce } from '../../hooks/useDebounce'
 import { PATHS } from '../../constants/paths'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { getPersonInfo } from '../../data/team'
@@ -42,13 +43,19 @@ export default function ArtifactsGalleryPage() {
       return next
     })
 
-  // Free-text search over what the gallery feed actually carries: title, tags,
-  // and the creator's name. Bodies are deliberately NOT in the feed (an html
-  // artifact runs to tens of KB and every card would pay for it), so this does
-  // not search inside an artifact — see the note above the input.
+  // Search runs in two places at once. Title, tags, and author are in the feed
+  // already, so those match locally on the keystroke. The text INSIDE an
+  // artifact lives only in the database — bodies are far too big to ship to a
+  // card grid — so that half is a debounced server call returning ids, unioned
+  // in below. Typing stays responsive; body hits land a beat later.
   const [query, setQuery] = useState('')
+  const debouncedQuery = useDebounce(query, 250)
+  const { data: bodyMatchIds = [] } = useArtifactBodySearch(debouncedQuery)
 
-  const filtered = useMemo(() => filterArtifacts(artifacts, selected, query), [artifacts, selected, query])
+  const filtered = useMemo(
+    () => filterArtifacts(artifacts, selected, query, bodyMatchIds),
+    [artifacts, selected, query, bodyMatchIds],
+  )
 
   return (
     <PageContainer>
@@ -71,9 +78,9 @@ export default function ArtifactsGalleryPage() {
           </div>
         </div>
 
-        {/* ── Search ── narrows by title, tag, or who made it. Composes with
-            the tag chips below (search AND tag), so you can search inside a
-            shelf. Does not reach inside an artifact's body. */}
+        {/* ── Search ── title, tag, author, and the text inside an artifact.
+            Composes with the tag chips below (search AND tag), so you can
+            search within one shelf. */}
         <div style={{ position: 'relative', marginBottom: '0.9rem', maxWidth: 420 }}>
           <Search
             {...ICON_PROPS}
@@ -84,7 +91,7 @@ export default function ArtifactsGalleryPage() {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search artifacts by title, tag, or author"
+            placeholder="Search artifacts — title, tag, author, or text inside"
             aria-label="Search artifacts"
             style={{
               width: '100%',
@@ -153,7 +160,7 @@ export default function ArtifactsGalleryPage() {
               title="Nothing matches"
               subtitle={
                 query.trim()
-                  ? `No artifact matches "${query.trim()}"${selected.size ? ' under the selected tag(s)' : ''}. Titles, tags, and authors are searched — not the text inside an artifact.`
+                  ? `No artifact matches "${query.trim()}"${selected.size ? ' under the selected tag(s)' : ''}. Titles, tags, authors, and artifact text are all searched.`
                   : 'No artifact carries the selected tag(s). Clear the filter to see all.'
               }
               action={{
