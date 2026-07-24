@@ -4,8 +4,7 @@ import { createPortal } from 'react-dom'
 import { Inbox, X, Send } from 'lucide-react'
 import { useProjects } from '../hooks/useApiData'
 import { useUndoToast } from './UndoToast'
-import { isHermesPrefix } from '../lib/hermesRouting'
-import { askHermesOnDay, dayActivityQueryKey, hermesOutcomeToast } from '../lib/askHermes'
+import { dayActivityQueryKey, hermesOutcomeToast } from '../lib/askHermes'
 import InlineSelect from './InlineSelect'
 import { nowInstant } from '../lib/time'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -29,10 +28,13 @@ const TAGS: { value: InboxTag; label: string }[] = [
  * and files it to the `inbox` table. The Peripheral Brain pull script turns
  * each row into a markdown file in `Peripheral-Brain/Inbox/` overnight.
  *
- * EXCEPT a typed `@hermes …` prefix, which is a question rather than a note: it
- * routes to the day feed via askHermesOnDay() instead of filing an inbox event.
- * See src/lib/askHermes.ts for why (2026-07-23 — this was the one capture box
- * Hermes could not hear, and it failed silently).
+ * A typed `@hermes …` prefix files the note AND gets an answer (Nick's call,
+ * 2026-07-23). This component does NOT special-case it: the capture posts
+ * normally, and the server's sync-bulk handler detects the token on first
+ * arrival and dispatches to the day feed (#907). One dispatch site, so the same
+ * typed text behaves identically here and from the mobile PWA, and a capture
+ * cannot be double-asked. We only READ the outcome back off the response to
+ * pick the toast. See api/routes/inbox-events.ts for the guards.
  */
 export default function QuickCaptureInbox() {
   const [open, setOpen] = useState(false)
@@ -120,33 +122,17 @@ export default function QuickCaptureInbox() {
     const trimmed = text.trim()
     if (!trimmed || submitting) return
 
-    // Route 0 — a typed @hermes prefix is a QUESTION, not a note to file. Send it
-    // to the day feed (same lane as the `q` quick-add and the Today bar) instead
-    // of burying it in inbox_events, which has no Hermes handling on either side.
-    // Nick typed `@hermes …` here twice on 2026-07-23 and both asks sat untriaged
-    // with no error — the box gave no hint that it was the one capture surface
-    // Hermes could not hear. The tag + project selectors are inbox-only concepts,
-    // so the prefix simply wins over them.
-    if (isHermesPrefix(trimmed)) {
-      setSubmitting(true)
-      const result = await askHermesOnDay(trimmed)
-      if (result.ok) {
-        setText('')
-        setProjectId('')
-        eventIdRef.current = null
-        queryClient.invalidateQueries({ queryKey: dayActivityQueryKey() })
-      } else {
-        console.error('Quick capture → Hermes failed:', result.error)
-      }
-      const toast = hermesOutcomeToast(result)
-      const show = { success: showSuccess, info: showInfo, error: showError }[toast.kind]
-      show(toast.text)
-      setSubmitting(false)
-      // Keep the sheet open on failure so the text isn't lost.
-      if (result.ok) close()
-      return
-    }
-
+    // A typed @hermes is NOT intercepted here. Nick's call 2026-07-23: an
+    // @hermes capture should FILE the note AND get the answer, on every path.
+    //
+    // That makes the client interception actively wrong rather than merely
+    // redundant. This box files through POST /api/inbox-events/sync-bulk, which
+    // is where the server-side detect lives (#907) -- so intercepting here too
+    // would dispatch Hermes TWICE for one capture. Deleting the interception
+    // gives both halves with ONE dispatch site: the row is written, the server
+    // sees a first arrival carrying the token, and it dispatches. The response's
+    // `hermes` array is what we surface below, so the toast still reports the
+    // outcome instead of the ask disappearing.
     setSubmitting(true)
     try {
       const now = nowInstant()
@@ -170,10 +156,25 @@ export default function QuickCaptureInbox() {
         }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const out = await res.json().catch(() => ({})) as {
+        data?: { hermes?: Array<{ dispatched: boolean; reason?: string }> }
+      }
       setText('')
       setProjectId('')
       eventIdRef.current = null
-      showSuccess('Captured → Inbox')
+
+      // The server reports whether a typed @hermes dispatched (#907). Surface
+      // that instead of the generic "Captured" so an ask can never look filed
+      // but unanswered -- the whole point of routing it at all.
+      const ask = out.data?.hermes?.[0]
+      if (ask) {
+        queryClient.invalidateQueries({ queryKey: dayActivityQueryKey() })
+        const toast = hermesOutcomeToast({ ok: true, hermes: ask })
+        const show = { success: showSuccess, info: showInfo, error: showError }[toast.kind]
+        show(toast.text)
+      } else {
+        showSuccess('Captured → Inbox')
+      }
       setTimeout(() => {
         setSubmitting(false)
         close()

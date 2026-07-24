@@ -276,7 +276,7 @@ describe('handleSyncBulkInboxEvents — @hermes dispatch (#907)', () => {
     const res = await handleSyncBulkInboxEvents(
       bulkRequest({ events, ...extra }), testUser, { DB: db } as unknown as Env,
     );
-    return (await res.json()) as { data: { hermes?: Array<{ dispatched: boolean }> } };
+    return (await res.json()) as { data: { hermes?: Array<{ dispatched: boolean; reason?: string }> } };
   }
 
   it('dispatches on FIRST arrival of an @hermes capture', async () => {
@@ -299,9 +299,14 @@ describe('handleSyncBulkInboxEvents — @hermes dispatch (#907)', () => {
     expect(mockPost).not.toHaveBeenCalled();
   });
 
-  it('GUARD 3 — a stale capture does not fire an old backlog', async () => {
-    await run([evt({ captured_at: '2026-01-01T00:00:00Z' })]);
+  it('GUARD 3 — a stale capture does not fire an old backlog, but SAYS SO', async () => {
+    // Declining is right; declining silently is the bug this feature exists to
+    // end, just relocated into the guard. The row is filed either way, so the
+    // report is the only thing that tells you no answer is coming.
+    const body = await run([evt({ captured_at: '2026-01-01T00:00:00Z' })]);
     expect(mockPost).not.toHaveBeenCalled();
+    expect(body.data.hermes?.[0].dispatched).toBe(false);
+    expect(body.data.hermes?.[0].reason).toMatch(/older than 24h/);
   });
 
   it('leaves ordinary captures alone', async () => {

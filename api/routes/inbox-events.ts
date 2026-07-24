@@ -208,6 +208,8 @@ export async function handleSyncBulkInboxEvents(
   // #907 guard 1+2+3: collected during the write loop, dispatched after it, so a
   // Hermes failure can never roll back or delay a durable capture.
   const hermesAsks: Array<{ id: string; text: string; day: string }> = [];
+  // Asks a guard DECLINED. Reported, never dropped quietly -- see guard 3.
+  const hermesSkipped: Array<{ client_id: string; dispatched: false; reason: string }> = [];
 
   for (let i = 0; i < body.events.length; i += BATCH_SIZE) {
     const batch = body.events.slice(i, i + BATCH_SIZE);
@@ -279,12 +281,20 @@ export async function handleSyncBulkInboxEvents(
         // can be new. Guard 2 (`clear_existing`) and guard 3 (freshness) sit
         // alongside it; see the block comment at the top of this file.
         const askText = e.raw_text ?? '';
-        if (
-          !body.clear_existing
-          && HERMES_DETECT_RE.test(askText)
-          && isFreshCapture(e.captured_at)
-        ) {
-          hermesAsks.push({ id: e.id, text: askText, day: dayKeyFromCapture(e.captured_at) });
+        if (!body.clear_existing && HERMES_DETECT_RE.test(askText)) {
+          if (isFreshCapture(e.captured_at)) {
+            hermesAsks.push({ id: e.id, text: askText, day: dayKeyFromCapture(e.captured_at) });
+          } else {
+            // Guard 3 declined -- REPORT it. A guard that drops an ask without
+            // saying so is the same silent failure #907 exists to end, just
+            // relocated into the fix. The row is filed either way; this is why
+            // no answer is coming.
+            hermesSkipped.push({
+              client_id: e.id,
+              dispatched: false,
+              reason: `capture older than ${HERMES_MAX_AGE_MS / 3600000}h (${e.captured_at}) -- not dispatched`,
+            });
+          }
         }
         continue;
       }
@@ -305,7 +315,9 @@ export async function handleSyncBulkInboxEvents(
 
   // #907: dispatch AFTER every write has landed. The capture is already durable
   // at this point, so a Hermes outage costs the answer, never the note.
-  const hermes: Array<{ client_id: string; dispatched: boolean; reason?: string }> = [];
+  const hermes: Array<{ client_id: string; dispatched: boolean; reason?: string }> = [
+    ...hermesSkipped,
+  ];
   if (hermesAsks.length) {
     const actor = await resolveActor(env, user, undefined, { allowImpersonation: true });
     const actorSlug = 'error' in actor ? null : actor.slug;
