@@ -16,8 +16,50 @@
 // rejected-stale rows synced.
 
 import type { AuthUser, Env } from '../helpers';
-import { json, error, logActivity, isPiRequest, generateId } from '../helpers';
+import { json, error, logActivity, isPiRequest, generateId, resolveActor } from '../helpers';
 import { idempotentDelete } from '../lib/idempotent-delete';
+import { postActivityEntry } from '../lib/activity-entry';
+import { HERMES_DETECT_RE } from '../lib/hermes-mention';
+
+// A typed @hermes in a capture is a QUESTION, not a note to file (PB backlog
+// #907). The browser capture boxes intercept it client-side and route it to the
+// day feed; a producer that does NOT run the Hub bundle -- the mobile PWA, an
+// integration -- reaches this endpoint instead, where the ask used to land as an
+// untriaged row and die with no answer AND no error. Nick lost two that way on
+// 2026-07-23. The silent half is the damage, not the missing feature.
+//
+// Why this was not simply "detect and dispatch": sync-bulk is a BULK, REPLAYABLE
+// upsert, so a naive detect re-fires Hermes on every backfill, retry and full
+// resync. Three guards make a dispatch happen at most once per capture:
+//
+//   1. FIRST ARRIVAL ONLY -- keyed off the pre/post-write id diff the handler
+//      already computes. `pre === undefined` is precisely "this id did not exist
+//      before this request", so the client-supplied event id IS the idempotency
+//      key. A replay takes the ON CONFLICT UPDATE path and can never be a first
+//      arrival.
+//   2. NEVER ON A FULL RESYNC -- `clear_existing` truncates the table first, so
+//      every row would look new. That is a resync, not fresh captures.
+//   3. FRESH CAPTURES ONLY -- a machine pushing a local backlog would otherwise
+//      fire every historical @hermes note at once.
+//
+// A failed dispatch NEVER fails the sync: the row is already durably stored, and
+// losing the answer must not also lose the note.
+const HERMES_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/** Civil YYYY-MM-DD day-feed key from an ISO capture stamp. */
+function dayKeyFromCapture(capturedAt: string | null | undefined): string {
+  const parsed = capturedAt ? new Date(capturedAt) : new Date();
+  const use = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  return `${use.getUTCFullYear()}-${String(use.getUTCMonth() + 1).padStart(2, '0')}-${String(use.getUTCDate()).padStart(2, '0')}`;
+}
+
+/** Guard 3. An unparseable or absent stamp means "now" -- the common case. */
+function isFreshCapture(capturedAt: string | null | undefined): boolean {
+  if (!capturedAt) return true;
+  const t = new Date(capturedAt).getTime();
+  if (Number.isNaN(t)) return true;
+  return Date.now() - t <= HERMES_MAX_AGE_MS;
+}
 
 const INBOX_EVENT_ALLOWED_SOURCES = new Set([
   'telegram', 'gmail', 'hub_pwa', 'file_watcher', 'pomodoro',
@@ -154,6 +196,9 @@ export async function handleSyncBulkInboxEvents(
   let inserted = 0;
   let rejectedStale = 0;
   const results: Array<{ client_id: string; status: string; reason?: string }> = [];
+  // #907 guard 1+2+3: collected during the write loop, dispatched after it, so a
+  // Hermes failure can never roll back or delay a durable capture.
+  const hermesAsks: Array<{ id: string; text: string; day: string }> = [];
 
   for (let i = 0; i < body.events.length; i += BATCH_SIZE) {
     const batch = body.events.slice(i, i + BATCH_SIZE);
@@ -221,6 +266,17 @@ export async function handleSyncBulkInboxEvents(
       if (pre === undefined) {
         inserted += 1;
         results.push({ client_id: e.id, status: 'inserted' });
+        // #907: FIRST ARRIVAL of this id -- the only point at which a capture
+        // can be new. Guard 2 (`clear_existing`) and guard 3 (freshness) sit
+        // alongside it; see the block comment at the top of this file.
+        const askText = e.raw_text ?? '';
+        if (
+          !body.clear_existing
+          && HERMES_DETECT_RE.test(askText)
+          && isFreshCapture(e.captured_at)
+        ) {
+          hermesAsks.push({ id: e.id, text: askText, day: dayKeyFromCapture(e.captured_at) });
+        }
         continue;
       }
       if (post === pre) {
@@ -238,13 +294,61 @@ export async function handleSyncBulkInboxEvents(
     }
   }
 
+  // #907: dispatch AFTER every write has landed. The capture is already durable
+  // at this point, so a Hermes outage costs the answer, never the note.
+  const hermes: Array<{ client_id: string; dispatched: boolean; reason?: string }> = [];
+  if (hermesAsks.length) {
+    const actor = await resolveActor(env, user, undefined, { allowImpersonation: true });
+    const actorSlug = 'error' in actor ? null : actor.slug;
+    for (const ask of hermesAsks) {
+      if (!actorSlug) {
+        hermes.push({ client_id: ask.id, dispatched: false, reason: 'actor_unresolved' });
+        continue;
+      }
+      try {
+        // Same lane the browser boxes use: the body goes VERBATIM (token
+        // intact) to the day feed, whose HERMES_DETECT_RE fires the in-thread
+        // answer. Day threads default private.
+        const posted = await postActivityEntry({
+          env,
+          user,
+          entityType: 'day',
+          entityId: ask.day,
+          kind: 'comment',
+          body: ask.text,
+          actorSlug,
+          visibility: 'author',
+        });
+        hermes.push(
+          posted.ok
+            ? { client_id: ask.id, dispatched: posted.hermes?.dispatched ?? true, reason: posted.hermes?.reason }
+            : { client_id: ask.id, dispatched: false, reason: posted.error },
+        );
+      } catch (err) {
+        console.error('inbox-events: @hermes dispatch failed:', err);
+        hermes.push({ client_id: ask.id, dispatched: false, reason: 'dispatch_threw' });
+      }
+    }
+  }
+
   await logActivity(
     env, 'sync',
-    `Bulk sync: ${inserted}/${body.events.length} inbox_events applied (${rejectedStale} rejected stale)`,
+    `Bulk sync: ${inserted}/${body.events.length} inbox_events applied (${rejectedStale} rejected stale)`
+      + (hermes.length ? `; ${hermes.filter(h => h.dispatched).length}/${hermes.length} @hermes dispatched` : ''),
     user.email, null, null,
   );
 
-  return json({ data: { ok: true, inserted, rejected_stale: rejectedStale, results } });
+  return json({
+    data: {
+      ok: true,
+      inserted,
+      rejected_stale: rejectedStale,
+      results,
+      // Present only when a capture carried @hermes, so the caller can surface
+      // the outcome instead of the ask dying silently -- the #907 complaint.
+      ...(hermes.length ? { hermes } : {}),
+    },
+  });
 }
 
 // POST /api/inbox-events — browser-facing single-capture endpoint.
