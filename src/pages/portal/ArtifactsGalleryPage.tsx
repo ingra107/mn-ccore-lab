@@ -10,7 +10,7 @@
 
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FileText, ArrowRight, Sparkles } from 'lucide-react'
+import { FileText, ArrowRight, Sparkles, Search } from 'lucide-react'
 import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import HermesMark from '../../components/HermesMark'
@@ -22,6 +22,7 @@ import { PATHS } from '../../constants/paths'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { getPersonInfo } from '../../data/team'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { filterArtifacts } from './artifactGalleryFilter'
 
 export default function ArtifactsGalleryPage() {
   usePageMeta('Artifacts · MN-CCORE', 'Curated, reusable lab reference artifacts')
@@ -41,10 +42,13 @@ export default function ArtifactsGalleryPage() {
       return next
     })
 
-  const filtered = useMemo(() => {
-    if (selected.size === 0) return artifacts
-    return artifacts.filter((a) => a.tags.some((t) => selected.has(t)))
-  }, [artifacts, selected])
+  // Free-text search over what the gallery feed actually carries: title, tags,
+  // and the creator's name. Bodies are deliberately NOT in the feed (an html
+  // artifact runs to tens of KB and every card would pay for it), so this does
+  // not search inside an artifact — see the note above the input.
+  const [query, setQuery] = useState('')
+
+  const filtered = useMemo(() => filterArtifacts(artifacts, selected, query), [artifacts, selected, query])
 
   return (
     <PageContainer>
@@ -65,6 +69,33 @@ export default function ArtifactsGalleryPage() {
               Curated, reusable reference artifacts. Tag an artifact to shelve it here.
             </p>
           </div>
+        </div>
+
+        {/* ── Search ── narrows by title, tag, or who made it. Composes with
+            the tag chips below (search AND tag), so you can search inside a
+            shelf. Does not reach inside an artifact's body. */}
+        <div style={{ position: 'relative', marginBottom: '0.9rem', maxWidth: 420 }}>
+          <Search
+            {...ICON_PROPS}
+            size={15}
+            style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate)', opacity: 0.7, pointerEvents: 'none' }}
+          />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search artifacts by title, tag, or author"
+            aria-label="Search artifacts"
+            style={{
+              width: '100%',
+              fontSize: 13,
+              padding: '7px 11px 7px 32px',
+              borderRadius: 'var(--radius-full)',
+              border: '1px solid var(--border-subtle)',
+              background: 'var(--ice)',
+              color: 'var(--ink)',
+            }}
+          />
         </div>
 
         {/* ── Tag-chip filter bar (multi-select; "All" default) ── */}
@@ -119,9 +150,16 @@ export default function ArtifactsGalleryPage() {
           <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)' }}>
             <EmptyState
               icon={<FileText size={28} />}
-              title="No artifacts match this filter"
-              subtitle="No artifact carries the selected tag(s). Clear the filter to see all."
-              action={{ label: 'Clear filter', onClick: () => setSelected(new Set()) }}
+              title="Nothing matches"
+              subtitle={
+                query.trim()
+                  ? `No artifact matches "${query.trim()}"${selected.size ? ' under the selected tag(s)' : ''}. Titles, tags, and authors are searched — not the text inside an artifact.`
+                  : 'No artifact carries the selected tag(s). Clear the filter to see all.'
+              }
+              action={{
+                label: query.trim() ? 'Clear search and filter' : 'Clear filter',
+                onClick: () => { setQuery(''); setSelected(new Set()) },
+              }}
             />
           </div>
         ) : (

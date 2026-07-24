@@ -20,6 +20,7 @@ import { Button } from '../../components/ui/Button'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import EmptyState from '../../components/EmptyState'
 import MarkdownView from '../../components/MarkdownView'
+import HtmlArtifactFrame from '../../components/HtmlArtifactFrame'
 import HermesMark from '../../components/HermesMark'
 import { ActivityEntryItem, type ActivityEntryItemRow } from '../../components/activity/activityRender'
 import { ShowHiddenToggle } from '../../components/activity/ShowHiddenToggle'
@@ -406,18 +407,7 @@ export default function ArtifactPage() {
           style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '1.5rem 1.75rem', marginBottom: '2rem' }}
         >
           {artifact.content_type === 'html' ? (
-            <iframe
-              title={`${artifact.title} (interactive artifact)`}
-              sandbox="allow-scripts"
-              srcDoc={artifact.body_md}
-              style={{
-                width: '100%',
-                minHeight: '70vh',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-lg)',
-                background: '#fff',
-              }}
-            />
+            <HtmlArtifactFrame title={artifact.title} html={artifact.body_md} />
           ) : (
             <MarkdownView source={artifact.body_md} />
           )}

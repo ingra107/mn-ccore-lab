@@ -19,8 +19,10 @@
  * serve path.
  *
  * DO NOT re-add serving here. If a future need arises to render an artifact
- * inside the Hub UI, use the team path's sandboxed `srcDoc` iframe
- * (src/pages/portal/ArtifactPage.tsx), which is also opaque-origin.
+ * inside the Hub UI, use the team path's sandboxed blob-url iframe
+ * (src/components/HtmlArtifactFrame.tsx), which is also opaque-origin. It uses
+ * a blob url rather than srcDoc because srcDoc leaves the document at
+ * about:srcdoc, where one in-page anchor click blanks the artifact (2026-07-24).
  */
 
 import { handleLegacyPublicArtifactRedirect } from '../../api/routes/public-artifact'
