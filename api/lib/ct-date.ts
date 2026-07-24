@@ -22,7 +22,17 @@ const CT_DATE_FMT = new Intl.DateTimeFormat('en-US', {
   day: '2-digit',
 });
 
-function ctDateString(d: Date): string {
+/**
+ * The America/Chicago calendar date of an arbitrary instant, as `YYYY-MM-DD`.
+ *
+ * Exported 2026-07-23 for the inbox-events @hermes lane (#907), which maps a
+ * capture's `captured_at` onto the SAME civil day the Today feed shows. The
+ * browser's `todayKey()` is LOCAL time; a server-side UTC day key silently
+ * routes every evening-CDT capture (19:00 onward) to TOMORROW's feed, where it
+ * is invisible on Today. Caught by a live probe at 20:31 CDT landing on
+ * 2026-07-24. Use this, never `getUTC*()`, for anything a human reads as "today".
+ */
+export function ctDateString(d: Date): string {
   const parts = CT_DATE_FMT.formatToParts(d);
   const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
   return `${get('year')}-${get('month')}-${get('day')}`;

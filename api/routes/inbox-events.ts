@@ -20,6 +20,7 @@ import { json, error, logActivity, isPiRequest, generateId, resolveActor } from 
 import { idempotentDelete } from '../lib/idempotent-delete';
 import { postActivityEntry } from '../lib/activity-entry';
 import { HERMES_DETECT_RE } from '../lib/hermes-mention';
+import { ctDateString } from '../lib/ct-date';
 
 // A typed @hermes in a capture is a QUESTION, not a note to file (PB backlog
 // #907). The browser capture boxes intercept it client-side and route it to the
@@ -46,11 +47,19 @@ import { HERMES_DETECT_RE } from '../lib/hermes-mention';
 // losing the answer must not also lose the note.
 const HERMES_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
-/** Civil YYYY-MM-DD day-feed key from an ISO capture stamp. */
+/**
+ * Civil YYYY-MM-DD day-feed key from an ISO capture stamp, in the LAB's
+ * timezone.
+ *
+ * MUST be America/Chicago, not UTC. The Today feed is keyed by the browser's
+ * LOCAL day (`todayKey()` in src/lib/taskGrouping.ts), so a UTC key silently
+ * files every evening-CDT capture under TOMORROW, where it never appears on
+ * Today -- the same invisible-misroute this whole fix exists to end. Caught by
+ * a live probe at 20:31 CDT that landed on 2026-07-24.
+ */
 function dayKeyFromCapture(capturedAt: string | null | undefined): string {
   const parsed = capturedAt ? new Date(capturedAt) : new Date();
-  const use = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
-  return `${use.getUTCFullYear()}-${String(use.getUTCMonth() + 1).padStart(2, '0')}-${String(use.getUTCDate()).padStart(2, '0')}`;
+  return ctDateString(Number.isNaN(parsed.getTime()) ? new Date() : parsed);
 }
 
 /** Guard 3. An unparseable or absent stamp means "now" -- the common case. */

@@ -310,6 +310,17 @@ describe('handleSyncBulkInboxEvents — @hermes dispatch (#907)', () => {
     expect(body.data.hermes).toBeUndefined();
   });
 
+  it('files the ask on the LAB civil day, not the UTC day', async () => {
+    // Regression: dayKeyFromCapture originally used getUTC*(), so a capture at
+    // 20:31 CDT (01:31 UTC next day) filed under TOMORROW's feed and was
+    // invisible on Today -- the exact silent misroute this feature exists to
+    // end. Caught by a live prod probe, not by the suite, which is why it is
+    // pinned here now. 2026-07-24T01:31Z is still 2026-07-23 in America/Chicago.
+    await run([evt({ captured_at: '2026-07-24T01:31:00Z' })]);
+    expect(mockPost).toHaveBeenCalledTimes(1);
+    expect(mockPost.mock.calls[0][0].entityId).toBe('2026-07-23');
+  });
+
   it('a Hermes failure never fails the capture', async () => {
     mockPost.mockRejectedValue(new Error('hermes down'));
     const body = await run([evt()]);
