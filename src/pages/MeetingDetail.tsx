@@ -55,7 +55,6 @@ import type { HoverCardData } from '../components/HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
 import { getPersonInfo, getMemberBySlug, directors, getAllMembers } from '../data/team'
 import { formatLongDate } from '../lib/dateUtils'
-import { getMeetingFacilitator } from '../lib/facilitator'
 import { PATHS } from '../constants/paths'
 import SmartCompose from '../components/SmartCompose'
 import HeartbeatLine from '../components/HeartbeatLine'
@@ -601,10 +600,10 @@ export default function MeetingDetail() {
             {formatLongDate(meeting.date)}
           </p>
 
-          {/* Facilitator badge */}
+          {/* Facilitator badge — the RECORDED facilitator only. Blank when the
+              meeting doesn't carry one (#102). */}
           {(() => {
-            const facilitatorSlug = getMeetingFacilitator(meeting.date)
-            const facilitatorInfo = facilitatorSlug ? getPersonInfo(facilitatorSlug) : null
+            const facilitatorInfo = meeting.facilitator ? getPersonInfo(meeting.facilitator) : null
             return facilitatorInfo ? (
               <div className="flex items-center gap-2 mt-2">
                 <UserCheck {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />

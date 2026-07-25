@@ -162,13 +162,18 @@ export async function handleUpdateMeetingNotes(meetingId: string, request: Reque
 // manual edit here can never be overwritten by a re-push. Date is NOT editable
 // (it is half of the dedup key).
 export async function handleUpdateMeetingMeta(meetingId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { attendees?: string[]; title?: string; type?: string; tags?: string[] };
+  const body = await request.json() as { attendees?: string[]; title?: string; type?: string; tags?: string[]; facilitator?: string | null };
   const sets: string[] = [];
   const binds: unknown[] = [];
   if (Array.isArray(body.attendees)) { sets.push('attendees = ?'); binds.push(JSON.stringify(body.attendees)); }
   if (typeof body.title === 'string' && body.title.trim()) { sets.push('title = ?'); binds.push(body.title.trim()); }
   if (typeof body.type === 'string' && body.type) { sets.push('type = ?'); binds.push(body.type); }
   if (Array.isArray(body.tags)) { sets.push('tags = ?'); binds.push(JSON.stringify(body.tags)); }
+  // #102: facilitator is recorded, never derived. An explicit null clears it —
+  // this is the one field where "unset it" is a real edit, because a wrong
+  // facilitator is worse than none.
+  if (body.facilitator === null) { sets.push('facilitator = NULL'); }
+  else if (typeof body.facilitator === 'string' && body.facilitator.trim()) { sets.push('facilitator = ?'); binds.push(body.facilitator.trim()); }
   if (sets.length === 0) return error('no editable fields provided', 400);
   const result = await env.DB.prepare(
     `UPDATE meetings SET ${sets.join(', ')}, updated_at = datetime('now') WHERE id = ?`
@@ -461,9 +466,18 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
   const body = await request.json() as {
     date: string; title: string; type?: string; attendees?: string[];
     notes?: string | null; decisions?: string | null; tags?: string[] | null;
-    source_id?: string | null;
+    source_id?: string | null; facilitator?: string | null;
   };
   if (!body.date || !body.title) return error('date and title required', 400);
+
+  // #102: who actually ran the meeting. The UI used to DERIVE this from a hash
+  // of the date, so it was wrong ~always; now it renders the stored value or
+  // nothing. Give the value a writer so the read isn't pointed at a column
+  // nothing fills (the `Project.lastActivity` mistake, #95). Absent/empty never
+  // wipes an existing value — same COALESCE-on-carried-value rule as the rest.
+  const facilitator = typeof body.facilitator === 'string' && body.facilitator.trim()
+    ? body.facilitator.trim()
+    : null;
 
   // `tags` arrives as an array; persist as a JSON string (matches `attendees`).
   // An explicit null / absent tags stays null so the COALESCE guard below can
@@ -505,7 +519,7 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
     // clobber an existing row's type with a default (matches the INSERT
     // branch's `body.type ?? 'biweekly'` default applying to NEW rows only).
     const hasType = typeof body.type === 'string' && body.type.length > 0;
-    if (hasNotes || hasDecisions || hasTags || hasAttendees || hasType || body.source_id) {
+    if (hasNotes || hasDecisions || hasTags || hasAttendees || hasType || body.source_id || facilitator) {
       await env.DB.prepare(
         `UPDATE meetings
             SET notes = COALESCE(?, notes),
@@ -513,6 +527,7 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
                 tags = COALESCE(?, tags),
                 attendees = COALESCE(?, attendees),
                 type = COALESCE(?, type),
+                facilitator = COALESCE(?, facilitator),
                 source_id = COALESCE(source_id, ?),
                 updated_at = datetime('now')
           WHERE id = ?`
@@ -522,6 +537,7 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
         hasTags ? tagsJson : null,
         hasAttendees ? attendeesJson : null,
         hasType ? body.type : null,
+        facilitator,
         body.source_id ?? null,
         existing.id,
       ).run();
@@ -536,12 +552,12 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
 
   const id = `mtg-${body.date}-${generateId().slice(0, 8)}`;
   await env.DB.prepare(
-    'INSERT INTO meetings (id, date, title, type, attendees, notes, decisions, tags, status, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO meetings (id, date, title, type, attendees, notes, decisions, tags, status, source_id, facilitator) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     id, body.date, body.title, body.type ?? 'biweekly',
     body.attendees ? JSON.stringify(body.attendees) : null,
     body.notes ?? null, body.decisions ?? null, tagsJson, 'upcoming',
-    body.source_id ?? null,
+    body.source_id ?? null, facilitator,
   ).run();
 
   await logActivity(env, 'meeting', `Created meeting: "${body.title}" on ${body.date}`, user.email, id, 'meeting');

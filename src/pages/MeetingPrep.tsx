@@ -13,7 +13,6 @@ import { getPersonInfo } from '../data/team'
 import { emailToSlug } from '../lib/emailSlug'
 import { formatLongDate, formatShortDate, isOverdue as isItemOverdue } from '../lib/dateUtils'
 import { PRIORITY_COLORS } from '../lib/taskConstants'
-import { getMeetingFacilitator } from '../lib/facilitator'
 import { PATHS } from '../constants/paths'
 import { staggerContainer, staggerItem } from '../lib/animations'
 import EntityNotFound from '../components/EntityNotFound'
@@ -21,7 +20,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 interface PrepData {
-  meeting: { id: string; title: string; date: string; status: string; attendees: string | null }
+  meeting: { id: string; title: string; date: string; status: string; attendees: string | null; facilitator?: string | null }
   previousMeeting: { id: string; date: string; title: string } | null
   previousActionItems: { id: string; description: string; assignee: string; completed: number; due_date: string | null }[]
   recentActivity: { type: string; description: string; actor: string; entity_id: string; entity_type: string; created_at: string }[]
@@ -72,8 +71,8 @@ export default function MeetingPrep() {
   }
 
   const { meeting, previousMeeting, previousActionItems, recentActivity, upcomingDeadlines, overdueTasks, agendaItems } = data
-  const facilitatorSlug = getMeetingFacilitator(meeting.date)
-  const facilitator = facilitatorSlug ? getPersonInfo(facilitatorSlug) : null
+  // #102: the RECORDED facilitator, or nothing. No derivation.
+  const facilitator = meeting.facilitator ? getPersonInfo(meeting.facilitator) : null
   const pendingPrev = previousActionItems.filter(a => !a.completed)
   const completedPrev = previousActionItems.filter(a => a.completed)
 

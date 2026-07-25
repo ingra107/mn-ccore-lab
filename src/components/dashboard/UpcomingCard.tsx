@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { Calendar, AlertCircle, ArrowRight, ListChecks, CalendarOff, UserCheck } from 'lucide-react'
 import { useMeetingsApi, useMeetingLinkedTasks, useMeetingCadence, useTasks } from '../../hooks/useApiData'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
-import { getMeetingFacilitator } from '../../lib/facilitator'
 import { localDateKey } from '../../lib/dateUtils'
 import { countActionsByMeetingId } from '../../lib/meetingTaskCounts'
 import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
@@ -148,8 +147,8 @@ function UpcomingCard() {
                 {new Date(nextMeeting.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
               </p>
               {(() => {
-                const fSlug = getMeetingFacilitator(nextMeeting.date)
-                const fInfo = fSlug ? getPersonInfo(fSlug) : null
+                // #102: recorded facilitator only — never derived from the date.
+                const fInfo = nextMeeting.facilitator ? getPersonInfo(nextMeeting.facilitator) : null
                 return fInfo ? (
                   <p className="flex items-center gap-1" style={{ fontSize: '10px', color: 'var(--teal)', margin: '2px 0 0 0' }}>
                     <UserCheck {...ICON_PROPS} size={10} />

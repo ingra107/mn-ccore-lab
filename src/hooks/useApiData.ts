@@ -367,6 +367,10 @@ export interface MeetingRow {
   status: string
   created_at: string
   updated_at: string
+  /** schema-v49: who actually ran the meeting. NULL when nobody recorded it —
+   *  and NULL renders nothing. Never derive a facilitator (#102: it used to be
+   *  a hash of the date over an alphabetical roster, so it was always wrong). */
+  facilitator?: string | null
   /** v95: PB's calendar-match id, when this meeting was matched from a PB
    *  push. tasks.meeting_id may carry either this id space or `id` — the
    *  join in handleGetMeeting matches `IN (id, source_id)`; any client-side

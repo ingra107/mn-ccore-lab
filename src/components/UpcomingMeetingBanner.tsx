@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, ArrowRight, CheckCircle2, UserCheck } from 'lucide-react'
 import { useMeetingsApi, useMeetingLinkedTasks } from '../hooks/useApiData'
-import { getMeetingFacilitator } from '../lib/facilitator'
 import { localDateKey } from '../lib/dateUtils'
 import { countActionsByMeetingId } from '../lib/meetingTaskCounts'
 import { getPersonInfo } from '../data/team'
@@ -113,8 +112,8 @@ export default function UpcomingMeetingBanner() {
                   {formattedDate}
                 </p>
                 {(() => {
-                  const fSlug = getMeetingFacilitator(nextMeeting.date)
-                  const fInfo = fSlug ? getPersonInfo(fSlug) : null
+                  // #102: recorded facilitator only — never derived from the date.
+                  const fInfo = nextMeeting.facilitator ? getPersonInfo(nextMeeting.facilitator) : null
                   return fInfo ? (
                     <p
                       className="flex items-center gap-1.5 text-xs mt-1"

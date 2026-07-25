@@ -166,4 +166,6 @@ export interface Meeting {
   decisions?: string[]
   notes?: string
   updated_at?: string  // server row timestamp — drives the new-notes freshness pill
+  /** Who ran the meeting, recorded — never derived. NULL renders nothing (#102). */
+  facilitator?: string | null
 }

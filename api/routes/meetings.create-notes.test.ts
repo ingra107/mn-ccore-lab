@@ -52,11 +52,12 @@ function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[]; notific
         run: async () => {
           if (upper.startsWith('INSERT INTO MEETINGS')) {
             // INSERT (id, date, title, type, attendees, notes, decisions, tags, status, source_id)
-            const [id, date, title, type, attendees, notes, decisions, tags, status, sourceId] = args
+            const [id, date, title, type, attendees, notes, decisions, tags, status, sourceId, facilitator] = args
             meetings.push({
               id, date, title, type, attendees,
               notes: notes ?? null, decisions: decisions ?? null,
               tags: tags ?? null, source_id: sourceId ?? null,
+              facilitator: facilitator ?? null,
               status, created_at: '2026-05-29T00:00:00Z', updated_at: '2026-05-29T00:00:00Z',
             })
             return { meta: { changes: 1 } }
@@ -64,9 +65,9 @@ function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[]; notific
           if (upper.startsWith('UPDATE MEETINGS') && upper.includes('COALESCE')) {
             // UPDATE ... SET notes = COALESCE(?, notes), decisions = COALESCE(?, decisions),
             //               tags = COALESCE(?, tags), attendees = COALESCE(?, attendees),
-            //               type = COALESCE(?, type), source_id = COALESCE(source_id, ?),
-            //               updated_at = ... WHERE id = ?
-            const [notesArg, decisionsArg, tagsArg, attendeesArg, typeArg, sourceIdArg, id] = args
+            //               type = COALESCE(?, type), facilitator = COALESCE(?, facilitator),
+            //               source_id = COALESCE(source_id, ?), updated_at = ... WHERE id = ?
+            const [notesArg, decisionsArg, tagsArg, attendeesArg, typeArg, facilitatorArg, sourceIdArg, id] = args
             const row = meetings.find((m) => m.id === id)
             if (row) {
               if (notesArg !== null && notesArg !== undefined) row.notes = notesArg
@@ -74,6 +75,7 @@ function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[]; notific
               if (tagsArg !== null && tagsArg !== undefined) row.tags = tagsArg
               if (attendeesArg !== null && attendeesArg !== undefined) row.attendees = attendeesArg
               if (typeArg !== null && typeArg !== undefined) row.type = typeArg
+              if (facilitatorArg !== null && facilitatorArg !== undefined) row.facilitator = facilitatorArg
               if (!row.source_id && sourceIdArg !== null && sourceIdArg !== undefined) row.source_id = sourceIdArg
               row.updated_at = '2026-05-29T12:00:00Z'
               return { meta: { changes: 1 } }
