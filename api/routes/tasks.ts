@@ -1357,7 +1357,7 @@ export async function handleGetTaskUpdates(taskId: string, request: Request, env
 // updates) + @hermes dispatch; this handler keeps actor resolution + the
 // activity_log echo + response shaping.
 export async function handlePostTaskUpdate(taskId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { content: string; update_type?: string; author_slug?: string; visibility?: string };
+  const body = await request.json() as { content: string; update_type?: string; author_slug?: string; visibility?: string; source_table?: string | null; source_id?: string | null };
   if (!body.content?.trim()) return error('content required', 400);
 
   // Fix 3: guardTaskProject replaces the duplicate SELECT+assertProjectVisible.
@@ -1369,6 +1369,15 @@ export async function handlePostTaskUpdate(taskId: string, request: Request, use
   if ('error' in actor) return error(actor.error, 400);
   const authorSlug = actor.slug;
 
+  // Idempotency source key — the same contract handlePostProjectUpdate has
+  // carried since the 2026-06-23 PB session-close capture. Without it the TASK
+  // lane had no way to be posted twice safely, so PB could only ever write
+  // per-PROJECT session summaries: session-close and the overnight Inbox flush
+  // both emit the note, and a second POST would have duplicated the row on
+  // every task. Pair-or-neither, matching the project route — a half-set stores
+  // a non-NULL source_table with a NULL source_id, outside the partial
+  // UNIQUE(source_table, source_id) index's intent.
+  const hasSourceKey = body.source_table != null && body.source_id != null;
   const posted = await postActivityEntry({
     env,
     user,
@@ -1380,6 +1389,8 @@ export async function handlePostTaskUpdate(taskId: string, request: Request, use
     actorSlug: authorSlug,
     visibility: body.visibility === 'author' ? 'author' : undefined,
     taskProjectId: guard.projectId,
+    sourceTable: hasSourceKey ? body.source_table : null,
+    sourceId: hasSourceKey ? body.source_id : null,
   });
   if (!posted.ok) return error(posted.error, posted.status);
 

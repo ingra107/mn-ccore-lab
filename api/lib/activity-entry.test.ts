@@ -1087,6 +1087,68 @@ describe('P2-A — project composers write activity_entries; old reads are proje
     expect(row!.source_table).toBeNull()
     expect(row!.source_id).toBeNull()
   })
+
+  // #103: the TASK lane needs the same idempotency contract the project lane
+  // has had since 2026-06-23. Without it PB could only write per-PROJECT
+  // session summaries — session-close and the overnight Inbox backstop both
+  // emit the note, so a task note would have duplicated on every close.
+  it('handlePostTaskUpdate forwards source_table/source_id; a second post with the same key is deduped to ONE row', async () => {
+    const ctx = makeEnv(FX)
+    const post = () => handlePostTaskUpdate(
+      't1',
+      natePostReq({
+        content: 'progress: wired the day-scoped transcript',
+        source_table: 'pb_progress_note',
+        source_id: 'feedfacefeedfacefeedfacefeedfa00',
+      }),
+      NATE,
+      ctx.env,
+    )
+
+    const first = await post()
+    expect(first.status).toBe(201)
+    const firstRow = ctx.ae.find(r => r.entity_type === 'task' && r.source_table === 'pb_progress_note')
+    expect(firstRow).toBeDefined()
+    expect(firstRow!.source_id).toBe('feedfacefeedfacefeedfacefeedfa00')
+    const after1 = ctx.ae.length
+
+    const second = await post()
+    expect(second.status).toBe(201)
+    expect(ctx.ae.length).toBe(after1)
+    expect(ctx.ae.filter(r => r.source_table === 'pb_progress_note').length).toBe(1)
+  })
+
+  it('handlePostTaskUpdate ignores a half-set source key (source_table without source_id)', async () => {
+    const ctx = makeEnv(FX)
+    const res = await handlePostTaskUpdate(
+      't1',
+      natePostReq({ content: 'no key', source_table: 'pb_progress_note' }),
+      NATE,
+      ctx.env,
+    )
+    expect(res.status).toBe(201)
+    const row = ctx.ae.find(r => r.entity_type === 'task' && r.kind === 'update')
+    expect(row).toBeDefined()
+    expect(row!.source_table).toBeNull()
+    expect(row!.source_id).toBeNull()
+  })
+
+  // A project note and a task note with the SAME body on the same day are
+  // DIFFERENT rows — Nick wants the task summary even when it duplicates the
+  // project one. The two lanes must therefore key into different namespaces
+  // (PB prefixes the task key), or one would silently swallow the other.
+  it('a task note and a project note with distinct keys both land', async () => {
+    const ctx = makeEnv(FX)
+    const shared = 'Shipped the transcript fix.'
+    await handlePostProjectUpdate('alpha', natePostReq({
+      content: shared, source_table: 'pb_progress_note', source_id: 'a'.repeat(32),
+    }), NATE, ctx.env)
+    await handlePostTaskUpdate('t1', natePostReq({
+      content: shared, source_table: 'pb_progress_note', source_id: 'b'.repeat(32),
+    }), NATE, ctx.env)
+    const notes = ctx.ae.filter(r => r.source_table === 'pb_progress_note')
+    expect(notes.map(r => r.entity_type).sort()).toEqual(['project', 'task'])
+  })
 })
 
 // ── Hermes placeholder ────────────────────────────────────────────────────────────
