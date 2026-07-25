@@ -1,3 +1,62 @@
+# ▶▶ BUG SWEEP #98/#101/#102/#103 — SHIPPED + DEPLOYED (2026-07-24/25). Live = `84feb637`; HEAD adds `9667ae72` (simplify) — **NOT yet deployed, deploy before trusting prod for the source-key refactor.**
+
+**Bug queue empty.** All four GitHub issues closed, all four `bug_reports` rows resolved.
+
+- **#98 — Hermes had no memory of its own answers.** The reply mechanics closed on 07-22 were
+  real; the Hermes half was not. `dispatchHermes` gated its transcript on
+  `visibility='team' OR actor_slug=requester`. Once threads went private-by-default, Hermes's
+  answers are `visibility='author'` / `actor_slug='claude-ai'` — neither arm — so every
+  follow-up arrived with the user's questions and **none of the assistant's replies**. Now uses
+  the same three-arm predicate `activityVisibilityGate` builds (CLAUDE.md **Rule 82**).
+  `d2c09b0d`. **Found by driving the real path on prod, not by reading code — the code looked
+  correct and had passed review.** The transcript query had NO branch in the test double, so it
+  fell through to an empty result and every transcript assertion had been passing against zero
+  rows. Double now reads the root arm off the SQL; proven by reintroducing the bug (3 fail).
+- **#103 — task-level session notes.** `POST /api/tasks/:id/updates` had no
+  `source_table`/`source_id`, so the task lane couldn't survive being posted twice — which is
+  *the* reason only projects ever got session summaries (session-close posts, the overnight
+  flush re-posts). Both routes now share `sourceKeyFrom()` (**Rule 81**). PB half:
+  `f48524a4e` + `348b3f04d`. Hub: `84feb637`.
+- **#102 — facilitator was a date hash** over an alphabetical roster; never read
+  `meetings.facilitator`, and all 31 prod meetings have NULL there, so *every* facilitator ever
+  shown was invented. Now renders the recorded value or nothing; `src/lib/facilitator.ts`
+  deleted; column given a writer so it isn't a read with no producer (the `#95` mistake).
+  `36918e24`.
+- **#101 — meetings detail panel** showed every meeting's action items under the one you
+  clicked, plus a duplicate of that meeting's own list. Both removed; the add form now files
+  against the selected meeting (it used to file against the most *recent*). `433d11dc`.
+
+**⚠️ Deploy state:** prod is `84feb637`. `9667ae72` (the `sourceKeyFrom` extraction +
+inbox-events test fix) is committed and pushed but **not deployed**. Run
+`npm run deploy:pages:gated`.
+
+**Landmines / things a fresh session should not re-derive:**
+- **`api/routes/inbox-events.test.ts` had a ~24h shelf life** — an absolute `captured_at`
+  against a `Date.now()`-relative freshness guard. It passed at 19:41 and failed at 22:47 the
+  same night. Clock is frozen there now. Look for the same shape elsewhere.
+- **The fork canary is not measuring what its name says, and my first fix was wrong.** I
+  claimed `bash -c 'exit 0'` "never forks" and was about to change it; a bake-off refuted me —
+  **275 bash launches** (PowerShell parent, node parent, login shell, 40KB env, subshells) all
+  succeeded *during* an active crash window. Bash on this machine is fine; the crash is
+  specific to how the **Claude Code harness** invokes bash, and nothing constructible from
+  outside reproduces it. Do not "fix" the probe until there's a target. Canary log:
+  `~/PB-State/data/logs/fork_canary.work.jsonl`.
+- **Gardener runs live in `~/PB-State/data/shared/gardener/runs/`**, not `data/gardener/` — the
+  wrong path is PB **#916** and it cost this session real time. 34 apply-runs, **0 actions**,
+  23 machine-origin rows admitted: a quiet timeline, not a stuck gate. `gate.py:57-67` excludes
+  `pb_progress_note` on purpose — do not allowlist it.
+- **`PB-Logon-Window-Recorder` is armed** (PB `9680e1b9a`). On Nick's next restart it names the
+  process that opens the console window. Unregister once answered.
+- Home fixed the dispatcher health rollup (`52dbf0d36`): mixed cycles were counted as neither
+  ok nor fail, so `last_24h_fail: 0` while 74 of 96 cycles carried a failure. Open: PB **#918**
+  (`kg-auto-enrich` vs `kg-enrich`, both scheduled 02:15, same `MemorySystem`).
+
+**Method note worth keeping:** four wrong assertions this session (three mine, one home's) were
+all the same move — reading a conclusion off the *shape* of an output instead of the rows
+behind it. Memory: `feedback_never-assert-a-number-you-did-not-compute`.
+
+---
+
 # ▶▶ HERMES LANE UNIFICATION — Wave 2 SHIPPED+DEPLOYED (live `1cb5ed32`) AND Phase 10 endpoint DEPLOYED live `3b16c540` (listener committed → home) 2026-07-23. Resume: Phase 10 end-to-end = a home-listener check (home pulls PB + listener restart); + 2 trivial extracts.
 
 > **Resume point is ONE line in `docs/superpowers/plans/2026-07-22-hermes-lane-unification.md` §0.5** —
