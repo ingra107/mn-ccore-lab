@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
-import { Activity, Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale } from 'lucide-react'
+import { Activity, Calendar, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
@@ -11,7 +11,6 @@ import type { MeetingRow, MeetingDetail as MeetingDetailData } from '../hooks/us
 import type { TaskRow } from '../lib/api'
 import { countActionsByMeetingId } from '../lib/meetingTaskCounts'
 import { useCreateTask, useCreateDecision, useUpdateTask, useBulkUpdateTasks } from '../hooks/useMutations'
-import { useUndoToast } from '../components/UndoToast'
 import { useToast } from '../hooks/useToast'
 import { directors, getAllMembers, getPersonInfo } from '../data/team'
 import { projects as projectOptions } from '../data/projects'
@@ -21,8 +20,7 @@ import PageHeader from '../components/PageHeader'
 import InlineSelect from '../components/InlineSelect'
 import InlineAssigneePicker from '../components/InlineAssigneePicker'
 import { TaskRow as SharedTaskRow } from '../components/tasks/TaskRow'
-import { getMeetingFacilitator } from '../lib/facilitator'
-import { parseCarriedForward, emDashifyTitle } from '../lib/textUtils'
+import { emDashifyTitle } from '../lib/textUtils'
 import { formatFullDate, formatShortDate, localDateKey } from '../lib/dateUtils'
 import PageTooltip, { dismissPageTooltip } from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
@@ -73,6 +71,7 @@ function meetingRowToMeeting(row: MeetingRow, tasksByMeetingId: Map<string, Task
     decisions: parseJsonArray(row.decisions),
     notes: row.notes || undefined,
     updated_at: row.updated_at || undefined,
+    facilitator: row.facilitator ?? null,
     actionItems: meetingActions.map((t) => ({
       id: t.id,
       description: t.description,
@@ -142,8 +141,7 @@ function MeetingDetail({ meeting }: MeetingDetailProps) {
   const realActionItems = fullMeeting?.action_items ?? []
   const pendingActions = realActionItems.filter((a) => !isTaskDone(a)).length
   const totalActions = realActionItems.length
-  const fSlug = getMeetingFacilitator(meeting.date)
-  const fInfo = fSlug ? getPersonInfo(fSlug) : null
+  const fInfo = meeting.facilitator ? getPersonInfo(meeting.facilitator) : null
 
   const meetingQueryKey = ['meeting', meeting.id] as const
   function handleToggleDone(item: TaskRow) {
@@ -433,10 +431,7 @@ export default function Meetings() {
 
   const { data: meetingRows = [], isLoading: meetingsLoading } = useMeetingsApi()
   const { data: cadence } = useMeetingCadence()
-  const { showUndo } = useUndoToast()
   const createTaskMutation = useCreateTask()
-  const updateTaskMutation = useUpdateTask()
-  const bulkUpdateTasksMutation = useBulkUpdateTasks()
   // T12: server-backed seen tracking (schema v81) replaces the per-device
   // localStorage hook — multi-device consistent, and the gold/teal split
   // (never_seen vs updated-since-seen) matches the app-wide attention canon.
@@ -446,8 +441,7 @@ export default function Meetings() {
   // T9/T19 (#547): real tasks (tasks.meeting_id), not the legacy action_items
   // table — one unscoped fetch shared by the per-meeting actionItems list
   // (meetingRowToMeeting, below), the list-row counts (actionCountsByMeetingId),
-  // and the global "All Pending Actions" widget (derived from meetings ->
-  // actionItems, so it inherits this source automatically). useMeetingLinkedTasks()
+  // and the page-header totals. useMeetingLinkedTasks()
   // deliberately bypasses useTasks()'s dedupTasks() cross-source collapsing —
   // see its doc comment in useApiData.ts — and shares its cache entry with the
   // dashboard "next meeting" widgets that need the same per-meeting counts.
@@ -468,22 +462,9 @@ export default function Meetings() {
     [meetingRows, tasksByMeetingId]
   )
 
-  // T9: mark-done/reopen for a global-list action item — same
-  // useUpdateTask/useBulkUpdateTasks pattern MeetingDetail's
-  // handleToggleDone already uses. Direction is known from which bucket
-  // (pending vs completed) the click came from, so no read-back is needed.
-  const setActionDone = (id: string, done: boolean) => {
-    if (done) {
-      bulkUpdateTasksMutation.mutate({ ids: [id], action: 'complete' })
-    } else {
-      updateTaskMutation.mutate({ id, fields: { status: 'todo', completed: 0 } })
-    }
-  }
-  const toggleWithUndo = (id: string, currentlyDone: boolean) => {
-    const next = !currentlyDone
-    setActionDone(id, next)
-    showUndo(next ? 'Action item completed' : 'Action item reopened', () => setActionDone(id, currentlyDone))
-  }
+  // (#101) The global mark-done/reopen pair that lived here served only the
+  // cross-meeting action lists in the detail panel. Those are gone; the
+  // per-meeting list inside MeetingDetail has its own handleToggleDone.
 
   // T8/T19: list-row action counts — real tasks (tasks.meeting_id), not the
   // legacy action_items table. Dual-id join (T3: `IN (id, source_id)`)
@@ -584,8 +565,12 @@ export default function Meetings() {
 
   function handleAddActionItem() {
     if (!newActionDesc.trim()) return
-    const sortedMeetings = [...meetings].sort((a, b) => b.date.localeCompare(a.date))
-    const targetMeetingId = sortedMeetings[0]?.id
+    // #101: file against the meeting on screen. This used to pick the most
+    // RECENT meeting by date, so an item added while reading a March meeting
+    // silently landed on last week's — the same "this panel isn't about the
+    // meeting you're looking at" defect as the cross-meeting lists above.
+    const targetMeetingId = selectedMeeting?.id
+    if (!targetMeetingId) return
     createTaskMutation.mutate({
       meeting_id: targetMeetingId,
       description: newActionDesc.trim(),
@@ -680,16 +665,10 @@ export default function Meetings() {
                     <span className="text-xs ml-1.5" style={{ color: 'var(--muted)' }}>
                       {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil}d`}
                     </span>
-                    {(() => {
-                      const fSlug = getMeetingFacilitator(nextMeetingDateStr)
-                      const fInfo = fSlug ? getPersonInfo(fSlug) : null
-                      return fInfo ? (
-                        <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--teal)', marginTop: 2 }}>
-                          <UserCheck {...ICON_PROPS} size={10} />
-                          {fInfo.name.split(' ')[0]}
-                        </span>
-                      ) : null
-                    })()}
+                    {/* #102: no facilitator line here — this widget is keyed on a
+                        COMPUTED next-meeting date, so there is no meeting row to
+                        read a recorded facilitator from. Nothing to show beats a
+                        guess. */}
                   </div>
                   <Clock {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', marginLeft: 4 }} />
                 </div>
@@ -928,50 +907,14 @@ export default function Meetings() {
             <motion.div key={selectedMeeting.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
               <MeetingDetail meeting={selectedMeeting} />
 
-              <div style={{ marginTop: '2.5rem', paddingTop: '2rem' }}>
-                <h3 className="text-base font-medium mb-4" style={{ color: 'var(--ink)' }}>All Pending Actions</h3>
-
-                {pendingActions.length > 0 ? (
-                  <div className="space-y-2 mb-4">
-                    {pendingActions.map((item) => {
-                      const info = getPersonInfo(item.assignee)
-                      const { isCarried: itemIsCarried, clean: itemClean } = parseCarriedForward(item.description)
-                      return (
-                        <div key={item.id || item.description} className="flex items-start gap-3 p-3 rounded-lg action-item-card"
-                          style={{ background: 'var(--surface-2)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, boxShadow: 'var(--shadow-card)' }}>
-                          <button type="button" className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
-                            style={{ background: 'none', border: 'none', padding: 'var(--sp-md)', margin: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'transform 0.15s ease', minWidth: '44px', minHeight: '44px' }}
-                            onClick={() => item.id && toggleWithUndo(item.id, false)}
-                            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.2)' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
-                            title="Mark as completed">
-                            <Circle {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
-                          </button>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm leading-snug" style={{ color: 'var(--ink)' }}>
-                              {itemIsCarried && <span className="carried-badge">&#x21bb; carried</span>}
-                              {item.carryCount && item.carryCount > 1 && (
-                                <span className="carried-count-badge">&times;{item.carryCount}</span>
-                              )}
-                              {itemClean}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-3 mt-1.5">
-                              <div className="flex items-center gap-1.5">
-                                <div style={{ width: 18, height: 18 }}><Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="sm-icon" /></div>
-                                <span className="text-xs" style={{ color: 'var(--slate)' }}>{info.name}</span>
-                              </div>
-                              {item.dueDate && <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.75 }}>due {formatShortDate(item.dueDate)}</span>}
-                              {item.projectSlug && <span className="inline-block px-2 py-0.5 rounded-full text-xs" style={{ background: 'var(--ice)', color: 'var(--slate)', fontSize: '10px' }}>{item.projectSlug}</span>}
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-sm mb-4" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No pending action items.</p>
-                )}
-
+              {/* #101: this panel is about the meeting you clicked. It used to
+                  end with "All Pending Actions" + "Completed (N)" built from
+                  EVERY meeting's items — items with nothing to do with the one
+                  on screen, and a second copy of the ones that did (MeetingDetail
+                  above already lists this meeting's action items from
+                  useMeetingDetail(id)). Both lists are gone; the add form stays
+                  and now files against the SELECTED meeting. */}
+              <div style={{ marginTop: '1.5rem' }}>
                 <QuickAddForm
                   isOpen={showAddAction}
                   onToggle={() => setShowAddAction(true)}
@@ -1013,45 +956,6 @@ export default function Meetings() {
                     </div>
                   </div>
                 </QuickAddForm>
-
-                {completedActions.length > 0 && (
-                  <div className="mt-6">
-                    <h4 className="text-xs font-normal uppercase tracking-wider mb-2" style={{ color: 'var(--teal)', letterSpacing: '0.06em' }}>
-                      Completed ({completedActions.length})
-                    </h4>
-                    <div className="space-y-1.5">
-                      {completedActions.map((item) => {
-                        const info = getPersonInfo(item.assignee)
-                        const { isCarried: cIsCarried, clean: cClean } = parseCarriedForward(item.description)
-                        return (
-                          <div key={item.id || item.description} className="flex items-start gap-3 p-2.5 rounded-lg action-item-card" style={{ background: 'var(--surface-2)', opacity: 0.85 }}>
-                            <button type="button" className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
-                              style={{ background: 'none', border: 'none', padding: 'var(--sp-md)', margin: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'transform 0.15s ease', minWidth: '44px', minHeight: '44px' }}
-                              onClick={() => item.id && toggleWithUndo(item.id, true)}
-                              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.2)' }}
-                              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
-                              title="Mark as pending">
-                              <CheckCircle2 {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
-                            </button>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm leading-snug" style={{ color: 'var(--ink)', textDecoration: 'line-through', opacity: 0.85 }}>
-                                {cIsCarried && <span className="carried-badge">&#x21bb; carried</span>}
-                                {cClean}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-3 mt-1">
-                                <div className="flex items-center gap-1.5">
-                                  <div style={{ width: 16, height: 16 }}><Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="2xs" /></div>
-                                  <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.75 }}>{info.name}</span>
-                                </div>
-                                <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>from {formatShortDate(item.meetingDate)}</span>
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
               </div>
             </motion.div>
           ) : (
