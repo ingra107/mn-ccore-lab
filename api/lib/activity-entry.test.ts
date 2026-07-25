@@ -252,6 +252,43 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
             return null
           },
           all: async () => {
+            // dispatchHermes transcript (#98 multi-turn memory). Thread-scoped
+            // `(ae.id = ?1 OR ae.parent_id = ?1)` or day-scoped
+            // `ae.entity_type = 'day' AND ae.entity_id = ?1`.
+            //
+            // MUST be tested BEFORE the day-feed branch: that branch's regex
+            // (`entity_type = 'day' AND ae.entity_id = ?`) also matches the
+            // day-scoped transcript, and it sorts newest-first through a
+            // different visibility helper — so a transcript assertion would be
+            // reading a feed projection, not the transcript. Until this branch
+            // existed at all the query fell through to the empty default, so
+            // every transcript assertion passed against zero rows. That is how
+            // "Hermes forgets its own prior answer" shipped unnoticed.
+            if (/FROM activity_entries ae/.test(sql) && /ae\.body != \?/.test(sql) && /ORDER BY ae\.created_at ASC/.test(sql)) {
+              const [scopeBind, excludeId, pendingBody, requester] = binds as [string, string, string, string]
+              const dayScoped = /ae\.entity_type = 'day'/.test(sql)
+              let rows = dayScoped
+                ? ae.filter(r => r.entity_type === 'day' && r.entity_id === scopeBind)
+                : ae.filter(r => r.id === scopeBind || r.parent_id === scopeBind)
+              rows = rows.filter(r => r.id !== excludeId && r.kind === 'comment' && r.body !== pendingBody)
+              // The visibility gate, READ OFF THE SQL rather than hardcoded. The
+              // root arm applies only when the statement actually carries the
+              // EXISTS sub-select — otherwise a double that always ran three
+              // arms would keep these tests green even if the arm were deleted
+              // from the product, which is the definition of a proxy artifact.
+              const hasRootArm = /EXISTS \(\s*SELECT 1 FROM activity_entries r/.test(sql)
+                && /r\.visibility = 'author'/.test(sql)
+                && /r\.actor_slug = \?/.test(sql)
+              rows = rows.filter((r) => {
+                if (r.visibility === 'team') return true
+                if (r.actor_slug === requester) return true
+                if (!hasRootArm) return false
+                const root = ae.find(x => x.id === (r.parent_id ?? r.id))
+                return !!root && root.visibility === 'author' && root.actor_slug === requester
+              })
+              rows = [...rows].sort((a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : a.id < b.id ? -1 : 1))
+              return { results: rows.map(r => ({ actor_slug: r.actor_slug, body: r.body, created_at: r.created_at })) }
+            }
             // Per-task projections (comments / updates / activity / detail-updates).
             // The `(ae\.)?` tolerance matches what the project branches below
             // already do: handleGetTaskActivity qualifies its columns because it
@@ -1367,6 +1404,131 @@ describe('postActivityEntry — day entity', () => {
     const binds = aiRequests[0].binds as unknown[]
     expect(binds[1]).toBe('daily_thought') // source_type
     expect(binds[5]).toBeNull()             // context — NEVER "day: <date>"
+  })
+})
+
+// ── #98 multi-turn: the thread transcript Hermes gets in its prompt ───────────
+//
+// Nick's ask: "if I wanted it to do something different with the email, it would
+// have the context of what it did in the prior post." The transcript therefore
+// has to include HERMES'S OWN prior answers, not just the user's questions.
+// Since @hermes threads went private-by-default, those answers are
+// visibility='author' with actor_slug='claude-ai' — neither team-visible nor
+// the requester's — so a two-arm gate dropped every one of them and Hermes
+// answered each follow-up with no memory of what it had just written.
+describe('dispatchHermes — thread transcript (#98)', () => {
+  /** Prompt of the Nth ai_requests insert (bind index 4). */
+  const promptOf = (aiRequests: Array<Record<string, unknown>>, n: number) =>
+    (aiRequests[n].binds as unknown[])[4] as string
+
+  async function privateThreadWithAnswer(env: Env, ae: AERow[]) {
+    const root = await postActivityEntry({
+      env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: '@hermes draft an email to Will about the cohort', actorSlug: 'nate-mesfin', visibility: 'author',
+    })
+    if (!root.ok) throw new Error('root failed')
+    const rootId = root.row.id as string
+    // Stand in for the listener's answer: claude-ai reply, private by inheritance.
+    const answer = await postActivityEntry({
+      env, user: { email: 'claude-ai', name: 'Hermes' }, entityType: 'task', entityId: 't1',
+      kind: 'comment', body: 'Draft: Hi Will, the cohort is 4,812 encounters.',
+      actorSlug: 'claude-ai', visibility: 'author', parentId: rootId, fireSideEffects: false,
+    })
+    if (!answer.ok) throw new Error('answer failed')
+    // Drop the "Thinking…" placeholder the root's dispatch left behind so the
+    // assertions below read a clean two-message thread.
+    for (let i = ae.length - 1; i >= 0; i--) {
+      if (ae[i].body.startsWith('Thinking about this')) ae.splice(i, 1)
+    }
+    return rootId
+  }
+
+  it("carries Hermes's own prior answer into the follow-up prompt", async () => {
+    const { env, ae, aiRequests } = makeEnv(FX)
+    const rootId = await privateThreadWithAnswer(env, ae)
+    await postActivityEntry({
+      env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: '@hermes make it shorter', actorSlug: 'nate-mesfin', visibility: 'author', parentId: rootId,
+    })
+    const prompt = promptOf(aiRequests, aiRequests.length - 1)
+    expect(prompt).toContain('<activity_thread_context')
+    expect(prompt).toContain('4,812')                    // what Hermes said last time
+    expect(prompt).toContain('draft an email to Will')   // the original question
+    expect(prompt).toContain('<current_request>')
+    expect(prompt).not.toContain('Thinking about this')  // placeholders carry no content
+  })
+
+  it('labels the assistant turns so the model can tell who said what', async () => {
+    const { env, ae, aiRequests } = makeEnv(FX)
+    const rootId = await privateThreadWithAnswer(env, ae)
+    await postActivityEntry({
+      env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: '@hermes shorter', actorSlug: 'nate-mesfin', visibility: 'author', parentId: rootId,
+    })
+    const prompt = promptOf(aiRequests, aiRequests.length - 1)
+    expect(prompt).toContain('assistant hermes')
+    expect(prompt).toContain('user nate-mesfin')
+  })
+
+  // LEAK CLASS. The root arm must admit a private child only when the child's
+  // OWN root is author-private AND authored by the requester. A private reply
+  // under someone else's TEAM root fails all three arms and must stay invisible.
+  it("does NOT leak another member's private reply under a shared team root", async () => {
+    const { env, aiRequests } = makeEnv(FX)
+    const root = await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: 'team-visible kickoff', actorSlug: 'nick-ingraham',
+    })
+    if (!root.ok) throw new Error('root failed')
+    const rootId = root.row.id as string
+    await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: 'SECRET salary figure', actorSlug: 'nick-ingraham', visibility: 'author', parentId: rootId,
+    })
+    await postActivityEntry({
+      env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: '@hermes summarise this thread', actorSlug: 'nate-mesfin', parentId: rootId,
+    })
+    const prompt = promptOf(aiRequests, aiRequests.length - 1)
+    expect(prompt).toContain('team-visible kickoff')
+    expect(prompt).not.toContain('SECRET salary figure')
+  })
+
+  it("does NOT leak another member's private day thread into a day-scoped transcript", async () => {
+    const { env, aiRequests } = makeEnv(FX)
+    await postActivityEntry({
+      env, user: NICK, entityType: 'day', entityId: '2026-07-24', kind: 'comment',
+      body: 'SECRET morning thought', actorSlug: 'nick-ingraham', visibility: 'author',
+    })
+    await postActivityEntry({
+      env, user: NATE, entityType: 'day', entityId: '2026-07-24', kind: 'comment',
+      body: '@hermes what did we talk about today', actorSlug: 'nate-mesfin', visibility: 'author',
+    })
+    const prompt = promptOf(aiRequests, aiRequests.length - 1)
+    expect(prompt).not.toContain('SECRET morning thought')
+  })
+
+  it("day scope DOES recall the requester's own earlier private exchange", async () => {
+    const { env, ae, aiRequests } = makeEnv(FX)
+    const first = await postActivityEntry({
+      env, user: NATE, entityType: 'day', entityId: '2026-07-24', kind: 'comment',
+      body: '@hermes remind me to email Will', actorSlug: 'nate-mesfin', visibility: 'author',
+    })
+    if (!first.ok) throw new Error('first failed')
+    await postActivityEntry({
+      env, user: { email: 'claude-ai', name: 'Hermes' }, entityType: 'day', entityId: '2026-07-24',
+      kind: 'comment', body: 'Noted — email Will about the cohort.', actorSlug: 'claude-ai',
+      visibility: 'author', parentId: first.row.id as string, fireSideEffects: false,
+    })
+    for (let i = ae.length - 1; i >= 0; i--) {
+      if (ae[i].body.startsWith('Thinking about this')) ae.splice(i, 1)
+    }
+    await postActivityEntry({
+      env, user: NATE, entityType: 'day', entityId: '2026-07-24', kind: 'comment',
+      body: '@hermes what was that again', actorSlug: 'nate-mesfin', visibility: 'author',
+    })
+    const prompt = promptOf(aiRequests, aiRequests.length - 1)
+    expect(prompt).toContain('email Will about the cohort')
   })
 })
 

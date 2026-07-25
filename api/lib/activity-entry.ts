@@ -710,21 +710,44 @@ async function dispatchHermes(
   // requester-scoped + visibility-gated in SQL, so a transcript can never surface
   // a sibling the asker can't read; hidden rows ARE included (dismiss ≠ forget).
   const dayScoped = args.entityType === 'day';
-  const scopeClause = dayScoped ? `entity_type = 'day' AND entity_id = ?1` : `(id = ?1 OR parent_id = ?1)`;
+  const scopeClause = dayScoped ? `ae.entity_type = 'day' AND ae.entity_id = ?1` : `(ae.id = ?1 OR ae.parent_id = ?1)`;
   const scopeBind = dayScoped ? args.entityId : args.threadRootId;
   if (scopeBind) {
     try {
+      // The gate is the SAME three-arm predicate activityVisibilityGate builds
+      // for a reply read, root arm included. A two-arm gate
+      // (`visibility='team' OR actor_slug=requester`) silently dropped HERMES'S
+      // OWN PRIOR ANSWERS: since the private-by-default flip those rows are
+      // visibility='author' with actor_slug='claude-ai', so they are neither
+      // team-visible nor the requester's. The transcript therefore carried the
+      // user's questions and none of the assistant's replies — which is exactly
+      // the memory #98 asked for ("it would have the context of what it did in
+      // the prior post"). The root arm widens nothing: it admits a row only when
+      // the row's OWN thread root is author-private AND authored by the
+      // requester, and such a root is already invisible to everyone else, hence
+      // so are its children. A private sub-reply under someone else's TEAM root
+      // still fails all three arms.
+      //
       // activity-hidden-exempt: Hermes transcript (thread- or day-scoped). Owner
       // requirement 9.1.5: dismiss must not mean forget — Hermes sees hidden
-      // rows. Requester-scoped + visibility-gated in the WHERE below regardless.
+      // rows. Requester-scoped + visibility-gated in the WHERE regardless.
       const priorRes = await env.DB.prepare(
-        `SELECT actor_slug, body, created_at FROM activity_entries
+        `SELECT ae.actor_slug, ae.body, ae.created_at FROM activity_entries ae
           WHERE ${scopeClause}
-            AND id != ?2
-            AND kind = 'comment'
-            AND body != ?3
-            AND (visibility = 'team' OR actor_slug = ?4)
-          ORDER BY created_at ASC, id ASC`
+            AND ae.id != ?2
+            AND ae.kind = 'comment'
+            AND ae.body != ?3
+            AND (
+              ae.visibility = 'team'
+              OR ae.actor_slug = ?4
+              OR EXISTS (
+                   SELECT 1 FROM activity_entries r
+                    WHERE r.id = COALESCE(ae.parent_id, ae.id)
+                      AND r.visibility = 'author'
+                      AND r.actor_slug = ?4
+                 )
+            )
+          ORDER BY ae.created_at ASC, ae.id ASC`
       ).bind(scopeBind, args.entryId, HERMES_PENDING_BODY, actorSlug(args.requestedBy)).all<{
         actor_slug: string; body: string; created_at: string;
       }>();
