@@ -359,15 +359,29 @@ Codex Pass 0 (sibling audit) + Pass 1 (expand-surface matrix) ran (`codex-d1-par
 >
 > **Nick's pending:** phone re-test (esp. ✓ Complete on the task panel bottom bar), Ask-the-Lab
 > retire verdict (1 question ever, 0 answers — recommend retirement, substrate-swap-gated),
-> gardener maiden --apply artifact review (ran 22:40, home), N1b remaining de-box waves ride
+> ~~gardener maiden --apply artifact review (ran 22:40, home)~~ **CLOSED 2026-07-24 — nothing
+> to review** (see the corrected note below the docket header), N1b remaining de-box waves ride
 > the queued pill-language sweep task.
 
 # ▶▶▶ NEXT-SESSION DOCKET (Nick-ordered 2026-06-11 close) — EXECUTE IN ORDER
 
 > Nick verbatim: "Make sure all these are crystal clear in that order and then we can have the
 > next session just start tackling them." Each ticket is self-contained — no re-triaging.
-> **Nick's own first move (not a ticket): review the gardener's FIRST --apply artifact**
-> (PB `data/gardener/runs/`, maiden run 2026-06-11 22:40 home).
+> ~~**Nick's own first move (not a ticket): review the gardener's FIRST --apply artifact**
+> (PB `data/gardener/runs/`, maiden run 2026-06-11 22:40 home).~~
+> **CLOSED 2026-07-24 — there is nothing to review, and the path above is wrong.** Runs live in
+> `~/PB-State/data/shared/gardener/runs/` (Syncthing, on BOTH machines), not `data/gardener/`;
+> the repo-relative path never existed and sent a later session hunting on the wrong disk
+> (PB #916). Of the 36 files, the only 06-11 ones are two **dry runs** (12:07Z + 12:09Z), both
+> empty: 0 actions, 0 rejected proposals, 0 rollback SQL. No `--apply` artifact for 06-11 or
+> 06-12 exists on either machine; the first is `2026-06-13`. Line 644 below reads "tonight
+> 22:40 is its maiden mutation run" — forward-looking, written on the 11th, and nobody ever
+> recorded that it ran. The likeliest reading (home, verified against the same HEAD) is that
+> Nick approved `--apply` on the 11th and the first scheduled apply landed on the 13th, so no
+> file is missing. Either way the review has no content behind it. Across all 34 apply-mode
+> runs the gardener has taken **0 actions** — 23 machine-origin rows admitted, none duplicates.
+> That is a quiet timeline, not a broken gate (`scripts/gardener/gate.py:57-67` excludes
+> `pb_progress_note` deliberately — do not "fix" it).
 >
 > **THE HOUSE STYLE IS LOCKED** (evening, 8 panel rounds, Nick: "lock it in this is great!!!"):
 > 8-point canon in `docs/design-system.md` "THE LOCKED PANEL STYLE" — one surface, borderless-
