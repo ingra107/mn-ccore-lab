@@ -874,6 +874,26 @@ export async function activityVisibilityGate(
  *                 (queues, badges, scores, search) never does. Returns `1=1` so
  *                 the call site is uniform whether or not hidden is shown.
  */
+/**
+ * The PB idempotency pair, read off a request body under ONE rule: pair or
+ * neither. A half-set stores a non-NULL source_table against a NULL source_id,
+ * which sits outside the partial UNIQUE(source_table, source_id) index's WHERE
+ * guard and so dedups nothing.
+ *
+ * Shared because the project route and the task route must agree forever — PB
+ * posts the SAME session note to both lanes, and two copies of this rule are two
+ * things that can drift apart. (#103)
+ */
+export function sourceKeyFrom(
+  body: { source_table?: string | null; source_id?: string | null },
+): { sourceTable: string | null; sourceId: string | null } {
+  const paired = body.source_table != null && body.source_id != null;
+  return {
+    sourceTable: paired ? body.source_table! : null,
+    sourceId: paired ? body.source_id! : null,
+  };
+}
+
 export function activityHiddenClause(alias = '', include = false): string {
   if (include) return '1=1';
   return `${alias ? alias + '.' : ''}hidden_at IS NULL`;

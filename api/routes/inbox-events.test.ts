@@ -321,9 +321,21 @@ describe('handleSyncBulkInboxEvents — @hermes dispatch (#907)', () => {
     // invisible on Today -- the exact silent misroute this feature exists to
     // end. Caught by a live prod probe, not by the suite, which is why it is
     // pinned here now. 2026-07-24T01:31Z is still 2026-07-23 in America/Chicago.
-    await run([evt({ captured_at: '2026-07-24T01:31:00Z' })]);
-    expect(mockPost).toHaveBeenCalledTimes(1);
-    expect(mockPost.mock.calls[0][0].entityId).toBe('2026-07-23');
+    //
+    // The clock is FROZEN because Guard 3 (isFreshCapture) is relative to
+    // Date.now() while this stamp is absolute: the pair gave the test a ~24h
+    // shelf life, and it began failing mid-session on 2026-07-25 when the
+    // capture aged past the guard. A test that expires is a test that reports
+    // on the calendar rather than on the code.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-24T02:00:00Z'));
+    try {
+      await run([evt({ captured_at: '2026-07-24T01:31:00Z' })]);
+      expect(mockPost).toHaveBeenCalledTimes(1);
+      expect(mockPost.mock.calls[0][0].entityId).toBe('2026-07-23');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('a Hermes failure never fails the capture', async () => {

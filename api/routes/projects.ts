@@ -3,7 +3,7 @@ import { json, error, generateId, logActivity, isPiRequest, resolveActor, assert
 import { ctToday } from '../lib/ct-date';
 import { nowInstant, dbStampToIso } from '../lib/time';
 import { applyMutation } from './mutations';
-import { activityVisibilityGate, activityHiddenClause, postActivityEntry } from '../lib/activity-entry';
+import { activityVisibilityGate, activityHiddenClause, postActivityEntry, sourceKeyFrom } from '../lib/activity-entry';
 import { enumFieldsFor } from '../lib/enum-domains';
 import { PROJECT_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 
@@ -1056,7 +1056,7 @@ export async function handlePostProjectUpdate(slug: string, request: Request, us
   // close + overnight Inbox flush computing the same key) is dropped server-
   // side. Require the pair or neither — a half-set would store a non-NULL
   // source_table with NULL source_id outside the index's intent.
-  const hasSourceKey = body.source_table != null && body.source_id != null;
+  const srcKey = sourceKeyFrom(body);
   const posted = await postActivityEntry({
     env,
     user,
@@ -1067,8 +1067,8 @@ export async function handlePostProjectUpdate(slug: string, request: Request, us
     body: body.content,
     actorSlug: actor.slug,
     projectSlug: slug,
-    sourceTable: hasSourceKey ? body.source_table : null,
-    sourceId: hasSourceKey ? body.source_id : null,
+    sourceTable: srcKey.sourceTable,
+    sourceId: srcKey.sourceId,
   });
   if (!posted.ok) return error(posted.error, posted.status);
 

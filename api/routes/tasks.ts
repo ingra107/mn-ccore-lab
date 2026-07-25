@@ -9,7 +9,7 @@ import { applyMutation } from './mutations';
 // Fix 5: removed dead re-export — callers import directly from ../lib/task-cols
 // or via api/helpers.ts which already re-exports it (zero callers used this path).
 import { TASK_SELECT_COLS, TASK_SELECT_COLS_TYPED } from '../lib/task-cols';
-import { postActivityEntry, activityVisibilityGate, activityHiddenClause } from '../lib/activity-entry';
+import { postActivityEntry, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 
 // ── Fix 3: guardTaskProject ────────────────────────────────────────────────────
@@ -1374,10 +1374,9 @@ export async function handlePostTaskUpdate(taskId: string, request: Request, use
   // lane had no way to be posted twice safely, so PB could only ever write
   // per-PROJECT session summaries: session-close and the overnight Inbox flush
   // both emit the note, and a second POST would have duplicated the row on
-  // every task. Pair-or-neither, matching the project route — a half-set stores
-  // a non-NULL source_table with a NULL source_id, outside the partial
-  // UNIQUE(source_table, source_id) index's intent.
-  const hasSourceKey = body.source_table != null && body.source_id != null;
+  // every task. The pair-or-neither rule lives in sourceKeyFrom so the two
+  // routes cannot drift apart.
+  const srcKey = sourceKeyFrom(body);
   const posted = await postActivityEntry({
     env,
     user,
@@ -1389,8 +1388,8 @@ export async function handlePostTaskUpdate(taskId: string, request: Request, use
     actorSlug: authorSlug,
     visibility: body.visibility === 'author' ? 'author' : undefined,
     taskProjectId: guard.projectId,
-    sourceTable: hasSourceKey ? body.source_table : null,
-    sourceId: hasSourceKey ? body.source_id : null,
+    sourceTable: srcKey.sourceTable,
+    sourceId: srcKey.sourceId,
   });
   if (!posted.ok) return error(posted.error, posted.status);
 
