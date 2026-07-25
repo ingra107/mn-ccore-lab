@@ -1,4 +1,4 @@
-# ▶▶ BUG SWEEP #98/#101/#102/#103 — SHIPPED + DEPLOYED (2026-07-24/25). Live = `84feb637`; HEAD adds `9667ae72` (simplify) — **NOT yet deployed, deploy before trusting prod for the source-key refactor.**
+# ▶▶ BUG SWEEP #98/#101/#102/#103 — SHIPPED + DEPLOYED (2026-07-24/25). Live = `bdb7aac1` (probe PASS), which includes the `sourceKeyFrom` refactor. Nothing undeployed.
 
 **Bug queue empty.** All four GitHub issues closed, all four `bug_reports` rows resolved.
 
@@ -26,9 +26,8 @@
   clicked, plus a duplicate of that meeting's own list. Both removed; the add form now files
   against the selected meeting (it used to file against the most *recent*). `433d11dc`.
 
-**⚠️ Deploy state:** prod is `84feb637`. `9667ae72` (the `sourceKeyFrom` extraction +
-inbox-events test fix) is committed and pushed but **not deployed**. Run
-`npm run deploy:pages:gated`.
+**Deploy state:** prod is `bdb7aac1`, deployed at session close, probe PASS. Includes
+`9667ae72` (the `sourceKeyFrom` extraction + the inbox-events test fix).
 
 **Landmines / things a fresh session should not re-derive:**
 - **`api/routes/inbox-events.test.ts` had a ~24h shelf life** — an absolute `captured_at`
