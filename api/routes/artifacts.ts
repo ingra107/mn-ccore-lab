@@ -73,9 +73,11 @@ const GALLERY_COLS =
 
 // A write is authed-team: the anonymous shim is the middleware's "no auth"
 // marker (api/index.ts sets user.email='anonymous' only when neither a CF Access
-// JWT nor an API key is present). DELETE-method routes bypass the POST/PUT auth
-// middleware entirely, so this in-handler guard — not the middleware — is what
-// fails a tag write closed. See the tags-write handlers below.
+// JWT nor an API key is present). Before backlog #909 (2026-07-25), DELETE-method
+// routes bypassed the write-auth middleware entirely, so this in-handler guard was
+// the ONLY thing that failed a tag DELETE closed. The middleware (api/index.ts
+// step 5, `WRITE_AUTH_METHODS`) now gates DELETE too; this check stays as a
+// second, redundant layer. See the tags-write handlers below.
 function isAnonymous(user: AuthUser | null | undefined): boolean {
   return !user || user.email === 'anonymous';
 }

@@ -7,6 +7,7 @@ import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, get
 // the Hono app at the end of the file (before app.notFound). Replaces the
 // raw app.get/post calls.
 import { defineRoute, bindRegistryToHono } from './lib/route-dsl';
+import type { HttpMethod } from './lib/route-dsl';
 import type { AuthUser } from './helpers';
 import { validateApiKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
@@ -313,13 +314,40 @@ app.use('/api/*', async (c, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. POST/PUT auth gate + user resolution.
+// 5. Write-method auth gate + user resolution.
+//
+// backlog #909 (2026-07-25): this gate used to test
+// `method !== 'POST' && method !== 'PUT'`, so DELETE (and any future write
+// method) skipped it entirely — a request could only be 401'd here if it
+// happened to be POST or PUT. The one live DELETE route
+// (DELETE /api/artifacts/:id/tags/:tag) survived only because its handler
+// remembers to check `isAnonymous(user)` itself — a Level-3 scattered guard,
+// not a chokepoint.
+//
+// Fix: gate every method EXCEPT GET (GET has its own allowlisted gate at
+// step 4 above). WRITE_AUTH_METHODS is typed as
+// `Record<Exclude<HttpMethod, 'GET'>, true>` — a mapped type over the SAME
+// HttpMethod union route-dsl.ts uses to constrain defineRoute(). Every route
+// in this file is registered exclusively through defineRoute +
+// bindRegistryToHono (no raw app.get/post/put/delete calls exist), so
+// HttpMethod is the complete set of methods any handler can ever be bound
+// to. If a 5th value is ever added to HttpMethod, TypeScript refuses to
+// compile this file until WRITE_AUTH_METHODS is updated to cover it —
+// the missing-gate class this bug belongs to becomes a compile error
+// instead of a silent hole (ethos #15, Level 1: the wrong state — a
+// write method with no auth gate — is unrepresentable, not merely guarded).
+//
 // If REQUIRE_AUTH=1 and neither a CF Access JWT nor a valid API key is
 // present, return 401. Otherwise fall back to the anonymous "Team Member"
 // identity (preserves pre-launch PI-only behavior).
 // ─────────────────────────────────────────────────────────────────────────────
+const WRITE_AUTH_METHODS: Record<Exclude<HttpMethod, 'GET'>, true> = {
+  POST: true,
+  PUT: true,
+  DELETE: true,
+};
 app.use('*', async (c, next) => {
-  if (c.req.method !== 'POST' && c.req.method !== 'PUT') {
+  if (!(c.req.method in WRITE_AUTH_METHODS)) {
     await next();
     return;
   }
@@ -2620,8 +2648,11 @@ defineRoute({
   handler: (c) => handleCreateArtifact(R(c), USER(c), E(c)),
 });
 // Collection-tag writes (schema-v104). Authed-team — the handlers gate on the
-// resolved user (the anonymous shim = no auth). The DELETE especially relies on
-// that in-handler guard: DELETE-method routes skip the POST/PUT auth middleware.
+// resolved user (the anonymous shim = no auth) as defense in depth. Until
+// backlog #909 (2026-07-25), DELETE-method routes skipped the write-auth
+// middleware entirely and this in-handler check was the ONLY thing that
+// failed the DELETE closed; the middleware now gates DELETE too (step 5,
+// `WRITE_AUTH_METHODS`), so this is a second, redundant layer.
 defineRoute({
   method: 'POST',
   path: '/api/artifacts/:id/tags',
