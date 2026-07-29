@@ -62,6 +62,7 @@
 //     design doc; publishing to `visibility='public'` is opt-in per artifact.
 
 import type { Env } from '../helpers';
+import { ensureDoctype } from '../lib/html-doctype';
 
 /**
  * The cookieless origin that actually serves public artifact HTML (#508).
@@ -109,7 +110,13 @@ export async function handleGetPublicArtifact(id: string, env: Env): Promise<Res
   if (!row) return notFound();
   if (row.visibility !== 'public' || row.content_type !== 'html') return notFound();
 
-  return new Response(row.body_md, {
+  // #915: doctype-less fragment bodies (the Claude-Artifact export shape;
+  // 2 of 4 prod html artifacts on 2026-07-29, one public) render in QUIRKS
+  // MODE. handleCreateArtifact/handleReviseArtifact normalize new html bodies
+  // at ingest; this serve-time prepend is the retroactive cover for rows
+  // stored before that gate existed. ensureDoctype is idempotent and passes
+  // already-complete documents through byte-identical.
+  return new Response(ensureDoctype(row.body_md), {
     status: 200,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',

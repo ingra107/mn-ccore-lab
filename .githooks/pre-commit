@@ -184,6 +184,24 @@ if [ -n "$tw_interp_hits" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# Cookieless-artifact-origin minimality gate (2026-07-29, PB backlog #883).
+# The #508 origin split's security property holds ONLY while artifacts-site/
+# stays authority-free (one Function route, one code-owned D1 read binding,
+# nothing else). Before this gate that constraint was prose-only and NO
+# pre-commit gate fired on artifacts-site/** at all. Allowlist check — an
+# unknown new binding/section/route fails closed. Deploy-time twin lives in
+# package.json deploy:artifacts.
+if git diff --cached --name-only --diff-filter=ACMR \
+        | grep -qE "^artifacts-site/|^scripts/check-artifacts-origin-minimal\.mjs$"; then
+    if ! node scripts/check-artifacts-origin-minimal.mjs; then
+        echo ""
+        echo "BLOCKED: artifacts-site/ change breaks the cookieless origin's minimality"
+        echo "(the whole value of #508 — see artifacts-site/wrangler.toml header)."
+        exit 1
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # Ledger-registry gate (2026-06-18, bounded-ledger primitive).
 # Rejects any new schema-v*.sql that introduces a CREATE TABLE with a
 # timestamp column that lacks a LEDGER_REGISTRY entry in

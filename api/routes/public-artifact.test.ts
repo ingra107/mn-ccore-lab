@@ -57,7 +57,27 @@ describe('GET /a/:id — public artifact serve', () => {
     expect(res.headers.get('Cache-Control')).toBe('public, max-age=300');
     expect(res.headers.get('X-Robots-Tag')).toBe('noindex');
     const body = await res.text();
-    expect(body).toBe('<html><body>hi</body></html>');
+    // #915: the stored body has no doctype, so the serve path prepends one
+    // (quirks-mode fix); the rest of the document is untouched.
+    expect(body).toBe('<!DOCTYPE html>\n<html><body>hi</body></html>');
+  });
+
+  it('serves a stored FRAGMENT with a doctype prepended, and a full document byte-identical (#915)', async () => {
+    // The real prod fragment shape (art_b424399a, live on the public origin):
+    // opens with <title>, no doctype -> quirks mode without the prepend.
+    const fragment = '<title>LLM Stewardship</title><h1>Map</h1>';
+    const envFragment = {
+      DB: makeDb({ body_md: fragment, content_type: 'html', visibility: 'public' }),
+    } as unknown as Env;
+    const resFragment = await handleGetPublicArtifact('art_frag', envFragment);
+    expect(await resFragment.text()).toBe('<!DOCTYPE html>\n' + fragment);
+
+    const full = '<!DOCTYPE html><html lang="en"><body>done</body></html>';
+    const envFull = {
+      DB: makeDb({ body_md: full, content_type: 'html', visibility: 'public' }),
+    } as unknown as Env;
+    const resFull = await handleGetPublicArtifact('art_full', envFull);
+    expect(await resFull.text()).toBe(full);
   });
 
   it('404s when visibility=team (content_type=html)', async () => {

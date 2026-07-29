@@ -22,6 +22,13 @@
 #   Every one of those would re-import Hub authority into the very origin whose
 #   whole value is that it HAS no authority. Do not add them here.
 #
+# ENFORCED (PB #883, 2026-07-29): scripts/check-artifacts-origin-minimal.mjs —
+#   allowlist gate over this file + functions/ + public/, wired into
+#   .githooks/pre-commit (fires on artifacts-site/** commits) AND as the first
+#   step of `npm run deploy:artifacts`. Repo-invisible dashboard state (Access
+#   app attachment, `wrangler pages secret put`) is outside its coverage —
+#   see the script header's coverage-boundary note.
+#
 # BINDINGS ARE CODE-OWNED HERE (unlike the main mn-ccore-lab Pages project,
 # whose bindings are dashboard-owned — CLAUDE.md "Deploy mode"). `wrangler pages
 # deploy` reads this file because it declares `pages_build_output_dir`, so the

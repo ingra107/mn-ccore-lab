@@ -304,6 +304,9 @@ import { resolveKeyLinkSlot, hermesKeyLinkDesc, type TaskKeyLinkRow } from '../l
 // #196: also mirror the artifact into the synced `links` table (the P5 readers
 // were cut over to it; a slot-only link is invisible on TODAY.md).
 import { mirrorArtifactLink } from '../lib/artifact-link-mirror';
+// #915: html bodies are normalized to complete documents at the ingest
+// chokepoints (create + revise) — see api/lib/html-doctype.ts.
+import { ensureDoctype } from '../lib/html-doctype';
 
 // ── POST /api/artifacts ─────────────────────────────────────────────────────────
 // Create an artifact. Callable by Hermes (API key → created_by='claude-ai' when
@@ -357,6 +360,16 @@ export async function handleCreateArtifact(
   const contentType = body.content_type ?? 'markdown';
   const visibility = body.visibility ?? 'team';
 
+  // #915: html artifacts are stored as COMPLETE documents. The Claude-Artifact
+  // export shape is a doctype-less fragment (the authoring tool only wraps it
+  // at ITS render time), which renders in quirks mode on every Hub sink
+  // (public /a/:id, portal blob frame). Normalizing at the ingest chokepoint
+  // makes a doctype-less stored html body unrepresentable going forward;
+  // ensureDoctype is idempotent and leaves complete documents byte-identical.
+  // (The prepend may exceed MAX_BODY_MD_LENGTH by at most the 16-char doctype
+  // line — that cap is a DoS guard, not an exact storage contract.)
+  const bodyMd = contentType === 'html' ? ensureDoctype(body.body_md) : body.body_md;
+
   // Resolve the author. claude-ai (Hermes) is always allowed; impersonating a
   // specific team slug requires PI/service authority (resolveActor enforces).
   const actor = await resolveActor(env, user, body.created_by, {
@@ -374,7 +387,7 @@ export async function handleCreateArtifact(
   ).bind(
     id,
     body.title.trim(),
-    body.body_md,
+    bodyMd,
     taskId,
     body.project_id || null,
     actor.slug,
@@ -498,11 +511,15 @@ export async function handleReviseArtifact(
   ).run();
 
   // 2. Replace body (+ optional title) and bump version off the row's own value.
+  // #915: html revisions get the same ingest normalization as creates — a
+  // doctype-less fragment body would reintroduce quirks mode on a row the
+  // create path already normalized.
+  const newBody = current.content_type === 'html' ? ensureDoctype(body.body_md) : body.body_md;
   const newVersion = current.version + 1;
   const newTitle = body.title?.trim() || current.title;
   await env.DB.prepare(
     `UPDATE artifacts SET body_md = ?, title = ?, version = ?, updated_at = datetime('now') WHERE id = ?`
-  ).bind(body.body_md, newTitle, newVersion, id).run();
+  ).bind(newBody, newTitle, newVersion, id).run();
 
   const updated = await env.DB.prepare('SELECT * FROM artifacts WHERE id = ?').bind(id).first<ArtifactRow>();
   return json({ data: updated });

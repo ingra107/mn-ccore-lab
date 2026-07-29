@@ -209,6 +209,71 @@ describe('artifacts routes', () => {
     expect(insert!.binds).toContain('public');
   });
 
+  // ── create/revise: #915 html doctype normalization at ingest ─────────────────
+
+  it('create: content_type=html stores a doctype-less FRAGMENT as a complete document (#915)', async () => {
+    const writes: Array<{ sql: string; binds: unknown[] }> = [];
+    const fragment = '<title>Aims Funnel</title><h1>Funnel</h1>'; // the Claude-Artifact export shape
+    const created = { id: 'art_frag', title: 'Aims', body_md: fragment, version: 1, created_by: 'nick-ingraham' };
+    const env = { DB: makeDb({ artifact: created, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
+
+    const res = await handleCreateArtifact(
+      req({ title: 'Aims', body_md: fragment, content_type: 'html' }),
+      USER,
+      env,
+    );
+
+    expect(res.status).toBe(201);
+    const insert = writes.find((w) => /INSERT INTO artifacts/.test(w.sql));
+    expect(insert!.binds).toContain('<!DOCTYPE html>\n' + fragment);
+    expect(insert!.binds).not.toContain(fragment); // the raw fragment is never stored
+  });
+
+  it('create: content_type=html passes a complete document through byte-identical (#915)', async () => {
+    const writes: Array<{ sql: string; binds: unknown[] }> = [];
+    const full = '<!DOCTYPE html><html lang="en"><body>x</body></html>';
+    const created = { id: 'art_full', title: 'Full', body_md: full, version: 1, created_by: 'nick-ingraham' };
+    const env = { DB: makeDb({ artifact: created, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
+
+    const res = await handleCreateArtifact(req({ title: 'Full', body_md: full, content_type: 'html' }), USER, env);
+
+    expect(res.status).toBe(201);
+    const insert = writes.find((w) => /INSERT INTO artifacts/.test(w.sql));
+    expect(insert!.binds).toContain(full);
+  });
+
+  it('create: content_type=markdown is NEVER doctype-normalized (#915)', async () => {
+    const writes: Array<{ sql: string; binds: unknown[] }> = [];
+    const md = '# A markdown body with an <html> mention';
+    const created = { id: 'art_md', title: 'MD', body_md: md, version: 1, created_by: 'nick-ingraham' };
+    const env = { DB: makeDb({ artifact: created, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
+
+    const res = await handleCreateArtifact(req({ title: 'MD', body_md: md }), USER, env);
+
+    expect(res.status).toBe(201);
+    const insert = writes.find((w) => /INSERT INTO artifacts/.test(w.sql));
+    expect(insert!.binds).toContain(md);
+  });
+
+  it('revise: an html artifact revision gets the same ingest normalization (#915)', async () => {
+    const writes: Array<{ sql: string; binds: unknown[] }> = [];
+    const env = { DB: makeDb({
+      artifact: { id: 'art_1', version: 1, body_md: '<!DOCTYPE html>\n<h1>v1</h1>', title: 'T', created_by: 'claude-ai', content_type: 'html' },
+      captureWrite: (sql, binds) => writes.push({ sql, binds }),
+    }) } as unknown as Env;
+
+    const res = await handleReviseArtifact(
+      'art_1',
+      req({ body_md: '<h1>v2 fragment</h1>' }),
+      { email: 'claude-ai', name: 'Hermes' },
+      env,
+    );
+    expect(res.status).toBe(200);
+
+    const update = writes.find((w) => /UPDATE artifacts SET/.test(w.sql));
+    expect(update!.binds).toContain('<!DOCTYPE html>\n<h1>v2 fragment</h1>');
+  });
+
   it('create: 400 on invalid content_type', async () => {
     const env = { DB: makeDb({}) } as unknown as Env;
     const res = await handleCreateArtifact(req({ title: 'T', body_md: 'B', content_type: 'pdf' }), USER, env);
