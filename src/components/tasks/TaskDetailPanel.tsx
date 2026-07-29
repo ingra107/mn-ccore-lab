@@ -52,6 +52,7 @@ import KeyLinksEditor from '../KeyLinksEditor'
 import { isHermesPrefix, isBacklogPrefix, stripBacklogPrefix } from '../../lib/hermesRouting'
 import { hermesOutcomeToast, type HermesDispatch } from '../../lib/askHermes'
 import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
+import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
 import { Brain } from 'lucide-react'
 
 type Tab = 'overview' | 'intelligence' | 'activity' | 'files' | 'details'
@@ -1223,8 +1224,6 @@ function DetailKeyLinks({
   onUpdate: (fields: Record<string, string | null>) => void
 }) {
   // Inherited project links from the links table (read-only, visually separated).
-  // Task-own links are no longer shown read-only here — they are already
-  // covered by KeyLinksEditor below (slots backfilled 1:1 from links table).
   // #507 follow-up opt-out: this is a read-only OPTIONAL enrichment (task's
   // own key-link write path is unaffected) that already hides itself when
   // empty (`projectLinks.length > 0` below) -- a fetch failure degrades the
@@ -1233,6 +1232,18 @@ function DetailKeyLinks({
   // Sort: type-priority (displayRank) primary, sort_order as tiebreaker.
   // Mirrors PB sections.py render order so both surfaces agree by construction.
   const projectLinks = [...(linksData?.projectLinks ?? [])].sort(
+    (a, b) => displayRank(a.type) - displayRank(b.type) || a.sort_order - b.sort_order
+  )
+  // Task-own links BEYOND the 3 slots (#910, Nick 2026-07-24). The 2026-06-21
+  // double-render cleanup (62b31111) removed task-own chips on the premise
+  // that slots mirror the links table 1:1 — true only while a task has <= 3
+  // links; the table is unbounded, so a 4th+ link rendered NOWHERE and looked
+  // never-saved. Slot-covered rows stay editor-only (no double render);
+  // everything else renders below as read-only chips. Total coverage by
+  // construction: covered ∪ overflow = all live rows (src/lib/taskLinkOverflow).
+  const overflowLinks = taskOwnOverflowLinks(linksData?.links, [
+    task.key_link_1, task.key_link_2, task.key_link_3,
+  ]).sort(
     (a, b) => displayRank(a.type) - displayRank(b.type) || a.sort_order - b.sort_order
   )
 
@@ -1287,6 +1298,21 @@ function DetailKeyLinks({
           })
         }}
       />
+
+      {/* Task-own stored links beyond the 3 slots (#910) — read-only, so a
+          task with >3 typed links can never silently hide one. */}
+      {overflowLinks.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+            More links
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {overflowLinks.map((link) => (
+              <StoredLinkChip key={link.id} link={link} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

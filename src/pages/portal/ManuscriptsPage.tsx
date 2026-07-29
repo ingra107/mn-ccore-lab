@@ -774,10 +774,15 @@ export default function ManuscriptsPage() {
           return (
             <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
               {published.map((p) => {
-                // M-11: canonical names live on the Project type. created_at
-                // backfills the year if published_year is missing.
-                const journal = p.journal_name || ''
-                const year = p.published_year || (p.created_at ? parseDbUtc(p.created_at).getFullYear() : '')
+                // #812: read the REAL schema-v71 columns (journal,
+                // publication_date, doi) — the former M-11 names
+                // (journal_name/published_year) never had a backing column,
+                // so this card rendered blank fields forever. created_at
+                // still backfills the year when publication_date is unset.
+                const journal = p.journal || ''
+                const year = p.publication_date
+                  ? p.publication_date.slice(0, 4)
+                  : (p.created_at ? parseDbUtc(p.created_at).getFullYear() : '')
                 const doi = p.doi
                 return (
                   <div

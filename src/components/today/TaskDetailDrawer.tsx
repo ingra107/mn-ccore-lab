@@ -21,6 +21,7 @@ import { TaskInlineFieldRow } from '../tasks/detail/FieldControls'
 import { TaskActivityFeed } from '../tasks/detail/TaskActivityFeed'
 import TaskDetailPanel from '../tasks/TaskDetailPanel'
 import StoredLinkChip from '../StoredLinkChip'
+import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
 import {
   ACCENT_TEAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PANEL_BG,
@@ -52,6 +53,12 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   const detail = detailQuery.data
   const { data: linksData } = useTaskLinks(task.id)
   const projectLinks = linksData?.projectLinks ?? []
+  // Task-own stored links beyond the 3 key_link_* slots (#910). The collapsed
+  // row header shows the 3 slot icons; without this, a 4th+ typed link had no
+  // render path in the drawer and looked never-saved.
+  const overflowLinks = taskOwnOverflowLinks(linksData?.links, [
+    task.key_link_1, task.key_link_2, task.key_link_3,
+  ])
   const subtasks = detail?.subtasks ?? []
   const blocks = detail?.blocks ?? []
 
@@ -171,10 +178,14 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
               via "view all →" / the empty-description opener). */}
           <button onClick={() => setFullEditorTask(task)} title="Open the full task editor" style={{ padding: '4px 10px', background: 'transparent', color: 'var(--teal)', border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>⊞ Full editor</button>
         </div>
-        {/* Right: quiet project-link chips (no label) — pushed to the right edge,
-            wraps below the actions on a narrow drawer. */}
-        {projectLinks.length > 0 && (
+        {/* Right: quiet link chips (no label) — task-own overflow (#910) first,
+            then inherited project links; pushed to the right edge, wraps below
+            the actions on a narrow drawer. */}
+        {(overflowLinks.length > 0 || projectLinks.length > 0) && (
           <div className="flex flex-wrap gap-2" style={{ marginLeft: 'auto', justifyContent: 'flex-end' }}>
+            {overflowLinks.map((link) => (
+              <StoredLinkChip key={link.id} link={link} />
+            ))}
             {projectLinks.map((link) => (
               <StoredLinkChip key={link.id} link={link} />
             ))}

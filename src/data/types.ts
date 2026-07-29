@@ -124,12 +124,15 @@ export interface Project {
   // folder is expected to contain a generated "Start Claude.bat". NULL for
   // projects without a Box/local working dir.
   primary_folder?: string | null
-  // Trophy / publication metadata (M-11). Populated for stage='Published'
-  // projects via the linked publications row. NULL until the project is
-  // shipped + linked. journal_name is the canonical field name; older
-  // payloads may use `journal` or `target_journal` — those are aliases.
-  journal_name?: string | null
-  published_year?: number | null
+  // Trophy / publication metadata — the REAL columns are schema-v71's
+  // Bucket-C reference fields (journal, publication_date, doi; Hub-canonical
+  // + PB-synced since 2026-05-29, returned by GET /api/projects SELECT *).
+  // The former M-11 names (journal_name, published_year; 2026-04-28) predated
+  // v71 and never had a backing column — deleted 2026-07-29 (#812). Note
+  // v71 deliberately keeps `journal` SEPARATE from the PWA publications
+  // field `journal_name` (distinct lineage) — do not re-alias them.
+  journal?: string | null
+  publication_date?: string | null
   doi?: string | null
   created_at?: string
 }

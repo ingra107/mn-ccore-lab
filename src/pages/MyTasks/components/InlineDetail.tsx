@@ -11,7 +11,7 @@ import { Pin } from 'lucide-react'
 import { ICON_PROPS } from '../../../lib/iconProps'
 import SmartCompose from '../../../components/SmartCompose'
 import { useUpdateTask, useBulkUpdateTasks, useToggleSubtask } from '../../../hooks/useMutations'
-import { useTaskDetail, useTaskLinks } from '../../../hooks/useApiData'
+import { useTaskDetail, useTaskLinks, type StoredLink } from '../../../hooks/useApiData'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTaskViewTracking } from '../../../hooks/useTaskViewTracking'
 import { useUndoToast } from '../../../components/UndoToast'
@@ -19,6 +19,7 @@ import { localDateKey } from '../../../lib/dateUtils'
 import { STATUS_OPTIONS } from '../../../lib/taskConstants'
 import { TaskActivityFeed } from '../../../components/tasks/detail/TaskActivityFeed'
 import StoredLinkChip from '../../../components/StoredLinkChip'
+import { taskOwnOverflowLinks } from '../../../lib/taskLinkOverflow'
 import LinkifiedText from '../../../components/LinkifiedText'
 import {
   ACCENT_TEAL, ACCENT_GREEN,
@@ -37,6 +38,30 @@ import WorkOnActions from '../../../components/WorkOnActions'
 
 // Muted color for feed items (not in the re-exported constants set).
 const INK_MUTED = 'rgba(226,232,240,0.70)'
+
+// Task-own stored links beyond the 3 key_link_* slots (#910). The collapsed
+// row shows the 3 slot icons; without this, a 4th+ typed link had no render
+// path in the inline expansion and looked never-saved. Kept as its own
+// component so InlineDetail's body doesn't read task.key_link_* (React
+// Compiler memoization preservation).
+function OverflowLinksSection({ task, links }: { task: TaskRow; links: StoredLink[] | undefined }) {
+  const overflowLinks = taskOwnOverflowLinks(links, [
+    task.key_link_1, task.key_link_2, task.key_link_3,
+  ])
+  if (overflowLinks.length === 0) return null
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+      <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+        More links
+      </span>
+      <div className="flex flex-wrap gap-2">
+        {overflowLinks.map((link) => (
+          <StoredLinkChip key={link.id} link={link} />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }: { task: TaskRow; projectName?: string | null; primaryFolder?: string | null; onOpenEditor?: () => void }) {
   // Real handlers (no longer decorative). Reach for mutations directly so the
@@ -170,6 +195,12 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
           )}
         </div>
       )}
+
+      {/* Task-own stored links beyond the 3 slots (#910) — read-only,
+          self-hiding. Rendered as a subcomponent (not computed in this body)
+          so the extra task.key_link_* reads don't break the React Compiler's
+          preservation of this component's fine-grained manual memoizations. */}
+      <OverflowLinksSection task={task} links={linksData?.links} />
 
       {/* Inherited project links — read-only, shown near the top before the action bar. */}
       {projectLinks.length > 0 && (

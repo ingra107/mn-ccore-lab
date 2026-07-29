@@ -86,7 +86,57 @@ export interface ProjectRow {
   key_link_2_desc?: string | null
   key_link_3?: string | null
   key_link_3_desc?: string | null
+  // schema-v71 promoted fields (2026-05-29) + v73/v90-era synced columns
+  // (#811, 2026-07-29): every PB-synced wire field GET /api/projects
+  // (SELECT *) returns is now DECLARED, so a synced column can no longer
+  // reach the browser while staying invisible to TypeScript — the exact
+  // layer that hid key_link_1..3 for months. Enforced by PROJECT_ROW_KEYS
+  // below + src/lib/__tests__/rowContract.test.ts against the pb-schema
+  // field registry.
+  next_action?: string | null
+  due_date?: string | null
+  tier?: string | null
+  domain?: string | null
+  state?: string | null
+  stage_notes?: string | null
+  next_artifact?: string | null
+  citation?: string | null
+  doi?: string | null
+  pubmed_id?: string | null
+  publication_date?: string | null
+  journal?: string | null
+  author_role?: string | null
+  manuscript_path?: string | null
+  analysis_path?: string | null
+  key_files?: string | null
+  github_url?: string | null
+  box_url?: string | null
+  context_links?: string | null
 }
+
+// #811 (2026-07-29): runtime mirror of `keyof ProjectRow`, bound BOTH ways at
+// compile time — `satisfies` rejects a key that is not on the interface, and
+// PROJECT_ROW_KEYS_COMPLETE fails to compile (naming the missing keys) when
+// the interface grows without this list. rowContract.test.ts then proves the
+// pb-schema wire contract is a subset of this list, closing the class where a
+// synced D1 column reaches the browser but stays unreadable to TypeScript.
+export const PROJECT_ROW_KEYS = [
+  'id', 'title', 'status', 'description', 'category', 'pi', 'slug', 'stage',
+  'pi_context', 'strategic_context', 'short_name', 'created_at', 'updated_at',
+  'stage_entered_at', 'last_meaningful_movement', 'stale_active_since',
+  'last_activity', 'primary_folder', 'type',
+  'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc',
+  'key_link_3', 'key_link_3_desc',
+  'next_action', 'due_date', 'tier', 'domain', 'state', 'stage_notes',
+  'next_artifact', 'citation', 'doi', 'pubmed_id', 'publication_date',
+  'journal', 'author_role', 'manuscript_path', 'analysis_path', 'key_files',
+  'github_url', 'box_url', 'context_links',
+] as const satisfies readonly (keyof ProjectRow)[]
+
+type MissingProjectRowKey = Exclude<keyof ProjectRow, (typeof PROJECT_ROW_KEYS)[number]>
+export const PROJECT_ROW_KEYS_COMPLETE: [MissingProjectRowKey] extends [never]
+  ? true
+  : { 'PROJECT_ROW_KEYS is missing': MissingProjectRowKey } = true
 
 export interface GrantRow {
   id: string
@@ -196,7 +246,46 @@ export interface TaskRow {
    *  Set by PB when creating the task (pending), updated here via Accept/Decline.
    *  Non-meeting tasks leave this null. Schema v83 (approval_status column). */
   approval_status?: 'pending' | 'accepted' | 'declined' | null
+  // PB-synced wire fields returned by the task GET endpoints (TASK_SELECT_COLS
+  // derives from the generated TASK_PLAIN_COLS) but previously undeclared here
+  // (#811, 2026-07-29) — same invisible-to-TS class as key_link_1..3 on
+  // ProjectRow. Enforced by TASK_ROW_KEYS below + rowContract.test.ts.
+  deadline?: string | null
+  deadline_type?: string | null
+  effort?: string | null
+  inbox_event_id?: string | null
+  next_artifact?: string | null
+  nick_followup_date?: string | null
+  related_message_ids?: string | null
+  /** 0/1 integer flag (D1 has no boolean). */
+  requires_nick_brain?: number | null
+  source_thread_id?: string | null
+  waiting_since?: string | null
 }
+
+// #811 (2026-07-29): runtime mirror of `keyof TaskRow`, compile-bound both
+// ways — see PROJECT_ROW_KEYS above for the mechanism and rationale.
+export const TASK_ROW_KEYS = [
+  'id', 'meeting_id', 'project_id', 'title', 'short_title', 'description',
+  'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'source',
+  'completed', 'completed_at', 'completed_by', 'blocked_by',
+  'acknowledged_at', 'acknowledged_by', 'watchers', 'reminder_days',
+  'instructions', 'recurrence', 'recurrence_parent_id', 'description_json',
+  'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc',
+  'key_link_3', 'key_link_3_desc', 'email_link', 'group_override',
+  'waiting_on', 'promised_to', 'promise_date', 'next_checkin_date',
+  'planned_for', 'plan_slot', 'plan_rank', 'estimated_minutes',
+  'plan_start_min', 'created_at', 'updated_at', 'meeting_title',
+  'meeting_date', 'approval_status',
+  'deadline', 'deadline_type', 'effort', 'inbox_event_id', 'next_artifact',
+  'nick_followup_date', 'related_message_ids', 'requires_nick_brain',
+  'source_thread_id', 'waiting_since',
+] as const satisfies readonly (keyof TaskRow)[]
+
+type MissingTaskRowKey = Exclude<keyof TaskRow, (typeof TASK_ROW_KEYS)[number]>
+export const TASK_ROW_KEYS_COMPLETE: [MissingTaskRowKey] extends [never]
+  ? true
+  : { 'TASK_ROW_KEYS is missing': MissingTaskRowKey } = true
 
 export interface PBSessionRow {
   id: string
