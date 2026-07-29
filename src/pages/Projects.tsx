@@ -25,6 +25,7 @@ import type { Project } from '../data/types'
 import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import { staggerContainer, staggerItem } from '../lib/animations'
 import { stripConsortiumPrefix, stripGrantTypePrefix, isGrantProjectType } from '../lib/textUtils'
+import { mechanismFamily, MECHANISM_ACCENT } from '../lib/grantMechanism'
 import { Chip } from '../components/ui/Chip'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -74,14 +75,12 @@ const CATEGORY_DOT: Record<string, string> = {
 
 // Grant-mechanism badge colors (projects.type, schema-v73). One tier more
 // specific than the category dot — R01/R03/K read at a glance in the dense
-// pipeline row. Only the 3 grant values in the `type` enum get a color;
-// non-grant types (CLIF, Nick_Lab, Friends, Mentees, Admin, Personal) never
-// render a badge (see isGrantProjectType).
-const GRANT_TYPE_COLOR: Record<string, string> = {
-  R01: 'var(--teal)',
-  R03: 'var(--maroon)',
-  K: 'var(--gold)',
-}
+// pipeline row. Colors come from the shared family primitive
+// (lib/grantMechanism): non-grant types (CLIF, Nick_Lab, Friends, Mentees,
+// Admin, Personal) map to family 'other' = slate, and never render a badge
+// anyway (see isGrantProjectType).
+const grantTypeColor = (type: string | null | undefined): string =>
+  MECHANISM_ACCENT[mechanismFamily(type)]
 
 // Fully-cleaned display title for a pipeline row: strip the consortium tag
 // first, then — if the project's own `type` says it's a grant — the
@@ -740,7 +739,7 @@ export default function Projects() {
                                   get no badge. */}
                               {isGrantProjectType(project.type) && (
                                 <Chip
-                                  color={GRANT_TYPE_COLOR[project.type] ?? 'var(--slate)'}
+                                  color={grantTypeColor(project.type)}
                                   bordered
                                   title={`Grant mechanism: ${project.type}`}
                                 >
@@ -955,7 +954,7 @@ export default function Projects() {
                               />
                               {isGrantProjectType(project.type) && (
                                 <Chip
-                                  color={GRANT_TYPE_COLOR[project.type] ?? 'var(--slate)'}
+                                  color={grantTypeColor(project.type)}
                                   bordered
                                   title={`Grant mechanism: ${project.type}`}
                                   style={{ flexShrink: 0, marginTop: '2px' }}

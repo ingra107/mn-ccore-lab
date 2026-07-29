@@ -32,6 +32,7 @@ import { formatMediumDate, isOverdue, getDaysUntil } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { mechanismFamily, MECHANISM_ACCENT, type MechanismFamily } from '../../lib/grantMechanism'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 // ── Gantt chart constants ──────────────────────────────────────
@@ -73,25 +74,31 @@ function formatFunding(amount: number): string {
   return `$${amount.toLocaleString()}`
 }
 
+// Badge text color comes from the shared family accent (lib/grantMechanism);
+// the tinted bg is this page's local render concern. K family is GOLD per the
+// shared map (was teal here — a 2026-03-30 flattening of K23 into R01's teal
+// with no recorded rationale; the dashboard + Projects badge both say gold).
+const MECHANISM_BADGE_BG: Record<MechanismFamily, string> = {
+  R01: 'var(--teal-active)',
+  R03: 'rgba(122,0,25,0.1)',
+  K: 'var(--gold-active)',
+  other: 'rgba(26,41,57,0.10)',
+}
+
 function mechanismColor(mechanism: string): { bg: string; color: string } {
-  switch (mechanism) {
-    case 'R01': return { bg: 'var(--teal-active)', color: 'var(--teal)' }
-    case 'K23': return { bg: 'var(--teal-active)', color: 'var(--teal)' }
-    case 'R03': return { bg: 'rgba(122,0,25,0.1)', color: 'var(--maroon)' }
-    default: return { bg: 'var(--gold-active)', color: 'var(--gold)' }
-  }
+  const family = mechanismFamily(mechanism)
+  return { bg: MECHANISM_BADGE_BG[family], color: MECHANISM_ACCENT[family] }
 }
 
 // ── Gantt helpers ──────────────────────────────────────────────
 
+// Page-local override: on this gantt, gold-dashed-hatched = proposed. Funded
+// bars take the shared family accent (K gold is distinguishable from proposed
+// gold by solid-vs-dashed fill, same coexistence the dashboard has rendered
+// since 2026-03).
 function ganttMechanismColor(mechanism: string, proposed: boolean): string {
   if (proposed) return 'var(--gold)'
-  switch (mechanism) {
-    case 'R01': return 'var(--teal)'
-    case 'K23': return 'var(--teal)'
-    case 'R03': return 'var(--maroon)'
-    default: return 'var(--teal)'
-  }
+  return MECHANISM_ACCENT[mechanismFamily(mechanism)]
 }
 
 function parseYear(dateStr: string | null): number | null {

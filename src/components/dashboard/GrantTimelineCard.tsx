@@ -2,16 +2,14 @@ import { memo, useMemo } from 'react'
 import { Banknote } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { useGrantTimeline, type GrantTimelineItem } from '../../hooks/useGrantTimeline'
+import { mechanismFamily, MECHANISM_FILL } from '../../lib/grantMechanism'
 
 const CURRENT_YEAR = new Date().getFullYear()
 
+// White text sits ON these bars, so they use the theme-stable FILL lane
+// (literal hex, Rule 41 class) — never the theme-flipping accent vars.
 function mechanismColor(mechanism: string): string {
-  switch (mechanism) {
-    case 'R01': return '#2d8a8a'
-    case 'K23': return '#c9a84c'
-    case 'R03': return '#7a0019'
-    default: return '#64748b'
-  }
+  return MECHANISM_FILL[mechanismFamily(mechanism)]
 }
 
 interface GrantBar {
