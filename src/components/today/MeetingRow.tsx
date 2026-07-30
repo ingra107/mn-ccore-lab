@@ -146,7 +146,15 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
                 onChange={isCalEvent ? undefined : (ev) => onNote(e.id, ev.target.value)}
                 readOnly={isCalEvent}
                 disabled={isCalEvent}
-                placeholder={isCalEvent ? 'Personal calendar event — no meeting record' : 'Jot notes as the meeting happens…'}
+                placeholder={
+                  isCalEvent
+                    ? (e.hasUndebriefedMatch
+                        // #550: a match exists (undebriefed) — the native row
+                        // elsewhere carries the live jot; don't claim no record.
+                        ? 'This meeting has its own row — jot notes there instead'
+                        : 'Personal calendar event — no meeting record')
+                    : 'Jot notes as the meeting happens…'
+                }
                 style={{ width: '100%', minHeight: 72, background: isCalEvent ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '8px 10px', color: isCalEvent ? INK_DIM : INK, fontSize: 12, fontFamily: 'inherit', outline: 'none', resize: isCalEvent ? 'none' : 'vertical', boxSizing: 'border-box', lineHeight: 1.5, cursor: isCalEvent ? 'not-allowed' : undefined }}
               />
             </>

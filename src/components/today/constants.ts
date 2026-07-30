@@ -66,6 +66,14 @@ export interface TodayEvent {
   // Non-empty → MeetingRow renders MarkdownView + "Open meeting" link
   // instead of the jot textarea.
   meetingNotes?: string | null
+  // #550: true when a cal- row matched a same-day D1 meeting record that has
+  // NO debrief notes yet (7b5188de's early-return path — meetingId/meetingNotes
+  // stay unset on purpose so the native untimed row keeps the live jot
+  // textarea, not this row). Exists ONLY so MeetingRow can pick accurate
+  // placeholder copy; it must NOT feed meetingId-gated behavior (unseen dot,
+  // mark-seen, deep link) — that's the pre-debrief merge rework this row
+  // explicitly defers, not this fix.
+  hasUndebriefedMatch?: boolean
 }
 
 // #74: events at/over this many minutes (3h) are "long blocks" — they move to

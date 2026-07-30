@@ -275,7 +275,11 @@ export default function TodayPage() {
     const matchedMeetingIds = new Set<string>()
     const decoratedPersonal = personal.map((e) => {
       const match = matchMeetingRecord(e, rawMeetings, normalizeMeetingTitle)
-      if (!match || !match.notes) return e
+      if (!match) return e
+      // #550: a match with no notes yet stays undecorated (7b5188de — the
+      // native untimed row below keeps the live jot), but flag it so
+      // MeetingRow can stop claiming "no meeting record" when one exists.
+      if (!match.notes) return { ...e, hasUndebriefedMatch: true }
       matchedMeetingIds.add(match.id)
       return { ...e, meetingId: match.id, meetingNotes: match.notes }
     })
