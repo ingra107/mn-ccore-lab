@@ -73,8 +73,21 @@ export const facultyCollaborators: TeamMember[] = [
 
 // Order = activity level in MNCCORE (most active first). Keep updated.
 export const researchTeam: TeamMember[] = [
+  // NO openalexId on purpose. The #905 candidate A5081788404 was checked on 2026-07-30
+  // and REFUSED: the record is CONFLATED, not merely thin. Its 10 works mix clinical
+  // research (metformin/COVID recovery, diabetes shared decision-making, a Spanish PRO
+  // validation) with "Flight Simulator Training" (2017) and "Politics, Personality, and
+  // Poor Decision-Making" (2018), under an "Institute of Accelerating Systems and
+  // Applications" affiliation. Wiring it would publish another person's papers on the
+  // public site under his name -- the exact failure #905's design exists to prevent.
+  // A works_count with no institution is not evidence of a thin record; read the works.
   { name: 'Steven Arriaza', initials: 'SA', role: 'Research Coordinator', slug: 'steven-arriaza' },
-  { name: 'Emma Bromley', initials: 'EB', role: 'Research Coordinator', slug: 'emma-bromley', authorName: 'Bromley E' },
+  // openalexId corroborated 2026-07-30 on two independent axes before it went public:
+  // the record's only affiliation is Minneapolis VA Health Care System, and its one
+  // work is "Comparison of six natural language processing approaches to assessing
+  // firearm access" (2024) -- right institution, and squarely in the lab's own
+  // firearm-access line. Backlog #905.
+  { name: 'Emma Bromley', initials: 'EB', role: 'Research Coordinator', slug: 'emma-bromley', openalexId: 'A5114603216', authorName: 'Bromley E' },
   { name: 'Casey Eddington', initials: 'CE', role: 'Data Analyst', slug: 'casey-eddington', openalexId: 'A5048819960', authorName: 'Eddington C' },
   { name: 'Dan Shyu', initials: 'DS', role: 'Critical Care Fellow', credentials: 'MD', slug: 'dan-shyu', openalexId: 'A5111762982', authorName: 'Shyu D', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/shyu-daniel.png' },
   { name: 'Beret Fitzgerald', initials: 'BF', role: 'Critical Care Fellow', credentials: 'MD', slug: 'beret-fitzgerald', authorName: 'Fitzgerald B', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/fitzgerald-beret-001.png' },
