@@ -39,14 +39,51 @@ try {
 
 // tsc line: `api/routes/x.ts(12,34): error TS2339: Message...`
 const RE = /^(.+?)\((\d+),(\d+)\): error (TS\d+): (.*)$/
+// Backlog #966 (2026-07-30): some diagnostics (e.g. a cross-file
+// `import("...").Type` reference in an argument-type message) embed the
+// ABSOLUTE path tsc resolved the module to, which bakes in the machine's
+// home-directory username (Nick runs this repo from two machines, `ingra`
+// and `ingra107`). Left raw, the SAME error produces a DIFFERENT signature
+// per machine, so a baseline committed from one machine spuriously
+// "regresses" the first time the other machine runs the check -- exactly
+// the false-red that trains people to stop trusting a ratchet gate.
+const normalizeMessage = (msg) =>
+  msg.replace(/[A-Za-z]:[\\/]Users[\\/][^\\/]+[\\/]/g, '~/').replace(/\\/g, '/')
 const counts = new Map()
 for (const line of raw.split(/\r?\n/)) {
   const m = RE.exec(line.trim())
   if (!m) continue
   const [, file, , , code, message] = m
   // Normalize the path separator so a Windows run and a CI run agree.
-  const sig = `${file.replace(/\\/g, '/')}|${code}|${message.slice(0, 80)}`
+  const sig = `${file.replace(/\\/g, '/')}|${code}|${normalizeMessage(message).slice(0, 80)}`
   counts.set(sig, (counts.get(sig) || 0) + 1)
+}
+
+// Backlog #966 (2026-07-30): a PROGRAM-level tsc error -- one that isn't tied
+// to a single file/line/col, e.g. TS2688 "Cannot find type definition file
+// for '@cloudflare/workers-types'" when the package is declared in
+// package.json but missing from node_modules, or TS18003/TS5023 -- means the
+// type program never built at all. RE above only matches per-file
+// diagnostics, so a broken compile and a genuinely clean one are otherwise
+// INDISTINGUISHABLE: both produce zero matches, so this script would report
+// "PASS -- 0 errors" either way. That is exactly what happened here: this
+// machine's node_modules was missing @cloudflare/workers-types, and every
+// run silently reported a false PASS (once even "debt DROPPED 149 -> 0")
+// while tsc had not actually checked a single file. Fail loud instead.
+const GLOBAL_ERR_RE = /error (TS\d+):/
+const unstructuredErrors = raw
+  .split(/\r?\n/)
+  .map((l) => l.trim())
+  .filter((l) => GLOBAL_ERR_RE.test(l) && !RE.test(l))
+if (unstructuredErrors.length > 0) {
+  console.error('[check-api-types] tsc reported a PROGRAM-level error, not a per-file diagnostic:\n')
+  for (const l of unstructuredErrors) console.error(`  ${l}`)
+  console.error('\nThe type program never built, so the per-file scan below would see zero')
+  console.error('matches regardless of whether api/ is actually clean -- refusing to report')
+  console.error('PASS or write a baseline against an unbuilt program. Common cause: an ambient')
+  console.error("types package (e.g. @cloudflare/workers-types) is declared in package.json")
+  console.error('but missing from node_modules -- run `npm install` and re-run this check.')
+  process.exit(1)
 }
 
 if (update) {

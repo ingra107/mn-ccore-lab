@@ -248,6 +248,34 @@ if git diff --cached --name-only --diff-filter=AM \
 fi
 
 # ---------------------------------------------------------------------------
+# Worker type-check gate (backlog #966, 2026-07-30). `check-api-types.mjs`
+# (backlog #501b-class check, authored 2026-07-22 for the #98 incident: a
+# `{ slug } | { error }` union access shipped as a plain TS2339 and 500'd on
+# every request in prod) was wired ONLY into `deploy:pages:gated` -- so a
+# broken api/ type could sit on main through any number of commits, caught
+# only the next time someone runs a manual deploy. Neither pre-commit nor CI
+# (.github/workflows/vitest.yml runs test:api/lib/src, never typecheck:api)
+# ran it before now. Scoped to api/, shared/, and the check's own config so
+# doc/frontend-only commits pay nothing; ~8-9s on a full api/ typecheck when
+# it does fire. The baseline was refreshed 149 -> 0 in the same commit (the
+# api/ tree already typechecks clean; the stale floor was carrying debt that
+# no longer exists) so the ratchet starts honest instead of silently
+# permitting 149 pre-existing errors nobody can name.
+if git diff --cached --name-only --diff-filter=ACMR \
+        | grep -qE "^api/.*\.tsx?$|^shared/.*\.tsx?$|^tsconfig\.api\.json$|^scripts/check-api-types\.mjs$"; then
+    echo "[hub-precommit] api/ staged -- running worker type-check gate..."
+    if ! npm run --silent typecheck:api; then
+        echo ""
+        echo "BLOCKED: new worker type error(s) in api/ (see above)."
+        echo "Fix the error, or if the baseline genuinely needs to move, run"
+        echo "  npm run typecheck:api:update"
+        echo "and stage scripts/api-types-baseline.json alongside your change."
+        echo "The floor may only go down or stay flat -- it refuses to rise."
+        exit 1
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # Vitest gate (backlog #505, 2026-07-16). Before this, NOTHING in the repo
 # ran any vitest suite as a commit/CI gate — `npm run test:api` (1129+ tests)
 # only ran manually, and the two configs covering src/ (vitest.config.lib.ts,

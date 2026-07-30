@@ -1,7 +1,7 @@
 {
   "api/index.ts|TS2322|Type '\"launch-log\"' is not assignable to type 'EntityName | undefined'.": 5,
   "api/index.ts|TS2345|Argument of type 'Env' is not assignable to parameter of type 'NotifyEnv'.": 1,
-  "api/index.ts|TS2345|Argument of type 'import(\"C:/Users/ingra107/mn-ccore-lab/api/helpers\").AuthUser'": 2,
+  "api/index.ts|TS2345|Argument of type 'import(\"~/mn-ccore-lab/api/helpers\").AuthUser' is not assignab": 2,
   "api/routes/bug-report.ts|TS2352|Conversion of type 'Env' to type 'Record<string, unknown>' may be a mistake beca": 1,
   "api/routes/conferences.ts|TS2339|Property 'abstract_due' does not exist on type '{ project_id?: string | undefine": 1,
   "api/routes/conferences.ts|TS2339|Property 'abstract_submitted_at' does not exist on type '{ project_id?: string |": 1,
