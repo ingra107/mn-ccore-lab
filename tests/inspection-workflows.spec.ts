@@ -1995,18 +1995,100 @@ test.describe('A11Y — Focus management', () => {
     console.log(`Animation duration with reduced-motion: ${animDuration}`)
   })
 
-  test('A11Y: Dark mode contrast — text on dark bg meets 4.5:1', async ({ page }) => {
-    await loadPage(page, P.dashboard)
-    const contrast = await page.evaluate(() => {
-      const body = document.querySelector('main, body')
-      if (!body) return null
-      const bg = getComputedStyle(body).backgroundColor
-      const text = getComputedStyle(body).color
-      return { bg, text }
+  // backlog #light-mode-contrast (2026-06-16, re-picked-up 2026-07-30): this
+  // test used to only console.log the body bg/color with a comment saying
+  // "manual verification is more reliable" -- i.e. it never actually
+  // asserted anything, and it never called injectFakeAuth, so against the
+  // real CF-Access-gated prod domain it was silently measuring the login
+  // splash's colors, not the app's. Both problems fixed here, and its
+  // missing light-mode sibling is added right below -- the 2026-06-17
+  // light-mode-audit doc's whole premise was "dark mode is well-tended,
+  // light mode has had little focus," and this test suite embodied exactly
+  // that gap (a dark-mode check existed, no light-mode one did).
+  // Same CF Access caveat as the #891 test above: injectFakeAuth only
+  // satisfies the app's own useAuth() cookie check, not Cloudflare's edge
+  // gate on the canonical prod domain -- run with PLAYWRIGHT_BASE_URL
+  // pointed at an ungated preview-hash deploy, or this measures the
+  // Cloudflare/Google login splash instead of the app (the `text` assertion
+  // below catches that case loudly instead of silently passing on the
+  // wrong page).
+  for (const mode of ['dark', 'light'] as const) {
+    test(`A11Y: ${mode} mode contrast — page title text meets 4.5:1 (AA)`, async ({ page, context }) => {
+      await injectFakeAuth(context, BASE)
+      await context.addInitScript((m) => {
+        window.localStorage.setItem('mn-ccore-theme', m)
+      }, mode)
+      await loadPage(page, P.dashboard)
+
+      const result = await page.evaluate(() => {
+        function toRgb(str: string): [number, number, number, number] {
+          const m = str.match(/rgba?\(([^)]+)\)/)
+          if (!m) return [0, 0, 0, 1]
+          const parts = m[1].split(',').map((s) => parseFloat(s.trim()))
+          return [parts[0], parts[1], parts[2], parts[3] === undefined ? 1 : parts[3]]
+        }
+        function luminance([r, g, b]: [number, number, number, number]) {
+          const chan = [r, g, b].map((v) => {
+            const c = v / 255
+            return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+          })
+          return 0.2126 * chan[0] + 0.7152 * chan[1] + 0.0722 * chan[2]
+        }
+        // Walk up the tree compositing alpha backgrounds onto white until an
+        // opaque one is hit -- most Hub surfaces are white/cream with alpha
+        // tints layered on top, so the element's own bg alone is misleading.
+        function effectiveBg(el: Element): [number, number, number, number] {
+          let node: Element | null = el
+          let bg: [number, number, number, number] = [255, 255, 255, 1]
+          const stack: [number, number, number, number][] = []
+          while (node) {
+            const rgba = toRgb(getComputedStyle(node).backgroundColor)
+            if (rgba[3] > 0) stack.push(rgba)
+            if (rgba[3] >= 0.999) break
+            node = node.parentElement
+          }
+          for (let i = stack.length - 1; i >= 0; i--) {
+            const [r, g, b, a] = stack[i]
+            bg = [r * a + bg[0] * (1 - a), g * a + bg[1] * (1 - a), b * a + bg[2] * (1 - a), 1]
+          }
+          return bg
+        }
+        function ratio(fg: [number, number, number, number], bg: [number, number, number, number]) {
+          const l1 = luminance(fg)
+          const l2 = luminance(bg)
+          const hi = Math.max(l1, l2)
+          const lo = Math.min(l1, l2)
+          return (hi + 0.05) / (lo + 0.05)
+        }
+        const h1 = document.querySelector('h1')
+        if (!h1) return null
+        const cs = getComputedStyle(h1)
+        const fg = toRgb(cs.color)
+        const bg = effectiveBg(h1)
+        return {
+          text: (h1.textContent || '').trim().slice(0, 40),
+          color: cs.color,
+          bg: `rgb(${bg[0].toFixed(0)},${bg[1].toFixed(0)},${bg[2].toFixed(0)})`,
+          ratio: Math.round(ratio(fg, bg) * 100) / 100,
+        }
+      })
+
+      console.log(`${mode} mode h1 contrast:`, result)
+      expect(result, `no <h1> found on ${P.dashboard} in ${mode} mode`).not.toBeNull()
+      // Fail loud rather than silently pass on the wrong page: if the CF
+      // Access edge gate intercepted this request (see comment above), the
+      // login splash's own heading text would not be "Today" and a
+      // coincidentally-high-contrast measurement of THAT page must not read
+      // as a pass for the app's contrast.
+      expect(result!.text).toBe('Today')
+      // AA floor for the row's own stated bar ("WCAG AA floor, ideally AAA
+      // for body"); this is a heading so 3:1 (large text) is the strict
+      // floor, but every real token in the palette clears body-text 4.5:1
+      // by a wide margin (measured 16-20:1 on this exact element 2026-07-30)
+      // so 4.5:1 is the honest regression floor, not an aspirational one.
+      expect(result!.ratio).toBeGreaterThanOrEqual(4.5)
     })
-    console.log(`Dark mode colors — bg: ${contrast?.bg}, text: ${contrast?.text}`)
-    // Manual verification from screenshot is more reliable for contrast
-  })
+  }
 })
 
 // ═════════════════════════════════════════════════════════════════════
