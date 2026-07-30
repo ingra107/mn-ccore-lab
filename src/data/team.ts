@@ -14,6 +14,7 @@ export const directors: Director[] = [
     photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-06/Nick%20Picture_2022.jpg?itok=VEDKgpUN',
     scholarId: 'ZKMVVHkAAAAJ', // Scholar stats (2026-03-24): citations 2626, h-index 24, i10-index 39
     orcidId: '0000-0002-0292-0594', // #357 — ORCID primary source for publications
+    authorName: 'Ingraham NE', // #906 — was matched only via authorSlugs, which a co-authored paper can miss (see mergePublications dedup-skip note)
   },
   {
     name: 'Nathan Mesfin',
@@ -26,6 +27,7 @@ export const directors: Director[] = [
     path: '/nate-mesfin',
     bio: 'Critical care physician investigating in-hospital cardiac arrest survivability, DNR order variation, and chronic critical illness outcomes.',
     photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/images/dom-faculty-_0135_layer-164_0.png?itok=YWiCOKFA',
+    authorName: 'Mesfin N', // #906 — see Nick's authorName note above
   },
 ]
 
@@ -94,6 +96,7 @@ export function getAllMembers(): TeamMember[] {
     photoUrl: d.photoUrl,
     bio: d.bio,
     scholarId: d.scholarId,
+    authorName: d.authorName,
   }))
   return [...directorMembers, ...seniorMentors, ...facultyCollaborators, ...researchTeam]
 }

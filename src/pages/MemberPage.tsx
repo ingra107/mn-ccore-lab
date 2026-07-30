@@ -772,7 +772,14 @@ export default function MemberPage() {
       )}
 
       {memberPubs.length > 0 && (
-        <PublicationsSection publications={memberPubs} id="publications" />
+        // #906 (Nick 2026-07-23) also asked for a "Top-10 Featured Articles"
+        // section here that the MEMBER chooses. Not built: it needs a
+        // per-member featuring data model (Publication has only a GLOBAL
+        // `featured` boolean today) plus a portal-gated editing surface to
+        // write it — a D1 schema + Worker-route question, out of frontend
+        // scope. "All Publications" (this section, 10 most-recent + View
+        // all) is the half of the spec that needed neither.
+        <PublicationsSection publications={memberPubs} id="publications" title="All Publications" />
       )}
       {memberPubs.length === 0 && (
         <div

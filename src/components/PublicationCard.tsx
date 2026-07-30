@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { Publication } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import AuthorAvatarStack from './AuthorAvatarStack'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -135,7 +136,17 @@ function formatAuthors(authors: string): React.ReactNode[] {
   return result
 }
 
-export default function PublicationCard({ pub }: { pub: Publication }) {
+export default function PublicationCard({
+  pub,
+  showAuthorAvatars = false,
+}: {
+  pub: Publication
+  /** Opt-in — the mini author-avatar-stack (#906) is a Publications-page-only
+   *  affordance. Left off by default so MemberPage / PublicationLibrary don't
+   *  silently gain a stack that mostly repeats the viewed member's own photo
+   *  back at them (design principle #2 - don't show the same info twice). */
+  showAuthorAvatars?: boolean
+}) {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
   const isDark = document.documentElement.classList.contains('dark')
@@ -237,6 +248,13 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
               {pub.journal}
             </p>
           </div>
+
+          {/* Author avatar stack (#906) — opt-in, Publications-page only */}
+          {showAuthorAvatars && (
+            <div className="flex-shrink-0 self-center">
+              <AuthorAvatarStack pub={pub} />
+            </div>
+          )}
 
           {/* Expand chevron */}
           <div className="flex-shrink-0 self-center">

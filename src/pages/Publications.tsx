@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Award, List, BookOpen, Copy } from 'lucide-react'
+import { Award, List, BookOpen, Copy, Star } from 'lucide-react'
 import { usePublications } from '../hooks/useApiData'
 import type { Publication } from '../data/types'
 import PublicationFilters from '../components/PublicationFilters'
@@ -47,6 +47,12 @@ export default function Publications() {
   const { data: publications = [] } = usePublications()
 
   const [viewMode, setViewMode] = useState<'list' | 'library'>('list')
+  // #906 — "All pubs" collapses to the 10 most-recent by default, with a
+  // "View all" toggle revealing everything in place (design principle #3).
+  // Only meaningful with no active filter/search — that branch already
+  // shows a flat, unbounded, matched list (the right behavior for "find
+  // the thing I searched for", not "browse the curated recent set").
+  const [showAllPubs, setShowAllPubs] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Parse filter state from URL
@@ -170,6 +176,26 @@ export default function Publications() {
     [publications]
   )
 
+  // #906 (Nick 2026-07-23) — "10-Featured section" on this page. Reuses the
+  // Publication.featured boolean the homepage's FeaturedResearch already
+  // curates from (same field, same convention) — no new data model needed
+  // for the lab-wide picks; per-MEMBER featuring (MemberPage's ask) is a
+  // separate, not-yet-built surface (see MemberPage.tsx).
+  const featuredPubs = useMemo(
+    () =>
+      [...publications]
+        .filter((p) => p.featured)
+        .sort((a, b) => b.year - a.year)
+        .slice(0, 10),
+    [publications]
+  )
+
+  const RECENT_COUNT = 10
+  const recentPubs = useMemo(
+    () => [...filtered].sort((a, b) => b.year - a.year).slice(0, RECENT_COUNT),
+    [filtered]
+  )
+
   const pubsRef = useScrollRevealGroup('.fade-in-up', 80)
 
   return (
@@ -284,6 +310,38 @@ export default function Publications() {
           </button>
         )}
       </section>
+
+      {/* Featured Publications (#906, Nick 2026-07-23) — lab-wide picks via
+          Publication.featured, the same field + curation convention the
+          homepage's FeaturedResearch section already uses. Reuses
+          PublicationCard so the affordance is identical wherever it renders
+          (design principle #4), with the author-avatar-stack opted in. */}
+      {featuredPubs.length > 0 && (
+        <>
+          <section className="py-6 sm:py-8 content-container">
+            <div className="flex items-center gap-2 mb-4">
+              <Star {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <h2
+                className="text-sm"
+                style={{
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  color: 'var(--gold)',
+                  fontSize: '12px',
+                }}
+              >
+                Featured Publications
+              </h2>
+            </div>
+            <div className="space-y-3 sm:space-y-4">
+              {featuredPubs.map((pub) => (
+                <PublicationCard key={pub.id} pub={pub} showAuthorAvatars />
+              ))}
+            </div>
+          </section>
+          <SectionDivider />
+        </>
+      )}
 
       {/* Key Publications — theme-aware surface tokens. CLS R7: always rendered w/ minHeight slot */}
       <div style={{ minHeight: '200px' }}>
@@ -408,6 +466,23 @@ export default function Publications() {
           />
         </div>
 
+        {/* All Publications heading (#906) — only while browsing the
+            curated default view; a search/filter turns this into results,
+            not "all pubs", so the label steps aside for it. */}
+        {viewMode === 'list' && !hasFilters && !searchTerm && filtered.length > 0 && (
+          <h2
+            className="text-sm mb-4"
+            style={{
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              color: 'var(--slate)',
+              fontSize: '12px',
+            }}
+          >
+            All Publications
+          </h2>
+        )}
+
         {/* Publication list / library — minHeight prevents page collapse to 0 during cold load (CLS fix) */}
         {viewMode === 'library' ? (
           <PublicationLibrary publications={filtered} />
@@ -428,13 +503,49 @@ export default function Publications() {
           <div className="space-y-3 sm:space-y-4">
             {filtered.map((pub) => (
               <div key={pub.id} className="fade-in-up">
-                <PublicationCard pub={pub} />
+                <PublicationCard pub={pub} showAuthorAvatars />
               </div>
             ))}
           </div>
+        ) : !showAllPubs ? (
+          /* #906 — 10 most-recent, sorted by year, collapsed by default;
+             "View all" reveals the full grouped-by-year browse view in
+             place (design principle #3), same list either way. */
+          <>
+            <div className="space-y-3 sm:space-y-4">
+              {recentPubs.map((pub) => (
+                <div key={pub.id} className="fade-in-up">
+                  <PublicationCard pub={pub} showAuthorAvatars />
+                </div>
+              ))}
+            </div>
+            {filtered.length > RECENT_COUNT && (
+              <div className="mt-6 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowAllPubs(true)}
+                  className="text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
+                  style={{ color: 'var(--gold)', background: 'none', border: 'none' }}
+                >
+                  View all {filtered.length} publications
+                </button>
+              </div>
+            )}
+          </>
         ) : (
-          /* Grouped by year (default) — sticky year headers (P2-12). M-10 quiet label style preserved. */
-          years.map((year) => (
+          <>
+            <div className="mb-6 text-center">
+              <button
+                type="button"
+                onClick={() => setShowAllPubs(false)}
+                className="text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
+                style={{ color: 'var(--gold)', background: 'none', border: 'none' }}
+              >
+                Show recent only
+              </button>
+            </div>
+            {/* Grouped by year (default) — sticky year headers (P2-12). M-10 quiet label style preserved. */}
+            {years.map((year) => (
             <div key={year} className="mb-8 sm:mb-12">
               <div
                 className="fade-in-up flex items-center gap-3 mb-4 sm:mb-6 py-2"
@@ -482,12 +593,13 @@ export default function Publications() {
                   .filter((p) => p.year === year)
                   .map((pub) => (
                     <div key={pub.id} className="fade-in-up">
-                      <PublicationCard pub={pub} />
+                      <PublicationCard pub={pub} showAuthorAvatars />
                     </div>
                   ))}
               </div>
             </div>
-          ))
+            ))}
+          </>
         )}
       </section>
     </PageLayout>

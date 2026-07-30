@@ -438,12 +438,21 @@ export function PublicationsSection({
   publications,
   id,
   title = 'Publications',
+  recentCount = 10,
 }: {
   publications: Publication[]
   id?: string
   title?: string
+  /** #906 — a member with >10 publications (routine post-#905, e.g. Dudley
+   *  ~250) collapses to the `recentCount` most recent by default, with a
+   *  "View all" toggle revealing the rest in place (design principle #3). */
+  recentCount?: number
 }) {
+  const [showAll, setShowAll] = useState(false)
   const sorted = [...publications].sort((a, b) => b.year - a.year)
+  const hasOverflow = sorted.length > recentCount
+  const visible = showAll ? sorted : sorted.slice(0, recentCount)
+
   return (
     <section className="mb-16" id={id}>
       <h2
@@ -457,10 +466,22 @@ export function PublicationsSection({
         {title}
       </h2>
       <div className="space-y-4">
-        {sorted.map((pub) => (
+        {visible.map((pub) => (
           <PublicationCard key={pub.id} pub={pub} />
         ))}
       </div>
+      {hasOverflow && (
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            className="text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
+            style={{ color: 'var(--gold)', background: 'none', border: 'none' }}
+          >
+            {showAll ? 'Show fewer' : `View all ${sorted.length} publications`}
+          </button>
+        </div>
+      )}
     </section>
   )
 }
