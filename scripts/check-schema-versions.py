@@ -4,13 +4,22 @@ scripts/check-schema-versions.py
 =================================
 Structural integrity check for the api/schema-v*.sql migration file set.
 
-Three assertions (INFRA-5):
+Four assertions (INFRA-5; assertion 4 added by backlog #893):
   1. Ordered-version list: detects gaps or new out-of-order insertions vs the
      committed snapshot.
   2. Duplicate-prefix detection: flags any version number that has more files
      than the snapshot recorded for that version.
   3. Snapshot hash: SHA-256 of the sorted canonical file list must match the
      hash stored in scripts/schema-version-snapshot.json.
+  4. Self-registration: every schema-vNN*.sql file at or after
+     LEDGER_EPOCH_VERSION must contain a self-registering
+     "INSERT OR IGNORE INTO schema_migrations" statement naming its own
+     filename. This is the FILE-side half of the prod migration ledger
+     (schema-v105-schema-migrations-ledger.sql); the CI-side half diffs the
+     ledger's rows against this same committed file list
+     (.github/workflows/schema-drift.yml) to catch a file that was committed
+     but never applied, or applied and failed before its self-registering
+     INSERT ran. See backlog #893 for the incidents (#564, #559) this closes.
 
 The snapshot is the single source of truth.  When a new schema file is added
 or removed intentionally, the developer MUST regenerate the snapshot:
@@ -44,6 +53,16 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
 API_DIR = REPO_ROOT / "api"
 SNAPSHOT_PATH = SCRIPT_DIR / "schema-version-snapshot.json"
+
+# First version required to self-register into schema_migrations (backlog
+# #893). Introduced by schema-v105-schema-migrations-ledger.sql. Pre-epoch
+# files (v2-v104) are deliberately exempt -- no fabricated history backfill.
+LEDGER_EPOCH_VERSION = 105
+
+_SELF_REG_STMT_RE = re.compile(
+    r"INSERT\s+OR\s+IGNORE\s+INTO\s+schema_migrations\b.*?;",
+    re.IGNORECASE | re.DOTALL,
+)
 
 
 # ── file discovery & parsing ─────────────────────────────────────────────────
@@ -134,6 +153,61 @@ def save_snapshot(path: Path, snapshot: dict) -> None:
     with open(path, "w", encoding="utf-8") as f:
         json.dump(snapshot, f, indent=2)
         f.write("\n")  # trailing newline for clean git diffs
+
+
+# ── self-registration (assertion 4, backlog #893) ───────────────────────────
+
+def strip_sql_comments(text: str) -> str:
+    """Drop `--` line comments and `/* */` block comments.
+
+    Assertion 4 must read STATEMENTS, not prose. Without this a file whose only
+    self-registering INSERT sits inside a `--` header comment passes -- measured
+    2026-07-30 against a decoy file, which returned violations == []. That is
+    precisely the file the assertion exists to catch: one that DOCUMENTS the
+    registration it never performs.
+
+    Naive about `--` inside a string literal, deliberately. No schema file has
+    one, and the error direction is safe: over-stripping can only make the check
+    stricter, because a real statement is never inside a comment.
+    """
+    text = re.sub(r"/\*.*?\*/", " ", text, flags=re.DOTALL)
+    return re.sub(r"--[^\n]*", " ", text)
+
+
+def find_missing_self_registration(
+    entries: list[tuple[int, str, str]], api_dir: Path
+) -> list[str]:
+    """
+    For every schema file at or after LEDGER_EPOCH_VERSION, verify its SQL
+    text contains a statement-level "INSERT OR IGNORE INTO schema_migrations"
+    that names the file's OWN filename. Returns a list of human-readable
+    violation strings (empty if every in-scope file is compliant).
+
+    This is a static file-content check only -- no D1 connection, no network.
+    It proves the SOURCE carries the self-registration the ledger table
+    depends on; it cannot prove the file was ever actually applied to prod
+    (that is the CI drift step's job, comparing this same file list against
+    the live schema_migrations table).
+    """
+    violations: list[str] = []
+    for ver, _label, fname in entries:
+        if ver < LEDGER_EPOCH_VERSION:
+            continue
+        path = api_dir / fname
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError as exc:
+            violations.append(f"  {fname}: could not read file ({exc})")
+            continue
+
+        stmts = _SELF_REG_STMT_RE.findall(strip_sql_comments(text))
+        if not any(fname in s for s in stmts):
+            violations.append(
+                f'  {fname}: missing a self-registering "INSERT OR IGNORE '
+                f'INTO schema_migrations" statement naming its own filename '
+                f"(required for every file at/after v{LEDGER_EPOCH_VERSION})"
+            )
+    return violations
 
 
 # ── check logic ──────────────────────────────────────────────────────────────
@@ -241,6 +315,20 @@ def check(api_dir: Path, snapshot_path: Path) -> int:
             "FAIL [new-duplicates]: Version(s) with more files than the snapshot recorded:\n"
             + "\n".join(new_dup_violations)
             + "\n  If intentional, run: python scripts/check-schema-versions.py --update"
+        )
+
+    # ── Assertion 4: self-registration (backlog #893 ledger epoch) ─────────
+    self_reg_violations = find_missing_self_registration(entries, api_dir)
+    if self_reg_violations:
+        failures.append(
+            f"FAIL [self-registration]: schema file(s) at/after "
+            f"v{LEDGER_EPOCH_VERSION} missing a self-registering INSERT into "
+            "schema_migrations:\n"
+            + "\n".join(self_reg_violations)
+            + "\n  Every schema-vNN*.sql file from v"
+            f"{LEDGER_EPOCH_VERSION} onward must end with:\n"
+            "    INSERT OR IGNORE INTO schema_migrations (version, filename) "
+            "VALUES (<version>, '<its own filename>');"
         )
 
     if snapshot_dup_groups:

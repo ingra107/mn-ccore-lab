@@ -172,6 +172,80 @@ jobs:
             require('fs').writeFileSync('prod-schema.sql', normalizeSql(raw) + '\n');
           "
 
+      - name: "Migration ledger vs committed file list (backlog #893)"
+        # schema_migrations (introduced by schema-v105-schema-migrations-
+        # ledger.sql) records which schema-vNN*.sql files at/after v105
+        # actually ran to completion on prod, via a self-registering INSERT
+        # that check-schema-versions.py's assertion-4 requires on the source
+        # side. This step is the CI-side half: a committed v105+ file with NO
+        # matching ledger row means it was never applied, or was applied and
+        # failed before its self-registering INSERT ran — exactly the gap
+        # that made #564 and #559 answerable only by ad-hoc row-counting.
+        #
+        # Soft-skips (informational, exit 0) until schema-v105 itself has
+        # been applied to prod: the table not existing yet is the EXPECTED
+        # state between "source merged" and "DDL applied" (a separate,
+        # explicitly authorized step — see backlog #893's scope-question).
+        # Once the table exists, a committed v105+ file with no matching row
+        # hard-fails BY NAME.
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          wrangler d1 execute mnccore-lab \
+            --remote \
+            --command "SELECT filename FROM schema_migrations" \
+            --json > ledger.json 2> ledger-stderr.log || true
+
+          # Search BOTH streams. `wrangler d1 execute --json` writes its error
+          # payload to STDOUT, not stderr (measured 2026-07-30: 409 bytes on
+          # stdout, 0 on stderr) — so a stderr-only grep never sees "no such
+          # table", ledger.json is non-empty, and the step hard-fails every
+          # committed v105+ file during exactly the window this soft-skip
+          # exists for. Same trap documented in Peripheral-Brain's
+          # scripts/wrangler_d1.py.
+          if grep -qi "no such table" ledger.json ledger-stderr.log; then
+            echo "INFO: schema_migrations does not exist on prod yet (schema-v105 not applied). Skipping ledger-vs-committed check until it is."
+            exit 0
+          fi
+
+          if [ ! -s ledger.json ]; then
+            echo "::warning::Migration ledger query produced no output and did not report 'no such table' — treating as a transient failure, not drift."
+            cat ledger-stderr.log || true
+            exit 0
+          fi
+
+          node -e "
+            const fs = require('fs');
+            const LEDGER_EPOCH_VERSION = 105;
+            const j = JSON.parse(fs.readFileSync('ledger.json', 'utf8'));
+
+            // A successful --json run returns an ARRAY of result objects. Any
+            // other shape is an error payload or a format change, NOT 'the
+            // ledger is empty' — and treating it as empty would report every
+            // committed file as never-applied. Say so and skip; a wrong drift
+            // claim is worse than no claim.
+            if (!Array.isArray(j) || !j[0] || !Array.isArray(j[0].results)) {
+              console.log('::warning::Migration ledger query returned a non-array payload (error or changed --json format), not a result set. Skipping rather than reporting false drift. Payload head: ' + JSON.stringify(j).slice(0, 300));
+              process.exit(0);
+            }
+            const registered = new Set(j[0].results.map(r => r.filename));
+
+            const committed = fs.readdirSync('api')
+              .map(f => { const m = f.match(/^schema-v(\d+)(?:-([^.]+))?\.sql\$/); return m ? { file: f, version: +m[1] } : null; })
+              .filter(Boolean)
+              .filter(x => x.version >= LEDGER_EPOCH_VERSION)
+              .map(x => x.file);
+
+            const missing = committed.filter(f => !registered.has(f));
+            if (missing.length > 0) {
+              console.error('::error::Committed schema file(s) at/after v' + LEDGER_EPOCH_VERSION + ' with NO matching schema_migrations row on prod (never applied, or applied and failed before the self-registering INSERT):');
+              missing.forEach(f => console.error('  - ' + f));
+              process.exit(1);
+            }
+            console.log('Migration ledger OK: ' + committed.length + ' committed file(s) at/after v' + LEDGER_EPOCH_VERSION + ', all registered on prod.');
+          "
+
       - name: Build committed schema reference
         run: |
           # Reality check (audit found 2026-04-21): api/bootstrap-schema.sql only has
