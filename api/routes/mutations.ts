@@ -925,6 +925,9 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags
       // Hub-UI completion mutations (no feedback loop: the project UPDATE is a
       // direct D1 write, not routed through the mutation protocol).
       await advanceProjectMovement(env, mut, current);
+      // Advance a PROJECT's own last_meaningful_movement on its own content
+      // edits (no-op for task mutations — see the table==='projects' guard).
+      await advanceProjectOwnMovement(env, mut, current);
       // Lifecycle activity: complete / reopen / key-change lines. `current` is the
       // pre-patch before-image (applyPatch's D1 UPDATE doesn't mutate it). Non-fatal.
       await emitLifecycleActivity(env, mut, user, current);
@@ -940,6 +943,9 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags
   // Advance parent project staleness fields on task completion.
   // See comment on the merged_clean path above — same semantics.
   await advanceProjectMovement(env, mut, current);
+  // Advance a PROJECT's own last_meaningful_movement on its own content
+  // edits (no-op for task mutations — see the table==='projects' guard).
+  await advanceProjectOwnMovement(env, mut, current);
   // Lifecycle activity: complete / reopen / key-change lines. `current` is the
   // pre-patch before-image (applyPatch's D1 UPDATE doesn't mutate it). Non-fatal.
   await emitLifecycleActivity(env, mut, user, current);
@@ -1228,6 +1234,84 @@ async function advanceProjectMovement(
     WHERE id = ?
   `).bind(tsUtc, tsUtc, projectId).run().catch((e: Error) => {
     console.error('advanceProjectMovement: project update failed:', e.message);
+  });
+}
+
+// Patch keys that never count as "worked on" for last_meaningful_movement
+// purposes -- sync/pipeline bookkeeping, not content a person edited.
+// Deliberately an EXCLUDE list, not an include list: a project field added to
+// TABLE_FIELDS in the future counts as meaningful by default, so covering it
+// here needs no code change (Level 1 for future fields; only bookkeeping has
+// to be named).
+const PROJECT_MOVEMENT_EXCLUDED_FIELDS = new Set([
+  'last_meaningful_movement',
+  'stale_active_since',
+  'stage_entered_at',
+  'created_at',
+  'updated_at',
+  'slug',
+  'last_mutation_id',
+  'seq',
+]);
+
+/**
+ * Advance a PROJECT'S OWN last_meaningful_movement when a Hub-first PATCH
+ * (PB write via /api/mutations, or Hub UI) touches a real content field --
+ * anything other than sync bookkeeping (PROJECT_MOVEMENT_EXCLUDED_FIELDS).
+ *
+ * Symmetric counterpart to advanceProjectMovement above: that function
+ * advances a project's LMM from a CHILD task's completion; this one advances
+ * it from the project's OWN edits. Without it, a project worked exclusively
+ * through PB field writes (description/citation/due_date/... -- no stage or
+ * status transition, no task activity underneath it) never touches LMM or
+ * activity_entries, so GET /api/projects' last_activity rollup (projects.ts)
+ * and its last_meaningful_movement fallback both stay frozen and the
+ * Projects-list "activity" sort buries it -- the gap a 2026-07-23 diagnosis
+ * found on LPV R01 (40 activity_entries all backfill, sort rank 74/84, while
+ * the project was worked through July via PB field writes with no stage/
+ * status change in that window).
+ *
+ * Deliberately does NOT emit an activity_entries row. That would turn every
+ * routine metadata edit (a due_date tweak, a citation fill-in) into a public
+ * timeline line -- the team-visible narrative already has its own primitive
+ * for that (an explicit progress note via postActivityEntry / Hub "Progress"
+ * comments). This only refreshes the private freshness signal the sort
+ * already trusts (last_meaningful_movement, MAX-gate, never regresses).
+ *
+ * Skips when the patch itself explicitly sets last_meaningful_movement (e.g.
+ * PB's update_project_state, which advances it with the correct instant as
+ * part of the same PATCH) -- don't fight a more precise write with a second,
+ * less-precise stamp of our own.
+ */
+async function advanceProjectOwnMovement(
+  env: Env,
+  mut: Mutation,
+  current: Record<string, unknown>,
+): Promise<void> {
+  if (mut.table !== 'projects') return;
+
+  const patch = (mut.patch ?? {}) as Record<string, unknown>;
+  if (Object.prototype.hasOwnProperty.call(patch, 'last_meaningful_movement')) return;
+
+  const touchedMeaningfulField = Object.keys(patch).some(
+    (f) => !PROJECT_MOVEMENT_EXCLUDED_FIELDS.has(f) && patch[f] !== current[f]
+  );
+  if (!touchedMeaningfulField) return;
+
+  const tsUtc =
+    normalizeToUtcSpaceSep(mut.client_ts) ??
+    nowInstant().replace('T', ' ').replace(/\.\d+Z$/, '');
+
+  await env.DB.prepare(`
+    UPDATE projects
+    SET last_meaningful_movement = CASE
+        WHEN last_meaningful_movement IS NULL OR last_meaningful_movement < ?
+        THEN ?
+        ELSE last_meaningful_movement
+      END
+    WHERE id = ?
+  `).bind(tsUtc, tsUtc, mut.record_id).run().catch((e: Error) => {
+    console.error('advanceProjectOwnMovement: project update failed:', e.message);
   });
 }
 
