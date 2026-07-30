@@ -48,7 +48,7 @@ review/journey-*.png
 review/audit-0609/
 review/audit-results.json
 review/edge-fix-*/
-review/light-audit-*/
+review/light-*/
 review/codex-*.md
 review/MN-CCORE Lab Hub Design System*/
 # Session scratch + build-output copies (regenerable / handoff-only)
