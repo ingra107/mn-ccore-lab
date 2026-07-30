@@ -30,13 +30,30 @@ interface OAAuthor {
   last_known_institution?: OAInst
 }
 
-function affil(a: OAAuthor): string {
-  const insts = a.last_known_institutions?.length
+function institutions(a: OAAuthor): OAInst[] {
+  return a.last_known_institutions?.length
     ? a.last_known_institutions
     : a.last_known_institution
       ? [a.last_known_institution]
       : []
-  return insts.map((i) => i.display_name).filter(Boolean).join('; ')
+}
+
+function affil(a: OAAuthor): string {
+  return institutions(a).map((i) => i.display_name).filter(Boolean).join('; ')
+}
+
+// The PRIMARY (first-listed) institution only — NOT the full co-affiliation
+// list. Caught live for claire-collins (#905 residual): OpenAlex's top-scored
+// candidate had primary institution "Sydney Children's Hospital" but a
+// mid-list "University of Minnesota Medical Center" entry (a multi-decade,
+// multi-institution profile — likely a merged/split-profile artifact), and
+// testing the joined string pushed a wrong-person match to HIGH confidence.
+// Requiring the match on the primary institution makes that class of
+// false-HIGH unrepresentable without weakening real single/dual-institution
+// UMN matches (Nathan Mesfin: primary = "University of Minnesota"; Adams
+// Dudley: only institution = "Minneapolis VA Health Care System").
+function primaryAffil(a: OAAuthor): string {
+  return institutions(a)[0]?.display_name ?? ''
 }
 
 async function main() {
@@ -55,8 +72,7 @@ async function main() {
       const ranked = (data.results ?? [])
         .map((a) => {
           const nameMatch = lastName(a.display_name || '') === ln
-          const aff = affil(a).toLowerCase()
-          const mn = /minnesota|minneapolis|\bumn\b/.test(aff)
+          const mn = /minnesota|minneapolis|\bumn\b/.test(primaryAffil(a).toLowerCase())
           const hasOrcid = Boolean(a.orcid)
           const score =
             (nameMatch ? 3 : 0) + (mn ? 3 : 0) + (hasOrcid ? 1 : 0) + Math.min((a.works_count || 0) / 50, 1)
@@ -70,9 +86,14 @@ async function main() {
       summary.push({ slug: m.slug!, conf, orcid })
       console.log(`${conf.padEnd(6)} ${m.slug!.padEnd(24)} name="${m.name}"  -> ${orcid || '(review candidates)'}`)
       for (const r of ranked.slice(0, 3)) {
+        // id=<openalex-author-id> so a REVIEW candidate lacking an ORCID
+        // (the openalexId pathway proven live for dave-macdonald,
+        // josh-trujeque, casey-eddington, dan-shyu, benjamin-henkle) can
+        // still be acted on from this report without re-querying the API.
         console.log(
           `        ${(r.a.orcid || 'no-orcid').replace('https://orcid.org/', '').padEnd(20)} | ` +
-            `${(r.a.display_name || '').padEnd(24)} | works=${String(r.a.works_count || 0).padStart(4)} | ${affil(r.a).slice(0, 42)}`,
+            `${(r.a.display_name || '').padEnd(24)} | works=${String(r.a.works_count || 0).padStart(4)} | ` +
+            `id=${(r.a.id || '').replace('https://openalex.org/', '').padEnd(12)} | ${affil(r.a)}`,
         )
       }
     } catch (err) {
