@@ -7,6 +7,7 @@ import { emailToSlug } from '../../lib/emailSlug'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineSelect from '../InlineSelect'
 import { Button } from '../ui/Button'
+import Field from '../ui/Field'
 import Modal from '../ui/Modal'
 import { todayCivil } from '../../lib/time'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -300,28 +301,25 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
       <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
         {/* Title */}
         <div>
-          <label
-            htmlFor="task-title"
-            className="block text-xs font-medium mb-1"
-            style={{ color: 'var(--slate)' }}
-          >
-            Title *
-          </label>
-          <input
-            id="task-title"
-            type="text"
-            data-testid="task-title-input"
-            value={title}
-            onChange={handleTitleChange}
-            placeholder="e.g., Complete BMI subgroup analysis for AJRCCM revision"
-            className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1"
-            style={{
-              ...selectStyle,
-              borderColor: 'var(--border-subtle)',
-            }}
-            aria-required="true"
-            autoFocus
-          />
+          <Field label="Title" required htmlFor="task-title">
+            <input
+              id="task-title"
+              type="text"
+              data-testid="task-title-input"
+              value={title}
+              onChange={handleTitleChange}
+              placeholder="e.g., Complete BMI subgroup analysis for AJRCCM revision"
+              className="w-full outline-none focus:ring-0"
+              style={{
+                fontSize: 'var(--value-size)',
+                color: 'var(--ink)',
+                background: 'transparent',
+                border: 'none',
+              }}
+              aria-required="true"
+              autoFocus
+            />
+          </Field>
           {/* Autofill suggestion chips */}
           {visibleSuggestions.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
@@ -358,36 +356,26 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
         </div>
 
         {/* Description */}
-        <div>
-          <label
-            htmlFor="task-description"
-            className="block text-xs font-medium mb-1"
-            style={{ color: 'var(--slate)' }}
-          >
-            Description
-          </label>
+        <Field label="Description" htmlFor="task-description">
           <textarea
             id="task-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Additional details..."
             rows={2}
-            className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1 resize-none"
-            style={selectStyle}
+            className="w-full outline-none focus:ring-0 resize-none"
+            style={{
+              fontSize: 'var(--value-size)',
+              color: 'var(--ink)',
+              background: 'transparent',
+              border: 'none',
+            }}
           />
-        </div>
+        </Field>
 
         {/* Owner + Priority row */}
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label
-              id="task-assignee-label"
-              htmlFor="task-assignee"
-              className="block text-xs font-medium mb-1"
-              style={{ color: 'var(--slate)' }}
-            >
-              Owner * <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(responsible)</span>
-            </label>
+          <Field label="Owner (responsible)" required htmlFor="task-assignee" labelId="task-assignee-label" noContainer>
             <div
               id="task-assignee"
               aria-required="true"
@@ -399,15 +387,8 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
                 onChange={(slug) => { setAssignee(slug); setAssigneeTouched(true) }}
               />
             </div>
-          </div>
-          <div>
-            <label
-              htmlFor="task-priority"
-              className="block text-xs font-medium mb-1"
-              style={{ color: 'var(--slate)' }}
-            >
-              Priority
-            </label>
+          </Field>
+          <Field label="Priority" htmlFor="task-priority" noContainer>
             <InlineSelect
               value={priority}
               options={[
@@ -420,19 +401,12 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               size="md"
               alwaysShowChevron
             />
-          </div>
+          </Field>
         </div>
 
         {/* Project + Due Date row */}
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label
-              htmlFor="task-project"
-              className="block text-xs font-medium mb-1"
-              style={{ color: 'var(--slate)' }}
-            >
-              Project <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(optional)</span>
-            </label>
+          <Field label="Project (optional)" htmlFor="task-project" noContainer>
             <InlineSelect
               value={projectId}
               options={[{ value: '', label: 'No Project' }, ...projects.map((p) => ({ value: p.slug, label: p.title })
@@ -441,15 +415,8 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               size="md"
               alwaysShowChevron
             />
-          </div>
-          <div>
-            <label
-              htmlFor="task-due-date"
-              className="block text-xs font-medium mb-1"
-              style={{ color: 'var(--slate)' }}
-            >
-              Due Date
-            </label>
+          </Field>
+          <Field label="Due Date" htmlFor="task-due-date" noContainer>
             <input
               id="task-due-date"
               type="date"
@@ -458,7 +425,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               className="w-full rounded-md border px-2.5 py-2 text-sm"
               style={selectStyle}
             />
-          </div>
+          </Field>
         </div>
 
         <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>

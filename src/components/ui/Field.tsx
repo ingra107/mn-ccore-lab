@@ -5,6 +5,10 @@ export interface FieldProps {
   required?: boolean
   hint?: string
   htmlFor?: string
+  /** id on the rendered <label> — for callers that need aria-labelledby
+   * pointing at the label (e.g. a role="group" wrapper that isn't itself
+   * a labelable element, so htmlFor alone doesn't associate). */
+  labelId?: string
   children: React.ReactNode
   noContainer?: boolean
   /**
@@ -30,13 +34,14 @@ export interface FieldProps {
  * Design tokens are baked in — never literal px.
  * Both light + dark themes work via theme-aware CSS custom properties.
  */
-export default function Field({ label, required, hint, htmlFor, children, noContainer, size = 'label' }: FieldProps) {
+export default function Field({ label, required, hint, htmlFor, labelId, children, noContainer, size = 'label' }: FieldProps) {
   const micro = size === 'micro'
   return (
     <div>
       {label && (
         <label
           htmlFor={htmlFor}
+          id={labelId}
           style={{
             display: 'block',
             fontSize: micro ? 'var(--text-micro)' : 'var(--text-label)',
