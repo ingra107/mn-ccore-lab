@@ -2611,7 +2611,13 @@ defineRoute({
 defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c)) });
 defineRoute({ method: 'POST', path: '/api/launch-log/:id/status', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleSetLaunchStatus(c.req.param('id'), R(c), USER(c), E(c)) });
 defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c)) });
-defineRoute({ method: 'POST', path: '/api/launch-log/:id/claim',  auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleClaimLaunch(c.req.param('id'), R(c), USER(c), E(c)) });
+// PI/API-key gated in-handler (isPiRequest — same idiom as /api/bug-reports
+// above, not the /api/pb/* path middleware). Backlog #250: closes the gap
+// where any team member holding (or guessing) the opaque lnch_ id could
+// consume a pending mobile launch and read its seed. Both live claimants
+// (resolve_launch.py, hub_ai_listener.py) already send Bearer PB_API_KEY and
+// pass unchanged — see api/routes/launch-log.ts:handleClaimLaunch for detail.
+defineRoute({ method: 'POST', path: '/api/launch-log/:id/claim',  auth: 'pi',     entity: 'launch-log', visibility: 'na', handler: (c) => handleClaimLaunch(c.req.param('id'), R(c), USER(c), E(c)) });
 
 // Artifacts writes — specific-before-generic. Create is authed (Hermes via API
 // key, or a team member). Revise/comments authed; delete PI-gated in-handler.

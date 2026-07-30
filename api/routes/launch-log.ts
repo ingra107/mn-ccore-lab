@@ -1,5 +1,5 @@
 // api/routes/launch-log.ts
-import { json, error, generateId } from '../helpers';
+import { json, error, generateId, isPiRequest } from '../helpers';
 import type { Env, AuthUser } from '../helpers';
 
 const TAGS = ['quickchat', 'workon'];
@@ -134,10 +134,24 @@ function composeSeedWithTaskContext(row: ClaimRow): string {
 }
 
 // POST /api/launch-log/:id/claim — atomic single-use opaque-token claim; UNSCOPED (no requested_by filter).
+// PI/API-key gated in-handler (isPiRequest — same idiom as bug-report.ts's
+// handleListBugReports). Backlog #250: a team member must not be able to
+// consume a pending mobile launch + read its seed even by guessing the
+// opaque lnch_ id (queue privacy, defense-in-depth). Both live claimants pass
+// unchanged because they already authenticate with Bearer PB_API_KEY:
+// resolve_launch.py (the computer route, scripts/utils/resolve_launch.py:138-140)
+// and hub_ai_listener.py (the mobile route, scripts/scheduled/hub_ai_listener.py:244-252,1104).
+// validateApiKey() matches that key against env.PB_API_KEY and isPiRequest()
+// short-circuits true before ever touching CF Access. No browser caller hits
+// this endpoint directly — the browser only POSTs /api/launch-log to mint a
+// token; the OS protocol handler hands the opaque id to resolve_launch.py.
 // Returns { verb, seed, project_slug } on success. 410 if token invalid, expired, or already consumed.
 // The returned seed is the RAW stored seed enriched with the source task's context
 // when the row carried a task_id (see composeSeedWithTaskContext). (#485)
-export async function handleClaimLaunch(id: string, _request: Request, _user: AuthUser, env: Env): Promise<Response> {
+export async function handleClaimLaunch(id: string, request: Request, _user: AuthUser, env: Env): Promise<Response> {
+  if (!(await isPiRequest(request, env))) {
+    return error('Forbidden — PI access only', 403);
+  }
   const result = await env.DB.prepare(
     `UPDATE launch_log SET status='launched', consumed_at=datetime('now'), launched_at=datetime('now')
      WHERE id=? AND consumed_at IS NULL AND expires_at IS NOT NULL AND expires_at > datetime('now')`

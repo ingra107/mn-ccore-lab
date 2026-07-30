@@ -24,6 +24,7 @@ function req(body: unknown, url = 'https://x/api/launch-log') {
   return new Request(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 }
 const USER = { email: 'ingra107@umn.edu', name: 'Nick' };
+const API_KEY = 'test-pb-key';
 
 describe('handleCreateLaunch', () => {
   it('inserts a launch_log row and returns 201 with the seed stored', async () => {
@@ -94,15 +95,32 @@ function makeDbForClaim({ changes = 1, firstRow = null as any } = {}) {
   };
   return db;
 }
-function claimReq(id: string) {
-  return new Request(`https://x/api/launch-log/${id}/claim`, { method: 'POST' });
+function claimReq(id: string, opts: { auth?: boolean } = {}) {
+  const headers: Record<string, string> = {};
+  if (opts.auth !== false) headers['Authorization'] = `Bearer ${API_KEY}`;
+  return new Request(`https://x/api/launch-log/${id}/claim`, { method: 'POST', headers });
+}
+function claimEnv(db: unknown) {
+  return { DB: db, PB_API_KEY: API_KEY } as unknown as Env;
 }
 
 describe('handleClaimLaunch', () => {
+  // backlog #250: PI/API-key gated in-handler (isPiRequest). Both live
+  // claimants (resolve_launch.py, hub_ai_listener.py) send Bearer PB_API_KEY
+  // and pass unchanged — 403 here is the ONE new behavior, everything else
+  // in this describe block exercises unchanged claim logic with that header
+  // now present (mirrors bug-reports.status.test.ts's key:true convention).
+  it('403s without a valid API key or PI session', async () => {
+    const db = makeDbForClaim({ changes: 1, firstRow: { tag: 'quickchat', seed: 'x', project_slug: null } });
+    const env = claimEnv(db);
+    const res = await handleClaimLaunch('lnch_abc', claimReq('lnch_abc', { auth: false }), USER, env);
+    expect(res.status).toBe(403);
+  });
+
   it('returns 200 with verb/seed/project_slug when token is valid', async () => {
     const firstRow = { tag: 'quickchat', seed: 'fix the figure', project_slug: 'pb-sector' };
     const db = makeDbForClaim({ changes: 1, firstRow });
-    const env = { DB: db } as unknown as Env;
+    const env = claimEnv(db);
     const res = await handleClaimLaunch('lnch_abc', claimReq('lnch_abc'), USER, env);
     expect(res.status).toBe(200);
     const body = await res.json() as any;
@@ -113,21 +131,21 @@ describe('handleClaimLaunch', () => {
 
   it('returns 410 on second claim (consumed_at already set — changes=0)', async () => {
     const db = makeDbForClaim({ changes: 0 });
-    const env = { DB: db } as unknown as Env;
+    const env = claimEnv(db);
     const res = await handleClaimLaunch('lnch_abc', claimReq('lnch_abc'), USER, env);
     expect(res.status).toBe(410);
   });
 
   it('returns 410 when token is expired (changes=0)', async () => {
     const db = makeDbForClaim({ changes: 0 });
-    const env = { DB: db } as unknown as Env;
+    const env = claimEnv(db);
     const res = await handleClaimLaunch('lnch_expired', claimReq('lnch_expired'), USER, env);
     expect(res.status).toBe(410);
   });
 
   it('returns 410 for an unknown id (changes=0)', async () => {
     const db = makeDbForClaim({ changes: 0 });
-    const env = { DB: db } as unknown as Env;
+    const env = claimEnv(db);
     const res = await handleClaimLaunch('lnch_unknown', claimReq('lnch_unknown'), USER, env);
     expect(res.status).toBe(410);
   });
@@ -135,7 +153,7 @@ describe('handleClaimLaunch', () => {
   it('returns 410 for a legacy row with NULL expires_at (expires_at IS NOT NULL guard rejects)', async () => {
     // Legacy rows have NULL expires_at — the WHERE clause rejects them (changes=0)
     const db = makeDbForClaim({ changes: 0 });
-    const env = { DB: db } as unknown as Env;
+    const env = claimEnv(db);
     const res = await handleClaimLaunch('lnch_legacy', claimReq('lnch_legacy'), USER, env);
     expect(res.status).toBe(410);
   });
@@ -160,7 +178,7 @@ describe('handleClaimLaunch — task-context composition (#485)', () => {
   it('prepends the task-context header and preserves the raw seed after a blank line', async () => {
     const firstRow = { tag: 'quickchat', seed: 'has it been done?', project_slug: 'pb-sector', task_id: 'task_1', ...taskCols };
     const db = makeDbForClaim({ changes: 1, firstRow });
-    const env = { DB: db } as unknown as Env;
+    const env = claimEnv(db);
     const res = await handleClaimLaunch('lnch_ctx', claimReq('lnch_ctx'), USER, env);
     expect(res.status).toBe(200);
     const body = await res.json() as any;
@@ -179,7 +197,7 @@ describe('handleClaimLaunch — task-context composition (#485)', () => {
   it('returns the raw seed unchanged when the launch carried no task_id', async () => {
     const firstRow = { tag: 'quickchat', seed: 'fix the figure', project_slug: null, task_id: null };
     const db = makeDbForClaim({ changes: 1, firstRow });
-    const env = { DB: db } as unknown as Env;
+    const env = claimEnv(db);
     const res = await handleClaimLaunch('lnch_raw', claimReq('lnch_raw'), USER, env);
     const body = await res.json() as any;
     expect(body.data.seed).toBe('fix the figure');
@@ -189,7 +207,7 @@ describe('handleClaimLaunch — task-context composition (#485)', () => {
     // Join sentinel: task_id set but task_pk NULL (deleted_at guard nulled the join)
     const firstRow = { tag: 'workon', seed: 'pick this up', project_slug: 'x', task_id: 'task_gone', task_pk: null };
     const db = makeDbForClaim({ changes: 1, firstRow });
-    const env = { DB: db } as unknown as Env;
+    const env = claimEnv(db);
     const res = await handleClaimLaunch('lnch_miss', claimReq('lnch_miss'), USER, env);
     const body = await res.json() as any;
     expect(body.data.seed).toBe('pick this up');
@@ -199,7 +217,7 @@ describe('handleClaimLaunch — task-context composition (#485)', () => {
     const longDesc = 'x'.repeat(900);
     const firstRow = { tag: 'workon', seed: 'go', project_slug: 'x', task_id: 'task_long', ...taskCols, task_description: longDesc };
     const db = makeDbForClaim({ changes: 1, firstRow });
-    const env = { DB: db } as unknown as Env;
+    const env = claimEnv(db);
     const res = await handleClaimLaunch('lnch_long', claimReq('lnch_long'), USER, env);
     const body = await res.json() as any;
     // 500-char cap + ellipsis; the full 900-char description never appears.
