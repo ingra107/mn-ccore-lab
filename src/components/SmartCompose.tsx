@@ -35,6 +35,7 @@ import { hermesOutcomeToast, type HermesDispatch } from '../lib/askHermes'
 import { useUndoToast } from './UndoToast'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
+import { uploadFileToR2 } from '../lib/r2Upload'
 
 const EMOJI_QUICK = ['👍', '❤️', '🎉', '👀', '🔥', '💡', '✅', '⚠️', '📝', '🤖', '🚀', '🙏']
 
@@ -339,42 +340,10 @@ export default function SmartCompose(props: SmartComposeProps) {
     }
     setUploading(true)
     try {
-      const urlRes = await fetch('/api/upload/url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type || 'application/octet-stream',
-          context: { type: uploadContext.type, id: uploadContext.id },
-        }),
-      })
-      if (!urlRes.ok) throw new Error(`Failed to get upload URL (${urlRes.status}) — R2 may not be configured`)
-      const urlData = await urlRes.json() as { data?: { uploadUrl: string; key: string } }
-      if (!urlData.data?.uploadUrl) throw new Error('Failed to get upload URL — R2 may not be configured')
-      const putRes = await fetch(urlData.data.uploadUrl, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type || 'application/octet-stream' },
-      })
-      if (!putRes.ok) throw new Error(`Upload to storage failed (${putRes.status})`)
-      const doneRes = await fetch('/api/upload/done', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: urlData.data.key,
-          filename: file.name,
-          contentType: file.type,
-          sizeBytes: file.size,
-          entityType: uploadContext.entityType ?? uploadContext.type,
-          entityId: uploadContext.id,
-        }),
-      })
-      if (!doneRes.ok) throw new Error(`Recording attachment failed (${doneRes.status})`)
-      const doneData = await doneRes.json() as { data?: { url?: string } }
-      // Same-origin, non-expiring raw-bytes link (api/routes/uploads.ts
-      // handleUploadDone) — falls back to constructing it client-side only if
-      // an older/unpatched worker is still serving the response.
-      const url = doneData.data?.url ?? `/api/files/${urlData.data.key}/raw`
+      // Shared presign -> PUT -> done chain (backlog #545) — see
+      // ../lib/r2Upload.ts; OverviewQuickAdd (TaskDetailPanel.tsx) calls the
+      // same function so the two composers can't drift on this again.
+      const { url } = await uploadFileToR2(file, uploadContext)
       insertAtCursor(isImage ? `![${file.name}](${url}) ` : `[${file.name}](${url}) `)
       undoToast.showSuccess(`Attached ${file.name}`)
     } catch (err) {

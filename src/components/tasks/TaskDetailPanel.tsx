@@ -25,6 +25,7 @@ import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { appendCharToInput, stripMeetingMarker } from '../../lib/textUtils'
 import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrouping'
+import { uploadFileToR2 } from '../../lib/r2Upload'
 import MentionInput from '../MentionInput'
 import TypingIndicator from '../TypingIndicator'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
@@ -1519,29 +1520,12 @@ function OverviewQuickAdd({
     }
     setUploading(true)
     try {
-      const urlRes = await fetch('/api/upload/url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream', context: { type: 'task', id: taskId } }),
-      })
-      if (!urlRes.ok) throw new Error(`presign failed (${urlRes.status})`)
-      const urlData = await urlRes.json() as { data?: { uploadUrl?: string; key?: string } }
-      if (!urlData.data?.uploadUrl || !urlData.data?.key) throw new Error('presign failed')
-      const putRes = await fetch(urlData.data.uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } })
-      if (!putRes.ok) throw new Error(`upload to storage failed (${putRes.status})`)
-      const doneRes = await fetch('/api/upload/done', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: urlData.data.key, filename: file.name, contentType: file.type, sizeBytes: file.size, entityType: 'task', entityId: taskId }),
-      })
-      if (!doneRes.ok) throw new Error(`recording attachment failed (${doneRes.status})`)
-      const doneData = await doneRes.json() as { data?: { url?: string } }
+      // Shared presign -> PUT -> done chain (backlog #545) — see
+      // ../../lib/r2Upload.ts; SmartCompose calls the same function so the
+      // two composers can't drift on this again.
+      const { url: link } = await uploadFileToR2(file, { type: 'task', id: taskId })
       queryClient.invalidateQueries({ queryKey: ['attachments', 'task', taskId] })
       queryClient.invalidateQueries({ queryKey: ['task-files', taskId] })
-      // Same-origin, non-expiring raw-bytes link (see api/routes/uploads.ts
-      // handleUploadDone) — falls back to constructing it client-side only if
-      // an older/unpatched worker is still serving the response.
-      const link = doneData.data?.url ?? `/api/files/${urlData.data.key}/raw`
       const md = isImage ? `![${file.name}](${link})` : `[${file.name}](${link})`
       setText((prev) => (prev ? `${prev}\n${md}` : md))
       showSuccess(`Attached ${file.name}`)
