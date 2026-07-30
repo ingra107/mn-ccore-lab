@@ -97,8 +97,7 @@ jobs:
         run: |
           cat > normalize-sql.cjs <<'EOF'
           // normalizeSql(rawSqlText) -> sorted canonical statements joined by '\n'
-          //   - strips line comments (--) and block comments (/* */)
-          //   - splits on semicolons (statement terminator)
+          //   - splits into statements with a SINGLE quote-aware lexer pass
           //   - collapses ALL whitespace runs to single space
           //   - strips paren-adjacent whitespace
           //   - removes "IF NOT EXISTS"
@@ -109,13 +108,107 @@ jobs:
           //     Real structural differences (different defaults, NOT NULL
           //     constraints, different PKs) still surface.
           //   - sorts statements case-insensitively for stable diff
+          //
+          // WHY A LEXER AND NOT REGEXES (2026-07-30, the 8-night RED):
+          // The previous version ran three INDEPENDENT regex passes -- strip /* */,
+          // strip --, then split(';') -- and their composition was the bug. A `--`
+          // inside a string literal is not a comment, but the stripper could not tell:
+          //   CREATE TRIGGER ... BEGIN SELECT RAISE(ABORT, 'x -- do y'); END
+          // The `-- do y'); END` was eaten to end-of-line, taking the closing quote
+          // AND the `;` terminator with it, so the NEXT statement was glued onto this
+          // one. 11 of prod's 315 statements carry `--` inside a message string; the
+          // resulting merges land in different places on the prod side (ordered by
+          // type,name) than the committed side (file order), so the two canonical
+          // forms disagreed and `Diff prod vs committed` failed every night from
+          // 2026-07-22 with no real drift behind it.
+          // Making the tokenizer aware of what a string literal IS removes the whole
+          // class -- `--`, `/* */` and `;` simply cannot be seen as syntax inside a
+          // quoted region, so there is no case left to special-case.
+          //
+          // The same pass also tracks BEGIN/CASE...END so a trigger body's internal
+          // `;` no longer chops the trigger into fragments. That chopping was lossy
+          // but SYMMETRIC (both sides did it identically), so it never by itself
+          // caused a diff -- it just left 33 bare `END` statements in the canonical
+          // form and made the artifact unreadable for whoever came to diagnose it.
+          function splitStatements(text) {
+            const stmts = []
+            let buf = ''
+            let i = 0
+            const n = text.length
+            let blockDepth = 0
+            let inTrigger = false
+
+            const flush = () => {
+              const s = buf.trim()
+              if (s.length) stmts.push(s)
+              buf = ''
+              blockDepth = 0
+              inTrigger = false
+            }
+
+            while (i < n) {
+              const ch = text[i]
+              const nx = text[i + 1]
+
+              // line comment -- only OUTSIDE a quoted region, which is the whole point
+              if (ch === '-' && nx === '-') {
+                while (i < n && text[i] !== '\n') i++
+                buf += ' '
+                continue
+              }
+              if (ch === '/' && nx === '*') {
+                i += 2
+                while (i < n && !(text[i] === '*' && text[i + 1] === '/')) i++
+                i += 2
+                buf += ' '
+                continue
+              }
+              // string literal / quoted identifier; SQL escapes the quote by doubling it
+              if (ch === "'" || ch === '"' || ch === '`') {
+                const q = ch
+                buf += q
+                i++
+                while (i < n) {
+                  if (text[i] === q && text[i + 1] === q) { buf += q + q; i += 2; continue }
+                  if (text[i] === q) { buf += q; i++; break }
+                  buf += text[i]; i++
+                }
+                continue
+              }
+              if (ch === '[') {
+                buf += ch; i++
+                while (i < n && text[i] !== ']') { buf += text[i]; i++ }
+                if (i < n) { buf += ']'; i++ }
+                continue
+              }
+              // words: track CREATE TRIGGER, then BEGIN/CASE ... END nesting
+              if (/[A-Za-z_]/.test(ch)) {
+                let j = i
+                while (j < n && /[A-Za-z0-9_]/.test(text[j])) j++
+                const word = text.slice(i, j)
+                const up = word.toUpperCase()
+                if (up === 'TRIGGER' && /\bCREATE\s+(?:TEMP\s+|TEMPORARY\s+)?$/i.test(buf)) inTrigger = true
+                if (inTrigger) {
+                  if (up === 'BEGIN' || up === 'CASE') blockDepth++
+                  else if (up === 'END' && blockDepth > 0) blockDepth--
+                }
+                buf += word
+                i = j
+                continue
+              }
+              if (ch === ';' && blockDepth === 0) { flush(); i++; continue }
+              buf += ch
+              i++
+            }
+            flush()
+            return stmts
+          }
+
           function sortTableColumns(stmt) {
-            // Match: CREATE TABLE [IF NOT EXISTS] "?name"? (body)
             const m = stmt.match(/^(CREATE TABLE\s+(?:"[^"]+"|\w+)\s*)\((.*)\)\s*$/i)
             if (!m) return stmt
             const prefix = m[1]
             const body = m[2]
-            // Split body on top-level commas (not inside parens).
             const parts = []
             let depth = 0
             let buf = ''
@@ -133,12 +226,9 @@ jobs:
             parts.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
             return prefix + '(' + parts.join(', ') + ')'
           }
+
           function normalizeSql(text) {
-            const stripped = text
-              .replace(/\/\*[\s\S]*?\*\//g, ' ')
-              .replace(/--[^\n]*/g, ' ')
-            const stmts = stripped
-              .split(';')
+            const stmts = splitStatements(text)
               .map(s => s.replace(/\s+/g, ' ').trim())
               .map(s => s.replace(/\bIF NOT EXISTS\b/gi, '').replace(/\s+/g, ' ').trim())
               .map(s => s.replace(/\(\s+/g, '(').replace(/\s+\)/g, ')').replace(/\s+,/g, ',').replace(/,\s+/g, ', '))
@@ -150,6 +240,7 @@ jobs:
               .filter(s => !/^CREATE TABLE\s+d1_migrations\b/i.test(s))
             return stmts.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' })).join('\n')
           }
+
           module.exports = { normalizeSql }
           EOF
 
