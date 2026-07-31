@@ -257,10 +257,18 @@ fi
 # (.github/workflows/vitest.yml runs test:api/lib/src, never typecheck:api)
 # ran it before now. Scoped to api/, shared/, and the check's own config so
 # doc/frontend-only commits pay nothing; ~8-9s on a full api/ typecheck when
-# it does fire. The baseline was refreshed 149 -> 0 in the same commit (the
-# api/ tree already typechecks clean; the stale floor was carrying debt that
-# no longer exists) so the ratchet starts honest instead of silently
-# permitting 149 pre-existing errors nobody can name.
+# it does fire.
+#
+# The baseline is NOT zero, and an earlier version of this comment said it was.
+# `scripts/api-types-baseline.json` holds 39 signatures summing to 149 errors,
+# and the gate reports `PASS - 0 new errors (149 known, unchanged)`. The api/
+# tree does NOT typecheck clean. The "149 -> 0" reading came from the bug the
+# same commit fixed: check-api-types.mjs passed silently when tsc could not
+# build, so a failed build produced zero errors and the script read that as
+# "debt dropped to 0". With the silent pass fixed, the real floor is visible.
+# So this is a RATCHET on a 149-error floor, not a clean gate: it blocks NEW
+# errors only. Paying the floor down is separate work; `npm run
+# typecheck:api:update` lowers it once errors are actually fixed.
 if git diff --cached --name-only --diff-filter=ACMR \
         | grep -qE "^api/.*\.tsx?$|^shared/.*\.tsx?$|^tsconfig\.api\.json$|^scripts/check-api-types\.mjs$"; then
     echo "[hub-precommit] api/ staged -- running worker type-check gate..."

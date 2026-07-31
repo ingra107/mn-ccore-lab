@@ -54,7 +54,14 @@ review/MN-CCORE Lab Hub Design System*/
 # Session scratch + build-output copies (regenerable / handoff-only)
 Scratch-handoff/
 dist-screenshot/
-src/lib/__tests__/__screenshots__/
+# Vitest browser-mode writes a PNG here when a test FAILS (`screenshotFailures`
+# defaults to true). These are failure debris, not snapshot baselines: nothing
+# in the repo calls `toMatchScreenshot`, so no test ever compares against them.
+# The old line pinned `src/lib/__tests__/__screenshots__/`, a path vitest never
+# writes to, while the four directories it does write to went untracked and two
+# stale PNGs sat committed under `src/__tests__/__screenshots__/` — named for
+# tests that no longer exist (backlog #1042).
+**/__screenshots__/
 review/*.png
 review/audit-newteammate/
 review/a11y-deep/
