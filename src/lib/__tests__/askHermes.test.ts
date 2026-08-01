@@ -7,7 +7,7 @@
 // in the first place.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { askHermesOnDay, hermesOutcomeToast, dayActivityQueryKey } from '../askHermes';
+import { askHermesOnDay, askHermesOnTask, hermesOutcomeToast, dayActivityQueryKey } from '../askHermes';
 
 describe('hermesOutcomeToast', () => {
   it('reports a dispatched ask as success', () => {
@@ -80,6 +80,47 @@ describe('askHermesOnDay', () => {
   it('returns ok:false instead of throwing when the network rejects', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
     const res = await askHermesOnDay('@hermes hi', '2026-07-23');
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error.message).toBe('offline');
+  });
+});
+
+describe('askHermesOnTask', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('posts the body verbatim AND private, so the server can detect the token', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ hermes: { dispatched: true } }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await askHermesOnTask('task_42', '@hermes summarize this task');
+
+    expect(res).toEqual({ ok: true, hermes: { dispatched: true } });
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/tasks/task_42/comments',
+      expect.objectContaining({
+        method: 'POST',
+        // Both halves of the contract the SmartCompose / OverviewQuickAdd
+        // copies could previously drift on: the @hermes token survives
+        // (stripping is a silent "no Hermes") and the row is PRIVATE by
+        // default (visibility='author', owner decision A).
+        body: JSON.stringify({ content: '@hermes summarize this task', visibility: 'author' }),
+      })
+    );
+  });
+
+  it('returns ok:false instead of throwing on a non-2xx', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503 }));
+    const res = await askHermesOnTask('task_42', '@hermes hi');
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error.message).toBe('/api/tasks comment 503');
+  });
+
+  it('returns ok:false instead of throwing when the network rejects', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    const res = await askHermesOnTask('task_42', '@hermes hi');
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error.message).toBe('offline');
   });

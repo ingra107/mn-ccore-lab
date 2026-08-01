@@ -51,7 +51,7 @@ import { TaskActivityFeed } from './detail/TaskActivityFeed'
 import TaskIntelligence from './detail/TaskIntelligence'
 import KeyLinksEditor from '../KeyLinksEditor'
 import { isHermesPrefix, isBacklogPrefix, stripBacklogPrefix } from '../../lib/hermesRouting'
-import { hermesOutcomeToast, type HermesDispatch } from '../../lib/askHermes'
+import { askHermesOnTask, hermesOutcomeToast } from '../../lib/askHermes'
 import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
 import { Brain } from 'lucide-react'
@@ -1601,37 +1601,24 @@ function OverviewQuickAdd({
     // A direct @hermes prefix is a private ask: intercept before submitComment so
     // it doesn't fall through as team-visible activity (owner decision A).
     if (isHermesPrefix(v)) {
-      // Hermes wave Phase 5: post the body VERBATIM (@hermes token intact) to the
-      // task comment endpoint as PRIVATE (visibility='author') — owner decision A:
-      // a typed prefix defaults private (a mid-text @hermes stays team-visible).
-      // The server's HERMES_DETECT_RE fires on the intact token → dispatchHermes
-      // answers IN-THREAD (source_type='task_comment'); the answer inherits
-      // visibility='author'. KEEP the token: stripping is a silent "no Hermes"
-      // (§3.4 inversion). Was: POST /api/ai-requests source_type='daily_thought',
-      // read via TaskActivityFeed's activity_entries thread (Phase 3-6 migration).
-      fetch(`/api/tasks/${taskId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: v, visibility: 'author' }),
-      })
-        .then(async (res) => {
-          if (!res.ok) throw new Error(`/api/tasks comment ${res.status}`)
-          return (await res.json().catch(() => ({}))) as { hermes?: HermesDispatch }
-        })
-        .then((out) => {
+      // Hermes wave Phase 5 — the POST contract (visibility='author', @hermes
+      // token kept intact, in-thread answer — owner decision A) lives in
+      // askHermesOnTask (src/lib/askHermes.ts), shared with SmartCompose task
+      // mode so the two task composers cannot drift on it (backlog #545).
+      // Never rejects — branch on `ok`.
+      askHermesOnTask(taskId, v).then((result) => {
+        if (result.ok) {
           reset()
           queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] })
           queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
           queryClient.invalidateQueries({ queryKey: ['activity'] })
-          // Shared copy (src/lib/askHermes.ts). `ok: true` by construction — a
-          // non-2xx threw in the step above and lands in .catch().
-          const toast = hermesOutcomeToast({ ok: true, hermes: out.hermes }, 'Posted')
+          const toast = hermesOutcomeToast(result, 'Posted')
           ;(toast.kind === 'info' ? showInfo : showSuccess)(toast.text)
-        })
-        .catch((e) => {
-          console.error('@hermes from task comment failed:', e)
+        } else {
+          console.error('@hermes from task comment failed:', result.error)
           showError('@hermes failed — your message is still here, try again')
-        })
+        }
+      })
       return
     }
     // ── @backlog: improvement-backlog idea ────────────────────────────────────

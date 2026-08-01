@@ -11,6 +11,8 @@
 // The fix is not a third copy of the routing block. Each capture surface that
 // reaches the day feed calls askHermesOnDay(), so a NEW capture box gets the
 // behavior by calling one function instead of by remembering to reimplement it.
+// askHermesOnTask() is the task-lane analog (backlog #545): task compose
+// surfaces call it instead of hand-rolling the private task-comment POST.
 //
 // hermesOutcomeToast() also closes the deferred /simplify finding from
 // docs/superpowers/plans/2026-07-22-hermes-lane-unification.md ("3rd copy =
@@ -59,6 +61,36 @@ export async function askHermesOnDay(
 /** The react-query key the day feed reads, so callers invalidate the right thing. */
 export function dayActivityQueryKey(dateKey: string = todayKey()): [string, string] {
   return ['day-activity', dateKey]
+}
+
+/**
+ * Post `content` to a task's comment thread as a Hermes ask.
+ *
+ * The body goes VERBATIM (token intact) to POST /api/tasks/:id/comments as a
+ * PRIVATE (visibility='author') activity_entries row -- owner decision A: a
+ * typed @hermes prefix defaults private (a mid-text @hermes stays a team
+ * comment). The server's HERMES_DETECT_RE fires on the stored token and
+ * answers IN-THREAD (source_type='task_comment'); the answer inherits
+ * visibility='author'. Never throws -- callers branch on `ok`.
+ *
+ * Task-lane analog of askHermesOnDay(): shared by SmartCompose task mode and
+ * OverviewQuickAdd (TaskDetailPanel.tsx) so the two task composers cannot
+ * drift on this contract again (backlog #545 -- the same block had been
+ * hand-threaded through both in four separate commits).
+ */
+export async function askHermesOnTask(taskId: string, content: string): Promise<HermesAskResult> {
+  try {
+    const res = await fetch(`/api/tasks/${taskId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, visibility: 'author' }),
+    })
+    if (!res.ok) throw new Error(`/api/tasks comment ${res.status}`)
+    const out = (await res.json().catch(() => ({}))) as { hermes?: HermesDispatch }
+    return { ok: true, hermes: out.hermes }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err : new Error(String(err)) }
+  }
 }
 
 export type ToastKind = 'success' | 'info' | 'error'

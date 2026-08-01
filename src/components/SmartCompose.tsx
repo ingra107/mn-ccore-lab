@@ -31,7 +31,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { usePostTaskUpdate } from '../hooks/useMutations'
 import { useLaunchCommands, taskLaunchContext, type LaunchCommandContext } from '../hooks/useLaunchCommands'
 import { isHermesPrefix } from '../lib/hermesRouting'
-import { hermesOutcomeToast, type HermesDispatch } from '../lib/askHermes'
+import { askHermesOnTask, hermesOutcomeToast } from '../lib/askHermes'
 import { useUndoToast } from './UndoToast'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
@@ -258,36 +258,26 @@ export default function SmartCompose(props: SmartComposeProps) {
       if (routed) return
     }
     // ── @hermes prefix (task mode): unified timeline (Hermes wave Phase 5) ──────
-    // A typed "@hermes …" posts the body VERBATIM (token intact) to the task's
-    // comment endpoint as a PRIVATE (visibility='author') activity_entries row —
-    // owner decision A: the typed prefix defaults private, distinct from a
-    // mid-text @hermes ("ask @hermes about X") which stays a team comment. The
-    // server's HERMES_DETECT_RE fires on the intact token → dispatchHermes
-    // answers IN-THREAD (source_type='task_comment'), and the answer inherits
-    // visibility='author'. KEEP the token: stripping it is a silent "no Hermes"
-    // (§3.4 inversion). Runs AFTER the launch-tag interception (@workon/@quickchat
-    // still win) and only on the PREFIX form. The Hermes toggle's @hermes prepend
-    // is intentionally left as-is (still a team comment) — only a typed prefix
-    // routes here. Was: POST /api/ai-requests source_type='daily_thought', read
-    // via TaskActivityFeed's activity_entries thread (Phase 3-6 migration).
+    // A typed "@hermes …" is a PRIVATE ask on this task. The POST contract
+    // (visibility='author', token kept intact, in-thread answer — owner
+    // decision A) lives in askHermesOnTask (src/lib/askHermes.ts), shared with
+    // OverviewQuickAdd (TaskDetailPanel.tsx) so the two task composers cannot
+    // drift on it (backlog #545). Runs AFTER the launch-tag interception
+    // (@workon/@quickchat still win) and only on the PREFIX form. The Hermes
+    // toggle's @hermes prepend is intentionally left as-is (still a team
+    // comment) — only a typed prefix routes here.
     if (!isCustomMode && isHermesPrefix(raw)) {
       const taskId = (props as TaskModeProps).taskId
-      try {
-        const res = await fetch(`/api/tasks/${taskId}/comments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: raw, visibility: 'author' }),
-        })
-        if (!res.ok) throw new Error(`/api/tasks comment ${res.status}`)
+      const result = await askHermesOnTask(taskId, raw)
+      if (result.ok) {
         setVal('')
         queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
-        const out = await res.json().catch(() => ({})) as { hermes?: HermesDispatch }
         // Shared copy (src/lib/askHermes.ts) — the POST differs from the day feed's,
-        // the outcome wording does not. `ok: true` by construction: a non-2xx threw above.
-        const toast = hermesOutcomeToast({ ok: true, hermes: out.hermes }, 'Posted')
+        // the outcome wording does not.
+        const toast = hermesOutcomeToast(result, 'Posted')
         ;(toast.kind === 'info' ? undoToast.showInfo : undoToast.showSuccess)(toast.text)
-      } catch (err) {
-        console.error('@hermes from task compose failed:', err)
+      } else {
+        console.error('@hermes from task compose failed:', result.error)
         undoToast.showError('@hermes failed — your message is still here, try again')
       }
       return
