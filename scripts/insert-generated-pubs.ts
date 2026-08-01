@@ -16,6 +16,15 @@
  *   2. npx tsx scripts/insert-generated-pubs.ts /tmp/prod_pubs.json > /tmp/insert_pubs.sql
  *   3. Review /tmp/insert_pubs.sql, then execute:
  *      bash scripts/wrangler-d1 d1 execute mnccore-lab --remote --file=/tmp/insert_pubs.sql
+ *
+ * #1126: this script is deliberately INSERT-only — a generated pub that
+ * duplicates an EXISTING prod row is skipped outright (line ~60), same as
+ * always. It does not, and should not, UPDATE that prod row's author_slugs,
+ * even after the #1126 generation-time union fix (mergePublications.ts /
+ * fetch-publications.ts) — those fixes only change what NEW rows carry.
+ * Prod rows inserted before the fix keep whatever single-author-slug value
+ * they were given at insert time. See scripts/backfill-author-slugs-report.ts
+ * for a read-only report on what those existing rows would gain.
  */
 import { readFileSync } from 'node:fs'
 import type { Publication } from '../src/data/types'

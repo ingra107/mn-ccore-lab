@@ -4,19 +4,24 @@
  * paper shows mini avatar photos of the lab-member co-authors in author
  * order, first author overlapped on top").
  *
- * WHY name-matching is the PRIMARY path, not `authorSlugs`: `authorSlugs` on
- * a shared multi-lab-author paper records only ONE slug in practice.
- * `fetch-publications.ts` sets `authorSlugs: [member.slug]` per per-member
- * fetch run, and neither `mergePublications` nor `insert-generated-pubs.ts`
- * ever UNIONS `authorSlugs` across a duplicate DOI — a paper already present
- * under one co-author's slug is skipped outright when a second co-author's
- * run encounters the same DOI (dedup-by-key `continue`, no merge). So a
- * paper co-authored by two lab members frequently carries only the slug of
- * whichever member's fetch happened to insert it first. Parsing the
- * `authors` byline and matching each segment against every team member's
- * `authorName` (the same substring test `PublicationCard`'s `formatAuthors`
- * and `MemberPage`'s `memberPubs` filter already use) recovers every lab
- * co-author actually present, in their real byline order.
+ * WHY name-matching is the PRIMARY path, not `authorSlugs`: on a shared
+ * multi-lab-author paper, `authorSlugs` still records only ONE slug in
+ * practice for most of prod's EXISTING rows. `fetch-publications.ts` sets
+ * `authorSlugs: [member.slug]` per per-member fetch run; `mergePublications`
+ * and `fetch-publications.ts`'s own intra-run dedup used to drop a
+ * duplicate-DOI copy outright instead of unioning its `authorSlugs` in —
+ * fixed 2026-08-01 (#1126, `unionAuthorSlugs` in mergePublications.ts) — but
+ * that fix only changes what NEW rows carry going forward. Every row already
+ * in prod keeps its pre-fix collapsed value until a backfill runs
+ * (scripts/backfill-author-slugs-report.ts, read-only report; #1126). Even
+ * post-backfill, the union is only as complete as the set of co-authors
+ * whose OWN fetch independently resolved this run — a co-author present in
+ * the byline but never fetched (no orcid/openalex id, or a failed run) is
+ * invisible to authorSlugs by construction. Parsing the `authors` byline and
+ * matching each segment against every team member's `authorName` (the same
+ * substring test `PublicationCard`'s `formatAuthors` and `MemberPage`'s
+ * `memberPubs` filter already use) recovers every lab co-author actually
+ * present, in their real byline order, independent of any of the above.
  *
  * `authorSlugs` is still consulted as a FALLBACK, for the (currently exactly
  * two) team members who have no `authorName` on file — the `directors`

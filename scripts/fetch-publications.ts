@@ -30,7 +30,7 @@ import {
   facultyCollaborators,
   researchTeam,
 } from '../src/data/team'
-import { dedupKeys } from '../src/data/mergePublications'
+import { dedupKeys, unionAuthorSlugs } from '../src/data/mergePublications'
 
 /**
  * A work is a real publication (vs a conference-abstract stub or a
@@ -325,14 +325,23 @@ async function main() {
 
   // Dedup within the generated set (stable, keep first) — same multi-key logic
   // mergePublications uses, so a title dup is caught even when only one copy
-  // carries a DOI.
-  const seen = new Set<string>()
-  const deduped = all.filter((p) => {
+  // carries a DOI. #1126: UNION authorSlugs across duplicate copies instead
+  // of dropping them — each per-member fetch above tags a pub `authorSlugs:
+  // [member.slug]`, so a paper co-authored by two lab members arrives here
+  // as two near-identical copies (one per author's own fetch run); silently
+  // keeping only the first collapsed co-authorship to a single lab author.
+  const keyToIndex = new Map<string, number>()
+  const deduped: Publication[] = []
+  for (const p of all) {
     const keys = dedupKeys(p)
-    if (keys.some((k) => seen.has(k))) return false
-    for (const k of keys) seen.add(k)
-    return true
-  })
+    const dupIndex = keys.map((k) => keyToIndex.get(k)).find((i) => i !== undefined)
+    if (dupIndex !== undefined) {
+      deduped[dupIndex] = unionAuthorSlugs(deduped[dupIndex], p)
+      continue
+    }
+    for (const k of keys) keyToIndex.set(k, deduped.length)
+    deduped.push(p)
+  }
 
   writeFileSync(OUT, render(deduped), 'utf8')
   console.log(

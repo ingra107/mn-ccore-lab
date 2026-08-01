@@ -70,12 +70,18 @@ export async function handleGetMemberFeaturedPublications(
  * unauthenticated caller has no actor slug, so it can never match `slug`.
  *
  * NOT validated: that the member is actually an author of each publication.
- * `publications.author_slugs` holds ONE member slug per paper in practice —
- * duplicate ingestion keeps the first generated row and drops the rest instead
- * of unioning their author slugs (PB backlog #1126, src/data/mergePublications
- * .ts:25). An authorship check against that column today would reject
- * legitimate coauthors from featuring their own papers. Add the check AFTER
- * #1126 lands the union + backfill, not before.
+ * `publications.author_slugs` on rows already in prod holds ONE member slug
+ * per paper in practice — duplicate ingestion used to keep the first
+ * generated row and drop the rest instead of unioning their author slugs
+ * (PB backlog #1126). The generation-time bug is fixed (src/data/merge
+ * Publications.ts `unionAuthorSlugs`, used by both mergePublications() and
+ * fetch-publications.ts's own intra-run dedup) — but that only changes what
+ * NEW rows carry going forward. Every row inserted before the fix still has
+ * its collapsed single-slug value; scripts/backfill-author-slugs-report.ts
+ * is the read-only report for what those rows would gain (#1126). An
+ * authorship check against `author_slugs` today would still reject
+ * legitimate coauthors on any pre-fix row. Add the check AFTER the backfill
+ * (report reviewed, then an actual UPDATE) lands, not before.
  */
 export async function handlePutMemberFeaturedPublications(
   slug: string,
