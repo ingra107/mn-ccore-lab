@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchApi, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, createSubmissionEvent, deleteSubmissionEvent, createGrantMilestone, updateGrantMilestone, completeGrantMilestone, createConference, updateConference, deleteConference } from '../../lib/api'
+import { fetchApi, createDependency, deleteDependency, addExpertise, removeExpertise, setMemberFeaturedPublications, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, createSubmissionEvent, deleteSubmissionEvent, createGrantMilestone, updateGrantMilestone, completeGrantMilestone, createConference, updateConference, deleteConference } from '../../lib/api'
+import { MEMBER_FEATURED_QUERY_KEY, rowToPublication } from '../useApiData'
 import { rollbackSnapshots } from './utils'
 import { nowInstant } from '../../lib/time'
 import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, GrantMilestoneRow, ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus, PresentationType } from '../../lib/api'
@@ -337,6 +338,36 @@ export function useRemoveExpertise(memberSlug: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['expertise', memberSlug] })
       queryClient.invalidateQueries({ queryKey: ['expertise', 'all'] })
+    },
+  })
+}
+
+// ── Member-curated featured publications (#906, schema-v106) ─
+//
+// One ordered replace-set write. `publicationIds` IS the new list — the array
+// index becomes sort_order server-side, so "reorder", "add" and "remove" are
+// all the same call and there is no renumbering step to get wrong.
+//
+// No optimistic update: the server is the party that knows whether an id is
+// real, and it echoes the STORED rows back, so seeding the cache from the
+// response is both simpler and truthful. On failure the cache is untouched and
+// the editor surfaces the server's message.
+export function useSetMemberFeaturedPublications(memberSlug: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (publicationIds: string[]) =>
+      setMemberFeaturedPublications(memberSlug, publicationIds),
+
+    onSuccess: (res) => {
+      queryClient.setQueryData(
+        [MEMBER_FEATURED_QUERY_KEY, memberSlug],
+        res.data.map(rowToPublication),
+      )
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: [MEMBER_FEATURED_QUERY_KEY, memberSlug] })
     },
   })
 }

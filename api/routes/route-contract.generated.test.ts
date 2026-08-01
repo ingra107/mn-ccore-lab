@@ -129,11 +129,20 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 263 as of 2026-07-24 — artifact body search (+1, backlog #913):
     //   GET    /api/artifacts/search?q=   — ids of shelved artifacts whose title
     //                                       or body matches; ids only, never bodies.
+    // 265 as of 2026-08-01 — member-curated featured publications (+2, PB #906,
+    //   schema-v106):
+    //   GET /api/team/:slug/featured-publications — public; the member's own
+    //       Top-10, in the member's own order.
+    //   PUT /api/team/:slug/featured-publications — ordered replace-set, max 10,
+    //       member-or-PI. This is the FIRST PUT in the registry — every other
+    //       write is a POST. The write-auth gate (index.ts step 5,
+    //       WRITE_AUTH_METHODS) and corsHeadersFor both already name PUT, so
+    //       nothing had to change for it; it just now has a live caller.
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(263)
+    expect(ROUTE_REGISTRY).toHaveLength(265)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

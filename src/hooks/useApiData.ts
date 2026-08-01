@@ -14,6 +14,7 @@
 import { useQuery } from '@tanstack/react-query'
 import {
   fetchPublications,
+  fetchMemberFeaturedPublications,
   fetchTeam,
   fetchProjects,
   fetchGrants,
@@ -85,7 +86,7 @@ import { grants as _devGrants } from '../data/grants'
 
 // ── Transform D1 rows → frontend types ──────────────────────
 
-function rowToPublication(row: PublicationRow): Publication {
+export function rowToPublication(row: PublicationRow): Publication {
   return {
     id: row.id,
     authors: row.authors,
@@ -226,6 +227,28 @@ export function usePublications(params?: {
     staleTime: STALE_TIME,
     retry: false,
     enabled: options?.enabled ?? true,
+  })
+}
+
+// ── Member-curated featured publications (#906, schema-v106) ─
+//
+// The Top-10 THIS member chose, in the order they chose. Deliberately NO
+// static/dev initialData: there is no static source for a per-member curation
+// (src/data/publications.ts only carries the lab-wide `featured` flag), and
+// seeding a fake list would make the page claim picks the member never made.
+// A failed fetch surfaces as isError and the section renders nothing.
+export const MEMBER_FEATURED_QUERY_KEY = 'member-featured-publications'
+
+export function useMemberFeaturedPublications(slug: string | undefined) {
+  return useQuery({
+    queryKey: [MEMBER_FEATURED_QUERY_KEY, slug],
+    queryFn: async () => {
+      const res = await fetchMemberFeaturedPublications(slug!)
+      return res.data.map(rowToPublication)
+    },
+    staleTime: STALE_TIME,
+    retry: false,
+    enabled: !!slug,
   })
 }
 

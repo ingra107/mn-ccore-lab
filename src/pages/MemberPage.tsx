@@ -2,6 +2,7 @@ import { useMemo, useState, useRef, useEffect } from 'react'
 import { useParams, Navigate, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
+import MemberFeaturedPublications from '../components/MemberFeaturedPublications'
 import Breadcrumb from '../components/Breadcrumb'
 import { FlaskConical, GraduationCap, Handshake, CheckCircle2, TrendingUp, Sparkles, X, Plus, Activity } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
@@ -13,6 +14,7 @@ import type { MenteeMilestoneRow } from '../hooks/useApiData'
 import { useCommitments } from '../hooks/useCommitments'
 import { useAddExpertise, useRemoveExpertise } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
+import { emailToSlug } from '../lib/emailSlug'
 import type { CommitmentRow } from '../hooks/useCommitments'
 import { getMemberBySlug, getPersonInfo } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
@@ -161,7 +163,8 @@ export default function MemberPage() {
   // Same component renders at /team/:slug (public chrome) and
   // /portal/team/:slug (portal chrome). Trajectory link should preserve context.
   const location = useLocation()
-  const teamBase = location.pathname.startsWith('/portal/') ? '/portal/team' : '/team'
+  const isPortalRoute = location.pathname.startsWith('/portal/')
+  const teamBase = isPortalRoute ? '/portal/team' : '/team'
   const member = slug ? getMemberBySlug(slug) : undefined
 
   // Check if this member is also a mentee (trainee)
@@ -180,7 +183,18 @@ export default function MemberPage() {
   useEffect(() => {
     if (showAddTag) newTagInputRef.current?.focus({ preventScroll: true })
   }, [showAddTag])
-  const { isAuthenticated } = useAuth()
+  const { user, isAuthenticated } = useAuth()
+  // #906 — who may edit this member's featured list. Portal route only (the
+  // public /team/:slug page stays read-only chrome), and only the member
+  // themselves or a PI. The server re-checks this; the flag just decides
+  // whether the affordance is offered. `user.isPi` is authoritative only after
+  // /api/auth/me hydrates — a cookie-only first paint reports false, which
+  // fails CLOSED (no edit button for a beat), never open.
+  const canEditFeatured =
+    isPortalRoute
+    && isAuthenticated
+    && Boolean(slug)
+    && (emailToSlug(user.email) === slug || user.isPi)
   const { data: allCommitments = [] } = useCommitments(slug)
 
   // Commitments to this person (slug does partial match on to_whom)
@@ -771,14 +785,19 @@ export default function MemberPage() {
         </>
       )}
 
+      {/* #906 — the member's own Top-10, in the member's own order, ABOVE the
+          recency rollup. Backed by member_featured_publications (schema-v106);
+          the component renders nothing when the member has chosen none and the
+          viewer cannot edit. */}
+      {slug && (
+        <MemberFeaturedPublications
+          slug={slug}
+          memberPubs={memberPubs}
+          canEdit={canEditFeatured}
+        />
+      )}
+
       {memberPubs.length > 0 && (
-        // #906 (Nick 2026-07-23) also asked for a "Top-10 Featured Articles"
-        // section here that the MEMBER chooses. Not built: it needs a
-        // per-member featuring data model (Publication has only a GLOBAL
-        // `featured` boolean today) plus a portal-gated editing surface to
-        // write it — a D1 schema + Worker-route question, out of frontend
-        // scope. "All Publications" (this section, 10 most-recent + View
-        // all) is the half of the spec that needed neither.
         <PublicationsSection publications={memberPubs} id="publications" title="All Publications" />
       )}
       {memberPubs.length === 0 && (

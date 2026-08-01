@@ -375,6 +375,30 @@ export function fetchTeam() {
   return fetchApi<TeamMemberRow[]>('/api/team')
 }
 
+// ── Member-curated featured publications (#906, schema-v106) ─
+//
+// The per-member Top-10 the member picks themselves, ordered by the member.
+// Distinct from `PublicationRow.featured`, which is ONE lab-wide flag per
+// paper and drives the Publications page + homepage sections.
+//
+// One place builds the URL so the route can move without hunting call sites.
+export const memberFeaturedPublicationsPath = (slug: string) =>
+  `/api/team/${encodeURIComponent(slug)}/featured-publications`
+
+export function fetchMemberFeaturedPublications(slug: string) {
+  return fetchApi<PublicationRow[]>(memberFeaturedPublicationsPath(slug))
+}
+
+/** Replace the member's whole featured list. `publicationIds` is ORDERED and
+ *  is the new list — index becomes sort_order. Max 10, distinct, each must be
+ *  a real publication id; the server 400s otherwise and writes nothing. */
+export function setMemberFeaturedPublications(slug: string, publicationIds: string[]) {
+  return fetchApi<PublicationRow[]>(memberFeaturedPublicationsPath(slug), {
+    method: 'PUT',
+    body: JSON.stringify({ publicationIds }),
+  })
+}
+
 export function fetchProjects(params?: { status?: string; category?: string }) {
   const qs = new URLSearchParams()
   if (params?.status) qs.set('status', params.status)

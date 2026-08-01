@@ -26,6 +26,7 @@ import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgenda
 import { handleGetPublications, handleGetGrants, handleCollaborationGraph, handleGetStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
 import { handleGetCitations } from './routes/citations';
 import { handleGetTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
+import { handleGetMemberFeaturedPublications, handlePutMemberFeaturedPublications } from './routes/member-featured-publications';
 import { handleGetDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper, handleGetDigestComments, handleCreateDigestComment, handleDigestCommentCounts } from './routes/digest';
 import { handleGetIdeas, handleCreateIdea, handleUpdateIdea, handleVoteIdea } from './routes/ideas';
 import { handleBugReport, handleListBugReports, handleUpdateBugReportStatus } from './routes/bug-report';
@@ -157,6 +158,15 @@ function isPublicGet(path: string): boolean {
   // /api/team/:slug — single-segment profile (exclude analytics sub-routes)
   // Matches /api/team/nick-ingraham but NOT /api/team/by-expertise
   if (/^\/api\/team\/[^/]+$/.test(path) && path !== '/api/team/by-expertise') return true;
+
+  // /api/team/:slug/featured-publications — the member's own curated Top-10
+  // (#906). Public for the same reason /api/publications and the member
+  // profile above are: it renders on the PUBLIC /team/:slug marketing page.
+  // The single-segment rule above deliberately does NOT cover sub-resources
+  // (cv-data, trajectory, contributions are all authed), so this needs its
+  // own line. The PUT half is NOT affected by this list — writes are gated
+  // by the write-auth middleware plus the handler's own actor check.
+  if (/^\/api\/team\/[^/]+\/featured-publications$/.test(path)) return true;
 
   // /api/projects/:slug — single project view (NOT sub-resources like /api/projects/:slug/comments)
   if (/^\/api\/projects\/[^/]+$/.test(path)) return true;
@@ -1549,6 +1559,25 @@ defineRoute({
   entity: 'team',
   visibility: 'na',
   handler: (c) => handleGetContributions(c.req.param('slug'), U(c), E(c)),
+});
+// #906 — the member's own curated Top-10. GET is public because it renders on
+// the public /team/:slug page (and is in isPublicGet above). PUT is the
+// replace-set write; the handler enforces "the member themselves, a PI, or the
+// service key" itself, because auth: 'authed' only proves SOMEONE is signed in,
+// not that they are the member whose list this is.
+defineRoute({
+  method: 'GET',
+  path: '/api/team/:slug/featured-publications',
+  auth: 'public',
+  handler: (c) => handleGetMemberFeaturedPublications(c.req.param('slug'), E(c)),
+});
+defineRoute({
+  method: 'PUT',
+  path: '/api/team/:slug/featured-publications',
+  auth: 'authed',
+  entity: 'publications',
+  visibility: 'na',
+  handler: (c) => handlePutMemberFeaturedPublications(c.req.param('slug'), R(c), E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

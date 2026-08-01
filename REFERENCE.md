@@ -43,6 +43,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | team_members | 19 | Lab personnel + roles + `email` column (schema v43). Slugs use `preferred_name-last_name` format post Phase 36b. |
 | projects | 64 | Research projects with stages + `deleted_at` (schema v45) + indexed `title` (v46). |
 | publications | 100+ | PubMed-sourced publications |
+| member_featured_publications | 0+ | Per-member curated Top-10 (schema **v106**, 2026-08-01, PB #906): (member_slug, publication_id, sort_order) with a composite PK. The MEMBER-scoped featuring axis; `publications.featured` stays the separate LAB-WIDE flag behind the Publications page + homepage sections. sort_order is the member's own order, written from the submitted array index by the ordered replace-set PUT. Hub-only, no PB lockstep. |
 | grants | 10+ | Active and pending grants |
 | milestones | 30+ | Project milestones + deadlines |
 | meetings | 20+ | Biweekly meetings + agendas |
@@ -87,6 +88,8 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
   - **`/api/projects` returns a DERIVED `last_activity`** (2026-07-21, #95) — `MAX(activity_entries.created_at)` for the project (its own rows ∪ its tasks' rows), emitted as a zone-explicit ISO instant. It is **not a stored column**; `SELECT *` alone will not produce it. Drives the Projects list's default "last worked on" sort + the "Xd ago" staleness chip (`Project.lastActivity` via `rowToProject`). **Present on the browser read ONLY — the `?seq_after=` cursor branch (PB sync wire) is deliberately byte-identical to the stored row**, mirroring the `tasks.project_id` browser-slug / sync-typed split. Don't "fix" the sync branch to include it.
 - GET /api/milestones, /api/meetings, /api/digest
 - GET /api/notifications, /api/commitments
+- **GET /api/team/:slug/featured-publications** (PUBLIC, #906, schema-v106) — the Top-10 that member chose, joined to `publications` and returned in the MEMBER'S order (`member_featured_publications.sort_order`), capped at 10 in SQL. Public because it renders on the public `/team/:slug` page; it needs its own `isPublicGet` rule because the `/api/team/:slug` rule matches a single segment only.
+- **PUT /api/team/:slug/featured-publications** (the member, a PI, or the service key) — `{ publicationIds: string[] }`, ORDERED, max 10, distinct, every id must exist. Replace-set: one DELETE + N INSERTs in a single `DB.batch`, `sort_order` = array index. Echoes the stored list back. A rejected request writes NOTHING. Does NOT check authorship against `publications.author_slugs` — that column keeps one slug per paper in practice (PB #1126), so the check would reject legitimate coauthors; add it after #1126's union+backfill.
 
 ### Project Operations
 - POST /api/projects/:id/comments, /api/projects/:id/updates
@@ -361,6 +364,7 @@ Discovered during the 2026-04-17/18 deep-audit. Canonical, non-obvious patterns 
 ### HTTP verbs
 - **POST, not PATCH, for updates.** Both `/api/tasks/:id` and `/api/projects/:slug` use `POST` to update. PATCH returns 405. Expressed explicitly in `scripts/deep-audit/harness.ts` via `apiPatchTask()` / `apiPatchProject()` shims.
 - **POST `/api/projects/:slug/delete`, not `DELETE /api/projects/:slug`.** The DELETE verb returns 405 here too. Same pattern for other soft-delete endpoints.
+- **One deliberate PUT: `PUT /api/team/:slug/featured-publications`** (#906, 2026-08-01) — the only PUT in the registry, and the exception proves the rule above. The POST-for-updates convention is about PARTIAL updates of one entity; this route replaces a whole ordered collection, which is exactly what PUT means. Don't generalise it; new partial updates still use POST.
 
 ### URL param resolution (slug vs id)
 - Project URL params accept **either `slug` or `id`** — handlers use `WHERE id = ? OR slug = ?`. Canonical storage is against `projects.id`; the comment+update handlers resolve the URL param first then store using the canonical id. Use `apiGetProjectFromList()` in audits rather than a nonexistent `GET /api/projects/:slug`.
