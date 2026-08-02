@@ -101,7 +101,21 @@ function main() {
   for (const row of rows) {
     const existing = parseSlugs(row.author_slugs, row.id)
     const resolved = resolveLabCoAuthors({ authors: row.authors ?? '', authorSlugs: existing }, members)
-    const proposed = resolved.map((r) => r.slug)
+    // UNION semantics (2026-08-01 review of the first dry run): the byline
+    // matcher has false NEGATIVES (initialed bylines), so a proposal must never
+    // DROP an existing slug it fails to re-derive. Normalize legacy short forms
+    // (nick -> nick-ingraham) against the member list; keep anything
+    // unresolvable verbatim rather than losing data. Byline order first.
+    const canonical = new Set(members.map((m) => m.slug))
+    const normalizedExisting = existing.map((s) => {
+      if (canonical.has(s)) return s
+      const hits = members.filter((m) => m.slug.startsWith(s + '-'))
+      return hits.length === 1 ? hits[0].slug : s
+    })
+    const proposed: string[] = []
+    for (const s of [...resolved.map((r) => r.slug), ...normalizedExisting]) {
+      if (!proposed.includes(s)) proposed.push(s)
+    }
     const added = proposed.filter((s) => !existing.includes(s))
     if (added.length === 0) {
       unchanged++
@@ -115,7 +129,7 @@ function main() {
   )
   console.log('')
 
-  const SAMPLE = 20
+  const SAMPLE = 200
   for (const c of candidates.slice(0, SAMPLE)) {
     console.log(`id=${c.id}`)
     console.log(`  title:    ${c.title}`)
