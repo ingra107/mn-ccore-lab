@@ -1,4 +1,5 @@
-import { useState, useMemo, lazy, Suspense } from 'react'
+import { useState, useMemo, Suspense } from 'react'
+import { lazyRoute } from '../lib/lazyRoute'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -24,7 +25,7 @@ import { QueryErrorNote } from '../components/QueryErrorNote'
 // In-place task editor (Nick 2026-06-11: clicking a NEW item must open the
 // actionable thing, not just another page). Lazy — only loads when a row is
 // clicked the first time.
-const TaskDetailPanel = lazy(() => import('../components/tasks/TaskDetailPanel'))
+const TaskDetailPanel = lazyRoute(() => import('../components/tasks/TaskDetailPanel'))
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
 import { useUnseenActivity } from '../hooks/useEntitySeen'
 import { AttentionChip } from '../components/tasks/AttentionChip'

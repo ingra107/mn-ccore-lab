@@ -1,4 +1,5 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { lazyRoute } from '../lib/lazyRoute'
 import { Link, useLocation } from 'react-router-dom'
 import {
   Home,
@@ -27,7 +28,7 @@ import {
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 
-const BugReportModal = lazy(() => import('./BugReportModal'))
+const BugReportModal = lazyRoute(() => import('./BugReportModal'))
 
 
 /**

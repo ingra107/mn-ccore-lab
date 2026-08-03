@@ -1,4 +1,5 @@
-import { lazy, Suspense, Component } from 'react'
+import { Suspense, Component } from 'react'
+import { lazyRoute } from './lib/lazyRoute'
 import type { ReactNode, ErrorInfo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -11,7 +12,7 @@ import RequireAuth from './components/RequireAuth'
 import HeartbeatLine from './components/HeartbeatLine'
 import { Button } from './components/ui/Button'
 import { TooltipLayer } from './components/TooltipLayer'
-const Home = lazy(() => import('./pages/Home'))
+const Home = lazyRoute(() => import('./pages/Home'))
 import { AuthProvider } from './context/AuthContext'
 import { PATHS } from './constants/paths'
 
@@ -101,53 +102,53 @@ const queryClient = new QueryClient({
 })
 
 // Public pages — lazy-loaded
-const Team = lazy(() => import('./pages/Team'))
-const NickLab = lazy(() => import('./pages/NickLab'))
-const NateLab = lazy(() => import('./pages/NateLab'))
-const MemberPage = lazy(() => import('./pages/MemberPage'))
-const Publications = lazy(() => import('./pages/Publications'))
-const PublicationDetail = lazy(() => import('./pages/PublicationDetail'))
-const Contact = lazy(() => import('./pages/Contact'))
-const Network = lazy(() => import('./pages/Network'))
+const Team = lazyRoute(() => import('./pages/Team'))
+const NickLab = lazyRoute(() => import('./pages/NickLab'))
+const NateLab = lazyRoute(() => import('./pages/NateLab'))
+const MemberPage = lazyRoute(() => import('./pages/MemberPage'))
+const Publications = lazyRoute(() => import('./pages/Publications'))
+const PublicationDetail = lazyRoute(() => import('./pages/PublicationDetail'))
+const Contact = lazyRoute(() => import('./pages/Contact'))
+const Network = lazyRoute(() => import('./pages/Network'))
 
 // Portal pages — lazy-loaded (existing)
-const Dashboard = lazy(() => import('./pages/Dashboard'))
-const TodayPage = lazy(() => import('./pages/portal/TodayPage'))
-const Projects = lazy(() => import('./pages/Projects'))
-const ProjectDetail = lazy(() => import('./pages/ProjectDetail'))
-const ArtifactPage = lazy(() => import('./pages/portal/ArtifactPage'))
-const ArtifactsGalleryPage = lazy(() => import('./pages/portal/ArtifactsGalleryPage'))
-const Meetings = lazy(() => import('./pages/Meetings'))
-const MeetingDetail = lazy(() => import('./pages/MeetingDetail'))
-const MeetingPrep = lazy(() => import('./pages/MeetingPrep'))
-const Digest = lazy(() => import('./pages/Digest'))
+const Dashboard = lazyRoute(() => import('./pages/Dashboard'))
+const TodayPage = lazyRoute(() => import('./pages/portal/TodayPage'))
+const Projects = lazyRoute(() => import('./pages/Projects'))
+const ProjectDetail = lazyRoute(() => import('./pages/ProjectDetail'))
+const ArtifactPage = lazyRoute(() => import('./pages/portal/ArtifactPage'))
+const ArtifactsGalleryPage = lazyRoute(() => import('./pages/portal/ArtifactsGalleryPage'))
+const Meetings = lazyRoute(() => import('./pages/Meetings'))
+const MeetingDetail = lazyRoute(() => import('./pages/MeetingDetail'))
+const MeetingPrep = lazyRoute(() => import('./pages/MeetingPrep'))
+const Digest = lazyRoute(() => import('./pages/Digest'))
 
-const TrajectoryPage = lazy(() => import('./pages/TrajectoryPage'))
-const MyItems = lazy(() => import('./pages/MyItems'))
+const TrajectoryPage = lazyRoute(() => import('./pages/TrajectoryPage'))
+const MyItems = lazyRoute(() => import('./pages/MyItems'))
 
 // New portal pages (Phase H1 — placeholders, built out in later phases)
-const PersonalPage = lazy(() => import('./pages/portal/PersonalPage'))
-const UnifiedMyTasks = lazy(() => import('./pages/MyTasks'))
-const CalendarPage = lazy(() => import('./pages/portal/CalendarPage'))
-const DeadlinesPage = lazy(() => import('./pages/portal/DeadlinesPage'))
-const ManuscriptsPage = lazy(() => import('./pages/portal/ManuscriptsPage'))
-const IdeasPage = lazy(() => import('./pages/portal/IdeasPage'))
-const SearchPage = lazy(() => import('./pages/portal/SearchPage'))
-const ActivityPage = lazy(() => import('./pages/portal/ActivityPage'))
-const AnalyticsPage = lazy(() => import('./pages/portal/AnalyticsPage'))
-const InsightsPage = lazy(() => import('./pages/portal/InsightsPage'))
-const SettingsPage = lazy(() => import('./pages/portal/SettingsPage'))
-const ProfilePage = lazy(() => import('./pages/portal/ProfilePage'))
-const MeetingNotesPage = lazy(() => import('./pages/portal/MeetingNotesPage'))
-const DecisionsPage = lazy(() => import('./pages/portal/DecisionsPage'))
-const NarrativesPage = lazy(() => import('./pages/portal/NarrativesPage'))
-const AskTheLab = lazy(() => import('./pages/portal/AskTheLab'))
-const PIAnalytics = lazy(() => import('./pages/portal/PIAnalytics'))
-const SessionHistory = lazy(() => import('./pages/portal/SessionHistory'))
-const MenteeMilestonesPage = lazy(() => import('./pages/portal/MenteeMilestonesPage'))
-const DeadlineCascadePage = lazy(() => import('./pages/portal/DeadlineCascadePage'))
-const Pulse = lazy(() => import('./pages/Pulse'))
-const GrantsPage = lazy(() => import('./pages/portal/GrantsPage'))
+const PersonalPage = lazyRoute(() => import('./pages/portal/PersonalPage'))
+const UnifiedMyTasks = lazyRoute(() => import('./pages/MyTasks'))
+const CalendarPage = lazyRoute(() => import('./pages/portal/CalendarPage'))
+const DeadlinesPage = lazyRoute(() => import('./pages/portal/DeadlinesPage'))
+const ManuscriptsPage = lazyRoute(() => import('./pages/portal/ManuscriptsPage'))
+const IdeasPage = lazyRoute(() => import('./pages/portal/IdeasPage'))
+const SearchPage = lazyRoute(() => import('./pages/portal/SearchPage'))
+const ActivityPage = lazyRoute(() => import('./pages/portal/ActivityPage'))
+const AnalyticsPage = lazyRoute(() => import('./pages/portal/AnalyticsPage'))
+const InsightsPage = lazyRoute(() => import('./pages/portal/InsightsPage'))
+const SettingsPage = lazyRoute(() => import('./pages/portal/SettingsPage'))
+const ProfilePage = lazyRoute(() => import('./pages/portal/ProfilePage'))
+const MeetingNotesPage = lazyRoute(() => import('./pages/portal/MeetingNotesPage'))
+const DecisionsPage = lazyRoute(() => import('./pages/portal/DecisionsPage'))
+const NarrativesPage = lazyRoute(() => import('./pages/portal/NarrativesPage'))
+const AskTheLab = lazyRoute(() => import('./pages/portal/AskTheLab'))
+const PIAnalytics = lazyRoute(() => import('./pages/portal/PIAnalytics'))
+const SessionHistory = lazyRoute(() => import('./pages/portal/SessionHistory'))
+const MenteeMilestonesPage = lazyRoute(() => import('./pages/portal/MenteeMilestonesPage'))
+const DeadlineCascadePage = lazyRoute(() => import('./pages/portal/DeadlineCascadePage'))
+const Pulse = lazyRoute(() => import('./pages/Pulse'))
+const GrantsPage = lazyRoute(() => import('./pages/portal/GrantsPage'))
 
 function PageLoader() {
   // P1-10: the lab's own ECG pulse instead of a generic spinner. HeartbeatLine

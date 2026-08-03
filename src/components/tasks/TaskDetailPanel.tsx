@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
+import { lazyRoute } from '../../lib/lazyRoute'
 import {
   X, Circle, Clock, User, Flag, Scale,
   ArrowRightLeft,
@@ -10,7 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
-const RichTextEditor = lazy(() => import('../RichTextEditor'))
+const RichTextEditor = lazyRoute(() => import('../RichTextEditor'))
 import { useUpdateTask, useUpdateTaskStatus, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useTaskViewTracking } from '../../hooks/useTaskViewTracking'
 import { useProjects, useDecisions, useTaskLinks } from '../../hooks/useApiData'

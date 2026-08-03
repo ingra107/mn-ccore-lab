@@ -48,4 +48,21 @@ export default defineConfig([
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
     },
   },
+  // Route/component code-splitting must go through lazyRoute(), which reloads
+  // once when a chunk 404s because a deploy replaced this tab's build. Bare
+  // React.lazy() dead-ends: it caches the rejected import, so the error
+  // boundary's retry replays the same failure forever (2026-08-03 —
+  // "Failed to fetch dynamically imported module: .../ProjectDetail-*.js").
+  // Making this a lint error is what keeps lazyRoute a real single chokepoint
+  // rather than a convention the 50th call site forgets.
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/lib/lazyRoute.tsx'],
+    rules: {
+      'no-restricted-syntax': ['error', {
+        selector: "CallExpression[callee.name='lazy']",
+        message: 'Use lazyRoute() from src/lib/lazyRoute instead of React.lazy() so a stale chunk after a deploy self-heals.',
+      }],
+    },
+  },
 ])

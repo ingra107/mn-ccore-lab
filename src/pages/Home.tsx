@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo, lazy, Suspense } from 'react'
+import { useEffect, useState, useMemo, Suspense } from 'react'
+import { lazyRoute } from '../lib/lazyRoute'
 // Link removed — hero cards use <a> for reliable full-page navigation
 import {
   Stethoscope,
@@ -25,7 +26,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 // Lazy-loaded: pulls recharts (PublicationTimeline) — deferred until scrolled into view
-const ResearchImpact = lazy(() => import('../components/ResearchImpact'))
+const ResearchImpact = lazyRoute(() => import('../components/ResearchImpact'))
 
 const pillars = [
   {

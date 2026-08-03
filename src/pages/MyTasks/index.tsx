@@ -9,7 +9,8 @@
 // sidebar, not a tab, not a top-right toggle). Order List | Lanes | Columns;
 // bare arrival defaults to List (Nick 2026-06-10); URL ?view= deep-links win.
 
-import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from 'react'
+import { useState, useMemo, useCallback, useEffect, Suspense } from 'react'
+import { lazyRoute } from '../../lib/lazyRoute'
 import { useSearchParams } from 'react-router-dom'
 import { useTasks, useProjects } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
@@ -26,7 +27,7 @@ import { BulkBar } from './components/BulkBar'
 import { ColumnsView } from './views/ColumnsView'
 import { LanesView } from './views/LanesView'
 import { ListView } from './views/ListView'
-const TaskBoardView = lazy(() => import('../../components/tasks/TaskBoardView'))
+const TaskBoardView = lazyRoute(() => import('../../components/tasks/TaskBoardView'))
 import { useTaskFilter } from './hooks/useTaskFilter'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { isApprovalPending, isApprovalTriaged } from '../../lib/taskGrouping'

@@ -1,6 +1,7 @@
-import { useMemo, useState, lazy, Suspense } from 'react'
+import { useMemo, useState, Suspense } from 'react'
+import { lazyRoute } from '../lib/lazyRoute'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-const BugReportModal = lazy(() => import('./BugReportModal'))
+const BugReportModal = lazyRoute(() => import('./BugReportModal'))
 import {
   LayoutDashboard,
   User,
