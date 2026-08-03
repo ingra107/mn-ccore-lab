@@ -40,7 +40,7 @@ import { PlannedTaskRow } from './PlannedTaskRow'
 import {
   buildTimelineModel, pxForMeeting, PX_PER_MIN, GAP_FLOOR,
   TIMELINE_TASK_BLOCKS, packTaskBlocks, MEETING_FLOOR,
-  type TimelineUnit,
+  type TimelineUnit, type DayBalance,
 } from './timelineModel'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK, INK_DIM, PAGE_BG, withAlpha,
@@ -62,6 +62,35 @@ function fmtMin(min: number): string {
   const hour = h > 12 ? h - 12 : h === 0 ? 12 : h
   const ampm = h < 12 ? 'AM' : 'PM'
   return m === 0 ? `${hour} ${ampm}` : `${hour}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
+// ── Day balance strip ─────────────────────────────────────────────────────
+// A single ~18px bar summarising the day: proportional teal (free) / gold
+// (committed) segments plus the numbers in words. Reads MINUTES off the model,
+// never rendered pixel heights — see DayBalance's own doc comment.
+function DayBalanceStrip({ balance }: { balance: DayBalance }) {
+  const { freeMinutes, meetingMinutes, serviceMinutes } = balance
+  const total = freeMinutes + meetingMinutes
+  if (total <= 0) return null
+  const freePct = Math.round((freeMinutes / total) * 100)
+
+  return (
+    <div style={{ marginBottom: 10, padding: '0 2px' }}>
+      <div
+        role="img"
+        aria-label={`${fmtDuration(freeMinutes)} free, ${fmtDuration(meetingMinutes)} in meetings`}
+        style={{ display: 'flex', height: 4, borderRadius: 2, overflow: 'hidden', background: withAlpha(INK, 8) }}
+      >
+        <div style={{ width: `${freePct}%`, background: withAlpha(ACCENT_TEAL, 55) }} />
+        <div style={{ width: `${100 - freePct}%`, background: withAlpha(ACCENT_GOLD, 60) }} />
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4, fontSize: 10, color: INK_DIM }}>
+        <span style={{ color: ACCENT_TEAL }}>{fmtDuration(freeMinutes)} free</span>
+        <span style={{ color: ACCENT_GOLD }}>{fmtDuration(meetingMinutes)} in meetings</span>
+        {serviceMinutes > 0 && <span>{fmtDuration(serviceMinutes)} blocked out</span>}
+      </div>
+    </div>
+  )
 }
 
 // ── Now-line placement ────────────────────────────────────────────────────
@@ -1028,6 +1057,14 @@ export function TimelineGrid({
 
   return (
     <div>
+      {/* Day balance — the whole-day free/busy answer, stated from model MINUTES.
+          The axis below got shorter (PX_PER_MIN 0.9 → 0.7) to stop pushing the
+          task groups off-screen; this carries the "how much free time do I have"
+          signal that raw height used to carry alone, and carries it more
+          honestly — floors and intrinsic content make height a lossy proxy for
+          duration. Teal = free, gold = committed (Rule 59). */}
+      <DayBalanceStrip balance={model.balance} />
+
       {/* All-day banner */}
       {allDayEvents.length > 0 && (
         <div style={{ marginBottom: 8 }}>

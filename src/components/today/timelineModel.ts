@@ -33,8 +33,28 @@ export const TIMELINE_TASK_BLOCKS = true
 // visually distinct: 30→27px(floor), 45→40px, 60→54px, 90→81px.
 // (Prior: PX_PER_MIN=0.6 + MEETING_FLOOR=40 → everything ≤66min was 40px,
 // making 30min look the same as 60min. Nick eval 2026-06-18.)
-export const PX_PER_MIN = 0.9      // raised from 0.6 to distinguish 30/45/60/90min
-export const MEETING_FLOOR = 27    // lowered from 40 — 30min=27px(hits floor), 60min=54px
+// 2026-08-03 (Nick: "make the timeline not as tall"): 0.9 → 0.7.
+//
+// Measured first: on a 7am-8pm axis with four meetings, the timeline is 702px,
+// of which 540px (77%) is empty gap. Gaps are where the height is, but they
+// CANNOT be compressed on their own — a gap's interior is a coordinate system
+// (see pxForGap below), so a non-uniform scale saves dropped tasks at the wrong
+// time. Reducing this ONE shared constant is the only change that shortens the
+// page while keeping every pixel↔minute conversion self-consistent.
+//
+// Cost, measured rather than assumed: `.meeting-row-header` is 6px padding on
+// an 11px font ≈ 28px of intrinsic content, and units use minHeight, so a
+// 30-min row is intrinsic-bound at ~28px either way. At 0.9 a 45-min row was
+// 41px; at 0.7 it is 32px. So the 30-vs-45 distinction narrows from ~13px to
+// ~4px. Still monotonic (28 < 32 < 42 < 63) and nowhere near the pre-2026-06-18
+// defect where 0.6px/min + a 40px floor made everything ≤66min identical — but
+// it is the real price of this change, and durationHierarchy in
+// timelineModel.test.ts pins it so a further cut cannot silently flatten it.
+//
+// The whole-day free-time signal no longer rests on raw height alone: the
+// DayBalanceStrip above the axis states it from model MINUTES.
+export const PX_PER_MIN = 0.7      // was 0.9; 0.6 + a 40px floor was the old defect
+export const MEETING_FLOOR = 27    // lowered from 40 — 30min hits this floor, 60min=42px
 export const GAP_FLOOR = 24        // min-height for a gap row
 
 // ── Morning planning floor ─────────────────────────────────────────────────
@@ -242,6 +262,22 @@ export interface UntimedUnit {
 
 export type TimelineUnit = GapUnit | MeetingUnit | OverlapUnit | UntimedUnit
 
+/**
+ * Whole-day free/busy totals, in MINUTES.
+ *
+ * Deliberately derived from the model, never from rendered pixel heights: floors
+ * and intrinsic content make a unit's height a lossy proxy for its duration, so
+ * a pixel-derived summary would drift from the truth exactly on the crowded days
+ * where it matters. This is what lets the axis itself get shorter (PX_PER_MIN
+ * 0.9 → 0.7) without losing the answer to "how much free time do I have?".
+ */
+export interface DayBalance {
+  freeMinutes: number
+  meetingMinutes: number
+  /** Long/cross-day blocks — reported separately: they never consume free time. */
+  serviceMinutes: number
+}
+
 export interface TimelineModel {
   allDayEvents: TodayEvent[]
   serviceBlocks: TodayEvent[]
@@ -250,6 +286,7 @@ export interface TimelineModel {
   dayEnd: number
   /** total globalClusterCount — so trailing gap slot = between-{globalClusterCount} */
   globalClusterCount: number
+  balance: DayBalance
 }
 
 // ── Main export ────────────────────────────────────────────────────────────
@@ -403,6 +440,22 @@ export function buildTimelineModel(
     })
   }
 
+  // Whole-day totals from MINUTES, not from the heights we just computed.
+  // An overlap contributes its SPAN, not the sum of its events — two meetings
+  // at the same hour cost one hour of the day, not two.
+  let freeMinutes = 0
+  let meetingMinutes = 0
+  for (const u of units) {
+    if (u.kind === 'gap') freeMinutes += u.freeMinutes
+    else if (u.kind === 'meeting') meetingMinutes += u.minutes
+    else if (u.kind === 'overlap') meetingMinutes += u.spanMinutes
+  }
+  const serviceMinutes = serviceBlocks.reduce((sum, e) => {
+    const s = e.startMin
+    const en = e.endMin
+    return sum + (typeof s === 'number' && typeof en === 'number' ? Math.max(0, en - s) : 0)
+  }, 0)
+
   return {
     allDayEvents,
     serviceBlocks,
@@ -410,5 +463,6 @@ export function buildTimelineModel(
     dayStart,
     dayEnd,
     globalClusterCount,
+    balance: { freeMinutes, meetingMinutes, serviceMinutes },
   }
 }
