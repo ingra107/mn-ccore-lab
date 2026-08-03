@@ -555,6 +555,20 @@ export default function TodayPage() {
             GH#150: replaces both HTML5 DnD (list→gap) and raw pointer events (block move). */}
         <TodayDndContext state={state} tasks={tasks}>
 
+        {/* Planned-for-today sits ABOVE the day view (Nick 2026-08-03).
+            It used to render between the timeline and the task groups, i.e.
+            immediately adjacent to the unplanned pool it was drawn from — so on
+            a light day the same two or three tasks appeared twice, inches apart.
+            The second render is deliberate and stays: it is the only place to
+            UNPLAN a task and bring it back. Separating the two by the whole day
+            view is the cheap test of whether proximity, not duplication, was the
+            actual problem. */}
+        <PlannedTodaySection
+          stripTasks={stripTasks}
+          state={state}
+          projectsByPid={projectsByPid}
+        />
+
         {/* Today view: Timeline (drag-to-plan) or Agenda (linear scan).
             The toggle lives in the Timeline section header; AgendaListView
             renders its own header-less version when view === 'agenda'. */}
@@ -638,12 +652,6 @@ export default function TodayPage() {
             )}
           </section>
         )}
-
-        <PlannedTodaySection
-          stripTasks={stripTasks}
-          state={state}
-          projectsByPid={projectsByPid}
-        />
 
         {/* #105: heading no longer claims "All" — the pool is now what the due
             window admits, and the window picker sits next to the claim it makes. */}

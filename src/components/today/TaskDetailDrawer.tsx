@@ -8,7 +8,11 @@
 // popover wiring as UnifiedMyTasks InlineDetail (writes group_override on tasks).
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { Users } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
+import { formatBrandName } from '../BrandName'
+import { isFromMeeting, meetingHrefFor, meetingTitleFor } from '../../lib/meetingOrigin'
 import { useTaskDetail, useTaskLinks } from '../../hooks/useApiData'
 import SmartCompose from '../SmartCompose'
 import { useUpdateTask, useToggleSubtask } from '../../hooks/useMutations'
@@ -212,6 +216,34 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           style={{ fontSize: 10, color: ACCENT_TEAL, background: 'transparent', border: 'none', padding: '3px 0', cursor: 'pointer', fontFamily: 'inherit' }}
         >view all →</button>
       </div>
+
+      {/* #108: meeting provenance, with room for the name and the link. The row
+          above carries only a bare icon (a labelled chip there made every
+          meeting-derived task a line taller); this is where it gets stated.
+          Links only when the meetings join resolved — see lib/meetingOrigin. */}
+      {isFromMeeting(task) && (
+        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: INK_DIM }}>
+          <Users size={12} strokeWidth={1.5} absoluteStrokeWidth style={{ color: ACCENT_TEAL, flexShrink: 0 }} />
+          {(() => {
+            const href = meetingHrefFor(task)
+            const title = meetingTitleFor(task)
+            if (href && title) {
+              return (
+                <>
+                  <span>From meeting</span>
+                  <Link
+                    to={href}
+                    className="link-affordance"
+                    style={{ color: ACCENT_TEAL }}
+                    data-tip="Open this meeting — its notes and the other tasks from it"
+                  >{formatBrandName(title)}</Link>
+                </>
+              )
+            }
+            return <span>From a meeting{title ? ` · ${formatBrandName(title)}` : ''}</span>
+          })()}
+        </div>
+      )}
 
       {/* Next step — first open subtask */}
       {nextStep && (

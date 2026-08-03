@@ -20,7 +20,6 @@ import { ACCENT_GOLD, ACCENT_CORAL, ACCENT_TEAL, INK_MUTED } from './constants'
 import { formatShortDate } from '../../lib/dateUtils'
 import { Chip } from '../ui/Chip'
 import { Users } from 'lucide-react'
-import { formatBrandName } from '../BrandName'
 import { isFromMeeting, meetingTitleFor } from '../../lib/meetingOrigin'
 import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
@@ -69,29 +68,30 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
     </div>
   ) : null
 
-  // #108: meeting provenance. Nick: "when things come from meetings we know they
-  // come from meetings that is important." This rides the existing badge line —
-  // its own channel, so it does not overload the urgency rail, the due text, the
-  // attention chip or the done box (Rule 76). Driven by source/meeting_id, which
-  // always exist; the meeting NAME only appears when the meetings join resolved
-  // (see lib/meetingOrigin — meeting_id dangles on most rows today).
+  // #108: meeting provenance, as a bare icon in the INLINE meta cluster.
+  //
+  // This first shipped as a labelled chip on the belowTitle line, which gave
+  // every meeting-derived task a whole extra row of height (Nick: "makes them
+  // taller than other ones"). The full name + link now live in the expanded
+  // drawer, where there is room for them; the row keeps only the glyph that
+  // answers "did this come from a meeting?" at a glance. Its own channel, so it
+  // does not overload the urgency rail, due text, attention chip or done box
+  // (Rule 76), and the tooltip carries the text equivalent.
   const meetingTitle = meetingTitleFor(task)
-  const meetingBadge = !isDone && isFromMeeting(task) ? (
-    <Chip
-      color={ACCENT_TEAL}
-      title={meetingTitle ? `From meeting: ${meetingTitle}` : 'Created from a meeting'}
-      style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}
+  const meetingMeta = !isDone && isFromMeeting(task) ? (
+    <span
+      data-tip={meetingTitle ? `From meeting: ${meetingTitle}` : 'Created from a meeting'}
+      style={{ display: 'inline-flex', alignItems: 'center', color: ACCENT_TEAL, opacity: 0.85 }}
     >
-      <Users size={10} strokeWidth={1.5} absoluteStrokeWidth style={{ marginRight: 3, verticalAlign: -1 }} />
-      {meetingTitle ? formatBrandName(meetingTitle) : 'From a meeting'}
-    </Chip>
+      <Users size={12} strokeWidth={1.5} absoluteStrokeWidth />
+      <span className="sr-only">{meetingTitle ? `From meeting: ${meetingTitle}` : 'From a meeting'}</span>
+    </span>
   ) : null
 
   // v55 workflow badges — compact second line, only when a field is set and
   // the task isn't done. Preserved verbatim from the pre-refactor row.
-  const workflowBadges = !isDone && (meetingBadge || task.waiting_on || task.promised_to || task.next_checkin_date) ? (
+  const workflowBadges = !isDone && (task.waiting_on || task.promised_to || task.next_checkin_date) ? (
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-      {meetingBadge}
       {task.waiting_on && (
         <Chip color={ACCENT_GOLD} title={`Waiting on: ${task.waiting_on}`} style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
           ⏳ {task.waiting_on}
@@ -160,7 +160,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
       onTogglePlan={() => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
       leadingTag={tagForTask(task, projectsByPid)}
       belowTitle={workflowBadges}
-      extraMeta={<>{workOnMeta}{linkMeta}</>}
+      extraMeta={<>{meetingMeta}{workOnMeta}{linkMeta}</>}
     >
       <TaskDetailDrawer task={task} project={project} state={state} />
     </SharedTaskRow>
