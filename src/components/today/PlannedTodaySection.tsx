@@ -63,7 +63,11 @@ export function PlannedTodaySection({
         style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, cursor: 'pointer' }}
       >
         <span style={{ fontSize: 14 }}>📋</span>
-        <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.01em', margin: 0, whiteSpace: 'nowrap' }}>Planned today</h3>
+        {/* "Planned today" over-claimed: this section holds ONLY slot==='strip'
+            tasks — the ones planned for today with no specific time. Tasks
+            dropped into a timeline gap are planned too, and they live in that
+            gap, not here. */}
+        <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.01em', margin: 0, whiteSpace: 'nowrap' }}>Planned · no specific time</h3>
         <span style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{stripTasks.length}</span>
         {open && <span className="today-section-hint" style={{ fontSize: 11, color: INK_DIM }}>✓ done · × to unplan</span>}
         <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)', marginLeft: 4 }} />

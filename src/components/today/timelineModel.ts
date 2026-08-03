@@ -47,6 +47,20 @@ export const MORNING_FLOOR = 7 * 60   // 7:00 AM in minutes-since-midnight
 export const pxForMeeting = (min: number): number =>
   Math.max(MEETING_FLOOR, Math.round(min * PX_PER_MIN))
 
+// ⚠️ A GAP'S HEIGHT MUST STAY min * PX_PER_MIN. It is not just a visual
+// choice — the gap's interior is a coordinate system. Six call sites convert
+// pointer pixels to minutes inside a gap by dividing by this same global
+// constant: the list-drop math (TodayDndContext), block move and resize
+// (useTaskBlockDrag, useTaskBlockGesture), task-block placement
+// (packTaskBlocks below), and the drop preview + in-unit now-line offset
+// (TimelineGrid). Rendering a gap at anything other than its linear height
+// makes every one of those conversions wrong, so a task dropped near the
+// bottom of a long gap would be saved at the wrong time.
+//
+// This was measured 2026-08-03 while trying to compress long gaps to cut the
+// timeline's height (~77% of it is empty gap). Compression is still the right
+// idea, but it requires threading a PER-GAP scale through all six sites, not
+// changing this function alone. See the height options written up for Nick.
 export const pxForGap = (min: number): number =>
   Math.max(GAP_FLOOR, Math.round(min * PX_PER_MIN))
 

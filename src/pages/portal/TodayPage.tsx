@@ -559,15 +559,22 @@ export default function TodayPage() {
             It used to render between the timeline and the task groups, i.e.
             immediately adjacent to the unplanned pool it was drawn from — so on
             a light day the same two or three tasks appeared twice, inches apart.
-            The second render is deliberate and stays: it is the only place to
-            UNPLAN a task and bring it back. Separating the two by the whole day
-            view is the cheap test of whether proximity, not duplication, was the
-            actual problem. */}
-        <PlannedTodaySection
-          stripTasks={stripTasks}
-          state={state}
-          projectsByPid={projectsByPid}
-        />
+            The render in the task groups below is deliberate and stays: it is
+            the reliable place to UNPLAN a task and bring it back. Separating the
+            two by the whole day view tests whether proximity, not duplication,
+            was the actual problem.
+
+            TIMELINE MODE ONLY. AgendaListView derives its own strip tasks and
+            renders them with PlannedTaskRow — including the × unplan button — so
+            mounting this in Agenda mode put a strip task on screen THREE times
+            (here, in the agenda body, and in the task pool). */}
+        {todayView === 'timeline' && (
+          <PlannedTodaySection
+            stripTasks={stripTasks}
+            state={state}
+            projectsByPid={projectsByPid}
+          />
+        )}
 
         {/* Today view: Timeline (drag-to-plan) or Agenda (linear scan).
             The toggle lives in the Timeline section header; AgendaListView
