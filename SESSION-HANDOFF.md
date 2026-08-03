@@ -1,3 +1,96 @@
+# ▶▶ BUG SWEEP #104–#108 + TODAY-PAGE FOLLOW-UPS — SHIPPED + DEPLOYED (2026-08-03). Live = `8ce17b97` (probe PASS). Bug queue EMPTY, all 5 GitHub issues closed.
+
+**8 commits, every one deployed + pushed, every deploy probe PASS. No schema change, no migration, no new route** (still v104 / 257 routes). api 1329 · lib 238 · src 157, all green.
+
+## The through-line: three of five "features" were dead reads
+
+#104, #108 and the two codex found were all the same shape — UI wired to a field
+whose producer never worked, failing silently. Worth pattern-matching on before
+building anything new here.
+
+- **#104 — `af0c855a`.** "Moved to another project" on all 27 prod rows. The lookup
+  ran `SELECT name FROM projects` and **there is no `name` column — it is `title`**.
+  D1 threw every call, a bare `catch` swallowed it, so the neutral fallback was the
+  only body this code could ever write. Now resolves BOTH ends (`Moved: A → B`,
+  prefers `short_name`) and logs instead of swallowing. ⚠️ **The test double had
+  invented a `name` key**, so the broken query passed the suite while failing in
+  prod — it now reproduces D1's error, proven by reintroducing the bug (1 fail).
+- **#108 — `55e5ddae` + `8ce17b97`.** Five surfaces badge a meeting-derived task;
+  four rendered nothing. All gate on `meeting_title`, which only exists via
+  `LEFT JOIN meetings ON t.meeting_id = m.id` — and **`tasks.meeting_id` and
+  `meetings.id` are DIFFERENT ID SPACES** (meetings `mtg-YYYY-MM-DD-hash`; tasks
+  `cal-…` from extraction or `mtg_<ts>` from approval). Only 8 of 152 joined.
+  `api/lib/meeting-ref.ts` now bridges by the date + title-slug embedded in those
+  ids → **109/152, verified on live prod**. The slug is TRUNCATED at ~24 chars
+  (`pulmonary-hsr-group-meet`), so a unique-prefix match is load-bearing (+19).
+- **#105/#106 — `ceaa9846`.** Today had NO due filter — it rendered every open
+  assigned task, so "All today's tasks" was true in the way that made it useless.
+  7d/14d/30d/All picker + groups roll up to 5 rows.
+- **#107 — `be7e67cb`.** Minutes-since-midnight can't express a span crossing one:
+  11pm–7am gave `endMin < startMin`, `duration()` returned −960, `isService()`
+  rejected it into the main body. Carry-in was worse — the API selected on
+  `start_at` alone so a yesterday-start event never reached the browser. Events
+  now clip to one civil day, half-open, `0 ≤ startMin < endMin ≤ 1440`.
+
+## ⚠️ LANDMINES — do not re-derive these
+
+1. **`pxForGap` MUST stay `minutes × PX_PER_MIN`.** A gap's interior is a
+   COORDINATE SYSTEM, not whitespace: **six** call sites convert pointer pixels to
+   minutes by dividing by the global `PX_PER_MIN` — list-drop (`TodayDndContext`),
+   block move + resize (`useTaskBlockDrag`, `useTaskBlockGesture`), task-block
+   placement (`packTaskBlocks`), drop preview and the in-unit now-line
+   (`TimelineGrid`). Render a gap at any other height and **a task dropped near the
+   bottom of a long gap is SAVED AT THE WRONG TIME.** I tried sub-linear gap
+   compression to cut page height, measured this, and backed it out. The comment on
+   `pxForGap` + a linearity test are the guard. Compressing gaps is still the better
+   height fix — it just requires threading a PER-GAP scale through all six sites.
+2. **`meetingHrefFor` must target `meeting_ref`, NEVER `meeting_id`.** Falling back
+   to the raw id is the single change that puts dead links back (would 404 on ~43).
+3. **`decorateMeetingRefs` must not rewrite `meeting_id`.** That is the value PB
+   replicates; rewriting it on the wire desyncs Hub from brain.db. It adds
+   `meeting_ref` alongside.
+4. **The colour-lint baseline (`scripts/check-color-string-concat.baseline.json`)
+   keys on `file:line`**, so inserting ANY line above an existing offender re-flags
+   it as new. Four TaskCard entries were shifted +9 this session. The hits are
+   static Tailwind classes the gate's own note says to leave alone — bump the
+   baseline, don't "fix" them.
+
+## Timeline height — the state of that argument
+
+`PX_PER_MIN` 0.9 → **0.7** (`54f386fd`), example day 702px → 558px (~20%). Measured
+first: 77% of the timeline is empty gap. Codex's option won over mine because a
+GLOBAL scale change keeps every pixel↔minute conversion self-consistent (landmine 1).
+
+**The price, measured not assumed:** the meeting row is ~28px of intrinsic content
+and units use `minHeight`, so a 30-min row renders ~28px either way while 45-min
+drops 41px → 32px. **30-vs-45 narrows from ~13px to ~4px.** Still strictly
+increasing; `timelineModel.test.ts::durationHierarchy` pins it so a further cut
+FAILS rather than flattening it quietly. A `DayBalanceStrip` now carries the
+whole-day free/busy answer from model MINUTES (never rendered heights).
+
+## Open / next
+
+- **Nick to eyeball:** does 0.7 still read? If 30-vs-45 is too close, the fix is
+  the per-gap scale in **#110**, not a further global cut.
+- **#109 — retire the meeting-ref bridge.** The durable #108 fix is in Peripheral
+  Brain: make the meeting-extraction and meeting-approval writers mint the
+  canonical `meetings.id`, then backfill, then delete `decorateMeetingRefs`. The
+  read-time bridge covers what is already written; it does not stop new bad ids.
+- **#110 — make the gap px↔minute invariant structural** (landmine 1). Step 1 is a
+  `minToPx`/`pxToMin` pair replacing the bare exported constant; step 2 is the
+  per-gap scale that unlocks real gap compression.
+- **~43 tasks still unresolved** — old date-only ids with no meeting record, plus
+  approval ids on days with 2+ meetings (deliberately refused; a wrong link is
+  worse than none).
+- **Three surfaces still gate on `meeting_title`** (`ActionBoardCard`,
+  `ActivityStream`, `MyItems`). They now benefit from the server-side resolution,
+  but they don't use the shared `lib/meetingOrigin` helpers — converge when touched.
+- **This file is 1540 lines / ~74K tokens** and is read at every session start.
+  `docs/superpowers/plans/2026-06-15-session-handoff-shrink-generate.md` is the
+  written, unexecuted plan for that. Not improvised at close.
+
+---
+
 # ▶▶ BUG SWEEP #98/#101/#102/#103 — SHIPPED + DEPLOYED (2026-07-24/25). Live = `bdb7aac1` (probe PASS), which includes the `sourceKeyFrom` refactor. Nothing undeployed.
 
 **Bug queue empty.** All four GitHub issues closed, all four `bug_reports` rows resolved.
