@@ -119,17 +119,38 @@ describe('taskChangeEvents', () => {
       { event: 'assignee', kind: 'system', body: 'Unassigned' },
     ]);
   });
-  it('project move uses the resolved name, never the raw id', () => {
+  it('project move names BOTH ends when both resolve (#104)', () => {
     expect(
-      taskChangeEvents({ project_id: 'proj_OLD' }, { project_id: 'proj_NEW' }, { projectName: 'CLIF Provider Variation' }),
+      taskChangeEvents(
+        { project_id: 'proj_OLD' },
+        { project_id: 'proj_NEW' },
+        { fromProjectName: 'CQODE Backbone', toProjectName: 'CLIF Provider Variation' },
+      ),
+    ).toEqual([
+      { event: 'project', kind: 'system', body: 'Moved: CQODE Backbone → CLIF Provider Variation' },
+    ]);
+  });
+  it('project move from NO project names only the destination', () => {
+    expect(
+      taskChangeEvents({ project_id: null }, { project_id: 'proj_NEW' }, { toProjectName: 'CLIF Provider Variation' }),
     ).toEqual([{ event: 'project', kind: 'system', body: 'Moved to CLIF Provider Variation' }]);
   });
-  it('project move with no resolved name falls back to a neutral phrase (no id leak)', () => {
+  it('project move with an unresolvable destination still names the origin', () => {
+    expect(
+      taskChangeEvents({ project_id: 'proj_OLD' }, { project_id: 'proj_NEW' }, { fromProjectName: 'CQODE Backbone' }),
+    ).toEqual([{ event: 'project', kind: 'system', body: 'Moved: CQODE Backbone → another project' }]);
+  });
+  it('project move with no resolved labels falls back to a neutral phrase (no id leak)', () => {
     const evs = taskChangeEvents({ project_id: null }, { project_id: 'proj_NEW' });
     expect(evs).toEqual([{ event: 'project', kind: 'system', body: 'Moved to another project' }]);
     expect(evs[0].body).not.toContain('proj_');
   });
-  it('project removed', () => {
+  it('project removed names the project it left', () => {
+    expect(
+      taskChangeEvents({ project_id: 'proj_OLD' }, { project_id: null }, { fromProjectName: 'CQODE Backbone' }),
+    ).toEqual([{ event: 'project', kind: 'system', body: 'Removed from CQODE Backbone' }]);
+  });
+  it('project removed with an unresolvable origin stays neutral', () => {
     expect(taskChangeEvents({ project_id: 'proj_OLD' }, { project_id: null })).toEqual([
       { event: 'project', kind: 'system', body: 'Removed from project' },
     ]);
@@ -187,10 +208,28 @@ describe('projectChangeEvents', () => {
 
 // ── emitLifecycleActivity wiring (postActivityEntry spied) ──────────────────────
 
-function fakeEnv(projectName: string | null = null): any {
+// Test double for the project-label lookup, keyed by project id.
+//
+// ⚠️ D1 FIDELITY: `projects` has NO `name` column — it is `title` (+ `short_name`).
+// The previous double invented a `name` key, so `SELECT name FROM projects`
+// passed here while throwing `no such column: name` in prod on EVERY call. The
+// bare catch swallowed it, so all 27 prod project-move rows read "Moved to
+// another project" (#104). This double now reproduces D1's error, so
+// reintroducing that column fails the suite instead of shipping silently.
+function fakeEnv(labels: Record<string, string> = {}): any {
   return {
     DB: {
-      prepare: () => ({ bind: () => ({ first: async () => (projectName ? { name: projectName } : null) }) }),
+      prepare: (sql: string) => {
+        if (/\bname\b/.test(sql)) throw new Error('no such column: name');
+        return {
+          bind: (...ids: string[]) => ({
+            all: async () => ({
+              results: ids.filter((id) => labels[id]).map((id) => ({ id, label: labels[id] })),
+            }),
+            first: async () => null,
+          }),
+        };
+      },
     },
   };
 }
@@ -232,14 +271,26 @@ describe('emitLifecycleActivity', () => {
     expect(mockedPost).not.toHaveBeenCalled();
   });
 
-  it('task project-move resolves the NAME (never leaks the proj_ id) keyed :project', async () => {
+  it('task project-move resolves BOTH labels (never leaks the proj_ id) keyed :project', async () => {
     const mut: any = { mutation_id: 'mut_3', table: 'tasks', record_id: 'task_C', op: 'update', patch: { project_id: 'proj_NEW' } };
-    await emitLifecycleActivity(fakeEnv('CLIF Provider Variation'), mut, NICK, { project_id: 'proj_OLD' });
+    await emitLifecycleActivity(
+      fakeEnv({ proj_OLD: 'CQODE Backbone', proj_NEW: 'CLIF Provider Variation' }),
+      mut, NICK, { project_id: 'proj_OLD' },
+    );
     expect(mockedPost).toHaveBeenCalledTimes(1);
     const arg = mockedPost.mock.calls[0][0];
-    expect(arg.body).toBe('Moved to CLIF Provider Variation');
+    expect(arg.body).toBe('Moved: CQODE Backbone → CLIF Provider Variation');
     expect(arg.body).not.toContain('proj_');
     expect(arg.sourceId).toBe('mut_3:project');
+  });
+
+  it('a project-label lookup failure degrades to the neutral phrase, never throws (#104)', async () => {
+    const brokenEnv: any = { DB: { prepare: () => { throw new Error('no such column: name'); } } };
+    const mut: any = { mutation_id: 'mut_3b', table: 'tasks', record_id: 'task_C2', op: 'update', patch: { project_id: 'proj_NEW' } };
+    await expect(
+      emitLifecycleActivity(brokenEnv, mut, NICK, { project_id: 'proj_OLD' }),
+    ).resolves.toBeUndefined();
+    expect(mockedPost.mock.calls[0][0].body).toBe('Moved to another project');
   });
 
   it('multiple tracked changes → one row per event, keyed by event', async () => {
