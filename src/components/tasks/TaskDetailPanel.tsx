@@ -7,7 +7,7 @@ import {
   ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Type, Loader2,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
 const RichTextEditor = lazy(() => import('../RichTextEditor'))
@@ -24,6 +24,8 @@ import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { appendCharToInput, stripMeetingMarker } from '../../lib/textUtils'
+import { formatBrandName } from '../BrandName'
+import { isFromMeeting, meetingHrefFor, meetingTitleFor } from '../../lib/meetingOrigin'
 import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import { uploadFileToR2 } from '../../lib/r2Upload'
 import MentionInput from '../MentionInput'
@@ -848,9 +850,32 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               </div>
             </CollapsibleSection>
 
-            {/* Meta info */}
+            {/* Meta info. #108: meeting origin is stated in words, not as the raw
+                `meeting_extraction` enum, and links to the meeting when — and only
+                when — that meeting actually resolves (see lib/meetingOrigin). */}
             <div className="flex items-center gap-3 text-[10px] pt-2 border-t" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-              {task.source && <span>Source: {task.source}</span>}
+              {isFromMeeting(task) ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Users size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--teal)' }} />
+                  {(() => {
+                    const href = meetingHrefFor(task)
+                    const title = meetingTitleFor(task)
+                    if (href && title) {
+                      return (
+                        <>
+                          From meeting:{' '}
+                          <Link to={href} className="link-affordance" style={{ color: 'var(--teal)' }} data-tip="Open this meeting — notes and the other tasks from it">
+                            {formatBrandName(title)}
+                          </Link>
+                        </>
+                      )
+                    }
+                    return <>From a meeting{title ? `: ${formatBrandName(title)}` : ''}</>
+                  })()}
+                </span>
+              ) : (
+                task.source && <span>Source: {task.source}</span>
+              )}
               {task.created_at && <span>Created {formatRelativeTime(task.created_at)}</span>}
               {task.completed_at && <span>Completed {formatRelativeTime(task.completed_at)}</span>}
             </div>

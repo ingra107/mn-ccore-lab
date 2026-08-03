@@ -16,9 +16,12 @@ import { useDensity } from '../DensityToggle'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { LinkRow, type TaskLink } from './primitives'
 import { tagForTask } from './constants'
-import { ACCENT_GOLD, ACCENT_CORAL, INK_MUTED } from './constants'
+import { ACCENT_GOLD, ACCENT_CORAL, ACCENT_TEAL, INK_MUTED } from './constants'
 import { formatShortDate } from '../../lib/dateUtils'
 import { Chip } from '../ui/Chip'
+import { Users } from 'lucide-react'
+import { formatBrandName } from '../BrandName'
+import { isFromMeeting, meetingTitleFor } from '../../lib/meetingOrigin'
 import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
@@ -66,10 +69,29 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
     </div>
   ) : null
 
+  // #108: meeting provenance. Nick: "when things come from meetings we know they
+  // come from meetings that is important." This rides the existing badge line —
+  // its own channel, so it does not overload the urgency rail, the due text, the
+  // attention chip or the done box (Rule 76). Driven by source/meeting_id, which
+  // always exist; the meeting NAME only appears when the meetings join resolved
+  // (see lib/meetingOrigin — meeting_id dangles on most rows today).
+  const meetingTitle = meetingTitleFor(task)
+  const meetingBadge = !isDone && isFromMeeting(task) ? (
+    <Chip
+      color={ACCENT_TEAL}
+      title={meetingTitle ? `From meeting: ${meetingTitle}` : 'Created from a meeting'}
+      style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}
+    >
+      <Users size={10} strokeWidth={1.5} absoluteStrokeWidth style={{ marginRight: 3, verticalAlign: -1 }} />
+      {meetingTitle ? formatBrandName(meetingTitle) : 'From a meeting'}
+    </Chip>
+  ) : null
+
   // v55 workflow badges — compact second line, only when a field is set and
   // the task isn't done. Preserved verbatim from the pre-refactor row.
-  const workflowBadges = !isDone && (task.waiting_on || task.promised_to || task.next_checkin_date) ? (
+  const workflowBadges = !isDone && (meetingBadge || task.waiting_on || task.promised_to || task.next_checkin_date) ? (
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+      {meetingBadge}
       {task.waiting_on && (
         <Chip color={ACCENT_GOLD} title={`Waiting on: ${task.waiting_on}`} style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
           ⏳ {task.waiting_on}

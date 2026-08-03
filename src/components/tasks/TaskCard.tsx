@@ -14,6 +14,7 @@ import { STATUS_OPTIONS, PRIORITY_CONFIG, PRIORITY_COLORS, STATUS_CYCLE } from '
 import type { TaskRow } from '../../lib/api'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { Chip } from '../ui/Chip'
+import { isFromMeeting, meetingTitleFor } from '../../lib/meetingOrigin'
 
 function hasBlockers(task: TaskRow): boolean {
   return !!task.blocked_by && task.blocked_by.split(',').filter(s => s.trim()).length > 0
@@ -174,13 +175,21 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
               </span>
             )}
 
-            {/* Source badge */}
-            {task.source === 'meeting' && task.meeting_title && !compact && (
+            {/* Meeting-origin badge (#108). Was gated on source === 'meeting'
+                AND a non-null meeting_title — two conditions the live pipeline
+                almost never satisfies (it writes meeting_extraction /
+                meeting_approval, and the meetings join dangles on most rows),
+                so this badge effectively never rendered. Origin now comes from
+                fields that always exist; the meeting NAME is used when known. */}
+            {isFromMeeting(task) && !compact && (
               <span
                 className="text-[11px]"
                 style={{ color: 'var(--teal)', opacity: 0.85 }}
               >
-                {formatBrandName(task.meeting_title.split(':')[0])}
+                {(() => {
+                  const t = meetingTitleFor(task)
+                  return t ? formatBrandName(t) : 'From a meeting'
+                })()}
               </span>
             )}
           </div>
