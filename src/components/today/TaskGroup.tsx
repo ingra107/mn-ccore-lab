@@ -14,7 +14,7 @@ import type { TaskRow as TaskRowData } from '../../lib/api'
 // expandedId/onExpand no longer come from TodayPage — TaskGroup owns its own
 // expand state so clicking a row here never expands the same task in Timeline
 // or PlannedTodaySection (Item 2 fix, 2026-06-22).
-export function TaskGroup({ gkey, tasks, projectsByPid, state }: { gkey: GroupKey; tasks: TaskRowData[]; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>; state: TodayStateApi }) {
+export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 }: { gkey: GroupKey; tasks: TaskRowData[]; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>; state: TodayStateApi; previewLimit?: number }) {
   const meta = GROUP_META[gkey]
   const doneCount = tasks.filter((t) => state.done[t.id] || isTaskDone(t)).length
   const sorted = useMemo(() => {
@@ -31,6 +31,29 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state }: { gkey: GroupKe
   // ask, no localStorage persistence).
   const [open, setOpen] = useState(true)
 
+  // #106: roll up to previewLimit rows by default. Nick: "only show up to 3-5
+  // rows or something and then you can expand but the default should be that
+  // its rolled up somehow."
+  //
+  // This is a SEPARATE affordance from the collapse chevron above: the chevron
+  // hides the whole group, this bounds how much of an OPEN group you see. The
+  // rail cards' "+N more →" is a third thing again — it navigates to another
+  // page, whereas these rows are work you do here, so reveal is inline.
+  //
+  // Slices `sorted`, never `tasks`: planned → active → done is settled ordering
+  // (Rule 62), and slicing the raw array would bury planned work under whatever
+  // order the API happened to return.
+  const [showAll, setShowAll] = useState(false)
+  const visible = showAll ? sorted : sorted.slice(0, previewLimit)
+  const hiddenCount = sorted.length - visible.length
+
+  // Collapsing must not strand the expanded drawer on a row that just left the
+  // list — the drawer would keep rendering with no visible parent row.
+  const collapseRows = useCallback(() => {
+    setShowAll(false)
+    setExpandedId((id) => (id && !sorted.slice(0, previewLimit).some((t) => t.id === id) ? null : id))
+  }, [sorted, previewLimit])
+
   if (tasks.length === 0) return null
   return (
     <div style={{ marginBottom: 20 }}>
@@ -46,7 +69,7 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state }: { gkey: GroupKe
       </div>
       {open && (
         <div style={{ background: PANEL_BG, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
-          {sorted.map((t) => (
+          {visible.map((t) => (
             <TaskRow
               key={t.id}
               task={t}
@@ -57,6 +80,27 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state }: { gkey: GroupKe
               projectsByPid={projectsByPid}
             />
           ))}
+          {(hiddenCount > 0 || showAll) && (
+            <button
+              onClick={showAll ? collapseRows : () => setShowAll(true)}
+              aria-expanded={showAll}
+              style={{
+                display: 'block',
+                width: '100%',
+                background: 'none',
+                border: 'none',
+                borderTop: '1px solid rgba(255,255,255,0.06)',
+                color: INK_DIM,
+                fontSize: 11,
+                cursor: 'pointer',
+                padding: '7px 14px',
+                textAlign: 'left',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {showAll ? 'Show fewer' : `Show ${hiddenCount} more`}
+            </button>
+          )}
         </div>
       )}
     </div>

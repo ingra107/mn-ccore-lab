@@ -28,7 +28,7 @@ import { researchTeam } from '../../data/team'
 import { useTodayState } from '../../hooks/useTodayState'
 import {
   GROUP_ORDER,
-  ACCENT_GOLD, ACCENT_GREEN,
+  ACCENT_GOLD, ACCENT_GREEN, ACCENT_TEAL,
   INK, INK_MUTED, INK_DIM, PAGE_BG,
   todayKey, daysSince, formatTodayDate,
   meetingToEvent, calendarEventToTodayEvent, isToday,
@@ -53,7 +53,8 @@ import { PulseCard } from '../../components/today/rail/PulseCard'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
-import { withAlpha, isApprovalPending, isApprovalTriaged } from '../../lib/taskGrouping'
+import { withAlpha, isApprovalPending, isApprovalTriaged, civilDatePlusDays } from '../../lib/taskGrouping'
+import { useTodayDueWindow, DUE_WINDOW_OPTIONS } from '../../hooks/useTodayDueWindow'
 
 export default function TodayPage() {
   usePageMeta('Today · MN-CCORE', 'Operating-day landing — what to work on, who you\'re meeting, what\'s overdue.')
@@ -148,15 +149,43 @@ export default function TodayPage() {
   const { view: todayView, setView: setTodayView } = useTodayView()
 
 
+  // #105: how far ahead the TASK POOL reaches. A view preference, not task state.
+  const { dueWindow, setDueWindow } = useTodayDueWindow()
+
+  // The task pool shown under the heading below.
+  //
+  // ⚠️ This is deliberately a SEPARATE array from `tasks`, and only the grouped
+  // list consumes it. `useTodayState`, Timeline, Agenda, PlannedTodaySection and
+  // the overdue rail must keep receiving the FULL open set — the day plan is
+  // synced task state derived from those rows (Rule 63b), so filtering the base
+  // array would make a planned task whose due date falls outside the window
+  // vanish from its own saved slot.
+  //
+  // A task is in the pool when it is planned for today (an explicit choice always
+  // outranks a date filter), or its due date is on/before the window edge.
+  // Overdue tasks pass because their date is before the edge; undated tasks
+  // appear only under "All".
+  const visibleTasks = useMemo(() => {
+    if (dueWindow === 'all') return tasks
+    const edge = civilDatePlusDays(todayKey(), dueWindow)
+    return tasks.filter((t) => {
+      if (state.planned[t.id]) return true
+      const due = t.due_date?.slice(0, 10)
+      return !!due && due <= edge
+    })
+  }, [tasks, dueWindow, state.planned])
+
+  const hiddenByWindow = tasks.length - visibleTasks.length
+
   // Group bucketing.
   const grouped = useMemo(() => {
     const g: Record<GroupKey, TaskRow[]> = { deep: [], priorities: [], quick: [], pb: [], etl: [] }
-    for (const t of tasks) {
+    for (const t of visibleTasks) {
       const key = getGroupForTask(t, projectsByPid)
       g[key].push(t)
     }
     return g
-  }, [tasks, projectsByPid])
+  }, [visibleTasks, projectsByPid])
 
   // Derived counts.
   const overdueTasks = useMemo(() => {
@@ -620,8 +649,47 @@ export default function TodayPage() {
           projectsByPid={projectsByPid}
         />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, marginTop: 8 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>📋 All today's tasks</h2>
+        {/* #105: heading no longer claims "All" — the pool is now what the due
+            window admits, and the window picker sits next to the claim it makes. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, marginTop: 8, flexWrap: 'wrap' }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>📋 Tasks</h2>
+          <div
+            role="group"
+            aria-label="Show tasks due within"
+            style={{ display: 'inline-flex', alignItems: 'center', border: `1px solid ${withAlpha(ACCENT_TEAL, 22)}`, borderRadius: 6, overflow: 'hidden', flexShrink: 0 }}
+          >
+            {DUE_WINDOW_OPTIONS.map((o) => (
+              <button
+                key={String(o.value)}
+                onClick={() => setDueWindow(o.value)}
+                aria-pressed={dueWindow === o.value}
+                data-tip={o.hint}
+                style={{
+                  background: dueWindow === o.value ? withAlpha(ACCENT_TEAL, 18) : 'transparent',
+                  border: 'none',
+                  color: dueWindow === o.value ? ACCENT_TEAL : INK_DIM,
+                  fontSize: 11,
+                  fontWeight: dueWindow === o.value ? 600 : 400,
+                  cursor: 'pointer',
+                  padding: '3px 9px',
+                  letterSpacing: '0.02em',
+                  transition: 'all 120ms',
+                  lineHeight: 1.5,
+                }}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          {hiddenByWindow > 0 && (
+            <button
+              onClick={() => setDueWindow('all')}
+              data-tip="Show every open task again"
+              style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 11, cursor: 'pointer', padding: 0 }}
+            >
+              {hiddenByWindow} further out →
+            </button>
+          )}
           <span className="today-section-hint" style={{ fontSize: 12, color: INK_DIM }}>click to expand · 📌 or drag ⋮⋮ to plan</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
         </div>

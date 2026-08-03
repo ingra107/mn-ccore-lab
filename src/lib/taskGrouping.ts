@@ -114,6 +114,22 @@ export function todayKey(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+/**
+ * A civil date (YYYY-MM-DD) offset by N days, still civil, still local.
+ *
+ * Parses from PARTS into a local-midnight Date — never `new Date('2026-08-03')`,
+ * which parses as UTC midnight and lands on the previous day in every western
+ * zone (the same defect `isToday()` documents). `setDate` handles month, year
+ * and DST rollover for us.
+ */
+export function civilDatePlusDays(civil: string, days: number): string {
+  const [y, m, d] = civil.split('-').map(Number)
+  if (!y || !m || !d) return civil
+  const dt = new Date(y, m - 1, d)
+  dt.setDate(dt.getDate() + days)
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+}
+
 /** Days elapsed since an ISO date string. Returns Infinity for null/invalid. */
 export function daysSince(iso: string | null | undefined): number {
   if (!iso) return Infinity
