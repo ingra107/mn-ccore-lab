@@ -291,7 +291,11 @@ export function AgendaListView({
   // buildTimelineModel is the single source of truth for slot identity (Phase 6).
   // Agenda passes visibleEvents — dismissed events are excluded before the model.
   const model = useMemo(() => buildTimelineModel(visibleEvents), [visibleEvents])
-  const { allDayEvents, units } = model
+  // #107: serviceBlocks was destructured away here, so EVERY long (>=3h) event
+  // was silently invisible in Agenda mode — not just overnight ones. Agenda is
+  // the "scan your day" surface; dropping a 4-hour commitment from it is the
+  // opposite of scanning. Rendered in its own section below.
+  const { allDayEvents, units, serviceBlocks } = model
 
   // All planned task ids (excluding done).
   const plannedIds = state.plannedIds()
@@ -371,9 +375,15 @@ export function AgendaListView({
 
   const hasTodayContent = units.length > 0 || plannedIds.length > 0
 
-  const nowColor = units.some((u) => u.kind === 'meeting' || u.kind === 'overlap')
-    ? ACCENT_CORAL
-    : ACCENT_GOLD
+  // Coral means "you are IN something right now" (Rule 59). This used to go
+  // coral whenever the day contained any meeting at all, so it was coral all
+  // day on any day with a meeting and carried no information.
+  const inMeetingNow = [...units.flatMap((u) =>
+    u.kind === 'meeting' ? [u.event] : u.kind === 'overlap' ? u.events : [],
+  ), ...serviceBlocks].some(
+    (e) => typeof e.startMin === 'number' && typeof e.endMin === 'number' && e.startMin <= now && now < e.endMin,
+  )
+  const nowColor = inMeetingNow ? ACCENT_CORAL : ACCENT_GOLD
 
   const renderNowMarker = () => (
     <div
@@ -420,6 +430,27 @@ export function AgendaListView({
                   key={e.id}
                   event={e}
                   isNow={false}
+                  onDismiss={onDismiss}
+                />
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* #107: long + cross-day blocks. These are deliberately kept out of the
+          interleaved scan (they would swamp it), but they must still be VISIBLE —
+          they were dropped entirely before. */}
+      {serviceBlocks.filter((e) => !dismissedIds[e.id]).length > 0 && (
+        <div style={{ marginBottom: 8 }}>
+          <SectionHeader label="Long / multi-day" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {serviceBlocks
+              .filter((e) => !dismissedIds[e.id])
+              .map((e) => (
+                <AgendaEventRow
+                  key={e.id}
+                  event={e}
+                  isNow={typeof e.startMin === 'number' && typeof e.endMin === 'number' && e.startMin <= now && now < e.endMin}
                   onDismiss={onDismiss}
                 />
               ))}

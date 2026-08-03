@@ -226,16 +226,32 @@ export async function handleListEvents(
     }
   }
 
-  // Range query is inclusive on both ends. start_at is ISO with 'Z' suffix
-  // so a string compare against `${start}T00:00:00.000Z` works naturally.
+  // #107: OVERLAP query, not a start-only range.
+  //
+  // This used to filter `start_at >= ? AND start_at <= ?`, which drops any
+  // event that began before the window and is still running inside it — an
+  // overnight block starting 11 PM yesterday and ending 7 AM today never
+  // reached the client at all, so Today could not render it however well the
+  // frontend handled cross-day spans.
+  //
+  // An event overlaps the window when it starts before the window ends AND
+  // ends after the window begins — the same semantics Google Calendar's
+  // events.list exposes via timeMin/timeMax. Rows with no end_at (point
+  // events) fall back to the start-only test.
+  //
+  // The extra day of lead-in is bounded: `end_at > startBound` cannot match an
+  // event that finished before the window, so this widens the result by
+  // in-flight events only, not by history.
   const startBound = `${start}T00:00:00.000Z`
   const endBound = `${end}T23:59:59.999Z`
   const rows = await env.DB.prepare(
     `SELECT id, summary, location, start_at, end_at, is_all_day
      FROM user_calendar_events
-     WHERE user_slug = ? AND start_at >= ? AND start_at <= ?
+     WHERE user_slug = ?
+       AND start_at <= ?
+       AND (end_at > ? OR (end_at IS NULL AND start_at >= ?))
      ORDER BY start_at`
-  ).bind(slug, startBound, endBound).all<{ id: string; summary: string | null; location: string | null; start_at: string; end_at: string | null; is_all_day: number }>()
+  ).bind(slug, endBound, startBound, startBound).all<{ id: string; summary: string | null; location: string | null; start_at: string; end_at: string | null; is_all_day: number }>()
 
   const events = (rows.results ?? []).map((r) => ({
     id: r.id,

@@ -74,6 +74,22 @@ export interface TodayEvent {
   // mark-seen, deep link) — that's the pre-debrief merge rework this row
   // explicitly defers, not this fix.
   hasUndebriefedMatch?: boolean
+
+  // ── #107: cross-day span ────────────────────────────────────────────────
+  // startMin/endMin are minutes-since-midnight, which cannot express a span
+  // that crosses one. An 11 PM → 7 AM event used to produce startMin=1380 and
+  // endMin=420 — an interval whose end precedes its start, which made
+  // duration() negative, kept it out of the service rail, and fed packColumns
+  // an inverted interval. Events are now CLIPPED to the day they render on, so
+  // 0 <= startMin < endMin <= 1440 always holds, and the clipped-off ends are
+  // recorded here instead.
+  //
+  // 1440 means "midnight at the end of this day" and is deliberately NOT 0 —
+  // encoding it as 0 would reintroduce the inversion.
+  startsBeforeDay?: boolean   // began before this day's 00:00
+  endsAfterDay?: boolean      // runs past this day's 24:00
+  actualStartAt?: string      // the real instant, unclipped
+  actualEndAt?: string        // the real instant, unclipped
 }
 
 // #74: events at/over this many minutes (3h) are "long blocks" — they move to
@@ -195,29 +211,98 @@ export function isToday(isoDate: string | null | undefined): boolean {
 // Personal calendar feed events (issue #45). Same TodayEvent shape so the
 // timeline renders them indistinguishably from team meetings — but we
 // prefix the title with a 📅 so users can spot which came from their feed.
-export function calendarEventToTodayEvent(e: { id: string; title: string; location: string | null; startAt: string; endAt: string | null; isAllDay: boolean }): TodayEvent {
-  const start = new Date(e.startAt)
-  const time = e.isAllDay
-    ? 'all day'
-    : start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  const end = e.endAt && !e.isAllDay
-    ? new Date(e.endAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    : undefined
+export interface CalendarFeedEvent {
+  id: string
+  title: string
+  location: string | null
+  startAt: string
+  endAt: string | null
+  isAllDay: boolean
+}
+
+/** Local midnight for a civil YYYY-MM-DD. Built from PARTS — never `new Date(civil)`, which is UTC. */
+function localMidnight(dayKey: string): Date {
+  const [y, m, d] = dayKey.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+/** The civil day AFTER dayKey, as a local Date. Uses setDate so DST days stay 1 calendar day apart. */
+function nextLocalMidnight(dayKey: string): Date {
+  const d = localMidnight(dayKey)
+  d.setDate(d.getDate() + 1)
+  return d
+}
+
+const DEFAULT_EVENT_MIN = 30
+
+/**
+ * Project a calendar event onto ONE civil day, clipped to that day's bounds
+ * (#107). Returns null when the event does not touch the day.
+ *
+ * Nick: "we should account for all across day activities."
+ *
+ * Intervals are HALF-OPEN, matching Google Calendar's own list semantics (an
+ * event overlaps a window when `start < windowEnd && end > windowStart`). So an
+ * event ending at exactly midnight belongs to the day it ran in, NOT to the
+ * next one — otherwise every 5pm–midnight block would also appear on tomorrow.
+ *
+ * All-day events keep their civil date and are not clipped; their stored
+ * timestamp is a UTC-midnight sentinel that must never be read through the
+ * browser's timezone (that shifts the day backwards west of UTC).
+ */
+export function projectCalendarEventToDay(e: CalendarFeedEvent, dayKey: string): TodayEvent | null {
   const meetingUrl = extractMeetingUrl(e.location)
   // If location holds a meeting URL, hide the URL string from the loc
   // chip (it'll render via the dedicated 🔗 Join button instead).
   const loc = meetingUrl ? undefined : (e.location ?? undefined)
-  return {
-    id: `cal-${e.id}`,
-    time,
-    end,
-    title: e.title,
-    loc,
-    meetingUrl,
-    startMin: e.isAllDay ? undefined : localMinutesFromIso(e.startAt),
-    endMin: e.isAllDay ? undefined : localMinutesFromIso(e.endAt),
-    isAllDay: e.isAllDay,
+  const base = { title: e.title, loc, meetingUrl }
+
+  if (e.isAllDay) {
+    // Compare civil-to-civil; the sentinel's wall clock is meaningless.
+    if (e.startAt.slice(0, 10) !== dayKey) return null
+    return { ...base, id: `cal-${e.id}`, time: 'all day', isAllDay: true }
   }
+
+  const start = new Date(e.startAt)
+  if (isNaN(start.getTime())) return null
+  const end = e.endAt ? new Date(e.endAt) : new Date(start.getTime() + DEFAULT_EVENT_MIN * 60_000)
+  const effectiveEnd = isNaN(end.getTime()) || end <= start
+    ? new Date(start.getTime() + DEFAULT_EVENT_MIN * 60_000)
+    : end
+
+  const dayStart = localMidnight(dayKey)
+  const dayEnd = nextLocalMidnight(dayKey)
+  if (!(start < dayEnd && effectiveEnd > dayStart)) return null
+
+  const startsBeforeDay = start < dayStart
+  const endsAfterDay = effectiveEnd > dayEnd
+  const startMin = startsBeforeDay ? 0 : start.getHours() * 60 + start.getMinutes()
+  // 1440, not 0 — see the TodayEvent field comments.
+  const endMin = endsAfterDay ? 1440 : effectiveEnd.getHours() * 60 + effectiveEnd.getMinutes()
+
+  const fmt = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return {
+    ...base,
+    // Day-qualified so dismissing today's slice cannot also hide tomorrow's.
+    id: `cal-${e.id}@${dayKey}`,
+    time: startsBeforeDay ? 'from yesterday' : fmt(start),
+    end: endsAfterDay ? 'midnight' : fmt(effectiveEnd),
+    startMin,
+    endMin: Math.max(endMin, startMin + 1),
+    isAllDay: false,
+    startsBeforeDay,
+    endsAfterDay,
+    actualStartAt: e.startAt,
+    actualEndAt: effectiveEnd.toISOString(),
+  }
+}
+
+/** How a cross-day slice reads on the row. Empty for an ordinary same-day event. */
+export function continuationNote(e: TodayEvent): string {
+  if (e.startsBeforeDay && e.endsAfterDay) return 'all day · started yesterday, runs past midnight'
+  if (e.startsBeforeDay) return 'started yesterday'
+  if (e.endsAfterDay) return 'continues tomorrow'
+  return ''
 }
 
 // T13: mirrors api/routes/meetings.ts normalizeMeetingTitle EXACTLY (dedup

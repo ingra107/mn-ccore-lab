@@ -31,7 +31,7 @@ import {
   ACCENT_GOLD, ACCENT_GREEN, ACCENT_TEAL,
   INK, INK_MUTED, INK_DIM, PAGE_BG,
   todayKey, daysSince, formatTodayDate,
-  meetingToEvent, calendarEventToTodayEvent, isToday,
+  meetingToEvent, projectCalendarEventToDay, isToday,
   matchMeetingRecord, normalizeMeetingTitle,
   getGroupForTask, isTaskDone,
   type GroupKey, type TodayEvent, type DailyCounts,
@@ -290,9 +290,12 @@ export default function TodayPage() {
   const todaysMeetings: TodayEvent[] = useMemo(() => {
     const rawMeetings = (meetingsQuery.data ?? []).filter((m) => isToday(m.date))
     const meetings = rawMeetings.map(meetingToEvent)
+    // #107: project every returned event onto today rather than filtering on
+    // its START. An event that began yesterday and ends this morning belongs on
+    // today; a start-date filter dropped it entirely.
     const personal = (calendarEventsQuery.data ?? [])
-      .filter((e) => isToday(e.startAt))
-      .map(calendarEventToTodayEvent)
+      .map((e) => projectCalendarEventToDay(e, todayKey()))
+      .filter((e): e is TodayEvent => e !== null)
 
     // T13: bridge personal-calendar rows to their D1 meeting record (same
     // day + normalized title). Merge ONLY once the meeting has debrief notes:
@@ -329,20 +332,13 @@ export default function TodayPage() {
   // scan ahead without switching views. Only personal iCal events have time;
   // D1 meetings are date-only so there's no reliable "tomorrow" D1 query here.
   const tomorrowMeetings: TodayEvent[] = useMemo(() => {
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    const tomorrowKey = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`
-    const isTomorrow = (isoDate: string | null | undefined): boolean => {
-      if (!isoDate) return false
-      if (!isoDate.includes('T')) return isoDate.slice(0, 10) === tomorrowKey
-      const d = new Date(isoDate)
-      if (isNaN(d.getTime())) return false
-      const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-      return local === tomorrowKey
-    }
+    // #107: same projection as today. The old start-only filter also meant an
+    // event running from tonight into tomorrow never appeared in the Tomorrow
+    // preview, because it "starts" today.
+    const tomorrowKey = civilDatePlusDays(todayKey(), 1)
     return (calendarEventsQuery.data ?? [])
-      .filter((e) => isTomorrow(e.startAt))
-      .map(calendarEventToTodayEvent)
+      .map((e) => projectCalendarEventToDay(e, tomorrowKey))
+      .filter((e): e is TodayEvent => e !== null)
   }, [calendarEventsQuery.data])
 
   // Strip tasks: planned with slot==='strip'. Between-N tasks stay inside the

@@ -44,6 +44,7 @@ import {
 } from './timelineModel'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK, INK_DIM, PAGE_BG, withAlpha,
+  continuationNote,
   type TodayEvent, type PlannedSlot,
 } from './constants'
 import { fmtDuration } from './utils'
@@ -52,6 +53,10 @@ import type { TaskRow } from '../../lib/api'
 
 // ── Time label helper ──────────────────────────────────────────────────
 function fmtMin(min: number): string {
+  // #107: minute 1440 is the midnight that ENDS this day (a cross-day slice is
+  // clipped to it). Without this case h=24 falls through to `h > 12 ? h - 12`
+  // = 12 and `h < 12 ? 'AM' : 'PM'` = PM, labelling midnight "12 PM" — noon.
+  if (min >= 1440) return 'midnight'
   const h = Math.floor(min / 60)
   const m = min % 60
   const hour = h > 12 ? h - 12 : h === 0 ? 12 : h
@@ -1137,6 +1142,13 @@ export function TimelineGrid({
                   <div style={{ fontSize: 10, color: INK, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.3 }}>
                     {e.title}
                   </div>
+                  {/* #107: say WHERE the span goes. Teal, not coral — a
+                      cross-day block is calendar structure, not a warning. */}
+                  {continuationNote(e) && (
+                    <div style={{ fontSize: 9, color: ACCENT_TEAL, opacity: 0.85, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      ↕ {continuationNote(e)}
+                    </div>
+                  )}
                   <button
                     onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
                     title="Remove from today's view"

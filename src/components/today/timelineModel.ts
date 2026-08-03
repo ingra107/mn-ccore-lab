@@ -57,11 +57,20 @@ function duration(e: TodayEvent): number {
     : 30
 }
 
+// #107: a slice that crosses either day boundary is a service block regardless
+// of how many minutes of it land inside this day. Nick: overnight events "should
+// not be in the main body... it should be with the small boxes of events that
+// are > 4 hours etc." An 11:30 PM → 12:30 AM event is only 30 minutes of today,
+// but it is still a cross-day commitment and belongs in the compact rail, not
+// stretched across the main chronology.
+//
+// The 3h threshold is unchanged — cross-day is an INDEPENDENT criterion, not a
+// redefinition of "long".
 function isService(e: TodayEvent): boolean {
   return (
     !e.isAllDay &&
     typeof e.startMin === 'number' &&
-    duration(e) >= LONG_EVENT_MIN
+    (e.startsBeforeDay === true || e.endsAfterDay === true || duration(e) >= LONG_EVENT_MIN)
   )
 }
 
