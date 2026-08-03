@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isFromMeeting, meetingTitleFor, meetingHrefFor, MEETING_SOURCES } from '../meetingOrigin';
+import { isFromMeeting, meetingTitleFor, meetingHrefFor, meetingLabelFor, MEETING_SOURCES } from '../meetingOrigin';
 
 describe('isFromMeeting', () => {
   it('recognises every source the live pipeline writes (#108)', () => {
@@ -37,21 +37,43 @@ describe('meetingTitleFor', () => {
 });
 
 describe('meetingHrefFor', () => {
-  it('links when the join resolved (a real meetings.id)', () => {
+  it('links to the RESOLVED canonical id', () => {
     expect(
-      meetingHrefFor({ meeting_id: 'mtg-2026-07-24-ef23d426', meeting_title: 'R01 meet follow up + Aim 3' }),
-    ).toBe('/portal/meetings/mtg-2026-07-24-ef23d426');
+      meetingHrefFor({
+        meeting_id: 'cal-20260731T1300-nickadams-meeting',
+        meeting_ref: 'mtg-2026-07-31-acc249c0',
+        meeting_title: 'Nick/Adams Meeting',
+      }),
+    ).toBe('/portal/meetings/mtg-2026-07-31-acc249c0');
   });
 
-  it('NEVER links a dangling meeting_id — the 144/152 case (#108)', () => {
-    // These ids are real prod values from tasks; none exists in `meetings`.
-    // Linking them would 404. A null title is the only signal we have that the
-    // join failed, so it must gate the href.
-    expect(meetingHrefFor({ meeting_id: 'cal-20260731T1300-nickadams-meeting', meeting_title: null })).toBeNull();
-    expect(meetingHrefFor({ meeting_id: 'mtg_20260731T182205' })).toBeNull();
+  it('NEVER falls back to the raw meeting_id — the dead-link trap (#108)', () => {
+    // These are real prod values from tasks; none exists in `meetings`, so
+    // linking them would 404. Only meeting_ref is a safe target, and the server
+    // sets it only when it actually identified the meeting.
+    expect(meetingHrefFor({ meeting_id: 'cal-20260731T1300-nickadams-meeting' })).toBeNull();
+    expect(meetingHrefFor({ meeting_id: 'mtg_20260731T182205', meeting_title: 'Something' })).toBeNull();
   });
 
   it('does not link a task with no meeting at all', () => {
     expect(meetingHrefFor({ meeting_title: 'Stray title', meeting_id: null })).toBeNull();
+    expect(meetingHrefFor({ meeting_ref: '  ' })).toBeNull();
+  });
+});
+
+describe('meetingLabelFor', () => {
+  it('reads "<name> · <date>" when both are known', () => {
+    expect(meetingLabelFor({ meeting_title: 'Nick/Adams Meeting', meeting_date: '2026-07-31' }))
+      .toBe('Nick/Adams Meeting · Jul 31');
+  });
+
+  it('parses the date from PARTS, never as UTC', () => {
+    // new Date('2026-07-31') is UTC midnight = Jul 30 evening in Central time.
+    expect(meetingLabelFor({ meeting_title: 'M', meeting_date: '2026-01-01' })).toBe('M · Jan 1');
+  });
+
+  it('falls back to the name alone, then to the bare phrase', () => {
+    expect(meetingLabelFor({ meeting_title: 'Lab Sync' })).toBe('Lab Sync');
+    expect(meetingLabelFor({ meeting_id: 'mtg_20260731T182205' })).toBe('From a meeting');
   });
 });

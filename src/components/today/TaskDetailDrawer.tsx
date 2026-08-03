@@ -12,7 +12,7 @@ import { Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { formatBrandName } from '../BrandName'
-import { isFromMeeting, meetingHrefFor, meetingTitleFor } from '../../lib/meetingOrigin'
+import { isFromMeeting, meetingHrefFor, meetingLabelFor } from '../../lib/meetingOrigin'
 import { useTaskDetail, useTaskLinks } from '../../hooks/useApiData'
 import SmartCompose from '../SmartCompose'
 import { useUpdateTask, useToggleSubtask } from '../../hooks/useMutations'
@@ -222,25 +222,33 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           meeting-derived task a line taller); this is where it gets stated.
           Links only when the meetings join resolved — see lib/meetingOrigin. */}
       {isFromMeeting(task) && (
-        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: INK_DIM }}>
-          <Users size={12} strokeWidth={1.5} absoluteStrokeWidth style={{ color: ACCENT_TEAL, flexShrink: 0 }} />
+        <div style={{ marginTop: 12, fontSize: 11, color: INK_DIM }}>
           {(() => {
             const href = meetingHrefFor(task)
-            const title = meetingTitleFor(task)
-            if (href && title) {
+            const label = formatBrandName(meetingLabelFor(task))
+            const icon = <Users size={12} strokeWidth={1.5} absoluteStrokeWidth style={{ color: ACCENT_TEAL, flexShrink: 0 }} />
+            // Nick: "i would LOVE if the from a meeting with the icon was the
+            // link". The icon and the label are ONE target, not a label with a
+            // link glued beside it.
+            if (href) {
               return (
-                <>
-                  <span>From meeting</span>
-                  <Link
-                    to={href}
-                    className="link-affordance"
-                    style={{ color: ACCENT_TEAL }}
-                    data-tip="Open this meeting — its notes and the other tasks from it"
-                  >{formatBrandName(title)}</Link>
-                </>
+                <Link
+                  to={href}
+                  className="link-affordance"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: ACCENT_TEAL }}
+                  data-tip="Open this meeting — its notes and the other tasks from it"
+                >
+                  {icon}
+                  <span>{label}</span>
+                </Link>
               )
             }
-            return <span>From a meeting{title ? ` · ${formatBrandName(title)}` : ''}</span>
+            return (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                {icon}
+                <span>{label}</span>
+              </span>
+            )
           })()}
         </div>
       )}

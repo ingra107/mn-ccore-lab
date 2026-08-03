@@ -9,6 +9,7 @@ import { applyMutation } from './mutations';
 // Fix 5: removed dead re-export — callers import directly from ../lib/task-cols
 // or via api/helpers.ts which already re-exports it (zero callers used this path).
 import { TASK_SELECT_COLS, TASK_SELECT_COLS_TYPED } from '../lib/task-cols';
+import { resolveMeetingRef, type MeetingLike } from '../lib/meeting-ref';
 import { postActivityEntry, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 
@@ -151,7 +152,53 @@ export async function handleGetTasks(url: URL, env: Env, canSeePb = false): Prom
 
   const result = await env.DB.prepare(query).bind(...params).all();
   const rows = filterFixtures(result.results, 'title', includeFixtures);
-  return json({ data: rows, count: rows.length });
+  return json({ data: await decorateMeetingRefs(env, rows), count: rows.length });
+}
+
+/**
+ * Fill in the meeting a task came from, for the ~95% of rows whose meeting_id
+ * does not equal any meetings.id (#108).
+ *
+ * The SQL `LEFT JOIN meetings ON t.meeting_id = m.id` above only matches when
+ * the writer happened to mint the canonical id. It usually did not — the
+ * calendar and approval lanes mint their own id spaces — so `meeting_title`
+ * came back NULL for 144 of 152 tasks and every meeting badge in the UI
+ * silently rendered nothing. resolveMeetingRef bridges the id spaces by the
+ * date and title slug embedded in those ids (72% of them, measured against
+ * prod 2026-08-03).
+ *
+ * Adds `meeting_ref` (the resolved canonical id — what a link should target)
+ * and backfills `meeting_title`/`meeting_date`. Deliberately does NOT touch
+ * `meeting_id`: that is the stored value PB replicates, and rewriting it on the
+ * wire would make the Hub disagree with brain.db about what is stored.
+ *
+ * One extra query per list read, over a table of a few dozen rows, and only
+ * when some task actually carries a meeting_id.
+ */
+async function decorateMeetingRefs(
+  env: Env,
+  rows: Record<string, unknown>[],
+): Promise<Record<string, unknown>[]> {
+  const needing = rows.filter((r) => r.meeting_id && !r.meeting_title);
+  if (needing.length === 0) {
+    // Still expose meeting_ref for natively-joined rows so clients have ONE field to read.
+    return rows.map((r) => (r.meeting_id && r.meeting_title ? { ...r, meeting_ref: r.meeting_id } : r));
+  }
+  let meetings: MeetingLike[] = [];
+  try {
+    const res = await env.DB.prepare('SELECT id, title, date FROM meetings').all<MeetingLike>();
+    meetings = res.results ?? [];
+  } catch (e) {
+    console.error('decorateMeetingRefs: meetings lookup failed (badges degrade, nothing breaks):', e);
+    return rows;
+  }
+  return rows.map((r) => {
+    if (!r.meeting_id) return r;
+    if (r.meeting_title) return { ...r, meeting_ref: r.meeting_id };
+    const hit = resolveMeetingRef(r.meeting_id as string, meetings);
+    if (!hit) return r;
+    return { ...r, meeting_ref: hit.id, meeting_title: hit.title, meeting_date: hit.date };
+  });
 }
 
 // POST /api/tasks/:id/status — change task status (todo/in_progress/done/blocked/waiting_external)
@@ -227,7 +274,11 @@ export async function handleGetTask(id: string, env: Env, request: Request): Pro
     const block = await assertProjectVisible(request, env, task.project_id as string);
     if (block) return block;
   }
-  return json({ data: task });
+  // Same meeting-ref bridge as the list read, so the detail panel resolves the
+  // meeting too — otherwise a task would badge its meeting in the row and lose
+  // it the moment you opened the task.
+  const [decorated] = await decorateMeetingRefs(env, [task]);
+  return json({ data: decorated });
 }
 
 // GET /api/action-items and POST /api/action-items/:id/toggle (handleActionItems,

@@ -42,6 +42,14 @@ export interface MeetingOriginFields {
   source?: string | null
   meeting_id?: string | null
   meeting_title?: string | null
+  /**
+   * The CANONICAL meetings.id, resolved server-side by api/lib/meeting-ref.
+   * Present only when the meeting was actually identified, which is exactly the
+   * condition for rendering a link. `meeting_id` is the raw stored value and is
+   * NOT a safe link target — it dangles on most rows.
+   */
+  meeting_ref?: string | null
+  meeting_date?: string | null
 }
 
 /** True when the task originated in a meeting. Never depends on the fragile join. */
@@ -65,11 +73,31 @@ export function meetingTitleFor(task: MeetingOriginFields): string | null {
 /**
  * Href to the meeting page, or null when we cannot prove it would resolve.
  *
- * A non-null `meeting_title` IS the proof: it only exists because the LEFT JOIN
- * on `meetings.id` matched. Do NOT relax this to `meeting_id != null` — that is
- * exactly the dead link this gate exists to prevent (144 of 152 would 404).
+ * Targets `meeting_ref` — the canonical id the server resolved — NEVER the raw
+ * `meeting_id`, which belongs to a different id space on most rows and would
+ * 404. Falling back to `meeting_id` here is the one change that would
+ * reintroduce dead links, so it is deliberately not done.
  */
 export function meetingHrefFor(task: MeetingOriginFields): string | null {
-  if (!task.meeting_id || !meetingTitleFor(task)) return null;
-  return PATHS.meeting(task.meeting_id);
+  const ref = task.meeting_ref?.trim();
+  if (!ref) return null;
+  return PATHS.meeting(ref);
+}
+
+/**
+ * The label for the meeting tag: the name, plus the date when we have it —
+ * "Nick/Adams Meeting · Jul 31". Falls back to the bare phrase when the meeting
+ * could not be identified, so the ORIGIN is still stated.
+ */
+export function meetingLabelFor(task: MeetingOriginFields): string {
+  const title = meetingTitleFor(task);
+  if (!title) return 'From a meeting';
+  const d = task.meeting_date?.slice(0, 10);
+  if (!d) return title;
+  const [y, m, day] = d.split('-').map(Number);
+  if (!y || !m || !day) return title;
+  // Built from parts — `new Date('2026-07-31')` is UTC midnight and prints as
+  // the 30th in every western zone.
+  const when = new Date(y, m - 1, day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `${title} · ${when}`;
 }

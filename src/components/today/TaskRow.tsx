@@ -20,7 +20,7 @@ import { ACCENT_GOLD, ACCENT_CORAL, ACCENT_TEAL, INK_MUTED } from './constants'
 import { formatShortDate } from '../../lib/dateUtils'
 import { Chip } from '../ui/Chip'
 import { Users } from 'lucide-react'
-import { isFromMeeting, meetingTitleFor } from '../../lib/meetingOrigin'
+import { isFromMeeting, meetingLabelFor } from '../../lib/meetingOrigin'
 import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
@@ -77,14 +77,14 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
   // answers "did this come from a meeting?" at a glance. Its own channel, so it
   // does not overload the urgency rail, due text, attention chip or done box
   // (Rule 76), and the tooltip carries the text equivalent.
-  const meetingTitle = meetingTitleFor(task)
+  const meetingLabel = meetingLabelFor(task)
   const meetingMeta = !isDone && isFromMeeting(task) ? (
     <span
-      data-tip={meetingTitle ? `From meeting: ${meetingTitle}` : 'Created from a meeting'}
+      data-tip={meetingLabel === 'From a meeting' ? 'Created from a meeting' : `From meeting: ${meetingLabel}`}
       style={{ display: 'inline-flex', alignItems: 'center', color: ACCENT_TEAL, opacity: 0.85 }}
     >
       <Users size={12} strokeWidth={1.5} absoluteStrokeWidth />
-      <span className="sr-only">{meetingTitle ? `From meeting: ${meetingTitle}` : 'From a meeting'}</span>
+      <span className="sr-only">{meetingLabel}</span>
     </span>
   ) : null
 
