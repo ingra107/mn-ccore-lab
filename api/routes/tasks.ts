@@ -179,25 +179,25 @@ async function decorateMeetingRefs(
   env: Env,
   rows: Record<string, unknown>[],
 ): Promise<Record<string, unknown>[]> {
-  const needing = rows.filter((r) => r.meeting_id && !r.meeting_title);
-  if (needing.length === 0) {
-    // Still expose meeting_ref for natively-joined rows so clients have ONE field to read.
-    return rows.map((r) => (r.meeting_id && r.meeting_title ? { ...r, meeting_ref: r.meeting_id } : r));
-  }
+  // Only pay for the meetings lookup when some row actually needs bridging; a
+  // natively-joined row just gets meeting_ref set from its own id, so clients
+  // have ONE field to read either way.
+  const needsBridge = rows.some((r) => r.meeting_id && !r.meeting_title);
   let meetings: MeetingLike[] = [];
-  try {
-    const res = await env.DB.prepare('SELECT id, title, date FROM meetings').all<MeetingLike>();
-    meetings = res.results ?? [];
-  } catch (e) {
-    console.error('decorateMeetingRefs: meetings lookup failed (badges degrade, nothing breaks):', e);
-    return rows;
+  if (needsBridge) {
+    try {
+      const res = await env.DB.prepare('SELECT id, title, date FROM meetings').all<MeetingLike>();
+      meetings = res.results ?? [];
+    } catch (e) {
+      console.error('decorateMeetingRefs: meetings lookup failed (badges degrade, nothing breaks):', e);
+      return rows;
+    }
   }
   return rows.map((r) => {
     if (!r.meeting_id) return r;
     if (r.meeting_title) return { ...r, meeting_ref: r.meeting_id };
     const hit = resolveMeetingRef(r.meeting_id as string, meetings);
-    if (!hit) return r;
-    return { ...r, meeting_ref: hit.id, meeting_title: hit.title, meeting_date: hit.date };
+    return hit ? { ...r, meeting_ref: hit.id, meeting_title: hit.title, meeting_date: hit.date } : r;
   });
 }
 

@@ -17,25 +17,30 @@ import { useCallback, useEffect, useState } from 'react'
 //
 // Pattern mirrors useTodayView / useDensity: one key, one hook, cross-tab sync.
 
-export type DueWindow = 7 | 14 | 30 | 'all'
+// String-typed on purpose: localStorage round-trips strings anyway, and the
+// shared SegmentedToggle is generic over `T extends string`. Callers that need
+// the number use `dueWindowDays()`.
+export type DueWindow = '7' | '14' | '30' | 'all'
 
 const LS_KEY = 'mnccore.today.dueWindow'
-const VALID: DueWindow[] = [7, 14, 30, 'all']
+const VALID: DueWindow[] = ['7', '14', '30', 'all']
 
-export const DUE_WINDOW_OPTIONS: Array<{ value: DueWindow; label: string; hint: string }> = [
-  { value: 7, label: '7d', hint: 'Due in the next 7 days (plus overdue and anything planned today)' },
-  { value: 14, label: '14d', hint: 'Due in the next 14 days (plus overdue and anything planned today)' },
-  { value: 30, label: '30d', hint: 'Due in the next 30 days (plus overdue and anything planned today)' },
-  { value: 'all', label: 'All', hint: 'Every open task assigned to you, dated or not' },
+export const DUE_WINDOW_OPTIONS: Array<{ value: DueWindow; label: string }> = [
+  { value: '7', label: '7d' },
+  { value: '14', label: '14d' },
+  { value: '30', label: '30d' },
+  { value: 'all', label: 'All' },
 ]
+
+/** Days in the window, or null for 'all' (no upper bound). */
+export function dueWindowDays(w: DueWindow): number | null {
+  return w === 'all' ? null : Number(w)
+}
 
 function read(): DueWindow {
   try {
-    const raw = localStorage.getItem(LS_KEY)
-    if (raw === null) return 'all'
-    // Numbers round-trip through localStorage as strings.
-    const parsed: DueWindow = raw === 'all' ? 'all' : (Number(raw) as DueWindow)
-    return VALID.includes(parsed) ? parsed : 'all'
+    const raw = localStorage.getItem(LS_KEY) as DueWindow | null
+    return raw && VALID.includes(raw) ? raw : 'all'
   } catch {
     return 'all'
   }
@@ -57,7 +62,7 @@ export function useTodayDueWindow() {
 
   const setDueWindow = useCallback((next: DueWindow) => {
     setDueWindowState(next)
-    try { localStorage.setItem(LS_KEY, String(next)) } catch { /* unavailable */ }
+    try { localStorage.setItem(LS_KEY, next) } catch { /* unavailable */ }
   }, [])
 
   return { dueWindow, setDueWindow }

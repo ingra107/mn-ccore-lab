@@ -28,7 +28,7 @@ import { researchTeam } from '../../data/team'
 import { useTodayState } from '../../hooks/useTodayState'
 import {
   GROUP_ORDER,
-  ACCENT_GOLD, ACCENT_GREEN, ACCENT_TEAL,
+  ACCENT_GOLD, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PAGE_BG,
   todayKey, daysSince, formatTodayDate,
   meetingToEvent, projectCalendarEventToDay, isToday,
@@ -54,7 +54,8 @@ import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
 import { withAlpha, isApprovalPending, isApprovalTriaged, civilDatePlusDays } from '../../lib/taskGrouping'
-import { useTodayDueWindow, DUE_WINDOW_OPTIONS } from '../../hooks/useTodayDueWindow'
+import { useTodayDueWindow, DUE_WINDOW_OPTIONS, dueWindowDays } from '../../hooks/useTodayDueWindow'
+import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
 
 export default function TodayPage() {
   usePageMeta('Today · MN-CCORE', 'Operating-day landing — what to work on, who you\'re meeting, what\'s overdue.')
@@ -166,8 +167,9 @@ export default function TodayPage() {
   // Overdue tasks pass because their date is before the edge; undated tasks
   // appear only under "All".
   const visibleTasks = useMemo(() => {
-    if (dueWindow === 'all') return tasks
-    const edge = civilDatePlusDays(todayKey(), dueWindow)
+    const days = dueWindowDays(dueWindow)
+    if (days === null) return tasks
+    const edge = civilDatePlusDays(todayKey(), days)
     return tasks.filter((t) => {
       if (state.planned[t.id]) return true
       const due = t.due_date?.slice(0, 10)
@@ -664,34 +666,17 @@ export default function TodayPage() {
             window admits, and the window picker sits next to the claim it makes. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, marginTop: 8, flexWrap: 'wrap' }}>
           <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>📋 Tasks</h2>
-          <div
-            role="group"
-            aria-label="Show tasks due within"
-            style={{ display: 'inline-flex', alignItems: 'center', border: `1px solid ${withAlpha(ACCENT_TEAL, 22)}`, borderRadius: 6, overflow: 'hidden', flexShrink: 0 }}
-          >
-            {DUE_WINDOW_OPTIONS.map((o) => (
-              <button
-                key={String(o.value)}
-                onClick={() => setDueWindow(o.value)}
-                aria-pressed={dueWindow === o.value}
-                data-tip={o.hint}
-                style={{
-                  background: dueWindow === o.value ? withAlpha(ACCENT_TEAL, 18) : 'transparent',
-                  border: 'none',
-                  color: dueWindow === o.value ? ACCENT_TEAL : INK_DIM,
-                  fontSize: 11,
-                  fontWeight: dueWindow === o.value ? 600 : 400,
-                  cursor: 'pointer',
-                  padding: '3px 9px',
-                  letterSpacing: '0.02em',
-                  transition: 'all 120ms',
-                  lineHeight: 1.5,
-                }}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
+          {/* The ONE locked toggle anatomy — never re-mint the inline pill group
+              (docs/design-system.md; ui/SegmentedToggle.tsx). The labels are
+              self-evident, so per the tooltip doctrine they carry none. */}
+          <SegmentedToggle
+            options={DUE_WINDOW_OPTIONS}
+            value={dueWindow}
+            onChange={setDueWindow}
+            accent="teal"
+            size="sm"
+            ariaLabel="Show tasks due within"
+          />
           {hiddenByWindow > 0 && (
             <button
               onClick={() => setDueWindow('all')}

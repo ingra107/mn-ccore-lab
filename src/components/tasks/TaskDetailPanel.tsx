@@ -7,7 +7,7 @@ import {
   ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Type, Loader2,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
 const RichTextEditor = lazy(() => import('../RichTextEditor'))
@@ -24,8 +24,8 @@ import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { appendCharToInput, stripMeetingMarker } from '../../lib/textUtils'
-import { formatBrandName } from '../BrandName'
-import { isFromMeeting, meetingHrefFor, meetingLabelFor } from '../../lib/meetingOrigin'
+import { isFromMeeting } from '../../lib/meetingOrigin'
+import { MeetingOriginTag } from './MeetingOriginTag'
 import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import { uploadFileToR2 } from '../../lib/r2Upload'
 import MentionInput from '../MentionInput'
@@ -854,24 +854,9 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 `meeting_extraction` enum, and links to the meeting when — and only
                 when — that meeting actually resolves (see lib/meetingOrigin). */}
             <div className="flex items-center gap-3 text-[10px] pt-2 border-t" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-              {isFromMeeting(task) ? (() => {
-                const href = meetingHrefFor(task)
-                const label = formatBrandName(meetingLabelFor(task))
-                const icon = <Users size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--teal)' }} />
-                // Icon + label are ONE link target, not a label with a link beside it.
-                return href ? (
-                  <Link
-                    to={href}
-                    className="link-affordance"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--teal)' }}
-                    data-tip="Open this meeting — notes and the other tasks from it"
-                  >
-                    {icon}{label}
-                  </Link>
-                ) : (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{icon}{label}</span>
-                )
-              })() : (
+              {isFromMeeting(task) ? (
+                <MeetingOriginTag task={task} iconSize={11} style={{ gap: 4 }} />
+              ) : (
                 task.source && <span>Source: {task.source}</span>
               )}
               {task.created_at && <span>Created {formatRelativeTime(task.created_at)}</span>}

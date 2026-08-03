@@ -44,15 +44,18 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 
   // (Rule 62), and slicing the raw array would bury planned work under whatever
   // order the API happened to return.
   const [showAll, setShowAll] = useState(false)
-  const visible = showAll ? sorted : sorted.slice(0, previewLimit)
+  // One memoized slice, shared by the render and the collapse handler — they
+  // need the same set, and recomputing it in two places invites them to drift.
+  const preview = useMemo(() => sorted.slice(0, previewLimit), [sorted, previewLimit])
+  const visible = showAll ? sorted : preview
   const hiddenCount = sorted.length - visible.length
 
   // Collapsing must not strand the expanded drawer on a row that just left the
   // list — the drawer would keep rendering with no visible parent row.
   const collapseRows = useCallback(() => {
     setShowAll(false)
-    setExpandedId((id) => (id && !sorted.slice(0, previewLimit).some((t) => t.id === id) ? null : id))
-  }, [sorted, previewLimit])
+    setExpandedId((id) => (id && !preview.some((t) => t.id === id) ? null : id))
+  }, [preview])
 
   if (tasks.length === 0) return null
   return (

@@ -8,11 +8,9 @@
 // popover wiring as UnifiedMyTasks InlineDetail (writes group_override on tasks).
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Users } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { formatBrandName } from '../BrandName'
-import { isFromMeeting, meetingHrefFor, meetingLabelFor } from '../../lib/meetingOrigin'
+import { isFromMeeting } from '../../lib/meetingOrigin'
+import { MeetingOriginTag } from '../tasks/MeetingOriginTag'
 import { useTaskDetail, useTaskLinks } from '../../hooks/useApiData'
 import SmartCompose from '../SmartCompose'
 import { useUpdateTask, useToggleSubtask } from '../../hooks/useMutations'
@@ -223,33 +221,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           Links only when the meetings join resolved — see lib/meetingOrigin. */}
       {isFromMeeting(task) && (
         <div style={{ marginTop: 12, fontSize: 11, color: INK_DIM }}>
-          {(() => {
-            const href = meetingHrefFor(task)
-            const label = formatBrandName(meetingLabelFor(task))
-            const icon = <Users size={12} strokeWidth={1.5} absoluteStrokeWidth style={{ color: ACCENT_TEAL, flexShrink: 0 }} />
-            // Nick: "i would LOVE if the from a meeting with the icon was the
-            // link". The icon and the label are ONE target, not a label with a
-            // link glued beside it.
-            if (href) {
-              return (
-                <Link
-                  to={href}
-                  className="link-affordance"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: ACCENT_TEAL }}
-                  data-tip="Open this meeting — its notes and the other tasks from it"
-                >
-                  {icon}
-                  <span>{label}</span>
-                </Link>
-              )
-            }
-            return (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                {icon}
-                <span>{label}</span>
-              </span>
-            )
-          })()}
+          <MeetingOriginTag task={task} color={ACCENT_TEAL} />
         </div>
       )}
 
