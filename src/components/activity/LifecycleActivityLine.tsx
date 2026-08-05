@@ -29,6 +29,7 @@ export function LifecycleActivityLine({
   onDelete,
   taskLabel,
   taskHref,
+  onTaskLinkClick,
 }: {
   entry: ActivityEntryItemRow
   onDelete?: () => void
@@ -37,6 +38,11 @@ export function LifecycleActivityLine({
    *  subject is already the page you're looking at. */
   taskLabel?: string | null
   taskHref?: string
+  /** #111: lets the surface open the task in place instead of following the
+   *  href. Built by activityRender's taskLinkClickHandler — it preventDefaults
+   *  only when the surface actually opened the task, and never on a modified
+   *  click, so ⌘-click / middle-click still open a new tab. */
+  onTaskLinkClick?: (e: React.MouseEvent) => void
 }) {
   const ev = eventOf(entry)
   const glyph = GLYPH[ev] ?? '⇄'
@@ -66,7 +72,7 @@ export function LifecycleActivityLine({
             {' · '}
             <a
               href={taskHref}
-              onClick={(e) => e.stopPropagation()}
+              onClick={onTaskLinkClick ?? ((e) => e.stopPropagation())}
               className="link-affordance"
               style={{ fontStyle: 'normal', color: 'var(--teal)' }}
             >

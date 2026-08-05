@@ -77,8 +77,12 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
 
   const pillHeight = compact ? 20 : 24
 
+  // No top margin and no full-width spacer: this bar now shares ONE action row
+  // with the Reply / N-replies controls (activityRender.tsx), so the caller owns
+  // the spacing and the "+" hugs the pills instead of floating to the far right
+  // across an otherwise empty band (#112).
   return (
-    <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+    <div className="flex items-center gap-1 flex-wrap">
       {/* Existing reaction pills */}
       {[...grouped.entries()].map(([emoji, { count, userReacted, users }]) => (
         <button
@@ -103,9 +107,6 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
           <span>{count}</span>
         </button>
       ))}
-
-      {/* Spacer pushes + button to right end of reaction row (T-06 spec) */}
-      <span style={{ flex: 1, minWidth: 4 }} aria-hidden="true" />
 
       {/* Add reaction button + picker */}
       <div className="relative" ref={pickerRef}>

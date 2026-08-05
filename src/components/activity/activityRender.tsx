@@ -355,6 +355,14 @@ export interface ActivityEntryItemProps {
   /** True when this root is currently dismissed — flips the label to "Restore"
    *  and dims the card. Only meaningful while a feed shows hidden (include_hidden). */
   isHidden?: boolean
+
+  /**
+   * #111 — open the originating task WHERE THE VIEWER IS instead of navigating
+   * to My Tasks. Return true when the task was actually opened; return false to
+   * let the link's href navigate as before. Passed by surfaces that mount a
+   * TaskDetailPanel of their own (ProjectDetail via ActivityStream).
+   */
+  onOpenTask?: (taskId: string) => boolean
 }
 
 // ── DeleteEntryButton ─────────────────────────────────────────────────────────
@@ -514,15 +522,17 @@ function TaskOriginBadge({
   taskHref,
   entityId,
   label,
+  onClick,
 }: {
   taskHref: string
   entityId: string
   label?: string | null
+  onClick?: (e: React.MouseEvent) => void
 }) {
   return (
     <a
       href={taskHref}
-      onClick={(e) => e.stopPropagation()}
+      onClick={onClick ?? ((e) => e.stopPropagation())}
       aria-label={`Go to task: ${label || entityId}`}
       className="inline-flex items-center gap-1 self-start"
       style={{
@@ -544,6 +554,30 @@ function TaskOriginBadge({
       {label || 'task'}
     </a>
   )
+}
+
+// ── Task-link click: open where you are, don't navigate away (#111) ──────────
+//
+// A task link in the PROJECT feed used to be a plain <a> to
+// /portal/my-tasks?openTask=<id>, so clicking "Clustering -> hierarchical
+// language" threw you off the project onto the My Tasks page (Nick: "it should
+// show me that task, not take me to the task page").
+//
+// The href stays — it is what makes middle-click, ⌘-click and copy-link work,
+// and it is the fallback when the surface can't open the task itself. A surface
+// that CAN (ProjectDetail already mounts TaskDetailPanel and consumes
+// ?openTask=) passes onOpenTask; it returns true when it actually opened the
+// task, and only then do we suppress the navigation. A miss — task not in this
+// project's loaded rows — falls through to the href rather than doing nothing.
+//
+// Modified clicks are never intercepted: open-in-new-tab must keep working.
+function taskLinkClickHandler(entityId: string, onOpenTask?: (taskId: string) => boolean) {
+  return (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!onOpenTask) return
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+    if (onOpenTask(entityId)) e.preventDefault()
+  }
 }
 
 // ── KindBadge — consistent pill for update sub-types ─────────────────────────
@@ -639,6 +673,7 @@ export function ActivityEntryItem({
   isReply,
   onDismiss,
   isHidden,
+  onOpenTask,
 }: ActivityEntryItemProps) {
   const isTask = entry.entity_type === 'task'
   const isHermes = entry.actor_slug === 'claude-ai'
@@ -654,6 +689,7 @@ export function ActivityEntryItem({
     ? `/portal/my-tasks?openTask=${encodeURIComponent(entry.entity_id)}`
     : null
   const taskLabel = entry.task_title ?? null
+  const onTaskLinkClick = isTask ? taskLinkClickHandler(entry.entity_id, onOpenTask) : undefined
 
   // Lifecycle rows (created / completed / changed) render as a quiet minimal
   // line, NOT a comment card — overriding the (previously unused-in-prod) card
@@ -671,7 +707,7 @@ export function ActivityEntryItem({
           entry={entry}
           onDelete={onDelete}
           {...(showTaskOriginBadge && isTask && taskHref
-            ? { taskLabel, taskHref }
+            ? { taskLabel, taskHref, onTaskLinkClick }
             : {})}
         />
       </ActivityEntryWrapper>
@@ -769,6 +805,7 @@ export function ActivityEntryItem({
             taskHref={taskHref}
             entityId={entry.entity_id}
             label={taskLabel}
+            onClick={onTaskLinkClick}
           />
         )}
         {/* Name line */}
@@ -809,7 +846,9 @@ export function ActivityEntryItem({
           <HermesResponse content={entry.body} />
         )}
         {showReactions && !isTask && (
-          <ReactionBar targetType="comment" targetId={entry.id} />
+          <div style={{ marginTop: 6 }}>
+            <ReactionBar targetType="comment" targetId={entry.id} />
+          </div>
         )}
       </ActivityEntryWrapper>
     )
@@ -831,6 +870,7 @@ export function ActivityEntryItem({
           taskHref={taskHref}
           entityId={entry.entity_id}
           label={taskLabel}
+          onClick={onTaskLinkClick}
         />
       )}
 
@@ -901,14 +941,13 @@ export function ActivityEntryItem({
             </p>
           )}
 
-          {/* Reactions (project-entity rows only) */}
-          {showReactions && !isTask && (
-            <ReactionBar
-              targetType={entry.kind === 'update' ? 'project_update' : 'comment'}
-              targetId={entry.id}
-            />
-          )}
-
+          {/* ONE action row: reactions + thread controls (#112).
+              These used to be two stacked rows, and on a project-entity row the
+              reaction row is EMPTY until somebody reacts — a 26px band holding a
+              single right-floated dashed "+", measured on prod. That band is what
+              Nick saw as "so much space between the end of that statement and the
+              reply". Merging them costs the feed nothing and removes the gap;
+              existing reaction pills still sit closest to the body they belong to. */}
           {/* #98 thread controls. Quiet by design — a thread affordance should
               not out-shout the message it hangs off. The count stays visible
               while COLLAPSED, which is the whole point: "so i can respond to
@@ -917,8 +956,14 @@ export function ActivityEntryItem({
               in-thread (it opens the root's composer — the follow-up still
               attaches to the root, so the thread stays one level). The reply
               COUNT / expand toggle stays root-only. */}
-          {(onReply || ((replyCount ?? 0) > 0 && !isReply)) && (
-            <div className="flex items-center gap-3" style={{ marginTop: 6 }}>
+          {((showReactions && !isTask) || onReply || ((replyCount ?? 0) > 0 && !isReply)) && (
+            <div className="flex items-center gap-3 flex-wrap" style={{ marginTop: 6 }}>
+              {showReactions && !isTask && (
+                <ReactionBar
+                  targetType={entry.kind === 'update' ? 'project_update' : 'comment'}
+                  targetId={entry.id}
+                />
+              )}
               {(replyCount ?? 0) > 0 && !isReply && onToggleThread && (
                 <button
                   type="button"

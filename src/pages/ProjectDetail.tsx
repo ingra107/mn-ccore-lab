@@ -449,6 +449,22 @@ function ProjectDetailInner({ project }: InnerProps) {
     { ready: projectTasks.length > 0 },
   )
 
+  // #111 — a task named in the activity feed opens HERE, in the panel this page
+  // already mounts. It used to be a plain <a href="/portal/my-tasks?openTask=…">,
+  // so reading the feed and clicking a task threw you onto another page (Nick:
+  // "it should show me that task, not take me to the task page"). Returning
+  // false on a miss lets the link's href navigate, so a task that isn't in this
+  // project's loaded rows still goes somewhere rather than nowhere.
+  const openTaskInPlace = useCallback(
+    (id: string) => {
+      const t = projectTasks.find((pt) => pt.id === id)
+      if (!t) return false
+      setSelectedTask(t)
+      return true
+    },
+    [projectTasks],
+  )
+
   // Presence: who else is viewing this project right now (Slack-style)
   const viewerSlugs = usePresence('project', project.slug)
   const { typingPeers: projectTypingPeers, broadcastTyping: broadcastProjectTyping } = useTyping('project', project.slug)
@@ -2087,7 +2103,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             ))}
           </div>
 
-          <ActivityStream project={project} filter={streamFilter} />
+          <ActivityStream project={project} filter={streamFilter} onOpenTask={openTaskInPlace} />
 
           {/* Project decisions + dependencies management surfaces — shown only in
               the unfiltered ('all') view; their items already appear inline in

@@ -16,8 +16,6 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  CheckCircle2,
-  Circle,
   TrendingUp,
   AlertTriangle,
   CheckCircle,
@@ -26,13 +24,10 @@ import {
 } from 'lucide-react'
 import { useMeetingLinkedTasks } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
-import { usePostProjectUpdate, useAddComment, useUpdateTask, useBulkUpdateTasks, useDeleteActivityEntry, useEditActivityEntry, useDismissThread } from '../../hooks/useMutations'
+import { usePostProjectUpdate, useAddComment, useDeleteActivityEntry, useEditActivityEntry, useDismissThread } from '../../hooks/useMutations'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
-import { getPersonInfo } from '../../data/team'
-import { formatRelativeTime } from '../../lib/dateUtils'
 import { useToast } from '../../hooks/useToast'
-import { useUndoToast } from '../UndoToast'
 import SmartCompose from '../SmartCompose'
 import EmptyState from '../EmptyState'
 import type { Project } from '../../data/types'
@@ -45,7 +40,7 @@ import { ActivityThread } from '../activity/ActivityThread'
 import { ShowHiddenToggle } from '../activity/ShowHiddenToggle'
 import { canDeleteActivityEntry } from '../activity/activityPermissions'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 // ── Unified feed row shape (activity_entries) ─────────────────────────────────
 
@@ -59,6 +54,49 @@ export type StreamFilter = 'all' | 'notes' | 'comments' | 'task-activity'
 interface Props {
   project: Project
   filter: StreamFilter
+  /** #111 — open a task named in the feed WHERE THE VIEWER IS. Returns true when
+   *  the surface actually opened it; false lets the link's href navigate. */
+  onOpenTask?: (taskId: string) => boolean
+}
+
+// ── Action items → lifecycle rows (#112) ─────────────────────────────────────
+//
+// A meeting-linked task is a task; the feed already has one renderer for "a task
+// changed" — LifecycleActivityLine, reached by kind 'system'. So instead of a
+// second card anatomy, an action item becomes a synthetic system row and flows
+// through the exact renderer that produces "＋ Created this task · <name> — Nick".
+//
+// Synthetic because there is no activity_entries row to render: these tasks are
+// written by PB's meeting extraction, which never goes through the Hub's
+// applyInsert and so never mints a `created` lifecycle entry. Where the Hub DID
+// mint one (approval-created tasks), the real row wins and this one is dropped —
+// see createdTaskIds below — so the same creation is never narrated twice.
+/** Synthetic rows have no activity_entries row behind them, so delete / edit /
+ *  dismiss must not be offered — they'd POST an id the server has never seen. */
+const SYNTHETIC_ID_PREFIX = 'action-'
+function isSyntheticRow(row: UnifiedEntryRow) {
+  return row.id.startsWith(SYNTHETIC_ID_PREFIX)
+}
+
+function actionItemToLifecycleRow(task: TaskRow): UnifiedEntryRow {
+  const origin = task.meeting_title ? `from ${task.meeting_title}` : 'from a meeting'
+  return {
+    id: `${SYNTHETIC_ID_PREFIX}${task.id}`,
+    entity_type: 'task',
+    entity_id: task.id,
+    project_id: null,
+    kind: 'system',
+    visibility: 'team',
+    actor_slug: task.assignee,
+    body: `Created this task · ${origin}`,
+    mentions_json: null,
+    update_type: null,
+    // eventOf() reads this to pick the glyph — 'created' gives the same gold ＋
+    // as a real creation row, which is what this row reports.
+    metadata_json: '{"event":"created","lifecycle":true}',
+    created_at: task.created_at,
+    task_title: task.short_title || task.title,
+  }
 }
 
 // Note-type pills (mirrors ProjectUpdateFeed TYPE_CONFIG).
@@ -73,8 +111,16 @@ const NOTE_TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string;
 // P2-A (2026-06-10): the legacy 'note'/'comment' arms are GONE — the project
 // composers write activity_entries now and the old endpoints are projections
 // over the same rows, so merging both sources would render every entry twice.
+//
+// #112 (2026-08-05): the 'action' arm is gone too. It rendered its own card
+// showing `task.description`, which for every meeting-extracted task is
+// provenance boilerplate ("From the R01 Meet Follow Up Aim 3 meeting on July 24,
+// 2026. Source: [[Context/Meetings/…]] [meeting:cal-…]") and NEVER the task's
+// name — measured on all 9 rows of this project on prod. Nick: "very
+// uninformative… aren't all action items associated with a task? If that's true,
+// we should make it that way." They are (T19/#547 made action items tasks), so
+// they now render through the SAME lifecycle line as "Created this task".
 type StreamEvent =
-  | { kind: 'action';        ts: string; id: string; row: TaskRow }
   | { kind: 'unified-entry'; ts: string; id: string; row: UnifiedEntryRow }
 
 // motion props shared across all animated stream items.
@@ -86,7 +132,7 @@ const itemMotion = {
   transition: { duration: 0.2 },
 }
 
-export default function ActivityStream({ project, filter }: Props) {
+export default function ActivityStream({ project, filter, onOpenTask }: Props) {
   const slug = project.slug
 
   // T19 (#547): meeting-linked tasks for this project (tasks.meeting_id),
@@ -122,21 +168,11 @@ export default function ActivityStream({ project, filter }: Props) {
 
   const { isAuthenticated, user } = useAuth()
   const { showSuccess } = useToast()
-  const { showUndo } = useUndoToast()
   const postUpdate = usePostProjectUpdate(slug)
   const addComment = useAddComment(slug)
-  // T19: mark-done/reopen mirrors Meetings.tsx's setActionDone — uncomplete
-  // writes status directly, complete routes through the batch 'complete'
-  // action so completed_at is server-set.
-  const updateTask = useUpdateTask()
-  const bulkUpdateTasks = useBulkUpdateTasks()
-  const setActionDone = (id: string, done: boolean) => {
-    if (done) {
-      bulkUpdateTasks.mutate({ ids: [id], action: 'complete' })
-    } else {
-      updateTask.mutate({ id, fields: { status: 'todo', completed: 0 } })
-    }
-  }
+  // #112: the action-item card's own complete/reopen toggle went with the card.
+  // Completing lives where the task does — the row's name now opens the task's
+  // detail panel in place (#111), which is the canonical place to do it.
 
   // Manual delete (Nick 2026-07-06): own entries, or any entry for the PI.
   // Server re-enforces author-or-PI on POST /api/activity/:id/delete.
@@ -150,6 +186,21 @@ export default function ActivityStream({ project, filter }: Props) {
   // Which composer to show in the combined ('all') view: note or comment.
   const [composeKind, setComposeKind] = useState<'note' | 'comment'>('note')
 
+  // Tasks whose creation the unified feed ALREADY narrates. An action item for
+  // one of these would render a second, identical "Created this task" line
+  // seconds apart (prod: 'CLIF meeting Qs for Jared' had both), so the real row
+  // wins and the synthetic one is dropped.
+  const createdTaskIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const e of unifiedEntries) {
+      if (e.entity_type !== 'task' || e.kind !== 'system') continue
+      try {
+        if (e.metadata_json && JSON.parse(e.metadata_json).event === 'created') ids.add(e.entity_id)
+      } catch { /* malformed metadata — treat as not-a-creation */ }
+    }
+    return ids
+  }, [unifiedEntries])
+
   // Merge sources into one time-ordered list, newest first. The unified feed
   // IS the project's activity (project rows + task rollup); action items are
   // the only remaining sidecar source.
@@ -157,13 +208,17 @@ export default function ActivityStream({ project, filter }: Props) {
     const out: StreamEvent[] = []
     // Action items only appear in the unfiltered ('all') view.
     if (filter === 'all') {
-      for (const a of actionRows) out.push({ kind: 'action', ts: a.created_at, id: `act-${a.id}`, row: a })
+      for (const a of actionRows) {
+        if (createdTaskIds.has(a.id)) continue
+        const row = actionItemToLifecycleRow(a)
+        out.push({ kind: 'unified-entry', ts: row.created_at, id: `act-${a.id}`, row })
+      }
     }
     for (const e of unifiedEntries) {
       out.push({ kind: 'unified-entry', ts: e.created_at, id: `ue-${e.id}`, row: e })
     }
     return out.sort((a, b) => (a.ts > b.ts ? -1 : a.ts < b.ts ? 1 : 0))
-  }, [actionRows, unifiedEntries, filter])
+  }, [actionRows, unifiedEntries, filter, createdTaskIds])
 
   // Apply the active filter via filterMatchesKind (shared/activityKinds.ts).
   const visible = useMemo(() => {
@@ -347,13 +402,9 @@ export default function ActivityStream({ project, filter }: Props) {
               <StreamItem
                 key={event.id}
                 event={event}
-                onToggleAction={(task) => {
-                  const wasDone = isTaskDone(task)
-                  setActionDone(task.id, !wasDone)
-                  showUndo('Action item toggled', () => setActionDone(task.id, wasDone))
-                }}
+                onOpenTask={onOpenTask}
                 onDeleteEntry={
-                  event.kind === 'unified-entry' && canDeleteActivityEntry(user, event.row.actor_slug)
+                  !isSyntheticRow(event.row) && canDeleteActivityEntry(user, event.row.actor_slug)
                     ? () =>
                         deleteEntry.mutate({
                           id: event.row.id,
@@ -363,7 +414,7 @@ export default function ActivityStream({ project, filter }: Props) {
                     : undefined
                 }
                 onEditEntry={
-                  event.kind === 'unified-entry' && canDeleteActivityEntry(user, event.row.actor_slug)
+                  !isSyntheticRow(event.row) && canDeleteActivityEntry(user, event.row.actor_slug)
                     ? (body) =>
                         editEntry.mutate({
                           id: event.row.id,
@@ -374,7 +425,7 @@ export default function ActivityStream({ project, filter }: Props) {
                     : undefined
                 }
                 onDismissEntry={
-                  event.kind === 'unified-entry' && canDeleteActivityEntry(user, event.row.actor_slug)
+                  !isSyntheticRow(event.row) && canDeleteActivityEntry(user, event.row.actor_slug)
                     ? () =>
                         dismissThread.mutate({
                           id: event.row.id,
@@ -399,92 +450,36 @@ export default function ActivityStream({ project, filter }: Props) {
 
 // ── Per-event renderers ──────────────────────────────────────────────────
 
-function StreamItem({ event, onToggleAction, onDeleteEntry, onEditEntry, onDismissEntry }: { event: StreamEvent; onToggleAction: (task: TaskRow) => void; onDeleteEntry?: () => void; onEditEntry?: (body: string) => void; onDismissEntry?: () => void }) {
-  switch (event.kind) {
-    case 'action':
-      return <ActionItemRowView action={event.row} onToggle={onToggleAction} />
-    case 'unified-entry': {
-      // Project-stream anatomy: task-origin chip + reactions + animation.
-      const itemProps = {
-        showReactions: true,
-        showTaskOriginBadge: true,
-        taskOriginBorderWidth: 2,
-        motionProps: itemMotion,
-      }
-      // Lifecycle narration is not repliable (the API rejects it as a parent);
-      // isRepliableKind is the single home for that rule, shared with the task
-      // feed so the two surfaces cannot drift apart.
-      if (!isRepliableKind(event.row.kind)) {
-        return <ActivityEntryItem {...itemProps} entry={event.row} onDelete={onDeleteEntry} />
-      }
-      // #98: a reply posted from the PROJECT feed still threads onto the entry's
-      // own root — the reply endpoint takes only the parent id and inherits
-      // entity identity from it, so replying to a task-origin row lands on that
-      // TASK, not on the project. That is why no entity is passed here.
-      return (
-        <ActivityThread
-          root={event.row}
-          itemProps={itemProps}
-          invalidateKeys={[['project-activity']]}
-          onDelete={onDeleteEntry ? () => onDeleteEntry() : undefined}
-          onEdit={onEditEntry ? (_e, body) => onEditEntry(body) : undefined}
-          onDismiss={onDismissEntry ? () => onDismissEntry() : undefined}
-        />
-      )
-    }
+function StreamItem({ event, onOpenTask, onDeleteEntry, onEditEntry, onDismissEntry }: { event: StreamEvent; onOpenTask?: (taskId: string) => boolean; onDeleteEntry?: () => void; onEditEntry?: (body: string) => void; onDismissEntry?: () => void }) {
+  // Project-stream anatomy: task-origin chip + reactions + animation.
+  const itemProps = {
+    showReactions: true,
+    showTaskOriginBadge: true,
+    taskOriginBorderWidth: 2,
+    motionProps: itemMotion,
+    onOpenTask,
   }
-}
-
-function ActionItemRowView({ action, onToggle }: { action: TaskRow; onToggle: (task: TaskRow) => void }) {
-  const completed = isTaskDone(action)
+  // Lifecycle narration is not repliable (the API rejects it as a parent);
+  // isRepliableKind is the single home for that rule, shared with the task
+  // feed so the two surfaces cannot drift apart. This is also what keeps the
+  // synthetic action-item rows (kind 'system', no activity_entries row behind
+  // them) out of the reply path — a reply to one would have nothing to attach to.
+  if (!isRepliableKind(event.row.kind)) {
+    return <ActivityEntryItem {...itemProps} entry={event.row} onDelete={onDeleteEntry} />
+  }
+  // #98: a reply posted from the PROJECT feed still threads onto the entry's
+  // own root — the reply endpoint takes only the parent id and inherits
+  // entity identity from it, so replying to a task-origin row lands on that
+  // TASK, not on the project. That is why no entity is passed here.
   return (
-    <motion.div
-      {...itemMotion}
-      style={{ background: 'var(--cream)', borderRadius: 'var(--radius-lg)', padding: 'var(--sp-md)', borderLeft: '3px solid var(--slate)' }}
-      className="detail-card"
-    >
-      <div className="flex items-start gap-3">
-        <motion.button
-          type="button"
-          onClick={() => onToggle(action)}
-          className="cursor-pointer flex-shrink-0 mt-0.5"
-          style={{ background: 'none', border: 'none', padding: 0, color: completed ? 'var(--teal)' : 'var(--slate)' }}
-          whileTap={{ scale: 0.85 }}
-          aria-label={completed ? 'Mark action item incomplete' : 'Mark action item complete'}
-        >
-          {completed ? <CheckCircle2 {...ICON_PROPS} size={18} /> : <Circle {...ICON_PROPS} size={18} />}
-        </motion.button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-            <span style={{ fontSize: '10px', color: 'var(--slate)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Action item</span>
-            <MetaTime ts={action.created_at} />
-          </div>
-          <p style={{
-            fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0, lineHeight: 1.4,
-            textDecoration: completed ? 'line-through' : 'none', opacity: completed ? 0.85 : 1,
-          }}>
-            {action.description}
-          </p>
-          <div className="flex flex-wrap items-center gap-3 mt-1">
-            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-              {getPersonInfo(action.assignee).name}
-            </span>
-            {action.meeting_title && (
-              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
-                from {action.meeting_title}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    </motion.div>
+    <ActivityThread
+      root={event.row}
+      itemProps={itemProps}
+      invalidateKeys={[['project-activity']]}
+      onDelete={onDeleteEntry ? () => onDeleteEntry() : undefined}
+      onEdit={onEditEntry ? (_e, body) => onEditEntry(body) : undefined}
+      onDismiss={onDismissEntry ? () => onDismissEntry() : undefined}
+    />
   )
 }
 
-function MetaTime({ ts }: { ts: string }) {
-  return (
-    <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-      {formatRelativeTime(ts)}
-    </span>
-  )
-}
