@@ -4,7 +4,9 @@
 // activity_entries AND task rows rolled up by project_id. The composers write
 // activity_entries (postActivityEntry) and the legacy endpoints are
 // projections over the same rows, so merging legacy sources here would render
-// every entry twice (the P2-A removal). Action items remain the only sidecar.
+// every entry twice (the P2-A removal). Meeting-linked tasks are the one
+// remaining sidecar source, and since #112 they are folded into the same
+// lifecycle rendering rather than carrying a card anatomy of their own.
 //
 // Filter pills map to derived kinds:
 //   'all' — everything · 'notes' — kind='update' (project entity) ·
@@ -31,7 +33,7 @@ import { useToast } from '../../hooks/useToast'
 import SmartCompose from '../SmartCompose'
 import EmptyState from '../EmptyState'
 import type { Project } from '../../data/types'
-import { deriveRenderKind, filterMatchesKind, isRepliableKind } from '../../../shared/activityKinds'
+import { deriveRenderKind, filterMatchesKind, isRepliableKind, lifecycleEventOf, lifecycleMetadata } from '../../../shared/activityKinds'
 import {
   ActivityEntryItem,
   type ActivityEntryItemRow,
@@ -71,17 +73,10 @@ interface Props {
 // applyInsert and so never mints a `created` lifecycle entry. Where the Hub DID
 // mint one (approval-created tasks), the real row wins and this one is dropped —
 // see createdTaskIds below — so the same creation is never narrated twice.
-/** Synthetic rows have no activity_entries row behind them, so delete / edit /
- *  dismiss must not be offered — they'd POST an id the server has never seen. */
-const SYNTHETIC_ID_PREFIX = 'action-'
-function isSyntheticRow(row: UnifiedEntryRow) {
-  return row.id.startsWith(SYNTHETIC_ID_PREFIX)
-}
-
 function actionItemToLifecycleRow(task: TaskRow): UnifiedEntryRow {
   const origin = task.meeting_title ? `from ${task.meeting_title}` : 'from a meeting'
   return {
-    id: `${SYNTHETIC_ID_PREFIX}${task.id}`,
+    id: `action-${task.id}`,
     entity_type: 'task',
     entity_id: task.id,
     project_id: null,
@@ -93,8 +88,13 @@ function actionItemToLifecycleRow(task: TaskRow): UnifiedEntryRow {
     update_type: null,
     // eventOf() reads this to pick the glyph — 'created' gives the same gold ＋
     // as a real creation row, which is what this row reports.
-    metadata_json: '{"event":"created","lifecycle":true}',
+    metadata_json: lifecycleMetadata('created'),
     created_at: task.created_at,
+    // Carried as an explicit flag, NOT inferred from the id prefix: the id is a
+    // React key, and deriving "is this real" from its spelling means a future
+    // key change silently re-enables delete/edit/dismiss on a row the server
+    // cannot resolve.
+    _synthetic: true,
     task_title: task.short_title || task.title,
   }
 }
@@ -120,8 +120,11 @@ const NOTE_TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string;
 // uninformative… aren't all action items associated with a task? If that's true,
 // we should make it that way." They are (T19/#547 made action items tasks), so
 // they now render through the SAME lifecycle line as "Created this task".
-type StreamEvent =
-  | { kind: 'unified-entry'; ts: string; id: string; row: UnifiedEntryRow }
+//
+// With the 'action' arm gone every event is a unified entry, so this is a plain
+// row type rather than a one-member discriminated union — the tag would be a
+// constant that no branch can read.
+interface StreamEvent { ts: string; id: string; row: UnifiedEntryRow }
 
 // motion props shared across all animated stream items.
 const itemMotion = {
@@ -196,9 +199,7 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
     const ids = new Set<string>()
     for (const e of unifiedEntries) {
       if (e.entity_type !== 'task' || e.kind !== 'system') continue
-      try {
-        if (e.metadata_json && JSON.parse(e.metadata_json).event === 'created') ids.add(e.entity_id)
-      } catch { /* malformed metadata — treat as not-a-creation */ }
+      if (lifecycleEventOf(e.metadata_json) === 'created') ids.add(e.entity_id)
     }
     return ids
   }, [unifiedEntries])
@@ -213,11 +214,11 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
       for (const a of actionRows) {
         if (createdTaskIds.has(a.id)) continue
         const row = actionItemToLifecycleRow(a)
-        out.push({ kind: 'unified-entry', ts: row.created_at, id: `act-${a.id}`, row })
+        out.push({ ts: row.created_at, id: `act-${a.id}`, row })
       }
     }
     for (const e of unifiedEntries) {
-      out.push({ kind: 'unified-entry', ts: e.created_at, id: `ue-${e.id}`, row: e })
+      out.push({ ts: e.created_at, id: `ue-${e.id}`, row: e })
     }
     return out.sort((a, b) => (a.ts > b.ts ? -1 : a.ts < b.ts ? 1 : 0))
   }, [actionRows, unifiedEntries, filter, createdTaskIds])
@@ -225,11 +226,7 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
   // Apply the active filter via filterMatchesKind (shared/activityKinds.ts).
   const visible = useMemo(() => {
     if (filter === 'all') return events
-    return events.filter(
-      (e) =>
-        e.kind === 'unified-entry' &&
-        filterMatchesKind(filter, e.row.entity_type, e.row.kind),
-    )
+    return events.filter((e) => filterMatchesKind(filter, e.row.entity_type, e.row.kind))
   }, [events, filter])
 
   const handlePostNote = (content: string) =>
@@ -406,7 +403,7 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
                 event={event}
                 onOpenTask={onOpenTask}
                 onDeleteEntry={
-                  !isSyntheticRow(event.row) && canDeleteActivityEntry(user, event.row.actor_slug)
+                  !event.row._synthetic && canDeleteActivityEntry(user, event.row.actor_slug)
                     ? () =>
                         deleteEntry.mutate({
                           id: event.row.id,
@@ -416,7 +413,7 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
                     : undefined
                 }
                 onEditEntry={
-                  !isSyntheticRow(event.row) && canDeleteActivityEntry(user, event.row.actor_slug)
+                  !event.row._synthetic && canDeleteActivityEntry(user, event.row.actor_slug)
                     ? (body) =>
                         editEntry.mutate({
                           id: event.row.id,
@@ -427,7 +424,7 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
                     : undefined
                 }
                 onDismissEntry={
-                  !isSyntheticRow(event.row) && canDeleteActivityEntry(user, event.row.actor_slug)
+                  !event.row._synthetic && canDeleteActivityEntry(user, event.row.actor_slug)
                     ? () =>
                         dismissThread.mutate({
                           id: event.row.id,

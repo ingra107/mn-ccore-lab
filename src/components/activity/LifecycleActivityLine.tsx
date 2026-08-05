@@ -7,6 +7,7 @@
 // two row types don't visually diverge (Nick 2026-07-09). Design ref:
 // docs/superpowers/specs/2026-07-09-activity-log-provenance-design.md
 import { getPersonInfo } from '../../data/team'
+import { lifecycleEventOf } from '../../../shared/activityKinds'
 import { EntryTime, DeleteEntryButton } from './activityRender'
 import type { ActivityEntryItemRow } from './activityRender'
 
@@ -15,13 +16,10 @@ const GLYPH: Record<string, string> = { created: '＋', completed: '✓', reopen
 
 /** Read the lifecycle event name from metadata_json; fall back to kind. */
 function eventOf(entry: ActivityEntryItemRow): string {
-  try {
-    const md = entry.metadata_json ? JSON.parse(entry.metadata_json) : null
-    if (md && typeof md.event === 'string') return md.event
-  } catch {
-    /* ignore malformed metadata */
-  }
-  return entry.kind === 'completion' ? 'completed' : 'changed'
+  return (
+    lifecycleEventOf(entry.metadata_json) ??
+    (entry.kind === 'completion' ? 'completed' : 'changed')
+  )
 }
 
 export function LifecycleActivityLine({

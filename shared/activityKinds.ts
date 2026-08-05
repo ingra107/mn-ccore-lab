@@ -64,6 +64,32 @@ export function deriveRenderKind(entityType: string, kind: StoredKind): string {
   return kind;
 }
 
+/**
+ * Read the lifecycle event name out of `activity_entries.metadata_json`
+ * ('created' | 'completed' | 'reopened' | …), or null when the column is empty,
+ * malformed, or carries no `event`.
+ *
+ * Same reason `isRepliableKind` lives here: the parse-and-swallow idiom had two
+ * independent copies — LifecycleActivityLine's private `eventOf` (picking the
+ * row's glyph) and ActivityStream's creation-dedupe scan — both reading one
+ * on-disk shape, free to drift from each other and from the writer
+ * (api/lib/lifecycle-activity.ts) that produces it.
+ */
+export function lifecycleEventOf(metadataJson: string | null | undefined): string | null {
+  if (!metadataJson) return null;
+  try {
+    const md = JSON.parse(metadataJson) as { event?: unknown };
+    return typeof md?.event === 'string' ? md.event : null;
+  } catch {
+    return null; // malformed metadata — treat as "no lifecycle event"
+  }
+}
+
+/** The `metadata_json` a lifecycle row carries. Mirrors what the server writer emits. */
+export function lifecycleMetadata(event: string): string {
+  return JSON.stringify({ event, lifecycle: true });
+}
+
 // ── Task-feed filter taxonomy ─────────────────────────────────────────────────
 
 /** Subset-filter labels used by TaskActivityFeed. */
