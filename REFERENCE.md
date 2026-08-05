@@ -96,8 +96,9 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 - GET /api/projects/health (real 4-factor scoring algorithm)
 
 ### Meeting Operations
-- POST /api/meetings/:id/agenda, /api/meetings/:id/action-items
-- POST /api/meetings/:id/decisions, /api/meetings/:id/notes
+- POST /api/meetings/:id/agenda, /api/meetings/:id/agenda/reorder, /api/meetings/:id/notes
+- POST /api/meetings/:id/generate-agenda, /api/meetings/:id/meta · GET /api/meetings/:id/prep
+- ⚠️ There is **no** `/api/meetings/:id/action-items` and **no** `/api/meetings/:id/decisions` — both were documented here but neither has ever been registered (`api/index.ts`), and the first 404s on prod. A meeting's action items are **tasks** (`tasks.meeting_id`) since #547/#552, so create one with `POST /api/tasks`; decisions live on their own `/api/decisions*` family, not under a meeting.
 
 ### Task System
 - GET /api/tasks (7 filters, `include_deleted=1` surfaces soft-deletes for sync)

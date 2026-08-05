@@ -1,3 +1,80 @@
+# ▶▶ BUG SWEEP #111/#112 — SHIPPED + DEPLOYED (2026-08-05). Live = `bb9af5ec` (probe PASS). Bug queue EMPTY, both GitHub issues closed. Frontend only — no schema/migration/route change (still v104 / 257 routes). api 1329 · lib 262 · src 157.
+
+**3 commits, all deployed + pushed.** `ced41e6a` (the two fixes) · `6a2da406` (memo tidy) · `bb9af5ec` (session-close `/simplify`). Deployed twice — the second time because `/simplify` changed shipped code, which put prod behind HEAD.
+
+## Both bugs were the same shape as #104/#108: a read wired to nothing
+
+- **#111 — task links navigated you off the project.** All 130 task links on a
+  project page pointed at `/portal/my-tasks?openTask=<id>`. `ProjectDetail`
+  **already** mounts `TaskDetailPanel` and **already** consumes `?openTask=` —
+  the panel was sitting there with nothing wired to it. Now an
+  `onOpenTask(id) => boolean` threads down to the anchor's onClick, which
+  `preventDefault()`s only when the surface really opened the task.
+- **#112a — action items never named their task.** The row rendered
+  `task.description`, which for a meeting-extracted task is provenance
+  boilerplate (`From the … meeting on July 24, 2026. Source: [[Context/Meetings/…]]`).
+  Measured: **all 9 rows on the reporting project, not one carried the task name.**
+  They render through the shared `LifecycleActivityLine` now.
+- **#112b — the empty reaction band.** `ReactionBar` renders on project rows
+  whether or not anyone reacted: a **measured 26px** full-width band holding one
+  right-floated dashed `+`, between the body and Reply. That was the "so much
+  space" Nick saw. Merged into one action row.
+
+## ⚠️ LANDMINES — do not re-derive these
+
+1. **`useOpenParam` is for ARRIVING at a page, not for a click on the page you
+   are already on.** It fires **once per distinct param value** and strips the
+   param, so a second click on the same task after closing the panel is a silent
+   no-op. That is why #111 went through a direct callback instead of "just set
+   `?openTask=`". CLAUDE.md **Rule 63e** now says so.
+2. **A DOM count taken in an UNFOCUSED Chrome tab counts rows React already
+   removed.** Chrome throttles rAF in a background tab; `AnimatePresence
+   mode="popLayout"` keeps an exiting child MOUNTED until its exit animation
+   finishes, which never happens. Cost ~15 min chasing a dedup "failure" that
+   was never real: a cold load measured `2/14` and held it **flat across 32
+   samples over 6.4s**; one screenshot (which focuses the tab) → `1/13`, correct.
+   Mount animations don't run either, so every row reads `opacity: 0` and looks
+   like a Rule-1 violation. **Screenshot first, then measure**, and re-run the
+   component's own predicate over freshly fetched data before blaming the code —
+   here the predicate said `wouldDrop: 1` the whole time. Memory:
+   `project_repo-environment-gotchas` point 7.
+3. **The synthetic action-item row and its dedupe are ONE mechanism — remove
+   them together (#113).** `actionItemToLifecycleRow` exists only because PB's
+   meeting-extraction writer bypasses the Hub's `applyInsert` and never mints a
+   real `created` entry; `createdTaskIds` exists only to suppress the resulting
+   double-narration where a real row does exist. Neither will look dead to a
+   simplification pass. Same shape as #109.
+4. **Synthetic feed rows carry an explicit `_synthetic` flag** — do NOT go back
+   to sniffing the `action-` id prefix. The id is a React key; deriving "is this
+   real" from its spelling means a key change silently re-enables
+   delete/edit/dismiss on a row the server cannot resolve.
+
+## Found by the close, not by the work — two live falsehoods in first-read docs
+
+- **`REFERENCE.md` documented two routes that have NEVER existed:**
+  `POST /api/meetings/:id/action-items` (404s on prod) and
+  `/api/meetings/:id/decisions`. Neither is registered in `api/index.ts`. Fixed.
+  Method worth reusing: scrape `/api/…` strings out of `REFERENCE.md`, join
+  against `path:` registrations in `api/index.ts`, probe what's left.
+- **`PROJECT.md`'s `next_action` warned "⚠️ NOTHING COMMITTED YET"** about
+  `scripts/gen-session-header.mjs` + its plan — **both tracked for weeks.** It
+  was also 2 weeks and 4 bug sweeps stale. Rewritten against the canonical value.
+- ⚠️ **`PROJECT.md` frontmatter `next_action` and brain.db/Hub had DIFFERENT
+  values** (07-21 vs 08-02). CLAUDE.md calls PROJECT.md's frontmatter canonical;
+  the architecture calls Hub D1 canonical. **Unresolved — needs Nick's call**,
+  not a silent pick. I set PROJECT.md to match the fresher Hub value.
+- **`CHANGELOG.md` had skipped its last two sweeps** (07-24/25 and 08-03). Entry
+  written for this one plus an in-place gap notice. Two in a row is how that file
+  stops being "what changed".
+
+## Open / next
+
+- **#113 (new)** — retire the synthetic action-item row: fix the PB writer, backfill, then delete both halves.
+- Everything under the 2026-08-03 section below is still open: **#109** (retire the meeting-ref bridge), **#110** (structural gap px↔minute invariant), ~43 unresolved meeting-refs, 3 surfaces still gating on `meeting_title`.
+- ⚠️ **A concurrent PB session is writing into this repo.** `src/lib/pbLinks.generated.ts`, `link-rules.generated.json` and `__tests__/link-fixtures.json` were regenerated at 10:40 today by PB's `scripts/links/gen_links.py` while I worked. **I left them uncommitted deliberately** — they are not mine to commit, and `git checkout` would have destroyed them. They are still dirty in the tree; whoever owns that change should commit it.
+
+---
+
 # ▶▶ BUG SWEEP #104–#108 + TODAY-PAGE FOLLOW-UPS — SHIPPED + DEPLOYED (2026-08-03). Live = `8ce17b97` (probe PASS). Bug queue EMPTY, all 5 GitHub issues closed.
 
 **8 commits, every one deployed + pushed, every deploy probe PASS. No schema change, no migration, no new route** (still v104 / 257 routes). api 1329 · lib 238 · src 157, all green.

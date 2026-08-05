@@ -3,6 +3,22 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-08-05 — bug sweep #111/#112: the project activity feed
+
+> ⚠️ **Gap notice.** The 2026-07-24/25 sweep (#98/#101/#102/#103) and the 2026-08-03 sweep (#104–#108 + the Today-timeline work) shipped without a CHANGELOG entry — their record lives in `SESSION-HANDOFF.md`. Read that for anything between 07-22 and 08-05. Two skipped entries in a row is how this file stops being "what changed"; the fix is to write the entry at close, not to backfill three weeks from memory.
+
+Frontend only — no schema, migration, route, or API change (still v104 / 257 routes). 3 commits, deployed + probe PASS, live `bb9af5ec`. 1329 api · 262 lib · 157 src, all green.
+
+**#111 — a task named in the feed navigated you off the project.** Every task link on a project page (130 of them, counted live) pointed at `/portal/my-tasks?openTask=<id>`. `ProjectDetail` already mounts `TaskDetailPanel` and already consumes `?openTask=`, so the panel was there and nothing was wired to it. Links now open it in place via an `onOpenTask(id) => boolean` threaded down to the anchor's onClick, which `preventDefault()`s only when the surface actually opened the task. The `href` stays — it is what makes ⌘-click and copy-link work, and it is the fallback on a miss. **`useOpenParam` was deliberately NOT reused**: it fires once per distinct value, so clicking the same task twice after closing the panel would silently do nothing. CLAUDE.md **Rule 63e** extended.
+
+**#112a — action items never named their task.** The row rendered `task.description`, which for a meeting-extracted task is provenance boilerplate (`From the R01 Meet Follow Up Aim 3 meeting on July 24, 2026. Source: [[Context/Meetings/…]] [meeting:cal-…]`) — measured on all 9 rows of the reporting project; not one carried the task's name. Action items have been tasks since T19/#547, so they now render through the same `LifecycleActivityLine` as "Created this task". The card and its complete-toggle are gone; completing lives on the task, which the name now opens. **The synthetic row exists only because PB's meeting-extraction writer bypasses the Hub's `applyInsert` and never mints a real `created` entry** — when that writer is fixed, `actionItemToLifecycleRow` AND the `createdTaskIds` dedupe both delete together (filed **#113**).
+
+**#112b — the empty reaction band.** On a project-entity row `ReactionBar` renders whether or not anyone has reacted: a measured 26px full-width band holding one right-floated dashed `+`, between the body and Reply. Reactions and thread controls now share one action row.
+
+**Session-close `/simplify`:** lifted the `metadata_json` parse into `shared/activityKinds.ts` (`lifecycleEventOf` / `lifecycleMetadata` — it had two hand-rolled copies), replaced the `action-` id-prefix sniff with an explicit `_synthetic` flag, collapsed the now-single-member `StreamEvent` union. Added the missing contract test for the swallow-on-malformed branch.
+
+**Doc drift caught by the close, not by the work:** `REFERENCE.md` documented `POST /api/meetings/:id/action-items` and `/api/meetings/:id/decisions` — **neither has ever been registered** in `api/index.ts` and the first 404s on prod. `PROJECT.md`'s `next_action` carried a "⚠️ NOTHING COMMITTED YET" warning about files that had been tracked for weeks. Both fixed.
+
 ## 2026-07-22 — bug sweep #96–#100, threaded replies (schema v100), two unreported privacy leaks, and `api/` finally typechecked
 
 Full Bug-Squasher pass. Whole open queue cleared; 12 commits, all deployed + pushed, every post-deploy probe PASS; 1176/1176 api tests. Live `e8c0a169`.
