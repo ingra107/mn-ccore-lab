@@ -163,7 +163,9 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
     staleTime: 30 * 1000,
     enabled: !!slug,
   })
-  const unifiedEntries = unified?.entries ?? []
+  // Memoized: a fresh `?? []` every render made both downstream useMemos
+  // recompute on every render (react-hooks/exhaustive-deps warned about it).
+  const unifiedEntries = useMemo(() => unified?.entries ?? [], [unified])
   const hiddenCount = unified?.hiddenCount ?? 0
 
   const { isAuthenticated, user } = useAuth()
