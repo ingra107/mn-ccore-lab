@@ -108,14 +108,14 @@
     {
       "canonical": "\\1",
       "id_group": 1,
-      "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*\\.[A-Za-z0-9]{1,5})$",
+      "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\r\\n]*\\.[A-Za-z0-9]{1,5})$",
       "title": "\\1",
       "type": "local_file"
     },
     {
       "canonical": "\\1",
       "id_group": 1,
-      "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*)",
+      "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\r\\n]*)",
       "title": "\\1",
       "type": "local_folder"
     },

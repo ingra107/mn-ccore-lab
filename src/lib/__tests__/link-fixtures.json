@@ -272,6 +272,46 @@
     }
   },
   {
+    "raw": "C:/Users/ingra107/Box/Research/CQODE Backbone UMN CLIF/presentations/clhss-portfolio.md",
+    "expected": {
+      "type": "local_file",
+      "canonical_url": "~/Box/Research/CQODE Backbone UMN CLIF/presentations/clhss-portfolio.md",
+      "short_title": "~/Box/Research/CQODE Backbone UMN CLIF/presentations/clhss-portfolio.md"
+    }
+  },
+  {
+    "raw": "C:\\Users\\ingra107\\Box\\Kick_Ingraham\\K proposal",
+    "expected": {
+      "type": "local_folder",
+      "canonical_url": "~/Box/Kick_Ingraham/K proposal",
+      "short_title": "~/Box/Kick_Ingraham/K proposal"
+    }
+  },
+  {
+    "raw": "\"C:\\Users\\ingra107\\Box\\Research\\CQODE Backbone UMN CLIF\\\"",
+    "expected": {
+      "type": "local_folder",
+      "canonical_url": "~/Box/Research/CQODE Backbone UMN CLIF/",
+      "short_title": "~/Box/Research/CQODE Backbone UMN CLIF/"
+    }
+  },
+  {
+    "raw": "C:/Users/ingra107/Peripheral-Brain/Docs/system-map.md is the file",
+    "expected": {
+      "type": "local_file",
+      "canonical_url": "~/Peripheral-Brain/Docs/system-map.md",
+      "short_title": "~/Peripheral-Brain/Docs/system-map.md"
+    }
+  },
+  {
+    "raw": "C:/tmp see https://github.com/clif/mCIDE",
+    "expected": {
+      "type": "local_folder",
+      "canonical_url": "C:/tmp",
+      "short_title": "C:/tmp"
+    }
+  },
+  {
     "raw": "C:\\1projects\\report.docx",
     "expected": {
       "type": "local_file",

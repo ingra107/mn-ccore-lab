@@ -1,5 +1,5 @@
 // GENERATED from scripts/links/link_contract.py -- DO NOT EDIT BY HAND.
-// rules_hash=25d2a4e93cda9ca07f9ca8b5e4e01079133530df49e4c1d621acc143b45869bd
+// rules_hash=e0666c37d7f73ce4cc744932f94e86a085dc02c93b2a978e828e149001f88846
 // Regenerate: python -X utf8 scripts/links/gen_links.py (in the Peripheral-Brain repo).
 //
 // INERT (Phase 1): exported but not imported by app code. urlClassify.ts is the
@@ -17,7 +17,7 @@ export interface PbCanonicalLink {
   source_raw: string | null
 }
 
-export const PB_LINK_RULES_HASH = '25d2a4e93cda9ca07f9ca8b5e4e01079133530df49e4c1d621acc143b45869bd'
+export const PB_LINK_RULES_HASH = 'e0666c37d7f73ce4cc744932f94e86a085dc02c93b2a978e828e149001f88846'
 
 interface PbLinkRule {
   type: string
@@ -136,14 +136,14 @@ const PB_LINK_RULES: PbLinkRule[] = [
   {
     "canonical": "\\1",
     "id_group": 1,
-    "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*\\.[A-Za-z0-9]{1,5})$",
+    "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\r\\n]*\\.[A-Za-z0-9]{1,5})$",
     "title": "\\1",
     "type": "local_file"
   },
   {
     "canonical": "\\1",
     "id_group": 1,
-    "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*)",
+    "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\r\\n]*)",
     "title": "\\1",
     "type": "local_folder"
   },
@@ -240,12 +240,40 @@ function stripTerminal(token: string): string {
   return token.replace(TERMINAL, '')
 }
 
+// Whole-raw local-path lane (#1109) -- mirrors normalize.py _whole_raw_local_token.
+// The tokenizer bounds tokens at whitespace; when the ENTIRE input is one local
+// path, spaces in folder names are path characters, not token boundaries.
+const LOCAL_START_RE = /^(?:[A-Za-z]:[\\/]|\/c\/|~\/|\.\/)/
+const OTHER_LINK_RE = /https?:\/\/|obsidian:\/\/|\[\[/
+const EXT_END_RE = /\.[A-Za-z0-9]{1,5}$/
+
+function wholeRawLocalToken(raw: string): string | null {
+  let s = raw.trim()
+  if (!s || s.includes('\n') || s.includes('\r')) return null
+  const quoted =
+    s.length >= 2 && (s[0] === '"' || s[0] === "'") && s[s.length - 1] === s[0]
+  if (quoted) s = s.slice(1, -1).trim()
+  else s = stripTerminal(s)
+  if (!LOCAL_START_RE.test(s)) return null
+  if (!s.includes(' ')) return null
+  if (quoted) return s
+  if (OTHER_LINK_RE.test(s)) return null
+  if (EXT_END_RE.test(s)) return s
+  if (EXT_END_RE.test(stripTerminal(s.split(' ', 1)[0]))) return null
+  return s
+}
+
 export function normalizeLink(
   raw: string | null | undefined,
   opts?: { titleHint?: string | null },
 ): PbCanonicalLink | null {
   if (!raw) return null
   const titleHint = opts?.titleHint ?? null
+  const whole = wholeRawLocalToken(raw)
+  if (whole !== null) {
+    const link = normalizeToken(whole, titleHint)
+    if (link) return link
+  }
   TOKENIZER.lastIndex = 0
   let m: RegExpExecArray | null
   while ((m = TOKENIZER.exec(raw)) !== null) {
