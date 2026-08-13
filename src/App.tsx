@@ -1,5 +1,5 @@
 import { Suspense, Component } from 'react'
-import { lazyRoute } from './lib/lazyRoute'
+import { lazyRoute, isStaleChunkError } from './lib/lazyRoute'
 import type { ReactNode, ErrorInfo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -36,6 +36,14 @@ class ErrorBoundary extends Component<
 
   render() {
     if (this.state.hasError) {
+      // A stale chunk — this tab is running a build that a deploy replaced — is
+      // the one class where this boundary's usual copy is FALSE: "everything
+      // else still works" is wrong (every route this tab has not loaded yet is
+      // equally dead) and "navigate to another page" walks the user onto the
+      // next dead chunk. lazyRoute() already spent its one automatic reload
+      // before the error could reach here; only a reload recovers, so say so.
+      // Copy matches PageErrorBoundary, which handles the same case.
+      const stale = isStaleChunkError(this.state.error)
       const errorMsg = this.state.error?.message || 'Unknown error'
       return (
         <div style={{ padding: '3rem 2rem', textAlign: 'center', minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -45,17 +53,19 @@ class ErrorBoundary extends Component<
             </svg>
           </div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: '1.25rem', color: 'var(--ink)', margin: '0 0 var(--sp-sm)' }}>
-            Something went wrong
+            {stale ? 'This tab is running an old version' : 'Something went wrong'}
           </h2>
           <p style={{ fontSize: '14px', color: 'var(--slate)', maxWidth: 420, margin: '0 0 20px', lineHeight: 1.5 }}>
-            This page hit an error, but everything else still works. Try refreshing, or navigate to another page.
+            {stale
+              ? 'The Hub was updated while this tab was open. Reload to get the current version.'
+              : 'This page hit an error, but everything else still works. Try refreshing, or navigate to another page.'}
           </p>
           <div style={{ display: 'flex', gap: 'var(--sp-sm)', marginBottom: 'var(--sp-lg)' }}>
             <Button
               variant="primary"
               onClick={() => { this.setState({ hasError: false, error: null, showDetail: false }); window.location.reload() }}
             >
-              Try again
+              {stale ? 'Reload' : 'Try again'}
             </Button>
             <Button
               variant="secondary"
@@ -206,7 +216,11 @@ export default function App() {
 
                 {/* Public pages: top nav layout */}
                 <Route element={<Layout />}>
-                  <Route path="/" element={<Home />} />
+                  {/* Home is lazy too — without a boundary, a stale Home chunk
+                      that survives lazyRoute's one automatic reload would
+                      unmount the entire tree (blank page). Same class as the
+                      other public routes below. */}
+                  <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
                   <Route path="/team" element={<ErrorBoundary><Team /></ErrorBoundary>} />
                   <Route path="/nick" element={<ErrorBoundary><NickLab /></ErrorBoundary>} />
                   <Route path="/nate" element={<ErrorBoundary><NateLab /></ErrorBoundary>} />
