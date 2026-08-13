@@ -65,7 +65,16 @@ export default function TodayPage() {
   // autoScroll handled by dnd-kit DndContext (enabled by default via PointerSensor)
   // — replaced useDragAutoScroll() which listened on 'dragover' (HTML5; now dead).
 
-  const tasksQuery = useTasks(userSlug ? { assignee: userSlug } : undefined)
+  // Backlog #1039: retry:false matches the sibling useProjects() call right
+  // below, which already opts out of react-query's default 3-retry
+  // exponential backoff. Without this, tasksQuery alone can hold isLoading
+  // (and so <TableSkeleton />, below) true on any transient /api/tasks
+  // failure before falling through to the isError screen -- the query-core
+  // retry math alone is ~7s (1s+2s+4s), and reproducing a forced /api/tasks
+  // failure live against the pre-fix build measured ~12.9s wall-clock to
+  // the error screen (page nav/hydration adds on top of the retry math).
+  // With retry:false the same forced failure fails on the first attempt.
+  const tasksQuery = useTasks(userSlug ? { assignee: userSlug } : undefined, { retry: false })
   const projectsQuery = useProjects()
   const meetingsQuery = useMeetingsApi()
   const regulatoryQuery = useExpiringRegulatory(60)
@@ -509,7 +518,13 @@ export default function TodayPage() {
               type="button"
               onClick={dismissHowTo}
               aria-label="Dismiss tip"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: INK_DIM, fontSize: 16, lineHeight: 1, padding: '2px 6px', flexShrink: 0, opacity: 0.85 }}
+              // Backlog #1037: padding 2px 6px measured ~20x22px, under the
+              // WCAG 2.2 SC 2.5.8 24x24 CSS-px floor -- this is a standalone
+              // icon button (no larger click surface around it, unlike the
+              // CollapseChevron glyphs whose whole header row is the real
+              // target). 5px/8px brings it to ~26x26 without visibly
+              // growing the transparent-background glyph.
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: INK_DIM, fontSize: 16, lineHeight: 1, padding: '5px 8px', flexShrink: 0, opacity: 0.85 }}
             >
               ×
             </button>

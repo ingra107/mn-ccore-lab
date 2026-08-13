@@ -1858,16 +1858,41 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 }
 
 /* N1.08/N1.16 — small square/dot controls keep their visual size; an
-   invisible ::before restores the 44px touch zone on touch devices. */
+   invisible ::before restores a real hit area on every pointer type, not
+   just touch. Backlog #1037 (2026-07-30 light-mode audit residual): the
+   base rule below used to live ONLY inside the touch media query, so a
+   mouse user's real clickable box was the bare visual size -- 17x17 for
+   .done-box (TaskRow's complete checkbox, every task list) and 14-20px for
+   .stage-dot (ProjectDetail's stage selector) -- under the WCAG 2.2 SC
+   2.5.8 (Target Size Minimum, AA) 24x24 CSS-px floor, which applies to
+   every pointer input, not only touch.
+   `inset` on an absolutely-positioned ::before is relative to the parent's
+   PADDING box, not its border box (what getBoundingClientRect()/the visual
+   size actually measure) -- so the parent's own border eats into the inset
+   budget. Caught live (real Chromium elementFromPoint hit-testing, not a
+   source read): an earlier -6px here measured 22x22 for the smallest real
+   instance (.stage-dot's 14px/2px-border non-current-stage dot: 14 +
+   2*(6-2) = 22), under the floor, while .done-box (1.5px border) happened
+   to clear it. -8px covers every current instance with margin: worst case
+   is .stage-dot's 14px/2px-border dot at 14 + 2*(8-2) = 26x26; .done-box
+   (17px/1.5px-border) reaches 17 + 2*(8-1.5) = 30x30. Smaller than the
+   touch tier's -13px bleed below (into 9px row gaps that are fine on touch
+   but risk swallowing an adjacent element's click on the denser desktop
+   layout). Touch devices still get the bigger AAA-ish zone below, since
+   touch has no hover fallback and coarser input. */
+.done-box,
+.stage-dot {
+  position: relative;
+}
+.done-box::before,
+.stage-dot::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
 @media (hover: none) {
-  .done-box,
-  .stage-dot {
-    position: relative;
-  }
   .done-box::before,
   .stage-dot::before {
-    content: '';
-    position: absolute;
     inset: -13px;
   }
 }

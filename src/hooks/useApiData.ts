@@ -637,6 +637,14 @@ function dedupTasks(tasks: TaskRow[]): TaskRow[] {
   return [...seen.values()]
 }
 
+// Backlog #1039: `options.retry` is opt-in (default unset -- every existing
+// caller keeps react-query's default retry:3 exponential backoff,
+// unchanged). TodayPage passes `retry: false` because it gates its
+// <TableSkeleton /> on `tasksQuery.isLoading`, and the default backoff
+// (1s+2s+4s ~= 7s, read at node_modules/@tanstack/query-core/build/modern/
+// retryer.js:7-9,86) holds that skeleton up for ~7s on any transient fetch
+// failure -- unlike the sibling `useProjects` call in the same isLoading
+// OR-gate, which already sets retry:false.
 export function useTasks(filters?: {
   assignee?: string
   status?: string
@@ -645,7 +653,7 @@ export function useTasks(filters?: {
   meeting?: string
   source?: string
   completed?: string
-}, options?: { enabled?: boolean }) {
+}, options?: { enabled?: boolean; retry?: boolean | number }) {
   return useQuery({
     queryKey: ['tasks', filters],
     queryFn: async () => {
@@ -654,6 +662,7 @@ export function useTasks(filters?: {
     },
     staleTime: 60 * 1000,
     enabled: options?.enabled ?? true,
+    ...(options?.retry !== undefined ? { retry: options.retry } : {}),
   })
 }
 

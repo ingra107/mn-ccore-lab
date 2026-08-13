@@ -20,7 +20,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { cleanupTestTasks, cleanupTestMeetings, cleanupTestIdeas, cleanupTestDecisions } from './test-cleanup'
 import { P } from './helpers/paths'
-import { injectFakeAuth } from './helpers/capture-auth'
+import { injectFakeAuth, injectRealAuth, hasRealSessionEnv } from './helpers/capture-auth'
 
 // Honour PLAYWRIGHT_BASE_URL so test:smoke against a preview deploy targets
 // the preview, not hardcoded prod.
@@ -2089,6 +2089,135 @@ test.describe('A11Y — Focus management', () => {
       expect(result!.ratio).toBeGreaterThanOrEqual(4.5)
     })
   }
+})
+
+// ═════════════════════════════════════════════════════════════════════
+// PART 10b: ICON HIT-AREA SIZING — backlog #1037
+// ═════════════════════════════════════════════════════════════════════
+//
+// The 2026-07-30 wave-6 audit measured contrast (above) but explicitly left
+// icon hit-area sizing as an unverified hedged follow-up. WCAG 2.2 SC 2.5.8
+// (Target Size Minimum, AA) requires >=24x24 CSS px for EVERY pointer
+// input, not just touch — unlike this app's existing `.touch-target`/
+// `@media (hover: none)` machinery, which only enlarged hit areas below a
+// 768px viewport. Real bounding-box / hit-test measurements, not a static
+// CSS read: line-height and glyph metrics aren't knowable from source alone,
+// and an invisible ::before hit-zone (the done-box/stage-dot pattern) isn't
+// part of getBoundingClientRect() on the element itself.
+test.describe('A11Y — Icon hit-area sizing (WCAG 2.2 SC 2.5.8, >=24x24)', () => {
+  test('A11Y: Today page dismiss-tip button meets the 24x24 floor', async ({ page, context }) => {
+    // Verified live 2026-08-13: bare injectFakeAuth() no longer clears the
+    // CF Access EDGE gate on its own (confirmed by re-running the existing
+    // dark/light contrast tests above -- both currently fail the same way,
+    // landing on the real Google sign-in splash, "Sign in" != "Today"). That
+    // regression is pre-existing and out of scope here (see FINDINGS in the
+    // dispatch report); injectRealAuth() (adds the real CF-Access-Client-Id/
+    // Secret headers) still clears the edge, so use it even though this
+    // element itself is chrome-only and doesn't need real task/project DATA.
+    test.skip(!hasRealSessionEnv(), 'HUB_TEST_MODE_KEY/TEST_MODE_KEY not set, and bare injectFakeAuth() no longer clears the CF Access edge gate on its own (verified 2026-08-13) -- no way to reach the portal shell without the real-auth fixture.')
+    await injectRealAuth(context, BASE)
+    await loadPage(page, P.dashboard)
+    const dismissBtn = page.getByRole('button', { name: 'Dismiss tip' })
+    const box = await dismissBtn.boundingBox()
+    expect(box, 'Dismiss tip button not found/visible (already dismissed this session?)').not.toBeNull()
+    console.log('Dismiss tip button box:', box)
+    expect(box!.width).toBeGreaterThanOrEqual(24)
+    expect(box!.height).toBeGreaterThanOrEqual(24)
+  })
+
+  test('A11Y: DoneBox invisible hit-zone reaches the 24x24 floor on every pointer type', async ({ page, context }) => {
+    // DoneBox only renders once a real task row is on screen — #896's real-
+    // session fixture is required here (unlike the chrome-only test above).
+    test.skip(!hasRealSessionEnv(), 'HUB_TEST_MODE_KEY/TEST_MODE_KEY not set — cannot get real authenticated task DATA (#896); DoneBox needs a real row to render, so this check is a no-op without it.')
+    await injectRealAuth(context, BASE)
+    await loadPage(page, P.myTasks)
+    const doneBox = page.locator('.done-box').first()
+    const visible = await doneBox.isVisible().catch(() => false)
+    test.skip(!visible, 'No visible .done-box on My Tasks for this session — no open task rows to measure.')
+    // getBoundingClientRect() on the button reports only its 17x17 visual
+    // glyph — the invisible ::before expansion (src/index.css N1.08/N1.16,
+    // now unconditional per #1037) isn't part of that rect. Hit-test 4px
+    // outside each visual edge instead: inside the -6px ::before inset,
+    // outside the glyph. A passive geometry query (elementFromPoint), not a
+    // real click — this must stay read-only against prod task data.
+    const hits = await page.evaluate(() => {
+      const btn = document.querySelector('.done-box') as HTMLElement | null
+      if (!btn) return null
+      const r = btn.getBoundingClientRect()
+      const points: [number, number][] = [
+        [r.left - 4, r.top + r.height / 2],
+        [r.right + 4, r.top + r.height / 2],
+        [r.left + r.width / 2, r.top - 4],
+        [r.left + r.width / 2, r.bottom + 4],
+      ]
+      return points.map(([x, y]) => {
+        const el = document.elementFromPoint(x, y)
+        return el === btn || (el != null && btn.contains(el))
+      })
+    })
+    expect(hits, 'DoneBox not found in DOM for the hit-test evaluate()').not.toBeNull()
+    console.log('DoneBox 4px-outside-glyph hit-test (left/right/top/bottom):', hits)
+    for (const hit of hits!) expect(hit).toBe(true)
+    // .stage-dot (ProjectDetail's stage selector, 14-20px visual) shares
+    // this exact selector pair in src/index.css — same mechanism, not
+    // re-verified here separately: clicking one on prod would really change
+    // a project's stage, which this suite must not do.
+  })
+})
+
+// ═════════════════════════════════════════════════════════════════════
+// PART 10c: TODAY PAGE LOADING-STATE RESILIENCE — backlog #1039
+// ═════════════════════════════════════════════════════════════════════
+//
+// The 2026-07-30 wave-6 audit recorded a possible Today-page stuck-skeleton
+// observation and dismissed it as likely a harness artifact without running
+// it down. Reading the code (src/pages/portal/TodayPage.tsx isLoading =
+// tasksQuery.isLoading || projectsQuery.isLoading) found a real, verified
+// mechanism: unlike the sibling useProjects() call in the same gate,
+// useTasks() (src/hooks/useApiData.ts) set no `retry` option, so it
+// inherited react-query v5's default retry:3 with exponential backoff.
+// Verified two ways at HEAD, not just read: (1) a direct, isolated exercise
+// of @tanstack/query-core's own retryer (no app code) timed 4 attempts /
+// 7089ms with no retry override vs 1 attempt / 6ms with retry:false --
+// confirming both the mechanism and that the fix removes it; (2)
+// reproducing a forced /api/tasks 500 live against the CURRENTLY DEPLOYED
+// (pre-fix) build measured 12903ms wall-clock to the error screen (nav +
+// hydration overhead on top of the retry math). Fixed by passing
+// `retry: false` from TodayPage, matching useProjects(). This test forces
+// the same live failure and asserts the error screen appears well short of
+// that ~12.9s pre-fix baseline. It does NOT prove this was the exact
+// instance the wave-6 agent saw once, live, without a preserved repro --
+// only that this specific, real, code-confirmed mechanism is now fixed.
+// NOTE: this test asserts against WHATEVER BUILD IS DEPLOYED to BASE, not
+// this file's local source -- it will only actually exercise the fix once
+// this change ships (see the dispatch report's VERIFIED lines for what was
+// and wasn't confirmed pre-deploy).
+test.describe('VISUAL — Today page loading-state resilience (backlog #1039)', () => {
+  test('Today page surfaces the error screen well under the pre-fix ~12.9s baseline on a failed tasks fetch', async ({ page, context }) => {
+    // Verified live 2026-08-13: bare injectFakeAuth() no longer clears the
+    // CF Access edge gate on its own (see the sibling hit-area test above
+    // and FINDINGS in the dispatch report) -- use the real-header bypass.
+    test.skip(!hasRealSessionEnv(), 'HUB_TEST_MODE_KEY/TEST_MODE_KEY not set, and bare injectFakeAuth() no longer clears the CF Access edge gate on its own (verified 2026-08-13).')
+    await injectRealAuth(context, BASE)
+    // Force every /api/tasks call to fail. Independent of real DATA content
+    // (#896) -- this is a client-side network fault, not a data-content
+    // check -- but still needs the edge-gate bypass above to reach the page
+    // at all.
+    await page.route('**/api/tasks*', (route) => route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"forced failure for #1039 regression test"}' }))
+    const start = Date.now()
+    await page.goto(`${BASE}${P.dashboard}`, { waitUntil: 'domcontentloaded', timeout: 15000 })
+    // Same CF Access caveat as the contrast test above: if the edge gate
+    // intercepted this request, "Could not load Today" would never appear
+    // (the login splash would render instead) -- fail loud on that instead
+    // of silently timing out with an unhelpful message.
+    await expect(page.getByText('Could not load Today')).toBeVisible({ timeout: 10000 })
+    const elapsed = Date.now() - start
+    console.log(`Today error screen appeared after ${elapsed}ms (pre-fix measured baseline: ~12903ms)`)
+    // 8s: comfortably below the measured ~12.9s pre-fix baseline (which
+    // included ~7s of retry backoff alone), comfortably above normal page
+    // nav/hydration so this doesn't flake on ordinary network variance.
+    expect(elapsed).toBeLessThan(8000)
+  })
 })
 
 // ═════════════════════════════════════════════════════════════════════
