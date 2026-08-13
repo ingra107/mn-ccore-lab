@@ -64,18 +64,18 @@ const deduped = findings.filter(f => {
 deduped.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line)
 
 if (!fs.existsSync(BASELINE_PATH)) {
-  // First run: write the baseline and explain what was found.
-  fs.writeFileSync(BASELINE_PATH, JSON.stringify(deduped, null, 2) + '\n')
-  if (deduped.length === 0) {
-    console.log('check-no-optional-request: OK (0 optional-Request handlers). Baseline written (empty).')
-  } else {
-    console.log(`check-no-optional-request: baseline written with ${deduped.length} grandfathered site(s):`)
-    for (const f of deduped) console.log(`  ${f.file}:${f.line}  ${f.sample}`)
-    console.log('These sites are grandfathered (cron dual-invoke pattern). New sites will fail lint.')
-    console.log('To remove a site from the baseline, fix it then delete its entry from')
-    console.log(`  ${path.relative(ROOT, BASELINE_PATH)}`)
-  }
-  process.exit(0)
+  // The baseline is git-tracked, so it is never legitimately absent — there is
+  // no such thing as a "first run" here. The branch that used to live at this
+  // line auto-wrote a baseline containing every CURRENT violation and exited 0,
+  // which means one `git rm` of the baseline would have turned this lint into a
+  // rubber stamp that prints its findings and passes. That is exactly the
+  // failure backlog #1132 described, and it was one deleted file away from real.
+  // Fail loud instead: a missing baseline is a broken checkout, not a new one.
+  console.error('check-no-optional-request: baseline file is MISSING.')
+  console.error(`  expected: ${path.relative(ROOT, BASELINE_PATH)}`)
+  console.error('  It is git-tracked. Restore it (git checkout -- <path>) rather than')
+  console.error('  regenerating it — regenerating grandfathers whatever is broken today.')
+  process.exit(1)
 }
 
 // Subsequent runs: compare against baseline.
