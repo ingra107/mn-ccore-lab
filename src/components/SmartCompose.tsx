@@ -168,17 +168,29 @@ export default function SmartCompose(props: SmartComposeProps) {
   const [internalVal, setInternalVal] = useState('')
   const isControlled = isCustomMode && typeof (props as CustomModeProps).value === 'string'
   const val = isControlled ? ((props as CustomModeProps).value as string) : internalVal
+  // Mirrors `val` into a ref every render (backlog #1118, race 2) so an
+  // in-flight async callback — insertAtCursor after `await uploadFileToR2`,
+  // which can resolve seconds after the paste/click that started it — always
+  // resolves a functional update against the LATEST value, not the one
+  // closed over when the callback was created. The uncontrolled branch
+  // already reads fresh state via setInternalVal's own functional-update
+  // form; only the controlled branch (value/onChange owned by the caller,
+  // e.g. ProjectDetail's quick-compose) had no such guarantee — it captured
+  // `val` as a plain variable, so an insert that resolved after the user had
+  // since typed more text overwrote that typing with a stale base string.
+  const valRef = useRef(val)
+  valRef.current = val
   const setVal = useCallback((next: string | ((cur: string) => string)) => {
     if (isControlled) {
       const onChange = (props as CustomModeProps).onChange
       if (!onChange) return
-      const resolved = typeof next === 'function' ? (next as (cur: string) => string)(val) : next
+      const resolved = typeof next === 'function' ? (next as (cur: string) => string)(valRef.current) : next
       onChange(resolved)
     } else {
       setInternalVal((cur) => (typeof next === 'function' ? (next as (cur: string) => string)(cur) : next))
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isControlled, val])
+  }, [isControlled])
 
   const [focused, setFocused] = useState(false)
   const [emojiOpen, setEmojiOpen] = useState(false)
@@ -315,9 +327,25 @@ export default function SmartCompose(props: SmartComposeProps) {
     }
   }, [submit])
 
-  const handleFiles = useCallback(async (files: FileList | null) => {
-    const file = files?.[0]
-    if (!file || !uploadContext) return
+  // Upload queue (backlog #1118). Every incoming batch of files — one from
+  // the (now `multiple`) file picker, one or more from a multi-file paste —
+  // is pushed onto ONE FIFO queue and drained by a single loop instead of
+  // firing an independent async chain per file. A call that arrives while
+  // the queue is already draining just appends to it; the already-running
+  // loop picks the new entries up on its next iteration rather than starting
+  // a second, concurrent drain. That makes the old race unrepresentable: the
+  // shared `uploading` boolean used to flip back to false the instant
+  // WHICHEVER upload finished first, even while a sibling was still in
+  // flight (paste file A, paste file B before A resolves, B finishes first —
+  // the Attach button re-enabled and the spinner stopped while A was still
+  // uploading). Now `uploading` can only ever go false once the queue is
+  // actually empty, because there is only ever one drain session per
+  // component instance.
+  const uploadQueueRef = useRef<File[]>([])
+  const uploadSessionActiveRef = useRef(false)
+
+  const uploadOneFile = useCallback(async (file: File) => {
+    if (!uploadContext) return
     const isImage = (file.type || '').startsWith('image/')
     const previewId = crypto.randomUUID()
     if (isImage) {
@@ -328,7 +356,6 @@ export default function SmartCompose(props: SmartComposeProps) {
       }
       reader.readAsDataURL(file)
     }
-    setUploading(true)
     try {
       // Shared presign -> PUT -> done chain (backlog #545) — see
       // ../lib/r2Upload.ts; OverviewQuickAdd (TaskDetailPanel.tsx) calls the
@@ -340,24 +367,45 @@ export default function SmartCompose(props: SmartComposeProps) {
       console.error('Attach failed:', err)
       undoToast.showError(`Attach failed: ${err instanceof Error ? err.message : 'please try again.'}`)
     } finally {
-      setUploading(false)
       setPendingUploads((prev) => prev.filter((p) => p.id !== previewId))
     }
   }, [uploadContext, insertAtCursor, undoToast])
 
+  const drainUploadQueue = useCallback(async () => {
+    if (uploadSessionActiveRef.current) return
+    uploadSessionActiveRef.current = true
+    setUploading(true)
+    try {
+      while (uploadQueueRef.current.length > 0) {
+        const file = uploadQueueRef.current.shift() as File
+        await uploadOneFile(file)
+      }
+    } finally {
+      uploadSessionActiveRef.current = false
+      setUploading(false)
+    }
+  }, [uploadOneFile])
+
+  const handleFiles = useCallback((files: FileList | null) => {
+    if (!files || files.length === 0 || !uploadContext) return
+    uploadQueueRef.current.push(...Array.from(files))
+    void drainUploadQueue()
+  }, [uploadContext, drainUploadQueue])
+
   const handlePaste = useCallback((e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     if (!uploadContext) return
-    const items = Array.from(e.clipboardData?.items || [])
-    const fileItem = items.find((it) => it.kind === 'file')
-    if (fileItem) {
-      e.preventDefault()
-      const f = fileItem.getAsFile()
-      if (f) {
-        const dt = new DataTransfer()
-        dt.items.add(f)
-        handleFiles(dt.files)
-      }
+    // Every 'file' clipboard item, not just the first (backlog #1118) —
+    // copying several images from a file manager and pasting them here used
+    // to silently keep only the one `items.find()` happened to return.
+    const fileItems = Array.from(e.clipboardData?.items || []).filter((it) => it.kind === 'file')
+    if (fileItems.length === 0) return
+    e.preventDefault()
+    const dt = new DataTransfer()
+    for (const item of fileItems) {
+      const f = item.getAsFile()
+      if (f) dt.items.add(f)
     }
+    if (dt.files.length > 0) handleFiles(dt.files)
   }, [uploadContext, handleFiles])
 
   const isDark = theme === 'dark'
@@ -408,6 +456,7 @@ export default function SmartCompose(props: SmartComposeProps) {
       <input
         ref={fileInputRef}
         type="file"
+        multiple
         style={{ display: 'none' }}
         onChange={(e) => { handleFiles(e.target.files); e.target.value = '' }}
       />
