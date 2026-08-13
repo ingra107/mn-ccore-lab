@@ -17,7 +17,11 @@ import { ARTIFACT_URL_RE } from '../lib/artifact-url';
 //
 // PI / API-key callers keep seeing everything: the PB listener polls this
 // endpoint for pending work, and the PI is the operator of his own system.
-export async function handleGetAIRequests(url: URL, env: Env, request?: Request): Promise<Response> {
+// `request` is REQUIRED, not optional. While it was optional, a caller that
+// omitted it skipped the requester-scoping branch below and got every row back
+// — full prompt and response — which is the exact leak the scoping was added to
+// close. Required makes that call unrepresentable rather than merely unused.
+export async function handleGetAIRequests(url: URL, env: Env, request: Request): Promise<Response> {
   const status = url.searchParams.get('status');
   const projectSlug = url.searchParams.get('project_slug');
   const sourceType = url.searchParams.get('source_type');
@@ -31,7 +35,7 @@ export async function handleGetAIRequests(url: URL, env: Env, request?: Request)
   // the canonical slug — rows written through paths that stored a slug (or an
   // alias address) would otherwise become invisible to their own author, which
   // fails closed in the wrong direction: silently hiding your own history.
-  if (request && !(await isPiRequest(request, env))) {
+  if (!(await isPiRequest(request, env))) {
     const user = await getAuthUser(request, env);
     const email = user?.email ?? '';
     if (!email) {
