@@ -1,4 +1,4 @@
-// Email-prefix → canonical team slug map.
+// Email → canonical team slug for the UI.
 //
 // Phase 36b canonicalized team slugs to `preferred_name-last_name` format
 // (e.g. `nick-ingraham`). Email prefixes rarely match — Nick's UMN NetID
@@ -9,38 +9,15 @@
 // - Notifications / unread counts key on the wrong slug
 // - Task assignee filters miss the user's own tasks
 //
-// Mirror of `EMAIL_PREFIX_TO_SLUG` in `api/helpers.ts`. Update both in
-// lockstep when adding a team member.
-
-// Mirror of `EMAIL_PREFIX_TO_SLUG` in `api/helpers.ts:239-261` (kept in the
-// same order for diff-ability). Update BOTH sides in lockstep when adding a
-// team member (CLAUDE.md Rule 34).
-const EMAIL_PREFIX_TO_SLUG: Record<string, string> = {
-  nick: 'nick-ingraham',       // old slug, kept so legacy records resolve
-  ingra107: 'nick-ingraham',   // real UMN NetID
-  ningraha: 'nick-ingraham',   // legacy email alias (W1 2026-04-29)
-  nate: 'nate-mesfin',
-  dudley: 'adams-dudley',
-  chipman: 'jeff-chipman',
-  mceachron: 'kendall-mceachron',
-  safadi: 'sami-safadi',
-  begnaud: 'abbie-begnaud',
-  henkle: 'benjamin-henkle',
-  macdonald: 'dave-macdonald',
-  trujeque: 'josh-trujeque',
-  pendleton: 'katie-pendleton',
-  kalinoski: 'michael-kalinoski',
-  wacker: 'dave-wacker',
-  arriaza: 'steven-arriaza',
-  bromley: 'emma-bromley',
-  eddington: 'casey-eddington',
-  shyu: 'dan-shyu',
-  fitzgerald: 'beret-fitzgerald',
-  collins: 'claire-collins',
-}
+// The map lives in `shared/emailSlug.ts` (PB backlog #1134) — imported by
+// BOTH this file and the Worker's `actorSlug` (`api/helpers.ts`) — so the
+// two sides can no longer drift the way they did before #1134 (a member in
+// one map and not the other lost the `canEditFeatured` edit button while
+// the API still accepted the write). Adding a team member means adding a
+// row to `shared/emailSlug.ts` once, not mirroring it here too.
+import { resolveEmailSlug } from '../../shared/emailSlug'
 
 export function emailToSlug(email: string | undefined | null): string {
   if (!email) return ''
-  const prefix = email.split('@')[0]?.toLowerCase() ?? ''
-  return EMAIL_PREFIX_TO_SLUG[prefix] ?? prefix
+  return resolveEmailSlug(email)
 }

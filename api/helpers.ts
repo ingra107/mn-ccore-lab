@@ -2,6 +2,7 @@ import type { Env } from './types';
 import { verifyCfAccessJwt } from './jwt-verify';
 import { validateApiKey } from './middleware/api-key-auth';
 import { safeRow } from './lib/task-cols';
+import { resolveEmailSlug } from '../shared/emailSlug';
 // Re-export so Phase 1b callers can import TASK_SELECT_COLS from the same
 // shared root without touching the internal lib path.
 // T2.5: TABLE_PRIVATE_COLS + safeRow added — preferred over the tasks-only
@@ -312,42 +313,17 @@ export function parseMentions(text: string): string[] {
   return [...new Set(Array.from(text.matchAll(regex), m => m[1]))];
 }
 
-/** Map email local-part → canonical team slug. Used because team emails
- *  (`nick@umn.edu`, `bromley@umn.edu`) don't match the post-Phase-36b
- *  `preferred-last` slug format. Also handles Nick's real UMN address
- *  aliases (`ningraha@`, `sandb029@`). Keep in sync with
- *  `team_members.slug` — adding a new member means adding a row here.
- *  Unknown prefix falls through to the email-prefix literal. */
-const EMAIL_PREFIX_TO_SLUG: Record<string, string> = {
-  nick: 'nick-ingraham',       // old slug, kept so legacy records resolve
-  ingra107: 'nick-ingraham',   // real UMN NetID
-  ningraha: 'nick-ingraham',   // legacy email alias (W1 2026-04-29)
-  nate: 'nate-mesfin',
-  dudley: 'adams-dudley',
-  chipman: 'jeff-chipman',
-  mceachron: 'kendall-mceachron',
-  safadi: 'sami-safadi',
-  begnaud: 'abbie-begnaud',
-  henkle: 'benjamin-henkle',
-  macdonald: 'dave-macdonald',
-  trujeque: 'josh-trujeque',
-  pendleton: 'katie-pendleton',
-  kalinoski: 'michael-kalinoski',
-  wacker: 'dave-wacker',
-  arriaza: 'steven-arriaza',
-  bromley: 'emma-bromley',
-  eddington: 'casey-eddington',
-  shyu: 'dan-shyu',
-  fitzgerald: 'beret-fitzgerald',
-  collins: 'claire-collins',
-}
-
 /** Extract canonical team slug from email (e.g., "nick@umn.edu" →
  *  "nick-ingraham", "ningraha@umn.edu" → "nick-ingraham"). Returns the
- *  literal email prefix for unknown emails. */
+ *  literal email prefix for unknown emails. The map lives in
+ *  `shared/emailSlug.ts` (PB backlog #1134) — imported by BOTH this and the
+ *  UI's `emailToSlug` (`src/lib/emailSlug.ts`) — so the two can no longer
+ *  drift the way they did before #1134 (a member in one map and not the
+ *  other lost the `canEditFeatured` edit button while the API still
+ *  accepted the write). Adding a team member means adding a row to
+ *  `shared/emailSlug.ts` once, not mirroring it here too. */
 export function actorSlug(email: string): string {
-  const prefix = email.split('@')[0].toLowerCase()
-  return EMAIL_PREFIX_TO_SLUG[prefix] ?? prefix
+  return resolveEmailSlug(email)
 }
 
 /**
