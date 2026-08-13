@@ -269,7 +269,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | `src/components/RequireAuth.tsx` | Branded sign-in splash, extracted from App.tsx (Phase 36d) |
 | `src/components/pulse/PulseScene.tsx` + `PulseMetric.tsx` + `PulseSparkline.tsx` | Cinematic kiosk primitives (Phase 36d) |
 | `functions/og/[type]/[slug].ts` | Per-route SVG share-card generator (project/team/meeting/default, edge-cached 1h, Phase 36d) |
-| `public/_headers` | Forces `image/svg+xml` content-type on `/og/*` (Phase 36d) |
+| `public/_headers` | Forces `image/svg+xml` content-type on `/og/*` (Phase 36d); caches `/assets/*` immutable (#1320 — safe because Vite content-hashes every filename it writes there) |
 | `scripts/claude-design-brief.txt` | Brand brief for Claude Design — tokens, motif SVG path, ethos (Phase 36d) |
 | `tests/capture-for-design.spec.ts` + `playwright.config.design-capture.ts` | Full-page screenshots with pre-scroll, 41 hero + 6 mobile surfaces (Phase 36d → round-4) |
 | `tests/capture-focus-asks.spec.ts` | Round-specific spot captures (Quick Add, row focus, ▾ density) |
