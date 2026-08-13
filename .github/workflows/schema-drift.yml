@@ -54,6 +54,7 @@ jobs:
           token: ${{ secrets.PB_SCHEMA_PAT }}
 
       - name: pb-schema contract manifest verify (fail-closed)
+        if: ${{ !cancelled() }}
         # Slice 6 (PB 2026-06-08): the pb-schema submodule is a versioned contract
         # bundle (committed generated/* + manifest.json). PB (schema_dsl_codegen)
         # is the sole emitter. This renderer-free, PB-free hash check asserts the
@@ -66,6 +67,7 @@ jobs:
         working-directory: pb-schema
 
       - name: Schema version integrity (INFRA-5)
+        if: ${{ !cancelled() }}
         # Fast pre-flight using stdlib Python — no Node/wrangler required.
         # Checks three structural properties of the api/schema-v*.sql file set:
         #   1. Ordered-version list: any NEW gap vs the committed snapshot fails.
@@ -82,14 +84,17 @@ jobs:
         run: python3 scripts/check-schema-versions.py
 
       - name: Setup Node
+        if: ${{ !cancelled() }}
         uses: actions/setup-node@v6
         with:
           node-version: '24'
 
       - name: Install wrangler
+        if: ${{ !cancelled() }}
         run: npm install -g wrangler@^4.14.0
 
       - name: Write SQL normalizer
+        if: ${{ !cancelled() }}
         # Both prod (via sqlite_master) and committed (via files) need the
         # same canonical form before diff. Without this, multi-line CREATE
         # in schema.sql vs single-line in sqlite_master produces phantom
@@ -245,6 +250,7 @@ jobs:
           EOF
 
       - name: Dump prod D1 schema
+        if: ${{ !cancelled() }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -264,6 +270,7 @@ jobs:
           "
 
       - name: "Migration ledger vs committed file list (backlog #893)"
+        if: ${{ !cancelled() }}
         # schema_migrations (introduced by schema-v105-schema-migrations-
         # ledger.sql) records which schema-vNN*.sql files at/after v105
         # actually ran to completion on prod, via a self-registering INSERT
@@ -338,6 +345,7 @@ jobs:
           "
 
       - name: Build committed schema reference
+        if: ${{ !cancelled() }}
         run: |
           # Reality check (audit found 2026-04-21): api/bootstrap-schema.sql only has
           # ~7 tables. The other ~43 tables + every index live in migration
@@ -405,6 +413,7 @@ jobs:
           "
 
       - name: Diff prod vs committed
+        if: ${{ !cancelled() }}
         run: |
           # Both sides are now canonical — true line-by-line diff.
           if ! diff -u committed-schema.sql prod-schema.sql > schema-drift.diff; then
@@ -427,9 +436,11 @@ jobs:
           retention-days: 30
 
       - name: Install npm dependencies (for contract lint)
+        if: ${{ !cancelled() }}
         run: npm ci
 
       - name: Schema contract lint (codex Q6+Q9)
+        if: ${{ !cancelled() }}
         # Compares TABLE_FIELDS, route ALLOWED_FIELDS, and SQL column refs
         # against the committed D1 schema files. Catches phantom column bugs
         # like the deleted tasks.recurrence branch (Task 1.6, PB SHA b06ce2b3).
@@ -437,6 +448,7 @@ jobs:
         run: npm run audit:schema-contract
 
       - name: Project-identity completeness gate (Slice E, fail-closed)
+        if: ${{ !cancelled() }}
         # Symmetric Project-Identity Convergence gate — the Hub D1 half. Asserts
         # ONE machine identity = typed proj_* PK across every identity-bearing
         # project surface on prod D1 (storage, FK columns, kg composite keys),
@@ -453,6 +465,7 @@ jobs:
         run: python3 scripts/check-project-identity-gate.py
 
       - name: Time-discipline lint (Increment 1A R20/R21, ENFORCE)
+        if: ${{ !cancelled() }}
         # Hub-local stdlib mirror — does NOT depend on a PB checkout. ENFORCE
         # mode (hard-fail) since the Plan 1B display-site migration cleared the
         # backlog to zero (2026-05-25): all date sites use canonical helpers

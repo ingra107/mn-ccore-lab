@@ -72,10 +72,20 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: api (Worker routes, node mode)
+        # !cancelled() (not the default sequential skip): the three suites
+        # below are mutually independent — none consumes another's output,
+        # and this one needs neither Playwright nor the other two suites'
+        # results. Without this, a red test:api reports test:lib/test:src as
+        # `skipped`, and a red Playwright install reports ALL THREE as
+        # `skipped` even though test:api/test:lib never touch a browser —
+        # same masking class as schema-drift.yml (backlog #1041, #1094).
+        if: ${{ !cancelled() }}
         run: npm run test:api
 
       - name: lib (src/lib pure-logic, node mode)
+        if: ${{ !cancelled() }}
         run: npm run test:lib
 
       - name: src (components, browser mode via chromium)
+        if: ${{ !cancelled() }}
         run: npm run test:src
