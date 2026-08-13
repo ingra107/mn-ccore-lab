@@ -2,11 +2,19 @@
   {
     "file": "api/routes/lane3.ts",
     "line": 49,
-    "sample": "request?: Request"
+    "sample": "request?: Request",
+    "reason": "PI-only pull; missing request fails CLOSED (403 Forbidden) -- lane3.ts:51-53."
+  },
+  {
+    "file": "api/routes/search.ts",
+    "line": 118,
+    "sample": "request?: Request",
+    "reason": "Missing request falls back to a synthetic Request, which activityVisibilityGate resolves to team-only (hides @me rows) -- fails CLOSED, not open. Exercised by the 3-arg (no request) calls in security-gates.test.ts. See search.ts:152-154."
   },
   {
     "file": "api/routes/sessions.ts",
     "line": 35,
-    "sample": "request?: Request"
+    "sample": "request?: Request",
+    "reason": "PI-only pull; missing request fails CLOSED (403 Forbidden) -- sessions.ts:36-38."
   }
 ]

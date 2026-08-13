@@ -7,11 +7,15 @@
 // Z1.6 removed those two; this lint prevents regression.
 //
 // Baseline-aware: if a baseline file exists, only NEW violations (not in
-// baseline) cause exit 1. This lets the 3 known cron-dual-invoke sites
-// (digest-email, lane3, sessions) be grandfathered while blocking any
-// NEW optional-request introduction. When the grandfathered sites are
-// migrated, shrink the baseline and the lint automatically enforces the
-// tighter contract.
+// baseline) cause exit 1. A site earns a place in the baseline only when
+// the code path fails CLOSED on a missing request (403, or a documented
+// restrictive fallback) -- see check-no-optional-request.baseline.json for
+// each site's reason and file:line. A site that fails OPEN on a missing
+// request (returns unscoped data) is a real defect and must NOT be
+// baselined; it stays a reported violation until the handler is fixed.
+// When a grandfathered site is migrated to a required `request: Request`,
+// shrink the baseline and the lint automatically enforces the tighter
+// contract.
 //
 // Usage:
 //   node scripts/check-no-optional-request.mjs
