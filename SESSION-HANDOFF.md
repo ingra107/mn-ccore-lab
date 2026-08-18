@@ -1,3 +1,73 @@
+# ▶▶ BUG SWEEP #114–#117 + BACKLOG CLEAR-DOWN — SHIPPED + DEPLOYED (2026-08-18). Live = `2f60f732`. Bug queue EMPTY, GitHub issue list EMPTY. Frontend + two prod D1 backfills; no schema/migration/route change (still v104 / 257 routes).
+
+**10 commits.** `bfdc981d` (#114) · `d2d9f54a` (#115) · `5ef3bbd5` (#116) · `1db7a52a` (#117) · `a738ec5c` (#110 step 1) · `d478e41e` (member-page crash) · `bce10437` + `d758c1c9` (#113) · `2f60f732` (session-close /simplify).
+
+## The through-line, again: measure the issue's PREMISE before executing its plan
+
+Three of four backlog items had a premise that died to one query. This is now a
+memory (`feedback_measure-a-backlog-issues-premise-before-executing-it`).
+
+- **#113 claimed PB bypasses `applyInsert`** so no real `created` row is ever
+  minted, and prescribed a cross-repo PB writer change. Measured: **August was
+  29/29 meeting tasks WITH a real creation row.** The emit shipped 2026-07-09
+  and has held since; the gap was 37 historical rows. The whole cross-repo half
+  of that issue did not exist.
+- **#87 asked to build publications-per-person.** Already built and working
+  (OpenAlex + ORCID, `author_slugs`); the page was CRASHING before it could
+  render them.
+- **#109's plan is only two-thirds achievable** — see landmine 2.
+
+## ⚠️ LANDMINES — do not re-derive these
+
+1. **`activity_entries.project_id` is captured at INSERT from the payload.** A
+   task that gets its project AFTER creation has a creation row pointing at
+   NULL, and a moved task has one pointing at the OLD project — so neither
+   reaches the feed of the project the task is in. That, not a missing writer,
+   is why the client-side synthetic row existed. 43 rows re-pointed at the
+   task's project (26 from NULL, 17 real moves) in
+   `scripts/backfill-113b-align-project-id.sql`, which enumerates every UPDATE
+   by id and ships a matching rollback file. **Nick's call: the creation line
+   follows the task**; the move is already narrated by its own event.
+2. **`mtg_<timestamp>` task ids are UNRESOLVABLE, permanently.** Of 124
+   meeting-linked tasks, 87 resolve and 37 do not — every failure is the
+   `mtg_` form from PB `capture/controller.py:367`. It carries no title, and
+   `meetings` has a `date` column with **no time**, so 23 fall on days with
+   several meetings and 14 on days with no meeting row at all. "Backfill
+   everything then delete the bridge" cannot happen. `meetingHrefFor` must
+   still NEVER fall back to `meeting_id`.
+3. **A stale hashed chunk survives `?bust=` on the page URL.** Verifying #113
+   cost ~10 min because the tab held `MemberPage-Dt5A7K6E.js` while prod served
+   `CrHSxx7W`. `fetch(url, {cache:'no-store'})` from the page and read the
+   `assets/index-*.js` ref out of the HTML — that tells you whether the EDGE or
+   the TAB is stale. Only a **fresh tab** picked up the new build.
+4. **Production React swallows ErrorBoundary-caught errors** — console is
+   silent and `read_console_messages` returns nothing. Pull the error off the
+   boundary's fiber instead: walk `__reactFiber$*` up from the error UI node to
+   a `stateNode.state.error`. That is what produced the stack that found the
+   member-page crash in one step.
+
+## Prod data written this session (both idempotent, both with rollback)
+
+- `scripts/backfill-113-created-entries.sql` — 37 missing `created` lifecycle
+  rows. Keyed `source_id='backfill-113:<task_id>:created'` against the partial
+  `UNIQUE(source_table, source_id)` index, so a re-run writes 0. Rollback: one
+  DELETE on that prefix.
+- `scripts/backfill-113b-align-project-id.sql` — 43 `project_id` re-points,
+  with `...rollback.sql` holding the exact prior values.
+
+## Open / next
+
+- **PB backlog #1593** (was GitHub #109) — meeting-id writers. Spec:
+  `Context/Decisions/2026-08-18-meeting-id-writers-mint-the-canonical-meetings-id.md`.
+  Parked because step 2 makes a DAILY pipeline fail-closed and wants Nick
+  watching a live meeting run.
+- **PB backlog #1595** (was GitHub #110) — per-gap timeline scale, step 2.
+- **GitHub issues #87, #109, #110, #113, #114–#117 are all CLOSED.** #109/#110
+  are closed as SCHEDULED, pointing at the backlog rows — do not reopen them
+  as "unowned work".
+
+---
+
 # ▶▶ BUG SWEEP #111/#112 — SHIPPED + DEPLOYED (2026-08-05). Live = `bb9af5ec` (probe PASS). Bug queue EMPTY, both GitHub issues closed. Frontend only — no schema/migration/route change (still v104 / 257 routes). api 1329 · lib 262 · src 157.
 
 **3 commits, all deployed + pushed.** `ced41e6a` (the two fixes) · `6a2da406` (memo tidy) · `bb9af5ec` (session-close `/simplify`). Deployed twice — the second time because `/simplify` changed shipped code, which put prod behind HEAD.
@@ -38,14 +108,17 @@
    component's own predicate over freshly fetched data before blaming the code —
    here the predicate said `wouldDrop: 1` the whole time. Memory:
    `project_repo-environment-gotchas` point 7.
-3. **The synthetic action-item row and its dedupe are ONE mechanism — remove
-   them together (#113).** `actionItemToLifecycleRow` exists only because PB's
+3. ~~**The synthetic action-item row and its dedupe are ONE mechanism — remove
+   them together (#113).**~~ **DONE 2026-08-18 (`d758c1c9`) — both halves are
+   gone; the premise below was also wrong (PB never bypassed `applyInsert`).
+   See the 2026-08-18 section at the top.** `actionItemToLifecycleRow` exists only because PB's
    meeting-extraction writer bypasses the Hub's `applyInsert` and never mints a
    real `created` entry; `createdTaskIds` exists only to suppress the resulting
    double-narration where a real row does exist. Neither will look dead to a
    simplification pass. Same shape as #109.
-4. **Synthetic feed rows carry an explicit `_synthetic` flag** — do NOT go back
-   to sniffing the `action-` id prefix. The id is a React key; deriving "is this
+4. ~~**Synthetic feed rows carry an explicit `_synthetic` flag** — do NOT go back
+   to sniffing the `action-` id prefix.~~ **MOOT 2026-08-18 — there are no
+   synthetic feed rows any more; the flag was deleted with them.** The id is a React key; deriving "is this
    real" from its spelling means a key change silently re-enables
    delete/edit/dismiss on a row the server cannot resolve.
 
@@ -111,7 +184,10 @@ building anything new here.
 
 ## ⚠️ LANDMINES — do not re-derive these
 
-1. **`pxForGap` MUST stay `minutes × PX_PER_MIN`.** A gap's interior is a
+1. **A gap's height MUST stay `minToPx(minutes)`.** (Was written as
+   `minutes × PX_PER_MIN`; since `a738ec5c` the ratio is module-private and the
+   six sites share `minToPx`/`pxToMin`, so this is now a compile error rather
+   than a convention.) A gap's interior is a
    COORDINATE SYSTEM, not whitespace: **six** call sites convert pointer pixels to
    minutes by dividing by the global `PX_PER_MIN` — list-drop (`TodayDndContext`),
    block move + resize (`useTaskBlockDrag`, `useTaskBlockGesture`), task-block

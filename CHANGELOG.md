@@ -3,6 +3,28 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-08-18 — bug sweep #114–#117, plus the backlog cleared down to zero
+
+Frontend + two prod D1 backfills; no schema, migration, route or API change (still v104 / 257 routes). 10 commits, deployed, every probe PASS. GitHub issue list is empty for the first time.
+
+**#114 — clicking a task on Lab Overview changed its status.** The Tasks card cycled `todo → in_progress`, everything else → `done`, on any row click. Reading a task mutated it, and nothing opened it. It now opens `TaskDetailPanel`, portalled to `<body>` — `DashboardGrid` puts a CSS transform on every widget, and a transformed ancestor becomes the containing block for `position: fixed`, so an in-place panel would have been clipped into the card.
+
+**#115 — an unreadable dropdown in the top-right.** The release-notes pill painted its popover with `var(--surface-2)`, which in dark mode is `rgba(255,255,255,0.06)` — a tint meant to sit on an opaque surface, so the page showed through it. Now `var(--cream)` (Rule 45). Its `var(--surface-2, var(--cream))` fallback had never fired: the token is always defined. The pill also read "Phase 36c shipped" and the panel said "Just shipped" about an April release; now "What's new" and "Released".
+
+**#116 — a planned task was invisible.** Measured on prod: the gold 3% fill and 18% dashed border composited to **1.38:1** against the strip behind them. Now 8% / 70% — 4.5:1 dark, 3.4:1 light, clearing the 3:1 non-text bar in both themes, outline still dashed.
+
+**#117 — the Work-on and folder icons could not be found.** They were `opacity: 0` behind a self-hover rule, so you had to hover something invisible to learn it was there. They now follow the row's hover state, the same one the drag grip uses.
+
+**A crash nobody reported.** `/portal/team/<anyone>` was dying on `item.description.length` in `MenteeDashboard`; `tasks.description` is nullable and 9 open meeting-linked tasks have none. It renders the task name through the shared `TaskTitle` now — which is the right field anyway, the same correction #112 made to project rows.
+
+**#110 step 1 — the timeline invariant became structural.** `PX_PER_MIN` is module-private; the six px↔minute sites share `minToPx`/`pxToMin`. Importing the bare ratio is now TS2459. No behaviour change: identical arithmetic, wrapped.
+
+**#113 — the synthetic action-item row is retired.** Its stated premise was wrong: PB never bypassed `applyInsert` (August measured 29/29 with real creation rows). The real blocker was `activity_entries.project_id`, captured at INSERT, so a task that got its project later had a creation row pointing at NULL. 37 missing rows backfilled, 43 re-pointed at the task's project, then `actionItemToLifecycleRow`, `createdTaskIds` and `_synthetic` all deleted together.
+
+**#87 was already done.** Publications-per-person works via OpenAlex + ORCID; the crash was hiding it. 77 for Nick, matching D1 exactly.
+
+**#109 and #110 closed as SCHEDULED**, into PB backlog #1593 and #1595, with a decision doc for the meeting-id work. Neither is abandoned; both have specs.
+
 ## 2026-08-05 — bug sweep #111/#112: the project activity feed
 
 > ⚠️ **Gap notice.** The 2026-07-24/25 sweep (#98/#101/#102/#103) and the 2026-08-03 sweep (#104–#108 + the Today-timeline work) shipped without a CHANGELOG entry — their record lives in `SESSION-HANDOFF.md`. Read that for anything between 07-22 and 08-05. Two skipped entries in a row is how this file stops being "what changed"; the fix is to write the entry at close, not to backfill three weeks from memory.
