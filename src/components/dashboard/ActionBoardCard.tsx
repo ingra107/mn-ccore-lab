@@ -1,4 +1,5 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { CheckCircle2, ClipboardList, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
@@ -10,15 +11,24 @@ import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
 import DueLabel from '../DueLabel'
 import { DoneBox } from '../tasks/TaskRow'
+import TaskDetailPanel from '../tasks/TaskDetailPanel'
 import TaskTitle from '../tasks/TaskTitle'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
+import type { TaskRow as TaskRowData } from '../../lib/api'
 
 function ActionBoardCard() {
   const { data: items = [] } = useTasks() // Already deduped by useTasks hook
   const updateStatus = useUpdateTaskStatus()
   const { showUndo } = useUndoToast()
+  // #114: clicking a row opens the editor. It used to CYCLE THE STATUS
+  // (todo → in_progress, anything else → done), which meant every attempt to
+  // read a task silently mutated it — and Rule 9 / Rule 68 say the square is
+  // the only thing that completes. The panel mounts here rather than routing
+  // to /portal/my-tasks?openTask= because this card is the surface you are
+  // already on (Rule 63e).
+  const [detailTask, setDetailTask] = useState<TaskRowData | null>(null)
 
   const pending = items.filter((i) => !isTaskDone(i))
   const completed = items.filter((i) => isTaskDone(i))
@@ -56,12 +66,7 @@ function ActionBoardCard() {
                       return (
                         <div key={item.id} className="flex items-start gap-2 py-1.5 pl-7 action-board-row"
                           style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}`, cursor: 'pointer', borderRadius: 'var(--radius-sm)', margin: '0 -4px', padding: '6px 4px 6px 28px', transition: 'background 0.15s' }}
-                          onClick={() => {
-                            const next = item.status === 'todo' ? 'in_progress' : 'done'
-                            const prev = item.status
-                            updateStatus.mutate({ id: item.id, status: next })
-                            showUndo(`Status → ${next === 'done' ? 'Done' : 'In Progress'}`, () => updateStatus.mutate({ id: item.id, status: prev }))
-                          }}>
+                          onClick={() => setDetailTask(item)}>
                           {/* C15 DoneBox — canonical square = complete */}
                           <DoneBox
                             done={isTaskDone(item)}
@@ -115,6 +120,15 @@ function ActionBoardCard() {
           View all tasks <ArrowRight {...ICON_PROPS} size={11} />
         </Link>
       </div>
+      {/* Portalled to <body> on purpose: DashboardGrid renders every widget
+          inside a react-grid-layout item that carries a CSS transform
+          (useCSSTransforms), and a transformed ancestor becomes the containing
+          block for position:fixed — so the panel and its backdrop would be
+          clipped into this card instead of covering the viewport. */}
+      {detailTask && createPortal(
+        <TaskDetailPanel task={detailTask} onClose={() => setDetailTask(null)} />,
+        document.body,
+      )}
       <style>{`
         .action-board-row:active { background: var(--gold-hover); }
         .action-board-row:hover { background: var(--gold-hover); }
