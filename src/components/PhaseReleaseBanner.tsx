@@ -98,8 +98,6 @@ export default function PhaseReleaseBanner() {
     persistDismissed(dismissed)
   }
 
-  const shortLabel = release.title.split('—')[0].trim()
-
   return (
     <div ref={panelRef} style={{ position: 'relative', display: 'inline-flex' }}>
       <button
@@ -109,7 +107,9 @@ export default function PhaseReleaseBanner() {
         className="phase-pill"
       >
         <span className="phase-pill-dot" aria-hidden="true" />
-        <span>{shortLabel} shipped</span>
+        {/* #115: the pill used to read "Phase 36c shipped" — an internal phase
+            number tells a reader nothing about what the control does. */}
+        <span>What&rsquo;s new</span>
         <ChevronRight {...ICON_PROPS}
           size={12}
           style={{
@@ -136,7 +136,13 @@ export default function PhaseReleaseBanner() {
               marginTop: 6,
               width: 340,
               padding: 'var(--sp-md)',
-              background: 'var(--surface-2, var(--cream))',
+              // Rule 45: a floating panel must be FULLY OPAQUE. --surface-2 is
+              // a tint meant to sit on top of an opaque surface — in dark mode
+              // it is rgba(255,255,255,0.06), so the page showed straight
+              // through this popover and the text was unreadable (#115). The
+              // `var(--surface-2, var(--cream))` fallback never fired: the
+              // token is always defined, so --cream was dead code.
+              background: 'var(--cream)',
               border: '1px solid var(--border-default)',
               borderRadius: 'var(--radius-lg)',
               boxShadow: 'var(--shadow-menu)',
@@ -147,7 +153,9 @@ export default function PhaseReleaseBanner() {
             <div className="flex items-start justify-between gap-2" style={{ marginBottom: 6 }}>
               <div>
                 <div style={{ fontSize: 10, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                  Just shipped · {release.date}
+                  {/* Was "Just shipped ·" — the pill stays up until dismissed,
+                      so it kept calling a months-old release brand new. */}
+                  Released · {release.date}
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, marginTop: 2, lineHeight: 1.3 }}>
                   {release.title}
