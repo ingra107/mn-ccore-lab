@@ -43,7 +43,17 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
       data-task-id={task.id}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      style={{ background: withAlpha(ACCENT_GOLD, 3), border: `1px dashed ${withAlpha(ACCENT_GOLD, 18)}`, borderRadius: 6, overflow: 'hidden', transition: 'all 120ms' }}
+      // #116 — the planned card has to READ. Measured on live prod (dark): the
+      // old gold 3% fill + gold 18% dashed border composited to 1.38:1 against
+      // the strip behind it, i.e. an outline you cannot see. Gold 8% / 70%
+      // measures 4.5:1 dark and 3.4:1 light, clearing the 3:1 WCAG 1.4.11
+      // non-text bar in BOTH themes. The outline stays dashed (Nick's ask) —
+      // dashed vs solid is what separates "planned" from a normal row.
+      //
+      // Drop targets are unaffected: every one of them signals with a colour
+      // change PLUS a fill appearing (and, in agenda mode, a height change), so
+      // a louder resting row does not swallow the drag affordance.
+      style={{ background: withAlpha(ACCENT_GOLD, 8), border: `1px dashed ${withAlpha(ACCENT_GOLD, 70)}`, borderRadius: 6, overflow: 'hidden', transition: 'all 120ms' }}
     >
       <div onClick={() => !isDone && onExpand(task.id)} style={{ display: 'flex', gap: 9, padding: small ? '6px 10px' : '8px 12px', alignItems: 'flex-start', cursor: isDone ? 'default' : 'pointer' }}>
         {timeHint && (
