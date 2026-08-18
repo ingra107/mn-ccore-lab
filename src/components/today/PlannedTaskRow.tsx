@@ -111,14 +111,22 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
                 <GripHorizontal {...ICON_PROPS} size={12} />
               </span>
             )}
-            {/* Compact WorkOnActions — hidden until hover (CSS hov-opacity).
+            {/* Compact WorkOnActions — revealed by hovering the ROW, using the
+                same `hover` state the drag grip above already uses (#117).
+                It was `opacity: 0` + .hov-opacity, which only reveals on hover
+                of the cluster ITSELF — an affordance you cannot find, because
+                finding it requires landing on something invisible. Every other
+                surface that renders WorkOnActions (Today's unplanned rows,
+                MyTasks List, InlineDetail, ProjectDetail) shows it outright;
+                this row was the only one hiding it.
+                visibility, not opacity, so it stays out of the AT tree while
+                hidden (Rule 27) and the row does not reflow on hover.
                 stopPropagation prevents the click from expanding the row. */}
             {project?.primary_folder && (
               <span
                 onClick={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
-                className="hov-opacity"
-                style={{ display: 'inline-flex', alignItems: 'center', opacity: 0, '--hov-opacity': '1' } as React.CSSProperties}
+                style={{ display: 'inline-flex', alignItems: 'center', visibility: hover ? 'visible' : 'hidden' }}
               >
                 <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.name} variant="compact" />
               </span>
