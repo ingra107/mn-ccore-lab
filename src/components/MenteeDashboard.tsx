@@ -104,9 +104,12 @@ export default function MenteeDashboard({ slug, name }: Props) {
                         renderer: it prefers the curated short_title, keeps
                         description as a fallback, lifts a [Carried forward]
                         prefix into a chip, and is null-safe by construction. */}
-                    <span style={{ fontSize: '11px', color: 'var(--ink)', lineHeight: 1.3 }}>
-                      <TaskTitle title={item.short_title || item.title} fallback={item.description} maxChars={60} />
-                    </span>
+                    <TaskTitle
+                      title={item.short_title || item.title}
+                      fallback={item.description}
+                      maxChars={60}
+                      style={{ fontSize: '11px', color: 'var(--ink)', lineHeight: 1.3 }}
+                    />
                   </div>
                 )
               })}
