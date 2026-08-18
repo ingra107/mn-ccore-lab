@@ -12,6 +12,7 @@ import HoverCard from './HoverCard'
 import type { HoverCardData } from './HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
 import { usePublications, useMeetingLinkedTasks, useProjects } from '../hooks/useApiData'
+import TaskTitle from './tasks/TaskTitle'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { isTaskDone } from '../lib/taskGrouping'
@@ -91,8 +92,20 @@ export default function MenteeDashboard({ slug, name }: Props) {
                 return (
                   <div key={item.id} className="flex items-start gap-1.5">
                     <Circle {...ICON_PROPS} size={10} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, marginTop: '3px', flexShrink: 0 }} />
+                    {/* The row names the TASK, not its description.
+                        `tasks.description` is nullable, and reading .length off
+                        it crashed this whole page for any member holding an open
+                        meeting-linked task without one (measured: 9 such tasks
+                        on prod, all Nick's). It was also the wrong field to show
+                        even when present -- for a meeting-extracted task the
+                        description is provenance boilerplate ("From the ...
+                        meeting on ..."), which is exactly what #112 took off the
+                        project action-item rows. TaskTitle is the shared
+                        renderer: it prefers the curated short_title, keeps
+                        description as a fallback, lifts a [Carried forward]
+                        prefix into a chip, and is null-safe by construction. */}
                     <span style={{ fontSize: '11px', color: 'var(--ink)', lineHeight: 1.3 }}>
-                      {item.description.length > 60 ? item.description.slice(0, 57) + '...' : item.description}
+                      <TaskTitle title={item.short_title || item.title} fallback={item.description} maxChars={60} />
                     </span>
                   </div>
                 )
