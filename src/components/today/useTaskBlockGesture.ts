@@ -15,7 +15,7 @@
 //   - Touch: pointer events fire on touch → same gesture paths work on mobile.
 
 import { useRef, useState, useCallback, type PointerEvent as ReactPointerEvent } from 'react'
-import { PX_PER_MIN } from './timelineModel'
+import { minToPx, pxToMin } from './timelineModel'
 import type { PlannedSlot } from './constants'
 
 // ── Snap helper ──────────────────────────────────────────────────────────────
@@ -179,7 +179,7 @@ export function useTaskBlockGesture({
       // Fix A: snap the live preview to match the ghost + eventual commit.
       // Cross-gap: use resolveAcrossGaps when freeWindows available, otherwise
       // fall back to single-gap clamp [gapStartMin, gapEndMin - dur].
-      const rawNew = planStartMin + deltaY / PX_PER_MIN
+      const rawNew = planStartMin + pxToMin(deltaY)
       const snapped = snap15(rawNew)
       let clamped: number
       if (freeWindows && freeWindows.length > 0) {
@@ -189,7 +189,7 @@ export function useTaskBlockGesture({
         const maxStart = gapEndMin - dur
         clamped = Math.max(gapStartMin, Math.min(maxStart, snapped))
       }
-      setTranslatePx((clamped - planStartMin) * PX_PER_MIN)
+      setTranslatePx(minToPx(clamped - planStartMin))
       onGhostUpdate?.(taskId, clamped)
     } else if (g.mode === 'resize') {
       setHeightDeltaPx(deltaY)
@@ -235,7 +235,7 @@ export function useTaskBlockGesture({
     // Mark committed so a late pointerup doesn't double-fire onExpand
     g.committed = true
 
-    const deltaMins = deltaY / PX_PER_MIN
+    const deltaMins = pxToMin(deltaY)
 
     if (gMode === 'move') {
       const rawNewStart = planStartMin + deltaMins

@@ -38,7 +38,7 @@ import type { FreeWindow } from './useTaskBlockGesture'
 import { EventRow, type SaveStatus } from './MeetingRow'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
-  buildTimelineModel, pxForMeeting, PX_PER_MIN, GAP_FLOOR,
+  buildTimelineModel, pxForMeeting, minToPx, GAP_FLOOR,
   TIMELINE_TASK_BLOCKS, packTaskBlocks, MEETING_FLOOR,
   type TimelineUnit, type DayBalance,
 } from './timelineModel'
@@ -113,7 +113,7 @@ function computeNowPlacement(units: TimelineUnit[], now: number, dayStart: numbe
     const u = units[i]
     if (u.kind === 'untimed') continue
     if (now < u.startMin) return { mode: 'before', index: i }
-    if (now < u.endMin) return { mode: 'within', index: i, offsetPx: Math.round((now - u.startMin) * PX_PER_MIN) }
+    if (now < u.endMin) return { mode: 'within', index: i, offsetPx: Math.round(minToPx(now - u.startMin)) }
   }
   return { mode: 'trail' }
 }
@@ -428,8 +428,8 @@ function AgendaGapRow({
     if (!p) return null
     const dur = ghostTask.estimated_minutes ?? 30
     return {
-      topPx: Math.round((snappedMin - gapStartMin) * PX_PER_MIN),
-      heightPx: Math.max(MEETING_FLOOR, Math.round(dur * PX_PER_MIN)),
+      topPx: Math.round(minToPx(snappedMin - gapStartMin)),
+      heightPx: Math.max(MEETING_FLOOR, Math.round(minToPx(dur))),
       colIdx: p.colIdx,
       colCount: p.colCount,
     }
@@ -758,7 +758,7 @@ function AgendaOverlapRegion({
   // Start offset for stagger: minutes from cluster start → px
   const startOffsetPx = (e: TodayEvent): number =>
     typeof e.startMin === 'number'
-      ? Math.round((e.startMin - unit.startMin) * PX_PER_MIN)
+      ? Math.round(minToPx(e.startMin - unit.startMin))
       : 0
 
   return (
@@ -1135,9 +1135,9 @@ export function TimelineGrid({
             (internal scroll if there are ever many blocks). The time-range text
             still conveys the span, so dropping proportional height loses nothing. */}
         {serviceBlocks.length > 0 && (() => {
-          // Same axis the agenda uses (dayStart→dayEnd × PX_PER_MIN): bounds the
+          // Same axis the agenda uses (minToPx(dayEnd - dayStart)): bounds the
           // rail to "the full day" with no measurement / ResizeObserver.
-          const serviceDayHeight = Math.round((model.dayEnd - dayStart) * PX_PER_MIN)
+          const serviceDayHeight = Math.round(minToPx(model.dayEnd - dayStart))
           const serviceCols = serviceBlocks.length <= 1 ? 1 : 2
           return (
           <div style={{

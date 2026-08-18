@@ -45,7 +45,7 @@ import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { PlannedSlot } from './constants'
 import type { TaskRow } from '../../lib/api'
 import { ACCENT_GOLD, INK, withAlpha } from './constants'
-import { PX_PER_MIN, TIMELINE_TASK_BLOCKS } from './timelineModel'
+import { pxToMin, TIMELINE_TASK_BLOCKS } from './timelineModel'
 
 // ── Data types carried on active.data.current ──────────────────────────────
 
@@ -148,7 +148,7 @@ export function TodayDndContext({ children, state, tasks }: TodayDndContextProps
     } else {
       // List drag: recover pointer-Y precision using dnd-kit's event data
       // (Directive 2, 2026-06-22). Mirrors the old HTML5 onDrop math:
-      //   rawMins = gapStartMin + (e.clientY - gapTop) / PX_PER_MIN
+      //   rawMins = gapStartMin + pxToMin(e.clientY - gapTop)
       //   snapped = round(rawMins / 15) * 15
       //   startMin = clamp(snapped, gapStartMin, gapEndMin − estimatedMins)
       //
@@ -173,7 +173,7 @@ export function TodayDndContext({ children, state, tasks }: TodayDndContextProps
         if (startClientY != null && gapTop != null) {
           // current pointer Y = Y at drag start + accumulated delta
           const currentClientY = startClientY + event.delta.y
-          const rawMins = gapStartMin + (currentClientY - gapTop) / PX_PER_MIN
+          const rawMins = gapStartMin + pxToMin(currentClientY - gapTop)
           const snapped = Math.round(rawMins / 15) * 15
           startMin = Math.max(gapStartMin, Math.min(gapEndMin - estimatedMins, snapped))
         }

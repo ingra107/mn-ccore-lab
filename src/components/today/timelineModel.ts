@@ -53,9 +53,29 @@ export const TIMELINE_TASK_BLOCKS = true
 //
 // The whole-day free-time signal no longer rests on raw height alone: the
 // DayBalanceStrip above the axis states it from model MINUTES.
-export const PX_PER_MIN = 0.7      // was 0.9; 0.6 + a 40px floor was the old defect
+//
+// #110 — the ratio is deliberately NOT exported. It used to be, and six call
+// sites imported it and multiplied or divided by it inline, which made "a gap's
+// height is minutes × ratio" an invariant six files had to independently keep
+// true. The only guard was the comment on pxForGap below. Now the ratio is
+// module-private and the conversion is a function pair: a new call site
+// physically cannot reach the bare number to drift from them, because there is
+// nothing to import. That turns the comment into a compile error.
+const PX_PER_MIN = 0.7             // was 0.9; 0.6 + a 40px floor was the old defect
 export const MEETING_FLOOR = 27    // lowered from 40 — 30min hits this floor, 60min=42px
 export const GAP_FLOOR = 24        // min-height for a gap row
+
+/**
+ * minutes → pixels on the timeline axis. Exact (no rounding) — round at the
+ * point you write a style, so continuous drag transforms stay sub-pixel.
+ */
+export const minToPx = (min: number): number => min * PX_PER_MIN
+
+/**
+ * pixels → minutes on the timeline axis. The exact inverse of minToPx.
+ * Every pointer-position-to-time conversion goes through here.
+ */
+export const pxToMin = (px: number): number => px / PX_PER_MIN
 
 // ── Morning planning floor ─────────────────────────────────────────────────
 // dayStart is always ≤ MORNING_FLOOR (7 AM) so the axis covers pre-first-event
@@ -65,24 +85,29 @@ export const GAP_FLOOR = 24        // min-height for a gap row
 export const MORNING_FLOOR = 7 * 60   // 7:00 AM in minutes-since-midnight
 
 export const pxForMeeting = (min: number): number =>
-  Math.max(MEETING_FLOOR, Math.round(min * PX_PER_MIN))
+  Math.max(MEETING_FLOOR, Math.round(minToPx(min)))
 
-// ⚠️ A GAP'S HEIGHT MUST STAY min * PX_PER_MIN. It is not just a visual
-// choice — the gap's interior is a coordinate system. Six call sites convert
-// pointer pixels to minutes inside a gap by dividing by this same global
-// constant: the list-drop math (TodayDndContext), block move and resize
-// (useTaskBlockDrag, useTaskBlockGesture), task-block placement
-// (packTaskBlocks below), and the drop preview + in-unit now-line offset
-// (TimelineGrid). Rendering a gap at anything other than its linear height
-// makes every one of those conversions wrong, so a task dropped near the
-// bottom of a long gap would be saved at the wrong time.
+// ⚠️ A GAP'S HEIGHT MUST STAY minToPx(min). It is not just a visual choice —
+// the gap's interior is a coordinate system. Six call sites convert pointer
+// pixels to minutes inside a gap through pxToMin: the list-drop math
+// (TodayDndContext), block move and resize (useTaskBlockDrag,
+// useTaskBlockGesture), task-block placement (packTaskBlocks below), and the
+// drop preview + in-unit now-line offset (TimelineGrid). Rendering a gap at
+// anything other than its linear height makes every one of those conversions
+// wrong, so a task dropped near the bottom of a long gap would be saved at the
+// wrong time.
+//
+// Since #110 those six sites share one function pair rather than one bare
+// number, so they cannot drift apart. What is still only prose is THIS
+// function's promise to render at that height — hence the linearity test in
+// timelineModel.test.ts.
 //
 // This was measured 2026-08-03 while trying to compress long gaps to cut the
 // timeline's height (~77% of it is empty gap). Compression is still the right
 // idea, but it requires threading a PER-GAP scale through all six sites, not
 // changing this function alone. See the height options written up for Nick.
 export const pxForGap = (min: number): number =>
-  Math.max(GAP_FLOOR, Math.round(min * PX_PER_MIN))
+  Math.max(GAP_FLOOR, Math.round(minToPx(min)))
 
 // ── Duration helpers ───────────────────────────────────────────────────────
 function duration(e: TodayEvent): number {
@@ -218,8 +243,8 @@ export function packTaskBlocks(
   return sorted.map((t, i) => {
     const start = t.plan_start_min as number
     const dur = t.estimated_minutes ?? 30
-    const topPx = Math.round((start - gapStartMin) * PX_PER_MIN)
-    const heightPx = Math.max(MEETING_FLOOR, Math.round(dur * PX_PER_MIN))
+    const topPx = Math.round(minToPx(start - gapStartMin))
+    const heightPx = Math.max(MEETING_FLOOR, Math.round(minToPx(dur)))
     return { id: t.id, ...placements[i], topPx, heightPx }
   })
 }

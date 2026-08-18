@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   pxForMeeting, pxForGap, buildTimelineModel,
-  PX_PER_MIN, MEETING_FLOOR, GAP_FLOOR,
+  minToPx, MEETING_FLOOR, GAP_FLOOR,
 } from './timelineModel'
 import type { TodayEvent } from './constants'
 
@@ -37,12 +37,14 @@ describe('meeting duration hierarchy', () => {
 
 describe('pxForGap is LINEAR in minutes', () => {
   // Not cosmetic. A gap's interior is a coordinate system: six call sites turn
-  // pointer pixels into minutes by dividing by PX_PER_MIN. If a gap is rendered
-  // at anything other than its linear height, a task dropped near its bottom is
-  // saved at the wrong time. This test is the guard on that invariant.
-  it('holds px == minutes * PX_PER_MIN above the floor', () => {
+  // pointer pixels into minutes through pxToMin, the exact inverse of minToPx.
+  // If a gap is rendered at anything other than its linear height, a task
+  // dropped near its bottom is saved at the wrong time. Since #110 the six
+  // sites share one function pair, so they cannot drift from each other — what
+  // this test still guards is that pxForGap RENDERS at that shared height.
+  it('holds px == minToPx(minutes) above the floor', () => {
     for (const min of [60, 90, 120, 180, 240, 480]) {
-      expect(pxForGap(min)).toBe(Math.round(min * PX_PER_MIN))
+      expect(pxForGap(min)).toBe(Math.round(minToPx(min)))
     }
   })
 

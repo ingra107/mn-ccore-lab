@@ -27,7 +27,7 @@
 
 import { useRef, useState, useCallback, type PointerEvent as ReactPointerEvent } from 'react'
 import { useDraggable } from '@dnd-kit/core'
-import { PX_PER_MIN } from './timelineModel'
+import { minToPx, pxToMin } from './timelineModel'
 import type { TaskRow } from '../../lib/api'
 import { resolveAcrossGaps, type FreeWindow } from './useTaskBlockGesture'
 
@@ -110,7 +110,7 @@ export function useTaskBlockDrag({
   let translatePx = 0
   let snappedMin = planStartMin
   if (isDragging && transform) {
-    const rawNew = planStartMin + transform.y / PX_PER_MIN
+    const rawNew = planStartMin + pxToMin(transform.y)
     const snapped = snap15(rawNew)
     let clamped: number
     if (freeWindows && freeWindows.length > 0) {
@@ -121,7 +121,7 @@ export function useTaskBlockDrag({
       clamped = Math.max(gapStartMin, Math.min(maxStart, snapped))
     }
     snappedMin = clamped
-    translatePx = (clamped - planStartMin) * PX_PER_MIN
+    translatePx = minToPx(clamped - planStartMin)
     commitStartMinRef.current = clamped
   }
 
@@ -172,7 +172,7 @@ export function useTaskBlockDrag({
 
     if (Math.abs(deltaY) < 8) return
 
-    const rawNewDur = dur + deltaY / PX_PER_MIN
+    const rawNewDur = dur + pxToMin(deltaY)
     const snapped = snap15(rawNewDur)
     const clamped = Math.max(15, Math.min(480, snapped))
     if (clamped !== dur) {
