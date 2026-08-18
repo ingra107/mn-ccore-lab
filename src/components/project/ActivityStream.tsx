@@ -24,8 +24,6 @@ import {
   HelpCircle,
   Activity as ActivityIcon,
 } from 'lucide-react'
-import { useMeetingLinkedTasks } from '../../hooks/useApiData'
-import type { TaskRow } from '../../lib/api'
 import { usePostProjectUpdate, useAddComment, useDeleteActivityEntry, useEditActivityEntry, useDismissThread } from '../../hooks/useMutations'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
@@ -33,7 +31,7 @@ import { useToast } from '../../hooks/useToast'
 import SmartCompose from '../SmartCompose'
 import EmptyState from '../EmptyState'
 import type { Project } from '../../data/types'
-import { deriveRenderKind, filterMatchesKind, isRepliableKind, lifecycleEventOf, lifecycleMetadata } from '../../../shared/activityKinds'
+import { deriveRenderKind, filterMatchesKind, isRepliableKind } from '../../../shared/activityKinds'
 import {
   ActivityEntryItem,
   type ActivityEntryItemRow,
@@ -59,44 +57,6 @@ interface Props {
   /** #111 — open a task named in the feed WHERE THE VIEWER IS. Returns true when
    *  the surface actually opened it; false lets the link's href navigate. */
   onOpenTask?: (taskId: string) => boolean
-}
-
-// ── Action items → lifecycle rows (#112) ─────────────────────────────────────
-//
-// A meeting-linked task is a task; the feed already has one renderer for "a task
-// changed" — LifecycleActivityLine, reached by kind 'system'. So instead of a
-// second card anatomy, an action item becomes a synthetic system row and flows
-// through the exact renderer that produces "＋ Created this task · <name> — Nick".
-//
-// Synthetic because there is no activity_entries row to render: these tasks are
-// written by PB's meeting extraction, which never goes through the Hub's
-// applyInsert and so never mints a `created` lifecycle entry. Where the Hub DID
-// mint one (approval-created tasks), the real row wins and this one is dropped —
-// see createdTaskIds below — so the same creation is never narrated twice.
-function actionItemToLifecycleRow(task: TaskRow): UnifiedEntryRow {
-  const origin = task.meeting_title ? `from ${task.meeting_title}` : 'from a meeting'
-  return {
-    id: `action-${task.id}`,
-    entity_type: 'task',
-    entity_id: task.id,
-    project_id: null,
-    kind: 'system',
-    visibility: 'team',
-    actor_slug: task.assignee,
-    body: `Created this task · ${origin}`,
-    mentions_json: null,
-    update_type: null,
-    // eventOf() reads this to pick the glyph — 'created' gives the same gold ＋
-    // as a real creation row, which is what this row reports.
-    metadata_json: lifecycleMetadata('created'),
-    created_at: task.created_at,
-    // Carried as an explicit flag, NOT inferred from the id prefix: the id is a
-    // React key, and deriving "is this real" from its spelling means a future
-    // key change silently re-enables delete/edit/dismiss on a row the server
-    // cannot resolve.
-    _synthetic: true,
-    task_title: task.short_title || task.title,
-  }
 }
 
 // Note-type pills (mirrors ProjectUpdateFeed TYPE_CONFIG).
@@ -137,14 +97,6 @@ const itemMotion = {
 
 export default function ActivityStream({ project, filter, onOpenTask }: Props) {
   const slug = project.slug
-
-  // T19 (#547): meeting-linked tasks for this project (tasks.meeting_id),
-  // not the dead action_items table. Server-side project filter (task-cols
-  // resolves slug-or-typed-PK, api/routes/tasks.ts:131) replaces the old
-  // client-side `project_id === slug || project_id === title` heuristic,
-  // which was an action_items-specific artifact — TaskRow.project_id is
-  // already resolved to the canonical slug.
-  const { data: actionRows = [] } = useMeetingLinkedTasks({ project: project.slug })
 
   // ── Unified feed (Design C, v77) — whole-picture project activity ────────────
   // Includes project-level activity_entries AND task rows rolled up by project_id.
@@ -191,37 +143,20 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
   // Which composer to show in the combined ('all') view: note or comment.
   const [composeKind, setComposeKind] = useState<'note' | 'comment'>('note')
 
-  // Tasks whose creation the unified feed ALREADY narrates. An action item for
-  // one of these would render a second, identical "Created this task" line
-  // seconds apart (prod: 'CLIF meeting Qs for Jared' had both), so the real row
-  // wins and the synthetic one is dropped.
-  const createdTaskIds = useMemo(() => {
-    const ids = new Set<string>()
-    for (const e of unifiedEntries) {
-      if (e.entity_type !== 'task' || e.kind !== 'system') continue
-      if (lifecycleEventOf(e.metadata_json) === 'created') ids.add(e.entity_id)
-    }
-    return ids
-  }, [unifiedEntries])
-
-  // Merge sources into one time-ordered list, newest first. The unified feed
-  // IS the project's activity (project rows + task rollup); action items are
-  // the only remaining sidecar source.
+  // The unified feed IS the project's activity (project rows + task rollup).
+  // It used to be merged with a synthetic "Created this task" row fabricated
+  // per meeting-linked task, because those tasks' real creation rows either did
+  // not exist or carried the wrong project_id. Both were fixed at rest in #113
+  // (37 rows backfilled, 43 re-pointed at the task's project), so there is one
+  // source again. Do NOT reintroduce a client-side row here: a feed entry the
+  // server cannot resolve cannot be deleted, edited or dismissed.
   const events = useMemo(() => {
     const out: StreamEvent[] = []
-    // Action items only appear in the unfiltered ('all') view.
-    if (filter === 'all') {
-      for (const a of actionRows) {
-        if (createdTaskIds.has(a.id)) continue
-        const row = actionItemToLifecycleRow(a)
-        out.push({ ts: row.created_at, id: `act-${a.id}`, row })
-      }
-    }
     for (const e of unifiedEntries) {
       out.push({ ts: e.created_at, id: `ue-${e.id}`, row: e })
     }
     return out.sort((a, b) => (a.ts > b.ts ? -1 : a.ts < b.ts ? 1 : 0))
-  }, [actionRows, unifiedEntries, filter, createdTaskIds])
+  }, [unifiedEntries])
 
   // Apply the active filter via filterMatchesKind (shared/activityKinds.ts).
   const visible = useMemo(() => {
@@ -403,7 +338,7 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
                 event={event}
                 onOpenTask={onOpenTask}
                 onDeleteEntry={
-                  !event.row._synthetic && canDeleteActivityEntry(user, event.row.actor_slug)
+                  canDeleteActivityEntry(user, event.row.actor_slug)
                     ? () =>
                         deleteEntry.mutate({
                           id: event.row.id,
@@ -413,7 +348,7 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
                     : undefined
                 }
                 onEditEntry={
-                  !event.row._synthetic && canDeleteActivityEntry(user, event.row.actor_slug)
+                  canDeleteActivityEntry(user, event.row.actor_slug)
                     ? (body) =>
                         editEntry.mutate({
                           id: event.row.id,
@@ -424,7 +359,7 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
                     : undefined
                 }
                 onDismissEntry={
-                  !event.row._synthetic && canDeleteActivityEntry(user, event.row.actor_slug)
+                  canDeleteActivityEntry(user, event.row.actor_slug)
                     ? () =>
                         dismissThread.mutate({
                           id: event.row.id,

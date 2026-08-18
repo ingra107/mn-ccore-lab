@@ -246,11 +246,6 @@ export interface ActivityEntryItemRow {
   task_title?: string | null
   /** Derived at render from entity_type + kind. Never stored. */
   _renderKind?: string
-  /** True on a row a FEED fabricated rather than read from activity_entries
-   *  (ActivityStream's action-item lifecycle rows). Never stored, never sent.
-   *  Callers use it to withhold delete/edit/dismiss — those POST an entry id
-   *  the server has never seen. */
-  _synthetic?: boolean
 }
 
 // ── Per-surface prop contract ─────────────────────────────────────────────────
