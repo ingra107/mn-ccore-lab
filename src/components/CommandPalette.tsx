@@ -6,7 +6,7 @@ import {
   Clock, FolderKanban, FileText, Lightbulb, HelpCircle, BookOpen, DollarSign,
   Users, Plus, ArrowRight, Command, CalendarPlus,
   CheckCircle2, AlertTriangle, Flag, CircleDot, Scale, GitBranch,
-  Activity, BarChart3, Settings, Bug, Library,
+  Activity, BarChart3, Settings, Bug, Library, ListChecks,
 } from 'lucide-react'
 import { spring } from '../lib/animations'
 import { localDateKey, isOverdue } from '../lib/dateUtils'
@@ -261,6 +261,29 @@ export default function CommandPalette() {
         action: () => {
           void launch('mnccore://bugsquash', {
             successMessage: 'Launching Bug Squasher… (needs the mnccore:// handler installed on this machine)',
+          })
+          setOpen(false)
+        },
+        category: 'action',
+      })
+    }
+
+    // Backlog Wave — PI ONLY, same model as Bug Squasher above: exposed only
+    // here, fired through the protocol-launch chokepoint, honest toast because
+    // the local handler must be installed. Difference in what it drives: Bug
+    // Squasher works THIS repo's open bug reports; this one works the
+    // Peripheral-Brain improvement backlog and runs unattended — two waves of
+    // agents, codex on the hard rows, then a session close. The prompt is not
+    // inlined here or in the .bat; it lives in PB's backlog-wave skill.
+    if (user?.isPi) {
+      items.push({
+        id: 'action-backlog-wave',
+        label: 'Backlog Wave',
+        sublabel: 'Open a Claude session to work the improvement backlog autonomously',
+        icon: ListChecks,
+        action: () => {
+          void launch('mnccore://backlogwave', {
+            successMessage: 'Launching Backlog Wave… (needs the mnccore:// handler installed on this machine)',
           })
           setOpen(false)
         },

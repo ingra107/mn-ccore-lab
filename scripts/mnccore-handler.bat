@@ -28,6 +28,9 @@ echo %date% %time% ARGS: %* >> "%TEMP%\mnccore-handler.log"
 ::                                            allowlist — no other filename is ever executed.
 ::   mnccore://process                      → run %USERPROFILE%\Peripheral-Brain\Quick_Process.bat.
 ::   mnccore://bugsquash                     → run <this dir>\bug-squasher.bat (sibling).
+::   mnccore://backlogwave                  → run <this dir>\backlog-wave.bat (sibling).
+::                                            Works the PB improvement backlog, not this
+::                                            repo — the .bat cd's to Peripheral-Brain.
 ::   mnccore://quickchat                    → launch Quick_Chat_seeded.bat in PB root.
 ::   mnccore://obsidian/<url-encoded-note>  → open a vault note. WARM (Obsidian
 ::                                            running): the Obsidian CLI shim
@@ -104,6 +107,10 @@ if /I "!url!"=="process" (
 )
 if /I "!url!"=="bugsquash" (
     call :verb_bugsquash
+    exit /b !errorlevel!
+)
+if /I "!url!"=="backlogwave" (
+    call :verb_backlogwave
     exit /b !errorlevel!
 )
 if /I "!url!"=="quickchat" (
@@ -270,6 +277,29 @@ if defined MNCCORE_HANDLER_DRYRUN (
 :: CWD = the Hub repo root so the Claude session starts there (bug-squasher.bat
 :: also cd's there itself, but set it here too for the spawned window title/dir).
 start "" /D "%~dp0.." "!bs!"
+exit /b 0
+
+
+:: ── :verb_backlogwave ── run the sibling backlog-wave.bat ────────────────────
+:: SECURITY: identical model to :verb_bugsquash — the only thing this verb runs
+:: is the literal sibling file "%~dp0backlog-wave.bat". Refuses if it doesn't
+:: exist. No path argument is taken — nothing arbitrary is reachable.
+::
+:: NOTE the /D difference from bugsquash: this one works the Peripheral-Brain
+:: backlog, so the spawned window starts in PB, not this repo. The .bat cd's
+:: there itself and refuses if PB is missing; /D just matches so the window
+:: title and any relative path a human types land in the right tree.
+:verb_backlogwave
+set "bw=%~dp0backlog-wave.bat"
+if not exist "!bw!" (
+    call :fail "backlogwave: backlog-wave.bat not found at !bw!"
+    exit /b 1
+)
+if defined MNCCORE_HANDLER_DRYRUN (
+    echo DRYRUN backlogwave: start "" /D "%USERPROFILE%\Peripheral-Brain" "!bw!"
+    exit /b 0
+)
+start "" /D "%USERPROFILE%\Peripheral-Brain" "!bw!"
 exit /b 0
 
 
