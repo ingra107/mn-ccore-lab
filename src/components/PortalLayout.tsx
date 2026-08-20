@@ -172,15 +172,22 @@ export default function PortalLayout() {
             />
           </Link>
 
-          {/* Search trigger */}
+          {/* Search trigger — the ONLY way into the command palette on a device
+              with no keyboard, so it must render at every width. It used to be
+              `hidden sm:flex`, which made the palette unreachable on a phone:
+              no Cmd+K, no trigger, and every palette-only action (Bug Squasher,
+              Backlog Wave, quick filters) went with it. Below `sm` it collapses
+              to the icon alone; the label, the fixed width and the ⌘K hint are
+              desktop affordances and stay behind the breakpoint. */}
           <button
             onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
-            className="hidden sm:flex items-center gap-2 px-5 py-2 rounded-lg border text-sm transition-colors hover:bg-black/5"
-            style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', cursor: 'pointer', background: 'none', minWidth: '220px' }}
+            aria-label="Open command palette"
+            className="flex items-center gap-2 px-3 sm:px-5 py-2 sm:min-w-[220px] rounded-lg border text-sm transition-colors hover:bg-black/5"
+            style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', cursor: 'pointer', background: 'none' }}
           >
             <Search {...ICON_PROPS} size={14} />
-            <span>Search...</span>
-            <kbd className="text-[10px] px-1 py-0.5 rounded border ml-2" style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-subtle)' }}>
+            <span className="hidden sm:inline">Search...</span>
+            <kbd className="hidden sm:inline text-[10px] px-1 py-0.5 rounded border ml-2" style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-subtle)' }}>
               ⌘K
             </kbd>
           </button>
