@@ -14,6 +14,8 @@ import { isTaskDone } from '../lib/taskGrouping'
 import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
 import { useAuth } from '../hooks/useAuth'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
+import { useToast } from '../hooks/useToast'
+import { detectOrigin } from '../lib/launchOrigin'
 import { openGlobalQuickAdd } from './GlobalQuickAddModal'
 import { getPersonInfo } from '../data/team'
 import { PATHS, PUBLIC_PATHS } from '../constants/paths'
@@ -69,6 +71,7 @@ export default function CommandPalette() {
   const { user } = useAuth()
   const currentUserSlug = emailToSlug(user?.email)
   const { launch } = useProtocolLaunch()
+  const { showSuccess } = useToast()
 
   const [recentRoutes, setRecentRoutes] = useState<string[]>(() => {
     try {
@@ -268,23 +271,59 @@ export default function CommandPalette() {
       })
     }
 
-    // Backlog Wave — PI ONLY, same model as Bug Squasher above: exposed only
-    // here, fired through the protocol-launch chokepoint, honest toast because
-    // the local handler must be installed. Difference in what it drives: Bug
-    // Squasher works THIS repo's open bug reports; this one works the
-    // Peripheral-Brain improvement backlog and runs unattended — two waves of
-    // agents, codex on the hard rows, then a session close. The prompt is not
-    // inlined here or in the .bat; it lives in PB's backlog-wave skill.
+    // Backlog Wave — PI ONLY, same exposure model as Bug Squasher above. What
+    // it drives differs: Bug Squasher works THIS repo's open bug reports; this
+    // works the Peripheral-Brain improvement backlog unattended. The prompt is
+    // in neither this file nor the .bat — it lives in PB's backlog-wave skill.
+    //
+    // ORIGIN-AWARE, because a phone has no mnccore:// handler and firing the
+    // protocol there is a silent no-op:
+    //   computer → mnccore://backlogwave → the sibling .bat → a VISIBLE terminal
+    //              running `claude "/backlog-wave"` in Peripheral-Brain, so Nick
+    //              can watch and interrupt it.
+    //   mobile   → POST /api/launch-log, the SAME queue @quickchat already uses.
+    //              hub_ai_listener on the home machine polls pending rows, claims
+    //              one, launches the seeded session there, and Telegram-pushes so
+    //              it is drivable from the phone. Nothing is enqueued for the
+    //              desktop arm, so there is no double-launch.
+    //
+    // Deliberately NOT routed through executeLaunchCommand: that helper's
+    // computer arm fires the opaque-token URI, and this button's computer arm is
+    // the .bat terminal instead. Only the mobile POST is shared in shape, and it
+    // reuses the EXISTING quickchat tag — no new tag, so no cross-repo contract
+    // change and no listener branch to keep in sync.
     if (user?.isPi) {
       items.push({
         id: 'action-backlog-wave',
         label: 'Backlog Wave',
-        sublabel: 'Open a Claude session to work the improvement backlog autonomously',
+        sublabel: 'Work the improvement backlog autonomously (home machine if on mobile)',
         icon: ListChecks,
         action: () => {
-          void launch('mnccore://backlogwave', {
-            successMessage: 'Launching Backlog Wave… (needs the mnccore:// handler installed on this machine)',
-          })
+          void (async () => {
+            if (detectOrigin() === 'computer') {
+              await launch('mnccore://backlogwave', {
+                successMessage: 'Launching Backlog Wave… (needs the mnccore:// handler installed on this machine)',
+              })
+              return
+            }
+            try {
+              const res = await fetch('/api/launch-log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  tag: 'quickchat',
+                  origin: 'mobile',
+                  seed: 'Run the /backlog-wave skill now. I am on mobile and will not be answering questions — follow the skill end to end, and anything you cannot ship without me comes back as a written plan.',
+                  task_id: null,
+                }),
+              })
+              if (!res.ok) throw new Error(`launch-log ${res.status}`)
+              showSuccess('Queued — your home machine will pick it up and Telegram you')
+            } catch (e) {
+              console.error('Backlog Wave enqueue failed:', e)
+              showSuccess('Could not queue Backlog Wave — try again from the laptop')
+            }
+          })()
           setOpen(false)
         },
         category: 'action',
