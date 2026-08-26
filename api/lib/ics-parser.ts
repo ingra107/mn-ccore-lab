@@ -54,6 +54,9 @@ export function parseIcs(raw: string, opts: ParseOptions = {}): IcsEvent[] {
   const masters: ParsedVEvent[] = []
   // RECURRENCE-ID overrides: keyed by `${uid}|${recurrence-id-iso}`.
   const overrides = new Map<string, ParsedVEvent>()
+  // Overrides already materialized by the expansion loop below, so the
+  // moved-instance sweep after it does not emit them a second time.
+  const usedOverrides = new Set<string>()
 
   let current: Partial<ParsedVEvent> | null = null
   let inEvent = false
@@ -166,6 +169,7 @@ export function parseIcs(raw: string, opts: ParseOptions = {}): IcsEvent[] {
       const overrideKey = `${m.uid}|${inst.startAt}`
       const override = overrides.get(overrideKey)
       if (override) {
+        usedOverrides.add(overrideKey)
         if (override.status === 'CANCELLED') continue  // override cancelled this instance
         if (override.startAt > windowEnd) continue
         collected.push(toIcsEvent(override))
@@ -173,6 +177,28 @@ export function parseIcs(raw: string, opts: ParseOptions = {}): IcsEvent[] {
         collected.push(toIcsEvent(inst))
       }
     }
+  }
+
+  // A moved instance is included on ITS OWN time, not its original's.
+  //
+  // The loop above can only surface an override by replacing the instance the
+  // RRULE generates at the override's RECURRENCE-ID. When a meeting is pushed
+  // LATER than the window's lookback -- Nick's ADHERE-LPV meeting moved from
+  // Fri 2026-08-14 12:00 to Wed 2026-08-26 13:45, 12 days -- the original never
+  // gets generated (the poll window starts one day back), so the override was
+  // dropped even though the meeting it describes sits squarely inside the
+  // window. It vanished from Today entirely.
+  //
+  // So decide an override's inclusion by the same overlap test a standalone
+  // VEVENT gets. `usedOverrides` keeps an already-materialized one from
+  // appearing twice.
+  for (const [key, ov] of overrides) {
+    if (usedOverrides.has(key)) continue
+    if (ov.status === 'CANCELLED') continue
+    if (ov.startAt > windowEnd) continue
+    const effectiveEnd = ov.endAt ?? ov.startAt
+    if (effectiveEnd < windowStart) continue
+    collected.push(toIcsEvent(ov))
   }
 
   // Dedup by (summary, startAt). Some calendars emit the same event under

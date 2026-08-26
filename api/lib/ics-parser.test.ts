@@ -316,6 +316,53 @@ describe('parseIcs — RRULE expansion', () => {
     expect(out.filter((e) => e.startAt === '2026-04-13T14:00:00.000Z')).toHaveLength(0)
   })
 
+  it('keeps an instance moved later than the window lookback', () => {
+    // Nick's ADHERE-LPV meeting, 2026-08-26: a 3-weekly Friday series whose
+    // 08-14 instance was moved to Wed 08-26 13:45. The poll window starts one
+    // day back, so the RRULE never generates the 08-14 original -- and the
+    // override used to be reachable only by replacing that original, so the
+    // meeting disappeared from Today on the day it was happening.
+    const ics = ical(
+      vevent({
+        UID: 'moved-1',
+        SUMMARY: 'ADHERE-LPV meeting',
+        DTSTART: '20260406T140000Z',
+        RRULE: 'FREQ=WEEKLY;INTERVAL=3;BYDAY=MO',
+      }),
+      vevent({
+        UID: 'moved-1',
+        SUMMARY: 'ADHERE-LPV meeting',
+        DTSTART: '20260515T184500Z',
+        DTEND: '20260515T192500Z',
+        'RECURRENCE-ID': '20260406T140000Z',
+      }),
+    )
+    // Window opens well after the override's original start (04-06).
+    const out = parseIcs(ics, { windowStart: '2026-05-14T00:00:00.000Z', windowEnd: '2026-05-28T00:00:00.000Z' })
+    const moved = out.find((e) => e.startAt === '2026-05-15T18:45:00.000Z')
+    expect(moved).toBeDefined()
+    expect(moved!.summary).toBe('ADHERE-LPV meeting')
+  })
+
+  it('does not emit a moved instance twice when its original is in-window', () => {
+    const ics = ical(
+      vevent({
+        UID: 'moved-2',
+        SUMMARY: 'Standup',
+        DTSTART: '20260406T140000Z',
+        RRULE: 'FREQ=WEEKLY;BYDAY=MO;COUNT=3',
+      }),
+      vevent({
+        UID: 'moved-2',
+        SUMMARY: 'Standup (rescheduled)',
+        DTSTART: '20260413T160000Z',
+        'RECURRENCE-ID': '20260413T140000Z',
+      }),
+    )
+    const out = parseIcs(ics, WIN)
+    expect(out.filter((e) => e.summary === 'Standup (rescheduled)')).toHaveLength(1)
+  })
+
   it('cancelled RECURRENCE-ID drops just that instance', () => {
     const ics = ical(
       vevent({
