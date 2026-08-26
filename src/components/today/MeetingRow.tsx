@@ -7,16 +7,26 @@
 // prototype source for searchability.
 
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Video } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Video, ListChecks } from 'lucide-react'
 import { ACCENT_TEAL, ACCENT_GOLD, INK, INK_DIM, withAlpha, type TodayEvent } from './constants'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { PATHS } from '../../constants/paths'
 import MarkdownView from '../MarkdownView'
 import { useUnseenActivity, useMarkSeen } from '../../hooks/useEntitySeen'
+import { usePrepMeetingFromEvent } from '../../hooks/mutations/useMeetingMutations'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved'
+
+// Shared pill styling for the row's inline actions (Join / Prep / Open).
+const PILL_STYLE: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: 3,
+  fontSize: 9, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
+  color: ACCENT_GOLD, background: withAlpha(ACCENT_GOLD, 12),
+  border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`, borderRadius: 999,
+  padding: '1px 7px', textDecoration: 'none', flexShrink: 0, lineHeight: 1.5,
+}
 
 export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStatus = 'idle', isCalEvent = false, minHeight }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean; minHeight?: number }) {
   const [expanded, setExpanded] = useState(false)
@@ -41,6 +51,29 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
   useEffect(() => {
     if (expanded && e.meetingId && e.meetingNotes) markSeen('meeting', e.meetingId)
   }, [expanded, e.meetingId, e.meetingNotes, markSeen])
+
+  // ── Prep ────────────────────────────────────────────────────────────────
+  // A calendar row has no D1 meeting record, so before the meeting there is
+  // nowhere to build an agenda, drop links, or leave notes for the team.
+  // "Prep" creates that record and opens it. Everything downstream already
+  // exists (MeetingDetail: agenda items with document links, drag order,
+  // notes, decisions, tasks) — this is only the bridge into it.
+  //
+  // A native D1 row (isCalEvent false) IS its own meeting, so it links
+  // straight through instead of offering to create anything.
+  const navigate = useNavigate()
+  const prep = usePrepMeetingFromEvent()
+  const rowMeetingId = isCalEvent ? (e.meetingId ?? e.matchedMeetingId) : e.id
+  const canPrep = isCalEvent && !rowMeetingId && !!e.dayKey
+
+  async function handlePrep(ev: React.MouseEvent) {
+    ev.stopPropagation()
+    if (!e.dayKey || prep.isPending) return
+    // POST /api/meetings upserts on (date, normalized title), so a second
+    // press — or a press from another device — lands on the same row.
+    const res = await prep.mutateAsync({ date: e.dayKey, title: e.title, source_id: e.id })
+    if (res?.data?.id) navigate(PATHS.meeting(res.data.id))
+  }
 
   return (
     // GH#80 Phase 4: overflow removed (was 'hidden') so the expanded notes
@@ -67,17 +100,36 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
             onClick={(ev) => ev.stopPropagation()}
             title="Join meeting"
             aria-label="Join meeting"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 3,
-              fontSize: 9, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
-              color: ACCENT_GOLD, background: withAlpha(ACCENT_GOLD, 12),
-              border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`, borderRadius: 999,
-              padding: '1px 7px', textDecoration: 'none', flexShrink: 0, lineHeight: 1.5,
-            }}
+            style={PILL_STYLE}
           >
             <Video {...ICON_PROPS} size={11} aria-hidden />
             Join
           </a>
+        )}
+        {rowMeetingId && (
+          <Link
+            to={PATHS.meeting(rowMeetingId)}
+            onClick={(ev) => ev.stopPropagation()}
+            title="Open this meeting's agenda and notes"
+            aria-label={`Open agenda for ${e.title}`}
+            style={PILL_STYLE}
+          >
+            <ListChecks {...ICON_PROPS} size={11} aria-hidden />
+            Agenda
+          </Link>
+        )}
+        {canPrep && (
+          <button
+            type="button"
+            onClick={handlePrep}
+            disabled={prep.isPending}
+            title="Build an agenda for this meeting — links, notes, decisions"
+            aria-label={`Prep ${e.title}`}
+            style={{ ...PILL_STYLE, cursor: prep.isPending ? 'wait' : 'pointer', opacity: prep.isPending ? 0.6 : 1 }}
+          >
+            <ListChecks {...ICON_PROPS} size={11} aria-hidden />
+            {prep.isPending ? 'Prepping' : 'Prep'}
+          </button>
         )}
         {e.loc && <span className="meeting-row-loc" style={{ fontSize: 11, color: ACCENT_TEAL }}>📍 {e.loc}</span>}
         {note && note.length > 0 && <span title="Has notes" style={{ fontSize: 11, color: ACCENT_GOLD }}>📝</span>}
@@ -117,13 +169,7 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
                 <Link
                   to={PATHS.meeting(e.meetingId!)}
                   onClick={(ev) => ev.stopPropagation()}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 3,
-                    fontSize: 9, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
-                    color: ACCENT_GOLD, background: withAlpha(ACCENT_GOLD, 12),
-                    border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`, borderRadius: 999,
-                    padding: '1px 7px', textDecoration: 'none', flexShrink: 0, lineHeight: 1.5,
-                  }}
+                  style={PILL_STYLE}
                 >
                   Open meeting →
                 </Link>
@@ -152,7 +198,7 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
                         // #550: a match exists (undebriefed) — the native row
                         // elsewhere carries the live jot; don't claim no record.
                         ? 'This meeting has its own row — jot notes there instead'
-                        : 'Personal calendar event — no meeting record')
+                        : 'No meeting page yet — press Prep to build an agenda')
                     : 'Jot notes as the meeting happens…'
                 }
                 style={{ width: '100%', minHeight: 72, background: isCalEvent ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '8px 10px', color: isCalEvent ? INK_DIM : INK, fontSize: 12, fontFamily: 'inherit', outline: 'none', resize: isCalEvent ? 'none' : 'vertical', boxSizing: 'border-box', lineHeight: 1.5, cursor: isCalEvent ? 'not-allowed' : undefined }}

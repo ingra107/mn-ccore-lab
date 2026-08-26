@@ -74,6 +74,18 @@ export interface TodayEvent {
   // mark-seen, deep link) — that's the pre-debrief merge rework this row
   // explicitly defers, not this fix.
   hasUndebriefedMatch?: boolean
+  // The id of the D1 meeting a cal- row matched, INCLUDING the undebriefed
+  // case that deliberately leaves `meetingId` unset. Read only by the Prep
+  // pill, to link to an existing meeting instead of offering to create one.
+  // Kept separate from `meetingId` on purpose: that field still gates the
+  // unseen dot, mark-seen and the notes deep link, and #550 defers widening
+  // those to pre-debrief matches.
+  matchedMeetingId?: string
+  // The day this row was projected onto (YYYY-MM-DD, local). A cal- row's own
+  // `id` is day-qualified but its start instant may sit on another day, and
+  // the D1 meetings table is keyed by date — so the Prep pill needs the day
+  // the row is RENDERED on, not the instant it starts.
+  dayKey?: string
 
   // ── #107: cross-day span ────────────────────────────────────────────────
   // startMin/endMin are minutes-since-midnight, which cannot express a span
@@ -260,7 +272,7 @@ export function projectCalendarEventToDay(e: CalendarFeedEvent, dayKey: string):
   if (e.isAllDay) {
     // Compare civil-to-civil; the sentinel's wall clock is meaningless.
     if (e.startAt.slice(0, 10) !== dayKey) return null
-    return { ...base, id: `cal-${e.id}`, time: 'all day', isAllDay: true }
+    return { ...base, id: `cal-${e.id}`, time: 'all day', isAllDay: true, dayKey }
   }
 
   const start = new Date(e.startAt)
@@ -285,6 +297,7 @@ export function projectCalendarEventToDay(e: CalendarFeedEvent, dayKey: string):
     ...base,
     // Day-qualified so dismissing today's slice cannot also hide tomorrow's.
     id: `cal-${e.id}@${dayKey}`,
+    dayKey,
     time: startsBeforeDay ? 'from yesterday' : fmt(start),
     end: endsAfterDay ? 'midnight' : fmt(effectiveEnd),
     startMin,

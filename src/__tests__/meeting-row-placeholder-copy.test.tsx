@@ -65,16 +65,44 @@ function renderRow(e: TodayEvent): Promise<HTMLElement> {
 const BASE: TodayEvent = { id: 'cal-1', time: '9:00 AM', title: 'Standup' }
 
 describe('EventRow placeholder copy (#550)', () => {
-  it('keeps "no meeting record" for a truly unmatched personal event', async () => {
+  it('tells a truly unmatched personal event there is no page, and how to get one', async () => {
     const host = await renderRow(BASE)
     const textarea = await expand(host)
-    expect(textarea.placeholder).toBe('Personal calendar event — no meeting record')
+    // Copy changed with the Prep pill: the old wording ("no meeting record")
+    // was a dead end, and now there is a button in the header that fixes it.
+    expect(textarea.placeholder).toBe('No meeting page yet — press Prep to build an agenda')
   })
 
-  it('does not claim "no meeting record" once matched but undebriefed', async () => {
+  it('does not claim there is no page once matched but undebriefed', async () => {
     const host = await renderRow({ ...BASE, hasUndebriefedMatch: true })
     const textarea = await expand(host)
-    expect(textarea.placeholder).not.toContain('no meeting record')
+    expect(textarea.placeholder).not.toContain('No meeting page yet')
     expect(textarea.placeholder).toContain('own row')
+  })
+})
+
+// The Prep pill itself: offered only for a calendar row with no meeting
+// record AND a day to key the D1 row on; replaced by an Agenda link the
+// moment a record exists (matched or native).
+describe('EventRow Prep pill', () => {
+  function pills(host: HTMLElement): string[] {
+    return [...host.querySelectorAll('.meeting-row-header a, .meeting-row-header button')]
+      .map((el) => el.textContent?.trim() ?? '')
+  }
+
+  it('offers Prep on an unmatched calendar row', async () => {
+    const host = await renderRow({ ...BASE, dayKey: '2026-08-26' })
+    expect(pills(host)).toContain('Prep')
+  })
+
+  it('withholds Prep when the row has no day to key the meeting on', async () => {
+    const host = await renderRow(BASE)
+    expect(pills(host)).not.toContain('Prep')
+  })
+
+  it('shows Agenda instead of Prep once a meeting record exists', async () => {
+    const host = await renderRow({ ...BASE, dayKey: '2026-08-26', matchedMeetingId: 'mtg-2026-08-26-abc' })
+    expect(pills(host)).toContain('Agenda')
+    expect(pills(host)).not.toContain('Prep')
   })
 })

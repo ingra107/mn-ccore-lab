@@ -20,6 +20,37 @@ export function useAddAgendaItem(meetingId: string) {
   })
 }
 
+// ── Prep a future meeting from a calendar row ───────────────
+//
+// The Today timeline shows personal-calendar events (cal-*) that have no D1
+// `meetings` row, so there is nowhere to build an agenda before the meeting
+// happens. Until now the only way to get a row was Meetings → "Record
+// Meeting", retyping date + title by hand, or waiting for the PB debrief
+// pipeline to push one AFTER a transcript existed.
+//
+// POST /api/meetings is already an upsert keyed on (date, normalized title)
+// — handleCreateMeeting, api/routes/meetings.ts — so pressing Prep twice, or
+// on two devices, returns the SAME row rather than minting a duplicate. That
+// is why this needs no client-side "already prepped?" guard: the duplicate is
+// unrepresentable at the write path, not defended against here.
+//
+// source_id carries the calendar row's stable id (set-once via COALESCE on
+// the server) so a later PB debrief push lands on this same row.
+export function usePrepMeetingFromEvent() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { date: string; title: string; source_id: string }) =>
+      fetchApi<{ id: string }>('/api/meetings', {
+        method: 'POST',
+        body: JSON.stringify({ date: input.date, title: input.title, source_id: input.source_id }),
+      }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['meetings'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 // ── Meeting Notes mutation ──────────────────────────────────
 
 export function useUpdateMeetingNotes(meetingId: string) {

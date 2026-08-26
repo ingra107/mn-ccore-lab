@@ -322,7 +322,11 @@ export default function TodayPage() {
       // #550: a match with no notes yet stays undecorated (7b5188de — the
       // native untimed row below keeps the live jot), but flag it so
       // MeetingRow can stop claiming "no meeting record" when one exists.
-      if (!match.notes) return { ...e, hasUndebriefedMatch: true }
+      // matchedMeetingId rides along so the Prep pill links to the existing
+      // page instead of offering to create a second one. It deliberately does
+      // NOT set meetingId — that field still gates the jot/unseen behavior
+      // #550 left on the native row.
+      if (!match.notes) return { ...e, hasUndebriefedMatch: true, matchedMeetingId: match.id }
       matchedMeetingIds.add(match.id)
       return { ...e, meetingId: match.id, meetingNotes: match.notes }
     })
