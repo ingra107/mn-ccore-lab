@@ -1454,11 +1454,15 @@ export function useMenteeOverview() {
 
 export interface StoredLink {
   id: string
+  /** 'key' = current, 'archive' = superseded (project page only, never on tasks). */
   role: string
   type: string
   canonical_url: string
   short_title: string | null
   sort_order: number
+  /** ISO strings from D1; optional so older cached payloads still typecheck. */
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 export interface TaskLinksPayload {

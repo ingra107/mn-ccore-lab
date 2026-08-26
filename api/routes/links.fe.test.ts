@@ -184,6 +184,17 @@ const BOX_LINK: Record<string, unknown> = {
   sort_order: 1,
 }
 
+// role='archive' — superseded, still LIVE (deleted_at NULL). Must render on the
+// project page but must NOT follow the project onto task cards.
+const ARCHIVED_LINK: Record<string, unknown> = {
+  id: 'lnk_archived_001',
+  role: 'archive',
+  type: 'google_doc',
+  canonical_url: 'https://docs.google.com/document/d/superseded999',
+  short_title: 'Reviewer responses (previous round)',
+  sort_order: 2,
+}
+
 const GMAIL_LINK: Record<string, unknown> = {
   id: 'lnk_gmail_001',
   role: 'key',
@@ -798,5 +809,90 @@ describe('handleGetProjectLinks — derived project-field links in links', () =>
     expect(body.links[0].id).toBe('lnk_doc_001')
     expect(body.links[1].id).toBe('derived:folder')
     expect(body.links[2].id).toBe('derived:box')
+  })
+})
+
+
+// ── role filtering: archive stays on the project, off the tasks ─────────────
+//
+// Regression origin (Nick, 2026-08-25): the LPV project's July R1
+// reviewer-response doc and its retired R1 edit-checklist artifact were still
+// being inherited onto an August R2 task, so the task card advertised two
+// superseded surfaces alongside the current one. Archiving must remove them
+// from tasks WITHOUT tombstoning them (the project page keeps the history).
+describe('handleGetTaskLinks — project links filtered to role=key', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockAssertProjectVisible.mockResolvedValue(null)
+  })
+
+  it('omits an archived project link from inherited projectLinks', async () => {
+    const env = makeEnv({
+      taskRow: { project_id: 'proj_001' },
+      projectRow: { id: 'proj_001' },
+      projectLinks: [DOC_LINK, ARCHIVED_LINK],
+    })
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    expect(res.status).toBe(200)
+    const body = await res.json() as { projectLinks: Record<string, unknown>[] }
+    const ids = body.projectLinks.map((l) => l.id)
+    expect(ids).toContain('lnk_doc_001')
+    expect(ids).not.toContain('lnk_archived_001')
+  })
+
+  it('inherits nothing when every project link is archived', async () => {
+    const env = makeEnv({
+      taskRow: { project_id: 'proj_001' },
+      projectRow: { id: 'proj_001' },
+      projectLinks: [ARCHIVED_LINK],
+    })
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const body = await res.json() as { projectLinks: unknown[] }
+    expect(body.projectLinks).toEqual([])
+  })
+
+  it('treats a row with no role as key (defensive: pre-migration rows)', async () => {
+    const NO_ROLE = { ...DOC_LINK }
+    delete (NO_ROLE as Record<string, unknown>).role
+    const env = makeEnv({
+      taskRow: { project_id: 'proj_001' },
+      projectRow: { id: 'proj_001' },
+      projectLinks: [NO_ROLE],
+    })
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const body = await res.json() as { projectLinks: unknown[] }
+    expect(body.projectLinks).toHaveLength(1)
+  })
+
+  it('still inherits derived folder links when all explicit links are archived', async () => {
+    const env = makeEnv({
+      taskRow: { project_id: 'proj_001' },
+      projectRow: { id: 'proj_001', primary_folder: 'file:///C:/proj/' },
+      projectLinks: [ARCHIVED_LINK],
+    })
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const body = await res.json() as { projectLinks: Record<string, unknown>[] }
+    expect(body.projectLinks).toHaveLength(1)
+    expect(body.projectLinks[0].type).toBe('local_folder')
+  })
+})
+
+describe('handleGetProjectLinks — archived links still render on the project', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockAssertProjectVisible.mockResolvedValue(null)
+  })
+
+  it('returns archived links alongside key links (archive is not delete)', async () => {
+    const env = makeEnv({
+      projectRow: { id: 'proj_001' },
+      projectLinks: [DOC_LINK, ARCHIVED_LINK],
+    })
+    const res = await handleGetProjectLinks('proj_001', makeRequest(), env)
+    expect(res.status).toBe(200)
+    const body = await res.json() as { links: Record<string, unknown>[] }
+    const ids = body.links.map((l) => l.id)
+    expect(ids).toContain('lnk_doc_001')
+    expect(ids).toContain('lnk_archived_001')
   })
 })

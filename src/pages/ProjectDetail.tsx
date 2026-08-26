@@ -27,7 +27,7 @@ import {
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMarkSeen } from '../hooks/useEntitySeen'
-import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments, useProjectPapers } from '../hooks/useApiData'
+import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments, useProjectPapers, useProjectLinks } from '../hooks/useApiData'
 import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import BulkActionToolbar from '../components/tasks/BulkActionToolbar'
@@ -50,6 +50,7 @@ import type { Project } from '../data/types'
 import type { TaskRow } from '../lib/api'
 import RevisionTracker from '../components/RevisionTracker'
 import KeyLinksEditor from '../components/KeyLinksEditor'
+import ProjectLinkLibrary from '../components/ProjectLinkLibrary'
 import WorkOnActions from '../components/WorkOnActions'
 import LinkifiedText from '../components/LinkifiedText'
 import FileUpload from '../components/FileUpload'
@@ -234,6 +235,9 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Revisions for this project
   const { data: revisions = [] } = useRevisions(project.slug)
+  // Full links table (every role). Task views get the role='key' subset from
+  // handleGetTaskLinks; this page is the one surface that shows the archive.
+  const { data: storedLinks, isLoading: linksLoading } = useProjectLinks(project.slug)
 
   // Tab counts (PD-12)
   const { data: papers = [] } = useProjectPapers(project.slug)
@@ -1217,6 +1221,9 @@ function ProjectDetailInner({ project }: InnerProps) {
                 }}
               />
             </div>
+
+            {/* Documents & Links — the full links table, dated, archive collapsed */}
+            <ProjectLinkLibrary links={storedLinks} isLoading={linksLoading} />
 
             {/* Recent Activity */}
             <div>

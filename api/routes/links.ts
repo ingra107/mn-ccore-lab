@@ -127,7 +127,10 @@ export async function handleGetLinks(url: URL, request: Request, env: Env): Prom
 // Narrower projection than the sync lane: omits sync bookkeeping (seq,
 // last_mutation_id, source_raw, deleted_at, created_at, updated_at).
 // Consumers: TaskDetailPanel / ProjectDetail / KeyLinksEditor.
-const FE_LINKS_COLS = 'id, role, type, canonical_url, short_title, sort_order';
+// created_at/updated_at ride along so the project page can date each link
+// (Nick 2026-08-25: "all links and documents and artifacts with time stamps").
+const FE_LINKS_COLS =
+  'id, role, type, canonical_url, short_title, sort_order, created_at, updated_at';
 
 // Shared query helper: fetch live (non-deleted) links for one owner, ordered
 // by sort_order then id for a stable display sequence.
@@ -367,7 +370,19 @@ export async function handleGetTaskLinks(
       : Promise.resolve(null),
   ]);
 
-  const projectExplicit = projectData?.explicit ?? [];
+  // Task cards inherit only role='key' project links. An archived link is still
+  // LIVE (it renders, dated, on the project page) but it has been superseded, so
+  // it must not follow the project onto every task -- which is how the July R1
+  // reviewer-response doc and the retired R1 checklist were still showing on an
+  // August R2 task. Mirrors scripts/today/sections.py, which already asks
+  // get_links(..., role='key') for exactly this reason.
+  //
+  // Derived links (primary_folder / github_url / box_url) are NOT filtered:
+  // they are computed from live project fields, so they are current by
+  // construction and carry no role of their own.
+  const projectExplicit = (projectData?.explicit ?? []).filter(
+    (row) => (row.role ?? 'key') === 'key',
+  );
   const projectLinks = projectData
     ? buildProjectLinks(projectData.fields, projectExplicit)
     : [];
