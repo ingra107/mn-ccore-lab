@@ -46,7 +46,10 @@ function LinkRow({ link, dateField }: { link: StoredLink; dateField: 'created_at
     <div className="flex items-baseline justify-between gap-2">
       <StoredLinkChip link={link} />
       {date && (
-        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6, whiteSpace: 'nowrap' }}>
+        // --muted, not a dimmed --slate: the opacity policy floors secondary
+        // text at 0.85 and reserves 0.55-0.70 for decoration, and an opacity
+        // here would compound with any parent that sets one.
+        <span style={{ fontSize: '10px', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
           {date}
         </span>
       )}
@@ -85,7 +88,10 @@ export default function ProjectLinkLibrary({ links, isLoading }: Props) {
             badge={archived.length}
             storageKey="project-links-archived"
           >
-            <div className="flex flex-col gap-1.5" style={{ opacity: 0.65 }}>
+            {/* No wrapper opacity: it multiplies into every child (the design
+                system forbids compound opacity). The collapsed group and its
+                Archive icon already carry the "superseded" signal. */}
+            <div className="flex flex-col gap-1.5">
               {archived.map((link) => (
                 <LinkRow key={link.id} link={link} dateField="updated_at" />
               ))}
