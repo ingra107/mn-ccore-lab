@@ -19,16 +19,17 @@
  *
  * Dates: `updated_at` is when the row last changed (its archive stamp, for an
  * archived link); `created_at` is when it was first filed. Both come from D1
- * via FE_LINKS_COLS.
+ * via FE_LINKS_COLS, and both render through `formatDbLocal`, the canonical
+ * stored-timestamp chokepoint.
  */
 
-import { useState } from 'react'
-import { Archive, ChevronRight, Link2 } from 'lucide-react'
+import { Archive, Link2 } from 'lucide-react'
 import StoredLinkChip from './StoredLinkChip'
-import { formatLinkDate, partitionByRole } from '../lib/projectLinkLibrary'
+import CollapsibleSection from './CollapsibleSection'
+import { partitionByRole } from '../lib/projectLinkLibrary'
+import { formatDbLocal } from '../lib/time'
+import { ICON_PROPS } from '../lib/iconProps'
 import type { StoredLink } from '../hooks/useApiData'
-
-const ICON_PROPS = { strokeWidth: 1.75 } as const
 
 const LABEL_STYLE = {
   fontSize: '10px',
@@ -40,7 +41,7 @@ const LABEL_STYLE = {
 } as const
 
 function LinkRow({ link, dateField }: { link: StoredLink; dateField: 'created_at' | 'updated_at' }) {
-  const date = formatLinkDate(link[dateField])
+  const date = formatDbLocal(link[dateField], 'date')
   return (
     <div className="flex items-baseline justify-between gap-2">
       <StoredLinkChip link={link} />
@@ -59,7 +60,6 @@ interface Props {
 }
 
 export default function ProjectLinkLibrary({ links, isLoading }: Props) {
-  const [showArchived, setShowArchived] = useState(false)
   if (isLoading) return null
   const { current, archived } = partitionByRole(links ?? [])
   if (current.length === 0 && archived.length === 0) return null
@@ -79,39 +79,18 @@ export default function ProjectLinkLibrary({ links, isLoading }: Props) {
 
       {archived.length > 0 && (
         <div style={{ marginTop: current.length > 0 ? '10px' : 0 }}>
-          <button
-            type="button"
-            onClick={() => setShowArchived((v) => !v)}
-            aria-expanded={showArchived}
-            className="flex items-center gap-1.5"
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              fontSize: '10px',
-              color: 'var(--slate)',
-              opacity: 0.7,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-            }}
+          <CollapsibleSection
+            title="Archived"
+            icon={<Archive {...ICON_PROPS} size={11} style={{ color: 'var(--slate)' }} />}
+            badge={archived.length}
+            storageKey="project-links-archived"
           >
-            <ChevronRight
-              {...ICON_PROPS}
-              size={11}
-              style={{ transform: showArchived ? 'rotate(90deg)' : 'none', transition: 'transform 120ms' }}
-            />
-            <Archive {...ICON_PROPS} size={11} />
-            Archived ({archived.length})
-          </button>
-
-          {showArchived && (
-            <div className="flex flex-col gap-1.5" style={{ marginTop: '6px', opacity: 0.65 }}>
+            <div className="flex flex-col gap-1.5" style={{ opacity: 0.65 }}>
               {archived.map((link) => (
                 <LinkRow key={link.id} link={link} dateField="updated_at" />
               ))}
             </div>
-          )}
+          </CollapsibleSection>
         </div>
       )}
     </div>

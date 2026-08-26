@@ -4,7 +4,7 @@
 // buckets, and a legacy row with no `role` must land in `current`.
 
 import { describe, it, expect } from 'vitest'
-import { partitionByRole, sortForDisplay, formatLinkDate } from '../projectLinkLibrary'
+import { partitionByRole, sortForDisplay } from '../projectLinkLibrary'
 import type { StoredLink } from '../../hooks/useApiData'
 
 function link(over: Partial<StoredLink> & { id: string }): StoredLink {
@@ -72,18 +72,7 @@ describe('sortForDisplay', () => {
   })
 })
 
-describe('formatLinkDate', () => {
-  it('formats a D1 timestamp (space separator, no zone)', () => {
-    expect(formatLinkDate('2026-07-10 13:12:32')).toBe('10 Jul 2026')
-  })
-
-  it('formats a plain ISO date', () => {
-    expect(formatLinkDate('2026-08-25')).toBe('25 Aug 2026')
-  })
-
-  it('degrades to null rather than "Invalid Date"', () => {
-    expect(formatLinkDate('not-a-date')).toBeNull()
-    expect(formatLinkDate(null)).toBeNull()
-    expect(formatLinkDate(undefined)).toBeNull()
-  })
-})
+// Date formatting is NOT tested here: it moved to `formatDbLocal` in src/lib/time.ts,
+// the canonical stored-timestamp chokepoint, which owns its own coverage. This file
+// previously carried a private formatLinkDate with a third, divergent implementation
+// of the D1-timestamp fix (/simplify reuse pass, 2026-08-25).
