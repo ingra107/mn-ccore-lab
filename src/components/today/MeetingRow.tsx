@@ -16,16 +16,28 @@ import { PATHS } from '../../constants/paths'
 import MarkdownView from '../MarkdownView'
 import { useUnseenActivity, useMarkSeen } from '../../hooks/useEntitySeen'
 import { usePrepMeetingFromEvent } from '../../hooks/mutations/useMeetingMutations'
+import { Chip } from '../ui/Chip'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved'
 
-// Shared pill styling for the row's inline actions (Join / Prep / Open).
-const PILL_STYLE: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: 3,
-  fontSize: 9, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
-  color: ACCENT_GOLD, background: withAlpha(ACCENT_GOLD, 12),
-  border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`, borderRadius: 999,
-  padding: '1px 7px', textDecoration: 'none', flexShrink: 0, lineHeight: 1.5,
+// #2227: the row's inline actions (Join / Agenda / Prep / Open meeting) are
+// interactive <a>/<Link>/<button> elements, so they can't BE a Chip (Chip
+// renders a passive <span>, has no href/onClick/`as` prop, and none of its 7
+// other callers are interactive — src/components/ui/Chip.tsx). Instead the
+// interactive element stays an unstyled shell (behavior only) and wraps a
+// Chip (visual chrome only) as its child — reuses the shared pill primitive
+// per design-system rule 4 ("never fork a one-off variant") without adding
+// polymorphism risk to a component 7 other surfaces depend on.
+const PILL_LINK_STYLE: React.CSSProperties = {
+  display: 'inline-flex', textDecoration: 'none', flexShrink: 0, lineHeight: 1.5,
+  background: 'none', border: 'none', padding: 0, font: 'inherit',
+}
+
+// Chip doesn't have an uppercase/tracked-label mode (its other callers are
+// sentence-case badges) -- merged into Chip's `style` prop, which callers
+// override last by design, rather than adding a variant to the primitive.
+const PILL_LABEL_STYLE: React.CSSProperties = {
+  textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600,
 }
 
 export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStatus = 'idle', isCalEvent = false, minHeight }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean; minHeight?: number }) {
@@ -102,10 +114,12 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
             onClick={(ev) => ev.stopPropagation()}
             title="Join meeting"
             aria-label="Join meeting"
-            style={PILL_STYLE}
+            style={PILL_LINK_STYLE}
           >
-            <Video {...ICON_PROPS} size={11} aria-hidden />
-            Join
+            <Chip color={ACCENT_GOLD} pill bordered borderAlpha={30} style={PILL_LABEL_STYLE}>
+              <Video {...ICON_PROPS} size={11} aria-hidden />
+              Join
+            </Chip>
           </a>
         )}
         {rowMeetingId && (
@@ -114,10 +128,12 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
             onClick={(ev) => ev.stopPropagation()}
             title="Open this meeting's agenda and notes"
             aria-label={`Open agenda for ${e.title}`}
-            style={PILL_STYLE}
+            style={PILL_LINK_STYLE}
           >
-            <ListChecks {...ICON_PROPS} size={11} aria-hidden />
-            Agenda
+            <Chip color={ACCENT_GOLD} pill bordered borderAlpha={30} style={PILL_LABEL_STYLE}>
+              <ListChecks {...ICON_PROPS} size={11} aria-hidden />
+              Agenda
+            </Chip>
           </Link>
         )}
         {canPrep && (
@@ -127,10 +143,12 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
             disabled={prep.isPending}
             title="Build an agenda for this meeting — links, notes, decisions"
             aria-label={`Prep ${e.title}`}
-            style={{ ...PILL_STYLE, cursor: prep.isPending ? 'wait' : 'pointer', opacity: prep.isPending ? 0.6 : 1 }}
+            style={{ ...PILL_LINK_STYLE, cursor: prep.isPending ? 'wait' : 'pointer' }}
           >
-            <ListChecks {...ICON_PROPS} size={11} aria-hidden />
-            {prep.isPending ? 'Prepping' : 'Prep'}
+            <Chip color={ACCENT_GOLD} pill bordered borderAlpha={30} style={{ ...PILL_LABEL_STYLE, opacity: prep.isPending ? 0.6 : 1 }}>
+              <ListChecks {...ICON_PROPS} size={11} aria-hidden />
+              {prep.isPending ? 'Prepping' : 'Prep'}
+            </Chip>
           </button>
         )}
         {e.loc && <span className="meeting-row-loc" style={{ fontSize: 11, color: ACCENT_TEAL }}>📍 {e.loc}</span>}
@@ -171,9 +189,11 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
                 <Link
                   to={PATHS.meeting(e.meetingId!)}
                   onClick={(ev) => ev.stopPropagation()}
-                  style={PILL_STYLE}
+                  style={PILL_LINK_STYLE}
                 >
-                  Open meeting →
+                  <Chip color={ACCENT_GOLD} pill bordered borderAlpha={30} style={PILL_LABEL_STYLE}>
+                    Open meeting →
+                  </Chip>
                 </Link>
               </div>
               <MarkdownView source={e.meetingNotes} />

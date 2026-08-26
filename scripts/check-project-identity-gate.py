@@ -131,7 +131,27 @@ def d1_query(sql: str) -> list[dict]:
     proc = subprocess.run(cmd, capture_output=True, text=True,
                           cwd=str(_HERE.parent), env=_d1_env())
     if proc.returncode != 0:
-        raise RuntimeError(f"wrangler d1 failed: {proc.stderr[-1500:]}")
+        # `wrangler d1 execute --json` writes its error PAYLOAD to STDOUT, not  # wrangler-d1-allowed
+        # stderr -- on a transient CF flake stderr is often empty, which is why
+        # this raised a bare "wrangler d1 failed: " with nothing after the
+        # colon twice in one session (PB backlog #2231, 2026-08-26). Same shape
+        # already diagnosed + fixed once in this repo, in
+        # scripts/wrangler_d1.py::WranglerD1Error (PB backlog #416, a4cfd466) --
+        # mirrored here (not imported) because this script's env-stripping is
+        # CI-conditional (_d1_env/_is_ci) where wrangler_d1.py's is
+        # unconditional; sharing the class would strip the CI-scoped D1 token
+        # this gate needs kept. This does not identify WHY wrangler exited
+        # non-zero -- it only guarantees the next failure carries evidence.
+        detail = (proc.stderr or "").strip()
+        out = (proc.stdout or "").strip()
+        if out:
+            detail = f"{detail} | stdout: {out}" if detail else f"stdout: {out}"
+        if not detail:
+            detail = "(no stderr or stdout captured)"
+        raise RuntimeError(
+            f"wrangler d1 exited {proc.returncode}: {detail[-1500:]}\n"
+            f"cmd: {' '.join(cmd)}"
+        )
     data = json.loads(proc.stdout)
     return data[0]["results"]
 
