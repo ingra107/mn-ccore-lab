@@ -34,15 +34,28 @@ export function useAddAgendaItem(meetingId: string) {
 // is why this needs no client-side "already prepped?" guard: the duplicate is
 // unrepresentable at the write path, not defended against here.
 //
-// source_id carries the calendar row's stable id (set-once via COALESCE on
-// the server) so a later PB debrief push lands on this same row.
+// ⚠️ This deliberately sends NO `source_id`, and that is load-bearing — see
+// CLAUDE.md rule 83 ("Meeting origin is TWO questions"). `meetings.source_id`
+// is SET-ONCE on the server (`COALESCE(source_id, ?)`), and it belongs to the
+// PB debrief pipeline: `push_meeting_entry` writes `source_id = <the manifest
+// meeting_id>` so that `tasks.meeting_id IN (m.id, m.source_id)` — the join in
+// handleGetMeeting — can find a meeting's action items. PB mints those ids as
+// `cal-YYYYMMDDTHHMM-<slug>` (scripts/meetings/calendar_adapter.py), while a
+// Today row's id is `cal-<icalUID>@<YYYY-MM-DD>`. Different id spaces. If Prep
+// claimed the slot first, the later debrief push would be COALESCE'd away and
+// every action item from that meeting would render nowhere — the exact #108
+// failure rule 83 exists to prevent.
+//
+// Nothing is lost by omitting it: the debrief push lands on this same row via
+// the (date, normalized title) dedup above, which is what actually matched in
+// the prod round-trip, and it then fills source_id itself.
 export function usePrepMeetingFromEvent() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { date: string; title: string; source_id: string }) =>
+    mutationFn: (input: { date: string; title: string }) =>
       fetchApi<{ id: string }>('/api/meetings', {
         method: 'POST',
-        body: JSON.stringify({ date: input.date, title: input.title, source_id: input.source_id }),
+        body: JSON.stringify({ date: input.date, title: input.title }),
       }),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] })

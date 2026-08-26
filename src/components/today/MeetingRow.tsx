@@ -70,8 +70,10 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
     ev.stopPropagation()
     if (!e.dayKey || prep.isPending) return
     // POST /api/meetings upserts on (date, normalized title), so a second
-    // press — or a press from another device — lands on the same row.
-    const res = await prep.mutateAsync({ date: e.dayKey, title: e.title, source_id: e.id })
+    // press — or a press from another device — lands on the same row. No
+    // source_id: that slot is set-once and belongs to the PB debrief push
+    // (see usePrepMeetingFromEvent's comment, and CLAUDE.md rule 83).
+    const res = await prep.mutateAsync({ date: e.dayKey, title: e.title })
     if (res?.data?.id) navigate(PATHS.meeting(res.data.id))
   }
 

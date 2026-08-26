@@ -105,4 +105,51 @@ describe('EventRow Prep pill', () => {
     expect(pills(host)).toContain('Agenda')
     expect(pills(host)).not.toContain('Prep')
   })
+
+  // Regression guard, CLAUDE.md rule 83. `meetings.source_id` is SET-ONCE on
+  // the server (COALESCE(source_id, ?)) and belongs to the PB debrief push,
+  // which writes `source_id = <manifest meeting_id>` so that
+  // `tasks.meeting_id IN (m.id, m.source_id)` can find a meeting's action
+  // items. PB mints those as `cal-YYYYMMDDTHHMM-<slug>`; a Today row's id is
+  // `cal-<icalUID>@<date>`. If Prep claimed the slot first the debrief's value
+  // would be COALESCE'd away and its action items would render nowhere. The
+  // first cut of this feature DID send it (c0339323, fixed same day).
+  it('sends no source_id — that slot belongs to the PB debrief push', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { id: 'mtg-2026-08-26-new' } }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const host = await mount(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <EventRow
+            e={{ ...BASE, dayKey: '2026-08-26' }}
+            onDismiss={() => {}}
+            onNote={() => {}}
+            isCalEvent
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    const prepButton = [...host.querySelectorAll('.meeting-row-header button')]
+      .find((el) => el.textContent?.trim() === 'Prep') as HTMLButtonElement
+    expect(prepButton).toBeTruthy()
+    prepButton.click()
+
+    let call: [string, RequestInit] | undefined
+    for (let i = 0; i < 100; i++) {
+      call = fetchMock.mock.calls.find((c) => String(c[0]).includes('/api/meetings')) as
+        [string, RequestInit] | undefined
+      if (call) break
+      await new Promise((r) => setTimeout(r, 10))
+    }
+    expect(call, 'Prep never POSTed to /api/meetings').toBeTruthy()
+
+    const body = JSON.parse(String(call![1].body))
+    expect(body).toEqual({ date: '2026-08-26', title: 'Standup' })
+    expect(body).not.toHaveProperty('source_id')
+  })
 })
