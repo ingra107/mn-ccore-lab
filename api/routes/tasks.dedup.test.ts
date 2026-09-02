@@ -17,6 +17,7 @@ import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
 import type { Env, AuthUser } from '../helpers'
 import { _resetValidationFlagsCache } from '../helpers'
+import { classifyTaskDedupSelect } from '../lib/task-dedup-sql'
 
 // ── Shared stub DB ──────────────────────────────────────────────────────────
 
@@ -47,8 +48,11 @@ function makeStubDB(seedRows: Record<string, Record<string, unknown>> = {}) {
 
       first: async <T>() => {
         const upper = sql.trim().toUpperCase()
-        // SELECT id FROM tasks WHERE title = ? AND project_id IS ? AND ...
-        if (upper.includes('TITLE =') && upper.includes('PROJECT_ID IS')) {
+        // The name-identity dedup SELECT, raw or normalized (#530b). The
+        // classifier THROWS on a `SELECT id FROM tasks` it does not know, so a
+        // query edit that outruns this stub is a red test rather than a silent
+        // fall-through to a by-id lookup that disables dedup.
+        if (classifyTaskDedupSelect(sql) === 'title') {
           const title = boundVals[0] as string
           const projectId = (boundVals[1] === undefined ? null : boundVals[1]) as string | null
           const row = findByTitleProject(title, projectId)
@@ -406,7 +410,7 @@ function makeRaceStubDB() {
 
       first: async <T>() => {
         const upper = sql.trim().toUpperCase()
-        if (upper.includes('TITLE =') && upper.includes('PROJECT_ID IS')) {
+        if (classifyTaskDedupSelect(sql) === 'title') {
           titleProjectSelectCalls += 1
           // Calls 1-2 = the serial pre-insert dedup checks for BOTH machines
           // (the race window: neither writer's INSERT has committed yet, so
@@ -609,7 +613,7 @@ describe('partial index race backstop — concurrent dup INSERT (18:00:27 shape)
           bind: (...more: unknown[]) => makeNoIndexStmt(s, [...vals, ...more]),
           first: async <T>() => {
             const upper = s.trim().toUpperCase()
-            if (upper.includes('TITLE =') && upper.includes('PROJECT_ID IS')) {
+            if (classifyTaskDedupSelect(s) === 'title') {
               return null as T | null  // race: both see empty
             }
             if (upper.includes('PROCESSED_MUTATIONS')) return null as T | null
@@ -695,7 +699,10 @@ function makeMobileEnv() {
         // applyInsert's own (title, project_id) I18 rule below doesn't scope
         // by assignee either. Shapes: pre-project-id (Phase 1.4, no longer
         // live), post-project-id-pre-#523 (had ASSIGNEE =), post-#523 (this one).
-        if (upper.includes('LOWER(TRIM(TITLE))')) {
+        // (#530b: the central rule folds the title too now, so this matcher
+        // can no longer key on LOWER(TRIM(TITLE)) -- it would swallow the
+        // central SELECT and answer it with the mobile predicate.)
+        if (classifyTaskDedupSelect(sql) === 'mobile') {
           const title = (boundVals[0] as string).toLowerCase().trim()
           // project_id is boundVals[1] and boundVals[2] (assignee bind dropped #523)
           const projectId = boundVals.length >= 3 ? (boundVals[1] as string | null) : undefined
@@ -724,7 +731,7 @@ function makeMobileEnv() {
         // applyInsert's central I18 (title, project_id) dedup — fires INSIDE
         // applyMutation for any row the pre-check above missed (#523
         // fallthrough coverage). Mirrors makeStubDB's matcher.
-        if (upper.includes('TITLE =') && upper.includes('PROJECT_ID IS')) {
+        if (classifyTaskDedupSelect(sql) === 'title') {
           const title = boundVals[0] as string
           const projectId = (boundVals[1] === undefined ? null : boundVals[1]) as string | null
           for (const row of store.values()) {

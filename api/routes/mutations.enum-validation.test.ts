@@ -17,6 +17,7 @@ import type { Mutation } from './mutations'
 import type { Env, AuthUser, ValidationFlags } from '../helpers'
 import { _resetValidationFlagsCache } from '../helpers'
 import { enumFieldsFor, canonicalizeValue, assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains'
+import { classifyTaskDedupSelect } from '../lib/task-dedup-sql'
 import enumDomains from '../enum-domains.generated.json'
 
 const fakeUser = { email: 'test@example.com', role: 'admin' } as AuthUser
@@ -57,7 +58,10 @@ function makeStubDB(opts: {
         if (upper.includes('FROM PROCESSED_MUTATIONS')) {
           return null as T | null
         }
-        if (upper.includes('TITLE =') && upper.includes('PROJECT_ID IS')) {
+        // Name-identity dedup SELECT, raw or normalized. classifyTaskDedupSelect
+        // THROWS on a `SELECT id FROM tasks` shape it does not know, so a query
+        // edit that outruns this stub is red, not a vacuous green (#530b).
+        if (classifyTaskDedupSelect(sql) === 'title') {
           const title = boundVals[0] as string
           const projectId = (boundVals[1] === undefined ? null : boundVals[1]) as string | null
           const row = findByTitleProject(title, projectId)
@@ -463,7 +467,7 @@ describe('(f) V3 adoptable dedup', () => {
           bind: (...m: unknown[]) => mk([...boundVals, ...m]),
           first: async <T>() => {
             const u = sql.trim().toUpperCase()
-            if (u.includes('TITLE =') && u.includes('PROJECT_ID IS')) {
+            if (classifyTaskDedupSelect(sql) === 'title') {
               dedupCalls++
               // First call (serial dedup) misses; second call (post-throw re-lookup) hits.
               return (dedupCalls >= 2 ? { id: winner } : null) as T | null
@@ -474,7 +478,7 @@ describe('(f) V3 adoptable dedup', () => {
           all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
           run: async () => {
             const u = sql.trim().toUpperCase()
-            if (u.startsWith('INSERT INTO TASKS')) throw new Error('UNIQUE constraint failed: idx_tasks_title_project_active')
+            if (u.startsWith('INSERT INTO TASKS')) throw new Error("UNIQUE constraint failed: index 'idx_tasks_title_norm_project_active'")
             return { meta: { changes: 1 } }
           },
         })

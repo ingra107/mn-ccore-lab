@@ -13,6 +13,7 @@ import { nowInstant } from '../lib/time'
 import { handleMutations } from './mutations'
 import type { Mutation } from './mutations'
 import type { Env, AuthUser } from '../helpers'
+import { classifyTaskDedupSelect } from '../lib/task-dedup-sql'
 
 // ── Shared stub DB ────────────────────────────────────────────────────────────
 //
@@ -39,8 +40,10 @@ function makeStubDB(seedRows: Record<string, Record<string, unknown>> = {}) {
           return (mutations.get(id) ?? null) as T | null
         }
 
-        // Dedup SELECT (tasks title+project_id query)
-        if (upper.includes('TITLE =') && upper.includes('PROJECT_ID IS')) {
+        // Dedup SELECT (tasks title+project_id query), raw or normalized.
+        // classifyTaskDedupSelect throws on an unrecognised `SELECT id FROM
+        // tasks`, so a query edit that outruns this stub is red (#530b).
+        if (classifyTaskDedupSelect(sql) === 'title') {
           return null as T | null
         }
 

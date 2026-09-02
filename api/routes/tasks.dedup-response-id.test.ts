@@ -13,6 +13,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { AuthUser, Env } from '../helpers'
+import { classifyTaskDedupSelect } from '../lib/task-dedup-sql'
 
 const { applyMutationMock } = vi.hoisted(() => ({ applyMutationMock: vi.fn() }))
 vi.mock('./mutations', () => ({ applyMutation: applyMutationMock }))
@@ -31,8 +32,10 @@ function echoRowDB() {
           return { id, title: 'Stub Row', assignee: 'claude-ai', status: 'todo' }
         }
         // Mobile pre-check dedup SELECT — no match, forces the fallthrough
-        // to applyMutation (which is mocked below).
-        if (upper.includes('LOWER(TRIM(TITLE))')) return null
+        // to applyMutation (which is mocked below). Keyed by shape, not by the
+        // LOWER(TRIM(TITLE)) substring, which the central rule now also carries
+        // (#530b); the classifier THROWS on an unrecognised task dedup SELECT.
+        if (classifyTaskDedupSelect(sql) === 'mobile') return null
         return null
       },
       run: async () => ({ success: true, meta: { changes: 1 } }),

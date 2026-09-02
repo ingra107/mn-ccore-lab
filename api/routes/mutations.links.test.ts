@@ -14,6 +14,7 @@ import { nowInstant } from '../lib/time';
 import { handleMutations } from './mutations';
 import type { Mutation } from './mutations';
 import type { Env, AuthUser } from '../helpers';
+import { classifyTaskDedupSelect } from '../lib/task-dedup-sql';
 import { handleGetLinks } from './links';
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
@@ -65,8 +66,10 @@ function makeStubDB(seed: Record<string, StoreRow> = {}) {
         if (upper.includes('VALIDATION_FLAGS')) {
           return null as T | null;
         }
-        // Dedup check (tasks only -- not relevant for links but guard it)
-        if (upper.includes('TITLE =') && upper.includes('PROJECT_ID IS')) {
+        // Dedup check (tasks only -- not relevant for links but guard it).
+        // classifyTaskDedupSelect throws on an unrecognised `SELECT id FROM
+        // tasks`, so a query edit that outruns this stub is red (#530b).
+        if (classifyTaskDedupSelect(sql) === 'title') {
           return null as T | null;
         }
         // readCanonical / applyDelete idempotent check: SELECT * FROM <table> WHERE id = ?

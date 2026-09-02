@@ -17,6 +17,7 @@ import { nowInstant } from '../lib/time'
 import { _resetValidationFlagsCache } from '../helpers'
 import type { Mutation } from './mutations'
 import type { Env, AuthUser } from '../helpers'
+import { classifyTaskDedupSelect } from '../lib/task-dedup-sql'
 
 const TEST_API_KEY = 'test-meeting-dedup-api-key'
 const fakeUser: AuthUser = { email: 'test@example.com', role: 'admin', name: 'Test User' } as unknown as AuthUser
@@ -65,13 +66,15 @@ function makeStubDB(seedRows: Record<string, Record<string, unknown>> = {}) {
 
       first: async <T>() => {
         const upper = sql.trim().toUpperCase()
-        // meeting-identity SELECT: (source, meeting_id)
-        if (upper.includes("SOURCE = 'MEETING_APPROVAL'") && upper.includes('MEETING_ID =')) {
+        // meeting-identity SELECT: (source, meeting_id). The classifier THROWS
+        // on a `SELECT id FROM tasks` it does not recognise, so a query edit
+        // that outruns this stub is red, not a vacuous green (#530b).
+        if (classifyTaskDedupSelect(sql) === 'meeting') {
           const row = findByMeeting(boundVals[0] as string)
           return (row ? { id: row.id } : null) as T | null
         }
-        // non-meeting (title, project_id) SELECT
-        if (upper.includes('TITLE =') && upper.includes('PROJECT_ID IS')) {
+        // non-meeting name-identity SELECT, raw or normalized
+        if (classifyTaskDedupSelect(sql) === 'title') {
           const title = boundVals[0] as string
           const projectId = (boundVals[1] === undefined ? null : boundVals[1]) as string | null
           const row = findByTitleProjectNonMeeting(title, projectId)
