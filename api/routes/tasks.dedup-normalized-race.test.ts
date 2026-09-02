@@ -1,35 +1,24 @@
-// The #530b cutover bridge: the race-loser catch is normalized ONE DEPLOY
-// BEFORE the serial arm, and this is the test that says why.
+// The race-loser catch under the FOLDED key (#530b, 2026-09-02).
 //
-// The dangerous window is not "before the index exists" — it is the window
-// where idx_tasks_title_norm_project_active is LIVE and the serial dedup arm
-// still matches the raw title:
-//
-//   1. a case / edge-space variant misses the serial (raw) SELECT;
-//   2. its INSERT trips the normalized index;
-//   3. the catch re-queries — and if the catch is ALSO raw, it cannot find the
-//      differently-spelled winner, so applyInsert re-throws;
-//   4. processOne records the mutation as an `error`, and processed_mutations
-//      replays that error verbatim for the same mutation_id. The create is
-//      permanently dead-lettered until a fresh mutation_id is minted.
-//
-// Moving the catch first closes it. Broadening the catch cannot reopen the race
-// it guards, because every raw exact conflict is also a normalized match — the
-// catch is a strict superset of what it was.
+// The serial dedup SELECT runs before the winner's INSERT commits, so in a true
+// race it finds nothing and both writers attempt an INSERT. The loser trips
+// idx_tasks_title_norm_project_active and the catch re-queries. If that
+// re-query used the raw title it could not find a differently-spelled winner,
+// applyInsert would re-throw, processOne would record an `error`, and
+// processed_mutations would replay that error for the same mutation_id -- a
+// create lost for good. The catch was moved onto the folded key ONE DEPLOY
+// AHEAD of the serial arm for exactly that reason; this file is what the bridge
+// bought, kept after the cutover because the property it pins is permanent.
 //
 // Reconciled Dual-Plan (builder + mechanic + codex), Nick's GO 2026-09-02. Both
-// codex and mechanic argued this superset property; neither ran it. This runs it.
+// codex and mechanic argued the superset property; neither ran it. This runs it.
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import { nowInstant } from '../lib/time'
 import type { Mutation } from './mutations'
 import type { Env, AuthUser } from '../helpers'
 import { _resetValidationFlagsCache } from '../helpers'
-import {
-  TASK_TITLE_KEY_SQL,
-  TASK_TITLE_DEDUP_SELECT_RAW,
-  classifyTaskDedupSelect,
-} from '../lib/task-dedup-sql'
+import { classifyTaskDedupSelect } from '../lib/task-dedup-sql'
 
 const fakeUser = { email: 'ingra107@umn.edu', role: 'admin' } as AuthUser
 const TEST_API_KEY = 'test-dedup-normalized-race-api-key'
@@ -45,17 +34,19 @@ function insertColumns(sql: string): string[] {
 }
 
 /**
- * A D1 stub in the exact cutover state: the NORMALIZED index is live, the
- * serial arm is still RAW, the catch is NORMALIZED.
+ * A D1 stub with the normalized index live and the race window open: the FIRST
+ * name-identity SELECT (the serial arm) sees the pre-race state and misses, as
+ * it does in production when the winner's INSERT has not committed yet. Every
+ * later SELECT -- the catch -- reads the store honestly.
  */
-function makeCutoverStubDB() {
+function makeCutoverStubDB(raceWindow = true) {
   const store = new Map<string, Record<string, unknown>>([
     [WINNER_ID, {
       id: WINNER_ID, title: WINNER_TITLE, project_id: null,
       status: 'todo', deleted_at: null, source: null, seq: 1,
     }],
   ])
-  const seen: Array<'raw' | 'normalized'> = []
+  const seen: Array<'serial' | 'catch'> = []
 
   function makeStmt(sql: string, boundVals: unknown[]): any {
     return {
@@ -64,19 +55,19 @@ function makeCutoverStubDB() {
       first: async <T>() => {
         const upper = sql.trim().toUpperCase()
         if (classifyTaskDedupSelect(sql) === 'title') {
-          // Which arm is asking? The raw one compares the stored title byte for
-          // byte; the normalized one folds both sides, exactly as SQLite would.
-          const normalized = sql.includes(TASK_TITLE_KEY_SQL)
-          seen.push(normalized ? 'normalized' : 'raw')
+          seen.push(seen.length === 0 ? 'serial' : 'catch')
+          // The race window: the serial arm runs before the winner's INSERT is
+          // visible, so it misses even though the winner exists.
+          if (seen.length === 1 && raceWindow) return null as T | null
           const title = boundVals[0] as string
           const projectId = (boundVals[1] === undefined ? null : boundVals[1]) as string | null
           const fold = (s: string) => s.toLowerCase().replace(/^ +| +$/g, '')
           for (const row of store.values()) {
-            const rowTitle = row.title as string
-            const hit = normalized
-              ? fold(rowTitle) === fold(title)
-              : rowTitle === title
-            if (hit && (row.project_id ?? null) === projectId && !row.deleted_at && row.status !== 'done') {
+            if (
+              fold(row.title as string) === fold(title) &&
+              (row.project_id ?? null) === projectId &&
+              !row.deleted_at && row.status !== 'done'
+            ) {
               return { id: row.id } as T
             }
           }
@@ -157,10 +148,10 @@ function loserMutation(): Mutation {
   } as Mutation
 }
 
-describe('#530b bridge — normalized catch adopts a raw-distinct race loser', () => {
+describe('#530b — the folded catch adopts a case-variant race loser', () => {
   beforeEach(() => { _resetValidationFlagsCache() })
 
-  it('serial RAW arm misses, the index fires, and the NORMALIZED catch adopts the winner', async () => {
+  it('serial arm misses in the race window, the index fires, the catch adopts the winner', async () => {
     const db = makeCutoverStubDB()
     const { handleMutations } = await import('./mutations')
     const env = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
@@ -176,7 +167,7 @@ describe('#530b bridge — normalized catch adopts a raw-distinct race loser', (
     }
 
     // Adopted, not dead-lettered. A regression to status='error' here IS the
-    // permanently-lost create this bridge exists to prevent.
+    // permanently-lost create this whole change exists to prevent.
     expect(body.results[0].status).toBe('accepted')
     expect(body.results[0].reason).toContain('race-loser')
     expect(body.results[0].canonical_id).toBe(WINNER_ID)
@@ -185,26 +176,38 @@ describe('#530b bridge — normalized catch adopts a raw-distinct race loser', (
     expect(db._store.has(LOSER_ID)).toBe(false)
     expect(db._store.size).toBe(1)
 
-    // The asymmetry is the point — assert BOTH arms ran and that they ran in
-    // the cutover order (raw first, normalized second). If both were raw, the
-    // second entry would say 'raw' and the adoption above could not happen.
-    expect(db._seen()).toEqual(['raw', 'normalized'])
+    // Both arms ran, in order: the serial one saw the race window and missed,
+    // the catch re-queried after the INSERT threw. A one-element list here
+    // means the INSERT never fired and this is no longer a race test.
+    expect(db._seen()).toEqual(['serial', 'catch'])
   })
 
-  it('the raw arm alone would NOT have found the winner (the un-bridged failure)', async () => {
-    // The counterfactual, stated as a fact about the SQL rather than as prose:
-    // the pre-#530b catch compared titles byte for byte, so the loser's own
-    // title is the only thing it could have matched, and no such row exists.
-    const db = makeCutoverStubDB()
-    const stmt = db.prepare(TASK_TITLE_DEDUP_SELECT_RAW).bind(LOSER_TITLE, null)
-    expect(await stmt.first()).toBeNull()
-    // ...while the winner IS present under the folded key.
-    expect(db._store.get(WINNER_ID)!.title).toBe(WINNER_TITLE)
+  it('with no race, the serial arm adopts the case variant and never INSERTs', async () => {
+    // The ordinary path: two sequential creates. The serial arm folds the
+    // title, finds the winner, and returns the adoptable response without ever
+    // reaching the INSERT -- so the index is a backstop here, not the actor.
+    const db = makeCutoverStubDB(false)
+    const { handleMutations } = await import('./mutations')
+    const env = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
+
+    const req = new Request('https://example.com/api/mutations', {
+      method: 'POST',
+      body: JSON.stringify({ mutations: [loserMutation()] }),
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
+    })
+    const body = await (await handleMutations(req, fakeUser, env)).json() as {
+      results: Array<{ status: string; reason?: string; canonical_id?: string }>
+    }
+    expect(body.results[0].status).toBe('accepted')
+    expect(body.results[0].canonical_id).toBe(WINNER_ID)
+    expect(body.results[0].reason).not.toContain('race-loser')
+    expect(db._seen()).toEqual(['serial'])
+    expect(db._store.size).toBe(1)
   })
 
-  it('an exact-title race still adopts — the normalized catch is a superset', async () => {
-    // The property the reconciliation leaned on: broadening the catch cannot
-    // lose a case the narrow catch handled.
+  it('an exact-title race still adopts — the folded key is a superset of the raw one', async () => {
+    // The property the reconciliation leaned on: folding the key cannot lose a
+    // case the byte-exact key handled.
     const db = makeCutoverStubDB()
     const { handleMutations } = await import('./mutations')
     const env = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
@@ -223,7 +226,7 @@ describe('#530b bridge — normalized catch adopts a raw-distinct race loser', (
     }
     expect(body.results[0].status).toBe('accepted')
     expect(body.results[0].canonical_id).toBe(WINNER_ID)
-    // Exact match: the SERIAL arm catches it, so the INSERT never runs.
-    expect(db._seen()).toEqual(['raw'])
+    expect(body.results[0].reason).toContain('race-loser')
+    expect(db._seen()).toEqual(['serial', 'catch'])
   })
 })

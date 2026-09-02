@@ -48,16 +48,6 @@ export const TASK_TITLE_DEDUP_SELECT =
   `SELECT id FROM tasks WHERE ${TASK_TITLE_KEY_SQL} = ${TASK_TITLE_KEY_BIND_SQL} ` +
   `AND project_id IS ? ${TASK_DEDUP_SCOPE_SQL}`;
 
-/**
- * The pre-#530b raw-title form. Live ONLY in the cutover window between the
- * bridge deploy (race-loser catch normalized first, so no create can be lost
- * once the normalized index exists) and the second deploy that moves the serial
- * arm. DELETE THIS with the second deploy — a lingering second key is the drift
- * this module exists to prevent.
- */
-export const TASK_TITLE_DEDUP_SELECT_RAW =
-  `SELECT id FROM tasks WHERE title = ? AND project_id IS ? ${TASK_DEDUP_SCOPE_SQL}`;
-
 // ── Test-support: classify a `SELECT id FROM tasks` the D1 stubs must answer ──
 //
 // The vitest D1 stubs recognise the dedup SELECTs by matching their SQL text,

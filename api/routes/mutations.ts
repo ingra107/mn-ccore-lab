@@ -27,7 +27,7 @@ import { FK_SLUG_FIELDS } from '../lib/task-cols';
 import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
 import { emitLifecycleActivity } from '../lib/lifecycle-activity';
-import { TASK_TITLE_DEDUP_SELECT, TASK_TITLE_DEDUP_SELECT_RAW } from '../lib/task-dedup-sql';
+import { TASK_TITLE_DEDUP_SELECT } from '../lib/task-dedup-sql';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 
 const ALLOWED_TABLES = new Set([
@@ -589,15 +589,10 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
   // definition, api/lib/task-dedup-sql.ts, and a contract test reads the
   // migration file and asserts the index agrees with it.
   //
-  // CUTOVER STATE (#530b, 2026-09-02): this serial arm still matches the RAW
-  // title while the race-loser catch below matches the NORMALIZED one. That
-  // asymmetry is the bridge, and it is deliberate for exactly one deploy: with
-  // the normalized index live and a raw serial arm, a case variant misses here,
-  // trips the index on INSERT, and would DEAD-LETTER PERMANENTLY if the catch
-  // could not find the differently-spelled winner (processed_mutations replays
-  // that error verbatim for the same mutation_id). A broader catch cannot
-  // reopen the race, because every raw exact conflict is also a normalized
-  // match. The next deploy moves this arm and deletes the raw constant.
+  // The key FOLDS case and edge whitespace (#530b, 2026-09-02): a title that
+  // differs only that way is the same task, which is what PB's local pre-check
+  // has assumed since July. Both arms and the index now share one definition,
+  // so the arm you are reading cannot drift from the one below it.
   if (mut.table === 'tasks') {
     const p = mut.payload as Record<string, unknown>;
     const source = p.source as string | undefined;
@@ -621,7 +616,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
         // NULL IS NULL is true). The source guard keeps meeting-approval rows
         // out of the name identity class.
         const dup = await env.DB.prepare(
-          TASK_TITLE_DEDUP_SELECT_RAW,
+          TASK_TITLE_DEDUP_SELECT,
         ).bind(title, projectId ?? null).first<{ id: string }>();
         if (dup) {
           return dedupAccepted(env, mut, dup.id, flags,
@@ -753,13 +748,12 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
         const title = p.title as string | undefined;
         const projectId = p.project_id as string | null | undefined;
         if (title) {
-          // NORMALIZED, and deliberately one deploy ahead of the serial arm
-          // above (#530b bridge): once idx_tasks_title_norm_project_active is
-          // live, the loser of a case/edge-space race trips it, and only a
-          // normalized re-query can find the differently-spelled winner. A
-          // raw catch here would re-throw and the mutation would dead-letter
-          // for good. Broader is safe: every raw exact conflict is also a
-          // normalized match, so this cannot reopen the race it closes.
+          // The SAME query as the serial arm, from the same constant. The
+          // loser of a case/edge-space race trips
+          // idx_tasks_title_norm_project_active, and only a folded re-query
+          // finds the differently-spelled winner; a raw one re-throws and the
+          // create dead-letters for good, because processed_mutations replays
+          // that error for the same mutation_id.
           const dup = await env.DB.prepare(
             TASK_TITLE_DEDUP_SELECT,
           ).bind(title, projectId ?? null).first<{ id: string }>();

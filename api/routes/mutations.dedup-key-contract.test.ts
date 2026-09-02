@@ -22,7 +22,6 @@ import {
   TASK_TITLE_KEY_BIND_SQL,
   TASK_TITLE_NORM_INDEX,
   TASK_TITLE_DEDUP_SELECT,
-  TASK_TITLE_DEDUP_SELECT_RAW,
   classifyTaskDedupSelect,
 } from '../lib/task-dedup-sql'
 
@@ -33,29 +32,26 @@ describe('task dedup key — one definition', () => {
     expect(TASK_TITLE_DEDUP_SELECT).toContain(`${TASK_TITLE_KEY_SQL} = ${TASK_TITLE_KEY_BIND_SQL}`)
   })
 
-  it('both SELECTs keep the identity scope byte-identical to the index predicate', () => {
+  it('the SELECT keeps the identity scope byte-identical to the index predicate', () => {
     const scope =
       "AND deleted_at IS NULL AND status != 'done' " +
       "AND (source IS NULL OR source != 'meeting_approval') LIMIT 1"
     expect(TASK_TITLE_DEDUP_SELECT).toContain(scope)
-    expect(TASK_TITLE_DEDUP_SELECT_RAW).toContain(scope)
   })
 
-  it('NULL project_id matches NULL on both arms (IS ?, never = ?)', () => {
+  it('NULL project_id matches NULL (IS ?, never = ?)', () => {
     expect(TASK_TITLE_DEDUP_SELECT).toContain('project_id IS ?')
-    expect(TASK_TITLE_DEDUP_SELECT_RAW).toContain('project_id IS ?')
     expect(TASK_TITLE_DEDUP_SELECT).not.toContain('project_id = ?')
   })
 
-  it('the raw arm is byte-identical to the pre-#530b query it replaces', () => {
-    // Pinned verbatim: the cutover's serial arm must behave exactly as it did
-    // before, or the bridge deploy is not the no-op it claims to be for the
-    // serial path.
-    expect(TASK_TITLE_DEDUP_SELECT_RAW).toBe(
-      "SELECT id FROM tasks WHERE title = ? AND project_id IS ? " +
-      "AND deleted_at IS NULL AND status != 'done' " +
-      "AND (source IS NULL OR source != 'meeting_approval') LIMIT 1",
-    )
+  it('BOTH applyInsert arms use the constant -- no raw title literal survives', () => {
+    // The cutover is finished: the bridge ran the catch one deploy ahead of the
+    // serial arm, and this is what closes it. A reintroduced `title = ?` would
+    // silently unmatch the index and reopen the race the index exists to close.
+    const src = readFileSync(join(API_DIR, 'routes', 'mutations.ts'), 'utf8')
+    expect(src).not.toContain('title = ?')
+    const uses = src.match(/TASK_TITLE_DEDUP_SELECT/g) ?? []
+    expect(uses.length).toBe(3)   // the import + the two arms
   })
 
   it('normalization happens in SQL, never in JS', () => {
@@ -111,7 +107,11 @@ describe('task dedup key — the migration and the code agree', () => {
 describe('classifyTaskDedupSelect — the stubs fail loud', () => {
   it('recognises the three live dedup SELECTs', () => {
     expect(classifyTaskDedupSelect(TASK_TITLE_DEDUP_SELECT)).toBe('title')
-    expect(classifyTaskDedupSelect(TASK_TITLE_DEDUP_SELECT_RAW)).toBe('title')
+    // The retired raw form still classifies, so a stub stays honest if an old
+    // query shape shows up in a fixture.
+    expect(classifyTaskDedupSelect(
+      "SELECT id FROM tasks WHERE title = ? AND project_id IS ? AND deleted_at IS NULL AND status != 'done' AND (source IS NULL OR source != 'meeting_approval') LIMIT 1",
+    )).toBe('title')
     expect(classifyTaskDedupSelect(
       "SELECT id FROM tasks WHERE source = 'meeting_approval' AND meeting_id = ? AND deleted_at IS NULL AND status != 'done' LIMIT 1",
     )).toBe('meeting')
