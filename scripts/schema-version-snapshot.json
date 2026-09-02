@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "b4b682f1e5d3668a344ea3c98c73982f3a676c7a603c298e1220fe3457d55a46",
-  "file_count": 110,
+  "hash": "656b6246637d32d9c561b543060fd80e165bb1c720cc846ebc21dc5c33d3f264",
+  "file_count": 111,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -112,11 +112,12 @@
     "schema-v103-activity-entries-answered-at.sql",
     "schema-v104-artifact-tags.sql",
     "schema-v105-schema-migrations-ledger.sql",
-    "schema-v106-member-featured-publications.sql"
+    "schema-v106-member-featured-publications.sql",
+    "schema-v107-tasks-title-dedup-normalize.sql"
   ],
   "version_range": [
     2,
-    106
+    107
   ],
   "gaps": [
     35,
