@@ -15,6 +15,44 @@ interface QuickAddFormProps {
   className?: string
 }
 
+// The dashed-gold "+ Add …" pill. Exported so a sibling toggle in the same
+// action row (Meetings "Log Decision", #118) is the same trigger, not a copy.
+export function QuickAddTrigger({
+  label,
+  onClick,
+  icon,
+  active = false,
+  ariaExpanded,
+}: {
+  label: string
+  onClick: () => void
+  /** Defaults to the Plus glyph. */
+  icon?: ReactNode
+  /** Tint the label gold while the thing it toggles is open. */
+  active?: boolean
+  ariaExpanded?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={ariaExpanded}
+      className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium quick-add-trigger hov-border hov-color"
+      style={{
+        background: 'var(--ice)',
+        color: active ? 'var(--gold)' : 'var(--slate)',
+        border: `1px dashed ${withAlpha(ACCENT_GOLD, 30)}`,
+        transition: 'all 0.2s ease',
+        '--hov-border': 'var(--gold)',
+        '--hov-color': 'var(--ink)',
+      } as React.CSSProperties}
+    >
+      {icon ?? <Plus {...ICON_PROPS} size={14} />}
+      {label}
+    </button>
+  )
+}
+
 export default function QuickAddForm({
   isOpen,
   onToggle,
@@ -30,27 +68,16 @@ export default function QuickAddForm({
       {/* Toggle trigger */}
       <AnimatePresence mode="wait">
         {!isOpen && (
-          <motion.button
+          <motion.div
             key="trigger"
-            type="button"
+            className="inline-flex"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            onClick={onToggle}
-            className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium quick-add-trigger hov-border hov-color"
-            style={{
-              background: 'var(--ice)',
-              color: 'var(--slate)',
-              border: `1px dashed ${withAlpha(ACCENT_GOLD, 30)}`,
-              transition: 'all 0.2s ease',
-              '--hov-border': 'var(--gold)',
-              '--hov-color': 'var(--ink)',
-            } as React.CSSProperties}
           >
-            <Plus {...ICON_PROPS} size={14} />
-            {triggerLabel}
-          </motion.button>
+            <QuickAddTrigger label={triggerLabel} onClick={onToggle} />
+          </motion.div>
         )}
       </AnimatePresence>
 

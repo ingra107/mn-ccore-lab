@@ -14,7 +14,7 @@ import { useCreateTask, useCreateDecision, useUpdateTask, useBulkUpdateTasks } f
 import { useToast } from '../hooks/useToast'
 import { directors, getAllMembers, getPersonInfo } from '../data/team'
 import { projects as projectOptions } from '../data/projects'
-import QuickAddForm from '../components/QuickAddForm'
+import QuickAddForm, { QuickAddTrigger } from '../components/QuickAddForm'
 import Avatar from '../components/Avatar'
 import PageHeader from '../components/PageHeader'
 import InlineSelect from '../components/InlineSelect'
@@ -271,22 +271,13 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
           >
             View Full Meeting <ArrowRight {...ICON_PROPS} size={11} />
           </Link>
-          <button
-            type="button"
+          <QuickAddTrigger
+            label={showDecisionForm ? 'Cancel decision' : 'Log Decision'}
+            icon={<Scale {...ICON_PROPS} size={14} />}
             onClick={() => setShowDecisionForm(!showDecisionForm)}
-            aria-expanded={showDecisionForm}
-            className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium quick-add-trigger hov-border hov-color"
-            style={{
-              background: 'var(--ice)',
-              color: showDecisionForm ? 'var(--gold)' : 'var(--slate)',
-              border: `1px dashed ${withAlpha(ACCENT_GOLD, 30)}`,
-              transition: 'all 0.2s ease',
-              '--hov-border': 'var(--gold)',
-              '--hov-color': 'var(--ink)',
-            } as React.CSSProperties}
-          >
-            <Scale {...ICON_PROPS} size={14} /> {showDecisionForm ? 'Cancel decision' : 'Log Decision'}
-          </button>
+            active={showDecisionForm}
+            ariaExpanded={showDecisionForm}
+          />
           {addActionItem}
         </div>
         <AnimatePresence>
@@ -655,6 +646,54 @@ export default function Meetings() {
     pendingActions.length > 0 ? `${pendingActions.length} pending` : null,
   ].filter(Boolean).join(' · ')
 
+  // #118: rendered inside MeetingDetail's top action row via its slot prop.
+  // `basis-full` drops the OPEN form onto its own line so the inputs are not
+  // squeezed into a flex cell next to the other two buttons.
+  const addActionItemForm = (
+    <QuickAddForm
+      isOpen={showAddAction}
+      onToggle={() => setShowAddAction(true)}
+      onSubmit={handleAddActionItem}
+      onCancel={() => { setShowAddAction(false); setNewActionDesc(''); setNewActionAssignee('nick-ingraham'); setNewActionDueDate(''); setNewActionProject('') }}
+      triggerLabel="Add Action Item"
+      submitLabel="Add Item"
+      className={showAddAction ? 'basis-full' : ''}
+    >
+      <div className="space-y-3">
+        <div>
+          <label style={labelStyle}>Description</label>
+          <input type="text" value={newActionDesc} onChange={(e) => setNewActionDesc(e.target.value)} placeholder="What needs to be done?" style={inputStyle}
+            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAddActionItem() }} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label style={labelStyle}>Assignee</label>
+            <InlineAssigneePicker
+              value={newActionAssignee}
+              onChange={setNewActionAssignee}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Due Date (optional)</label>
+            <input type="date" value={newActionDueDate} onChange={(e) => setNewActionDueDate(e.target.value)} style={inputStyle} />
+          </div>
+        </div>
+        <div>
+          <label style={labelStyle}>Project (optional)</label>
+          <InlineSelect
+            value={newActionProject}
+            options={[{ value: '', label: 'No project link' }, ...projectOptions.map((p) => ({ value: p.title, label: p.title }))]}
+            onChange={setNewActionProject}
+            size="md"
+            alwaysShowChevron
+          />
+        </div>
+      </div>
+    </QuickAddForm>
+  )
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
@@ -929,53 +968,7 @@ export default function Meetings() {
                   top action row (the slot prop); `basis-full` drops the open
                   form onto its own line so the inputs are not squeezed into a
                   flex cell next to the other two buttons. */}
-              <MeetingDetail
-                meeting={selectedMeeting}
-                addActionItem={
-                <QuickAddForm
-                  isOpen={showAddAction}
-                  onToggle={() => setShowAddAction(true)}
-                  onSubmit={handleAddActionItem}
-                  onCancel={() => { setShowAddAction(false); setNewActionDesc(''); setNewActionAssignee('nick-ingraham'); setNewActionDueDate(''); setNewActionProject('') }}
-                  triggerLabel="Add Action Item"
-                  submitLabel="Add Item"
-                  className={showAddAction ? 'basis-full' : ''}
-                >
-                  <div className="space-y-3">
-                    <div>
-                      <label style={labelStyle}>Description</label>
-                      <input type="text" value={newActionDesc} onChange={(e) => setNewActionDesc(e.target.value)} placeholder="What needs to be done?" style={inputStyle}
-                        onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                        onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }}
-                        onKeyDown={(e) => { if (e.key === 'Enter') handleAddActionItem() }} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label style={labelStyle}>Assignee</label>
-                        <InlineAssigneePicker
-                          value={newActionAssignee}
-                          onChange={setNewActionAssignee}
-                        />
-                      </div>
-                      <div>
-                        <label style={labelStyle}>Due Date (optional)</label>
-                        <input type="date" value={newActionDueDate} onChange={(e) => setNewActionDueDate(e.target.value)} style={inputStyle} />
-                      </div>
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Project (optional)</label>
-                      <InlineSelect
-                        value={newActionProject}
-                        options={[{ value: '', label: 'No project link' }, ...projectOptions.map((p) => ({ value: p.title, label: p.title }))]}
-                        onChange={setNewActionProject}
-                        size="md"
-                        alwaysShowChevron
-                      />
-                    </div>
-                  </div>
-                </QuickAddForm>
-                }
-              />
+              <MeetingDetail meeting={selectedMeeting} addActionItem={addActionItemForm} />
             </motion.div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>

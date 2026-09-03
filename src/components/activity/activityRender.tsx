@@ -375,7 +375,8 @@ export interface ActivityEntryItemProps {
 // and on a lifecycle row the glyph is hover-only, so the moment the pointer
 // left the 22px row the armed control vanished. A first click looked like a
 // no-op. Now the armed state says so in words ("Delete?"), stays visible
-// off-hover via [data-armed] (index.css), and holds for 5s.
+// off-hover (the inline `visibility` below outranks the .detail-card/.lc-row
+// hover-hide rules in index.css), and holds for 5s.
 const DELETE_ARM_WINDOW_MS = 5000
 
 export function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
@@ -397,7 +398,6 @@ export function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
           setArmed(true)
         }
       }}
-      data-armed={armed ? 'true' : undefined}
       title={armed ? 'Click again to delete permanently' : 'Delete entry'}
       aria-label={armed ? 'Click again to delete permanently' : 'Delete entry'}
       className="inline-flex items-center justify-center cursor-pointer hov-color ae-delete"
@@ -406,6 +406,7 @@ export function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
         height: 18,
         flexShrink: 0,
         gap: 3,
+        visibility: armed ? 'visible' : undefined,
         background: armed ? withAlpha(ACCENT_CORAL, 12) : 'transparent',
         border: armed ? `1px solid ${withAlpha(ACCENT_CORAL, 55)}` : 'none',
         borderRadius: 'var(--radius-sm)',
