@@ -3,6 +3,16 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-09-03 — bug sweep #118–#120
+
+Frontend only; no schema, migration, route or API change (still v104 / 257 routes). 2 commits (`9dfee79c`, `6d3f97dd`), deployed, probe PASS. Bug queue and GitHub issue list empty again except #119, which stays open as a feature tracker.
+
+**#120 — "the trash cans don't work" on a task's activity line.** They did: two clicks on a comment card and on a lifecycle row both hit `POST /api/activity/:id/delete` on prod and removed the row, and the 09-01 activity_log shows no delete at all at the time of the report. The delete is a two-step confirm, and the armed state was a 3s colour change on an 11px icon that, on a lifecycle row, is hover-only and vanished the moment the pointer left the 22px row. A first click read as a no-op. The armed state now says "Delete?" in a coral pill, stays visible off-hover via `[data-armed]`, and holds 5s.
+
+**#118 — "can these be much higher on this page."** View Full Meeting, Log Decision and Add Action Item closed the meeting panel after Attendees, Agenda, Decisions, Action Items and Notes. They are one action row under the header now; the Log Decision form still expands in place; the parent-owned quick-add rides a new `addActionItem` slot prop on `MeetingDetail` and takes the full row when open.
+
+**#119 — Hermes reading Gmail.** Feature request, not a bug: the `hub_ai_listener` prompt has no tool access, so this is a Peripheral Brain listener change. Bug row dismissed, GitHub issue left open with the triage.
+
 ## 2026-08-18 — bug sweep #114–#117, plus the backlog cleared down to zero
 
 Frontend + two prod D1 backfills; no schema, migration, route or API change (still v104 / 257 routes). 10 commits, deployed, every probe PASS. GitHub issue list is empty for the first time.

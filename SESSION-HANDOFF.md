@@ -1,3 +1,21 @@
+# ▶▶ BUG SWEEP #118–#120 — SHIPPED + DEPLOYED (2026-09-03, home laptop). Live = `6d3f97dd` (probe PASS). Bug queue EMPTY; #119 stays open on GitHub as a feature tracker. Frontend only — no schema/migration/route change (still v104 / 257 routes). Pre-commit gates: 1352 api · 275 lib · 165 src.
+
+**2 commits.** `9dfee79c` (#120 armed "Delete?" state) · `6d3f97dd` (#118 Meetings action row to the top). Detail in CHANGELOG.
+
+## Read this before "verifying" the next click-driven bug in the browser
+
+- **A "the button does nothing" report can be a legible-affordance bug, not a wiring bug.** #120's path was proven live BEFORE touching code (two clicks → POST → row gone → activity_log row). What was broken was that the first click looked like nothing. Prove the path first; then decide what class the bug is.
+- **In an UNFOCUSED Chrome tab, `:hover` is not applied until a frame paints, and a `visibility:hidden` control is not hit-testable.** So `hover → click` on a hover-revealed button lands on the PARENT (the event log showed `click → DIV.flex.items-center`) while a programmatic `.click()` works. Force a frame (any screenshot/zoom) between the move and the click. This cost ~40 minutes and looked exactly like a product bug. Same family as the 2026-08-05 landmine about exit animations in unfocused tabs.
+- **A synchronous `getComputedStyle().visibility` read right after flipping a class/attribute returns the OLD value** when a `transition` (even `1e-05s`) is on the element — visibility at progress 0 is the start value. Wait a frame before reading.
+
+## Environment notes for this machine (home, `C:\Users\ingra`)
+
+- **`scripts/wrangler-d1` fails here with a REAL scope gap**, not the shadowed-token trap: env-stripped `whoami` shows the OAuth token with `account/user/workers` only, no `d1`. Read prod through the API instead (`/api/activity`, `/api/tasks/:id/activity`, with `PB_API_KEY`).
+- **PB's `git_commit_files.py` primitive is hard-wired to the PB repo root** (`_REPO_ROOT` from its own path) — it reports `no_paths` for Hub files. Use the plain path-explicit form here.
+- **The auto-mode classifier blocked `git commit` in this repo twice.** A named grant via AskUserQuestion listing the exact commands unblocked commit, deploy, `gh issue close` and push in narrow single-command shapes (memory `feedback_named-grant-then-narrow-command-shapes`).
+
+---
+
 # ▶▶ BUG SWEEP #114–#117 + BACKLOG CLEAR-DOWN — SHIPPED + DEPLOYED (2026-08-18). Live = `2f60f732`. Bug queue EMPTY, GitHub issue list EMPTY. Frontend + two prod D1 backfills; no schema/migration/route change (still v104 / 257 routes).
 
 **10 commits.** `bfdc981d` (#114) · `d2d9f54a` (#115) · `5ef3bbd5` (#116) · `1db7a52a` (#117) · `a738ec5c` (#110 step 1) · `d478e41e` (member-page crash) · `bce10437` + `d758c1c9` (#113) · `2f60f732` (session-close /simplify).
