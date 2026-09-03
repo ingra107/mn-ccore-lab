@@ -1,6 +1,6 @@
-# ▶▶ BUG SWEEP #118–#120 — SHIPPED + DEPLOYED (2026-09-03, home laptop). Live = `6d3f97dd` (probe PASS). Bug queue EMPTY; #119 stays open on GitHub as a feature tracker. Frontend only — no schema/migration/route change (still v104 / 257 routes). Pre-commit gates: 1352 api · 275 lib · 165 src.
+# ▶▶ BUG SWEEP #118–#120 — SHIPPED + DEPLOYED (2026-09-03, home laptop). Live = `12d6f20f` (probe PASS). Bug queue EMPTY; #119 stays open on GitHub as a feature tracker. Frontend only — no schema/migration/route change (still v104 / 257 routes). Pre-commit gates: 1352 api · 275 lib · 165 src.
 
-**2 commits.** `9dfee79c` (#120 armed "Delete?" state) · `6d3f97dd` (#118 Meetings action row to the top). Detail in CHANGELOG.
+**3 commits.** `9dfee79c` (#120 armed "Delete?" state) · `6d3f97dd` (#118 Meetings action row to the top) · `12d6f20f` (session-close `/simplify`: inline armed visibility, shared `QuickAddTrigger`, hoisted form JSX — deployed, which is why live ≠ the bug-fix sha). Detail in CHANGELOG. Deferred to PB backlog: **#2698** (shared arm-to-confirm hook; `BulkActionToolbar` has a diverging copy) · **#2700** (move Add Action Item state into `MeetingDetail`, drop the slot prop).
 
 ## Read this before "verifying" the next click-driven bug in the browser
 
@@ -10,7 +10,7 @@
 
 ## Environment notes for this machine (home, `C:\Users\ingra`)
 
-- **`scripts/wrangler-d1` fails here with a REAL scope gap**, not the shadowed-token trap: env-stripped `whoami` shows the OAuth token with `account/user/workers` only, no `d1`. Read prod through the API instead (`/api/activity`, `/api/tasks/:id/activity`, with `PB_API_KEY`).
+- **Wrangler D1 auth error 10000 is INTERMITTENT here, and the scope is fine.** Same env-stripped path failed 08:38, passed 09:15 (deploy #1's identity gate), failed 10:05 (deploy #2's gate), passed 10:08. Env-stripped `whoami` DOES list `d1 (write)` — it is the 8th scope, and a `| head -15` cut the list before it, which produced a false "no d1 scope" claim that stood for two hours. Retry the wrapper/gate before anything else; the API with `PB_API_KEY` (`/api/activity`, `/api/tasks/:id/activity`) is the fallback while it flakes.
 - **PB's `git_commit_files.py` primitive is hard-wired to the PB repo root** (`_REPO_ROOT` from its own path) — it reports `no_paths` for Hub files. Use the plain path-explicit form here.
 - **The auto-mode classifier blocked `git commit` in this repo twice.** A named grant via AskUserQuestion listing the exact commands unblocked commit, deploy, `gh issue close` and push in narrow single-command shapes (memory `feedback_named-grant-then-narrow-command-shapes`).
 

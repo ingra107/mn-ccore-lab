@@ -5,7 +5,7 @@
 
 ## 2026-09-03 — bug sweep #118–#120
 
-Frontend only; no schema, migration, route or API change (still v104 / 257 routes). 2 commits (`9dfee79c`, `6d3f97dd`), deployed, probe PASS. Bug queue and GitHub issue list empty again except #119, which stays open as a feature tracker.
+Frontend only; no schema, migration, route or API change (still v104 / 257 routes). 3 commits (`9dfee79c`, `6d3f97dd`, and the session-close simplify pass `12d6f20f`, which exported QuickAddForm's trigger as `QuickAddTrigger` so Log Decision reuses it), deployed, probe PASS. Bug queue and GitHub issue list empty again except #119, which stays open as a feature tracker.
 
 **#120 — "the trash cans don't work" on a task's activity line.** They did: two clicks on a comment card and on a lifecycle row both hit `POST /api/activity/:id/delete` on prod and removed the row, and the 09-01 activity_log shows no delete at all at the time of the report. The delete is a two-step confirm, and the armed state was a 3s colour change on an 11px icon that, on a lifecycle row, is hover-only and vanished the moment the pointer left the 22px row. A first click read as a no-op. The armed state now says "Delete?" in a coral pill, stays visible off-hover via `[data-armed]`, and holds 5s.
 
