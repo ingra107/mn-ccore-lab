@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 import { Activity, Calendar, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale } from 'lucide-react'
@@ -125,9 +125,13 @@ interface ActionItemWithContext extends ActionItem {
 
 interface MeetingDetailProps {
   meeting: Meeting
+  /** #118: the parent-owned "Add Action Item" quick-add, rendered in the
+   *  action row under the header so it sits WITH View Full Meeting and Log
+   *  Decision instead of below Notes. */
+  addActionItem?: ReactNode
 }
 
-function MeetingDetail({ meeting }: MeetingDetailProps) {
+function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const updateTask = useUpdateTask()
@@ -250,7 +254,95 @@ function MeetingDetail({ meeting }: MeetingDetailProps) {
         </div>
       </div>
 
-      <div style={{ marginBottom: '1.5rem' }} />
+      {/* #118 (Nick 2026-08-28: "can these be much higher on this page"):
+          View Full Meeting, Log Decision and Add Action Item used to close the
+          panel — after Attendees, Agenda, Decisions, Action Items AND Notes —
+          so on any meeting with notes the three things you DO here were below
+          the fold. One action row, directly under the header. The Log Decision
+          form still expands in place, beneath the row. */}
+      <div className="mb-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to={PATHS.meeting(meeting.id)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+            // Theme-agnostic dark-gold fill + white text = 7.5:1 AA both
+            // modes. --gold light failed with dark text (2.46:1). r7 2026-04-22.
+            style={{ background: 'var(--stage-fill-analysis)', color: '#fff', textDecoration: 'none', transition: 'opacity 0.2s' }}
+          >
+            View Full Meeting <ArrowRight {...ICON_PROPS} size={11} />
+          </Link>
+          <button
+            type="button"
+            onClick={() => setShowDecisionForm(!showDecisionForm)}
+            aria-expanded={showDecisionForm}
+            className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium quick-add-trigger hov-border hov-color"
+            style={{
+              background: 'var(--ice)',
+              color: showDecisionForm ? 'var(--gold)' : 'var(--slate)',
+              border: `1px dashed ${withAlpha(ACCENT_GOLD, 30)}`,
+              transition: 'all 0.2s ease',
+              '--hov-border': 'var(--gold)',
+              '--hov-color': 'var(--ink)',
+            } as React.CSSProperties}
+          >
+            <Scale {...ICON_PROPS} size={14} /> {showDecisionForm ? 'Cancel decision' : 'Log Decision'}
+          </button>
+          {addActionItem}
+        </div>
+        <AnimatePresence>
+          {showDecisionForm && (
+            <motion.form
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+              onSubmit={handleLogDecision}
+              style={{ marginTop: '8px' }}
+            >
+              <input
+                type="text"
+                value={decisionTitle}
+                onChange={(e) => setDecisionTitle(e.target.value)}
+                placeholder="What was decided?"
+                aria-label="What was decided?"
+                ref={decisionTitleRef}
+                style={{
+                  width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
+                  background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 'var(--radius-lg)',
+                  padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
+                onBlur={(e) => (e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15))}
+              />
+              <input
+                type="text"
+                value={decisionRationale}
+                onChange={(e) => setDecisionRationale(e.target.value)}
+                placeholder="Why? (optional rationale)"
+                aria-label="Why? (optional rationale)"
+                style={{
+                  width: '100%', fontSize: '12px', color: 'var(--ink)',
+                  background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`, borderRadius: 'var(--radius-lg)',
+                  padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
+                }}
+              />
+              <div className="flex gap-2">
+                {/* Theme-agnostic dark-gold fill + white text = 7.5:1
+                    AA both modes. --gold light (#6b5420) failed with
+                    dark text (2.46:1). r7 2026-04-22. */}
+                <button type="submit"
+                  style={{ background: 'var(--stage-fill-analysis)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                  Save
+                </button>
+                <button type="button" onClick={() => { setShowDecisionForm(false); setDecisionTitle(''); setDecisionRationale('') }}
+                  style={{ background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}>
+                  Cancel
+                </button>
+              </div>
+            </motion.form>
+          )}
+        </AnimatePresence>
+      </div>
 
       {meeting.attendees && meeting.attendees.length > 0 && (
         <div className="mb-6">
@@ -334,84 +426,6 @@ function MeetingDetail({ meeting }: MeetingDetailProps) {
         </div>
       )}
 
-      {/* M-26: Log Decision section */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <h4 className="mtg-section-label mtg-section-label--gold" style={{ margin: 0 }}>Log Decision</h4>
-          <button
-            type="button"
-            onClick={() => setShowDecisionForm(!showDecisionForm)}
-            style={{
-              background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)',
-              padding: '2px 8px', cursor: 'pointer', fontSize: '10px', color: 'var(--gold)',
-              display: 'inline-flex', alignItems: 'center', gap: '3px',
-            }}
-          >
-            <Scale {...ICON_PROPS} size={10} /> {showDecisionForm ? 'Cancel' : 'Add'}
-          </button>
-        </div>
-        <AnimatePresence>
-          {showDecisionForm && (
-            <motion.form
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
-              onSubmit={handleLogDecision}
-              style={{ marginBottom: '8px' }}
-            >
-              <input
-                type="text"
-                value={decisionTitle}
-                onChange={(e) => setDecisionTitle(e.target.value)}
-                placeholder="What was decided?"
-                ref={decisionTitleRef}
-                style={{
-                  width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
-                  background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 'var(--radius-lg)',
-                  padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
-                }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-                onBlur={(e) => (e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15))}
-              />
-              <input
-                type="text"
-                value={decisionRationale}
-                onChange={(e) => setDecisionRationale(e.target.value)}
-                placeholder="Why? (optional rationale)"
-                style={{
-                  width: '100%', fontSize: '12px', color: 'var(--ink)',
-                  background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`, borderRadius: 'var(--radius-lg)',
-                  padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
-                }}
-              />
-              <div className="flex gap-2">
-                {/* Theme-agnostic dark-gold fill + white text = 7.5:1
-                    AA both modes. --gold light (#6b5420) failed with
-                    dark text (2.46:1). r7 2026-04-22. */}
-                <button type="submit"
-                  style={{ background: 'var(--stage-fill-analysis)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                  Save
-                </button>
-                <button type="button" onClick={() => { setShowDecisionForm(false); setDecisionTitle(''); setDecisionRationale('') }}
-                  style={{ background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}>
-                  Cancel
-                </button>
-              </div>
-            </motion.form>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <Link
-        to={PATHS.meeting(meeting.id)}
-        className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-md text-xs font-medium"
-        // Theme-agnostic dark-gold fill + white text = 7.5:1 AA both
-        // modes. --gold light failed with dark text (2.46:1). r7 2026-04-22.
-        style={{ fontSize: 'var(--label-size)', background: 'var(--stage-fill-analysis)', color: '#fff', textDecoration: 'none', transition: 'opacity 0.2s' }}
-      >
-        View Full Meeting <ArrowRight {...ICON_PROPS} size={11} />
-      </Link>
     </div>
   )
 }
@@ -905,16 +919,19 @@ export default function Meetings() {
           </button>
           {selectedMeeting ? (
             <motion.div key={selectedMeeting.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-              <MeetingDetail meeting={selectedMeeting} />
-
               {/* #101: this panel is about the meeting you clicked. It used to
                   end with "All Pending Actions" + "Completed (N)" built from
                   EVERY meeting's items — items with nothing to do with the one
                   on screen, and a second copy of the ones that did (MeetingDetail
-                  above already lists this meeting's action items from
-                  useMeetingDetail(id)). Both lists are gone; the add form stays
-                  and now files against the SELECTED meeting. */}
-              <div style={{ marginTop: '1.5rem' }}>
+                  lists this meeting's action items from useMeetingDetail(id)).
+                  Both lists are gone; the add form stays and files against the
+                  SELECTED meeting. #118: it now renders INSIDE MeetingDetail's
+                  top action row (the slot prop); `basis-full` drops the open
+                  form onto its own line so the inputs are not squeezed into a
+                  flex cell next to the other two buttons. */}
+              <MeetingDetail
+                meeting={selectedMeeting}
+                addActionItem={
                 <QuickAddForm
                   isOpen={showAddAction}
                   onToggle={() => setShowAddAction(true)}
@@ -922,6 +939,7 @@ export default function Meetings() {
                   onCancel={() => { setShowAddAction(false); setNewActionDesc(''); setNewActionAssignee('nick-ingraham'); setNewActionDueDate(''); setNewActionProject('') }}
                   triggerLabel="Add Action Item"
                   submitLabel="Add Item"
+                  className={showAddAction ? 'basis-full' : ''}
                 >
                   <div className="space-y-3">
                     <div>
@@ -956,7 +974,8 @@ export default function Meetings() {
                     </div>
                   </div>
                 </QuickAddForm>
-              </div>
+                }
+              />
             </motion.div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
