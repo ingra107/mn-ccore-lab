@@ -366,14 +366,23 @@ export interface ActivityEntryItemProps {
 }
 
 // ── DeleteEntryButton ─────────────────────────────────────────────────────────
-// Two-step inline confirm: first click arms (coral, 3s window), second click
-// deletes. No browser dialog. Rendered only when a caller passes onDelete;
-// the API re-enforces author-or-PI server-side.
+// Two-step inline confirm: first click arms, second click deletes. No browser
+// dialog. Rendered only when a caller passes onDelete; the API re-enforces
+// author-or-PI server-side.
+//
+// #120 (Nick 2026-09-01: "i tried to delete entry and i don't think it
+// worked"): the armed state used to be a 3s colour change on an 11px glyph —
+// and on a lifecycle row the glyph is hover-only, so the moment the pointer
+// left the 22px row the armed control vanished. A first click looked like a
+// no-op. Now the armed state says so in words ("Delete?"), stays visible
+// off-hover via [data-armed] (index.css), and holds for 5s.
+const DELETE_ARM_WINDOW_MS = 5000
+
 export function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
   const [armed, setArmed] = useState(false)
   useEffect(() => {
     if (!armed) return
-    const t = setTimeout(() => setArmed(false), 3000)
+    const t = setTimeout(() => setArmed(false), DELETE_ARM_WINDOW_MS)
     return () => clearTimeout(t)
   }, [armed])
   return (
@@ -388,23 +397,31 @@ export function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
           setArmed(true)
         }
       }}
+      data-armed={armed ? 'true' : undefined}
       title={armed ? 'Click again to delete permanently' : 'Delete entry'}
       aria-label={armed ? 'Click again to delete permanently' : 'Delete entry'}
       className="inline-flex items-center justify-center cursor-pointer hov-color ae-delete"
       style={{
-        width: 18,
+        minWidth: 18,
         height: 18,
         flexShrink: 0,
-        background: 'transparent',
-        border: 'none',
+        gap: 3,
+        background: armed ? withAlpha(ACCENT_CORAL, 12) : 'transparent',
+        border: armed ? `1px solid ${withAlpha(ACCENT_CORAL, 55)}` : 'none',
         borderRadius: 'var(--radius-sm)',
         color: armed ? ACCENT_CORAL : 'var(--slate)',
         opacity: armed ? 1 : 0.45,
-        padding: 0,
+        padding: armed ? '0 6px 0 4px' : 0,
+        fontSize: 10,
+        fontWeight: 600,
+        fontStyle: 'normal',
+        lineHeight: 1,
+        whiteSpace: 'nowrap',
         '--hov-color': ACCENT_CORAL,
       } as React.CSSProperties}
     >
       <Trash2 size={11} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
+      {armed && <span>Delete?</span>}
     </button>
   )
 }

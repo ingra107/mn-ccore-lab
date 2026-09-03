@@ -1781,6 +1781,10 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 .detail-card:hover .ae-delete,
 .detail-card:hover .ae-edit,
 .lc-row:hover .ae-delete { visibility: visible; }
+/* #120: an ARMED trash ("Delete?") must not vanish when the pointer drifts off
+   the row — the second click is what actually deletes. */
+.detail-card .ae-delete[data-armed],
+.lc-row .ae-delete[data-armed] { visibility: visible; }
 @media (hover: none) {
   .detail-card .ae-delete,
   .detail-card .ae-edit,
