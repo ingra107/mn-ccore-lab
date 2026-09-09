@@ -628,6 +628,18 @@ async function fireMentionNotifications(
   // Preserve historical source_type so the existing delete-cascade
   // (DELETE notifications WHERE source_type IN ('task','task_comment')) and
   // click-through consumers keep matching.
+  // ⚠️ This ladder has to name EVERY entity type. It has no meeting/day arm by
+  // accident: both fall through to the project default, which builds
+  // `/projects?open=<id>` out of an id that is not a project — a dead link, and
+  // Rule 73 says every attention click opens the actionable entity. The meeting
+  // arm came with #124; the `day` arm is the same one-line class, wrong since
+  // the day entity shipped, fixed here rather than left for whoever @mentions
+  // someone in a morning thought.
+  //
+  // Four ladders in this file branch per entity type (existence check, Hermes
+  // source_type, this source_type, this link) and #124 extended three of them.
+  // That is the shape, not the oversight — backlog #8461 proposes one
+  // per-entity config object all four consult.
   const sourceType =
     args.entityType === 'task'
       ? args.kind === 'comment'
@@ -635,7 +647,11 @@ async function fireMentionNotifications(
         : 'task'
       : args.entityType === 'artifact'
         ? 'artifact_comment'
-        : 'project';
+        : args.entityType === 'meeting'
+          ? 'meeting_comment'
+          : args.entityType === 'day'
+            ? 'daily_thought'
+            : 'project';
   const link =
     args.entityType === 'task'
       // Direct portal deep-link (2026-06-11) — opens the task editor without
@@ -644,9 +660,15 @@ async function fireMentionNotifications(
       ? `/portal/my-tasks?open=${args.entityId}`
       : args.entityType === 'artifact'
         ? `/portal/artifacts/${args.entityId}`
-        : args.projectSlug
-          ? `/projects/${args.projectSlug}` // legacy project-mention link shape
-          : `/projects?open=${args.entityId}`;
+        : args.entityType === 'meeting'
+          ? `/portal/meetings/${args.entityId}`
+          // A day thread lives on the Today bar, and entity_id is its date — so
+          // the actionable surface is Today, not a per-day page (there is none).
+          : args.entityType === 'day'
+            ? '/portal/dashboard'
+            : args.projectSlug
+              ? `/projects/${args.projectSlug}` // legacy project-mention link shape
+              : `/projects?open=${args.entityId}`;
   const verb = args.kind === 'comment' ? 'mentioned you' : 'mentioned you in a task note';
   const title = `${args.actorName} ${verb}`;
   const stmt = env.DB.prepare(
@@ -700,23 +722,28 @@ async function buildMeetingContextBlock(env: Env, meetingId: string): Promise<st
     }
   };
 
-  const agendaItems = await env.DB.prepare(
-    'SELECT content, added_by, type FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order ASC, created_at ASC'
-  ).bind(meetingId).all<{ content: string; added_by: string; type: string | null }>().catch(() => ({ results: [] as { content: string; added_by: string; type: string | null }[] }));
-
+  // Both queries key off the meeting row we already have, so neither waits on
+  // the other — run them together rather than paying two serialized D1
+  // round-trips on a path a person is waiting on.
+  //
   // ⚠️ tasks.meeting_id and meetings.id are DIFFERENT ID SPACES (CLAUDE.md rule
   // 83): a debrief-extracted task carries the CALENDAR id, which is this row's
   // `source_id`. Matching both covers the calendar-extracted and native cases;
   // the legacy `mtg_<timestamp>` form is unresolvable by design and simply
   // doesn't match. Never "fix" this to a plain join on m.id — it matched 8 of
   // 152 rows when that was tried.
-  const tasks = await env.DB.prepare(
-    `SELECT id, title, status, assignee, due_date FROM tasks
-      WHERE deleted_at IS NULL AND meeting_id IS NOT NULL AND meeting_id IN (?, ?)
-      ORDER BY created_at ASC`
-  ).bind(m.id, m.source_id ?? m.id).all<{
-    id: string; title: string; status: string; assignee: string | null; due_date: string | null;
-  }>().catch(() => ({ results: [] as { id: string; title: string; status: string; assignee: string | null; due_date: string | null }[] }));
+  const [agendaItems, tasks] = await Promise.all([
+    env.DB.prepare(
+      'SELECT content, added_by, type FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order ASC, created_at ASC'
+    ).bind(meetingId).all<{ content: string; added_by: string; type: string | null }>().catch(() => ({ results: [] as { content: string; added_by: string; type: string | null }[] })),
+    env.DB.prepare(
+      `SELECT id, title, status, assignee, due_date FROM tasks
+        WHERE deleted_at IS NULL AND meeting_id IS NOT NULL AND meeting_id IN (?, ?)
+        ORDER BY created_at ASC`
+    ).bind(m.id, m.source_id ?? m.id).all<{
+      id: string; title: string; status: string; assignee: string | null; due_date: string | null;
+    }>().catch(() => ({ results: [] as { id: string; title: string; status: string; assignee: string | null; due_date: string | null }[] })),
+  ]);
 
   // Mirrors PB meeting_debrief.py::_slugify — lowercase, drop everything that is
   // not word/space/dash, collapse runs of space/underscore/dash to one dash.
@@ -842,6 +869,11 @@ async function dispatchHermes(
   // the ASKER can see, so a thread transcript can never surface a sibling the
   // requester isn't allowed to read.
   let prompt = aiPrompt;
+  // Says outright whether the thread block got attached. This used to be read
+  // back as `prompt === aiPrompt`, which encodes the same fact by string
+  // identity and quietly depends on the assembled prompt never coincidentally
+  // equalling the bare ask.
+  let hasThreadBlock = false;
 
   // #124: a meeting's facts go in FIRST, ahead of the thread transcript, so a
   // first ask on a meeting page ("what did we say we'd answer before the next
@@ -916,6 +948,7 @@ async function dispatchHermes(
         prompt =
           `<activity_thread_context version="1" ${scopeAttr}>\n${transcript}\n</activity_thread_context>\n\n` +
           `<current_request>\n${aiPrompt}\n</current_request>`;
+        hasThreadBlock = true;
       }
     } catch (e) {
       // Context is an ENHANCEMENT — never let assembling it lose the question.
@@ -927,9 +960,9 @@ async function dispatchHermes(
   // follow-up carries both the meeting's facts and the prior exchange. When the
   // thread block is absent this is still a well-formed envelope around the ask.
   if (meetingBlock) {
-    prompt = prompt === aiPrompt
-      ? `${meetingBlock}\n\n<current_request>\n${aiPrompt}\n</current_request>`
-      : `${meetingBlock}\n\n${prompt}`;
+    prompt = hasThreadBlock
+      ? `${meetingBlock}\n\n${prompt}`
+      : `${meetingBlock}\n\n<current_request>\n${aiPrompt}\n</current_request>`;
   }
 
   await env.DB.prepare(

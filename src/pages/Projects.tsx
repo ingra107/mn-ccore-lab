@@ -518,7 +518,9 @@ export default function Projects() {
   const mncoreCount = statusScoped.filter((p) => p.category === 'MNCCORE').length
   const clifCount = statusScoped.filter((p) => p.category === 'CLIF').length
   const pbCount = statusScoped.filter((p) => p.category === 'Peripheral Brain').length
-  const doneHidden = activeStatus === 'open' ? projects.length - statusScoped.length : 0
+  // No guard on activeStatus: the 'all' branch makes statusScoped === projects,
+  // so the difference is already 0 there.
+  const doneHidden = projects.length - statusScoped.length
 
 
   return (

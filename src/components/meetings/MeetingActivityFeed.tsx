@@ -28,8 +28,11 @@ import { askHermesOnMeeting, meetingActivityQueryKey, hermesOutcomeToast } from 
 import SmartCompose from '../SmartCompose'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { MessageSquare } from 'lucide-react'
-
-const isPending = (body: string) => /Thinking about this/.test(body)
+// The canonical "is this the Thinking… placeholder" predicate. It matches the
+// placeholder body verbatim, and that literal has three consumers (the write
+// primitive, the response handler, this) — a local regex here would have been a
+// fourth copy free to drift from the string the server actually writes.
+import { isHermesPending } from '../hermesPendingUtil'
 
 export default function MeetingActivityFeed({ meetingId }: { meetingId: string }) {
   const [showHidden, setShowHidden] = useState(false)
@@ -50,7 +53,7 @@ export default function MeetingActivityFeed({ meetingId }: { meetingId: string }
     // Poll while any thread is still "Thinking…" so Hermes's answer lands without
     // a manual refresh; otherwise idle. Same rule as the day feed.
     refetchInterval: (q) =>
-      ((q.state.data as { entries?: ActivityEntryItemRow[] } | undefined)?.entries ?? []).some((r) => isPending(r.body))
+      ((q.state.data as { entries?: ActivityEntryItemRow[] } | undefined)?.entries ?? []).some((r) => isHermesPending(r.body))
         ? 10_000
         : false,
     staleTime: 5_000,

@@ -3,6 +3,7 @@ import { fetchApi, createDependency, deleteDependency, addExpertise, removeExper
 import { MEMBER_FEATURED_QUERY_KEY, rowToPublication } from '../useApiData'
 import { rollbackSnapshots } from './utils'
 import { nowInstant } from '../../lib/time'
+import { meetingActivityQueryKey } from '../../lib/askHermes'
 import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, GrantMilestoneRow, ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus, PresentationType } from '../../lib/api'
 
 // ── Digest Status mutation ───────────────────────────────────
@@ -161,7 +162,9 @@ export function useDismissThread() {
         queryClient.invalidateQueries({ queryKey: ['day-activity', input.dayKey] })
       }
       if (input.meetingId) {
-        queryClient.invalidateQueries({ queryKey: ['meeting-activity', input.meetingId] })
+        // The key-builder, not the literal — askHermes.ts exports it precisely so
+        // callers invalidate the right thing if the shape ever changes.
+        queryClient.invalidateQueries({ queryKey: meetingActivityQueryKey(input.meetingId) })
       }
       // A dismissed thread must not keep raising the teal ● "new activity" badge.
       queryClient.invalidateQueries({ queryKey: ['unseen-activity'] })
