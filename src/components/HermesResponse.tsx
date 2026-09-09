@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
-import LinkifiedText from './LinkifiedText'
+import MarkdownView from './MarkdownView'
 
 export type HermesCitation =
   | { type: 'project'; slug: string; title: string }
@@ -62,12 +62,33 @@ export default function HermesResponse({ content }: { content: string }) {
 
   return (
     <div className="flex flex-col" style={{ gap: 10 }}>
-      <p
-        className="text-sm leading-relaxed"
-        style={{ color: 'var(--ink)', margin: 0, whiteSpace: 'pre-wrap' }}
-      >
-        <LinkifiedText text={prose} />
-      </p>
+      {/* Hermes writes markdown -- headings, numbered lists, **bold**, `code`.
+          This rendered it as pre-wrap plain text, so a structured answer arrived
+          with its asterisks and hyphens showing (Nick, 2026-09-08, on a meeting
+          answer: "is hermes trying to do md formatting? ... we should make it so
+          that it works").
+
+          MarkdownView is the renderer the repo already has, and its own header
+          named this gap: "the activity feeds render plain pre-wrap text via
+          LinkifiedText". It is dependency-free, never uses
+          dangerouslySetInnerHTML (raw HTML renders as literal text, so a model-
+          authored body cannot inject), and hands plain runs to LinkifiedText --
+          so every URL/mnccore:/portal-link chip behaves exactly as before.
+
+          The <p> wrapper is gone on purpose: MarkdownView emits block elements,
+          and a <ul> inside a <p> is invalid HTML that the browser unnests.
+          fontSize keeps the feed's 14px (MarkdownView defaults to 16px for
+          long-form artifact bodies); every block inside sizes in em, so the one
+          override scales the whole answer coherently.
+
+          HUMAN comments deliberately stay plain (activityRender's own body
+          path) -- people type asterisks without meaning bold. Only Hermes, which
+          is actually emitting markdown, gets it rendered. */}
+      <MarkdownView
+        source={prose}
+        className="leading-relaxed"
+        style={{ color: 'var(--ink)', fontSize: 'var(--text-base, 14px)' }}
+      />
 
       {findings.length > 0 && (
         <div className="flex flex-col" style={{ gap: 6 }}>
