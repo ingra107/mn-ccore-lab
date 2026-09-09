@@ -65,6 +65,7 @@ import { TaskRow as SharedTaskRow } from '../components/tasks/TaskRow'
 import { TaskRowActions } from '../components/tasks/TaskRowActions'
 import { InlineDetail } from './MyTasks/components/InlineDetail'
 import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
+import MeetingActivityFeed from '../components/meetings/MeetingActivityFeed'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -1078,6 +1079,22 @@ export default function MeetingDetail() {
             )}
           </div>
         </motion.div>
+
+        {/* Discussion (#124) — the meeting's own conversation. Last section on
+            purpose: you read what happened, then you ask about it. */}
+        {meeting?.id && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.3 }} className="mt-8">
+            <div className="flex items-center gap-2 mb-3">
+              <MessageSquarePlus {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
+              <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+                Discussion
+              </h3>
+            </div>
+            <div className="detail-card" style={{ borderRadius: 8, padding: '14px 16px' }}>
+              <MeetingActivityFeed meetingId={meeting.id} />
+            </div>
+          </motion.div>
+        )}
       </div>
 
       <style>{`

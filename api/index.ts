@@ -38,6 +38,7 @@ import { handleCalendarEvents } from './routes/calendar';
 import { handleListFeeds, handleAddFeed, handleDeleteFeed, handleListEvents, pollAllStaleFeeds } from './routes/calendar-feeds';
 import { handleGetActivity, handleActivityHeatmap, handleDeleteActivityEntry, handleEditActivityEntry, handleSetActivityHidden, handleGetActivityReplies, handleCreateActivityReply } from './routes/activity';
 import { handleGetDayActivity, handlePostDayActivity } from './routes/days';
+import { handleGetMeetingActivity, handlePostMeetingActivity } from './routes/meeting-activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper, handlePapersByProject, handlePapersByPublication } from './routes/paper-links';
@@ -1178,6 +1179,25 @@ defineRoute({
   entity: 'activity',
   visibility: 'na',
   handler: (c) => handlePostDayActivity(c.req.param('date'), R(c), USER(c), E(c)),
+});
+// The `meeting` entity feed (#124) — conversations on a meeting page, so the
+// debrief can be asked about instead of only read. Same shape as the day feed;
+// meeting threads default TEAM-visible (a meeting page is a shared surface).
+defineRoute({
+  method: 'GET',
+  path: '/api/meetings/:id/activity',
+  auth: 'authed',
+  entity: 'activity',
+  visibility: 'na',
+  handler: (c) => handleGetMeetingActivity(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/meetings/:id/activity',
+  auth: 'authed',
+  entity: 'activity',
+  visibility: 'na',
+  handler: (c) => handlePostMeetingActivity(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
   method: 'GET',

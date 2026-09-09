@@ -138,11 +138,16 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //       write is a POST. The write-auth gate (index.ts step 5,
     //       WRITE_AUTH_METHODS) and corsHeadersFor both already name PUT, so
     //       nothing had to change for it; it just now has a live caller.
+    // 267 as of 2026-09-08 — the `meeting` entity feed (+2, #124):
+    //   GET  /api/meetings/:id/activity — a meeting's conversation roots.
+    //   POST /api/meetings/:id/activity — say something on a meeting (@hermes
+    //        included; the ask carries the meeting's agenda, notes, decisions,
+    //        tasks and the path to the archived transcript).
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(265)
+    expect(ROUTE_REGISTRY).toHaveLength(267)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

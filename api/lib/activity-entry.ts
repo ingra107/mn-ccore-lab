@@ -33,6 +33,11 @@ const HERMES_PENDING_BODY = 'Thinking about this... (AI response pending)';
 // bury the actual question at the end of a wall of text.
 const THREAD_CONTEXT_MAX_MESSAGES = 12;
 const THREAD_CONTEXT_MAX_CHARS = 8000;
+
+// #124 meeting-context bounds. The debrief notes on a real meeting run ~3.5KB
+// and the attendee list ~700B, so the whole block fits well inside this; the cap
+// only guards a pathological row.
+const MEETING_CONTEXT_MAX_CHARS = 12000;
 import {
   STORED_KINDS,
   UPDATE_TYPES,
@@ -57,7 +62,7 @@ import { resolveKeyLinkSlot, hermesKeyLinkDesc, type TaskKeyLinkRow } from './ke
 // the slot write alone is invisible to TODAY.md / the Hub link panel.
 import { mirrorArtifactLink } from './artifact-link-mirror';
 
-export type EntityType = 'task' | 'project' | 'artifact' | 'day';
+export type EntityType = 'task' | 'project' | 'artifact' | 'day' | 'meeting';
 
 export interface PostActivityEntryInput {
   env: Env;
@@ -195,8 +200,8 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
   if (!isStoredKind(kind)) {
     return { ok: false, error: `kind must be one of ${STORED_KINDS.join('|')}`, status: 400 };
   }
-  if (entityType !== 'task' && entityType !== 'project' && entityType !== 'artifact' && entityType !== 'day') {
-    return { ok: false, error: `unknown entity_type "${entityType}" (expected 'task'|'project'|'artifact'|'day')`, status: 400 };
+  if (entityType !== 'task' && entityType !== 'project' && entityType !== 'artifact' && entityType !== 'day' && entityType !== 'meeting') {
+    return { ok: false, error: `unknown entity_type "${entityType}" (expected 'task'|'project'|'artifact'|'day'|'meeting')`, status: 400 };
   }
   if (input.visibility !== undefined && !isVisibility(input.visibility)) {
     return { ok: false, error: `visibility must be one of ${VISIBILITIES.join('|')}`, status: 400 };
@@ -290,6 +295,22 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     ).bind(entityId).first<{ project_id: string | null }>();
     if (!art) return { ok: false, error: 'Artifact not found', status: 404 };
     projectId = art.project_id ?? null;
+  } else if (entityType === 'meeting') {
+    // meeting entity (#124): a real table, so the existence check is a real
+    // lookup — unlike 'day', which has no table and validates by shape.
+    //
+    // project_id is ALWAYS NULL even though a meeting carries project `tags`.
+    // A meeting routinely spans several projects (the row Nick reported on tags
+    // three), so charging its conversation to one of them would be arbitrary,
+    // and it would move that project's health score for a discussion the
+    // project didn't have. Same reasoning as the `day` entity. Meeting-derived
+    // work reaches a project the way it already does — through the TASKS the
+    // debrief creates, which carry their own project_id.
+    const mtg = await env.DB.prepare(
+      'SELECT id FROM meetings WHERE id = ? LIMIT 1'
+    ).bind(entityId).first<{ id: string }>();
+    if (!mtg) return { ok: false, error: 'Meeting not found', status: 404 };
+    projectId = null;
   } else if (entityType === 'project') {
     // project entity: project_id = entity_id; confirm the project row exists.
     const proj = await env.DB.prepare(
@@ -638,6 +659,110 @@ async function fireMentionNotifications(
   );
 }
 
+/**
+ * #124: the facts about a meeting, assembled HUB-SIDE and prepended to the
+ * Hermes prompt.
+ *
+ * Hermes runs fenced on the PB listener and cannot resolve an opaque
+ * `mtg-2026-09-08-4fec5b77` by itself. The listener's own entity resolver
+ * (build_entity_context) only understands `task:` and `project:` tokens, so a
+ * `meeting:` context would produce nothing there. Rather than require a
+ * cross-repo lockstep to teach the deployed listener a fifth token, the block
+ * rides in the PROMPT — which the listener already passes to the model
+ * verbatim. Same mechanism the thread transcript uses, same reason.
+ *
+ * The verbatim transcript is NOT in D1; PB's debrief pipeline archives it as
+ * `Context/Meetings/<date>_<slug>.transcript.vtt` (meeting_debrief.py's
+ * `_slugify`, mirrored below). The listener is unfenced enough to Read/Glob it,
+ * so naming the expected path is what makes "reread the transcript verbatim"
+ * (Nick's ask) actually reachable. The path is a POINTER, not a promise — the
+ * block says so, and says how to find the file if the slug missed.
+ */
+async function buildMeetingContextBlock(env: Env, meetingId: string): Promise<string | null> {
+  const m = await env.DB.prepare(
+    'SELECT id, date, title, type, status, attendees, agenda, notes, decisions, tags, source_id FROM meetings WHERE id = ? LIMIT 1'
+  ).bind(meetingId).first<{
+    id: string; date: string; title: string; type: string | null; status: string | null;
+    attendees: string | null; agenda: string | null; notes: string | null;
+    decisions: string | null; tags: string | null; source_id: string | null;
+  }>();
+  if (!m) return null;
+
+  // A JSON-array column rendered as a plain list; falls back to the raw text so
+  // a hand-edited non-JSON value still reaches the model instead of vanishing.
+  const listOf = (raw: string | null): string[] => {
+    if (!raw?.trim()) return [];
+    try {
+      const v = JSON.parse(raw);
+      return Array.isArray(v) ? v.map((x) => String(x)).filter(Boolean) : [String(v)];
+    } catch {
+      return [raw.trim()];
+    }
+  };
+
+  const agendaItems = await env.DB.prepare(
+    'SELECT content, added_by, type FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order ASC, created_at ASC'
+  ).bind(meetingId).all<{ content: string; added_by: string; type: string | null }>().catch(() => ({ results: [] as { content: string; added_by: string; type: string | null }[] }));
+
+  // ⚠️ tasks.meeting_id and meetings.id are DIFFERENT ID SPACES (CLAUDE.md rule
+  // 83): a debrief-extracted task carries the CALENDAR id, which is this row's
+  // `source_id`. Matching both covers the calendar-extracted and native cases;
+  // the legacy `mtg_<timestamp>` form is unresolvable by design and simply
+  // doesn't match. Never "fix" this to a plain join on m.id — it matched 8 of
+  // 152 rows when that was tried.
+  const tasks = await env.DB.prepare(
+    `SELECT id, title, status, assignee, due_date FROM tasks
+      WHERE deleted_at IS NULL AND meeting_id IS NOT NULL AND meeting_id IN (?, ?)
+      ORDER BY created_at ASC`
+  ).bind(m.id, m.source_id ?? m.id).all<{
+    id: string; title: string; status: string; assignee: string | null; due_date: string | null;
+  }>().catch(() => ({ results: [] as { id: string; title: string; status: string; assignee: string | null; due_date: string | null }[] }));
+
+  // Mirrors PB meeting_debrief.py::_slugify — lowercase, drop everything that is
+  // not word/space/dash, collapse runs of space/underscore/dash to one dash.
+  const slug = (m.title || '')
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'meeting';
+
+  const attendees = listOf(m.attendees);
+  const decisions = listOf(m.decisions);
+  const tags = listOf(m.tags);
+  const items = agendaItems.results ?? [];
+  const taskRows = tasks.results ?? [];
+
+  const parts: string[] = [
+    `title: ${m.title}`,
+    `date: ${m.date}`,
+    `meeting_id: ${m.id}`,
+    ...(m.type ? [`type: ${m.type}`] : []),
+    ...(m.status ? [`status: ${m.status}`] : []),
+    ...(tags.length ? [`related projects: ${tags.join(', ')}`] : []),
+    ...(attendees.length ? [`attendees: ${attendees.join(', ')}`] : []),
+  ];
+  if (m.agenda?.trim() && m.agenda.trim() !== 'None') parts.push(`\nagenda:\n${m.agenda.trim()}`);
+  if (items.length) {
+    parts.push(`\nagenda items:\n${items.map((i) => `- [${i.type ?? 'discussion'}] ${i.content} (added by ${i.added_by})`).join('\n')}`);
+  }
+  if (m.notes?.trim()) parts.push(`\nnotes / debrief summary:\n${m.notes.trim()}`);
+  if (decisions.length) parts.push(`\ndecisions:\n${decisions.map((d) => `- ${d}`).join('\n')}`);
+  if (taskRows.length) {
+    parts.push(`\ntasks from this meeting:\n${taskRows.map((t) => `- [${t.status}] ${t.title} — ${t.assignee ?? 'unassigned'}${t.due_date ? `, due ${t.due_date}` : ''} (id ${t.id})`).join('\n')}`);
+  }
+  parts.push(
+    `\nverbatim transcript: if this meeting was debriefed, Peripheral Brain archived the full Zoom transcript at ` +
+    `Context/Meetings/${m.date}_${slug}.transcript.vtt (the structured extraction sits beside it as ` +
+    `Context/Meetings/${m.date}_${slug}.extraction.json). Read it when the question needs what was actually said. ` +
+    `If that exact name is not there, glob Context/Meetings/${m.date}_* — the slug comes from the meeting title and may differ. ` +
+    `Do not claim what the transcript says unless you have read it.`
+  );
+
+  const body = parts.join('\n').slice(0, MEETING_CONTEXT_MAX_CHARS);
+  return `<meeting_context version="1" meeting_id="${m.id}">\n${body}\n</meeting_context>`;
+}
+
 async function dispatchHermes(
   env: Env,
   args: {
@@ -667,6 +792,12 @@ async function dispatchHermes(
   // (§9.9): daily_thought takes the listener's DEFAULT path, so no cross-repo
   // change is needed for the day lane, and _postHermesResponse routes the answer
   // back by the TRIGGERING ENTRY's entity_type, not by source_type.
+  // #124: 'meeting_comment' is a NEW source_type, and that is safe with the
+  // already-deployed listener without a lockstep — _process_one branches only on
+  // 'artifact_comment' and 'backlog_idea' and sends everything else down the
+  // default build_prompt → get_response → post_response lane, which is exactly
+  // what a meeting ask wants. Naming it (rather than reusing 'project_comment')
+  // keeps the listener's own log line honest about which lane fired.
   const sourceType =
     args.entityType === 'task'
       ? 'task_comment'
@@ -674,7 +805,9 @@ async function dispatchHermes(
         ? 'artifact_comment'
         : args.entityType === 'day'
           ? 'daily_thought'
-          : 'project_comment';
+          : args.entityType === 'meeting'
+            ? 'meeting_comment'
+            : 'project_comment';
   const projectSlug = args.projectId;
   const aiId = generateId();
 
@@ -684,6 +817,13 @@ async function dispatchHermes(
   // treats a NULL/falsy context as "no entity" (two independent falsy guards),
   // so this needs no cross-repo lockstep. This also matches today's behavior —
   // deriveEntityContext() already returns null for a date-key source_id.
+  //
+  // A 'meeting' token KEEPS the grammar. The listener's _parse_entity_context
+  // regex matches only task|project|artifact, so it returns (None, None),
+  // build_entity_context returns "", and build_prompt falls to its
+  // `elif context:` arm — one harmless "Context: meeting: <id>" line. The facts
+  // that actually matter ride in the prompt via buildMeetingContextBlock, so
+  // this needs no cross-repo lockstep either.
   const context = args.entityType === 'day' ? null : `${args.entityType}: ${args.entityId}`;
 
   // #98 multi-turn. Nick: "if I wanted it to do something different with the
@@ -702,6 +842,21 @@ async function dispatchHermes(
   // the ASKER can see, so a thread transcript can never surface a sibling the
   // requester isn't allowed to read.
   let prompt = aiPrompt;
+
+  // #124: a meeting's facts go in FIRST, ahead of the thread transcript, so a
+  // first ask on a meeting page ("what did we say we'd answer before the next
+  // meeting?") already has the agenda, notes, decisions, tasks and the path to
+  // the verbatim transcript. Failing to build it must not lose the question, so
+  // it degrades to a plain ask exactly like the thread-context assembly below.
+  let meetingBlock: string | null = null;
+  if (args.entityType === 'meeting') {
+    try {
+      meetingBlock = await buildMeetingContextBlock(env, args.entityId);
+    } catch (e) {
+      console.error('dispatchHermes: meeting context assembly failed:', e);
+    }
+  }
+
   // Transcript memory. For a 'day' entity it is DAY-scoped (owner 9.1.5: "day-page
   // memory reach = today only, hidden INCLUDED") — every ask on a given day sees
   // that day's OTHER conversations, so "remember what we talked about this
@@ -766,6 +921,15 @@ async function dispatchHermes(
       // Context is an ENHANCEMENT — never let assembling it lose the question.
       console.error('dispatchHermes: thread context assembly failed:', e);
     }
+  }
+
+  // The meeting block wraps whatever the thread assembly produced, so a
+  // follow-up carries both the meeting's facts and the prior exchange. When the
+  // thread block is absent this is still a well-formed envelope around the ask.
+  if (meetingBlock) {
+    prompt = prompt === aiPrompt
+      ? `${meetingBlock}\n\n<current_request>\n${aiPrompt}\n</current_request>`
+      : `${meetingBlock}\n\n${prompt}`;
   }
 
   await env.DB.prepare(

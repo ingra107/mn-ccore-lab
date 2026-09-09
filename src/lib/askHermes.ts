@@ -93,6 +93,44 @@ export async function askHermesOnTask(taskId: string, content: string): Promise<
   }
 }
 
+/**
+ * Post `content` to a meeting's conversation (#124).
+ *
+ * Meeting-lane analog of askHermesOnDay / askHermesOnTask, and it exists for the
+ * same reason they do: the routing contract lives in ONE place per lane so a new
+ * compose surface gets the behaviour by calling a function rather than by
+ * remembering to reimplement it.
+ *
+ * `visibility` differs from the other two lanes on purpose. A meeting page is a
+ * shared team surface, so an ordinary remark defaults TEAM-visible; only a typed
+ * `@hermes` PREFIX makes the thread private, matching the task lane's rule that
+ * the prefix selects the default audience. The body goes VERBATIM — the stored
+ * text is what the server's HERMES_DETECT_RE fires on.
+ */
+export async function askHermesOnMeeting(
+  meetingId: string,
+  content: string,
+  visibility: 'team' | 'author' = 'team',
+): Promise<HermesAskResult> {
+  try {
+    const res = await fetch(`/api/meetings/${encodeURIComponent(meetingId)}/activity`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, visibility }),
+    })
+    if (!res.ok) throw new Error(`/api/meetings activity ${res.status}`)
+    const out = (await res.json().catch(() => ({}))) as { hermes?: HermesDispatch }
+    return { ok: true, hermes: out.hermes }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err : new Error(String(err)) }
+  }
+}
+
+/** The react-query key the meeting feed reads, so callers invalidate the right thing. */
+export function meetingActivityQueryKey(meetingId: string): [string, string] {
+  return ['meeting-activity', meetingId]
+}
+
 export type ToastKind = 'success' | 'info' | 'error'
 
 /**

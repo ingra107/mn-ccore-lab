@@ -69,6 +69,12 @@ interface Fixtures {
   projects: Record<string, { id: string; slug: string | null; category: string | null }>
   // artifacts keyed by art_ id → { title } for the key_link desc lookup.
   artifacts: Record<string, { title: string | null }>
+  // #124: meetings keyed by mtg- id. Only the columns the meeting entity's
+  // existence check and buildMeetingContextBlock actually read.
+  meetings: Record<string, {
+    date: string; title: string; notes?: string | null; decisions?: string | null
+    attendees?: string | null; tags?: string | null; agenda?: string | null; source_id?: string | null
+  }>
   teamSlugs: Set<string>
 }
 
@@ -80,6 +86,7 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
   const tasks = fx.tasks ?? {}
   const projects = fx.projects ?? {}
   const artifacts = fx.artifacts ?? {}
+  const meetings = fx.meetings ?? {}
   const teamSlugs = fx.teamSlugs ?? new Set(['nick-ingraham', 'nate-mesfin'])
 
   // Resolve a project ref (id or slug) → canonical id.
@@ -186,6 +193,18 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
               const t = tasks[binds[0] as string]
               if (!t) return null
               return { id: binds[0], title: t.title ?? '', description: '', deleted_at: t.deleted_at ?? null, project_id: t.project_id }
+            }
+            // #124 meeting entity: the existence check, and the fuller row
+            // buildMeetingContextBlock reads to assemble the Hermes prompt block.
+            if (/FROM meetings WHERE id = \? LIMIT 1/.test(sql)) {
+              const m = meetings[binds[0] as string]
+              if (!m) return null
+              if (/SELECT id FROM meetings/.test(sql)) return { id: binds[0] }
+              return {
+                id: binds[0], date: m.date, title: m.title, type: 'biweekly', status: 'upcoming',
+                attendees: m.attendees ?? null, agenda: m.agenda ?? null, notes: m.notes ?? null,
+                decisions: m.decisions ?? null, tags: m.tags ?? null, source_id: m.source_id ?? null,
+              }
             }
             if (/SELECT id FROM projects WHERE id = \? LIMIT 1/.test(sql)) {
               const c = projCanon(binds[0] as string)
@@ -1466,6 +1485,110 @@ describe('postActivityEntry — day entity', () => {
     const binds = aiRequests[0].binds as unknown[]
     expect(binds[1]).toBe('daily_thought') // source_type
     expect(binds[5]).toBeNull()             // context — NEVER "day: <date>"
+  })
+})
+
+// ── #124: the meeting entity ─────────────────────────────────────────────────
+//
+// Nick could read a debrief and ask nothing about it. A meeting becomes an
+// entity_type on the same store, so the conversation, the privacy rules and the
+// Hermes dispatch are the ones that already exist. Two things are load-bearing
+// and both are asserted below: project_id must stay NULL (a meeting spans
+// projects, so charging its talk to one would move that project's health for a
+// discussion it never had), and the Hermes prompt must carry the meeting's own
+// facts, because the deployed PB listener cannot resolve a `meeting:` token and
+// would otherwise answer with no idea what the meeting was.
+const MTG_FX: Partial<Fixtures> = {
+  meetings: {
+    'mtg-2026-09-08-abc': {
+      date: '2026-09-08',
+      title: '2nd CLIF Senior Advisory Meeting',
+      notes: '## Summary\nThe board reviewed consortium growth.',
+      decisions: '["A CLIF Foundation nonprofit has been established."]',
+      attendees: '["dudley@umn.edu","ingra107@umn.edu"]',
+      tags: '["clif-steering-committee"]',
+      source_id: 'cal-20260908T1200-2nd-clif-senior-advisory',
+    },
+  },
+}
+
+describe('postActivityEntry — meeting entity (#124)', () => {
+  it('accepts an existing meeting; project_id is NULL even when the meeting tags projects', async () => {
+    const { env, ae } = makeEnv(MTG_FX)
+    const r = await postActivityEntry({
+      env, user: NATE, entityType: 'meeting', entityId: 'mtg-2026-09-08-abc',
+      kind: 'comment', body: 'what did we agree on the Flare license?', actorSlug: 'nate-mesfin',
+    })
+    expect(r.ok).toBe(true)
+    expect(ae[0].entity_type).toBe('meeting')
+    expect(ae[0].entity_id).toBe('mtg-2026-09-08-abc')
+    expect(ae[0].project_id).toBeNull()
+  })
+
+  it('rejects an unknown meeting (404) — a real table means a real existence check', async () => {
+    const { env } = makeEnv(MTG_FX)
+    const r = await postActivityEntry({
+      env, user: NATE, entityType: 'meeting', entityId: 'mtg-does-not-exist',
+      kind: 'comment', body: 'x', actorSlug: 'nate-mesfin',
+    })
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.status).toBe(404)
+  })
+
+  it('defaults team-visible — a meeting page is a shared surface', async () => {
+    const { env, ae } = makeEnv(MTG_FX)
+    await postActivityEntry({
+      env, user: NATE, entityType: 'meeting', entityId: 'mtg-2026-09-08-abc',
+      kind: 'comment', body: 'notes look right to me', actorSlug: 'nate-mesfin',
+    })
+    expect(ae[0].visibility).toBe('team')
+  })
+
+  it('@hermes dispatches source_type=meeting_comment with the meeting facts in the PROMPT', async () => {
+    const { env, aiRequests } = makeEnv(MTG_FX)
+    const r = await postActivityEntry({
+      env, user: NATE, entityType: 'meeting', entityId: 'mtg-2026-09-08-abc',
+      kind: 'comment', body: '@hermes what did I say we had to answer before the next meeting?',
+      actorSlug: 'nate-mesfin',
+    })
+    expect(r.ok).toBe(true)
+    expect(aiRequests.length).toBe(1)
+    const binds = aiRequests[0].binds as unknown[]
+    expect(binds[1]).toBe('meeting_comment')          // source_type — its own lane in the listener log
+    expect(binds[3]).toBeNull()                        // project_slug — NULL, same reason project_id is
+    expect(binds[5]).toBe('meeting: mtg-2026-09-08-abc') // context keeps the grammar
+    const prompt = binds[4] as string
+    // The block is what makes the ask answerable at all: the fenced model cannot
+    // resolve an opaque mtg- id, and the listener has no `meeting:` resolver.
+    expect(prompt).toContain('<meeting_context version="1"')
+    expect(prompt).toContain('2nd CLIF Senior Advisory Meeting')
+    expect(prompt).toContain('date: 2026-09-08')
+    expect(prompt).toContain('A CLIF Foundation nonprofit has been established.')
+    expect(prompt).toContain('clif-steering-committee')
+    // The verbatim transcript is NOT in D1 — the block must name where PB put it,
+    // with the slug derived the way meeting_debrief.py derives it.
+    expect(prompt).toContain('Context/Meetings/2026-09-08_2nd-clif-senior-advisory-meeting.transcript.vtt')
+    // The question itself survives the envelope.
+    expect(prompt).toContain('what did I say we had to answer before the next meeting?')
+  })
+
+  it('a failed context build still asks the question — context is an enhancement', async () => {
+    // A meeting row that exists for the check but whose context read throws.
+    const { env, aiRequests } = makeEnv(MTG_FX)
+    const realPrepare = env.DB.prepare.bind(env.DB)
+    env.DB.prepare = ((sql: string) => {
+      if (/SELECT id, date, title, type, status/.test(sql)) throw new Error('boom')
+      return realPrepare(sql)
+    }) as typeof env.DB.prepare
+    const r = await postActivityEntry({
+      env, user: NATE, entityType: 'meeting', entityId: 'mtg-2026-09-08-abc',
+      kind: 'comment', body: '@hermes summarise this', actorSlug: 'nate-mesfin',
+    })
+    expect(r.ok).toBe(true)
+    expect(aiRequests.length).toBe(1)
+    const prompt = (aiRequests[0].binds as unknown[])[4] as string
+    expect(prompt).not.toContain('<meeting_context')
+    expect(prompt).toContain('summarise this')
   })
 })
 

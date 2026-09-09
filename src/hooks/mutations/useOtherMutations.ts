@@ -140,7 +140,7 @@ export function useDismissThread() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { id: string; hidden: boolean; taskId?: string; projectSlug?: string; artifactId?: string; dayKey?: string }) =>
+    mutationFn: (input: { id: string; hidden: boolean; taskId?: string; projectSlug?: string; artifactId?: string; dayKey?: string; meetingId?: string }) =>
       fetchApi(`/api/activity/${input.id}/hide`, {
         method: 'POST',
         body: JSON.stringify({ hidden: input.hidden }),
@@ -159,6 +159,9 @@ export function useDismissThread() {
       }
       if (input.dayKey) {
         queryClient.invalidateQueries({ queryKey: ['day-activity', input.dayKey] })
+      }
+      if (input.meetingId) {
+        queryClient.invalidateQueries({ queryKey: ['meeting-activity', input.meetingId] })
       }
       // A dismissed thread must not keep raising the teal ● "new activity" badge.
       queryClient.invalidateQueries({ queryKey: ['unseen-activity'] })
