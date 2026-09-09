@@ -94,14 +94,26 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
     // panel isn't clipped. data-expanded drives a CSS elevation lift (#106).
     <div data-expanded={expanded ? 'true' : undefined} style={{ position: 'relative', background: withAlpha(ACCENT_TEAL, 6), border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, minHeight }}>
       {/* ROW 25: gap/padding/title-clamp/end-time/loc-hide → CSS .meeting-row-* */}
-      <div onClick={() => setExpanded(!expanded)} className="meeting-row-header">
-        <span className={`meeting-row-time${overlap ? ' meeting-row-time--overlap' : ''}`} style={{ color: ACCENT_TEAL, flexShrink: 0 }}>
+      <div onClick={() => setExpanded(!expanded)} className={`meeting-row-header${overlap ? ' meeting-row-header--overlap' : ''}`}>
+        <span
+          className={`meeting-row-time${overlap ? ' meeting-row-time--overlap' : ''}`}
+          style={{ color: ACCENT_TEAL, flexShrink: 0 }}
+          /* #122: the end time is hidden in an overlap column (it cost ~55px of a
+             200px column and the duration is already carried by block height).
+             data-tip puts the full range one hover away. */
+          data-tip={overlap && e.end ? `${e.time} – ${e.end}` : undefined}
+        >
           {e.time}
           {e.end && <span className="meeting-row-end" style={{ color: INK_DIM, fontWeight: 400 }}> – {e.end}</span>}
         </span>
         {/* #112: tooltip explains the teal dot — it's a calendar event indicator */}
         <span title="Calendar event" aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_TEAL, flexShrink: 0 }} />
         <span className="meeting-row-title" style={{ color: INK }}>{e.title}</span>
+        {/* #122: the trailing controls are ONE flex group, not eight loose
+            siblings. In a narrow overlap column the group takes a full-width
+            second line (CSS .meeting-row-header--overlap) instead of pushing
+            the title to 0px and spilling the pills into the next column. */}
+        <div className="meeting-row-actions">
         {e.meetingUrl && (
           // #83/#86: petite "Join" pill (was a 🔗 icon — a chain link did not
           // read as "join the meeting"). Gold = user-driven action (Rule 59),
@@ -176,6 +188,7 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
           className="hov-opacity"
           style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 14, cursor: 'pointer', padding: '0 4px', lineHeight: 1, opacity: 0.5, transition: 'opacity 120ms', '--hov-opacity': '1' } as React.CSSProperties}
         >×</button>
+        </div>
       </div>
       {expanded && (
         <div style={{ padding: '12px 14px 14px', borderTop: `1px solid ${withAlpha(ACCENT_TEAL, 18)}`, background: withAlpha(ACCENT_TEAL, 2) }}>
