@@ -13,7 +13,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../lib/api'
 import InlineSelect from '../components/InlineSelect'
 import { useUndoToast } from '../components/UndoToast'
-import { PROJECT_STATUS_OPTIONS, normalizeProjectStatus, isProjectActive } from '../lib/taskConstants'
+import { PROJECT_STATUS_OPTIONS, normalizeProjectStatus, isProjectActive, isProjectDone } from '../lib/taskConstants'
 import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
@@ -59,6 +59,15 @@ const CATEGORY_FILTERS = [
   { key: 'CLIF', label: 'CLIF' },
   { key: 'Peripheral Brain', label: 'Peripheral Brain' },
   { key: 'stale', label: 'Needs Attention' },
+] as const
+
+// #123 (Nick 2026-09-08): the page had no way to hide finished projects — 11 of
+// 92 rows in prod were status='done'. "Active" is every OPEN project (active,
+// blocked, waiting_external), NOT isProjectActive() which is the narrower
+// "in motion" predicate the health widgets use. 'all' is the escape hatch.
+const STATUS_FILTERS = [
+  { key: 'open', label: 'Active' },
+  { key: 'all', label: 'All' },
 ] as const
 
 const CATEGORY_DOT: Record<string, string> = {
@@ -188,6 +197,32 @@ const HEALTH_STATUS_COLOR: Record<string, string> = {
   'Needs Attention': 'var(--gold)',
   'At Risk': 'var(--orange)',
   'Critical': 'var(--maroon)',
+}
+
+// N1b — locked-canon ghost pill: active = teal tint + teal text, never a solid
+// fill block in a toolbar. One definition serves both filter axes (#123) so the
+// second group cannot drift from the first.
+function FilterPill({ label, active, onClick, title }: { label: string; active: boolean; onClick: () => void; title?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-pressed={active}
+      className="cursor-pointer inline-flex items-center px-2.5 py-1 text-xs filter-pill"
+      style={{
+        fontWeight: active ? 600 : ('var(--label-weight)' as React.CSSProperties['fontWeight']),
+        fontSize: 'var(--label-size)',
+        borderRadius: 'var(--radius-full)',
+        background: active ? 'var(--teal-active)' : 'transparent',
+        color: active ? 'var(--teal)' : 'var(--slate)',
+        border: '1px solid transparent',
+        transition: 'all 0.15s',
+      }}
+    >
+      {label}
+    </button>
+  )
 }
 
 function getStageProjects(stage: Stage, filtered: Project[]): Project[] {
@@ -321,6 +356,19 @@ export default function Projects() {
       return out
     }, { replace: true })
   }, [setSearchParams])
+  // #123: status is URL-backed for the same reason category is — a shared or
+  // bookmarked link round-trips. Absent param = 'open' (done rows hidden).
+  const VALID_STATUS_KEYS = useMemo(() => new Set(STATUS_FILTERS.map((f) => f.key as string)), [])
+  const statusParam = searchParams.get('status')
+  const activeStatus = statusParam && VALID_STATUS_KEYS.has(statusParam) ? statusParam : 'open'
+  const setActiveStatus = useCallback((next: string) => {
+    setSearchParams((prev) => {
+      const out = new URLSearchParams(prev)
+      if (next && next !== 'open') out.set('status', next)
+      else out.delete('status')
+      return out
+    }, { replace: true })
+  }, [setSearchParams])
   const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list')
   const [showDeps, setShowDeps] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
@@ -347,11 +395,20 @@ export default function Projects() {
     else { setSortKey(key); setSortAsc(true) }
   }
 
+  // #123: the status gate runs FIRST so every downstream consumer — the three
+  // category branches, the summary counts, the pipeline columns — sees one
+  // consistent population. A count over `projects` while the list renders
+  // `filtered` is the badge-dishonesty class (Rule 73).
+  const statusScoped = useMemo(
+    () => (activeStatus === 'all' ? projects : projects.filter((p) => !isProjectDone(p.status))),
+    [projects, activeStatus],
+  )
+
   const filtered = useMemo(() => {
-    let base: typeof projects
-    if (activeCategory === 'all') base = projects
+    let base: typeof statusScoped
+    if (activeCategory === 'all') base = statusScoped
     else if (activeCategory === 'stale') {
-      base = projects.filter(p => {
+      base = statusScoped.filter(p => {
         if (!isProjectActive(p.status)) return false
         // P2-9: ONE staleness basis = days-since-meaningful-movement, gated by
         // the shared projectStaleDays pref (Settings → Lab Preferences). Falls
@@ -366,7 +423,7 @@ export default function Projects() {
         return isStale || lowHealth
       })
     }
-    else base = projects.filter((p) => p.category === activeCategory)
+    else base = statusScoped.filter((p) => p.category === activeCategory)
     return [...base].sort((a, b) => {
       const pinCmp =
         (pinnedSlugs.has(a.slug) ? 0 : 1) - (pinnedSlugs.has(b.slug) ? 0 : 1)
@@ -407,7 +464,7 @@ export default function Projects() {
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
     })
-  }, [activeCategory, projects, sortKey, sortAsc, pinnedSlugs, healthBySlug, prefs.projectStaleDays])
+  }, [activeCategory, statusScoped, sortKey, sortAsc, pinnedSlugs, healthBySlug, prefs.projectStaleDays])
 
   // Project slugs in display order for keyboard nav
   const projectSlugs = useMemo(() => filtered.map((p) => p.slug), [filtered])
@@ -416,7 +473,7 @@ export default function Projects() {
   // "adjusting state based on a prop change" pattern:
   // https://react.dev/learn/you-might-not-need-an-effect) instead of an
   // effect, avoiding an extra commit-then-effect cascade.
-  const focusResetKey = `${activeCategory}|${viewMode}`
+  const focusResetKey = `${activeCategory}|${activeStatus}|${viewMode}`
   const [prevFocusResetKey, setPrevFocusResetKey] = useState(focusResetKey)
   if (focusResetKey !== prevFocusResetKey) {
     setPrevFocusResetKey(focusResetKey)
@@ -454,11 +511,14 @@ export default function Projects() {
     }
   }, [focusedIndex])
 
-  // Summary stats — 3-bucket canonical (Stage 4 #12-followup, 2026-05-08)
-  const totalCount = projects.length
-  const mncoreCount = projects.filter((p) => p.category === 'MNCCORE').length
-  const clifCount = projects.filter((p) => p.category === 'CLIF').length
-  const pbCount = projects.filter((p) => p.category === 'Peripheral Brain').length
+  // Summary stats — 3-bucket canonical (Stage 4 #12-followup, 2026-05-08).
+  // #123: counted over statusScoped, not `projects` — the strip must describe
+  // the population the page is actually showing.
+  const totalCount = statusScoped.length
+  const mncoreCount = statusScoped.filter((p) => p.category === 'MNCCORE').length
+  const clifCount = statusScoped.filter((p) => p.category === 'CLIF').length
+  const pbCount = statusScoped.filter((p) => p.category === 'Peripheral Brain').length
+  const doneHidden = activeStatus === 'open' ? projects.length - statusScoped.length : 0
 
 
   return (
@@ -502,25 +562,26 @@ export default function Projects() {
               inline in the toolbar and occluded the Pipeline toggle mid-word.
               The Pipeline view toggle (above) is already visible chrome. */}
           {CATEGORY_FILTERS.map((f) => (
-            <button
+            <FilterPill
               key={f.key}
-              type="button"
+              label={f.label}
+              active={activeCategory === f.key}
               onClick={() => setActiveCategory(f.key)}
-              className="cursor-pointer inline-flex items-center px-2.5 py-1 text-xs filter-pill"
-              // N1b — locked-canon ghost pill: active = teal tint + teal text,
-              // never a solid fill block in a toolbar.
-              style={{
-                fontWeight: activeCategory === f.key ? 600 : ('var(--label-weight)' as React.CSSProperties['fontWeight']),
-                fontSize: 'var(--label-size)',
-                borderRadius: 'var(--radius-full)',
-                background: activeCategory === f.key ? 'var(--teal-active)' : 'transparent',
-                color: activeCategory === f.key ? 'var(--teal)' : 'var(--slate)',
-                border: '1px solid transparent',
-                transition: 'all 0.15s',
-              }}
-            >
-              {f.label}
-            </button>
+            />
+          ))}
+          {/* #123: status is a SECOND, orthogonal axis (category answers "whose
+              work", status answers "is it still open"), so it gets its own pill
+              group behind a hairline rather than being folded into the category
+              row where "Active" would read as a fourth category. */}
+          <span aria-hidden="true" style={{ width: 1, alignSelf: 'stretch', margin: '0 2px', background: 'var(--border-subtle)' }} />
+          {STATUS_FILTERS.map((f) => (
+            <FilterPill
+              key={f.key}
+              label={f.label}
+              active={activeStatus === f.key}
+              onClick={() => setActiveStatus(f.key)}
+              title={f.key === 'open' ? 'Active, blocked and waiting — everything not finished' : 'Every project, including finished ones'}
+            />
           ))}
         </>
       }
@@ -533,7 +594,7 @@ export default function Projects() {
               whiteSpace: 'nowrap',
             }}
           >
-              {totalCount} projects &middot; {mncoreCount} MN-CCORE &middot; {clifCount} CLIF{pbCount > 0 ? ` \u00b7 ${pbCount} PB` : ''}
+              {totalCount} projects &middot; {mncoreCount} MN-CCORE &middot; {clifCount} CLIF{pbCount > 0 ? ` \u00b7 ${pbCount} PB` : ''}{doneHidden > 0 ? ` · ${doneHidden} done hidden` : ''}
           </span>
           {viewMode === 'pipeline' && (
             <button

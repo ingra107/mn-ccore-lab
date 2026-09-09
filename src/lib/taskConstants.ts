@@ -95,6 +95,16 @@ export function isProjectActive(value: string | null | undefined): boolean {
   return normalizeProjectStatus(value) === 'active'
 }
 
+/**
+ * True if the project is finished. Deliberately NOT `!isProjectActive(...)`:
+ * `blocked` and `waiting_external` are not "in motion" but they ARE still open
+ * work, so the two predicates answer different questions (#123, Nick: "the
+ * default is active but that also means active and blocked and waiting").
+ */
+export function isProjectDone(value: string | null | undefined): boolean {
+  return normalizeProjectStatus(value) === 'done'
+}
+
 // ── Stages ──
 
 // Stage colors pinned for WCAG AA on near-black dark-mode bg (2026-04-18).
