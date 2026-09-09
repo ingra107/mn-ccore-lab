@@ -1,3 +1,44 @@
+# ▶▶ BUG SWEEP #121–#124 + THE HERMES LANES — SHIPPED + DEPLOYED (2026-09-08, home laptop). Live = `15f4a2ac` (probe PASS). Bug queue EMPTY (0 open). GitHub #121–#124 closed; **#125 opened** (simplify findings, not defects). Hub: +2 routes (**267**, was 257) — no schema change, still v108 files. Gates: 1357 api · 275 lib · 171 src.
+
+**5 Hub commits.** `07fac210` (#123) · `d4fb084f` (#122) · `b19af600` (#124) · `15f4a2ac` (markdown) · `1334d7a7` (session-close simplify + a dead notification link). **4 PB commits** in `~/Peripheral-Brain`: `6d800d2ee` (meeting artifacts) · `7183f8495` (#121 PB access) · `49e6b9ee7` (#119 Gmail) · one more landing for the Gmail fixes.
+
+## Read this before touching the Hermes spawn — three flags that fail SILENTLY
+
+`--safe-mode`, `--mcp-config` and `--strict-mcp-config` interact, and getting any one wrong produces a Hermes that runs fine and says "no Gmail tool available". Each was measured on identical commands with one flag changed:
+
+1. **A headless `claude --print` does NOT load the MCP servers in `~/.claude.json`.** Ask it to list its `mcp__` tools and it answers NONE. Dropping `--strict-mcp-config` is necessary and nowhere near sufficient.
+2. **`--mcp-config` needs a FILE.** Inline JSON is documented and does not survive `list2cmdline` on Windows — absent on one run, `CONNECT_TIMEOUT` on the next. Raising `MCP_TIMEOUT` changed nothing, which is what ruled out the slow-handshake story.
+3. **`--safe-mode` removes the server after all of that.** It disables every customization "including MCP servers"; `safe_mode_args()`'s own condition 3 already said a lane may pass it only if it needs no MCP tool. With the flag: `searchGmail` → NO. Without: YES.
+
+**Keep `--strict-mcp-config`.** With `--mcp-config` but without it, the spawn also picked up the Slack connector including `slack_send_message` — a send-capable surface nobody asked for, reachable by an unattended agent.
+
+**The price is real:** Nick's asks now pay PB's hook chain, **71s vs ~5.5s** measured. Team asks keep `--safe-mode`. If that latency is unacceptable the next move is gating the Workspace tools per-request rather than per-asker.
+
+## ⚠️ LANDMINES — do not re-derive these
+
+1. **`project_id` is NULL on a meeting thread, deliberately.** A meeting tags several projects (the reported one tagged three), so charging its conversation to one is arbitrary and moves that project's health score for a discussion it never had. Same reasoning as `day`.
+2. **Four ladders in `api/lib/activity-entry.ts` branch on `entityType`** — existence check, Hermes `source_type`, mention `source_type`, mention `link`. #124 extended three; the missed one shipped a dead `/projects?open=<meeting id>` notification link (fixed in `1334d7a7`, and the `day` entity had the same hole since it shipped). A sixth entity type means all four, or land the config object in **#125**.
+3. **The meeting's facts ride in the PROMPT, not in `context`.** The deployed listener has no `meeting:` resolver and the fenced model cannot resolve an opaque `mtg-` id. `buildMeetingContextBlock` also names the archived transcript path derived the way `meeting_debrief.py::_slugify` derives it — verified live, Hermes read the real `.vtt` and quoted the closing minutes.
+4. **`tasks.meeting_id IN (m.id, m.source_id)`** — rule 83's id-space split. A plain join on `m.id` matched 8 of 152 rows.
+5. **The classifier blocks the PB commit primitive intermittently.** It refused `git_commit_files` twice on identical shapes that had worked earlier in the same session; a named AskUserQuestion grant unblocked it. Unrelated to git.
+6. **A PB `index.lock` held by ANOTHER Claude session is not orphaned.** Check for a live `git.exe` and read its command line before touching it — killing it is the documented machine-wide breakage.
+
+## Verified live on prod, not deduced
+
+- `POST /api/meetings/:id/activity` → row with `entity_type='meeting'`, `project_id=null`; unknown meeting → 404.
+- `@hermes` on a meeting → `ai_requests` with `source_type='meeting_comment'` and the full `<meeting_context>` block; Hermes answered *"Straight from the transcript's closing minutes…"* — **on the OLD listener**, which is also the proof the new `source_type` needed no cross-repo lockstep.
+- #121: Hermes replied *"I read `Projects/clif-steering-committee/PROJECT.md`"* and quoted its `next_action`.
+- #119: Hermes returned the real subject line of the most recent message in the UMN inbox, and noted it treated the body as untrusted data.
+- #122 measured on the built CSS at 3×200px: title width **0 → 117**, last control **+117px past the column edge → 14px inside**; full-width row unchanged.
+
+## Open / next
+
+- **GitHub #125** — the shape work behind the dead link: one per-entity config object for the four ladders, extract `askHermesOnEntity`, a shared activity-feed hook and route factory, bound the poll-while-pending. None is a live defect.
+- **Hermes latency** — decide whether 71s on Nick's own asks is acceptable or gate the Workspace tools per-request.
+- **#119 is CLOSED as shipped**, not as a tracker. It had been dismissed in the bug queue on 2026-09-03 and left open on GitHub; this session built it.
+
+---
+
 # ▶▶ BUG SWEEP #118–#120 — SHIPPED + DEPLOYED (2026-09-03, home laptop). Live = `12d6f20f` (probe PASS). Bug queue EMPTY; #119 stays open on GitHub as a feature tracker. Frontend only — no schema/migration/route change (still v104 / 257 routes). Pre-commit gates: 1352 api · 275 lib · 165 src.
 
 **3 commits.** `9dfee79c` (#120 armed "Delete?" state) · `6d3f97dd` (#118 Meetings action row to the top) · `12d6f20f` (session-close `/simplify`: inline armed visibility, shared `QuickAddTrigger`, hoisted form JSX — deployed, which is why live ≠ the bug-fix sha). Detail in CHANGELOG. Deferred to PB backlog: **#2698** (shared arm-to-confirm hook; `BulkActionToolbar` has a diverging copy) · **#2700** (move Add Action Item state into `MeetingDetail`, drop the slot prop).

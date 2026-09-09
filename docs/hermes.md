@@ -22,6 +22,14 @@ Hermes is the MN-CCORE Lab Hub's built-in AI research assistant. Team members ca
 2. Write a comment mentioning `@hermes`
 3. Hermes responds with context about the project
 
+### Meeting Discussion (2026-09-08)
+1. Open a meeting and scroll to **Discussion**
+2. Write a comment mentioning `@hermes`
+3. Hermes answers with the meeting's agenda, notes, decisions and the tasks it produced — and, when the meeting was debriefed, it can read the **archived Zoom transcript** and answer from what was actually said
+4. Ask it for a write-up and the answer becomes an artifact page with a link in the thread, the same as on a task or project
+
+Meeting comments are team-visible by default (a meeting page is a shared surface). Starting your message with `@hermes` makes that thread private to you, the same rule the task and Today composers follow.
+
 ## What Hermes Can Help With
 - Research methodology questions ("What's the best approach for competing risks analysis?")
 - Literature context ("What do we know about SOFA score trajectories in sepsis?")
