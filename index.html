@@ -70,6 +70,43 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Entry-graph self-heal. If the module <script> below fails, one of its
+         static imports is unloadable — in practice an HTML document cached
+         under a chunk URL (the SPA fallback + the immutable /assets/* header;
+         see functions/assets/[[path]].ts for the server-side fix). React never
+         mounts, so no app code can recover. This walks the static import
+         graph with cache:'reload' (which replaces each poisoned cache entry
+         with the real file) and reloads once. Guarded to one attempt per 30s
+         so a genuinely broken build cannot loop. -->
+    <script>
+      (function () {
+        var KEY = 'mnccore:entry-heal';
+        window.addEventListener('error', function (e) {
+          var t = e.target;
+          if (!t || t.tagName !== 'SCRIPT' || t.type !== 'module' || !t.src) return;
+          var last = 0;
+          try { last = Number(sessionStorage.getItem(KEY) || 0); } catch (err) { /* private mode */ }
+          if (Date.now() - last < 30000) return;
+          try { sessionStorage.setItem(KEY, String(Date.now())); } catch (err) { /* private mode */ }
+          var seen = {};
+          function walk(url) {
+            if (seen[url]) return Promise.resolve();
+            seen[url] = 1;
+            return fetch(url, { cache: 'reload' })
+              .then(function (r) {
+                return /javascript/.test(r.headers.get('content-type') || '') ? r.text() : '';
+              })
+              .then(function (src) {
+                var re = /(?:from|import)\s*"(\.\.?\/[^"]+\.js)"/g, m, next = [];
+                while ((m = re.exec(src))) next.push(new URL(m[1], url).href);
+                return Promise.all(next.map(walk));
+              })
+              .catch(function () { /* network down: the reload below will show the browser's own error */ });
+          }
+          walk(t.src).then(function () { location.reload(); });
+        }, true);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

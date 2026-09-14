@@ -12,8 +12,11 @@
 # chunkFileNames/assetsDir override, so this is stock Vite 8 behavior); a
 # changed file gets a new name, it never overwrites the old one at the same
 # path. public/ has no assets/ subfolder, so nothing non-hashed can land at
-# this path and inherit the rule. Safe to cache forever: a stale tab asking
-# for an old hashed chunk 404s (handled by #1173/#1175's reload-on-dead-chunk
-# path), it never serves stale content from cache.
+# this path and inherit the rule. Safe to cache forever ONLY because
+# functions/assets/[[path]].ts turns the SPA fallback into a 404 no-store: on
+# its own, Pages answers a missing chunk with index.html as 200 text/html, and
+# this rule would stamp THAT immutable too -- which cached an HTML document
+# under a chunk URL in the PI's browser for a year and blanked the portal
+# (2026-09-14). A stale tab's old chunk now 404s (lazyRoute reloads it).
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
