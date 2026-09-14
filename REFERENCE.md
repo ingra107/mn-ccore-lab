@@ -51,7 +51,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | action_items | 8 | Legacy action items (pre-task system) — frozen since ~2026-03-30, content losslessly mirrored into `tasks`; queued for DROP (schema-v99, backlog #562), staged not yet applied as of 2026-07-16 |
 | project_updates | DROPPED 2026-06-10 | schema-v78; snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
 | project_comments | DROPPED 2026-06-10 | schema-v78 (was `comments` table); snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
-| research_digest | 152+ | Weekly paper digests |
+| research_digest | 1683 (2026-09-14) | Daily PubMed digest papers; `pub_date` is `YYYY` / `YYYY-MM` / `YYYY-MM-DD` at PubMed's precision (#127) |
 | notifications | dynamic | In-app notification feed |
 | commitments | dynamic | Team commitments tracker |
 | collaboration_network | dynamic | Inter-member collaboration links |
@@ -269,7 +269,8 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | `src/components/RequireAuth.tsx` | Branded sign-in splash, extracted from App.tsx (Phase 36d) |
 | `src/components/pulse/PulseScene.tsx` + `PulseMetric.tsx` + `PulseSparkline.tsx` | Cinematic kiosk primitives (Phase 36d) |
 | `functions/og/[type]/[slug].ts` | Per-route SVG share-card generator (project/team/meeting/default, edge-cached 1h, Phase 36d) |
-| `public/_headers` | Forces `image/svg+xml` content-type on `/og/*` (Phase 36d); caches `/assets/*` immutable (#1320 — safe because Vite content-hashes every filename it writes there) |
+| `public/_headers` | Forces `image/svg+xml` content-type on `/og/*` (Phase 36d); caches `/assets/*` immutable (#1320 — safe because Vite content-hashes every filename AND because the row below makes a missing chunk a 404; without it the SPA fallback got cached under a chunk URL for a year, 2026-09-14) |
+| `functions/assets/[[path]].ts` | Proxies `ASSETS`; an HTML body on an asset path becomes `404` + `no-store` (2026-09-14). Paired with the inline entry-graph self-heal script in `index.html`, which re-fetches a poisoned static import graph with `cache:'reload'` and reloads once |
 | `scripts/claude-design-brief.txt` | Brand brief for Claude Design — tokens, motif SVG path, ethos (Phase 36d) |
 | `tests/capture-for-design.spec.ts` + `playwright.config.design-capture.ts` | Full-page screenshots with pre-scroll, 41 hero + 6 mobile surfaces (Phase 36d → round-4) |
 | `tests/capture-focus-asks.spec.ts` | Round-specific spot captures (Quick Add, row focus, ▾ density) |

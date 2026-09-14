@@ -18,6 +18,14 @@
  * makes it true: a fallback HTML body for an asset path becomes a 404 with
  * `no-store`, so nothing wrong is ever cached under an asset URL. Real assets
  * pass through untouched (their immutable header still comes from _headers).
+ *
+ * Why not `_redirects` (`/assets/*  /404.html  404`) instead of a Function on
+ * every asset request? Two documented reasons: Pages `_redirects` supports only
+ * 301/302/303/307/308 and 200, so a 404 rule is rejected; and "redirects are
+ * always followed, regardless of whether or not an asset matches", so the rule
+ * would fire on chunks that exist. The content-type check is the only shape
+ * that leaves real assets alone. Cost: one Worker invocation per uncached
+ * asset request — the immutable header makes repeat loads free.
  */
 
 interface Env {

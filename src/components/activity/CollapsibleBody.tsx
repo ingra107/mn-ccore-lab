@@ -12,38 +12,50 @@
 // plain pre-wrap paragraph AND a Hermes markdown answer (lists, code fences),
 // which line-clamp handles inconsistently across block children.
 
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 
 interface CollapsibleBodyProps {
   children: ReactNode
   /** Lines visible while collapsed. */
   maxLines?: number
-  /** Line-height used for the cap; matches the body's own 1.55. */
-  lineHeight?: number
   /** Font size the cap is computed against — set it HERE and let the body
    *  inherit, or the cap and the lines it counts disagree. */
   fontSize?: string | number
+  /** What the content IS (the body string) — re-measured when it changes.
+   *  `children` cannot serve: it is a new element every render. */
+  contentKey?: string
 }
 
-export function CollapsibleBody({ children, maxLines = 5, lineHeight = 1.55, fontSize }: CollapsibleBodyProps) {
+// The body's own line-height; the cap is measured in the same unit.
+const LINE_HEIGHT = 1.55
+
+export function CollapsibleBody({ children, maxLines = 5, fontSize, contentKey }: CollapsibleBodyProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)
   const [overflows, setOverflows] = useState(false)
 
+  // Measure against the cap even while expanded, so collapsing back stays
+  // offered only when it would actually hide something.
+  const measure = useCallback(() => {
+    const el = ref.current
+    if (!el) return
+    const capPx = parseFloat(getComputedStyle(el).fontSize) * LINE_HEIGHT * maxLines
+    setOverflows(el.scrollHeight > capPx + 1)
+  }, [maxLines])
+
+  // One observer for the row's lifetime (per cap). Keying it on `children`
+  // (a fresh element every render) rebuilt it on every feed poll, for every
+  // row, whether or not the text changed.
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
-    const measure = () => {
-      // Measure against the cap even while expanded, so collapsing back stays
-      // offered only when it would actually hide something.
-      const capPx = parseFloat(getComputedStyle(el).fontSize) * lineHeight * maxLines
-      setOverflows(el.scrollHeight > capPx + 1)
-    }
-    measure()
     const ro = new ResizeObserver(measure)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [children, lineHeight, maxLines])
+  }, [measure])
+
+  // Re-measure when the content changes.
+  useLayoutEffect(() => { measure() }, [measure, contentKey])
 
   return (
     <>
@@ -51,9 +63,9 @@ export function CollapsibleBody({ children, maxLines = 5, lineHeight = 1.55, fon
         ref={ref}
         data-collapsible-body=""
         style={{
-          lineHeight,
+          lineHeight: LINE_HEIGHT,
           fontSize,
-          ...(expanded ? {} : { maxHeight: `${maxLines * lineHeight}em`, overflow: 'hidden' }),
+          ...(expanded ? {} : { maxHeight: `${maxLines * LINE_HEIGHT}em`, overflow: 'hidden' }),
         }}
       >
         {children}

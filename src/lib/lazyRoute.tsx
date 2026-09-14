@@ -9,9 +9,12 @@
 // A tab left open across a deploy is running build A. Vite names every chunk
 // by content hash, and a Pages deploy replaces the whole asset set, so build
 // A's chunk filenames stop existing. The first time that tab visits a route it
-// has not loaded yet, the dynamic import 404s. Worse: Pages answers a missing
-// asset with the SPA fallback — `200 text/html` — so the browser is handed an
-// HTML document where it asked for a module, and the import rejects.
+// has not loaded yet, the dynamic import fails. Until 2026-09-14 Pages answered
+// a missing asset with the SPA fallback — `200 text/html`, and _headers stamped
+// it immutable — so the browser was handed (and cached for a year) an HTML
+// document where it asked for a module. functions/assets/[[path]].ts now makes
+// that a real 404 + no-store; the import still rejects, which is what this
+// handles.
 //
 // React's lazy() CACHES the rejected promise. That is why the error boundary's
 // "Try Again" button could never work for this class: re-rendering replays the

@@ -29,7 +29,10 @@ HUB = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(HUB / "scripts"))
 sys.path.insert(0, str(Path.home() / "Peripheral-Brain"))
 from wrangler_d1 import run_d1  # noqa: E402
-from scripts.research.search_papers import pubmed_pub_date  # noqa: E402  (PB's parser, one copy)
+# Cross-repo import, on purpose: PB's PubMed date parser is the one copy, and
+# this script must agree with what the daily pipeline writes. It assumes a
+# Peripheral-Brain checkout at $HOME (true on both of Nick's machines).
+from scripts.research.search_papers import pubmed_pub_date  # noqa: E402
 
 EFETCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 BATCH = 200
@@ -79,11 +82,12 @@ def main() -> int:
         time.sleep(0.4)
 
     apply, undo = [], []
-    header = (
-        "-- #127: research_digest journal + pub_date repaired from PubMed efetch, "
-        f"generated {time.strftime('%Y-%m-%d')} by scripts/backfill-127-digest-metadata.py.\n"
-        "-- pub_date keeps PubMed's precision: 'YYYY' | 'YYYY-MM' | 'YYYY-MM-DD'.\n"
-    )
+    def header(verb: str) -> str:
+        return (
+            f"-- #127: research_digest journal + pub_date {verb} PubMed efetch, "
+            f"generated {time.strftime('%Y-%m-%d')} by scripts/backfill-127-digest-metadata.py.\n"
+            "-- pub_date keeps PubMed's precision: 'YYYY' | 'YYYY-MM' | 'YYYY-MM-DD'.\n"
+        )
     unresolved, unchanged = 0, 0
     for r in rows:
         m = meta.get(r["pmid"])
@@ -97,8 +101,8 @@ def main() -> int:
         apply.append(f"UPDATE research_digest SET journal = {q(journal)}, pub_date = {q(pub_date)} WHERE id = {q(r['id'])};")
         undo.append(f"UPDATE research_digest SET journal = {q(r['journal'])}, pub_date = {q(r['pub_date'])} WHERE id = {q(r['id'])};")
 
-    OUT.write_text(header + "\n".join(apply) + "\n", encoding="utf-8")
-    ROLLBACK.write_text(header.replace("repaired from", "ROLLBACK to the values before") + "\n".join(undo) + "\n", encoding="utf-8")
+    OUT.write_text(header("repaired from") + "\n".join(apply) + "\n", encoding="utf-8")
+    ROLLBACK.write_text(header("ROLLBACK to the values before") + "\n".join(undo) + "\n", encoding="utf-8")
     print(f"{len(apply)} updates, {unchanged} already correct, {unresolved} pmids PubMed did not return", file=sys.stderr)
     print(f"wrote {OUT.name} + {ROLLBACK.name}", file=sys.stderr)
     return 0

@@ -862,7 +862,7 @@ export function ActivityEntryItem({
         {isHermesPending(entry.body) ? (
           <HermesPending askedAt={entry.created_at} />
         ) : (
-          <CollapsibleBody fontSize={textSize}>
+          <CollapsibleBody fontSize={textSize} contentKey={entry.body}>
             <HermesResponse content={entry.body} />
           </CollapsibleBody>
         )}
@@ -947,7 +947,7 @@ export function ActivityEntryItem({
           ) : (
             // Long bodies collapse to a few lines with "more" (#126). Font size
             // lives on the wrapper so the cap counts the same lines it clamps.
-            <CollapsibleBody fontSize={textSize}>
+            <CollapsibleBody fontSize={textSize} contentKey={entry.body}>
               <p
                 style={{
                   color: 'var(--ink)',

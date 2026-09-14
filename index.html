@@ -86,7 +86,7 @@
           if (!t || t.tagName !== 'SCRIPT' || t.type !== 'module' || !t.src) return;
           var last = 0;
           try { last = Number(sessionStorage.getItem(KEY) || 0); } catch (err) { /* private mode */ }
-          if (Date.now() - last < 30000) return;
+          if (Date.now() - last < 30000) return; // keep in step with lazyRoute.tsx RELOAD_WINDOW_MS
           try { sessionStorage.setItem(KEY, String(Date.now())); } catch (err) { /* private mode */ }
           var seen = {};
           function walk(url) {
