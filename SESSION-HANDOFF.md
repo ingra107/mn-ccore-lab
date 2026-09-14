@@ -1,6 +1,6 @@
-# ▶▶ BUG SWEEP #126/#127 + ASSET-CACHE POISONING — SHIPPED + DEPLOYED (2026-09-14, work laptop). Live = `66ebd287` (probe PASS). Bug queue EMPTY; #126/#127 closed. No schema/route change. Gates: 178 src (+7) · 275 lib · api untouched.
+# ▶▶ BUG SWEEP #126/#127 + ASSET-CACHE POISONING — SHIPPED + DEPLOYED (2026-09-14, work laptop). Live = `b6e5037a` (probe PASS; `b6e5037a` = session-close simplify: CollapsibleBody observer keyed on the body string, not the element). Bug queue EMPTY; #126/#127 closed. No schema/route change. Gates: 178 src (+7) · 275 lib · api untouched.
 
-**3 Hub commits** `e36600e7` (#127) · `6899af59` (#126) · `66ebd287` (asset cache). **1 PB commit** ("Research digest: keep the journal and the real publication date", pushed). **Prod D1 write:** `scripts/backfill-127-digest-metadata.sql` — 1682 `research_digest` rows re-pointed at PubMed's real journal + date (rollback file alongside).
+**4 Hub commits** `e36600e7` (#127) · `6899af59` (#126) · `66ebd287` (asset cache) · `b6e5037a` (simplify + docs). **1 PB commit** ("Research digest: keep the journal and the real publication date", pushed). **Prod D1 write:** `scripts/backfill-127-digest-metadata.sql` — 1682 `research_digest` rows re-pointed at PubMed's real journal + date (rollback file alongside).
 
 ## The one to remember: a missing chunk was a YEAR-CACHED HTML DOCUMENT
 
