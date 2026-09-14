@@ -1,3 +1,25 @@
+# ▶▶ BUG SWEEP #126/#127 + ASSET-CACHE POISONING — SHIPPED + DEPLOYED (2026-09-14, work laptop). Live = `66ebd287` (probe PASS). Bug queue EMPTY; #126/#127 closed. No schema/route change. Gates: 178 src (+7) · 275 lib · api untouched.
+
+**3 Hub commits** `e36600e7` (#127) · `6899af59` (#126) · `66ebd287` (asset cache). **1 PB commit** ("Research digest: keep the journal and the real publication date", pushed). **Prod D1 write:** `scripts/backfill-127-digest-metadata.sql` — 1682 `research_digest` rows re-pointed at PubMed's real journal + date (rollback file alongside).
+
+## The one to remember: a missing chunk was a YEAR-CACHED HTML DOCUMENT
+
+Verifying #127 in the browser, prod rendered an empty `<div id="root">` while the same build rendered on its preview URL. Chrome's HTTP cache held `/assets/dateUtils-BOZ-d9vO.js` as 4,930 bytes of index.html (network copy: 2,826 bytes of JS). Pages answers any unknown path with the SPA fallback as **200 text/html**, and `public/_headers` stamped `/assets/*` immutable for a year — on that response too. A chunk requested in the seconds before the new asset set reached the edge (open tabs reload on the version bump) is poisoned until the cache is cleared, and React never mounts, so no app code can recover. **This was live in Nick's own Chrome profile.** The `_headers` comment claimed a missing chunk 404s — it did not; `lazyRoute.tsx` already knew about the HTML fallback but not the immutable header.
+
+Fix (both halves verified live): `functions/assets/[[path]].ts` turns an HTML body on an asset path into **404 + no-store** (`curl /assets/nope.js` → 404 now); an inline script in `index.html` catches the module `<script>` error, walks the static import graph with `cache:'reload'` and reloads once (30s guard) — it fired on the poisoned profile, replaced the cache entry, and the portal mounted.
+
+**How to spot it next time:** no console errors, no `/api/*` requests, `root.children.length === 0`, and `fetch(chunk, {cache:'force-cache'})` returns HTML while `{cache:'no-store'}` returns JS. Compare prod against the deployment's own preview URL (`wrangler pages deployment list`) — same bytes, different verdict = client cache.
+
+## #127 was a PB pipeline fault, not a renderer one
+
+1678/1683 rows read `2026-01-01`; the journal column read `(PUBMED)`. `search_papers.py` kept only PubDate/Year, `sync_d1_digest.py` fabricated `-01-01`, and `generate_digest.py` printed the search ENGINE (`source`) where the journal belongs. `pub_date` is now `'YYYY' | 'YYYY-MM' | 'YYYY-MM-DD'` end to end and `formatPublicationDate()` renders each precision. The D1 API cap (`limit ≤ 300`, relevance-ordered) means `GET /api/digest` never shows you the newest rows — measure `research_digest` with D1, not the endpoint.
+
+## #126 premise, measured
+
+The report landed 37 s after a 3,587-char update was posted from the Today drawer. `CollapsibleBody` caps every activity body (plain + Hermes markdown) at 5 line-heights; the control appears only on measured overflow. Live: 93 px shown of 725, "more" offered; short bodies show nothing.
+
+---
+
 # ▶▶ BUG SWEEP #121–#124 + THE HERMES LANES — SHIPPED + DEPLOYED (2026-09-08, home laptop). Live = `15f4a2ac` (probe PASS). Bug queue EMPTY (0 open). GitHub #121–#124 closed; **#125 opened** (simplify findings, not defects). Hub: +2 routes (**267**, was 257) — no schema change, still v108 files. Gates: 1357 api · 275 lib · 171 src.
 
 **5 Hub commits.** `07fac210` (#123) · `d4fb084f` (#122) · `b19af600` (#124) · `15f4a2ac` (markdown) · `1334d7a7` (session-close simplify + a dead notification link). **4 PB commits** in `~/Peripheral-Brain`: `6d800d2ee` (meeting artifacts) · `7183f8495` (#121 PB access) · `49e6b9ee7` (#119 Gmail) · one more landing for the Gmail fixes.
