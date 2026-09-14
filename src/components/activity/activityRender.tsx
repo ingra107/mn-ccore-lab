@@ -47,6 +47,7 @@ import Avatar from '../Avatar'
 import LinkifiedText, { ImageChip } from '../LinkifiedText'
 import HermesMark from '../HermesMark'
 import HermesResponse from '../HermesResponse'
+import { CollapsibleBody } from './CollapsibleBody'
 import HermesPending from '../HermesPending'
 import { isHermesPending } from '../hermesPendingUtil'
 import { LifecycleActivityLine } from './LifecycleActivityLine'
@@ -857,11 +858,13 @@ export function ActivityEntryItem({
             {onDelete && <DeleteEntryButton onDelete={onDelete} />}
           </div>
         </div>
-        {/* Body */}
+        {/* Body — long answers collapse to a few lines (#126) */}
         {isHermesPending(entry.body) ? (
           <HermesPending askedAt={entry.created_at} />
         ) : (
-          <HermesResponse content={entry.body} />
+          <CollapsibleBody fontSize={textSize}>
+            <HermesResponse content={entry.body} />
+          </CollapsibleBody>
         )}
         {showReactions && !isTask && (
           <div style={{ marginTop: 6 }}>
@@ -942,21 +945,23 @@ export function ActivityEntryItem({
               onCancel={() => setEditing(false)}
             />
           ) : (
-            <p
-              style={{
-                fontSize: textSize,
-                color: 'var(--ink)',
-                opacity: 'var(--ink-primary)',
-                lineHeight: 1.55,
-                margin: 0,
-                whiteSpace: 'pre-wrap',
-              }}
-            >
-              {renderBodyWithImages(entry.body)}
-              {wasEdited && (
-                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5, fontStyle: 'italic', marginLeft: 6 }}>(edited)</span>
-              )}
-            </p>
+            // Long bodies collapse to a few lines with "more" (#126). Font size
+            // lives on the wrapper so the cap counts the same lines it clamps.
+            <CollapsibleBody fontSize={textSize}>
+              <p
+                style={{
+                  color: 'var(--ink)',
+                  opacity: 'var(--ink-primary)',
+                  margin: 0,
+                  whiteSpace: 'pre-wrap',
+                }}
+              >
+                {renderBodyWithImages(entry.body)}
+                {wasEdited && (
+                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5, fontStyle: 'italic', marginLeft: 6 }}>(edited)</span>
+                )}
+              </p>
+            </CollapsibleBody>
           )}
 
           {/* ONE action row: reactions + thread controls (#112).
