@@ -23,7 +23,7 @@ import type { DigestPaper, DigestComment } from '../hooks/useApiData'
 import { useUpdateDigestStatus, useLinkPaper, useCreateDigestComment } from '../hooks/useMutations'
 import { Button } from '../components/ui/Button'
 import { getPersonInfo } from '../data/team'
-import { formatMediumDate } from '../lib/dateUtils'
+import { formatMediumDate, formatPublicationDate } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
 import PageHeader from '../components/PageHeader'
 import HeartbeatLine from '../components/HeartbeatLine'
@@ -36,11 +36,6 @@ type StatusFilter = 'all' | 'new' | 'saved'
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00')
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-}
-
-function formatPubDate(dateStr: string | null): string {
-  if (!dateStr) return ''
-  return formatMediumDate(dateStr)
 }
 
 function truncateAuthors(authors: string | null): string {
@@ -206,7 +201,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                   opacity: 0.75,
                 }}
               >
-                {formatPubDate(paper.pub_date)}
+                {formatPublicationDate(paper.pub_date)}
               </span>
             )}
             {doiUrl && (
@@ -935,7 +930,7 @@ export default function Digest() {
                   const saved = allPapersForDate.filter(p => p.status === 'saved')
                   const bib = saved.map(p => {
                     const authors = truncateAuthors(p.authors)
-                    const year = p.pub_date ? new Date(p.pub_date).getFullYear() : ''
+                    const year = p.pub_date ? p.pub_date.slice(0, 4) : ''
                     return `${authors}. ${p.title}. ${p.journal || ''}${year ? ` (${year})` : ''}${p.doi ? `. doi:${p.doi}` : ''}`
                   }).join('\n\n')
                   navigator.clipboard.writeText(bib)

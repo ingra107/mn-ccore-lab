@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useProjectPapers, usePublications } from '../../hooks/useApiData'
 import { useUnlinkPaper, useLinkPaper } from '../../hooks/useMutations'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { formatPublicationDate } from '../../lib/dateUtils'
 import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../../lib/taskGrouping'
 import { Button } from '../../components/ui/Button'
 
@@ -105,7 +106,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
                           opacity: 'var(--ink-label)',
                         }}
                       >
-                        {p.pub_date}
+                        {formatPublicationDate(p.pub_date)}
                       </span>
                     )}
                   </div>

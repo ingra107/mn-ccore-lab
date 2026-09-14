@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { localDateKey } from './dateUtils'
+import { localDateKey, formatPublicationDate } from './dateUtils'
 
 describe('localDateKey', () => {
   it('returns YYYY-MM-DD built from local getters, not the UTC ISO date', () => {
@@ -33,5 +33,25 @@ describe('localDateKey', () => {
     const now = new Date()
     const expected = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
     expect(localDateKey()).toBe(expected)
+  })
+})
+
+// Hub #127: research_digest.pub_date arrives at whatever precision PubMed gave
+// ("2026", "2026-09", "2026-09-10"). Rendering a bare year through the full
+// date formatter is what put "Jan 1, 2026" on every digest paper.
+describe('formatPublicationDate', () => {
+  it('renders a full date as a medium date', () => {
+    expect(formatPublicationDate('2026-09-10')).toBe('Sep 10, 2026')
+  })
+  it('renders year-month without inventing a day', () => {
+    expect(formatPublicationDate('2026-09')).toBe('Sep 2026')
+  })
+  it('renders a bare year as the year', () => {
+    expect(formatPublicationDate('2026')).toBe('2026')
+  })
+  it('is empty for null/empty/garbage', () => {
+    expect(formatPublicationDate(null)).toBe('')
+    expect(formatPublicationDate('')).toBe('')
+    expect(formatPublicationDate('n/a')).toBe('')
   })
 })

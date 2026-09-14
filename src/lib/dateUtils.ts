@@ -47,6 +47,22 @@ export function formatMediumDate(dateStr: string): string {
   return safeParse(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+/**
+ * A publication date at whatever precision the source gave (Hub #127).
+ *   "2026-09-10" → "Sep 10, 2026" · "2026-09" → "Sep 2026" · "2026" → "2026"
+ * PubMed often knows only the year (or year + month) for an epub, and
+ * research_digest.pub_date stores exactly that. Pushing a bare year through
+ * a full-date formatter fabricates a day — every digest paper read "Jan 1".
+ */
+export function formatPublicationDate(dateStr: string | null | undefined): string {
+  const m = /^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/.exec((dateStr ?? '').trim())
+  if (!m) return ''
+  const [, y, mo, d] = m
+  if (d) return formatMediumDate(`${y}-${mo}-${d}`)
+  if (mo) return new Date(Number(y), Number(mo) - 1, 1, 12).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  return y
+}
+
 /** "Monday, March 25, 2025" */
 export function formatLongDate(dateStr: string): string {
   return safeParse(dateStr).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
