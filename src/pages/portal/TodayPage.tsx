@@ -55,6 +55,7 @@ import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
 import { withAlpha, isApprovalPending, isApprovalTriaged, civilDatePlusDays } from '../../lib/taskGrouping'
 import { useTodayDueWindow, DUE_WINDOW_OPTIONS, dueWindowDays } from '../../hooks/useTodayDueWindow'
+import { isMilestone } from '../../../shared/taskKinds'
 import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
 
 export default function TodayPage() {
@@ -181,6 +182,9 @@ export default function TodayPage() {
     const edge = civilDatePlusDays(todayKey(), days)
     return tasks.filter((t) => {
       if (state.planned[t.id]) return true
+      // A milestone is the horizon itself (Nick 2026-09-16: always show) —
+      // a grant date six weeks out must not vanish behind a 7d window.
+      if (isMilestone(t)) return true
       const due = t.due_date?.slice(0, 10)
       return !!due && due <= edge
     })

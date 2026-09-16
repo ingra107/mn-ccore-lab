@@ -37,6 +37,14 @@ export interface IdempotentDeleteArgs {
    * project-scoped SELECT+gate for tasks/projects and every existing caller.
    */
   gateProject?: boolean;
+  /**
+   * Name of the column holding the project FK when it is not `project_id`
+   * (paper_project_links keeps it in `project_slug` — a typed id since Z3.2
+   * despite the name). The gate still runs; only the column differs.
+   * 2026-09-16: without this the Literature tab's unlink 500'd on
+   * "no such column: project_id" for every row it ever tried to remove.
+   */
+  projectColumn?: string;
 }
 
 /**
@@ -70,9 +78,10 @@ export async function idempotentDelete(args: IdempotentDeleteArgs): Promise<Resp
   // Tables without a project_id column (e.g. inbox_events) opt out of the
   // project-ACL SELECT+gate, which otherwise 500s on the hard-coded project_id.
   const gateProject = args.gateProject !== false;
+  const projectColumn = args.projectColumn ?? 'project_id';
 
   if (mode === 'soft') {
-    const cols = gateProject ? 'id, deleted_at, project_id' : 'id, deleted_at';
+    const cols = gateProject ? `id, deleted_at, ${projectColumn} AS project_id` : 'id, deleted_at';
     const row = await env.DB.prepare(
       `SELECT ${cols} FROM ${table} WHERE id = ?`,
     ).bind(id).first<{ id: string; deleted_at: string | null; project_id?: string | null }>();
@@ -119,7 +128,7 @@ export async function idempotentDelete(args: IdempotentDeleteArgs): Promise<Resp
   // source of truth for whether a row existed (meta.changes).
   const row = gateProject
     ? await env.DB.prepare(
-        `SELECT id, project_id FROM ${table} WHERE id = ?`,
+        `SELECT id, ${projectColumn} AS project_id FROM ${table} WHERE id = ?`,
       ).bind(id).first<{ id: string; project_id: string | null }>()
     : null;
 

@@ -67,7 +67,9 @@ export async function handleLinkPaper(
 
 // POST /api/paper-links/:id/delete — unlink a paper from a project
 export async function handleUnlinkPaper(id: string, request: Request, env: Env): Promise<Response> {
-  return idempotentDelete({ table: 'paper_project_links', id, mode: 'hard', request, env });
+  // The project FK lives in `project_slug` on this table (a typed id since
+  // Z3.2); the default `project_id` SELECT 500'd on every unlink (2026-09-16).
+  return idempotentDelete({ table: 'paper_project_links', id, mode: 'hard', request, env, projectColumn: 'project_slug' });
 }
 
 // GET /api/papers/by-project?project_id= — publications linked to a project (with full pub data)
