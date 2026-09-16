@@ -287,7 +287,7 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isCompleted ? INK_DIM : INK, textDecoration: isCompleted ? 'line-through' : 'none', fontWeight: 500, paddingRight: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
         {/* #112: dot = task group indicator; tooltip names the group */}
         <span title={`Group: ${meta.label}`} aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: withAlpha(meta.color, 50), flexShrink: 0 }} />
-        <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>
+        {!isMilestone(task) && <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>}
         {/* Title-click opens the full editor (Nick 2026-06-10) — single click,
             not just the double-click/e/⏎ paths. stop() keeps the cursor-move
             row click from also firing.

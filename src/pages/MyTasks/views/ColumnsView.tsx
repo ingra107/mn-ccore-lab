@@ -180,7 +180,7 @@ export function MyTasksRow({ task, project, selected, selectionActive, onSelect,
       isPlanned={planned}
       plannedLabel="today"
       showGroupOverridePin
-      leadingTag={(task as TaskRow & { _tag?: string })._tag ?? '📝'}
+      leadingTag={isMilestone(task) ? undefined : ((task as TaskRow & { _tag?: string })._tag ?? '📝')}
       extraMeta={rowExtraMeta(task, prefs.taskStaleDays)}
     >
       {isMilestone(task) ? (

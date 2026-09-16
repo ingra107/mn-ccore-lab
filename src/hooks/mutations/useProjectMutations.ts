@@ -116,8 +116,13 @@ export function useUpdateProjectFields() {
     onSuccess: (_resp, { slug, fields }) => {
       if (!isProjectFinished(fields as { status?: string | null; stage?: string | null }) || suggestedPublicationMatchSlugs.has(slug)) return
 
+      // Already linked? The per-slug cache exists only once ProjectDetail has
+      // mounted; the Projects/Manuscripts tables hold the all-links rows
+      // instead, keyed by project_slug — check both or the nag re-fires there.
       const existing = queryClient.getQueryData<{ id: string }[]>(['project-publications', slug])
       if (existing && existing.length > 0) return
+      const allLinks = queryClient.getQueryData<{ project_slug: string | null }[]>(['project-publications', 'all'])
+      if (allLinks?.some((l) => l.project_slug === slug)) return
 
       const projects = queryClient.getQueryData<Project[]>(['projects'])
       const project = projects?.find((p) => p.slug === slug)
