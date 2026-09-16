@@ -38,6 +38,7 @@ import { OverdueBanner } from './OverdueBanner'
 import { NoTasksMatch } from './MyTasksEmpty'
 import WorkOnActions from '../../../components/WorkOnActions'
 import type { TaskRow } from '../../../lib/api'
+import { isMilestone } from '../../../../shared/taskKinds'
 
 interface ListViewProps {
   filtered: TaskRow[]
@@ -302,7 +303,7 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
             e.stopPropagation(); onDouble()
           }}
           style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }}
-        >{task.short_title || task.title}</span>
+        >{isMilestone(task) && <span aria-hidden="true" style={{ color: 'var(--task-accent-gold)', marginRight: 2 }}>◆</span>}{task.short_title || task.title}</span>
         {isNew && <AttentionChip kind="new" />}
         {!isNew && newActivity > 0 && <AttentionChip kind="activity" count={newActivity} />}
         {task.group_override && <span title={`Moved manually (${task.group_override})`} style={{ display: 'inline-flex', alignItems: 'center', color: ACCENT_TEAL, flexShrink: 0 }}><MapPin {...ICON_PROPS} size={11} /></span>}

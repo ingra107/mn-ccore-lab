@@ -167,6 +167,14 @@ export interface SharedTaskRowProps {
   task: TaskRowData
   project: { name: string; slug: string } | null
 
+  // ── kind (schema-v109, GH #131/#132) ── 'milestone' renders a half-height
+  // dated rule instead of the normal row: no DoneBox (a milestone is not
+  // completed by clicking a box — Mark complete lives in the expanded
+  // drawer), a ◆ glyph in its place, a hairline rule above+below, and a
+  // trimmed left→right order (glyph → project link → title → due → caret).
+  // Defaults to 'task' so every existing caller renders byte-identical.
+  variant?: 'task' | 'milestone'
+
   // ── done / complete ── square is ALWAYS complete.
   isDone: boolean
   onToggleDone: () => void
@@ -265,6 +273,53 @@ function DragHandle({ show, draggable, onDragStart }: { show: boolean; draggable
 }
 
 export function TaskRow(props: SharedTaskRowProps) {
+  // The variant switch lives ABOVE every hook: MilestoneRow and StandardRow
+  // are separate components, so neither calls hooks conditionally
+  // (rules-of-hooks) and the 'task' path stays byte-identical for every
+  // existing caller (Rule 68: add a prop, never fork).
+  if (props.variant === 'milestone') return <MilestoneRow {...props} />
+  return <StandardRow {...props} />
+}
+
+// ── Milestone branch (GH #131/#132) — a dated rule, not a task row. ────────
+// Half height, a hairline above and below, ◆ where the done box would sit,
+// project link → title → due → caret. No click-to-complete on the row; the
+// expanded drawer owns Mark complete.
+function MilestoneRow(props: SharedTaskRowProps) {
+  const { task, project, isDone, isExpanded, onToggleExpand, hideCaret, children } = props
+  return (
+      <div data-task-id={task.id} data-task-kind="milestone">
+        <div style={{ borderTop: `1px solid ${withAlpha(INK, 13)}` }} />
+        <div
+          onClick={onToggleExpand}
+          style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '3px 14px', minHeight: 20, cursor: 'pointer', userSelect: 'none' }}
+        >
+          <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 17, flexShrink: 0, color: ACCENT_GOLD, fontSize: 11, lineHeight: 1 }}>◆</span>
+          <span className="sr-only">Milestone</span>
+          <ProjectTag project={project} />
+          <span
+            style={{
+              flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: 500, color: INK, opacity: 0.85,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              textDecoration: isDone ? 'line-through' : 'none',
+            }}
+          >
+            {task.short_title || task.title}
+          </span>
+          {task.due_date && <DueChip due={task.due_date} status={task.status} />}
+          {!hideCaret && (
+            <span style={{ color: INK_MUTED, opacity: isExpanded ? 1 : 0.7, transition: 'opacity 140ms', flexShrink: 0, fontSize: 11 }}>
+              {isExpanded ? '▾' : '▸'}
+            </span>
+          )}
+        </div>
+        <div style={{ borderBottom: `1px solid ${withAlpha(INK, 13)}` }} />
+        {isExpanded && children}
+      </div>
+  )
+}
+
+function StandardRow(props: SharedTaskRowProps) {
   const {
     task, project, isDone, onToggleDone, isExpanded, onToggleExpand, hideCaret,
     onOpenEditor,

@@ -63,7 +63,7 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
       }
       if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false
       return true
-    }).map((t) => ({ ...t, _group: getGroupForTask(t, projectsByPid), _tag: tagForTask(t, projectsByPid) }) as TaskRow & { _group: GroupKey; _tag: string })
+    }).map((t) => ({ ...t, _group: getGroupForTask(t, projectsByPid), _tag: tagForTask(t, projectsByPid) }) as TaskRow & { _group: GroupKey; _tag: string | null })
   }, [allTasks, filter, search, quickView, plannedSet, today, projectsByPid, taskStaleDays, viewerSlug])
 
   // Bucket by group, then sort each bucket: planned → active → done.

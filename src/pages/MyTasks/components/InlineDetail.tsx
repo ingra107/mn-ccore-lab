@@ -292,6 +292,7 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
       <TaskInlineFieldRow
         status={task.status}
         priority={task.priority}
+        kind={task.kind}
         projectId={task.project_id}
         dueDate={task.due_date}
         onUpdate={(fields) => {

@@ -14,6 +14,8 @@ import { useDraggable } from '@dnd-kit/core'
 import { TaskRow as SharedTaskRow } from '../tasks/TaskRow'
 import { useDensity } from '../DensityToggle'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
+import { MilestoneDrawer } from './MilestoneDrawer'
+import { isMilestone } from '../../../shared/taskKinds'
 import { LinkRow, type TaskLink } from './primitives'
 import { tagForTask } from './constants'
 import { ACCENT_GOLD, ACCENT_CORAL, ACCENT_TEAL, INK_MUTED } from './constants'
@@ -30,6 +32,10 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
   const isDone = !!state.done[task.id]
   const planned = state.planned[task.id]
   const expanded = expandedId === task.id && !isDone
+  // A milestone is never planned/dragged/promoted — it is a dated rule with
+  // no click-to-complete box (GH #131/#132). Guard against a stray
+  // planned_for on a milestone row: it must never enter the planned bucket.
+  const milestone = isMilestone(task)
 
   // dnd-kit draggable (GH#150): replaces HTML5 draggable/onDragStart.
   // We wrap the SharedTaskRow in a useDraggable div. The PointerSensor in
@@ -39,7 +45,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
   // so only dnd-kit fires.
   const { attributes: dragAttrs, listeners: dragListeners, setNodeRef: setDragNodeRef, isDragging: isListDragging } = useDraggable({
     id: `list-task:${task.id}`,
-    disabled: isDone,
+    disabled: isDone || milestone,
     data: { taskId: task.id, source: 'list', task },
   })
   const onDragStart = undefined  // No HTML5 drag; dnd-kit handles it
@@ -131,10 +137,23 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
     // needing Nick's call, not an a11y-only fix.
     <div
       ref={setDragNodeRef}
-      {...(expanded ? {} : dragAttrs)}
-      {...dragListeners}
+      {...(expanded || milestone ? {} : dragAttrs)}
+      {...(milestone ? {} : dragListeners)}
       style={{ opacity: isListDragging ? 0.5 : 1 }}
     >
+    {milestone ? (
+      <SharedTaskRow
+        task={task}
+        project={project}
+        variant="milestone"
+        isDone={isDone}
+        onToggleDone={() => (isDone ? state.uncheck(task.id) : state.markDone(task.id))}
+        isExpanded={expanded}
+        onToggleExpand={() => { if (!isDone) onExpand(task.id) }}
+      >
+        <MilestoneDrawer task={task} project={project} state={state} />
+      </SharedTaskRow>
+    ) : (
     <SharedTaskRow
       task={task}
       project={project}
@@ -164,6 +183,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
     >
       <TaskDetailDrawer task={task} project={project} state={state} />
     </SharedTaskRow>
+    )}
     </div>
   )
 }

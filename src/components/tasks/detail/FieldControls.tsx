@@ -536,9 +536,15 @@ const PRIORITY_INLINE_OPTIONS = [
   { value: 'urgent', label: 'Urgent' },
 ]
 
+const KIND_INLINE_OPTIONS = [
+  { value: 'task', label: 'Task' },
+  { value: 'milestone', label: 'Milestone' },
+]
+
 export function TaskInlineFieldRow({
   status,
   priority,
+  kind,
   projectId,
   dueDate,
   onUpdate,
@@ -546,6 +552,9 @@ export function TaskInlineFieldRow({
 }: {
   status: string
   priority: string | null | undefined
+  /** schema-v109. Optional so pre-existing callers (none as of this add) keep
+   *  compiling; every current caller passes task.kind. */
+  kind?: string | null
   projectId: string | null | undefined
   dueDate: string | null | undefined
   onUpdate: (fields: Record<string, unknown>) => void
@@ -569,6 +578,12 @@ export function TaskInlineFieldRow({
         value={priority || 'medium'}
         onChange={(v) => onUpdate({ priority: v })}
         options={PRIORITY_INLINE_OPTIONS}
+      />
+      <GhostSelect
+        aria-label="Kind"
+        value={kind || 'task'}
+        onChange={(v) => onUpdate({ kind: v })}
+        options={KIND_INLINE_OPTIONS}
       />
       <ProjectInlineGhostSelect
         value={projectId || ''}

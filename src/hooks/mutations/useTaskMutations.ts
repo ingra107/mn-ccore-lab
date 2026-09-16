@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createTask, updateTaskStatus, updateTask, acknowledgeTask, restoreTask, fetchApi } from '../../lib/api'
 import type { TaskRow } from '../../lib/api'
+import type { TaskKind } from '../../../shared/taskKinds'
 import { TASK_STATUS, optimisticListUpdate, rollbackSnapshots } from './utils'
 import { nowInstant } from '../../lib/time'
 
@@ -18,6 +19,7 @@ export function useCreateTask() {
       project_id?: string
       due_date?: string
       priority?: string
+      kind?: TaskKind
     }) => createTask(input),
 
     onSettled: () => {

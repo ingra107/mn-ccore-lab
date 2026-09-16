@@ -8,6 +8,7 @@
 // helpers) remain in each surface's own constants.ts.
 
 import type { TaskRow } from './api'
+import { isMilestone } from '../../shared/taskKinds'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Types
@@ -51,8 +52,8 @@ export const PANEL_BG      = 'var(--task-panel-bg)'
  * Alpha-blend a task-surface accent color over the page background.
  * Replaces the legacy `${color}NN` hex+alpha-suffix pattern which only
  * worked when `color` was a literal 6-digit hex; the Phase 7 CSS-var
- * migration broke that pattern (var(--task-accent-gold)22 is not valid
- * CSS). Returns a CSS `color-mix()` expression supported in Chrome
+ * migration broke that pattern (a CSS var with a hex-alpha suffix is not
+ * valid CSS). Returns a CSS `color-mix()` expression supported in Chrome
  * 111+ / Safari 16.4+ / Firefox 113+.
  *
  *   withAlpha(ACCENT_GOLD, 13)  →  'color-mix(in srgb, var(--task-accent-gold) 13%, transparent)'
@@ -145,7 +146,10 @@ export function daysSince(iso: string | null | undefined): number {
 export function tagForTask(
   t: TaskRow,
   projectsByPid: Map<string, { category?: string | null; slug: string }>,
-): string {
+): string | null {
+  // A milestone renders its own ◆ glyph (TaskRow variant="milestone") — no
+  // category tag (GH #131/#132).
+  if (isMilestone(t)) return null
   if (t.source === 'pb') return '🧠'
   const proj = t.project_id ? projectsByPid.get(t.project_id) : null
   const cat  = proj?.category || ''
@@ -158,4 +162,56 @@ export function tagForTask(
   if (/manuscript|paper|draft|revise/i.test(t.title)) return '📄'
   if (/meeting|agenda|review/i.test(t.title)) return '📅'
   return '📝'
+}
+
+/**
+ * Interleave milestones into an active-bucket task list by due date, WITHOUT
+ * re-sorting the tasks themselves (CLAUDE.md Rule 62 — never re-sort a group
+ * by date; a milestone earns its position by stable insertion, not by making
+ * the whole bucket date-ordered). GH #131/#132.
+ *
+ * Every non-milestone item keeps its existing relative order. Each milestone
+ * (processed in ascending due-date order) is inserted immediately before the
+ * first non-milestone item whose due_date is STRICTLY later than the
+ * milestone's — a task with no due_date counts as later than every dated
+ * milestone (so a milestone always lands before it), and a milestone with no
+ * due_date goes to the very end of the list.
+ */
+export function interleaveMilestones<T extends { kind?: string | null; due_date?: string | null }>(active: T[]): T[] {
+  const milestones = active.filter((t) => isMilestone(t))
+  const rest = active.filter((t) => !isMilestone(t))
+  if (milestones.length === 0) return rest
+
+  const civil = (d: string | null | undefined) => (d ? d.slice(0, 10) : null)
+
+  const sortedMilestones = [...milestones].sort((a, b) => {
+    const ad = civil(a.due_date)
+    const bd = civil(b.due_date)
+    if (ad === bd) return 0
+    if (ad === null) return 1   // no-date milestone sorts last
+    if (bd === null) return -1
+    return ad < bd ? -1 : 1
+  })
+
+  const result: T[] = []
+  let mi = 0
+  for (const task of rest) {
+    const taskDue = civil(task.due_date)
+    while (mi < sortedMilestones.length) {
+      const mDue = civil(sortedMilestones[mi].due_date)
+      if (mDue === null) break // no-date milestones wait for the final flush
+      if (taskDue === null || mDue < taskDue) {
+        result.push(sortedMilestones[mi])
+        mi++
+      } else {
+        break
+      }
+    }
+    result.push(task)
+  }
+  while (mi < sortedMilestones.length) {
+    result.push(sortedMilestones[mi])
+    mi++
+  }
+  return result
 }

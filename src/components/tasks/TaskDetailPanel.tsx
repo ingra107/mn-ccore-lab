@@ -543,6 +543,15 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 { value: 'urgent', label: 'Urgent' },
               ]}
             />
+            <GhostSelect
+              aria-label="Kind"
+              value={task.kind || 'task'}
+              onChange={(v) => handleFieldUpdate('kind', v)}
+              options={[
+                { value: 'task', label: 'Task' },
+                { value: 'milestone', label: 'Milestone' },
+              ]}
+            />
             <ProjectInlineGhostSelect
               value={task.project_id || ''}
               onChange={(v) => handleFieldUpdate('project_id', v || null)}

@@ -66,6 +66,7 @@ import { TaskRowActions } from '../components/tasks/TaskRowActions'
 import { InlineDetail } from './MyTasks/components/InlineDetail'
 import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
 import MeetingActivityFeed from '../components/meetings/MeetingActivityFeed'
+import { isMilestone } from '../../shared/taskKinds'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -757,6 +758,7 @@ export default function MeetingDetail() {
                       <SharedTaskRow
                         key={item.id}
                         task={item}
+                        variant={isMilestone(item) ? 'milestone' : 'task'}
                         // project={null}: TaskRowActions owns BOTH project
                         // affordances (picker chip + navigation arrow), so the
                         // row must not also render ProjectTag — that would
@@ -806,6 +808,7 @@ export default function MeetingDetail() {
                       <SharedTaskRow
                         key={item.id}
                         task={item}
+                        variant={isMilestone(item) ? 'milestone' : 'task'}
                         // See the pending list above — TaskRowActions owns both
                         // project affordances on this page.
                         project={null}

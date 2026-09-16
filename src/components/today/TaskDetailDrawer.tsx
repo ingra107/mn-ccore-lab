@@ -293,6 +293,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           <TaskInlineFieldRow
             status={task.status}
             priority={task.priority}
+            kind={task.kind}
             projectId={task.project_id}
             dueDate={task.due_date}
             onUpdate={(fields) => {

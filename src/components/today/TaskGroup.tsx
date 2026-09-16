@@ -8,6 +8,8 @@ import { TaskRow } from './TaskRow'
 import { CollapseChevron } from './SectionCollapseToggle'
 import { collapseToggleProps } from './collapseToggleProps'
 import { GROUP_META, INK_DIM, PANEL_BG, withAlpha, isTaskDone, type GroupKey } from './constants'
+import { interleaveMilestones } from '../../lib/taskGrouping'
+import { isMilestone } from '../../../shared/taskKinds'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
@@ -18,8 +20,12 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 
   const meta = GROUP_META[gkey]
   const doneCount = tasks.filter((t) => state.done[t.id] || isTaskDone(t)).length
   const sorted = useMemo(() => {
-    const planned = tasks.filter((t) => state.planned[t.id] && !state.done[t.id])
-    const active = tasks.filter((t) => !state.planned[t.id] && !state.done[t.id])
+    // A milestone never enters `planned` (GH #131/#132) even if
+    // state.planned somehow carries a stale entry for it — treat it as
+    // active always.
+    const planned = tasks.filter((t) => state.planned[t.id] && !state.done[t.id] && !isMilestone(t))
+    const activeRaw = tasks.filter((t) => (!state.planned[t.id] || isMilestone(t)) && !state.done[t.id])
+    const active = interleaveMilestones(activeRaw)
     const done = tasks.filter((t) => state.done[t.id])
     return [...planned, ...active, ...done]
   }, [tasks, state.planned, state.done])

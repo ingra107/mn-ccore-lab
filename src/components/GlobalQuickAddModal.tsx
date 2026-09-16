@@ -18,7 +18,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Zap, X } from 'lucide-react'
+import { Zap, X, Diamond } from 'lucide-react'
 import QuickAddTaskInput from './QuickAddTaskInput'
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { useCreateTask } from '../hooks/useMutations'
@@ -62,6 +62,7 @@ const PRIORITY_MAP: Record<number, string> = { 1: 'urgent', 2: 'high', 3: 'mediu
 
 function GlobalQuickAddModal({ isOpen, onClose }: Props) {
   const [value, setValue] = useState('')
+  const [isMilestoneDraft, setIsMilestoneDraft] = useState(false)
   const createTask = useCreateTask()
   const { showSuccess, showInfo, showError } = useToast()
   const { user } = useAuth()
@@ -74,7 +75,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
   if (isOpen !== prevIsOpen) {
     setPrevIsOpen(isOpen)
-    if (!isOpen) setValue('')
+    if (!isOpen) { setValue(''); setIsMilestoneDraft(false) }
   }
 
   const handleSubmit = useCallback(async () => {
@@ -115,13 +116,15 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
       ...(parsed.dueDate ? { due_date: parsed.dueDate } : {}),
       ...(parsed.projectSlug ? { project_id: parsed.projectSlug } : {}),
       ...(parsed.priority ? { priority: PRIORITY_MAP[parsed.priority] ?? 'medium' } : {}),
+      ...(isMilestoneDraft ? { kind: 'milestone' as const } : {}),
     }, {
-      onSuccess: () => showSuccess('Task created'),
+      onSuccess: () => showSuccess(isMilestoneDraft ? 'Milestone created' : 'Task created'),
     })
 
     setValue('')
+    setIsMilestoneDraft(false)
     onClose()
-  }, [value, createTask, onClose, showSuccess, showInfo, showError, queryClient, fallbackAssignee])
+  }, [value, createTask, onClose, showSuccess, showInfo, showError, queryClient, fallbackAssignee, isMilestoneDraft])
 
   useEffect(() => {
     if (!isOpen) return
@@ -265,6 +268,30 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                 <TokenHint prefix="Apr 15"  desc="due date" color="var(--teal)" />
                 <div style={{ flex: 1 }} />
                 <button
+                  type="button"
+                  onClick={() => setIsMilestoneDraft((v) => !v)}
+                  aria-pressed={isMilestoneDraft}
+                  aria-label="Toggle milestone"
+                  className="tip"
+                  data-tip="Create as a milestone instead of a task"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    background: isMilestoneDraft ? withAlpha(ACCENT_GOLD, 22) : 'transparent',
+                    color: isMilestoneDraft ? 'var(--gold)' : 'var(--slate)',
+                    border: `1px solid ${isMilestoneDraft ? 'var(--gold)' : 'var(--border-subtle)'}`,
+                    borderRadius: 'var(--radius-lg)',
+                    cursor: 'pointer',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                  }}
+                >
+                  <Diamond {...ICON_PROPS} size={11} />
+                  Milestone
+                </button>
+                <button
                   onClick={handleSubmit}
                   disabled={!parseQuickAddInput(value).title.trim()}
                   style={{
@@ -280,7 +307,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                     transition: 'background 0.15s ease, color 0.15s ease',
                   }}
                 >
-                  Add task ↵
+                  {isMilestoneDraft ? 'Add milestone ↵' : 'Add task ↵'}
                 </button>
               </div>
             </div>

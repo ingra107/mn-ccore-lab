@@ -28,6 +28,7 @@ import {
   type GroupKey,
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
+import { isMilestone } from '../../../../shared/taskKinds'
 
 export function ColumnsView({ filtered, byGroup, selected, toggleSelect, selectRange, anchorId, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { filtered: TaskRow[]; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; selectRange: (targetId: string, orderedIds: string[], anchor: string | null) => void; anchorId: string | null; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string; primary_folder?: string | null }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
   // MT-16 — when a Group filter is active, only render the matching column
@@ -165,6 +166,7 @@ export function MyTasksRow({ task, project, selected, selectionActive, onSelect,
     <SharedTaskRow
       task={task}
       project={project}
+      variant={isMilestone(task) ? 'milestone' : 'task'}
       dense={density === 'compact'}
       stack={stack}
       isDone={isDone}
