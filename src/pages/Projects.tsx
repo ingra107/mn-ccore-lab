@@ -2,15 +2,13 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid, Star } from 'lucide-react'
-import { stageIndex, toApiStage, normalizeStage, stageLabel } from '../lib/stageNormalize'
+import { stageIndex, toApiStage, stageLabel } from '../lib/stageNormalize'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
 import { PANEL_BG, daysSince, withAlpha } from '../lib/taskGrouping'
 import { parseDbUtc } from '../lib/time'
-import { useCreateProject } from '../hooks/useMutations'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { updateProject } from '../lib/api'
+import { useCreateProject, useUpdateProjectFields } from '../hooks/useMutations'
 import InlineSelect from '../components/InlineSelect'
 import { useUndoToast } from '../components/UndoToast'
 import { PROJECT_STATUS_OPTIONS, normalizeProjectStatus, isProjectActive, isProjectDone } from '../lib/taskConstants'
@@ -295,36 +293,7 @@ export default function Projects() {
     return map
   }, [healthData])
   const createProject = useCreateProject()
-  const queryClient = useQueryClient()
-  const inlineUpdate = useMutation({
-    mutationFn: ({ slug, fields }: { slug: string; fields: Record<string, unknown> }) =>
-      updateProject(slug, fields),
-    onMutate: async ({ slug, fields }) => {
-      await queryClient.cancelQueries({ queryKey: ['projects'] })
-      const prev = queryClient.getQueryData<Project[]>(['projects'])
-      if (prev) {
-        // Ingress chokepoint (Hub #361a): this optimistic cache merge is a
-        // SECOND stage-data entry point that bypasses rowToProject entirely.
-        // `fields.stage` here is toApiStage() output (e.g. 'data_analysis' /
-        // 'submitted') — the wire shape, needed as-is for the mutationFn PATCH
-        // body — but the local `['projects']` cache must hold the UI's
-        // canonical value or every read site downstream (now normalize-free)
-        // would briefly see a non-canonical stage until onSettled refetches.
-        const optimisticFields = 'stage' in fields
-          ? { ...fields, stage: normalizeStage(fields.stage as string) || fields.stage }
-          : fields
-        queryClient.setQueryData<Project[]>(['projects'], prev.map(p => p.slug === slug ? { ...p, ...optimisticFields } : p))
-      }
-      return { prev }
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.prev) queryClient.setQueryData(['projects'], context.prev)
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
-      queryClient.invalidateQueries({ queryKey: ['activity'] })
-    },
-  })
+  const inlineUpdate = useUpdateProjectFields()
   const { showUndo } = useUndoToast()
 
   // S17: stage editing is one grammar everywhere — instant + undo (design Rule 8),

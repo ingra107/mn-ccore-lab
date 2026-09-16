@@ -17,9 +17,7 @@ import DataPage from '../../components/DataPage'
 import Avatar from '../../components/Avatar'
 import CreateProjectModal from '../../components/CreateProjectModal'
 import { useProjects, useTasks, useManuscriptsAttention } from '../../hooks/useApiData'
-import { useCreateProject } from '../../hooks/useMutations'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { updateProject } from '../../lib/api'
+import { useCreateProject, useUpdateProjectFields } from '../../hooks/useMutations'
 import InlineSelect from '../../components/InlineSelect'
 import CategoryIcon from '../../components/CategoryIcon'
 import { useUndoToast } from '../../components/UndoToast'
@@ -35,7 +33,7 @@ import EmptyState from '../../components/EmptyState'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
-import { toApiStage, stageIndex, normalizeStage } from '../../lib/stageNormalize'
+import { toApiStage, stageIndex } from '../../lib/stageNormalize'
 import { PATHS } from '../../constants/paths'
 import { parseDbUtc } from '../../lib/time'
 import { parseDateOnlyOrTimestamp } from '../../lib/dateUtils'
@@ -155,36 +153,8 @@ export default function ManuscriptsPage() {
   const { prefs: labPrefs } = useLabPrefs()
   const stalledThresholdDays = labPrefs.manuscriptsStaleDays
   const createProject = useCreateProject()
-  const queryClient = useQueryClient()
   const { showUndo } = useUndoToast()
-  const inlineUpdate = useMutation({
-    mutationFn: ({ slug, fields }: { slug: string; fields: Record<string, unknown> }) =>
-      updateProject(slug, fields),
-    onMutate: async ({ slug, fields }) => {
-      await queryClient.cancelQueries({ queryKey: ['projects'] })
-      const prev = queryClient.getQueryData<Project[]>(['projects'])
-      if (prev) {
-        // Ingress chokepoint (Hub #361a): this optimistic merge writes into
-        // the SAME `['projects']` cache Projects.tsx reads (now normalize-
-        // free). `fields.stage` is toApiStage() wire-shape output, needed
-        // as-is for the mutationFn PATCH body — but the local cache needs
-        // the UI canonical value or a stage change made here would briefly
-        // leak a non-canonical value into Projects.tsx's read sites too.
-        const optimisticFields = 'stage' in fields
-          ? { ...fields, stage: normalizeStage(fields.stage as string) || fields.stage }
-          : fields
-        queryClient.setQueryData<Project[]>(['projects'], prev.map(p => p.slug === slug ? { ...p, ...optimisticFields } : p))
-      }
-      return { prev }
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.prev) queryClient.setQueryData(['projects'], context.prev)
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
-      queryClient.invalidateQueries({ queryKey: ['activity'] })
-    },
-  })
+  const inlineUpdate = useUpdateProjectFields()
 
   const handleFieldChange = (slug: string, field: string, value: unknown, prev: unknown) => {
     inlineUpdate.mutate({ slug, fields: { [field]: value } })

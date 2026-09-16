@@ -43,13 +43,22 @@ export function useCreateProject() {
   })
 }
 
-export function useUpdateProject(projectId: string) {
+// Every inline project edit (ProjectDetail meta row + stage strip, Projects
+// and Manuscripts table cells) goes through this ONE optimistic writer.
+// Before #128 the same merge lived in three copies, and all three rolled a
+// failed write back in silence: the undo toast had already said "Stage →
+// Writing", the row kept its old value, and nothing named the reason. Now a
+// rejected write surfaces the server's message (Rule 35 400s, mutation 409s,
+// auth 401s) so the next report carries the cause instead of "it didn't change".
+export function useUpdateProjectFields() {
   const queryClient = useQueryClient()
+  const { showError } = useUndoToast()
 
   return useMutation({
-    mutationFn: (fields: Partial<Project>) => updateProject(projectId, fields),
+    mutationFn: ({ slug, fields }: { slug: string; fields: Record<string, unknown> }) =>
+      updateProject(slug, fields),
 
-    onMutate: async (fields) => {
+    onMutate: async ({ slug, fields }) => {
       await queryClient.cancelQueries({ queryKey: ['projects'] })
 
       const previousProjects = queryClient.getQueryData<Project[]>(['projects'])
@@ -59,16 +68,15 @@ export function useUpdateProject(projectId: string) {
         // SAME `['projects']` cache Projects.tsx/ManuscriptsPage.tsx read
         // (both normalize-free downstream of rowToProject). `fields.stage`
         // is toApiStage() wire-shape output when the caller is a stage
-        // change (e.g. ProjectDetail's handleStageChange) — needed as-is
-        // for the mutationFn PATCH body, but the local cache write must
-        // hold the UI canonical value.
-        const optimisticFields = fields.stage != null
-          ? { ...fields, stage: (normalizeStage(fields.stage) || fields.stage) as Project['stage'] }
+        // change — needed as-is for the mutationFn PATCH body, but the local
+        // cache write must hold the UI canonical value.
+        const optimisticFields = 'stage' in fields && fields.stage != null
+          ? { ...fields, stage: (normalizeStage(fields.stage as string) || fields.stage) as Project['stage'] }
           : fields
         queryClient.setQueryData<Project[]>(
           ['projects'],
           previousProjects.map((p) =>
-            p.slug === projectId ? { ...p, ...optimisticFields } : p
+            p.slug === slug ? { ...p, ...optimisticFields } : p
           )
         )
       }
@@ -76,10 +84,13 @@ export function useUpdateProject(projectId: string) {
       return { previousProjects }
     },
 
-    onError: (_err, _fields, context) => {
+    onError: (err, { fields }, context) => {
       if (context?.previousProjects) {
         queryClient.setQueryData(['projects'], context.previousProjects)
       }
+      const what = Object.keys(fields).join(', ') || 'project'
+      const why = err instanceof Error && err.message ? err.message : 'request failed'
+      showError(`Could not save ${what} — ${why}`)
     },
 
     onSettled: () => {
@@ -88,6 +99,15 @@ export function useUpdateProject(projectId: string) {
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
+}
+
+// Slug-bound form for a single-project surface (ProjectDetail).
+export function useUpdateProject(projectId: string) {
+  const inline = useUpdateProjectFields()
+  return {
+    ...inline,
+    mutate: (fields: Partial<Project>) => inline.mutate({ slug: projectId, fields }),
+  }
 }
 
 // ── Comment mutations ───────────────────────────────────────
