@@ -15,6 +15,7 @@ import { TaskRow as SharedTaskRow } from '../tasks/TaskRow'
 import { useDensity } from '../DensityToggle'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { MilestoneDrawer } from './MilestoneDrawer'
+import { isTaskDone } from '../../lib/taskGrouping'
 import { isMilestone } from '../../../shared/taskKinds'
 import { LinkRow, type TaskLink } from './primitives'
 import { tagForTask } from './constants'
@@ -151,7 +152,11 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
         isExpanded={expanded}
         onToggleExpand={() => { if (!isDone) onExpand(task.id) }}
       >
-        <MilestoneDrawer task={task} project={project} state={state} />
+        <MilestoneDrawer
+          task={task}
+          project={project}
+          onToggleComplete={(t) => ((t.id === task.id ? isDone : (state.done[t.id] || isTaskDone(t))) ? state.uncheck(t.id) : state.markDone(t.id))}
+        />
       </SharedTaskRow>
     ) : (
     <SharedTaskRow

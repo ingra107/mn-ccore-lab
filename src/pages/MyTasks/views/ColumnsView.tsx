@@ -18,6 +18,7 @@ import { useDensity } from '../../../components/DensityToggle'
 import { useSelectMode } from '../../../hooks/useSelectMode'
 import { Chip } from '../primitives'
 import { InlineDetail } from '../components/InlineDetail'
+import { MilestoneDrawer } from '../../../components/today/MilestoneDrawer'
 import { OverdueBanner } from './OverdueBanner'
 import { NoTasksMatch, LaneEmpty } from './MyTasksEmpty'
 import {
@@ -126,6 +127,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, selectR
                       }
                     }}
                     onToggleComplete={() => onToggleComplete(t)}
+                    onToggleCompleteTask={onToggleComplete}
                     onOpenEditor={() => onOpenEditor(t.id)}
                     expanded={expanded === t.id}
                     onExpand={() => setExpanded(expanded === t.id ? null : t.id)}
@@ -158,7 +160,7 @@ function rowExtraMeta(task: TaskRow, staleDays: number) {
   )
 }
 
-export function MyTasksRow({ task, project, selected, selectionActive, onSelect, onToggleComplete, onOpenEditor, expanded, onExpand, planned, stack }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; selected: boolean; selectionActive: boolean; onSelect: () => void; onToggleComplete: () => void; onOpenEditor?: () => void; expanded: boolean; onExpand: () => void; planned: boolean; stack?: boolean }) {
+export function MyTasksRow({ task, project, selected, selectionActive, onSelect, onToggleComplete, onToggleCompleteTask, onOpenEditor, expanded, onExpand, planned, stack }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; selected: boolean; selectionActive: boolean; onSelect: () => void; onToggleComplete: () => void; onToggleCompleteTask?: (t: TaskRow) => void; onOpenEditor?: () => void; expanded: boolean; onExpand: () => void; planned: boolean; stack?: boolean }) {
   const isDone = isTaskDone(task)
   const { prefs } = useLabPrefs()
   const [density] = useDensity()
@@ -183,7 +185,13 @@ export function MyTasksRow({ task, project, selected, selectionActive, onSelect,
       leadingTag={(task as TaskRow & { _tag?: string })._tag ?? '📝'}
       extraMeta={rowExtraMeta(task, prefs.taskStaleDays)}
     >
-      <InlineDetail task={task} projectName={project?.name} primaryFolder={project?.primary_folder} onOpenEditor={onOpenEditor} />
+      {isMilestone(task) && onToggleCompleteTask ? (
+        // Same drawer Today uses (Nick 2026-09-16): Mark complete, project
+        // links + documents, the project's open tasks, notes.
+        <MilestoneDrawer task={task} project={project} onToggleComplete={onToggleCompleteTask} />
+      ) : (
+        <InlineDetail task={task} projectName={project?.name} primaryFolder={project?.primary_folder} onOpenEditor={onOpenEditor} />
+      )}
     </SharedTaskRow>
   )
 }

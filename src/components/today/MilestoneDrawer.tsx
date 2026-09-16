@@ -21,15 +21,18 @@ import { PATHS } from '../../constants/paths'
 import { Link } from 'react-router-dom'
 import { stripMeetingMarker } from '../../lib/textUtils'
 import { ACCENT_TEAL, INK_DIM, INK_MUTED } from './constants'
-import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
 const OPEN_TASKS_CAP = 8
 
-export function MilestoneDrawer({ task, project, state }: {
+// Surface-agnostic (Nick 2026-09-16: "put on my tasks too"). The host passes
+// ONE completion verb that takes a task row, so Today routes it through
+// useTodayState (instant + undo) and My Tasks through its own
+// onToggleComplete — the drawer never picks a mutation itself.
+export function MilestoneDrawer({ task, project, onToggleComplete }: {
   task: TaskRow
   project: { name: string; slug: string; primary_folder?: string | null } | null
-  state: TodayStateApi
+  onToggleComplete: (t: TaskRow) => void
 }) {
   const isDone = isTaskDone(task)
   const [descExpanded, setDescExpanded] = useState(false)
@@ -50,8 +53,8 @@ export function MilestoneDrawer({ task, project, state }: {
 
   // Same path the row's done box takes on Today (instant + undo toast +
   // sinks to the done bucket) — not a raw status mutation.
-  const markComplete = () => state.markDone(task.id)
-  const reopen = () => state.uncheck(task.id)
+  const markComplete = () => onToggleComplete(task)
+  const reopen = () => onToggleComplete(task)
 
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ padding: '10px 18px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
@@ -127,7 +130,7 @@ export function MilestoneDrawer({ task, project, state }: {
                     dense
                     hideCaret
                     isDone={isTaskDone(t)}
-                    onToggleDone={() => (isTaskDone(t) ? state.uncheck(t.id) : state.markDone(t.id))}
+                    onToggleDone={() => onToggleComplete(t)}
                     isExpanded={false}
                     // Row body or title → the full editor for THAT task (Nick
                     // 2026-09-16: "click on the open tasks here and edit them").
