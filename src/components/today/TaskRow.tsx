@@ -150,7 +150,9 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
         isDone={isDone}
         onToggleDone={() => (isDone ? state.uncheck(task.id) : state.markDone(task.id))}
         isExpanded={expanded}
-        onToggleExpand={() => { if (!isDone) onExpand(task.id) }}
+        // Not gated on isDone: the milestone row has no done box, so the
+        // drawer's Reopen is its only way back once Mark complete fires.
+        onToggleExpand={() => onExpand(task.id)}
       >
         <MilestoneDrawer
           task={task}

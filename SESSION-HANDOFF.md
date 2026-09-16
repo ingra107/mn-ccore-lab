@@ -1,4 +1,4 @@
-# ▶▶ BUG SWEEP #128–#132 — ALL FIVE SHIPPED + DEPLOYED, plus Nick's same-day follow-ups (2026-09-16, work laptop). Live = `c01137f9` (probe PASS). Bug queue EMPTY; GitHub #128–#132 closed. **Schema v110**, **routes 271**, PB mig 128/129, pb-schema 0.7.1. Gates: 1372 api · lib +17 · src +2.
+# ▶▶ BUG SWEEP #128–#132 — ALL FIVE SHIPPED + DEPLOYED, plus Nick's same-day follow-ups and a session-close simplify pass (2026-09-16, work laptop). Live = `75d2661c`+1 (probe PASS; `6a4a787c` = simplify: variant defaults from `task.kind`, `isProjectFinished()`, `shared/publicationRoles.ts`, `ui/labelStyle.ts`; `75d2661c` = code-review fixes). Bug queue EMPTY; GitHub #128–#132 closed. **Schema v110**, **routes 271**, PB mig 128/129, pb-schema 0.7.1. Gates: 1372 api · lib +17 · src +2.
 
 **7 Hub commits** `880692ed` (#128) · `7f8162cf` (#130) · `1fc75b3e` (v109 + API) · `1db43820` (milestone UI) · `5ed725f9` (publications API) · `f80c88c9` (titleMatch) · `4770ef90` (publications UI). **1 PB commit** (tasks.kind: enums, DSL, mig 128/129, view, TODAY.md renderer, decision doc, registry; pushed). **pb-schema** `55faad2` (0.7.1, pushed to main).
 
@@ -18,6 +18,7 @@
 
 ## Nick's follow-ups the same afternoon (all live)
 
+- `b3b1a55c` milestones ignore the Today due-window (Nick's call); the two stray April paper links are deleted, and the Literature tab's unlink (500'd since Z3.2 on a hard-coded `project_id`) works.
 - `3d9376ed` milestone row is title → gold leader line → project → due (his ask: "title first, project on the right, a gold semitransparent subtle line connects them"); open tasks inside the drawer open the full editor.
 - `34b2388f` `MilestoneDrawer` on My Tasks Columns + Lanes (drawer takes one completion verb, not Today's state object).
 - `c01137f9` Projects pills Open · Active · All · **Done** (done OR published).
