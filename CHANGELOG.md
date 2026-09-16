@@ -5,13 +5,15 @@
 
 ## 2026-09-16 — bug sweep #128–#132
 
-Two fixed and deployed (`880692ed`, `7f8162cf`); three are feature requests with design proposals posted on GitHub and left open in the queue. Frontend only, no schema or route change.
+All five shipped and deployed (`880692ed`, `7f8162cf`, `1fc75b3e`, `1db43820`, `5ed725f9`, `f80c88c9`, `4770ef90`). Schema v109 + v110, routes 267 → 271, PB mig 128/129, pb-schema 0.7.1.
 
 **#128 — stage change showed the toast and did not stick.** Not reproducible: the activity log and `processed_mutations` show the pi and status writes seconds earlier and no stage write at all, and the same write succeeds today from the browser and the API. What was certain is that a rejected project write was silent in all three copies of the optimistic writer. They are now one hook, `useUpdateProjectFields`, whose `onError` restores the cache and shows the server's reason. Browser-mode test covers the 400 and accepted paths.
 
 **#130 — Active that hides waiting and blocked.** Status pills are Open (not done), Active (`isProjectActive()`), All. The hidden count says "hidden" under Active since waiting and blocked rows hide there too.
 
-**#129, #131, #132 — design asks.** Milestones on Today (proposal: `tasks.kind='milestone'`, a TaskRow variant, shared-field process) and published papers linked to projects (proposal: wire the existing empty `project_publications` junction). Both need Nick's data-model call before a build.
+**#131/#132 — milestones on Today.** Nick chose `tasks.kind='milestone'` over the empty `milestones` table. Shared field end to end: PB enums + DSL + mig 128 (column) + 129 (`v_section_assignments` carries `t.kind`), pb-schema 0.7.1, Hub schema-v109, `VALID` kinds 400 on create and update, `kind` in the required set. The shared `TaskRow` gained `variant="milestone"` (split into `MilestoneRow`/`StandardRow` above the hooks): half height, hairline above and below, ◆ where the done box would sit, project link, name, due date, no click-to-complete — `MilestoneDrawer` owns Mark complete, Full editor, project links and documents, open tasks and notes. `interleaveMilestones()` places each one before the first task with a later due date without re-sorting the tasks. Quick-add has a Milestone toggle; the detail panel and drawers have a Kind select; TODAY.md renders `◆ ── MILESTONE · <date> ── name`. Cold insert and warm pull now let a NOT NULL DEFAULT column take its default on a wire NULL.
+
+**#129 — published papers on projects.** Nick chose the junction with a `role`. `project_publications` (v49, 0 rows, no routes) + schema-v110 `role` (primary/secondary/preprint); four routes; a Published card on ProjectDetail (avatar stack, first author … senior author, journal · year, DOI/PubMed, PI link/unlink picker over the 703 lab publications), the same list atop the Literature & Publications tab, a journal · year chip on Done/published rows of Projects and Manuscripts, "Published from this project" on the publication page, and an "Is this the paper?" toast (title Jaccard ≥ 0.6) when a project goes published/done. Found and fixed: the Literature tab's own `paper_project_links` reads never matched (typed id vs slug; only `research_digest` joined), so no link made through that modal had ever rendered.
 
 ## 2026-09-08 — bug sweep #121–#124, and Hermes gets Peripheral Brain and Gmail
 

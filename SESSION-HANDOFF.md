@@ -1,19 +1,27 @@
-# ▶▶ BUG SWEEP #128–#132 — #128/#130 SHIPPED + DEPLOYED, #129/#131/#132 ARE DESIGN ASKS AWAITING NICK (2026-09-16, work laptop). Live = `7f8162cf` (probe PASS). Bug queue: 3 open (#129, #131, #132 — feature requests with proposals posted on GitHub, not defects). No schema/route change. Frontend only.
+# ▶▶ BUG SWEEP #128–#132 — ALL FIVE SHIPPED + DEPLOYED (2026-09-16, work laptop). Live = `4770ef90` (probe PASS). Bug queue EMPTY; GitHub #128–#132 closed. **Schema v110** (v109 tasks.kind, v110 project_publications.role — both applied test + prod, read back). **Routes 271** (+4). PB mig 128/129, pb-schema 0.7.1. Gates: 1372 api · lib +12 · src +2.
 
-**2 Hub commits.** `880692ed` (#128) · `7f8162cf` (#130). Pushed.
+**7 Hub commits** `880692ed` (#128) · `7f8162cf` (#130) · `1fc75b3e` (v109 + API) · `1db43820` (milestone UI) · `5ed725f9` (publications API) · `f80c88c9` (titleMatch) · `4770ef90` (publications UI). **1 PB commit** (tasks.kind: enums, DSL, mig 128/129, view, TODAY.md renderer, decision doc, registry; pushed). **pb-schema** `55faad2` (0.7.1, pushed to main).
 
-## #128 was not reproducible, so the fix makes the class legible
+## What #131/#132 and #129 became
 
-Nick clicked Writing, got the undo toast, the row stayed at Idea. `activity_log` + `processed_mutations` show the pi (13:19:11) and status (13:19:17) writes and NO stage write, so the request 4xx'd or never left the browser; the same write succeeds from the API key and from his Chrome today. The three copies of the optimistic project writer (ProjectDetail / Projects / Manuscripts) all rolled back in silence. Now ONE hook, `useUpdateProjectFields`, and its `onError` shows the server's message ("Could not save stage — Invalid stage …"). Browser-mode test `src/__tests__/project-update-error-surfaces.test.tsx`. If it recurs, the toast carries the reason — read it before anything else.
+- **Milestone = task with `kind='milestone'`** (CLAUDE.md rule 86). Shared field, full R10 lockstep: PB DSL → pb-schema regen → D1 v109 → Worker → PB pull. Verified end to end: a milestone created on the Hub pulled into brain.db with `kind='milestone'`, `v_section_assignments` carried it, `format_task_callout` rendered `◆ ── MILESTONE · 2026-09-18 ── name`. Probe row deleted afterwards.
+- **Published output = `project_publications` + `role`** (rule 87). `clif-icu-readmissions` now carries Amagai 2025 (primary) + its preprint — Nick's own example from the report. **Found on the way:** `paper_project_links` (the Literature tab's "Link Paper" modal) has been a dead read since Z3.2 — writer stores the typed id, reader bound the slug, and only `research_digest` was joined. Fixed; the K23's stray ADHERE-LPV link now shows on its Literature tab so Nick can unlink it.
+- **#128** was not reproducible; the three copies of the optimistic project writer are one hook and a rejected write now shows the server's reason. **#130**: status pills Open | Active | All.
 
-## #130: status pills are Open | Active | All
+## Landmines added this session
 
-Open = not done (the old "Active"), Active = `isProjectActive()` only, All unchanged. `?status=active`. Count label reads "n hidden" under Active because waiting/blocked hide too.
+1. **`_insert_task_row` / warm pull and NOT NULL DEFAULT columns.** `kind` is the first extension column with a NOT NULL DEFAULT; a wire row that omits it (older Hub, stub) used to cold-insert an explicit NULL and abort. `hub.py` now reads `_defaulted_not_null` off `pragma_table_info` for the cold insert and preserves on a wire NULL in the warm loop (`_TASK_NEVER_NULL_DEFAULTED`, authored). The two totality ledgers classify `kind`; the next such column will fail those tests until it is classified — that is the intended tripwire.
+2. **`test_schema_drift_gate::test_latest_view_migrations_only_sql_at_or_above_floor` pins which migration owns each view.** Recreating `v_section_assignments` means moving that pin (120 → 129 this time).
+3. **The pre-commit eslint gate is zero-error and the hub-frontend agent does not run it.** Its first pass put an early `return` above the hooks in `TaskRow` (rules-of-hooks ×5). Run `npx eslint <files>` on any agent's diff before committing.
+4. **`check-color-string-concat` matches COMMENTS too** — a doc comment quoting `var(--task-accent-gold)22` tripped it once its line number moved out of the baseline. Reworded.
+5. **D1 auth-10000 hit once on the deploy gate; the retry passed** (memory `feedback_hub-deploy-and-wrangler-auth`).
 
-## Waiting on Nick (proposals on the issues)
+## Not done / follow-ups
 
-- **#131/#132 milestones on Today** — recommended `tasks.kind='milestone'` (shared-field change: PB enums + registry + brain.db mig + Hub v109 + TaskRow `variant`), NOT the empty `milestones` table. Needs his call on model + where rows sit (interleaved by group vs a Deep Work strip) + assignee.
-- **#129 publications ↔ projects** — `project_publications` junction already exists (0 rows, no routes); `publications` has 703 rows and already holds the Saki readmissions paper. Proposal: 3 routes + Publications section on ProjectDetail + Done-row chip + title-match suggestion on publish. He said brainstorm first, so nothing built.
+- `MilestoneDrawer` is wired on Today only; Columns/Lanes/My Hub/meeting rows render the milestone variant but expand into the ordinary `InlineDetail`. Wire it there if Nick uses milestones from My Tasks.
+- Milestones obey the Today due-window filter like tasks (7/14/30d/All); a far-off grant deadline shows only under a wide window. Revisit if he wants milestones always visible.
+- The two stray April `paper_project_links` rows (ADHERE-LPV protocol on the K23 + central-line projects) are now visible; left for Nick to unlink.
+- Preprint duplicate rows in `publications` (two readmissions rows) — a loader-side merge, not touched.
 
 ---
 
