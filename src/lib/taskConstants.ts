@@ -105,6 +105,13 @@ export function isProjectDone(value: string | null | undefined): boolean {
   return normalizeProjectStatus(value) === 'done'
 }
 
+/** Finished work: status done OR stage published (Nick 2026-09-16, the
+ *  Projects "Done" pill, the Done-row publication chip, and the "Is this the
+ *  paper?" trigger all mean this). One predicate so the three cannot drift. */
+export function isProjectFinished(p: { status?: string | null; stage?: string | null }): boolean {
+  return isProjectDone(p.status) || p.stage === 'published'
+}
+
 // ── Stages ──
 
 // Stage colors pinned for WCAG AA on near-black dark-mode bg (2026-04-18).

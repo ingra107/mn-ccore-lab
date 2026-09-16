@@ -821,7 +821,7 @@ defineRoute({
   auth: 'authed',
   entity: 'projects',
   visibility: 'na',
-  handler: (c) => handleGetAllProjectPublications(R(c), E(c), CSP(c)),
+  handler: (c) => handleGetAllProjectPublications(E(c), CSP(c)),
 });
 defineRoute({
   method: 'GET',

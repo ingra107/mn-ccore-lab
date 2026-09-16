@@ -202,10 +202,10 @@ describe('GET /api/project-publications', () => {
       },
       batch: async () => [],
     };
-    const res = await handleGetAllProjectPublications(get('/x'), makeEnv(db), false);
+    const res = await handleGetAllProjectPublications(makeEnv(db), false);
     expect(res.status).toBe(200);
     expect(seen).toEqual([0]);
-    await handleGetAllProjectPublications(get('/x'), makeEnv(db), true);
+    await handleGetAllProjectPublications(makeEnv(db), true);
     expect(seen).toEqual([1]);
   });
 });

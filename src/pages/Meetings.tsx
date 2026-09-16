@@ -30,7 +30,6 @@ import { useUnseenActivity, useMarkSeen } from '../hooks/useEntitySeen'
 import MarkdownView from '../components/MarkdownView'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha, isTaskDone } from '../lib/taskGrouping'
-import { isMilestone } from '../../shared/taskKinds'
 
 type FilterMode = 'all' | 'decisions' | 'actions'
 
@@ -398,7 +397,6 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
                   key={item.id}
                   task={item}
                   project={project}
-                  variant={isMilestone(item) ? 'milestone' : 'task'}
                   dense
                   isDone={isTaskDone(item)}
                   onToggleDone={() => handleToggleDone(item)}

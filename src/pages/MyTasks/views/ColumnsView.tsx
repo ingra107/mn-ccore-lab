@@ -126,8 +126,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, selectR
                         toggleSelect(t.id)
                       }
                     }}
-                    onToggleComplete={() => onToggleComplete(t)}
-                    onToggleCompleteTask={onToggleComplete}
+                    onToggleComplete={onToggleComplete}
                     onOpenEditor={() => onOpenEditor(t.id)}
                     expanded={expanded === t.id}
                     onExpand={() => setExpanded(expanded === t.id ? null : t.id)}
@@ -160,7 +159,7 @@ function rowExtraMeta(task: TaskRow, staleDays: number) {
   )
 }
 
-export function MyTasksRow({ task, project, selected, selectionActive, onSelect, onToggleComplete, onToggleCompleteTask, onOpenEditor, expanded, onExpand, planned, stack }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; selected: boolean; selectionActive: boolean; onSelect: () => void; onToggleComplete: () => void; onToggleCompleteTask?: (t: TaskRow) => void; onOpenEditor?: () => void; expanded: boolean; onExpand: () => void; planned: boolean; stack?: boolean }) {
+export function MyTasksRow({ task, project, selected, selectionActive, onSelect, onToggleComplete, onOpenEditor, expanded, onExpand, planned, stack }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; selected: boolean; selectionActive: boolean; onSelect: () => void; onToggleComplete: (t: TaskRow) => void; onOpenEditor?: () => void; expanded: boolean; onExpand: () => void; planned: boolean; stack?: boolean }) {
   const isDone = isTaskDone(task)
   const { prefs } = useLabPrefs()
   const [density] = useDensity()
@@ -168,11 +167,10 @@ export function MyTasksRow({ task, project, selected, selectionActive, onSelect,
     <SharedTaskRow
       task={task}
       project={project}
-      variant={isMilestone(task) ? 'milestone' : 'task'}
       dense={density === 'compact'}
       stack={stack}
       isDone={isDone}
-      onToggleDone={onToggleComplete}
+      onToggleDone={() => onToggleComplete(task)}
       onOpenEditor={onOpenEditor}
       isExpanded={expanded}
       onToggleExpand={onExpand}
@@ -185,10 +183,10 @@ export function MyTasksRow({ task, project, selected, selectionActive, onSelect,
       leadingTag={(task as TaskRow & { _tag?: string })._tag ?? '📝'}
       extraMeta={rowExtraMeta(task, prefs.taskStaleDays)}
     >
-      {isMilestone(task) && onToggleCompleteTask ? (
+      {isMilestone(task) ? (
         // Same drawer Today uses (Nick 2026-09-16): Mark complete, project
         // links + documents, the project's open tasks, notes.
-        <MilestoneDrawer task={task} project={project} onToggleComplete={onToggleCompleteTask} />
+        <MilestoneDrawer task={task} project={project} onToggleComplete={onToggleComplete} />
       ) : (
         <InlineDetail task={task} projectName={project?.name} primaryFolder={project?.primary_folder} onOpenEditor={onOpenEditor} />
       )}

@@ -39,7 +39,6 @@ import { useUndoToast } from '../../components/UndoToast'
 import type { TaskRow } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { isMilestone } from '../../../shared/taskKinds'
 
 // M-25: minimal shape for the regulatory-expiring alert strip — the full
 // ExpiringRegulatoryRow type lives unexported in lib/api.ts; this covers
@@ -378,7 +377,6 @@ function HubTaskRow({
     <SharedTaskRow
       task={task}
       project={null}
-      variant={isMilestone(task) ? 'milestone' : 'task'}
       dense={density === 'compact'}
       hideCaret
       isDone={isDone}

@@ -31,14 +31,7 @@ import { formatDbLocal } from '../lib/time'
 import { ICON_PROPS } from '../lib/iconProps'
 import type { StoredLink } from '../hooks/useApiData'
 
-const LABEL_STYLE = {
-  fontSize: '10px',
-  fontWeight: 500,
-  color: 'var(--slate)',
-  opacity: 'var(--ink-label)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.06em',
-} as const
+import { LABEL_STYLE } from './ui/labelStyle'
 
 function LinkRow({ link, dateField }: { link: StoredLink; dateField: 'created_at' | 'updated_at' }) {
   const date = formatDbLocal(link[dateField], 'date')

@@ -121,8 +121,7 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
                         toggleSelect(t.id)
                       }
                     }}
-                    onToggleComplete={() => onToggleComplete(t)}
-                    onToggleCompleteTask={onToggleComplete}
+                    onToggleComplete={onToggleComplete}
                     onOpenEditor={() => onOpenEditor(t.id)}
                     expanded={expanded === t.id}
                     onExpand={() => setExpanded(expanded === t.id ? null : t.id)}

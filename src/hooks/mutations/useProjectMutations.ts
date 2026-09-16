@@ -16,6 +16,7 @@ import { useUndoToast } from '../../components/UndoToast'
 import { PATHS } from '../../constants/paths'
 import { normalizeStage } from '../../lib/stageNormalize'
 import { bestPublicationMatch } from '../../lib/titleMatch'
+import { isProjectFinished } from '../../lib/taskConstants'
 
 // ── Project mutations ───────────────────────────────────────
 
@@ -113,8 +114,7 @@ export function useUpdateProjectFields() {
     },
 
     onSuccess: (_resp, { slug, fields }) => {
-      const justPublished = fields.stage === 'published' || fields.status === 'done'
-      if (!justPublished || suggestedPublicationMatchSlugs.has(slug)) return
+      if (!isProjectFinished(fields as { status?: string | null; stage?: string | null }) || suggestedPublicationMatchSlugs.has(slug)) return
 
       const existing = queryClient.getQueryData<{ id: string }[]>(['project-publications', slug])
       if (existing && existing.length > 0) return

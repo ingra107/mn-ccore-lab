@@ -24,12 +24,8 @@ import type { AuthUser, Env } from '../helpers';
 import { json, error, logActivity, resolveAndGuardProject } from '../helpers';
 import type { PublicationRow } from '../types';
 
-export const PUBLICATION_ROLES = ['primary', 'secondary', 'preprint'] as const;
-export type PublicationRole = (typeof PUBLICATION_ROLES)[number];
-
-export function isPublicationRole(v: unknown): v is PublicationRole {
-  return typeof v === 'string' && (PUBLICATION_ROLES as readonly string[]).includes(v);
-}
+import { PUBLICATION_ROLES, isPublicationRole, type PublicationRole } from '../../shared/publicationRoles';
+export { PUBLICATION_ROLES, isPublicationRole, type PublicationRole };
 
 export interface ProjectPublicationRow extends PublicationRow {
   role: PublicationRole;
@@ -81,12 +77,15 @@ export async function handleLinkProjectPublication(
     return error(`Invalid role "${String(body.role)}". Must be one of ${PUBLICATION_ROLES.join('/')}.`, 400);
   }
 
-  const { block, projectId } = await resolveAndGuardProject(request, env, projectSlug);
+  // The two lookups are independent (project by slug + caller; publication by
+  // id) — one round trip, not two.
+  const [{ block, projectId }, pub] = await Promise.all([
+    resolveAndGuardProject(request, env, projectSlug),
+    env.DB.prepare('SELECT id, title FROM publications WHERE id = ? LIMIT 1')
+      .bind(publicationId)
+      .first<{ id: string; title: string }>(),
+  ]);
   if (block) return block;
-
-  const pub = await env.DB.prepare('SELECT id, title FROM publications WHERE id = ? LIMIT 1')
-    .bind(publicationId)
-    .first<{ id: string; title: string }>();
   if (!pub) return error(`Unknown publication "${publicationId}"`, 404);
 
   // Upsert: relinking with a different role updates the role rather than
@@ -161,7 +160,6 @@ export interface ProjectPublicationLinkRow {
 // PI/API-key — `canSeePb` is what /api/projects applies, and the row chip
 // never needs a paper for a project the caller cannot open.
 export async function handleGetAllProjectPublications(
-  request: Request,
   env: Env,
   canSeePb: boolean,
 ): Promise<Response> {
@@ -174,7 +172,6 @@ export async function handleGetAllProjectPublications(
       WHERE (? = 1 OR pr.category IS NULL OR pr.category != 'Peripheral Brain')
       ORDER BY ${ROLE_ORDER}, p.year DESC, p.id ASC`,
   ).bind(canSeePb ? 1 : 0).all<ProjectPublicationLinkRow>();
-  void request;
   const rows = result.results ?? [];
   return json({ data: rows, count: rows.length });
 }

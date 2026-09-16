@@ -94,6 +94,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 ### Project Operations
 - POST /api/projects/:id/comments, /api/projects/:id/updates
 - GET /api/projects/health (real 4-factor scoring algorithm)
+- **Published output (#129, schema-v110, 2026-09-16)** — `GET/POST /api/projects/:slug/publications` (`{ publication_id, role? }`, role primary/secondary/preprint, upsert on the pair), `POST /api/projects/:slug/publications/:pubId/delete` (idempotent), `GET /api/project-publications` (every link, for the Done-row chips; PB projects hidden from non-PI). Backed by `project_publications`; distinct from `/api/projects/:slug/papers` (`paper_project_links`, the reading list — its FK column is `project_slug` and holds the typed id).
 
 ### Meeting Operations
 - POST /api/meetings/:id/agenda, /api/meetings/:id/agenda/reorder, /api/meetings/:id/notes

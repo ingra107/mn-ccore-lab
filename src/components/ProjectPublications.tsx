@@ -22,24 +22,11 @@ import GhostSelect, { type GhostSelectOption } from './ui/GhostSelect'
 import { useProjectPublications, usePublications, type ProjectPublicationDisplay } from '../hooks/useApiData'
 import { useLinkProjectPublication, useUnlinkProjectPublication } from '../hooks/mutations/useProjectMutations'
 import { PUBLIC_PATHS } from '../constants/paths'
-import type { PublicationRole } from '../lib/api'
+import { PUBLICATION_ROLES, type PublicationRole } from '../../shared/publicationRoles'
 
-// Matches ProjectLinkLibrary's LABEL_STYLE (kept file-local there — a shared
-// export trips react-refresh/only-export-components).
-const LABEL_STYLE = {
-  fontSize: '10px',
-  fontWeight: 500,
-  color: 'var(--slate)',
-  opacity: 'var(--ink-label)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.06em',
-} as const
+import { LABEL_STYLE } from './ui/labelStyle'
 
-const ROLE_OPTIONS: GhostSelectOption[] = [
-  { value: 'primary', label: 'Primary' },
-  { value: 'secondary', label: 'Secondary' },
-  { value: 'preprint', label: 'Preprint' },
-]
+const ROLE_OPTIONS: GhostSelectOption[] = PUBLICATION_ROLES.map((r) => ({ value: r, label: r[0].toUpperCase() + r.slice(1) }))
 
 /** Same byline split PublicationCard.formatAuthors / resolveLabCoAuthors use:
  *  strip one trailing period, split on commas, trim, drop empties. */

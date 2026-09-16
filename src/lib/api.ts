@@ -1,4 +1,5 @@
 import type { TaskKind } from '../../shared/taskKinds'
+import type { PublicationRole } from '../../shared/publicationRoles'
 /**
  * Typed API client for MN-CCORE D1 backend.
  *
@@ -386,7 +387,7 @@ export function fetchTeam() {
 // A project's PUBLISHED OUTPUT — distinct from the Literature tab's
 // `paper_project_links` reading list. See api/routes/project-publications.ts
 // for the full contract.
-export type PublicationRole = 'primary' | 'secondary' | 'preprint'
+export type { PublicationRole } from '../../shared/publicationRoles'
 
 export interface ProjectPublicationRow extends PublicationRow {
   role: PublicationRole

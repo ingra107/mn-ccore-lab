@@ -53,8 +53,7 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
 
   // Same path the row's done box takes on Today (instant + undo toast +
   // sinks to the done bucket) — not a raw status mutation.
-  const markComplete = () => onToggleComplete(task)
-  const reopen = () => onToggleComplete(task)
+  const toggleDone = () => onToggleComplete(task)
 
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ padding: '10px 18px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
@@ -63,9 +62,9 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {isDone ? (
-            <Button variant="ghost" size="sm" onClick={reopen} style={{ padding: '4px 10px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}>↺ Reopen</Button>
+            <Button variant="ghost" size="sm" onClick={toggleDone} style={{ padding: '4px 10px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}>↺ Reopen</Button>
           ) : (
-            <Button variant="ghost-gold" size="sm" onClick={markComplete} style={{ padding: '4px 10px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}>✓ Mark complete</Button>
+            <Button variant="ghost-gold" size="sm" onClick={toggleDone} style={{ padding: '4px 10px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}>✓ Mark complete</Button>
           )}
           <button onClick={() => setFullEditorTask(task)} title="Open the full task editor" style={{ padding: '4px 10px', background: 'transparent', color: 'var(--teal)', border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>⊞ Full editor</button>
           {fullProject?.primary_folder && (

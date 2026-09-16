@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useProjectPickerList } from '../../../hooks/useProjectPickerList'
+import { TASK_KIND_OPTIONS } from '../../../../shared/taskKinds'
 import GhostSelect from '../../ui/GhostSelect'
 import {
   Circle, Flag, Check, Clock, Handshake,
@@ -536,11 +537,6 @@ const PRIORITY_INLINE_OPTIONS = [
   { value: 'urgent', label: 'Urgent' },
 ]
 
-const KIND_INLINE_OPTIONS = [
-  { value: 'task', label: 'Task' },
-  { value: 'milestone', label: 'Milestone' },
-]
-
 export function TaskInlineFieldRow({
   status,
   priority,
@@ -552,9 +548,8 @@ export function TaskInlineFieldRow({
 }: {
   status: string
   priority: string | null | undefined
-  /** schema-v109. Optional so pre-existing callers (none as of this add) keep
-   *  compiling; every current caller passes task.kind. */
-  kind?: string | null
+  /** schema-v109 — every caller passes task.kind. */
+  kind: string | null | undefined
   projectId: string | null | undefined
   dueDate: string | null | undefined
   onUpdate: (fields: Record<string, unknown>) => void
@@ -583,7 +578,7 @@ export function TaskInlineFieldRow({
         aria-label="Kind"
         value={kind || 'task'}
         onChange={(v) => onUpdate({ kind: v })}
-        options={KIND_INLINE_OPTIONS}
+        options={[...TASK_KIND_OPTIONS]}
       />
       <ProjectInlineGhostSelect
         value={projectId || ''}

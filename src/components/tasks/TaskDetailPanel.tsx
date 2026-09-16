@@ -1,3 +1,4 @@
+import { TASK_KIND_OPTIONS } from '../../../shared/taskKinds'
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { lazyRoute } from '../../lib/lazyRoute'
 import {
@@ -547,10 +548,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               aria-label="Kind"
               value={task.kind || 'task'}
               onChange={(v) => handleFieldUpdate('kind', v)}
-              options={[
-                { value: 'task', label: 'Task' },
-                { value: 'milestone', label: 'Milestone' },
-              ]}
+              options={[...TASK_KIND_OPTIONS]}
             />
             <ProjectInlineGhostSelect
               value={task.project_id || ''}

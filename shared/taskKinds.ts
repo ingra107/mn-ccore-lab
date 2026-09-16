@@ -14,6 +14,12 @@ export type TaskKind = (typeof TASK_KINDS)[number];
 
 export const DEFAULT_TASK_KIND: TaskKind = 'task';
 
+/** Picker options for the Kind select (TaskDetailPanel + the drawers' field row). */
+export const TASK_KIND_OPTIONS: ReadonlyArray<{ value: TaskKind; label: string }> = [
+  { value: 'task', label: 'Task' },
+  { value: 'milestone', label: 'Milestone' },
+];
+
 export function isTaskKind(v: unknown): v is TaskKind {
   return typeof v === 'string' && (TASK_KINDS as readonly string[]).includes(v);
 }

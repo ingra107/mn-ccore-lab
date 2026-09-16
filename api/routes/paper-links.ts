@@ -12,7 +12,8 @@ import { idempotentDelete } from '../lib/idempotent-delete';
 // `research_digest` rows — but only research_digest was joined, so a linked
 // lab paper came back title-less. Resolve the slug, join both, COALESCE.
 export async function handleGetPaperLinks(projectSlug: string, env: Env): Promise<Response> {
-  const canonical = await projectRefToCanonical(env, projectSlug);
+  // Slug → typed id resolved INSIDE the statement (one round trip; this route
+  // fires on every ProjectDetail mount).
   const result = await env.DB.prepare(
     `SELECT ppl.id, ppl.paper_id, ppl.project_slug, ppl.linked_by, ppl.note, ppl.link_type, ppl.created_at,
             COALESCE(rd.title, p.title) AS title,
@@ -25,9 +26,10 @@ export async function handleGetPaperLinks(projectSlug: string, env: Env): Promis
      FROM paper_project_links ppl
      LEFT JOIN research_digest rd ON rd.id = ppl.paper_id
      LEFT JOIN publications p ON p.id = ppl.paper_id
-     WHERE ppl.project_slug = ? OR ppl.project_slug = ?
+     WHERE ppl.project_slug = ?
+        OR ppl.project_slug = (SELECT id FROM projects WHERE id = ? OR slug = ? LIMIT 1)
      ORDER BY ppl.created_at DESC`
-  ).bind(canonical ?? projectSlug, projectSlug).all();
+  ).bind(projectSlug, projectSlug, projectSlug).all();
   return json({ data: result.results });
 }
 
@@ -100,21 +102,18 @@ export async function handlePapersByPublication(url: URL, env: Env): Promise<Res
   // typed id OR the slug, because paper_project_links has stored the typed id
   // since Z3.2 while this join only ever matched the slug (dead read).
   const result = await env.DB.prepare(
-    `SELECT link_id, link_type, note, linked_at, slug, title, status, category, stage, pi
-     FROM (
-       SELECT ppl.id AS link_id, ppl.link_type, ppl.note, ppl.created_at AS linked_at,
-              pr.slug, pr.title, pr.status, pr.category, pr.stage, pr.pi
-       FROM paper_project_links ppl
-       JOIN projects pr ON pr.id = ppl.project_slug OR pr.slug = ppl.project_slug
-       WHERE ppl.paper_id = ?
-       UNION ALL
-       SELECT pp.project_id || ':' || pp.publication_id AS link_id, pp.role AS link_type, NULL AS note,
-              pp.created_at AS linked_at,
-              pr.slug, pr.title, pr.status, pr.category, pr.stage, pr.pi
-       FROM project_publications pp
-       JOIN projects pr ON pr.id = pp.project_id
-       WHERE pp.publication_id = ?
-     )
+    `SELECT ppl.id AS link_id, ppl.link_type, ppl.note, ppl.created_at AS linked_at,
+            pr.slug, pr.title, pr.status, pr.category, pr.stage, pr.pi
+     FROM paper_project_links ppl
+     JOIN projects pr ON pr.id = ppl.project_slug OR pr.slug = ppl.project_slug
+     WHERE ppl.paper_id = ?
+     UNION ALL
+     SELECT pp.project_id || ':' || pp.publication_id AS link_id, pp.role AS link_type, NULL AS note,
+            pp.created_at AS linked_at,
+            pr.slug, pr.title, pr.status, pr.category, pr.stage, pr.pi
+     FROM project_publications pp
+     JOIN projects pr ON pr.id = pp.project_id
+     WHERE pp.publication_id = ?
      ORDER BY linked_at DESC`
   ).bind(publicationId, publicationId).all();
 

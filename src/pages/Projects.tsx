@@ -11,7 +11,7 @@ import { parseDbUtc } from '../lib/time'
 import { useCreateProject, useUpdateProjectFields } from '../hooks/useMutations'
 import InlineSelect from '../components/InlineSelect'
 import { useUndoToast } from '../components/UndoToast'
-import { PROJECT_STATUS_OPTIONS, normalizeProjectStatus, isProjectActive, isProjectDone } from '../lib/taskConstants'
+import { PROJECT_STATUS_OPTIONS, normalizeProjectStatus, isProjectActive, isProjectDone, isProjectFinished } from '../lib/taskConstants'
 import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
@@ -74,14 +74,10 @@ const STATUS_FILTERS = [
   { key: 'done', label: 'Done', title: 'Finished — status done or stage published' },
 ] as const
 
-function isFinished(p: Project): boolean {
-  return isProjectDone(p.status) || p.stage === 'published'
-}
-
 function statusScope(status: string, projects: Project[]): Project[] {
   if (status === 'all') return projects
   if (status === 'active') return projects.filter((p) => isProjectActive(p.status))
-  if (status === 'done') return projects.filter(isFinished)
+  if (status === 'done') return projects.filter(isProjectFinished)
   return projects.filter((p) => !isProjectDone(p.status))
 }
 
@@ -126,7 +122,7 @@ function PublishedChip({
   links: import('../hooks/useApiData').ProjectPublicationLink[] | undefined
   onOpen: () => void
 }) {
-  if (!isProjectDone(project.status) && project.stage !== 'published') return null
+  if (!isProjectFinished(project)) return null
 
   const primary = links?.[0]
   const journal = primary?.journal || project.journal
@@ -707,6 +703,14 @@ export default function Projects() {
                   let lastStage = ''
                   return filtered.map((project, index) => {
                     const projectHealth = healthBySlug.get(project.slug)
+                    // One element, rendered in both the desktop row and the mobile card.
+                    const publishedChip = (
+                      <PublishedChip
+                        project={project}
+                        links={publicationsBySlug?.get(project.slug)}
+                        onOpen={() => navigate(`${PATHS.project(project.slug)}?tab=literature`)}
+                      />
+                    )
                     // #91-class fix, now structural (Hub #361a): project.stage
                     // is already canonical at ingress, so a legacy-cased value
                     // ("Idea") can no longer diverge from its canonical form
@@ -892,11 +896,7 @@ export default function Projects() {
                                   </span>
                                 ) : null
                               })()}
-                              <PublishedChip
-                                project={project}
-                                links={publicationsBySlug?.get(project.slug)}
-                                onOpen={() => navigate(`${PATHS.project(project.slug)}?tab=literature`)}
-                              />
+                              {publishedChip}
                               {projectHealth && (
                                 <span
                                   data-tip={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
@@ -1072,11 +1072,7 @@ export default function Projects() {
                                   </span>
                                 )}
                               </span>
-                              <PublishedChip
-                                project={project}
-                                links={publicationsBySlug?.get(project.slug)}
-                                onOpen={() => navigate(`${PATHS.project(project.slug)}?tab=literature`)}
-                              />
+                              {publishedChip}
                               {projectHealth && (
                                 <span
                                   style={{

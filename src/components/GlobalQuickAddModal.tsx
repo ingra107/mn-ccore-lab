@@ -28,6 +28,7 @@ import { emailToSlug } from '../lib/emailSlug'
 import { isEditableTarget } from '../lib/editableTarget'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { Chip } from './ui/Chip'
 import { isHermesPrefix } from '../lib/hermesRouting'
 import { askHermesOnDay, dayActivityQueryKey, hermesOutcomeToast } from '../lib/askHermes'
 
@@ -274,22 +275,14 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                   aria-label="Toggle milestone"
                   className="tip"
                   data-tip="Create as a milestone instead of a task"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    background: isMilestoneDraft ? withAlpha(ACCENT_GOLD, 22) : 'transparent',
-                    color: isMilestoneDraft ? 'var(--gold)' : 'var(--slate)',
-                    border: `1px solid ${isMilestoneDraft ? 'var(--gold)' : 'var(--border-subtle)'}`,
-                    borderRadius: 'var(--radius-lg)',
-                    cursor: 'pointer',
-                    padding: '4px 10px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                  }}
+                  style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
                 >
-                  <Diamond {...ICON_PROPS} size={11} />
-                  Milestone
+                  {/* Chip owns the pill look (fill/border alpha, radius) so this
+                      toggle stays in step with every other pill in the app. */}
+                  <Chip pill bordered size="sm" filled={isMilestoneDraft} color={isMilestoneDraft ? 'var(--gold)' : 'var(--slate)'}>
+                    <Diamond {...ICON_PROPS} size={11} />
+                    Milestone
+                  </Chip>
                 </button>
                 <button
                   onClick={handleSubmit}
