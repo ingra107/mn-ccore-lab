@@ -1,12 +1,21 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { createProject, updateProject, addProjectComment, fetchApi } from '../../lib/api'
-import type { Project } from '../../data/types'
+import {
+  createProject,
+  updateProject,
+  addProjectComment,
+  fetchApi,
+  linkProjectPublication,
+  unlinkProjectPublication,
+  type PublicationRole,
+} from '../../lib/api'
+import type { Project, Publication } from '../../data/types'
 import type { Comment, ProjectDocumentRow } from '../useApiData'
 import { nowInstant } from '../../lib/time'
 import { useUndoToast } from '../../components/UndoToast'
 import { PATHS } from '../../constants/paths'
 import { normalizeStage } from '../../lib/stageNormalize'
+import { bestPublicationMatch } from '../../lib/titleMatch'
 
 // ── Project mutations ───────────────────────────────────────
 
@@ -50,9 +59,13 @@ export function useCreateProject() {
 // Writing", the row kept its old value, and nothing named the reason. Now a
 // rejected write surfaces the server's message (Rule 35 400s, mutation 409s,
 // auth 401s) so the next report carries the cause instead of "it didn't change".
+// #129 "Is this the paper?" — surfaced at most once per project per session,
+// so re-editing other fields on a just-published project doesn't re-nag.
+const suggestedPublicationMatchSlugs = new Set<string>()
+
 export function useUpdateProjectFields() {
   const queryClient = useQueryClient()
-  const { showError } = useUndoToast()
+  const { showError, showInfo } = useUndoToast()
 
   return useMutation({
     mutationFn: ({ slug, fields }: { slug: string; fields: Record<string, unknown> }) =>
@@ -97,6 +110,38 @@ export function useUpdateProjectFields() {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
       queryClient.invalidateQueries({ queryKey: ['stats'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+
+    onSuccess: (_resp, { slug, fields }) => {
+      const justPublished = fields.stage === 'published' || fields.status === 'done'
+      if (!justPublished || suggestedPublicationMatchSlugs.has(slug)) return
+
+      const existing = queryClient.getQueryData<{ id: string }[]>(['project-publications', slug])
+      if (existing && existing.length > 0) return
+
+      const projects = queryClient.getQueryData<Project[]>(['projects'])
+      const project = projects?.find((p) => p.slug === slug)
+      const title = project?.title
+      if (!title) return
+
+      const candidates = queryClient.getQueryData<Publication[]>(['publications', undefined])
+      if (!candidates || candidates.length === 0) return
+
+      const match = bestPublicationMatch(title, candidates)
+      if (!match) return
+
+      suggestedPublicationMatchSlugs.add(slug)
+      const { pub } = match
+      const detail = [pub.journal, pub.year].filter(Boolean).join(' ')
+      showInfo(`Is this the paper? ${pub.title}${detail ? ` (${detail})` : ''}`, {
+        label: 'Link',
+        onClick: () => {
+          linkProjectPublication(slug, { publication_id: pub.id, role: 'primary' }).then(() => {
+            queryClient.invalidateQueries({ queryKey: ['project-publications', slug] })
+            queryClient.invalidateQueries({ queryKey: ['project-publications', 'all'] })
+          })
+        },
+      })
     },
   })
 }
@@ -286,6 +331,48 @@ export function useUnlinkPaper() {
       fetch(`/api/paper-links/${id}/delete`, { method: 'POST' }).then((r) => r.json()),
     onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: ['project-papers', variables.project_slug] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// ── Project-Publication (published output) mutations, #129 ─
+// Distinct from useLinkPaper/useUnlinkPaper above (paper_project_links —
+// the Literature tab's reading list). This is the project_publications
+// junction — the project's own published output.
+
+export function useLinkProjectPublication(slug: string) {
+  const queryClient = useQueryClient()
+  const { showError } = useUndoToast()
+  return useMutation({
+    mutationFn: (input: { publication_id: string; role?: PublicationRole }) =>
+      linkProjectPublication(slug, input),
+    onError: (err) => {
+      const why = err instanceof Error && err.message ? err.message : 'request failed'
+      showError(`Could not link publication — ${why}`)
+    },
+    onSettled: (_data, _err, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['project-publications', slug] })
+      queryClient.invalidateQueries({ queryKey: ['project-publications', 'all'] })
+      queryClient.invalidateQueries({ queryKey: ['linked-projects', variables.publication_id] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useUnlinkProjectPublication(slug: string) {
+  const queryClient = useQueryClient()
+  const { showError } = useUndoToast()
+  return useMutation({
+    mutationFn: (publicationId: string) => unlinkProjectPublication(slug, publicationId),
+    onError: (err) => {
+      const why = err instanceof Error && err.message ? err.message : 'request failed'
+      showError(`Could not unlink publication — ${why}`)
+    },
+    onSettled: (_data, _err, publicationId) => {
+      queryClient.invalidateQueries({ queryKey: ['project-publications', slug] })
+      queryClient.invalidateQueries({ queryKey: ['project-publications', 'all'] })
+      queryClient.invalidateQueries({ queryKey: ['linked-projects', publicationId] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })

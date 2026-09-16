@@ -16,7 +16,7 @@ import { InputSafeKeyboardSensor, InputSafePointerSensor } from '../../lib/dndSe
 import DataPage from '../../components/DataPage'
 import Avatar from '../../components/Avatar'
 import CreateProjectModal from '../../components/CreateProjectModal'
-import { useProjects, useTasks, useManuscriptsAttention } from '../../hooks/useApiData'
+import { useProjects, useTasks, useManuscriptsAttention, useAllProjectPublications } from '../../hooks/useApiData'
 import { useCreateProject, useUpdateProjectFields } from '../../hooks/useMutations'
 import InlineSelect from '../../components/InlineSelect'
 import CategoryIcon from '../../components/CategoryIcon'
@@ -146,6 +146,7 @@ export default function ManuscriptsPage() {
 
   const { data: projects = [], isLoading } = useProjects()
   const { data: tasks = [] } = useTasks()
+  const { data: publicationsBySlug } = useAllProjectPublications()
   const { data: attentionData } = useManuscriptsAttention()
   // M-04: stalled threshold now flows from useLabPrefs (same source as
   // NeedsAttentionDashboard). Previously a hardcoded 30 in this file
@@ -749,11 +750,18 @@ export default function ManuscriptsPage() {
                 // (journal_name/published_year) never had a backing column,
                 // so this card rendered blank fields forever. created_at
                 // still backfills the year when publication_date is unset.
-                const journal = p.journal || ''
-                const year = p.publication_date
-                  ? p.publication_date.slice(0, 4)
-                  : (p.created_at ? parseDbUtc(p.created_at).getFullYear() : '')
-                const doi = p.doi
+                // #129: prefer the project's own linked publication (the
+                // PI-curated project_publications junction) over the static
+                // v71 journal/publication_date columns — those are blank on
+                // most rows.
+                const primaryPub = publicationsBySlug?.get(p.slug)?.[0]
+                const journal = primaryPub?.journal || p.journal || ''
+                const year = primaryPub?.year
+                  || (p.publication_date
+                    ? p.publication_date.slice(0, 4)
+                    : (p.created_at ? parseDbUtc(p.created_at).getFullYear() : ''))
+                const doi = primaryPub?.doi || p.doi
+                const pubTitle = primaryPub?.title
                 return (
                   <div
                     key={p.slug}
@@ -771,7 +779,11 @@ export default function ManuscriptsPage() {
                         borderBottom: '1px solid var(--border-subtle)',
                       }}
                     >
-                      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '11px', color: 'var(--ink-bright, #fff)', opacity: 0.85, letterSpacing: '0.04em' }}>
+                      <div
+                        className={pubTitle ? 'tip' : undefined}
+                        data-tip={pubTitle}
+                        style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '11px', color: 'var(--ink-bright, #fff)', opacity: 0.85, letterSpacing: '0.04em' }}
+                      >
                         {journal || 'Journal'} {year ? `· ${year}` : ''}
                       </div>
                       <h3

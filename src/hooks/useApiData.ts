@@ -44,6 +44,8 @@ import {
   fetchUpcomingConferences,
   fetchPBSessions,
   fetchPBSessionStats,
+  fetchProjectPublications,
+  fetchAllProjectPublications,
 } from '../lib/api'
 import type {
   PublicationRow,
@@ -64,6 +66,7 @@ import type {
   CascadeGraph,
   ImpactResult,
   PBSessionRow,
+  ProjectPublicationLink,
 } from '../lib/api'
 import { localDateKey } from '../lib/dateUtils'
 import { normalizeStage } from '../lib/stageNormalize'
@@ -71,7 +74,7 @@ import { normalizeStage } from '../lib/stageNormalize'
 // Re-export lib/api row types that consumers import via this module.
 // Narrow surface: only the types actually consumed by components. Other
 // lib/api types are imported directly from lib/api where needed.
-export type { DependencyRow, ExpertiseTag, MenteeMilestoneRow, PBSessionRow, RevisionRow, ReviewerCommentRow }
+export type { DependencyRow, ExpertiseTag, MenteeMilestoneRow, PBSessionRow, RevisionRow, ReviewerCommentRow, ProjectPublicationLink }
 
 import type { Publication, TeamMember, Project, Grant } from '../data/types'
 
@@ -249,6 +252,49 @@ export function useMemberFeaturedPublications(slug: string | undefined) {
     staleTime: STALE_TIME,
     retry: false,
     enabled: !!slug,
+  })
+}
+
+// ── Project publications junction (#129) ─────────────────────
+//
+// A project's PUBLISHED OUTPUT (project_publications junction) — distinct
+// from `useProjectPapers` (the Literature tab's reading-list join table).
+export type ProjectPublicationDisplay = Publication & { role: 'primary' | 'secondary' | 'preprint'; linked_at: string }
+
+export function useProjectPublications(slug: string | undefined) {
+  return useQuery({
+    queryKey: ['project-publications', slug],
+    queryFn: async (): Promise<ProjectPublicationDisplay[]> => {
+      const res = await fetchProjectPublications(slug!)
+      return res.data.map((row) => ({ ...rowToPublication(row), role: row.role, linked_at: row.linked_at }))
+    },
+    staleTime: STALE_TIME,
+    retry: false,
+    enabled: !!slug,
+  })
+}
+
+// Every project→publication link, for the Projects/Manuscripts row chips —
+// one fetch instead of N per-project requests.
+export function useAllProjectPublications() {
+  return useQuery({
+    queryKey: ['project-publications', 'all'],
+    queryFn: async () => {
+      const res = await fetchAllProjectPublications()
+      return res.data
+    },
+    select: (rows): Map<string, ProjectPublicationLink[]> => {
+      const map = new Map<string, ProjectPublicationLink[]>()
+      for (const row of rows) {
+        if (!row.project_slug) continue
+        const list = map.get(row.project_slug) ?? []
+        list.push(row)
+        map.set(row.project_slug, list)
+      }
+      return map
+    },
+    staleTime: STALE_TIME,
+    retry: false,
   })
 }
 

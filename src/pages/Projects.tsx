@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid, Star } from 'lucide-react'
 import { stageIndex, toApiStage, stageLabel } from '../lib/stageNormalize'
@@ -27,7 +27,7 @@ import { mechanismFamily, MECHANISM_ACCENT } from '../lib/grantMechanism'
 import { Chip } from '../components/ui/Chip'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
-import { useAllProjectLinks } from '../hooks/useApiData'
+import { useAllProjectLinks, useAllProjectPublications } from '../hooks/useApiData'
 import type { StoredLink } from '../hooks/useApiData'
 import { iconForType } from '../lib/linkIcon'
 import { classifyUrl } from '../lib/urlClassify'
@@ -104,6 +104,39 @@ const grantTypeColor = (type: string | null | undefined): string =>
 // so leaving a literal "R01: " in the title text would stutter next to it.
 function cleanProjectTitle(project: Project): string {
   return stripGrantTypePrefix(stripConsortiumPrefix(project.title).clean, project.type)
+}
+
+// #129: a Done/Published project's own paper — the project_publications
+// junction (primary link, if any) wins over the static v71 journal/
+// publication_date columns, since the junction is what a PI actually curated.
+function PublishedChip({
+  project,
+  links,
+  onOpen,
+}: {
+  project: Project
+  links: import('../hooks/useApiData').ProjectPublicationLink[] | undefined
+  onOpen: () => void
+}) {
+  if (!isProjectDone(project.status) && project.stage !== 'published') return null
+
+  const primary = links?.[0]
+  const journal = primary?.journal || project.journal
+  const year = primary?.year || (project.publication_date ? project.publication_date.slice(0, 4) : undefined)
+  if (!journal && !year) return null
+
+  return (
+    <span
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpen() }}
+      style={{ cursor: 'pointer', flexShrink: 0 }}
+      className="tip"
+      data-tip={primary?.title || cleanProjectTitle(project)}
+    >
+      <Chip color="var(--teal)" bordered>
+        {journal || 'Published'}{year ? ` · ${year}` : ''}
+      </Chip>
+    </span>
+  )
 }
 
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
@@ -261,6 +294,7 @@ function projectRecencyMs(p: Project): number {
 }
 
 export default function Projects() {
+  const navigate = useNavigate()
   usePageMeta(
     'Research Pipeline | MN-CCORE',
     'Track MN-CCORE research projects from idea to publication across MN-CCORE, CLIF, and Peripheral Brain buckets.'
@@ -277,6 +311,7 @@ export default function Projects() {
   const { data: dependencies = [] } = useDependencies()
   const { data: healthData } = useProjectHealth()
   const { data: allProjectLinks = {} } = useAllProjectLinks()
+  const { data: publicationsBySlug } = useAllProjectPublications()
   // P2-9: shared staleness threshold (days-since-meaningful-movement). The
   // "Needs Attention" filter's STALENESS input reconciles to this single basis
   // (health score may still weight other inputs, but staleness is one truth).
@@ -849,6 +884,11 @@ export default function Projects() {
                                   </span>
                                 ) : null
                               })()}
+                              <PublishedChip
+                                project={project}
+                                links={publicationsBySlug?.get(project.slug)}
+                                onOpen={() => navigate(`${PATHS.project(project.slug)}?tab=literature`)}
+                              />
                               {projectHealth && (
                                 <span
                                   data-tip={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
@@ -1024,6 +1064,11 @@ export default function Projects() {
                                   </span>
                                 )}
                               </span>
+                              <PublishedChip
+                                project={project}
+                                links={publicationsBySlug?.get(project.slug)}
+                                onOpen={() => navigate(`${PATHS.project(project.slug)}?tab=literature`)}
+                              />
                               {projectHealth && (
                                 <span
                                   style={{

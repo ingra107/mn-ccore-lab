@@ -394,6 +394,14 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; label: string 
   nate: { bg: 'var(--gold)', text: '#0f1923', label: 'Mesfin' },
 }
 
+// #124: `link_type` on this route can be a `paper_project_links` value
+// (input/output/related, rendered as-is) OR — since #129 — a
+// `project_publications` junction role (primary/secondary/preprint).
+// Only `primary` gets a friendlier label; secondary/preprint read fine as-is.
+const LINK_TYPE_LABEL: Record<string, string> = {
+  primary: 'Published from this project',
+}
+
 function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
   const { data: linkedProjects = [], isError, refetch } = useLinkedProjects(publicationId)
 
@@ -484,7 +492,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
                       color: 'var(--teal)',
                     }}
                   >
-                    {project.link_type}
+                    {LINK_TYPE_LABEL[project.link_type] ?? project.link_type}
                   </span>
                 )}
                 {project.stage && (

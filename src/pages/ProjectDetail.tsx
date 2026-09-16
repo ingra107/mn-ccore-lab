@@ -27,7 +27,7 @@ import {
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMarkSeen } from '../hooks/useEntitySeen'
-import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments, useProjectPapers, useProjectLinks } from '../hooks/useApiData'
+import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments, useProjectPapers, useProjectLinks, useProjectPublications } from '../hooks/useApiData'
 import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import BulkActionToolbar from '../components/tasks/BulkActionToolbar'
@@ -51,6 +51,7 @@ import type { TaskRow } from '../lib/api'
 import RevisionTracker from '../components/RevisionTracker'
 import KeyLinksEditor from '../components/KeyLinksEditor'
 import ProjectLinkLibrary from '../components/ProjectLinkLibrary'
+import ProjectPublications from '../components/ProjectPublications'
 import WorkOnActions from '../components/WorkOnActions'
 import LinkifiedText from '../components/LinkifiedText'
 import FileUpload from '../components/FileUpload'
@@ -241,6 +242,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Tab counts (PD-12)
   const { data: papers = [] } = useProjectPapers(project.slug)
+  const { data: publications = [] } = useProjectPublications(project.slug)
   const { data: filesData = [] } = useQuery<Array<unknown>>({
     queryKey: ['attachments', 'project', project.slug],
     queryFn: async () => {
@@ -1041,7 +1043,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             { id: 'activity', label: `Activity${activityCount ? ` (${activityCount})` : ''}` },
             { id: 'files', label: `Files${filesData.length ? ` (${filesData.length})` : ''}` },
             { id: 'revisions', label: `Revisions${revisions.length ? ` (${revisions.length})` : ''}` },
-            { id: 'literature', label: `Literature${papers.length ? ` (${papers.length})` : ''}` },
+            { id: 'literature', label: `Literature & Publications${(papers.length + publications.length) ? ` (${papers.length + publications.length})` : ''}` },
           ]
           return tabs.map((tab, i) => (
             <button
@@ -1221,6 +1223,14 @@ function ProjectDetailInner({ project }: InnerProps) {
                 }}
               />
             </div>
+
+            {/* Published output — the project's own papers (project_publications) */}
+            <ProjectPublications
+              projectSlug={project.slug}
+              projectTitle={project.title}
+              isPi={isPi}
+              variant="card"
+            />
 
             {/* Documents & Links — the full links table, dated, archive collapsed */}
             <ProjectLinkLibrary links={storedLinks} isLoading={linksLoading} />
@@ -2127,7 +2137,7 @@ function ProjectDetailInner({ project }: InnerProps) {
       {/* ── LITERATURE TAB ── */}
       {activeTab === 'literature' && (
         <div role="tabpanel" id="projectdetail-tabpanel-literature" aria-labelledby="projectdetail-tab-literature">
-          <ProjectLiterature projectSlug={project.slug} isPi={isPi} />
+          <ProjectLiterature projectSlug={project.slug} projectTitle={project.title} isPi={isPi} />
         </div>
       )}
 

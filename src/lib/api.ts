@@ -381,6 +381,53 @@ export function fetchTeam() {
   return fetchApi<TeamMemberRow[]>('/api/team')
 }
 
+// ── Project publications junction (#129, schema-v49/v110) ────
+//
+// A project's PUBLISHED OUTPUT — distinct from the Literature tab's
+// `paper_project_links` reading list. See api/routes/project-publications.ts
+// for the full contract.
+export type PublicationRole = 'primary' | 'secondary' | 'preprint'
+
+export interface ProjectPublicationRow extends PublicationRow {
+  role: PublicationRole
+  linked_at: string
+}
+
+export interface ProjectPublicationLink {
+  project_id: string
+  project_slug: string | null
+  publication_id: string
+  role: PublicationRole
+  title: string
+  journal: string | null
+  year: number
+  doi: string | null
+  pubmed: string | null
+  linked_at: string
+}
+
+export function fetchProjectPublications(slug: string) {
+  return fetchApi<ProjectPublicationRow[]>(`/api/projects/${encodeURIComponent(slug)}/publications`)
+}
+
+export function linkProjectPublication(slug: string, input: { publication_id: string; role?: PublicationRole }) {
+  return fetchApi<{ project_id: string; publication_id: string; role: PublicationRole }>(
+    `/api/projects/${encodeURIComponent(slug)}/publications`,
+    { method: 'POST', body: JSON.stringify(input) },
+  )
+}
+
+export function unlinkProjectPublication(slug: string, publicationId: string) {
+  return fetchApi<{ project_id: string; publication_id: string; deleted: boolean; idempotent: boolean }>(
+    `/api/projects/${encodeURIComponent(slug)}/publications/${encodeURIComponent(publicationId)}/delete`,
+    { method: 'POST' },
+  )
+}
+
+export function fetchAllProjectPublications() {
+  return fetchApi<ProjectPublicationLink[]>('/api/project-publications')
+}
+
 // ── Member-curated featured publications (#906, schema-v106) ─
 //
 // The per-member Top-10 the member picks themselves, ordered by the member.

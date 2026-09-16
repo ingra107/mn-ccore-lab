@@ -7,20 +7,26 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import { formatPublicationDate } from '../../lib/dateUtils'
 import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../../lib/taskGrouping'
 import { Button } from '../../components/ui/Button'
+import ProjectPublications from '../../components/ProjectPublications'
 
 interface ProjectLiteratureProps {
   projectSlug: string
+  projectTitle: string
   isPi: boolean
 }
 
-export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratureProps) {
+export default function ProjectLiterature({ projectSlug, projectTitle, isPi }: ProjectLiteratureProps) {
   const { data: papers = [] } = useProjectPapers(projectSlug)
   const unlinkPaper = useUnlinkPaper()
   const linkPaper = useLinkPaper()
   const [showLinkModal, setShowLinkModal] = useState(false)
 
   return (
-    <div style={{ marginBottom: '2.5rem' }}>
+    <>
+      <div style={{ marginBottom: '2.5rem' }}>
+        <ProjectPublications projectSlug={projectSlug} projectTitle={projectTitle} isPi={isPi} variant="list" />
+      </div>
+      <div style={{ marginBottom: '2.5rem' }}>
       <div className="flex items-center gap-2 mb-3">
         <BookOpen {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
         <h2
@@ -188,7 +194,8 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
           onClose={() => setShowLinkModal(false)}
         />
       )}
-    </div>
+      </div>
+    </>
   )
 }
 
