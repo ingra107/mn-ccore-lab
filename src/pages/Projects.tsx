@@ -64,16 +64,24 @@ const CATEGORY_FILTERS = [
 // (active, blocked, waiting_external). #130 (Nick 2026-09-16) added 'active'
 // between it and 'all': status='active' only, the same isProjectActive()
 // predicate the health widgets use, so waiting and blocked rows drop out.
-// 'all' is the escape hatch.
+// 'all' is the escape hatch. 'done' (Nick, same day) = finished work: status
+// done OR stage published, so a published project still marked active shows
+// up where he goes looking for its paper.
 const STATUS_FILTERS = [
   { key: 'open', label: 'Open', title: 'Active, blocked and waiting — everything not finished' },
   { key: 'active', label: 'Active', title: 'Active only — no waiting or blocked' },
   { key: 'all', label: 'All', title: 'Every project, including finished ones' },
+  { key: 'done', label: 'Done', title: 'Finished — status done or stage published' },
 ] as const
+
+function isFinished(p: Project): boolean {
+  return isProjectDone(p.status) || p.stage === 'published'
+}
 
 function statusScope(status: string, projects: Project[]): Project[] {
   if (status === 'all') return projects
   if (status === 'active') return projects.filter((p) => isProjectActive(p.status))
+  if (status === 'done') return projects.filter(isFinished)
   return projects.filter((p) => !isProjectDone(p.status))
 }
 
@@ -532,7 +540,7 @@ export default function Projects() {
   // so the difference is already 0 there. Under 'active' the hidden rows are
   // waiting/blocked as well as done, so the label says "hidden", not "done".
   const hiddenCount = projects.length - statusScoped.length
-  const hiddenLabel = activeStatus === 'active' ? 'hidden' : 'done hidden'
+  const hiddenLabel = activeStatus === 'open' ? 'done hidden' : 'hidden'
 
 
   return (
