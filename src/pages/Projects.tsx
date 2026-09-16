@@ -60,13 +60,22 @@ const CATEGORY_FILTERS = [
 ] as const
 
 // #123 (Nick 2026-09-08): the page had no way to hide finished projects — 11 of
-// 92 rows in prod were status='done'. "Active" is every OPEN project (active,
-// blocked, waiting_external), NOT isProjectActive() which is the narrower
-// "in motion" predicate the health widgets use. 'all' is the escape hatch.
+// 92 rows in prod were status='done'. 'open' is every project not finished
+// (active, blocked, waiting_external). #130 (Nick 2026-09-16) added 'active'
+// between it and 'all': status='active' only, the same isProjectActive()
+// predicate the health widgets use, so waiting and blocked rows drop out.
+// 'all' is the escape hatch.
 const STATUS_FILTERS = [
-  { key: 'open', label: 'Active' },
-  { key: 'all', label: 'All' },
+  { key: 'open', label: 'Open', title: 'Active, blocked and waiting — everything not finished' },
+  { key: 'active', label: 'Active', title: 'Active only — no waiting or blocked' },
+  { key: 'all', label: 'All', title: 'Every project, including finished ones' },
 ] as const
+
+function statusScope(status: string, projects: Project[]): Project[] {
+  if (status === 'all') return projects
+  if (status === 'active') return projects.filter((p) => isProjectActive(p.status))
+  return projects.filter((p) => !isProjectDone(p.status))
+}
 
 const CATEGORY_DOT: Record<string, string> = {
   // Canonical 3-bucket
@@ -368,10 +377,7 @@ export default function Projects() {
   // category branches, the summary counts, the pipeline columns — sees one
   // consistent population. A count over `projects` while the list renders
   // `filtered` is the badge-dishonesty class (Rule 73).
-  const statusScoped = useMemo(
-    () => (activeStatus === 'all' ? projects : projects.filter((p) => !isProjectDone(p.status))),
-    [projects, activeStatus],
-  )
+  const statusScoped = useMemo(() => statusScope(activeStatus, projects), [projects, activeStatus])
 
   const filtered = useMemo(() => {
     let base: typeof statusScoped
@@ -488,8 +494,10 @@ export default function Projects() {
   const clifCount = statusScoped.filter((p) => p.category === 'CLIF').length
   const pbCount = statusScoped.filter((p) => p.category === 'Peripheral Brain').length
   // No guard on activeStatus: the 'all' branch makes statusScoped === projects,
-  // so the difference is already 0 there.
-  const doneHidden = projects.length - statusScoped.length
+  // so the difference is already 0 there. Under 'active' the hidden rows are
+  // waiting/blocked as well as done, so the label says "hidden", not "done".
+  const hiddenCount = projects.length - statusScoped.length
+  const hiddenLabel = activeStatus === 'active' ? 'hidden' : 'done hidden'
 
 
   return (
@@ -551,7 +559,7 @@ export default function Projects() {
               label={f.label}
               active={activeStatus === f.key}
               onClick={() => setActiveStatus(f.key)}
-              title={f.key === 'open' ? 'Active, blocked and waiting — everything not finished' : 'Every project, including finished ones'}
+              title={f.title}
             />
           ))}
         </>
@@ -565,7 +573,7 @@ export default function Projects() {
               whiteSpace: 'nowrap',
             }}
           >
-              {totalCount} projects &middot; {mncoreCount} MN-CCORE &middot; {clifCount} CLIF{pbCount > 0 ? ` \u00b7 ${pbCount} PB` : ''}{doneHidden > 0 ? ` · ${doneHidden} done hidden` : ''}
+              {totalCount} projects &middot; {mncoreCount} MN-CCORE &middot; {clifCount} CLIF{pbCount > 0 ? ` \u00b7 ${pbCount} PB` : ''}{hiddenCount > 0 ? ` · ${hiddenCount} ${hiddenLabel}` : ''}
           </span>
           {viewMode === 'pipeline' && (
             <button
