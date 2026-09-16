@@ -143,11 +143,16 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   POST /api/meetings/:id/activity — say something on a meeting (@hermes
     //        included; the ask carries the meeting's agenda, notes, decisions,
     //        tasks and the path to the archived transcript).
+    // 271 as of 2026-09-16 — a project's published output (+4, #129):
+    //   GET  /api/projects/:slug/publications — the papers a project produced.
+    //   POST /api/projects/:slug/publications — link { publication_id, role }.
+    //   POST /api/projects/:slug/publications/:pubId/delete — unlink.
+    //   GET  /api/project-publications — every link, for the row chips.
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(267)
+    expect(ROUTE_REGISTRY).toHaveLength(271)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

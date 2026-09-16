@@ -2,16 +2,32 @@ import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, projectRefToCanonical } from '../helpers';
 import { idempotentDelete } from '../lib/idempotent-delete';
 
-// GET /api/projects/:slug/papers — papers linked to a project, joined with research_digest
+// GET /api/projects/:slug/papers — papers linked to a project (the reading list).
+//
+// #129 (2026-09-16), two dead reads fixed at once. handleLinkPaper has stored
+// the TYPED project id in `project_slug` since Z3.2, but this bound the raw
+// URL slug, so every link ever made through the Literature tab's modal
+// matched nothing (measured: 2 rows in prod, 0 rendered). And `paper_id` is
+// polymorphic — the modal links `publications` rows as readily as
+// `research_digest` rows — but only research_digest was joined, so a linked
+// lab paper came back title-less. Resolve the slug, join both, COALESCE.
 export async function handleGetPaperLinks(projectSlug: string, env: Env): Promise<Response> {
+  const canonical = await projectRefToCanonical(env, projectSlug);
   const result = await env.DB.prepare(
-    `SELECT ppl.id, ppl.paper_id, ppl.project_slug, ppl.linked_by, ppl.note, ppl.created_at,
-            rd.title, rd.journal, rd.pub_date, rd.doi, rd.authors, rd.relevance_score
+    `SELECT ppl.id, ppl.paper_id, ppl.project_slug, ppl.linked_by, ppl.note, ppl.link_type, ppl.created_at,
+            COALESCE(rd.title, p.title) AS title,
+            COALESCE(rd.journal, p.journal) AS journal,
+            COALESCE(rd.pub_date, CAST(p.year AS TEXT)) AS pub_date,
+            COALESCE(rd.doi, p.doi) AS doi,
+            COALESCE(rd.authors, p.authors) AS authors,
+            rd.relevance_score,
+            CASE WHEN p.id IS NOT NULL THEN 'publication' ELSE 'digest' END AS paper_source
      FROM paper_project_links ppl
      LEFT JOIN research_digest rd ON rd.id = ppl.paper_id
-     WHERE ppl.project_slug = ?
+     LEFT JOIN publications p ON p.id = ppl.paper_id
+     WHERE ppl.project_slug = ? OR ppl.project_slug = ?
      ORDER BY ppl.created_at DESC`
-  ).bind(projectSlug).all();
+  ).bind(canonical ?? projectSlug, projectSlug).all();
   return json({ data: result.results });
 }
 
@@ -77,14 +93,28 @@ export async function handlePapersByPublication(url: URL, env: Env): Promise<Res
   const publicationId = url.searchParams.get('publication_id');
   if (!publicationId) return error('publication_id is required', 400);
 
+  // #129: UNION the project's published-output junction (project_publications,
+  // role rides as link_type) with the reading-list links; join projects on the
+  // typed id OR the slug, because paper_project_links has stored the typed id
+  // since Z3.2 while this join only ever matched the slug (dead read).
   const result = await env.DB.prepare(
-    `SELECT ppl.id as link_id, ppl.link_type, ppl.note, ppl.created_at as linked_at,
-            pr.slug, pr.title, pr.status, pr.category, pr.stage, pr.pi
-     FROM paper_project_links ppl
-     JOIN projects pr ON pr.slug = ppl.project_slug
-     WHERE ppl.paper_id = ?
-     ORDER BY ppl.created_at DESC`
-  ).bind(publicationId).all();
+    `SELECT link_id, link_type, note, linked_at, slug, title, status, category, stage, pi
+     FROM (
+       SELECT ppl.id AS link_id, ppl.link_type, ppl.note, ppl.created_at AS linked_at,
+              pr.slug, pr.title, pr.status, pr.category, pr.stage, pr.pi
+       FROM paper_project_links ppl
+       JOIN projects pr ON pr.id = ppl.project_slug OR pr.slug = ppl.project_slug
+       WHERE ppl.paper_id = ?
+       UNION ALL
+       SELECT pp.project_id || ':' || pp.publication_id AS link_id, pp.role AS link_type, NULL AS note,
+              pp.created_at AS linked_at,
+              pr.slug, pr.title, pr.status, pr.category, pr.stage, pr.pi
+       FROM project_publications pp
+       JOIN projects pr ON pr.id = pp.project_id
+       WHERE pp.publication_id = ?
+     )
+     ORDER BY linked_at DESC`
+  ).bind(publicationId, publicationId).all();
 
   return json({ data: result.results });
 }

@@ -42,6 +42,7 @@ import { handleGetMeetingActivity, handlePostMeetingActivity } from './routes/me
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper, handlePapersByProject, handlePapersByPublication } from './routes/paper-links';
+import { handleGetProjectPublications, handleLinkProjectPublication, handleUnlinkProjectPublication, handleGetAllProjectPublications } from './routes/project-publications';
 import { handleInsightConnections, handleInsightSuggestions, handleInsightsDashboard } from './routes/insights';
 import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
 import { handleTrajectory } from './routes/trajectory';
@@ -786,6 +787,41 @@ defineRoute({
   entity: 'projects',
   visibility: 'na',
   handler: (c) => handleGetPaperLinks(c.req.param('slug'), E(c)),
+});
+// #129 (2026-09-16): a project's PUBLISHED OUTPUT — the project_publications
+// junction (role primary/secondary/preprint). Distinct from /papers, which is
+// the reading list. GET /api/project-publications feeds the list-page chips.
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:slug/publications',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleGetProjectPublications(c.req.param('slug'), R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/projects/:slug/publications',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleLinkProjectPublication(c.req.param('slug'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/projects/:slug/publications/:pubId/delete',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleUnlinkProjectPublication(c.req.param('slug'), c.req.param('pubId'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/project-publications',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleGetAllProjectPublications(R(c), E(c), CSP(c)),
 });
 defineRoute({
   method: 'GET',
