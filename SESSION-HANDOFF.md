@@ -1,3 +1,22 @@
+# ▶▶ BUG SWEEP #128–#132 — #128/#130 SHIPPED + DEPLOYED, #129/#131/#132 ARE DESIGN ASKS AWAITING NICK (2026-09-16, work laptop). Live = `7f8162cf` (probe PASS). Bug queue: 3 open (#129, #131, #132 — feature requests with proposals posted on GitHub, not defects). No schema/route change. Frontend only.
+
+**2 Hub commits.** `880692ed` (#128) · `7f8162cf` (#130). Pushed.
+
+## #128 was not reproducible, so the fix makes the class legible
+
+Nick clicked Writing, got the undo toast, the row stayed at Idea. `activity_log` + `processed_mutations` show the pi (13:19:11) and status (13:19:17) writes and NO stage write, so the request 4xx'd or never left the browser; the same write succeeds from the API key and from his Chrome today. The three copies of the optimistic project writer (ProjectDetail / Projects / Manuscripts) all rolled back in silence. Now ONE hook, `useUpdateProjectFields`, and its `onError` shows the server's message ("Could not save stage — Invalid stage …"). Browser-mode test `src/__tests__/project-update-error-surfaces.test.tsx`. If it recurs, the toast carries the reason — read it before anything else.
+
+## #130: status pills are Open | Active | All
+
+Open = not done (the old "Active"), Active = `isProjectActive()` only, All unchanged. `?status=active`. Count label reads "n hidden" under Active because waiting/blocked hide too.
+
+## Waiting on Nick (proposals on the issues)
+
+- **#131/#132 milestones on Today** — recommended `tasks.kind='milestone'` (shared-field change: PB enums + registry + brain.db mig + Hub v109 + TaskRow `variant`), NOT the empty `milestones` table. Needs his call on model + where rows sit (interleaved by group vs a Deep Work strip) + assignee.
+- **#129 publications ↔ projects** — `project_publications` junction already exists (0 rows, no routes); `publications` has 703 rows and already holds the Saki readmissions paper. Proposal: 3 routes + Publications section on ProjectDetail + Done-row chip + title-match suggestion on publish. He said brainstorm first, so nothing built.
+
+---
+
 # ▶▶ BUG SWEEP #126/#127 + ASSET-CACHE POISONING — SHIPPED + DEPLOYED (2026-09-14, work laptop). Live = `b6e5037a` (probe PASS; `b6e5037a` = session-close simplify: CollapsibleBody observer keyed on the body string, not the element). Bug queue EMPTY; #126/#127 closed. No schema/route change. Gates: 178 src (+7) · 275 lib · api untouched.
 
 **4 Hub commits** `e36600e7` (#127) · `6899af59` (#126) · `66ebd287` (asset cache) · `b6e5037a` (simplify + docs). **1 PB commit** ("Research digest: keep the journal and the real publication date", pushed). **Prod D1 write:** `scripts/backfill-127-digest-metadata.sql` — 1682 `research_digest` rows re-pointed at PubMed's real journal + date (rollback file alongside).

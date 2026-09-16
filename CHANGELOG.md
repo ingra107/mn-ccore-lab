@@ -3,6 +3,16 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-09-16 — bug sweep #128–#132
+
+Two fixed and deployed (`880692ed`, `7f8162cf`); three are feature requests with design proposals posted on GitHub and left open in the queue. Frontend only, no schema or route change.
+
+**#128 — stage change showed the toast and did not stick.** Not reproducible: the activity log and `processed_mutations` show the pi and status writes seconds earlier and no stage write at all, and the same write succeeds today from the browser and the API. What was certain is that a rejected project write was silent in all three copies of the optimistic writer. They are now one hook, `useUpdateProjectFields`, whose `onError` restores the cache and shows the server's reason. Browser-mode test covers the 400 and accepted paths.
+
+**#130 — Active that hides waiting and blocked.** Status pills are Open (not done), Active (`isProjectActive()`), All. The hidden count says "hidden" under Active since waiting and blocked rows hide there too.
+
+**#129, #131, #132 — design asks.** Milestones on Today (proposal: `tasks.kind='milestone'`, a TaskRow variant, shared-field process) and published papers linked to projects (proposal: wire the existing empty `project_publications` junction). Both need Nick's data-model call before a build.
+
 ## 2026-09-08 — bug sweep #121–#124, and Hermes gets Peripheral Brain and Gmail
 
 Four open bugs, all fixed. Hub: +2 routes (267, was 257), no schema change. Five Hub commits (`07fac210`, `d4fb084f`, `b19af600`, `15f4a2ac`, `1334d7a7`) and four in Peripheral Brain. Deployed, probe PASS. GitHub #121–#124 closed; #125 opened for the shape work the simplify pass turned up.
