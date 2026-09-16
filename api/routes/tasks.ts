@@ -12,6 +12,7 @@ import { TASK_SELECT_COLS, TASK_SELECT_COLS_TYPED } from '../lib/task-cols';
 import { resolveMeetingRef, type MeetingLike } from '../lib/meeting-ref';
 import { postActivityEntry, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
+import { DEFAULT_TASK_KIND, TASK_KINDS, isTaskKind, type TaskKind } from '../../shared/taskKinds';
 
 // ── Fix 3: guardTaskProject ────────────────────────────────────────────────────
 //
@@ -298,7 +299,11 @@ const VALID_GROUP_OVERRIDES = new Set(['deep', 'priorities', 'quick', 'pb', 'etl
 // NOT via the enum-domain trigger. NULL/'' clears the slot. Mirrors group_override's
 // posture (a Hub write-boundary guard, 400 on junk).
 const VALID_PLAN_SLOT_RE = /^(right_now|strip|between-\d+)$/;
-const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee']);
+// kind (schema-v109, 2026-09-16): 'task' | 'milestone', NOT NULL DEFAULT 'task'.
+// Vocabulary lives in shared/taskKinds.ts (UI imports the same list). Required
+// on update (a null/'' clear is a 400, not a reset to the default) so a
+// milestone can never silently become a task through an empty patch.
+const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee', 'kind']);
 
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   // T1.1: PB-visibility gate. Non-PI callers cannot mutate tasks attached
@@ -325,6 +330,15 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     if (v === '' || v === undefined) body.group_override = null;
     else if (v !== null && (typeof v !== 'string' || !VALID_GROUP_OVERRIDES.has(v))) {
       return error(`Invalid group_override "${v}". Must be one of deep/priorities/quick/pb/etl or null.`, 400);
+    }
+  }
+  // Validate kind (schema-v109). NOT NULL on both stores, so there is no clear
+  // branch: anything but a listed kind is a 400, and the optimistic Kind select
+  // surfaces the reason instead of silently reverting (Rule 35's class).
+  if ('kind' in body && body.kind !== undefined) {
+    const v = body.kind;
+    if (!isTaskKind(v)) {
+      return error(`Invalid kind "${v}". Must be one of ${TASK_KINDS.join('/')}.`, 400);
     }
   }
   // Validate plan_slot (Workstream B). '' / undefined = clear; null = clear;
@@ -463,8 +477,14 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
     // Meeting Accept/Decline (schema-v90, 2026-06-25): PB sets 'pending' on
     // create; Accept/Decline buttons patch to 'accepted'/'declined' later.
     approval_status?: 'pending' | 'accepted' | 'declined' | null;
+    // schema-v109 (2026-09-16): 'task' (default) | 'milestone'.
+    kind?: TaskKind | null;
   };
   if (!body.description || !body.assignee) return error('description and assignee required', 400);
+  if (body.kind != null && !isTaskKind(body.kind)) {
+    return error(`Invalid kind "${body.kind}". Must be one of ${TASK_KINDS.join('/')}.`, 400);
+  }
+  const kind: TaskKind = body.kind ?? DEFAULT_TASK_KIND;
 
   // Validate assignee exists in team_members — reject bogus slugs before
   // they pollute the DB. Deep-audit Suite 8 found 'not_a_real_person_xyz'
@@ -533,6 +553,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
       // Meeting Accept/Decline (schema-v90, 2026-06-25): pass through from
       // request body so PB-created meeting_approval tasks land with 'pending'.
       approval_status: body.approval_status ?? null,
+      kind,
       // PB §2D (2026-06-10): every source_thread_id-bearing task is minted
       // HERE (Apps Script "Email Tasks") — derive the Gmail-thread link at
       // create so PB's backfill_email_links.py + invariant I40 can retire.

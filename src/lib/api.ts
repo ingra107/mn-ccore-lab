@@ -1,3 +1,4 @@
+import type { TaskKind } from '../../shared/taskKinds'
 /**
  * Typed API client for MN-CCORE D1 backend.
  *
@@ -211,6 +212,11 @@ export interface TaskRow {
    *  Values: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null. NULL = auto-classify
    *  via getGroupForTask. Syncs to brain.db so TODAY.md generation honors it. */
   group_override?: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null
+  /** schema-v109 (2026-09-16): 'task' | 'milestone'. A milestone is a task row
+   *  rendered as a half-height dated rule (TaskRow variant), never a fork.
+   *  Vocabulary: shared/taskKinds.ts. Optional here only for rows built by
+   *  tests/fixtures; the API always returns it (NOT NULL DEFAULT 'task'). */
+  kind?: TaskKind
   /** Operational follow-up fields (schema v55). Returned by the task GET
    *  endpoints and accepted by the mutation allowlist; typed here so callers
    *  can read them without `as any`. No UI surfacing yet (INFRA-7). */
@@ -276,7 +282,7 @@ export const TASK_ROW_KEYS = [
   'waiting_on', 'promised_to', 'promise_date', 'next_checkin_date',
   'planned_for', 'plan_slot', 'plan_rank', 'estimated_minutes',
   'plan_start_min', 'created_at', 'updated_at', 'meeting_title',
-  'meeting_date', 'approval_status',
+  'meeting_date', 'approval_status', 'kind',
   'deadline', 'deadline_type', 'effort', 'inbox_event_id', 'next_artifact',
   'nick_followup_date', 'related_message_ids', 'requires_nick_brain',
   'source_thread_id', 'waiting_since',
@@ -480,6 +486,7 @@ export function createTask(input: {
   due_date?: string
   priority?: string
   source?: string
+  kind?: TaskKind
 }) {
   return fetchApi<TaskRow>('/api/tasks', {
     method: 'POST',

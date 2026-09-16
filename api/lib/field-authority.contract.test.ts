@@ -208,6 +208,7 @@ const TASK_CREATE_BUCKETS: Record<string, CreateBucket> = {
   priority: 'defaulted',         // body.priority || 'medium'
   source: 'defaulted',           // body.source || (meeting_id ? 'meeting' : 'manual')
   status: 'defaulted',           // validated body.status, else 'todo'
+  kind: 'defaulted',             // validated body.kind, else 'task' (schema-v109)
   // derived (computed from another field / function)
   title: 'derived',              // body.title || body.description
   completed: 'derived',          // isInsertDone ? 1 : 0  (completion triad)
@@ -359,6 +360,17 @@ describe('E) handleCreateTask payload coercions (real route, persistence mocked)
   it('passes an explicit approval_status through unchanged', async () => {
     const payload = await captureCreatePayload({ description: 'pending approval task', approval_status: 'pending' })
     expect(payload.approval_status).toBe('pending')
+  })
+
+  // schema-v109 (2026-09-16): kind is NOT NULL DEFAULT 'task' on both stores.
+  it('defaults missing kind → task', async () => {
+    const payload = await captureCreatePayload({ description: 'an ordinary task' })
+    expect(payload.kind).toBe('task')
+  })
+
+  it('passes kind=milestone through unchanged', async () => {
+    const payload = await captureCreatePayload({ description: 'R01 LOI due', kind: 'milestone' })
+    expect(payload.kind).toBe('milestone')
   })
 
   it('source_thread_id present → email_link derived as the paired Gmail-thread link', async () => {
