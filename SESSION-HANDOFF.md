@@ -1,4 +1,4 @@
-# ▶▶ BUG SWEEP #128–#132 — ALL FIVE SHIPPED + DEPLOYED (2026-09-16, work laptop). Live = `4770ef90` (probe PASS). Bug queue EMPTY; GitHub #128–#132 closed. **Schema v110** (v109 tasks.kind, v110 project_publications.role — both applied test + prod, read back). **Routes 271** (+4). PB mig 128/129, pb-schema 0.7.1. Gates: 1372 api · lib +12 · src +2.
+# ▶▶ BUG SWEEP #128–#132 — ALL FIVE SHIPPED + DEPLOYED, plus Nick's same-day follow-ups (2026-09-16, work laptop). Live = `c01137f9` (probe PASS). Bug queue EMPTY; GitHub #128–#132 closed. **Schema v110**, **routes 271**, PB mig 128/129, pb-schema 0.7.1. Gates: 1372 api · lib +17 · src +2.
 
 **7 Hub commits** `880692ed` (#128) · `7f8162cf` (#130) · `1fc75b3e` (v109 + API) · `1db43820` (milestone UI) · `5ed725f9` (publications API) · `f80c88c9` (titleMatch) · `4770ef90` (publications UI). **1 PB commit** (tasks.kind: enums, DSL, mig 128/129, view, TODAY.md renderer, decision doc, registry; pushed). **pb-schema** `55faad2` (0.7.1, pushed to main).
 
@@ -16,9 +16,16 @@
 4. **`check-color-string-concat` matches COMMENTS too** — a doc comment quoting `var(--task-accent-gold)22` tripped it once its line number moved out of the baseline. Reworded.
 5. **D1 auth-10000 hit once on the deploy gate; the retry passed** (memory `feedback_hub-deploy-and-wrangler-auth`).
 
+## Nick's follow-ups the same afternoon (all live)
+
+- `3d9376ed` milestone row is title → gold leader line → project → due (his ask: "title first, project on the right, a gold semitransparent subtle line connects them"); open tasks inside the drawer open the full editor.
+- `34b2388f` `MilestoneDrawer` on My Tasks Columns + Lanes (drawer takes one completion verb, not Today's state object).
+- `c01137f9` Projects pills Open · Active · All · **Done** (done OR published).
+- PB: `BrainDB.create_task/update_task` accept `kind` (they refused it under #8386's allow-list until the ADHERE session flagged the memory gap) — `tests/db/test_task_kind_writers.py`.
+
 ## Not done / follow-ups
 
-- `MilestoneDrawer` is wired on Today only; Columns/Lanes/My Hub/meeting rows render the milestone variant but expand into the ordinary `InlineDetail`. Wire it there if Nick uses milestones from My Tasks.
+- My Hub + meeting rows render the milestone variant but still expand to the ordinary detail (only Today + My Tasks have the drawer).
 - Milestones obey the Today due-window filter like tasks (7/14/30d/All); a far-off grant deadline shows only under a wide window. Revisit if he wants milestones always visible.
 - The two stray April `paper_project_links` rows (ADHERE-LPV protocol on the K23 + central-line projects) are now visible; left for Nick to unlink.
 - Preprint duplicate rows in `publications` (two readmissions rows) — a loader-side merge, not touched.
