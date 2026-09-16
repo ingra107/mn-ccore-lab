@@ -296,16 +296,20 @@ function MilestoneRow(props: SharedTaskRowProps) {
         >
           <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 17, flexShrink: 0, color: ACCENT_GOLD, fontSize: 11, lineHeight: 1 }}>◆</span>
           <span className="sr-only">Milestone</span>
-          <ProjectTag project={project} />
+          {/* Title first and project on the right, like a task row (Nick
+              2026-09-16); a faint gold leader runs between them so the two
+              read as one dated line rather than a title and a stray chip. */}
           <span
             style={{
-              flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: 500, color: INK, opacity: 0.85,
+              flexShrink: 1, minWidth: 0, fontSize: 12.5, fontWeight: 500, color: INK, opacity: 0.85,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               textDecoration: isDone ? 'line-through' : 'none',
             }}
           >
             {task.short_title || task.title}
           </span>
+          <span aria-hidden="true" style={{ flex: 1, minWidth: 24, height: 1, background: withAlpha(ACCENT_GOLD, 28) }} />
+          <ProjectTag project={project} />
           {task.due_date && <DueChip due={task.due_date} status={task.status} />}
           {!hideCaret && (
             <span style={{ color: INK_MUTED, opacity: isExpanded ? 1 : 0.7, transition: 'opacity 140ms', flexShrink: 0, fontSize: 11 }}>

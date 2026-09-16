@@ -129,7 +129,11 @@ export function MilestoneDrawer({ task, project, state }: {
                     isDone={isTaskDone(t)}
                     onToggleDone={() => (isTaskDone(t) ? state.uncheck(t.id) : state.markDone(t.id))}
                     isExpanded={false}
-                    onToggleExpand={() => {}}
+                    // Row body or title → the full editor for THAT task (Nick
+                    // 2026-09-16: "click on the open tasks here and edit them").
+                    // Same TaskDetailPanel the milestone's own Full editor uses.
+                    onToggleExpand={() => setFullEditorTask(t)}
+                    onOpenEditor={() => setFullEditorTask(t)}
                   />
                 ))}
               </div>
