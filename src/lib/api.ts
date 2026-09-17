@@ -268,6 +268,14 @@ export interface TaskRow {
   requires_nick_brain?: number | null
   source_thread_id?: string | null
   waiting_since?: string | null
+  /** kind='question' rows (schema v111): a question PB asks Nick. The spec
+   *  (prompt, choices, recommendation) is immutable; the answer is NULL until
+   *  he answers on the Today card or Telegram; the telegram handle lets a Hub
+   *  answer update the Telegram card. Wire-serialized JSON text; the Worker
+   *  chokepoint (api/lib/task-question.ts) validates shape. */
+  question_spec_json?: string | null
+  question_answer_json?: string | null
+  question_telegram_json?: string | null
 }
 
 // #811 (2026-07-29): runtime mirror of `keyof TaskRow`, compile-bound both
@@ -287,6 +295,7 @@ export const TASK_ROW_KEYS = [
   'deadline', 'deadline_type', 'effort', 'inbox_event_id', 'next_artifact',
   'nick_followup_date', 'related_message_ids', 'requires_nick_brain',
   'source_thread_id', 'waiting_since',
+  'question_spec_json', 'question_answer_json', 'question_telegram_json',
 ] as const satisfies readonly (keyof TaskRow)[]
 
 type MissingTaskRowKey = Exclude<keyof TaskRow, (typeof TASK_ROW_KEYS)[number]>

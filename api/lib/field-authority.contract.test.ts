@@ -240,6 +240,14 @@ const TASK_CREATE_BUCKETS: Record<string, CreateBucket> = {
   requires_nick_brain: 'route_excluded',
   waiting_on: 'route_excluded',
   waiting_since: 'route_excluded',
+  // schema-v111 (2026-09-17): a question is MINTED by a PB producer through
+  // /api/mutations (BrainDB.create_task(kind='question', question_spec_json=...)),
+  // never by the REST create route — handleCreateTask has no spec field, and the
+  // chokepoint refuses a kind='question' insert without one (question_spec_missing),
+  // so a body.kind='question' POST is a 409, not a half-built question.
+  question_spec_json: 'route_excluded',
+  question_answer_json: 'route_excluded',   // written by the answer surfaces (Hub card / Telegram) via UPDATE only
+  question_telegram_json: 'route_excluded', // written by the HOME reconciler via UPDATE only
 }
 
 // handleCreateProject payload (projects.ts:168-178).

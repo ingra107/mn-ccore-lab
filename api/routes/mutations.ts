@@ -28,6 +28,7 @@ import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
 import { emitLifecycleActivity } from '../lib/lifecycle-activity';
 import { TASK_TITLE_DEDUP_SELECT } from '../lib/task-dedup-sql';
+import { normalizeQuestionJsonFields, questionRowError } from '../lib/task-question';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 
 const ALLOWED_TABLES = new Set([
@@ -554,6 +555,19 @@ async function dedupAccepted(
 
 export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags): Promise<MutationResult> {
   if (!mut.payload) return mutErr(mut.mutation_id, 'insert requires payload');
+
+  // Question contract (schema-v111, 2026-09-17): a kind='question' row must
+  // carry its spec, and any answer/telegram handle must be well-formed JSON.
+  // Objects from a Hub-UI writer are serialized to text here (D1 refuses an
+  // object binding). Checked BEFORE dedup so a malformed question neither
+  // inserts nor adopts an existing row. The insert payload IS the effective
+  // row (no current); `kind` absent = the column default 'task'. Mirrors the
+  // applyPatch arm below — one function, api/lib/task-question.ts.
+  if (mut.table === 'tasks') {
+    mut.payload = normalizeQuestionJsonFields(mut.payload as Record<string, unknown>);
+    const qErr = questionRowError(mut.payload as Record<string, unknown>);
+    if (qErr) return mutErr(mut.mutation_id, qErr);
+  }
 
   // Task-insert dedup has TWO explicit identity classes (2026-07-02 meeting-dedup
   // wave; supersedes the single universal I18 (title, project_id) rule):
@@ -1433,6 +1447,22 @@ async function applyPatch(
       ? `https://mail.google.com/mail/u/1/#inbox/${threadId}`
       : null;
     effectivePatch = { ...effectivePatch, email_link: derivedLink };
+  }
+
+  // Question contract (schema-v111, 2026-09-17) on the UPDATE path — the one
+  // place every task patch passes (Hub UI, bulk actions, PB's outbox). Checked
+  // on the EFFECTIVE row, current + patch, so a patch that only flips status
+  // to 'done' on an unanswered question is refused, a patch that only writes
+  // a malformed answer is refused, and a patch that makes a row a question
+  // with no spec is refused. Throws like the lmm_invalid guard above; processOne
+  // records it as `apply error: question_<code>: ...`. The same function runs
+  // on the insert arm (applyInsert) — api/lib/task-question.ts is the contract.
+  // Deliberately NOT applied to op=delete (applyDelete): that is the sanctioned
+  // way to retire a moot question without fabricating an answer.
+  if (mut.table === 'tasks' && effectivePatch) {
+    effectivePatch = normalizeQuestionJsonFields(effectivePatch);
+    const qErr = questionRowError({ ...current, ...effectivePatch });
+    if (qErr) throw new Error(qErr);
   }
 
   const patchKeys = Object.keys(effectivePatch || {});

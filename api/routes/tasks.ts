@@ -67,7 +67,7 @@ export async function handleOverdueCount(url: URL, env: Env): Promise<Response> 
   return json({ data: { count: result?.count ?? 0, unseen: result?.unseen ?? 0 } })
 }
 
-// GET /api/tasks?assignee=&status=&priority=&project=&meeting=&completed=&source=
+// GET /api/tasks?assignee=&status=&priority=&project=&meeting=&completed=&source=&kind=
 //
 // 2026-04-28 (schema-v51): when ?seq_after=N is present, switches to
 // sync-cursor mode: filters seq > N, orders by seq ASC, applies limit
@@ -84,6 +84,13 @@ export async function handleGetTasks(url: URL, env: Env, canSeePb = false): Prom
   const meetingId = url.searchParams.get('meeting') || url.searchParams.get('meeting_id');
   const completed = url.searchParams.get('completed');
   const source = url.searchParams.get('source');
+  // ?kind=question (schema-v111, 2026-09-17): the HOME Telegram reconciler
+  // polls this to render/converge question cards; the same param serves any
+  // kind. Vocabulary-guarded so an unlisted kind is a 400, not an empty list.
+  const kind = url.searchParams.get('kind');
+  if (kind !== null && !isTaskKind(kind)) {
+    return error(`Invalid kind "${kind}". Must be one of ${TASK_KINDS.join('/')}.`, 400);
+  }
   const updatedSince = url.searchParams.get('updated_since');
   const createdSince = url.searchParams.get('created_since');
   const seqAfterRaw = url.searchParams.get('seq_after');
@@ -136,6 +143,7 @@ export async function handleGetTasks(url: URL, env: Env, canSeePb = false): Prom
   }
   if (meetingId) { query += ' AND t.meeting_id = ?'; params.push(meetingId); }
   if (source) { query += ' AND t.source = ?'; params.push(source); }
+  if (kind) { query += ' AND t.kind = ?'; params.push(kind); }
   if (completed !== null && completed !== undefined) {
     query += ' AND t.completed = ?';
     params.push(completed === 'true' ? 1 : 0);

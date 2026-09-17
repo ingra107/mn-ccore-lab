@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "f81eb55df740974fd9b97f0e32bf7eb0dd085bf7ac8b057bf410ece9a7b1ecfb",
-  "file_count": 114,
+  "hash": "c1a012bd4caf01075caeeb1af9f434990f58ddafeefdc9bfd63aa2fad70ab1c8",
+  "file_count": 115,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -116,11 +116,12 @@
     "schema-v107-tasks-title-dedup-normalize.sql",
     "schema-v108-drop-raw-title-dedup-index.sql",
     "schema-v109-tasks-kind.sql",
-    "schema-v110-project-publications-role.sql"
+    "schema-v110-project-publications-role.sql",
+    "schema-v111-tasks-question.sql"
   ],
   "version_range": [
     2,
-    110
+    111
   ],
   "gaps": [
     35,
