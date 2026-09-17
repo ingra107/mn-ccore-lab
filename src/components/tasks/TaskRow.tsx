@@ -354,8 +354,8 @@ function MilestoneRow(props: SharedTaskRowProps) {
 // Which due-chip(s) a milestone row shows. Three shapes:
 //   - `role` set (from interleaveMilestones) — render exactly the one date
 //     that row represents (task.milestoneDate).
-//   - no role, single date (no deadline, or deadline == due_date) — the
-//     pre-2026-09-17 single gold DueChip, reading due_date.
+//   - no role, single date (no deadline, or deadline == due_date) — one
+//     gold HARD chip reading due_date (a milestone's only date is its hard date).
 //   - no role, two distinct dates (project page / My Tasks — lists that
 //     never ran through interleaveMilestones) — both chips side by side,
 //     so a viewer sees the miss without needing date-ordered placement.
@@ -382,28 +382,30 @@ function MilestoneChips({ task, role, status }: { task: TaskRowData; role?: Mile
   return single ? <MilestoneChip role="hard" date={single} status={status} /> : null
 }
 
-// role='hard' delegates to DueChip so a hard/single date keeps identical
-// coral-overdue/gold-today/muted semantics to a plain task's due chip.
-// role='internal'|'slipped' reads blue and is NEVER coral (Nick 2026-09-17)
-// — a slipped internal date is a miss to notice, not an active overdue item
-// (that's what the paired hard-date chip is for).
+// Every milestone chip names its date: HARD in gold (coral once missed),
+// INTERNAL in blue, SLIPPED in dimmed blue. A single-date milestone IS a hard
+// date and says so (Nick 2026-09-17: "when internal and hard are the same
+// date it should show that it's a hard date"). internal/slipped are NEVER
+// coral — a slipped internal date is a miss to notice, not an active overdue
+// item (that's what the paired hard-date chip is for).
 function MilestoneChip({ role, date, status }: { role: MilestoneRole; date: string; status?: string }) {
-  if (role === 'hard') return <DueChip due={date} status={status} />
-  const label = role === 'slipped' ? 'slipped' : 'internal'
+  const overdue = role === 'hard' && isOverdue(date, status)
+  const color = role === 'hard' ? (overdue ? ACCENT_CORAL : ACCENT_GOLD) : ACCENT_BLUE
   const dimmed = role === 'slipped'
+  const tip = role === 'hard' ? 'Hard date' : dimmed ? 'Internal date slipped' : 'Internal date'
   return (
     <span
       className="tip tip-end"
-      data-tip={`${dimmed ? 'Internal date slipped' : 'Internal date'}: ${date}`}
-      aria-label={`${label}: ${date}`}
+      data-tip={`${tip}: ${date}`}
+      aria-label={`${role}: ${date}`}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 3, fontVariantNumeric: 'tabular-nums',
-        fontSize: 11, fontWeight: 500, color: ACCENT_BLUE, flexShrink: 0, whiteSpace: 'nowrap',
+        fontSize: 11, fontWeight: overdue ? 600 : 500, color, flexShrink: 0, whiteSpace: 'nowrap',
         opacity: dimmed ? 0.55 : 1,
       }}
     >
-      <span style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', opacity: 0.75 }}>{label}</span>
-      {dueLabelText(date, false)}
+      <span style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', opacity: 0.75 }}>{role}</span>
+      {dueLabelText(date, overdue)}
     </span>
   )
 }
