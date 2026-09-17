@@ -56,7 +56,12 @@ import type { TaskRow } from '../../lib/api'
 import { withAlpha, isApprovalPending, isApprovalTriaged, civilDatePlusDays } from '../../lib/taskGrouping'
 import { useTodayDueWindow, DUE_WINDOW_OPTIONS, dueWindowDays } from '../../hooks/useTodayDueWindow'
 import { isMilestone } from '../../../shared/taskKinds'
+import { Chip } from '../../components/ui/Chip'
+import { Diamond } from 'lucide-react'
+import { ICON_PROPS } from '../../lib/iconProps'
 import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
+
+const SHOW_MILESTONES_KEY = 'hub-today-show-milestones'
 
 export default function TodayPage() {
   usePageMeta('Today · MN-CCORE', 'Operating-day landing — what to work on, who you\'re meeting, what\'s overdue.')
@@ -176,19 +181,29 @@ export default function TodayPage() {
   // outranks a date filter), or its due date is on/before the window edge.
   // Overdue tasks pass because their date is before the edge; undated tasks
   // appear only under "All".
+  // Milestones on/off (Nick 2026-09-17: "we need a filter to turn off
+  // milestones"). Per-viewer convenience, so localStorage; default on.
+  const [showMilestones, setShowMilestones] = useState<boolean>(() => {
+    try { return localStorage.getItem(SHOW_MILESTONES_KEY) !== 'off' } catch { return true }
+  })
+  useEffect(() => {
+    try { localStorage.setItem(SHOW_MILESTONES_KEY, showMilestones ? 'on' : 'off') } catch { /* unavailable */ }
+  }, [showMilestones])
+
   const visibleTasks = useMemo(() => {
     const days = dueWindowDays(dueWindow)
-    if (days === null) return tasks
-    const edge = civilDatePlusDays(todayKey(), days)
+    const edge = days === null ? null : civilDatePlusDays(todayKey(), days)
     return tasks.filter((t) => {
-      if (state.planned[t.id]) return true
       // A milestone is the horizon itself (Nick 2026-09-16: always show) —
-      // a grant date six weeks out must not vanish behind a 7d window.
-      if (isMilestone(t)) return true
+      // a grant date six weeks out must not vanish behind a 7d window — unless
+      // the milestones toggle is off.
+      if (isMilestone(t)) return showMilestones
+      if (edge === null) return true
+      if (state.planned[t.id]) return true
       const due = t.due_date?.slice(0, 10)
       return !!due && due <= edge
     })
-  }, [tasks, dueWindow, state.planned])
+  }, [tasks, dueWindow, state.planned, showMilestones])
 
   const hiddenByWindow = tasks.length - visibleTasks.length
 
@@ -700,6 +715,21 @@ export default function TodayPage() {
             size="sm"
             ariaLabel="Show tasks due within"
           />
+          <button
+            type="button"
+            onClick={() => setShowMilestones((v) => !v)}
+            aria-pressed={showMilestones}
+            aria-label="Show milestones"
+            className="tip"
+            data-tip={showMilestones ? 'Hide milestone rules' : 'Show milestone rules'}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+          >
+            {/* Same pill the quick-add modal uses for its milestone toggle. */}
+            <Chip pill bordered size="sm" filled={showMilestones} color={showMilestones ? 'var(--gold)' : 'var(--slate)'}>
+              <Diamond {...ICON_PROPS} size={11} />
+              Milestones
+            </Chip>
+          </button>
           {hiddenByWindow > 0 && (
             <button
               onClick={() => setDueWindow('all')}

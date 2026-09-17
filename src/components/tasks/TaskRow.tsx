@@ -40,9 +40,9 @@ import { AttentionChip } from './AttentionChip'
 import TaskTitle from './TaskTitle'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN, ACCENT_BLUE,
-  INK, INK_MUTED, withAlpha, todayKey, type MilestoneRole, type MilestoneEntry,
+  INK, INK_MUTED, withAlpha, type MilestoneRole, type MilestoneEntry,
 } from '../../lib/taskGrouping'
-import { dueLabelText, isOverdue } from '../../lib/dateUtils'
+import { dueLabelCompact, dueTone, isOverdue } from '../../lib/dateUtils'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
 // Reserved priority-dot color. urgent/high carry a colored dot; everything
@@ -90,22 +90,28 @@ export function DoneBox({ done, onToggle, color = ACCENT_GREEN }: { done: boolea
   )
 }
 
-// Due-date chip — tabular-nums; coral overdue, gold today, muted otherwise.
-// Delegates to dueLabelText() from dateUtils so the wording is identical
-// across all surfaces (DH-4 consolidation, 2026-06-04).
+// Due-date chip — compact (<= 6 chars, right-aligned in a 6ch box so a column
+// of chips lines up; Nick 2026-09-17); coral overdue, gold today, subtle gold
+// tomorrow, muted otherwise. The absolute date is the tooltip. Wording comes
+// from dueLabelCompact() in dateUtils so every row surface agrees.
+const CHIP_BOX: React.CSSProperties = {
+  display: 'inline-block', minWidth: '6ch', textAlign: 'right', fontSize: 11,
+  fontVariantNumeric: 'tabular-nums', flexShrink: 0, whiteSpace: 'nowrap',
+}
+
 function DueChip({ due, status }: { due: string; status?: string }) {
   const dueDay = due.slice(0, 10)
   const overdue = isOverdue(due, status)
-  const isToday = !overdue && dueDay === todayKey()
-  const color = overdue ? ACCENT_CORAL : isToday ? ACCENT_GOLD : INK_MUTED
+  const tone = dueTone(due, overdue)
+  const color = tone === 'overdue' ? ACCENT_CORAL : tone === 'today' || tone === 'tomorrow' ? ACCENT_GOLD : INK_MUTED
   return (
     <span
       className="tip tip-end"
       data-tip={`Due ${dueDay}`}
       aria-label={`Due ${dueDay}`}
-      style={{ fontSize: 11, color, fontVariantNumeric: 'tabular-nums', fontWeight: overdue ? 600 : 500, flexShrink: 0, whiteSpace: 'nowrap' }}
+      style={{ ...CHIP_BOX, color, fontWeight: overdue ? 600 : 500, opacity: tone === 'tomorrow' ? 0.65 : 1 }}
     >
-      {dueLabelText(due, overdue)}
+      {dueLabelCompact(due, overdue)}
     </span>
   )
 }
@@ -382,12 +388,11 @@ function MilestoneChips({ task, role, status }: { task: TaskRowData; role?: Mile
   return single ? <MilestoneChip role="hard" date={single} status={status} /> : null
 }
 
-// Every milestone chip names its date: HARD in gold (coral once missed),
-// INTERNAL in blue, SLIPPED in dimmed blue. A single-date milestone IS a hard
-// date and says so (Nick 2026-09-17: "when internal and hard are the same
-// date it should show that it's a hard date"). internal/slipped are NEVER
-// coral — a slipped internal date is a miss to notice, not an active overdue
-// item (that's what the paired hard-date chip is for).
+// Milestone chip: the COLOR names the date (Nick 2026-09-17, no word prefix) —
+// gold = hard (coral once missed), blue = internal, dimmed blue = slipped. Same
+// compact wording and 6ch box as DueChip. internal/slipped are NEVER coral: a
+// slipped internal date is a miss to notice, not an active overdue item (that
+// is what the paired hard-date chip is for).
 function MilestoneChip({ role, date, status }: { role: MilestoneRole; date: string; status?: string }) {
   const overdue = role === 'hard' && isOverdue(date, status)
   const color = role === 'hard' ? (overdue ? ACCENT_CORAL : ACCENT_GOLD) : ACCENT_BLUE
@@ -398,14 +403,9 @@ function MilestoneChip({ role, date, status }: { role: MilestoneRole; date: stri
       className="tip tip-end"
       data-tip={`${tip}: ${date}`}
       aria-label={`${role}: ${date}`}
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 3, fontVariantNumeric: 'tabular-nums',
-        fontSize: 11, fontWeight: overdue ? 600 : 500, color, flexShrink: 0, whiteSpace: 'nowrap',
-        opacity: dimmed ? 0.55 : 1,
-      }}
+      style={{ ...CHIP_BOX, color, fontWeight: overdue ? 600 : 500, opacity: dimmed ? 0.55 : 1 }}
     >
-      <span style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', opacity: 0.75 }}>{role}</span>
-      {dueLabelText(date, overdue)}
+      {dueLabelCompact(date, overdue)}
     </span>
   )
 }

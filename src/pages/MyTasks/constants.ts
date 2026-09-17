@@ -18,7 +18,7 @@ export {
 
 import type { GroupKey } from '../../lib/taskGrouping'
 import { ACCENT_CORAL, ACCENT_GOLD, INK_MUTED, todayKey } from '../../lib/taskGrouping'
-import { dueLabelText, isOverdue } from '../../lib/dateUtils'
+import { dueLabelCompact, isOverdue } from '../../lib/dateUtils'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Types
@@ -107,14 +107,15 @@ export function getGroupForTask(t: TaskRow, projectsByPid: Map<string, { categor
   return 'deep'
 }
 
-// dueLabel: thin wrapper around the canonical dueLabelText() helper (DH-4,
+// dueLabel: thin wrapper around dueLabelCompact(), the <= 6-char row form
+// (Nick 2026-09-17; was dueLabelText, DH-4
 // 2026-06-04). Returns '—' for null (caller's placeholder convention).
 // Status is passed for accurate overdue detection (done tasks are never overdue).
 export function dueLabel(due: string | null, status?: string): string {
   if (!due) return '—'
   const d = new Date(due + 'T12:00:00')
   if (isNaN(d.getTime())) return '—'
-  return dueLabelText(due, isOverdue(due, status))
+  return dueLabelCompact(due, isOverdue(due, status))
 }
 
 export function dueColor(t: TaskRow): string {

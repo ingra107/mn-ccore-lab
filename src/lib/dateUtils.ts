@@ -143,6 +143,35 @@ export function localDateKey(d: Date = new Date()): string {
  * @param due     ISO date string (at least YYYY-MM-DD)
  * @param overdue Result of isOverdue(due, status) — caller pre-computes once
  */
+// Compact due label for TASK ROWS (Nick 2026-09-17): never more than 6
+// characters so every chip in a column has the same footprint — `3d` overdue,
+// `Today`, `Tom` (tomorrow), `12d` / `45d` ahead (days cover months too). The
+// absolute date lives in the chip's tooltip. Cards and the deadlines page keep
+// dueLabelText's worded form.
+export type DueTone = 'overdue' | 'today' | 'tomorrow' | 'later'
+
+export function dueTone(due: string, overdue: boolean): DueTone {
+  if (overdue) return 'overdue'
+  const dueDay = due.slice(0, 10)
+  if (dueDay === localDateKey()) return 'today'
+  const target = new Date(dueDay + 'T12:00:00')
+  const todayNoon = new Date(); todayNoon.setHours(12, 0, 0, 0)
+  const days = Math.round((target.getTime() - todayNoon.getTime()) / 86400000)
+  return days === 1 ? 'tomorrow' : 'later'
+}
+
+export function dueLabelCompact(due: string, overdue: boolean): string {
+  const dueDay = due.slice(0, 10)
+  const target = new Date(dueDay + 'T12:00:00')
+  if (isNaN(target.getTime())) return dueDay.slice(5)
+  const todayNoon = new Date(); todayNoon.setHours(12, 0, 0, 0)
+  const days = Math.round((target.getTime() - todayNoon.getTime()) / 86400000)
+  if (overdue) return `${Math.max(1, -days)}d`
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Tom'
+  return `${days}d`
+}
+
 export function dueLabelText(due: string, overdue: boolean): string {
   const dueDay = due.slice(0, 10)
   const today = localDateKey()
