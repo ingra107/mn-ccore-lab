@@ -1210,6 +1210,10 @@ a:hover {
   --task-accent-coral:   #8a1f2e;   /* matches --maroon-solid */
   --task-accent-orange:  #a23d08;   /* matches --orange light */
   --task-accent-green:   #066e2f;   /* matches --green light */
+  /* Two-date milestone rendering (Nick 2026-09-17): the internal/slipped
+     date reads distinctly from the hard (sponsor/journal) date, which stays
+     gold. Not an existing --*-solid pin — chosen for AA contrast on #fff. */
+  --task-accent-blue:    #1f4e8c;
 }
 
 .dark {
@@ -1224,6 +1228,7 @@ a:hover {
   --task-accent-coral:   #f0737e;
   --task-accent-orange:  #f08a5b;
   --task-accent-green:   #6ee89a;
+  --task-accent-blue:    #7fb3f0;
 }
 
 /* ── Funding agency colors — brighter in dark mode ── */

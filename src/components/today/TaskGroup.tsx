@@ -8,7 +8,7 @@ import { TaskRow } from './TaskRow'
 import { CollapseChevron } from './SectionCollapseToggle'
 import { collapseToggleProps } from './collapseToggleProps'
 import { GROUP_META, INK_DIM, PANEL_BG, withAlpha, isTaskDone, type GroupKey } from './constants'
-import { interleaveMilestones } from '../../lib/taskGrouping'
+import { interleaveMilestones, type MilestoneEntry } from '../../lib/taskGrouping'
 import { isMilestone } from '../../../shared/taskKinds'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
@@ -19,7 +19,11 @@ import type { TaskRow as TaskRowData } from '../../lib/api'
 export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 }: { gkey: GroupKey; tasks: TaskRowData[]; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>; state: TodayStateApi; previewLimit?: number }) {
   const meta = GROUP_META[gkey]
   const doneCount = tasks.filter((t) => state.done[t.id] || isTaskDone(t)).length
-  const sorted = useMemo(() => {
+  // Return type is MilestoneEntry[] (a TaskRow + optional milestoneRole/
+  // milestoneDate) — interleaveMilestones stamps those fields on the rows it
+  // emits (Nick 2026-09-17 two-date rendering); plain TaskRowData is still
+  // structurally assignable (the fields are optional).
+  const sorted = useMemo((): MilestoneEntry[] => {
     // A milestone never enters `planned` (GH #131/#132) even if
     // state.planned somehow carries a stale entry for it — treat it as
     // active always.
@@ -79,14 +83,19 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 
       {open && (
         <div style={{ background: PANEL_BG, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
           {visible.map((t) => (
+            // Key includes milestoneRole (not just t.id): a slipped
+            // milestone renders as TWO rows sharing one id (Nick 2026-09-17)
+            // — React needs distinct keys for both. Expand state stays keyed
+            // by task id (both rows open the same drawer; acceptable).
             <TaskRow
-              key={t.id}
+              key={`${t.id}:${t.milestoneRole ?? 'row'}`}
               task={t}
               project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
               state={state}
               expandedId={expandedId}
               onExpand={onExpand}
               projectsByPid={projectsByPid}
+              milestoneRole={t.milestoneRole}
             />
           ))}
           {(hiddenCount > 0 || showAll) && (

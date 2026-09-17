@@ -554,10 +554,28 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               value={task.project_id || ''}
               onChange={(v) => handleFieldUpdate('project_id', v || null)}
             />
-            <DueInlineSelect
-              value={task.due_date || ''}
-              onChange={(v) => handleFieldUpdate('due_date', v || null)}
-            />
+            {task.kind === 'milestone' ? (
+              // Two-date milestone (Nick 2026-09-17): due_date is the
+              // INTERNAL date, deadline is the HARD (sponsor/journal) date —
+              // both editable here, titled to disambiguate.
+              <>
+                <DueInlineSelect
+                  title="Internal date"
+                  value={task.due_date || ''}
+                  onChange={(v) => handleFieldUpdate('due_date', v || null)}
+                />
+                <DueInlineSelect
+                  title="Hard date"
+                  value={task.deadline || ''}
+                  onChange={(v) => handleFieldUpdate('deadline', v || null)}
+                />
+              </>
+            ) : (
+              <DueInlineSelect
+                value={task.due_date || ''}
+                onChange={(v) => handleFieldUpdate('due_date', v || null)}
+              />
+            )}
             <button
               type="button"
               data-testid="delete-task"

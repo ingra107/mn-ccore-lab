@@ -11,7 +11,7 @@ import type { MeetingRow } from '../../hooks/useApiData'
 export {
   type GroupKey,
   GROUP_ORDER,
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN, ACCENT_BLUE,
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
   todayKey, daysSince, tagForTask, withAlpha, isTaskDone,
 } from '../../lib/taskGrouping'
@@ -19,6 +19,7 @@ export {
 import { todayKey } from '../../lib/taskGrouping'
 import type { GroupKey } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
+import { isMilestone } from '../../../shared/taskKinds'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Types
@@ -155,6 +156,10 @@ export function getGroupForTask(t: TaskRow, projectsBySlug: Map<string, { catego
   if (t.group_override && (['deep', 'priorities', 'quick', 'pb', 'etl'] as const).includes(t.group_override)) {
     return t.group_override
   }
+  // A milestone is the deadline spine, not work: it always sits in Deep Work
+  // as a dated rule (Nick 2026-09-17: "they should always be in deep work"),
+  // whatever its priority says. Only an explicit Move (above) outranks this.
+  if (isMilestone(t)) return 'deep'
   // PB bucket — broadened: source flag, title prefix, project slug pattern,
   // or project category. Catches "Peripheral Brain" variations that the
   // narrow source='pb' check missed in the eval (review/pre-merge-2026-04-25/EVAL.md Issue 4).

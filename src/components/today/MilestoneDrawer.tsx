@@ -10,8 +10,10 @@
 import { useState } from 'react'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { useProjects, useProjectLinks, useTasks } from '../../hooks/useApiData'
+import { useUpdateTask } from '../../hooks/useMutations'
 import { TaskRow as SharedTaskRow } from '../tasks/TaskRow'
 import TaskDetailPanel from '../tasks/TaskDetailPanel'
+import { DueInlineSelect } from '../tasks/detail/FieldControls'
 import StoredLinkChip from '../StoredLinkChip'
 import ProjectLinkLibrary from '../ProjectLinkLibrary'
 import WorkOnActions from '../WorkOnActions'
@@ -20,7 +22,7 @@ import { Button } from '../ui/Button'
 import { PATHS } from '../../constants/paths'
 import { Link } from 'react-router-dom'
 import { stripMeetingMarker } from '../../lib/textUtils'
-import { ACCENT_TEAL, INK_DIM, INK_MUTED } from './constants'
+import { ACCENT_BLUE, ACCENT_GOLD, ACCENT_TEAL, INK_DIM, INK_MUTED } from './constants'
 import type { TaskRow } from '../../lib/api'
 
 const OPEN_TASKS_CAP = 8
@@ -37,6 +39,14 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
   const isDone = isTaskDone(task)
   const [descExpanded, setDescExpanded] = useState(false)
   const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
+
+  // Two-date milestone rendering (Nick 2026-09-17): due_date is the INTERNAL
+  // date, deadline is the HARD (sponsor/journal) date. Same update path
+  // TaskDetailPanel's handleFieldUpdate uses — the drawer never picks its
+  // own mutation.
+  const updateTask = useUpdateTask()
+  const setDueDate = (v: string) => updateTask.mutate({ id: task.id, fields: { due_date: v || null } })
+  const setDeadline = (v: string) => updateTask.mutate({ id: task.id, fields: { deadline: v || null } })
 
   // Today's WorkOnActions launches need the project's primary_folder, which
   // Today's own projectsByPid map doesn't carry through — pull the full row.
@@ -55,8 +65,39 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
   // sinks to the done bucket) — not a raw status mutation.
   const toggleDone = () => onToggleComplete(task)
 
+  // Rendered once, in whichever branch below has a project (see placement note).
+  const composer = (
+    <div style={{ marginTop: 14 }}>
+      <SmartCompose
+        taskId={task.id}
+        placeholder="Note or @hermes…"
+        showMeLock
+        showHermesToggle
+        bare
+        alwaysShowToolbar
+        launchContext={{ projectSlug: project?.slug ?? task.project_id ?? null, primaryFolder: fullProject?.primary_folder ?? null }}
+      />
+    </div>
+  )
+
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ padding: '10px 18px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* Date row — internal (blue dot) + hard (gold dot) dates, both
+          editable (Nick 2026-09-17). Above the action row: these are the
+          fields that decide what the collapsed row shows. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8, flexWrap: 'wrap' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: INK_DIM }}>
+          <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT_BLUE, flexShrink: 0 }} />
+          Internal
+          <DueInlineSelect title="Internal date" value={task.due_date || ''} onChange={setDueDate} />
+        </span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: INK_DIM }}>
+          <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT_GOLD, flexShrink: 0 }} />
+          Hard
+          <DueInlineSelect title="Hard date" value={task.deadline || ''} onChange={setDeadline} />
+        </span>
+      </div>
+
       {/* Action row — mark complete only lives here (Nick: the collapsed row
           has no click-to-check box for a milestone). */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
@@ -103,14 +144,22 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
           {/* Project links — key links inline as chips, then the full library
               (current + archived) for everything else (Rule: never duplicate
               the key_link_* denormalized slots' render path). */}
-          {(keyLinks.length > 0 || (storedLinks && storedLinks.length > 0)) && (
+          {keyLinks.length > 0 && (
             <div style={{ marginTop: 12 }}>
               <div style={{ fontSize: 10, color: INK_DIM, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Project links</div>
-              {keyLinks.length > 0 && (
-                <div className="flex flex-wrap gap-2" style={{ marginBottom: 8 }}>
-                  {keyLinks.map((link) => <StoredLinkChip key={link.id} link={link} />)}
-                </div>
-              )}
+              <div className="flex flex-wrap gap-2" style={{ marginBottom: 8 }}>
+                {keyLinks.map((link) => <StoredLinkChip key={link.id} link={link} />)}
+              </div>
+            </div>
+          )}
+
+          {/* Note composer sits between the key links and the document library
+              (Nick 2026-09-17: "so I don't have to scroll down far to do a
+              quick chat"). The library and the open-task list can run long. */}
+          {composer}
+
+          {storedLinks && storedLinks.length > 0 && (
+            <div style={{ marginTop: 12 }}>
               <ProjectLinkLibrary links={storedLinks} isLoading={linksLoading} />
             </div>
           )}
@@ -148,21 +197,11 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
           )}
         </>
       ) : (
-        <div style={{ marginTop: 12, fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>No project</div>
+        <>
+          <div style={{ marginTop: 12, fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>No project</div>
+          {composer}
+        </>
       )}
-
-      {/* Note composer */}
-      <div style={{ marginTop: 14 }}>
-        <SmartCompose
-          taskId={task.id}
-          placeholder="Note or @hermes…"
-          showMeLock
-          showHermesToggle
-          bare
-          alwaysShowToolbar
-          launchContext={{ projectSlug: project?.slug ?? task.project_id ?? null, primaryFolder: fullProject?.primary_folder ?? null }}
-        />
-      </div>
 
       {fullEditorTask && (
         <TaskDetailPanel task={fullEditorTask} onClose={() => setFullEditorTask(null)} />

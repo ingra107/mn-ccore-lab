@@ -504,13 +504,17 @@ export function ProjectInlineGhostSelect({ value, onChange }: { value: string; o
   )
 }
 
-export function DueInlineSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function DueInlineSelect({ value, onChange, title = 'Due date' }: { value: string; onChange: (v: string) => void; title?: string }) {
   // #82 (Nick 2026-06-24): the date control is a single ghost pill — the inner
   // InlineDatePicker already provides the hover tint. The old wrapper added its
   // OWN hover tint + padding around the picker, which double-layered and read as
   // a box. Keep only the tooltip + alignment; let the picker be the one ghost.
+  //
+  // `title` override (Nick 2026-09-17): a milestone shows TWO of these side by
+  // side (due_date = internal date, deadline = hard date) and each needs its
+  // own tooltip to disambiguate — a plain task keeps the "Due date" default.
   return (
-    <div data-ghost-pill title="Due date" style={{ display: 'inline-flex', alignItems: 'center' }}>
+    <div data-ghost-pill title={title} style={{ display: 'inline-flex', alignItems: 'center' }}>
       <DateInput value={value} onChange={onChange} />
     </div>
   )

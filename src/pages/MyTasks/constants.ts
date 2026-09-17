@@ -3,6 +3,7 @@
 // by 2+ files in src/pages/MyTasks/ lives here.
 
 import type { TaskRow } from '../../lib/api'
+import { isMilestone } from '../../../shared/taskKinds'
 import { researchTeam } from '../../data/team'
 
 // Shared primitives re-exported from taskGrouping (also used by Today landing).
@@ -91,6 +92,10 @@ export function getGroupForTask(t: TaskRow, projectsByPid: Map<string, { categor
   if (t.group_override && (['deep', 'priorities', 'quick', 'pb', 'etl'] as const).includes(t.group_override)) {
     return t.group_override
   }
+  // A milestone is the deadline spine, not work: it always sits in Deep Work
+  // as a dated rule (Nick 2026-09-17: "they should always be in deep work"),
+  // whatever its priority says. Only an explicit Move (above) outranks this.
+  if (isMilestone(t)) return 'deep'
   if (t.source === 'pb' || /^pb:/i.test(t.title)) return 'pb'
   const proj = t.project_id ? projectsByPid.get(t.project_id) : null
   const projSlug = proj?.slug || ''

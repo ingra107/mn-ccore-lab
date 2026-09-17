@@ -39,8 +39,8 @@ import { useUnseenActivity } from '../../hooks/useEntitySeen'
 import { AttentionChip } from './AttentionChip'
 import TaskTitle from './TaskTitle'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
-  INK, INK_MUTED, withAlpha, todayKey,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN, ACCENT_BLUE,
+  INK, INK_MUTED, withAlpha, todayKey, type MilestoneRole, type MilestoneEntry,
 } from '../../lib/taskGrouping'
 import { dueLabelText, isOverdue } from '../../lib/dateUtils'
 import type { TaskRow as TaskRowData } from '../../lib/api'
@@ -176,6 +176,15 @@ export interface SharedTaskRowProps {
   // Defaults to 'task' so every existing caller renders byte-identical.
   variant?: 'task' | 'milestone'   // override only — defaults from task.kind
 
+  // ── milestone two-date rendering (Nick 2026-09-17) ── which of a
+  // milestone's 1-2 rule-entries THIS row represents (see milestoneRules in
+  // taskGrouping.ts). Set only on date-ordered lists that ran the task
+  // through interleaveMilestones (Today groups); left undefined on lists
+  // that render a milestone as a single row regardless of date order
+  // (project page, My Tasks) — there, MilestoneRow reads due_date/deadline
+  // straight off `task` and shows both dates side by side when they differ.
+  milestoneRole?: MilestoneRole
+
   // ── done / complete ── square is ALWAYS complete.
   isDone: boolean
   onToggleDone: () => void
@@ -289,32 +298,47 @@ export function TaskRow(props: SharedTaskRowProps) {
 // Half height, a hairline above and below, ◆ where the done box would sit,
 // project link → title → due → caret. No click-to-complete on the row; the
 // expanded drawer owns Mark complete.
+// Two-date milestone rendering (Nick 2026-09-17). `milestoneRole` is set by
+// interleaveMilestones on date-ordered lists (Today groups): each rule this
+// milestone expanded into is its own row, positioned by its own date — an
+// 'internal' or 'slipped' role reads blue, a 'hard' role (or no role, on the
+// single-date default) reads gold, exactly like the pre-2026-09-17 row.
 function MilestoneRow(props: SharedTaskRowProps) {
-  const { task, project, isDone, isExpanded, onToggleExpand, hideCaret, children } = props
+  const { task, project, isDone, isExpanded, onToggleExpand, hideCaret, children, milestoneRole } = props
+
+  const isBlueRole = milestoneRole === 'internal' || milestoneRole === 'slipped'
+  const diamondColor = isBlueRole ? ACCENT_BLUE : ACCENT_GOLD
+  const dimmed = milestoneRole === 'slipped'
+  const titleOpacity = dimmed ? 0.6 : 0.85
+  const emphasisOpacity = dimmed ? 0.55 : 1
+
   return (
-      <div data-task-id={task.id} data-task-kind="milestone">
+      <div data-task-id={task.id} data-task-kind="milestone" {...(milestoneRole ? { 'data-milestone-role': milestoneRole } : {})}>
         <div style={{ borderTop: `1px solid ${withAlpha(INK, 13)}` }} />
         <div
           onClick={onToggleExpand}
           style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '3px 14px', minHeight: 20, cursor: 'pointer', userSelect: 'none' }}
         >
-          <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 17, flexShrink: 0, color: ACCENT_GOLD, fontSize: 11, lineHeight: 1 }}>◆</span>
+          <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 17, flexShrink: 0, color: diamondColor, opacity: emphasisOpacity, fontSize: 11, lineHeight: 1 }}>◆</span>
           <span className="sr-only">Milestone</span>
           {/* Title first and project on the right, like a task row (Nick
-              2026-09-16); a faint gold leader runs between them so the two
-              read as one dated line rather than a title and a stray chip. */}
+              2026-09-16); a faint leader (gold/blue, matching the diamond)
+              runs between them so the two read as one dated line rather than
+              a title and a stray chip. */}
           <span
             style={{
-              flexShrink: 1, minWidth: 0, fontSize: 12.5, fontWeight: 500, color: INK, opacity: 0.85,
+              flexShrink: 1, minWidth: 0, fontSize: 12.5, fontWeight: 500, color: INK, opacity: titleOpacity,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               textDecoration: isDone ? 'line-through' : 'none',
             }}
           >
             {task.short_title || task.title}
           </span>
-          <span aria-hidden="true" style={{ flex: 1, minWidth: 24, height: 1, background: withAlpha(ACCENT_GOLD, 28) }} />
+          <span aria-hidden="true" style={{ flex: 1, minWidth: 24, height: 1, background: withAlpha(diamondColor, 28), opacity: emphasisOpacity }} />
           <ProjectTag project={project} />
-          {task.due_date && <DueChip due={task.due_date} status={task.status} />}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, opacity: emphasisOpacity }}>
+            <MilestoneChips task={task} role={milestoneRole} status={task.status} />
+          </span>
           {!hideCaret && (
             <span style={{ color: INK_MUTED, opacity: isExpanded ? 1 : 0.7, transition: 'opacity 140ms', flexShrink: 0, fontSize: 11 }}>
               {isExpanded ? '▾' : '▸'}
@@ -324,6 +348,63 @@ function MilestoneRow(props: SharedTaskRowProps) {
         <div style={{ borderBottom: `1px solid ${withAlpha(INK, 13)}` }} />
         {isExpanded && children}
       </div>
+  )
+}
+
+// Which due-chip(s) a milestone row shows. Three shapes:
+//   - `role` set (from interleaveMilestones) — render exactly the one date
+//     that row represents (task.milestoneDate).
+//   - no role, single date (no deadline, or deadline == due_date) — the
+//     pre-2026-09-17 single gold DueChip, reading due_date.
+//   - no role, two distinct dates (project page / My Tasks — lists that
+//     never ran through interleaveMilestones) — both chips side by side,
+//     so a viewer sees the miss without needing date-ordered placement.
+function MilestoneChips({ task, role, status }: { task: TaskRowData; role?: MilestoneRole; status?: string }) {
+  const civil = (d: string | null | undefined) => (d ? d.slice(0, 10) : null)
+  const due = civil(task.due_date)
+  const hard = civil(task.deadline)
+
+  if (role) {
+    const entry = task as MilestoneEntry
+    const date = civil(entry.milestoneDate) ?? (role === 'hard' ? (hard ?? due) : due)
+    return date ? <MilestoneChip role={role} date={date} status={status} /> : null
+  }
+
+  if (hard && hard !== due) {
+    return (
+      <>
+        {due && <MilestoneChip role="internal" date={due} status={status} />}
+        <MilestoneChip role="hard" date={hard} status={status} />
+      </>
+    )
+  }
+  const single = hard ?? due
+  return single ? <MilestoneChip role="hard" date={single} status={status} /> : null
+}
+
+// role='hard' delegates to DueChip so a hard/single date keeps identical
+// coral-overdue/gold-today/muted semantics to a plain task's due chip.
+// role='internal'|'slipped' reads blue and is NEVER coral (Nick 2026-09-17)
+// — a slipped internal date is a miss to notice, not an active overdue item
+// (that's what the paired hard-date chip is for).
+function MilestoneChip({ role, date, status }: { role: MilestoneRole; date: string; status?: string }) {
+  if (role === 'hard') return <DueChip due={date} status={status} />
+  const label = role === 'slipped' ? 'slipped' : 'internal'
+  const dimmed = role === 'slipped'
+  return (
+    <span
+      className="tip tip-end"
+      data-tip={`${dimmed ? 'Internal date slipped' : 'Internal date'}: ${date}`}
+      aria-label={`${label}: ${date}`}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 3, fontVariantNumeric: 'tabular-nums',
+        fontSize: 11, fontWeight: 500, color: ACCENT_BLUE, flexShrink: 0, whiteSpace: 'nowrap',
+        opacity: dimmed ? 0.55 : 1,
+      }}
+    >
+      <span style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', opacity: 0.75 }}>{label}</span>
+      {dueLabelText(date, false)}
+    </span>
   )
 }
 

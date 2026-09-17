@@ -15,7 +15,7 @@ import { TaskRow as SharedTaskRow } from '../tasks/TaskRow'
 import { useDensity } from '../DensityToggle'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { MilestoneDrawer } from './MilestoneDrawer'
-import { isTaskDone } from '../../lib/taskGrouping'
+import { isTaskDone, type MilestoneRole } from '../../lib/taskGrouping'
 import { isMilestone } from '../../../shared/taskKinds'
 import { LinkRow, type TaskLink } from './primitives'
 import { tagForTask } from './constants'
@@ -28,7 +28,7 @@ import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
-export function TaskRow({ task, project, state, expandedId, onExpand, projectsByPid }: { task: TaskRowData; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; expandedId: string | null; onExpand: (id: string) => void; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }> }) {
+export function TaskRow({ task, project, state, expandedId, onExpand, projectsByPid, milestoneRole }: { task: TaskRowData; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; expandedId: string | null; onExpand: (id: string) => void; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>; milestoneRole?: MilestoneRole }) {
   const [density] = useDensity()
   const isDone = !!state.done[task.id]
   const planned = state.planned[task.id]
@@ -147,6 +147,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
         task={task}
         project={project}
         variant="milestone"
+        milestoneRole={milestoneRole}
         isDone={isDone}
         onToggleDone={() => (isDone ? state.uncheck(task.id) : state.markDone(task.id))}
         isExpanded={expanded}
