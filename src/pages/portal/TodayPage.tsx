@@ -51,9 +51,10 @@ import { NeedsAttentionCard } from '../../components/today/rail/NeedsAttentionCa
 import { ProjectsCard } from '../../components/today/rail/ProjectsCard'
 import { PulseCard } from '../../components/today/rail/PulseCard'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
+import { QuestionsCard } from '../../components/tasks/QuestionsCard'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
-import { withAlpha, isApprovalPending, isApprovalTriaged, civilDatePlusDays } from '../../lib/taskGrouping'
+import { withAlpha, isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionWaiting, civilDatePlusDays } from '../../lib/taskGrouping'
 import { useTodayDueWindow, DUE_WINDOW_OPTIONS, dueWindowDays } from '../../hooks/useTodayDueWindow'
 import { isMilestone } from '../../../shared/taskKinds'
 import { Chip } from '../../components/ui/Chip'
@@ -102,13 +103,21 @@ export default function TodayPage() {
     () => (tasksQuery.data ?? []).filter(isApprovalPending),
     [tasksQuery.data],
   )
+  // "Needs you" questions (kind='question', schema v111) are surfaced in
+  // QuestionsCard, above PendingMeetingsCard — same double-render guard.
+  const questionTasks: TaskRow[] = useMemo(
+    () => (tasksQuery.data ?? []).filter(isQuestionWaiting),
+    [tasksQuery.data],
+  )
   // #97: ANSWERED approvals (accepted/declined) drop out entirely — they are
   // triage artifacts, not work. See isApprovalTriaged for why this is filtered
-  // on the answer rather than on status.
+  // on the answer rather than on status. Questions are excluded outright
+  // (isQuestionTask, not just isQuestionWaiting) — an answered-but-not-yet-
+  // closed question is still not an ordinary task.
   const tasks: TaskRow[] = useMemo(
     () => (tasksQuery.data ?? []).filter(
       (t) => t.completed === 0 && t.status !== 'done'
-        && !isApprovalPending(t) && !isApprovalTriaged(t),
+        && !isApprovalPending(t) && !isApprovalTriaged(t) && !isQuestionTask(t),
     ),
     [tasksQuery.data],
   )
@@ -553,6 +562,11 @@ export default function TodayPage() {
             </button>
           </div>
         )}
+
+        {/* "Needs you" questions — a process is waiting on Nick's answer. Shown
+            above PendingMeetingsCard: an unanswered question blocks something,
+            a captured meeting is merely awaiting triage. */}
+        <QuestionsCard tasks={questionTasks} />
 
         {/* Pending meetings triage card — shown before the pill strip so captured
             meetings requiring a decision are the first thing Nick sees. Disappears

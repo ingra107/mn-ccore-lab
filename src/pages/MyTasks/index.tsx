@@ -30,7 +30,8 @@ import { ListView } from './views/ListView'
 const TaskBoardView = lazyRoute(() => import('../../components/tasks/TaskBoardView'))
 import { useTaskFilter } from './hooks/useTaskFilter'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
-import { isApprovalPending, isApprovalTriaged } from '../../lib/taskGrouping'
+import { QuestionsCard } from '../../components/tasks/QuestionsCard'
+import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionWaiting } from '../../lib/taskGrouping'
 import { useSelection } from './hooks/useSelection'
 import { useOpenParam } from '../../hooks/useOpenParam'
 import { useIsMobile } from '../../hooks/useIsMobile'
@@ -173,11 +174,18 @@ export default function UnifiedMyTasks() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [tasksQuery.data],
   )
+  // "Needs you" questions (kind='question', schema v111) — see QuestionsCard.
+  const questionTasks = useMemo(
+    () => allTasks.filter(isQuestionWaiting),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tasksQuery.data],
+  )
   // #97: answered approvals (accepted/declined) are dropped too — see
   // isApprovalTriaged. Previously only 'pending' was excluded, so a triaged
-  // meeting reappeared here as an ordinary task.
+  // meeting reappeared here as an ordinary task. Questions are excluded
+  // outright (isQuestionTask), matching TodayPage's guard.
   const nonPendingTasks = useMemo(
-    () => allTasks.filter((t) => !isApprovalPending(t) && !isApprovalTriaged(t)),
+    () => allTasks.filter((t) => !isApprovalPending(t) && !isApprovalTriaged(t) && !isQuestionTask(t)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [tasksQuery.data],
   )
@@ -354,6 +362,9 @@ export default function UnifiedMyTasks() {
       )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* "Needs you" questions — shown above the pending-meetings card, same
+              guard shape. Disappears once every question is answered. */}
+          {!isLoading && <QuestionsCard tasks={questionTasks} />}
           {/* Pending meetings triage card — shown above the task list on all views.
               Disappears automatically once all meetings are accepted or declined. */}
           {!isLoading && <PendingMeetingsCard tasks={pendingMeetingTasks} />}

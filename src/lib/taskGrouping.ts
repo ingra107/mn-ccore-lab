@@ -8,7 +8,7 @@
 // helpers) remain in each surface's own constants.ts.
 
 import type { TaskRow } from './api'
-import { isMilestone } from '../../shared/taskKinds'
+import { isMilestone, isQuestion } from '../../shared/taskKinds'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Types
@@ -110,6 +110,111 @@ export function isApprovalPending(t: { approval_status?: string | null }): boole
 
 export function isApprovalTriaged(t: { approval_status?: string | null }): boolean {
   return t.approval_status === 'accepted' || t.approval_status === 'declined'
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Questions — kind='question' rows (schema v111, PB mig 130, 2026-09-17)
+// ──────────────────────────────────────────────────────────────────────────
+//
+// A question is a task a PB producer minted because a process is waiting on
+// Nick's answer (Design doc: PB Scratch/plans/sequential-petting-sky.md).
+// `question_spec_json` is the immutable ask; `question_answer_json` is NULL
+// until he answers, on either the Hub or Telegram. Answered is not done — the
+// consumer closes the row after acting on the answer, so `isQuestionWaiting`
+// (not `status`) is what drives the "needs you" card, mirroring
+// `isApprovalPending` above.
+
+/** One choice offered by a question's spec. `payload` carries whatever the
+ *  PB consumer needs to act without a second lookup (e.g. a calendar
+ *  candidate's event id). */
+export interface QuestionChoice {
+  key: string
+  label: string
+  payload?: unknown
+}
+
+/** `tasks.question_spec_json`, parsed. Minted once, never edited (immutable
+ *  per the design doc) — the minter always appends an `other` choice. */
+export interface QuestionSpec {
+  v: number
+  kind: string
+  prompt: string
+  choices: QuestionChoice[]
+  rec: string
+  allow_text: boolean
+}
+
+/** `tasks.question_answer_json`, parsed. NULL on the row = unanswered. */
+export interface QuestionAnswer {
+  v: number
+  choice: string
+  text?: string
+  via: 'hub' | 'telegram' | 'policy'
+  at: string
+}
+
+export function isQuestionTask(t: { kind?: string | null } | null | undefined): boolean {
+  return isQuestion(t)
+}
+
+/**
+ * Tolerant parse of a question's spec — malformed JSON (or a shape missing
+ * `prompt`/`choices`) returns `null` rather than throwing, so a card can
+ * render a one-line "malformed question" fallback (the task title) instead
+ * of crashing the whole Today/My Tasks page over one bad row.
+ */
+export function parseQuestionSpec(t: { question_spec_json?: string | null }): QuestionSpec | null {
+  if (!t.question_spec_json) return null
+  try {
+    const parsed = JSON.parse(t.question_spec_json) as Partial<QuestionSpec>
+    if (!parsed || typeof parsed.prompt !== 'string' || !Array.isArray(parsed.choices)) return null
+    return {
+      v: parsed.v ?? 1,
+      kind: parsed.kind ?? '',
+      prompt: parsed.prompt,
+      choices: parsed.choices,
+      rec: parsed.rec ?? '',
+      allow_text: parsed.allow_text ?? true,
+    }
+  } catch {
+    return null
+  }
+}
+
+/** Tolerant parse of a question's answer — same shape as parseQuestionSpec. */
+export function parseQuestionAnswer(t: { question_answer_json?: string | null }): QuestionAnswer | null {
+  if (!t.question_answer_json) return null
+  try {
+    const parsed = JSON.parse(t.question_answer_json) as Partial<QuestionAnswer>
+    if (!parsed || typeof parsed.choice !== 'string') return null
+    return {
+      v: parsed.v ?? 1,
+      choice: parsed.choice,
+      text: parsed.text,
+      via: parsed.via ?? 'hub',
+      at: parsed.at ?? '',
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * A question row still waiting on Nick: unanswered, and not closed out from
+ * under it (a consumer can close a question row directly on a terminal
+ * answer path — the design doc's "dismissed" arm). Mirrors `isApprovalPending`:
+ * the card that surfaces this drives on the answer/state, never on `status`
+ * alone, since a stray non-terminal status must not hide a live question.
+ */
+export function isQuestionWaiting(t: {
+  kind?: string | null
+  question_answer_json?: string | null
+  status?: string | null
+}): boolean {
+  return isQuestionTask(t)
+    && t.question_answer_json == null
+    && t.status !== 'done'
+    && t.status !== 'deleted'
 }
 
 /** Today's date as YYYY-MM-DD string in browser local time. */

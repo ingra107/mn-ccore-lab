@@ -578,12 +578,17 @@ export function TaskInlineFieldRow({
         onChange={(v) => onUpdate({ priority: v })}
         options={PRIORITY_INLINE_OPTIONS}
       />
-      <GhostSelect
-        aria-label="Kind"
-        value={kind || 'task'}
-        onChange={(v) => onUpdate({ kind: v })}
-        options={[...TASK_KIND_OPTIONS]}
-      />
+      {/* A question is minted, never picked (its kind isn't in
+          TASK_KIND_OPTIONS) — hide the select rather than show a value the
+          picker cannot represent (shared/taskKinds.ts). */}
+      {kind !== 'question' && (
+        <GhostSelect
+          aria-label="Kind"
+          value={kind || 'task'}
+          onChange={(v) => onUpdate({ kind: v })}
+          options={[...TASK_KIND_OPTIONS]}
+        />
+      )}
       <ProjectInlineGhostSelect
         value={projectId || ''}
         onChange={(v) => onUpdate({ project_id: v || null })}

@@ -1,4 +1,4 @@
-import { TASK_KIND_OPTIONS } from '../../../shared/taskKinds'
+import { TASK_KIND_OPTIONS, isQuestion } from '../../../shared/taskKinds'
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { lazyRoute } from '../../lib/lazyRoute'
 import {
@@ -544,12 +544,17 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 { value: 'urgent', label: 'Urgent' },
               ]}
             />
-            <GhostSelect
-              aria-label="Kind"
-              value={task.kind || 'task'}
-              onChange={(v) => handleFieldUpdate('kind', v)}
-              options={[...TASK_KIND_OPTIONS]}
-            />
+            {/* A question is minted by a PB producer, never picked (its kind
+                isn't in TASK_KIND_OPTIONS) — hide the select rather than show
+                a value the picker cannot represent (shared/taskKinds.ts). */}
+            {!isQuestion(task) && (
+              <GhostSelect
+                aria-label="Kind"
+                value={task.kind || 'task'}
+                onChange={(v) => handleFieldUpdate('kind', v)}
+                options={[...TASK_KIND_OPTIONS]}
+              />
+            )}
             <ProjectInlineGhostSelect
               value={task.project_id || ''}
               onChange={(v) => handleFieldUpdate('project_id', v || null)}
