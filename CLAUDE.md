@@ -16,6 +16,9 @@ Historical material in `docs/archived/` — safe to ignore unless explicitly spe
 
 The MN-CCORE Lab Hub is the **team's operating surface** — where research gets managed, meetings get run, and information flows between Nick's CLI system and every team member's browser.
 
+The Hub is a research operating system, not a task list.
+Every page passes the 5-second test: a newcomer knows what to do next without asking.
+
 ## Quick Reference
 
 | Thing | Value |
