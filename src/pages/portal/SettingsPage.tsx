@@ -653,7 +653,7 @@ export default function SettingsPage() {
 //   - marginBottom: var(--sp-2xl) (32px inter-zone gap)
 //   - border: var(--border-subtle) + radius: var(--radius-lg)
 //   - padding: var(--sp-xl) (24px)
-//   - backgroundColor: var(--surface-1)
+//   - backgroundColor: var(--surface-card) (white working card in light mode)
 //   - h3: var(--text-md) / var(--weight-ui) (16px / 500)
 //   - subtitle: var(--text-small) (12px)
 
@@ -664,7 +664,10 @@ function SettingsSection({ title, subtitle, icon: Icon, children }: { title: str
       border: '1px solid var(--border-subtle)',
       borderRadius: 'var(--radius-lg)',
       padding: 'var(--sp-xl)',
-      backgroundColor: 'var(--surface-1)',
+      // Working card: white in light mode (the 2026-06-17 audit read the old
+      // --surface-1 grey tint as a disabled surface); --surface-card and
+      // --surface-1 share the same dark value, so dark mode is unchanged.
+      backgroundColor: 'var(--surface-card)',
     }}>
       <div className="flex items-center gap-3 mb-4">
         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--teal-active)' }}>

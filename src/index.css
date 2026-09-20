@@ -45,10 +45,18 @@
   /* Light-mode border alphas bumped per R4-04 — form inputs on /settings
      were barely distinguishable from the surrounding surface at 0.06 /
      0.12 / 0.20. Bumped to 0.08 / 0.14 / 0.24 — visible bordered field
-     affordance without adding heaviness. Dark-mode values unchanged. */
-  --border-subtle: color-mix(in srgb, var(--task-panel-bg) 8%, transparent);
-  --border-default: color-mix(in srgb, var(--task-panel-bg) 14%, transparent);
-  --border-strong: color-mix(in srgb, var(--task-panel-bg) 24%, transparent);
+     affordance without adding heaviness. Dark-mode values unchanged.
+
+     The base colour is INK, deliberately (P2, 2026-09-20). These were
+     rgba(15,25,35,a) literals; the 2026-06-16 withAlpha codemod (ee95db28)
+     matched #0f1923 to --task-panel-bg, whose DARK value it is, so in light
+     mode every structural border became an 8% alpha of #f4f5f7 — 1.01:1 on
+     white, i.e. invisible — the day before the light-mode audit found "no
+     border/elevation system". --task-ink is #0f1923 in light mode, so this
+     restores the R4-04 values exactly; dark keeps its own overrides below. */
+  --border-subtle: color-mix(in srgb, var(--task-ink) 8%, transparent);
+  --border-default: color-mix(in srgb, var(--task-ink) 14%, transparent);
+  --border-strong: color-mix(in srgb, var(--task-ink) 24%, transparent);
 
   /* Letter-spacing — tighten at display sizes (Linear/Vercel/Stripe pattern) */
   --tracking-display: -0.04em;   /* 32px+ headings */
@@ -88,10 +96,11 @@
 
   /* Shadow elevation system */
   --shadow-flat: none;
-  /* P1-2: light-mode card elevation is now a hairline ring, not a drop
-     shadow on a grey wash. Dark mode keeps a real shadow (see .dark). */
-  --shadow-card: 0 0 0 1px color-mix(in srgb, var(--task-panel-bg) 6%, transparent);
-  --shadow-card-hover: 0 6px 16px color-mix(in srgb, var(--task-panel-bg) 18%, transparent);
+  /* P1-2: light-mode card elevation is a hairline ring, not a drop shadow
+     on a grey wash. Dark mode keeps a real shadow (see .dark). Ink-based
+     alpha for the same reason as --border-* above (ee95db28 regression). */
+  --shadow-card: 0 0 0 1px color-mix(in srgb, var(--task-ink) 6%, transparent);
+  --shadow-card-hover: 0 6px 16px color-mix(in srgb, var(--task-ink) 18%, transparent);
   --shadow-elevated: 0 4px 12px rgba(0,0,0,0.15);
 
   /* Surface elevation — luminance stepping */
@@ -115,10 +124,17 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* P1-2 (2026-06-09): light-mode bg inversion. The page is now the LIGHTEST
-     layer (cream #faf8f3); cards step DOWN to #f4f5f7 + a hairline (see
-     --surface-card / --task-panel-bg below). Was #f5f5f5 page behind #ffffff
-     cards — a tint behind the cards, the inverse of Round-6 Rule #1. */
+  /* Light-mode surface model (P2, 2026-09-20, supersedes the P1-2 inversion
+     of 2026-06-09): the page is a flat cream canvas (#faf8f3, NOT the old
+     #f5f5f5 grey wash that read "heavy"); WORKING surfaces — cards, tables,
+     task panels, menus — are white (--cream / --surface-card /
+     --task-panel-bg) with a 1px ink-alpha hairline (--border-subtle /
+     --shadow-card); QUIET panels (pipeline columns, chip trays) are --ice.
+     P1-2 had stepped cards DOWN to #f4f5f7, but only 2 of ~230 surface
+     consumers ever took that token — 156 sites paint var(--cream) = white —
+     and the 2026-06-17 audit rated the white-surface pages (Manuscripts,
+     Digest) the strongest and named Slack/Airtable/Google as the reference.
+     The Today/My Tasks task panel was the last holdout at #f4f5f7. */
   --bg-rgb: 250, 248, 243;
   --page-bg: #faf8f3;
   color-scheme: light dark;
@@ -371,14 +387,14 @@ html[data-density="comfortable"] {
   /* Sidebar surface — DARKER than content (3-plane depth, matches Linear) */
   --sidebar-bg: color-mix(in oklch, var(--cream), black 12%);
 
-  /* Surface elevation — card bg BELOW the page bg (P1-2 inversion).
-     Page = cream #faf8f3 (lightest); card steps down to ice #f4f5f7 + a
-     hairline. No more white card floating on a grey wash. */
-  --surface-card: #f4f5f7;
-  /* Card hairline — 1px color-mix(in srgb, var(--task-panel-bg) 6%, transparent) ring, replaces the drop-shadow
-     on the grey wash (P1-2). Consumers that use box-shadow: var(--shadow-card)
-     pick this up; dark mode keeps its real shadow (overridden in .dark). */
-  --card-hairline: 0 0 0 1px color-mix(in srgb, var(--task-panel-bg) 6%, transparent);
+  /* Working-card surface: white on the cream canvas (P2, 2026-09-20 — see
+     the surface-model note above --page-bg). Dark keeps its lift below.
+     Same shape as --surface-1 in dark, so a panel that moves from
+     --surface-1 to this token renders identically in dark mode. */
+  --surface-card: #ffffff;
+  /* --card-hairline was deleted here (P2, 2026-09-20): zero consumers since
+     P1-2 minted it, and it had no .dark override. The hairline ring IS
+     --shadow-card in light mode; use that. */
 
   /* Focus ring — WCAG AA teal (gold fails in light mode) */
   --focus-ring: oklch(0.55 0.12 190 / 0.5);
@@ -914,8 +930,15 @@ a:hover {
 
 /* ── Project card hover ── */
 .project-card:hover {
-  box-shadow: 0 3px 10px color-mix(in srgb, var(--task-panel-bg) 8%, transparent);
+  /* Light: an 8% INK shadow. It was an ink literal until ee95db28 re-pointed
+     it at --task-panel-bg, which is near-white in light mode (invisible). */
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--task-ink) 8%, transparent);
   transition: box-shadow 0.25s ease;
+}
+.dark .project-card:hover {
+  /* Pins the pre-existing dark rendering byte-for-byte: this is the exact
+     value the rule above computed in dark mode before the light fix. */
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--task-panel-bg) 8%, transparent);
 }
 
 /* ── Status Badges ── */
@@ -1195,15 +1218,18 @@ a:hover {
    from --ink / --slate / --muted / --gold / --teal / --maroon / --orange
    / --green pinned hexes in :root above). Accents share the solid AA-safe
    hexes used by --teal-solid / --maroon-solid / --stage-fill-* so white
-   text and inverted (#0f1923) text both remain readable. */
+   text and inverted (#0f1923) text both remain readable.
+   --task-ink is also the BASE of every light-mode structural border and
+   card shadow (--border-*, --shadow-card*; see the note at --border-subtle),
+   so its light value must stay a dark ink hex. */
 :root {
   /* Page & panel surfaces */
-  --task-page-bg:        #faf8f3;   /* P1-2: cream page = lightest layer */
-  --task-panel-bg:       #f4f5f7;   /* P1-2: ice panel = a hair darker */
+  --task-page-bg:        #faf8f3;   /* cream canvas = the page (--page-bg) */
+  --task-panel-bg:       #ffffff;   /* white working panel on the canvas (P2, 2026-09-20; was #f4f5f7 — every other page's card is var(--cream) = white) */
   /* Ink hierarchy (text on task surfaces) */
   --task-ink:            #0f1923;   /* matches --ink hex */
   --task-ink-muted:      #5a6370;   /* matches --muted (6.0:1 on #fff) */
-  --task-ink-dim:        #7a828c;   /* third-tier metadata; ~4.6:1 on #fff */
+  --task-ink-dim:        #616d7b;   /* third-tier metadata: 5.3:1 on #fff, 5.0:1 on #faf8f3, 4.8:1 on #f4f5f7. Was #7a828c, whose "~4.6:1" comment was false (3.9:1 on #fff, AA fail); dark keeps #7a828c. */
   /* Accents — pinned to the AA-safe hexes already used for solid bgs */
   --task-accent-gold:    #6b5420;   /* matches --gold light, AA on #fff */
   --task-accent-teal:    #006b66;   /* matches --teal light, AA on #fff */
@@ -2108,9 +2134,9 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
     --ink-muted: 1.0;
     --ink-label: 1.0;
     --ink-hint: 1.0;
-    /* Stronger borders in light mode */
-    --border-subtle: color-mix(in srgb, var(--task-panel-bg) 20%, transparent);
-    --border-default: color-mix(in srgb, var(--task-panel-bg) 35%, transparent);
+    /* Stronger borders in light mode (ink base — see --border-subtle) */
+    --border-subtle: color-mix(in srgb, var(--task-ink) 20%, transparent);
+    --border-default: color-mix(in srgb, var(--task-ink) 35%, transparent);
   }
 
   .dark {
@@ -2129,14 +2155,14 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    backdrop-filter blur (replaces with solid surface-1 background). */
 @media (prefers-reduced-transparency: reduce) {
   :root {
-    /* P1-2: opaque card stays a hair below the cream page (#faf8f3). */
-    --surface-card: #f4f5f7;
+    /* Card stays the white working surface (already opaque). */
+    --surface-card: #ffffff;
     --surface-1: #f0f1f3;
     --surface-2: #e7e9ec;
     --surface-3: #dde0e4;
     --hover-subtle: rgba(0, 0, 0, 0.04);
-    --border-subtle: color-mix(in srgb, var(--task-panel-bg) 12%, transparent);
-    --border-default: color-mix(in srgb, var(--task-panel-bg) 20%, transparent);
+    --border-subtle: color-mix(in srgb, var(--task-ink) 12%, transparent);
+    --border-default: color-mix(in srgb, var(--task-ink) 20%, transparent);
   }
 
   .dark {

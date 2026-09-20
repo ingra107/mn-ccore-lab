@@ -315,7 +315,23 @@ export default function AnalyticsPage() {
     URL.revokeObjectURL(url)
   }
 
-  if (tasksLoading || projectsLoading) return <CardSkeleton count={6} />
+  // Loading keeps the page's identity (title + subtitle) above the skeleton.
+  // The 2026-06-17 light-mode audit captured this page as "skeleton-only":
+  // a bare CardSkeleton with no header read as a broken page, not a loading one.
+  if (tasksLoading || projectsLoading) {
+    return (
+      <PageContainer>
+        <PageHeader
+          icon={<BarChart3 {...ICON_PROPS} size={20} />}
+          title="Lab Analytics"
+          subtitle="Track lab performance and trends"
+        />
+        <div className="mt-5">
+          <CardSkeleton count={6} />
+        </div>
+      </PageContainer>
+    )
+  }
 
   // P6-C10 / Fix 4: QueryState consolidates the auth-vs-generic-error block and
   // the empty-state block that were previously duplicated across early returns.

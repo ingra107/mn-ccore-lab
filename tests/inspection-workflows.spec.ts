@@ -2022,6 +2022,10 @@ test.describe('A11Y — Focus management', () => {
 
       const result = await page.evaluate(() => {
         function toRgb(str: string): [number, number, number, number] {
+          // Chromium serializes a resolved color-mix() as `color(srgb r g b / a)`
+          // with 0-1 channels; plain tokens come back as rgb()/rgba().
+          const cm = str.match(/color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\)/)
+          if (cm) return [+cm[1] * 255, +cm[2] * 255, +cm[3] * 255, cm[4] === undefined ? 1 : +cm[4]]
           const m = str.match(/rgba?\(([^)]+)\)/)
           if (!m) return [0, 0, 0, 1]
           const parts = m[1].split(',').map((s) => parseFloat(s.trim()))
@@ -2065,11 +2069,41 @@ test.describe('A11Y — Focus management', () => {
         const cs = getComputedStyle(h1)
         const fg = toRgb(cs.color)
         const bg = effectiveBg(h1)
+
+        // P2 (2026-09-20, PB #8242): probe the structural tokens on the real
+        // page so the ee95db28 class cannot come back silently. That codemod
+        // re-pointed every light-mode border/shadow alpha at --task-panel-bg
+        // (near-white in light mode), so --border-subtle composited to 1.01:1
+        // on white -- invisible -- and nothing measured it for three months.
+        const probe = document.createElement('div')
+        probe.style.cssText = 'position:absolute;width:1px;height:1px;border:1px solid var(--border-subtle);color:var(--task-ink-dim)'
+        document.body.appendChild(probe)
+        const pcs = getComputedStyle(probe)
+        // Read the strings BEFORE remove(): a live CSSStyleDeclaration on a
+        // detached element answers '' for every property.
+        const borderToken = pcs.borderTopColor
+        const dimToken = pcs.color
+        const border = toRgb(borderToken)
+        const dim = toRgb(dimToken)
+        probe.remove()
+        const pageBg = effectiveBg(document.body)
+        const a = border[3]
+        const hairline: [number, number, number, number] = [
+          border[0] * a + pageBg[0] * (1 - a),
+          border[1] * a + pageBg[1] * (1 - a),
+          border[2] * a + pageBg[2] * (1 - a),
+          1,
+        ]
         return {
           text: (h1.textContent || '').trim().slice(0, 40),
           color: cs.color,
           bg: `rgb(${bg[0].toFixed(0)},${bg[1].toFixed(0)},${bg[2].toFixed(0)})`,
           ratio: Math.round(ratio(fg, bg) * 100) / 100,
+          borderToken,
+          borderBase: [border[0], border[1], border[2]] as [number, number, number],
+          hairlineRatio: Math.round(ratio(hairline, pageBg) * 1000) / 1000,
+          dimToken,
+          dimRatio: Math.round(ratio(dim, pageBg) * 100) / 100,
         }
       })
 
@@ -2087,6 +2121,28 @@ test.describe('A11Y — Focus management', () => {
       // by a wide margin (measured 16-20:1 on this exact element 2026-07-30)
       // so 4.5:1 is the honest regression floor, not an aspirational one.
       expect(result!.ratio).toBeGreaterThanOrEqual(4.5)
+
+      // --task-ink-dim is real third-tier text (dates, hints, "Meeting notes"
+      // labels) in both themes. Light was #7a828c = 3.89:1 on white behind a
+      // comment claiming ~4.6:1; now #616d7b (5.0:1 on the cream page). Dark
+      // is unchanged (#7a828c on #0b1017 = 4.9:1).
+      expect(result!.dimRatio, `--task-ink-dim ${result!.dimToken} on the page bg`).toBeGreaterThanOrEqual(4.5)
+
+      if (mode === 'light') {
+        // A structural hairline must be VISIBLE on the page: an ink alpha
+        // (rgba(15,25,35,.08) composited) measures ~1.17:1; the regressed
+        // near-white alpha measured 1.01:1. 1.1 is the honest floor between
+        // the two, not an aesthetic target.
+        expect(result!.hairlineRatio, `--border-subtle ${result!.borderToken} composited on the page bg`).toBeGreaterThanOrEqual(1.1)
+        // ...and its BASE colour must be ink-dark, never a surface colour.
+        const [r, g, b] = result!.borderBase
+        expect(Math.max(r, g, b), `--border-subtle base ${result!.borderToken} should be an ink colour in light mode`).toBeLessThan(96)
+      } else {
+        // Dark keeps its own override (rgba(255,255,255,.05)); pin the shape
+        // so a light-mode token change cannot leak into dark.
+        const [r, g, b] = result!.borderBase
+        expect(Math.min(r, g, b), `--border-subtle base ${result!.borderToken} should stay a white alpha in dark mode`).toBeGreaterThan(200)
+      }
     })
   }
 })

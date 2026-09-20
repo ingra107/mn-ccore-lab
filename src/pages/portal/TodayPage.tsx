@@ -754,7 +754,8 @@ export default function TodayPage() {
             </button>
           )}
           <span className="today-section-hint" style={{ fontSize: 12, color: INK_DIM }}>click to expand · 📌 or drag ⋮⋮ to plan</span>
-          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+          {/* --border-default is rgba(255,255,255,0.08) in dark mode (the old literal) and an ink alpha in light, where a white alpha was invisible. */}
+          <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
         </div>
 
         {isLoading ? (
