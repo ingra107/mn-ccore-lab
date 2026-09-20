@@ -329,6 +329,10 @@ def fetch_db_writes(db: str, time_period: str, limit: int) -> list[dict]:
     except WranglerD1Error as e:
         sys.stderr.write(f"SETUP ERROR: wrangler d1 insights failed:\n{e}\n")
         raise SystemExit(2)
+    if "[wrangler_d1]" in (res.stderr or ""):
+        # The cold-token retry fired (PB #1293). Surface it so a run that
+        # needed two attempts is visible in the monitor's log, not silent.
+        sys.stderr.write(res.stderr.split("\n", 1)[0] + "\n")
     out = res.stdout
     idx = out.find("[")
     if idx < 0:

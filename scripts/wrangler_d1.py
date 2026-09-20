@@ -113,14 +113,12 @@ def _stripped_env() -> dict[str, str]:
     return env
 
 
-def run_wrangler(argv: Sequence[str], *, timeout: int = 120) -> WranglerResult:
-    """Run `wrangler <argv...>` from the Hub repo root with CF env stripped.
+# The error text wrangler prints when the D1 API rejects the bearer token.
+_COLD_TOKEN_ERROR = "Authentication error [code: 10000]"
 
-    THE STRIP is unconditional — env may or may not be set; after this wrangler
-    always uses OAuth.
-    """
-    cmd = _wrangler_cmd() + list(argv)
-    proc = subprocess.run(
+
+def _run_once(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
+    return subprocess.run(
         cmd,
         text=True,
         # wrangler emits UTF-8 (box-drawing chars in deploy banners); without an
@@ -133,6 +131,42 @@ def run_wrangler(argv: Sequence[str], *, timeout: int = 120) -> WranglerResult:
         env=_stripped_env(),
         cwd=str(_repo_root()),
     )
+
+
+def run_wrangler(argv: Sequence[str], *, timeout: int = 120) -> WranglerResult:
+    """Run `wrangler <argv...>` from the Hub repo root with CF env stripped.
+
+    THE STRIP is unconditional — env may or may not be set; after this wrangler
+    always uses OAuth.
+
+    COLD-TOKEN RETRY (PB backlog #1293, root-caused 2026-09-02, reproduced on
+    home 2026-09-20): the OAuth access token lives 1 hour. A wrangler process
+    that starts with an EXPIRED one refreshes it (writes the new token to
+    config/default.toml) and then, ~400 ms later, its first D1 request is
+    answered 401 -> "Authentication error [code: 10000]" -- while /user and
+    /accounts calls in the same process succeed. The very next process, reading
+    the refreshed token from disk, passes. So on that exact error text the
+    command is run ONCE more, in a fresh process. A second failure raises with
+    both attempts' text; nothing is swallowed. The env-shadow class described
+    in the module docstring produces the same code 10000 but is stripped
+    unconditionally above, so it cannot be what the retry is masking.
+    """
+    cmd = _wrangler_cmd() + list(argv)
+    proc = _run_once(cmd, timeout)
+    if proc.returncode != 0 and _COLD_TOKEN_ERROR in (proc.stderr or ""):
+        first = proc
+        proc = _run_once(cmd, timeout)
+        if proc.returncode != 0:
+            raise WranglerD1Error(
+                proc.returncode,
+                f"{proc.stderr}\n[cold-token retry: attempt 1 also failed]\n"
+                f"{first.stderr}",
+                cmd, stdout=proc.stdout,
+            )
+        proc.stderr = (
+            f"[wrangler_d1] attempt 1 hit '{_COLD_TOKEN_ERROR}' on a cold OAuth "
+            f"token; attempt 2 (refreshed token) succeeded.\n{proc.stderr or ''}"
+        )
     if proc.returncode != 0:
         raise WranglerD1Error(proc.returncode, proc.stderr, cmd,
                               stdout=proc.stdout)
