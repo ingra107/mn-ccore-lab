@@ -153,7 +153,13 @@ def run_wrangler(argv: Sequence[str], *, timeout: int = 120) -> WranglerResult:
     """
     cmd = _wrangler_cmd() + list(argv)
     proc = _run_once(cmd, timeout)
-    if proc.returncode != 0 and _COLD_TOKEN_ERROR in (proc.stderr or ""):
+    # `--json` commands (d1 execute) print the error PAYLOAD on stdout, not
+    # stderr (the #416 shape) -- so the cold-token text is looked for on both.
+    # Measured on the first deploy after the retry shipped: the predeploy
+    # identity gate hit code 10000 on stdout and the stderr-only test missed it.
+    if proc.returncode != 0 and _COLD_TOKEN_ERROR in (
+        (proc.stderr or "") + (proc.stdout or "")
+    ):
         first = proc
         proc = _run_once(cmd, timeout)
         if proc.returncode != 0:
