@@ -127,7 +127,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   // #93 (Nick 2026-06-24 + codex consult): tighter top padding (was 20px) so the
   // drawer hugs the row instead of opening with a gap.
   return (
-    <div onClick={(e) => e.stopPropagation()} style={{ padding: '10px 18px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+    <div onClick={(e) => e.stopPropagation()} style={{ padding: '10px 18px 16px', borderTop: '1px solid var(--border-subtle)' }}>
       {/* Action row — de-duplicated + de-boxed (#93).
           REMOVED: "✓ Complete" (the task ROW's DoneBox already completes) and
           WorkOnActions (folder/▶ live in the row's title area) — show each
@@ -154,7 +154,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
                 NOT moving it between projects. */}
             <button onClick={() => setMoveOpen((o) => !o)} title="Set which Today section this task lives in (Deep work / Priorities / Quick / …)" style={{ padding: '4px 10px', background: moveOpen ? withAlpha(ACCENT_TEAL, 20) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'transparent'}`, borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Set section ▾</button>
             {moveOpen && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+              <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
                 {TODAY_MOVE_OPTIONS.map((opt) => (
                   <button
                     key={opt.key}
@@ -316,14 +316,14 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
               onClick={() => adjustDuration(-DURATION_STEP)}
               disabled={durationMins <= DURATION_MIN}
               aria-label="Decrease duration by 15 minutes"
-              style={{ width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 4, color: durationMins <= DURATION_MIN ? INK_DIM : INK, cursor: durationMins <= DURATION_MIN ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins <= DURATION_MIN ? 0.35 : 0.8 }}
+              style={{ width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: `1px solid var(--border-strong)`, borderRadius: 4, color: durationMins <= DURATION_MIN ? INK_DIM : INK, cursor: durationMins <= DURATION_MIN ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins <= DURATION_MIN ? 0.35 : 0.8 }}
             >−</button>
             <span style={{ fontSize: 11, color: INK, fontVariantNumeric: 'tabular-nums', minWidth: 36, textAlign: 'center' }}>{fmtDuration(durationMins)}</span>
             <button
               onClick={() => adjustDuration(DURATION_STEP)}
               disabled={durationMins >= DURATION_MAX}
               aria-label="Increase duration by 15 minutes"
-              style={{ width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 4, color: durationMins >= DURATION_MAX ? INK_DIM : INK, cursor: durationMins >= DURATION_MAX ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins >= DURATION_MAX ? 0.35 : 0.8 }}
+              style={{ width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: `1px solid var(--border-strong)`, borderRadius: 4, color: durationMins >= DURATION_MAX ? INK_DIM : INK, cursor: durationMins >= DURATION_MAX ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins >= DURATION_MAX ? 0.35 : 0.8 }}
             >+</button>
           </div>
 

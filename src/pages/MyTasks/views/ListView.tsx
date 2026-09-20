@@ -35,13 +35,15 @@ import {
 } from '../constants'
 import { isOverdue } from '../../../lib/dateUtils'
 import { OverdueBanner } from './OverdueBanner'
-import { NoTasksMatch } from './MyTasksEmpty'
+import { NoTasksMatch, AllCaughtUp } from './MyTasksEmpty'
 import WorkOnActions from '../../../components/WorkOnActions'
 import type { TaskRow } from '../../../lib/api'
 import { isMilestone } from '../../../../shared/taskKinds'
 
 interface ListViewProps {
   filtered: TaskRow[]
+  /** True when the page has NO tasks at all (not a filter artifact). */
+  isEmpty: boolean
   selected: Set<string>
   toggleSelect: (id: string) => void
   selectRange: (targetId: string, orderedIds: string[], anchor: string | null) => void
@@ -53,7 +55,7 @@ interface ListViewProps {
   plannedSet: Set<string>
 }
 
-export function ListView({ filtered, selected, toggleSelect, selectRange, anchorId, setSelected, setDrawer, projectsByPid, projectOptions, plannedSet }: ListViewProps) {
+export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRange, anchorId, setSelected, setDrawer, projectsByPid, projectOptions, plannedSet }: ListViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const { cursor, setCursor } = useListKeyboard({ filtered, toggleSelect, setDrawer, setSelected })
 
@@ -129,7 +131,7 @@ export function ListView({ filtered, selected, toggleSelect, selectRange, anchor
             the row has a trailing 52px Work column the header was missing, so the
             1fr Title soaked up the extra 52px and every column after it drifted
             out of alignment. Add the matching Work column (empty header cell). */}
-        <div className="list-view-header" style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px 52px', padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK_DIM, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
+        <div className="list-view-header" style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px 52px', padding: '6px 16px', borderBottom: '1px solid var(--border-default)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK_DIM, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
           <div className="list-view-col-cursor"></div>
           <div className="list-view-col-done"></div>
           <div>Title</div>
@@ -141,7 +143,7 @@ export function ListView({ filtered, selected, toggleSelect, selectRange, anchor
           <div className="list-view-col-links" style={{ textAlign: 'right' }}>Links</div>
           <div className="list-view-col-work"></div>
         </div>
-        {filtered.length === 0 && <NoTasksMatch />}
+        {filtered.length === 0 && (isEmpty ? <AllCaughtUp /> : <NoTasksMatch />)}
         {filtered.length > 0 && (
           <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
             {virtualizer.getVirtualItems().map((row) => {
@@ -185,7 +187,7 @@ export function ListView({ filtered, selected, toggleSelect, selectRange, anchor
        </div>
       </div>
       {/* P1-1: full-width footer border, band-centered keyboard-hint content. */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)', flexShrink: 0 }}>
+      <div style={{ borderTop: '1px solid var(--border-subtle)', background: 'rgba(0,0,0,0.2)', flexShrink: 0 }}>
        <div className="mt-band" style={{ paddingTop: 5, paddingBottom: 5, fontSize: 10, color: INK_DIM, display: 'flex', gap: 14 }}>
         <span style={{ fontFamily: 'var(--font-mono), JetBrains Mono, monospace' }}>{filtered.length > 0 ? `${cursor + 1}/${filtered.length}` : '0/0'}</span>
         <span style={{ flex: 1 }} />

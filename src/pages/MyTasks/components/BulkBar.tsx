@@ -89,7 +89,7 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
       </div>
       {/* Picker popover — replaces window.prompt() (CD spec: dark-first picker, not native modal). Esc / outside-click close. */}
       {picker && (
-        <div className="mt-band" style={{ position: 'absolute', top: '100%', left: 0, right: 0, paddingTop: 10, paddingBottom: 10, background: PANEL_BG, borderBottom: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', zIndex: 20, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+        <div className="mt-band" style={{ position: 'absolute', top: '100%', left: 0, right: 0, paddingTop: 10, paddingBottom: 10, background: PANEL_BG, borderBottom: '1px solid var(--border-default)', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', zIndex: 20, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
           <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginRight: 6 }}>
             {picker === 'reassign' ? 'Reassign to' : picker === 'priority' ? 'Set priority' : 'Set status'}
           </span>
@@ -111,7 +111,7 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
             <button
               key={a.slug}
               onClick={() => { onReassign(a.slug); setPicker(null) }}
-              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}
+              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-strong)', background: 'rgba(255,255,255,0.02)', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}
             >{a.name}</button>
           ))}
           <span style={{ flex: 1 }} />

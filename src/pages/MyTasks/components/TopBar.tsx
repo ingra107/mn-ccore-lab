@@ -57,7 +57,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
     // separator) but the toolbar CONTENT is band-centered via .mt-band so its
     // left edge matches the views below + the data pages. Vertical padding
     // stays on the outer; horizontal padding comes from .mt-band.
-    <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0, paddingTop: 14, paddingBottom: 12 }}>
+    <div style={{ borderBottom: '1px solid var(--border-subtle)', flexShrink: 0, paddingTop: 14, paddingBottom: 12 }}>
      <div className="mt-band">
       {/* P2-6: title row wraps so the search input + Create Task drop to a
           second line on narrow widths instead of clipping the fixed-260 search
@@ -155,7 +155,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
         />
         <button
           onClick={() => setFilter((f) => ({ ...f, hideCompleted: !f.hideCompleted }))}
-          style={{ padding: '4px 10px', fontSize: 11, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 999, background: filter.hideCompleted ? 'rgba(255,255,255,0.02)' : 'rgba(110,232,154,0.1)', color: filter.hideCompleted ? INK_MUTED : ACCENT_GREEN, fontFamily: 'inherit', cursor: 'pointer' }}
+          style={{ padding: '4px 10px', fontSize: 11, border: '1px solid var(--border-strong)', borderRadius: 999, background: filter.hideCompleted ? 'rgba(255,255,255,0.02)' : 'rgba(110,232,154,0.1)', color: filter.hideCompleted ? INK_MUTED : ACCENT_GREEN, fontFamily: 'inherit', cursor: 'pointer' }}
         >{filter.hideCompleted ? 'Show completed' : 'Hide completed'}</button>
         {hasFilters && (
           <button

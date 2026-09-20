@@ -20,7 +20,7 @@ import { Chip } from '../primitives'
 import { InlineDetail } from '../components/InlineDetail'
 import { MilestoneDrawer } from '../../../components/today/MilestoneDrawer'
 import { OverdueBanner } from './OverdueBanner'
-import { NoTasksMatch, LaneEmpty } from './MyTasksEmpty'
+import { NoTasksMatch, AllCaughtUp, LaneEmpty } from './MyTasksEmpty'
 import {
   GROUP_META, GROUP_ORDER,
   ACCENT_ORANGE,
@@ -31,7 +31,7 @@ import {
 import type { TaskRow } from '../../../lib/api'
 import { isMilestone } from '../../../../shared/taskKinds'
 
-export function ColumnsView({ filtered, byGroup, selected, toggleSelect, selectRange, anchorId, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { filtered: TaskRow[]; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; selectRange: (targetId: string, orderedIds: string[], anchor: string | null) => void; anchorId: string | null; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string; primary_folder?: string | null }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
+export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect, selectRange, anchorId, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { filtered: TaskRow[]; isEmpty: boolean; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; selectRange: (targetId: string, orderedIds: string[], anchor: string | null) => void; anchorId: string | null; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string; primary_folder?: string | null }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
   // MT-16 — when a Group filter is active, only render the matching column
   // (others would just be "nothing here" empty lanes that eat horizontal
   // space and obscure the filter result).
@@ -139,7 +139,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, selectR
           )
         })}
       </div>
-      {filtered.length === 0 && <NoTasksMatch />}
+      {filtered.length === 0 && (isEmpty ? <AllCaughtUp /> : <NoTasksMatch />)}
     </div>
     </div>
   )

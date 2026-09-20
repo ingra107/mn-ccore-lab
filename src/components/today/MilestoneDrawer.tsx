@@ -81,7 +81,7 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
   )
 
   return (
-    <div onClick={(e) => e.stopPropagation()} style={{ padding: '10px 18px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+    <div onClick={(e) => e.stopPropagation()} style={{ padding: '10px 18px 16px', borderTop: '1px solid var(--border-subtle)' }}>
       {/* Date row — internal (blue dot) + hard (gold dot) dates, both
           editable (Nick 2026-09-17). Above the action row: these are the
           fields that decide what the collapsed row shows. */}
@@ -168,7 +168,7 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
           {visibleOpenTasks.length > 0 && (
             <div style={{ marginTop: 14 }}>
               <div style={{ fontSize: 10, color: INK_DIM, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Open tasks on this project</div>
-              <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, overflow: 'hidden' }}>
+              <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 6, overflow: 'hidden' }}>
                 {visibleOpenTasks.map((t) => (
                   <SharedTaskRow
                     key={t.id}

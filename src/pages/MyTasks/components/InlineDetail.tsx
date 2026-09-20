@@ -228,7 +228,7 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
         <div ref={moveRef} style={{ position: 'relative' }}>
           <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (changes priority to match)" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: `1px solid ${moveOpen ? ACCENT_TEAL : 'transparent'}`, background: moveOpen ? withAlpha(ACCENT_TEAL, 13) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: 'pointer' }}>Move →</button>
           {moveOpen && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
               {MOVE_OPTIONS.map((opt) => (
                 <button
                   key={opt.key}

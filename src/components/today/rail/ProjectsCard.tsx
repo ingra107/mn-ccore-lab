@@ -67,7 +67,7 @@ export function ProjectsCard({ projects }: { projects: ProjectEntry[] }) {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Jump to project…"
-        style={{ width: '100%', padding: '6px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 'var(--radius-sm)', fontSize: 12, color: INK, outline: 'none', fontFamily: 'inherit', marginBottom: 8, boxSizing: 'border-box' }}
+        style={{ width: '100%', padding: '6px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)', fontSize: 12, color: INK, outline: 'none', fontFamily: 'inherit', marginBottom: 8, boxSizing: 'border-box' }}
       />
       <div style={{ maxHeight: 320, overflowY: 'auto' }}>
         {shown.length === 0 && (

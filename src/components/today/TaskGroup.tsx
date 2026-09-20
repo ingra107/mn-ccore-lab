@@ -81,7 +81,7 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 
         <CollapseChevron open={open} color={meta.color} />
       </div>
       {open && (
-        <div style={{ background: PANEL_BG, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={{ background: PANEL_BG, border: '1px solid var(--border-subtle)', borderRadius: 8, overflow: 'hidden' }}>
           {visible.map((t) => (
             // Key includes milestoneRole (not just t.id): a slipped
             // milestone renders as TWO rows sharing one id (Nick 2026-09-17)
@@ -107,7 +107,7 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 
                 width: '100%',
                 background: 'none',
                 border: 'none',
-                borderTop: '1px solid rgba(255,255,255,0.06)',
+                borderTop: '1px solid var(--border-subtle)',
                 color: INK_DIM,
                 fontSize: 11,
                 cursor: 'pointer',

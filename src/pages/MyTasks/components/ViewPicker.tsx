@@ -18,7 +18,7 @@ export function ViewPicker({ view, setView }: { view: ViewMode; setView: (v: Vie
     // P2-6: pill height is content-driven (minHeight, not fixed) so the touch
     // 44px button floor can grow the segments on coarse-pointer devices without
     // clipping the labels inside a fixed 26px box. Desktop stays compact.
-    <div style={{ display: 'inline-flex', alignItems: 'stretch', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 999, background: 'rgba(255,255,255,0.02)', overflow: 'hidden', minHeight: 26 }}>
+    <div style={{ display: 'inline-flex', alignItems: 'stretch', border: '1px solid var(--border-strong)', borderRadius: 999, background: 'rgba(255,255,255,0.02)', overflow: 'hidden', minHeight: 26 }}>
       {views.map((v, i) => {
         const active = view === v.k
         return (
@@ -26,7 +26,7 @@ export function ViewPicker({ view, setView }: { view: ViewMode; setView: (v: Vie
             key={v.k}
             onClick={() => setView(v.k)}
             title={v.desc}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0 11px', fontSize: 11, fontFamily: 'inherit', cursor: 'pointer', border: 'none', background: active ? withAlpha(ACCENT_TEAL, 15) : 'transparent', color: active ? ACCENT_TEAL : INK_MUTED, fontWeight: active ? 600 : 500, borderRight: i < views.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none', whiteSpace: 'nowrap' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0 11px', fontSize: 11, fontFamily: 'inherit', cursor: 'pointer', border: 'none', background: active ? withAlpha(ACCENT_TEAL, 15) : 'transparent', color: active ? ACCENT_TEAL : INK_MUTED, fontWeight: active ? 600 : 500, borderRight: i < views.length - 1 ? '1px solid var(--border-subtle)' : 'none', whiteSpace: 'nowrap' }}
           >
             <span style={{ fontSize: 12 }}>{v.icon}</span>
             {v.l}

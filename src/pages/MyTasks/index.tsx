@@ -193,6 +193,10 @@ export default function UnifiedMyTasks() {
   const { filtered, byGroup } = useTaskFilter({
     allTasks: nonPendingTasks, filter, search, quickView, plannedSet, projectsByPid,
   })
+  // Genuinely-empty vs filtered-to-empty. The views pick AllCaughtUp or
+  // NoTasksMatch on this; before it was plumbed, an empty plate always read
+  // "your filters hide everything" with nothing to clear.
+  const isEmpty = nonPendingTasks.length === 0
 
   const drawerTask = drawer ? allTasks.find((t) => t.id === drawer) ?? null : null
 
@@ -371,7 +375,7 @@ export default function UnifiedMyTasks() {
           {isLoading ? (
             <div className="mt-band" style={{ paddingTop: 24, paddingBottom: 24 }}><div style={{ maxWidth: 'var(--col-main)' }}><TableSkeleton /></div></div>
           ) : effectiveView === 'columns' ? (
-            <ColumnsView filtered={filtered} byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
+            <ColumnsView filtered={filtered} isEmpty={isEmpty} byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
           ) : effectiveView === 'lanes' ? (
             <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
           ) : effectiveView === 'board' ? (
@@ -385,7 +389,7 @@ export default function UnifiedMyTasks() {
                   <span style={{ fontSize: 11, color: 'var(--muted)', opacity: 0.85 }}>{view === 'board' ? 'Board' : 'Columns'} is a desktop view — showing List on this screen.</span>
                 </div>
               )}
-              <ListView filtered={filtered} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} projectOptions={projectOptions} plannedSet={plannedSet} />
+              <ListView filtered={filtered} isEmpty={isEmpty} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} projectOptions={projectOptions} plannedSet={plannedSet} />
             </>
           )}
         </div>

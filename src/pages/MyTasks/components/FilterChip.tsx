@@ -71,7 +71,7 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
 
   const active = options.find((o) => o.v === value)
   return (
-    <div ref={triggerRef} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 999, background: 'rgba(255,255,255,0.02)', fontSize: 11, minHeight: 26 }}>
+    <div ref={triggerRef} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', border: '1px solid var(--border-strong)', borderRadius: 999, background: 'rgba(255,255,255,0.02)', fontSize: 11, minHeight: 26 }}>
       <span style={{ color: INK_DIM, paddingLeft: 10, paddingRight: 6, letterSpacing: '0.02em' }}>{label}</span>
       <button
         onClick={() => setOpen(!open)}
@@ -84,10 +84,10 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
         <div
           ref={menuRef}
           role="listbox"
-          style={{ position: 'fixed', top: pos.top, left: pos.left, minWidth: Math.max(pos.minWidth, 200), maxHeight: pos.maxHeight, overflowY: 'auto', background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}
+          style={{ position: 'fixed', top: pos.top, left: pos.left, minWidth: Math.max(pos.minWidth, 200), maxHeight: pos.maxHeight, overflowY: 'auto', background: PANEL_BG, border: '1px solid var(--border-strong)', borderRadius: 6, zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}
         >
           {showTypeahead && (
-            <div style={{ position: 'sticky', top: 0, background: PANEL_BG, padding: '6px 8px 4px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ position: 'sticky', top: 0, background: PANEL_BG, padding: '6px 8px 4px', borderBottom: '1px solid var(--border-subtle)' }}>
               <input
                 ref={filterInputRef}
                 value={filter}
