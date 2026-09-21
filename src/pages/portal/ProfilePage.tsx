@@ -3,7 +3,8 @@
 // bio, photo_url, scholar_id, credentials) and manage their iCal feed
 // integrations. role + member_type are admin-only and rendered read-only here.
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useId } from 'react'
+import Field from '../../components/ui/Field'
 import { Navigate, Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -242,11 +243,13 @@ export default function ProfilePage() {
 function ProfileField({ label, value, onChange, onBlur, multiline }: {
   label: string; value: string; onChange: (v: string) => void; onBlur: () => void; multiline?: boolean
 }) {
+  const id = useId()
   return (
     <div className={multiline ? 'md:col-span-2' : ''}>
-      <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--slate)' }}>{label}</label>
+      <Field label={label} htmlFor={id} noContainer>
       {multiline ? (
         <textarea
+          id={id}
           rows={3}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -256,6 +259,7 @@ function ProfileField({ label, value, onChange, onBlur, multiline }: {
         />
       ) : (
         <input
+          id={id}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -264,6 +268,7 @@ function ProfileField({ label, value, onChange, onBlur, multiline }: {
           style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-0)', color: 'var(--ink)' }}
         />
       )}
+      </Field>
     </div>
   )
 }

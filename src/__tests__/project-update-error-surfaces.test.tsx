@@ -11,20 +11,15 @@
 
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { useEffect } from 'react'
-import { createRoot, type Root } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { UndoToastProvider } from '../components/UndoToast'
 import { useUpdateProjectFields } from '../hooks/mutations/useProjectMutations'
 import type { Project } from '../data/types'
+import { mount, cleanupMountsAfterEach } from './testMount'
 
-let mounted: { host: HTMLElement; root: Root }[] = []
+cleanupMountsAfterEach()
 
 afterEach(() => {
-  for (const { host, root } of mounted) {
-    root.unmount()
-    host.remove()
-  }
-  mounted = []
   vi.unstubAllGlobals()
 })
 
@@ -47,20 +42,18 @@ function Harness({ fields }: { fields: Record<string, unknown> }) {
   return null
 }
 
-function mountWith(fields: Record<string, unknown>): { host: HTMLElement; queryClient: QueryClient } {
+async function mountWith(fields: Record<string, unknown>): Promise<{ host: HTMLElement; queryClient: QueryClient }> {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   queryClient.setQueryData<Project[]>(['projects'], seed)
-  const host = document.createElement('div')
-  document.body.appendChild(host)
-  const root = createRoot(host)
-  root.render(
+  // Harness renders nothing; the assertions below poll for the toast themselves.
+  const host = await mount(
     <QueryClientProvider client={queryClient}>
       <UndoToastProvider>
         <Harness fields={fields} />
       </UndoToastProvider>
     </QueryClientProvider>,
+    { ready: () => true, label: 'Harness' },
   )
-  mounted.push({ host, root })
   return { host, queryClient }
 }
 
@@ -72,7 +65,7 @@ describe('useUpdateProjectFields: a rejected write is never silent (#128)', () =
       statusText: 'Bad Request',
       json: async () => ({ error: 'Invalid stage: "nope". Must be one of: idea, writing' }),
     }))
-    const { host, queryClient } = mountWith({ stage: 'nope' })
+    const { host, queryClient } = await mountWith({ stage: 'nope' })
 
     await until(() => /Could not save stage/.test(host.textContent ?? ''), 'error toast')
     expect(host.textContent).toContain('Invalid stage: "nope"')
@@ -86,7 +79,7 @@ describe('useUpdateProjectFields: a rejected write is never silent (#128)', () =
       json: async () => ({ data: { slug: 'p1', stage: 'writing' } }),
     })
     vi.stubGlobal('fetch', fetchMock)
-    const { host, queryClient } = mountWith({ stage: 'writing' })
+    const { host, queryClient } = await mountWith({ stage: 'writing' })
 
     await until(() => fetchMock.mock.calls.length > 0, 'POST')
     await new Promise((r) => setTimeout(r, 50))

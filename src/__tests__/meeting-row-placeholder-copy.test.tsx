@@ -9,26 +9,16 @@
 
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import type { ReactElement } from 'react'
-import { createRoot, type Root } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { EventRow } from '../components/today/MeetingRow'
 import type { TodayEvent } from '../components/today/constants'
+import { mount as mountShared, cleanupMountsAfterEach } from './testMount'
 
-let mounted: { host: HTMLElement; root: Root }[] = []
+cleanupMountsAfterEach()
 
-async function mount(node: ReactElement): Promise<HTMLElement> {
-  const host = document.createElement('div')
-  document.body.appendChild(host)
-  const root = createRoot(host)
-  root.render(node)
-  mounted.push({ host, root })
-  // React 19 commits asynchronously; poll rather than assume one tick is enough.
-  for (let i = 0; i < 100; i++) {
-    if (host.querySelector('.meeting-row-header')) return host
-    await new Promise((r) => setTimeout(r, 10))
-  }
-  throw new Error('EventRow never rendered')
+function mount(node: ReactElement): Promise<HTMLElement> {
+  return mountShared(node, { ready: (h) => h.querySelector('.meeting-row-header'), label: 'EventRow' })
 }
 
 async function expand(host: HTMLElement): Promise<HTMLTextAreaElement> {
@@ -42,11 +32,6 @@ async function expand(host: HTMLElement): Promise<HTMLTextAreaElement> {
 }
 
 afterEach(() => {
-  for (const { host, root } of mounted) {
-    root.unmount()
-    host.remove()
-  }
-  mounted = []
   vi.unstubAllGlobals()
 })
 

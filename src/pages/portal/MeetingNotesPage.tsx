@@ -14,6 +14,7 @@ import Modal from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import MetricCard from '../../components/MetricCard'
 import InlineSelect from '../../components/InlineSelect'
+import Field from '../../components/ui/Field'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { useUndoToast } from '../../components/UndoToast'
 import { useMeetingsApi } from '../../hooks/useApiData'
@@ -300,10 +301,7 @@ function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: 
             it as the meeting's notes — the honest, useful action. */}
 
         {/* Link to meeting — required, since this is the save target */}
-        <div>
-          <label htmlFor="meeting-notes-link" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
-            Link to Meeting
-          </label>
+        <Field label="Link to Meeting" htmlFor="meeting-notes-link" noContainer>
           <InlineSelect
             value={meetingId}
             options={[
@@ -314,14 +312,12 @@ function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: 
             size="md"
             alwaysShowChevron
           />
-        </div>
+        </Field>
 
         {/* Input area */}
-        <div>
-          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
-            Paste Transcript
-          </label>
+        <Field label="Paste Transcript" htmlFor="meeting-notes-transcript" noContainer>
           <textarea
+            id="meeting-notes-transcript"
             value={transcript}
             onChange={(e) => setTranscript(e.target.value)}
             placeholder="Paste your meeting transcript here..."
@@ -329,7 +325,7 @@ function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: 
             className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
             style={{ borderColor: 'var(--border-subtle)' }}
           />
-        </div>
+        </Field>
       </div>
     </Modal>
   )

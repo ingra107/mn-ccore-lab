@@ -7,6 +7,7 @@ import { useCreateDependency, useDeleteDependency } from '../../hooks/useMutatio
 import type { Project } from '../../data/types'
 import { PATHS } from '../../constants/paths'
 import InlineSelect from '../../components/InlineSelect'
+import Field from '../../components/ui/Field'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
@@ -133,20 +134,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
             >
               <div className="flex flex-wrap gap-2 items-end mb-3">
                 {/* Direction */}
-                <div>
-                  <label
-                    style={{
-                      fontSize: '10px',
-                      color: 'var(--slate)',
-                      opacity: 0.75,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      display: 'block',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    Direction
-                  </label>
+                <Field label="Direction" size="micro" noContainer>
                   <InlineSelect
                     value={newDirection}
                     options={[
@@ -156,53 +144,29 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                     onChange={(v) => setNewDirection(v as 'outgoing' | 'incoming')}
                     alwaysShowChevron
                   />
-                </div>
+                </Field>
 
                 {/* Relationship type */}
-                <div>
-                  <label
-                    style={{
-                      fontSize: '10px',
-                      color: 'var(--slate)',
-                      opacity: 0.75,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      display: 'block',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    Relationship
-                  </label>
+                <Field label="Relationship" size="micro" noContainer>
                   <InlineSelect
                     value={newRelType}
                     options={REL_OPTIONS}
                     onChange={setNewRelType}
                     alwaysShowChevron
                   />
-                </div>
+                </Field>
 
                 {/* Target project */}
                 <div style={{ flex: 1, minWidth: '160px' }}>
-                  <label
-                    style={{
-                      fontSize: '10px',
-                      color: 'var(--slate)',
-                      opacity: 0.75,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      display: 'block',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    Project
-                  </label>
-                  <InlineSelect
-                    value={newTarget}
-                    options={[{ value: '', label: 'Select a project...' }, ...availableTargets.map((p) => ({ value: p.slug, label: p.title }))]}
-                    onChange={setNewTarget}
-                    size="md"
-                    alwaysShowChevron
-                  />
+                  <Field label="Project" size="micro" noContainer>
+                    <InlineSelect
+                      value={newTarget}
+                      options={[{ value: '', label: 'Select a project...' }, ...availableTargets.map((p) => ({ value: p.slug, label: p.title }))]}
+                      onChange={setNewTarget}
+                      size="md"
+                      alwaysShowChevron
+                    />
+                  </Field>
                 </div>
               </div>
 

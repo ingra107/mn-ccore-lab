@@ -13,6 +13,7 @@ import { Button } from '../../components/ui/Button'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
+import Field from '../../components/ui/Field'
 import { ActivityEntryItem } from '../../components/activity/activityRender'
 import type { ActivityEntryItemRow } from '../../components/activity/activityRender'
 import { useQuestions, useQuestionDetail, useProjects } from '../../hooks/useApiData'
@@ -474,10 +475,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
         }}
         className="flex flex-col gap-3.5"
       >
-        <div>
-          <label htmlFor="question-text" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
-            Question *
-          </label>
+        <Field label="Question" required htmlFor="question-text" noContainer>
           {/* SmartCompose (D14) — @-mention dropdown surfaces @hermes in the
               team list. The modal footer's "Ask the Lab" button drives the
               form (hideSubmitButton); Cmd+Enter submits via the form keydown. */}
@@ -495,13 +493,11 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
             hideKbdHint
             autoFocus
           />
-        </div>
+        </Field>
 
-        <div>
-          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
-            Context
-          </label>
+        <Field label="Context" htmlFor="ask-lab-context" noContainer>
           <textarea
+            id="ask-lab-context"
             value={context}
             onChange={(e) => setContext(e.target.value)}
             placeholder="Help others understand your question"
@@ -509,12 +505,9 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
             className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
             style={{ borderColor: 'var(--border-subtle)' }}
           />
-        </div>
+        </Field>
 
-        <div>
-          <label htmlFor="ask-lab-related-project" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
-            Related Project
-          </label>
+        <Field label="Related Project" htmlFor="ask-lab-related-project" noContainer>
           <InlineSelect
             value={projectSlug}
             options={[
@@ -525,7 +518,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
             size="md"
             alwaysShowChevron
           />
-        </div>
+        </Field>
 
         {!questionText.trim() && (
           <p id="question-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>

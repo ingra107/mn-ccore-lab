@@ -23,9 +23,9 @@
 
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { useState, type ReactElement } from 'react'
-import { createRoot, type Root } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import SmartCompose from '../components/SmartCompose'
+import { mount as mountShared, cleanupMountsAfterEach } from './testMount'
 import { uploadFileToR2 } from '../lib/r2Upload'
 
 vi.mock('../lib/r2Upload', () => ({
@@ -34,20 +34,10 @@ vi.mock('../lib/r2Upload', () => ({
 
 const mockedUpload = vi.mocked(uploadFileToR2)
 
-let mounted: { host: HTMLElement; root: Root }[] = []
+cleanupMountsAfterEach()
 
-async function mount(node: ReactElement): Promise<HTMLElement> {
-  const host = document.createElement('div')
-  document.body.appendChild(host)
-  const root = createRoot(host)
-  root.render(node)
-  mounted.push({ host, root })
-  // React 19 commits asynchronously; poll rather than assume one tick is enough.
-  for (let i = 0; i < 100; i++) {
-    if (host.querySelector('textarea')) return host
-    await new Promise((r) => setTimeout(r, 10))
-  }
-  throw new Error('SmartCompose never rendered')
+function mount(node: ReactElement): Promise<HTMLElement> {
+  return mountShared(node, { ready: (h) => h.querySelector('textarea'), label: 'SmartCompose' })
 }
 
 async function waitFor(predicate: () => boolean, label: string): Promise<void> {
@@ -59,11 +49,6 @@ async function waitFor(predicate: () => boolean, label: string): Promise<void> {
 }
 
 afterEach(() => {
-  for (const { host, root } of mounted) {
-    root.unmount()
-    host.remove()
-  }
-  mounted = []
   vi.unstubAllGlobals()
   mockedUpload.mockReset()
 })

@@ -6,6 +6,7 @@ import { useProjects } from '../hooks/useApiData'
 import { useUndoToast } from './UndoToast'
 import { dayActivityQueryKey, hermesOutcomeToast } from '../lib/askHermes'
 import InlineSelect from './InlineSelect'
+import Field from './ui/Field'
 import { nowInstant } from '../lib/time'
 import { ICON_PROPS } from '../lib/iconProps'
 import { Button } from './ui/Button'
@@ -341,28 +342,18 @@ export default function QuickCaptureInbox() {
         </div>
 
         {/* Project selector */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label
-            htmlFor="qci-project"
-            style={{
-              fontSize: 'var(--text-micro, 10px)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              color: 'var(--ink-label, var(--slate))',
-              opacity: 0.85,
-              fontWeight: 500,
-            }}
-          >
-            Project (optional)
-          </label>
-          <InlineSelect
-            value={projectId}
-            options={[{ value: '', label: 'No project' }, ...((projects || []).map((p) => ({ value: p.slug, label: p.title })))]}
-            onChange={setProjectId}
-            size="md"
-            alwaysShowChevron
-          />
-        </div>
+        <Field label="Project (optional)" htmlFor="qci-project" size="micro" noContainer>
+          {/* flex column keeps the trigger stretched to the row width, as the pre-Field wrapper did */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <InlineSelect
+              value={projectId}
+              options={[{ value: '', label: 'No project' }, ...((projects || []).map((p) => ({ value: p.slug, label: p.title })))]}
+              onChange={setProjectId}
+              size="md"
+              alwaysShowChevron
+            />
+          </div>
+        </Field>
 
         {/* Actions */}
         <div

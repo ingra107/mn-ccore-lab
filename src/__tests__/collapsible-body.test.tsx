@@ -6,34 +6,20 @@
 // Runs in real Chromium (vitest.config.ts browser mode) because the collapse
 // decision is a MEASUREMENT (scrollHeight vs clientHeight), not a string rule.
 
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import type { ReactElement } from 'react'
-import { createRoot, type Root } from 'react-dom/client'
 import { CollapsibleBody } from '../components/activity/CollapsibleBody'
+import { mount as mountShared, cleanupMountsAfterEach } from './testMount'
 
-let mounted: { host: HTMLElement; root: Root }[] = []
+cleanupMountsAfterEach()
 
 async function mount(node: ReactElement): Promise<HTMLElement> {
-  const host = document.createElement('div')
-  host.style.width = '320px'
-  document.body.appendChild(host)
-  const root = createRoot(host)
-  root.render(node)
-  mounted.push({ host, root })
-  for (let i = 0; i < 100; i++) {
-    if (host.querySelector('[data-collapsible-body]')) break
-    await new Promise((r) => setTimeout(r, 10))
-  }
+  const host = await mountShared(node, { ready: (h) => h.querySelector('[data-collapsible-body]'), label: 'CollapsibleBody', width: '320px' })
   // one more frame so the layout measurement has run
   await new Promise((r) => requestAnimationFrame(() => r(null)))
   await new Promise((r) => setTimeout(r, 20))
   return host
 }
-
-afterEach(() => {
-  for (const { host, root } of mounted) { root.unmount(); host.remove() }
-  mounted = []
-})
 
 const LONG = Array.from({ length: 40 }, (_, i) => `line ${i + 1} of a very long comment body`).join('\n')
 

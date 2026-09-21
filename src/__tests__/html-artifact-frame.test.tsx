@@ -10,37 +10,19 @@
 // and the iframe are the real thing, not a jsdom stand-in. Mounts with
 // react-dom directly — the repo carries no testing-library.
 
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import type { ReactElement } from 'react'
-import { createRoot, type Root } from 'react-dom/client'
 import HtmlArtifactFrame from '../components/HtmlArtifactFrame'
+import { mount as mountShared, cleanupMountsAfterEach } from './testMount'
 
 const HTML = '<h1>Aims</h1><nav><a href="#shape">Shape</a></nav><details id="shape"><summary>Shape</summary><p>body</p></details>'
 
-let mounted: { host: HTMLElement; root: Root }[] = []
+cleanupMountsAfterEach()
 
 async function mount(node: ReactElement): Promise<HTMLIFrameElement> {
-  const host = document.createElement('div')
-  document.body.appendChild(host)
-  const root = createRoot(host)
-  root.render(node)
-  mounted.push({ host, root })
-  // React 19 commits asynchronously; poll rather than assume one tick is enough
-  for (let i = 0; i < 100; i++) {
-    const el = host.querySelector('iframe')
-    if (el) return el
-    await new Promise((r) => setTimeout(r, 10))
-  }
-  throw new Error('iframe never rendered')
+  const host = await mountShared(node, { ready: (h) => h.querySelector('iframe'), label: 'iframe' })
+  return host.querySelector('iframe')!
 }
-
-afterEach(() => {
-  for (const { host, root } of mounted) {
-    root.unmount()
-    host.remove()
-  }
-  mounted = []
-})
 
 describe('HtmlArtifactFrame', () => {
   it('gives the document a real url so in-page anchors do not blank it', async () => {

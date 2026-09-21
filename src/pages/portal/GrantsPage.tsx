@@ -19,6 +19,7 @@ import EmptyState from '../../components/EmptyState'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
+import Field from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
 import { useUndoToast } from '../../components/UndoToast'
 import { ColumnHeader, TableContainer, TableControls } from '../../components/table'
@@ -1164,10 +1165,7 @@ function AddGrantMilestoneModal({
         </div>
 
         <div className="flex flex-col gap-3">
-          <div>
-            <label htmlFor="grant-milestone-grant" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
-              Grant
-            </label>
+          <Field label="Grant" htmlFor="grant-milestone-grant" noContainer>
             <InlineSelect
               value={grantId}
               options={grants.map((g) => ({ value: g.id, label: `${g.mechanism} - ${g.title}` }))}
@@ -1175,12 +1173,9 @@ function AddGrantMilestoneModal({
               size="md"
               alwaysShowChevron
             />
-          </div>
+          </Field>
 
-          <div>
-            <label htmlFor="grant-milestone-type" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
-              Milestone Type
-            </label>
+          <Field label="Milestone Type" htmlFor="grant-milestone-type" noContainer>
             <InlineSelect
               value={milestoneType}
               options={MILESTONE_TYPES}
@@ -1188,13 +1183,11 @@ function AddGrantMilestoneModal({
               size="md"
               alwaysShowChevron
             />
-          </div>
+          </Field>
 
-          <div>
-            <label style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
-              Title
-            </label>
+          <Field label="Title" htmlFor="grant-milestone-title" noContainer>
             <input
+              id="grant-milestone-title"
               type="text"
               placeholder="e.g., Year 2 RPPR"
               value={title}
@@ -1202,32 +1195,28 @@ function AddGrantMilestoneModal({
               style={inputStyle}
               autoFocus
             />
-          </div>
+          </Field>
 
-          <div>
-            <label style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
-              Due Date
-            </label>
+          <Field label="Due Date" htmlFor="grant-milestone-due" noContainer>
             <input
+              id="grant-milestone-due"
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
               style={inputStyle}
             />
-          </div>
+          </Field>
 
-          <div>
-            <label style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
-              Notes (optional)
-            </label>
+          <Field label="Notes (optional)" htmlFor="grant-milestone-notes" noContainer>
             <textarea
+              id="grant-milestone-notes"
               placeholder="Any additional notes..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
               style={{ ...inputStyle, resize: 'vertical' as const }}
             />
-          </div>
+          </Field>
         </div>
 
         <div className="flex justify-end gap-2 mt-4">

@@ -9,6 +9,7 @@ import EmptyState from '../../components/EmptyState'
 import EmptyStateArt from '../../components/EmptyStateArt'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
+import Field from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
 import { useUndoToast } from '../../components/UndoToast'
 import { useMenteeMilestones, useMenteeOverview, useActivity } from '../../hooks/useApiData'
@@ -935,10 +936,7 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
         {/* Form */}
         <div className="flex flex-col gap-4">
           {/* Mentee */}
-          <div>
-            <label htmlFor="mentee-milestone-mentee" style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
-              Mentee
-            </label>
+          <Field label="Mentee" htmlFor="mentee-milestone-mentee" noContainer>
             <InlineSelect
               value={menteeSlug}
               options={menteeSlugs.map((s) => ({ value: s, label: getPersonInfo(s).name || s }))}
@@ -946,13 +944,10 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
               size="md"
               alwaysShowChevron
             />
-          </div>
+          </Field>
 
           {/* Type */}
-          <div>
-            <label htmlFor="mentee-milestone-type" style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
-              Milestone Type
-            </label>
+          <Field label="Milestone Type" htmlFor="mentee-milestone-type" noContainer>
             <InlineSelect
               value={milestoneType}
               options={MILESTONE_TYPES}
@@ -960,14 +955,12 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
               size="md"
               alwaysShowChevron
             />
-          </div>
+          </Field>
 
           {/* Title */}
-          <div>
-            <label style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
-              Title
-            </label>
+          <Field label="Title" htmlFor="mentee-milestone-title" noContainer>
             <input
+              id="mentee-milestone-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -985,14 +978,12 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
               }}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
             />
-          </div>
+          </Field>
 
           {/* Due Date */}
-          <div>
-            <label style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
-              Due Date
-            </label>
+          <Field label="Due Date" htmlFor="mentee-milestone-due" noContainer>
             <input
+              id="mentee-milestone-due"
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
@@ -1007,14 +998,12 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
                 outline: 'none',
               }}
             />
-          </div>
+          </Field>
 
           {/* Description */}
-          <div>
-            <label style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
-              Description (optional)
-            </label>
+          <Field label="Description (optional)" htmlFor="mentee-milestone-description" noContainer>
             <textarea
+              id="mentee-milestone-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Additional context or requirements..."
@@ -1032,7 +1021,7 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
                 lineHeight: 1.5,
               }}
             />
-          </div>
+          </Field>
         </div>
 
         {/* Actions */}

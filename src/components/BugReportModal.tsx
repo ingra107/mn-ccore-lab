@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { X, Send, Image, Loader2 } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import Modal from './ui/Modal'
+import Field from './ui/Field'
 import { ICON_PROPS } from '../lib/iconProps'
 
 interface BugReportModalProps {
@@ -204,35 +205,30 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
           ) : (
             // Form
             <>
-              <label
-                htmlFor="bug-description"
-                className="block text-xs mb-1.5"
-                style={{ color: 'var(--slate)', fontWeight: 500 }}
-              >
-                What happened?
-              </label>
-              <textarea
-                ref={textareaRef}
-                id="bug-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                onPaste={handlePaste}
-                onKeyDown={handleKeyDown}
-                placeholder="Describe the bug... (Ctrl+V screenshot, Ctrl+Enter submit)"
-                rows={4}
-                style={{
-                  width: '100%',
-                  background: 'var(--surface-1)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: 'var(--sp-sm) var(--sp-md)',
-                  color: 'var(--ink)',
-                  fontSize: 'var(--text-sm)',
-                  resize: 'vertical',
-                  outline: 'none',
-                  fontFamily: 'var(--font-sans)',
-                }}
-              />
+              <Field label="What happened?" htmlFor="bug-description" noContainer>
+                <textarea
+                  ref={textareaRef}
+                  id="bug-description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  onPaste={handlePaste}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Describe the bug... (Ctrl+V screenshot, Ctrl+Enter submit)"
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    background: 'var(--surface-1)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: 'var(--sp-sm) var(--sp-md)',
+                    color: 'var(--ink)',
+                    fontSize: 'var(--text-sm)',
+                    resize: 'vertical',
+                    outline: 'none',
+                    fontFamily: 'var(--font-sans)',
+                  }}
+                />
+              </Field>
 
               {/* Screenshot preview */}
               {screenshot && (

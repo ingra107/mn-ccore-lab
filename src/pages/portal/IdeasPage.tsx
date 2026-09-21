@@ -6,6 +6,7 @@ import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
+import Field from '../../components/ui/Field'
 import CreateProjectModal from '../../components/CreateProjectModal'
 import { useUndoToast } from '../../components/UndoToast'
 import { ColumnHeader, TableContainer } from '../../components/table'
@@ -970,9 +971,9 @@ function IdeaRowView({
               }}
               style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-md)' }}
             >
-              <div>
-                <label style={{ display: 'block', fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Title</label>
+              <Field label="Title" htmlFor="idea-edit-title" size="micro" noContainer>
                 <input
+                  id="idea-edit-title"
                   type="text"
                   ref={editTitleRef}
                   value={editTitle}
@@ -980,19 +981,19 @@ function IdeaRowView({
                   required
                   style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-base)', boxSizing: 'border-box' }}
                 />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Description</label>
+              </Field>
+              <Field label="Description" htmlFor="idea-edit-description" size="micro" noContainer>
                 <textarea
+                  id="idea-edit-description"
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   rows={3}
                   style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-small)', resize: 'vertical', boxSizing: 'border-box' }}
                 />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Research Area</label>
+              </Field>
+              <Field label="Research Area" htmlFor="idea-edit-area" size="micro" noContainer>
                 <select
+                  id="idea-edit-area"
                   value={editArea}
                   onChange={(e) => setEditArea(e.target.value)}
                   aria-label="Research area"
@@ -1001,7 +1002,7 @@ function IdeaRowView({
                   <option value="">— none —</option>
                   {researchAreas.map((a) => <option key={a} value={a}>{a}</option>)}
                 </select>
-              </div>
+              </Field>
               <div style={{ display: 'flex', gap: 'var(--sp-sm)' }}>
                 <Button type="submit" variant="primary" size="sm" disabled={!editTitle.trim()}>
                   Save
@@ -1145,19 +1146,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
           className="flex flex-col"
           style={{ padding: 'var(--sp-xl)', gap: 'var(--sp-md)' }}
         >
-          <div>
-            <label
-              htmlFor="idea-title"
-              className="block"
-              style={{
-                fontSize: 'var(--text-label)',
-                fontWeight: 500,
-                color: 'var(--slate)',
-                marginBottom: 'var(--sp-xs)',
-              }}
-            >
-              Title *
-            </label>
+          <Field label="Title" required htmlFor="idea-title" noContainer>
             <input
               id="idea-title"
               type="text"
@@ -1173,21 +1162,9 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
               aria-required="true"
               autoFocus
             />
-          </div>
+          </Field>
 
-          <div>
-            <label
-              htmlFor="idea-description"
-              className="block"
-              style={{
-                fontSize: 'var(--text-label)',
-                fontWeight: 500,
-                color: 'var(--slate)',
-                marginBottom: 'var(--sp-xs)',
-              }}
-            >
-              Description
-            </label>
+          <Field label="Description" htmlFor="idea-description" noContainer>
             <textarea
               id="idea-description"
               value={description}
@@ -1201,21 +1178,9 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
                 fontSize: 'var(--text-small)',
               }}
             />
-          </div>
+          </Field>
 
-          <div>
-            <label
-              htmlFor="idea-area"
-              className="block"
-              style={{
-                fontSize: 'var(--text-label)',
-                fontWeight: 500,
-                color: 'var(--slate)',
-                marginBottom: 'var(--sp-xs)',
-              }}
-            >
-              Research Area
-            </label>
+          <Field label="Research Area" htmlFor="idea-area" noContainer>
             <InlineSelect
               value={researchArea}
               options={[{ value: '', label: 'Select area (optional)' }, ...researchAreas.map((a) => ({ value: a, label: a }))]}
@@ -1223,7 +1188,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
               size="md"
               alwaysShowChevron
             />
-          </div>
+          </Field>
 
           {!title.trim() && (
             <p

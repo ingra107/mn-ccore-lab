@@ -10,6 +10,7 @@ import {
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import { Button } from '../../components/ui/Button'
+import Field from '../../components/ui/Field'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import InlineSelect from '../../components/InlineSelect'
@@ -778,17 +779,14 @@ function IntegrationsPanel() {
 
 function SettingsField({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div>
-      <label className="block text-xs font-medium mb-0.5" style={{ color: 'var(--slate)' }}>
-        {label}
-      </label>
+    <Field label={label} noContainer>
       {hint && (
         <p className="text-[11px] mb-1.5" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           {hint}
         </p>
       )}
       {children}
-    </div>
+    </Field>
   )
 }
 

@@ -10,6 +10,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Field from './ui/Field'
 import {
   Send,
   MessageSquare,
@@ -148,28 +149,49 @@ function AddEventForm({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         {/* Event type */}
         <div>
-          <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.75, display: 'block', marginBottom: '4px' }}>
-            Event Type
-          </label>
-          <InlineSelect
-            value={eventType}
-            options={EVENT_TYPES.map((t) => ({ value: t, label: EVENT_CONFIG[t].label }))}
-            onChange={(v) => setEventType(v as SubmissionEventType)}
-            size="md"
-            alwaysShowChevron
-          />
+          <Field label="Event Type" noContainer>
+            <InlineSelect
+              value={eventType}
+              options={EVENT_TYPES.map((t) => ({ value: t, label: EVENT_CONFIG[t].label }))}
+              onChange={(v) => setEventType(v as SubmissionEventType)}
+              size="md"
+              alwaysShowChevron
+            />
+          </Field>
         </div>
 
         {/* Date */}
         <div>
-          <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.75, display: 'block', marginBottom: '4px' }}>
-            Date
-          </label>
+          <Field label="Date" htmlFor="submission-event-date" noContainer>
+            <input
+              id="submission-event-date"
+              type="date"
+              value={eventDate}
+              onChange={(e) => setEventDate(e.target.value)}
+              required
+              style={{
+                width: '100%',
+                padding: '6px 10px',
+                fontSize: 'var(--value-size)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-subtle)',
+                background: 'transparent',
+                color: 'var(--ink)',
+              }}
+            />
+          </Field>
+        </div>
+      </div>
+
+      {/* Journal */}
+      <div style={{ marginBottom: '10px' }}>
+        <Field label="Journal" htmlFor="submission-journal" noContainer>
           <input
-            type="date"
-            value={eventDate}
-            onChange={(e) => setEventDate(e.target.value)}
-            required
+            id="submission-journal"
+            type="text"
+            value={journal}
+            onChange={(e) => setJournal(e.target.value)}
+            placeholder="e.g., CHEST, AJRCCM"
             style={{
               width: '100%',
               padding: '6px 10px',
@@ -180,52 +202,30 @@ function AddEventForm({
               color: 'var(--ink)',
             }}
           />
-        </div>
-      </div>
-
-      {/* Journal */}
-      <div style={{ marginBottom: '10px' }}>
-        <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.75, display: 'block', marginBottom: '4px' }}>
-          Journal
-        </label>
-        <input
-          type="text"
-          value={journal}
-          onChange={(e) => setJournal(e.target.value)}
-          placeholder="e.g., CHEST, AJRCCM"
-          style={{
-            width: '100%',
-            padding: '6px 10px',
-            fontSize: 'var(--value-size)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-subtle)',
-            background: 'transparent',
-            color: 'var(--ink)',
-          }}
-        />
+        </Field>
       </div>
 
       {/* Notes */}
       <div style={{ marginBottom: '12px' }}>
-        <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.75, display: 'block', marginBottom: '4px' }}>
-          Notes
-        </label>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Optional details..."
-          rows={2}
-          style={{
-            width: '100%',
-            padding: '6px 10px',
-            fontSize: 'var(--value-size)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-subtle)',
-            background: 'transparent',
-            color: 'var(--ink)',
-            resize: 'vertical',
-          }}
-        />
+        <Field label="Notes" htmlFor="submission-notes" noContainer>
+          <textarea
+            id="submission-notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Optional details..."
+            rows={2}
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              fontSize: 'var(--value-size)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-subtle)',
+              background: 'transparent',
+              color: 'var(--ink)',
+              resize: 'vertical',
+            }}
+          />
+        </Field>
       </div>
 
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>

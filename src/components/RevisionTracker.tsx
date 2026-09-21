@@ -20,6 +20,7 @@ import {
   Send,
 } from 'lucide-react'
 import InlineSelect from './InlineSelect'
+import Field from './ui/Field'
 import Avatar from './Avatar'
 import { useUndoToast } from './UndoToast'
 import { useRevisions, useRevisionComments } from '../hooks/useApiData'
@@ -164,57 +165,41 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
             >
               <div className="flex flex-wrap gap-3 items-end">
                 <div style={{ flex: 1, minWidth: '160px' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: 'var(--label-size)',
-                      fontWeight: 'var(--label-weight)',
-                      color: 'var(--slate)',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    Journal
-                  </label>
-                  <input
-                    type="text"
-                    value={newJournal}
-                    onChange={(e) => setNewJournal(e.target.value)}
-                    placeholder="e.g., AJRCCM"
-                    className="w-full rounded-lg px-3 py-1.5"
-                    style={{
-                      fontSize: 'var(--value-size)',
-                      color: 'var(--ink)',
-                      background: 'var(--ice)',
-                      border: '1px solid var(--border-subtle)',
-                      outline: 'none',
-                    }}
-                  />
+                  <Field label="Journal" htmlFor="revision-journal" noContainer>
+                    <input
+                      id="revision-journal"
+                      type="text"
+                      value={newJournal}
+                      onChange={(e) => setNewJournal(e.target.value)}
+                      placeholder="e.g., AJRCCM"
+                      className="w-full rounded-lg px-3 py-1.5"
+                      style={{
+                        fontSize: 'var(--value-size)',
+                        color: 'var(--ink)',
+                        background: 'var(--ice)',
+                        border: '1px solid var(--border-subtle)',
+                        outline: 'none',
+                      }}
+                    />
+                  </Field>
                 </div>
                 <div style={{ minWidth: '160px' }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: 'var(--label-size)',
-                      fontWeight: 'var(--label-weight)',
-                      color: 'var(--slate)',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    Response Due
-                  </label>
-                  <input
-                    type="date"
-                    value={newResponseDue}
-                    onChange={(e) => setNewResponseDue(e.target.value)}
-                    className="rounded-lg px-3 py-1.5"
-                    style={{
-                      fontSize: 'var(--value-size)',
-                      color: 'var(--ink)',
-                      background: 'var(--ice)',
-                      border: '1px solid var(--border-subtle)',
-                      outline: 'none',
-                    }}
-                  />
+                  <Field label="Response Due" htmlFor="revision-response-due" noContainer>
+                    <input
+                      id="revision-response-due"
+                      type="date"
+                      value={newResponseDue}
+                      onChange={(e) => setNewResponseDue(e.target.value)}
+                      className="rounded-lg px-3 py-1.5"
+                      style={{
+                        fontSize: 'var(--value-size)',
+                        color: 'var(--ink)',
+                        background: 'var(--ice)',
+                        border: '1px solid var(--border-subtle)',
+                        outline: 'none',
+                      }}
+                    />
+                  </Field>
                 </div>
                 <Button
                   variant="primary"
@@ -737,44 +722,44 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
           >
             <div className="flex gap-3 mb-2">
               <div>
-                <label style={{ display: 'block', fontSize: '10px', fontWeight: 500, color: 'var(--slate)', marginBottom: 2 }}>
-                  Reviewer #
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={9}
-                  value={newReviewerNum}
-                  onChange={(e) => setNewReviewerNum(parseInt(e.target.value) || 1)}
-                  className="rounded-md px-2 py-1"
-                  style={{
-                    width: 52,
-                    fontSize: '12px',
-                    color: 'var(--ink)',
-                    background: 'var(--ice)',
-                    border: '1px solid var(--border-subtle)',
-                    outline: 'none',
-                  }}
-                />
+                <Field label="Reviewer #" htmlFor="revision-reviewer-num" size="micro" noContainer>
+                  <input
+                    id="revision-reviewer-num"
+                    type="number"
+                    min={1}
+                    max={9}
+                    value={newReviewerNum}
+                    onChange={(e) => setNewReviewerNum(parseInt(e.target.value) || 1)}
+                    className="rounded-md px-2 py-1"
+                    style={{
+                      width: 52,
+                      fontSize: '12px',
+                      color: 'var(--ink)',
+                      background: 'var(--ice)',
+                      border: '1px solid var(--border-subtle)',
+                      outline: 'none',
+                    }}
+                  />
+                </Field>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '10px', fontWeight: 500, color: 'var(--slate)', marginBottom: 2 }}>
-                  Assigned To
-                </label>
-                <input
-                  type="text"
-                  value={newAssignedTo}
-                  onChange={(e) => setNewAssignedTo(e.target.value)}
-                  className="rounded-md px-2 py-1"
-                  style={{
-                    width: 100,
-                    fontSize: '12px',
-                    color: 'var(--ink)',
-                    background: 'var(--ice)',
-                    border: '1px solid var(--border-subtle)',
-                    outline: 'none',
-                  }}
-                />
+                <Field label="Assigned To" htmlFor="revision-assigned-to" size="micro" noContainer>
+                  <input
+                    id="revision-assigned-to"
+                    type="text"
+                    value={newAssignedTo}
+                    onChange={(e) => setNewAssignedTo(e.target.value)}
+                    className="rounded-md px-2 py-1"
+                    style={{
+                      width: 100,
+                      fontSize: '12px',
+                      color: 'var(--ink)',
+                      background: 'var(--ice)',
+                      border: '1px solid var(--border-subtle)',
+                      outline: 'none',
+                    }}
+                  />
+                </Field>
               </div>
             </div>
             <textarea

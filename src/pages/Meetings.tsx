@@ -19,6 +19,7 @@ import Avatar from '../components/Avatar'
 import PageHeader from '../components/PageHeader'
 import InlineSelect from '../components/InlineSelect'
 import InlineAssigneePicker from '../components/InlineAssigneePicker'
+import Field from '../components/ui/Field'
 import { TaskRow as SharedTaskRow } from '../components/tasks/TaskRow'
 import { emDashifyTitle } from '../lib/textUtils'
 import { formatFullDate, formatShortDate, localDateKey } from '../lib/dateUtils'
@@ -626,10 +627,6 @@ export default function Meetings() {
     background: 'var(--ice)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, color: 'var(--ink)',
     fontSize: 'var(--value-size)', outline: 'none', borderRadius: 'var(--radius-lg)', padding: '6px 10px', width: '100%',
   }
-  const labelStyle: React.CSSProperties = {
-    fontSize: '10px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px', display: 'block',
-  }
-
   function isNextMeeting(meeting: Meeting): boolean {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -660,28 +657,24 @@ export default function Meetings() {
       className={showAddAction ? 'basis-full' : ''}
     >
       <div className="space-y-3">
-        <div>
-          <label style={labelStyle}>Description</label>
-          <input type="text" value={newActionDesc} onChange={(e) => setNewActionDesc(e.target.value)} placeholder="What needs to be done?" style={inputStyle}
+        <Field label="Description" htmlFor="meeting-action-desc" size="micro" noContainer>
+          <input id="meeting-action-desc" type="text" value={newActionDesc} onChange={(e) => setNewActionDesc(e.target.value)} placeholder="What needs to be done?" style={inputStyle}
             onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
             onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAddActionItem() }} />
-        </div>
+        </Field>
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label style={labelStyle}>Assignee</label>
+          <Field label="Assignee" size="micro" noContainer>
             <InlineAssigneePicker
               value={newActionAssignee}
               onChange={setNewActionAssignee}
             />
-          </div>
-          <div>
-            <label style={labelStyle}>Due Date (optional)</label>
-            <input type="date" value={newActionDueDate} onChange={(e) => setNewActionDueDate(e.target.value)} style={inputStyle} />
-          </div>
+          </Field>
+          <Field label="Due Date (optional)" htmlFor="meeting-action-due" size="micro" noContainer>
+            <input id="meeting-action-due" type="date" value={newActionDueDate} onChange={(e) => setNewActionDueDate(e.target.value)} style={inputStyle} />
+          </Field>
         </div>
-        <div>
-          <label style={labelStyle}>Project (optional)</label>
+        <Field label="Project (optional)" size="micro" noContainer>
           <InlineSelect
             value={newActionProject}
             options={[{ value: '', label: 'No project link' }, ...projectOptions.map((p) => ({ value: p.title, label: p.title }))]}
@@ -689,7 +682,7 @@ export default function Meetings() {
             size="md"
             alwaysShowChevron
           />
-        </div>
+        </Field>
       </div>
     </QuickAddForm>
   )
@@ -737,20 +730,17 @@ export default function Meetings() {
                 >
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label style={labelStyle}>Date</label>
-                        <input type="date" value={newMeetingDate} onChange={(e) => setNewMeetingDate(e.target.value)} style={inputStyle} />
-                      </div>
-                      <div>
-                        <label style={labelStyle}>Title</label>
-                        <input type="text" value={newMeetingTitle} onChange={(e) => setNewMeetingTitle(e.target.value)} placeholder="Meeting title" style={inputStyle}
+                      <Field label="Date" htmlFor="new-meeting-date" size="micro" noContainer>
+                        <input id="new-meeting-date" type="date" value={newMeetingDate} onChange={(e) => setNewMeetingDate(e.target.value)} style={inputStyle} />
+                      </Field>
+                      <Field label="Title" htmlFor="new-meeting-title" size="micro" noContainer>
+                        <input id="new-meeting-title" type="text" value={newMeetingTitle} onChange={(e) => setNewMeetingTitle(e.target.value)} placeholder="Meeting title" style={inputStyle}
                           onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
                           onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }} />
-                      </div>
+                      </Field>
                     </div>
-                    <div>
-                      <label style={labelStyle}><Users {...ICON_PROPS} size={10} className="inline mr-1" />Attendees</label>
-                      <div className="flex flex-wrap gap-2 mt-1">
+                    <Field label="Attendees" size="micro" noContainer>
+                      <div className="flex flex-wrap gap-2">
                         {TEAM_OPTIONS.slice(0, 10).map((m) => {
                           const selected = newMeetingAttendees.includes(m.slug)
                           return (
@@ -763,9 +753,8 @@ export default function Meetings() {
                           )
                         })}
                       </div>
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Agenda</label>
+                    </Field>
+                    <Field label="Agenda" size="micro" noContainer>
                       <div className="space-y-2">
                         {newMeetingAgenda.map((item, i) => (
                           <div key={i} className="flex items-center gap-2">
@@ -785,7 +774,7 @@ export default function Meetings() {
                           <Plus {...ICON_PROPS} size={12} />Add agenda item
                         </button>
                       </div>
-                    </div>
+                    </Field>
                   </div>
                 </QuickAddForm>
               </div>
