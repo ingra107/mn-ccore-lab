@@ -18,6 +18,7 @@ import { useState } from 'react'
 import { HelpCircle, Check } from 'lucide-react'
 import { useUpdateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
+import { nowInstant } from '../../lib/time'
 import { parseQuestionSpec } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
 
@@ -126,7 +127,7 @@ function QuestionRow({ task, isLast }: { task: TaskRow; isLast: boolean }) {
       choice,
       text: text.trim() || undefined,
       via: 'hub' as const,
-      at: new Date().toISOString(),
+      at: nowInstant(),
     }
     mutateTask({ id: task.id, fields: { question_answer_json: answer } })
     showUndo(

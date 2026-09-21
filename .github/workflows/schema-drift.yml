@@ -464,15 +464,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: python3 scripts/check-project-identity-gate.py
 
-      - name: Time-discipline lint (Increment 1A R20/R21, ENFORCE)
-        if: ${{ !cancelled() }}
-        # Hub-local stdlib mirror — does NOT depend on a PB checkout. ENFORCE
-        # mode (hard-fail) since the Plan 1B display-site migration cleared the
-        # backlog to zero (2026-05-25): all date sites use canonical helpers
-        # (src/lib/time.ts, src/lib/dateUtils.ts, api/lib/time.ts, ct-date.ts).
-        #
-        # No `|| true`: in ENFORCE mode the script exits 1 on any R20/R21 hit,
-        # red-failing the build so a regression is caught at PR time.
-        env:
-          TIME_LINT_MODE: enforce
-        run: node scripts/check-time-discipline.mjs
+      # Time-discipline lint (R20/R21) MOVED to vitest.yml + .githooks/pre-commit
+      # on 2026-09-20: a source-only lint on a nightly prod-schema job fired as a
+      # mislabelled "schema drift" failure 12+ hours after the commit that
+      # introduced the hit. It now fails the push/PR gate that owns src/ + api/.

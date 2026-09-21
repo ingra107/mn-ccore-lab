@@ -65,6 +65,17 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
+      - name: Time-discipline lint (R20/R21, ENFORCE)
+        # Stdlib-only, no npm ci needed, runs first so a raw
+        # `new Date().toISOString()` fails THIS push/PR gate. Until 2026-09-20
+        # it lived only in schema-drift.yml (nightly cron), so a hit surfaced
+        # 12+ hours later as a "D1 Schema Drift Check failed" email with no
+        # drift behind it (QuestionsCard.tsx, 09-18..09-20). Same check also
+        # runs in .githooks/pre-commit.
+        env:
+          TIME_LINT_MODE: enforce
+        run: node scripts/check-time-discipline.mjs
+
       - name: Install dependencies
         run: npm ci
 

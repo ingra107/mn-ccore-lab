@@ -184,6 +184,20 @@ if [ -n "$tw_interp_hits" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# Time-discipline lint (R20/R21, 2026-09-20). Raw `new Date().toISOString()`
+# or `.toISOString().split|slice(` in src/ + api/ outside the allowlist. Used
+# to run ONLY in the nightly schema-drift workflow, so a hit surfaced the next
+# morning as a mislabelled "D1 Schema Drift Check failed" email. Stdlib node,
+# sub-second. Fix: nowInstant() from src/lib/time.ts (or the api/lib helpers).
+if git diff --cached --name-only --diff-filter=AM | grep -qE '^(src|api)/.*\.(ts|tsx|mjs|js)$'; then
+    if ! TIME_LINT_MODE=enforce node scripts/check-time-discipline.mjs; then
+        echo ""
+        echo "BLOCKED: time-discipline (R20/R21) hit. Use nowInstant() / the lib/time helpers."
+        exit 1
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # Cookieless-artifact-origin minimality gate (2026-07-29, PB backlog #883).
 # The #508 origin split's security property holds ONLY while artifacts-site/
 # stays authority-free (one Function route, one code-owned D1 read binding,
