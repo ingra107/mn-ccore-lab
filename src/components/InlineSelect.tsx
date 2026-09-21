@@ -14,9 +14,12 @@ interface InlineSelectProps {
    *  Set true on high-signal cells like Decisions Outcome where the dropdown
    *  affordance is the primary action. */
   alwaysShowChevron?: boolean
+  /** Forwarded to the trigger button so a Field's htmlFor resolves to it
+   *  (label.control). Without it the nine Field-wrapped selects had inert labels (#8240 residue). */
+  id?: string
 }
 
-export default function InlineSelect({ value, options, onChange, size = 'sm', alwaysShowChevron = false }: InlineSelectProps) {
+export default function InlineSelect({ value, options, onChange, size = 'sm', alwaysShowChevron = false, id }: InlineSelectProps) {
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
   const [focusedIdx, setFocusedIdx] = useState(-1)
@@ -88,6 +91,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
     <>
       <button
         ref={triggerRef}
+        id={id}
         className="inline-select-trigger hov-bg"
         aria-expanded={open}
         aria-haspopup="listbox"

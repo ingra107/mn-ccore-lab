@@ -345,7 +345,7 @@ export default function QuickCaptureInbox() {
         <Field label="Project (optional)" htmlFor="qci-project" size="micro" noContainer>
           {/* flex column keeps the trigger stretched to the row width, as the pre-Field wrapper did */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <InlineSelect
+            <InlineSelect id="qci-project"
               value={projectId}
               options={[{ value: '', label: 'No project' }, ...((projects || []).map((p) => ({ value: p.slug, label: p.title })))]}
               onChange={setProjectId}

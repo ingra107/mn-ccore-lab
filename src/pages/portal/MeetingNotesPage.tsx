@@ -302,7 +302,7 @@ function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: 
 
         {/* Link to meeting — required, since this is the save target */}
         <Field label="Link to Meeting" htmlFor="meeting-notes-link" noContainer>
-          <InlineSelect
+          <InlineSelect id="meeting-notes-link"
             value={meetingId}
             options={[
               { value: '', label: 'Select meeting...' },

@@ -1166,7 +1166,7 @@ function AddGrantMilestoneModal({
 
         <div className="flex flex-col gap-3">
           <Field label="Grant" htmlFor="grant-milestone-grant" noContainer>
-            <InlineSelect
+            <InlineSelect id="grant-milestone-grant"
               value={grantId}
               options={grants.map((g) => ({ value: g.id, label: `${g.mechanism} - ${g.title}` }))}
               onChange={setGrantId}
@@ -1176,7 +1176,7 @@ function AddGrantMilestoneModal({
           </Field>
 
           <Field label="Milestone Type" htmlFor="grant-milestone-type" noContainer>
-            <InlineSelect
+            <InlineSelect id="grant-milestone-type"
               value={milestoneType}
               options={MILESTONE_TYPES}
               onChange={setMilestoneType}

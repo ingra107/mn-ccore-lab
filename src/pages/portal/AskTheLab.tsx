@@ -508,7 +508,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
         </Field>
 
         <Field label="Related Project" htmlFor="ask-lab-related-project" noContainer>
-          <InlineSelect
+          <InlineSelect id="ask-lab-related-project"
             value={projectSlug}
             options={[
               { value: '', label: 'None (general question)' },

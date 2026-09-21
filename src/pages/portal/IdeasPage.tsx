@@ -1181,7 +1181,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
           </Field>
 
           <Field label="Research Area" htmlFor="idea-area" noContainer>
-            <InlineSelect
+            <InlineSelect id="idea-area"
               value={researchArea}
               options={[{ value: '', label: 'Select area (optional)' }, ...researchAreas.map((a) => ({ value: a, label: a }))]}
               onChange={setResearchArea}

@@ -937,7 +937,7 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
         <div className="flex flex-col gap-4">
           {/* Mentee */}
           <Field label="Mentee" htmlFor="mentee-milestone-mentee" noContainer>
-            <InlineSelect
+            <InlineSelect id="mentee-milestone-mentee"
               value={menteeSlug}
               options={menteeSlugs.map((s) => ({ value: s, label: getPersonInfo(s).name || s }))}
               onChange={setMenteeSlug}
@@ -948,7 +948,7 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
 
           {/* Type */}
           <Field label="Milestone Type" htmlFor="mentee-milestone-type" noContainer>
-            <InlineSelect
+            <InlineSelect id="mentee-milestone-type"
               value={milestoneType}
               options={MILESTONE_TYPES}
               onChange={setMilestoneType}
