@@ -1,33 +1,27 @@
 /**
- * authorAvatars — resolve the ordered list of lab-member co-authors on a
- * publication, for the author-avatar-stack (#906, Nick 2026-07-23: "each
- * paper shows mini avatar photos of the lab-member co-authors in author
- * order, first author overlapped on top").
+ * authorAvatars — resolve a publication's byline against the lab roster, so a
+ * surface can show WHO wrote a paper rather than a run of text (#133; the
+ * #906 avatar stack this grew out of is gone).
  *
- * WHY name-matching is the PRIMARY path, not `authorSlugs`: on a shared
- * multi-lab-author paper, `authorSlugs` still records only ONE slug in
- * practice for most of prod's EXISTING rows. `fetch-publications.ts` sets
+ * WHY the byline is matched by NAME and `authorSlugs` is not consulted: on a
+ * shared multi-lab-author paper, `authorSlugs` records only ONE slug for most
+ * of prod's EXISTING rows. `fetch-publications.ts` sets
  * `authorSlugs: [member.slug]` per per-member fetch run; `mergePublications`
- * and `fetch-publications.ts`'s own intra-run dedup used to drop a
- * duplicate-DOI copy outright instead of unioning its `authorSlugs` in —
- * fixed 2026-08-01 (#1126, `unionAuthorSlugs` in mergePublications.ts) — but
- * that fix only changes what NEW rows carry going forward. Every row already
- * in prod keeps its pre-fix collapsed value until a backfill runs
- * (scripts/backfill-author-slugs-report.ts, read-only report; #1126). Even
- * post-backfill, the union is only as complete as the set of co-authors
- * whose OWN fetch independently resolved this run — a co-author present in
- * the byline but never fetched (no orcid/openalex id, or a failed run) is
- * invisible to authorSlugs by construction. Parsing the `authors` byline and
- * matching each segment against every team member's `authorName` (the same
- * substring test `PublicationCard`'s `formatAuthors` and `MemberPage`'s
- * `memberPubs` filter already use) recovers every lab co-author actually
- * present, in their real byline order, independent of any of the above.
+ * and that script's intra-run dedup used to drop a duplicate-DOI copy outright
+ * instead of unioning its `authorSlugs` in — fixed 2026-08-01 (#1126,
+ * `unionAuthorSlugs` in mergePublications.ts) — but that fix only changes what
+ * NEW rows carry. Every row already in prod keeps its pre-fix collapsed value
+ * until a backfill runs (scripts/backfill-author-slugs-report.ts, read-only
+ * report; #1126). Even post-backfill the union is only as complete as the set
+ * of co-authors whose OWN fetch independently resolved that run — a co-author
+ * in the byline who was never fetched (no orcid/openalex id, or a failed run)
+ * is invisible to `authorSlugs` by construction.
  *
- * `authorSlugs` is still consulted as a FALLBACK, for the (currently exactly
- * two) team members who have no `authorName` on file — the `directors`
- * entries for Nick Ingraham and Nate Mesfin, whose `Director` type predates
- * the PubMed-name field `TeamMember` carries. A slug-only match has no known
- * byline position, so it is appended after every name-matched author.
+ * Matching each byline segment against every member's `authorName` (the same
+ * substring test `PublicationCard.formatAuthors` and `MemberPage`'s
+ * `memberPubs` filter use) recovers every lab co-author actually present, in
+ * their real byline order, independent of all of the above. It costs nothing
+ * in coverage: exactly one roster entry lacks an `authorName` today.
  */
 
 import type { Publication, TeamMember } from '../data/types'
@@ -54,43 +48,44 @@ function splitAuthorSegments(authors: string | undefined): string[] {
     .filter(Boolean)
 }
 
+export interface BylineAuthor {
+  /** The byline segment exactly as the citation prints it, e.g. "Ingraham NE". */
+  name: string
+  /** Set when this segment resolves to a lab member; undefined otherwise. */
+  member?: ResolvedAuthorAvatar
+}
+
 /**
- * Ordered, deduplicated lab-member co-authors for one publication.
- * `members` is caller-supplied (pass `getAllMembers()`) so this stays a pure
- * function — no import-time dependency on team.ts data.
+ * Every author on the byline, in byline order, each tagged with the lab member
+ * it resolves to (or nothing). This is what the author COLUMN renders (#133,
+ * Nick 2026-09-16: "authors with face picture and name in a column on the
+ * right ... if its NOT someone in our MNCCORE group you can just have a blank
+ * photo so its clear that people in our Lab are the ones with their photo").
+ *
+ * `resolveLabCoAuthors` above answers a different question -- which lab
+ * members are on this paper -- and drops everyone else, so the avatar stack
+ * built on it cannot show the contrast Nick is asking for. Both read the same
+ * byline through `splitAuthorSegments` and match on the same `authorName`
+ * substring test, so a member who appears in one appears in the other.
+ *
+ * The `authorSlugs` fallback does NOT apply here: a slug-only match has no
+ * byline position, and this list IS the byline. A member reachable only
+ * through `authorSlugs` renders as an ordinary unmatched author rather than
+ * being appended out of order.
  */
-export function resolveLabCoAuthors(
-  pub: Pick<Publication, 'authors' | 'authorSlugs'>,
+export function resolveBylineAuthors(
+  pub: Pick<Publication, 'authors'>,
   members: TeamMember[],
-): ResolvedAuthorAvatar[] {
-  const bySlug = new Map<string, TeamMember>()
-  for (const m of members) {
-    if (m.slug) bySlug.set(m.slug, m)
-  }
+): BylineAuthor[] {
   const withAuthorName = members.filter((m) => m.slug && m.authorName)
+  const claimed = new Set<string>()
 
-  const resolved: ResolvedAuthorAvatar[] = []
-  const seen = new Set<string>()
-
-  // Primary: byline order via name-segment matching.
-  for (const seg of splitAuthorSegments(pub.authors)) {
-    const match = withAuthorName.find((m) => seg.includes(m.authorName as string))
-    if (match && match.slug && !seen.has(match.slug)) {
-      seen.add(match.slug)
-      resolved.push(toAvatar(match))
-    }
-  }
-
-  // Fallback: authorSlugs entries not already resolved by name (covers
-  // members with no `authorName` on file). Position unknown -> appended.
-  const slugs = Array.isArray(pub.authorSlugs) ? pub.authorSlugs : []
-  for (const slug of slugs) {
-    if (seen.has(slug)) continue
-    const m = bySlug.get(slug)
-    if (!m) continue
-    seen.add(slug)
-    resolved.push(toAvatar(m))
-  }
-
-  return resolved
+  return splitAuthorSegments(pub.authors).map((seg) => {
+    const match = withAuthorName.find(
+      (m) => seg.includes(m.authorName as string) && !claimed.has(m.slug as string),
+    )
+    if (!match) return { name: seg }
+    claimed.add(match.slug as string)
+    return { name: seg, member: toAvatar(match) }
+  })
 }

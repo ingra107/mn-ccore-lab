@@ -25,7 +25,7 @@
  * Reuses PublicationCard (design principle #4 — same affordance everywhere).
  * Avatars stay OFF, matching the sibling "All Publications" section: on a
  * member's own page the stack would mostly show that member's photo back at
- * them (principle #2, and PublicationCard's own showAuthorAvatars comment).
+ * them (principle #2, and PublicationCard's own showAuthorColumn comment).
  */
 
 import { useMemo, useState } from 'react'

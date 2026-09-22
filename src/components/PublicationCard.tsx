@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { Publication } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
-import AuthorAvatarStack from './AuthorAvatarStack'
+import AuthorColumn from './AuthorColumn'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -138,14 +138,15 @@ function formatAuthors(authors: string): React.ReactNode[] {
 
 export default function PublicationCard({
   pub,
-  showAuthorAvatars = false,
+  showAuthorColumn = false,
 }: {
   pub: Publication
-  /** Opt-in — the mini author-avatar-stack (#906) is a Publications-page-only
-   *  affordance. Left off by default so MemberPage / PublicationLibrary don't
-   *  silently gain a stack that mostly repeats the viewed member's own photo
-   *  back at them (design principle #2 - don't show the same info twice). */
-  showAuthorAvatars?: boolean
+  /** Opt-in — the author column (#133, was the #906 avatar stack) is a
+   *  Publications-page-only affordance. Left off by default so MemberPage /
+   *  PublicationLibrary don't silently gain a column that mostly repeats the
+   *  viewed member's own photo back at them (design principle #2 - don't show
+   *  the same info twice). */
+  showAuthorColumn?: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -224,12 +225,16 @@ export default function PublicationCard({
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <p
-              className="text-xs sm:text-sm mb-1.5"
-              style={{ color: 'var(--slate)' }}
-            >
-              {formatAuthors(pub.authors)}
-            </p>
+            {/* #133: when the author column renders, the byline moves into the
+                expanded panel rather than printing the same names twice. */}
+            {!showAuthorColumn && (
+              <p
+                className="text-xs sm:text-sm mb-1.5"
+                style={{ color: 'var(--slate)' }}
+              >
+                {formatAuthors(pub.authors)}
+              </p>
+            )}
             <h3
               className="text-sm sm:text-base font-normal leading-tight mb-1.5"
               style={{
@@ -249,10 +254,10 @@ export default function PublicationCard({
             </p>
           </div>
 
-          {/* Author avatar stack (#906) — opt-in, Publications-page only */}
-          {showAuthorAvatars && (
-            <div className="flex-shrink-0 self-center">
-              <AuthorAvatarStack pub={pub} />
+          {/* Author column (#133) — opt-in, Publications-page only */}
+          {showAuthorColumn && (
+            <div className="flex-shrink-0 self-start w-full sm:w-52">
+              <AuthorColumn pub={pub} />
             </div>
           )}
 
@@ -288,6 +293,13 @@ export default function PublicationCard({
               }}
             >
               <div className="pt-4 sm:pt-5 sm:pl-36">
+                {/* Full byline — the card head shows faces, this shows the
+                    citation order (#133). */}
+                {showAuthorColumn && (
+                  <p className="text-xs sm:text-sm mb-3" style={{ color: 'var(--slate)' }}>
+                    {formatAuthors(pub.authors)}
+                  </p>
+                )}
                 {pub.abstract && (
                   <p
                     className="text-sm leading-relaxed mb-3 sm:mb-4"

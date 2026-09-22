@@ -16,7 +16,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BookOpenText, X } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
-import AuthorAvatarStack from './AuthorAvatarStack'
+import AuthorColumn from './AuthorColumn'
 import { Chip } from './ui/Chip'
 import GhostSelect, { type GhostSelectOption } from './ui/GhostSelect'
 import { useProjectPublications, usePublications, type ProjectPublicationDisplay } from '../hooks/useApiData'
@@ -28,21 +28,10 @@ import { LABEL_STYLE } from './ui/labelStyle'
 
 const ROLE_OPTIONS: GhostSelectOption[] = PUBLICATION_ROLES.map((r) => ({ value: r, label: r[0].toUpperCase() + r.slice(1) }))
 
-/** Same byline split PublicationCard.formatAuthors / resolveLabCoAuthors use:
+/** Same byline split PublicationCard.formatAuthors / resolveBylineAuthors use:
  *  strip one trailing period, split on commas, trim, drop empties. */
 function splitAuthors(authors: string): string[] {
   return authors.replace(/\.$/, '').split(',').map((s) => s.trim()).filter(Boolean)
-}
-
-function AuthorLine({ authors }: { authors: string }) {
-  const segs = splitAuthors(authors)
-  if (segs.length === 0) return null
-  if (segs.length === 1) return <span>{segs[0]}</span>
-  return (
-    <span>
-      {segs[0]} <span style={{ opacity: 0.7 }}>&hellip;</span> {segs[segs.length - 1]}
-    </span>
-  )
 }
 
 interface ProjectPublicationsProps {
@@ -139,7 +128,6 @@ function PublicationLinkRow({
 }) {
   return (
     <div className="group flex items-start gap-2">
-      <AuthorAvatarStack pub={pub} maxVisible={3} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <Link
           to={PUBLIC_PATHS.publication(pub.id)}
@@ -162,7 +150,11 @@ function PublicationLinkRow({
           className="flex flex-wrap items-center gap-1.5"
           style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginTop: 2 }}
         >
-          <AuthorLine authors={pub.authors} />
+          {/* #133: the byline IS the faces -- photo + name per author, lab
+              members clickable, everyone else a blank silhouette. Replaces
+              the "First ... Last" text line and the aria-hidden avatar stack
+              that used to lead the row. */}
+          <AuthorColumn pub={pub} layout="row" maxVisible={isCard ? 3 : 8} />
           {pub.journal && <span>&middot; {pub.journal}</span>}
           {pub.year ? <span>&middot; {pub.year}</span> : null}
           {pub.role !== 'primary' && (

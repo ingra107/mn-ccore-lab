@@ -335,7 +335,7 @@ export default function Publications() {
             </div>
             <div className="space-y-3 sm:space-y-4">
               {featuredPubs.map((pub) => (
-                <PublicationCard key={pub.id} pub={pub} showAuthorAvatars />
+                <PublicationCard key={pub.id} pub={pub} showAuthorColumn />
               ))}
             </div>
           </section>
@@ -503,7 +503,7 @@ export default function Publications() {
           <div className="space-y-3 sm:space-y-4">
             {filtered.map((pub) => (
               <div key={pub.id} className="fade-in-up">
-                <PublicationCard pub={pub} showAuthorAvatars />
+                <PublicationCard pub={pub} showAuthorColumn />
               </div>
             ))}
           </div>
@@ -515,7 +515,7 @@ export default function Publications() {
             <div className="space-y-3 sm:space-y-4">
               {recentPubs.map((pub) => (
                 <div key={pub.id} className="fade-in-up">
-                  <PublicationCard pub={pub} showAuthorAvatars />
+                  <PublicationCard pub={pub} showAuthorColumn />
                 </div>
               ))}
             </div>
@@ -593,7 +593,7 @@ export default function Publications() {
                   .filter((p) => p.year === year)
                   .map((pub) => (
                     <div key={pub.id} className="fade-in-up">
-                      <PublicationCard pub={pub} showAuthorAvatars />
+                      <PublicationCard pub={pub} showAuthorColumn />
                     </div>
                   ))}
               </div>
