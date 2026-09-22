@@ -27,13 +27,24 @@
  * a slug-only match has no byline position to offer a byline-derived report.
  *
  * CAVEAT (read before acting on the output): `resolveBylineAuthors` matches
- * by SUBSTRING against each team member's `authorName` (e.g. "Dudley RA").
- * That is a heuristic, not an exact match — see its own docstring for the
- * known false-positive shape. Fine for a report a human reviews; NOT fine to
- * pipe into a live UPDATE unreviewed, and doubly not once `author_slugs`
- * starts gating write authorization (#906's featured-publications PUT names
- * this as its prerequisite). Spot-check the `added` slugs on a sample of
- * real papers before trusting the full candidate list.
+ * by SUBSTRING against each team member's `authorName` (e.g. "Dudley RA") —
+ * a heuristic, not an exact match. The module header of
+ * src/lib/authorAvatars.ts explains why the byline is matched this way; the
+ * two false-positive shapes are:
+ *   1. a segment that CONTAINS a shorter member's `authorName` matches that
+ *      member ("Dudleyson RA" contains "Dudley RA").
+ *   2. a member is claimed at most once per byline, so a REPEATED segment
+ *      falls through to the next member whose `authorName` is also a
+ *      substring of it. Two roster members with overlapping `authorName`s
+ *      ("Wacker D" inside "Wacker DA") plus a duplicated segment can
+ *      therefore propose a slug for someone not on the paper. The deleted
+ *      `resolveLabCoAuthors` deduped AFTER matching, so it dropped the repeat
+ *      instead — this shape is new as of 2026-09-22.
+ * Fine for a report a human reviews; NOT fine to pipe into a live UPDATE
+ * unreviewed, and doubly not once `author_slugs` starts gating write
+ * authorization (#906's featured-publications PUT names this as its
+ * prerequisite). Spot-check the `added` slugs on a sample of real papers
+ * before trusting the full candidate list.
  *
  * Usage:
  *   1. Pull prod's existing pubs (author_slugs needs `authors` alongside it
