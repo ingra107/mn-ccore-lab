@@ -33,6 +33,21 @@ import { QueryErrorNote } from '../components/QueryErrorNote'
 
 type StatusFilter = 'all' | 'new' | 'saved'
 
+// #136, Nick: "when i click something it should get 'filed' so i can walk
+// through the studies and don't need to click down ... at the very least, I
+// need to get the sense that I've processed it."
+//
+// A processed paper sinks. Unread float to the top of the list in the
+// server's relevance order, saved sit under them, dismissed go to the bottom
+// -- so the next thing to read is always the next thing on screen, and the X
+// visibly does something. Nothing is removed: every paper stays reachable,
+// and clicking the same button again restores it.
+const PROCESS_RANK: Record<string, number> = { new: 0, saved: 1, dismissed: 2 }
+
+function processRank(status: string): number {
+  return PROCESS_RANK[status] ?? 0
+}
+
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00')
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
@@ -113,9 +128,13 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
     <div
       className="card p-4 sm:p-5"
       style={{
-        opacity: isDismissed ? 0.85 : 1,
         minHeight: '120px',
-        transition: 'opacity var(--duration-normal) var(--ease-out), transform var(--duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--duration-slow) var(--ease-out), background-color var(--duration-normal) var(--ease-out)',
+        // Filed state rides a left rail, not a dimmed card: a parent opacity
+        // multiplies with every coloured child and fails AA (CLAUDE.md rule
+        // 43). The rail is one channel carrying one signal -- processed or
+        // not -- and the chip below is its text equivalent (rule 76).
+        borderLeft: `3px solid ${isSaved ? ACCENT_GOLD : isDismissed ? 'var(--border-subtle)' : 'transparent'}`,
+        transition: 'transform var(--duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--duration-slow) var(--ease-out), background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
       }}
     >
       <div className="flex items-start gap-3 sm:gap-4">
@@ -182,6 +201,20 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
 
           {/* Journal + date */}
           <div className="flex flex-wrap items-center gap-2 mb-2">
+            {(isSaved || isDismissed) && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 500,
+                  background: isSaved ? 'var(--gold-emphasis)' : 'var(--ice)',
+                  color: isSaved ? 'var(--gold-on-emphasis)' : 'var(--slate)',
+                }}
+              >
+                <Check {...ICON_PROPS} size={10} />
+                {isSaved ? 'Saved' : 'Dismissed'}
+              </span>
+            )}
             {paper.journal && (
               <span
                 className="text-xs"
@@ -298,6 +331,31 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
             </div>
           )}
 
+          {/* Summary — the LLM TLDR. Always visible; the abstract is the
+              progressive disclosure under it (#136). */}
+          {paper.summary && (
+            <p
+              className="text-xs sm:text-sm leading-relaxed mb-2"
+              style={{ color: 'var(--ink)' }}
+            >
+              {paper.summary}
+            </p>
+          )}
+
+          {/* Why this matters */}
+          {paper.significance && (
+            <p
+              className="text-xs leading-relaxed mb-2 pl-3"
+              style={{
+                color: 'var(--slate)',
+                borderLeft: `2px solid ${withAlpha(ACCENT_GOLD, 30)}`,
+              }}
+            >
+              <span style={{ color: 'var(--gold)', fontWeight: 500 }}>Why this matters — </span>
+              {paper.significance}
+            </p>
+          )}
+
           {/* Abstract (collapsible) */}
           {paper.abstract && (
             <div>
@@ -319,7 +377,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                   className="text-xs sm:text-sm leading-relaxed mt-1 pl-3"
                   style={{
                     color: 'var(--slate)',
-                    borderLeft: `2px solid ${withAlpha(ACCENT_GOLD, 30)}`,
+                    borderLeft: `2px solid var(--border-subtle)`,
                   }}
                 >
                   {paper.abstract}
@@ -718,7 +776,9 @@ export default function Digest() {
         (p.journal || '').toLowerCase().includes(q)
       )
     }
-    return result
+    // Processed papers sink (#136). Array.prototype.sort is stable, so within
+    // a bucket the server's relevance_score DESC order is untouched.
+    return [...result].sort((a, b) => processRank(a.status) - processRank(b.status))
   }, [papers, searchQuery, forYouFilter, userSlug])
 
   const isEmpty = dates.length === 0 && !isLoading

@@ -720,7 +720,12 @@ export interface DigestPaper {
   authors: string | null
   journal: string | null
   pub_date: string | null
+  /** The real PubMed abstract — progressive disclosure, often absent (#136). */
   abstract: string | null
+  /** LLM TLDR: what the paper did and found. Always rendered (#136). */
+  summary: string | null
+  /** LLM "Why This Matters". Always rendered (#136). */
+  significance: string | null
   pmid: string | null
   doi: string | null
   relevance_score: number

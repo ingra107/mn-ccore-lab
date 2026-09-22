@@ -182,9 +182,30 @@ export async function handleCreateDigestPaper(request: Request, env: Env): Promi
   const body = await request.json() as Record<string, unknown>;
   if (!body.id || !body.title) return error('id and title required', 400);
 
+  // Upsert that PRESERVES the reader's own marks. This was INSERT OR REPLACE,
+  // which rewrote `status` and `saved_by` from the request body on every
+  // re-push -- so re-pushing a paper Nick had saved or dismissed silently
+  // reset it to 'new'. PB's sync only avoided that by never re-pushing (a
+  // local sync-state file of already-sent ids), which meant a paper could
+  // never be corrected either. ON CONFLICT updates the paper's FACTS and
+  // leaves the reader's state alone, so a corrective re-push is safe (#136).
   await env.DB.prepare(
-    `INSERT OR REPLACE INTO research_digest (id, title, authors, journal, pub_date, abstract, pmid, doi, relevance_score, relevance_reason, topics, status, digest_date)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO research_digest (id, title, authors, journal, pub_date, abstract, summary, significance, pmid, doi, relevance_score, relevance_reason, topics, status, digest_date)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       title = excluded.title,
+       authors = excluded.authors,
+       journal = excluded.journal,
+       pub_date = excluded.pub_date,
+       abstract = excluded.abstract,
+       summary = excluded.summary,
+       significance = excluded.significance,
+       pmid = excluded.pmid,
+       doi = excluded.doi,
+       relevance_score = excluded.relevance_score,
+       relevance_reason = excluded.relevance_reason,
+       topics = excluded.topics,
+       digest_date = excluded.digest_date`
   ).bind(
     body.id as string,
     body.title as string,
@@ -192,6 +213,8 @@ export async function handleCreateDigestPaper(request: Request, env: Env): Promi
     (body.journal as string) ?? null,
     (body.pub_date as string) ?? null,
     (body.abstract as string) ?? null,
+    (body.summary as string) ?? null,
+    (body.significance as string) ?? null,
     (body.pmid as string) ?? null,
     (body.doi as string) ?? null,
     (body.relevance_score as number) ?? 0,
