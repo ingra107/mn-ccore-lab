@@ -4,31 +4,85 @@ import type { Layout, Layouts } from 'react-grid-layout'
 // because react-grid-layout's WidthProvider sizes against the inner element.
 // At a 1440px window with a 250px sidebar the content area is ~1000px.
 export const DASHBOARD_GRID_BREAKPOINTS = { lg: 960, md: 720, sm: 480, xs: 0 } as const
-export const DASHBOARD_GRID_COLS = { lg: 4, md: 3, sm: 2, xs: 1 } as const
-export const DASHBOARD_GRID_ROW_HEIGHT = { lg: 260, md: 220, sm: 200, xs: 180 } as const
+
+// One old card cell is GRID_SCALE x GRID_SCALE cells now (Nick 2026-09-17,
+// #134: "2-3x more granularity to the grid that you can snap to"). Splitting
+// both axes by 3 keeps the geometry identical -- a 3x3 card occupies exactly
+// the width and height the old 1x1 card did, because the two margins the split
+// introduces are subtracted from the row height below -- while giving the
+// resize handle 10 width steps per row instead of 4. Cards can never get
+// SMALLER than they could before: minW/minH are pinned at GRID_SCALE.
+export const GRID_SCALE = 3
+
+export const DASHBOARD_GRID_COLS = { lg: 12, md: 9, sm: 6, xs: 3 } as const
+
+// rowHeight must satisfy `GRID_SCALE * rh + (GRID_SCALE - 1) * marginY` = the
+// old row height, so an unresized dashboard renders pixel-identical.
+// marginY is 20 (DashboardGrid's `margin` prop).
+export const DASHBOARD_GRID_ROW_HEIGHT = {
+  lg: (260 - 40) / 3,
+  md: (220 - 40) / 3,
+  sm: (200 - 40) / 3,
+  xs: (180 - 40) / 3,
+} as const
 
 type Breakpoint = keyof typeof DASHBOARD_GRID_COLS
 
 export interface GridCard {
   id: string
-  /** Optional default width (grid cols). Defaults to 1. */
+  /** Optional default width, in OLD whole-card units. Defaults to 1. */
   defaultW?: number
-  /** Optional default height (rows). Defaults to 1. */
+  /** Optional default height, in OLD whole-card units. Defaults to 1. */
   defaultH?: number
 }
 
-const LAYOUT_STORAGE_PREFIX = 'mnccore-dashboard-layouts-v1'
+const LAYOUT_STORAGE_PREFIX = 'mnccore-dashboard-layouts-v2'
+const LEGACY_STORAGE_PREFIX = 'mnccore-dashboard-layouts-v1'
 
 function storageKey(section: string, userSlug: string | undefined) {
   return `${LAYOUT_STORAGE_PREFIX}:${userSlug || 'anon'}:${section}`
 }
 
+function legacyStorageKey(section: string, userSlug: string | undefined) {
+  return `${LEGACY_STORAGE_PREFIX}:${userSlug || 'anon'}:${section}`
+}
+
+/**
+ * Multiply a v1 (whole-card) layout up into v2 cells. A dashboard Nick already
+ * arranged keeps its arrangement across the split instead of reflowing.
+ */
+function scaleLegacyLayouts(saved: Layouts): Layouts {
+  const out: Layouts = {}
+  ;(Object.keys(saved) as Breakpoint[]).forEach(bp => {
+    const cols = DASHBOARD_GRID_COLS[bp]
+    if (!cols) return
+    out[bp] = (saved[bp] ?? []).map(l => ({
+      ...l,
+      x: l.x * GRID_SCALE,
+      y: l.y * GRID_SCALE,
+      w: Math.min(l.w * GRID_SCALE, cols),
+      h: l.h * GRID_SCALE,
+      minW: GRID_SCALE,
+      minH: GRID_SCALE,
+      maxW: cols,
+      maxH: 4 * GRID_SCALE,
+    }))
+  })
+  return out
+}
+
 export function loadSavedLayouts(section: string, userSlug: string | undefined): Layouts | null {
   try {
     const raw = localStorage.getItem(storageKey(section, userSlug))
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    if (parsed && typeof parsed === 'object') return parsed as Layouts
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed && typeof parsed === 'object') return parsed as Layouts
+    }
+    const legacy = localStorage.getItem(legacyStorageKey(section, userSlug))
+    if (legacy) {
+      const parsed = JSON.parse(legacy)
+      if (parsed && typeof parsed === 'object') return scaleLegacyLayouts(parsed as Layouts)
+    }
   } catch {
     /* fall through to null */
   }
@@ -46,6 +100,7 @@ export function saveLayouts(section: string, userSlug: string | undefined, layou
 export function resetLayouts(section: string, userSlug: string | undefined) {
   try {
     localStorage.removeItem(storageKey(section, userSlug))
+    localStorage.removeItem(legacyStorageKey(section, userSlug))
   } catch {
     /* ignore */
   }
@@ -59,16 +114,20 @@ function flowLayout(cards: GridCard[], cols: number): Layout[] {
   const out: Layout[] = []
   let x = 0
   let y = 0
-  let rowHeight = 1
+  let rowHeight = GRID_SCALE
   for (const card of cards) {
-    const w = Math.min(card.defaultW ?? 1, cols)
-    const h = card.defaultH ?? 1
+    const w = Math.min((card.defaultW ?? 1) * GRID_SCALE, cols)
+    const h = (card.defaultH ?? 1) * GRID_SCALE
     if (x + w > cols) {
       x = 0
       y += rowHeight
-      rowHeight = 1
+      rowHeight = GRID_SCALE
     }
-    out.push({ i: card.id, x, y, w, h, minW: 1, minH: 1, maxW: cols, maxH: 4 })
+    out.push({
+      i: card.id, x, y, w, h,
+      minW: GRID_SCALE, minH: GRID_SCALE,
+      maxW: cols, maxH: 4 * GRID_SCALE,
+    })
     x += w
     rowHeight = Math.max(rowHeight, h)
   }
