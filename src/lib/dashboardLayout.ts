@@ -39,12 +39,16 @@ export interface GridCard {
 const LAYOUT_STORAGE_PREFIX = 'mnccore-dashboard-layouts-v2'
 const LEGACY_STORAGE_PREFIX = 'mnccore-dashboard-layouts-v1'
 
+function keyFor(prefix: string, section: string, userSlug: string | undefined) {
+  return `${prefix}:${userSlug || 'anon'}:${section}`
+}
+
 function storageKey(section: string, userSlug: string | undefined) {
-  return `${LAYOUT_STORAGE_PREFIX}:${userSlug || 'anon'}:${section}`
+  return keyFor(LAYOUT_STORAGE_PREFIX, section, userSlug)
 }
 
 function legacyStorageKey(section: string, userSlug: string | undefined) {
-  return `${LEGACY_STORAGE_PREFIX}:${userSlug || 'anon'}:${section}`
+  return keyFor(LEGACY_STORAGE_PREFIX, section, userSlug)
 }
 
 /**
@@ -71,18 +75,18 @@ function scaleLegacyLayouts(saved: Layouts): Layouts {
   return out
 }
 
+function parseLayouts(raw: string | null): Layouts | null {
+  if (!raw) return null
+  const parsed = JSON.parse(raw)
+  return parsed && typeof parsed === 'object' ? (parsed as Layouts) : null
+}
+
 export function loadSavedLayouts(section: string, userSlug: string | undefined): Layouts | null {
   try {
-    const raw = localStorage.getItem(storageKey(section, userSlug))
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (parsed && typeof parsed === 'object') return parsed as Layouts
-    }
-    const legacy = localStorage.getItem(legacyStorageKey(section, userSlug))
-    if (legacy) {
-      const parsed = JSON.parse(legacy)
-      if (parsed && typeof parsed === 'object') return scaleLegacyLayouts(parsed as Layouts)
-    }
+    const current = parseLayouts(localStorage.getItem(storageKey(section, userSlug)))
+    if (current) return current
+    const legacy = parseLayouts(localStorage.getItem(legacyStorageKey(section, userSlug)))
+    return legacy ? scaleLegacyLayouts(legacy) : null
   } catch {
     /* fall through to null */
   }

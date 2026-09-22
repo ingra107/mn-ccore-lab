@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { User } from 'lucide-react'
 import type { Publication } from '../data/types'
@@ -107,7 +107,13 @@ export default function AuthorColumn({
   layout?: 'column' | 'row'
 }) {
   const [showAll, setShowAll] = useState(false)
-  const authors = resolveBylineAuthors(pub, getAllMembers())
+  // Memoized: this component mounts once per publication row (list/grid of
+  // cards), and getAllMembers() rebuilds the whole team roster on every call.
+  // Without this, any unrelated parent re-render (search typing, a sibling's
+  // state change) re-derives the roster and re-scans authors for every
+  // visible card. Same pattern as SearchPage.tsx's `useMemo(() => getAllMembers(), [])`.
+  const members = useMemo(() => getAllMembers(), [])
+  const authors = useMemo(() => resolveBylineAuthors(pub, members), [pub, members])
 
   if (authors.length === 0) return null
 

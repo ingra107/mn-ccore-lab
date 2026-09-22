@@ -18,11 +18,15 @@
  * every co-author into it, lab or not — the union bug only ever touched the
  * `authorSlugs` column, never `authors`). So the only way to RECOVER the
  * missing co-authors on an already-inserted row is to re-derive them from
- * that byline text. `resolveLabCoAuthors` (src/lib/authorAvatars.ts) already
- * does exactly this — it is the SAME primitive the author-avatar-stack UI
- * uses (#906, wave-6 commit 9ee95b9b), reused here rather than forked.
+ * that byline text. `resolveBylineAuthors` (src/lib/authorAvatars.ts) does
+ * exactly this, and this script keeps the lab members it tags. It is the SAME
+ * primitive the `AuthorColumn` UI uses (#133), reused here rather than forked
+ * — it replaced `resolveLabCoAuthors` (the #906 avatar stack's resolver) on
+ * 2026-09-22. That function's `authorSlugs` fallback is not missed here: this
+ * script already unions `existing` back in explicitly a few lines below, and
+ * a slug-only match has no byline position to offer a byline-derived report.
  *
- * CAVEAT (read before acting on the output): `resolveLabCoAuthors` matches
+ * CAVEAT (read before acting on the output): `resolveBylineAuthors` matches
  * by SUBSTRING against each team member's `authorName` (e.g. "Dudley RA").
  * That is a heuristic, not an exact match — see its own docstring for the
  * known false-positive shape. Fine for a report a human reviews; NOT fine to
@@ -48,7 +52,7 @@
  */
 import { readFileSync } from 'node:fs'
 import { getAllMembers } from '../src/data/team'
-import { resolveLabCoAuthors } from '../src/lib/authorAvatars'
+import { resolveBylineAuthors } from '../src/lib/authorAvatars'
 
 interface ProdPubRow {
   id: string
@@ -100,7 +104,9 @@ function main() {
 
   for (const row of rows) {
     const existing = parseSlugs(row.author_slugs, row.id)
-    const resolved = resolveLabCoAuthors({ authors: row.authors ?? '', authorSlugs: existing }, members)
+    const resolved = resolveBylineAuthors({ authors: row.authors ?? '' }, members)
+      .map((a) => a.member)
+      .filter((m): m is NonNullable<typeof m> => m !== undefined)
     // UNION semantics (2026-08-01 review of the first dry run): the byline
     // matcher has false NEGATIVES (initialed bylines), so a proposal must never
     // DROP an existing slug it fails to re-derive. Normalize legacy short forms

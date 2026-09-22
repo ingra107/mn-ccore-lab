@@ -62,16 +62,17 @@ export interface BylineAuthor {
  * right ... if its NOT someone in our MNCCORE group you can just have a blank
  * photo so its clear that people in our Lab are the ones with their photo").
  *
- * `resolveLabCoAuthors` above answers a different question -- which lab
- * members are on this paper -- and drops everyone else, so the avatar stack
- * built on it cannot show the contrast Nick is asking for. Both read the same
- * byline through `splitAuthorSegments` and match on the same `authorName`
- * substring test, so a member who appears in one appears in the other.
+ * This is the module's ONLY resolver. It replaced `resolveLabCoAuthors`, which
+ * answered the narrower question — which lab members are on this paper — and
+ * dropped everyone else, so the avatar stack built on it could not show the
+ * contrast Nick asked for. `scripts/backfill-author-slugs-report.ts` was that
+ * function's other caller and now filters this list to its tagged members.
  *
- * The `authorSlugs` fallback does NOT apply here: a slug-only match has no
- * byline position, and this list IS the byline. A member reachable only
- * through `authorSlugs` renders as an ordinary unmatched author rather than
- * being appended out of order.
+ * `authorSlugs` is deliberately not consulted: a slug-only match has no byline
+ * position, and this list IS the byline. A member reachable only through
+ * `authorSlugs` comes back as an ordinary unmatched author rather than being
+ * appended out of order. The backfill report unions its own `existing` slugs
+ * back in, which is where that recovery belongs.
  */
 export function resolveBylineAuthors(
   pub: Pick<Publication, 'authors'>,
