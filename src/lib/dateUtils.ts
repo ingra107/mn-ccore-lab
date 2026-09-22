@@ -145,9 +145,11 @@ export function localDateKey(d: Date = new Date()): string {
  */
 // Compact due label for TASK ROWS (Nick 2026-09-17): never more than 6
 // characters so every chip in a column has the same footprint — `3d` overdue,
-// `Today`, `Tom` (tomorrow), `12d` / `45d` ahead (days cover months too). The
-// absolute date lives in the chip's tooltip. Cards and the deadlines page keep
-// dueLabelText's worded form.
+// `Today`, `1d` / `12d` / `45d` ahead (days cover months too). Tomorrow reads
+// `1d` like every other future day - the abbreviated word `Tom` was worse than
+// the number it replaced (Nick 2026-09-17, #135). The absolute date lives in
+// the chip's tooltip. Cards and the deadlines page keep dueLabelText's worded
+// form.
 export type DueTone = 'overdue' | 'today' | 'tomorrow' | 'later'
 
 export function dueTone(due: string, overdue: boolean): DueTone {
@@ -168,7 +170,6 @@ export function dueLabelCompact(due: string, overdue: boolean): string {
   const days = Math.round((target.getTime() - todayNoon.getTime()) / 86400000)
   if (overdue) return `${Math.max(1, -days)}d`
   if (days === 0) return 'Today'
-  if (days === 1) return 'Tom'
   return `${days}d`
 }
 
