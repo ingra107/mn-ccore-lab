@@ -182,30 +182,48 @@ export async function handleCreateDigestPaper(request: Request, env: Env): Promi
   const body = await request.json() as Record<string, unknown>;
   if (!body.id || !body.title) return error('id and title required', 400);
 
-  // Upsert that PRESERVES the reader's own marks. This was INSERT OR REPLACE,
-  // which rewrote `status` and `saved_by` from the request body on every
-  // re-push -- so re-pushing a paper Nick had saved or dismissed silently
-  // reset it to 'new'. PB's sync only avoided that by never re-pushing (a
-  // local sync-state file of already-sent ids), which meant a paper could
-  // never be corrected either. ON CONFLICT updates the paper's FACTS and
-  // leaves the reader's state alone, so a corrective re-push is safe (#136).
+  // Upsert, and every clause here is load-bearing. Three classes of column:
+  //
+  //  1. The READER's state -- `status`, `saved_by`. Never written on conflict.
+  //     This was INSERT OR REPLACE, which rewrote them from the request body,
+  //     so re-pushing a paper Nick had saved or dismissed reset it to 'new'.
+  //     PB only avoided that by never re-pushing (a local file of already-sent
+  //     ids), which also meant a paper could never be CORRECTED.
+  //
+  //  2. FIRST-SIGHT facts -- `digest_date`. COALESCE keeps the stored value:
+  //     it means "the date this paper appeared in the digest", and PB's
+  //     Digest.md is a ROLLING document whose frontmatter carries only the
+  //     date it was last generated. Writing `excluded` collapsed 1065 papers
+  //     onto one day and flattened the date selector's whole history
+  //     (2026-09-22, repaired from `created_at`).
+  //
+  //  3. The paper's own facts -- everything else. `COALESCE(excluded.x, x)`,
+  //     so a push that has nothing to say for a field leaves what is there.
+  //     A re-generated Digest.md drops the LLM TLDR from older entries; a bare
+  //     `excluded.summary` erased 74 stored summaries that no source still
+  //     holds. Absent means "not parsed this run", never "clear it".
+  //     `title` is the exception: it is required, so it always lands, and
+  //     `relevance_score` takes MAX for the same reason COALESCE is right
+  //     elsewhere -- PB derives the score from which fields it parsed, so a
+  //     run that parsed fewer of them is missing information, not evidence
+  //     that the paper got less relevant.
   await env.DB.prepare(
     `INSERT INTO research_digest (id, title, authors, journal, pub_date, abstract, summary, significance, pmid, doi, relevance_score, relevance_reason, topics, status, digest_date)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        title = excluded.title,
-       authors = excluded.authors,
-       journal = excluded.journal,
-       pub_date = excluded.pub_date,
-       abstract = excluded.abstract,
-       summary = excluded.summary,
-       significance = excluded.significance,
-       pmid = excluded.pmid,
-       doi = excluded.doi,
-       relevance_score = excluded.relevance_score,
-       relevance_reason = excluded.relevance_reason,
-       topics = excluded.topics,
-       digest_date = excluded.digest_date`
+       authors = COALESCE(excluded.authors, research_digest.authors),
+       journal = COALESCE(excluded.journal, research_digest.journal),
+       pub_date = COALESCE(excluded.pub_date, research_digest.pub_date),
+       abstract = COALESCE(excluded.abstract, research_digest.abstract),
+       summary = COALESCE(excluded.summary, research_digest.summary),
+       significance = COALESCE(excluded.significance, research_digest.significance),
+       pmid = COALESCE(excluded.pmid, research_digest.pmid),
+       doi = COALESCE(excluded.doi, research_digest.doi),
+       relevance_score = MAX(excluded.relevance_score, research_digest.relevance_score),
+       relevance_reason = COALESCE(excluded.relevance_reason, research_digest.relevance_reason),
+       topics = COALESCE(excluded.topics, research_digest.topics),
+       digest_date = COALESCE(research_digest.digest_date, excluded.digest_date)`
   ).bind(
     body.id as string,
     body.title as string,
