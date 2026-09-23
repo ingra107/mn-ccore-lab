@@ -76,14 +76,7 @@
 // enumeration this session's report carries.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-
-/** Same outbound-link retarget HtmlArtifactFrame carries — a plain <a href>
- *  inside the frame would otherwise navigate the frame itself away. */
-const OUTBOUND_LINK_SHIM =
-  '<script>document.addEventListener("click",function(e){' +
-  'var a=e.target&&e.target.closest?e.target.closest("a[href]"):null;' +
-  'if(a&&/^https?:/i.test(a.getAttribute("href")||"")){a.target="_blank";a.rel="noopener noreferrer";}' +
-  '},true);</script>'
+import { artifactBlobUrl, OUTBOUND_LINK_SHIM } from '../lib/artifactBlob'
 
 /** The postMessage payload shape the shim posts to the parent. */
 interface DeskSaveMessage {
@@ -188,8 +181,7 @@ export default function DeskBrokerFrame({ id, title, html }: { id: string; title
   const [seed] = useState(() => readSeed(id))
 
   const url = useMemo(() => {
-    const body = buildSeedShim(seed) + OUTBOUND_LINK_SHIM + html
-    return URL.createObjectURL(new Blob([body], { type: 'text/html' }))
+    return artifactBlobUrl(html, buildSeedShim(seed) + OUTBOUND_LINK_SHIM)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- seed is captured once at mount (see useState initializer above); re-seeding on every parent re-render would fight the iframe's own in-memory store
   }, [html])
   useEffect(() => () => URL.revokeObjectURL(url), [url])

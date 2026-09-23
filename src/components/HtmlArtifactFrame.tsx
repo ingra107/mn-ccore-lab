@@ -49,20 +49,12 @@
 // alone — those must stay same-document, which is the whole point above.
 
 import { useMemo, useEffect } from 'react'
+import { artifactBlobUrl, OUTBOUND_LINK_SHIM } from '../lib/artifactBlob'
 
 /** Sends off-site links to a new tab. Capture-phase + delegated, so it also
  *  covers links an artifact's own script adds later. */
-const OUTBOUND_LINK_SHIM =
-  '<script>document.addEventListener("click",function(e){' +
-  'var a=e.target&&e.target.closest?e.target.closest("a[href]"):null;' +
-  'if(a&&/^https?:/i.test(a.getAttribute("href")||"")){a.target="_blank";a.rel="noopener noreferrer";}' +
-  '},true);</script>'
-
 export default function HtmlArtifactFrame({ title, html }: { title: string; html: string }) {
-  const url = useMemo(
-    () => URL.createObjectURL(new Blob([OUTBOUND_LINK_SHIM + html], { type: 'text/html' })),
-    [html],
-  )
+  const url = useMemo(() => artifactBlobUrl(html, OUTBOUND_LINK_SHIM), [html])
   useEffect(() => () => URL.revokeObjectURL(url), [url])
 
   return (
