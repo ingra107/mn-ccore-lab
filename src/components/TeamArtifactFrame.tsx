@@ -104,6 +104,7 @@ export default function TeamArtifactFrame({
   const [attempt, setAttempt] = useState(0)
   const graceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const absoluteTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
   // Mirrors `status` for onFocus below, which needs to read the CURRENT value
   // from a plain event handler without putting a side effect (setAttempt)
   // inside a setStatus updater — React may invoke an updater twice (e.g.
@@ -124,6 +125,11 @@ export default function TeamArtifactFrame({
   useEffect(() => {
     function onMessage(event: MessageEvent) {
       if (event.origin !== PUBLIC_ARTIFACT_ORIGIN_FE) return
+      // Origin alone does not identify THIS frame: two team desks on one page
+      // share the artifacts origin, so each would accept the other's ready
+      // message and could clear its own fallback while still at Access's
+      // login page.
+      if (event.source !== iframeRef.current?.contentWindow) return
       if (event.data !== TEAM_ARTIFACT_READY_MESSAGE) return
       if (graceTimer.current) clearTimeout(graceTimer.current)
       if (absoluteTimer.current) clearTimeout(absoluteTimer.current)
@@ -182,6 +188,7 @@ export default function TeamArtifactFrame({
     <div style={frameStyle}>
       <iframe
         key={attempt}
+        ref={iframeRef}
         title={`${title} (interactive artifact)`}
         sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
         allow="clipboard-write"

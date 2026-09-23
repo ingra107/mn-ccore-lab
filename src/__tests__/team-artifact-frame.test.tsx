@@ -30,8 +30,8 @@ async function waitFor(host: HTMLElement, check: (h: HTMLElement) => unknown, la
 
 /** A real MessageEvent with a spoofable `origin`, dispatched on window —
  *  exercises the exact listener TeamArtifactFrame registers, not a mock. */
-function postAs(origin: string, data: unknown) {
-  window.dispatchEvent(new MessageEvent('message', { data, origin }))
+function postAs(origin: string, data: unknown, source: MessageEventSource | null = null) {
+  window.dispatchEvent(new MessageEvent('message', { data, origin, source }))
 }
 
 describe('TeamArtifactFrame', () => {
@@ -71,7 +71,7 @@ describe('TeamArtifactFrame — the login-loop fallback', () => {
     )
     const iframe = host.querySelector('iframe')!
     iframe.dispatchEvent(new Event('load'))
-    postAs(PUBLIC_ARTIFACT_ORIGIN_FE, TEAM_ARTIFACT_READY_MESSAGE)
+    postAs(PUBLIC_ARTIFACT_ORIGIN_FE, TEAM_ARTIFACT_READY_MESSAGE, iframe.contentWindow)
     // Outlive both timers; the ready message must have cancelled them.
     await new Promise((r) => setTimeout(r, 300))
     expect(host.querySelector('iframe')).not.toBeNull()
@@ -112,7 +112,7 @@ describe('TeamArtifactFrame — the login-loop fallback', () => {
       { ready: (h) => h.querySelector('iframe'), label: 'iframe' },
     )
     await waitFor(host, (h) => h.textContent?.includes('Sign in to view this artifact.'), 'fallback notice')
-    postAs(PUBLIC_ARTIFACT_ORIGIN_FE, TEAM_ARTIFACT_READY_MESSAGE)
+    postAs(PUBLIC_ARTIFACT_ORIGIN_FE, TEAM_ARTIFACT_READY_MESSAGE, host.querySelector('iframe')!.contentWindow)
     await waitFor(
       host,
       (h) => !h.textContent?.includes('Sign in to view this artifact.'),
@@ -129,6 +129,17 @@ describe('TeamArtifactFrame — the login-loop fallback', () => {
       { ready: (h) => h.querySelector('iframe'), label: 'iframe' },
     )
     postAs('https://evil.example', TEAM_ARTIFACT_READY_MESSAGE)
+    await waitFor(host, (h) => h.textContent?.includes('Sign in to view this artifact.'), 'fallback notice')
+  })
+
+  it('ignores a right-origin ready message sent by a different frame', async () => {
+    // Two team desks on one page share the artifacts origin; each must only
+    // accept its OWN frame's ready message.
+    const host = await mountShared(
+      <TeamArtifactFrame id="art_sibling" title="Desk" readyGraceMs={30} absoluteTimeoutMs={40} />,
+      { ready: (h) => h.querySelector('iframe'), label: 'iframe' },
+    )
+    postAs(PUBLIC_ARTIFACT_ORIGIN_FE, TEAM_ARTIFACT_READY_MESSAGE, window)
     await waitFor(host, (h) => h.textContent?.includes('Sign in to view this artifact.'), 'fallback notice')
   })
 
