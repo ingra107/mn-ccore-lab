@@ -20,7 +20,7 @@ import { Button } from '../../components/ui/Button'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import EmptyState from '../../components/EmptyState'
 import MarkdownView from '../../components/MarkdownView'
-import HtmlArtifactFrame from '../../components/HtmlArtifactFrame'
+import TeamArtifactFrame from '../../components/TeamArtifactFrame'
 import HermesMark from '../../components/HermesMark'
 import { ActivityEntryItem, type ActivityEntryItemRow } from '../../components/activity/activityRender'
 import { ShowHiddenToggle } from '../../components/activity/ShowHiddenToggle'
@@ -395,19 +395,22 @@ export default function ArtifactPage() {
         })()}
 
         {/* ── Document body ──
-            HTML artifacts (content_type='html', schema-v94) render LIVE in a
-            sandboxed iframe: sandbox="allow-scripts" WITHOUT "allow-same-origin"
-            puts the doc in an opaque origin — scripts run (interactive
-            artifacts work) but it can never read/touch the Hub session
-            (cookies, storage, parent DOM). Markdown artifacts (default,
-            including missing/undefined content_type) render exactly as
-            before via MarkdownView — no regression there. */}
+            HTML artifacts (content_type='html', schema-v94) render LIVE via
+            TeamArtifactFrame — the cookieless artifacts origin's /a/team/:id
+            route (#2411), embedded with allow-same-origin so the
+            working-desk kit's localStorage marks/notes persist across a
+            reload. Hub-session isolation still holds: mn-ccore-artifacts.
+            pages.dev is a different SITE (Public Suffix List boundary), so
+            no CF_Authorization cookie can ever reach it, same-origin sandbox
+            token or not — see TeamArtifactFrame.tsx. Markdown artifacts
+            (default, including missing/undefined content_type) render
+            exactly as before via MarkdownView — no regression there. */}
         <div
           className="detail-card"
           style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '1.5rem 1.75rem', marginBottom: '2rem' }}
         >
           {artifact.content_type === 'html' ? (
-            <HtmlArtifactFrame title={artifact.title} html={artifact.body_md} />
+            <TeamArtifactFrame id={artifact.id} title={artifact.title} />
           ) : (
             <MarkdownView source={artifact.body_md} />
           )}

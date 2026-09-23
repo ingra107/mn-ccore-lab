@@ -1,8 +1,11 @@
-# ═══ THE COOKIELESS ARTIFACT ORIGIN (backlog #508, Option A) ═══
+# ═══ THE COOKIELESS ARTIFACT ORIGIN (backlog #508, Option A; #2411) ═══
 #
-# A SECOND Cloudflare Pages project whose ONLY job is to serve public HTML
-# artifacts at `GET /a/:id`. It exists to make same-origin stored XSS against
-# the Hub session UNREPRESENTABLE rather than merely blocked by a header.
+# A SECOND Cloudflare Pages project serving public HTML artifacts at
+# `GET /a/:id` and, since #2411 (2026-09-23), team HTML artifacts at
+# `GET /a/team/:id` (gated by a Cloudflare Access application attached in the
+# dashboard to exactly that path — see functions/a/team/[id].ts). It exists
+# to make same-origin stored XSS against the Hub session UNREPRESENTABLE
+# rather than merely blocked by a header.
 #
 # Why a separate project and not a path on mn-ccore-lab.pages.dev:
 #   `*.pages.dev` is on the PUBLIC SUFFIX LIST, so `mn-ccore-artifacts.pages.dev`
@@ -15,12 +18,20 @@
 #   depth — see api/routes/public-artifact.ts.)
 #
 # DELIBERATELY MINIMAL — this project has, and must keep:
-#   - exactly ONE Function route: /a/:id  (functions/a/[id].ts)
-#   - a READ path to D1 only (the handler runs one parameterized SELECT)
-#   - NO /api/*, NO SPA, NO Cloudflare Access application, NO secrets,
-#     NO PB_API_KEY, NO cron triggers, NO R2, NO service bindings.
-#   Every one of those would re-import Hub authority into the very origin whose
-#   whole value is that it HAS no authority. Do not add them here.
+#   - exactly TWO Function routes: /a/:id (public, functions/a/[id].ts) and
+#     /a/team/:id (team, functions/a/team/[id].ts) — the allowlist in
+#     scripts/check-artifacts-origin-minimal.mjs enumerates both
+#   - a READ path to D1 only (each handler runs one parameterized SELECT)
+#   - NO /api/*, NO SPA, NO secrets, NO PB_API_KEY, NO cron triggers, NO R2,
+#     NO service bindings. Every one of those would re-import Hub authority
+#     into the very origin whose whole value is that it HAS no authority.
+#     Do not add them here.
+#   - the team route's "team-only" gate is a Cloudflare Access application
+#     attached to /a/team/* in the DASHBOARD (see functions/a/team/[id].ts) —
+#     deliberately NOT a secret or a D1 capability table on this project,
+#     both of which the line above forbids. This is the one exception to
+#     "no Access application" above: it is scoped to /a/team/* only, /a/:id
+#     stays unauthenticated.
 #
 # ENFORCED (PB #883, 2026-07-29): scripts/check-artifacts-origin-minimal.mjs —
 #   allowlist gate over this file + functions/ + public/, wired into

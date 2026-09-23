@@ -86,6 +86,29 @@ interface PublicArtifactRow {
   visibility: string;
 }
 
+interface TeamArtifactRow {
+  body_md: string;
+  content_type: string;
+}
+
+/**
+ * Same click-eats-the-frame problem the old blob-url iframe worked around
+ * client-side (HtmlArtifactFrame.tsx): embedded in an <iframe>, a plain
+ * `<a href>` to an outbound site navigates the FRAME, replacing the artifact
+ * with that site rendered in a small box with no way back. Retargeting to a
+ * new tab server-side means every sink that serves this body gets the fix,
+ * not just the one client component that remembered to add it. Appended
+ * AFTER the (already doctype-ensured) body rather than prepended — a leading
+ * <script> before <!DOCTYPE> would push the doctype out of leading position
+ * and re-trigger quirks mode (#915); a trailing <script> is foster-parented
+ * into <body> by every HTML parser and does not move the doctype.
+ */
+const OUTBOUND_LINK_SHIM =
+  '<script>document.addEventListener("click",function(e){' +
+  'var a=e.target&&e.target.closest?e.target.closest("a[href]"):null;' +
+  'if(a&&/^https?:/i.test(a.getAttribute("href")||"")){a.target="_blank";a.rel="noopener noreferrer";}' +
+  '},true);</script>';
+
 function notFound(): Response {
   return new Response('Not found', {
     status: 404,
@@ -130,6 +153,78 @@ export async function handleGetPublicArtifact(id: string, env: Env): Promise<Res
         "sandbox allow-scripts; default-src 'none'; connect-src 'none'; form-action 'none'; base-uri 'none'; script-src 'unsafe-inline' 'unsafe-eval' data: blob:; style-src 'unsafe-inline' data:; img-src data: blob:; font-src data:; media-src data: blob:",
       'X-Content-Type-Options': 'nosniff',
       'Cache-Control': 'public, max-age=300',
+      'X-Robots-Tag': 'noindex',
+    },
+  });
+}
+
+/**
+ * GET on the cookieless origin's TEAM route (`/a/team/:id`, #2411): serves any
+ * `content_type='html'` artifact body regardless of `visibility` ('team' OR
+ * 'public'). This is what the Hub's own `/portal/artifacts/:id` page embeds
+ * for a live-HTML artifact — the ArtifactPage route is already reachable only
+ * through the Cloudflare Access-gated `/portal/*` application, so a signed-in
+ * viewer got here once already; this handler does not re-check that.
+ *
+ * Authorization is NOT this function's job. "Team-only" is enforced entirely
+ * at the EDGE by a Cloudflare Access application scoped to exactly this path
+ * on the artifacts origin (dashboard-side config, outside git — see the
+ * NEEDS-NICK note in the commit that introduced this route). Deliberately NOT
+ * a signed-token / D1-row capability check: that would need either a secret
+ * on this origin (forbidden by the #883 minimality gate) or a new mutable D1
+ * table (a schema migration, out of this route's scope) — Access needs
+ * neither. The origin's D1 binding stays a single parameterized read, same
+ * shape as handleGetPublicArtifact; #883's allowlist gate is updated in the
+ * same commit to admit this second, equally minimal Function route.
+ *
+ * Residual risk, stated plainly rather than left implied: unlike the public
+ * route, the Hub embeds this one with `sandbox="allow-scripts
+ * allow-same-origin ..."` (deskkit needs real per-origin localStorage for
+ * marks/notes to survive a reload — an opaque origin's storage is either
+ * inaccessible or re-keyed every load). `allow-same-origin` grants an
+ * artifact's own script access to THIS origin's cookies/storage — i.e. the
+ * artifacts-origin's OWN Cloudflare Access session, not the Hub's (different
+ * SITE, PSL boundary, see PUBLIC_ARTIFACT_ORIGIN doc). Worst case from a
+ * malicious/compromised team artifact is "read other team artifacts an
+ * authenticated visitor can already reach," not Hub session takeover —
+ * still a Level-2 (Access-gated chokepoint) guarantee here, not the public
+ * route's Level-1 (unrepresentable). Documented as a deliberate, accepted
+ * trade for the persistence requirement, not an oversight.
+ */
+export async function handleGetTeamArtifactHtml(id: string, env: Env): Promise<Response> {
+  if (!id || !id.startsWith('art_')) return notFound();
+
+  const row = await env.DB
+    .prepare('SELECT body_md, content_type FROM artifacts WHERE id = ? LIMIT 1')
+    .bind(id)
+    .first<TeamArtifactRow>();
+
+  if (!row) return notFound();
+  if (row.content_type !== 'html') return notFound();
+
+  // Appended, not prepended — see OUTBOUND_LINK_SHIM's own comment for why
+  // ordering matters here (#915 doctype regression).
+  const body = ensureDoctype(row.body_md) + OUTBOUND_LINK_SHIM;
+
+  return new Response(body, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      // Sandbox tokens here must be a SUPERSET of (or equal to) the iframe's
+      // own `sandbox` attribute — CSP's `sandbox` directive and the iframe
+      // attribute intersect, the more restrictive wins. Omitting a token the
+      // iframe grants silently strips it; that is why allow-same-origin and
+      // the popup tokens are listed here too, not just connect-src 'none'
+      // (still the load-bearing blind-CSRF close — see public-artifact CSP
+      // comment above) and the data:/blob: content allowances.
+      'Content-Security-Policy':
+        "sandbox allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox; default-src 'none'; connect-src 'none'; form-action 'none'; base-uri 'none'; script-src 'unsafe-inline' 'unsafe-eval' data: blob:; style-src 'unsafe-inline' data:; img-src data: blob:; font-src data:; media-src data: blob:",
+      'X-Content-Type-Options': 'nosniff',
+      // Team artifacts are edited/revised in place (version++ on the SAME
+      // id) — unlike the public route's immutable-per-version body, caching
+      // this response would serve a stale revision after @hermes or a
+      // teammate revises it. No-store, not a short max-age.
+      'Cache-Control': 'no-store',
       'X-Robots-Tag': 'noindex',
     },
   });

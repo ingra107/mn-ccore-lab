@@ -21,6 +21,7 @@ import { describe, it, expect, vi } from 'vitest';
 import type { Env } from '../helpers';
 import {
   handleGetPublicArtifact,
+  handleGetTeamArtifactHtml,
   handleLegacyPublicArtifactRedirect,
   PUBLIC_ARTIFACT_ORIGIN,
 } from './public-artifact';
@@ -130,6 +131,78 @@ describe('GET /a/:id — public artifact serve', () => {
     expect(resTeam.status).toBe(resMissing.status);
     expect(await resTeam.text()).toBe(await resMissing.text());
     expect(resTeam.headers.get('X-Robots-Tag')).toBe(resMissing.headers.get('X-Robots-Tag'));
+  });
+});
+
+describe('GET /a/team/:id — team artifact serve (#2411)', () => {
+  const TEAM_CSP_SANDBOX = 'sandbox allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox';
+
+  it('serves html body for content_type=html regardless of visibility=team', async () => {
+    const env = {
+      DB: makeDb({ body_md: '<html><body>hi</body></html>', content_type: 'html' }),
+    } as unknown as Env;
+
+    const res = await handleGetTeamArtifactHtml('art_abc123', env);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('text/html; charset=utf-8');
+    // CSP's sandbox directive must be a SUPERSET of (or equal to) the
+    // embedding iframe's own sandbox attribute (TeamArtifactFrame.tsx),
+    // or CSP silently strips a token the iframe grants.
+    expect(res.headers.get('Content-Security-Policy')).toContain(TEAM_CSP_SANDBOX);
+    expect(res.headers.get('Content-Security-Policy')).toContain("connect-src 'none'");
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    // Team artifacts are revised in place (version++ on the same id) —
+    // caching would serve a stale revision after an edit.
+    expect(res.headers.get('Cache-Control')).toBe('no-store');
+    const body = await res.text();
+    expect(body).toContain('<!DOCTYPE html>\n<html><body>hi</body></html>');
+    // Outbound-link retargeting shim, appended after the body (not prepended
+    // — a leading <script> before <!DOCTYPE> would re-trigger quirks mode).
+    expect(body).toContain('a.target="_blank"');
+  });
+
+  it('serves visibility=public content_type=html too — this route does not gate on visibility', async () => {
+    const env = {
+      DB: makeDb({ body_md: '<html>hi</html>', content_type: 'html', visibility: 'public' }),
+    } as unknown as Env;
+    const res = await handleGetTeamArtifactHtml('art_pub', env);
+    expect(res.status).toBe(200);
+  });
+
+  it('404s when content_type=markdown', async () => {
+    const env = {
+      DB: makeDb({ body_md: '# secret plan', content_type: 'markdown' }),
+    } as unknown as Env;
+    const res = await handleGetTeamArtifactHtml('art_md', env);
+    expect(res.status).toBe(404);
+    const body = await res.text();
+    expect(body).not.toContain('secret plan');
+  });
+
+  it('404s when the artifact does not exist', async () => {
+    const env = { DB: makeDb(null) } as unknown as Env;
+    const res = await handleGetTeamArtifactHtml('art_missing', env);
+    expect(res.status).toBe(404);
+  });
+
+  it('404s without a DB round-trip when the id is not art_-shaped', async () => {
+    const db = makeDb(null);
+    const env = { DB: db } as unknown as Env;
+    const res = await handleGetTeamArtifactHtml('not-an-artifact-id', env);
+    expect(res.status).toBe(404);
+    expect(db.prepare).not.toHaveBeenCalled();
+  });
+
+  it('missing AND markdown 404s are identical in shape (no signal leak)', async () => {
+    const envMd = { DB: makeDb({ body_md: 'x', content_type: 'markdown' }) } as unknown as Env;
+    const envMissing = { DB: makeDb(null) } as unknown as Env;
+
+    const resMd = await handleGetTeamArtifactHtml('art_a', envMd);
+    const resMissing = await handleGetTeamArtifactHtml('art_b', envMissing);
+
+    expect(resMd.status).toBe(resMissing.status);
+    expect(await resMd.text()).toBe(await resMissing.text());
   });
 });
 

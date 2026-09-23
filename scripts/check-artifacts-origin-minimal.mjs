@@ -12,9 +12,15 @@
  * re-imported authority — the exact "documented rule that drifts" shape.
  *
  * WHAT IT ASSERTS (allowlist, so an unknown new capability FAILS CLOSED):
- *   1. artifacts-site/functions/ contains EXACTLY one function: a/[id].ts.
- *   2. That function imports the SHARED handler (api/routes/public-artifact)
- *      — one implementation, one test file, never forked.
+ *   1. artifacts-site/functions/ contains EXACTLY the two allowlisted
+ *      functions: a/[id].ts (public serve, #508) and a/team/[id].ts
+ *      (team serve gated by a Cloudflare Access application on that path,
+ *      #2411 — see that file's header). Both are read-only D1 lookups; the
+ *      second route does not weaken "one route class, one code-owned D1
+ *      binding, no secrets" — it doubles the route COUNT, not the authority.
+ *   2. Each of those functions imports the SHARED handler module
+ *      (api/routes/public-artifact) — one implementation, one test file,
+ *      never forked.
  *   3. artifacts-site/wrangler.toml declares ONLY:
  *        top level : name (= mn-ccore-artifacts), compatibility_date,
  *                    pages_build_output_dir
@@ -62,9 +68,10 @@ const REPO_ROOT = rootFlag !== -1 && argv[rootFlag + 1]
 const SITE = path.join(REPO_ROOT, 'artifacts-site');
 const violations = [];
 
-// ── 1 + 2. Exactly one Function route, importing the shared handler ──────────
+// ── 1 + 2. Exactly the allowlisted Function routes, each importing the
+//          shared handler ──────────────────────────────────────────────────
 
-const ALLOWED_FUNCTIONS = ['a/[id].ts'];
+const ALLOWED_FUNCTIONS = ['a/[id].ts', 'a/team/[id].ts'];
 
 function walk(dir, base) {
   if (!fs.existsSync(dir)) return [];
@@ -86,12 +93,14 @@ if (fnFiles.join('|') !== ALLOWED_FUNCTIONS.join('|')) {
     `Every additional file under artifacts-site/functions/ is a new ROUTE on the cookieless origin.`,
   );
 } else {
-  const fnSource = fs.readFileSync(path.join(fnDir, 'a', '[id].ts'), 'utf8');
-  if (!/from\s+['"][^'"]*api\/routes\/public-artifact['"]/.test(fnSource)) {
-    violations.push(
-      `functions/a/[id].ts no longer imports the shared handler (api/routes/public-artifact) — ` +
-      `the one-implementation/two-surfaces contract is broken (never fork it).`,
-    );
+  for (const rel of ALLOWED_FUNCTIONS) {
+    const fnSource = fs.readFileSync(path.join(fnDir, ...rel.split('/')), 'utf8');
+    if (!/from\s+['"][^'"]*api\/routes\/public-artifact['"]/.test(fnSource)) {
+      violations.push(
+        `functions/${rel} no longer imports the shared handler (api/routes/public-artifact) — ` +
+        `the one-implementation/two-surfaces contract is broken (never fork it).`,
+      );
+    }
   }
 }
 
@@ -201,4 +210,4 @@ if (violations.length > 0) {
   process.exit(1);
 }
 
-console.log('[artifacts-origin-minimal] OK — one route, one code-owned D1 read binding, nothing else.');
+console.log('[artifacts-origin-minimal] OK — allowlisted routes, one code-owned D1 read binding, nothing else.');

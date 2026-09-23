@@ -18,11 +18,15 @@
  * api/routes/public-artifact.ts so it is covered by the same vitest file as the
  * serve path.
  *
- * DO NOT re-add serving here. If a future need arises to render an artifact
- * inside the Hub UI, use the team path's sandboxed blob-url iframe
- * (src/components/HtmlArtifactFrame.tsx), which is also opaque-origin. It uses
- * a blob url rather than srcDoc because srcDoc leaves the document at
- * about:srcdoc, where one in-page anchor click blanks the artifact (2026-07-24).
+ * DO NOT re-add serving here. To render an artifact inside the AUTHENTICATED
+ * portal (/portal/artifacts/:id), use TeamArtifactFrame (src/components/
+ * TeamArtifactFrame.tsx), which embeds the cookieless origin's /a/team/:id
+ * route (#2411) — still a different SITE from this one, so no Hub cookie can
+ * reach it. For any future need to render artifact HTML OUTSIDE an
+ * authenticated context, use HtmlArtifactFrame.tsx's opaque-origin blob-url
+ * embed instead — it uses a blob url rather than srcDoc because srcDoc
+ * leaves the document at about:srcdoc, where one in-page anchor click blanks
+ * the artifact (2026-07-24).
  */
 
 import { handleLegacyPublicArtifactRedirect } from '../../api/routes/public-artifact'

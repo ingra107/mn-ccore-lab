@@ -1,4 +1,22 @@
-// HtmlArtifactFrame — renders an interactive (content_type='html') artifact.
+// HtmlArtifactFrame — renders an interactive (content_type='html') artifact
+// in an OPAQUE-ORIGIN sandboxed iframe (no allow-same-origin, ever — see the
+// guard test in src/__tests__/html-artifact-frame.test.tsx).
+//
+// As of 2026-09-23 (#2411) ArtifactPage no longer calls this component — the
+// working-desk kit needs persistent localStorage for marks/notes, which an
+// opaque origin cannot give it (storage is either inaccessible or re-keyed
+// every reload), so /portal/artifacts/:id now uses TeamArtifactFrame.tsx
+// instead, which embeds the SAME html body from a genuinely separate SITE
+// (mn-ccore-artifacts.pages.dev/a/team/:id) with allow-same-origin — safe
+// there because no Hub cookie can cross a Public Suffix List boundary
+// regardless of that token.
+//
+// This component is kept, not deleted: it is the sanctioned pattern for
+// rendering artifact HTML anywhere OUTSIDE an authenticated, Access-gated
+// context (e.g. the Hub's own origin, unauthenticated), where
+// allow-same-origin would be a same-origin-stored-XSS-to-Hub-session bug.
+// Do not delete it, and do not add allow-same-origin here, without a
+// deliberate decision superseding this one.
 //
 // An interactive artifact needs a REAL document URL, not srcDoc.
 //
