@@ -22,10 +22,11 @@
 // token to get right. What it adds on top is a storage BROKER, so deskkit
 // still gets working persistence without ever touching real localStorage:
 //
-//   1. Before the artifact's own script runs, a small shim (SEED_SHIM below)
-//      replaces `window.localStorage` inside the iframe with an in-memory
-//      Storage stand-in, seeded from JSON this component reads out of the
-//      HUB'S OWN first-party localStorage under `desk:<artifactId>`.
+//   1. Before the artifact's own script runs, a small shim (buildSeedShim
+//      below) defines `window.__deskStorage` — a PLAIN GLOBAL, not an
+//      override of the native `localStorage` accessor — seeded from JSON
+//      this component reads out of the HUB'S OWN first-party localStorage
+//      under `desk:<artifactId>`.
 //   2. Every mutation (setItem/removeItem/clear) on that stand-in posts the
 //      WHOLE store back to the parent via postMessage — the artifact never
 //      picks the storage key or the origin; this component does.
@@ -41,39 +42,38 @@
 // TeamArtifactFrame carries; opaque-origin doesn't change this — it's a
 // Permissions Policy delegation, unrelated to same-origin/storage).
 //
-// The /a/team route, TeamArtifactFrame and the artifacts-site Access app
-// stay in place until Nick's cross-browser (notably Safari) proof passes —
-// see the decision doc's "Revisit if" for what would send this back.
+// ═══ window.__deskStorage, not an override of `localStorage` (2026-09-23) ═══
 //
-// ═══ NOT WIRED UP — the decision doc's own Assumption #1 does not hold (2026-09-23) ═══
-//
-// ArtifactPage.tsx still renders TeamArtifactFrame, not this component.
-// Measured in real Chromium (vitest.config.ts browser mode, headless), three
-// probes deep: `Object.defineProperty(window, "localStorage", {value:
-// standIn, configurable:true})` inside this sandbox does NOT throw, and a
-// read of the bare `localStorage` identifier immediately afterward, in the
-// SAME <script> tag, DOES return the stand-in. But deskkit.js is pasted into
-// its OWN, separate <script> tag at the end of the page (by its own SKILL.md
-// contract) — and a read of `localStorage` from THAT tag throws natively:
+// The first build of this component tried `Object.defineProperty(window,
+// "localStorage", {value: standIn, configurable:true})`. Measured in real
+// Chromium (vitest.config.ts browser mode, headless), three probes deep:
+// that override does NOT throw, and a read of the bare `localStorage`
+// identifier immediately afterward, in the SAME <script> tag, DOES return
+// the stand-in — but deskkit.js is pasted into its OWN, separate <script>
+// tag at the end of the page (its own contract), and a read of `localStorage`
+// from THAT tag throws natively:
 //
 //   SecurityError: Failed to read the 'localStorage' property from
 //   'Window': The document is sandboxed and lacks the 'allow-same-origin'
 //   flag.
 //
-// So the override does not survive a script-tag boundary; only code sharing
-// the shim's own <script> element ever sees it. deskkit.js, which is the
-// entire reason this component exists, cannot.
+// The override does not survive a script-tag boundary. A plain global has
+// no such native check attached to it and is visible, unchanged, from every
+// subsequent <script> tag — confirmed by the same probe technique — so the
+// shim below defines ONLY `window.__deskStorage`; there is no
+// `window.localStorage` override left anywhere in this file, not even as a
+// fallback. deskkit.js (PB side, orchestrator-owned) now calls `store()`,
+// which returns `window.__deskStorage || localStorage`, for both its
+// startup read and every save.
 //
-// The adapter alternative the decision doc names DOES work, confirmed by the
-// same probe technique: expose the stand-in as a plain global —
-// `window.__deskStorage = { getItem, setItem, removeItem, clear }` — rather
-// than trying to shadow the native `localStorage` accessor. A plain property
-// read has no Blink-native security check tied to it, so it is visible,
-// unchanged, from every subsequent <script> tag. That requires deskkit.js to
-// call `window.__deskStorage.setItem(...)` instead of the bare
-// `localStorage` global — the "~20-line storage adapter" the decision doc
-// already names as the fallback. Per the dispatch that built this component:
-// deskkit is out of scope here; changing it needs its own decision.
+// The /a/team route, TeamArtifactFrame and the artifacts-site Access app
+// stay in place until Nick's cross-browser (notably Safari) proof passes —
+// see the decision doc's "Revisit if" for what would send this back. Every
+// team desk published BEFORE this cutover inlines the OLD deskkit.js (no
+// `store()`, calls bare `localStorage` directly) and will hit the same
+// SecurityError inside this frame, caught by deskkit's own try/catch —
+// silently not persisting, not crashing. Those desks need a rebuild; see the
+// enumeration this session's report carries.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 
@@ -142,8 +142,11 @@ function escapeForInlineScript(jsStringLiteral: string): string {
 }
 
 /** Builds the <script> that must run before anything else in the artifact
- *  body: it replaces window.localStorage with an in-memory stand-in seeded
- *  from `seed`, before deskkit.js's own synchronous startup read. */
+ *  body: it defines `window.__deskStorage` — a plain global, seeded from
+ *  `seed` — for deskkit.js's `store()` helper to find on its startup read.
+ *  Deliberately does NOT touch `window.localStorage`: see the file header
+ *  for why an override of the native accessor cannot reach a second
+ *  <script> tag, which is exactly where deskkit.js always runs. */
 function buildSeedShim(seed: Record<string, string>): string {
   // Double-stringify: the inner JSON.stringify produces the JSON text; the
   // outer wraps that text as a JS string literal (escaping quotes,
@@ -153,21 +156,17 @@ function buildSeedShim(seed: Record<string, string>): string {
   return (
     '<script>(function(){' +
     'var SEED=JSON.parse(' + literal + ');' +
-    'function Store(initial){' +
     'var data={};' +
-    'try{if(initial&&typeof initial==="object"){for(var k in initial){' +
-    'if(Object.prototype.hasOwnProperty.call(initial,k))data[k]=String(initial[k]);' +
+    'try{if(SEED&&typeof SEED==="object"){for(var k in SEED){' +
+    'if(Object.prototype.hasOwnProperty.call(SEED,k))data[k]=String(SEED[k]);' +
     '}}}catch(e){}' +
     'function post(){try{parent.postMessage({type:' + JSON.stringify(DESK_SAVE_TYPE) + ',value:JSON.stringify(data)},"*");}catch(e){}}' +
-    'var storage={' +
+    'window.__deskStorage={' +
     'getItem:function(k){return Object.prototype.hasOwnProperty.call(data,k)?data[k]:null;},' +
     'setItem:function(k,v){data[k]=String(v);post();},' +
     'removeItem:function(k){delete data[k];post();},' +
-    'clear:function(){data={};post();},' +
-    'key:function(i){return Object.keys(data)[i]||null;}' +
+    'clear:function(){data={};post();}' +
     '};' +
-    'Object.defineProperty(storage,"length",{get:function(){return Object.keys(data).length;}});' +
-    'try{Object.defineProperty(window,"localStorage",{value:storage,configurable:true});}catch(e){}' +
     '})();</script>'
   )
 }

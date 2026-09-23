@@ -20,7 +20,7 @@ import { Button } from '../../components/ui/Button'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import EmptyState from '../../components/EmptyState'
 import MarkdownView from '../../components/MarkdownView'
-import TeamArtifactFrame from '../../components/TeamArtifactFrame'
+import DeskBrokerFrame from '../../components/DeskBrokerFrame'
 import HermesMark from '../../components/HermesMark'
 import { ActivityEntryItem, type ActivityEntryItemRow } from '../../components/activity/activityRender'
 import { ShowHiddenToggle } from '../../components/activity/ShowHiddenToggle'
@@ -396,29 +396,26 @@ export default function ArtifactPage() {
 
         {/* ── Document body ──
             HTML artifacts (content_type='html', schema-v94) render LIVE via
-            TeamArtifactFrame — the cookieless artifacts origin's /a/team/:id
-            route (#2411), embedded with allow-same-origin so the
-            working-desk kit's localStorage marks/notes persist across a
-            reload. Hub-session isolation still holds: mn-ccore-artifacts.
-            pages.dev is a different SITE (Public Suffix List boundary), so
-            no CF_Authorization cookie can ever reach it, same-origin sandbox
-            token or not — see TeamArtifactFrame.tsx. Markdown artifacts
-            (default, including missing/undefined content_type) render
-            exactly as before via MarkdownView — no regression there.
-
-            NOT YET CUT OVER to the 2026-09-23 Hub-brokered opaque-frame
-            design (Context/Decisions/2026-09-23-team-desks-hub-brokered-
-            opaque-frame.md) — see src/components/DeskBrokerFrame.tsx's
-            top-of-file note: its core assumption (redefining
-            window.localStorage inside an opaque sandbox survives into a
-            SEPARATE <script> tag, i.e. deskkit.js's own) does not hold in
-            real Chromium. Blocked pending a decision on deskkit's adapter. */}
+            DeskBrokerFrame — the Hub's own opaque-origin blob iframe (no
+            allow-same-origin, ever), with the Hub brokering deskkit's
+            storage through window.__deskStorage + postMessage (2026-09-23
+            decision: Context/Decisions/2026-09-23-team-desks-hub-brokered-
+            opaque-frame.md; adapter cutover same day after the /a/team
+            cross-site route looped on sign-in in Safari/ITP and Chrome with
+            third-party cookies blocked). See DeskBrokerFrame.tsx's file
+            header for why the storage broker is a plain global, not a
+            window.localStorage override, and for the rebuild every
+            pre-cutover team desk needs (deskkit.js on those inlines the old,
+            non-`store()` version, so it silently stops persisting inside
+            this frame rather than crashing). Markdown artifacts (default,
+            including missing/undefined content_type) render exactly as
+            before via MarkdownView — no regression there. */}
         <div
           className="detail-card"
           style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '1.5rem 1.75rem', marginBottom: '2rem' }}
         >
           {artifact.content_type === 'html' ? (
-            <TeamArtifactFrame id={artifact.id} title={artifact.title} />
+            <DeskBrokerFrame id={artifact.id} title={artifact.title} html={artifact.body_md} />
           ) : (
             <MarkdownView source={artifact.body_md} />
           )}

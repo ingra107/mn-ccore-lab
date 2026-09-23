@@ -2,14 +2,18 @@
 // in an OPAQUE-ORIGIN sandboxed iframe (no allow-same-origin, ever — see the
 // guard test in src/__tests__/html-artifact-frame.test.tsx).
 //
-// As of 2026-09-23 (#2411) ArtifactPage no longer calls this component — the
-// working-desk kit needs persistent localStorage for marks/notes, which an
-// opaque origin cannot give it (storage is either inaccessible or re-keyed
-// every reload), so /portal/artifacts/:id now uses TeamArtifactFrame.tsx
-// instead, which embeds the SAME html body from a genuinely separate SITE
-// (mn-ccore-artifacts.pages.dev/a/team/:id) with allow-same-origin — safe
-// there because no Hub cookie can cross a Public Suffix List boundary
-// regardless of that token.
+// As of 2026-09-23 ArtifactPage no longer calls this component directly for
+// team desks — the working-desk kit needs persistent storage for
+// marks/notes, and this component's own opaque origin gives an artifact
+// script no way to reach anything durable. /portal/artifacts/:id now uses
+// DeskBrokerFrame.tsx, which keeps this same opaque-origin, no-
+// allow-same-origin shape (see that component's sandbox-shape test) but adds
+// a Hub-brokered `window.__deskStorage` global instead — the Hub, not the
+// artifact, owns the storage key and the persistence. (A same-day interim,
+// TeamArtifactFrame.tsx, tried a genuinely separate SITE with
+// allow-same-origin instead; superseded the same day after it looped on
+// sign-in in Safari/ITP and Chrome with third-party cookies blocked — see
+// Context/Decisions/2026-09-23-team-desks-hub-brokered-opaque-frame.md.)
 //
 // This component is kept, not deleted: it is the sanctioned pattern for
 // rendering artifact HTML anywhere OUTSIDE an authenticated, Access-gated
