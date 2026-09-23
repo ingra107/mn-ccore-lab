@@ -109,6 +109,35 @@ const OUTBOUND_LINK_SHIM =
   'if(a&&/^https?:/i.test(a.getAttribute("href")||"")){a.target="_blank";a.rel="noopener noreferrer";}' +
   '},true);</script>';
 
+/**
+ * The message TeamArtifactFrame.tsx (src/lib/artifactOrigin.ts) listens for to
+ * tell a broken-page-icon (Cloudflare Access login refusing to render in the
+ * frame — see that component's header comment) apart from a genuinely loaded
+ * artifact. Duplicated as a literal on the frontend side, same pattern as
+ * PUBLIC_ARTIFACT_ORIGIN above — the frontend bundle cannot import from api/.
+ *
+ * Carries NO data (a bare string, not an object with fields an artifact
+ * script could poison) and is sent to `'*'` — that is safe specifically
+ * BECAUSE it is content-free: there is nothing here for an eavesdropping
+ * parent to learn, so the missing targetOrigin does not leak anything. The
+ * receiving side (TeamArtifactFrame) is what actually enforces the trust
+ * boundary, by checking `event.origin === PUBLIC_ARTIFACT_ORIGIN_FE` before
+ * accepting it — a forged ready message from a different embedded frame or a
+ * malicious top-level script cannot originate from that origin.
+ */
+export const TEAM_ARTIFACT_READY_MESSAGE = 'mnccore-artifact-ready';
+
+/**
+ * Appended after OUTBOUND_LINK_SHIM (ordering only matters for the doctype
+ * fix in that shim's comment; this one has no such constraint but stays last
+ * for readability — "housekeeping first, then announce ready"). Fires once
+ * per document load; a team artifact that is revised in place gets a fresh
+ * ready message on the next load because the whole document (this script
+ * included) is re-served, never cached (`Cache-Control: no-store` below).
+ */
+const READY_MESSAGE_SHIM =
+  `<script>try{window.parent.postMessage(${JSON.stringify(TEAM_ARTIFACT_READY_MESSAGE)},"*")}catch(e){}</script>`;
+
 function notFound(): Response {
   return new Response('Not found', {
     status: 404,
@@ -204,7 +233,7 @@ export async function handleGetTeamArtifactHtml(id: string, env: Env): Promise<R
 
   // Appended, not prepended — see OUTBOUND_LINK_SHIM's own comment for why
   // ordering matters here (#915 doctype regression).
-  const body = ensureDoctype(row.body_md) + OUTBOUND_LINK_SHIM;
+  const body = ensureDoctype(row.body_md) + OUTBOUND_LINK_SHIM + READY_MESSAGE_SHIM;
 
   return new Response(body, {
     status: 200,

@@ -24,6 +24,7 @@ import {
   handleGetTeamArtifactHtml,
   handleLegacyPublicArtifactRedirect,
   PUBLIC_ARTIFACT_ORIGIN,
+  TEAM_ARTIFACT_READY_MESSAGE,
 } from './public-artifact';
 
 function makeDb(row: Record<string, unknown> | null) {
@@ -160,6 +161,13 @@ describe('GET /a/team/:id — team artifact serve (#2411)', () => {
     // Outbound-link retargeting shim, appended after the body (not prepended
     // — a leading <script> before <!DOCTYPE> would re-trigger quirks mode).
     expect(body).toContain('a.target="_blank"');
+    // The ready-message shim (2026-09-23 login-loop fallback): TeamArtifactFrame
+    // uses its absence to tell a genuinely loaded artifact apart from the
+    // Cloudflare Access login page. window.parent, not window — this body is
+    // always embedded, never navigated to top-level by this route's consumer.
+    expect(body).toContain(`window.parent.postMessage(${JSON.stringify(TEAM_ARTIFACT_READY_MESSAGE)},"*")`);
+    // Must come after the outbound-link shim's closing tag, not interleaved.
+    expect(body.indexOf('a.target="_blank"')).toBeLessThan(body.indexOf(TEAM_ARTIFACT_READY_MESSAGE));
   });
 
   it('serves visibility=public content_type=html too — this route does not gate on visibility', async () => {

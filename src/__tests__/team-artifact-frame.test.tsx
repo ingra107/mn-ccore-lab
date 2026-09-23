@@ -1,10 +1,12 @@
-// Guards TeamArtifactFrame's src + sandbox shape (#2411).
+// Guards TeamArtifactFrame's src + sandbox shape (#2411), plus the
+// login-loop fallback state machine (2026-09-23, following 0e955794).
 //
 // Runs in real Chromium (vitest.config.ts browser mode), same pattern as
 // html-artifact-frame.test.tsx.
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import TeamArtifactFrame from '../components/TeamArtifactFrame'
+import { PUBLIC_ARTIFACT_ORIGIN_FE, TEAM_ARTIFACT_READY_MESSAGE } from '../lib/artifactOrigin'
 import { mount as mountShared, cleanupMountsAfterEach } from './testMount'
 
 cleanupMountsAfterEach()
@@ -15,6 +17,21 @@ async function mount(id: string, title: string): Promise<HTMLIFrameElement> {
     label: 'iframe',
   })
   return host.querySelector('iframe')!
+}
+
+/** Waits up to ~2s for `check(host)` to become truthy; throws `label` if not. */
+async function waitFor(host: HTMLElement, check: (h: HTMLElement) => unknown, label: string) {
+  for (let i = 0; i < 200; i++) {
+    if (check(host)) return
+    await new Promise((r) => setTimeout(r, 10))
+  }
+  throw new Error(`${label} never became true`)
+}
+
+/** A real MessageEvent with a spoofable `origin`, dispatched on window —
+ *  exercises the exact listener TeamArtifactFrame registers, not a mock. */
+function postAs(origin: string, data: unknown) {
+  window.dispatchEvent(new MessageEvent('message', { data, origin }))
 }
 
 describe('TeamArtifactFrame', () => {
@@ -43,5 +60,91 @@ describe('TeamArtifactFrame', () => {
     const iframe = await mount('art_deadbeef', 'Desk')
     expect(iframe.getAttribute('src')).not.toMatch(/^blob:/)
     expect(iframe.hasAttribute('srcdoc')).toBe(false)
+  })
+})
+
+describe('TeamArtifactFrame — the login-loop fallback', () => {
+  it('stays on the iframe when a valid ready message arrives before the grace window closes', async () => {
+    const host = await mountShared(
+      <TeamArtifactFrame id="art_ok" title="Desk" readyGraceMs={50} absoluteTimeoutMs={200} />,
+      { ready: (h) => h.querySelector('iframe'), label: 'iframe' },
+    )
+    const iframe = host.querySelector('iframe')!
+    iframe.dispatchEvent(new Event('load'))
+    postAs(PUBLIC_ARTIFACT_ORIGIN_FE, TEAM_ARTIFACT_READY_MESSAGE)
+    // Outlive both timers; the ready message must have cancelled them.
+    await new Promise((r) => setTimeout(r, 300))
+    expect(host.querySelector('iframe')).not.toBeNull()
+    expect(host.textContent).not.toContain('Sign in to view this artifact.')
+  })
+
+  it('falls back when the iframe loads (the Access login page) but no ready message follows', async () => {
+    const host = await mountShared(
+      <TeamArtifactFrame id="art_blocked" title="Desk" readyGraceMs={30} absoluteTimeoutMs={5000} />,
+      { ready: (h) => h.querySelector('iframe'), label: 'iframe' },
+    )
+    host.querySelector('iframe')!.dispatchEvent(new Event('load'))
+    await waitFor(host, (h) => h.textContent?.includes('Sign in to view this artifact.'), 'fallback notice')
+    expect(host.querySelector('iframe')).toBeNull()
+  })
+
+  it('falls back on the absolute backstop even when `load` never fires', async () => {
+    const host = await mountShared(
+      <TeamArtifactFrame id="art_stuck" title="Desk" readyGraceMs={5000} absoluteTimeoutMs={40} />,
+      { ready: (h) => h.querySelector('iframe'), label: 'iframe' },
+    )
+    await waitFor(host, (h) => h.textContent?.includes('Sign in to view this artifact.'), 'fallback notice')
+    expect(host.querySelector('iframe')).toBeNull()
+  })
+
+  it('ignores a ready-shaped message from the wrong origin', async () => {
+    const host = await mountShared(
+      <TeamArtifactFrame id="art_spoof" title="Desk" readyGraceMs={30} absoluteTimeoutMs={40} />,
+      { ready: (h) => h.querySelector('iframe'), label: 'iframe' },
+    )
+    postAs('https://evil.example', TEAM_ARTIFACT_READY_MESSAGE)
+    await waitFor(host, (h) => h.textContent?.includes('Sign in to view this artifact.'), 'fallback notice')
+  })
+
+  it('"Open to sign in" opens the same artifact url in a new tab', async () => {
+    const host = await mountShared(
+      <TeamArtifactFrame id="art_open" title="Desk" readyGraceMs={10} absoluteTimeoutMs={20} />,
+      { ready: (h) => h.querySelector('iframe'), label: 'iframe' },
+    )
+    await waitFor(host, (h) => h.textContent?.includes('Sign in to view this artifact.'), 'fallback notice')
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    const [openButton] = Array.from(host.querySelectorAll('button')).filter(
+      (b) => b.textContent === 'Open to sign in',
+    )
+    openButton.click()
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://mn-ccore-artifacts.pages.dev/a/team/art_open',
+      '_blank',
+      'noopener,noreferrer',
+    )
+    openSpy.mockRestore()
+  })
+
+  it('"Retry" swaps the fallback back for a fresh iframe', async () => {
+    const host = await mountShared(
+      <TeamArtifactFrame id="art_retry" title="Desk" readyGraceMs={10} absoluteTimeoutMs={20} />,
+      { ready: (h) => h.querySelector('iframe'), label: 'iframe' },
+    )
+    await waitFor(host, (h) => h.textContent?.includes('Sign in to view this artifact.'), 'fallback notice')
+    const [retryButton] = Array.from(host.querySelectorAll('button')).filter((b) => b.textContent === 'Retry')
+    retryButton.click()
+    await waitFor(host, (h) => h.querySelector('iframe'), 'iframe after retry')
+    expect(host.textContent).not.toContain('Sign in to view this artifact.')
+  })
+
+  it('auto-retries the moment the window regains focus', async () => {
+    const host = await mountShared(
+      <TeamArtifactFrame id="art_focus" title="Desk" readyGraceMs={10} absoluteTimeoutMs={20} />,
+      { ready: (h) => h.querySelector('iframe'), label: 'iframe' },
+    )
+    await waitFor(host, (h) => h.textContent?.includes('Sign in to view this artifact.'), 'fallback notice')
+    window.dispatchEvent(new Event('focus'))
+    await waitFor(host, (h) => h.querySelector('iframe'), 'iframe after focus retry')
+    expect(host.textContent).not.toContain('Sign in to view this artifact.')
   })
 })
