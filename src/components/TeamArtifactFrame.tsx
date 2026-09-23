@@ -60,13 +60,18 @@
 // message is trusted, so nothing else on the page (or another embedded
 // frame) can fake a ready signal.
 //
-// On that verdict the iframe is swapped for a small notice + two affordances
+// On that verdict a small notice + two affordances overlays the iframe
 // (Nick's ask, verbatim): "Open to sign in" (a new tab at the same URL — Access
 // happily renders top-level, and completes the SSO round trip) and "Retry"
 // (reload the frame, which now carries whatever Access session that tab just
 // established). The frame also retries on its own the moment the WINDOW
 // regains focus (coming back from that sign-in tab), so the common path needs
 // no click at all.
+//
+// The iframe itself is NEVER unmounted for this — only hidden (display:none)
+// — so a ready message that arrives after the notice appears (a load that
+// was merely slow, not actually stuck) still recovers automatically with no
+// reload: the content was there the whole time.
 
 import { useEffect, useRef, useState } from 'react'
 import { PUBLIC_ARTIFACT_ORIGIN_FE, TEAM_ARTIFACT_READY_MESSAGE } from '../lib/artifactOrigin'
@@ -99,6 +104,15 @@ export default function TeamArtifactFrame({
   const [attempt, setAttempt] = useState(0)
   const graceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const absoluteTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  // Mirrors `status` for onFocus below, which needs to read the CURRENT value
+  // from a plain event handler without putting a side effect (setAttempt)
+  // inside a setStatus updater — React may invoke an updater twice (e.g.
+  // StrictMode) to surface exactly that kind of impurity, which would double
+  // the attempt bump.
+  const statusRef = useRef<Status>(status)
+  useEffect(() => {
+    statusRef.current = status
+  }, [status])
   const src = `${PUBLIC_ARTIFACT_ORIGIN_FE}/a/team/${id}`
 
   // Listen for the ready message + run the absolute backstop timer. Re-armed
@@ -132,11 +146,9 @@ export default function TeamArtifactFrame({
   // from the "Open to sign in" tab) — the common path needs no click.
   useEffect(() => {
     function onFocus() {
-      setStatus((prev) => {
-        if (prev !== 'blocked') return prev
-        setAttempt((a) => a + 1)
-        return 'loading'
-      })
+      if (statusRef.current !== 'blocked') return
+      setStatus('loading')
+      setAttempt((a) => a + 1)
     }
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
@@ -158,47 +170,59 @@ export default function TeamArtifactFrame({
     }, readyGraceMs)
   }
 
-  if (status === 'blocked') {
-    return (
-      <div
-        style={{
-          ...frameStyle,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.75rem',
-          padding: '2rem',
-          textAlign: 'center',
-        }}
-      >
-        <p style={{ margin: 0, color: 'var(--ink-secondary, #666)' }}>
-          Sign in to view this artifact.
-        </p>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button
-            type="button"
-            onClick={() => window.open(src, '_blank', 'noopener,noreferrer')}
-          >
-            Open to sign in
-          </button>
-          <button type="button" onClick={retry}>
-            Retry
-          </button>
-        </div>
-      </div>
-    )
-  }
-
+  // The iframe stays MOUNTED (display:none, never removed from the DOM) even
+  // while the fallback notice shows on top of it. Unmounting it on 'blocked'
+  // was the actual bug: it destroys the iframe's browsing context, so a load
+  // that just happens to be slower than absoluteTimeoutMs — not stuck at all,
+  // just not finished yet — can never deliver its ready message once the
+  // backstop fires; the frame is stuck showing a false "Sign in" forever.
+  // Keeping it alive means a late ready message still wins, no reload
+  // required: display flips back to visible with the content already there.
   return (
-    <iframe
-      key={attempt}
-      title={`${title} (interactive artifact)`}
-      sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-      allow="clipboard-write"
-      src={src}
-      onLoad={handleIframeLoad}
-      style={frameStyle}
-    />
+    <div style={frameStyle}>
+      <iframe
+        key={attempt}
+        title={`${title} (interactive artifact)`}
+        sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+        allow="clipboard-write"
+        src={src}
+        onLoad={handleIframeLoad}
+        style={{
+          width: '100%',
+          height: '100%',
+          minHeight: 'inherit',
+          border: 'none',
+          display: status === 'blocked' ? 'none' : 'block',
+        }}
+      />
+      {status === 'blocked' && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.75rem',
+            padding: '2rem',
+            textAlign: 'center',
+          }}
+        >
+          <p style={{ margin: 0, color: 'var(--ink-secondary, #666)' }}>
+            Sign in to view this artifact.
+          </p>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => window.open(src, '_blank', 'noopener,noreferrer')}
+            >
+              Open to sign in
+            </button>
+            <button type="button" onClick={retry}>
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

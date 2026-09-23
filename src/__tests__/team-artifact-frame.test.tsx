@@ -85,7 +85,10 @@ describe('TeamArtifactFrame — the login-loop fallback', () => {
     )
     host.querySelector('iframe')!.dispatchEvent(new Event('load'))
     await waitFor(host, (h) => h.textContent?.includes('Sign in to view this artifact.'), 'fallback notice')
-    expect(host.querySelector('iframe')).toBeNull()
+    // The iframe stays in the DOM (hidden), not unmounted — see the next
+    // test: this is what lets a late ready message still recover.
+    expect(host.querySelector('iframe')).not.toBeNull()
+    expect((host.querySelector('iframe') as HTMLIFrameElement).style.display).toBe('none')
   })
 
   it('falls back on the absolute backstop even when `load` never fires', async () => {
@@ -94,7 +97,30 @@ describe('TeamArtifactFrame — the login-loop fallback', () => {
       { ready: (h) => h.querySelector('iframe'), label: 'iframe' },
     )
     await waitFor(host, (h) => h.textContent?.includes('Sign in to view this artifact.'), 'fallback notice')
-    expect(host.querySelector('iframe')).toBeNull()
+    expect(host.querySelector('iframe')).not.toBeNull()
+    expect((host.querySelector('iframe') as HTMLIFrameElement).style.display).toBe('none')
+  })
+
+  it('recovers automatically when a ready message arrives AFTER the backstop already declared blocked', async () => {
+    // The bug this guards: unmounting the iframe on 'blocked' destroys its
+    // browsing context, so a load that was merely slower than
+    // absoluteTimeoutMs — not actually stuck — could never deliver a late
+    // ready message. The iframe must stay mounted (just hidden) so this
+    // message can still be heard and the frame can recover without a reload.
+    const host = await mountShared(
+      <TeamArtifactFrame id="art_slow" title="Desk" readyGraceMs={5000} absoluteTimeoutMs={30} />,
+      { ready: (h) => h.querySelector('iframe'), label: 'iframe' },
+    )
+    await waitFor(host, (h) => h.textContent?.includes('Sign in to view this artifact.'), 'fallback notice')
+    postAs(PUBLIC_ARTIFACT_ORIGIN_FE, TEAM_ARTIFACT_READY_MESSAGE)
+    await waitFor(
+      host,
+      (h) => !h.textContent?.includes('Sign in to view this artifact.'),
+      'fallback notice to clear',
+    )
+    const iframe = host.querySelector('iframe') as HTMLIFrameElement
+    expect(iframe).not.toBeNull()
+    expect(iframe.style.display).not.toBe('none')
   })
 
   it('ignores a ready-shaped message from the wrong origin', async () => {
