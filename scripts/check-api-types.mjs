@@ -47,8 +47,17 @@ const RE = /^(.+?)\((\d+),(\d+)\): error (TS\d+): (.*)$/
 // per machine, so a baseline committed from one machine spuriously
 // "regresses" the first time the other machine runs the check -- exactly
 // the false-red that trains people to stop trusting a ratchet gate.
+//
+// Same class, found 2026-09-23 committing from a worktree checkout
+// (.claude/worktrees/<branch>/api/... instead of api/...): the baseline was
+// written from the main checkout, so the SAME already-baselined error
+// spuriously "regressed" the first time the check ran from a worktree.
+// Strip the worktree segment too, once path separators are normalized.
 const normalizeMessage = (msg) =>
-  msg.replace(/[A-Za-z]:[\\/]Users[\\/][^\\/]+[\\/]/g, '~/').replace(/\\/g, '/')
+  msg
+    .replace(/[A-Za-z]:[\\/]Users[\\/][^\\/]+[\\/]/g, '~/')
+    .replace(/\\/g, '/')
+    .replace(/\.claude\/worktrees\/[^/]+\//g, '')
 const counts = new Map()
 for (const line of raw.split(/\r?\n/)) {
   const m = RE.exec(line.trim())

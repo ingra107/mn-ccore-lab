@@ -38,9 +38,9 @@
 //      then writes `desk:<artifactId>` in the Hub's real localStorage.
 //
 // `allow="clipboard-write"` delegates the Clipboard permission across the
-// opaque-origin boundary for deskkit's Copy-for-Claude button (same grant
-// TeamArtifactFrame carries; opaque-origin doesn't change this — it's a
-// Permissions Policy delegation, unrelated to same-origin/storage).
+// opaque-origin boundary for deskkit's Copy-for-Claude button; opaque-origin
+// doesn't change this — it's a Permissions Policy delegation, unrelated to
+// same-origin/storage.
 //
 // ═══ window.__deskStorage, not an override of `localStorage` (2026-09-23) ═══
 //
@@ -66,9 +66,11 @@
 // which returns `window.__deskStorage || localStorage`, for both its
 // startup read and every save.
 //
-// The /a/team route, TeamArtifactFrame and the artifacts-site Access app
-// stay in place until Nick's cross-browser (notably Safari) proof passes —
-// see the decision doc's "Revisit if" for what would send this back. Every
+// The /a/team route, TeamArtifactFrame and the artifacts-site "mn-ccore
+// artifacts (team desks)" Access app were retired 2026-09-23 (same day as
+// this component shipped) — Nick accepted skipping the cross-browser Safari
+// proof rather than carry the dead cross-site path further; see the decision
+// doc's "Revisit if" for what would bring a cross-site variant back. Every
 // team desk published BEFORE this cutover inlines the OLD deskkit.js (no
 // `store()`, calls bare `localStorage` directly) and will hit the same
 // SecurityError inside this frame, caught by deskkit's own try/catch —

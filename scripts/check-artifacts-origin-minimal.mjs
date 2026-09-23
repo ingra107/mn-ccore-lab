@@ -12,13 +12,13 @@
  * re-imported authority — the exact "documented rule that drifts" shape.
  *
  * WHAT IT ASSERTS (allowlist, so an unknown new capability FAILS CLOSED):
- *   1. artifacts-site/functions/ contains EXACTLY the two allowlisted
- *      functions: a/[id].ts (public serve, #508) and a/team/[id].ts
- *      (team serve gated by a Cloudflare Access application on that path,
- *      #2411 — see that file's header). Both are read-only D1 lookups; the
- *      second route does not weaken "one route class, one code-owned D1
- *      binding, no secrets" — it doubles the route COUNT, not the authority.
- *   2. Each of those functions imports the SHARED handler module
+ *   1. artifacts-site/functions/ contains EXACTLY the one allowlisted
+ *      function: a/[id].ts (public serve, #508), a read-only D1 lookup.
+ *      (The #2411 team route, a/team/[id].ts, was retired 2026-09-23 — team
+ *      desks render from the Hub's own opaque-origin frame instead, see
+ *      Context/Decisions/2026-09-23-team-desks-hub-brokered-opaque-frame.md
+ *      — so this origin is back to exactly one route.)
+ *   2. That function imports the SHARED handler module
  *      (api/routes/public-artifact) — one implementation, one test file,
  *      never forked.
  *   3. artifacts-site/wrangler.toml declares ONLY:
@@ -71,7 +71,7 @@ const violations = [];
 // ── 1 + 2. Exactly the allowlisted Function routes, each importing the
 //          shared handler ──────────────────────────────────────────────────
 
-const ALLOWED_FUNCTIONS = ['a/[id].ts', 'a/team/[id].ts'];
+const ALLOWED_FUNCTIONS = ['a/[id].ts'];
 
 function walk(dir, base) {
   if (!fs.existsSync(dir)) return [];

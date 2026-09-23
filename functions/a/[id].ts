@@ -19,14 +19,17 @@
  * serve path.
  *
  * DO NOT re-add serving here. To render an artifact inside the AUTHENTICATED
- * portal (/portal/artifacts/:id), use TeamArtifactFrame (src/components/
- * TeamArtifactFrame.tsx), which embeds the cookieless origin's /a/team/:id
- * route (#2411) — still a different SITE from this one, so no Hub cookie can
- * reach it. For any future need to render artifact HTML OUTSIDE an
- * authenticated context, use HtmlArtifactFrame.tsx's opaque-origin blob-url
- * embed instead — it uses a blob url rather than srcDoc because srcDoc
- * leaves the document at about:srcdoc, where one in-page anchor click blanks
- * the artifact (2026-07-24).
+ * portal (/portal/artifacts/:id), use DeskBrokerFrame (src/components/
+ * DeskBrokerFrame.tsx), the Hub's own opaque-origin blob iframe with the Hub
+ * brokering the working-desk kit's localStorage — no cross-site request to
+ * this origin at all (a #2411 cross-site /a/team/:id variant lived here
+ * 2026-09-23 and was retired the same day; see
+ * Context/Decisions/2026-09-23-team-desks-hub-brokered-opaque-frame.md). For
+ * any future need to render artifact HTML OUTSIDE an authenticated context,
+ * use HtmlArtifactFrame.tsx's opaque-origin blob-url embed instead — it uses
+ * a blob url rather than srcDoc because srcDoc leaves the document at
+ * about:srcdoc, where one in-page anchor click blanks the artifact
+ * (2026-07-24).
  */
 
 import { handleLegacyPublicArtifactRedirect } from '../../api/routes/public-artifact'
