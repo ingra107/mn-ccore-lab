@@ -404,7 +404,15 @@ export default function ArtifactPage() {
             no CF_Authorization cookie can ever reach it, same-origin sandbox
             token or not — see TeamArtifactFrame.tsx. Markdown artifacts
             (default, including missing/undefined content_type) render
-            exactly as before via MarkdownView — no regression there. */}
+            exactly as before via MarkdownView — no regression there.
+
+            NOT YET CUT OVER to the 2026-09-23 Hub-brokered opaque-frame
+            design (Context/Decisions/2026-09-23-team-desks-hub-brokered-
+            opaque-frame.md) — see src/components/DeskBrokerFrame.tsx's
+            top-of-file note: its core assumption (redefining
+            window.localStorage inside an opaque sandbox survives into a
+            SEPARATE <script> tag, i.e. deskkit.js's own) does not hold in
+            real Chromium. Blocked pending a decision on deskkit's adapter. */}
         <div
           className="detail-card"
           style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '1.5rem 1.75rem', marginBottom: '2rem' }}
