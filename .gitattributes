@@ -4,3 +4,7 @@
 # rewrite this checkout to CRLF, so the two committed copies would no longer be
 # byte-identical on disk. See PB backlog #730.
 api/routes/hash_vectors.json text eol=lf
+
+# Same pin for the milestone-placement golden vectors, emitted LF by PB
+# scripts/today/gen_milestone_vectors.py into both repos; its --check compares bytes.
+src/lib/__tests__/milestone_vectors.json text eol=lf
