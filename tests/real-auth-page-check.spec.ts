@@ -6,8 +6,14 @@
  *
  *   npx playwright test tests/real-auth-page-check.spec.ts --workers=1 --reporter=list
  *
+ * Another page (write the path WITHOUT its leading slash -- Git Bash rewrites
+ * a value starting with `/` into C:/Program Files/Git/...):
+ *
+ *   HUB_CHECK_PATH=portal/my-tasks npx playwright test tests/real-auth-page-check.spec.ts --workers=1 --reporter=list
+ *
  * Optional env:
- *   HUB_CHECK_PATH       page to open (default /portal/dashboard)
+ *   HUB_CHECK_PATH       page to open (default portal/dashboard; a leading
+ *                        slash is accepted outside Git Bash)
  *   PLAYWRIGHT_BASE_URL  target (default https://mn-ccore-lab.pages.dev)
  *
  * Needs CF_ACCESS_CLIENT_ID, CF_ACCESS_CLIENT_SECRET and HUB_TEST_MODE_KEY
@@ -24,13 +30,14 @@
  */
 import { test, expect } from '@playwright/test'
 import { injectRealAuth, missingRealSessionEnv } from './helpers/capture-auth'
-import { P } from './helpers/paths'
+import { P, resolveCheckUrl } from './helpers/paths'
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL || 'https://mn-ccore-lab.pages.dev'
-const PATH = process.env.HUB_CHECK_PATH || P.dashboard
 
 test('real-auth page check: edge + Worker auth, real data, read-only', async ({ page, context }) => {
   expect(missingRealSessionEnv(), 'real Hub session env vars missing').toEqual([])
+  // Throws with the reason on an MSYS-mangled HUB_CHECK_PATH, before any request.
+  const target = resolveCheckUrl(BASE, process.env.HUB_CHECK_PATH, P.dashboard)
   // injectRealAuth aborts every non-GET /api/* call and returns the list.
   const blockedWrites = await injectRealAuth(context, BASE)
 
@@ -49,14 +56,14 @@ test('real-auth page check: edge + Worker auth, real data, read-only', async ({ 
   expect(Array.isArray(body.data) && body.data.length > 0, '/api/tasks returned no rows').toBe(true)
 
   // Edge + frontend half: the page itself, not the Google sign-in page.
-  await page.goto(`${BASE}${PATH}`, { waitUntil: 'load', timeout: 20000 })
+  await page.goto(target.href, { waitUntil: 'load', timeout: 20000 })
   await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {})
   expect(new URL(page.url()).hostname, 'redirected off the Hub (CF Access edge gate)').toBe(new URL(BASE).hostname)
   const h1 = (await page.locator('h1').first().textContent({ timeout: 10000 }).catch(() => null))?.trim() ?? null
   expect(h1, 'landed on the sign-in page').not.toBe('Sign in')
 
   await page.screenshot({ path: 'review/real-auth-check.png', fullPage: false })
-  console.log(`real-auth check: ${BASE}${PATH} h1=${JSON.stringify(h1)}`)
+  console.log(`real-auth check: ${target.href} h1=${JSON.stringify(h1)}`)
   console.log(`blocked non-GET /api calls: ${blockedWrites.length ? blockedWrites.join(', ') : 'none'}`)
   expect(apiDenied, '/api/* calls the page made that the Worker refused').toEqual([])
 })

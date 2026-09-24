@@ -22,6 +22,9 @@ on:
       - 'api/**'
       - 'src/**'
       - 'vitest.config*.ts'
+      - 'eslint.config.js'
+      - 'scripts/check-*.mjs'
+      - 'scripts/check-*.baseline.json'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/vitest.yml'
@@ -31,6 +34,9 @@ on:
       - 'api/**'
       - 'src/**'
       - 'vitest.config*.ts'
+      - 'eslint.config.js'
+      - 'scripts/check-*.mjs'
+      - 'scripts/check-*.baseline.json'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/vitest.yml'
@@ -100,3 +106,34 @@ jobs:
       - name: src (components, browser mode via chromium)
         if: ${{ !cancelled() }}
         run: npm run test:src
+
+  # WHY (PB backlog #1354, 2026-09-24): `npm run lint` chains eslint over
+  # src/ + api/ and the four custom lints (select-star, color-concat,
+  # no-optional-request, token-snap) and propagates failure (c8f18c55), but no
+  # workflow and no hook ran it -- a correctly-exiting lint enforced nothing.
+  # Pre-commit now lints the staged files; this is the full-tree backstop for a
+  # contributor without the hook. Own job so it runs beside the vitest job
+  # instead of behind the Playwright install. Green on the tree it landed on
+  # (0 errors, 12 warnings; warnings do not fail eslint).
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        # No submodules: eslint here has no type-aware rules, and the custom
+        # lints read api/routes and src only, so pb-schema is never loaded.
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm run lint (eslint src/ + api/, and the custom lints)
+        run: npm run lint

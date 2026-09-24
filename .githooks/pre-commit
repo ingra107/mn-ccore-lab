@@ -39,47 +39,19 @@ if git diff --cached --name-only --diff-filter=AM | grep -qx "WORKPLAN.md"; then
 fi
 
 # ---------------------------------------------------------------------------
-# Wrangler-D1 entry-point lint (2026-05-24). Flags RAW `wrangler d1` /
-# `npx wrangler d1 execute` in staged files (wrangler-d1-allowed: rule doc).
-# ALL programmatic D1 calls must go
-# through the sanctioned env-stripping entry point (scripts/wrangler-d1 shell
-# shim or scripts/wrangler_d1.py), which unsets CLOUDFLARE_API_TOKEN /
-# CLOUDFLARE_ACCOUNT_ID before invoking wrangler — the fix for the recurring
+# Wrangler-D1 entry-point lint (2026-05-24; moved to a script 2026-09-24,
+# PB backlog #2300). Refuses a RAW `wrangler d1 execute|export` on an ADDED
+# code line of the staged diff. ALL programmatic D1 calls go through the
+# sanctioned env-stripping entry point (scripts/wrangler-d1 shell shim or
+# scripts/wrangler_d1.py), which unsets CLOUDFLARE_API_TOKEN /
+# CLOUDFLARE_ACCOUNT_ID before invoking wrangler -- the fix for the recurring
 # OAuth-shadow auth failure (feedback_wrangler-home-auth-works.md).
-#
-# Exemptions (legitimate raw callers):
-#   - .github/workflows/   CI uses a proper D1-scoped secret, not OAuth.
-#   - scripts/wrangler-d1, scripts/wrangler_d1.py  the wrapper itself.
-#   - *.md doc/comment usage may carry an allow marker `wrangler-d1-allowed`.
-# A line carrying `wrangler-d1-allowed` anywhere on it is allowed (escape hatch
-# for docs/comments that must show the raw form).
-raw_d1_hits=""
-for f in $(git diff --cached --name-only --diff-filter=AM); do
-    case "$f" in
-        .github/workflows/*) continue ;;
-        scripts/wrangler-d1|scripts/wrangler_d1.py) continue ;;
-    esac
-    # Only inspect text files that still exist in the working tree.
-    [ -f "$f" ] || continue
-    # Match `wrangler d1` or `npx wrangler d1` not preceded by the wrapper name.
-    # Skip lines carrying the allow marker.
-    while IFS= read -r line; do
-        case "$line" in *wrangler-d1-allowed*) continue ;; esac
-        raw_d1_hits="${raw_d1_hits}${f}: ${line}
-"
-    done < <(grep -nE '(npx )?wrangler d1 (execute|export)' "$f" 2>/dev/null | grep -vE 'wrangler-d1|wrangler_d1' || true)
-done
-if [ -n "$raw_d1_hits" ]; then
-    echo ""
-    echo "BLOCKED: raw 'wrangler d1' call(s) found — route through the sanctioned"
-    echo "entry point (scripts/wrangler-d1 shell shim OR scripts/wrangler_d1.py)."
-    echo "These strip CLOUDFLARE_API_TOKEN/ACCOUNT_ID so OAuth (which has D1 scope)"
-    echo "is used. See CLAUDE.md 'Wrangler / D1 auth' + feedback_wrangler-home-auth-works.md."
-    echo ""
-    printf '%s' "$raw_d1_hits"
-    echo ""
-    echo "If a raw form is genuinely required (CI, docs), add 'wrangler-d1-allowed'"
-    echo "on the line, or place it under .github/workflows/."
+# The inline grep this replaced read whole files, comments included, so a
+# sentence describing the command (or any edit to a file whose header showed
+# it) blocked the commit. The script blanks comments and docstrings and reads
+# only added lines; exemptions and the `wrangler-d1-allowed` line marker are
+# unchanged. Both directions are pinned in api/raw-wrangler-d1-gate.test.ts.
+if ! node scripts/check-raw-wrangler-d1.mjs; then
     exit 1
 fi
 
@@ -95,11 +67,15 @@ for cand in "$(cd "$(dirname "$0")/.." && pwd)/../Peripheral-Brain" \
     fi
 done
 
-# Only run the lint when api/ TS or schema-v*.sql files are staged. Cheap
-# check — the lint itself is fast (<1s on full Hub checkout) but the staged-
-# file guard saves a fork+exec on doc-only commits.
-if git diff --cached --name-only --diff-filter=AM \
-        | grep -qE "^api/(routes|middleware|lib)/.*\.(ts|tsx)$|^api/schema-v.*\.sql$"; then
+# Run the lint when anything under api/ is staged. The trigger is the
+# checker's own Hub scope (check_sync_antipatterns.py `_TREE_PREFIXES["hub"]`
+# = api/), not a subset of it: until 2026-09-24 it fired only on
+# api/(routes|middleware|lib)/*.ts and api/schema-v*.sql, while the checker
+# walks EVERY api/**/*.sql because #888 found seq-writing risk in
+# backfill-v77, backfill-v102, seed-v2 and bootstrap-schema.sql -- so a commit
+# touching only those never ran it (PB backlog #8576). ~2s warm (verdict
+# cache); the staged-path guard still skips doc-only commits.
+if git diff --cached --name-only --diff-filter=ACMR | grep -qE "^api/"; then
     if [ -z "$PB_ROOT" ]; then
         echo "[hub-precommit] WARN: PB checkout not adjacent; skipping sync-antipattern lint."
         echo "[hub-precommit] To enforce: clone Peripheral-Brain at \$HOME/Peripheral-Brain or sibling to mn-ccore-lab."
@@ -320,12 +296,46 @@ if git diff --cached --name-only --diff-filter=ACMR \
     # eslint zero-error ratchet (backlog #174 burn-down, 2026-07-16): src/ reached
     # 0 errors via a 4-agent wave; this gate keeps it there. eslint exits nonzero
     # only on ERRORS (warnings pass), so this is the errors-stay-zero contract.
-    echo "[hub-precommit] eslint zero-error gate (src/)..."
-    if ! npx --no-install eslint src; then
+    # Since 2026-09-24 (PB backlog #1354) it lints the STAGED src/ + api/ files
+    # (the config's product scope), not all of src/: api/ was never linted at
+    # commit, and `eslint src` alone took ~130s on the home laptop. The rules
+    # are per-file (no type-aware rules in eslint.config.js), so linting what
+    # changed is the whole contract; the full-tree `npm run lint` runs in CI
+    # (.github/workflows/vitest.yml).
+    staged_lint=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(src|api)/.*\.(ts|tsx)$' || true)
+    if [ -n "$staged_lint" ]; then
+        echo "[hub-precommit] eslint zero-error gate (staged src/ + api/)..."
+        # shellcheck disable=SC2086 -- one path per line, no spaces under src/ or api/
+        if ! npx --no-install eslint --no-warn-ignored $staged_lint; then
+            echo ""
+            echo "BLOCKED: eslint errors in staged src/ or api/ files (baseline is ZERO)."
+            echo "Fix the error or add a disable-with-reason comment; do not let the"
+            echo "count regrow -- 440 problems were burned down to 0 in one day."
+            exit 1
+        fi
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# api/routes custom lints (PB backlog #1354, 2026-09-24). `npm run lint`
+# chains these, but no hook or workflow ran it, so a correctly-exiting lint
+# enforced nothing unless a human typed the command. check-no-optional-request
+# guards an auth-scoping regression (`request?: Request` on a handler);
+# check-select-star guards private columns leaving via SELECT * on a private
+# table. Both read api/routes/ only, so they fire only when it is staged
+# (~2-6s). check-color-string-concat runs above on every commit; the fifth,
+# check-token-snap, is warn-only by design and cannot fail, so it runs only in
+# CI's `npm run lint` where its output is read.
+if git diff --cached --name-only --diff-filter=ACMR | grep -qE '^api/routes/'; then
+    if ! npm run --silent lint:no-optional-request; then
         echo ""
-        echo "BLOCKED: eslint errors in src/ (baseline is ZERO since 2026-07-16)."
-        echo "Fix the error or add a disable-with-reason comment; do not let the"
-        echo "count regrow -- 440 problems were burned down to 0 in one day."
+        echo "BLOCKED: new \`request?: Request\` handler signature in api/routes/."
+        echo "Make the request required; see scripts/check-no-optional-request.baseline.json."
+        exit 1
+    fi
+    if ! npm run --silent lint:select-star; then
+        echo ""
+        echo "BLOCKED: new SELECT * on a private-column table in api/routes/ without safeRow."
         exit 1
     fi
 fi
