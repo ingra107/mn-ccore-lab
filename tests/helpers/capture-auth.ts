@@ -16,6 +16,15 @@ import type { BrowserContext } from '@playwright/test'
  * Backend writes are still gated by real JWKS verification in
  * `api/jwt-verify.ts`. Capture runs are read-only, so that's fine.
  *
+ * What this does NOT do (#1364): it never clears Cloudflare Access's EDGE
+ * gate on the canonical prod domain. The edge redirects `/portal/*` to the
+ * Google sign-in page before any app code runs, so the forged cookie is never
+ * read. It only works against a target with no edge gate (a local dev
+ * server, or a preview deploy Access does not cover). For the prod alias use `injectRealAuth()` below. The 2026-07-30
+ * contrast-test commit (f1ee7a84) already recorded the guard firing on gated
+ * prod with this helper alone, so this was never a regression, only a
+ * helper used against a target it was not built for.
+ *
  * Cookie must not be httpOnly (useAuth reads `document.cookie`).
  */
 export async function injectFakeAuth(context: BrowserContext, baseUrl: string) {
@@ -64,8 +73,8 @@ export async function injectFakeAuth(context: BrowserContext, baseUrl: string) {
  * standalone audit scripts) don't reinvent it. Two independent bypasses
  * stack, matching the two independent gates a real request crosses:
  *   - `CF-Access-Client-Id`/`-Secret` (a real CF Access service token) clears
- *     CLOUDFLARE's own edge redirect on the canonical prod domain. Omit when
- *     already pointed at an ungated preview-hash deploy.
+ *     CLOUDFLARE's own edge redirect on the canonical prod domain. Always
+ *     sent; a target with no edge gate ignores it.
  *   - `X-Test-Mode-Key` + `X-Test-User` clears the WORKER's own JWKS check
  *     (`api/helpers.ts:getAuthUser`, still live at HEAD) — the half
  *     `injectFakeAuth()` never reaches, because CF Access service-token JWTs
@@ -76,53 +85,81 @@ export async function injectFakeAuth(context: BrowserContext, baseUrl: string) {
  * `CF_ACCESS_CLIENT_SECRET`, `HUB_TEST_MODE_KEY` (or `TEST_MODE_KEY`),
  * `TEST_USER_EMAIL` (defaults to Nick's UMN address, which resolves via
  * `EMAIL_PREFIX_TO_SLUG` to the canonical task-owning slug).
+ *
+ * Canary + the one command an agent runs for a real authenticated page check:
+ * `tests/real-auth-page-check.spec.ts` (usage in its header).
  */
-export function realAuthHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {}
-  const cfId = process.env.CF_ACCESS_CLIENT_ID
-  const cfSecret = process.env.CF_ACCESS_CLIENT_SECRET
-  if (cfId && cfSecret) {
-    headers['CF-Access-Client-Id'] = cfId
-    headers['CF-Access-Client-Secret'] = cfSecret
-  }
-  const testModeKey = process.env.HUB_TEST_MODE_KEY || process.env.TEST_MODE_KEY
-  if (testModeKey) {
-    headers['X-Test-Mode-Key'] = testModeKey
-    headers['X-Test-User'] = process.env.TEST_USER_EMAIL || 'ingra107@umn.edu'
-  }
-  return headers
-}
+
+/** The env vars a real session needs, as groups: any one name in a group satisfies it. */
+const REAL_SESSION_ENV: string[][] = [
+  ['CF_ACCESS_CLIENT_ID'],
+  ['CF_ACCESS_CLIENT_SECRET'],
+  ['HUB_TEST_MODE_KEY', 'TEST_MODE_KEY'],
+]
 
 /**
- * True only when the backend bypass is available — the piece that actually
- * unlocks real DATA, not just the Cloudflare edge gate. `HUB_TEST_MODE_KEY`
- * is a Cloudflare Worker secret, so this is false in most environments by
- * design; callers should `test.skip(!hasRealSessionEnv(), ...)` rather than
- * fail when it's absent (same honesty pattern as `hub-audit.ts`'s own
- * `!! HUB_TEST_MODE_KEY not set` warning).
+ * Names of the env vars a real session still lacks; empty when all are set.
+ * Both halves are required: the CF Access pair for the edge, the test-mode
+ * key for the Worker. The pre-#1364 check looked at the test-mode key only,
+ * so a machine missing the CF pair passed the skip-guard and landed on the
+ * sign-in page.
  */
+export function missingRealSessionEnv(): string[] {
+  return REAL_SESSION_ENV.filter((group) => !group.some((name) => process.env[name])).map((group) =>
+    group.join(' or '),
+  )
+}
+
+/** True only when every var a real session needs is set. Use as `test.skip(!hasRealSessionEnv(), realSessionSkipReason())`. */
 export function hasRealSessionEnv(): boolean {
-  return Boolean(process.env.HUB_TEST_MODE_KEY || process.env.TEST_MODE_KEY)
+  return missingRealSessionEnv().length === 0
+}
+
+/** Skip reason naming exactly which vars are missing. */
+export function realSessionSkipReason(): string {
+  return `real Hub session env missing: ${missingRealSessionEnv().join(', ')} (User-scope env vars; see tests/helpers/capture-auth.ts)`
+}
+
+function realAuthHeaders(): Record<string, string> {
+  return {
+    'CF-Access-Client-Id': process.env.CF_ACCESS_CLIENT_ID!,
+    'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET!,
+    'X-Test-Mode-Key': (process.env.HUB_TEST_MODE_KEY || process.env.TEST_MODE_KEY)!,
+    'X-Test-User': process.env.TEST_USER_EMAIL || 'ingra107@umn.edu',
+  }
 }
 
 /**
- * Full real-session setup for a spec that needs authenticated prod (or
- * preview) DATA visible in the DOM: frontend chrome (`injectFakeAuth`) plus
- * the backend bypass headers (`realAuthHeaders`) applied to every request
- * the context's pages make. Check `hasRealSessionEnv()` first and
- * `test.skip()` when false — this function still runs without it (frontend
- * chrome only, same as calling `injectFakeAuth` alone) so it degrades rather
- * than throws.
+ * Full real-session setup for a spec that needs the prod alias or real DATA
+ * in the DOM: frontend chrome (`injectFakeAuth`) plus the edge and backend
+ * headers on every request the context makes.
+ *
+ * THROWS when any var is missing. It used to warn and return a context with
+ * frontend auth only, which on prod renders the sign-in page and on a
+ * preview renders chrome with zero data: a half-authenticated context that
+ * looked like a working one. Callers `test.skip(!hasRealSessionEnv(),
+ * realSessionSkipReason())` first.
+ *
+ * READ-ONLY by construction: this session reads and could write real prod
+ * rows, so every non-GET `/api/*` request the context's pages send is
+ * aborted before it leaves the browser (merely opening Today POSTs
+ * `/api/seen`). The returned array lists what was blocked. A page-level
+ * `page.route()` still runs first, so a spec can fulfil a request itself.
+ * Deliberate prod writes belong in `scripts/hub-audit.ts`, not here.
  */
-export async function injectRealAuth(context: BrowserContext, baseUrl: string) {
-  await injectFakeAuth(context, baseUrl)
-  const headers = realAuthHeaders()
-  if (!headers['X-Test-Mode-Key']) {
-    console.warn(
-      'injectRealAuth: HUB_TEST_MODE_KEY/TEST_MODE_KEY not set — context has ' +
-        'frontend/edge auth only, backend API calls will still 401. Set the ' +
-        'env var (see realAuthHeaders() docstring) or test.skip().',
-    )
+export async function injectRealAuth(context: BrowserContext, baseUrl: string): Promise<string[]> {
+  const missing = missingRealSessionEnv()
+  if (missing.length) {
+    throw new Error(`injectRealAuth: ${realSessionSkipReason()}`)
   }
-  await context.setExtraHTTPHeaders(headers)
+  await injectFakeAuth(context, baseUrl)
+  await context.setExtraHTTPHeaders(realAuthHeaders())
+  const blockedWrites: string[] = []
+  await context.route('**/api/**', (route) => {
+    const req = route.request()
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method())) return route.continue()
+    blockedWrites.push(`${req.method()} ${new URL(req.url()).pathname}`)
+    return route.abort('blockedbyclient')
+  })
+  return blockedWrites
 }

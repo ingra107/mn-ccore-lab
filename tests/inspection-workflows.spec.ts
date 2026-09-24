@@ -20,7 +20,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { cleanupTestTasks, cleanupTestMeetings, cleanupTestIdeas, cleanupTestDecisions } from './test-cleanup'
 import { P } from './helpers/paths'
-import { injectFakeAuth, injectRealAuth, hasRealSessionEnv } from './helpers/capture-auth'
+import { injectRealAuth, hasRealSessionEnv, realSessionSkipReason } from './helpers/capture-auth'
 
 // Honour PLAYWRIGHT_BASE_URL so test:smoke against a preview deploy targets
 // the preview, not hardcoded prod.
@@ -688,11 +688,10 @@ test.describe('FEATURE — @mention autocomplete', () => {
   // prevent -- opus/haiku competing with the sonnet default mid-word.
   test('FEATURE #891: @hermes dropdown withholds opus/haiku until "-" is typed', async ({ page, context }) => {
     // /portal/* is behind real Cloudflare Access on the canonical prod
-    // domain -- injectFakeAuth only satisfies the app-level useAuth() check,
-    // not Cloudflare's own edge gate, so this test must be pointed at an
-    // ungated URL (a preview-hash deploy) via PLAYWRIGHT_BASE_URL, same
-    // pattern as capture-interactions.spec.ts's CAPTURE_BASE_URL.
-    await injectFakeAuth(context, BASE)
+    // domain, and the comment dropdown needs a real task row: the real-auth
+    // fixture clears both gates (#1364, #896).
+    test.skip(!hasRealSessionEnv(), realSessionSkipReason())
+    await injectRealAuth(context, BASE)
     await loadPage(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
@@ -2005,16 +2004,15 @@ test.describe('A11Y — Focus management', () => {
   // light-mode-audit doc's whole premise was "dark mode is well-tended,
   // light mode has had little focus," and this test suite embodied exactly
   // that gap (a dark-mode check existed, no light-mode one did).
-  // Same CF Access caveat as the #891 test above: injectFakeAuth only
-  // satisfies the app's own useAuth() cookie check, not Cloudflare's edge
-  // gate on the canonical prod domain -- run with PLAYWRIGHT_BASE_URL
-  // pointed at an ungated preview-hash deploy, or this measures the
-  // Cloudflare/Google login splash instead of the app (the `text` assertion
-  // below catches that case loudly instead of silently passing on the
-  // wrong page).
+  // Same CF Access caveat as the #891 test above: the canonical prod domain
+  // needs the real-auth fixture, or this measures the Google sign-in page
+  // instead of the app (the `text` assertion below catches that loudly).
+  // #1364: this test called injectFakeAuth alone and was red on prod since
+  // it shipped; f1ee7a84 recorded the guard firing on gated prod.
   for (const mode of ['dark', 'light'] as const) {
     test(`A11Y: ${mode} mode contrast — page title text meets 4.5:1 (AA)`, async ({ page, context }) => {
-      await injectFakeAuth(context, BASE)
+      test.skip(!hasRealSessionEnv(), realSessionSkipReason())
+      await injectRealAuth(context, BASE)
       await context.addInitScript((m) => {
         window.localStorage.setItem('mn-ccore-theme', m)
       }, mode)
@@ -2162,15 +2160,10 @@ test.describe('A11Y — Focus management', () => {
 // part of getBoundingClientRect() on the element itself.
 test.describe('A11Y — Icon hit-area sizing (WCAG 2.2 SC 2.5.8, >=24x24)', () => {
   test('A11Y: Today page dismiss-tip button meets the 24x24 floor', async ({ page, context }) => {
-    // Verified live 2026-08-13: bare injectFakeAuth() no longer clears the
-    // CF Access EDGE gate on its own (confirmed by re-running the existing
-    // dark/light contrast tests above -- both currently fail the same way,
-    // landing on the real Google sign-in splash, "Sign in" != "Today"). That
-    // regression is pre-existing and out of scope here (see FINDINGS in the
-    // dispatch report); injectRealAuth() (adds the real CF-Access-Client-Id/
-    // Secret headers) still clears the edge, so use it even though this
-    // element itself is chrome-only and doesn't need real task/project DATA.
-    test.skip(!hasRealSessionEnv(), 'HUB_TEST_MODE_KEY/TEST_MODE_KEY not set, and bare injectFakeAuth() no longer clears the CF Access edge gate on its own (verified 2026-08-13) -- no way to reach the portal shell without the real-auth fixture.')
+    // Bare injectFakeAuth() never clears the CF Access EDGE gate on the
+    // prod domain (#1364), so even this chrome-only element needs the
+    // real-auth fixture.
+    test.skip(!hasRealSessionEnv(), realSessionSkipReason())
     await injectRealAuth(context, BASE)
     await loadPage(page, P.dashboard)
     const dismissBtn = page.getByRole('button', { name: 'Dismiss tip' })
@@ -2184,7 +2177,7 @@ test.describe('A11Y — Icon hit-area sizing (WCAG 2.2 SC 2.5.8, >=24x24)', () =
   test('A11Y: DoneBox invisible hit-zone reaches the 24x24 floor on every pointer type', async ({ page, context }) => {
     // DoneBox only renders once a real task row is on screen — #896's real-
     // session fixture is required here (unlike the chrome-only test above).
-    test.skip(!hasRealSessionEnv(), 'HUB_TEST_MODE_KEY/TEST_MODE_KEY not set — cannot get real authenticated task DATA (#896); DoneBox needs a real row to render, so this check is a no-op without it.')
+    test.skip(!hasRealSessionEnv(), realSessionSkipReason())
     await injectRealAuth(context, BASE)
     await loadPage(page, P.myTasks)
     const doneBox = page.locator('.done-box').first()
@@ -2250,10 +2243,9 @@ test.describe('A11Y — Icon hit-area sizing (WCAG 2.2 SC 2.5.8, >=24x24)', () =
 // and wasn't confirmed pre-deploy).
 test.describe('VISUAL — Today page loading-state resilience (backlog #1039)', () => {
   test('Today page surfaces the error screen well under the pre-fix ~12.9s baseline on a failed tasks fetch', async ({ page, context }) => {
-    // Verified live 2026-08-13: bare injectFakeAuth() no longer clears the
-    // CF Access edge gate on its own (see the sibling hit-area test above
-    // and FINDINGS in the dispatch report) -- use the real-header bypass.
-    test.skip(!hasRealSessionEnv(), 'HUB_TEST_MODE_KEY/TEST_MODE_KEY not set, and bare injectFakeAuth() no longer clears the CF Access edge gate on its own (verified 2026-08-13).')
+    // Bare injectFakeAuth() never clears the CF Access edge gate on the prod
+    // domain (#1364) -- use the real-header bypass.
+    test.skip(!hasRealSessionEnv(), realSessionSkipReason())
     await injectRealAuth(context, BASE)
     // Force every /api/tasks call to fail. Independent of real DATA content
     // (#896) -- this is a client-side network fault, not a data-content
