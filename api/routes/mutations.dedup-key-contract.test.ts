@@ -22,6 +22,8 @@ import {
   TASK_TITLE_KEY_BIND_SQL,
   TASK_TITLE_NORM_INDEX,
   TASK_TITLE_DEDUP_SELECT,
+  TASK_TITLE_RECURRING_TOKENS,
+  TASK_TITLE_NOT_RECURRING_SQL,
   classifyTaskDedupSelect,
 } from '../lib/task-dedup-sql'
 
@@ -35,8 +37,24 @@ describe('task dedup key — one definition', () => {
   it('the SELECT keeps the identity scope byte-identical to the index predicate', () => {
     const scope =
       "AND deleted_at IS NULL AND status != 'done' " +
-      "AND (source IS NULL OR source != 'meeting_approval') LIMIT 1"
+      "AND (source IS NULL OR source != 'meeting_approval') " +
+      "AND instr(lower(title), '(recurring)') = 0 AND instr(lower(title), '_recurring') = 0 " +
+      "AND instr(lower(title), 'recurring:') = 0 LIMIT 1"
     expect(TASK_TITLE_DEDUP_SELECT).toContain(scope)
+  })
+
+  it('the recurring exemption covers every token, from the one list', () => {
+    // #8496: PB's is_recurring_name reads the same three tokens
+    // (Peripheral-Brain tests/db/test_recurring_marker_hub_parity.py pins the
+    // list against this file). A token missing here means the marker works for
+    // some spellings and not others.
+    expect([...TASK_TITLE_RECURRING_TOKENS]).toEqual(['(recurring)', '_recurring', 'recurring:'])
+    for (const t of TASK_TITLE_RECURRING_TOKENS) {
+      expect(TASK_TITLE_NOT_RECURRING_SQL).toContain(`instr(lower(title), '${t}') = 0`)
+    }
+    // instr, never LIKE: `_` is a LIKE wildcard ('%_recurring%' matches
+    // "Fix recurring failure") and LIKE's case fold follows a PRAGMA.
+    expect(TASK_TITLE_NOT_RECURRING_SQL).not.toMatch(/LIKE/i)
   })
 
   it('NULL project_id matches NULL (IS ?, never = ?)', () => {
@@ -72,6 +90,24 @@ describe('task dedup key — the migration and the code agree', () => {
     readFileSync(join(API_DIR, f), 'utf8').includes(`CREATE UNIQUE INDEX IF NOT EXISTS ${TASK_TITLE_NORM_INDEX}`),
   )
 
+  it('the superseded index is dropped by a later migration than the one that created it', () => {
+    // schema-v113 replaced v107's idx_tasks_title_norm_project_active (no
+    // recurring exemption). If the drop went missing, prod would keep refusing
+    // the recurring pairs the code now admits -- and the race-loser re-query,
+    // which exempts them, would find no winner and dead-letter the create.
+    const old = 'idx_tasks_title_norm_project_active'
+    const ver = (f: string) => Number(/^schema-v(\d+)/.exec(f)![1])
+    // Statements only: rollback recipes in the headers name both verbs in comments.
+    const code = (f: string) => readFileSync(join(API_DIR, f), 'utf8')
+      .split(/\r?\n/).filter(l => !l.trimStart().startsWith('--')).join('\n')
+    const creators = schemaFiles.filter(f => code(f).includes(`CREATE UNIQUE INDEX IF NOT EXISTS ${old}`))
+    const droppers = schemaFiles.filter(f => code(f).includes(`DROP INDEX IF EXISTS ${old};`))
+    expect(creators).toHaveLength(1)
+    expect(droppers).toHaveLength(1)
+    expect(ver(droppers[0])).toBeGreaterThan(ver(creators[0]))
+    expect(droppers[0]).toBe(declaring[0])
+  })
+
   it('exactly one migration creates the normalized index', () => {
     // An empty read is a FAILURE here, not a pass: if nothing declares the
     // index, the key has no structural backstop and this whole contract is
@@ -98,6 +134,7 @@ describe('task dedup key — the migration and the code agree', () => {
       'deleted_at IS NULL',
       "status != 'done'",
       "(source IS NULL OR source != 'meeting_approval')",
+      ...TASK_TITLE_NOT_RECURRING_SQL.split(' AND '),
     ]) {
       expect(predicate).toContain(clause)
     }

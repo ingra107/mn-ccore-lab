@@ -2,7 +2,7 @@
 //
 // WHY THIS FILE EXISTS (PB backlog #530b, reconciled Dual-Plan, 2026-09-02).
 // The two applyInsert dedup arms (serial + race-loser catch) and the partial
-// UNIQUE index idx_tasks_title_norm_project_active must agree on the key, or
+// UNIQUE index TASK_TITLE_NORM_INDEX (below) must agree on the key, or
 // the SELECT-then-INSERT race hole reopens — schema-v92's standing warning.
 // The predicate used to be written out twice inside mutations.ts and a third
 // time in the migration, and two of those three could drift in silence. Now the
@@ -28,15 +28,51 @@ export const TASK_TITLE_KEY_SQL = 'lower(trim(title))';
 /** The same fold applied to the bound value. Must stay paired with the above. */
 export const TASK_TITLE_KEY_BIND_SQL = 'lower(trim(?))';
 
-/** The partial UNIQUE index that backs the key (api/schema-v107-*.sql). */
-export const TASK_TITLE_NORM_INDEX = 'idx_tasks_title_norm_project_active';
+/**
+ * The partial UNIQUE index that backs the key (api/schema-v113-*.sql). It
+ * replaced schema-v107's idx_tasks_title_norm_project_active, which had no
+ * recurring exemption; the new NAME is load-bearing for the same reason v107's
+ * `_norm` was (`CREATE UNIQUE INDEX IF NOT EXISTS` matches on the name, so
+ * re-declaring the old name with a new predicate is a silent no-op).
+ */
+export const TASK_TITLE_NORM_INDEX = 'idx_tasks_title_norm_nonrecurring_active';
+
+// ── The recurring-name exemption (PB backlog #8496, 2026-09-24) ─────────────
+//
+// A title carrying a recurring marker is a task that legitimately repeats while
+// an earlier instance is still open ("Weekly sync prep (recurring)"), so it is
+// NOT in the name-identity class: neither applyInsert arm adopts it and the
+// index does not refuse it. Nick, 2026-09-10, chose to restore this exemption
+// at the arbiter rather than retire the marker. PB's
+// scripts/db/dedup.py::is_recurring_name applies the SAME three tokens with
+// the SAME semantics (ASCII case fold, plain substring), and
+// Peripheral-Brain tests/db/test_recurring_marker_hub_parity.py pins the
+// token list against this file.
+//
+// The exemption is a function of the KEY: every token is space-free, and
+// lower(trim(title)) differs from lower(title) only by edge spaces, so two
+// titles with the same key are either both exempt or both not. The exemption
+// therefore never splits an identity group -- a recurring title is simply
+// outside the class, exactly as a meeting approval is.
+//
+// instr(), not LIKE: `_` is a LIKE wildcard (so '%_recurring%' matches any
+// character before "recurring"), and LIKE's case folding depends on
+// PRAGMA case_sensitive_like. instr(lower(...)) has neither dependency.
+export const TASK_TITLE_RECURRING_TOKENS = ['(recurring)', '_recurring', 'recurring:'] as const;
+
+/** True when the stored title carries no recurring marker. SQL, never JS (see NORMALIZE IN SQL). */
+export const TASK_TITLE_NOT_RECURRING_SQL = TASK_TITLE_RECURRING_TOKENS
+  .map((t) => `instr(lower(title), '${t}') = 0`)
+  .join(' AND ');
 
 // The rows the name-identity class covers: active, not done, not a meeting
 // approval (meeting rows are keyed by (source, meeting_id) and NEVER consult
-// the title). BYTE-MATCHES the index predicate in schema-v107.
+// the title), and not recurring-marked. Every clause appears verbatim in the
+// index predicate in schema-v113; the contract test reads that file and checks.
 const TASK_DEDUP_SCOPE_SQL =
   `AND deleted_at IS NULL AND status != 'done' ` +
-  `AND (source IS NULL OR source != 'meeting_approval') LIMIT 1`;
+  `AND (source IS NULL OR source != 'meeting_approval') ` +
+  `AND ${TASK_TITLE_NOT_RECURRING_SQL} LIMIT 1`;
 
 /**
  * The name-identity dedup SELECT. `project_id IS ?` (not `= ?`) so a NULL

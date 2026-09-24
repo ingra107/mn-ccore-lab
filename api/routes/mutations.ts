@@ -561,12 +561,70 @@ async function dedupAccepted(
   reason: string,
 ): Promise<MutationResult> {
   const canonical = await readCanonical(env, 'tasks', winnerId);
+  if (!canonical) {
+    // The winner matched the dedup SELECT and was gone at read-back. An
+    // 'accepted' with no canonical payload (and, with the dedup flag off, no
+    // canonical_id) reads to PB as a plain accept of ITS OWN id, which it would
+    // commit as a skeleton no Hub row backs. Refuse instead, and settle no
+    // receipt, so a retry of this mutation_id re-runs the dedup and inserts if
+    // the winner is really gone. The reason carries none of the words PB's
+    // _classify_hub_first_error reads as permanent, so PB treats it as
+    // transient (Peripheral-Brain tests/db/test_hub500_infra_error_classifier.py
+    // pins the classifier).
+    const r = mutErr(mut.mutation_id,
+      `${DEDUP_WINNER_VANISHED_REASON_PREFIX} ${winnerId} matched the dedup SELECT but was gone at read-back; nothing written, retry`);
+    RECEIPT_HANDLED.add(r);
+    return r;
+  }
   return mkResult(mut.mutation_id, 'accepted', {
     result_seq: canonical?.seq as number | undefined,
     canonical_payload: canonical || undefined,
     canonical_id: flags?.dedup ? winnerId : undefined,
     reason,
   });
+}
+
+/** Exported so the tests can pin the exact text PB classifies as transient. */
+export const DEDUP_WINNER_VANISHED_REASON_PREFIX = 'dedup_winner_vanished:';
+
+/**
+ * The meeting-approval arm's adoption, serial and race-loser alike.
+ *
+ * A re-capture of a meeting whose approval row is still open but DECLINED is a
+ * new human decision: the transcript was staged again, so the row goes back to
+ * 'pending' (PB backlog #8352, the Hub half). Doing it here makes the
+ * adopt-and-reset ONE Hub write, returned as the canonical payload; before
+ * this, PB's scripts/meetings/approval.py::create_pending_approval read the
+ * adopted row and issued a second update_task, with a window between the two
+ * in which the row was adopted but still declined.
+ *
+ * The UPDATE's WHERE is the whole rule, so it is its own compare-and-swap: it
+ * changes the row only while it is still an open, declined meeting approval.
+ * A row accepted, closed or deleted since the dedup SELECT is left alone, and a
+ * retry after the reset finds 'pending' and changes nothing. A DONE row is
+ * never reached: the dedup SELECT excludes it, so a re-capture of a closed
+ * meeting still mints a new row (schema-v60's legitimate-recreation intent).
+ * The reset is requested only by a create that itself asks for 'pending'.
+ */
+async function meetingDedupAccepted(
+  env: Env,
+  mut: Mutation,
+  winnerId: string,
+  flags: ValidationFlags | undefined,
+  reason: string,
+): Promise<MutationResult> {
+  const requested = (mut.payload as Record<string, unknown>).approval_status;
+  if (requested === 'pending') {
+    const res = await env.DB.prepare(
+      `UPDATE tasks SET approval_status = 'pending', last_mutation_id = ?, updated_at = datetime('now') ` +
+      `WHERE id = ? AND source = 'meeting_approval' AND approval_status = 'declined' ` +
+      `AND deleted_at IS NULL AND status != 'done'`,
+    ).bind(mut.mutation_id, winnerId).run();
+    if ((res?.meta?.changes ?? 0) > 0) {
+      reason = `${reason}; reset declined -> pending`;
+    }
+  }
+  return dedupAccepted(env, mut, winnerId, flags, reason);
 }
 
 export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags): Promise<MutationResult> {
@@ -604,6 +662,9 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
   //      rows so a meeting row is never a title-match winner for a name-keyed
   //      task (once meeting approvals have a typed identity, cross-adoption is
   //      unsafe). project_id IS NULL matches NULL; deleted + done rows excluded.
+  //      A recurring-marked title ("... (recurring)", "Recurring: ...",
+  //      "..._recurring") is OUTSIDE this class (#8496, schema-v113): it is
+  //      never adopted, so a new instance can be created while the last is open.
   //
   //   - Race condition: the INSERT below uses ON CONFLICT(id) DO NOTHING, so
   //     two concurrent inserts with the same record_id are covered by Bug Y
@@ -614,7 +675,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
   //
   // The two SELECT predicates BYTE-MATCH their partial unique indexes
   // (idx_tasks_meeting_approval_active in schema-v92,
-  // idx_tasks_title_norm_project_active in schema-v107); a SELECT/index
+  // idx_tasks_title_norm_nonrecurring_active in schema-v113); a SELECT/index
   // mismatch reopens the race hole through the catch. The title SQL has ONE
   // definition, api/lib/task-dedup-sql.ts, and a contract test reads the
   // migration file and asserts the index agrees with it.
@@ -635,7 +696,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
         `SELECT id FROM tasks WHERE source = 'meeting_approval' AND meeting_id = ? AND deleted_at IS NULL AND status != 'done' LIMIT 1`,
       ).bind(meetingId).first<{ id: string }>();
       if (dup) {
-        return dedupAccepted(env, mut, dup.id, flags,
+        return meetingDedupAccepted(env, mut, dup.id, flags,
           `deduped: active meeting_approval task with same meeting_id exists as ${dup.id}`);
       }
     } else {
@@ -749,7 +810,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     // Race-loser path: the serial dedup SELECT above runs BEFORE the winner's
     // INSERT commits in a true race, so it finds no row. The INSERT then fires
     // one of the two partial unique indexes (idx_tasks_meeting_approval_active
-    // for meeting-approval rows, idx_tasks_title_norm_project_active for
+    // for meeting-approval rows, idx_tasks_title_norm_nonrecurring_active for
     // name-keyed rows) -> a UNIQUE constraint error that ON CONFLICT(id) does NOT absorb
     // (different conflict target). Pre-fix this dead-lettered an actually-
     // accepted conceptual task. Fix: dispatch by source in the SAME order as
@@ -770,7 +831,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
             `SELECT id FROM tasks WHERE source = 'meeting_approval' AND meeting_id = ? AND deleted_at IS NULL AND status != 'done' LIMIT 1`,
           ).bind(meetingId).first<{ id: string }>();
           if (dup) {
-            return dedupAccepted(env, mut, dup.id, flags,
+            return meetingDedupAccepted(env, mut, dup.id, flags,
               `deduped (race-loser): active meeting_approval task with same meeting_id exists as ${dup.id}`);
           }
         }
@@ -780,7 +841,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
         if (title) {
           // The SAME query as the serial arm, from the same constant. The
           // loser of a case/edge-space race trips
-          // idx_tasks_title_norm_project_active, and only a folded re-query
+          // idx_tasks_title_norm_nonrecurring_active, and only a folded re-query
           // finds the differently-spelled winner; a raw one re-throws and the
           // create dead-letters for good, because processed_mutations replays
           // that error for the same mutation_id.
