@@ -117,6 +117,7 @@ const TASK_UPDATE_EXCLUDED = new Set<string>([
   'email_link',      // DERIVED from source_thread_id at write time (gmailThreadUrl); never a direct client field
   'source',          // provenance, fixed at create
   'waiting_since',   // W1 operational timestamp, server/trigger-managed (waiting_on IS allow-listed; the timestamp is not)
+  'question_consumed_json', // #8842 R4 consumer receipt: the PB consumer writes it via /api/mutations, never the Hub UI
 ])
 
 describe('B) task update allow-list (TASK_ALLOWED_FIELDS) vs TABLE_FIELDS.tasks', () => {
@@ -248,6 +249,7 @@ const TASK_CREATE_BUCKETS: Record<string, CreateBucket> = {
   question_spec_json: 'route_excluded',
   question_answer_json: 'route_excluded',   // written by the answer surfaces (Hub card / Telegram) via UPDATE only
   question_telegram_json: 'route_excluded', // written by the HOME reconciler via UPDATE only
+  question_consumed_json: 'route_excluded', // #8842 R4: the PB consumer's receipt, /api/mutations only, never the Hub UI
 }
 
 // handleCreateProject payload (projects.ts:168-178).

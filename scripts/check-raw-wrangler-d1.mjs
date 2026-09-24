@@ -239,9 +239,12 @@ function main() {
   let diff
   try {
     // Explicit prefixes: a user's diff.noprefix / diff.mnemonicPrefix would
-    // otherwise change the `+++ b/` header this parses.
+    // otherwise change the `+++ b/` header this parses. Submodules are left out:
+    // a gitlink (e.g. the pb-schema pointer) has no staged blob to read, so
+    // `git show :pb-schema` fails and the gate would refuse every pointer bump.
     diff = execFileSync('git', [
       '-c', 'core.quotePath=false', 'diff', '--cached', '-U0', '--no-color', '--no-ext-diff', '--no-renames',
+      '--ignore-submodules=all',
       '--src-prefix=a/', '--dst-prefix=b/', '--diff-filter=AM',
     ], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 })
   } catch (e) {

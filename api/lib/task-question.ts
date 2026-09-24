@@ -40,6 +40,7 @@ export const QUESTION_JSON_COLS = [
   'question_spec_json',
   'question_answer_json',
   'question_telegram_json',
+  'question_consumed_json',
 ] as const;
 
 export type QuestionJsonCol = (typeof QUESTION_JSON_COLS)[number];
@@ -182,4 +183,87 @@ export function questionConsumerCloseError(
   // button). status='deleted' is refused on an UNANSWERED question by
   // questionRowError, so it is not offered here.
   return "question_consumer_close_only: a question is closed by the PB consumer after it acts on the answer; to retire it instead, delete the task (op=delete)";
+}
+
+/** The consumer-receipt column (schema-v114, PB mig 135, #8842 R4). */
+export const QUESTION_CONSUMED_COL = 'question_consumed_json';
+
+/**
+ * #8842 R4, the construction that replaces questionConsumerCloseError's
+ * inference. PB reads a question as `consumed` only from a receipt the
+ * consumer wrote in the same patch as the close (PB scripts/questions/
+ * state.py question_state), never from `status`. This keeps the receipt
+ * honest at the one write path:
+ *
+ *   1. a hub_ui: write may not carry the column at all -- the Hub UI is never
+ *      the consumer (belt to TASK_ALLOWED_FIELDS, which already excludes it
+ *      from the REST route);                          -> question_consumed_hub_ui
+ *   2. a receipt rides only on a kind='question' row, only WITH status 'done',
+ *      parses to {v:1, consumer, at, answer_at, evidence} with non-empty
+ *      strings, and its answer_at equals the effective answer's `at`, so a
+ *      receipt cannot vouch for an answer it never saw -> question_consumed_invalid
+ *   3. `enforceClose` (lab_settings hub_validate_question_consumed): a
+ *      question may ENTER 'done' only when the same write carries a receipt.
+ *                                                       -> question_unconsumed
+ *
+ * `current` is {} on insert. `patch` is the mutation's own fields (not the
+ * effective row): rules 1 and 3 are about what THIS write carries.
+ * Deletion (status 'deleted', op=delete) is untouched: retiring is not
+ * consuming, and PB reads a deleted question as `anomaly`, never `consumed`.
+ *
+ * What it trusts: the same as questionConsumerCloseError -- origin_machine
+ * is stamped server-side for Hub-UI writes; /api/mutations is PI / API-key
+ * only. A PI caller that labels itself 'home' and fabricates a receipt gets
+ * through, and so does a raw D1 write. Level 2 (one chokepoint); Level 1
+ * would need per-writer authorization in D1, which does not exist.
+ */
+export function questionConsumedError(
+  current: Record<string, unknown>,
+  effective: Record<string, unknown>,
+  patch: Record<string, unknown>,
+  originMachine: string | undefined,
+  enforceClose: boolean,
+): string | null {
+  const carries = Object.prototype.hasOwnProperty.call(patch, QUESTION_CONSUMED_COL);
+  if (carries && (originMachine ?? '').startsWith(HUB_UI_ORIGIN_PREFIX)) {
+    return `question_consumed_hub_ui: ${QUESTION_CONSUMED_COL} is written only by the PB consumer that acted on the answer, never from the Hub UI`;
+  }
+  const isQuestion = (effective.kind ?? 'task') === 'question';
+  const receipt = carries ? patch[QUESTION_CONSUMED_COL] : undefined;
+  const hasReceipt = receipt !== null && receipt !== undefined;
+  if (hasReceipt) {
+    if (!isQuestion) {
+      return `question_consumed_invalid: ${QUESTION_CONSUMED_COL} is only for a kind=question row`;
+    }
+    if (effective.status !== 'done') {
+      return `question_consumed_invalid: a receipt is written only with the close (status='done' in the same write)`;
+    }
+    const parsed = parseJsonCol(receipt);
+    if (!parsed.ok) return `question_consumed_invalid: ${QUESTION_CONSUMED_COL} is not JSON (${parsed.why})`;
+    const r = parsed.value;
+    if (!isPlainObject(r) || r.v !== 1) {
+      return `question_consumed_invalid: ${QUESTION_CONSUMED_COL} must be an object with v=1`;
+    }
+    for (const k of ['consumer', 'at', 'answer_at', 'evidence']) {
+      const val = r[k];
+      if (typeof val !== 'string' || val.trim() === '') {
+        return `question_consumed_invalid: ${QUESTION_CONSUMED_COL}.${k} must be a non-empty string`;
+      }
+    }
+    const ans = parseJsonCol(effective.question_answer_json);
+    const answerAt = ans.ok && isPlainObject(ans.value) ? ans.value.at : undefined;
+    if (r.answer_at !== answerAt) {
+      return `question_consumed_invalid: ${QUESTION_CONSUMED_COL}.answer_at does not match the answer's at (a receipt binds the answer it acted on)`;
+    }
+  }
+  if (
+    enforceClose &&
+    isQuestion &&
+    effective.status === 'done' &&
+    current.status !== 'done' &&
+    !hasReceipt
+  ) {
+    return "question_unconsumed: a question enters 'done' only with the PB consumer's receipt in the same write (question_consumed_json); to retire it instead, delete the task (op=delete)";
+  }
+  return null;
 }

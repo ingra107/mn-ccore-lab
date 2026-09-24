@@ -276,6 +276,11 @@ export interface TaskRow {
   question_spec_json?: string | null
   question_answer_json?: string | null
   question_telegram_json?: string | null
+  /** The PB consumer's receipt (schema v114, #8842 R4): NULL until the lane
+   *  that acted on the answer closes the question. Read-only here: the Hub UI
+   *  never writes it (not in TASK_ALLOWED_FIELDS; applyPatch refuses it from
+   *  a hub_ui: origin). */
+  question_consumed_json?: string | null
 }
 
 // #811 (2026-07-29): runtime mirror of `keyof TaskRow`, compile-bound both
@@ -296,6 +301,7 @@ export const TASK_ROW_KEYS = [
   'nick_followup_date', 'related_message_ids', 'requires_nick_brain',
   'source_thread_id', 'waiting_since',
   'question_spec_json', 'question_answer_json', 'question_telegram_json',
+  'question_consumed_json',
 ] as const satisfies readonly (keyof TaskRow)[]
 
 type MissingTaskRowKey = Exclude<keyof TaskRow, (typeof TASK_ROW_KEYS)[number]>

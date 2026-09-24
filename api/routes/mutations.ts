@@ -28,7 +28,7 @@ import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
 import { emitLifecycleActivity } from '../lib/lifecycle-activity';
 import { TASK_TITLE_DEDUP_SELECT } from '../lib/task-dedup-sql';
-import { normalizeQuestionJsonFields, questionRowError, questionConsumerCloseError } from '../lib/task-question';
+import { normalizeQuestionJsonFields, questionRowError, questionConsumerCloseError, questionConsumedError } from '../lib/task-question';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 
 const ALLOWED_TABLES = new Set([
@@ -641,6 +641,14 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     mut.payload = normalizeQuestionJsonFields(mut.payload as Record<string, unknown>);
     const qErr = questionRowError(mut.payload as Record<string, unknown>);
     if (qErr) return mutErr(mut.mutation_id, qErr);
+    // #8842 R4: an insert has no current row; a question born 'done' needs
+    // the consumer receipt like any other close (flag-gated), and a Hub-UI
+    // insert may not carry one.
+    const payload = mut.payload as Record<string, unknown>;
+    const consumedErr = questionConsumedError(
+      {}, payload, payload, mut.origin_machine, flags?.question_consumed ?? false,
+    );
+    if (consumedErr) return mutErr(mut.mutation_id, consumedErr);
   }
 
   // Task-insert dedup has TWO explicit identity classes (2026-07-02 meeting-dedup
@@ -1038,7 +1046,7 @@ async function decideAndCommitUpdate(
     }
   }
 
-  const committed = await commitRowWrite(env, mut, current, await applyPatch(env, mut, current), outcome);
+  const committed = await commitRowWrite(env, mut, current, await applyPatch(env, mut, current, flags), outcome);
   if (committed === CAS_MISS) return CAS_MISS;
 
   // Side effects run once, only after this mutation's row write committed.
@@ -1405,7 +1413,7 @@ async function advanceProjectOwnMovement(
  * records those as `apply error:`.
  */
 async function applyPatch(
-  env: Env, mut: Mutation, current: Record<string, unknown>,
+  env: Env, mut: Mutation, current: Record<string, unknown>, flags?: ValidationFlags,
 ): Promise<SqlFragment> {
   // LMM forward guard (Increment 1A Task 8 v5, finding 4): normalize
   // last_meaningful_movement to canonical UTC space-sep before writing it
@@ -1528,6 +1536,14 @@ async function applyPatch(
     // and cannot stop: api/lib/task-question.ts questionConsumerCloseError.
     const closeErr = questionConsumerCloseError(current, { ...current, ...effectivePatch }, mut.origin_machine);
     if (closeErr) throw new Error(closeErr);
+    // #8842 R4: the consumer receipt -- only the PB consumer writes it, only
+    // with the close, bound to the answer; with the flag ON a question cannot
+    // enter 'done' without it. api/lib/task-question.ts questionConsumedError.
+    const consumedErr = questionConsumedError(
+      current, { ...current, ...effectivePatch }, effectivePatch, mut.origin_machine,
+      flags?.question_consumed ?? false,
+    );
+    if (consumedErr) throw new Error(consumedErr);
   }
 
   const patchKeys = Object.keys(effectivePatch || {});
