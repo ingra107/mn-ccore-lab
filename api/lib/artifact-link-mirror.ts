@@ -63,8 +63,8 @@ export type ArtifactLinkMirrorResult =
  *
  * NB (#199c): calling applyInsert directly BYPASSES processOne's gate stack —
  * ALLOWED_TABLES / TABLE_FIELDS / assertProtectedNotNull / assertEnumDomain.
- * Safe today: all 8 payload cols below are whitelisted and `links` has no enum
- * domain. But a future `links` column omitted from the whitelist would fail
+ * Safe today: all 8 payload cols below are whitelisted, and the one enum-domained
+ * links field (`role`, #2093) is the literal 'key' here. But a future `links` column omitted from the whitelist would fail
  * SILENTLY at D1 here (status 'failed', no validation error). Keep this payload
  * in lockstep with the links mutation schema, or route through processOne.
  */

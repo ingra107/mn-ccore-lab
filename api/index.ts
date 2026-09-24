@@ -84,7 +84,7 @@ import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail, handleSendDailyDigests } from './routes/digest-email';
 import { pruneAllLedgers, monitorD1Health, compactProcessedMutationsJson } from './lib/ledger-retention';
-import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks } from './routes/links';
+import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleSetLinkRole } from './routes/links';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2111,6 +2111,16 @@ defineRoute({
   entity: 'links',
   visibility: 'na',
   handler: (c) => handleGetProjectLinks(c.req.param('slug'), R(c), E(c)),
+});
+// Archive / restore one project link from the project page (#2089).
+// Body { role }; project-owned links only; gated by assertProjectVisible.
+defineRoute({
+  method: 'POST',
+  path: '/api/links/:id/role',
+  auth: 'authed',
+  entity: 'links',
+  visibility: 'na',
+  handler: (c) => handleSetLinkRole(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
 // Tasks — specific-before-generic

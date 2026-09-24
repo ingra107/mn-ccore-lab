@@ -10,7 +10,7 @@ import {
   type PublicationRole,
 } from '../../lib/api'
 import type { Project, Publication } from '../../data/types'
-import type { Comment, ProjectDocumentRow } from '../useApiData'
+import type { Comment, ProjectDocumentRow, StoredLink } from '../useApiData'
 import { nowInstant } from '../../lib/time'
 import { useUndoToast } from '../../components/UndoToast'
 import { PATHS } from '../../constants/paths'
@@ -228,6 +228,55 @@ export function usePostProjectUpdate(projectSlug: string) {
       queryClient.invalidateQueries({ queryKey: ['activity'] })
       // P2-A: notes land in activity_entries — refresh the unified feed.
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectSlug] })
+    },
+  })
+}
+
+// ── Project link role (archive / restore, #2089) ───────────
+
+/** Archive or restore one of a project's `links` rows from its project page.
+ *  Optimistic: the row moves between the current list and the Archived group
+ *  at once and rolls back if the Worker refuses. Task cards inherit a project's
+ *  role='key' links, so their caches are invalidated too. */
+export function useSetProjectLinkRole(projectSlug: string) {
+  const queryClient = useQueryClient()
+  const { showError } = useUndoToast()
+  const key = ['project-links', projectSlug]
+
+  return useMutation({
+    mutationFn: (input: { linkId: string; role: 'key' | 'archive' }) =>
+      fetchApi<StoredLink>(`/api/links/${encodeURIComponent(input.linkId)}/role`, {
+        method: 'POST',
+        body: JSON.stringify({ role: input.role }),
+      }),
+
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<StoredLink[]>(key)
+      if (previous) {
+        queryClient.setQueryData<StoredLink[]>(
+          key,
+          previous.map((l) =>
+            l.id === input.linkId ? { ...l, role: input.role, updated_at: nowInstant() } : l,
+          ),
+        )
+      }
+      return { previous }
+    },
+
+    // Roll back AND say why: a 409 here is usually a same-URL collision
+    // ("Another current link on this project already has this URL"), which a
+    // silent revert would leave Nick guessing at.
+    onError: (err, input, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous)
+      const why = err instanceof Error && err.message ? err.message : 'request failed'
+      showError(`Could not ${input.role === 'archive' ? 'archive' : 'restore'} link — ${why}`)
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key })
+      queryClient.invalidateQueries({ queryKey: ['all-project-links'] })
+      queryClient.invalidateQueries({ queryKey: ['task-links'] })
     },
   })
 }

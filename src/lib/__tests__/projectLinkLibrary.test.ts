@@ -4,7 +4,7 @@
 // buckets, and a legacy row with no `role` must land in `current`.
 
 import { describe, it, expect } from 'vitest'
-import { partitionByRole, sortForDisplay } from '../projectLinkLibrary'
+import { canChangeRole, partitionByRole, partitionForProjectPage, sortForDisplay } from '../projectLinkLibrary'
 import type { StoredLink } from '../../hooks/useApiData'
 
 function link(over: Partial<StoredLink> & { id: string }): StoredLink {
@@ -76,3 +76,63 @@ describe('sortForDisplay', () => {
 // the canonical stored-timestamp chokepoint, which owns its own coverage. This file
 // previously carried a private formatLinkDate with a third, divergent implementation
 // of the D1-timestamp fix (/simplify reuse pass, 2026-08-25).
+
+// #2091: the project page renders ONE Links card. A stored row whose URL is also
+// a key-link slot shows once, as the pinned chip, never again in the library.
+describe('partitionForProjectPage', () => {
+  const gdoc = (id: string) => `https://docs.google.com/document/d/${id}/edit`
+
+  it('moves a current row matching a slot into pinned', () => {
+    const { pinned, current, archived } = partitionForProjectPage(
+      [link({ id: 'a', canonical_url: gdoc('A') }), link({ id: 'b', canonical_url: gdoc('B') })],
+      [gdoc('A'), null, undefined],
+    )
+    expect(pinned.map((l) => l.id)).toEqual(['a'])
+    expect(current.map((l) => l.id)).toEqual(['b'])
+    expect(archived).toEqual([])
+  })
+
+  it('matches a raw slot URL to its canonical row (tab suffix, trailing space)', () => {
+    const { pinned, current } = partitionForProjectPage(
+      [link({ id: 'a', canonical_url: gdoc('A') })],
+      [` https://docs.google.com/document/d/A/edit?tab=t.0 `],
+    )
+    expect(pinned.map((l) => l.id)).toEqual(['a'])
+    expect(current).toEqual([])
+  })
+
+  it('never folds an archived row into pinned', () => {
+    const { pinned, archived } = partitionForProjectPage(
+      [link({ id: 'old', role: 'archive', canonical_url: gdoc('A') })],
+      [gdoc('A')],
+    )
+    expect(pinned).toEqual([])
+    expect(archived.map((l) => l.id)).toEqual(['old'])
+  })
+
+  it('loses nothing: every input lands in exactly one bucket', () => {
+    const input = [
+      link({ id: 'a', canonical_url: gdoc('A') }),
+      link({ id: 'b', role: 'archive' }),
+      link({ id: 'c' }),
+      link({ id: 'd', role: 'derived', type: 'box_folder', canonical_url: 'https://app.box.com/folder/1' }),
+    ]
+    const { pinned, current, archived } = partitionForProjectPage(input, [gdoc('A'), '', null])
+    expect(pinned.length + current.length + archived.length).toBe(input.length)
+  })
+
+  it('empty slots pin nothing', () => {
+    const { pinned, current } = partitionForProjectPage([link({ id: 'a' })], [null, '', '   '])
+    expect(pinned).toEqual([])
+    expect(current).toHaveLength(1)
+  })
+})
+
+describe('canChangeRole', () => {
+  it('offers the archive control only on stored rows', () => {
+    expect(canChangeRole(link({ id: 'k' }))).toBe(true)
+    expect(canChangeRole(link({ id: 'x', role: 'archive' }))).toBe(true)
+    // derived rows are synthesised per request; there is no row to update
+    expect(canChangeRole(link({ id: 'd', role: 'derived' }))).toBe(false)
+  })
+})

@@ -28,7 +28,7 @@ import {
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMarkSeen } from '../hooks/useEntitySeen'
 import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments, useProjectPapers, useProjectLinks, useProjectPublications } from '../hooks/useApiData'
-import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask } from '../hooks/useMutations'
+import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask, useSetProjectLinkRole } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import BulkActionToolbar from '../components/tasks/BulkActionToolbar'
 import { useAuth } from '../hooks/useAuth'
@@ -239,6 +239,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   // Full links table (every role). Task views get the role='key' subset from
   // handleGetTaskLinks; this page is the one surface that shows the archive.
   const { data: storedLinks, isLoading: linksLoading } = useProjectLinks(project.slug)
+  const setLinkRole = useSetProjectLinkRole(project.slug)
 
   // Tab counts (PD-12)
   const { data: papers = [] } = useProjectPapers(project.slug)
@@ -1180,7 +1181,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             )}
           </div>
 
-          {/* Right column (1/3): Key Links (top) + Recent Activity (bottom) */}
+          {/* Right column (1/3): Links (top) + Recent Activity (bottom) */}
           <div className="lg:col-span-1 flex flex-col gap-4">
             {/* Local launch — Open folder + Work on this in Claude (mnccore://).
                 Only when the project has a working folder. */}
@@ -1195,34 +1196,34 @@ function ProjectDetailInner({ project }: InnerProps) {
                 <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.short_name || project.title} />
               </div>
             )}
-            {/* Key Links strip */}
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Link2 {...ICON_PROPS} size={13} style={{ color: 'var(--teal)' }} />
-                <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  Key Links
-                </span>
-              </div>
-
-              <KeyLinksEditor
-                hideLabel
-                links={[
-                  { url: project.key_link_1, desc: project.key_link_1_desc },
-                  { url: project.key_link_2, desc: project.key_link_2_desc },
-                  { url: project.key_link_3, desc: project.key_link_3_desc },
-                ]}
-                onSave={(next) => {
-                  d1Update.mutate({
-                    key_link_1: next[0]?.url || null,
-                    key_link_1_desc: next[0]?.desc || null,
-                    key_link_2: next[1]?.url || null,
-                    key_link_2_desc: next[1]?.desc || null,
-                    key_link_3: next[2]?.url || null,
-                    key_link_3_desc: next[2]?.desc || null,
-                  } as Partial<Project>)
-                }}
-              />
-            </div>
+            {/* Links — ONE card (#2091): the three pinned key-link slots on top,
+                every other stored link below, archived collapsed. */}
+            <ProjectLinkLibrary
+              links={storedLinks}
+              isLoading={linksLoading}
+              slotUrls={[project.key_link_1, project.key_link_2, project.key_link_3]}
+              onSetRole={(link, role) => setLinkRole.mutate({ linkId: link.id, role })}
+              pinnedEditor={
+                <KeyLinksEditor
+                  hideLabel
+                  links={[
+                    { url: project.key_link_1, desc: project.key_link_1_desc },
+                    { url: project.key_link_2, desc: project.key_link_2_desc },
+                    { url: project.key_link_3, desc: project.key_link_3_desc },
+                  ]}
+                  onSave={(next) => {
+                    d1Update.mutate({
+                      key_link_1: next[0]?.url || null,
+                      key_link_1_desc: next[0]?.desc || null,
+                      key_link_2: next[1]?.url || null,
+                      key_link_2_desc: next[1]?.desc || null,
+                      key_link_3: next[2]?.url || null,
+                      key_link_3_desc: next[2]?.desc || null,
+                    } as Partial<Project>)
+                  }}
+                />
+              }
+            />
 
             {/* Published output — the project's own papers (project_publications) */}
             <ProjectPublications
@@ -1231,9 +1232,6 @@ function ProjectDetailInner({ project }: InnerProps) {
               isPi={isPi}
               variant="card"
             />
-
-            {/* Documents & Links — the full links table, dated, archive collapsed */}
-            <ProjectLinkLibrary links={storedLinks} isLoading={linksLoading} />
 
             {/* Recent Activity */}
             <div>

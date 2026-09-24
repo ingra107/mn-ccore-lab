@@ -1,6 +1,16 @@
 {
   "_generated_by": "python -m scripts.db.schema_contract_codegen --emit-hub-enum-domains (Phase A1; SSOT = scripts/db/enums.py + outbox.PROJECT_TYPE_TO_HUB_CATEGORY). DO NOT EDIT BY HAND.",
   "tables": {
+    "links": {
+      "role": {
+        "canonical": [
+          "key",
+          "archive"
+        ],
+        "legacy_aliases": {},
+        "nullable": false
+      }
+    },
     "projects": {
       "category": {
         "canonical": [

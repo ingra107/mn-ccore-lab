@@ -35,7 +35,11 @@
 // Decision doc: Peripheral-Brain/Context/Decisions/2026-06-20-links-table.md
 
 import type { Env } from '../types';
-import { json, error, isPiRequest, assertProjectVisible } from '../helpers';
+import type { AuthUser } from '../helpers';
+import { json, error, isPiRequest, assertProjectVisible, generateId, getValidationFlags } from '../helpers';
+import { assertEnumDomain } from '../lib/enum-domains';
+import { nowInstant } from '../lib/time';
+import { applyUpdate } from './mutations';
 
 // Columns returned to the sync pull leg -- matches brain.db links columns that
 // are identity-mapped to Hub (omits brain.db-local bookkeeping: sync_status,
@@ -521,4 +525,114 @@ export async function handleGetAllProjectLinks(
   }
 
   return json({ projects: result });
+}
+
+// POST /api/links/:id/role -- archive or restore one project link (#2089)
+//
+// Body: { role: 'key' | 'archive' }. Response: { data: <canonical links row> }.
+//
+// The project page's Links card calls this from its per-row archive / restore
+// control. Before it, archiving a link was `BrainDB.set_link_role()` from
+// Python only (Nick, 2026-08-25, asked to archive from the page he is on).
+//
+// Three checks, in the order a wrong write would slip through them:
+//   1. `role` must be in the generated links.role domain (#2093), so a typo
+//      (`keys`) is a 400 rather than a row every `role='key'` reader drops.
+//   2. The link must be PROJECT-owned. `archive` on a task link is a legal
+//      value but a silent tombstone: no surface renders a task's archived
+//      links, and handleGetTaskLinks filters to role='key'. PB's
+//      set_link_role refuses the same case; a domain can never catch it.
+//   3. The caller must be able to see the owning project (same gate as
+//      handleUpdateProject, the project page's other link writer).
+//
+// Write path: applyUpdate with a `hub_ui:` origin, the precedent of
+// artifact-link-mirror.ts (applyInsert). applyMutation is typed to
+// tasks/projects, and applyUpdate does not run processOne's enum gate, so
+// check 1 runs here explicitly and unconditionally.
+export async function handleSetLinkRole(
+  linkId: string,
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  let body: { role?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return error('JSON body required', 400);
+  }
+  const fields: Record<string, unknown> = { role: body?.role };
+  const enumErr = assertEnumDomain('links', fields);
+  if (enumErr) return error(enumErr, 400);
+  const role = fields.role as string;
+
+  const row = await env.DB
+    .prepare('SELECT id, owner_table, owner_id, role, canonical_url FROM links WHERE id = ? AND deleted_at IS NULL LIMIT 1')
+    .bind(linkId)
+    .first<{ id: string; owner_table: string; owner_id: string; role: string; canonical_url: string }>();
+  if (!row) return error('Link not found', 404);
+  if (row.owner_table !== 'projects') {
+    return error(
+      'Only a project link can be archived or restored: a task has no archived group, so an archived task link would vanish',
+      400,
+    );
+  }
+  const block = await assertProjectVisible(request, env, row.owner_id);
+  if (block) return block;
+
+  if (row.role === role) {
+    const current = await env.DB.prepare(`SELECT ${FE_LINKS_COLS} FROM links WHERE id = ?`).bind(linkId).first();
+    return json({ data: current });
+  }
+
+  // idx_links_owner_role_url is UNIQUE on (owner_table, owner_id, role,
+  // canonical_url) over live rows. Restoring X after the same URL was re-added
+  // as a new key row, or archiving a second copy of an already-archived URL,
+  // would violate it. Say so as a 409 the page can show, rather than letting
+  // the constraint error reach app.onError as a bare 500. The pre-check gives
+  // the plain message; the catch below covers a concurrent writer.
+  const clash = await env.DB
+    .prepare(
+      `SELECT id FROM links
+        WHERE owner_table = ? AND owner_id = ? AND role = ? AND canonical_url = ?
+          AND deleted_at IS NULL AND id != ? LIMIT 1`,
+    )
+    .bind(row.owner_table, row.owner_id, role, row.canonical_url, linkId)
+    .first<{ id: string }>();
+  if (clash) return roleClash(role);
+
+  const flags = await getValidationFlags(env);
+  let res: Awaited<ReturnType<typeof applyUpdate>>;
+  try {
+    res = await applyUpdate(env, {
+      mutation_id: generateId('mut'),
+      origin_machine: 'hub_ui:handleSetLinkRole',
+      table: 'links',
+      op: 'update',
+      record_id: linkId,
+      base_seq: null,
+      base_row_hash: null,
+      patch: { role },
+      depends_on: null,
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
+    }, user, flags);
+  } catch (e) {
+    if (/SQLITE_CONSTRAINT|UNIQUE constraint failed/.test(e instanceof Error ? e.message : String(e))) {
+      return roleClash(role);
+    }
+    throw e;
+  }
+  if (res.status !== 'accepted' && res.status !== 'merged_clean') {
+    const message = `mutation ${res.status}: ${res.reason ?? ''}`;
+    return json({ error: message, rejected: res.status, message }, 409);
+  }
+  return json({ data: res.canonical_payload ?? null });
+}
+
+function roleClash(role: string): Response {
+  const message = role === 'archive'
+    ? 'This URL is already in the archived group'
+    : 'Another current link on this project already has this URL';
+  return json({ error: message, rejected: 'error', message }, 409);
 }

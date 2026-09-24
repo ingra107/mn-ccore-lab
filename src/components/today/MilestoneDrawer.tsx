@@ -160,7 +160,14 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
 
           {storedLinks && storedLinks.length > 0 && (
             <div style={{ marginTop: 12 }}>
-              <ProjectLinkLibrary links={storedLinks} isLoading={linksLoading} />
+              {/* The key rows are already the chips above; pass them as the
+                  pinned set so the library shows only derived + archived rows
+                  instead of repeating them (#2091, design principle 2). */}
+              <ProjectLinkLibrary
+                links={storedLinks}
+                isLoading={linksLoading}
+                slotUrls={keyLinks.map((l) => l.canonical_url)}
+              />
             </div>
           )}
 
