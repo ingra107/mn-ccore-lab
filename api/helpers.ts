@@ -646,6 +646,30 @@ export async function canSeePbProject(request: Request, env: Env, projectRef: st
 }
 
 /**
+ * #8842 R6 · `pbTaskVisibilitySql(alias, canSeePb)` — the SQL form of
+ * canSeePbProject for a query that returns TASK rows: an `AND (...)` fragment
+ * to append to the WHERE, or '' for a PI / API-key caller.
+ *
+ * Same rule as canSeePbProject: a task with no project is team-visible; a
+ * task whose project is in category 'Peripheral Brain' is PI-only; a task
+ * whose project_id matches NO project row fails CLOSED (it could be a PB
+ * project we cannot see). The project_id may hold a typed PK or a legacy
+ * slug, so both are matched.
+ *
+ * Self-contained (correlated subqueries, no JOIN), so it cannot fan out rows
+ * and needs nothing from the caller's FROM clause beyond the task alias.
+ * `alias` is a code constant, never user input.
+ */
+export function pbTaskVisibilitySql(alias: string, canSeePb: boolean): string {
+  if (canSeePb) return '';
+  const ref = `${alias}.project_id`;
+  return ` AND (${ref} IS NULL OR (`
+    + `EXISTS (SELECT 1 FROM projects pbv WHERE pbv.id = ${ref} OR pbv.slug = ${ref})`
+    + ` AND NOT EXISTS (SELECT 1 FROM projects pbv WHERE (pbv.id = ${ref} OR pbv.slug = ${ref}) AND pbv.category = 'Peripheral Brain')`
+    + '))';
+}
+
+/**
  * A2b · `assertProjectVisible` — guard that returns a 403 Response when the
  * caller may not see the project, or null when access is allowed.
  *

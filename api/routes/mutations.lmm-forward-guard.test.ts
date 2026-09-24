@@ -18,6 +18,7 @@ import { describe, it, expect } from 'vitest'
 import { nowInstant } from '../lib/time'
 import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
+import { withSequentialBatch, boundSetValue } from '../test-support/sequential-batch'
 
 // ── Stub DB ──────────────────────────────────────────────────────────────────
 // Tracks the project row and captures every UPDATE SQL + bound values.
@@ -138,7 +139,7 @@ async function writtenLmm(
   db: ReturnType<typeof makeProjectStubDB>,
   patch: Record<string, unknown>,
 ): Promise<unknown> {
-  const env = { DB: db } as unknown as import('../helpers').Env
+  const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
   const mut = makeMut(patch)
   const result = await applyUpdate(env, mut, user)
   if (result.status === 'error') return { error: result.reason }
@@ -225,7 +226,7 @@ describe('LMM forward guard — G4: canonical space-sep UTC passes through uncha
 describe('LMM forward guard — G5: null/undefined/empty LMM passed through (no-op)', () => {
   it('null LMM is written as null (explicit clear)', async () => {
     const db = makeProjectStubDB(baseProject({ last_meaningful_movement: '2026-05-01 10:00:00' }))
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const result = await applyUpdate(env, makeMut({ last_meaningful_movement: null }), user)
     expect(result.status).toMatch(/^(accepted|merged_clean)$/)
     // null is a valid explicit clear; no normalization fires
@@ -247,7 +248,7 @@ describe('LMM forward guard — G5: null/undefined/empty LMM passed through (no-
 describe('LMM forward guard — G6: unparseable LMM string throws lmm_invalid', () => {
   it('garbage string → throws with lmm_invalid message', async () => {
     const db = makeProjectStubDB(baseProject())
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     await expect(
       applyUpdate(env, makeMut({ last_meaningful_movement: 'not-a-timestamp' }), user)
     ).rejects.toThrow(/lmm_invalid/)
@@ -290,6 +291,11 @@ describe('LMM forward guard — G7: tasks table patch with lmm-like field is not
         run: async () => {
           updateCalls.push({ sql, vals: [...boundVals] })
           const upper = sql.trim().toUpperCase()
+          if (upper.startsWith('UPDATE TASKS')) {
+            // Stamp the landed mutation id so commitRowWrite sees its write.
+            const row = taskStore.get(boundVals[boundVals.length - 1] as string)
+            if (row) row.last_mutation_id = boundSetValue(sql, boundVals, 'last_mutation_id')
+          }
           if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) {
             mutationsStore.set(boundVals[0] as string, { mutation_id: boundVals[0] })
             return { meta: { changes: 1 } }
@@ -306,7 +312,7 @@ describe('LMM forward guard — G7: tasks table patch with lmm-like field is not
       batch: async () => [],
     }
 
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const mut = {
       mutation_id: 'mut_lmm_guard_tasks_test',
       origin_machine: 'work',

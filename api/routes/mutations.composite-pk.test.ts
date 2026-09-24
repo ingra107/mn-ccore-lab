@@ -14,6 +14,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { nowInstant } from '../lib/time';
 import { applyInsert, applyUpdate, applyDelete } from './mutations';
 import type { Mutation } from './mutations';
+import { withSequentialBatch } from '../test-support/sequential-batch'
 
 // ── Workers-runtime gap guard ─────────────────────────────────────────────────
 //
@@ -79,15 +80,36 @@ function rowPkKey(table: string, row: Row): string {
   return JSON.stringify(getPkCols(table).map(c => row[c]));
 }
 
-/** Parse "col1 = ? AND col2 = ? AND col3 = ?" into [{col, val}, ...]. */
-function parseWhere(whereClause: string, vals: unknown[]): Array<{ col: string; val: unknown }> {
-  const parts = whereClause.split(/\s+AND\s+/i);
+/** Parse "col1 = ? AND col2 = ? AND col3 = ?" into [{col, val}, ...].
+ *  Also understands the #8842 commit-door terms: `col IS ?` (null-safe
+ *  equality, the CAS term), `col IS NULL`, and `[NOT] EXISTS (...)` guards,
+ *  which this stub treats as true after consuming their bound values. The
+ *  split is paren-aware because those subqueries contain their own ANDs. */
+function parseWhere(whereClause: string, vals: unknown[]): Array<{ col: string; val: unknown; test?: (v: unknown) => boolean }> {
+  const parts: string[] = [];
+  let depth = 0;
+  let cur = '';
+  const tokens = whereClause.split(/(\s+AND\s+)/i);
+  for (const t of tokens) {
+    if (/^\s+AND\s+$/i.test(t) && depth === 0) { parts.push(cur); cur = ''; continue; }
+    cur += t;
+    depth += (t.match(/\(/g) ?? []).length - (t.match(/\)/g) ?? []).length;
+  }
+  if (cur.trim()) parts.push(cur);
   let idx = 0;
-  return parts.map(part => {
-    const m = part.trim().match(/^(\w+)\s*=\s*\?$/);
-    if (!m) throw new Error(`Unsupported WHERE clause fragment: ${part}`);
-    return { col: m[1], val: vals[idx++] };
-  });
+  const out: Array<{ col: string; val: unknown; test?: (v: unknown) => boolean }> = [];
+  for (const part of parts) {
+    const p = part.trim();
+    if (/^(NOT\s+)?EXISTS\s*\(/i.test(p)) { idx += (p.match(/\?/g) ?? []).length; continue; }
+    let m = p.match(/^(\w+)\s*=\s*\?$/);
+    if (m) { out.push({ col: m[1], val: vals[idx++] }); continue; }
+    m = p.match(/^(\w+)\s+IS\s+\?$/i);
+    if (m) { const want = vals[idx++] ?? null; out.push({ col: m[1], val: want, test: (v) => (v ?? null) === want }); continue; }
+    m = p.match(/^(\w+)\s+IS\s+NULL$/i);
+    if (m) { out.push({ col: m[1], val: null, test: (v) => v == null }); continue; }
+    throw new Error(`Unsupported WHERE clause fragment: ${part}`);
+  }
+  return out;
 }
 
 /** Parse "col1 = ?, col2 = ?, updated_at = datetime('now'), last_mutation_id = ?"
@@ -159,7 +181,7 @@ function makeCompositeDb() {
 
     const tbl = getTable(table);
     for (const [key, row] of tbl.entries()) {
-      if (filters.every(({ col, val }) => row[col] === val)) {
+      if (filters.every(({ col, val, test }) => (test ? test(row[col]) : row[col] === val))) {
         let setIdx = 0;
         for (const item of setItems) {
           if (item.isPlaceholder) {
@@ -188,7 +210,7 @@ function makeCompositeDb() {
     const filters = parseWhere(whereClause, vals);
     const tbl = getTable(table);
     for (const row of tbl.values()) {
-      if (filters.every(({ col, val }) => row[col] === val)) return row;
+      if (filters.every(({ col, val, test }) => (test ? test(row[col]) : row[col] === val))) return row;
     }
     return null;
   }
@@ -223,7 +245,7 @@ function makeCompositeDb() {
 const FAKE_USER = { id: 'user_test', email: 'test@test.com' } as any;
 
 function makeEnv(db?: ReturnType<typeof makeCompositeDb>) {
-  return { DB: db ?? makeCompositeDb() } as any;
+  return { DB: withSequentialBatch(db ?? makeCompositeDb()) } as any;
 }
 
 function mut(overrides: Partial<Mutation>): Mutation {

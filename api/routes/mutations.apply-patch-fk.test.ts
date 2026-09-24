@@ -17,6 +17,7 @@
 import { describe, it, expect } from 'vitest'
 import { applyUpdate } from './mutations'
 import type { AuthUser, Env } from '../helpers'
+import { withSequentialBatch, boundSetValue } from '../test-support/sequential-batch'
 
 // ── Stub DB ──────────────────────────────────────────────────────────────────
 
@@ -62,6 +63,8 @@ function makeUpdateStubDB(opts: StubUpdateOpts = {}) {
       run: async () => {
         if (upper.startsWith('UPDATE TASKS')) {
           updateCalls.push({ sql, bindings: [...boundVals] })
+          // Stamp the landed mutation id so commitRowWrite sees its write.
+          if (existingRow) existingRow.last_mutation_id = boundSetValue(sql, boundVals, 'last_mutation_id')
         }
         if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) {
           return { meta: { changes: 1 } }
@@ -88,7 +91,7 @@ describe('A1 — applyPatch FK slug canonicalization on UPDATE path (Slice C)', 
     const db = makeUpdateStubDB({
       projectRow: { id: 'proj_canonical_00000000000000001' },
     })
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const result = await applyUpdate(env, {
       op: 'update',
@@ -123,7 +126,7 @@ describe('A1 — applyPatch FK slug canonicalization on UPDATE path (Slice C)', 
       // projectRefToCanonical resolves typed PK to itself via `WHERE id = ?`
       projectRow: { id: 'proj_canonical_00000000000000001' },
     })
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const result = await applyUpdate(env, {
       op: 'update',
@@ -153,7 +156,7 @@ describe('A1 — applyPatch FK slug canonicalization on UPDATE path (Slice C)', 
       // No project found — projectRefToCanonical returns null
       projectRow: null,
     })
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const result = await applyUpdate(env, {
       op: 'update',

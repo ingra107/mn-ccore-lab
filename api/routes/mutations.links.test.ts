@@ -16,6 +16,7 @@ import type { Mutation } from './mutations';
 import type { Env, AuthUser } from '../helpers';
 import { classifyTaskDedupSelect } from '../lib/task-dedup-sql';
 import { handleGetLinks } from './links';
+import { withSequentialBatch } from '../test-support/sequential-batch'
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 
@@ -123,7 +124,7 @@ function makeStubDB(seed: Record<string, StoreRow> = {}) {
 }
 
 function makeEnv(db: ReturnType<typeof makeStubDB>): Env {
-  return { DB: db as any, KV: null as any, BUCKET: null as any } as unknown as Env;
+  return { DB: withSequentialBatch(db) as any, KV: null as any, BUCKET: null as any } as unknown as Env;
 }
 
 // Stub Request that passes isPiRequest() (API-key bearer)
@@ -390,7 +391,7 @@ describe('handleGetLinks — pull endpoint', () => {
 
   it('returns { data, count } shape on a basic pull', async () => {
     const db = makeLinksDB([sampleRow]);
-    const env = { DB: db, PB_API_KEY: 'test-api-key' } as unknown as Env;
+    const env = { DB: withSequentialBatch(db), PB_API_KEY: 'test-api-key' } as unknown as Env;
     const req = makePiGetRequest('seq_after=0');
     const url = new URL(req.url);
     const resp = await handleGetLinks(url, req, env);
@@ -403,7 +404,7 @@ describe('handleGetLinks — pull endpoint', () => {
 
   it('validates seq_after is a non-negative integer', async () => {
     const db = makeLinksDB([]);
-    const env = { DB: db, PB_API_KEY: 'test-api-key' } as unknown as Env;
+    const env = { DB: withSequentialBatch(db), PB_API_KEY: 'test-api-key' } as unknown as Env;
     const req = makePiGetRequest('seq_after=abc');
     const resp = await handleGetLinks(new URL(req.url), req, env);
     expect(resp.status).toBe(400);
@@ -414,7 +415,7 @@ describe('handleGetLinks — pull endpoint', () => {
   it('rejects non-PI callers with 403', async () => {
     const db = makeLinksDB([sampleRow]);
     // No PB_API_KEY on env, so isPiRequest fails
-    const env = { DB: db, PB_API_KEY: 'DIFFERENT_KEY' } as unknown as Env;
+    const env = { DB: withSequentialBatch(db), PB_API_KEY: 'DIFFERENT_KEY' } as unknown as Env;
     const req = new Request('https://mn-ccore-lab.pages.dev/api/links?seq_after=0', {
       headers: { Authorization: 'Bearer wrong-key' },
     });
@@ -431,7 +432,7 @@ describe('handleGetLinks — pull endpoint', () => {
         }),
       }),
     };
-    const env = { DB: db, PB_API_KEY: 'test-api-key' } as unknown as Env;
+    const env = { DB: withSequentialBatch(db), PB_API_KEY: 'test-api-key' } as unknown as Env;
     const req = makePiGetRequest('seq_after=0');
     const resp = await handleGetLinks(new URL(req.url), req, env);
     // Should fail-soft (empty result) rather than 500 so the Worker
@@ -444,7 +445,7 @@ describe('handleGetLinks — pull endpoint', () => {
 
   it('rejects invalid owner_table filter', async () => {
     const db = makeLinksDB([]);
-    const env = { DB: db, PB_API_KEY: 'test-api-key' } as unknown as Env;
+    const env = { DB: withSequentialBatch(db), PB_API_KEY: 'test-api-key' } as unknown as Env;
     const req = makePiGetRequest('owner_table=invalid_table');
     const resp = await handleGetLinks(new URL(req.url), req, env);
     expect(resp.status).toBe(400);

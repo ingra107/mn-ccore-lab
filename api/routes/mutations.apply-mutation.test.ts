@@ -6,6 +6,7 @@
 import { describe, it, expect } from 'vitest'
 import { nowInstant } from '../lib/time'
 import { applyMutation, applyInsert, applyUpdate } from './mutations'
+import { withSequentialBatch, boundSetValue } from '../test-support/sequential-batch'
 
 // ── Stub DB ──────────────────────────────────────────────────────────────────
 // Handles: SELECT * FROM tasks/projects WHERE id = ?,
@@ -139,7 +140,7 @@ describe('applyMutation envelope factory', () => {
       last_mutation_id: null,
     })
 
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     const result = await applyMutation(env, {
@@ -166,7 +167,7 @@ describe('applyMutation envelope factory', () => {
     const db = makeStubDB()
     const newTaskId = 'task_01hwtest_apply_mut_0000002'
 
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     const result = await applyMutation(env, {
@@ -201,7 +202,7 @@ describe('applyMutation envelope factory', () => {
     // (proactive-brief MAX(t.updated_at)). The insert now stamps datetime('now').
     const db = makeStubDB()
     const newTaskId = 'task_01hwtest_apply_mut_updstamp1'
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     const result = await applyInsert(env, {
@@ -235,7 +236,7 @@ describe('applyMutation envelope factory', () => {
     // deliberate caller value (e.g. a sync echo) wins over datetime('now').
     const db = makeStubDB()
     const newTaskId = 'task_01hwtest_apply_mut_updstamp2'
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
     const SUPPLIED = '2026-01-02 03:04:05'
 
@@ -266,7 +267,7 @@ describe('applyMutation envelope factory', () => {
     // born acknowledged so they never count as unseen.
     const db = makeStubDB()
     const newTaskId = 'task_01hwtest_apply_mut_selfack1'
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'ingra107@umn.edu' } as import('../helpers').AuthUser // actorSlug → nick-ingraham
 
     const result = await applyInsert(env, {
@@ -293,7 +294,7 @@ describe('applyMutation envelope factory', () => {
   it('insert self-ack does NOT fire when assigning to someone else (2026-06-11)', async () => {
     const db = makeStubDB()
     const newTaskId = 'task_01hwtest_apply_mut_selfack2'
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'ingra107@umn.edu' } as import('../helpers').AuthUser
 
     const result = await applyInsert(env, {
@@ -324,7 +325,7 @@ describe('applyMutation envelope factory', () => {
       id: tid, title: 'Handed off', status: 'todo', seq: 3, deleted_at: null,
       assignee: 'nick-ingraham', acknowledged_at: '2026-06-10 12:00:00', acknowledged_by: 'nick-ingraham',
     })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'ingra107@umn.edu' } as import('../helpers').AuthUser
 
     const result = await applyMutation(env, {
@@ -346,7 +347,7 @@ describe('applyMutation envelope factory', () => {
       id: tid, title: 'Same owner', status: 'todo', seq: 2, deleted_at: null,
       assignee: 'nick-ingraham', acknowledged_at: '2026-06-10 12:00:00', acknowledged_by: 'nick-ingraham',
     })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'ingra107@umn.edu' } as import('../helpers').AuthUser
 
     await applyMutation(env, {
@@ -369,7 +370,7 @@ describe('applyMutation envelope factory', () => {
       seq: 2,
     })
 
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     const result = await applyMutation(env, {
@@ -394,7 +395,7 @@ describe('applyMutation envelope factory', () => {
     for (let i = 0; i < 5; i++) {
       const tid = `task_01hwtest_apply_mut_uniq_${i}`
       db._store.set(tid, { id: tid, title: `Task ${i}`, status: 'todo', seq: i + 1, deleted_at: null })
-      const env = { DB: db } as unknown as import('../helpers').Env
+      const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
       const user = { email: 'test@example.com' } as import('../helpers').AuthUser
       const result = await applyMutation(env, {
         table: 'tasks', record_id: tid, op: 'update',
@@ -417,7 +418,7 @@ describe('applyMutation flag-independence sanity check', () => {
     const db = makeStubDB()
     const tid = 'task_01hwtest_bulk_flag_test001'
     db._store.set(tid, { id: tid, title: 'Flag test', status: 'todo', seq: 1, deleted_at: null })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
     const result = await applyMutation(env, {
       table: 'tasks', record_id: tid, op: 'update',
@@ -483,7 +484,7 @@ describe('Stage 3 Phase 2: sessions table uses session_id as PK', () => {
 
   it('INSERT into sessions uses ON CONFLICT(session_id), not ON CONFLICT(id)', async () => {
     const db = makeCapturingDB()
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     const sessionId = 'hub-deploy-smoke-001'
@@ -520,7 +521,7 @@ describe('Stage 3 Phase 2: sessions table uses session_id as PK', () => {
     // Verify that a subsequent read after insert uses session_id column.
     // We do this by observing the SELECT SQL captured after the INSERT.
     const db = makeCapturingDB()
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     const sessionId = 'hub-pk-read-test-002'
@@ -610,7 +611,7 @@ describe('Stage 3 Phase 3.6: sessions upsert-on-miss', () => {
           if (upper.startsWith('UPDATE')) {
             const idKey = boundVals[boundVals.length - 1] as string
             const row = store.get(idKey)
-            if (row) store.set(idKey, { ...row, updated: true })
+            if (row) store.set(idKey, { ...row, updated: true, last_mutation_id: boundSetValue(sql, boundVals, 'last_mutation_id') ?? row.last_mutation_id })
           }
           return { meta: { changes: 1 } }
         },
@@ -628,7 +629,7 @@ describe('Stage 3 Phase 3.6: sessions upsert-on-miss', () => {
 
   it('update on absent sessions row upserts (accepted) instead of erroring', async () => {
     const db = makeUpsertDB()
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     const sessionId = 'sess_upsert_race_test_001'
@@ -681,7 +682,7 @@ describe('Stage 3 Phase 3.6: sessions upsert-on-miss', () => {
       last_mutation_id: 'mut_prior',
     })
 
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     const mut = {
@@ -718,7 +719,7 @@ describe('Stage 3 Phase 3.6: sessions upsert-on-miss', () => {
 describe('create-route payload keys stay within the wire contract', () => {
   it('the handleCreateTask payload key set is accepted end-to-end', async () => {
     const db = makeStubDB()
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     const result = await applyMutation(env, {

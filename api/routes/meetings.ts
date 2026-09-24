@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical, pbTaskVisibilitySql } from '../helpers';
 import { TASK_SELECT_COLS } from '../lib/task-cols';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
@@ -54,7 +54,11 @@ export async function handleGetMeetings(env: Env, isAuthed = false): Promise<Res
 // `isAuthed` true when the caller has a valid JWT or API key (resolved by
 // index.ts, mirroring the handleGetMeetings pattern). Unauth callers get the
 // public-safe column projection; authed callers get the full row.
-export async function handleGetMeeting(id: string, env: Env, isAuthed = false): Promise<Response> {
+//
+// `canSeePb` (#8842 R6): action items are TASK rows, so a non-PI caller gets
+// the same PB-project filter as every other task feed (pbTaskVisibilitySql).
+// Before this the route returned PB-private tasks to any authed team member.
+export async function handleGetMeeting(id: string, env: Env, isAuthed = false, canSeePb = false): Promise<Response> {
   const cols = isAuthed ? '*' : MEETING_PUBLIC_COLS;
   const meeting = await env.DB.prepare(`SELECT ${cols} FROM meetings WHERE id = ?`).bind(id).first();
   if (!meeting) return error('Meeting not found', 404);
@@ -66,7 +70,8 @@ export async function handleGetMeeting(id: string, env: Env, isAuthed = false): 
   // resolves correctly. (The prior `.replace(/\bt\./g,'')` strip was a fragile
   // hack once project_id became a correlated subquery — aliasing is the root fix.)
   // Meeting agenda/notes (the meeting row itself) are team-internal-visible
-  // by design — only the task rows in action_items are the leak risk.
+  // by design. The task rows in action_items carry two risks: the private
+  // `notes` column (handled here) and PB-private ROWS (pbTaskVisibilitySql).
   //
   // v95: tasks.meeting_id may carry either the Hub-minted meeting id or PB's
   // calendar-match source_id, so the join matches either id space. NULL-safety
@@ -80,7 +85,7 @@ export async function handleGetMeeting(id: string, env: Env, isAuthed = false): 
   const sourceId = (meeting as { source_id?: string | null }).source_id ?? null;
   const [actionItemsRaw, agendaItems] = await Promise.all([
     env.DB.prepare(
-      `SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.meeting_id IN (?, ?) AND t.deleted_at IS NULL ORDER BY t.created_at`
+      `SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.meeting_id IN (?, ?) AND t.deleted_at IS NULL${pbTaskVisibilitySql('t', canSeePb)} ORDER BY t.created_at`
     ).bind(id, sourceId ?? id).all<Record<string, unknown>>(),
     env.DB.prepare('SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at').bind(id).all(),
   ]);
@@ -194,7 +199,9 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
   const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first();
   if (!meeting) return error('Meeting not found', 404);
 
-  const pbFilter = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
+  // Task rows only: the shared rule (fails closed on an unknown project ref,
+  // like canSeePbProject). The LEFT JOIN projects this used to need is gone.
+  const pbTasks = pbTaskVisibilitySql('t', canSeePb);
 
   // Find the previous meeting (for carry-forward context). MUST resolve
   // before the parallel fan-out below — prevActionItems depends on it.
@@ -223,8 +230,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
       ? env.DB.prepare(
           `SELECT t.id, t.description, t.assignee, t.completed, t.due_date
            FROM tasks t
-           LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-           WHERE t.meeting_id IN (?, ?) AND t.deleted_at IS NULL${pbFilter}
+           WHERE t.meeting_id IN (?, ?) AND t.deleted_at IS NULL${pbTasks}
            ORDER BY t.completed ASC, t.assignee`
         ).bind(prevMeeting.id, prevMeeting.source_id ?? prevMeeting.id).all()
       : Promise.resolve({ results: [] as Record<string, unknown>[] }),
@@ -246,8 +252,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     env.DB.prepare(
       `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.priority, t.status
        FROM tasks t
-       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE t.due_date BETWEEN ? AND ? AND t.completed = 0 AND t.deleted_at IS NULL${pbFilter}
+       WHERE t.due_date BETWEEN ? AND ? AND t.completed = 0 AND t.deleted_at IS NULL${pbTasks}
        ORDER BY t.due_date`
     ).bind(today, twoWeeksOut).all(),
     // Current meeting's agenda items
@@ -258,8 +263,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     env.DB.prepare(
       `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.priority
        FROM tasks t
-       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE t.due_date < ? AND t.completed = 0 AND t.deleted_at IS NULL${pbFilter}
+       WHERE t.due_date < ? AND t.completed = 0 AND t.deleted_at IS NULL${pbTasks}
        ORDER BY t.due_date`
     ).bind(today).all(),
   ]);
@@ -298,6 +302,9 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
 
   const prevDate = prevMeeting?.date ?? '1970-01-01';
 
+  // Task rows use the shared rule; pbFilterP stays for the non-task rows
+  // (regulatory items, project updates) that join projects p themselves.
+  const pbTasks = pbTaskVisibilitySql('t', canSeePb);
   const pbFilterP = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
   const pbFilterDirect = canSeePb ? '' : " AND (category IS NULL OR category != 'Peripheral Brain')";
   const today = ctToday();
@@ -316,8 +323,7 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
       `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.status
        FROM tasks t
        JOIN meetings m ON t.meeting_id IN (m.id, m.source_id)
-       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE m.date < ? AND t.deleted_at IS NULL AND (t.completed = 0 OR t.status NOT IN ('done','completed'))${pbFilterP}
+       WHERE m.date < ? AND t.deleted_at IS NULL AND (t.completed = 0 OR t.status NOT IN ('done','completed'))${pbTasks}
        ORDER BY m.date DESC, t.created_at
        LIMIT 20`
     ).bind(meeting.date).all<{ id: string; title: string; description: string; assignee: string; due_date: string; status: string }>(),
@@ -325,11 +331,10 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
     env.DB.prepare(
       `SELECT t.id, t.title, t.assignee, t.due_date, t.priority, t.status
        FROM tasks t
-       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
        WHERE t.status IN ('todo','in_progress','waiting_external')
          AND t.priority IN ('high','urgent')
          AND t.due_date BETWEEN ? AND ?
-         AND (t.deleted_at IS NULL OR t.deleted_at = '')${pbFilterP}
+         AND (t.deleted_at IS NULL OR t.deleted_at = '')${pbTasks}
        ORDER BY t.due_date
        LIMIT 15`
     ).bind(today, weekOut).all<{ id: string; title: string; assignee: string; due_date: string; priority: string; status: string }>(),

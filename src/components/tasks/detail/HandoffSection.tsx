@@ -89,7 +89,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
   const { data: handoffs = [] } = useHandoffs(taskId)
   const createHandoff = useCreateHandoff(taskId)
   const acknowledgeHandoff = useAcknowledgeHandoff(taskId)
-  const { showSuccess } = useToast()
+  const { showSuccess, showError } = useToast()
 
   const members = team.filter((m) => m.slug && m.slug !== currentAssignee).sort((a, b) => a.name.localeCompare(b.name))
 
@@ -103,14 +103,22 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
       assessment: assessment.trim() || undefined,
       recommendation: recommendation.trim() || undefined,
     }, {
-      onSuccess: () => showSuccess('Handoff sent'),
+      // #8842: the server refuses (409) when the reassignment does not land and
+      // then writes no handoff. Keep the typed SBAR on screen and say why; clear
+      // and close the form only once the handoff is really recorded.
+      onSuccess: () => {
+        showSuccess('Handoff sent')
+        setShowForm(false)
+        setToSlug('')
+        setSituation('')
+        setBackground('')
+        setAssessment('')
+        setRecommendation('')
+      },
+      onError: (err) => {
+        showError(`Handoff not sent: ${err instanceof Error ? err.message : 'please try again.'}`)
+      },
     })
-    setShowForm(false)
-    setToSlug('')
-    setSituation('')
-    setBackground('')
-    setAssessment('')
-    setRecommendation('')
   }
 
   const inputStyle = {

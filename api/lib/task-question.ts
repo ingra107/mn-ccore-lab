@@ -144,3 +144,42 @@ export function questionRowError(effective: Record<string, unknown>): string | n
 
   return null;
 }
+
+/** Origin prefix applyMutation stamps on every Hub-UI write (mutations.ts). */
+export const HUB_UI_ORIGIN_PREFIX = 'hub_ui:';
+
+/**
+ * #8842 R4 interim containment (Level 2; the Level-1 fix, a consumer-only
+ * receipt column, is planned separately). "Answered is not done: the CONSUMER
+ * closes the row" was a rule nothing enforced: a person could tick Done on an
+ * answered question in the Hub and PB's question_state would then read it as
+ * `consumed`, so /process would never build what the answer approved.
+ *
+ * Refuses a Hub-UI write that moves a question from any open status to
+ * 'done'. Retiring a moot question stays allowed through op=delete (and
+ * through status 'deleted' once it is answered; questionRowError refuses
+ * that on an unanswered one).
+ *
+ * What it trusts: `origin_machine` is `hub_ui:<route>` for every Hub-UI
+ * write, because Hub routes write tasks only through applyMutation, which
+ * stamps it server-side (route_no_raw_writes.test.ts bans raw task writes in
+ * the routes). What it cannot stop: /api/mutations takes origin_machine from
+ * the caller. That endpoint is PI / API-key only (handleMutations
+ * isPiRequest), so only PB or Nick's own key can send a non-hub_ui origin,
+ * and PB is the consumer. A PI caller that labels a Hub-UI close as 'home'
+ * gets through; so does a raw D1 write.
+ */
+export function questionConsumerCloseError(
+  current: Record<string, unknown>,
+  effective: Record<string, unknown>,
+  originMachine: string | undefined,
+): string | null {
+  if (!(originMachine ?? '').startsWith(HUB_UI_ORIGIN_PREFIX)) return null;
+  const isQuestion = (current.kind ?? 'task') === 'question' || effective.kind === 'question';
+  if (!isQuestion) return null;
+  if (current.status === 'done' || effective.status !== 'done') return null;
+  // Names only what works from every state: op=delete (the Hub's Delete
+  // button). status='deleted' is refused on an UNANSWERED question by
+  // questionRowError, so it is not offered here.
+  return "question_consumer_close_only: a question is closed by the PB consumer after it acts on the answer; to retire it instead, delete the task (op=delete)";
+}

@@ -87,7 +87,10 @@ import {
   handleUpdateRevisionComment,
   handleGetActiveRevisions,
 } from './revisions'
+import { handleGetMeeting } from './meetings'
+import { handleCalendarEvents } from './calendar'
 import type { Env } from '../helpers'
+import { withSequentialBatch, boundSetValue } from '../test-support/sequential-batch'
 
 // ── Test identity constants ────────────────────────────────────────────────────
 
@@ -189,12 +192,17 @@ function makeEnv(projectCategory: 'Peripheral Brain' | 'MNCCORE', opts: EnvOpts 
   const regProjectId = opts.regProjectId !== undefined ? opts.regProjectId : 'test-proj'
   const revProjectId = opts.revProjectId !== undefined ? opts.revProjectId : 'test-proj'
   const docProjectId = opts.docProjectId !== undefined ? opts.docProjectId : 'test-proj'
+  // #8842 R1: a task/project write now lands through one D1 batch and is
+  // recognised by the row carrying the mutation's last_mutation_id. This
+  // stub's rows are static, so it remembers the last stamp an UPDATE bound
+  // and serves it back on the task/project rows.
+  let stamped: unknown = null
   return {
     TEST_MODE_KEY: 'local-test-key-do-not-use-in-prod',
     PB_API_KEY: 'valid-test-api-key',
-    DB: {
+    DB: withSequentialBatch({
       prepare: (sql: string) => ({
-        bind: (..._args: unknown[]) => ({
+        bind: (...args: unknown[]) => ({
           first: async () => {
             if (/pi_emails/.test(sql)) return { value: JSON.stringify([PI_EMAIL]) }
             // Task SELECTs (TASK_SELECT_COLS) now embed a `FROM projects p`
@@ -203,13 +211,13 @@ function makeEnv(projectCategory: 'Peripheral Brain' | 'MNCCORE', opts: EnvOpts 
             // gate check below — otherwise a task fetch is misrouted to a project
             // row and its project_id (the PB-gate input) goes missing.
             if (/FROM tasks WHERE id/.test(sql) || /FROM tasks t WHERE t\.id/.test(sql) || /FROM tasks t LEFT JOIN/.test(sql)) {
-              return { id: 'task-id', project_id: taskProjectId, description: 'Test task desc', title: 'Test task' }
+              return { id: 'task-id', project_id: taskProjectId, description: 'Test task desc', title: 'Test task', last_mutation_id: stamped }
             }
             // The project gate query is unaliased (`FROM projects WHERE (id=? OR
             // slug=?)`); the task subquery is aliased (`FROM projects p WHERE`),
             // so `FROM projects WHERE` matches only the gate, not the subquery.
             if (/FROM projects WHERE/.test(sql)) {
-              return { id: 'proj-id', slug: 'test-proj', category: projectCategory, title: 'Test Project' }
+              return { id: 'proj-id', slug: 'test-proj', category: projectCategory, title: 'Test Project', last_mutation_id: stamped }
             }
             if (/FROM conference_submissions WHERE id/.test(sql)) {
               return { project_id: confProjectId }
@@ -235,10 +243,19 @@ function makeEnv(projectCategory: 'Peripheral Brain' | 'MNCCORE', opts: EnvOpts 
             if (/FROM team_members/.test(sql)) {
               return { id: 'member-id', slug: 'test-user' }
             }
+            if (/FROM meetings WHERE id/.test(sql)) {
+              return { id: 'mtg-id', title: 'Lab meeting', date: '2026-09-01', source_id: null }
+            }
             return null
           },
           all: async () => ({ results: opts.feedRows ?? [] }),
-          run: async () => ({ success: true, meta: { changes: 1 } }),
+          run: async () => {
+            if (/^\s*UPDATE\b/i.test(sql)) {
+              const v = boundSetValue(sql, args, 'last_mutation_id')
+              if (v !== undefined) stamped = v
+            }
+            return { success: true, meta: { changes: 1 } }
+          },
         }),
         first: async () => {
           if (/pi_emails/.test(sql)) return { value: JSON.stringify([PI_EMAIL]) }
@@ -247,8 +264,7 @@ function makeEnv(projectCategory: 'Peripheral Brain' | 'MNCCORE', opts: EnvOpts 
         all: async () => ({ results: opts.feedRows ?? [] }),
         run: async () => ({ success: true, meta: { changes: 1 } }),
       }),
-      batch: async () => [],
-    },
+    }),
   } as unknown as Env
 }
 
@@ -685,6 +701,8 @@ const mixedFeedRows = [
   { id: 'r1', category: 'Peripheral Brain', title: 'PB row' },
   { id: 'r2', category: 'MNCCORE', title: 'MNCCORE row' },
 ]
+// The calendar merges three sources by date, so its rows need date fields.
+const datedFeedRows = mixedFeedRows.map((r) => ({ ...r, date: '2026-09-24', due_date: '2026-09-24', target_date: '2026-09-24' }))
 
 interface PatternBCase {
   label: string
@@ -740,6 +758,18 @@ const patternBCases: PatternBCase[] = [
     label: 'GET /api/deadline-cascade/all — filtered for non-PI',
     callNonPi: () => handleGetAllCascades(pbEnv({ feedRows: mixedFeedRows }), false),
     callPi:    () => handleGetAllCascades(pbEnv({ feedRows: mixedFeedRows }), true),
+  },
+  // #8842 R6. Shape-only here like the rows above (this stub cannot run SQL);
+  // the filter itself is exercised on real SQLite in meetings.pb-visibility.test.ts.
+  {
+    label: 'GET /api/meetings/:id (action_items) — filtered for non-PI',
+    callNonPi: () => handleGetMeeting('mtg-id', pbEnv({ feedRows: mixedFeedRows }), true, false),
+    callPi:    () => handleGetMeeting('mtg-id', pbEnv({ feedRows: mixedFeedRows }), true, true),
+  },
+  {
+    label: 'GET /api/calendar/events (task deadlines) — filtered for non-PI',
+    callNonPi: () => handleCalendarEvents(new URL('https://x/api/calendar/events'), pbEnv({ feedRows: datedFeedRows }), false),
+    callPi:    () => handleCalendarEvents(new URL('https://x/api/calendar/events'), pbEnv({ feedRows: datedFeedRows }), true),
   },
 ]
 
@@ -837,7 +867,8 @@ describe('PB-visibility contract — registry drift guard', () => {
 
   it('Pattern B (feeds) registry has at least the expected number of cases', () => {
     // 3 originals + 5 new cross-project feeds + 1 Fix 2a (handleGetTasks list) = 9
-    expect(patternBCases.length).toBeGreaterThanOrEqual(9)
+    // + #8842 R6 meeting detail + calendar events = 11
+    expect(patternBCases.length).toBeGreaterThanOrEqual(11)
   })
 })
 

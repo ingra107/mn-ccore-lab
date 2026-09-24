@@ -23,6 +23,7 @@
 import { describe, it, expect } from 'vitest'
 import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
+import { withSequentialBatch } from '../test-support/sequential-batch'
 
 // ── Stub DB -- projects only (this side-effect never touches tasks) ────────
 
@@ -122,7 +123,7 @@ const baseProject = {
 describe('advanceProjectOwnMovement -- via applyUpdate', () => {
   it('R1: a meaningful field change (description) advances LMM from client_ts', async () => {
     const db = makeStubDB({ ...baseProject })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     const result = await applyUpdate(
@@ -144,7 +145,7 @@ describe('advanceProjectOwnMovement -- via applyUpdate', () => {
 
   it('R2: MAX gate -- does not move LMM backward against a newer existing value', async () => {
     const db = makeStubDB({ ...baseProject, last_meaningful_movement: '2026-07-29 21:00:00' })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     // client_ts (2026-07-23) predates the existing LMM (2026-07-29).
@@ -156,7 +157,7 @@ describe('advanceProjectOwnMovement -- via applyUpdate', () => {
 
   it('R3: a patch touching ONLY bookkeeping fields does not advance LMM', async () => {
     const db = makeStubDB({ ...baseProject })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     await applyUpdate(env, makeMut({ patch: { stale_active_since: null } }), user)
@@ -168,7 +169,7 @@ describe('advanceProjectOwnMovement -- via applyUpdate', () => {
 
   it('R4: an explicit last_meaningful_movement in the patch is left alone (no competing write)', async () => {
     const db = makeStubDB({ ...baseProject })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     await applyUpdate(
@@ -188,7 +189,7 @@ describe('advanceProjectOwnMovement -- via applyUpdate', () => {
 
   it('R5: a no-op patch (same value) does not advance LMM', async () => {
     const db = makeStubDB({ ...baseProject })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     await applyUpdate(env, makeMut({ patch: { description: 'old description' } }), user)

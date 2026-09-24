@@ -1,4 +1,4 @@
-import { TASK_KIND_OPTIONS, isQuestion } from '../../../shared/taskKinds'
+import { TASK_KIND_OPTIONS, isQuestion, statusOptionsFor } from '../../../shared/taskKinds'
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { lazyRoute } from '../../lib/lazyRoute'
 import {
@@ -525,13 +525,14 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               aria-label="Status"
               value={task.status}
               onChange={handleStatusChange}
-              options={[
+              // #8842 R4: no Done on an open question; the PB consumer closes it.
+              options={statusOptionsFor([
                 { value: 'todo', label: 'To Do' },
                 { value: 'in_progress', label: 'In Progress' },
                 { value: 'waiting_external', label: 'Waiting (Ext.)' },
                 { value: 'blocked', label: 'Blocked' },
                 { value: 'done', label: 'Done' },
-              ]}
+              ], task.kind, task.status)}
             />
             <GhostSelect
               aria-label="Priority"

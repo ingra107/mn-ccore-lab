@@ -28,7 +28,7 @@ import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
 import { emitLifecycleActivity } from '../lib/lifecycle-activity';
 import { TASK_TITLE_DEDUP_SELECT } from '../lib/task-dedup-sql';
-import { normalizeQuestionJsonFields, questionRowError } from '../lib/task-question';
+import { normalizeQuestionJsonFields, questionRowError, questionConsumerCloseError } from '../lib/task-question';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 
 const ALLOWED_TABLES = new Set([
@@ -388,11 +388,12 @@ async function processOne(
   // M46 (2026-05-29): fetch `outcome` alongside the JSON so we can detect
   // `dependency_failed` rows and re-evaluate rather than replaying the poison.
   //
-  // JSON compaction note (backlog #36, 2026-06-18): original_response_json is
-  // nulled for 'accepted' rows older than 48h by compactProcessedMutationsJson().
-  // When it is null, we synthesize a minimal MutationResult from `outcome` —
-  // the client already handled this outcome; exact-replay fidelity only matters
-  // within the practical retry window.
+  // JSON compaction note (backlog #36, 2026-06-18): compactProcessedMutationsJson()
+  // replaces original_response_json on 'accepted' rows older than 48h with the
+  // minimalReceiptJson placeholder, and commitRowWrite writes the same
+  // placeholder before its fill. Both parse as a valid minimal MutationResult,
+  // so replay needs no special case for them. The column is NOT NULL in prod
+  // (schema-v58); the null branch below is kept for a non-prod schema only.
   const prior = await env.DB.prepare(
     'SELECT outcome, original_response_json FROM processed_mutations WHERE mutation_id = ?'
   ).bind(mut.mutation_id).first<{ outcome: string; original_response_json: string | null }>();
@@ -513,16 +514,31 @@ async function processOne(
       result = mutErr(mut.mutation_id, `op ${mut.op} not implemented`);
     }
   } catch (e) {
-    result = mutErr(mut.mutation_id, `apply error: ${(e as Error).message}`);
+    if (e instanceof CommitNotLandedError) {
+      // The commit batch failed as a whole, so D1 rolled every statement back:
+      // no row change, no receipt. Report it as an infra error (PB retries it,
+      // tests/db/test_hub500_infra_error_classifier.py) and record nothing; a
+      // recorded `apply error` would replay forever for a write that never
+      // happened.
+      result = mutErr(mut.mutation_id, `infra error: ${e.message}`);
+      RECEIPT_HANDLED.add(result);
+    } else {
+      result = mutErr(mut.mutation_id, `apply error: ${(e as Error).message}`);
+    }
   }
 
-  // Bug Y fix (2026-04-30 stress test): atomic write of processed_mutations
-  // via ON CONFLICT DO NOTHING. If a concurrent request raced past the SELECT
-  // idempotency gate at the top of this function and beat us to the INSERT,
-  // we silently no-op AND return THEIR canonical response (read back from
-  // processed_mutations). The two requests carry identical mutation_id, so
-  // applyInsert's ON CONFLICT(id) above already produced the same final row
-  // state; we just need to make the response shape consistent.
+  // An update/delete that changed a row already wrote its receipt inside the
+  // same D1 batch as the row (commitRowWrite), and a CAS-exhausted attempt
+  // deliberately writes none. Recording again here would replace the first
+  // with nothing and the second with an error that replays forever.
+  if (RECEIPT_HANDLED.has(result)) return result;
+
+  // Every other verdict (insert, conflict, validation error, no-op delete)
+  // writes no row that the receipt must be atomic with, so it is recorded on
+  // its own. ON CONFLICT DO NOTHING + read-back is the Bug Y fix (2026-04-30):
+  // a same-id request that raced past the SELECT gate gets the winner's
+  // stored response. For inserts that is sound because applyInsert's
+  // ON CONFLICT(id) already converged the row.
   const idempotent = await recordProcessedAtomic(env, mut, result);
   return idempotent ?? result;
 }
@@ -814,6 +830,15 @@ const UPSERT_ON_MISS_TABLES = new Set(['sessions']);
 
 export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags): Promise<MutationResult> {
   if (!mut.patch) return mutErr(mut.mutation_id, 'update requires patch');
+  // Each attempt re-reads the row and re-runs every check below, so a retry
+  // after a CAS miss decides against the row that is actually there.
+  return withCasRetry(env, mut, () => decideAndCommitUpdate(env, mut, user, flags));
+}
+
+async function decideAndCommitUpdate(
+  env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags,
+): Promise<MutationResult | CasMiss> {
+  if (!mut.patch) return mutErr(mut.mutation_id, 'update requires patch');
 
   const current = await readCanonical(env, mut.table, mut.record_id);
   if (!current) {
@@ -930,7 +955,9 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags
     }
   }
 
-  // Conflict check (only for update with base_seq)
+  // Conflict check (only for update with base_seq). Clean apply otherwise
+  // (current_seq == base_seq, or no base_seq for append / Hub-UI writes).
+  let outcome: 'accepted' | 'merged_clean' = 'accepted';
   if (mut.op === 'update' && mut.base_seq !== null && mut.base_seq !== undefined) {
     if (currentSeq > mut.base_seq) {
       const baseFields = Object.keys(mut.patch);
@@ -946,42 +973,28 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags
         }
       }
       // Hash matches OR no base_row_hash -> merged_clean
-      const r = await applyPatch(env, mut, current);
-      // Advance parent project staleness fields on task completion.
-      // Symmetric Hub-side counterpart to brain.db::_advance_project_movement
-      // (commit 83946bc2). Uses MAX semantics so forward-only regardless of
-      // which machine's completion lands first. Fires for both PB-push and
-      // Hub-UI completion mutations (no feedback loop: the project UPDATE is a
-      // direct D1 write, not routed through the mutation protocol).
-      await advanceProjectMovement(env, mut, current);
-      // Advance a PROJECT's own last_meaningful_movement on its own content
-      // edits (no-op for task mutations — see the table==='projects' guard).
-      await advanceProjectOwnMovement(env, mut, current);
-      // Lifecycle activity: complete / reopen / key-change lines. `current` is the
-      // pre-patch before-image (applyPatch's D1 UPDATE doesn't mutate it). Non-fatal.
-      await emitLifecycleActivity(env, mut, user, current);
-      return mkResult(mut.mutation_id, 'merged_clean', {
-        result_seq: r.seq as number | undefined,
-        canonical_payload: r,
-      });
+      outcome = 'merged_clean';
     }
   }
 
-  // Clean apply (current_seq == base_seq, or no base_seq for append)
-  const r = await applyPatch(env, mut, current);
+  const committed = await commitRowWrite(env, mut, current, await applyPatch(env, mut, current), outcome);
+  if (committed === CAS_MISS) return CAS_MISS;
+
+  // Side effects run once, only after this mutation's row write committed.
   // Advance parent project staleness fields on task completion.
-  // See comment on the merged_clean path above — same semantics.
+  // Symmetric Hub-side counterpart to brain.db::_advance_project_movement
+  // (commit 83946bc2). Uses MAX semantics so forward-only regardless of
+  // which machine's completion lands first. Fires for both PB-push and
+  // Hub-UI completion mutations (no feedback loop: the project UPDATE is a
+  // direct D1 write, not routed through the mutation protocol).
   await advanceProjectMovement(env, mut, current);
   // Advance a PROJECT's own last_meaningful_movement on its own content
   // edits (no-op for task mutations — see the table==='projects' guard).
   await advanceProjectOwnMovement(env, mut, current);
   // Lifecycle activity: complete / reopen / key-change lines. `current` is the
-  // pre-patch before-image (applyPatch's D1 UPDATE doesn't mutate it). Non-fatal.
+  // pre-patch before-image. Non-fatal.
   await emitLifecycleActivity(env, mut, user, current);
-  return mkResult(mut.mutation_id, 'accepted', {
-    result_seq: r.seq as number | undefined,
-    canonical_payload: r,
-  });
+  return committed;
 }
 
 export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
@@ -992,6 +1005,10 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
   if (!DELETE_CAPABLE_TABLES.has(mut.table)) {
     return mutErr(mut.mutation_id, `op=delete not supported on ${mut.table} (no deleted_at column)`);
   }
+  return withCasRetry(env, mut, () => decideAndCommitDelete(env, mut, user));
+}
+
+async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult | CasMiss> {
   // Idempotent: already-deleted returns accepted.
   const current = await readCanonical(env, mut.table, mut.record_id);
   if (!current) {
@@ -1006,81 +1023,56 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
     });
   }
 
-  const idCol = pkColumn(mut.table);
-  let deleteWhere: string;
-  let deleteVals: unknown[];
-
-  if (isCompositePk(idCol)) {
-    const parts = decodeCompositeRecordId(mut.record_id);
-    const { clause, vals: wv } = compositeWhere(idCol, parts);
-    deleteWhere = clause;
-    deleteVals = [mut.mutation_id, ...wv];
-  } else {
-    deleteWhere = `${idCol} = ?`;
-    deleteVals = [mut.mutation_id, mut.record_id];
-  }
-
   // Cascade cleanup for tasks and projects (codex Fixes 2+3, 2026-05-11).
   // PB-origin deletes route through applyDelete, bypassing the route-level
-  // cascade in handleDeleteTask / handleDeleteProject. Move the cascade here
-  // so both callers (Hub-UI route + /api/mutations PB path) clean up dependents.
-  // Wrapped in try/catch so a missing child table doesn't abort the soft-delete.
-  if (mut.table === 'tasks') {
-    try {
-      await env.DB.batch([
+  // cascade in handleDeleteTask / handleDeleteProject, so the cascade lives
+  // here for both callers. #8842 R1: it now runs INSIDE the soft-delete's
+  // batch, each statement gated on the parent's delete having landed. It used
+  // to run in a separate batch BEFORE the soft-delete with its failure
+  // swallowed, so a soft-delete that failed (or, with the CAS term, lost to a
+  // concurrent writer) left the children deleted under a live parent. Every
+  // table below exists in prod D1 (read-only sqlite_master query, 2026-09-23),
+  // task_subtasks included, so no statement can fail on a missing table.
+  const dependents = (landed: SqlFragment): D1PreparedStatement[] => {
+    const gated = (sql: string, ...vals: unknown[]) =>
+      env.DB.prepare(`${sql} AND ${landed.sql}`).bind(...vals, ...landed.vals);
+    if (mut.table === 'tasks') {
+      return [
         // Design C (v77): unified-timeline rows for this task.
         // task_comments/task_updates dropped (schema-v78, 2026-06-10).
-        env.DB.prepare("DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id = ?").bind(mut.record_id),
-        env.DB.prepare("DELETE FROM notifications WHERE source_type IN ('task','task_comment') AND source_id = ?").bind(mut.record_id),
-      ]);
-    } catch (e) {
-      console.error('applyDelete task cascade failed:', e);
+        gated("DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id = ?", mut.record_id),
+        gated("DELETE FROM notifications WHERE source_type IN ('task','task_comment') AND source_id = ?", mut.record_id),
+        gated('DELETE FROM task_subtasks WHERE task_id = ?', mut.record_id),
+      ];
     }
-    // task_subtasks is conditional (may not exist in all envs)
-    try {
-      await env.DB.prepare('DELETE FROM task_subtasks WHERE task_id = ?').bind(mut.record_id).run();
-    } catch { /* table may not exist */ }
-  } else if (mut.table === 'projects') {
-    // B7 (SEC-T0-7): mirror the full child-table cascade from handleDeleteProject
-    // so PB-origin project deletes (this path) clean up the same dependents the
-    // Hub-UI route does. `mut.record_id` is the project's canonical typed PK.
-    // (entity_aliases is a PB-side brain.db table, not present in Hub D1, so
-    // there's no Hub alias row to clear here.)
-    //
-    // P2-REKEY: child rows are keyed by canonical typed PK after the P2 D1 data
-    // migration; the slug-lookup + dual-bind pattern is dropped. project_dependencies
-    // still uses slug-keyed from_slug/to_slug columns by deliberate design — those
-    // are deleted via the projects.slug read below (separate query, not FK-PK
-    // cascade). See §3 project_dependencies decision in p2-pk-rekey-CONSOLIDATED.md.
-    try {
-      // project_dependencies is slug-keyed by design; resolve slug for that table only.
-      const proj = await env.DB.prepare('SELECT slug FROM projects WHERE id = ?').bind(mut.record_id).first<{ slug: string | null }>();
-      const slug = proj?.slug ?? null;
-      const cascadeStmts = [
+    if (mut.table === 'projects') {
+      // B7 (SEC-T0-7): mirror the full child-table cascade from
+      // handleDeleteProject. `mut.record_id` is the project's canonical typed
+      // PK (P2-REKEY: child rows are keyed by it). entity_aliases is a PB-side
+      // brain.db table with no Hub copy. project_dependencies is keyed by
+      // from_project_id/to_project_id since the Slice D re-key; this path
+      // still named the dropped from_slug/to_slug columns, which made the
+      // whole cascade batch throw "no such column" and the old try/catch
+      // swallowed it. Same statement as handleDeleteProject (projects.ts).
+      const stmts = [
         // comments/project_updates dropped (schema-v78, 2026-06-10).
-        env.DB.prepare('DELETE FROM project_documents WHERE project_id = ?').bind(mut.record_id),
-        env.DB.prepare('DELETE FROM milestones WHERE project_id = ?').bind(mut.record_id),
-        env.DB.prepare('DELETE FROM conference_submissions WHERE project_id = ?').bind(mut.record_id),
-        env.DB.prepare('DELETE FROM submission_events WHERE project_id = ?').bind(mut.record_id),
-        env.DB.prepare('DELETE FROM regulatory_items WHERE project_id = ?').bind(mut.record_id),
+        gated('DELETE FROM project_documents WHERE project_id = ?', mut.record_id),
+        gated('DELETE FROM milestones WHERE project_id = ?', mut.record_id),
+        gated('DELETE FROM conference_submissions WHERE project_id = ?', mut.record_id),
+        gated('DELETE FROM submission_events WHERE project_id = ?', mut.record_id),
+        gated('DELETE FROM regulatory_items WHERE project_id = ?', mut.record_id),
         // manuscript_revisions: added to cascade (completeness sweep 2026-06-01 gap)
-        env.DB.prepare('DELETE FROM manuscript_revisions WHERE project_id = ?').bind(mut.record_id),
+        gated('DELETE FROM manuscript_revisions WHERE project_id = ?', mut.record_id),
         // Design C (v77): clear the project's own unified-timeline rows. Task
         // rows survive (the tasks are soft-orphaned to project_id=NULL below).
-        env.DB.prepare("DELETE FROM activity_entries WHERE entity_type = 'project' AND entity_id = ?").bind(mut.record_id),
-        env.DB.prepare("UPDATE tasks SET project_id = NULL, updated_at = datetime('now') WHERE project_id = ? AND deleted_at IS NULL").bind(mut.record_id),
+        gated("DELETE FROM activity_entries WHERE entity_type = 'project' AND entity_id = ?", mut.record_id),
+        gated("UPDATE tasks SET project_id = NULL, updated_at = datetime('now') WHERE project_id = ? AND deleted_at IS NULL", mut.record_id),
+        gated('DELETE FROM project_dependencies WHERE (from_project_id = ? OR to_project_id = ?)', mut.record_id, mut.record_id),
       ];
-      // project_dependencies: slug-keyed; only delete if slug is known.
-      if (slug) {
-        cascadeStmts.push(
-          env.DB.prepare('DELETE FROM project_dependencies WHERE from_slug = ? OR to_slug = ?').bind(slug, slug)
-        );
-      }
-      await env.DB.batch(cascadeStmts);
-    } catch (e) {
-      console.error('applyDelete project cascade failed:', e);
+      return stmts;
     }
-  }
+    return [];
+  };
 
   // Stamp updated_at only for tables that carry the column (M32).
   // Co-set status='deleted' for status-bearing tables (M33, 2026-05-29): ensures
@@ -1094,11 +1086,14 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
   const setClause = TABLES_WITH_UPDATED_AT.has(mut.table)
     ? `deleted_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ?${statusClause}`
     : `deleted_at = datetime('now'), last_mutation_id = ?${statusClause}`;
-  await env.DB.prepare(
-    `UPDATE ${mut.table} SET ${setClause} WHERE ${deleteWhere}`
-  ).bind(...deleteVals).run();
 
-  const r = await readCanonical(env, mut.table, mut.record_id);
+  const committed = await commitRowWrite(
+    env, mut, current,
+    { sql: `UPDATE ${mut.table} SET ${setClause}`, vals: [mut.mutation_id] },
+    'accepted',
+    { extraWhere: ' AND deleted_at IS NULL', dependents },
+  );
+  if (committed === CAS_MISS) return CAS_MISS;
 
   // Record actor attribution for the delete — mirrors the logActivity calls in
   // handleDeleteTask / handleDeleteProject (route-level). PB-origin deletes bypass
@@ -1110,10 +1105,7 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
     console.warn('applyDelete logActivity failed (non-fatal):', logErr);
   }
 
-  return mkResult(mut.mutation_id, 'accepted', {
-    result_seq: r?.seq as number | undefined,
-    canonical_payload: r || undefined,
-  });
+  return committed;
 }
 
 /**
@@ -1344,9 +1336,16 @@ async function advanceProjectOwnMovement(
   });
 }
 
+/**
+ * Build (not run) the `UPDATE <table> SET ...` for a patch against the row it
+ * was decided on. Every derived clause below reads `current`, which is why the
+ * statement must only land on that same version (commitRowWrite's CAS term).
+ * Throws on a contract violation (lmm_invalid, question_*); processOne
+ * records those as `apply error:`.
+ */
 async function applyPatch(
   env: Env, mut: Mutation, current: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
+): Promise<SqlFragment> {
   // LMM forward guard (Increment 1A Task 8 v5, finding 4): normalize
   // last_meaningful_movement to canonical UTC space-sep before writing it
   // verbatim to D1. Without this guard, any future projects patch (Hub UI,
@@ -1463,6 +1462,11 @@ async function applyPatch(
     effectivePatch = normalizeQuestionJsonFields(effectivePatch);
     const qErr = questionRowError({ ...current, ...effectivePatch });
     if (qErr) throw new Error(qErr);
+    // #8842 R4 interim: a Hub-UI write may not close a question as done; the
+    // PB consumer does that after acting on the answer. What the check trusts
+    // and cannot stop: api/lib/task-question.ts questionConsumerCloseError.
+    const closeErr = questionConsumerCloseError(current, { ...current, ...effectivePatch }, mut.origin_machine);
+    if (closeErr) throw new Error(closeErr);
   }
 
   const patchKeys = Object.keys(effectivePatch || {});
@@ -1532,26 +1536,9 @@ async function applyPatch(
     setClauses.push("stage_entered_at = datetime('now')");
   }
 
-  const idCol = pkColumn(mut.table);
-  let patchWhere: string;
-  let patchWhereVals: unknown[];
-
-  if (isCompositePk(idCol)) {
-    const parts = decodeCompositeRecordId(mut.record_id);
-    const { clause, vals: wv } = compositeWhere(idCol, parts);
-    patchWhere = clause;
-    patchWhereVals = wv;
-  } else {
-    patchWhere = `${idCol} = ?`;
-    patchWhereVals = [mut.record_id];
-  }
-
-  await env.DB.prepare(
-    `UPDATE ${mut.table} SET ${setClauses.join(', ')} WHERE ${patchWhere}`
-  ).bind(...vals, ...patchWhereVals).run();
-
-  const r = await readCanonical(env, mut.table, mut.record_id);
-  return r || current;
+  // No WHERE here: commitRowWrite adds the PK, the compare-and-swap term and
+  // the same-id guard, and runs this inside the batch with the receipt.
+  return { sql: `UPDATE ${mut.table} SET ${setClauses.join(', ')}`, vals };
 }
 
 async function readCanonical(
@@ -1617,6 +1604,239 @@ function mkResult(
 
 function mutErr(mutation_id: string, reason: string): MutationResult {
   return { mutation_id, status: 'error', reason };
+}
+
+// ── The one commit door for row-changing updates and deletes ────────────────
+//
+// #8842 R1 (2026-09-23). Before this, applyUpdate read `current`, decided
+// accepted / merged_clean / conflict against it, then wrote
+// `UPDATE ... WHERE id = ?` with no version term, and processOne recorded the
+// receipt in a SEPARATE statement afterwards. Two consequences, both measured
+// against the real code on SQLite with the prod seq trigger:
+//   1. Lost update: two writers from the same base_seq both came back
+//      `accepted`; the second silently overwrote the first, whose caller had
+//      already struck its TODAY.md line.
+//   2. Receipt after apply: a D1 failure between the row write and the
+//      receipt reported `error` for a write that had landed, and the retry
+//      then reported `conflict` against its own write.
+// commitRowWrite puts the row change, its dependents and its receipt in ONE
+// D1 batch (one transaction). The row statement carries a compare-and-swap
+// on the row that was evaluated, so a write can only land on the version its
+// verdict was computed from, and it cannot land without its receipt.
+
+/** Results whose processed_mutations row is already settled; processOne must not record them. */
+const RECEIPT_HANDLED = new WeakSet<MutationResult>();
+
+/** commitRowWrite's answer when the row moved after it was read. */
+const CAS_MISS = Symbol('cas_miss');
+type CasMiss = typeof CAS_MISS;
+
+/** Decide+commit attempts before giving up with a transient error. */
+const CAS_ATTEMPTS = 3;
+
+/** Exported so the tests can pin the exact text PB classifies. */
+export const CAS_CONTENTION_REASON_PREFIX = 'cas_contention:';
+
+interface SqlFragment { sql: string; vals: unknown[] }
+
+/** commitRowWrite's batch failed and rolled back; nothing was written. */
+class CommitNotLandedError extends Error {}
+
+/**
+ * A statement in the batch broke a constraint: NOT NULL, CHECK, UNIQUE, FK,
+ * or a trigger's RAISE(ABORT) (the tasks completion-triad guard, schema-v98).
+ * D1 reports every one of them with `SQLITE_CONSTRAINT` in the message
+ * (measured on workerd 2026-09-23: "D1_ERROR: <text>: SQLITE_CONSTRAINT
+ * (extended: SQLITE_CONSTRAINT_TRIGGER)"). Such a failure is deterministic:
+ * retrying the same patch fails the same way, so it must be a recorded
+ * `apply error:` (PB: permanent_other), not a retryable infra error.
+ */
+function isConstraintFailure(e: unknown): boolean {
+  const code = (e as { code?: unknown } | null)?.code;
+  if (typeof code === 'string' && code.startsWith('SQLITE_CONSTRAINT')) return true;
+  return /SQLITE_CONSTRAINT/.test(e instanceof Error ? e.message : String(e));
+}
+
+/**
+ * The receipt body written inside the commit batch, before the full response
+ * exists. `processed_mutations.original_response_json` is `TEXT NOT NULL` in
+ * prod (schema-v58), so the placeholder is real JSON. It is exactly the
+ * minimal result replay needs ({mutation_id, status}), so a receipt whose
+ * fill never ran still replays correctly. compactProcessedMutationsJson
+ * (lib/ledger-retention.ts) writes the same shape with SQLite json_object,
+ * which serialises byte-identically to this.
+ */
+export function minimalReceiptJson(mutationId: string, status: MutationResult['status']): string {
+  return JSON.stringify({ mutation_id: mutationId, status });
+}
+
+function pkWhere(table: string, recordId: string): SqlFragment {
+  const idCol = pkColumn(table);
+  if (isCompositePk(idCol)) {
+    const { clause, vals } = compositeWhere(idCol, decodeCompositeRecordId(recordId));
+    return { sql: clause, vals };
+  }
+  return { sql: `${idCol} = ?`, vals: [recordId] };
+}
+
+/**
+ * The version test for the row the verdict was computed from. `seq` moves on
+ * every UPDATE of a seq table (AFTER UPDATE trigger, schema-v53), including
+ * the direct project writes that do not stamp last_mutation_id;
+ * last_mutation_id covers the tables with no seq column. Derived from the row,
+ * not a table list, so a table that gains seq is covered with no edit here.
+ */
+function casPredicate(current: Record<string, unknown>): SqlFragment {
+  const parts: string[] = [];
+  const vals: unknown[] = [];
+  if ('seq' in current) {
+    parts.push('seq IS ?');
+    vals.push(current.seq ?? null);
+  }
+  if ('last_mutation_id' in current) {
+    parts.push('last_mutation_id IS ?');
+    vals.push(current.last_mutation_id ?? null);
+  }
+  return { sql: parts.length > 0 ? parts.join(' AND ') : '1=1', vals };
+}
+
+const TERMINAL_RECEIPT_SQL =
+  "EXISTS (SELECT 1 FROM processed_mutations WHERE mutation_id = ? AND outcome != 'dependency_failed')";
+
+/**
+ * Run one row write + its receipt as a single D1 batch.
+ *
+ * `write` is `UPDATE <table> SET ...` with no WHERE; this function adds the
+ * PK, the CAS term and a guard that refuses to write a row whose mutation id
+ * already holds a terminal receipt (a same-id duplicate cannot write twice).
+ * `dependents` builds statements that must commit or roll back with the row
+ * (a delete's child cascade); each must end with `AND <landed.sql>` so it
+ * fires only when this batch's row write landed.
+ *
+ * Won = no terminal receipt existed when the batch started AND the row read
+ * back inside the batch carries this mutation id. The witness is the row, not
+ * D1's meta.changes: D1 counts the seq trigger's own UPDATE (seat A measured
+ * changes=2 on a one-row update), so a changes check is engine-specific.
+ *
+ * The receipt is written with the minimalReceiptJson placeholder (the column
+ * is NOT NULL in prod), then filled with the full response after the batch.
+ * A failed fill leaves the placeholder, which replays as {mutation_id,
+ * status}; the outcome itself is durable either way.
+ */
+async function commitRowWrite(
+  env: Env,
+  mut: Mutation,
+  current: Record<string, unknown>,
+  write: SqlFragment,
+  outcome: 'accepted' | 'merged_clean',
+  opts: {
+    extraWhere?: string;
+    dependents?: (landed: SqlFragment) => D1PreparedStatement[];
+    reason?: string;
+  } = {},
+): Promise<MutationResult | CasMiss> {
+  const pk = pkWhere(mut.table, mut.record_id);
+  const cas = casPredicate(current);
+  const placeholder = minimalReceiptJson(mut.mutation_id, outcome);
+  const landed: SqlFragment = {
+    sql: `EXISTS (SELECT 1 FROM ${mut.table} WHERE ${pk.sql} AND last_mutation_id = ?) AND NOT ${TERMINAL_RECEIPT_SQL}`,
+    vals: [...pk.vals, mut.mutation_id, mut.mutation_id],
+  };
+
+  const stmts: D1PreparedStatement[] = [
+    env.DB.prepare('SELECT outcome FROM processed_mutations WHERE mutation_id = ?').bind(mut.mutation_id),
+    // PK term LAST so its binds are last, the order every row write in this
+    // file has always used.
+    env.DB.prepare(
+      `${write.sql} WHERE ${cas.sql} AND NOT ${TERMINAL_RECEIPT_SQL}${opts.extraWhere ?? ''} AND ${pk.sql}`,
+    ).bind(...write.vals, ...cas.vals, mut.mutation_id, ...pk.vals),
+    ...(opts.dependents ? opts.dependents(landed) : []),
+    // Folds the M46 dependency_failed -> terminal upgrade into the same
+    // statement: a stored dependency_failed row is overwritten, any other
+    // stored verdict is left alone.
+    env.DB.prepare(
+      `INSERT INTO processed_mutations (mutation_id, origin_machine, processed_at, outcome, original_response_json, table_name, record_id)
+       SELECT ?, ?, datetime('now'), ?, ?, ?, ? WHERE ${landed.sql}
+       ON CONFLICT(mutation_id) DO UPDATE SET outcome = excluded.outcome, original_response_json = excluded.original_response_json, processed_at = excluded.processed_at
+       WHERE processed_mutations.outcome = 'dependency_failed'`,
+    ).bind(mut.mutation_id, mut.origin_machine, outcome, placeholder, mut.table, mut.record_id, ...landed.vals),
+    env.DB.prepare(`SELECT * FROM ${mut.table} WHERE ${pk.sql}`).bind(...pk.vals),
+  ];
+
+  let res: D1Result<Record<string, unknown>>[];
+  try {
+    res = await env.DB.batch<Record<string, unknown>>(stmts);
+  } catch (e) {
+    // One transaction: a failed batch leaves nothing behind. A constraint or
+    // RAISE failure is deterministic, so it goes back as a plain Error and
+    // processOne records it as `apply error:` (the pre-#8842 contract). Any
+    // other failure is an unrecorded, retryable infra error.
+    if (isConstraintFailure(e)) throw e;
+    throw new CommitNotLandedError((e as Error).message);
+  }
+  const prior = res[0]?.results?.[0] as { outcome?: string } | undefined;
+  const row = res[res.length - 1]?.results?.[0];
+  const priorAllowsWrite = !prior || prior.outcome === 'dependency_failed';
+  if (!priorAllowsWrite || !row || row.last_mutation_id !== mut.mutation_id) {
+    return CAS_MISS;
+  }
+
+  const canonical = safeRow(mut.table, row);
+  const result = mkResult(mut.mutation_id, outcome, {
+    result_seq: canonical.seq as number | undefined,
+    canonical_payload: canonical,
+    ...(opts.reason ? { reason: opts.reason } : {}),
+  });
+  try {
+    await env.DB.prepare(
+      'UPDATE processed_mutations SET original_response_json = ? WHERE mutation_id = ? AND original_response_json = ?',
+    ).bind(JSON.stringify(result), mut.mutation_id, placeholder).run();
+  } catch (e) {
+    // Enrichment that degrades with a surface (ethos #3 shape 3): the receipt
+    // and the row are already committed together; only the replay body is
+    // reduced to {mutation_id, status}.
+    console.error('commitRowWrite: receipt response fill failed', mut.mutation_id, (e as Error).message);
+  }
+  RECEIPT_HANDLED.add(result);
+  return result;
+}
+
+/**
+ * Re-run `attempt` (read current -> decide -> commitRowWrite) until it lands
+ * or returns a verdict. After a CAS miss, a stored receipt for this same
+ * mutation id means a concurrent duplicate won; return its response. After
+ * CAS_ATTEMPTS misses, return a transient error and record nothing: a
+ * recorded error would replay forever, and PB's _classify_hub_first_error
+ * treats this reason as transient (pinned by PB
+ * tests/db/test_hub_cas_contention_is_transient.py).
+ */
+async function withCasRetry(
+  env: Env,
+  mut: Mutation,
+  attempt: () => Promise<MutationResult | CasMiss>,
+): Promise<MutationResult> {
+  for (let i = 0; i < CAS_ATTEMPTS; i++) {
+    const r = await attempt();
+    if (r !== CAS_MISS) return r;
+    const stored = await env.DB.prepare(
+      "SELECT outcome, original_response_json FROM processed_mutations WHERE mutation_id = ? AND outcome != 'dependency_failed'",
+    ).bind(mut.mutation_id).first<{ outcome: string; original_response_json: string | null }>();
+    if (stored) {
+      let winner: MutationResult;
+      try {
+        winner = stored.original_response_json
+          ? (JSON.parse(stored.original_response_json) as MutationResult)
+          : { mutation_id: mut.mutation_id, status: stored.outcome as MutationResult['status'] };
+      } catch {
+        winner = { mutation_id: mut.mutation_id, status: stored.outcome as MutationResult['status'] };
+      }
+      RECEIPT_HANDLED.add(winner);
+      return winner;
+    }
+  }
+  const r = mutErr(mut.mutation_id, `${CAS_CONTENTION_REASON_PREFIX} row changed on each of ${CAS_ATTEMPTS} attempts; nothing written, retry`);
+  RECEIPT_HANDLED.add(r);
+  return r;
 }
 
 // Terminal statuses that can supersede a cached `dependency_failed` row.

@@ -43,3 +43,14 @@ export function isMilestone(t: { kind?: string | null } | null | undefined): boo
 export function isQuestion(t: { kind?: string | null } | null | undefined): boolean {
   return t?.kind === 'question';
 }
+
+/**
+ * #8842 R4: the PB consumer closes a question after it acts on the answer;
+ * the API refuses a Hub-UI close (question_consumer_close_only). So a
+ * question row does not offer Done, unless it is already done (then the
+ * select still has to show its value).
+ */
+export function statusOptionsFor<T extends { value: string }>(options: readonly T[], kind: string | null | undefined, status: string | null | undefined): T[] {
+  if (kind !== 'question' || status === 'done') return [...options];
+  return options.filter((o) => o.value !== 'done');
+}

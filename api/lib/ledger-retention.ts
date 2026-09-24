@@ -149,21 +149,29 @@ export async function pruneAllLedgers(
 // ── JSON compaction ──────────────────────────────────────────────────────────
 
 /**
- * Null out `original_response_json` on `processed_mutations` rows older than
- * JSON_NULL_AFTER_HOURS (48h) whose outcome is 'accepted'.
+ * Replace `original_response_json` on `processed_mutations` rows older than
+ * JSON_NULL_AFTER_HOURS (48h) whose outcome is 'accepted' with the minimal
+ * body {"mutation_id":...,"status":"accepted"}.
+ *
+ * #8842 (2026-09-23): this used to SET the column to NULL, but it is
+ * `TEXT NOT NULL` in prod (schema-v58), so every run failed and nothing was
+ * ever compacted (276 accepted rows >48h still carried full JSON, 0 NULL).
+ * json_object serialises byte-identically to mutations.ts minimalReceiptJson,
+ * the placeholder commitRowWrite writes, and replay parses it as a normal
+ * minimal result.
  *
  * Rationale (backlog #36, 2026-06-18 post-mortem):
  *   The full response JSON (~1.4 KB per row) is only needed for exact-replay
  *   fidelity — a client re-sending the same mutation_id within a short window.
  *   After 48h the practical retry window is closed; keeping the JSON for the
  *   remaining 5 days of the 7d retention window costs ~10× per-row storage
- *   with zero benefit. Nulling accepted rows cuts per-row size ~10x.
+ *   with zero benefit. Compacting accepted rows cuts per-row size ~10x.
  *
- *   Only 'accepted' rows are nulled. 'conflict', 'merged_clean', and
+ *   Only 'accepted' rows are compacted. 'conflict', 'merged_clean', and
  *   'dependency_failed' rows are LEFT with their JSON because those outcomes
  *   carry non-trivial diagnostic state (canonical_payload, current_payload,
  *   rejection reason) that may be useful for longer. The replay path handles
- *   all nulled rows with a synthesized response (see mutations.ts:readPrior).
+ *   compacted rows as ordinary minimal JSON (see mutations.ts processOne).
  *
  * Chunked UPDATE to avoid D1 per-statement limits on large result sets.
  * Returns the number of rows compacted.
@@ -176,12 +184,12 @@ export async function compactProcessedMutationsJson(db: D1Database): Promise<num
   // D1 doesn't natively support LIMIT in UPDATE; use a subquery on the PK.
   const sql = `
     UPDATE processed_mutations
-    SET original_response_json = NULL
+    SET original_response_json = json_object('mutation_id', mutation_id, 'status', outcome)
     WHERE mutation_id IN (
       SELECT mutation_id FROM processed_mutations
       WHERE processed_at < ${cutoff}
         AND outcome = 'accepted'
-        AND original_response_json IS NOT NULL
+        AND original_response_json IS NOT json_object('mutation_id', mutation_id, 'status', outcome)
       LIMIT ${JSON_NULL_CHUNK_SIZE}
     )
   `;
@@ -197,7 +205,7 @@ export async function compactProcessedMutationsJson(db: D1Database): Promise<num
     if (compacted === 0) break;
   }
   if (totalCompacted > 0) {
-    console.log(`[LedgerCompact] processed_mutations: nulled JSON on ${totalCompacted} accepted rows (>${JSON_NULL_AFTER_HOURS}h)`);
+    console.log(`[LedgerCompact] processed_mutations: compacted JSON on ${totalCompacted} accepted rows (>${JSON_NULL_AFTER_HOURS}h)`);
   }
   return totalCompacted;
 }

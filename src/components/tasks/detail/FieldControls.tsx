@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useProjectPickerList } from '../../../hooks/useProjectPickerList'
-import { TASK_KIND_OPTIONS } from '../../../../shared/taskKinds'
+import { TASK_KIND_OPTIONS, statusOptionsFor } from '../../../../shared/taskKinds'
 import GhostSelect from '../../ui/GhostSelect'
 import {
   Circle, Flag, Check, Clock, Handshake,
@@ -570,7 +570,7 @@ export function TaskInlineFieldRow({
         aria-label="Status"
         value={status}
         onChange={(v) => onUpdate({ status: v })}
-        options={STATUS_INLINE_OPTIONS}
+        options={statusOptionsFor(STATUS_INLINE_OPTIONS, kind, status)}
       />
       <GhostSelect
         aria-label="Priority"

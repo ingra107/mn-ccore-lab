@@ -14,6 +14,7 @@ import { handleMutations } from './mutations'
 import type { Mutation } from './mutations'
 import type { Env, AuthUser } from '../helpers'
 import { classifyTaskDedupSelect } from '../lib/task-dedup-sql'
+import { withSequentialBatch } from '../test-support/sequential-batch'
 
 // ── Shared stub DB ────────────────────────────────────────────────────────────
 //
@@ -174,7 +175,7 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
       },
     })
 
-    const env = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
+    const env = { DB: withSequentialBatch(db), PB_API_KEY: TEST_API_KEY } as unknown as Env
     const mut: Mutation = {
       mutation_id: 'mut_notes_test_update_0001',
       origin_machine: 'home',
@@ -216,7 +217,7 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
       },
     })
 
-    const env = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
+    const env = { DB: withSequentialBatch(db), PB_API_KEY: TEST_API_KEY } as unknown as Env
     const mut: Mutation = {
       mutation_id: 'mut_notes_test_update_0002',
       origin_machine: 'home',
@@ -249,7 +250,7 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
     const newTaskId = 'task_01hwtest_mut_notes_insert_0001'
     const db = makeStubDB()  // empty store — insert creates the row
 
-    const env = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
+    const env = { DB: withSequentialBatch(db), PB_API_KEY: TEST_API_KEY } as unknown as Env
     const mut: Mutation = {
       mutation_id: 'mut_notes_test_insert_0001',
       origin_machine: 'home',
@@ -298,7 +299,7 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
       },
     })
 
-    const env = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
+    const env = { DB: withSequentialBatch(db), PB_API_KEY: TEST_API_KEY } as unknown as Env
     const mut: Mutation = {
       mutation_id: 'mut_notes_test_proj_0001',
       origin_machine: 'home',

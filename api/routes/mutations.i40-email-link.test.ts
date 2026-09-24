@@ -14,6 +14,7 @@ import { describe, it, expect } from 'vitest'
 import { nowInstant } from '../lib/time'
 import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
+import { withSequentialBatch } from '../test-support/sequential-batch'
 
 function makeStubDB() {
   const store: Map<string, Record<string, unknown>> = new Map()
@@ -95,7 +96,7 @@ describe('I40 fix — applyPatch (A3 path) derives email_link with source_thread
     const db = makeStubDB()
     const id = 'task_01i40test_a3_emaillink_0001'
     seedTask(db, id)
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     const mut: Mutation = {
       mutation_id: 'mut_01i40testA3elink000000001A',
@@ -125,7 +126,7 @@ describe('I40 fix — applyPatch (A3 path) derives email_link with source_thread
       source_thread_id: 'OLDTHREAD',
       email_link: 'https://mail.google.com/mail/u/1/#inbox/OLDTHREAD',
     })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     const mut: Mutation = {
       mutation_id: 'mut_01i40testA3elink000000002A',
@@ -155,7 +156,7 @@ describe('I40 fix — applyPatch (A3 path) derives email_link with source_thread
       source_thread_id: 'SOMETHREAD',
       email_link: 'https://mail.google.com/mail/u/1/#inbox/SOMETHREAD',
     })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     const mut: Mutation = {
       mutation_id: 'mut_01i40testA3elink000000003A',
@@ -183,7 +184,7 @@ describe('I40 fix — applyPatch (A3 path) derives email_link with source_thread
     const db = makeStubDB()
     const id = 'task_01i40test_a3_emaillink_0004'
     seedTask(db, id)
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     const customLink = 'https://mail.google.com/mail/u/0/#all/CUSTOMTHREAD'
     const mut: Mutation = {

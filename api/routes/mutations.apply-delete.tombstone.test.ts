@@ -13,6 +13,7 @@ import { describe, it, expect } from 'vitest'
 import { nowInstant } from '../lib/time'
 import { applyDelete } from './mutations'
 import type { Mutation } from './mutations'
+import { withSequentialBatch } from '../test-support/sequential-batch'
 
 // DB stub that stores rows in-memory and applies UPDATEs by parsing SET clauses.
 // Mirrors the pattern from mutations.deleted-status.test.ts but extended to
@@ -109,7 +110,7 @@ describe('M33 forward guard — applyDelete (Site 1: mutations.ts)', () => {
       issued_at: nowInstant(),
     }
 
-    const fakeEnv = { DB: db } as unknown as import('../helpers').Env
+    const fakeEnv = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const result = await applyDelete(fakeEnv, mut, fakeUser)
 
     expect(result.status).toMatch(/^(accepted|merged_clean)$/)
@@ -146,7 +147,7 @@ describe('M33 forward guard — applyDelete (Site 1: mutations.ts)', () => {
       issued_at: nowInstant(),
     }
 
-    const fakeEnv = { DB: db } as unknown as import('../helpers').Env
+    const fakeEnv = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const result = await applyDelete(fakeEnv, mut, fakeUser)
 
     expect(result.status).toMatch(/^(accepted|merged_clean)$/)
@@ -184,7 +185,7 @@ describe('M33 forward guard — applyDelete (Site 1: mutations.ts)', () => {
       issued_at: nowInstant(),
     }
 
-    const fakeEnv = { DB: db } as unknown as import('../helpers').Env
+    const fakeEnv = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const result = await applyDelete(fakeEnv, mut, fakeUser)
 
     // sessions may return 'accepted' or 'already absent' depending on stub
@@ -224,7 +225,7 @@ describe('M33 forward guard — applyDelete (Site 1: mutations.ts)', () => {
       issued_at: nowInstant(),
     }
 
-    const fakeEnv = { DB: db } as unknown as import('../helpers').Env
+    const fakeEnv = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const result = await applyDelete(fakeEnv, mut, fakeUser)
 
     expect(result.status).toBe('accepted')

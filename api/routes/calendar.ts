@@ -1,9 +1,15 @@
 import type { Env } from '../helpers';
-import { json } from '../helpers';
+import { json, pbTaskVisibilitySql } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 
 // GET /api/calendar/events?start=&end=
-export async function handleCalendarEvents(url: URL, env: Env): Promise<Response> {
+//
+// `canSeePb` (#8842 R6): the task-deadline rows are TASK rows, so a non-PI
+// caller gets the shared PB-project filter; before this every authed team
+// member saw PB-private task titles and assignees on the calendar. Soft-
+// deleted tasks are excluded too (the query had no tombstone filter, so a
+// deleted task kept its deadline on the calendar).
+export async function handleCalendarEvents(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const startDate = url.searchParams.get('start') || ctToday(-30);
   const endDate = url.searchParams.get('end') || ctToday(90);
 
@@ -11,7 +17,7 @@ export async function handleCalendarEvents(url: URL, env: Env): Promise<Response
   const [meetings, tasks, milestones] = await Promise.all([
     env.DB.prepare('SELECT DISTINCT id, date, title, type FROM meetings WHERE date >= ? AND date <= ? ORDER BY date')
       .bind(startDate, endDate).all<{ id: string; date: string; title: string; type: string }>(),
-    env.DB.prepare('SELECT id, title, description, due_date, assignee, status, priority FROM tasks WHERE due_date IS NOT NULL AND due_date >= ? AND due_date <= ? AND completed = 0 ORDER BY due_date')
+    env.DB.prepare(`SELECT t.id, t.title, t.description, t.due_date, t.assignee, t.status, t.priority FROM tasks t WHERE t.due_date IS NOT NULL AND t.due_date >= ? AND t.due_date <= ? AND t.completed = 0 AND t.deleted_at IS NULL${pbTaskVisibilitySql('t', canSeePb)} ORDER BY t.due_date`)
       .bind(startDate, endDate).all<{ id: string; title: string; description: string; due_date: string; assignee: string; status: string; priority: string }>(),
     env.DB.prepare('SELECT m.id, m.title, m.target_date, m.status, g.mechanism, g.title as grant_title FROM milestones m LEFT JOIN grants g ON m.grant_id = g.id WHERE m.target_date >= ? AND m.target_date <= ? ORDER BY m.target_date')
       .bind(startDate, endDate).all<{ id: string; title: string; target_date: string; status: string; mechanism: string | null; grant_title: string | null }>(),

@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest'
 import { nowInstant } from '../lib/time'
 import { handleUpdateTask } from './tasks'
+import { withSequentialBatch } from '../test-support/sequential-batch'
 
 function makeStubDB() {
   const store: Map<string, Record<string, unknown>> = new Map()
@@ -100,7 +101,7 @@ describe('handleUpdateTask guards tasks.kind (schema-v109)', () => {
     const db = makeStubDB()
     const id = 'task_01hwtest_kind_000001'
     seedTask(db, id, { kind: 'task' })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     const res = await handleUpdateTask(id, apiKeyPost({ kind: 'milestone' }), user, env)
     expect(res.status).toBe(200)
@@ -111,7 +112,7 @@ describe('handleUpdateTask guards tasks.kind (schema-v109)', () => {
     const db = makeStubDB()
     const id = 'task_01hwtest_kind_000002'
     seedTask(db, id, { kind: 'task' })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     const res = await handleUpdateTask(id, apiKeyPost({ kind: 'deadline' }), user, env)
     expect(res.status).toBe(400)
@@ -125,7 +126,7 @@ describe('handleUpdateTask guards tasks.kind (schema-v109)', () => {
       const db = makeStubDB()
       const id = 'task_01hwtest_kind_000003'
       seedTask(db, id, { kind: 'milestone' })
-      const env = { DB: db } as unknown as import('../helpers').Env
+      const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
       const res = await handleUpdateTask(id, apiKeyPost({ kind: bad }), user, env)
       expect(res.status).toBe(400)
@@ -137,7 +138,7 @@ describe('handleUpdateTask guards tasks.kind (schema-v109)', () => {
     const db = makeStubDB()
     const id = 'task_01hwtest_kind_000004'
     seedTask(db, id, { kind: 'milestone' })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     const res = await handleUpdateTask(id, apiKeyPost({ due_date: '2026-10-01' }), user, env)
     expect(res.status).toBe(200)

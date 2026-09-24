@@ -16,6 +16,7 @@ import { describe, it, expect } from 'vitest'
 import { nowInstant } from '../lib/time'
 import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
+import { withSequentialBatch } from '../test-support/sequential-batch'
 
 // ── Stub DB ──────────────────────────────────────────────────────────────────
 // Tracks the task row AND the parent project row so we can assert project
@@ -177,7 +178,7 @@ function projectUpdateCalls(db: ReturnType<typeof makeStubDB>) {
 describe('advanceProjectMovement — via applyUpdate', () => {
   it('R1: advances project on todo→done transition (PB-origin mutation)', async () => {
     const db = makeStubDB({ task: { ...baseTask }, project: { ...baseProject } })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     const result = await applyUpdate(env, makeMut(), user)
@@ -202,7 +203,7 @@ describe('advanceProjectMovement — via applyUpdate', () => {
       task: { ...baseTask, status: 'done', completed: 1 },
       project: { ...baseProject, last_meaningful_movement: '2026-05-20T10:00:00.000Z' },
     })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     // Re-send a done patch on an already-done task
@@ -223,7 +224,7 @@ describe('advanceProjectMovement — via applyUpdate', () => {
       task: { ...baseTask },
       project: { ...baseProject, last_meaningful_movement: '2026-05-22T16:00:00.000Z' },
     })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     // Mutation client_ts is 14:00 but project already has 16:00
@@ -242,7 +243,7 @@ describe('advanceProjectMovement — via applyUpdate', () => {
 
   it('R3: fires for Hub-UI origin mutation (origin_machine=hub_ui:...)', async () => {
     const db = makeStubDB({ task: { ...baseTask }, project: { ...baseProject } })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'nick@example.com' } as import('../helpers').AuthUser
 
     const result = await applyUpdate(env, makeMut({
@@ -262,7 +263,7 @@ describe('advanceProjectMovement — via applyUpdate', () => {
     const db = makeStubDB({
       task: { ...baseTask, project_id: null },
     })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     const result = await applyUpdate(env, makeMut(), user)
@@ -273,7 +274,7 @@ describe('advanceProjectMovement — via applyUpdate', () => {
 
   it('R5: non-done status transition does not advance project', async () => {
     const db = makeStubDB({ task: { ...baseTask }, project: { ...baseProject } })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     // Status change to in_progress (not done)
@@ -290,7 +291,7 @@ describe('advanceProjectMovement — via applyUpdate', () => {
 
   it('R1: completed=1 flag alone (without status) also triggers advancement', async () => {
     const db = makeStubDB({ task: { ...baseTask }, project: { ...baseProject } })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     // Some callers (e.g. toggle) may send completed=1 without status
@@ -348,7 +349,7 @@ describe('advanceProjectMovement — Task-4 UTC normalization', () => {
         stale_active_since: null,
       },
     })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     await applyUpdate(env, makeMut({
@@ -386,7 +387,7 @@ describe('advanceProjectMovement — Task-4 UTC normalization', () => {
         stale_active_since: null,
       },
     })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     await applyUpdate(env, makeMut({
@@ -425,7 +426,7 @@ describe('advanceProjectMovement — Task-4 UTC normalization', () => {
         stale_active_since: null,
       },
     })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     await applyUpdate(env, makeMut({
@@ -481,7 +482,7 @@ describe('advanceProjectMovement — Task-4 UTC normalization', () => {
       seq: 2,
       last_mutation_id: null,
     })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
     const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
     await Promise.all([

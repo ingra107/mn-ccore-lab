@@ -23,6 +23,7 @@ import { describe, it, expect } from 'vitest'
 import { nowInstant } from '../lib/time'
 import { applyDelete, applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
+import { withSequentialBatch } from '../test-support/sequential-batch'
 
 // In-memory DB that APPLIES the SET clause each apply* function generates —
 // including literal `NULL` and `datetime('now')` — so the row state after the
@@ -117,7 +118,7 @@ describe('delete → restore round trip (real applyDelete + applyUpdate)', () =>
   it('clears deleted_at and returns the row to a live status', async () => {
     const db = makeStubDB()
     const id = seed(db)
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     const del = await applyDelete(env, mut({ op: 'delete', record_id: id }), fakeUser)
     expect(del.status).toMatch(/^(accepted|merged_clean)$/)
@@ -146,7 +147,7 @@ describe('delete → restore round trip (real applyDelete + applyUpdate)', () =>
   it('restores a previously-DONE item with its completion triad intact', async () => {
     const db = makeStubDB()
     const id = seed(db, { status: 'done', completed: 1, completed_at: '2026-07-20 09:00:00', completed_by: 'nick@umn.edu' })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     await applyDelete(env, mut({ op: 'delete', record_id: id }), fakeUser)
     expect(db._store.get(id)!.status).toBe('deleted')
@@ -167,7 +168,7 @@ describe('delete → restore round trip (real applyDelete + applyUpdate)', () =>
   it('a patch that does NOT address the deletion is refused (guard still armed)', async () => {
     const db = makeStubDB()
     const id = seed(db)
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     await applyDelete(env, mut({ op: 'delete', record_id: id }), fakeUser)
 

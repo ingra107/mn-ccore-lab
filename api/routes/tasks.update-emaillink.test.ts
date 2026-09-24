@@ -11,6 +11,7 @@
 import { describe, it, expect } from 'vitest'
 import { nowInstant } from '../lib/time'
 import { handleUpdateTask } from './tasks'
+import { withSequentialBatch } from '../test-support/sequential-batch'
 
 function makeStubDB() {
   const store: Map<string, Record<string, unknown>> = new Map()
@@ -102,7 +103,7 @@ describe('handleUpdateTask derives email_link with source_thread_id (I40 class-c
     const db = makeStubDB()
     const id = 'task_01hwtest_emaillink_000001'
     seedTask(db, id)
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     const res = await handleUpdateTask(id, apiKeyPost({ source_thread_id: '19ebTESTthread01' }), user, env)
     expect(res.status).toBe(200)
@@ -119,7 +120,7 @@ describe('handleUpdateTask derives email_link with source_thread_id (I40 class-c
       source_thread_id: 'OLDTHREAD',
       email_link: 'https://mail.google.com/mail/u/1/#inbox/OLDTHREAD',
     })
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     const res = await handleUpdateTask(id, apiKeyPost({ source_thread_id: null }), user, env)
     expect(res.status).toBe(200)
@@ -133,7 +134,7 @@ describe('handleUpdateTask derives email_link with source_thread_id (I40 class-c
     const db = makeStubDB()
     const id = 'task_01hwtest_emaillink_000003'
     seedTask(db, id)
-    const env = { DB: db } as unknown as import('../helpers').Env
+    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     const res = await handleUpdateTask(id, apiKeyPost({ due_date: '2026-06-12' }), user, env)
     expect(res.status).toBe(200)

@@ -19,6 +19,7 @@ import { _resetValidationFlagsCache } from '../helpers'
 import { enumFieldsFor, canonicalizeValue, assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains'
 import { classifyTaskDedupSelect } from '../lib/task-dedup-sql'
 import enumDomains from '../enum-domains.generated.json'
+import { withSequentialBatch } from '../test-support/sequential-batch'
 
 const fakeUser = { email: 'test@example.com', role: 'admin' } as AuthUser
 // M07: handleMutations now requires PI/API-key auth.
@@ -155,7 +156,7 @@ function makeStubDB(opts: {
 }
 
 function envWith(db: Env['DB']): Env {
-  return { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
+  return { DB: withSequentialBatch(db), PB_API_KEY: TEST_API_KEY } as unknown as Env
 }
 
 async function runMutation(env: Env, mut: Mutation) {

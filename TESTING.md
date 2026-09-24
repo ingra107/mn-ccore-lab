@@ -244,7 +244,8 @@ Miniflare.
   `schema-v22.sql` — the rename depends on tables the base v22 file
   creates.  The bootstrap script handles this via suffix-rank sort.  Do
   not add more variants without updating the comparator in
-  `scripts/local-db-bootstrap.ts`.
+  `scripts/schema-chain.ts` (shared by the bootstrap script and the API
+  tests' migrated-schema fixture, `api/test-support/prod-schema-db.ts`).
 - **Migrations referencing since-dropped tables:** a handful of historical
   `schema-v*.sql` files assume prod state that no longer matches a fresh
   bootstrap (columns added elsewhere, indexes reconciled elsewhere, or —
@@ -253,7 +254,7 @@ Miniflare.
   `FRESH_BOOTSTRAP_SKIP`; migrations where only SOME statements are
   incompatible (the rest being real, non-redundant SQL that must still
   apply) are listed in `FRESH_BOOTSTRAP_STRIP_STATEMENTS`, both in
-  `scripts/local-db-bootstrap.ts`. Neither list edits the checked-in
+  `scripts/schema-chain.ts`. Neither list edits the checked-in
   migration file — bootstrap applies a filtered copy in `.wrangler/` only.
 - **Windows libuv handle race:** direct `execSync` calls to wrangler in a
   tight loop trigger an assertion failure

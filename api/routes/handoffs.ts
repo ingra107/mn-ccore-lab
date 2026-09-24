@@ -1,7 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug } from '../helpers';
-import { applyUpdate, type Mutation } from './mutations';
-import { nowInstant } from '../lib/time';
+import { applyMutation } from './mutations';
 
 interface HandoffRow {
   id: string
@@ -55,6 +54,26 @@ export async function handleCreateHandoff(taskId: string, request: Request, user
   }
   const id = generateId();
 
+  // Reassign FIRST, through the A3 mutation protocol (last_mutation_id stamp,
+  // seq advance, receipt; Codex HUB-R1 2026-04-30 replaced a raw UPDATE).
+  // #8842: the result used to be ignored, so a reassignment that did not land
+  // (a conflict, a cas_contention retry exhaustion, a validation error) still
+  // wrote the handoff and told the recipient the task was theirs. Now nothing
+  // else is written unless the reassignment applied. applyMutation (not a
+  // bare applyUpdate) so the write gets the validation flags, the hub_ui
+  // origin every Hub-UI write carries, and a receipt on every outcome.
+  const reassign = await applyMutation(env, {
+    table: 'tasks',
+    record_id: taskId,
+    op: 'update',
+    patch: { assignee: toSlug },
+    route: 'handleCreateHandoff',
+    user,
+  });
+  if (reassign.status !== 'accepted' && reassign.status !== 'merged_clean') {
+    return error(`handoff not recorded: reassignment ${reassign.status} — ${reassign.reason ?? ''}`, 409);
+  }
+
   // Insert handoff record
   await env.DB.prepare(
     `INSERT INTO task_handoffs (id, task_id, from_slug, to_slug, situation, background, assessment, recommendation)
@@ -69,25 +88,6 @@ export async function handleCreateHandoff(taskId: string, request: Request, user
     body.assessment?.trim() || null,
     body.recommendation?.trim() || null,
   ).run();
-
-  // Reassign the task to the new owner via the A3 mutation protocol so the
-  // change picks up last_mutation_id stamping, seq advancement, and the
-  // canonical-payload pipeline that brain.db pulls reconcile against.
-  // Codex HUB-R1 fix (2026-04-30): was raw "UPDATE tasks SET assignee=...".
-  const reassignMutId = `mut_${generateId()}`;
-  const reassignMut: Mutation = {
-    mutation_id: reassignMutId,
-    origin_machine: 'hub',
-    table: 'tasks',
-    op: 'update',
-    record_id: taskId,
-    base_seq: null,
-    base_row_hash: null,
-    patch: { assignee: toSlug },
-    client_ts: nowInstant(),
-    issued_at: nowInstant(),
-  };
-  await applyUpdate(env, reassignMut, user);
 
   // Create notification for recipient
   const task = await env.DB.prepare('SELECT title, description FROM tasks WHERE id = ?').bind(taskId).first<{ title: string; description: string }>();

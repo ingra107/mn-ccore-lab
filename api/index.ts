@@ -917,8 +917,9 @@ defineRoute({
   path: '/api/meetings/:id',
   auth: 'authed',
   entity: 'meetings',
-  visibility: 'na',
-  handler: (c) => handleGetMeeting(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true),
+  // #8842 R6: action items are task rows; non-PI callers get the PB filter.
+  visibility: 'pb-aware',
+  handler: (c) => handleGetMeeting(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true, CSP(c)),
 });
 defineRoute({
   method: 'GET',
@@ -1509,8 +1510,9 @@ defineRoute({
   path: '/api/calendar/events',
   auth: 'authed',
   entity: 'calendar',
-  visibility: 'na',
-  handler: (c) => handleCalendarEvents(U(c), E(c)),
+  // #8842 R6: task deadlines are task rows; non-PI callers get the PB filter.
+  visibility: 'pb-aware',
+  handler: (c) => handleCalendarEvents(U(c), E(c), CSP(c)),
 });
 
 // Personal iCal calendar feeds (issue #45). Per-user, secret URL stays in D1.

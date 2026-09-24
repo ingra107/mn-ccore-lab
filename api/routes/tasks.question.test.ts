@@ -26,8 +26,9 @@ import { describe, it, expect } from 'vitest'
 import { nowInstant } from '../lib/time'
 import { applyInsert, applyUpdate, applyMutation } from './mutations'
 import { handleGetTasks } from './tasks'
-import { normalizeQuestionJsonFields, questionRowError } from '../lib/task-question'
+import { normalizeQuestionJsonFields, questionRowError, questionConsumerCloseError } from '../lib/task-question'
 import type { AuthUser, Env } from '../helpers'
+import { withSequentialBatch } from '../test-support/sequential-batch'
 
 // ── store-backed D1 stub (tasks.kind.test.ts shape) ─────────────────────────
 
@@ -137,7 +138,7 @@ describe('a question cannot close unanswered (question_unanswered)', () => {
     const db = makeStubDB()
     const id = 'task_01question_unanswered_0001'
     seedQuestion(db, id)
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const r = await applyMutation(env, {
       table: 'tasks', record_id: id, op: 'update',
@@ -155,7 +156,7 @@ describe('a question cannot close unanswered (question_unanswered)', () => {
     const db = makeStubDB()
     const id = 'task_01question_unanswered_0002'
     seedQuestion(db, id)
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     await expect(applyUpdate(env, {
       mutation_id: 'mut_q_del_0002', origin_machine: 'test', table: 'tasks', op: 'update',
@@ -165,26 +166,62 @@ describe('a question cannot close unanswered (question_unanswered)', () => {
     expect(db._store.get(id)?.status).toBe('todo')
   })
 
-  it('status=done WITH an answer already stored is accepted (the consumer closes it)', async () => {
+  // #8842 R4 (2026-09-23): this case USED to assert that a Hub-UI close of an
+  // answered question is accepted. That encoded the old design, in which the
+  // Hub could close a question and PB's question_state then read it as
+  // `consumed`, so the approved build never ran. Changed deliberately: a
+  // Hub-UI (hub_ui:) close is now refused; the PB consumer closes it.
+  it('status=done from the Hub UI on an ANSWERED question is refused (the PB consumer closes it)', async () => {
     const db = makeStubDB()
     const id = 'task_01question_answered_done_03'
     seedQuestion(db, id, { question_answer_json: JSON.stringify(ANSWER) })
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const r = await applyMutation(env, {
       table: 'tasks', record_id: id, op: 'update',
       patch: { status: 'done', completed: 1, completed_at: nowInstant() },
       route: 'test', user: NICK,
     })
+    expect(r.status).toBe('error')
+    expect(r.reason).toMatch(/^apply error: question_consumer_close_only:/)
+    expect(db._store.get(id)?.status).toBe('todo')
+  })
+
+  it('status=done from PB (the consumer) on an answered question is accepted', async () => {
+    const db = makeStubDB()
+    const id = 'task_01question_answered_done_pb'
+    seedQuestion(db, id, { question_answer_json: JSON.stringify(ANSWER) })
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
+
+    const r = await applyUpdate(env, {
+      mutation_id: 'mut_q_pbclose_0001', origin_machine: 'home', table: 'tasks', op: 'update',
+      record_id: id, base_seq: 1, base_row_hash: null,
+      patch: { status: 'done', completed: 1, completed_at: nowInstant() }, client_ts: nowInstant(), issued_at: nowInstant(),
+    }, NICK)
     expect(r.status).toBe('accepted')
     expect(db._store.get(id)?.status).toBe('done')
+  })
+
+  it('the Hub UI may still retire a question (status=deleted on an answered question)', async () => {
+    const db = makeStubDB()
+    const id = 'task_01question_hub_retire_01'
+    seedQuestion(db, id, { question_answer_json: JSON.stringify(ANSWER) })
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
+
+    const r = await applyMutation(env, {
+      table: 'tasks', record_id: id, op: 'update',
+      patch: { status: 'deleted' },
+      route: 'test', user: NICK,
+    })
+    expect(r.status).toBe('accepted')
+    expect(db._store.get(id)?.status).toBe('deleted')
   })
 
   it('an ordinary task still closes with no answer column set (guard is kind-scoped)', async () => {
     const db = makeStubDB()
     const id = 'task_01ordinary_done_0004'
     seedQuestion(db, id, { kind: 'task', source: 'manual', question_spec_json: null })
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const r = await applyMutation(env, {
       table: 'tasks', record_id: id, op: 'update',
@@ -203,7 +240,7 @@ describe('an answer patch lands (the only answer store)', () => {
     const db = makeStubDB()
     const id = 'task_01question_answer_0005'
     seedQuestion(db, id)
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
     const text = JSON.stringify(ANSWER)
 
     const r = await applyUpdate(env, {
@@ -221,7 +258,7 @@ describe('an answer patch lands (the only answer store)', () => {
     const db = makeStubDB()
     const id = 'task_01question_answer_obj_006'
     seedQuestion(db, id)
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const r = await applyUpdate(env, {
       mutation_id: 'mut_q_ans_0006', origin_machine: 'hub_ui:test', table: 'tasks', op: 'update',
@@ -242,7 +279,7 @@ describe('an answer patch lands (the only answer store)', () => {
     const db = makeStubDB()
     const id = 'task_01question_undo_0007'
     seedQuestion(db, id, { question_answer_json: JSON.stringify(ANSWER) })
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const r = await applyUpdate(env, {
       mutation_id: 'mut_q_undo_0007', origin_machine: 'work', table: 'tasks', op: 'update',
@@ -257,7 +294,7 @@ describe('an answer patch lands (the only answer store)', () => {
     const db = makeStubDB()
     const id = 'task_01question_tg_0008'
     seedQuestion(db, id)
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
     const handle = JSON.stringify({ chat_id: 1, message_id: 2, rendered_at: '2026-09-17T18:00:00Z' })
 
     const ok = await applyUpdate(env, {
@@ -292,7 +329,7 @@ describe('a malformed answer is refused (question_answer_invalid)', () => {
       const db = makeStubDB()
       const id = 'task_01question_badans_0009'
       seedQuestion(db, id)
-      const env = { DB: db } as unknown as Env
+      const env = { DB: withSequentialBatch(db) } as unknown as Env
 
       await expect(applyUpdate(env, {
         mutation_id: 'mut_q_bad_0009', origin_machine: 'work', table: 'tasks', op: 'update',
@@ -307,7 +344,7 @@ describe('a malformed answer is refused (question_answer_invalid)', () => {
     const db = makeStubDB()
     const id = 'task_01question_other_0010'
     seedQuestion(db, id)
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
     const text = JSON.stringify({ v: 1, choice: 'other', text: 'It was the HSR meeting', via: 'telegram', at: nowInstant() })
 
     const r = await applyUpdate(env, {
@@ -332,7 +369,7 @@ describe('a kind=question insert requires question_spec_json (question_spec_miss
 
   it('is refused through the full applyMutation path when the spec is absent', async () => {
     const db = makeStubDB()
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
     const r = await applyMutation(env, {
       table: 'tasks', record_id: 'task_01question_nospec_0011', op: 'insert',
       payload: { ...basePayload, kind: 'question' },
@@ -345,7 +382,7 @@ describe('a kind=question insert requires question_spec_json (question_spec_miss
 
   it('is refused when the spec is explicitly null', async () => {
     const db = makeStubDB()
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
     const r = await applyInsert(env, {
       mutation_id: 'mut_q_ins_0012', origin_machine: 'work', table: 'tasks', op: 'insert',
       record_id: 'task_01question_nullspec_0012', base_seq: null, base_row_hash: null,
@@ -358,7 +395,7 @@ describe('a kind=question insert requires question_spec_json (question_spec_miss
 
   it('inserts with a spec; an OBJECT spec is serialized', async () => {
     const db = makeStubDB()
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
     const id = 'task_01question_withspec_0013'
     const r = await applyInsert(env, {
       mutation_id: 'mut_q_ins_0013', origin_machine: 'work', table: 'tasks', op: 'insert',
@@ -375,7 +412,7 @@ describe('a kind=question insert requires question_spec_json (question_spec_miss
 
   it('a question cannot be born done with no answer', async () => {
     const db = makeStubDB()
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
     const r = await applyInsert(env, {
       mutation_id: 'mut_q_ins_0014', origin_machine: 'work', table: 'tasks', op: 'insert',
       record_id: 'task_01question_borndone_0014', base_seq: null, base_row_hash: null,
@@ -390,7 +427,7 @@ describe('a kind=question insert requires question_spec_json (question_spec_miss
     const db = makeStubDB()
     const id = 'task_01task_to_question_0015'
     seedQuestion(db, id, { kind: 'task', source: 'manual', question_spec_json: null })
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     await expect(applyUpdate(env, {
       mutation_id: 'mut_q_kind_0015', origin_machine: 'work', table: 'tasks', op: 'update',
@@ -417,7 +454,7 @@ describe('GET /api/tasks?kind=question', () => {
 
   it('adds AND t.kind = ? bound to the requested kind', async () => {
     const db = makeQueryCaptureDB()
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
     const res = await handleGetTasks(new URL('https://x/api/tasks?kind=question&assignee=nick-ingraham'), env, true)
     expect(res.status).toBe(200)
     expect(db._calls).toHaveLength(1)
@@ -428,7 +465,7 @@ describe('GET /api/tasks?kind=question', () => {
 
   it('omits the kind clause when the param is absent', async () => {
     const db = makeQueryCaptureDB()
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
     await handleGetTasks(new URL('https://x/api/tasks'), env, true)
     // t.kind is in the SELECT projection either way; the FILTER must be absent.
     expect(db._calls[0].sql).not.toContain(' AND t.kind = ?')
@@ -436,7 +473,7 @@ describe('GET /api/tasks?kind=question', () => {
 
   it('an unlisted kind is a 400 naming the vocabulary, not an empty list', async () => {
     const db = makeQueryCaptureDB()
-    const env = { DB: db } as unknown as Env
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
     const res = await handleGetTasks(new URL('https://x/api/tasks?kind=decision'), env, true)
     expect(res.status).toBe(400)
     const body = await res.json() as { error: string }
@@ -459,5 +496,18 @@ describe('task-question pure helpers', () => {
     expect(questionRowError({ status: 'done' })).toBeNull()
     expect(questionRowError({ kind: 'question', question_spec_json: SPEC, status: 'todo' })).toBeNull()
     expect(questionRowError({ kind: 'question', question_spec_json: '{"a":1', status: 'todo' })).toMatch(/^question_spec_invalid:/)
+  })
+})
+
+describe('#8842 R4: the refusal names the retire path that works', () => {
+  it('op=delete retires an UNANSWERED question from the Hub UI, as the refusal message says', async () => {
+    const db = makeStubDB()
+    const id = 'task_01question_hub_opdelete_1'
+    seedQuestion(db, id)
+    const env = { DB: withSequentialBatch(db) } as unknown as Env
+    const r = await applyMutation(env, { table: 'tasks', record_id: id, op: 'delete', route: 'test', user: NICK })
+    expect(r.status).toBe('accepted')
+    expect(questionConsumerCloseError({ kind: 'question', status: 'todo' }, { kind: 'question', status: 'done' }, 'hub_ui:x'))
+      .toMatch(/delete the task \(op=delete\)/)
   })
 })
