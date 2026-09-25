@@ -26,6 +26,9 @@ echo %date% %time% ARGS: %* >> "%TEMP%\mnccore-handler.log"
 ::                                            directory AND <folder>\Start Claude.bat exists.
 ::                                            The hardcoded basename "Start Claude.bat" IS the
 ::                                            allowlist — no other filename is ever executed.
+::   mnccore://file/<url-encoded-path>      → open ONE .docx/.pdf/.xlsx under %USERPROFILE%\Box\
+::                                            in its default app (desk "Open file" buttons).
+::                                            Allowlists only: Box root, file attribute, extension.
 ::   mnccore://process                      → run %USERPROFILE%\Peripheral-Brain\Quick_Process.bat.
 ::   mnccore://bugsquash                     → run <this dir>\bug-squasher.bat (sibling).
 ::   mnccore://backlogwave                  → run <this dir>\backlog-wave.bat (sibling).
@@ -84,6 +87,12 @@ if "!url:~0,7!"=="launch/" (
     rem turn percent-encoded shell metacharacters (%22 %26 ...) into live chars;
     rem leaving them inert lets verb_launch's strict alnum gate reject them.
     call :verb_launch "!arg!"
+    exit /b !errorlevel!
+)
+if "!url:~0,5!"=="file/" (
+    set "arg=!url:~5!"
+    call :decode arg
+    call :verb_file "!arg!"
     exit /b !errorlevel!
 )
 if "!url:~0,7!"=="workon/" (
@@ -157,6 +166,16 @@ if not exist "!target!" (
 :: directory — files, including executables, never match. This makes the "URI
 :: hands a .bat/.exe to explorer → OS runs it" path UNREPRESENTABLE; no
 :: extension denylist is needed or used (denylist has gaps; directory-only does not).
+::   2026-09-25: the trailing-backslash test alone is NOT enough on Box Drive, whose
+::   virtual filesystem answers it true for FILES (measured: open/.../build_penultimate.py
+::   reached explorer.exe). The attribute check below is the gate that holds everywhere.
+set "attr="
+for %%A in ("!target!") do set "attr=%%~aA"
+if /I not "!attr:~0,1!"=="d" set "attr="
+if not defined attr (
+    call :fail "open: refused — target is not a directory: !target!"
+    exit /b 1
+)
 if not exist "!target!\" (
     call :fail "open: refused — target is not a directory: !target!"
     exit /b 1
@@ -166,6 +185,50 @@ if defined MNCCORE_HANDLER_DRYRUN (
     exit /b 0
 )
 "%SystemRoot%\explorer.exe" "!target!"
+exit /b 0
+
+
+:: ── :verb_file <path> ── open ONE document in its default app ───────────────
+:: Added 2026-09-25 (Nick: desk buttons should open the file itself). Three gates,
+:: all allowlists, no denylist: (1) the resolved full path must sit inside
+:: %USERPROFILE%\Box\ ; (2) it must be an existing FILE (a directory is refused);
+:: (3) its extension must be exactly .docx, .pdf or .xlsx. Macro-bearing (.docm,
+:: .xlsm) and executable types never match, so the URI still cannot run code.
+:verb_file
+set "target=%~f1"
+set "ext=%~x1"
+set "boxroot=%USERPROFILE%\Box\"
+set "ok="
+::   The Box root can only occur at the start of a valid path (a colon is illegal
+::   later), so "contains" is a prefix test. No pipe: a piped echo loses delayed expansion.
+if /I not "!target:%boxroot%=!"=="!target!" set "ok=1"
+if not defined ok (
+    call :fail "file: refused, outside Box: !target!"
+    exit /b 1
+)
+if not exist "!target!" (
+    call :fail "File not found: !target!"
+    exit /b 1
+)
+::   Directory test by attribute: on Box Drive's virtual filesystem the usual
+::   exist "path\" idiom reports FILES as directories too (measured 2026-09-25).
+set "attr="
+for %%A in ("!target!") do set "attr=%%~aA"
+if /I "!attr:~0,1!"=="d" (
+    call :fail "file: refused, target is a directory: !target!"
+    exit /b 1
+)
+set "extok="
+for %%X in (.docx .pdf .xlsx) do if /I "!ext!"=="%%X" set "extok=1"
+if not defined extok (
+    call :fail "file: refused, only .docx .pdf .xlsx: !target!"
+    exit /b 1
+)
+if defined MNCCORE_HANDLER_DRYRUN (
+    echo DRYRUN file: start "" "!target!"
+    exit /b 0
+)
+start "" "!target!"
 exit /b 0
 
 
