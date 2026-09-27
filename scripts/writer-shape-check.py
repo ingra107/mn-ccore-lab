@@ -44,8 +44,17 @@ ambiguity resolves toward "known" (no alarm), NOT toward "unknown":
     INSERT-only teeth above.
 
 HEAD source = every non-test `*.ts` under `api/` (routes + lib + index +
-helpers) — the code the deployed Worker actually runs. `.sql` migrations and
-`*.test.ts` are NOT prod Worker writers and are excluded.
+helpers) — the code the deployed Worker actually runs — PLUS every committed
+`api/**/*.sql` and top-level `scripts/*.sql`: migrations and one-off repairs
+reach prod through `wrangler d1 execute --file`, so they are accounted-for
+writers too (each migration self-registers in `schema_migrations`). `*.test.ts`
+is excluded.
+
+The observed window spans days, so HEAD alone is not the accounted-for set: a
+shape change committed mid-window leaves the OLD shape in insights until it ages
+out. Shapes emitted by the pre-change side of every `api/` commit inside the
+window (+ GRACE_DAYS deploy lag) are also known, and each is printed as
+RETIRED-IN-WINDOW so the widening is visible (false alarm 2026-09-27, da0cab19).
 
 EXIT CODES
 ----------
@@ -64,6 +73,7 @@ from __future__ import annotations
 import argparse
 import json as _json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -290,6 +300,14 @@ class HeadShapes:
             self.delete_tables.add(table)
 
 
+def _add_shapes_from_text(shapes: HeadShapes, text: str) -> None:
+    for raw in _iter_head_sql_strings(text):
+        sql = normalize_sql(_mask_interpolations(raw))
+        parsed = parse_write(sql)
+        if parsed:
+            shapes.add(parsed)
+
+
 def extract_head_shapes() -> tuple[HeadShapes, set[str]]:
     head = HeadShapes()
     ts_files = [
@@ -301,13 +319,133 @@ def extract_head_shapes() -> tuple[HeadShapes, set[str]]:
             text = p.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
-        for raw in _iter_head_sql_strings(text):
-            sql = normalize_sql(_mask_interpolations(raw))
-            parsed = parse_write(sql)
-            if parsed:
-                head.add(parsed)
+        _add_shapes_from_text(head, text)
+    # Committed SQL files are the SECOND prod writer path: migrations and
+    # one-off repairs are applied with `wrangler d1 execute --file`, and every
+    # migration since v103 self-registers with `INSERT OR IGNORE INTO
+    # schema_migrations (version, filename)`. Leaving them out made the first
+    # full-window run alarm on v114's own registration row (2026-09-27).
+    sql_files = list(API_DIR.rglob("*.sql")) + list((REPO_ROOT / "scripts").glob("*.sql"))
+    for p in sql_files:
+        try:
+            text = p.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        _add_shapes_from_sql_file(head, text)
     generic_tables = load_generic_applier_tables()
     return head, generic_tables
+
+
+def _add_shapes_from_sql_file(shapes: HeadShapes, text: str) -> None:
+    """Statements of a plain .sql file: strip comments, split on ';'."""
+    text = re.sub(r"/\*.*?\*/", " ", text, flags=re.S)
+    text = re.sub(r"--[^\n]*", " ", text)
+    for stmt in text.split(";"):
+        parsed = parse_write(normalize_sql(stmt))
+        if parsed:
+            shapes.add(parsed)
+
+
+# ── Window history (what the Worker emitted EARLIER in the observed window) ──
+#
+# WHY: the insights window is days long, HEAD is one instant. When a commit
+# inside the window changes a write shape (2026-09-22, da0cab19: the digest
+# upsert went from a 13-column INSERT OR REPLACE to a 15-column ON CONFLICT
+# upsert), D1 legitimately observed BOTH shapes this week, and a HEAD-only diff
+# called the pre-deploy one an UNKNOWN WRITER for a full window (fired
+# 2026-09-27). The accounted-for set is therefore every shape a COMMITTED
+# revision of `api/` emitted while the window was open, not HEAD's alone.
+#
+# What still alarms: a shape no committed revision in [window + grace] ever
+# emitted -- a foreign actor, a deploy from an uncommitted tree, or a stale
+# deploy/orphan running code OLDER than the window (the 2026-07-06 calendar
+# orphan ran month-old code). Cost: an orphan frozen at a revision inside the
+# window is masked until that revision ages out -- at most one window + grace.
+
+GRACE_DAYS = 2  # deploy lag: a commit made just before the window opened may
+                # have gone live inside it, so its PRE-change shapes stay known.
+
+
+def window_days(time_period: str) -> float:
+    """'7d' -> 7, '24h' -> 1. Refuses anything else (fail loud: an unparsed
+    window would silently shrink the history set and false-alarm)."""
+    m = re.fullmatch(r"(\d+)([dh])", time_period.strip())
+    if not m:
+        sys.stderr.write(f"SETUP ERROR: cannot parse --time-period {time_period!r} "
+                         "(expected e.g. 1d / 7d / 24h)\n")
+        raise SystemExit(2)
+    n = int(m.group(1))
+    return n if m.group(2) == "d" else n / 24
+
+
+def _git(*args: str) -> str:
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), *args],
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            timeout=120,
+        )
+    except (OSError, subprocess.TimeoutExpired) as e:
+        sys.stderr.write(f"SETUP ERROR: git {' '.join(args)} failed: {e}\n")
+        raise SystemExit(2)
+    if proc.returncode != 0:
+        sys.stderr.write(f"SETUP ERROR: git {' '.join(args)} exited "
+                         f"{proc.returncode}: {proc.stderr.strip()[:500]}\n")
+        raise SystemExit(2)
+    return proc.stdout
+
+
+def extract_window_retired_shapes(days: float, grace_days: float = GRACE_DAYS):
+    """Shapes emitted by the PRE-change version of every Worker source file a
+    commit inside [now - days - grace, now] touched.
+
+    Every version of a file that was live during the window is either HEAD's
+    or the parent-side version of a later in-window change, so walking each
+    in-window commit's parent blobs covers every intermediate revision.
+
+    Returns (HeadShapes, {parsed_fingerprint: short_sha_of_the_retiring_commit}).
+    """
+    since_hours = int((days + grace_days) * 24)
+    log = _git("log", f"--since={since_hours} hours ago", "--format=__C__%H",
+               "--name-only", "--", "api")
+    retired = HeadShapes()
+    retired_by: dict = {}
+    sha = None
+    for line in log.splitlines():
+        line = line.strip()
+        if line.startswith("__C__"):
+            sha = line[5:]
+            continue
+        if not line or sha is None:
+            continue
+        if not line.endswith(".ts") or line.endswith(".test.ts"):
+            continue
+        # The parent-side blob; absent when this commit ADDED the file.
+        try:
+            proc = subprocess.run(
+                ["git", "-C", str(REPO_ROOT), "show", f"{sha}^:{line}"],
+                capture_output=True, text=True, encoding="utf-8",
+                errors="replace", timeout=60,
+            )
+        except (OSError, subprocess.TimeoutExpired) as e:
+            sys.stderr.write(f"SETUP ERROR: git show {sha}^:{line} failed: {e}\n")
+            raise SystemExit(2)
+        if proc.returncode != 0:
+            continue  # file new in this commit (or root commit): no prior shape
+        before = HeadShapes()
+        _add_shapes_from_text(before, proc.stdout)
+        for table, colsets in before.insert_colsets.items():
+            for cols in colsets:
+                retired.add(("INSERT", table, cols))
+                retired_by.setdefault(("INSERT", table, cols), sha[:8])
+        for table in before.insert_anycol_tables:
+            retired.add(("INSERT", table, None))
+            retired_by.setdefault(("INSERT", table, None), sha[:8])
+        for table in before.update_tables:
+            retired.add(("UPDATE", table, None))
+        for table in before.delete_tables:
+            retired.add(("DELETE", table, None))
+    return retired, retired_by
 
 
 # ── DB observation (what actually ran) ───────────────────────────────────────
@@ -410,11 +548,18 @@ def main() -> int:
     args = ap.parse_args()
 
     head, generic_insert_tables = extract_head_shapes()
+    retired, retired_by = extract_window_retired_shapes(window_days(args.time_period))
     rows = fetch_db_writes(args.db, args.time_period, args.limit)
+    if len(rows) >= args.limit:
+        # insights returned a full page: the least-run queries -- where a rare
+        # foreign writer hides -- were never fingerprinted. Say so every run.
+        print(f"WARNING: insights returned {len(rows)} rows = --limit; the window "
+              f"holds more queries than were checked. Raise --limit.")
 
     # table -> list of (parsed, runs, rows_written) for observed writes
     observed: dict[str, list] = {}
     unknown: list = []
+    retired_hits: list = []
     for row in rows:
         q = row.get("query", "")
         parsed = parse_write(normalize_sql(q))
@@ -426,8 +571,15 @@ def main() -> int:
         runs = row.get("numberOfTimesRun", 0)
         written = row.get("totalRowsWritten", 0)
         observed.setdefault(table, []).append((parsed, runs, written, q))
-        if not is_known(parsed, head, generic_insert_tables):
-            unknown.append((parsed, runs, written, q))
+        if is_known(parsed, head, generic_insert_tables):
+            continue
+        # Not in HEAD. Known only if a committed revision live in this window
+        # emitted it (a shape change deployed mid-window). No generic-applier
+        # widening here: `retired` holds static literals only.
+        if is_known(parsed, retired, set()):
+            retired_hits.append((parsed, runs, retired_by.get(parsed, "?")))
+            continue
+        unknown.append((parsed, runs, written, q))
 
     print(f"writer-shape-check — db={args.db} window={args.time_period} "
           f"(top {args.limit} queries by count)")
@@ -437,6 +589,13 @@ def main() -> int:
           f"(generic UPDATE={head.generic_update}, generic DELETE={head.generic_delete})")
     print(f"Observed write statements: {sum(len(v) for v in observed.values())} "
           f"across {len(observed)} tables\n")
+    for parsed, runs, sha in retired_hits:
+        wtype, table, cols = parsed
+        print(f"  RETIRED-IN-WINDOW {table} [{wtype}] {_fmt_cols(cols)} runs={runs} "
+              f"-- emitted before commit {sha}, which changed it inside the window; "
+              f"it alarms again if still observed once {sha} is older than the window.")
+    if retired_hits:
+        print()
 
     if unknown:
         print(f"❌ {len(unknown)} UNKNOWN WRITER shape(s) — observed in D1, NOT emitted by HEAD:\n")
@@ -446,8 +605,9 @@ def main() -> int:
             print(f"    runs={runs}  rowsWritten={written}")
             print(f"    {normalize_sql(q)[:200]}")
             print()
-        print("A write shape with no HEAD counterpart means a writer that is NOT")
-        print("in the current committed Worker code: a stale deploy, an orphaned")
+        print("A write shape that no committed revision of the Worker emitted during")
+        print("this window means a writer the repo does not account for: a deploy")
+        print("of code older than the window or never committed, an orphaned")
         print("--env/--name copy, or a foreign-account actor. Enumerate account")
         print("workers/crons/previews for this table before theorizing about the")
         print("one known writer (feedback_enumerate-all-writers-before-diagnosing-one).")
