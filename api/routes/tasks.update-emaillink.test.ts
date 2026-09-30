@@ -7,75 +7,15 @@
 // morning (6 tasks with a thread id and no Gmail link). These tests pin the
 // derived-pair rule on UPDATE: writing source_thread_id carries the derived
 // email_link with it; clearing it clears the link.
+//
+// #8862: runs on the migration-chain database (api/test-support/prod-schema-db.ts)
+// instead of a SET-clause-parsing stub whose receipt INSERT only recorded the
+// mutation id. Each landed write now has its receipt read back.
 
-import { describe, it, expect } from 'vitest'
-import { nowInstant } from '../lib/time'
+import { describe, it, expect, beforeEach } from 'vitest'
+import type Database from 'better-sqlite3'
 import { handleUpdateTask } from './tasks'
-import { withSequentialBatch } from '../test-support/sequential-batch'
-
-function makeStubDB() {
-  const store: Map<string, Record<string, unknown>> = new Map()
-  const mutations: Map<string, Record<string, unknown>> = new Map()
-
-  function makeStmt(sql: string, boundVals: unknown[]): ReturnType<typeof makeStmt> {
-    const self = {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-      first: async <T>() => {
-        const upper = sql.trim().toUpperCase()
-        if (upper.includes('PROCESSED_MUTATIONS')) {
-          const id = boundVals[0] as string
-          return (mutations.get(id) ?? null) as T | null
-        }
-        const id = boundVals[0] as string
-        return (store.get(id) ?? null) as T | null
-      },
-      all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
-      run: async () => {
-        const upper = sql.trim().toUpperCase()
-        if (upper.startsWith('UPDATE')) {
-          const setMatch = sql.match(/SET (.+) WHERE/s)
-          if (setMatch) {
-            const pairs = setMatch[1].split(',').map((s: string) => s.trim())
-            const id = boundVals[boundVals.length - 1] as string
-            const row = store.get(id)
-            if (row) {
-              let paramIdx = 0
-              for (const pair of pairs) {
-                const [col, placeholder] = pair.split('=').map((s: string) => s.trim())
-                if (placeholder && placeholder.includes('datetime')) {
-                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
-                } else if (placeholder && placeholder.toUpperCase() === 'NULL') {
-                  row[col] = null
-                } else {
-                  row[col] = boundVals[paramIdx++]
-                }
-              }
-              store.set(id, row)
-            }
-          }
-          return { meta: { changes: 1 } }
-        }
-        if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) {
-          const mutId = boundVals[0] as string
-          if (!mutations.has(mutId)) {
-            mutations.set(mutId, { mutation_id: mutId })
-            return { meta: { changes: 1 } }
-          }
-          return { meta: { changes: 0 } }
-        }
-        return { meta: { changes: 0 } }
-      },
-    }
-    return self
-  }
-
-  return {
-    _store: store,
-    _mutations: mutations,
-    prepare: (sql: string) => makeStmt(sql, []),
-    batch: async () => [],
-  }
-}
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
 function apiKeyPost(body: unknown): Request {
   return new Request('https://x/api/tasks/test', {
@@ -90,57 +30,61 @@ function apiKeyPost(body: unknown): Request {
 
 const user = { email: 'ingra107@umn.edu', name: 'Nick' } as import('../helpers').AuthUser
 
-function seedTask(db: ReturnType<typeof makeStubDB>, id: string, extra: Record<string, unknown> = {}) {
-  db._store.set(id, {
-    id, title: 'Probe', status: 'todo', priority: 'medium', assignee: 'nick-ingraham',
-    seq: 1, deleted_at: null, project_id: null, email_link: null, source_thread_id: null,
-    ...extra,
-  })
+let db: InstanceType<typeof Database>
+let env: import('../helpers').Env
+beforeEach(() => {
+  db = prodSchemaDb()
+  env = { DB: d1Adapter(db) } as unknown as import('../helpers').Env
+})
+
+function seedTask(id: string, extra: Record<string, unknown> = {}) {
+  insertRow(db, 'tasks', { id, title: 'Probe', status: 'todo', priority: 'medium', assignee: 'nick-ingraham', ...extra })
 }
+const rowOf = (id: string) => db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as Record<string, unknown>
+const receiptsFor = (id: string) =>
+  db.prepare("SELECT outcome, original_response_json FROM processed_mutations WHERE table_name = 'tasks' AND record_id = ?").all(id) as
+    { outcome: string; original_response_json: string }[]
 
 describe('handleUpdateTask derives email_link with source_thread_id (I40 class-close)', () => {
   it('writing source_thread_id on update derives the paired Gmail link', async () => {
-    const db = makeStubDB()
     const id = 'task_01hwtest_emaillink_000001'
-    seedTask(db, id)
-    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
+    seedTask(id)
 
     const res = await handleUpdateTask(id, apiKeyPost({ source_thread_id: '19ebTESTthread01' }), user, env)
     expect(res.status).toBe(200)
 
-    const row = db._store.get(id)
-    expect(row?.source_thread_id).toBe('19ebTESTthread01')
-    expect(row?.email_link).toBe('https://mail.google.com/mail/u/1/#inbox/19ebTESTthread01')
+    const row = rowOf(id)
+    expect(row.source_thread_id).toBe('19ebTESTthread01')
+    expect(row.email_link).toBe('https://mail.google.com/mail/u/1/#inbox/19ebTESTthread01')
+    const receipts = receiptsFor(id)
+    expect(receipts).toHaveLength(1)
+    expect(JSON.parse(receipts[0].original_response_json).status).toBe(receipts[0].outcome)
   })
 
   it('clearing source_thread_id clears the derived link (pair moves together)', async () => {
-    const db = makeStubDB()
     const id = 'task_01hwtest_emaillink_000002'
-    seedTask(db, id, {
+    seedTask(id, {
       source_thread_id: 'OLDTHREAD',
       email_link: 'https://mail.google.com/mail/u/1/#inbox/OLDTHREAD',
     })
-    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
 
     const res = await handleUpdateTask(id, apiKeyPost({ source_thread_id: null }), user, env)
     expect(res.status).toBe(200)
 
-    const row = db._store.get(id)
-    expect(row?.source_thread_id).toBe(null)
-    expect(row?.email_link).toBe(null)
+    const row = rowOf(id)
+    expect(row.source_thread_id).toBe(null)
+    expect(row.email_link).toBe(null)
   })
 
   it('an unrelated update does not touch email_link', async () => {
-    const db = makeStubDB()
     const id = 'task_01hwtest_emaillink_000003'
-    seedTask(db, id)
-    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
+    seedTask(id)
 
     const res = await handleUpdateTask(id, apiKeyPost({ due_date: '2026-06-12' }), user, env)
     expect(res.status).toBe(200)
 
-    const row = db._store.get(id)
-    expect(row?.email_link).toBe(null)
-    expect('email_link' in (row ?? {})).toBe(true)
+    const row = rowOf(id)
+    expect(row.email_link).toBe(null)
+    expect(row.due_date).toBe('2026-06-12')
   })
 })

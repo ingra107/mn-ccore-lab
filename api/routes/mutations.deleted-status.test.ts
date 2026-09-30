@@ -2,257 +2,139 @@
 // must co-apply deleted_at so Hub D1 rows don't stay visible with I7 invariant
 // "deleted brain.db task still active on Hub".
 //
-// We exercise applyPatch indirectly through applyUpdate which is the exported
-// path reached by processOne when op='update'. Because we need a real D1 binding
-// we use the miniflare in-process D1 stub that vitest provides via the wrangler
-// vitest pool.
+// We exercise applyPatch indirectly through applyUpdate, the exported path
+// processOne reaches when op='update'.
+//
+// #8862: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+// This file used to say it ran on "the miniflare in-process D1 stub"; it ran on
+// a hand-written SET-clause parser whose receipt INSERT was a no-op and which
+// had no completion-triad trigger, so a status-only `done` patch passed here
+// whatever applyPatch did with completed/completed_at. Prod's v98 guard refuses
+// that row; the test now meets the guard and reads the receipt.
 
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
+import type Database from 'better-sqlite3'
 import { nowInstant } from '../lib/time'
 import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
-import { withSequentialBatch } from '../test-support/sequential-batch'
+import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db'
 
-// Minimal D1 stub that stores rows in-memory. Sufficient for unit-testing
-// applyUpdate without a real Cloudflare binding.
-function makeStubDB() {
-  const store: Map<string, Record<string, unknown>> = new Map()
+const taskId = 'task_01hwtest000000000000000001'
+const fakeUser = { email: 'test@example.com', role: 'admin' } as import('../helpers').AuthUser
 
-  function makeStmt(sql: string, boundVals: unknown[]) {
-    return {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-      first: async <T>() => {
-        // SELECT * FROM tasks WHERE id = ?
-        const id = boundVals[0] as string
-        return (store.get(id) ?? null) as T | null
-      },
-      run: async () => {
-        const upper = sql.trim().toUpperCase()
-        if (upper.startsWith('UPDATE')) {
-          // Parse SET clauses to apply patch. Very minimal — handles our test cases.
-          const setMatch = sql.match(/SET (.+?) WHERE/s)
-          if (setMatch) {
-            const pairs = setMatch[1].split(',').map(s => s.trim())
-            const id = boundVals[boundVals.length - 1] as string
-            const row = store.get(id)
-            if (row) {
-              let paramIdx = 0
-              for (const pair of pairs) {
-                const [col, placeholder] = pair.split('=').map(s => s.trim())
-                if (placeholder.includes('datetime')) {
-                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
-                } else if (placeholder.toUpperCase() === 'NULL') {
-                  // Literal NULL — no bound param consumed, set to null directly
-                  row[col] = null
-                } else {
-                  row[col] = boundVals[paramIdx++]
-                }
-              }
-              store.set(id, row)
-            }
-          }
-        } else if (upper.startsWith('INSERT INTO processed_mutations')) {
-          // No-op for unit test
-        }
-        return { meta: { changes: 1 } }
-      },
-    }
-  }
+let db: InstanceType<typeof Database>
+let env: import('../helpers').Env
+beforeEach(() => {
+  db = prodSchemaDb()
+  env = { DB: d1Adapter(db) } as unknown as import('../helpers').Env
+})
 
-  return {
-    _store: store,
-    prepare: (sql: string) => makeStmt(sql, []),
-    // batch: execute each statement sequentially (sufficient for unit tests;
-    // mirrors the D1 batch contract without needing a real binding).
-    batch: async (stmts: Array<{ run: () => Promise<unknown> }>) => {
-      return Promise.all(stmts.map(s => s.run()))
-    },
-  }
+/** Seed the task and return the seq the v53 trigger gave it (the base a PB writer holds). */
+function seed(row: Record<string, unknown>): number {
+  const full: Record<string, unknown> = { id: taskId, assignee: 'nick', ...row }
+  const cols = Object.keys(full)
+  db.prepare(`INSERT INTO tasks (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`).run(...cols.map((c) => full[c]))
+  return (db.prepare('SELECT seq FROM tasks WHERE id = ?').get(taskId) as { seq: number }).seq
 }
 
+function upd(mutationId: string, baseSeq: number, patch: Record<string, unknown>): Mutation {
+  return {
+    mutation_id: mutationId,
+    origin_machine: 'home',
+    table: 'tasks',
+    op: 'update',
+    record_id: taskId,
+    base_seq: baseSeq,
+    base_row_hash: null,
+    patch,
+    client_ts: nowInstant(),
+    issued_at: nowInstant(),
+  } as Mutation
+}
+
+const rowOf = () => db.prepare('SELECT * FROM tasks WHERE id = ?').get(taskId) as Record<string, unknown>
+const receiptOf = (id: string) =>
+  db.prepare('SELECT outcome, original_response_json FROM processed_mutations WHERE mutation_id = ?').get(id) as
+    | { outcome: string; original_response_json: string }
+    | undefined
+
 describe('I7 fix — op=update with status=deleted sets deleted_at', () => {
-  const taskId = 'task_01hwtest000000000000000001'
-
   it('sets deleted_at when status=deleted and deleted_at was NULL', async () => {
-    const db = makeStubDB()
-    // Seed an active task (deleted_at = null)
-    db._store.set(taskId, {
-      id: taskId,
-      title: 'Test task',
-      status: 'todo',
-      deleted_at: null,
-      seq: 1,
-      last_mutation_id: null,
-    })
-
-    const mut: Mutation = {
-      mutation_id: 'mut_01hwtest000000000000000001',
-      origin_machine: 'home',
-      table: 'tasks',
-      op: 'update',
-      record_id: taskId,
-      base_seq: 1,
-      base_row_hash: null,
-      patch: { status: 'deleted' },
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
-
-    const fakeEnv = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const fakeUser = { email: 'test@example.com', role: 'admin' } as import('../helpers').AuthUser
-
-    const result = await applyUpdate(fakeEnv, mut, fakeUser)
+    const base = seed({ title: 'Test task', status: 'todo' })
+    const result = await applyUpdate(env, upd('mut_01hwtest000000000000000001', base, { status: 'deleted' }), fakeUser)
 
     expect(result.status).toMatch(/^(accepted|merged_clean)$/)
-
-    const row = db._store.get(taskId)!
+    const row = rowOf()
     expect(row.status).toBe('deleted')
     expect(typeof row.deleted_at).toBe('string')
     expect((row.deleted_at as string).length).toBeGreaterThan(0)
+    expect(receiptOf('mut_01hwtest000000000000000001')!.outcome).toBe(result.status)
   })
 
   it('does not overwrite deleted_at when already set (idempotent)', async () => {
-    const db = makeStubDB()
     const existingDeletedAt = '2026-05-01 12:00:00'
-    db._store.set(taskId, {
-      id: taskId,
-      title: 'Already deleted',
-      status: 'deleted',
-      deleted_at: existingDeletedAt,
-      seq: 5,
-      last_mutation_id: 'mut_prev',
-    })
+    const base = seed({ title: 'Already deleted', status: 'deleted', deleted_at: existingDeletedAt, last_mutation_id: 'mut_prev' })
 
-    const mut: Mutation = {
-      mutation_id: 'mut_01hwtest000000000000000002',
-      origin_machine: 'home',
-      table: 'tasks',
-      op: 'update',
-      record_id: taskId,
-      base_seq: 5,
-      base_row_hash: null,
-      patch: { status: 'deleted' },
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
-
-    const fakeEnv = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const fakeUser = { email: 'test@example.com', role: 'admin' } as import('../helpers').AuthUser
-
-    const result = await applyUpdate(fakeEnv, mut, fakeUser)
+    const result = await applyUpdate(env, upd('mut_01hwtest000000000000000002', base, { status: 'deleted' }), fakeUser)
 
     expect(result.status).toMatch(/^(accepted|merged_clean)$/)
-    // deleted_at must not have been overwritten
-    const row = db._store.get(taskId)!
-    expect(row.deleted_at).toBe(existingDeletedAt)
+    expect(rowOf().deleted_at).toBe(existingDeletedAt)
   })
 
   it('does NOT set deleted_at for non-deleted status updates', async () => {
-    const db = makeStubDB()
-    db._store.set(taskId, {
-      id: taskId,
-      title: 'Active task',
-      status: 'todo',
-      deleted_at: null,
-      seq: 2,
-      last_mutation_id: null,
-    })
-
-    const mut: Mutation = {
-      mutation_id: 'mut_01hwtest000000000000000003',
-      origin_machine: 'home',
-      table: 'tasks',
-      op: 'update',
-      record_id: taskId,
-      base_seq: 2,
-      base_row_hash: null,
-      patch: { status: 'done' },
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
-
-    const fakeEnv = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const fakeUser = { email: 'test@example.com', role: 'admin' } as import('../helpers').AuthUser
-
-    const result = await applyUpdate(fakeEnv, mut, fakeUser)
+    // A full completion triad: prod's v98 trigger refuses status=done without
+    // completed=1 and completed_at (see the next test).
+    const base = seed({ title: 'Active task', status: 'todo' })
+    const result = await applyUpdate(
+      env,
+      upd('mut_01hwtest000000000000000003', base, { status: 'done', completed: 1, completed_at: '2026-05-03 09:00:00' }),
+      fakeUser,
+    )
 
     expect(result.status).toMatch(/^(accepted|merged_clean)$/)
-    const row = db._store.get(taskId)!
+    const row = rowOf()
+    expect(row.status).toBe('done')
     expect(row.deleted_at).toBeNull()
+    expect(receiptOf('mut_01hwtest000000000000000003')!.outcome).toBe(result.status)
+  })
+
+  it('a status-only `done` patch meets the prod completion-triad guard, row untouched', async () => {
+    // The old stub accepted this. Prod refuses it (schema-v98); applyUpdate
+    // surfaces the RAISE as a thrown constraint error, which processOne
+    // records as `apply error:` (pinned end-to-end in mutations.cas-race.test.ts).
+    const base = seed({ title: 'Active task', status: 'todo' })
+    await expect(applyUpdate(env, upd('mut_01hwtest000000000000000006', base, { status: 'done' }), fakeUser))
+      .rejects.toThrow(/completion triad guard/)
+    expect(rowOf().status).toBe('todo')
+    expect(receiptOf('mut_01hwtest000000000000000006')).toBeUndefined()
   })
 
   // I7-INVERSE tests (2026-05-03): symmetric recovery path
   it('clears deleted_at when status transitions from deleted to a live status', async () => {
-    const db = makeStubDB()
-    db._store.set(taskId, {
-      id: taskId,
-      title: 'Restored task',
-      status: 'deleted',
-      deleted_at: '2026-05-03 14:24:33',
-      seq: 10,
-      last_mutation_id: 'mut_prev',
-    })
+    const base = seed({ title: 'Restored task', status: 'deleted', deleted_at: '2026-05-03 14:24:33', last_mutation_id: 'mut_prev' })
 
-    const mut: Mutation = {
-      mutation_id: 'mut_01hwtest000000000000000004',
-      origin_machine: 'home',
-      table: 'tasks',
-      op: 'update',
-      record_id: taskId,
-      base_seq: 10,
-      base_row_hash: null,
-      patch: { status: 'todo' },
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
-
-    const fakeEnv = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const fakeUser = { email: 'test@example.com', role: 'admin' } as import('../helpers').AuthUser
-
-    const result = await applyUpdate(fakeEnv, mut, fakeUser)
+    const result = await applyUpdate(env, upd('mut_01hwtest000000000000000004', base, { status: 'todo' }), fakeUser)
 
     expect(result.status).toMatch(/^(accepted|merged_clean)$/)
-    const row = db._store.get(taskId)!
+    const row = rowOf()
     expect(row.status).toBe('todo')
     expect(row.deleted_at).toBeNull()
   })
 
   it('explicit deleted_at in patch wins over implicit co-flip (precedence rule)', async () => {
-    const db = makeStubDB()
     const explicitTs = '2026-01-01 00:00:00'
-    db._store.set(taskId, {
-      id: taskId,
-      title: 'Task with explicit deleted_at',
-      status: 'deleted',
-      deleted_at: '2026-05-03 14:24:33',
-      seq: 15,
-      last_mutation_id: 'mut_prev2',
-    })
+    const base = seed({ title: 'Task with explicit deleted_at', status: 'deleted', deleted_at: '2026-05-03 14:24:33', last_mutation_id: 'mut_prev2' })
 
-    // Patch sets status='todo' AND deleted_at explicitly — explicit wins, no co-flip
-    const mut: Mutation = {
-      mutation_id: 'mut_01hwtest000000000000000005',
-      origin_machine: 'home',
-      table: 'tasks',
-      op: 'update',
-      record_id: taskId,
-      base_seq: 15,
-      base_row_hash: null,
-      patch: { status: 'todo', deleted_at: explicitTs } as Record<string, unknown>,
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
-
-    // deleted_at is not in TABLE_FIELDS whitelist, so we bypass the whitelist
-    // check by testing applyUpdate directly (not through processOne).
-    const fakeEnv = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const fakeUser = { email: 'test@example.com', role: 'admin' } as import('../helpers').AuthUser
-
-    const result = await applyUpdate(fakeEnv, mut, fakeUser)
+    // Patch sets status='todo' AND deleted_at explicitly — explicit wins, no co-flip.
+    // deleted_at is not in the TABLE_FIELDS whitelist, so this calls applyUpdate
+    // directly (not through processOne).
+    const result = await applyUpdate(
+      env,
+      upd('mut_01hwtest000000000000000005', base, { status: 'todo', deleted_at: explicitTs }),
+      fakeUser,
+    )
 
     expect(result.status).toMatch(/^(accepted|merged_clean)$/)
-    const row = db._store.get(taskId)!
-    // The explicit deleted_at from the patch must be applied as-is
-    expect(row.deleted_at).toBe(explicitTs)
+    expect(rowOf().deleted_at).toBe(explicitTs)
   })
 })

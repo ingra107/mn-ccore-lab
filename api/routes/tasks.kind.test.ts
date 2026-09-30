@@ -4,76 +4,16 @@
 // DEFAULT 'task' on both stores, so the UPDATE path must 400 on any value
 // outside shared/taskKinds.ts AND on a null/'' clear (there is no "reset to
 // default" through a patch — a milestone must not silently become a task).
-// Stub DB copied from tasks.update-emaillink.test.ts.
+//
+// #8862: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+// The stub this file copied from tasks.update-emaillink.test.ts had no NOT
+// NULL on kind at all, so it could not tell the route's 400 from the column's
+// refusal; here the column is the real one and each landed write has a receipt.
 
-import { describe, it, expect } from 'vitest'
-import { nowInstant } from '../lib/time'
+import { describe, it, expect, beforeEach } from 'vitest'
+import type Database from 'better-sqlite3'
 import { handleUpdateTask } from './tasks'
-import { withSequentialBatch } from '../test-support/sequential-batch'
-
-function makeStubDB() {
-  const store: Map<string, Record<string, unknown>> = new Map()
-  const mutations: Map<string, Record<string, unknown>> = new Map()
-
-  function makeStmt(sql: string, boundVals: unknown[]): ReturnType<typeof makeStmt> {
-    const self = {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-      first: async <T>() => {
-        const upper = sql.trim().toUpperCase()
-        if (upper.includes('PROCESSED_MUTATIONS')) {
-          const id = boundVals[0] as string
-          return (mutations.get(id) ?? null) as T | null
-        }
-        const id = boundVals[0] as string
-        return (store.get(id) ?? null) as T | null
-      },
-      all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
-      run: async () => {
-        const upper = sql.trim().toUpperCase()
-        if (upper.startsWith('UPDATE')) {
-          const setMatch = sql.match(/SET (.+) WHERE/s)
-          if (setMatch) {
-            const pairs = setMatch[1].split(',').map((s: string) => s.trim())
-            const id = boundVals[boundVals.length - 1] as string
-            const row = store.get(id)
-            if (row) {
-              let paramIdx = 0
-              for (const pair of pairs) {
-                const [col, placeholder] = pair.split('=').map((s: string) => s.trim())
-                if (placeholder && placeholder.includes('datetime')) {
-                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
-                } else if (placeholder && placeholder.toUpperCase() === 'NULL') {
-                  row[col] = null
-                } else {
-                  row[col] = boundVals[paramIdx++]
-                }
-              }
-              store.set(id, row)
-            }
-          }
-          return { meta: { changes: 1 } }
-        }
-        if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) {
-          const mutId = boundVals[0] as string
-          if (!mutations.has(mutId)) {
-            mutations.set(mutId, { mutation_id: mutId })
-            return { meta: { changes: 1 } }
-          }
-          return { meta: { changes: 0 } }
-        }
-        return { meta: { changes: 0 } }
-      },
-    }
-    return self
-  }
-
-  return {
-    _store: store,
-    _mutations: mutations,
-    prepare: (sql: string) => makeStmt(sql, []),
-    batch: async () => [],
-  }
-}
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
 function apiKeyPost(body: unknown): Request {
   return new Request('https://x/api/tasks/test', {
@@ -88,60 +28,65 @@ function apiKeyPost(body: unknown): Request {
 
 const user = { email: 'ingra107@umn.edu', name: 'Nick' } as import('../helpers').AuthUser
 
-function seedTask(db: ReturnType<typeof makeStubDB>, id: string, extra: Record<string, unknown> = {}) {
-  db._store.set(id, {
-    id, title: 'Probe', status: 'todo', priority: 'medium', assignee: 'nick-ingraham',
-    seq: 1, deleted_at: null, project_id: null, email_link: null, source_thread_id: null,
-    ...extra,
-  })
+let db: InstanceType<typeof Database>
+let env: import('../helpers').Env
+beforeEach(() => {
+  db = prodSchemaDb()
+  env = { DB: d1Adapter(db) } as unknown as import('../helpers').Env
+})
+
+function seedTask(id: string, extra: Record<string, unknown> = {}) {
+  insertRow(db, 'tasks', { id, title: 'Probe', status: 'todo', priority: 'medium', assignee: 'nick-ingraham', ...extra })
 }
+const kindOf = (id: string) => (db.prepare('SELECT kind FROM tasks WHERE id = ?').get(id) as { kind: string }).kind
+const receiptCount = () => (db.prepare('SELECT COUNT(*) AS n FROM processed_mutations').get() as { n: number }).n
 
 describe('handleUpdateTask guards tasks.kind (schema-v109)', () => {
+  it('the column itself refuses a NULL kind (the route guard is not the only line)', () => {
+    seedTask('task_01hwtest_kind_000000')
+    expect(() => db.prepare("UPDATE tasks SET kind = NULL WHERE id = 'task_01hwtest_kind_000000'").run())
+      .toThrow(/NOT NULL constraint failed: tasks.kind/)
+  })
+
   it('kind=milestone lands on the row', async () => {
-    const db = makeStubDB()
     const id = 'task_01hwtest_kind_000001'
-    seedTask(db, id, { kind: 'task' })
-    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
+    seedTask(id, { kind: 'task' })
 
     const res = await handleUpdateTask(id, apiKeyPost({ kind: 'milestone' }), user, env)
     expect(res.status).toBe(200)
-    expect(db._store.get(id)?.kind).toBe('milestone')
+    expect(kindOf(id)).toBe('milestone')
+    expect(receiptCount()).toBe(1)
   })
 
   it('an unlisted kind is a 400 that names the vocabulary', async () => {
-    const db = makeStubDB()
     const id = 'task_01hwtest_kind_000002'
-    seedTask(db, id, { kind: 'task' })
-    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
+    seedTask(id, { kind: 'task' })
 
     const res = await handleUpdateTask(id, apiKeyPost({ kind: 'deadline' }), user, env)
     expect(res.status).toBe(400)
     const json = await res.json() as { error: string }
     expect(json.error).toMatch(/Invalid kind "deadline"\. Must be one of task\/milestone/)
-    expect(db._store.get(id)?.kind).toBe('task')
+    expect(kindOf(id)).toBe('task')
+    expect(receiptCount()).toBe(0)
   })
 
   it('a null or empty kind is refused (NOT NULL, no clear branch)', async () => {
+    const id = 'task_01hwtest_kind_000003'
+    seedTask(id, { kind: 'milestone' })
     for (const bad of [null, '']) {
-      const db = makeStubDB()
-      const id = 'task_01hwtest_kind_000003'
-      seedTask(db, id, { kind: 'milestone' })
-      const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-
       const res = await handleUpdateTask(id, apiKeyPost({ kind: bad }), user, env)
       expect(res.status).toBe(400)
-      expect(db._store.get(id)?.kind).toBe('milestone')
+      expect(kindOf(id)).toBe('milestone')
     }
   })
 
   it('an unrelated patch leaves kind alone', async () => {
-    const db = makeStubDB()
     const id = 'task_01hwtest_kind_000004'
-    seedTask(db, id, { kind: 'milestone' })
-    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
+    seedTask(id, { kind: 'milestone' })
 
     const res = await handleUpdateTask(id, apiKeyPost({ due_date: '2026-10-01' }), user, env)
     expect(res.status).toBe(200)
-    expect(db._store.get(id)?.kind).toBe('milestone')
+    expect(kindOf(id)).toBe('milestone')
+    expect((db.prepare('SELECT due_date FROM tasks WHERE id = ?').get(id) as { due_date: string }).due_date).toBe('2026-10-01')
   })
 })

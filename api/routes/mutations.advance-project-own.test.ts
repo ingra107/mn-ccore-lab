@@ -19,78 +19,39 @@
 //   R4 -- a patch that explicitly sets last_meaningful_movement itself is left
 //         alone (no competing CASE-gate write from this side-effect).
 //   R5 -- a no-op patch (new value === old value) does not advance LMM.
+//
+// #8862: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+// The stub this file used re-implemented the CASE MAX-gate in JavaScript, so R2
+// tested the stub's copy, not the SQL; here the SQL runs, and the CASE-write
+// count comes from the statements the engine actually executed.
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
+import type Database from 'better-sqlite3'
 import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
-import { withSequentialBatch } from '../test-support/sequential-batch'
+import { prodSchemaDb, d1Adapter, insertRow, receiptOf } from '../test-support/prod-schema-db'
 
-// ── Stub DB -- projects only (this side-effect never touches tasks) ────────
+const PROJ = 'proj_01test00000000000000000001'
+const user = { email: 'test@example.com' } as import('../helpers').AuthUser
 
-function makeStubDB(project: Record<string, unknown>) {
-  const store = new Map<string, Record<string, unknown>>()
-  store.set(project.id as string, { ...project })
-  const updateCalls: Array<{ sql: string; vals: unknown[] }> = []
+let db: InstanceType<typeof Database>
+let env: import('../helpers').Env
+let executed: string[]
 
-  function makeStmt(sql: string, boundVals: unknown[]): ReturnType<typeof makeStmt> {
-    const self = {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-      first: async <T>() => {
-        const id = boundVals[0] as string
-        const row = store.get(id)
-        // Shallow copy: applyPatch's re-read after its own UPDATE must not
-        // alias the stored row (mirrors mutations.advance-project.test.ts).
-        return (row ? { ...row } : null) as T | null
-      },
-      all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
-      run: async () => {
-        updateCalls.push({ sql, vals: boundVals })
-        const upper = sql.trim().toUpperCase()
-        const id = boundVals[boundVals.length - 1] as string
-        const row = store.get(id)
-        if (!row) return { meta: { changes: 0 } }
-        if (upper.includes('CASE')) {
-          // advanceProjectOwnMovement's MAX-gate: bind(tsUtc, tsUtc, id).
-          const ts = boundVals[0] as string
-          const existing = row.last_meaningful_movement as string | null | undefined
-          if (!existing || ts > existing) row.last_meaningful_movement = ts
-        } else if (upper.startsWith('UPDATE PROJECTS')) {
-          // applyPatch's generic SET clause: col = ?, ..., updated_at =
-          // datetime('now'), last_mutation_id = ? WHERE id = ?
-          const setMatch = sql.match(/SET (.+) WHERE/is)
-          if (setMatch) {
-            const pairs = setMatch[1].split(',').map((s: string) => s.trim())
-            let paramIdx = 0
-            for (const pair of pairs) {
-              const eq = pair.indexOf('=')
-              const col = pair.slice(0, eq).trim()
-              const placeholder = pair.slice(eq + 1).trim()
-              if (/datetime\(/i.test(placeholder)) {
-                row[col] = '2026-07-30 00:00:00'
-              } else {
-                row[col] = boundVals[paramIdx++]
-              }
-            }
-          }
-        }
-        store.set(id, row)
-        return { meta: { changes: 1 } }
-      },
-    }
-    return self
-  }
-
-  return {
-    _store: store,
-    _updateCalls: updateCalls,
-    prepare: (sql: string) => makeStmt(sql, []),
-    batch: async () => [],
-  }
+function setup(lmm: string | null = null) {
+  db = prodSchemaDb()
+  executed = []
+  env = { DB: d1Adapter(db, { onExec: (sql) => executed.push(sql) }) } as unknown as import('../helpers').Env
+  insertRow(db, 'projects', {
+    id: PROJ, title: 'LPV R01', status: 'active', description: 'old description',
+    stale_active_since: '2026-05-01 00:00:00', last_meaningful_movement: lmm,
+  })
 }
+beforeEach(() => setup())
 
-function lmmUpdateCalls(db: ReturnType<typeof makeStubDB>) {
-  return db._updateCalls.filter((c) => c.sql.toUpperCase().includes('CASE'))
-}
+// The MAX-gate statement advanceProjectOwnMovement issues, as the engine ran it.
+const lmmCaseWrites = () => executed.filter((s) => /SET\s+last_meaningful_movement\s*=\s*CASE/i.test(s))
+const proj = () => db.prepare('SELECT * FROM projects WHERE id = ?').get(PROJ) as Record<string, unknown>
 
 function makeMut(overrides: Partial<Mutation> = {}): Mutation {
   return {
@@ -98,7 +59,7 @@ function makeMut(overrides: Partial<Mutation> = {}): Mutation {
     origin_machine: 'home',
     table: 'projects',
     op: 'update',
-    record_id: 'proj_01test00000000000000000001',
+    record_id: PROJ,
     base_seq: null,
     base_row_hash: null,
     patch: {},
@@ -108,94 +69,48 @@ function makeMut(overrides: Partial<Mutation> = {}): Mutation {
   }
 }
 
-const baseProject = {
-  id: 'proj_01test00000000000000000001',
-  title: 'LPV R01',
-  status: 'active',
-  description: 'old description',
-  stale_active_since: '2026-05-01 00:00:00',
-  last_meaningful_movement: null as string | null,
-  deleted_at: null,
-  seq: 1,
-  last_mutation_id: null,
-}
-
 describe('advanceProjectOwnMovement -- via applyUpdate', () => {
   it('R1: a meaningful field change (description) advances LMM from client_ts', async () => {
-    const db = makeStubDB({ ...baseProject })
-    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
-
-    const result = await applyUpdate(
-      env,
-      makeMut({ patch: { description: 'new description' } }),
-      user,
-    )
+    const result = await applyUpdate(env, makeMut({ patch: { description: 'new description' } }), user)
     expect(result.status).toBe('accepted')
+    expect(receiptOf(db, 'mut_01test000000000000000000002')!.outcome).toBe('accepted')
 
-    const calls = lmmUpdateCalls(db)
-    expect(calls.length).toBe(1)
-    expect(calls[0].sql).toMatch(/last_meaningful_movement/i)
-
-    const proj = db._store.get(baseProject.id)
+    expect(lmmCaseWrites().length).toBe(1)
     // '2026-07-23T14:00:00.000Z' -> canonical UTC space-sep.
-    expect(proj?.last_meaningful_movement).toBe('2026-07-23 14:00:00')
-    expect(proj?.description).toBe('new description')
+    expect(proj().last_meaningful_movement).toBe('2026-07-23 14:00:00')
+    expect(proj().description).toBe('new description')
   })
 
   it('R2: MAX gate -- does not move LMM backward against a newer existing value', async () => {
-    const db = makeStubDB({ ...baseProject, last_meaningful_movement: '2026-07-29 21:00:00' })
-    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
-
+    setup('2026-07-29 21:00:00')
     // client_ts (2026-07-23) predates the existing LMM (2026-07-29).
-    await applyUpdate(env, makeMut({ patch: { description: 'late-arriving edit' } }), user)
-
-    const proj = db._store.get(baseProject.id)
-    expect(proj?.last_meaningful_movement).toBe('2026-07-29 21:00:00')
+    const result = await applyUpdate(env, makeMut({ patch: { description: 'late-arriving edit' } }), user)
+    expect(result.status).toBe('accepted')
+    expect(proj().description).toBe('late-arriving edit')
+    expect(proj().last_meaningful_movement).toBe('2026-07-29 21:00:00')
   })
 
   it('R3: a patch touching ONLY bookkeeping fields does not advance LMM', async () => {
-    const db = makeStubDB({ ...baseProject })
-    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
-
     await applyUpdate(env, makeMut({ patch: { stale_active_since: null } }), user)
-
-    expect(lmmUpdateCalls(db).length).toBe(0)
-    const proj = db._store.get(baseProject.id)
-    expect(proj?.last_meaningful_movement).toBeNull()
+    expect(lmmCaseWrites().length).toBe(0)
+    expect(proj().last_meaningful_movement).toBeNull()
   })
 
   it('R4: an explicit last_meaningful_movement in the patch is left alone (no competing write)', async () => {
-    const db = makeStubDB({ ...baseProject })
-    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
-
     await applyUpdate(
       env,
-      makeMut({
-        patch: { description: 'explicit-lmm edit', last_meaningful_movement: '2026-07-23 14:00:00' },
-      }),
+      makeMut({ patch: { description: 'explicit-lmm edit', last_meaningful_movement: '2026-07-23 14:00:00' } }),
       user,
     )
-
     // advanceProjectOwnMovement must not have fired its own CASE-gate write --
     // applyPatch's own SET clause already carries the explicit value.
-    expect(lmmUpdateCalls(db).length).toBe(0)
-    const proj = db._store.get(baseProject.id)
-    expect(proj?.last_meaningful_movement).toBe('2026-07-23 14:00:00')
+    expect(lmmCaseWrites().length).toBe(0)
+    expect(proj().last_meaningful_movement).toBe('2026-07-23 14:00:00')
   })
 
   it('R5: a no-op patch (same value) does not advance LMM', async () => {
-    const db = makeStubDB({ ...baseProject })
-    const env = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
-
     await applyUpdate(env, makeMut({ patch: { description: 'old description' } }), user)
-
-    expect(lmmUpdateCalls(db).length).toBe(0)
-    const proj = db._store.get(baseProject.id)
-    expect(proj?.last_meaningful_movement).toBeNull()
+    expect(lmmCaseWrites().length).toBe(0)
+    expect(proj().last_meaningful_movement).toBeNull()
   })
 })

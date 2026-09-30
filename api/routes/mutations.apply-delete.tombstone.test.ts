@@ -5,232 +5,113 @@
 // without setting status — PB's pull guard (hub.py:1315-1339) refused the
 // row as a malformed tombstone, creating a dead-letter loop.
 //
-// Also asserts that applyDelete on a Lane-3 table (agent_knowledge, which has
-// no status column) does NOT attempt to set status — confirming the
-// STATUS_BEARING_DELETE_TABLES gate fires correctly.
+// Also asserts that applyDelete on a Lane-3 table (sessions, which has no
+// status column) does NOT set status — the STATUS_BEARING_DELETE_TABLES gate.
+//
+// #8862: runs on the migration-chain database (api/test-support/prod-schema-db.ts),
+// not the SET-clause-parsing stub it used to. The stub treated the receipt
+// INSERT and the cascade DELETEs as no-ops, so a NULL receipt body (the
+// 2026-09-24 bug: original_response_json is NOT NULL in prod) passed here.
+// Every test below now also reads the receipt row the batch wrote.
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
+import type Database from 'better-sqlite3'
 import { nowInstant } from '../lib/time'
 import { applyDelete } from './mutations'
 import type { Mutation } from './mutations'
-import { withSequentialBatch } from '../test-support/sequential-batch'
-
-// DB stub that stores rows in-memory and applies UPDATEs by parsing SET clauses.
-// Mirrors the pattern from mutations.deleted-status.test.ts but extended to
-// handle batch() (cascade cleanup) and records the last UPDATE SQL for assertion.
-function makeStubDB() {
-  const store: Map<string, Record<string, unknown>> = new Map()
-  let lastUpdateSql = ''
-
-  function makeStmt(sql: string, boundVals: unknown[]) {
-    return {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-      first: async <T>() => {
-        // readCanonical: SELECT * FROM <table> WHERE id = ?
-        // applyDelete pre-check: SELECT * FROM <table> WHERE id = ?
-        const id = boundVals[0] as string
-        return (store.get(id) ?? null) as T | null
-      },
-      run: async () => {
-        const upper = sql.trim().toUpperCase()
-        if (upper.startsWith('UPDATE') && !upper.includes('processed_mutations')) {
-          lastUpdateSql = sql
-          // Apply the SET clause to the matching store row.
-          const setMatch = sql.match(/SET (.+?) WHERE/s)
-          if (setMatch) {
-            const pairs = setMatch[1].split(',').map(s => s.trim())
-            // The WHERE clause is "id = ?" for simple PK tables.
-            // The last bound value is the record id (simple PK tables).
-            const id = boundVals[boundVals.length - 1] as string
-            const row = store.get(id)
-            if (row) {
-              let paramIdx = 0
-              for (const pair of pairs) {
-                const eqIdx = pair.indexOf('=')
-                const col = pair.slice(0, eqIdx).trim()
-                const placeholder = pair.slice(eqIdx + 1).trim()
-                if (placeholder.includes('datetime')) {
-                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
-                } else if (placeholder.toUpperCase() === 'NULL') {
-                  row[col] = null
-                } else if (placeholder.startsWith("'") && placeholder.endsWith("'")) {
-                  // Literal string value — e.g. status = 'deleted'
-                  row[col] = placeholder.slice(1, -1)
-                } else {
-                  row[col] = boundVals[paramIdx++]
-                }
-              }
-              store.set(id, row)
-            }
-          }
-        } else if (upper.startsWith('DELETE') || upper.startsWith('INSERT INTO processed_mutations')) {
-          // Cascade cleanup DELETEs and processed_mutations writes are no-ops
-          // for unit-test purposes.
-        }
-        return { meta: { changes: 1 } }
-      },
-    }
-  }
-
-  return {
-    _store: store,
-    _lastUpdateSql: () => lastUpdateSql,
-    prepare: (sql: string) => makeStmt(sql, []),
-    batch: async (stmts: Array<{ run: () => Promise<unknown> }>) => {
-      return Promise.all(stmts.map(s => s.run()))
-    },
-  }
-}
+import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db'
 
 const fakeUser = { email: 'test@example.com', role: 'admin' } as import('../helpers').AuthUser
 
+let db: InstanceType<typeof Database>
+let env: import('../helpers').Env
+beforeEach(() => {
+  db = prodSchemaDb()
+  env = { DB: d1Adapter(db) } as unknown as import('../helpers').Env
+})
+
+function del(table: string, recordId: string, mutationId: string, baseSeq: number | null): Mutation {
+  return {
+    mutation_id: mutationId,
+    origin_machine: 'home',
+    table,
+    op: 'delete',
+    record_id: recordId,
+    base_seq: baseSeq,
+    base_row_hash: null,
+    patch: {},
+    client_ts: nowInstant(),
+    issued_at: nowInstant(),
+  } as Mutation
+}
+
+const receipt = (id: string) =>
+  db.prepare('SELECT outcome, original_response_json, table_name, record_id FROM processed_mutations WHERE mutation_id = ?').get(id) as
+    | { outcome: string; original_response_json: string; table_name: string; record_id: string }
+    | undefined
+
 describe('M33 forward guard — applyDelete (Site 1: mutations.ts)', () => {
-  it('stamps status=deleted AND deleted_at on a tasks row', async () => {
+  it('stamps status=deleted AND deleted_at on a tasks row, with a receipt', async () => {
     const taskId = 'task_01hw_m33_test_000000000001'
-    const db = makeStubDB()
-    db._store.set(taskId, {
-      id: taskId,
-      name: 'M33 test task',
-      status: 'todo',
-      deleted_at: null,
-      seq: 1,
-      last_mutation_id: null,
-    })
+    db.prepare("INSERT INTO tasks (id, title, assignee, status) VALUES (?, 'M33 test task', 'nick', 'todo')").run(taskId)
 
-    const mut: Mutation = {
-      mutation_id: 'mut_01hw_m33_test_000000000001',
-      origin_machine: 'home',
-      table: 'tasks',
-      op: 'delete',
-      record_id: taskId,
-      base_seq: 1,
-      base_row_hash: null,
-      patch: {},
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
+    const result = await applyDelete(env, del('tasks', taskId, 'mut_01hw_m33_test_000000000001', null), fakeUser)
+    expect(result.status).toBe('accepted')
 
-    const fakeEnv = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const result = await applyDelete(fakeEnv, mut, fakeUser)
-
-    expect(result.status).toMatch(/^(accepted|merged_clean)$/)
-
-    const row = db._store.get(taskId)!
+    const row = db.prepare('SELECT status, deleted_at, last_mutation_id FROM tasks WHERE id = ?').get(taskId) as Record<string, unknown>
     expect(row.status).toBe('deleted')
     expect(typeof row.deleted_at).toBe('string')
     expect((row.deleted_at as string).length).toBeGreaterThan(0)
+    expect(row.last_mutation_id).toBe('mut_01hw_m33_test_000000000001')
+
+    const r = receipt('mut_01hw_m33_test_000000000001')!
+    expect(r.outcome).toBe('accepted')
+    expect(r.table_name).toBe('tasks')
+    expect(JSON.parse(r.original_response_json).status).toBe('accepted')
   })
 
-  it('stamps status=deleted AND deleted_at on a projects row', async () => {
+  it('stamps status=deleted AND deleted_at on a projects row, with a receipt', async () => {
     const projId = 'proj_01hw_m33_test_000000000001'
-    const db = makeStubDB()
-    db._store.set(projId, {
-      id: projId,
-      name: 'M33 test project',
-      slug: 'm33-test-project',
-      status: 'active',
-      deleted_at: null,
-      seq: 2,
-      last_mutation_id: null,
-    })
+    db.prepare("INSERT INTO projects (id, title, slug, status) VALUES (?, 'M33 test project', 'm33-test-project', 'active')").run(projId)
 
-    const mut: Mutation = {
-      mutation_id: 'mut_01hw_m33_test_000000000002',
-      origin_machine: 'home',
-      table: 'projects',
-      op: 'delete',
-      record_id: projId,
-      base_seq: 2,
-      base_row_hash: null,
-      patch: {},
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
+    const result = await applyDelete(env, del('projects', projId, 'mut_01hw_m33_test_000000000002', null), fakeUser)
+    expect(result.status).toBe('accepted')
 
-    const fakeEnv = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const result = await applyDelete(fakeEnv, mut, fakeUser)
-
-    expect(result.status).toMatch(/^(accepted|merged_clean)$/)
-
-    const row = db._store.get(projId)!
+    const row = db.prepare('SELECT status, deleted_at FROM projects WHERE id = ?').get(projId) as Record<string, unknown>
     expect(row.status).toBe('deleted')
     expect(typeof row.deleted_at).toBe('string')
     expect((row.deleted_at as string).length).toBeGreaterThan(0)
+    expect(receipt('mut_01hw_m33_test_000000000002')!.outcome).toBe('accepted')
   })
 
-  it('does NOT set status on a Lane-3 table (agent_knowledge has no status column)', async () => {
-    // agent_knowledge uses a composite PK (context_id). Use a simple-PK Lane-3
-    // table that IS in DELETE_CAPABLE_TABLES: 'sessions' (PK = session_id).
-    // We verify the UPDATE SQL does NOT contain "status" for non-status-bearing
-    // tables — the statusClause must be '' for sessions.
+  it('does NOT set status on a Lane-3 table (sessions has no status column)', async () => {
+    // The old stub accepted any status here and checked the SQL only if one
+    // was captured. On the real schema a `status = 'deleted'` clause on
+    // sessions is "no such column", so a landed delete IS the assertion.
     const sessId = 'session_2026-05-29T00-00-00_m33test'
-    const db = makeStubDB()
-    db._store.set(sessId, {
-      session_id: sessId,
-      deleted_at: null,
-      seq: 3,
-      last_mutation_id: null,
-    })
+    db.prepare('INSERT INTO sessions (session_id) VALUES (?)').run(sessId)
+    expect(db.prepare("SELECT COUNT(*) AS n FROM pragma_table_info('sessions') WHERE name = 'status'").get()).toEqual({ n: 0 })
 
-    const mut: Mutation = {
-      mutation_id: 'mut_01hw_m33_test_000000000003',
-      origin_machine: 'home',
-      table: 'sessions',
-      op: 'delete',
-      record_id: sessId,
-      base_seq: 3,
-      base_row_hash: null,
-      patch: {},
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
+    const result = await applyDelete(env, del('sessions', sessId, 'mut_01hw_m33_test_000000000003', null), fakeUser)
+    expect(result.status).toBe('accepted')
 
-    const fakeEnv = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const result = await applyDelete(fakeEnv, mut, fakeUser)
-
-    // sessions may return 'accepted' or 'already absent' depending on stub
-    // readCanonical resolution — the key assertion is the SQL shape.
-    expect(['accepted', 'merged_clean', 'error'].includes(result.status) || result.status !== undefined).toBe(true)
-
-    // The UPDATE SQL must NOT contain "status" for a non-status-bearing table
-    const updateSql = db._lastUpdateSql()
-    if (updateSql) {
-      expect(updateSql).not.toContain("status = 'deleted'")
-    }
+    const row = db.prepare('SELECT deleted_at, last_mutation_id FROM sessions WHERE session_id = ?').get(sessId) as Record<string, unknown>
+    expect(typeof row.deleted_at).toBe('string')
+    expect(row.last_mutation_id).toBe('mut_01hw_m33_test_000000000003')
+    expect(receipt('mut_01hw_m33_test_000000000003')!.outcome).toBe('accepted')
   })
 
   it('is idempotent: already-deleted row returns accepted without re-deleting', async () => {
     const taskId = 'task_01hw_m33_test_000000000004'
     const existingDeletedAt = '2026-05-28 10:00:00'
-    const db = makeStubDB()
-    db._store.set(taskId, {
-      id: taskId,
-      name: 'Already deleted',
-      status: 'deleted',
-      deleted_at: existingDeletedAt,
-      seq: 5,
-      last_mutation_id: 'mut_prev',
-    })
+    db.prepare(
+      "INSERT INTO tasks (id, title, assignee, status, deleted_at, last_mutation_id) VALUES (?, 'Already deleted', 'nick', 'deleted', ?, 'mut_prev')",
+    ).run(taskId, existingDeletedAt)
 
-    const mut: Mutation = {
-      mutation_id: 'mut_01hw_m33_test_000000000005',
-      origin_machine: 'home',
-      table: 'tasks',
-      op: 'delete',
-      record_id: taskId,
-      base_seq: 5,
-      base_row_hash: null,
-      patch: {},
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
-
-    const fakeEnv = { DB: withSequentialBatch(db) } as unknown as import('../helpers').Env
-    const result = await applyDelete(fakeEnv, mut, fakeUser)
-
+    const result = await applyDelete(env, del('tasks', taskId, 'mut_01hw_m33_test_000000000005', null), fakeUser)
     expect(result.status).toBe('accepted')
-    // deleted_at must not have been overwritten
-    const row = db._store.get(taskId)!
+    const row = db.prepare('SELECT deleted_at, last_mutation_id FROM tasks WHERE id = ?').get(taskId) as Record<string, unknown>
     expect(row.deleted_at).toBe(existingDeletedAt)
+    expect(row.last_mutation_id).toBe('mut_prev')
   })
 })

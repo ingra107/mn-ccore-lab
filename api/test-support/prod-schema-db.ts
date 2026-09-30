@@ -15,6 +15,20 @@
 // migration: the deploy plan's Step 0 reads prod sqlite_master for that.
 //
 // Built once per test worker and cloned per call (serialize/deserialize).
+//
+// Contract (#8862, pinned by api/test-support/prod-schema-db.test.ts):
+//   - every clone enforces foreign keys, as D1 does on every query. The
+//     connection setting is not stored in the image; prodSchemaDb() sets it
+//     and throws if it does not read back as 1, so an FK-off clone cannot be
+//     handed out. (Evidence D1 enforces: scripts/p2_hub_rekey_apply.py records
+//     a prod delete refused by an FK a local SQLite dry run had let through.)
+//   - the built image passes PRAGMA foreign_key_check (rows the chain seeds
+//     are consistent);
+//   - clones are independent of each other and of the image;
+//   - d1Adapter's batch() is one transaction: a failing statement rolls back
+//     every earlier statement of the same batch, as D1's does.
+// Write-path tests use this fixture, not a hand-written schema or a stub that
+// simulates SQL; scripts/check-api-test-fixtures.mjs refuses new ones.
 
 import Database from 'better-sqlite3'
 import { readFileSync } from 'node:fs'
@@ -38,15 +52,47 @@ function buildImage(): Buffer {
       throw new Error(`prod-schema-db: ${m.file} failed to apply: ${(e as Error).message}`)
     }
   }
+  const violations = db.pragma('foreign_key_check') as unknown[]
+  if (violations.length > 0) {
+    throw new Error(`prod-schema-db: the migrated image fails foreign_key_check: ${JSON.stringify(violations.slice(0, 5))}`)
+  }
   const buf = db.serialize()
   db.close()
   return buf
 }
 
-/** A fresh in-memory database carrying the full migrated Hub schema. */
+/** A fresh in-memory database carrying the full migrated Hub schema, FKs enforced. */
 export function prodSchemaDb(): InstanceType<typeof Database> {
   if (!image) image = buildImage()
-  return new Database(image)
+  const db = new Database(image)
+  db.pragma('foreign_keys = ON')
+  if (db.pragma('foreign_keys', { simple: true }) !== 1) {
+    throw new Error('prod-schema-db: foreign_keys did not read back ON; D1 enforces foreign keys')
+  }
+  return db
+}
+
+/**
+ * Insert one row with the named columns and return the stored row, so a test
+ * sees what the schema's defaults and triggers made of it (seq included).
+ */
+export function insertRow(
+  db: InstanceType<typeof Database>, table: string, row: Record<string, unknown>,
+): Record<string, unknown> {
+  const cols = Object.keys(row)
+  const info = db.prepare(
+    `INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
+  ).run(...cols.map((c) => row[c]))
+  return db.prepare(`SELECT * FROM ${table} WHERE rowid = ?`).get(info.lastInsertRowid) as Record<string, unknown>
+}
+
+/** The processed_mutations receipt for a mutation id, or undefined. */
+export function receiptOf(db: InstanceType<typeof Database>, mutationId: string) {
+  return db.prepare(
+    'SELECT outcome, original_response_json, table_name, record_id FROM processed_mutations WHERE mutation_id = ?',
+  ).get(mutationId) as
+    | { outcome: string; original_response_json: string; table_name: string; record_id: string }
+    | undefined
 }
 
 /**
@@ -58,6 +104,8 @@ export function prodSchemaDb(): InstanceType<typeof Database> {
  */
 export function d1Adapter(db: InstanceType<typeof Database>, hooks: {
   failSql?: RegExp; failTimes?: number; beforeBatch?: () => void
+  /** Called with every statement the engine executes, before it runs. */
+  onExec?: (sql: string, vals: unknown[]) => void
 } = {}) {
   function d1Error(e: unknown): Error {
     const err = e as { message?: string; code?: string }
@@ -66,6 +114,7 @@ export function d1Adapter(db: InstanceType<typeof Database>, hooks: {
     return new Error(`D1_ERROR: ${err.message}: ${base}${code !== base ? ` (extended: ${code})` : ''}`)
   }
   function exec(sql: string, vals: unknown[], mode: 'all' | 'run') {
+    hooks.onExec?.(sql, vals)
     if (hooks.failSql && hooks.failSql.test(sql) && (hooks.failTimes ?? 0) > 0) {
       hooks.failTimes = (hooks.failTimes ?? 0) - 1
       throw new Error('D1_ERROR: simulated D1 failure: SQLITE_ERROR')
