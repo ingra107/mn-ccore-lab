@@ -150,11 +150,15 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   GET  /api/project-publications — every link, for the row chips.
     // 272 as of 2026-09-24 — archive/restore a project link (+1, PB #2089):
     //   POST /api/links/:id/role — { role: 'key' | 'archive' }.
+    // 269 as of 2026-09-30 — the email-drafts mirror retired (-3, PB #8836):
+    //   GET /api/email-drafts, GET /api/email-drafts/pending,
+    //   POST /api/email-drafts/sync-bulk. Its only reader, a hidden card,
+    //   never showed a draft.
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(272)
+    expect(ROUTE_REGISTRY).toHaveLength(269)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {
