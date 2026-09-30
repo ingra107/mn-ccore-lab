@@ -1,0 +1,47 @@
+-- schema-v115-drop-email-drafts.sql (2026-09-30)
+--
+-- Drops the email_drafts table -- backlog #8836 (PB Docs/improvement-backlog.md).
+--
+-- WHY: email_drafts was a Hub mirror of PB's per-machine email_draft_log
+-- (schema-v37, 2026-04-08, for the Lab Overview "Email Drafts" card). It never
+-- worked as a queue:
+--   * PB pushed rows past a created_at cursor only, so a later drafted -> sent
+--     or -> expired change never reached the Hub;
+--   * the key was PB's per-laptop INTEGER id under INSERT OR REPLACE, so the
+--     two laptops overwrote each other's rows and same-draft pairs survived as
+--     separate rows;
+--   * /pending filtered status='draft', a value PB never writes (PB writes
+--     drafted / sent / expired / skipped), and the card's hook read `data`
+--     while the route returned `drafts`, so the card never showed a draft.
+-- The route, card, hook and PB push were removed in the same change as this
+-- file. PB's local email_draft_log is untouched and remains the only store.
+--
+-- ORDER: apply only AFTER the Worker without /api/email-drafts is deployed
+-- and BOTH laptops run the PB code without push_email_drafts (otherwise a
+-- stale PB push hits a 404 route, which is harmless, but a stale Worker would
+-- 500 on a missing table).
+--
+-- PRE-DROP ARCHIVE (required; the GET route stripped gmail_draft_url, so it
+-- was never a backup). Export the raw rows first:
+--   scripts/wrangler-d1 d1 execute mnccore-lab --remote --json \
+--     --command "SELECT * FROM email_drafts" > <archive-dir>/email_drafts-rows.json
+-- Do not try to reconcile or delete rows by id: ids collide across laptops.
+--
+-- ROLLBACK: take a D1 Time Travel bookmark immediately before running this
+--   file, then: wrangler d1 time-travel restore mnccore-lab --bookmark=<it>
+-- (or re-run the email_drafts CREATE from schema-v37.sql and re-import the
+-- archive). No forward re-CREATE here on purpose, per schema-v99.
+--
+-- APPLY (test first, then prod; sanctioned wrapper only; prod needs Nick):
+--   scripts/wrangler-d1 d1 execute mnccore-lab-test --remote --file=api/schema-v115-drop-email-drafts.sql
+--   scripts/wrangler-d1 d1 execute mnccore-lab      --remote --file=api/schema-v115-drop-email-drafts.sql
+--
+-- AFTER APPLY: remove the now-dead `email_drafts` entries from
+-- api/lib/task-cols.ts TABLE_PRIVATE_COLS (+ its case in task-cols.test.ts)
+-- and from scripts/check-select-star.mjs PRIVATE_TABLES. They are kept until
+-- the table is gone because the table still holds private gmail_draft_url
+-- values and the guard is what keeps a future SELECT * from returning them.
+
+DROP TABLE IF EXISTS email_drafts;
+
+INSERT OR IGNORE INTO schema_migrations (version, filename) VALUES (115, 'schema-v115-drop-email-drafts.sql');

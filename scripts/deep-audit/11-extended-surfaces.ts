@@ -128,12 +128,6 @@ async function main() {
     if (heatmapResp.ok()) pass(s, '11.L /api/file-activity/heatmap responds')
     else bug(s, 'HEATMAP-FAIL', 'P2', '11.L GET /api/file-activity/heatmap', `HTTP ${heatmapResp.status()}`, '200')
 
-    // ═══════════════════ EMAIL DRAFTS ═══════════════════
-    section(s, '11.M  Email drafts endpoint (synced from brain.db)')
-    const drafts = await apiGet<Array<{ id: string }>>(s, '/api/email-drafts')
-    if (!drafts) bug(s, 'EMAIL-DRAFTS-GET', 'P2', '11.M GET /api/email-drafts', 'null', 'array')
-    else pass(s, `11.M /api/email-drafts returns ${drafts.length} drafts`)
-
     // ═══════════════════ DISPATCH QUEUE ═══════════════════
     section(s, '11.N  Dispatch queue endpoint (/api/pb/dispatch/pending)')
     const dispatchResp = await s.api.get('/api/pb/dispatch/pending')

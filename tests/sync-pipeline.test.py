@@ -748,24 +748,6 @@ class TestNewFeatureSync:
         print(f"  D1 session stats: {d1_stats}")
         print(f"  ✓ Claude sessions pushed to D1")
 
-    def test_25_push_email_drafts_to_d1(self):
-        """brain.db email_draft_log → push → verify D1 has drafts."""
-        rows = brain_query("SELECT COUNT(*) as cnt FROM email_draft_log")
-        brain_count = rows[0]["cnt"]
-        print(f"  brain.db email_draft_log: {brain_count}")
-
-        if brain_count == 0:
-            print(f"  ✓ Skipped --no email draft data")
-            return
-
-        output = run_push()
-
-        d1_drafts = d1_get("/email-drafts")
-        d1_count = len(d1_drafts.get("data", []))
-        print(f"  D1 email_drafts after push: {d1_count}")
-        assert d1_count > 0, "No email drafts in D1 after push"
-        print(f"  ✓ Email drafts pushed to D1")
-
     def test_26_push_file_activity_to_d1(self):
         """brain.db file_activity → push aggregated daily → verify D1 has heatmap data."""
         rows = brain_query("SELECT COUNT(*) as cnt FROM file_activity")
@@ -1163,19 +1145,6 @@ class TestFullRoundTripWorkflows:
         if matching:
             print(f"  D1 session: duration={matching[0].get('duration_minutes')}min")
         print(f"  ✓ Pomodoro data in D1 for Hub card to render")
-
-    def test_40_email_draft_roundtrip_braindb_to_hub_card(self):
-        """brain.db email_draft_log → push → verify D1 pending count."""
-        rows = brain_query("SELECT COUNT(*) as cnt FROM email_draft_log WHERE status='draft' OR status IS NULL")
-        brain_pending = rows[0]["cnt"]
-        print(f"  brain.db pending email drafts: {brain_pending}")
-
-        run_push()
-
-        d1_pending = d1_get("/email-drafts/pending")
-        d1_count = d1_pending.get("count", 0)
-        print(f"  D1 pending email drafts: {d1_count}")
-        print(f"  ✓ Email draft count available for Hub card")
 
     def test_41_key_links_roundtrip_braindb_to_hub_to_braindb(self):
         """brain.db key_links → push → Hub shows icons → edit in Hub → pull → brain.db updated."""

@@ -2856,24 +2856,6 @@
       "covered": false
     },
     {
-      "id": "api-get-email-drafts",
-      "component": "api/routes/email-drafts.ts",
-      "type": "api",
-      "description": "GET /api/email-drafts — email drafts list",
-      "test_file": null,
-      "test_name": null,
-      "covered": false
-    },
-    {
-      "id": "api-get-email-drafts-pending",
-      "component": "api/routes/email-drafts.ts",
-      "type": "api",
-      "description": "GET /api/email-drafts/pending — pending email drafts",
-      "test_file": null,
-      "test_name": null,
-      "covered": false
-    },
-    {
       "id": "api-get-pb-relay",
       "component": "api/routes/pb-relay.ts",
       "type": "api",
@@ -3280,8 +3262,6 @@
     "api-get-pi-analytics",
     "api-get-proactive-brief",
     "api-get-file-activity",
-    "api-get-email-drafts",
-    "api-get-email-drafts-pending",
     "api-get-pb-relay",
     "api-get-pb-dispatch-pending",
     "api-post-digest-status",
@@ -3303,9 +3283,9 @@
     "form-publication-search"
   ],
   "summary": {
-    "total": 362,
+    "total": 360,
     "covered": 314,
-    "uncovered": 48,
-    "coverage_pct": 86.7
+    "uncovered": 46,
+    "coverage_pct": 87.2
   }
 }

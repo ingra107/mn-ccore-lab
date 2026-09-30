@@ -31,7 +31,6 @@ export type EntityName =
   | 'manuscripts'
   | 'meetings'
   | 'inbox-events'
-  | 'email-drafts'
   | 'project-documents'
   | 'deadline-cascade'
   | 'files'

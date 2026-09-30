@@ -62,7 +62,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | task_updates | DROPPED 2026-06-10 | schema-v78; endpoints remain as activity_entries projections; snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
 | lab_settings | 7 | Key-value settings store (includes `pi_emails` JSON, schema v44) |
 | workflow_templates | 3+ | Custom project stage templates |
-| email_drafts | dynamic | Email draft status synced from brain.db (schema v37) |
+| email_drafts | RETIRING | No reader or writer since the mirror was retired 2026-09-30 (#8836); drop pending in schema-v115 |
 | file_activity_daily | dynamic | Aggregated daily file activity from brain.db (schema v37) |
 | pomodoro_sessions | dynamic | Focus sessions synced from brain.db |
 | dispatch_queue | dynamic | Claude action items from Hub |
@@ -159,10 +159,6 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 - POST /api/revisions (accepts `project_id` OR `project_slug`, `reviewer_comments` alias for `notes`)
 - POST /api/revisions/:id, POST /api/revisions/:id/comments
 
-### Email Drafts (Phase 29)
-- GET /api/email-drafts (?status=draft filter), /api/email-drafts/pending
-- POST /api/email-drafts/sync-bulk (brain.db push)
-
 ### Proactive Brief (Phase 29)
 - GET /api/proactive-brief (overdue, due-today, stale projects, milestones, suggested focus, bullets)
 
@@ -238,15 +234,13 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | `api/routes/uploads.ts` | R2 file upload API |
 | `api/lib/email.ts` | Resend email integration (ready, needs API key) |
 | `src/components/dashboard/PomodoroStatsCard.tsx` | Focus hours/streak/top project dashboard card (Phase 29) |
-| `src/components/dashboard/EmailDraftsCard.tsx` | Pending email draft count + Gmail links (Phase 29) |
 | `src/components/dashboard/ProactiveBriefCard.tsx` | Overdue/due-today/focus suggestion intelligence card (Phase 29) |
 | `src/components/dashboard/SystemHealthMiniCard.tsx` | Green/amber/red sync health indicator (Phase 29) |
 | `src/components/dashboard/FileActivityCard.tsx` | GitHub-style calendar heatmap of file activity (Phase 29) |
 | `src/components/QuickCaptureBar.tsx` | Dashboard capture trigger → opens the canonical GlobalQuickAddModal (shortcut `q`; Ctrl+N retired 2026-06-10 — browser-reserved, never fired) |
-| `api/routes/email-drafts.ts` | Email draft sync + pending count API (Phase 29) |
 | `api/routes/proactive-brief.ts` | Computed intelligence: overdue, stale, focus suggestion (Phase 29) |
 | `api/routes/file-activity.ts` | File activity heatmap + sync API (Phase 29) |
-| `api/schema-v37.sql` | Key link columns + email_drafts + file_activity_daily tables |
+| `api/schema-v37.sql` | Key link columns + email_drafts (dropped by schema-v115, #8836) + file_activity_daily tables |
 | `api/schema-v41.sql` | team_members `full_name` + `preferred_name` (Phase 35) |
 | `api/schema-v42.sql` | projects key_link_1/2/3 + _desc (Phase 35) |
 | `api/schema-v43.sql` | team_members.email column + slug-derived backfill (Phase 36) |

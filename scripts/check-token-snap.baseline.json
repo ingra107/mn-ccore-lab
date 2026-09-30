@@ -78,12 +78,6 @@
     "sample": "marginTop: 4px → var(--sp-xs)"
   },
   {
-    "file": "src/components/dashboard/EmailDraftsCard.tsx",
-    "line": 41,
-    "kind": "spacing-px-literal",
-    "sample": "marginBottom: 4px → var(--sp-xs)"
-  },
-  {
     "file": "src/components/dashboard/GrantTimelineCard.tsx",
     "line": 134,
     "kind": "spacing-px-literal",

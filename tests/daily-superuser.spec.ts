@@ -2335,15 +2335,6 @@ test.describe('DATA — Dashboard cards show real data', () => {
     }
   })
 
-  test('Email Drafts API returns correct pending count', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/email-drafts/pending`)
-    if (res.status() === 200) {
-      const data = await res.json()
-      console.log(`Email drafts pending: ${data.count}`)
-      expect(typeof data.count).toBe('number')
-    }
-  })
-
   test('File Activity API returns heatmap with date entries', async ({ request }) => {
     const res = await request.get(`${BASE}/api/file-activity/heatmap?days=30`)
     if (res.status() === 200) {

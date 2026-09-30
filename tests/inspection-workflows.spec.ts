@@ -2303,33 +2303,6 @@ test.describe('VISUAL — Missing page screenshots', () => {
 // ═════════════════════════════════════════════════════════════════════
 
 test.describe('API — New feature endpoints (schema v37+)', () => {
-  // Feature 3: Email Drafts
-  test('API GET: /api/email-drafts → 200', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/email-drafts`)
-    expect([200, 404]).toContain(res.status())
-  })
-
-  test('API GET: /api/email-drafts/pending → 200', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/email-drafts/pending`)
-    expect(res.status()).toBe(200)
-    const data = await res.json()
-    expect(data).toHaveProperty('count')
-  })
-
-  test('API POST: /api/email-drafts/sync-bulk → accepts draft array', async ({ request }) => {
-    const res = await request.post(`${BASE}/api/email-drafts/sync-bulk`, {
-      data: { drafts: [{
-        id: 'test-draft-001',
-        task_id: null,
-        gmail_draft_url: 'https://mail.google.com/test',
-        draft_type: 'reply',
-        status: 'draft',
-        created_at: new Date().toISOString(),
-      }]}
-    })
-    expect([200, 201]).toContain(res.status())
-  })
-
   // Feature 4: Proactive Brief
   test('API GET: /api/proactive-brief → 200 with structured response', async ({ request }) => {
     const res = await request.get(`${BASE}/api/proactive-brief`)

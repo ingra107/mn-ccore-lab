@@ -78,7 +78,6 @@ import { handleGetSubmissions, handleCreateSubmission, handleUpdateSubmission, h
 import { handleGetRegulatoryItems, handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRenewRegulatoryItem, handleRegulatoryIcs } from './routes/regulatory';
 import { handleGetGrantMilestones, handleUpcomingGrantMilestones, handleCreateGrantMilestone, handleUpdateGrantMilestone, handleCompleteGrantMilestone } from './routes/grant-milestones';
 import { handleGetConferences, handleGetUpcomingConferences, handleCreateConference, handleUpdateConference, handleDeleteConference } from './routes/conferences';
-import { handleGetEmailDrafts, handleGetPendingDrafts, handleSyncEmailDrafts } from './routes/email-drafts';
 import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeleteProjectDocument } from './routes/project-documents';
 import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
@@ -1768,26 +1767,6 @@ defineRoute({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Email drafts (reads)
-// ─────────────────────────────────────────────────────────────────────────────
-defineRoute({
-  method: 'GET',
-  path: '/api/email-drafts',
-  auth: 'authed',
-  entity: 'email-drafts',
-  visibility: 'na',
-  handler: (c) => handleGetEmailDrafts(U(c), E(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/email-drafts/pending',
-  auth: 'authed',
-  entity: 'email-drafts',
-  visibility: 'na',
-  handler: (c) => handleGetPendingDrafts(R(c), E(c)),
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Proactive brief / digest preview / file activity
 // ─────────────────────────────────────────────────────────────────────────────
 defineRoute({
@@ -3074,16 +3053,6 @@ defineRoute({
   entity: 'digest',
   visibility: 'na',
   handler: (c) => handleSendDailyDigests(E(c), { kind: 'http', request: R(c) }),
-});
-
-// Email drafts sync
-defineRoute({
-  method: 'POST',
-  path: '/api/email-drafts/sync-bulk',
-  auth: 'authed',
-  entity: 'email-drafts',
-  visibility: 'na',
-  handler: (c) => handleSyncEmailDrafts(R(c), E(c)),
 });
 
 // File activity sync

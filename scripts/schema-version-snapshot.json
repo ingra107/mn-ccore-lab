@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "2d048186819f93ff5d7cfd7a255cc95fde17a0ea5aa963656662dc4b8f700f03",
-  "file_count": 118,
+  "hash": "cbfffff9ab1f133aa5f1344205b255a66835058b68661c1b0f8161e94b6762d2",
+  "file_count": 119,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -120,11 +120,12 @@
     "schema-v111-tasks-question.sql",
     "schema-v112-digest-summary.sql",
     "schema-v113-tasks-title-dedup-recurring-exempt.sql",
-    "schema-v114-tasks-question-consumed.sql"
+    "schema-v114-tasks-question-consumed.sql",
+    "schema-v115-drop-email-drafts.sql"
   ],
   "version_range": [
     2,
-    114
+    115
   ],
   "gaps": [
     35,

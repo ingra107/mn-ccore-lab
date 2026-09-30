@@ -33,7 +33,6 @@ import InsightsCard from '../components/dashboard/InsightsCard'
 import WeeklyProgressCard from '../components/dashboard/WeeklyProgressCard'
 import QuickWinsCard from '../components/dashboard/QuickWinsCard'
 import PomodoroStatsCard from '../components/dashboard/PomodoroStatsCard'
-import EmailDraftsCard from '../components/dashboard/EmailDraftsCard'
 import ProactiveBriefCard from '../components/dashboard/ProactiveBriefCard'
 import SystemHealthMiniCard from '../components/dashboard/SystemHealthMiniCard'
 import FileActivityCard from '../components/dashboard/FileActivityCard'
@@ -70,7 +69,6 @@ const CARD_TABS: Record<string, DashboardTab[]> = {
   'weekly-progress': ['overview', 'deadlines'],
   'quick-wins': ['overview', 'deadlines'],
   'pomodoro-stats': ['overview'],
-  'email-drafts': ['overview', 'deadlines'],
   'proactive-brief': ['overview'],
   'system-health': ['overview'],
   'file-activity': ['overview', 'projects'],
@@ -94,7 +92,6 @@ const CARD_REGISTRY = [
   { id: 'weekly-progress', label: 'Weekly Progress', component: WeeklyProgressCard, defaultVisible: true },
   { id: 'quick-wins', label: 'Quick Wins', component: QuickWinsCard, defaultVisible: true },
   { id: 'pomodoro-stats', label: 'Focus Time', component: PomodoroStatsCard, defaultVisible: false },
-  { id: 'email-drafts', label: 'Email Drafts', component: EmailDraftsCard, defaultVisible: false },
   { id: 'proactive-brief', label: 'Your Brief', component: ProactiveBriefCard, defaultVisible: true },
   { id: 'system-health', label: 'System Health', component: SystemHealthMiniCard, defaultVisible: false },
   { id: 'file-activity', label: 'File Activity', component: FileActivityCard, defaultVisible: false },

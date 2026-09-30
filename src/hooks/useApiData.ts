@@ -1791,19 +1791,6 @@ interface LinkedProject {
   pi: string | null
 }
 
-// ── Email Drafts Pending ────────────────────────────────────
-
-export function useEmailDraftsPending() {
-  return useQuery({
-    queryKey: ['email-drafts-pending'],
-    queryFn: async () => {
-      const data = await fetchJson<{ data?: unknown[] }>('/api/email-drafts/pending')
-      return data.data ?? []
-    },
-    staleTime: 2 * 60 * 1000,
-  })
-}
-
 // ── Proactive Brief ─────────────────────────────────────────
 
 export function useProactiveBrief() {

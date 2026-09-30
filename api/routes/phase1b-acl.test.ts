@@ -9,7 +9,7 @@
 //   6. Regulatory ICS — auth-only gate (not PI-only)
 //   7. Uploads create (url + done) — canAccessEntity on context/entityId
 //   8. Decisions create — resolveActor rejects foreign decided_by for non-PI
-//   9. Email-drafts sync-bulk — PI-or-API-key gate
+//   9. (retired 2026-09-30, #8836: the email-drafts sync-bulk route was removed)
 //  10. File-activity sync — PI-or-API-key gate
 //  11. Meeting detail — full row for authed, public cols for unauth
 //
@@ -29,7 +29,6 @@ import { handleInboxEvents, handleSyncBulkInboxEvents } from './inbox-events'
 import { handleRegulatoryIcs } from './regulatory'
 import { handleUploadUrl, handleUploadDone, handleGetFile } from './uploads'
 import { handleCreateDecision } from './decisions'
-import { handleSyncEmailDrafts } from './email-drafts'
 import { handleSyncFileActivity } from './file-activity'
 import { handleGetMeeting, handleGetAgendaItems, handleMeetingPrep, handleGenerateAgenda } from './meetings'
 import type { Env } from '../helpers'
@@ -785,66 +784,6 @@ describe('handleCreateDecision — resolveActor for decided_by', () => {
     expect(res.status).toBe(400)
     const body = await res.json() as { error: string }
     expect(body.error).toMatch(/unknown actor/i)
-  })
-})
-
-// ── 9. Email-drafts sync-bulk — PI-or-API-key gate ──────────────────────────
-
-describe('handleSyncEmailDrafts — PI-or-API-key gate', () => {
-  function draftEnv() {
-    return piEnv()
-  }
-
-  it('returns 403 for unauthenticated callers', async () => {
-    const req = new Request('https://x/api/email-drafts/sync-bulk', {
-      method: 'POST',
-      body: JSON.stringify({ drafts: [{ id: 'd1', status: 'draft' }] }),
-      headers: { 'Content-Type': 'application/json' },
-    })
-    const res = await handleSyncEmailDrafts(req, draftEnv())
-    expect(res.status).toBe(403)
-  })
-
-  it('returns 403 for non-PI team members', async () => {
-    const req = new Request('https://x/api/email-drafts/sync-bulk', {
-      method: 'POST',
-      body: JSON.stringify({ drafts: [{ id: 'd1', status: 'draft' }] }),
-      headers: {
-        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
-        'X-Test-User': NON_PI_EMAIL,
-        'Content-Type': 'application/json',
-      },
-    })
-    const res = await handleSyncEmailDrafts(req, draftEnv())
-    expect(res.status).toBe(403)
-  })
-
-  it('returns 200 for PI callers', async () => {
-    const req = new Request('https://x/api/email-drafts/sync-bulk', {
-      method: 'POST',
-      body: JSON.stringify({ drafts: [{ id: 'd1', status: 'draft' }] }),
-      headers: {
-        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
-        'X-Test-User': PI_EMAIL,
-        'Content-Type': 'application/json',
-      },
-    })
-    const res = await handleSyncEmailDrafts(req, draftEnv())
-    expect(res.status).toBe(200)
-  })
-
-  it('returns 200 for API-key callers (PB sync service)', async () => {
-    const env = makeEnv({ PB_API_KEY: 'valid-test-api-key' } as unknown as Env)
-    const req = new Request('https://x/api/email-drafts/sync-bulk', {
-      method: 'POST',
-      body: JSON.stringify({ drafts: [{ id: 'd1', status: 'draft' }] }),
-      headers: {
-        Authorization: VALID_API_KEY,
-        'Content-Type': 'application/json',
-      },
-    })
-    const res = await handleSyncEmailDrafts(req, env)
-    expect(res.status).toBe(200)
   })
 })
 
