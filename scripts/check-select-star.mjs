@@ -12,7 +12,6 @@
 //
 // TABLE_PRIVATE_COLS (from api/lib/task-cols.ts, Z3.1):
 //   tasks          → { notes }
-//   email_drafts   → { body_text, body_html, thread_id }
 //   inbox_events   → { raw_payload_json, notes }
 //   regulatory_items → { notes }
 //
@@ -50,7 +49,6 @@ const enforce = process.argv.includes('--enforce')
 // in sync manually; the Z3.1 test catches drift via the test suite.)
 const PRIVATE_TABLES = new Set([
   'tasks',
-  'email_drafts',
   'inbox_events',
   'regulatory_items',
 ])

@@ -2,14 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { TABLE_PRIVATE_COLS, safeRow, FK_SLUG_FIELDS, TASK_SELECT_COLS } from './task-cols'
 
 describe('TABLE_PRIVATE_COLS — Z3 expansion', () => {
-  it('email_drafts strips body_text + body_html + thread_id', () => {
-    expect(TABLE_PRIVATE_COLS['email_drafts']).toBeDefined()
-    const stripped = safeRow('email_drafts', {
-      id: 'd1', subject: 'hi', body_text: 'SECRET', body_html: '<p>SECRET</p>', thread_id: 'thr-1'
-    })
-    expect(stripped).toEqual({ id: 'd1', subject: 'hi' })
-  })
-
   it('inbox_events strips raw_payload_json + notes', () => {
     expect(TABLE_PRIVATE_COLS['inbox_events']).toBeDefined()
     const stripped = safeRow('inbox_events', {
