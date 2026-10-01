@@ -12,151 +12,48 @@
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import { nowInstant } from '../lib/time'
-import { handleMutations, applyUpdate, applyInsert } from './mutations'
+import { handleMutations, applyInsert } from './mutations'
 import type { Mutation } from './mutations'
 import type { Env, AuthUser, ValidationFlags } from '../helpers'
 import { _resetValidationFlagsCache } from '../helpers'
 import { enumFieldsFor, canonicalizeValue, assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains'
 import { classifyTaskDedupSelect } from '../lib/task-dedup-sql'
 import enumDomains from '../enum-domains.generated.json'
-import { withSequentialBatch } from '../test-support/sequential-batch'
+import { prodSchemaDb, d1Adapter, insertRow, receiptOf } from '../test-support/prod-schema-db'
 
 const fakeUser = { email: 'test@example.com', role: 'admin' } as AuthUser
 // M07: handleMutations now requires PI/API-key auth.
 const TEST_API_KEY = 'test-enum-validation-api-key'
 
-// ── Stub DB with lab_settings flags + tasks/projects store ──────────────────
+// ── Fixture ──────────────────────────────────────────────────────────────────
+//
+// #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+// The old stub parsed INSERT column lists and SET clauses by regex, served
+// lab_settings from a Map, treated the processed_mutations receipt INSERT as a
+// bookkeeping Set, and simulated the race-loser UNIQUE by throwing on any
+// tasks INSERT. Here the validation flags are real lab_settings rows, seq comes
+// from the v53 triggers, the dedup race trips the real partial unique index,
+// and every write claim is checked against the stored row AND the receipt.
 
-function makeStubDB(opts: {
+type Db = ReturnType<typeof prodSchemaDb>
+
+function makeDb(opts: {
   flags?: Partial<Record<string, string>>      // lab_settings key -> '1'|'0'
-  rows?: Record<string, Record<string, unknown>>
-  raceUnique?: boolean                          // simulate partial-index UNIQUE on tasks insert
-} = {}) {
-  const store = new Map<string, Record<string, unknown>>(Object.entries(opts.rows ?? {}))
-  const labSettings = new Map<string, string>(Object.entries(opts.flags ?? {}))
-  const processed = new Set<string>()
-
-  function findByTitleProject(title: string, projectId: string | null): Record<string, unknown> | null {
-    for (const row of store.values()) {
-      if (row.title === title && (row.project_id ?? null) === projectId && !row.deleted_at && row.status !== 'done') {
-        return row
-      }
-    }
-    return null
+  rows?: Array<[string, Record<string, unknown>]>
+} = {}): Db {
+  const db = prodSchemaDb()
+  for (const [key, value] of Object.entries(opts.flags ?? {})) {
+    db.prepare('INSERT OR REPLACE INTO lab_settings (key, value) VALUES (?, ?)').run(key, value)
   }
-
-  function makeStmt(sql: string, boundVals: unknown[]): any {
-    const upper = sql.trim().toUpperCase()
-    return {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-
-      first: async <T>() => {
-        if (upper.startsWith('SELECT VALUE FROM LAB_SETTINGS') || upper.includes('FROM LAB_SETTINGS WHERE KEY =')) {
-          const k = boundVals[0] as string
-          const v = labSettings.get(k)
-          return (v !== undefined ? { value: v } : null) as T | null
-        }
-        if (upper.includes('FROM PROCESSED_MUTATIONS')) {
-          return null as T | null
-        }
-        // Name-identity dedup SELECT, raw or normalized. classifyTaskDedupSelect
-        // THROWS on a `SELECT id FROM tasks` shape it does not know, so a query
-        // edit that outruns this stub is red, not a vacuous green (#530b).
-        if (classifyTaskDedupSelect(sql) === 'title') {
-          const title = boundVals[0] as string
-          const projectId = (boundVals[1] === undefined ? null : boundVals[1]) as string | null
-          const row = findByTitleProject(title, projectId)
-          return (row ? { id: row.id } : null) as T | null
-        }
-        // readCanonical / select slug etc.: SELECT * FROM <t> WHERE id = ?
-        const id = boundVals[0] as string
-        return (store.get(id) ?? null) as T | null
-      },
-
-      all: async <T>() => {
-        // getValidationFlags: SELECT key, value FROM lab_settings WHERE key IN (...)
-        if (upper.includes('FROM LAB_SETTINGS') && upper.includes('KEY IN')) {
-          const results = (boundVals as string[])
-            .filter(k => labSettings.has(k))
-            .map(k => ({ key: k, value: labSettings.get(k)! }))
-          return { results: results as T[], success: true, meta: {} }
-        }
-        return { results: [] as T[], success: true, meta: {} }
-      },
-
-      run: async () => {
-        if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) {
-          const mid = boundVals[0] as string
-          if (processed.has(mid)) return { meta: { changes: 0 } }
-          processed.add(mid)
-          return { meta: { changes: 1 } }
-        }
-        if (upper.startsWith('INSERT INTO TASKS')) {
-          if (opts.raceUnique) {
-            throw new Error('D1_ERROR: UNIQUE constraint failed: tasks.title, tasks.project_id')
-          }
-          // crude col=val capture: INSERT INTO tasks (a, b, ...) VALUES (?, ?, ...)
-          const m = sql.match(/INSERT INTO \w+ \(([^)]+)\)/i)
-          if (m) {
-            const cols = m[1].split(',').map(s => s.trim())
-            const row: Record<string, unknown> = {}
-            cols.forEach((c, i) => { row[c] = boundVals[i] })
-            row.seq = (store.size + 1)
-            store.set(row.id as string, row)
-          }
-          return { meta: { changes: 1 } }
-        }
-        if (upper.startsWith('INSERT INTO PROJECTS')) {
-          const m = sql.match(/INSERT INTO \w+ \(([^)]+)\)/i)
-          if (m) {
-            const cols = m[1].split(',').map(s => s.trim())
-            const row: Record<string, unknown> = {}
-            cols.forEach((c, i) => { row[c] = boundVals[i] })
-            row.seq = (store.size + 1)
-            store.set(row.id as string, row)
-          }
-          return { meta: { changes: 1 } }
-        }
-        if (upper.startsWith('UPDATE')) {
-          const setMatch = sql.match(/SET (.+) WHERE/s)
-          if (setMatch) {
-            const pairs = setMatch[1].split(',').map(s => s.trim())
-            const id = boundVals[boundVals.length - 1] as string
-            const row = store.get(id)
-            if (row) {
-              let paramIdx = 0
-              for (const pair of pairs) {
-                const [col, placeholder] = pair.split('=').map(s => s.trim())
-                if (placeholder && placeholder.includes('datetime')) {
-                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
-                } else if (placeholder && placeholder.toUpperCase() === 'NULL') {
-                  row[col] = null
-                } else if (placeholder && placeholder.toUpperCase().includes('CASE')) {
-                  // advanceProjectMovement CASE — skip param accounting (no-op for tests)
-                } else {
-                  row[col] = boundVals[paramIdx++]
-                }
-              }
-              row.seq = ((row.seq as number) ?? 0) + 1
-              store.set(id, row)
-            }
-          }
-          return { meta: { changes: 1 } }
-        }
-        return { meta: { changes: 0 } }
-      },
-    }
-  }
-
-  return {
-    _store: store,
-    prepare: (sql: string) => makeStmt(sql, []),
-    batch: async (stmts: Array<{ run: () => Promise<unknown> }>) => Promise.all(stmts.map(s => s.run())),
-  } as unknown as Env['DB']
+  for (const [table, row] of opts.rows ?? []) insertRow(db, table, row)
+  return db
 }
 
-function envWith(db: Env['DB']): Env {
-  return { DB: withSequentialBatch(db), PB_API_KEY: TEST_API_KEY } as unknown as Env
+const rowOf = (db: Db, table: string, id: string) =>
+  db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id) as Record<string, unknown> | undefined
+
+function envWith(db: Db, hooks: Parameters<typeof d1Adapter>[1] = {}): Env {
+  return { DB: d1Adapter(db, hooks), PB_API_KEY: TEST_API_KEY } as unknown as Env
 }
 
 async function runMutation(env: Env, mut: Mutation) {
@@ -275,7 +172,7 @@ describe('canonicalizeValue — mirrors enums.py _canonicalize', () => {
 
 describe('(a)(b) V1 enum validation', () => {
   it('(a) invalid enum -> error, row unchanged', async () => {
-    const db = makeStubDB({ flags: ALL_ON })
+    const db = makeDb({ flags: ALL_ON })
     const env = envWith(db)
     const mut: Mutation = {
       mutation_id: 'mut_a1', origin_machine: 'home', table: 'tasks', op: 'insert',
@@ -285,11 +182,15 @@ describe('(a)(b) V1 enum validation', () => {
     }
     const r = await runMutation(env, mut)
     expect(r.status).toBe('error')
-    expect((db as any)._store.has('task_aaa1')).toBe(false)
+    expect(rowOf(db, 'tasks', 'task_aaa1')).toBeUndefined()
+    // The rejection is recorded (replayable), not silently dropped.
+    const receipt = receiptOf(db, 'mut_a1')
+    expect(receipt?.outcome).toBe('error')
+    expect(JSON.parse(receipt!.original_response_json).status).toBe('error')
   })
 
   it('(b) legacy value canonicalizes and is ACCEPTED (risk-#1 guard)', async () => {
-    const db = makeStubDB({ flags: ALL_ON })
+    const db = makeDb({ flags: ALL_ON })
     const env = envWith(db)
     const mut: Mutation = {
       mutation_id: 'mut_b1', origin_machine: 'home', table: 'tasks', op: 'insert',
@@ -299,13 +200,19 @@ describe('(a)(b) V1 enum validation', () => {
     }
     const r = await runMutation(env, mut)
     expect(r.status).toBe('accepted')
-    const row = (db as any)._store.get('task_bbb1')
+    const row = rowOf(db, 'tasks', 'task_bbb1')!
     expect(row.status).toBe('todo')   // canonicalized forward
     expect(row.priority).toBe('high')
+    expect(row.last_mutation_id).toBe('mut_b1')
+    expect(receiptOf(db, 'mut_b1')?.outcome).toBe('accepted')
   })
 
   it('flags OFF -> invalid enum applies (validator dormant)', async () => {
-    const db = makeStubDB({ flags: {} })  // all OFF
+    // No hub_validate_* rows seeded: the migrated lab_settings carries none of
+    // the four flags, so getValidationFlags reads them OFF. tasks.status has no
+    // CHECK in prod, so the junk value really lands — that is what "dormant"
+    // means, and why the flag being ON in prod matters.
+    const db = makeDb({ flags: {} })  // all OFF
     const env = envWith(db)
     const mut: Mutation = {
       mutation_id: 'mut_off1', origin_machine: 'home', table: 'tasks', op: 'insert',
@@ -315,6 +222,8 @@ describe('(a)(b) V1 enum validation', () => {
     }
     const r = await runMutation(env, mut)
     expect(r.status).toBe('accepted')   // dormant — no rejection
+    expect(rowOf(db, 'tasks', 'task_off1')!.status).toBe('Banana')
+    expect(receiptOf(db, 'mut_off1')?.outcome).toBe('accepted')
   })
 })
 
@@ -322,7 +231,7 @@ describe('(a)(b) V1 enum validation', () => {
 
 describe('(e) projects.category bucket domain', () => {
   it('category=MNCCORE accepted', async () => {
-    const db = makeStubDB({ flags: ALL_ON })
+    const db = makeDb({ flags: ALL_ON })
     const env = envWith(db)
     const mut: Mutation = {
       mutation_id: 'mut_e1', origin_machine: 'home', table: 'projects', op: 'insert',
@@ -332,10 +241,12 @@ describe('(e) projects.category bucket domain', () => {
     }
     const r = await runMutation(env, mut)
     expect(r.status).toBe('accepted')
+    expect(rowOf(db, 'projects', 'proj_e1')!.category).toBe('MNCCORE')
+    expect(receiptOf(db, 'mut_e1')?.outcome).toBe('accepted')
   })
 
   it('category=R01 rejected (proves bucket-domain, not type-domain)', async () => {
-    const db = makeStubDB({ flags: ALL_ON })
+    const db = makeDb({ flags: ALL_ON })
     const env = envWith(db)
     const mut: Mutation = {
       mutation_id: 'mut_e2', origin_machine: 'home', table: 'projects', op: 'insert',
@@ -345,7 +256,8 @@ describe('(e) projects.category bucket domain', () => {
     }
     const r = await runMutation(env, mut)
     expect(r.status).toBe('error')
-    expect((db as any)._store.has('proj_e2')).toBe(false)
+    expect(rowOf(db, 'projects', 'proj_e2')).toBeUndefined()
+    expect(receiptOf(db, 'mut_e2')?.outcome).toBe('error')
   })
 })
 
@@ -353,25 +265,37 @@ describe('(e) projects.category bucket domain', () => {
 
 describe('(c)(d) V2 conflict-hash closure', () => {
   const taskId = 'task_conf1'
-  function seed() {
-    return { [taskId]: { id: taskId, title: 'C', status: 'todo', priority: 'medium', assignee: 'nick-ingraham', deleted_at: null, seq: 5, last_mutation_id: null } }
+  /** Seed the task, then edit it twice so seq advances past the base an older
+   *  writer held. Returns the CURRENT seq (what the v53 triggers made of it). */
+  function seed(db: Db): number {
+    insertRow(db, 'tasks', { id: taskId, title: 'C', status: 'todo', priority: 'medium', assignee: 'nick-ingraham' })
+    db.prepare("UPDATE tasks SET description = 'edit 1' WHERE id = ?").run(taskId)
+    db.prepare("UPDATE tasks SET description = 'edit 2' WHERE id = ?").run(taskId)
+    const seq = rowOf(db, 'tasks', taskId)!.seq as number
+    expect(seq).toBeGreaterThanOrEqual(2)
+    return seq
   }
 
   it('(c) stale-seq + no base_row_hash -> conflict, row unchanged', async () => {
-    const db = makeStubDB({ flags: ALL_ON, rows: seed() })
+    const db = makeDb({ flags: ALL_ON })
+    const seq = seed(db)
     const env = envWith(db)
     const mut: Mutation = {
       mutation_id: 'mut_c1', origin_machine: 'home', table: 'tasks', op: 'update',
-      record_id: taskId, base_seq: 2, base_row_hash: null,
+      record_id: taskId, base_seq: seq - 1, base_row_hash: null,
       patch: { priority: 'high' }, client_ts: nowInstant(), issued_at: nowInstant(),
     }
     const r = await runMutation(env, mut)
     expect(r.status).toBe('conflict')
-    expect((db as any)._store.get(taskId).priority).toBe('medium')  // unchanged
+    const row = rowOf(db, 'tasks', taskId)!
+    expect(row.priority).toBe('medium')  // unchanged
+    expect(row.seq).toBe(seq)
+    expect(receiptOf(db, 'mut_c1')?.outcome).toBe('conflict')
   })
 
   it('base_seq=null update against existing row -> conflict (blind overwrite refused)', async () => {
-    const db = makeStubDB({ flags: ALL_ON, rows: seed() })
+    const db = makeDb({ flags: ALL_ON })
+    const seq = seed(db)
     const env = envWith(db)
     const mut: Mutation = {
       mutation_id: 'mut_c2', origin_machine: 'home', table: 'tasks', op: 'update',
@@ -380,10 +304,15 @@ describe('(c)(d) V2 conflict-hash closure', () => {
     }
     const r = await runMutation(env, mut)
     expect(r.status).toBe('conflict')
+    const row = rowOf(db, 'tasks', taskId)!
+    expect(row.priority).toBe('medium')
+    expect(row.seq).toBe(seq)
+    expect(receiptOf(db, 'mut_c2')?.outcome).toBe('conflict')
   })
 
   it('(d) hub_ui exemption: base_seq=null + hub_ui origin -> applies', async () => {
-    const db = makeStubDB({ flags: ALL_ON, rows: seed() })
+    const db = makeDb({ flags: ALL_ON })
+    const seq = seed(db)
     const env = envWith(db)
     const mut: Mutation = {
       mutation_id: 'mut_d1', origin_machine: 'hub_ui:test', table: 'tasks', op: 'update',
@@ -392,30 +321,39 @@ describe('(c)(d) V2 conflict-hash closure', () => {
     }
     const r = await runMutation(env, mut)
     expect(r.status).toBe('accepted')
-    expect((db as any)._store.get(taskId).priority).toBe('high')
+    const row = rowOf(db, 'tasks', taskId)!
+    expect(row.priority).toBe('high')
+    expect(row.seq as number).toBeGreaterThan(seq)
+    expect(row.last_mutation_id).toBe('mut_d1')
+    expect(receiptOf(db, 'mut_d1')?.outcome).toBe('accepted')
   })
 
   it('non-stale hashless update still accepts (no over-rejection)', async () => {
-    const db = makeStubDB({ flags: ALL_ON, rows: seed() })
+    const db = makeDb({ flags: ALL_ON })
+    const seq = seed(db)
     const env = envWith(db)
     const mut: Mutation = {
       mutation_id: 'mut_c3', origin_machine: 'home', table: 'tasks', op: 'update',
-      record_id: taskId, base_seq: 5, base_row_hash: null,   // base_seq == current_seq
+      record_id: taskId, base_seq: seq, base_row_hash: null,   // base_seq == current_seq
       patch: { priority: 'high' }, client_ts: nowInstant(), issued_at: nowInstant(),
     }
     const r = await runMutation(env, mut)
     expect(r.status).toBe('accepted')
+    expect(rowOf(db, 'tasks', taskId)!.priority).toBe('high')
+    expect(receiptOf(db, 'mut_c3')?.outcome).toBe('accepted')
   })
 })
 
 // ── (f) V3 adoptable dedup ───────────────────────────────────────────────────
 
 describe('(f) V3 adoptable dedup', () => {
+  const taskCount = (db: Db) => (db.prepare('SELECT COUNT(*) AS n FROM tasks').get() as { n: number }).n
+
   it('serial dedup returns accepted + canonical_id, no new row', async () => {
     const winner = 'task_win1'
-    const db = makeStubDB({
+    const db = makeDb({
       flags: ALL_ON,
-      rows: { [winner]: { id: winner, title: 'Dup', project_id: null, status: 'todo', deleted_at: null, seq: 3 } },
+      rows: [['tasks', { id: winner, title: 'Dup', project_id: null, status: 'todo', assignee: 'nick-ingraham' }]],
     })
     const env = envWith(db)
     const mut: Mutation = {
@@ -427,76 +365,101 @@ describe('(f) V3 adoptable dedup', () => {
     const r = await runMutation(env, mut)
     expect(r.status).toBe('accepted')
     expect(r.canonical_id).toBe(winner)
-    expect((db as any)._store.has('task_loser1')).toBe(false)
+    expect(rowOf(db, 'tasks', 'task_loser1')).toBeUndefined()
+    expect(taskCount(db)).toBe(1)
+    expect(receiptOf(db, 'mut_f1')?.outcome).toBe('accepted')
   })
 
   it('race-loser UNIQUE -> adoptable accepted + canonical_id (not error)', async () => {
+    // The old stub threw UNIQUE on every tasks INSERT; as its own comment said,
+    // the serial dedup SELECT finds the winner first, so this case exercises the
+    // serial path end-to-end through handleMutations (the true race path is the
+    // next case). Here the loser's title differs from the winner's only in case
+    // and edge whitespace, so adoption also proves the folded key (#530b).
     const winner = 'task_win2'
-    const db = makeStubDB({
+    const db = makeDb({
       flags: ALL_ON,
-      raceUnique: true,
-      // winner present so the post-throw re-lookup finds it (race window closed by then)
-      rows: { [winner]: { id: winner, title: 'Race', project_id: null, status: 'todo', deleted_at: null, seq: 7 } },
+      rows: [['tasks', { id: winner, title: 'Race', project_id: null, status: 'todo', assignee: 'nick-ingraham' }]],
     })
     const env = envWith(db)
     const mut: Mutation = {
       mutation_id: 'mut_f2', origin_machine: 'work', table: 'tasks', op: 'insert',
       record_id: 'task_loser2', base_seq: null, base_row_hash: null,
-      // NOTE: serial dedup SELECT must MISS so we reach the INSERT throw. To
-      // simulate the race, the winner has a DIFFERENT title in the dedup SELECT
-      // window — but here we just rely on raceUnique + the re-lookup finding it.
-      payload: { title: 'Race', project_id: null, status: 'todo', priority: 'medium', assignee: 'nick-ingraham' },
+      payload: { title: '  RACE ', project_id: null, status: 'todo', priority: 'medium', assignee: 'nick-ingraham' },
       client_ts: nowInstant(), issued_at: nowInstant(),
     }
-    // The serial dedup SELECT WILL find the winner here (title matches), so this
-    // exercises the serial path. To truly exercise the race path we call
-    // applyInsert directly with a store whose dedup-find returns null first.
     const r = await runMutation(env, mut)
     expect(r.status).toBe('accepted')
     expect(r.canonical_id).toBe(winner)
+    expect(rowOf(db, 'tasks', 'task_loser2')).toBeUndefined()
+    expect(taskCount(db)).toBe(1)
+    expect(receiptOf(db, 'mut_f2')?.outcome).toBe('accepted')
   })
 
   it('race-loser path via applyInsert: dedup SELECT misses, INSERT throws UNIQUE, re-lookup adopts', async () => {
+    // The race is made real: the winner commits in the window between the
+    // loser's serial dedup SELECT (which therefore misses) and the loser's
+    // INSERT, which then trips the real partial unique index
+    // idx_tasks_title_norm_nonrecurring_active. The old stub faked all three.
     const winner = 'task_win3'
-    // Custom stub: dedup SELECT returns null (race window), INSERT throws UNIQUE,
-    // then the post-throw re-lookup returns the winner.
-    let dedupCalls = 0
-    const store = new Map<string, Record<string, unknown>>([[winner, { id: winner, title: 'R3', project_id: null, status: 'todo', deleted_at: null, seq: 9 }]])
-    const db = {
-      prepare: (sql: string) => {
-        const mk = (boundVals: unknown[]): any => ({
-          bind: (...m: unknown[]) => mk([...boundVals, ...m]),
-          first: async <T>() => {
-            const u = sql.trim().toUpperCase()
-            if (classifyTaskDedupSelect(sql) === 'title') {
-              dedupCalls++
-              // First call (serial dedup) misses; second call (post-throw re-lookup) hits.
-              return (dedupCalls >= 2 ? { id: winner } : null) as T | null
-            }
-            if (u.includes('PROCESSED_MUTATIONS')) return null as T | null
-            return (store.get(boundVals[0] as string) ?? null) as T | null
-          },
-          all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
-          run: async () => {
-            const u = sql.trim().toUpperCase()
-            if (u.startsWith('INSERT INTO TASKS')) throw new Error("UNIQUE constraint failed: index 'idx_tasks_title_norm_project_active'")
-            return { meta: { changes: 1 } }
-          },
-        })
-        return mk([])
+    const db = makeDb()
+    let dedupSelects = 0
+    let winnerCommitted = false
+    const env = envWith(db, {
+      onExec: (sql) => {
+        if (/^\s*SELECT id FROM tasks/i.test(sql) && classifyTaskDedupSelect(sql) === 'title') dedupSelects++
+        if (!winnerCommitted && /^\s*INSERT INTO tasks\b/i.test(sql)) {
+          winnerCommitted = true
+          insertRow(db, 'tasks', { id: winner, title: 'R3', project_id: null, status: 'todo', assignee: 'nick-ingraham' })
+        }
       },
-    } as unknown as Env['DB']
+    })
     const flags: ValidationFlags = { enums: false, conflict_hash: false, completion_tombstone: false, dedup: true, question_consumed: false }
     const mut: Mutation = {
       mutation_id: 'mut_f3', origin_machine: 'work', table: 'tasks', op: 'insert',
       record_id: 'task_loser3', base_seq: null, base_row_hash: null,
-      payload: { title: 'R3', project_id: null, status: 'todo' },
+      // assignee is TEXT NOT NULL in prod. The old stub's payload omitted it and
+      // still reached the UNIQUE throw; on the real schema NOT NULL fires first
+      // (pinned by the next case), so the payload carries one.
+      payload: { title: 'R3', project_id: null, status: 'todo', assignee: 'nick-ingraham' },
       client_ts: nowInstant(), issued_at: nowInstant(),
     }
-    const r = await applyInsert(envWith(db), mut, fakeUser, flags)
+    const r = await applyInsert(env, mut, fakeUser, flags)
     expect(r.status).toBe('accepted')
     expect(r.canonical_id).toBe(winner)
     expect(r.reason).toMatch(/race-loser/)
+    expect(winnerCommitted).toBe(true)
+    expect(dedupSelects).toBe(2)   // serial miss + post-throw re-lookup
+    expect(rowOf(db, 'tasks', 'task_loser3')).toBeUndefined()
+    expect(taskCount(db)).toBe(1)
+  })
+
+  it('a NOT NULL refusal during the race window is NOT adopted as a race-loser', async () => {
+    // Premise the old stub hid: it threw UNIQUE for any tasks INSERT, so an
+    // assignee-less payload looked like a race-loser. Prod refuses the row on
+    // tasks.assignee NOT NULL before any index is consulted; the catch adopts
+    // only on UNIQUE, so the error propagates even though a same-title winner
+    // committed in the window. Nothing is written for the loser.
+    const db = makeDb()
+    let winnerCommitted = false
+    const env = envWith(db, {
+      onExec: (sql) => {
+        if (!winnerCommitted && /^\s*INSERT INTO tasks\b/i.test(sql)) {
+          winnerCommitted = true
+          insertRow(db, 'tasks', { id: 'task_win4', title: 'R4', project_id: null, status: 'todo', assignee: 'nick-ingraham' })
+        }
+      },
+    })
+    const flags: ValidationFlags = { enums: false, conflict_hash: false, completion_tombstone: false, dedup: true, question_consumed: false }
+    const mut: Mutation = {
+      mutation_id: 'mut_f4', origin_machine: 'work', table: 'tasks', op: 'insert',
+      record_id: 'task_loser4', base_seq: null, base_row_hash: null,
+      payload: { title: 'R4', project_id: null, status: 'todo' },
+      client_ts: nowInstant(), issued_at: nowInstant(),
+    }
+    await expect(applyInsert(env, mut, fakeUser, flags)).rejects.toThrow(/NOT NULL constraint failed: tasks\.assignee/)
+    expect(rowOf(db, 'tasks', 'task_loser4')).toBeUndefined()
+    expect(taskCount(db)).toBe(1)
   })
 })
 

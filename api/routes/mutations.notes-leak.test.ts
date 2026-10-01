@@ -13,124 +13,26 @@ import { nowInstant } from '../lib/time'
 import { handleMutations } from './mutations'
 import type { Mutation } from './mutations'
 import type { Env, AuthUser } from '../helpers'
-import { classifyTaskDedupSelect } from '../lib/task-dedup-sql'
-import { withSequentialBatch } from '../test-support/sequential-batch'
+import { prodSchemaDb, d1Adapter, insertRow, receiptOf } from '../test-support/prod-schema-db'
 
-// ── Shared stub DB ────────────────────────────────────────────────────────────
+// ── Fixture ──────────────────────────────────────────────────────────────────
 //
-// Pattern mirrors mutations.apply-mutation.test.ts. Critically, the stored
-// row includes `notes` so that IF readCanonical does SELECT * and returns
-// notes in canonical_payload, the test will catch it.
+// #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+// The stored task row carries a real `notes` value (the D1 tasks table has the
+// column), so IF readCanonical does SELECT * and returns notes in
+// canonical_payload, the test catches it. The old regex stub parsed SET
+// clauses and treated the receipt INSERT as a no-op; this one reads the
+// stored row and the processed_mutations receipt back.
 
-function makeStubDB(seedRows: Record<string, Record<string, unknown>> = {}) {
-  const store: Map<string, Record<string, unknown>> = new Map(
-    Object.entries(seedRows)
-  )
-  const mutations: Map<string, Record<string, unknown>> = new Map()
-
-  function makeStmt(sql: string, boundVals: unknown[]): any {
-    return {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-
-      first: async <T>() => {
-        const upper = sql.trim().toUpperCase()
-
-        // processed_mutations idempotency check
-        if (upper.includes('PROCESSED_MUTATIONS')) {
-          const id = boundVals[0] as string
-          return (mutations.get(id) ?? null) as T | null
-        }
-
-        // Dedup SELECT (tasks title+project_id query), raw or normalized.
-        // classifyTaskDedupSelect throws on an unrecognised `SELECT id FROM
-        // tasks`, so a query edit that outruns this stub is red (#530b).
-        if (classifyTaskDedupSelect(sql) === 'title') {
-          return null as T | null
-        }
-
-        // Validation flags
-        if (upper.includes('VALIDATION_FLAGS')) {
-          return null as T | null
-        }
-
-        // SELECT * FROM tasks WHERE id = ? (readCanonical + initial fetch)
-        const id = boundVals[0] as string
-        return (store.get(id) ?? null) as T | null
-      },
-
-      all: async <T>() => {
-        return { results: [] as T[], success: true, meta: {} }
-      },
-
-      run: async () => {
-        const upper = sql.trim().toUpperCase()
-        if (upper.startsWith('UPDATE')) {
-          const setMatch = sql.match(/SET (.+) WHERE/s)
-          if (setMatch) {
-            const pairs = setMatch[1].split(',').map((s: string) => s.trim())
-            // Last bound val is the WHERE id value
-            const id = boundVals[boundVals.length - 1] as string
-            const row = store.get(id)
-            if (row) {
-              let paramIdx = 0
-              for (const pair of pairs) {
-                const [col, placeholder] = pair.split('=').map((s: string) => s.trim())
-                if (placeholder && placeholder.includes('datetime')) {
-                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
-                } else if (placeholder && placeholder.toUpperCase() === 'NULL') {
-                  row[col] = null
-                } else {
-                  row[col] = boundVals[paramIdx++]
-                }
-              }
-              store.set(id, row)
-            }
-          }
-          return { meta: { changes: 1 } }
-        }
-        if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) {
-          const mutId = boundVals[0] as string
-          if (!mutations.has(mutId)) {
-            mutations.set(mutId, { mutation_id: mutId, origin_machine: boundVals[1] })
-            return { meta: { changes: 1 } }
-          }
-          return { meta: { changes: 0 } }
-        }
-        if (upper.startsWith('INSERT INTO TASKS') || upper.startsWith('INSERT INTO ')) {
-          const id = boundVals[0] as string
-          if (id && !store.has(id)) {
-            // Build a row from bound values. Column order from applyInsert:
-            // id, meeting_id, project_id, title, description, assignee,
-            // assigned_by, due_date, deadline, priority, status, source,
-            // completed, completed_at, completed_by, created_at, ...
-            const colsMatch = sql.match(/INSERT INTO \w+ \(([^)]+)\)/)
-            if (colsMatch) {
-              const cols = colsMatch[1].split(',').map((c: string) => c.trim())
-              const row: Record<string, unknown> = {}
-              cols.forEach((col: string, i: number) => { row[col] = boundVals[i] ?? null })
-              row['seq'] = 1
-              row['deleted_at'] = null
-              // Preserve notes in the stored row — this is the leak we're testing
-              store.set(id, row)
-            }
-          }
-          return { meta: { changes: 1 } }
-        }
-        return { meta: { changes: 0 } }
-      },
-    }
-  }
-
-  return {
-    _store: store,
-    _mutations: mutations,
-    prepare: (sql: string) => makeStmt(sql, []),
-    batch: async (stmts: any[]) => {
-      for (const s of stmts) await s.run()
-      return []
-    },
-  }
+function makeDb(seed: Array<[string, Record<string, unknown>]> = []) {
+  const db = prodSchemaDb()
+  for (const [table, row] of seed) insertRow(db, table, row)
+  return db
 }
+
+/** The seq the v53 trigger gave a seeded row: the base a PB writer holds. */
+const seqOf = (db: ReturnType<typeof prodSchemaDb>, table: string, id: string) =>
+  (db.prepare(`SELECT seq FROM ${table} WHERE id = ?`).get(id) as { seq: number }).seq
 
 const fakeUser: AuthUser = {
   email: 'nate@umn.edu',
@@ -155,91 +57,72 @@ function makeRequest(mutations: Mutation[]): Request {
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
+const taskId = 'task_01hwtest_mut_notes_0001'
+
+const seededTask = (): [string, Record<string, unknown>] => ['tasks', {
+  id: taskId,
+  title: 'Confidential task',
+  description: 'Team-visible description',
+  assignee: 'nate-mesfin',
+  status: 'todo',
+  completed: 0,
+  priority: 'medium',
+  notes: 'PRIVATE brain.db note — must not reach team via mutations',
+}]
+
+type Body = { results: Array<{ status: string; canonical_payload?: Record<string, unknown> }> }
+
+async function send(db: ReturnType<typeof prodSchemaDb>, mut: Mutation): Promise<Body> {
+  const env = { DB: d1Adapter(db), PB_API_KEY: TEST_API_KEY } as unknown as Env
+  const res = await handleMutations(makeRequest([mut]), fakeUser, env)
+  return await res.json() as Body
+}
+
+function taskUpdate(db: ReturnType<typeof prodSchemaDb>, mutationId: string): Mutation {
+  return {
+    mutation_id: mutationId,
+    origin_machine: 'home',
+    table: 'tasks',
+    op: 'update',
+    record_id: taskId,
+    base_seq: seqOf(db, 'tasks', taskId),
+    base_row_hash: null,
+    patch: { status: 'in_progress' },
+    client_ts: nowInstant(),
+    issued_at: nowInstant(),
+  }
+}
+
 describe('mutations canonical_payload — SEC-P2-03 notes not in response', () => {
-  const taskId = 'task_01hwtest_mut_notes_0001'
-
   it('task UPDATE canonical_payload does not contain notes', async () => {
-    const db = makeStubDB({
-      [taskId]: {
-        id: taskId,
-        title: 'Confidential task',
-        description: 'Team-visible description',
-        assignee: 'nate-mesfin',
-        status: 'todo',
-        completed: 0,
-        priority: 'medium',
-        notes: 'PRIVATE brain.db note — must not reach team via mutations',
-        deleted_at: null,
-        seq: 3,
-        last_mutation_id: null,
-      },
-    })
-
-    const env = { DB: withSequentialBatch(db), PB_API_KEY: TEST_API_KEY } as unknown as Env
-    const mut: Mutation = {
-      mutation_id: 'mut_notes_test_update_0001',
-      origin_machine: 'home',
-      table: 'tasks',
-      op: 'update',
-      record_id: taskId,
-      base_seq: 3,
-      base_row_hash: null,
-      patch: { status: 'in_progress' },
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
-
-    const res = await handleMutations(makeRequest([mut]), fakeUser, env)
-    const body = await res.json() as {
-      results: Array<{ status: string; canonical_payload?: Record<string, unknown> }>
-    }
+    const db = makeDb([seededTask()])
+    const body = await send(db, taskUpdate(db, 'mut_notes_test_update_0001'))
 
     expect(body.results[0].status).toMatch(/^(accepted|merged_clean)$/)
     const payload = body.results[0].canonical_payload
     expect(payload).toBeDefined()
     expect(payload).not.toHaveProperty('notes')
+    expect(JSON.stringify(body)).not.toContain('PRIVATE')
+
+    // The write landed and the private note is still stored (stripped on the
+    // wire, not erased), and the receipt it replays from does not carry it.
+    const row = db.prepare('SELECT status, notes FROM tasks WHERE id = ?').get(taskId) as Record<string, unknown>
+    expect(row.status).toBe('in_progress')
+    expect(row.notes).toMatch(/^PRIVATE/)
+    const receipt = receiptOf(db, 'mut_notes_test_update_0001')!
+    expect(receipt.outcome).toBe(body.results[0].status)
+    expect(receipt.original_response_json).not.toContain('PRIVATE')
   })
 
   it('task UPDATE canonical_payload still has non-private fields', async () => {
-    const db = makeStubDB({
-      [taskId]: {
-        id: taskId,
-        title: 'Confidential task',
-        description: 'Team-visible description',
-        assignee: 'nate-mesfin',
-        status: 'todo',
-        completed: 0,
-        priority: 'medium',
-        notes: 'PRIVATE note',
-        deleted_at: null,
-        seq: 3,
-        last_mutation_id: null,
-      },
-    })
-
-    const env = { DB: withSequentialBatch(db), PB_API_KEY: TEST_API_KEY } as unknown as Env
-    const mut: Mutation = {
-      mutation_id: 'mut_notes_test_update_0002',
-      origin_machine: 'home',
-      table: 'tasks',
-      op: 'update',
-      record_id: taskId,
-      base_seq: 3,
-      base_row_hash: null,
-      patch: { status: 'in_progress' },
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
-
-    const res = await handleMutations(makeRequest([mut]), fakeUser, env)
-    const body = await res.json() as {
-      results: Array<{ status: string; canonical_payload?: Record<string, unknown> }>
-    }
+    const db = makeDb([seededTask()])
+    const body = await send(db, taskUpdate(db, 'mut_notes_test_update_0002'))
 
     const payload = body.results[0].canonical_payload
     expect(payload).toHaveProperty('id', taskId)
     expect(payload).toHaveProperty('description', 'Team-visible description')
     expect(payload).toHaveProperty('assignee', 'nate-mesfin')
+    expect(payload).toHaveProperty('status', 'in_progress')
   })
 
   it('task INSERT carrying notes is REJECTED outright (pb-schema 0.4.0 wire contract)', async () => {
@@ -248,10 +131,9 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
     // canonical_payload echo) is superseded: an unknown field now ERRORS, which
     // makes the leak structurally impossible AND keeps schema drift visible.
     const newTaskId = 'task_01hwtest_mut_notes_insert_0001'
-    const db = makeStubDB()  // empty store — insert creates the row
+    const db = makeDb()  // empty — insert would create the row
 
-    const env = { DB: withSequentialBatch(db), PB_API_KEY: TEST_API_KEY } as unknown as Env
-    const mut: Mutation = {
+    const body = await send(db, {
       mutation_id: 'mut_notes_test_insert_0001',
       origin_machine: 'home',
       table: 'tasks',
@@ -270,60 +152,46 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
       },
       client_ts: nowInstant(),
       issued_at: nowInstant(),
-    }
-
-    const res = await handleMutations(makeRequest([mut]), fakeUser, env)
-    const body = await res.json() as {
-      results: Array<{ status: string; canonical_payload?: Record<string, unknown> }>
-    }
+    })
 
     expect(body.results[0].status).toBe('error')
     // And the error echo must not leak the note text back either.
     expect(JSON.stringify(body.results[0])).not.toContain('PRIVATE note')
+    // Nothing was written.
+    expect(db.prepare('SELECT 1 FROM tasks WHERE id = ?').get(newTaskId)).toBeUndefined()
   })
 
   it('non-task table mutations are unaffected by task-specific stripping', async () => {
     // Projects don't have a notes column — verify no regression on project mutations.
     const projectId = 'proj_01hwtest_mut_notes_proj_0001'
-    const db = makeStubDB({
-      [projectId]: {
-        id: projectId,
-        slug: 'test-project',
-        title: 'Test Project',
-        status: 'active',
-        stage: 'analysis',
-        category: 'MNCCORE',
-        deleted_at: null,
-        seq: 2,
-        last_mutation_id: null,
-      },
-    })
+    const db = makeDb([['projects', {
+      id: projectId,
+      slug: 'test-project',
+      title: 'Test Project',
+      status: 'active',
+      stage: 'data_analysis',
+      category: 'MNCCORE',
+    }]])
 
-    const env = { DB: withSequentialBatch(db), PB_API_KEY: TEST_API_KEY } as unknown as Env
-    const mut: Mutation = {
+    const body = await send(db, {
       mutation_id: 'mut_notes_test_proj_0001',
       origin_machine: 'home',
       table: 'projects',
       op: 'update',
       record_id: projectId,
-      base_seq: 2,
+      base_seq: seqOf(db, 'projects', projectId),
       base_row_hash: null,
       patch: { status: 'waiting_external' },
       client_ts: nowInstant(),
       issued_at: nowInstant(),
-    }
-
-    const res = await handleMutations(makeRequest([mut]), fakeUser, env)
-    const body = await res.json() as {
-      results: Array<{ status: string; canonical_payload?: Record<string, unknown> }>
-    }
+    })
 
     expect(body.results[0].status).toMatch(/^(accepted|merged_clean)$/)
     const payload = body.results[0].canonical_payload
-    if (payload) {
-      // Project row should still be returned intact
-      expect(payload).toHaveProperty('id', projectId)
-      expect(payload).toHaveProperty('slug', 'test-project')
-    }
+    expect(payload).toHaveProperty('id', projectId)
+    expect(payload).toHaveProperty('slug', 'test-project')
+    expect((db.prepare('SELECT status FROM projects WHERE id = ?').get(projectId) as { status: string }).status)
+      .toBe('waiting_external')
+    expect(receiptOf(db, 'mut_notes_test_proj_0001')!.outcome).toBe(body.results[0].status)
   })
 })

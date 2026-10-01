@@ -4,8 +4,8 @@
 // A question is a task row. Three JSON columns carry the ask, the answer and
 // the Telegram handle. Every task write passes applyInsert / applyPatch in
 // mutations.ts, and both call questionRowError() on the EFFECTIVE row
-// (api/lib/task-question.ts). This file exercises the REAL functions with a
-// store-backed D1 stub (copied from tasks.kind.test.ts), no vi.mock:
+// (api/lib/task-question.ts). This file exercises the REAL functions on the
+// migration-chain database (prodSchemaDb + d1Adapter, #8875), no vi.mock:
 //
 //   1. done / deleted with a NULL answer is refused (question_unanswered) —
 //      through the FULL applyMutation path (a status-only patch carries no new
@@ -28,86 +28,46 @@ import { applyInsert, applyUpdate, applyMutation } from './mutations'
 import { handleGetTasks } from './tasks'
 import { normalizeQuestionJsonFields, questionRowError, questionConsumerCloseError } from '../lib/task-question'
 import type { AuthUser, Env } from '../helpers'
-import { withSequentialBatch } from '../test-support/sequential-batch'
+import { prodSchemaDb, d1Adapter, insertRow, receiptOf } from '../test-support/prod-schema-db'
 
-// ── store-backed D1 stub (tasks.kind.test.ts shape) ─────────────────────────
+// ── fixture: the migration-chain database (#8875) ──────────────────────────
+//
+// Runs on api/test-support/prod-schema-db.ts: the real tasks table with its
+// v53 seq triggers, the completion-triad guard triggers and the
+// processed_mutations receipt (original_response_json TEXT NOT NULL). The old
+// stub parsed SET clauses and treated the receipt INSERT as a no-op; every
+// write assertion below reads the STORED row and the receipt back.
 
-function makeStubDB() {
-  const store: Map<string, Record<string, unknown>> = new Map()
-  const mutations: Map<string, Record<string, unknown>> = new Map()
-  const updateCalls: { sql: string; bindings: unknown[] }[] = []
+type Db = ReturnType<typeof prodSchemaDb>
 
-  function makeStmt(sql: string, boundVals: unknown[]): ReturnType<typeof makeStmt> {
-    const self = {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-      first: async <T>() => {
-        const upper = sql.trim().toUpperCase()
-        if (upper.includes('PROCESSED_MUTATIONS')) {
-          return (mutations.get(boundVals[0] as string) ?? null) as T | null
-        }
-        // Dedup pre-checks bind a title / meeting id, never a task id → miss.
-        if (/^SELECT\s+ID\s+FROM\s+TASKS/.test(upper)) return null as T | null
-        return (store.get(boundVals[0] as string) ?? null) as T | null
-      },
-      all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
-      run: async () => {
-        const upper = sql.trim().toUpperCase()
-        if (upper.startsWith('UPDATE TASKS')) {
-          updateCalls.push({ sql, bindings: [...boundVals] })
-          const setMatch = sql.match(/SET (.+) WHERE/s)
-          if (setMatch) {
-            const pairs = setMatch[1].split(',').map((s: string) => s.trim())
-            const id = boundVals[boundVals.length - 1] as string
-            const row = store.get(id)
-            if (row) {
-              let paramIdx = 0
-              for (const pair of pairs) {
-                const [col, placeholder] = pair.split('=').map((s: string) => s.trim())
-                if (placeholder && placeholder.includes('datetime')) {
-                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
-                } else if (placeholder && placeholder.toUpperCase() === 'NULL') {
-                  row[col] = null
-                } else {
-                  row[col] = boundVals[paramIdx++]
-                }
-              }
-              store.set(id, row)
-            }
-          }
-          return { meta: { changes: 1 } }
-        }
-        if (upper.startsWith('INSERT INTO TASKS')) {
-          // cols list is in the SQL; values are the bindings in the same order
-          // (extra datetime('now') literals sit AFTER the placeholders).
-          const colsMatch = sql.match(/INSERT INTO tasks \(([^)]+)\)/)
-          if (colsMatch) {
-            const cols = colsMatch[1].split(',').map((s) => s.trim())
-            const row: Record<string, unknown> = {}
-            cols.forEach((c, i) => { if (i < boundVals.length) row[c] = boundVals[i] })
-            store.set(row.id as string, { seq: 1, deleted_at: null, ...row })
-          }
-          return { meta: { changes: 1 } }
-        }
-        if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) {
-          const mutId = boundVals[0] as string
-          if (!mutations.has(mutId)) {
-            mutations.set(mutId, { mutation_id: mutId })
-            return { meta: { changes: 1 } }
-          }
-          return { meta: { changes: 0 } }
-        }
-        return { meta: { changes: 0 } }
-      },
-    }
-    return self
-  }
+function makeDB() {
+  const db = prodSchemaDb()
+  const writes: { sql: string; vals: unknown[] }[] = []
+  const adapter = d1Adapter(db, {
+    onExec: (sql, vals) => { if (/^\s*(UPDATE|INSERT)\s+(INTO\s+)?tasks\b/i.test(sql)) writes.push({ sql, vals: [...vals] }) },
+  })
+  return { db, writes, env: { DB: adapter } as unknown as Env }
+}
 
-  return {
-    _store: store,
-    _updateCalls: updateCalls,
-    prepare: (sql: string) => makeStmt(sql, []),
-    batch: async () => [],
-  }
+const rowOf = (db: Db, id: string) =>
+  db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as Record<string, unknown> | undefined
+
+/** The seq the v53 trigger gave a seeded row: the base a PB writer holds. */
+const seqOf = (db: Db, id: string) => rowOf(db, id)!.seq as number
+
+/**
+ * The processed_mutations receipt a landed (or recorded-refused) mutation
+ * leaves: a real row whose original_response_json is non-NULL text naming the
+ * same outcome. The old stub never stored this column at all.
+ */
+function expectReceipt(db: Db, mutationId: string, outcome: string, recordId: string) {
+  const rc = receiptOf(db, mutationId)
+  expect(rc).toBeDefined()
+  expect(rc!.outcome).toBe(outcome)
+  expect(rc!.table_name).toBe('tasks')
+  expect(rc!.record_id).toBe(recordId)
+  expect(typeof rc!.original_response_json).toBe('string')
+  expect((JSON.parse(rc!.original_response_json) as { status: string }).status).toBe(outcome)
 }
 
 const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick' }
@@ -118,13 +78,13 @@ const SPEC = JSON.stringify({
   allow_text: true, rec: 'c1',
 })
 
-function seedQuestion(db: ReturnType<typeof makeStubDB>, id: string, extra: Record<string, unknown> = {}) {
-  db._store.set(id, {
+function seedQuestion(db: Db, id: string, extra: Record<string, unknown> = {}) {
+  insertRow(db, 'tasks', {
     id, title: 'Which meeting was this? -- 2026-09-17 12:00 (45 min)',
     kind: 'question', status: 'todo', priority: 'medium', assignee: 'nick-ingraham',
     source: 'meeting_match', meeting_id: 'mtg_20260917T170406-zoom',
     question_spec_json: SPEC, question_answer_json: null, question_telegram_json: null,
-    seq: 1, deleted_at: null, project_id: null, completed: 0, completed_at: null,
+    deleted_at: null, project_id: null, completed: 0, completed_at: null,
     ...extra,
   })
 }
@@ -135,10 +95,9 @@ const ANSWER = { v: 1, choice: 'c1', via: 'hub', at: '2026-09-17T18:00:00Z' }
 
 describe('a question cannot close unanswered (question_unanswered)', () => {
   it('status=done with a NULL answer is refused through the full applyMutation path', async () => {
-    const db = makeStubDB()
+    const { db, writes, env } = makeDB()
     const id = 'task_01question_unanswered_0001'
     seedQuestion(db, id)
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const r = await applyMutation(env, {
       table: 'tasks', record_id: id, op: 'update',
@@ -146,24 +105,28 @@ describe('a question cannot close unanswered (question_unanswered)', () => {
       route: 'test', user: NICK,
     })
     expect(r.status).toBe('error')
+    expectReceipt(db, r.mutation_id, 'error', id)
     expect(r.reason).toMatch(/^apply error: question_unanswered:/)
     // The row did not move.
-    expect(db._store.get(id)?.status).toBe('todo')
-    expect(db._updateCalls).toHaveLength(0)
+    expect(rowOf(db, id)?.status).toBe('todo')
+    expect(writes).toHaveLength(0)
+    // A refused mutation leaves no task write and no landed receipt row.
+    expect(rowOf(db, id)?.completed).toBe(0)
   })
 
   it('status=deleted by patch with a NULL answer is refused too', async () => {
-    const db = makeStubDB()
+    const { db, writes, env } = makeDB()
     const id = 'task_01question_unanswered_0002'
     seedQuestion(db, id)
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     await expect(applyUpdate(env, {
       mutation_id: 'mut_q_del_0002', origin_machine: 'test', table: 'tasks', op: 'update',
-      record_id: id, base_seq: 1, base_row_hash: null,
+      record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
       patch: { status: 'deleted' }, client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)).rejects.toThrow(/^question_unanswered:/)
-    expect(db._store.get(id)?.status).toBe('todo')
+    expect(rowOf(db, id)?.status).toBe('todo')
+    expect(rowOf(db, id)?.deleted_at).toBeNull()
+    expect(receiptOf(db, 'mut_q_del_0002')).toBeUndefined()
   })
 
   // #8842 R4 (2026-09-23): this case USED to assert that a Hub-UI close of an
@@ -172,10 +135,9 @@ describe('a question cannot close unanswered (question_unanswered)', () => {
   // `consumed`, so the approved build never ran. Changed deliberately: a
   // Hub-UI (hub_ui:) close is now refused; the PB consumer closes it.
   it('status=done from the Hub UI on an ANSWERED question is refused (the PB consumer closes it)', async () => {
-    const db = makeStubDB()
+    const { db, writes, env } = makeDB()
     const id = 'task_01question_answered_done_03'
     seedQuestion(db, id, { question_answer_json: JSON.stringify(ANSWER) })
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const r = await applyMutation(env, {
       table: 'tasks', record_id: id, op: 'update',
@@ -183,30 +145,31 @@ describe('a question cannot close unanswered (question_unanswered)', () => {
       route: 'test', user: NICK,
     })
     expect(r.status).toBe('error')
+    expectReceipt(db, r.mutation_id, 'error', id)
     expect(r.reason).toMatch(/^apply error: question_consumer_close_only:/)
-    expect(db._store.get(id)?.status).toBe('todo')
+    expect(rowOf(db, id)?.status).toBe('todo')
   })
 
   it('status=done from PB (the consumer) on an answered question is accepted', async () => {
-    const db = makeStubDB()
+    const { db, writes, env } = makeDB()
     const id = 'task_01question_answered_done_pb'
     seedQuestion(db, id, { question_answer_json: JSON.stringify(ANSWER) })
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const r = await applyUpdate(env, {
       mutation_id: 'mut_q_pbclose_0001', origin_machine: 'home', table: 'tasks', op: 'update',
-      record_id: id, base_seq: 1, base_row_hash: null,
+      record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
       patch: { status: 'done', completed: 1, completed_at: nowInstant() }, client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)
     expect(r.status).toBe('accepted')
-    expect(db._store.get(id)?.status).toBe('done')
+    expectReceipt(db, r.mutation_id, 'accepted', id)
+    expect(rowOf(db, id)?.status).toBe('done')
+    expect(rowOf(db, id)?.completed).toBe(1)
   })
 
   it('the Hub UI may still retire a question (status=deleted on an answered question)', async () => {
-    const db = makeStubDB()
+    const { db, writes, env } = makeDB()
     const id = 'task_01question_hub_retire_01'
     seedQuestion(db, id, { question_answer_json: JSON.stringify(ANSWER) })
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const r = await applyMutation(env, {
       table: 'tasks', record_id: id, op: 'update',
@@ -214,14 +177,14 @@ describe('a question cannot close unanswered (question_unanswered)', () => {
       route: 'test', user: NICK,
     })
     expect(r.status).toBe('accepted')
-    expect(db._store.get(id)?.status).toBe('deleted')
+    expectReceipt(db, r.mutation_id, 'accepted', id)
+    expect(rowOf(db, id)?.status).toBe('deleted')
   })
 
   it('an ordinary task still closes with no answer column set (guard is kind-scoped)', async () => {
-    const db = makeStubDB()
+    const { db, writes, env } = makeDB()
     const id = 'task_01ordinary_done_0004'
     seedQuestion(db, id, { kind: 'task', source: 'manual', question_spec_json: null })
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const r = await applyMutation(env, {
       table: 'tasks', record_id: id, op: 'update',
@@ -229,7 +192,8 @@ describe('a question cannot close unanswered (question_unanswered)', () => {
       route: 'test', user: NICK,
     })
     expect(r.status).toBe('accepted')
-    expect(db._store.get(id)?.status).toBe('done')
+    expectReceipt(db, r.mutation_id, 'accepted', id)
+    expect(rowOf(db, id)?.status).toBe('done')
   })
 })
 
@@ -237,28 +201,27 @@ describe('a question cannot close unanswered (question_unanswered)', () => {
 
 describe('an answer patch lands (the only answer store)', () => {
   it('a JSON-text answer is stored byte-for-byte', async () => {
-    const db = makeStubDB()
+    const { db, writes, env } = makeDB()
     const id = 'task_01question_answer_0005'
     seedQuestion(db, id)
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
     const text = JSON.stringify(ANSWER)
 
     const r = await applyUpdate(env, {
       mutation_id: 'mut_q_ans_0005', origin_machine: 'work', table: 'tasks', op: 'update',
-      record_id: id, base_seq: 1, base_row_hash: null,
+      record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
       patch: { question_answer_json: text }, client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)
     expect(r.status).toBe('accepted')
-    expect(db._store.get(id)?.question_answer_json).toBe(text)
+    expectReceipt(db, r.mutation_id, 'accepted', id)
+    expect(rowOf(db, id)?.question_answer_json).toBe(text)
     // status untouched: answered != done
-    expect(db._store.get(id)?.status).toBe('todo')
+    expect(rowOf(db, id)?.status).toBe('todo')
   })
 
   it('an OBJECT answer (Hub-UI shape) is serialized to text before binding', async () => {
-    const db = makeStubDB()
+    const { db, writes, env } = makeDB()
     const id = 'task_01question_answer_obj_006'
     seedQuestion(db, id)
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const r = await applyUpdate(env, {
       mutation_id: 'mut_q_ans_0006', origin_machine: 'hub_ui:test', table: 'tasks', op: 'update',
@@ -266,50 +229,54 @@ describe('an answer patch lands (the only answer store)', () => {
       patch: { question_answer_json: ANSWER }, client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)
     expect(r.status).toBe('accepted')
-    const stored = db._store.get(id)?.question_answer_json
+    expectReceipt(db, r.mutation_id, 'accepted', id)
+    const stored = rowOf(db, id)?.question_answer_json
     expect(typeof stored).toBe('string')
     expect(JSON.parse(stored as string)).toEqual(ANSWER)
     // No object reached D1.
-    for (const call of db._updateCalls) {
-      for (const b of call.bindings) expect(typeof b === 'object' && b !== null).toBe(false)
+    expect(writes.length).toBeGreaterThan(0)
+    for (const call of writes) {
+      for (const b of call.vals) expect(typeof b === 'object' && b !== null).toBe(false)
     }
   })
 
   it('undo (answer -> NULL) on an open question is accepted', async () => {
-    const db = makeStubDB()
+    const { db, writes, env } = makeDB()
     const id = 'task_01question_undo_0007'
     seedQuestion(db, id, { question_answer_json: JSON.stringify(ANSWER) })
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     const r = await applyUpdate(env, {
       mutation_id: 'mut_q_undo_0007', origin_machine: 'work', table: 'tasks', op: 'update',
-      record_id: id, base_seq: 1, base_row_hash: null,
+      record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
       patch: { question_answer_json: null }, client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)
     expect(r.status).toBe('accepted')
-    expect(db._store.get(id)?.question_answer_json).toBeNull()
+    expectReceipt(db, r.mutation_id, 'accepted', id)
+    expect(rowOf(db, id)?.question_answer_json).toBeNull()
   })
 
   it('a telegram handle lands and a non-object handle is refused', async () => {
-    const db = makeStubDB()
+    const { db, writes, env } = makeDB()
     const id = 'task_01question_tg_0008'
     seedQuestion(db, id)
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
     const handle = JSON.stringify({ chat_id: 1, message_id: 2, rendered_at: '2026-09-17T18:00:00Z' })
 
     const ok = await applyUpdate(env, {
       mutation_id: 'mut_q_tg_0008a', origin_machine: 'home', table: 'tasks', op: 'update',
-      record_id: id, base_seq: 1, base_row_hash: null,
+      record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
       patch: { question_telegram_json: handle }, client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)
     expect(ok.status).toBe('accepted')
-    expect(db._store.get(id)?.question_telegram_json).toBe(handle)
+    expectReceipt(db, ok.mutation_id, 'accepted', id)
+    expect(rowOf(db, id)?.question_telegram_json).toBe(handle)
 
     await expect(applyUpdate(env, {
       mutation_id: 'mut_q_tg_0008b', origin_machine: 'home', table: 'tasks', op: 'update',
-      record_id: id, base_seq: 1, base_row_hash: null,
+      record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
       patch: { question_telegram_json: '[1,2]' }, client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)).rejects.toThrow(/^question_telegram_invalid:/)
+    expect(rowOf(db, id)?.question_telegram_json).toBe(handle)
+    expect(receiptOf(db, 'mut_q_tg_0008b')).toBeUndefined()
   })
 })
 
@@ -326,34 +293,34 @@ describe('a malformed answer is refused (question_answer_invalid)', () => {
   ]
   for (const [label, value] of bad) {
     it(`refuses ${label}`, async () => {
-      const db = makeStubDB()
+      const { db, writes, env } = makeDB()
       const id = 'task_01question_badans_0009'
       seedQuestion(db, id)
-      const env = { DB: withSequentialBatch(db) } as unknown as Env
-
+  
       await expect(applyUpdate(env, {
         mutation_id: 'mut_q_bad_0009', origin_machine: 'work', table: 'tasks', op: 'update',
-        record_id: id, base_seq: 1, base_row_hash: null,
+        record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
         patch: { question_answer_json: value }, client_ts: nowInstant(), issued_at: nowInstant(),
       }, NICK)).rejects.toThrow(/^question_answer_invalid:/)
-      expect(db._store.get(id)?.question_answer_json).toBeNull()
+      expect(rowOf(db, id)?.question_answer_json).toBeNull()
+      expect(receiptOf(db, 'mut_q_bad_0009')).toBeUndefined()
     })
   }
 
   it("accepts choice='other' with text", async () => {
-    const db = makeStubDB()
+    const { db, writes, env } = makeDB()
     const id = 'task_01question_other_0010'
     seedQuestion(db, id)
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
     const text = JSON.stringify({ v: 1, choice: 'other', text: 'It was the HSR meeting', via: 'telegram', at: nowInstant() })
 
     const r = await applyUpdate(env, {
       mutation_id: 'mut_q_other_0010', origin_machine: 'home', table: 'tasks', op: 'update',
-      record_id: id, base_seq: 1, base_row_hash: null,
+      record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
       patch: { question_answer_json: text }, client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)
     expect(r.status).toBe('accepted')
-    expect(db._store.get(id)?.question_answer_json).toBe(text)
+    expectReceipt(db, r.mutation_id, 'accepted', id)
+    expect(rowOf(db, id)?.question_answer_json).toBe(text)
   })
 })
 
@@ -368,21 +335,21 @@ describe('a kind=question insert requires question_spec_json (question_spec_miss
   }
 
   it('is refused through the full applyMutation path when the spec is absent', async () => {
-    const db = makeStubDB()
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
+    const { db, writes, env } = makeDB()
     const r = await applyMutation(env, {
       table: 'tasks', record_id: 'task_01question_nospec_0011', op: 'insert',
       payload: { ...basePayload, kind: 'question' },
       route: 'test', user: NICK,
     })
     expect(r.status).toBe('error')
+    expectReceipt(db, r.mutation_id, 'error', 'task_01question_nospec_0011')
     expect(r.reason).toMatch(/^question_spec_missing:/)
-    expect(db._store.has('task_01question_nospec_0011')).toBe(false)
+    expect(rowOf(db, 'task_01question_nospec_0011')).toBeUndefined()
+    expect(writes).toHaveLength(0)
   })
 
   it('is refused when the spec is explicitly null', async () => {
-    const db = makeStubDB()
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
+    const { db, writes, env } = makeDB()
     const r = await applyInsert(env, {
       mutation_id: 'mut_q_ins_0012', origin_machine: 'work', table: 'tasks', op: 'insert',
       record_id: 'task_01question_nullspec_0012', base_seq: null, base_row_hash: null,
@@ -390,12 +357,14 @@ describe('a kind=question insert requires question_spec_json (question_spec_miss
       client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)
     expect(r.status).toBe('error')
+    // applyInsert alone records no receipt (processOne does); a refusal writes no row either.
+    expect(receiptOf(db, r.mutation_id)).toBeUndefined()
+    expect(rowOf(db, 'task_01question_nullspec_0012')).toBeUndefined()
     expect(r.reason).toMatch(/^question_spec_missing:/)
   })
 
   it('inserts with a spec; an OBJECT spec is serialized', async () => {
-    const db = makeStubDB()
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
+    const { db, writes, env } = makeDB()
     const id = 'task_01question_withspec_0013'
     const r = await applyInsert(env, {
       mutation_id: 'mut_q_ins_0013', origin_machine: 'work', table: 'tasks', op: 'insert',
@@ -404,15 +373,14 @@ describe('a kind=question insert requires question_spec_json (question_spec_miss
       client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)
     expect(r.status).toBe('accepted')
-    const stored = db._store.get(id)
+    const stored = rowOf(db, id)
     expect(stored?.kind).toBe('question')
     expect(typeof stored?.question_spec_json).toBe('string')
     expect(JSON.parse(stored?.question_spec_json as string)).toEqual(JSON.parse(SPEC))
   })
 
   it('a question cannot be born done with no answer', async () => {
-    const db = makeStubDB()
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
+    const { db, writes, env } = makeDB()
     const r = await applyInsert(env, {
       mutation_id: 'mut_q_ins_0014', origin_machine: 'work', table: 'tasks', op: 'insert',
       record_id: 'task_01question_borndone_0014', base_seq: null, base_row_hash: null,
@@ -420,60 +388,71 @@ describe('a kind=question insert requires question_spec_json (question_spec_miss
       client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)
     expect(r.status).toBe('error')
+    expect(receiptOf(db, r.mutation_id)).toBeUndefined()
+    expect(rowOf(db, 'task_01question_borndone_0014')).toBeUndefined()
     expect(r.reason).toMatch(/^question_unanswered:/)
   })
 
   it('an update that turns a task INTO a question needs the spec in the same patch', async () => {
-    const db = makeStubDB()
+    const { db, writes, env } = makeDB()
     const id = 'task_01task_to_question_0015'
     seedQuestion(db, id, { kind: 'task', source: 'manual', question_spec_json: null })
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
 
     await expect(applyUpdate(env, {
       mutation_id: 'mut_q_kind_0015', origin_machine: 'work', table: 'tasks', op: 'update',
-      record_id: id, base_seq: 1, base_row_hash: null,
+      record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
       patch: { kind: 'question' }, client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)).rejects.toThrow(/^question_spec_missing:/)
-    expect(db._store.get(id)?.kind).toBe('task')
+    expect(rowOf(db, id)?.kind).toBe('task')
+    expect(receiptOf(db, 'mut_q_kind_0015')).toBeUndefined()
   })
 })
 
 // ── 5. GET /api/tasks?kind= ─────────────────────────────────────────────────
 
 describe('GET /api/tasks?kind=question', () => {
+  // The read runs on the real tasks table; onExec observes the SQL the
+  // handler sends, and the seeded rows prove the filter's EFFECT too.
   function makeQueryCaptureDB() {
+    const db = prodSchemaDb()
     const calls: { sql: string; params: unknown[] }[] = []
-    const stmt = (sql: string, params: unknown[]) => ({
-      bind: (...p: unknown[]) => stmt(sql, [...params, ...p]),
-      first: async () => null,
-      all: async () => { calls.push({ sql, params }); return { results: [], success: true, meta: {} } },
-      run: async () => ({ meta: { changes: 0 } }),
+    const adapter = d1Adapter(db, {
+      onExec: (sql, params) => { if (/\bFROM\s+tasks\s+t\b/i.test(sql)) calls.push({ sql, params: [...params] }) },
     })
-    return { _calls: calls, prepare: (sql: string) => stmt(sql, []), batch: async () => [] }
+    seedQuestion(db, 'task_01get_question_0001')
+    // A distinct title: the real idx_tasks_title_norm_nonrecurring_active
+    // unique index refuses two active rows with one normalized title.
+    seedQuestion(db, 'task_01get_ordinary_0001', { kind: 'task', title: 'Ordinary task', source: 'manual', question_spec_json: null })
+    return { _calls: calls, db, env: { DB: adapter } as unknown as Env }
   }
 
   it('adds AND t.kind = ? bound to the requested kind', async () => {
     const db = makeQueryCaptureDB()
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
+    const env = db.env
     const res = await handleGetTasks(new URL('https://x/api/tasks?kind=question&assignee=nick-ingraham'), env, true)
     expect(res.status).toBe(200)
     expect(db._calls).toHaveLength(1)
     expect(db._calls[0].sql).toContain(' AND t.kind = ?')
     expect(db._calls[0].params).toContain('question')
     expect(db._calls[0].params).toContain('nick-ingraham')
+    // The filter's effect on real rows: only the question comes back.
+    const body = await res.json() as { data: Array<{ id: string; kind: string }> }
+    expect(body.data.map((t) => t.id)).toEqual(['task_01get_question_0001'])
   })
 
   it('omits the kind clause when the param is absent', async () => {
     const db = makeQueryCaptureDB()
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
-    await handleGetTasks(new URL('https://x/api/tasks'), env, true)
+    const env = db.env
+    const res = await handleGetTasks(new URL('https://x/api/tasks'), env, true)
     // t.kind is in the SELECT projection either way; the FILTER must be absent.
     expect(db._calls[0].sql).not.toContain(' AND t.kind = ?')
+    const body = await res.json() as { data: Array<{ id: string }> }
+    expect(body.data.map((t) => t.id).sort()).toEqual(['task_01get_ordinary_0001', 'task_01get_question_0001'])
   })
 
   it('an unlisted kind is a 400 naming the vocabulary, not an empty list', async () => {
     const db = makeQueryCaptureDB()
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
+    const env = db.env
     const res = await handleGetTasks(new URL('https://x/api/tasks?kind=decision'), env, true)
     expect(res.status).toBe(400)
     const body = await res.json() as { error: string }
@@ -501,12 +480,12 @@ describe('task-question pure helpers', () => {
 
 describe('#8842 R4: the refusal names the retire path that works', () => {
   it('op=delete retires an UNANSWERED question from the Hub UI, as the refusal message says', async () => {
-    const db = makeStubDB()
+    const { db, writes, env } = makeDB()
     const id = 'task_01question_hub_opdelete_1'
     seedQuestion(db, id)
-    const env = { DB: withSequentialBatch(db) } as unknown as Env
     const r = await applyMutation(env, { table: 'tasks', record_id: id, op: 'delete', route: 'test', user: NICK })
     expect(r.status).toBe('accepted')
+    expectReceipt(db, r.mutation_id, 'accepted', id)
     expect(questionConsumerCloseError({ kind: 'question', status: 'todo' }, { kind: 'question', status: 'done' }, 'hub_ui:x'))
       .toMatch(/delete the task \(op=delete\)/)
   })
