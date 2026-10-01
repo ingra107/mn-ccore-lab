@@ -109,7 +109,6 @@ export const EXCEPTIONS = new Map([
   ['api/routes/meetings.create-notes.test.ts', UNCONVERTED],
   ['api/routes/meetings.pb-visibility.test.ts', 'hand DDL on a local engine for legacy slug refs / orphans; its activity_entries omits v100 parent_id. Seed those states on the chain'],
   ['api/routes/member-featured-publications.test.ts', UNCONVERTED],
-  ['api/routes/mutations.advance-project.test.ts', UNCONVERTED],
   ['api/routes/mutations.apply-mutation.test.ts', UNCONVERTED],
   ['api/routes/mutations.dependency-failed-recovery.test.ts', UNCONVERTED],
   ['api/routes/mutations.enum-validation.test.ts', `${UNCONVERTED}; the pure canonicalization cases need no database`],
@@ -133,7 +132,6 @@ export const EXCEPTIONS = new Map([
   ['api/routes/tasks.dedup.test.ts', UNCONVERTED],
   ['api/routes/tasks.meeting-dedup.test.ts', UNCONVERTED],
   ['api/routes/tasks.pb-visibility.test.ts', 'hand DDL on a local engine for legacy slug refs / orphans; its activity_entries omits v100 parent_id. Seed those states on the chain'],
-  ['api/routes/tasks.question.test.ts', `${UNCONVERTED}; the question JSON normalization cases need no database`],
   ['api/schema-v98-tasks-completion-triad-guard.test.ts', 'migration test: applies the v98 file to a pre-v98 table on purpose; the migrated fixture already carries the guard, so this subject cannot use it'],
 ])
 
