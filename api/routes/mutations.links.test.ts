@@ -7,16 +7,23 @@
 //   - unknown field in links payload is rejected with status='error'
 //   - GET /links?seq_after / include_deleted / limit filtering (links.ts handler)
 //
+// #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+// The old stub stored a synthetic {id, seq, last_mutation_id} on INSERT, treated
+// the processed_mutations receipt INSERT as a no-op, and answered every GET
+// /links with a canned row list whatever the WHERE clause said. Every write
+// claim below is now read back from the stored row and the receipt, and the
+// GET cases run the handler's real SQL against real rows (schema-v88 links,
+// its CHECK on owner_table, its NOT NULLs and its seq triggers).
+//
 // Decision doc: Peripheral-Brain/Context/Decisions/2026-06-20-links-table.md
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { nowInstant } from '../lib/time';
 import { handleMutations } from './mutations';
 import type { Mutation } from './mutations';
 import type { Env, AuthUser } from '../helpers';
-import { classifyTaskDedupSelect } from '../lib/task-dedup-sql';
 import { handleGetLinks } from './links';
-import { withSequentialBatch } from '../test-support/sequential-batch'
+import { prodSchemaDb, d1Adapter, insertRow, receiptOf } from '../test-support/prod-schema-db';
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 
@@ -25,6 +32,10 @@ const MOCK_USER: AuthUser = {
   slug: 'nick-ingraham',
   isPi: true,
 };
+
+const TEST_API_KEY = 'test-api-key';
+
+type DB = ReturnType<typeof prodSchemaDb>;
 
 // Build a minimal Mutation envelope.
 function makeMut(overrides: Partial<Mutation> & { table: string }): Mutation {
@@ -41,112 +52,57 @@ function makeMut(overrides: Partial<Mutation> & { table: string }): Mutation {
   };
 }
 
-// ── Stub DB factory ────────────────────────────────────────────────────────────
-//
-// Minimal D1 stub: stores rows in a Map, tracks INSERTs/UPDATEs.
-
-type StoreRow = Record<string, unknown>;
-
-function makeStubDB(seed: Record<string, StoreRow> = {}) {
-  const store = new Map<string, StoreRow>(Object.entries(seed));
-  const processedMutations = new Map<string, StoreRow>();
-  const sqlLog: string[] = [];
-
-  function makeStmt(sql: string, boundVals: unknown[]): any {
-    return {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-
-      first: async <T>() => {
-        const upper = sql.trim().toUpperCase();
-        sqlLog.push(sql);
-
-        if (upper.includes('PROCESSED_MUTATIONS')) {
-          const id = boundVals[0] as string;
-          return (processedMutations.get(id) ?? null) as T | null;
-        }
-        if (upper.includes('VALIDATION_FLAGS')) {
-          return null as T | null;
-        }
-        // Dedup check (tasks only -- not relevant for links but guard it).
-        // classifyTaskDedupSelect throws on an unrecognised `SELECT id FROM
-        // tasks`, so a query edit that outruns this stub is red (#530b).
-        if (classifyTaskDedupSelect(sql) === 'title') {
-          return null as T | null;
-        }
-        // readCanonical / applyDelete idempotent check: SELECT * FROM <table> WHERE id = ?
-        const id = boundVals[0] as string;
-        return (store.get(id) ?? null) as T | null;
-      },
-
-      all: async <T>() => {
-        sqlLog.push(sql);
-        return { results: [] as T[], success: true, meta: {} };
-      },
-
-      run: async () => {
-        sqlLog.push(sql);
-        // Simulate INSERT into links -- store row keyed by record_id
-        if (/^INSERT INTO links/i.test(sql.trim())) {
-          const insertMatch = sql.match(/INSERT INTO links \(([^)]+)\) VALUES \(([^)]+)\)/i);
-          if (insertMatch) {
-            const id = boundVals[0] as string;
-            // Build a synthetic stored row (seq assigned by trigger in real D1)
-            store.set(id, {
-              id,
-              seq: store.size + 1,
-              last_mutation_id: boundVals[boundVals.length - 1] as string,
-            });
-          }
-        }
-        if (/^UPDATE links/i.test(sql.trim())) {
-          // Simulate soft-delete
-          const id = boundVals[boundVals.length - 1] as string;
-          const existing = store.get(id);
-          if (existing) {
-            store.set(id, { ...existing, deleted_at: nowInstant() });
-          }
-        }
-        return { meta: { changes: 1 } };
-      },
-    };
-  }
-
+function makeEnv(db: DB, onExec?: (sql: string, vals: unknown[]) => void): Env {
   return {
-    prepare: (sql: string) => makeStmt(sql, []),
-    batch: async (stmts: any[]) => {
-      for (const s of stmts) await s.run();
-      return [];
-    },
-    _store: store,
-    _processedMutations: processedMutations,
-    _sqlLog: sqlLog,
-  };
+    DB: d1Adapter(db, { onExec }),
+    KV: null as any,
+    BUCKET: null as any,
+    PB_API_KEY: TEST_API_KEY,
+  } as unknown as Env;
 }
 
-function makeEnv(db: ReturnType<typeof makeStubDB>): Env {
-  return { DB: withSequentialBatch(db) as any, KV: null as any, BUCKET: null as any } as unknown as Env;
-}
+type Body = { results: Array<{ status: string; reason?: string }> };
 
-// Stub Request that passes isPiRequest() (API-key bearer)
-function makePiRequest(env: Env): Request {
-  return new Request('https://mn-ccore-lab.pages.dev/api/mutations', {
+async function send(env: Env, mut: Mutation): Promise<{ status: number; body: Body }> {
+  const req = new Request('https://mn-ccore-lab.pages.dev/api/mutations', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      // isPiRequest checks env.PB_API_KEY vs Authorization Bearer
-      Authorization: 'Bearer test-api-key',
+      Authorization: `Bearer ${TEST_API_KEY}`,
     },
-    body: '{}',
+    body: JSON.stringify({ mutations: [mut] }),
+  });
+  const resp = await handleMutations(req, MOCK_USER, env);
+  return { status: resp.status, body: (await resp.json()) as Body };
+}
+
+const linkRow = (db: DB, id: string) =>
+  db.prepare('SELECT * FROM links WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+
+/** Seed a live links row (real columns, valid values); returns the stored row. */
+function seedLink(db: DB, id: string, extra: Record<string, unknown> = {}) {
+  return insertRow(db, 'links', {
+    id,
+    owner_table: 'tasks',
+    owner_id: 'task_01TEST000000000000000001',
+    role: 'key',
+    type: 'google_doc',
+    canonical_url: `https://docs.google.com/document/d/${id}`,
+    short_title: 'Protocol draft',
+    sort_order: 0,
+    created_at: '2026-06-20 10:00:00',
+    updated_at: '2026-06-20 10:00:00',
+    ...extra,
   });
 }
 
 // ── Admission tests ────────────────────────────────────────────────────────────
 
 describe('mutations.ts — links table admission', () => {
+  let db: DB;
+  beforeEach(() => { db = prodSchemaDb(); });
+
   it('accepts a valid links INSERT mutation', async () => {
-    const db = makeStubDB();
-    // isPiRequest needs PB_API_KEY on env to match Bearer token
-    const env = { ...makeEnv(db), PB_API_KEY: 'test-api-key' } as unknown as Env;
     const linkId = 'link_01TEST00000000000000000001';
 
     const mut: Mutation = makeMut({
@@ -168,32 +124,41 @@ describe('mutations.ts — links table admission', () => {
       },
     });
 
-    const req = new Request('https://mn-ccore-lab.pages.dev/api/mutations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer test-api-key',
-      },
-      body: JSON.stringify({ mutations: [mut] }),
-    });
-
-    const resp = await handleMutations(req, MOCK_USER, env);
-    expect(resp.status).toBe(200);
-    const body = await resp.json() as { results: Array<{ status: string; reason?: string }> };
+    const { status, body } = await send(makeEnv(db), mut);
+    expect(status).toBe(200);
     expect(body.results).toHaveLength(1);
     // Must be accepted (not 'unknown table' or field rejection)
     expect(body.results[0].status).toBe('accepted');
     expect(body.results[0].reason).toBeUndefined();
+
+    // The row really landed, with the payload's values and a trigger-assigned seq.
+    const row = linkRow(db, linkId)!;
+    expect(row).toBeDefined();
+    expect(row.owner_table).toBe('tasks');
+    expect(row.owner_id).toBe('task_01TEST000000000000000001');
+    expect(row.type).toBe('google_doc');
+    expect(row.canonical_url).toBe('https://docs.google.com/document/d/abc123');
+    expect(row.short_title).toBe('Protocol draft');
+    expect(row.source_raw).toBeNull();
+    expect(row.deleted_at).toBeNull();
+    expect(row.seq as number).toBeGreaterThan(0);
+    expect(row.last_mutation_id).toBe(mut.mutation_id);
+    expect(typeof row.updated_at).toBe('string');
+
+    // And the receipt (processed_mutations.original_response_json is TEXT NOT NULL).
+    const receipt = receiptOf(db, mut.mutation_id)!;
+    expect(receipt.outcome).toBe('accepted');
+    expect(receipt.table_name).toBe('links');
+    expect(receipt.record_id).toBe(linkId);
+    expect(typeof receipt.original_response_json).toBe('string');
   });
 
   it('rejects an unknown field in a links payload', async () => {
-    const db = makeStubDB();
-    const env = { ...makeEnv(db), PB_API_KEY: 'test-api-key' } as unknown as Env;
-
+    const linkId = 'link_01TEST00000000000000000002';
     const mut: Mutation = makeMut({
       table: 'links',
       op: 'insert',
-      record_id: 'link_01TEST00000000000000000002',
+      record_id: linkId,
       payload: {
         owner_table: 'tasks',
         owner_id: 'task_01TEST000000000000000001',
@@ -207,28 +172,17 @@ describe('mutations.ts — links table admission', () => {
       },
     });
 
-    const req = new Request('https://mn-ccore-lab.pages.dev/api/mutations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer test-api-key',
-      },
-      body: JSON.stringify({ mutations: [mut] }),
-    });
-
-    const resp = await handleMutations(req, MOCK_USER, env);
-    expect(resp.status).toBe(200);
-    const body = await resp.json() as { results: Array<{ status: string; reason?: string }> };
+    const { status, body } = await send(makeEnv(db), mut);
+    expect(status).toBe(200);
     expect(body.results[0].status).toBe('error');
     expect(body.results[0].reason).toMatch(/unknown fields for links/i);
     expect(body.results[0].reason).toMatch(/sync_status/);
+    // Nothing was written.
+    expect(linkRow(db, linkId)).toBeUndefined();
   });
 
   it('rejects a mutation for an unlisted table (regression: links must be in ALLOWED_TABLES)', async () => {
     // This test would also catch regression if links were removed from ALLOWED_TABLES.
-    const db = makeStubDB();
-    const env = { ...makeEnv(db), PB_API_KEY: 'test-api-key' } as unknown as Env;
-
     const mut: Mutation = makeMut({
       table: 'unknown_table_xyz' as any,
       op: 'insert',
@@ -236,17 +190,7 @@ describe('mutations.ts — links table admission', () => {
       payload: { foo: 'bar' },
     });
 
-    const req = new Request('https://mn-ccore-lab.pages.dev/api/mutations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer test-api-key',
-      },
-      body: JSON.stringify({ mutations: [mut] }),
-    });
-
-    const resp = await handleMutations(req, MOCK_USER, env);
-    const body = await resp.json() as { results: Array<{ status: string; reason?: string }> };
+    const { body } = await send(makeEnv(db), mut);
     expect(body.results[0].status).toBe('error');
     expect(body.results[0].reason).toMatch(/unknown table/i);
   });
@@ -254,50 +198,28 @@ describe('mutations.ts — links table admission', () => {
   it('soft-delete on links stamps deleted_at and does NOT co-set status (links has no status column)', async () => {
     // Seed an existing links row so applyDelete finds it.
     const linkId = 'link_01TEST00000000000000000003';
-    const db = makeStubDB({
-      [linkId]: {
-        id: linkId,
-        owner_table: 'tasks',
-        owner_id: 'task_01TEST000000000000000001',
-        role: 'key',
-        type: 'google_doc',
-        canonical_url: 'https://docs.google.com/document/d/abc123',
-        short_title: 'Protocol draft',
-        sort_order: 0,
-        deleted_at: null,
-        seq: 1,
-        last_mutation_id: null,
-        created_at: '2026-06-20 10:00:00',
-        updated_at: '2026-06-20 10:00:00',
-      },
-    });
-    const env = { ...makeEnv(db), PB_API_KEY: 'test-api-key' } as unknown as Env;
+    seedLink(db, linkId);
 
-    const mut: Mutation = makeMut({
-      table: 'links',
-      op: 'delete',
-      record_id: linkId,
-    });
-
-    const req = new Request('https://mn-ccore-lab.pages.dev/api/mutations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer test-api-key',
-      },
-      body: JSON.stringify({ mutations: [mut] }),
-    });
-
-    const resp = await handleMutations(req, MOCK_USER, env);
-    expect(resp.status).toBe(200);
-    const body = await resp.json() as { results: Array<{ status: string; reason?: string }> };
+    const sqlLog: string[] = [];
+    const mut: Mutation = makeMut({ table: 'links', op: 'delete', record_id: linkId });
+    const { status, body } = await send(makeEnv(db, (sql) => sqlLog.push(sql)), mut);
+    expect(status).toBe(200);
     expect(body.results[0].status).toBe('accepted');
 
+    // The stored row is tombstoned: deleted_at stamped, updated_at re-stamped,
+    // the row itself retained (soft-delete, sync-symmetric).
+    const row = linkRow(db, linkId)!;
+    expect(row).toBeDefined();
+    expect(typeof row.deleted_at).toBe('string');
+    expect((row.deleted_at as string).length).toBeGreaterThan(0);
+    expect(row.updated_at).not.toBe('2026-06-20 10:00:00');
+    expect(receiptOf(db, mut.mutation_id)!.outcome).toBe('accepted');
+
     // The DELETE SQL must NOT include "status = 'deleted'" (links has no status column;
-    // STATUS_BEARING_DELETE_TABLES only covers tasks/projects).
-    const deleteSqls = db._sqlLog.filter(s => /^UPDATE links.*deleted_at/i.test(s));
+    // STATUS_BEARING_DELETE_TABLES only covers tasks/projects). On the real schema a
+    // co-set would also fail outright (no such column), which the accept above rules out.
+    const deleteSqls = sqlLog.filter(s => /^\s*UPDATE links.*deleted_at/is.test(s));
     expect(deleteSqls.length).toBeGreaterThan(0);
-    // None of the delete statements should co-set status='deleted'
     for (const sql of deleteSqls) {
       expect(sql).not.toMatch(/status\s*=/i);
     }
@@ -305,117 +227,97 @@ describe('mutations.ts — links table admission', () => {
 
   it('conflict detection works for links UPDATE (base_seq/base_row_hash path)', async () => {
     const linkId = 'link_01TEST00000000000000000004';
-    const db = makeStubDB({
-      [linkId]: {
-        id: linkId,
-        owner_table: 'tasks',
-        owner_id: 'task_01TEST000000000000000001',
-        role: 'key',
-        type: 'google_doc',
-        canonical_url: 'https://docs.google.com/document/d/abc123',
-        short_title: 'Old title',
-        sort_order: 0,
-        deleted_at: null,
-        seq: 10,  // current seq is 10
-        last_mutation_id: null,
-        created_at: '2026-06-20 10:00:00',
-        updated_at: '2026-06-20 10:00:00',
-      },
-    });
-    const env = { ...makeEnv(db), PB_API_KEY: 'test-api-key' } as unknown as Env;
+    // Seed then bump seq with real UPDATEs (the v88 trigger advances it) so the
+    // stored seq is ahead of the client's base.
+    seedLink(db, linkId, { short_title: 'Old title' });
+    for (let i = 0; i < 9; i++) db.prepare('UPDATE links SET sort_order = ? WHERE id = ?').run(i, linkId);
+    const before = linkRow(db, linkId)!;
+    const staleBase = (before.seq as number) - 5;
+    expect(staleBase).toBeGreaterThan(0);
 
-    // Client thinks seq=5 (stale) and provides a hash that won't match
+    // Client holds a stale seq and provides a hash that won't match
     const mut: Mutation = makeMut({
       table: 'links',
       op: 'update',
       record_id: linkId,
-      base_seq: 5,
+      base_seq: staleBase,
       base_row_hash: 'sha256:deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
       patch: { short_title: 'New title' },
     });
 
-    const req = new Request('https://mn-ccore-lab.pages.dev/api/mutations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer test-api-key',
-      },
-      body: JSON.stringify({ mutations: [mut] }),
-    });
-
-    const resp = await handleMutations(req, MOCK_USER, env);
-    const body = await resp.json() as { results: Array<{ status: string; reason?: string }> };
-    // seq(10) > base_seq(5) + hash mismatch => conflict
+    const { body } = await send(makeEnv(db), mut);
+    // seq > base_seq + hash mismatch => conflict
     expect(body.results[0].status).toBe('conflict');
     expect(body.results[0].reason).toMatch(/base_seq/i);
+    // Hub wins: the stored row is unchanged.
+    const after = linkRow(db, linkId)!;
+    expect(after.short_title).toBe('Old title');
+    expect(after.seq).toBe(before.seq);
   });
 });
 
 // ── GET /links handler tests ──────────────────────────────────────────────────
 
 describe('handleGetLinks — pull endpoint', () => {
-  // Stub Request with PI auth (Bearer matches PB_API_KEY on env)
+  let db: DB;
+  beforeEach(() => { db = prodSchemaDb(); });
+
   function makePiGetRequest(queryString: string): Request {
     return new Request(`https://mn-ccore-lab.pages.dev/api/links?${queryString}`, {
-      headers: { Authorization: 'Bearer test-api-key' },
+      headers: { Authorization: `Bearer ${TEST_API_KEY}` },
     });
   }
-
-  // Build a stub DB that returns predefined rows for the links query.
-  function makeLinksDB(rows: StoreRow[]) {
-    return {
-      prepare: (_sql: string) => ({
-        bind: (..._vals: unknown[]) => ({
-          all: async <T>() => ({ results: rows as T[], success: true, meta: {} }),
-        }),
-      }),
-    };
-  }
-
-  const sampleRow: StoreRow = {
-    id: 'link_01TEST00000000000000000010',
-    owner_table: 'tasks',
-    owner_id: 'task_01TEST000000000000000001',
-    role: 'key',
-    type: 'google_doc',
-    canonical_url: 'https://docs.google.com/document/d/abc123',
-    short_title: 'Protocol draft',
-    source_raw: null,
-    sort_order: 0,
-    deleted_at: null,
-    seq: 1,
-    last_mutation_id: null,
-    created_at: '2026-06-20 10:00:00',
-    updated_at: '2026-06-20 10:00:00',
+  const getLinks = (env: Env, qs: string) => {
+    const req = makePiGetRequest(qs);
+    return handleGetLinks(new URL(req.url), req, env);
   };
 
+  const sampleId = 'link_01TEST00000000000000000010';
+
   it('returns { data, count } shape on a basic pull', async () => {
-    const db = makeLinksDB([sampleRow]);
-    const env = { DB: withSequentialBatch(db), PB_API_KEY: 'test-api-key' } as unknown as Env;
-    const req = makePiGetRequest('seq_after=0');
-    const url = new URL(req.url);
-    const resp = await handleGetLinks(url, req, env);
+    const stored = seedLink(db, sampleId);
+    const resp = await getLinks(makeEnv(db), 'seq_after=0');
     expect(resp.status).toBe(200);
-    const body = await resp.json() as { data: unknown[]; count: number };
+    const body = await resp.json() as { data: Array<Record<string, unknown>>; count: number };
     expect(body.data).toHaveLength(1);
     expect(body.count).toBe(1);
-    expect((body.data[0] as Record<string, unknown>).id).toBe(sampleRow.id);
+    expect(body.data[0].id).toBe(sampleId);
+    expect(body.data[0].seq).toBe(stored.seq);
+    // The sync projection: identity-mapped columns only.
+    expect(Object.keys(body.data[0]).sort()).toEqual([
+      'canonical_url', 'created_at', 'deleted_at', 'id', 'last_mutation_id', 'owner_id',
+      'owner_table', 'role', 'seq', 'short_title', 'sort_order', 'source_raw', 'type', 'updated_at',
+    ]);
+  });
+
+  it('honours seq_after and include_deleted against real rows', async () => {
+    // Strengthened (#8875): the old canned stub returned the same rows whatever
+    // the WHERE clause said; this pins the cursor and tombstone filters.
+    const a = seedLink(db, 'link_01TEST0000000000000000A');
+    const b = seedLink(db, 'link_01TEST0000000000000000B');
+    db.prepare("UPDATE links SET deleted_at = '2026-06-21 00:00:00' WHERE id = ?").run(b.id);
+    const env = makeEnv(db);
+
+    const live = await (await getLinks(env, 'seq_after=0')).json() as { data: Array<{ id: string }> };
+    expect(live.data.map(r => r.id)).toEqual([a.id]);
+
+    const all = await (await getLinks(env, 'seq_after=0&include_deleted=1')).json() as { data: Array<{ id: string; seq: number }> };
+    expect(all.data.map(r => r.id)).toEqual([a.id, b.id]);
+    const after = await (await getLinks(env, `seq_after=${a.seq}&include_deleted=1`)).json() as { data: Array<{ id: string }> };
+    expect(after.data.map(r => r.id)).toEqual([b.id]);
   });
 
   it('validates seq_after is a non-negative integer', async () => {
-    const db = makeLinksDB([]);
-    const env = { DB: withSequentialBatch(db), PB_API_KEY: 'test-api-key' } as unknown as Env;
-    const req = makePiGetRequest('seq_after=abc');
-    const resp = await handleGetLinks(new URL(req.url), req, env);
+    const resp = await getLinks(makeEnv(db), 'seq_after=abc');
     expect(resp.status).toBe(400);
     const body = await resp.json() as { error: string };
     expect(body.error).toMatch(/seq_after/i);
   });
 
   it('rejects non-PI callers with 403', async () => {
-    const db = makeLinksDB([sampleRow]);
-    // No PB_API_KEY on env, so isPiRequest fails
-    const env = { DB: withSequentialBatch(db), PB_API_KEY: 'DIFFERENT_KEY' } as unknown as Env;
+    seedLink(db, sampleId);
+    // PB_API_KEY on env differs from the bearer, so isPiRequest fails
+    const env = { ...makeEnv(db), PB_API_KEY: 'DIFFERENT_KEY' } as unknown as Env;
     const req = new Request('https://mn-ccore-lab.pages.dev/api/links?seq_after=0', {
       headers: { Authorization: 'Bearer wrong-key' },
     });
@@ -424,17 +326,10 @@ describe('handleGetLinks — pull endpoint', () => {
   });
 
   it('returns empty data when the links table does not exist yet', async () => {
-    // Simulate "no such table: links" from D1 (migration not yet applied)
-    const db = {
-      prepare: (_sql: string) => ({
-        bind: (..._vals: unknown[]) => ({
-          all: async () => { throw new Error('D1_ERROR: no such table: links'); },
-        }),
-      }),
-    };
-    const env = { DB: withSequentialBatch(db), PB_API_KEY: 'test-api-key' } as unknown as Env;
-    const req = makePiGetRequest('seq_after=0');
-    const resp = await handleGetLinks(new URL(req.url), req, env);
+    // The real "no such table: links" error from the engine (migration not yet
+    // applied): drop the table on this clone rather than faking the message.
+    db.exec('DROP TABLE links');
+    const resp = await getLinks(makeEnv(db), 'seq_after=0');
     // Should fail-soft (empty result) rather than 500 so the Worker
     // can be deployed before the D1 migration runs (R10 ordering).
     expect(resp.status).toBe(200);
@@ -444,10 +339,7 @@ describe('handleGetLinks — pull endpoint', () => {
   });
 
   it('rejects invalid owner_table filter', async () => {
-    const db = makeLinksDB([]);
-    const env = { DB: withSequentialBatch(db), PB_API_KEY: 'test-api-key' } as unknown as Env;
-    const req = makePiGetRequest('owner_table=invalid_table');
-    const resp = await handleGetLinks(new URL(req.url), req, env);
+    const resp = await getLinks(makeEnv(db), 'owner_table=invalid_table');
     expect(resp.status).toBe(400);
     const body = await resp.json() as { error: string };
     expect(body.error).toMatch(/owner_table/i);
