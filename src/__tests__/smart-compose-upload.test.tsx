@@ -240,6 +240,33 @@ describe('SmartCompose insert at cursor (#1360)', () => {
     expect(latestValue).toBe('before [shot.txt](/files/shot) after')
   })
 
+  // React 19 mounts a controlled textarea by setting defaultValue and then the
+  // same value, which leaves the caret at 0 (review on PR #140). An existing
+  // value -- MeetingDetail's "Edit notes" seeds the saved notes -- must still
+  // take inserts at the END until the user places the caret.
+  for (const autoFocus of [false, true]) {
+    it(`a composer mounted with existing text appends inserts (autoFocus=${autoFocus})`, async () => {
+      let latestValue = 'existing notes'
+      function Seeded() {
+        const [value, setValue] = useState('existing notes')
+        return (
+          <SmartCompose
+            onSubmit={async () => {}}
+            value={value}
+            onChange={(next) => { setValue(next); latestValue = next }}
+            uploadContext={{ type: 'project', id: 'proj-1' }}
+            alwaysShowToolbar
+            autoFocus={autoFocus}
+          />
+        )
+      }
+      const host = await renderQuery(<Seeded />)
+      host.querySelector<HTMLButtonElement>('button[aria-label="Mention someone"]')!.click()
+      await waitFor(() => latestValue !== 'existing notes', 'mention inserted')
+      expect(latestValue).toBe('existing notes@')
+    })
+  }
+
   it('autoFocus focuses the textarea on mount', async () => {
     const host = await renderQuery(
       <SmartCompose onSubmit={async () => {}} uploadContext={{ type: 'project', id: 'proj-1' }} autoFocus />,

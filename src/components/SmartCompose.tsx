@@ -207,6 +207,15 @@ export default function SmartCompose(props: SmartComposeProps) {
   const { tryLaunchCommand } = useLaunchCommands()
 
   useEffect(() => {
+    // React 19 mounts a controlled textarea by setting defaultValue and then
+    // the same value, so the caret starts at 0. Put it at the end once, so a
+    // composer opened on existing text (MeetingDetail "Edit notes") takes
+    // toolbar inserts at the end until the user places the caret (#1360).
+    const ta = textareaRef.current
+    if (ta) ta.setSelectionRange(ta.value.length, ta.value.length)
+  }, [])
+
+  useEffect(() => {
     // preventScroll: keeps focus without browser-scrolling the textarea into
     // view on in-page mounts (click-stays-put rule, #39 sweep, 2026-06-16).
     if (autoFocus && textareaRef.current) textareaRef.current.focus({ preventScroll: true })
