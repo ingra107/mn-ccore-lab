@@ -49,6 +49,29 @@ DEFAULT_DB = os.environ.get("PB_D1_DATABASE", "mnccore-lab")
 _SHADOWING_ENV = ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
 
 
+def format_wrangler_error(returncode: int, stdout: str | None,
+                          stderr: str | None, *, limit: int = 2000) -> str:
+    """The ONE message shape for a non-zero wrangler exit (PB backlog #2288).
+
+    `wrangler d1 execute --json` writes its error PAYLOAD to STDOUT, not
+    stderr -- on a transient CF flake stderr is often empty, so a stderr-only
+    message rendered as a bare "wrangler exited 1:" with zero diagnostic. That
+    shape was fixed twice, independently: here (the 2026-06-30 + 07-02
+    activity-gardener crashes, PB backlog #416, a4cfd466) and in
+    check-project-identity-gate.py::d1_query (PB backlog #2231), and the two
+    copies had already drifted (only the gate said so when BOTH streams were
+    empty). Both now call this. It formats only: env-stripping stays with each
+    caller, because the gate's is CI-conditional and this module's is not.
+    """
+    detail = (stderr or "").strip()
+    out = (stdout or "").strip()
+    if out:
+        detail = f"{detail} | stdout: {out}" if detail else f"stdout: {out}"
+    if not detail:
+        detail = "(no stderr or stdout captured)"
+    return f"wrangler exited {returncode}: {detail[-limit:]}"
+
+
 class WranglerD1Error(RuntimeError):
     """Raised when a wrangler invocation exits non-zero."""
 
@@ -58,19 +81,7 @@ class WranglerD1Error(RuntimeError):
         self.stderr = stderr
         self.stdout = stdout
         self.cmd = list(cmd)
-        # `wrangler d1 execute --json` writes its error PAYLOAD to STDOUT, not
-        # stderr — on a transient CF flake stderr is often empty, so a
-        # stderr-only message was a bare "wrangler exited 1:" with zero
-        # diagnostic (the 2026-06-30 + 07-02 activity-gardener crashes; PB
-        # backlog #416). Include a stdout tail too so the actual error text
-        # survives. stderr-present behavior is unchanged (stdout defaults empty).
-        detail = (stderr or "").strip()
-        out = (stdout or "").strip()
-        if out:
-            detail = f"{detail} | stdout: {out}" if detail else f"stdout: {out}"
-        super().__init__(
-            f"wrangler exited {returncode}: {detail[-2000:]}"
-        )
+        super().__init__(format_wrangler_error(returncode, stdout, stderr))
 
 
 @dataclass
