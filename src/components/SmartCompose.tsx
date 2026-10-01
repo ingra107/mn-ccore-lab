@@ -446,6 +446,10 @@ export default function SmartCompose(props: SmartComposeProps) {
       <MentionInput
         value={val}
         onChange={setVal}
+        // insertAtCursor and the autoFocus effect both read this ref; without
+        // it they saw null, appended every insertion at the end and never
+        // focused (#1360).
+        inputRef={textareaRef}
         placeholder={placeholder}
         onKeyDown={onKeyDown}
         onFocus={() => setFocused(true)}

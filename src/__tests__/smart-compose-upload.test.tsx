@@ -199,3 +199,52 @@ describe('SmartCompose file attach (#1118)', () => {
     expect(latestValue).toContain('shot')
   })
 })
+
+// Backlog #1360 — SmartCompose never forwarded its textareaRef to MentionInput,
+// so insertAtCursor read a null ref and appended every insertion (file link,
+// @mention, emoji) at the end, and the autoFocus prop never focused anything.
+describe('SmartCompose insert at cursor (#1360)', () => {
+  it('the Mention button inserts at the caret, not at the end', async () => {
+    let latestValue = ''
+    const host = await renderQuery(<ControlledHarness onValue={(v) => { latestValue = v }} />)
+    const textarea = host.querySelector<HTMLTextAreaElement>('textarea')!
+
+    setNativeValue(textarea, 'hello world')
+    await waitFor(() => latestValue === 'hello world', 'typed text committed')
+    textarea.focus()
+    textarea.setSelectionRange(5, 5)
+
+    host.querySelector<HTMLButtonElement>('button[aria-label="Mention someone"]')!.click()
+    await waitFor(() => latestValue !== 'hello world', 'mention inserted')
+    expect(latestValue).toBe('hello@ world')
+  })
+
+  it('an uploaded file link lands at the caret', async () => {
+    const upload = deferred<{ url: string; key: string }>()
+    mockedUpload.mockImplementation(() => upload.promise)
+
+    let latestValue = ''
+    const host = await renderQuery(<ControlledHarness onValue={(v) => { latestValue = v }} />)
+    const textarea = host.querySelector<HTMLTextAreaElement>('textarea')!
+
+    setNativeValue(textarea, 'before after')
+    await waitFor(() => latestValue === 'before after', 'typed text committed')
+    textarea.focus()
+    textarea.setSelectionRange(7, 7)
+
+    pasteFiles(textarea, [new File(['a'], 'shot.txt', { type: 'text/plain' })])
+    await waitFor(() => mockedUpload.mock.calls.length >= 1, 'upload requested')
+    upload.resolve({ url: '/files/shot', key: 'k1' })
+    await waitFor(() => latestValue.includes('shot'), 'markdown link inserted')
+
+    expect(latestValue).toBe('before [shot.txt](/files/shot) after')
+  })
+
+  it('autoFocus focuses the textarea on mount', async () => {
+    const host = await renderQuery(
+      <SmartCompose onSubmit={async () => {}} uploadContext={{ type: 'project', id: 'proj-1' }} autoFocus />,
+    )
+    const textarea = host.querySelector<HTMLTextAreaElement>('textarea')!
+    await waitFor(() => document.activeElement === textarea, 'textarea focused')
+  })
+})
