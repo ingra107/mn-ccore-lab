@@ -117,7 +117,6 @@ export const EXCEPTIONS = new Map([
   ['api/routes/mutations.fix7-integration.test.ts', UNCONVERTED],
   ['api/routes/mutations.infra-error.test.ts', 'fault injection around the batch; d1Adapter failSql/beforeBatch hooks can carry it'],
   ['api/routes/mutations.links.test.ts', `${UNCONVERTED}; the "links table does not exist yet" case is a missing-schema subject and may stay a stub`],
-  ['api/routes/mutations.notes-leak.test.ts', `${UNCONVERTED}; the synthetic private notes input is adversarial on purpose, keep it as a narrow read injection`],
   ['api/routes/mutations.partial-batch.test.ts', 'fault injection around the batch; d1Adapter failSql/beforeBatch hooks can carry it'],
   ['api/routes/mutations.tombstone-cascade.test.ts', UNCONVERTED],
   ['api/routes/pb-sector.test.ts', 'stub batch on a capture route; convert with the route writers'],
