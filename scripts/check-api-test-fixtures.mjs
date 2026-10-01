@@ -111,7 +111,6 @@ export const EXCEPTIONS = new Map([
   ['api/routes/member-featured-publications.test.ts', UNCONVERTED],
   ['api/routes/mutations.advance-project.test.ts', UNCONVERTED],
   ['api/routes/mutations.apply-mutation.test.ts', UNCONVERTED],
-  ['api/routes/mutations.composite-pk.test.ts', `${UNCONVERTED}; keep the no-Buffer runtime case separate from the Node-built fixture`],
   ['api/routes/mutations.dependency-failed-recovery.test.ts', UNCONVERTED],
   ['api/routes/mutations.enum-validation.test.ts', `${UNCONVERTED}; the pure canonicalization cases need no database`],
   ['api/routes/mutations.fix7-integration.test.ts', UNCONVERTED],
