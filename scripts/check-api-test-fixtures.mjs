@@ -115,7 +115,6 @@ export const EXCEPTIONS = new Map([
   ['api/routes/mutations.partial-batch.test.ts', 'fault injection around the batch; d1Adapter failSql/beforeBatch hooks can carry it'],
   ['api/routes/mutations.tombstone-cascade.test.ts', UNCONVERTED],
   ['api/routes/pb-sector.test.ts', 'stub batch on a capture route; convert with the route writers'],
-  ['api/routes/pb-visibility-contract.test.ts', `${UNCONVERTED}; split the read/denial matrix from the allowed-write branches`],
   ['api/routes/phase1b-acl.test.ts', 'stub batch in an ACL suite (lane L3 owns this file in wave w0930); convert or narrow to a read-only fake'],
   ['api/routes/phase1b-b-visibility.test.ts', 'stub batch in a visibility suite; convert or narrow to a read-only fake'],
   ['api/routes/phase4-correctness.test.ts', UNCONVERTED],
