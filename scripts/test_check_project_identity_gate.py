@@ -13,9 +13,9 @@ as a bare, contentless string.
 
 The script's filename uses hyphens (matches its CLI-invocation convention,
 `python3 scripts/check-project-identity-gate.py`), so it is not an importable
-module name -- load it by file path with importlib, same approach the script
-itself uses for nothing (it has no internal cross-imports), keeping this test
-self-contained and dependency-free like the script it covers.
+module name -- load it by file path with importlib. Its one internal import is
+`format_wrangler_error` from the stdlib-only sibling scripts/wrangler_d1.py
+(PB backlog #2288), which the script resolves itself via its own directory.
 """
 from __future__ import annotations
 
@@ -91,3 +91,25 @@ def test_d1_query_still_surfaces_stderr_when_present(monkeypatch):
     msg = str(exc_info.value)
     assert "Authentication error" in msg
     assert "exited 7403" in msg
+
+
+def test_d1_query_and_wrangler_d1_error_share_one_message_shape(monkeypatch):
+    """#2288: the stdout-payload fix landed twice (#416 in wrangler_d1.py,
+    #2231 here) as two copies that drifted. Both must render the same message
+    for the same streams -- including the both-empty case only one had."""
+    wrangler_d1 = sys.modules["wrangler_d1"]
+    monkeypatch.setattr(gate, "_wrangler_cmd", lambda: ["wrangler.cmd"])
+    monkeypatch.setattr(gate, "_d1_env", lambda: {})
+    for rc, out, err in [(1, '{"error":"D1_ERROR"}', ""), (1, "", ""),
+                         (7403, "", "Authentication error"), (2, "o", "e")]:
+        monkeypatch.setattr(
+            subprocess, "run", lambda *a, _r=(rc, out, err), **k: _fake_completed(*_r)
+        )
+        with pytest.raises(RuntimeError) as exc_info:
+            gate.d1_query("SELECT 1")
+        gate_msg = str(exc_info.value).split("\ncmd: ")[0]
+        wrapper_msg = str(wrangler_d1.WranglerD1Error(rc, err, ["wrangler"], stdout=out))
+        assert gate_msg == wrapper_msg
+    assert "no stderr or stdout captured" in str(
+        wrangler_d1.WranglerD1Error(1, "", ["wrangler"])
+    )
