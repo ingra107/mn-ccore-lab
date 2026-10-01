@@ -8,3 +8,19 @@ api/routes/hash_vectors.json text eol=lf
 # Same pin for the milestone-placement golden vectors, emitted LF by PB
 # scripts/today/gen_milestone_vectors.py into both repos; its --check compares bytes.
 src/lib/__tests__/milestone_vectors.json text eol=lf
+
+# JS/TS modules stay LF in every working copy (#8877). Under core.autocrlf=true
+# (the Windows work machine) a module whose first line is `#!/usr/bin/env node`
+# checks out as `#!...\r\n`, and the locked vite 8.0.2 transform turns that into
+# `SyntaxError: Invalid or unexpected token` the moment a vitest suite imports it
+# (api/raw-wrangler-d1-gate.test.ts -> scripts/check-raw-wrangler-d1.mjs; the
+# api/test-support/fixture-gate.test.ts import of check-api-test-fixtures.mjs is
+# the same shape). The index already holds these files LF; this pins the checkout.
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.mts text eol=lf
+*.cts text eol=lf
+*.tsx text eol=lf
