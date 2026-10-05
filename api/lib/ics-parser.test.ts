@@ -526,3 +526,88 @@ describe('parseIcs — window bounds', () => {
     expect(may5!.startAt).toBe('2026-05-05T20:00:00.000Z')
   })
 })
+
+// #2225: the feed publishes ATTENDEE lines (Nick's: 121,571 lines over 7,184
+// VEVENTs, every one with mailto:). The parser used to read them only for the
+// owner-declined filter and then drop them in toIcsEvent, so Prep had nothing
+// to seed a meeting's attendees with. Every IcsEvent now carries the list.
+describe('parseIcs — attendees (#2225)', () => {
+  // vevent() writes `KEY:VALUE`; real lines put params on the key. Raw lines
+  // here are the shapes measured in the live feed.
+  function rawEvent(lines: string[]): string {
+    return ['BEGIN:VEVENT', ...lines, 'END:VEVENT'].join('\r\n')
+  }
+
+  it('keeps attendee emails, lower-cased, from real line shapes', () => {
+    const ics = ical(rawEvent([
+      'UID:att-1',
+      'SUMMARY:R01 aims',
+      'DTSTART:20260415T140000Z',
+      'DTEND:20260415T150000Z',
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;CN=Adams Dudley;X-NUM-GUESTS=0:mailto:Dudley@UMN.edu',
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;CN="Parker, Will";X-NUM-GUESTS=0:MAILTO:wparker@uchicago.edu',
+    ]))
+    const out = parseIcs(ics, WIN)
+    expect(out).toHaveLength(1)
+    expect(out[0].attendees).toEqual(['dudley@umn.edu', 'wparker@uchicago.edu'])
+  })
+
+  it('reads a folded ATTENDEE line and a quoted param holding a colon', () => {
+    const ics = ical(rawEvent([
+      'UID:att-2',
+      'SUMMARY:Folded',
+      'DTSTART:20260415T140000Z',
+      'ATTENDEE;CUTYPE=INDIVIDUAL;PARTSTAT=TENTATIVE;CN=Nate Mesfin;X-RESPONSE-COMMENT="Note: runn',
+      ' ing late";X-NUM-GUESTS=0:mailto:nate@stanford.edu',
+    ]))
+    const out = parseIcs(ics, WIN)
+    expect(out[0].attendees).toEqual(['nate@stanford.edu'])
+  })
+
+  it('drops attendees who declined and rooms/resources; dedupes', () => {
+    const ics = ical(rawEvent([
+      'UID:att-3',
+      'SUMMARY:Mixed',
+      'DTSTART:20260415T140000Z',
+      'ATTENDEE;CUTYPE=INDIVIDUAL;PARTSTAT=DECLINED;CN=Gone:mailto:gone@umn.edu',
+      'ATTENDEE;CUTYPE=RESOURCE;PARTSTAT=ACCEPTED;CN=PWB 5-200:mailto:c_room123@resource.calendar.google.com',
+      'ATTENDEE;CUTYPE=ROOM;PARTSTAT=ACCEPTED;CN=Room:mailto:room@umn.edu',
+      'ATTENDEE;CUTYPE=INDIVIDUAL;PARTSTAT=ACCEPTED;CN=A:mailto:a@umn.edu',
+      'ATTENDEE;CUTYPE=INDIVIDUAL;PARTSTAT=ACCEPTED;CN=A again:mailto:A@umn.edu',
+    ]))
+    const out = parseIcs(ics, WIN)
+    expect(out[0].attendees).toEqual(['a@umn.edu'])
+  })
+
+  it('an event with no ATTENDEE lines carries an empty list, never undefined', () => {
+    const ics = ical(vevent({ UID: 'att-4', SUMMARY: 'Solo', DTSTART: '20260415T140000Z' }))
+    const out = parseIcs(ics, WIN)
+    expect(out[0].attendees).toEqual([])
+  })
+
+  it('RRULE instances carry the master list; a RECURRENCE-ID override carries its own', () => {
+    const ics = ical(
+      rawEvent([
+        'UID:att-rec',
+        'SUMMARY:Weekly 1:1',
+        'DTSTART:20260406T140000Z',
+        'RRULE:FREQ=WEEKLY;BYDAY=MO;COUNT=3',
+        'ATTENDEE;PARTSTAT=ACCEPTED;CN=A:mailto:a@umn.edu',
+      ]),
+      rawEvent([
+        'UID:att-rec',
+        'SUMMARY:Weekly 1:1',
+        'RECURRENCE-ID:20260413T140000Z',
+        'DTSTART:20260413T140000Z',
+        'ATTENDEE;PARTSTAT=ACCEPTED;CN=A:mailto:a@umn.edu',
+        'ATTENDEE;PARTSTAT=ACCEPTED;CN=B:mailto:b@umn.edu',
+      ]),
+    )
+    const out = parseIcs(ics, WIN)
+    expect(out).toHaveLength(3)
+    const byDay = new Map(out.map((e) => [e.startAt.slice(0, 10), e.attendees]))
+    expect(byDay.get('2026-04-06')).toEqual(['a@umn.edu'])
+    expect(byDay.get('2026-04-13')).toEqual(['a@umn.edu', 'b@umn.edu'])
+    expect(byDay.get('2026-04-20')).toEqual(['a@umn.edu'])
+  })
+})

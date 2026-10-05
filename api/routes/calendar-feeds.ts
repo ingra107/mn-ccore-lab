@@ -245,16 +245,20 @@ export async function handleListEvents(
   const startBound = `${start}T00:00:00.000Z`
   const endBound = `${end}T23:59:59.999Z`
   const rows = await env.DB.prepare(
-    `SELECT id, summary, location, start_at, end_at, is_all_day
+    `SELECT id, uid, summary, location, start_at, end_at, is_all_day
      FROM user_calendar_events
      WHERE user_slug = ?
        AND start_at <= ?
        AND (end_at > ? OR (end_at IS NULL AND start_at >= ?))
      ORDER BY start_at`
-  ).bind(slug, endBound, startBound, startBound).all<{ id: string; summary: string | null; location: string | null; start_at: string; end_at: string | null; is_all_day: number }>()
+  ).bind(slug, endBound, startBound, startBound).all<{ id: string; uid: string; summary: string | null; location: string | null; start_at: string; end_at: string | null; is_all_day: number }>()
 
+  // `id` is re-minted on every 200-poll; `uid` + `startAt` is the stable key
+  // (schema v61's natural key) the Prep pill sends to prep-from-event (#2225).
+  // Attendees are deliberately not returned: only the server reads them.
   const events = (rows.results ?? []).map((r) => ({
     id: r.id,
+    uid: r.uid,
     title: r.summary ?? '(no title)',
     location: r.location,
     startAt: r.start_at,
@@ -401,18 +405,23 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
   // start_at = REPLACE (handles event updates from re-poll).
   // The JS Map dedupe block was removed — it was collapsing legitimate recurring
   // instances by keeping only last-seen UID, exactly the bug this fix addresses.
+  //
+  // attendees (schema v116, #2225): the JSON string[] of invited emails, always
+  // written ('[]' when none), so NULL in the column means only "row predates
+  // v116". Read server-side by POST /api/meetings/prep-from-event; the list
+  // endpoint below does not return it.
   const pollToken = newId()
   const insertStmt = env.DB.prepare(
     `INSERT OR REPLACE INTO user_calendar_events
-     (id, feed_id, user_slug, uid, summary, description, location, start_at, end_at, is_all_day, updated_at, poll_token)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)`
+     (id, feed_id, user_slug, uid, summary, description, location, start_at, end_at, is_all_day, attendees, updated_at, poll_token)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)`
   )
 
   for (let i = 0; i < inWindow.length; i += INSERT_CHUNK_SIZE) {
     const chunk = inWindow.slice(i, i + INSERT_CHUNK_SIZE)
     const stmts = chunk.map((ev) => insertStmt.bind(
       newId(), feed.id, feed.user_slug, ev.uid, ev.summary, ev.description, ev.location,
-      ev.startAt, ev.endAt, ev.isAllDay ? 1 : 0, pollToken,
+      ev.startAt, ev.endAt, ev.isAllDay ? 1 : 0, JSON.stringify(ev.attendees), pollToken,
     ))
     try {
       await env.DB.batch(stmts)

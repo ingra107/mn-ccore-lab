@@ -33,6 +33,12 @@ export interface IcsEvent {
   startAt: string  // ISO-8601 UTC
   endAt: string | null
   isAllDay: boolean
+  /** Invited attendees' emails, lower-cased, deduped (#2225). Excludes anyone
+   *  whose PARTSTAT is DECLINED and CUTYPE=ROOM/RESOURCE entries (rooms are
+   *  attendees in Google's feed). The owner stays in the list. Required, not
+   *  optional: every producer and the poll INSERT must handle it, so leaving
+   *  it out fails tsc instead of silently caching nothing. */
+  attendees: string[]
 }
 
 export interface ParseOptions {
@@ -118,8 +124,9 @@ export function parseIcs(raw: string, opts: ParseOptions = {}): IcsEvent[] {
       case 'STATUS':
         current.status = value.trim().toUpperCase() as ParsedVEvent['status']; break
       case 'ATTENDEE':
-        // Keep the full property line (including PARTSTAT params) so the
-        // declined-filter above can read it.
+        // Keep the full property line (params included): the owner-declined
+        // filter above reads PARTSTAT from it, and toIcsEvent extracts the
+        // attendee emails from it (#2225).
         current.attendees!.push(`${rawKey}:${value}`); break
       case 'DTSTART': {
         const parsed = parseIcsDate(value, params)
@@ -231,7 +238,9 @@ interface ParsedVEvent {
   exdates?: string[]
   recurrenceId?: string
   status?: 'CONFIRMED' | 'CANCELLED' | 'TENTATIVE'
-  attendees?: string[]  // raw ATTENDEE property lines for PARTSTAT inspection
+  // Raw ATTENDEE property lines (params included). Required so an RRULE
+  // instance copy (expandRrule) cannot be built without carrying them.
+  attendees: string[]
 }
 
 function toIcsEvent(p: ParsedVEvent): IcsEvent {
@@ -243,7 +252,27 @@ function toIcsEvent(p: ParsedVEvent): IcsEvent {
     startAt: p.startAt,
     endAt: p.endAt ?? null,
     isAllDay: p.isAllDay,
+    attendees: attendeeEmails(p.attendees),
   }
+}
+
+// The email is the value after the LAST `:mailto:`. Never split on the first
+// colon: a quoted param such as X-RESPONSE-COMMENT="Note: late" puts a colon
+// before it (33 such lines in Nick's feed on 2026-10-05).
+const ATTENDEE_MAILTO_RE = /^(.*):mailto:([^\s;:"]+)\s*$/i
+
+function attendeeEmails(lines: string[]): string[] {
+  const out: string[] = []
+  for (const line of lines) {
+    const m = ATTENDEE_MAILTO_RE.exec(line)
+    if (!m) continue
+    const params = m[1]
+    if (/(^|;)PARTSTAT=DECLINED(;|$)/i.test(params)) continue
+    if (/(^|;)CUTYPE=(ROOM|RESOURCE)(;|$)/i.test(params)) continue
+    const email = m[2].toLowerCase()
+    if (!out.includes(email)) out.push(email)
+  }
+  return out
 }
 
 // ─── Line handling ──────────────────────────────────────────────────────
@@ -592,6 +621,7 @@ function expandRrule(master: ParsedVEvent, windowStart: string, windowEnd: strin
         startAt: startIso,
         endAt: endIso,
         isAllDay: master.isAllDay,
+        attendees: master.attendees,
       })
       count++
       if (r.count !== undefined && count >= r.count) return out

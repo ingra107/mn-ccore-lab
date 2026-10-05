@@ -28,11 +28,18 @@ export function useAddAgendaItem(meetingId: string) {
 // Meeting", retyping date + title by hand, or waiting for the PB debrief
 // pipeline to push one AFTER a transcript existed.
 //
-// POST /api/meetings is already an upsert keyed on (date, normalized title)
-// — handleCreateMeeting, api/routes/meetings.ts — so pressing Prep twice, or
-// on two devices, returns the SAME row rather than minting a duplicate. That
-// is why this needs no client-side "already prepped?" guard: the duplicate is
-// unrepresentable at the write path, not defended against here.
+// POST /api/meetings/prep-from-event (#2225) shares POST /api/meetings'
+// upsert keyed on (date, normalized title) — upsertMeeting in
+// api/routes/meetings.ts — so pressing Prep twice, or on two devices, returns
+// the SAME row rather than minting a duplicate. That is why this needs no
+// client-side "already prepped?" guard: the duplicate is unrepresentable at
+// the write path, not defended against here.
+//
+// The client sends only WHICH calendar row ({uid, startAt}, the cache key
+// that survives a re-poll) and the day it was rendered on. The server copies
+// the title and the invited attendees from the caller's own calendar cache,
+// so there is no attendee field here to forget (every meeting this pill made
+// before #2225 had NULL attendees).
 //
 // ⚠️ This deliberately sends NO `source_id`, and that is load-bearing — see
 // CLAUDE.md rule 83 ("Meeting origin is TWO questions"). `meetings.source_id`
@@ -41,7 +48,7 @@ export function useAddAgendaItem(meetingId: string) {
 // meeting_id>` so that `tasks.meeting_id IN (m.id, m.source_id)` — the join in
 // handleGetMeeting — can find a meeting's action items. PB mints those ids as
 // `cal-YYYYMMDDTHHMM-<slug>` (scripts/meetings/calendar_adapter.py), while a
-// Today row's id is `cal-<icalUID>@<YYYY-MM-DD>`. Different id spaces. If Prep
+// Today row's id is `cal-<cache row id>@<YYYY-MM-DD>`. Different id spaces. If Prep
 // claimed the slot first, the later debrief push would be COALESCE'd away and
 // every action item from that meeting would render nowhere — the exact #108
 // failure rule 83 exists to prevent.
@@ -52,10 +59,10 @@ export function useAddAgendaItem(meetingId: string) {
 export function usePrepMeetingFromEvent() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { date: string; title: string }) =>
-      fetchApi<{ id: string }>('/api/meetings', {
+    mutationFn: (input: { uid: string; startAt: string; day: string }) =>
+      fetchApi<{ id: string }>('/api/meetings/prep-from-event', {
         method: 'POST',
-        body: JSON.stringify({ date: input.date, title: input.title }),
+        body: JSON.stringify({ uid: input.uid, start_at: input.startAt, day: input.day }),
       }),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] })

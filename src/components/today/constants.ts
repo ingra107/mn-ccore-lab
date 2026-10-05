@@ -87,6 +87,12 @@ export interface TodayEvent {
   // the D1 meetings table is keyed by date — so the Prep pill needs the day
   // the row is RENDERED on, not the instant it starts.
   dayKey?: string
+  // #2225: the calendar cache row this cal- row came from, by the key that
+  // survives a re-poll (v61's (uid, start_at); the cache row `id` inside this
+  // row's own `id` is re-minted every poll). The Prep pill sends it to
+  // POST /api/meetings/prep-from-event, which copies title + attendees from
+  // the cache server-side. Set on every cal- row, absent on native D1 rows.
+  calendarRef?: { uid: string; startAt: string }
 
   // ── #107: cross-day span ────────────────────────────────────────────────
   // startMin/endMin are minutes-since-midnight, which cannot express a span
@@ -230,6 +236,8 @@ export function isToday(isoDate: string | null | undefined): boolean {
 // prefix the title with a 📅 so users can spot which came from their feed.
 export interface CalendarFeedEvent {
   id: string
+  /** iCal UID; with startAt, the stable key of a cache row (#2225). */
+  uid: string
   title: string
   location: string | null
   startAt: string
@@ -272,7 +280,7 @@ export function projectCalendarEventToDay(e: CalendarFeedEvent, dayKey: string):
   // If location holds a meeting URL, hide the URL string from the loc
   // chip (it'll render via the dedicated 🔗 Join button instead).
   const loc = meetingUrl ? undefined : (e.location ?? undefined)
-  const base = { title: e.title, loc, meetingUrl }
+  const base = { title: e.title, loc, meetingUrl, calendarRef: { uid: e.uid, startAt: e.startAt } }
 
   if (e.isAllDay) {
     // Compare civil-to-civil; the sentinel's wall clock is meaningless.

@@ -31,7 +31,8 @@ import { CSS } from '@dnd-kit/utilities'
 import { InputSafePointerSensor, InputSafeTouchSensor } from '../lib/dndSensors'
 import { isEditableTarget } from '../lib/editableTarget'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useMeetingDetail, useProjects } from '../hooks/useApiData'
+import { useMeetingDetail, useProjects, useTeam } from '../hooks/useApiData'
+import { buildAttendeeLookup, resolveAttendeeList } from '../../shared/attendees'
 import type { AgendaItemRow, MeetingDetail as MeetingDetailData } from '../hooks/useApiData'
 import type { TaskRow } from '../lib/api'
 import { useQueryClient } from '@tanstack/react-query'
@@ -1411,11 +1412,25 @@ function AttendanceSection({ attendees, updateMeta }: { attendees: string[]; upd
   const allPeople = [...directors, ...getAllMembers()].filter(p => p.slug)
   const uniquePeople = allPeople.filter((p, i) => allPeople.findIndex(x => x.slug === p.slug) === i)
 
+  // #551: a stored value may be a team email (the PB push, rows written before
+  // the receiver normalized) where the picker compares team slugs. Resolve with
+  // the same rule the Worker's writers use (shared/attendees.ts): an EXACT
+  // team_members.email match is the member's slug, everything else stays as
+  // stored. Never by email prefix: `nate@stanford.edu` is not Nate Mesfin.
+  const { data: team = [] } = useTeam()
+  const lookup = buildAttendeeLookup([
+    ...uniquePeople.map(p => ({ slug: p.slug })),
+    ...team.map(m => ({ slug: m.slug, email: m.email })),
+  ])
+  const resolvedAttendees = resolveAttendeeList(localAttendees, lookup)
+
   const toggleAttendee = (slug: string) => {
     const prevList = localAttendees
-    const newList = localAttendees.includes(slug)
-      ? localAttendees.filter(s => s !== slug)
-      : [...localAttendees, slug]
+    // Toggling writes the RESOLVED list, so a team email is replaced by the
+    // slug it stood for and externals are kept.
+    const newList = resolvedAttendees.includes(slug)
+      ? resolvedAttendees.filter(s => s !== slug)
+      : [...resolvedAttendees, slug]
     setLocalAttendees(newList)
     updateMeta.mutate({ attendees: newList }, {
       onError: () => {
@@ -1433,7 +1448,7 @@ function AttendanceSection({ attendees, updateMeta }: { attendees: string[]; upd
           Attendees
         </span>
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-          {localAttendees.length}
+          {resolvedAttendees.length}
         </span>
         <button
           onClick={() => setExpanded(!expanded)}
@@ -1443,8 +1458,8 @@ function AttendanceSection({ attendees, updateMeta }: { attendees: string[]; upd
         </button>
       </div>
       <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-        {localAttendees.map(slug => <AttendeeChip key={slug} slug={slug} />)}
-        {localAttendees.length === 0 && !expanded && (
+        {resolvedAttendees.map(slug => <AttendeeChip key={slug} slug={slug} />)}
+        {resolvedAttendees.length === 0 && !expanded && (
           <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No attendees logged</span>
         )}
       </div>
@@ -1453,7 +1468,7 @@ function AttendanceSection({ attendees, updateMeta }: { attendees: string[]; upd
           {uniquePeople.map(person => {
             const slug = person.slug!
             const p = getPersonInfo(slug)
-            const present = localAttendees.includes(slug)
+            const present = resolvedAttendees.includes(slug)
             return (
               <button
                 key={slug}

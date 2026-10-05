@@ -22,7 +22,7 @@ import { handleMarkSeen, handleGetUnseenActivity } from './routes/seen';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
 import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
-import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleUpdateMeetingMeta, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
+import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleUpdateMeetingMeta, handleMeetingPrep, handleGenerateAgenda, handlePrepMeetingFromEvent } from './routes/meetings';
 import { handleGetPublications, handleGetGrants, handleCollaborationGraph, handleGetStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
 import { handleGetCitations } from './routes/citations';
 import { handleGetTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
@@ -2316,6 +2316,16 @@ defineRoute({
   entity: 'meetings',
   visibility: 'na',
   handler: (c) => handleCreateMeeting(R(c), USER(c), E(c)),
+});
+// #2225: the Today Prep pill. Title + attendees come from the caller's own
+// calendar cache row, server-side (handlePrepMeetingFromEvent).
+defineRoute({
+  method: 'POST',
+  path: '/api/meetings/prep-from-event',
+  auth: 'authed',
+  entity: 'meetings',
+  visibility: 'na',
+  handler: (c) => handlePrepMeetingFromEvent(R(c), USER(c), E(c)),
 });
 defineRoute({
   method: 'POST',

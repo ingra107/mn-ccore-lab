@@ -30,6 +30,9 @@ export interface TeamMember {
   /** True if this row was provisioned automatically on first login.
    *  Surfaces a "Pending review" badge in the Team UI until role is set. */
   autoCreated?: boolean
+  /** team_members.email, present only on rows fetched by an authed caller.
+   *  The attendance picker resolves stored attendee emails with it (#551). */
+  email?: string
 }
 
 export interface Publication {

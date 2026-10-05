@@ -91,7 +91,16 @@ describe('matchMeetingRecord', () => {
 // packColumns an inverted interval.
 describe('projectCalendarEventToDay', () => {
   const ev = (startAt: string, endAt: string | null, isAllDay = false) => ({
-    id: 'e1', title: 'Overnight thing', location: null, startAt, endAt, isAllDay,
+    id: 'e1', uid: 'uid-1@google.com', title: 'Overnight thing', location: null, startAt, endAt, isAllDay,
+  })
+
+  // #2225: the Prep pill sends the cache row's stable key, so every projected
+  // slice must carry it, timed or all-day.
+  it('carries the calendar row key (uid + raw startAt) on every slice', () => {
+    const timed = projectCalendarEventToDay(ev(local('2026-08-03T23:00'), local('2026-08-04T07:00')), '2026-08-04')!
+    expect(timed.calendarRef).toEqual({ uid: 'uid-1@google.com', startAt: local('2026-08-03T23:00') })
+    const allDay = projectCalendarEventToDay(ev('2026-08-03T00:00:00.000Z', null, true), '2026-08-03')!
+    expect(allDay.calendarRef).toEqual({ uid: 'uid-1@google.com', startAt: '2026-08-03T00:00:00.000Z' })
   })
   // Local-time ISO strings so the test does not depend on the runner's zone.
   const local = (s: string) => new Date(s).toISOString()

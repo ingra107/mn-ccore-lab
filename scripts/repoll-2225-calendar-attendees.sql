@@ -1,0 +1,25 @@
+-- repoll-2225-calendar-attendees.sql (2026-10-05) -- one-off, PB backlog #2225.
+--
+-- Forces the next calendar poll to re-fetch and re-parse every feed in full,
+-- so cache rows written before api/schema-v116-calendar-events-attendees.sql
+-- (attendees NULL) are rewritten by the code that fills the column.
+--
+-- Clears the conditional-GET state (etag / last_modified, so no 304 cheap
+-- path) and the staleness stamp (so the cron picks every feed up at once).
+--
+-- ORDER: run ONLY AFTER both `npm run deploy:worker` (the cron poller) and
+-- `npm run deploy:pages:gated` (the ?force=1 poller) are live. Run earlier, an
+-- old-code poll can consume it: it writes NULL attendees and stores a fresh
+-- etag, and the new code then gets 304 and leaves those rows NULL. It was kept
+-- out of v116 for exactly that reason.
+--
+-- Idempotent and safe to re-run (it only makes the next poll a full one).
+--
+-- APPLY (sanctioned wrapper only):
+--   scripts/wrangler-d1 d1 execute mnccore-lab --remote --file=scripts/repoll-2225-calendar-attendees.sql
+--
+-- CHECK after the next poll (cron at :00, or GET /api/integrations/calendar/events?force=1):
+--   SELECT COUNT(*), SUM(attendees IS NULL), SUM(attendees <> '[]') FROM user_calendar_events;
+--   expect the NULL count 0 and the non-empty count > 0.
+
+UPDATE user_calendar_feeds SET etag = NULL, last_modified = NULL, last_polled_at = NULL;

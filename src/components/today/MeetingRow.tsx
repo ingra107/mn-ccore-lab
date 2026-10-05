@@ -17,6 +17,7 @@ import MarkdownView from '../MarkdownView'
 import { useUnseenActivity, useMarkSeen } from '../../hooks/useEntitySeen'
 import { usePrepMeetingFromEvent } from '../../hooks/mutations/useMeetingMutations'
 import { Chip } from '../ui/Chip'
+import { useToast } from '../../hooks/useToast'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved'
 
@@ -76,17 +77,30 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
   const navigate = useNavigate()
   const prep = usePrepMeetingFromEvent()
   const rowMeetingId = isCalEvent ? (e.meetingId ?? e.matchedMeetingId) : e.id
-  const canPrep = isCalEvent && !rowMeetingId && !!e.dayKey
+  const { showError } = useToast()
+  // projectCalendarEventToDay always builds calendarRef, so test the uid in it:
+  // a list response from a Worker older than #2225 has no uid, and Prep then
+  // has no cache row to point at.
+  const calendarUid = e.calendarRef?.uid
+  const canPrep = isCalEvent && !rowMeetingId && !!e.dayKey && !!calendarUid
 
   async function handlePrep(ev: React.MouseEvent) {
     ev.stopPropagation()
-    if (!e.dayKey || prep.isPending) return
-    // POST /api/meetings upserts on (date, normalized title), so a second
-    // press — or a press from another device — lands on the same row. No
-    // source_id: that slot is set-once and belongs to the PB debrief push
-    // (see usePrepMeetingFromEvent's comment, and CLAUDE.md rule 83).
-    const res = await prep.mutateAsync({ date: e.dayKey, title: e.title })
-    if (res?.data?.id) navigate(PATHS.meeting(res.data.id))
+    if (!e.dayKey || !e.calendarRef || !calendarUid || prep.isPending) return
+    // prep-from-event upserts on (date, normalized title), so a second press
+    // — or a press from another device — lands on the same row. The server
+    // copies title + attendees from this calendar row (#2225). No source_id:
+    // that slot is set-once and belongs to the PB debrief push (see
+    // usePrepMeetingFromEvent's comment, and CLAUDE.md rule 83).
+    try {
+      const res = await prep.mutateAsync({ uid: calendarUid, startAt: e.calendarRef.startAt, day: e.dayKey })
+      if (res?.data?.id) navigate(PATHS.meeting(res.data.id))
+    } catch (err) {
+      // fetchApi throws ApiError carrying the server's `error` text (e.g. the
+      // 404 "calendar may have refreshed; reload"); show it instead of failing
+      // silently.
+      showError(`Prep failed: ${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   return (

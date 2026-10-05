@@ -64,7 +64,8 @@ function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[]; notific
           }
           if (upper.startsWith('UPDATE MEETINGS') && upper.includes('COALESCE')) {
             // UPDATE ... SET notes = COALESCE(?, notes), decisions = COALESCE(?, decisions),
-            //               tags = COALESCE(?, tags), attendees = COALESCE(?, attendees),
+            //               tags = COALESCE(?, tags),
+            //               attendees = CASE WHEN attendees IS NULL OR attendees = '[]' THEN COALESCE(?, attendees) ELSE attendees END,
             //               type = COALESCE(?, type), facilitator = COALESCE(?, facilitator),
             //               source_id = COALESCE(source_id, ?), updated_at = ... WHERE id = ?
             const [notesArg, decisionsArg, tagsArg, attendeesArg, typeArg, facilitatorArg, sourceIdArg, id] = args
@@ -73,7 +74,10 @@ function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[]; notific
               if (notesArg !== null && notesArg !== undefined) row.notes = notesArg
               if (decisionsArg !== null && decisionsArg !== undefined) row.decisions = decisionsArg
               if (tagsArg !== null && tagsArg !== undefined) row.tags = tagsArg
-              if (attendeesArg !== null && attendeesArg !== undefined) row.attendees = attendeesArg
+              // attendees fill-only since #2225: written only when the stored list
+              // is NULL or '[]' (the real SQL is exercised on the migrated schema
+              // in meetings.attendees.test.ts)
+              if ((row.attendees === null || row.attendees === undefined || row.attendees === '[]') && attendeesArg !== null && attendeesArg !== undefined) row.attendees = attendeesArg
               if (typeArg !== null && typeArg !== undefined) row.type = typeArg
               if (facilitatorArg !== null && facilitatorArg !== undefined) row.facilitator = facilitatorArg
               if (!row.source_id && sourceIdArg !== null && sourceIdArg !== undefined) row.source_id = sourceIdArg
@@ -574,13 +578,12 @@ describe('handleCreateMeeting — debrief notification (fire-once bell)', () => 
   })
 })
 
-// T5 — POST /api/meetings/:id/meta. `title` and `tags` are still PB-authored
-// only on INSERT/explicit-carry (see the tags describe block above), so a
-// manual edit to those stays put across a bare re-push. `attendees`/`type`
-// are the exception since PB commit c8e4ff306 (2026-07-07): PB now carries
-// them on every push, so a manual T5 correction to attendees/type can be
-// overwritten by a subsequent PB re-push that carries a differing value —
-// same COALESCE-on-carried-value contract as notes/decisions.
+// T5 — POST /api/meetings/:id/meta. A manual edit to `title` stays put (the
+// dedup path never writes it). `type` and `tags` are refreshed by a re-push
+// that carries a value (COALESCE-on-carried-value, like notes/decisions).
+// `attendees` are FILL-ONLY on the dedup path since #2225 (2026-10-05), so a
+// manual T5 attendee edit survives every later push; that contract is tested
+// on the migrated schema in meetings.attendees.test.ts.
 describe('handleUpdateMeetingMeta — T5 metadata edit endpoint', () => {
   function seedMeeting(overrides: Row = {}): { env: Env; meetings: Row[] } {
     return makeStatefulEnv([

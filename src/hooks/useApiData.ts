@@ -122,6 +122,7 @@ function rowToTeamMember(row: TeamMemberRow): TeamMember {
     scholarId: row.scholar_id || undefined,
     authorName: row.author_name || undefined,
     autoCreated: row.auto_created === 1,
+    email: row.email || undefined,
   }
 }
 
@@ -1641,6 +1642,8 @@ export function useUpcomingGrantMilestones(days: number = 90) {
 
 export interface UserCalendarEvent {
   id: string
+  /** iCal UID; with startAt, the cache row key the Prep pill sends (#2225). */
+  uid: string
   title: string
   location: string | null
   startAt: string

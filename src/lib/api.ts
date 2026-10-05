@@ -40,6 +40,8 @@ export interface TeamMemberRow {
   department: string | null
   member_type: string | null
   auto_created?: number
+  /** Returned to authed callers only (team.ts TEAM_PUBLIC_COLS omits it). */
+  email?: string | null
   created_at: string
 }
 

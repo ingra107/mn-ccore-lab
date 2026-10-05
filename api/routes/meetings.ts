@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical, pbTaskVisibilitySql } from '../helpers';
+import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical, pbTaskVisibilitySql, actorSlug } from '../helpers';
 import { TASK_SELECT_COLS } from '../lib/task-cols';
+import { normalizeAttendees, attendeesColumnValue, type NormalizedAttendees } from '../lib/meeting-write';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 
@@ -163,14 +164,28 @@ export async function handleUpdateMeetingNotes(meetingId: string, request: Reque
 }
 
 // POST /api/meetings/:id/meta — edit meeting metadata (attendees/title/type/tags).
-// Hub edits are canonical: the PB pipeline only sets these on INSERT, so a
-// manual edit here can never be overwritten by a re-push. Date is NOT editable
-// (it is half of the dedup key).
+// This is the human path, so it may overwrite. What a later automated write
+// (the PB debrief push, a Prep press) can do to each field is decided in
+// upsertMeeting below, field by field:
+//   - attendees: FILL-ONLY, so a non-empty list edited here survives every
+//     later push. NULL and '[]' both count as empty and CAN be filled: an
+//     empty list cleared here cannot be told apart in the stored data from
+//     the '[]' that older Meetings-dialog inserts wrote, and leaving those
+//     unfillable forever was the worse error.
+//   - title: never touched by the dedup path (it is the match key).
+//   - tags, type, facilitator: the push still REFRESHES them when it carries
+//     a value (`COALESCE(?, col)`), so an edit here can be replaced by a push.
+// (The comment this replaces said the PB pipeline only set these on INSERT;
+// that stopped being true for attendees + type in b3ebe90b, 2026-07-15.)
+// Date is NOT editable (it is half of the dedup key).
 export async function handleUpdateMeetingMeta(meetingId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { attendees?: string[]; title?: string; type?: string; tags?: string[]; facilitator?: string | null };
   const sets: string[] = [];
   const binds: unknown[] = [];
-  if (Array.isArray(body.attendees)) { sets.push('attendees = ?'); binds.push(JSON.stringify(body.attendees)); }
+  if (Array.isArray(body.attendees)) {
+    const attendees: NormalizedAttendees = await normalizeAttendees(env, body.attendees);
+    sets.push('attendees = ?'); binds.push(JSON.stringify(attendees));
+  }
   if (typeof body.title === 'string' && body.title.trim()) { sets.push('title = ?'); binds.push(body.title.trim()); }
   if (typeof body.type === 'string' && body.type) { sets.push('type = ?'); binds.push(body.type); }
   if (Array.isArray(body.tags)) { sets.push('tags = ?'); binds.push(JSON.stringify(body.tags)); }
@@ -462,11 +477,20 @@ function normalizeMeetingTitle(title: string): string {
 // (2026-07-07) made the push carry `attendees` (parsed from the note's
 // frontmatter, omitted only when empty/unparseable) and `type` ("one-on-one"
 // heuristic, otherwise omitted) on EVERY push, not just the first — see
-// shared-schema-registry.md "/meetings push payload" entry. Until this fix
+// shared-schema-registry.md "/meetings push payload" entry. Until b3ebe90b
 // only the INSERT branch persisted them, so any meeting that already had a
-// Hub row (pushed before this date, or any date+title dedup match) kept NULL
-// attendees forever. Both now follow the same COALESCE-on-carried-value
-// pattern as notes/decisions/tags: absent/empty never wipes an existing value.
+// Hub row kept NULL attendees forever. `type` follows the COALESCE-on-
+// carried-value pattern of notes/decisions/tags.
+//
+// attendees are FILL-ONLY (2026-10-05, #2225): a stored non-empty list wins,
+// like source_id. b3ebe90b made them carried-wins, which let any later push
+// replace a list a person had edited in the picker (handleUpdateMeetingMeta).
+// A push still fills an EMPTY list (NULL or '[]'), which is what b3ebe90b was
+// fixing; '[]' counts as empty because older Meetings-dialog inserts stored it
+// and nothing in the row tells it apart from a picker clear. Every attendee
+// list is normalized first
+// (api/lib/meeting-write.ts, #551): team emails become slugs, everything else
+// is kept.
 export async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
     date: string; title: string; type?: string; attendees?: string[];
@@ -474,80 +498,99 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
     source_id?: string | null; facilitator?: string | null;
   };
   if (!body.date || !body.title) return error('date and title required', 400);
+  return upsertMeeting(env, user, {
+    date: body.date,
+    title: body.title,
+    type: body.type,
+    attendees: await normalizeAttendees(env, body.attendees),
+    notes: body.notes,
+    decisions: body.decisions,
+    tags: body.tags,
+    source_id: body.source_id,
+    facilitator: body.facilitator,
+  });
+}
 
+interface MeetingUpsert {
+  date: string; title: string; type?: string;
+  attendees: NormalizedAttendees;
+  notes?: string | null; decisions?: string | null; tags?: string[] | null;
+  source_id?: string | null; facilitator?: string | null;
+}
+
+// The one INSERT-or-dedup-UPDATE for meetings, shared by POST /api/meetings
+// and POST /api/meetings/prep-from-event. Keyed on (date, normalized title).
+async function upsertMeeting(env: Env, user: AuthUser, input: MeetingUpsert): Promise<Response> {
   // #102: who actually ran the meeting. The UI used to DERIVE this from a hash
   // of the date, so it was wrong ~always; now it renders the stored value or
   // nothing. Give the value a writer so the read isn't pointed at a column
   // nothing fills (the `Project.lastActivity` mistake, #95). Absent/empty never
   // wipes an existing value — same COALESCE-on-carried-value rule as the rest.
-  const facilitator = typeof body.facilitator === 'string' && body.facilitator.trim()
-    ? body.facilitator.trim()
+  const facilitator = typeof input.facilitator === 'string' && input.facilitator.trim()
+    ? input.facilitator.trim()
     : null;
 
   // `tags` arrives as an array; persist as a JSON string (matches `attendees`).
   // An explicit null / absent tags stays null so the COALESCE guard below can
   // distinguish "no tags this push" from "wipe the tags".
-  const tagsJson = Array.isArray(body.tags) ? JSON.stringify(body.tags) : null;
+  const tagsJson = Array.isArray(input.tags) ? JSON.stringify(input.tags) : null;
 
-  // `attendees` mirrors `tags`'s JSON-string contract, but treats an EMPTY
-  // array the same as absent (a push that carries `attendees: []` must not
-  // wipe a previously-recorded attendee list on the dedup path). Matches the
-  // INSERT branch's `JSON.stringify(body.attendees)` serialization exactly.
-  const attendeesJson = Array.isArray(body.attendees) && body.attendees.length > 0
-    ? JSON.stringify(body.attendees)
-    : null;
+  // An EMPTY attendee list is the same as absent on both paths: NULL on
+  // INSERT (so a later push can still fill it) and no-op on the dedup path.
+  const attendeesJson = attendeesColumnValue(input.attendees);
 
-  const normalizedTitle = normalizeMeetingTitle(body.title);
+  const normalizedTitle = normalizeMeetingTitle(input.title);
 
   // Fetch candidates on the same date and normalize each one's title before
   // comparing. This beats a naive `WHERE date=? AND title=?` match which would
   // miss "Lab Meeting" vs "lab  meeting".
   const sameDate = await env.DB.prepare(
     'SELECT * FROM meetings WHERE date = ?'
-  ).bind(body.date).all<{ id: string; date: string; title: string; notes: string | null }>();
+  ).bind(input.date).all<{ id: string; date: string; title: string; notes: string | null }>();
   const existing = (sameDate.results ?? []).find(
     (m) => normalizeMeetingTitle(m.title) === normalizedTitle,
   );
   if (existing) {
-    // Upsert: if the re-push carries notes/decisions/tags/attendees/type,
-    // refresh the row. The COALESCE-on-carried-value pattern means an
-    // absent/empty field never wipes an existing value — only a provided
-    // (non-null / non-empty) value overwrites. source_id is SET-ONCE
-    // (COALESCE(source_id, ?) — existing wins): identity, not refreshable
-    // content, opposite direction from the other fields.
+    // Upsert: if the re-push carries notes/decisions/tags/type, refresh the
+    // row. The COALESCE-on-carried-value pattern means an absent/empty field
+    // never wipes an existing value — only a provided (non-null / non-empty)
+    // value overwrites. attendees and source_id are the opposite direction,
+    // FILL-ONLY (existing wins): source_id is identity, and attendees may hold
+    // a person's edit (see the header above). attendees fill when NULL or
+    // '[]'; a NULL bind leaves the column as it is.
     const hadNotes = !!(existing as { notes?: string | null }).notes;
-    const hasNotes = body.notes !== undefined && body.notes !== null;
-    const hasDecisions = body.decisions !== undefined && body.decisions !== null;
+    const hasNotes = input.notes !== undefined && input.notes !== null;
+    const hasDecisions = input.decisions !== undefined && input.decisions !== null;
     const hasTags = tagsJson !== null;
     const hasAttendees = attendeesJson !== null;
     // type: only overwrite when the payload carries a real value — never
     // clobber an existing row's type with a default (matches the INSERT
-    // branch's `body.type ?? 'biweekly'` default applying to NEW rows only).
-    const hasType = typeof body.type === 'string' && body.type.length > 0;
-    if (hasNotes || hasDecisions || hasTags || hasAttendees || hasType || body.source_id || facilitator) {
+    // branch's `type ?? 'biweekly'` default applying to NEW rows only).
+    const hasType = typeof input.type === 'string' && input.type.length > 0;
+    if (hasNotes || hasDecisions || hasTags || hasAttendees || hasType || input.source_id || facilitator) {
       await env.DB.prepare(
         `UPDATE meetings
             SET notes = COALESCE(?, notes),
                 decisions = COALESCE(?, decisions),
                 tags = COALESCE(?, tags),
-                attendees = COALESCE(?, attendees),
+                attendees = CASE WHEN attendees IS NULL OR attendees = '[]' THEN COALESCE(?, attendees) ELSE attendees END,
                 type = COALESCE(?, type),
                 facilitator = COALESCE(?, facilitator),
                 source_id = COALESCE(source_id, ?),
                 updated_at = datetime('now')
           WHERE id = ?`
       ).bind(
-        hasNotes ? body.notes : null,
-        hasDecisions ? body.decisions : null,
+        hasNotes ? input.notes : null,
+        hasDecisions ? input.decisions : null,
         hasTags ? tagsJson : null,
         hasAttendees ? attendeesJson : null,
-        hasType ? body.type : null,
+        hasType ? input.type : null,
         facilitator,
-        body.source_id ?? null,
+        input.source_id ?? null,
         existing.id,
       ).run();
       if (hasNotes && !hadNotes) {
-        await fireMeetingDebriefNotification(env, existing.id, body.source_id ?? null, body.title);
+        await fireMeetingDebriefNotification(env, existing.id, input.source_id ?? null, input.title);
       }
       const refreshed = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(existing.id).first();
       return json({ data: refreshed }, 200);
@@ -555,22 +598,77 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
     return json({ data: existing }, 200);
   }
 
-  const id = `mtg-${body.date}-${generateId().slice(0, 8)}`;
+  const id = `mtg-${input.date}-${generateId().slice(0, 8)}`;
   await env.DB.prepare(
     'INSERT INTO meetings (id, date, title, type, attendees, notes, decisions, tags, status, source_id, facilitator) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
-    id, body.date, body.title, body.type ?? 'biweekly',
-    body.attendees ? JSON.stringify(body.attendees) : null,
-    body.notes ?? null, body.decisions ?? null, tagsJson, 'upcoming',
-    body.source_id ?? null, facilitator,
+    id, input.date, input.title, input.type ?? 'biweekly',
+    attendeesJson,
+    input.notes ?? null, input.decisions ?? null, tagsJson, 'upcoming',
+    input.source_id ?? null, facilitator,
   ).run();
 
-  await logActivity(env, 'meeting', `Created meeting: "${body.title}" on ${body.date}`, user.email, id, 'meeting');
+  await logActivity(env, 'meeting', `Created meeting: "${input.title}" on ${input.date}`, user.email, id, 'meeting');
 
-  if (body.notes !== undefined && body.notes !== null) {
-    await fireMeetingDebriefNotification(env, id, body.source_id ?? null, body.title);
+  if (input.notes !== undefined && input.notes !== null) {
+    await fireMeetingDebriefNotification(env, id, input.source_id ?? null, input.title);
   }
 
   const created = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);
+}
+
+const CIVIL_DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The civil day `days` after a YYYY-MM-DD, as YYYY-MM-DD (UTC arithmetic on a date-only value). */
+function shiftCivilDay(day: string, days: number): string {
+  const [y, m, d] = day.split('-').map(Number);
+  // anti-pattern-allowed: R21 targets reading "today" from a UTC clock; this is pure arithmetic on a date-only input built with Date.UTC, so the UTC slice IS the civil day.
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+// POST /api/meetings/prep-from-event — body { uid, start_at, day } (#2225).
+//
+// The Today Prep pill: make (or find) the Hub meeting for one of the caller's
+// own calendar rows. Title and attendees are copied SERVER-SIDE from the
+// calendar cache, so the client has no attendee field to forget or forge.
+// The row is looked up by (uid, start_at), schema v61's natural key, which a
+// re-poll keeps; the cache row `id` is re-minted every poll, so it is not
+// accepted. `day` is the civil day the row was rendered on (the meetings
+// table is keyed by date); it must fall within the event's span, one day of
+// slack each side for time zones.
+//
+// Never writes source_id: that slot is set-once and belongs to the PB debrief
+// push (CLAUDE.md rule 83; 9f41f605). Attendees go through upsertMeeting, so on
+// an existing meeting they only fill an empty list. An event with no
+// attendees (or a cache row written before v116) seeds NULL, so the debrief
+// push can still fill it.
+export async function handlePrepMeetingFromEvent(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json().catch(() => null) as { uid?: unknown; start_at?: unknown; day?: unknown } | null;
+  const uid = typeof body?.uid === 'string' ? body.uid : '';
+  const startAt = typeof body?.start_at === 'string' ? body.start_at : '';
+  const day = typeof body?.day === 'string' ? body.day : '';
+  if (!uid || !startAt || !CIVIL_DAY_RE.test(day)) return error('uid, start_at and day (YYYY-MM-DD) required', 400);
+
+  // Same owner key the poller writes (calendar-feeds.ts handleAddFeed).
+  const ev = await env.DB.prepare(
+    `SELECT summary, start_at, end_at, attendees
+       FROM user_calendar_events
+      WHERE user_slug = ? AND uid = ? AND start_at = ?
+      LIMIT 1`
+  ).bind(actorSlug(user.email), uid, startAt).first<{ summary: string | null; start_at: string; end_at: string | null; attendees: string | null }>();
+  if (!ev) return error('Calendar event not found. The calendar may have refreshed; reload and try again.', 404);
+
+  const firstDay = shiftCivilDay(ev.start_at.slice(0, 10), -1);
+  const lastDay = shiftCivilDay((ev.end_at ?? ev.start_at).slice(0, 10), 1);
+  if (day < firstDay || day > lastDay) return error('day is outside the event', 400);
+
+  // The poller writes this column with JSON.stringify; a parse failure is a
+  // bug worth a 500, not a silent empty list.
+  const cached: unknown = ev.attendees ? JSON.parse(ev.attendees) : [];
+  return upsertMeeting(env, user, {
+    date: day,
+    title: ev.summary?.trim() || '(no title)',
+    attendees: await normalizeAttendees(env, cached),
+  });
 }

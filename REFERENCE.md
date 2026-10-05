@@ -99,6 +99,8 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 ### Meeting Operations
 - POST /api/meetings/:id/agenda, /api/meetings/:id/agenda/reorder, /api/meetings/:id/notes
 - POST /api/meetings/:id/generate-agenda, /api/meetings/:id/meta · GET /api/meetings/:id/prep
+- POST /api/meetings/prep-from-event `{uid, start_at, day}` — the Today Prep pill (#2225). Creates or finds the meeting for one of the caller's calendar rows; title + attendees are copied server-side from `user_calendar_events` (v116 `attendees` column). Never writes `source_id`.
+- Attendees on every meetings writer are normalized (`api/lib/meeting-write.ts`, rule in `shared/attendees.ts`, #551): exact `team_members.email` → slug, everything else kept. On the `POST /api/meetings` dedup path they are FILL-ONLY: a push fills an empty list (NULL or `'[]'`) and never replaces a non-empty one; only `/meta` overwrites.
 - ⚠️ There is **no** `/api/meetings/:id/action-items` and **no** `/api/meetings/:id/decisions` — both were documented here but neither has ever been registered (`api/index.ts`), and the first 404s on prod. A meeting's action items are **tasks** (`tasks.meeting_id`) since #547/#552, so create one with `POST /api/tasks`; decisions live on their own `/api/decisions*` family, not under a meeting.
 
 ### Task System

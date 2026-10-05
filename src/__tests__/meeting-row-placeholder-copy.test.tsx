@@ -14,6 +14,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { EventRow } from '../components/today/MeetingRow'
 import type { TodayEvent } from '../components/today/constants'
 import { mount as mountShared, cleanupMountsAfterEach } from './testMount'
+import { UndoToastProvider } from '../components/UndoToast'
 
 cleanupMountsAfterEach()
 
@@ -75,14 +76,58 @@ describe('EventRow Prep pill', () => {
       .map((el) => el.textContent?.trim() ?? '')
   }
 
+  const REF = { uid: 'abc@google.com', startAt: '2026-08-26T14:00:00.000Z' }
+
   it('offers Prep on an unmatched calendar row', async () => {
-    const host = await renderRow({ ...BASE, dayKey: '2026-08-26' })
+    const host = await renderRow({ ...BASE, dayKey: '2026-08-26', calendarRef: REF })
     expect(pills(host)).toContain('Prep')
   })
 
   it('withholds Prep when the row has no day to key the meeting on', async () => {
-    const host = await renderRow(BASE)
+    const host = await renderRow({ ...BASE, calendarRef: REF })
     expect(pills(host)).not.toContain('Prep')
+  })
+
+  it('withholds Prep when the row has no calendar key to copy attendees from', async () => {
+    const host = await renderRow({ ...BASE, dayKey: '2026-08-26' })
+    expect(pills(host)).not.toContain('Prep')
+  })
+
+  // projectCalendarEventToDay always builds calendarRef, so an events list from
+  // a Worker older than #2225 (no `uid`) yields { uid: undefined, ... }; the
+  // pill must test the uid, not the object.
+  it('withholds Prep when calendarRef carries no uid', async () => {
+    const host = await renderRow({
+      ...BASE, dayKey: '2026-08-26',
+      calendarRef: { uid: undefined as unknown as string, startAt: REF.startAt },
+    })
+    expect(pills(host)).not.toContain('Prep')
+  })
+
+  it("shows the server's message when Prep fails", async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found',
+      json: async () => ({ error: 'Calendar event not found. The calendar may have refreshed; reload and try again.' }),
+    }))
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const host = await mount(
+      <QueryClientProvider client={queryClient}>
+        <UndoToastProvider>
+          <MemoryRouter>
+            <EventRow e={{ ...BASE, dayKey: '2026-08-26', calendarRef: REF }} onDismiss={() => {}} onNote={() => {}} isCalEvent />
+          </MemoryRouter>
+        </UndoToastProvider>
+      </QueryClientProvider>,
+    )
+    const prepButton = [...host.querySelectorAll('.meeting-row-header button')]
+      .find((el) => el.textContent?.trim() === 'Prep') as HTMLButtonElement
+    prepButton.click()
+    for (let i = 0; i < 200 && !/Prep failed/.test(host.textContent ?? ''); i++) {
+      await new Promise((r) => setTimeout(r, 10))
+    }
+    expect(host.textContent).toContain('Prep failed: Calendar event not found')
   })
 
   it('shows Agenda instead of Prep once a meeting record exists', async () => {
@@ -96,10 +141,14 @@ describe('EventRow Prep pill', () => {
   // which writes `source_id = <manifest meeting_id>` so that
   // `tasks.meeting_id IN (m.id, m.source_id)` can find a meeting's action
   // items. PB mints those as `cal-YYYYMMDDTHHMM-<slug>`; a Today row's id is
-  // `cal-<icalUID>@<date>`. If Prep claimed the slot first the debrief's value
-  // would be COALESCE'd away and its action items would render nowhere. The
-  // first cut of this feature DID send it (c0339323, fixed same day).
-  it('sends no source_id — that slot belongs to the PB debrief push', async () => {
+  // `cal-<cache row id>@<date>`. If Prep claimed the slot first the debrief's
+  // value would be COALESCE'd away and its action items would render nowhere.
+  // The first cut of this feature DID send it (c0339323, fixed same day).
+  //
+  // #2225: Prep posts only the calendar row's key and the day; the server
+  // copies title + attendees from the cache. No title, no attendees, no
+  // source_id leave the browser.
+  it('posts the calendar key to prep-from-event and sends no source_id', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ data: { id: 'mtg-2026-08-26-new' } }),
@@ -110,7 +159,7 @@ describe('EventRow Prep pill', () => {
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>
           <EventRow
-            e={{ ...BASE, dayKey: '2026-08-26' }}
+            e={{ ...BASE, dayKey: '2026-08-26', calendarRef: REF }}
             onDismiss={() => {}}
             onNote={() => {}}
             isCalEvent
@@ -126,15 +175,15 @@ describe('EventRow Prep pill', () => {
 
     let call: [string, RequestInit] | undefined
     for (let i = 0; i < 100; i++) {
-      call = fetchMock.mock.calls.find((c) => String(c[0]).includes('/api/meetings')) as
+      call = fetchMock.mock.calls.find((c) => String(c[0]).includes('/api/meetings/prep-from-event')) as
         [string, RequestInit] | undefined
       if (call) break
       await new Promise((r) => setTimeout(r, 10))
     }
-    expect(call, 'Prep never POSTed to /api/meetings').toBeTruthy()
+    expect(call, 'Prep never POSTed to /api/meetings/prep-from-event').toBeTruthy()
 
     const body = JSON.parse(String(call![1].body))
-    expect(body).toEqual({ date: '2026-08-26', title: 'Standup' })
+    expect(body).toEqual({ uid: 'abc@google.com', start_at: '2026-08-26T14:00:00.000Z', day: '2026-08-26' })
     expect(body).not.toHaveProperty('source_id')
   })
 })
