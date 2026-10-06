@@ -1,9 +1,11 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Upload, File, Trash2, Download, Loader2 } from 'lucide-react'
 import { getPersonInfo } from '../data/team'
 import { formatRelativeTime } from '../lib/dateUtils'
 import { ICON_PROPS } from '../lib/iconProps'
+import { uploadFileToR2 } from '../lib/r2Upload'
+import { useUploadQueue } from '../lib/useUploadQueue'
 
 interface FileAttachment {
   id: string
@@ -32,7 +34,6 @@ function formatBytes(bytes: number | null): string {
 export default function FileUpload({ entityType, entityId }: FileUploadProps) {
   const queryClient = useQueryClient()
   const [dragOver, setDragOver] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState('')
 
   const { data: files = [] } = useQuery<FileAttachment[]>({
@@ -53,74 +54,49 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
     },
   })
 
+  // One file through the shared presign -> PUT -> done chain (#1031: this was
+  // the last hand-rolled copy). Files go through the shared queue, so a second
+  // drop while one is in flight waits its turn instead of racing the
+  // `uploading` flag, which the queue now owns.
+  // The failure message clears itself after 3s. The timer lives in a ref so a
+  // new upload (and unmount) cancels it; an uncancelled one blanked the next
+  // upload's "Uploading X..." label partway through.
+  const clearMsgTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cancelClearMsg = () => {
+    if (clearMsgTimerRef.current !== null) clearTimeout(clearMsgTimerRef.current)
+    clearMsgTimerRef.current = null
+  }
+  useEffect(() => cancelClearMsg, [])
   const uploadFile = useCallback(async (file: File) => {
-    setUploading(true)
-    setUploadProgress(`Uploading ${file.name}...`)
-
+    cancelClearMsg()
+    setUploadProgress(`Uploading ${file.name}... (${formatBytes(file.size)})`)
     try {
-      // 1. Get presigned URL
-      const urlRes = await fetch('/api/upload/url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type || 'application/octet-stream',
-          context: { type: entityType, id: entityId },
-        }),
-      })
-      const urlData = await urlRes.json() as { data: { uploadUrl: string; key: string } }
-
-      if (!urlData.data?.uploadUrl) {
-        throw new Error('Failed to get upload URL — R2 may not be configured')
-      }
-
-      // 2. Upload directly to R2
-      setUploadProgress(`Uploading ${file.name}... (${formatBytes(file.size)})`)
-      const res = await fetch(urlData.data.uploadUrl, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type || 'application/octet-stream' },
-      })
-      if (!res.ok) throw new Error('Upload failed')
-
-      // 3. Record in D1
-      const doneRes = await fetch('/api/upload/done', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: urlData.data.key,
-          filename: file.name,
-          contentType: file.type,
-          sizeBytes: file.size,
-          entityType,
-          entityId,
-        }),
-      })
-      if (!doneRes.ok) throw new Error('Failed to register upload')
-
+      await uploadFileToR2(file, { type: entityType, id: entityId })
       queryClient.invalidateQueries({ queryKey: ['attachments', entityType, entityId] })
       setUploadProgress('')
     } catch (err) {
       console.error('Upload failed:', err)
       setUploadProgress(`Upload failed: ${err instanceof Error ? err.message : 'unknown error'}`)
-      setTimeout(() => setUploadProgress(''), 3000)
-    } finally {
-      setUploading(false)
+      clearMsgTimerRef.current = setTimeout(() => {
+        clearMsgTimerRef.current = null
+        setUploadProgress('')
+      }, 3000)
     }
   }, [entityType, entityId, queryClient])
+  const { enqueue, uploading } = useUploadQueue(uploadFile)
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
     const file = e.dataTransfer.files[0]
-    if (file) uploadFile(file)
-  }, [uploadFile])
+    if (file) enqueue([file])
+  }, [enqueue])
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) uploadFile(file)
+    if (file) enqueue([file])
     e.target.value = ''
-  }, [uploadFile])
+  }, [enqueue])
 
   const handleDownload = useCallback(async (r2Key: string, filename: string) => {
     const res = await fetch(`/api/files/${r2Key}`)
@@ -157,10 +133,13 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
           style={{ display: 'none' }}
           onChange={handleFileSelect}
         />
-        {uploading ? (
-          <div className="flex items-center justify-center gap-2" style={{ color: 'var(--teal)' }}>
-            <Loader2 {...ICON_PROPS} size={16} className="animate-spin" />
-            <span className="text-xs">{uploadProgress}</span>
+        {/* `|| uploadProgress`: the failure message is set as the upload
+            ends, after `uploading` clears. Gating on `uploading` alone hid
+            every "Upload failed: ..." line the instant it was written. */}
+        {uploading || uploadProgress ? (
+          <div className="flex items-center justify-center gap-2" style={{ color: uploading ? 'var(--teal)' : 'var(--maroon)' }}>
+            {uploading && <Loader2 {...ICON_PROPS} size={16} className="animate-spin" />}
+            <span className="text-xs" role={uploading ? undefined : 'alert'}>{uploadProgress}</span>
           </div>
         ) : (
           <div className="flex items-center justify-center gap-2" style={{ color: 'var(--muted)' }}>
