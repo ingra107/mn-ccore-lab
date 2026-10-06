@@ -8,48 +8,34 @@
  *   - whitespace-only raw_text → 400 (trim guard)
  *   - missing raw_text → 400
  *   - unknown source → 400
+ *
+ * #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+ * The first cut handed back a fabricated read-back row (`seq: 42`), so the
+ * seq the inbox_events trigger assigns was never exercised; and the sync-bulk
+ * suite answered its pre/post SELECTs from a counter, so the ON CONFLICT upsert
+ * never ran. Here the seq is the trigger's, every 400 is checked against an
+ * empty table, and sync-bulk's replay/resync guards run on real rows.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type Database from 'better-sqlite3';
 import type { Env, AuthUser } from '../helpers';
 
 import { handleCreateInboxEvent } from './inbox-events';
 import { nowInstant } from '../lib/time';
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 
 const testUser: AuthUser = { email: 'test@example.com', name: 'Test User' };
 
-// ── DB stub factory ────────────────────────────────────────────────────────────
+let db: InstanceType<typeof Database>;
+let env: Env;
+beforeEach(() => {
+  db = prodSchemaDb();
+  env = { DB: d1Adapter(db) } as unknown as Env;
+});
 
-function makeDb(opts: {
-  /** Row returned by the post-insert SELECT (simulates trigger-assigned seq). */
-  insertRow?: Record<string, unknown> | null;
-  /** Optional spy on every INSERT statement + binds. */
-  captureInsert?: (sql: string, binds: unknown[]) => void;
-}) {
-  return {
-    prepare: (sql: string) => {
-      let boundVals: unknown[] = [];
-      const stmt: Record<string, (...args: unknown[]) => unknown> = {
-        bind: (...args: unknown[]) => { boundVals = [...boundVals, ...args]; return stmt; },
-        run: async () => {
-          if (/^INSERT INTO inbox_events/i.test(sql)) {
-            opts.captureInsert?.(sql, [...boundVals]);
-          }
-          return { success: true, meta: {} };
-        },
-        first: async () => {
-          // [\s\S]* not .* — the handler's read-back SELECT is multi-line
-          // (explicit column list), and `.` does not cross newlines.
-          if (/SELECT[\s\S]*FROM inbox_events WHERE id/.test(sql)) return opts.insertRow ?? null;
-          return null;
-        },
-        all: async () => ({ results: [] }),
-      };
-      return stmt;
-    },
-    batch: async (stmts: unknown[]) => stmts.map(() => ({ success: true, meta: {}, results: [] })),
-  };
-}
+const inboxRows = () =>
+  db.prepare('SELECT id, source, raw_text, seq FROM inbox_events ORDER BY seq').all() as Array<{ id: string; source: string; raw_text: string; seq: number }>;
 
 function makeRequest(body: unknown): Request {
   return new Request('https://example.com/api/inbox-events', {
@@ -62,29 +48,8 @@ function makeRequest(body: unknown): Request {
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
 describe('handleCreateInboxEvent — POST /api/inbox-events', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('returns 201 with id (evt_ prefix) and seq when row is created', async () => {
-    const db = makeDb({
-      insertRow: {
-        id: 'evt_01J0000000000000TESTULID',
-        source: 'hub_ui',
-        raw_text: 'buy milk',
-        captured_at: '2026-06-26T12:00:00Z',
-        seq: 42,
-        created_at: '2026-06-26T12:00:00Z',
-        updated_at: '2026-06-26T12:00:00Z',
-      },
-    });
-    const env = { DB: db } as unknown as Env;
-
-    const res = await handleCreateInboxEvent(
-      makeRequest({ raw_text: 'buy milk' }),
-      testUser,
-      env,
-    );
+  it('returns 201 with id (evt_ prefix) and the trigger-assigned seq when row is created', async () => {
+    const res = await handleCreateInboxEvent(makeRequest({ raw_text: 'buy milk' }), testUser, env);
     expect(res.status).toBe(201);
     const body = await res.json() as { data: Record<string, unknown> };
     expect(typeof body.data.id).toBe('string');
@@ -93,104 +58,39 @@ describe('handleCreateInboxEvent — POST /api/inbox-events', () => {
     expect(body.data.seq as number).toBeGreaterThan(0);
     expect(body.data.source).toBe('hub_ui');
     expect(body.data.raw_text).toBe('buy milk');
+    // The response is the stored row.
+    expect(inboxRows()).toEqual([{ id: body.data.id, source: 'hub_ui', raw_text: 'buy milk', seq: body.data.seq }]);
   });
 
-  it('defaults source to hub_ui when source is omitted', async () => {
-    const inserts: Array<{ sql: string; binds: unknown[] }> = [];
-    const db = makeDb({
-      insertRow: {
-        id: 'evt_DEFAULTSOURCE',
-        source: 'hub_ui',
-        raw_text: 'default source test',
-        captured_at: '2026-06-26T12:00:00Z',
-        seq: 1,
-        created_at: '2026-06-26T12:00:00Z',
-        updated_at: '2026-06-26T12:00:00Z',
-      },
-      captureInsert: (sql, binds) => inserts.push({ sql, binds }),
-    });
-    const env = { DB: db } as unknown as Env;
+  it('each capture advances seq (the pull cursor depends on it)', async () => {
+    const a = await (await handleCreateInboxEvent(makeRequest({ raw_text: 'one' }), testUser, env)).json() as { data: { seq: number } };
+    const b = await (await handleCreateInboxEvent(makeRequest({ raw_text: 'two' }), testUser, env)).json() as { data: { seq: number } };
+    expect(b.data.seq).toBeGreaterThan(a.data.seq);
+  });
 
-    const res = await handleCreateInboxEvent(
-      makeRequest({ raw_text: 'default source test' }),
-      testUser,
-      env,
-    );
+  it('defaults source to hub_ui and trims raw_text when source is omitted', async () => {
+    const res = await handleCreateInboxEvent(makeRequest({ raw_text: '  default source test ' }), testUser, env);
     expect(res.status).toBe(201);
-    // Second bind is source
-    expect(inserts[0].binds[1]).toBe('hub_ui');
+    expect(inboxRows()).toMatchObject([{ source: 'hub_ui', raw_text: 'default source test' }]);
   });
 
   it('accepts a valid explicit source', async () => {
-    const db = makeDb({
-      insertRow: {
-        id: 'evt_EXPLICSOURCE',
-        source: 'hub_pwa',
-        raw_text: 'explicit source',
-        captured_at: '2026-06-26T12:00:00Z',
-        seq: 7,
-        created_at: '2026-06-26T12:00:00Z',
-        updated_at: '2026-06-26T12:00:00Z',
-      },
-    });
-    const env = { DB: db } as unknown as Env;
-
-    const res = await handleCreateInboxEvent(
-      makeRequest({ raw_text: 'explicit source', source: 'hub_pwa' }),
-      testUser,
-      env,
-    );
+    const res = await handleCreateInboxEvent(makeRequest({ raw_text: 'explicit source', source: 'hub_pwa' }), testUser, env);
     expect(res.status).toBe(201);
     const body = await res.json() as { data: Record<string, unknown> };
     expect(body.data.source).toBe('hub_pwa');
+    expect(inboxRows()).toMatchObject([{ source: 'hub_pwa' }]);
   });
 
-  it('returns 400 when raw_text is empty string', async () => {
-    const db = makeDb({});
-    const env = { DB: db } as unknown as Env;
-
-    const res = await handleCreateInboxEvent(
-      makeRequest({ raw_text: '' }),
-      testUser,
-      env,
-    );
+  it.each([
+    ['empty string raw_text', { raw_text: '' }],
+    ['whitespace-only raw_text (trim guard)', { raw_text: '   ' }],
+    ['missing raw_text', {}],
+    ['an unknown source', { raw_text: 'hello', source: 'discord' }],
+  ])('returns 400 and writes nothing for %s', async (_label, payload) => {
+    const res = await handleCreateInboxEvent(makeRequest(payload), testUser, env);
     expect(res.status).toBe(400);
-  });
-
-  it('returns 400 when raw_text is whitespace-only (trim guard)', async () => {
-    const db = makeDb({});
-    const env = { DB: db } as unknown as Env;
-
-    const res = await handleCreateInboxEvent(
-      makeRequest({ raw_text: '   ' }),
-      testUser,
-      env,
-    );
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 when raw_text is missing', async () => {
-    const db = makeDb({});
-    const env = { DB: db } as unknown as Env;
-
-    const res = await handleCreateInboxEvent(
-      makeRequest({}),
-      testUser,
-      env,
-    );
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 for an unknown source', async () => {
-    const db = makeDb({});
-    const env = { DB: db } as unknown as Env;
-
-    const res = await handleCreateInboxEvent(
-      makeRequest({ raw_text: 'hello', source: 'discord' }),
-      testUser,
-      env,
-    );
-    expect(res.status).toBe(400);
+    expect(inboxRows()).toEqual([]);
   });
 });
 
@@ -200,6 +100,10 @@ describe('handleCreateInboxEvent — POST /api/inbox-events', () => {
 // as an untriaged row with no answer and no error. sync-bulk is a replayable
 // bulk upsert, so the dispatch has to be guarded or a backfill re-asks
 // everything. These pin all three guards plus the happy path.
+//
+// postActivityEntry is the Hermes dispatch seam (its own suite covers it), and
+// the PI gate / actor lookup are auth seams; they stay mocked. The database is
+// real.
 
 const mockPost = vi.hoisted(() => vi.fn());
 vi.mock('../lib/activity-entry', () => ({
@@ -213,35 +117,6 @@ vi.mock('../helpers', async (orig) => ({
   resolveActor: async () => ({ slug: 'nick-ingraham' }),
   logActivity: async () => {},
 }));
-
-/** DB stub for sync-bulk: `existing` = ids already on Hub before the write. */
-function makeBulkDb(existing: string[]) {
-  const present = new Set(existing);
-  let selects = 0;
-  return {
-    prepare: (sql: string) => {
-      let binds: unknown[] = [];
-      const stmt: Record<string, (...a: unknown[]) => unknown> = {
-        bind: (...a: unknown[]) => { binds = [...binds, ...a]; return stmt; },
-        run: async () => ({ success: true, meta: {} }),
-        first: async () => null,
-        all: async () => {
-          if (!/FROM inbox_events WHERE id IN/.test(sql)) return { results: [] };
-          selects += 1;
-          // 1st call = pre-write state; 2nd = post-write (everything present,
-          // with a bumped updated_at so nothing reads as rejected_stale).
-          const ids = binds as string[];
-          if (selects % 2 === 1) {
-            return { results: ids.filter(id => present.has(id)).map(id => ({ id, updated_at: '2026-01-01T00:00:00Z' })) };
-          }
-          return { results: ids.map(id => ({ id, updated_at: '2999-01-01T00:00:00Z' })) };
-        },
-      };
-      return stmt;
-    },
-    batch: async (stmts: unknown[]) => stmts.map(() => ({ success: true, meta: {}, results: [] })),
-  };
-}
 
 function bulkRequest(body: unknown): Request {
   return new Request('https://example.com/api/inbox-events/sync-bulk', {
@@ -270,16 +145,19 @@ describe('handleSyncBulkInboxEvents — @hermes dispatch (#907)', () => {
     mockPost.mockResolvedValue({ ok: true, row: {}, hermes: { dispatched: true } });
   });
 
+  /** `existing` = ids already on Hub before the write, seeded as real rows. */
   async function run(events: unknown[], extra: Record<string, unknown> = {}, existing: string[] = []) {
+    for (const id of existing) {
+      insertRow(db, 'inbox_events', { id, source: 'hub_ui', raw_text: 'earlier copy', captured_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' });
+    }
     const { handleSyncBulkInboxEvents } = await import('./inbox-events');
-    const db = makeBulkDb(existing);
-    const res = await handleSyncBulkInboxEvents(
-      bulkRequest({ events, ...extra }), testUser, { DB: db } as unknown as Env,
-    );
-    return (await res.json()) as { data: { hermes?: Array<{ dispatched: boolean; reason?: string }> } };
+    const res = await handleSyncBulkInboxEvents(bulkRequest({ events, ...extra }), testUser, env);
+    return (await res.json()) as {
+      data: { hermes?: Array<{ dispatched: boolean; reason?: string }>; results?: Array<{ client_id: string; status: string }> };
+    };
   }
 
-  it('dispatches on FIRST arrival of an @hermes capture', async () => {
+  it('dispatches on FIRST arrival of an @hermes capture, and the row is stored', async () => {
     const body = await run([evt()]);
     expect(mockPost).toHaveBeenCalledTimes(1);
     const arg = mockPost.mock.calls[0][0];
@@ -287,16 +165,20 @@ describe('handleSyncBulkInboxEvents — @hermes dispatch (#907)', () => {
     // Token must survive verbatim -- the server detects on the stored text.
     expect(arg.body).toContain('@hermes');
     expect(body.data.hermes?.[0].dispatched).toBe(true);
+    expect(inboxRows()).toMatchObject([{ id: 'evt_hermes_1', raw_text: '@hermes what time is my CLIF meeting today' }]);
   });
 
-  it('GUARD 1 — a replay of the same id does NOT re-dispatch', async () => {
+  it('GUARD 1 — a replay of the same id does NOT re-dispatch; the upsert updates the one row', async () => {
     await run([evt()], {}, ['evt_hermes_1']);
     expect(mockPost).not.toHaveBeenCalled();
+    expect(inboxRows()).toMatchObject([{ id: 'evt_hermes_1', raw_text: '@hermes what time is my CLIF meeting today' }]);
   });
 
-  it('GUARD 2 — a full resync (clear_existing) never dispatches', async () => {
+  it('GUARD 2 — a full resync (clear_existing) never dispatches, and truncates first', async () => {
+    insertRow(db, 'inbox_events', { id: 'evt_old_other', source: 'hub_ui', raw_text: 'gone after resync', captured_at: '2026-01-01T00:00:00Z' });
     await run([evt()], { clear_existing: true });
     expect(mockPost).not.toHaveBeenCalled();
+    expect(inboxRows().map((r) => r.id)).toEqual(['evt_hermes_1']);
   });
 
   it('GUARD 3 — a stale capture does not fire an old backlog, but SAYS SO', async () => {
@@ -307,12 +189,20 @@ describe('handleSyncBulkInboxEvents — @hermes dispatch (#907)', () => {
     expect(mockPost).not.toHaveBeenCalled();
     expect(body.data.hermes?.[0].dispatched).toBe(false);
     expect(body.data.hermes?.[0].reason).toMatch(/older than 24h/);
+    expect(inboxRows()).toHaveLength(1);
   });
 
   it('leaves ordinary captures alone', async () => {
     const body = await run([evt({ raw_text: 'buy milk' })]);
     expect(mockPost).not.toHaveBeenCalled();
     expect(body.data.hermes).toBeUndefined();
+  });
+
+  it('a client copy older than the Hub row is rejected_stale and changes nothing', async () => {
+    insertRow(db, 'inbox_events', { id: 'evt_newer', source: 'hub_ui', raw_text: 'hub copy', captured_at: '2026-01-01T00:00:00Z', updated_at: '2026-09-01T00:00:00Z' });
+    const body = await run([evt({ id: 'evt_newer', raw_text: 'old client copy', client_updated_at: '2026-08-01T00:00:00Z' })]);
+    expect(body.data.results?.[0].status).toBe('rejected_stale');
+    expect(inboxRows()).toMatchObject([{ id: 'evt_newer', raw_text: 'hub copy' }]);
   });
 
   it('files the ask on the LAB civil day, not the UTC day', async () => {
@@ -343,5 +233,6 @@ describe('handleSyncBulkInboxEvents — @hermes dispatch (#907)', () => {
     const body = await run([evt()]);
     // Row still applied; outcome reported instead of the ask dying silently.
     expect(body.data.hermes?.[0].dispatched).toBe(false);
+    expect(inboxRows()).toHaveLength(1);
   });
 });

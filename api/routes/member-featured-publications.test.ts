@@ -6,101 +6,65 @@
  *   - GET returns the member's OWN order (sort_order), not year order
  *   - PUT writes sort_order from the ARRAY INDEX, so the submitted sequence
  *     is what comes back — the whole point of Nick's 2026-08-01 call
- *   - PUT is a REPLACE-set: one DELETE then N INSERTs, in one D1 batch
+ *   - PUT is a REPLACE-set: one DELETE then N INSERTs, in one D1 batch, so a
+ *     failure part-way leaves the previous list whole
  *   - the cap, distinctness, shape, and unknown-id rejections all 400 BEFORE
- *     any write is issued (asserted by "the batch never ran", not by reading
- *     the handler)
+ *     any write lands
  *   - authorization: own-list yes, someone else's no, anonymous no, PI yes
  *
  * Auth is driven through the REAL helpers (isPiRequest / actorSlugFromRequest)
  * using the TEST_MODE_KEY + X-Test-User bypass that getAuthUser already
  * supports — no stubbed auth seam, so a change to actorSlug's LUT or to the
  * PI check is visible here.
+ *
+ * #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+ * The first cut recorded the statements handed to a stub batch that could not
+ * roll back, and answered the GET from canned rows, so "replaces the set" and
+ * "orders by sort_order" were claims about SQL text. Here the list is read
+ * back from member_featured_publications, the GET runs its own ORDER BY and
+ * LIMIT, and a failing INSERT is shown to roll the whole replace back.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
+import type Database from 'better-sqlite3';
 import type { Env } from '../helpers';
 import {
   MAX_FEATURED_PUBLICATIONS,
   handleGetMemberFeaturedPublications,
   handlePutMemberFeaturedPublications,
 } from './member-featured-publications';
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 
 const TEST_KEY = 'test-mode-key-906';
 
-// ── DB stub ─────────────────────────────────────────────────────────────────
-// Regex-routed, same shape as api/routes/artifact-tags.test.ts's makeDb.
-// `batched` records every statement handed to DB.batch() so a test can assert
-// both WHAT was written and THAT nothing was written on a rejected request.
+// eddington@umn.edu → casey-eddington via EMAIL_PREFIX_TO_SLUG (api/helpers.ts).
+const MEMBER_EMAIL = 'eddington@umn.edu';
+const MEMBER_SLUG = 'casey-eddington';
+const PI_EMAIL = 'ingra107@umn.edu';
 
-interface Written { sql: string; binds: unknown[] }
+let db: InstanceType<typeof Database>;
+let env: Env;
 
-interface StubStmt {
-  __sql: string;
-  __binds: unknown[];
-  bind: (...args: unknown[]) => StubStmt;
-  run: () => Promise<unknown>;
-  first: () => Promise<unknown>;
-  all: () => Promise<{ results: unknown[] }>;
+function pub(id: string, year: number, title = id) {
+  insertRow(db, 'publications', { id, title, authors: 'Ingraham NE, Eddington C', journal: 'Chest', year, author_slugs: '["casey-eddington"]' });
 }
 
-interface StubDb {
-  prepare: (sql: string) => StubStmt;
-  batch: (stmts: StubStmt[]) => Promise<unknown[]>;
-}
+beforeEach(() => {
+  db = prodSchemaDb();
+  env = { DB: d1Adapter(db), TEST_MODE_KEY: TEST_KEY } as unknown as Env;
+  // The chain seeds pi_emails with the lab's own list (schema-v44); this
+  // suite's PI is PI_EMAIL. (The first cut never read lab_settings: its stub
+  // answered null, so getPiEmails fell back to a hardcoded set.)
+  db.prepare("UPDATE lab_settings SET value = ? WHERE key = 'pi_emails'").run(JSON.stringify([PI_EMAIL]));
+  for (const [id, name, slug] of [['m1', 'Casey Eddington', MEMBER_SLUG], ['m2', 'Adams Dudley', 'adams-dudley']]) {
+    if (!db.prepare('SELECT 1 FROM team_members WHERE slug = ?').get(slug)) insertRow(db, 'team_members', { id, name, slug });
+  }
+});
 
-function makeDb(opts: {
-  memberExists?: boolean;
-  knownPublicationIds?: string[];
-  featured?: Record<string, unknown>[];
-  batched: Written[];
-}): StubDb {
-  return {
-    prepare: (sql: string) => {
-      const binds: unknown[] = [];
-      const stmt: StubStmt = {
-        __sql: sql,
-        __binds: binds,
-        bind: (...args: unknown[]) => { binds.push(...args); return stmt; },
-        run: async () => ({ success: true, meta: { changes: 1 }, results: [] }),
-        first: async () => {
-          if (/FROM team_members WHERE slug/.test(sql)) {
-            return opts.memberExists === false ? null : { ok: 1 };
-          }
-          // getPiEmails' lab_settings lookup → null → PI_EMAILS_FALLBACK.
-          return null;
-        },
-        all: async () => {
-          if (/FROM publications WHERE id IN/.test(sql)) {
-            const known = new Set(opts.knownPublicationIds ?? []);
-            return { results: binds.filter((b) => known.has(String(b))).map((id) => ({ id })) };
-          }
-          if (/FROM member_featured_publications m/.test(sql)) {
-            return { results: opts.featured ?? [] };
-          }
-          return { results: [] };
-        },
-      };
-      return stmt;
-    },
-    batch: async (stmts: StubStmt[]) => {
-      for (const s of stmts) opts.batched.push({ sql: s.__sql, binds: [...s.__binds] });
-      return stmts.map(() => ({ success: true, meta: {}, results: [] }));
-    },
-  };
-}
-
-function makeEnv(db: unknown): Env {
-  return { DB: db, TEST_MODE_KEY: TEST_KEY } as unknown as Env;
-}
-
-function pubRow(id: string, year: number, title: string) {
-  return {
-    id, title, authors: 'Ingraham NE, Eddington C', journal: 'Chest', year,
-    status: 'Published', doi: null, pubmed: null, abstract: null, topics: null,
-    featured: 0, author_slugs: '["casey-eddington"]',
-    created_at: '2026-01-01', updated_at: '2026-01-01',
-  };
+const stored = (slug = MEMBER_SLUG) =>
+  db.prepare('SELECT publication_id, sort_order FROM member_featured_publications WHERE member_slug = ? ORDER BY sort_order').all(slug) as Array<{ publication_id: string; sort_order: number }>;
+function setList(slug: string, ids: string[]) {
+  ids.forEach((id, i) => insertRow(db, 'member_featured_publications', { member_slug: slug, publication_id: id, sort_order: i }));
 }
 
 /** A PUT as a given user. Omit `asEmail` for an unauthenticated request. */
@@ -116,107 +80,95 @@ function putReq(slug: string, body: unknown, asEmail?: string): Request {
   );
 }
 
-// eddington@umn.edu → casey-eddington via EMAIL_PREFIX_TO_SLUG (api/helpers.ts).
-const MEMBER_EMAIL = 'eddington@umn.edu';
-const MEMBER_SLUG = 'casey-eddington';
-const PI_EMAIL = 'ingra107@umn.edu';
-
 describe('GET /api/team/:slug/featured-publications', () => {
-  it('returns the rows the join produced, with a count', async () => {
-    const batched: Written[] = [];
-    const featured = [pubRow('pub_c', 2019, 'C'), pubRow('pub_a', 2026, 'A')];
-    const res = await handleGetMemberFeaturedPublications(
-      MEMBER_SLUG, makeEnv(makeDb({ featured, batched })),
-    );
+  it('returns the member list in THEIR order (sort_order), not year order, with a count', async () => {
+    pub('pub_a', 2026, 'A');
+    pub('pub_c', 2019, 'C');
+    setList(MEMBER_SLUG, ['pub_c', 'pub_a']);
+    const res = await handleGetMemberFeaturedPublications(MEMBER_SLUG, env);
     expect(res.status).toBe(200);
-    const body = await res.json() as { data: { id: string }[]; count: number };
+    const body = await res.json() as { data: { id: string; title: string }[]; count: number };
     expect(body.data.map((p) => p.id)).toEqual(['pub_c', 'pub_a']);
+    expect(body.data[0].title).toBe('C');
     expect(body.count).toBe(2);
   });
 
-  it('orders by the member sort_order and caps at ten in SQL, not in JS', async () => {
-    const batched: Written[] = [];
-    let seenSql = '';
-    let seenBinds: unknown[] = [];
-    const db = makeDb({ featured: [], batched });
-    const wrapped: StubDb = {
-      batch: db.batch,
-      prepare: (sql: string) => {
-        const stmt = db.prepare(sql);
-        if (/FROM member_featured_publications m/.test(sql)) {
-          seenSql = sql;
-          seenBinds = stmt.__binds;
-        }
-        return stmt;
-      },
-    };
-    await handleGetMemberFeaturedPublications(MEMBER_SLUG, makeEnv(wrapped));
-    expect(seenSql).toMatch(/ORDER BY\s+m\.sort_order ASC/);
-    expect(seenSql).toMatch(/LIMIT \?/);
-    expect(seenBinds).toEqual([MEMBER_SLUG, MAX_FEATURED_PUBLICATIONS]);
-    // No `year DESC` — the member's order is the order (Nick 2026-08-01).
-    expect(seenSql).not.toMatch(/year DESC/);
+  it('caps at ten in SQL', async () => {
+    const ids = Array.from({ length: MAX_FEATURED_PUBLICATIONS + 2 }, (_, i) => `pub_${String(i).padStart(2, '0')}`);
+    ids.forEach((id, i) => pub(id, 2000 + i));
+    setList(MEMBER_SLUG, ids);
+    const res = await handleGetMemberFeaturedPublications(MEMBER_SLUG, env);
+    const body = await res.json() as { data: { id: string }[] };
+    expect(body.data.map((p) => p.id)).toEqual(ids.slice(0, MAX_FEATURED_PUBLICATIONS));
   });
 
   it('is empty, not an error, for a member who has featured nothing', async () => {
-    const batched: Written[] = [];
-    const res = await handleGetMemberFeaturedPublications(
-      'adams-dudley', makeEnv(makeDb({ featured: [], batched })),
-    );
+    const res = await handleGetMemberFeaturedPublications('adams-dudley', env);
     expect(res.status).toBe(200);
     expect((await res.json() as { data: unknown[] }).data).toEqual([]);
   });
 });
 
 describe('PUT /api/team/:slug/featured-publications — the write', () => {
-  it('replaces the whole set: one DELETE then one INSERT per id, in order', async () => {
-    const batched: Written[] = [];
-    const env = makeEnv(makeDb({
-      knownPublicationIds: ['pub_a', 'pub_b', 'pub_c'], featured: [], batched,
-    }));
+  beforeEach(() => { pub('pub_a', 2026, 'A'); pub('pub_b', 2024, 'B'); pub('pub_c', 2019, 'C'); });
+
+  it('replaces the whole set; sort_order comes from the ARRAY INDEX', async () => {
+    setList(MEMBER_SLUG, ['pub_b']);
     const res = await handlePutMemberFeaturedPublications(
-      MEMBER_SLUG,
-      putReq(MEMBER_SLUG, { publicationIds: ['pub_c', 'pub_a', 'pub_b'] }, MEMBER_EMAIL),
-      env,
+      MEMBER_SLUG, putReq(MEMBER_SLUG, { publicationIds: ['pub_c', 'pub_a', 'pub_b'] }, MEMBER_EMAIL), env,
     );
     expect(res.status).toBe(200);
-
-    expect(batched).toHaveLength(4);
-    expect(batched[0].sql).toMatch(/DELETE FROM member_featured_publications/);
-    expect(batched[0].binds).toEqual([MEMBER_SLUG]);
-    // sort_order comes from the ARRAY INDEX — submitted order is stored order.
-    expect(batched.slice(1).map((w) => w.binds)).toEqual([
-      [MEMBER_SLUG, 'pub_c', 0],
-      [MEMBER_SLUG, 'pub_a', 1],
-      [MEMBER_SLUG, 'pub_b', 2],
+    expect(stored()).toEqual([
+      { publication_id: 'pub_c', sort_order: 0 },
+      { publication_id: 'pub_a', sort_order: 1 },
+      { publication_id: 'pub_b', sort_order: 2 },
     ]);
   });
 
-  it('accepts an empty array as "clear my list" (DELETE only)', async () => {
-    const batched: Written[] = [];
-    const res = await handlePutMemberFeaturedPublications(
-      MEMBER_SLUG,
-      putReq(MEMBER_SLUG, { publicationIds: [] }, MEMBER_EMAIL),
-      makeEnv(makeDb({ featured: [], batched })),
-    );
+  it('accepts an empty array as "clear my list"', async () => {
+    setList(MEMBER_SLUG, ['pub_a', 'pub_b']);
+    const res = await handlePutMemberFeaturedPublications(MEMBER_SLUG, putReq(MEMBER_SLUG, { publicationIds: [] }, MEMBER_EMAIL), env);
     expect(res.status).toBe(200);
-    expect(batched).toHaveLength(1);
-    expect(batched[0].sql).toMatch(/DELETE FROM member_featured_publications/);
+    expect(stored()).toEqual([]);
   });
 
   it('echoes the stored list back, not the submitted array', async () => {
-    const batched: Written[] = [];
-    const res = await handlePutMemberFeaturedPublications(
-      MEMBER_SLUG,
-      putReq(MEMBER_SLUG, { publicationIds: ['pub_a'] }, MEMBER_EMAIL),
-      makeEnv(makeDb({
-        knownPublicationIds: ['pub_a'],
-        featured: [pubRow('pub_a', 2026, 'A')],
-        batched,
-      })),
-    );
+    const res = await handlePutMemberFeaturedPublications(MEMBER_SLUG, putReq(MEMBER_SLUG, { publicationIds: ['pub_a'] }, MEMBER_EMAIL), env);
     const body = await res.json() as { data: { id: string; title: string }[] };
     expect(body.data).toEqual([expect.objectContaining({ id: 'pub_a', title: 'A' })]);
+  });
+
+  it('a failing INSERT rolls the whole replace back: the previous list survives', async () => {
+    setList(MEMBER_SLUG, ['pub_b', 'pub_c']);
+    // Fail the SECOND insert, after the DELETE and the first INSERT already ran
+    // inside the same batch transaction.
+    let insertsSeen = 0;
+    env = {
+      DB: d1Adapter(db, {
+        onExec: (sql) => {
+          if (/INSERT INTO member_featured_publications/.test(sql) && ++insertsSeen === 2) {
+            throw new Error('D1_ERROR: simulated D1 failure: SQLITE_ERROR');
+          }
+        },
+      }),
+      TEST_MODE_KEY: TEST_KEY,
+    } as unknown as Env;
+
+    let threw = false;
+    let status = 0;
+    try {
+      const res = await handlePutMemberFeaturedPublications(
+        MEMBER_SLUG, putReq(MEMBER_SLUG, { publicationIds: ['pub_a', 'pub_b'] }, MEMBER_EMAIL), env,
+      );
+      status = res.status;
+    } catch {
+      threw = true;
+    }
+    expect(threw || status >= 500).toBe(true);
+    expect(stored()).toEqual([
+      { publication_id: 'pub_b', sort_order: 0 },
+      { publication_id: 'pub_c', sort_order: 1 },
+    ]);
   });
 });
 
@@ -233,108 +185,79 @@ describe('PUT — rejections happen BEFORE any write', () => {
 
   for (const c of cases) {
     it(`400s on ${c.name} and writes nothing`, async () => {
-      const batched: Written[] = [];
-      const res = await handlePutMemberFeaturedPublications(
-        MEMBER_SLUG,
-        putReq(MEMBER_SLUG, c.body, MEMBER_EMAIL),
-        makeEnv(makeDb({ knownPublicationIds: c.known ?? [], featured: [], batched })),
-      );
+      for (const id of c.known ?? []) pub(id, 2020);
+      if (!(c.known ?? []).includes('pub_keep')) pub('pub_keep', 2020);
+      setList(MEMBER_SLUG, ['pub_keep']);
+      const res = await handlePutMemberFeaturedPublications(MEMBER_SLUG, putReq(MEMBER_SLUG, c.body, MEMBER_EMAIL), env);
       expect(res.status).toBe(400);
       expect((await res.json() as { error: string }).error).toMatch(c.match);
-      expect(batched).toEqual([]);
+      expect(stored()).toEqual([{ publication_id: 'pub_keep', sort_order: 0 }]);
     });
   }
 
   it('exactly ten is allowed (the cap is inclusive)', async () => {
     const ids = Array.from({ length: MAX_FEATURED_PUBLICATIONS }, (_, i) => `pub_${i}`);
-    const batched: Written[] = [];
-    const res = await handlePutMemberFeaturedPublications(
-      MEMBER_SLUG,
-      putReq(MEMBER_SLUG, { publicationIds: ids }, MEMBER_EMAIL),
-      makeEnv(makeDb({ knownPublicationIds: ids, featured: [], batched })),
-    );
+    ids.forEach((id) => pub(id, 2020));
+    const res = await handlePutMemberFeaturedPublications(MEMBER_SLUG, putReq(MEMBER_SLUG, { publicationIds: ids }, MEMBER_EMAIL), env);
     expect(res.status).toBe(200);
-    expect(batched).toHaveLength(1 + MAX_FEATURED_PUBLICATIONS);
+    expect(stored()).toHaveLength(MAX_FEATURED_PUBLICATIONS);
   });
 
   it('404s for an unknown member slug and writes nothing', async () => {
-    const batched: Written[] = [];
-    const res = await handlePutMemberFeaturedPublications(
-      MEMBER_SLUG,
-      putReq(MEMBER_SLUG, { publicationIds: [] }, MEMBER_EMAIL),
-      makeEnv(makeDb({ memberExists: false, featured: [], batched })),
-    );
+    db.prepare('DELETE FROM team_members WHERE slug = ?').run(MEMBER_SLUG);
+    const res = await handlePutMemberFeaturedPublications(MEMBER_SLUG, putReq(MEMBER_SLUG, { publicationIds: [] }, MEMBER_EMAIL), env);
     expect(res.status).toBe(404);
-    expect(batched).toEqual([]);
   });
 
   it('400s on a malformed JSON body', async () => {
-    const batched: Written[] = [];
+    pub('pub_keep', 2020);
+    setList(MEMBER_SLUG, ['pub_keep']);
     const req = new Request(
       `https://mn-ccore-lab.pages.dev/api/team/${MEMBER_SLUG}/featured-publications`,
       {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Test-Mode-Key': TEST_KEY,
-          'X-Test-User': MEMBER_EMAIL,
-        },
+        headers: { 'Content-Type': 'application/json', 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': MEMBER_EMAIL },
         body: '{not json',
       },
     );
-    const res = await handlePutMemberFeaturedPublications(
-      MEMBER_SLUG, req, makeEnv(makeDb({ featured: [], batched })),
-    );
+    const res = await handlePutMemberFeaturedPublications(MEMBER_SLUG, req, env);
     expect(res.status).toBe(400);
-    expect(batched).toEqual([]);
+    expect(stored()).toHaveLength(1);
   });
 });
 
 describe('PUT — authorization', () => {
+  beforeEach(() => {
+    pub('pub_keep', 2020);
+    setList('adams-dudley', ['pub_keep']);
+  });
+
   it('lets a member edit their OWN list', async () => {
-    const batched: Written[] = [];
-    const res = await handlePutMemberFeaturedPublications(
-      MEMBER_SLUG,
-      putReq(MEMBER_SLUG, { publicationIds: [] }, MEMBER_EMAIL),
-      makeEnv(makeDb({ featured: [], batched })),
-    );
+    const res = await handlePutMemberFeaturedPublications(MEMBER_SLUG, putReq(MEMBER_SLUG, { publicationIds: ['pub_keep'] }, MEMBER_EMAIL), env);
     expect(res.status).toBe(200);
+    expect(stored()).toEqual([{ publication_id: 'pub_keep', sort_order: 0 }]);
   });
 
   it('403s a member editing SOMEONE ELSE, and writes nothing', async () => {
-    const batched: Written[] = [];
-    const res = await handlePutMemberFeaturedPublications(
-      'adams-dudley',
-      putReq('adams-dudley', { publicationIds: [] }, MEMBER_EMAIL),
-      makeEnv(makeDb({ featured: [], batched })),
-    );
+    const res = await handlePutMemberFeaturedPublications('adams-dudley', putReq('adams-dudley', { publicationIds: [] }, MEMBER_EMAIL), env);
     expect(res.status).toBe(403);
-    expect(batched).toEqual([]);
+    expect(stored('adams-dudley')).toHaveLength(1);
   });
 
-  it('403s an unauthenticated caller', async () => {
-    const batched: Written[] = [];
-    const res = await handlePutMemberFeaturedPublications(
-      MEMBER_SLUG,
-      putReq(MEMBER_SLUG, { publicationIds: [] }),
-      makeEnv(makeDb({ featured: [], batched })),
-    );
+  it('403s an unauthenticated caller, and writes nothing', async () => {
+    pub('pub_other', 2021);
+    const res = await handlePutMemberFeaturedPublications(MEMBER_SLUG, putReq(MEMBER_SLUG, { publicationIds: ['pub_other'] }), env);
     expect(res.status).toBe(403);
-    expect(batched).toEqual([]);
+    expect(stored()).toEqual([]);
   });
 
   it('lets a PI edit any member list', async () => {
-    const batched: Written[] = [];
-    const res = await handlePutMemberFeaturedPublications(
-      'adams-dudley',
-      putReq('adams-dudley', { publicationIds: [] }, PI_EMAIL),
-      makeEnv(makeDb({ featured: [], batched })),
-    );
+    const res = await handlePutMemberFeaturedPublications('adams-dudley', putReq('adams-dudley', { publicationIds: [] }, PI_EMAIL), env);
     expect(res.status).toBe(200);
+    expect(stored('adams-dudley')).toEqual([]);
   });
 
   it('lets the PB service key edit any member list', async () => {
-    const batched: Written[] = [];
     const req = new Request(
       'https://mn-ccore-lab.pages.dev/api/team/adams-dudley/featured-publications',
       {
@@ -343,12 +266,9 @@ describe('PUT — authorization', () => {
         body: JSON.stringify({ publicationIds: [] }),
       },
     );
-    const env = {
-      DB: makeDb({ featured: [], batched }),
-      TEST_MODE_KEY: TEST_KEY,
-      PB_API_KEY: 'svc-key-906',
-    } as unknown as Env;
-    const res = await handlePutMemberFeaturedPublications('adams-dudley', req, env);
+    const svcEnv = { DB: d1Adapter(db), TEST_MODE_KEY: TEST_KEY, PB_API_KEY: 'svc-key-906' } as unknown as Env;
+    const res = await handlePutMemberFeaturedPublications('adams-dudley', req, svcEnv);
     expect(res.status).toBe(200);
+    expect(stored('adams-dudley')).toEqual([]);
   });
 });
