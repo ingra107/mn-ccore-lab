@@ -28,6 +28,7 @@ import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
 import { emitLifecycleActivity } from '../lib/lifecycle-activity';
 import { TASK_TITLE_DEDUP_SELECT } from '../lib/task-dedup-sql';
+import { touchesKeyLinkSlots, slotLinkStatements, touchedLinksRead } from '../lib/key-link';
 import { normalizeQuestionJsonFields, questionRowError, questionConsumerCloseError, questionConsumedError } from '../lib/task-question';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 
@@ -287,6 +288,10 @@ interface MutationResult {
   // the PB outbox ack handler can adopt it via a hub_slug alias instead of
   // dead-lettering or keeping a zombie row. Present only on adoptable acks.
   canonical_id?: string;
+  // #8842 R7: rows this write changed in another table, in the same batch.
+  // Today only `links`, written by the key_link slot mirror (lib/key-link.ts);
+  // PB caches them so its next add_link sees the row the Hub just made.
+  dependents?: { links: Record<string, unknown>[] };
 }
 
 export async function handleMutations(
@@ -812,8 +817,37 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
   // same canonical state. End-to-end idempotent.
   const sql = `INSERT INTO ${mut.table} (${cols.join(', ')}) VALUES (${allPlaceholders}) ON CONFLICT${conflictTarget} DO NOTHING`;
 
+  // #8842 R7: a row born with key_link slots gets its `links` rows in the same
+  // batch (lib/key-link.ts). This is the genuine-insert path: every dedup and
+  // adoption above has already returned, so an adopted create mirrors nothing.
+  // `landed` = this insert put the row there (a same-id replay that
+  // ON CONFLICT skipped still finds its own mutation id; NOT EXISTS keeps that
+  // replay from making a second links row).
+  const mirrorSlots =
+    (mut.table === 'tasks' || mut.table === 'projects') &&
+    touchesKeyLinkSlots(mut.payload as Record<string, unknown>);
+  let touchedLinks: Record<string, unknown>[] = [];
+
   try {
-    await env.DB.prepare(sql).bind(...vals).run();
+    if (mirrorSlots) {
+      const pk = pkWhere(mut.table, mut.record_id);
+      const landed: SqlFragment = {
+        sql: `EXISTS (SELECT 1 FROM ${mut.table} WHERE ${pk.sql} AND last_mutation_id = ?)`,
+        vals: [...pk.vals, mut.mutation_id],
+      };
+      const res = await env.DB.batch<Record<string, unknown>>([
+        env.DB.prepare(sql).bind(...vals),
+        ...slotLinkStatements(
+          env.DB, mut.table as 'tasks' | 'projects', mut.record_id,
+          {}, mut.payload as Record<string, unknown>, mut.mutation_id, landed,
+        ),
+        touchedLinksRead(env.DB, mut.mutation_id),
+      ]);
+      touchedLinks = (res[res.length - 1]?.results ?? []) as Record<string, unknown>[];
+    } else {
+      // No slot columns: the insert runs exactly as it always has.
+      await env.DB.prepare(sql).bind(...vals).run();
+    }
   } catch (e) {
     // Race-loser path: the serial dedup SELECT above runs BEFORE the winner's
     // INSERT commits in a true race, so it finds no row. The INSERT then fires
@@ -878,6 +912,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
   return mkResult(mut.mutation_id, 'accepted', {
     result_seq: canonical?.seq as number | undefined,
     canonical_payload: canonical || undefined,
+    ...(touchedLinks.length ? { dependents: { links: touchedLinks } } : {}),
   });
 }
 
@@ -1046,7 +1081,23 @@ async function decideAndCommitUpdate(
     }
   }
 
-  const committed = await commitRowWrite(env, mut, current, await applyPatch(env, mut, current, flags), outcome);
+  // #8842 R7: a key_link slot write carries its `links` rows in the same batch
+  // (lib/key-link.ts slotLinkStatements). Slot columns pass through applyPatch
+  // unchanged, so current + patch is the row the write produces.
+  const mirrorSlots =
+    (mut.table === 'tasks' || mut.table === 'projects') && touchesKeyLinkSlots(mut.patch);
+  const committed = await commitRowWrite(
+    env, mut, current, await applyPatch(env, mut, current, flags), outcome,
+    mirrorSlots
+      ? {
+          dependents: (landed) => slotLinkStatements(
+            env.DB, mut.table as 'tasks' | 'projects', mut.record_id,
+            current, { ...current, ...mut.patch }, mut.mutation_id, landed,
+          ),
+          dependentLinksRead: touchedLinksRead(env.DB, mut.mutation_id),
+        }
+      : {},
+  );
   if (committed === CAS_MISS) return CAS_MISS;
 
   // Side effects run once, only after this mutation's row write committed.
@@ -1809,6 +1860,11 @@ async function commitRowWrite(
   opts: {
     extraWhere?: string;
     dependents?: (landed: SqlFragment) => D1PreparedStatement[];
+    // Read back, inside the same batch, the dependent rows this write touched;
+    // they go out on the result as `dependents.links` (#8842 R7). Its rows
+    // land in the stored replay body too, because the fill below serializes
+    // the whole result.
+    dependentLinksRead?: D1PreparedStatement;
     reason?: string;
   } = {},
 ): Promise<MutationResult | CasMiss> {
@@ -1837,6 +1893,7 @@ async function commitRowWrite(
        ON CONFLICT(mutation_id) DO UPDATE SET outcome = excluded.outcome, original_response_json = excluded.original_response_json, processed_at = excluded.processed_at
        WHERE processed_mutations.outcome = 'dependency_failed'`,
     ).bind(mut.mutation_id, mut.origin_machine, outcome, placeholder, mut.table, mut.record_id, ...landed.vals),
+    ...(opts.dependentLinksRead ? [opts.dependentLinksRead] : []),
     env.DB.prepare(`SELECT * FROM ${mut.table} WHERE ${pk.sql}`).bind(...pk.vals),
   ];
 
@@ -1859,10 +1916,14 @@ async function commitRowWrite(
   }
 
   const canonical = safeRow(mut.table, row);
+  const touchedLinks = opts.dependentLinksRead
+    ? (res[res.length - 2]?.results ?? []) as Record<string, unknown>[]
+    : [];
   const result = mkResult(mut.mutation_id, outcome, {
     result_seq: canonical.seq as number | undefined,
     canonical_payload: canonical,
     ...(opts.reason ? { reason: opts.reason } : {}),
+    ...(touchedLinks.length ? { dependents: { links: touchedLinks } } : {}),
   });
   try {
     await env.DB.prepare(
