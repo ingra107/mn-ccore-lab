@@ -14,10 +14,22 @@
  *   - revise: ownership gate — creator or PI allowed, other member 403
  *   - comments: routes through postActivityEntry(entityType='artifact')
  *   - delete: PI-gated (403 for non-PI), cascades activity_entries + versions
+ *
+ * #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+ * The first cut answered every SELECT from canned rows and asserted on bind
+ * arrays of a stub batch that could not roll back, so "stored X" meant "X was
+ * somewhere in a bind list". Here each case reads the stored artifact, task
+ * slot or version row back. The schema-v101 canary artifact the chain seeds is
+ * left in place (list assertions count only this file's rows).
+ *
+ * postActivityEntry (the comment seam, covered by its own suite) and the
+ * resolveActor / isPiRequest auth seams stay mocked; the database is real.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type Database from 'better-sqlite3';
 import type { Env, AuthUser } from '../helpers';
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 
 // Stub postActivityEntry + the visibility gate (the comment route delegates to it).
 vi.mock('../lib/activity-entry', () => ({
@@ -28,7 +40,7 @@ vi.mock('../lib/activity-entry', () => ({
   activityVisibilityGate: vi.fn().mockResolvedValue({ clause: '1=1', binds: [] }),
 }));
 
-// resolveActor + isPiRequest are real-ish; stub helpers we need to control.
+// resolveActor + isPiRequest are the auth seams this suite controls.
 vi.mock('../helpers', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../helpers')>();
   return {
@@ -57,56 +69,8 @@ import {
 const mockPostActivity = vi.mocked(postActivityEntry);
 const mockIsPi = vi.mocked(isPiRequest);
 
-// ── DB stub factory ────────────────────────────────────────────────────────────
-
-function makeDb(opts: {
-  artifact?: Record<string, unknown> | null;
-  versions?: Record<string, unknown>[];
-  list?: Record<string, unknown>[];
-  // task row returned for SELECT key_link_1/2/3 FROM tasks WHERE id = ?
-  // undefined = task not found (null); pass a partial row to simulate slot state.
-  task?: { key_link_1?: string | null; key_link_2?: string | null; key_link_3?: string | null } | null;
-  captureWrite?: (sql: string, binds: unknown[]) => void;
-}) {
-  return {
-    prepare: (sql: string) => {
-      let bound: unknown[] = [];
-      const stmt: any = {
-        bind: (...args: unknown[]) => { bound = [...bound, ...args]; return stmt; },
-        run: async () => { opts.captureWrite?.(sql, [...bound]); return { success: true, meta: {}, results: [] }; },
-        first: async () => {
-          if (/FROM artifacts WHERE id/.test(sql)) return opts.artifact ?? null;
-          // Task key_link SELECT (resolveKeyLinkSlot path).
-          if (/FROM tasks WHERE id/.test(sql)) {
-            if (opts.task === undefined) return null; // task not found
-            return opts.task === null ? null : {
-              key_link_1: opts.task.key_link_1 ?? null,
-              key_link_2: opts.task.key_link_2 ?? null,
-              key_link_3: opts.task.key_link_3 ?? null,
-            };
-          }
-          return null;
-        },
-        all: async () => {
-          if (/FROM artifacts WHERE id/.test(sql)) return { results: opts.artifact ? [opts.artifact] : [] };
-          if (/FROM artifact_versions/.test(sql)) return { results: opts.versions ?? [] };
-          if (/FROM artifacts/.test(sql)) return { results: opts.list ?? [] };
-          return { results: [] };
-        },
-      };
-      return stmt;
-    },
-    batch: async (stmts: any[]) => {
-      // Like D1: per-statement results. run() still fires so write-capture works.
-      const out: unknown[] = [];
-      for (const s of stmts) {
-        if (s && typeof s.run === 'function') await s.run();
-        out.push(s && typeof s.all === 'function' ? await s.all() : { success: true, meta: {}, results: [] });
-      }
-      return out;
-    },
-  };
-}
+let db: InstanceType<typeof Database>;
+let env: Env;
 
 function req(body: unknown): Request {
   return new Request('https://example.com/api/artifacts', {
@@ -115,31 +79,53 @@ function req(body: unknown): Request {
     body: JSON.stringify(body),
   });
 }
+function hubReq(body: unknown): Request {
+  return new Request('https://mn-ccore-lab.pages.dev/api/artifacts', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+}
 
 const USER: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick' };
+const HERMES: AuthUser = { email: 'claude-ai', name: 'Hermes' };
+
+function seedArtifact(row: Record<string, unknown>) {
+  insertRow(db, 'artifacts', { title: 'T', body_md: 'old', version: 1, created_by: 'nick-ingraham', ...row });
+}
+function seedTask(id: string, slots: Record<string, string | null> = {}) {
+  insertRow(db, 'tasks', { id, title: `Task ${id}`, status: 'todo', priority: 'medium', assignee: 'nick-ingraham', ...slots });
+}
+const artifact = (id: string) => db.prepare('SELECT * FROM artifacts WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+const slotsOf = (taskId: string) =>
+  db.prepare('SELECT key_link_1, key_link_1_desc, key_link_2, key_link_3, key_link_3_desc FROM tasks WHERE id = ?').get(taskId) as Record<string, string | null>;
+const count = (sql: string, ...v: unknown[]) => (db.prepare(sql).get(...v) as { n: number }).n;
+async function createdId(res: Response): Promise<{ id: string; payload: Record<string, unknown> }> {
+  const payload = await res.json() as { data: { id: string } } & Record<string, unknown>;
+  return { id: payload.data.id, payload };
+}
 
 describe('artifacts routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsPi.mockResolvedValue(false);
+    db = prodSchemaDb();
+    env = { DB: d1Adapter(db) } as unknown as Env;
   });
 
   // ── create ──────────────────────────────────────────────────────────────────
 
-  it('create: 400 when title missing', async () => {
-    const env = { DB: makeDb({}) } as unknown as Env;
-    const res = await handleCreateArtifact(req({ body_md: 'x' }), USER, env);
+  it.each([
+    ['title missing', { body_md: 'x' }],
+    ['body_md missing', { title: 'Lit review' }],
+    ['invalid content_type', { title: 'T', body_md: 'B', content_type: 'pdf' }],
+    ['invalid visibility', { title: 'T', body_md: 'B', visibility: 'world' }],
+  ])('create: 400 when %s, and nothing is stored', async (_label, body) => {
+    const before = count('SELECT COUNT(*) AS n FROM artifacts');
+    const res = await handleCreateArtifact(req(body), USER, env);
     expect(res.status).toBe(400);
-  });
-
-  it('create: 400 when body_md missing', async () => {
-    const env = { DB: makeDb({}) } as unknown as Env;
-    const res = await handleCreateArtifact(req({ title: 'Lit review' }), USER, env);
-    expect(res.status).toBe(400);
+    expect(count('SELECT COUNT(*) AS n FROM artifacts')).toBe(before);
   });
 
   it('create: 400 when body_md exceeds the size cap', async () => {
-    const env = { DB: makeDb({}) } as unknown as Env;
     const oversized = 'x'.repeat(2_000_001);
     const res = await handleCreateArtifact(req({ title: 'Too big', body_md: oversized }), USER, env);
     expect(res.status).toBe(400);
@@ -147,435 +133,271 @@ describe('artifacts routes', () => {
     expect(payload.error).toMatch(/exceeds maximum size/);
   });
 
-  it('create: exactly at the size cap is accepted', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
-    const created = { id: 'art_cap', title: 'At cap', body_md: 'x', version: 1, created_by: 'nick-ingraham' };
-    const env = { DB: makeDb({ artifact: created, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
+  it('create: exactly at the size cap is accepted and stored whole', async () => {
     const atCap = 'x'.repeat(2_000_000);
     const res = await handleCreateArtifact(req({ title: 'At cap', body_md: atCap }), USER, env);
     expect(res.status).toBe(201);
+    const { id } = await createdId(res);
+    expect((artifact(id)!.body_md as string).length).toBe(2_000_000);
   });
 
   it('create: inserts with version 1 and art_ id, returns 201', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
-    const created = { id: 'art_xyz', title: 'Lit review', body_md: '# Hello', version: 1, created_by: 'claude-ai' };
-    const env = { DB: makeDb({ artifact: created, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
-
+    insertRow(db, 'projects', { id: 'proj_1', slug: 'proj-1', title: 'P1', category: 'MNCCORE' });
+    // A task_id that names no task: the artifact is still created, and says so.
     const res = await handleCreateArtifact(
       req({ title: 'Lit review', body_md: '# Hello', created_by: 'claude-ai', task_id: 'task_1', project_id: 'proj_1' }),
-      { email: 'claude-ai', name: 'Hermes' },
+      HERMES,
       env,
     );
-
     expect(res.status).toBe(201);
-    const insert = writes.find((w) => /INSERT INTO artifacts/.test(w.sql));
-    expect(insert).toBeDefined();
-    // id begins with art_; version literal 1 in the SQL; created_by resolved.
-    expect((insert!.binds[0] as string).startsWith('art_')).toBe(true);
-    expect(insert!.binds).toContain('task_1');
-    expect(insert!.binds).toContain('proj_1');
-    expect(insert!.binds).toContain('claude-ai');
+    const { id, payload } = await createdId(res);
+    expect(id.startsWith('art_')).toBe(true);
+    expect(artifact(id)).toMatchObject({ version: 1, task_id: 'task_1', project_id: 'proj_1', created_by: 'claude-ai', title: 'Lit review' });
+    expect(payload.linkSkipped).toBe('task_not_found');
   });
 
   // ── create: schema-v94 content_type/visibility ───────────────────────────────
 
   it('create: omitting content_type/visibility defaults to markdown/team', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
-    const created = { id: 'art_defaults', title: 'T', body_md: 'B', version: 1, created_by: 'nick-ingraham' };
-    const env = { DB: makeDb({ artifact: created, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
-
     const res = await handleCreateArtifact(req({ title: 'T', body_md: 'B' }), USER, env);
-
     expect(res.status).toBe(201);
-    const insert = writes.find((w) => /INSERT INTO artifacts/.test(w.sql));
-    expect(insert!.binds).toContain('markdown');
-    expect(insert!.binds).toContain('team');
+    const { id } = await createdId(res);
+    expect(artifact(id)).toMatchObject({ content_type: 'markdown', visibility: 'team' });
   });
 
   it('create: accepts content_type=html + visibility=public, stores both', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
-    const created = { id: 'art_public', title: 'Shared', body_md: '<html></html>', version: 1, created_by: 'nick-ingraham' };
-    const env = { DB: makeDb({ artifact: created, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
-
     const res = await handleCreateArtifact(
       req({ title: 'Shared', body_md: '<html></html>', content_type: 'html', visibility: 'public' }),
       USER,
       env,
     );
-
     expect(res.status).toBe(201);
-    const insert = writes.find((w) => /INSERT INTO artifacts/.test(w.sql));
-    expect(insert!.binds).toContain('html');
-    expect(insert!.binds).toContain('public');
+    const { id } = await createdId(res);
+    expect(artifact(id)).toMatchObject({ content_type: 'html', visibility: 'public' });
   });
 
   // ── create/revise: #915 html doctype normalization at ingest ─────────────────
 
   it('create: content_type=html stores a doctype-less FRAGMENT as a complete document (#915)', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
     const fragment = '<title>Aims Funnel</title><h1>Funnel</h1>'; // the Claude-Artifact export shape
-    const created = { id: 'art_frag', title: 'Aims', body_md: fragment, version: 1, created_by: 'nick-ingraham' };
-    const env = { DB: makeDb({ artifact: created, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
-
-    const res = await handleCreateArtifact(
-      req({ title: 'Aims', body_md: fragment, content_type: 'html' }),
-      USER,
-      env,
-    );
-
+    const res = await handleCreateArtifact(req({ title: 'Aims', body_md: fragment, content_type: 'html' }), USER, env);
     expect(res.status).toBe(201);
-    const insert = writes.find((w) => /INSERT INTO artifacts/.test(w.sql));
-    expect(insert!.binds).toContain('<!DOCTYPE html>\n' + fragment);
-    expect(insert!.binds).not.toContain(fragment); // the raw fragment is never stored
+    const { id } = await createdId(res);
+    // The raw fragment is never stored.
+    expect(artifact(id)!.body_md).toBe('<!DOCTYPE html>\n' + fragment);
   });
 
   it('create: content_type=html passes a complete document through byte-identical (#915)', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
     const full = '<!DOCTYPE html><html lang="en"><body>x</body></html>';
-    const created = { id: 'art_full', title: 'Full', body_md: full, version: 1, created_by: 'nick-ingraham' };
-    const env = { DB: makeDb({ artifact: created, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
-
     const res = await handleCreateArtifact(req({ title: 'Full', body_md: full, content_type: 'html' }), USER, env);
-
     expect(res.status).toBe(201);
-    const insert = writes.find((w) => /INSERT INTO artifacts/.test(w.sql));
-    expect(insert!.binds).toContain(full);
+    const { id } = await createdId(res);
+    expect(artifact(id)!.body_md).toBe(full);
   });
 
   it('create: content_type=markdown is NEVER doctype-normalized (#915)', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
     const md = '# A markdown body with an <html> mention';
-    const created = { id: 'art_md', title: 'MD', body_md: md, version: 1, created_by: 'nick-ingraham' };
-    const env = { DB: makeDb({ artifact: created, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
-
     const res = await handleCreateArtifact(req({ title: 'MD', body_md: md }), USER, env);
-
     expect(res.status).toBe(201);
-    const insert = writes.find((w) => /INSERT INTO artifacts/.test(w.sql));
-    expect(insert!.binds).toContain(md);
+    const { id } = await createdId(res);
+    expect(artifact(id)!.body_md).toBe(md);
   });
 
   it('revise: an html artifact revision gets the same ingest normalization (#915)', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
-    const env = { DB: makeDb({
-      artifact: { id: 'art_1', version: 1, body_md: '<!DOCTYPE html>\n<h1>v1</h1>', title: 'T', created_by: 'claude-ai', content_type: 'html' },
-      captureWrite: (sql, binds) => writes.push({ sql, binds }),
-    }) } as unknown as Env;
-
-    const res = await handleReviseArtifact(
-      'art_1',
-      req({ body_md: '<h1>v2 fragment</h1>' }),
-      { email: 'claude-ai', name: 'Hermes' },
-      env,
-    );
+    seedArtifact({ id: 'art_1', body_md: '<!DOCTYPE html>\n<h1>v1</h1>', created_by: 'claude-ai', content_type: 'html' });
+    const res = await handleReviseArtifact('art_1', req({ body_md: '<h1>v2 fragment</h1>' }), HERMES, env);
     expect(res.status).toBe(200);
-
-    const update = writes.find((w) => /UPDATE artifacts SET/.test(w.sql));
-    expect(update!.binds).toContain('<!DOCTYPE html>\n<h1>v2 fragment</h1>');
-  });
-
-  it('create: 400 on invalid content_type', async () => {
-    const env = { DB: makeDb({}) } as unknown as Env;
-    const res = await handleCreateArtifact(req({ title: 'T', body_md: 'B', content_type: 'pdf' }), USER, env);
-    expect(res.status).toBe(400);
-  });
-
-  it('create: 400 on invalid visibility', async () => {
-    const env = { DB: makeDb({}) } as unknown as Env;
-    const res = await handleCreateArtifact(req({ title: 'T', body_md: 'B', visibility: 'world' }), USER, env);
-    expect(res.status).toBe(400);
+    expect(artifact('art_1')!.body_md).toBe('<!DOCTYPE html>\n<h1>v2 fragment</h1>');
   });
 
   // ── create + key_link auto-backfill ──────────────────────────────────────────
 
   it('create + key_link: task_id set + all slots empty → slot 1 gets absolute URL + Hermes desc', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
-    const created = { id: 'art_abc', title: 'Lit review', body_md: '# Hi', version: 1, created_by: 'claude-ai' };
-    const env = {
-      DB: makeDb({
-        artifact: created,
-        task: { key_link_1: null, key_link_2: null, key_link_3: null },
-        captureWrite: (sql, binds) => writes.push({ sql, binds }),
-      }),
-    } as unknown as Env;
-
+    seedTask('task_aaa');
     const res = await handleCreateArtifact(
-      new Request('https://mn-ccore-lab.pages.dev/api/artifacts', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'Lit review', body_md: '# Hi', created_by: 'claude-ai', task_id: 'task_aaa' }),
-      }),
-      { email: 'claude-ai', name: 'Hermes' },
+      hubReq({ title: 'Lit review', body_md: '# Hi', created_by: 'claude-ai', task_id: 'task_aaa' }),
+      HERMES,
       env,
     );
-
     expect(res.status).toBe(201);
-    // key_link_1 UPDATE fired (via batch — captureWrite intercepts run() inside batch).
-    const linkUpdate = writes.find((w) => /UPDATE tasks SET key_link_1/.test(w.sql));
-    expect(linkUpdate).toBeDefined();
-    // URL must be absolute and contain the art_ id.
-    const url = linkUpdate!.binds[0] as string;
-    expect(url).toMatch(/^https:\/\//);
-    expect(url).toContain('/portal/artifacts/art_');
+    const { id } = await createdId(res);
+    const slots = slotsOf('task_aaa');
+    // URL is absolute and names the new artifact.
+    expect(slots.key_link_1).toBe(`https://mn-ccore-lab.pages.dev/portal/artifacts/${id}`);
     // Description starts with 'Hermes: ' and contains the title.
-    const desc = linkUpdate!.binds[1] as string;
-    expect(desc).toMatch(/^Hermes: /);
-    expect(desc).toContain('Lit review');
-    // WHERE clause targets the right task id.
-    expect(linkUpdate!.binds[2]).toBe('task_aaa');
+    expect(slots.key_link_1_desc).toMatch(/^Hermes: /);
+    expect(slots.key_link_1_desc).toContain('Lit review');
+    expect(slots.key_link_2).toBeNull();
   });
 
   it('create + key_link: slots 1 & 2 full → writes slot 3', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
-    const created = { id: 'art_def', title: 'Methods', body_md: '# Methods', version: 1, created_by: 'claude-ai' };
-    const env = {
-      DB: makeDb({
-        artifact: created,
-        task: {
-          key_link_1: 'https://docs.google.com/doc1',
-          key_link_2: 'https://docs.google.com/doc2',
-          key_link_3: null,
-        },
-        captureWrite: (sql, binds) => writes.push({ sql, binds }),
-      }),
-    } as unknown as Env;
-
-    await handleCreateArtifact(
-      new Request('https://mn-ccore-lab.pages.dev/api/artifacts', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'Methods', body_md: '# Methods', created_by: 'claude-ai', task_id: 'task_bbb' }),
-      }),
-      { email: 'claude-ai', name: 'Hermes' },
+    seedTask('task_bbb', { key_link_1: 'https://docs.google.com/doc1', key_link_2: 'https://docs.google.com/doc2' });
+    const res = await handleCreateArtifact(
+      hubReq({ title: 'Methods', body_md: '# Methods', created_by: 'claude-ai', task_id: 'task_bbb' }),
+      HERMES,
       env,
     );
-
-    const linkUpdate = writes.find((w) => /UPDATE tasks SET key_link_3/.test(w.sql));
-    expect(linkUpdate).toBeDefined();
-    // Confirm slot 1 and 2 UPDATEs were NOT issued.
-    expect(writes.some((w) => /UPDATE tasks SET key_link_1/.test(w.sql))).toBe(false);
-    expect(writes.some((w) => /UPDATE tasks SET key_link_2/.test(w.sql))).toBe(false);
+    const { id } = await createdId(res);
+    expect(slotsOf('task_bbb')).toMatchObject({
+      key_link_1: 'https://docs.google.com/doc1',
+      key_link_2: 'https://docs.google.com/doc2',
+      key_link_3: `https://mn-ccore-lab.pages.dev/portal/artifacts/${id}`,
+    });
   });
 
   it('create + key_link: all 3 slots full → no key_link write, artifact still created (201)', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
-    const created = { id: 'art_ghi', title: 'Results', body_md: '# Results', version: 1, created_by: 'claude-ai' };
-    const env = {
-      DB: makeDb({
-        artifact: created,
-        task: {
-          key_link_1: 'https://example.com/1',
-          key_link_2: 'https://example.com/2',
-          key_link_3: 'https://example.com/3',
-        },
-        captureWrite: (sql, binds) => writes.push({ sql, binds }),
-      }),
-    } as unknown as Env;
-
+    const full = { key_link_1: 'https://example.com/1', key_link_2: 'https://example.com/2', key_link_3: 'https://example.com/3' };
+    seedTask('task_ccc', full);
     const res = await handleCreateArtifact(
-      new Request('https://mn-ccore-lab.pages.dev/api/artifacts', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'Results', body_md: '# Results', created_by: 'claude-ai', task_id: 'task_ccc' }),
-      }),
-      { email: 'claude-ai', name: 'Hermes' },
+      hubReq({ title: 'Results', body_md: '# Results', created_by: 'claude-ai', task_id: 'task_ccc' }),
+      HERMES,
       env,
     );
-
     expect(res.status).toBe(201);
-    // No task UPDATE of any slot.
-    expect(writes.some((w) => /UPDATE tasks SET key_link/.test(w.sql))).toBe(false);
-    // Artifact INSERT still fired.
-    expect(writes.some((w) => /INSERT INTO artifacts/.test(w.sql))).toBe(true);
-    // linkSkipped reported.
-    const payload = await res.json() as { linkSkipped?: string };
+    const { id, payload } = await createdId(res);
+    expect(slotsOf('task_ccc')).toMatchObject(full);
+    expect(artifact(id)).toBeDefined();
     expect(payload.linkSkipped).toBe('slots_full');
   });
 
-  it('create + key_link: URL already in a slot → idempotent, no duplicate UPDATE', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
+  it('create + key_link: URL already in a slot → idempotent, no duplicate write', async () => {
     // Pin the ID so we can pre-populate the matching URL in the task row.
     const fixedHex = 'deadbeef000000000000000000000001';
     const spy = vi.spyOn(helpers, 'generateId').mockReturnValue(fixedHex);
     const expectedUrl = `https://mn-ccore-lab.pages.dev/portal/artifacts/art_${fixedHex}`;
-    const created = { id: `art_${fixedHex}`, title: 'Discussion', body_md: '# Disc', version: 1, created_by: 'claude-ai' };
-
-    const env = {
-      DB: makeDb({
-        artifact: created,
-        // Slot 1 already holds the exact URL that will be generated.
-        task: { key_link_1: expectedUrl, key_link_2: null, key_link_3: null },
-        captureWrite: (sql, binds) => writes.push({ sql, binds }),
-      }),
-    } as unknown as Env;
+    seedTask('task_ddd', { key_link_1: expectedUrl });
 
     const res = await handleCreateArtifact(
-      new Request('https://mn-ccore-lab.pages.dev/api/artifacts', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'Discussion', body_md: '# Disc', created_by: 'claude-ai', task_id: 'task_ddd' }),
-      }),
-      { email: 'claude-ai', name: 'Hermes' },
+      hubReq({ title: 'Discussion', body_md: '# Disc', created_by: 'claude-ai', task_id: 'task_ddd' }),
+      HERMES,
       env,
     );
-
     spy.mockRestore();
 
     expect(res.status).toBe(201);
-    expect(writes.some((w) => /UPDATE tasks SET key_link/.test(w.sql))).toBe(false);
-    const payload = await res.json() as { linkSkipped?: string };
+    const { id, payload } = await createdId(res);
+    expect(id).toBe(`art_${fixedHex}`);
+    expect(slotsOf('task_ddd')).toMatchObject({ key_link_1: expectedUrl, key_link_2: null, key_link_3: null });
     expect(payload.linkSkipped).toBe('already_linked');
   });
 
   it('create + key_link: no task_id → no task SELECT or UPDATE issued', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
-    const selects: string[] = [];
-    const created = { id: 'art_notask', title: 'Standalone', body_md: '# Stand', version: 1, created_by: 'claude-ai' };
-    // Intercept DB.prepare to capture SELECTs too.
-    const baseDb = makeDb({ artifact: created, task: undefined, captureWrite: (sql, binds) => writes.push({ sql, binds }) });
-    const origPrepare = baseDb.prepare.bind(baseDb);
-    const db = {
-      ...baseDb,
-      prepare: (sql: string) => {
-        if (/FROM tasks/.test(sql)) selects.push(sql);
-        return origPrepare(sql);
-      },
-    };
-    const env = { DB: db } as unknown as Env;
+    seedTask('task_untouched');
+    const taskSql: string[] = [];
+    env = { DB: d1Adapter(db, { onExec: (sql) => { if (/\btasks\b/.test(sql)) taskSql.push(sql); } }) } as unknown as Env;
 
     const res = await handleCreateArtifact(
-      new Request('https://mn-ccore-lab.pages.dev/api/artifacts', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'Standalone', body_md: '# Stand', created_by: 'claude-ai' }),
-      }),
-      { email: 'claude-ai', name: 'Hermes' },
+      hubReq({ title: 'Standalone', body_md: '# Stand', created_by: 'claude-ai' }),
+      HERMES,
       env,
     );
-
     expect(res.status).toBe(201);
-    expect(selects).toHaveLength(0);
-    expect(writes.some((w) => /UPDATE tasks/.test(w.sql))).toBe(false);
+    expect(taskSql).toEqual([]);
+    expect(slotsOf('task_untouched').key_link_1).toBeNull();
   });
 
   // ── get ─────────────────────────────────────────────────────────────────────
 
   it('get: 404 when artifact missing', async () => {
-    const env = { DB: makeDb({ artifact: null }) } as unknown as Env;
     const res = await handleGetArtifact('art_missing', env);
     expect(res.status).toBe(404);
   });
 
   it('get: returns artifact + versions array', async () => {
-    const env = { DB: makeDb({
-      artifact: { id: 'art_1', title: 'T', body_md: 'B', version: 3 },
-      versions: [{ artifact_id: 'art_1', version: 2 }, { artifact_id: 'art_1', version: 1 }],
-    }) } as unknown as Env;
+    seedArtifact({ id: 'art_1', title: 'T', body_md: 'B', version: 3 });
+    insertRow(db, 'artifact_versions', { artifact_id: 'art_1', version: 2, body_md: 'v2' });
+    insertRow(db, 'artifact_versions', { artifact_id: 'art_1', version: 1, body_md: 'v1' });
     const res = await handleGetArtifact('art_1', env);
     expect(res.status).toBe(200);
-    const payload = await res.json() as { data: { version: number; versions: unknown[] } };
+    const payload = await res.json() as { data: { version: number; versions: Array<{ version: number }> } };
     expect(payload.data.version).toBe(3);
-    expect(payload.data.versions).toHaveLength(2);
+    expect(payload.data.versions.map((v) => v.version).sort()).toEqual([1, 2]);
   });
 
   it('list: returns rows + count', async () => {
-    const env = { DB: makeDb({ list: [{ id: 'art_1' }, { id: 'art_2' }] }) } as unknown as Env;
+    const before = count('SELECT COUNT(*) AS n FROM artifacts');
+    seedArtifact({ id: 'art_list_1' });
+    seedArtifact({ id: 'art_list_2' });
     const res = await handleGetArtifacts(new URL('https://x/api/artifacts'), env);
-    const payload = await res.json() as { data: unknown[]; count: number };
-    expect(payload.count).toBe(2);
+    const payload = await res.json() as { data: Array<{ id: string }>; count: number };
+    expect(payload.count).toBe(before + 2);
+    expect(payload.data.map((r) => r.id)).toEqual(expect.arrayContaining(['art_list_1', 'art_list_2']));
   });
 
   // ── revise ────────────────────────────────────────────────────────────────────
 
   it('revise: 404 when artifact missing', async () => {
-    const env = { DB: makeDb({ artifact: null }) } as unknown as Env;
     const res = await handleReviseArtifact('art_x', req({ body_md: 'new' }), USER, env);
     expect(res.status).toBe(404);
   });
 
-  it('revise: 400 when body_md missing', async () => {
-    const env = { DB: makeDb({ artifact: { id: 'art_1', version: 1, body_md: 'old', title: 'T' } }) } as unknown as Env;
+  it('revise: 400 when body_md missing, and the artifact is unchanged', async () => {
+    seedArtifact({ id: 'art_1' });
     const res = await handleReviseArtifact('art_1', req({ revision_note: 'x' }), USER, env);
     expect(res.status).toBe(400);
+    expect(artifact('art_1')).toMatchObject({ body_md: 'old', version: 1 });
   });
 
   it('revise: archives current body at current version, bumps to version+1', async () => {
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
     // created_by='claude-ai' matches the mocked resolveActor's resolution for
-    // the { email: 'claude-ai' } caller below — this test exercises the
-    // creator-matches-actor branch of the ownership gate, not the PI branch.
-    const env = { DB: makeDb({
-      artifact: { id: 'art_1', version: 2, body_md: 'old body', title: 'Old title', created_by: 'claude-ai' },
-      captureWrite: (sql, binds) => writes.push({ sql, binds }),
-    }) } as unknown as Env;
+    // the HERMES caller — this exercises the creator-matches-actor branch.
+    seedArtifact({ id: 'art_1', version: 2, body_md: 'old body', title: 'Old title', created_by: 'claude-ai' });
 
-    const res = await handleReviseArtifact(
-      'art_1',
-      req({ body_md: 'new body', revision_note: 'addressed 3 comments' }),
-      { email: 'claude-ai', name: 'Hermes' },
-      env,
-    );
+    const res = await handleReviseArtifact('art_1', req({ body_md: 'new body', revision_note: 'addressed 3 comments' }), HERMES, env);
     expect(res.status).toBe(200);
 
-    // Archive INSERT OR IGNORE with the CURRENT version (2) + old body.
-    const archive = writes.find((w) => /INSERT OR IGNORE INTO artifact_versions/.test(w.sql));
-    expect(archive).toBeDefined();
-    expect(archive!.binds).toContain(2);          // current version
-    expect(archive!.binds).toContain('old body'); // current body archived
-    expect(archive!.binds).toContain('addressed 3 comments');
-
-    // UPDATE bumps to 3 with the new body.
-    const update = writes.find((w) => /UPDATE artifacts SET/.test(w.sql));
-    expect(update).toBeDefined();
-    expect(update!.binds).toContain('new body');
-    expect(update!.binds).toContain(3);           // version+1
+    // Archive row at the CURRENT version (2) with the old body.
+    expect(db.prepare("SELECT version, body_md, revision_note FROM artifact_versions WHERE artifact_id = 'art_1'").all())
+      .toEqual([{ version: 2, body_md: 'old body', revision_note: 'addressed 3 comments' }]);
+    // The artifact moves to version 3 with the new body.
+    expect(artifact('art_1')).toMatchObject({ version: 3, body_md: 'new body' });
   });
 
   // ── revise: ownership gate ───────────────────────────────────────────────────
 
   it('revise: creator (actor.slug === created_by) is allowed even when not PI', async () => {
     mockIsPi.mockResolvedValue(false);
-    const env = { DB: makeDb({
-      artifact: { id: 'art_1', version: 1, body_md: 'old', title: 'T', created_by: 'nick-ingraham' },
-    }) } as unknown as Env;
+    seedArtifact({ id: 'art_1', created_by: 'nick-ingraham' });
     // Mocked resolveActor resolves USER (non-claude-ai email) to 'nick-ingraham'.
     const res = await handleReviseArtifact('art_1', req({ body_md: 'new' }), USER, env);
     expect(res.status).toBe(200);
+    expect(artifact('art_1')!.body_md).toBe('new');
   });
 
   it('revise: PI is allowed to revise an artifact they did not create', async () => {
     mockIsPi.mockResolvedValue(true);
-    const env = { DB: makeDb({
-      artifact: { id: 'art_1', version: 1, body_md: 'old', title: 'T', created_by: 'someone-else' },
-    }) } as unknown as Env;
+    seedArtifact({ id: 'art_1', created_by: 'someone-else' });
     const res = await handleReviseArtifact('art_1', req({ body_md: 'new' }), USER, env);
     expect(res.status).toBe(200);
+    expect(artifact('art_1')!.body_md).toBe('new');
   });
 
-  it('revise: 403 for a non-creator, non-PI team member', async () => {
+  it('revise: 403 for a non-creator, non-PI team member, and nothing changes', async () => {
     mockIsPi.mockResolvedValue(false);
-    const env = { DB: makeDb({
-      artifact: { id: 'art_1', version: 1, body_md: 'old', title: 'T', created_by: 'someone-else' },
-    }) } as unknown as Env;
-    // USER resolves to 'nick-ingraham' via the mocked resolveActor — mismatches
-    // created_by='someone-else', and isPiRequest is mocked false.
+    seedArtifact({ id: 'art_1', created_by: 'someone-else' });
     const res = await handleReviseArtifact('art_1', req({ body_md: 'new' }), USER, env);
     expect(res.status).toBe(403);
     const payload = await res.json() as { error?: string };
     expect(payload.error).toMatch(/creator or a PI/);
+    expect(artifact('art_1')).toMatchObject({ body_md: 'old', version: 1 });
+    expect(count("SELECT COUNT(*) AS n FROM artifact_versions WHERE artifact_id = 'art_1'")).toBe(0);
   });
 
   // ── comments ──────────────────────────────────────────────────────────────────
 
   it('comment: 404 when artifact missing', async () => {
-    const env = { DB: makeDb({ artifact: null }) } as unknown as Env;
     const res = await handleAddArtifactComment('art_x', req({ content: 'hi' }), USER, env);
     expect(res.status).toBe(404);
   });
 
   it('comment: 400 when content empty', async () => {
-    const env = { DB: makeDb({ artifact: { id: 'art_1' } }) } as unknown as Env;
+    seedArtifact({ id: 'art_1' });
     const res = await handleAddArtifactComment('art_1', req({ content: '  ' }), USER, env);
     expect(res.status).toBe(400);
   });
 
   it('comment: routes through postActivityEntry with entityType=artifact', async () => {
-    const env = { DB: makeDb({ artifact: { id: 'art_1' } }) } as unknown as Env;
+    seedArtifact({ id: 'art_1' });
     const res = await handleAddArtifactComment('art_1', req({ content: '@hermes please revise' }), USER, env);
     expect(res.status).toBe(201);
     expect(mockPostActivity).toHaveBeenCalledOnce();
@@ -587,35 +409,38 @@ describe('artifacts routes', () => {
   });
 
   it('comment: author-only visibility passes through when requested', async () => {
-    const env = { DB: makeDb({ artifact: { id: 'art_1' } }) } as unknown as Env;
+    seedArtifact({ id: 'art_1' });
     await handleAddArtifactComment('art_1', req({ content: '@me private note', visibility: 'author' }), USER, env);
     expect(mockPostActivity.mock.calls[0][0].visibility).toBe('author');
   });
 
   // ── delete ────────────────────────────────────────────────────────────────────
 
-  it('delete: 403 for non-PI caller', async () => {
+  it('delete: 403 for non-PI caller, and the artifact stays', async () => {
     mockIsPi.mockResolvedValue(false);
-    const env = { DB: makeDb({ artifact: { id: 'art_1' } }) } as unknown as Env;
+    seedArtifact({ id: 'art_1' });
     const res = await handleDeleteArtifact('art_1', req({}), env);
     expect(res.status).toBe(403);
+    expect(artifact('art_1')).toBeDefined();
   });
 
   it('delete: PI cascades activity_entries + versions + artifact', async () => {
     mockIsPi.mockResolvedValue(true);
-    const writes: Array<{ sql: string; binds: unknown[] }> = [];
-    const env = { DB: makeDb({ artifact: { id: 'art_1' }, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
+    seedArtifact({ id: 'art_1', version: 2 });
+    insertRow(db, 'artifact_versions', { artifact_id: 'art_1', version: 1, body_md: 'v1' });
+    insertRow(db, 'activity_entries', { id: 'ae_art1', entity_type: 'artifact', entity_id: 'art_1', kind: 'comment', actor_slug: 'nick-ingraham', body: 'note' });
+    seedArtifact({ id: 'art_keep' });
+
     const res = await handleDeleteArtifact('art_1', req({}), env);
     expect(res.status).toBe(200);
-    // All three cascade deletes fired through batch().
-    expect(writes.some((w) => /DELETE FROM activity_entries WHERE entity_type = 'artifact'/.test(w.sql))).toBe(true);
-    expect(writes.some((w) => /DELETE FROM artifact_versions/.test(w.sql))).toBe(true);
-    expect(writes.some((w) => /DELETE FROM artifacts WHERE id/.test(w.sql))).toBe(true);
+    expect(artifact('art_1')).toBeUndefined();
+    expect(count("SELECT COUNT(*) AS n FROM artifact_versions WHERE artifact_id = 'art_1'")).toBe(0);
+    expect(count("SELECT COUNT(*) AS n FROM activity_entries WHERE entity_type = 'artifact' AND entity_id = 'art_1'")).toBe(0);
+    expect(artifact('art_keep')).toBeDefined();
   });
 
   it('delete: idempotent when artifact already gone (PI)', async () => {
     mockIsPi.mockResolvedValue(true);
-    const env = { DB: makeDb({ artifact: null }) } as unknown as Env;
     const res = await handleDeleteArtifact('art_gone', req({}), env);
     expect(res.status).toBe(200);
     const payload = await res.json() as { data: { idempotent: boolean } };

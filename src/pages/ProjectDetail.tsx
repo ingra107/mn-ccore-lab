@@ -498,56 +498,13 @@ function ProjectDetailInner({ project }: InnerProps) {
   const projectPeerIntents = useIntentBroadcast('project', project.slug, projectSelfIntent)
   const [quickComposeKind, setQuickComposeKind] = useState<'note' | 'comment'>('note')
   const [quickComposeSubmitting, setQuickComposeSubmitting] = useState(false)
-  const [quickComposeDragOver, setQuickComposeDragOver] = useState(false)
-  const [quickComposeUploading, setQuickComposeUploading] = useState(false)
   const isMobile = useIsMobile()
   const [composeSheetOpen, setComposeSheetOpen] = useState(false)
   useComposeSheet(isMobile && composeSheetOpen, () => setComposeSheetOpen(false))
-  // T-04 inline file drop — Slack parity. Upload → append link to compose.
-  // The drag-drop wrapper still calls uploadToCompose; SmartCompose's own
-  // paperclip + paste path uses uploadContext directly.
-  const uploadToCompose = useCallback(async (file: File) => {
-    if (!project) return
-    setQuickComposeUploading(true)
-    try {
-      const urlRes = await fetch('/api/upload/url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type || 'application/octet-stream',
-          context: { type: 'project', id: project.slug },
-        }),
-      })
-      const urlData = await urlRes.json() as { data?: { uploadUrl?: string; key?: string } }
-      if (!urlData.data?.uploadUrl || !urlData.data?.key) throw new Error('presign failed')
-      await fetch(urlData.data.uploadUrl, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type || 'application/octet-stream' },
-      })
-      const doneRes = await fetch('/api/upload/done', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: urlData.data.key,
-          filename: file.name,
-          contentType: file.type,
-          sizeBytes: file.size,
-          entityType: 'project',
-          entityId: project.slug,
-        }),
-      })
-      const doneData = await doneRes.json() as { data?: { url?: string } }
-      queryClient.invalidateQueries({ queryKey: ['attachments', 'project', project.slug] })
-      const link = doneData.data?.url ?? `/api/files/${urlData.data.key}`
-      setQuickComposeText((prev) => (prev ? `${prev}\n[${file.name}](${link})` : `[${file.name}](${link})`))
-    } catch (err) {
-      console.error('compose upload failed', err)
-    } finally {
-      setQuickComposeUploading(false)
-    }
-  }, [project, queryClient])
+  // T-04 inline file drop now lives inside SmartCompose (#1358): drop,
+  // paste and the paperclip share its one upload queue and one uploading
+  // flag. This page used to wrap SmartCompose in its own drop zone with a
+  // third hand-rolled upload chain and a second flag for the same box.
   const handleQuickCompose = async () => {
     const text = quickComposeText.trim()
     if (!text || quickComposeSubmitting) return
@@ -1394,21 +1351,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               </button>
             </div>
           </div>
-          <div
-            onDragOver={(e) => { e.preventDefault(); setQuickComposeDragOver(true) }}
-            onDragLeave={() => setQuickComposeDragOver(false)}
-            onDrop={(e) => {
-              e.preventDefault()
-              setQuickComposeDragOver(false)
-              const files = Array.from(e.dataTransfer.files || [])
-              files.forEach(uploadToCompose)
-            }}
-            style={{
-              borderRadius: 'var(--radius-md)',
-              outline: quickComposeDragOver ? '2px dashed var(--teal)' : 'none',
-              outlineOffset: '2px',
-            }}
-          >
+          <div>
             {/* SmartCompose (D14) — replaces the prior decorative @/:/📎
                 button row. @ → MentionInput dropdown, : → emoji palette,
                 paperclip → real R2 upload via uploadContext. State is
@@ -1439,9 +1382,6 @@ function ProjectDetailInner({ project }: InnerProps) {
               submitLabel={quickComposeKind === 'note' ? 'Post note' : 'Comment'}
             />
           </div>
-          {quickComposeUploading && (
-            <p className="mt-1 text-[10px]" style={{ color: 'var(--teal)', opacity: 0.85 }}>Uploading…</p>
-          )}
           <TypingIndicator slugs={projectTypingPeers} className="mt-1" />
         </div>
       </motion.div>

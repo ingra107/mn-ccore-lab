@@ -490,3 +490,69 @@ describe('#8842 R4: the refusal names the retire path that works', () => {
       .toMatch(/delete the task \(op=delete\)/)
   })
 })
+
+// ── PB #2219: an Approve: approval is a question, so a Hub tap cannot close it ──
+//
+// PB stopped minting task-shaped `Approve:` rows (2026-10-05): every approval,
+// plan or runbook ("Approve: MECHANIC ..."), is a kind='question' row, and PB's
+// evidence gate (scripts/db/approve_completion.py) runs only on PB's own close.
+// The ONLY thing that keeps a Hub Done tap from closing an approval with no
+// evidence and no build is questionConsumerCloseError. This pins that contract
+// for the approval shape PB depends on; loosening the close rule for questions
+// breaks #2219 on the PB side, not only #8842.
+describe('PB #2219: a Hub tap cannot close an Approve: question', () => {
+  const APPROVAL_SPEC = JSON.stringify({
+    v: 1, kind: 'fix_approval', prompt: 'sync-push failure -- 401 since 06:00',
+    choices: [{ key: 'yes', label: 'Build it' }, { key: 'no', label: 'Not now' }, { key: 'other', label: 'Other' }],
+    allow_text: true, rec: 'yes',
+  })
+  const seedApproval = (db: Db, id: string, extra: Record<string, unknown> = {}) =>
+    seedQuestion(db, id, {
+      title: 'Approve: MECHANIC sync-push failure -- 401 since 06:00',
+      source: 'failure-triage', meeting_id: null, question_spec_json: APPROVAL_SPEC,
+      ...extra,
+    })
+  const YES_ANSWER = { v: 1, choice: 'yes', via: 'hub', at: '2026-10-05T18:00:00Z' }
+
+  it('a Hub-UI done on an ANSWERED runbook approval is refused (question_consumer_close_only)', async () => {
+    const { db, writes, env } = makeDB()
+    const id = 'task_01approve_runbook_hubtap1'
+    seedApproval(db, id, { question_answer_json: JSON.stringify(YES_ANSWER) })
+    const r = await applyMutation(env, {
+      table: 'tasks', record_id: id, op: 'update',
+      patch: { status: 'done', completed: 1, completed_at: nowInstant() },
+      route: 'test', user: NICK,
+    })
+    expect(r.status).toBe('error')
+    expect(r.reason).toMatch(/^apply error: question_consumer_close_only:/)
+    expect(rowOf(db, id)?.status).toBe('todo')
+    expect(writes).toHaveLength(0)
+  })
+
+  it('a Hub-UI done on an UNANSWERED approval is refused too', async () => {
+    const { db, env } = makeDB()
+    const id = 'task_01approve_runbook_hubtap2'
+    seedApproval(db, id)
+    const r = await applyMutation(env, {
+      table: 'tasks', record_id: id, op: 'update',
+      patch: { status: 'done', completed: 1, completed_at: nowInstant() },
+      route: 'test', user: NICK,
+    })
+    expect(r.status).toBe('error')
+    expect(r.reason).toMatch(/^apply error: question_(unanswered|consumer_close_only):/)
+    expect(rowOf(db, id)?.status).toBe('todo')
+  })
+
+  it('the PB consumer close of an answered approval is accepted', async () => {
+    const { db, env } = makeDB()
+    const id = 'task_01approve_runbook_pbclose'
+    seedApproval(db, id, { question_answer_json: JSON.stringify(YES_ANSWER) })
+    const r = await applyUpdate(env, {
+      mutation_id: 'mut_approve_pbclose_0001', origin_machine: 'home', table: 'tasks', op: 'update',
+      record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
+      patch: { status: 'done', completed: 1, completed_at: nowInstant() }, client_ts: nowInstant(), issued_at: nowInstant(),
+    }, NICK)
+    expect(r.status).toBe('accepted')
+    expect(rowOf(db, id)?.status).toBe('done')
+  })
+})

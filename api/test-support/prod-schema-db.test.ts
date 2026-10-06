@@ -73,4 +73,31 @@ describe('prod-schema-db contract', () => {
     await expect(d1.prepare("INSERT INTO task_subtasks (id, task_id, title) VALUES ('s', 'nope', 'x')").run())
       .rejects.toThrow(/^D1_ERROR: FOREIGN KEY constraint failed: SQLITE_CONSTRAINT \(extended: SQLITE_CONSTRAINT_FOREIGNKEY\)$/)
   })
+
+  // #8875 cold review: better-sqlite3 stores an `undefined` bind as NULL; D1
+  // refuses it. The adapter must refuse it too, on every path, or a route that
+  // forgets `?? null` is green here and broken in prod.
+  it('refuses an undefined bind value, as D1 does, on bind / batch / every exec path, and writes nothing', async () => {
+    const db = prodSchemaDb()
+    const d1 = d1Adapter(db)
+    const D1_UNDEF = /^D1_TYPE_ERROR: Type 'undefined' not supported for value 'undefined'/
+    // notifications.body is nullable, so a NULL there is legal and only `undefined` is refused.
+    const sql = "INSERT INTO notifications (id, title, body, recipient_slug, type, source_type, source_id) VALUES (?, ?, ?, 'nick-ingraham', 'update', 'x', 'x')"
+    // bind() itself throws (workerd validates at bind time), a TypeError.
+    expect(() => d1.prepare(sql).bind('i1', 'T', undefined)).toThrow(TypeError)
+    expect(() => d1.prepare(sql).bind('i1', 'T', undefined)).toThrow(D1_UNDEF)
+    // A chained bind is checked too.
+    expect(() => d1.prepare(sql).bind('i1', 'T').bind(undefined)).toThrow(D1_UNDEF)
+    // A statement assembled without bind() (vals set directly) is caught at exec, for run/all/first and in batch.
+    const raw = { ...d1.prepare(sql), vals: ['i2', 'T', undefined] }
+    const forged = d1.prepare(sql)
+    forged.vals.push('i3', 'T', undefined)
+    await expect(forged.run()).rejects.toThrow(D1_UNDEF)
+    await expect(forged.all()).rejects.toThrow(D1_UNDEF)
+    await expect(forged.first()).rejects.toThrow(D1_UNDEF)
+    await expect(d1.batch([d1.prepare(sql).bind('ok', 'T', 'body'), raw])).rejects.toThrow(D1_UNDEF)
+    // null is fine, and nothing from the refused batch landed.
+    await d1.prepare(sql).bind('i4', 'T', null).run()
+    expect((db.prepare("SELECT id FROM notifications WHERE id IN ('ok','i1','i2','i3','i4')").all() as { id: string }[]).map((r) => r.id)).toEqual(['i4'])
+  })
 })

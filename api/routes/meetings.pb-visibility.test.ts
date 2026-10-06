@@ -1,69 +1,48 @@
 // #8842 R6 — PB-private task rows on the meeting and calendar routes.
 //
-// Real SQLite (better-sqlite3), so the SQL filter itself is exercised; the
-// Pattern B cases in pb-visibility-contract.test.ts use a stub that returns
-// rows verbatim and cannot see a WHERE clause.
-//
 // Before the fix (Hub 16e72a50): GET /api/meetings/:id returned a task under
 // a 'Peripheral Brain' project in action_items to any authed caller, and
 // GET /api/calendar/events returned every open dated task, PB or not, plus
 // soft-deleted ones.
+//
+// #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts),
+// so the SQL filter runs against the real tables. The first cut built nine
+// tables by hand (its activity_entries lacked v100 parent_id and every NOT
+// NULL). The legacy states it needs -- a task whose project_id is a SLUG and
+// one whose ref names no project -- are representable on the real schema
+// (tasks.project_id carries no FK), so they are seeded there. The chain's own
+// seed rows are filtered out by title, never counted.
 
 import { describe, it, expect, beforeEach } from 'vitest'
-import Database from 'better-sqlite3'
-import { TASK_PLAIN_COLS } from '../lib/task-cols'
+import type Database from 'better-sqlite3'
 import { ctToday } from '../lib/ct-date'
 import { handleGetMeeting, handleMeetingPrep, handleGenerateAgenda } from './meetings'
 import { handleCalendarEvents } from './calendar'
 import { pbTaskVisibilitySql } from '../helpers'
-
-function makeD1(db: InstanceType<typeof Database>) {
-  function makeStmt(sql: string, vals: unknown[]): any {
-    return {
-      bind: (...more: unknown[]) => makeStmt(sql, [...vals, ...more]),
-      first: async () => db.prepare(sql).get(...vals) ?? null,
-      all: async () => ({ results: db.prepare(sql).all(...vals), success: true, meta: {} }),
-      run: async () => ({ success: true, meta: { changes: db.prepare(sql).run(...vals).changes } }),
-    }
-  }
-  return { prepare: (sql: string) => makeStmt(sql, []) }
-}
-
-const TASK_COLS = new Set<string>([...TASK_PLAIN_COLS, 'project_id', 'notes'])
-const DDL = `
-CREATE TABLE projects (id TEXT PRIMARY KEY, slug TEXT, title TEXT, category TEXT, status TEXT, stage TEXT, updated_at TEXT);
-CREATE TABLE tasks (${[...TASK_COLS].map((c) => `${c} ${c === 'completed' ? 'INTEGER DEFAULT 0' : 'TEXT'}`).join(', ')});
-CREATE TABLE meetings (id TEXT PRIMARY KEY, date TEXT, title TEXT, type TEXT, status TEXT, facilitator TEXT,
-  created_at TEXT, updated_at TEXT, source_id TEXT, notes TEXT);
-CREATE TABLE agenda_items (id TEXT, meeting_id TEXT, sort_order INTEGER, created_at TEXT);
-CREATE TABLE activity_log (id TEXT, type TEXT, description TEXT, actor TEXT, related_id TEXT, related_type TEXT, timestamp TEXT);
-CREATE TABLE regulatory_items (id TEXT, title TEXT, item_type TEXT, expiration_date TEXT, status TEXT, project_id TEXT);
-CREATE TABLE activity_entries (id TEXT, body TEXT, update_type TEXT, actor_slug TEXT, created_at TEXT, project_id TEXT,
-  entity_type TEXT, kind TEXT, hidden_at TEXT);
-CREATE TABLE milestones (id TEXT, title TEXT, target_date TEXT, status TEXT, grant_id TEXT);
-CREATE TABLE grants (id TEXT, mechanism TEXT, title TEXT);
-`
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
 const TODAY = ctToday()
 let db: InstanceType<typeof Database>
 let env: any
 
+const OURS = new Set([
+  'PB PRIVATE', 'PB PRIVATE BY SLUG', 'TEAM TASK', 'NO PROJECT', 'UNKNOWN PROJECT REF', 'DELETED TASK',
+  'PREV PB PRIVATE', 'PREV TEAM TASK',
+])
+
 function task(id: string, title: string, projectId: string | null, extra: Record<string, unknown> = {}) {
-  const row: Record<string, unknown> = {
-    id, title, project_id: projectId, meeting_id: 'mtg_now', status: 'todo', priority: 'high',
+  insertRow(db, 'tasks', {
+    id, title, project_id: projectId, meeting_id: 'mtg_now', status: 'todo', priority: 'high', assignee: 'nick-ingraham',
     completed: 0, due_date: TODAY, deleted_at: null, created_at: '2026-09-01 00:00:00', ...extra,
-  }
-  const cols = Object.keys(row)
-  db.prepare(`INSERT INTO tasks (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`).run(...cols.map((c) => row[c]))
+  })
 }
 
 beforeEach(() => {
-  db = new Database(':memory:')
-  db.exec(DDL)
-  db.prepare("INSERT INTO projects VALUES ('proj_pb', 'pb-private', 'Private', 'Peripheral Brain', 'active', 'x', '2026-01-01')").run()
-  db.prepare("INSERT INTO projects VALUES ('proj_team', 'team-proj', 'Team', 'MNCCORE', 'active', 'x', '2026-01-01')").run()
-  db.prepare("INSERT INTO meetings (id, date, title, type) VALUES ('mtg_prev', '2026-09-01', 'Prev', 'lab')").run()
-  db.prepare(`INSERT INTO meetings (id, date, title, type) VALUES ('mtg_now', '${TODAY}', 'Now', 'lab')`).run()
+  db = prodSchemaDb()
+  insertRow(db, 'projects', { id: 'proj_pb', slug: 'pb-private', title: 'Private', category: 'Peripheral Brain', status: 'active' })
+  insertRow(db, 'projects', { id: 'proj_team', slug: 'team-proj', title: 'Team', category: 'MNCCORE', status: 'active' })
+  insertRow(db, 'meetings', { id: 'mtg_prev', date: '2026-09-01', title: 'Prev', type: 'lab' })
+  insertRow(db, 'meetings', { id: 'mtg_now', date: TODAY, title: 'Now', type: 'lab' })
   task('t_pb', 'PB PRIVATE', 'proj_pb')
   task('t_pb_slug', 'PB PRIVATE BY SLUG', 'pb-private')
   task('t_team', 'TEAM TASK', 'proj_team')
@@ -73,10 +52,10 @@ beforeEach(() => {
   // Carried-forward items for the agenda route come from the PREVIOUS meeting.
   task('t_prev_pb', 'PREV PB PRIVATE', 'proj_pb', { meeting_id: 'mtg_prev', due_date: null })
   task('t_prev_team', 'PREV TEAM TASK', 'proj_team', { meeting_id: 'mtg_prev', due_date: null })
-  env = { DB: makeD1(db) }
+  env = { DB: d1Adapter(db) }
 })
 
-const titles = (rows: Array<{ title?: string }>) => rows.map((r) => r.title).sort()
+const titles = (rows: Array<{ title?: string }>) => rows.map((r) => r.title).filter((t) => OURS.has(t as string)).sort()
 
 describe('pbTaskVisibilitySql — the one rule', () => {
   it('is empty for a PI / API-key caller', () => {

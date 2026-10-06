@@ -334,5 +334,101 @@
       "canonical_url": "[[iwd_\\1_thing]]",
       "short_title": "iwd_\\1_thing"
     }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/0/#inbox/1a0e5f718220a235",
+    "expected": {
+      "type": "gmail_thread",
+      "canonical_url": "https://mail.google.com/mail/u/0/#inbox/1a0e5f718220a235",
+      "short_title": "Gmail thread"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/1/#inbox/1a0e5f718220a235",
+    "expected": {
+      "type": "gmail_thread",
+      "canonical_url": "https://mail.google.com/mail/u/1/#inbox/1a0e5f718220a235",
+      "short_title": "Gmail thread"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/1/#drafts",
+    "expected": {
+      "type": "web",
+      "canonical_url": "https://mail.google.com/mail/u/1/#drafts",
+      "short_title": "Link"
+    }
+  },
+  {
+    "raw": "https://urldefense.com/v3/__https:/forms.cloud.microsoft/pages/x__;!!abc$",
+    "expected": {
+      "type": "web",
+      "canonical_url": "https://urldefense.com/v3/__https:/forms.cloud.microsoft/pages/x__;!!abc$",
+      "short_title": "Link"
+    }
+  },
+  {
+    "raw": "https://drive.google.com/drive/folders/1FOLDER?usp=drive_link",
+    "expected": {
+      "type": "web",
+      "canonical_url": "https://drive.google.com/drive/folders/1FOLDER?usp=drive_link",
+      "short_title": "Link"
+    }
+  },
+  {
+    "raw": "https://drive.google.com/file/d/1FILE/view?usp=sharing",
+    "expected": {
+      "type": "web",
+      "canonical_url": "https://drive.google.com/file/d/1FILE/view?usp=sharing",
+      "short_title": "Link"
+    }
+  },
+  {
+    "raw": "https://docs.google.com/document/d/1ABCdef/edit?usp=sharing&tab=t.0",
+    "expected": {
+      "type": "google_doc",
+      "canonical_url": "https://docs.google.com/document/d/1ABCdef/edit",
+      "short_title": "Google Doc"
+    }
+  },
+  {
+    "raw": "https://umn.app.box.com/folder/123456789",
+    "expected": {
+      "type": "box_folder",
+      "canonical_url": "https://app.box.com/folder/123456789",
+      "short_title": "Box folder"
+    }
+  },
+  {
+    "raw": "https://example.org/page/",
+    "expected": {
+      "type": "web",
+      "canonical_url": "https://example.org/page/",
+      "short_title": "Link"
+    }
+  },
+  {
+    "raw": "https://example.org/page?b=2&a=1#frag",
+    "expected": {
+      "type": "web",
+      "canonical_url": "https://example.org/page?b=2&a=1#frag",
+      "short_title": "Link"
+    }
+  },
+  {
+    "raw": "see https://example.org/x).",
+    "expected": {
+      "type": "web",
+      "canonical_url": "https://example.org/x",
+      "short_title": "Link"
+    }
+  },
+  {
+    "raw": "~/Box/Research/folder/",
+    "expected": {
+      "type": "local_folder",
+      "canonical_url": "~/Box/Research/folder/",
+      "short_title": "~/Box/Research/folder/"
+    }
   }
 ]

@@ -1,7 +1,8 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, isPiRequest, resolveActor, assertProjectVisible, canSeePbProjectRow, projectRefToCanonical } from '../helpers';
 import { ctToday } from '../lib/ct-date';
-import { nowInstant, dbStampToIso } from '../lib/time';
+import { nowInstant } from '../lib/time';
+import { lastWorkedIso } from '../lib/project-recency';
 import { applyMutation } from './mutations';
 import { activityVisibilityGate, activityHiddenClause, postActivityEntry, sourceKeyFrom } from '../lib/activity-entry';
 import { enumFieldsFor } from '../lib/enum-domains';
@@ -278,6 +279,11 @@ export async function handleGetProjects(url: URL, env: Env, user: AuthUser, apiK
   // all before this — the Projects list's activity sort silently degraded to
   // updated_at and its "Xd ago" staleness chip never rendered.
   //
+  // PB #8236 (2026-10-05): LMM is MERGED in (the later of the two wins), not
+  // standing in -- a NULL LMM simply leaves the rollup. The rollup alone froze
+  // for a project worked only through PB field writes, which post no timeline
+  // line by design; advanceProjectOwnMovement moves LMM on those writes.
+  //
   // One constant-cost aggregate (idx_ae_project = (project_id, created_at DESC),
   // so MAX-per-group is an ordered index scan), merged in memory — the same
   // batched shape handleProjectHealth uses instead of a per-project N+1. It does
@@ -308,8 +314,9 @@ export async function handleGetProjects(url: URL, env: Env, user: AuthUser, apiK
       (agg?.results || []).map((r) => [r.project_id, r.latest] as const)
     );
     for (const r of rows) {
-      const latest = latestByProject.get(String(r.id));
-      r.last_activity = latest ? dbStampToIso(latest) : null;
+      // PB #8236: merged with last_meaningful_movement here, once, so every
+      // consumer of last_activity sees PB-only field work (api/lib/project-recency.ts).
+      r.last_activity = lastWorkedIso(latestByProject.get(String(r.id)), r.last_meaningful_movement);
     }
     return json({ data: rows, count: rows.length });
   }

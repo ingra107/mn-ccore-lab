@@ -30,6 +30,7 @@ import { isFromMeeting } from '../../lib/meetingOrigin'
 import { MeetingOriginTag } from './MeetingOriginTag'
 import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import { uploadFileToR2 } from '../../lib/r2Upload'
+import { useUploadQueue } from '../../lib/useUploadQueue'
 import MentionInput from '../MentionInput'
 import TypingIndicator from '../TypingIndicator'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
@@ -1503,7 +1504,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
 //   right: Post button
 //
 // Mobile: whole component sticks to the panel's scroll-container bottom.
-function OverviewQuickAdd({
+export function OverviewQuickAdd({
   taskId,
   taskTitle,
   projectSlug,
@@ -1524,7 +1525,6 @@ function OverviewQuickAdd({
   const [forHermes, setForHermes] = useState(false)
   const [meOnly, setMeOnly] = useState(false)
   const [dragOver, setDragOver] = useState(false)
-  const [uploading, setUploading] = useState(false)
   // Instant optimistic preview while the real R2 upload runs in the
   // background (mirrors BugReportModal's screenshot-preview UX — the base64
   // dataUrl is local-only, never submitted/stored; the durable path is still
@@ -1546,8 +1546,11 @@ function OverviewQuickAdd({
   // Composing = focused OR has text — drives textarea rows + action row visibility.
   const composing = focused || text.trim().length > 0
 
-  // T-04 inline file drop — same presigned-R2 flow as FileUpload.
-  const uploadToCompose = useCallback(async (file: File) => {
+  // T-04 inline file drop. One file's upload: preview, shared R2 chain,
+  // append link, toast. Every entry point (drop, picker, paste) feeds files
+  // through `enqueueUploads`, never this directly, so `uploading` is derived
+  // from one queue and cannot clear while a sibling is pending (#1356).
+  const uploadOneFile = useCallback(async (file: File) => {
     const isImage = (file.type || '').startsWith('image/')
     const previewId = crypto.randomUUID()
     if (isImage) {
@@ -1558,7 +1561,6 @@ function OverviewQuickAdd({
       }
       reader.readAsDataURL(file)
     }
-    setUploading(true)
     try {
       // Shared presign -> PUT -> done chain (backlog #545) — see
       // ../../lib/r2Upload.ts; SmartCompose calls the same function so the
@@ -1573,10 +1575,10 @@ function OverviewQuickAdd({
       console.error('compose upload failed', err)
       showError(`Attach failed: ${err instanceof Error ? err.message : 'please try again.'}`)
     } finally {
-      setUploading(false)
       setPendingUploads((prev) => prev.filter((p) => p.id !== previewId))
     }
   }, [taskId, queryClient, showSuccess, showError])
+  const { enqueue: enqueueUploads, uploading } = useUploadQueue(uploadOneFile)
 
   // N1.22 — short strings on phones: the idle one-row input is narrow next
   // to the mode pills, and the long placeholder clipped to "@mention a".
@@ -1721,7 +1723,7 @@ function OverviewQuickAdd({
           onDrop={(e) => {
             e.preventDefault()
             setDragOver(false)
-            Array.from(e.dataTransfer.files || []).forEach(uploadToCompose)
+            enqueueUploads(e.dataTransfer.files)
           }}
           style={{
             outline: dragOver ? '2px dashed var(--teal)' : 'none',
@@ -1772,7 +1774,7 @@ function OverviewQuickAdd({
             ref={fileInputRef as unknown as React.RefObject<HTMLInputElement>}
             type="file"
             multiple
-            onChange={(e) => { Array.from(e.target.files || []).forEach(uploadToCompose); e.target.value = '' }}
+            onChange={(e) => { enqueueUploads(e.target.files); e.target.value = '' }}
             style={{ display: 'none' }}
           />
           {/* MentionInput (Rule 7) — N1c: the raw textarea here had no
@@ -1791,8 +1793,12 @@ function OverviewQuickAdd({
               onContentChange?.(hasContent)
             }}
             onPaste={(e) => {
-              const fileItem = Array.from(e.clipboardData?.items || []).find((it) => it.kind === 'file')
-              if (fileItem) { e.preventDefault(); const f = fileItem.getAsFile(); if (f) uploadToCompose(f) }
+              // Every pasted file, not just the first (parity with SmartCompose, #1118).
+              const pasted = Array.from(e.clipboardData?.items || [])
+                .filter((it) => it.kind === 'file')
+                .map((it) => it.getAsFile())
+                .filter((f): f is File => f !== null)
+              if (pasted.length > 0) { e.preventDefault(); enqueueUploads(pasted) }
             }}
             placeholder={PLACEHOLDERS[mode]}
             onFocus={(e) => {

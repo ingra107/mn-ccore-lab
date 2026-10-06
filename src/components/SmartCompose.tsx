@@ -36,6 +36,7 @@ import { useUndoToast } from './UndoToast'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
 import { uploadFileToR2 } from '../lib/r2Upload'
+import { useUploadQueue } from '../lib/useUploadQueue'
 
 const EMOJI_QUICK = ['👍', '❤️', '🎉', '👀', '🔥', '💡', '✅', '⚠️', '📝', '🤖', '🚀', '🙏']
 
@@ -194,7 +195,6 @@ export default function SmartCompose(props: SmartComposeProps) {
 
   const [focused, setFocused] = useState(false)
   const [emojiOpen, setEmojiOpen] = useState(false)
-  const [uploading, setUploading] = useState(false)
   // Instant optimistic preview while the real R2 upload runs (mirrors
   // BugReportModal's screenshot-preview UX — local base64 only, never
   // submitted/stored; the durable path is still the presigned-R2 flow below,
@@ -336,23 +336,13 @@ export default function SmartCompose(props: SmartComposeProps) {
     }
   }, [submit])
 
-  // Upload queue (backlog #1118). Every incoming batch of files — one from
-  // the (now `multiple`) file picker, one or more from a multi-file paste —
-  // is pushed onto ONE FIFO queue and drained by a single loop instead of
-  // firing an independent async chain per file. A call that arrives while
-  // the queue is already draining just appends to it; the already-running
-  // loop picks the new entries up on its next iteration rather than starting
-  // a second, concurrent drain. That makes the old race unrepresentable: the
+  // Upload queue (backlog #1118, extracted for #1356/#1358). Every incoming
+  // batch of files (the `multiple` picker, a multi-file paste, a drop) goes
+  // onto ONE FIFO queue drained by a single loop, via the shared
+  // ../lib/useUploadQueue.ts. That keeps the old race unrepresentable: the
   // shared `uploading` boolean used to flip back to false the instant
   // WHICHEVER upload finished first, even while a sibling was still in
-  // flight (paste file A, paste file B before A resolves, B finishes first —
-  // the Attach button re-enabled and the spinner stopped while A was still
-  // uploading). Now `uploading` can only ever go false once the queue is
-  // actually empty, because there is only ever one drain session per
-  // component instance.
-  const uploadQueueRef = useRef<File[]>([])
-  const uploadSessionActiveRef = useRef(false)
-
+  // flight. `uploading` is derived from the queue and has no setter here.
   const uploadOneFile = useCallback(async (file: File) => {
     if (!uploadContext) return
     const isImage = (file.type || '').startsWith('image/')
@@ -370,6 +360,9 @@ export default function SmartCompose(props: SmartComposeProps) {
       // ../lib/r2Upload.ts; OverviewQuickAdd (TaskDetailPanel.tsx) calls the
       // same function so the two composers can't drift on this again.
       const { url } = await uploadFileToR2(file, uploadContext)
+      // Refresh the entity's attachment list (FileUpload's query key), as
+      // ProjectDetail's own drop handler did before the drop moved in here.
+      queryClient.invalidateQueries({ queryKey: ['attachments', uploadContext.entityType ?? uploadContext.type, uploadContext.id] })
       insertAtCursor(isImage ? `![${file.name}](${url}) ` : `[${file.name}](${url}) `)
       undoToast.showSuccess(`Attached ${file.name}`)
     } catch (err) {
@@ -378,28 +371,34 @@ export default function SmartCompose(props: SmartComposeProps) {
     } finally {
       setPendingUploads((prev) => prev.filter((p) => p.id !== previewId))
     }
-  }, [uploadContext, insertAtCursor, undoToast])
+  }, [uploadContext, insertAtCursor, undoToast, queryClient])
 
-  const drainUploadQueue = useCallback(async () => {
-    if (uploadSessionActiveRef.current) return
-    uploadSessionActiveRef.current = true
-    setUploading(true)
-    try {
-      while (uploadQueueRef.current.length > 0) {
-        const file = uploadQueueRef.current.shift() as File
-        await uploadOneFile(file)
-      }
-    } finally {
-      uploadSessionActiveRef.current = false
-      setUploading(false)
-    }
-  }, [uploadOneFile])
+  const { enqueue: enqueueUploads, uploading } = useUploadQueue(uploadOneFile)
 
   const handleFiles = useCallback((files: FileList | null) => {
     if (!files || files.length === 0 || !uploadContext) return
-    uploadQueueRef.current.push(...Array.from(files))
-    void drainUploadQueue()
-  }, [uploadContext, drainUploadQueue])
+    enqueueUploads(files)
+  }, [uploadContext, enqueueUploads])
+
+  // Drop-to-attach (#1358). The box owns its drop, so a host page never wraps
+  // SmartCompose in a second drop zone with a second queue and a second
+  // uploading flag (ProjectDetail used to). Only a drag carrying FILES is
+  // claimed; any other drag (dnd-kit, text, the Today HTML5 list drags)
+  // passes through untouched. No uploadContext means no drop target at all.
+  const [dragOver, setDragOver] = useState(false)
+  const dragHasFiles = (e: React.DragEvent) => Array.from(e.dataTransfer?.types || []).includes('Files')
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    if (!uploadContext || !dragHasFiles(e)) return
+    e.preventDefault()
+    setDragOver(true)
+  }, [uploadContext])
+  const handleDragLeave = useCallback(() => setDragOver(false), [])
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    if (!uploadContext || !dragHasFiles(e)) return
+    e.preventDefault()
+    setDragOver(false)
+    handleFiles(e.dataTransfer.files)
+  }, [uploadContext, handleFiles])
 
   const handlePaste = useCallback((e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     if (!uploadContext) return
@@ -637,7 +636,18 @@ export default function SmartCompose(props: SmartComposeProps) {
   // Hidden paste handler — registers on the textarea via MentionInput
   // doesn't expose paste; attach via a wrapper so paste-image works.
   const composeWrapper = (
-    <div onPaste={handlePaste as unknown as React.ClipboardEventHandler<HTMLDivElement>}>
+    <div
+      onPaste={handlePaste as unknown as React.ClipboardEventHandler<HTMLDivElement>}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      data-drag-over={dragOver ? 'true' : undefined}
+      style={{
+        borderRadius: 'var(--radius-md)',
+        outline: dragOver ? '2px dashed var(--teal)' : 'none',
+        outlineOffset: '2px',
+      }}
+    >
       {inner}
     </div>
   )

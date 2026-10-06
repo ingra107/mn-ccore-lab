@@ -113,7 +113,20 @@ export function d1Adapter(db: InstanceType<typeof Database>, hooks: {
     const base = code.startsWith('SQLITE_CONSTRAINT') ? 'SQLITE_CONSTRAINT' : 'SQLITE_ERROR'
     return new Error(`D1_ERROR: ${err.message}: ${base}${code !== base ? ` (extended: ${code})` : ''}`)
   }
+  // D1 refuses an `undefined` bind value (workerd's bind() throws
+  // "D1_TYPE_ERROR: Type 'undefined' not supported for value 'undefined'"),
+  // while better-sqlite3 silently stores it as NULL. Without this check a
+  // route that forgets `?? null` passes every test on this fixture and fails
+  // in prod (#8875 cold review). Checked at bind time, as D1 does, and again
+  // at exec so no path into the engine (first/all/run/batch) skips it.
+  function assertNoUndefined(vals: unknown[]) {
+    const i = vals.findIndex((v) => v === undefined)
+    if (i !== -1) {
+      throw new TypeError(`D1_TYPE_ERROR: Type 'undefined' not supported for value 'undefined' (bind position ${i + 1})`)
+    }
+  }
   function exec(sql: string, vals: unknown[], mode: 'all' | 'run') {
+    assertNoUndefined(vals)
     hooks.onExec?.(sql, vals)
     if (hooks.failSql && hooks.failSql.test(sql) && (hooks.failTimes ?? 0) > 0) {
       hooks.failTimes = (hooks.failTimes ?? 0) - 1
@@ -133,7 +146,7 @@ export function d1Adapter(db: InstanceType<typeof Database>, hooks: {
   function makeStmt(sql: string, vals: unknown[]): any {
     return {
       sql, vals,
-      bind: (...more: unknown[]) => makeStmt(sql, [...vals, ...more]),
+      bind: (...more: unknown[]) => { assertNoUndefined(more); return makeStmt(sql, [...vals, ...more]) },
       first: async () => (exec(sql, vals, 'all').results[0] as unknown) ?? null,
       all: async () => exec(sql, vals, 'all'),
       run: async () => exec(sql, vals, 'run'),
