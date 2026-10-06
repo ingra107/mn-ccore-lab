@@ -5,146 +5,114 @@
 // on a dedup hit (its own `SELECT ... WHERE id = ?` found nothing), and
 // handleMobileTasksToHub mapped the PWA's temp id to a phantom Hub id.
 //
-// Mocks applyMutation directly (same pattern as
-// api/lib/field-authority.contract.test.ts's captureCreatePayload) so this
-// asserts the response-shape fix in isolation from the dedup SQL itself —
-// SQL-level coverage (the pre-check key, normalization) lives in
-// tasks.dedup.test.ts.
+// #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts)
+// with the REAL applyMutation. The first cut mocked applyMutation and echoed a
+// row back for any id, so it proved the caller read canonical_payload.id but
+// not that the dedup arbiter really adopted the winner, nor that no second row
+// landed. Here the winner is a stored row, and each case counts the rows that
+// carry the title afterwards.
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
+import type Database from 'better-sqlite3'
 import type { AuthUser, Env } from '../helpers'
-import { classifyTaskDedupSelect } from '../lib/task-dedup-sql'
-
-const { applyMutationMock } = vi.hoisted(() => ({ applyMutationMock: vi.fn() }))
-vi.mock('./mutations', () => ({ applyMutation: applyMutationMock }))
-
-// Echoes back a row shaped like the queried id — enough to prove the caller
-// queried WITH the id it claims to have resolved to, without needing to know
-// handleCreateTask/handleMobileTasksToHub's internally-generated ULID ahead of time.
-function echoRowDB() {
-  function makeStmt(sql: string, binds: unknown[]): any {
-    return {
-      bind: (...more: unknown[]) => makeStmt(sql, [...binds, ...more]),
-      first: async () => {
-        const upper = sql.toUpperCase()
-        if (upper.includes('FROM TASKS') && upper.includes('WHERE T.ID')) {
-          const id = binds[binds.length - 1] as string
-          return { id, title: 'Stub Row', assignee: 'claude-ai', status: 'todo' }
-        }
-        // Mobile pre-check dedup SELECT — no match, forces the fallthrough
-        // to applyMutation (which is mocked below). Keyed by shape, not by the
-        // LOWER(TRIM(TITLE)) substring, which the central rule now also carries
-        // (#530b); the classifier THROWS on an unrecognised task dedup SELECT.
-        if (classifyTaskDedupSelect(sql) === 'mobile') return null
-        return null
-      },
-      run: async () => ({ success: true, meta: { changes: 1 } }),
-      all: async () => ({ results: [], success: true, meta: {} }),
-    }
-  }
-  return { prepare: (sql: string) => makeStmt(sql, []), batch: async () => [] }
-}
+import { handleCreateTask, handleMobileTasksToHub } from './tasks'
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
 const user = { email: 'ingra107@umn.edu', name: 'Nick' } as AuthUser
 
+let db: InstanceType<typeof Database>
+let env: Env
 beforeEach(() => {
-  applyMutationMock.mockReset()
+  db = prodSchemaDb()
+  env = { DB: d1Adapter(db) } as unknown as Env
 })
 
+const WINNER = 'task_01hwtest_dedupresp_winner0'
+function seedWinner(title: string) {
+  insertRow(db, 'tasks', { id: WINNER, title, status: 'todo', priority: 'medium', assignee: 'nick-ingraham' })
+}
+const idsTitled = (title: string) =>
+  (db.prepare('SELECT id FROM tasks WHERE title = ? ORDER BY id').all(title) as { id: string }[]).map((r) => r.id)
+
+function createReq(body: unknown) {
+  return new Request('https://example.com/api/tasks', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  })
+}
+function mobileReq(tasks: unknown[]) {
+  return new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tasks }),
+  })
+}
+
 describe('handleCreateTask — response reflects the dedup-adopted row (#523)', () => {
-  it('a dedup hit returns the EXISTING row, not {data: null}', async () => {
-    // Simulate applyInsert's dedupAccepted: canonical_payload.id is the
-    // WINNER's id, which differs from whatever id handleCreateTask generated
-    // internally for this (never-inserted) attempt.
-    applyMutationMock.mockResolvedValue({
-      status: 'accepted',
-      canonical_payload: { id: 'task_EXISTING_WINNER', title: 'Existing Task', assignee: 'claude-ai', status: 'todo' },
-    })
+  it('a dedup hit returns the EXISTING row, not {data: null}, and writes no second row', async () => {
+    seedWinner('Follow up')
 
-    const { handleCreateTask } = await import('./tasks')
-    const env = { DB: echoRowDB() } as unknown as Env
-    const req = new Request('https://example.com/api/tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assignee: 'claude-ai', description: 'Follow up' }),
-    })
-
-    const res = await handleCreateTask(req, user, env)
-    const body = await res.json() as { data: { id: string } | null }
+    const res = await handleCreateTask(createReq({ assignee: 'claude-ai', description: 'Follow up' }), user, env)
+    const body = await res.json() as { data: { id: string; title: string } | null }
 
     expect(res.status).toBe(201)
     expect(body.data).not.toBeNull()
-    expect(body.data!.id).toBe('task_EXISTING_WINNER')
+    expect(body.data!.id).toBe(WINNER)
+    expect(idsTitled('Follow up')).toEqual([WINNER])
   })
 
-  it('a normal (non-dedup) insert still returns the freshly-created row', async () => {
-    // canonical_payload.id echoes the record_id applyMutation was called
-    // with — the "no dedup, insert succeeded" shape.
-    applyMutationMock.mockImplementation(async (_env: unknown, args: { record_id: string }) => ({
-      status: 'accepted',
-      canonical_payload: { id: args.record_id, title: 'New Task', assignee: 'claude-ai', status: 'todo' },
-    }))
-
-    const { handleCreateTask } = await import('./tasks')
-    const env = { DB: echoRowDB() } as unknown as Env
-    const req = new Request('https://example.com/api/tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assignee: 'claude-ai', description: 'Brand new task' }),
-    })
-
-    const res = await handleCreateTask(req, user, env)
+  it('a normal (non-dedup) insert returns the freshly-created row, stored with its receipt', async () => {
+    const res = await handleCreateTask(createReq({ assignee: 'claude-ai', description: 'Brand new task' }), user, env)
     const body = await res.json() as { data: { id: string } }
-    const [, mutArgs] = applyMutationMock.mock.calls[0]
 
     expect(res.status).toBe(201)
-    expect(body.data.id).toBe(mutArgs.record_id)
+    expect(idsTitled('Brand new task')).toEqual([body.data.id])
+    const receipt = db.prepare('SELECT outcome FROM processed_mutations WHERE record_id = ?').get(body.data.id) as { outcome: string } | undefined
+    expect(receipt?.outcome).toBe('accepted')
   })
 })
 
 describe('handleMobileTasksToHub — id_map/counters reflect the dedup-adopted row (#523)', () => {
-  it('a dedup hit (fallthrough past the pre-check) maps to the EXISTING id, counts as deduped', async () => {
-    applyMutationMock.mockResolvedValue({
-      status: 'accepted',
-      canonical_payload: { id: 'task_EXISTING_WINNER' },
-    })
+  it('the pre-check finds an open same-title row: maps to it, counts as deduped', async () => {
+    seedWinner('Follow up')
 
-    const { handleMobileTasksToHub } = await import('./tasks')
-    const env = { DB: echoRowDB() } as unknown as Env
-    const req = new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tasks: [{ id: 'mobile_abc', title: 'Follow up', assignee: 'nick-ingraham' }] }),
-    })
-
-    const res = await handleMobileTasksToHub(req, user, env)
+    const res = await handleMobileTasksToHub(mobileReq([{ id: 'mobile_pre', title: '  follow UP ', assignee: 'nick-ingraham' }]), user, env)
     const body = await res.json() as { data: { id_map: Record<string, string>; created: number; deduped: number } }
 
-    expect(body.data.deduped).toBe(1)
-    expect(body.data.created).toBe(0)
-    expect(body.data.id_map['mobile_abc']).toBe('task_EXISTING_WINNER')
+    expect(body.data).toMatchObject({ created: 0, deduped: 1 })
+    expect(body.data.id_map['mobile_pre']).toBe(WINNER)
+    expect(idsTitled('Follow up')).toEqual([WINNER])
   })
 
-  it('a normal (non-dedup) insert still maps to the freshly-created id, counts as created', async () => {
-    applyMutationMock.mockImplementation(async (_env: unknown, args: { record_id: string }) => ({
-      status: 'accepted',
-      canonical_payload: { id: args.record_id },
-    }))
+  it('a peer insert landing after the pre-check: the arbiter adopts it, id_map points at it, counts as deduped', async () => {
+    // The real race: the pre-check SELECT misses, then a concurrent writer
+    // inserts the same (title, project_id) before applyInsert runs. The row
+    // goes in just before the first statement the engine executes after the
+    // pre-check.
+    let precheckRan = false
+    let raced = false
+    env = {
+      DB: d1Adapter(db, {
+        onExec: (sql) => {
+          if (precheckRan && !raced) { raced = true; seedWinner('Follow up') }
+          if (/completed = 0 AND deleted_at IS NULL LIMIT 1/.test(sql)) precheckRan = true
+        },
+      }),
+    } as unknown as Env
 
-    const { handleMobileTasksToHub } = await import('./tasks')
-    const env = { DB: echoRowDB() } as unknown as Env
-    const req = new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tasks: [{ id: 'mobile_xyz', title: 'Brand new', assignee: 'nick-ingraham' }] }),
-    })
-
-    const res = await handleMobileTasksToHub(req, user, env)
+    const res = await handleMobileTasksToHub(mobileReq([{ id: 'mobile_abc', title: 'Follow up', assignee: 'nick-ingraham' }]), user, env)
     const body = await res.json() as { data: { id_map: Record<string, string>; created: number; deduped: number } }
-    const [, mutArgs] = applyMutationMock.mock.calls[0]
 
-    expect(body.data.created).toBe(1)
-    expect(body.data.deduped).toBe(0)
-    expect(body.data.id_map['mobile_xyz']).toBe(mutArgs.record_id)
+    expect(raced).toBe(true)
+    expect(body.data).toMatchObject({ created: 0, deduped: 1 })
+    expect(body.data.id_map['mobile_abc']).toBe(WINNER)
+    expect(idsTitled('Follow up')).toEqual([WINNER])
+  })
+
+  it('a normal (non-dedup) insert maps to the freshly-created id, counts as created', async () => {
+    const res = await handleMobileTasksToHub(mobileReq([{ id: 'mobile_xyz', title: 'Brand new', assignee: 'nick-ingraham' }]), user, env)
+    const body = await res.json() as { data: { id_map: Record<string, string>; created: number; deduped: number } }
+
+    expect(body.data).toMatchObject({ created: 1, deduped: 0 })
+    expect(idsTitled('Brand new')).toEqual([body.data.id_map['mobile_xyz']])
+    const row = db.prepare('SELECT source, status, completed FROM tasks WHERE id = ?').get(body.data.id_map['mobile_xyz'])
+    expect(row).toEqual({ source: 'mobile', status: 'todo', completed: 0 })
   })
 })

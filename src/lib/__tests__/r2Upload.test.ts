@@ -107,3 +107,35 @@ describe('uploadFileToR2', () => {
       .rejects.toThrow('Recording attachment failed (500)')
   })
 })
+
+// One copy of the chain (#1031, #1358). Two surfaces (ProjectDetail's quick
+// compose, FileUpload) kept hand-rolled presign/PUT/done chains for months
+// after this helper existed, and one of them had already drifted (no PUT
+// status check, failures swallowed, a JSON endpoint used as the link). This
+// fails the moment any src/ file outside r2Upload.ts calls either endpoint.
+describe('the presign/done chain has one copy', () => {
+  it('no src/ file other than r2Upload.ts fetches /api/upload/url or /api/upload/done', async () => {
+    const { readdirSync, readFileSync, statSync } = await import('node:fs')
+    const { join, relative, sep } = await import('node:path')
+    const root = join(process.cwd(), 'src')
+    const call = /fetch\(\s*['"`]\/api\/upload\/(url|done)['"`]/
+    const offenders: string[] = []
+    let scanned = 0
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const full = join(dir, name)
+        if (statSync(full).isDirectory()) {
+          if (name === '__tests__' || name === 'node_modules') continue
+          walk(full)
+        } else if (/\.(ts|tsx)$/.test(name)) {
+          scanned++
+          const rel = relative(root, full).split(sep).join('/')
+          if (rel !== 'lib/r2Upload.ts' && call.test(readFileSync(full, 'utf8'))) offenders.push(rel)
+        }
+      }
+    }
+    walk(root)
+    expect(scanned).toBeGreaterThan(100) // the walk actually saw the tree
+    expect(offenders).toEqual([])
+  })
+})

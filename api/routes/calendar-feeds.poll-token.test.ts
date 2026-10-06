@@ -12,23 +12,26 @@
  * poll_token) LAST, only after all INSERT chunks succeed. The empty-on-failure
  * state is now structurally unrepresentable.
  *
- * Test coverage:
- *   1. Successful poll: old rows evicted (DELETE with token filter runs).
- *   2. Failed INSERT chunk: old rows preserved (eviction DELETE never runs).
- *   3. Successful poll: new rows carry the poll_token column.
- *   4. Stale eviction failure (non-fatal): poll still completes successfully.
+ * #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+ * The first cut's stub threw from a hand-written batch() and counted DELETE
+ * statements, so "old rows preserved" meant "no DELETE string was seen" -- it
+ * could not see a cache that was emptied some other way, and its batch could
+ * not roll back. Here the feed's cached events are real rows; an INSERT
+ * failure is injected with d1Adapter failSql, and each case reads back which
+ * events the feed holds afterwards.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type Database from 'better-sqlite3';
 import type { Env } from '../helpers';
 import { nowInstant } from '../lib/time';
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 
 // We need to mock fetch() so pollFeed doesn't make real HTTP calls.
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
-// Import the internal pollAllStaleFeeds which calls pollFeed internally.
-// We test via pollAllStaleFeeds since pollFeed is not exported.
+// pollFeed is not exported; pollAllStaleFeeds drives it.
 import { pollAllStaleFeeds } from './calendar-feeds';
 
 // ── Minimal ICS fixture ──────────────────────────────────────────────────────
@@ -48,84 +51,29 @@ function makeIcs(uid: string, summary: string): string {
   ].join('\r\n');
 }
 
-// ── DB stub factory ──────────────────────────────────────────────────────────
+let db: InstanceType<typeof Database>;
 
-interface DbStubOpts {
-  /** Pre-existing rows to return for the stale feeds SELECT. */
-  staleFeeds?: Record<string, unknown>[];
-  /**
-   * Map of "INSERT chunk index" (0-based) to throw an error on that chunk.
-   * { 0: true } throws on the first INSERT chunk; empty = all succeed.
-   */
-  failInsertChunk?: Record<number, boolean>;
-  /** Capture executed SQL statements for assertion. */
-  capturedSql?: string[];
-  /** Capture DELETE bind params for assertion. */
-  capturedDeletes?: Array<{ sql: string; binds: unknown[] }>;
-  /** Capture INSERT bind params. */
-  capturedInserts?: Array<{ binds: unknown[][] }>;
-  /** If true, throw on the final stale eviction DELETE. */
-  failEviction?: boolean;
+function seedFeed(id: string, extra: Record<string, unknown> = {}) {
+  insertRow(db, 'user_calendar_feeds', {
+    id, user_slug: 'nick-ingraham', feed_url: `https://cal.example.com/${id}.ics`, feed_label: 'Test',
+    last_polled_at: null, ...extra,
+  });
 }
-
-function makeDb(opts: DbStubOpts = {}) {
-  let insertChunkCount = 0;
-
-  return {
-    prepare: (sql: string) => {
-      const normalizedSql = sql.replace(/\s+/g, ' ').trim();
-      opts.capturedSql?.push(normalizedSql);
-      let boundVals: unknown[] = [];
-
-      const stmt: any = {
-        bind: (...args: unknown[]) => {
-          boundVals = [...boundVals, ...args];
-          return stmt;
-        },
-        run: async () => {
-          if (/DELETE FROM user_calendar_events/i.test(normalizedSql)) {
-            opts.capturedDeletes?.push({ sql: normalizedSql, binds: [...boundVals] });
-            if (opts.failEviction) {
-              throw new Error('D1_ERROR: simulated eviction failure');
-            }
-          }
-          if (/UPDATE user_calendar_feeds/i.test(normalizedSql)) {
-            opts.capturedSql?.push(`UPDATE_FEEDS:${JSON.stringify(boundVals)}`);
-          }
-          return { success: true, meta: { changes: 1 }, results: [] };
-        },
-        first: async () => null,
-        all: async () => {
-          if (/FROM user_calendar_feeds/i.test(normalizedSql)) {
-            return { results: opts.staleFeeds ?? [] };
-          }
-          return { results: [] };
-        },
-      };
-      return stmt;
-    },
-    batch: async (stmts: unknown[]) => {
-      const chunkIdx = insertChunkCount++;
-      if (opts.failInsertChunk?.[chunkIdx]) {
-        throw new Error(`D1_ERROR: simulated batch failure on chunk ${chunkIdx}`);
-      }
-      // Capture poll_token from bound values (last positional param in INSERT).
-      if (opts.capturedInserts) {
-        // Each stmt in the batch has a _boundVals property set during .bind() above.
-        // Since our stubs are plain objects, we can't introspect the bound values
-        // from within batch(). Instead, we verify via capturedDeletes token matching.
-        opts.capturedInserts.push({ binds: [] });
-      }
-      return stmts.map(() => ({ success: true, meta: { changes: 1 }, results: [] }));
-    },
-  };
+/** A cached event from an EARLIER poll (or a pre-v85 row when token is null). */
+function seedOldEvent(feedId: string, uid: string, token: string | null) {
+  insertRow(db, 'user_calendar_events', {
+    id: `old_${uid}`, feed_id: feedId, user_slug: 'nick-ingraham', uid, summary: `Old ${uid}`,
+    start_at: '2026-06-01T10:00:00Z', end_at: '2026-06-01T11:00:00Z', is_all_day: 0, poll_token: token,
+  });
 }
+const summaries = (feedId: string) =>
+  (db.prepare('SELECT summary FROM user_calendar_events WHERE feed_id = ? ORDER BY summary').all(feedId) as { summary: string }[]).map((r) => r.summary);
+const feed = (id: string) => db.prepare('SELECT * FROM user_calendar_feeds WHERE id = ?').get(id) as Record<string, unknown>;
+const envWith = (hooks: Parameters<typeof d1Adapter>[1] = {}) => ({ DB: d1Adapter(db, hooks) }) as unknown as Env;
 
-function makeEnv(db: ReturnType<typeof makeDb>): Env {
-  return { DB: db as unknown as D1Database } as unknown as Env;
-}
-
-// ── Tests ────────────────────────────────────────────────────────────────────
+beforeEach(() => {
+  db = prodSchemaDb();
+});
 
 describe('pollFeed — atomic swap (Level-1 durability, v85)', () => {
   beforeEach(() => {
@@ -133,143 +81,78 @@ describe('pollFeed — atomic swap (Level-1 durability, v85)', () => {
     mockFetch.mockResolvedValue(
       new Response(makeIcs('test-uid-1', 'Team Standup'), {
         status: 200,
-        headers: { 'content-type': 'text/calendar' },
-      })
+        headers: { 'content-type': 'text/calendar', ETag: 'W/"v2"' },
+      }),
     );
   });
 
-  // ── Test 1: Successful poll — stale rows ARE evicted ──────────────────────
-  it('evicts old rows (different poll_token) after all inserts succeed', async () => {
-    const capturedDeletes: Array<{ sql: string; binds: unknown[] }> = [];
-    const db = makeDb({
-      staleFeeds: [
-        { id: 'feed-1', user_slug: 'nick-ingraham', feed_url: 'https://cal.example.com/feed.ics',
-          feed_label: 'Test', last_polled_at: null, last_error: null,
-          created_at: nowInstant(), etag: null, last_modified: null },
-      ],
-      capturedDeletes,
-    });
-    const env = makeEnv(db);
+  it('a successful poll replaces the cache: new rows carry a 32-char poll_token, old ones (prior token and pre-v85 NULL) are evicted', async () => {
+    seedFeed('feed-1');
+    seedOldEvent('feed-1', 'prior', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    seedOldEvent('feed-1', 'legacy', null);
+    seedFeed('feed-other', { last_polled_at: nowInstant() }); // fresh: not polled
+    seedOldEvent('feed-other', 'untouched', null);
 
-    await pollAllStaleFeeds(env);
+    await pollAllStaleFeeds(envWith());
 
-    // A DELETE must have been issued.
-    expect(capturedDeletes.length).toBe(1);
-
-    // The DELETE must target the feed AND filter by poll_token (not a blanket DELETE).
-    const del = capturedDeletes[0];
-    expect(del.sql).toMatch(/DELETE FROM user_calendar_events WHERE feed_id = \? AND/i);
-    expect(del.sql).toMatch(/poll_token/i);
-
-    // The DELETE's first bind param must be the feed id.
-    expect(del.binds[0]).toBe('feed-1');
-
-    // The second bind param is the poll_token UUID (32-char hex).
-    expect(typeof del.binds[1]).toBe('string');
-    expect((del.binds[1] as string).length).toBe(32);
+    expect(summaries('feed-1')).toEqual(['Team Standup']);
+    const token = (db.prepare("SELECT poll_token FROM user_calendar_events WHERE feed_id = 'feed-1'").get() as { poll_token: string }).poll_token;
+    expect(token).toHaveLength(32);
+    expect(feed('feed-1')).toMatchObject({ last_error: null, etag: 'W/"v2"' });
+    expect(feed('feed-1').last_polled_at).toBeTruthy();
+    // Another feed's cache is never touched.
+    expect(summaries('feed-other')).toEqual(['Old untouched']);
   });
 
-  // ── Test 2: Failed INSERT chunk — old rows are NOT evicted ────────────────
-  it('preserves old rows when an INSERT chunk fails (no DELETE issued)', async () => {
-    const capturedDeletes: Array<{ sql: string; binds: unknown[] }> = [];
-    const db = makeDb({
-      staleFeeds: [
-        { id: 'feed-2', user_slug: 'nick-ingraham', feed_url: 'https://cal.example.com/feed.ics',
-          feed_label: 'Test', last_polled_at: null, last_error: null,
-          created_at: nowInstant(), etag: null, last_modified: null },
-      ],
-      failInsertChunk: { 0: true }, // fail the first (and only) chunk
-      capturedDeletes,
-    });
-    const env = makeEnv(db);
+  it('a failed INSERT chunk keeps the old cache whole and records the error', async () => {
+    seedFeed('feed-2', { etag: 'W/"v1"' });
+    seedOldEvent('feed-2', 'prior', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
 
-    // Should not throw — pollFeed catches errors internally.
-    await expect(pollAllStaleFeeds(env)).resolves.not.toThrow();
+    await expect(pollAllStaleFeeds(envWith({ failSql: /INSERT OR REPLACE INTO user_calendar_events/, failTimes: 1 }))).resolves.not.toThrow();
 
-    // CRITICAL: no DELETE must have been issued when inserts failed.
-    // The old cache must be intact.
-    const calEventDeletes = capturedDeletes.filter((d) =>
-      /DELETE FROM user_calendar_events/i.test(d.sql)
-    );
-    expect(calEventDeletes.length).toBe(0);
+    // CRITICAL: the cache is not emptied, and no new row slipped in.
+    expect(summaries('feed-2')).toEqual(['Old prior']);
+    // Conditional headers are cleared so the next poll re-fetches in full.
+    expect(feed('feed-2').last_error).toMatch(/^insert chunk 0:/);
+    expect(feed('feed-2').etag).toBeNull();
   });
 
-  // ── Test 3: 304 Not Modified — no INSERT/DELETE at all ───────────────────
-  it('skips all DB writes on 304 Not Modified (cheap path)', async () => {
+  it('a 304 Not Modified touches no event rows, only last_polled_at', async () => {
     mockFetch.mockResolvedValueOnce(new Response(null, { status: 304 }));
+    seedFeed('feed-3', { etag: 'W/"abc123"' });
+    seedOldEvent('feed-3', 'prior', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
 
-    const capturedDeletes: Array<{ sql: string; binds: unknown[] }> = [];
-    const capturedSql: string[] = [];
-    const db = makeDb({
-      staleFeeds: [
-        { id: 'feed-3', user_slug: 'nick-ingraham', feed_url: 'https://cal.example.com/feed.ics',
-          feed_label: 'Test', last_polled_at: null, last_error: null,
-          created_at: nowInstant(), etag: 'W/"abc123"', last_modified: null },
-      ],
-      capturedDeletes,
-      capturedSql,
-    });
-    const env = makeEnv(db);
+    await pollAllStaleFeeds(envWith());
 
-    await pollAllStaleFeeds(env);
-
-    // No INSERT or DELETE on the events table for 304.
-    const eventWrites = capturedDeletes.filter((d) =>
-      /user_calendar_events/i.test(d.sql)
-    );
-    expect(eventWrites.length).toBe(0);
+    expect(summaries('feed-3')).toEqual(['Old prior']);
+    expect(feed('feed-3').etag).toBe('W/"abc123"');
+    expect(feed('feed-3').last_polled_at).toBeTruthy();
   });
 
-  // ── Test 4: Stale eviction failure is non-fatal ───────────────────────────
-  it('completes successfully even if the stale eviction DELETE throws', async () => {
-    const capturedDeletes: Array<{ sql: string; binds: unknown[] }> = [];
-    const db = makeDb({
-      staleFeeds: [
-        { id: 'feed-4', user_slug: 'nick-ingraham', feed_url: 'https://cal.example.com/feed.ics',
-          feed_label: 'Test', last_polled_at: null, last_error: null,
-          created_at: nowInstant(), etag: null, last_modified: null },
-      ],
-      failEviction: true,
-      capturedDeletes,
-    });
-    const env = makeEnv(db);
+  it('a failed stale eviction is non-fatal: the new rows are live and the poll completes', async () => {
+    seedFeed('feed-4');
+    seedOldEvent('feed-4', 'prior', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
 
-    // pollAllStaleFeeds should not throw even if eviction fails.
-    await expect(pollAllStaleFeeds(env)).resolves.not.toThrow();
+    await expect(pollAllStaleFeeds(envWith({ failSql: /DELETE FROM user_calendar_events/, failTimes: 1 }))).resolves.not.toThrow();
+
+    // New rows landed; the stale one lingers until the next successful poll.
+    expect(summaries('feed-4')).toEqual(['Old prior', 'Team Standup']);
+    expect(feed('feed-4').last_error).toBeNull();
   });
 
-  // ── Test 5: Empty feed (zero events) — evicts old rows via token filter ───
-  it('evicts old rows even when new event set is empty (zero events in window)', async () => {
-    // Return an ICS with no events in the window
+  it('evicts old rows even when the new event set is empty (zero events in window)', async () => {
     mockFetch.mockResolvedValueOnce(
-      new Response(
-        'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Test//EN\r\nEND:VCALENDAR\r\n',
-        { status: 200, headers: { 'content-type': 'text/calendar' } }
-      )
+      new Response('BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Test//EN\r\nEND:VCALENDAR\r\n', {
+        status: 200, headers: { 'content-type': 'text/calendar' },
+      }),
     );
+    seedFeed('feed-5');
+    seedOldEvent('feed-5', 'prior', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
 
-    const capturedDeletes: Array<{ sql: string; binds: unknown[] }> = [];
-    const db = makeDb({
-      staleFeeds: [
-        { id: 'feed-5', user_slug: 'nick-ingraham', feed_url: 'https://cal.example.com/feed.ics',
-          feed_label: 'Test', last_polled_at: null, last_error: null,
-          created_at: nowInstant(), etag: null, last_modified: null },
-      ],
-      capturedDeletes,
-    });
-    const env = makeEnv(db);
+    await pollAllStaleFeeds(envWith());
 
-    await pollAllStaleFeeds(env);
-
-    // Even with zero new events, stale rows must be evicted.
-    // (The old-style DELETE-first strategy would blank the cache here too,
-    // but the token-filter makes it explicit: empty insert set → fresh token
-    // (0 inserts) → eviction still fires and removes any stale rows.)
-    const evictionDeletes = capturedDeletes.filter((d) =>
-      /DELETE FROM user_calendar_events/i.test(d.sql)
-    );
-    expect(evictionDeletes.length).toBe(1);
-    expect(evictionDeletes[0].sql).toMatch(/poll_token/i);
+    expect(summaries('feed-5')).toEqual([]);
+    expect(feed('feed-5').last_error).toBeNull();
   });
 });
 
@@ -281,11 +164,8 @@ describe('pollFeed — atomic swap (Level-1 durability, v85)', () => {
 // so PARTSTAT=DECLINED events were silently inserted to D1 and shown in Today.
 //
 // FIX (schema v86): user_calendar_feeds.user_email stores the owner's real email.
-// pollAllStaleFeeds now passes feed.user_email ?? feed.user_slug. This test
-// confirms that a feed with user_email set causes the cron path to filter out
-// a DECLINED event (zero INSERT batches = event was dropped by the parser).
+// pollAllStaleFeeds now passes feed.user_email ?? feed.user_slug.
 describe('pollFeed — cron path uses user_email for PARTSTAT=DECLINED filter (backlog #117)', () => {
-  // ICS with one DECLINED event for ingra107@umn.edu.
   const OWNER_EMAIL = 'ingra107@umn.edu';
   const declinedIcs = [
     'BEGIN:VCALENDAR',
@@ -294,12 +174,8 @@ describe('pollFeed — cron path uses user_email for PARTSTAT=DECLINED filter (b
     'BEGIN:VEVENT',
     'UID:declined-cron-test@test.com',
     'SUMMARY:Declined pitch',
-    // Use a fixed date well inside the polling window (today is used by the cron path,
-    // but we can't predict that precisely — use the same trick as makeIcs).
     `DTSTART:${nowInstant().replace(/[-:]/g, '').slice(0, 15)}Z`,
     `DTEND:${new Date(Date.now() + 3600000).toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`,
-    // ATTENDEE line: params BEFORE the colon, mailto: address as value.
-    // The parser stores the full "ATTENDEE;...params...:mailto:..." string.
     `ATTENDEE;CN=Nick;PARTSTAT=DECLINED:mailto:${OWNER_EMAIL}`,
     'END:VEVENT',
     'END:VCALENDAR',
@@ -307,76 +183,19 @@ describe('pollFeed — cron path uses user_email for PARTSTAT=DECLINED filter (b
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFetch.mockResolvedValue(new Response(declinedIcs, { status: 200, headers: { 'content-type': 'text/calendar' } }));
   });
 
   it('filters the DECLINED event when feed.user_email is the real owner email', async () => {
-    // Feed row has user_email set (the v86 path).
-    mockFetch.mockResolvedValue(
-      new Response(declinedIcs, { status: 200, headers: { 'content-type': 'text/calendar' } })
-    );
-    let batchCallCount = 0;
-    const db = makeDb({
-      staleFeeds: [
-        {
-          id: 'feed-declined-email',
-          user_slug: 'nick-ingraham',
-          user_email: OWNER_EMAIL,
-          feed_url: 'https://cal.example.com/declined.ics',
-          feed_label: 'Test',
-          last_polled_at: null,
-          last_error: null,
-          created_at: nowInstant(),
-          etag: null,
-          last_modified: null,
-        },
-      ],
-    });
-
-    // Intercept batch() to count INSERT calls (each chunk = one batch call).
-    const origBatch = db.batch.bind(db);
-    (db as any).batch = async (stmts: unknown[]) => {
-      batchCallCount++;
-      return origBatch(stmts);
-    };
-
-    await pollAllStaleFeeds(makeEnv(db));
-
-    // The DECLINED event was filtered by the parser — zero INSERT chunks fired.
-    expect(batchCallCount).toBe(0);
+    seedFeed('feed-declined-email', { user_email: OWNER_EMAIL });
+    await pollAllStaleFeeds(envWith());
+    expect(summaries('feed-declined-email')).toEqual([]);
   });
 
   it('does NOT filter the event when feed.user_email is null (legacy row — same as prior behavior)', async () => {
-    // Feed row with user_email=null (pre-v86 legacy): falls back to user_slug,
-    // which will not match the ATTENDEE line, so the event IS inserted.
-    mockFetch.mockResolvedValue(
-      new Response(declinedIcs, { status: 200, headers: { 'content-type': 'text/calendar' } })
-    );
-    let batchCallCount = 0;
-    const db = makeDb({
-      staleFeeds: [
-        {
-          id: 'feed-declined-null-email',
-          user_slug: 'nick-ingraham',
-          user_email: null,
-          feed_url: 'https://cal.example.com/declined.ics',
-          feed_label: 'Test',
-          last_polled_at: null,
-          last_error: null,
-          created_at: nowInstant(),
-          etag: null,
-          last_modified: null,
-        },
-      ],
-    });
-    const origBatch = db.batch.bind(db);
-    (db as any).batch = async (stmts: unknown[]) => {
-      batchCallCount++;
-      return origBatch(stmts);
-    };
-
-    await pollAllStaleFeeds(makeEnv(db));
-
     // user_slug fallback cannot match the email — event is NOT filtered, IS inserted.
-    expect(batchCallCount).toBeGreaterThan(0);
+    seedFeed('feed-declined-null-email', { user_email: null });
+    await pollAllStaleFeeds(envWith());
+    expect(summaries('feed-declined-null-email')).toEqual(['Declined pitch']);
   });
 });

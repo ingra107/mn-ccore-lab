@@ -15,73 +15,37 @@
 // entirely (raw-inserted or pre-dating the schema-v71 column add) and are
 // NOT evidence for or against this code path — see the #614 provenance note
 // filed alongside this fix.
+//
+// #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+// The first cut's stub stored whatever columns the INSERT named and echoed
+// them back, so a default the schema rejects (a CHECK, a NOT NULL, an FK)
+// would still have passed. Here the asserted values are read from the stored
+// row, and the create carries its processed_mutations receipt.
 
 import { describe, it, expect, beforeEach } from 'vitest'
+import type Database from 'better-sqlite3'
 import { handleCreateProject } from './projects'
 import { _resetValidationFlagsCache } from '../helpers'
 import type { Env, AuthUser } from '../helpers'
+import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db'
 
 const fakeUser = { email: 'nick@umn.edu', name: 'Nick' } as AuthUser
 
-// Minimal D1 stub covering exactly what handleCreateProject's call chain
-// touches: the slug-collision SELECT, lab_settings (validators stay OFF —
-// getValidationFlags catches any stub gap and falls back all-off),
-// processed_mutations idempotency lookup, the generic projects INSERT
-// (captures whatever columns applyInsert actually writes), the post-insert
-// SELECT * re-read, and the activity_log INSERT logActivity fires.
-function makeStubDB() {
-  const store = new Map<string, Record<string, unknown>>()
+let db: InstanceType<typeof Database>
+let env: Env
+beforeEach(() => {
+  _resetValidationFlagsCache()
+  db = prodSchemaDb()
+  env = { DB: d1Adapter(db) } as unknown as Env
+})
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function makeStmt(sql: string, boundVals: unknown[]): any {
-    const upper = sql.trim().toUpperCase()
-    return {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-      first: async <T>() => {
-        if (upper.includes('FROM LAB_SETTINGS')) return null as T | null
-        if (upper.includes('FROM PROCESSED_MUTATIONS')) return null as T | null
-        if (upper.includes('SELECT ID FROM PROJECTS WHERE SLUG')) return null as T | null
-        if (upper.includes('SELECT * FROM PROJECTS WHERE ID')) {
-          const id = boundVals[0] as string
-          return (store.get(id) ?? null) as T | null
-        }
-        return null as T | null
-      },
-      all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
-      run: async () => {
-        if (upper.startsWith('INSERT INTO PROJECTS')) {
-          const m = sql.match(/INSERT INTO \w+ \(([^)]+)\)/i)
-          if (m) {
-            const cols = m[1].split(',').map((s) => s.trim())
-            const row: Record<string, unknown> = {}
-            cols.forEach((c, i) => { row[c] = boundVals[i] })
-            row.seq = store.size + 1
-            row.deleted_at = null
-            store.set(row.id as string, row)
-          }
-          return { meta: { changes: 1 } }
-        }
-        // processed_mutations INSERT, activity_log INSERT — no-op success.
-        return { meta: { changes: 1 } }
-      },
-    }
-  }
-
-  return {
-    prepare: (sql: string) => makeStmt(sql, []),
-    batch: async (stmts: Array<{ run: () => Promise<unknown> }>) => Promise.all(stmts.map((s) => s.run())),
-  } as unknown as Env['DB']
-}
-
-function envWith(db: Env['DB']): Env {
-  return { DB: db } as unknown as Env
-}
-
-beforeEach(() => _resetValidationFlagsCache())
+const stored = (id: string) =>
+  db.prepare('SELECT domain, tier, category, stage FROM projects WHERE id = ?').get(id) as Record<string, unknown> | undefined
+const receiptFor = (id: string) =>
+  db.prepare('SELECT outcome, table_name FROM processed_mutations WHERE record_id = ?').get(id) as { outcome: string; table_name: string } | undefined
 
 describe('#614 handleCreateProject — domain/tier defaults', () => {
   it('defaults domain to "Research" and tier to "2-Biweekly" when omitted', async () => {
-    const env = envWith(makeStubDB())
     const req = new Request('https://x/api/projects', {
       method: 'POST',
       body: JSON.stringify({ title: 'New CLIF Substudy' }),
@@ -91,13 +55,12 @@ describe('#614 handleCreateProject — domain/tier defaults', () => {
     const body = await res.json() as { data: Record<string, unknown> }
     expect(body.data.domain).toBe('Research')
     expect(body.data.tier).toBe('2-Biweekly')
-    // Existing default behavior (category/stage) must stay intact.
-    expect(body.data.category).toBe('MNCCORE')
-    expect(body.data.stage).toBe('idea')
+    // Existing default behavior (category/stage) must stay intact — on the stored row too.
+    expect(stored(body.data.id as string)).toEqual({ domain: 'Research', tier: '2-Biweekly', category: 'MNCCORE', stage: 'idea' })
+    expect(receiptFor(body.data.id as string)).toEqual({ outcome: 'accepted', table_name: 'projects' })
   })
 
   it('honors an explicit domain/tier when the caller supplies them', async () => {
-    const env = envWith(makeStubDB())
     const req = new Request('https://x/api/projects', {
       method: 'POST',
       body: JSON.stringify({ title: 'Grant Renewal', domain: 'Grants', tier: '1-Weekly' }),
@@ -107,5 +70,6 @@ describe('#614 handleCreateProject — domain/tier defaults', () => {
     const body = await res.json() as { data: Record<string, unknown> }
     expect(body.data.domain).toBe('Grants')
     expect(body.data.tier).toBe('1-Weekly')
+    expect(stored(body.data.id as string)).toMatchObject({ domain: 'Grants', tier: '1-Weekly' })
   })
 })

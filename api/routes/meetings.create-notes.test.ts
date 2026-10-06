@@ -10,122 +10,33 @@
 //   3. a re-push with a null/absent notes does NOT wipe existing notes
 //      (COALESCE guard), and an insert-only re-push is a no-op on those fields.
 //
-// A small stateful in-memory `meetings` table backs env.DB so the INSERT →
-// SELECT-back and dedup SELECT → UPDATE → SELECT-back round-trips behave like
-// real D1. No live binding, no network, no prod Hub.
+// #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+// The first cut's in-memory `meetings` table re-implemented the dedup UPDATE
+// by reading its bind ORDER (`const [notesArg, decisionsArg, ...] = args`) and
+// re-coding each COALESCE in JavaScript, so a reordered or wrong UPDATE in the
+// route could pass. Here the route's real INSERT / dedup UPDATE / notification
+// INSERT run on the real tables; `meetings()` and `notifications()` read the
+// stored rows back.
 
 import { describe, it, expect, beforeEach } from 'vitest'
+import type Database from 'better-sqlite3'
 import { handleCreateMeeting, handleUpdateMeetingMeta } from './meetings'
 import type { AuthUser, Env } from '../helpers'
-
-// ── Minimal stateful D1 stub (meetings + activity_log) ───────────────────────
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
 type Row = Record<string, unknown>
 
-function normalize(title: string): string {
-  return title.toLowerCase().trim().replace(/\s+/g, ' ')
-}
-
-function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[]; notifications: Row[] } {
-  const meetings: Row[] = seed.map((r) => ({ ...r }))
-  const notifications: Row[] = []
-
-  const prepare = (sql: string) => {
-    const s = sql.trim()
-    const upper = s.toUpperCase()
-    return {
-      bind: (...args: unknown[]) => ({
-        all: async <T = Row>() => {
-          if (upper.startsWith('SELECT') && upper.includes('FROM MEETINGS') && upper.includes('WHERE DATE =')) {
-            const date = args[0]
-            return { results: meetings.filter((m) => m.date === date) as T[] }
-          }
-          return { results: [] as T[] }
-        },
-        first: async <T = Row>() => {
-          if (upper.startsWith('SELECT') && upper.includes('FROM MEETINGS') && upper.includes('WHERE ID =')) {
-            const id = args[args.length - 1]
-            return (meetings.find((m) => m.id === id) as T) ?? null
-          }
-          return null
-        },
-        run: async () => {
-          if (upper.startsWith('INSERT INTO MEETINGS')) {
-            // INSERT (id, date, title, type, attendees, notes, decisions, tags, status, source_id)
-            const [id, date, title, type, attendees, notes, decisions, tags, status, sourceId, facilitator] = args
-            meetings.push({
-              id, date, title, type, attendees,
-              notes: notes ?? null, decisions: decisions ?? null,
-              tags: tags ?? null, source_id: sourceId ?? null,
-              facilitator: facilitator ?? null,
-              status, created_at: '2026-05-29T00:00:00Z', updated_at: '2026-05-29T00:00:00Z',
-            })
-            return { meta: { changes: 1 } }
-          }
-          if (upper.startsWith('UPDATE MEETINGS') && upper.includes('COALESCE')) {
-            // UPDATE ... SET notes = COALESCE(?, notes), decisions = COALESCE(?, decisions),
-            //               tags = COALESCE(?, tags),
-            //               attendees = CASE WHEN attendees IS NULL OR attendees = '[]' THEN COALESCE(?, attendees) ELSE attendees END,
-            //               type = COALESCE(?, type), facilitator = COALESCE(?, facilitator),
-            //               source_id = COALESCE(source_id, ?), updated_at = ... WHERE id = ?
-            const [notesArg, decisionsArg, tagsArg, attendeesArg, typeArg, facilitatorArg, sourceIdArg, id] = args
-            const row = meetings.find((m) => m.id === id)
-            if (row) {
-              if (notesArg !== null && notesArg !== undefined) row.notes = notesArg
-              if (decisionsArg !== null && decisionsArg !== undefined) row.decisions = decisionsArg
-              if (tagsArg !== null && tagsArg !== undefined) row.tags = tagsArg
-              // attendees fill-only since #2225: written only when the stored list
-              // is NULL or '[]' (the real SQL is exercised on the migrated schema
-              // in meetings.attendees.test.ts)
-              if ((row.attendees === null || row.attendees === undefined || row.attendees === '[]') && attendeesArg !== null && attendeesArg !== undefined) row.attendees = attendeesArg
-              if (typeArg !== null && typeArg !== undefined) row.type = typeArg
-              if (facilitatorArg !== null && facilitatorArg !== undefined) row.facilitator = facilitatorArg
-              if (!row.source_id && sourceIdArg !== null && sourceIdArg !== undefined) row.source_id = sourceIdArg
-              row.updated_at = '2026-05-29T12:00:00Z'
-              return { meta: { changes: 1 } }
-            }
-            return { meta: { changes: 0 } }
-          }
-          if (upper.startsWith('UPDATE MEETINGS')) {
-            // T5 meta endpoint: dynamic SET clause built from whichever fields
-            // were provided, e.g. "SET attendees = ?, title = ?, updated_at =
-            // datetime('now') WHERE id = ?". Parse the column names in order
-            // (skip updated_at — it has no bind placeholder) and assign the
-            // trailing bind args (last is always the id) positionally.
-            const setClause = (s.match(/SET\s+(.*?)\s+WHERE/is) ?? ['', ''])[1]
-            const cols = setClause
-              .split(',')
-              .map((c) => c.trim().split('=')[0].trim())
-              .filter((c) => c.toLowerCase() !== 'updated_at')
-            const id = args[args.length - 1]
-            const row = meetings.find((m) => m.id === id)
-            if (!row) return { meta: { changes: 0 } }
-            cols.forEach((col, i) => { row[col] = args[i] })
-            row.updated_at = '2026-05-29T12:00:00Z'
-            return { meta: { changes: 1 } }
-          }
-          if (upper.startsWith('INSERT INTO NOTIFICATIONS')) {
-            // INSERT (id, recipient_slug, type, source_type, source_id, title, body, link)
-            const [id, recipientSlug, type, sourceType, sourceId, title, bodyText, link] = args
-            notifications.push({
-              id, recipient_slug: recipientSlug, type, source_type: sourceType,
-              source_id: sourceId, title, body: bodyText, link,
-            })
-            return { meta: { changes: 1 } }
-          }
-          // activity_log insert and anything else: no-op
-          return { meta: { changes: 1 } }
-        },
-      }),
-      // bare (un-bound) calls — not used by handleCreateMeeting, kept for safety
-      first: async () => null,
-      all: async () => ({ results: [] }),
-      run: async () => ({ meta: { changes: 0 } }),
-    }
+/** A fresh migrated database seeded with `seed` meetings; reads are live. */
+function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: () => Row[]; notifications: () => Row[]; db: InstanceType<typeof Database> } {
+  const db = prodSchemaDb()
+  for (const r of seed) insertRow(db, 'meetings', r)
+  const env = { DB: d1Adapter(db) } as unknown as Env
+  return {
+    env,
+    db,
+    meetings: () => db.prepare('SELECT * FROM meetings ORDER BY created_at, id').all() as Row[],
+    notifications: () => db.prepare('SELECT * FROM notifications ORDER BY created_at, id').all() as Row[],
   }
-
-  const env = { DB: { prepare } } as unknown as Env
-  return { env, meetings, notifications }
 }
 
 function makeUser(email = 'ingra107@umn.edu'): AuthUser {
@@ -140,15 +51,10 @@ function makeRequest(body: Record<string, unknown>): Request {
   })
 }
 
-// Normalize helper used to pre-seed an existing meeting whose title collapses
-// to the same key as the re-push title.
-const _ = normalize // referenced so eslint doesn't flag the helper as unused
-void _
-
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 describe('handleCreateMeeting — Slice 4 notes/decisions persistence', () => {
-  let envBundle: { env: Env; meetings: Row[] }
+  let envBundle: ReturnType<typeof makeStatefulEnv>
 
   beforeEach(() => {
     envBundle = makeStatefulEnv()
@@ -175,9 +81,9 @@ describe('handleCreateMeeting — Slice 4 notes/decisions persistence', () => {
     expect(body.data.notes).toBe(summary)
     expect(body.data.decisions).toBe(decisions)
     // and it actually landed in the backing table (not just echoed)
-    expect(meetings).toHaveLength(1)
-    expect(meetings[0].notes).toBe(summary)
-    expect(meetings[0].decisions).toBe(decisions)
+    expect(meetings()).toHaveLength(1)
+    expect(meetings()[0].notes).toBe(summary)
+    expect(meetings()[0].decisions).toBe(decisions)
   })
 
   it('INSERT path tolerates an absent notes/decisions (null persisted)', async () => {
@@ -189,7 +95,7 @@ describe('handleCreateMeeting — Slice 4 notes/decisions persistence', () => {
     const body = await res.json() as { data: Row }
     expect(res.status).toBe(201)
     expect(body.data.notes).toBeNull()
-    expect(meetings[0].notes).toBeNull()
+    expect(meetings()[0].notes).toBeNull()
   })
 
   it('UPDATEs notes on the dedup (upsert) path — late summary refreshes the row', async () => {
@@ -199,8 +105,8 @@ describe('handleCreateMeeting — Slice 4 notes/decisions persistence', () => {
       makeRequest({ date: '2026-05-29', title: 'MN-CCORE: Nick Adams', type: 'biweekly' }),
       makeUser(), env,
     )
-    expect(meetings).toHaveLength(1)
-    expect(meetings[0].notes).toBeNull()
+    expect(meetings()).toHaveLength(1)
+    expect(meetings()[0].notes).toBeNull()
 
     // Second push (same date, same normalized title, casing/space variant):
     // now carries the generated summary. Must UPDATE the existing row, not
@@ -218,9 +124,9 @@ describe('handleCreateMeeting — Slice 4 notes/decisions persistence', () => {
     const body = await res.json() as { data: Row }
 
     expect(res.status).toBe(200)
-    expect(meetings).toHaveLength(1) // no duplicate created
-    expect(meetings[0].notes).toBe(summary)
-    expect(meetings[0].decisions).toBe('- ship it')
+    expect(meetings()).toHaveLength(1) // no duplicate created
+    expect(meetings()[0].notes).toBe(summary)
+    expect(meetings()[0].decisions).toBe('- ship it')
     expect(body.data.notes).toBe(summary)
   })
 
@@ -250,10 +156,10 @@ describe('handleCreateMeeting — Slice 4 notes/decisions persistence', () => {
     const body = await res.json() as { data: Row }
 
     expect(res.status).toBe(200)
-    expect(meetings).toHaveLength(1)
+    expect(meetings()).toHaveLength(1)
     // existing summary preserved, not clobbered to null
-    expect(meetings[0].notes).toBe(existingNotes)
-    expect(meetings[0].decisions).toBe('- prior decision')
+    expect(meetings()[0].notes).toBe(existingNotes)
+    expect(meetings()[0].decisions).toBe('- prior decision')
     expect(body.data.notes).toBe(existingNotes)
   })
 
@@ -274,8 +180,8 @@ describe('handleCreateMeeting — Slice 4 notes/decisions persistence', () => {
       makeUser(), env,
     )
     expect(res.status).toBe(200)
-    expect(meetings).toHaveLength(1)
-    expect(meetings[0].notes).toBe(existingNotes)
+    expect(meetings()).toHaveLength(1)
+    expect(meetings()[0].notes).toBe(existingNotes)
   })
 })
 
@@ -306,8 +212,8 @@ describe('handleCreateMeeting — attendees/type persistence on the dedup path',
     const body = await res.json() as { data: Row }
 
     expect(res.status).toBe(200)
-    expect(meetings).toHaveLength(1) // dedup, no duplicate row
-    expect(meetings[0].attendees).toBe(JSON.stringify(attendees))
+    expect(meetings()).toHaveLength(1) // dedup, no duplicate row
+    expect(meetings()[0].attendees).toBe(JSON.stringify(attendees))
     expect(JSON.parse(body.data.attendees as string)).toEqual(attendees)
   })
 
@@ -331,7 +237,7 @@ describe('handleCreateMeeting — attendees/type persistence on the dedup path',
       makeUser(), env,
     )
     expect(res1.status).toBe(200)
-    expect(meetings[0].attendees).toBe(existingAttendees)
+    expect(meetings()[0].attendees).toBe(existingAttendees)
 
     // Re-push explicitly carrying an empty attendees array (unparseable frontmatter).
     const res2 = await handleCreateMeeting(
@@ -340,8 +246,8 @@ describe('handleCreateMeeting — attendees/type persistence on the dedup path',
     )
     const body2 = await res2.json() as { data: Row }
     expect(res2.status).toBe(200)
-    expect(meetings).toHaveLength(1)
-    expect(meetings[0].attendees).toBe(existingAttendees) // still not clobbered
+    expect(meetings()).toHaveLength(1)
+    expect(meetings()[0].attendees).toBe(existingAttendees) // still not clobbered
     expect(body2.data.attendees).toBe(existingAttendees)
   })
 
@@ -364,7 +270,7 @@ describe('handleCreateMeeting — attendees/type persistence on the dedup path',
       makeUser(), env,
     )
     expect(res1.status).toBe(200)
-    expect(meetings[0].type).toBe('one-on-one')
+    expect(meetings()[0].type).toBe('one-on-one')
 
     // Re-push with type omitted: existing type is left alone, never reset to
     // the INSERT-only 'biweekly' default.
@@ -374,7 +280,7 @@ describe('handleCreateMeeting — attendees/type persistence on the dedup path',
     )
     const body2 = await res2.json() as { data: Row }
     expect(res2.status).toBe(200)
-    expect(meetings[0].type).toBe('one-on-one')
+    expect(meetings()[0].type).toBe('one-on-one')
     expect(body2.data.type).toBe('one-on-one')
   })
 })
@@ -396,7 +302,7 @@ describe('handleCreateMeeting — schema-v72 tags (multi-tagging) persistence', 
 
     expect(res.status).toBe(201)
     // Stored JSON-encoded (mirrors the attendees column shape).
-    expect(meetings[0].tags).toBe(JSON.stringify(tags))
+    expect(meetings()[0].tags).toBe(JSON.stringify(tags))
     expect(JSON.parse(body.data.tags as string)).toEqual(tags)
     // And the title is the calendar title, not a hardcoded prefix.
     expect(body.data.title).toBe('Nick / Adams 1:1')
@@ -409,7 +315,7 @@ describe('handleCreateMeeting — schema-v72 tags (multi-tagging) persistence', 
       makeUser(), env,
     )
     expect(res.status).toBe(201)
-    expect(meetings[0].tags).toBeNull()
+    expect(meetings()[0].tags).toBeNull()
   })
 
   it('UPDATEs tags on the dedup path — late tagging refreshes the row', async () => {
@@ -419,8 +325,8 @@ describe('handleCreateMeeting — schema-v72 tags (multi-tagging) persistence', 
       makeRequest({ date: '2026-05-29', title: 'Lab Sync', type: 'biweekly' }),
       makeUser(), env,
     )
-    expect(meetings).toHaveLength(1)
-    expect(meetings[0].tags).toBeNull()
+    expect(meetings()).toHaveLength(1)
+    expect(meetings()[0].tags).toBeNull()
 
     // Second push (same normalized title) now carries the discussed-project tags.
     const tags = ['mn-ccore', 'r03-decision-making-styles-of-medical-trainees']
@@ -431,8 +337,8 @@ describe('handleCreateMeeting — schema-v72 tags (multi-tagging) persistence', 
     const body = await res.json() as { data: Row }
 
     expect(res.status).toBe(200)
-    expect(meetings).toHaveLength(1) // no duplicate
-    expect(JSON.parse(meetings[0].tags as string)).toEqual(tags)
+    expect(meetings()).toHaveLength(1) // no duplicate
+    expect(JSON.parse(meetings()[0].tags as string)).toEqual(tags)
     expect(JSON.parse(body.data.tags as string)).toEqual(tags)
   })
 
@@ -456,9 +362,9 @@ describe('handleCreateMeeting — schema-v72 tags (multi-tagging) persistence', 
     )
     const body = await res.json() as { data: Row }
     expect(res.status).toBe(200)
-    expect(meetings).toHaveLength(1)
-    expect(meetings[0].tags).toBe(existingTags) // not clobbered
-    expect(meetings[0].notes).toBe('refreshed notes') // notes still refreshed
+    expect(meetings()).toHaveLength(1)
+    expect(meetings()[0].tags).toBe(existingTags) // not clobbered
+    expect(meetings()[0].notes).toBe('refreshed notes') // notes still refreshed
     expect(body.data.tags).toBe(existingTags)
   })
 
@@ -480,8 +386,8 @@ describe('handleCreateMeeting — schema-v72 tags (multi-tagging) persistence', 
       makeUser(), env,
     )
     expect(res.status).toBe(200)
-    expect(meetings).toHaveLength(1)
-    expect(meetings[0].tags).toBe(existingTags)
+    expect(meetings()).toHaveLength(1)
+    expect(meetings()[0].tags).toBe(existingTags)
   })
 })
 
@@ -489,8 +395,8 @@ describe('handleCreateMeeting — schema-v72 tags (multi-tagging) persistence', 
 // notes-less -> notes-full transition (insert-with-notes, or the first dedup
 // upsert that adds a summary). A later re-push (notes already present) must
 // NOT fire a second bell — that path surfaces via the entity_seen teal dot
-// instead. These tests assert the exact fire count via the stub's recorded
-// `notifications` inserts, not just response shape.
+// instead. These tests assert the exact fire count from the stored
+// notifications rows, not just response shape.
 describe('handleCreateMeeting — debrief notification (fire-once bell)', () => {
   it('insert-with-notes fires exactly ONE notification, keyed to the hub meeting id (never source_id)', async () => {
     const { env, notifications } = makeStatefulEnv()
@@ -507,13 +413,13 @@ describe('handleCreateMeeting — debrief notification (fire-once bell)', () => 
     const hubId = body.data.id as string
 
     expect(res.status).toBe(201)
-    expect(notifications).toHaveLength(1)
-    expect(notifications[0].type).toBe('meeting_debrief')
-    expect(notifications[0].recipient_slug).toBe('nick-ingraham')
+    expect(notifications()).toHaveLength(1)
+    expect(notifications()[0].type).toBe('meeting_debrief')
+    expect(notifications()[0].recipient_slug).toBe('nick-ingraham')
     // source_id + link use the minted hub id, never the PB calendar source_id.
-    expect(notifications[0].source_id).toBe(hubId)
-    expect(notifications[0].source_id).not.toBe('pb-calendar-evt-999')
-    expect(notifications[0].link).toBe(`/portal/meetings/${hubId}`)
+    expect(notifications()[0].source_id).toBe(hubId)
+    expect(notifications()[0].source_id).not.toBe('pb-calendar-evt-999')
+    expect(notifications()[0].link).toBe(`/portal/meetings/${hubId}`)
   })
 
   it('insert WITHOUT notes fires ZERO notifications', async () => {
@@ -523,7 +429,7 @@ describe('handleCreateMeeting — debrief notification (fire-once bell)', () => 
       makeUser(), env,
     )
     expect(res.status).toBe(201)
-    expect(notifications).toHaveLength(0)
+    expect(notifications()).toHaveLength(0)
   })
 
   it('dedup transition notes null -> present fires exactly ONE notification', async () => {
@@ -546,12 +452,12 @@ describe('handleCreateMeeting — debrief notification (fire-once bell)', () => 
       makeUser(), env,
     )
     expect(res.status).toBe(200)
-    expect(meetings).toHaveLength(1) // dedup, no duplicate meeting row
-    expect(notifications).toHaveLength(1)
-    expect(notifications[0].type).toBe('meeting_debrief')
-    expect(notifications[0].recipient_slug).toBe('nick-ingraham')
-    expect(notifications[0].source_id).toBe('mtg-2026-05-29-notif0001')
-    expect(notifications[0].link).toBe('/portal/meetings/mtg-2026-05-29-notif0001')
+    expect(meetings()).toHaveLength(1) // dedup, no duplicate meeting row
+    expect(notifications()).toHaveLength(1)
+    expect(notifications()[0].type).toBe('meeting_debrief')
+    expect(notifications()[0].recipient_slug).toBe('nick-ingraham')
+    expect(notifications()[0].source_id).toBe('mtg-2026-05-29-notif0001')
+    expect(notifications()[0].link).toBe('/portal/meetings/mtg-2026-05-29-notif0001')
   })
 
   it('dedup re-push where the existing row already HAD notes fires ZERO notifications (no repeat bell)', async () => {
@@ -574,7 +480,7 @@ describe('handleCreateMeeting — debrief notification (fire-once bell)', () => 
       makeUser(), env,
     )
     expect(res.status).toBe(200)
-    expect(notifications).toHaveLength(0)
+    expect(notifications()).toHaveLength(0)
   })
 })
 
@@ -585,7 +491,7 @@ describe('handleCreateMeeting — debrief notification (fire-once bell)', () => 
 // manual T5 attendee edit survives every later push; that contract is tested
 // on the migrated schema in meetings.attendees.test.ts.
 describe('handleUpdateMeetingMeta — T5 metadata edit endpoint', () => {
-  function seedMeeting(overrides: Row = {}): { env: Env; meetings: Row[] } {
+  function seedMeeting(overrides: Row = {}): ReturnType<typeof makeStatefulEnv> {
     return makeStatefulEnv([
       {
         id: 'mtg-2026-05-29-meta0001',
@@ -612,12 +518,12 @@ describe('handleUpdateMeetingMeta — T5 metadata edit endpoint', () => {
     const body = await res.json() as { data: Row }
 
     expect(res.status).toBe(200)
-    expect(meetings[0].title).toBe('Renamed Meeting')
+    expect(meetings()[0].title).toBe('Renamed Meeting')
     // untouched fields survive
-    expect(meetings[0].type).toBe('biweekly')
-    expect(meetings[0].attendees).toBe(JSON.stringify(['orig@umn.edu']))
-    expect(meetings[0].tags).toBe(JSON.stringify(['orig-tag']))
-    expect(meetings[0].notes).toBe('kept notes')
+    expect(meetings()[0].type).toBe('biweekly')
+    expect(meetings()[0].attendees).toBe(JSON.stringify(['orig@umn.edu']))
+    expect(meetings()[0].tags).toBe(JSON.stringify(['orig-tag']))
+    expect(meetings()[0].notes).toBe('kept notes')
     expect(body.data.title).toBe('Renamed Meeting')
   })
 
@@ -630,7 +536,7 @@ describe('handleUpdateMeetingMeta — T5 metadata edit endpoint', () => {
     )
     expect(res.status).toBe(400)
     // nothing mutated
-    expect(meetings[0].title).toBe('Original Title')
+    expect(meetings()[0].title).toBe('Original Title')
   })
 
   it('404s on an unknown meeting id', async () => {
@@ -654,7 +560,7 @@ describe('handleUpdateMeetingMeta — T5 metadata edit endpoint', () => {
     const body = await res.json() as { data: Row }
 
     expect(res.status).toBe(200)
-    expect(meetings[0].attendees).toBe(JSON.stringify(attendees))
+    expect(meetings()[0].attendees).toBe(JSON.stringify(attendees))
     expect(JSON.parse(body.data.attendees as string)).toEqual(attendees)
   })
 })
