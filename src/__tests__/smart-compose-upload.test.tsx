@@ -275,3 +275,69 @@ describe('SmartCompose insert at cursor (#1360)', () => {
     await waitFor(() => document.activeElement === textarea, 'textarea focused')
   })
 })
+
+// Backlog #1358 -- the box owns its drop. ProjectDetail used to wrap
+// SmartCompose in its own drop zone with a separate upload chain and a
+// separate uploading flag, so one visible box could read "uploading" and "not
+// uploading" at once. Drop now feeds the same queue as paste and the
+// paperclip: one box, one queue, one flag.
+function dropFiles(target: Element, files: File[]): DragEvent {
+  const dt = new DataTransfer()
+  for (const f of files) dt.items.add(f)
+  const ev = new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt })
+  target.dispatchEvent(ev)
+  return ev
+}
+
+describe('SmartCompose drop-to-attach (#1358)', () => {
+  it('a drop and a paste share one queue and one uploading flag', async () => {
+    const dDrop = deferred<{ url: string; key: string }>()
+    const dPaste = deferred<{ url: string; key: string }>()
+    mockedUpload.mockImplementation((file: File) => (file.name === 'dropped.txt' ? dDrop.promise : dPaste.promise))
+
+    const host = await renderQuery(
+      <SmartCompose onSubmit={async () => {}} uploadContext={{ type: 'project', id: 'proj-1' }} alwaysShowToolbar />,
+    )
+    const textarea = host.querySelector<HTMLTextAreaElement>('textarea')!
+    const attachBtn = () => host.querySelector<HTMLButtonElement>('button[aria-label="Attach file"]')!
+
+    const ev = dropFiles(textarea, [new File(['a'], 'dropped.txt', { type: 'text/plain' })])
+    expect(ev.defaultPrevented).toBe(true)
+    await waitFor(() => mockedUpload.mock.calls.length >= 1, 'dropped file upload requested')
+    await waitFor(() => attachBtn().disabled === true, 'attach disabled during the drop upload')
+
+    // Paste while the dropped file is still in flight: it queues behind it.
+    pasteFiles(textarea, [new File(['b'], 'pasted.txt', { type: 'text/plain' })])
+    await new Promise((r) => setTimeout(r, 30))
+    expect(mockedUpload).toHaveBeenCalledTimes(1)
+
+    dDrop.resolve({ url: '/files/dropped', key: 'k1' })
+    await waitFor(() => mockedUpload.mock.calls.length >= 2, 'pasted file upload requested')
+    expect(attachBtn().disabled).toBe(true)
+
+    dPaste.resolve({ url: '/files/pasted', key: 'k2' })
+    await waitFor(() => textarea.value.includes('dropped.txt') && textarea.value.includes('pasted.txt'), 'both links inserted')
+    await waitFor(() => attachBtn().disabled === false, 'attach re-enabled once the shared queue drains')
+  })
+
+  it('a drag carrying no files is left alone', async () => {
+    const host = await renderQuery(
+      <SmartCompose onSubmit={async () => {}} uploadContext={{ type: 'project', id: 'proj-1' }} alwaysShowToolbar />,
+    )
+    const textarea = host.querySelector<HTMLTextAreaElement>('textarea')!
+    const dt = new DataTransfer()
+    dt.setData('text/plain', 'just text')
+    const ev = new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt })
+    textarea.dispatchEvent(ev)
+    await new Promise((r) => setTimeout(r, 30))
+    expect(mockedUpload).not.toHaveBeenCalled()
+  })
+
+  it('without an uploadContext a file drop is not claimed', async () => {
+    const host = await renderQuery(<SmartCompose onSubmit={async () => {}} alwaysShowToolbar />)
+    const textarea = host.querySelector<HTMLTextAreaElement>('textarea')!
+    const ev = dropFiles(textarea, [new File(['a'], 'x.txt', { type: 'text/plain' })])
+    expect(ev.defaultPrevented).toBe(false)
+    expect(mockedUpload).not.toHaveBeenCalled()
+  })
+})
