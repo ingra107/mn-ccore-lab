@@ -1,320 +1,256 @@
 // api/routes/launch-log.test.ts
-import { describe, it, expect } from 'vitest';
+//
+// #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+// The first cut's stubs answered every first() with one canned row and every
+// claim UPDATE with a chosen `changes` count, so "410 on a second claim",
+// "410 when expired" and "410 for a legacy NULL expires_at" were the same
+// stub with changes=0 -- the WHERE clause that tells them apart never ran.
+// Here each case is a real launch_log row in the state it names, the claim's
+// UPDATE decides, and every write is read back. launch_log carries CHECKs on
+// tag/origin/status, so a value the schema refuses can no longer pass.
+import { describe, it, expect, beforeEach } from 'vitest';
+import type Database from 'better-sqlite3';
 import type { Env } from '../helpers';
 import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleClaimLaunch, handleListPendingLaunches, handleRefireLaunch } from './launch-log';
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 
-function makeDb(seed: { rows?: any[]; first?: any } = {}) {
-  const captured: Array<{ sql: string; binds: unknown[] }> = [];
-  const db: any = {
-    _captured: captured,
-    prepare(sql: string) {
-      let binds: unknown[] = [];
-      const stmt: any = {
-        bind: (...a: unknown[]) => { binds = [...binds, ...a]; return stmt; },
-        run: async () => { captured.push({ sql, binds: [...binds] }); return { success: true }; },
-        first: async () => seed.first ?? null,
-        all: async () => ({ results: seed.rows ?? [] }),
-      };
-      return stmt;
-    },
-  };
-  return db;
-}
-function req(body: unknown, url = 'https://x/api/launch-log') {
-  return new Request(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-}
 const USER = { email: 'ingra107@umn.edu', name: 'Nick' };
 const API_KEY = 'test-pb-key';
 
+let db: InstanceType<typeof Database>;
+let env: Env;
+beforeEach(() => {
+  db = prodSchemaDb();
+  env = { DB: d1Adapter(db), PB_API_KEY: API_KEY } as unknown as Env;
+});
+
+function req(body: unknown, url = 'https://x/api/launch-log') {
+  return new Request(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+}
+const row = (id: string) => db.prepare('SELECT * FROM launch_log WHERE id = ?').get(id) as Record<string, unknown> | undefined;
+const count = () => (db.prepare('SELECT COUNT(*) AS n FROM launch_log').get() as { n: number }).n;
+function launch(id: string, extra: Record<string, unknown> = {}) {
+  insertRow(db, 'launch_log', {
+    id, tag: 'quickchat', seed: 'x', origin: 'computer', status: 'pending', requested_by: USER.email,
+    expires_at: "2999-01-01 00:00:00", ...extra,
+  });
+}
+
 describe('handleCreateLaunch', () => {
   it('inserts a launch_log row and returns 201 with the seed stored', async () => {
-    const db = makeDb({ first: { id: 'L1', tag: 'quickchat', seed: 'fix the figure', origin: 'computer', status: 'launched' } });
-    const env = { DB: db } as unknown as Env;
     const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'fix the figure', origin: 'computer', status: 'launched' }), USER, env);
     expect(res.status).toBe(201);
-    const insert = db._captured.find((c: any) => /INSERT INTO launch_log/.test(c.sql));
-    expect(insert).toBeDefined();
-    expect(insert.binds).toContain('fix the figure');
-    expect(insert.binds).toContain('ingra107@umn.edu'); // requested_by
+    const { data } = await res.json() as { data: { id: string } };
+    expect(row(data.id)).toMatchObject({ tag: 'quickchat', seed: 'fix the figure', origin: 'computer', status: 'launched', requested_by: 'ingra107@umn.edu' });
+    expect(row(data.id)!.launched_at).toBeTruthy();
+    expect(row(data.id)!.expires_at).toBeTruthy();
   });
 
-  it('rejects an unknown tag with 400', async () => {
-    const env = { DB: makeDb() } as unknown as Env;
+  it('rejects an unknown tag with 400, and writes nothing', async () => {
     const res = await handleCreateLaunch(req({ tag: 'bogus', seed: 'x', origin: 'computer' }), USER, env);
     expect(res.status).toBe(400);
+    expect(count()).toBe(0);
   });
 
   it('stores task_id when the launch fired from a task compose surface (#485)', async () => {
-    const db = makeDb({ first: { id: 'L2', tag: 'quickchat', seed: 'x', task_id: 'task_1' } });
-    const env = { DB: db } as unknown as Env;
     const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer', task_id: 'task_1' }), USER, env);
     expect(res.status).toBe(201);
-    const insert = db._captured.find((c: any) => /INSERT INTO launch_log/.test(c.sql));
-    expect(insert.sql).toContain('task_id');
-    expect(insert.binds).toContain('task_1');
+    const { data } = await res.json() as { data: { id: string } };
+    expect(row(data.id)!.task_id).toBe('task_1');
   });
 
   it('stores task_id as NULL for a context-free launch (Today bar #485)', async () => {
-    const db = makeDb({ first: { id: 'L3', tag: 'quickchat', seed: 'x' } });
-    const env = { DB: db } as unknown as Env;
     const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer' }), USER, env);
     expect(res.status).toBe(201);
-    const insert = db._captured.find((c: any) => /INSERT INTO launch_log/.test(c.sql));
-    // task_id column present in the INSERT, bound to null when absent from the body.
-    expect(insert.sql).toContain('task_id');
-    expect(insert.binds).toContain(null);
+    const { data } = await res.json() as { data: { id: string } };
+    expect(row(data.id)!.task_id).toBeNull();
+    expect(row(data.id)!.status).toBe('pending');
   });
 });
 
 describe('handleRefireLaunch', () => {
-  it('carries task_id forward into the cloned launch (#485)', async () => {
-    // The source row has a task_id; refire re-POSTs it so the clone keeps task
-    // context (the new row re-composes fresh context at its own claim).
-    const db = makeDb({ first: { id: 'L4', tag: 'workon', seed: 's', origin: 'computer', target_machine: null, project_slug: 'p', task_id: 'task_9' } });
-    const env = { DB: db } as unknown as Env;
+  it('clones the launch into a new row carrying task_id forward (#485), source untouched', async () => {
+    launch('L4', { tag: 'workon', seed: 's', project_slug: 'p', task_id: 'task_9', status: 'completed' });
     const res = await handleRefireLaunch('L4', USER, env);
     expect(res.status).toBe(201);
-    const insert = db._captured.find((c: any) => /INSERT INTO launch_log/.test(c.sql));
-    expect(insert.binds).toContain('task_9');
+    const { data } = await res.json() as { data: { id: string } };
+    expect(data.id).not.toBe('L4');
+    expect(row(data.id)).toMatchObject({ tag: 'workon', seed: 's', project_slug: 'p', task_id: 'task_9', status: 'pending' });
+    expect(row('L4')!.status).toBe('completed');
+  });
+
+  it('404s a launch owned by someone else', async () => {
+    launch('L5', { requested_by: 'someone@else.com' });
+    const res = await handleRefireLaunch('L5', USER, env);
+    expect(res.status).toBe(404);
+    expect(count()).toBe(1);
   });
 });
 
-// ── makeDbForClaim: variant that returns meta.changes from run() ──────────────
-function makeDbForClaim({ changes = 1, firstRow = null as any } = {}) {
-  const db: any = {
-    prepare(sql: string) {
-      let binds: unknown[] = [];
-      const stmt: any = {
-        bind: (...a: unknown[]) => { binds = [...binds, ...a]; return stmt; },
-        run:   async () => ({ meta: { changes } }),
-        first: async () => firstRow,
-        all:   async () => ({ results: [] }),
-      };
-      return stmt;
-    },
-  };
-  return db;
-}
 function claimReq(id: string, opts: { auth?: boolean } = {}) {
   const headers: Record<string, string> = {};
   if (opts.auth !== false) headers['Authorization'] = `Bearer ${API_KEY}`;
   return new Request(`https://x/api/launch-log/${id}/claim`, { method: 'POST', headers });
 }
-function claimEnv(db: unknown) {
-  return { DB: db, PB_API_KEY: API_KEY } as unknown as Env;
-}
 
 describe('handleClaimLaunch', () => {
   // backlog #250: PI/API-key gated in-handler (isPiRequest). Both live
-  // claimants (resolve_launch.py, hub_ai_listener.py) send Bearer PB_API_KEY
-  // and pass unchanged — 403 here is the ONE new behavior, everything else
-  // in this describe block exercises unchanged claim logic with that header
-  // now present (mirrors bug-reports.status.test.ts's key:true convention).
-  it('403s without a valid API key or PI session', async () => {
-    const db = makeDbForClaim({ changes: 1, firstRow: { tag: 'quickchat', seed: 'x', project_slug: null } });
-    const env = claimEnv(db);
+  // claimants (resolve_launch.py, hub_ai_listener.py) send Bearer PB_API_KEY.
+  it('403s without a valid API key or PI session, and does not consume the token', async () => {
+    launch('lnch_abc');
     const res = await handleClaimLaunch('lnch_abc', claimReq('lnch_abc', { auth: false }), USER, env);
     expect(res.status).toBe(403);
+    expect(row('lnch_abc')!.consumed_at).toBeNull();
   });
 
-  it('returns 200 with verb/seed/project_slug when token is valid', async () => {
-    const firstRow = { tag: 'quickchat', seed: 'fix the figure', project_slug: 'pb-sector' };
-    const db = makeDbForClaim({ changes: 1, firstRow });
-    const env = claimEnv(db);
+  it('returns 200 with verb/seed/project_slug when token is valid, and consumes it', async () => {
+    launch('lnch_abc', { seed: 'fix the figure', project_slug: 'pb-sector' });
     const res = await handleClaimLaunch('lnch_abc', claimReq('lnch_abc'), USER, env);
     expect(res.status).toBe(200);
     const body = await res.json() as any;
-    expect(body.data.verb).toBe('quickchat');
-    expect(body.data.seed).toBe('fix the figure');
-    expect(body.data.project_slug).toBe('pb-sector');
+    expect(body.data).toEqual({ verb: 'quickchat', seed: 'fix the figure', project_slug: 'pb-sector' });
+    expect(row('lnch_abc')).toMatchObject({ status: 'launched' });
+    expect(row('lnch_abc')!.consumed_at).toBeTruthy();
   });
 
-  it('returns 410 on second claim (consumed_at already set — changes=0)', async () => {
-    const db = makeDbForClaim({ changes: 0 });
-    const env = claimEnv(db);
+  it('returns 410 on second claim (consumed_at already set)', async () => {
+    launch('lnch_abc');
+    expect((await handleClaimLaunch('lnch_abc', claimReq('lnch_abc'), USER, env)).status).toBe(200);
     const res = await handleClaimLaunch('lnch_abc', claimReq('lnch_abc'), USER, env);
     expect(res.status).toBe(410);
   });
 
-  it('returns 410 when token is expired (changes=0)', async () => {
-    const db = makeDbForClaim({ changes: 0 });
-    const env = claimEnv(db);
+  it('returns 410 when token is expired', async () => {
+    launch('lnch_expired', { expires_at: '2020-01-01 00:00:00' });
     const res = await handleClaimLaunch('lnch_expired', claimReq('lnch_expired'), USER, env);
     expect(res.status).toBe(410);
+    expect(row('lnch_expired')).toMatchObject({ status: 'pending', consumed_at: null });
   });
 
-  it('returns 410 for an unknown id (changes=0)', async () => {
-    const db = makeDbForClaim({ changes: 0 });
-    const env = claimEnv(db);
+  it('returns 410 for an unknown id', async () => {
     const res = await handleClaimLaunch('lnch_unknown', claimReq('lnch_unknown'), USER, env);
     expect(res.status).toBe(410);
   });
 
   it('returns 410 for a legacy row with NULL expires_at (expires_at IS NOT NULL guard rejects)', async () => {
-    // Legacy rows have NULL expires_at — the WHERE clause rejects them (changes=0)
-    const db = makeDbForClaim({ changes: 0 });
-    const env = claimEnv(db);
+    launch('lnch_legacy', { expires_at: null });
     const res = await handleClaimLaunch('lnch_legacy', claimReq('lnch_legacy'), USER, env);
     expect(res.status).toBe(410);
+    expect(row('lnch_legacy')!.consumed_at).toBeNull();
   });
 });
 
 describe('handleClaimLaunch — task-context composition (#485)', () => {
   // NOTE: this is the SINGLE seed-to-session exit for BOTH the computer route
   // (resolve_launch.py) AND the mobile route (hub_ai_listener claims the same
-  // endpoint), so these cases cover the "forward path" too — there is no
-  // separate worker-side forward that reads the seed.
-  // The claim runs ONE LEFT-JOINed SELECT (launch row + task context), so the
-  // plain makeDbForClaim stub serves these too — firstRow is the flat joined row.
-  const taskCols = {
-    task_pk: 'task_1',
-    task_title: 'Wire the freshness guard',
-    task_status: 'in_progress',
-    task_due: '2026-07-10',
-    task_description: 'Guard TODAY.md regen against stale frontmatter.',
-    project_name: 'PB Sector',
-  };
+  // endpoint), so these cases cover the "forward path" too.
+  beforeEach(() => {
+    insertRow(db, 'projects', { id: 'proj_pbs', slug: 'pb-sector', title: 'PB Sector', category: 'MNCCORE' });
+    insertRow(db, 'tasks', {
+      id: 'task_1', title: 'Wire the freshness guard', status: 'in_progress', priority: 'medium', assignee: 'nick-ingraham',
+      due_date: '2026-07-10', description: 'Guard TODAY.md regen against stale frontmatter.', project_id: 'proj_pbs',
+    });
+  });
+
+  async function claim(id: string) {
+    const res = await handleClaimLaunch(id, claimReq(id), USER, env);
+    expect(res.status).toBe(200);
+    return (await res.json() as any).data as { verb: string; seed: string; project_slug: string | null };
+  }
 
   it('prepends the task-context header and preserves the raw seed after a blank line', async () => {
-    const firstRow = { tag: 'quickchat', seed: 'has it been done?', project_slug: 'pb-sector', task_id: 'task_1', ...taskCols };
-    const db = makeDbForClaim({ changes: 1, firstRow });
-    const env = claimEnv(db);
-    const res = await handleClaimLaunch('lnch_ctx', claimReq('lnch_ctx'), USER, env);
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
-    expect(body.data.verb).toBe('quickchat');
-    expect(body.data.project_slug).toBe('pb-sector');
-    expect(body.data.seed).toContain('[Task context');
-    expect(body.data.seed).toContain('Wire the freshness guard');
-    expect(body.data.seed).toContain('in_progress');
-    expect(body.data.seed).toContain('PB Sector');
-    expect(body.data.seed).toContain('Guard TODAY.md regen');
+    launch('lnch_ctx', { seed: 'has it been done?', project_slug: 'pb-sector', task_id: 'task_1' });
+    const data = await claim('lnch_ctx');
+    expect(data.verb).toBe('quickchat');
+    expect(data.project_slug).toBe('pb-sector');
+    expect(data.seed).toContain('[Task context');
+    expect(data.seed).toContain('Wire the freshness guard');
+    expect(data.seed).toContain('in_progress');
+    expect(data.seed).toContain('PB Sector');
+    expect(data.seed).toContain('Guard TODAY.md regen');
     // header, blank line, then the raw seed verbatim at the end
-    expect(body.data.seed).toContain('\n\nhas it been done?');
-    expect(body.data.seed.endsWith('has it been done?')).toBe(true);
+    expect(data.seed).toContain('\n\nhas it been done?');
+    expect(data.seed.endsWith('has it been done?')).toBe(true);
   });
 
   it('returns the raw seed unchanged when the launch carried no task_id', async () => {
-    const firstRow = { tag: 'quickchat', seed: 'fix the figure', project_slug: null, task_id: null };
-    const db = makeDbForClaim({ changes: 1, firstRow });
-    const env = claimEnv(db);
-    const res = await handleClaimLaunch('lnch_raw', claimReq('lnch_raw'), USER, env);
-    const body = await res.json() as any;
-    expect(body.data.seed).toBe('fix the figure');
+    launch('lnch_raw', { seed: 'fix the figure' });
+    expect((await claim('lnch_raw')).seed).toBe('fix the figure');
   });
 
-  it('falls back to the raw seed when task_id points to a missing/deleted task', async () => {
-    // Join sentinel: task_id set but task_pk NULL (deleted_at guard nulled the join)
-    const firstRow = { tag: 'workon', seed: 'pick this up', project_slug: 'x', task_id: 'task_gone', task_pk: null };
-    const db = makeDbForClaim({ changes: 1, firstRow });
-    const env = claimEnv(db);
-    const res = await handleClaimLaunch('lnch_miss', claimReq('lnch_miss'), USER, env);
-    const body = await res.json() as any;
-    expect(body.data.seed).toBe('pick this up');
+  it('falls back to the raw seed when task_id points to a deleted task', async () => {
+    db.prepare("UPDATE tasks SET deleted_at = '2026-07-01T00:00:00Z', status = 'deleted' WHERE id = 'task_1'").run();
+    launch('lnch_del', { tag: 'workon', seed: 'pick this up', task_id: 'task_1' });
+    expect((await claim('lnch_del')).seed).toBe('pick this up');
+  });
+
+  it('falls back to the raw seed when task_id points to a missing task', async () => {
+    launch('lnch_miss', { tag: 'workon', seed: 'pick this up', task_id: 'task_gone' });
+    expect((await claim('lnch_miss')).seed).toBe('pick this up');
   });
 
   it('truncates a long description to keep the header bounded', async () => {
-    const longDesc = 'x'.repeat(900);
-    const firstRow = { tag: 'workon', seed: 'go', project_slug: 'x', task_id: 'task_long', ...taskCols, task_description: longDesc };
-    const db = makeDbForClaim({ changes: 1, firstRow });
-    const env = claimEnv(db);
-    const res = await handleClaimLaunch('lnch_long', claimReq('lnch_long'), USER, env);
-    const body = await res.json() as any;
+    db.prepare("UPDATE tasks SET description = ? WHERE id = 'task_1'").run('x'.repeat(900));
+    launch('lnch_long', { tag: 'workon', seed: 'go', task_id: 'task_1' });
+    const data = await claim('lnch_long');
     // 500-char cap + ellipsis; the full 900-char description never appears.
-    expect(body.data.seed).toContain('…');
-    expect(body.data.seed).not.toContain('x'.repeat(600));
-    expect(body.data.seed.endsWith('go')).toBe(true);
+    expect(data.seed).toContain('…');
+    expect(data.seed).not.toContain('x'.repeat(600));
+    expect(data.seed.endsWith('go')).toBe(true);
   });
 });
 
-// ── makeDbForPending: captures all() SQL for assertion ───────────────────────
-function makeDbForPending(rows: any[] = []) {
-  const captured: Array<{ sql: string }> = [];
-  const db: any = {
-    _captured: captured,
-    prepare(sql: string) {
-      const stmt: any = {
-        bind: () => stmt,
-        run: async () => ({ success: true }),
-        first: async () => null,
-        all: async () => { captured.push({ sql }); return { results: rows }; },
-      };
-      return stmt;
-    },
-  };
-  return db;
-}
-
 describe('handleListPendingLaunches', () => {
-  it('returns pending mobile unconsumed unexpired rows unscoped by requested_by', async () => {
-    const rows = [
-      { id: 'lnch_a', created_at: '2026-06-26T01:00:00Z' },
-      { id: 'lnch_b', created_at: '2026-06-26T01:01:00Z' },
-    ];
-    const db = makeDbForPending(rows);
-    const env = { DB: db } as unknown as Env;
+  it('returns only pending, mobile, unconsumed, unexpired rows, unscoped by requested_by', async () => {
+    launch('lnch_a', { origin: 'mobile', created_at: '2026-06-26 01:00:00' });
+    launch('lnch_b', { origin: 'mobile', created_at: '2026-06-26 01:01:00', requested_by: 'someone@else.com' });
+    launch('lnch_computer', { origin: 'computer' });
+    launch('lnch_expired', { origin: 'mobile', expires_at: '2020-01-01 00:00:00' });
+    launch('lnch_consumed', { origin: 'mobile', consumed_at: '2026-06-26 02:00:00' });
+    launch('lnch_launched', { origin: 'mobile', status: 'launched' });
+
     const res = await handleListPendingLaunches(env);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
-    expect(body.data).toHaveLength(2);
-    expect(body.data[0].id).toBe('lnch_a');
-    expect(body.data[1].id).toBe('lnch_b');
-  });
-
-  it('SQL is unscoped (no requested_by filter) and projects only id + created_at', async () => {
-    const db = makeDbForPending([]);
-    const env = { DB: db } as unknown as Env;
-    await handleListPendingLaunches(env);
-    const { sql } = db._captured[0];
-    expect(sql).toContain("status='pending'");
-    expect(sql).toContain("origin='mobile'");
-    expect(sql).toContain('consumed_at IS NULL');
-    expect(sql).toContain("expires_at > datetime('now')");
-    expect(sql).toContain('SELECT id, created_at');
-    // unscoped: a row owned by a different requested_by is still returned
-    expect(sql).not.toContain('requested_by');
-  });
-
-  it('response carries no seed field (SELECT projects id + created_at only)', async () => {
-    const rows = [{ id: 'lnch_c', created_at: '2026-06-26T02:00:00Z' }];
-    const db = makeDbForPending(rows);
-    const env = { DB: db } as unknown as Env;
-    const res = await handleListPendingLaunches(env);
-    const body = await res.json() as any;
-    expect(body.data[0]).toHaveProperty('id');
-    expect(body.data[0]).toHaveProperty('created_at');
-    expect(body.data[0]).not.toHaveProperty('seed');
+    const body = await res.json() as { data: Array<Record<string, unknown>> };
+    expect(body.data.map((r) => r.id).sort()).toEqual(['lnch_a', 'lnch_b']);
+    // Projects id + created_at only: never the seed.
+    for (const r of body.data) expect(Object.keys(r).sort()).toEqual(['created_at', 'id']);
   });
 
   it('returns empty array when no pending mobile rows exist', async () => {
-    const db = makeDbForPending([]);
-    const env = { DB: db } as unknown as Env;
     const res = await handleListPendingLaunches(env);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
-    expect(body.data).toHaveLength(0);
+    expect((await res.json() as any).data).toHaveLength(0);
   });
 
-  // 403 for non-PI callers is enforced by app.use('/api/pb/*') middleware (index.ts:282),
+  // 403 for non-PI callers is enforced by app.use('/api/pb/*') middleware (index.ts),
   // not this handler — no per-handler auth check required or tested here.
+});
+
+describe('handleListLaunches', () => {
+  it("lists only the requester's own launches", async () => {
+    launch('L_mine');
+    launch('L_theirs', { requested_by: 'someone@else.com' });
+    const res = await handleListLaunches(new URL('https://x/api/launch-log'), USER, env);
+    const body = await res.json() as { data: Array<{ id: string }> };
+    expect(body.data.map((r) => r.id)).toEqual(['L_mine']);
+  });
 });
 
 describe('handleSetLaunchStatus', () => {
   it('updates status + launched_at and returns the row', async () => {
-    const db = makeDb({ first: { id: 'L1', status: 'launched' } });
-    const env = { DB: db } as unknown as Env;
+    launch('L1');
     const res = await handleSetLaunchStatus('L1', req({ status: 'launched' }), USER, env);
     expect(res.status).toBe(200);
-    const upd = db._captured.find((c: any) => /UPDATE launch_log SET status/.test(c.sql));
-    expect(upd.binds).toContain('launched');
-    expect(upd.sql).toContain('launched_at');
+    expect(row('L1')!.status).toBe('launched');
+    expect(row('L1')!.launched_at).toBeTruthy();
   });
 
-  it('returns 404 when a different user tries to update', async () => {
-    const db = makeDb({ first: null });
-    const env = { DB: db } as unknown as Env;
+  it('returns 404 when a different user tries to update, and changes nothing', async () => {
+    launch('L1');
     const other = { email: 'someone@else.com', name: 'Other' };
     const res = await handleSetLaunchStatus('L1', req({ status: 'launched' }), other, env);
     expect(res.status).toBe(404);
+    expect(row('L1')!.status).toBe('pending');
   });
 });

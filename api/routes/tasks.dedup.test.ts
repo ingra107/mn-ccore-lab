@@ -2,676 +2,223 @@
 //
 // Covers server-side (title, project_id) dedup via:
 //   1. mutations.ts applyInsert — via the exported handleMutations path
+//   2. handleMobileTasksToHub's (title, project_id) pre-check
 // (sync-bulk path deleted 2026-05-12; codex audit #8)
 //
-// Uses the same in-memory D1 stub pattern as mutations.deleted-status.test.ts.
 // Covers the four edge cases from the incident spec:
 //   - Dedup fires on same (title, project_id) both null
 //   - No dedup when project_id differs
 //   - No dedup against deleted rows
 //   - No dedup against done rows
+//
+// #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+// The first cut answered the dedup SELECTs with JavaScript matchers, modelled
+// the partial UNIQUE index as a hand-written throw, and kept a "regression
+// proof" that only showed its own index-less stub accepting two rows. Here the
+// index is the one the chain builds, the race test counts the INSERTs the
+// engine really attempted, and the index-less proof is replaced by the index
+// itself refusing the duplicate.
 
 import { describe, it, expect, beforeEach } from 'vitest'
+import type Database from 'better-sqlite3'
 import { nowInstant } from '../lib/time'
-import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
 import type { Env, AuthUser } from '../helpers'
 import { _resetValidationFlagsCache } from '../helpers'
 import { classifyTaskDedupSelect } from '../lib/task-dedup-sql'
-
-// ── Shared stub DB ──────────────────────────────────────────────────────────
-
-function makeStubDB(seedRows: Record<string, Record<string, unknown>> = {}) {
-  const store: Map<string, Record<string, unknown>> = new Map(
-    Object.entries(seedRows)
-  )
-
-  // Title+project_id index: key = `${title}|||${project_id ?? 'NULL'}`
-  // We rebuild on each query so mutations are reflected.
-  function findByTitleProject(title: string, projectId: string | null): Record<string, unknown> | null {
-    for (const row of store.values()) {
-      if (
-        row.title === title &&
-        (row.project_id ?? null) === projectId &&
-        !row.deleted_at &&
-        row.status !== 'done'
-      ) {
-        return row
-      }
-    }
-    return null
-  }
-
-  function makeStmt(sql: string, boundVals: unknown[]): any {
-    return {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-
-      first: async <T>() => {
-        const upper = sql.trim().toUpperCase()
-        // The name-identity dedup SELECT, raw or normalized (#530b). The
-        // classifier THROWS on a `SELECT id FROM tasks` it does not know, so a
-        // query edit that outruns this stub is a red test rather than a silent
-        // fall-through to a by-id lookup that disables dedup.
-        if (classifyTaskDedupSelect(sql) === 'title') {
-          const title = boundVals[0] as string
-          const projectId = (boundVals[1] === undefined ? null : boundVals[1]) as string | null
-          const row = findByTitleProject(title, projectId)
-          return (row ? { id: row.id } : null) as T | null
-        }
-        // SELECT * FROM tasks/projects WHERE id = ?
-        const id = boundVals[0] as string
-        return (store.get(id) ?? null) as T | null
-      },
-
-      all: async <T>() => {
-        const upper = sql.trim().toUpperCase()
-        // SELECT id, updated_at FROM tasks WHERE id IN (...)
-        if (upper.includes('ID IN')) {
-          const ids = boundVals as string[]
-          const results = ids
-            .map(id => store.get(id))
-            .filter(Boolean) as T[]
-          return { results, success: true, meta: {} }
-        }
-        return { results: [] as T[], success: true, meta: {} }
-      },
-
-      run: async () => {
-        const upper = sql.trim().toUpperCase()
-        if (upper.startsWith('UPDATE')) {
-          const setMatch = sql.match(/SET (.+) WHERE/s)
-          if (setMatch) {
-            const pairs = setMatch[1].split(',').map((s: string) => s.trim())
-            const id = boundVals[boundVals.length - 1] as string
-            const row = store.get(id)
-            if (row) {
-              let paramIdx = 0
-              for (const pair of pairs) {
-                const [col, placeholder] = pair.split('=').map((s: string) => s.trim())
-                if (placeholder && placeholder.includes('datetime')) {
-                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
-                } else {
-                  row[col] = boundVals[paramIdx++]
-                }
-              }
-              store.set(id, row)
-            }
-          }
-          return { meta: { changes: 1 } }
-        }
-        if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) {
-          return { meta: { changes: 1 } }
-        }
-        if (upper.startsWith('INSERT INTO TASKS') || upper.startsWith('INSERT INTO ')) {
-          // Parse id from VALUES (first positional)
-          const id = boundVals[0] as string
-          if (id && !store.has(id)) {
-            // Build a minimal row from bound values
-            // Column order matches the INSERT in applyInsert (mutations.ts):
-            // id, meeting_id, project_id, title, description, assignee, assigned_by,
-            // due_date, deadline, priority, status, source, completed, completed_at,
-            // completed_by, created_at, key_link_1..6, updated_at
-            store.set(id, {
-              id, meeting_id: boundVals[1], project_id: boundVals[2],
-              title: boundVals[3], description: boundVals[4],
-              assignee: boundVals[5], assigned_by: boundVals[6],
-              due_date: boundVals[7], deadline: boundVals[8],
-              priority: boundVals[9], status: boundVals[10],
-              source: boundVals[11], completed: boundVals[12],
-              completed_at: boundVals[13], completed_by: boundVals[14],
-              created_at: boundVals[15],
-              deleted_at: null, seq: 1, updated_at: boundVals[22] ?? nowInstant(),
-              last_mutation_id: null,
-            })
-          }
-          return { meta: { changes: 1 } }
-        }
-        return { meta: { changes: 0 } }
-      },
-    }
-  }
-
-  return {
-    _store: store,
-    prepare: (sql: string) => makeStmt(sql, []),
-    batch: async (stmts: any[]) => {
-      const results = []
-      for (const s of stmts) await s.run()
-      return results
-    },
-  }
-}
+import { prodSchemaDb, d1Adapter, insertRow, receiptOf } from '../test-support/prod-schema-db'
 
 const fakeUser: AuthUser = { email: 'test@example.com', role: 'admin', name: 'Test User' } as unknown as AuthUser
 const TEST_API_KEY = 'test-dedup-api-key' // M07: handleMutations requires PI/API-key auth
 
+let db: InstanceType<typeof Database>
+beforeEach(() => {
+  _resetValidationFlagsCache()
+  db = prodSchemaDb()
+})
+
+function seedProject(id: string) {
+  insertRow(db, 'projects', { id, slug: id.replace(/_/g, '-').toLowerCase(), title: id, category: 'MNCCORE' })
+}
+function seedTask(row: Record<string, unknown>) {
+  insertRow(db, 'tasks', { priority: 'medium', assignee: 'nick-ingraham', project_id: null, status: 'todo', ...row })
+}
+const has = (id: string) => db.prepare('SELECT 1 FROM tasks WHERE id = ?').get(id) !== undefined
+const idsTitled = (title: string) =>
+  (db.prepare('SELECT id FROM tasks WHERE title = ? ORDER BY id').all(title) as { id: string }[]).map((r) => r.id)
+
+function insertMut(id: string, mutationId: string, payload: Record<string, unknown>, origin = 'home'): Mutation {
+  return {
+    mutation_id: mutationId,
+    origin_machine: origin,
+    table: 'tasks',
+    op: 'insert',
+    record_id: id,
+    base_seq: null,
+    base_row_hash: null,
+    payload: { project_id: null, status: 'todo', priority: 'medium', assignee: 'nick-ingraham', created_at: nowInstant(), ...payload },
+    client_ts: nowInstant(),
+    issued_at: nowInstant(),
+  } as Mutation
+}
+
+async function post(DB: unknown, mut: Mutation) {
+  const { handleMutations } = await import('./mutations')
+  const fakeEnv = { DB, PB_API_KEY: TEST_API_KEY } as unknown as Env
+  const req = new Request('https://example.com/api/mutations', {
+    method: 'POST',
+    body: JSON.stringify({ mutations: [mut] }),
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
+  })
+  const resp = await handleMutations(req, fakeUser, fakeEnv)
+  const body = await resp.json() as { results: Array<{ status: string; reason?: string; canonical_id?: string; canonical_payload?: Record<string, unknown> }> }
+  return body.results[0]
+}
+
 // ── mutations.ts applyInsert dedup tests ────────────────────────────────────
 
 describe('mutations.ts applyInsert — I18 (title, project_id) dedup', () => {
-  // We test via applyUpdate (exported) as a proxy — the full processOne
-  // path requires processed_mutations table. The dedup logic in applyInsert
-  // is unit-tested here by constructing op='insert' mutations directly via
-  // the exported handleMutations path with a stub DB.
-  //
-  // Since applyInsert is not exported, we verify the dedup contract by
-  // confirming that a second insert with the same title+project_id returns
-  // status='accepted' with a reason containing 'deduped' and the existing id.
-
   it('deduped: same title + same null project_id returns accepted with reason', async () => {
     const existingId = 'task_existing_001'
-    const db = makeStubDB({
-      [existingId]: {
-        id: existingId,
-        title: 'Approve: MECHANIC: I3',
-        project_id: null,
-        deleted_at: null,
-        status: 'todo',
-        seq: 1,
-        last_mutation_id: null,
-      }
-    })
+    seedTask({ id: existingId, title: 'Approve: MECHANIC: I3' })
 
-    // Simulate what applyInsert does: the dedup SELECT fires before INSERT
-    // We test via the full handleMutations import which calls processOne ->
-    // applyInsert. Import it here.
-    const { handleMutations } = await import('./mutations')
-    const mut: Mutation = {
-      mutation_id: 'mut_dedup_test_0001',
-      origin_machine: 'work',
-      table: 'tasks',
-      op: 'insert',
-      record_id: 'task_new_dup_0001',
-      base_seq: null,
-      base_row_hash: null,
-      payload: {
-        title: 'Approve: MECHANIC: I3',
-        project_id: null,
-        status: 'todo',
-        priority: 'medium',
-        assignee: 'nick-ingraham',
-        created_at: nowInstant(),
-      },
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
+    const r = await post(d1Adapter(db), insertMut('task_new_dup_0001', 'mut_dedup_test_0001', { title: 'Approve: MECHANIC: I3' }, 'work'))
 
-    const fakeEnv = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
-    const req = new Request('https://example.com/api/mutations', {
-      method: 'POST',
-      body: JSON.stringify({ mutations: [mut] }),
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
-    })
-
-    const resp = await handleMutations(req, fakeUser, fakeEnv)
-    const body = await resp.json() as { results: Array<{ status: string; reason?: string; canonical_payload?: Record<string, unknown> }> }
-
-    expect(body.results[0].status).toBe('accepted')
-    expect(body.results[0].reason).toContain('deduped')
-    expect(body.results[0].reason).toContain(existingId)
+    expect(r.status).toBe('accepted')
+    expect(r.reason).toContain('deduped')
+    expect(r.reason).toContain(existingId)
+    expect(r.canonical_payload?.id).toBe(existingId)
     // New row should NOT have been inserted
-    expect(db._store.has('task_new_dup_0001')).toBe(false)
+    expect(has('task_new_dup_0001')).toBe(false)
+    expect(idsTitled('Approve: MECHANIC: I3')).toEqual([existingId])
+    expect(receiptOf(db, 'mut_dedup_test_0001')?.outcome).toBe('accepted')
   })
 
   it('no-dedup: same title but different non-null project_id — inserts normally', async () => {
-    const db = makeStubDB({
-      'task_proj_a': {
-        id: 'task_proj_a',
-        title: 'Write draft',
-        project_id: 'proj_alpha',
-        deleted_at: null,
-        status: 'todo',
-        seq: 1,
-        last_mutation_id: null,
-      }
-    })
+    seedProject('proj_alpha')
+    seedProject('proj_beta')
+    seedTask({ id: 'task_proj_a', title: 'Write draft', project_id: 'proj_alpha' })
 
-    const { handleMutations } = await import('./mutations')
-    const mut: Mutation = {
-      mutation_id: 'mut_dedup_test_0002',
-      origin_machine: 'home',
-      table: 'tasks',
-      op: 'insert',
-      record_id: 'task_proj_b_new',
-      base_seq: null,
-      base_row_hash: null,
-      payload: {
-        title: 'Write draft',
-        project_id: 'proj_beta',  // different project
-        status: 'todo',
-        priority: 'medium',
-        assignee: 'nick-ingraham',
-        created_at: nowInstant(),
-      },
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
+    const r = await post(d1Adapter(db), insertMut('task_proj_b_new', 'mut_dedup_test_0002', { title: 'Write draft', project_id: 'proj_beta' }))
 
-    const fakeEnv = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
-    const req = new Request('https://example.com/api/mutations', {
-      method: 'POST',
-      body: JSON.stringify({ mutations: [mut] }),
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
-    })
-
-    const resp = await handleMutations(req, fakeUser, fakeEnv)
-    const body = await resp.json() as { results: Array<{ status: string; reason?: string }> }
-
-    expect(body.results[0].status).toBe('accepted')
+    expect(r.status).toBe('accepted')
     // Should NOT have the dedup reason
-    expect(body.results[0].reason ?? '').not.toContain('deduped')
-    // New row should have been inserted
-    expect(db._store.has('task_proj_b_new')).toBe(true)
+    expect(r.reason ?? '').not.toContain('deduped')
+    // New row should have been inserted, in its own project
+    expect(idsTitled('Write draft')).toEqual(['task_proj_a', 'task_proj_b_new'])
+    expect(db.prepare('SELECT project_id FROM tasks WHERE id = ?').get('task_proj_b_new')).toEqual({ project_id: 'proj_beta' })
   })
 
   it('no-dedup against deleted row — soft-deleted task does not block new insert', async () => {
-    const db = makeStubDB({
-      'task_deleted_old': {
-        id: 'task_deleted_old',
-        title: 'Reply to Abbie',
-        project_id: null,
-        deleted_at: '2026-05-01 10:00:00',
-        status: 'deleted',
-        seq: 3,
-        last_mutation_id: 'mut_prev',
-      }
-    })
+    seedTask({ id: 'task_deleted_old', title: 'Reply to Abbie', status: 'deleted', deleted_at: '2026-05-01 10:00:00', last_mutation_id: 'mut_prev' })
 
-    const { handleMutations } = await import('./mutations')
-    const mut: Mutation = {
-      mutation_id: 'mut_dedup_test_0003',
-      origin_machine: 'home',
-      table: 'tasks',
-      op: 'insert',
-      record_id: 'task_new_reply',
-      base_seq: null,
-      base_row_hash: null,
-      payload: {
-        title: 'Reply to Abbie',
-        project_id: null,
-        status: 'todo',
-        priority: 'medium',
-        assignee: 'nick-ingraham',
-        created_at: nowInstant(),
-      },
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
+    const r = await post(d1Adapter(db), insertMut('task_new_reply', 'mut_dedup_test_0003', { title: 'Reply to Abbie' }))
 
-    const fakeEnv = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
-    const req = new Request('https://example.com/api/mutations', {
-      method: 'POST',
-      body: JSON.stringify({ mutations: [mut] }),
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
-    })
-
-    const resp = await handleMutations(req, fakeUser, fakeEnv)
-    const body = await resp.json() as { results: Array<{ status: string; reason?: string }> }
-
-    expect(body.results[0].status).toBe('accepted')
-    expect(body.results[0].reason ?? '').not.toContain('deduped')
-    expect(db._store.has('task_new_reply')).toBe(true)
+    expect(r.status).toBe('accepted')
+    expect(r.reason ?? '').not.toContain('deduped')
+    expect(idsTitled('Reply to Abbie')).toEqual(['task_deleted_old', 'task_new_reply'])
   })
 
   it('no-dedup against done row — completed task does not block a new task of same name', async () => {
-    const db = makeStubDB({
-      'task_done_old': {
-        id: 'task_done_old',
-        title: 'Weekly review',
-        project_id: null,
-        deleted_at: null,
-        status: 'done',
-        seq: 10,
-        last_mutation_id: 'mut_completed',
-      }
-    })
+    seedTask({ id: 'task_done_old', title: 'Weekly review', status: 'done', completed: 1, completed_at: '2026-05-01T10:00:00Z', last_mutation_id: 'mut_completed' })
 
-    const { handleMutations } = await import('./mutations')
-    const mut: Mutation = {
-      mutation_id: 'mut_dedup_test_0004',
-      origin_machine: 'home',
-      table: 'tasks',
-      op: 'insert',
-      record_id: 'task_new_weekly',
-      base_seq: null,
-      base_row_hash: null,
-      payload: {
-        title: 'Weekly review',
-        project_id: null,
-        status: 'todo',
-        priority: 'medium',
-        assignee: 'nick-ingraham',
-        created_at: nowInstant(),
-      },
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }
+    const r = await post(d1Adapter(db), insertMut('task_new_weekly', 'mut_dedup_test_0004', { title: 'Weekly review' }))
 
-    const fakeEnv = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
-    const req = new Request('https://example.com/api/mutations', {
-      method: 'POST',
-      body: JSON.stringify({ mutations: [mut] }),
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
-    })
-
-    const resp = await handleMutations(req, fakeUser, fakeEnv)
-    const body = await resp.json() as { results: Array<{ status: string; reason?: string }> }
-
-    expect(body.results[0].status).toBe('accepted')
-    expect(body.results[0].reason ?? '').not.toContain('deduped')
-    expect(db._store.has('task_new_weekly')).toBe(true)
+    expect(r.status).toBe('accepted')
+    expect(r.reason ?? '').not.toContain('deduped')
+    expect(idsTitled('Weekly review')).toEqual(['task_done_old', 'task_new_weekly'])
   })
 })
 
 // ── Concurrent-race tests (partial index backstop) ──────────────────────────
-//
-// The serial dedup path (SELECT finds existing → return deduped) was tested
-// above. These tests cover the race window:
 //
 //   T=0  machine-home  SELECT → no row found (winner not yet inserted)
 //   T=0  machine-work  SELECT → no row found (same empty state)
 //   T=1  machine-home  INSERT → succeeds (first writer wins)
 //   T=1  machine-work  INSERT → partial index fires (UNIQUE violation)
 //
-// In production D1/SQLite the partial index
-//   CREATE UNIQUE INDEX idx_tasks_title_project_active
-//     ON tasks(title, project_id) WHERE deleted_at IS NULL AND status != 'done'
-// makes this structural: the race-loser INSERT throws a constraint error.
-//
-// applyInsert's catch(e) (mutations.ts, 2026-07-02 meeting-dedup wave, commit
-// 1dfe81bf) re-queries by (title, project_id) — same predicate as the serial
-// SELECT — and, when the winner is now visible, returns the SAME adoptable
-// `accepted` + canonical_id response as the serial path (reason prefixed
-// "deduped (race-loser)"). The race-loser no longer dead-letters; it adopts
-// the winner's PK via alias, closing the client-side gap previously documented
-// here (flagged 2026-05-03, resolved 2026-07-02).
+// The migrated partial UNIQUE index (today idx_tasks_title_norm_nonrecurring_active,
+// schema-v113) makes this structural: the race-loser INSERT throws a constraint
+// error. applyInsert's catch re-queries by the same key and, when the winner is
+// now visible, returns the SAME adoptable `accepted` + canonical_id response as
+// the serial path (reason prefixed "deduped (race-loser)").
 
-// Parses "INSERT INTO tasks (c1, c2, ...) VALUES (...)" -> column names, so
-// the stored row reflects the ACTUAL payload key order (applyInsert builds
-// columns from Object.keys(payload), not a fixed schema-wide order). A prior
-// version of this stub hardcoded positional indices assuming a fixed legacy
-// column layout (title at index 3, status at index 10); with this test's
-// payload key order that silently stored the STATUS value under `title`,
-// which the race-loser catch's honest re-query then failed to match. Faithful
-// parsing (mirrors tasks.meeting-dedup.test.ts's insertColumns) makes the stub
-// correct regardless of payload key order.
-function insertColumns(sql: string): string[] {
-  const m = sql.match(/INSERT INTO \w+ \(([^)]*)\)/i)
-  return m ? m[1].split(',').map(s => s.trim()) : []
-}
-
-function makeRaceStubDB() {
-  const store: Map<string, Record<string, unknown>> = new Map()
-  let insertCount = 0
-  let titleProjectSelectCalls = 0
-
-  function makeStmt(sql: string, boundVals: unknown[]): any {
-    return {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-
-      first: async <T>() => {
-        const upper = sql.trim().toUpperCase()
-        if (classifyTaskDedupSelect(sql) === 'title') {
-          titleProjectSelectCalls += 1
-          // Calls 1-2 = the serial pre-insert dedup checks for BOTH machines
-          // (the race window: neither writer's INSERT has committed yet, so
-          // both miss). Call 3+ = the race-loser's catch re-query, which fires
-          // strictly AFTER the winner's INSERT has committed (that commit is
-          // the only reason the loser's INSERT hit the UNIQUE constraint in
-          // the first place) — an honest store lookup reflects that.
-          if (titleProjectSelectCalls <= 2) return null as T | null
-          const title = boundVals[0] as string
-          const projectId = (boundVals[1] === undefined ? null : boundVals[1]) as string | null
-          for (const row of store.values()) {
-            if (row.title === title && (row.project_id ?? null) === projectId && !row.deleted_at && row.status !== 'done') {
-              return { id: row.id } as T
-            }
-          }
-          return null as T | null
-        }
-        // processed_mutations idempotency check
-        if (upper.includes('PROCESSED_MUTATIONS')) {
-          return null as T | null
-        }
-        // readCanonical (SELECT * FROM tasks WHERE id = ?)
-        const id = boundVals[0] as string
-        return (store.get(id) ?? null) as T | null
-      },
-
-      all: async <T>() => {
-        const upper = sql.trim().toUpperCase()
-        // getValidationFlags: SELECT key, value FROM lab_settings WHERE key IN (...)
-        // Stubbed ON so canonical_id is surfaced on the adoptable response,
-        // matching prod (mirrors tasks.meeting-dedup.test.ts convention).
-        if (upper.includes('FROM LAB_SETTINGS')) {
-          return {
-            results: [{ key: 'hub_dedup_adoptable', value: '1' }] as unknown as T[],
-            success: true, meta: {},
-          }
-        }
-        return { results: [] as T[], success: true, meta: {} }
-      },
-
-      run: async () => {
-        const upper = sql.trim().toUpperCase()
-        if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) {
-          return { meta: { changes: 1 } }
-        }
-        if (upper.startsWith('INSERT INTO TASKS')) {
-          insertCount++
-          const id = boundVals[0] as string
-          if (insertCount === 1) {
-            // First INSERT (home-machine winner): succeeds. Column names parsed
-            // from the SQL text so the row reflects the actual payload key order.
-            const cols = insertColumns(sql)
-            const row: Record<string, unknown> = { deleted_at: null, seq: 1 }
-            cols.forEach((c, i) => { if (i < boundVals.length) row[c] = boundVals[i] })
-            if (!('updated_at' in row)) row.updated_at = nowInstant()
-            store.set(id, row)
-            return { meta: { changes: 1 } }
-          } else {
-            // Second INSERT (work-machine loser): partial index fires.
-            // D1 throws an error matching SQLite UNIQUE constraint violation.
-            throw new Error(
-              'D1_ERROR: UNIQUE constraint failed: tasks.title, tasks.project_id'
-            )
-          }
-        }
-        return { meta: { changes: 0 } }
-      },
-    }
-  }
-
-  return {
-    _store: store,
-    _insertCount: () => insertCount,
-    prepare: (sql: string) => makeStmt(sql, []),
-    batch: async (stmts: any[]) => {
-      for (const s of stmts) await s.run()
-      return []
+/** Both serial name-identity SELECTs miss (the race window); INSERT attempts on tasks are counted. */
+function raceWindowD1() {
+  let titleSelects = 0
+  let taskInserts = 0
+  const base = d1Adapter(db, {
+    onExec: (sql) => { if (/^\s*INSERT INTO tasks\b/i.test(sql)) taskInserts++ },
+  })
+  const DB = {
+    ...base,
+    prepare(sql: string) {
+      const stmt = base.prepare(sql)
+      if (classifyTaskDedupSelect(sql) !== 'title') return stmt
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const wrap = (s: any): any => ({
+        ...s,
+        bind: (...v: unknown[]) => wrap(s.bind(...v)),
+        first: async () => {
+          titleSelects++
+          const real = await s.first()
+          // Selects 1 (home serial) and 2 (work serial) see the pre-race state;
+          // 3 is the work catch's re-query, which reads honestly.
+          return titleSelects <= 2 ? null : real
+        },
+      })
+      return wrap(stmt)
     },
   }
+  return { DB, taskInserts: () => taskInserts, titleSelects: () => titleSelects }
 }
 
 describe('partial index race backstop — concurrent dup INSERT (18:00:27 shape)', () => {
-  beforeEach(() => { _resetValidationFlagsCache() })
-
-  // Regression test for the 2026-05-03 18:00:27 incident:
-  // Both home + work machines pushed "Approve: MECHANIC: I18 — 0p+19t" near-
-  // simultaneously. Phase 2 serial dedup didn't catch it because both machines
-  // passed the SELECT check before either INSERT landed.
-  //
-  // With the partial index in place (2be4a01b) AND the race-loser catch (commit
-  // 1dfe81bf, 2026-07-02):
-  //   - The winner INSERT succeeds → row in store
-  //   - The loser INSERT hits the UNIQUE constraint → throws
-  //   - applyInsert's catch(e) re-queries by (title, project_id), finds the now-
-  //     committed winner, and returns the SAME adoptable accepted+canonical_id
-  //     response as the serial dedup path (reason: "deduped (race-loser): ...")
-  //
-  // This test DOCUMENTS the current behavior (the loser adopts the winner via
-  // alias, it does NOT dead-letter) and asserts the partial index still fires
-  // structurally (regression would be: both rows land as separate tasks).
+  // Regression test for the 2026-05-03 18:00:27 incident: both home + work
+  // pushed "Approve: MECHANIC: I18 — 0p+19t" near-simultaneously, and both
+  // passed the serial SELECT before either INSERT landed.
   it('test_partial_index_catches_concurrent_dup_insert_race: loser adopts winner via race-loser catch', async () => {
-    const db = makeRaceStubDB()
-    const { handleMutations } = await import('./mutations')
-
+    const { DB, taskInserts, titleSelects } = raceWindowD1()
     const title = 'Approve: MECHANIC: I18 — 0p+19t'
-    const fakeEnv = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
+    const WINNER = 'task_01KQQ1SRTWBWREJY0SHPTE5RPJ'  // actual winner PK from incident
+    const LOSER = 'task_01KQQ1SRTWBWREJY0SHPTE5RXX'   // loser PK (alias candidate)
 
-    // Machine-home (winner) mutation — arrives first
-    const mutHome: Mutation = {
-      mutation_id: 'mut_race_home_0001',
-      origin_machine: 'home',
-      table: 'tasks',
-      op: 'insert',
-      record_id: 'task_01KQQ1SRTWBWREJY0SHPTE5RPJ',  // actual winner PK from incident
-      base_seq: null,
-      base_row_hash: null,
-      payload: {
-        title,
-        project_id: null,
-        status: 'todo',
-        priority: 'medium',
-        assignee: 'nick-ingraham',
-        created_at: '2026-05-03T18:00:27.000Z',
-      },
-      client_ts: '2026-05-03T18:00:27.000Z',
-      issued_at: '2026-05-03T18:00:27.000Z',
-    }
+    const home = await post(DB, insertMut(WINNER, 'mut_race_home_0001', { title, created_at: '2026-05-03T18:00:27.000Z' }, 'home'))
+    expect(home.status).toBe('accepted')
+    expect(home.reason ?? '').not.toContain('error')
+    expect(has(WINNER)).toBe(true)
 
-    // Machine-work (loser) mutation — same title, different record_id
-    const mutWork: Mutation = {
-      mutation_id: 'mut_race_work_0001',
-      origin_machine: 'work',
-      table: 'tasks',
-      op: 'insert',
-      record_id: 'task_01KQQ1SRTWBWREJY0SHPTE5RXX',  // loser PK (alias candidate)
-      base_seq: null,
-      base_row_hash: null,
-      payload: {
-        title,
-        project_id: null,
-        status: 'todo',
-        priority: 'medium',
-        assignee: 'nick-ingraham',
-        created_at: '2026-05-03T18:00:27.100Z',
-      },
-      client_ts: '2026-05-03T18:00:27.100Z',
-      issued_at: '2026-05-03T18:00:27.100Z',
-    }
+    const work = await post(DB, insertMut(LOSER, 'mut_race_work_0001', { title, created_at: '2026-05-03T18:00:27.100Z' }, 'work'))
 
-    // Winner request
-    const reqHome = new Request('https://example.com/api/mutations', {
-      method: 'POST',
-      body: JSON.stringify({ mutations: [mutHome] }),
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
-    })
-    const respHome = await handleMutations(reqHome, fakeUser, fakeEnv)
-    const bodyHome = await respHome.json() as { results: Array<{ status: string; reason?: string }> }
+    // The index fired (INSERT threw), but the race-loser catch re-queried and
+    // adopted the winner: status='accepted', not 'error'. A regression to
+    // 'error' means the catch stopped finding the winner -- back to
+    // dead-lettering the loser.
+    expect(work.status).toBe('accepted')
+    expect(work.reason).toContain('race-loser')
+    expect(work.reason).toContain(WINNER)
+    // canonical_id is gated on hub_dedup_adoptable, which this database does
+    // not seed (OFF); the winner still comes back as the canonical payload.
+    expect(work.canonical_payload?.id).toBe(WINNER)
 
-    // Winner: succeeds
-    expect(bodyHome.results[0].status).toBe('accepted')
-    expect(bodyHome.results[0].reason ?? '').not.toContain('error')
-    expect(db._store.has('task_01KQQ1SRTWBWREJY0SHPTE5RPJ')).toBe(true)
+    // The duplicate was NOT inserted as a separate row.
+    expect(idsTitled(title)).toEqual([WINNER])
+    expect(receiptOf(db, 'mut_race_work_0001')?.outcome).toBe('accepted')
 
-    // Loser request — partial index fires on INSERT
-    const reqWork = new Request('https://example.com/api/mutations', {
-      method: 'POST',
-      body: JSON.stringify({ mutations: [mutWork] }),
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
-    })
-    const respWork = await handleMutations(reqWork, fakeUser, fakeEnv)
-    const bodyWork = await respWork.json() as { results: Array<{ status: string; reason?: string; canonical_id?: string }> }
-
-    // Partial index fired (INSERT threw), but the race-loser catch re-queried
-    // and adopted the winner: status='accepted', not 'error'.
-    // If this regresses to status='error', the catch's re-query stopped
-    // finding the winner (or was removed) — back to dead-lettering the loser.
-    expect(bodyWork.results[0].status).toBe('accepted')
-    expect(bodyWork.results[0].reason).toContain('race-loser')
-    expect(bodyWork.results[0].reason).toContain('task_01KQQ1SRTWBWREJY0SHPTE5RPJ')
-    expect(bodyWork.results[0].canonical_id).toBe('task_01KQQ1SRTWBWREJY0SHPTE5RPJ')
-
-    // The duplicate was NOT inserted as a separate row — only the winner row exists
-    expect(db._store.has('task_01KQQ1SRTWBWREJY0SHPTE5RXX')).toBe(false)
-
-    // Verify index count: both SERIAL SELECTs saw empty state (race window),
-    // both attempted INSERT — proves the serial dedup didn't catch this, only
-    // the structural partial index + catch backstop did.
-    expect(db._insertCount()).toBe(2)
+    // Both serial SELECTs saw the empty state and both INSERTs were attempted:
+    // only the structural index + catch caught this, not the serial dedup.
+    expect(taskInserts()).toBe(2)
+    expect(titleSelects()).toBe(3)
   })
 
-  it('regression proof: without the index both concurrent inserts would succeed', async () => {
-    // A stub DB where the second INSERT does NOT throw (index absent).
-    // Both inserts succeed → store has two rows with same (title, project_id).
-    // This demonstrates what happened at 18:00:27 before 2be4a01b.
-    const store: Map<string, Record<string, unknown>> = new Map()
-    const noIndexDB = {
-      _store: store,
-      prepare: (sql: string) => {
-        const makeNoIndexStmt = (s: string, vals: unknown[]): any => ({
-          bind: (...more: unknown[]) => makeNoIndexStmt(s, [...vals, ...more]),
-          first: async <T>() => {
-            const upper = s.trim().toUpperCase()
-            if (classifyTaskDedupSelect(s) === 'title') {
-              return null as T | null  // race: both see empty
-            }
-            if (upper.includes('PROCESSED_MUTATIONS')) return null as T | null
-            return (store.get(vals[0] as string) ?? null) as T | null
-          },
-          all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
-          run: async () => {
-            const upper = s.trim().toUpperCase()
-            if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) return { meta: { changes: 1 } }
-            if (upper.startsWith('INSERT INTO TASKS')) {
-              const id = vals[0] as string
-              // No index: silently accept both inserts
-              store.set(id, {
-                id, title: vals[3], project_id: vals[2] ?? null,
-                status: vals[10] ?? 'todo', deleted_at: null, seq: 1,
-              })
-              return { meta: { changes: 1 } }
-            }
-            return { meta: { changes: 0 } }
-          },
-        })
-        return makeNoIndexStmt(sql, [])
-      },
-      batch: async (stmts: any[]) => { for (const s of stmts) await s.run(); return [] },
-    }
-
-    const { handleMutations } = await import('./mutations')
+  it('the migrated index itself refuses the second open row (what made the race structural)', () => {
+    // Replaces the first cut's "without the index both inserts succeed" proof,
+    // which exercised only its own index-less stub. Drop the index from the
+    // migration chain and this fails.
     const title = 'Approve: MECHANIC: I18 — 0p+19t'
-    const fakeEnvNoIndex = { DB: noIndexDB, PB_API_KEY: TEST_API_KEY } as unknown as Env
-
-    for (const [origin, id] of [['home', 'task_winner_noindex'], ['work', 'task_loser_noindex']] as const) {
-      const mut: Mutation = {
-        mutation_id: `mut_race_noidx_${origin}`,
-        origin_machine: origin,
-        table: 'tasks',
-        op: 'insert',
-        record_id: id,
-        base_seq: null,
-        base_row_hash: null,
-        payload: { title, project_id: null, status: 'todo', priority: 'medium', assignee: 'nick-ingraham', created_at: nowInstant() },
-        client_ts: nowInstant(),
-        issued_at: nowInstant(),
-      }
-      const req = new Request('https://example.com/api/mutations', {
-        method: 'POST',
-        body: JSON.stringify({ mutations: [mut] }),
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
-      })
-      await handleMutations(req, fakeUser, fakeEnvNoIndex)
-    }
-
-    // Without the index: both rows land → this is the pre-2be4a01b dup state
-    expect(noIndexDB._store.has('task_winner_noindex')).toBe(true)
-    expect(noIndexDB._store.has('task_loser_noindex')).toBe(true)
-
-    // With the index (first test above), only winner lands.
-    // This test exists to make the regression explicit:
-    // drop 2be4a01b's index → this test passes, the race test above fails.
+    seedTask({ id: 'task_winner_ix', title })
+    expect(() => seedTask({ id: 'task_loser_ix', title })).toThrow(/UNIQUE constraint failed/)
+    expect(idsTitled(title)).toEqual(['task_winner_ix'])
   })
 })
 
@@ -681,276 +228,67 @@ describe('partial index race backstop — concurrent dup INSERT (18:00:27 shape)
 // Nick decision 2026-05-04: same title+assignee but DIFFERENT project = NOT a
 // duplicate. This block verifies the fix: project_id added to the dedup query.
 
-function makeMobileEnv() {
-  // Minimal in-memory store for handleMobileTasksToHub tests.
-  // Tracks tasks by id; supports INSERT (pre-seed + creation) and SELECT dedup.
-  const store: Map<string, Record<string, unknown>> = new Map()
-  let lastInsertedId: string | null = null
+const mobileUser = { id: 'u_test', email: 'test@example.com', role: 'admin', name: 'Test' } as unknown as AuthUser
 
-  function makeStmt(sql: string, boundVals: unknown[]): any {
-    return {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-
-      first: async <T>() => {
-        const upper = sql.trim().toUpperCase()
-
-        // Dedup SELECT for handleMobileTasksToHub (#523 2026-07-07: assignee
-        // dropped from the key — it never protected anything, since
-        // applyInsert's own (title, project_id) I18 rule below doesn't scope
-        // by assignee either. Shapes: pre-project-id (Phase 1.4, no longer
-        // live), post-project-id-pre-#523 (had ASSIGNEE =), post-#523 (this one).
-        // (#530b: the central rule folds the title too now, so this matcher
-        // can no longer key on LOWER(TRIM(TITLE)) -- it would swallow the
-        // central SELECT and answer it with the mobile predicate.)
-        if (classifyTaskDedupSelect(sql) === 'mobile') {
-          const title = (boundVals[0] as string).toLowerCase().trim()
-          // project_id is boundVals[1] and boundVals[2] (assignee bind dropped #523)
-          const projectId = boundVals.length >= 3 ? (boundVals[1] as string | null) : undefined
-
-          for (const row of store.values()) {
-            const rowTitle = ((row.title as string) ?? '').toLowerCase().trim()
-            const rowCompleted = row.completed as number
-            const rowDeletedAt = row.deleted_at
-
-            if (rowTitle !== title) continue
-            if (rowCompleted !== 0) continue
-            if (rowDeletedAt) continue
-
-            // If project_id is present in the query (post-fix), check it
-            if (projectId !== undefined) {
-              const rowProjectId = (row.project_id ?? null) as string | null
-              const queryProjectId = projectId === undefined ? null : (projectId ?? null)
-              if (rowProjectId !== queryProjectId) continue
-            }
-
-            return { id: row.id } as T
-          }
-          return null as T | null
-        }
-
-        // applyInsert's central I18 (title, project_id) dedup — fires INSIDE
-        // applyMutation for any row the pre-check above missed (#523
-        // fallthrough coverage). Mirrors makeStubDB's matcher.
-        if (classifyTaskDedupSelect(sql) === 'title') {
-          const title = boundVals[0] as string
-          const projectId = (boundVals[1] === undefined ? null : boundVals[1]) as string | null
-          for (const row of store.values()) {
-            if (
-              row.title === title &&
-              (row.project_id ?? null) === projectId &&
-              !row.deleted_at &&
-              row.status !== 'done'
-            ) {
-              return { id: row.id } as T
-            }
-          }
-          return null as T | null
-        }
-
-        // getValidationFlags: SELECT key, value FROM lab_settings WHERE key IN (...)
-        // Returns nothing → all flags OFF, matching the "null → OFF" convention
-        // used elsewhere in this file. canonical_id (flag-gated) isn't needed —
-        // the fix reads canonical_payload.id, which is unconditional.
-        if (upper.includes('LAB_SETTINGS')) {
-          return null as T | null
-        }
-
-        // Project resolution query: SELECT id, slug FROM projects WHERE id = ? OR slug = ?
-        if (upper.includes('FROM PROJECTS') && upper.includes('SLUG')) {
-          const ref = boundVals[0] as string
-          // Return the ref as-is (treat project_id as already resolved)
-          return { id: ref, slug: ref } as T
-        }
-
-        return null as T | null
-      },
-
-      run: async () => {
-        const upper = sql.trim().toUpperCase()
-        if (upper.startsWith('INSERT INTO TASKS')) {
-          // handleMobileTasksToHub INSERT column order:
-          // id, title, description, assignee, assigned_by, project_id, due_date,
-          // deadline, priority, status, source, completed, completed_at,
-          // notes, effort, short_title, source_thread_id, related_message_ids
-          const id = boundVals[0] as string
-          store.set(id, {
-            id,
-            title: boundVals[1],
-            assignee: boundVals[3],
-            project_id: boundVals[5] ?? null,
-            status: boundVals[9],
-            completed: boundVals[11],
-            deleted_at: null,
-          })
-          lastInsertedId = id
-          return { meta: { changes: 1 } }
-        }
-        // activity_log INSERT — silently accept
-        if (upper.startsWith('INSERT INTO ACTIVITY_LOG')) {
-          return { meta: { changes: 1 } }
-        }
-        return { meta: { changes: 0 } }
-      },
-
-      all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
-    }
-  }
-
-  const db = {
-    _store: store,
-    _lastInsertedId: () => lastInsertedId,
-    prepare: (sql: string) => makeStmt(sql, []),
-    batch: async (stmts: any[]) => { for (const s of stmts) await s.run(); return [] },
-  }
-
-  // Env stub — also provides a no-op ACTIVITY_LOG path
-  const env = {
-    DB: db,
-  }
-
-  // Helper: pre-seed a task directly into the store
-  function seedTask(row: Record<string, unknown>) {
-    store.set(row.id as string, { deleted_at: null, completed: 0, ...row })
-  }
-
-  return { env, seedTask, store }
+async function mobile(tasks: unknown[]) {
+  const { handleMobileTasksToHub } = await import('./tasks')
+  const req = new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
+    body: JSON.stringify({ tasks }),
+  })
+  const response = await handleMobileTasksToHub(req, mobileUser, { DB: d1Adapter(db) } as unknown as Env)
+  return (await response.json() as { data: { deduped: number; created: number; id_map: Record<string, string> } }).data
 }
 
-const mobileUser = { id: 'u_test', email: 'test@example.com', role: 'admin', name: 'Test' } as unknown as import('../helpers').AuthUser
-
 describe('Phase 1.4 — mobile dedup includes project_id', () => {
+  beforeEach(() => { for (const p of ['proj_A', 'proj_B', 'proj_C', 'proj_D']) seedProject(p) })
+
   it('different project_id with same title+assignee creates two rows', async () => {
-    const { env, seedTask, store } = makeMobileEnv()
+    seedTask({ id: 'task_existing', title: 'shared title', project_id: 'proj_A' })
 
-    // Pre-seed: task in project A
-    seedTask({
-      id: 'task_existing',
-      title: 'shared title',
-      assignee: 'nick-ingraham',
-      project_id: 'proj_A',
-      status: 'todo',
-      completed: 0,
-    })
-
-    const { handleMobileTasksToHub } = await import('./tasks')
-
-    const req = new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
-      body: JSON.stringify({
-        tasks: [{
-          id: 'mobile_xyz',
-          title: 'shared title',
-          assignee: 'nick-ingraham',
-          project_id: 'proj_B',  // DIFFERENT project
-        }],
-      }),
-    })
-
-    const response = await handleMobileTasksToHub(req, mobileUser, env as any)
-    const body = await response.json() as { data: { deduped: number; created: number; id_map: Record<string, string> } }
+    const data = await mobile([{ id: 'mobile_xyz', title: 'shared title', assignee: 'nick-ingraham', project_id: 'proj_B' }])
 
     // Should NOT dedup; should create new task
-    expect(body.data.deduped).toBe(0)
-    expect(body.data.created).toBe(1)
-    expect(body.data.id_map['mobile_xyz']).not.toBe('task_existing')
-    // New task should exist in store
-    expect(store.has(body.data.id_map['mobile_xyz'])).toBe(true)
+    expect(data.deduped).toBe(0)
+    expect(data.created).toBe(1)
+    expect(data.id_map['mobile_xyz']).not.toBe('task_existing')
+    expect(db.prepare('SELECT project_id FROM tasks WHERE id = ?').get(data.id_map['mobile_xyz'])).toEqual({ project_id: 'proj_B' })
+    expect(idsTitled('shared title')).toHaveLength(2)
   })
 
   it('same title+assignee+project_id deduplicates', async () => {
-    const { env, seedTask } = makeMobileEnv()
+    seedTask({ id: 'task_existing2', title: 'dup title', project_id: 'proj_C' })
 
-    seedTask({
-      id: 'task_existing2',
-      title: 'dup title',
-      assignee: 'nick-ingraham',
-      project_id: 'proj_C',
-      status: 'todo',
-      completed: 0,
-    })
+    const data = await mobile([{ id: 'mobile_dup', title: 'dup title', assignee: 'nick-ingraham', project_id: 'proj_C' }])
 
-    const { handleMobileTasksToHub } = await import('./tasks')
-
-    const req = new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
-      body: JSON.stringify({
-        tasks: [{ id: 'mobile_dup', title: 'dup title', assignee: 'nick-ingraham', project_id: 'proj_C' }],
-      }),
-    })
-
-    const response = await handleMobileTasksToHub(req, mobileUser, env as any)
-    const body = await response.json() as { data: { deduped: number; created: number; id_map: Record<string, string> } }
-
-    expect(body.data.deduped).toBe(1)
-    expect(body.data.id_map['mobile_dup']).toBe('task_existing2')
+    expect(data.deduped).toBe(1)
+    expect(data.id_map['mobile_dup']).toBe('task_existing2')
+    expect(idsTitled('dup title')).toEqual(['task_existing2'])
   })
 
   // #523 (2026-07-07): assignee dropped from the pre-check key — it never
   // actually protected anything (applyInsert's own (title, project_id) I18
-  // rule downstream doesn't scope by assignee either, so a cross-assignee
-  // same-title-project row would merge there regardless). This proves the
-  // pre-check now catches it directly instead of silently creating a second
-  // row that a moment later would have collided with I18 anyway.
+  // rule downstream doesn't scope by assignee either).
   it('different assignee, same title+project_id now deduplicates (#523)', async () => {
-    const { env, seedTask } = makeMobileEnv()
+    seedTask({ id: 'task_existing3', title: 'shared owner-agnostic title', assignee: 'claude-ai', project_id: 'proj_D' })
 
-    seedTask({
-      id: 'task_existing3',
-      title: 'shared owner-agnostic title',
-      assignee: 'someone-else',
-      project_id: 'proj_D',
-      status: 'todo',
-      completed: 0,
-    })
+    const data = await mobile([{ id: 'mobile_cross_assignee', title: 'shared owner-agnostic title', assignee: 'nick-ingraham', project_id: 'proj_D' }])
 
-    const { handleMobileTasksToHub } = await import('./tasks')
-
-    const req = new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
-      body: JSON.stringify({
-        tasks: [{ id: 'mobile_cross_assignee', title: 'shared owner-agnostic title', assignee: 'nick-ingraham', project_id: 'proj_D' }],
-      }),
-    })
-
-    const response = await handleMobileTasksToHub(req, mobileUser, env as any)
-    const body = await response.json() as { data: { deduped: number; created: number; id_map: Record<string, string> } }
-
-    expect(body.data.deduped).toBe(1)
-    expect(body.data.created).toBe(0)
-    expect(body.data.id_map['mobile_cross_assignee']).toBe('task_existing3')
+    expect(data.deduped).toBe(1)
+    expect(data.created).toBe(0)
+    expect(data.id_map['mobile_cross_assignee']).toBe('task_existing3')
   })
 
-  // #523: lower(trim()) normalization is KEPT — genuine tolerance for typed
-  // mobile input that applyInsert's central exact `title = ?` rule lacks.
+  // #523: lower(trim()) normalization is KEPT — genuine tolerance for typed mobile input.
   it('case + whitespace variant of an existing title still deduplicates', async () => {
-    const { env, seedTask } = makeMobileEnv()
+    seedTask({ id: 'task_existing4', title: 'Buy milk' })
 
-    seedTask({
-      id: 'task_existing4',
-      title: 'Buy milk',
-      assignee: 'nick-ingraham',
-      project_id: null,
-      status: 'todo',
-      completed: 0,
-    })
+    const data = await mobile([{ id: 'mobile_case_variant', title: '  buy MILK  ', assignee: 'nick-ingraham' }])
 
-    const { handleMobileTasksToHub } = await import('./tasks')
-
-    const req = new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
-      body: JSON.stringify({
-        tasks: [{ id: 'mobile_case_variant', title: '  buy MILK  ', assignee: 'nick-ingraham' }],
-      }),
-    })
-
-    const response = await handleMobileTasksToHub(req, mobileUser, env as any)
-    const body = await response.json() as { data: { deduped: number; id_map: Record<string, string> } }
-
-    expect(body.data.deduped).toBe(1)
-    expect(body.data.id_map['mobile_case_variant']).toBe('task_existing4')
+    expect(data.deduped).toBe(1)
+    expect(data.id_map['mobile_case_variant']).toBe('task_existing4')
+    // No second row under the typed spelling either.
+    expect(db.prepare("SELECT id FROM tasks WHERE lower(trim(title)) = 'buy milk'").all()).toEqual([{ id: 'task_existing4' }])
   })
 })
