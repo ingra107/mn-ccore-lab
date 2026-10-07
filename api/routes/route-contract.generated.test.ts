@@ -156,11 +156,15 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   never showed a draft.
     // 270 as of 2026-10-05 — Prep seeds attendees from the calendar (+1, PB #2225):
     //   POST /api/meetings/prep-from-event — { uid, start_at, day }.
+    // 267 as of 2026-10-07 — the PB relay web UI retired (-3): GET and POST
+    //   /api/pb/relay, POST /api/pb/relay/:index/complete. Their only client,
+    //   RelayCard, lost its page in the 2026-06-10 PB Sector retirement; PB had
+    //   no caller.
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(270)
+    expect(ROUTE_REGISTRY).toHaveLength(267)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

@@ -306,18 +306,6 @@
     "sample": "padding: 4px → var(--sp-xs)"
   },
   {
-    "file": "src/components/pb-sector/TodayView.tsx",
-    "line": 365,
-    "kind": "spacing-px-literal",
-    "sample": "marginLeft: 4px → var(--sp-xs)"
-  },
-  {
-    "file": "src/components/pb-sector/TodayView.tsx",
-    "line": 413,
-    "kind": "spacing-px-literal",
-    "sample": "paddingLeft: 4px → var(--sp-xs)"
-  },
-  {
     "file": "src/components/PresenceAvatars.tsx",
     "line": 71,
     "kind": "spacing-px-literal",
@@ -352,12 +340,6 @@
     "line": 466,
     "kind": "spacing-px-literal",
     "sample": "marginLeft: 8px → var(--sp-sm)"
-  },
-  {
-    "file": "src/components/ProjectUpdateFeed.tsx",
-    "line": 91,
-    "kind": "spacing-px-literal",
-    "sample": "marginTop: 4px → var(--sp-xs)"
   },
   {
     "file": "src/components/PublicationLibrary.tsx",
@@ -606,18 +588,6 @@
     "sample": "paddingRight: 12px → var(--sp-md)"
   },
   {
-    "file": "src/components/tasks/TaskQuickEditChips.tsx",
-    "line": 97,
-    "kind": "spacing-px-literal",
-    "sample": "gap: 4px → var(--sp-xs)"
-  },
-  {
-    "file": "src/components/tasks/TaskQuickEditChips.tsx",
-    "line": 280,
-    "kind": "spacing-px-literal",
-    "sample": "gap: 4px → var(--sp-xs)"
-  },
-  {
     "file": "src/components/tasks/TaskRow.tsx",
     "line": 112,
     "kind": "radius-px-literal",
@@ -664,18 +634,6 @@
     "line": 68,
     "kind": "radius-px-literal",
     "sample": "borderRadius: 4px → var(--radius-sm)"
-  },
-  {
-    "file": "src/components/today/OverlapBand.tsx",
-    "line": 53,
-    "kind": "radius-px-literal",
-    "sample": "borderRadius: 8px → var(--radius-lg)"
-  },
-  {
-    "file": "src/components/today/OverlapBand.tsx",
-    "line": 99,
-    "kind": "spacing-px-literal",
-    "sample": "marginTop: 4px → var(--sp-xs)"
   },
   {
     "file": "src/components/today/PillStrip.tsx",
@@ -826,24 +784,6 @@
     "line": 49,
     "kind": "spacing-px-literal",
     "sample": "gap: 8px → var(--sp-sm)"
-  },
-  {
-    "file": "src/components/today/RightNowCard.tsx",
-    "line": 22,
-    "kind": "radius-px-literal",
-    "sample": "borderRadius: 8px → var(--radius-lg)"
-  },
-  {
-    "file": "src/components/today/RightNowCard.tsx",
-    "line": 68,
-    "kind": "spacing-px-literal",
-    "sample": "marginBottom: 8px → var(--sp-sm)"
-  },
-  {
-    "file": "src/components/today/RightNowCard.tsx",
-    "line": 71,
-    "kind": "spacing-px-literal",
-    "sample": "marginTop: 4px → var(--sp-xs)"
   },
   {
     "file": "src/components/today/TaskDetailDrawer.tsx",
@@ -1720,12 +1660,6 @@
     "line": 984,
     "kind": "spacing-px-literal",
     "sample": "marginBottom: 4px → var(--sp-xs)"
-  },
-  {
-    "file": "src/pages/portal/MyTasks.tsx",
-    "line": 659,
-    "kind": "spacing-px-literal",
-    "sample": "gap: 8px → var(--sp-sm)"
   },
   {
     "file": "src/pages/portal/NarrativesPage.tsx",

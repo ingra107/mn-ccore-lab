@@ -509,20 +509,6 @@ test.describe('UX — Task view modes', () => {
     await page.screenshot({ path: 'review/ux-board-view.png' })
   })
 
-  test('UX: Timeline view renders Gantt chart', async ({ page }) => {
-    await loadPage(page, P.myTasks)
-    // Open ViewDropdown and select Timeline
-    const trigger = page.locator('button:has-text("More views")').first()
-    if (await trigger.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await trigger.click()
-      await page.waitForTimeout(200)
-      await page.locator('text=Timeline').last().click().catch(() => {})
-    }
-    const hasTimeline = await page.locator('text=TODAY').isVisible({ timeout: 3000 }).catch(() => false)
-    console.log(`Timeline view TODAY marker visible: ${hasTimeline}`)
-    await page.screenshot({ path: 'review/ux-timeline-view.png' })
-  })
-
   test('UX: By Person view shows team workload', async ({ page }) => {
     await loadPage(page, P.myTasks)
     // Open ViewDropdown and select By Person

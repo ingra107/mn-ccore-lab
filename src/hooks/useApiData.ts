@@ -1409,34 +1409,6 @@ export function useNarratives() {
   })
 }
 
-// ── PB Sector (dispatch queue — Hermes lane) ───────────────
-
-export function useDispatchPending() {
-  return useQuery({
-    queryKey: ['dispatch-pending'],
-    queryFn: async () => {
-      const data = await fetchJson<{ data?: unknown[]; count?: number }>('/api/pb/dispatch/pending')
-      return { items: data.data || [], count: data.count || 0 }
-    },
-    staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
-  })
-}
-
-// ── TODAY.md ────────────────────────────────────────────────
-
-export function useTodayMd() {
-  return useQuery({
-    queryKey: ['today-md'],
-    queryFn: async () => {
-      const data = await fetchJson<{ data?: { content?: string } }>('/api/pb/today')
-      return data.data?.content || ''
-    },
-    staleTime: 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
-  })
-}
-
 // ── Revision tracker ────────────────────────────────────────
 
 export function useRevisions(projectId: string) {

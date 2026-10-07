@@ -6,16 +6,7 @@ import type { Publication } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import AuthorColumn from './AuthorColumn'
-
-const TOPIC_DISPLAY: Record<string, string> = {
-  clif: 'CLIF',
-  covid: 'COVID-19',
-  ventilation: 'Ventilation',
-  'decision-making': 'Decision-Making',
-  quality: 'Quality',
-  sepsis: 'Sepsis',
-  disparities: 'Disparities',
-}
+import { topicLabel } from '../lib/topics'
 
 const TOPIC_COLORS: Record<string, { bg: string; color: string; darkBg: string; darkColor: string }> = {
   clif: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', darkBg: 'rgba(96, 165, 250, 0.15)', darkColor: '#60a5fa' },
@@ -56,10 +47,6 @@ const clifMembers = [
   'Chhikara K', 'Chaudhari V', 'Lyons PG', 'Gao CA', 'Buell KG',
   'Barker AK', 'Amagai S', 'Nour M',
 ]
-
-function topicLabel(topic: string): string {
-  return TOPIC_DISPLAY[topic] ?? topic.charAt(0).toUpperCase() + topic.slice(1)
-}
 
 function topicColor(topic: string, isDark: boolean) {
   const tc = TOPIC_COLORS[topic]

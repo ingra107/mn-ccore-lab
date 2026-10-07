@@ -70,7 +70,6 @@ import { handleGetSessions } from './routes/sessions';
 import { handleLane3List } from './routes/lane3';
 import { handleGetTodayMd } from './routes/pb-today'; // POST /api/pb/today retired 2026-05-05 (5.9)
 import { handlePBHealth } from './routes/pb-health';
-import { handleGetRelay, handleCreateRelay, handleCompleteRelay } from './routes/pb-relay';
 import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleGetActiveRevisions, handleAttentionManuscripts } from './routes/revisions';
 import { handleGetMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone, handleCompleteMenteeMilestone } from './routes/mentee-milestones';
 import { handleGetCascade, handleGetImpact, handleGetAllCascades, handleCreateDeadlineDependency, handleDeleteDeadlineDependency } from './routes/deadline-cascade';
@@ -584,14 +583,6 @@ defineRoute({
   entity: 'pb',
   visibility: 'na',
   handler: (c) => handlePBHealth(E(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/pb/relay',
-  auth: 'pi',
-  entity: 'pb',
-  visibility: 'na',
-  handler: (c) => handleGetRelay(E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2820,30 +2811,6 @@ defineRoute({
   handler: (c) => handleBulkCreatePBSessions(R(c), USER(c), E(c)),
 });
 // POST /api/pb/today retired 2026-05-05 (5.9): 0 callers; GET preserved for frontend use
-defineRoute({
-  method: 'POST',
-  path: '/api/pb/relay',
-  auth: 'pi',
-  entity: 'pb',
-  visibility: 'na',
-  handler: (c) => handleCreateRelay(R(c), USER(c), E(c)),
-});
-// Relay completion uses a numeric index in the path — Hono matches :index
-// against one URL segment. Original regex was /^\/api\/pb\/relay\/\d+\/complete$/;
-// we rely on `parseInt` + NaN guard since a non-digit segment would have fallen
-// through to 404 in the original anyway.
-defineRoute({
-  method: 'POST',
-  path: '/api/pb/relay/:index/complete',
-  auth: 'pi',
-  entity: 'pb',
-  visibility: 'na',
-  handler: (c) => {
-  const index = parseInt(c.req.param('index'), 10);
-  if (Number.isNaN(index)) return error('Not found', 404);
-  return handleCompleteRelay(R(c), E(c), index);
-},
-});
 
 // Impact check — route removed 2026-05-05 (5.3b); handleCheckImpact used internally by cron at line 1269
 

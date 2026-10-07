@@ -1434,15 +1434,6 @@
       "covered": true
     },
     {
-      "id": "click-timeline-view",
-      "component": "src/components/tasks/TaskTimelineView.tsx",
-      "type": "click",
-      "description": "Switch to Timeline view shows Gantt chart",
-      "test_file": "tests/inspection.spec.ts",
-      "test_name": "UX: Timeline view renders Gantt chart",
-      "covered": true
-    },
-    {
       "id": "click-byperson-view",
       "component": "src/components/tasks/TaskGridView.tsx",
       "type": "click",
@@ -2856,15 +2847,6 @@
       "covered": false
     },
     {
-      "id": "api-get-pb-relay",
-      "component": "api/routes/pb-relay.ts",
-      "type": "api",
-      "description": "GET /api/pb/relay — relay messages",
-      "test_file": null,
-      "test_name": null,
-      "covered": false
-    },
-    {
       "id": "api-get-pb-dispatch-pending",
       "component": "api/routes/pb-sector.ts",
       "type": "api",
@@ -3262,7 +3244,6 @@
     "api-get-pi-analytics",
     "api-get-proactive-brief",
     "api-get-file-activity",
-    "api-get-pb-relay",
     "api-get-pb-dispatch-pending",
     "api-post-digest-status",
     "api-post-revisions-create",

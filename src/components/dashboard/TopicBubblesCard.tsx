@@ -3,16 +3,7 @@ import { Tags } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { usePublications } from '../../hooks/useApiData'
 import { useDashboardMounted } from './dashboardMounted'
-
-const TOPIC_DISPLAY: Record<string, string> = {
-  clif: 'CLIF',
-  covid: 'COVID-19',
-  ventilation: 'Ventilation',
-  'decision-making': 'Decision-Making',
-  quality: 'Quality',
-  sepsis: 'Sepsis',
-  disparities: 'Disparities',
-}
+import { topicLabel } from '../../lib/topics'
 
 const TOPIC_BUBBLE_COLORS: Record<string, string> = {
   clif: '#3b82f6',
@@ -138,7 +129,7 @@ function TopicBubblesCard() {
 
     const data: BubbleData[] = Object.entries(topicCounts).map(([topic, count]) => ({
       topic,
-      label: TOPIC_DISPLAY[topic] ?? topic.charAt(0).toUpperCase() + topic.slice(1),
+      label: topicLabel(topic),
       count,
       color: TOPIC_BUBBLE_COLORS[topic] ?? '#c9a84c',
       radius: 14 + (count / maxCount) * 26,

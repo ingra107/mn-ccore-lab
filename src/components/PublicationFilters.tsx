@@ -3,20 +3,7 @@ import { X } from 'lucide-react'
 import type { Publication } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
-
-const TOPIC_DISPLAY: Record<string, string> = {
-  clif: 'CLIF',
-  covid: 'COVID-19',
-  ventilation: 'Ventilation',
-  'decision-making': 'Decision-Making',
-  quality: 'Quality',
-  sepsis: 'Sepsis',
-  disparities: 'Disparities',
-}
-
-function topicLabel(topic: string): string {
-  return TOPIC_DISPLAY[topic] ?? topic.charAt(0).toUpperCase() + topic.slice(1)
-}
+import { topicLabel } from '../lib/topics'
 
 interface PublicationFiltersProps {
   publications: Publication[]

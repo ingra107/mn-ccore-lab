@@ -27,16 +27,7 @@ import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { QueryErrorNote } from '../components/QueryErrorNote'
-
-const TOPIC_DISPLAY: Record<string, string> = {
-  clif: 'CLIF',
-  covid: 'COVID-19',
-  ventilation: 'Ventilation',
-  'decision-making': 'Decision-Making',
-  quality: 'Quality',
-  sepsis: 'Sepsis',
-  disparities: 'Disparities',
-}
+import { topicLabel } from '../lib/topics'
 
 const TOPIC_COLORS: Record<string, string> = {
   clif: '#3b82f6',
@@ -701,7 +692,7 @@ export default function MemberPage() {
                     fontWeight: 500,
                   }}
                 >
-                  {TOPIC_DISPLAY[topic] ?? topic}
+                  {topicLabel(topic)}
                   <span
                     className="text-xs opacity-60"
                   >
