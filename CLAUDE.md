@@ -125,7 +125,7 @@ A page is a "data page" if its primary content is a scrollable record list. Neve
 
 ### Shared Utilities
 - `src/lib/dateUtils.ts` — all date formatting
-- `src/lib/time.ts` — canonical time chokepoint (Increment 1A): `Instant`/`CivilDate` types, `nowInstant()` (UTC), `formatLocal()` (viewer-local display), `todayCivil()`. Discipline: store instants UTC, display viewer-local (browser zone = traveler-aware). Lint R20-R23 (`scripts/check-time-discipline.mjs`, **ENFORCE** — CI hard-fails on any new raw-date site) flags raw `new Date().toISOString()` / `.toISOString().split|slice`. Plan 1B (the ~139-site display migration to viewer-local) is **COMPLETE** (2026-05-25): all hits cleared, lint flipped WARN→ENFORCE. `dateUtils.ts` remains in use alongside `time.ts`.
+- `src/lib/time.ts` — canonical time chokepoint (Increment 1A): `Instant`/`CivilDate` types, `nowInstant()` (UTC), `formatLocal()` (viewer-local display), `todayCivil()`. Discipline: store instants UTC, display viewer-local (browser zone = traveler-aware). Lint R20/R21 (`local/time-discipline` in `eslint.config.js`, **ENFORCE** — an error at pre-commit and in the CI `lint` job, product and test files) flags raw `new Date().toISOString()` / `.toISOString().split|slice`; a reasoned exception is `// eslint-disable-next-line local/time-discipline -- <why>`. R22/R23 (Python) stay in PB. Plan 1B (the ~139-site display migration to viewer-local) is **COMPLETE** (2026-05-25): all hits cleared, lint flipped WARN→ENFORCE. `dateUtils.ts` remains in use alongside `time.ts`.
 - `src/data/team.ts:getPersonInfo()` — team member lookup
 - `formatBrandName()` from `BrandName.tsx` — any text that might contain "MNCCORE"
 

@@ -464,7 +464,8 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: python3 scripts/check-project-identity-gate.py
 
-      # Time-discipline lint (R20/R21) MOVED to vitest.yml + .githooks/pre-commit
-      # on 2026-09-20: a source-only lint on a nightly prod-schema job fired as a
-      # mislabelled "schema drift" failure 12+ hours after the commit that
-      # introduced the hit. It now fails the push/PR gate that owns src/ + api/.
+      # Time-discipline lint (R20/R21) MOVED out of this job on 2026-09-20: a
+      # source-only lint on a nightly prod-schema job fired as a mislabelled
+      # "schema drift" failure 12+ hours after the commit that introduced the
+      # hit. Since 2026-10-07 it is the eslint rule `local/time-discipline`
+      # (eslint.config.js), run by .githooks/pre-commit and vitest.yml's lint job.

@@ -39,7 +39,7 @@ type Row = Record<string, unknown>
 
 const DAY_MS = 86400000
 /** A timestamp `deltaDays` from now, in SQLite's datetime('now') format. */
-// anti-pattern-allowed: a UTC INSTANT formatted like SQLite's datetime('now') (also UTC), not a civil day; the comparison it feeds is instant-vs-instant
+// eslint-disable-next-line local/time-discipline -- a UTC INSTANT formatted like SQLite's datetime('now') (also UTC), not a civil day; the comparison it feeds is instant-vs-instant
 const sqlTs = (deltaDays: number) => new Date(Date.now() + deltaDays * DAY_MS).toISOString().slice(0, 19).replace('T', ' ')
 
 let db: InstanceType<typeof Database>

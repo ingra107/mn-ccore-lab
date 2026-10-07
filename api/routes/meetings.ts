@@ -623,7 +623,7 @@ const CIVIL_DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 /** The civil day `days` after a YYYY-MM-DD, as YYYY-MM-DD (UTC arithmetic on a date-only value). */
 function shiftCivilDay(day: string, days: number): string {
   const [y, m, d] = day.split('-').map(Number);
-  // anti-pattern-allowed: R21 targets reading "today" from a UTC clock; this is pure arithmetic on a date-only input built with Date.UTC, so the UTC slice IS the civil day.
+  // eslint-disable-next-line local/time-discipline -- R21 targets reading "today" from a UTC clock; this is pure arithmetic on a date-only input built with Date.UTC, so the UTC slice IS the civil day.
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
 }
 

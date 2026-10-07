@@ -6,7 +6,7 @@
 // into a feed, a search result, a badge, a PB /process queue, or a health score
 // — silently, with no error anywhere. Rules do not prevent that class; an
 // executable check plus a shared predicate does (codex ethos #4; the repo
-// already does this for time discipline via check-time-discipline.mjs and for
+// already does this for time discipline via eslint's local/time-discipline and for
 // wrangler-d1 via the pre-commit hook).
 //
 // TWO ENUMERATIONS ALREADY UNDERCOUNTED THIS TABLE before the checker existed:

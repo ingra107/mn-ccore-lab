@@ -99,7 +99,7 @@ function previewOf(body: string): string {
 function shiftIsoDate(dateStr: string, days: number): string {
   const d = new Date(`${dateStr}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
-  // anti-pattern-allowed: pure UTC civil-date arithmetic anchored at T00:00:00Z (all-UTC ops, no local tz, no roll-tomorrow)
+  // eslint-disable-next-line local/time-discipline -- pure UTC civil-date arithmetic anchored at T00:00:00Z (all-UTC ops, no local tz, no roll-tomorrow)
   return d.toISOString().slice(0, 10);
 }
 
