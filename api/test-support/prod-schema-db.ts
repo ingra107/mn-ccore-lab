@@ -125,6 +125,27 @@ export function d1Adapter(db: InstanceType<typeof Database>, hooks: {
       throw new TypeError(`D1_TYPE_ERROR: Type 'undefined' not supported for value 'undefined' (bind position ${i + 1})`)
     }
   }
+  // D1 binds `?NNN` ordered parameters positionally: `.bind(a, b)` fills ?1
+  // and ?2, and one value may serve several `?1` sites
+  // (https://developers.cloudflare.com/d1/worker-api/prepared-statements/).
+  // better-sqlite3 treats `?NNN` as a NAMED parameter and refuses a positional
+  // list ("Too many parameter values were provided"), so pass it the same
+  // values keyed by their ordinal. api/lib/activity-entry.ts's Hermes
+  // transcript query is written this way (#8875).
+  // The bind count must equal the highest ordinal, so an extra or missing
+  // value throws here as a plain `?` list does. Limits: the scan is textual
+  // (a `?3` inside a string literal counts), and a statement mixing `?` with
+  // `?NNN` is not supported (none exists in api/).
+  const ORDERED_PARAM = /\?(\d+)/g
+  function engineArgs(sql: string, vals: unknown[]): unknown[] {
+    const ordinals = [...sql.matchAll(ORDERED_PARAM)].map((m) => Number(m[1]))
+    if (ordinals.length === 0) return vals
+    const max = Math.max(...ordinals)
+    if (vals.length !== max) {
+      throw new Error(`D1_ERROR: ${vals.length} values bound for ${max} ordered parameters: SQLITE_RANGE`)
+    }
+    return [Object.fromEntries(vals.map((v, i) => [i + 1, v]))]
+  }
   function exec(sql: string, vals: unknown[], mode: 'all' | 'run') {
     assertNoUndefined(vals)
     hooks.onExec?.(sql, vals)
@@ -134,8 +155,9 @@ export function d1Adapter(db: InstanceType<typeof Database>, hooks: {
     }
     try {
       const stmt = db.prepare(sql)
-      if (mode === 'all' && stmt.reader) return { results: stmt.all(...vals), success: true, meta: {} }
-      const info = stmt.run(...vals)
+      const args = engineArgs(sql, vals)
+      if (mode === 'all' && stmt.reader) return { results: stmt.all(...args), success: true, meta: {} }
+      const info = stmt.run(...args)
       return { results: [], success: true, meta: { changes: info.changes } }
     } catch (e) {
       if ((e as Error).message?.startsWith('D1_ERROR')) throw e

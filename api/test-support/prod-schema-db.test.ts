@@ -74,6 +74,28 @@ describe('prod-schema-db contract', () => {
       .rejects.toThrow(/^D1_ERROR: FOREIGN KEY constraint failed: SQLITE_CONSTRAINT \(extended: SQLITE_CONSTRAINT_FOREIGNKEY\)$/)
   })
 
+  // #8875: D1 binds `?NNN` ordered parameters positionally, one value serving
+  // every site of its ordinal; better-sqlite3 refuses a positional list for
+  // them. The Hermes transcript query (api/lib/activity-entry.ts) is written
+  // with ?1..?4, so without this every transcript read failed on the fixture.
+  it('binds ?NNN ordered parameters positionally, as D1 does, on first / all / run / batch', async () => {
+    const db = prodSchemaDb()
+    const d1 = d1Adapter(db)
+    insertRow(db, 'tasks', TASK)
+    insertRow(db, 'tasks', { ...TASK, id: 'task_c2', title: 'other' })
+    const sel = 'SELECT id FROM tasks WHERE (id = ?1 OR title = ?1) AND assignee = ?2 ORDER BY id'
+    expect(await d1.prepare(sel).bind('task_c1', 'nick').first()).toEqual({ id: 'task_c1' })
+    expect((await d1.prepare(sel).bind('other', 'nick').all()).results).toEqual([{ id: 'task_c2' }])
+    expect((await d1.prepare(sel).bind('task_c1', 'someone-else').all()).results).toEqual([])
+    // An extra or a missing value is refused, as a plain `?` list is.
+    await expect(d1.prepare(sel).bind('task_c1', 'nick', 'extra').all()).rejects.toThrow(/^D1_ERROR: 3 values bound for 2/)
+    await expect(d1.prepare(sel).bind('task_c1').first()).rejects.toThrow(/^D1_ERROR: 1 values bound for 2/)
+    await d1.prepare('UPDATE tasks SET title = ?2 WHERE id = ?1').bind('task_c1', 'renamed').run()
+    await d1.batch([d1.prepare('UPDATE tasks SET title = ?2 WHERE id = ?1').bind('task_c2', 'renamed2')])
+    expect((db.prepare('SELECT title FROM tasks ORDER BY id').all() as { title: string }[]).map((r) => r.title))
+      .toEqual(['renamed', 'renamed2'])
+  })
+
   // #8875 cold review: better-sqlite3 stores an `undefined` bind as NULL; D1
   // refuses it. The adapter must refuse it too, on every path, or a route that
   // forgets `?? null` is green here and broken in prod.

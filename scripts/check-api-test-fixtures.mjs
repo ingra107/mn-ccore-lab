@@ -89,18 +89,10 @@ export function classify(source) {
     .map(([k]) => k)
 }
 
-// Every file that matched when #8862 landed (2026-09-30). Reason first, then
-// what converting it needs. Delete an entry when its file stops matching.
-const UNCONVERTED = 'unconverted write-path fake: move onto prodSchemaDb()/d1Adapter and assert stored rows + receipts'
+// Every file that matched when #8862 landed (2026-09-30), less the ones since
+// moved onto the migrated fixture (#8875: the last eight 2026-10-06). Reason
+// first. Delete an entry when its file stops matching.
 export const EXCEPTIONS = new Map([
-  ['api/lib/activity-entry.test.ts', UNCONVERTED],
-  ['api/lib/artifact-link-mirror.test.ts', UNCONVERTED],
-  ['api/lib/field-authority.contract.test.ts', 'stub batch around a field-authority contract; convert with the mutation suites'],
-  ['api/routes/mutations.dependency-failed-recovery.test.ts', UNCONVERTED],
-  ['api/routes/mutations.fix7-integration.test.ts', UNCONVERTED],
-  ['api/routes/mutations.infra-error.test.ts', 'fault injection around the batch; d1Adapter failSql/beforeBatch hooks can carry it'],
-  ['api/routes/mutations.partial-batch.test.ts', 'fault injection around the batch; d1Adapter failSql/beforeBatch hooks can carry it'],
-  ['api/routes/mutations.tombstone-cascade.test.ts', UNCONVERTED],
   ['api/schema-v98-tasks-completion-triad-guard.test.ts', 'migration test: applies the v98 file to a pre-v98 table on purpose; the migrated fixture already carries the guard, so this subject cannot use it'],
 ])
 

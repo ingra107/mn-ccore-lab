@@ -9,161 +9,85 @@
  *   production path silently wrote a raw slug as project_id to D1.
  *
  * This file has NO vi.mock('./mutations') hoisting, so it calls the real applyInsert
- * end-to-end. The DB stub resolves a slug-form project_id to a canonical row;
- * the test asserts that the INSERT SQL receives the resolved value, not the raw slug.
+ * end-to-end.
+ *
+ * #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+ * The old stub answered every `FROM projects` SELECT with one canned row
+ * whatever its WHERE said, and the tests searched the INSERT's bind list for
+ * the resolved id. Here the project is a real row, resolution runs the real
+ * `id = ? OR slug = ?` lookup, and each test reads the stored task back.
+ * tasks.project_id carries no foreign key in the chain, so nothing below the
+ * route would refuse a raw slug: the stored-row assertions are the guard.
+ * (The stub also accepted a task with no assignee; tasks.assignee is
+ * NOT NULL, so the payloads now carry one, as PB's do.)
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
+import type Database from 'better-sqlite3'
 import { applyInsert } from './mutations'
 import type { AuthUser, Env } from '../helpers'
-
-// ── Stub DB that tracks INSERT bindings ──────────────────────────────────────
-
-interface StubDBOpts {
-  /** The project row returned for any SELECT FROM projects query */
-  projectRow?: { id: string; slug: string | null; category?: string | null } | null
-}
-
-function makeStubDB(opts: StubDBOpts = {}) {
-  const {
-    projectRow = { id: 'proj_canonical_uuid', slug: 'my-project-slug', category: 'MNCCORE' },
-  } = opts
-
-  // Capture INSERT bindings so we can assert what value landed in project_id
-  const insertBindings: unknown[][] = []
-
-  function makeStmt(sql: string, boundVals: unknown[]): ReturnType<typeof makeStmt> {
-    const self = {
-      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
-      first: async <T>() => {
-        const upper = sql.trim().toUpperCase()
-        // processed_mutations idempotency check — no prior entry
-        if (upper.includes('PROCESSED_MUTATIONS')) return null as T
-        // project lookup (projectRefToCanonical inside FK_SLUG_FIELDS loop)
-        if (upper.includes('FROM PROJECTS')) return projectRow as T
-        // task SELECT (applyInsert reads tasks WHERE id = ? after INSERT)
-        if (upper.includes('FROM TASKS')) return null as T
-        return null as T
-      },
-      all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
-      run: async () => {
-        const upper = sql.trim().toUpperCase()
-        if (upper.startsWith('INSERT INTO TASKS')) {
-          // Capture bound values for assertion
-          insertBindings.push([...boundVals])
-        }
-        if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) {
-          return { meta: { changes: 1 } }
-        }
-        return { meta: { changes: 1 } }
-      },
-    }
-    return self
-  }
-
-  return {
-    _insertBindings: insertBindings,
-    prepare: (sql: string) => makeStmt(sql, []),
-    batch: async () => [],
-  }
-}
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
 const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick' }
+
+let db: InstanceType<typeof Database>
+let env: Env
+beforeEach(() => {
+  db = prodSchemaDb()
+  env = { DB: d1Adapter(db) } as unknown as Env
+  insertRow(db, 'projects', { id: 'proj_canonical_uuid', slug: 'my-project-slug', title: 'Fix 7 project', category: 'MNCCORE' })
+  // A second project: resolution must return the row the ref names, not
+  // whichever project row comes first.
+  insertRow(db, 'projects', { id: 'proj_other', slug: 'other-slug', title: 'Other', category: 'MNCCORE' })
+})
+
+const storedTask = (id: string) =>
+  db.prepare('SELECT id, title, project_id FROM tasks WHERE id = ?').get(id) as
+    | { id: string; title: string; project_id: string | null }
+    | undefined
+
+function insertTask(taskId: string, mutationId: string, projectRef: string) {
+  return applyInsert(env, {
+    table: 'tasks',
+    op: 'insert',
+    origin_machine: 'home',
+    record_id: taskId,
+    mutation_id: mutationId,
+    base_seq: null,
+    base_row_hash: null,
+    payload: { title: `Fix 7 ${taskId}`, status: 'todo', assignee: 'nick-ingraham', project_id: projectRef },
+  } as Parameters<typeof applyInsert>[1], NICK)
+}
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('Fix 7 integration — applyInsert slug resolution (real applyInsert, no mock)', () => {
   it('resolves a slug-form project_id to canonical typed PK before INSERT (P2)', async () => {
     // P2: canonical = proj.id (typed PK), not slug. Caller passes slug; stored value must be the PK.
-    const db = makeStubDB({
-      projectRow: { id: 'proj_canonical_uuid', slug: 'my-project-slug', category: 'MNCCORE' },
-    })
-    const env = { DB: db } as unknown as Env
-
     const taskId = 'task_01integration_fix7_slug_0001'
-    const result = await applyInsert(env, {
-      table: 'tasks',
-      record_id: taskId,
-      mutation_id: 'mut_test_fix7_slug_0001',
-      payload: {
-        title: 'Fix 7 slug resolution test',
-        status: 'todo',
-        // Caller passes the raw slug — applyInsert must resolve to proj.id
-        project_id: 'my-project-slug',
-      },
-    }, NICK)
-
-    expect(result.status).toMatch(/^(accepted|merged_clean)$/)
-
-    // P2: canonical = proj.id ('proj_canonical_uuid'), not slug.
-    const insertArgs = db._insertBindings[0]
-    expect(insertArgs).toBeDefined()
-    const projectIdIdx = (insertArgs as unknown[]).indexOf('proj_canonical_uuid')
-    expect(projectIdIdx).toBeGreaterThanOrEqual(0)
-    // Slug must NOT appear in INSERT bindings (it was replaced by the typed PK)
-    const slugIdx = (insertArgs as unknown[]).indexOf('my-project-slug')
-    expect(slugIdx).toBe(-1)
+    const result = await insertTask(taskId, 'mut_test_fix7_slug_0001', 'my-project-slug')
+    expect(result.status).toBe('accepted')
+    expect(storedTask(taskId)).toEqual({ id: taskId, title: `Fix 7 ${taskId}`, project_id: 'proj_canonical_uuid' })
   })
 
-  it('resolves a UUID-form project_id to canonical typed PK before INSERT (P2)', async () => {
-    // Caller passes the UUID directly; proj.id = 'proj_canonical_uuid' is already canonical.
-    const db = makeStubDB({
-      projectRow: { id: 'proj_canonical_uuid', slug: 'my-project-slug', category: 'MNCCORE' },
-    })
-    const env = { DB: db } as unknown as Env
-
+  it('keeps a UUID-form project_id as the canonical typed PK (P2)', async () => {
     const taskId = 'task_01integration_fix7_uuid_0002'
-    const result = await applyInsert(env, {
-      table: 'tasks',
-      record_id: taskId,
-      mutation_id: 'mut_test_fix7_uuid_0002',
-      payload: {
-        title: 'Fix 7 UUID resolution test',
-        status: 'todo',
-        // Caller passes the typed PK directly — stored value is also the typed PK.
-        project_id: 'proj_canonical_uuid',
-      },
-    }, NICK)
+    const result = await insertTask(taskId, 'mut_test_fix7_uuid_0002', 'proj_canonical_uuid')
+    expect(result.status).toBe('accepted')
+    expect(storedTask(taskId)?.project_id).toBe('proj_canonical_uuid')
+  })
 
-    expect(result.status).toMatch(/^(accepted|merged_clean)$/)
-
-    // P2: canonical = proj.id ('proj_canonical_uuid') — UUID IS the canonical form.
-    const insertArgs = db._insertBindings[0]
-    expect(insertArgs).toBeDefined()
-    const resolvedIdx = (insertArgs as unknown[]).indexOf('proj_canonical_uuid')
-    expect(resolvedIdx).toBeGreaterThanOrEqual(0)
-    // Slug must NOT appear in INSERT bindings (proj.id was used, not slug)
-    const slugIdx = (insertArgs as unknown[]).indexOf('my-project-slug')
-    expect(slugIdx).toBe(-1)
+  it('resolves to the project the ref names, not to an arbitrary project row', async () => {
+    const taskId = 'task_01integration_fix7_other_0004'
+    expect((await insertTask(taskId, 'mut_test_fix7_other_0004', 'other-slug')).status).toBe('accepted')
+    expect(storedTask(taskId)?.project_id).toBe('proj_other')
   })
 
   it('sets project_id to null when project ref does not resolve', async () => {
-    // Unresolvable ref — projectRow = null means no row found
-    const db = makeStubDB({ projectRow: null })
-    const env = { DB: db } as unknown as Env
-
-    const taskId = 'task_01integration_fix7_null_0003'
-    const result = await applyInsert(env, {
-      table: 'tasks',
-      record_id: taskId,
-      mutation_id: 'mut_test_fix7_null_0003',
-      payload: {
-        title: 'Fix 7 unresolvable ref test',
-        status: 'todo',
-        project_id: 'nonexistent-slug',
-      },
-    }, NICK)
-
-    expect(result.status).toMatch(/^(accepted|merged_clean)$/)
-
     // Unresolvable refs become null (no reject — PB may push before project arrives)
-    const insertArgs = db._insertBindings[0]
-    expect(insertArgs).toBeDefined()
-    // 'nonexistent-slug' must NOT appear (was replaced by null)
-    const rawIdx = (insertArgs as unknown[]).indexOf('nonexistent-slug')
-    expect(rawIdx).toBe(-1)
-    // null must appear (the resolved value)
-    const nullIdx = (insertArgs as unknown[]).indexOf(null)
-    expect(nullIdx).toBeGreaterThanOrEqual(0)
+    const taskId = 'task_01integration_fix7_null_0003'
+    const result = await insertTask(taskId, 'mut_test_fix7_null_0003', 'nonexistent-slug')
+    expect(result.status).toBe('accepted')
+    expect(storedTask(taskId)).toEqual({ id: taskId, title: `Fix 7 ${taskId}`, project_id: null })
   })
 })

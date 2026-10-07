@@ -1,8 +1,7 @@
 // activity-entry.test.ts — contract tests for the unified-timeline write
 // primitive (postActivityEntry) + read projections (Design C, schema-v77).
 //
-// Uses an in-memory activity_entries store keyed by the SQL signatures the
-// primitive + the retargeted handlers emit. Covers:
+// Covers:
 //   - @me prefix strips + visibility gate (author sees own, other doesn't, API-key/PI sees all)
 //   - kind / update_type validation rejects
 //   - idempotent re-insert returns existing (no dup)
@@ -10,6 +9,25 @@
 //   - task delete cascade removes activity_entries rows
 //   - Hermes placeholder lands as an activity entry
 //   - project feed includes task rows by project_id
+//
+// #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+// The old fixture was a ~430-line SQL interpreter: it matched each statement
+// by regex, re-implemented the visibility gate, the feed filters, the thread
+// transcript, the hide cascade and the delete cascades in JS, and answered
+// every unmatched read with null. Its own comments record that a transcript
+// query once fell through to the empty default and every transcript assertion
+// passed against zero rows. Now every handler runs its real SQL against real
+// rows (activity_entries with its partial UNIQUE on (source_table, source_id),
+// notifications, ai_requests, tasks' key_link slots, meetings, artifacts), and
+// the assertions read the stored rows back through `ae`, `notifications` and
+// `aiRequests`, which are live views of those tables.
+//
+// The one thing the fixture still supplies is a CLOCK. activity_entries
+// stamps created_at with datetime('now'), one-second resolution, and every
+// feed orders by (created_at, id) with a random hex id, so two rows written in
+// the same second would order at random. makeEnv gives each new row its own
+// later second, after the statement that wrote it, the way the old fixture's
+// counter did; ordering assertions then test the SQL's ORDER BY, not luck.
 
 import { describe, it, expect } from 'vitest'
 import type { AuthUser, Env } from '../helpers'
@@ -25,6 +43,7 @@ import {
 import { handleGetProjectActivity, handleAddComment, handlePostProjectUpdate, handleGetComments, handleGetProjectUpdates } from '../routes/projects'
 import { handleDeleteActivityEntry, handleEditActivityEntry, handleSetActivityHidden } from '../routes/activity'
 import { handleGetDayActivity, handlePostDayActivity } from '../routes/days'
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
 const TEST_MODE_KEY = 'local-test-key-do-not-use-in-prod'
 const PI_EMAIL = 'ingra107@umn.edu'
@@ -32,7 +51,7 @@ const NON_PI_EMAIL = 'nate@umn.edu'
 const NICK: AuthUser = { email: PI_EMAIL, name: 'Nick' }
 const NATE: AuthUser = { email: NON_PI_EMAIL, name: 'Nate' }
 
-// ── In-memory model ────────────────────────────────────────────────────────────
+// ── Fixture ────────────────────────────────────────────────────────────────────
 
 interface AERow {
   id: string
@@ -48,29 +67,22 @@ interface AERow {
   metadata_json: string | null
   source_table: string | null
   source_id: string | null
-  /** #98: NULL for a thread root, the root's id for a reply. */
-  parent_id?: string | null
-  /** v102: NULL = visible; a timestamp = dismissed (Hermes wave Phase 2). */
-  hidden_at?: string | null
+  parent_id: string | null
+  hidden_at: string | null
+  hidden_by: string | null
   created_at: string
 }
 
-/** Newest-first by (created_at, id) — the compound cursor order every feed uses. */
-const byCreatedDesc = (a: AERow, b: AERow) =>
-  a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : a.id < b.id ? 1 : -1
-
 interface Fixtures {
   tasks: Record<string, {
-    project_id: string | null; deleted_at?: string | null; title?: string; assignee?: string | null
-    // key_link slots — the artifact at-source comment-path hook reads/writes these.
+    project_id: string | null; deleted_at?: string | null; title?: string; assignee?: string
     key_link_1?: string | null; key_link_2?: string | null; key_link_3?: string | null
     key_link_1_desc?: string | null; key_link_2_desc?: string | null; key_link_3_desc?: string | null
   }>
   projects: Record<string, { id: string; slug: string | null; category: string | null }>
   // artifacts keyed by art_ id → { title } for the key_link desc lookup.
-  artifacts: Record<string, { title: string | null }>
-  // #124: meetings keyed by mtg- id. Only the columns the meeting entity's
-  // existence check and buildMeetingContextBlock actually read.
+  artifacts: Record<string, { title: string }>
+  // #124: meetings keyed by mtg- id.
   meetings: Record<string, {
     date: string; title: string; notes?: string | null; decisions?: string | null
     attendees?: string | null; tags?: string | null; agenda?: string | null; source_id?: string | null
@@ -78,441 +90,83 @@ interface Fixtures {
   teamSlugs: Set<string>
 }
 
-function makeEnv(fx: Partial<Fixtures> = {}) {
-  const ae: AERow[] = []
-  const notifications: Array<Record<string, unknown>> = []
-  const aiRequests: Array<Record<string, unknown>> = []
-  let clock = 0
-  const tasks = fx.tasks ?? {}
-  const projects = fx.projects ?? {}
-  const artifacts = fx.artifacts ?? {}
-  const meetings = fx.meetings ?? {}
-  const teamSlugs = fx.teamSlugs ?? new Set(['nick-ingraham', 'nate-mesfin'])
+/** A live, read-only array view of a table: every access re-reads the stored rows. */
+function liveRows<T>(read: () => T[]): T[] {
+  return new Proxy([] as T[], {
+    get(_target, prop) {
+      const rows = read()
+      const v = Reflect.get(rows, prop)
+      return typeof v === 'function' ? v.bind(rows) : v
+    },
+  })
+}
 
-  // Resolve a project ref (id or slug) → canonical id.
-  function projCanon(ref: string): string | null {
-    for (const p of Object.values(projects)) {
-      if (p.id === ref || p.slug === ref) return p.id
-    }
-    return null
+function makeEnv(fx: Partial<Fixtures> = {}, hooks: Parameters<typeof d1Adapter>[1] = {}) {
+  const db = prodSchemaDb()
+
+  // The chain's seeded pi_emails list does not name ingra107@umn.edu; the PI
+  // gate reads this row (getPiEmails caches it per module, and every makeEnv
+  // writes the same value).
+  db.prepare("UPDATE lab_settings SET value = ? WHERE key = 'pi_emails'").run(JSON.stringify([PI_EMAIL]))
+  for (const slug of fx.teamSlugs ?? new Set(['nick-ingraham', 'nate-mesfin'])) {
+    insertRow(db, 'team_members', { id: `tm_${slug}`, name: slug, slug })
+  }
+  for (const p of Object.values(fx.projects ?? {})) {
+    insertRow(db, 'projects', { id: p.id, slug: p.slug, title: p.slug ?? p.id, category: p.category })
+  }
+  for (const [id, t] of Object.entries(fx.tasks ?? {})) {
+    insertRow(db, 'tasks', {
+      id, title: t.title ?? '', project_id: t.project_id, assignee: t.assignee ?? 'nick-ingraham',
+      ...(t.deleted_at ? { deleted_at: t.deleted_at, status: 'deleted' } : {}),
+      key_link_1: t.key_link_1 ?? null, key_link_2: t.key_link_2 ?? null, key_link_3: t.key_link_3 ?? null,
+      key_link_1_desc: t.key_link_1_desc ?? null, key_link_2_desc: t.key_link_2_desc ?? null, key_link_3_desc: t.key_link_3_desc ?? null,
+    })
+  }
+  for (const [id, a] of Object.entries(fx.artifacts ?? {})) {
+    insertRow(db, 'artifacts', { id, title: a.title, body_md: '# x', created_by: 'nick-ingraham' })
+  }
+  for (const [id, m] of Object.entries(fx.meetings ?? {})) {
+    insertRow(db, 'meetings', {
+      id, date: m.date, title: m.title, notes: m.notes ?? null, decisions: m.decisions ?? null,
+      attendees: m.attendees ?? null, tags: m.tags ?? null, agenda: m.agenda ?? null, source_id: m.source_id ?? null,
+    })
   }
 
-  // Shared insert used by both the INSERT...run() path (backfill / OR IGNORE) and
-  // the INSERT...RETURNING *.first() path (normal write). Returns the new row.
-  function insertActivityEntry(binds: any[]): AERow {
-    // parent_id is the 14th bind (#98), hidden_at the 15th (v102) — positional,
-    // matching the column list in api/lib/activity-entry.ts. Keep these in
-    // lockstep: a silently-dropped trailing bind here would make every reply look
-    // like a root (or every dismissed thread look visible) in tests.
-    const [id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, parent_id, hidden_at] = binds
-    const row: AERow = {
-      id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body,
-      mentions_json, update_type, metadata_json, source_table, source_id,
-      parent_id: parent_id ?? null,
-      hidden_at: hidden_at ?? null,
-      created_at: `2026-06-10 00:00:0${clock++}`,
+  // The clock (see the header): each activity row gets the next second, in
+  // insertion (rowid) order, once the statement that wrote it has returned.
+  // Unix seconds, an hour back; SQLite formats each stamp itself (datetime(?, 'unixepoch')),
+  // the same 'YYYY-MM-DD HH:MM:SS' shape datetime('now') writes in prod.
+  const base = Math.floor(Date.now() / 1000) - 60 * 60
+  let tick = 0
+  const stamped = new Set<string>()
+  const stamp = () => {
+    for (const { id } of db.prepare('SELECT id FROM activity_entries ORDER BY rowid').all() as Array<{ id: string }>) {
+      if (stamped.has(id)) continue
+      stamped.add(id)
+      db.prepare("UPDATE activity_entries SET created_at = datetime(?, 'unixepoch') WHERE id = ?").run(base + tick++, id)
     }
-    ae.push(row)
-    return row
   }
-
-  function applyVisibilityFilter(rows: AERow[], sql: string, binds: unknown[]): AERow[] {
-    // The gate clause is one of:
-    //   1=1                                  (PI/API-key — all)
-    //   visibility = 'team'                  (unauthed — team only)
-    //   (... visibility = 'team' OR ... actor_slug = ?)   (browser actor)
-    // We detect the actor-slug arm by presence of "actor_slug = ?" near the gate.
-    if (/visibility = 'team' OR/.test(sql) || /\.visibility = 'team' OR/.test(sql)) {
-      const slug = binds[binds.length - 1] as string // gate slug is last positional in our calls
-      // NOTE: our handlers always append the gate binds LAST, but recent-* feeds
-      // don't use the actor-slug arm. For per-task reads the slug is the final bind.
-      return rows.filter(r => r.visibility === 'team' || r.actor_slug === slug)
-    }
-    if (/visibility = 'team'/.test(sql) && !/OR/.test(sql)) {
-      return rows.filter(r => r.visibility === 'team')
-    }
-    return rows
-  }
-
+  // Stamping runs before every statement the code under test PREPARES and
+  // before every read of the live views below, so a row is dated before
+  // anything can read it. batch() is the adapter's own, untouched.
+  const adapter = d1Adapter(db, hooks)
   const env = {
     TEST_MODE_KEY,
     PB_API_KEY: 'valid-test-api-key',
-    DB: {
-      prepare: (sql: string) => {
-        let binds: unknown[] = []
-        const stmt: any = {
-          bind: (...args: unknown[]) => { binds = [...binds, ...args]; return stmt },
-          first: async () => {
-            if (/pi_emails/.test(sql)) return { value: JSON.stringify([PI_EMAIL]) }
-            if (/FROM team_members WHERE slug = \?/.test(sql)) {
-              return teamSlugs.has(binds[0] as string) ? { 1: 1 } : null
-            }
-            if (/SELECT project_id, assignee, title FROM tasks WHERE id = \?/.test(sql)) {
-              const t = tasks[binds[0] as string]
-              return t && t.deleted_at == null
-                ? { project_id: t.project_id, assignee: t.assignee ?? null, title: t.title ?? '' }
-                : null
-            }
-            // Artifact at-source hook: slot state read (key_link_1/2/3).
-            if (/SELECT key_link_1, key_link_2, key_link_3 FROM tasks WHERE id = \? AND deleted_at IS NULL/.test(sql)) {
-              const t = tasks[binds[0] as string]
-              if (!t || t.deleted_at != null) return null
-              return {
-                key_link_1: t.key_link_1 ?? null,
-                key_link_2: t.key_link_2 ?? null,
-                key_link_3: t.key_link_3 ?? null,
-              }
-            }
-            // Artifact at-source hook: title lookup for the key_link description.
-            if (/SELECT title FROM artifacts WHERE id = \?/.test(sql)) {
-              const a = artifacts[binds[0] as string]
-              return a ? { title: a.title } : null
-            }
-            // Owner re-notification lookup (2026-06-11): assignee + title.
-            if (/SELECT assignee, title FROM tasks WHERE id = \? AND deleted_at IS NULL/.test(sql)) {
-              const t = tasks[binds[0] as string]
-              if (!t || t.deleted_at != null) return null
-              return { assignee: t.assignee ?? null, title: t.title ?? '' }
-            }
-            if (/FROM tasks WHERE id = \? AND deleted_at IS NULL/.test(sql)) {
-              const t = tasks[binds[0] as string]
-              if (!t || t.deleted_at != null) return null
-              return { id: binds[0], project_id: t.project_id, description: '', title: t.title ?? '', deleted_at: null }
-            }
-            if (/SELECT title FROM tasks WHERE id = \?/.test(sql)) {
-              const t = tasks[binds[0] as string]
-              return t ? { title: t.title ?? '' } : null
-            }
-            if (/SELECT \* FROM tasks WHERE id = \?/.test(sql)) {
-              const t = tasks[binds[0] as string]
-              if (!t) return null
-              return { id: binds[0], title: t.title ?? '', description: '', project_id: t.project_id, deleted_at: t.deleted_at ?? null, assignee: 'nick-ingraham' }
-            }
-            // handleDeleteTask's existence probe (explicit column list, reads soft-deleted too).
-            if (/SELECT id, title, description, deleted_at, project_id FROM tasks WHERE id = \?/.test(sql)) {
-              const t = tasks[binds[0] as string]
-              if (!t) return null
-              return { id: binds[0], title: t.title ?? '', description: '', deleted_at: t.deleted_at ?? null, project_id: t.project_id }
-            }
-            // #124 meeting entity: the existence check, and the fuller row
-            // buildMeetingContextBlock reads to assemble the Hermes prompt block.
-            if (/FROM meetings WHERE id = \? LIMIT 1/.test(sql)) {
-              const m = meetings[binds[0] as string]
-              if (!m) return null
-              if (/SELECT id FROM meetings/.test(sql)) return { id: binds[0] }
-              return {
-                id: binds[0], date: m.date, title: m.title, type: 'biweekly', status: 'upcoming',
-                attendees: m.attendees ?? null, agenda: m.agenda ?? null, notes: m.notes ?? null,
-                decisions: m.decisions ?? null, tags: m.tags ?? null, source_id: m.source_id ?? null,
-              }
-            }
-            if (/SELECT id FROM projects WHERE id = \? LIMIT 1/.test(sql)) {
-              const c = projCanon(binds[0] as string)
-              return c ? { id: c } : null
-            }
-            if (/FROM projects WHERE \(id = \? OR slug = \?\)/.test(sql) || /FROM projects WHERE id = \? OR slug = \?/.test(sql)) {
-              const c = projCanon(binds[0] as string)
-              if (!c) return null
-              const p = Object.values(projects).find(x => x.id === c)!
-              return { id: p.id, slug: p.slug, category: p.category }
-            }
-            // Non-source insert path: `INSERT INTO activity_entries ... RETURNING *`
-            // resolved via .first() (real D1 supports RETURNING; mirror the run()
-            // insert and return the new row). No conflict possible on this path.
-            if (/INSERT INTO activity_entries/.test(sql) && /RETURNING \*/.test(sql)) {
-              return insertActivityEntry(binds as any[])
-            }
-            if (/SELECT \* FROM activity_entries WHERE id = \?/.test(sql)) {
-              return ae.find(r => r.id === binds[0]) ?? null
-            }
-            // handleDeleteActivityEntry auth probe + idempotentDelete's hard-mode
-            // project-gate probe (explicit column lists, WHERE id = ?).
-            // #98 parent resolution inside postActivityEntry. Its own column
-            // list, so it needs its own branch — the doubles match on the exact
-            // SELECT, and an unmatched read returns null, which postActivityEntry
-            // correctly reads as "parent not found" and 404s.
-            if (/SELECT id, parent_id, entity_type, entity_id, kind, visibility, hidden_at FROM activity_entries WHERE id = \?/.test(sql)) {
-              const r = ae.find(x => x.id === binds[0])
-              return r ? {
-                id: r.id, parent_id: r.parent_id ?? null, entity_type: r.entity_type,
-                entity_id: r.entity_id, kind: r.kind, visibility: r.visibility,
-                hidden_at: r.hidden_at ?? null,
-              } : null
-            }
-            if (/SELECT id, actor_slug FROM activity_entries WHERE id = \?/.test(sql)) {
-              const r = ae.find(x => x.id === binds[0])
-              return r ? { id: r.id, actor_slug: r.actor_slug } : null
-            }
-            // handleEditActivityEntry auth+kind probe.
-            if (/SELECT id, actor_slug, kind, metadata_json FROM activity_entries WHERE id = \?/.test(sql)) {
-              const r = ae.find(x => x.id === binds[0])
-              return r ? { id: r.id, actor_slug: r.actor_slug, kind: r.kind, metadata_json: r.metadata_json } : null
-            }
-            // handleSetActivityHidden auth+root probe (v102).
-            if (/SELECT id, actor_slug, parent_id, kind FROM activity_entries WHERE id = \?/.test(sql)) {
-              const r = ae.find(x => x.id === binds[0])
-              return r ? { id: r.id, actor_slug: r.actor_slug, parent_id: r.parent_id ?? null, kind: r.kind } : null
-            }
-            // handleEditActivityEntry body update (RETURNING * via .first()).
-            if (/UPDATE activity_entries SET body = \?, metadata_json = \? WHERE id = \? RETURNING \*/.test(sql)) {
-              const r = ae.find(x => x.id === binds[2])
-              if (!r) return null
-              r.body = binds[0] as string
-              r.metadata_json = binds[1] as string
-              return { ...r }
-            }
-            if (/SELECT id, project_id FROM activity_entries WHERE id = \?/.test(sql)) {
-              const r = ae.find(x => x.id === binds[0])
-              return r ? { id: r.id, project_id: r.project_id } : null
-            }
-            if (/FROM activity_entries WHERE source_table = \? AND source_id = \?/.test(sql)) {
-              return ae.find(r => r.source_table === binds[0] && r.source_id === binds[1]) ?? null
-            }
-            return null
-          },
-          all: async () => {
-            // dispatchHermes transcript (#98 multi-turn memory). Thread-scoped
-            // `(ae.id = ?1 OR ae.parent_id = ?1)` or day-scoped
-            // `ae.entity_type = 'day' AND ae.entity_id = ?1`.
-            //
-            // MUST be tested BEFORE the day-feed branch: that branch's regex
-            // (`entity_type = 'day' AND ae.entity_id = ?`) also matches the
-            // day-scoped transcript, and it sorts newest-first through a
-            // different visibility helper — so a transcript assertion would be
-            // reading a feed projection, not the transcript. Until this branch
-            // existed at all the query fell through to the empty default, so
-            // every transcript assertion passed against zero rows. That is how
-            // "Hermes forgets its own prior answer" shipped unnoticed.
-            if (/FROM activity_entries ae/.test(sql) && /ae\.body != \?/.test(sql) && /ORDER BY ae\.created_at ASC/.test(sql)) {
-              const [scopeBind, excludeId, pendingBody, requester] = binds as [string, string, string, string]
-              const dayScoped = /ae\.entity_type = 'day'/.test(sql)
-              let rows = dayScoped
-                ? ae.filter(r => r.entity_type === 'day' && r.entity_id === scopeBind)
-                : ae.filter(r => r.id === scopeBind || r.parent_id === scopeBind)
-              rows = rows.filter(r => r.id !== excludeId && r.kind === 'comment' && r.body !== pendingBody)
-              // The visibility gate, READ OFF THE SQL rather than hardcoded. The
-              // root arm applies only when the statement actually carries the
-              // EXISTS sub-select — otherwise a double that always ran three
-              // arms would keep these tests green even if the arm were deleted
-              // from the product, which is the definition of a proxy artifact.
-              const hasRootArm = /EXISTS \(\s*SELECT 1 FROM activity_entries r/.test(sql)
-                && /r\.visibility = 'author'/.test(sql)
-                && /r\.actor_slug = \?/.test(sql)
-              rows = rows.filter((r) => {
-                if (r.visibility === 'team') return true
-                if (r.actor_slug === requester) return true
-                if (!hasRootArm) return false
-                const root = ae.find(x => x.id === (r.parent_id ?? r.id))
-                return !!root && root.visibility === 'author' && root.actor_slug === requester
-              })
-              rows = [...rows].sort((a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : a.id < b.id ? -1 : 1))
-              return { results: rows.map(r => ({ actor_slug: r.actor_slug, body: r.body, created_at: r.created_at })) }
-            }
-            // Per-task projections (comments / updates / activity / detail-updates).
-            // The `(ae\.)?` tolerance matches what the project branches below
-            // already do: handleGetTaskActivity qualifies its columns because it
-            // joins a correlated reply-count subquery (#98), the other task
-            // projections don't.
-            if (/FROM activity_entries/.test(sql) && /(ae\.)?entity_type = 'task' AND (ae\.)?entity_id = \?/.test(sql)) {
-              // Do NOT assume binds[0]. A leading subquery contributes its own
-              // gate binds BEFORE the task id, so the id's position depends on
-              // the statement. Count the placeholders that precede it — exact
-              // for every shape, and still 0 for the un-prefixed projections.
-              const marker = sql.indexOf('entity_id = ?')
-              const taskIdIdx = (sql.slice(0, marker).match(/\?/g) || []).length
-              const taskId = binds[taskIdIdx] as string
-              let rows = ae.filter(r => r.entity_type === 'task' && r.entity_id === taskId)
-              if (/kind = 'comment'/.test(sql)) rows = rows.filter(r => r.kind === 'comment')
-              if (/kind = 'update'/.test(sql)) rows = rows.filter(r => r.kind === 'update')
-              // #98: roots-only feeds. Without this a reply would surface in the
-              // unified feed here but not in prod — the double hiding a bug.
-              if (/parent_id IS NULL/.test(sql)) rows = rows.filter(r => !r.parent_id)
-              rows = applyVisibilityFilter(rows, sql, binds)
-              rows = [...rows].sort(byCreatedDesc)
-              return { results: rows.map(r => projectRowForSql(sql, r)) }
-            }
-            // Day feed (Phase 3): WHERE entity_type = 'day' AND ae.entity_id = ? —
-            // roots only, mirrors the task branch's bind-counting (a leading
-            // reply_count subquery contributes its gate binds before the date).
-            if (/FROM activity_entries/.test(sql) && /entity_type = 'day' AND ae\.entity_id = \?/.test(sql)) {
-              const marker = sql.indexOf('entity_id = ?')
-              const dateIdx = (sql.slice(0, marker).match(/\?/g) || []).length
-              const dateKey = binds[dateIdx] as string
-              let rows = ae.filter(r => r.entity_type === 'day' && r.entity_id === dateKey)
-              if (/parent_id IS NULL/.test(sql)) rows = rows.filter(r => !r.parent_id)
-              rows = applyVisibilityFilter(rows, sql, binds)
-              rows = [...rows].sort(byCreatedDesc)
-              return { results: rows.map(r => projectRowForSql(sql, r)) }
-            }
-            // Project feed: WHERE project_id = ?  — single-predicate (project-entity
-            // rows store project_id = entity_id, so this captures both project-level
-            // rows AND task rows rolled up by project_id).
-            // Project-entity projections (P2-A): comments / updates over
-            // activity_entries with the legacy shapes.
-            if (/FROM activity_entries/.test(sql) && /entity_type = 'project' AND ae\.entity_id = \?/.test(sql)) {
-              const projId = binds[0] as string
-              let rows = ae.filter(r => r.entity_type === 'project' && r.entity_id === projId)
-              if (/kind = 'comment'/.test(sql)) rows = rows.filter(r => r.kind === 'comment')
-              if (/kind = 'update'/.test(sql)) rows = rows.filter(r => r.kind === 'update')
-              rows = applyVisibilityFilter(rows, sql, binds)
-              rows = [...rows].sort(byCreatedDesc)
-              if (/AS author_id|author_id/.test(sql)) {
-                // comments projection shape
-                return { results: rows.map(r => ({
-                  id: r.id, content: r.body, created_at: r.created_at,
-                  author_id: r.actor_slug === 'claude-ai' ? 'claude-ai' : `member_${r.actor_slug}`,
-                  author_name: r.actor_slug === 'claude-ai' ? 'Claude AI' : null,
-                  author_slug: r.actor_slug,
-                })) }
-              }
-              // updates projection shape (project_id is re-mapped by the handler)
-              return { results: rows.map(r => ({
-                id: r.id, author: r.actor_slug, content: r.body, update_type: r.update_type, created_at: r.created_at,
-              })) }
-            }
-            if (/FROM activity_entries/.test(sql) && /WHERE (ae\.)?project_id = \?/.test(sql)) {
-              const projId = binds[0] as string
-              let rows = ae.filter(r => r.project_id === projId)
-              rows = applyVisibilityFilter(rows, sql, binds)
-              rows = [...rows].sort(byCreatedDesc)
-              return { results: rows.map(r => {
-                const out = projectRowForSql(sql, r)
-                // Mirror the LEFT JOIN tasks → task_title column when selected.
-                if (/task_title/.test(sql)) {
-                  out.task_title = r.entity_type === 'task' ? (tasks[r.entity_id]?.title ?? null) : null
-                }
-                return out
-              }) }
-            }
-            // Legacy activity_log read in detail handler — empty.
-            if (/FROM activity_log/.test(sql)) return { results: [] }
-            if (/FROM task_subtasks/.test(sql)) return { results: [] }
-            if (/blocked_by LIKE/.test(sql)) return { results: [] }
-            return { results: [] }
-          },
-          run: async () => {
-            if (/INSERT( OR IGNORE)? INTO activity_entries/.test(sql)) {
-              const sourceTable = (binds as any[])[11]
-              const sourceId = (binds as any[])[12]
-              // INSERT OR IGNORE: skip on (source_table, source_id) conflict.
-              if (/OR IGNORE/.test(sql) && sourceTable != null) {
-                const dup = ae.find(r => r.source_table === sourceTable && r.source_id === sourceId)
-                if (dup) return { meta: { changes: 0 } }
-              }
-              const inserted = insertActivityEntry(binds as any[])
-              // RETURNING * insert (used inside the at-source batch): surface the
-              // row so batch() can return it per-statement like real D1.
-              if (/RETURNING \*/.test(sql)) return { meta: { changes: 1 }, results: [inserted] }
-              return { meta: { changes: 1 } }
-            }
-            // handleSetActivityHidden cascade (v102): hide sets a stamp + hidden_by,
-            // unhide NULLs both — both across root (id=?) AND its replies (parent_id=?).
-            if (/UPDATE activity_entries SET hidden_at/.test(sql)) {
-              const isHide = /hidden_by = \?/.test(sql) // hide binds [caller, id, id]; unhide binds [id, id]
-              const rootId = (isHide ? binds[1] : binds[0]) as string
-              const stamp = isHide ? '2026-06-10 12:00:00' : null
-              const by = isHide ? (binds[0] as string) : null
-              let changes = 0
-              for (const r of ae) {
-                if (r.id === rootId || r.parent_id === rootId) {
-                  r.hidden_at = stamp
-                  ;(r as Record<string, unknown>).hidden_by = by
-                  changes++
-                }
-              }
-              return { meta: { changes } }
-            }
-            if (/INSERT INTO notifications/.test(sql)) { notifications.push({ binds: [...binds] }); return { meta: {} } }
-            if (/INSERT INTO ai_requests/.test(sql)) { aiRequests.push({ binds: [...binds] }); return { meta: {} } }
-            // Artifact at-source hook: key_link slot UPDATE — apply to the in-memory task.
-            const klm = sql.match(/UPDATE tasks SET key_link_(\d) = \?, key_link_\d_desc = \? WHERE id = \?/)
-            if (klm) {
-              const slot = klm[1]
-              const [url, desc, taskId] = binds as [string, string, string]
-              const t = tasks[taskId]
-              if (t) {
-                ;(t as Record<string, unknown>)[`key_link_${slot}`] = url
-                ;(t as Record<string, unknown>)[`key_link_${slot}_desc`] = desc
-              }
-              return { meta: { changes: t ? 1 : 0 } }
-            }
-            if (/DELETE FROM activity_entries/.test(sql)) {
-              // Task delete cascade: WHERE entity_type='task' AND entity_id=?
-              if (/entity_id = \?/.test(sql)) {
-                const id = binds[0] as string
-                for (let i = ae.length - 1; i >= 0; i--) {
-                  if (ae[i].entity_type === 'task' && ae[i].entity_id === id) ae.splice(i, 1)
-                }
-                return { meta: {} }
-              }
-              // #98 thread cascade: WHERE parent_id = ? — delete a root's replies.
-              // This MUST be matched before the row-targeted fallback below:
-              // that fallback reads binds[0] as a ROW id, so an unmatched
-              // parent_id delete would silently delete the ROOT instead of its
-              // children — the double diverging from real SQL, not the code.
-              if (/parent_id = \?/.test(sql)) {
-                const parentId = binds[0] as string
-                for (let i = ae.length - 1; i >= 0; i--) {
-                  if (ae[i].parent_id === parentId) ae.splice(i, 1)
-                }
-                return { meta: {} }
-              }
-              // Row-targeted delete (idempotentDelete hard mode): WHERE id = ?
-              const rowId = binds[0] as string
-              const idx = ae.findIndex(r => r.id === rowId)
-              if (idx >= 0) { ae.splice(idx, 1); return { meta: { changes: 1 } } }
-              return { meta: { changes: 0 } }
-            }
-            return { meta: {} }
-          },
-        }
-        stmt.bind = (...args: unknown[]) => { binds = [...binds, ...args]; return stmt }
-        return stmt
-      },
-      batch: async (stmts: any[]) => {
-        // Mirror D1: per-statement results. The at-source hook reads
-        // results[0].results[0] (the RETURNING * comment row) from this array.
-        const out: unknown[] = []
-        for (const s of stmts) {
-          if (s && typeof s.run === 'function') {
-            const r = await s.run()
-            out.push({ results: (r && (r as any).results) ?? [], meta: (r as any)?.meta ?? {} })
-          } else {
-            out.push({ results: [], meta: {} })
-          }
-        }
-        return out
-      },
-    },
+    DB: { ...adapter, prepare: (sql: string) => { stamp(); return adapter.prepare(sql) } },
   } as unknown as Env
 
-  // Map a stored AERow to the projected/aliased shape the SQL requested.
-  function projectRowForSql(sql: string, r: AERow): Record<string, unknown> {
-    // /comments + /updates projection: id, task_id, author_slug, content[, update_type], created_at
-    if (/entity_id AS task_id/.test(sql) && /actor_slug AS author_slug/.test(sql) && /body AS content/.test(sql)) {
-      const out: Record<string, unknown> = { id: r.id, task_id: r.entity_id, author_slug: r.actor_slug, content: r.body, created_at: r.created_at }
-      if (/update_type/.test(sql)) out.update_type = r.update_type
-      return out
-    }
-    // detail handler updates projection: id, content, author_slug, update_type, created_at
-    if (/body AS content/.test(sql) && /actor_slug AS author_slug/.test(sql)) {
-      return { id: r.id, content: r.body, author_slug: r.actor_slug, update_type: r.update_type, created_at: r.created_at }
-    }
-    // unified feed / project feed: full row minus source cols
-    return {
-      id: r.id, entity_type: r.entity_type, entity_id: r.entity_id, project_id: r.project_id,
-      kind: r.kind, visibility: r.visibility, actor_slug: r.actor_slug, body: r.body,
-      mentions_json: r.mentions_json, update_type: r.update_type, metadata_json: r.metadata_json,
-      created_at: r.created_at,
-      // #98 threading columns — the real feeds select these, so the double must
-      // return them or a threading assertion would pass here and fail in prod.
-      parent_id: r.parent_id ?? null,
-      ...(/reply_count/.test(sql) ? { reply_count: ae.filter(x => x.parent_id === r.id).length } : {}),
-    }
-  }
+  const ae = liveRows(() => { stamp(); return db.prepare('SELECT * FROM activity_entries ORDER BY rowid').all() as AERow[] })
+  const notifications = liveRows(() => db.prepare('SELECT * FROM notifications ORDER BY rowid').all() as Array<Record<string, unknown>>)
+  const aiRequests = liveRows(() => db.prepare('SELECT * FROM ai_requests ORDER BY rowid').all() as Array<Record<string, unknown>>)
+  const taskRow = (id: string) => db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as Record<string, unknown> | undefined
+  /** Delete the "Thinking…" placeholders a dispatch left, so a thread reads clean. */
+  const dropPlaceholders = () => { db.prepare("DELETE FROM activity_entries WHERE body LIKE 'Thinking about this%'").run() }
 
-  return { env, ae, notifications, aiRequests }
+  return { env, db, ae, notifications, aiRequests, taskRow, dropPlaceholders }
 }
+
+type Ctx = ReturnType<typeof makeEnv>
 
 // Auth helpers — PI via test headers, non-PI via test headers, API-key via Bearer.
 function piReq(): Request {
@@ -575,246 +229,178 @@ describe('postActivityEntry — artifact key_link at source (task comment path)'
     })
   }
   const URL_ABC = 'https://mn-ccore-lab.pages.dev/portal/artifacts/art_abc123'
+  /** The task's three slots as stored: [url, desc] per slot. */
+  const slotsOf = (ctx: Ctx) => {
+    const t = ctx.taskRow('t1')!
+    return [1, 2, 3].map((n) => [t[`key_link_${n}`] ?? null, t[`key_link_${n}_desc`] ?? null])
+  }
 
   it('comment with an artifact URL → links into the first free slot, comment still posts', async () => {
-    const { env, ae } = ctxWithArtifact()
+    const ctx = ctxWithArtifact()
     const r = await postActivityEntry({
-      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      env: ctx.env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
       body: `Full write-up: ${URL_ABC}`, actorSlug: 'nick-ingraham',
     })
     expect(r.ok).toBe(true)
     // Comment landed.
-    expect(ae.some(e => e.entity_id === 't1' && e.kind === 'comment')).toBe(true)
-    // No linkSkipped flag (a fresh link was written).
+    expect(ctx.ae.some(e => e.entity_id === 't1' && e.kind === 'comment')).toBe(true)
+    // No linkSkipped flag (a fresh link was written), and slot 1 holds it.
     expect((r as { linkSkipped?: string }).linkSkipped).toBeUndefined()
+    expect(slotsOf(ctx)[0][0]).toBe(URL_ABC)
   })
 
   it('links the artifact title as `Hermes: <title>` description', async () => {
-    const { env } = ctxWithArtifact()
-    // Capture the UPDATE binds via a wrapper.
-    const updates: Array<{ sql: string; binds: unknown[] }> = []
-    const origPrepare = env.DB.prepare.bind(env.DB)
-    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
-      const stmt = origPrepare(sql)
-      if (/UPDATE tasks SET key_link_\d/.test(sql)) {
-        const origBind = stmt.bind.bind(stmt)
-        stmt.bind = (...args: unknown[]) => { updates.push({ sql, binds: args }); return origBind(...args) }
-      }
-      return stmt
-    }
+    const ctx = ctxWithArtifact()
     await postActivityEntry({
-      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      env: ctx.env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
       body: `here: ${URL_ABC}`, actorSlug: 'nick-ingraham',
     })
-    expect(updates).toHaveLength(1)
-    expect(updates[0].sql).toMatch(/UPDATE tasks SET key_link_1/)
-    expect(updates[0].binds[0]).toBe(URL_ABC)
-    expect(updates[0].binds[1]).toBe('Hermes: Sepsis lit review')
-    expect(updates[0].binds[2]).toBe('t1')
+    expect(slotsOf(ctx)).toEqual([[URL_ABC, 'Hermes: Sepsis lit review'], [null, null], [null, null]])
   })
 
   it('falls back to a generic desc when the artifact row is not found', async () => {
-    const { env } = makeEnv({
+    const ctx = makeEnv({
       tasks: { t1: { project_id: 'proj_a', title: 'Task One' } },
       projects: { a: { id: 'proj_a', slug: 'alpha', category: 'MNCCORE' } },
       artifacts: {}, // no artifact row for the URL's id
       teamSlugs: new Set(['nick-ingraham']),
     })
-    const updates: Array<unknown[]> = []
-    const origPrepare = env.DB.prepare.bind(env.DB)
-    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
-      const stmt = origPrepare(sql)
-      if (/UPDATE tasks SET key_link_\d/.test(sql)) {
-        const origBind = stmt.bind.bind(stmt)
-        stmt.bind = (...args: unknown[]) => { updates.push(args); return origBind(...args) }
-      }
-      return stmt
-    }
     await postActivityEntry({
-      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      env: ctx.env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
       body: `see ${URL_ABC}`, actorSlug: 'nick-ingraham',
     })
-    expect(updates).toHaveLength(1)
-    expect(updates[0][1]).toBe('Hermes: artifact')
+    expect(slotsOf(ctx)[0]).toEqual([URL_ABC, 'Hermes: artifact'])
   })
 
-  it('idempotent — URL already in a slot → no UPDATE, linkSkipped=already_linked', async () => {
-    const { env } = ctxWithArtifact({ key_link_1: URL_ABC })
-    const updates: unknown[] = []
-    const origPrepare = env.DB.prepare.bind(env.DB)
-    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
-      const stmt = origPrepare(sql)
-      if (/UPDATE tasks SET key_link_\d/.test(sql)) updates.push(sql)
-      return stmt
-    }
+  it('idempotent — URL already in a slot → slots unchanged, linkSkipped=already_linked', async () => {
+    const ctx = ctxWithArtifact({ key_link_1: URL_ABC })
+    const before = ctx.taskRow('t1')
     const r = await postActivityEntry({
-      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      env: ctx.env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
       body: `again: ${URL_ABC}`, actorSlug: 'nick-ingraham',
     })
     expect(r.ok).toBe(true)
-    expect(updates).toHaveLength(0)
+    expect(ctx.taskRow('t1')).toEqual(before)
     expect((r as { linkSkipped?: string }).linkSkipped).toBe('already_linked')
   })
 
   it('all 3 slots full → no link, linkSkipped=slots_full, comment still posts', async () => {
-    const { env, ae } = ctxWithArtifact({
+    const ctx = ctxWithArtifact({
       key_link_1: 'https://x/1', key_link_2: 'https://x/2', key_link_3: 'https://x/3',
     })
     const r = await postActivityEntry({
-      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      env: ctx.env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
       body: `won't fit: ${URL_ABC}`, actorSlug: 'nick-ingraham',
     })
     expect(r.ok).toBe(true)
     expect((r as { linkSkipped?: string }).linkSkipped).toBe('slots_full')
+    expect(slotsOf(ctx).map(s => s[0])).toEqual(['https://x/1', 'https://x/2', 'https://x/3'])
     // Comment still posted.
-    expect(ae.some(e => e.entity_id === 't1' && e.kind === 'comment')).toBe(true)
+    expect(ctx.ae.some(e => e.entity_id === 't1' && e.kind === 'comment')).toBe(true)
   })
 
   it('two artifact URLs in one comment fill two distinct slots, left-to-right', async () => {
-    const { env } = makeEnv({
+    const ctx = makeEnv({
       tasks: { t1: { project_id: 'proj_a', title: 'Task One' } },
       projects: { a: { id: 'proj_a', slug: 'alpha', category: 'MNCCORE' } },
       artifacts: { art_abc123: { title: 'First' }, art_def456: { title: 'Second' } },
       teamSlugs: new Set(['nick-ingraham']),
     })
     const url2 = 'https://mn-ccore-lab.pages.dev/portal/artifacts/art_def456'
-    const updates: Array<{ sql: string; binds: unknown[] }> = []
-    const origPrepare = env.DB.prepare.bind(env.DB)
-    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
-      const stmt = origPrepare(sql)
-      if (/UPDATE tasks SET key_link_\d/.test(sql)) {
-        const origBind = stmt.bind.bind(stmt)
-        stmt.bind = (...args: unknown[]) => { updates.push({ sql, binds: args }); return origBind(...args) }
-      }
-      return stmt
-    }
     await postActivityEntry({
-      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      env: ctx.env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
       body: `two: ${URL_ABC} and ${url2}`, actorSlug: 'nick-ingraham',
     })
-    expect(updates).toHaveLength(2)
-    expect(updates[0].sql).toMatch(/key_link_1/)
-    expect(updates[0].binds[0]).toBe(URL_ABC)
-    expect(updates[1].sql).toMatch(/key_link_2/)
-    expect(updates[1].binds[0]).toBe(url2)
+    expect(slotsOf(ctx)).toEqual([[URL_ABC, 'Hermes: First'], [url2, 'Hermes: Second'], [null, null]])
   })
 
   it('partial fit: 1 free slot + 2 URLs → links 1, linkSkipped=slots_full', async () => {
-    const { env } = makeEnv({
+    const ctx = makeEnv({
       tasks: { t1: { project_id: 'proj_a', title: 'Task One', key_link_1: 'https://x/1', key_link_2: 'https://x/2' } },
       projects: { a: { id: 'proj_a', slug: 'alpha', category: 'MNCCORE' } },
       artifacts: { art_abc123: { title: 'First' }, art_def456: { title: 'Second' } },
       teamSlugs: new Set(['nick-ingraham']),
     })
     const url2 = 'https://mn-ccore-lab.pages.dev/portal/artifacts/art_def456'
-    const updates: string[] = []
-    const origPrepare = env.DB.prepare.bind(env.DB)
-    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
-      const stmt = origPrepare(sql)
-      if (/UPDATE tasks SET key_link_\d/.test(sql)) updates.push(sql)
-      return stmt
-    }
     const r = await postActivityEntry({
-      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      env: ctx.env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
       body: `${URL_ABC} ${url2}`, actorSlug: 'nick-ingraham',
     })
-    expect(updates).toHaveLength(1)
-    expect(updates[0]).toMatch(/key_link_3/)
+    expect(slotsOf(ctx).map(s => s[0])).toEqual(['https://x/1', 'https://x/2', URL_ABC])
     expect((r as { linkSkipped?: string }).linkSkipped).toBe('slots_full')
   })
 
   it('comment on a PROJECT entity → no link attempt', async () => {
-    const { env } = ctxWithArtifact()
-    const updates: string[] = []
-    const origPrepare = env.DB.prepare.bind(env.DB)
-    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
-      const stmt = origPrepare(sql)
-      if (/UPDATE tasks SET key_link_\d/.test(sql)) updates.push(sql)
-      return stmt
-    }
+    const ctx = ctxWithArtifact()
+    const before = ctx.taskRow('t1')
     const r = await postActivityEntry({
-      env, user: NICK, entityType: 'project', entityId: 'proj_a', kind: 'comment',
+      env: ctx.env, user: NICK, entityType: 'project', entityId: 'proj_a', kind: 'comment',
       body: `project note with ${URL_ABC}`, actorSlug: 'nick-ingraham', projectSlug: 'alpha',
     })
     expect(r.ok).toBe(true)
-    expect(updates).toHaveLength(0)
+    expect(ctx.taskRow('t1')).toEqual(before)
+    expect(ctx.db.prepare("SELECT COUNT(*) AS n FROM projects WHERE key_link_1 IS NOT NULL OR key_link_2 IS NOT NULL OR key_link_3 IS NOT NULL").get()).toEqual({ n: 0 })
   })
 
   it('task UPDATE (kind=update) with an artifact URL → no link attempt (comment-path only)', async () => {
-    const { env } = ctxWithArtifact()
-    const updates: string[] = []
-    const origPrepare = env.DB.prepare.bind(env.DB)
-    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
-      const stmt = origPrepare(sql)
-      if (/UPDATE tasks SET key_link_\d/.test(sql)) updates.push(sql)
-      return stmt
-    }
+    const ctx = ctxWithArtifact()
+    const before = ctx.taskRow('t1')
     const r = await postActivityEntry({
-      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'update', updateType: 'progress',
+      env: ctx.env, user: NICK, entityType: 'task', entityId: 't1', kind: 'update', updateType: 'progress',
       body: `progress: ${URL_ABC}`, actorSlug: 'nick-ingraham',
     })
     expect(r.ok).toBe(true)
-    expect(updates).toHaveLength(0)
+    expect(ctx.taskRow('t1')).toEqual(before)
   })
 
   it('comment with a non-artifact URL → ignored, no link attempt', async () => {
-    const { env } = ctxWithArtifact()
-    const updates: string[] = []
-    const origPrepare = env.DB.prepare.bind(env.DB)
-    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
-      const stmt = origPrepare(sql)
-      if (/UPDATE tasks SET key_link_\d/.test(sql)) updates.push(sql)
-      return stmt
-    }
+    const ctx = ctxWithArtifact()
+    const before = ctx.taskRow('t1')
     const r = await postActivityEntry({
-      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      env: ctx.env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
       body: 'see https://docs.google.com/document/d/abc for the draft', actorSlug: 'nick-ingraham',
     })
     expect(r.ok).toBe(true)
-    expect(updates).toHaveLength(0)
+    expect(ctx.taskRow('t1')).toEqual(before)
     expect((r as { linkSkipped?: string }).linkSkipped).toBeUndefined()
   })
 
   it('posting the same artifact-URL comment twice → exactly one key_link', async () => {
-    const { env } = ctxWithArtifact()
-    let updateCount = 0
-    const origPrepare = env.DB.prepare.bind(env.DB)
-    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
-      const stmt = origPrepare(sql)
-      if (/UPDATE tasks SET key_link_\d/.test(sql)) updateCount++
-      return stmt
-    }
+    const ctx = ctxWithArtifact()
     const first = await postActivityEntry({
-      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      env: ctx.env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
       body: `first: ${URL_ABC}`, actorSlug: 'nick-ingraham',
     })
     const second = await postActivityEntry({
-      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      env: ctx.env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
       body: `second: ${URL_ABC}`, actorSlug: 'nick-ingraham',
     })
     expect(first.ok && second.ok).toBe(true)
-    expect(updateCount).toBe(1) // only the first wrote a slot
+    expect(slotsOf(ctx).filter(s => s[0] === URL_ABC)).toHaveLength(1) // only the first wrote a slot
     expect((second as { linkSkipped?: string }).linkSkipped).toBe('already_linked')
+    expect(ctx.ae.filter(e => e.entity_id === 't1' && e.kind === 'comment')).toHaveLength(2)
   })
 
   // End-to-end through the actual route: linkSkipped surfaces on the response.
   it('route handleAddTaskComment surfaces linkSkipped=slots_full on the response', async () => {
-    const { env } = ctxWithArtifact({
+    const ctx = ctxWithArtifact({
       key_link_1: 'https://x/1', key_link_2: 'https://x/2', key_link_3: 'https://x/3',
     })
-    const res = await handleAddTaskComment('t1', natePostReq({ content: `won't fit: ${URL_ABC}` }), NATE, env)
+    const res = await handleAddTaskComment('t1', natePostReq({ content: `won't fit: ${URL_ABC}` }), NATE, ctx.env)
     expect(res.status).toBe(201)
     const payload = await res.json() as { data: unknown; linkSkipped?: string }
     expect(payload.linkSkipped).toBe('slots_full')
     expect(payload.data).toBeTruthy() // comment still created
+    expect(ctx.ae.filter(e => e.entity_id === 't1' && e.actor_slug === 'nate-mesfin')).toHaveLength(1)
   })
 
   it('route handleAddTaskComment: clean link → no linkSkipped on the response', async () => {
-    const { env } = ctxWithArtifact()
-    const res = await handleAddTaskComment('t1', natePostReq({ content: `here: ${URL_ABC}` }), NATE, env)
+    const ctx = ctxWithArtifact()
+    const res = await handleAddTaskComment('t1', natePostReq({ content: `here: ${URL_ABC}` }), NATE, ctx.env)
     expect(res.status).toBe(201)
     const payload = await res.json() as { linkSkipped?: string }
     expect(payload.linkSkipped).toBeUndefined()
+    expect(slotsOf(ctx)[0][0]).toBe(URL_ABC)
   })
 })
 
@@ -868,11 +454,11 @@ describe('owner re-notification — activity on YOUR task re-lights the bell (20
     const { env, notifications } = makeEnv(OWNED)
     const r = await postActivityEntry({ env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment', body: 'made progress on this', actorSlug: 'nate-mesfin' })
     expect(r.ok).toBe(true)
-    const owner = notifications.find(n => (n.binds as unknown[])[1] === 'nick-ingraham')
+    const owner = notifications.find(n => n.recipient_slug === 'nick-ingraham')
     expect(owner).toBeTruthy()
-    const binds = owner!.binds as unknown[]
-    expect(binds[2]).toBe('update')                          // type
-    expect(binds[7]).toBe('/portal/my-tasks?open=t1')        // direct editor deep-link
+    expect(owner!.type).toBe('update')
+    expect(owner!.link).toBe('/portal/my-tasks?open=t1')     // direct editor deep-link
+    expect(owner!.source_id).toBe('t1')
   })
 
   it('author-only (@me) entries notify NO ONE', async () => {
@@ -890,9 +476,9 @@ describe('owner re-notification — activity on YOUR task re-lights the bell (20
   it('assignee already @mentioned gets ONLY the richer mention notification (no dup)', async () => {
     const { env, notifications } = makeEnv(OWNED)
     await postActivityEntry({ env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment', body: 'hey @nick-ingraham look at this', actorSlug: 'nate-mesfin' })
-    const toNick = notifications.filter(n => (n.binds as unknown[])[1] === 'nick-ingraham')
+    const toNick = notifications.filter(n => n.recipient_slug === 'nick-ingraham')
     expect(toNick.length).toBe(1)
-    expect((toNick[0].binds as unknown[])[2]).toBe('mention')
+    expect(toNick[0].type).toBe('mention')
   })
 })
 
@@ -1180,8 +766,8 @@ describe('Hermes — @hermes lands a placeholder activity entry + ai_request', (
     expect(placeholder).toBeDefined()
     expect(placeholder!.kind).toBe('comment')
     expect(ctx.aiRequests.length).toBe(1)
-    // ai_requests bind index 1 = source_type
-    expect((ctx.aiRequests[0].binds as unknown[])[1]).toBe('task_comment')
+    expect(ctx.aiRequests[0].source_type).toBe('task_comment')
+    expect(ctx.aiRequests[0].status).toBe('pending')
   })
 
   it('a Hermes placeholder for an @me question inherits author visibility', async () => {
@@ -1233,14 +819,33 @@ describe('Hermes — @hermes lands a placeholder activity entry + ai_request', (
 // ── delete cascade ────────────────────────────────────────────────────────────────
 
 describe('task delete cascades activity_entries', () => {
-  it('removes the task entries on hard cascade-clean', async () => {
+  const delReq = () => new Request('https://x/api/test', { method: 'POST', headers: { 'X-Test-Mode-Key': TEST_MODE_KEY, 'X-Test-User': PI_EMAIL } })
+
+  it('soft-deletes the task and removes its entries, in the same write', async () => {
     const ctx = makeEnv(FX)
     await handleAddTaskComment('t1', natePostReq({ content: 'to be deleted' }), NATE, ctx.env)
     expect(ctx.ae.filter(r => r.entity_id === 't1').length).toBeGreaterThan(0)
-    // handleDeleteTask runs the cascade DELETE FROM activity_entries.
-    const delReq = new Request('https://x/api/test', { method: 'POST', headers: { 'X-Test-Mode-Key': TEST_MODE_KEY, 'X-Test-User': PI_EMAIL } })
-    await handleDeleteTask('t1', delReq, NICK, ctx.env)
+    const res = await handleDeleteTask('t1', delReq(), NICK, ctx.env)
+    expect(res.status).toBe(200)
+    expect(ctx.taskRow('t1')).toMatchObject({ status: 'deleted' })
+    expect(ctx.taskRow('t1')?.deleted_at).not.toBeNull()
     expect(ctx.ae.filter(r => r.entity_type === 'task' && r.entity_id === 't1').length).toBe(0)
+    const receipt = ctx.db.prepare("SELECT outcome FROM processed_mutations WHERE table_name = 'tasks' AND record_id = 't1'").get()
+    expect(receipt).toEqual({ outcome: 'accepted' })
+  })
+
+  it('a soft-delete that does not land leaves the task AND its entries in place', async () => {
+    // #8875: the route used to delete the children itself, before the
+    // soft-delete and with the failure swallowed, so this left a live task
+    // with no timeline. The cascade now rides the soft-delete's batch.
+    const ctx = makeEnv(FX, { failSql: /^UPDATE tasks SET deleted_at/, failTimes: 99 })
+    await handleAddTaskComment('t1', natePostReq({ content: 'must survive' }), NATE, ctx.env)
+    const before = ctx.ae.filter(r => r.entity_id === 't1').map(r => r.id)
+    expect(before.length).toBeGreaterThan(0)
+    const outcome = await handleDeleteTask('t1', delReq(), NICK, ctx.env).then(r => r.status, (e: Error) => `threw: ${e.message}`)
+    expect(outcome).not.toBe(200)
+    expect(ctx.taskRow('t1')).toMatchObject({ deleted_at: null })
+    expect(ctx.ae.filter(r => r.entity_id === 't1').map(r => r.id)).toEqual(before)
   })
 })
 
@@ -1482,9 +1087,8 @@ describe('postActivityEntry — day entity', () => {
     const r = await postActivityEntry({ env, user: NATE, entityType: 'day', entityId: '2026-07-22', kind: 'comment', body: '@hermes what should I focus on today', actorSlug: 'nate-mesfin', visibility: 'author' })
     expect(r.ok).toBe(true)
     expect(aiRequests.length).toBe(1)
-    const binds = aiRequests[0].binds as unknown[]
-    expect(binds[1]).toBe('daily_thought') // source_type
-    expect(binds[5]).toBeNull()             // context — NEVER "day: <date>"
+    expect(aiRequests[0].source_type).toBe('daily_thought')
+    expect(aiRequests[0].context).toBeNull() // NEVER "day: <date>"
   })
 })
 
@@ -1553,11 +1157,11 @@ describe('postActivityEntry — meeting entity (#124)', () => {
     })
     expect(r.ok).toBe(true)
     expect(aiRequests.length).toBe(1)
-    const binds = aiRequests[0].binds as unknown[]
-    expect(binds[1]).toBe('meeting_comment')          // source_type — its own lane in the listener log
-    expect(binds[3]).toBeNull()                        // project_slug — NULL, same reason project_id is
-    expect(binds[5]).toBe('meeting: mtg-2026-09-08-abc') // context keeps the grammar
-    const prompt = binds[4] as string
+    const req = aiRequests[0]
+    expect(req.source_type).toBe('meeting_comment')          // its own lane in the listener log
+    expect(req.project_slug).toBeNull()                       // NULL, same reason project_id is
+    expect(req.context).toBe('meeting: mtg-2026-09-08-abc')   // context keeps the grammar
+    const prompt = req.prompt as string
     // The block is what makes the ask answerable at all: the fenced model cannot
     // resolve an opaque mtg- id, and the listener has no `meeting:` resolver.
     expect(prompt).toContain('<meeting_context version="1"')
@@ -1586,7 +1190,7 @@ describe('postActivityEntry — meeting entity (#124)', () => {
     })
     expect(r.ok).toBe(true)
     expect(aiRequests.length).toBe(1)
-    const prompt = (aiRequests[0].binds as unknown[])[4] as string
+    const prompt = aiRequests[0].prompt as string
     expect(prompt).not.toContain('<meeting_context')
     expect(prompt).toContain('summarise this')
   })
@@ -1602,11 +1206,11 @@ describe('postActivityEntry — meeting entity (#124)', () => {
 // the requester's — so a two-arm gate dropped every one of them and Hermes
 // answered each follow-up with no memory of what it had just written.
 describe('dispatchHermes — thread transcript (#98)', () => {
-  /** Prompt of the Nth ai_requests insert (bind index 4). */
+  /** Prompt of the Nth stored ai_requests row. */
   const promptOf = (aiRequests: Array<Record<string, unknown>>, n: number) =>
-    (aiRequests[n].binds as unknown[])[4] as string
+    aiRequests[n].prompt as string
 
-  async function privateThreadWithAnswer(env: Env, ae: AERow[]) {
+  async function privateThreadWithAnswer({ env, dropPlaceholders }: Ctx) {
     const root = await postActivityEntry({
       env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment',
       body: '@hermes draft an email to Will about the cohort', actorSlug: 'nate-mesfin', visibility: 'author',
@@ -1622,15 +1226,14 @@ describe('dispatchHermes — thread transcript (#98)', () => {
     if (!answer.ok) throw new Error('answer failed')
     // Drop the "Thinking…" placeholder the root's dispatch left behind so the
     // assertions below read a clean two-message thread.
-    for (let i = ae.length - 1; i >= 0; i--) {
-      if (ae[i].body.startsWith('Thinking about this')) ae.splice(i, 1)
-    }
+    dropPlaceholders()
     return rootId
   }
 
   it("carries Hermes's own prior answer into the follow-up prompt", async () => {
-    const { env, ae, aiRequests } = makeEnv(FX)
-    const rootId = await privateThreadWithAnswer(env, ae)
+    const ctx = makeEnv(FX)
+    const { env, aiRequests } = ctx
+    const rootId = await privateThreadWithAnswer(ctx)
     await postActivityEntry({
       env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment',
       body: '@hermes make it shorter', actorSlug: 'nate-mesfin', visibility: 'author', parentId: rootId,
@@ -1644,8 +1247,9 @@ describe('dispatchHermes — thread transcript (#98)', () => {
   })
 
   it('labels the assistant turns so the model can tell who said what', async () => {
-    const { env, ae, aiRequests } = makeEnv(FX)
-    const rootId = await privateThreadWithAnswer(env, ae)
+    const ctx = makeEnv(FX)
+    const { env, aiRequests } = ctx
+    const rootId = await privateThreadWithAnswer(ctx)
     await postActivityEntry({
       env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment',
       body: '@hermes shorter', actorSlug: 'nate-mesfin', visibility: 'author', parentId: rootId,
@@ -1694,7 +1298,7 @@ describe('dispatchHermes — thread transcript (#98)', () => {
   })
 
   it("day scope DOES recall the requester's own earlier private exchange", async () => {
-    const { env, ae, aiRequests } = makeEnv(FX)
+    const { env, aiRequests, dropPlaceholders } = makeEnv(FX)
     const first = await postActivityEntry({
       env, user: NATE, entityType: 'day', entityId: '2026-07-24', kind: 'comment',
       body: '@hermes remind me to email Will', actorSlug: 'nate-mesfin', visibility: 'author',
@@ -1705,9 +1309,7 @@ describe('dispatchHermes — thread transcript (#98)', () => {
       kind: 'comment', body: 'Noted — email Will about the cohort.', actorSlug: 'claude-ai',
       visibility: 'author', parentId: first.row.id as string, fireSideEffects: false,
     })
-    for (let i = ae.length - 1; i >= 0; i--) {
-      if (ae[i].body.startsWith('Thinking about this')) ae.splice(i, 1)
-    }
+    dropPlaceholders()
     await postActivityEntry({
       env, user: NATE, entityType: 'day', entityId: '2026-07-24', kind: 'comment',
       body: '@hermes what was that again', actorSlug: 'nate-mesfin', visibility: 'author',

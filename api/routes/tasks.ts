@@ -1052,15 +1052,11 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
 // into brain.db without physical row loss. Idempotent: re-deleting an already-
 // deleted task returns 200 with `idempotent: true`.
 //
-// Cascade:
-//   - DELETE task_comments WHERE task_id = ?
-//   - DELETE task_updates WHERE task_id = ?
-//   - DELETE task_subtasks WHERE task_id = ?
-//   - DELETE notifications WHERE source_type IN ('task','task_comment') AND source_id = ?
-//
-// Mirrors the batch-delete notification cleanup added for audit 12.L. Subtasks
-// and task_updates are hard-deleted since they're UI-only artefacts of this task
-// (no external sync to brain.db / Airtable).
+// Cascade: this route deletes nothing itself. applyDelete (mutations.ts,
+// decideAndCommitDelete's `dependents`) hard-deletes the task's
+// activity_entries, notifications (source_type 'task'/'task_comment') and
+// task_subtasks inside the soft-delete's batch, each gated on that soft-delete
+// having landed. (task_comments/task_updates were dropped in schema-v78.)
 export async function handleDeleteTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   // T1.1: PB-visibility gate. Non-PI callers cannot soft-delete tasks attached
   // to Peripheral Brain projects. API-key callers (sync) pass via isPiRequest.
@@ -1096,21 +1092,13 @@ export async function handleDeleteTask(id: string, request: Request, user: AuthU
     return json({ data: { deleted: id, title: label, idempotent: true } });
   }
 
-  // Cascade-clean child rows. task_subtasks carries a task_id FK-by-convention
-  // (not enforced). Notifications cleanup mirrors the batch-delete path (12.L).
-  // task_comments/task_updates dropped (schema-v78, 2026-06-10).
-  try {
-    // Design C (v77): unified-timeline rows for this task.
-    await env.DB.prepare("DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id = ?").bind(id).run();
-    try { await env.DB.prepare('DELETE FROM task_subtasks WHERE task_id = ?').bind(id).run(); } catch { /* table may not exist */ }
-    await env.DB.prepare(
-      "DELETE FROM notifications WHERE source_type IN ('task','task_comment') AND source_id = ?"
-    ).bind(id).run();
-  } catch (e) {
-    console.error('task cascade-clean failed:', e);
-  }
-
-  // Soft-delete via applyMutation — stamps last_mutation_id + records in processed_mutations.
+  // Soft-delete via applyMutation — stamps last_mutation_id + records in
+  // processed_mutations. The child cascade (activity_entries, notifications,
+  // task_subtasks) runs INSIDE that write's batch (applyDelete's dependents,
+  // #8842 R1), so a delete that does not land leaves every child in place.
+  // #8875: this route used to run the same three DELETEs itself, as separate
+  // statements BEFORE the soft-delete with their failure swallowed, so a
+  // rejected or failed soft-delete left a live task stripped of its timeline.
   const deleteMutResult = await applyMutation(env, {
     table: 'tasks',
     record_id: id,

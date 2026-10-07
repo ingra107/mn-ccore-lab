@@ -33,6 +33,7 @@ import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authorit
 import { TASK_PLAIN_COLS } from './task-cols'
 import { TASK_ALLOWED_FIELDS } from '../routes/tasks'
 import { PROJECT_ALLOWED_FIELDS } from '../routes/projects'
+import { prodSchemaDb, d1Adapter, receiptOf } from '../test-support/prod-schema-db'
 
 // ── set helpers ─────────────────────────────────────────────────────────────
 const arr = (s: Iterable<string>) => [...s].sort()
@@ -320,78 +321,95 @@ describe('D) create classification — every wire field is in exactly one bucket
 
 // ════════════════════════════════════════════════════════════════════════════
 // E) BEHAVIOR — the nontrivial create coercions codex named, on the REAL route.
-//    Mocks ONLY the persistence boundary (applyMutation); captures the exact
-//    payload handleCreateTask builds. No prod, no DB.
+//    Spies on the persistence boundary (applyMutation) to capture the exact
+//    payload handleCreateTask builds, then lets the REAL applyMutation write it.
+//
+// #8875: the route used to run on a no-op D1 stub (every read null, every
+// write changes=0, a hand-written batch) with applyMutation replaced outright,
+// so nothing reached a table. Now the spy calls through to the real
+// applyMutation on the migration-chain database
+// (api/test-support/prod-schema-db.ts). Each case keeps its raw-payload
+// assertion (a default or a coercion downstream cannot hide a field the route
+// failed to build) AND reads the stored row and its processed_mutations
+// receipt back (a field the route built but the write path dropped is RED too).
 // ════════════════════════════════════════════════════════════════════════════
 //
 // vi.hoisted: the factory is hoisted above imports, so the mock fn must be too.
 const { applyMutationMock } = vi.hoisted(() => ({ applyMutationMock: vi.fn() }))
 // '../routes/mutations' from api/lib resolves to the SAME module tasks.ts imports
-// as './mutations' → tasks.ts receives this mock for applyMutation.
-vi.mock('../routes/mutations', () => ({
-  applyMutation: applyMutationMock,
-}))
+// as './mutations' → tasks.ts receives this spy for applyMutation; every other
+// export is the real one.
+vi.mock('../routes/mutations', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../routes/mutations')>()
+  return { ...real, applyMutation: applyMutationMock }
+})
 
-// Generic no-op chainable D1 stub: satisfies logActivity / notifications / any
-// stray query without modelling SQL (assignee='claude-ai' skips the only .first()
-// that must return a row — the team_members validation).
-function noopDB() {
-  const stmt: Record<string, unknown> = {
-    bind: () => stmt,
-    first: async () => null,
-    run: async () => ({ success: true, meta: { changes: 0 } }),
-    all: async () => ({ results: [], success: true, meta: {} }),
-  }
-  return { prepare: () => stmt, batch: async () => [] }
-}
+type Created = { payload: Record<string, unknown>; stored: Record<string, unknown> }
 
-async function captureCreatePayload(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+async function createTask(body: Record<string, unknown>): Promise<Created> {
   const { handleCreateTask } = await import('../routes/tasks')
+  const real = await vi.importActual<typeof import('../routes/mutations')>('../routes/mutations')
   applyMutationMock.mockReset()
-  applyMutationMock.mockResolvedValue({ status: 'accepted' })
-  const env = { DB: noopDB(), RESEND_API_KEY: undefined } as unknown as import('../helpers').Env
+  applyMutationMock.mockImplementation(real.applyMutation)
+  const db = prodSchemaDb()
+  const env = { DB: d1Adapter(db), RESEND_API_KEY: undefined } as unknown as import('../helpers').Env
   const user = { email: 'ingra107@umn.edu', name: 'Nick' } as import('../helpers').AuthUser
   const req = new Request('https://x/api/tasks', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    // assignee='claude-ai' skips the team_members lookup, the one read that
+    // must find a row.
     body: JSON.stringify({ assignee: 'claude-ai', ...body }),
   })
-  await handleCreateTask(req, user, env)
+  const resp = await handleCreateTask(req, user, env)
+  expect(resp.status).toBeLessThan(300)
   expect(applyMutationMock).toHaveBeenCalledTimes(1)
-  return (applyMutationMock.mock.calls[0][1] as { payload: Record<string, unknown> }).payload
+  const [, mut] = applyMutationMock.mock.calls[0] as [unknown, { payload: Record<string, unknown> }]
+  const result = await applyMutationMock.mock.results[0].value as { mutation_id: string; status: string }
+  expect(result.status).toBe('accepted')
+  const stored = db.prepare('SELECT * FROM tasks WHERE last_mutation_id = ?').get(result.mutation_id) as Record<string, unknown>
+  expect(stored).toBeDefined()
+  expect(receiptOf(db, result.mutation_id)).toMatchObject({ outcome: 'accepted', table_name: 'tasks', record_id: stored.id })
+  return { payload: mut.payload, stored }
 }
 
-describe('E) handleCreateTask payload coercions (real route, persistence mocked)', () => {
+describe('E) handleCreateTask payload coercions (real route, real write path)', () => {
   it('defaults missing approval_status → null', async () => {
-    const payload = await captureCreatePayload({ description: 'a task with no approval_status' })
+    const { payload, stored } = await createTask({ description: 'a task with no approval_status' })
     expect(payload.approval_status).toBeNull()
+    expect(stored.approval_status).toBeNull()
   })
 
   it('passes an explicit approval_status through unchanged', async () => {
-    const payload = await captureCreatePayload({ description: 'pending approval task', approval_status: 'pending' })
+    const { payload, stored } = await createTask({ description: 'pending approval task', approval_status: 'pending' })
     expect(payload.approval_status).toBe('pending')
+    expect(stored.approval_status).toBe('pending')
   })
 
   // schema-v109 (2026-09-16): kind is NOT NULL DEFAULT 'task' on both stores.
   it('defaults missing kind → task', async () => {
-    const payload = await captureCreatePayload({ description: 'an ordinary task' })
+    const { payload, stored } = await createTask({ description: 'an ordinary task' })
     expect(payload.kind).toBe('task')
+    expect(stored.kind).toBe('task')
   })
 
   it('passes kind=milestone through unchanged', async () => {
-    const payload = await captureCreatePayload({ description: 'R01 LOI due', kind: 'milestone' })
+    const { payload, stored } = await createTask({ description: 'R01 LOI due', kind: 'milestone' })
     expect(payload.kind).toBe('milestone')
+    expect(stored.kind).toBe('milestone')
   })
 
   it('source_thread_id present → email_link derived as the paired Gmail-thread link', async () => {
-    const payload = await captureCreatePayload({ description: 'email-sourced task', source_thread_id: 'THREAD123' })
+    const { payload, stored } = await createTask({ description: 'email-sourced task', source_thread_id: 'THREAD123' })
     expect(payload.source_thread_id).toBe('THREAD123')
     expect(payload.email_link).toBe('https://mail.google.com/mail/u/1/#inbox/THREAD123')
+    expect(stored).toMatchObject({ source_thread_id: 'THREAD123', email_link: 'https://mail.google.com/mail/u/1/#inbox/THREAD123' })
   })
 
   it('source_thread_id absent → email_link is null (pair moves together)', async () => {
-    const payload = await captureCreatePayload({ description: 'no thread task' })
+    const { payload, stored } = await createTask({ description: 'no thread task' })
     expect(payload.source_thread_id).toBeNull()
     expect(payload.email_link).toBeNull()
+    expect(stored).toMatchObject({ source_thread_id: null, email_link: null })
   })
 })

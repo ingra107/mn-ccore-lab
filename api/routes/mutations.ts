@@ -1144,11 +1144,12 @@ async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): P
   }
 
   // Cascade cleanup for tasks and projects (codex Fixes 2+3, 2026-05-11).
-  // PB-origin deletes route through applyDelete, bypassing the route-level
-  // cascade in handleDeleteTask / handleDeleteProject, so the cascade lives
-  // here for both callers. #8842 R1: it now runs INSIDE the soft-delete's
-  // batch, each statement gated on the parent's delete having landed. It used
-  // to run in a separate batch BEFORE the soft-delete with its failure
+  // PB-origin deletes route through applyDelete directly, so the cascade
+  // lives here for both callers. (handleDeleteTask relies on it alone since
+  // #8875; handleDeleteProject still runs its own pre-cascade batch.)
+  // #8842 R1: it now runs INSIDE the soft-delete's batch, each statement
+  // gated on the parent's delete having landed. It used to run in a separate
+  // batch BEFORE the soft-delete with its failure
   // swallowed, so a soft-delete that failed (or, with the CAS term, lost to a
   // concurrent writer) left the children deleted under a live parent. Every
   // table below exists in prod D1 (read-only sqlite_master query, 2026-09-23),

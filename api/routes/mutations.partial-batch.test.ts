@@ -16,60 +16,49 @@
 //
 // This test:
 //   1. Sends a two-mutation batch where the second has no origin_machine.
-//   2. Asserts the first mutation's result is NOT present in the per-row
-//      results as 'accepted' (i.e., no partial commit for a well-formed first
-//      mutation when the batch has a malformed second mutation is NOT the
-//      guarantee — the guarantee is that the malformed mutation itself never
-//      writes). The critical property is that the second mutation's error is
-//      surfaced as status='error', not a 500, and the second mutation DID NOT
-//      cause any D1 write. This is a unit test over processOne logic.
+//   2. The guarantee is NOT that the batch rolls back as a whole: the
+//      well-formed first mutation lands with its receipt. The guarantee is
+//      that the malformed mutation itself never writes: its error surfaces as
+//      status='error', not a 500, and it leaves no row and no receipt.
 //   3. Verifies the missing-field error reason is human-readable.
 //
-// The test works by importing and calling processOne indirectly via
-// handleMutations with a mock DB that records prepare() calls. A missing-field
-// mutation must never invoke DB.prepare() for INSERT/UPDATE/DELETE after the
-// envelope check returns.
+// #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
+// The old mock answered every read with null and recorded DML only from an
+// un-bound .run(), so its "no DML" assertions could not see a bound INSERT and
+// passed whatever the route wrote. Here every statement the engine executes is
+// logged through d1Adapter's onExec, the malformed mutation must reach the
+// engine with NO statement at all (not even the idempotency read), and the
+// stored tasks rows and processed_mutations receipts are read back. d1Adapter
+// refuses an undefined bind with D1_TYPE_ERROR, as D1 does, so the original
+// failure mode (the undefined field reaching the receipt INSERT) is reproducible
+// on this fixture.
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
+import type Database from 'better-sqlite3'
 import { nowInstant } from '../lib/time'
+import { handleMutations } from './mutations'
 import type { Mutation } from './mutations'
+import type { Env, AuthUser } from '../helpers'
+import { prodSchemaDb, d1Adapter, receiptOf } from '../test-support/prod-schema-db'
 
-// Minimal mock D1 DB. We track whether prepare() was called with DML (INSERT/UPDATE/DELETE).
-function makeMockDb(overrides: Partial<{
-  first: (sql: string) => Promise<unknown>,
-  run: () => Promise<{ meta: { changes: number } }>,
-}> = {}) {
-  const dmlCalls: string[] = []
-  const db = {
-    prepare: vi.fn((sql: string) => ({
-      bind: (..._args: unknown[]) => ({
-        first: () => overrides.first?.(sql) ?? Promise.resolve(null),
-        run: () => overrides.run?.() ?? Promise.resolve({ meta: { changes: 0 }, success: true, results: [] }),
-        all: () => Promise.resolve({ results: [], success: true, meta: {} }),
-      }),
-      first: () => overrides.first?.(sql) ?? Promise.resolve(null),
-      run: () => {
-        if (/^\s*(INSERT|UPDATE|DELETE)/i.test(sql)) dmlCalls.push(sql)
-        return overrides.run?.() ?? Promise.resolve({ meta: { changes: 0 }, success: true, results: [] })
-      },
-      all: () => Promise.resolve({ results: [], success: true, meta: {} }),
-    })),
-    batch: vi.fn(() => Promise.resolve([])),
-    _dmlCalls: dmlCalls,
-  }
-  return db
-}
-
-function makeEnv(db: ReturnType<typeof makeMockDb>) {
-  return {
-    DB: db,
+let db: InstanceType<typeof Database>
+let env: Env
+let execLog: Array<{ sql: string; vals: unknown[] }>
+// Every SQL text the route PREPARED. onExec alone cannot prove "no DB access":
+// d1Adapter refuses an undefined bind at bind() time, before onExec runs.
+let prepared: string[]
+beforeEach(() => {
+  db = prodSchemaDb()
+  execLog = []
+  prepared = []
+  const adapter = d1Adapter(db, { onExec: (sql, vals) => { execLog.push({ sql, vals }) } })
+  env = {
+    DB: { ...adapter, prepare: (sql: string) => { prepared.push(sql); return adapter.prepare(sql) } },
     PB_API_KEY: 'test-key',
-  } as unknown as import('../helpers').Env
-}
+  } as unknown as Env
+})
 
-function makeUser() {
-  return { email: 'ingra107@umn.edu', role: 'admin' } as unknown as import('../helpers').AuthUser
-}
+const user = { email: 'ingra107@umn.edu', role: 'admin' } as unknown as AuthUser
 
 function baseMut(overrides: Partial<Mutation> = {}): Mutation {
   return {
@@ -80,7 +69,7 @@ function baseMut(overrides: Partial<Mutation> = {}): Mutation {
     record_id: `task_01HV${Math.random().toString(36).slice(2, 12).toUpperCase()}`,
     base_seq: null,
     base_row_hash: null,
-    payload: { title: 'Test task', status: 'todo' },
+    payload: { title: `Test task ${Math.random().toString(36).slice(2, 8)}`, status: 'todo', assignee: 'nick-ingraham' },
     depends_on: null,
     client_ts: nowInstant(),
     issued_at: nowInstant(),
@@ -88,105 +77,81 @@ function baseMut(overrides: Partial<Mutation> = {}): Mutation {
   }
 }
 
+async function send(muts: Mutation[]) {
+  const req = new Request('https://example.com/api/mutations', {
+    method: 'POST',
+    body: JSON.stringify({ mutations: muts }),
+    headers: { 'content-type': 'application/json', 'Authorization': 'Bearer test-key' },
+  })
+  const resp = await handleMutations(req, user, env)
+  const body = await resp.json() as { results: Array<{ mutation_id: string; status: string; reason?: string }> }
+  return { status: resp.status, body }
+}
+
+const taskRow = (id: string) => db.prepare('SELECT id, title FROM tasks WHERE id = ?').get(id)
+/** Statements whose SQL or binds mention this mutation or record id. */
+const touching = (m: Mutation) =>
+  execLog.filter((e) => e.vals.includes(m.mutation_id) || e.vals.includes(m.record_id))
+
 describe('processOne envelope validation — partial-batch atomicity guard', () => {
-  it('missing origin_machine returns status=error without any DML', async () => {
-    const { handleMutations } = await import('./mutations')
-    const db = makeMockDb()
-    const env = makeEnv(db)
-    const user = makeUser()
+  for (const field of ['origin_machine', 'client_ts', 'issued_at'] as const) {
+    it(`missing ${field} returns status=error without touching the database`, async () => {
+      const badMut = baseMut({ [field]: undefined } as Partial<Mutation>)
+      const { status, body } = await send([badMut])
 
-    const badMut = baseMut({ origin_machine: undefined as unknown as string })
-    const req = new Request('https://example.com/api/mutations', {
-      method: 'POST',
-      body: JSON.stringify({ mutations: [badMut] }),
-      headers: { 'content-type': 'application/json', 'Authorization': 'Bearer test-key' },
+      expect(status).toBe(200)
+      expect(body.results).toHaveLength(1)
+      expect(body.results[0].status).toBe('error')
+      expect(body.results[0].reason).toContain(field)
+      // CRITICAL: the envelope check runs before any per-mutation DB access:
+      // no statement names this mutation (no idempotency read, no row write,
+      // no receipt) and nothing but a read ran. (The one read handleMutations
+      // may issue is the request-level lab_settings flag load, cached per
+      // module, so it shows up only on the first request of the file.)
+      expect(touching(badMut)).toEqual([])
+      expect(execLog.filter((e) => !/^\s*SELECT\b/i.test(e.sql))).toEqual([])
+      expect(prepared.filter((sql) => !/FROM lab_settings/.test(sql))).toEqual([])
+      expect(taskRow(badMut.record_id)).toBeUndefined()
+      expect(receiptOf(db, badMut.mutation_id)).toBeUndefined()
     })
+  }
 
-    const resp = await handleMutations(req, user, env)
-    const body = await resp.json() as { results: Array<{ status: string; reason?: string }> }
-
-    expect(resp.status).toBe(200)
-    expect(body.results).toHaveLength(1)
-    expect(body.results[0].status).toBe('error')
-    expect(body.results[0].reason).toContain('origin_machine')
-    // CRITICAL: no INSERT/UPDATE/DELETE should have run for this mutation
-    expect(db._dmlCalls.filter(s => /INSERT|UPDATE|DELETE/i.test(s))).toHaveLength(0)
-  })
-
-  it('missing client_ts returns status=error without any DML', async () => {
-    const { handleMutations } = await import('./mutations')
-    const db = makeMockDb()
-    const env = makeEnv(db)
-    const user = makeUser()
-
-    const badMut = baseMut({ client_ts: undefined as unknown as string })
-    const req = new Request('https://example.com/api/mutations', {
-      method: 'POST',
-      body: JSON.stringify({ mutations: [badMut] }),
-      headers: { 'content-type': 'application/json', 'Authorization': 'Bearer test-key' },
-    })
-
-    const resp = await handleMutations(req, user, env)
-    const body = await resp.json() as { results: Array<{ status: string; reason?: string }> }
-
-    expect(resp.status).toBe(200)
-    expect(body.results[0].status).toBe('error')
-    expect(body.results[0].reason).toContain('client_ts')
-    expect(db._dmlCalls.filter(s => /INSERT|UPDATE|DELETE/i.test(s))).toHaveLength(0)
-  })
-
-  it('missing issued_at returns status=error without any DML', async () => {
-    const { handleMutations } = await import('./mutations')
-    const db = makeMockDb()
-    const env = makeEnv(db)
-    const user = makeUser()
-
-    const badMut = baseMut({ issued_at: undefined as unknown as string })
-    const req = new Request('https://example.com/api/mutations', {
-      method: 'POST',
-      body: JSON.stringify({ mutations: [badMut] }),
-      headers: { 'content-type': 'application/json', 'Authorization': 'Bearer test-key' },
-    })
-
-    const resp = await handleMutations(req, user, env)
-    const body = await resp.json() as { results: Array<{ status: string; reason?: string }> }
-
-    expect(resp.status).toBe(200)
-    expect(body.results[0].status).toBe('error')
-    expect(body.results[0].reason).toContain('issued_at')
-    expect(db._dmlCalls.filter(s => /INSERT|UPDATE|DELETE/i.test(s))).toHaveLength(0)
-  })
-
-  it('batch with malformed second mutation: second returns error, response is 200 not 500', async () => {
-    // This pins the primary incident: a well-formed batch where one mutation
-    // is malformed must return 200 with per-row results (not 500), and the
-    // malformed mutation must have status='error'. The first mutation's outcome
-    // is separate (may succeed or fail depending on mock state).
-    const { handleMutations } = await import('./mutations')
-    const db = makeMockDb()
-    const env = makeEnv(db)
-    const user = makeUser()
-
+  it('batch with malformed second mutation: first lands with its receipt, second writes nothing, response is 200 not 500', async () => {
+    // Pins the primary incident: one malformed mutation in a batch must return
+    // 200 with per-row results (not 500), its own result is status='error',
+    // and it leaves no row and no receipt. The well-formed first mutation is
+    // independent of it and lands normally.
     const mut1 = baseMut()
     const mut2 = baseMut({ origin_machine: undefined as unknown as string })
 
-    const req = new Request('https://example.com/api/mutations', {
-      method: 'POST',
-      body: JSON.stringify({ mutations: [mut1, mut2] }),
-      headers: { 'content-type': 'application/json', 'Authorization': 'Bearer test-key' },
-    })
-
-    const resp = await handleMutations(req, user, env)
-    // Must be 200, never 500
-    expect(resp.status).toBe(200)
-    const body = await resp.json() as { results: Array<{ mutation_id: string; status: string; reason?: string }> }
+    const { status, body } = await send([mut1, mut2])
+    expect(status).toBe(200)
     expect(body.results).toHaveLength(2)
 
-    // Second mutation must be error
+    const r1 = body.results.find(r => r.mutation_id === mut1.mutation_id)
+    expect(r1?.status).toBe('accepted')
+    expect(taskRow(mut1.record_id)).toEqual({ id: mut1.record_id, title: (mut1.payload as { title: string }).title })
+    const receipt1 = receiptOf(db, mut1.mutation_id)
+    expect(receipt1).toMatchObject({ outcome: 'accepted', table_name: 'tasks', record_id: mut1.record_id })
+    expect(JSON.parse(receipt1!.original_response_json)).toMatchObject({ mutation_id: mut1.mutation_id, status: 'accepted' })
+
     const r2 = body.results.find(r => r.mutation_id === mut2.mutation_id)
     expect(r2).toBeDefined()
     expect(r2!.status).toBe('error')
     expect(r2!.reason).toContain('origin_machine')
+    expect(touching(mut2)).toEqual([])
+    expect(taskRow(mut2.record_id)).toBeUndefined()
+    expect(receiptOf(db, mut2.mutation_id)).toBeUndefined()
+  })
+
+  it('the fixture can see the original failure: an undefined receipt field is refused as D1 refuses it', async () => {
+    // What the envelope check prevents: an undefined origin_machine reaching the
+    // receipt INSERT. D1 throws D1_TYPE_ERROR at bind; so does this fixture.
+    expect(() =>
+      env.DB.prepare('INSERT INTO processed_mutations (mutation_id, origin_machine, processed_at, outcome, original_response_json) VALUES (?, ?, datetime(\'now\'), ?, ?)')
+        .bind('mut_x', undefined, 'accepted', '{}'),
+    ).toThrow(/D1_TYPE_ERROR/)
+    expect(receiptOf(db, 'mut_x')).toBeUndefined()
   })
 
   it('source-level: processOne envelope validation precedes idempotency check and DML', async () => {
