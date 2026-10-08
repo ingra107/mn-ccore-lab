@@ -13,7 +13,7 @@
 // be explicit metadata, not string-derived.
 
 import type { Context, Hono } from 'hono'
-import { projectAnonResponse, type AnonShape } from './anon-shape'
+import { projectAnonResponse, type AnonRowFilter, type AnonShape } from './anon-shape'
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 export type AuthLevel = 'public' | 'authed' | 'pi'
@@ -114,11 +114,16 @@ interface RouteMetadataBase {
  * public GET without a shape does not type-check, and defineRoute() throws on
  * it at load time for callers that cast past the type. Every other route has
  * no shape and is never read anonymously when auth is enforced.
+ *
+ * A public GET whose ROWS (not just columns) are partly private also carries
+ * `anonRows`, the predicate a row must pass to reach an anonymous caller
+ * (e.g. publications: only status 'Published'). Like anonShape it exists only
+ * on a public GET.
  */
 export type RouteMetadata =
-  | (RouteMetadataBase & { method: 'GET'; auth: 'public'; anonShape: AnonShape })
-  | (RouteMetadataBase & { method: HttpMethod; auth: Exclude<AuthLevel, 'public'>; anonShape?: never })
-  | (RouteMetadataBase & { method: Exclude<HttpMethod, 'GET'>; auth: 'public'; anonShape?: never })
+  | (RouteMetadataBase & { method: 'GET'; auth: 'public'; anonShape: AnonShape; anonRows?: AnonRowFilter })
+  | (RouteMetadataBase & { method: HttpMethod; auth: Exclude<AuthLevel, 'public'>; anonShape?: never; anonRows?: never })
+  | (RouteMetadataBase & { method: Exclude<HttpMethod, 'GET'>; auth: 'public'; anonShape?: never; anonRows?: never })
 
 const VALID_AUTH: ReadonlySet<AuthLevel> = new Set<AuthLevel>([
   'public',
@@ -136,7 +141,7 @@ export function defineRoute(meta: RouteMetadata): RouteMetadata {
   }
   // The load-time half of the type rule, for callers that cast past it. Read
   // through the wide shape: the union says these states cannot exist.
-  const raw = meta as RouteMetadataBase & { method: HttpMethod; auth: AuthLevel; anonShape?: AnonShape }
+  const raw = meta as RouteMetadataBase & { method: HttpMethod; auth: AuthLevel; anonShape?: AnonShape; anonRows?: AnonRowFilter }
   const publicGet = raw.method === 'GET' && raw.auth === 'public'
   if (publicGet && !raw.anonShape) {
     throw new Error(
@@ -146,6 +151,11 @@ export function defineRoute(meta: RouteMetadata): RouteMetadata {
   if (raw.anonShape && !publicGet) {
     throw new Error(
       `${raw.method} ${raw.path} has an anonShape but is not a public GET; only a public GET is read anonymously`,
+    )
+  }
+  if (raw.anonRows && !publicGet) {
+    throw new Error(
+      `${raw.method} ${raw.path} has anonRows but is not a public GET; only a public GET is read anonymously`,
     )
   }
   const dup = ROUTE_REGISTRY.find(
@@ -232,7 +242,8 @@ export interface ReadGate {
  * to drift from it. For an anonymous caller (gate.isAnonymous):
  *   - auth 'authed' | 'pi'  -> gate.deny(c), the handler never runs;
  *   - auth 'public'         -> the handler runs and its response is projected
- *                              through the route's anonShape (allowlist).
+ *                              through the route's anonShape (allowlist),
+ *                              after dropping rows its anonRows refuses.
  * Identified callers (session or API key) get the handler's response as is.
  * Hono also routes HEAD through these GET handlers, so HEAD is gated too.
  */
@@ -254,7 +265,7 @@ export function bindRegistryToHono(app: Hono<any>, gate: ReadGate): void {
     app.get(route.path, async (c: any) => {
       if (!gate.isAnonymous(c)) return route.handler(c)
       if (route.auth !== 'public') return gate.deny(c)
-      return projectAnonResponse(await route.handler(c), route.anonShape, label)
+      return projectAnonResponse(await route.handler(c), route.anonShape, label, route.anonRows)
     })
   }
 }

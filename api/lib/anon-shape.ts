@@ -20,11 +20,25 @@
 //   { k: shape }  the value must be a plain object; only the named keys are
 //                 kept, each projected through its own shape.
 // A value whose type does not match its shape is dropped (fail closed).
+//
+// A shape cannot drop ROWS. A route whose rows are themselves private to
+// anonymous callers (an unpublished paper, not just a private column) also
+// declares `anonRows`, a predicate each row of the response's `data` array
+// must pass; it runs on the raw row, before the shape. See AnonRowFilter.
 
 export type AnonShape =
   | true
   | readonly [AnonShape]
   | { readonly [key: string]: AnonShape }
+
+/**
+ * Which rows of a `{ data: [...], count? }` response an anonymous caller may
+ * see. Runs on the handler's raw row (before the shape), so it may test a
+ * column the shape does not publish. A row that is not a plain object is
+ * dropped. `count`, when the body carries a numeric one, is recomputed from
+ * the surviving rows so it never reports the hidden total.
+ */
+export type AnonRowFilter = (row: Readonly<Record<string, unknown>>) => boolean
 
 type Scalar = string | number | boolean | null
 
@@ -69,13 +83,19 @@ function rebuild(res: Response, body: unknown): Response {
 }
 
 /**
- * Apply `shape` to a handler's Response for an anonymous caller.
+ * Apply `shape` (and `rows`, when the route declares one) to a handler's
+ * Response for an anonymous caller.
  *
  * A 2xx body that is not JSON cannot be projected, so it is refused with a
  * 500 and a console.error rather than passed through unshaped: a public route
  * that starts returning something else fails loud, it does not leak quietly.
  */
-export async function projectAnonResponse(res: Response, shape: AnonShape, label: string): Promise<Response> {
+export async function projectAnonResponse(
+  res: Response,
+  shape: AnonShape,
+  label: string,
+  rows?: AnonRowFilter,
+): Promise<Response> {
   const ok = res.status >= 200 && res.status < 300
   const text = await res.text()
   let body: unknown
@@ -88,6 +108,19 @@ export async function projectAnonResponse(res: Response, shape: AnonShape, label
       status: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     })
+  }
+  if (ok && rows) {
+    // A row filter needs the { data: [...] } envelope. A body that lacks it is
+    // refused, never sent with every row: fail loud, not open.
+    if (!isPlainObject(body) || !Array.isArray(body.data)) {
+      console.error(`[anon-shape] ${label}: anonRows is declared but the body has no data array; refusing`)
+      return new Response(JSON.stringify({ error: 'Internal error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+    const kept = body.data.filter((r) => isPlainObject(r) && rows(r))
+    body = { ...body, data: kept, ...(typeof body.count === 'number' ? { count: kept.length } : {}) }
   }
   // A non-2xx keeps the error envelope plus whatever the route's own shape
   // already allows (e.g. /api/health's `ok` on a 503). Never wider than 2xx.

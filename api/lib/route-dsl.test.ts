@@ -103,6 +103,19 @@ describe('defineRoute()', () => {
     ).toThrow(/not a public GET/i)
   })
 
+  it('rejects anonRows on a route that is not a public GET', () => {
+    expect(() =>
+      // @ts-expect-error only a public GET may carry anonRows
+      defineRoute({
+        method: 'GET',
+        path: '/api/test/authed-rows',
+        auth: 'authed',
+        anonRows: () => true,
+        handler: async () => new Response(),
+      }),
+    ).toThrow(/anonRows but is not a public GET/i)
+  })
+
   it('rejects unknown auth level', () => {
     expect(() =>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -187,5 +200,44 @@ describe('bindRegistryToHono()', () => {
     const res = await app.request('/api/bind-test/err')
     expect(res.status).toBe(404)
     expect(await res.json()).toEqual({ error: 'Not found' })
+  })
+
+  it('anonymous: anonRows drops refused rows before the shape and recomputes count', async () => {
+    defineRoute({
+      method: 'GET',
+      path: '/api/bind-test/rows',
+      auth: 'public',
+      // status is NOT in the shape: the filter reads the raw row.
+      anonShape: { data: [{ id: true }], count: true },
+      anonRows: (r) => r.status === 'Published',
+      handler: async () => jsonRes({
+        data: [{ id: 'a', status: 'Published' }, { id: 'b', status: 'In Review' }, 'not-a-row'],
+        count: 3,
+      }),
+    })
+    const signedIn = new Hono()
+    bindRegistryToHono(signedIn, OPEN_GATE)
+    expect((await (await signedIn.request('/api/bind-test/rows')).json()).count).toBe(3)
+    const anon = new Hono()
+    bindRegistryToHono(anon, ANON_GATE)
+    const res = await anon.request('/api/bind-test/rows')
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ data: [{ id: 'a' }], count: 1 })
+  })
+
+  it('anonymous: anonRows on a body with no data array fails closed (500), never sends every row', async () => {
+    defineRoute({
+      method: 'GET',
+      path: '/api/bind-test/rows-bad',
+      auth: 'public',
+      anonShape: { rows: [{ id: true }] },
+      anonRows: () => false,
+      handler: async () => jsonRes({ rows: [{ id: 'secret-row' }] }),
+    })
+    const app = new Hono()
+    bindRegistryToHono(app, ANON_GATE)
+    const res = await app.request('/api/bind-test/rows-bad')
+    expect(res.status).toBe(500)
+    expect(await res.text()).not.toContain('secret-row')
   })
 })

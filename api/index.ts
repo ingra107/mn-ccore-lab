@@ -12,7 +12,7 @@ const PB_SERVICE_SLUG = 'nick-ingraham';
 // raw app.get/post calls.
 import { defineRoute, bindRegistryToHono } from './lib/route-dsl';
 import type { HttpMethod } from './lib/route-dsl';
-import type { AnonShape } from './lib/anon-shape';
+import type { AnonRowFilter, AnonShape } from './lib/anon-shape';
 import type { AuthUser } from './helpers';
 import { validateApiKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
@@ -141,6 +141,10 @@ const PUBLIC_PUBLICATION: AnonShape = {
   id: true, title: true, authors: true, journal: true, year: true, status: true,
   doi: true, pubmed: true, abstract: true, topics: true, featured: true, author_slugs: true,
 };
+// Logged-out visitors see published work only; 'In Preparation' and
+// 'In Review' rows (title, authors, abstract) stay with signed-in members.
+// 'Published' is the only finished value in prod and the POST default.
+const PUBLISHED_ONLY: AnonRowFilter = (row) => row.status === 'Published';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Global error handler — matches old top-level try/catch behavior.
@@ -1292,6 +1296,7 @@ defineRoute({
   path: '/api/publications',
   auth: 'public',
   anonShape: { data: [PUBLIC_PUBLICATION], count: true },
+  anonRows: PUBLISHED_ONLY,
   handler: (c) => handleGetPublications(U(c), E(c)),
 });
 defineRoute({
@@ -1671,6 +1676,7 @@ defineRoute({
   path: '/api/team/:slug/featured-publications',
   auth: 'public',
   anonShape: { data: [PUBLIC_PUBLICATION], count: true },
+  anonRows: PUBLISHED_ONLY,
   handler: (c) => handleGetMemberFeaturedPublications(c.req.param('slug'), E(c)),
 });
 defineRoute({

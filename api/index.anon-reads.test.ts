@@ -59,7 +59,17 @@ beforeAll(() => {
     id: 'pub1', title: 'A published paper', authors: 'Ingraham N', journal: 'CHEST', year: 2025,
     status: 'Published', author_slugs: '["nick-ingraham"]',
   })
+  // Unpublished work is private to signed-in members, rows and all.
+  insertRow(db, 'publications', {
+    id: 'pub_review', title: `${S} paper in review`, authors: 'Ingraham N', journal: 'CHEST', year: 2026,
+    status: 'In Review', abstract: `${S} unpublished abstract`, featured: 1, author_slugs: '["nick-ingraham"]',
+  })
+  insertRow(db, 'publications', {
+    id: 'pub_prep', title: `${S} paper in preparation`, authors: 'Ingraham N', year: 2026,
+    status: 'In Preparation', author_slugs: '["nick-ingraham"]',
+  })
   insertRow(db, 'member_featured_publications', { member_slug: 'nick-ingraham', publication_id: 'pub1', sort_order: 0 })
+  insertRow(db, 'member_featured_publications', { member_slug: 'nick-ingraham', publication_id: 'pub_review', sort_order: 1 })
   insertRow(db, 'research_digest', {
     id: 'digest-1', title: 'A digest paper', journal: 'Lancet', relevance_score: 0.9,
     relevance_reason: `${S} why it matters to Nick`, summary: `${S} summary`, topics: '["sepsis"]',
@@ -143,9 +153,15 @@ describe('anonymous reads (REQUIRE_AUTH=1)', () => {
     const team = JSON.parse((await get('/api/team')).text)
     expect(team.data).toEqual([{ slug: 'nick-ingraham', name: 'Nick Ingraham' }])
     const pubs = JSON.parse((await get('/api/publications')).text)
+    expect(pubs.data.map((p: { id: string }) => p.id)).toEqual(['pub1'])
     expect(pubs.data[0]).toMatchObject({ id: 'pub1', title: 'A published paper', status: 'Published' })
+    expect(pubs.count).toBe(1)
     const featured = JSON.parse((await get('/api/team/nick-ingraham/featured-publications')).text)
-    expect(featured.data[0]).toMatchObject({ id: 'pub1', title: 'A published paper' })
+    expect(featured.data.map((p: { id: string }) => p.id)).toEqual(['pub1'])
+    expect(featured.count).toBe(1)
+    // Asking for the unpublished status by name returns nothing, not the rows.
+    const review = JSON.parse((await get('/api/publications?status=In%20Review')).text)
+    expect(review).toEqual({ data: [], count: 0 })
     const digest = JSON.parse((await get('/api/digest?limit=4')).text)
     expect(digest.data[0]).toEqual({ id: 'digest-1', title: 'A digest paper', journal: 'Lancet', topics: '["sepsis"]', relevance_score: 0.9 })
     const health = JSON.parse((await get('/api/health')).text)
@@ -188,6 +204,13 @@ describe('signed-in reads are unchanged', () => {
       expect((await get('/api/meetings/next', who)).text).toContain(`${S} meeting title`)
       expect((await get('/api/team', who)).text).toContain(`${S.toLowerCase()}@umn.edu`)
       expect((await get('/api/projects/anon-project', who)).status).toBe(200)
+    })
+    it(`${who}: /api/publications and featured-publications keep unpublished work`, async () => {
+      const pubs = JSON.parse((await get('/api/publications', who)).text)
+      expect(pubs.data.map((p: { id: string }) => p.id).sort()).toEqual(['pub1', 'pub_prep', 'pub_review'])
+      expect(pubs.count).toBe(3)
+      const featured = JSON.parse((await get('/api/team/nick-ingraham/featured-publications', who)).text)
+      expect(featured.data.map((p: { id: string }) => p.id)).toEqual(['pub1', 'pub_review'])
     })
   }
 })
