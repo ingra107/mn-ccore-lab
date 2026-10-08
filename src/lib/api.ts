@@ -1129,6 +1129,18 @@ export function fetchExpiringRegulatory(days: number = 60) {
   return fetchApi<ExpiringRegulatoryRow[]>(`/api/regulatory/expiring?days=${days}`)
 }
 
+// Today's MENTEES row (api/routes/today-mentees.ts): the viewer's mentees with
+// each one's next open due date. Empty for a viewer who mentors no one.
+export interface TodayMenteeRow {
+  slug: string
+  name: string
+  next_due: string | null
+}
+
+export function fetchTodayMentees() {
+  return fetchApi<TodayMenteeRow[]>('/api/today/mentees')
+}
+
 // ── Grant Post-Award Milestones ──────────────────────────────
 
 export interface GrantMilestoneRow {

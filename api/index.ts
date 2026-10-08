@@ -39,6 +39,7 @@ import { handleGetSearch } from './routes/search';
 import { handleGetSettings, handleUpdateSettings, handleGetWorkflowTemplates, handleCreateWorkflowTemplate } from './routes/settings';
 import { handleGetReactions, handleToggleReaction } from './routes/reactions';
 import { handleCalendarEvents } from './routes/calendar';
+import { handleTodayMentees } from './routes/today-mentees';
 import { handleListFeeds, handleAddFeed, handleDeleteFeed, handleListEvents, pollAllStaleFeeds } from './routes/calendar-feeds';
 import { handleGetActivity, handleActivityHeatmap, handleDeleteActivityEntry, handleEditActivityEntry, handleSetActivityHidden, handleGetActivityReplies, handleCreateActivityReply } from './routes/activity';
 import { handleGetDayActivity, handlePostDayActivity } from './routes/days';
@@ -1522,6 +1523,17 @@ defineRoute({
   // 2026-10-08: and only the caller's own tasks (viewer = resolved user slug).
   visibility: 'pb-aware',
   handler: (c) => handleCalendarEvents(U(c), E(c), USER(c).slug, CSP(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/today/mentees',
+  auth: 'authed',
+  entity: 'tasks',
+  // 2026-10-08: Today's MENTEES row. The viewer's mentees (a director's
+  // research team) with each one's next open due date; [] for anyone else.
+  // Viewer = resolved user slug, never a query param. Non-PI: PB filter.
+  visibility: 'pb-aware',
+  handler: (c) => handleTodayMentees(E(c), USER(c).slug, CSP(c)),
 });
 
 // Personal iCal calendar feeds (issue #45). Per-user, secret URL stays in D1.

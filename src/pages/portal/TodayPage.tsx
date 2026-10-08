@@ -11,7 +11,7 @@
 // 📂▶ Work = open project folder / launch Claude Code.
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useTasks, useProjects, useMeetingsApi, useExpiringRegulatory, useUserCalendarEvents, usePBSessionStats } from '../../hooks/useApiData'
+import { useTasks, useProjects, useMeetingsApi, useExpiringRegulatory, useUserCalendarEvents, usePBSessionStats, useTodayMentees } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { useMarkSeen } from '../../hooks/useEntitySeen'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
@@ -23,8 +23,8 @@ import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { DoneBox } from '../../components/tasks/TaskRow'
 import { useTodayView } from '../../hooks/useTodayView'
 import { AgendaListView } from '../../components/today/AgendaListView'
-import { researchTeam } from '../../data/team'
 import { useTodayState } from '../../hooks/useTodayState'
+import { civilDaysUntil } from '../../lib/dateUtils'
 import {
   GROUP_ORDER,
   ACCENT_GOLD, ACCENT_GREEN,
@@ -80,7 +80,11 @@ export default function TodayPage() {
   // failure live against the pre-fix build measured ~12.9s wall-clock to
   // the error screen (page nav/hydration adds on top of the retry math).
   // With retry:false the same forced failure fails on the first attempt.
-  const tasksQuery = useTasks(userSlug ? { assignee: userSlug } : undefined, { retry: false })
+  // 2026-10-08: no slug yet -> no query at all. The old `: undefined` fallback
+  // fired an UNSCOPED /api/tasks read (every member's tasks) until the slug
+  // arrived; `enabled` makes that request impossible to build.
+  const tasksQuery = useTasks({ assignee: userSlug }, { retry: false, enabled: !!userSlug })
+  const menteesQuery = useTodayMentees()
   const projectsQuery = useProjects()
   const meetingsQuery = useMeetingsApi()
   const regulatoryQuery = useExpiringRegulatory(60)
@@ -297,9 +301,10 @@ export default function TodayPage() {
   }, [regulatoryQuery.data])
 
   // Pulse: real focus minutes from PB pomodoro sessions today (D19),
-  // sync staleness, mentees. Mentees = researchTeam slugs (Coordinators /
-  // Fellows / Students / Analysts). Each mentee's "next" is the soonest
-  // due_date among their assigned tasks; — if none.
+  // sync staleness, mentees. Mentees come from GET /api/today/mentees: the
+  // viewer's own mentees (a director's research team; none for anyone else),
+  // each with the due date of their soonest open task; — if none. It was a
+  // filter over the viewer's OWN task list, so it could never match a mentee.
   const focusMin = useMemo(() => {
     const today = todayKey()
     const perDay = sessionStatsQuery.data?.per_day ?? []
@@ -307,19 +312,15 @@ export default function TodayPage() {
     return todayRow?.total_minutes ?? 0
   }, [sessionStatsQuery.data])
   const mentees = useMemo(() => {
-    const allTasks = tasksQuery.data ?? []
-    return researchTeam.map((m) => {
-      const theirs = allTasks.filter((t) => t.assignee === m.slug && t.completed === 0 && t.due_date)
-      const soonest = theirs.map((t) => t.due_date as string).sort()[0]
+    return (menteesQuery.data ?? []).map((m) => {
       let next = '—'
-      if (soonest) {
-        // eslint-disable-next-line react-hooks/purity -- deliberate snapshot at memoize time, recomputes with tasksQuery.data
-        const days = Math.round((new Date(soonest + 'T12:00:00').getTime() - Date.now()) / 86400000)
+      if (m.next_due) {
+        const days = civilDaysUntil(m.next_due)
         next = days < 0 ? `${Math.abs(days)}d late` : days === 0 ? 'today' : `${days}d`
       }
       return { name: m.name, next }
     })
-  }, [tasksQuery.data])
+  }, [menteesQuery.data])
 
   // Today events. Merge team meetings (D1 `meetings` table — date-only, no
   // time) with the user's personal iCal feed events (timed). Sort so timed

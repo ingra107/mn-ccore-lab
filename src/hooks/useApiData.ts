@@ -39,6 +39,7 @@ import {
   fetchSubmissionEvents,
   fetchActiveSubmissions,
   fetchExpiringRegulatory,
+  fetchTodayMentees,
   fetchUpcomingGrantMilestones,
   fetchConferences,
   fetchUpcomingConferences,
@@ -1588,6 +1589,14 @@ export function useActiveSubmissions() {
 }
 
 // ── Regulatory & Compliance ────────────────────────────────
+
+export function useTodayMentees() {
+  return useQuery({
+    queryKey: ['today-mentees'],
+    queryFn: () => fetchTodayMentees().then((r) => r.data),
+    staleTime: 60 * 1000,
+  })
+}
 
 export function useExpiringRegulatory(days: number = 60) {
   return useQuery({
