@@ -621,7 +621,7 @@ export default function MyItems() {
 
   // Derive user slug from email; pre-launch (no CF Access cookie yet) defaults
   // to Nick so the page is useful instead of a sign-in wall.
-  const userSlug = user?.slug || 'nick-ingraham'
+  const userSlug = user?.email ? user.slug : 'nick-ingraham'
 
   // Data hooks
   // T19 (#547): meeting-linked tasks (tasks.meeting_id), not the dead

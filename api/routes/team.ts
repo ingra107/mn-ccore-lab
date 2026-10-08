@@ -172,6 +172,15 @@ export async function handleUpdateTeamMember(
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return error('email must be a single address', 400);
       }
+      // A typo here must not lock anyone out: the login email of a PI, or of
+      // the caller themselves, is never changed through this route.
+      if (isOwner) return error('Cannot change your own login email', 403);
+      const current = await env.DB.prepare(
+        'SELECT email FROM team_members WHERE slug = ?'
+      ).bind(slug).first<{ email: string | null }>();
+      if (current?.email && piEmails.has(current.email.toLowerCase())) {
+        return error("Cannot change a PI's login email", 403);
+      }
       // Two pre-provisioned rows on one address would make the login resolve
       // to whichever was created first. An auto-created ghost holding it is
       // fine: resolveSlug prefers the pre-provisioned row, which is the repair.

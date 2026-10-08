@@ -67,7 +67,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
   const { showSuccess, showInfo, showError } = useToast()
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const fallbackAssignee = user?.slug || 'nick-ingraham'
+  const fallbackAssignee = user?.email ? user.slug : 'nick-ingraham'
 
   // Reset the input when the modal closes. Adjusted during render (React's
   // "adjusting state when a prop changes" pattern) instead of an effect — the

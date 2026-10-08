@@ -761,7 +761,7 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: `Follow up on stalled project: ${project.title}`,
-          assignee: user?.slug || 'nick-ingraham',
+          assignee: user?.email ? user.slug : 'nick-ingraham',
           project_id: project.slug,
           priority: 'high',
           due_date: project.dueStr,

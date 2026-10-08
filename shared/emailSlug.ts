@@ -11,15 +11,6 @@
 // "keys" for the other 16 members were surname guesses, not NetIDs. Adding a
 // team member is now a data edit (their row's `email`), never a code edit.
 
-/** Pre-Phase-36b slugs still stored on rows (tasks.assignee holds `nick` and
- *  `ningraha`, 2026-10-08). A CLOSED set of old values, never a list of
- *  members: a new member never goes here. Delete it once no row carries
- *  either value. */
-export const LEGACY_SLUG_ALIASES: Readonly<Record<string, string>> = {
-  nick: 'nick-ingraham',
-  ningraha: 'nick-ingraham',
-}
-
 /** Lowercased local part of an email: the slug a brand-new member is given
  *  (`ensureTeamMember`) and the fallback when no team_members row carries
  *  the email. */

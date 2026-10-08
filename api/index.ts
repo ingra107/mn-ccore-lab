@@ -1,10 +1,11 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { Env } from './types';
-import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible, resolveSlug } from './helpers';
+import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible } from './helpers';
 
 // The PB service key IS Nick's automation (Brief-7, 2026-06-11).
 const PB_SERVICE_EMAIL = 'ingra107@umn.edu';
+const PB_SERVICE_SLUG = 'nick-ingraham';
 // Z1.3 (2026-05-28): metadata-first route registration. Every defineRoute({...})
 // below populates ROUTE_REGISTRY; bindRegistryToHono(app) wires them all into
 // the Hono app at the end of the file (before app.notFound). Replaces the
@@ -275,10 +276,12 @@ app.use('*', async (c, next) => {
   // 'anonymous', which renders as a person named "anonymous" on all feeds.
   // Fix: when a valid API key is present and no browser session is resolved,
   // use Nick's canonical identity (the service key IS Nick's automation; PB is
-  // his personal system). Its slug comes from team_members like everyone's.
+  // his personal system). Its slug is a constant, not a team_members lookup:
+  // an editable email row must not decide who PB automation writes as, and
+  // sync requests skip a query.
   const user: AuthUser = authed
     ?? (result === true
-      ? { email: PB_SERVICE_EMAIL, name: 'Nick', slug: await resolveSlug(env, PB_SERVICE_EMAIL) }
+      ? { email: PB_SERVICE_EMAIL, name: 'Nick', slug: PB_SERVICE_SLUG }
       : { email: 'anonymous', name: 'Team Member', slug: 'anonymous' });
   c.set('user', user);
   // Auto-provision a team_members row on first sight. Cheap (1 indexed

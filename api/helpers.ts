@@ -2,7 +2,7 @@ import type { Env } from './types';
 import { verifyCfAccessJwt } from './jwt-verify';
 import { validateApiKey } from './middleware/api-key-auth';
 import { safeRow } from './lib/task-cols';
-import { LEGACY_SLUG_ALIASES, emailPrefix } from '../shared/emailSlug';
+import { emailPrefix } from '../shared/emailSlug';
 // Re-export so Phase 1b callers can import TASK_SELECT_COLS from the same
 // shared root without touching the internal lib path.
 // T2.5: TABLE_PRIVATE_COLS + safeRow added — preferred over the tasks-only
@@ -111,9 +111,10 @@ export interface AuthUser {
  *     so setting the real email on the seeded row is the whole repair.
  *     No row → the lowercased email prefix, the slug `ensureTeamMember`
  *     gives a brand-new member.
- *   - legacy pre-36b slug (`nick`, `ningraha`) → its canonical slug.
- *   - any other bare string (`nick-ingraham`, `claude-ai`, `anonymous`)
- *     passes through.
+ *   - a bare string (`nick-ingraham`, `claude-ai`, `anonymous`) passes
+ *     through. (The pre-36b `nick`/`ningraha` slugs survive only on 17
+ *     status='deleted' tasks.assignee rows, 2026-10-08; no reader of a
+ *     resolved slug sees them, so there is no alias list.)
  *
  * Replaces `actorSlug` + `EMAIL_PREFIX_TO_SLUG`, a hand-kept NetID map that
  * gave every member missing from it a ghost account on first login
@@ -122,7 +123,7 @@ export interface AuthUser {
 export async function resolveSlug(env: Env, ref: string | null | undefined): Promise<string> {
   const raw = typeof ref === 'string' ? ref.trim() : '';
   if (!raw) return '';
-  if (!raw.includes('@')) return LEGACY_SLUG_ALIASES[raw] ?? raw;
+  if (!raw.includes('@')) return raw;
   const row = await env.DB.prepare(
     `SELECT slug FROM team_members
      WHERE lower(email) = lower(?) AND slug IS NOT NULL AND slug != ''

@@ -11,7 +11,8 @@
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setEmailDirectory, slugForEmail } from '../emailSlug'
-import { LEGACY_SLUG_ALIASES, emailPrefix } from '../../../shared/emailSlug'
+import { emailPrefix } from '../../../shared/emailSlug'
+import { authUserFromMe } from '../../hooks/useAuth'
 
 describe('slugForEmail (display directory from /api/auth/me)', () => {
   beforeEach(() => setEmailDirectory([]))
@@ -48,9 +49,33 @@ describe('shared/emailSlug.ts — what is left once identity moved to team_membe
   it('emailPrefix lowercases the local part', () => {
     expect(emailPrefix('Eddin022@umn.edu')).toBe('eddin022')
   })
+})
 
-  it('LEGACY_SLUG_ALIASES is the closed pre-36b set, not a member list', () => {
-    // A new member never goes here; their row's email is what onboards them.
-    expect(LEGACY_SLUG_ALIASES).toEqual({ nick: 'nick-ingraham', ningraha: 'nick-ingraham' })
+// Cold-review fix (a): Pages can ship before the Worker. An /api/auth/me from
+// a Worker older than #8945 carries no `slug`; the user must still get THEIR
+// slug, never '' (which callers used to replace with 'nick-ingraham').
+describe('authUserFromMe — /api/auth/me with and without slug', () => {
+  beforeEach(() => setEmailDirectory([]))
+
+  it('uses the Worker slug when present', () => {
+    const u = authUserFromMe({ authenticated: true, email: 'eddin022@umn.edu', slug: 'casey-eddington', directory: [] })
+    expect(u?.slug).toBe('casey-eddington')
+  })
+
+  it('an old Worker response with no slug falls back to the email resolution, never empty', () => {
+    const u = authUserFromMe({ authenticated: true, email: 'Patne001@umn.edu', name: 'Pat' })
+    expect(u).toMatchObject({ email: 'Patne001@umn.edu', isAuthenticated: true })
+    expect(u?.slug).toBe('patne001')
+    expect(u?.slug).not.toBe('nick-ingraham')
+  })
+
+  it('no slug but a directory: resolves through the directory', () => {
+    const u = authUserFromMe({ authenticated: true, email: 'eddin022@umn.edu', directory: [{ email: 'eddin022@umn.edu', slug: 'casey-eddington' }] })
+    expect(u?.slug).toBe('casey-eddington')
+  })
+
+  it('unauthenticated -> null', () => {
+    expect(authUserFromMe({ authenticated: false })).toBeNull()
+    expect(authUserFromMe(null)).toBeNull()
   })
 })

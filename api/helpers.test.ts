@@ -41,9 +41,8 @@ describe('resolveSlug — #8945 identity from team_members.email', () => {
     expect(await resolveSlug(env, 'Newperson@umn.edu')).toBe('newperson')
   })
 
-  it('maps the two legacy pre-36b slugs and passes other slugs through', async () => {
-    expect(await resolveSlug(env, 'ningraha')).toBe('nick-ingraham')
-    expect(await resolveSlug(env, 'nick')).toBe('nick-ingraham')
+  it('passes bare slugs through untouched (no legacy alias list)', async () => {
+    expect(await resolveSlug(env, 'ningraha')).toBe('ningraha')
     expect(await resolveSlug(env, 'nate-mesfin')).toBe('nate-mesfin')
     expect(await resolveSlug(env, 'claude-ai')).toBe('claude-ai')
     expect(await resolveSlug(env, 'anonymous')).toBe('anonymous')

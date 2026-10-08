@@ -1214,7 +1214,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentCha
   const createTask = useCreateTask()
   const queryClient = useQueryClient()
   const { user } = useAuth()
-  const fallbackAssignee = user?.slug || 'nick-ingraham'
+  const fallbackAssignee = user?.email ? user.slug : 'nick-ingraham'
 
   const parsed = text.trim() ? parseQuickAddInput(text) : null
   const hasContent = parsed && parsed.title.trim().length > 0

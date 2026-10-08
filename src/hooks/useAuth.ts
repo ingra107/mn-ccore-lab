@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useMemo } from 'react'
 import { setEmailDirectory, slugForEmail } from '../lib/emailSlug'
 import { getPersonInfo } from '../data/team'
 
-interface AuthUser {
+export interface AuthUser {
   email: string
   /** The user's team slug (`nick-ingraham`), resolved by the Worker from
    *  team_members.email (#8945). '' until known. Every "who am I" site reads
@@ -20,10 +20,23 @@ const defaultUser: AuthUser = {
   isPi: false,
 }
 
-// The last slug /api/auth/me returned for an email, so a cookie first paint
-// renders the right person's data before the API answers. A cache of the
-// Worker's answer, never a source: hydration always overwrites it.
+// The last slug and email directory /api/auth/me returned, so a cookie first
+// paint renders the right person (and other people's stored emails) before
+// the API answers. A cache of the Worker's answer, never a source: hydration
+// always overwrites it.
 const SLUG_CACHE_PREFIX = 'hub:auth-slug:'
+const DIRECTORY_CACHE_KEY = 'hub:auth-directory'
+type DirectoryRow = { email: string; slug: string }
+function cacheDirectory(rows: DirectoryRow[]): void {
+  try { localStorage.setItem(DIRECTORY_CACHE_KEY, JSON.stringify(rows)) } catch { /* storage off: directory arrives with the API */ }
+}
+function loadCachedDirectory(): void {
+  try {
+    const raw = localStorage.getItem(DIRECTORY_CACHE_KEY)
+    const rows = raw ? JSON.parse(raw) : null
+    if (Array.isArray(rows)) setEmailDirectory(rows)
+  } catch { /* corrupt or no storage: render prefixes until the API answers */ }
+}
 function cachedSlug(email: string): string {
   if (!email) return ''
   try { return localStorage.getItem(SLUG_CACHE_PREFIX + email.toLowerCase()) ?? '' } catch { return '' }
@@ -64,7 +77,8 @@ function getAuthFromCookie(): AuthUser {
   // Cookie-based path is a first-paint optimization; it cannot know isPi
   // (that answer lives server-side). Hydrates to true via /api/auth/me.
   const email = (payload.email as string) || ''
-  const slug = cachedSlug(email)
+  loadCachedDirectory()
+  const slug = cachedSlug(email) || slugForEmail(email)
   return {
     email,
     slug,
@@ -89,25 +103,35 @@ function nameFromEmail(knownSlug: string, email: string): string {
   return email.split('@')[0]
 }
 
+/**
+ * Turn an /api/auth/me body into the auth user, or null when unauthenticated.
+ * The slug is the Worker's when it sent one. A Worker older than #8945 sends
+ * none (Pages can ship first): fall back to the cached slug, then to the
+ * directory/email-prefix resolution, so a signed-in user always has THEIR
+ * slug and never an empty one that a caller would replace with a default.
+ */
+export function authUserFromMe(data: {
+  authenticated?: boolean; email?: string; name?: string; isPi?: boolean
+  slug?: string; directory?: unknown
+} | null | undefined): AuthUser | null {
+  if (!data?.authenticated) return null
+  const email = data.email || ''
+  if (Array.isArray(data.directory)) {
+    setEmailDirectory(data.directory as DirectoryRow[])
+    cacheDirectory(data.directory as DirectoryRow[])
+  }
+  const slug = data.slug || cachedSlug(email) || slugForEmail(email)
+  if (data.slug) cacheSlug(email, data.slug)
+  return { email, slug, name: data.name || '', isAuthenticated: true, isPi: Boolean(data.isPi) }
+}
+
 // Also support fetching auth status from the API for more reliable detection
 async function fetchAuthStatus(): Promise<AuthUser> {
   try {
     const res = await fetch('/api/auth/me', { credentials: 'same-origin' })
     if (res.ok) {
-      const data = await res.json()
-      if (data.authenticated) {
-        const email: string = data.email || ''
-        const slug: string = data.slug || ''
-        if (Array.isArray(data.directory)) setEmailDirectory(data.directory)
-        cacheSlug(email, slug)
-        return {
-          email,
-          slug,
-          name: data.name || '',
-          isAuthenticated: true,
-          isPi: Boolean(data.isPi),
-        }
-      }
+      const user = authUserFromMe(await res.json())
+      if (user) return user
     }
   } catch {
     // API not available or not authenticated
@@ -140,11 +164,11 @@ export function useAuthState(): AuthContextValue {
     const cookieUser = getAuthFromCookie()
     return cookieUser.isAuthenticated ? cookieUser : defaultUser
   })
-  // Still loading until the user's slug is known: a cookie paint with no
-  // cached slug cannot say whose tasks to show yet.
+  // Still loading until the Worker has confirmed the slug at least once for
+  // this email: a first-ever cookie paint only has the email-prefix guess.
   const [isLoading, setIsLoading] = useState(() => {
     const cookieUser = getAuthFromCookie()
-    return !cookieUser.isAuthenticated || !cookieUser.slug
+    return !cookieUser.isAuthenticated || !cachedSlug(cookieUser.email)
   })
 
   useEffect(() => {
