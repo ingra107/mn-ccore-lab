@@ -16,6 +16,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import { useToast } from '../hooks/useToast'
 import { detectOrigin } from '../lib/launchOrigin'
+import { currentPageRoute } from '../lib/launchCommands'
 import { openGlobalQuickAdd } from './GlobalQuickAddModal'
 import { getPersonInfo } from '../data/team'
 import { PATHS, PUBLIC_PATHS } from '../constants/paths'
@@ -315,6 +316,7 @@ export default function CommandPalette() {
                   origin: 'mobile',
                   seed: 'Run the /backlog-wave skill now. I am on mobile and will not be answering questions — follow the skill end to end, and anything you cannot ship without me comes back as a written plan.',
                   task_id: null,
+                  page_route: currentPageRoute(),
                 }),
               })
               if (!res.ok) throw new Error(`launch-log ${res.status}`)

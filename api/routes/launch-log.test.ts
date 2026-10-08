@@ -11,7 +11,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type Database from 'better-sqlite3';
 import type { Env } from '../helpers';
-import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleClaimLaunch, handleListPendingLaunches, handleRefireLaunch } from './launch-log';
+import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleClaimLaunch, handleListPendingLaunches, handleRefireLaunch, parseLaunchPage } from './launch-log';
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 
 const USER = { email: 'ingra107@umn.edu', name: 'Nick' };
@@ -197,6 +197,97 @@ describe('handleClaimLaunch — task-context composition (#485)', () => {
     expect(data.seed).toContain('…');
     expect(data.seed).not.toContain('x'.repeat(600));
     expect(data.seed.endsWith('go')).toBe(true);
+  });
+});
+
+describe('launch page context (PB #8935)', () => {
+  // 2026-10-08: "@quickchat can you draft the email to tom that this task needs"
+  // fired from a meeting page reached the session as the bare seed (task_id and
+  // project_slug both NULL) and it drafted against the wrong task.
+  const MTG = 'mtg_20261008T150203-teams';
+  beforeEach(() => {
+    insertRow(db, 'meetings', { id: MTG, date: '2026-10-08', title: 'LHS Ambulatory Discovery - SME Discussion' });
+    insertRow(db, 'projects', { id: 'proj_clif', slug: 'clif-family', title: 'CLIF Family paper', category: 'MNCCORE' });
+  });
+  async function claim(id: string) {
+    const res = await handleClaimLaunch(id, claimReq(id), USER, env);
+    expect(res.status).toBe(200);
+    return (await res.json() as any).data as { verb: string; seed: string; project_slug: string | null };
+  }
+
+  it('stores page_route on create, and carries it through refire', async () => {
+    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer', page_route: `/portal/meetings/${MTG}` }), USER, env);
+    expect(res.status).toBe(201);
+    const { data } = await res.json() as { data: { id: string } };
+    expect(row(data.id)!.page_route).toBe(`/portal/meetings/${MTG}`);
+    const re = await handleRefireLaunch(data.id, USER, env);
+    const { data: copy } = await re.json() as { data: { id: string } };
+    expect(row(copy.id)!.page_route).toBe(`/portal/meetings/${MTG}`);
+  });
+
+  it('stores page_route NULL when an older frontend sends none', async () => {
+    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer' }), USER, env);
+    const { data } = await res.json() as { data: { id: string } };
+    expect(row(data.id)!.page_route).toBeNull();
+  });
+
+  it('refuses a malformed page_route with 400 and writes nothing', async () => {
+    for (const bad of ['portal/meetings/x', 42, '/' + 'a'.repeat(600)]) {
+      const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer', page_route: bad }), USER, env);
+      expect(res.status).toBe(400);
+    }
+    expect(count()).toBe(0);
+  });
+
+  it('meeting page: the claim names the meeting on screen, for BOTH verbs', async () => {
+    for (const tag of ['quickchat', 'workon']) {
+      const id = `lnch_mtg_${tag}`;
+      launch(id, { tag, seed: 'can you draft the email to tom that this task needs please!', page_route: `/portal/meetings/${MTG}` });
+      const data = await claim(id);
+      expect(data.seed).toBe(
+        `[Launched from the Hub meeting page: "LHS Ambulatory Discovery - SME Discussion" (2026-10-08), meeting id ${MTG} -- /portal/meetings/${MTG}]` +
+        '\n\ncan you draft the email to tom that this task needs please!',
+      );
+    }
+  });
+
+  it('project page: the claim names the project, found by slug', async () => {
+    launch('lnch_proj', { seed: 'make this a project', page_route: '/portal/projects/clif-family' });
+    expect((await claim('lnch_proj')).seed).toMatch(/^\[Launched from the Hub project page: "CLIF Family paper", project slug clif-family -- \/portal\/projects\/clif-family\]\n\nmake this a project$/);
+  });
+
+  it('a deleted meeting is reported as not found, never dropped', async () => {
+    launch('lnch_gone', { seed: 'go', page_route: '/portal/meetings/mtg_gone' });
+    expect((await claim('lnch_gone')).seed).toBe('[Launched from the Hub meeting page: meeting id mtg_gone (not found in the Hub) -- /portal/meetings/mtg_gone]\n\ngo');
+  });
+
+  it('named and unknown pages are still reported by route', async () => {
+    launch('lnch_today', { seed: 'a', page_route: '/portal/dashboard' });
+    launch('lnch_other', { seed: 'b', page_route: '/portal/grants?tab=open' });
+    expect((await claim('lnch_today')).seed).toBe('[Launched from the Hub: Today -- /portal/dashboard]\n\na');
+    expect((await claim('lnch_other')).seed).toBe('[Launched from the Hub: Hub page -- /portal/grants?tab=open]\n\nb');
+  });
+
+  it('page line comes first, then the task block, then the raw seed (task drawer on Today)', async () => {
+    insertRow(db, 'tasks', { id: 'task_7', title: 'Email Tom about biologics', status: 'todo', priority: 'medium', assignee: 'nick-ingraham', project_id: 'proj_clif' });
+    launch('lnch_both', { seed: 'draft it', task_id: 'task_7', page_route: '/portal/dashboard' });
+    const lines = (await claim('lnch_both')).seed.split('\n');
+    expect(lines[0]).toBe('[Launched from the Hub: Today -- /portal/dashboard]');
+    expect(lines[1]).toMatch(/^\[Task context/);
+    expect(lines[2]).toBe('Task: Email Tom about biologics');
+    expect(lines.at(-1)).toBe('draft it');
+  });
+});
+
+describe('parseLaunchPage', () => {
+  it('maps every route to exactly one typed page', () => {
+    expect(parseLaunchPage(null)).toBeNull();
+    expect(parseLaunchPage('')).toBeNull();
+    expect(parseLaunchPage('/portal/meetings/mtg_1/prep')).toEqual({ kind: 'meeting', route: '/portal/meetings/mtg_1/prep', meetingId: 'mtg_1' });
+    expect(parseLaunchPage('/portal/meetings/a%20b?x=1')).toMatchObject({ kind: 'meeting', meetingId: 'a b' });
+    expect(parseLaunchPage('/portal/projects/p1#notes')).toMatchObject({ kind: 'project', slug: 'p1' });
+    expect(parseLaunchPage('/portal/my-tasks?status=done')).toMatchObject({ kind: 'named', label: 'My Tasks' });
+    expect(parseLaunchPage('/portal/meetings/%E0%A4%A')).toMatchObject({ kind: 'meeting', meetingId: '%E0%A4%A' });
   });
 });
 

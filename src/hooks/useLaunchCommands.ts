@@ -21,7 +21,7 @@
 // re-pass a receiver-detached native fetch (the #543 regression).
 
 import { useCallback } from 'react'
-import { matchLaunchCommand, executeLaunchCommand, type LaunchExecutionContext } from '../lib/launchCommands'
+import { matchLaunchCommand, executeLaunchCommand, currentPageRoute, type LaunchExecutionContext } from '../lib/launchCommands'
 import { detectOrigin } from '../lib/launchOrigin'
 import { useProtocolLaunch } from './useProtocolLaunch'
 import { useToast } from './useToast'
@@ -54,7 +54,7 @@ export function useLaunchCommands() {
     (text: string, ctx: LaunchCommandContext = {}, onLaunched?: () => void): boolean => {
       const cmd = matchLaunchCommand(text)
       if (!cmd) return false
-      void executeLaunchCommand(cmd, ctx, { detectOriginFn: detectOrigin, protocolLaunch, showInfo, showError }, onLaunched)
+      void executeLaunchCommand(cmd, ctx, { detectOriginFn: detectOrigin, pageRouteFn: currentPageRoute, protocolLaunch, showInfo, showError }, onLaunched)
       return true
     },
     [protocolLaunch, showInfo, showError],
@@ -71,7 +71,7 @@ export function useLaunchCommands() {
     async (text: string, ctx: LaunchCommandContext = {}, onLaunched?: () => void): Promise<boolean> => {
       const cmd = matchLaunchCommand(text)
       if (!cmd) return false
-      await executeLaunchCommand(cmd, ctx, { detectOriginFn: detectOrigin, protocolLaunch, showInfo, showError }, onLaunched)
+      await executeLaunchCommand(cmd, ctx, { detectOriginFn: detectOrigin, pageRouteFn: currentPageRoute, protocolLaunch, showInfo, showError }, onLaunched)
       return true
     },
     [protocolLaunch, showInfo, showError],

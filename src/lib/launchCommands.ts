@@ -36,6 +36,13 @@ export interface LaunchExecutionContext {
   originOverride?: 'computer' | 'mobile'
 }
 
+/** The browser's current Hub path + query, capped to the worker's 512-char
+ *  limit. Every launch POST carries it (PB #8935). */
+export function currentPageRoute(): string {
+  if (typeof window === 'undefined') return '/'
+  return `${window.location.pathname}${window.location.search}`.slice(0, 512)
+}
+
 export interface LaunchExecutionDeps {
   /** Injected so tests don't need a browser fetch/DOM. OMITTED by production
    *  callers — they take the default bound global fetch (see executeLaunchCommand).
@@ -44,6 +51,11 @@ export interface LaunchExecutionDeps {
    *  global object (regression #543, from #525's DI extraction, 2026-07-07). */
   fetchFn?: typeof fetch
   detectOriginFn: () => 'computer' | 'mobile'
+  /** The Hub path the launch fires from (PB #8935). REQUIRED, so no executor
+   *  can be built that launches without saying which page it came from; the
+   *  worker parses it at claim time into the page + on-screen entity
+   *  (meeting / project) header. Production passes currentPageRoute. */
+  pageRouteFn: () => string
   protocolLaunch: (uri: string, opts: { copyText: string; successMessage: string; copyMessage: string }) => Promise<void>
   showInfo: (message: string) => void
   showError: (message: string) => void
@@ -66,6 +78,7 @@ export async function executeLaunchCommand(
   const isWorkon = cmd.tag === 'workon'
   const origin = ctx.originOverride ?? deps.detectOriginFn()
   const folder = ctx.primaryFolder ?? ''
+  const pageRoute = deps.pageRouteFn()
   // Call fetch as a bare global (receiver = window). Invoking native browser
   // fetch as `deps.fetchFn(...)` sets the receiver to `deps` → "Illegal
   // invocation" throw BEFORE the request is sent (#543). Tests inject their own.
@@ -77,10 +90,12 @@ export async function executeLaunchCommand(
       body: JSON.stringify(
         // task_id is sent symmetrically for BOTH tags — a @quickchat fired
         // from a task card carries context just like @workon (#485). Null on
-        // context-free surfaces (Today bar) → the claim returns the raw seed.
+        // non-task surfaces. page_route is sent for BOTH tags from EVERY
+        // surface (#8935): it is how a launch from a meeting or project page
+        // tells the session what was on screen.
         isWorkon
-          ? { tag: 'workon', seed: cmd.seed, origin, project_slug: ctx.projectSlug ?? null, task_id: ctx.taskId ?? null }
-          : { tag: 'quickchat', seed: cmd.seed, origin, task_id: ctx.taskId ?? null },
+          ? { tag: 'workon', seed: cmd.seed, origin, project_slug: ctx.projectSlug ?? null, task_id: ctx.taskId ?? null, page_route: pageRoute }
+          : { tag: 'quickchat', seed: cmd.seed, origin, task_id: ctx.taskId ?? null, page_route: pageRoute },
       ),
     })
     if (!res.ok) throw new Error(`launch-log ${res.status}`)

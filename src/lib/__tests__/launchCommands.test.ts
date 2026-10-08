@@ -57,6 +57,7 @@ function makeDeps(overrides: Partial<LaunchExecutionDeps> = {}): LaunchExecution
   return {
     fetchFn: vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: { id: 'lnch_abc123' } }) }),
     detectOriginFn: vi.fn().mockReturnValue('computer'),
+    pageRouteFn: vi.fn().mockReturnValue('/portal/dashboard'),
     protocolLaunch: vi.fn().mockResolvedValue(undefined),
     showInfo: vi.fn(),
     showError: vi.fn(),
@@ -114,7 +115,19 @@ describe('executeLaunchCommand — @quickchat', () => {
     const deps = makeDeps()
     await executeLaunchCommand({ tag: 'quickchat', seed: 'hi' }, {}, deps)
     const [, init] = (deps.fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]
-    expect(JSON.parse(init.body as string)).toEqual({ tag: 'quickchat', seed: 'hi', origin: 'computer', task_id: null })
+    expect(JSON.parse(init.body as string)).toEqual({ tag: 'quickchat', seed: 'hi', origin: 'computer', task_id: null, page_route: '/portal/dashboard' })
+  })
+
+  // PB #8935: a quickchat from the meeting page arrived with no context and the
+  // session guessed the wrong task. The page route now rides on every launch.
+  it('sends the launching page route for BOTH tags (meeting page shape)', async () => {
+    const route = '/portal/meetings/mtg_20261008T150203-teams'
+    for (const tag of ['quickchat', 'workon'] as const) {
+      const deps = makeDeps({ pageRouteFn: vi.fn().mockReturnValue(route) })
+      await executeLaunchCommand({ tag, seed: 'draft the email' }, { primaryFolder: 'C:/proj' }, deps)
+      const [, init] = (deps.fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]
+      expect(JSON.parse(init.body as string).page_route).toBe(route)
+    }
   })
 
   it('carries taskId through when given (task compose surfaces)', async () => {
@@ -183,6 +196,7 @@ describe('executeLaunchCommand — default fetch wiring (#543 regression)', () =
       const deps: LaunchExecutionDeps = {
         // fetchFn deliberately omitted — mirrors the production wiring
         detectOriginFn: vi.fn().mockReturnValue('mobile'),
+        pageRouteFn: vi.fn().mockReturnValue('/portal/dashboard'),
         protocolLaunch: vi.fn().mockResolvedValue(undefined),
         showInfo: vi.fn(),
         showError: vi.fn(),
