@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronDown, Calendar, ArrowRight, AlertTriangle, CheckCircle2, GitBranch } from 'lucide-react'
 import type { CascadeGraph, ImpactResult, DeadlineNode } from '../lib/api'
-import { formatShortDate, isOverdue, getDaysUntil } from '../lib/dateUtils'
+import { formatShortDate, isOverdue, civilDaysUntil } from '../lib/dateUtils'
 import { getStatusColor } from '../lib/statusColors'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
@@ -15,7 +15,9 @@ function getNodeStatus(node: DeadlineNode): NodeStatus {
   if (node.status === 'done' || node.status === 'completed') return 'completed'
   if (!node.due_date) return 'on-track'
   if (isOverdue(node.due_date, node.status)) return 'overdue'
-  if (getDaysUntil(node.due_date) <= 7) return 'at-risk'
+  // At risk = due within the next 7 calendar days (#8947: the old ceil-to-
+  // end-of-day count read today as 1, so this flagged from 6 days out).
+  if (civilDaysUntil(node.due_date) <= 7) return 'at-risk'
   return 'on-track'
 }
 

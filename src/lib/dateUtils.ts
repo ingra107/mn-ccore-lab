@@ -97,11 +97,6 @@ export function isOverdue(dueDate: string | null, status?: string): boolean {
   return new Date(dueDate + 'T23:59:59') < new Date()
 }
 
-export function getDaysUntil(dateStr: string): number {
-  const target = new Date(dateStr + 'T23:59:59')
-  return Math.ceil((target.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-}
-
 /**
  * Whole CALENDAR days from today to `dateStr` (`YYYY-MM-DD...`) in the viewer
  * zone (or `zone`): 0 = today, 1 = tomorrow, negative = past. Both sides are

@@ -25,7 +25,7 @@ import {
 import type { SubmissionEventType, SubmissionEventRow } from '../lib/api'
 import { useSubmissionEvents } from '../hooks/useApiData'
 import { useCreateSubmissionEvent, useDeleteSubmissionEvent } from '../hooks/useMutations'
-import { formatRelativeTime, getDaysUntil, localDateKey } from '../lib/dateUtils'
+import { formatRelativeTime, civilDaysUntil, localDateKey } from '../lib/dateUtils'
 import EmptyState from './EmptyState'
 import InlineSelect from './InlineSelect'
 import { getStatusColor, getStatusBg } from '../lib/statusColors'
@@ -95,7 +95,7 @@ const EVENT_TYPES: SubmissionEventType[] = [
 ]
 
 function formatDaysUntil(dateStr: string): string {
-  const diff = getDaysUntil(dateStr)
+  const diff = civilDaysUntil(dateStr)
   if (diff < 0) return `${Math.abs(diff)}d overdue`
   if (diff === 0) return 'today'
   if (diff === 1) return 'in 1d'

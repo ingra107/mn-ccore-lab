@@ -22,7 +22,7 @@ import InlineAssigneePicker from '../components/InlineAssigneePicker'
 import Field from '../components/ui/Field'
 import { TaskRow as SharedTaskRow } from '../components/tasks/TaskRow'
 import { emDashifyTitle } from '../lib/textUtils'
-import { formatFullDate, formatShortDate, localDateKey } from '../lib/dateUtils'
+import { civilDaysUntil, formatFullDate, formatShortDate, localDateKey } from '../lib/dateUtils'
 import PageTooltip, { dismissPageTooltip } from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
 import { PATHS } from '../constants/paths'
@@ -105,14 +105,6 @@ function getNextMeetingDate(meetingsList: Meeting[]): Date {
   const nextTuesday = new Date(today)
   nextTuesday.setDate(today.getDate() + daysUntilTuesday)
   return nextTuesday
-}
-
-function getDaysUntil(target: Date): number {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const t = new Date(target)
-  t.setHours(0, 0, 0, 0)
-  return Math.ceil((t.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
 
 interface ActionItemWithContext extends ActionItem {
@@ -497,7 +489,9 @@ export default function Meetings() {
   const [newMeetingAgenda, setNewMeetingAgenda] = useState<string[]>([''])
 
   const nextMeeting = useMemo(() => getNextMeetingDate(meetings), [meetings])
-  const daysUntil = getDaysUntil(nextMeeting)
+  // #8947: calendar-day count; the old midnight-to-midnight ceil read a 25h
+  // fall-back day as 2 days.
+  const daysUntil = civilDaysUntil(localDateKey(nextMeeting))
   const nextMeetingDateStr = localDateKey(nextMeeting)
 
   const allActionItems = useMemo(() => {

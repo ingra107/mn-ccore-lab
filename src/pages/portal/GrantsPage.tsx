@@ -29,7 +29,7 @@ import { useSimilarGrants, useUpcomingGrantMilestones } from '../../hooks/useApi
 import { useCreateGrantMilestone, useUpdateGrantMilestone, useCompleteGrantMilestone, useUpdateGrant } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { displayName } from '../../lib/nameUtils'
-import { formatMediumDate, isOverdue, getDaysUntil } from '../../lib/dateUtils'
+import { formatMediumDate, isOverdue, civilDaysUntil } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
@@ -905,7 +905,7 @@ export default function GrantsPage() {
             </div>
 
             {enrichedPostAward.map((m) => {
-              const daysUntil = m.due_date ? getDaysUntil(m.due_date) : null
+              const daysUntil = m.due_date ? civilDaysUntil(m.due_date) : null
               return (
                 <div
                   key={m.id}
