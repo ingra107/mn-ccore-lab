@@ -48,6 +48,7 @@ import {
   type TodayEvent, type PlannedSlot,
 } from './constants'
 import { fmtDuration } from './utils'
+import { formatNowLabel } from './useNowMinutes'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
@@ -880,7 +881,9 @@ export function TimelineGrid({
   inMeeting,
 }: TimelineGridProps) {
   const nowColor = inMeeting ? ACCENT_CORAL : ACCENT_GOLD
-  const nowLabel = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  // Label from the SAME `now` minutes that place the line, never a second
+  // wall-clock read (#138): the two can only disagree if one of them is stale.
+  const nowLabel = formatNowLabel(now)
 
   // Pass nowMin so dayStart always encompasses now + MORNING_FLOOR.
   const model = useMemo(() => buildTimelineModel(events, { nowMin: now }), [events, now])

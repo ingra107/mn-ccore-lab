@@ -39,7 +39,7 @@ import {
 } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
-import { useNowMinutes } from './useNowMinutes'
+import { useNowMinutes, formatNowLabel } from './useNowMinutes'
 import { fmtDuration } from './utils'
 
 // ── helpers ───────────────────────────────────────────────────────────────
@@ -411,7 +411,7 @@ export function AgendaListView({
         marginRight: 4,
         whiteSpace: 'nowrap',
       }}>
-        {new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} now
+        {formatNowLabel(now)} now
       </span>
     </div>
   )
