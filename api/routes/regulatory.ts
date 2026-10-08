@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate, getAuthUser, assertProjectVisible } from '../helpers';
+import { json, error, generateId, logActivity, buildUpdate, getAuthUser, assertProjectVisible } from '../helpers';
 import { withProjectWrite, withExistingRowProject } from '../lib/route-guards';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
@@ -140,7 +140,7 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
       b.notes || null,
     ).run();
 
-    const actor = actorSlug(user.email);
+    const actor = user.slug;
     await logActivity(e, 'regulatory', `New regulatory item for ${b.project_id}: "${b.title}"`, actor, id, 'regulatory');
 
     const created = await e.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first<Record<string, unknown>>();
@@ -291,7 +291,7 @@ export async function handleRenewRegulatoryItem(id: string, request: Request, us
     ),
   ]);
 
-  const actor = actorSlug(user.email);
+  const actor = user.slug;
   await logActivity(env, 'regulatory', `Renewed regulatory item: "${existing.title}"`, actor, newId, 'regulatory');
 
   const created = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(newId).first<Record<string, unknown>>();

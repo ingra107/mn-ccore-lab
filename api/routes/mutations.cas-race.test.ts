@@ -24,7 +24,7 @@ import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db';
 type Hooks = { failSql?: RegExp; failTimes?: number; beforeBatch?: () => void };
 const makeD1 = (d: InstanceType<typeof Database>, hooks: Hooks = {}) => d1Adapter(d, hooks);
 
-const USER = { email: 'nick@example.com' } as any;
+const USER = { email: 'nick@example.com', slug: 'nick-ingraham' } as any;
 const FLAGS = { conflict_hash: true } as any;
 
 let db: InstanceType<typeof Database>;

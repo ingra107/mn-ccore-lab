@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, assertProjectVisible } from '../helpers';
+import { json, error, generateId, logActivity, assertProjectVisible } from '../helpers';
 import { withProjectWrite, withExistingRowProject } from '../lib/route-guards';
 import { hiddenResource } from '../lib/hidden-resource';
 
@@ -93,7 +93,7 @@ export async function handleCreateRevision(request: Request, user: AuthUser, env
       notes,
     ).run();
 
-    const actor = actorSlug(user.email);
+    const actor = user.slug;
     await logActivity(e, 'revision', `Revision R${round} created for project ${ref}`, actor, id, 'revision');
 
     const created = await e.DB.prepare('SELECT * FROM manuscript_revisions WHERE id = ?').bind(id).first();
@@ -139,7 +139,7 @@ export async function handleUpdateRevision(id: string, request: Request, user: A
       `UPDATE manuscript_revisions SET ${sets.join(', ')} WHERE id = ?`
     ).bind(...params).run();
 
-    const actor = actorSlug(user.email);
+    const actor = user.slug;
     await logActivity(e, 'revision', `Revision ${rowId} updated`, actor, rowId, 'revision');
 
     const updated = await e.DB.prepare('SELECT * FROM manuscript_revisions WHERE id = ?').bind(rowId).first();
@@ -221,7 +221,7 @@ export async function handleCreateRevisionComment(revisionId: string, request: R
     body.response_text || null,
   ).run();
 
-  const actor = actorSlug(user.email);
+  const actor = user.slug;
   await logActivity(env, 'revision_comment', `Comment added to revision ${revisionId}`, actor, id, 'reviewer_comment');
 
   const created = await env.DB.prepare('SELECT * FROM reviewer_comments WHERE id = ?').bind(id).first();
@@ -274,7 +274,7 @@ export async function handleUpdateRevisionComment(id: string, request: Request, 
     `UPDATE reviewer_comments SET ${sets.join(', ')} WHERE id = ?`
   ).bind(...params).run();
 
-  const actor = actorSlug(user.email);
+  const actor = user.slug;
   await logActivity(env, 'revision_comment', `Comment ${id} updated`, actor, id, 'reviewer_comment');
 
   const updated = await env.DB.prepare('SELECT * FROM reviewer_comments WHERE id = ?').bind(id).first();
@@ -300,7 +300,7 @@ export async function handleAttentionManuscripts(
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
-  const actor = actorSlug(user.email);
+  const actor = user.slug;
   const reviewDays = Math.max(0, parseInt(url.searchParams.get('review_days') ?? '7', 10) || 7);
   const staleDays = Math.max(0, parseInt(url.searchParams.get('stale_days') ?? '30', 10) || 30);
 

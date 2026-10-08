@@ -20,7 +20,7 @@
 // call sites stay as-is and are not duplicated here.
 
 import type { AuthUser, Env } from '../helpers';
-import { generateId, parseMentions, actorSlugFromRequest, isPiRequest, actorSlug } from '../helpers';
+import { generateId, parseMentions, actorSlugFromRequest, isPiRequest, resolveSlug } from '../helpers';
 
 // The pending-placeholder body. Written here, matched by the response handler
 // (api/routes/ai-requests.ts) and rendered as <HermesPending> by the UI
@@ -935,7 +935,7 @@ async function dispatchHermes(
                  )
             )
           ORDER BY ae.created_at ASC, ae.id ASC`
-      ).bind(scopeBind, args.entryId, HERMES_PENDING_BODY, actorSlug(args.requestedBy)).all<{
+      ).bind(scopeBind, args.entryId, HERMES_PENDING_BODY, await resolveSlug(env, args.requestedBy)).all<{
         actor_slug: string; body: string; created_at: string;
       }>();
       const prior = (priorRes.results ?? []).slice(-THREAD_CONTEXT_MAX_MESSAGES);
@@ -976,7 +976,7 @@ async function dispatchHermes(
   // via the public AI reply.
   await postActivityEntry({
     env,
-    user: { email: 'claude-ai', name: 'Hermes' },
+    user: { email: 'claude-ai', name: 'Hermes', slug: 'claude-ai' },
     entityType: args.entityType,
     entityId: args.entityId,
     kind: 'comment',

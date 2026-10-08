@@ -14,7 +14,7 @@ import type { Env } from '../helpers';
 import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleClaimLaunch, handleListPendingLaunches, handleRefireLaunch, parseLaunchPage } from './launch-log';
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 
-const USER = { email: 'ingra107@umn.edu', name: 'Nick' };
+const USER = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' };
 const API_KEY = 'test-pb-key';
 
 let db: InstanceType<typeof Database>;
@@ -408,7 +408,7 @@ describe('handleSetLaunchStatus', () => {
 
   it('returns 404 when a different user tries to update, and changes nothing', async () => {
     launch('L1');
-    const other = { email: 'someone@else.com', name: 'Other' };
+    const other = { email: 'someone@else.com', name: 'Other', slug: 'someone' };
     const res = await handleSetLaunchStatus('L1', req({ status: 'launched' }), other, env);
     expect(res.status).toBe(404);
     expect(row('L1')!.status).toBe('pending');

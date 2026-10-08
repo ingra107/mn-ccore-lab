@@ -2,7 +2,7 @@ import type { Env } from './types';
 import { verifyCfAccessJwt } from './jwt-verify';
 import { validateApiKey } from './middleware/api-key-auth';
 import { safeRow } from './lib/task-cols';
-import { resolveEmailSlug } from '../shared/emailSlug';
+import { LEGACY_SLUG_ALIASES, emailPrefix } from '../shared/emailSlug';
 // Re-export so Phase 1b callers can import TASK_SELECT_COLS from the same
 // shared root without touching the internal lib path.
 // T2.5: TABLE_PRIVATE_COLS + safeRow added — preferred over the tasks-only
@@ -93,9 +93,67 @@ export interface AuthUser {
   email: string
   name?: string
   picture?: string
+  /** The caller's canonical team slug (`nick-ingraham`). Resolved ONCE per
+   *  request by `getAuthUser` from `team_members.email` (#8945) — the row is
+   *  the identity, not a code-side map of NetIDs. Every "who is calling"
+   *  site reads this field; there is no email-string function to call. */
+  slug: string
 }
 
-export async function getAuthUser(request: Request, env: Env): Promise<AuthUser | null> {
+/**
+ * #8945: resolve a person reference (an email OR a slug) to the canonical
+ * team slug, from `team_members` — the one identity source.
+ *
+ *   - email (`eddin022@umn.edu`) → the slug of the row whose `email` matches
+ *     (case-insensitive). When two rows share the email — a pre-provisioned
+ *     row and the ghost auto-created on a first login before a PI set the
+ *     real email — the pre-provisioned row wins (`auto_created = 0` first),
+ *     so setting the real email on the seeded row is the whole repair.
+ *     No row → the lowercased email prefix, the slug `ensureTeamMember`
+ *     gives a brand-new member.
+ *   - legacy pre-36b slug (`nick`, `ningraha`) → its canonical slug.
+ *   - any other bare string (`nick-ingraham`, `claude-ai`, `anonymous`)
+ *     passes through.
+ *
+ * Replaces `actorSlug` + `EMAIL_PREFIX_TO_SLUG`, a hand-kept NetID map that
+ * gave every member missing from it a ghost account on first login
+ * (Casey + Nate, 2026-10-08).
+ */
+export async function resolveSlug(env: Env, ref: string | null | undefined): Promise<string> {
+  const raw = typeof ref === 'string' ? ref.trim() : '';
+  if (!raw) return '';
+  if (!raw.includes('@')) return LEGACY_SLUG_ALIASES[raw] ?? raw;
+  const row = await env.DB.prepare(
+    `SELECT slug FROM team_members
+     WHERE lower(email) = lower(?) AND slug IS NOT NULL AND slug != ''
+     ORDER BY auto_created ASC, created_at ASC
+     LIMIT 1`
+  ).bind(raw).first<{ slug: string }>();
+  return row?.slug ?? emailPrefix(raw);
+}
+
+// One resolution per Request: the /api/* middleware, isPiRequest and the
+// route handlers all ask for the same caller; the JWT verify and the
+// team_members slug lookup run once. Keyed on the Request object, so it dies
+// with the request.
+const authUserByRequest = new WeakMap<Request, Promise<AuthUser | null>>();
+
+export function getAuthUser(request: Request, env: Env): Promise<AuthUser | null> {
+  let pending = authUserByRequest.get(request);
+  if (!pending) {
+    pending = resolveAuthUser(request, env);
+    authUserByRequest.set(request, pending);
+  }
+  return pending;
+}
+
+async function resolveAuthUser(request: Request, env: Env): Promise<AuthUser | null> {
+  const identity = await readAuthIdentity(request, env);
+  if (!identity) return null;
+  return { ...identity, slug: await resolveSlug(env, identity.email) };
+}
+
+async function readAuthIdentity(request: Request, env: Env): Promise<Omit<AuthUser, 'slug'> | null> {
   // Test-mode auth bypass — uses the same TEST_MODE_KEY secret that gates
   // the DB_TEST swap, but is INDEPENDENT of the swap so the audit can hit
   // prod DB with a test user identity. Activates when:
@@ -152,21 +210,22 @@ export async function getAuthUser(request: Request, env: Env): Promise<AuthUser 
  * gated by the @umn.edu Access policy). On first sight of an email,
  * three branches:
  *
- *   1. Direct email match — row already linked. No-op.
+ *   1. Direct email match — row already linked. No-op. This is how a
+ *      pre-provisioned member lands on their own row: the PI sets their
+ *      real email on it (`POST /api/team/:slug {email}`), and `resolveSlug`
+ *      reads it. (#8945 removed the EMAIL_PREFIX_TO_SLUG claim branch: a
+ *      code-side NetID map gave every member missing from it a ghost.)
  *
- *   2. Slug match via EMAIL_PREFIX_TO_SLUG LUT — Nick had pre-provisioned
- *      this member (e.g. `nate-mesfin` exists, JWT email `mesfin@umn.edu`,
- *      LUT maps `mesfin → nate-mesfin`). This is a CLAIM. Backfill the
- *      real email + photo (only if not already set) so future lookups
+ *   2. Email-prefix slug match — `slug = email-prefix`. A CLAIM: backfill
+ *      the real email + photo (only if not already set) so future lookups
  *      hit branch 1. Don't overwrite name (Nick's preferred name beats
  *      Google's display name).
  *
- *   3. Email-prefix slug match — direct lookup against `slug = email-prefix`.
- *      Same claim logic as branch 2. Catches members provisioned without
- *      a LUT entry.
- *
- *   4. No match — INSERT a new row with auto_created=1. Surfaces in the
- *      Team UI with a PENDING REVIEW badge until Nick assigns a role.
+ *   3. No match — INSERT a new row with auto_created=1. Surfaces in the
+ *      Team UI with a PENDING REVIEW badge until Nick assigns a role. If
+ *      the person was pre-provisioned under a guessed email, the PI sets
+ *      the real email on the pre-provisioned row; `resolveSlug` prefers it
+ *      over this ghost from the next request on.
  *
  * Idempotent + safe under concurrency. Excludes the synthetic Hermes
  * agent and test-mode users.
@@ -177,22 +236,15 @@ export async function ensureTeamMember(env: Env, user: AuthUser): Promise<void> 
 
   // Branch 1: direct email match — already linked, nothing to do.
   const byEmail = await env.DB.prepare(
-    'SELECT id FROM team_members WHERE email = ?'
+    'SELECT id FROM team_members WHERE lower(email) = lower(?)'
   ).bind(user.email).first<{ id: string }>()
   if (byEmail) return
 
-  // Branch 2/3: try to claim a pre-provisioned row. Two candidate slugs:
-  //   - canonical slug from the LUT (e.g. mesfin → nate-mesfin)
-  //   - raw email-prefix (covers members not in the LUT)
-  const emailPrefix = user.email.split('@')[0].toLowerCase()
-  const canonicalSlug = actorSlug(user.email)  // returns LUT-mapped slug or email-prefix
-  const candidateSlugs = [...new Set([canonicalSlug, emailPrefix])]
-
+  // Branch 2: claim a row whose slug is the email prefix.
+  const prefix = emailPrefix(user.email)
   const existingBySlug = await env.DB.prepare(
-    `SELECT id, photo_url FROM team_members
-     WHERE slug IN (${candidateSlugs.map(() => '?').join(',')})
-     LIMIT 1`
-  ).bind(...candidateSlugs).first<{ id: string; photo_url: string | null }>()
+    'SELECT id, photo_url FROM team_members WHERE slug = ? LIMIT 1'
+  ).bind(prefix).first<{ id: string; photo_url: string | null }>()
 
   if (existingBySlug) {
     // CLAIM: backfill email so future logins hit branch 1. Backfill
@@ -211,14 +263,14 @@ export async function ensureTeamMember(env: Env, user: AuthUser): Promise<void> 
     return
   }
 
-  // Branch 4: no pre-provisioned row → create one.
+  // Branch 3: no pre-provisioned row → create one.
   const id = generateId()
-  const name = user.name?.trim() || emailPrefix
+  const name = user.name?.trim() || prefix
   try {
     await env.DB.prepare(
       `INSERT INTO team_members (id, name, slug, email, photo_url, auto_created)
        VALUES (?, ?, ?, ?, ?, 1)`
-    ).bind(id, name, emailPrefix, user.email, user.picture ?? null).run()
+    ).bind(id, name, prefix, user.email, user.picture ?? null).run()
   } catch (e) {
     // UNIQUE constraint race (two concurrent first requests). Safe to ignore —
     // row exists now; the next call will land on branch 1 or 2.
@@ -282,17 +334,17 @@ export function generateId(kind?: 'task' | 'project' | 'inbox_event' | 'mut'): s
  * every `logActivity` call site lands a real team slug, never a raw email or
  * the unauthed `'anonymous'` sentinel rendered literally on the feed.
  *
- *   - email-looking actors (`mesfin@umn.edu`) → `actorSlug()` slug
- *     (`nate-mesfin`). Most call sites historically passed `user.email`.
+ *   - email-looking actors (`mesfin@umn.edu`) → `resolveSlug()` slug
+ *     (`nate-mesfin`), read from team_members. Most call sites historically
+ *     passed `user.email`.
  *   - the unauthed fallback identity (`'anonymous'`) → null, so the feed can
  *     render it as a neutral system row instead of a person named "anonymous".
  *   - already-slug actors (`nick-ingraham`, `claude-ai`) pass through.
  */
-function canonicalizeActorForLog(actor: string | null | undefined): string | null {
+async function canonicalizeActorForLog(env: Env, actor: string | null | undefined): Promise<string | null> {
   const raw = typeof actor === 'string' ? actor.trim() : '';
   if (!raw || raw === 'anonymous') return null;
-  if (raw.includes('@')) return actorSlug(raw);
-  return raw;
+  return resolveSlug(env, raw);
 }
 
 export async function logActivity(
@@ -305,25 +357,12 @@ export async function logActivity(
 ): Promise<void> {
   await env.DB.prepare(
     'INSERT INTO activity_log (id, type, description, actor, related_id, related_type) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(generateId(), type, description, canonicalizeActorForLog(actor), relatedId ?? null, relatedType ?? null).run();
+  ).bind(generateId(), type, description, await canonicalizeActorForLog(env, actor), relatedId ?? null, relatedType ?? null).run();
 }
 
 export function parseMentions(text: string): string[] {
   const regex = /@([a-z][a-z0-9_-]*)/g;
   return [...new Set(Array.from(text.matchAll(regex), m => m[1]))];
-}
-
-/** Extract canonical team slug from email (e.g., "nick@umn.edu" →
- *  "nick-ingraham", "ningraha@umn.edu" → "nick-ingraham"). Returns the
- *  literal email prefix for unknown emails. The map lives in
- *  `shared/emailSlug.ts` (PB backlog #1134) — imported by BOTH this and the
- *  UI's `emailToSlug` (`src/lib/emailSlug.ts`) — so the two can no longer
- *  drift the way they did before #1134 (a member in one map and not the
- *  other lost the `canEditFeatured` edit button while the API still
- *  accepted the write). Adding a team member means adding a row to
- *  `shared/emailSlug.ts` once, not mirroring it here too. */
-export function actorSlug(email: string): string {
-  return resolveEmailSlug(email)
 }
 
 /**
@@ -332,10 +371,10 @@ export function actorSlug(email: string): string {
  * One policy for every "who did this" write site (asked_by, submitted_by,
  * created_by, author_slug, author, to_slug, pi, uploaded_by):
  *
- *   1. Default identity = actorSlug(user.email) — the authenticated caller.
+ *   1. Default identity = user.slug — the authenticated caller.
  *   2. A caller-supplied `override` is accepted ONLY if it resolves to a real
  *      team_members.slug. Email-looking overrides are canonicalized through
- *      actorSlug first (so "mesfin@umn.edu" → "nate-mesfin" before the slug
+ *      resolveSlug first (so "mesfin@umn.edu" → "nate-mesfin" before the slug
  *      check). An unknown slug returns an error (caller 400s).
  *   3. Cross-identity impersonation (override ≠ caller's own slug) is allowed
  *      ONLY when `allowImpersonation` is true — i.e. the request is a PI or the
@@ -352,7 +391,7 @@ export async function resolveActor(
   override: string | null | undefined,
   opts: { allowImpersonation: boolean },
 ): Promise<{ slug: string } | { error: string }> {
-  const callerSlug = actorSlug(user.email);
+  const callerSlug = user.slug;
   const raw = typeof override === 'string' ? override.trim() : '';
   if (!raw) return { slug: callerSlug };
 
@@ -361,7 +400,7 @@ export async function resolveActor(
   if (raw === 'claude-ai') return { slug: 'claude-ai' };
 
   // Canonicalize email-looking overrides to a slug before validating.
-  const candidate = raw.includes('@') ? actorSlug(raw) : raw;
+  const candidate = raw.includes('@') ? await resolveSlug(env, raw) : raw;
 
   // The override must be a real team member slug.
   const member = await env.DB.prepare(
@@ -581,12 +620,12 @@ export function _resetValidationFlagsCache(): void {
  * A1 · `actorSlugFromRequest` — resolve the canonical team slug for the
  * authenticated caller, or null when the request is unauthenticated.
  *
- * Replaces the buggy `?.slug` pattern: `AuthUser` has no `.slug` field.
- * Correct form: `getAuthUser` → `actorSlug(user.email)`.
+ * `getAuthUser` resolves the slug from team_members (#8945); this is the
+ * null-safe projection of it.
  */
 export async function actorSlugFromRequest(request: Request, env: Env): Promise<string | null> {
   const user = await getAuthUser(request, env);
-  return user ? actorSlug(user.email) : null;
+  return user ? user.slug : null;
 }
 
 /**

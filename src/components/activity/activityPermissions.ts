@@ -5,13 +5,12 @@
 // home. Gates whether the trash button renders on an entry; the server
 // re-enforces regardless.
 
-import { emailToSlug } from '../../lib/emailSlug'
 
 export function canDeleteActivityEntry(
-  user: { email?: string; isPi?: boolean } | null | undefined,
+  user: { email?: string; slug?: string; isPi?: boolean } | null | undefined,
   actorSlug: string,
 ): boolean {
   if (user?.isPi) return true
-  const viewerSlug = emailToSlug(user?.email)
+  const viewerSlug = user?.slug ?? ''
   return !!viewerSlug && actorSlug === viewerSlug
 }

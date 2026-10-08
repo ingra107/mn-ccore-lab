@@ -1,4 +1,3 @@
-import { emailToSlug } from './emailSlug'
 
 export type UserRole = 'pi' | 'fellow' | 'coordinator' | 'default'
 
@@ -11,10 +10,10 @@ const FELLOW_SLUGS = ['dan-shyu', 'beret-fitzgerald', 'emma-bromley', 'casey-edd
 
 /** Derive role from auth user. PI-ness comes from the server via user.isPi
  *  (reflects the lab_settings.pi_emails allowlist, not a client-side list). */
-export function getUserRoleFromAuth(user: { email?: string; isPi?: boolean } | null | undefined): UserRole {
+export function getUserRoleFromAuth(user: { email?: string; slug?: string; isPi?: boolean } | null | undefined): UserRole {
   if (!user?.email) return 'default'
   if (user.isPi) return 'pi'
-  const slug = emailToSlug(user.email)
+  const slug = user.slug ?? ''
   if (FELLOW_SLUGS.includes(slug)) return 'fellow'
   if (user.email.endsWith('@umn.edu')) return 'coordinator'
   return 'default'

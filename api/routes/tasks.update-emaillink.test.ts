@@ -28,7 +28,7 @@ function apiKeyPost(body: unknown): Request {
   })
 }
 
-const user = { email: 'ingra107@umn.edu', name: 'Nick' } as import('../helpers').AuthUser
+const user = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' } as import('../helpers').AuthUser
 
 let db: InstanceType<typeof Database>
 let env: import('../helpers').Env

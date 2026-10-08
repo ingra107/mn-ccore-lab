@@ -18,7 +18,7 @@ import type { AuthUser, Env } from '../helpers'
 import { handleCreateTask, handleMobileTasksToHub } from './tasks'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
-const user = { email: 'ingra107@umn.edu', name: 'Nick' } as AuthUser
+const user = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' } as AuthUser
 
 let db: InstanceType<typeof Database>
 let env: Env

@@ -13,7 +13,6 @@ import MetricCard from '../../components/MetricCard'
 import { useInsightConnections } from '../../hooks/useApiData'
 import { useToast } from '../../hooks/useToast'
 import { useAuth } from '../../hooks/useAuth'
-import { emailToSlug } from '../../lib/emailSlug'
 import { getPersonInfo } from '../../data/team'
 import { PATHS } from '../../constants/paths'
 import { stageLabel, toApiStage } from '../../lib/stageNormalize'
@@ -762,7 +761,7 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: `Follow up on stalled project: ${project.title}`,
-          assignee: emailToSlug(user?.email) || 'nick-ingraham',
+          assignee: user?.slug || 'nick-ingraham',
           project_id: project.slug,
           priority: 'high',
           due_date: project.dueStr,

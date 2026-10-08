@@ -83,8 +83,8 @@ export async function injectFakeAuth(context: BrowserContext, baseUrl: string) {
  * Same env var names as `scripts/hub-audit.ts` so one env setup serves both
  * the standalone audit script and Playwright specs: `CF_ACCESS_CLIENT_ID`,
  * `CF_ACCESS_CLIENT_SECRET`, `HUB_TEST_MODE_KEY` (or `TEST_MODE_KEY`),
- * `TEST_USER_EMAIL` (defaults to Nick's UMN address, which resolves via
- * `EMAIL_PREFIX_TO_SLUG` to the canonical task-owning slug).
+ * `TEST_USER_EMAIL` (defaults to Nick's UMN address, which the Worker
+ * resolves from `team_members.email` to the canonical task-owning slug).
  *
  * Canary + the one command an agent runs for a real authenticated page check:
  * `tests/real-auth-page-check.spec.ts` (usage in its header).

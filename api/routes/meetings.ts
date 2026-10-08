@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical, pbTaskVisibilitySql, actorSlug } from '../helpers';
+import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical, pbTaskVisibilitySql } from '../helpers';
 import { TASK_SELECT_COLS } from '../lib/task-cols';
 import { normalizeAttendees, attendeesColumnValue, type NormalizedAttendees } from '../lib/meeting-write';
 import { ctToday } from '../lib/ct-date';
@@ -656,7 +656,7 @@ export async function handlePrepMeetingFromEvent(request: Request, user: AuthUse
        FROM user_calendar_events
       WHERE user_slug = ? AND uid = ? AND start_at = ?
       LIMIT 1`
-  ).bind(actorSlug(user.email), uid, startAt).first<{ summary: string | null; start_at: string; end_at: string | null; attendees: string | null }>();
+  ).bind(user.slug, uid, startAt).first<{ summary: string | null; start_at: string; end_at: string | null; attendees: string | null }>();
   if (!ev) return error('Calendar event not found. The calendar may have refreshed; reload and try again.', 404);
 
   const firstDay = shiftCivilDay(ev.start_at.slice(0, 10), -1);

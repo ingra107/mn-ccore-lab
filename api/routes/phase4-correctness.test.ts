@@ -37,7 +37,7 @@ import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 
-const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick' };
+const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' };
 
 // Phase 1b-extended: write-path handlers run assertProjectVisible / isPiRequest,
 // both of which need a real auth signal on the Request. Use the same TEST_MODE_KEY

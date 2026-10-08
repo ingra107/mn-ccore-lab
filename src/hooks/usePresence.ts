@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
 import { useAuth } from './useAuth'
-import { emailToSlug } from '../lib/emailSlug'
 import { getRealtimeBus } from '../lib/realtimeBus'
 
 const HEARTBEAT_MS = 15_000
@@ -53,7 +52,7 @@ export function useIntentBroadcast(
   selfIntent: Intent,
 ): Record<string, Intent> {
   const { user } = useAuth()
-  const mySlug = user?.email ? emailToSlug(user.email) : ''
+  const mySlug = user?.slug || ''
   const [peerIntents, setPeerIntents] = useState<Record<string, { intent: Intent; lastSeen: number }>>({})
   const lastBroadcastRef = useRef<Intent>('viewing')
   // Latest-value ref: the subscription effect below intentionally does NOT
@@ -155,7 +154,7 @@ interface TypingMessage {
 
 export function useTyping(entityType: string, entityId: string | undefined | null) {
   const { user } = useAuth()
-  const mySlug = user?.email ? emailToSlug(user.email) : ''
+  const mySlug = user?.slug || ''
   const [typingPeers, setTypingPeers] = useState<{ slug: string; lastSeen: number }[]>([])
   const lastBroadcastRef = useRef<{ typing: boolean; ts: number }>({ typing: false, ts: 0 })
 
@@ -209,7 +208,7 @@ export function useTyping(entityType: string, entityId: string | undefined | nul
 
 export function usePresence(entityType: string, entityId: string | undefined | null): string[] {
   const { user } = useAuth()
-  const mySlug = user?.email ? emailToSlug(user.email) : ''
+  const mySlug = user?.slug || ''
   const [peers, setPeers] = useState<PresenceEntry[]>([])
 
   useEffect(() => {

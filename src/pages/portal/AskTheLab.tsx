@@ -20,7 +20,6 @@ import { useQuestions, useQuestionDetail, useProjects } from '../../hooks/useApi
 import { useCreateQuestion, useCreateAnswer, useAcceptAnswer } from '../../hooks/useMutations'
 import { useToast } from '../../hooks/useToast'
 import { useAuth } from '../../hooks/useAuth'
-import { emailToSlug } from '../../lib/emailSlug'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { isProductionVisible } from '../../lib/isProductionVisible'
@@ -264,7 +263,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
   const { data: detail, isLoading } = useQuestionDetail(questionId)
   const { user } = useAuth()
   const { showSuccess } = useToast()
-  const userSlug = emailToSlug(user?.email)
+  const userSlug = user?.slug ?? ''
   const [answerText, setAnswerText] = useState('')
   const createAnswerMut = useCreateAnswer(questionId)
   const acceptAnswerMut = useAcceptAnswer(questionId)

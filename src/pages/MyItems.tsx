@@ -17,7 +17,6 @@ import {
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useAuth } from '../hooks/useAuth'
-import { emailToSlug } from '../lib/emailSlug'
 import { useMeetingLinkedTasks, useTasks } from '../hooks/useApiData'
 import type { TaskRow } from '../lib/api'
 import { QueryErrorNote } from '../components/QueryErrorNote'
@@ -622,7 +621,7 @@ export default function MyItems() {
 
   // Derive user slug from email; pre-launch (no CF Access cookie yet) defaults
   // to Nick so the page is useful instead of a sign-in wall.
-  const userSlug = emailToSlug(user?.email) || 'nick-ingraham'
+  const userSlug = user?.slug || 'nick-ingraham'
 
   // Data hooks
   // T19 (#547): meeting-linked tasks (tasks.meeting_id), not the dead

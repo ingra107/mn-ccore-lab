@@ -22,7 +22,7 @@
 // write path through this endpoint as part of A3 ship.
 
 import type { AuthUser, Env, ValidationFlags } from '../helpers';
-import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeRow, projectRefToCanonical, isPiRequest, actorSlug, logActivity } from '../helpers';
+import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeRow, projectRefToCanonical, isPiRequest, logActivity } from '../helpers';
 import { FK_SLUG_FIELDS } from '../lib/task-cols';
 import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
@@ -746,7 +746,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
   // acknowledged_at in the payload wins.
   if (mut.table === 'tasks') {
     const p = mut.payload as Record<string, unknown>;
-    if (p.acknowledged_at == null && typeof p.assignee === 'string' && user?.email && actorSlug(user.email) === p.assignee) {
+    if (p.acknowledged_at == null && typeof p.assignee === 'string' && user?.slug && user.slug === p.assignee) {
       p.acknowledged_at = nowInstant();
       p.acknowledged_by = p.assignee;
     }

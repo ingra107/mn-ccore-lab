@@ -4,7 +4,6 @@ import { useReactions } from '../hooks/useApiData'
 import type { Reaction } from '../hooks/useApiData'
 import { useToggleReaction } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
-import { emailToSlug } from '../lib/emailSlug'
 import { getPersonInfo } from '../data/team'
 import { nowInstant } from '../lib/time'
 
@@ -26,7 +25,7 @@ interface ReactionBarProps {
 export default function ReactionBar({ targetType, targetId, compact }: ReactionBarProps) {
   const queryClient = useQueryClient()
   const { user } = useAuth()
-  const currentSlug = emailToSlug(user?.email)
+  const currentSlug = user?.slug ?? ''
   const [showPicker, setShowPicker] = useState(false)
   const pickerRef = useRef<HTMLDivElement>(null)
 

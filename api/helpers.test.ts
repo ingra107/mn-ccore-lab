@@ -1,40 +1,92 @@
 import { describe, it, expect } from 'vitest'
+import { prodSchemaDb, d1Adapter, insertRow } from './test-support/prod-schema-db'
 import {
-  actorSlug, assertProtectedNotNull, resolveActor,
+  resolveSlug, ensureTeamMember, assertProtectedNotNull, resolveActor,
   actorSlugFromRequest, canSeePbProject, assertProjectVisible,
   projectRefToCanonical, safeTaskRow, safeRow, TABLE_PRIVATE_COLS,
 } from './helpers'
 import type { AuthUser, Env } from './helpers'
 
-// W1 (2026-04-29) — verify EMAIL_PREFIX_TO_SLUG canonicalizes ningraha@umn.edu
-// to 'nick-ingraham'. Closes A0 Decision #7: prior to W1, `ningraha:` was missing
-// from the LUT so 3 INSERT sites hardcoded the literal `'ningraha'` to compensate.
-// W1 added the LUT entry + flipped those 3 sites to use `'nick-ingraham'`.
+// #8945 (2026-10-08): a caller's slug comes from team_members.email, not from
+// a code-side NetID map. Casey (eddin022@) and Nate (mesfin@) got ghost
+// accounts on first login because their NetIDs were missing from
+// EMAIL_PREFIX_TO_SLUG. These run on the migration-chain database, so the
+// SQL is the SQL prod runs.
 
-describe('actorSlug — W1 ningraha canonicalization', () => {
-  it('canonicalizes ningraha@umn.edu to nick-ingraham', () => {
-    expect(actorSlug('ningraha@umn.edu')).toBe('nick-ingraham')
+function teamDb(rows: Array<{ id: string; slug: string; email?: string; auto_created?: number; created_at?: string }>) {
+  const db = prodSchemaDb()
+  for (const r of rows) insertRow(db, 'team_members', { name: r.slug, ...r })
+  return db
+}
+const teamEnv = (db: ReturnType<typeof prodSchemaDb>, extra: Record<string, unknown> = {}) =>
+  ({ DB: d1Adapter(db), ...extra }) as unknown as Env
+
+describe('resolveSlug — #8945 identity from team_members.email', () => {
+  const db = teamDb([
+    { id: 'tm-nick', slug: 'nick-ingraham', email: 'ingra107@umn.edu' },
+    { id: 'tm-casey', slug: 'casey-eddington', email: 'eddin022@umn.edu' },
+  ])
+  const env = teamEnv(db)
+
+  it('resolves an email no code map has ever listed, from the row', async () => {
+    expect(await resolveSlug(env, 'eddin022@umn.edu')).toBe('casey-eddington')
+    expect(await resolveSlug(env, 'ingra107@umn.edu')).toBe('nick-ingraham')
   })
 
-  it('canonicalizes nick@umn.edu to nick-ingraham (legacy short form)', () => {
-    expect(actorSlug('nick@umn.edu')).toBe('nick-ingraham')
+  it('matches case-insensitively', async () => {
+    expect(await resolveSlug(env, 'EDDIN022@UMN.EDU')).toBe('casey-eddington')
   })
 
-  it('canonicalizes ingra107@umn.edu to nick-ingraham (real UMN NetID)', () => {
-    expect(actorSlug('ingra107@umn.edu')).toBe('nick-ingraham')
+  it('falls back to the lowercased prefix for an email no row carries', async () => {
+    expect(await resolveSlug(env, 'Newperson@umn.edu')).toBe('newperson')
   })
 
-  it('handles uppercase input via lowercasing', () => {
-    expect(actorSlug('NINGRAHA@umn.edu')).toBe('nick-ingraham')
+  it('maps the two legacy pre-36b slugs and passes other slugs through', async () => {
+    expect(await resolveSlug(env, 'ningraha')).toBe('nick-ingraham')
+    expect(await resolveSlug(env, 'nick')).toBe('nick-ingraham')
+    expect(await resolveSlug(env, 'nate-mesfin')).toBe('nate-mesfin')
+    expect(await resolveSlug(env, 'claude-ai')).toBe('claude-ai')
+    expect(await resolveSlug(env, 'anonymous')).toBe('anonymous')
+    expect(await resolveSlug(env, '')).toBe('')
+    expect(await resolveSlug(env, null)).toBe('')
   })
 
-  it('falls through to literal prefix for unknown emails', () => {
-    expect(actorSlug('unknown@umn.edu')).toBe('unknown')
+  it('prefers the pre-provisioned row over a ghost that holds the same email', async () => {
+    // The repair shape: a ghost was auto-created on first login, then the PI
+    // set the real email on the seeded row. The seeded row must win even
+    // though the ghost is older in this fixture.
+    const db2 = teamDb([
+      { id: 'tm-ghost', slug: 'bromle012', email: 'bromle012@umn.edu', auto_created: 1, created_at: '2026-01-01 00:00:00' },
+      { id: 'tm-emma', slug: 'emma-bromley', email: 'bromle012@umn.edu', auto_created: 0, created_at: '2026-03-26 00:29:41' },
+    ])
+    expect(await resolveSlug(teamEnv(db2), 'bromle012@umn.edu')).toBe('emma-bromley')
+  })
+})
+
+describe('ensureTeamMember — #8945 first login', () => {
+  const user = (email: string): AuthUser => ({ email, slug: '' })
+  const rows = (db: ReturnType<typeof prodSchemaDb>) =>
+    db.prepare('SELECT slug, email, auto_created FROM team_members ORDER BY slug').all() as Array<{ slug: string; email: string | null; auto_created: number }>
+
+  it('a member whose row carries their real email lands on it: no ghost, no map entry', async () => {
+    const db = teamDb([{ id: 'tm-pat', slug: 'pat-newmember', email: 'patne001@umn.edu' }])
+    const before = rows(db).length
+    await ensureTeamMember(teamEnv(db), user('patne001@umn.edu'))
+    expect(rows(db).length).toBe(before)
+    expect(rows(db).filter((r) => r.auto_created === 1)).toEqual([])
   })
 
-  it('canonicalizes other team prefixes', () => {
-    expect(actorSlug('bromley@umn.edu')).toBe('emma-bromley')
-    expect(actorSlug('mceachron@umn.edu')).toBe('kendall-mceachron')
+  it('an email no row carries gets a PENDING-REVIEW row slugged by its prefix', async () => {
+    const db = teamDb([])
+    await ensureTeamMember(teamEnv(db), user('Stranger9@umn.edu'))
+    const ghost = rows(db).find((r) => r.auto_created === 1)
+    expect(ghost).toMatchObject({ slug: 'stranger9', email: 'Stranger9@umn.edu' })
+  })
+
+  it('a row slugged by the email prefix is claimed, not duplicated', async () => {
+    const db = teamDb([{ id: 'tm-x', slug: 'jdoe', email: 'jdoe@old.example' }])
+    await ensureTeamMember(teamEnv(db), user('jdoe@umn.edu'))
+    expect(rows(db).filter((r) => r.slug === 'jdoe')).toEqual([{ slug: 'jdoe', email: 'jdoe@umn.edu', auto_created: 0 }])
   })
 })
 
@@ -72,24 +124,19 @@ describe('assertProtectedNotNull — AM-1 (SEC-T0-5)', () => {
 })
 
 // ── AM-2: actor-override slug validation ──────────────────────────────────────
-// Minimal env stub: team_members has slugs 'nick-ingraham' and 'nate-mesfin'.
-function makeActorEnv(knownSlugs: string[]): Env {
-  return {
-    DB: {
-      prepare: (_sql: string) => ({
-        bind: (slug: string) => ({
-          first: async () => (knownSlugs.includes(slug) ? { 1: 1 } : null),
-        }),
-      }),
-    },
-  } as unknown as Env
+// team_members has 'nick-ingraham' and 'nate-mesfin', each with its login email.
+function makeActorEnv(): Env {
+  return teamEnv(teamDb([
+    { id: 'tm-nick', slug: 'nick-ingraham', email: 'ingra107@umn.edu' },
+    { id: 'tm-nate', slug: 'nate-mesfin', email: 'mesfin@umn.edu' },
+  ]))
 }
 
-const nickUser: AuthUser = { email: 'ingra107@umn.edu' } // → nick-ingraham
-const teamUser: AuthUser = { email: 'nate@umn.edu' }     // → nate-mesfin (LUT)
+const nickUser: AuthUser = { email: 'ingra107@umn.edu', slug: 'nick-ingraham' }
+const teamUser: AuthUser = { email: 'mesfin@umn.edu', slug: 'nate-mesfin' }
 
 describe('resolveActor — AM-2 (SEC-T0-6)', () => {
-  const env = makeActorEnv(['nick-ingraham', 'nate-mesfin'])
+  const env = makeActorEnv()
 
   it('defaults to the caller slug when no override', async () => {
     const r = await resolveActor(env, nickUser, undefined, { allowImpersonation: false })
@@ -102,8 +149,8 @@ describe('resolveActor — AM-2 (SEC-T0-6)', () => {
   })
 
   it('canonicalizes an email-looking override before validating', async () => {
-    const r = await resolveActor(env, nickUser, 'ningraha@umn.edu', { allowImpersonation: false })
-    expect(r).toEqual({ slug: 'nick-ingraham' }) // ningraha → nick-ingraham (own slug)
+    const r = await resolveActor(env, nickUser, 'INGRA107@umn.edu', { allowImpersonation: false })
+    expect(r).toEqual({ slug: 'nick-ingraham' }) // resolved from team_members.email
   })
 
   it('rejects an unknown slug override with an error', async () => {
@@ -131,7 +178,10 @@ describe('resolveActor — AM-2 (SEC-T0-6)', () => {
 
 // Minimal env with TEST_MODE_KEY for auth bypass
 function makeAuthEnv(testModeKey = 'test-key'): Env {
-  return { TEST_MODE_KEY: testModeKey, DB: { prepare: () => ({ bind: () => ({ first: async () => null }) }) } } as unknown as Env
+  return teamEnv(teamDb([
+    { id: 'tm-nick', slug: 'nick-ingraham', email: 'ingra107@umn.edu' },
+    { id: 'tm-nate', slug: 'nate-mesfin', email: 'mesfin@umn.edu' },
+  ]), { TEST_MODE_KEY: testModeKey })
 }
 
 function makeRequest(headers: Record<string, string> = {}): Request {
@@ -149,11 +199,11 @@ describe('actorSlugFromRequest — A1', () => {
     expect(slug).toBe('nick-ingraham')
   })
 
-  it('returns the LUT-mapped slug, not raw email prefix', async () => {
+  it('returns the slug of the row carrying the email, not the raw email prefix', async () => {
     const env = makeAuthEnv('local-test-key')
     const req = makeRequest({
       'X-Test-Mode-Key': 'local-test-key',
-      'X-Test-User': 'nate@umn.edu',
+      'X-Test-User': 'mesfin@umn.edu',
     })
     const slug = await actorSlugFromRequest(req, env)
     expect(slug).toBe('nate-mesfin')

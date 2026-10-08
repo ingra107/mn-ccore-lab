@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
+import { json, error, generateId, logActivity, buildUpdate } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 
 // GET /api/mentee-milestones?mentee=&status=&type=
@@ -68,7 +68,7 @@ export async function handleCreateMenteeMilestone(request: Request, user: AuthUs
     'INSERT INTO mentee_milestones (id, mentee_slug, milestone_type, title, description, due_date, notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(id, body.mentee_slug, body.milestone_type, body.title, body.description || null, body.due_date || null, body.notes || null, status).run();
 
-  const actor = actorSlug(user.email);
+  const actor = user.slug;
   await logActivity(env, 'mentee_milestone', `New milestone for ${body.mentee_slug}: "${body.title}"`, actor, id, 'mentee_milestone');
 
   const created = await env.DB.prepare('SELECT * FROM mentee_milestones WHERE id = ?').bind(id).first();
@@ -99,7 +99,7 @@ export async function handleCompleteMenteeMilestone(id: string, user: AuthUser, 
   const updated = await env.DB.prepare('SELECT * FROM mentee_milestones WHERE id = ?').bind(id).first();
   if (!updated) return error('Milestone not found', 404);
 
-  const actor = actorSlug(user.email);
+  const actor = user.slug;
   await logActivity(env, 'mentee_milestone', `Completed milestone: "${(updated as Record<string, unknown>).title}"`, actor, id, 'mentee_milestone');
 
   return json({ data: updated });

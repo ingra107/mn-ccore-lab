@@ -2,7 +2,6 @@ import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { User, Circle, CheckCircle2, ArrowRight, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-import { emailToSlug } from '../../lib/emailSlug'
 import { useMeetingLinkedTasks } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
 import { useUnreadCount } from '../../hooks/useNotifications'
@@ -17,7 +16,7 @@ import { isTaskDone } from '../../lib/taskGrouping'
 
 function MyItemsCard() {
   const { user } = useAuth()
-  const userSlug = emailToSlug(user?.email)
+  const userSlug = user?.slug ?? ''
   // T19 (#547): meeting-linked tasks (tasks.meeting_id), not the dead
   // action_items table — see useMeetingLinkedTasks() doc comment.
   const { data: allItems = [], isError, refetch } = useMeetingLinkedTasks(

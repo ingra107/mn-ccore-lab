@@ -16,7 +16,6 @@ import { useAuth } from '../../hooks/useAuth'
 import { useMarkSeen } from '../../hooks/useEntitySeen'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { MNCCORE_PROCESS_URI, MNCCORE_QUICKCHAT_URI } from '../../lib/urlClassify'
-import { emailToSlug } from '../../lib/emailSlug'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import HeartbeatLine from '../../components/HeartbeatLine'
 import { Button } from '../../components/ui/Button'
@@ -68,7 +67,7 @@ export default function TodayPage() {
   usePageMeta('Today · MN-CCORE', 'Operating-day landing — what to work on, who you\'re meeting, what\'s overdue.')
   const { user } = useAuth()
   const { launch: launchProcess } = useProtocolLaunch()
-  const userSlug = emailToSlug(user?.email)
+  const userSlug = user?.slug ?? ''
   // autoScroll handled by dnd-kit DndContext (enabled by default via PointerSensor)
   // — replaced useDragAutoScroll() which listened on 'dragover' (HTML5; now dead).
 

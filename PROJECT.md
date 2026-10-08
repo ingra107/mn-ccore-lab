@@ -200,6 +200,10 @@ replacements. brain.db side updated (1,144 rows + sync script default).
 `actorSlug(email)` in `api/helpers.ts` maps email-prefix → canonical
 slug via `EMAIL_PREFIX_TO_SLUG`. Nick's real UMN address `ingra107@umn.edu`
 wired into PI allowlist (was `ningraha@`/`sandb029@` — wrong people).
+*Superseded 2026-10-08 (PB #8945): the map is gone. The slug comes from the
+`team_members.email` column (`resolveSlug`, `AuthUser.slug`, `slug` on
+`/api/auth/me`); a new member is onboarded by setting their real email on
+their row (`POST /api/team/:slug {email}`, PI only), not by a code edit.*
 
 ## Phase 36 COMPLETE — Consultant Close-out + Mobile Swipe + Data Cleanup (2026-04-19)
 

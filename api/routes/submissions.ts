@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, assertProjectVisible } from '../helpers';
+import { json, error, generateId, logActivity, assertProjectVisible } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { withProjectWrite, withExistingRowProject } from '../lib/route-guards';
 import { idempotentDelete } from '../lib/idempotent-delete';
@@ -67,7 +67,7 @@ export async function handleCreateSubmission(request: Request, user: AuthUser, e
       b.notes || null,
     ).run();
 
-    const actor = actorSlug(user.email);
+    const actor = user.slug;
     await logActivity(e, 'submission', `Submission event '${b.event_type}' created for project ${b.project_id}`, actor, id, 'submission_event');
 
     const created = await e.DB.prepare('SELECT * FROM submission_events WHERE id = ?').bind(id).first();
@@ -113,7 +113,7 @@ export async function handleUpdateSubmission(id: string, request: Request, user:
       `UPDATE submission_events SET ${sets.join(', ')} WHERE id = ? AND deleted_at IS NULL`
     ).bind(...params).run();
 
-    const actor = actorSlug(user.email);
+    const actor = user.slug;
     await logActivity(e, 'submission', `Submission event ${rowId} updated`, actor, rowId, 'submission_event');
 
     const updated = await e.DB.prepare('SELECT * FROM submission_events WHERE id = ?').bind(rowId).first();
@@ -134,7 +134,7 @@ export async function handleDeleteSubmission(id: string, request: Request, user:
     mode: 'soft',
     request,
     env,
-    actorSlug: actorSlug(user.email),
+    actorSlug: user.slug,
     activityCategory: 'submission',
     activityEntityType: 'submission_event',
   });

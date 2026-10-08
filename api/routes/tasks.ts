@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, isPiRequest, resolveActor, assertProjectVisible, projectRefToCanonical, pbTaskVisibilitySql } from '../helpers';
+import { json, error, generateId, logActivity, resolveSlug, isPiRequest, resolveActor, assertProjectVisible, projectRefToCanonical, pbTaskVisibilitySql } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
@@ -251,7 +251,7 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
   // Notify assigner when task is completed
   if (completed && item.assigned_by) {
     try {
-      const assignerSlug = actorSlug(item.assigned_by);
+      const assignerSlug = await resolveSlug(env, item.assigned_by);
       await env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
       ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} completed a task`, (item.title || item.description).slice(0, 200), `/portal/my-tasks?open=${id}`).run();
@@ -587,7 +587,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
   // Notify assignee if it's someone else
   try {
     const assignee = body.assignee;
-    const authorSlug = actorSlug(user.email);
+    const authorSlug = user.slug;
     if (assignee && assignee !== authorSlug) {
       await env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
@@ -1263,7 +1263,7 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
   } catch { /* no body or non-JSON — fine */ }
 
   const now = nowInstant();
-  const acknowledgedBy = overrideSlug ?? actorSlug(user.email);
+  const acknowledgedBy = overrideSlug ?? user.slug;
 
   // HUB-7 (2026-06-10): route through applyMutation so last_mutation_id is
   // stamped. Unblocked by pb-schema 0.4.0, which added
@@ -1286,9 +1286,9 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
   // with auto-acknowledge-on-view (2026-06-11) this fires on every first open,
   // and a self-assigned task would otherwise notify the opener about their own
   // glance — the exact noise loop the seen-model removes.
-  if (task.assigned_by && actorSlug(task.assigned_by) !== actorSlug(user.email)) {
+  const assignerSlug = task.assigned_by ? await resolveSlug(env, task.assigned_by) : '';
+  if (assignerSlug && assignerSlug !== user.slug) {
     try {
-      const assignerSlug = actorSlug(task.assigned_by);
       await env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
       ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} opened the task you assigned`, (task.title || task.description).slice(0, 200), `/portal/my-tasks?open=${id}`).run();

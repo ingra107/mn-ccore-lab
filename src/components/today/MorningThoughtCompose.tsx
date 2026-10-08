@@ -21,7 +21,6 @@ import { useCallback, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import SmartCompose from '../SmartCompose'
 import { useAuth } from '../../hooks/useAuth'
-import { emailToSlug } from '../../lib/emailSlug'
 import { useCreateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { todayKey } from './constants'
@@ -55,7 +54,7 @@ function appendDailyThought(content: string, kind: 'note' | 'hermes' | 'task') {
 
 export function MorningThoughtCompose() {
   const { user } = useAuth()
-  const userSlug = emailToSlug(user?.email)
+  const userSlug = user?.slug ?? ''
   const createTask = useCreateTask()
   const undoToast = useUndoToast()
   const queryClient = useQueryClient()

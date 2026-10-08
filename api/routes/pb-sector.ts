@@ -166,7 +166,7 @@ export async function handleCompleteDispatchItem(request: Request, env: Env): Pr
     if (item?.task_id) {
       await postActivityEntry({
         env,
-        user: { email: 'claude-ai', name: 'Hermes' },
+        user: { email: 'claude-ai', name: 'Hermes', slug: 'claude-ai' },
         entityType: 'task',
         entityId: item.task_id,
         kind: 'comment',

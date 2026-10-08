@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { json, error, generateId, logActivity } from '../helpers';
 import { applyMutation } from './mutations';
 
 interface HandoffRow {
@@ -42,7 +42,7 @@ export async function handleCreateHandoff(taskId: string, request: Request, user
     return error('situation is required', 400);
   }
 
-  const fromSlug = actorSlug(user.email);
+  const fromSlug = user.slug;
   const toSlug = body.to_slug.trim();
   // AM-2: to_slug is a destination team slug (not an actor identity). Validate
   // it against team_members so a handoff can't be created to a bogus slug
@@ -128,7 +128,7 @@ export async function handleAcknowledgeHandoff(handoffId: string, user: AuthUser
     return error('Already acknowledged', 400);
   }
 
-  const actor = actorSlug(user.email);
+  const actor = user.slug;
 
   await env.DB.prepare(
     "UPDATE task_handoffs SET acknowledged = 1, acknowledged_at = datetime('now') WHERE id = ?"

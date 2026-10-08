@@ -1,5 +1,5 @@
 import type { Env } from '../helpers';
-import { json, error, corsHeaders, getAuthUser, isPiRequest, actorSlug } from '../helpers';
+import { json, error, corsHeaders, getAuthUser, isPiRequest } from '../helpers';
 import { escapeHtml } from '../lib/escapeHtml';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
@@ -18,7 +18,7 @@ async function authorizeDigestFor(
   if (await isPiRequest(request, env)) return null; // PI / service key
   const user = await getAuthUser(request, env);
   if (!user?.email || user.email === 'anonymous') return 'Authentication required';
-  if (actorSlug(user.email) === memberSlug) return null; // own digest
+  if (user.slug === memberSlug) return null; // own digest
   return 'Forbidden — you can only generate/send your own digest';
 }
 

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { Bell, AtSign, UserPlus, Clock, RefreshCw, CheckCheck, Sparkles, Calendar } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
-import { emailToSlug } from '../lib/emailSlug'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
 import { formatRelativeTime, formatMediumDate, localDateKey } from '../lib/dateUtils'
 import { PATHS } from '../constants/paths'
@@ -24,7 +23,7 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
 // rightward when the bell lives in the portal sidebar.
 export default function NotificationBell({ align = 'right' }: { align?: 'left' | 'right' }) {
   const { user, isAuthenticated } = useAuth()
-  const slug = useMemo(() => emailToSlug(user?.email), [user?.email])
+  const slug = user?.slug ?? ''
   const { data: notifications = [] } = useNotifications(slug)
   const { data: unreadCount = 0 } = useUnreadCount(slug)
   const markRead = useMarkRead(slug)

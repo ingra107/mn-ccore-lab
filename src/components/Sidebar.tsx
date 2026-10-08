@@ -42,7 +42,6 @@ import { todayKey } from '../lib/taskGrouping'
 import { PATHS } from '../constants/paths'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
-import { emailToSlug } from '../lib/emailSlug'
 import { ICON_PROPS } from '../lib/iconProps'
 
 // Premium icon weight (Nick 2026-06-11): lucide's default stroke (2 on a 24
@@ -143,7 +142,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   const navigate = useNavigate()
   const { user } = useAuth()
   const { isDark } = useDarkMode()
-  const userSlug = emailToSlug(user?.email)
+  const userSlug = user?.slug ?? ''
   const [showBugReport, setShowBugReport] = useState(false)
   const person = userSlug ? getPersonInfo(userSlug) : null
   const isPi = user?.isPi ?? false

@@ -17,7 +17,7 @@ import { lastWorkedIso } from '../lib/project-recency'
 import type { AuthUser, Env } from '../helpers'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
-const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick' }
+const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' }
 
 function makeEnv() {
   const db = prodSchemaDb()

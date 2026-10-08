@@ -1,8 +1,7 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from './useAuth'
 import { useUnreadCount } from './useNotifications'
-import { emailToSlug } from '../lib/emailSlug'
 
 const SECTION_EMOJIS: Record<string, string> = {
   '/dashboard': '📊',
@@ -76,7 +75,7 @@ function restoreFavicon() {
 export function useFavicon() {
   const { pathname } = useLocation()
   const { user } = useAuth()
-  const userSlug = useMemo(() => emailToSlug(user?.email), [user?.email])
+  const userSlug = user?.slug ?? ''
   const { data: unreadCount = 0 } = useUnreadCount(userSlug)
 
   useEffect(() => {

@@ -31,16 +31,16 @@ describe('typed-request wrappers', () => {
 
   it('toPIRequest requires both authed AND isPi=true', () => {
     const raw = new Request('https://x/api/x')
-    expect(toPIRequest(raw, { email: 'a@b.com' }, false)).toBeNull()
+    expect(toPIRequest(raw, { email: 'a@b.com', slug: 'a' }, false)).toBeNull()
     expect(toPIRequest(raw, null, true)).toBeNull()
-    expect(toPIRequest(raw, { email: 'a@b.com' }, true)).not.toBeNull()
+    expect(toPIRequest(raw, { email: 'a@b.com', slug: 'a' }, true)).not.toBeNull()
   })
 
   it('toProjectVisibleRequest tags with the resolved projectId', () => {
     const raw = new Request('https://x/api/x')
     const tagged: ProjectVisibleRequest | null = toProjectVisibleRequest(
       raw,
-      { email: 'a@b.com' },
+      { email: 'a@b.com', slug: 'a' },
       'proj-1',
     )
     expect(tagged).not.toBeNull()
@@ -49,7 +49,7 @@ describe('typed-request wrappers', () => {
 
   it('toProjectVisibleRequest returns null when projectId is empty', () => {
     const raw = new Request('https://x/api/x')
-    expect(toProjectVisibleRequest(raw, { email: 'a@b.com' }, '')).toBeNull()
+    expect(toProjectVisibleRequest(raw, { email: 'a@b.com', slug: 'a' }, '')).toBeNull()
   })
 
   it('toProjectVisibleRequest returns null when user is missing', () => {

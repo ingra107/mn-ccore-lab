@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, logActivity, actorSlug, getPiEmails } from '../helpers';
+import { json, error, logActivity, getPiEmails } from '../helpers';
 
 // AM-3 (SEC-T0-1): public-safe team_members projection. Excludes `email`
 // (PII) and `auto_created` (the internal PENDING-REVIEW flag). Keeps every
@@ -65,8 +65,11 @@ const SELF_EDIT_FIELDS = ['bio', 'photo_url', 'scholar_id', 'title', 'department
 // Admin-only fields — only PI emails (lab_settings.pi_emails) can set.
 // role/member_type assignment is admin-only because it determines team
 // directory grouping + sets the gold-pill role label visible to the
-// whole lab.
-const ADMIN_ONLY_FIELDS = ['role', 'member_type'] as const
+// whole lab. `email` is the member's login identity (#8945): the address
+// their CF Access login carries is matched against it to find their row, so
+// setting the real UMN address on a pre-provisioned row is how a new member
+// lands on their own account — no code change, no NetID map.
+const ADMIN_ONLY_FIELDS = ['role', 'member_type', 'email'] as const
 
 // Citation cache fields — written ONLY by the PB-side scholarly cron via
 // X-API-Key (Bearer PB_API_KEY) auth, never by browser users. See
@@ -140,7 +143,7 @@ export async function handleUpdateTeamMember(
     return error('Authentication required', 401);
   }
 
-  const callerSlug = actorSlug(user.email);
+  const callerSlug = user.slug;
   const piEmails = await getPiEmails(env);
   const isPi = piEmails.has(user.email.toLowerCase());
   const isOwner = callerSlug === slug;
@@ -163,6 +166,22 @@ export async function handleUpdateTeamMember(
     // Admin-only field guard.
     if (ADMIN_ONLY_FIELDS.includes(key as typeof ADMIN_ONLY_FIELDS[number]) && !isPi) {
       return error(`Field "${key}" can only be set by a PI`, 403);
+    }
+    if (key === 'email') {
+      const email = typeof val === 'string' ? val.trim().toLowerCase() : '';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return error('email must be a single address', 400);
+      }
+      // Two pre-provisioned rows on one address would make the login resolve
+      // to whichever was created first. An auto-created ghost holding it is
+      // fine: resolveSlug prefers the pre-provisioned row, which is the repair.
+      const taken = await env.DB.prepare(
+        'SELECT slug FROM team_members WHERE lower(email) = ? AND slug != ? AND auto_created = 0 LIMIT 1'
+      ).bind(email, slug).first<{ slug: string }>();
+      if (taken) return error(`email is already the login of "${taken.slug}"`, 409);
+      updates.push('email = ?');
+      values.push(email);
+      continue;
     }
     updates.push(`${key} = ?`);
     values.push(val as string | null);

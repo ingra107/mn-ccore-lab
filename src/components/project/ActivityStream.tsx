@@ -26,7 +26,6 @@ import {
 } from 'lucide-react'
 import { usePostProjectUpdate, useAddComment, useDeleteActivityEntry, useEditActivityEntry, useDismissThread } from '../../hooks/useMutations'
 import { useAuth } from '../../hooks/useAuth'
-import { emailToSlug } from '../../lib/emailSlug'
 import { useToast } from '../../hooks/useToast'
 import SmartCompose from '../SmartCompose'
 import EmptyState from '../EmptyState'
@@ -174,7 +173,7 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
 
   const handlePostComment = (content: string) =>
     new Promise<void>((resolve) => {
-      addComment.mutate({ content, author: emailToSlug(user?.email) || 'anonymous' }, {
+      addComment.mutate({ content, author: user?.slug || 'anonymous' }, {
         onSuccess: () => { showSuccess('Comment posted'); resolve() },
         onError: () => resolve(),
       })

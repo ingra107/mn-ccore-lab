@@ -38,7 +38,7 @@ beforeEach(() => {
 
 const links = () => db.prepare('SELECT project_id, publication_id, role FROM project_publications WHERE project_id = ?').all(PROJ_ID);
 
-const user = { email: 'ingra107@umn.edu', name: 'Nick' } as import('../helpers').AuthUser;
+const user = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' } as import('../helpers').AuthUser;
 
 function post(path: string, body: unknown): Request {
   return new Request(`https://mn-ccore-lab.pages.dev${path}`, {
@@ -97,7 +97,7 @@ describe('PB visibility on link', () => {
       body: JSON.stringify({ publication_id: PUB_ID }),
     });
     const res = await handleLinkProjectPublication(
-      PROJ_SLUG, req, { email: 'eddington@umn.edu', name: 'Casey' } as import('../helpers').AuthUser, env,
+      PROJ_SLUG, req, { email: 'eddington@umn.edu', name: 'Casey', slug: 'casey-eddington' } as import('../helpers').AuthUser, env,
     );
     expect(res.status).toBe(403);
     expect(links()).toEqual([]);

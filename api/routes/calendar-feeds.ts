@@ -16,7 +16,7 @@
 
 import type { Env, AuthUser } from '../helpers'
 import { json, error } from '../helpers'
-import { actorSlug } from '../helpers'
+
 import { idempotentDelete } from '../lib/idempotent-delete'
 import { parseIcs, type IcsEvent, type ParseOptions } from '../lib/ics-parser'
 import { nowInstant } from '../lib/time'
@@ -103,7 +103,7 @@ function sanitizeUrl(raw: string): string | null {
 // GET /api/integrations/calendar/feeds — list current user's feeds
 export async function handleListFeeds(env: Env, user: AuthUser | null): Promise<Response> {
   if (!user) return error('Unauthorized', 401)
-  const slug = actorSlug(user.email)
+  const slug = user.slug
   const r = await env.DB.prepare(
     'SELECT id, user_slug, user_email, feed_url, feed_label, last_polled_at, last_error, created_at, etag, last_modified FROM user_calendar_feeds WHERE user_slug = ? ORDER BY created_at'
   ).bind(slug).all<FeedRow>()
@@ -132,7 +132,7 @@ export async function handleAddFeed(
   waitUntil?: (promise: Promise<unknown>) => void,
 ): Promise<Response> {
   if (!user) return error('Unauthorized', 401)
-  const slug = actorSlug(user.email)
+  const slug = user.slug
   const body = await request.json().catch(() => null) as { url?: string; label?: string } | null
   if (!body) return error('Invalid JSON body', 400)
   const url = sanitizeUrl(body.url ?? '')
@@ -171,7 +171,7 @@ export async function handleAddFeed(
 // DELETE /api/integrations/calendar/feeds/:id
 export async function handleDeleteFeed(request: Request, env: Env, user: AuthUser | null, id: string): Promise<Response> {
   if (!user) return error('Unauthorized', 401)
-  const slug = actorSlug(user.email)
+  const slug = user.slug
   // Confirm ownership before delete (FK cascade clears events automatically).
   // Ownership gate runs before idempotentDelete so a foreign-user id doesn't
   // get the idempotent 200 "already gone" response (it should be 403).
@@ -197,7 +197,7 @@ export async function handleListEvents(
   waitUntil?: (promise: Promise<unknown>) => void,
 ): Promise<Response> {
   if (!user) return error('Unauthorized', 401)
-  const slug = actorSlug(user.email)
+  const slug = user.slug
   const start = url.searchParams.get('start') || ctToday()
   // Default range: today + next 7 days.
   const endDefault = ctToday(7)

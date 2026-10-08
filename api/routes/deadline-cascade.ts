@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, assertProjectVisible, resolveAndGuardProject } from '../helpers';
+import { json, error, generateId, logActivity, assertProjectVisible, resolveAndGuardProject } from '../helpers';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -369,7 +369,7 @@ export async function handleCreateDeadlineDependency(request: Request, user: Aut
     'INSERT INTO deadline_dependencies (id, upstream_id, upstream_type, downstream_id, downstream_type, lag_days, notes) VALUES (?, ?, ?, ?, ?, ?, ?)'
   ).bind(id, body.upstream_id, body.upstream_type, body.downstream_id, body.downstream_type, body.lag_days || 0, body.notes || null).run();
 
-  await logActivity(env, 'deadline_dependency', `Dependency created: ${body.upstream_type} → ${body.downstream_type}`, actorSlug(user.email), id, 'deadline_dependency');
+  await logActivity(env, 'deadline_dependency', `Dependency created: ${body.upstream_type} → ${body.downstream_type}`, user.slug, id, 'deadline_dependency');
 
   const created = await env.DB.prepare('SELECT * FROM deadline_dependencies WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);

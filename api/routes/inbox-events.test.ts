@@ -25,7 +25,7 @@ import { handleCreateInboxEvent } from './inbox-events';
 import { nowInstant } from '../lib/time';
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 
-const testUser: AuthUser = { email: 'test@example.com', name: 'Test User' };
+const testUser: AuthUser = { email: 'test@example.com', name: 'Test User', slug: 'test' };
 
 let db: InstanceType<typeof Database>;
 let env: Env;

@@ -15,7 +15,7 @@ type AuthUser = import('../helpers').AuthUser
 
 let db: InstanceType<typeof Database>
 let env: Env
-const user = { email: 'test@example.com' } as AuthUser
+const user = { email: 'test@example.com', slug: 'test' } as AuthUser
 
 beforeEach(() => {
   db = prodSchemaDb()

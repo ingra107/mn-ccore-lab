@@ -28,7 +28,7 @@ import type { AuthUser, Env } from '../helpers'
 import { prodSchemaDb, d1Adapter, insertRow, receiptOf } from '../test-support/prod-schema-db'
 
 const TASK_ID = 'task_01update_test_000000000001'
-const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick' }
+const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' }
 
 let db: InstanceType<typeof Database>
 let env: Env

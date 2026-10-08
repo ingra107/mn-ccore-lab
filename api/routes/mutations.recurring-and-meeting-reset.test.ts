@@ -24,7 +24,7 @@ import {
 import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db';
 import { classifyTaskDedupSelect } from '../lib/task-dedup-sql';
 
-const USER = { email: 'nick@example.com' } as any;
+const USER = { email: 'nick@example.com', slug: 'nick-ingraham' } as any;
 const FLAGS = { dedup: true } as any;
 
 let db: InstanceType<typeof Database>;

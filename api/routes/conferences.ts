@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate, assertProjectVisible, resolveAndGuardProject } from '../helpers';
+import { json, error, generateId, logActivity, buildUpdate, assertProjectVisible, resolveAndGuardProject } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { withOptionalProjectWrite, withExistingRowProject } from '../lib/route-guards';
 import { idempotentDelete } from '../lib/idempotent-delete';
@@ -160,7 +160,7 @@ export async function handleCreateConference(request: Request, user: AuthUser, e
       b.status || 'planning',
     ).run();
 
-    const actor = actorSlug(user.email);
+    const actor = user.slug;
     await logActivity(e, 'conference', `Conference submission "${b.title}" created for ${b.conference}`, actor, id, 'conference_submission');
 
     const created = await e.DB.prepare('SELECT * FROM conference_submissions WHERE id = ?').bind(id).first();
@@ -213,7 +213,7 @@ export async function handleUpdateConference(id: string, request: Request, user:
 
     await e.DB.prepare(`UPDATE conference_submissions SET ${sql} WHERE id = ?`).bind(...params, rowId).run();
 
-    const actor = actorSlug(user.email);
+    const actor = user.slug;
     await logActivity(e, 'conference', `Conference submission ${rowId} updated`, actor, rowId, 'conference_submission');
 
     const updated = await e.DB.prepare('SELECT * FROM conference_submissions WHERE id = ?').bind(rowId).first();
@@ -235,7 +235,7 @@ export async function handleDeleteConference(id: string, request: Request, user:
     mode: 'hard',
     request,
     env,
-    actorSlug: actorSlug(user.email),
+    actorSlug: user.slug,
     activityCategory: 'conference',
     activityEntityType: 'conference_submission',
   });

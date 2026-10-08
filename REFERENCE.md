@@ -82,6 +82,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 - GET /api/version — current data version (React Query invalidator)
 - GET /api/health — D1 + realtime binding runbook ([docs/OBSERVABILITY.md](docs/OBSERVABILITY.md))
 - GET /api/auth/me — `{authenticated, email, name, isPi}` (Phase 36: adds `isPi` + awaits JWT verify)
+  - #8945: also `slug` (the caller's team slug, resolved from `team_members.email`, pre-provisioned rows before auto-created ones) and `directory: [{email, slug}]` for rendering stored emails. The UI reads `useAuth().user.slug`; there is no email-to-slug map. Onboard a member by setting their real login email: `POST /api/team/:slug {email}` (PI only; 409 when another pre-provisioned row already holds it).
 
 ### Core Data
 - GET /api/team, /api/projects, /api/publications, /api/grants

@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, isPiRequest, resolveActor, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, logActivity, isPiRequest, resolveActor, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 import { HERMES_DETECT_RE, HERMES_STRIP_RE } from '../lib/hermes-mention';
 
@@ -233,7 +233,7 @@ export async function handleAcceptAnswer(answerId: string, request: Request, use
   ).bind(answer.question_id).first<{ asked_by: string }>();
   if (!question) return error('Question not found', 404);
 
-  const actorSlugValue = actorSlug(user.email);
+  const actorSlugValue = user.slug;
   const isPi = await isPiRequest(request, env);
   if (!isPi && actorSlugValue !== question.asked_by) {
     return error('Only the PI or the question asker can accept an answer', 403);

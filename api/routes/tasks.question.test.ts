@@ -70,7 +70,7 @@ function expectReceipt(db: Db, mutationId: string, outcome: string, recordId: st
   expect((JSON.parse(rc!.original_response_json) as { status: string }).status).toBe(outcome)
 }
 
-const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick' }
+const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' }
 
 const SPEC = JSON.stringify({
   v: 1, kind: 'meeting_match', prompt: 'Which meeting was this?',

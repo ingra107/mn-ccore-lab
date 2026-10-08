@@ -21,7 +21,7 @@ import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
 import { prodSchemaDb, d1Adapter, insertRow, receiptOf } from '../test-support/prod-schema-db'
 
-const fakeUser = { email: 'ingra107@umn.edu', name: 'Nick' } as import('../helpers').AuthUser
+const fakeUser = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' } as import('../helpers').AuthUser
 
 let db: InstanceType<typeof Database>
 let env: import('../helpers').Env

@@ -24,7 +24,6 @@ import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { useCreateTask } from '../hooks/useMutations'
 import { useToast } from '../hooks/useToast'
 import { useAuth } from '../hooks/useAuth'
-import { emailToSlug } from '../lib/emailSlug'
 import { isEditableTarget } from '../lib/editableTarget'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
@@ -68,7 +67,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
   const { showSuccess, showInfo, showError } = useToast()
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const fallbackAssignee = user?.email ? emailToSlug(user.email) : 'nick-ingraham'
+  const fallbackAssignee = user?.slug || 'nick-ingraham'
 
   // Reset the input when the modal closes. Adjusted during render (React's
   // "adjusting state when a prop changes" pattern) instead of an effect — the

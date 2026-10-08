@@ -1,9 +1,13 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react'
-import { emailToSlug } from '../lib/emailSlug'
+import { setEmailDirectory, slugForEmail } from '../lib/emailSlug'
 import { getPersonInfo } from '../data/team'
 
 interface AuthUser {
   email: string
+  /** The user's team slug (`nick-ingraham`), resolved by the Worker from
+   *  team_members.email (#8945). '' until known. Every "who am I" site reads
+   *  this; nothing derives it from the email string. */
+  slug: string
   name?: string
   isAuthenticated: boolean
   isPi: boolean
@@ -11,8 +15,22 @@ interface AuthUser {
 
 const defaultUser: AuthUser = {
   email: '',
+  slug: '',
   isAuthenticated: false,
   isPi: false,
+}
+
+// The last slug /api/auth/me returned for an email, so a cookie first paint
+// renders the right person's data before the API answers. A cache of the
+// Worker's answer, never a source: hydration always overwrites it.
+const SLUG_CACHE_PREFIX = 'hub:auth-slug:'
+function cachedSlug(email: string): string {
+  if (!email) return ''
+  try { return localStorage.getItem(SLUG_CACHE_PREFIX + email.toLowerCase()) ?? '' } catch { return '' }
+}
+function cacheSlug(email: string, slug: string): void {
+  if (!email || !slug) return
+  try { localStorage.setItem(SLUG_CACHE_PREFIX + email.toLowerCase(), slug) } catch { /* storage off: first paint waits for the API */ }
 }
 
 // Cloudflare Access injects a JWT in the Cf-Access-Jwt-Assertion header.
@@ -46,21 +64,22 @@ function getAuthFromCookie(): AuthUser {
   // Cookie-based path is a first-paint optimization; it cannot know isPi
   // (that answer lives server-side). Hydrates to true via /api/auth/me.
   const email = (payload.email as string) || ''
+  const slug = cachedSlug(email)
   return {
     email,
-    name: (payload.name as string) || nameFromEmail(email) || '',
+    slug,
+    name: (payload.name as string) || nameFromEmail(slug, email) || '',
     isAuthenticated: true,
     isPi: false,
   }
 }
 
-// Produce a readable display name from an email address. Routes through the
-// team LUT so `ingra107@umn.edu` renders as "Nicholas Ingraham" instead of
-// "Ingra107". Falls back to the raw local-part if the email prefix isn't
-// in the team directory.
-function nameFromEmail(email: string): string {
+// Produce a readable display name for the cookie first paint, from the cached
+// slug when there is one, so `ingra107@umn.edu` renders as "Nicholas Ingraham"
+// instead of "Ingra107". Falls back to the raw local-part.
+function nameFromEmail(knownSlug: string, email: string): string {
   if (!email) return ''
-  const slug = emailToSlug(email)
+  const slug = knownSlug || slugForEmail(email)
   if (slug) {
     const person = getPersonInfo(slug)
     if (person.name && person.name !== 'Unknown' && !person.name.includes('@')) {
@@ -77,8 +96,13 @@ async function fetchAuthStatus(): Promise<AuthUser> {
     if (res.ok) {
       const data = await res.json()
       if (data.authenticated) {
+        const email: string = data.email || ''
+        const slug: string = data.slug || ''
+        if (Array.isArray(data.directory)) setEmailDirectory(data.directory)
+        cacheSlug(email, slug)
         return {
-          email: data.email || '',
+          email,
+          slug,
           name: data.name || '',
           isAuthenticated: true,
           isPi: Boolean(data.isPi),
@@ -116,7 +140,12 @@ export function useAuthState(): AuthContextValue {
     const cookieUser = getAuthFromCookie()
     return cookieUser.isAuthenticated ? cookieUser : defaultUser
   })
-  const [isLoading, setIsLoading] = useState(() => !getAuthFromCookie().isAuthenticated)
+  // Still loading until the user's slug is known: a cookie paint with no
+  // cached slug cannot say whose tasks to show yet.
+  const [isLoading, setIsLoading] = useState(() => {
+    const cookieUser = getAuthFromCookie()
+    return !cookieUser.isAuthenticated || !cookieUser.slug
+  })
 
   useEffect(() => {
     // Always hit API to get authoritative isPi (cookie cannot know it)

@@ -28,7 +28,7 @@ import { applyInsert } from './mutations'
 import type { AuthUser, Env } from '../helpers'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
-const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick' }
+const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' }
 
 let db: InstanceType<typeof Database>
 let env: Env

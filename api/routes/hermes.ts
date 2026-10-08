@@ -20,7 +20,7 @@
 // (Phase 10), codex-vetted requester-scoping mechanism.
 
 import type { Env } from '../helpers';
-import { json, error, actorSlug } from '../helpers';
+import { json, error, resolveSlug } from '../helpers';
 import { validateApiKey } from '../middleware/api-key-auth';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -62,7 +62,7 @@ function empty(): Response {
  * Strict identity resolution: an identity claim (email, or an already-slug
  * value) resolves to a REAL `team_members.slug`, or null.
  *
- * Deliberately NOT the bare `actorSlug()` helper alone: `actorSlug()` is
+ * Deliberately NOT the bare `resolveSlug()` helper alone: `resolveSlug()` is
  * designed for an AUTHENTICATED session where an unmapped email prefix is a
  * legitimate fallback slug (the caller undeniably owns that email — CF Access
  * verified it). Here the identity arrives as a query-string claim from an
@@ -78,7 +78,7 @@ function empty(): Response {
 async function resolveStrictRequesterSlug(env: Env, rawIdentity: string): Promise<string | null> {
   const raw = rawIdentity.trim();
   if (!raw) return null;
-  const candidate = raw.includes('@') ? actorSlug(raw) : raw;
+  const candidate = raw.includes('@') ? await resolveSlug(env, raw) : raw;
   const member = await env.DB.prepare(
     'SELECT 1 FROM team_members WHERE slug = ? LIMIT 1'
   ).bind(candidate).first();

@@ -26,7 +26,7 @@ import type { Mutation } from './mutations'
 import type { Env, AuthUser } from '../helpers'
 import { prodSchemaDb, d1Adapter, insertRow, receiptOf } from '../test-support/prod-schema-db'
 
-const user = { email: 'test@example.com' } as AuthUser
+const user = { email: 'test@example.com', slug: 'test' } as AuthUser
 
 let db: InstanceType<typeof Database>
 let env: Env

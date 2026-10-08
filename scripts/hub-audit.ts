@@ -79,11 +79,11 @@ function writeFindings(ctx: Ctx) {
 // authenticate as the audit user instead of returning 401 on the JWKS path.
 // Without this, every audit Move/Create/Update would 401 silently because the
 // CF Access service-token JWT lacks an `email` claim.
-// Default to Nick's UMN email — emailToSlug('ingra107@umn.edu') resolves
-// via EMAIL_PREFIX_TO_SLUG to the canonical 'nick-ingraham' slug (which
-// owns 626 tasks). The gmail address slugifies to 'nicholas.ingraham'
-// (no LUT entry) and matches zero tasks. Override via env for other
-// audit identities.
+// Default to Nick's UMN email — the Worker resolves 'ingra107@umn.edu' to
+// 'nick-ingraham' from team_members.email (#8945), the slug that owns his
+// tasks. An address no team_members row carries resolves to its bare
+// prefix and matches zero tasks. Override via env for other audit
+// identities.
 const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || 'ingra107@umn.edu'
 // Accept either name — local env uses HUB_TEST_MODE_KEY (HUB_ prefix to
 // disambiguate from other test keys). Worker secret is TEST_MODE_KEY.

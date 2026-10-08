@@ -3,7 +3,6 @@ import { Sparkles, FileText, Shield, DollarSign, BarChart3, ClipboardList } from
 import { useTeam, useProjects } from '../../hooks/useApiData'
 import { suggestTaskFields, type AutofillSuggestions, type FieldSuggestion } from '../../lib/taskAutofill'
 import { useAuth } from '../../hooks/useAuth'
-import { emailToSlug } from '../../lib/emailSlug'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineSelect from '../InlineSelect'
 import { Button } from '../ui/Button'
@@ -74,7 +73,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
   const { data: team = [] } = useTeam()
   const { data: projects = [] } = useProjects()
   const { user } = useAuth()
-  const defaultAssignee = user?.email ? emailToSlug(user.email) : ''
+  const defaultAssignee = user?.slug || ''
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')

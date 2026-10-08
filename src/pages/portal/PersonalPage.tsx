@@ -18,7 +18,6 @@ import { useUpdateTaskStatus, useUpdateTask } from '../../hooks/useMutations'
 import { openGlobalQuickAdd } from '../../components/GlobalQuickAddModal'
 import { useTaskKeyboardShortcuts } from '../../hooks/useTaskKeyboardShortcuts'
 import { useAuth } from '../../hooks/useAuth'
-import { emailToSlug } from '../../lib/emailSlug'
 import { useUserRole } from '../../hooks/useUserRole'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime, isOverdue } from '../../lib/dateUtils'
@@ -579,10 +578,7 @@ function QuickStatsCard({
 export default function PersonalPage() {
   const { recent } = useRecentlyViewed()
   const { user: authUser, isAuthenticated } = useAuth()
-  const currentUser = useMemo(() => {
-    if (!authUser.email) return null
-    return emailToSlug(authUser.email)
-  }, [authUser.email])
+  const currentUser = authUser.slug || null
   const person = currentUser ? getPersonInfo(currentUser) : null
   const { role, setRoleOverride, clearRoleOverride } = useUserRole()
 

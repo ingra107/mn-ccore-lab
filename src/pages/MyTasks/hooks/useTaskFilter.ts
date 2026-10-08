@@ -16,7 +16,6 @@ import {
 import { isOverdue } from '../../../lib/dateUtils'
 import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import { useAuth } from '../../../hooks/useAuth'
-import { emailToSlug } from '../../../lib/emailSlug'
 import type { TaskRow } from '../../../lib/api'
 
 export interface UseTaskFilterArgs {
@@ -37,7 +36,7 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
   // 'new' quick view (Slack-style seen, 2026-06-11): YOUR tasks you haven't
   // opened yet (acknowledged_at IS NULL; auto-ack fires on open, draining it).
   const { user } = useAuth()
-  const viewerSlug = emailToSlug(user?.email)
+  const viewerSlug = user?.slug ?? ''
 
   // Apply quick-view + filters + search.
   const filtered = useMemo(() => {

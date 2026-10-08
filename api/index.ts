@@ -1,7 +1,10 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { Env } from './types';
-import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible } from './helpers';
+import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible, resolveSlug } from './helpers';
+
+// The PB service key IS Nick's automation (Brief-7, 2026-06-11).
+const PB_SERVICE_EMAIL = 'ingra107@umn.edu';
 // Z1.3 (2026-05-28): metadata-first route registration. Every defineRoute({...})
 // below populates ROUTE_REGISTRY; bindRegistryToHono(app) wires them all into
 // the Hono app at the end of the file (before app.notFound). Replaces the
@@ -268,13 +271,16 @@ app.use('*', async (c, next) => {
   const authed = await getAuthUser(c.req.raw, env);
   c.set('authedUser', authed);
   // Brief-7 (2026-06-11): PB API-key callers land as 'anonymous' because they
-  // carry no CF Access JWT — actorSlug('anonymous') returns the literal string
+  // carry no CF Access JWT — the slug was the literal string
   // 'anonymous', which renders as a person named "anonymous" on all feeds.
   // Fix: when a valid API key is present and no browser session is resolved,
   // use Nick's canonical identity (the service key IS Nick's automation; PB is
-  // his personal system). actorSlug('ingra107@umn.edu') → 'nick-ingraham' via LUT.
-  const pbServiceUser = { email: 'ingra107@umn.edu', name: 'Nick' };
-  c.set('user', authed || (result === true ? pbServiceUser : { email: 'anonymous', name: 'Team Member' }));
+  // his personal system). Its slug comes from team_members like everyone's.
+  const user: AuthUser = authed
+    ?? (result === true
+      ? { email: PB_SERVICE_EMAIL, name: 'Nick', slug: await resolveSlug(env, PB_SERVICE_EMAIL) }
+      : { email: 'anonymous', name: 'Team Member', slug: 'anonymous' });
+  c.set('user', user);
   // Auto-provision a team_members row on first sight. Cheap (1 indexed
   // SELECT for known users; INSERT only for new). Failure is non-fatal —
   // we don't want auth to break because the directory write hiccupped.
@@ -368,10 +374,8 @@ app.use('*', async (c, next) => {
   if (requireAuth && !authedUser && !hasApiKey) {
     return error('Authentication required', 401);
   }
-  // Brief-7: same identity resolution as the GET middleware above —
-  // valid API key without a browser session → Nick's canonical identity.
-  const pbServiceUser2 = { email: 'ingra107@umn.edu', name: 'Nick' };
-  c.set('user', authedUser || (hasApiKey ? pbServiceUser2 : { email: 'anonymous', name: 'Team Member' }));
+  // `user` was set by the first middleware (authed / PB service / anonymous,
+  // slug resolved from team_members); it is not re-derived here (#8945).
   await next();
 });
 
@@ -456,7 +460,18 @@ defineRoute({
   if (!user) return json({ authenticated: false }, 200);
   const piEmails = await getPiEmails(env);
   const isPi = piEmails.has(user.email.toLowerCase());
-  return json({ authenticated: true, isPi, ...user });
+  // #8945: `slug` (on `user`) is the caller's identity, resolved from
+  // team_members.email — the UI reads it instead of deriving one from the
+  // email string. `directory` lets the UI render OTHER people's stored emails
+  // (tasks.assigned_by holds an email) with the same resolution, pre-
+  // provisioned rows first, as resolveSlug. Authed callers already see every
+  // team_members email on GET /api/team.
+  const dir = await env.DB.prepare(
+    `SELECT email, slug FROM team_members
+     WHERE email IS NOT NULL AND email != '' AND slug IS NOT NULL AND slug != ''
+     ORDER BY auto_created ASC, created_at ASC`
+  ).all<{ email: string; slug: string }>();
+  return json({ authenticated: true, isPi, ...user, directory: dir.results ?? [] });
 },
 });
 

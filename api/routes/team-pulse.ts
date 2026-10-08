@@ -1,5 +1,5 @@
 import type { Env } from '../helpers';
-import { json, actorSlug } from '../helpers';
+import { json, resolveSlug } from '../helpers';
 
 // GET /api/team/pulse?hours=48
 // AM-3 (SEC-T0-1): the per-member activity breakdown (who did what) is
@@ -30,25 +30,34 @@ export async function handleTeamPulse(url: URL, env: Env, isAuthed = false): Pro
     ).bind(cutoff).all<{ slug: string }>(),
   ]);
 
+  // Rows carry slugs and, on older writes, emails (tasks.completed_by holds
+  // 'ingra107@umn.edu'); resolve each distinct value once, from team_members.
+  const slugOf = new Map<string, Promise<string>>();
+  const slugFor = (ref: string): Promise<string> => {
+    let s = slugOf.get(ref);
+    if (!s) { s = resolveSlug(env, ref); slugOf.set(ref, s); }
+    return s;
+  };
+
   // Merge activity per person
   const personActivity = new Map<string, { slug: string; updates: number; completions: number }>();
 
   for (const row of updates.results || []) {
-    const slug = actorSlug(row.slug);
+    const slug = await slugFor(row.slug);
     const entry = personActivity.get(slug) || { slug, updates: 0, completions: 0 };
     entry.updates += row.count;
     personActivity.set(slug, entry);
   }
 
   for (const row of completions.results || []) {
-    const slug = actorSlug(row.slug);
+    const slug = await slugFor(row.slug);
     const entry = personActivity.get(slug) || { slug, updates: 0, completions: 0 };
     entry.completions += row.count;
     personActivity.set(slug, entry);
   }
 
   for (const row of activeMembers.results || []) {
-    const slug = actorSlug(row.slug);
+    const slug = await slugFor(row.slug);
     if (!personActivity.has(slug)) {
       personActivity.set(slug, { slug, updates: 0, completions: 0 });
     }

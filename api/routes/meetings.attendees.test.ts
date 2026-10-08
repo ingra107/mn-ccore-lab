@@ -26,7 +26,7 @@ import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-
 
 type Db = ReturnType<typeof prodSchemaDb>
 
-const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick Ingraham' } as AuthUser
+const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick Ingraham', slug: 'nick-ingraham' } as AuthUser
 
 function makeDb(): Db {
   const db = prodSchemaDb()

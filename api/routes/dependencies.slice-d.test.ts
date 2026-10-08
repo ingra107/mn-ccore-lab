@@ -24,7 +24,7 @@ import {
 } from './dependencies';
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 
-const FAKE_USER = { email: 'nick@example.com', name: 'Nick' } as any;
+const FAKE_USER = { email: 'nick@example.com', name: 'Nick', slug: 'nick-ingraham' } as any;
 
 // isPiRequest with no API key + no JWT returns false; that's fine (allowImpersonation
 // false, and we never pass created_by override). So a bare Request works.

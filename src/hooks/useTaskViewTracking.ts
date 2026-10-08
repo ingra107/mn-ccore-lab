@@ -14,9 +14,8 @@
 // Call from every task detail surface: TaskDetailPanel (full editor),
 // TaskDetailDrawer (Today inline), InlineDetail (MyTasks Columns/Lanes).
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAuth } from './useAuth'
-import { emailToSlug } from '../lib/emailSlug'
 import { useAcknowledgeTask } from './useMutations'
 import { useMarkSeen } from './useEntitySeen'
 
@@ -29,7 +28,7 @@ interface AckableTask {
 
 export function useTaskViewTracking(task: AckableTask | null | undefined) {
   const { user } = useAuth()
-  const viewerSlug = useMemo(() => emailToSlug(user?.email), [user?.email])
+  const viewerSlug = user?.slug ?? ''
   const { mutate: ackMutate } = useAcknowledgeTask()
   const markSeen = useMarkSeen()
   // Session-local guards so optimistic-rollback on a failed POST can't loop

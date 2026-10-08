@@ -331,13 +331,13 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
 
   it('handleUploadUrl: blocks non-PI uploading to a PB-category project', async () => {
     const req = post('/api/upload/url', NON_PI_EMAIL, { filename: 'secret.pdf', contentType: 'application/pdf', context: { type: 'project', id: 'pb-secret' } })
-    const res = await handleUploadUrl(req, { email: NON_PI_EMAIL, name: 'Nate' }, uploadsEnv())
+    const res = await handleUploadUrl(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, uploadsEnv())
     expect(res.status).toBe(403)
   })
 
   it('handleUploadUrl: allows non-PI uploading to a non-PB project', async () => {
     const req = post('/api/upload/url', NON_PI_EMAIL, { filename: 'report.pdf', contentType: 'application/pdf', context: { type: 'project', id: 'mnccore-project' } })
-    const res = await handleUploadUrl(req, { email: NON_PI_EMAIL, name: 'Nate' }, uploadsEnv())
+    const res = await handleUploadUrl(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, uploadsEnv())
     expect(res.status).toBe(200)
   })
 
@@ -345,7 +345,7 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
     // R2's S3 API resolves the first path segment as the bucket. Presigning
     // without it 403'd every PUT since the feature shipped (bucket-less URL bug).
     const req = post('/api/upload/url', NON_PI_EMAIL, { filename: 'shot.png', contentType: 'image/png', context: { type: 'task', id: 'task-123' } })
-    const res = await handleUploadUrl(req, { email: NON_PI_EMAIL, name: 'Nate' }, uploadsEnv())
+    const res = await handleUploadUrl(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, uploadsEnv())
     expect(res.status).toBe(200)
     const { data } = await res.json() as { data: { uploadUrl: string; key: string } }
     expect(new URL(data.uploadUrl).pathname).toBe(`/mnccore-files/${data.key}`)
@@ -355,7 +355,7 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
     const req = post('/api/upload/done', NON_PI_EMAIL, {
       key: 'project/pb-secret/file.pdf', filename: 'file.pdf', contentType: 'application/pdf', sizeBytes: 1024, entityType: 'project', entityId: 'pb-secret',
     })
-    const res = await handleUploadDone(req, { email: NON_PI_EMAIL, name: 'Nate' }, uploadsEnv())
+    const res = await handleUploadDone(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, uploadsEnv())
     expect(res.status).toBe(403)
     expect(attachments()).toEqual([])
   })
@@ -364,7 +364,7 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
     const req = post('/api/upload/done', PI_EMAIL, {
       key: 'project/pb-secret/file.pdf', filename: 'file.pdf', contentType: 'application/pdf', sizeBytes: 1024, entityType: 'project', entityId: 'pb-secret',
     })
-    const res = await handleUploadDone(req, { email: PI_EMAIL, name: 'Nick' }, uploadsEnv())
+    const res = await handleUploadDone(req, { email: PI_EMAIL, name: 'Nick', slug: 'nick-ingraham' }, uploadsEnv())
     expect(res.status).toBe(200)
     expect(attachments()).toMatchObject([{ entity_type: 'project', r2_key: 'project/pb-secret/file.pdf' }])
   })
@@ -373,7 +373,7 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
     const req = post('/api/upload/done', NON_PI_EMAIL, {
       key: 'task/task-1/missing.png', filename: 'missing.png', contentType: 'image/png', sizeBytes: 1, entityType: 'task', entityId: 'task-1',
     })
-    const res = await handleUploadDone(req, { email: NON_PI_EMAIL, name: 'Nate' }, uploadsEnv({ FILES: { head: async () => null } } as unknown as Env))
+    const res = await handleUploadDone(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, uploadsEnv({ FILES: { head: async () => null } } as unknown as Env))
     expect(res.status).toBeGreaterThanOrEqual(400)
     expect(attachments()).toEqual([])
   })
@@ -382,7 +382,7 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
     const req = post('/api/upload/done', NON_PI_EMAIL, {
       key: 'task/task-1/1700000000000-shot.png', filename: 'shot.png', contentType: 'image/png', sizeBytes: 512, entityType: 'task', entityId: 'task-1',
     })
-    const res = await handleUploadDone(req, { email: NON_PI_EMAIL, name: 'Nate' }, uploadsEnv())
+    const res = await handleUploadDone(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, uploadsEnv())
     expect(res.status).toBe(200)
     const data = await res.json() as { data?: { url?: string } }
     // Same-origin path (not a presigned R2 URL — those expire in 1h, useless
@@ -451,7 +451,7 @@ describe('handleCreateDecision — resolveActor for decided_by', () => {
   beforeEach(() => { before = count('SELECT COUNT(*) AS n FROM hub_decisions') })
 
   it('non-PI caller cannot spoof a foreign decided_by, and nothing is stored', async () => {
-    const res = await handleCreateDecision(decisionReq(NON_PI_EMAIL, { title: 'Spoof attempt', decided_by: PI_SLUG }), { email: NON_PI_EMAIL, name: 'Nate' }, piEnv())
+    const res = await handleCreateDecision(decisionReq(NON_PI_EMAIL, { title: 'Spoof attempt', decided_by: PI_SLUG }), { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, piEnv())
     expect(res.status).toBe(400)
     const body = await res.json() as { error: string }
     expect(body.error).toMatch(/not authorized/i)
@@ -459,19 +459,19 @@ describe('handleCreateDecision — resolveActor for decided_by', () => {
   })
 
   it('non-PI caller with no decided_by override is stored under their own slug', async () => {
-    const res = await handleCreateDecision(decisionReq(NON_PI_EMAIL, { title: 'Own decision' }), { email: NON_PI_EMAIL, name: 'Nate' }, piEnv())
+    const res = await handleCreateDecision(decisionReq(NON_PI_EMAIL, { title: 'Own decision' }), { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, piEnv())
     expect(res.status).toBe(201)
     expect(decisions().find((d) => d.title === 'Own decision')?.decided_by).toBe(NON_PI_SLUG)
   })
 
   it('PI caller may delegate decided_by to another team member', async () => {
-    const res = await handleCreateDecision(decisionReq(PI_EMAIL, { title: 'Delegated', decided_by: NON_PI_SLUG }), { email: PI_EMAIL, name: 'Nick' }, piEnv())
+    const res = await handleCreateDecision(decisionReq(PI_EMAIL, { title: 'Delegated', decided_by: NON_PI_SLUG }), { email: PI_EMAIL, name: 'Nick', slug: 'nick-ingraham' }, piEnv())
     expect(res.status).toBe(201)
     expect(decisions().find((d) => d.title === 'Delegated')?.decided_by).toBe(NON_PI_SLUG)
   })
 
   it('unknown decided_by slug returns 400 even for PI, and nothing is stored', async () => {
-    const res = await handleCreateDecision(decisionReq(PI_EMAIL, { title: 'Ghost', decided_by: 'ghost-user' }), { email: PI_EMAIL, name: 'Nick' }, piEnv())
+    const res = await handleCreateDecision(decisionReq(PI_EMAIL, { title: 'Ghost', decided_by: 'ghost-user' }), { email: PI_EMAIL, name: 'Nick', slug: 'nick-ingraham' }, piEnv())
     expect(res.status).toBe(400)
     const body = await res.json() as { error: string }
     expect(body.error).toMatch(/unknown actor/i)
@@ -670,7 +670,7 @@ describe('M-2: handleSyncBulkInboxEvents — PI-or-API-key gate on write path', 
   const stored = () => count("SELECT COUNT(*) AS n FROM inbox_events WHERE id = 'ev_test_01'")
 
   it('returns 403 for unauthenticated callers, and writes nothing', async () => {
-    const res = await handleSyncBulkInboxEvents(bulkReq({}), { email: NON_PI_EMAIL, name: 'Anon' }, piEnv())
+    const res = await handleSyncBulkInboxEvents(bulkReq({}), { email: NON_PI_EMAIL, name: 'Anon', slug: 'nate-mesfin' }, piEnv())
     expect(res.status).toBe(403)
     expect(stored()).toBe(0)
   })
@@ -678,7 +678,7 @@ describe('M-2: handleSyncBulkInboxEvents — PI-or-API-key gate on write path', 
   it('returns 403 for non-PI JWT callers, and writes nothing', async () => {
     const res = await handleSyncBulkInboxEvents(
       bulkReq({ 'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod', 'X-Test-User': NON_PI_EMAIL }),
-      { email: NON_PI_EMAIL, name: 'Nate' }, piEnv(),
+      { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, piEnv(),
     )
     expect(res.status).toBe(403)
     expect(stored()).toBe(0)
@@ -687,14 +687,14 @@ describe('M-2: handleSyncBulkInboxEvents — PI-or-API-key gate on write path', 
   it('returns 200 for PI JWT callers, and the event is stored', async () => {
     const res = await handleSyncBulkInboxEvents(
       bulkReq({ 'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod', 'X-Test-User': PI_EMAIL }),
-      { email: PI_EMAIL, name: 'Nick' }, piEnv(),
+      { email: PI_EMAIL, name: 'Nick', slug: 'nick-ingraham' }, piEnv(),
     )
     expect(res.status).toBe(200)
     expect(stored()).toBe(1)
   })
 
   it('returns 200 for API-key callers (PB sync service), and the event is stored', async () => {
-    const res = await handleSyncBulkInboxEvents(bulkReq({ Authorization: VALID_API_KEY }), { email: 'system@pb', name: 'PB Sync' }, makeEnv())
+    const res = await handleSyncBulkInboxEvents(bulkReq({ Authorization: VALID_API_KEY }), { email: 'system@pb', name: 'PB Sync', slug: 'system' }, makeEnv())
     expect(res.status).toBe(200)
     expect(stored()).toBe(1)
   })

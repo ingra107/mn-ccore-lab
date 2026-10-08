@@ -22,7 +22,6 @@ import InlineAssigneePicker from '../../../components/InlineAssigneePicker'
 import { useTaskFieldEditors } from '../../../hooks/useTaskFieldEditors'
 import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import { useAuth } from '../../../hooks/useAuth'
-import { emailToSlug } from '../../../lib/emailSlug'
 import { useUnseenActivity } from '../../../hooks/useEntitySeen'
 import { AttentionChip } from '../../../components/tasks/AttentionChip'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../../../lib/taskConstants'
@@ -84,7 +83,7 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
   const { prefs } = useLabPrefs()
   // NEW-to-you chip (Slack-style seen): viewer slug computed once for all rows.
   const { user } = useAuth()
-  const viewerSlug = emailToSlug(user?.email)
+  const viewerSlug = user?.slug ?? ''
   // New-ACTIVITY map (teal ● chip — distinct from gold NEW assignment).
   const { data: unseen } = useUnseenActivity()
 

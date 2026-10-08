@@ -34,7 +34,6 @@ import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { useAuth } from '../../hooks/useAuth'
 import { useIsMobile } from '../../hooks/useIsMobile'
-import { emailToSlug } from '../../lib/emailSlug'
 import { useUnseenActivity } from '../../hooks/useEntitySeen'
 import { AttentionChip } from './AttentionChip'
 import TaskTitle from './TaskTitle'
@@ -444,7 +443,7 @@ function StandardRow(props: SharedTaskRowProps) {
   // never opened (acknowledged_at IS NULL). Auto-acknowledge fires when the
   // detail surface opens, so the chip clears live the moment you look at it.
   const { user } = useAuth()
-  const isNewToViewer = !isDone && !!task.assignee && task.assignee === emailToSlug(user?.email) && !task.acknowledged_at
+  const isNewToViewer = !isDone && !!task.assignee && task.assignee === (user?.slug ?? '') && !task.acknowledged_at
 
   // New-ACTIVITY signal (distinct from NEW assignment — Nick 2026-06-11):
   // a task you've already seen has activity by others since your last look.

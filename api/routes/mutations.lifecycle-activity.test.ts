@@ -233,7 +233,7 @@ function fakeEnv(labels: Record<string, string> = {}): any {
     },
   };
 }
-const NICK: any = { email: 'ingra107@umn.edu', name: 'Nick' }; // → actorSlug 'nick-ingraham'
+const NICK: any = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' }; // → actorSlug 'nick-ingraham'
 
 describe('emitLifecycleActivity', () => {
   beforeEach(() => mockedPost.mockClear());

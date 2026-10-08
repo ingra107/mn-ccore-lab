@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, projectRefToCanonical, actorSlug, isPiRequest, getAuthUser } from '../helpers';
+import { json, error, generateId, projectRefToCanonical, resolveSlug, isPiRequest, getAuthUser } from '../helpers';
 import { postActivityEntry } from '../lib/activity-entry';
 import type { EntityType } from '../lib/activity-entry';
 import { ARTIFACT_URL_RE } from '../lib/artifact-url';
@@ -43,7 +43,7 @@ export async function handleGetAIRequests(url: URL, env: Env, request: Request):
       return json({ data: [], count: 0, tokens: { input: 0, output: 0, tracked: 0 } });
     }
     query += ' AND (lower(requested_by) = lower(?) OR lower(requested_by) = lower(?))';
-    params.push(email, actorSlug(email));
+    params.push(email, user?.slug ?? '');
   }
 
   if (status) {
@@ -328,7 +328,7 @@ async function _postHermesResponse(
 
     const posted = await postActivityEntry({
       env,
-      user: { email: 'claude-ai', name: 'Hermes' },
+      user: { email: 'claude-ai', name: 'Hermes', slug: 'claude-ai' },
       entityType,
       entityId,
       kind: 'comment',
@@ -387,7 +387,7 @@ async function _notifySubmitter(
 ): Promise<void> {
   if (!req.requested_by) return;
 
-  const recipientSlug = actorSlug(req.requested_by);
+  const recipientSlug = await resolveSlug(env, req.requested_by);
   if (!recipientSlug) return;
 
   // Idempotency: at most one notification per (recipient, ai_request, req.id).

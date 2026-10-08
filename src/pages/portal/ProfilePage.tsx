@@ -10,7 +10,6 @@ import { PATHS } from '../../constants/paths'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { User, Save, Calendar as CalendarIcon, Settings as SettingsIcon, ExternalLink } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-import { emailToSlug } from '../../lib/emailSlug'
 import { useTeam } from '../../hooks/useApiData'
 import PageHeader from '../../components/PageHeader'
 import Avatar from '../../components/Avatar'
@@ -44,7 +43,7 @@ const FIELD_LABELS: Record<keyof ProfileForm, string> = {
 export default function ProfilePage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
   const queryClient = useQueryClient()
-  const slug = emailToSlug(user?.email)
+  const slug = user?.slug ?? ''
 
   // Read the user's row from the cached team list. useTeam runs the
   // existing rowToTeamMember mapper which strips full_name/preferred_name

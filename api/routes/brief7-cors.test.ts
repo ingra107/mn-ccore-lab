@@ -6,38 +6,34 @@
  * Brief-8 / HUB-4 re-judge: corsHeadersFor behavior for known and unknown origins.
  *
  * These tests cover the helpers layer directly — index.ts middleware wiring is
- * covered implicitly (actorSlug('ingra107@umn.edu') === 'nick-ingraham' is the
+ * covered implicitly (resolveSlug(env, 'ingra107@umn.edu') === 'nick-ingraham' is the
  * key invariant that makes the middleware fix correct).
  */
 
 import { describe, it, expect } from 'vitest';
-import { actorSlug, corsHeadersFor } from '../helpers';
+import { resolveSlug, corsHeadersFor } from '../helpers';
+import type { Env } from '../helpers';
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 
 // ── Brief-7: PB API-key actor identity ─────────────────────────────────────────
 //
-// The middleware change sets user.email = 'ingra107@umn.edu' when a valid API
-// key is present and no CF Access JWT is resolved. actorSlug() maps that to
-// 'nick-ingraham'. This test confirms the LUT invariant so a future LUT change
-// is caught before it silently breaks the actor identity of PB writes.
+// The middleware sets user.email = 'ingra107@umn.edu' when a valid API key is
+// present and no CF Access JWT is resolved; its slug is read from team_members.
 
 describe('Brief-7 — PB API-key actor identity', () => {
-  it('actorSlug("ingra107@umn.edu") → "nick-ingraham" (the PB service identity)', () => {
-    // ingra107 is Nick's canonical UMN NetID; the middleware now sets
-    // email = 'ingra107@umn.edu' for API-key callers, so this is the slug
-    // every PB-originated activity entry will carry.
-    expect(actorSlug('ingra107@umn.edu')).toBe('nick-ingraham');
+  // #8945: the slug comes from team_members.email (resolveSlug), not a map.
+  const db = prodSchemaDb();
+  insertRow(db, 'team_members', { id: 'tm-nick', name: 'Nick', slug: 'nick-ingraham', email: 'ingra107@umn.edu' });
+  const env = { DB: d1Adapter(db) } as unknown as Env;
+
+  it('the PB service email resolves to "nick-ingraham" (the PB service identity)', async () => {
+    // The middleware sets email = 'ingra107@umn.edu' for API-key callers, so
+    // this is the slug every PB-originated activity entry carries.
+    expect(await resolveSlug(env, 'ingra107@umn.edu')).toBe('nick-ingraham');
   });
 
-  it('actorSlug("anonymous") → "anonymous" (the pre-fix behavior that was wrong)', () => {
-    // Regression guard: confirm 'anonymous' was never in the LUT and returned
-    // its email-prefix verbatim — this is what the fix removes from the hot path.
-    expect(actorSlug('anonymous')).toBe('anonymous');
-  });
-
-  it('actorSlug for "anonymous@umn.edu" also leaks as "anonymous"', () => {
-    // Belt-and-suspenders: old identity was { email: 'anonymous', name: 'Team Member' }
-    // so actorSlug('anonymous') is the exact broken value. Confirm no accidental fix.
-    expect(actorSlug('anonymous')).toBe('anonymous');
+  it('"anonymous" passes through as "anonymous" (the unauthed sentinel)', async () => {
+    expect(await resolveSlug(env, 'anonymous')).toBe('anonymous');
   });
 });
 

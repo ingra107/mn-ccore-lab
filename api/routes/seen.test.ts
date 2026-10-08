@@ -46,6 +46,8 @@ let db: InstanceType<typeof Database>
 let env: Env
 beforeEach(() => {
   db = prodSchemaDb()
+  // #8945: the caller's slug is read from team_members.email.
+  insertRow(db, 'team_members', { id: 'tm-nick', name: 'Nick', slug: 'nick-ingraham', email: 'ingra107@umn.edu' })
   env = { DB: d1Adapter(db), TEST_MODE_KEY: 'local-test-key-do-not-use-in-prod' } as unknown as Env
 })
 

@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { CalendarDays, CheckCircle2, AlertTriangle, Clock } from 'lucide-react'
 import { useTasks, useMeetingsApi } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
-import { emailToSlug } from '../../lib/emailSlug'
 import { isOverdue } from '../../lib/dateUtils'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { parseDbUtc } from '../../lib/time'
@@ -11,7 +10,7 @@ import { ICON_PROPS } from '../../lib/iconProps'
 
 export default function YourWeekCard() {
   const { user } = useAuth()
-  const slug = emailToSlug(user?.email)
+  const slug = user?.slug ?? ''
   const { data: tasks = [] } = useTasks()
   const { data: meetings = [] } = useMeetingsApi()
 

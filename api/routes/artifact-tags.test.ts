@@ -32,8 +32,8 @@ import {
 } from './artifacts';
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 
-const USER: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick' };
-const ANON: AuthUser = { email: 'anonymous', name: 'Team Member' };
+const USER: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' };
+const ANON: AuthUser = { email: 'anonymous', name: 'Team Member', slug: 'anonymous' };
 
 let db: InstanceType<typeof Database>;
 let env: Env;

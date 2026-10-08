@@ -48,8 +48,8 @@ import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-
 const TEST_MODE_KEY = 'local-test-key-do-not-use-in-prod'
 const PI_EMAIL = 'ingra107@umn.edu'
 const NON_PI_EMAIL = 'nate@umn.edu'
-const NICK: AuthUser = { email: PI_EMAIL, name: 'Nick' }
-const NATE: AuthUser = { email: NON_PI_EMAIL, name: 'Nate' }
+const NICK: AuthUser = { email: PI_EMAIL, name: 'Nick', slug: 'nick-ingraham' }
+const NATE: AuthUser = { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }
 
 // ── Fixture ────────────────────────────────────────────────────────────────────
 
@@ -108,8 +108,10 @@ function makeEnv(fx: Partial<Fixtures> = {}, hooks: Parameters<typeof d1Adapter>
   // gate reads this row (getPiEmails caches it per module, and every makeEnv
   // writes the same value).
   db.prepare("UPDATE lab_settings SET value = ? WHERE key = 'pi_emails'").run(JSON.stringify([PI_EMAIL]))
+  // #8945: the login email on the row is what resolves a caller to a slug.
+  const loginEmail: Record<string, string> = { 'nick-ingraham': PI_EMAIL, 'nate-mesfin': NON_PI_EMAIL }
   for (const slug of fx.teamSlugs ?? new Set(['nick-ingraham', 'nate-mesfin'])) {
-    insertRow(db, 'team_members', { id: `tm_${slug}`, name: slug, slug })
+    insertRow(db, 'team_members', { id: `tm_${slug}`, name: slug, slug, email: loginEmail[slug] ?? null })
   }
   for (const p of Object.values(fx.projects ?? {})) {
     insertRow(db, 'projects', { id: p.id, slug: p.slug, title: p.slug ?? p.id, category: p.category })
@@ -1219,7 +1221,7 @@ describe('dispatchHermes — thread transcript (#98)', () => {
     const rootId = root.row.id as string
     // Stand in for the listener's answer: claude-ai reply, private by inheritance.
     const answer = await postActivityEntry({
-      env, user: { email: 'claude-ai', name: 'Hermes' }, entityType: 'task', entityId: 't1',
+      env, user: { email: 'claude-ai', name: 'Hermes', slug: 'claude-ai' }, entityType: 'task', entityId: 't1',
       kind: 'comment', body: 'Draft: Hi Will, the cohort is 4,812 encounters.',
       actorSlug: 'claude-ai', visibility: 'author', parentId: rootId, fireSideEffects: false,
     })
@@ -1305,7 +1307,7 @@ describe('dispatchHermes — thread transcript (#98)', () => {
     })
     if (!first.ok) throw new Error('first failed')
     await postActivityEntry({
-      env, user: { email: 'claude-ai', name: 'Hermes' }, entityType: 'day', entityId: '2026-07-24',
+      env, user: { email: 'claude-ai', name: 'Hermes', slug: 'claude-ai' }, entityType: 'day', entityId: '2026-07-24',
       kind: 'comment', body: 'Noted — email Will about the cohort.', actorSlug: 'claude-ai',
       visibility: 'author', parentId: first.row.id as string, fireSideEffects: false,
     })

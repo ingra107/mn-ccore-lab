@@ -1,63 +1,56 @@
-// Contract test for shared/emailSlug.ts — the single map source for
-// email-prefix -> canonical team slug (PB backlog #1134).
+// Contract test for src/lib/emailSlug.ts — DISPLAY resolution of a stored
+// email (tasks.assigned_by) to a team slug, from the directory the Worker
+// returns on /api/auth/me (#8945).
 //
-// Before #1134 this map was hand-mirrored in src/lib/emailSlug.ts
-// (`emailToSlug`, the UI) and api/helpers.ts (`actorSlug`, the Worker).
-// Neither side had a dedicated test pinning it — api/helpers.test.ts only
-// covered `actorSlug`, and the UI's `emailToSlug` had no test at all. A
-// drift between the two failed CLOSED but silently wrong: #906's evidence
-// was a member added to one copy and not the other losing the
-// `canEditFeatured` edit button while the API still accepted the write.
-//
-// Both `emailToSlug` (this file) and `actorSlug` (api/helpers.ts, still
-// separately covered by api/helpers.test.ts) now call the SAME
-// `resolveEmailSlug` in shared/emailSlug.ts, so there is only one map left
-// to pin — this file pins it from the UI side; api/helpers.test.ts pins the
-// same function from the Worker side.
+// Before #8945 this wrapped a hand-kept NetID map (EMAIL_PREFIX_TO_SLUG) that
+// both the UI and the Worker used to decide who the LOGGED-IN user was; every
+// member missing from it got a ghost account on first login. Who the user is
+// now comes from `useAuth().user.slug` (resolved server-side from
+// team_members.email); this file only renders other people's emails, with
+// the same first-row-wins order the Worker's resolveSlug uses.
 
-import { describe, it, expect } from 'vitest'
-import { EMAIL_PREFIX_TO_SLUG, resolveEmailSlug } from '../../../shared/emailSlug'
-import { emailToSlug } from '../emailSlug'
+import { describe, it, expect, beforeEach } from 'vitest'
+import { setEmailDirectory, slugForEmail } from '../emailSlug'
+import { LEGACY_SLUG_ALIASES, emailPrefix } from '../../../shared/emailSlug'
 
-describe('resolveEmailSlug (shared/emailSlug.ts)', () => {
-  it('maps a known prefix to its canonical team slug', () => {
-    expect(resolveEmailSlug('ingra107@umn.edu')).toBe('nick-ingraham')
-    expect(resolveEmailSlug('bromley@umn.edu')).toBe('emma-bromley')
-    expect(resolveEmailSlug('mceachron@umn.edu')).toBe('kendall-mceachron')
+describe('slugForEmail (display directory from /api/auth/me)', () => {
+  beforeEach(() => setEmailDirectory([]))
+
+  it('resolves an email the directory carries, whatever its NetID looks like', () => {
+    setEmailDirectory([
+      { email: 'eddin022@umn.edu', slug: 'casey-eddington' },
+      { email: 'ingra107@umn.edu', slug: 'nick-ingraham' },
+    ])
+    expect(slugForEmail('eddin022@umn.edu')).toBe('casey-eddington')
+    expect(slugForEmail('INGRA107@UMN.EDU')).toBe('nick-ingraham')
   })
 
-  it('canonicalizes every one of Nick\'s email aliases to the same slug', () => {
-    expect(resolveEmailSlug('nick@umn.edu')).toBe('nick-ingraham')
-    expect(resolveEmailSlug('ingra107@umn.edu')).toBe('nick-ingraham')
-    expect(resolveEmailSlug('ningraha@umn.edu')).toBe('nick-ingraham')
+  it('first row wins, matching the Worker order (pre-provisioned before auto-created)', () => {
+    setEmailDirectory([
+      { email: 'bromle012@umn.edu', slug: 'emma-bromley' },
+      { email: 'bromle012@umn.edu', slug: 'bromle012' },
+    ])
+    expect(slugForEmail('bromle012@umn.edu')).toBe('emma-bromley')
   })
 
-  it('lowercases the prefix before lookup', () => {
-    expect(resolveEmailSlug('NINGRAHA@umn.edu')).toBe('nick-ingraham')
-    expect(resolveEmailSlug('Bromley@umn.edu')).toBe('emma-bromley')
+  it('falls back to the lowercased prefix before the directory arrives or for an unknown email', () => {
+    expect(slugForEmail('Someone@umn.edu')).toBe('someone')
   })
 
-  it('falls through to the literal lowercased prefix for an unknown email', () => {
-    expect(resolveEmailSlug('unknown@umn.edu')).toBe('unknown')
-  })
-
-  it('every entry in the map resolves to itself (no unreachable rows)', () => {
-    for (const [prefix, slug] of Object.entries(EMAIL_PREFIX_TO_SLUG)) {
-      expect(resolveEmailSlug(`${prefix}@umn.edu`)).toBe(slug)
-    }
+  it('returns "" for null/undefined/empty', () => {
+    expect(slugForEmail(null)).toBe('')
+    expect(slugForEmail(undefined)).toBe('')
+    expect(slugForEmail('')).toBe('')
   })
 })
 
-describe('emailToSlug (src/lib/emailSlug.ts, the UI wrapper)', () => {
-  it('delegates to the same shared map as the Worker\'s actorSlug', () => {
-    expect(emailToSlug('ingra107@umn.edu')).toBe(resolveEmailSlug('ingra107@umn.edu'))
-    expect(emailToSlug('bromley@umn.edu')).toBe(resolveEmailSlug('bromley@umn.edu'))
-    expect(emailToSlug('unknown@umn.edu')).toBe(resolveEmailSlug('unknown@umn.edu'))
+describe('shared/emailSlug.ts — what is left once identity moved to team_members', () => {
+  it('emailPrefix lowercases the local part', () => {
+    expect(emailPrefix('Eddin022@umn.edu')).toBe('eddin022')
   })
 
-  it('returns "" for null/undefined/empty — the pre-auth-hydration case', () => {
-    expect(emailToSlug(null)).toBe('')
-    expect(emailToSlug(undefined)).toBe('')
-    expect(emailToSlug('')).toBe('')
+  it('LEGACY_SLUG_ALIASES is the closed pre-36b set, not a member list', () => {
+    // A new member never goes here; their row's email is what onboards them.
+    expect(LEGACY_SLUG_ALIASES).toEqual({ nick: 'nick-ingraham', ningraha: 'nick-ingraham' })
   })
 })

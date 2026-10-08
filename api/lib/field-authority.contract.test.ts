@@ -353,7 +353,7 @@ async function createTask(body: Record<string, unknown>): Promise<Created> {
   applyMutationMock.mockImplementation(real.applyMutation)
   const db = prodSchemaDb()
   const env = { DB: d1Adapter(db), RESEND_API_KEY: undefined } as unknown as import('../helpers').Env
-  const user = { email: 'ingra107@umn.edu', name: 'Nick' } as import('../helpers').AuthUser
+  const user = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' } as import('../helpers').AuthUser
   const req = new Request('https://x/api/tasks', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

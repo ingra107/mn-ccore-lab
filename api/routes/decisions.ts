@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate, resolveActor, isPiRequest, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, logActivity, buildUpdate, resolveActor, isPiRequest, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 
 // GET /api/decisions?project_slug=&status=pending|recorded|revisited&tag=
@@ -100,7 +100,7 @@ export async function handleUpdateDecisionOutcome(id: string, request: Request, 
     "UPDATE hub_decisions SET outcome = ?, outcome_status = ?, outcome_sentiment = ?, outcome_date = datetime('now') WHERE id = ?"
   ).bind(body.outcome, body.outcome_status, sentiment, id).run();
 
-  const actor = actorSlug(user.email);
+  const actor = user.slug;
   await logActivity(env, 'decision_outcome', `Outcome recorded for decision`, actor, id, 'decision');
 
   const updated = await env.DB.prepare('SELECT * FROM hub_decisions WHERE id = ?').bind(id).first();
@@ -126,7 +126,7 @@ export async function handleUpdateDecision(id: string, request: Request, user: A
     `UPDATE hub_decisions SET ${sql} WHERE id = ?`
   ).bind(...values, id).run();
 
-  const actor = actorSlug(user.email);
+  const actor = user.slug;
   await logActivity(env, 'decision_update', `Decision updated`, actor, id, 'decision');
 
   const updated = await env.DB.prepare('SELECT * FROM hub_decisions WHERE id = ?').bind(id).first();

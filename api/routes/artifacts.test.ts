@@ -85,8 +85,8 @@ function hubReq(body: unknown): Request {
   });
 }
 
-const USER: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick' };
-const HERMES: AuthUser = { email: 'claude-ai', name: 'Hermes' };
+const USER: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' };
+const HERMES: AuthUser = { email: 'claude-ai', name: 'Hermes', slug: 'claude-ai' };
 
 function seedArtifact(row: Record<string, unknown>) {
   insertRow(db, 'artifacts', { title: 'T', body_md: 'old', version: 1, created_by: 'nick-ingraham', ...row });

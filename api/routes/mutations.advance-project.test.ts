@@ -40,7 +40,7 @@ import { prodSchemaDb, d1Adapter, insertRow, receiptOf } from '../test-support/p
 
 const TASK = 'task_01test00000000000000000001'
 const PROJ = 'proj_01r01providervariation0001'
-const user = { email: 'test@example.com' } as import('../helpers').AuthUser
+const user = { email: 'test@example.com', slug: 'test' } as import('../helpers').AuthUser
 
 let db: InstanceType<typeof Database>
 let env: import('../helpers').Env
@@ -172,7 +172,7 @@ describe('advanceProjectMovement — via applyUpdate', () => {
   it('R3: fires for Hub-UI origin mutation (origin_machine=hub_ui:...)', async () => {
     seedProject(PROJ)
     const base = seedTask(TASK)
-    const nick = { email: 'nick@example.com' } as import('../helpers').AuthUser
+    const nick = { email: 'nick@example.com', slug: 'nick-ingraham' } as import('../helpers').AuthUser
 
     const result = await applyUpdate(env, makeMut({
       mutation_id: 'mut_01test000000000000000000002',

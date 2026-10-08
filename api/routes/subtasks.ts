@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { json, error, generateId, logActivity } from '../helpers';
 import { nowInstant } from '../lib/time';
 import { idempotentDelete } from '../lib/idempotent-delete';
 
@@ -45,7 +45,7 @@ export async function handleCreateSubtask(taskId: string, request: Request, user
 
   const created = await env.DB.prepare('SELECT * FROM task_subtasks WHERE id = ?').bind(id).first<SubtaskRow>();
 
-  const actor = actorSlug(user.email);
+  const actor = user.slug;
   await logActivity(env, 'subtask_created', `Added subtask "${body.title.trim()}"`, actor, taskId, 'task');
 
   return json({ data: created }, 201);
@@ -61,7 +61,7 @@ export async function handleToggleSubtask(subtaskId: string, user: AuthUser, env
     return error('Subtask not found', 404);
   }
 
-  const actor = actorSlug(user.email);
+  const actor = user.slug;
   const nowCompleted = existing.completed ? 0 : 1;
   const completedAt = nowCompleted ? nowInstant() : null;
   const completedBy = nowCompleted ? actor : null;

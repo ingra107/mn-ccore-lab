@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
-import { emailToSlug } from '../lib/emailSlug'
 import InlineSelect from './InlineSelect'
 import InlineAssigneePicker from './InlineAssigneePicker'
 import Field from './ui/Field'
@@ -63,7 +62,7 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('MNCCORE')
   const [stage, setStage] = useState('idea')
-  const [pi, setPi] = useState(emailToSlug(user.email))
+  const [pi, setPi] = useState(user.slug)
   const [description, setDescription] = useState('')
 
   // S15: seed the form from prefill whenever the modal opens (e.g. promoting
@@ -72,7 +71,7 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
     if (!open) return
     setTitle(prefill?.title ?? '')
     setDescription(prefill?.description ?? '')
-    setPi(prefill?.pi ?? emailToSlug(user.email))
+    setPi(prefill?.pi ?? user.slug)
     setCategory('MNCCORE')
     setStage('idea')
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -94,7 +93,7 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
     setTitle('')
     setCategory('MNCCORE')
     setStage('idea')
-    setPi(emailToSlug(user.email))
+    setPi(user.slug)
     setDescription('')
     onClose()
   }

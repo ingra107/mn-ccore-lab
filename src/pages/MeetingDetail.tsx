@@ -43,7 +43,6 @@ import TypingIndicator from '../components/TypingIndicator'
 import MarkdownView from '../components/MarkdownView'
 import { emDashifyTitle } from '../lib/textUtils'
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
-import { emailToSlug } from '../lib/emailSlug'
 import { useAuth } from '../hooks/useAuth'
 import { useToast } from '../hooks/useToast'
 import { useUndoToast } from '../components/UndoToast'
@@ -1215,7 +1214,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentCha
   const createTask = useCreateTask()
   const queryClient = useQueryClient()
   const { user } = useAuth()
-  const fallbackAssignee = user?.email ? emailToSlug(user.email) : 'nick-ingraham'
+  const fallbackAssignee = user?.slug || 'nick-ingraham'
 
   const parsed = text.trim() ? parseQuickAddInput(text) : null
   const hasContent = parsed && parsed.title.trim().length > 0

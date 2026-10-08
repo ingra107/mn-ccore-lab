@@ -14,7 +14,6 @@ import { lazyRoute } from '../../lib/lazyRoute'
 import { useSearchParams } from 'react-router-dom'
 import { useTasks, useProjects } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
-import { emailToSlug } from '../../lib/emailSlug'
 import { researchTeam } from '../../data/team'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
@@ -46,7 +45,7 @@ import type { TaskRow } from '../../lib/api'
 export default function UnifiedMyTasks() {
   usePageMeta('My Tasks · MN-CCORE', 'Library / workbench for triage, filtering, and bulk actions across all your tasks.')
   const { user } = useAuth()
-  const userSlug = emailToSlug(user?.email)
+  const userSlug = user?.slug ?? ''
 
   const tasksQuery = useTasks(userSlug ? { assignee: userSlug } : undefined)
   const projectsQuery = useProjects()

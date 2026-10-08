@@ -6,7 +6,7 @@ import type Database from 'better-sqlite3'
 import { handleCreateHandoff } from './handoffs'
 import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db'
 
-const USER = { email: 'nick@example.com' } as any
+const USER = { email: 'nick@example.com', slug: 'nick-ingraham' } as any
 let db: InstanceType<typeof Database>
 let env: any
 

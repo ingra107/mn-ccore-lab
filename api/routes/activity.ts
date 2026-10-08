@@ -1,5 +1,5 @@
 import type { Env, AuthUser } from '../helpers';
-import { json, error, actorSlug, isPiRequest, resolveActor } from '../helpers';
+import { json, error, isPiRequest, resolveActor } from '../helpers';
 import { idempotentDelete } from '../lib/idempotent-delete';
 import { isTestFixture } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
@@ -63,7 +63,7 @@ export async function handleDeleteActivityEntry(id: string, request: Request, us
   // (same semantics as idempotentDelete hard mode).
   if (!row) return json({ data: { id, deleted: true, idempotent: true } });
 
-  const caller = actorSlug(user.email);
+  const caller = user.slug;
   if (row.actor_slug !== caller && !(await isPiRequest(request, env))) {
     return error('Only the author or the PI can delete an activity entry', 403);
   }
@@ -107,7 +107,7 @@ export async function handleEditActivityEntry(id: string, request: Request, user
     return error('Only comments and notes can be edited', 400);
   }
 
-  const caller = actorSlug(user.email);
+  const caller = user.slug;
   if (row.actor_slug !== caller && !(await isPiRequest(request, env))) {
     return error('Only the author or the PI can edit an activity entry', 403);
   }
@@ -155,7 +155,7 @@ export async function handleSetActivityHidden(id: string, request: Request, user
   if (!row) return error('Activity entry not found', 404);
   if (row.parent_id) return error('Only a thread root can be dismissed — not a reply', 400);
 
-  const caller = actorSlug(user.email);
+  const caller = user.slug;
   if (row.actor_slug !== caller && !(await isPiRequest(request, env))) {
     return error('Only the author or the PI can dismiss an activity entry', 403);
   }

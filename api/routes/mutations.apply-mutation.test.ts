@@ -52,7 +52,7 @@ describe('applyMutation envelope factory', () => {
     const seeded = insertRow(db, 'tasks', {
       id: taskId, title: 'Test task', status: 'todo', completed: 0, assignee: 'nick-ingraham', priority: 'medium',
     })
-    const user = { email: 'test@example.com' } as AuthUser
+    const user = { email: 'test@example.com', slug: 'test' } as AuthUser
 
     // A full completion triad: prod's v98 trigger refuses status=done without
     // completed=1 AND completed_at (the old stub accepted the two-field patch).
@@ -86,7 +86,7 @@ describe('applyMutation envelope factory', () => {
     // completed=1 + completed_at. processOne records the refusal as an error;
     // the row stays as it was.
     insertRow(db, 'tasks', { id: taskId, title: 'Test task', status: 'todo', completed: 0, assignee: 'nick-ingraham' })
-    const user = { email: 'test@example.com' } as AuthUser
+    const user = { email: 'test@example.com', slug: 'test' } as AuthUser
 
     const result = await applyMutation(env, {
       table: 'tasks', record_id: taskId, op: 'update',
@@ -104,7 +104,7 @@ describe('applyMutation envelope factory', () => {
 
   it('mints mut_ id on insert', async () => {
     const newTaskId = 'task_01hwtest_apply_mut_0000002'
-    const user = { email: 'test@example.com' } as AuthUser
+    const user = { email: 'test@example.com', slug: 'test' } as AuthUser
 
     const result = await applyMutation(env, {
       table: 'tasks',
@@ -142,7 +142,7 @@ describe('applyMutation envelope factory', () => {
     // silently dropping a brand-new task from project last-activity rollups
     // (proactive-brief MAX(t.updated_at)). The insert now stamps datetime('now').
     const newTaskId = 'task_01hwtest_apply_mut_updstamp1'
-    const user = { email: 'test@example.com' } as AuthUser
+    const user = { email: 'test@example.com', slug: 'test' } as AuthUser
 
     const result = await applyInsert(env, {
       table: 'tasks',
@@ -178,7 +178,7 @@ describe('applyMutation envelope factory', () => {
     // The stamp is skipped when the payload already carries updated_at — a
     // deliberate caller value (e.g. a sync echo) wins over datetime('now').
     const newTaskId = 'task_01hwtest_apply_mut_updstamp2'
-    const user = { email: 'test@example.com' } as AuthUser
+    const user = { email: 'test@example.com', slug: 'test' } as AuthUser
     const SUPPLIED = '2026-01-02 03:04:05'
 
     const result = await applyInsert(env, {
@@ -207,7 +207,7 @@ describe('applyMutation envelope factory', () => {
     // service user + Apps Script lanes, which resolve to nick-ingraham) are
     // born acknowledged so they never count as unseen.
     const newTaskId = 'task_01hwtest_apply_mut_selfack1'
-    const user = { email: 'ingra107@umn.edu' } as AuthUser // actorSlug → nick-ingraham
+    const user = { email: 'ingra107@umn.edu', slug: 'nick-ingraham' } as AuthUser // actorSlug → nick-ingraham
 
     const result = await applyInsert(env, {
       table: 'tasks',
@@ -232,7 +232,7 @@ describe('applyMutation envelope factory', () => {
 
   it('insert self-ack does NOT fire when assigning to someone else (2026-06-11)', async () => {
     const newTaskId = 'task_01hwtest_apply_mut_selfack2'
-    const user = { email: 'ingra107@umn.edu' } as AuthUser
+    const user = { email: 'ingra107@umn.edu', slug: 'nick-ingraham' } as AuthUser
 
     const result = await applyInsert(env, {
       table: 'tasks',
@@ -264,7 +264,7 @@ describe('applyMutation envelope factory', () => {
       id: tid, title: 'Handed off', status: 'todo',
       assignee: 'nick-ingraham', acknowledged_at: '2026-06-10 12:00:00', acknowledged_by: 'nick-ingraham',
     })
-    const user = { email: 'ingra107@umn.edu' } as AuthUser
+    const user = { email: 'ingra107@umn.edu', slug: 'nick-ingraham' } as AuthUser
 
     const result = await applyMutation(env, {
       table: 'tasks', record_id: tid, op: 'update',
@@ -285,7 +285,7 @@ describe('applyMutation envelope factory', () => {
       id: tid, title: 'Same owner', status: 'todo',
       assignee: 'nick-ingraham', acknowledged_at: '2026-06-10 12:00:00', acknowledged_by: 'nick-ingraham',
     })
-    const user = { email: 'ingra107@umn.edu' } as AuthUser
+    const user = { email: 'ingra107@umn.edu', slug: 'nick-ingraham' } as AuthUser
 
     const result = await applyMutation(env, {
       table: 'tasks', record_id: tid, op: 'update',
@@ -304,7 +304,7 @@ describe('applyMutation envelope factory', () => {
   it('mints mut_ id on delete', async () => {
     const delTaskId = 'task_01hwtest_apply_mut_0000003'
     insertRow(db, 'tasks', { id: delTaskId, title: 'To be deleted', status: 'todo', assignee: 'nick-ingraham' })
-    const user = { email: 'test@example.com' } as AuthUser
+    const user = { email: 'test@example.com', slug: 'test' } as AuthUser
 
     const result = await applyMutation(env, {
       table: 'tasks',
@@ -326,7 +326,7 @@ describe('applyMutation envelope factory', () => {
 
   it('each call mints a unique mutation_id (no id collision)', async () => {
     const ids = new Set<string>()
-    const user = { email: 'test@example.com' } as AuthUser
+    const user = { email: 'test@example.com', slug: 'test' } as AuthUser
 
     for (let i = 0; i < 5; i++) {
       const tid = `task_01hwtest_apply_mut_uniq_${i}`
@@ -356,7 +356,7 @@ describe('applyMutation flag-independence sanity check', () => {
     // Just a sanity guard — applyMutation should work without any env flag
     const tid = 'task_01hwtest_bulk_flag_test001'
     insertRow(db, 'tasks', { id: tid, title: 'Flag test', status: 'todo', assignee: 'nick-ingraham' })
-    const user = { email: 'test@example.com' } as AuthUser
+    const user = { email: 'test@example.com', slug: 'test' } as AuthUser
     const result = await applyMutation(env, {
       table: 'tasks', record_id: tid, op: 'update',
       patch: { status: 'done', completed: 1, completed_at: '2026-05-12 10:00:00' }, route: 'handleTestRoute', user,
@@ -375,7 +375,7 @@ describe('applyMutation flag-independence sanity check', () => {
 // d1Adapter's onExec log.
 
 describe('Stage 3 Phase 2: sessions table uses session_id as PK', () => {
-  const user = { email: 'test@example.com' } as AuthUser
+  const user = { email: 'test@example.com', slug: 'test' } as AuthUser
 
   it('INSERT into sessions uses ON CONFLICT(session_id), not ON CONFLICT(id)', async () => {
     const sessionId = 'hub-deploy-smoke-001'
@@ -456,7 +456,7 @@ describe('Stage 3 Phase 2: sessions table uses session_id as PK', () => {
 // After: INSERT ... ON CONFLICT DO UPDATE (upsert) instead.
 
 describe('Stage 3 Phase 3.6: sessions upsert-on-miss', () => {
-  const user = { email: 'test@example.com' } as AuthUser
+  const user = { email: 'test@example.com', slug: 'test' } as AuthUser
 
   it('update on absent sessions row upserts (accepted) instead of erroring', async () => {
     const sessionId = 'sess_upsert_race_test_001'
@@ -554,7 +554,7 @@ describe('Stage 3 Phase 3.6: sessions upsert-on-miss', () => {
 // (If you add a key to a create payload, add it here too.)
 describe('create-route payload keys stay within the wire contract', () => {
   it('the handleCreateTask payload key set is accepted end-to-end', async () => {
-    const user = { email: 'test@example.com' } as AuthUser
+    const user = { email: 'test@example.com', slug: 'test' } as AuthUser
 
     const result = await applyMutation(env, {
       table: 'tasks',

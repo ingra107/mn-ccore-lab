@@ -20,7 +20,6 @@ import { currentPageRoute } from '../lib/launchCommands'
 import { openGlobalQuickAdd } from './GlobalQuickAddModal'
 import { getPersonInfo } from '../data/team'
 import { PATHS, PUBLIC_PATHS } from '../constants/paths'
-import { emailToSlug } from '../lib/emailSlug'
 import { ICON_PROPS } from '../lib/iconProps'
 
 interface CommandItem {
@@ -70,7 +69,7 @@ export default function CommandPalette() {
   const { data: team = [] } = useTeam({ enabled: open })
   const { data: meetings = [] } = useMeetingsApi({ enabled: open })
   const { user } = useAuth()
-  const currentUserSlug = emailToSlug(user?.email)
+  const currentUserSlug = user?.slug ?? ''
   const { launch } = useProtocolLaunch()
   const { showSuccess } = useToast()
 

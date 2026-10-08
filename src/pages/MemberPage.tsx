@@ -14,7 +14,6 @@ import type { MenteeMilestoneRow } from '../hooks/useApiData'
 import { useCommitments } from '../hooks/useCommitments'
 import { useAddExpertise, useRemoveExpertise } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
-import { emailToSlug } from '../lib/emailSlug'
 import type { CommitmentRow } from '../hooks/useCommitments'
 import { getMemberBySlug, getPersonInfo } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
@@ -185,7 +184,7 @@ export default function MemberPage() {
     isPortalRoute
     && isAuthenticated
     && Boolean(slug)
-    && (emailToSlug(user.email) === slug || user.isPi)
+    && (user.slug === slug || user.isPi)
   const { data: allCommitments = [] } = useCommitments(slug)
 
   // Commitments to this person (slug does partial match on to_whom)

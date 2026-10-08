@@ -44,7 +44,7 @@ beforeEach(() => {
   insertRow(db, 'tasks', { id: TASK, title: 'Draft aims', status: 'todo', priority: 'medium', assignee: 'nick-ingraham', project_id: PID })
 })
 
-const user = { email: 'ingra107@umn.edu', name: 'Nick' } as AuthUser
+const user = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' } as AuthUser
 function makeRequest(): Request {
   return new Request('https://x/api/test', {
     method: 'POST',

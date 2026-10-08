@@ -1,5 +1,5 @@
 import type { Director, TeamMember } from './types'
-import { emailToSlug } from '../lib/emailSlug'
+import { slugForEmail } from '../lib/emailSlug'
 
 export const directors: Director[] = [
   {
@@ -133,7 +133,7 @@ export function getPersonInfo(slug: string): { name: string; initials: string; p
   // Handle email addresses (from D1 auth) — try LUT-mapped slug first so
   // `ingra107@umn.edu` finds the member row for `nick-ingraham`.
   if (slug.includes('@')) {
-    const mapped = emailToSlug(slug)
+    const mapped = slugForEmail(slug)
     if (mapped !== slug) {
       const director2 = directors.find((d) => d.slug === mapped)
       if (director2) return { name: director2.name, initials: director2.initials, photoUrl: director2.photoUrl }

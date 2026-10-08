@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
+import { json, error, generateId, logActivity, buildUpdate } from '../helpers';
 
 // milestone_type: 'progress_report' | 'continuing_review' | 'nce_deadline' | 'budget_period' | 'irb_renewal' | 'subcontract' | 'other'
 // status: 'upcoming' | 'in_progress' | 'completed' | 'overdue'
@@ -68,7 +68,7 @@ export async function handleCreateGrantMilestone(request: Request, user: AuthUse
     'INSERT INTO grant_milestones (id, grant_id, milestone_type, title, due_date, notes, status) VALUES (?, ?, ?, ?, ?, ?, ?)'
   ).bind(id, body.grant_id, body.milestone_type, body.title, body.due_date || null, body.notes || null, status).run();
 
-  const actor = actorSlug(user.email);
+  const actor = user.slug;
   await logActivity(env, 'grant_milestone', `New grant milestone: "${body.title}"`, actor, id, 'grant_milestone');
 
   const created = await env.DB.prepare('SELECT * FROM grant_milestones WHERE id = ?').bind(id).first();
@@ -99,7 +99,7 @@ export async function handleCompleteGrantMilestone(id: string, user: AuthUser, e
   const updated = await env.DB.prepare('SELECT * FROM grant_milestones WHERE id = ?').bind(id).first();
   if (!updated) return error('Milestone not found', 404);
 
-  const actor = actorSlug(user.email);
+  const actor = user.slug;
   await logActivity(env, 'grant_milestone', `Completed grant milestone: "${(updated as Record<string, unknown>).title}"`, actor, id, 'grant_milestone');
 
   return json({ data: updated });

@@ -14,7 +14,7 @@
  *
  * Auth is driven through the REAL helpers (isPiRequest / actorSlugFromRequest)
  * using the TEST_MODE_KEY + X-Test-User bypass that getAuthUser already
- * supports — no stubbed auth seam, so a change to actorSlug's LUT or to the
+ * supports — no stubbed auth seam, so a change to slug resolution or to the
  * PI check is visible here.
  *
  * #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
@@ -37,8 +37,9 @@ import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-
 
 const TEST_KEY = 'test-mode-key-906';
 
-// eddington@umn.edu → casey-eddington via EMAIL_PREFIX_TO_SLUG (api/helpers.ts).
-const MEMBER_EMAIL = 'eddington@umn.edu';
+// #8945: eddin022@umn.edu → casey-eddington because the row carries that
+// email (api/helpers.ts::resolveSlug), not through a NetID map.
+const MEMBER_EMAIL = 'eddin022@umn.edu';
 const MEMBER_SLUG = 'casey-eddington';
 const PI_EMAIL = 'ingra107@umn.edu';
 
@@ -56,8 +57,8 @@ beforeEach(() => {
   // suite's PI is PI_EMAIL. (The first cut never read lab_settings: its stub
   // answered null, so getPiEmails fell back to a hardcoded set.)
   db.prepare("UPDATE lab_settings SET value = ? WHERE key = 'pi_emails'").run(JSON.stringify([PI_EMAIL]));
-  for (const [id, name, slug] of [['m1', 'Casey Eddington', MEMBER_SLUG], ['m2', 'Adams Dudley', 'adams-dudley']]) {
-    if (!db.prepare('SELECT 1 FROM team_members WHERE slug = ?').get(slug)) insertRow(db, 'team_members', { id, name, slug });
+  for (const [id, name, slug, email] of [['m1', 'Casey Eddington', MEMBER_SLUG, MEMBER_EMAIL], ['m2', 'Adams Dudley', 'adams-dudley', 'dudley@umn.edu']]) {
+    if (!db.prepare('SELECT 1 FROM team_members WHERE slug = ?').get(slug)) insertRow(db, 'team_members', { id, name, slug, email });
   }
 });
 
@@ -205,7 +206,10 @@ describe('PUT — rejections happen BEFORE any write', () => {
 
   it('404s for an unknown member slug and writes nothing', async () => {
     db.prepare('DELETE FROM team_members WHERE slug = ?').run(MEMBER_SLUG);
-    const res = await handlePutMemberFeaturedPublications(MEMBER_SLUG, putReq(MEMBER_SLUG, { publicationIds: [] }, MEMBER_EMAIL), env);
+    // As the PI: with the row gone, the member's own email no longer resolves
+    // to MEMBER_SLUG (#8945, the row IS the identity), so a self-edit is a 403
+    // before the lookup. The PI reaches the unknown-member check.
+    const res = await handlePutMemberFeaturedPublications(MEMBER_SLUG, putReq(MEMBER_SLUG, { publicationIds: [] }, PI_EMAIL), env);
     expect(res.status).toBe(404);
   });
 

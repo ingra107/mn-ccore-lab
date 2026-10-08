@@ -29,7 +29,7 @@ import { _resetValidationFlagsCache } from '../helpers'
 import type { Env, AuthUser } from '../helpers'
 import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db'
 
-const fakeUser = { email: 'nick@umn.edu', name: 'Nick' } as AuthUser
+const fakeUser = { email: 'nick@umn.edu', name: 'Nick', slug: 'nick-ingraham' } as AuthUser
 
 let db: InstanceType<typeof Database>
 let env: Env

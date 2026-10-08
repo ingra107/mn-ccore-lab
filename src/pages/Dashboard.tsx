@@ -8,7 +8,6 @@ import { resetLayouts } from '../lib/dashboardLayout'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
-import { emailToSlug } from '../lib/emailSlug'
 import { useMeetingsApi, useTasks, useExpiringRegulatory } from '../hooks/useApiData'
 import { formatMediumDate, localDateKey } from '../lib/dateUtils'
 import { isProductionVisible } from '../lib/isProductionVisible'
@@ -285,7 +284,7 @@ export default function Dashboard() {
   }, [tabFilteredRegistry, visibleCards, pinnedCards, sortByUsage])
 
   // Stable slug for layout persistence per user
-  const userSlug = emailToSlug(user?.email) || undefined
+  const userSlug = user?.slug || undefined
 
   // Build GridCard arrays for DashboardGrid — per-section storage
   const cardLookup = useMemo(() => {

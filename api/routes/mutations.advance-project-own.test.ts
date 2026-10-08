@@ -32,7 +32,7 @@ import type { Mutation } from './mutations'
 import { prodSchemaDb, d1Adapter, insertRow, receiptOf } from '../test-support/prod-schema-db'
 
 const PROJ = 'proj_01test00000000000000000001'
-const user = { email: 'test@example.com' } as import('../helpers').AuthUser
+const user = { email: 'test@example.com', slug: 'test' } as import('../helpers').AuthUser
 
 let db: InstanceType<typeof Database>
 let env: import('../helpers').Env

@@ -12,7 +12,6 @@
 // is the side-effect that wires them to postActivityEntry (Task 2/3).
 
 import type { Env, AuthUser } from '../helpers';
-import { actorSlug } from '../helpers';
 import { postActivityEntry } from './activity-entry';
 // Type-only import — erased at compile, so no runtime cycle with mutations.ts
 // (which imports emitLifecycleActivity as a value).
@@ -242,7 +241,7 @@ export async function emitLifecycleActivity(
   try {
     if (mut.table !== 'tasks' && mut.table !== 'projects') return;
     const entityType: 'task' | 'project' = mut.table === 'tasks' ? 'task' : 'project';
-    const actor = actorSlug(user?.email ?? '') || 'nick-ingraham';
+    const actor = user?.slug || 'nick-ingraham';
 
     let events: LifecycleEvent[] = [];
     if (mut.op === 'insert' && before === null) {

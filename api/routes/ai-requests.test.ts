@@ -46,6 +46,8 @@ let env: Env;
 beforeEach(() => {
   vi.clearAllMocks();
   db = prodSchemaDb();
+  // #8945: requested_by (an email) resolves to a slug through team_members.email.
+  insertRow(db, 'team_members', { id: 'tm-nick', name: 'Nick', slug: 'nick-ingraham', email: 'ingra107@umn.edu' });
   env = { DB: d1Adapter(db) } as unknown as Env;
 });
 
@@ -230,7 +232,7 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
 // ── Submitter notifications ────────────────────────────────────────────────────
 //
 // INSERT INTO notifications for every completed ai_request, keyed by
-// requested_by email → actorSlug (LUT-mapped, e.g. ingra107 → nick-ingraham).
+// requested_by email → resolveSlug (team_members.email, e.g. ingra107 → nick-ingraham).
 // Idempotent: repeated response-POST retries skip the INSERT when a
 // (recipient_slug, 'ai_request', ai_request.id) row already exists.
 
@@ -313,7 +315,7 @@ describe('handleUpdateAIResponse — submitter notifications', () => {
 describe('handleCreateAIRequest — entity context derivation', () => {
   async function createAndGetContext(body: Record<string, unknown>): Promise<unknown> {
     const req = new Request('https://example.com/api/ai-requests', { method: 'POST', body: JSON.stringify(body) });
-    const res = await handleCreateAIRequest(req, { email: 'nick@umn.edu', name: 'Nick' } as never, env);
+    const res = await handleCreateAIRequest(req, { email: 'nick@umn.edu', name: 'Nick', slug: 'nick-ingraham' } as never, env);
     expect(res.status).toBe(201);
     const { data } = await res.json() as { data: { id: string } };
     const row = db.prepare('SELECT context, requested_by FROM ai_requests WHERE id = ?').get(data.id) as { context: string | null; requested_by: string };

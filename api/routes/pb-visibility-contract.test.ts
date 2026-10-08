@@ -261,9 +261,9 @@ interface Caller {
   /** What index.ts passes as canSeePb for this caller. */
   canSeePb: boolean
 }
-const NON_PI: Caller = { get: nonPiRequest, post: nonPiPost, user: { email: NON_PI_EMAIL, name: 'Nate' }, canSeePb: false }
-const PI: Caller = { get: piRequest, post: piPost, user: { email: PI_EMAIL, name: 'Nick' }, canSeePb: true }
-const API_KEY: Caller = { get: apiKeyRequest, post: apiKeyPost, user: { email: 'service@api', name: 'S' }, canSeePb: true }
+const NON_PI: Caller = { get: nonPiRequest, post: nonPiPost, user: { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, canSeePb: false }
+const PI: Caller = { get: piRequest, post: piPost, user: { email: PI_EMAIL, name: 'Nick', slug: 'nick-ingraham' }, canSeePb: true }
+const API_KEY: Caller = { get: apiKeyRequest, post: apiKeyPost, user: { email: 'service@api', name: 'S', slug: 'service' }, canSeePb: true }
 
 type Call = (c: Caller, r: Ref, env: Env) => Promise<Response>
 const q = (path: string, r: Ref) => new URL(`https://x/${path}`.replace('{ref}', r.slug))

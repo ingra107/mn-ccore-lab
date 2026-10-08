@@ -286,7 +286,7 @@ describe('handleUpdateConference — PB visibility gate (from conf.project_id)',
       },
       body: JSON.stringify({ notes: 'updated notes' }),
     })
-    const user = { email: NON_PI_EMAIL, name: 'Nate' }
+    const user = { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }
     const res = await handleUpdateConference('conf_pb-proj', req, user, env)
     expect(res.status).toBe(404)
     expect(db.prepare("SELECT notes FROM conference_submissions WHERE id = 'conf_pb-proj'").get()).toEqual({ notes: null })
@@ -303,7 +303,7 @@ describe('handleUpdateConference — PB visibility gate (from conf.project_id)',
       },
       body: JSON.stringify({ notes: 'updated notes' }),
     })
-    const user = { email: NON_PI_EMAIL, name: 'Nate' }
+    const user = { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }
     const res = await handleUpdateConference('conf_mnccore-proj', req, user, env)
     expect(res.status).toBe(200)
     expect(db.prepare("SELECT notes FROM conference_submissions WHERE id = 'conf_mnccore-proj'").get()).toEqual({ notes: 'updated notes' })
@@ -320,7 +320,7 @@ describe('handleUpdateConference — PB visibility gate (from conf.project_id)',
       },
       body: JSON.stringify({ notes: 'updated notes' }),
     })
-    const user = { email: PI_EMAIL, name: 'Nick' }
+    const user = { email: PI_EMAIL, name: 'Nick', slug: 'nick-ingraham' }
     const res = await handleUpdateConference('conf_pb-proj', req, user, env)
     expect(res.status).toBe(200)
   })

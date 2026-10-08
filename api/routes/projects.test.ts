@@ -57,10 +57,10 @@ function makeUrl(params: Record<string, string> = {}) {
   return u;
 }
 
-const NICK_USER: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick' };
-const PERSONAL_EMAIL_NICK: AuthUser = { email: 'nicholas.ingraham@gmail.com', name: 'Nick Personal' };
-const NON_NICK_USER: AuthUser = { email: 'collaborator@example.com', name: 'Collaborator' };
-const ANON_USER: AuthUser = { email: 'anonymous', name: 'Team Member' };
+const NICK_USER: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' };
+const PERSONAL_EMAIL_NICK: AuthUser = { email: 'nicholas.ingraham@gmail.com', name: 'Nick Personal', slug: 'nicholas.ingraham' };
+const NON_NICK_USER: AuthUser = { email: 'collaborator@example.com', name: 'Collaborator', slug: 'collaborator' };
+const ANON_USER: AuthUser = { email: 'anonymous', name: 'Team Member', slug: 'anonymous' };
 
 // ── Sample project rows ──────────────────────────────────────────────────────
 

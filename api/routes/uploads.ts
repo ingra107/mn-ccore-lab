@@ -1,12 +1,8 @@
 import { AwsClient } from 'aws4fetch';
 import type { Env } from '../types';
-import { actorSlug, isPiRequest } from '../helpers';
+import { isPiRequest } from '../helpers';
+import type { AuthUser } from '../helpers';
 import { safeRow } from '../lib/task-cols';
-
-interface AuthUser {
-  email: string;
-  name: string;
-}
 
 // R2's S3 API is path-style: https://{account}.r2.cloudflarestorage.com/{bucket}/{key}.
 // Presigning without the bucket segment made R2 read the key's first segment
@@ -138,7 +134,7 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
   // AM-2: uploaded_by is an actor identity. Pre-fix it stored a raw
   // email-prefix (user.email.split('@')[0]) that bypassed actorSlug. Resolve
   // to a canonical team slug (no caller override on this path).
-  const uploadedBy = actorSlug(user.email);
+  const uploadedBy = user.slug;
 
   const id = crypto.randomUUID().slice(0, 16);
   await env.DB.prepare(
