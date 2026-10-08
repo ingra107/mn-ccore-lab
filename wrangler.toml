@@ -26,6 +26,12 @@ bucket = "./dist"
 # ─── PRODUCTION — the real worker. name pinned so deploys update it in place. ───
 [env.production]
 name = "mn-ccore-lab-api"
+# No public workers.dev URL. This worker exists for its crons and bindings; the
+# Hub's /api is served by the Pages Function (functions/api/[[route]].ts), which
+# has REQUIRE_AUTH=1. The workers.dev URL ran without REQUIRE_AUTH, so it served
+# every route, reads and writes, to anonymous callers (found 2026-10-08). Nothing
+# calls it. Crons and the service binding do not need it.
+workers_dev = false
 
 [[env.production.d1_databases]]
 binding = "DB"
