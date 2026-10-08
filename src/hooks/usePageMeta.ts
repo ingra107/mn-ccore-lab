@@ -12,20 +12,15 @@ function ensureMeta(attr: string, key: string, content: string) {
   }
 }
 
-interface PageMetaOptions {
-  /** og:type — e.g. 'article' for project pages, 'profile' for /team/:slug. */
-  ogType?: string
-  /** Per-route OG share-card URL — point at /og/<type>/<slug> for branded
-   *  preview images instead of the static og-image.svg fallback. */
-  ogImage?: string
-}
-
-export function usePageMeta(title: string, description: string, ogTypeOrOptions?: string | PageMetaOptions) {
-  // Back-compat: callers pass a string for og:type, or an options object.
-  const opts: PageMetaOptions = typeof ogTypeOrOptions === 'string'
-    ? { ogType: ogTypeOrOptions }
-    : ogTypeOrOptions ?? {}
-
+/**
+ * Title and meta tags for the browser tab and in-page readers. Link unfurlers
+ * (Slack, iMessage, Twitter) never run this: they read the served HTML. A page
+ * that needs its own preview card serves its tags server-side, as
+ * functions/team/[slug].ts does for /team/:slug.
+ *
+ * @param ogType og:type, e.g. 'article' for project pages, 'profile' for /team/:slug.
+ */
+export function usePageMeta(title: string, description: string, ogType?: string) {
   useEffect(() => {
     document.title = title
 
@@ -36,10 +31,6 @@ export function usePageMeta(title: string, description: string, ogTypeOrOptions?
     ensureMeta('name', 'twitter:title', title)
     ensureMeta('name', 'twitter:description', description)
 
-    if (opts.ogType) ensureMeta('property', 'og:type', opts.ogType)
-    if (opts.ogImage) {
-      ensureMeta('property', 'og:image', opts.ogImage)
-      ensureMeta('name', 'twitter:image', opts.ogImage)
-    }
-  }, [title, description, opts.ogType, opts.ogImage])
+    if (ogType) ensureMeta('property', 'og:type', ogType)
+  }, [title, description, ogType])
 }

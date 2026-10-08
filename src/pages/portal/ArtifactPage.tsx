@@ -104,7 +104,6 @@ export default function ArtifactPage() {
   usePageMeta(
     artifact ? `${artifact.title} · MN-CCORE` : 'Artifact · MN-CCORE',
     'Link-shareable lab artifact',
-    { ogImage: `https://mn-ccore-lab.pages.dev/og/artifact/${id}` },
   )
 
   // v102: "Show hidden" reveals dismissed threads (refetch with include_hidden).

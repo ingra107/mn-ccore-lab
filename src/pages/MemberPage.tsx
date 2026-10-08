@@ -268,10 +268,8 @@ export default function MemberPage() {
     member
       ? `${displayName} — ${member.role} at MN-CCORE Lab, University of Minnesota.${publishedCount > 0 ? ` ${publishedCount} publications.` : ''}`
       : '',
-    {
-      ogType: 'profile',
-      ogImage: slug ? `https://mn-ccore-lab.pages.dev/og/team/${slug}` : undefined,
-    },
+    // og:image for link unfurlers is in the served HTML (functions/team/[slug].ts).
+    'profile',
   )
 
   if (!member) {

@@ -1,49 +1,30 @@
 /**
- * Per-route OG share cards: GET /og/:type/:slug (functions/og/[type]/[slug].ts
- * is the Pages wrapper). Returns a 1200x630 branded SVG.
+ * OG share cards: GET /og/:type/:slug (functions/og/[type]/[slug].ts is the
+ * Pages wrapper). Returns a 1200x630 branded SVG.
  *
- *   /og/project/:slug   project title + PI + stage + category accent
- *   /og/team/:slug      member name (+ title, role, credentials when signed in)
- *   /og/meeting/:id     meeting title + date
- *   /og/artifact/:id    artifact title + version
- *   /og/<anything else> branded fallback
+ *   /og/team/:slug      the member's name (the public profile page's card)
+ *   /og/<anything else> the generic lab card
  *
- * WHO CAN SEE WHAT (2026-10-08). /og/* sits outside /portal/* (the only path
- * Cloudflare Access gates) and outside /api/* (the only path the in-code auth
- * runs on), so until now any logged-out caller who knew a slug or id got the
- * D1 title of any project, meeting or artifact, deleted and PB-category rows
- * included. The anonymous /api reads were cut to what the public website shows
- * the same day (api/lib/anon-shape.ts); this applies the same line here:
+ * WHO FETCHES THESE. Link unfurlers (Slack, iMessage, Twitter), and nothing
+ * else: a browser never renders og:image. Unfurlers read the HTML without
+ * running JS and carry no session, so the only card any of them can reach is
+ * the one a page's SERVED HTML names. Since 2026-10-08 that is /team/:slug
+ * (functions/team/[slug].ts writes og:image = /og/team/<slug> into the HTML);
+ * every other page serves index.html's static /og-image.svg.
  *
- *   - signed in (CF Access JWT, header or CF_Authorization cookie) or a valid
- *     PB API key: the full card, through the same checks api/index.ts uses
- *     (getAuthUser, validateApiKey). PB-category projects still need PI.
- *   - logged out: only what is already public. A team card shows the name
- *     (GET /api/team's anonShape is slug + name); an artifact card shows its
- *     title only when the artifact is published (visibility='public' AND
- *     content_type='html', the exact predicate /a/:id serves on). Everything
- *     else, "not found" included, is the generic lab card, so a logged-out
- *     caller cannot tell a private entity from a missing one.
+ * WHAT WAS RETIRED (2026-10-08). The project, meeting and artifact cards and
+ * the signed-in variants of every card. usePageMeta set their URLs in a
+ * useEffect, which no unfurler runs, and /portal/* answers an unfurler with an
+ * Access redirect; the logged-out project and meeting cards were already the
+ * generic card (4f65fee6). No caller could reach any of it.
  *
- * WHY THE CARDS EXIST, AND WHO SEES THEM. Phase 36d (ef604db1) added them for
- * link previews: ProjectDetail, MeetingDetail, MemberPage and ArtifactPage
- * pass /og/<type>/<slug> to usePageMeta, which writes og:image in a
- * useEffect. Slack, iMessage and Twitter unfurlers read the HTML without
- * running JS, so they only ever see index.html's static /og-image.svg; and
- * every /portal/* page answers an unfurler with a 302 to the Access login, so
- * no unfurler carries the sharer's session either. Gating therefore costs no
- * working unfurl. Signed-in browsers still get the full card.
- *
- * Caching: a signed-in card is `private, no-store` (it must never land in a
- * shared cache a logged-out caller could read); a logged-out card holds only
- * public data and keeps the 1h public cache. `Vary` names the credential
- * headers. public/_headers no longer sets Cache-Control on /og/*, so this
- * handler is the one place that decides.
+ * WHAT A CARD MAY SAY. Only what a logged-out visitor can already read: the
+ * team card shows the name, as GET /api/team's anonShape does (slug + name).
+ * A missing member gets the generic card. No credential is read, so every
+ * card is publicly cacheable.
  */
 
 import type { Env } from '../types'
-import { getAuthUser, canSeePbProjectRow } from '../helpers'
-import { validateApiKey } from '../middleware/api-key-auth'
 
 const W = 1200
 const H = 630
@@ -119,98 +100,27 @@ function svg(content: { eyebrow: string; title: string; subtitle?: string; accen
 </svg>`
 }
 
-const CATEGORY_ACCENT: Record<string, string> = {
-  clif: '#f0737e',     // maroon dark-mode
-  lab: '#5cbcb4',      // teal dark-mode
-  nate: '#f08a5b',     // orange dark-mode
-  mentee: '#dcb355',   // gold dark-mode
-}
-
 const GENERIC = { eyebrow: 'MN-CCORE LAB', title: 'Research operations', subtitle: 'Tasks · Projects · Meetings · Lab knowledge' }
 
-async function ogProject(slug: string, env: Env, request: Request): Promise<string> {
-  const row = await env.DB.prepare(
-    'SELECT id, title, pi, stage, category FROM projects WHERE slug = ? OR id = ?'
-  ).bind(slug, slug).first<{ id: string; title: string; pi: string | null; stage: string | null; category: string | null }>()
-  if (!row) {
-    return svg({ eyebrow: 'PROJECT', title: 'Project not found', subtitle: slug })
-  }
-  // PB-category projects are PI-only everywhere else (canSeePbProject); same here.
-  if (!(await canSeePbProjectRow(request, env, row))) return svg(GENERIC)
-  const piRow = row.pi
-    ? await env.DB.prepare('SELECT name FROM team_members WHERE slug = ?').bind(row.pi).first<{ name: string }>()
-    : null
-  const piName = piRow?.name ?? row.pi ?? 'unassigned'
-  const subtitle = `${row.stage ?? 'Active'} · PI ${piName}`
-  const accent = CATEGORY_ACCENT[(row.category ?? '').toLowerCase()] ?? '#dcb355'
-  return svg({ eyebrow: 'RESEARCH PROJECT', title: row.title, subtitle, accent })
+async function ogTeam(slug: string, env: Env): Promise<string> {
+  const row = await env.DB.prepare('SELECT name FROM team_members WHERE slug = ?')
+    .bind(slug).first<{ name: string }>()
+  return row ? svg({ eyebrow: 'MN-CCORE TEAM', title: row.name }) : svg(GENERIC)
 }
 
-async function ogTeam(slug: string, env: Env, signedIn: boolean): Promise<string> {
-  const row = await env.DB.prepare(
-    'SELECT name, role, credentials, title FROM team_members WHERE slug = ?'
-  ).bind(slug).first<{ name: string; role: string | null; credentials: string | null; title: string | null }>()
-  if (!row) return signedIn ? svg({ eyebrow: 'TEAM', title: 'Member not found', subtitle: slug }) : svg(GENERIC)
-  if (!signedIn) return svg({ eyebrow: 'MN-CCORE TEAM', title: row.name })
-  const display = row.credentials ? `${row.name}, ${row.credentials}` : row.name
-  const subtitle = [row.title, row.role].filter(Boolean).join(' · ')
-  return svg({ eyebrow: 'MN-CCORE TEAM', title: display, subtitle })
-}
-
-// N3c (2026-06-11): share card for Hermes artifact pages (/portal/artifacts/:id).
-async function ogArtifact(id: string, env: Env, signedIn: boolean): Promise<string> {
-  const row = await env.DB.prepare(
-    'SELECT title, version, created_by, created_at, visibility, content_type FROM artifacts WHERE id = ?'
-  ).bind(id).first<{
-    title: string; version: number; created_by: string | null; created_at: string
-    visibility: string | null; content_type: string | null
-  }>()
-  const published = row?.visibility === 'public' && row?.content_type === 'html'
-  if (!signedIn && !published) return svg(GENERIC)
-  if (!row) return svg({ eyebrow: 'ARTIFACT', title: 'Artifact not found' })
-  const subtitle = `v${row.version} · ${(row.created_at || '').slice(0, 10)}${row.created_by === 'claude-ai' ? ' · by Hermes' : ''}`
-  return svg({ eyebrow: 'LAB ARTIFACT', title: row.title, subtitle, accent: '#dcb355' })
-}
-
-async function ogMeeting(id: string, env: Env): Promise<string> {
-  const row = await env.DB.prepare(
-    'SELECT title, date, type FROM meetings WHERE id = ?'
-  ).bind(id).first<{ title: string; date: string; type: string | null }>()
-  if (!row) return svg({ eyebrow: 'MEETING', title: 'Meeting not found' })
-  const subtitle = `${row.date}${row.type ? ` · ${row.type}` : ''}`
-  return svg({ eyebrow: 'LAB MEETING', title: row.title, subtitle })
-}
-
-/** Same identity checks as the /api/* middleware in api/index.ts. A wrong API
- *  key is not an identity: it reads as logged out, never as an error. */
-async function isSignedIn(request: Request, env: Env): Promise<boolean> {
-  if (validateApiKey(request, env) === true) return true
-  return (await getAuthUser(request, env)) !== null
-}
-
-export async function handleOgCard(type: string, slug: string, request: Request, env: Env): Promise<Response> {
+export async function handleOgCard(type: string, slug: string, env: Env): Promise<Response> {
   let body: string
-  let signedIn = false
   try {
-    signedIn = await isSignedIn(request, env)
-    if (type === 'team') body = await ogTeam(slug, env, signedIn)
-    else if (type === 'artifact') body = await ogArtifact(slug, env, signedIn)
-    else if (!signedIn) body = svg(GENERIC)
-    else if (type === 'project') body = await ogProject(slug, env, request)
-    else if (type === 'meeting') body = await ogMeeting(slug, env)
-    else body = svg(GENERIC)
+    body = type === 'team' ? await ogTeam(slug, env) : svg(GENERIC)
   } catch (e) {
-    // Emission protection: the fallback is the public generic card, publicly cacheable.
+    // Total fallback on the next line: the generic card, logged.
     console.error('[og-card]', type, (e as Error).message)
-    signedIn = false
     body = svg(GENERIC)
   }
-
   return new Response(body, {
     headers: {
       'Content-Type': 'image/svg+xml; charset=utf-8',
-      'Cache-Control': signedIn ? 'private, no-store' : 'public, max-age=3600, s-maxage=3600',
-      'Vary': 'Cookie, Authorization, X-API-Key, Cf-Access-Jwt-Assertion',
+      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
     },
   })
 }

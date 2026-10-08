@@ -113,10 +113,7 @@ export default function ProjectDetail() {
   usePageMeta(
     project ? `${project.title} | MN-CCORE` : 'Project Not Found | MN-CCORE',
     project?.description ?? 'MN-CCORE research project details.',
-    {
-      ogType: 'article',
-      ogImage: slug ? `https://mn-ccore-lab.pages.dev/og/project/${slug}` : undefined,
-    },
+    'article',
   )
 
   // Still fetching — don't render "not found" prematurely

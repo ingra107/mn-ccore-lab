@@ -3,9 +3,7 @@
 # auto-coercing the Content-Type to text/html on Functions responses,
 # which broke link-preview consumers (Twitter, Slack, email scrapers).
 # Force the SVG content-type here so the share cards render correctly.
-# No Cache-Control here: api/routes/og-card.ts sends a signed-in caller's card
-# as private, no-store and a logged-out card as public, and a blanket public
-# rule would let a shared cache hand a signed-in card to a logged-out caller.
+# No Cache-Control here: api/routes/og-card.ts is the one place that sets it.
 /og/*
   Content-Type: image/svg+xml; charset=utf-8
 

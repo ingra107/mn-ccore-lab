@@ -28,8 +28,8 @@
 // /api/* (the in-code auth middleware in api/index.ts only runs on '/api/*').
 // So this handler is reachable by a signed-out external visitor with NO
 // Cloudflare Access JWT and NO API key. (The /og/* share cards are reachable
-// the same way, but since 2026-10-08 api/routes/og-card.ts shows a logged-out
-// caller only public data.)
+// the same way; since 2026-10-08 api/routes/og-card.ts draws only public data,
+// a team member's name, for anyone.)
 //
 // Security-critical invariants:
 //   - Serves the raw stored body ONLY when visibility='public' AND
