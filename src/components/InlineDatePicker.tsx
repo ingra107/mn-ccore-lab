@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, CalendarDays } from 'lucide-react'
-import { formatShortDate } from '../lib/dateUtils'
+import { formatShortDate, addDaysYmd } from '../lib/dateUtils'
 import { ICON_PROPS } from '../lib/iconProps'
 import { usePortalDropdown, type PortalDropdownPosition } from '../hooks/usePortalDropdown'
 
@@ -80,6 +80,16 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, value])
 
+  // Latest selected date, kept in a ref so back-to-back +7 clicks accumulate
+  // even if the parent has not re-rendered with the previous click's value yet.
+  const selectedRef = useRef<string | null>(value)
+  useEffect(() => { selectedRef.current = value }, [value])
+  const stepBy = useCallback((days: number) => {
+    const next = addDaysYmd(selectedRef.current || ymd(new Date()), days)
+    selectedRef.current = next
+    if (next !== value) onChange(next)   // optimistic write, popover stays open
+  }, [value, onChange])
+
   const commit = useCallback((next: string | null) => {
     if (next !== value) onChange(next)   // optimistic write
     setOpen(false)
@@ -88,12 +98,14 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
   const presets = useMemo(() => {
     const tmrw = new Date(today.getTime() + 86400000)
     const nextMon = new Date(today.getTime() + ((8 - today.getDay()) % 7 || 7) * 86400000)
-    const plusWeek = new Date(today.getTime() + 7 * 86400000)
     return [
-      { label: 'Today', value: todayStr },
-      { label: 'Tomorrow', value: ymd(tmrw) },
-      { label: 'Next Mon', value: ymd(nextMon) },
-      { label: '+1 Week', value: ymd(plusWeek) },
+      { label: 'Today', value: todayStr, step: 0 },
+      { label: 'Tomorrow', value: ymd(tmrw), step: 0 },
+      { label: 'Next Mon', value: ymd(nextMon), step: 0 },
+      // #143: +7 is CUMULATIVE. Each click adds 7 days to the date currently
+      // selected (today when none), and the popover stays open so four clicks
+      // land 28 days out. The other presets stay absolute.
+      { label: '+7d', value: '', step: 7 },
     ]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayStr])
@@ -194,12 +206,13 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
             {presets.map((p) => (
               <button
                 key={p.label}
-                onMouseDown={(e) => { e.preventDefault(); commit(p.value) }}
+                title={p.step ? `Add ${p.step} days to the selected date (click again to keep adding)` : undefined}
+                onMouseDown={(e) => { e.preventDefault(); if (p.step) stepBy(p.step); else commit(p.value) }}
                 style={{
                   flex: 1, padding: '4px 2px', borderRadius: 'var(--radius-md)', border: 'none',
                   fontSize: 10, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap',
-                  background: value === p.value ? 'var(--teal-emphasis)' : 'transparent',
-                  color: value === p.value ? 'var(--teal)' : 'var(--slate)',
+                  background: !p.step && value === p.value ? 'var(--teal-emphasis)' : 'transparent',
+                  color: !p.step && value === p.value ? 'var(--teal)' : 'var(--slate)',
                 }}
               >
                 {p.label}

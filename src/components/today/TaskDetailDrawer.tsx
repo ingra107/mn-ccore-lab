@@ -19,7 +19,7 @@ import { useUndoToast } from '../UndoToast'
 
 import { WorkflowSection } from '../tasks/detail/FieldControls'
 import type { WorkflowFields } from '../tasks/detail/FieldControls'
-import { TaskInlineFieldRow } from '../tasks/detail/FieldControls'
+import { TaskInlineFieldRow, DueInlineSelect } from '../tasks/detail/FieldControls'
 import { TaskActivityFeed } from '../tasks/detail/TaskActivityFeed'
 import TaskDetailPanel from '../tasks/TaskDetailPanel'
 import StoredLinkChip from '../StoredLinkChip'
@@ -176,6 +176,13 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
               </div>
             )}
           </div>
+          {/* #143 (Nick 2026-10-08): Due date sits right after "Set section", before
+              "Full editor" - the field he changes most. Removed from the Status
+              row below (hideDue) so it shows once. */}
+          <DueInlineSelect
+            value={task.due_date || ''}
+            onChange={(v) => updateTask.mutate({ id: task.id, fields: { due_date: v || null } })}
+          />
           {/* #93: explicit Full editor entry (the drawer previously only reached it
               via "view all →" / the empty-description opener). */}
           <button onClick={() => setFullEditorTask(task)} title="Open the full task editor" style={{ padding: '4px 10px', background: 'transparent', color: 'var(--teal)', border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>⊞ Full editor</button>
@@ -296,6 +303,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
             kind={task.kind}
             projectId={task.project_id}
             dueDate={task.due_date}
+            hideDue
             onUpdate={(fields) => {
               const prev = task.status
               updateTask.mutate({ id: task.id, fields })

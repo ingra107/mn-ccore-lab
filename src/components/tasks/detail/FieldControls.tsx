@@ -547,6 +547,7 @@ export function TaskInlineFieldRow({
   kind,
   projectId,
   dueDate,
+  hideDue,
   onUpdate,
   style,
 }: {
@@ -556,6 +557,10 @@ export function TaskInlineFieldRow({
   kind: string | null | undefined
   projectId: string | null | undefined
   dueDate: string | null | undefined
+  /** #143: the Today drawer renders the due-date control in its action row
+   *  instead, so the same fact is not shown twice. Default false: every other
+   *  surface keeps Due in this row. */
+  hideDue?: boolean
   onUpdate: (fields: Record<string, unknown>) => void
   onOpenEditor: () => void
   /** Wrapper style override — surfaces differ only in outer spacing. */
@@ -593,10 +598,12 @@ export function TaskInlineFieldRow({
         value={projectId || ''}
         onChange={(v) => onUpdate({ project_id: v || null })}
       />
-      <DueInlineSelect
-        value={dueDate || ''}
-        onChange={(v) => onUpdate({ due_date: v || null })}
-      />
+      {!hideDue && (
+        <DueInlineSelect
+          value={dueDate || ''}
+          onChange={(v) => onUpdate({ due_date: v || null })}
+        />
+      )}
       {/* "Open full editor" moved to the surface-level action bar (#114).
           onOpenEditor prop kept for TaskDetailDrawer, which still needs it
           for the "view all →" / full-panel open path. */}

@@ -740,8 +740,8 @@ test.describe('FEATURE — Inline date picker', () => {
       await dateCell.click()
       await page.waitForTimeout(500)
 
-      // Expect preset buttons (Today, Tomorrow, Next Monday, +1 Week)
-      const presets = ['Today', 'Tomorrow', 'Next Mon', '+1 Week', 'Clear']
+      // Expect preset buttons (Today, Tomorrow, Next Monday, +7d)
+      const presets = ['Today', 'Tomorrow', 'Next Mon', '+7d', 'Clear']
       for (const preset of presets) {
         const found = await page.locator(`text=${preset}`).first().isVisible({ timeout: 500 }).catch(() => false)
         console.log(`Date preset "${preset}": ${found}`)
