@@ -162,7 +162,8 @@ describe('processOne envelope validation — partial-batch atomicity guard', () 
     const { resolve } = await import('node:path')
     const src = readFileSync(resolve(__dirname, 'mutations.ts'), 'utf-8')
 
-    const originMachineCheckIdx = src.indexOf("return mutErr(mut.mutation_id, 'origin_machine required')")
+    // L-Q23 (2026-10-08): mutErr takes a refusal code before the reason.
+    const originMachineCheckIdx = src.indexOf("return mutErr(mut.mutation_id, 'envelope_invalid', 'origin_machine required')")
     // M48 (2026-06-18): SELECT now fetches both outcome + JSON (null-safe compaction).
     // Match the idempotency check at processOne entry, not the race-lost read-back.
     const idempotencySelectIdx = src.indexOf('SELECT outcome, original_response_json FROM processed_mutations WHERE mutation_id = ?')

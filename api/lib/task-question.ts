@@ -12,10 +12,11 @@
 // place that sees every task write — Hub UI, bulk actions, PB's outbox — is
 // applyInsert / applyPatch in api/routes/mutations.ts, and both call ONE
 // function here on the EFFECTIVE row (current + patch). Level 2, single
-// chokepoint, mechanism stated. PB's BrainDB.update_task mirrors the same
-// three rules on its side of the wire.
+// chokepoint, mechanism stated. This is the ONLY judge of a question write
+// (L-Q23, 2026-10-08): PB stops pre-judging patches from its cache and reads
+// the refusal's `code` (question_rule / question_shape / question_consumer) instead.
 //
-// THE THREE RULES
+// THE RULES (questionRowError, on the effective row)
 //   spec      a kind='question' row must carry a parseable spec object
 //             -> question_spec_missing / question_spec_invalid
 //   answer    a non-null answer must parse to an object with a non-empty
@@ -25,6 +26,10 @@
 //             while the answer is NULL. Answered is not done: the CONSUMER
 //             closes the row after its durable effect. -> question_unanswered
 //   telegram  a non-null handle must parse to an object -> question_telegram_invalid
+//   non-question  a spec or answer only on a kind='question' row
+//             -> question_field_on_non_question
+// plus questionPatchError (what the write carries): question_spec_immutable,
+// question_choice_unknown.
 //
 // Every error string opens with its code and a colon, the same shape
 // applyPatch's `lmm_invalid:` uses, so a caller can match on the code.
@@ -35,6 +40,41 @@
 // text and leaves a string EXACTLY as sent — PB hashes the bytes it wrote
 // (base_row_hash, mutations.ts hashTouched), so re-serializing a string here
 // would manufacture a false conflict on the next PB update.
+
+import type { RefusalCode } from '../../pb-schema/pb_schema/generated/refusal-codes.generated.ts';
+
+/**
+ * Every error code this module returns -> the /api/mutations refusal code
+ * (L-Q23, 2026-10-08). Three families, so PB can treat them differently:
+ *   question_rule      quiet: the rules PB's cache validator used to pre-refuse
+ *                      (so a refusal of them never alerted); now the Hub's alone
+ *   question_shape     loud: a malformed spec / answer / handle is a writer bug
+ *   question_consumer  loud: a close the consumer rules refuse (#8842 R4)
+ * `QuestionError` is a template-literal type over these keys, so a function
+ * here cannot return a string whose code has no row in this map.
+ */
+export const QUESTION_ERROR_CODES = {
+  question_field_on_non_question: 'question_rule',
+  question_spec_immutable: 'question_rule',
+  question_choice_unknown: 'question_rule',
+  question_spec_missing: 'question_shape',
+  question_spec_invalid: 'question_shape',
+  question_answer_invalid: 'question_shape',
+  question_telegram_invalid: 'question_shape',
+  question_unanswered: 'question_consumer',
+  question_consumer_close_only: 'question_consumer',
+  question_consumed_hub_ui: 'question_consumer',
+  question_consumed_invalid: 'question_consumer',
+  question_unconsumed: 'question_consumer',
+} as const satisfies Record<string, RefusalCode>;
+
+export type QuestionErrorCode = keyof typeof QUESTION_ERROR_CODES;
+export type QuestionError = `${QuestionErrorCode}: ${string}`;
+
+/** The refusal code for an error this module returned. */
+export function questionRefusalCode(err: QuestionError): RefusalCode {
+  return QUESTION_ERROR_CODES[err.slice(0, err.indexOf(':')) as QuestionErrorCode];
+}
 
 export const QUESTION_JSON_COLS = [
   'question_spec_json',
@@ -95,7 +135,7 @@ function parseJsonCol(raw: unknown): { ok: true; value: unknown } | { ok: false;
  * answer/telegram shape when those columns are present, so a stray JSON
  * string on an ordinary task still fails loud.
  */
-export function questionRowError(effective: Record<string, unknown>): string | null {
+export function questionRowError(effective: Record<string, unknown>): QuestionError | null {
   const kind = effective.kind ?? 'task';
   const isQuestion = kind === 'question';
 
@@ -137,12 +177,93 @@ export function questionRowError(effective: Record<string, unknown>): string | n
     if (!isPlainObject(parsed.value)) return 'question_telegram_invalid: question_telegram_json must be a JSON object';
   }
 
+  // non-question: only a question row holds a spec or an answer (L-Q23,
+  // 2026-10-08). Judged on the EFFECTIVE row, so a patch that clears both
+  // (NULL) is legal, a patch that sets kind='question' with a spec is legal,
+  // and the Telegram handle stays allowed on any row (legacy
+  // source='meeting_approval' rows that are still kind='task' carry one).
+  // PB's BrainDB used to refuse this from its CACHE kind; a NULL cache kind
+  // then refused a real answer. The Hub row is the one that knows the kind.
+  if (!isQuestion) {
+    const stray = (['question_spec_json', 'question_answer_json'] as const).filter(
+      (c) => effective[c] !== null && effective[c] !== undefined,
+    );
+    if (stray.length > 0) {
+      return `question_field_on_non_question: ${stray.join(', ')} on a kind=${String(kind)} task; only a kind=question task holds a spec or an answer`;
+    }
+  }
+
   // unanswered: a question cannot close with no answer.
   const status = effective.status;
   if (isQuestion && !answered && typeof status === 'string' && CLOSED_STATUSES.has(status)) {
     return `question_unanswered: a kind=question task cannot reach status='${status}' while question_answer_json is NULL (answer it, or op=delete to retire a moot question)`;
   }
 
+  return null;
+}
+
+/** The keys a stored spec offers, plus the free-text choice every question
+ *  carries (PB's Ask appends `other` by construction). Null when the spec has
+ *  no readable choices list: then there is nothing to judge an answer against,
+ *  and questionRowError has already judged the spec's own shape. */
+function specChoiceKeys(spec: unknown): Set<string> | null {
+  if (spec === null || spec === undefined) return null;
+  const parsed = parseJsonCol(spec);
+  if (!parsed.ok || !isPlainObject(parsed.value)) return null;
+  const choices = parsed.value.choices;
+  if (!Array.isArray(choices)) return null;
+  const keys = new Set<string>([QUESTION_OTHER_CHOICE]);
+  for (const c of choices) {
+    if (isPlainObject(c) && typeof c.key === 'string') keys.add(c.key);
+  }
+  return keys;
+}
+
+/**
+ * The two question rules that need to know what THIS write carries, not just
+ * the row it produces (L-Q23, 2026-10-08; ported from PB's BrainDB, which
+ * judged them from its cache copy of the row and so could refuse a write the
+ * Hub row allowed):
+ *
+ *   spec immutable  a non-null spec in the write must equal the stored one
+ *                   when one is stored. The buttons Nick saw are the buttons
+ *                   the consumer acts on. Clearing (NULL) is not a rewrite;
+ *                   questionRowError judges what clearing leaves behind.
+ *                                                    -> question_spec_immutable
+ *   choice known    an answer in the write names one of the spec's choice
+ *                   keys (or `other`). Judged only when the write carries the
+ *                   answer, so an old row is never refused for an answer it
+ *                   already holds.                   -> question_choice_unknown
+ *
+ * `current` is {} on insert; `patch` is the write's own (normalized) fields.
+ */
+export function questionPatchError(
+  current: Record<string, unknown>,
+  patch: Record<string, unknown>,
+): QuestionError | null {
+  const has = (c: string) => Object.prototype.hasOwnProperty.call(patch, c);
+
+  const storedSpec = current.question_spec_json;
+  if (
+    has('question_spec_json') &&
+    patch.question_spec_json !== null && patch.question_spec_json !== undefined &&
+    storedSpec !== null && storedSpec !== undefined &&
+    patch.question_spec_json !== storedSpec
+  ) {
+    return 'question_spec_immutable: question_spec_json cannot change once set';
+  }
+
+  if (has('question_answer_json')) {
+    const answer = parseJsonCol(patch.question_answer_json);
+    const choice = answer.ok && isPlainObject(answer.value) ? answer.value.choice : undefined;
+    if (typeof choice === 'string') {
+      const spec = has('question_spec_json') ? patch.question_spec_json : storedSpec;
+      const keys = specChoiceKeys(spec);
+      if (keys && !keys.has(choice)) {
+        return `question_choice_unknown: answer choice '${choice}' is not one of the spec's choices (${[...keys].join(', ')})`;
+      }
+    }
+  }
   return null;
 }
 
@@ -174,7 +295,7 @@ export function questionConsumerCloseError(
   current: Record<string, unknown>,
   effective: Record<string, unknown>,
   originMachine: string | undefined,
-): string | null {
+): QuestionError | null {
   if (!(originMachine ?? '').startsWith(HUB_UI_ORIGIN_PREFIX)) return null;
   const isQuestion = (current.kind ?? 'task') === 'question' || effective.kind === 'question';
   if (!isQuestion) return null;
@@ -223,7 +344,7 @@ export function questionConsumedError(
   patch: Record<string, unknown>,
   originMachine: string | undefined,
   enforceClose: boolean,
-): string | null {
+): QuestionError | null {
   const carries = Object.prototype.hasOwnProperty.call(patch, QUESTION_CONSUMED_COL);
   if (carries && (originMachine ?? '').startsWith(HUB_UI_ORIGIN_PREFIX)) {
     return `question_consumed_hub_ui: ${QUESTION_CONSUMED_COL} is written only by the PB consumer that acted on the answer, never from the Hub UI`;

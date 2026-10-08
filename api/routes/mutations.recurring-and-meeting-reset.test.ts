@@ -246,6 +246,8 @@ describe('#8352: a dedup winner gone at read-back is refused, not accepted', () 
     const first = (await (await post()).json() as any).results[0];
     expect(first.status).toBe('error');
     expect(first.reason.startsWith(DEDUP_WINNER_VANISHED_REASON_PREFIX)).toBe(true);
+    // L-Q23: PB will classify on this code (retry), not on the text.
+    expect(first.code).toBe('dedup_winner_vanished');
     // PB pins this exact text as TRANSIENT in
     // Peripheral-Brain tests/db/test_hub_dedup_winner_vanished_is_transient.py.
     expect(first.reason).toBe(

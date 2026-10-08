@@ -112,6 +112,8 @@ describe('R1 lost update: compare-and-swap on the evaluated row', () => {
     const out = (await res.json() as any).results[0];
     expect(out.status).toBe('error');
     expect(out.reason.startsWith(CAS_CONTENTION_REASON_PREFIX)).toBe(true);
+    // L-Q23: PB will classify on this code (retry), not on the text.
+    expect(out.code).toBe('cas_contention');
     // PB pins this exact text as TRANSIENT in
     // Peripheral-Brain tests/db/test_hub_cas_contention_is_transient.py.
     expect(out.reason).toBe('cas_contention: row changed on each of 3 attempts; nothing written, retry');

@@ -124,6 +124,8 @@ describe('Layer-3 Hub-500 fix — per-item infra error catch', () => {
     expect(r2).toBeDefined()
     expect(r2!.status).toBe('error')
     expect(r2!.reason).toMatch(/^infra error:/)
+    // L-Q23: PB will classify on this code (retry), not on the text.
+    expect((r2 as { code?: string }).code).toBe('infra')
     expect(r2!.reason).toContain('Internal error in D1 DB storage')
     // It failed before applying: no row, and no settled receipt a retry would replay.
     expect(taskExists(mut2.record_id)).toBe(false)

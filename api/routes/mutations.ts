@@ -29,8 +29,9 @@ import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
 import { emitLifecycleActivity } from '../lib/lifecycle-activity';
 import { TASK_TITLE_DEDUP_SELECT } from '../lib/task-dedup-sql';
 import { touchesKeyLinkSlots, slotLinkStatements, touchedLinksRead } from '../lib/key-link';
-import { normalizeQuestionJsonFields, questionRowError, questionConsumerCloseError, questionConsumedError } from '../lib/task-question';
+import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumerCloseError, questionConsumedError } from '../lib/task-question';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
+import type { RefusalCode } from '../../pb-schema/pb_schema/generated/refusal-codes.generated.ts';
 
 const ALLOWED_TABLES = new Set([
   'tasks', 'projects', 'inbox_events', 'day_capacity', 'project_state_log',
@@ -283,6 +284,10 @@ interface MutationResult {
   canonical_payload?: Record<string, unknown>;
   current_payload?: Record<string, unknown>;
   reason?: string;
+  // L-Q23 (2026-10-08): set on every status='error' result this build makes
+  // (mutErr requires it). Absent on a stored receipt from before codes, which
+  // replays verbatim; PB treats a code-less error as UNCODED, never as a class.
+  code?: RefusalCode;
   // Phase A1 (V3 dedup): when an insert is deduped onto an existing canonical
   // row (serial path OR race-loser path), Hub returns the WINNER's PK here so
   // the PB outbox ack handler can adopt it via a hub_slug alias instead of
@@ -338,7 +343,7 @@ export async function handleMutations(
       result = await processOne(env, mut, inBatchResults, user, flags);
     } catch (e) {
       console.error('infra error in processOne', mut.mutation_id, (e as Error).message);
-      result = mutErr(mut.mutation_id ?? '<missing>', `infra error: ${(e as Error).message}`);
+      result = mutErr(mut.mutation_id ?? '<missing>', 'infra', `infra error: ${(e as Error).message}`);
     }
     results.push(result);
     inBatchResults.set(mut.mutation_id, result);
@@ -365,27 +370,27 @@ async function processOne(
   // Peripheral-Brain/Context/Mechanic/escalations/
   //   2026-05-11_tests-sync-flush-async-prod-hub-leak.md secondary finding.)
   if (!mut.mutation_id || !mut.mutation_id.startsWith('mut_')) {
-    return mutErr(mut.mutation_id || '<missing>', 'invalid mutation_id (must be mut_<ULID>)');
+    return mutErr(mut.mutation_id || '<missing>', 'envelope_invalid', 'invalid mutation_id (must be mut_<ULID>)');
   }
   if (!ALLOWED_TABLES.has(mut.table)) {
-    return mutErr(mut.mutation_id, `unknown table ${mut.table}`);
+    return mutErr(mut.mutation_id, 'envelope_invalid', `unknown table ${mut.table}`);
   }
   if (!ALLOWED_OPS.has(mut.op)) {
-    return mutErr(mut.mutation_id, `unknown op ${mut.op}`);
+    return mutErr(mut.mutation_id, 'envelope_invalid', `unknown op ${mut.op}`);
   }
   if (!mut.record_id) {
-    return mutErr(mut.mutation_id, 'record_id required');
+    return mutErr(mut.mutation_id, 'envelope_invalid', 'record_id required');
   }
   // Required envelope fields that feed into processed_mutations INSERT.
   // Undefined values would produce D1_TYPE_ERROR after the apply already ran.
   if (!mut.origin_machine) {
-    return mutErr(mut.mutation_id, 'origin_machine required');
+    return mutErr(mut.mutation_id, 'envelope_invalid', 'origin_machine required');
   }
   if (!mut.client_ts) {
-    return mutErr(mut.mutation_id, 'client_ts required');
+    return mutErr(mut.mutation_id, 'envelope_invalid', 'client_ts required');
   }
   if (!mut.issued_at) {
-    return mutErr(mut.mutation_id, 'issued_at required');
+    return mutErr(mut.mutation_id, 'envelope_invalid', 'issued_at required');
   }
 
   // Idempotency: previously processed?
@@ -424,7 +429,7 @@ async function processOne(
         return JSON.parse(prior.original_response_json) as MutationResult;
       } catch {
         // Manifest corruption -- shouldn't happen but never throw
-        return mutErr(mut.mutation_id, 'idempotency record unparseable');
+        return mutErr(mut.mutation_id, 'idempotency_unparseable', 'idempotency record unparseable');
       }
     }
   }
@@ -459,7 +464,7 @@ async function processOne(
     if (allowed) {
       const unknown = Object.keys(fields).filter(k => !allowed.has(k));
       if (unknown.length > 0) {
-        const r = mutErr(mut.mutation_id, `unknown fields for ${mut.table}: ${unknown.join(',')}`);
+        const r = mutErr(mut.mutation_id, 'unknown_field', `unknown fields for ${mut.table}: ${unknown.join(',')}`);
         const idem = await recordProcessedAtomic(env, mut, r);
         return idem ?? r;
       }
@@ -472,7 +477,7 @@ async function processOne(
     // being silently nulled via the A3 write path.
     const protectedErr = assertProtectedNotNull(mut.table, fields);
     if (protectedErr) {
-      const r = mutErr(mut.mutation_id, protectedErr);
+      const r = mutErr(mut.mutation_id, 'protected_null', protectedErr);
       const idem = await recordProcessedAtomic(env, mut, r);
       return idem ?? r;
     }
@@ -485,7 +490,7 @@ async function processOne(
     if (flags.enums) {
       const enumErr = assertEnumDomain(mut.table, fields);
       if (enumErr) {
-        const r = mutErr(mut.mutation_id, enumErr);
+        const r = mutErr(mut.mutation_id, 'enum_domain', enumErr);
         const idem = await recordProcessedAtomic(env, mut, r);
         return idem ?? r;
       }
@@ -499,7 +504,7 @@ async function processOne(
     if (flags.completion_tombstone && mut.op === 'insert') {
       const triadErr = assertCompletionTriad(mut.table, null, fields);
       if (triadErr) {
-        const r = mutErr(mut.mutation_id, triadErr);
+        const r = mutErr(mut.mutation_id, 'completion_triad', triadErr);
         const idem = await recordProcessedAtomic(env, mut, r);
         return idem ?? r;
       }
@@ -516,7 +521,7 @@ async function processOne(
     } else if (mut.op === 'delete') {
       result = await applyDelete(env, mut, user);
     } else {
-      result = mutErr(mut.mutation_id, `op ${mut.op} not implemented`);
+      result = mutErr(mut.mutation_id, 'envelope_invalid', `op ${mut.op} not implemented`);
     }
   } catch (e) {
     if (e instanceof CommitNotLandedError) {
@@ -525,10 +530,10 @@ async function processOne(
       // tests/db/test_hub500_infra_error_classifier.py) and record nothing; a
       // recorded `apply error` would replay forever for a write that never
       // happened.
-      result = mutErr(mut.mutation_id, `infra error: ${e.message}`);
+      result = mutErr(mut.mutation_id, 'commit_not_landed', `infra error: ${e.message}`);
       RECEIPT_HANDLED.add(result);
     } else {
-      result = mutErr(mut.mutation_id, `apply error: ${(e as Error).message}`);
+      result = await applyErrorResult(env, mut, e);
     }
   }
 
@@ -576,7 +581,7 @@ async function dedupAccepted(
     // _classify_hub_first_error reads as permanent, so PB treats it as
     // transient (Peripheral-Brain tests/db/test_hub500_infra_error_classifier.py
     // pins the classifier).
-    const r = mutErr(mut.mutation_id,
+    const r = mutErr(mut.mutation_id, 'dedup_winner_vanished',
       `${DEDUP_WINNER_VANISHED_REASON_PREFIX} ${winnerId} matched the dedup SELECT but was gone at read-back; nothing written, retry`);
     RECEIPT_HANDLED.add(r);
     return r;
@@ -633,7 +638,7 @@ async function meetingDedupAccepted(
 }
 
 export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags): Promise<MutationResult> {
-  if (!mut.payload) return mutErr(mut.mutation_id, 'insert requires payload');
+  if (!mut.payload) return mutErr(mut.mutation_id, 'envelope_invalid', 'insert requires payload');
 
   // Question contract (schema-v111, 2026-09-17): a kind='question' row must
   // carry its spec, and any answer/telegram handle must be well-formed JSON.
@@ -645,7 +650,10 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
   if (mut.table === 'tasks') {
     mut.payload = normalizeQuestionJsonFields(mut.payload as Record<string, unknown>);
     const qErr = questionRowError(mut.payload as Record<string, unknown>);
-    if (qErr) return mutErr(mut.mutation_id, qErr);
+    if (qErr) return mutErr(mut.mutation_id, questionRefusalCode(qErr), qErr);
+    // L-Q23: an answer born with the row names one of its spec's choices.
+    const pErr = questionPatchError({}, mut.payload as Record<string, unknown>);
+    if (pErr) return mutErr(mut.mutation_id, questionRefusalCode(pErr), pErr);
     // #8842 R4: an insert has no current row; a question born 'done' needs
     // the consumer receipt like any other close (flag-gated), and a Hub-UI
     // insert may not carry one.
@@ -653,7 +661,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     const consumedErr = questionConsumedError(
       {}, payload, payload, mut.origin_machine, flags?.question_consumed ?? false,
     );
-    if (consumedErr) return mutErr(mut.mutation_id, consumedErr);
+    if (consumedErr) return mutErr(mut.mutation_id, questionRefusalCode(consumedErr), consumedErr);
   }
 
   // Task-insert dedup has TWO explicit identity classes (2026-07-02 meeting-dedup
@@ -703,7 +711,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     if (source === 'meeting_approval') {
       const meetingId = p.meeting_id as string | undefined;
       if (!meetingId) {
-        return mutErr(mut.mutation_id, 'meeting_approval task requires meeting_id');
+        return mutErr(mut.mutation_id, 'value_invalid', 'meeting_approval task requires meeting_id');
       }
       const dup = await env.DB.prepare(
         `SELECT id FROM tasks WHERE source = 'meeting_approval' AND meeting_id = ? AND deleted_at IS NULL AND status != 'done' LIMIT 1`,
@@ -933,7 +941,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
 const UPSERT_ON_MISS_TABLES = new Set(['sessions']);
 
 export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags): Promise<MutationResult> {
-  if (!mut.patch) return mutErr(mut.mutation_id, 'update requires patch');
+  if (!mut.patch) return mutErr(mut.mutation_id, 'envelope_invalid', 'update requires patch');
   // Each attempt re-reads the row and re-runs every check below, so a retry
   // after a CAS miss decides against the row that is actually there.
   return withCasRetry(env, mut, () => decideAndCommitUpdate(env, mut, user, flags));
@@ -942,7 +950,7 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags
 async function decideAndCommitUpdate(
   env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags,
 ): Promise<MutationResult | CasMiss> {
-  if (!mut.patch) return mutErr(mut.mutation_id, 'update requires patch');
+  if (!mut.patch) return mutErr(mut.mutation_id, 'envelope_invalid', 'update requires patch');
 
   const current = await readCanonical(env, mut.table, mut.record_id);
   if (!current) {
@@ -975,7 +983,7 @@ async function decideAndCommitUpdate(
         reason: 'upserted: row absent at update time (insert-update race)',
       });
     }
-    return mutErr(mut.mutation_id, `${mut.table} record ${mut.record_id} not found`);
+    return mutErr(mut.mutation_id, 'record_not_found', `${mut.table} record ${mut.record_id} not found`);
   }
 
   // Tombstone resurrection guard (codex Fix 1, 2026-05-11):
@@ -1006,7 +1014,7 @@ async function decideAndCommitUpdate(
       patchRecord.status === 'deleted';
     const isUndeletePatch = hasExplicitDeletedAt || hasLiveStatus || isIdempotentDelete;
     if (!isUndeletePatch) {
-      return mutErr(mut.mutation_id, `${mut.table} record ${mut.record_id} is deleted — cannot update; send deleted_at=null to undelete`);
+      return mutErr(mut.mutation_id, 'record_deleted', `${mut.table} record ${mut.record_id} is deleted — cannot update; send deleted_at=null to undelete`);
     }
   }
 
@@ -1020,7 +1028,7 @@ async function decideAndCommitUpdate(
   if (flags?.completion_tombstone) {
     const triadErr = assertCompletionTriad(mut.table, current, mut.patch as Record<string, unknown>);
     if (triadErr) {
-      return mutErr(mut.mutation_id, triadErr);
+      return mutErr(mut.mutation_id, 'completion_triad', triadErr);
     }
   }
 
@@ -1123,7 +1131,7 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
   // D1_ERROR at runtime. See DELETE_CAPABLE_TABLES / TABLES_WITH_UPDATED_AT.
   // (M32, 2026-05-28: stale "5 domain tables" comment corrected; guard added.)
   if (!DELETE_CAPABLE_TABLES.has(mut.table)) {
-    return mutErr(mut.mutation_id, `op=delete not supported on ${mut.table} (no deleted_at column)`);
+    return mutErr(mut.mutation_id, 'envelope_invalid', `op=delete not supported on ${mut.table} (no deleted_at column)`);
   }
   return withCasRetry(env, mut, () => decideAndCommitDelete(env, mut, user));
 }
@@ -1500,7 +1508,7 @@ async function applyPatch(
       if (!isAlreadyCanonical) {
         const normalized = normalizeToUtcSpaceSep(raw);
         if (normalized === null) {
-          throw new Error(
+          throw new RefusalError('value_invalid',
             `lmm_invalid: last_meaningful_movement '${raw}' is not a parseable timestamp`
           );
         }
@@ -1582,12 +1590,15 @@ async function applyPatch(
   if (mut.table === 'tasks' && effectivePatch) {
     effectivePatch = normalizeQuestionJsonFields(effectivePatch);
     const qErr = questionRowError({ ...current, ...effectivePatch });
-    if (qErr) throw new Error(qErr);
+    if (qErr) throw new RefusalError(questionRefusalCode(qErr), qErr);
+    // L-Q23: what this write carries -- a changed spec, an unknown choice.
+    const pErr = questionPatchError(current, effectivePatch);
+    if (pErr) throw new RefusalError(questionRefusalCode(pErr), pErr);
     // #8842 R4 interim: a Hub-UI write may not close a question as done; the
     // PB consumer does that after acting on the answer. What the check trusts
     // and cannot stop: api/lib/task-question.ts questionConsumerCloseError.
     const closeErr = questionConsumerCloseError(current, { ...current, ...effectivePatch }, mut.origin_machine);
-    if (closeErr) throw new Error(closeErr);
+    if (closeErr) throw new RefusalError(questionRefusalCode(closeErr), closeErr);
     // #8842 R4: the consumer receipt -- only the PB consumer writes it, only
     // with the close, bound to the answer; with the flag ON a question cannot
     // enter 'done' without it. api/lib/task-question.ts questionConsumedError.
@@ -1595,7 +1606,7 @@ async function applyPatch(
       current, { ...current, ...effectivePatch }, effectivePatch, mut.origin_machine,
       flags?.question_consumed ?? false,
     );
-    if (consumedErr) throw new Error(consumedErr);
+    if (consumedErr) throw new RefusalError(questionRefusalCode(consumedErr), consumedErr);
   }
 
   const patchKeys = Object.keys(effectivePatch || {});
@@ -1725,14 +1736,75 @@ export async function hashTouched(
 
 function mkResult(
   mutation_id: string,
-  status: MutationResult['status'],
+  // Never 'error': mutErr is the one error constructor, so no error is built
+  // without a code (L-Q23).
+  status: Exclude<MutationResult['status'], 'error'>,
   extras: Partial<MutationResult> = {},
 ): MutationResult {
   return { mutation_id, status, ...extras };
 }
 
-function mutErr(mutation_id: string, reason: string): MutationResult {
-  return { mutation_id, status: 'error', reason };
+/**
+ * The ONE constructor of a status='error' result. `code` is required, from
+ * the pb-schema REFUSAL_CODES vocabulary, so a refusal PB cannot classify
+ * does not typecheck (L-Q23, 2026-10-08). PB picks retry / converge / adopt /
+ * alert / stay quiet from `code` alone; `reason` is for people and the Hub UI
+ * toasts, and keeps the exact text it always had (an older PB still reads it).
+ */
+function mutErr(mutation_id: string, code: RefusalCode, reason: string): MutationResult {
+  return { mutation_id, status: 'error', code, reason };
+}
+
+/**
+ * A deliberate refusal thrown from inside an apply (lmm_invalid, the question
+ * rules): processOne's catch reads `code` off it. The message is the reason
+ * text, unchanged, so `apply error: <message>` reads as it always did.
+ */
+export class RefusalError extends Error {
+  constructor(readonly code: RefusalCode, message: string) {
+    super(message);
+  }
+}
+
+/**
+ * The code for an exception thrown out of an apply. Total: every throw maps
+ * to a code. A constraint failure on `links` is decided by DATA, not engine
+ * text: re-read the live row for the natural key the write carried. A live
+ * holder with a different id means the key is taken (PB adopts that row);
+ * none means another constraint (NOT NULL, CHECK) fired. The re-read runs
+ * only on this failure path; if it throws, the batch loop reports `infra` and
+ * nothing is recorded, so the write is retried rather than refused forever.
+ */
+async function applyErrorResult(env: Env, mut: Mutation, e: unknown): Promise<MutationResult> {
+  const reason = `apply error: ${(e as Error).message}`;
+  if (e instanceof RefusalError) return mutErr(mut.mutation_id, e.code, reason);
+  if (!isConstraintFailure(e)) return mutErr(mut.mutation_id, 'apply_error', reason);
+  // Only a UNIQUE failure can be the natural key. A write that breaks NOT
+  // NULL or CHECK while also sharing a live row's key is a malformed write,
+  // and must not read as "adopt the holder".
+  if (mut.table !== 'links' || !isUniqueFailure(e)) return mutErr(mut.mutation_id, 'constraint', reason);
+  const holder = await liveLinkHolder(env, mut);
+  if (!holder) return mutErr(mut.mutation_id, 'constraint', reason);
+  return { ...mutErr(mut.mutation_id, 'link_natural_key', reason), current_payload: holder };
+}
+
+/** The live links row (other than this record) holding the natural key
+ *  (owner_table, owner_id, role, canonical_url) this write would produce. */
+async function liveLinkHolder(env: Env, mut: Mutation): Promise<Record<string, unknown> | null> {
+  let row: Record<string, unknown>;
+  if (mut.op === 'insert') {
+    row = { role: 'key', ...(mut.payload ?? {}) };
+  } else {
+    const current = await readCanonical(env, 'links', mut.record_id);
+    row = { ...(current ?? {}), ...(mut.patch ?? {}) };
+  }
+  const key = [row.owner_table, row.owner_id, row.role, row.canonical_url];
+  if (key.some((v) => v === null || v === undefined)) return null;
+  const hit = await env.DB.prepare(
+    'SELECT * FROM links WHERE owner_table = ? AND owner_id = ? AND role = ? AND canonical_url = ? ' +
+    'AND deleted_at IS NULL AND id != ? LIMIT 1',
+  ).bind(...key, mut.record_id).first<Record<string, unknown>>();
+  return hit ? safeRow('links', hit) : null;
 }
 
 // ── The one commit door for row-changing updates and deletes ────────────────
@@ -1784,6 +1856,15 @@ function isConstraintFailure(e: unknown): boolean {
   const code = (e as { code?: unknown } | null)?.code;
   if (typeof code === 'string' && code.startsWith('SQLITE_CONSTRAINT')) return true;
   return /SQLITE_CONSTRAINT/.test(e instanceof Error ? e.message : String(e));
+}
+
+/** A UNIQUE constraint failure specifically. D1 reports the extended code
+ *  only in the message ("... SQLITE_CONSTRAINT (extended:
+ *  SQLITE_CONSTRAINT_UNIQUE)"); SQLite's own text is "UNIQUE constraint failed". */
+function isUniqueFailure(e: unknown): boolean {
+  const code = (e as { code?: unknown } | null)?.code;
+  if (code === 'SQLITE_CONSTRAINT_UNIQUE') return true;
+  return /SQLITE_CONSTRAINT_UNIQUE|UNIQUE constraint failed/.test(e instanceof Error ? e.message : String(e));
 }
 
 /**
@@ -1973,7 +2054,7 @@ async function withCasRetry(
       return winner;
     }
   }
-  const r = mutErr(mut.mutation_id, `${CAS_CONTENTION_REASON_PREFIX} row changed on each of ${CAS_ATTEMPTS} attempts; nothing written, retry`);
+  const r = mutErr(mut.mutation_id, 'cas_contention', `${CAS_CONTENTION_REASON_PREFIX} row changed on each of ${CAS_ATTEMPTS} attempts; nothing written, retry`);
   RECEIPT_HANDLED.add(r);
   return r;
 }
