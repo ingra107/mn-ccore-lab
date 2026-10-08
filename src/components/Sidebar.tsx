@@ -36,6 +36,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useDarkMode } from '../hooks/useDarkMode'
 import NotificationBell from './NotificationBell'
 import { useNextMeeting } from '../hooks/useApiData'
+import { civilDaysUntil } from '../lib/dateUtils'
 import { useUnseenActivity } from '../hooks/useEntitySeen'
 import { todayKey } from '../lib/taskGrouping'
 import { PATHS } from '../constants/paths'
@@ -181,11 +182,8 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   const dayUnseen = unseen?.days.get(todayKey())?.new_count ?? 0
   const nextMeetingLabel = useMemo(() => {
     if (!nextMeeting?.date) return null
-    const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const nextDate = new Date(nextMeeting.date + 'T12:00:00')
-    if (nextDate < today) return null
-    const diffDays = Math.round((nextDate.getTime() - today.getTime()) / 86400000)
+    const diffDays = civilDaysUntil(nextMeeting.date)
+    if (diffDays < 0) return null
     if (diffDays === 0) return 'Today'
     if (diffDays === 1) return 'Tomorrow'
     if (diffDays > 90) return null

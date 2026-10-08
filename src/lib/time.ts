@@ -84,12 +84,12 @@ export function formatDbLocal(
  * Default zone = the browser's resolved zone (traveler-aware). Server callers
  * (digest Worker) pass the resolved machine/recipient zone explicitly.
  */
-export function todayCivil(zone?: string): CivilDate {
+export function todayCivil(zone?: string, now: Date = new Date()): CivilDate {
   const tz = zone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const fmt = new Intl.DateTimeFormat('en-US', {
     timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
   });
-  const parts = fmt.formatToParts(new Date());
+  const parts = fmt.formatToParts(now);
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
   return `${get('year')}-${get('month')}-${get('day')}` as CivilDate;
 }

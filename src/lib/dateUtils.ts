@@ -3,7 +3,7 @@
  * All functions accept ISO date strings and handle timezone-safe parsing.
  */
 
-import { parseDbUtc } from './time'
+import { parseDbUtc, todayCivil } from './time'
 
 // Parse any incoming date/timestamp string into a viewer-correct Date.
 // Delegates to time.ts:parseDbUtc — the single chokepoint that (a) noon-anchors
@@ -100,6 +100,29 @@ export function isOverdue(dueDate: string | null, status?: string): boolean {
 export function getDaysUntil(dateStr: string): number {
   const target = new Date(dateStr + 'T23:59:59')
   return Math.ceil((target.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+}
+
+/**
+ * Whole CALENDAR days from today to `dateStr` (`YYYY-MM-DD...`) in the viewer
+ * zone (or `zone`): 0 = today, 1 = tomorrow, negative = past. Both sides are
+ * civil dates, so the time of day never leaks in. #137: the sidebar used to
+ * subtract midnight-today from NOON-of-target and Math.round it, which turns
+ * "today" (0.5 day) into 1 and labelled a same-day meeting "Tomorrow".
+ */
+export function civilDaysUntil(dateStr: string, now: Date = new Date(), zone?: string): number {
+  const toUtcDay = (ymd: string) => {
+    const [y, m, d] = ymd.slice(0, 10).split('-').map(Number)
+    return Date.UTC(y, m - 1, d)
+  }
+  return Math.round((toUtcDay(dateStr) - toUtcDay(todayCivil(zone, now))) / 86400000)
+}
+
+/** `YYYY-MM-DD` plus `n` calendar days (negative ok), no timezone involved. */
+export function addDaysYmd(ymd: string, n: number): string {
+  const [y, m, d] = ymd.slice(0, 10).split('-').map(Number)
+  // Pure integer calendar math on a UTC-anchored date; no instant is formatted.
+  const r = new Date(Date.UTC(y, m - 1, d + n))
+  return `${r.getUTCFullYear()}-${String(r.getUTCMonth() + 1).padStart(2, '0')}-${String(r.getUTCDate()).padStart(2, '0')}`
 }
 
 export function getDaysAgo(dateStr: string): number {
