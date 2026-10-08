@@ -221,6 +221,10 @@ export interface LedgerHealth {
   overRowBudget: boolean;
   /** True if a prune error was logged for this table. */
   pruneError: boolean;
+  /** The prune error text, so the alert says WHAT failed (2026-10-08: 15
+   *  alerts since July read "prune error" with the message only in a
+   *  console.error nobody tails). */
+  pruneErrorMessage?: string;
 }
 
 export interface D1HealthReport {
@@ -266,14 +270,15 @@ export async function monitorD1Health(
       console.error(`[D1Health] stats query failed for ${entry.table}:`, e instanceof Error ? e.message : e);
     }
 
-    const pruneError = !!(pruneResults[entry.table]?.error);
+    const pruneErrorMessage = pruneResults[entry.table]?.error;
+    const pruneError = !!pruneErrorMessage;
     const overRowBudget = entry.maxRows != null && rowCount > entry.maxRows;
 
     if (overRowBudget || pruneError) {
       alertTriggered = true;
     }
 
-    tables.push({ table: entry.table, rowCount, oldestRetainedAt, newestAt, overRowBudget, pruneError });
+    tables.push({ table: entry.table, rowCount, oldestRetainedAt, newestAt, overRowBudget, pruneError, pruneErrorMessage });
   }
 
   if (alertTriggered) {
@@ -302,9 +307,14 @@ async function _createHealthAlert(
   if (overBudget.length === 0) return;
 
   const lines = overBudget.map((t) => {
-    if (t.pruneError) return `${t.table}: prune error — ${t.rowCount} rows`;
+    const budget = t.overRowBudget ? ' (over budget)' : ' (within budget)';
+    if (t.pruneError) return `${t.table}: prune error — ${t.rowCount} rows${budget}: ${(t.pruneErrorMessage ?? '').slice(0, 300)}`;
     return `${t.table}: ${t.rowCount} rows (over budget)`;
   });
+  // Title names the real condition: a prune error on a small table is not
+  // "over budget" (every alert since July was a prune error at <600 rows).
+  const anyOverBudget = overBudget.some((t) => t.overRowBudget);
+  const title = anyOverBudget ? 'D1 ledger over budget' : 'D1 ledger prune failed';
 
   const body =
     `D1 ledger alert at ${checkedAt}:\n` +
@@ -324,7 +334,7 @@ async function _createHealthAlert(
         'system_alert',        // type
         'db_health',           // source_type
         'ledger-monitor',      // source_id
-        'D1 ledger over budget', // title
+        title,                 // title
         body,                  // body
         '/api/health'          // link — points to the health endpoint
       )

@@ -47,7 +47,12 @@ export interface TodayStateApi extends TodayStateShape {
   unplan: (id: string) => void
 }
 
-export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = []): TodayStateApi {
+// One shared empty array: a `= []` default is a NEW array every render, and the
+// render-phase `completedTodayIds !== prevCompletedTodayIds` compare below would
+// then setState on every render -- React #301, the same class as #144.
+const NO_COMPLETED_IDS: string[] = []
+
+export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = NO_COMPLETED_IDS): TodayStateApi {
   const updateStatus = useUpdateTaskStatus()
   const undoToast = useUndoToast()
   const plan = useTodayPlan()

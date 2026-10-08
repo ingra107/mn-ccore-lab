@@ -27,6 +27,7 @@ export const EMAIL_PREFIX_TO_SLUG: Record<string, string> = {
   ingra107: 'nick-ingraham',   // real UMN NetID
   ningraha: 'nick-ingraham',   // legacy email alias (W1 2026-04-29)
   nate: 'nate-mesfin',
+  mesfin: 'nate-mesfin',       // real UMN NetID (first Hub login 2026-10-08, #144)
   dudley: 'adams-dudley',
   chipman: 'jeff-chipman',
   mceachron: 'kendall-mceachron',
@@ -41,6 +42,7 @@ export const EMAIL_PREFIX_TO_SLUG: Record<string, string> = {
   arriaza: 'steven-arriaza',
   bromley: 'emma-bromley',
   eddington: 'casey-eddington',
+  eddin022: 'casey-eddington', // real UMN NetID (first Hub login 2026-10-08, #144)
   shyu: 'dan-shyu',
   fitzgerald: 'beret-fitzgerald',
   collins: 'claire-collins',

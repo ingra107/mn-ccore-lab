@@ -213,6 +213,27 @@ describe('monitorD1Health', () => {
 
     expect(report.alertTriggered).toBe(true);
     expect(report.tables[0].pruneError).toBe(true);
+    expect(report.tables[0].pruneErrorMessage).toBe('timeout');
+  });
+
+  it('a prune error under budget is titled "prune failed" and carries the error text', async () => {
+    const binds: unknown[][] = [];
+    const db = {
+      prepare: () => ({
+        first: async () => ({ cnt: 275, oldest: null, newest: null }),
+        bind: (...args: unknown[]) => { binds.push(args); return { run: async () => ({ meta: { changes: 1 } }) }; },
+        run: async () => ({ meta: { changes: 0 } }),
+      }),
+    } as unknown as D1Database;
+    const pruneResults = Object.fromEntries(
+      LEDGER_REGISTRY.map((e, i) => [e.table, i === 0 ? { deleted: 0, error: 'D1_ERROR: Network connection lost' } : { deleted: 0 }])
+    );
+    await monitorD1Health(db, pruneResults);
+    const insert = binds.find((b) => b.includes('system_alert'));
+    expect(insert).toBeDefined();
+    expect(insert).toContain('D1 ledger prune failed');
+    expect(String(insert![6])).toContain('D1_ERROR: Network connection lost');
+    expect(String(insert![6])).toContain('within budget');
   });
 
   it('does not throw when notifications insert fails', async () => {
