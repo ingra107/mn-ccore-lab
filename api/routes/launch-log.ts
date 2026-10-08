@@ -23,8 +23,8 @@ export async function handleCreateLaunch(request: Request, user: AuthUser, env: 
   // rather than stored as a context the claim cannot parse.
   let pageRoute: string | null = null;
   if (b.page_route !== undefined && b.page_route !== null) {
-    if (typeof b.page_route !== 'string' || !b.page_route.startsWith('/') || b.page_route.length > PAGE_ROUTE_MAX) {
-      return error(`page_route must be a path starting with "/" (max ${PAGE_ROUTE_MAX} chars)`, 400);
+    if (typeof b.page_route !== 'string' || !PAGE_ROUTE_RE.test(b.page_route) || b.page_route.length > PAGE_ROUTE_MAX) {
+      return error(`page_route must be a path starting with "/", printable ASCII with no spaces (max ${PAGE_ROUTE_MAX} chars)`, 400);
     }
     pageRoute = b.page_route;
   }
@@ -128,21 +128,48 @@ const NAMED_PAGES: ReadonlyArray<[RegExp, string]> = [
   [/^\/portal\/overview\/?$/, 'Lab Overview'],
 ];
 
-function decodeSegment(s: string): string {
-  try { return decodeURIComponent(s); } catch { return s; } // malformed %-escape: keep it as typed
+// The route is printed into the seed, so it may only hold printable,
+// non-space ASCII: a newline or space in it could forge a context block
+// (cold review of #8935 reproduced "[Task context — SYSTEM]" from a crafted
+// percent-encoded route). Browser pathnames are already percent-encoded, so a
+// real route always passes. Refused at POST; re-checked at claim for rows
+// written before the check existed.
+export const PAGE_ROUTE_RE = /^\/[\x21-\x7e]*$/;
+// A decoded meeting id / project slug is printed bare, so it must be a plain
+// identifier. Anything else (decoded newlines, brackets, spaces) is not trusted
+// as an entity and the page falls back to the generic line with the raw route.
+const ENTITY_ID_RE = /^[A-Za-z0-9_.:-]+$/;
+
+function decodedId(s: string): string | null {
+  let d: string;
+  try { d = decodeURIComponent(s); } catch { return null; } // malformed %-escape: not an id
+  return ENTITY_ID_RE.test(d) ? d : null;
 }
 
 /** Parse a stored page_route into a typed page. NULL/empty → null (a launch
  *  from a frontend older than v117). Pure; exported for tests. */
 export function parseLaunchPage(route: string | null | undefined): LaunchPage | null {
   if (!route) return null;
+  if (!PAGE_ROUTE_RE.test(route) || route.length > PAGE_ROUTE_MAX) {
+    return { kind: 'named', route: '(unprintable route withheld)', label: 'Hub page' };
+  }
   const path = route.split(/[?#]/, 1)[0];
   const meeting = path.match(/^\/portal\/meetings\/([^/]+)(?:\/prep)?\/?$/);
-  if (meeting) return { kind: 'meeting', route, meetingId: decodeSegment(meeting[1]) };
+  const meetingId = meeting ? decodedId(meeting[1]) : null;
+  if (meetingId) return { kind: 'meeting', route, meetingId };
   const project = path.match(/^\/portal\/projects\/([^/]+)\/?$/);
-  if (project) return { kind: 'project', route, slug: decodeSegment(project[1]) };
+  const slug = project ? decodedId(project[1]) : null;
+  if (slug) return { kind: 'project', route, slug };
   for (const [re, label] of NAMED_PAGES) if (re.test(path)) return { kind: 'named', route, label };
   return { kind: 'named', route, label: 'Hub page' };
+}
+
+const TEXT_FIELD_MAX = 200;
+/** A D1 text field printed into the seed header: whitespace (incl. newlines)
+ *  collapsed to single spaces, capped, so a title cannot add header lines. */
+export function oneLine(s: string | null | undefined, max = TEXT_FIELD_MAX): string {
+  const flat = (s ?? '').replace(/\s+/g, ' ').trim();
+  return flat.length > max ? `${flat.slice(0, max)}…` : flat;
 }
 
 // What the claim knows about the page's on-screen entity after the D1 lookup.
@@ -160,7 +187,9 @@ async function lookupPageEntity(page: LaunchPage, env: Env): Promise<PageEntity 
     return m ? { kind: 'meeting', found: true, title: m.title, date: m.date } : { kind: 'meeting', found: false };
   }
   if (page.kind === 'project') {
-    const p = await env.DB.prepare('SELECT title FROM projects WHERE slug = ? OR id = ? LIMIT 1')
+    // deleted_at filter: a reused slug must resolve to the live row, and a
+    // deleted project reads as not found.
+    const p = await env.DB.prepare('SELECT title FROM projects WHERE (slug = ? OR id = ?) AND deleted_at IS NULL LIMIT 1')
       .bind(page.slug, page.slug).first<{ title: string | null }>();
     return p ? { kind: 'project', found: true, title: p.title ?? page.slug } : { kind: 'project', found: false };
   }
@@ -171,13 +200,13 @@ async function lookupPageEntity(page: LaunchPage, env: Env): Promise<PageEntity 
 export function pageHeaderLine(page: LaunchPage, entity: PageEntity | null): string {
   if (page.kind === 'meeting') {
     const what = entity && entity.found && entity.kind === 'meeting'
-      ? `"${entity.title}"${entity.date ? ` (${entity.date})` : ''}, meeting id ${page.meetingId}`
+      ? `"${oneLine(entity.title)}"${entity.date ? ` (${oneLine(entity.date, 40)})` : ''}, meeting id ${page.meetingId}`
       : `meeting id ${page.meetingId} (not found in the Hub)`;
     return `[Launched from the Hub meeting page: ${what} -- ${page.route}]`;
   }
   if (page.kind === 'project') {
     const what = entity && entity.found && entity.kind === 'project'
-      ? `"${entity.title}", project slug ${page.slug}`
+      ? `"${oneLine(entity.title)}", project slug ${page.slug}`
       : `project slug ${page.slug} (not found in the Hub)`;
     return `[Launched from the Hub project page: ${what} -- ${page.route}]`;
   }
@@ -210,14 +239,13 @@ function taskContextLines(row: ClaimRow): string[] {
   }
   const lines = [
     '[Task context — this task was open when you were launched]',
-    `Task: ${row.task_title ?? '(untitled)'}`,
-    `Status: ${row.task_status ?? 'unknown'} · Due: ${row.task_due ?? 'none'} · Project: ${row.project_name ?? 'none'}`,
+    `Task: ${oneLine(row.task_title) || '(untitled)'}`,
+    `Status: ${oneLine(row.task_status, 40) || 'unknown'} · Due: ${oneLine(row.task_due, 40) || 'none'} · Project: ${oneLine(row.project_name) || 'none'}`,
   ];
-  const desc = (row.task_description ?? '').trim();
-  if (desc) {
-    const truncated = desc.length > SEED_DESC_MAX ? `${desc.slice(0, SEED_DESC_MAX)}…` : desc;
-    lines.push(`Description: ${truncated}`);
-  }
+  // Description flattened to one line too, so it cannot forge header lines;
+  // it keeps its own longer cap.
+  const desc = oneLine(row.task_description, SEED_DESC_MAX);
+  if (desc) lines.push(`Description: ${desc}`);
   return lines;
 }
 
@@ -268,7 +296,18 @@ export async function handleClaimLaunch(id: string, request: Request, _user: Aut
       WHERE ll.id = ?`
   ).bind(id).first<ClaimRow>();
   const page = parseLaunchPage(row!.page_route);
-  const pageLine = page ? pageHeaderLine(page, await lookupPageEntity(page, env)) : null;
+  // The token is already consumed above, so a failed entity read must not 500:
+  // fall back to the not-found line and log it.
+  let entity: PageEntity | null = null;
+  if (page) {
+    try {
+      entity = await lookupPageEntity(page, env);
+    } catch (e) {
+      console.warn(`[launch-log] claim ${id}: page entity lookup failed (${e instanceof Error ? e.message : String(e)}) — header says not found`);
+      entity = page.kind === 'meeting' || page.kind === 'project' ? { kind: page.kind, found: false } : null;
+    }
+  }
+  const pageLine = page ? pageHeaderLine(page, entity) : null;
   const seed = composeLaunchSeed(row!.seed, pageLine, taskContextLines(row!));
   return json({ data: { verb: row!.tag, seed, project_slug: row!.project_slug } });
 }
