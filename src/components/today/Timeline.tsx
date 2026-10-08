@@ -149,7 +149,8 @@ export function Timeline({ events, tasks, state, projectsByPid, activeView, onTo
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
   const navigate = useNavigate()
-  // Hoist isPhone so EventRow + OverlapBand share one matchMedia listener.
+  // isPhone is threaded through TimelineGrid to EventRow, which ignores it
+  // (EventRow's breakpoints live in CSS); kept for the prop contract only.
   const isPhone = useIsMobile(768)
   // dismissedMeetings is now provided by TodayPage (lifted, #170).
   const dismissedMeetings = dismissedIds

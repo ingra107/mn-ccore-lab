@@ -112,7 +112,8 @@ export interface TodayEvent {
 }
 
 // #74: events at/over this many minutes (3h) are "long blocks" — they move to
-// the timeline's left rail so they don't squash short meetings via OverlapBand.
+// the right 25% service lane (timelineModel.ts) so they don't squash short
+// meetings in overlap clusters.
 export const LONG_EVENT_MIN = 180
 
 export interface DailyCounts {

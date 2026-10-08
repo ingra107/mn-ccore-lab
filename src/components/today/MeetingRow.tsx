@@ -44,8 +44,8 @@ const PILL_LABEL_STYLE: React.CSSProperties = {
 export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStatus = 'idle', isCalEvent = false, minHeight }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean; minHeight?: number }) {
   const [expanded, setExpanded] = useState(false)
   // N1.06 / ROW 24+25: visual breakpoints moved to CSS (.meeting-row-* in
-  // index.css). isPhone prop accepted for API compatibility with Timeline +
-  // OverlapBand callers (ROW 24); hook runs on standalone renders but value
+  // index.css). isPhone prop accepted for API compatibility with TimelineGrid
+  // callers (ROW 24); hook runs on standalone renders but value
   // is unused now that JSX branches are gone.
   useIsMobile(768) // keeps matchMedia alive on standalone renders
 
