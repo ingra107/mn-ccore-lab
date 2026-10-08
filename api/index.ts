@@ -2118,8 +2118,9 @@ defineRoute({
   visibility: 'na',
   handler: (c) => handleGetTaskLinks(c.req.param('id'), R(c), E(c)),
 });
-// Bulk project-links (backlog #147) — specific literal path registered BEFORE
-// the parameterized /:slug/links so hono matches it without ambiguity.
+// Bulk project-links (backlog #147). Defined after GET /api/projects/:id,
+// which matched it with id='links' until bindRegistryToHono started binding
+// literal paths ahead of param routes (route-dsl.ts bindOrder).
 defineRoute({
   method: 'GET',
   path: '/api/projects/links',

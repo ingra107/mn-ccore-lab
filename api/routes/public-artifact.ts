@@ -27,8 +27,9 @@
 // application only gates /portal/*, per api/index.ts:362-363) and OUTSIDE
 // /api/* (the in-code auth middleware in api/index.ts only runs on '/api/*').
 // So this handler is reachable by a signed-out external visitor with NO
-// Cloudflare Access JWT and NO API key — same posture as the existing
-// functions/og/[type]/[slug].ts share-card generator.
+// Cloudflare Access JWT and NO API key. (The /og/* share cards are reachable
+// the same way, but since 2026-10-08 api/routes/og-card.ts shows a logged-out
+// caller only public data.)
 //
 // Security-critical invariants:
 //   - Serves the raw stored body ONLY when visibility='public' AND

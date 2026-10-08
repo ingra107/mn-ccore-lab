@@ -168,6 +168,41 @@ export function _resetRegistryForTests(): void {
   ROUTE_REGISTRY.length = 0
 }
 
+// Segment rank: a literal segment is more specific than a `:param`, which is
+// more specific than a `*` wildcard.
+function segmentRank(seg: string): number {
+  if (seg.startsWith(':')) return 1
+  if (seg.includes('*')) return 2
+  return 0
+}
+
+function compareSpecificity(a: string, b: string): number {
+  const sa = a.split('/')
+  const sb = b.split('/')
+  const n = Math.min(sa.length, sb.length)
+  for (let i = 0; i < n; i++) {
+    const d = segmentRank(sa[i]) - segmentRank(sb[i])
+    if (d !== 0) return d
+  }
+  return sa.length - sb.length
+}
+
+/**
+ * The order bindRegistryToHono binds routes in. Hono runs matching handlers
+ * in registration order, so a param route bound before a literal path that it
+ * also matches answers for it: GET /api/projects/:id caught
+ * /api/projects/links with id='links' because it was defined 1,300 lines
+ * earlier. Binding by specificity (at the first segment where two paths
+ * differ in kind, literal before `:param` before `*`) makes a literal path
+ * win no matter where its defineRoute() sits in the file. The sort is a total
+ * order on the rank vectors and Array.prototype.sort is stable, so routes of
+ * equal shape keep their file order. Routes that can never match the same
+ * request are unaffected by their relative order.
+ */
+export function bindOrder(routes: readonly RouteMetadata[]): RouteMetadata[] {
+  return [...routes].sort((a, b) => compareSpecificity(a.path, b.path))
+}
+
 /**
  * How bindRegistryToHono tells an anonymous read from an identified one.
  * api/index.ts owns the answer (it holds the auth middleware's context vars
@@ -203,7 +238,7 @@ export interface ReadGate {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function bindRegistryToHono(app: Hono<any>, gate: ReadGate): void {
-  for (const route of ROUTE_REGISTRY) {
+  for (const route of bindOrder(ROUTE_REGISTRY)) {
     const method = route.method.toLowerCase() as
       | 'get'
       | 'post'
