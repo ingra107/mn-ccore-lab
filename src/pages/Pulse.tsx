@@ -257,7 +257,8 @@ export default function Pulse() {
                         lineHeight: 1.2,
                       }}
                     >
-                      {formatBrandName(g.title)}
+                      {/* A signed-out kiosk gets no grant titles (anonShape). */}
+                      {g.title ? formatBrandName(g.title) : null}
                     </span>
                     <span
                       className="uppercase mt-1"
@@ -280,8 +281,11 @@ export default function Pulse() {
       })
     }
 
-    // Scene 6 — Live activity feed, but cinematic.
-    if (activity.length) {
+    // Scene 6 — Live activity feed, but cinematic. A signed-out kiosk gets
+    // activity rows without their description (anonShape), so the scene
+    // only runs on rows that have one.
+    const describedActivity = activity.filter((a) => a.description)
+    if (describedActivity.length) {
       list.push({
         key: 'activity',
         render: () => (
@@ -291,7 +295,7 @@ export default function Pulse() {
             subtitle="The most recent moves across the lab."
           >
             <ul className="flex flex-col gap-5 max-w-[1400px]">
-              {activity.slice(0, 6).map((a, i) => (
+              {describedActivity.slice(0, 6).map((a, i) => (
                 <motion.li
                   key={a.id}
                   initial={{ opacity: 0, x: -12 }}

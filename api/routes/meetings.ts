@@ -14,12 +14,6 @@ export async function handleNextMeeting(env: Env): Promise<Response> {
   return json({ data: result || null })
 }
 
-// AM-3 (SEC-T0-1): public-safe meeting columns. Excludes internal meeting
-// content — `agenda`, `notes`, `decisions`, `attendees` — which the public
-// `SELECT *` previously leaked. Authed callers (the gated /portal/meetings
-// list page) get the full row so the existing UI keeps rendering those fields.
-const MEETING_PUBLIC_COLS = 'id, date, title, type, status, facilitator, created_at, updated_at, source_id';
-
 // One-shot "debrief landed" bell: fires only when a push transitions a meeting
 // from notes-less to notes-full (insert-with-notes or first notes upsert).
 // Later re-pushes surface via the entity_seen teal dot, never a second bell.
@@ -40,28 +34,24 @@ async function fireMeetingDebriefNotification(env: Env, meetingId: string, sourc
   ).run();
 }
 
-// GET /api/meetings — list all meetings
-// `isAuthed` true when the caller has a valid JWT or API key (resolved by the
-// index.ts router). Unauth callers get the redacted projection.
-export async function handleGetMeetings(env: Env, isAuthed = false): Promise<Response> {
-  const cols = isAuthed ? '*' : MEETING_PUBLIC_COLS;
+// GET /api/meetings — list all meetings. The route is auth: 'authed'; an
+// anonymous caller is refused before this runs (bindRegistryToHono), so the
+// old per-handler public column list (AM-3) is gone.
+export async function handleGetMeetings(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
-    `SELECT ${cols} FROM meetings ORDER BY date DESC`
+    'SELECT * FROM meetings ORDER BY date DESC'
   ).all();
   return json({ data: result.results, count: result.results.length });
 }
 
 // GET /api/meetings/:id — single meeting with action items + agenda items.
-// `isAuthed` true when the caller has a valid JWT or API key (resolved by
-// index.ts, mirroring the handleGetMeetings pattern). Unauth callers get the
-// public-safe column projection; authed callers get the full row.
+// The route is auth: 'authed' (anonymous callers never reach this handler).
 //
 // `canSeePb` (#8842 R6): action items are TASK rows, so a non-PI caller gets
 // the same PB-project filter as every other task feed (pbTaskVisibilitySql).
 // Before this the route returned PB-private tasks to any authed team member.
-export async function handleGetMeeting(id: string, env: Env, isAuthed = false, canSeePb = false): Promise<Response> {
-  const cols = isAuthed ? '*' : MEETING_PUBLIC_COLS;
-  const meeting = await env.DB.prepare(`SELECT ${cols} FROM meetings WHERE id = ?`).bind(id).first();
+export async function handleGetMeeting(id: string, env: Env, canSeePb = false): Promise<Response> {
+  const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();
   if (!meeting) return error('Meeting not found', 404);
 
   // SEC-P2-02: exclude the private `notes` column from task rows returned in

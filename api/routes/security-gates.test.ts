@@ -18,80 +18,43 @@ import { handleGetSearch } from './search'
 import { handleListFiles } from './uploads'
 import type { Env } from '../helpers'
 
-// ── AM-3: /api/team projection ────────────────────────────────────────────────
-describe('handleGetTeam — AM-3 public projection', () => {
-  function teamEnv(): Env {
-    const fullRow = {
-      id: 'm1', name: 'Nick', slug: 'nick-ingraham', role: 'PI',
-      member_type: 'director', photo_url: null, title: 'Director',
-      email: 'ingra107@umn.edu', auto_created: 0,
-    }
-    return {
+// ── AM-3: /api/team and /api/meetings ───────────────────────────────────────
+// The anonymous projection moved out of these handlers to the route layer:
+// /api/team is a public GET whose anonShape keeps slug + name, /api/meetings
+// is auth: 'authed'. The anonymous half is proved through the real worker in
+// api/index.anon-reads.test.ts. What stays here: the handlers hand signed-in
+// callers the full row.
+describe('handleGetTeam — signed-in callers get the full row', () => {
+  it('includes email (anonymous callers are cut down by the route anonShape)', async () => {
+    const env = {
       DB: {
         prepare: (sql: string) => ({
           all: async () => {
-            // Public path selects an explicit column list (no '*' / no email);
-            // authed path selects '*'. Mirror that: only include email when the
-            // SQL didn't restrict columns (i.e. SELECT * ...).
-            const isStar = /SELECT \* FROM team_members/i.test(sql)
-            const row: Record<string, unknown> = { ...fullRow }
-            if (!isStar) { delete row.email; delete row.auto_created }
-            return { results: [row] }
+            expect(sql).toMatch(/SELECT \* FROM team_members/i)
+            return { results: [{ id: 'm1', name: 'Nick', slug: 'nick-ingraham', email: 'ingra107@umn.edu', auto_created: 0 }] }
           },
         }),
       },
     } as unknown as Env
-  }
-
-  it('omits email for unauthenticated callers', async () => {
-    const res = await handleGetTeam(teamEnv(), false)
-    const body = await res.json() as { data: Record<string, unknown>[] }
-    expect(body.data[0]).not.toHaveProperty('email')
-    expect(body.data[0]).not.toHaveProperty('auto_created')
-    expect(body.data[0].name).toBe('Nick') // display fields preserved
-  })
-
-  it('includes email for authenticated callers', async () => {
-    const res = await handleGetTeam(teamEnv(), true)
+    const res = await handleGetTeam(env)
     const body = await res.json() as { data: Record<string, unknown>[] }
     expect(body.data[0]).toHaveProperty('email', 'ingra107@umn.edu')
   })
 })
 
-// ── AM-3: /api/meetings projection ──────────────────────────────────────────────
-describe('handleGetMeetings — AM-3 public projection', () => {
-  function meetingsEnv(): Env {
-    const fullRow = {
-      id: 'mtg1', date: '2026-05-22', title: 'Lab meeting', type: 'biweekly',
-      status: 'upcoming', facilitator: 'nick-ingraham',
-      agenda: 'SECRET AGENDA', notes: 'PRIVATE NOTES', decisions: 'DECISIONS',
-      attendees: 'everyone',
-    }
-    return {
+describe('handleGetMeetings — signed-in callers get the full row', () => {
+  it('includes notes (the route refuses anonymous callers before the handler)', async () => {
+    const env = {
       DB: {
         prepare: (sql: string) => ({
           all: async () => {
-            const isStar = /SELECT \* FROM meetings/i.test(sql)
-            const row: Record<string, unknown> = { ...fullRow }
-            if (!isStar) { delete row.agenda; delete row.notes; delete row.decisions; delete row.attendees }
-            return { results: [row] }
+            expect(sql).toMatch(/SELECT \* FROM meetings/i)
+            return { results: [{ id: 'mtg1', date: '2026-05-22', title: 'Lab meeting', notes: 'PRIVATE NOTES' }] }
           },
         }),
       },
     } as unknown as Env
-  }
-
-  it('omits notes/agenda/decisions for unauthenticated callers', async () => {
-    const res = await handleGetMeetings(meetingsEnv(), false)
-    const body = await res.json() as { data: Record<string, unknown>[] }
-    expect(body.data[0]).not.toHaveProperty('notes')
-    expect(body.data[0]).not.toHaveProperty('agenda')
-    expect(body.data[0]).not.toHaveProperty('decisions')
-    expect(body.data[0].title).toBe('Lab meeting') // public fields preserved
-  })
-
-  it('includes notes for authenticated callers', async () => {
-    const res = await handleGetMeetings(meetingsEnv(), true)
+    const res = await handleGetMeetings(env)
     const body = await res.json() as { data: Record<string, unknown>[] }
     expect(body.data[0]).toHaveProperty('notes', 'PRIVATE NOTES')
   })

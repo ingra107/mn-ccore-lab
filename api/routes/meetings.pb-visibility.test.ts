@@ -72,12 +72,12 @@ describe('pbTaskVisibilitySql — the one rule', () => {
 
 describe('GET /api/meetings/:id — action_items', () => {
   it('non-PI caller does not see PB-private action items', async () => {
-    const body = await (await handleGetMeeting('mtg_now', env, true, false)).json() as any
+    const body = await (await handleGetMeeting('mtg_now', env, false)).json() as any
     expect(titles(body.data.action_items)).toEqual(['NO PROJECT', 'TEAM TASK'])
   })
 
   it('PI caller sees every live action item', async () => {
-    const body = await (await handleGetMeeting('mtg_now', env, true, true)).json() as any
+    const body = await (await handleGetMeeting('mtg_now', env, true)).json() as any
     expect(titles(body.data.action_items)).toEqual(
       ['NO PROJECT', 'PB PRIVATE', 'PB PRIVATE BY SLUG', 'TEAM TASK', 'UNKNOWN PROJECT REF'],
     )

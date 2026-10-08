@@ -9,6 +9,11 @@
 > enforced server-side via X-API-Key + `REQUIRE_AUTH=1` + JWT
 > verification. `/api/health` is deliberately exempt from auth so
 > external uptime monitors can probe it.
+>
+> An anonymous caller gets `ok`, `failures` and `timestamp` only (the
+> route's `anonShape` in `api/index.ts`); the `checks` block below is
+> returned to signed-in and API-key callers. Monitors key on the status
+> code, which is unchanged.
 
 **Healthy** (sample taken 2026-04-20 post Phase 36c):
 ```json

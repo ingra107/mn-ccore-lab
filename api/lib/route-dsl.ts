@@ -12,7 +12,8 @@
 // `/:id/comments` and `/:id/ics` routes need DB parent lookup — entity must
 // be explicit metadata, not string-derived.
 
-import type { Hono } from 'hono'
+import type { Context, Hono } from 'hono'
+import { projectAnonResponse, type AnonShape } from './anon-shape'
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 export type AuthLevel = 'public' | 'authed' | 'pi'
@@ -81,10 +82,8 @@ export type EntityName =
 
 export type VisibilityPolicy = 'pb-aware' | 'na'
 
-export interface RouteMetadata {
-  method: HttpMethod
+interface RouteMetadataBase {
   path: string
-  auth: AuthLevel
   entity?: EntityName
   visibility?: VisibilityPolicy
   /**
@@ -108,6 +107,19 @@ export interface RouteMetadata {
   handler: (...args: any[]) => Promise<Response> | Response
 }
 
+/**
+ * A public GET is the only kind of route an anonymous caller can read, so it
+ * is the only kind that carries an `anonShape`, and it MUST carry one: the
+ * allowlist of response fields an anonymous caller sees (anon-shape.ts). A
+ * public GET without a shape does not type-check, and defineRoute() throws on
+ * it at load time for callers that cast past the type. Every other route has
+ * no shape and is never read anonymously when auth is enforced.
+ */
+export type RouteMetadata =
+  | (RouteMetadataBase & { method: 'GET'; auth: 'public'; anonShape: AnonShape })
+  | (RouteMetadataBase & { method: HttpMethod; auth: Exclude<AuthLevel, 'public'>; anonShape?: never })
+  | (RouteMetadataBase & { method: Exclude<HttpMethod, 'GET'>; auth: 'public'; anonShape?: never })
+
 const VALID_AUTH: ReadonlySet<AuthLevel> = new Set<AuthLevel>([
   'public',
   'authed',
@@ -120,6 +132,20 @@ export function defineRoute(meta: RouteMetadata): RouteMetadata {
   if (!VALID_AUTH.has(meta.auth)) {
     throw new Error(
       `auth must be one of public|authed|pi, got "${meta.auth}" for ${meta.method} ${meta.path}`,
+    )
+  }
+  // The load-time half of the type rule, for callers that cast past it. Read
+  // through the wide shape: the union says these states cannot exist.
+  const raw = meta as RouteMetadataBase & { method: HttpMethod; auth: AuthLevel; anonShape?: AnonShape }
+  const publicGet = raw.method === 'GET' && raw.auth === 'public'
+  if (publicGet && !raw.anonShape) {
+    throw new Error(
+      `public GET ${raw.path} has no anonShape: name the fields an anonymous caller may see, or make it auth: 'authed'`,
+    )
+  }
+  if (raw.anonShape && !publicGet) {
+    throw new Error(
+      `${raw.method} ${raw.path} has an anonShape but is not a public GET; only a public GET is read anonymously`,
     )
   }
   const dup = ROUTE_REGISTRY.find(
@@ -143,6 +169,20 @@ export function _resetRegistryForTests(): void {
 }
 
 /**
+ * How bindRegistryToHono tells an anonymous read from an identified one.
+ * api/index.ts owns the answer (it holds the auth middleware's context vars
+ * and REQUIRE_AUTH); route-dsl owns what happens next.
+ */
+export interface ReadGate {
+  // Method syntax on purpose: api/index.ts passes handlers typed for its own
+  // Context<AppEnv>, which method parameters accept.
+  /** True when auth is enforced and the caller has neither a session nor a valid API key. */
+  isAnonymous(c: Context): boolean
+  /** The 401 sent to an anonymous caller of a non-public GET. */
+  deny(c: Context): Response
+}
+
+/**
  * Bind every entry in ROUTE_REGISTRY to a Hono app. Called ONCE from
  * api/index.ts after every defineRoute() in the imported route modules has
  * run (module-load side-effect).
@@ -151,16 +191,35 @@ export function _resetRegistryForTests(): void {
  * extract what they need (request, env, params) on the inside. This keeps
  * the registration uniform and leaves the per-handler argument shape as
  * an internal detail of each route module.
+ *
+ * GET routes are the read chokepoint. The route Hono actually matched decides
+ * access, from its own metadata, so there is no second list of public paths
+ * to drift from it. For an anonymous caller (gate.isAnonymous):
+ *   - auth 'authed' | 'pi'  -> gate.deny(c), the handler never runs;
+ *   - auth 'public'         -> the handler runs and its response is projected
+ *                              through the route's anonShape (allowlist).
+ * Identified callers (session or API key) get the handler's response as is.
+ * Hono also routes HEAD through these GET handlers, so HEAD is gated too.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function bindRegistryToHono(app: Hono<any>): void {
+export function bindRegistryToHono(app: Hono<any>, gate: ReadGate): void {
   for (const route of ROUTE_REGISTRY) {
     const method = route.method.toLowerCase() as
       | 'get'
       | 'post'
       | 'put'
       | 'delete'
+    if (route.method !== 'GET') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      app[method](route.path, (c: any) => route.handler(c))
+      continue
+    }
+    const label = `GET ${route.path}`
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    app[method](route.path, (c: any) => route.handler(c))
+    app.get(route.path, async (c: any) => {
+      if (!gate.isAnonymous(c)) return route.handler(c)
+      if (route.auth !== 'public') return gate.deny(c)
+      return projectAnonResponse(await route.handler(c), route.anonShape, label)
+    })
   }
 }

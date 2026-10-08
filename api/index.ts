@@ -12,6 +12,7 @@ const PB_SERVICE_SLUG = 'nick-ingraham';
 // raw app.get/post calls.
 import { defineRoute, bindRegistryToHono } from './lib/route-dsl';
 import type { HttpMethod } from './lib/route-dsl';
+import type { AnonShape } from './lib/anon-shape';
 import type { AuthUser } from './helpers';
 import { validateApiKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
@@ -125,62 +126,21 @@ type AppEnv = {
 const app = new Hono<AppEnv>();
 
 // ─────────────────────────────────────────────────────────────────────────────
-// isPublicGet — allowlist of GET paths that don't require authentication even
-// when REQUIRE_AUTH=1. Everything else (GET /api/*) requires a valid CF Access
-// JWT or API key. This mirrors the approach used for POST/PUT but applies to
-// reads so that team portals behind CF Access don't need additional per-route
-// auth checks for sensitive data endpoints.
+// Anonymous reads. There is no list of public paths here any more: a GET route
+// is readable without sign-in only when its own defineRoute() says
+// auth: 'public', and then the caller sees only the fields its `anonShape`
+// names (api/lib/anon-shape.ts, applied by bindRegistryToHono). The old
+// path allowlist (isPublicGet) drifted from the route metadata in both
+// directions: /api/projects/deleted-since and /api/digest/:id/comments were
+// readable, /api/activity/:id/replies (declared public) was not.
 //
-// Parameterized rules use prefix-match because Hono exposes the resolved
-// pathname string, not a parsed params object, at middleware level.
+// Publication rows are public record; the same shape serves the full list
+// and a member's featured list.
 // ─────────────────────────────────────────────────────────────────────────────
-function isPublicGet(path: string): boolean {
-  // Exact-match public routes
-  const exactPublic = new Set([
-    '/api/health',
-    '/api/version',
-    '/api/auth/me',
-    '/api/team',
-    '/api/team/slugs',
-    '/api/team/pulse',
-    '/api/publications',
-    '/api/grants',
-    '/api/grants/timeline',
-    '/api/stats',
-    '/api/citations',
-    '/api/graph/collaboration',
-    '/api/projects',
-    '/api/projects/health',
-    '/api/activity',
-    '/api/expertise',
-    '/api/meetings',
-    '/api/meetings/next',
-    '/api/digest',
-    '/api/digest/dates',
-  ]);
-  if (exactPublic.has(path)) return true;
-
-  // /api/team/:slug — single-segment profile (exclude analytics sub-routes)
-  // Matches /api/team/nick-ingraham but NOT /api/team/by-expertise
-  if (/^\/api\/team\/[^/]+$/.test(path) && path !== '/api/team/by-expertise') return true;
-
-  // /api/team/:slug/featured-publications — the member's own curated Top-10
-  // (#906). Public for the same reason /api/publications and the member
-  // profile above are: it renders on the PUBLIC /team/:slug marketing page.
-  // The single-segment rule above deliberately does NOT cover sub-resources
-  // (cv-data, trajectory, contributions are all authed), so this needs its
-  // own line. The PUT half is NOT affected by this list — writes are gated
-  // by the write-auth middleware plus the handler's own actor check.
-  if (/^\/api\/team\/[^/]+\/featured-publications$/.test(path)) return true;
-
-  // /api/projects/:slug — single project view (NOT sub-resources like /api/projects/:slug/comments)
-  if (/^\/api\/projects\/[^/]+$/.test(path)) return true;
-
-  // /api/digest/* — digest comments and other digest sub-resources
-  if (path.startsWith('/api/digest/')) return true;
-
-  return false;
-}
+const PUBLIC_PUBLICATION: AnonShape = {
+  id: true, title: true, authors: true, journal: true, year: true, status: true,
+  doi: true, pubmed: true, abstract: true, topics: true, featured: true, author_slugs: true,
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Global error handler — matches old top-level try/catch behavior.
@@ -311,27 +271,18 @@ app.use('/api/pb/*', async (c, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. GET auth lockdown — require auth for non-public GET endpoints.
-// When REQUIRE_AUTH=1, any GET that isn't in isPublicGet() needs a CF Access
-// JWT or a valid API key. This closes the read-path hole where team members
-// could fetch /api/tasks, /api/pb/*, /api/analytics/*, etc. without signing in.
-// Public routes (marketing pages, /api/health, /api/version, team profiles, etc.)
-// pass through unchanged. The PI-gate middleware above already handles /api/pb/*
-// before this runs, so /api/pb/* GETs from non-PI callers are 403'd first.
+// 4. GET auth lockdown lives in bindRegistryToHono (api/lib/route-dsl.ts), at
+// the end of this file. With REQUIRE_AUTH=1, an anonymous GET of a route that
+// is not auth: 'public' gets 401 before its handler runs, and a public GET's
+// response is cut down to that route's anonShape. The decision rides on the
+// route Hono actually matched, so it cannot disagree with the route metadata.
+// An anonymous GET of a path with no route gets Hono's 404.
 // ─────────────────────────────────────────────────────────────────────────────
-app.use('/api/*', async (c, next) => {
-  if (c.req.method !== 'GET') { await next(); return; }
+function isAnonymousRead(c: Context<AppEnv>): boolean {
   const env = c.get('env') as unknown as { REQUIRE_AUTH?: string };
-  if (env.REQUIRE_AUTH !== '1') { await next(); return; }
-  const path = new URL(c.req.url).pathname;
-  if (isPublicGet(path)) { await next(); return; }
-  const authedUser = c.get('authedUser');
-  const hasApiKey = c.get('apiKeyValid') === true;
-  if (!authedUser && !hasApiKey) {
-    return c.json({ error: 'Authentication required' }, 401, corsHeaders);
-  }
-  await next();
-});
+  if (env.REQUIRE_AUTH !== '1') return false;
+  return !c.get('authedUser') && c.get('apiKeyValid') !== true;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. Write-method auth gate + user resolution.
@@ -344,8 +295,8 @@ app.use('/api/*', async (c, next) => {
 // remembers to check `isAnonymous(user)` itself — a Level-3 scattered guard,
 // not a chokepoint.
 //
-// Fix: gate every method EXCEPT GET (GET has its own allowlisted gate at
-// step 4 above). WRITE_AUTH_METHODS is typed as
+// Fix: gate every method EXCEPT GET (GET is gated per route in
+// bindRegistryToHono). WRITE_AUTH_METHODS is typed as
 // `Record<Exclude<HttpMethod, 'GET'>, true>` — a mapped type over the SAME
 // HttpMethod union route-dsl.ts uses to constrain defineRoute(). Every route
 // in this file is registered exclusively through defineRoute +
@@ -458,6 +409,7 @@ defineRoute({
   method: 'GET',
   path: '/api/auth/me',
   auth: 'public',
+  anonShape: { authenticated: true },
   handler: async (c) => {
   const env = E(c);
   const user = c.get('authedUser') || (await getAuthUser(c.req.raw, env));
@@ -483,6 +435,7 @@ defineRoute({
   method: 'GET',
   path: '/api/version',
   auth: 'public',
+  anonShape: { version: true, env: true },
   handler: (c) => handleVersion(E(c)),
 });
 
@@ -490,6 +443,7 @@ defineRoute({
   method: 'GET',
   path: '/api/health',
   auth: 'public',
+  anonShape: { ok: true, failures: [true], timestamp: true },
   handler: async (c) => {
   const env = E(c);
   const failures: string[] = [];
@@ -663,25 +617,36 @@ defineRoute({
 defineRoute({
   method: 'GET',
   path: '/api/digest/dates',
-  auth: 'public',
+  auth: 'authed',
+  entity: 'digest',
+  visibility: 'na',
   handler: (c) => handleDigestDates(E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/digest/comment-counts',
-  auth: 'public',
+  auth: 'authed',
+  entity: 'digest',
+  visibility: 'na',
   handler: (c) => handleDigestCommentCounts(U(c), E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/digest',
   auth: 'public',
+  anonShape: {
+    // The Home page's LatestDigest card: title, journal, topic chips, score.
+    data: [{ id: true, title: true, journal: true, topics: true, relevance_score: true }],
+    count: true,
+  },
   handler: (c) => handleGetDigest(U(c), E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/digest/:id/comments',
-  auth: 'public',
+  auth: 'authed',
+  entity: 'digest',
+  visibility: 'na',
   handler: (c) => handleGetDigestComments(c.req.param('id'), E(c)),
 });
 
@@ -744,6 +709,10 @@ defineRoute({
   method: 'GET',
   path: '/api/projects/health',
   auth: 'public',
+  anonShape: {
+    // The /pulse kiosk's health scene reads only the summary counts.
+    summary: { total: true, healthy: true, needs_attention: true, at_risk: true, critical: true, avg_score: true },
+  },
   handler: (c) => handleProjectHealth(E(c), CSP(c)),
 });
 // Tombstone endpoint — consumed by sync_d1_pull.pull_hub_projects to mirror
@@ -752,7 +721,9 @@ defineRoute({
 defineRoute({
   method: 'GET',
   path: '/api/projects/deleted-since',
-  auth: 'public',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
   handler: (c) => handleGetDeletedProjectsSince(U(c), E(c)),
 });
 defineRoute({
@@ -865,6 +836,12 @@ defineRoute({
   method: 'GET',
   path: '/api/projects',
   auth: 'public',
+  anonShape: {
+    // Home and /pulse count active projects from `status`; nothing public
+    // renders a project's title, notes, links or folders.
+    data: [{ status: true }],
+    count: true,
+  },
   handler: (c) => handleGetProjects(U(c), E(c), c.get('user'), c.get('apiKeyValid') === true),
 });
 // GET /api/projects/:id — single-record fetch by id or slug (codex Q4 2026-05-12).
@@ -873,7 +850,9 @@ defineRoute({
 defineRoute({
   method: 'GET',
   path: '/api/projects/:id',
-  auth: 'public',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'pb-aware',
   handler: (c) => handleGetProject(c.req.param('id'), E(c), c.get('user'), c.get('apiKeyValid') === true),
 });
 
@@ -891,7 +870,9 @@ defineRoute({
 defineRoute({
   method: 'GET',
   path: '/api/meetings/next',
-  auth: 'public',
+  auth: 'authed',
+  entity: 'meetings',
+  visibility: 'na',
   handler: (c) => handleNextMeeting(E(c)),
 });
 // Agenda/prep/generate-agenda are auth-gated (isAuthed flag mirrors handleGetMeeting pattern).
@@ -928,13 +909,15 @@ defineRoute({
   entity: 'meetings',
   // #8842 R6: action items are task rows; non-PI callers get the PB filter.
   visibility: 'pb-aware',
-  handler: (c) => handleGetMeeting(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true, CSP(c)),
+  handler: (c) => handleGetMeeting(c.req.param('id'), E(c), CSP(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/meetings',
-  auth: 'public',
-  handler: (c) => handleGetMeetings(E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true),
+  auth: 'authed',
+  entity: 'meetings',
+  visibility: 'na',
+  handler: (c) => handleGetMeetings(E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1025,12 +1008,21 @@ defineRoute({
   method: 'GET',
   path: '/api/grants/timeline',
   auth: 'public',
+  anonShape: {
+    // /pulse grant scene. Titles stay private: proposals in preparation are listed here too.
+    data: [{ id: true, mechanism: true, agency: true, proposed: true }],
+  },
   handler: (c) => handleGrantsTimeline(E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/grants',
   auth: 'public',
+  anonShape: {
+    // Home counts active grants from `proposed`.
+    data: [{ id: true, mechanism: true, agency: true, proposed: true }],
+    count: true,
+  },
   handler: (c) => handleGetGrants(E(c)),
 });
 
@@ -1105,6 +1097,10 @@ defineRoute({
   method: 'GET',
   path: '/api/expertise',
   auth: 'public',
+  anonShape: {
+    // /team filter chips and the /team/:slug expertise list.
+    data: [{ id: true, member_slug: true, tag: true, source: true, confidence: true }],
+  },
   handler: (c) => handleGetExpertise(U(c), E(c)),
 });
 
@@ -1295,48 +1291,74 @@ defineRoute({
   method: 'GET',
   path: '/api/publications',
   auth: 'public',
+  anonShape: { data: [PUBLIC_PUBLICATION], count: true },
   handler: (c) => handleGetPublications(U(c), E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/team',
   auth: 'public',
-  handler: (c) => handleGetTeam(E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true),
+  anonShape: {
+    // Home and /pulse read only the head count; profiles come from src/data/team.
+    data: [{ slug: true, name: true }],
+    count: true,
+  },
+  handler: (c) => handleGetTeam(E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/team/slugs',
-  auth: 'public',
+  auth: 'authed',
+  entity: 'team',
+  visibility: 'na',
   handler: (c) => handleTeamSlugs(E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/team/pulse',
-  auth: 'public',
-  handler: (c) => handleTeamPulse(U(c), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true),
+  auth: 'authed',
+  entity: 'team',
+  visibility: 'na',
+  handler: (c) => handleTeamPulse(U(c), E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/graph/collaboration',
-  auth: 'public',
+  auth: 'authed',
+  entity: 'publications',
+  visibility: 'na',
   handler: (c) => handleCollaborationGraph(E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/stats',
   auth: 'public',
+  anonShape: {
+    data: {
+      publicationCount: true, teamSize: true, grantCount: true,
+      projectCount: true, activeProjectCount: true, featuredPublicationCount: true,
+    },
+  },
   handler: (c) => handleGetStats(E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/citations',
-  auth: 'public',
+  auth: 'authed',
+  entity: 'citations',
+  visibility: 'na',
   handler: (c) => handleGetCitations(E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/activity',
   auth: 'public',
+  anonShape: {
+    // /team marks members active this week from actor + timestamp. The
+    // free-text description (internal progress notes) stays private.
+    data: [{ id: true, type: true, actor: true, timestamp: true }],
+    count: true,
+  },
   handler: (c) => handleGetActivity(U(c), E(c), CSP(c)),
 });
 defineRoute({
@@ -1381,7 +1403,7 @@ defineRoute({
 defineRoute({
   method: 'GET',
   path: '/api/activity/:id/replies',
-  auth: 'public',
+  auth: 'authed',
   entity: 'activity',
   visibility: 'na',
   handler: (c) => handleGetActivityReplies(c.req.param('id'), R(c), E(c)),
@@ -1640,7 +1662,7 @@ defineRoute({
   handler: (c) => handleGetContributions(c.req.param('slug'), U(c), E(c)),
 });
 // #906 — the member's own curated Top-10. GET is public because it renders on
-// the public /team/:slug page (and is in isPublicGet above). PUT is the
+// the public /team/:slug page (auth: 'public' + anonShape below). PUT is the
 // replace-set write; the handler enforces "the member themselves, a PI, or the
 // service key" itself, because auth: 'authed' only proves SOMEONE is signed in,
 // not that they are the member whose list this is.
@@ -1648,6 +1670,7 @@ defineRoute({
   method: 'GET',
   path: '/api/team/:slug/featured-publications',
   auth: 'public',
+  anonShape: { data: [PUBLIC_PUBLICATION], count: true },
   handler: (c) => handleGetMemberFeaturedPublications(c.req.param('slug'), E(c)),
 });
 defineRoute({
@@ -3094,7 +3117,10 @@ defineRoute({
 // Single registration site — replaces the per-line app.get/post calls that
 // the migration deleted. ROUTE_REGISTRY is populated by side-effect as each
 // defineRoute({...}) above evaluates at module-load.
-bindRegistryToHono(app);
+bindRegistryToHono(app, {
+  isAnonymous: isAnonymousRead,
+  deny: (c) => c.json({ error: 'Authentication required' }, 401, corsHeaders),
+});
 
 app.notFound(() => error('Not found', 404));
 

@@ -718,8 +718,10 @@ export default function MemberPage() {
         </>
       )}
 
-      {/* Dashboard — projects, action items, publication count, summary */}
-      {slug && <MenteeDashboard slug={slug} name={member.name} />}
+      {/* Dashboard — projects, action items, publication count, summary.
+          Signed-in only: its projects and action items are not public data
+          (/api/projects shows a visitor status only; tasks need sign-in). */}
+      {slug && isAuthenticated && <MenteeDashboard slug={slug} name={member.name} />}
 
       {/* Milestones — for fellows and research team members */}
       {slug && (mentee || member.role?.includes('Fellow') || member.role?.includes('Researcher')) && (

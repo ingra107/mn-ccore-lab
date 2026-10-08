@@ -515,9 +515,10 @@ describe('handleSyncFileActivity — PI-or-API-key gate', () => {
   })
 })
 
-// ── 11. Meeting detail — full row for authed, public cols for unauth ──────────
+// ── 11. Meeting detail — full row (the route is auth: 'authed'; anonymous
+// callers are refused before the handler, api/index.anon-reads.test.ts) ──────
 
-describe('handleGetMeeting — auth projection', () => {
+describe('handleGetMeeting — full row', () => {
   beforeEach(() => {
     insertRow(db, 'meetings', {
       id: 'mtg1', date: '2026-05-28', title: 'Team standup', type: 'biweekly', status: 'upcoming', facilitator: PI_SLUG,
@@ -525,20 +526,8 @@ describe('handleGetMeeting — auth projection', () => {
     })
   })
 
-  it('unauthenticated callers get public-safe columns only (no agenda/notes/decisions)', async () => {
-    const res = await handleGetMeeting('mtg1', makeEnv(), false)
-    expect(res.status).toBe(200)
-    const body = await res.json() as { data: Record<string, unknown> }
-    expect(body.data.title).toBe('Team standup') // public field preserved
-    expect(body.data).not.toHaveProperty('agenda')
-    expect(body.data).not.toHaveProperty('notes')
-    expect(body.data).not.toHaveProperty('decisions')
-    expect(body.data).not.toHaveProperty('attendees')
-    expect(JSON.stringify(body)).not.toMatch(/PRIVATE AGENDA|INTERNAL NOTES|TEAM DECISIONS/)
-  })
-
   it('authenticated callers get the full row (including agenda/notes/decisions)', async () => {
-    const res = await handleGetMeeting('mtg1', makeEnv(), true)
+    const res = await handleGetMeeting('mtg1', makeEnv())
     expect(res.status).toBe(200)
     const body = await res.json() as { data: Record<string, unknown> }
     expect(body.data).toHaveProperty('agenda', 'PRIVATE AGENDA')
@@ -547,7 +536,7 @@ describe('handleGetMeeting — auth projection', () => {
   })
 
   it('returns 404 when meeting does not exist', async () => {
-    const res = await handleGetMeeting('ghost-mtg', makeEnv(), true)
+    const res = await handleGetMeeting('ghost-mtg', makeEnv())
     expect(res.status).toBe(404)
   })
 })

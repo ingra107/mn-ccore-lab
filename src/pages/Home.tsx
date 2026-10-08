@@ -21,6 +21,7 @@ import CLIFMap from '../components/CLIFMap'
 import UpcomingMeetingBanner from '../components/UpcomingMeetingBanner'
 import LatestDigest from '../components/LatestDigest'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { useAuth } from '../hooks/useAuth'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
@@ -105,6 +106,7 @@ export default function Home() {
   const { data: projects = [] } = useProjects()
   const { data: team = [] } = useTeam()
   const { data: grants = [] } = useGrants()
+  const { isAuthenticated } = useAuth()
   const pillarsRef = useScrollRevealGroup('.fade-in-up', 150)
   const affiliatesRef = useScrollRevealGroup('.fade-in-up', 100)
 
@@ -479,7 +481,9 @@ export default function Home() {
         </section>
       </div>
 
-      <UpcomingMeetingBanner />
+      {/* Lab meetings are signed-in only (/api/meetings is auth: 'authed');
+          the banner links into the portal, so a visitor never sees it. */}
+      {isAuthenticated && <UpcomingMeetingBanner />}
 
       <FeaturedResearch />
 

@@ -737,8 +737,8 @@ const patternBCases: PatternBCase[] = [
   // #8842 R6. The filter is also exercised in meetings.pb-visibility.test.ts.
   {
     label: 'GET /api/meetings/:id (action_items) — filtered for non-PI',
-    callNonPi: (env) => handleGetMeeting('mtg-id', env, true, false),
-    callPi:    (env) => handleGetMeeting('mtg-id', env, true, true),
+    callNonPi: (env) => handleGetMeeting('mtg-id', env, false),
+    callPi:    (env) => handleGetMeeting('mtg-id', env, true),
   },
   {
     label: 'GET /api/calendar/events (task deadlines) — filtered for non-PI',
