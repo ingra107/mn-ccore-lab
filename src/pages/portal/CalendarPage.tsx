@@ -8,7 +8,6 @@ import ToggleButton from '../../components/ToggleButton'
 import { formatBrandName } from '../../components/BrandName'
 import { useCalendarEvents } from '../../hooks/useApiData'
 import { isProductionVisible } from '../../lib/isProductionVisible'
-import { getPersonInfo } from '../../data/team'
 import { formatLongDate, formatShortDate, localDateKey } from '../../lib/dateUtils'
 import type { CalendarEvent } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
@@ -65,6 +64,9 @@ export default function CalendarPage() {
     }
   }, [currentDate])
 
+  // Meetings and grant milestones are lab-wide; task deadlines are the
+  // viewer's own, scoped by the Worker (api/routes/calendar.ts), so a task
+  // row needs no assignee label here.
   const { data: rawEvents = [], isLoading } = useCalendarEvents({ start, end })
   const events = useMemo(
     () => rawEvents.filter((e) => isProductionVisible(e.title)),
@@ -479,7 +481,6 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
             {dayEvents.map((e) => {
               const config = eventColors[e.type] || eventColors.task
               const Icon = eventIcons[e.type] || Calendar
-              const assignee = e.meta?.assignee as string | undefined
               const to = eventLinkTo(e)
               const Wrapper: ElementType = to ? Link : 'div'
               const wrapperProps = to ? { to } : {}
@@ -494,9 +495,6 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
                       <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{formatBrandName(e.title)}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: config.color, backgroundColor: config.bg }}>{e.type}</span>
-                        {assignee && (
-                          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{getPersonInfo(assignee).name}</span>
-                        )}
                       </div>
                     </div>
                   </Wrapper>
@@ -548,7 +546,6 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
               {dayEvents.map((e) => {
                 const config = eventColors[e.type] || eventColors.task
                 const Icon = eventIcons[e.type] || Calendar
-                const assignee = e.meta?.assignee as string | undefined
                 const to = eventLinkTo(e)
                 const AgendaWrapper: ElementType = to ? Link : 'div'
                 const agendaProps = to ? { to } : {}
@@ -559,9 +556,6 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                         <Icon {...ICON_PROPS} size={12} style={{ color: config.color }} />
                       </div>
                       <span className="flex-1 text-sm" style={{ color: 'var(--ink)' }}>{formatBrandName(e.title)}</span>
-                      {assignee && (
-                        <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{getPersonInfo(assignee).name.split(' ')[0]}</span>
-                      )}
                       <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: config.color, backgroundColor: config.bg }}>{e.type}</span>
                     </AgendaWrapper>
                   </motion.div>

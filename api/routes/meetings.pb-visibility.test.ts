@@ -89,14 +89,31 @@ describe('GET /api/calendar/events — task deadlines', () => {
   const taskTitles = (body: any) => titles(body.data.filter((e: any) => e.type === 'task'))
 
   it('non-PI caller does not see PB-private tasks or deleted tasks', async () => {
-    const body = await (await handleCalendarEvents(url(), env, false)).json() as any
+    const body = await (await handleCalendarEvents(url(), env, 'nick-ingraham', false)).json() as any
     expect(taskTitles(body)).toEqual(['NO PROJECT', 'TEAM TASK'])
   })
 
   it('PI caller sees PB tasks, still not deleted ones', async () => {
-    const body = await (await handleCalendarEvents(url(), env, true)).json() as any
+    const body = await (await handleCalendarEvents(url(), env, 'nick-ingraham', true)).json() as any
     expect(taskTitles(body)).toContain('PB PRIVATE')
     expect(taskTitles(body)).not.toContain('DELETED TASK')
+  })
+
+  // 2026-10-08 (Nick: "the lab calendar and Today page show tasks not assigned
+  // to the user"): task deadlines are the viewer's own. Every fixture task is
+  // nick-ingraham's, so another viewer, PI flag or not, gets no task rows,
+  // while the meeting on the same day still comes back (lab-wide).
+  it('another member sees none of the PI tasks but still sees the meeting', async () => {
+    for (const pi of [false, true]) {
+      const body = await (await handleCalendarEvents(url(), env, 'casey-eddington', pi)).json() as any
+      expect(taskTitles(body)).toEqual([])
+      expect(body.data.some((e: any) => e.type === 'meeting')).toBe(true)
+    }
+  })
+
+  it('a caller with no team identity gets no task rows', async () => {
+    const body = await (await handleCalendarEvents(url(), env, 'anonymous', true)).json() as any
+    expect(taskTitles(body)).toEqual([])
   })
 })
 

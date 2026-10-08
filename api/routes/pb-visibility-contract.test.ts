@@ -742,8 +742,8 @@ const patternBCases: PatternBCase[] = [
   },
   {
     label: 'GET /api/calendar/events (task deadlines) — filtered for non-PI',
-    callNonPi: (env) => handleCalendarEvents(new URL('https://x/api/calendar/events'), env, false),
-    callPi:    (env) => handleCalendarEvents(new URL('https://x/api/calendar/events'), env, true),
+    callNonPi: (env) => handleCalendarEvents(new URL('https://x/api/calendar/events'), env, 'nate-mesfin', false),
+    callPi:    (env) => handleCalendarEvents(new URL('https://x/api/calendar/events'), env, 'nate-mesfin', true),
   },
 ]
 

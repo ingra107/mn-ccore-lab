@@ -1519,8 +1519,9 @@ defineRoute({
   auth: 'authed',
   entity: 'calendar',
   // #8842 R6: task deadlines are task rows; non-PI callers get the PB filter.
+  // 2026-10-08: and only the caller's own tasks (viewer = resolved user slug).
   visibility: 'pb-aware',
-  handler: (c) => handleCalendarEvents(U(c), E(c), CSP(c)),
+  handler: (c) => handleCalendarEvents(U(c), E(c), USER(c).slug, CSP(c)),
 });
 
 // Personal iCal calendar feeds (issue #45). Per-user, secret URL stays in D1.
