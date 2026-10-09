@@ -35,6 +35,9 @@ beforeAll(() => {
     id: 'tm1', name: 'Nick Ingraham', slug: 'nick-ingraham', role: 'PI', member_type: 'director',
     email: `${S.toLowerCase()}@umn.edu`, bio: 'public bio',
   })
+  // The signed-in session below; a member, so it reads full rows (2026-10-08:
+  // a signed-in email with no row is a non-member and reads the anon shape).
+  insertRow(db, 'team_members', { id: 'tm-nate', name: 'Nate Mesfin', slug: 'nate-mesfin', email: 'nate@umn.edu' })
   insertRow(db, 'projects', {
     id: 'proj_anon1', title: `${S} project title`, slug: 'anon-project', status: 'active', stage: 'analysis',
     category: 'MNCCORE', pi: 'nick-ingraham', description: `${S} description`,
@@ -151,7 +154,7 @@ describe('anonymous reads (REQUIRE_AUTH=1)', () => {
     expect(activity.data[0]).toMatchObject({ actor: 'nick-ingraham', type: 'project_update' })
     expect(activity.data[0]).not.toHaveProperty('description')
     const team = JSON.parse((await get('/api/team')).text)
-    expect(team.data).toEqual([{ slug: 'nick-ingraham', name: 'Nick Ingraham' }])
+    expect(team.data).toEqual([{ slug: 'nate-mesfin', name: 'Nate Mesfin' }, { slug: 'nick-ingraham', name: 'Nick Ingraham' }])
     const pubs = JSON.parse((await get('/api/publications')).text)
     expect(pubs.data.map((p: { id: string }) => p.id)).toEqual(['pub1'])
     expect(pubs.data[0]).toMatchObject({ id: 'pub1', title: 'A published paper', status: 'Published' })

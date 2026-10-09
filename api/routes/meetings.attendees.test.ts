@@ -78,16 +78,14 @@ describe('normalizeAttendees through the create endpoint (#551)', () => {
     ])
   })
 
-  it('resolves a duplicated team email deterministically: the reviewed member wins over an auto-created one', async () => {
+  it('a duplicated team email cannot exist: schema-v118 refuses the second row, case-insensitively', () => {
+    // This test used to pin which of two rows sharing an email won. Since
+    // schema-v118 (2026-10-08) the second row cannot be written, so the
+    // tiebreak has nothing left to break.
     const db = makeDb()
-    // Inserted FIRST so rowid order would pick it if the query were unordered.
-    insertRow(db, 'team_members', { id: 'tm-zz-auto', name: 'Auto', slug: 'aa-auto-dup', email: 'dup@umn.edu', auto_created: 1 })
-    insertRow(db, 'team_members', { id: 'tm-zz-real', name: 'Real', slug: 'zz-real-dup', email: 'DUP@umn.edu', auto_created: 0 })
-    const res = await handleCreateMeeting(post('/api/meetings', {
-      date: '2026-10-06', title: 'Dup', attendees: ['dup@umn.edu'],
-    }), NICK, envOf(db))
-    const id = ((await res.json()) as { data: { id: string } }).data.id
-    expect(attendeesOf(db, id)).toEqual(['zz-real-dup'])
+    insertRow(db, 'team_members', { id: 'tm-zz-real', name: 'Real', slug: 'zz-real-dup', email: 'dup@umn.edu' })
+    expect(() => insertRow(db, 'team_members', { id: 'tm-zz-auto', name: 'Auto', slug: 'aa-auto-dup', email: 'DUP@umn.edu', auto_created: 1 }))
+      .toThrow(/UNIQUE/)
   })
 
   it('never resolves by email prefix: nate@stanford.edu stays raw', async () => {

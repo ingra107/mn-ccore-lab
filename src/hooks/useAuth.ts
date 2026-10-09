@@ -11,6 +11,13 @@ export interface AuthUser {
   name?: string
   isAuthenticated: boolean
   isPi: boolean
+  /** False only when the Worker said this signed-in email is on no
+   *  team_members row (2026-10-08). Cloudflare Access lets any @umn.edu
+   *  account sign in; such a non-member gets the members-only page, and 403
+   *  from every member route. True otherwise, including while unknown (cookie
+   *  first paint, an API that did not confirm the session): the API is the
+   *  gate, this only picks the page. */
+  isMember: boolean
 }
 
 const defaultUser: AuthUser = {
@@ -18,12 +25,14 @@ const defaultUser: AuthUser = {
   slug: '',
   isAuthenticated: false,
   isPi: false,
+  isMember: false,
 }
 
 // The last slug and email directory /api/auth/me returned, so a cookie first
 // paint renders the right person (and other people's stored emails) before
 // the API answers. A cache of the Worker's answer, never a source: hydration
-// always overwrites it.
+// always overwrites it. A slug is cached only for a confirmed member, so a
+// cached slug also means "this device has seen this email answer as a member".
 const SLUG_CACHE_PREFIX = 'hub:auth-slug:'
 const DIRECTORY_CACHE_KEY = 'hub:auth-directory'
 type DirectoryRow = { email: string; slug: string }
@@ -44,6 +53,14 @@ function cachedSlug(email: string): string {
 function cacheSlug(email: string, slug: string): void {
   if (!email || !slug) return
   try { localStorage.setItem(SLUG_CACHE_PREFIX + email.toLowerCase(), slug) } catch { /* storage off: first paint waits for the API */ }
+}
+function forgetDirectory(): void {
+  setEmailDirectory([])
+  try { localStorage.removeItem(DIRECTORY_CACHE_KEY) } catch { /* storage off: nothing cached */ }
+}
+function forgetSlug(email: string): void {
+  if (!email) return
+  try { localStorage.removeItem(SLUG_CACHE_PREFIX + email.toLowerCase()) } catch { /* storage off: nothing cached */ }
 }
 
 // Cloudflare Access injects a JWT in the Cf-Access-Jwt-Assertion header.
@@ -74,8 +91,11 @@ function getAuthFromCookie(): AuthUser {
   const payload = decodeJwtPayload(token)
   if (!payload) return defaultUser
 
-  // Cookie-based path is a first-paint optimization; it cannot know isPi
-  // (that answer lives server-side). Hydrates to true via /api/auth/me.
+  // Cookie-based path is a first-paint optimization; it cannot know isPi or
+  // isMember (those answers live server-side). Hydrates via /api/auth/me.
+  // With no cached slug (cached only for a confirmed member) the provider
+  // keeps loading until the API answers, so a non-member never sees a flash
+  // of the portal.
   const email = (payload.email as string) || ''
   loadCachedDirectory()
   const slug = cachedSlug(email) || slugForEmail(email)
@@ -85,6 +105,7 @@ function getAuthFromCookie(): AuthUser {
     name: (payload.name as string) || nameFromEmail(slug, email) || '',
     isAuthenticated: true,
     isPi: false,
+    isMember: true,
   }
 }
 
@@ -112,17 +133,27 @@ function nameFromEmail(knownSlug: string, email: string): string {
  */
 export function authUserFromMe(data: {
   authenticated?: boolean; email?: string; name?: string; isPi?: boolean
-  slug?: string; directory?: unknown
+  isMember?: boolean; slug?: string; directory?: unknown
 } | null | undefined): AuthUser | null {
   if (!data?.authenticated) return null
   const email = data.email || ''
+  if (data.isMember === false) {
+    // Not on the team: no slug, no directory. Forget what this device cached
+    // while a member used it (their slug, and the member email directory, which
+    // a non-member must not be able to read out of localStorage).
+    forgetSlug(email)
+    forgetDirectory()
+    return { email, slug: '', name: data.name || '', isAuthenticated: true, isPi: false, isMember: false }
+  }
   if (Array.isArray(data.directory)) {
     setEmailDirectory(data.directory as DirectoryRow[])
     cacheDirectory(data.directory as DirectoryRow[])
   }
   const slug = data.slug || cachedSlug(email) || slugForEmail(email)
   if (data.slug) cacheSlug(email, data.slug)
-  return { email, slug, name: data.name || '', isAuthenticated: true, isPi: Boolean(data.isPi) }
+  // A Worker older than this field sends none: treat the session as a member,
+  // as before. The API, not this flag, decides access.
+  return { email, slug, name: data.name || '', isAuthenticated: true, isPi: Boolean(data.isPi), isMember: true }
 }
 
 // Also support fetching auth status from the API for more reliable detection

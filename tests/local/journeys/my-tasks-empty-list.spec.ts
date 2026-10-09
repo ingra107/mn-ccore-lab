@@ -4,9 +4,11 @@ import { test, expect } from '@playwright/test'
 // re-renders" for every member whose list was EMPTY. useListKeyboard clamped
 // its cursor with a render-phase setState whose guard (`0 >= 0`) never turned
 // false on an empty list. Nick never saw it (his list is never empty); Casey and
-// Nate hit it on their first login. A brand-new email has zero tasks on any
-// seed, so this journey always exercises the empty path, plus the list view
-// with an empty quick-view filter for a member who does have tasks.
+// Nate hit it on their first login. Casey (eddin022@umn.edu) is a member with
+// zero tasks on the local seed, so this journey always exercises the empty
+// path, plus the list view with an empty quick-view filter for a member who
+// does have tasks. (It used a brand-new email until 2026-10-08; a signed-in
+// email with no team_members row now gets the members-only page, not My Tasks.)
 const HEADERS = { 'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod' }
 
 async function openMyTasks(page: import('@playwright/test').Page, email: string, query = '') {
@@ -22,7 +24,7 @@ async function openMyTasks(page: import('@playwright/test').Page, email: string,
 }
 
 test('My Tasks renders for a member with no tasks at all', async ({ page }) => {
-  const errors = await openMyTasks(page, 'brand-new-member@umn.edu')
+  const errors = await openMyTasks(page, 'eddin022@umn.edu')
   await expect(page.getByText('Something went wrong')).toHaveCount(0)
   expect(errors).toEqual([])
 })

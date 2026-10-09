@@ -11,9 +11,8 @@
 // "keys" for the other 16 members were surname guesses, not NetIDs. Adding a
 // team member is now a data edit (their row's `email`), never a code edit.
 
-/** Lowercased local part of an email: the slug a brand-new member is given
- *  (`ensureTeamMember`) and the fallback when no team_members row carries
- *  the email. */
+/** Lowercased local part of an email: the slug resolveSlug falls back to when
+ *  no team_members row carries the email. */
 export function emailPrefix(email: string): string {
   return (email.split('@')[0] ?? '').trim().toLowerCase()
 }

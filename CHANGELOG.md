@@ -3,6 +3,10 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-10-08 — the Hub is members-only
+
+Cloudflare Access admits any @umn.edu account, and on every signed-in request `ensureTeamMember` gave an unknown email an `auto_created` row (or wrote it onto a row whose slug was its email prefix), so any UMN NetID could read every task, project and meeting and the member emails on `/api/team`, and could write. Membership is now a server fact: an email on a `team_members` row, or a PI email. Sign-in writes nothing; `ensureTeamMember` is gone. The route gate in `bindRegistryToHono` answers a signed-in non-member `403 {code: 'not_a_member'}` on every route that is not a public GET (those serve their anonShape), so a new route is members-only by default; `app.get/post/...` are off the app's type in `api/index.ts`, so no route can be bound around the gate. `/api/auth/me` returns `isMember`; the SPA shows a members-only page with a Request access mailto. A PI adds a member from the Team page (`POST /api/team`, routes 268 → 269). schema-v118 makes `lower(team_members.email)` unique, so one login can never resolve to two rows. Unknown paths get a not-found page instead of a redirect into the portal.
+
 ## 2026-09-16 — bug sweep #128–#132
 
 All five shipped and deployed (`880692ed`, `7f8162cf`, `1fc75b3e`, `1db43820`, `5ed725f9`, `f80c88c9`, `4770ef90`). Schema v109 + v110, routes 267 → 271, PB mig 128/129, pb-schema 0.7.1.

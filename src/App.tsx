@@ -119,6 +119,7 @@ const MemberPage = lazyRoute(() => import('./pages/MemberPage'))
 const Publications = lazyRoute(() => import('./pages/Publications'))
 const PublicationDetail = lazyRoute(() => import('./pages/PublicationDetail'))
 const Contact = lazyRoute(() => import('./pages/Contact'))
+const NotFound = lazyRoute(() => import('./pages/NotFound'))
 const Network = lazyRoute(() => import('./pages/Network'))
 
 // Portal pages — lazy-loaded (existing)
@@ -231,6 +232,11 @@ export default function App() {
                   <Route path="/publications/:id" element={<ErrorBoundary><PublicationDetail /></ErrorBoundary>} />
                   <Route path="/network" element={<ErrorBoundary><Network /></ErrorBoundary>} />
                   <Route path="/contact" element={<ErrorBoundary><Contact /></ErrorBoundary>} />
+                  {/* Unknown paths: a not-found page in the public chrome, with
+                      a link home and one into the Hub (sign-in when logged
+                      out). It replaced a redirect to /portal/dashboard, which
+                      sent a mistyped public URL to the sign-in wall. */}
+                  <Route path="*" element={<ErrorBoundary><NotFound /></ErrorBoundary>} />
                 </Route>
 
                 {/* Legacy root-path redirects (2026-04-21 migration).
@@ -328,8 +334,6 @@ export default function App() {
                   <Route path="/portal/team/:slug/trajectory" element={<ErrorBoundary><TrajectoryPage /></ErrorBoundary>} />
                 </Route>
 
-                {/* Catch-all: redirect unknown paths to dashboard */}
-                <Route path="*" element={<Navigate to="/portal/dashboard" replace />} />
               </Routes>
             </Suspense>
           </ViewTransitionWrapper>

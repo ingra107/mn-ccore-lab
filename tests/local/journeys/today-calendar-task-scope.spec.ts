@@ -10,8 +10,10 @@ import plan from '../../../scripts/seed/phase0-plan.json' with { type: 'json' }
 // on the real stack: the requests the page makes, and the titles it renders.
 //
 // Nate (nate@umn.edu on the local seed) has tasks of his own, so his runs
-// cannot pass vacuously. Casey (eddin022@umn.edu) has no row on the local
-// seed and none of his own tasks: he must see none of anyone else's.
+// cannot pass vacuously. Casey (eddin022@umn.edu, casey-eddington) is a member
+// on the local seed with none of his own tasks: he must see none of anyone
+// else's. (Before 2026-10-08 he had no row and signed in as an auto-created
+// ghost; sign-in no longer creates rows, so a non-member sees no Today at all.)
 const HEADERS = { 'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod' }
 const strip = (s: string) => s.replace(/^test_delete_/, '')
 const titlesOf = (slug: string) => plan.tasks.filter((t) => t.assignee === slug).map((t) => strip(t.description))
@@ -20,7 +22,7 @@ const NATE_TITLES = titlesOf('nate-mesfin')
 
 const VIEWERS = [
   { email: 'nate@umn.edu', slug: 'nate-mesfin', own: NATE_TITLES },
-  { email: 'eddin022@umn.edu', slug: 'eddin022', own: [] as string[] },
+  { email: 'eddin022@umn.edu', slug: 'casey-eddington', own: [] as string[] },
 ]
 
 type Seen = { taskUrls: string[]; calendarTaskAssignees: string[] }

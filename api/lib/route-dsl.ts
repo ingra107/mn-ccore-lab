@@ -118,12 +118,18 @@ interface RouteMetadataBase {
  * A public GET whose ROWS (not just columns) are partly private also carries
  * `anonRows`, the predicate a row must pass to reach an anonymous caller
  * (e.g. publications: only status 'Published'). Like anonShape it exists only
- * on a public GET.
+ * on a public GET, and a signed-in non-member gets the same cut.
+ *
+ * `servesNonMembers` (2026-10-08) exists only on a public GET: a signed-in
+ * caller with no team_members row gets that handler's own answer instead of
+ * the anonShape projection. GET /api/auth/me is the one user; it is how the
+ * SPA learns `isMember: false` and shows the members-only page. Its handler
+ * owns what a non-member sees, so it must read the caller kind itself.
  */
 export type RouteMetadata =
-  | (RouteMetadataBase & { method: 'GET'; auth: 'public'; anonShape: AnonShape; anonRows?: AnonRowFilter })
-  | (RouteMetadataBase & { method: HttpMethod; auth: Exclude<AuthLevel, 'public'>; anonShape?: never; anonRows?: never })
-  | (RouteMetadataBase & { method: Exclude<HttpMethod, 'GET'>; auth: 'public'; anonShape?: never; anonRows?: never })
+  | (RouteMetadataBase & { method: 'GET'; auth: 'public'; anonShape: AnonShape; anonRows?: AnonRowFilter; servesNonMembers?: true })
+  | (RouteMetadataBase & { method: HttpMethod; auth: Exclude<AuthLevel, 'public'>; anonShape?: never; anonRows?: never; servesNonMembers?: never })
+  | (RouteMetadataBase & { method: Exclude<HttpMethod, 'GET'>; auth: 'public'; anonShape?: never; anonRows?: never; servesNonMembers?: never })
 
 const VALID_AUTH: ReadonlySet<AuthLevel> = new Set<AuthLevel>([
   'public',
@@ -156,6 +162,11 @@ export function defineRoute(meta: RouteMetadata): RouteMetadata {
   if (raw.anonRows && !publicGet) {
     throw new Error(
       `${raw.method} ${raw.path} has anonRows but is not a public GET; only a public GET is read anonymously`,
+    )
+  }
+  if ((raw as { servesNonMembers?: unknown }).servesNonMembers !== undefined && !publicGet) {
+    throw new Error(
+      `${raw.method} ${raw.path} has servesNonMembers but is not a public GET; every other route is members-only`,
     )
   }
   const dup = ROUTE_REGISTRY.find(
@@ -214,17 +225,29 @@ export function bindOrder(routes: readonly RouteMetadata[]): RouteMetadata[] {
 }
 
 /**
- * How bindRegistryToHono tells an anonymous read from an identified one.
- * api/index.ts owns the answer (it holds the auth middleware's context vars
- * and REQUIRE_AUTH); route-dsl owns what happens next.
+ * Who is calling, as the route gate sees it. api/index.ts decides (it holds
+ * the auth middleware's context vars, the team_members lookup and
+ * REQUIRE_AUTH); route-dsl decides what each kind may reach.
+ *
+ *   - 'member'     a signed-in person whose email is on a team_members row
+ *                  (or a PI email), or a service caller (valid PB API key).
+ *                  With auth not enforced (REQUIRE_AUTH != 1, local dev) a
+ *                  credential-less caller is also a member, as it always was.
+ *   - 'non-member' a signed-in identity (CF Access admits any @umn.edu) with
+ *                  no team_members row.
+ *   - 'anonymous'  auth is enforced and the caller has neither a session nor
+ *                  a valid API key.
  */
-export interface ReadGate {
+export type CallerKind = 'member' | 'non-member' | 'anonymous'
+
+export interface RouteGate {
   // Method syntax on purpose: api/index.ts passes handlers typed for its own
   // Context<AppEnv>, which method parameters accept.
-  /** True when auth is enforced and the caller has neither a session nor a valid API key. */
-  isAnonymous(c: Context): boolean
-  /** The 401 sent to an anonymous caller of a non-public GET. */
+  callerKind(c: Context): CallerKind
+  /** The 401 sent to an anonymous caller of a non-public route. */
   deny(c: Context): Response
+  /** The 403 sent to a signed-in non-member. */
+  denyNonMember(c: Context): Response
 }
 
 /**
@@ -237,35 +260,59 @@ export interface ReadGate {
  * the registration uniform and leaves the per-handler argument shape as
  * an internal detail of each route module.
  *
- * GET routes are the read chokepoint. The route Hono actually matched decides
- * access, from its own metadata, so there is no second list of public paths
- * to drift from it. For an anonymous caller (gate.isAnonymous):
- *   - auth 'authed' | 'pi'  -> gate.deny(c), the handler never runs;
- *   - auth 'public'         -> the handler runs and its response is projected
- *                              through the route's anonShape (allowlist),
- *                              after dropping rows its anonRows refuses.
- * Identified callers (session or API key) get the handler's response as is.
- * Hono also routes HEAD through these GET handlers, so HEAD is gated too.
+ * This wrapper is the access chokepoint for every route, every method. The
+ * route Hono actually matched decides access, from its own metadata, so there
+ * is no second list of paths to drift from it:
+ *
+ *   caller      | public GET                     | any other route
+ *   ------------+--------------------------------+---------------------------
+ *   member      | handler                        | handler
+ *   non-member  | anonShape (+ anonRows) cut, or | denyNonMember (403)
+ *               | handler if servesNonMembers    |
+ *   anonymous   | anonShape (+ anonRows) cut     | deny (401), every method
+ *               |                                | (the write gate in
+ *               |                                | api/index.ts 401s first)
+ *
+ * A route is members-only unless it says otherwise, and the only thing it can
+ * say is `auth: 'public'` on a GET (with an anonShape). There is no metadata
+ * that hands a non-member a full response from any other route. The switch is
+ * exhaustive over CallerKind: a new kind is a compile error here until it is
+ * placed. Hono also routes HEAD through GET handlers, so HEAD is gated too.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function bindRegistryToHono(app: Hono<any>, gate: ReadGate): void {
+export function bindRegistryToHono(app: Hono<any>, gate: RouteGate): void {
   for (const route of bindOrder(ROUTE_REGISTRY)) {
     const method = route.method.toLowerCase() as
       | 'get'
       | 'post'
       | 'put'
       | 'delete'
-    if (route.method !== 'GET') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      app[method](route.path, (c: any) => route.handler(c))
-      continue
-    }
-    const label = `GET ${route.path}`
+    const label = `${route.method} ${route.path}`
+    // Only a public GET has an anonShape (the RouteMetadata union), so a
+    // non-null shape IS "this route is a public GET".
+    const anonShape = route.method === 'GET' && route.auth === 'public' ? route.anonShape : null
+    // Rows a logged-out caller or a non-member may not see (e.g. unpublished
+    // papers). Applied on BOTH projection paths below.
+    const anonRows = route.method === 'GET' && route.auth === 'public' ? route.anonRows : undefined
+    const servesNonMembers = route.method === 'GET' && route.auth === 'public' && route.servesNonMembers === true
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    app.get(route.path, async (c: any) => {
-      if (!gate.isAnonymous(c)) return route.handler(c)
-      if (route.auth !== 'public') return gate.deny(c)
-      return projectAnonResponse(await route.handler(c), route.anonShape, label, route.anonRows)
+    app[method](route.path, async (c: any) => {
+      const kind = gate.callerKind(c)
+      switch (kind) {
+        case 'member':
+          return route.handler(c)
+        case 'non-member':
+          if (!anonShape) return gate.denyNonMember(c)
+          if (servesNonMembers) return route.handler(c)
+          return projectAnonResponse(await route.handler(c), anonShape, label, anonRows)
+        case 'anonymous':
+          if (anonShape) return projectAnonResponse(await route.handler(c), anonShape, label, anonRows)
+          return gate.deny(c)
+        default: {
+          const unplaced: never = kind
+          throw new Error(`caller kind ${String(unplaced)} has no access rule`)
+        }
+      }
     })
   }
 }

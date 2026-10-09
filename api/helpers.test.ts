@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { prodSchemaDb, d1Adapter, insertRow } from './test-support/prod-schema-db'
 import {
-  resolveSlug, ensureTeamMember, assertProtectedNotNull, resolveActor,
+  resolveSlug, isTeamMember, _resetPiEmailsCacheForTests, assertProtectedNotNull, resolveActor,
   actorSlugFromRequest, canSeePbProject, assertProjectVisible,
   projectRefToCanonical, safeTaskRow, safeRow, TABLE_PRIVATE_COLS,
 } from './helpers'
@@ -50,42 +50,60 @@ describe('resolveSlug — #8945 identity from team_members.email', () => {
     expect(await resolveSlug(env, null)).toBe('')
   })
 
-  it('prefers the pre-provisioned row over a ghost that holds the same email', async () => {
-    // The repair shape: a ghost was auto-created on first login, then the PI
-    // set the real email on the seeded row. The seeded row must win even
-    // though the ghost is older in this fixture.
-    const db2 = teamDb([
-      { id: 'tm-ghost', slug: 'bromle012', email: 'bromle012@umn.edu', auto_created: 1, created_at: '2026-01-01 00:00:00' },
-      { id: 'tm-emma', slug: 'emma-bromley', email: 'bromle012@umn.edu', auto_created: 0, created_at: '2026-03-26 00:29:41' },
-    ])
-    expect(await resolveSlug(teamEnv(db2), 'bromle012@umn.edu')).toBe('emma-bromley')
+  it('two rows cannot hold one login email (schema-v118), so there is no tiebreak to pin', () => {
+    // Before 2026-10-08 a first-login ghost could share an email with the
+    // seeded row and resolveSlug had to prefer the seeded one. Sign-in no
+    // longer writes rows, and the unique index refuses the duplicate outright.
+    const db2 = teamDb([{ id: 'tm-emma', slug: 'emma-bromley', email: 'bromle012@umn.edu' }])
+    expect(() => insertRow(db2, 'team_members', { id: 'tm-ghost', name: 'g', slug: 'bromle012', email: 'BROMLE012@umn.edu', auto_created: 1 }))
+      .toThrow(/UNIQUE/)
+    // A row with no login email is still legal, several times over.
+    insertRow(db2, 'team_members', { id: 'tm-n1', name: 'n1', slug: 'n1', email: null })
+    insertRow(db2, 'team_members', { id: 'tm-n2', name: 'n2', slug: 'n2', email: '' })
+    insertRow(db2, 'team_members', { id: 'tm-n3', name: 'n3', slug: 'n3', email: '' })
   })
 })
 
-describe('ensureTeamMember — #8945 first login', () => {
-  const user = (email: string): AuthUser => ({ email, slug: '' })
-  const rows = (db: ReturnType<typeof prodSchemaDb>) =>
-    db.prepare('SELECT slug, email, auto_created FROM team_members ORDER BY slug').all() as Array<{ slug: string; email: string | null; auto_created: number }>
+// 2026-10-08: membership is a lookup, never a write. ensureTeamMember used to
+// INSERT a row for any unknown signed-in email (any @umn.edu became a member)
+// and write the caller's email onto a row whose slug equalled their prefix (a
+// takeover). isTeamMember replaced it and writes nothing.
+describe('isTeamMember — membership is a team_members row (or a PI email)', () => {
+  const snapshot = (db: ReturnType<typeof prodSchemaDb>) =>
+    JSON.stringify(db.prepare('SELECT * FROM team_members ORDER BY id').all())
 
-  it('a member whose row carries their real email lands on it: no ghost, no map entry', async () => {
+  it('an email on a row is a member, case-insensitively', async () => {
     const db = teamDb([{ id: 'tm-pat', slug: 'pat-newmember', email: 'patne001@umn.edu' }])
-    const before = rows(db).length
-    await ensureTeamMember(teamEnv(db), user('patne001@umn.edu'))
-    expect(rows(db).length).toBe(before)
-    expect(rows(db).filter((r) => r.auto_created === 1)).toEqual([])
+    expect(await isTeamMember(teamEnv(db), 'patne001@umn.edu')).toBe(true)
+    expect(await isTeamMember(teamEnv(db), ' PATNE001@UMN.EDU ')).toBe(true)
   })
 
-  it('an email no row carries gets a PENDING-REVIEW row slugged by its prefix', async () => {
+  it('an email no row carries is not a member, and no row is created', async () => {
+    const db = teamDb([{ id: 'tm-pat', slug: 'pat-newmember', email: 'patne001@umn.edu' }])
+    const before = snapshot(db)
+    expect(await isTeamMember(teamEnv(db), 'Stranger9@umn.edu')).toBe(false)
+    expect(snapshot(db)).toBe(before)
+  })
+
+  it('a row slugged by the email prefix is neither claimed nor counted', async () => {
+    const db = teamDb([{ id: 'tm-x', slug: 'jdoe', email: 'jane.doe@umn.edu' }])
+    const before = snapshot(db)
+    expect(await isTeamMember(teamEnv(db), 'jdoe@umn.edu')).toBe(false)
+    expect(snapshot(db)).toBe(before)
+  })
+
+  it('a PI email is a member even with no row', async () => {
     const db = teamDb([])
-    await ensureTeamMember(teamEnv(db), user('Stranger9@umn.edu'))
-    const ghost = rows(db).find((r) => r.auto_created === 1)
-    expect(ghost).toMatchObject({ slug: 'stranger9', email: 'Stranger9@umn.edu' })
+    db.prepare("UPDATE lab_settings SET value = ? WHERE key = 'pi_emails'").run(JSON.stringify(['pi-only@umn.edu']))
+    _resetPiEmailsCacheForTests()
+    expect(await isTeamMember(teamEnv(db), 'pi-only@umn.edu')).toBe(true)
+    _resetPiEmailsCacheForTests()
   })
 
-  it('a row slugged by the email prefix is claimed, not duplicated', async () => {
-    const db = teamDb([{ id: 'tm-x', slug: 'jdoe', email: 'jdoe@old.example' }])
-    await ensureTeamMember(teamEnv(db), user('jdoe@umn.edu'))
-    expect(rows(db).filter((r) => r.slug === 'jdoe')).toEqual([{ slug: 'jdoe', email: 'jdoe@umn.edu', auto_created: 0 }])
+  it('an empty or non-email string is not a member', async () => {
+    const db = teamDb([{ id: 'tm-a', slug: 'anonymous', email: '' }])
+    expect(await isTeamMember(teamEnv(db), '')).toBe(false)
+    expect(await isTeamMember(teamEnv(db), 'anonymous')).toBe(false)
   })
 })
 

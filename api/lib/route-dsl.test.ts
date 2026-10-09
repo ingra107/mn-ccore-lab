@@ -8,17 +8,14 @@ import {
   bindRegistryToHono,
   ROUTE_REGISTRY,
   _resetRegistryForTests,
-  type ReadGate,
+  type RouteGate,
 } from './route-dsl'
 
-const OPEN_GATE: ReadGate = {
-  isAnonymous: () => false,
-  deny: () => new Response('denied', { status: 401 }),
-}
-const ANON_GATE: ReadGate = {
-  isAnonymous: () => true,
-  deny: () => new Response(JSON.stringify({ error: 'Authentication required' }), { status: 401 }),
-}
+const deny = () => new Response(JSON.stringify({ error: 'Authentication required' }), { status: 401 })
+const denyNonMember = () => new Response(JSON.stringify({ error: 'members only', code: 'not_a_member' }), { status: 403 })
+const OPEN_GATE: RouteGate = { callerKind: () => 'member', deny, denyNonMember }
+const ANON_GATE: RouteGate = { callerKind: () => 'anonymous', deny, denyNonMember }
+const NON_MEMBER_GATE: RouteGate = { callerKind: () => 'non-member', deny, denyNonMember }
 
 const jsonRes = (body: unknown) =>
   new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } })
@@ -239,5 +236,76 @@ describe('bindRegistryToHono()', () => {
     const res = await app.request('/api/bind-test/rows-bad')
     expect(res.status).toBe(500)
     expect(await res.text()).not.toContain('secret-row')
+  })
+
+  it('non-member: anonRows drops refused rows exactly as for an anonymous caller', async () => {
+    defineRoute({
+      method: 'GET',
+      path: '/api/bind-test/rows-nm',
+      auth: 'public',
+      anonShape: { data: [{ id: true }], count: true },
+      anonRows: (r) => r.status === 'Published',
+      handler: async () => jsonRes({ data: [{ id: 'a', status: 'Published' }, { id: 'b', status: 'In Review' }], count: 2 }),
+    })
+    const app = new Hono()
+    bindRegistryToHono(app, NON_MEMBER_GATE)
+    expect(await (await app.request('/api/bind-test/rows-nm')).json()).toEqual({ data: [{ id: 'a' }], count: 1 })
+  })
+
+  it('non-member: 403 on every route that is not a public GET, every method, before the handler', async () => {
+    let ran = 0
+    const methods = ['GET', 'POST', 'PUT', 'DELETE'] as const
+    for (const method of methods) {
+      defineRoute({ method, path: '/api/bind-test/m', auth: 'authed', handler: async () => { ran++; return jsonRes({ data: 'member data' }) } })
+      defineRoute({ method, path: '/api/bind-test/pi', auth: 'pi', handler: async () => { ran++; return jsonRes({ data: 'pi data' }) } })
+    }
+    defineRoute({ method: 'POST', path: '/api/bind-test/pubpost', auth: 'public', handler: async () => { ran++; return jsonRes({ ok: true }) } })
+    const app = new Hono()
+    bindRegistryToHono(app, NON_MEMBER_GATE)
+    for (const method of methods) {
+      for (const path of ['/api/bind-test/m', '/api/bind-test/pi']) {
+        const res = await app.request(path, { method })
+        expect(res.status, `${method} ${path}`).toBe(403)
+        expect(await res.json()).toEqual({ error: 'members only', code: 'not_a_member' })
+      }
+    }
+    expect((await app.request('/api/bind-test/pubpost', { method: 'POST' })).status).toBe(403)
+    expect((await app.request('/api/bind-test/m', { method: 'HEAD' })).status).toBe(403)
+    expect(ran).toBe(0)
+  })
+
+  it('non-member: a public GET is cut to its anonShape; only servesNonMembers gets the handler in full', async () => {
+    defineRoute({
+      method: 'GET', path: '/api/bind-test/pub', auth: 'public', anonShape: { data: [{ id: true }] },
+      handler: async () => jsonRes({ data: [{ id: 'p1', note: 'private' }] }),
+    })
+    defineRoute({
+      method: 'GET', path: '/api/bind-test/me', auth: 'public', anonShape: { authenticated: true }, servesNonMembers: true,
+      handler: async () => jsonRes({ authenticated: true, isMember: false }),
+    })
+    const app = new Hono()
+    bindRegistryToHono(app, NON_MEMBER_GATE)
+    expect(await (await app.request('/api/bind-test/pub')).json()).toEqual({ data: [{ id: 'p1' }] })
+    expect(await (await app.request('/api/bind-test/me')).json()).toEqual({ authenticated: true, isMember: false })
+  })
+
+  it('anonymous: every write is denied before its handler', async () => {
+    let ran = false
+    defineRoute({ method: 'POST', path: '/api/bind-test/w', auth: 'authed', handler: async () => { ran = true; return jsonRes({}) } })
+    const app = new Hono()
+    bindRegistryToHono(app, ANON_GATE)
+    expect((await app.request('/api/bind-test/w', { method: 'POST' })).status).toBe(401)
+    expect(ran).toBe(false)
+  })
+
+  it('servesNonMembers is refused anywhere but a public GET', () => {
+    expect(() =>
+      defineRoute({
+        method: 'GET', path: '/api/bind-test/x', auth: 'authed',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...({ servesNonMembers: true } as any),
+        handler: async () => new Response(),
+      }),
+    ).toThrow(/servesNonMembers/)
   })
 })

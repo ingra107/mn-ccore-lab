@@ -109,8 +109,8 @@ export interface AuthUser {
  *     row and the ghost auto-created on a first login before a PI set the
  *     real email — the pre-provisioned row wins (`auto_created = 0` first),
  *     so setting the real email on the seeded row is the whole repair.
- *     No row → the lowercased email prefix, the slug `ensureTeamMember`
- *     gives a brand-new member.
+ *     No row → the lowercased email prefix (a non-member's email, or a
+ *     stored email whose row is gone).
  *   - a bare string (`nick-ingraham`, `claude-ai`, `anonymous`) passes
  *     through. (The pre-36b `nick`/`ningraha` slugs survive only on 17
  *     status='deleted' tasks.assignee rows, 2026-10-08; no reader of a
@@ -205,79 +205,27 @@ async function readAuthIdentity(request: Request, env: Env): Promise<Omit<AuthUs
 }
 
 /**
- * Auto-provision OR claim a team_members row on first login.
+ * Membership is a server-side fact (2026-10-08): a signed-in email is a member
+ * when a team_members row carries it (case-insensitive) or it is a PI email
+ * (lab_settings.pi_emails, so a PI signing in on another address is never
+ * locked out). Cloudflare Access admits every @umn.edu account, so a valid
+ * JWT alone says nothing about membership.
  *
- * The CF Access JWT carries an authoritative email (verified by Google +
- * gated by the @umn.edu Access policy). On first sight of an email,
- * three branches:
- *
- *   1. Direct email match — row already linked. No-op. This is how a
- *      pre-provisioned member lands on their own row: the PI sets their
- *      real email on it (`POST /api/team/:slug {email}`), and `resolveSlug`
- *      reads it. (#8945 removed the EMAIL_PREFIX_TO_SLUG claim branch: a
- *      code-side NetID map gave every member missing from it a ghost.)
- *
- *   2. Email-prefix slug match — `slug = email-prefix`. A CLAIM: backfill
- *      the real email + photo (only if not already set) so future lookups
- *      hit branch 1. Don't overwrite name (Nick's preferred name beats
- *      Google's display name).
- *
- *   3. No match — INSERT a new row with auto_created=1. Surfaces in the
- *      Team UI with a PENDING REVIEW badge until Nick assigns a role. If
- *      the person was pre-provisioned under a guessed email, the PI sets
- *      the real email on the pre-provisioned row; `resolveSlug` prefers it
- *      over this ghost from the next request on.
- *
- * Idempotent + safe under concurrency. Excludes the synthetic Hermes
- * agent and test-mode users.
+ * This replaced ensureTeamMember, which ran on every identified request and
+ * (a) INSERTed an auto_created=1 row for any unknown email, so any UMN
+ * account became a "member" by signing in, and (b) wrote the caller's email
+ * onto any row whose slug equalled their email prefix, a takeover of that
+ * row's identity. A member is now added only by a PI (POST /api/team) or by
+ * a PI setting the email on an existing row (POST /api/team/:slug).
  */
-export async function ensureTeamMember(env: Env, user: AuthUser): Promise<void> {
-  if (user.email === 'anonymous' || user.email.endsWith('@test.local')) return
-  if (user.email === 'claude-ai@umn.edu') return
-
-  // Branch 1: direct email match — already linked, nothing to do.
-  const byEmail = await env.DB.prepare(
-    'SELECT id FROM team_members WHERE lower(email) = lower(?)'
-  ).bind(user.email).first<{ id: string }>()
-  if (byEmail) return
-
-  // Branch 2: claim a row whose slug is the email prefix.
-  const prefix = emailPrefix(user.email)
-  const existingBySlug = await env.DB.prepare(
-    'SELECT id, photo_url FROM team_members WHERE slug = ? LIMIT 1'
-  ).bind(prefix).first<{ id: string; photo_url: string | null }>()
-
-  if (existingBySlug) {
-    // CLAIM: backfill email so future logins hit branch 1. Backfill
-    // photo_url only if the row doesn't already have one (Nick's curated
-    // photo wins). Never overwrite name — preferred name is intentional.
-    const setPhoto = !existingBySlug.photo_url && user.picture
-    if (setPhoto) {
-      await env.DB.prepare(
-        'UPDATE team_members SET email = ?, photo_url = ? WHERE id = ?'
-      ).bind(user.email, user.picture ?? null, existingBySlug.id).run()
-    } else {
-      await env.DB.prepare(
-        'UPDATE team_members SET email = ? WHERE id = ?'
-      ).bind(user.email, existingBySlug.id).run()
-    }
-    return
-  }
-
-  // Branch 3: no pre-provisioned row → create one.
-  const id = generateId()
-  const name = user.name?.trim() || prefix
-  try {
-    await env.DB.prepare(
-      `INSERT INTO team_members (id, name, slug, email, photo_url, auto_created)
-       VALUES (?, ?, ?, ?, ?, 1)`
-    ).bind(id, name, prefix, user.email, user.picture ?? null).run()
-  } catch (e) {
-    // UNIQUE constraint race (two concurrent first requests). Safe to ignore —
-    // row exists now; the next call will land on branch 1 or 2.
-    const msg = (e as Error).message
-    if (!msg.includes('UNIQUE')) throw e
-  }
+export async function isTeamMember(env: Env, email: string): Promise<boolean> {
+  const e = email.trim().toLowerCase()
+  if (!e || !e.includes('@')) return false
+  const row = await env.DB.prepare(
+    'SELECT 1 AS ok FROM team_members WHERE lower(email) = ? LIMIT 1'
+  ).bind(e).first<{ ok: number }>()
+  if (row) return true
+  return (await getPiEmails(env)).has(e)
 }
 
 // A1.2 (2026-04-29 plan rev 4 §A1): when `kind` is 'task' or 'project',
@@ -454,6 +402,11 @@ export async function getPiEmails(env: Env): Promise<Set<string>> {
   } catch { /* fall through to fallback */ }
   piEmailsCache = { emails: PI_EMAILS_FALLBACK, fetchedAt: now };
   return PI_EMAILS_FALLBACK;
+}
+
+/** Test-only: drop the cached PI list so a test's lab_settings row is read. */
+export function _resetPiEmailsCacheForTests(): void {
+  piEmailsCache = null;
 }
 
 /** True iff the request is from a PI — either an authenticated CF Access

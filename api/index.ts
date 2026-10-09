@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { Env } from './types';
-import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible } from './helpers';
+import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, isTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible } from './helpers';
 
 // The PB service key IS Nick's automation (Brief-7, 2026-06-11).
 const PB_SERVICE_EMAIL = 'ingra107@umn.edu';
@@ -11,7 +11,7 @@ const PB_SERVICE_SLUG = 'nick-ingraham';
 // the Hono app at the end of the file (before app.notFound). Replaces the
 // raw app.get/post calls.
 import { defineRoute, bindRegistryToHono } from './lib/route-dsl';
-import type { HttpMethod } from './lib/route-dsl';
+import type { HttpMethod, CallerKind } from './lib/route-dsl';
 import type { AnonRowFilter, AnonShape } from './lib/anon-shape';
 import type { AuthUser } from './helpers';
 import { validateApiKey } from './middleware/api-key-auth';
@@ -30,7 +30,7 @@ import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComm
 import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleUpdateMeetingMeta, handleMeetingPrep, handleGenerateAgenda, handlePrepMeetingFromEvent } from './routes/meetings';
 import { handleGetPublications, handleGetGrants, handleCollaborationGraph, handleGetStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
 import { handleGetCitations } from './routes/citations';
-import { handleGetTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
+import { handleGetTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember, handleCreateTeamMember } from './routes/team';
 import { handleGetMemberFeaturedPublications, handlePutMemberFeaturedPublications } from './routes/member-featured-publications';
 import { handleGetDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper, handleGetDigestComments, handleCreateDigestComment, handleDigestCommentCounts } from './routes/digest';
 import { handleGetIdeas, handleCreateIdea, handleUpdateIdea, handleVoteIdea } from './routes/ideas';
@@ -120,10 +120,20 @@ type AppEnv = {
      *  True iff the caller can see Peripheral Brain content (PI email or
      *  valid API key). Read via the CSP helper at handler registrations. */
     canSeePb: boolean;
+    /** Who the route gate sees (member / non-member / anonymous), set by the
+     *  auth middleware. Read only by bindRegistryToHono and /api/auth/me. */
+    callerKind: CallerKind;
   };
 };
 
-const app = new Hono<AppEnv>();
+// The Hono instance. Routes are attached to it in exactly one place,
+// bindRegistryToHono at the end of this file, which wraps every handler in the
+// member gate. `app` below is the same object with its route-binding methods
+// removed from the type, so a raw app.get/post/put/delete here (a route the
+// member gate never sees) does not compile. Middleware (use), preflight
+// (options), errors and not-found stay.
+const hono = new Hono<AppEnv>();
+const app: Omit<Hono<AppEnv>, 'get' | 'post' | 'put' | 'delete' | 'patch' | 'all' | 'on' | 'route' | 'mount' | 'basePath'> = hono;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Anonymous reads. There is no list of public paths here any more: a GET route
@@ -249,13 +259,18 @@ app.use('*', async (c, next) => {
       ? { email: PB_SERVICE_EMAIL, name: 'Nick', slug: PB_SERVICE_SLUG }
       : { email: 'anonymous', name: 'Team Member', slug: 'anonymous' });
   c.set('user', user);
-  // Auto-provision a team_members row on first sight. Cheap (1 indexed
-  // SELECT for known users; INSERT only for new). Failure is non-fatal —
-  // we don't want auth to break because the directory write hiccupped.
-  if (authed) {
-    try { await ensureTeamMember(env, authed) }
-    catch (e) { console.warn('[ensureTeamMember]', (e as Error).message) }
-  }
+  // Membership (2026-10-08). Cloudflare Access admits any @umn.edu account and
+  // the CF_Authorization cookie identifies it on /api/* too, so a signed-in
+  // identity is a member only when a team_members row carries its email (or it
+  // is a PI email). Nothing is written here: the old ensureTeamMember created
+  // a row for every unknown email and claimed rows by email prefix. A lookup
+  // failure throws (500), it never admits.
+  const requireAuth = (env as unknown as { REQUIRE_AUTH?: string }).REQUIRE_AUTH === '1';
+  let kind: CallerKind;
+  if (result === true) kind = 'member';
+  else if (authed) kind = (await isTeamMember(env, authed.email)) ? 'member' : 'non-member';
+  else kind = requireAuth ? 'anonymous' : 'member';
+  c.set('callerKind', kind);
   await next();
 });
 
@@ -275,18 +290,15 @@ app.use('/api/pb/*', async (c, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. GET auth lockdown lives in bindRegistryToHono (api/lib/route-dsl.ts), at
-// the end of this file. With REQUIRE_AUTH=1, an anonymous GET of a route that
-// is not auth: 'public' gets 401 before its handler runs, and a public GET's
-// response is cut down to that route's anonShape. The decision rides on the
-// route Hono actually matched, so it cannot disagree with the route metadata.
-// An anonymous GET of a path with no route gets Hono's 404.
+// 4. Read + member lockdown lives in bindRegistryToHono (api/lib/route-dsl.ts),
+// at the end of this file, keyed on c.var.callerKind (set above). With
+// REQUIRE_AUTH=1 an anonymous caller of a route that is not a public GET gets
+// 401 before its handler runs; a signed-in non-member gets 403 on every route
+// except a public GET, which it reads through the route's anonShape like an
+// anonymous caller (GET /api/auth/me alone answers it in full). The decision
+// rides on the route Hono actually matched, so it cannot disagree with the
+// route metadata. A path with no route gets Hono's 404.
 // ─────────────────────────────────────────────────────────────────────────────
-function isAnonymousRead(c: Context<AppEnv>): boolean {
-  const env = c.get('env') as unknown as { REQUIRE_AUTH?: string };
-  if (env.REQUIRE_AUTH !== '1') return false;
-  return !c.get('authedUser') && c.get('apiKeyValid') !== true;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. Write-method auth gate + user resolution.
@@ -414,10 +426,16 @@ defineRoute({
   path: '/api/auth/me',
   auth: 'public',
   anonShape: { authenticated: true },
+  // A signed-in non-member reads this in full: it is how the SPA knows to
+  // show the members-only page. It gets its own identity and nothing else.
+  servesNonMembers: true,
   handler: async (c) => {
   const env = E(c);
   const user = c.get('authedUser') || (await getAuthUser(c.req.raw, env));
   if (!user) return json({ authenticated: false }, 200);
+  if (c.get('callerKind') === 'non-member') {
+    return json({ authenticated: true, isMember: false, isPi: false, email: user.email, name: user.name ?? '' });
+  }
   const piEmails = await getPiEmails(env);
   const isPi = piEmails.has(user.email.toLowerCase());
   // #8945: `slug` (on `user`) is the caller's identity, resolved from
@@ -431,7 +449,7 @@ defineRoute({
      WHERE email IS NOT NULL AND email != '' AND slug IS NOT NULL AND slug != ''
      ORDER BY auto_created ASC, created_at ASC`
   ).all<{ email: string; slug: string }>();
-  return json({ authenticated: true, isPi, ...user, directory: dir.results ?? [] });
+  return json({ authenticated: true, isMember: true, isPi, ...user, directory: dir.results ?? [] });
 },
 });
 
@@ -2042,6 +2060,16 @@ defineRoute({
 });
 
 // Team
+// A PI adds a member (2026-10-08): the only way, with a PI setting the email
+// on an existing row, that an email becomes a member.
+defineRoute({
+  method: 'POST',
+  path: '/api/team',
+  auth: 'pi',
+  entity: 'team',
+  visibility: 'na',
+  handler: (c) => handleCreateTeamMember(R(c), USER(c), E(c), CSP(c)),
+});
 defineRoute({
   method: 'POST',
   path: '/api/team/:slug',
@@ -3124,9 +3152,13 @@ defineRoute({
 // Single registration site — replaces the per-line app.get/post calls that
 // the migration deleted. ROUTE_REGISTRY is populated by side-effect as each
 // defineRoute({...}) above evaluates at module-load.
-bindRegistryToHono(app, {
-  isAnonymous: isAnonymousRead,
+bindRegistryToHono(hono, {
+  callerKind: (c: Context<AppEnv>) => c.get('callerKind'),
   deny: (c) => c.json({ error: 'Authentication required' }, 401, corsHeaders),
+  denyNonMember: (c) => c.json({
+    error: 'This is a place for MN-CCORE members only. If you have questions, contact Nick Ingraham at ingra107@umn.edu.',
+    code: 'not_a_member',
+  }, 403, corsHeaders),
 });
 
 app.notFound(() => error('Not found', 404));

@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, logActivity, getPiEmails } from '../helpers';
+import { json, error, logActivity, getPiEmails, generateId } from '../helpers';
+import { slugFromName, MEMBER_SLUG, UMN_EMAIL } from '../../shared/memberSlug';
 
 // AM-3 (SEC-T0-1): public-safe team_members projection. Excludes `email`
 // (PII) and `auto_created` (the internal PENDING-REVIEW flag). Keeps every
@@ -181,11 +182,11 @@ export async function handleUpdateTeamMember(
       if (current?.email && piEmails.has(current.email.toLowerCase())) {
         return error("Cannot change a PI's login email", 403);
       }
-      // Two pre-provisioned rows on one address would make the login resolve
-      // to whichever was created first. An auto-created ghost holding it is
-      // fine: resolveSlug prefers the pre-provisioned row, which is the repair.
+      // Two rows on one address would make the login resolve to whichever
+      // was created first. (Sign-in no longer creates ghost rows, 2026-10-08,
+      // so any other row holding the address is a real conflict.)
       const taken = await env.DB.prepare(
-        'SELECT slug FROM team_members WHERE lower(email) = ? AND slug != ? AND auto_created = 0 LIMIT 1'
+        'SELECT slug FROM team_members WHERE lower(email) = ? AND slug != ? LIMIT 1'
       ).bind(email, slug).first<{ slug: string }>();
       if (taken) return error(`email is already the login of "${taken.slug}"`, 409);
       updates.push('email = ?');
@@ -231,4 +232,70 @@ export async function handleUpdateTeamMember(
 
   const updated = await env.DB.prepare('SELECT * FROM team_members WHERE slug = ?').bind(slug).first();
   return json({ data: updated });
+}
+
+// Roles and member types a new row may take. member_type drives the Team
+// directory grouping; research_team is what a new lab member almost always is.
+const MEMBER_TYPES = ['director', 'senior_mentor', 'faculty', 'research_team'] as const
+type MemberType = typeof MEMBER_TYPES[number]
+
+// POST /api/team — a PI adds a member (2026-10-08). This, and a PI setting
+// the email on an existing row, are the only ways an email becomes a member:
+// sign-in no longer creates rows. Body: { name, email, slug?, role?,
+// member_type? }. 409 when the email or the slug is already taken.
+export async function handleCreateTeamMember(
+  request: Request,
+  user: AuthUser,
+  env: Env,
+  isPi: boolean,
+): Promise<Response> {
+  if (!isPi) return error('Forbidden — only a PI can add a member', 403);
+  let body: Record<string, unknown>;
+  try { body = await request.json() as Record<string, unknown> }
+  catch { return error('Body must be JSON', 400) }
+
+  const name = typeof body.name === 'string' ? body.name.trim().replace(/\s+/g, ' ') : '';
+  if (!name || name.length > 120) return error('name is required (1-120 characters)', 400);
+  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  if (!UMN_EMAIL.test(email)) return error('email must be a single UMN address (…@umn.edu)', 400);
+  const slugIn = typeof body.slug === 'string' && body.slug.trim() !== '' ? body.slug.trim().toLowerCase() : slugFromName(name);
+  if (!MEMBER_SLUG.test(slugIn) || slugIn.length > 80) {
+    return error('slug must be lowercase letters, digits and single hyphens', 400);
+  }
+  const memberType = (typeof body.member_type === 'string' && body.member_type !== '' ? body.member_type : 'research_team') as MemberType;
+  if (!MEMBER_TYPES.includes(memberType)) return error(`member_type must be one of ${MEMBER_TYPES.join(', ')}`, 400);
+  const role = typeof body.role === 'string' && body.role.trim() !== '' ? body.role.trim().slice(0, 120) : null;
+
+  const emailTaken = await env.DB.prepare(
+    'SELECT slug FROM team_members WHERE lower(email) = ? LIMIT 1'
+  ).bind(email).first<{ slug: string }>();
+  if (emailTaken) return json({ error: `${email} is already the login of "${emailTaken.slug}"`, code: 'email_taken', slug: emailTaken.slug }, 409);
+  const slugTaken = await env.DB.prepare('SELECT 1 AS ok FROM team_members WHERE slug = ? LIMIT 1').bind(slugIn).first();
+  if (slugTaken) return json({ error: `The profile name "${slugIn}" is taken; choose another`, code: 'slug_taken', slug: slugIn }, 409);
+
+  const id = generateId();
+  try {
+    await env.DB.prepare(
+      `INSERT INTO team_members (id, name, slug, email, role, member_type, auto_created)
+       VALUES (?, ?, ?, ?, ?, ?, 0)`
+    ).bind(id, name, slugIn, email, role, memberType).run();
+  } catch (e) {
+    // A concurrent add lands here: slug is UNIQUE, and so is lower(email)
+    // (schema-v118, index idx_team_members_email_lower).
+    const msg = (e as Error).message;
+    if (msg.includes('UNIQUE') && msg.includes('email')) {
+      return json({ error: `${email} is already the login of another member`, code: 'email_taken' }, 409);
+    }
+    if (msg.includes('UNIQUE')) {
+      return json({ error: `The profile name "${slugIn}" is taken; choose another`, code: 'slug_taken', slug: slugIn }, 409);
+    }
+    throw e;
+  }
+
+  // Typed event, the same shape as role_assignment. The address stays out of
+  // the description: activity text is readable by every member.
+  await logActivity(env, 'member_added', `Added ${name} to the team`, user.email, slugIn, 'team_member');
+
+  const created = await env.DB.prepare('SELECT * FROM team_members WHERE id = ?').bind(id).first();
+  return json({ data: created }, 201);
 }

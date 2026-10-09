@@ -1,8 +1,9 @@
 // team.email.test.ts — PB #8945: a PI sets a member's login email on their
-// team_members row (POST /api/team/:slug {email}); that is how a new member
-// lands on their own account. Guards: a PI's login email and the caller's own
-// are never changed here (a typo would lock that person out), and two
-// pre-provisioned rows may not share one email. Runs on the migration-chain DB.
+// team_members row (POST /api/team/:slug {email}); that is how an existing row
+// becomes someone's account. Guards: a PI's login email and the caller's own
+// are never changed here (a typo would lock that person out), and two rows may
+// not share one email. Since 2026-10-08 sign-in creates no rows (no ghosts), so
+// any other row holding an address is a conflict. Runs on the migration-chain DB.
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import type Database from 'better-sqlite3'
@@ -20,7 +21,7 @@ beforeEach(() => {
   insertRow(db, 'team_members', { id: 'tm-nick', name: 'Nick', slug: 'nick-ingraham', email: 'ingra107@umn.edu' })
   insertRow(db, 'team_members', { id: 'tm-nate', name: 'Nate', slug: 'nate-mesfin', email: 'mesfin@umn.edu' })
   insertRow(db, 'team_members', { id: 'tm-emma', name: 'Emma', slug: 'emma-bromley', email: 'bromley@umn.edu' })
-  insertRow(db, 'team_members', { id: 'tm-ghost', name: 'bromle012', slug: 'bromle012', email: 'bromle012@umn.edu', auto_created: 1 })
+  insertRow(db, 'team_members', { id: 'tm-casey', name: 'Casey', slug: 'casey-eddington', email: 'eddin022@umn.edu' })
   env = { DB: d1Adapter(db) } as unknown as Env
 })
 
@@ -29,13 +30,13 @@ const setEmail = (slug: string, email: unknown, user: AuthUser = PI) =>
 const emailOf = (slug: string) => (db.prepare('SELECT email FROM team_members WHERE slug = ?').get(slug) as { email: string }).email
 
 describe('POST /api/team/:slug {email}', () => {
-  it('a PI sets a member\'s real email, normalised, even with a ghost holding it', async () => {
+  it("a PI sets a member's real email, normalised", async () => {
     const res = await setEmail('emma-bromley', ' Bromle012@UMN.edu ')
     expect(res.status).toBe(200)
     expect(emailOf('emma-bromley')).toBe('bromle012@umn.edu')
   })
 
-  it('refuses the caller\'s own row', async () => {
+  it("refuses the caller's own row", async () => {
     expect((await setEmail('nick-ingraham', 'typo@umn.edu')).status).toBe(403)
     expect(emailOf('nick-ingraham')).toBe('ingra107@umn.edu')
   })
@@ -45,8 +46,9 @@ describe('POST /api/team/:slug {email}', () => {
     expect(emailOf('nate-mesfin')).toBe('mesfin@umn.edu')
   })
 
-  it('409s when another pre-provisioned row already holds the email', async () => {
+  it('409s when any other row already holds the email', async () => {
     expect((await setEmail('emma-bromley', 'ingra107@umn.edu')).status).toBe(409)
+    expect((await setEmail('emma-bromley', 'EDDIN022@umn.edu')).status).toBe(409)
     expect(emailOf('emma-bromley')).toBe('bromley@umn.edu')
   })
 

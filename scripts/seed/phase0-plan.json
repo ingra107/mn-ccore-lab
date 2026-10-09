@@ -7,6 +7,7 @@
   "team_members": [
     {"slug": "nick-ingraham", "name": "Nick Ingraham", "role": "pi", "email": "ingra107@umn.edu", "member_type": "faculty", "is_pi": true},
     {"slug": "nate-mesfin", "name": "Nate Mesfin", "role": "fellow", "email": "nate@umn.edu", "member_type": "fellow", "is_pi": false},
+    {"slug": "casey-eddington", "name": "Casey Eddington", "role": "Data Analyst", "email": "eddin022@umn.edu", "member_type": "research_team", "is_pi": false},
     {"slug": "claude-ai", "name": "Hermes", "role": "ai", "email": "claude-ai@umn.edu", "member_type": "ai", "is_pi": false}
   ],
   "projects": [

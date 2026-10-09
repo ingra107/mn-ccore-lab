@@ -14,8 +14,11 @@ import { displayName } from '../lib/nameUtils'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { Button } from '../components/ui/Button'
+import AddMemberPanel from '../components/AddMemberPanel'
+import { useAuth } from '../hooks/useAuth'
 
 export default function Team() {
+  const { user } = useAuth()
   const { data: publications = [] } = usePublications()
   // #507 follow-up opt-out: this page's core content is the static team
   // roster (directors/seniorMentors/facultyCollaborators/researchTeam, all
@@ -122,6 +125,9 @@ export default function Team() {
           </span>
           {activeSlugs.size > 0 && <> · <span style={{ color: 'var(--green)' }}>{activeSlugs.size} active this week</span></>}
         </p>
+        {/* PI only: who can sign in to the Hub is a team_members row, and
+            this is how one is added (2026-10-08). The API refuses anyone else. */}
+        {user.isPi && <div className="mt-4"><AddMemberPanel /></div>}
       </section>
 
       {/* Expertise Filter */}
