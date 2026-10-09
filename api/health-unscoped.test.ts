@@ -64,7 +64,23 @@ describe('GET /api/health is about the database, not the caller', () => {
 
   it('the unscoped handle has exactly two readers: health, and the daily-digest fan-out (which rebinds per recipient)', () => {
     const src = readFileSync(join(__dirname, 'index.ts'), 'utf8')
-    const uses = src.split('\n').filter((l) => l.includes("get('unscopedDb')"))
+    // Plus the slug-claim oracle (api/lib/project-slug.ts), which hands the
+    // project create/rename routes one yes/no per value, never the handle:
+    // pinned to that exact form on exactly those two routes.
+    const ORACLE = "slugClaimCheck(c.get('unscopedDb'))"
+    const lines = src.split('\n').filter((l) => l.includes("get('unscopedDb')"))
+    const oracle = lines.filter((l) => l.includes(ORACLE))
+    expect(oracle).toHaveLength(2)
+    for (const l of oracle) expect(l.split("get('unscopedDb')").length - 1, l).toBe(1)
+    for (const [path, fn] of [["path: '/api/projects',", 'handleCreateProject('], ["path: '/api/projects/:slug',", 'handleUpdateProject(']]) {
+      const line = oracle.find((l) => l.includes(fn))
+      expect(line, fn).toBeDefined()
+      const at = src.indexOf(line!)
+      const block = src.slice(src.lastIndexOf('defineRoute(', at), at)
+      expect(block, fn).toContain("method: 'POST'")
+      expect(block, fn).toContain(path)
+    }
+    const uses = lines.filter((l) => !l.includes(ORACLE))
     expect(uses).toHaveLength(2)
     for (const path of ["path: '/api/health'", "path: '/api/digest-email/daily'"]) {
       const start = src.indexOf(path)

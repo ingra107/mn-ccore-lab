@@ -28,6 +28,7 @@ import { handleCreateProject } from './projects'
 import { _resetValidationFlagsCache } from '../helpers'
 import type { Env, AuthUser } from '../helpers'
 import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db'
+import { slugClaimCheck } from '../lib/project-slug'
 
 const fakeUser = { email: 'nick@umn.edu', name: 'Nick', slug: 'nick-ingraham' } as AuthUser
 
@@ -50,7 +51,7 @@ describe('#614 handleCreateProject — domain/tier defaults', () => {
       method: 'POST',
       body: JSON.stringify({ title: 'New CLIF Substudy' }),
     })
-    const res = await handleCreateProject(req, fakeUser, env)
+    const res = await handleCreateProject(req, fakeUser, env, slugClaimCheck(env.DB))
     expect(res.status).toBe(201)
     const body = await res.json() as { data: Record<string, unknown> }
     expect(body.data.domain).toBe('Research')
@@ -65,7 +66,7 @@ describe('#614 handleCreateProject — domain/tier defaults', () => {
       method: 'POST',
       body: JSON.stringify({ title: 'Grant Renewal', domain: 'Grants', tier: '1-Weekly' }),
     })
-    const res = await handleCreateProject(req, fakeUser, env)
+    const res = await handleCreateProject(req, fakeUser, env, slugClaimCheck(env.DB))
     expect(res.status).toBe(201)
     const body = await res.json() as { data: Record<string, unknown> }
     expect(body.data.domain).toBe('Grants')

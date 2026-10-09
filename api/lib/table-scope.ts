@@ -394,7 +394,9 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   commitments: {
     kind: 'scoped', key: 'id', dependsOn: ['projects', 'tasks'],
     where: (v) => (projectsScoped(v)
-      ? `((commitments.project IS NULL OR ${inVisibleProject('commitments.project')}) `
+      // commitments.project is free text; '' is how a writer says "no
+      // project", so it reads as NULL, not as a reference nobody can see.
+      ? `((NULLIF(commitments.project, '') IS NULL OR ${inVisibleProject('commitments.project')}) `
         + `AND (commitments.task_id IS NULL OR commitments.task_id IN ${VISIBLE_TASK_IDS}))`
       : null),
   },

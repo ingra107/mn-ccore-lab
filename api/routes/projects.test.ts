@@ -25,6 +25,7 @@ import { _resetValidationFlagsCache } from '../helpers';
 import type { AuthUser } from '../helpers';
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 import { viewerDb, personViewer, nobodyViewer } from '../lib/viewer-db';
+import { slugClaimCheck } from '../lib/project-slug';
 
 interface ProjectRow {
   id: string;
@@ -157,7 +158,8 @@ describe('PROJECT_CATEGORY_VALUES — three-bucket allowlist enforcement', () =>
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ category: toCategory }),
     });
-    return handleUpdateProject('proj_abc', req, NICK_USER, env());
+    const e = env();
+    return handleUpdateProject('proj_abc', req, NICK_USER, e, slugClaimCheck(e.DB));
   }
 
   it.each([

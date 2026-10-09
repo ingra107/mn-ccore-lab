@@ -2,7 +2,7 @@ import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, isPiRequest, resolveActor, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { validateApiKey } from '../middleware/api-key-auth';
-import { isValidProjectSlug, looksLikeProjectId } from '../lib/project-slug';
+import { isValidProjectSlug, looksLikeProjectId, type SlugClaimCheck } from '../lib/project-slug';
 import { nowInstant } from '../lib/time';
 import { lastWorkedIso } from '../lib/project-recency';
 import { applyMutation } from './mutations';
@@ -112,6 +112,7 @@ export async function handleCreateProject(
   request: Request,
   user: AuthUser,
   env: Env,
+  slugClaimed: SlugClaimCheck,
 ): Promise<Response> {
   const body = await request.json() as {
     title: string
@@ -136,12 +137,15 @@ export async function handleCreateProject(
   if (!baseSlug) return error('title/slug yields empty slug after sanitization', 400);
   // Collision-avoidance: if slug already exists, append -2, -3, ... until free.
   // Found by deep-audit Suite 8 — two creates with same title collided on slug,
-  // effectively corrupting the first project's identity.
+  // effectively corrupting the first project's identity. A slug is also taken
+  // when it is CLAIMED: used by any project ever, deleted or hidden included,
+  // or still named by a child row (slugClaimed, api/lib/project-slug.ts);
+  // creating it would hand the creator those rows.
   let slug = baseSlug;
   let attempt = 2;
   while (true) {
     const existing = await env.DB.prepare('SELECT id FROM projects WHERE slug = ?').bind(slug).first();
-    if (!existing) break;
+    if (!existing && !(await slugClaimed(slug))) break;
     slug = `${baseSlug}-${attempt}`;
     attempt += 1;
     if (attempt > 100) return error(`Cannot generate unique slug after 100 attempts from "${baseSlug}"`, 500);
@@ -567,7 +571,7 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
 // can paginate forward and never miss the oldest rows; when no `since`
 // (UI-style "give me 20 newest"), keep DESC for back-compat. Brain.db
 // pull_project_updates now paginates until response_count < limit.
-export async function handleRecentUpdates(url: URL, env: Env, isPi = false): Promise<Response> {
+export async function handleRecentUpdates(url: URL, env: Env, isPi = false, viewerSlug = ''): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
   const since = url.searchParams.get('since');
   // Repointed to activity_entries (kind='update', entity_type='project') after project_updates
@@ -575,9 +579,12 @@ export async function handleRecentUpdates(url: URL, env: Env, isPi = false): Pro
   // pull_project_updates / d1_project_updates mirror keep working unchanged.
   const cols = `id, project_id, actor_slug AS author, body AS content, update_type, created_at`;
   // A PI or the PB key (isPi) sees author-only (@me) updates too, as
-  // /api/task-updates/recent does; anyone else sees visibility='team' only.
-  let query = `SELECT ${cols} FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL${isPi ? '' : " AND visibility = 'team'"}`;
-  const binds: unknown[] = [];
+  // /api/task-updates/recent does; anyone else sees visibility='team' rows
+  // plus their own author-only ones (viewerSlug, the Worker-resolved
+  // identity, never a query param).
+  let query = `SELECT ${cols} FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL${isPi ? '' : " AND (visibility = 'team' OR actor_slug = ?)"}`;
+  // The anonymous shim (local dev, no auth) is nobody's author.
+  const binds: unknown[] = isPi ? [] : [viewerSlug === 'anonymous' ? '' : viewerSlug];
   if (since) {
     query += ' AND created_at > ?';
     binds.push(since);
@@ -631,6 +638,7 @@ export async function handleUpdateProject(
   request: Request,
   user: AuthUser,
   env: Env,
+  slugClaimed: SlugClaimCheck,
 ): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
 
@@ -677,8 +685,8 @@ export async function handleUpdateProject(
   // from "row found" (UPDATE). Fetch stage/pi/title for typed activity events (D22)
   // and category for the PB visibility gate below.
   const existingCheck = await env.DB.prepare(
-    'SELECT id, stage, pi, title, category FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-  ).bind(id, id).first<{ id: string; stage: string | null; pi: string | null; title: string | null; category: string | null }>();
+    'SELECT id, slug, stage, pi, title, category FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+  ).bind(id, id).first<{ id: string; slug: string | null; stage: string | null; pi: string | null; title: string | null; category: string | null }>();
 
   if (!existingCheck) {
     // existingCheck reads through the caller's handle, so for a person "not
@@ -731,6 +739,13 @@ export async function handleUpdateProject(
     // existingCheck came through the caller's handle, so this is a backstop.
     const block = await assertProjectVisible(request, env, existingCheck.id);
     if (block) return block;
+
+    // A rename to a CLAIMED slug (used by any project ever, or still named
+    // by a child row) would hand this project's members those rows
+    // (api/lib/project-slug.ts). Refused, whoever asks.
+    if (typeof body.slug === 'string' && body.slug !== existingCheck.slug && await slugClaimed(body.slug)) {
+      return error('That slug is already in use; choose another', 409);
+    }
 
     // Build patch from validated fields
     const patchFields: Record<string, unknown> = {};

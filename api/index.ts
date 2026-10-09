@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { Env } from './types';
+import { slugClaimCheck } from './lib/project-slug';
 import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, isTeamMember, actorSlugFromRequest, logActivity } from './helpers';
 import { viewerDb, personViewer, serviceViewer, nobodyViewer, isSiteAdmin, ALL_PROJECTS_HEADER, type Viewer } from './lib/viewer-db';
 
@@ -1453,7 +1454,7 @@ defineRoute({
   path: '/api/updates/recent',
   auth: 'authed',
   entity: 'projects',
-  handler: (c) => handleRecentUpdates(U(c), E(c), PI(c)),
+  handler: (c) => handleRecentUpdates(U(c), E(c), PI(c), USER(c).slug),
 });
 defineRoute({
   method: 'GET',
@@ -1910,7 +1911,7 @@ defineRoute({
   path: '/api/projects',
   auth: 'authed',
   entity: 'projects',
-  handler: (c) => handleCreateProject(R(c), USER(c), E(c)),
+  handler: (c) => handleCreateProject(R(c), USER(c), E(c), slugClaimCheck(c.get('unscopedDb'))),
 });
 defineRoute({
   method: 'POST',
@@ -1952,7 +1953,7 @@ defineRoute({
   path: '/api/projects/:slug',
   auth: 'authed',
   entity: 'projects',
-  handler: (c) => handleUpdateProject(c.req.param('slug'), R(c), USER(c), E(c)),
+  handler: (c) => handleUpdateProject(c.req.param('slug'), R(c), USER(c), E(c), slugClaimCheck(c.get('unscopedDb'))),
 });
 
 // Team

@@ -253,6 +253,9 @@ function world(prep?: (db: InstanceType<typeof Database>) => void): World {
   return { db, env }
 }
 
+/** The slug-claim oracle for a call that changes no slug: it must never be asked. */
+const NO_SLUG_CHANGE = async (): Promise<boolean> => { throw new Error('slug-claim check on a call that changes no slug') }
+
 // ── Callers ────────────────────────────────────────────────────────────────────
 
 interface Caller {
@@ -531,7 +534,7 @@ const patternWriteCases: PatternWriteCase[] = [
     prep: (db) => db.prepare("UPDATE projects SET status = 'blocked'").run(),
     receipt: 'projects',
     landed: (db, r) => expect(projectRow(db, r)?.status).toBe('active'),
-    call: (c, r, env) => handleUpdateProject(r.slug, c.post({ status: 'active' }), c.user, env),
+    call: (c, r, env) => handleUpdateProject(r.slug, c.post({ status: 'active' }), c.user, env, NO_SLUG_CHANGE),
   },
   {
     label: 'POST /api/projects/:slug/delete (handleDeleteProject) — T3.1 PI gate',
@@ -948,5 +951,23 @@ describe('GET /api/updates/recent: author-only updates reach only a PI or the PB
   it('the PB key (isPi) does', async () => {
     const res = await handleRecentUpdates(new URL('https://x/api/updates/recent?limit=500'), as(API_KEY, world(authorOnly)), true)
     expect(await res.text()).toContain('MEONLYMARK')
+  })
+})
+
+describe('cold re-review: commitments with project \'\' and own author-only updates', () => {
+  it('a commitment whose project is \'\' reads as no project: a member sees it', async () => {
+    const w = world((db) => insertRow(db, 'commitments', { id: 'cm-empty', commitment: 'EMPTYPROJMARK', to_whom: 'x', project: '' }))
+    const rows = await as(NON_PI, w).DB.prepare("SELECT id FROM commitments WHERE id = 'cm-empty'").all()
+    expect(rows.results).toHaveLength(1)
+  })
+
+  it('a member sees their OWN author-only project update, and not someone else\'s', async () => {
+    const w = world((db) => {
+      insertRow(db, 'activity_entries', { id: 'ae-mine', entity_type: 'project', entity_id: TEAM.id, project_id: TEAM.id, kind: 'update', visibility: 'author', actor_slug: 'nate-mesfin', body: 'MYOWNMARK' })
+      insertRow(db, 'activity_entries', { id: 'ae-theirs', entity_type: 'project', entity_id: TEAM.id, project_id: TEAM.id, kind: 'update', visibility: 'author', actor_slug: 'nick-ingraham', body: 'THEIRSMARK' })
+    })
+    const text = await (await handleRecentUpdates(new URL('https://x/api/updates/recent?limit=500'), as(NON_PI, w), false, 'nate-mesfin')).text()
+    expect(text).toContain('MYOWNMARK')
+    expect(text).not.toContain('THEIRSMARK')
   })
 })

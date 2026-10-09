@@ -358,6 +358,51 @@ describe('slug spoof: renaming your own project\'s slug to a hidden project id g
   }, 120_000)
 })
 
+// Cold re-review 2026-10-09 (finding 1, interim): a slug is a key to every row
+// that names it, so a person may not take a slug that is already CLAIMED: used
+// by any project ever (a deleted one here) or named by a child row with no
+// live owner. api/lib/project-slug.ts slugClaimCheck.
+describe('slug claims: a person cannot take a slug a deleted project used or a child row names', () => {
+  const GONE = 'gone-proj'
+  const GHOST = 'ghost-ref'
+  const claims = () => {
+    insertRow(db, 'projects', { id: 'proj_gone', slug: GONE, title: `${MARK} gone`, category: 'MNCCORE', status: 'active', stage: 'idea', deleted_at: '2026-09-01 00:00:00' })
+    insertRow(db, 'contributions', { id: 'contrib-gone', member_slug: 'nate-mesfin', type: 'analysis', description: `${MARK} gone contrib`, project_slug: GONE })
+    insertRow(db, 'activity_log', { id: 'log-ghost', type: 'project', description: `${MARK} ghost`, actor: 'nick-ingraham', related_id: GHOST, related_type: 'project' })
+  }
+
+  it('rename to a deleted project\'s slug or to a child-only reference is a 409, and nothing changes', async () => {
+    claims()
+    for (const slug of [GONE, GHOST]) {
+      const r = await call('POST', `/api/projects/${CASEY_PROJ}`, CASEY_EMAIL, { slug })
+      expect(r.status, slug).toBe(409)
+    }
+    expect((db.prepare('SELECT slug FROM projects WHERE id = ?').get(CASEY_PROJ) as { slug: string }).slug).toBe('casey-own')
+  })
+
+  it('create asking for a claimed slug gets the next free one, and reads none of the claimed rows', async () => {
+    claims()
+    for (const slug of [GONE, GHOST]) {
+      const r = await call('POST', '/api/projects', CASEY_EMAIL, { title: 'Mine', slug })
+      expect(r.status, `${slug}: ${r.text.slice(0, 200)}`).toBeLessThan(300)
+      const made = db.prepare("SELECT slug FROM projects WHERE title = 'Mine' ORDER BY created_at DESC, rowid DESC LIMIT 1").get() as { slug: string }
+      expect(made.slug).not.toBe(slug)
+    }
+    const leaks: string[] = []
+    for (const route of ROUTE_REGISTRY.filter((x) => x.method === 'GET' && !x.path.includes(':'))) {
+      const res = await call('GET', route.path + QUERY(GONE), CASEY_EMAIL)
+      if (res.text.toUpperCase().includes(MARK)) leaks.push(`GET ${route.path} ${res.status}`)
+    }
+    expect(leaks).toEqual([])
+  }, 60_000)
+
+  it('an ordinary unclaimed rename still lands', async () => {
+    const r = await call('POST', `/api/projects/${CASEY_PROJ}`, CASEY_EMAIL, { slug: 'casey-renamed' })
+    expect(r.status).toBeLessThan(300)
+    expect((db.prepare('SELECT slug FROM projects WHERE id = ?').get(CASEY_PROJ) as { slug: string }).slug).toBe('casey-renamed')
+  })
+})
+
 describe('Lane B: projects are channels, membership is the one default rule', () => {
   const ALL = { 'X-Hub-All-Projects': '1' }
   const texts = async (who: string, extra: Record<string, string> = {}) =>

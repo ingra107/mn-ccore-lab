@@ -34,6 +34,7 @@ import { handleCreateConference } from './conferences';
 import { handleCreateRevision } from './revisions';
 import { handleGetCascade } from './deadline-cascade';
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
+import { slugClaimCheck } from '../lib/project-slug';
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 
@@ -154,14 +155,14 @@ describe('Fix 2 — handleUpdateProject upsert-on-miss enum guards', () => {
 
   it('a person, the PI included, gets 404 on a miss and nothing is created', async () => {
     const before = projectCount();
-    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', status: 'active', stage: 'idea', category: 'MNCCORE' }), NICK, env);
+    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', status: 'active', stage: 'idea', category: 'MNCCORE' }), NICK, env, slugClaimCheck(env.DB));
     expect(res.status).toBe(404);
     expect(projectCount()).toBe(before);
   });
 
   it('the PB key cannot upsert a slug shaped like a project id', async () => {
     const before = projectCount();
-    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'X', slug: 'proj_01HIDDEN', status: 'active', stage: 'idea', category: 'MNCCORE' }, PB_KEY), NICK, env);
+    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'X', slug: 'proj_01HIDDEN', status: 'active', stage: 'idea', category: 'MNCCORE' }, PB_KEY), NICK, env, slugClaimCheck(env.DB));
     expect(res.status).toBe(400);
     expect(projectCount()).toBe(before);
   });
@@ -172,7 +173,7 @@ describe('Fix 2 — handleUpdateProject upsert-on-miss enum guards', () => {
     ['category', { status: 'active', stage: 'idea', category: 'lab' }, /Invalid category/i],
   ])('returns 400 for invalid %s on upsert-on-miss branch, and creates nothing', async (_f, fields, msg) => {
     const before = projectCount();
-    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', ...fields }, PB_KEY), NICK, env);
+    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', ...fields }, PB_KEY), NICK, env, slugClaimCheck(env.DB));
     expect(res.status).toBe(400);
     const body = await res.json() as { error: string };
     expect(body.error).toMatch(msg);
@@ -180,7 +181,7 @@ describe('Fix 2 — handleUpdateProject upsert-on-miss enum guards', () => {
   });
 
   it('accepts canonical values and inserts the project on upsert-on-miss branch', async () => {
-    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', status: 'active', stage: 'idea', category: 'MNCCORE' }, PB_KEY), NICK, env);
+    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', status: 'active', stage: 'idea', category: 'MNCCORE' }, PB_KEY), NICK, env, slugClaimCheck(env.DB));
     expect(res.status).toBe(200);
     const stored = rows("SELECT id, status, stage, category FROM projects WHERE slug = 'new-project-id'");
     expect(stored).toHaveLength(1);
@@ -238,7 +239,7 @@ describe('Fix 4 — handleUpdateProject: a refused mutation → HTTP 409', () =>
     // applyUpdate), so on the real path the non-accepted outcome this route
     // can see is a failed write. Fail the projects UPDATE in the engine.
     env = { ...env, DB: d1Adapter(db, { failSql: /^\s*UPDATE projects SET/i, failTimes: 100 }) } as Env;
-    const res = await handleUpdateProject(PROJ_ID, makeRequest({ title: 'Updated Title', status: 'active', stage: 'idea', category: 'MNCCORE' }), NICK, env);
+    const res = await handleUpdateProject(PROJ_ID, makeRequest({ title: 'Updated Title', status: 'active', stage: 'idea', category: 'MNCCORE' }), NICK, env, slugClaimCheck(env.DB));
     expect(res.status).toBe(409);
     const body = await res.json() as { rejected: string; data: { id: string; title: string } };
     expect(body.rejected).not.toBe('accepted');
@@ -247,7 +248,7 @@ describe('Fix 4 — handleUpdateProject: a refused mutation → HTTP 409', () =>
   });
 
   it('returns 200 on successful update and stores it (no regression)', async () => {
-    const res = await handleUpdateProject(PROJ_ID, makeRequest({ title: 'Updated Title', status: 'active', stage: 'idea', category: 'MNCCORE' }), NICK, env);
+    const res = await handleUpdateProject(PROJ_ID, makeRequest({ title: 'Updated Title', status: 'active', stage: 'idea', category: 'MNCCORE' }), NICK, env, slugClaimCheck(env.DB));
     expect(res.status).toBe(200);
     expect(rows('SELECT title FROM projects WHERE id = ?', PROJ_ID)).toEqual([{ title: 'Updated Title' }]);
   });

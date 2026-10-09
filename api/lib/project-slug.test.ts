@@ -4,7 +4,9 @@
 // schema-v121 trigger replayed from the migration chain.
 
 import { describe, it, expect } from 'vitest'
-import { isValidProjectSlug, looksLikeProjectId } from './project-slug'
+import { isValidProjectSlug, looksLikeProjectId, SLUG_REF_COLUMNS, slugClaimCheck } from './project-slug'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { applyMutation } from '../routes/mutations'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 import type { Env } from '../helpers'
@@ -79,5 +81,36 @@ describe('schema-v121 triggers (D1 itself)', () => {
     const d = db()
     insertRow(d, 'file_attachments', { id: 'f1', entity_type: 'project', entity_id: 'a', filename: 'x', r2_key: 'project/a/x' })
     expect(() => insertRow(d, 'file_attachments', { id: 'f2', entity_type: 'project', entity_id: 'b', filename: 'x', r2_key: 'project/a/x' })).toThrow(/UNIQUE/)
+  })
+})
+
+describe('SLUG_REF_COLUMNS covers every project reference the visibility rule reads', () => {
+  it('each listed column exists on the migrated schema', () => {
+    const d = prodSchemaDb()
+    for (const [t, c] of SLUG_REF_COLUMNS) {
+      const cols = (d.prepare(`PRAGMA table_info(${t})`).all() as Array<{ name: string }>).map((r) => r.name)
+      expect(cols, `${t}.${c}`).toContain(c)
+    }
+  })
+
+  it('every inVisibleProject(...) and byProject(...) reference in table-scope.ts is listed', () => {
+    const src = readFileSync(join(__dirname, 'table-scope.ts'), 'utf8')
+    const listed = new Set(SLUG_REF_COLUMNS.map(([t, c]) => `${t}.${c}`))
+    const refs = [
+      ...[...src.matchAll(/inVisibleProject\('([a-z_]+)\.([a-z_]+)'\)/g)].map((m) => `${m[1]}.${m[2]}`),
+      ...[...src.matchAll(/byProject\('([a-z_]+)', '([a-z_]+)'/g)].map((m) => `${m[1]}.${m[2]}`),
+    ]
+    expect(refs.length).toBeGreaterThan(20)
+    expect(refs.filter((r) => !listed.has(r))).toEqual([])
+  })
+
+  it('the oracle answers on the whole table: a deleted project\'s slug and a child-only reference are claimed', async () => {
+    const d = prodSchemaDb()
+    insertRow(d, 'projects', { id: 'proj_gone', slug: 'gone', title: 'G', category: 'MNCCORE', status: 'active', stage: 'idea', deleted_at: '2026-09-01 00:00:00' })
+    insertRow(d, 'activity_log', { id: 'l1', type: 'project', description: 'x', related_id: 'ghost', related_type: 'project' })
+    const claimed = slugClaimCheck(d1Adapter(d))
+    expect(await claimed('gone')).toBe(true)
+    expect(await claimed('ghost')).toBe(true)
+    expect(await claimed('fresh-slug')).toBe(false)
   })
 })
