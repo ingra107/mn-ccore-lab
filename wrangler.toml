@@ -49,9 +49,10 @@ database_id = "a30fe84d-0891-4035-9358-f7813b5f5807"
 
 [env.production.triggers]
 # Morning pulse email: weekdays at 7 AM CT (13:00 UTC)
-#   To activate: wrangler secret put SENDGRID_API_KEY --env production
+#   Sent through Resend (api/lib/email.ts), same as the daily digest.
 # Daily coordinator digest: every day at 6 AM CT (11:00 UTC during DST)
 #   To activate: wrangler secret put RESEND_API_KEY --env production
+# Both go to Nick only until DIGEST_RECIPIENTS is set (api/lib/email.ts).
 # iCal feed poller: hourly. ETag/If-Modified-Since makes most polls cheap
 #   (~200 bytes 304 vs ~500KB full fetch).
 crons = ["0 13 * * 1-5", "0 11 * * *", "0 * * * *"]

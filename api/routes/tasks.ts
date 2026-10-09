@@ -606,7 +606,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
         if (member) {
           const email = taskAssignmentEmail(user.name || user.email, title, resultId);
           email.to = member.email || `${assignee}@umn.edu`;
-          sendEmail(env.RESEND_API_KEY, email).catch(() => {});
+          sendEmail(env.RESEND_API_KEY, email).catch((e) => console.error('[email] task assignment send failed:', e));
         }
       }
     }

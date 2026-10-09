@@ -5,7 +5,7 @@ import { escapeHtml } from '../lib/escapeHtml';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 
-const HUB_URL = 'https://mn-ccore-lab.pages.dev';
+import { HUB_URL, isDigestRecipient, raw } from '../lib/email';
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -344,7 +344,7 @@ export async function handleDigestPreview(
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    return new Response(`<html><body><h2>Error</h2><pre>${msg}</pre></body></html>`, {
+    return new Response(`<html><body><h2>Error</h2><pre>${escapeHtml(msg)}</pre></body></html>`, {
       status: 500,
       headers: { 'Content-Type': 'text/html', ...corsHeaders },
     });
@@ -600,9 +600,10 @@ export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigg
      WHERE member_type IN ('director', 'coordinator') AND slug IS NOT NULL`
   ).all<CoordinatorMember>();
 
-  const members = membersResult.results ?? [];
+  // Recipient switch: Nick only until widened (api/lib/email.ts isDigestRecipient).
+  const members = (membersResult.results ?? []).filter((m) => isDigestRecipient(m.slug, env));
   if (members.length === 0) {
-    return json({ data: { sent: 0, skipped: 0, message: 'No coordinators/directors with email found' } });
+    return json({ data: { sent: 0, skipped: 0, message: 'No digest recipients found' } });
   }
 
   const { sendEmail } = await import('../lib/email');
@@ -632,7 +633,8 @@ export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigg
       const ok = await sendEmail(env.RESEND_API_KEY, {
         to: derivedEmail,
         subject: `Daily Lab Brief — ${dateStr}`,
-        html,
+        // composeDailyDigest escapes every database value with escapeHtml.
+        html: raw(html),
       });
       if (ok) { sent++; } else { skipped++; errors.push(`${member.slug}: send failed`); }
     } catch (e: unknown) {

@@ -5,8 +5,10 @@ export interface Env {
   R2_ACCESS_KEY_ID?: string;
   R2_SECRET_ACCESS_KEY?: string;
   CF_ACCOUNT_ID?: string;
-  SENDGRID_API_KEY?: string;
   RESEND_API_KEY?: string;
+  /** Who gets the daily digest + morning pulse: "all" or comma list of slugs.
+   *  Unset = Nick only (api/lib/email.ts DEFAULT_DIGEST_RECIPIENT_SLUGS). */
+  DIGEST_RECIPIENTS?: string;
   NOTIFICATION_HUB?: DurableObjectNamespace;
   PB_API_KEY?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;

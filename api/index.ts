@@ -73,6 +73,7 @@ import { handleGetHermesDayIndex } from './routes/hermes';
 import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRefireLaunch, handleClaimLaunch, handleListPendingLaunches } from './routes/launch-log';
 import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleAddArtifactComment, handleGetArtifactGallery, handleSearchArtifacts, handleGetArtifactTags, handleAddArtifactTag, handleRemoveArtifactTag } from './routes/artifacts';
 import { escapeHtml } from './lib/escapeHtml';
+import { HUB_URL, isDigestRecipient, raw, sendEmail } from './lib/email';
 import { handlePBCapture, handlePBDefer, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
 import { handleGetSessions } from './routes/sessions';
@@ -3208,10 +3209,11 @@ export default {
 
       // ── Morning Pulse Email (weekdays 7 AM CT = 13:00 UTC) ───────────────
       case '0 13 * * 1-5': {
-        if (!env.SENDGRID_API_KEY) {
-          console.log('[Pulse] No SENDGRID_API_KEY configured — skipping email send');
+        if (!env.RESEND_API_KEY) {
+          console.log('[Pulse] No RESEND_API_KEY configured — skipping email send');
           return;
         }
+        const resendKey = env.RESEND_API_KEY;
 
         console.log('[Pulse] Starting morning pulse email...');
 
@@ -3241,6 +3243,8 @@ export default {
         const piEmails = await getPiEmails(env);
         let sent = 0;
         for (const member of members.results) {
+          // Recipient switch: Nick only until widened (api/lib/email.ts isDigestRecipient).
+          if (!isDigestRecipient(member.slug, env)) continue;
           const email = member.email || `${member.slug}@umn.edu`;
           const firstName = member.name.split(' ')[0];
           const recipientIsPi = !!member.email && piEmails.has(member.email.toLowerCase());
@@ -3342,35 +3346,24 @@ export default {
   </div>
   ${itemsHtml}
   <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e8eff5;">
-    <a href="https://mn-ccore-lab.pages.dev/my-items" style="display:inline-block;padding:10px 20px;background:#c9a84c;color:#0f1923;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;">View All Items</a>
+    <a href="${HUB_URL}/portal/my-tasks" style="display:inline-block;padding:10px 20px;background:#c9a84c;color:#0f1923;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;">View All Items</a>
   </div>
-  <p style="font-size:11px;color:#64748b;margin-top:24px;">MN-CCORE Lab Hub — <a href="https://mn-ccore-lab.pages.dev" style="color:#c9a84c;">mn-ccore-lab.pages.dev</a></p>
+  <p style="font-size:11px;color:#64748b;margin-top:24px;">MN-CCORE Lab Hub — <a href="${HUB_URL}" style="color:#c9a84c;">mnccore.org</a></p>
 </body>
 </html>`;
 
-          // Send via SendGrid
-          try {
-            const sgResp = await fetch('https://api.sendgrid.com/v3/mail/send', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${env.SENDGRID_API_KEY}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                personalizations: [{ to: [{ email, name: member.name }] }],
-                from: { email: 'hub@mnccore.org', name: 'MN-CCORE Lab Hub' },
-                subject: `${firstName}, you have ${pendingItems.length} item${pendingItems.length !== 1 ? 's' : ''} today`,
-                content: [{ type: 'text/html', value: html }],
-              }),
-            });
-            if (sgResp.ok || sgResp.status === 202) {
-              sent++;
-              console.log(`[Pulse] Sent to ${email}`);
-            } else {
-              console.log(`[Pulse] Failed for ${email}: ${sgResp.status}`);
-            }
-          } catch (e) {
-            console.log(`[Pulse] Error sending to ${email}: ${e}`);
+          // Send via Resend (the same path as every other Hub email). The body
+          // above escapes each database value with escapeHtml.
+          const ok = await sendEmail(resendKey, {
+            to: email,
+            subject: `${firstName}, you have ${pendingItems.length} item${pendingItems.length !== 1 ? 's' : ''} today`.replace(/[\r\n]+/g, ' '),
+            html: raw(html),
+          });
+          if (ok) {
+            sent++;
+            console.log(`[Pulse] Sent to ${email}`);
+          } else {
+            console.log(`[Pulse] Failed for ${email}`);
           }
         }
 
