@@ -28,6 +28,8 @@ vi.mock('../helpers', async (importOriginal) => {
 
 import { handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks } from './links'
 import { assertProjectVisible, isPiRequest } from '../helpers'
+import { PI_ONLY_LINK_TYPES } from '../lib/pi-only-project-fields'
+import { PB_LINK_TYPES } from '../../shared/pbLinks.generated'
 
 const mockAssertProjectVisible = vi.mocked(assertProjectVisible)
 const mockIsPiRequest = vi.mocked(isPiRequest)
@@ -759,6 +761,29 @@ describe('handleGetProjectLinks — derived project-field links in links', () =>
     expect(types).toContain('github_repo')
     expect(types).toContain('box_folder')
     expect(body.links.find(l => l.type === 'local_folder')?.canonical_url).toBe(FOLDER_DERIVED_URL)
+  })
+
+  it('P7: every local_* link type in the generated SSOT is PI-only', () => {
+    const local = PB_LINK_TYPES.filter((t) => t.startsWith('local_'))
+    expect(local.length).toBeGreaterThan(0)
+    expect([...PI_ONLY_LINK_TYPES].sort()).toEqual([...local].sort())
+  })
+
+  it('P7: a non-PI caller gets no local_file row (a local .docx path); a PI does', async () => {
+    const DOCX = 'C:/Users/ingra107/Box/Research/R Proposal/.R01-Grant/CLIF letter of support.docx'
+    const env = makeEnv({
+      taskRow: { project_id: 'proj_001' },
+      projectRow: { id: 'proj_001' },
+      taskLinks: [{ id: 'lnk_file', role: 'key', type: 'local_file', canonical_url: DOCX, short_title: 'CLIF letter', sort_order: 0 }],
+      projectLinks: [{ id: 'lnk_pfile', role: 'key', type: 'local_file', canonical_url: DOCX, short_title: 'CLIF letter', sort_order: 0 }],
+    })
+    const member = await (await handleGetTaskLinks('task_001', makeRequest(), env, false)).text()
+    expect(member).not.toContain('CLIF letter of support')
+    const memberProj = await (await handleGetProjectLinks('my-project', makeRequest(), env, false)).text()
+    expect(memberProj).not.toContain('CLIF letter of support')
+    const pi = await (await handleGetTaskLinks('task_001', makeRequest(), env, true)).text()
+    expect(pi).toContain('lnk_file')
+    expect(pi).toContain('lnk_pfile')
   })
 
   it('P7: a non-PI caller gets no EXPLICIT local_folder row, on the task or its project; a PI does', async () => {

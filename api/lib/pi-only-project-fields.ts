@@ -40,11 +40,13 @@ export async function projectResponseFor(canSeePb: boolean, res: Response): Prom
   return new Response(JSON.stringify(body), { status: res.status, statusText: res.statusText, headers })
 }
 
-// Typed links of type 'local_folder' carry the same thing: a path on the PI's
-// machine ("~/Box/Research/...", or the derived mnccore://open/<path>). Prod
-// held 6 explicit rows on 2026-10-09, 4 of them on MNCCORE projects or tasks a
-// member can open. A non-PI never receives a local_folder link.
-export const PI_ONLY_LINK_TYPES = ['local_folder'] as const
+// Typed links of type 'local_folder' and 'local_file' carry the same thing: a
+// path on the PI's machine ("~/Box/Research/...", a local .docx, or the
+// derived mnccore://open/<path>). Prod on 2026-10-09: 7 live local_folder rows
+// and 9 local_file rows (all on tasks). A non-PI never receives either. Every
+// local_* type in shared/pbLinks.generated.ts PB_LINK_TYPES must be listed
+// here; links.fe.test.ts fails when a new one is not.
+export const PI_ONLY_LINK_TYPES = ['local_folder', 'local_file'] as const
 
 /** `rows` without the links only the PI can use (local folder paths). */
 export function withoutPiOnlyLinks<T extends object>(rows: T[]): T[] {
