@@ -546,7 +546,10 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
     status: 200,
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=300, s-maxage=300',
+      // #145: the body is computed on the viewer-bound handle, so it differs per
+      // caller and per "show all projects" state (X-Hub-All-Projects). A shared
+      // or edge cache would hand one viewer's dashboard to another.
+      'Cache-Control': 'private, no-store',
     },
   })
 }

@@ -1,5 +1,6 @@
 import type { Env } from '../helpers';
-import { json, error, corsHeaders, getAuthUser, isPiRequest } from '../helpers';
+import { json, error, corsHeaders, getAuthUser, isPiRequest, getPiEmails } from '../helpers';
+import { viewerDb, personViewer } from '../lib/viewer-db';
 import { escapeHtml } from '../lib/escapeHtml';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
@@ -695,7 +696,9 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
  * Z5.2 lint bans cannot recur here.
  */
 export type DailyDigestTrigger =
-  | { kind: 'http'; request: Request }
+  /** `unscopedDb`: the database before viewer binding (the route passes it),
+   *  so each email can be built on its recipient's own handle. */
+  | { kind: 'http'; request: Request; unscopedDb: D1Database }
   | { kind: 'cron' };
 
 /**
@@ -731,11 +734,23 @@ export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigg
   let skipped = 0;
   const errors: string[] = [];
 
+  // #145 Lane B: each email is built on a handle bound to its recipient, the
+  // same rule the request path uses (as the Pulse cron does), so a director
+  // is never mailed tasks, revisions or regulatory items from a project they
+  // are not on. The cron runs on the raw binding; the HTTP route passes the
+  // pre-binding database in, because its own env.DB is bound to the caller.
+  const rawDb = trigger.kind === 'http' ? trigger.unscopedDb : env.DB;
+  const piEmails = await getPiEmails(env);
+
   for (const member of members) {
     const derivedEmail = member.email || `${member.slug}@umn.edu`;
     const memberWithEmail = { ...member, email: derivedEmail };
     try {
-      const html = await composeDailyDigest(env, memberWithEmail);
+      const recipientEnv = {
+        ...env,
+        DB: viewerDb(rawDb, personViewer({ slug: member.slug, email: member.email, pi: !!member.email && piEmails.has(member.email.toLowerCase()) })),
+      };
+      const html = await composeDailyDigest(recipientEnv, memberWithEmail);
       const ok = await sendEmail(env.RESEND_API_KEY, {
         to: derivedEmail,
         subject: `Daily Lab Brief — ${dateStr}`,

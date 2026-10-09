@@ -228,8 +228,31 @@ describe('the statement forms routes use', () => {
       "UPDATE meetings AS m SET notes = 'x' WHERE m.id = ?",
       'DELETE FROM agenda_items AS a WHERE a.id = ?',
       'DELETE FROM agenda_items a WHERE a.id = ?',
+      // Lane B review: the table-position check must skip comments and
+      // whitespace and know the conflict clauses (each of these changed a
+      // hidden row in a sqlite repro against the keyword-plus-space regex).
+      "UPDATE OR IGNORE 'tasks' SET title = 'x' WHERE id = ?",
+      'UPDATE OR ROLLBACK "tasks" SET title = \'x\' WHERE id = ?',
+      "UPDATE/**/'tasks' SET title = 'x' WHERE id = ?",
+      'UPDATE"tasks"SET title = \'x\' WHERE id = ?',
+      'DELETE FROM/**/"tasks" WHERE id = ?',
+      'DELETE FROM"tasks" WHERE id = ?',
+      "INSERT OR REPLACE INTO\"project_members\" (project_id, member_slug, added_by) VALUES ('p', 's', 'x')",
+      'UPDATE OR ABORT [projects] SET title = 1',
+      'SELECT t.id FROM meetings m, "tasks" t',
+      'SELECT id FROM (SELECT id FROM meetings m, [tasks] t)',
+      "UPDATE -- a comment\n 'projects' SET title = 1",
     ]
     for (const sql of refused) expect(() => scopeSql(sql, active), sql).toThrow(ScopeRefused)
+    // String VALUES that spell a scoped table are data, not table names.
+    for (const sql of [
+      "SELECT id FROM links WHERE owner_table = 'tasks'",
+      "SELECT id FROM links WHERE owner_table IN ('tasks', 'projects')",
+      "SELECT id FROM activity_log WHERE related_type = 'project' OR related_type = 'tasks'",
+      "SELECT 'tasks' AS kind, id FROM tasks",
+      "INSERT INTO links (id, owner_table, owner_id, type, canonical_url, short_title) VALUES ('l', 'tasks', 't', 'doc', 'u', 's')",
+      "UPDATE links SET owner_table = 'projects' WHERE id = ?",
+    ]) expect(() => scopeSql(sql, active), sql).not.toThrow()
     // what stays legal: a trailing semicolon, INSERT OR IGNORE, a plain INSERT, DO NOTHING
     for (const sql of [
       'DELETE FROM agenda_items WHERE id = ?;',

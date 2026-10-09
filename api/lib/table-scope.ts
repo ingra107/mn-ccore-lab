@@ -232,9 +232,22 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
         : null,
     ]),
   },
+  // A file follows its entity. One exception: the morning-thought composer
+  // records its files as entity 'task' keyed by the DAY (YYYY-MM-DD, no task
+  // row; all 7 prod 'task' attachments on 2026-10-09 are this kind), and those
+  // are their uploader's. uploaded_by is server-written: the uploader's slug
+  // since AM-2, the local part of their email before it, so matching the
+  // viewer's own local part here cannot be spoofed by a client.
   file_attachments: {
     kind: 'scoped', key: 'id', dependsOn: ALL_PARENTS,
-    where: (v) => entityVisible(v, 'file_attachments.entity_type', 'file_attachments.entity_id'),
+    where: (v) => {
+      const base = entityVisible(v, 'file_attachments.entity_type', 'file_attachments.entity_id')
+      if (base === null || !projectsScoped(v) || v.kind !== 'person') return base
+      const mine = [...new Set([v.slug, v.email, v.email.split('@')[0]].filter((s) => s.length > 0))]
+      return `(${base} OR (file_attachments.entity_type = 'task' `
+        + `AND file_attachments.entity_id GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' `
+        + `AND lower(COALESCE(file_attachments.uploaded_by, '')) IN (${sqlList(mine)})))`
+    },
   },
   entity_seen: {
     kind: 'scoped', key: ['entity_type', 'entity_id', 'viewer_slug'], dependsOn: ALL_PARENTS,

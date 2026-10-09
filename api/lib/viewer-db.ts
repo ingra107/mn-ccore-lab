@@ -205,6 +205,68 @@ const FORBIDDEN_SQL = /(?:\b|["`[])(main|temp)["`\]]?\s*\.|\bsqlite_(master|sche
 
 export class ScopeRefused extends Error {}
 
+// Keywords after which SQLite reads a TABLE name: FROM / JOIN / INTO / UPDATE /
+// TABLE, and the conflict clauses that sit between UPDATE or INSERT and the
+// name (UPDATE OR IGNORE "t", INSERT OR REPLACE INTO "t").
+const TABLE_POSITION = new Set(['from', 'join', 'into', 'update', 'table', 'ignore', 'rollback', 'abort', 'fail', 'replace'])
+// Keywords that end a FROM list at their depth (a comma after them is not a table position).
+const ENDS_FROM_LIST = new Set(['where', 'group', 'order', 'limit', 'on', 'using', 'union', 'having', 'set', 'values', 'select', 'returning', 'window', 'except', 'intersect'])
+
+/**
+ * The scoped table a quoted identifier names in a table position, or null.
+ * A quoted token ("x", 'x', `x`, [x]) is a table position when the token
+ * before it, skipping whitespace and comments, is a TABLE_POSITION keyword,
+ * or a comma inside a FROM list at the same parenthesis depth (FROM a, "t").
+ * Exported for tests.
+ */
+export function quotedTableInTablePosition(sql: string, names: ReadonlySet<string>): string | null {
+  let prev = ''
+  let depth = 0
+  const fromList = new Map<number, boolean>()
+  let i = 0
+  const n = sql.length
+  while (i < n) {
+    const ch = sql[i]
+    if (ch === '-' && sql[i + 1] === '-') { const nl = sql.indexOf('\n', i); i = nl === -1 ? n : nl + 1; continue }
+    if (ch === '/' && sql[i + 1] === '*') { const c = sql.indexOf('*/', i + 2); i = c === -1 ? n : c + 2; continue }
+    if (/\s/.test(ch)) { i++; continue }
+    if (ch === "'" || ch === '"' || ch === '`' || ch === '[') {
+      const close = ch === '[' ? ']' : ch
+      let j = i + 1
+      let text = ''
+      while (j < n) {
+        if (sql[j] === close) {
+          if (close !== ']' && sql[j + 1] === close) { text += close; j += 2; continue }
+          break
+        }
+        text += sql[j]
+        j++
+      }
+      const tablePos = TABLE_POSITION.has(prev) || (prev === ',' && fromList.get(depth) === true)
+      if (tablePos && names.has(text.trim().toLowerCase())) return text.trim().toLowerCase()
+      prev = 'quoted'
+      i = j + 1
+      continue
+    }
+    if (ch === '(') { depth++; fromList.set(depth, false); prev = '('; i++; continue }
+    if (ch === ')') { fromList.delete(depth); depth--; prev = ')'; i++; continue }
+    if (ch === ',') { prev = ','; i++; continue }
+    if (/[A-Za-z_]/.test(ch)) {
+      let j = i
+      while (j < n && /[A-Za-z0-9_$]/.test(sql[j])) j++
+      const word = sql.slice(i, j).toLowerCase()
+      if (word === 'from' || word === 'join') fromList.set(depth, true)
+      else if (ENDS_FROM_LIST.has(word)) fromList.set(depth, false)
+      prev = word
+      i = j
+      continue
+    }
+    prev = ch
+    i++
+  }
+  return null
+}
+
 /**
  * Rewrite one statement for a scoped viewer. `active` maps each scoped table
  * this viewer is restricted on to its predicate. Exported for tests.
@@ -225,14 +287,14 @@ export function scopeSql(sql: string, active: ReadonlyMap<ScopedTable, string>):
   // name ("meetings", [meetings], `meetings`, and 'meetings': SQLite accepts
   // a single-quoted string as an identifier there, so `UPDATE 'meetings'`
   // reaches the real table past the guard) is refused rather than reasoned
-  // about. Only the table positions (after FROM, JOIN, INTO, UPDATE, TABLE):
-  // a string VALUE that spells a table, like links.owner_table = 'tasks', is
-  // data, and Lane B scopes both tasks and projects. No route writes a quoted
-  // table name; the compile sweep in viewer-db.test.ts pins that.
-  for (const t of named) {
-    if (new RegExp(`\\b(?:from|join|into|update|table)\\s+["'\`[]${t}["'\`\\]]`, 'i').test(sql)) {
-      throw new ScopeRefused(`viewer-db: a quoted identifier naming scoped table ${t} is refused for a scoped viewer`)
-    }
+  // about. A string VALUE that spells a table, like links.owner_table =
+  // 'tasks', is data and passes (Lane B scopes both tasks and projects).
+  // quotedTableInTablePosition decides by the token before the quoted name,
+  // skipping whitespace and comments (see its comment). No route writes a
+  // quoted table name; the compile sweep in viewer-db.test.ts pins that.
+  const quoted = quotedTableInTablePosition(sql, named)
+  if (quoted) {
+    throw new ScopeRefused(`viewer-db: a quoted identifier naming scoped table ${quoted} is refused for a scoped viewer`)
   }
   const scanned = topLevelWords(sql)
   const semi = scanned.findIndex((w) => w.word === ';' && w.depth === 0)

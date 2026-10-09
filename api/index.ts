@@ -126,6 +126,11 @@ type AppEnv = {
     /** #145: whose rows this request may read. Set with the canSeePb flag;
      *  env.DB is already bound to it (viewerDb). */
     viewer: Viewer;
+    /** #145: the database BEFORE viewer binding. Read ONLY by GET /api/health
+     *  (aggregate counts that must not depend on who is asking) and POST
+     *  /api/digest-email/daily (it rebinds the database per recipient). Pinned
+     *  to those two readers by api/health-unscoped.test.ts. */
+    unscopedDb: D1Database;
     /** Who the route gate sees (member / non-member / anonymous), set by the
      *  auth middleware. Read only by bindRegistryToHono and /api/auth/me. */
     callerKind: CallerKind;
@@ -396,6 +401,7 @@ app.use('/api/*', async (c, next) => {
       ? personViewer({ slug: authed.slug, email: authed.email, pi, allProjects: c.req.header(ALL_PROJECTS_HEADER) === '1' })
       : nobodyViewer();
   c.set('viewer', viewer);
+  c.set('unscopedDb', env.DB);
   c.set('env', { ...env, DB: viewerDb(env.DB, viewer) });
   await next();
 });
@@ -502,7 +508,13 @@ defineRoute({
   auth: 'public',
   anonShape: { ok: true, failures: [true], timestamp: true },
   handler: async (c) => {
-  const env = E(c);
+  // #145 Lane B: the health counts are about the DATABASE, not the caller. On
+  // the viewer-bound handle an anonymous caller (the post-deploy probe) reads
+  // zero tasks and the check answered 503 'tasks table empty'. The counts run
+  // on the unscoped handle; only ok/failures/timestamp reach an anonymous
+  // caller (anonShape), never a row.
+  const unscoped: D1Database = c.get('unscopedDb') ?? E(c).DB;
+  const env: Env = { ...E(c), DB: unscoped };
   const failures: string[] = [];
   const checks: Record<string, unknown> = {};
   const t0 = Date.now();
@@ -3212,7 +3224,8 @@ defineRoute({
   auth: 'authed',
   entity: 'digest',
   visibility: 'na',
-  handler: (c) => handleSendDailyDigests(E(c), { kind: 'http', request: R(c) }),
+  // The fan-out builds each email on its recipient's handle, from the pre-binding database.
+  handler: (c) => handleSendDailyDigests(E(c), { kind: 'http', request: R(c), unscopedDb: c.get('unscopedDb') }),
 });
 
 // File activity sync

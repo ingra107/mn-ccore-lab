@@ -443,6 +443,16 @@ describe('Lane B: projects are channels, membership is the one default rule', ()
     expect(day.status).not.toBe(403)
   })
 
+  it("a morning-thought file (entity 'task', a day key) is its uploader's, by slug or legacy email local part", async () => {
+    insertRow(db, 'file_attachments', { id: 'fa-day-casey', entity_type: 'task', entity_id: TODAY, filename: 'CASEYDAYMARK.png', r2_key: `task/${TODAY}/c.png`, uploaded_by: 'casey-eddington' })
+    insertRow(db, 'file_attachments', { id: 'fa-day-legacy', entity_type: 'task', entity_id: '2026-01-02', filename: 'LEGACYDAYMARK.png', r2_key: 'task/2026-01-02/l.png', uploaded_by: 'eddin022' })
+    const mine = await call('GET', `/api/files?entity_type=task&entity_id=${TODAY}`, CASEY_EMAIL)
+    expect(mine.status).toBe(200)
+    expect(mine.text).toContain('CASEYDAYMARK')
+    expect((await call('GET', '/api/files?entity_type=task&entity_id=2026-01-02', CASEY_EMAIL)).text).toContain('LEGACYDAYMARK')
+    expect((await call('GET', `/api/files?entity_type=task&entity_id=${TODAY}`, 'mesfin@umn.edu')).text).not.toContain('CASEYDAYMARK')
+  })
+
   it('members: a member adds, a non-member cannot see the list, only a PI or the member removes', async () => {
     const list = await call('GET', `/api/projects/${PROJ}/members`, 'mesfin@umn.edu')
     expect(list.status).toBe(200)
@@ -458,6 +468,24 @@ describe('Lane B: projects are channels, membership is the one default rule', ()
     expect((await call('DELETE', `/api/projects/${PROJ}/members/nate-mesfin`, PI_EMAIL)).status).toBe(200)
     const projects = JSON.parse((await call('GET', '/api/team/nate-mesfin/projects', CASEY_EMAIL)).text).data
     expect(projects).toEqual([]) // Casey sees none of Nate's projects
+  })
+})
+
+describe("Daily digest cron (0 11 * * *): each email is built on its recipient's handle", () => {
+  it("Nate's brief carries his project's regulatory item, not Nick's; Nick's carries his own", async () => {
+    insertRow(db, 'regulatory_items', { id: 'reg-nickonly', project_id: NICK_ONLY, item_type: 'irb', title: 'NICKREGMARK irb', expiration_date: TODAY, status: 'active' })
+    const sent: { to: string; html: string }[] = []
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init: RequestInit) => {
+      const b = JSON.parse(String(init.body)) as { to: string; html: string }
+      sent.push({ to: b.to, html: b.html })
+      return new Response('{}', { status: 200 })
+    }))
+    await worker.scheduled({ cron: '0 11 * * *' } as ScheduledEvent, { ...env, RESEND_API_KEY: 'k' } as Env, CTX)
+    const nate = sent.find((s) => s.to === 'mesfin@umn.edu')
+    const nick = sent.find((s) => s.to === PI_EMAIL)
+    expect(nate?.html).toContain(`${MARK} irb`)
+    expect(nate?.html).not.toContain('NICKREGMARK')
+    expect(nick?.html).toContain('NICKREGMARK')
   })
 })
 
