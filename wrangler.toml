@@ -55,7 +55,9 @@ database_id = "a30fe84d-0891-4035-9358-f7813b5f5807"
 # RESEND_API_KEY and DIGEST_RECIPIENTS must be set on BOTH this Worker and the
 #   Pages project mn-ccore-lab (the task-assignment email sends from Pages).
 # All three email kinds go to Nick only until DIGEST_RECIPIENTS is set
-#   (api/lib/email.ts: comma list of addresses, or "all").
+#   (api/lib/email.ts: comma list of addresses, or "all"). A list REPLACES the
+#   default, so include both of Nick's addresses: ingra107@umn.edu and
+#   nicholas.ingraham@gmail.com.
 # iCal feed poller: hourly. ETag/If-Modified-Since makes most polls cheap
 #   (~200 bytes 304 vs ~500KB full fetch).
 crons = ["0 13 * * 1-5", "0 11 * * *", "0 * * * *"]

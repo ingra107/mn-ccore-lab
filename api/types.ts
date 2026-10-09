@@ -6,8 +6,9 @@ export interface Env {
   R2_SECRET_ACCESS_KEY?: string;
   CF_ACCOUNT_ID?: string;
   RESEND_API_KEY?: string;
-  /** Who gets the daily digest + morning pulse: "all" or comma list of slugs.
-   *  Unset = Nick only (api/lib/email.ts DEFAULT_DIGEST_RECIPIENT_SLUGS). */
+  /** Who may get ANY Hub email (daily digest, morning pulse, task assignment):
+   *  "all" (any case) or a comma list of email addresses. A list REPLACES the
+   *  default. Unset = Nick only (api/lib/email.ts DEFAULT_EMAIL_RECIPIENTS). */
   DIGEST_RECIPIENTS?: string;
   NOTIFICATION_HUB?: DurableObjectNamespace;
   PB_API_KEY?: string;

@@ -65,7 +65,9 @@ describe('sendEmail', () => {
     expect(await sendEmail({ RESEND_API_KEY: 'k' }, { to: 'casey@umn.edu', subject: 's', html: raw('') })).toBe(false)
     expect(await sendEmail({}, { to: 'ingra107@umn.edu', subject: 's', html: raw('') })).toBe(false)
     expect(fetchMock).not.toHaveBeenCalled()
-    expect(await sendEmail({ RESEND_API_KEY: 'k' }, { to: 'Ingra107@UMN.edu', subject: 's', html: raw('') })).toBe(true)
+    expect(await sendEmail({ RESEND_API_KEY: 'k' }, { to: '  Ingra107@UMN.edu ', subject: 's', html: raw('') })).toBe(true)
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(JSON.parse(String(init.body)).to).toBe('Ingra107@UMN.edu')
   })
 })
 

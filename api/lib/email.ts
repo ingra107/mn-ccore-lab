@@ -107,7 +107,10 @@ interface EmailOptions {
 export async function sendEmail(env: RecipientEnv, options: EmailOptions): Promise<boolean> {
   const apiKey = env.RESEND_API_KEY;
   if (!apiKey) return false;
-  if (!isEmailRecipient(options.to, env)) {
+  // Check and send the SAME trimmed address, so the gate cannot approve one
+  // string and Resend receive another.
+  const to = options.to.trim();
+  if (!isEmailRecipient(to, env)) {
     warnIfRecipientsMatchNobody(env);
     return false;
   }
@@ -120,7 +123,7 @@ export async function sendEmail(env: RecipientEnv, options: EmailOptions): Promi
       },
       body: JSON.stringify({
         from: FROM_EMAIL,
-        to: options.to,
+        to,
         subject: options.subject,
         html: options.html.value,
       }),

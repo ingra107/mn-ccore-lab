@@ -2366,11 +2366,13 @@ defineRoute({
   auth: 'authed',
   entity: 'tasks',
   visibility: 'na',
-  handler: (c) => handleCreateTask(R(c), USER(c), E(c), (p) => {
-    // executionCtx throws when a caller (a test) supplies none; then the task
-    // route awaits the job itself instead.
-    try { c.executionCtx.waitUntil(p); } catch { void p; }
-  }),
+  handler: (c) => {
+    // c.executionCtx throws when the caller supplies none (a test). Then pass
+    // no waitUntil and the task route awaits the email job itself.
+    let ctx: ExecutionContext | undefined;
+    try { ctx = c.executionCtx; } catch { ctx = undefined; }
+    return handleCreateTask(R(c), USER(c), E(c), ctx ? (p) => ctx.waitUntil(p) : undefined);
+  },
 });
 defineRoute({
   method: 'POST',
