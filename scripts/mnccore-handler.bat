@@ -21,6 +21,11 @@ echo %date% %time% ARGS: %* >> "%TEMP%\mnccore-handler.log"
 ::                                            is accepted — the verb REFUSES anything that is
 ::                                            not an lnch_<alnum> token, so the old arbitrary
 ::                                            .bat/.cmd/.ps1 exec (arbitrary local code) is GONE.
+::   mnccore://desk/<slug>/<desk-name>      → start a Claude session on a working desk.
+::                                            Identifier only (no decode, no path): PB's
+::                                            resolve_launch.py desk mode reads the git-tracked
+::                                            desk + manifest, mints + claims a launch, then
+::                                            starts Quick_Chat_seeded.bat. Refusals are loud.
 ::   mnccore://workon/<url-encoded-folder>  → launch "<folder>\Start Claude.bat" in that folder.
 ::                                            SECURITY: refuses unless the decoded path is a
 ::                                            directory AND <folder>\Start Claude.bat exists.
@@ -92,6 +97,13 @@ if "!url:~0,7!"=="launch/" (
     rem turn percent-encoded shell metacharacters (%22 %26 ...) into live chars;
     rem leaving them inert lets verb_launch's strict alnum gate reject them.
     call :verb_launch "!arg!"
+    exit /b !errorlevel!
+)
+if "!url:~0,5!"=="desk/" (
+    set "arg=!url:~5!"
+    rem NO :decode, and percents doubled before CALL, both for the reasons given at launch/.
+    set "arg=!arg:%%=%%%%!"
+    call :verb_desk "!arg!"
     exit /b !errorlevel!
 )
 if "!url:~0,5!"=="file/" (
@@ -264,6 +276,40 @@ if defined MNCCORE_HANDLER_DRYRUN (
     exit /b 0
 )
 python -X utf8 "!resolver!" "%~1"
+exit /b 0
+
+
+:: ── :verb_desk <slug>/<desk-name> ── start a session on a working desk ────────
+:: Fired by a desk's grey "Start a Claude session on this desk" link (PB
+:: working-desk-artifact skill, 2026-10-09). SECURITY: same model as launch/.
+:: The arg is an IDENTIFIER, never text or a path: a project slug and a desk file
+:: stem. resolve_launch.py (desk mode) refuses unless that names an existing
+:: Projects\<slug>\artifacts\<desk>.html in PB, builds the seed only from that
+:: git-tracked desk and its .cards.json manifest, then mints + claims a normal
+:: launch over the authenticated channel. Charset gate below is coarse (findstr's
+:: [a-z] follows collation and also takes most capitals); the resolver's Python
+:: regex is the strict one. Unlike launch/, a refusal is LOUD: the resolver exits
+:: 1 (and raises a Windows balloon) and :fail shows the reason here.
+:verb_desk
+echo "%~1"| findstr /R /C:"^.[a-z0-9][a-z0-9-]*/[A-Za-z0-9_-][A-Za-z0-9_-]*.$" >nul
+if errorlevel 1 (
+    call :fail "desk: refused — not a <slug>/<desk-name> ref: %~1"
+    exit /b 1
+)
+set "resolver=%USERPROFILE%\Peripheral-Brain\scripts\utils\resolve_launch.py"
+if not exist "!resolver!" (
+    call :fail "desk: resolver not found at !resolver!"
+    exit /b 1
+)
+if defined MNCCORE_HANDLER_DRYRUN (
+    echo DRYRUN desk: python -X utf8 "!resolver!" desk "%~1"
+    exit /b 0
+)
+python -X utf8 "!resolver!" desk "%~1"
+if errorlevel 1 (
+    call :fail "desk: could not start a session — see %TEMP%\pb-resolve-launch.log"
+    exit /b 1
+)
 exit /b 0
 
 

@@ -178,6 +178,24 @@ if git diff --cached --name-only --diff-filter=ACMR \
 fi
 
 # ---------------------------------------------------------------------------
+# mnccore:// handler routing gate (2026-10-09). The handler is the one local
+# entry point any web page can fire, and until 2026-10-09 its refusal path ran
+# URL text as a command (ccbe459f). This runs the REAL .bat under DRYRUN with
+# file-marker injection payloads (never a GUI program). Windows only: the .bat
+# cannot run elsewhere, and the test skips itself there.
+if git diff --cached --name-only --diff-filter=ACMR \
+        | grep -qE "^scripts/mnccore-handler\.(bat|test\.mjs)$"; then
+    if ! node scripts/mnccore-handler.test.mjs >/tmp/mnccore-handler-test.$$ 2>&1; then
+        grep -E "^\s*not ok|error:" /tmp/mnccore-handler-test.$$ | head -20
+        rm -f /tmp/mnccore-handler-test.$$
+        echo ""
+        echo "BLOCKED: scripts/mnccore-handler.test.mjs failed (run it with node to see why)."
+        exit 1
+    fi
+    rm -f /tmp/mnccore-handler-test.$$
+fi
+
+# ---------------------------------------------------------------------------
 # Ledger-registry gate (2026-06-18, bounded-ledger primitive).
 # Rejects any new schema-v*.sql that introduces a CREATE TABLE with a
 # timestamp column that lacks a LEDGER_REGISTRY entry in
