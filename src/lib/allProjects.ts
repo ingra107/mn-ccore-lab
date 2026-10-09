@@ -16,6 +16,7 @@
 // ignores the header.
 
 import { useSyncExternalStore } from 'react'
+import type { QueryClient } from '@tanstack/react-query'
 
 export const ALL_PROJECTS_HEADER = 'X-Hub-All-Projects'
 
@@ -40,6 +41,21 @@ function subscribe(fn: () => void): () => void {
 /** React view of the switch. */
 export function useAllProjectsOn(): boolean {
   return useSyncExternalStore(subscribe, getAllProjectsOn, () => false)
+}
+
+/** The switch lives on the Projects list and project pages only (Nick: "a way on
+ *  the projects page to toggle that"). Anywhere else it must be off. */
+export function isProjectsRoute(pathname: string): boolean {
+  const base = '/portal/projects'
+  return pathname === base || pathname.startsWith(base + '/')
+}
+
+/** Flip the switch and drop every cached query. resetQueries, not
+ *  invalidateQueries: invalidate keeps the old data on screen until the refetch
+ *  lands, so a list fetched under the other rule could still show. */
+export function flipAllProjects(qc: QueryClient, next: boolean): void {
+  setAllProjectsOn(next)
+  void qc.resetQueries()
 }
 
 function isSameOriginApi(input: RequestInfo | URL): boolean {

@@ -1154,8 +1154,8 @@ function ProjectDetailInner({ project }: InnerProps) {
               </div>
             )}
             {/* Members (#145) -- projects work like channels: you see one only if you are on it. */}
-            {isAuthenticated && project.slug && (
-              <ProjectMembers projectRef={project.slug} projectTitle={project.title} />
+            {isAuthenticated && (project.slug ?? project.id) && (
+              <ProjectMembers projectRef={(project.slug ?? project.id) as string} projectTitle={project.title} />
             )}
             {/* Links — ONE card (#2091): the three pinned key-link slots on top,
                 every other stored link below, archived collapsed. */}

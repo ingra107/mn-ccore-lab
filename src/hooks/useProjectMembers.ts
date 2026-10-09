@@ -7,6 +7,7 @@ import {
   removeProjectMember,
   type ProjectMembersResult,
 } from '../lib/projectMembersApi'
+import { removedSelfOutOfProject } from '../lib/projectMembersRules'
 
 const membersKey = (ref: string) => ['project-members', ref] as const
 
@@ -31,14 +32,15 @@ export function useAddProjectMember(ref: string) {
   })
 }
 
-export function useRemoveProjectMember(ref: string) {
+export function useRemoveProjectMember(ref: string, userSlug: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (slug: string) => removeProjectMember(ref, slug),
-    onSuccess: (res: ProjectMembersResult) => {
-      // data is [] when the caller removed themself: the project is no longer
-      // theirs to read, so drop its cached list and the project lists too.
-      if (res.data.length === 0) {
+    onSuccess: (res: ProjectMembersResult, removedSlug: string) => {
+      // Drop the cached list only when the caller removed THEMSELF (the project
+      // is no longer theirs to read). An empty list after removing someone else
+      // is a real, empty list: keep it.
+      if (removedSelfOutOfProject(res, removedSlug, userSlug)) {
         qc.removeQueries({ queryKey: membersKey(ref) })
         void qc.invalidateQueries({ queryKey: ['projects'] })
       } else {

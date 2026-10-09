@@ -299,14 +299,14 @@ function projectRecencyMs(p: Project): number {
 
 export default function Projects() {
   const navigate = useNavigate()
+  const allProjectsOn = useAllProjectsOn()
   usePageMeta(
-    'Research Pipeline | MN-CCORE',
+    allProjectsOn ? 'All projects | MN-CCORE' : 'My projects | MN-CCORE',
     'Track MN-CCORE research projects from idea to publication across MN-CCORE, CLIF, and Peripheral Brain buckets.'
   )
 
   const { data: projects = [] } = useProjects()
   const { data: allTasks = [] } = useTasks()
-  const allProjectsOn = useAllProjectsOn()
   // #507 follow-up opt-out: dependencies/healthData/allProjectLinks are all
   // per-row OPTIONAL enrichments (dependency map inside a collapsible toggle,
   // health progress bar, link icons) layered onto the page's real query

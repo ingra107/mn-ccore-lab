@@ -3,27 +3,39 @@
 // Runs in real Chromium (vitest.config.ts browser mode); mounts with react-dom
 // directly (the repo carries no testing-library).
 import { describe, it, expect, afterEach } from 'vitest'
-import type { ReactElement } from 'react'
+import { useEffect, type ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthContext, authUserFromMe, type AuthUser } from '../hooks/useAuth'
 import { getAllProjectsOn, setAllProjectsOn } from '../lib/allProjects'
-import { AllProjectsBanner, AllProjectsSwitch } from './AllProjectsControls'
+import { MemoryRouter, useNavigate } from 'react-router-dom'
+import { AllProjectsBanner, AllProjectsRouteGuard, AllProjectsSwitch } from './AllProjectsControls'
 
 let mounted: { host: HTMLElement; root: Root }[] = []
 
 const tick = () => new Promise((r) => setTimeout(r, 30))
 
-async function mount(user: AuthUser): Promise<HTMLElement> {
+let navigateTo: (p: string) => void = () => {}
+function Nav() {
+  const nav = useNavigate()
+  useEffect(() => { navigateTo = nav }, [nav])
+  return null
+}
+
+async function mount(user: AuthUser, start = '/portal/projects'): Promise<HTMLElement> {
   const host = document.createElement('div')
   document.body.appendChild(host)
   const root = createRoot(host)
   const ui: ReactElement = (
     <QueryClientProvider client={new QueryClient()}>
-      <AuthContext.Provider value={{ user, isAuthenticated: user.isAuthenticated, isLoading: false }}>
-        <AllProjectsSwitch />
-        <AllProjectsBanner />
-      </AuthContext.Provider>
+      <MemoryRouter initialEntries={[start]}>
+        <AuthContext.Provider value={{ user, isAuthenticated: user.isAuthenticated, isLoading: false }}>
+          <Nav />
+          <AllProjectsRouteGuard />
+          <AllProjectsSwitch />
+          <AllProjectsBanner />
+        </AuthContext.Provider>
+      </MemoryRouter>
     </QueryClientProvider>
   )
   root.render(ui)
@@ -96,3 +108,20 @@ describe('AllProjectsSwitch visibility', () => {
     expect(host.querySelector('[data-testid="all-projects-banner"]')).toBeNull()
   })
 })
+
+describe('AllProjectsRouteGuard', () => {
+  it('keeps the switch on across the list and a project page, and turns it off elsewhere', async () => {
+    const host = await mount(me({ isPi: true, canShowAllProjects: true }))
+    ;(host.querySelector('[data-testid="all-projects-switch"]') as HTMLButtonElement).click()
+    await tick()
+    expect(getAllProjectsOn()).toBe(true)
+    navigateTo('/portal/projects/some-hidden-project')
+    await tick()
+    expect(getAllProjectsOn()).toBe(true)
+    navigateTo('/portal/team/nick-ingraham')
+    await tick()
+    expect(getAllProjectsOn()).toBe(false)
+    expect(host.querySelector('[data-testid="all-projects-banner"]')).toBeNull()
+  })
+})
+

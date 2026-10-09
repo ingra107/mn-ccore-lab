@@ -3,12 +3,14 @@
 // The switch draws only when /api/auth/me said canShowAllProjects (Nick). It is
 // off on every page load, since the state lives in memory (lib/allProjects.ts).
 // While it is on, every API request carries X-Hub-All-Projects and the banner
-// says the view is unfiltered. Flipping it refetches everything, because every
+// says the view is unfiltered. Flipping it resets every query, because every
 // cached list was fetched under the other rule.
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Eye } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
-import { setAllProjectsOn, useAllProjectsOn } from '../lib/allProjects'
+import { flipAllProjects, isProjectsRoute, useAllProjectsOn } from '../lib/allProjects'
 import { ICON_PROPS } from '../lib/iconProps'
 
 export function AllProjectsSwitch() {
@@ -22,8 +24,7 @@ export function AllProjectsSwitch() {
       role="switch"
       aria-checked={on}
       onClick={() => {
-        setAllProjectsOn(!on)
-        void queryClient.invalidateQueries()
+        flipAllProjects(queryClient, !on)
       }}
       data-testid="all-projects-switch"
       title="Admin only. Lists every project, including ones you are not a member of. Off again on reload."
@@ -69,8 +70,7 @@ export function AllProjectsBanner() {
       <button
         type="button"
         onClick={() => {
-          setAllProjectsOn(false)
-          void queryClient.invalidateQueries()
+          flipAllProjects(queryClient, false)
         }}
         style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--teal)', cursor: 'pointer', fontSize: 'var(--label-size)', minHeight: 32 }}
       >
@@ -78,4 +78,16 @@ export function AllProjectsBanner() {
       </button>
     </div>
   )
+}
+
+/** Turns the switch off when the route leaves the Projects list and project
+ *  pages, so an unfiltered view never follows Nick to a page with no banner. */
+export function AllProjectsRouteGuard() {
+  const { pathname } = useLocation()
+  const on = useAllProjectsOn()
+  const queryClient = useQueryClient()
+  useEffect(() => {
+    if (on && !isProjectsRoute(pathname)) flipAllProjects(queryClient, false)
+  }, [on, pathname, queryClient])
+  return null
 }

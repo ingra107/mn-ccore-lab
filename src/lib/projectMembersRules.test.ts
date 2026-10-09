@@ -18,15 +18,19 @@ describe('canRemoveMember', () => {
 })
 
 describe('removedSelfOutOfProject', () => {
-  it('is true for removed + empty list (the viewer lost the project)', () => {
-    expect(removedSelfOutOfProject({ data: [], project_id: 'p1', removed: true })).toBe(true)
+  it('is true when the caller removed themself and the list came back empty', () => {
+    expect(removedSelfOutOfProject({ data: [], project_id: 'p1', removed: true }, 'nick-ingraham', 'nick-ingraham')).toBe(true)
+  })
+  it('is false when the caller removed someone ELSE and the list is empty (admin cleaning out a project)', () => {
+    expect(removedSelfOutOfProject({ data: [], project_id: 'p1', removed: true }, 'casey-eddington', 'nick-ingraham')).toBe(false)
   })
   it('is false when the list still comes back', () => {
     const m = { slug: 'a', name: 'A', preferred_name: null, photo_url: null, member_type: null, email: null, added_by: 'x', created_at: '' }
-    expect(removedSelfOutOfProject({ data: [m], project_id: 'p1', removed: true })).toBe(false)
+    expect(removedSelfOutOfProject({ data: [m], project_id: 'p1', removed: true }, 'a', 'a')).toBe(false)
   })
-  it('is false when nothing was removed', () => {
-    expect(removedSelfOutOfProject({ data: [], project_id: 'p1', removed: false })).toBe(false)
+  it('is false when nothing was removed, or the viewer slug is unknown', () => {
+    expect(removedSelfOutOfProject({ data: [], project_id: 'p1', removed: false }, 'a', 'a')).toBe(false)
+    expect(removedSelfOutOfProject({ data: [], project_id: 'p1', removed: true }, '', '')).toBe(false)
   })
 })
 

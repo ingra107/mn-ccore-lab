@@ -10,7 +10,7 @@
  * with an empty list; we leave the project page for the Projects list instead
  * of showing a page that would 404 on the next refetch.
  */
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Users, X } from 'lucide-react'
 import Avatar from '../Avatar'
@@ -42,8 +42,9 @@ export default function ProjectMembers({ projectRef, projectTitle }: ProjectMemb
   const { showSuccess, showError } = useUndoToast()
   const { data: members = [], isLoading, isError } = useProjectMembers(projectRef)
   const { data: team = [] } = useTeam()
+  const headingRef = useRef<HTMLSpanElement>(null)
   const addMutation = useAddProjectMember(projectRef)
-  const removeMutation = useRemoveProjectMember(projectRef)
+  const removeMutation = useRemoveProjectMember(projectRef, user.slug)
 
   const pickerOptions = useMemo<GhostSelectOption[]>(
     () =>
@@ -71,11 +72,13 @@ export default function ProjectMembers({ projectRef, projectTitle }: ProjectMemb
     if (!window.confirm(ask)) return
     removeMutation.mutate(slug, {
       onSuccess: (res) => {
-        if (removedSelfOutOfProject(res)) {
+        if (removedSelfOutOfProject(res, slug, user.slug)) {
           showSuccess(`You left ${projectTitle}`)
           navigate(PATHS.projects, { replace: true })
         } else if (res.removed) {
           showSuccess(`Removed ${label} from ${projectTitle}`)
+          // The chip that held focus is gone: park focus on the panel heading.
+          headingRef.current?.focus()
         }
       },
       onError: (err) => showError(err instanceof Error ? err.message : 'Could not remove the member'),
@@ -86,7 +89,7 @@ export default function ProjectMembers({ projectRef, projectTitle }: ProjectMemb
     <section aria-label="Project members" data-testid="project-members">
       <div className="flex items-center gap-2 mb-2">
         <Users {...ICON_PROPS} size={13} style={{ color: 'var(--teal)' }} aria-hidden="true" />
-        <span style={LABEL_STYLE}>Members</span>
+        <span ref={headingRef} tabIndex={-1} style={{ ...LABEL_STYLE, outline: 'none' }}>Members</span>
         {members.length > 0 && (
           <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.85 }}>{members.length}</span>
         )}

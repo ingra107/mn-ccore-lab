@@ -11,9 +11,12 @@ export function canRemoveMember(viewer: { slug: string; isPi: boolean }, memberS
   return viewer.isPi || viewer.slug === memberSlug
 }
 
-/** True when the caller removed themself and can no longer read the project. */
-export function removedSelfOutOfProject(res: ProjectMembersResult): boolean {
-  return res.removed === true && res.data.length === 0
+/** True when the caller removed THEMSELF and can no longer read the project
+ *  (the API answers data: []). An empty list after removing someone else is
+ *  not this: Nick with the all-projects switch on removes a project's last
+ *  member and stays on the page. */
+export function removedSelfOutOfProject(res: ProjectMembersResult, removedSlug: string, userSlug: string): boolean {
+  return res.removed === true && res.data.length === 0 && removedSlug === userSlug && userSlug !== ''
 }
 
 /** Name shown for a member: the shared display helper first, the API's own

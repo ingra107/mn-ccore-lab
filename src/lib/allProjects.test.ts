@@ -4,7 +4,9 @@ import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest'
 import {
   ALL_PROJECTS_HEADER,
   getAllProjectsOn,
+  flipAllProjects,
   installAllProjectsFetch,
+  isProjectsRoute,
   setAllProjectsOn,
 } from './allProjects'
 
@@ -67,5 +69,27 @@ describe('installAllProjectsFetch', () => {
     setAllProjectsOn(false)
     await fetch('/api/projects')
     expect(calls[0].headers.has(ALL_PROJECTS_HEADER)).toBe(false)
+  })
+})
+
+describe('isProjectsRoute', () => {
+  it('covers the list and project pages only', () => {
+    expect(isProjectsRoute('/portal/projects')).toBe(true)
+    expect(isProjectsRoute('/portal/projects/clif-sedation')).toBe(true)
+    expect(isProjectsRoute('/portal/projectsx')).toBe(false)
+    expect(isProjectsRoute('/portal/dashboard')).toBe(false)
+    expect(isProjectsRoute('/portal/team/nick-ingraham')).toBe(false)
+  })
+})
+
+describe('flipAllProjects', () => {
+  it('sets the state and resets (not just invalidates) the query cache', () => {
+    let resets = 0
+    const qc = { resetQueries: () => { resets += 1; return Promise.resolve() } } as unknown as import('@tanstack/react-query').QueryClient
+    flipAllProjects(qc, true)
+    expect(getAllProjectsOn()).toBe(true)
+    flipAllProjects(qc, false)
+    expect(getAllProjectsOn()).toBe(false)
+    expect(resets).toBe(2)
   })
 })

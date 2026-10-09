@@ -14,6 +14,7 @@ import { Button } from './components/ui/Button'
 import { TooltipLayer } from './components/TooltipLayer'
 const Home = lazyRoute(() => import('./pages/Home'))
 import { AuthProvider } from './context/AuthContext'
+import { AllProjectsRouteGuard } from './components/AllProjectsControls'
 import { PATHS } from './constants/paths'
 
 // Error boundary to prevent one page crash from taking down the app
@@ -209,6 +210,7 @@ export default function App() {
       <TooltipLayer />
       <BrowserRouter>
         <AuthProvider>
+          <AllProjectsRouteGuard />
           <ViewTransitionWrapper>
             <Suspense fallback={<PageLoader />}>
               <Routes>
