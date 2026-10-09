@@ -2731,3 +2731,24 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-ft button[aria-label*="project folder"],.tk .tk-ft button[aria-label*="Claude"],.tk .tk-tr-r button[aria-label*="project folder"],.tk .tk-tr-r button[aria-label*="Claude"]{color:var(--sk-t3) !important}
 .tk .tk-ft button[aria-label*="project folder"]:hover,.tk .tk-ft button[aria-label*="Claude"]:hover,.tk .tk-tr-r button[aria-label*="project folder"]:hover,.tk .tk-tr-r button[aria-label*="Claude"]:hover{color:var(--sk-t1) !important}
 .tk textarea::placeholder{color:var(--sk-t3) !important;opacity:1}
+.tk .tk-clk{cursor:pointer}
+/* a11y: muted text on the gold attention wash uses the second text tier (AA) */
+.tk .tk-attn{--sk-t3:var(--sk-t2)}
+.tk .tk-attn-h .tk-cnt{opacity:1}
+/* tk-tlab: AM/PM labels need room: keep on one line, grow leftwards */
+.tk .tk-tlab{width:46px}
+/* dark depth: the later flat .tk-card rule beat the dark gradient; restate it above that specificity */
+.dark .tk .tk-card{background:linear-gradient(180deg,var(--sk-top) 0%,var(--sk-card) 60%)}
+.tk .tk-dense .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:7px 12px}
+.tk .tk-tc.tk-dense .tk-ft{padding-bottom:7px}
+/* timeline compact meeting card: one line, proportional height */
+.tk .tk-mcc{display:flex;flex-direction:column;justify-content:flex-start}
+.tk .tk-mcr{display:flex;align-items:center;gap:8px;padding:4px 10px;min-height:26px;min-width:0}
+.tk .tk-mcr.tk-wrap{flex-wrap:wrap;row-gap:2px}
+.tk .tk-mcr .tk-ct{font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk .tk-mcr.tk-wrap .tk-ct{white-space:normal}
+.tk .tk-mcr .tk-cs.tk-inl{margin:0;min-width:0;flex:0 1 auto;max-width:34%}
+.tk .tk-mcr .tk-mt{flex-shrink:0}
+.tk .tk-mcr .tk-pill,.tk .tk-mcr .tk-join,.tk .tk-mcr .tk-joinq{padding-top:1px;padding-bottom:1px;line-height:1.3;flex-shrink:0}
+.tk .tk-mcr .tk-sp{flex:1;min-width:0}
+.tk .tk-tlab{width:52px;padding-right:6px;font-size:9.5px;box-sizing:border-box}

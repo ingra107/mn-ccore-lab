@@ -159,7 +159,6 @@ export interface AgendaListViewProps {
   // does not reset dismissed meetings).
   dismissedIds: Record<string, boolean>
   onDismiss: (id: string) => void
-  onRestoreDismissed: () => void
   // `now` is NO LONGER a prop (#168 — was computed once at render in TodayPage,
   // freezing the now-marker. AgendaListView now calls useNowMinutes() itself
   // for a live 60s ticker, same as Timeline.
@@ -174,7 +173,6 @@ export function AgendaListView({
   projectsByPid,
   dismissedIds,
   onDismiss,
-  onRestoreDismissed,
 }: AgendaListViewProps) {
   // Live 60s ticker — fixes #168 (stale now-marker in Agenda mode).
   const now = useNowMinutes()
@@ -416,16 +414,6 @@ export function AgendaListView({
           </div>
         )}
       </div>
-
-      {/* Restore dismissed */}
-      {Object.keys(dismissedIds).length > 0 && (
-        <button
-          onClick={onRestoreDismissed}
-          style={{ marginTop: 8, color: 'var(--sk-ac)', fontSize: 11.5 }}
-        >
-          Restore {Object.keys(dismissedIds).length} hidden
-        </button>
-      )}
 
       {/* Tomorrow section */}
       {visibleTomorrow.length > 0 && (

@@ -7,12 +7,12 @@ import { stageIndex, toApiStage, stageLabel } from '../lib/stageNormalize'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
-import { PANEL_BG, daysSince, isStalledProject, withAlpha } from '../lib/taskGrouping'
+import { PANEL_BG, daysSince, withAlpha } from '../lib/taskGrouping'
 import { parseDbUtc } from '../lib/time'
 import { useCreateProject, useUpdateProjectFields } from '../hooks/useMutations'
 import InlineSelect from '../components/InlineSelect'
 import { useUndoToast } from '../components/UndoToast'
-import { PROJECT_STATUS_OPTIONS, normalizeProjectStatus, isProjectActive, isProjectDone, isProjectFinished } from '../lib/taskConstants'
+import { PROJECT_STATUS_OPTIONS, normalizeProjectStatus, isProjectActive, isProjectDone, isProjectFinished, isStalledProject } from '../lib/taskConstants'
 import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
@@ -416,7 +416,7 @@ export default function Projects() {
     }, { replace: true })
   }, [setSearchParams])
   // `?filter=stalled` is the Today stat line's "stalled" link (and the rail's
-  // "+N more"): active projects quiet for 10+ days, the same predicate Today
+  // "+N more"): active projects with no movement for projectStaleDays, the same predicate Today
   // counts with (isStalledProject). URL-backed like category and status.
   const stalledOnly = searchParams.get('filter') === 'stalled'
   const setStalledOnly = useCallback((on: boolean) => {
@@ -479,7 +479,7 @@ export default function Projects() {
       })
     }
     else base = statusScoped.filter((p) => p.category === activeCategory)
-    if (stalledOnly) base = base.filter(isStalledProject)
+    if (stalledOnly) base = base.filter((p) => isStalledProject(p, prefs.projectStaleDays))
     return [...base].sort((a, b) => {
       const pinCmp =
         (pinnedSlugs.has(a.slug) ? 0 : 1) - (pinnedSlugs.has(b.slug) ? 0 : 1)
@@ -641,7 +641,7 @@ export default function Projects() {
             label="Stalled"
             active={stalledOnly}
             onClick={() => setStalledOnly(!stalledOnly)}
-            title="Active projects with no activity in 10+ days"
+            title="Active projects with no movement in the stale window (Settings, Lab Preferences)"
           />
         </>
       }

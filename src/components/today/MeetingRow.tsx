@@ -39,7 +39,7 @@ function timeLine(e: TodayEvent): string {
   return e.end ? `${e.time} – ${e.end}` : e.time
 }
 
-export function EventRow({ e, onDismiss, note, onNote, saveStatus = 'idle', isCalEvent = false, minHeight }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean; minHeight?: number }) {
+export function EventRow({ e, onDismiss, overlap = false, compact = false, note, onNote, saveStatus = 'idle', isCalEvent = false, minHeight }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; compact?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean; minHeight?: number }) {
   const [expanded, setExpanded] = useState(false)
 
   // Happening now: the Join link becomes the filled primary and the card gets
@@ -105,6 +105,145 @@ export function EventRow({ e, onDismiss, note, onNote, saveStatus = 'idle', isCa
   const hasNotes = (note && note.length > 0) || !!e.meetingNotes
   const place = e.loc ?? null
 
+  const notesEl = (
+    hasNotes && (
+      <span className="tk-mt" title="Has notes">
+        <StickyNote {...ICON_PROPS} size={13} aria-hidden />notes
+      </span>
+    )
+  )
+  const agendaEl = (
+    rowMeetingId && (
+      <Link
+        to={PATHS.meeting(rowMeetingId)}
+        onClick={(ev) => ev.stopPropagation()}
+        title="Open this meeting's agenda and notes"
+        aria-label={`Open agenda for ${e.title}`}
+        className="tk-pill tk-btnp"
+      >
+        <ListChecks {...ICON_PROPS} size={11} aria-hidden />Agenda
+      </Link>
+    )
+  )
+  const prepEl = (
+    canPrep && (
+      <button
+        type="button"
+        onClick={handlePrep}
+        disabled={prep.isPending}
+        title="Build an agenda for this meeting — links, notes, decisions"
+        aria-label={`Prep ${e.title}`}
+        className="tk-pill tk-btnp planned-chip"
+        style={{ cursor: prep.isPending ? 'wait' : 'pointer', opacity: prep.isPending ? 0.6 : 1 }}
+      >
+        <ListChecks {...ICON_PROPS} size={11} aria-hidden />{prep.isPending ? 'Prepping' : 'Prep'}
+      </button>
+    )
+  )
+  const joinEl = (
+    e.meetingUrl && (
+      <a
+        href={e.meetingUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(ev) => ev.stopPropagation()}
+        title="Join meeting"
+        aria-label="Join meeting"
+        className={isNow ? 'tk-join' : 'tk-joinq'}
+      >
+        Join
+      </a>
+    )
+  )
+  const notesPanel = (
+    <div className="tk-mexp">
+              {e.meetingNotes ? (
+                // T13: cal- row matched to a D1 meeting that has debrief notes —
+                // read-only rendered notes + deep link, no jot textarea (editing
+                // debriefed notes stays on the meeting page).
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+                    <div className="tk-lbl" style={{ margin: 0 }}>Meeting notes</div>
+                    <Link
+                      to={PATHS.meeting(e.meetingId!)}
+                      onClick={(ev) => ev.stopPropagation()}
+                      className="tk-pill tk-btnp"
+                    >
+                      Open meeting →
+                    </Link>
+                  </div>
+                  <MarkdownView source={e.meetingNotes} />
+                </>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+                    <div className="tk-lbl" style={{ margin: 0 }}>Meeting notes</div>
+                    {!isCalEvent && saveStatus === 'saving' && (
+                      <span style={{ fontSize: 10.5, color: 'var(--sk-t3)' }}>saving…</span>
+                    )}
+                    {!isCalEvent && saveStatus === 'saved' && (
+                      <span style={{ fontSize: 10.5, color: 'var(--sk-ac)' }}>saved</span>
+                    )}
+                  </div>
+                  <textarea
+                    value={isCalEvent ? '' : (note || '')}
+                    onChange={isCalEvent ? undefined : (ev) => onNote(e.id, ev.target.value)}
+                    readOnly={isCalEvent}
+                    disabled={isCalEvent}
+                    placeholder={
+                      isCalEvent
+                        ? (e.hasUndebriefedMatch
+                            // #550: a match exists (undebriefed) — the native row
+                            // elsewhere carries the live jot; don't claim no record.
+                            ? 'This meeting has its own row — jot notes there instead'
+                            : 'No meeting page yet — press Prep to build an agenda')
+                        : 'Jot notes as the meeting happens…'
+                    }
+                    style={{ resize: isCalEvent ? 'none' : 'vertical', cursor: isCalEvent ? 'not-allowed' : undefined, outline: 'none', lineHeight: 1.5 }}
+                  />
+                </>
+              )}
+            </div>
+  )
+
+  // TIMELINE card (compact): time + title on one line, place dim and inline, the
+  // pills inline too, no always-present footer. The row is only as tall as its
+  // content, and the timeline gives it min-height = proportional px, so a 30 min
+  // meeting and a 60 min one stay different heights (the footer card was ~70px
+  // for everything under ~100 min). Overlap columns are narrow, so there the
+  // line may wrap. The full card (below) is for the Agenda and the all-day band.
+  if (compact) {
+    const start = e.time === 'all day' || e.time === '—' ? timeLine(e) : (overlap ? e.time : timeLine(e))
+    return (
+      <div
+        data-expanded={expanded ? 'true' : undefined}
+        data-meeting-compact
+        className={`tk-card tk-mc tk-mcc${isNow ? ' tk-nowm' : ''}`}
+        style={{ minHeight }}
+      >
+        <div onClick={() => setExpanded(!expanded)} className={`meeting-row-header tk-mcr${overlap ? ' tk-wrap' : ''}`} style={{ cursor: 'pointer' }}>
+          <span className="tk-mt" title={timeLine(e)}>{start}</span>
+          <span className="tk-ct">{e.title}</span>
+          {place && <span className="tk-cs tk-inl" title={place}>{place}</span>}
+          {isNow && <span className="tk-pill tk-box"><i />Now</span>}
+          {isNeverSeenMeeting && <span className="tk-tag" title="New notes since your last visit">New notes</span>}
+          <span className="tk-sp" />
+          {notesEl}{agendaEl}{prepEl}{joinEl}
+          {hasUpdateSinceSeenMeeting && <span aria-hidden="true" title="Updated since you last looked" className="tk-dotg" />}
+          <span className="tk-caret">{expanded ? '▾' : '▸'}</span>
+          <button
+            type="button"
+            onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
+            title="Remove from today's view"
+            aria-label={`Hide ${e.title}`}
+            className="tk-x"
+          >×</button>
+        </div>
+        {expanded && notesPanel}
+      </div>
+    )
+  }
+
   return (
     // GH#80 Phase 4: overflow stays visible so the expanded notes panel isn't
     // clipped. data-expanded drives a CSS elevation lift (#106).
@@ -143,100 +282,10 @@ export function EventRow({ e, onDismiss, note, onNote, saveStatus = 'idle', isCa
           {isNow && <span className="tk-pill tk-box"><i />Now</span>}
           {isNeverSeenMeeting && <span className="tk-tag" title="New notes since your last visit">New notes</span>}
           <span className="tk-sp" />
-          {hasNotes && (
-            <span className="tk-mt" title="Has notes">
-              <StickyNote {...ICON_PROPS} size={13} aria-hidden />notes
-            </span>
-          )}
-          {rowMeetingId && (
-            <Link
-              to={PATHS.meeting(rowMeetingId)}
-              onClick={(ev) => ev.stopPropagation()}
-              title="Open this meeting's agenda and notes"
-              aria-label={`Open agenda for ${e.title}`}
-              className="tk-pill tk-btnp"
-            >
-              <ListChecks {...ICON_PROPS} size={11} aria-hidden />Agenda
-            </Link>
-          )}
-          {canPrep && (
-            <button
-              type="button"
-              onClick={handlePrep}
-              disabled={prep.isPending}
-              title="Build an agenda for this meeting — links, notes, decisions"
-              aria-label={`Prep ${e.title}`}
-              className="tk-pill tk-btnp planned-chip"
-              style={{ cursor: prep.isPending ? 'wait' : 'pointer', opacity: prep.isPending ? 0.6 : 1 }}
-            >
-              <ListChecks {...ICON_PROPS} size={11} aria-hidden />{prep.isPending ? 'Prepping' : 'Prep'}
-            </button>
-          )}
-          {e.meetingUrl && (
-            <a
-              href={e.meetingUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(ev) => ev.stopPropagation()}
-              title="Join meeting"
-              aria-label="Join meeting"
-              className={isNow ? 'tk-join' : 'tk-joinq'}
-            >
-              Join
-            </a>
-          )}
+          {notesEl}{agendaEl}{prepEl}{joinEl}
         </div>
       </div>
-      {expanded && (
-        <div className="tk-mexp">
-          {e.meetingNotes ? (
-            // T13: cal- row matched to a D1 meeting that has debrief notes —
-            // read-only rendered notes + deep link, no jot textarea (editing
-            // debriefed notes stays on the meeting page).
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-                <div className="tk-lbl" style={{ margin: 0 }}>Meeting notes</div>
-                <Link
-                  to={PATHS.meeting(e.meetingId!)}
-                  onClick={(ev) => ev.stopPropagation()}
-                  className="tk-pill tk-btnp"
-                >
-                  Open meeting →
-                </Link>
-              </div>
-              <MarkdownView source={e.meetingNotes} />
-            </>
-          ) : (
-            <>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-                <div className="tk-lbl" style={{ margin: 0 }}>Meeting notes</div>
-                {!isCalEvent && saveStatus === 'saving' && (
-                  <span style={{ fontSize: 10.5, color: 'var(--sk-t3)' }}>saving…</span>
-                )}
-                {!isCalEvent && saveStatus === 'saved' && (
-                  <span style={{ fontSize: 10.5, color: 'var(--sk-ac)' }}>saved</span>
-                )}
-              </div>
-              <textarea
-                value={isCalEvent ? '' : (note || '')}
-                onChange={isCalEvent ? undefined : (ev) => onNote(e.id, ev.target.value)}
-                readOnly={isCalEvent}
-                disabled={isCalEvent}
-                placeholder={
-                  isCalEvent
-                    ? (e.hasUndebriefedMatch
-                        // #550: a match exists (undebriefed) — the native row
-                        // elsewhere carries the live jot; don't claim no record.
-                        ? 'This meeting has its own row — jot notes there instead'
-                        : 'No meeting page yet — press Prep to build an agenda')
-                    : 'Jot notes as the meeting happens…'
-                }
-                style={{ resize: isCalEvent ? 'none' : 'vertical', cursor: isCalEvent ? 'not-allowed' : undefined, outline: 'none', lineHeight: 1.5 }}
-              />
-            </>
-          )}
-        </div>
-      )}
+      {expanded && notesPanel}
     </div>
   )
 }

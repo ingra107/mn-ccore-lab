@@ -52,8 +52,8 @@ export function PlannedTodaySection({
       data-b2-planned-today
       className={`tk-panel tk-blk tk-planned${isOver ? ' tk-over' : ''}`}
     >
-      <div className="tk-ph">
-        <div {...collapseToggleProps(open, () => setOpen((o) => !o), 'Planned today')} className="tk-ctog">
+      <div {...collapseToggleProps(open, () => setOpen((o) => !o), 'Planned today')} className="tk-ph tk-clk">
+        <div className="tk-ctog">
           <CollapseChevron open={open} />
           {/* "Planned today" over-claimed: this section holds ONLY slot==='strip'
               tasks — the ones planned for today with no specific time. Tasks

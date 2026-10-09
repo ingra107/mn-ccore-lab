@@ -25,8 +25,8 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
   const stalledExtra = Math.max(0, stalledProjects.length - 5)
   return (
     <section className="tk-panel" data-b2-attention>
-      <div className="tk-ph">
-        <div {...collapseToggleProps(open, () => setOpen((o) => !o), 'Needs attention')} className="tk-ctog">
+      <div {...collapseToggleProps(open, () => setOpen((o) => !o), 'Needs attention')} className="tk-ph tk-clk">
+        <div className="tk-ctog">
           <CollapseChevron open={open} />
           <h3>Needs attention</h3>
           <span className="tk-cnt">{overdueTasks.length + stalledProjects.length}</span>

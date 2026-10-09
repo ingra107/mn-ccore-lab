@@ -13,6 +13,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useTasks, useProjects, useMeetingsApi, useExpiringRegulatory, useUserCalendarEvents, usePBSessionStats, useTodayMentees } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
+import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { useMarkSeen } from '../../hooks/useEntitySeen'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { MNCCORE_PROCESS_URI, MNCCORE_QUICKCHAT_URI } from '../../lib/urlClassify'
@@ -53,7 +54,8 @@ import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { QuestionsCard } from '../../components/tasks/QuestionsCard'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
-import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionWaiting, civilDatePlusDays, isStalledProject } from '../../lib/taskGrouping'
+import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionWaiting, civilDatePlusDays } from '../../lib/taskGrouping'
+import { isStalledProject, projectMovedAt } from '../../lib/taskConstants'
 import { useTodayDueWindow, DUE_WINDOW_OPTIONS, dueWindowDays } from '../../hooks/useTodayDueWindow'
 import { isMilestone } from '../../../shared/taskKinds'
 import { Brain, Diamond, MessageSquare, Settings } from 'lucide-react'
@@ -67,6 +69,7 @@ export default function TodayPage() {
   const { user } = useAuth()
   const { launch: launchProcess } = useProtocolLaunch()
   const userSlug = user?.slug ?? ''
+  const { prefs } = useLabPrefs()
   // autoScroll handled by dnd-kit DndContext (enabled by default via PointerSensor)
   // — replaced useDragAutoScroll() which listened on 'dragover' (HTML5; now dead).
 
@@ -129,7 +132,13 @@ export default function TodayPage() {
   // (UTC) completed_at to the local calendar date; a bare .slice(0,10) compares
   // the UTC date and drops evening completions in Central time.
   const doneTodayDetail = useMemo(
-    () => (tasksQuery.data ?? []).filter((t) => t.completed === 1 && isToday(t.completed_at)),
+    // Same rows the linked My Tasks "Done today" list shows: answered approvals
+    // and answered questions are triage artifacts, not work (MyTasks drops them
+    // the same way), so they are not counted or listed here either.
+    () => (tasksQuery.data ?? []).filter(
+      (t) => t.completed === 1 && isToday(t.completed_at)
+        && !isApprovalPending(t) && !isApprovalTriaged(t) && !isQuestionTask(t),
+    ),
     [tasksQuery.data],
   )
   const completedTodayIds = useMemo(() => doneTodayDetail.map((t) => t.id), [doneTodayDetail])
@@ -242,10 +251,10 @@ export default function TodayPage() {
     return all
       // isStalledProject is the SAME predicate the Projects page's
       // ?filter=stalled list uses, so this count and the list it links to agree.
-      .filter(isStalledProject)
-      .map((p) => ({ name: p.short_name || p.title || p.slug, slug: p.slug, days: daysSince(p.lastActivity) }))
+      .filter((p) => isStalledProject(p, prefs.projectStaleDays))
+      .map((p) => ({ name: p.short_name || p.title || p.slug, slug: p.slug, days: daysSince(projectMovedAt(p)) }))
       .sort((a, b) => b.days - a.days)
-  }, [projectsQuery.data])
+  }, [projectsQuery.data, prefs.projectStaleDays])
 
   const projectsForRail = useMemo(() => {
     const all = projectsQuery.data ?? []
@@ -404,7 +413,9 @@ export default function TodayPage() {
     overdue: overdueTasks.length,
     stalled: stalledProjects.length,
     planned: state.plannedIds().length,
-    meetings: todaysMeetings.length,
+    // The number matches the list its link opens: the Meetings page's meeting
+    // records for today (calendar-only events are on the Today section below).
+    meetings: (meetingsQuery.data ?? []).filter((m) => isToday(m.date)).length,
     doneToday: doneTodayCount,
   }
 
@@ -667,7 +678,6 @@ export default function TodayPage() {
                 projectsByPid={projectsByPid}
                 dismissedIds={dismissedEventIds}
                 onDismiss={onDismissEvent}
-                onRestoreDismissed={onRestoreAllDismissed}
               />
             )}
           </section>
@@ -732,8 +742,8 @@ export default function TodayPage() {
         </TodayDndContext>
 
         <section data-b2-completed className="tk-panel tk-blk">
-          <div className="tk-ph">
-            <div {...collapseToggleProps(completedOpen, () => setCompletedOpen(!completedOpen), 'Completed today')} className="tk-ctog">
+          <div {...collapseToggleProps(completedOpen, () => setCompletedOpen(!completedOpen), 'Completed today')} className="tk-ph tk-clk">
+            <div className="tk-ctog">
               <CollapseChevron open={completedOpen} />
               <h3>Completed today</h3>
               <span className="tk-cnt">{doneTodayDetail.length + localDoneIds.length}</span>

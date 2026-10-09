@@ -262,14 +262,27 @@ export interface SharedTaskRowProps {
    */
   rowActions?: ReactNode
 
-  // ── card anatomy (Today reskin, 2026-10-09) ── opt-in. When true the row
-  // renders as a stepped-surface CARD (.tk-card): bold title, the project's
-  // short name as a muted line under it, the assignee's face top right, other
-  // people bottom-left, small icon+counts bottom-right, due as a dot pill. Every
-  // control the standard row has is kept. Defaults off, so every other surface
-  // renders byte-identical (Rule 68: add a prop, never fork).
-  card?: boolean
-  /** card only: extra pills in the footer, after the due pill (workflow pills). */
+  // Card anatomy is opt-in through CardTaskRowProps below (card: true).
+  card?: false
+}
+
+// ── card anatomy (Today reskin, 2026-10-09) ── opt-in. With `card: true` the row
+// renders as a stepped-surface CARD (.tk-card): bold title, the project's short
+// name as a muted line under it, the assignee's face top right, other people
+// bottom-left, small icon+counts bottom-right, due as a dot pill. Defaults off,
+// so every other surface renders byte-identical (Rule 68: add a prop, never fork).
+//
+// The card does not implement multi-select, the trailing verb strip or the
+// stacked layout, so those props are `never` here: passing one is a TYPE ERROR
+// instead of a silently ignored prop.
+export type CardTaskRowProps = Omit<SharedTaskRowProps, 'card' | 'rowActions' | 'isSelected' | 'selectionActive' | 'onToggleSelect' | 'stack'> & {
+  card: true
+  rowActions?: never
+  isSelected?: never
+  selectionActive?: never
+  onToggleSelect?: never
+  stack?: never
+  /** extra pills in the footer, after the due pill (workflow pills). */
   footPills?: ReactNode
 }
 
@@ -298,7 +311,7 @@ function DragHandle({ show, draggable, onDragStart }: { show: boolean; draggable
   )
 }
 
-export function TaskRow(props: SharedTaskRowProps) {
+export function TaskRow(props: SharedTaskRowProps | CardTaskRowProps) {
   // The variant switch lives ABOVE every hook: MilestoneRow and StandardRow
   // are separate components, so neither calls hooks conditionally
   // (rules-of-hooks) and the 'task' path stays byte-identical for every
@@ -306,8 +319,8 @@ export function TaskRow(props: SharedTaskRowProps) {
   // `variant` is an OVERRIDE; the default is read off the row itself, so a
   // caller that never heard of milestones still renders one correctly.
   const variant = props.variant ?? (isMilestone(props.task) ? 'milestone' : 'task')
-  if (variant === 'milestone') return props.card ? <MilestoneCardRow {...props} /> : <MilestoneRow {...props} />
-  return props.card ? <CardRow {...props} /> : <StandardRow {...props} />
+  if (props.card) return variant === 'milestone' ? <MilestoneCardRow {...props} /> : <CardRow {...props} />
+  return variant === 'milestone' ? <MilestoneRow {...props} /> : <StandardRow {...props} />
 }
 
 // ── Milestone branch (GH #131/#132) — a dated rule, not a task row. ────────

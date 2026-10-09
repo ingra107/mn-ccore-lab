@@ -23,8 +23,8 @@ export function PulseCard({ focusMin, milestones, mentees }: { focusMin: number 
   const [open, setOpen] = useState(true)
   return (
     <section className="tk-panel">
-      <div className="tk-ph">
-        <div {...collapseToggleProps(open, () => setOpen((o) => !o), 'Pulse')} className="tk-ctog">
+      <div {...collapseToggleProps(open, () => setOpen((o) => !o), 'Pulse')} className="tk-ph tk-clk">
+        <div className="tk-ctog">
           <CollapseChevron open={open} />
           <h3>Pulse</h3>
         </div>

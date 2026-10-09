@@ -39,7 +39,7 @@ export function HermesSuggestsCard({ overdueTasks, stalledProjects, menteesWithD
   const focus = overdueCount > 0
     ? `${overdueCount} overdue task${overdueCount === 1 ? '' : 's'} at the top of your list — work the longest one first; momentum carries the rest.`
     : stalledCount > 0
-      ? `${stalledCount} stalled project${stalledCount === 1 ? '' : 's'} (no activity 10+ days). Pick one and ship a 30-min nudge.`
+      ? `${stalledCount} stalled project${stalledCount === 1 ? '' : 's'} (no movement in the stale window). Pick one and ship a 30-min nudge.`
       : 'No fires today. Block 90 minutes for the deepest task on your list — that\'s where leverage lives.'
 
   // Build 3 bullets from real signal — first three of these that are non-null:
@@ -71,8 +71,8 @@ export function HermesSuggestsCard({ overdueTasks, stalledProjects, menteesWithD
 
   return (
     <section className="tk-panel">
-      <div className="tk-ph">
-        <div {...collapseToggleProps(open, () => setOpen((o) => !o), "Today's focus")} className="tk-ctog">
+      <div {...collapseToggleProps(open, () => setOpen((o) => !o), "Today's focus")} className="tk-ph tk-clk">
+        <div className="tk-ctog">
           <CollapseChevron open={open} />
           <h3>Today's focus</h3>
         </div>

@@ -1,6 +1,6 @@
 import { Circle, Clock, CheckCircle2, AlertTriangle, Hourglass } from 'lucide-react'
 import { STATUS_BG_EXTENDED } from './statusColors'
-import { ACCENT_GOLD, withAlpha } from './taskGrouping'
+import { ACCENT_GOLD, withAlpha, daysSince } from './taskGrouping'
 
 // ── Status ──
 // Color SSOT (Nick 2026-06-11, "lean on consistency"): task status/priority
@@ -125,4 +125,25 @@ export const STAGE_COLORS: Record<string, string> = {
   Writing: '#dcb355',
   Review: '#d65c66',
   Published: '#4ecd77',
+}
+
+/** The moment a project last really moved: last_meaningful_movement, else
+ *  updated_at. The P2-9 staleness basis (Projects page "stale" filter). */
+export function projectMovedAt(p: { last_meaningful_movement?: string | null; updated_at?: string | null }): string | null | undefined {
+  return p.last_meaningful_movement || p.updated_at
+}
+
+/**
+ * A project is "stalled" when it is active and has not moved for `staleDays`
+ * (the Lab Preferences projectStaleDays, P2-9). This is the SAME basis the
+ * Projects page uses for staleness: no third rule. One definition for the Today
+ * stat line and rail AND the Projects `?filter=stalled` list the stat links to,
+ * so the number and the list it opens cannot disagree.
+ */
+export function isStalledProject(
+  p: { status?: string | null; last_meaningful_movement?: string | null; updated_at?: string | null },
+  staleDays: number,
+): boolean {
+  if (!isProjectActive(p.status)) return false
+  return daysSince(projectMovedAt(p)) >= staleDays
 }

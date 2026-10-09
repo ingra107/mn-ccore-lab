@@ -23,7 +23,7 @@ import { dueLabelCompact, dueTone, formatShortDate, isOverdue } from '../../lib/
 import type { MilestoneEntry } from '../../lib/taskGrouping'
 import { Face, Faces, CheckGlyph } from '../today/skin'
 import TaskTitle from './TaskTitle'
-import type { SharedTaskRowProps } from './TaskRow'
+import type { CardTaskRowProps } from './TaskRow'
 
 // The complete control on a card (.tk-ck). Same contract as DoneBox: the square
 // is COMPLETE, everywhere. `done-box` keeps the invisible 24px+ hit area.
@@ -87,10 +87,10 @@ function CardProjectLine({ project }: { project: { name: string; slug: string } 
   )
 }
 
-export function CardRow(props: SharedTaskRowProps) {
+export function CardRow(props: CardTaskRowProps) {
   const {
     task, project, isDone, onToggleDone, isExpanded, onToggleExpand, hideCaret,
-    onOpenEditor, draggable = false, onDragStart, onTogglePlan,
+    onOpenEditor, dense = false, draggable = false, onDragStart, onTogglePlan,
     isPlanned = false, plannedLabel, showGroupOverridePin = false,
     leadingTag, extraMeta, belowTitle, footPills, children,
   } = props
@@ -168,7 +168,7 @@ export function CardRow(props: SharedTaskRowProps) {
   return (
     <div
       data-task-id={task.id}
-      className={`tk-card tk-tc${isDone ? ' tk-done' : ''}${urgent ? ' tk-urg' : ''}${isExpanded ? ' tk-exp' : ''}`}
+      className={`tk-card tk-tc${dense ? ' tk-dense' : ''}${isDone ? ' tk-done' : ''}${urgent ? ' tk-urg' : ''}${isExpanded ? ' tk-exp' : ''}`}
     >
       <div className="tk-tch" onClick={onToggleExpand}>
         <CardCheck done={isDone} onToggle={onToggleDone} />
@@ -221,7 +221,7 @@ export function CardRow(props: SharedTaskRowProps) {
 // Milestone as a card-skin rule: ◇ internal / ◆ hard in gold, title, a faint
 // leader, project short name, a gold date pill, caret. Same expand contract as
 // the standard milestone row; a slipped internal date dims.
-export function MilestoneCardRow(props: SharedTaskRowProps) {
+export function MilestoneCardRow(props: CardTaskRowProps) {
   const { task, project, isDone, isExpanded, onToggleExpand, hideCaret, children, milestoneRole } = props
   const civil = (d: string | null | undefined) => (d ? d.slice(0, 10) : null)
   const role = milestoneRole

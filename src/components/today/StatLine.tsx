@@ -34,9 +34,9 @@ interface Stat {
 export function StatLine({ counts }: { counts: DailyCounts }) {
   const stats: Stat[] = [
     { key: 'overdue', value: counts.overdue, label: 'overdue', rule: 'o', to: `${PATHS.myTasks}?filter=overdue`, dest: 'Tasks filtered to overdue' },
-    { key: 'stalled', value: counts.stalled, label: 'stalled', rule: 'g', to: `${PATHS.projects}?filter=stalled`, dest: 'Projects filtered to stalled (no activity in 10+ days)' },
+    { key: 'stalled', value: counts.stalled, label: 'stalled', rule: 'g', to: `${PATHS.projects}?filter=stalled`, dest: 'Projects filtered to stalled (no movement in the stale window)' },
     { key: 'planned', value: counts.planned, label: 'planned', rule: 'n', to: `${PATHS.myTasks}?filter=planned`, dest: 'Tasks planned for today' },
-    { key: 'meetings', value: counts.meetings, label: 'meetings', rule: 't', to: `${PATHS.meetings}?filter=today`, dest: "Today's meetings" },
+    { key: 'meetings', value: counts.meetings, label: 'meetings', rule: 't', to: `${PATHS.meetings}?filter=today`, dest: "Today's meeting records" },
     { key: 'done', value: counts.doneToday, label: 'done', rule: 't', to: `${PATHS.myTasks}?filter=done-today`, dest: 'Tasks done today' },
   ]
   const total = counts.doneToday + counts.planned

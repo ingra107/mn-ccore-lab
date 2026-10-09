@@ -422,8 +422,14 @@ export default function Meetings() {
   const headerRef = useScrollReveal<HTMLDivElement>()
   // `?filter=today` is the Today page's "meetings" stat line link: this page's
   // list narrowed to today's meeting records.
-  const [searchParams] = useSearchParams()
-  const [filter, setFilter] = useState<FilterMode>(searchParams.get('filter') === 'today' ? 'today' : 'all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filter: FilterMode = (['today', 'decisions', 'actions'] as const).find((k) => k === searchParams.get('filter')) ?? 'all'
+  const setFilter = (next: FilterMode) => setSearchParams((prev) => {
+    const out = new URLSearchParams(prev)
+    if (next === 'all') out.delete('filter')
+    else out.set('filter', next)
+    return out
+  }, { replace: true })
   const [searchQuery, setSearchQuery] = useState('')
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null)

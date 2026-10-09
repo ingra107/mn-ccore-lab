@@ -70,11 +70,11 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 
   if (tasks.length === 0) return null
   return (
     <section className="tk-panel tk-blk" data-group={gkey}>
-      <div className="tk-ph">
-        <div {...collapseToggleProps(open, () => setOpen((o) => !o), meta.label)} className="tk-ctog">
+      <div {...collapseToggleProps(open, () => setOpen((o) => !o), meta.label)} className="tk-ph tk-clk">
+        <div className="tk-ctog">
           <CollapseChevron open={open} />
           <h3>{meta.label}</h3>
-          <span className="tk-cnt" title={`${doneCount} of ${tasks.length} done`}>{tasks.length}</span>
+          <span className="tk-cnt" title={`${doneCount} of ${tasks.length} done`}>{doneCount} of {tasks.length}</span>
         </div>
       </div>
       {open && (

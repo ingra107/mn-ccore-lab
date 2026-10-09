@@ -52,8 +52,8 @@ export function ProjectsCard({ projects }: { projects: ProjectEntry[] }) {
 
   return (
     <section className="tk-panel">
-      <div className="tk-ph">
-        <div {...collapseToggleProps(open, () => setOpen((o) => !o), 'Projects')} className="tk-ctog">
+      <div {...collapseToggleProps(open, () => setOpen((o) => !o), 'Projects')} className="tk-ph tk-clk">
+        <div className="tk-ctog">
           <CollapseChevron open={open} />
           <h3>Projects</h3>
           <span className="tk-cnt">{useAll ? totalCount : `${relevantCount} today`}</span>

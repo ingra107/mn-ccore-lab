@@ -64,15 +64,6 @@ function fmtMin(min: number): string {
   return m === 0 ? `${hour} ${ampm}` : `${hour}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
-// Compact gutter label: "8:30", "10:30", "12" (no AM/PM; the day-start label carries it).
-function fmtGutter(min: number): string {
-  if (min >= 1440) return 'midnight'
-  const h = Math.floor(min / 60)
-  const m = min % 60
-  const hour = h > 12 ? h - 12 : h === 0 ? 12 : h
-  return m === 0 ? `${hour}` : `${hour}:${String(m).padStart(2, '0')}`
-}
-
 // ── Day balance strip ─────────────────────────────────────────────────────
 // A single ~18px bar summarising the day: proportional teal (free) / gold
 // (committed) segments plus the numbers in words. Reads MINUTES off the model,
@@ -674,11 +665,12 @@ function AgendaMeetingRow({
         </div>
       )}
       {/* Time label in left 44px spine */}
-      <div aria-hidden="true" className="tk-tlab" style={{ left: -46, top: 6 }}>
-        {fmtGutter(startMin)}
+      <div aria-hidden="true" className="tk-tlab" style={{ left: -56, top: 6 }}>
+        {fmtMin(startMin)}
       </div>
       <EventRow
         e={event}
+        compact
         onDismiss={onDismiss}
         note={notes[event.id]}
         onNote={onNote}
@@ -764,8 +756,8 @@ function AgendaOverlapRegion({
         </div>
       )}
       {/* Time label */}
-      <div aria-hidden="true" className="tk-tlab" style={{ left: -46, top: 6 }}>
-        {fmtGutter(unit.startMin)}
+      <div aria-hidden="true" className="tk-tlab" style={{ left: -56, top: 6 }}>
+        {fmtMin(unit.startMin)}
       </div>
       {/* Side-by-side columns — #116: wider min (200px) to reduce title truncation */}
       <div
@@ -789,6 +781,7 @@ function AgendaOverlapRegion({
                   <EventRow
                     e={e}
                     overlap
+                    compact
                     onDismiss={onDismiss}
                     note={notes[e.id]}
                     onNote={onNote}
@@ -1060,7 +1053,7 @@ export function TimelineGrid({
         alignItems: 'flex-start',
       }}>
         {/* Time spine + agenda column */}
-        <div style={{ flex: 1, minWidth: 0, paddingLeft: 46, position: 'relative' }}>
+        <div style={{ flex: 1, minWidth: 0, paddingLeft: 56, position: 'relative' }}>
           {/* Day-start time label */}
           <div aria-hidden="true" className="tk-tlab" style={{ left: 0, top: 6 }}>
             {fmtMin(dayStart)}
