@@ -6,7 +6,7 @@ import { normalizeAttendees, attendeesColumnValue, type NormalizedAttendees } fr
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { initialAudience, isLabSeriesTitle, isMeetingAudience } from '../../shared/meetingAudience';
-import { isSiteAdmin, personViewer, type Viewer } from '../lib/viewer-db';
+import { isSiteAdmin, personViewer, SITE_ADMIN_SLUG, type Viewer } from '../lib/viewer-db';
 import { meetingArms } from '../lib/table-scope';
 
 // GET /api/meetings/next — next upcoming meeting (lightweight, for sidebar badge)
@@ -77,10 +77,32 @@ export async function handleGetMeetings(env: Env): Promise<Response> {
   return json({ data: result.results, count: result.results.length });
 }
 
-/** Owner or the site admin: the only people who may flip a meeting's audience or grant it to a project. */
-function canManageMeetingAccess(viewer: Viewer, ownerSlug: string | null | undefined): boolean {
+/**
+ * Who owns a lab SERIES row (MNCCORE, Pulmonary HSR, CLIF WG): Nick, whoever
+ * wrote it (Nick, 2026-10-09: "You own every series row: your PB debrief takes
+ * ownership of a series row, and only you can flip it private or grant it.
+ * Everyone still edits notes."). upsertMeeting stamps it on every series row it
+ * inserts or merges onto.
+ */
+const SERIES_OWNER_SLUG = SITE_ADMIN_SLUG;
+
+/** The owner a meeting of this title is written with: Nick for a series title, else the writer. */
+function ownerForTitle(title: string, writerOwner: string | null): string | null {
+  return isLabSeriesTitle(title) ? SERIES_OWNER_SLUG : writerOwner;
+}
+
+/**
+ * Owner or the site admin: the only people who may flip a meeting's audience,
+ * grant it to a project, or change its attendees. A series-titled row is
+ * Nick's alone, even where its owner_slug still names a member (a row written
+ * before the series ruling, or one whose re-own hit the per-owner index), so a
+ * member can never hold the flip on a series row.
+ */
+function canManageMeetingAccess(viewer: Viewer, ownerSlug: string | null | undefined, title?: string | null): boolean {
   if (viewer.kind !== 'person') return false;
-  return (!!ownerSlug && ownerSlug === viewer.slug) || isSiteAdmin(viewer);
+  if (isSiteAdmin(viewer)) return true;
+  if (isLabSeriesTitle(title)) return false;
+  return !!ownerSlug && ownerSlug === viewer.slug;
 }
 
 // GET /api/meetings/:id — single meeting with action items + agenda items.
@@ -129,7 +151,7 @@ export async function handleGetMeeting(id: string, env: Env, viewer?: Viewer): P
       agenda_items: agendaItems.results,
       // Who may flip the audience and toggle project access: decided here,
       // not by the browser (the handlers below check it again).
-      can_manage_access: viewer ? canManageMeetingAccess(viewer, meeting.owner_slug as string | null) : false,
+      can_manage_access: viewer ? canManageMeetingAccess(viewer, meeting.owner_slug as string | null, meeting.title as string | null) : false,
     },
   });
 }
@@ -218,30 +240,47 @@ export async function handleUpdateMeetingNotes(meetingId: string, request: Reque
 // Date is NOT editable (it is half of the dedup key).
 //
 // audience (schema-v122): 'private' | 'lab', and only the meeting's owner or
-// Nick may change it (Nick, 2026-10-09). Every other field stays editable by
-// anyone who can see the meeting, a lab meeting included (Nick: "everybody
-// should be able to edit because we'll still have the full transcript"). The
-// PB key never sets it: no automated writer decides who sees a meeting.
+// Nick may change it (Nick, 2026-10-09); a series row is Nick's alone. The
+// attendee list sits behind the same check, because an attendee can read the
+// meeting and Hermes gives an attendee its transcript: a member who could add
+// an outside person here would be handing out access. A member who is not the
+// owner may only take themselves off the list. Every other field stays
+// editable by anyone who can see the meeting, a lab meeting included (Nick:
+// "everybody should be able to edit because we'll still have the full
+// transcript"). The PB key never sets audience: no automated writer decides
+// who sees a meeting.
 export async function handleUpdateMeetingMeta(meetingId: string, request: Request, user: AuthUser, env: Env, viewer: Viewer): Promise<Response> {
   const body = await request.json() as { attendees?: string[]; title?: string; type?: string; tags?: string[]; facilitator?: string | null; audience?: unknown };
   const sets: string[] = [];
   const binds: unknown[] = [];
   let audienceChange: string | null = null;
-  if (body.audience !== undefined) {
-    if (!isMeetingAudience(body.audience)) return error("audience must be 'private' or 'lab'", 400);
-    const current = await env.DB.prepare('SELECT owner_slug, audience FROM meetings WHERE id = ?')
-      .bind(meetingId).first<{ owner_slug: string | null; audience: string }>();
-    if (!current) return error('Meeting not found', 404);
-    if (!canManageMeetingAccess(viewer, current.owner_slug)) {
-      return error("Only the meeting's owner or Nick can change who sees it", 403);
-    }
+  if (body.audience !== undefined && !isMeetingAudience(body.audience)) {
+    return error("audience must be 'private' or 'lab'", 400);
+  }
+  // audience and attendees both decide who sees the meeting (an attendee is a
+  // read arm, and Hermes hands an attendee the transcript), so both sit behind
+  // the same owner-or-Nick check. Read through the caller's handle: a meeting
+  // they cannot see is 404.
+  const current = body.audience !== undefined || Array.isArray(body.attendees)
+    ? await env.DB.prepare('SELECT owner_slug, audience, title, attendees FROM meetings WHERE id = ?')
+      .bind(meetingId).first<{ owner_slug: string | null; audience: string; title: string | null; attendees: string | null }>()
+    : null;
+  if ((body.audience !== undefined || Array.isArray(body.attendees)) && !current) return error('Meeting not found', 404);
+  const manager = current ? canManageMeetingAccess(viewer, current.owner_slug, current.title) : false;
+  if (body.audience !== undefined && current) {
+    if (!manager) return error("Only the meeting's owner or Nick can change who sees it", 403);
     if (current.audience !== body.audience) {
       sets.push('audience = ?'); binds.push(body.audience);
       audienceChange = body.audience;
     }
   }
-  if (Array.isArray(body.attendees)) {
+  if (Array.isArray(body.attendees) && current) {
     const attendees: NormalizedAttendees = await normalizeAttendees(env, body.attendees);
+    // A member who is not the owner or Nick may take only themselves off the
+    // list: the new list must be the stored one minus the caller.
+    if (!manager && !isSelfRemoval(await storedAttendees(env, current.attendees), attendees, viewer)) {
+      return error("Only the meeting's owner or Nick can change who attends; you can remove yourself", 403);
+    }
     sets.push('attendees = ?'); binds.push(JSON.stringify(attendees));
   }
   if (typeof body.title === 'string' && body.title.trim()) { sets.push('title = ?'); binds.push(body.title.trim()); }
@@ -268,9 +307,11 @@ export async function handleUpdateMeetingMeta(meetingId: string, request: Reques
   } catch (e) {
     // schema-v122: one lab meeting per title per day. Marking this one lab,
     // or renaming a lab meeting, onto another lab meeting's title that day.
-    if (isLabTitleCollision(e)) {
-      return error('Another lab meeting with this title is already on this date', 409);
-    }
+    // schema-v119: one meeting per owner per title per day (a rename onto
+    // another of the owner's meetings that day).
+    const collision = meetingCollision(e);
+    if (collision === 'lab') return error('Another lab meeting with this title is already on this date', 409);
+    if (collision === 'owner') return error("This meeting's owner already has a meeting with this title on this date", 409);
     throw e;
   }
   if (!result.meta || result.meta.changes === 0) return error('Meeting not found', 404);
@@ -282,6 +323,25 @@ export async function handleUpdateMeetingMeta(meetingId: string, request: Reques
   }
   const updated = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first();
   return json({ data: updated });
+}
+
+/** The stored attendee column as the normalized list (a team email becomes its slug). */
+async function storedAttendees(env: Env, column: string | null): Promise<NormalizedAttendees> {
+  let parsed: unknown = [];
+  if (column) {
+    try { parsed = JSON.parse(column); } catch { parsed = []; } // total fallback on the next line: an unparseable column is an empty list
+  }
+  return normalizeAttendees(env, Array.isArray(parsed) ? parsed : []);
+}
+
+/** True when `next` is exactly `stored` with the caller taken off it (and the caller was on it). */
+function isSelfRemoval(stored: readonly string[], next: readonly string[], viewer: Viewer): boolean {
+  if (viewer.kind !== 'person') return false;
+  const me = viewer.slug;
+  if (!stored.includes(me)) return false;
+  const expected = [...new Set(stored.filter((s) => s !== me))].sort();
+  const got = [...new Set(next)].sort();
+  return expected.length === got.length && expected.every((s, i) => s === got[i]);
 }
 
 // ── "Belongs to" grants (schema-v122) ────────────────────────────────────────
@@ -300,10 +360,10 @@ export async function handleUpdateMeetingMeta(meetingId: string, request: Reques
 
 async function grantTarget(meetingId: string, viewer: Viewer, env: Env): Promise<Response | { owner: string | null }> {
   if (viewer.kind !== 'person') return error('Project access is given by a person on the meeting page', 403);
-  const meeting = await env.DB.prepare('SELECT id, owner_slug FROM meetings WHERE id = ?')
-    .bind(meetingId).first<{ id: string; owner_slug: string | null }>();
+  const meeting = await env.DB.prepare('SELECT id, owner_slug, title FROM meetings WHERE id = ?')
+    .bind(meetingId).first<{ id: string; owner_slug: string | null; title: string | null }>();
   if (!meeting) return error('Meeting not found', 404);
-  if (!canManageMeetingAccess(viewer, meeting.owner_slug)) {
+  if (!canManageMeetingAccess(viewer, meeting.owner_slug, meeting.title)) {
     return error("Only the meeting's owner or Nick can give a project access", 403);
   }
   return { owner: meeting.owner_slug };
@@ -342,11 +402,18 @@ export async function handleRevokeMeetingProject(meetingId: string, projectRef: 
   const ref = (projectRef ?? '').trim();
   if (!ref) return error('project required', 400);
   // A grant to a project the caller can no longer see (or that was deleted)
-  // is still removable by its id.
+  // is still removable by its id. A ref that is neither a project the caller
+  // sees nor a project id this meeting is granted to is 404, the same answer
+  // as the grant route gives.
   const project = await env.DB.prepare(
     'SELECT id, title, short_name FROM projects WHERE id = ? OR slug = ? ORDER BY (id = ?) DESC LIMIT 1'
   ).bind(ref, ref, ref).first<{ id: string; title: string; short_name: string | null }>();
   const projectId = project?.id ?? ref;
+  if (!project) {
+    const granted = await env.DB.prepare('SELECT 1 AS ok FROM meeting_project_grants WHERE meeting_id = ? AND project_id = ?')
+      .bind(meetingId, projectId).first();
+    if (!granted) return error('Project not found', 404);
+  }
   const res = await env.DB.prepare('DELETE FROM meeting_project_grants WHERE meeting_id = ? AND project_id = ?')
     .bind(meetingId, projectId).run();
   if ((res.meta?.changes ?? 0) > 0) {
@@ -723,10 +790,22 @@ interface MeetingUpsert {
   source_id?: string | null; facilitator?: string | null;
 }
 
-//** D1/SQLite refusing a second lab meeting of one title on one day (schema-v122). */
-function isLabTitleCollision(e: unknown): boolean {
+/**
+ * Which meetings UNIQUE index refused a write, if either:
+ *   'lab'   schema-v122 idx_meetings_lab_date_title, one lab row per title per
+ *           day. An expression index, so SQLite names the INDEX:
+ *           "UNIQUE constraint failed: index 'idx_meetings_lab_date_title'".
+ *   'owner' schema-v119 idx_meetings_owner_date_title, a plain column index, so
+ *           SQLite names the COLUMNS:
+ *           "UNIQUE constraint failed: meetings.owner_slug, meetings.date, meetings.title".
+ * Kept apart so a per-owner refusal is never answered as a lab-title one.
+ */
+function meetingCollision(e: unknown): 'lab' | 'owner' | null {
   const msg = e instanceof Error ? e.message : String(e);
-  return /UNIQUE constraint failed/i.test(msg) && /idx_meetings_lab_date_title|meetings\.date/i.test(msg);
+  if (!/UNIQUE constraint failed/i.test(msg)) return null;
+  if (/idx_meetings_lab_date_title/.test(msg)) return 'lab';
+  if (/idx_meetings_owner_date_title|meetings\.owner_slug, meetings\.date, meetings\.title/.test(msg)) return 'owner';
+  return null;
 }
 
 type Candidate = { id: string; date: string; title: string; notes: string | null; owner_slug: string | null; audience?: string };
@@ -753,7 +832,7 @@ async function findLabSeriesRow(env: Env, date: string, title: string): Promise<
 // title) since schema-v119: the old key had no owner, so a member's Prep press
 // on "Lab meeting" merged into (and was answered with) another member's row of
 // the same title and day, notes included. Two people's same-titled meetings
-// are now two rows; the dedup path never rewrites owner_slug.
+// are now two rows.
 //
 // schema-v122: a LAB series meeting (MNCCORE, Pulmonary HSR, CLIF WG) is one
 // row whoever writes it first: a member's Prep press before the meeting and
@@ -761,8 +840,22 @@ async function findLabSeriesRow(env: Env, date: string, title: string): Promise<
 // a unique index makes a racing second INSERT impossible (it retries onto the
 // winner). A new row's audience comes from its title here and nowhere else;
 // the caller has no audience field.
+//
+// Series rows are Nick's (Nick, 2026-10-09, see SERIES_OWNER_SLUG): a series
+// row is INSERTED with owner Nick whoever writes it, and every write that
+// lands on one re-owns it to Nick. Outside that, the dedup path never rewrites
+// a non-NULL owner.
+//
+// A write onto a row someone else owns (a member's Prep or create POST landing
+// on Nick's series row) is FILL-ONLY for every field: it may fill an empty
+// notes/decisions/tags/type/facilitator, never replace one, and never touches
+// attendees (who attends decides who sees the meeting, so only the owner or
+// Nick sets it, on the meeting page). Editing notes stays open to everyone
+// who can see the meeting through POST /api/meetings/:id/notes, the human path.
 async function upsertMeeting(env: Env, writer: MeetingWriter, input: MeetingUpsert): Promise<Response> {
   const { owner, user } = writer;
+  // The owner this title's row is written with: Nick for a series title.
+  const rowOwner = ownerForTitle(input.title, owner);
   // #102: who actually ran the meeting. The UI used to DERIVE this from a hash
   // of the date, so it was wrong ~always; now it renders the stored value or
   // nothing. Give the value a writer so the read isn't pointed at a column
@@ -793,10 +886,12 @@ async function upsertMeeting(env: Env, writer: MeetingWriter, input: MeetingUpse
   //      title match would miss must update it, not 500 or duplicate.
   //   2. a lab series title: the lab row of that title on that date, whoever
   //      owns it (findLabSeriesRow);
-  //   3. the caller's own rows on that date, by normalized title;
+  //   3. the rows of this title's owner on that date (the caller's own, or
+  //      Nick's for a series title), by normalized title;
   //   4. for the PB key only, an owner-less row on that date created before
   //      schema-v119 was applied (ADOPTABLE_UNOWNED), which it then adopts.
-  // The dedup path never rewrites a non-NULL owner, nor audience.
+  // The dedup path never rewrites a non-NULL owner (a series row's re-own to
+  // Nick aside), nor audience.
   let existing: Candidate | undefined;
   if (writer.service && input.source_id) {
     existing = (await env.DB.prepare('SELECT * FROM meetings WHERE source_id = ? LIMIT 1')
@@ -806,15 +901,15 @@ async function upsertMeeting(env: Env, writer: MeetingWriter, input: MeetingUpse
   if (!existing) {
     const sameDate = await env.DB.prepare(
       `SELECT * FROM meetings WHERE date = ? AND (owner_slug IS ? OR (? = 1 AND ${ADOPTABLE_UNOWNED}))`
-    ).bind(input.date, owner, writer.service ? 1 : 0).all<Candidate>();
+    ).bind(input.date, rowOwner, writer.service ? 1 : 0).all<Candidate>();
     const titled = (sameDate.results ?? []).filter((m) => normalizeMeetingTitle(m.title) === normalizedTitle);
     existing = titled.find((m) => m.owner_slug !== null) ?? titled[0];
   }
-  if (existing && existing.owner_slug === null && owner && writer.service) {
+  if (existing && existing.owner_slug === null && rowOwner && writer.service) {
     // A source_id match can land here on a window row; the same cutoff decides.
     const stamped = await env.DB.prepare(`UPDATE meetings SET owner_slug = ? WHERE id = ? AND ${ADOPTABLE_UNOWNED}`)
-      .bind(owner, existing.id).run();
-    if (stamped.meta?.changes) existing = { ...existing, owner_slug: owner };
+      .bind(rowOwner, existing.id).run();
+    if (stamped.meta?.changes) existing = { ...existing, owner_slug: rowOwner };
   }
 
   // Upsert onto an existing row: if the push carries notes/decisions/tags/type,
@@ -824,26 +919,37 @@ async function upsertMeeting(env: Env, writer: MeetingWriter, input: MeetingUpse
   // opposite direction, FILL-ONLY (existing wins): source_id is identity, and
   // attendees may hold a person's edit (see the header above). attendees fill
   // when NULL or '[]'; a NULL bind leaves the column as it is.
-  const updateExisting = async (row: Candidate): Promise<Response> => {
+  //
+  // A row owned by someone other than the writer (after a series row's re-own)
+  // takes every field FILL-ONLY and no attendees at all (see the header above).
+  const updateExisting = async (found: Candidate): Promise<Response> => {
+    const row = await reownSeriesRow(env, found);
+    const crossOwner = row.owner_slug !== owner;
     const hadNotes = !!row.notes;
     const hasNotes = input.notes !== undefined && input.notes !== null;
     const hasDecisions = input.decisions !== undefined && input.decisions !== null;
     const hasTags = tagsJson !== null;
-    const hasAttendees = attendeesJson !== null;
+    const hasAttendees = attendeesJson !== null && !crossOwner;
     // type: only overwrite when the payload carries a real value — never
     // clobber an existing row's type with a default.
     const hasType = typeof input.type === 'string' && input.type.length > 0;
     if (!(hasNotes || hasDecisions || hasTags || hasAttendees || hasType || input.source_id || facilitator)) {
-      return json({ data: row }, 200);
+      const unchanged = row === found ? row : await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(row.id).first();
+      return json({ data: unchanged }, 200);
     }
+    // The carried value replaces the column, or, on a cross-owner write, only
+    // fills it while it is empty.
+    const refresh = (col: string, empty: string) => crossOwner
+      ? `${col} = CASE WHEN ${col} IS NULL OR ${empty} THEN COALESCE(?, ${col}) ELSE ${col} END`
+      : `${col} = COALESCE(?, ${col})`;
     await env.DB.prepare(
       `UPDATE meetings
-          SET notes = COALESCE(?, notes),
-              decisions = COALESCE(?, decisions),
-              tags = COALESCE(?, tags),
+          SET ${refresh('notes', "notes = ''")},
+              ${refresh('decisions', "decisions = ''")},
+              ${refresh('tags', "tags = '[]'")},
               attendees = CASE WHEN attendees IS NULL OR attendees = '[]' THEN COALESCE(?, attendees) ELSE attendees END,
-              type = COALESCE(?, type),
-              facilitator = COALESCE(?, facilitator),
+              ${refresh('type', "type = ''")},
+              ${refresh('facilitator', "facilitator = ''")},
               source_id = COALESCE(source_id, ?),
               updated_at = datetime('now')
         WHERE id = ?`
@@ -880,15 +986,23 @@ async function upsertMeeting(env: Env, writer: MeetingWriter, input: MeetingUpse
       id, input.date, input.title, typeof input.type === 'string' && input.type ? input.type : null,
       attendeesJson,
       input.notes ?? null, input.decisions ?? null, tagsJson, 'upcoming',
-      input.source_id ?? null, facilitator, owner, initialAudience(input.title),
+      input.source_id ?? null, facilitator, rowOwner, initialAudience(input.title),
     ).run();
   } catch (e) {
+    const collision = meetingCollision(e);
+    if (!collision) throw e;
     // Another writer inserted this lab meeting between our lookup and our
     // INSERT. Land on its row instead (once; a second miss is a real error).
-    if (!isLabTitleCollision(e)) throw e;
+    // A series row is Nick's either way, so a race can trip either index.
     const winner = await findLabSeriesRow(env, input.date, input.title);
-    if (!winner) throw e;
-    return updateExisting(winner);
+    if (winner) return updateExisting(winner);
+    // A member writing a series title whose row Nick already has that day but
+    // the member cannot see (Nick made it private): the series row is Nick's,
+    // so the member gets no twin of it.
+    if (collision === 'owner' && rowOwner !== owner) {
+      return error('A meeting with this title already exists on this date', 409);
+    }
+    throw e;
   }
 
   await logActivity(env, 'meeting', `Created meeting: "${input.title}" on ${input.date}`, user.email, id, 'meeting');
@@ -899,6 +1013,25 @@ async function upsertMeeting(env: Env, writer: MeetingWriter, input: MeetingUpse
 
   const created = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);
+}
+
+/**
+ * A series-titled row is Nick's (SERIES_OWNER_SLUG): stamp it on any row a
+ * write lands on. Through the caller's handle, so only a row they can see. If
+ * Nick already has a row of this title that day (the v119 per-owner index),
+ * the owner stays as it is; canManageMeetingAccess still treats the row as
+ * Nick's alone by its title.
+ */
+async function reownSeriesRow(env: Env, row: Candidate): Promise<Candidate> {
+  if (!isLabSeriesTitle(row.title) || row.owner_slug === SERIES_OWNER_SLUG) return row;
+  try {
+    const res = await env.DB.prepare('UPDATE meetings SET owner_slug = ? WHERE id = ?')
+      .bind(SERIES_OWNER_SLUG, row.id).run();
+    return res.meta?.changes ? { ...row, owner_slug: SERIES_OWNER_SLUG } : row;
+  } catch (e) {
+    if (meetingCollision(e) !== 'owner') throw e;
+    return row;
+  }
 }
 
 const CIVIL_DAY_RE = /^\d{4}-\d{2}-\d{2}$/;

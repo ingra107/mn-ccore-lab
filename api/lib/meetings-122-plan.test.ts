@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { prodSchemaDb, insertRow } from '../test-support/prod-schema-db'
-import { planAudienceBackfill, sqliteLowerTrim, type MeetingAudiencePreImage } from '../../scripts/meetings-122-plan'
+import { planAudienceBackfill, planSeriesReown, sqliteLowerTrim, type MeetingAudiencePreImage } from '../../scripts/meetings-122-plan'
 
 function world() {
   const db = prodSchemaDb()
@@ -81,6 +81,25 @@ describe('audience backfill', () => {
     db.prepare("UPDATE meetings SET audience = 'private' WHERE id = 'a'").run()
     db.exec(plan.apply) // re-running the apply re-marks only rows still private (documented: run once)
     expect(audiences(db).a).toBe('lab')
+  })
+
+  it('series owner: every series row goes to Nick, rolls back exactly, and a v119 twin is left alone', () => {
+    const { db, pre } = world()
+    insertRow(db, 'meetings', { id: 'm-casey', date: '2026-10-20', title: 'CLIF WG Weekly', owner_slug: 'casey-eddington', created_at: '2026-10-02 00:00:00' })
+    // Nick already owns this exact date + title: re-owning the member's row would hit idx_meetings_owner_date_title.
+    insertRow(db, 'meetings', { id: 'm-nick', date: '2026-10-21', title: 'MNCCORE', owner_slug: 'nick-ingraham', created_at: '2026-10-02 00:00:00' })
+    insertRow(db, 'meetings', { id: 'm-twin', date: '2026-10-21', title: 'MNCCORE', owner_slug: 'casey-eddington', created_at: '2026-10-02 00:00:00' })
+    const owners = () => Object.fromEntries((db.prepare('SELECT id, owner_slug FROM meetings').all() as { id: string; owner_slug: string | null }[]).map((r) => [r.id, r.owner_slug]))
+    const before = owners()
+    const plan = planSeriesReown(pre())
+    // f and g are owner-less series rows; d (a consult) and e are not series.
+    expect(plan.detail.map((d) => d.split('  ')[0])).toEqual(['f', 'g', 'm-casey'])
+    expect(plan.blocked.map((b) => b.split('  ')[0])).toEqual(['m-twin'])
+    db.exec(plan.apply)
+    expect(owners()).toEqual({ ...before, f: 'nick-ingraham', g: 'nick-ingraham', 'm-casey': 'nick-ingraham' })
+    db.exec(plan.rollback)
+    expect(owners()).toEqual(before)
+    expect(planSeriesReown(pre(), { windowStart: '2026-10-02 00:00:00' }).detail.map((d) => d.split('  ')[0])).toEqual(['m-casey'])
   })
 
   it('folds case and trims spaces the way SQLite does', () => {

@@ -1,8 +1,9 @@
 // meetings-122-plan.ts -- the pure half of the schema-v122 audience backfill.
 //
-// One write on prod `meetings`: every existing row whose title is one of the
+// Two writes on prod `meetings`: every existing row whose title is one of the
 // three lab series (shared/meetingAudience.ts, the SAME classifier the Worker's
-// INSERT uses) goes from 'private' to 'lab'. Generated from a pre-image the
+// INSERT uses) goes from 'private' to 'lab' (planAudienceBackfill), and every
+// series row goes to Nick's ownership (planSeriesReown, below). Generated from a pre-image the
 // operator exports, so the apply and its rollback name exact ids; each UPDATE
 // is guarded on the old value, so a row flipped by hand since the export is
 // left alone, and the rollback is guarded on the new value the same way.
@@ -26,6 +27,7 @@
 // CLI: scripts/backfill-122-meetings-audience.ts. Tests: api/lib/meetings-122-plan.test.ts.
 
 import { isLabSeriesTitle, labSeriesKey } from '../shared/meetingAudience'
+import { SITE_ADMIN_SLUG } from '../api/lib/viewer-db'
 
 export interface MeetingAudiencePreImage {
   id: string
@@ -89,5 +91,55 @@ export function planAudienceBackfill(
     detail: changing.map((m) => `${m.id}  ${m.date}  ${labSeriesKey(m.title)}  ${m.title}`),
     collisions: [],
     keptPrivate,
+  }
+}
+
+// SERIES OWNER. Nick, 2026-10-09: "You own every series row: your PB debrief
+// takes ownership of a series row, and only you can flip it private or grant
+// it." The Worker stamps Nick on every series row it inserts or writes onto
+// (api/routes/meetings.ts reownSeriesRow); this re-owns the rows that exist.
+// Every series-titled row, whatever its audience (a row kept private is still
+// a series row), within the window when one is given. A re-own that would hit
+// the v119 per-owner index (Nick already owns a row of that exact date and
+// title) is not planned but listed: the Worker treats a series title as Nick's
+// alone by its title, so such a row is already unmanageable by its member.
+
+export interface SeriesOwnerPlan {
+  apply: string
+  rollback: string
+  count: number
+  /** "<id>  <date>  <old owner>  <title>" per row that changes. */
+  detail: string[]
+  /** Rows left as they are because the v119 index would refuse the re-own. */
+  blocked: string[]
+}
+
+export function planSeriesReown(
+  meetings: readonly MeetingAudiencePreImage[],
+  opts: { windowStart?: string } = {},
+): SeriesOwnerPlan {
+  const inWindow = (m: MeetingAudiencePreImage) => !opts.windowStart || (!!m.created_at && m.created_at >= opts.windowStart)
+  // idx_meetings_owner_date_title: (owner_slug, date, title), exact title.
+  const key = (m: MeetingAudiencePreImage) => `${m.date}\u0000${m.title}`
+  const nickOwns = new Set(meetings.filter((m) => m.owner_slug === SITE_ADMIN_SLUG).map(key))
+  const candidates = meetings
+    .filter((m) => isLabSeriesTitle(m.title) && m.owner_slug !== SITE_ADMIN_SLUG && inWindow(m))
+    .sort((a, b) => a.id.localeCompare(b.id))
+  const changing: MeetingAudiencePreImage[] = []
+  const blocked: string[] = []
+  for (const m of candidates) {
+    const line = `${m.id}  ${m.date}  owner=${m.owner_slug ?? 'NULL'}  ${m.title}`
+    if (nickOwns.has(key(m))) { blocked.push(line); continue }
+    nickOwns.add(key(m)) // a second candidate of the same date and title would collide with this one
+    changing.push(m)
+  }
+  const was = (m: MeetingAudiencePreImage) => (m.owner_slug == null ? 'IS NULL' : `= ${lit(m.owner_slug)}`)
+  const old = (m: MeetingAudiencePreImage) => (m.owner_slug == null ? 'NULL' : lit(m.owner_slug))
+  return {
+    apply: changing.map((m) => `UPDATE meetings SET owner_slug = ${lit(SITE_ADMIN_SLUG)} WHERE id = ${lit(m.id)} AND owner_slug ${was(m)};`).join('\n'),
+    rollback: changing.map((m) => `UPDATE meetings SET owner_slug = ${old(m)} WHERE id = ${lit(m.id)} AND owner_slug = ${lit(SITE_ADMIN_SLUG)};`).join('\n'),
+    count: changing.length,
+    detail: changing.map((m) => `${m.id}  ${m.date}  owner=${m.owner_slug ?? 'NULL'}  ${m.title}`),
+    blocked,
   }
 }

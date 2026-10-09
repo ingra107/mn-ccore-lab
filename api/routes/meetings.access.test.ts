@@ -187,8 +187,44 @@ describe('flip private / lab: owner + Nick only', () => {
     expect(audienceOf('mtg-lab-twin')).toBe('private')
   })
 
+  it("a rename onto another of the owner's meetings that day is a per-owner 409, not the lab-title one", async () => {
+    insertRow(db, 'meetings', { id: 'mtg-casey-2', date: DAY, title: 'Casey other', owner_slug: 'casey-eddington' })
+    const r = await call('POST', '/api/meetings/mtg-casey-2/meta', CASEY, { title: 'Casey and Nick 1:1' })
+    expect(r.status).toBe(409)
+    expect(r.text).not.toContain('lab meeting')
+  })
+
   it('the column refuses anything but private/lab (CHECK)', () => {
     expect(() => db.prepare("UPDATE meetings SET audience = 'public' WHERE id = ?").run(M_LAB)).toThrow(/CHECK/)
+  })
+})
+
+describe('attendees decide access, so only the owner or Nick sets them', () => {
+  const setAttendees = (id: string, who: string, attendees: string[]) => call('POST', `/api/meetings/${id}/meta`, who, { attendees })
+  const attendeesOf = (id: string) => (db.prepare('SELECT attendees FROM meetings WHERE id = ?').get(id) as { attendees: string | null }).attendees
+
+  it('a granted-project member who is not an attendee cannot add one (B1)', async () => {
+    expect((await setAttendees(M_GRANT, CASEY, ['outsider@gmail.com'])).status).toBe(403)
+    expect(attendeesOf(M_GRANT)).toBeNull()
+  })
+
+  it('a lab member cannot add attendees to a lab meeting', async () => {
+    expect((await setAttendees(M_LAB, DAVE, ['dave-wacker', 'outsider@gmail.com'])).status).toBe(403)
+  })
+
+  it('an attendee may take only themselves off', async () => {
+    expect((await setAttendees(M_ATT, NATE, ['nate-mesfin', 'outsider@gmail.com'])).status).toBe(403)
+    expect((await setAttendees(M_ATT, NATE, [])).status).toBe(200)
+    expect(JSON.parse(attendeesOf(M_ATT)!)).toEqual([])
+  })
+
+  it('the owner and Nick may set them', async () => {
+    expect((await setAttendees(M_PRIV, CASEY, ['nate-mesfin'])).status).toBe(200)
+    expect((await setAttendees(M_GRANT, NICK, ['casey-eddington'])).status).toBe(200)
+  })
+
+  it('other fields stay editable by anyone who can see the meeting', async () => {
+    expect((await call('POST', `/api/meetings/${M_LAB}/meta`, DAVE, { tags: ['x'] })).status).toBe(200)
   })
 })
 
@@ -229,6 +265,15 @@ describe('"belongs to" grants: owner + Nick only, typed project id', () => {
     expect(grants(M_GRANT)).toHaveLength(1)
     expect((await call('DELETE', `/api/meetings/${M_GRANT}/projects/${PROJ_C}`, NICK)).status).toBe(200)
     expect(grants(M_GRANT)).toEqual([])
+  })
+
+  it('revoking a project the caller cannot see is 404 unless the meeting holds that grant (N5)', async () => {
+    expect((await call('DELETE', `/api/meetings/${M_PRIV}/projects/no-such-project`, CASEY)).status).toBe(404)
+    expect((await call('DELETE', `/api/meetings/${M_PRIV}/projects/nick-proj`, CASEY)).status).toBe(404)
+    // A grant to a project she is not on is still removable by its id.
+    insertRow(db, 'meeting_project_grants', { meeting_id: M_PRIV, project_id: PROJ_N, granted_by: 'nick-ingraham' })
+    expect((await call('DELETE', `/api/meetings/${M_PRIV}/projects/${PROJ_N}`, CASEY)).status).toBe(200)
+    expect(grants(M_PRIV)).toEqual([])
   })
 
   it('the meeting detail tells the page who may manage access', async () => {
@@ -296,13 +341,16 @@ describe('lab series dedup on write (upsertMeeting)', () => {
     expect((db.prepare('SELECT notes FROM meetings WHERE id = ?').get('mtg-jc-lab') as { notes: string | null }).notes).toBeNull()
   })
 
-  it("the PB debrief onto a lab row a member prepped fills its notes and rings Nick, not the member", async () => {
+  it("the PB debrief onto a lab row a member prepped fills its notes, takes ownership, and rings Nick, not the member", async () => {
     insertRow(db, 'meetings', { id: 'mtg-hsr-prep', date: '2026-10-09', title: 'Pulmonary HSR Group Meeting', owner_slug: 'casey-eddington', audience: 'lab' })
     const r = await call('POST', '/api/meetings', 'apikey', { date: '2026-10-09', title: 'Pulmonary HSR Group Meeting', notes: 'debrief', source_id: 'cal-hsr-9' })
     expect(r.json.data.id).toBe('mtg-hsr-prep')
     expect(r.json.data.notes).toBe('debrief')
+    // Nick, 2026-10-09: "You own every series row: your PB debrief takes ownership of a series row".
+    expect(r.json.data.owner_slug).toBe('nick-ingraham')
     const bell = db.prepare("SELECT recipient_slug FROM notifications WHERE type = 'meeting_debrief' AND source_id = ?").all('mtg-hsr-prep')
     expect(bell).toEqual([{ recipient_slug: 'nick-ingraham' }])
+    expect((await call('POST', '/api/meetings/mtg-hsr-prep/meta', CASEY, { audience: 'private' })).status).toBe(403)
   })
 
   it('a re-push never re-derives a hand-flipped audience', async () => {
@@ -312,9 +360,11 @@ describe('lab series dedup on write (upsertMeeting)', () => {
   })
 
   it('a racing INSERT of the same lab meeting lands on the winner instead of failing', async () => {
-    // Make the lookup miss once (the race window), so the INSERT hits the index.
+    // Make both lookups miss once (the race window: the lab-row match and the
+    // series owner's own rows), so the INSERT hits an index.
     const real = env.DB
     let missed = false
+    let missedOwn = false
     env = {
       ...env,
       DB: {
@@ -324,6 +374,10 @@ describe('lab series dedup on write (upsertMeeting)', () => {
             missed = true
             return real.prepare(sql.replace("audience = 'lab'", "audience = 'lab' AND 0"))
           }
+          if (!missedOwn && sql.includes('owner_slug IS ? OR')) {
+            missedOwn = true
+            return real.prepare(sql.replace('WHERE date = ?', 'WHERE 0 AND date = ?'))
+          }
           return real.prepare(sql)
         },
         batch: real.batch.bind(real),
@@ -331,8 +385,52 @@ describe('lab series dedup on write (upsertMeeting)', () => {
     } as Env
     const r = await call('POST', '/api/meetings', CASEY, { date: DAY, title: 'MNCCORE', attendees: ['casey-eddington'] })
     expect(missed).toBe(true)
+    expect(missedOwn).toBe(true)
     expect(r.status).toBe(200)
     expect(r.json.data.id).toBe(M_LAB)
+  })
+
+  it("a series row a member creates is Nick's from its first write; the member cannot flip or grant it", async () => {
+    const r = await call('POST', '/api/meetings', CASEY, { date: '2026-10-20', title: 'CLIF WG Weekly' })
+    expect(r.status).toBe(201)
+    expect(r.json.data.owner_slug).toBe('nick-ingraham')
+    expect(r.json.data.audience).toBe('lab')
+    const id = r.json.data.id as string
+    expect((await call('GET', `/api/meetings/${id}`, CASEY)).json.data.can_manage_access).toBe(false)
+    expect((await call('POST', `/api/meetings/${id}/meta`, CASEY, { audience: 'private' })).status).toBe(403)
+    expect((await call('POST', `/api/meetings/${id}/projects`, CASEY, { project: PROJ_C })).status).toBe(403)
+    expect((await call('POST', `/api/meetings/${id}/meta`, NICK, { audience: 'private' })).status).toBe(200)
+  })
+
+  it('a series row still owned by a member (written before the ruling) is Nick\'s alone by its title', async () => {
+    insertRow(db, 'meetings', { id: 'mtg-old-prep', date: '2026-09-01', title: 'MNCCORE', owner_slug: 'casey-eddington', audience: 'lab' })
+    expect((await call('GET', '/api/meetings/mtg-old-prep', CASEY)).json.data.can_manage_access).toBe(false)
+    expect((await call('POST', '/api/meetings/mtg-old-prep/meta', CASEY, { audience: 'private' })).status).toBe(403)
+    expect((await call('GET', '/api/meetings/mtg-old-prep', NICK)).json.data.can_manage_access).toBe(true)
+  })
+
+  it("a member's create POST onto Nick's series row fills only what is empty and never sets attendees", async () => {
+    db.prepare("UPDATE meetings SET decisions = NULL, attendees = NULL WHERE id = ?").run(M_LAB)
+    const r = await call('POST', '/api/meetings', CASEY, {
+      date: DAY, title: 'MNCCORE', notes: 'casey overwrite', decisions: 'casey decision', attendees: ['outsider@gmail.com'],
+    })
+    expect(r.status).toBe(200)
+    expect(r.json.data.id).toBe(M_LAB)
+    const row = db.prepare('SELECT notes, decisions, attendees, owner_slug FROM meetings WHERE id = ?').get(M_LAB) as Record<string, string | null>
+    expect(row.notes).toBe(`${M_LAB} notes`)        // Nick's debrief survives
+    expect(row.decisions).toBe('casey decision')     // an empty field is filled
+    expect(row.attendees).toBeNull()                 // no access handed out by a merge
+    expect(row.owner_slug).toBe('nick-ingraham')
+    // The PB debrief (Nick, the owner) still refreshes its own notes.
+    await call('POST', '/api/meetings', 'apikey', { date: DAY, title: 'MNCCORE', notes: 'debrief v2', source_id: 'cal-lab-1' })
+    expect((db.prepare('SELECT notes FROM meetings WHERE id = ?').get(M_LAB) as { notes: string }).notes).toBe('debrief v2')
+  })
+
+  it("a member writing a series title Nick made private that day gets 409, not a twin and not a 500", async () => {
+    db.prepare("UPDATE meetings SET audience = 'private' WHERE id = ?").run(M_LAB)
+    const r = await call('POST', '/api/meetings', CASEY, { date: DAY, title: 'MNCCORE' })
+    expect(r.status).toBe(409)
+    expect(db.prepare("SELECT COUNT(*) AS n FROM meetings WHERE date = ? AND title = 'MNCCORE'").get(DAY)).toEqual({ n: 1 })
   })
 
   it('the index makes two lab rows of one title on one day unrepresentable', () => {
@@ -388,6 +486,14 @@ describe('thread read markers (cross-device "New")', () => {
     await mark(DAVE, 'ae-root', '2026-10-09 09:00:00')
     expect(await mine(DAVE)).toEqual([{ root_id: 'ae-root', read_up_to: '2026-10-09 10:00:00' }])
     await mark(DAVE, 'ae-root', '2026-10-09 11:00:00')
+    expect((await mine(DAVE))[0].read_up_to).toBe('2026-10-09 11:00:00')
+  })
+
+  it("compares one timestamp form: a 'T' marker never beats a later ' ' one (N4)", async () => {
+    await mark(DAVE, 'ae-root', '2026-10-09 10:00:00')
+    await mark(DAVE, 'ae-root', '2026-10-09T09:00:00')
+    expect((await mine(DAVE))[0].read_up_to).toBe('2026-10-09 10:00:00')
+    await mark(DAVE, 'ae-root', '2026-10-09T11:00:00Z')
     expect((await mine(DAVE))[0].read_up_to).toBe('2026-10-09 11:00:00')
   })
 

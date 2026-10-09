@@ -23,6 +23,7 @@ import type Database from 'better-sqlite3'
 import { handleCreateMeeting, handleUpdateMeetingMeta } from './meetings'
 import type { AuthUser, Env } from '../helpers'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
+import { personViewer } from '../lib/viewer-db'
 
 type Row = Record<string, unknown>
 
@@ -560,7 +561,8 @@ describe('handleUpdateMeetingMeta — T5 metadata edit endpoint', () => {
     const res = await handleUpdateMeetingMeta(
       'mtg-2026-05-29-meta0001',
       makeRequest({ attendees }),
-      makeUser(), env,
+      // An attendee change is owner-or-Nick only (schema-v122): Nick's viewer.
+      makeUser(), env, personViewer({ slug: 'nick-ingraham', email: 'ingra107@umn.edu', pi: true }),
     )
     const body = await res.json() as { data: Row }
 

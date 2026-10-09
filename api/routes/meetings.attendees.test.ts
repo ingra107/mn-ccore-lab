@@ -23,6 +23,7 @@ import { describe, it, expect } from 'vitest'
 import { handleCreateMeeting, handleUpdateMeetingMeta, handlePrepMeetingFromEvent } from './meetings'
 import type { AuthUser, Env } from '../helpers'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
+import { personViewer } from '../lib/viewer-db'
 
 type Db = ReturnType<typeof prodSchemaDb>
 
@@ -150,7 +151,7 @@ describe('meta edit (the human path) normalizes and may overwrite', () => {
     insertRow(db, 'meetings', { owner_slug: 'nick-ingraham', id: 'mtg-meta', date: '2026-10-06', title: 'T', attendees: JSON.stringify(['old@umn.edu']) })
     const res = await handleUpdateMeetingMeta('mtg-meta', post('/api/meetings/mtg-meta/meta', {
       attendees: ['nmesfin@umn.edu', 'nate@stanford.edu'],
-    }), NICK, envOf(db))
+    }), NICK, envOf(db), personViewer({ slug: 'nick-ingraham', email: NICK.email, pi: true }))
     expect(res.status).toBe(200)
     expect(attendeesOf(db, 'mtg-meta')).toEqual(['zz-nate-mesfin', 'nate@stanford.edu'])
   })

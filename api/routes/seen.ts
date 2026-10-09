@@ -298,6 +298,11 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
 const READ_UP_TO_RE = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d{1,6})?Z?$/;
 const THREAD_SEEN_LIMIT = 2000;
 
+/** 'YYYY-MM-DDTHH:MM:SS[.fff][Z]' -> 'YYYY-MM-DD HH:MM:SS[.fff]' (UTC, D1's form). */
+function normalizeReadUpTo(ts: string): string {
+  return ts.replace('T', ' ').replace(/Z$/, '');
+}
+
 export async function handleGetThreadSeen(request: Request, env: Env): Promise<Response> {
   const viewer = await actorSlugFromRequest(request, env);
   if (!viewer) return json({ data: [], count: 0 });
@@ -313,8 +318,13 @@ export async function handleMarkThreadSeen(request: Request, env: Env): Promise<
   if (!viewer) return error('Authentication required', 401);
   const body = await request.json().catch(() => null) as { root_id?: unknown; read_up_to?: unknown } | null;
   const rootId = typeof body?.root_id === 'string' ? body.root_id : '';
-  const readUpTo = typeof body?.read_up_to === 'string' ? body.read_up_to : '';
-  if (!rootId || !READ_UP_TO_RE.test(readUpTo)) return error('root_id and read_up_to (a timestamp) required', 400);
+  const rawReadUpTo = typeof body?.read_up_to === 'string' ? body.read_up_to : '';
+  if (!rootId || !READ_UP_TO_RE.test(rawReadUpTo)) return error('root_id and read_up_to (a timestamp) required', 400);
+  // The forward-only compare below is a STRING compare, and ' ' sorts before
+  // 'T': '2026-10-09T09:00:00' would beat '2026-10-09 10:00:00'. Store one
+  // form, D1's own datetime() form (activity_entries.created_at), which is
+  // also what the client compares the marker against.
+  const readUpTo = normalizeReadUpTo(rawReadUpTo);
   // The thread must be a root the caller can see (the handle decides). An
   // INSERT is not a read, so this check is what keeps a marker off a hidden
   // thread.

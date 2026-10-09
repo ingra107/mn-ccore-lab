@@ -623,8 +623,9 @@ export default function MeetingDetail() {
             ) : null
           })()}
 
-          {/* Attendees — clickable toggle */}
-          <AttendanceSection attendees={attendees} updateMeta={updateMeta} />
+          {/* Attendees — clickable toggle, for the owner or Nick only (an
+              attendee can read the meeting; the server checks it again) */}
+          <AttendanceSection attendees={attendees} updateMeta={updateMeta} canEdit={meeting.can_manage_access === true} />
 
           <div style={{ height: '1px', background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.85, marginTop: '1.5rem' }} />
         </motion.div>
@@ -1410,7 +1411,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
 }
 
 // ── Attendance Section ───────────────────────────────────
-function AttendanceSection({ attendees, updateMeta }: { attendees: string[]; updateMeta: ReturnType<typeof useUpdateMeetingMeta> }) {
+function AttendanceSection({ attendees, updateMeta, canEdit }: { attendees: string[]; updateMeta: ReturnType<typeof useUpdateMeetingMeta>; canEdit: boolean }) {
   const [expanded, setExpanded] = useState(false)
   const [localAttendees, setLocalAttendees] = useState<string[]>(attendees)
   const { showUndo } = useUndoToast()
@@ -1456,12 +1457,14 @@ function AttendanceSection({ attendees, updateMeta }: { attendees: string[]; upd
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           {resolvedAttendees.length}
         </span>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', color: 'var(--teal)', marginLeft: 'auto' }}
-        >
-          {expanded ? 'Done' : '+ Edit'}
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', color: 'var(--teal)', marginLeft: 'auto' }}
+          >
+            {expanded ? 'Done' : '+ Edit'}
+          </button>
+        )}
       </div>
       <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         {resolvedAttendees.map(slug => <AttendeeChip key={slug} slug={slug} />)}
@@ -1469,7 +1472,7 @@ function AttendanceSection({ attendees, updateMeta }: { attendees: string[]; upd
           <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No attendees logged</span>
         )}
       </div>
-      {expanded && (
+      {canEdit && expanded && (
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 mt-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)', border: '1px solid var(--border-subtle)' }}>
           {uniquePeople.map(person => {
             const slug = person.slug!
