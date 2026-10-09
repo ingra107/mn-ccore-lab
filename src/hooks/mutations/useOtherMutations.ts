@@ -105,6 +105,8 @@ export function useDeleteActivityEntry() {
       if (input.dayKey) {
         queryClient.invalidateQueries({ queryKey: ['day-activity', input.dayKey] })
       }
+      // Opened thread replies (prefix: every root, both show-hidden variants): a deleted or edited reply must leave the list.
+      queryClient.invalidateQueries({ queryKey: ['activity-replies'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
@@ -129,6 +131,8 @@ export function useEditActivityEntry() {
       if (input.projectSlug) {
         queryClient.invalidateQueries({ queryKey: ['project-activity', input.projectSlug] })
       }
+      // Opened thread replies (prefix: every root, both show-hidden variants): a deleted or edited reply must leave the list.
+      queryClient.invalidateQueries({ queryKey: ['activity-replies'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
@@ -171,6 +175,8 @@ export function useDismissThread() {
       }
       // A dismissed thread must not keep raising the teal ● "new activity" badge.
       queryClient.invalidateQueries({ queryKey: ['unseen-activity'] })
+      // Opened thread replies (prefix: every root, both show-hidden variants): a deleted or edited reply must leave the list.
+      queryClient.invalidateQueries({ queryKey: ['activity-replies'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })

@@ -1095,3 +1095,26 @@ export function activityHiddenClause(alias = '', include = false): string {
   if (include) return '1=1';
   return `${alias ? alias + '.' : ''}hidden_at IS NULL`;
 }
+
+/**
+ * The four per-root reply columns every root feed returns, built once so the
+ * task, project, day and meeting feeds cannot drift: reply_count, last_reply_at,
+ * last_reply_actor and participants (comma-joined actor slugs in the order they
+ * first replied). All four read replies through the SAME hidden gate and the SAME
+ * visibility gate the replies route uses (`activityVisibilityGate(.., 'r', 'ae')`:
+ * the root arm, so a member's author-only @hermes thread counts Hermes's answers).
+ * The root alias in the outer query must be `ae`. `binds` is the gate's binds
+ * repeated once per subquery, in SQL order, so splice it where the column list
+ * sits (before the WHERE binds).
+ */
+export function replySummaryColumns(
+  gate: ActivityVisibilityGate,
+  includeHidden: boolean,
+): { sql: string; binds: string[] } {
+  const from = `FROM activity_entries r WHERE r.parent_id = ae.id AND ${activityHiddenClause('r', includeHidden)} AND ${gate.clause}`;
+  const sql = `(SELECT COUNT(*) ${from}) AS reply_count,
+            (SELECT MAX(r.created_at) ${from}) AS last_reply_at,
+            (SELECT r.actor_slug ${from} ORDER BY r.created_at DESC, r.id DESC LIMIT 1) AS last_reply_actor,
+            (SELECT GROUP_CONCAT(s) FROM (SELECT r.actor_slug AS s ${from} GROUP BY r.actor_slug ORDER BY MIN(r.created_at))) AS participants`;
+  return { sql, binds: [...gate.binds, ...gate.binds, ...gate.binds, ...gate.binds] };
+}

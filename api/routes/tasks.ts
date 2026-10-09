@@ -10,7 +10,7 @@ import { applyMutation } from './mutations';
 // or via api/helpers.ts which already re-exports it (zero callers used this path).
 import { TASK_SELECT_COLS, TASK_SELECT_COLS_TYPED } from '../lib/task-cols';
 import { resolveMeetingRef, type MeetingLike } from '../lib/meeting-ref';
-import { postActivityEntry, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
+import { postActivityEntry, replySummaryColumns, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 import { DEFAULT_TASK_KIND, TASK_KINDS, isTaskKind, type TaskKind } from '../../shared/taskKinds';
 
@@ -701,19 +701,18 @@ export async function handleGetTaskActivity(taskId: string, request: Request, en
   // subquery (a shown-hidden root must show its true reply count). Default false.
   const includeHidden = new URL(request.url).searchParams.get('include_hidden') === '1';
   const visAe = await activityVisibilityGate(request, env, 'ae');
-  const visR = await activityVisibilityGate(request, env, 'r');
+  const rs = replySummaryColumns(await activityVisibilityGate(request, env, 'r', 'ae'), includeHidden);
   // reply_count is computed per-request, never stored: an @me reply is visible
   // only to its author and the PI, so the honest count differs per viewer. The
   // subquery carries the same gate as the outer read, so the badge can never
   // advertise replies the viewer cannot open.
   const result = await env.DB.prepare(
     `SELECT ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.kind, ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type, ae.metadata_json, ae.parent_id, ae.hidden_at, ae.created_at,
-            (SELECT COUNT(*) FROM activity_entries r
-              WHERE r.parent_id = ae.id AND ${activityHiddenClause('r', includeHidden)} AND ${visR.clause}) AS reply_count
+            ${rs.sql}
      FROM activity_entries ae
      WHERE ae.entity_type = 'task' AND ae.entity_id = ? AND ae.parent_id IS NULL AND ${activityHiddenClause('ae', includeHidden)} AND ${visAe.clause}
      ORDER BY ae.created_at DESC, ae.id DESC`
-  ).bind(...visR.binds, taskId, ...visAe.binds).all();
+  ).bind(...rs.binds, taskId, ...visAe.binds).all();
   // hidden_count: dismissed roots THIS viewer could reveal, so the UI can render
   // "N hidden — show" without a second request. Reuses the visAe gate (same alias).
   // activity-hidden-exempt: the reveal-affordance count DELIBERATELY selects

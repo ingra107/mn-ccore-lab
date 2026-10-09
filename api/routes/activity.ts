@@ -188,11 +188,15 @@ export async function handleGetActivityReplies(
   env: Env,
 ): Promise<Response> {
   const vis = await activityVisibilityGate(request, env, 'ae', 'root');
+  // ?include_hidden=1: the feed's "show dismissed" counts a dismissed root's
+  // replies (replySummaryColumns), so the replies read must reveal them too or
+  // the summary row says "2 replies" and the thread opens empty.
+  const includeHidden = new URL(request.url).searchParams.get('include_hidden') === '1';
   const rows = await env.DB.prepare(
     `SELECT ${REPLY_COLS}
        FROM activity_entries ae
-       JOIN activity_entries root ON root.id = ae.parent_id AND ${activityHiddenClause('root')}
-      WHERE ae.parent_id = ? AND ${activityHiddenClause('ae')} AND ${vis.clause}
+       JOIN activity_entries root ON root.id = ae.parent_id AND ${activityHiddenClause('root', includeHidden)}
+      WHERE ae.parent_id = ? AND ${activityHiddenClause('ae', includeHidden)} AND ${vis.clause}
       ORDER BY ae.created_at ASC, ae.id ASC`,
   ).bind(parentId, ...vis.binds).all();
   const data = rows.results ?? [];

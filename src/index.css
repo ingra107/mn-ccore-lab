@@ -2519,7 +2519,7 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 .tk .tk-attn{position:relative;margin:14px 0 10px;border-radius:var(--r-card);background:linear-gradient(180deg,color-mix(in srgb,var(--sk-gold) 14%,var(--sk-card)) 0%,color-mix(in srgb,var(--sk-gold) 7%,var(--sk-card)) 100%);border:1px solid color-mix(in srgb,var(--sk-gold) 38%,transparent);box-shadow:inset 3px 0 0 var(--sk-gold),inset 0 1px 0 color-mix(in srgb,var(--sk-gold) 30%,transparent),var(--sk-amb)}
 .tk .tk-attn+.tk-attn{margin-top:8px}
 .tk .tk-attn-h{display:flex;align-items:center;gap:8px;padding:10px 14px 0 17px;font-size:12px;font-weight:600;color:var(--sk-gold);letter-spacing:.01em}
-.tk .tk-attn-h .tk-cnt{color:var(--sk-gold);opacity:.75;font-weight:500}
+.tk .tk-attn-h .tk-cnt{color:var(--sk-gold);font-weight:500} /* gold on the wash: 5.8:1 light, 6.5:1 dark */
 .tk .tk-attn-dot{width:7px;height:7px;border-radius:50%;background:var(--sk-gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--sk-gold) 22%,transparent)}
 .tk .tk-attn .tk-qrow{padding:6px 14px 12px 17px}
 .tk .tk-attn .tk-qrow+.tk-qrow{border-top:1px solid color-mix(in srgb,var(--sk-gold) 22%,transparent);padding-top:10px}
@@ -2734,7 +2734,6 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-clk{cursor:pointer}
 /* a11y: muted text on the gold attention wash uses the second text tier (AA) */
 .tk .tk-attn{--sk-t3:var(--sk-t2)}
-.tk .tk-attn-h .tk-cnt{opacity:1}
 /* tk-tlab: AM/PM labels need room: keep on one line, grow leftwards */
 .tk .tk-tlab{width:46px}
 /* dark depth: the later flat .tk-card rule beat the dark gradient; restate it above that specificity */

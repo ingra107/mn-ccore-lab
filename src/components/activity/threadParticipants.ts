@@ -1,8 +1,7 @@
-import type { ActivityEntryItemRow } from './activityRender'
-
-/** Distinct people in the thread, root author first, then in order of joining. */
-export function threadParticipants(root: ActivityEntryItemRow, replies: ActivityEntryItemRow[]): string[] {
-  const seen: string[] = []
-  for (const e of [root, ...replies]) if (!seen.includes(e.actor_slug)) seen.push(e.actor_slug)
-  return seen
+/** Distinct people in a thread: the root author first, then the repliers in the
+ *  order they first replied (the feed's comma-joined `participants` column). */
+export function threadParticipants(rootActor: string, participantsCsv?: string | null): string[] {
+  const out = [rootActor]
+  for (const slug of (participantsCsv ?? '').split(',')) if (slug && !out.includes(slug)) out.push(slug)
+  return out
 }

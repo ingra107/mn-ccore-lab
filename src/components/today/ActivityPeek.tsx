@@ -74,7 +74,7 @@ export function ActivityPeek({ taskId, count = 3, onViewAll }: { taskId: string;
           return (
             <div key={e.id} className={`tk-feedl${hidden ? ' tk-hid' : ''}`} data-activity-id={e.id}>
               {hermes
-                ? <span className="tk-face tk-sm tk-herm" title="Hermes" aria-label="Hermes">H</span>
+                ? <span role="img" className="tk-face tk-sm tk-herm" title="Hermes" aria-label="Hermes">H</span>
                 : <Face slug={e.actor_slug} sm />}
               <span className="tk-feedt">
                 <b>{hermes ? 'Hermes' : firstNameFor(e.actor_slug)}</b> {oneLine(e.body)}

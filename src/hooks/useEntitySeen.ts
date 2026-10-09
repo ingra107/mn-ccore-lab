@@ -32,6 +32,9 @@ export interface UnseenActivityRow {
    *  (day: unseen Hermes replies on that date's private thread). */
   new_count: number
   latest_at: string
+  /** The viewer's entity_seen.last_seen_at for this entity (null = never opened).
+   *  Thread "New" compares reply times against it. */
+  seen_at?: string | null
   title: string | null
   project_slug: string | null
   /** meeting rows only (T11) — 1 = never opened (gold NEW), 0 = opened before

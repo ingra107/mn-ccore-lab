@@ -18,7 +18,7 @@
 
 import type { Env, AuthUser } from '../helpers';
 import { json, error, resolveActor, isPiRequest } from '../helpers';
-import { activityVisibilityGate, activityHiddenClause, postActivityEntry } from '../lib/activity-entry';
+import { replySummaryColumns, activityVisibilityGate, activityHiddenClause, postActivityEntry } from '../lib/activity-entry';
 
 // GET /api/meetings/:id/activity — the meeting's conversation ROOTS
 // (newest-first), each with a viewer-specific reply_count. Two visibility gates,
@@ -28,15 +28,14 @@ export async function handleGetMeetingActivity(id: string, request: Request, env
   if (!id?.trim()) return error('meeting id required', 400);
   const includeHidden = new URL(request.url).searchParams.get('include_hidden') === '1';
   const visAe = await activityVisibilityGate(request, env, 'ae');
-  const visR = await activityVisibilityGate(request, env, 'r');
+  const rs = replySummaryColumns(await activityVisibilityGate(request, env, 'r', 'ae'), includeHidden);
   const result = await env.DB.prepare(
     `SELECT ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.kind, ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type, ae.metadata_json, ae.parent_id, ae.hidden_at, ae.created_at,
-            (SELECT COUNT(*) FROM activity_entries r
-              WHERE r.parent_id = ae.id AND ${activityHiddenClause('r', includeHidden)} AND ${visR.clause}) AS reply_count
+            ${rs.sql}
      FROM activity_entries ae
      WHERE ae.entity_type = 'meeting' AND ae.entity_id = ? AND ae.parent_id IS NULL AND ${activityHiddenClause('ae', includeHidden)} AND ${visAe.clause}
      ORDER BY ae.created_at DESC, ae.id DESC`
-  ).bind(...visR.binds, id, ...visAe.binds).all();
+  ).bind(...rs.binds, id, ...visAe.binds).all();
   // activity-hidden-exempt: reveal-affordance count DELIBERATELY selects dismissed
   // roots (hidden_at IS NOT NULL); requester-gated by visibility, count only.
   const hiddenRow = await env.DB.prepare(

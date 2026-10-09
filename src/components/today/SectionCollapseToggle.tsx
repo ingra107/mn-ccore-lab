@@ -5,9 +5,8 @@
 // by design (no storageKey/localStorage): Nick wants every section to start
 // expanded on every load.
 
-// `color` is accepted for the callers that still pass one and ignored: the
-// reskin draws every section chevron in the one muted tier (.tk-chev).
-export function CollapseChevron({ open }: { open: boolean; color?: string }) {
+// Every section chevron is drawn in the one muted tier (.tk-chev); no color prop.
+export function CollapseChevron({ open }: { open: boolean }) {
   return <span aria-hidden="true" className="tk-chev">{open ? '▾' : '▸'}</span>
 }
 

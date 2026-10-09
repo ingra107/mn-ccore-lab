@@ -34,11 +34,9 @@ import {
   ClipboardList,
   Pencil,
   Trash2,
-  ChevronRight,
   EyeOff,
   Eye,
 } from 'lucide-react'
-import { ICON_PROPS } from '../../lib/iconProps'
 import { motion } from 'framer-motion'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { parseDbUtc, formatDbLocal } from '../../lib/time'
@@ -241,6 +239,12 @@ export interface ActivityEntryItemRow {
   parent_id?: string | null
   /** #98: viewer-specific, computed per request — never stored. Roots only. */
   reply_count?: number
+  /** Thread summary, computed with reply_count under the same visibility gate:
+   *  newest reply time, who wrote it, and every replier (comma-joined slugs, in
+   *  the order they first replied). Null/absent when there are no replies. */
+  last_reply_at?: string | null
+  last_reply_actor?: string | null
+  participants?: string | null
   /** v102: NULL = visible, a timestamp = dismissed. Present only when a feed was
    *  fetched with ?include_hidden=1 (else dismissed roots are filtered out). */
   hidden_at?: string | null
@@ -345,12 +349,6 @@ export interface ActivityEntryItemProps {
 
   /** Opens the inline reply composer for this root. Absent on replies (one level). */
   onReply?: () => void
-  /** Viewer-specific count from the server. 0/undefined renders no chip. */
-  replyCount?: number
-  /** Whether this root's thread is currently expanded. */
-  threadExpanded?: boolean
-  /** Toggles the thread open/closed. Present only when replyCount > 0. */
-  onToggleThread?: () => void
   /** True when this card IS a reply — suppresses its own reply affordance. */
   isReply?: boolean
 
@@ -693,9 +691,6 @@ export function ActivityEntryItem({
   onDelete,
   onEdit,
   onReply,
-  replyCount,
-  threadExpanded,
-  onToggleThread,
   isReply,
   onDismiss,
   isHidden,
@@ -773,32 +768,7 @@ export function ActivityEntryItem({
     // colored child spans and fail AA (CLAUDE.md compound-opacity rule).
     ...(isHidden ? { borderLeft: '3px dashed var(--border-subtle)' } : {}),
     ...taskOriginStyle,
-    // §9.5.2 whole-card click affordance — only when there's a thread to open.
-    cursor: onToggleThread ? 'pointer' : undefined,
-    ...(onToggleThread ? ({ '--hov-bg': 'var(--hover-subtle)' } as React.CSSProperties) : {}),
   }
-
-  // ── Whole-card click toggles the thread (§9.5.2 progressive disclosure) ──
-  // onToggleThread is passed by ActivityThread ONLY on the root, and ONLY
-  // when replyCount > 0 — gating on its presence alone already gives us
-  // "root only" + "nothing to toggle when there are no replies" for free;
-  // no separate isReply/replyCount check needed. Reuses the SAME toggle
-  // (setExpanded) the "N replies" chevron already drives — one function,
-  // two triggers, not a forked handler.
-  const handleCardClick = onToggleThread
-    ? (e: React.MouseEvent<HTMLDivElement>) => {
-        // Bail on any interactive descendant — links, the Reply/edit/delete/
-        // dismiss buttons, reaction pills, the inline editor's textarea, etc.
-        // — so they keep working exactly as before. Read against the actual
-        // render tree here (activityRender.tsx + LinkifiedText, ReactionBar,
-        // HermesResponse): every interactive element in this card is a
-        // <button>, <a> (incl. react-router <Link>, which renders <a>), or
-        // (inside InlineCommentEditor) a <textarea>/<button> — no mention
-        // chips or custom role="button" elements exist in this tree today.
-        if ((e.target as HTMLElement).closest('button, a, input, textarea, select, [role="button"], [contenteditable]')) return
-        onToggleThread()
-      }
-    : undefined
 
   // ── Avatar dimension (matches sizeConfig in Avatar.tsx) ──────────────────
   const avatarDim = avatarSize === 'xs' ? 20 : 28
@@ -822,8 +792,7 @@ export function ActivityEntryItem({
       <ActivityEntryWrapper
         motionProps={motionProps}
         style={cardStyle}
-        className={onToggleThread ? 'detail-card hov-bg' : 'detail-card'}
-        onClick={handleCardClick}
+        className="detail-card"
       >
         {/* Task-origin chip above the thread (project-feed only) */}
         {showTaskOriginBadge && isTask && taskHref && (
@@ -893,8 +862,7 @@ export function ActivityEntryItem({
     <ActivityEntryWrapper
       motionProps={motionProps}
       style={cardStyle}
-      className={onToggleThread ? 'detail-card hov-bg' : 'detail-card'}
-      onClick={handleCardClick}
+      className="detail-card"
     >
       {/* Task-origin chip above the thread (project-feed only) */}
       {showTaskOriginBadge && isTask && taskHref && (
@@ -986,40 +954,20 @@ export function ActivityEntryItem({
               Nick saw as "so much space between the end of that statement and the
               reply". Merging them costs the feed nothing and removes the gap;
               existing reaction pills still sit closest to the body they belong to. */}
-          {/* #98 thread controls. Quiet by design — a thread affordance should
-              not out-shout the message it hangs off. The count stays visible
-              while COLLAPSED, which is the whole point: "so i can respond to
-              somebody else" needs to work without expanding first. */}
+          {/* #98: the reply COUNT and the expand toggle live in ThreadSummary, the row
+              under the root (activity/ThreadSummary.tsx); this footer only carries
+              reactions and the Reply control. */}
           {/* The Reply control also shows on a REPLY so you can answer Hermes
               in-thread (it opens the root's composer — the follow-up still
               attaches to the root, so the thread stays one level). The reply
               COUNT / expand toggle stays root-only. */}
-          {((showReactions && !isTask) || onReply || ((replyCount ?? 0) > 0 && !isReply)) && (
+          {((showReactions && !isTask) || onReply) && (
             <div className="flex items-center gap-3 flex-wrap" style={{ marginTop: 6 }}>
               {showReactions && !isTask && (
                 <ReactionBar
                   targetType={entry.kind === 'update' ? 'project_update' : 'comment'}
                   targetId={entry.id}
                 />
-              )}
-              {(replyCount ?? 0) > 0 && !isReply && onToggleThread && (
-                <button
-                  type="button"
-                  onClick={onToggleThread}
-                  aria-expanded={threadExpanded ? 'true' : 'false'}
-                  className="cursor-pointer inline-flex items-center gap-1"
-                  style={{
-                    fontSize: '11px', fontWeight: 500, color: 'var(--teal)',
-                    background: 'none', border: 'none', padding: 0,
-                  }}
-                >
-                  <ChevronRight
-                    {...ICON_PROPS}
-                    size={12}
-                    style={{ transform: threadExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 140ms' }}
-                  />
-                  {replyCount} {replyCount === 1 ? 'reply' : 'replies'}
-                </button>
               )}
               {onReply && (
                 <button

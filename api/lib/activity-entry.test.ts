@@ -40,7 +40,7 @@ import {
   handleGetTaskActivity,
 } from '../routes/tasks'
 import { handleGetProjectActivity, handleAddComment, handlePostProjectUpdate, handleGetComments, handleGetProjectUpdates } from '../routes/projects'
-import { handleDeleteActivityEntry, handleEditActivityEntry, handleSetActivityHidden } from '../routes/activity'
+import { handleDeleteActivityEntry, handleEditActivityEntry, handleSetActivityHidden, handleGetActivityReplies } from '../routes/activity'
 import { handleGetDayActivity, handlePostDayActivity } from '../routes/days'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
@@ -1358,5 +1358,62 @@ describe('handleGetDayActivity — private day feed', () => {
     const res = await handleGetDayActivity('2026-07-22', piReq(), env)
     const body = await res.json() as { data: Array<{ body: string }> }
     expect(body.data.some(r => r.body.includes('natems private note'))).toBe(true)
+  })
+})
+
+describe('root feeds carry the thread summary (reply_count, last_reply_at, last_reply_actor, participants)', () => {
+  type FeedRow = { id: string; reply_count: number; last_reply_at: string | null; last_reply_actor: string | null; participants: string | null }
+
+  it("a member's author-only @hermes thread counts Hermes's answer, and names who is in it", async () => {
+    const { env } = makeEnv(FX)
+    const posted = await postActivityEntry({ env, user: NATE, entityType: 'day', entityId: '2026-07-22', kind: 'comment', body: '@me ask', actorSlug: 'nate-mesfin' })
+    if (!posted.ok) throw new Error('seed failed')
+    const rootId = posted.row.id as string
+    // Hermes's answer is visibility=author (inherited) and actor claude-ai: only the root arm lets Nate see it.
+    await postActivityEntry({ env, user: NATE, entityType: 'day', entityId: '', parentId: rootId, kind: 'comment', body: 'the answer', actorSlug: 'claude-ai' })
+    await postActivityEntry({ env, user: NATE, entityType: 'day', entityId: '', parentId: rootId, kind: 'comment', body: 'thanks', actorSlug: 'nate-mesfin' })
+
+    const res = await handleGetDayActivity('2026-07-22', userGetReq(NON_PI_EMAIL), env)
+    const root = ((await res.json()) as { data: FeedRow[] }).data.find(r => r.id === rootId)!
+    expect(root.reply_count).toBe(2)
+    expect(root.participants).toBe('claude-ai,nate-mesfin')
+    expect(root.last_reply_actor).toBe('nate-mesfin')
+    expect(root.last_reply_at).toMatch(/^\d{4}-\d{2}-\d{2} /)
+
+    // The replies route returns the same two, so the count and the opened thread agree.
+    const rep = await handleGetActivityReplies(rootId, userGetReq(NON_PI_EMAIL), env)
+    expect(((await rep.json()) as { count: number }).count).toBe(2)
+  })
+
+  it('a thread with no replies has a zero count and null summary fields', async () => {
+    const { env } = makeEnv(FX)
+    const posted = await postActivityEntry({ env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment', body: 'alone', actorSlug: 'nate-mesfin' })
+    if (!posted.ok) throw new Error('seed failed')
+    const res = await handleGetTaskActivity('t1', piReq(), env)
+    const root = ((await res.json()) as { data: FeedRow[] }).data.find(r => r.id === posted.row.id)!
+    expect(root.reply_count).toBe(0)
+    expect(root.last_reply_at).toBeNull()
+    expect(root.participants).toBeNull()
+  })
+
+  it('show-dismissed: the feed count and the replies route agree on a dismissed thread', async () => {
+    const { env } = makeEnv(FX)
+    const posted = await postActivityEntry({ env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment', body: 'root', actorSlug: 'nate-mesfin' })
+    if (!posted.ok) throw new Error('seed failed')
+    const rootId = posted.row.id as string
+    await postActivityEntry({ env, user: NATE, entityType: 'task', entityId: '', parentId: rootId, kind: 'comment', body: 'child', actorSlug: 'nate-mesfin' })
+    await handleSetActivityHidden(rootId, new Request('https://x/api/test', {
+      method: 'POST',
+      headers: { 'X-Test-Mode-Key': TEST_MODE_KEY, 'X-Test-User': NON_PI_EMAIL, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hidden: true }),
+    }), NATE, env)
+
+    const feed = await handleGetTaskActivity('t1', new Request('https://x/api/test?include_hidden=1', { headers: { 'X-Test-Mode-Key': TEST_MODE_KEY, 'X-Test-User': PI_EMAIL } }), env)
+    const root = ((await feed.json()) as { data: FeedRow[] }).data.find(r => r.id === rootId)!
+    expect(root.reply_count).toBe(1)
+    const plain = await handleGetActivityReplies(rootId, piReq(), env)
+    expect(((await plain.json()) as { count: number }).count).toBe(0)
+    const shown = await handleGetActivityReplies(rootId, new Request('https://x/api/test?include_hidden=1', { headers: { 'X-Test-Mode-Key': TEST_MODE_KEY, 'X-Test-User': PI_EMAIL } }), env)
+    expect(((await shown.json()) as { count: number }).count).toBe(1)
   })
 })

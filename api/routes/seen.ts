@@ -106,6 +106,7 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
         `SELECT es.entity_type, es.entity_id,
                 COUNT(*) AS new_count,
                 MAX(ae.created_at) AS latest_at,
+                MAX(es.last_seen_at) AS seen_at,
                 CASE WHEN es.entity_type = 'task'
                      THEN COALESCE(t.short_title, t.title)
                      ELSE COALESCE(p.short_name, p.title) END AS title,
@@ -138,7 +139,7 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
       env.DB.prepare(
         `SELECT 'meeting' AS entity_type, m.id AS entity_id,
                 CASE WHEN es.last_seen_at IS NULL THEN 1 ELSE 0 END AS never_seen,
-                m.updated_at AS latest_at, m.title, NULL AS project_slug
+                m.updated_at AS latest_at, es.last_seen_at AS seen_at, m.title, NULL AS project_slug
          FROM meetings m
          LEFT JOIN entity_seen es
            ON es.entity_type = 'meeting' AND es.entity_id = m.id AND es.viewer_slug = ?
@@ -210,6 +211,7 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
                 root.entity_id AS entity_id,
                 COUNT(*) AS new_count,
                 MAX(COALESCE(reply.answered_at, reply.created_at)) AS latest_at,
+                MAX(es.last_seen_at) AS seen_at,
                 CASE WHEN root.entity_type = 'task'
                      THEN COALESCE(t.short_title, t.title)
                      ELSE NULL END AS title,
@@ -251,7 +253,7 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
     // list is sorted newest-first, the surviving one would be the OLDER. Sum the
     // counts, keep the latest timestamp, and the badge stays honest: what it
     // claims is what is actually new (Rule 73 badge honesty).
-    type UnseenRow = { entity_type?: string; entity_id?: string; new_count?: number; latest_at?: string };
+    type UnseenRow = { entity_type?: string; entity_id?: string; new_count?: number; latest_at?: string; seen_at?: string | null };
     const merged = new Map<string, UnseenRow>();
     const ordered: UnseenRow[] = [];
     for (const row of [
@@ -267,6 +269,7 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
         continue;
       }
       prior.new_count = (prior.new_count ?? 0) + (row.new_count ?? 0);
+      if (prior.seen_at == null && row.seen_at != null) prior.seen_at = row.seen_at;
       if (String(row.latest_at ?? '') > String(prior.latest_at ?? '')) prior.latest_at = row.latest_at;
     }
     // Re-sort the merged arms globally: each arm is ordered internally, but

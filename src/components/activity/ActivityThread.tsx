@@ -11,8 +11,11 @@
 // is precisely the duplication schema v77 collapsed when it replaced the
 // per-entity comment tables. Both feeds render roots through here.
 //
-// Replies load ON EXPAND, not with the feed: a root carries only its
-// reply_count, so a long thread costs nothing until someone opens it.
+// Replies load ON EXPAND, not with the feed. The collapsed summary row needs no
+// fetch: the root arrives with reply_count, last_reply_at, last_reply_actor and
+// participants (api/lib/activity-entry.ts replySummaryColumns), computed under
+// the same visibility gate as the replies route, so a long thread costs nothing
+// until someone opens it.
 //
 // Depth is ONE level by construction — replies render with `isReply`, which
 // suppresses their own Reply control, and the API rejects a reply-to-a-reply
@@ -25,6 +28,7 @@ import { canDeleteActivityEntry } from './activityPermissions'
 import { useAuth } from '../../hooks/useAuth'
 import SmartCompose from '../SmartCompose'
 import { ThreadSummary } from './ThreadSummary'
+import { useThreadNew } from './useThreadNew'
 
 interface ActivityThreadProps {
   root: ActivityEntryItemRow
@@ -49,6 +53,7 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
   const [draft, setDraft] = useState<string | null>(null)
 
   const replyCount = root.reply_count ?? 0
+  const { hasNew, markRead } = useThreadNew(root, user?.slug ?? '')
 
   // A Hermes thread = the root is an @hermes/@claude ask. Continuing it means
   // talking to Hermes, and the reply must START with @hermes for the server to
@@ -57,6 +62,7 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
   const openComposer = () => {
     setComposing(true)
     setExpanded(true)
+    markRead()
     setDraft((d) => d || (isHermesThread ? '@hermes ' : ''))
   }
   // The reply box sits at the bottom of an open thread; until typed in it holds the seed.
@@ -64,16 +70,17 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
   const setReplyDraft = (v: string) => setDraft(v)
 
   const { data: replies = [] } = useQuery<ActivityEntryItemRow[]>({
-    queryKey: ['activity-replies', root.id],
+    queryKey: ['activity-replies', root.id, !!root.hidden_at],
     queryFn: async () => {
-      const res = await fetch(`/api/activity/${root.id}/replies`)
+      // A dismissed root's replies are hidden with it; ask for them so the
+      // opened thread matches the count on the summary row.
+      const res = await fetch(`/api/activity/${root.id}/replies${root.hidden_at ? '?include_hidden=1' : ''}`)
       if (!res.ok) return []
       const body = await res.json() as { data?: ActivityEntryItemRow[] }
       return body.data || []
     },
-    // Fetched as soon as the root has replies: the collapsed summary row needs
-    // who is in the thread and when it last moved. Roots with none stay idle.
-    enabled: replyCount > 0 || expanded || composing,
+    // Lazy: nothing is fetched until the thread is actually opened.
+    enabled: expanded || composing,
     // Poll every 10s while a reply is still "Thinking…" so a Hermes answer fills
     // in without a manual refresh. A typed @hermes ask lands a pending placeholder
     // reply that _postHermesResponse rewrites asynchronously; the placeholder is a
@@ -115,8 +122,6 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
       <ActivityEntryItem
         {...itemProps}
         entry={root}
-        replyCount={replyCount}
-        threadExpanded={expanded}
         onReply={openComposer}
         onDelete={onDelete && canDeleteActivityEntry(user, root.actor_slug) ? () => onDelete(root) : undefined}
         onEdit={onEdit && canDeleteActivityEntry(user, root.actor_slug) ? (b: string) => onEdit(root, b) : undefined}
@@ -127,11 +132,13 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
       {replyCount > 0 && (
         <ThreadSummary
           root={root}
-          replies={replies}
-          replyCount={replyCount}
           expanded={expanded}
-          onToggle={() => setExpanded((v) => !v)}
-          viewerSlug={user?.slug ?? ''}
+          hasNew={hasNew}
+          onToggle={() => {
+            // Opening or closing reads the thread: the newest loaded reply counts too.
+            markRead([...replies].sort((a, b) => a.created_at.localeCompare(b.created_at)).pop()?.created_at)
+            setExpanded((v) => !v)
+          }}
         />
       )}
 

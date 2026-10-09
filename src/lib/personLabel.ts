@@ -13,6 +13,11 @@ function readable(slug: string, name: string): string {
 }
 
 /** Two letters from a person's full name ("Casey Eddington" -> "CE"). */
+/** Full name for display and screen readers: the team name, or a readable form of an unknown slug. */
+export function fullNameReadable(slug: string): string {
+  return readable(slug, fullNameForSlug(slug))
+}
+
 export function initialsFor(slug: string): string {
   const parts = readable(slug, fullNameForSlug(slug)).split(/\s+/).filter(Boolean)
   if (parts.length === 0) return '?'

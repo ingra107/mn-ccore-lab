@@ -72,7 +72,7 @@ test.describe('Today: plan a task (📌 button + drag)', () => {
     // one target is off-screen relative to the other, producing a flaky drop.
     const rects = await page.evaluate((id) => {
       const rowEl = document.querySelector(`[data-task-id="${id}"]`)
-      const grip = rowEl?.querySelector('[title="Drag to timeline to schedule this task"]')
+      const grip = rowEl?.querySelector('[aria-label="Drag to schedule"]')
       const stripEl = document.querySelector('[data-b2-planned-today]')
       if (!grip || !stripEl) return null
       const g = grip.getBoundingClientRect()

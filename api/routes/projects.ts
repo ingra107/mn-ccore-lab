@@ -6,7 +6,7 @@ import { isValidProjectSlug, looksLikeProjectId, type SlugClaimCheck } from '../
 import { nowInstant } from '../lib/time';
 import { lastWorkedIso } from '../lib/project-recency';
 import { applyMutation } from './mutations';
-import { activityVisibilityGate, activityHiddenClause, postActivityEntry, sourceKeyFrom } from '../lib/activity-entry';
+import { replySummaryColumns, activityVisibilityGate, activityHiddenClause, postActivityEntry, sourceKeyFrom } from '../lib/activity-entry';
 import { enumFieldsFor } from '../lib/enum-domains';
 import { PROJECT_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 
@@ -392,7 +392,7 @@ export async function handleGetProjectActivity(idOrSlug: string, request: Reques
   const vis = await activityVisibilityGate(request, env, 'ae');
   // #98: a second gate for the reply-count subquery, aliased to 'r'. Two calls,
   // never a regex rewrite of one clause into the other alias.
-  const visR = await activityVisibilityGate(request, env, 'r');
+  const rs = replySummaryColumns(await activityVisibilityGate(request, env, 'r', 'ae'), includeHidden);
   // Whole-picture: every row tied to this project. postActivityEntry stores
   // project_id = entity_id for project-entity rows (api/lib/activity-entry.ts:
   // `projectId = entityId` in the project branch) and the task's project_id for
@@ -408,8 +408,7 @@ export async function handleGetProjectActivity(idOrSlug: string, request: Reques
   const result = await env.DB.prepare(
     `SELECT ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.kind, ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type, ae.metadata_json, ae.parent_id, ae.hidden_at, ae.created_at,
             CASE WHEN ae.entity_type = 'task' THEN COALESCE(t.short_title, t.title) END AS task_title,
-            (SELECT COUNT(*) FROM activity_entries r
-              WHERE r.parent_id = ae.id AND ${activityHiddenClause('r', includeHidden)} AND ${visR.clause}) AS reply_count
+            ${rs.sql}
      FROM activity_entries ae
      LEFT JOIN tasks t ON ae.entity_type = 'task' AND t.id = ae.entity_id
      WHERE ae.project_id = ?
@@ -417,7 +416,7 @@ export async function handleGetProjectActivity(idOrSlug: string, request: Reques
        AND ${activityHiddenClause('ae', includeHidden)}
        AND ${vis.clause}
      ORDER BY ae.created_at DESC, ae.id DESC`
-  ).bind(...visR.binds, canonicalId, ...vis.binds).all();
+  ).bind(...rs.binds, canonicalId, ...vis.binds).all();
   // hidden_count: dismissed roots this viewer could reveal (see task feed).
   // activity-hidden-exempt: reveal-affordance count DELIBERATELY selects dismissed
   // roots (hidden_at IS NOT NULL); requester-gated by visibility, count only.

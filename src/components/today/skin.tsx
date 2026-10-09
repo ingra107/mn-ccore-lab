@@ -2,14 +2,14 @@
 // the meeting card, the drawer and the rail: the initials face, a face stack, a
 // person label (face + first name) and the check glyph. Presentational only.
 
-import { fullNameForSlug } from '../../lib/nameUtils'
-import { initialsFor, firstNameFor, firstOf, initialsOfName } from '../../lib/personLabel'
+
+import { initialsFor, firstNameFor, firstOf, initialsOfName, fullNameReadable } from '../../lib/personLabel'
 
 /** One person as an initials disc. `lg` is the 26px corner face on a card; `sm` 16px. */
 export function Face({ slug, lg = false, sm = false }: { slug: string; lg?: boolean; sm?: boolean }) {
-  const name = fullNameForSlug(slug)
+  const name = fullNameReadable(slug)
   return (
-    <span className={`tk-face${lg ? ' tk-lg' : ''}${sm ? ' tk-sm' : ''}`} title={name} aria-label={name}>
+    <span role="img" className={`tk-face${lg ? ' tk-lg' : ''}${sm ? ' tk-sm' : ''}`} title={name} aria-label={name}>
       {initialsFor(slug)}
     </span>
   )
