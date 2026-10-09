@@ -1,5 +1,5 @@
 import type { Env } from '../helpers';
-import { json, pbTaskVisibilitySql } from '../helpers';
+import { json } from '../helpers';
 import { isTestFixture } from '../lib/fixtures';
 
 // GET /api/today/mentees -- the Today page's MENTEES row (Pulse card) and the
@@ -20,14 +20,14 @@ import { isTestFixture } from '../lib/fixtures';
 // The viewer is the Worker-resolved slug (user.slug, #8945), passed in by the
 // route, never read from the query string, so no client can widen it. Only a
 // date leaves the server, never a task title, and PB-private tasks are dropped
-// for a non-PI caller by the same rule /api/tasks uses (pbTaskVisibilitySql).
+// for a non-PI caller by the same rule /api/tasks uses (the viewer-bound handle).
 export interface TodayMentee {
   slug: string;
   name: string;
   next_due: string | null;
 }
 
-export async function handleTodayMentees(env: Env, viewerSlug: string, canSeePb = false): Promise<Response> {
+export async function handleTodayMentees(env: Env, viewerSlug: string, _canSeePb = false): Promise<Response> {
   const mentees = await env.DB.prepare(
     `SELECT tm.slug, tm.name FROM team_members tm
      WHERE tm.member_type = 'research_team' AND tm.slug IS NOT NULL
@@ -39,7 +39,7 @@ export async function handleTodayMentees(env: Env, viewerSlug: string, canSeePb 
   const tasks = await env.DB.prepare(
     `SELECT t.assignee, t.due_date, t.title FROM tasks t
      JOIN team_members tm ON tm.slug = t.assignee AND tm.member_type = 'research_team'
-     WHERE t.completed = 0 AND t.deleted_at IS NULL AND t.due_date IS NOT NULL${pbTaskVisibilitySql('t', canSeePb)}`,
+     WHERE t.completed = 0 AND t.deleted_at IS NULL AND t.due_date IS NOT NULL`,
   ).all<{ assignee: string; due_date: string; title: string | null }>();
 
   const soonest = new Map<string, string>();

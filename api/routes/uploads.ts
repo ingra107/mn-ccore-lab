@@ -1,6 +1,6 @@
 import { AwsClient } from 'aws4fetch';
 import type { Env } from '../types';
-import { isPiRequest, pbTaskVisibilitySql } from '../helpers';
+import { isPiRequest } from '../helpers';
 import type { AuthUser } from '../helpers';
 import { safeRow } from '../lib/task-cols';
 
@@ -72,10 +72,8 @@ async function canAccessEntity(
     // as missing. Only the morning-thought composer's day key (YYYY-MM-DD,
     // todayKey() in src/lib/taskGrouping.ts) is a legitimate non-task id here.
     if (!task) return /^\d{4}-\d{2}-\d{2}$/.test(entityId);
-    const visible = await env.DB.prepare(
-      `SELECT 1 AS ok FROM tasks t WHERE t.id = ?${pbTaskVisibilitySql('t', false)} LIMIT 1`
-    ).bind(entityId).first();
-    return !!visible;
+    // Visible through the handle = the caller may see it (Lane B task rule).
+    return true;
   }
   return false;
 }

@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, resolveSlug, isPiRequest, resolveActor, assertProjectVisible, projectRefToCanonical, pbTaskVisibilitySql } from '../helpers';
+import { json, error, generateId, logActivity, resolveSlug, isPiRequest, resolveActor, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
@@ -111,12 +111,9 @@ export async function handleGetTasks(url: URL, env: Env, canSeePb = false): Prom
   const selectCols = wireTyped ? TASK_SELECT_COLS_TYPED : TASK_SELECT_COLS;
 
   const deletedFilter = includeDeleted ? '1=1' : 't.deleted_at IS NULL';
-  // Fix 2a: non-PI callers must not see tasks that belong to Peripheral Brain
-  // projects. pbTaskVisibilitySql is the one rule (helpers.ts) -- it also fails
-  // CLOSED on a project ref that matches no project row, which the NOT IN form
-  // this replaced let through (canSeePbProject has always failed closed there).
-  const pbExclusion = pbTaskVisibilitySql('t', canSeePb);
-  let query = `SELECT ${selectCols}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}${pbExclusion}`;
+  // Which tasks the caller sees (Peripheral Brain projects included) is the
+  // viewer-bound handle's rule, api/lib/table-scope.ts (#145 Lane B).
+  let query = `SELECT ${selectCols}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}`;
   const params: (string | number)[] = [];
 
   if (seqAfterRaw !== null) {
@@ -1318,11 +1315,10 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env, canSeePb = 
   // Mirror the category filter from search/activity for non-PI callers.
   // activity_entries stores project_id directly, but keep the join-shape filter
   // for parity with the prior task_updates path (entity_id is the task id).
-  // The update's task must EXIST and pass pbTaskVisibilitySql (the one rule,
-  // helpers.ts). The NOT IN form this replaced let through an update whose task
-  // pointed at an unknown project ref, or whose task row was gone -- both fail
-  // closed now, as canSeePbProject does.
-  const pbExclusion = canSeePb ? '' : ` AND EXISTS (SELECT 1 FROM tasks tv WHERE tv.id = activity_entries.entity_id${pbTaskVisibilitySql('tv', false)}) AND visibility = 'team'`
+  // Which updates the caller sees follows their task through the viewer-bound
+  // handle (activity_entries rule, api/lib/table-scope.ts, #145 Lane B); a
+  // non-PI caller additionally sees only team-visibility rows.
+  const pbExclusion = canSeePb ? '' : ` AND visibility = 'team'`
   const cols = `id, entity_id AS task_id, actor_slug AS author_slug, body AS content, update_type, created_at`
   let query = `SELECT ${cols} FROM activity_entries WHERE entity_type = 'task' AND kind = 'update' AND hidden_at IS NULL`
   const binds: unknown[] = []

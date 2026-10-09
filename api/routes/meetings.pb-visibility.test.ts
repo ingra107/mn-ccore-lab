@@ -18,12 +18,13 @@ import type Database from 'better-sqlite3'
 import { ctToday } from '../lib/ct-date'
 import { handleGetMeeting, handleMeetingPrep, handleGenerateAgenda } from './meetings'
 import { handleCalendarEvents } from './calendar'
-import { pbTaskVisibilitySql } from '../helpers'
+import { viewerDb, personViewer } from '../lib/viewer-db'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
 const TODAY = ctToday()
 let db: InstanceType<typeof Database>
 let env: any
+let memberEnv: any
 
 const OURS = new Set([
   'PB PRIVATE', 'PB PRIVATE BY SLUG', 'TEAM TASK', 'NO PROJECT', 'UNKNOWN PROJECT REF', 'DELETED TASK',
@@ -53,26 +54,34 @@ beforeEach(() => {
   task('t_prev_pb', 'PREV PB PRIVATE', 'proj_pb', { meeting_id: 'mtg_prev', due_date: null })
   task('t_prev_team', 'PREV TEAM TASK', 'proj_team', { meeting_id: 'mtg_prev', due_date: null })
   env = { DB: d1Adapter(db) }
+  insertRow(db, 'team_members', { id: 'tm-casey', name: 'Casey', slug: 'casey-eddington', email: 'eddin022@umn.edu' })
+  for (const p of ['proj_team', 'proj_pb']) {
+    db.prepare("INSERT OR IGNORE INTO project_members (project_id, member_slug, added_by) VALUES (?, 'casey-eddington', 'test')").run(p)
+  }
+  db.prepare(`UPDATE tasks SET watchers = '["casey-eddington"]' WHERE id = 't_none'`).run()
+  db.prepare(`UPDATE meetings SET attendees = '["casey-eddington"]' WHERE id IN ('mtg_now', 'mtg_prev')`).run()
+  memberEnv = { DB: viewerDb(env.DB, personViewer({ slug: 'casey-eddington', email: 'eddin022@umn.edu', pi: false })) }
 })
 
 const titles = (rows: Array<{ title?: string }>) => rows.map((r) => r.title).filter((t) => OURS.has(t as string)).sort()
 
-describe('pbTaskVisibilitySql — the one rule', () => {
-  it('is empty for a PI / API-key caller', () => {
-    expect(pbTaskVisibilitySql('t', true)).toBe('')
-  })
-
-  it('hides PB-project tasks (by PK or slug) and unknown refs; keeps team and project-less tasks', () => {
-    const rows = db.prepare(
-      `SELECT t.title FROM tasks t WHERE t.meeting_id = 'mtg_now' AND t.deleted_at IS NULL${pbTaskVisibilitySql('t', false)}`,
-    ).all() as Array<{ title: string }>
-    expect(titles(rows)).toEqual(['NO PROJECT', 'TEAM TASK'])
+// #145 Lane B: the PB rule for task rows lives in the viewer-bound handle
+// (api/lib/table-scope.ts), not in the handler, so every non-PI case reads
+// through a member's handle, as the request middleware gives it. Casey is on
+// BOTH projects (an accidental add to the PB one) and watches the
+// project-less task; the PB rows must still not reach her.
+describe('the task rule, through a member handle', () => {
+  it('hides PB-project tasks (by PK or slug) and unknown refs; keeps team and the watched project-less task', async () => {
+    const { results } = await memberEnv.DB.prepare(
+      `SELECT t.title FROM tasks t WHERE t.meeting_id = 'mtg_now' AND t.deleted_at IS NULL`,
+    ).all()
+    expect(titles(results as Array<{ title: string }>)).toEqual(['NO PROJECT', 'TEAM TASK'])
   })
 })
 
 describe('GET /api/meetings/:id — action_items', () => {
   it('non-PI caller does not see PB-private action items', async () => {
-    const body = await (await handleGetMeeting('mtg_now', env, false)).json() as any
+    const body = await (await handleGetMeeting('mtg_now', memberEnv, false)).json() as any
     expect(titles(body.data.action_items)).toEqual(['NO PROJECT', 'TEAM TASK'])
   })
 
@@ -89,7 +98,7 @@ describe('GET /api/calendar/events — task deadlines', () => {
   const taskTitles = (body: any) => titles(body.data.filter((e: any) => e.type === 'task'))
 
   it('non-PI caller does not see PB-private tasks or deleted tasks', async () => {
-    const body = await (await handleCalendarEvents(url(), env, 'nick-ingraham', false)).json() as any
+    const body = await (await handleCalendarEvents(url(), memberEnv, 'nick-ingraham', false)).json() as any
     expect(taskTitles(body)).toEqual(['NO PROJECT', 'TEAM TASK'])
   })
 
@@ -119,7 +128,7 @@ describe('GET /api/calendar/events — task deadlines', () => {
 
 describe('meeting prep + generated agenda use the same rule', () => {
   it('prep: previous action items, upcoming and overdue lists hide PB tasks for non-PI', async () => {
-    const body = await (await handleMeetingPrep('mtg_now', env, true, false)).json() as any
+    const body = await (await handleMeetingPrep('mtg_now', memberEnv, true, false)).json() as any
     const all = JSON.stringify(body.data)
     expect(all).not.toContain('PB PRIVATE')
     expect(all).not.toContain('UNKNOWN PROJECT REF')
@@ -132,7 +141,7 @@ describe('meeting prep + generated agenda use the same rule', () => {
   })
 
   it('generate-agenda: carried-forward and urgent items hide PB tasks for non-PI', async () => {
-    const body = await (await handleGenerateAgenda('mtg_now', env, true, false)).json() as any
+    const body = await (await handleGenerateAgenda('mtg_now', memberEnv, true, false)).json() as any
     const all = JSON.stringify(body)
     expect(all).toContain('PREV TEAM TASK')
     expect(all).not.toContain('PB PRIVATE')

@@ -42,6 +42,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type Database from 'better-sqlite3'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
+import { viewerDb, personViewer } from '../lib/viewer-db'
 import { handleGetComments, handleGetProjectUpdates, handleRecentUpdates } from './projects'
 import { handleGetProjectDocuments } from './project-documents'
 import { handleGetSubmissions } from './submissions'
@@ -562,8 +563,18 @@ describe('handleGetRecentTaskUpdates — canSeePb filter (Pattern B)', () => {
       insertRow(db, 'activity_entries', { id: `tu_${t}`, entity_type: 'task', entity_id: t, kind: 'update', actor_slug: 'nick-ingraham', body: `TASK UPDATE ON ${t}`, update_type: 'note' })
     }
   })
+  // #145 Lane B: the PB rule for task rows lives in the viewer-bound handle,
+  // so the non-PI case reads through Nate's handle (on both projects, the PB
+  // one by accident), as the request middleware gives it.
   const contents = async (canSeePb: boolean) => {
-    const res = await handleGetRecentTaskUpdates(new URL('https://x/api/task-updates/recent'), makeEnv(), canSeePb)
+    let env = makeEnv()
+    if (!canSeePb) {
+      for (const p of ['proj_pb', 'proj_mn']) {
+        db.prepare("INSERT OR IGNORE INTO project_members (project_id, member_slug, added_by) VALUES (?, 'nate-mesfin', 'test')").run(p)
+      }
+      env = { ...env, DB: viewerDb(env.DB, personViewer({ slug: 'nate-mesfin', email: NON_PI_EMAIL, pi: false })) } as Env
+    }
+    const res = await handleGetRecentTaskUpdates(new URL('https://x/api/task-updates/recent'), env, canSeePb)
     expect(res.status).toBe(200)
     return ((await res.json()) as { data: Array<{ content: string }> }).data.map((r) => r.content).sort()
   }

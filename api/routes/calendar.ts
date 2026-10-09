@@ -1,5 +1,5 @@
 import type { Env } from '../helpers';
-import { json, pbTaskVisibilitySql } from '../helpers';
+import { json } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 
 // GET /api/calendar/events?start=&end=
@@ -17,7 +17,7 @@ import { ctToday } from '../lib/ct-date';
 // slug is the Worker-resolved identity (`user.slug`, #8945), never a query
 // param, so no client can ask for someone else's tasks here, and a caller
 // with no team identity ('anonymous') matches no assignee and gets none.
-export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: string, canSeePb = false): Promise<Response> {
+export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: string, _canSeePb = false): Promise<Response> {
   const startDate = url.searchParams.get('start') || ctToday(-30);
   const endDate = url.searchParams.get('end') || ctToday(90);
 
@@ -30,7 +30,7 @@ export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: strin
     // possible).
     env.DB.prepare('SELECT DISTINCT id, date, title, type, (owner_slug IS ?) AS mine FROM meetings WHERE date >= ? AND date <= ? ORDER BY date, mine DESC, id')
       .bind(viewerSlug, startDate, endDate).all<{ id: string; date: string; title: string; type: string }>(),
-    env.DB.prepare(`SELECT t.id, t.title, t.description, t.due_date, t.assignee, t.status, t.priority FROM tasks t WHERE t.due_date IS NOT NULL AND t.due_date >= ? AND t.due_date <= ? AND t.completed = 0 AND t.deleted_at IS NULL AND t.assignee = ?${pbTaskVisibilitySql('t', canSeePb)} ORDER BY t.due_date`)
+    env.DB.prepare(`SELECT t.id, t.title, t.description, t.due_date, t.assignee, t.status, t.priority FROM tasks t WHERE t.due_date IS NOT NULL AND t.due_date >= ? AND t.due_date <= ? AND t.completed = 0 AND t.deleted_at IS NULL AND t.assignee = ? ORDER BY t.due_date`)
       .bind(startDate, endDate, viewerSlug).all<{ id: string; title: string; description: string; due_date: string; assignee: string; status: string; priority: string }>(),
     env.DB.prepare('SELECT m.id, m.title, m.target_date, m.status, g.mechanism, g.title as grant_title FROM milestones m LEFT JOIN grants g ON m.grant_id = g.id WHERE m.target_date >= ? AND m.target_date <= ? ORDER BY m.target_date')
       .bind(startDate, endDate).all<{ id: string; title: string; target_date: string; status: string; mechanism: string | null; grant_title: string | null }>(),

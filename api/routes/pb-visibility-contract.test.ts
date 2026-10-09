@@ -93,6 +93,7 @@ import { handleCalendarEvents } from './calendar'
 import type { Env } from '../helpers'
 import { ctToday } from '../lib/ct-date'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
+import { viewerDb, personViewer } from '../lib/viewer-db'
 
 // ── Test identity constants ────────────────────────────────────────────────────
 
@@ -751,7 +752,18 @@ describe('PB-visibility contract — Pattern B (cross-project feed filters; body
   for (const tc of patternBCases) {
     describe(tc.label, () => {
       it('non-PI caller gets 200 and body excludes Peripheral Brain rows', async () => {
-        const res = await tc.callNonPi(world(tc.prep).env)
+        // #145 Lane B: the PB rule lives in the viewer-bound handle, not in the
+        // handler. Nate is put on BOTH projects (an accidental add to the PB
+        // one) and on the meeting, and reads through his own handle, as the
+        // request middleware gives him: the PB rows must still not reach him.
+        const w = world(tc.prep)
+        // (the assignment trigger already put him on TEAM; PB it skips)
+        for (const p of [PB.id, TEAM.id]) {
+          w.db.prepare("INSERT OR IGNORE INTO project_members (project_id, member_slug, added_by) VALUES (?, 'nate-mesfin', 'test')").run(p)
+        }
+        w.db.prepare(`UPDATE meetings SET attendees = '["nate-mesfin"]' WHERE id = 'mtg-id'`).run()
+        const env = { ...w.env, DB: viewerDb(w.env.DB, personViewer({ slug: 'nate-mesfin', email: NON_PI_EMAIL, pi: false })) } as Env
+        const res = await tc.callNonPi(env)
         expect(res.status).toBe(200)
         const body = await res.text()
         expect(body, 'the feed must return the team rows (a vacuous empty body proves nothing)').toContain(TEAM_MARK)

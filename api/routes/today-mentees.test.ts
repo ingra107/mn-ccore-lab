@@ -9,9 +9,11 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import type Database from 'better-sqlite3'
 import { handleTodayMentees } from './today-mentees'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
+import { viewerDb, personViewer } from '../lib/viewer-db'
 
 let db: InstanceType<typeof Database>
 let env: any
+let directorEnv: any
 
 const OURS = new Set(['zz-mentee-a', 'zz-mentee-b', 'zz-mentee-c'])
 
@@ -50,13 +52,19 @@ beforeEach(() => {
   task('zz-mentee-c', null)
   task('zz-director', '2026-09-01')
   env = { DB: d1Adapter(db) }
+  // #145 Lane B: a non-PI director reads through their own handle. They are on
+  // the team project (and, by accident, the PB one: still hidden).
+  for (const p of ['proj_team', 'proj_pb']) {
+    db.prepare("INSERT OR IGNORE INTO project_members (project_id, member_slug, added_by) VALUES (?, 'zz-director', 'test')").run(p)
+  }
+  directorEnv = { DB: viewerDb(env.DB, personViewer({ slug: 'zz-director', email: null, pi: false })) }
 })
 
 const ours = (body: any) => (body.data as Array<{ slug: string }>).filter((m) => OURS.has(m.slug))
 
 describe('GET /api/today/mentees', () => {
   it("a director gets each research-team member's soonest open due date, soonest first", async () => {
-    const body = await (await handleTodayMentees(env, 'zz-director', false)).json() as any
+    const body = await (await handleTodayMentees(directorEnv, 'zz-director', false)).json() as any
     expect(ours(body)).toEqual([
       { slug: 'zz-mentee-b', name: 'ZZ-MENTEE-B', next_due: '2026-09-21' },
       { slug: 'zz-mentee-a', name: 'ZZ-MENTEE-A', next_due: '2026-10-12' },
