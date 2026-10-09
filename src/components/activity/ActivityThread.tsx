@@ -24,6 +24,7 @@ import { ActivityEntryItem, type ActivityEntryItemRow } from './activityRender'
 import { canDeleteActivityEntry } from './activityPermissions'
 import { useAuth } from '../../hooks/useAuth'
 import SmartCompose from '../SmartCompose'
+import { ThreadSummary } from './ThreadSummary'
 
 interface ActivityThreadProps {
   root: ActivityEntryItemRow
@@ -45,7 +46,7 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
   // is disorienting, and the reply you just wrote must land somewhere visible.
   const [expanded, setExpanded] = useState(false)
   const [composing, setComposing] = useState(false)
-  const [replyDraft, setReplyDraft] = useState('')
+  const [draft, setDraft] = useState<string | null>(null)
 
   const replyCount = root.reply_count ?? 0
 
@@ -56,8 +57,11 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
   const openComposer = () => {
     setComposing(true)
     setExpanded(true)
-    setReplyDraft((d) => d || (isHermesThread ? '@hermes ' : ''))
+    setDraft((d) => d || (isHermesThread ? '@hermes ' : ''))
   }
+  // The reply box sits at the bottom of an open thread; until typed in it holds the seed.
+  const replyDraft = draft ?? (isHermesThread ? '@hermes ' : '')
+  const setReplyDraft = (v: string) => setDraft(v)
 
   const { data: replies = [] } = useQuery<ActivityEntryItemRow[]>({
     queryKey: ['activity-replies', root.id],
@@ -67,8 +71,9 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
       const body = await res.json() as { data?: ActivityEntryItemRow[] }
       return body.data || []
     },
-    // Lazy: nothing is fetched until the thread is actually opened.
-    enabled: expanded || composing,
+    // Fetched as soon as the root has replies: the collapsed summary row needs
+    // who is in the thread and when it last moved. Roots with none stay idle.
+    enabled: replyCount > 0 || expanded || composing,
     // Poll every 10s while a reply is still "Thinking…" so a Hermes answer fills
     // in without a manual refresh. A typed @hermes ask lands a pending placeholder
     // reply that _postHermesResponse rewrites asynchronously; the placeholder is a
@@ -100,6 +105,7 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
       // unseen signal can change as a result of this post too.
       queryClient.invalidateQueries({ queryKey: ['unseen-activity'] })
       setComposing(false)
+      setDraft(null)
       setExpanded(true)
     },
   })
@@ -111,7 +117,6 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
         entry={root}
         replyCount={replyCount}
         threadExpanded={expanded}
-        onToggleThread={replyCount > 0 ? () => setExpanded((v) => !v) : undefined}
         onReply={openComposer}
         onDelete={onDelete && canDeleteActivityEntry(user, root.actor_slug) ? () => onDelete(root) : undefined}
         onEdit={onEdit && canDeleteActivityEntry(user, root.actor_slug) ? (b: string) => onEdit(root, b) : undefined}
@@ -119,10 +124,21 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
         isHidden={!!root.hidden_at}
       />
 
+      {replyCount > 0 && (
+        <ThreadSummary
+          root={root}
+          replies={replies}
+          replyCount={replyCount}
+          expanded={expanded}
+          onToggle={() => setExpanded((v) => !v)}
+          viewerSlug={user?.slug ?? ''}
+        />
+      )}
+
       {(expanded || composing) && (
         // One indent level, and only one — the left border is the thread spine.
         <div style={{ marginLeft: 20, paddingLeft: 12, borderLeft: '1px solid var(--border-subtle)' }} className="flex flex-col gap-1.5">
-          {expanded && replies.map((reply) => (
+          {expanded && [...replies].sort((a, b) => a.created_at.localeCompare(b.created_at)).map((reply) => (
             <ActivityEntryItem
               {...itemProps}
               key={reply.id}
@@ -135,10 +151,10 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
             />
           ))}
 
-          {composing && (
+          {(composing || expanded) && (
             <SmartCompose
               bare
-              autoFocus
+              autoFocus={composing}
               rows={2}
               value={replyDraft}
               onChange={setReplyDraft}
@@ -152,7 +168,7 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
               submitting={postReply.isPending}
               submitLabel="Reply"
               submittingLabel="Posting…"
-              onSubmit={async (content: string) => { await postReply.mutateAsync(content); setReplyDraft('') }}
+              onSubmit={async (content: string) => { await postReply.mutateAsync(content); setDraft(null) }}
             />
           )}
         </div>

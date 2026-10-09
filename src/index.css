@@ -2772,3 +2772,13 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-feedl.tk-hid .tk-feedt{opacity:.6;text-decoration:line-through}
 @media (hover:none){.tk .tk-feedctl{opacity:1}}
 .tk .tk-feedctl:has(.ae-delete[aria-label^="Click again"]){opacity:1}
+
+/* Thread summary row (Slack-style): faces . N replies . New . last reply, under the parent comment */
+.tk .tk-thr{display:flex;align-items:center;gap:8px;width:100%;margin:2px 0 0 20px;padding:4px 8px;max-width:calc(100% - 20px);background:transparent;border:0;border-radius:8px;cursor:pointer;color:var(--sk-t2);font-size:12px;text-align:left}
+.tk .tk-thr:hover,.tk .tk-thr:focus-visible{background:var(--sk-card2, var(--sk-card))}
+.tk .tk-thr:focus-visible{outline:2px solid var(--sk-ac);outline-offset:1px}
+.tk .tk-thr .tk-faces .tk-face{box-shadow:0 0 0 2px var(--sk-card)}
+.tk .tk-thr-n{font-weight:500;color:var(--sk-ac)}
+.tk .tk-thr .tk-tag{margin-left:0}
+.tk .tk-thr-t{color:var(--sk-t3);font-size:11px}
+.tk .tk-thr-c{margin-left:auto;color:var(--sk-t3);transition:transform 140ms}
