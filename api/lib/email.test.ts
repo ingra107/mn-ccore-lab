@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { html, raw, taskAssignmentEmail, sendEmail, isDigestRecipient, HUB_URL } from './email'
+import { html, raw, taskAssignmentEmail, sendEmail, isEmailRecipient, warnIfRecipientsMatchNobody, _resetRecipientWarning, HUB_URL } from './email'
 
 const HOSTILE = `<img src=x onerror=alert(1)> "q" 'a' & <script>`
 
@@ -48,27 +48,54 @@ describe('sendEmail', () => {
   it('posts the SafeHtml value to Resend and reports failure', async () => {
     const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
-    expect(await sendEmail('k', { to: 'a@b.c', subject: 's', html: raw('<p>x</p>') })).toBe(true)
+    const env = { RESEND_API_KEY: 'k', DIGEST_RECIPIENTS: 'all' }
+    expect(await sendEmail(env, { to: 'a@b.c', subject: 's', html: raw('<p>x</p>') })).toBe(true)
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
     expect(url).toBe('https://api.resend.com/emails')
     expect(JSON.parse(String(init.body)).html).toBe('<p>x</p>')
 
     vi.stubGlobal('fetch', vi.fn(async () => new Response('no', { status: 403 })))
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    expect(await sendEmail('k', { to: 'a@b.c', subject: 's', html: raw('') })).toBe(false)
+    expect(await sendEmail(env, { to: 'a@b.c', subject: 's', html: raw('') })).toBe(false)
+  })
+
+  it('blocks a non-allowed recipient before any request, and sends nothing without a key', async () => {
+    const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    expect(await sendEmail({ RESEND_API_KEY: 'k' }, { to: 'casey@umn.edu', subject: 's', html: raw('') })).toBe(false)
+    expect(await sendEmail({}, { to: 'ingra107@umn.edu', subject: 's', html: raw('') })).toBe(false)
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(await sendEmail({ RESEND_API_KEY: 'k' }, { to: 'Ingra107@UMN.edu', subject: 's', html: raw('') })).toBe(true)
   })
 })
 
-describe('isDigestRecipient', () => {
+describe('isEmailRecipient', () => {
   it('defaults to Nick only', () => {
-    expect(isDigestRecipient('nick-ingraham', {})).toBe(true)
-    expect(isDigestRecipient('nate-mesfin', {})).toBe(false)
-    expect(isDigestRecipient('casey-eddington', { DIGEST_RECIPIENTS: '' })).toBe(false)
+    expect(isEmailRecipient('ingra107@umn.edu', {})).toBe(true)
+    expect(isEmailRecipient('mesfin@umn.edu', {})).toBe(false)
+    expect(isEmailRecipient('eddin022@umn.edu', { DIGEST_RECIPIENTS: '' })).toBe(false)
   })
 
-  it('widens by comma list or "all"', () => {
-    expect(isDigestRecipient('nate-mesfin', { DIGEST_RECIPIENTS: 'nick-ingraham, nate-mesfin' })).toBe(true)
-    expect(isDigestRecipient('casey-eddington', { DIGEST_RECIPIENTS: 'nick-ingraham, nate-mesfin' })).toBe(false)
-    expect(isDigestRecipient('anyone', { DIGEST_RECIPIENTS: 'all' })).toBe(true)
+  it('widens by comma list or "all" in any case', () => {
+    const env = { DIGEST_RECIPIENTS: 'ingra107@umn.edu, Mesfin@umn.edu' }
+    expect(isEmailRecipient('mesfin@umn.edu', env)).toBe(true)
+    expect(isEmailRecipient('eddin022@umn.edu', env)).toBe(false)
+    expect(isEmailRecipient('anyone@x.y', { DIGEST_RECIPIENTS: 'all' })).toBe(true)
+    expect(isEmailRecipient('anyone@x.y', { DIGEST_RECIPIENTS: 'All' })).toBe(true)
+    expect(isEmailRecipient('anyone@x.y', { DIGEST_RECIPIENTS: ' ALL ' })).toBe(true)
+  })
+})
+
+describe('warnIfRecipientsMatchNobody', () => {
+  it('warns once when a value is configured, never when unset', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    _resetRecipientWarning()
+    warnIfRecipientsMatchNobody({})
+    expect(warn).not.toHaveBeenCalled()
+    warnIfRecipientsMatchNobody({ DIGEST_RECIPIENTS: 'typo-slug' })
+    warnIfRecipientsMatchNobody({ DIGEST_RECIPIENTS: 'typo-slug' })
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toContain('typo-slug')
+    warn.mockRestore()
   })
 })

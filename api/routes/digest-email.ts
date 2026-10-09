@@ -5,7 +5,7 @@ import { escapeHtml } from '../lib/escapeHtml';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 
-import { HUB_URL, isDigestRecipient, raw } from '../lib/email';
+import { HUB_URL, isEmailRecipient, raw, warnIfRecipientsMatchNobody } from '../lib/email';
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -600,9 +600,11 @@ export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigg
      WHERE member_type IN ('director', 'coordinator') AND slug IS NOT NULL`
   ).all<CoordinatorMember>();
 
-  // Recipient switch: Nick only until widened (api/lib/email.ts isDigestRecipient).
-  const members = (membersResult.results ?? []).filter((m) => isDigestRecipient(m.slug, env));
+  // Recipient switch: Nick only until widened. sendEmail enforces it too; this
+  // pre-filter just skips building emails that would be blocked.
+  const members = (membersResult.results ?? []).filter((m) => isEmailRecipient(m.email || `${m.slug}@umn.edu`, env));
   if (members.length === 0) {
+    warnIfRecipientsMatchNobody(env);
     return json({ data: { sent: 0, skipped: 0, message: 'No digest recipients found' } });
   }
 
@@ -630,7 +632,7 @@ export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigg
         DB: viewerDb(rawDb, personViewer({ slug: member.slug, email: member.email, pi: !!member.email && piEmails.has(member.email.toLowerCase()) })),
       };
       const html = await composeDailyDigest(recipientEnv, memberWithEmail);
-      const ok = await sendEmail(env.RESEND_API_KEY, {
+      const ok = await sendEmail(env, {
         to: derivedEmail,
         subject: `Daily Lab Brief — ${dateStr}`,
         // composeDailyDigest escapes every database value with escapeHtml.

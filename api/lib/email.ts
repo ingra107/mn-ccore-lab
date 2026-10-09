@@ -52,19 +52,47 @@ export function html(strings: TemplateStringsArray, ...values: Interpolation[]):
 // ── Recipient policy ──────────────────────────────────────────
 
 /**
- * Who receives the daily digest and the morning pulse. Nick only, for now
- * (Nick, 2026-10-09). To widen: add slugs here, or set the DIGEST_RECIPIENTS
- * variable on the Worker to a comma list of slugs, or to "all".
+ * Who may receive ANY email from the Hub (daily digest, morning pulse, task
+ * assignment). Nick only, for now (Nick, 2026-10-09). sendEmail checks this
+ * itself, so no caller can send around it.
+ *
+ * To widen: add addresses here, or set DIGEST_RECIPIENTS on BOTH the Worker
+ * and the Pages project to a comma list of addresses, or to "all"
+ * (case-insensitive). The setting REPLACES this default list.
  */
-export const DEFAULT_DIGEST_RECIPIENT_SLUGS: readonly string[] = ['nick-ingraham'];
+export const DEFAULT_EMAIL_RECIPIENTS: readonly string[] = [
+  'ingra107@umn.edu',
+  'nicholas.ingraham@gmail.com',
+];
 
-export function isDigestRecipient(slug: string, env: { DIGEST_RECIPIENTS?: string }): boolean {
+interface RecipientEnv {
+  RESEND_API_KEY?: string;
+  DIGEST_RECIPIENTS?: string;
+}
+
+function allowedAddresses(env: RecipientEnv): 'all' | readonly string[] {
   const setting = env.DIGEST_RECIPIENTS?.trim();
-  if (setting === 'all') return true;
-  const allowed = setting
-    ? setting.split(',').map((s) => s.trim()).filter(Boolean)
-    : DEFAULT_DIGEST_RECIPIENT_SLUGS;
-  return allowed.includes(slug);
+  if (!setting) return DEFAULT_EMAIL_RECIPIENTS;
+  if (setting.toLowerCase() === 'all') return 'all';
+  return setting.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+}
+
+export function isEmailRecipient(address: string, env: RecipientEnv): boolean {
+  const allowed = allowedAddresses(env);
+  return allowed === 'all' || allowed.includes(address.trim().toLowerCase());
+}
+
+let warnedNoRecipient = false;
+/** Log once per isolate when DIGEST_RECIPIENTS is set but a send found nobody it allows. */
+export function warnIfRecipientsMatchNobody(env: RecipientEnv): void {
+  const setting = env.DIGEST_RECIPIENTS?.trim();
+  if (!setting || warnedNoRecipient) return;
+  warnedNoRecipient = true;
+  console.warn(`[email] DIGEST_RECIPIENTS="${setting}" matched no recipient; nothing was sent. Use "all" or a comma list of addresses.`);
+}
+/** Test hook. */
+export function _resetRecipientWarning(): void {
+  warnedNoRecipient = false;
 }
 
 // ── Sending ───────────────────────────────────────────────────
@@ -75,7 +103,14 @@ interface EmailOptions {
   html: SafeHtml;
 }
 
-export async function sendEmail(apiKey: string, options: EmailOptions): Promise<boolean> {
+/** Sends one email if the recipient passes the single gate. Returns false when blocked or rejected. */
+export async function sendEmail(env: RecipientEnv, options: EmailOptions): Promise<boolean> {
+  const apiKey = env.RESEND_API_KEY;
+  if (!apiKey) return false;
+  if (!isEmailRecipient(options.to, env)) {
+    warnIfRecipientsMatchNobody(env);
+    return false;
+  }
   try {
     const res = await fetch(RESEND_URL, {
       method: 'POST',

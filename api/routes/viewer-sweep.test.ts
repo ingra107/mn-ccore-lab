@@ -489,6 +489,32 @@ describe("Daily digest cron (0 11 * * *): each email is built on its recipient's
   })
 })
 
+describe('Email recipient switch: with DIGEST_RECIPIENTS unset, only Nick is mailed', () => {
+  function stubResend(): { to: string }[] {
+    const sent: { to: string }[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      if (String(url).includes('api.resend.com')) sent.push({ to: (JSON.parse(String(init.body)) as { to: string }).to })
+      return new Response('{}', { status: 200 })
+    }))
+    return sent
+  }
+
+  it('0 11 * * * digest: every send goes to Nick, none to Nate or Casey', async () => {
+    const sent = stubResend()
+    await worker.scheduled({ cron: '0 11 * * *' } as ScheduledEvent, { ...env, RESEND_API_KEY: 'k' } as Env, CTX)
+    expect(sent.length).toBeGreaterThan(0)
+    expect(sent.every((s) => s.to === PI_EMAIL)).toBe(true)
+  })
+
+  it('0 13 * * 1-5 pulse: every send goes to Nick, none to Casey or Nate', async () => {
+    insertRow(db, 'tasks', { id: 'task_caseypulse', title: 'CASEYPULSE task', assignee: 'casey-eddington' })
+    const sent = stubResend()
+    await worker.scheduled({ cron: '0 13 * * 1-5' } as ScheduledEvent, { ...env, RESEND_API_KEY: 'k' } as Env, CTX)
+    expect(sent.length).toBeGreaterThan(0)
+    expect(sent.every((s) => s.to === PI_EMAIL)).toBe(true)
+  })
+})
+
 describe('Pulse cron: each email is built on its recipient\'s handle', () => {
   it("a member's email carries no Peripheral Brain project update; the PI's does", async () => {
     insertRow(db, 'projects', { id: 'proj_pb', slug: 'pb-proj', title: 'PB', category: 'Peripheral Brain', status: 'active', stage: 'writing' })

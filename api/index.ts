@@ -73,7 +73,7 @@ import { handleGetHermesDayIndex } from './routes/hermes';
 import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRefireLaunch, handleClaimLaunch, handleListPendingLaunches } from './routes/launch-log';
 import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleAddArtifactComment, handleGetArtifactGallery, handleSearchArtifacts, handleGetArtifactTags, handleAddArtifactTag, handleRemoveArtifactTag } from './routes/artifacts';
 import { escapeHtml } from './lib/escapeHtml';
-import { HUB_URL, isDigestRecipient, raw, sendEmail } from './lib/email';
+import { HUB_URL, isEmailRecipient, raw, sendEmail, warnIfRecipientsMatchNobody } from './lib/email';
 import { handlePBCapture, handlePBDefer, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
 import { handleGetSessions } from './routes/sessions';
@@ -2366,7 +2366,11 @@ defineRoute({
   auth: 'authed',
   entity: 'tasks',
   visibility: 'na',
-  handler: (c) => handleCreateTask(R(c), USER(c), E(c)),
+  handler: (c) => handleCreateTask(R(c), USER(c), E(c), (p) => {
+    // executionCtx throws when a caller (a test) supplies none; then the task
+    // route awaits the job itself instead.
+    try { c.executionCtx.waitUntil(p); } catch { void p; }
+  }),
 });
 defineRoute({
   method: 'POST',
@@ -3213,7 +3217,6 @@ export default {
           console.log('[Pulse] No RESEND_API_KEY configured — skipping email send');
           return;
         }
-        const resendKey = env.RESEND_API_KEY;
 
         console.log('[Pulse] Starting morning pulse email...');
 
@@ -3242,10 +3245,12 @@ export default {
         // they could not open in the Hub. The cron runs on the raw binding.
         const piEmails = await getPiEmails(env);
         let sent = 0;
+        let skippedByPolicy = 0;
         for (const member of members.results) {
-          // Recipient switch: Nick only until widened (api/lib/email.ts isDigestRecipient).
-          if (!isDigestRecipient(member.slug, env)) continue;
+          // Recipient switch: Nick only until widened. sendEmail enforces it too;
+          // this skips the queries for members who would be blocked.
           const email = member.email || `${member.slug}@umn.edu`;
+          if (!isEmailRecipient(email, env)) { skippedByPolicy++; continue; }
           const firstName = member.name.split(' ')[0];
           const recipientIsPi = !!member.email && piEmails.has(member.email.toLowerCase());
           let recipientDb: D1Database;
@@ -3354,7 +3359,7 @@ export default {
 
           // Send via Resend (the same path as every other Hub email). The body
           // above escapes each database value with escapeHtml.
-          const ok = await sendEmail(resendKey, {
+          const ok = await sendEmail(env, {
             to: email,
             subject: `${firstName}, you have ${pendingItems.length} item${pendingItems.length !== 1 ? 's' : ''} today`.replace(/[\r\n]+/g, ' '),
             html: raw(html),
@@ -3367,6 +3372,7 @@ export default {
           }
         }
 
+        if (skippedByPolicy === members.results.length) warnIfRecipientsMatchNobody(env);
         console.log(`[Pulse] Done — sent ${sent} emails`);
         return;
       }

@@ -52,7 +52,10 @@ database_id = "a30fe84d-0891-4035-9358-f7813b5f5807"
 #   Sent through Resend (api/lib/email.ts), same as the daily digest.
 # Daily coordinator digest: every day at 6 AM CT (11:00 UTC during DST)
 #   To activate: wrangler secret put RESEND_API_KEY --env production
-# Both go to Nick only until DIGEST_RECIPIENTS is set (api/lib/email.ts).
+# RESEND_API_KEY and DIGEST_RECIPIENTS must be set on BOTH this Worker and the
+#   Pages project mn-ccore-lab (the task-assignment email sends from Pages).
+# All three email kinds go to Nick only until DIGEST_RECIPIENTS is set
+#   (api/lib/email.ts: comma list of addresses, or "all").
 # iCal feed poller: hourly. ETag/If-Modified-Since makes most polls cheap
 #   (~200 bytes 304 vs ~500KB full fetch).
 crons = ["0 13 * * 1-5", "0 11 * * *", "0 * * * *"]
