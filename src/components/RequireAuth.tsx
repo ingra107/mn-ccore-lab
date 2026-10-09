@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import HeartbeatLine from './HeartbeatLine'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
-import { accessRequestHref, ACCESS_CONTACT } from '../lib/accessRequest'
+import JoinSteps from './JoinSteps'
 
 /**
  * RequireAuth — route guard + branded sign-in wall + members-only wall.
@@ -181,22 +181,13 @@ function MembersOnlyWall({ email, name }: { email: string; name: string }) {
           maxWidth: 380,
         }}
       >
-        This is a place for MN-CCORE members only. If you have questions, contact Nick
-        Ingraham at{' '}
-        <a
-          href={`mailto:${ACCESS_CONTACT}`}
-          style={{ color: '#5cbcb4', textDecoration: 'none', borderBottom: '1px solid currentColor' }}
-        >
-          {ACCESS_CONTACT}
-        </a>
-        .
+        This is a place for MN-CCORE members only. Here is how to join.
       </p>
 
-      <div style={{ marginTop: 28, width: '100%', display: 'flex', justifyContent: 'center' }}>
-        <GoldCta href={accessRequestHref(email, name)} testId="request-access">
-          <MailIcon />
-          Request access
-        </GoldCta>
+      {/* The same join instructions as the public /join page (one copy:
+          JoinSteps). Nick: a signed-in non-member is kindly told how to join. */}
+      <div style={{ marginTop: 28, width: '100%' }}>
+        <JoinSteps email={email} name={name} tone="dark" />
       </div>
 
       {email && (
@@ -449,25 +440,6 @@ function ShieldIcon() {
       aria-hidden="true"
     >
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  )
-}
-
-function MailIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="m3 7 9 6 9-6" />
     </svg>
   )
 }
