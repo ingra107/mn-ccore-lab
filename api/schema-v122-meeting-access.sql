@@ -45,9 +45,12 @@
 --   The unique index cannot fail at DDL time: every row is 'private' until the
 --   backfill runs.
 --
--- PRE-IMAGE: Time-Travel bookmark before the DDL; then, before the backfill:
+-- PRE-IMAGE: Time-Travel bookmark before the DDL; then, right before the
+-- backfill (a D1 --file run is not atomic, so generate from a fresh export):
 --   scripts/wrangler-d1 d1 execute mnccore-lab --remote --json \
---     --command "SELECT id, date, title, owner_slug, source_id, created_at, audience FROM meetings ORDER BY id" > pre-meetings.json
+--     --command "SELECT id, date, title, owner_slug, source_id, created_at, audience, attendees FROM meetings ORDER BY id" > pre-meetings.json
+--   scripts/wrangler-d1 d1 execute mnccore-lab --remote --json \
+--     --command "SELECT slug, email FROM team_members WHERE slug IS NOT NULL ORDER BY slug" > pre-team.json
 --
 -- ORDER: this DDL (test, then prod) -> audience backfill (scripts/backfill-122-meetings-audience.ts)
 -- -> npm run deploy:pages:gated -> npm run deploy:worker -> window sweep (same
