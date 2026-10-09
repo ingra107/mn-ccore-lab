@@ -759,15 +759,6 @@
       "covered": true
     },
     {
-      "id": "page-render-personal",
-      "component": "src/pages/portal/Personal.tsx",
-      "type": "render",
-      "description": "My Hub page renders without errors",
-      "test_file": "tests/inspection.spec.ts",
-      "test_name": "PAGE: My Hub (/personal) renders",
-      "covered": true
-    },
-    {
       "id": "page-render-my-tasks",
       "component": "src/pages/portal/MyTasks.tsx",
       "type": "render",
@@ -1668,15 +1659,6 @@
       "covered": true
     },
     {
-      "id": "click-onboarding-checklist",
-      "component": "src/components/OnboardingChecklist.tsx",
-      "type": "click",
-      "description": "Personal Hub shows onboarding progress",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "FEATURE: Personal Hub shows onboarding progress",
-      "covered": true
-    },
-    {
       "id": "click-settings-reset-dashboard",
       "component": "src/pages/portal/SettingsPage.tsx",
       "type": "click",
@@ -2004,16 +1986,7 @@
       "id": "localStorage-onboarding",
       "component": "src/hooks/useOnboarding.ts",
       "type": "localStorage",
-      "description": "Onboarding checklist state persisted to localStorage",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "FEATURE: Personal Hub shows onboarding progress",
-      "covered": true
-    },
-    {
-      "id": "localStorage-recently-viewed",
-      "component": "src/hooks/useRecentlyViewed.ts",
-      "type": "localStorage",
-      "description": "Recently viewed items persisted to localStorage",
+      "description": "Onboarding state (WelcomeBanner dismiss) persisted to localStorage",
       "test_file": null,
       "test_name": null,
       "covered": false
@@ -2028,19 +2001,10 @@
       "covered": true
     },
     {
-      "id": "localStorage-user-role",
-      "component": "src/hooks/useUserRole.ts",
-      "type": "localStorage",
-      "description": "User role override persisted to localStorage",
-      "test_file": null,
-      "test_name": null,
-      "covered": false
-    },
-    {
       "id": "localStorage-pinned-projects",
-      "component": "src/pages/Projects.tsx",
+      "component": "src/hooks/useProjectPins.ts",
       "type": "localStorage",
-      "description": "Pinned projects persisted to localStorage",
+      "description": "Pinned projects: server-side per person (/api/pins); the old localStorage key imports once",
       "test_file": "tests/inspection-workflows.spec.ts",
       "test_name": "FEATURE: P key pins/unpins project",
       "covered": true
@@ -2077,15 +2041,6 @@
       "component": "src/components/RoundPrompt.tsx",
       "type": "localStorage",
       "description": "Round prompt state persisted to localStorage",
-      "test_file": null,
-      "test_name": null,
-      "covered": false
-    },
-    {
-      "id": "localStorage-personal-cards",
-      "component": "src/pages/portal/Personal.tsx",
-      "type": "localStorage",
-      "description": "Personal hub visible cards persisted",
       "test_file": null,
       "test_name": null,
       "covered": false
@@ -3172,14 +3127,12 @@
     }
   ],
   "uncovered": [
+    "localStorage-onboarding",
     "drag-file-upload",
-    "localStorage-recently-viewed",
-    "localStorage-user-role",
     "localStorage-board-collapsed",
     "localStorage-collapsible-section",
     "localStorage-page-tooltip",
     "localStorage-round-prompt",
-    "localStorage-personal-cards",
     "localStorage-local-data",
     "hover-avatar",
     "hover-stage-selector",
@@ -3219,9 +3172,9 @@
     "form-publication-search"
   ],
   "summary": {
-    "total": 355,
-    "covered": 309,
-    "uncovered": 46,
-    "coverage_pct": 87.0
+    "total": 350,
+    "covered": 306,
+    "uncovered": 44,
+    "coverage_pct": 87.4
   }
 }

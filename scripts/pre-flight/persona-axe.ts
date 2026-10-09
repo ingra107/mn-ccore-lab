@@ -22,23 +22,23 @@ const PORTAL_PAGES = [
   '/portal/manuscripts',
   '/portal/meetings',
   '/portal/deadlines',
-  '/portal/ideas',
+  '/portal/projects?tab=ideas',
   '/portal/decisions',
   '/portal/grants',
   '/portal/analytics',
-  '/portal/pi-analytics',
+  '/portal/overview?tab=pi-analytics',
   '/team',
   '/portal/settings',
   // Extended coverage added 2026-04-18 — catches pages whose a11y hadn't
   // been validated by axe yet.
   '/pulse',
-  '/portal/personal',
+  '/portal/library',
   '/portal/calendar',
-  '/portal/digest',
+  '/portal/library?tab=digest',
   '/portal/search',
   '/portal/ask',
   '/portal/narratives',
-  '/portal/deadline-cascade',
+  '/portal/overview?tab=deadline-cascade',
   '/network',
   '/publications',
   '/portal/activity',
@@ -83,7 +83,7 @@ async function main() {
         .analyze()
 
       const violations = results.violations
-      await snap(s, `axe${path.replace(/\//g, '-')}`, 200)
+      await snap(s, `axe${path.replace(/[/?=&]/g, '-')}`, 200)
 
       if (violations.length === 0) {
         pass(s, `${path}: 0 axe violations`)

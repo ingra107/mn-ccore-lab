@@ -47,8 +47,8 @@ const SURFACES: Surface[] = [
   { slug: 'manuscripts',       path: '/portal/manuscripts',                              chunks: 1 },
   { slug: 'deadlines',         path: '/portal/deadlines',                                chunks: 1 },
   { slug: 'overview',          path: '/portal/overview',                                 chunks: 1 },
-  { slug: 'ideas',             path: '/portal/ideas',                                    chunks: 1 },
-  { slug: 'digest',            path: '/portal/digest',                                   chunks: 1 },
+  { slug: 'ideas',             path: '/portal/projects?tab=ideas',                                    chunks: 1 },
+  { slug: 'digest',            path: '/portal/library?tab=digest',                                   chunks: 1 },
 ]
 
 async function scrollThroughEverything(page: import('@playwright/test').Page) {

@@ -24,7 +24,7 @@ async function main() {
     await assertVisible(s, 'MyTasks page renders', 'h1', { severity: 'P1' })
 
     section(s, '2  /mentee-milestones exists and loads')
-    await goto(s, '/portal/mentee-milestones')
+    await goto(s, '/portal/overview?tab=mentee-milestones')
     await snap(s, 'mentee-milestones', 1500)
     const st = await s.page.evaluate(() => document.title).catch(() => '')
     if (st.toLowerCase().includes('mentee') || st.toLowerCase().includes('milestone')) pass(s, `Page title: ${st}`)

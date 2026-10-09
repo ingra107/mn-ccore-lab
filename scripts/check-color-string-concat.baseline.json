@@ -372,30 +372,6 @@
     "sample": "rgba(201, 168, 76, 0.15)"
   },
   {
-    "file": "src/components/OnboardingChecklist.tsx",
-    "line": 54,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201,168,76,0.06)"
-  },
-  {
-    "file": "src/components/OnboardingChecklist.tsx",
-    "line": 112,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201,168,76,0.12)"
-  },
-  {
-    "file": "src/components/OnboardingChecklist.tsx",
-    "line": 189,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201,168,76,0.12)"
-  },
-  {
-    "file": "src/components/OnboardingChecklist.tsx",
-    "line": 420,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201,168,76,0.1)"
-  },
-  {
     "file": "src/components/PublicationCard.tsx",
     "line": 267,
     "kind": "token-rgba-literal",

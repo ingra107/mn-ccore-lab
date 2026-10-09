@@ -143,7 +143,7 @@ async function main() {
     }
 
     section(s, '8  Digest — save a paper + comment on it')
-    await goto(s, '/portal/digest')
+    await goto(s, '/portal/library?tab=digest')
     await snap(s, 'digest')
     // Try to save the first visible paper
     const saveBtn = s.page.locator('button').filter({ hasText: /Save|save paper/i }).first()

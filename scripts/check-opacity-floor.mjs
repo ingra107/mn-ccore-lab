@@ -20,7 +20,8 @@
 // lint:opacity` so reviewers can spot-check their own diffs.
 //
 // Migration plan: chunk the 331 hits by file (top offenders:
-// pages/TrajectoryPage.tsx=14, pages/portal/PersonalPage.tsx=12,
+// pages/TrajectoryPage.tsx=14, pages/portal/PersonalPage.tsx=12 (deleted
+// 2026-10-09, nav redesign),
 // components/RevisionTracker.tsx=9, pages/MemberPage.tsx=9,
 // pages/MyItems.tsx=8, pages/portal/IdeasPage.tsx=8), then sweep file-by-
 // file in a future commit. Each fix: bump to 0.85 OR rewrite as color (e.g.

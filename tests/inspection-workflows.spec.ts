@@ -329,7 +329,7 @@ test.describe('FEATURE — G+key navigation shortcuts', () => {
     ['p', '/projects', 'Projects'],
     ['m', '/meetings', 'Meetings'],
     ['c', '/calendar', 'Calendar'],
-    ['i', '/ideas', 'Ideas'],
+    ['i', '/portal/projects?tab=ideas', 'Ideas'],
     ['k', '/deadlines', 'Deadlines'],
     ['y', '/my-tasks', 'My Tasks'],
   ]

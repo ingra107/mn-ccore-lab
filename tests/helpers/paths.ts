@@ -11,12 +11,11 @@ export const P = {
   dashboard: '/portal/dashboard',
   team: '/portal/team',
   overview: '/portal/overview',
-  // Nav redesign (2026-10-09): these old pages now REDIRECT to a tab --
-  // personal -> dashboard, deadlineCascade/piAnalytics/menteeMilestones ->
-  // overview?tab=..., artifacts (index)/digest -> library, ideas ->
-  // projects?tab=ideas, meetingNotes -> meetings?tab=transcripts. Kept so
-  // tests that visit them exercise the redirect.
-  personal: '/portal/personal',
+  // Nav redesign (2026-10-09): these keys now name the page's NEW home
+  // (My Hub merged into Today; Ideas, Transcripts, Research Digest and the PI
+  // pages became tabs). The old URLs still redirect, but tests visit the real
+  // page. `artifact(id)` below is unchanged: an artifact's page did not move.
+  personal: '/portal/dashboard',
   library: '/portal/library',
   launches: '/portal/launches',
   myItems: '/portal/my-items',
@@ -25,28 +24,28 @@ export const P = {
   tasks: '/portal/tasks',
   calendar: '/portal/calendar',
   deadlines: '/portal/deadlines',
-  deadlineCascade: '/portal/deadline-cascade',
+  deadlineCascade: '/portal/overview?tab=deadline-cascade',
   projects: '/portal/projects',
   project: (slug: string) => `/portal/projects/${slug}`,
-  artifacts: '/portal/artifacts',
+  artifacts: '/portal/library',
   artifact: (id: string) => `/portal/artifacts/${id}`,
   manuscripts: '/portal/manuscripts',
-  ideas: '/portal/ideas',
+  ideas: '/portal/projects?tab=ideas',
   ask: '/portal/ask',
   decisions: '/portal/decisions',
   narratives: '/portal/narratives',
-  digest: '/portal/digest',
+  digest: '/portal/library?tab=digest',
   search: '/portal/search',
   grants: '/portal/grants',
   meetings: '/portal/meetings',
   meeting: (id: string | number) => `/portal/meetings/${id}`,
   meetingPrep: (id: string | number) => `/portal/meetings/${id}/prep`,
-  meetingNotes: '/portal/meeting-notes',
+  meetingNotes: '/portal/meetings?tab=transcripts',
   activity: '/portal/activity',
   analytics: '/portal/analytics',
   insights: '/portal/insights',
-  piAnalytics: '/portal/pi/analytics',
-  menteeMilestones: '/portal/mentee-milestones',
+  piAnalytics: '/portal/overview?tab=pi-analytics',
+  menteeMilestones: '/portal/overview?tab=mentee-milestones',
   sessions: '/portal/sessions',
   settings: '/portal/settings',
   teamMember: (slug: string) => `/portal/team/${slug}`,

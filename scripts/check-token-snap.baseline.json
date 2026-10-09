@@ -1668,24 +1668,6 @@
     "sample": "marginRight: 4px → var(--sp-xs)"
   },
   {
-    "file": "src/pages/portal/PersonalPage.tsx",
-    "line": 483,
-    "kind": "spacing-px-literal",
-    "sample": "marginTop: 4px → var(--sp-xs)"
-  },
-  {
-    "file": "src/pages/portal/PersonalPage.tsx",
-    "line": 530,
-    "kind": "spacing-px-literal",
-    "sample": "gap: 8px → var(--sp-sm)"
-  },
-  {
-    "file": "src/pages/portal/PersonalPage.tsx",
-    "line": 1070,
-    "kind": "spacing-px-literal",
-    "sample": "marginLeft: 4px → var(--sp-xs)"
-  },
-  {
     "file": "src/pages/portal/SearchPage.tsx",
     "line": 864,
     "kind": "spacing-px-literal",

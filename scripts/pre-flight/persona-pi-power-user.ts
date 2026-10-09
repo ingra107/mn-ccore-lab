@@ -94,7 +94,7 @@ async function main() {
     else record(s, { id: 'ANALYTICS-EMPTY', severity: 'P2', scenario: 'Analytics has charts', observed: `${charts} svg/canvas`, expected: '≥3 charts' })
 
     section(s, '8  PI Analytics — personal scorecards')
-    await goto(s, '/portal/pi-analytics')
+    await goto(s, '/portal/overview?tab=pi-analytics')
     await snap(s, 'pi-analytics', 1500)
     const piCards = await s.page.locator('.bento-card, [class*="card"], [class*="Card"]').count().catch(() => 0)
     if (piCards > 0) pass(s, `PI Analytics renders ${piCards} card-like panels`)
@@ -123,7 +123,7 @@ async function main() {
     await assertVisible(s, 'Meeting rows', 'a[href*="/meetings/"], [data-testid*="meeting"]', { severity: 'P1' })
 
     section(s, '11  Ideas board — vote + comment')
-    await goto(s, '/portal/ideas')
+    await goto(s, '/portal/projects?tab=ideas')
     await snap(s, 'ideas')
     await assertVisible(s, 'Ideas content', '[data-testid*="idea"], h1:has-text("Ideas")', { severity: 'P2' })
 

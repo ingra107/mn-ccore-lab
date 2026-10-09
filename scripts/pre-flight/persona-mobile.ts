@@ -86,7 +86,7 @@ async function main() {
     else record(s, { id: 'DASH-MOBILE-OVERFLOW', severity: 'P1', scenario: 'No h-overflow on /dashboard', observed: `body=${overflow2.body}`, expected: `≤${overflow2.vw}` })
 
     section(s, '7  /projects, /manuscripts, /deadlines, /ideas, /decisions — all no h-overflow on mobile')
-    const pages = ['/portal/projects', '/portal/manuscripts', '/portal/deadlines', '/portal/ideas', '/portal/decisions', '/portal/grants', '/portal/meetings']
+    const pages = ['/portal/projects', '/portal/manuscripts', '/portal/deadlines', '/portal/projects?tab=ideas', '/portal/decisions', '/portal/grants', '/portal/meetings']
     let overflowCount = 0
     for (const p of pages) {
       await goto(s, p)

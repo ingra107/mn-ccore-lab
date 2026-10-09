@@ -25,7 +25,7 @@ async function main() {
     else record(s, { id: 'NO-SKIP-LINK', severity: 'P2', scenario: 'Skip-to-content anchor', observed: 'not found', expected: 'first focusable element' })
 
     section(s, '2  Every page has <main> landmark')
-    const pages = ['/portal/dashboard', '/portal/my-tasks', '/portal/my-tasks', '/portal/projects', '/portal/manuscripts', '/portal/meetings', '/portal/deadlines', '/portal/ideas', '/portal/decisions']
+    const pages = ['/portal/dashboard', '/portal/my-tasks', '/portal/my-tasks', '/portal/projects', '/portal/manuscripts', '/portal/meetings', '/portal/deadlines', '/portal/projects?tab=ideas', '/portal/decisions']
     for (const p of pages) {
       await goto(s, p)
       const hasMain = await s.page.locator('main, [role="main"]').count().catch(() => 0)

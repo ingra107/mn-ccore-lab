@@ -21,16 +21,16 @@ const TOUR_PAGES = [
   { path: '/portal/manuscripts', role: 'Manuscript pipeline' },
   { path: '/portal/meetings', role: 'Past + upcoming meetings' },
   { path: '/portal/deadlines', role: 'Calendar of due dates' },
-  { path: '/portal/ideas', role: 'Idea submission board' },
+  { path: '/portal/projects?tab=ideas', role: 'Idea submission board' },
   { path: '/portal/decisions', role: 'Decision log' },
   { path: '/portal/grants', role: 'Grant portfolio' },
-  { path: '/portal/digest', role: 'Research digest' },
+  { path: '/portal/library?tab=digest', role: 'Research digest' },
   { path: '/portal/ask', role: 'Ask the Lab — Q&A' },
   { path: '/portal/narratives', role: 'Research arcs' },
   { path: '/portal/search', role: 'Cross-surface search' },
   { path: '/team', role: 'Team directory' },
   { path: '/portal/analytics', role: 'Lab analytics' },
-  { path: '/portal/personal', role: 'My Hub / personal dashboard' },
+  { path: '/portal/library', role: 'Library: artifacts and the research digest' },
   { path: '/portal/calendar', role: 'Calendar view' },
   { path: '/portal/activity', role: 'Activity feed' },
   { path: '/publications', role: 'Publications library' },
@@ -49,7 +49,7 @@ async function main() {
       section(s, `${path}  (${role})`)
       await goto(s, path)
       await s.page.waitForTimeout(1500)
-      await snap(s, `page${path.replace(/\//g, '-')}`, 400)
+      await snap(s, `page${path.replace(/[/?=&]/g, '-')}`, 400)
 
       // Heuristic: does the page have ANY visible primary content?
       // The "empty page" smell is easy to spot: no headings, no data cells,

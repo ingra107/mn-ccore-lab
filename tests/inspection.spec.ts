@@ -195,7 +195,7 @@ test.describe('PAGE — Portal pages render without errors', () => {
   const portalPages: [string, string, string[]][] = [
     // [route, name, elements that MUST be present]
     [P.dashboard, 'Dashboard', ['Good morning|Good afternoon|Good evening', 'Customize']],
-    [P.personal, 'My Hub', ['My Hub']],
+    [P.library, 'Library', ['Artifacts', 'Research Digest']],
     [P.myTasks, 'My Tasks', ['Tasks', 'active task']],
     [P.tasks, 'All Tasks', ['Tasks']],  // /portal/tasks redirects to /portal/my-tasks
     [P.calendar, 'Calendar', ['Lab Calendar', 'Month']],
@@ -332,7 +332,7 @@ test.describe('VISUAL — Responsive breakpoints', () => {
     await page.setViewportSize({ width: 375, height: 812 })
     await loadPage(page, P.dashboard)
     // Full sidebar text should not be visible
-    const sidebarText = await page.locator('text=Research Digest').first().isVisible().catch(() => false)
+    const sidebarText = await page.locator('[data-testid="sidebar"] >> text=Library').first().isVisible().catch(() => false)
     expect(sidebarText, 'Sidebar visible on mobile').toBe(false)
   })
 
@@ -647,8 +647,9 @@ test.describe('UX — Calendar', () => {
 test.describe('UX — Sidebar navigation', () => {
   test('UX: All sidebar nav items are clickable', async ({ page }) => {
     await loadPage(page, P.dashboard)
-    // Phase 31.5: sidebar consolidated 6→3 sections; "My Tasks"→"Tasks", "All Tasks" removed, "Search" removed
-    const navItems = ['Dashboard', 'My Hub', 'Tasks', 'Calendar', 'Projects', 'Manuscripts', 'Ideas', 'Research Digest', 'Meetings', 'Deadlines', 'Grants']
+    // Nav redesign (2026-10-09): Search on top, then ten main items. Ideas,
+    // Research Digest and Transcripts became tabs; My Hub merged into Today.
+    const navItems = ['Search', 'Today', 'Tasks', 'Calendar', 'Deadlines', 'Meetings', 'Projects', 'Manuscripts', 'Grants', 'Library', 'Team']
     for (const item of navItems) {
       const link = page.locator(`nav >> text=${item}`).first()
       const visible = await link.isVisible().catch(() => false)
@@ -1537,9 +1538,9 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
 test.describe('VISUAL — Full page screenshots for visual regression', () => {
   const allPortalPaths = [
     'dashboard', 'my-tasks', 'tasks', 'projects', 'manuscripts',
-    'ideas', 'calendar', 'deadlines', 'decisions', 'meetings',
+    'calendar', 'deadlines', 'decisions', 'meetings',
     'analytics', 'search', 'grants', 'settings', 'activity',
-    'digest', 'meeting-notes', 'ask', 'personal',
+    'library', 'overview', 'ask',
   ]
 
   for (const pg of allPortalPaths) {
