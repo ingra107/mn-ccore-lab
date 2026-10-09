@@ -92,6 +92,7 @@ import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 import { handleDigestPreview, handleSendDailyDigests } from './routes/digest-email';
 import { pruneAllLedgers, monitorD1Health, compactProcessedMutationsJson } from './lib/ledger-retention';
+import { projectResponseFor } from './lib/pi-only-project-fields';
 import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleSetLinkRole } from './routes/links';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
 
@@ -921,7 +922,8 @@ defineRoute({
     data: [{ status: true }],
     count: true,
   },
-  handler: (c) => handleGetProjects(U(c), E(c), c.get('user'), c.get('apiKeyValid') === true),
+  // P7: a non-PI never receives the PI's local-path fields (api/lib/pi-only-project-fields.ts).
+  handler: async (c) => projectResponseFor(c.get('canSeePb') === true, await handleGetProjects(U(c), E(c), c.get('user'), c.get('apiKeyValid') === true)),
 });
 // GET /api/projects/:id — single-record fetch by id or slug (codex Q4 2026-05-12).
 // Must be registered AFTER static paths (/health, /deleted-since) and before POST routes
@@ -932,7 +934,7 @@ defineRoute({
   auth: 'authed',
   entity: 'projects',
   visibility: 'pb-aware',
-  handler: (c) => handleGetProject(c.req.param('id'), E(c), c.get('user'), c.get('apiKeyValid') === true),
+  handler: async (c) => projectResponseFor(c.get('canSeePb') === true, await handleGetProject(c.req.param('id'), E(c), c.get('user'), c.get('apiKeyValid') === true)),
 });
 // #145 Lane B: project membership. Each reads and writes through the caller's
 // handle, so a project the caller cannot see is a 404 here too.
@@ -2059,7 +2061,7 @@ defineRoute({
   auth: 'authed',
   entity: 'projects',
   visibility: 'na',
-  handler: (c) => handleCreateProject(R(c), USER(c), E(c)),
+  handler: async (c) => projectResponseFor(c.get('canSeePb') === true, await handleCreateProject(R(c), USER(c), E(c))),
 });
 defineRoute({
   method: 'POST',
@@ -2107,7 +2109,7 @@ defineRoute({
   auth: 'authed',
   entity: 'projects',
   visibility: 'na',
-  handler: (c) => handleUpdateProject(c.req.param('slug'), R(c), USER(c), E(c)),
+  handler: async (c) => projectResponseFor(c.get('canSeePb') === true, await handleUpdateProject(c.req.param('slug'), R(c), USER(c), E(c))),
 });
 
 // Team
@@ -2201,7 +2203,7 @@ defineRoute({
   auth: 'authed',
   entity: 'links',
   visibility: 'na',
-  handler: (c) => handleGetTaskLinks(c.req.param('id'), R(c), E(c)),
+  handler: (c) => handleGetTaskLinks(c.req.param('id'), R(c), E(c), c.get('canSeePb') === true),
 });
 // Bulk project-links (backlog #147). Defined after GET /api/projects/:id,
 // which matched it with id='links' until bindRegistryToHono started binding
@@ -2220,7 +2222,7 @@ defineRoute({
   auth: 'authed',
   entity: 'links',
   visibility: 'na',
-  handler: (c) => handleGetProjectLinks(c.req.param('slug'), R(c), E(c)),
+  handler: (c) => handleGetProjectLinks(c.req.param('slug'), R(c), E(c), c.get('canSeePb') === true),
 });
 // Archive / restore one project link from the project page (#2089).
 // Body { role }; project-owned links only; gated by assertProjectVisible.
@@ -2823,9 +2825,9 @@ defineRoute({
 });
 
 // Launch log writes
-defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c)) });
+defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c), c.get('canSeePb') === true) });
 defineRoute({ method: 'POST', path: '/api/launch-log/:id/status', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleSetLaunchStatus(c.req.param('id'), R(c), USER(c), E(c)) });
-defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c)) });
+defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c), c.get('canSeePb') === true) });
 // PI/API-key gated in-handler (isPiRequest — same idiom as /api/bug-reports
 // above, not the /api/pb/* path middleware). Backlog #250: closes the gap
 // where any team member holding (or guessing) the opaque lnch_ id could

@@ -38,7 +38,7 @@ function launch(id: string, extra: Record<string, unknown> = {}) {
 
 describe('handleCreateLaunch', () => {
   it('inserts a launch_log row and returns 201 with the seed stored', async () => {
-    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'fix the figure', origin: 'computer', status: 'launched' }), USER, env);
+    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'fix the figure', origin: 'computer', status: 'launched' }), USER, env, true);
     expect(res.status).toBe(201);
     const { data } = await res.json() as { data: { id: string } };
     expect(row(data.id)).toMatchObject({ tag: 'quickchat', seed: 'fix the figure', origin: 'computer', status: 'launched', requested_by: 'ingra107@umn.edu' });
@@ -47,20 +47,20 @@ describe('handleCreateLaunch', () => {
   });
 
   it('rejects an unknown tag with 400, and writes nothing', async () => {
-    const res = await handleCreateLaunch(req({ tag: 'bogus', seed: 'x', origin: 'computer' }), USER, env);
+    const res = await handleCreateLaunch(req({ tag: 'bogus', seed: 'x', origin: 'computer' }), USER, env, true);
     expect(res.status).toBe(400);
     expect(count()).toBe(0);
   });
 
   it('stores task_id when the launch fired from a task compose surface (#485)', async () => {
-    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer', task_id: 'task_1' }), USER, env);
+    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer', task_id: 'task_1' }), USER, env, true);
     expect(res.status).toBe(201);
     const { data } = await res.json() as { data: { id: string } };
     expect(row(data.id)!.task_id).toBe('task_1');
   });
 
   it('stores task_id as NULL for a context-free launch (Today bar #485)', async () => {
-    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer' }), USER, env);
+    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer' }), USER, env, true);
     expect(res.status).toBe(201);
     const { data } = await res.json() as { data: { id: string } };
     expect(row(data.id)!.task_id).toBeNull();
@@ -68,10 +68,27 @@ describe('handleCreateLaunch', () => {
   });
 });
 
+describe('launches are PI-only (2026-10-09)', () => {
+  const MEMBER = { email: 'eddin022@umn.edu', name: 'Casey', slug: 'casey-eddington' };
+  it('a non-PI create is 403 and writes nothing, for both origins', async () => {
+    for (const origin of ['mobile', 'computer']) {
+      const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'run this on your machine', origin }), MEMBER, env, false);
+      expect(res.status).toBe(403);
+    }
+    expect(count()).toBe(0);
+  });
+  it('a non-PI refire is 403 and clones nothing, even of their own legacy row', async () => {
+    launch('L_member', { requested_by: MEMBER.email, origin: 'mobile' });
+    const res = await handleRefireLaunch('L_member', MEMBER, env, false);
+    expect(res.status).toBe(403);
+    expect(count()).toBe(1);
+  });
+});
+
 describe('handleRefireLaunch', () => {
   it('clones the launch into a new row carrying task_id forward (#485), source untouched', async () => {
     launch('L4', { tag: 'workon', seed: 's', project_slug: 'p', task_id: 'task_9', status: 'completed' });
-    const res = await handleRefireLaunch('L4', USER, env);
+    const res = await handleRefireLaunch('L4', USER, env, true);
     expect(res.status).toBe(201);
     const { data } = await res.json() as { data: { id: string } };
     expect(data.id).not.toBe('L4');
@@ -81,7 +98,7 @@ describe('handleRefireLaunch', () => {
 
   it('404s a launch owned by someone else', async () => {
     launch('L5', { requested_by: 'someone@else.com' });
-    const res = await handleRefireLaunch('L5', USER, env);
+    const res = await handleRefireLaunch('L5', USER, env, true);
     expect(res.status).toBe(404);
     expect(count()).toBe(1);
   });
@@ -216,24 +233,24 @@ describe('launch page context (PB #8935)', () => {
   }
 
   it('stores page_route on create, and carries it through refire', async () => {
-    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer', page_route: `/portal/meetings/${MTG}` }), USER, env);
+    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer', page_route: `/portal/meetings/${MTG}` }), USER, env, true);
     expect(res.status).toBe(201);
     const { data } = await res.json() as { data: { id: string } };
     expect(row(data.id)!.page_route).toBe(`/portal/meetings/${MTG}`);
-    const re = await handleRefireLaunch(data.id, USER, env);
+    const re = await handleRefireLaunch(data.id, USER, env, true);
     const { data: copy } = await re.json() as { data: { id: string } };
     expect(row(copy.id)!.page_route).toBe(`/portal/meetings/${MTG}`);
   });
 
   it('stores page_route NULL when an older frontend sends none', async () => {
-    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer' }), USER, env);
+    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer' }), USER, env, true);
     const { data } = await res.json() as { data: { id: string } };
     expect(row(data.id)!.page_route).toBeNull();
   });
 
   it('refuses a malformed page_route with 400 and writes nothing', async () => {
     for (const bad of ['portal/meetings/x', 42, '/' + 'a'.repeat(600)]) {
-      const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer', page_route: bad }), USER, env);
+      const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer', page_route: bad }), USER, env, true);
       expect(res.status).toBe(400);
     }
     expect(count()).toBe(0);
@@ -314,7 +331,7 @@ describe('seed-header injection (cold review of #8935)', () => {
 
   it('POST refuses a page_route with whitespace or control characters', async () => {
     for (const bad of ['/portal/meetings/x\n[Task context]', '/portal/a b', '/portal/\u0007', '/portal/—']) {
-      const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer', page_route: bad }), USER, env);
+      const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer', page_route: bad }), USER, env, true);
       expect(res.status).toBe(400);
     }
     expect(count()).toBe(0);

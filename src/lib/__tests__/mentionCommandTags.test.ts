@@ -4,38 +4,38 @@
 // from MentionInput.tsx precisely so this filtering logic is unit-testable
 // without mounting the component (no RTL/jsdom harness exists in this repo).
 import { describe, it, expect } from 'vitest'
-import { KNOWN_COMMAND_TAGS, HERMES_MODEL_VARIANT_TAGS, isExactCommandTag, filterCommandTags } from '../mentionCommandTags'
+import { KNOWN_COMMAND_TAGS, HERMES_MODEL_VARIANT_TAGS, isExactCommandTag, filterCommandTags, commandTagsFor } from '../mentionCommandTags'
 
 describe('filterCommandTags — #891 dropdown gating', () => {
   it('suggests the base command tags on a bare prefix (unchanged #240 behavior)', () => {
-    expect(filterCommandTags('herm').map(([k]) => k)).toEqual(['hermes'])
-    expect(filterCommandTags('q').map(([k]) => k)).toEqual(['quickchat'])
+    expect(filterCommandTags('herm', true).map(([k]) => k)).toEqual(['hermes'])
+    expect(filterCommandTags('q', true).map(([k]) => k)).toEqual(['quickchat'])
   })
 
   it('suggests ONLY plain @hermes while mid-word — opus/haiku must not appear', () => {
-    const result = filterCommandTags('herme')
+    const result = filterCommandTags('herme', true)
     expect(result).toEqual([['hermes', KNOWN_COMMAND_TAGS.hermes]])
     expect(result.some(([k]) => k.includes('opus') || k.includes('haiku'))).toBe(false)
   })
 
   it('never shows a variant for any filter that has not reached the hyphen yet', () => {
     for (const filter of ['h', 'he', 'her', 'herm', 'herme', 'hermes']) {
-      const keys = filterCommandTags(filter).map(([k]) => k)
+      const keys = filterCommandTags(filter, true).map(([k]) => k)
       expect(keys.every((k) => !(k in HERMES_MODEL_VARIANT_TAGS))).toBe(true)
     }
   })
 
   it('surfaces the opus/haiku variants ONLY once "-" is typed', () => {
-    expect(filterCommandTags('hermes-').map(([k]) => k).sort()).toEqual(['hermes-haiku', 'hermes-opus'])
+    expect(filterCommandTags('hermes-', true).map(([k]) => k).sort()).toEqual(['hermes-haiku', 'hermes-opus'])
   })
 
   it('narrows to a single variant as more of the tag is typed', () => {
-    expect(filterCommandTags('hermes-op').map(([k]) => k)).toEqual(['hermes-opus'])
-    expect(filterCommandTags('hermes-ha').map(([k]) => k)).toEqual(['hermes-haiku'])
+    expect(filterCommandTags('hermes-op', true).map(([k]) => k)).toEqual(['hermes-opus'])
+    expect(filterCommandTags('hermes-ha', true).map(([k]) => k)).toEqual(['hermes-haiku'])
   })
 
   it('does not surface hermes-sonnet (deliberately omitted -- identical outcome to bare @hermes)', () => {
-    expect(filterCommandTags('hermes-').some(([k]) => k === 'hermes-sonnet')).toBe(false)
+    expect(filterCommandTags('hermes-', true).some(([k]) => k === 'hermes-sonnet')).toBe(false)
   })
 })
 
@@ -54,5 +54,21 @@ describe('isExactCommandTag — #221 dropdown-close parity', () => {
     expect(isExactCommandTag('herm')).toBe(false)
     expect(isExactCommandTag('hermes-')).toBe(false)
     expect(isExactCommandTag('hermes-op')).toBe(false)
+  })
+})
+
+describe('launch tags are PI-only (2026-10-09)', () => {
+  it('a non-PI is never offered @quickchat or @workon', () => {
+    expect(filterCommandTags('', false).map(([k]) => k)).toEqual(['hermes', 'backlog'])
+    expect(filterCommandTags('q', false)).toEqual([])
+    expect(filterCommandTags('w', false)).toEqual([])
+  })
+  it('a PI still is', () => {
+    expect(filterCommandTags('q', true).map(([k]) => k)).toEqual(['quickchat'])
+    expect(filterCommandTags('w', true).map(([k]) => k)).toEqual(['workon'])
+  })
+  it('commandTagsFor drops only the launch tags for a non-PI', () => {
+    expect(Object.keys(commandTagsFor(false)).sort()).toEqual(['backlog', 'hermes'])
+    expect(commandTagsFor(true)).toBe(KNOWN_COMMAND_TAGS)
   })
 })

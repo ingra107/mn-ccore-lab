@@ -22,12 +22,10 @@ import {
   ChevronRight,
   ExternalLink,
   Bug,
-  Shield,
   History,
   TrendingUp,
   GraduationCap,
   GitBranch,
-  ClipboardList,
   LayoutGrid,
   Library,
 } from 'lucide-react'
@@ -40,6 +38,7 @@ import { civilDaysUntil } from '../lib/dateUtils'
 import { useUnseenActivity } from '../hooks/useEntitySeen'
 import { todayKey } from '../lib/taskGrouping'
 import { PATHS } from '../constants/paths'
+import { PORTAL_PAGE_LABELS } from '../constants/pageLabels'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -101,38 +100,38 @@ const navGroups: NavGroup[] = [
       // "Today" replaces "Dashboard" as the primary landing label after the
       // Today B2 cutover (see CLAUDE.md Rule 52). Route stays /portal/dashboard
       // for URL compat during the alias window.
-      { to: PATHS.dashboard, label: 'Today', icon: LayoutDashboard },
-      { to: PATHS.personal, label: 'My Hub', icon: User },
+      { to: PATHS.dashboard, label: PORTAL_PAGE_LABELS[PATHS.dashboard], icon: LayoutDashboard },
+      { to: PATHS.personal, label: PORTAL_PAGE_LABELS[PATHS.personal], icon: User },
       // SquareCheck (check contained INSIDE the square) over the old
       // CheckSquare whose check overflowed the frame — reads cleaner at 18px.
-      { to: PATHS.myTasks, label: 'Tasks', icon: SquareCheck },
-      { to: PATHS.calendar, label: 'Calendar', icon: Calendar },
-      { to: PATHS.overview, label: 'Lab Overview', icon: LayoutGrid },
+      { to: PATHS.myTasks, label: PORTAL_PAGE_LABELS[PATHS.myTasks], icon: SquareCheck },
+      { to: PATHS.calendar, label: PORTAL_PAGE_LABELS[PATHS.calendar], icon: Calendar },
+      { to: PATHS.overview, label: PORTAL_PAGE_LABELS[PATHS.overview], icon: LayoutGrid },
     ],
   },
   {
     title: 'Research',
     items: [
-      { to: PATHS.projects, label: 'Projects', icon: FolderKanban },
-      { to: PATHS.manuscripts, label: 'Manuscripts', icon: FileText },
-      { to: PATHS.grants, label: 'Grants', icon: DollarSign },
-      { to: PATHS.deadlines, label: 'Deadlines', icon: Clock },
-      { to: PATHS.ideas, label: 'Ideas', icon: Lightbulb },
-      { to: PATHS.digest, label: 'Research Digest', icon: BookOpen },
+      { to: PATHS.projects, label: PORTAL_PAGE_LABELS[PATHS.projects], icon: FolderKanban },
+      { to: PATHS.manuscripts, label: PORTAL_PAGE_LABELS[PATHS.manuscripts], icon: FileText },
+      { to: PATHS.grants, label: PORTAL_PAGE_LABELS[PATHS.grants], icon: DollarSign },
+      { to: PATHS.deadlines, label: PORTAL_PAGE_LABELS[PATHS.deadlines], icon: Clock },
+      { to: PATHS.ideas, label: PORTAL_PAGE_LABELS[PATHS.ideas], icon: Lightbulb },
+      { to: PATHS.digest, label: PORTAL_PAGE_LABELS[PATHS.digest], icon: BookOpen },
     ],
   },
   {
     title: 'Lab',
     items: [
-      { to: PATHS.meetings, label: 'Meetings', icon: UsersIcon },
-      { to: PATHS.meetingNotes, label: 'Transcripts', icon: FileText },
-      { to: '/team', label: 'Team', icon: UsersIcon },
-      { to: PATHS.artifacts, label: 'Artifacts', icon: Library },
-      { to: PATHS.activity, label: 'Activity', icon: Activity },
-      { to: PATHS.analytics, label: 'Analytics', icon: BarChart3 },
-      { to: PATHS.insights, label: 'Insights', icon: TrendingUp },
-      { to: PATHS.profile, label: 'My Profile', icon: User },
-      { to: PATHS.settings, label: 'Settings', icon: Settings },
+      { to: PATHS.meetings, label: PORTAL_PAGE_LABELS[PATHS.meetings], icon: UsersIcon },
+      { to: PATHS.meetingNotes, label: PORTAL_PAGE_LABELS[PATHS.meetingNotes], icon: FileText },
+      { to: PATHS.team, label: PORTAL_PAGE_LABELS[PATHS.team], icon: UsersIcon },
+      { to: PATHS.artifacts, label: PORTAL_PAGE_LABELS[PATHS.artifacts], icon: Library },
+      { to: PATHS.activity, label: PORTAL_PAGE_LABELS[PATHS.activity], icon: Activity },
+      { to: PATHS.analytics, label: PORTAL_PAGE_LABELS[PATHS.analytics], icon: BarChart3 },
+      { to: PATHS.insights, label: PORTAL_PAGE_LABELS[PATHS.insights], icon: TrendingUp },
+      { to: PATHS.profile, label: PORTAL_PAGE_LABELS[PATHS.profile], icon: User },
+      { to: PATHS.settings, label: PORTAL_PAGE_LABELS[PATHS.settings], icon: Settings },
     ],
   },
 ]
@@ -198,17 +197,15 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           {
             title: 'PI View',
             items: [
-              { to: PATHS.piAnalytics, label: 'PI Analytics', icon: TrendingUp },
-              { to: PATHS.menteeMilestones, label: 'Mentee Milestones', icon: GraduationCap },
-              { to: PATHS.deadlineCascade, label: 'Deadline Cascade', icon: GitBranch },
-              { to: PATHS.meetings, label: 'Meeting Prep', icon: ClipboardList },
+              { to: PATHS.piAnalytics, label: PORTAL_PAGE_LABELS[PATHS.piAnalytics], icon: TrendingUp },
+              { to: PATHS.menteeMilestones, label: PORTAL_PAGE_LABELS[PATHS.menteeMilestones], icon: GraduationCap },
+              { to: PATHS.deadlineCascade, label: PORTAL_PAGE_LABELS[PATHS.deadlineCascade], icon: GitBranch },
             ],
           },
           {
             title: 'PI Tools',
             items: [
-              { to: PATHS.sessions, label: 'Session History', icon: History },
-              { to: PATHS.piAnalytics, label: 'PI Dashboard', icon: Shield },
+              { to: PATHS.sessions, label: PORTAL_PAGE_LABELS[PATHS.sessions], icon: History },
             ],
           },
         ]

@@ -12,6 +12,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query'
+import { useAuth } from './useAuth'
 import {
   fetchPublications,
   fetchMemberFeaturedPublications,
@@ -1651,9 +1652,21 @@ export interface PBHealthData {
   lastActivityTimestamp: string | null
 }
 
+// /api/pb/* is PI-only for every verb (api/index.ts, the PI gate): a member's
+// request is a guaranteed 403. These hooks are the one place a client builds
+// that request, so they refuse to fire for a non-PI instead of every caller
+// remembering to. Before this, Today showed members a permanent
+// "session stats unavailable" error. isPi starts false until /api/auth
+// hydrates, so a PI's queries simply start a moment later.
+function usePiOnlyEnabled(): boolean {
+  return useAuth().user.isPi
+}
+
 export function usePBHealth() {
+  const enabled = usePiOnlyEnabled()
   return useQuery({
     queryKey: ['pb-health'],
+    enabled,
     queryFn: async () => {
       const data = await fetchJson<{ data: PBHealthData }>('/api/pb/health')
       return data.data
@@ -1666,8 +1679,10 @@ export function usePBHealth() {
 // ── PB Sessions hooks ────────────────────────────────────────
 
 export function usePBSessions(params?: { limit?: number; project?: string; since?: string }) {
+  const enabled = usePiOnlyEnabled()
   return useQuery({
     queryKey: ['pb-sessions', params],
+    enabled,
     queryFn: async () => {
       const res = await fetchPBSessions(params)
       return res.data
@@ -1678,8 +1693,10 @@ export function usePBSessions(params?: { limit?: number; project?: string; since
 }
 
 export function usePBSessionStats() {
+  const enabled = usePiOnlyEnabled()
   return useQuery({
     queryKey: ['pb-session-stats'],
+    enabled,
     queryFn: async () => {
       const res = await fetchPBSessionStats()
       return res.data

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { portalTitle } from '../../constants/pageLabels'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { FileText, Plus, List, GitBranch, BookOpen, ExternalLink } from 'lucide-react'
@@ -273,9 +274,7 @@ export default function ManuscriptsPage() {
   // M-05: dynamic title flows through usePageMeta so the OG tags + meta
   // description stay in sync. Previously a competing useEffect overwrote
   // document.title, racing usePageMeta and making it dead code.
-  const pageTitle = writingCount > 0
-    ? `Manuscripts (${writingCount} writing) | MN-CCORE`
-    : `Manuscripts (${activeCount}) | MN-CCORE`
+  const pageTitle = portalTitle('Manuscripts', writingCount > 0 ? `${writingCount} writing` : `${activeCount}`)
   usePageMeta(
     pageTitle,
     'Track MN-CCORE manuscripts from idea to publication.'

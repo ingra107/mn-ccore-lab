@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { portalTitle } from '../../constants/pageLabels'
 import { Link } from 'react-router-dom'
 import { useOpenParam } from '../../hooks/useOpenParam'
 import {
@@ -951,13 +952,7 @@ export default function DecisionsPage() {
   }, [showCreate])
 
   useEffect(() => {
-    document.title =
-      pendingCount > 0
-        ? `Decisions (${pendingCount} pending) | MN-CCORE`
-        : 'Decisions | MN-CCORE'
-    return () => {
-      document.title = 'MN-CCORE Lab Hub'
-    }
+    document.title = portalTitle('Decisions', pendingCount > 0 ? `${pendingCount} pending` : undefined)
   }, [pendingCount])
 
   return (

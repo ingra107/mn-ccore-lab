@@ -156,6 +156,7 @@ const DecisionsPage = lazyRoute(() => import('./pages/portal/DecisionsPage'))
 const NarrativesPage = lazyRoute(() => import('./pages/portal/NarrativesPage'))
 const AskTheLab = lazyRoute(() => import('./pages/portal/AskTheLab'))
 const PIAnalytics = lazyRoute(() => import('./pages/portal/PIAnalytics'))
+const TeamDirectoryPage = lazyRoute(() => import('./pages/portal/TeamDirectoryPage'))
 const SessionHistory = lazyRoute(() => import('./pages/portal/SessionHistory'))
 const MenteeMilestonesPage = lazyRoute(() => import('./pages/portal/MenteeMilestonesPage'))
 const DeadlineCascadePage = lazyRoute(() => import('./pages/portal/DeadlineCascadePage'))
@@ -332,6 +333,7 @@ export default function App() {
                       the public marketing chrome (Fraunces titles, top nav,
                       footer). The /team list itself stays public so non-team
                       visitors can browse the lab on the marketing site. */}
+                  <Route path="/portal/team" element={<ErrorBoundary><TeamDirectoryPage /></ErrorBoundary>} />
                   <Route path="/portal/team/:slug" element={<ErrorBoundary><MemberPage /></ErrorBoundary>} />
                   <Route path="/portal/team/:slug/trajectory" element={<ErrorBoundary><TrajectoryPage /></ErrorBoundary>} />
                 </Route>

@@ -417,7 +417,7 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
 // ── Main Component ──────────────────────────────────────────
 
 export default function Meetings() {
-  usePageMeta('Meeting Hub | MN-CCORE', 'MNCCORE biweekly meetings, decisions, and action items archive.')
+  usePageMeta('Meetings · MN-CCORE', 'MNCCORE biweekly meetings, decisions, and action items archive.')
 
   const headerRef = useScrollReveal<HTMLDivElement>()
   const [filter, setFilter] = useState<FilterMode>('all')

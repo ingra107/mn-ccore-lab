@@ -202,7 +202,19 @@ describe('signed-in reads are unchanged', () => {
       const { status, text } = await get('/api/projects', who)
       expect(status).toBe(200)
       const row = JSON.parse(text).data.find((p: { id: string }) => p.id === 'proj_anon1')
-      expect(row).toMatchObject({ next_action: `${S} next action`, box_url: `https://box.com/${S}`, primary_folder: `C:/${S}/folder` })
+      expect(row).toMatchObject({ next_action: `${S} next action`, box_url: `https://box.com/${S}` })
+      // P7 (2026-10-09): the PI's local-path fields reach the PI / PB sync key
+      // only. 'session' here is Nate, a non-PI member.
+      if (who === 'apikey') {
+        expect(row).toMatchObject({ primary_folder: `C:/${S}/folder`, manuscript_path: `C:/${S}/ms`, analysis_path: `C:/${S}/an` })
+      } else {
+        expect(row).not.toHaveProperty('primary_folder')
+        expect(row).not.toHaveProperty('manuscript_path')
+        expect(row).not.toHaveProperty('analysis_path')
+        const one = JSON.parse((await get('/api/projects/anon-project', who)).text).data
+        expect(one).not.toHaveProperty('primary_folder')
+        expect(one.next_action).toBe(`${S} next action`)
+      }
     })
     it(`${who}: /api/activity carries descriptions, /api/meetings and /api/team their full rows`, async () => {
       expect((await get('/api/activity?limit=50', who)).text).toContain(`${S} internal progress note`)

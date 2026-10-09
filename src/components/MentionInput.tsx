@@ -7,7 +7,8 @@ import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 // carries the Hermes model-tag variants' gating logic (#891) — see
 // mentionCommandTags.ts for why they're a separate map from the always-
 // visible top-level tags.
-import { KNOWN_COMMAND_TAGS, isExactCommandTag, filterCommandTags } from '../lib/mentionCommandTags'
+import { commandTagsFor, isExactCommandTag, filterCommandTags } from '../lib/mentionCommandTags'
+import { useAuth } from '../hooks/useAuth'
 
 // Detects a command @-tag at the START of the value — module-level so it isn't
 // re-literal-ed on every keystroke (#252 finding 4). Stateless (no g/y flag),
@@ -60,6 +61,10 @@ export default function MentionInput({
   dropdownPosition = 'above',
 }: MentionInputProps) {
   const { data: teamSlugs = [] } = useTeamSlugs()
+  // Launch tags (@quickchat/@workon) are PI-only commands; for anyone else
+  // they are plain text (lib/mentionCommandTags.ts PI_ONLY_COMMAND_TAGS).
+  const isPi = useAuth().user.isPi
+  const commandTags = useMemo(() => commandTagsFor(isPi), [isPi])
   const [mentionOpen, setMentionOpen] = useState(false)
   const [mentionFilter, setMentionFilter] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -90,7 +95,7 @@ export default function MentionInput({
   // gated inside filterCommandTags on the filter string itself containing
   // '-' -- see mentionCommandTags.ts for why that keeps them invisible while
   // typing "@herm"/"@hermes".
-  const filteredCommands = useMemo(() => filterCommandTags(mentionFilter), [mentionFilter])
+  const filteredCommands = useMemo(() => filterCommandTags(mentionFilter, isPi), [mentionFilter, isPi])
 
   // Commands first, people after -- the single list keyboard nav + render walk.
   const mentionOptions: MentionOption[] = useMemo(
@@ -239,7 +244,7 @@ export default function MentionInput({
       if (match.index > lastIndex) {
         parts.push({ text: value.slice(lastIndex, match.index), isMention: false })
       }
-      const cmd = KNOWN_COMMAND_TAGS[match[1].toLowerCase()]
+      const cmd = commandTags[match[1].toLowerCase()]
       parts.push({ text: match[0], isMention: true, bg: cmd ? cmd.bg : 'var(--gold-active)' })
       lastIndex = match.index + match[0].length
     }
@@ -247,7 +252,7 @@ export default function MentionInput({
       parts.push({ text: value.slice(lastIndex), isMention: false })
     }
     return parts
-  }, [value])
+  }, [value, commandTags])
 
   // Show the overlay whenever there are any @-mentions (person or command).
   const hasMentions = highlightedParts.some((p) => p.isMention)
@@ -258,8 +263,8 @@ export default function MentionInput({
   const detectedCommand = useMemo(() => {
     const m = value.match(COMMAND_TAG_PREFIX_RE)
     if (!m) return null
-    return KNOWN_COMMAND_TAGS[m[1].toLowerCase()] ?? null
-  }, [value])
+    return commandTags[m[1].toLowerCase()] ?? null
+  }, [value, commandTags])
 
   return (
     <div style={{ position: 'relative', flex: 1 }}>

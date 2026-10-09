@@ -41,6 +41,19 @@ export const HERMES_MODEL_VARIANT_TAGS: Record<string, CommandTagDef> = {
   'hermes-haiku': { label: '⌘ Hermes AI (haiku)', color: KNOWN_COMMAND_TAGS.hermes.color, bg: KNOWN_COMMAND_TAGS.hermes.bg },
 }
 
+// @quickchat/@workon start a Claude session on the PI's own machine, and
+// POST /api/launch-log refuses every non-PI (2026-10-09). For anyone else
+// they are not commands: not suggested, not tinted, no "command recognized"
+// badge, and useLaunchCommands lets the text post as ordinary text.
+export const PI_ONLY_COMMAND_TAGS: readonly string[] = ['quickchat', 'workon']
+
+/** The base command tags this viewer can use (KNOWN_COMMAND_TAGS, minus the
+ *  PI-only launch tags for a non-PI). */
+export function commandTagsFor(isPi: boolean): Record<string, CommandTagDef> {
+  if (isPi) return KNOWN_COMMAND_TAGS
+  return Object.fromEntries(Object.entries(KNOWN_COMMAND_TAGS).filter(([k]) => !PI_ONLY_COMMAND_TAGS.includes(k)))
+}
+
 const ALL_COMMAND_TAGS: Record<string, CommandTagDef> = {
   ...KNOWN_COMMAND_TAGS,
   ...HERMES_MODEL_VARIANT_TAGS,
@@ -66,10 +79,10 @@ export function isExactCommandTag(filter: string): boolean {
  *    once the filter itself contains the `-` (checked via the filter
  *    string's own prefix, not a separate mode flag) -- so there is no code
  *    path that can show them before the '-' key is pressed. */
-export function filterCommandTags(filter: string): Array<[string, CommandTagDef]> {
+export function filterCommandTags(filter: string, isPi: boolean): Array<[string, CommandTagDef]> {
   const lower = filter.toLowerCase()
   if (lower in ALL_COMMAND_TAGS) return []
-  const entries = Object.entries(KNOWN_COMMAND_TAGS).filter(([key]) => key.startsWith(lower))
+  const entries = Object.entries(commandTagsFor(isPi)).filter(([key]) => key.startsWith(lower))
   if (lower.startsWith('hermes-')) {
     entries.push(...Object.entries(HERMES_MODEL_VARIANT_TAGS).filter(([key]) => key.startsWith(lower)))
   }

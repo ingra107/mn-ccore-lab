@@ -36,7 +36,7 @@ function stageAbbrev(stage: string): string {
 }
 
 export default function NarrativesPage() {
-  usePageMeta('Research Narratives | MN-CCORE Lab', 'Auto-detected research arcs across the lab.')
+  usePageMeta('Research Narratives · MN-CCORE', 'Auto-detected research arcs across the lab.')
   const { data: narratives = [], isLoading, isError, refetch } = useNarratives()
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [searchTerm, setSearchTerm] = useState('')
