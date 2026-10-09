@@ -36,6 +36,8 @@ import {
   type GroupKey, type TodayEvent, type DailyCounts,
 } from '../../components/today/constants'
 import { StatLine } from '../../components/today/StatLine'
+import { ProfileSetupPrompt } from '../../components/today/ProfileSetupPrompt'
+import { parseDbUtc } from '../../lib/time'
 import { TodayHeader } from '../../components/today/TodayHeader'
 import { Timeline } from '../../components/today/Timeline'
 import { CollapseChevron } from '../../components/today/SectionCollapseToggle'
@@ -142,6 +144,18 @@ export default function TodayPage() {
     [tasksQuery.data],
   )
   const completedTodayIds = useMemo(() => doneTodayDetail.map((t) => t.id), [doneTodayDetail])
+
+  // "done this week" — from the retired My Hub header (2026-10-09). Same week
+  // My Hub counted (Sunday start, local time) and the same exclusions as
+  // "done" above: answered approvals and questions are triage, not work.
+  const doneThisWeek = useMemo(() => {
+    const now = new Date()
+    const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
+    return (tasksQuery.data ?? []).filter(
+      (t) => t.completed === 1 && !!t.completed_at && parseDbUtc(t.completed_at) >= weekStart
+        && !isApprovalPending(t) && !isApprovalTriaged(t) && !isQuestionTask(t),
+    ).length
+  }, [tasksQuery.data])
 
   const projectsByPid = useMemo(() => {
     const m = new Map<string, { name: string; slug: string; category?: string | null; lastActivity?: string | null; primary_folder?: string | null }>()
@@ -560,7 +574,11 @@ export default function TodayPage() {
             pending meetings are accepted or declined. */}
         <PendingMeetingsCard tasks={pendingMeetingTasks} band={false} />
 
-        <StatLine counts={counts} />
+        {/* First login: until the profile has a title, bio and photo,
+            a snoozable "Set up your profile" (replaces My Hub's checklist). */}
+        <ProfileSetupPrompt />
+
+        <StatLine counts={counts} doneThisWeek={doneThisWeek} />
 
         {/* N1.21 — flex-start keeps the dismiss × anchored to the first line
             instead of floating detached mid-text when the hint wraps. */}

@@ -7,7 +7,8 @@ import { useState, useEffect, useId } from 'react'
 import Field from '../../components/ui/Field'
 import { Navigate, Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTeamRaw } from '../../hooks/useTeamRaw'
 import { User, Save, Calendar as CalendarIcon, Settings as SettingsIcon, ExternalLink } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTeam } from '../../hooks/useApiData'
@@ -57,21 +58,9 @@ export default function ProfilePage() {
   // which the public TeamMember shape doesn't carry. This piggybacks on the
   // same /api/team response — we just dig into it post-fetch.
   //
-  // MUST be a real useQuery (not a manual setQueryData on the cache): the save's
-  // onSuccess calls invalidateQueries(['team-raw']), and invalidate only refetches
-  // queries that have an observer with a queryFn. A hand-set cache entry gets
-  // marked stale but never re-fetched, so the form re-hydrates from stale data
-  // after a save (the STATE-2 bug). Sharing the cache key keeps it off the public
-  // useTeam mapping.
-  const rawQuery = useQuery({
-    queryKey: ['team-raw'],
-    queryFn: async (): Promise<{ data: Array<Record<string, unknown>> }> => {
-      const r = await fetch('/api/team')
-      if (!r.ok) throw new Error(`HTTP ${r.status}`)
-      return r.json()
-    },
-    enabled: !!slug && isAuthenticated,
-  })
+  // Shared with Today's "Set up your profile" prompt (src/hooks/useTeamRaw.ts),
+  // so a save here clears the prompt.
+  const rawQuery = useTeamRaw(!!slug && isAuthenticated)
   const rawRow = (rawQuery.data?.data ?? []).find((r) => r.slug === slug)
 
   const [form, setForm] = useState<ProfileForm>({

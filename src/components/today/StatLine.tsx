@@ -12,7 +12,12 @@
 // the day's progress, with no extra element (.tk-stats::after reads --prog).
 //
 // Colors: maroon = overdue only, gold = stalled, teal = the day's own numbers,
-// no color for planned. The PillStrip scroll-to-section behavior is gone: the
+// no color for planned.
+//
+// "done this week" (2026-10-09) came over from the retired My Hub header. It
+// is plainly NOT a link: My Tasks has no "done this week" view, and a stat
+// that looks clickable and goes nowhere is the thing Nick asked us not to
+// build. No rule color either: it is not the day's number. The PillStrip scroll-to-section behavior is gone: the
 // sections are right below, and the link now goes somewhere new.
 
 import { Link } from 'react-router-dom'
@@ -26,12 +31,13 @@ interface Stat {
   value: number
   label: string
   rule: Rule
-  to: string
+  /** Absent = a plain number, never a link. */
+  to?: string
   /** Names the destination for screen readers and the hover title. */
-  dest: string
+  dest?: string
 }
 
-export function StatLine({ counts }: { counts: DailyCounts }) {
+export function StatLine({ counts, doneThisWeek }: { counts: DailyCounts; doneThisWeek?: number }) {
   const stats: Stat[] = [
     { key: 'overdue', value: counts.overdue, label: 'overdue', rule: 'o', to: `${PATHS.myTasks}?filter=overdue`, dest: 'Tasks filtered to overdue' },
     { key: 'stalled', value: counts.stalled, label: 'stalled', rule: 'g', to: `${PATHS.projects}?filter=stalled`, dest: 'Projects filtered to stalled (no movement in the stale window)' },
@@ -39,6 +45,9 @@ export function StatLine({ counts }: { counts: DailyCounts }) {
     { key: 'meetings', value: counts.meetings, label: 'meetings', rule: 't', to: `${PATHS.meetings}?filter=today`, dest: "Today's meeting records" },
     { key: 'done', value: counts.doneToday, label: 'done', rule: 't', to: `${PATHS.myTasks}?filter=done-today`, dest: 'Tasks done today' },
   ]
+  if (doneThisWeek !== undefined) {
+    stats.push({ key: 'done-week', value: doneThisWeek, label: 'done this week', rule: 'n' })
+  }
   const total = counts.doneToday + counts.planned
   const pct = total > 0 ? Math.round((counts.doneToday / total) * 100) : 0
 
@@ -55,10 +64,13 @@ export function StatLine({ counts }: { counts: DailyCounts }) {
             <span className={`tk-rl${s.value > 0 ? ` tk-${s.rule}` : ''}`} aria-hidden="true" />
             <span>
               <span className="tk-v" style={{ display: 'block' }}>{s.value}</span>
-              <span className="tk-l">{s.label}{s.value > 0 && <span className="tk-ar" aria-hidden="true">&rarr;</span>}</span>
+              <span className="tk-l">{s.label}{s.value > 0 && s.to && <span className="tk-ar" aria-hidden="true">&rarr;</span>}</span>
             </span>
           </>
         )
+        if (!s.to) {
+          return <div key={s.key} className={`tk-st${s.value === 0 ? ' tk-zero' : ''}`} aria-label={`${s.value} ${s.label}`} data-stat={s.key}>{inner}</div>
+        }
         return s.value === 0 ? (
           <div key={s.key} className="tk-st tk-zero" aria-label={`0 ${s.label}`}>{inner}</div>
         ) : (
