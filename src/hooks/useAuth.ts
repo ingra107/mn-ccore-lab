@@ -18,6 +18,11 @@ export interface AuthUser {
    *  first paint, an API that did not confirm the session): the API is the
    *  gate, this only picks the page. */
   isMember: boolean
+  /** True only for the site admin (Nick). Gates the "Show all projects (admin)"
+   *  switch on the Projects page (#145). The Worker enforces the capability;
+   *  this only decides whether to draw the switch. False until /api/auth/me
+   *  says otherwise, so the cookie first paint never shows it. */
+  canShowAllProjects: boolean
 }
 
 const defaultUser: AuthUser = {
@@ -26,6 +31,7 @@ const defaultUser: AuthUser = {
   isAuthenticated: false,
   isPi: false,
   isMember: false,
+  canShowAllProjects: false,
 }
 
 // The last slug and email directory /api/auth/me returned, so a cookie first
@@ -106,6 +112,7 @@ function getAuthFromCookie(): AuthUser {
     isAuthenticated: true,
     isPi: false,
     isMember: true,
+    canShowAllProjects: false,
   }
 }
 
@@ -133,7 +140,7 @@ function nameFromEmail(knownSlug: string, email: string): string {
  */
 export function authUserFromMe(data: {
   authenticated?: boolean; email?: string; name?: string; isPi?: boolean
-  isMember?: boolean; slug?: string; directory?: unknown
+  isMember?: boolean; slug?: string; directory?: unknown; canShowAllProjects?: boolean
 } | null | undefined): AuthUser | null {
   if (!data?.authenticated) return null
   const email = data.email || ''
@@ -143,7 +150,7 @@ export function authUserFromMe(data: {
     // a non-member must not be able to read out of localStorage).
     forgetSlug(email)
     forgetDirectory()
-    return { email, slug: '', name: data.name || '', isAuthenticated: true, isPi: false, isMember: false }
+    return { email, slug: '', name: data.name || '', isAuthenticated: true, isPi: false, isMember: false, canShowAllProjects: false }
   }
   if (Array.isArray(data.directory)) {
     setEmailDirectory(data.directory as DirectoryRow[])
@@ -153,7 +160,8 @@ export function authUserFromMe(data: {
   if (data.slug) cacheSlug(email, data.slug)
   // A Worker older than this field sends none: treat the session as a member,
   // as before. The API, not this flag, decides access.
-  return { email, slug, name: data.name || '', isAuthenticated: true, isPi: Boolean(data.isPi), isMember: true }
+  return { email, slug, name: data.name || '', isAuthenticated: true, isPi: Boolean(data.isPi), isMember: true,
+    canShowAllProjects: data.canShowAllProjects === true }
 }
 
 // Also support fetching auth status from the API for more reliable detection

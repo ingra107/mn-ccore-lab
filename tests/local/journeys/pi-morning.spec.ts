@@ -48,9 +48,9 @@ test.describe('Journey 1: PI Morning Workflow', () => {
     await page.locator('[data-testid="close-detail-panel"]').click()
     await expect(detailPanel).not.toBeVisible({ timeout: 3000 })
 
-    // 15-17. Navigate to /projects — h1 is "Research Pipeline"
+    // 15-17. Navigate to /projects — h1 is "My projects"
     await go(page, P.projects)
-    await expect(page.locator('h1')).toContainText(/Research Pipeline/i, { timeout: 5000 })
+    await expect(page.locator('h1')).toContainText(/My projects/i, { timeout: 5000 })
 
     // Click any project row → navigates to /projects/:slug
     const anyProjectRow = page.locator('tr').filter({ has: page.locator('td') }).first()

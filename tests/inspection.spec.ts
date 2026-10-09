@@ -209,7 +209,7 @@ test.describe('PAGE — Portal pages render without errors', () => {
     [P.tasks, 'All Tasks', ['Tasks']],  // /portal/tasks redirects to /portal/my-tasks
     [P.calendar, 'Calendar', ['Lab Calendar', 'Month']],
     [P.deadlines, 'Deadlines', ['Deadlines']],
-    [P.projects, 'Projects', ['Research Pipeline', 'New Project']],
+    [P.projects, 'Projects', ['My projects', 'New Project']],
     [P.manuscripts, 'Manuscripts', ['Manuscripts']],
     [P.ideas, 'Ideas', ['Ideas Board', 'New Idea']],
     [P.ask, 'Ask the Lab', ['Ask the Lab', 'New Question']],

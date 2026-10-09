@@ -34,6 +34,8 @@ import { classifyUrl } from '../lib/urlClassify'
 import { displayRank } from '../lib/pbLinkDisplayOrder.generated'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import WorkOnActions from '../components/WorkOnActions'
+import { AllProjectsBanner, AllProjectsSwitch } from '../components/AllProjectsControls'
+import { useAllProjectsOn } from '../lib/allProjects'
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
@@ -304,6 +306,7 @@ export default function Projects() {
 
   const { data: projects = [] } = useProjects()
   const { data: allTasks = [] } = useTasks()
+  const allProjectsOn = useAllProjectsOn()
   // #507 follow-up opt-out: dependencies/healthData/allProjectLinks are all
   // per-row OPTIONAL enrichments (dependency map inside a collapsible toggle,
   // health progress bar, link icons) layered onto the page's real query
@@ -539,8 +542,10 @@ export default function Projects() {
     <>
     <DataPage
       icon={<FolderKanban {...ICON_PROPS} size={20} />}
-      title="Research Pipeline"
+      title={allProjectsOn ? 'All projects' : 'My projects'}
       actions={
+        <>
+        <AllProjectsSwitch />
         <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg new-project-btn"
@@ -557,6 +562,7 @@ export default function Projects() {
           <Plus {...ICON_PROPS} size={14} />
           New Project
         </button>
+        </>
       }
       views={[
         { key: 'list', icon: <List {...ICON_PROPS} size={14} />, label: 'List' },
@@ -632,7 +638,9 @@ export default function Projects() {
         </>
       }
       beforeBody={
-        /* Dependency map (collapsible, pipeline only) */
+        <>
+        <AllProjectsBanner />
+        {/* Dependency map (collapsible, pipeline only) */}
         <AnimatePresence>
           {showDeps && viewMode === 'pipeline' && (
             <motion.div
@@ -646,6 +654,7 @@ export default function Projects() {
             </motion.div>
           )}
         </AnimatePresence>
+        </>
       }
     >
         {/* ─── LIST VIEW ─── */}

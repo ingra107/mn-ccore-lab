@@ -51,6 +51,8 @@ import type { TaskRow } from '../lib/api'
 import RevisionTracker from '../components/RevisionTracker'
 import KeyLinksEditor from '../components/KeyLinksEditor'
 import ProjectLinkLibrary from '../components/ProjectLinkLibrary'
+import ProjectMembers from '../components/project/ProjectMembers'
+import { AllProjectsBanner } from '../components/AllProjectsControls'
 import ProjectPublications from '../components/ProjectPublications'
 import WorkOnActions from '../components/WorkOnActions'
 import LinkifiedText from '../components/LinkifiedText'
@@ -586,6 +588,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   return (
     <>
       <Breadcrumb backTo="/projects" backLabel="Projects" current={project.title} />
+      <AllProjectsBanner />
 
       {/* ── Compact Header ── */}
       <motion.div
@@ -1149,6 +1152,10 @@ function ProjectDetailInner({ project }: InnerProps) {
                 </div>
                 <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.short_name || project.title} />
               </div>
+            )}
+            {/* Members (#145) -- projects work like channels: you see one only if you are on it. */}
+            {isAuthenticated && project.slug && (
+              <ProjectMembers projectRef={project.slug} projectTitle={project.title} />
             )}
             {/* Links — ONE card (#2091): the three pinned key-link slots on top,
                 every other stored link below, archived collapsed. */}

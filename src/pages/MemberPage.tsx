@@ -7,6 +7,7 @@ import Breadcrumb from '../components/Breadcrumb'
 import { FlaskConical, GraduationCap, Handshake, CheckCircle2, TrendingUp, Sparkles, X, Plus, Activity } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
 import MenteeDashboard from '../components/MenteeDashboard'
+import MemberProjects from '../components/project/MemberProjects'
 import ActivityHeatmap from '../components/ActivityHeatmap'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { usePublications, useExpertise, useMenteeMilestones, useContributionScore } from '../hooks/useApiData'
@@ -720,6 +721,9 @@ export default function MemberPage() {
           Signed-in only: its projects and action items are not public data
           (/api/projects shows a visitor status only; tasks need sign-in). */}
       {slug && isAuthenticated && <MenteeDashboard slug={slug} name={member.name} />}
+
+      {/* Projects this person is on (#145): what the viewer may see, signed-in portal only. */}
+      {slug && isAuthenticated && isPortalRoute && <MemberProjects slug={slug} />}
 
       {/* Milestones — for fellows and research team members */}
       {slug && (mentee || member.role?.includes('Fellow') || member.role?.includes('Researcher')) && (

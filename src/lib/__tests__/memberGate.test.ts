@@ -11,7 +11,7 @@ import { slugFromName, MEMBER_SLUG, UMN_EMAIL } from '../../../shared/memberSlug
 describe('authUserFromMe — isMember', () => {
   it('a Worker non-member answer: signed in, not a member, no slug', () => {
     const u = authUserFromMe({ authenticated: true, isMember: false, isPi: false, email: 'jdoe@umn.edu', name: 'Jane Doe' })
-    expect(u).toEqual({ email: 'jdoe@umn.edu', slug: '', name: 'Jane Doe', isAuthenticated: true, isPi: false, isMember: false })
+    expect(u).toEqual({ email: 'jdoe@umn.edu', slug: '', name: 'Jane Doe', isAuthenticated: true, isPi: false, isMember: false, canShowAllProjects: false })
   })
 
   it('a non-member answer clears the cached member directory and slug on this device', () => {
