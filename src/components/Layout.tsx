@@ -1,16 +1,21 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { Menu, X, Sun, Moon, ChevronUp, ChevronDown } from 'lucide-react'
+import { Menu, X, Sun, Moon, ChevronUp } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { useAuth } from '../hooks/useAuth'
-import { useTasks, useMeetingsApi } from '../hooks/useApiData'
-import { formatShortDate, localDateKey } from '../lib/dateUtils'
 import PageTransition from './PageTransition'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../lib/taskGrouping'
+import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../lib/taskGrouping'
+import { PATHS, PUBLIC_PATHS } from '../constants/paths'
+import { memberHubTarget } from '../lib/memberHubTarget'
 
+// Public nav (2026-10-09): Home, Team, Publications, Member Hub, Contact.
+// "Member Hub" replaced the "Research" dropdown (Nick: "it should be after
+// publications and before contact ... like with university websites where
+// there's ... tabs where it takes you to a login page"). Where it goes
+// depends on who is looking: memberHubTarget().
 const navLinks: { to: string; label: string }[] = [
   { to: '/', label: 'Home' },
   { to: '/team', label: 'Team' },
@@ -18,23 +23,13 @@ const navLinks: { to: string; label: string }[] = [
   { to: '/contact', label: 'Contact' },
 ]
 
-const researchDropdownLinks = [
-  { to: '/dashboard', label: 'Today' },
-  { to: '/personal', label: 'My Hub' },
-  { to: '/projects', label: 'Projects' },
-  { to: '/grants', label: 'Grants' },
-  { to: '/network', label: 'Network' },
-  { to: '/meetings', label: 'Meetings' },
-  { to: '/digest', label: 'Research Digest' },
-]
-
-// Footer link groups
-const footerResearchLinks = [
-  { to: '/dashboard', label: 'Today' },
-  { to: '/projects', label: 'Projects' },
-  { to: '/grants', label: 'Grants' },
-  { to: '/meetings', label: 'Meetings' },
-  { to: '/digest', label: 'Research Digest' },
+// Footer "Member Hub" column — the Hub's main pages (redirect-free paths).
+const footerHubLinks = [
+  { to: PATHS.dashboard, label: 'Today' },
+  { to: PATHS.myTasks, label: 'Tasks' },
+  { to: PATHS.projects, label: 'Projects' },
+  { to: PATHS.meetings, label: 'Meetings' },
+  { to: PATHS.library, label: 'Library' },
 ]
 
 const footerQuickLinks = [
@@ -49,48 +44,13 @@ const footerQuickLinks = [
 
 export default function Layout() {
   const { isDark, toggle } = useDarkMode()
-  const { isAuthenticated } = useAuth()
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
-  const [researchOpen, setResearchOpen] = useState(false)
-  const [mobileResearchOpen, setMobileResearchOpen] = useState(false)
-  const researchRef = useRef<HTMLDivElement>(null)
-  const researchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const location = useLocation()
-
-  // Task badge count (pending only, already deduped by useTasks hook)
-  const { data: tasks = [] } = useTasks(undefined, { enabled: isAuthenticated })
-  const pendingCount = useMemo(() => tasks.filter((t) => !isTaskDone(t)).length, [tasks])
-
-  // Next upcoming meeting
-  const { data: meetings = [] } = useMeetingsApi({ enabled: isAuthenticated })
-  const nextMeetingLabel = useMemo(() => {
-    const today = localDateKey()
-    const upcoming = meetings
-      .filter((m) => m.date >= today)
-      .sort((a, b) => a.date.localeCompare(b.date))
-    if (upcoming.length === 0) return null
-    return formatShortDate(upcoming[0].date)
-  }, [meetings])
-
-  const isResearchActive = researchDropdownLinks.some(
-    (link) => location.pathname === link.to
-  )
-
-  const handleResearchEnter = useCallback(() => {
-    if (researchTimeoutRef.current) {
-      clearTimeout(researchTimeoutRef.current)
-      researchTimeoutRef.current = null
-    }
-    setResearchOpen(true)
-  }, [])
-
-  const handleResearchLeave = useCallback(() => {
-    researchTimeoutRef.current = setTimeout(() => {
-      setResearchOpen(false)
-    }, 150)
-  }, [])
+  const hub = memberHubTarget({ isLoading: authLoading, isAuthenticated, isMember: user?.isMember ?? false })
+  const hubActive = location.pathname === PUBLIC_PATHS.join
 
   // Close menus on route change, adjusted during render (React's "adjusting
   // state when a prop changes" pattern) rather than an effect.
@@ -98,8 +58,6 @@ export default function Layout() {
   if (location.pathname !== prevPathname) {
     setPrevPathname(location.pathname)
     setMenuOpen(false)
-    setResearchOpen(false)
-    setMobileResearchOpen(false)
   }
 
   useEffect(() => {
@@ -107,17 +65,6 @@ export default function Layout() {
     const timer = setTimeout(() => window.scrollTo(0, 0), 50)
     return () => clearTimeout(timer)
   }, [location.pathname])
-
-  // Close desktop dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (researchRef.current && !researchRef.current.contains(e.target as Node)) {
-        setResearchOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -201,132 +148,26 @@ export default function Layout() {
               Home
             </Link>
 
-            {/* Research Dropdown */}
-            <div
-              ref={researchRef}
-              className="relative"
-              onMouseEnter={handleResearchEnter}
-              onMouseLeave={handleResearchLeave}
-            >
-              <button
-                onClick={() => setResearchOpen(!researchOpen)}
-                className="cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap flex items-center gap-1"
-                style={{
-                  color: isResearchActive ? 'var(--gold)' : 'var(--slate)',
-                  borderBottom: isResearchActive ? '2px solid var(--gold)' : '2px solid transparent',
-                  background: 'none',
-                  border: 'none',
-                  borderBottomStyle: 'solid',
-                  borderBottomWidth: '2px',
-                  padding: 'var(--sp-sm) 0',
-                }}
-              >
-                Research
-                <ChevronDown {...ICON_PROPS}
-                  size={14}
-                  className="transition-transform duration-200"
-                  style={{
-                    transform: researchOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                  }}
-                />
-              </button>
-
-              {/* Dropdown panel — fully opaque bg. Previously 0.98/0.95
-                  transparency + backdrop-blur bled page's dark header band
-                  through the middle of the menu. GH #17. r7 2026-04-22. */}
-              <div
-                className="absolute top-full left-0 mt-1 py-2 rounded-lg"
-                style={{
-                  minWidth: '180px',
-                  background: isDark ? '#0f1923' : '#ffffff',
-                  border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
-                  boxShadow: 'var(--shadow-menu)',
-                  opacity: researchOpen ? 1 : 0,
-                  transform: researchOpen ? 'translateY(0)' : 'translateY(-4px)',
-                  pointerEvents: researchOpen ? 'auto' : 'none',
-                  transition: 'opacity 250ms ease, transform 250ms ease',
-                  zIndex: 'var(--z-dropdown, 50)',
-                }}
-              >
-                {researchDropdownLinks.map((link) => (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    className="block px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors duration-150 hov-bg hov-border"
-                    style={{
-                      color: location.pathname === link.to ? 'var(--gold)' : 'var(--ink)',
-                      borderLeft: location.pathname === link.to
-                        ? '3px solid var(--gold)'
-                        : '3px solid transparent',
-                      background: location.pathname === link.to
-                        ? 'var(--gold-active)'
-                        : 'transparent',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '8px',
-                      '--hov-bg': location.pathname !== link.to ? 'var(--gold-hover)' : 'transparent',
-                      '--hov-border': location.pathname !== link.to ? withAlpha(ACCENT_GOLD, 40) : 'transparent',
-                    } as React.CSSProperties}
-                  >
-                    <span>{link.label}</span>
-                    {link.label === 'Today' && pendingCount > 0 && (
-                      <span
-                        style={{
-                          background: 'var(--maroon-solid)',
-                          color: 'var(--ink-bright, #fff)',
-                          fontSize: '10px',
-                          lineHeight: '16px',
-                          width: '16px',
-                          height: '16px',
-                          borderRadius: 'var(--radius-circle)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          animation: 'badge-pop 200ms ease-out',
-                        }}
-                      >
-                        {pendingCount}
-                      </span>
-                    )}
-                    {link.label === 'Meetings' && nextMeetingLabel && (
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          color: 'var(--gold)',
-                          opacity: 0.8,
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {nextMeetingLabel}
-                      </span>
-                    )}
+            {/* Remaining top-level links, Member Hub before Contact */}
+            {navLinks.filter((link) => link.to !== '/').map((link) => {
+              const style = (active: boolean) => ({
+                color: active ? 'var(--gold)' : 'var(--slate)',
+                borderBottom: active ? '2px solid var(--gold)' : '2px solid transparent',
+              })
+              const cls = 'cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap'
+              return (
+                <span key={`${link.to}-${link.label}`} className="contents">
+                  {link.to === '/contact' && (
+                    hub.external
+                      ? <a href={hub.href} className={cls} style={style(false)} data-testid="member-hub-link">Member Hub</a>
+                      : <Link to={hub.href} className={cls} style={style(hubActive)} data-testid="member-hub-link">Member Hub</Link>
+                  )}
+                  <Link to={link.to} className={cls} style={style(location.pathname === link.to)}>
+                    {link.label}
                   </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Remaining top-level links */}
-            {navLinks.filter((link) => link.to !== '/').map((link) => (
-              <Link
-                key={`${link.to}-${link.label}`}
-                to={link.to}
-                className="cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap"
-                style={{
-                  color:
-                    location.pathname === link.to
-                      ? 'var(--gold)'
-                      : 'var(--slate)',
-                  borderBottom:
-                    location.pathname === link.to
-                      ? '2px solid var(--gold)'
-                      : '2px solid transparent',
-                }}
-              >
-                {link.label}
-              </Link>
-            ))}
+                </span>
+              )
+            })}
             <NotificationBell />
             <button
               onClick={toggle}
@@ -389,122 +230,29 @@ export default function Layout() {
               Home
             </Link>
 
-            {/* Research section (collapsible) */}
-            <button
-              onClick={() => setMobileResearchOpen(!mobileResearchOpen)}
-              className="w-full px-4 py-3 rounded-md cursor-pointer text-base font-medium transition-colors duration-200"
-              style={{
-                color: isResearchActive ? 'var(--gold)' : 'var(--ink)',
-                background: isResearchActive ? 'var(--gold-active)' : 'transparent',
+            {/* Remaining top-level links, Member Hub before Contact */}
+            {navLinks.filter((link) => link.to !== '/').map((link) => {
+              const style = (active: boolean) => ({
+                color: active ? 'var(--gold)' : 'var(--ink)',
+                background: active ? 'var(--gold-active)' : 'transparent',
                 minHeight: '44px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                border: 'none',
-                textAlign: 'left',
-              }}
-            >
-              Research
-              <ChevronDown {...ICON_PROPS}
-                size={16}
-                className="transition-transform duration-200"
-                style={{
-                  transform: mobileResearchOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                  color: 'var(--slate)',
-                }}
-              />
-            </button>
-
-            {/* Research sub-items */}
-            <div
-              className="overflow-hidden transition-all duration-300"
-              style={{
-                maxHeight: mobileResearchOpen ? '300px' : '0',
-                opacity: mobileResearchOpen ? 1 : 0,
-              }}
-            >
-              {researchDropdownLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => setMenuOpen(false)}
-                  className="block py-2.5 rounded-md cursor-pointer text-sm font-medium transition-colors duration-200"
-                  style={{
-                    color: location.pathname === link.to ? 'var(--gold)' : 'var(--ink)',
-                    background: location.pathname === link.to ? 'var(--gold-active)' : 'transparent',
-                    minHeight: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingLeft: '24px',
-                    paddingRight: '16px',
-                    marginLeft: '16px',
-                    borderLeft: location.pathname === link.to
-                      ? '3px solid var(--gold)'
-                      : `3px solid ${withAlpha(ACCENT_GOLD, 20)}`,
-                  }}
-                >
-                  <span>{link.label}</span>
-                  {link.label === 'Today' && pendingCount > 0 && (
-                    <span
-                      style={{
-                        background: 'var(--maroon-solid)',
-                        color: 'var(--ink-bright, #fff)',
-                        fontSize: '10px',
-                        lineHeight: '16px',
-                        width: '16px',
-                        height: '16px',
-                        borderRadius: 'var(--radius-circle)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        animation: 'badge-pop 200ms ease-out',
-                      }}
-                    >
-                      {pendingCount}
-                    </span>
+              })
+              const cls = 'block px-4 py-3 rounded-md cursor-pointer text-base font-medium transition-colors duration-200'
+              return (
+                <span key={`mobile-${link.to}-${link.label}`} className="contents">
+                  {link.to === '/contact' && (
+                    hub.external
+                      ? <a href={hub.href} className={cls} style={style(false)}>Member Hub</a>
+                      : <Link to={hub.href} onClick={() => setMenuOpen(false)} className={cls} style={style(hubActive)}>Member Hub</Link>
                   )}
-                  {link.label === 'Meetings' && nextMeetingLabel && (
-                    <span
-                      style={{
-                        fontSize: '10px',
-                        color: 'var(--gold)',
-                        opacity: 0.8,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {nextMeetingLabel}
-                    </span>
-                  )}
-                </Link>
-              ))}
-            </div>
-
-            {/* Remaining top-level links */}
-            {navLinks.filter((link) => link.to !== '/').map((link) => (
-              <Link
-                key={`mobile-${link.to}-${link.label}`}
-                to={link.to}
-                onClick={() => setMenuOpen(false)}
-                className="block px-4 py-3 rounded-md cursor-pointer text-base font-medium transition-colors duration-200"
-                style={{
-                  color:
-                    location.pathname === link.to
-                      ? 'var(--gold)'
-                      : 'var(--ink)',
-                  background:
-                    location.pathname === link.to
-                      ? 'var(--gold-active)'
-                      : 'transparent',
-                  minHeight: '44px',
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                {link.label}
-              </Link>
-            ))}
+                  <Link to={link.to} onClick={() => setMenuOpen(false)} className={cls} style={style(location.pathname === link.to)}>
+                    {link.label}
+                  </Link>
+                </span>
+              )
+            })}
           </div>
         </div>
       </nav>
@@ -567,7 +315,7 @@ export default function Layout() {
               </p>
             </div>
 
-            {/* Column 2: Research Portal */}
+            {/* Column 2: Member Hub (the Hub's main pages) */}
             <div>
               <h3
                 className="text-lg font-normal mb-4"
@@ -576,11 +324,11 @@ export default function Layout() {
                   color: 'var(--ink-bright, #fff)',
                 }}
               >
-                Research Portal
+                Member Hub
               </h3>
               <ul className="space-y-3">
-                {footerResearchLinks.map((link) => (
-                  <li key={`footer-research-${link.to}`}>
+                {footerHubLinks.map((link) => (
+                  <li key={`footer-hub-${link.to}`}>
                     <Link
                       to={link.to}
                       className="text-sm cursor-pointer transition-colors duration-200 hov-color"
