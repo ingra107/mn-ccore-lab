@@ -57,7 +57,6 @@ function makeEnv(overrides: Partial<Record<string, unknown>> = {}): Record<strin
         }),
       }),
     },
-    SENDGRID_API_KEY: 'sg-test-key',
     RESEND_API_KEY: 'resend-test-key',
     ...overrides,
   }
@@ -111,8 +110,8 @@ describe('scheduled() cron dispatch', () => {
     expect(mockHandleSendDailyDigests).not.toHaveBeenCalled()
   })
 
-  it('0 13 * * 1-5 → skips email body when SENDGRID_API_KEY absent', async () => {
-    const env = makeEnv({ SENDGRID_API_KEY: undefined })
+  it('0 13 * * 1-5 → skips email body when RESEND_API_KEY absent', async () => {
+    const env = makeEnv({ RESEND_API_KEY: undefined })
     await scheduledHandler(makeEvent('0 13 * * 1-5'), env, {})
 
     // Early return — no impact check, no member queries, no digest

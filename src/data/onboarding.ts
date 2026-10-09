@@ -16,7 +16,8 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     title: 'Complete your profile',
     description: 'Add your photo, bio, and credentials so the team knows you.',
     action: 'Go to your profile page',
-    link: '/team',
+    // Was '/team', the public marketing roster (F7, 2026-10-09).
+    link: '/portal/profile',
     category: 'setup',
   },
   {

@@ -36,6 +36,7 @@
 
 import type { Env } from '../types';
 import type { AuthUser } from '../helpers';
+import { withoutPiOnlyLinks } from '../lib/pi-only-project-fields';
 import { json, error, isPiRequest, assertProjectVisible, generateId, getValidationFlags } from '../helpers';
 import { assertEnumDomain } from '../lib/enum-domains';
 import { nowInstant } from '../lib/time';
@@ -227,7 +228,9 @@ interface ProjectLinkFields {
   box_url?: string | null;
 }
 
-interface DerivedLink {
+// A type alias, not an interface: an alias is assignable to Record<string, unknown>,
+// so explicit rows and derived links share one array type.
+type DerivedLink = {
   id: string;
   role: 'derived';
   type: string;
@@ -334,12 +337,18 @@ async function fetchProjectWithLinks(
 //
 // Explicit rows first (sort_order ASC, id ASC from the DB query), then derived
 // folder → github → box. Dedup: explicit wins when canonical_url matches.
+//
+// isPi false (a non-PI caller): no local_folder link, explicit or derived.
+// Either is a path on the PI's own machine (an mnccore://open/<path> URL or a
+// stored "~/Box/..." row), readable and usable only there (P7,
+// api/lib/pi-only-project-fields.ts).
 export function buildProjectLinks(
   fields: ProjectLinkFields,
   explicitRows: Record<string, unknown>[],
+  isPi: boolean,
 ): Record<string, unknown>[] {
-  const derived = buildDerivedProjectLinks(fields, explicitRows);
-  return [...explicitRows, ...derived];
+  const all = [...explicitRows, ...buildDerivedProjectLinks(fields, explicitRows)];
+  return isPi ? all : withoutPiOnlyLinks(all);
 }
 
 // GET /api/tasks/:id/links
@@ -354,6 +363,7 @@ export async function handleGetTaskLinks(
   taskId: string,
   request: Request,
   env: Env,
+  isPi: boolean,
 ): Promise<Response> {
   // Read through the caller's handle: a task the caller may not read is a 404.
   // A task can be visible without its project (it names the caller); the
@@ -386,10 +396,10 @@ export async function handleGetTaskLinks(
     (row) => (row.role ?? 'key') === 'key',
   );
   const projectLinks = projectData
-    ? buildProjectLinks(projectData.fields, projectExplicit)
+    ? buildProjectLinks(projectData.fields, projectExplicit, isPi)
     : [];
 
-  return json({ links: taskLinks, projectLinks });
+  return json({ links: isPi ? taskLinks : withoutPiOnlyLinks(taskLinks), projectLinks });
 }
 
 // GET /api/projects/:slug/links
@@ -403,6 +413,7 @@ export async function handleGetProjectLinks(
   slugOrId: string,
   request: Request,
   env: Env,
+  isPi: boolean,
 ): Promise<Response> {
   // Resolve slug/PK to canonical row so we can gate visibility + get the PK.
   // Also fetch the three derived-link source columns in the same query.
@@ -419,7 +430,7 @@ export async function handleGetProjectLinks(
   if (block) return block;
 
   const explicit = await fetchOwnerLinks(env, 'projects', project.id);
-  const links = buildProjectLinks(project, explicit);
+  const links = buildProjectLinks(project, explicit, isPi);
 
   return json({ links });
 }
@@ -448,9 +459,12 @@ export async function handleGetProjectLinks(
 // Visibility: both queries read through the caller's handle, so only the
 // projects the caller is on (and their links) come back.
 export async function handleGetAllProjectLinks(
-  _request: Request,
+  request: Request,
   env: Env,
 ): Promise<Response> {
+  // P7: only a PI or the PB key receives the PI-only local-folder links. A
+  // privilege, not a visibility rule: which projects come back is the handle's.
+  const callerIsPi = await isPiRequest(request, env);
   // Q1: fetch the caller's live projects with the three derived-link source columns.
   type ProjectBulkRow = { id: string } & ProjectLinkFields;
   let projects: ProjectBulkRow[];
@@ -507,7 +521,7 @@ export async function handleGetAllProjectLinks(
   const result: Record<string, Record<string, unknown>[]> = {};
   for (const proj of projects) {
     const explicit = explicitByProject.get(proj.id) ?? [];
-    result[proj.id] = buildProjectLinks(proj, explicit);
+    result[proj.id] = buildProjectLinks(proj, explicit, callerIsPi);
   }
 
   return json({ projects: result });

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useLayoutEffect } from 'react'
 import { Outlet, useLocation, Link } from 'react-router-dom'
 import { Menu, X, Sun, Moon, Monitor, Search, Plus } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
@@ -19,12 +19,15 @@ import { UndoToastProvider } from './UndoToast'
 import StatusBar from './StatusBar'
 import PhaseReleaseBanner from './PhaseReleaseBanner'
 import { PATHS } from '../constants/paths'
+import { useRecordRecentlyViewed } from '../hooks/useRecentlyViewed'
+import { PORTAL_PAGE_LABELS, portalTitle } from '../constants/pageLabels'
 import { ICON_PROPS } from '../lib/iconProps'
 
 export default function PortalLayout() {
   const { mode, setTheme } = useDarkMode()
   useFavicon()
   useRealtimeSync()
+  useRecordRecentlyViewed()
   const [showThemeMenu, setShowThemeMenu] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const { showHelp, setShowHelp, gPending } = useKeyboardShortcuts()
@@ -36,6 +39,16 @@ export default function PortalLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
   const [focusMode, setFocusMode] = useState(false)
+
+  // D3(a): every named portal page gets "<nav label> · MN-CCORE" in the tab.
+  // A LAYOUT effect on purpose: it runs before any page's passive useEffect
+  // (usePageMeta), so a page that sets its own title (a count, a record
+  // name) still wins, and a page that sets none no longer inherits the last
+  // page's title or the public site's.
+  useLayoutEffect(() => {
+    const label = PORTAL_PAGE_LABELS[location.pathname]
+    if (label) document.title = portalTitle(label)
+  }, [location.pathname])
 
   // Close mobile menu on route change. Adjusted during render (React's
   // "adjusting state when a prop changes" pattern) rather than an effect.

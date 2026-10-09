@@ -12,7 +12,10 @@ import { ACCENT_GOLD, INK, INK_MUTED, INK_DIM } from '../constants'
 import { CollapseChevron } from '../SectionCollapseToggle'
 import { collapseToggleProps } from '../collapseToggleProps'
 
-export function PulseCard({ focusMin, milestones, mentees }: { focusMin: number; milestones: Array<{ title: string; days: number }>; mentees: Array<{ name: string; next: string }> }) {
+// focusMin === null: the viewer has no pomodoro data source (a non-PI member;
+// /api/pb/* is PI-only), so the FOCUS tile and header minutes are not drawn.
+// A permanent "0min" would be a fake reading.
+export function PulseCard({ focusMin, milestones, mentees }: { focusMin: number | null; milestones: Array<{ title: string; days: number }>; mentees: Array<{ name: string; next: string }> }) {
   // Session-only collapse — starts expanded on every load (no localStorage).
   const [open, setOpen] = useState(true)
   return (
@@ -23,11 +26,12 @@ export function PulseCard({ focusMin, milestones, mentees }: { focusMin: number;
       >
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_GOLD }} />
         <h4 style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, margin: 0 }}>Pulse</h4>
-        <span style={{ fontSize: 11, color: INK_DIM, marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{focusMin}min</span>
+        <span style={{ fontSize: 11, color: INK_DIM, marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{focusMin !== null ? `${focusMin}min` : ''}</span>
         <CollapseChevron open={open} color={ACCENT_GOLD} />
       </div>
       {open && (
       <>
+      {focusMin !== null && (
       <div style={{ marginBottom: 10 }}>
         <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
           <div style={{ fontSize: 10, color: INK_MUTED, letterSpacing: '0.04em' }}>FOCUS</div>
@@ -36,6 +40,7 @@ export function PulseCard({ focusMin, milestones, mentees }: { focusMin: number;
           </div>
         </div>
       </div>
+      )}
       {milestones.length > 0 && (
         <>
           <div style={{ fontSize: 10, color: INK_MUTED, letterSpacing: '0.04em', marginBottom: 4 }}>NEXT MILESTONES</div>

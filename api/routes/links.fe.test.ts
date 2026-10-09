@@ -28,6 +28,8 @@ vi.mock('../helpers', async (importOriginal) => {
 
 import { handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks } from './links'
 import { assertProjectVisible, isPiRequest } from '../helpers'
+import { PI_ONLY_LINK_TYPES } from '../lib/pi-only-project-fields'
+import { PB_LINK_TYPES } from '../../shared/pbLinks.generated'
 
 const mockAssertProjectVisible = vi.mocked(assertProjectVisible)
 const mockIsPiRequest = vi.mocked(isPiRequest)
@@ -214,7 +216,7 @@ describe('handleGetTaskLinks — GET /api/tasks/:id/links', () => {
 
   it('returns 404 when task is not found', async () => {
     const env = makeEnv({ taskRow: null })
-    const res = await handleGetTaskLinks('task_missing', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_missing', makeRequest(), env, true)
     expect(res.status).toBe(404)
   })
 
@@ -224,7 +226,7 @@ describe('handleGetTaskLinks — GET /api/tasks/:id/links', () => {
       taskLinks: [],
       projectLinks: [],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     expect(res.status).toBe(200)
     const body = await res.json() as { links: unknown[]; projectLinks: unknown[] }
     expect(body.links).toEqual([])
@@ -236,7 +238,7 @@ describe('handleGetTaskLinks — GET /api/tasks/:id/links', () => {
       taskRow: { project_id: null },
       taskLinks: [DOC_LINK],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     expect(res.status).toBe(200)
     const body = await res.json() as { links: unknown[]; projectLinks: unknown[] }
     expect(body.links).toHaveLength(1)
@@ -253,7 +255,7 @@ describe('handleGetTaskLinks — GET /api/tasks/:id/links', () => {
       taskLinks: [DOC_LINK],
       projectLinks: [BOX_LINK, GMAIL_LINK],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     expect(res.status).toBe(200)
     const body = await res.json() as { links: unknown[]; projectLinks: unknown[] }
     expect(body.links).toHaveLength(1)
@@ -269,7 +271,7 @@ describe('handleGetTaskLinks — GET /api/tasks/:id/links', () => {
       taskRow: { project_id: null },
       taskLinks: [DOC_LINK],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     const body = await res.json() as { links: Record<string, unknown>[] }
     const row = body.links[0]
     // Must have the six projection fields.
@@ -294,14 +296,14 @@ describe('handleGetTaskLinks — GET /api/tasks/:id/links', () => {
       new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 }),
     )
     const env = makeEnv({ taskRow: { project_id: 'proj_hidden_001' } })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     expect(res.status).toBe(200)
     expect(mockAssertProjectVisible).not.toHaveBeenCalled()
   })
 
   it('does not call assertProjectVisible for tasks without a project', async () => {
     const env = makeEnv({ taskRow: { project_id: null } })
-    await handleGetTaskLinks('task_001', makeRequest(), env)
+    await handleGetTaskLinks('task_001', makeRequest(), env, true)
     expect(mockAssertProjectVisible).not.toHaveBeenCalled()
   })
 })
@@ -366,6 +368,7 @@ describe('handleGetAllProjectLinks — GET /api/projects/links (bulk)', () => {
   })
 
   it('includes derived links (primary_folder, github_url, box_url) alongside explicit', async () => {
+    mockIsPiRequest.mockResolvedValue(true) // the folder link is the PI's (P7)
     const env = makeEnvBulk({
       projectRows: [
         {
@@ -385,6 +388,26 @@ describe('handleGetAllProjectLinks — GET /api/projects/links (bulk)', () => {
     expect(types).toContain('local_folder')
     expect(types).toContain('github_repo')
     expect(types).toContain('box_folder')
+  })
+
+  it('P7: a non-PI gets no derived folder link (a PI local path); github and box stay', async () => {
+    const env = makeEnvBulk({
+      projectRows: [
+        {
+          id: 'proj_aaa',
+          category: 'Nick_Lab',
+          primary_folder: 'C:/Users/ingra107/Box/Research/CIRCLE',
+          github_url: 'https://github.com/ingra107/circle',
+          box_url: 'https://umn.box.com/s/circle',
+        },
+      ],
+      linkRows: [],
+    })
+    const res = await handleGetAllProjectLinks(makeRequest(), env)
+    const text = await res.text()
+    expect(text).not.toContain('ingra107/Box')
+    const links = (JSON.parse(text) as { projects: Record<string, Record<string, unknown>[]> }).projects['proj_aaa']
+    expect(links.map(l => l.type).sort()).toEqual(['box_folder', 'github_repo'])
   })
 
   it('deduplicates: explicit link wins over derived with the same canonical_url', async () => {
@@ -472,7 +495,7 @@ describe('handleGetProjectLinks — GET /api/projects/:slug/links', () => {
 
   it('returns 404 when project is not found', async () => {
     const env = makeEnv({ projectRow: null })
-    const res = await handleGetProjectLinks('missing-slug', makeRequest(), env)
+    const res = await handleGetProjectLinks('missing-slug', makeRequest(), env, true)
     expect(res.status).toBe(404)
   })
 
@@ -481,7 +504,7 @@ describe('handleGetProjectLinks — GET /api/projects/:slug/links', () => {
       projectRow: { id: 'proj_001' },
       projectLinks: [],
     })
-    const res = await handleGetProjectLinks('my-project', makeRequest(), env)
+    const res = await handleGetProjectLinks('my-project', makeRequest(), env, true)
     expect(res.status).toBe(200)
     const body = await res.json() as { links: unknown[] }
     expect(body.links).toEqual([])
@@ -492,7 +515,7 @@ describe('handleGetProjectLinks — GET /api/projects/:slug/links', () => {
       projectRow: { id: 'proj_001' },
       projectLinks: [BOX_LINK, DOC_LINK],
     })
-    const res = await handleGetProjectLinks('my-project', makeRequest(), env)
+    const res = await handleGetProjectLinks('my-project', makeRequest(), env, true)
     expect(res.status).toBe(200)
     const body = await res.json() as { links: Record<string, unknown>[] }
     expect(body.links).toHaveLength(2)
@@ -506,7 +529,7 @@ describe('handleGetProjectLinks — GET /api/projects/:slug/links', () => {
       projectRow: { id: 'proj_001' },
       projectLinks: [DOC_LINK],
     })
-    await handleGetProjectLinks('my-project', makeRequest(), env)
+    await handleGetProjectLinks('my-project', makeRequest(), env, true)
     expect(mockAssertProjectVisible).toHaveBeenCalledWith(
       expect.any(Request),
       env,
@@ -519,7 +542,7 @@ describe('handleGetProjectLinks — GET /api/projects/:slug/links', () => {
       new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 }),
     )
     const env = makeEnv({ projectRow: { id: 'proj_pb_001' } })
-    const res = await handleGetProjectLinks('pb-slug', makeRequest(), env)
+    const res = await handleGetProjectLinks('pb-slug', makeRequest(), env, true)
     expect(res.status).toBe(403)
   })
 
@@ -530,7 +553,7 @@ describe('handleGetProjectLinks — GET /api/projects/:slug/links', () => {
       projectLinks: [DOC_LINK],
     })
     // Use the typed PK directly as the "slug" param.
-    const res = await handleGetProjectLinks('proj_001', makeRequest(), env)
+    const res = await handleGetProjectLinks('proj_001', makeRequest(), env, true)
     expect(res.status).toBe(200)
     const body = await res.json() as { links: unknown[] }
     expect(body.links).toHaveLength(1)
@@ -562,7 +585,7 @@ describe('handleGetTaskLinks — derived project-field links in projectLinks', (
       projectRow: { id: 'proj_001', primary_folder: FOLDER_PATH },
       projectLinks: [],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     expect(res.status).toBe(200)
     const body = await res.json() as { links: unknown[]; projectLinks: unknown[] }
     const types = (body.projectLinks as Record<string, unknown>[]).map(l => l.type)
@@ -580,7 +603,7 @@ describe('handleGetTaskLinks — derived project-field links in projectLinks', (
       projectRow: { id: 'proj_001', github_url: GITHUB_URL },
       projectLinks: [],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     const body = await res.json() as { projectLinks: Record<string, unknown>[] }
     const gh = body.projectLinks.find(l => l.type === 'github_repo')
     expect(gh?.id).toBe('derived:github')
@@ -595,7 +618,7 @@ describe('handleGetTaskLinks — derived project-field links in projectLinks', (
       projectRow: { id: 'proj_001', box_url: BOX_URL },
       projectLinks: [],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     const body = await res.json() as { projectLinks: Record<string, unknown>[] }
     const box = body.projectLinks.find(l => l.type === 'box_folder')
     expect(box?.id).toBe('derived:box')
@@ -615,7 +638,7 @@ describe('handleGetTaskLinks — derived project-field links in projectLinks', (
       },
       projectLinks: [],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     const body = await res.json() as { projectLinks: Record<string, unknown>[] }
     const types = body.projectLinks.map(l => l.type)
     expect(types).toContain('local_folder')
@@ -634,7 +657,7 @@ describe('handleGetTaskLinks — derived project-field links in projectLinks', (
       },
       projectLinks: [],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     const body = await res.json() as { projectLinks: Record<string, unknown>[] }
     expect(body.projectLinks).toHaveLength(0)
   })
@@ -655,7 +678,7 @@ describe('handleGetTaskLinks — derived project-field links in projectLinks', (
       projectRow: { id: 'proj_001', box_url: BOX_URL },
       projectLinks: [explicitBoxLink],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     const body = await res.json() as { projectLinks: Record<string, unknown>[] }
     const boxRows = body.projectLinks.filter(l => l.type === 'box_folder')
     expect(boxRows).toHaveLength(1)
@@ -673,7 +696,7 @@ describe('handleGetTaskLinks — derived project-field links in projectLinks', (
       },
       projectLinks: [DOC_LINK, BOX_LINK],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     const body = await res.json() as { projectLinks: Record<string, unknown>[] }
     // Explicit rows first (DOC_LINK, BOX_LINK), then derived (folder, github).
     expect(body.projectLinks[0].id).toBe('lnk_doc_001')
@@ -687,7 +710,7 @@ describe('handleGetTaskLinks — derived project-field links in projectLinks', (
       taskRow: { project_id: null },
       projectLinks: [],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     const body = await res.json() as { projectLinks: Record<string, unknown>[] }
     expect(body.projectLinks).toHaveLength(0)
   })
@@ -709,7 +732,7 @@ describe('handleGetProjectLinks — derived project-field links in links', () =>
       },
       projectLinks: [],
     })
-    const res = await handleGetProjectLinks('my-project', makeRequest(), env)
+    const res = await handleGetProjectLinks('my-project', makeRequest(), env, true)
     expect(res.status).toBe(200)
     const body = await res.json() as { links: Record<string, unknown>[] }
     const types = body.links.map(l => l.type)
@@ -719,12 +742,69 @@ describe('handleGetProjectLinks — derived project-field links in links', () =>
     expect(body.links.find(l => l.type === 'local_folder')?.canonical_url).toBe(FOLDER_DERIVED_URL)
   })
 
+  it('P7: every local_* link type in the generated SSOT is PI-only', () => {
+    const local = PB_LINK_TYPES.filter((t) => t.startsWith('local_'))
+    expect(local.length).toBeGreaterThan(0)
+    expect([...PI_ONLY_LINK_TYPES].sort()).toEqual([...local].sort())
+  })
+
+  it('P7: a non-PI caller gets no local_file row (a local .docx path); a PI does', async () => {
+    const DOCX = 'C:/Users/ingra107/Box/Research/R Proposal/.R01-Grant/CLIF letter of support.docx'
+    const env = makeEnv({
+      taskRow: { project_id: 'proj_001' },
+      projectRow: { id: 'proj_001' },
+      taskLinks: [{ id: 'lnk_file', role: 'key', type: 'local_file', canonical_url: DOCX, short_title: 'CLIF letter', sort_order: 0 }],
+      projectLinks: [{ id: 'lnk_pfile', role: 'key', type: 'local_file', canonical_url: DOCX, short_title: 'CLIF letter', sort_order: 0 }],
+    })
+    const member = await (await handleGetTaskLinks('task_001', makeRequest(), env, false)).text()
+    expect(member).not.toContain('CLIF letter of support')
+    const memberProj = await (await handleGetProjectLinks('my-project', makeRequest(), env, false)).text()
+    expect(memberProj).not.toContain('CLIF letter of support')
+    const pi = await (await handleGetTaskLinks('task_001', makeRequest(), env, true)).text()
+    expect(pi).toContain('lnk_file')
+    expect(pi).toContain('lnk_pfile')
+  })
+
+  it('P7: a non-PI caller gets no EXPLICIT local_folder row, on the task or its project; a PI does', async () => {
+    const LOCAL = '~/Box/Research/K proposal/.K-Grant/RPPR/'
+    const folderRow = (id: string) => ({ id, role: 'key', type: 'local_folder', canonical_url: LOCAL, short_title: 'RPPR folder', sort_order: 0 })
+    const docRow = { id: 'lnk_doc', role: 'key', type: 'google_doc', canonical_url: 'https://docs.google.com/document/d/abc', short_title: 'Doc', sort_order: 1 }
+    const env = makeEnv({
+      taskRow: { project_id: 'proj_001' },
+      projectRow: { id: 'proj_001' },
+      taskLinks: [folderRow('lnk_tf'), docRow],
+      projectLinks: [folderRow('lnk_pf')],
+    })
+    const member = await (await handleGetTaskLinks('task_001', makeRequest(), env, false)).text()
+    expect(member).not.toContain(LOCAL)
+    expect(member).toContain('lnk_doc')
+    const memberProj = await (await handleGetProjectLinks('my-project', makeRequest(), env, false)).text()
+    expect(memberProj).not.toContain(LOCAL)
+    const pi = await (await handleGetTaskLinks('task_001', makeRequest(), env, true)).text()
+    expect(pi).toContain('lnk_tf')
+    expect(pi).toContain('lnk_pf')
+  })
+
+  it('P7: a non-PI caller gets no derived folder link; task links too', async () => {
+    const env = makeEnv({
+      taskRow: { project_id: 'proj_001' },
+      projectRow: { id: 'proj_001', primary_folder: FOLDER_PATH, github_url: GITHUB_URL },
+      projectLinks: [],
+    })
+    const proj = await (await handleGetProjectLinks('my-project', makeRequest(), env, false)).text()
+    expect(proj).not.toContain(FOLDER_PATH)
+    expect(proj).toContain(GITHUB_URL)
+    const task = await (await handleGetTaskLinks('task_001', makeRequest(), env, false)).text()
+    expect(task).not.toContain(FOLDER_PATH)
+    expect(task).toContain(GITHUB_URL)
+  })
+
   it('omits derived links when fields are absent', async () => {
     const env = makeEnv({
       projectRow: { id: 'proj_001' },
       projectLinks: [],
     })
-    const res = await handleGetProjectLinks('my-project', makeRequest(), env)
+    const res = await handleGetProjectLinks('my-project', makeRequest(), env, true)
     const body = await res.json() as { links: Record<string, unknown>[] }
     expect(body.links).toHaveLength(0)
   })
@@ -742,7 +822,7 @@ describe('handleGetProjectLinks — derived project-field links in links', () =>
       projectRow: { id: 'proj_001', primary_folder: FOLDER_PATH },
       projectLinks: [explicitFolder],
     })
-    const res = await handleGetProjectLinks('my-project', makeRequest(), env)
+    const res = await handleGetProjectLinks('my-project', makeRequest(), env, true)
     const body = await res.json() as { links: Record<string, unknown>[] }
     const folderRows = body.links.filter(l => l.type === 'local_folder')
     expect(folderRows).toHaveLength(1)
@@ -757,7 +837,7 @@ describe('handleGetProjectLinks — derived project-field links in links', () =>
       projectRow: { id: 'proj_001', primary_folder: fileUrl },
       projectLinks: [],
     })
-    const res = await handleGetProjectLinks('my-project', makeRequest(), env)
+    const res = await handleGetProjectLinks('my-project', makeRequest(), env, true)
     const body = await res.json() as { links: Record<string, unknown>[] }
     const folder = body.links.find(l => l.type === 'local_folder')
     expect(folder?.canonical_url).toBe(expectedUri)
@@ -768,7 +848,7 @@ describe('handleGetProjectLinks — derived project-field links in links', () =>
       projectRow: { id: 'proj_001', github_url: 'https://github.com/MN-CCORE/hub.git' },
       projectLinks: [],
     })
-    const res = await handleGetProjectLinks('my-project', makeRequest(), env)
+    const res = await handleGetProjectLinks('my-project', makeRequest(), env, true)
     const body = await res.json() as { links: Record<string, unknown>[] }
     const gh = body.links.find(l => l.type === 'github_repo')
     expect(gh?.short_title).toBe('MN-CCORE/hub')
@@ -783,7 +863,7 @@ describe('handleGetProjectLinks — derived project-field links in links', () =>
       },
       projectLinks: [DOC_LINK],
     })
-    const res = await handleGetProjectLinks('my-project', makeRequest(), env)
+    const res = await handleGetProjectLinks('my-project', makeRequest(), env, true)
     const body = await res.json() as { links: Record<string, unknown>[] }
     expect(body.links[0].id).toBe('lnk_doc_001')
     expect(body.links[1].id).toBe('derived:folder')
@@ -811,7 +891,7 @@ describe('handleGetTaskLinks — project links filtered to role=key', () => {
       projectRow: { id: 'proj_001' },
       projectLinks: [DOC_LINK, ARCHIVED_LINK],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     expect(res.status).toBe(200)
     const body = await res.json() as { projectLinks: Record<string, unknown>[] }
     const ids = body.projectLinks.map((l) => l.id)
@@ -825,7 +905,7 @@ describe('handleGetTaskLinks — project links filtered to role=key', () => {
       projectRow: { id: 'proj_001' },
       projectLinks: [ARCHIVED_LINK],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     const body = await res.json() as { projectLinks: unknown[] }
     expect(body.projectLinks).toEqual([])
   })
@@ -838,7 +918,7 @@ describe('handleGetTaskLinks — project links filtered to role=key', () => {
       projectRow: { id: 'proj_001' },
       projectLinks: [NO_ROLE],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     const body = await res.json() as { projectLinks: unknown[] }
     expect(body.projectLinks).toHaveLength(1)
   })
@@ -849,7 +929,7 @@ describe('handleGetTaskLinks — project links filtered to role=key', () => {
       projectRow: { id: 'proj_001', primary_folder: 'file:///C:/proj/' },
       projectLinks: [ARCHIVED_LINK],
     })
-    const res = await handleGetTaskLinks('task_001', makeRequest(), env)
+    const res = await handleGetTaskLinks('task_001', makeRequest(), env, true)
     const body = await res.json() as { projectLinks: Record<string, unknown>[] }
     expect(body.projectLinks).toHaveLength(1)
     expect(body.projectLinks[0].type).toBe('local_folder')
@@ -867,7 +947,7 @@ describe('handleGetProjectLinks — archived links still render on the project',
       projectRow: { id: 'proj_001' },
       projectLinks: [DOC_LINK, ARCHIVED_LINK],
     })
-    const res = await handleGetProjectLinks('proj_001', makeRequest(), env)
+    const res = await handleGetProjectLinks('proj_001', makeRequest(), env, true)
     expect(res.status).toBe(200)
     const body = await res.json() as { links: Record<string, unknown>[] }
     const ids = body.links.map((l) => l.id)

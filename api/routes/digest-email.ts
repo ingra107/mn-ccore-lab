@@ -5,7 +5,7 @@ import { escapeHtml } from '../lib/escapeHtml';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 
-const HUB_URL = 'https://mn-ccore-lab.pages.dev';
+import { HUB_URL, isEmailRecipient, raw, warnIfRecipientsMatchNobody } from '../lib/email';
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -344,7 +344,7 @@ export async function handleDigestPreview(
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    return new Response(`<html><body><h2>Error</h2><pre>${msg}</pre></body></html>`, {
+    return new Response(`<html><body><h2>Error</h2><pre>${escapeHtml(msg)}</pre></body></html>`, {
       status: 500,
       headers: { 'Content-Type': 'text/html', ...corsHeaders },
     });
@@ -600,9 +600,12 @@ export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigg
      WHERE member_type IN ('director', 'coordinator') AND slug IS NOT NULL`
   ).all<CoordinatorMember>();
 
-  const members = membersResult.results ?? [];
+  // Recipient switch: Nick only until widened. sendEmail enforces it too; this
+  // pre-filter just skips building emails that would be blocked.
+  const members = (membersResult.results ?? []).filter((m) => isEmailRecipient(m.email || `${m.slug}@umn.edu`, env));
   if (members.length === 0) {
-    return json({ data: { sent: 0, skipped: 0, message: 'No coordinators/directors with email found' } });
+    warnIfRecipientsMatchNobody(env);
+    return json({ data: { sent: 0, skipped: 0, message: 'No digest recipients found' } });
   }
 
   const { sendEmail } = await import('../lib/email');
@@ -629,10 +632,11 @@ export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigg
         DB: viewerDb(rawDb, personViewer({ slug: member.slug, email: member.email, pi: !!member.email && piEmails.has(member.email.toLowerCase()) })),
       };
       const html = await composeDailyDigest(recipientEnv, memberWithEmail);
-      const ok = await sendEmail(env.RESEND_API_KEY, {
+      const ok = await sendEmail(env, {
         to: derivedEmail,
         subject: `Daily Lab Brief — ${dateStr}`,
-        html,
+        // composeDailyDigest escapes every database value with escapeHtml.
+        html: raw(html),
       });
       if (ok) { sent++; } else { skipped++; errors.push(`${member.slug}: send failed`); }
     } catch (e: unknown) {

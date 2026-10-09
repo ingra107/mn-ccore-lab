@@ -77,7 +77,7 @@ function currentIsoWeek(): string {
 }
 
 export default function InsightsPage() {
-  usePageMeta('Operational Insights | MN-CCORE', 'Where attention should go this week.')
+  usePageMeta('Insights · MN-CCORE', 'Where attention should go this week.')
 
   // INS-04: ?week=YYYY-Www in URL → historical view; absent → current.
   const [searchParams, setSearchParams] = useSearchParams()

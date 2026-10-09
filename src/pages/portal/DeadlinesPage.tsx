@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { portalTitle } from '../../constants/pageLabels'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
@@ -215,10 +216,7 @@ export default function DeadlinesPage() {
 
   // Dynamic page title
   useEffect(() => {
-    document.title = overdue.length > 0
-      ? `Deadlines (${overdue.length} overdue) | MN-CCORE`
-      : 'Deadlines | MN-CCORE'
-    return () => { document.title = 'MN-CCORE Lab Hub' }
+    document.title = portalTitle('Deadlines', overdue.length > 0 ? `${overdue.length} overdue` : undefined)
   }, [overdue.length])
 
   // T2.1 (2026-05-28): adopt QueryState for auth-error consistency.

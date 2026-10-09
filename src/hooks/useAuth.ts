@@ -23,6 +23,13 @@ export interface AuthUser {
    *  this only decides whether to draw the switch. False until /api/auth/me
    *  says otherwise, so the cookie first paint never shows it. */
   canShowAllProjects: boolean
+  /** True only when isPi came from /api/auth/me. False on the cookie first
+   *  paint, while the API has not answered, and when it failed (the fallback
+   *  is the cookie user, whose isPi is false by construction). So
+   *  `!isPi && piResolved` means "known non-PI", and `!piResolved` means
+   *  "unknown" -- a caller whose wrong guess would leak (a launch seed posted
+   *  as team-visible text) must refuse on unknown, not treat it as non-PI. */
+  piResolved: boolean
 }
 
 const defaultUser: AuthUser = {
@@ -32,6 +39,7 @@ const defaultUser: AuthUser = {
   isPi: false,
   isMember: false,
   canShowAllProjects: false,
+  piResolved: false,
 }
 
 // The last slug and email directory /api/auth/me returned, so a cookie first
@@ -113,6 +121,7 @@ function getAuthFromCookie(): AuthUser {
     isPi: false,
     isMember: true,
     canShowAllProjects: false,
+    piResolved: false,
   }
 }
 
@@ -150,7 +159,7 @@ export function authUserFromMe(data: {
     // a non-member must not be able to read out of localStorage).
     forgetSlug(email)
     forgetDirectory()
-    return { email, slug: '', name: data.name || '', isAuthenticated: true, isPi: false, isMember: false, canShowAllProjects: false }
+    return { email, slug: '', name: data.name || '', isAuthenticated: true, isPi: false, isMember: false, canShowAllProjects: false, piResolved: true }
   }
   if (Array.isArray(data.directory)) {
     setEmailDirectory(data.directory as DirectoryRow[])
@@ -161,7 +170,7 @@ export function authUserFromMe(data: {
   // A Worker older than this field sends none: treat the session as a member,
   // as before. The API, not this flag, decides access.
   return { email, slug, name: data.name || '', isAuthenticated: true, isPi: Boolean(data.isPi), isMember: true,
-    canShowAllProjects: data.canShowAllProjects === true }
+    canShowAllProjects: data.canShowAllProjects === true, piResolved: true }
 }
 
 // Also support fetching auth status from the API for more reliable detection

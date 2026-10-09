@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { portalTitle } from '../../constants/pageLabels'
 import { useSearchParams } from 'react-router-dom'
 import { Plus, ThumbsUp, X, Lightbulb, Pencil, Archive, Rocket } from 'lucide-react'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
@@ -152,8 +153,7 @@ export default function IdeasPage() {
   // Dynamic page title
   useEffect(() => {
     const count = ideas.filter(i => i.status === 'new').length
-    document.title = count > 0 ? `Ideas (${count} new) | MN-CCORE` : 'Ideas | MN-CCORE'
-    return () => { document.title = 'MN-CCORE Lab Hub' }
+    document.title = portalTitle('Ideas', count > 0 ? `${count} new` : undefined)
   }, [ideas])
 
   const handleIdeaStatusChange = (id: string, status: string, prevStatus: string) => {

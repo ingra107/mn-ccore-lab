@@ -116,3 +116,9 @@ export async function executeLaunchCommand(
     deps.showError(`@${cmd.tag} failed — your text is still here, try again`)
   }
 }
+
+/** Shown when a launch tag is typed before /api/auth/me has said whether the
+ *  viewer is the PI (or after it failed). The text is neither launched nor
+ *  posted: posting it could make a PI's private launch seed team-visible. */
+export const LAUNCH_AUTH_UNRESOLVED_MSG =
+  "Couldn't confirm your access yet, so this wasn't launched or posted. Your text is still here; try again in a moment."

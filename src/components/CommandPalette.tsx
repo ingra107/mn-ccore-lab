@@ -19,7 +19,7 @@ import { detectOrigin } from '../lib/launchOrigin'
 import { currentPageRoute } from '../lib/launchCommands'
 import { openGlobalQuickAdd } from './GlobalQuickAddModal'
 import { getPersonInfo } from '../data/team'
-import { PATHS, PUBLIC_PATHS } from '../constants/paths'
+import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 
 interface CommandItem {
@@ -153,7 +153,9 @@ export default function CommandPalette() {
     }
 
     // Navigation commands
-    const navItems: { path: string; label: string; icon: typeof Search; shortcut?: string }[] = [
+    // piOnly: the sidebar shows these only to a PI (Sidebar.tsx "PI View" /
+    // "PI Tools"); a member reaching them here landed on a PI-only page.
+    const navItems: { path: string; label: string; icon: typeof Search; shortcut?: string; piOnly?: boolean }[] = [
       { path: PATHS.dashboard, label: 'Today', icon: LayoutDashboard, shortcut: 'G D' },
       { path: PATHS.overview, label: 'Lab Overview', icon: LayoutDashboard },
       { path: PATHS.personal, label: 'My Hub', icon: User, shortcut: 'G H' },
@@ -173,15 +175,16 @@ export default function CommandPalette() {
       { path: PATHS.artifacts, label: 'Artifacts', icon: Library },
       { path: PATHS.activity, label: 'Activity', icon: Activity },
       { path: PATHS.analytics, label: 'Analytics', icon: BarChart3 },
-      { path: PATHS.piAnalytics, label: 'PI Analytics', icon: BarChart3 },
+      { path: PATHS.piAnalytics, label: 'PI Analytics', icon: BarChart3, piOnly: true },
       { path: PATHS.settings, label: 'Settings', icon: Settings },
-      { path: PUBLIC_PATHS.publicTeam, label: 'Team', icon: Users },
+      { path: PATHS.team, label: 'Team', icon: Users },
       { path: PATHS.search, label: 'Search', icon: Search, shortcut: 'G S' },
-      { path: PATHS.sessions, label: 'Session History', icon: Clock },
+      { path: PATHS.sessions, label: 'Session History', icon: Clock, piOnly: true },
       { path: PATHS.narratives, label: 'Narratives', icon: BookOpen },
       { path: PATHS.meetingNotes, label: 'Transcripts', icon: FileText },
     ]
     for (const nav of navItems) {
+      if (nav.piOnly && !user?.isPi) continue
       items.push({
         id: `nav-${nav.path}`,
         label: nav.label,

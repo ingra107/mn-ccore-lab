@@ -8,7 +8,18 @@ const STATUSES = ['pending', 'launched', 'failed', 'completed', 'expired'];
 const PAGE_ROUTE_MAX = 512; // stored page_route cap (a pathname + short query) — #8935
 
 // POST /api/launch-log — create a new launch log entry
-export async function handleCreateLaunch(request: Request, user: AuthUser, env: Env): Promise<Response> {
+//
+// PI-only (2026-10-09). A launch row is an instruction to start a Claude
+// session on the PI's own machine: a 'mobile' row is claimed and spawned by
+// hub_ai_listener on Nick's home machine with no requester check, and a
+// 'computer' row fires the mnccore:// handler that exists only on his laptops.
+// Any signed-in member could create one, so a member's @quickchat from a phone
+// started a session on Nick's machine seeded with the member's text. Refusing
+// the write here (refire goes through this function too) means that row can
+// no longer exist. isPi is the route's isPiRequest result: a PI email
+// session or the PB API key.
+export async function handleCreateLaunch(request: Request, user: AuthUser, env: Env, isPi: boolean): Promise<Response> {
+  if (!isPi) return error('Forbidden — launches start a session on the PI\'s machine; PI access only', 403);
   const b = await request.json() as {
     tag: string; seed?: string; origin: string;
     target_machine?: string; project_slug?: string; status?: string; task_id?: string;
@@ -74,7 +85,8 @@ export async function handleSetLaunchStatus(id: string, request: Request, user: 
 }
 
 // POST /api/launch-log/:id/refire — clone a prior launch into a new row (never mutates history)
-export async function handleRefireLaunch(id: string, user: AuthUser, env: Env): Promise<Response> {
+export async function handleRefireLaunch(id: string, user: AuthUser, env: Env, isPi: boolean): Promise<Response> {
+  if (!isPi) return error('Forbidden — launches start a session on the PI\'s machine; PI access only', 403);
   const src = await env.DB.prepare('SELECT * FROM launch_log WHERE id = ? AND requested_by = ?')
     .bind(id, user.email).first<{ tag: string; seed: string; origin: string; target_machine: string | null; project_slug: string | null; task_id: string | null; page_route: string | null }>();
   if (!src) return error('launch not found', 404);
@@ -84,7 +96,7 @@ export async function handleRefireLaunch(id: string, user: AuthUser, env: Env): 
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tag: src.tag, seed: src.seed, origin: src.origin, target_machine: src.target_machine, project_slug: src.project_slug, task_id: src.task_id, page_route: src.page_route }),
   });
-  return handleCreateLaunch(fakeReq, user, env);
+  return handleCreateLaunch(fakeReq, user, env, isPi);
 }
 
 // GET /api/pb/launch-log/pending — UNSCOPED (no requested_by filter); PI-gated by app-level middleware.

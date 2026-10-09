@@ -5,8 +5,11 @@ export interface Env {
   R2_ACCESS_KEY_ID?: string;
   R2_SECRET_ACCESS_KEY?: string;
   CF_ACCOUNT_ID?: string;
-  SENDGRID_API_KEY?: string;
   RESEND_API_KEY?: string;
+  /** Who may get ANY Hub email (daily digest, morning pulse, task assignment):
+   *  "all" (any case) or a comma list of email addresses. A list REPLACES the
+   *  default. Unset = Nick only (api/lib/email.ts DEFAULT_EMAIL_RECIPIENTS). */
+  DIGEST_RECIPIENTS?: string;
   NOTIFICATION_HUB?: DurableObjectNamespace;
   PB_API_KEY?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;

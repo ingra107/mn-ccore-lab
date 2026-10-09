@@ -43,7 +43,7 @@ import { useTodayPlan } from '../../lib/todayPlan'
 import type { TaskRow } from '../../lib/api'
 
 export default function UnifiedMyTasks() {
-  usePageMeta('My Tasks · MN-CCORE', 'Library / workbench for triage, filtering, and bulk actions across all your tasks.')
+  usePageMeta('Tasks · MN-CCORE', 'Library / workbench for triage, filtering, and bulk actions across all your tasks.')
   const { user } = useAuth()
   const userSlug = user?.slug ?? ''
 

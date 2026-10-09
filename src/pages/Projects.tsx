@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { portalTitle } from '../constants/pageLabels'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid, Star } from 'lucide-react'
@@ -36,6 +37,7 @@ import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import WorkOnActions from '../components/WorkOnActions'
 import { AllProjectsBanner, AllProjectsSwitch } from '../components/AllProjectsControls'
 import { useAllProjectsOn } from '../lib/allProjects'
+import { useAuth } from '../hooks/useAuth'
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
@@ -60,6 +62,17 @@ const CATEGORY_FILTERS = [
   { key: 'Peripheral Brain', label: 'Peripheral Brain' },
   { key: 'stale', label: 'Needs Attention' },
 ] as const
+
+// F8 (2026-10-09): the API never returns a 'Peripheral Brain' project to a
+// non-PI, so for a member that filter pill could never match, and choosing it
+// in the inline category picker would be refused by the server. Both are
+// shown to a PI only. Display only -- the visibility rule lives in the API.
+const PB_CATEGORY = 'Peripheral Brain'
+const CATEGORY_OPTIONS = [
+  { value: 'MNCCORE', label: 'MN-CCORE', color: 'var(--teal)' },
+  { value: 'CLIF', label: 'CLIF', color: 'var(--maroon)' },
+  { value: PB_CATEGORY, label: 'Peripheral Brain', color: 'var(--slate)' },
+]
 
 // #123 (Nick 2026-09-08): the page had no way to hide finished projects — 11 of
 // 92 rows in prod were status='done'. 'open' is every project not finished
@@ -300,12 +313,27 @@ function projectRecencyMs(p: Project): number {
 export default function Projects() {
   const navigate = useNavigate()
   const allProjectsOn = useAllProjectsOn()
+  const isPi = useAuth().user.isPi
+  const { data: projects = [] } = useProjects()
+  // One title writer (D3(a)): this used to race a second raw document.title
+  // effect, so the tab read "My projects" or "Projects (N active)" depending
+  // on which ran last.
+  const activeProjectCount = projects.filter((p) => isProjectActive(p.status)).length
   usePageMeta(
-    allProjectsOn ? 'All projects | MN-CCORE' : 'My projects | MN-CCORE',
-    'Track MN-CCORE research projects from idea to publication across MN-CCORE, CLIF, and Peripheral Brain buckets.'
+    portalTitle('Projects', `${activeProjectCount} active`),
+    isPi
+      ? 'Track MN-CCORE research projects from idea to publication across MN-CCORE, CLIF, and Peripheral Brain buckets.'
+      : 'Track MN-CCORE research projects from idea to publication across MN-CCORE and CLIF.'
+  )
+  const categoryFilters = useMemo(
+    () => CATEGORY_FILTERS.filter((f) => isPi || f.key !== PB_CATEGORY),
+    [isPi],
+  )
+  const categoryOptions = useMemo(
+    () => CATEGORY_OPTIONS.filter((o) => isPi || o.value !== PB_CATEGORY),
+    [isPi],
   )
 
-  const { data: projects = [] } = useProjects()
   const { data: allTasks = [] } = useTasks()
   // #507 follow-up opt-out: dependencies/healthData/allProjectLinks are all
   // per-row OPTIONAL enrichments (dependency map inside a collapsible toggle,
@@ -363,7 +391,7 @@ export default function Projects() {
   // to PATHS.projects + '?category=CLIF') lands pre-filtered, and saved/shared
   // links round-trip. Same pattern ManuscriptsPage uses. Absent param = 'all'.
   const [searchParams, setSearchParams] = useSearchParams()
-  const VALID_CATEGORY_KEYS = useMemo(() => new Set(CATEGORY_FILTERS.map((f) => f.key as string)), [])
+  const VALID_CATEGORY_KEYS = useMemo(() => new Set(categoryFilters.map((f) => f.key as string)), [categoryFilters])
   const categoryParam = searchParams.get('category')
   const activeCategory = categoryParam && VALID_CATEGORY_KEYS.has(categoryParam) ? categoryParam : 'all'
   const setActiveCategory = useCallback((next: string) => {
@@ -493,13 +521,6 @@ export default function Projects() {
     setFocusedIndex(-1)
   }
 
-  // Dynamic page title
-  useEffect(() => {
-    const active = projects.filter(p => isProjectActive(p.status)).length
-    document.title = `Projects (${active} active) | MN-CCORE`
-    return () => { document.title = 'MN-CCORE Lab Hub' }
-  }, [projects])
-
   // Keyboard navigation (list view only)
   useProjectKeyboardNav({
     projectCount: filtered.length,
@@ -581,7 +602,7 @@ export default function Projects() {
           {/* S21: removed the "Try Pipeline view" promo coach-mark — it rendered
               inline in the toolbar and occluded the Pipeline toggle mid-word.
               The Pipeline view toggle (above) is already visible chrome. */}
-          {CATEGORY_FILTERS.map((f) => (
+          {categoryFilters.map((f) => (
             <FilterPill
               key={f.key}
               label={f.label}
@@ -998,11 +1019,7 @@ export default function Projects() {
                             <div className="flex items-center" onClick={(e) => e.preventDefault()}>
                               <InlineSelect
                                 value={project.category || ''}
-                                options={[
-                                  { value: 'MNCCORE', label: 'MN-CCORE', color: 'var(--teal)' },
-                                  { value: 'CLIF', label: 'CLIF', color: 'var(--maroon)' },
-                                  { value: 'Peripheral Brain', label: 'Peripheral Brain', color: 'var(--slate)' },
-                                ]}
+                                options={categoryOptions}
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
                               />
                             </div>
@@ -1106,11 +1123,7 @@ export default function Projects() {
                               <div onClick={(e) => e.preventDefault()} style={{ marginLeft: 'auto' }}>
                                 <InlineSelect
                                   value={project.category || ''}
-                                  options={[
-                                    { value: 'MNCCORE', label: 'MN-CCORE', color: 'var(--teal)' },
-                                    { value: 'CLIF', label: 'CLIF', color: 'var(--maroon)' },
-                                    { value: 'Peripheral Brain', label: 'Peripheral Brain', color: 'var(--slate)' },
-                                  ]}
+                                  options={categoryOptions}
                                   onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
                                 />
                               </div>

@@ -26,6 +26,24 @@
         else if (d === 'relaxed') root.classList.add('density-relaxed');
       })();
     </script>
+    <script>
+      // Pre-paint theme (D7, 2026-10-09). useDarkMode sets the 'dark' class in
+      // a useEffect, i.e. after React mounts, so a dark-theme user saw a full
+      // light page on every hard load. This applies the same decision before
+      // first paint; useDarkMode stays the owner after mount. Keep it in step
+      // with getInitialMode() in src/hooks/useDarkMode.ts.
+      (function() {
+        try {
+          var m = localStorage.getItem('mn-ccore-theme');
+          if (m !== 'light' && m !== 'dark' && m !== 'system') {
+            var old = localStorage.getItem('mn-ccore-dark-mode');
+            m = old === 'true' ? 'dark' : old === 'false' ? 'light' : 'system';
+          }
+          var dark = m === 'dark' || (m === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) { /* no storage: useDarkMode decides after mount */ }
+      })();
+    </script>
     <meta name="description" content="MN-CCORE: Minnesota Critical Care Outcomes & Research Effort at the University of Minnesota. Multi-center ICU research, CLIF Consortium, provider variation, and clinical decision-making." />
 
     <!-- Open Graph -->

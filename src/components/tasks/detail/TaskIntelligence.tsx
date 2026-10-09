@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Brain, TrendingUp } from 'lucide-react'
 import { useProjectUpdates } from '../../../hooks/useApiData'
 import { useToast } from '../../../hooks/useToast'
+import { useAuth } from '../../../hooks/useAuth'
 import HermesMark from '../../HermesMark'
 import { parseDateOnlyOrTimestamp } from '../../../lib/dateUtils'
 import type { TaskRow } from '../../../lib/api'
@@ -131,6 +132,7 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
   const delta = recent - prior
 
   const { showSuccess, showError } = useToast()
+  const isPi = useAuth().user.isPi
   const [draftRequested, setDraftRequested] = useState(false)
 
   const requestDraft = async () => {
@@ -227,7 +229,10 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
       )}
 
       {/* Hermes-adjacent label uses HermesMark (Mercury glyph, gold) per
-          CLAUDE.md Rule 29 — never lucide <Sparkles /> for Hermes. */}
+          CLAUDE.md Rule 29 — never lucide <Sparkles /> for Hermes.
+          PI-only: the button POSTs /api/pb/dispatch/add, which 403s every
+          non-PI (api/index.ts PI gate), so a member's click could only fail. */}
+      {isPi && (<>
       <label className="flex items-center gap-1.5" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
         <HermesMark size={10} />
         Hermes draft
@@ -273,6 +278,7 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
           {draftRequested ? 'Queued' : 'Review draft'}
         </button>
       </div>
+      </>)}
     </div>
   )
 }

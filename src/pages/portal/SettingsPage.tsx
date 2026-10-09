@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { PUBLIC_PATHS } from '../../constants/paths'
+import { PATHS } from '../../constants/paths'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
@@ -294,7 +294,7 @@ export default function SettingsPage() {
 
       {/* Team Directory shortcut */}
       <Link
-        to={PUBLIC_PATHS.publicTeam}
+        to={PATHS.team}
         className="inline-flex items-center gap-2 mb-4 px-4 py-2.5 rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
         style={{
           borderColor: 'var(--border-subtle)',
@@ -308,7 +308,7 @@ export default function SettingsPage() {
         </div>
         <div style={{ flex: 1 }}>
           <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Team Directory</span>
-          <span className="ml-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>Manage members, roles, and expertise tags</span>
+          <span className="ml-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>Everyone on the team</span>
         </div>
         <ArrowRight {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
       </Link>

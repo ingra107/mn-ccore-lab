@@ -74,6 +74,7 @@ import { handleGetHermesDayIndex } from './routes/hermes';
 import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRefireLaunch, handleClaimLaunch, handleListPendingLaunches } from './routes/launch-log';
 import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleAddArtifactComment, handleGetArtifactGallery, handleSearchArtifacts, handleGetArtifactTags, handleAddArtifactTag, handleRemoveArtifactTag } from './routes/artifacts';
 import { escapeHtml } from './lib/escapeHtml';
+import { HUB_URL, isEmailRecipient, raw, sendEmail, warnIfRecipientsMatchNobody } from './lib/email';
 import { handlePBCapture, handlePBDefer, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
 import { handleGetSessions } from './routes/sessions';
@@ -92,6 +93,7 @@ import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 import { handleDigestPreview, handleSendDailyDigests } from './routes/digest-email';
 import { pruneAllLedgers, monitorD1Health, compactProcessedMutationsJson } from './lib/ledger-retention';
+import { projectResponseFor } from './lib/pi-only-project-fields';
 import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleSetLinkRole } from './routes/links';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
 
@@ -885,7 +887,8 @@ defineRoute({
     data: [{ status: true }],
     count: true,
   },
-  handler: (c) => handleGetProjects(U(c), E(c)),
+  // P7: a non-PI never receives the PI's local-path fields (api/lib/pi-only-project-fields.ts).
+  handler: async (c) => projectResponseFor(c.get('isPi') === true, await handleGetProjects(U(c), E(c))),
 });
 // GET /api/projects/:id — single-record fetch by id or slug (codex Q4 2026-05-12).
 // Must be registered AFTER static paths (/health, /deleted-since) and before POST routes
@@ -895,7 +898,7 @@ defineRoute({
   path: '/api/projects/:id',
   auth: 'authed',
   entity: 'projects',
-  handler: (c) => handleGetProject(c.req.param('id'), E(c)),
+  handler: async (c) => projectResponseFor(c.get('isPi') === true, await handleGetProject(c.req.param('id'), E(c))),
 });
 // #145 Lane B: project membership. Each reads and writes through the caller's
 // handle, so a project the caller cannot see is a 404 here too.
@@ -1911,7 +1914,7 @@ defineRoute({
   path: '/api/projects',
   auth: 'authed',
   entity: 'projects',
-  handler: (c) => handleCreateProject(R(c), USER(c), E(c), slugClaimCheck(c.get('unscopedDb'))),
+  handler: async (c) => projectResponseFor(c.get('isPi') === true, await handleCreateProject(R(c), USER(c), E(c), slugClaimCheck(c.get('unscopedDb')))),
 });
 defineRoute({
   method: 'POST',
@@ -1953,7 +1956,7 @@ defineRoute({
   path: '/api/projects/:slug',
   auth: 'authed',
   entity: 'projects',
-  handler: (c) => handleUpdateProject(c.req.param('slug'), R(c), USER(c), E(c), slugClaimCheck(c.get('unscopedDb'))),
+  handler: async (c) => projectResponseFor(c.get('isPi') === true, await handleUpdateProject(c.req.param('slug'), R(c), USER(c), E(c), slugClaimCheck(c.get('unscopedDb')))),
 });
 
 // Team
@@ -2038,7 +2041,7 @@ defineRoute({
   path: '/api/tasks/:id/links',
   auth: 'authed',
   entity: 'links',
-  handler: (c) => handleGetTaskLinks(c.req.param('id'), R(c), E(c)),
+  handler: (c) => handleGetTaskLinks(c.req.param('id'), R(c), E(c), c.get('isPi') === true),
 });
 // Bulk project-links (backlog #147). Defined after GET /api/projects/:id,
 // which matched it with id='links' until bindRegistryToHono started binding
@@ -2055,7 +2058,7 @@ defineRoute({
   path: '/api/projects/:slug/links',
   auth: 'authed',
   entity: 'links',
-  handler: (c) => handleGetProjectLinks(c.req.param('slug'), R(c), E(c)),
+  handler: (c) => handleGetProjectLinks(c.req.param('slug'), R(c), E(c), c.get('isPi') === true),
 });
 // Archive / restore one project link from the project page (#2089).
 // Body { role }; project-owned links only; gated by assertProjectVisible.
@@ -2182,7 +2185,13 @@ defineRoute({
   path: '/api/tasks',
   auth: 'authed',
   entity: 'tasks',
-  handler: (c) => handleCreateTask(R(c), USER(c), E(c)),
+  handler: (c) => {
+    // c.executionCtx throws when the caller supplies none (a test). Then pass
+    // no waitUntil and the task route awaits the email job itself.
+    let ctx: ExecutionContext | undefined;
+    try { ctx = c.executionCtx; } catch { ctx = undefined; }
+    return handleCreateTask(R(c), USER(c), E(c), ctx ? (p) => ctx.waitUntil(p) : undefined);
+  },
 });
 defineRoute({
   method: 'POST',
@@ -2586,9 +2595,9 @@ defineRoute({
 });
 
 // Launch log writes
-defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c)) });
+defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c), c.get('isPi') === true) });
 defineRoute({ method: 'POST', path: '/api/launch-log/:id/status', auth: 'authed', entity: 'launch-log', handler: (c) => handleSetLaunchStatus(c.req.param('id'), R(c), USER(c), E(c)) });
-defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c)) });
+defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c), c.get('isPi') === true) });
 // PI/API-key gated in-handler (isPiRequest — same idiom as /api/bug-reports
 // above, not the /api/pb/* path middleware). Backlog #250: closes the gap
 // where any team member holding (or guessing) the opaque lnch_ id could
@@ -2946,8 +2955,8 @@ export default {
 
       // ── Morning Pulse Email (weekdays 7 AM CT = 13:00 UTC) ───────────────
       case '0 13 * * 1-5': {
-        if (!env.SENDGRID_API_KEY) {
-          console.log('[Pulse] No SENDGRID_API_KEY configured — skipping email send');
+        if (!env.RESEND_API_KEY) {
+          console.log('[Pulse] No RESEND_API_KEY configured — skipping email send');
           return;
         }
 
@@ -2978,8 +2987,12 @@ export default {
         // they could not open in the Hub. The cron runs on the raw binding.
         const piEmails = await getPiEmails(env);
         let sent = 0;
+        let skippedByPolicy = 0;
         for (const member of members.results) {
+          // Recipient switch: Nick only until widened. sendEmail enforces it too;
+          // this skips the queries for members who would be blocked.
           const email = member.email || `${member.slug}@umn.edu`;
+          if (!isEmailRecipient(email, env)) { skippedByPolicy++; continue; }
           const firstName = member.name.split(' ')[0];
           const recipientIsPi = !!member.email && piEmails.has(member.email.toLowerCase());
           let recipientDb: D1Database;
@@ -3079,38 +3092,28 @@ export default {
   </div>
   ${itemsHtml}
   <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e8eff5;">
-    <a href="https://mn-ccore-lab.pages.dev/my-items" style="display:inline-block;padding:10px 20px;background:#c9a84c;color:#0f1923;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;">View All Items</a>
+    <a href="${HUB_URL}/portal/my-tasks" style="display:inline-block;padding:10px 20px;background:#c9a84c;color:#0f1923;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;">View All Items</a>
   </div>
-  <p style="font-size:11px;color:#64748b;margin-top:24px;">MN-CCORE Lab Hub — <a href="https://mn-ccore-lab.pages.dev" style="color:#c9a84c;">mn-ccore-lab.pages.dev</a></p>
+  <p style="font-size:11px;color:#64748b;margin-top:24px;">MN-CCORE Lab Hub — <a href="${HUB_URL}" style="color:#c9a84c;">mnccore.org</a></p>
 </body>
 </html>`;
 
-          // Send via SendGrid
-          try {
-            const sgResp = await fetch('https://api.sendgrid.com/v3/mail/send', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${env.SENDGRID_API_KEY}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                personalizations: [{ to: [{ email, name: member.name }] }],
-                from: { email: 'hub@mnccore.org', name: 'MN-CCORE Lab Hub' },
-                subject: `${firstName}, you have ${pendingItems.length} item${pendingItems.length !== 1 ? 's' : ''} today`,
-                content: [{ type: 'text/html', value: html }],
-              }),
-            });
-            if (sgResp.ok || sgResp.status === 202) {
-              sent++;
-              console.log(`[Pulse] Sent to ${email}`);
-            } else {
-              console.log(`[Pulse] Failed for ${email}: ${sgResp.status}`);
-            }
-          } catch (e) {
-            console.log(`[Pulse] Error sending to ${email}: ${e}`);
+          // Send via Resend (the same path as every other Hub email). The body
+          // above escapes each database value with escapeHtml.
+          const ok = await sendEmail(env, {
+            to: email,
+            subject: `${firstName}, you have ${pendingItems.length} item${pendingItems.length !== 1 ? 's' : ''} today`.replace(/[\r\n]+/g, ' '),
+            html: raw(html),
+          });
+          if (ok) {
+            sent++;
+            console.log(`[Pulse] Sent to ${email}`);
+          } else {
+            console.log(`[Pulse] Failed for ${email}`);
           }
         }
 
+        if (skippedByPolicy === members.results.length) warnIfRecipientsMatchNobody(env);
         console.log(`[Pulse] Done — sent ${sent} emails`);
         return;
       }

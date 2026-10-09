@@ -559,12 +559,38 @@ describe("Daily digest cron (0 11 * * *): each email is built on its recipient's
       sent.push({ to: b.to, html: b.html })
       return new Response('{}', { status: 200 })
     }))
-    await worker.scheduled({ cron: '0 11 * * *' } as ScheduledEvent, { ...env, RESEND_API_KEY: 'k' } as Env, CTX)
+    await worker.scheduled({ cron: '0 11 * * *' } as ScheduledEvent, { ...env, RESEND_API_KEY: 'k', DIGEST_RECIPIENTS: 'all' } as Env, CTX)
     const nate = sent.find((s) => s.to === 'mesfin@umn.edu')
     const nick = sent.find((s) => s.to === PI_EMAIL)
     expect(nate?.html).toContain(`${MARK} irb`)
     expect(nate?.html).not.toContain('NICKREGMARK')
     expect(nick?.html).toContain('NICKREGMARK')
+  })
+})
+
+describe('Email recipient switch: with DIGEST_RECIPIENTS unset, only Nick is mailed', () => {
+  function stubResend(): { to: string }[] {
+    const sent: { to: string }[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      if (String(url).includes('api.resend.com')) sent.push({ to: (JSON.parse(String(init.body)) as { to: string }).to })
+      return new Response('{}', { status: 200 })
+    }))
+    return sent
+  }
+
+  it('0 11 * * * digest: every send goes to Nick, none to Nate or Casey', async () => {
+    const sent = stubResend()
+    await worker.scheduled({ cron: '0 11 * * *' } as ScheduledEvent, { ...env, RESEND_API_KEY: 'k' } as Env, CTX)
+    expect(sent.length).toBeGreaterThan(0)
+    expect(sent.every((s) => s.to === PI_EMAIL)).toBe(true)
+  })
+
+  it('0 13 * * 1-5 pulse: every send goes to Nick, none to Casey or Nate', async () => {
+    insertRow(db, 'tasks', { id: 'task_caseypulse', title: 'CASEYPULSE task', assignee: 'casey-eddington' })
+    const sent = stubResend()
+    await worker.scheduled({ cron: '0 13 * * 1-5' } as ScheduledEvent, { ...env, RESEND_API_KEY: 'k' } as Env, CTX)
+    expect(sent.length).toBeGreaterThan(0)
+    expect(sent.every((s) => s.to === PI_EMAIL)).toBe(true)
   })
 })
 
@@ -579,11 +605,11 @@ describe('Pulse cron: each email is built on its recipient\'s handle', () => {
     insertRow(db, 'activity_entries', { id: 'ae-team', entity_type: 'project', entity_id: 'proj_team', project_id: 'proj_team', kind: 'update', actor_slug: 'nate-mesfin', body: 'TEAMUPDATEMARK' })
     const sent: { to: string; html: string }[] = []
     vi.stubGlobal('fetch', vi.fn(async (_url: string, init: RequestInit) => {
-      const b = JSON.parse(String(init.body)) as { personalizations: { to: { email: string }[] }[]; content: { value: string }[] }
-      sent.push({ to: b.personalizations[0].to[0].email, html: b.content[0].value })
-      return new Response('', { status: 202 })
+      const b = JSON.parse(String(init.body)) as { to: string; html: string }
+      sent.push({ to: b.to, html: b.html })
+      return new Response('{}', { status: 200 })
     }))
-    await worker.scheduled({ cron: '0 13 * * 1-5' } as ScheduledEvent, { ...env, SENDGRID_API_KEY: 'k' } as Env, CTX)
+    await worker.scheduled({ cron: '0 13 * * 1-5' } as ScheduledEvent, { ...env, RESEND_API_KEY: 'k', DIGEST_RECIPIENTS: 'all' } as Env, CTX)
     const casey = sent.find((s) => s.to === CASEY_EMAIL)
     const nick = sent.find((s) => s.to === PI_EMAIL)
     expect(casey?.html).toContain('TEAMUPDATEMARK')

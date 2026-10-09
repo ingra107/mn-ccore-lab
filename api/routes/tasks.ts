@@ -445,7 +445,12 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
 }
 
 // POST /api/tasks — create new task
-export async function handleCreateTask(request: Request, user: AuthUser, env: Env): Promise<Response> {
+export async function handleCreateTask(
+  request: Request,
+  user: AuthUser,
+  env: Env,
+  waitUntil?: (promise: Promise<unknown>) => void,
+): Promise<Response> {
   const body = await request.json() as {
     title?: string; description: string; assignee: string;
     meeting_id?: string; project_id?: string; due_date?: string;
@@ -582,15 +587,21 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
         `/portal/my-tasks?open=${resultId}`,
       ).run();
 
-      // Email notification (fire-and-forget, only if Resend configured)
+      // Email notification, only if Resend is configured. sendEmail applies the
+      // recipient switch (api/lib/email.ts), so by default nothing goes to
+      // anyone but Nick. Runs after the response via waitUntil when the caller
+      // gave one; otherwise it is awaited so the Worker is not cut off mid-send.
       if (env.RESEND_API_KEY) {
-        const { sendEmail, taskAssignmentEmail } = await import('../lib/email');
-        const member = await env.DB.prepare('SELECT name, email FROM team_members WHERE slug = ?').bind(assignee).first<{ name: string; email: string | null }>();
-        if (member) {
-          const email = taskAssignmentEmail(user.name || user.email, title, resultId);
-          email.to = member.email || `${assignee}@umn.edu`;
-          sendEmail(env.RESEND_API_KEY, email).catch(() => {});
-        }
+        const job = (async () => {
+          const { sendEmail, taskAssignmentEmail } = await import('../lib/email');
+          const member = await env.DB.prepare('SELECT name, email FROM team_members WHERE slug = ?').bind(assignee).first<{ name: string; email: string | null }>();
+          if (member) {
+            const email = taskAssignmentEmail(user.name || user.email, title, resultId);
+            email.to = member.email || `${assignee}@umn.edu`;
+            await sendEmail(env, email);
+          }
+        })().catch((e) => console.error('[email] task assignment send failed:', e));
+        if (waitUntil) waitUntil(job); else await job;
       }
     }
   } catch (e) {

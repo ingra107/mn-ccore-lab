@@ -56,6 +56,7 @@ export const PATHS = {
   settings: `${PORTAL_PREFIX}/settings`,
   profile: `${PORTAL_PREFIX}/profile`,
 
+  team: `${PORTAL_PREFIX}/team`,
   teamMember: (slug: string) => `${PORTAL_PREFIX}/team/${slug}`,
   teamTrajectory: (slug: string) => `${PORTAL_PREFIX}/team/${slug}/trajectory`,
 } as const
