@@ -14,31 +14,44 @@ reachable. pythonw.exe is not a batch file: Windows hands the command line to it
 directly and the C runtime splits it into argv. No URL character is ever read by
 cmd.exe here:
 
-  - an unbalanced quote can only split the URL into extra argv entries, and the
-    handler refuses anything but exactly one argument;
+  - an unbalanced quote either splits the URL into extra argv entries (refused:
+    the handler takes exactly one argument) or is STRIPPED by the C runtime's
+    quote rules, leaving one argument with no quote in it; either way no quote
+    reaches a verb, and the router also refuses a literal one;
   - every child is started with an argv list (or, for explorer.exe, the same
     pre-quoted command line the .bat used, see verb_open), never shell=True;
-  - the .bat files the verbs run (Start Claude.bat and the fixed PB/Hub
-    launchers) are started as `cmd.exe /c <fixed path>`. For workon the
-    URL-derived folder goes in as the child's working directory, never as text
-    cmd.exe parses.
+  - every .bat a verb runs (Start Claude.bat and the fixed PB/Hub launchers) is
+    started as `cmd.exe /c .\\<basename>` with the bat's own folder as the
+    working directory (`_start_bat`). There is no full-path form, so no folder
+    text, URL-derived or not, is ever on a command line cmd.exe parses; the
+    basenames are fixed constants.
+
+Network paths. Any Win32 existence check on `\\\\host\\share` (or the WebDAV form
+`\\\\host@SSL\\DavWWWRoot`) makes Windows authenticate to that host, which hands an
+NTLM hash to whoever runs it. workon accepts only a local-drive folder under the
+PB repo or ~/Box (the roots PB's resolve_launch.resolve_workon_folder allows), and
+refuses `\\\\`, `//` and network drives before touching the file system. open
+accepts a UNC path only when its host is in UNC_HOST_ALLOWLIST, checked as text
+before any stat.
 
 Verbs (parity with mnccore-handler.bat, which stays one release as rollback):
 
   mnccore://open/<path>        Explorer-open an existing DIRECTORY (file attribute
                                check, because Box Drive answers the trailing-
-                               backslash test true for files).
+                               backslash test true for files). Drive path, or a
+                               UNC path on an allowlisted host.
   mnccore://launch/<lnch_tok>  opaque launch token -> PB resolve_launch.py. Only
                                `lnch_<alnum>` passes; no decode.
   mnccore://desk/<slug>/<desk> working-desk session -> resolve_launch.py desk mode.
                                Identifier only, no decode; a resolver refusal is loud.
-  mnccore://workon/<folder>    run <folder>\\Start Claude.bat with <folder> as cwd.
-                               The basename is the allowlist.
+  mnccore://workon/<folder>    run .\\Start Claude.bat with <folder> as cwd. Local
+                               drive only, under the PB repo or ~/Box; the
+                               basename is the executable allowlist.
   mnccore://file/<path>        open one .docx/.pdf/.xlsx under %USERPROFILE%\\Box\\.
   mnccore://process            %USERPROFILE%\\Peripheral-Brain\\Quick_Process.bat
   mnccore://quickchat          %USERPROFILE%\\Peripheral-Brain\\Quick_Chat_seeded.bat
-  mnccore://bugsquash          <this dir>\\bug-squasher.bat, cwd = Hub repo root
-  mnccore://backlogwave        <this dir>\\backlog-wave.bat, cwd = PB root
+  mnccore://bugsquash          <this dir>\\bug-squasher.bat (it cd's to the Hub root)
+  mnccore://backlogwave        <this dir>\\backlog-wave.bat (it cd's to PB)
   mnccore://obsidian/<note>    Obsidian CLI when Obsidian runs and the CLI shim
                                exists, else the obsidian:// protocol.
 
@@ -82,6 +95,18 @@ DESK_REF_RE = re.compile(r"([a-z0-9][a-z0-9-]{0,99})/([A-Za-z0-9_-]{1,120})", re
 CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 FILE_EXTS = (".docx", ".pdf", ".xlsx")
 START_CLAUDE = "Start Claude.bat"
+DRIVE_REMOTE = 4
+DRIVE_PATH_RE = re.compile(r"[A-Za-z]:\\", re.ASCII)
+
+# UNC hosts open/ may stat and hand to Explorer, lower-case, compared as text BEFORE
+# any file-system call (a stat on \\host\share authenticates to that host). Built
+# 2026-10-09 from the UNC hosts actually in use: none. A grep of the Hub repo found
+# only the `\\server\share` fixture in urlClassify.test.ts, and a read-only scan of
+# PB brain.db (tasks.key_link_1..3, projects.primary_folder, links.canonical_url /
+# source_raw) found no `\\host` or `file://host` value; every local link is a
+# file:///C:/... drive path. So every UNC open/ is refused until a host is named
+# here. Add the exact host component (`fs.example.edu`, `host@SSL` for WebDAV).
+UNC_HOST_ALLOWLIST: "frozenset[str]" = frozenset()
 
 
 class Refused(Exception):
@@ -220,21 +245,27 @@ def _act(label: str, plan: dict, run) -> int:
 
 # ── child processes ──────────────────────────────────────────────────────────
 
-def _bat_argv(bat: str, cwd: str) -> "list[str]":
-    """`cmd.exe /c <bat>`. When the bat sits in cwd it is named `.\\<basename>`,
-    so a URL-derived folder never appears in text cmd.exe parses."""
-    if os.path.normcase(os.path.dirname(bat)) == os.path.normcase(cwd.rstrip("\\")):
-        bat = ".\\" + os.path.basename(bat)
-    return [_sys32("cmd.exe"), "/c", bat]
+BAT_NAMES = frozenset({START_CLAUDE, "Quick_Process.bat", "Quick_Chat_seeded.bat",
+                       "bug-squasher.bat", "backlog-wave.bat"})
 
 
-def _start_bat(bat: str, cwd: str, label: str) -> int:
-    argv = _bat_argv(bat, cwd)
+def _bat_argv(name: str) -> "list[str]":
+    """`cmd.exe /c .\\<name>`, the only shape: the caller passes the bat's folder as
+    the working directory, so no folder text ever reaches cmd.exe. `name` must be
+    one of the fixed launcher basenames."""
+    if name not in BAT_NAMES:
+        raise Refused(f"internal: {name!r} is not a known launcher")
+    return [_sys32("cmd.exe"), "/c", ".\\" + name]
+
+
+def _start_bat(folder: str, name: str, label: str) -> int:
+    """Run <folder>\\<name> as `cmd.exe /c .\\<name>` with cwd = <folder>."""
+    argv = _bat_argv(name)
 
     def run() -> int:
-        subprocess.Popen(argv, cwd=cwd, close_fds=True, creationflags=CREATE_NEW_CONSOLE)
+        subprocess.Popen(argv, cwd=folder, close_fds=True, creationflags=CREATE_NEW_CONSOLE)
         return 0
-    return _act(label, {"argv": argv, "cwd": cwd}, run)
+    return _act(label, {"argv": argv, "cwd": folder}, run)
 
 
 def _startfile(target: str, label: str) -> int:
@@ -255,12 +286,61 @@ def _decode(arg: str) -> str:
     return arg.replace("%20", " ").replace("/", "\\")
 
 
+def _strip_trailing(path: str) -> str:
+    """Trailing backslashes off, but a drive root keeps one (`C:` alone means the
+    current directory on C)."""
+    p = path.rstrip("\\")
+    return p + "\\" if re.fullmatch(r"[A-Za-z]:", p) else p
+
+
+def _unc_host(path: str) -> "str | None":
+    """The host of a `\\\\host\\...` path, lower-case; None if not that shape."""
+    if not path.startswith("\\\\"):
+        return None
+    host = path[2:].split("\\", 1)[0]
+    return host.lower() or None
+
+
+def _drive_is_remote(path: str) -> bool:
+    """True for a mapped network drive. GetDriveTypeW reads the local mount table;
+    it does not contact the server."""
+    if os.name != "nt":
+        return False
+    fn = ctypes.windll.kernel32.GetDriveTypeW
+    fn.argtypes = [ctypes.c_wchar_p]
+    fn.restype = ctypes.c_uint32
+    return int(fn(path[:3])) == DRIVE_REMOTE
+
+
+def _local_drive_path(path: str, verb: str) -> str:
+    """Refuse, as text and before any stat, anything but `X:\\...` on a local drive.
+    `\\\\host\\share`, `\\\\host@SSL\\DavWWWRoot`, `\\\\?\\UNC\\...`, `\\\\.\\...` and
+    relative paths all fail the drive-letter shape."""
+    if not DRIVE_PATH_RE.match(path):
+        raise Refused(f"{verb}: refused, not a local drive path: {path}")
+    if _drive_is_remote(path):
+        raise Refused(f"{verb}: refused, {path[:2]} is a network drive: {path}")
+    return path
+
+
+def _under(child: str, root: str) -> bool:
+    c, r = os.path.normcase(child), os.path.normcase(root.rstrip("\\"))
+    return c == r or c.startswith(r + "\\")
+
+
 def verb_open(arg: str) -> int:
-    target = _decode(arg)
+    target = _strip_trailing(_decode(arg))
+    host = _unc_host(target)
+    if host is not None:
+        # Text check first: a stat on an unlisted host would send it our NTLM hash.
+        if target[:4] in ("\\\\?\\", "\\\\.\\") or host not in UNC_HOST_ALLOWLIST:
+            raise Refused(f"open: refused, network host not on the allowlist: {target}")
+    else:
+        _local_drive_path(target, "open")
     if not _exists(target):
         raise Refused(f"Path not found: {target}")
     # Directories only, by attribute: Box Drive answers `exist "x\"` true for files.
-    if not _is_dir(target) or not _exists(target + "\\"):
+    if not _is_dir(target) or not _exists(target.rstrip("\\") + "\\"):
         raise Refused(f"open: refused — target is not a directory: {target}")
     explorer = os.path.join(_system_root(), "explorer.exe")
     # explorer.exe reads commas as argument separators, and subprocess quotes an
@@ -328,46 +408,50 @@ def verb_desk(arg: str) -> int:
     return _act("desk", {"argv": argv}, run)
 
 
+def _workon_roots() -> "list[str]":
+    """The roots PB's resolve_launch.resolve_workon_folder allows: the PB repo and
+    ~/Box, junctions resolved (home's C:\\Users\\ingra107 -> C:\\Users\\ingra)."""
+    home = _home()
+    return [os.path.realpath(os.path.join(home, d)) for d in ("Peripheral-Brain", "Box")]
+
+
 def verb_workon(arg: str) -> int:
-    folder = _decode(arg)
-    if folder.endswith("\\"):
-        folder = folder[:-1]
+    folder = _decode(arg).rstrip("\\")
+    # Network and non-drive paths are refused as TEXT, before any stat (an SMB or
+    # WebDAV stat authenticates to the attacker's host).
+    _local_drive_path(folder, "workon")
+    real = os.path.realpath(folder)
+    if not any(_under(real, root) for root in _workon_roots()):
+        raise Refused(f"workon: refused, outside Peripheral-Brain and Box: {folder}")
     if not _is_dir(folder) or not _exists(folder + "\\"):
         raise Refused(f"workon: not a directory: {folder}")
-    bat = folder + "\\" + START_CLAUDE
-    if not _is_file(bat):
+    if not _is_file(folder + "\\" + START_CLAUDE):
         raise Refused(f"workon: no '{START_CLAUDE}' in {folder}")
-    return _start_bat(bat, folder, "workon")
+    return _start_bat(folder, START_CLAUDE, "workon")
+
+
+def _fixed_bat(folder: str, name: str, verb: str) -> int:
+    if not _is_file(os.path.join(folder, name)):
+        raise Refused(f"{verb}: {name} not found at {os.path.join(folder, name)}")
+    return _start_bat(folder, name, verb)
 
 
 def verb_process(_: str = "") -> int:
-    pb = os.path.join(_home(), "Peripheral-Brain")
-    qp = os.path.join(pb, "Quick_Process.bat")
-    if not _is_file(qp):
-        raise Refused(f"process: Quick_Process.bat not found at {qp}")
-    return _start_bat(qp, pb, "process")
+    return _fixed_bat(os.path.join(_home(), "Peripheral-Brain"), "Quick_Process.bat", "process")
 
 
 def verb_quickchat(_: str = "") -> int:
-    pb = os.path.join(_home(), "Peripheral-Brain")
-    qc = os.path.join(pb, "Quick_Chat_seeded.bat")
-    if not _is_file(qc):
-        raise Refused(f"quickchat: Quick_Chat_seeded.bat not found at {qc}")
-    return _start_bat(qc, pb, "quickchat")
+    return _fixed_bat(os.path.join(_home(), "Peripheral-Brain"), "Quick_Chat_seeded.bat", "quickchat")
 
 
 def verb_bugsquash(_: str = "") -> int:
-    bs = str(HERE / "bug-squasher.bat")
-    if not _is_file(bs):
-        raise Refused(f"bugsquash: bug-squasher.bat not found at {bs}")
-    return _start_bat(bs, str(HERE.parent), "bugsquash")
+    # The bat cd's to the Hub root itself (cd /d "%~dp0..").
+    return _fixed_bat(str(HERE), "bug-squasher.bat", "bugsquash")
 
 
 def verb_backlogwave(_: str = "") -> int:
-    bw = str(HERE / "backlog-wave.bat")
-    if not _is_file(bw):
-        raise Refused(f"backlogwave: backlog-wave.bat not found at {bw}")
-    return _start_bat(bw, os.path.join(_home(), "Peripheral-Brain"), "backlogwave")
+    # The bat cd's to %USERPROFILE%\Peripheral-Brain itself.
+    return _fixed_bat(str(HERE), "backlog-wave.bat", "backlogwave")
 
 
 def _obsidian_running() -> bool:

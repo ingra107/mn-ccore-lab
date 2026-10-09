@@ -12,11 +12,18 @@ PATH), from the main checkout, on each laptop. No admin: HKCU only. Writes throu
 winreg, so no reg.exe or shell is involved. Prints the old and new value and reads
 the new one back. Restart the browser afterwards.
 
+The registered command pins the FULL path of pythonw.exe. A Python upgrade that
+moves or removes that interpreter (a new minor version installs to a new
+directory) breaks every mnccore:// link silently in the browser: re-run
+`--apply` after any Python upgrade, on each laptop.
+
 Supersedes scripts\\setup-mnccore-protocol.bat (which registers the .bat).
 """
 from __future__ import annotations
 
 import argparse
+import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -42,6 +49,22 @@ def bat_command() -> str:
     if not HANDLER_BAT.is_file():
         raise SystemExit(f"ERROR: rollback handler not found: {HANDLER_BAT}")
     return f'"{HANDLER_BAT}" "%1"'
+
+
+def in_linked_worktree() -> bool:
+    """True when this file sits in a linked git worktree (its git-dir differs from
+    the common dir). Fails closed: if git cannot answer, treat it as a worktree."""
+    def rev(flag: str) -> "str | None":
+        try:
+            r = subprocess.run(["git", "rev-parse", "--path-format=absolute", flag],
+                               cwd=HERE, capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.SubprocessError):
+            return None
+        return r.stdout.strip() if r.returncode == 0 and r.stdout.strip() else None
+    git_dir, common = rev("--git-dir"), rev("--git-common-dir")
+    if git_dir is None or common is None:
+        return True
+    return os.path.normcase(os.path.realpath(git_dir)) != os.path.normcase(os.path.realpath(common))
 
 
 def read_command() -> "str | None":
@@ -74,8 +97,9 @@ def main(argv: "list[str] | None" = None) -> int:
         print(python_command())
         return 0
 
-    if (args.apply or args.revert_to_bat) and ".claude" in HERE.parts and "worktrees" in HERE.parts:
-        print(f"ERROR: {HERE} is a git worktree, which gets deleted. Run this from the main checkout.")
+    if (args.apply or args.revert_to_bat) and in_linked_worktree():
+        print(f"ERROR: {HERE} is in a linked git worktree (or git could not say), which gets deleted. "
+              "Run this from the main checkout.")
         return 1
 
     new = bat_command() if args.revert_to_bat else python_command()

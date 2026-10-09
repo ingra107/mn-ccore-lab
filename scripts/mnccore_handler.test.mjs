@@ -332,6 +332,32 @@ describe('mnccore_handler.py through the registered command line (DRYRUN)', { sk
       assert.equal(r.code, 1, r.out)
       assert.ok(r.out.includes('Path not found'), r.out)
     })
+    it('strips trailing backslashes before the checks', () => {
+      const r = fire(`mnccore://open/${fwd(dir)}//`)
+      assert.equal(r.code, 0, r.out)
+      assert.equal(plan(r.out, 'open').cmdline, `${explorer()} "${dir}"`)
+    })
+    // A stat on \\host\share authenticates to that host. UNC_HOST_ALLOWLIST is
+    // empty (no UNC host is in use), so every UNC open is refused as text.
+    for (const u of [
+      'mnccore://open///localhost/C$',
+      'mnccore://open///attacker.example/share/x',
+      'mnccore://open///attacker.example@SSL/DavWWWRoot',
+      'mnccore://open/\\\\attacker.example\\share',
+      'mnccore://open///?/UNC/attacker.example/share',
+      'mnccore://open///./C:/Windows',
+    ]) {
+      it(`refuses an unlisted network host: ${u}`, () => {
+        const r = fire(u)
+        assert.equal(r.code, 1, r.out)
+        assert.ok(r.out.includes('open: refused, network host not on the allowlist'), r.out)
+      })
+    }
+    it('refuses a relative path (no drive letter)', () => {
+      const r = fire('mnccore://open/Windows')
+      assert.equal(r.code, 1, r.out)
+      assert.ok(r.out.includes('open: refused, not a local drive path'), r.out)
+    })
   })
 
   describe('file/<path>', () => {
@@ -424,6 +450,51 @@ describe('mnccore_handler.py through the registered command line (DRYRUN)', { sk
       assert.equal(r.code, 1, r.out)
       assert.ok(r.out.includes('workon: not a directory'), r.out)
     })
+
+    // Review 2026-10-09: a share root `\\host\share` made ntpath.dirname keep a
+    // trailing backslash, the dirname/cwd compare missed, and the handler fell back
+    // to `cmd /c <full path>`, so a share named `a&mkdir X` ran mkdir. Network
+    // paths are now refused as text before any stat, and there is no full-path form.
+    for (const [name, u] of [
+      ['a share root', 'mnccore://workon///localhost/C$'],
+      ['a share root holding &', `mnccore://workon///localhost/a&echo PWNED>${MARK}`],
+      ['a share root with a trailing slash', 'mnccore://workon///localhost/share/'],
+      ['a WebDAV root', 'mnccore://workon///host@SSL/DavWWWRoot'],
+      ['a backslash UNC', 'mnccore://workon/\\\\localhost\\C$\\x'],
+      ['a file://host form', 'mnccore://workon/file://localhost/C$/x'],
+      ['a \\\\?\\UNC device path', 'mnccore://workon///?/UNC/localhost/C$'],
+      ['a drive-relative path', 'mnccore://workon/C:Users'],
+    ]) {
+      it(`refuses ${name} before touching the file system`, () => {
+        const r = fire(u)
+        assert.equal(r.code, 1, r.out)
+        assert.ok(r.out.includes('workon: refused, not a local drive path'), r.out)
+        assert.ok(!r.out.includes('DRYRUN'), r.out)
+        assert.equal(existsSync(MARK), false, `${u} executed: ${r.out}`)
+      })
+    }
+
+    it('refuses a folder with Start Claude.bat outside PB and Box', () => {
+      const out = join(home, 'Elsewhere')
+      mkdirSync(out, { recursive: true })
+      writeFileSync(join(out, 'Start Claude.bat'), '@exit /b 0\n')
+      const r = fire(url(out))
+      assert.equal(r.code, 1, r.out)
+      assert.ok(r.out.includes('workon: refused, outside Peripheral-Brain and Box'), r.out)
+    })
+    it('refuses a .. walk out of Box', () => {
+      const r = fire(url(join(home, 'Box')) + '/../Elsewhere')
+      assert.equal(r.code, 1, r.out)
+      assert.ok(r.out.includes('outside Peripheral-Brain and Box'), r.out)
+    })
+    it('accepts a folder under the PB repo', () => {
+      const pbProj = join(home, 'Peripheral-Brain', 'Projects', 'p1')
+      mkdirSync(pbProj, { recursive: true })
+      writeFileSync(join(pbProj, 'Start Claude.bat'), '@exit /b 0\n')
+      const r = fire(url(pbProj))
+      assert.equal(r.code, 0, r.out)
+      assert.deepEqual(plan(r.out, 'workon'), { argv: [cmd, '/c', '.\\Start Claude.bat'], cwd: pbProj })
+    })
   })
 
   describe('fixed-target verbs', () => {
@@ -442,15 +513,23 @@ describe('mnccore_handler.py through the registered command line (DRYRUN)', { sk
       assert.equal(r.code, 0, r.out)
       assert.deepEqual(plan(r.out, 'quickchat'), { argv: [cmd(), '/c', '.\\Quick_Chat_seeded.bat'], cwd: pb() })
     })
-    it('bugsquash runs the sibling bug-squasher.bat from the Hub root', () => {
+    // Same .\<basename> + cwd shape as every verb; each bat cd's where it needs to.
+    it('bugsquash runs .\\bug-squasher.bat from its own folder', () => {
       const r = fire('mnccore://bugsquash')
       assert.equal(r.code, 0, r.out)
-      assert.deepEqual(plan(r.out, 'bugsquash'), { argv: [cmd(), '/c', join(HERE, 'bug-squasher.bat')], cwd: dirname(HERE) })
+      assert.deepEqual(plan(r.out, 'bugsquash'), { argv: [cmd(), '/c', '.\\bug-squasher.bat'], cwd: HERE })
     })
-    it('backlogwave runs the sibling backlog-wave.bat from PB', () => {
+    it('backlogwave runs .\\backlog-wave.bat from its own folder', () => {
       const r = fire('mnccore://backlogwave')
       assert.equal(r.code, 0, r.out)
-      assert.deepEqual(plan(r.out, 'backlogwave'), { argv: [cmd(), '/c', join(HERE, 'backlog-wave.bat')], cwd: pb() })
+      assert.deepEqual(plan(r.out, 'backlogwave'), { argv: [cmd(), '/c', '.\\backlog-wave.bat'], cwd: HERE })
+    })
+    it('no verb ever puts a path on the cmd.exe line', () => {
+      for (const u of ['mnccore://process', 'mnccore://quickchat', 'mnccore://bugsquash', 'mnccore://backlogwave']) {
+        const r = fire(u)
+        const p = JSON.parse(r.out.match(/^DRYRUN \w+: (.*)$/m)[1])
+        assert.match(p.argv[2], /^\.\\[^\\]+\.bat$/, JSON.stringify(p))
+      }
     })
     it('process refuses when Quick_Process.bat is missing', () => {
       const qp = join(pb(), 'Quick_Process.bat')
