@@ -29,14 +29,9 @@
 
 import { useMemo, useState, useCallback } from 'react'
 import { useDroppable } from '@dnd-kit/core'
-import { Video } from 'lucide-react'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import { buildTimelineModel } from './timelineModel'
-import { ICON_PROPS } from '../../lib/iconProps'
-import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK, INK_DIM, INK_MUTED,
-  withAlpha, type TodayEvent, type PlannedSlot,
-} from './constants'
+import type { TodayEvent, PlannedSlot } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import { useNowMinutes, formatNowLabel } from './useNowMinutes'
@@ -74,76 +69,20 @@ function AgendaEventRow({
     ? durationLabel(event.startMin as number, event.endMin)
     : null
 
-  const borderColor = isNow ? ACCENT_CORAL : withAlpha(ACCENT_TEAL, 20)
-  const bgColor = isNow ? withAlpha(ACCENT_CORAL, 6) : 'transparent'
+  const sub = [timeStr, durStr, event.loc].filter(Boolean).join(' · ')
 
   return (
-    <div
-      data-agenda-list-row="meeting"
-      style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 10,
-        padding: '8px 10px',
-        borderRadius: 6,
-        border: `1px solid ${borderColor}`,
-        background: bgColor,
-        transition: 'background 120ms',
-        position: 'relative',
-      }}
-    >
-      {/* Time chip */}
-      <div style={{
-        flexShrink: 0,
-        width: 52,
-        textAlign: 'right',
-        fontSize: 11,
-        fontWeight: 600,
-        letterSpacing: '0.02em',
-        color: isNow ? ACCENT_CORAL : withAlpha(ACCENT_TEAL, 80),
-        paddingTop: 1,
-        fontVariantNumeric: 'tabular-nums',
-      }}>
-        {timeStr}
-      </div>
-
-      {/* Content */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{
-            fontSize: 13,
-            fontWeight: 500,
-            color: INK,
-            lineHeight: 1.3,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            flex: 1,
-            minWidth: 0,
-          }}>
-            {event.title}
-          </span>
-          {isNow && (
-            <span style={{
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: ACCENT_CORAL,
-              background: withAlpha(ACCENT_CORAL, 12),
-              padding: '1px 5px',
-              borderRadius: 3,
-              flexShrink: 0,
-            }}>now</span>
-          )}
-          {durStr && (
-            <span style={{ fontSize: 10, color: INK_MUTED, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
-              {durStr}
-            </span>
-          )}
+    <div data-agenda-list-row="meeting" className={`tk-card tk-mc${isNow ? ' tk-nowm' : ''}`}>
+      <div className="tk-mch" style={{ cursor: 'default' }}>
+        <div className="tk-hdr">
+          <div className="tk-ct" style={{ fontSize: 13 }}>{event.title}</div>
+          <div className="tk-cs" title={sub}>{sub}</div>
+        </div>
+        <div className="tk-tr-r">
+          {isNow && <span className="tk-pill tk-box"><i />Now</span>}
           {event.meetingUrl && (
-            // #83/#86: petite "Join" pill in the title row — matches MeetingRow's
-            // treatment (was a 🔗 icon that didn't read as "join the meeting").
+            // Join: the filled primary only while the meeting is on now, a plain
+            // link the rest of the day (same rule as the timeline card).
             <a
               href={event.meetingUrl}
               target="_blank"
@@ -151,60 +90,29 @@ function AgendaEventRow({
               onClick={(e) => e.stopPropagation()}
               title="Join meeting"
               aria-label="Join meeting"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 3,
-                fontSize: 9, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
-                color: ACCENT_GOLD, background: withAlpha(ACCENT_GOLD, 12),
-                border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`, borderRadius: 999,
-                padding: '1px 7px', textDecoration: 'none', flexShrink: 0, lineHeight: 1.5,
-              }}
+              className={isNow ? 'tk-join' : 'tk-joinq'}
             >
-              <Video {...ICON_PROPS} size={11} aria-hidden />
               Join
             </a>
           )}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDismiss(event.id) }}
+            title="Hide from today's view"
+            aria-label={`Hide ${event.title}`}
+            className="tk-x"
+          >
+            ×
+          </button>
         </div>
-        {event.loc && (
-          <div style={{ fontSize: 11, color: INK_DIM, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {event.loc}
-          </div>
-        )}
       </div>
-
-      {/* Dismiss */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onDismiss(event.id) }}
-        title="Hide from today's view"
-        style={{
-          background: 'none', border: 'none', cursor: 'pointer',
-          color: INK_DIM, fontSize: 14, lineHeight: 1, padding: '1px 4px',
-          opacity: 0.35, flexShrink: 0, transition: 'opacity 120ms',
-        }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.9' }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.35' }}
-        aria-label={`Hide ${event.title}`}
-      >
-        ×
-      </button>
     </div>
   )
 }
 
 // ── Section header ─────────────────────────────────────────────────────────
 function SectionHeader({ label }: { label: string }) {
-  return (
-    <div style={{
-      fontSize: 10,
-      fontWeight: 700,
-      letterSpacing: '0.10em',
-      textTransform: 'uppercase',
-      color: withAlpha(ACCENT_GOLD, 70),
-      padding: '0 2px 4px',
-      marginTop: 4,
-    }}>
-      {label}
-    </div>
-  )
+  return <div className="tk-ash">{label}</div>
 }
 
 // ── AgendaDropSeparator ───────────────────────────────────────────────────
@@ -218,13 +126,9 @@ function AgendaDropSeparator({ slot }: { slot: PlannedSlot }) {
   return (
     <div
       ref={setNodeRef}
+      className={`tk-asep${isOver ? ' tk-over' : ''}`}
       style={{
-        height: isOver ? 20 : 6,
-        marginTop: 1,
-        marginBottom: 1,
-        borderRadius: 4,
-        border: `1px dashed ${withAlpha(ACCENT_GOLD, isOver ? 55 : 15)}`,
-        background: isOver ? withAlpha(ACCENT_GOLD, 8) : 'transparent',
+        height: isOver ? 22 : 8,
         transition: 'all 120ms',
         display: 'flex',
         alignItems: 'center',
@@ -234,13 +138,7 @@ function AgendaDropSeparator({ slot }: { slot: PlannedSlot }) {
       }}
     >
       {isOver && (
-        <span style={{
-          fontSize: 9,
-          color: ACCENT_GOLD,
-          userSelect: 'none',
-          pointerEvents: 'none',
-          letterSpacing: '0.04em',
-        }}>
+        <span className="tk-gapl" style={{ position: 'static', color: 'var(--sk-ac)', userSelect: 'none', pointerEvents: 'none' }}>
           drop here
         </span>
       )}
@@ -383,7 +281,10 @@ export function AgendaListView({
   ), ...serviceBlocks].some(
     (e) => typeof e.startMin === 'number' && typeof e.endMin === 'number' && e.startMin <= now && now < e.endMin,
   )
-  const nowColor = inMeetingNow ? ACCENT_CORAL : ACCENT_GOLD
+  // One teal rule: the coral-while-in-a-meeting variant is dropped (the meeting
+  // card says "Now" itself).
+  void inMeetingNow
+  const nowColor = 'var(--sk-ac)'
 
   const renderNowMarker = () => (
     <div
@@ -398,15 +299,12 @@ export function AgendaListView({
       }}
     >
       <span style={{ width: 6, height: 6, borderRadius: '50%', background: nowColor, flexShrink: 0 }} />
-      <div style={{ flex: 1, height: 1, background: nowColor, boxShadow: `0 0 4px ${nowColor}80` }} />
+      <div style={{ flex: 1, height: 1.5, background: nowColor }} />
       <span style={{
-        padding: '1px 5px',
-        fontSize: 9,
-        fontWeight: 700,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
+        padding: '0 4px',
+        fontSize: 10,
+        fontWeight: 600,
         color: nowColor,
-        borderRadius: 3,
         flexShrink: 0,
         marginRight: 4,
         whiteSpace: 'nowrap',
@@ -422,7 +320,7 @@ export function AgendaListView({
       {allDayEvents.length > 0 && (
         <div style={{ marginBottom: 8 }}>
           <SectionHeader label="All day" />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {allDayEvents
               .filter((e) => !dismissedIds[e.id])
               .map((e) => (
@@ -523,11 +421,7 @@ export function AgendaListView({
       {Object.keys(dismissedIds).length > 0 && (
         <button
           onClick={onRestoreDismissed}
-          style={{
-            marginTop: 8,
-            background: 'none', border: 'none',
-            color: ACCENT_TEAL, fontSize: 11, cursor: 'pointer',
-          }}
+          style={{ marginTop: 8, color: 'var(--sk-ac)', fontSize: 11.5 }}
         >
           Restore {Object.keys(dismissedIds).length} hidden
         </button>
@@ -558,15 +452,7 @@ export function AgendaListView({
 
       {/* Empty state */}
       {visibleEvents.length === 0 && plannedIds.length === 0 && (
-        <div style={{
-          padding: '24px 16px',
-          textAlign: 'center',
-          color: INK_DIM,
-          fontSize: 13,
-          fontStyle: 'italic',
-          border: `1px dashed ${withAlpha(ACCENT_GOLD, 15)}`,
-          borderRadius: 8,
-        }}>
+        <div className="tk-empty">
           No meetings or planned tasks today
         </div>
       )}

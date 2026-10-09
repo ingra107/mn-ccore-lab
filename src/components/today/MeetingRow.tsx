@@ -1,55 +1,54 @@
-// MeetingRow — collapsed/expanded meeting row in the timeline.
-// Click row to expand inline notes textarea; × button dismisses from today's
+// MeetingRow — collapsed/expanded meeting CARD in the timeline.
+// Click the card to expand inline notes; the × button dismisses from today's
 // view (Timeline parent tracks dismissedMeetings + offers Restore-N-hidden).
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_EventRow). File renamed
 // to MeetingRow per HANDOFF §2; export name kept as EventRow to match the
 // prototype source for searchability.
+//
+// Look (Today reskin, 2026-10-09): the same card anatomy as a task, so the eye
+// learns one layout. Title bold on top, "time · place" as the muted line under
+// it, the footer carries the small controls (notes marker, Agenda / Prep, Join).
+// Join is the filled teal primary only while the meeting is happening now; the
+// rest of the day it is a plain link. Attendee faces, the meeting's project and
+// action counts are NOT here: the Today payload does not carry them yet (a
+// separate meeting build).
+//
+// `.meeting-row-header` stays on the clickable top block as a stable hook
+// (src/__tests__/meeting-row-placeholder-copy.test.tsx drives the card
+// through it); it carries no styles of its own any more.
 
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Video, ListChecks } from 'lucide-react'
-import { ACCENT_TEAL, ACCENT_GOLD, INK, INK_DIM, withAlpha, type TodayEvent } from './constants'
-import { useIsMobile } from '../../hooks/useIsMobile'
+import { ListChecks, StickyNote } from 'lucide-react'
+import type { TodayEvent } from './constants'
+import { useNowMinutes } from './useNowMinutes'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { PATHS } from '../../constants/paths'
 import MarkdownView from '../MarkdownView'
 import { useUnseenActivity, useMarkSeen } from '../../hooks/useEntitySeen'
 import { usePrepMeetingFromEvent } from '../../hooks/mutations/useMeetingMutations'
-import { Chip } from '../ui/Chip'
 import { useToast } from '../../hooks/useToast'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved'
 
-// #2227: the row's inline actions (Join / Agenda / Prep / Open meeting) are
-// interactive <a>/<Link>/<button> elements, so they can't BE a Chip (Chip
-// renders a passive <span>, has no href/onClick/`as` prop, and none of its 7
-// other callers are interactive — src/components/ui/Chip.tsx). Instead the
-// interactive element stays an unstyled shell (behavior only) and wraps a
-// Chip (visual chrome only) as its child — reuses the shared pill primitive
-// per design-system rule 4 ("never fork a one-off variant") without adding
-// polymorphism risk to a component 7 other surfaces depend on.
-const PILL_LINK_STYLE: React.CSSProperties = {
-  display: 'inline-flex', textDecoration: 'none', flexShrink: 0, lineHeight: 1.5,
-  background: 'none', border: 'none', padding: 0, font: 'inherit',
+/** "9:00 AM – 9:30 AM" for a timed row; plain words for the rows with no time. */
+function timeLine(e: TodayEvent): string {
+  if (e.time === 'all day') return 'All day'
+  if (e.time === '—') return 'No time set'
+  return e.end ? `${e.time} – ${e.end}` : e.time
 }
 
-// Chip doesn't have an uppercase/tracked-label mode (its other callers are
-// sentence-case badges) -- merged into Chip's `style` prop, which callers
-// override last by design, rather than adding a variant to the primitive.
-const PILL_LABEL_STYLE: React.CSSProperties = {
-  textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600,
-}
-
-export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStatus = 'idle', isCalEvent = false, minHeight }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean; minHeight?: number }) {
+export function EventRow({ e, onDismiss, note, onNote, saveStatus = 'idle', isCalEvent = false, minHeight }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean; minHeight?: number }) {
   const [expanded, setExpanded] = useState(false)
-  // N1.06 / ROW 24+25: visual breakpoints moved to CSS (.meeting-row-* in
-  // index.css). isPhone prop accepted for API compatibility with TimelineGrid
-  // callers (ROW 24); hook runs on standalone renders but value
-  // is unused now that JSX branches are gone.
-  useIsMobile(768) // keeps matchMedia alive on standalone renders
 
-  // T13: gold NEW pill / teal ● for a cal- row matched to a D1 meeting
+  // Happening now: the Join link becomes the filled primary and the card gets
+  // a teal edge. The clock is the same 60s ticker the now-line uses.
+  const nowMin = useNowMinutes()
+  const isNow = typeof e.startMin === 'number' && typeof e.endMin === 'number' && !e.isAllDay
+    && e.startMin <= nowMin && nowMin < e.endMin
+
+  // T13: NEW tag / teal dot for a cal- row matched to a D1 meeting
   // (same visual rule as the meetings tab — Meetings.tsx). Unmatched cal-
   // rows and real D1 rows (no e.meetingId) never carry the seen indicator
   // here; that surface is out of scope for this row.
@@ -103,124 +102,106 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
     }
   }
 
+  const hasNotes = (note && note.length > 0) || !!e.meetingNotes
+  const place = e.loc ?? null
+
   return (
-    // GH#80 Phase 4: overflow removed (was 'hidden') so the expanded notes
-    // panel isn't clipped. data-expanded drives a CSS elevation lift (#106).
-    <div data-expanded={expanded ? 'true' : undefined} style={{ position: 'relative', background: withAlpha(ACCENT_TEAL, 6), border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, minHeight }}>
-      {/* ROW 25: gap/padding/title-clamp/end-time/loc-hide → CSS .meeting-row-* */}
-      <div onClick={() => setExpanded(!expanded)} className={`meeting-row-header${overlap ? ' meeting-row-header--overlap' : ''}`}>
-        <span
-          className={`meeting-row-time${overlap ? ' meeting-row-time--overlap' : ''}`}
-          style={{ color: ACCENT_TEAL, flexShrink: 0 }}
-          /* #122: the end time is hidden in an overlap column (it cost ~55px of a
-             200px column and the duration is already carried by block height).
-             data-tip puts the full range one hover away. */
-          data-tip={overlap && e.end ? `${e.time} – ${e.end}` : undefined}
-        >
-          {e.time}
-          {e.end && <span className="meeting-row-end" style={{ color: INK_DIM, fontWeight: 400 }}> – {e.end}</span>}
-        </span>
-        {/* #112: tooltip explains the teal dot — it's a calendar event indicator */}
-        <span title="Calendar event" aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_TEAL, flexShrink: 0 }} />
-        <span className="meeting-row-title" style={{ color: INK }}>{e.title}</span>
-        {/* #122: the trailing controls are ONE flex group, not eight loose
-            siblings. In a narrow overlap column the group takes a full-width
-            second line (CSS .meeting-row-header--overlap) instead of pushing
-            the title to 0px and spilling the pills into the next column. */}
-        <div className="meeting-row-actions">
-        {e.meetingUrl && (
-          // #83/#86: petite "Join" pill (was a 🔗 icon — a chain link did not
-          // read as "join the meeting"). Gold = user-driven action (Rule 59),
-          // small font like the timeline duration pills. flexShrink:0 keeps the
-          // title's full flex width.
-          <a
-            href={e.meetingUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(ev) => ev.stopPropagation()}
-            title="Join meeting"
-            aria-label="Join meeting"
-            style={PILL_LINK_STYLE}
-          >
-            <Chip color={ACCENT_GOLD} pill bordered borderAlpha={30} style={PILL_LABEL_STYLE}>
-              <Video {...ICON_PROPS} size={11} aria-hidden />
+    // GH#80 Phase 4: overflow stays visible so the expanded notes panel isn't
+    // clipped. data-expanded drives a CSS elevation lift (#106).
+    <div
+      data-expanded={expanded ? 'true' : undefined}
+      className={`tk-card tk-mc${isNow ? ' tk-nowm' : ''}`}
+      style={{ minHeight }}
+    >
+      <div onClick={() => setExpanded(!expanded)} className="meeting-row-header" style={{ cursor: 'pointer' }}>
+        <div className="tk-mch">
+          <div className="tk-hdr">
+            <div className="tk-ct" style={{ fontSize: 13 }}>{e.title}</div>
+            <div className="tk-cs" title={place ? `${timeLine(e)} · ${place}` : timeLine(e)}>
+              {timeLine(e)}{place ? ` · ${place}` : ''}
+            </div>
+          </div>
+          <div className="tk-tr-r">
+            {hasUpdateSinceSeenMeeting && (
+              <span
+                aria-hidden="true"
+                title="Updated since you last looked"
+                className="tk-dotg"
+              />
+            )}
+            <span className="tk-caret">{expanded ? '▾' : '▸'}</span>
+            <button
+              type="button"
+              onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
+              title="Remove from today's view"
+              aria-label={`Hide ${e.title}`}
+              className="tk-x"
+            >×</button>
+          </div>
+        </div>
+        <div className="tk-ft">
+          {isNow && <span className="tk-pill tk-box"><i />Now</span>}
+          {isNeverSeenMeeting && <span className="tk-tag" title="New notes since your last visit">New notes</span>}
+          <span className="tk-sp" />
+          {hasNotes && (
+            <span className="tk-mt" title="Has notes">
+              <StickyNote {...ICON_PROPS} size={13} aria-hidden />notes
+            </span>
+          )}
+          {rowMeetingId && (
+            <Link
+              to={PATHS.meeting(rowMeetingId)}
+              onClick={(ev) => ev.stopPropagation()}
+              title="Open this meeting's agenda and notes"
+              aria-label={`Open agenda for ${e.title}`}
+              className="tk-pill tk-btnp"
+            >
+              <ListChecks {...ICON_PROPS} size={11} aria-hidden />Agenda
+            </Link>
+          )}
+          {canPrep && (
+            <button
+              type="button"
+              onClick={handlePrep}
+              disabled={prep.isPending}
+              title="Build an agenda for this meeting — links, notes, decisions"
+              aria-label={`Prep ${e.title}`}
+              className="tk-pill tk-btnp planned-chip"
+              style={{ cursor: prep.isPending ? 'wait' : 'pointer', opacity: prep.isPending ? 0.6 : 1 }}
+            >
+              <ListChecks {...ICON_PROPS} size={11} aria-hidden />{prep.isPending ? 'Prepping' : 'Prep'}
+            </button>
+          )}
+          {e.meetingUrl && (
+            <a
+              href={e.meetingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(ev) => ev.stopPropagation()}
+              title="Join meeting"
+              aria-label="Join meeting"
+              className={isNow ? 'tk-join' : 'tk-joinq'}
+            >
               Join
-            </Chip>
-          </a>
-        )}
-        {rowMeetingId && (
-          <Link
-            to={PATHS.meeting(rowMeetingId)}
-            onClick={(ev) => ev.stopPropagation()}
-            title="Open this meeting's agenda and notes"
-            aria-label={`Open agenda for ${e.title}`}
-            style={PILL_LINK_STYLE}
-          >
-            <Chip color={ACCENT_GOLD} pill bordered borderAlpha={30} style={PILL_LABEL_STYLE}>
-              <ListChecks {...ICON_PROPS} size={11} aria-hidden />
-              Agenda
-            </Chip>
-          </Link>
-        )}
-        {canPrep && (
-          <button
-            type="button"
-            onClick={handlePrep}
-            disabled={prep.isPending}
-            title="Build an agenda for this meeting — links, notes, decisions"
-            aria-label={`Prep ${e.title}`}
-            style={{ ...PILL_LINK_STYLE, cursor: prep.isPending ? 'wait' : 'pointer' }}
-          >
-            <Chip color={ACCENT_GOLD} pill bordered borderAlpha={30} style={{ ...PILL_LABEL_STYLE, opacity: prep.isPending ? 0.6 : 1 }}>
-              <ListChecks {...ICON_PROPS} size={11} aria-hidden />
-              {prep.isPending ? 'Prepping' : 'Prep'}
-            </Chip>
-          </button>
-        )}
-        {e.loc && <span className="meeting-row-loc" style={{ fontSize: 11, color: ACCENT_TEAL }}>📍 {e.loc}</span>}
-        {note && note.length > 0 && <span title="Has notes" style={{ fontSize: 11, color: ACCENT_GOLD }}>📝</span>}
-        {isNeverSeenMeeting && (
-          <span
-            title="New notes since your last visit"
-            style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 10, background: 'var(--gold)', color: '#1a1a1a', letterSpacing: '0.02em', flexShrink: 0 }}
-          >
-            NEW
-          </span>
-        )}
-        {hasUpdateSinceSeenMeeting && (
-          <span
-            aria-hidden="true"
-            title="Updated since you last looked"
-            style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--teal)', boxShadow: '0 0 0 2.5px rgba(45,138,138,0.15)', flexShrink: 0 }}
-          />
-        )}
-        <span style={{ fontSize: 11, color: INK_DIM }}>{expanded ? '▾' : '▸'}</span>
-        <button
-          onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
-          title="Remove from today's view"
-          aria-label={`Hide ${e.title}`}
-          className="hov-opacity"
-          style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 14, cursor: 'pointer', padding: '0 4px', lineHeight: 1, opacity: 0.5, transition: 'opacity 120ms', '--hov-opacity': '1' } as React.CSSProperties}
-        >×</button>
+            </a>
+          )}
         </div>
       </div>
       {expanded && (
-        <div style={{ padding: '12px 14px 14px', borderTop: `1px solid ${withAlpha(ACCENT_TEAL, 18)}`, background: withAlpha(ACCENT_TEAL, 2) }}>
+        <div className="tk-mexp">
           {e.meetingNotes ? (
             // T13: cal- row matched to a D1 meeting that has debrief notes —
             // read-only rendered notes + deep link, no jot textarea (editing
             // debriefed notes stays on the meeting page).
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: INK_DIM }}>Meeting notes</div>
+                <div className="tk-lbl" style={{ margin: 0 }}>Meeting notes</div>
                 <Link
                   to={PATHS.meeting(e.meetingId!)}
                   onClick={(ev) => ev.stopPropagation()}
-                  style={PILL_LINK_STYLE}
+                  className="tk-pill tk-btnp"
                 >
-                  <Chip color={ACCENT_GOLD} pill bordered borderAlpha={30} style={PILL_LABEL_STYLE}>
-                    Open meeting →
-                  </Chip>
+                  Open meeting →
                 </Link>
               </div>
               <MarkdownView source={e.meetingNotes} />
@@ -228,12 +209,12 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
           ) : (
             <>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: INK_DIM }}>Meeting notes</div>
+                <div className="tk-lbl" style={{ margin: 0 }}>Meeting notes</div>
                 {!isCalEvent && saveStatus === 'saving' && (
-                  <span style={{ fontSize: 10, color: INK_DIM }}>saving…</span>
+                  <span style={{ fontSize: 10.5, color: 'var(--sk-t3)' }}>saving…</span>
                 )}
                 {!isCalEvent && saveStatus === 'saved' && (
-                  <span style={{ fontSize: 10, color: ACCENT_TEAL }}>saved</span>
+                  <span style={{ fontSize: 10.5, color: 'var(--sk-ac)' }}>saved</span>
                 )}
               </div>
               <textarea
@@ -250,7 +231,7 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
                         : 'No meeting page yet — press Prep to build an agenda')
                     : 'Jot notes as the meeting happens…'
                 }
-                style={{ width: '100%', minHeight: 72, background: isCalEvent ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.25)', border: '1px solid var(--border-default)', borderRadius: 4, padding: '8px 10px', color: isCalEvent ? INK_DIM : INK, fontSize: 12, fontFamily: 'inherit', outline: 'none', resize: isCalEvent ? 'none' : 'vertical', boxSizing: 'border-box', lineHeight: 1.5, cursor: isCalEvent ? 'not-allowed' : undefined }}
+                style={{ resize: isCalEvent ? 'none' : 'vertical', cursor: isCalEvent ? 'not-allowed' : undefined, outline: 'none', lineHeight: 1.5 }}
               />
             </>
           )}

@@ -43,7 +43,6 @@ import {
   type TimelineUnit, type DayBalance,
 } from './timelineModel'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK, INK_DIM, PAGE_BG, withAlpha,
   continuationNote,
   type TodayEvent, type PlannedSlot,
 } from './constants'
@@ -65,6 +64,15 @@ function fmtMin(min: number): string {
   return m === 0 ? `${hour} ${ampm}` : `${hour}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
+// Compact gutter label: "8:30", "10:30", "12" (no AM/PM; the day-start label carries it).
+function fmtGutter(min: number): string {
+  if (min >= 1440) return 'midnight'
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  const hour = h > 12 ? h - 12 : h === 0 ? 12 : h
+  return m === 0 ? `${hour}` : `${hour}:${String(m).padStart(2, '0')}`
+}
+
 // ── Day balance strip ─────────────────────────────────────────────────────
 // A single ~18px bar summarising the day: proportional teal (free) / gold
 // (committed) segments plus the numbers in words. Reads MINUTES off the model,
@@ -76,19 +84,19 @@ function DayBalanceStrip({ balance }: { balance: DayBalance }) {
   const freePct = Math.round((freeMinutes / total) * 100)
 
   return (
-    <div style={{ marginBottom: 10, padding: '0 2px' }}>
+    <div className="tk-bal">
       <div
         role="img"
         aria-label={`${fmtDuration(freeMinutes)} free, ${fmtDuration(meetingMinutes)} in meetings`}
-        style={{ display: 'flex', height: 4, borderRadius: 2, overflow: 'hidden', background: withAlpha(INK, 8) }}
+        className="tk-balbar"
       >
-        <div style={{ width: `${freePct}%`, background: withAlpha(ACCENT_TEAL, 55) }} />
-        <div style={{ width: `${100 - freePct}%`, background: withAlpha(ACCENT_GOLD, 60) }} />
+        <span className="tk-f" style={{ width: `${freePct}%` }} />
+        <span className="tk-m" style={{ width: `${100 - freePct}%` }} />
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4, fontSize: 10, color: INK_DIM }}>
-        <span style={{ color: ACCENT_TEAL }}>{fmtDuration(freeMinutes)} free</span>
-        <span style={{ color: ACCENT_GOLD }}>{fmtDuration(meetingMinutes)} in meetings</span>
-        {serviceMinutes > 0 && <span>{fmtDuration(serviceMinutes)} blocked out</span>}
+      <div className="tk-baltx">
+        <span><b>{fmtDuration(freeMinutes)}</b> free</span>
+        <span><b>{fmtDuration(meetingMinutes)}</b> in meetings</span>
+        {serviceMinutes > 0 && <span><b>{fmtDuration(serviceMinutes)}</b> blocked out</span>}
       </div>
     </div>
   )
@@ -204,10 +212,7 @@ function TimedTaskBlock({
     left: `${leftPct}%`,
     width: `${widthPct}%`,
     boxSizing: 'border-box',
-    padding: '3px 6px 3px 6px',
-    background: withAlpha(ACCENT_GOLD, isDragging || isResizing ? 18 : expanded ? 16 : 10),
-    border: `1px solid ${withAlpha(ACCENT_GOLD, isDragging || isResizing ? 50 : expanded ? 55 : 30)}`,
-    borderRadius: 5,
+    // look (card, dashed edge, hatched left bar): .tk-tblock in index.css
     // overflow: 'visible' (NOT 'hidden') — overflow content must remain readable.
     overflow: 'visible',
     cursor: isDragging ? 'grabbing' : 'grab',
@@ -221,7 +226,7 @@ function TimedTaskBlock({
     touchAction: 'none',  // prevent browser scroll-hijack during pointer gesture
     userSelect: 'none',
     willChange: isDragging ? 'transform' : isResizing ? 'height' : 'auto',
-    outline: isDragging ? `2px solid ${withAlpha(ACCENT_GOLD, 60)}` : 'none',
+    outline: isDragging ? '2px solid var(--sk-ac)' : 'none',
   }
 
   const durLabel = fmtDuration(dur)
@@ -229,6 +234,7 @@ function TimedTaskBlock({
   return (
     <div
       ref={setNodeRef}
+      className={`tk-tblock${expanded ? ' tk-exp' : ''}`}
       style={blockStyle}
       onClick={onClickExpand}
       onMouseEnter={() => setIsHovered(true)}
@@ -247,15 +253,15 @@ function TimedTaskBlock({
           aria-hidden
           style={{
             flexShrink: 0,
-            color: ACCENT_GOLD,
-            opacity: (isHovered || isDragging) ? 0.7 : 0,
+            color: 'var(--sk-t3)',
+            opacity: (isHovered || isDragging) ? 0.9 : 0,
             transition: 'opacity 120ms ease',
           }}
         />
         <span style={{
-          fontSize: 11,
-          fontWeight: 500,
-          color: INK,
+          fontSize: 11.5,
+          fontWeight: 600,
+          color: 'var(--sk-t1)',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -264,16 +270,7 @@ function TimedTaskBlock({
         }}>
           {task.short_title || task.title}
         </span>
-        <span style={{
-          fontSize: 9,
-          color: ACCENT_GOLD,
-          padding: '1px 4px',
-          background: withAlpha(ACCENT_GOLD, 12),
-          border: `1px solid ${withAlpha(ACCENT_GOLD, 25)}`,
-          borderRadius: 999,
-          flexShrink: 0,
-          fontVariantNumeric: 'tabular-nums',
-        }}>
+        <span className="tk-mt" style={{ fontSize: 10.5, flexShrink: 0 }}>
           {durLabel}
         </span>
       </div>
@@ -446,10 +443,9 @@ function AgendaGapRow({
       // dragOver (isOver from useDroppable) drives highlight — replaces HTML5 onDragOver.
       // TodayDndContext.onDragEnd calls state.planAt when a task drops here.
       ref={setDropRef}
+      className={`tk-gap${dragOver ? ' tk-over' : ''}`}
       style={{
         minHeight: containerMinHeight,
-        borderTop: `1px dashed ${withAlpha(ACCENT_GOLD, dragOver ? 55 : 15)}`,
-        background: dragOver ? withAlpha(ACCENT_GOLD, 8) : 'transparent',
         transition: 'all 120ms',
         display: 'flex',
         flexDirection: 'column',
@@ -513,9 +509,9 @@ function AgendaGapRow({
                   left: `${leftPct}%`,
                   width: `${widthPct}%`,
                   boxSizing: 'border-box',
-                  border: `2px dashed ${ACCENT_GOLD}`,
-                  borderRadius: 5,
-                  background: withAlpha(ACCENT_GOLD, 8),
+                  border: '2px dashed var(--sk-ac)',
+                  borderRadius: 'var(--r-ctl)',
+                  background: 'var(--sk-ac-soft)',
                   pointerEvents: 'none',
                   zIndex: 20,
                   transition: 'top 80ms ease, height 80ms ease',
@@ -547,9 +543,9 @@ function AgendaGapRow({
               left: 0,
               right: 0,
               // Opaque background so the drawer hides lower blocks cleanly.
-              background: PAGE_BG,
-              // Gold left border visually connects the drawer to its block.
-              borderLeft: `3px solid ${withAlpha(ACCENT_GOLD, 55)}`,
+              background: 'var(--sk-panel)',
+              // Teal left border visually connects the drawer to its block.
+              borderLeft: '3px solid var(--sk-ac)',
               // Above the absolute block layer (z 1) and ghost (z 2).
               zIndex: 10,
             }}
@@ -587,19 +583,17 @@ function AgendaGapRow({
       )}
 
       {/* Free-time label — bottom of the gap */}
-      <div style={{
+      <div className="tk-gapl-row" style={{
         flex: 1,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: 'flex-end',
+        justifyContent: 'flex-end',
         minHeight: 16,
-        fontSize: 10,
-        color: dragOver ? ACCENT_GOLD : withAlpha(ACCENT_GOLD, 40),
-        fontStyle: 'italic',
+        padding: '0 8px 4px',
         userSelect: 'none',
         pointerEvents: 'none',
       }}>
-        {dragOver ? '↓ drop here' : fmtFree}
+        <span className="tk-gapl" style={dragOver ? { color: 'var(--sk-ac)' } : undefined}>{dragOver ? '↓ drop here' : fmtFree}</span>
       </div>
 
       {/* Now-line at fractional position within this gap.
@@ -661,7 +655,7 @@ function AgendaMeetingRow({
         minHeight: baseHeight,
         // Notes expand inside this shell below EventRow — no absolute needed
         position: 'relative',
-        borderTop: `1px solid ${withAlpha(ACCENT_TEAL, 10)}`,
+        margin: '3px 0',
       }}
     >
       {/* #83: now-line at fractional position within this meeting */}
@@ -680,25 +674,8 @@ function AgendaMeetingRow({
         </div>
       )}
       {/* Time label in left 44px spine */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          left: -44,
-          top: 4,
-          width: 40,
-          textAlign: 'right',
-          fontSize: 9,
-          fontWeight: 600,
-          letterSpacing: '0.04em',
-          color: withAlpha(ACCENT_TEAL, 70),
-          lineHeight: 1,
-          userSelect: 'none',
-          pointerEvents: 'none',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {fmtMin(startMin)}
+      <div aria-hidden="true" className="tk-tlab" style={{ left: -46, top: 6 }}>
+        {fmtGutter(startMin)}
       </div>
       <EventRow
         e={event}
@@ -767,7 +744,7 @@ function AgendaOverlapRegion({
       data-agenda-unit="overlap"
       style={{
         minHeight: unit.baseHeight,
-        borderTop: `1px solid ${withAlpha(ACCENT_TEAL, 10)}`,
+        margin: '3px 0',
         position: 'relative',
       }}
     >
@@ -787,32 +764,15 @@ function AgendaOverlapRegion({
         </div>
       )}
       {/* Time label */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          left: -44,
-          top: 4,
-          width: 40,
-          textAlign: 'right',
-          fontSize: 9,
-          fontWeight: 600,
-          letterSpacing: '0.04em',
-          color: withAlpha(ACCENT_TEAL, 70),
-          lineHeight: 1,
-          userSelect: 'none',
-          pointerEvents: 'none',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {fmtMin(unit.startMin)}
+      <div aria-hidden="true" className="tk-tlab" style={{ left: -46, top: 6 }}>
+        {fmtGutter(unit.startMin)}
       </div>
       {/* Side-by-side columns — #116: wider min (200px) to reduce title truncation */}
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${colCount}, minmax(200px, 1fr))`,
-          gap: 4,
+          gap: 6,
           overflowX: colCount > 1 ? 'auto' : 'visible',
           alignItems: 'start',
         }}
@@ -880,7 +840,10 @@ export function TimelineGrid({
   now,
   inMeeting,
 }: TimelineGridProps) {
-  const nowColor = inMeeting ? ACCENT_CORAL : ACCENT_GOLD
+  // One teal rule. The coral-while-in-a-meeting variant is dropped: the meeting
+  // card already says "Now", and a second color for the same fact is noise.
+  void inMeeting
+  const nowColor = 'var(--sk-ac)'
   // Label from the SAME `now` minutes that place the line, never a second
   // wall-clock read (#138): the two can only disagree if one of them is stale.
   const nowLabel = formatNowLabel(now)
@@ -903,15 +866,13 @@ export function TimelineGrid({
       }}
     >
       <span style={{ width: 7, height: 7, borderRadius: '50%', background: nowColor, flexShrink: 0, marginLeft: -4 }} />
-      <div style={{ flex: 1, height: 1, background: nowColor, boxShadow: `0 0 4px ${nowColor}80` }} />
+      <div style={{ flex: 1, height: 1.5, background: nowColor }} />
       <span style={{
-        padding: '1px 5px',
-        fontSize: 9,
-        fontWeight: 700,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
+        padding: '0 4px',
+        fontSize: 10,
+        fontWeight: 600,
         color: nowColor,
-        borderRadius: 3,
+        background: 'var(--sk-panel)',
         flexShrink: 0,
         marginRight: 2,
         whiteSpace: 'nowrap',
@@ -1071,11 +1032,11 @@ export function TimelineGrid({
       {/* All-day banner */}
       {allDayEvents.length > 0 && (
         <div style={{ marginBottom: 8 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_TEAL, padding: '0 2px 4px' }}>All-day events</div>
+          <div className="tk-alld">All day and unscheduled</div>
           {/* Same unbounded-stack class as the Service column (fixed 21709195):
               cap the all-day banner so a conference-week pile of all-day events
               scrolls internally instead of pushing the timeline down the page. */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto', overscrollBehavior: 'contain' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 220, overflowY: 'auto', overscrollBehavior: 'contain' }}>
             {allDayEvents.map((e) => (
               <EventRow
                 key={e.id}
@@ -1099,25 +1060,9 @@ export function TimelineGrid({
         alignItems: 'flex-start',
       }}>
         {/* Time spine + agenda column */}
-        <div style={{ flex: 1, minWidth: 0, paddingLeft: 44, position: 'relative' }}>
+        <div style={{ flex: 1, minWidth: 0, paddingLeft: 46, position: 'relative' }}>
           {/* Day-start time label */}
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 6,
-              width: 40,
-              textAlign: 'right',
-              fontSize: 9,
-              fontWeight: 600,
-              letterSpacing: '0.04em',
-              color: withAlpha(ACCENT_TEAL, 60),
-              lineHeight: 1,
-              userSelect: 'none',
-              pointerEvents: 'none',
-            }}
-          >
+          <div aria-hidden="true" className="tk-tlab" style={{ left: 0, top: 6 }}>
             {fmtMin(dayStart)}
           </div>
 
@@ -1148,9 +1093,7 @@ export function TimelineGrid({
             flexShrink: 0,
             zIndex: 1,
           }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: withAlpha(ACCENT_TEAL, 55), padding: '0 0 3px', whiteSpace: 'nowrap' }}>
-              Service
-            </div>
+            <div className="tk-svch">Service</div>
             <div style={{
               maxHeight: serviceDayHeight,
               overflowY: 'auto',
@@ -1164,28 +1107,19 @@ export function TimelineGrid({
               {serviceBlocks.map((e) => (
                 <div
                   key={e.id}
-                  style={{
-                    background: withAlpha(ACCENT_TEAL, 5),
-                    border: `1px solid ${withAlpha(ACCENT_TEAL, 20)}`,
-                    borderRadius: 4,
-                    padding: '5px 6px',
-                    // Translucent — agenda content renders over (z-index 2 on parent)
-                    opacity: 0.85,
-                    minHeight: 0,
-                    overflow: 'hidden',
-                    boxSizing: 'border-box',
-                  }}
+                  className="tk-svcb"
+                  style={{ minHeight: 0, overflow: 'hidden', boxSizing: 'border-box' }}
                 >
-                  <div style={{ fontSize: 9, color: ACCENT_TEAL, fontWeight: 600, fontVariantNumeric: 'tabular-nums', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div className="tk-t" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {e.time}{e.end ? ` – ${e.end}` : ''}
                   </div>
-                  <div style={{ fontSize: 10, color: INK, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.3 }}>
+                  <div className="tk-n" style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                     {e.title}
                   </div>
                   {/* #107: say WHERE the span goes. Teal, not coral — a
                       cross-day block is calendar structure, not a warning. */}
                   {continuationNote(e) && (
-                    <div style={{ fontSize: 9, color: ACCENT_TEAL, opacity: 0.85, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div className="tk-t" style={{ marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       ↕ {continuationNote(e)}
                     </div>
                   )}
@@ -1193,8 +1127,8 @@ export function TimelineGrid({
                     onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
                     title="Remove from today's view"
                     aria-label={`Hide ${e.title}`}
-                    className="hov-opacity"
-                    style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 10, cursor: 'pointer', padding: '2px 0 0', lineHeight: 1, opacity: 0.4, transition: 'opacity 120ms', '--hov-opacity': '1' } as React.CSSProperties}
+                    className="tk-x"
+                    style={{ fontSize: 10.5, padding: '2px 0 0' }}
                   >× hide</button>
                 </div>
               ))}

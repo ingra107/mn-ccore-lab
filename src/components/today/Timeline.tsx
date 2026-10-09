@@ -48,13 +48,9 @@ import EmptyStateArt from '../EmptyStateArt'
 import { type SaveStatus } from './MeetingRow'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { TimelineGrid } from './TimelineGrid'
-import { CollapseChevron } from './SectionCollapseToggle'
-import { collapseToggleProps } from './collapseToggleProps'
+import { TodayHeader } from './TodayHeader'
 import { useNowMinutes } from './useNowMinutes'
-import {
-  ACCENT_GOLD, ACCENT_TEAL, INK_DIM, withAlpha,
-  type PlannedSlot, type TodayEvent,
-} from './constants'
+import type { PlannedSlot, TodayEvent } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import { useUpdateMeetingNotes } from '../../hooks/mutations/useMeetingMutations'
@@ -102,18 +98,8 @@ function DropZone({ slot, label }: { slot: PlannedSlot; label: string }) {
   return (
     <div
       ref={setNodeRef}
-      style={{
-        padding: '6px 14px',
-        margin: '4px 0',
-        border: `1px dashed ${withAlpha(ACCENT_GOLD, isOver ? 55 : 15)}`,
-        borderRadius: 6,
-        fontSize: 11,
-        color: INK_DIM,
-        textAlign: 'center',
-        transition: 'all 120ms',
-        fontStyle: 'italic',
-        background: isOver ? withAlpha(ACCENT_GOLD, 8) : 'transparent',
-      }}
+      className={`tk-gap${isOver ? ' tk-over' : ''}`}
+      style={{ padding: '6px 14px', margin: '4px 0', fontSize: 11, color: 'var(--sk-t3)', textAlign: 'center', transition: 'all 120ms' }}
     >
       {label}
     </div>
@@ -200,7 +186,7 @@ export function Timeline({ events, tasks, state, projectsByPid, activeView, onTo
   const hasAnyEvents = hasTimed || hasAllDay
 
   return (
-    <section data-b2-timeline style={{ marginBottom: 24 }}>
+    <section data-b2-timeline className="tk-panel tk-blk">
       {/* Renderless auto-savers — one per real D1 meeting with in-session notes */}
       {touchedMeetingIds.map((id) => (
         <MeetingNotesAutoSave
@@ -211,74 +197,21 @@ export function Timeline({ events, tasks, state, projectsByPid, activeView, onTo
         />
       ))}
 
-      {/* Header. Only the icon+title+chevron are the collapse-click target —
-          the view-toggle group, hint, and restore button are siblings so
-          their clicks never reach the collapse handler (no stopPropagation
-          needed). */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-        <div
-          {...collapseToggleProps(open, onToggleOpen, 'Today section')}
-          style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
-        >
-          <span style={{ fontSize: 16 }}>📅</span>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>Today</h2>
-          <CollapseChevron open={open} color={ACCENT_TEAL} />
-        </div>
-        {/* Timeline⇄Agenda view toggle — rendered when parent passes activeView + onToggleView */}
-        {onToggleView && (
-          <div
-            role="group"
-            aria-label="Today view"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              border: `1px solid ${withAlpha(ACCENT_TEAL, 22)}`,
-              borderRadius: 6,
-              overflow: 'hidden',
-              flexShrink: 0,
-            }}
-          >
-            {(['timeline', 'agenda'] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => onToggleView(v)}
-                aria-pressed={activeView === v}
-                title={v === 'timeline' ? 'Timeline — drag tasks into gaps' : 'Agenda — scan your day'}
-                style={{
-                  background: activeView === v ? withAlpha(ACCENT_TEAL, 18) : 'transparent',
-                  border: 'none',
-                  color: activeView === v ? ACCENT_TEAL : INK_DIM,
-                  fontSize: 11,
-                  fontWeight: activeView === v ? 600 : 400,
-                  cursor: 'pointer',
-                  padding: '3px 9px',
-                  letterSpacing: '0.02em',
-                  transition: 'all 120ms',
-                  lineHeight: 1.5,
-                }}
-              >
-                {v === 'timeline' ? 'Timeline' : 'Agenda'}
-              </button>
-            ))}
-          </div>
-        )}
-        <span className="today-section-hint" style={{ fontSize: 11, color: INK_DIM }}>
-          {activeView === 'agenda'
-            ? 'scan your day · click to open · × to hide'
-            : 'drag tasks into the gaps · click meetings to take notes · × to hide'}
-        </span>
-        {Object.keys(dismissedMeetings).length > 0 && (
-          <button onClick={onRestoreDismissed} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: ACCENT_TEAL, fontSize: 11, cursor: 'pointer' }}>
-            Restore {Object.keys(dismissedMeetings).length} hidden
-          </button>
-        )}
-      </div>
+      <TodayHeader
+        open={open}
+        onToggleOpen={onToggleOpen}
+        eventCount={visibleMeetings.length}
+        activeView={activeView ?? 'timeline'}
+        onToggleView={(v) => onToggleView?.(v)}
+        hiddenCount={Object.keys(dismissedMeetings).length}
+        onRestore={onRestoreDismissed}
+      />
 
       {open && (
         <>
           {/* Empty state */}
           {visibleMeetings.length === 0 && (
-            <div style={{ background: withAlpha(ACCENT_GOLD, 3), border: `1px dashed ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 8 }}>
+            <div className="tk-empty" style={{ padding: 0 }}>
               <EmptyState
                 compact
                 icon={<EmptyStateArt variant="meetings" width={96} height={72} />}

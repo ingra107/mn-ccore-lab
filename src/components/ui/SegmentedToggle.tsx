@@ -29,6 +29,9 @@ interface SegmentedToggleProps<T extends string> {
   scrollable?: boolean
   className?: string
   ariaLabel?: string
+  /** 'tk' = the Today skin's tray (.tk-seg: the active segment is the brighter
+   *  card step). Only valid under a .tk ancestor; default keeps the canon pill. */
+  skin?: 'tk'
 }
 
 const ACCENT = {
@@ -52,9 +55,29 @@ export function SegmentedToggle<T extends string>({
   scrollable = false,
   className,
   ariaLabel,
+  skin,
 }: SegmentedToggleProps<T>) {
   const a = ACCENT[accent]
   const s = SIZE[size]
+  if (skin === 'tk') {
+    return (
+      <div role="tablist" aria-label={ariaLabel} className={`tk-seg${className ? ` ${className}` : ''}`}>
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            role="tab"
+            aria-selected={value === opt.value}
+            onClick={() => onChange(opt.value)}
+            title={opt.label}
+            className={value === opt.value ? 'tk-on' : undefined}
+          >
+            {opt.icon}{opt.label}
+          </button>
+        ))}
+      </div>
+    )
+  }
   return (
     <div
       role="tablist"

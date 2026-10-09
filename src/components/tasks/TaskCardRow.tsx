@@ -1,0 +1,269 @@
+// TaskCardRow — the CARD anatomy of the shared task row (Today reskin,
+// 2026-10-09). Opt-in via `card` on SharedTaskRow (tasks/TaskRow.tsx), which
+// dispatches here; every other surface keeps the standard row.
+//
+// One anatomy, repeated: bold title, the project's short name as a muted line
+// under it, the assignee's face top right, other people bottom-left, small
+// icon + counts bottom-right, due as a dot pill. Priority is gray except
+// Urgent, which gets the one orange rail and an "Urgent" tag (HIGH no longer
+// paints a rail: a second color for a second priority is the equal-weight
+// color noise the reskin removes). No subtask steps and no invented content.
+//
+// The contract is the standard row's: square = COMPLETE, body click = expand,
+// grip = drag-to-plan, pin = plan for today, planned pill = unplan. Styles:
+// .tk-* in index.css.
+
+import { Link } from 'react-router-dom'
+import { GripHorizontal, MapPin, MessageSquare, Pin } from 'lucide-react'
+import { ICON_PROPS } from '../../lib/iconProps'
+import { PATHS } from '../../constants/paths'
+import { useAuth } from '../../hooks/useAuth'
+import { useUnseenActivity } from '../../hooks/useEntitySeen'
+import { dueLabelCompact, dueTone, formatShortDate, isOverdue } from '../../lib/dateUtils'
+import type { MilestoneEntry } from '../../lib/taskGrouping'
+import { Face, Faces, CheckGlyph } from '../today/skin'
+import TaskTitle from './TaskTitle'
+import type { SharedTaskRowProps } from './TaskRow'
+
+// The complete control on a card (.tk-ck). Same contract as DoneBox: the square
+// is COMPLETE, everywhere. `done-box` keeps the invisible 24px+ hit area.
+export function CardCheck({ done, onToggle }: { done: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      className={`done-box tip tk-ck${done ? ' tk-on' : ''}`}
+      onClick={(e) => { e.stopPropagation(); onToggle() }}
+      onMouseDown={(e) => e.stopPropagation()}
+      data-tip={done ? 'Mark not done' : 'Mark done'}
+      aria-label={done ? 'Mark not done' : 'Mark done'}
+      aria-pressed={done}
+    >
+      {done && <CheckGlyph />}
+    </button>
+  )
+}
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+/** Card due wording: "2d late", "Yesterday", "Due today", "Tomorrow", a weekday
+ *  within the next week, else "Fri Oct 16". Words, not "in 3d". */
+function dueWords(due: string, overdue: boolean): string {
+  const target = new Date(due.slice(0, 10) + 'T12:00:00')
+  if (isNaN(target.getTime())) return due.slice(0, 10)
+  const todayNoon = new Date(); todayNoon.setHours(12, 0, 0, 0)
+  const days = Math.round((target.getTime() - todayNoon.getTime()) / 86400000)
+  if (overdue) return days >= -1 ? 'Yesterday' : `${-days}d late`
+  if (days === 0) return 'Due today'
+  if (days === 1) return 'Tomorrow'
+  if (days <= 6) return WEEKDAYS[target.getDay()]
+  return `${WEEKDAYS[target.getDay()]} ${formatShortDate(due)}`
+}
+
+function CardDuePill({ due, status }: { due: string; status?: string }) {
+  const dueDay = due.slice(0, 10)
+  const overdue = isOverdue(due, status)
+  const tone = dueTone(due, overdue)
+  const label = dueWords(due, overdue)
+  const cls = overdue ? 'tk-pill tk-o' : tone === 'today' ? 'tk-pill tk-g' : 'tk-pill'
+  return (
+    <span className={cls} data-tip={`Due ${dueDay}`} aria-label={`Due ${dueDay}`}>
+      <i />{label}
+    </span>
+  )
+}
+
+function CardProjectLine({ project }: { project: { name: string; slug: string } | null }) {
+  if (!project) return <div className="tk-cs">No project</div>
+  return (
+    <div className="tk-cs">
+      <Link
+        to={PATHS.project(project.slug)}
+        onClick={(e) => e.stopPropagation()}
+        aria-label={`Open ${project.name}`}
+      >
+        {project.name}
+      </Link>
+    </div>
+  )
+}
+
+export function CardRow(props: SharedTaskRowProps) {
+  const {
+    task, project, isDone, onToggleDone, isExpanded, onToggleExpand, hideCaret,
+    onOpenEditor, draggable = false, onDragStart, onTogglePlan,
+    isPlanned = false, plannedLabel, showGroupOverridePin = false,
+    leadingTag, extraMeta, belowTitle, footPills, children,
+  } = props
+
+  const { user } = useAuth()
+  const isNewToViewer = !isDone && !!task.assignee && task.assignee === (user?.slug ?? '') && !task.acknowledged_at
+  const { data: unseen } = useUnseenActivity()
+  const activityRow = !isDone && !isNewToViewer ? unseen?.tasks.get(task.id) : undefined
+
+  const urgent = !isDone && task.priority === 'urgent'
+  const displayTitle = task.short_title || task.title
+  const others = [task.assigned_by, ...(task.watchers ? task.watchers.split(',').map((w) => w.trim()) : [])]
+    .filter((s): s is string => !!s && s !== task.assignee)
+
+  const titleNode = onOpenEditor ? (
+    <span
+      role="button"
+      tabIndex={0}
+      onClick={(e) => { e.stopPropagation(); onOpenEditor() }}
+      onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOpenEditor() } }}
+      style={{ cursor: 'pointer' }}
+    >
+      <TaskTitle title={displayTitle} fallback={task.description} />
+    </span>
+  ) : (
+    <TaskTitle title={displayTitle} fallback={task.description} />
+  )
+
+  const planBtn = onTogglePlan && !isDone && !isPlanned ? (
+    <button
+      type="button"
+      data-plan-btn={task.id}
+      className="tk-hov today-plan-btn tip"
+      onClick={(e) => { e.stopPropagation(); onTogglePlan() }}
+      onMouseDown={(e) => e.stopPropagation()}
+      data-tip="Plan for today"
+      aria-label="Plan task for today"
+    >
+      <Pin {...ICON_PROPS} size={12} />
+    </button>
+  ) : null
+
+  const grip = draggable && !isDone ? (
+    <span
+      draggable
+      onDragStart={onDragStart}
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      data-tip="Drag to schedule"
+      aria-label="Drag to schedule"
+      className="tk-grip task-grip tip"
+    >
+      <GripHorizontal {...ICON_PROPS} size={12} />
+    </span>
+  ) : null
+
+  const plannedName = plannedLabel ? plannedLabel.charAt(0).toUpperCase() + plannedLabel.slice(1) : 'Planned'
+  const plannedPill = isPlanned && !isDone ? (
+    onTogglePlan ? (
+      <button
+        type="button"
+        className="tk-pill tk-btnp planned-chip tip"
+        onClick={(e) => { e.stopPropagation(); onTogglePlan() }}
+        onMouseDown={(e) => e.stopPropagation()}
+        data-tip="Click to unplan"
+        aria-label="Unplan task"
+      >
+        <Pin {...ICON_PROPS} size={11} />{plannedName}
+      </button>
+    ) : (
+      <span className="tk-pill"><Pin {...ICON_PROPS} size={11} />{plannedName}</span>
+    )
+  ) : null
+
+  return (
+    <div
+      data-task-id={task.id}
+      className={`tk-card tk-tc${isDone ? ' tk-done' : ''}${urgent ? ' tk-urg' : ''}${isExpanded ? ' tk-exp' : ''}`}
+    >
+      <div className="tk-tch" onClick={onToggleExpand}>
+        <CardCheck done={isDone} onToggle={onToggleDone} />
+        <div className="tk-hdr">
+          <div className="tk-ct">
+            {urgent && <span className="sr-only">Urgent: </span>}
+            {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
+            {titleNode}
+            {isNewToViewer && <span className="tk-tag" title="New to you: you have not opened this yet">New</span>}
+            {activityRow && (
+              <span className="tk-tag tk-ac" title={`${activityRow.new_count} new ${activityRow.new_count === 1 ? 'entry' : 'entries'} since you last opened this`}>
+                {activityRow.new_count} new
+              </span>
+            )}
+            {showGroupOverridePin && task.group_override && (
+              <span className="tk-tag tk-n tip" data-tip={`Moved manually (${task.group_override})`} aria-label={`Moved manually (${task.group_override})`}>
+                <MapPin {...ICON_PROPS} size={10} aria-hidden /> moved
+              </span>
+            )}
+            {urgent && <span className="tk-tag tk-urgtag" aria-hidden="true">Urgent</span>}
+            {planBtn}
+            {grip}
+          </div>
+          <CardProjectLine project={project} />
+        </div>
+        <div className="tk-tr-r">
+          {task.assignee && <Face slug={task.assignee} lg />}
+          {!hideCaret && <span className="tk-caret">{isExpanded ? '▾' : '▸'}</span>}
+        </div>
+      </div>
+      <div className="tk-ft">
+        {others.length > 0 && <Faces slugs={others} />}
+        {task.due_date && !isDone && <CardDuePill due={task.due_date} status={task.status} />}
+        {!isDone && footPills}
+        {plannedPill}
+        {belowTitle}
+        <span className="tk-sp" />
+        {activityRow && (
+          <span className="tk-mt" title={`${activityRow.new_count} new`}>
+            <MessageSquare {...ICON_PROPS} size={13} aria-hidden />{activityRow.new_count}
+          </span>
+        )}
+        {extraMeta}
+      </div>
+      {isExpanded && children}
+    </div>
+  )
+}
+
+// Milestone as a card-skin rule: ◇ internal / ◆ hard in gold, title, a faint
+// leader, project short name, a gold date pill, caret. Same expand contract as
+// the standard milestone row; a slipped internal date dims.
+export function MilestoneCardRow(props: SharedTaskRowProps) {
+  const { task, project, isDone, isExpanded, onToggleExpand, hideCaret, children, milestoneRole } = props
+  const civil = (d: string | null | undefined) => (d ? d.slice(0, 10) : null)
+  const role = milestoneRole
+  const entry = task as MilestoneEntry
+  const date = role
+    ? (civil(entry.milestoneDate) ?? (role === 'hard' ? (civil(task.deadline) ?? civil(task.due_date)) : civil(task.due_date)))
+    : (civil(task.deadline) ?? civil(task.due_date))
+  const isInternal = role === 'internal' || role === 'slipped'
+  const overdue = !isInternal && !!date && isOverdue(date, task.status)
+  return (
+    <div data-task-id={task.id} data-task-kind="milestone" {...(role ? { 'data-milestone-role': role } : {})} className="tk-msw">
+      <div
+        className={`tk-ms${isInternal ? ' tk-int' : ''}${role === 'slipped' ? ' tk-slip' : ''}`}
+        onClick={onToggleExpand}
+      >
+        <span aria-hidden="true" className="tk-dia">{isInternal ? '◇' : '◆'}</span>
+        <span className="sr-only">Milestone</span>
+        <span className="tk-mt2" style={{ textDecoration: isDone ? 'line-through' : 'none' }}>{task.short_title || task.title}</span>
+        <span aria-hidden="true" className="tk-lead" />
+        {project && (
+          <Link
+            to={PATHS.project(project.slug)}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Open ${project.name}`}
+            className="tk-cs"
+            style={{ margin: 0, flexShrink: 0, maxWidth: 160 }}
+          >
+            {project.name}
+          </Link>
+        )}
+        {date && (
+          <span
+            className={`tk-pill ${overdue ? 'tk-o' : 'tk-g'}`}
+            data-tip={`${role === 'hard' ? 'Hard date' : isInternal ? 'Internal date' : 'Date'}: ${date}`}
+            aria-label={`${role ?? 'hard'}: ${date}`}
+          >
+            <i />{dueLabelCompact(date, overdue)}
+          </span>
+        )}
+        {!hideCaret && <span className="tk-caret">{isExpanded ? '▾' : '▸'}</span>}
+      </div>
+      {isExpanded && children}
+    </div>
+  )
+}

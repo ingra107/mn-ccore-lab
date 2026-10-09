@@ -2,9 +2,10 @@
 //
 // Wires to the local Flask pomodoro server at localhost:5555. Laptop-only by
 // design (phone can't reach localhost). Three states:
-//   1. Server unreachable → disabled gray button "⏱ Pomo" (no crash, clear cue)
-//   2. Stopped           → gold  button "▶ Focus"  (matches Process button style)
-//   3. Active            → teal  button "⏹ M:SS"   (live tick, stop on click)
+//   1. Server unreachable → dim disabled button "Pomo" (no crash, clear cue)
+//   2. Stopped           → neutral button "Focus"  (same family as Process)
+//   3. Active            → filled teal button "M:SS" (live tick, stop on click)
+// Styles: .tk-btn in index.css (Today reskin); the page root carries .tk.
 //
 // Placed next to the PI-only Process button in TodayPage; guarded by user.isPi
 // at the call site. Only Nick's machine runs the server, so no relay needed.
@@ -12,7 +13,8 @@
 import { useEffect, useState } from 'react'
 import { useLocalPomodoro, POMO_BASE } from '../../hooks/useLocalPomodoro'
 import { useToast } from '../../hooks/useToast'
-import { ACCENT_GOLD, ACCENT_TEAL, withAlpha } from '../../lib/taskGrouping'
+import { Play, Square, Timer } from 'lucide-react'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 const POMO_APP_URL = `${POMO_BASE}/`
 
@@ -74,26 +76,21 @@ export function PomodoroControl() {
     showSuccess(`Focus session stopped — ${minLogged}m logged`)
   }
 
-  // 1. Server unreachable — idle/disabled
+  // 1. Server unreachable: dim, disabled, no crash and a clear cue
   if (!serverReachable) {
     return (
       <button
         type="button"
         disabled
         title="Pomodoro server not reachable (run pomodoro_server.py on this machine)"
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'center',
-          background: 'rgba(127,127,127,0.06)', border: '1px solid rgba(127,127,127,0.15)',
-          color: 'rgba(127,127,127,0.4)', borderRadius: 6, padding: '5px 11px',
-          fontSize: 13, fontWeight: 500, cursor: 'not-allowed', flexShrink: 0,
-        }}
+        className="tk-btn tk-off"
       >
-        ⏱ Pomo
+        <Timer {...ICON_PROPS} size={13} aria-hidden />Pomo
       </button>
     )
   }
 
-  // 2. Timer active — teal Stop button with live elapsed
+  // 2. Timer active: the one filled teal control, with the live elapsed time
   if (status?.active) {
     return (
       <button
@@ -101,34 +98,25 @@ export function PomodoroControl() {
         onClick={handleStop}
         disabled={isLoading}
         title={`Stop focus timer · ${formatElapsed(displayElapsed)} elapsed`}
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'center',
-          background: withAlpha(ACCENT_TEAL, 12), border: `1px solid ${withAlpha(ACCENT_TEAL, 35)}`,
-          color: ACCENT_TEAL, borderRadius: 6, padding: '5px 11px',
-          fontSize: 13, fontWeight: 500, cursor: isLoading ? 'wait' : 'pointer',
-          flexShrink: 0, fontVariantNumeric: 'tabular-nums',
-        }}
+        className="tk-btn tk-ac"
+        style={{ cursor: isLoading ? 'wait' : 'pointer' }}
       >
-        ⏹ {formatElapsed(displayElapsed)}
+        <Square {...ICON_PROPS} size={12} aria-hidden />{formatElapsed(displayElapsed)}
       </button>
     )
   }
 
-  // 3. Stopped — gold Start button (matches Process button style)
+  // 3. Stopped: a plain neutral Start button, same family as Quick Chat / Process
   return (
     <button
       type="button"
       onClick={handleStart}
       disabled={isLoading}
       title="Start a focus session"
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'center',
-        background: withAlpha(ACCENT_GOLD, 12), border: `1px solid ${withAlpha(ACCENT_GOLD, 35)}`,
-        color: ACCENT_GOLD, borderRadius: 6, padding: '5px 11px',
-        fontSize: 13, fontWeight: 500, cursor: isLoading ? 'wait' : 'pointer', flexShrink: 0,
-      }}
+      className="tk-btn"
+      style={{ cursor: isLoading ? 'wait' : 'pointer' }}
     >
-      ▶ Focus
+      <Play {...ICON_PROPS} size={12} aria-hidden />Focus
     </button>
   )
 }

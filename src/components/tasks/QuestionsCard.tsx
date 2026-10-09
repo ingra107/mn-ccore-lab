@@ -13,9 +13,14 @@
 // Undo path: writes question_answer_json back to null.
 //
 // Renders null when tasks is empty (no card appears when nothing is waiting).
+//
+// Look (Today reskin, 2026-10-09): ONE warm gold attention card, title inside
+// it, no box-in-box. Gold = "something wants you now", used rarely, so this
+// reads as not part of the everyday page. Styles: .tk-attn in index.css; the
+// .tk wrapper scopes them so the card looks the same on My Tasks.
 
 import { useState } from 'react'
-import { HelpCircle, Check } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { useUpdateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { nowInstant } from '../../lib/time'
@@ -24,74 +29,32 @@ import type { TaskRow } from '../../lib/api'
 
 interface QuestionsCardProps {
   tasks: TaskRow[]
+  /** Wrap in the page band (.mt-band). My Tasks needs it; Today sits inside its
+   *  own column and passes false so the card is not inset twice. */
+  band?: boolean
 }
 
-export function QuestionsCard({ tasks }: QuestionsCardProps) {
+export function QuestionsCard({ tasks, band = true }: QuestionsCardProps) {
   if (tasks.length === 0) return null
 
-  return (
-    <div className="mt-band" style={{ paddingTop: 12, paddingBottom: 0 }}>
-      <div style={{
-        background: 'var(--surface-2)',
-        border: '1px solid var(--border-default)',
-        borderLeft: '3px solid var(--task-accent-gold)',
-        borderRadius: 'var(--radius-lg)',
-        marginBottom: 8,
-        overflow: 'hidden',
-      }}>
-        {/* Card header */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '9px 16px',
-          borderBottom: '1px solid var(--border-subtle)',
-        }}>
-          <HelpCircle
-            size={13}
-            strokeWidth={1.75}
-            style={{ color: 'var(--task-accent-gold)', flexShrink: 0 }}
-          />
-          <span style={{
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.09em',
-            textTransform: 'uppercase',
-            color: 'var(--task-accent-gold)',
-          }}>
-            Needs you
-          </span>
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 10,
-            fontWeight: 700,
-            background: 'var(--task-accent-gold)',
-            color: '#fff',
-            borderRadius: 'var(--radius-full)',
-            minWidth: 18,
-            height: 18,
-            padding: '0 6px',
-            lineHeight: 1,
-          }}>
-            {tasks.length}
-          </span>
+  const card = (
+    <div className="tk">
+      <section className="tk-attn" aria-label="Needs you">
+        <div className="tk-attn-h">
+          <span className="tk-attn-dot" aria-hidden="true" />
+          Needs you
+          <span className="tk-cnt">{tasks.length}</span>
         </div>
-
-        {tasks.map((task, i) => (
-          <QuestionRow
-            key={task.id}
-            task={task}
-            isLast={i === tasks.length - 1}
-          />
+        {tasks.map((task) => (
+          <QuestionRow key={task.id} task={task} />
         ))}
-      </div>
+      </section>
     </div>
   )
+  return band ? <div className="mt-band" style={{ paddingTop: 12, paddingBottom: 0 }}>{card}</div> : card
 }
 
-function QuestionRow({ task, isLast }: { task: TaskRow; isLast: boolean }) {
+function QuestionRow({ task }: { task: TaskRow }) {
   const { mutate: mutateTask } = useUpdateTask()
   const { showUndo } = useUndoToast()
   const [choice, setChoice] = useState<string | null>(null)
@@ -100,17 +63,12 @@ function QuestionRow({ task, isLast }: { task: TaskRow; isLast: boolean }) {
 
   const spec = parseQuestionSpec(task)
 
-  const rowStyle: React.CSSProperties = {
-    padding: '10px 16px',
-    borderBottom: isLast ? undefined : '1px solid var(--border-subtle)',
-  }
-
   if (!spec) {
     // Malformed spec: never crash the page over one bad row — show a
     // minimal fallback with the task title so it's at least visible.
     return (
-      <div style={rowStyle}>
-        <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+      <div className="tk-qrow">
+        <div style={{ color: 'var(--sk-t3)' }}>
           Malformed question — {task.title}
         </div>
       </div>
@@ -137,27 +95,15 @@ function QuestionRow({ task, isLast }: { task: TaskRow; isLast: boolean }) {
   }
 
   return (
-    <div style={rowStyle}>
-      <div style={{
-        fontSize: 13,
-        fontWeight: 500,
-        color: 'var(--task-ink)',
-        marginBottom: 2,
-      }}>
-        {spec.prompt}
-      </div>
-      <div style={{
-        fontSize: 11,
-        color: 'var(--muted)',
-        marginBottom: 10,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      }}>
-        {task.title}
-      </div>
+    <div className="tk-qrow">
+      <div style={{ fontWeight: 500, color: 'var(--sk-t1)' }}>{spec.prompt}</div>
+      {task.title !== spec.prompt && (
+        <div style={{ fontSize: 11.5, color: 'var(--sk-t3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {task.title}
+        </div>
+      )}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+      <div className="tk-ops">
         {spec.choices.map((c) => {
           const isRec = c.key === spec.rec
           const isSelected = choice === c.key
@@ -166,25 +112,12 @@ function QuestionRow({ task, isLast }: { task: TaskRow; isLast: boolean }) {
               key={c.key}
               type="button"
               data-testid={`q-choice-${c.key}`}
+              className={`tk-btn tk-sm${isSelected ? ' tk-sel' : ''}`}
               onClick={(e) => {
                 e.stopPropagation()
                 setChoice(c.key)
               }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '6px 12px',
-                background: isSelected ? 'var(--task-accent-gold)' : 'transparent',
-                color: isSelected ? '#fff' : 'var(--task-ink)',
-                border: `1px solid ${isRec ? 'var(--task-accent-gold)' : 'var(--border-default)'}`,
-                borderRadius: 'var(--radius-md)',
-                fontSize: 12,
-                fontWeight: isSelected || isRec ? 600 : 500,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                touchAction: 'manipulation',
-              }}
+              style={{ fontWeight: isSelected || isRec ? 600 : 500, touchAction: 'manipulation' }}
             >
               {isSelected && <Check size={12} strokeWidth={2.5} />}
               {c.label}
@@ -203,11 +136,8 @@ function QuestionRow({ task, isLast }: { task: TaskRow; isLast: boolean }) {
               setNoteOpen(true)
             }}
             style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--muted)',
-              fontSize: 11,
-              cursor: 'pointer',
+              color: 'var(--sk-t3)',
+              fontSize: 11.5,
               padding: '6px 4px',
               textDecoration: 'underline',
               textUnderlineOffset: 2,
@@ -221,26 +151,12 @@ function QuestionRow({ task, isLast }: { task: TaskRow; isLast: boolean }) {
           type="button"
           data-testid="q-submit"
           disabled={!canSubmit}
+          className={`tk-btn tk-sm${canSubmit ? ' tk-pri' : ' tk-off'}`}
           onClick={(e) => {
             e.stopPropagation()
             submit()
           }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 5,
-            padding: '6px 14px',
-            marginLeft: 'auto',
-            background: canSubmit ? 'var(--task-accent-teal)' : 'var(--hover-subtle)',
-            color: canSubmit ? '#fff' : 'var(--muted)',
-            border: 'none',
-            borderRadius: 'var(--radius-md)',
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: canSubmit ? 'pointer' : 'not-allowed',
-            whiteSpace: 'nowrap',
-            touchAction: 'manipulation',
-          }}
+          style={{ marginLeft: 'auto', touchAction: 'manipulation' }}
         >
           Submit
         </button>
@@ -253,17 +169,8 @@ function QuestionRow({ task, isLast }: { task: TaskRow; isLast: boolean }) {
           onChange={(e) => setText(e.target.value)}
           placeholder={needsText ? 'Your answer (required)' : 'Add a note (optional)'}
           rows={2}
-          style={{
-            marginTop: 8,
-            width: '100%',
-            resize: 'vertical',
-            background: 'var(--task-panel-bg)',
-            border: '1px solid var(--border-default)',
-            borderRadius: 'var(--radius-md)',
-            padding: '6px 8px',
-            fontSize: 12,
-            color: 'var(--task-ink)',
-          }}
+          className="tk-wfi"
+          style={{ marginTop: 8, resize: 'vertical', color: 'var(--sk-t1)' }}
         />
       )}
     </div>

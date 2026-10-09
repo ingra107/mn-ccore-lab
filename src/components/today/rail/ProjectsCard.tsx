@@ -5,12 +5,14 @@
 // (last-7d activity). User can toggle "Show all" to expand to the full
 // active list. Toggle state persists in localStorage.today_projects_show_all.
 //
+// Look (Today reskin, 2026-10-09): a panel; projects by SHORT name, the next
+// action as a muted line under it (also short), a teal dot for "active today".
+//
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Projects).
 
 import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../../constants/paths'
-import { ACCENT_TEAL, ACCENT_GOLD, INK, INK_MUTED, INK_DIM } from '../constants'
 import { CollapseChevron } from '../SectionCollapseToggle'
 import { collapseToggleProps } from '../collapseToggleProps'
 
@@ -49,17 +51,13 @@ export function ProjectsCard({ projects }: { projects: ProjectEntry[] }) {
   }, [projects, q, useAll])
 
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div
-        {...collapseToggleProps(open, () => setOpen((o) => !o), 'Projects')}
-        style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer' }}
-      >
-        <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_TEAL }} />
-        <h4 style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_TEAL, margin: 0 }}>Projects</h4>
-        <span style={{ fontSize: 11, color: INK_DIM, marginLeft: 'auto' }}>
-          {useAll ? totalCount : `${relevantCount} today`}
-        </span>
-        <CollapseChevron open={open} color={ACCENT_TEAL} />
+    <section className="tk-panel">
+      <div className="tk-ph">
+        <div {...collapseToggleProps(open, () => setOpen((o) => !o), 'Projects')} className="tk-ctog">
+          <CollapseChevron open={open} />
+          <h3>Projects</h3>
+          <span className="tk-cnt">{useAll ? totalCount : `${relevantCount} today`}</span>
+        </div>
       </div>
       {open && (
       <>
@@ -67,24 +65,25 @@ export function ProjectsCard({ projects }: { projects: ProjectEntry[] }) {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Jump to project…"
-        style={{ width: '100%', padding: '6px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)', fontSize: 12, color: INK, outline: 'none', fontFamily: 'inherit', marginBottom: 8, boxSizing: 'border-box' }}
+        aria-label="Jump to project"
+        className="tk-jump"
       />
       <div style={{ maxHeight: 320, overflowY: 'auto' }}>
         {shown.length === 0 && (
-          <div style={{ padding: '8px 4px', fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>
-            {q ? 'No matches.' : useAll ? 'No active projects.' : 'No projects with activity today — toggle Show all.'}
+          <div style={{ padding: '8px 4px', fontSize: 12, color: 'var(--sk-t3)' }}>
+            {q ? 'No matches.' : useAll ? 'No active projects.' : 'No projects with activity today. Toggle Show all.'}
           </div>
         )}
         {shown.map((p) => (
-          <Link key={p.slug} to={PATHS.project(p.slug)} className="b2-proj" style={{ display: 'block', padding: 8, borderRadius: 'var(--radius-sm)', textDecoration: 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 2 }}>
-              <span style={{ fontSize: 12, color: INK, fontWeight: 500, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
+          <Link key={p.slug} to={PATHS.project(p.slug)} className="tk-proj">
+            <div className="tk-n">
+              <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
               {p.relevantToday && !useAll && (
-                <span title="Active today" aria-hidden="true" style={{ width: 4, height: 4, borderRadius: '50%', background: ACCENT_GOLD, flexShrink: 0 }} />
+                <span title="Active today" aria-hidden="true" className="tk-dotg" />
               )}
             </div>
             {p.nextAction && (
-              <div style={{ fontSize: 11, color: INK_MUTED, opacity: 0.8, paddingLeft: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>→ {p.nextAction}</div>
+              <div className="tk-a">→ {p.nextAction}</div>
             )}
           </Link>
         ))}
@@ -93,24 +92,14 @@ export function ProjectsCard({ projects }: { projects: ProjectEntry[] }) {
         <button
           type="button"
           onClick={() => setShowAll((v) => !v)}
-          style={{
-            marginTop: 8,
-            background: 'none',
-            border: 'none',
-            padding: 0,
-            color: ACCENT_TEAL,
-            fontSize: 11,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline' }}
-          onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none' }}
+          className="tk-rmore"
+          style={{ marginTop: 8 }}
         >
           {showAll ? `Show today only (${relevantCount})` : `Show all (${totalCount})`}
         </button>
       )}
       </>
       )}
-    </div>
+    </section>
   )
 }

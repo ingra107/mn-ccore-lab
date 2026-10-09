@@ -1,9 +1,9 @@
-// PlannedTodaySection — planned strip tasks below the Timeline.
+// PlannedTodaySection — planned strip tasks above the Timeline.
 // Renders tasks with slot==='strip' as full PlannedTaskRow rows.
 // The Right Now hero row was removed (Part A, 2026-06-22): the hero section
 // + in-page SmartCompose chat were replaced by the ubiquitous WorkOnActions
-// (📂 + ▶) that appear inline on every task surface. The strip list now shows
-// ALL planned-strip tasks (rightNow is no longer excluded from this list).
+// (folder + play) that appear inline on every task surface. The strip list now
+// shows ALL planned-strip tasks (rightNow is no longer excluded from this list).
 //
 // `slot:strip` droppable (2026-07-06, found while root-causing drag-to-plan
 // test failures — see #492 handoff): when this section was extracted out of
@@ -12,14 +12,16 @@
 // here. TodayDndContext.onDragEnd already routes any `slot:strip` drop to
 // state.planAt(taskId, 'strip') — it just had no droppable to land on, so
 // dragging a task onto "Planned today" silently no-opped (confirmed via a
-// live probe: zero API calls fired). The 📌 button path was unaffected.
+// live probe: zero API calls fired). The pin button path was unaffected.
+//
+// Look (Today reskin, 2026-10-09): a panel (the middle surface step) holding a
+// stack of hatched dashed cards; a drop highlights the panel in teal.
 
 import { useState, useCallback } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import { CollapseChevron } from './SectionCollapseToggle'
 import { collapseToggleProps } from './collapseToggleProps'
-import { ACCENT_GOLD, ACCENT_TEAL, INK_DIM, INK_MUTED, withAlpha } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
@@ -48,40 +50,27 @@ export function PlannedTodaySection({
     <section
       ref={setNodeRef}
       data-b2-planned-today
-      style={{
-        marginBottom: 24,
-        borderRadius: 8,
-        outline: isOver ? `1.5px dashed ${withAlpha(ACCENT_GOLD, 55)}` : '1.5px dashed transparent',
-        outlineOffset: 4,
-        background: isOver ? withAlpha(ACCENT_GOLD, 6) : 'transparent',
-        transition: 'all 120ms',
-      }}
+      className={`tk-panel tk-blk tk-planned${isOver ? ' tk-over' : ''}`}
     >
-      {/* Section header — clear boundary between calendar and planned list */}
-      <div
-        {...collapseToggleProps(open, () => setOpen((o) => !o), 'Planned today')}
-        style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, cursor: 'pointer' }}
-      >
-        <span style={{ fontSize: 14 }}>📋</span>
-        {/* "Planned today" over-claimed: this section holds ONLY slot==='strip'
-            tasks — the ones planned for today with no specific time. Tasks
-            dropped into a timeline gap are planned too, and they live in that
-            gap, not here. */}
-        <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.01em', margin: 0, whiteSpace: 'nowrap' }}>Planned · no specific time</h3>
-        <span style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{stripTasks.length}</span>
-        {open && <span className="today-section-hint" style={{ fontSize: 11, color: INK_DIM }}>✓ done · × to unplan</span>}
-        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)', marginLeft: 4 }} />
-        <CollapseChevron open={open} color={ACCENT_TEAL} />
+      <div className="tk-ph">
+        <div {...collapseToggleProps(open, () => setOpen((o) => !o), 'Planned today')} className="tk-ctog">
+          <CollapseChevron open={open} />
+          {/* "Planned today" over-claimed: this section holds ONLY slot==='strip'
+              tasks — the ones planned for today with no specific time. Tasks
+              dropped into a timeline gap are planned too, and they live in that
+              gap, not here. */}
+          <h3>Planned, no specific time</h3>
+          <span className="tk-cnt">{stripTasks.length}</span>
+        </div>
+        {open && <span className="tk-hintx today-section-hint">check to finish · × to unplan</span>}
       </div>
 
       {open && (stripTasks.length === 0 ? (
-        /* Empty state */
-        <div style={{ padding: '16px 20px', marginBottom: 4, textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.14)', borderRadius: 8 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: INK_DIM, marginRight: 10 }}>Nothing planned</span>
-          <span style={{ fontSize: 13, color: INK_MUTED }}>Drag ⋮⋮ into the timeline or drop onto the strip to plan tasks for today.</span>
+        <div className="tk-empty">
+          Nothing planned. Drag a task into the timeline or onto this strip to plan it for today.
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="tk-stack">
           {stripTasks.map((t) => (
             <PlannedTaskRow
               key={t.id}

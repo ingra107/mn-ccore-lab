@@ -4,16 +4,20 @@
 // is a follow-up — D17 stage 2.
 //
 // TP-14 (D17 stage 1, Phase 39 audit): renamed from "Hermes Suggests" to
-// "Today's Focus" because the heuristic is JS, not an LLM call. The ✨
+// "Today's Focus" because the heuristic is JS, not an LLM call. The sparkle
 // glyph and gold-AI framing implied AI authorship that wasn't there. We
 // keep the heuristic as-is; stage 2 will swap to a 1×/day cached
 // ai_request. The component name + filename keep "HermesSuggests" to
 // minimise churn on imports — only the visible label changes.
 //
+// Look (Today reskin, 2026-10-09): a panel on the middle surface step, the
+// text in the second text tier. The "Tackle ..." bullet uses the task's
+// short title, not the full one.
+//
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Alert).
 
 import { useState } from 'react'
-import { ACCENT_GOLD, INK, INK_MUTED, daysSince, withAlpha } from '../constants'
+import { daysSince } from '../constants'
 import { CollapseChevron } from '../SectionCollapseToggle'
 import { collapseToggleProps } from '../collapseToggleProps'
 import type { TaskRow } from '../../../lib/api'
@@ -45,7 +49,9 @@ export function HermesSuggestsCard({ overdueTasks, stalledProjects, menteesWithD
     const longest = [...overdueTasks].sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))[0]
     if (longest) {
       const days = daysSince(longest.due_date)
-      bullets.push(`Tackle "${longest.title.slice(0, 60)}" — ${Number.isFinite(days) ? `${days}d overdue` : 'overdue'}.`)
+      // Short title first: the long title is what leaked here (Nick: display
+      // short names everywhere).
+      bullets.push(`Tackle "${(longest.short_title || longest.title).slice(0, 60)}" — ${Number.isFinite(days) ? `${days}d overdue` : 'overdue'}.`)
     }
   }
   if (stalledProjects.length > 0) {
@@ -64,23 +70,21 @@ export function HermesSuggestsCard({ overdueTasks, stalledProjects, menteesWithD
   if (bullets.length < 3) bullets.push('No backlog drama. Pick one strategic project and write the next 200 words.')
 
   return (
-    <div style={{ padding: 14, background: withAlpha(ACCENT_GOLD, 6), border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`, borderRadius: 'var(--radius-md)', marginBottom: 14 }}>
-      <div
-        {...collapseToggleProps(open, () => setOpen((o) => !o), "Today's focus")}
-        style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: open ? 8 : 0, cursor: 'pointer' }}
-      >
-        <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_GOLD }} />
-        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD }}>Today's focus</span>
-        <CollapseChevron open={open} color={ACCENT_GOLD} />
+    <section className="tk-panel">
+      <div className="tk-ph">
+        <div {...collapseToggleProps(open, () => setOpen((o) => !o), "Today's focus")} className="tk-ctog">
+          <CollapseChevron open={open} />
+          <h3>Today's focus</h3>
+        </div>
       </div>
       {open && (
-        <>
-          <div style={{ fontSize: 12, color: INK, lineHeight: 1.5, marginBottom: 8 }}>{focus}</div>
-          <ul style={{ margin: 0, paddingLeft: 14, fontSize: 11, color: INK_MUTED, lineHeight: 1.7 }}>
+        <div className="tk-rail-p">
+          <div>{focus}</div>
+          <ul>
             {bullets.slice(0, 3).map((b, i) => <li key={i}>{b}</li>)}
           </ul>
-        </>
+        </div>
       )}
-    </div>
+    </section>
   )
 }

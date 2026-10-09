@@ -5,12 +5,15 @@
 // Infinity in the browser (nothing writes the mnccore_last_sync_at LS key), so it
 // permanently showed "—h". A control that can't be truthful is removed, not faked.
 //
+// Look (Today reskin, 2026-10-09): a panel; the focus number is a hero number in
+// the display face (same family as the stat line); mentees get a small face.
+//
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Pulse).
 
 import { useState } from 'react'
-import { ACCENT_GOLD, INK, INK_MUTED, INK_DIM } from '../constants'
 import { CollapseChevron } from '../SectionCollapseToggle'
 import { collapseToggleProps } from '../collapseToggleProps'
+import { NameFace } from '../skin'
 
 // focusMin === null: the viewer has no pomodoro data source (a non-PI member;
 // /api/pb/* is PI-only), so the FOCUS tile and header minutes are not drawn.
@@ -19,52 +22,48 @@ export function PulseCard({ focusMin, milestones, mentees }: { focusMin: number 
   // Session-only collapse — starts expanded on every load (no localStorage).
   const [open, setOpen] = useState(true)
   return (
-    <div>
-      <div
-        {...collapseToggleProps(open, () => setOpen((o) => !o), 'Pulse')}
-        style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, cursor: 'pointer' }}
-      >
-        <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_GOLD }} />
-        <h4 style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, margin: 0 }}>Pulse</h4>
-        <span style={{ fontSize: 11, color: INK_DIM, marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{focusMin !== null ? `${focusMin}min` : ''}</span>
-        <CollapseChevron open={open} color={ACCENT_GOLD} />
+    <section className="tk-panel">
+      <div className="tk-ph">
+        <div {...collapseToggleProps(open, () => setOpen((o) => !o), 'Pulse')} className="tk-ctog">
+          <CollapseChevron open={open} />
+          <h3>Pulse</h3>
+        </div>
       </div>
       {open && (
       <>
       {focusMin !== null && (
-      <div style={{ marginBottom: 10 }}>
-        <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
-          <div style={{ fontSize: 10, color: INK_MUTED, letterSpacing: '0.04em' }}>FOCUS</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--task-ink)', fontVariantNumeric: 'tabular-nums' }}>
-            {focusMin}<span style={{ fontSize: 11, color: INK_MUTED, fontWeight: 400, marginLeft: 2 }}>min</span>
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--sk-t3)' }}>Focus</div>
+          <div className="tk-fm">
+            {focusMin}<span style={{ fontSize: 11, color: 'var(--sk-t3)', marginLeft: 3, fontFamily: 'var(--font-body)' }}>min</span>
           </div>
         </div>
-      </div>
       )}
       {milestones.length > 0 && (
         <>
-          <div style={{ fontSize: 10, color: INK_MUTED, letterSpacing: '0.04em', marginBottom: 4 }}>NEXT MILESTONES</div>
+          <div className="tk-rsub">Next milestones</div>
           {milestones.slice(0, 3).map((m, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, padding: '4px 0', fontSize: 12 }}>
-              <span style={{ color: ACCENT_GOLD, fontVariantNumeric: 'tabular-nums', fontWeight: 500, minWidth: 32 }}>{m.days}d</span>
-              <span style={{ color: INK, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.title}</span>
+            <div key={i} className="tk-rli">
+              <span className="tk-t">{m.title}</span>
+              <span className="tk-d">{m.days}d</span>
             </div>
           ))}
         </>
       )}
       {mentees.length > 0 && (
         <>
-          <div style={{ fontSize: 10, color: INK_MUTED, letterSpacing: '0.04em', marginTop: 10, marginBottom: 4 }}>MENTEES</div>
+          <div className="tk-rsub">Mentees</div>
           {mentees.slice(0, 4).map((m, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, padding: '3px 0', fontSize: 12, alignItems: 'baseline' }}>
-              <span style={{ color: INK, fontWeight: 500, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</span>
-              <span style={{ color: m.next === '—' ? INK_DIM : ACCENT_GOLD, fontSize: 11, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{m.next}</span>
+            <div key={i} className="tk-rli" style={{ alignItems: 'center' }}>
+              <NameFace name={m.name} />
+              <span className="tk-t">{m.name}</span>
+              <span className="tk-d">{m.next}</span>
             </div>
           ))}
         </>
       )}
       </>
       )}
-    </div>
+    </section>
   )
 }

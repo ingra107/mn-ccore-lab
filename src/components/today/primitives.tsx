@@ -54,6 +54,7 @@ export function LinkRow({ links }: { links: TaskLink[] }) {
             href={isHttp ? href : l.url}
             target={isHttp ? '_blank' : undefined}
             rel={isHttp ? 'noopener noreferrer' : undefined}
+            className="tk-lkicon"
             data-tip={isEmail ? undefined : tooltip}
             aria-label={tooltip}
             onClick={(e) => {

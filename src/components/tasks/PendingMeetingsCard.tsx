@@ -9,8 +9,12 @@
 // Undo path: showUndo() reverts to 'pending' — identical to the old TaskCard inline buttons.
 //
 // Renders null when tasks is empty (no card appears when nothing is pending).
+//
+// Look (Today reskin, 2026-10-09): the same warm gold attention card as
+// "Needs you": one card, title inside it, no box-in-box. Accept is the glossy
+// teal primary. Styles: .tk-attn in index.css (the .tk wrapper scopes them).
 
-import { CalendarClock, Check, X } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { useUpdateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import type { TaskRow } from '../../lib/api'
@@ -39,103 +43,44 @@ function capturedAgo(iso: string): string {
 
 interface PendingMeetingsCardProps {
   tasks: TaskRow[]
+  /** Wrap in the page band (.mt-band). My Tasks needs it; Today passes false. */
+  band?: boolean
 }
 
-export function PendingMeetingsCard({ tasks }: PendingMeetingsCardProps) {
+export function PendingMeetingsCard({ tasks, band = true }: PendingMeetingsCardProps) {
   const { mutate: mutateTask } = useUpdateTask()
   const { showUndo } = useUndoToast()
 
   if (tasks.length === 0) return null
 
-  return (
-    <div className="mt-band" style={{ paddingTop: 12, paddingBottom: 0 }}>
-      <div style={{
-        // Recipe A (figure/ground): lift above the dark page bg. Keeps the
-        // teal accent bar + border-default edge; no extra hairline (would be
-        // a boxy double-edge).
-        background: 'var(--surface-2)',
-        border: '1px solid var(--border-default)',
-        borderLeft: '3px solid var(--task-accent-teal)',
-        borderRadius: 'var(--radius-lg)',
-        marginBottom: 8,
-        overflow: 'hidden',
-      }}>
-        {/* Card header */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '9px 16px',
-          borderBottom: '1px solid var(--border-subtle)',
-        }}>
-          <CalendarClock
-            size={13}
-            strokeWidth={1.75}
-            style={{ color: 'var(--task-accent-teal)', flexShrink: 0 }}
-          />
-          <span style={{
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.09em',
-            textTransform: 'uppercase',
-            color: 'var(--task-accent-teal)',
-          }}>
-            Pending meetings
-          </span>
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 10,
-            fontWeight: 700,
-            background: 'var(--task-accent-teal)',
-            color: '#fff',
-            borderRadius: 'var(--radius-full)',
-            minWidth: 18,
-            height: 18,
-            padding: '0 6px',
-            lineHeight: 1,
-          }}>
-            {tasks.length}
-          </span>
+  const card = (
+    <div className="tk">
+      <section className="tk-attn" aria-label="Meeting to triage">
+        <div className="tk-attn-h">
+          <span className="tk-attn-dot" aria-hidden="true" />
+          {tasks.length === 1 ? 'Meeting to triage' : 'Meetings to triage'}
+          <span className="tk-cnt">{tasks.length}</span>
         </div>
 
-        {/* Meeting rows */}
-        {tasks.map((task, i) => (
-          <div
-            key={task.id}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '10px 16px',
-              borderBottom: i < tasks.length - 1 ? '1px solid var(--border-subtle)' : undefined,
-            }}
-          >
+        {tasks.map((task) => (
+          <div key={task.id} className="tk-qrow" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             {/* Title + captured timestamp */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{
-                fontSize: 13,
-                fontWeight: 500,
-                color: 'var(--task-ink)',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}>
+            <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+              <div style={{ fontWeight: 500, color: 'var(--sk-t1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {/* meeting_title is the raw capture title; fall back to the task
                     name with the "Meeting: … [pending approval]" wrapper stripped */}
                 {task.meeting_title || cleanMeetingTitle(task.title)}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
+              <div style={{ fontSize: 11.5, color: 'var(--sk-t3)', marginTop: 2 }}>
                 Captured {capturedAgo(task.created_at)}
               </div>
             </div>
 
-            {/* Action buttons */}
             <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
               <button
                 type="button"
                 data-testid="pm-accept"
+                className="tk-btn tk-sm tk-pri"
                 onClick={(e) => {
                   e.stopPropagation()
                   // #97: close the row as well as answering it. The approval
@@ -150,22 +95,7 @@ export function PendingMeetingsCard({ tasks }: PendingMeetingsCardProps) {
                     () => mutateTask({ id: task.id, fields: { approval_status: 'pending', status: 'todo' } }),
                   )
                 }}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  padding: '6px 14px',
-                  background: 'var(--task-accent-teal)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 'var(--radius-md)',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  letterSpacing: '0.01em',
-                  touchAction: 'manipulation',
-                }}
+                style={{ touchAction: 'manipulation' }}
               >
                 <Check size={13} strokeWidth={2.5} />
                 Accept &amp; digest
@@ -173,6 +103,7 @@ export function PendingMeetingsCard({ tasks }: PendingMeetingsCardProps) {
               <button
                 type="button"
                 data-testid="pm-decline"
+                className="tk-btn tk-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   // #97: see the Accept handler — declining closes the row too.
@@ -182,21 +113,7 @@ export function PendingMeetingsCard({ tasks }: PendingMeetingsCardProps) {
                     () => mutateTask({ id: task.id, fields: { approval_status: 'pending', status: 'todo' } }),
                   )
                 }}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  padding: '6px 12px',
-                  background: 'transparent',
-                  color: 'var(--task-accent-coral)',
-                  border: '1px solid var(--task-accent-coral)',
-                  borderRadius: 'var(--radius-md)',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  touchAction: 'manipulation',
-                }}
+                style={{ touchAction: 'manipulation' }}
               >
                 <X size={13} strokeWidth={2} />
                 Decline
@@ -204,7 +121,8 @@ export function PendingMeetingsCard({ tasks }: PendingMeetingsCardProps) {
             </div>
           </div>
         ))}
-      </div>
+      </section>
     </div>
   )
+  return band ? <div className="mt-band" style={{ paddingTop: 12, paddingBottom: 0 }}>{card}</div> : card
 }

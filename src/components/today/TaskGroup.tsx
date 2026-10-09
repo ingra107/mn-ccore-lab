@@ -7,7 +7,7 @@ import { useMemo, useState, useCallback } from 'react'
 import { TaskRow } from './TaskRow'
 import { CollapseChevron } from './SectionCollapseToggle'
 import { collapseToggleProps } from './collapseToggleProps'
-import { GROUP_META, INK_DIM, PANEL_BG, withAlpha, isTaskDone, type GroupKey } from './constants'
+import { GROUP_META, isTaskDone, type GroupKey } from './constants'
 import { interleaveMilestones, type MilestoneEntry } from '../../lib/taskGrouping'
 import { isMilestone } from '../../../shared/taskKinds'
 import type { TodayStateApi } from '../../hooks/useTodayState'
@@ -69,58 +69,47 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 
 
   if (tasks.length === 0) return null
   return (
-    <div style={{ marginBottom: 20 }}>
-      <div
-        {...collapseToggleProps(open, () => setOpen((o) => !o), meta.label)}
-        style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, padding: '0 2px', cursor: 'pointer' }}
-      >
-        <span style={{ fontSize: 14 }}>{meta.icon}</span>
-        <h4 style={{ fontSize: 12, fontWeight: 700, color: 'var(--task-ink)', letterSpacing: '0.06em', textTransform: 'uppercase', margin: 0 }}>{meta.label}</h4>
-        <span style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{doneCount}/{tasks.length}</span>
-        <div style={{ flex: 1, height: 1, background: withAlpha(meta.color, 13), marginLeft: 4 }} />
-        <CollapseChevron open={open} color={meta.color} />
+    <section className="tk-panel tk-blk" data-group={gkey}>
+      <div className="tk-ph">
+        <div {...collapseToggleProps(open, () => setOpen((o) => !o), meta.label)} className="tk-ctog">
+          <CollapseChevron open={open} />
+          <h3>{meta.label}</h3>
+          <span className="tk-cnt" title={`${doneCount} of ${tasks.length} done`}>{tasks.length}</span>
+        </div>
       </div>
       {open && (
-        <div style={{ background: PANEL_BG, border: '1px solid var(--border-subtle)', borderRadius: 8, overflow: 'hidden' }}>
-          {visible.map((t) => (
-            // Key includes milestoneRole (not just t.id): a slipped
-            // milestone renders as TWO rows sharing one id (Nick 2026-09-17)
-            // — React needs distinct keys for both. Expand state stays keyed
-            // by task id (both rows open the same drawer; acceptable).
-            <TaskRow
-              key={`${t.id}:${t.milestoneRole ?? 'row'}`}
-              task={t}
-              project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
-              state={state}
-              expandedId={expandedId}
-              onExpand={onExpand}
-              projectsByPid={projectsByPid}
-              milestoneRole={t.milestoneRole}
-            />
-          ))}
+        <>
+          <div className="tk-stack">
+            {visible.map((t) => (
+              // Key includes milestoneRole (not just t.id): a slipped
+              // milestone renders as TWO rows sharing one id (Nick 2026-09-17)
+              // — React needs distinct keys for both. Expand state stays keyed
+              // by task id (both rows open the same drawer; acceptable).
+              <TaskRow
+                key={`${t.id}:${t.milestoneRole ?? 'row'}`}
+                task={t}
+                project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
+                state={state}
+                expandedId={expandedId}
+                onExpand={onExpand}
+                projectsByPid={projectsByPid}
+                milestoneRole={t.milestoneRole}
+              />
+            ))}
+          </div>
           {(hiddenCount > 0 || showAll) && (
             <button
+              type="button"
               onClick={showAll ? collapseRows : () => setShowAll(true)}
               aria-expanded={showAll}
-              style={{
-                display: 'block',
-                width: '100%',
-                background: 'none',
-                border: 'none',
-                borderTop: '1px solid var(--border-subtle)',
-                color: INK_DIM,
-                fontSize: 11,
-                cursor: 'pointer',
-                padding: '7px 14px',
-                textAlign: 'left',
-                letterSpacing: '0.02em',
-              }}
+              className="tk-further"
+              style={{ padding: '8px 2px 0' }}
             >
               {showAll ? 'Show fewer' : `Show ${hiddenCount} more`}
             </button>
           )}
-        </div>
+        </>
       )}
-    </div>
+    </section>
   )
 }

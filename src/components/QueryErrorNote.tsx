@@ -20,11 +20,12 @@ interface QueryErrorNoteProps {
 
 export function QueryErrorNote({ label, onRetry }: QueryErrorNoteProps) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--task-ink-muted)', marginBottom: 8 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--task-ink-muted)', marginBottom: 10 }}>
+      <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--sk-od)', flexShrink: 0 }} />
       <span>{label} unavailable</span>
       <button
         onClick={onRetry}
-        style={{ background: 'none', border: 'none', color: 'var(--task-ink-muted)', textDecoration: 'underline', fontSize: 11, cursor: 'pointer', padding: 0 }}
+        style={{ background: 'none', border: 'none', color: 'var(--sk-ac)', textDecoration: 'underline', textUnderlineOffset: 2, fontSize: 12, cursor: 'pointer', padding: 0 }}
       >
         retry
       </button>

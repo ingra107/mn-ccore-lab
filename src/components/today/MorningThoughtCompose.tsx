@@ -14,8 +14,10 @@
 //   - placeholder swaps to "Plan tomorrow's first move…"
 //   - default tasks get due_date = tomorrow
 //
-// The brief says to use SmartCompose; we do — `theme="dark"` + `bare` so the
-// existing PANEL_BG container styling on TodayPage stays intact.
+// The brief says to use SmartCompose; we do — `theme="light"` + `bare`: the
+// light theme reads the page tokens, so it is legible in BOTH modes (the dark
+// theme hard-codes pale ink and was faint on the light page). The .tk-compose
+// card on TodayPage supplies the box; .tk-compose textarea strips SmartCompose's own.
 
 import { useCallback, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -218,7 +220,7 @@ export function MorningThoughtCompose() {
     <>
       <SmartCompose
         placeholder={placeholder}
-        theme="dark"
+        theme="light"
         bare
         rows={1}
         submitLabel="Capture"

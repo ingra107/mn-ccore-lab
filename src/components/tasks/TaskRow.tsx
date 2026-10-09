@@ -42,6 +42,7 @@ import {
   INK, INK_MUTED, withAlpha, type MilestoneRole, type MilestoneEntry,
 } from '../../lib/taskGrouping'
 import { dueLabelCompact, dueTone, isOverdue } from '../../lib/dateUtils'
+import { CardRow, MilestoneCardRow } from './TaskCardRow'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
 // Reserved priority-dot color. urgent/high carry a colored dot; everything
@@ -260,6 +261,16 @@ export interface SharedTaskRowProps {
    * accessibility bug.
    */
   rowActions?: ReactNode
+
+  // ── card anatomy (Today reskin, 2026-10-09) ── opt-in. When true the row
+  // renders as a stepped-surface CARD (.tk-card): bold title, the project's
+  // short name as a muted line under it, the assignee's face top right, other
+  // people bottom-left, small icon+counts bottom-right, due as a dot pill. Every
+  // control the standard row has is kept. Defaults off, so every other surface
+  // renders byte-identical (Rule 68: add a prop, never fork).
+  card?: boolean
+  /** card only: extra pills in the footer, after the due pill (workflow pills). */
+  footPills?: ReactNode
 }
 
 // DragHandle — hover-revealed grab icon co-located with the 📌 plan pin.
@@ -295,8 +306,8 @@ export function TaskRow(props: SharedTaskRowProps) {
   // `variant` is an OVERRIDE; the default is read off the row itself, so a
   // caller that never heard of milestones still renders one correctly.
   const variant = props.variant ?? (isMilestone(props.task) ? 'milestone' : 'task')
-  if (variant === 'milestone') return <MilestoneRow {...props} />
-  return <StandardRow {...props} />
+  if (variant === 'milestone') return props.card ? <MilestoneCardRow {...props} /> : <MilestoneRow {...props} />
+  return props.card ? <CardRow {...props} /> : <StandardRow {...props} />
 }
 
 // ── Milestone branch (GH #131/#132) — a dated rule, not a task row. ────────

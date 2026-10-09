@@ -18,17 +18,15 @@ import { MilestoneDrawer } from './MilestoneDrawer'
 import { isTaskDone, type MilestoneRole } from '../../lib/taskGrouping'
 import { isMilestone } from '../../../shared/taskKinds'
 import { LinkRow, type TaskLink } from './primitives'
-import { tagForTask } from './constants'
-import { ACCENT_GOLD, ACCENT_CORAL, ACCENT_TEAL, INK_MUTED } from './constants'
 import { formatShortDate } from '../../lib/dateUtils'
-import { Chip } from '../ui/Chip'
-import { Users } from 'lucide-react'
+import { Users, Hourglass, Handshake, Repeat } from 'lucide-react'
+import { ICON_PROPS } from '../../lib/iconProps'
 import { isFromMeeting, meetingLabelFor } from '../../lib/meetingOrigin'
 import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
-export function TaskRow({ task, project, state, expandedId, onExpand, projectsByPid, milestoneRole }: { task: TaskRowData; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; expandedId: string | null; onExpand: (id: string) => void; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>; milestoneRole?: MilestoneRole }) {
+export function TaskRow({ task, project, state, expandedId, onExpand, milestoneRole }: { task: TaskRowData; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; expandedId: string | null; onExpand: (id: string) => void; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>; milestoneRole?: MilestoneRole }) {
   const [density] = useDensity()
   const isDone = !!state.done[task.id]
   const planned = state.planned[task.id]
@@ -88,33 +86,34 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
   const meetingMeta = !isDone && isFromMeeting(task) ? (
     <span
       data-tip={meetingLabel === 'From a meeting' ? 'Created from a meeting' : `From meeting: ${meetingLabel}`}
-      style={{ display: 'inline-flex', alignItems: 'center', color: ACCENT_TEAL, opacity: 0.85 }}
+      className="tk-mt"
     >
       <Users size={12} strokeWidth={1.5} absoluteStrokeWidth />
       <span className="sr-only">{meetingLabel}</span>
     </span>
   ) : null
 
-  // v55 workflow badges — compact second line, only when a field is set and
-  // the task isn't done. Preserved verbatim from the pre-refactor row.
-  const workflowBadges = !isDone && (task.waiting_on || task.promised_to || task.next_checkin_date) ? (
-    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+  // v55 workflow pills (waiting on / promised to / check-in), footer of the
+  // card, only when a field is set and the task isn't done. Same data as the
+  // old chips, now plain dot-less pills with a small icon.
+  const workflowPills = !isDone && (task.waiting_on || task.promised_to || task.next_checkin_date) ? (
+    <>
       {task.waiting_on && (
-        <Chip color={ACCENT_GOLD} title={`Waiting on: ${task.waiting_on}`} style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          ⏳ {task.waiting_on}
-        </Chip>
+        <span className="tk-pill" title={`Waiting on: ${task.waiting_on}`}>
+          <Hourglass {...ICON_PROPS} size={12} aria-hidden />Waiting on {task.waiting_on}
+        </span>
       )}
       {task.promised_to && (
-        <Chip color={ACCENT_CORAL} title={`Promised to: ${task.promised_to}${task.promise_date ? ` by ${task.promise_date}` : ''}`} style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          🤝 {task.promised_to}{task.promise_date ? ` · ${formatShortDate(task.promise_date)}` : ''}
-        </Chip>
+        <span className="tk-pill" title={`Promised to: ${task.promised_to}${task.promise_date ? ` by ${task.promise_date}` : ''}`}>
+          <Handshake {...ICON_PROPS} size={12} aria-hidden />Promised to {task.promised_to}{task.promise_date ? ` · ${formatShortDate(task.promise_date)}` : ''}
+        </span>
       )}
       {task.next_checkin_date && !task.waiting_on && (
-        <Chip color={INK_MUTED} title={`Check in: ${task.next_checkin_date}`}>
-          ↻ {formatShortDate(task.next_checkin_date)}
-        </Chip>
+        <span className="tk-pill" title={`Check in: ${task.next_checkin_date}`}>
+          <Repeat {...ICON_PROPS} size={12} aria-hidden />Check in {formatShortDate(task.next_checkin_date)}
+        </span>
       )}
-    </div>
+    </>
   ) : null
 
   return (
@@ -147,6 +146,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
         task={task}
         project={project}
         variant="milestone"
+        card
         milestoneRole={milestoneRole}
         isDone={isDone}
         onToggleDone={() => (isDone ? state.uncheck(task.id) : state.markDone(task.id))}
@@ -185,8 +185,8 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
       draggable={!isDone}
       onDragStart={onDragStart}
       onTogglePlan={() => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
-      leadingTag={tagForTask(task, projectsByPid)}
-      belowTitle={workflowBadges}
+      card
+      footPills={workflowPills}
       extraMeta={<>{meetingMeta}{workOnMeta}{linkMeta}</>}
     >
       <TaskDetailDrawer task={task} project={project} state={state} />

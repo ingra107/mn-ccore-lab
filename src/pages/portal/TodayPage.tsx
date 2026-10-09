@@ -17,25 +17,25 @@ import { useMarkSeen } from '../../hooks/useEntitySeen'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { MNCCORE_PROCESS_URI, MNCCORE_QUICKCHAT_URI } from '../../lib/urlClassify'
 import { usePageMeta } from '../../hooks/usePageMeta'
-import HeartbeatLine from '../../components/HeartbeatLine'
 import { Button } from '../../components/ui/Button'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
-import { DoneBox } from '../../components/tasks/TaskRow'
+import { CardCheck } from '../../components/tasks/TaskCardRow'
 import { useTodayView } from '../../hooks/useTodayView'
 import { AgendaListView } from '../../components/today/AgendaListView'
 import { useTodayState } from '../../hooks/useTodayState'
 import { civilDaysUntil } from '../../lib/dateUtils'
+import { daysSince } from '../../lib/taskGrouping'
 import {
   GROUP_ORDER,
-  ACCENT_GOLD, ACCENT_GREEN,
-  INK, INK_MUTED, INK_DIM, PAGE_BG,
-  todayKey, daysSince, formatTodayDate,
+  INK, INK_MUTED, PAGE_BG,
+  todayKey, formatTodayDate,
   meetingToEvent, projectCalendarEventToDay, isToday,
   matchMeetingRecord, normalizeMeetingTitle,
   getGroupForTask, isTaskDone,
   type GroupKey, type TodayEvent, type DailyCounts,
 } from '../../components/today/constants'
-import { PillStrip } from '../../components/today/PillStrip'
+import { StatLine } from '../../components/today/StatLine'
+import { TodayHeader } from '../../components/today/TodayHeader'
 import { Timeline } from '../../components/today/Timeline'
 import { CollapseChevron } from '../../components/today/SectionCollapseToggle'
 import { collapseToggleProps } from '../../components/today/collapseToggleProps'
@@ -53,11 +53,10 @@ import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { QuestionsCard } from '../../components/tasks/QuestionsCard'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
-import { withAlpha, isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionWaiting, civilDatePlusDays } from '../../lib/taskGrouping'
+import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionWaiting, civilDatePlusDays, isStalledProject } from '../../lib/taskGrouping'
 import { useTodayDueWindow, DUE_WINDOW_OPTIONS, dueWindowDays } from '../../hooks/useTodayDueWindow'
 import { isMilestone } from '../../../shared/taskKinds'
-import { Chip } from '../../components/ui/Chip'
-import { Diamond } from 'lucide-react'
+import { Brain, Diamond, MessageSquare, Settings } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
 
@@ -138,7 +137,10 @@ export default function TodayPage() {
   const projectsByPid = useMemo(() => {
     const m = new Map<string, { name: string; slug: string; category?: string | null; lastActivity?: string | null; primary_folder?: string | null }>()
     for (const p of projectsQuery.data ?? []) {
-      const entry = { name: p.title ?? p.slug, slug: p.slug, category: p.category ?? null, lastActivity: p.lastActivity ?? null, primary_folder: p.primary_folder ?? null }
+      // Short name everywhere on Today (Nick: display short names): short_name,
+      // then the full title, then the slug. This map feeds every project link
+      // on a card, so it was the biggest of the five long-name leaks.
+      const entry = { name: p.short_name || p.title || p.slug, slug: p.slug, category: p.category ?? null, lastActivity: p.lastActivity ?? null, primary_folder: p.primary_folder ?? null }
       m.set(p.slug, entry)
     }
     return m
@@ -238,9 +240,10 @@ export default function TodayPage() {
   const stalledProjects = useMemo(() => {
     const all = projectsQuery.data ?? []
     return all
-      .filter((p) => p.status === 'active')
-      .map((p) => ({ name: p.title ?? p.slug, days: daysSince(p.lastActivity) }))
-      .filter((p) => p.days >= 10 && p.days < Infinity)
+      // isStalledProject is the SAME predicate the Projects page's
+      // ?filter=stalled list uses, so this count and the list it links to agree.
+      .filter(isStalledProject)
+      .map((p) => ({ name: p.short_name || p.title || p.slug, slug: p.slug, days: daysSince(p.lastActivity) }))
       .sort((a, b) => b.days - a.days)
   }, [projectsQuery.data])
 
@@ -263,7 +266,8 @@ export default function TodayPage() {
       const existing = nextByProject.get(t.project_id)
       const aDue = t.due_date ?? '9999-12-31'
       const eDue = existing?.due ?? '9999-12-31'
-      if (!existing || aDue < eDue) nextByProject.set(t.project_id, { title: t.title, due: t.due_date ?? null })
+      // Short title: the next-action cue on the rail shows short names too.
+      if (!existing || aDue < eDue) nextByProject.set(t.project_id, { title: t.short_title || t.title, due: t.due_date ?? null })
       // Relevance signal A: due today OR overdue.
       if (t.due_date && t.due_date.slice(0, 10) <= today) relevantSlugs.add(t.project_id)
       // Relevance signal B: planned-today (covers strip and between-N slots).
@@ -280,7 +284,7 @@ export default function TodayPage() {
         }
         return {
           slug: p.slug,
-          name: p.title ?? p.slug,
+          name: p.short_name || p.title || p.slug,
           nextAction: next ? next.title.slice(0, 80) : null,
           relevantToday: relevantSlugs.has(p.slug),
         }
@@ -449,16 +453,15 @@ export default function TodayPage() {
   // .content-container (data pages), so the main column's left edge lands at the
   // same pixel as Projects/Manuscripts/Grants. Main maps to --col-main, rail to
   // --col-rail. No page-wide bg tint — Today sits on the global page bg like
-  // every other page (fix: "background color around the entire page"); only
-  // cards/panels carry their own surface.
+  // every other page; the cards/panels carry their own surfaces.
+  //
+  // `.tk` scopes the Today skin (three stepped surfaces: page < panel < card; see
+  // index.css "Today skin"). Layout order, top to bottom (Nick 2026-10-09):
+  // title, Needs you, meeting triage, stat line, how-to hint, compose.
   return (
-    <div className="b2-grid" style={{ color: 'var(--task-ink)', fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', minHeight: '100%' }}>
+    <div className="b2-grid tk" style={{ color: 'var(--sk-t1)', fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', minHeight: '100%' }}>
       <style>{`
         @keyframes b2pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-        /* Hover tints: rgba lifts in dark mode, darken in light mode.
-           Both schemes get a 4% overlay against their respective bg. */
-        .b2-proj:hover { background: rgba(127,127,127,0.06); }
-        .b2-proj-link:hover { color: var(--task-accent-teal) !important; opacity: 1 !important; text-decoration: underline; }
         /* Centered band (P1-1): identical to .content-container so the left
            edge matches the data pages exactly. main = --col-main, rail =
            --col-rail. Below 1024 the rail stacks under main. */
@@ -469,10 +472,12 @@ export default function TodayPage() {
           margin-left: auto; margin-right: auto;
           padding-left: 1.5rem; padding-right: 1.5rem;
         }
-        .b2-main { padding: 28px 32px 28px 0; min-width: 0; }
-        /* Rail is a recessed panel beside the main column. No page-wide tint;
-           it carries its own subtle surface so it reads as a distinct rail. */
-        .b2-rail { padding: 28px 0 28px 24px; overflow-y: auto; border-left: 1px solid var(--border-subtle); }
+        .b2-main { padding: 28px 32px 40px 0; min-width: 0; }
+        /* Rail: its own column beside main, panels stacked with 14px between. */
+        .b2-rail { padding: 28px 0 28px 24px; min-width: 0; border-left: 1px solid var(--sk-line); }
+        @media (max-width: 639px) {
+          .b2-grid { padding-left: 12px; padding-right: 12px; }
+        }
         @media (min-width: 640px) {
           .b2-grid { padding-left: 2rem; padding-right: 2rem; }
         }
@@ -481,22 +486,23 @@ export default function TodayPage() {
         }
         @media (max-width: 1024px) {
           .b2-grid { grid-template-columns: 1fr; }
-          .b2-main { padding: 20px 0; border-bottom: 1px solid var(--border-subtle); }
-          .b2-rail { padding: 16px 0 0; border-left: none; }
+          .b2-main { padding: 20px 0; }
+          .b2-rail { padding: 16px 0 32px; border-left: none; border-top: 1px solid var(--sk-line); }
         }
       `}</style>
 
       <main className="b2-main">
-        {/* N1.21 — flexWrap + nowrap date: at 375 the date used to wrap into a
-            3-line sliver squeezed beside the H1; now it drops as one unit. */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 4, flexWrap: 'wrap' }}>
-          <h1 style={{ fontSize: 32, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.03em', margin: 0 }}>Today</h1>
-          <HeartbeatLine width={60} height={14} color={ACCENT_GOLD} variant="static" />
-          <span style={{ fontSize: 13, color: INK_MUTED, whiteSpace: 'nowrap' }}>{formatTodayDate()}</span>
+        {/* Title row. N1.21 — flexWrap + nowrap date: at 375 the date used to wrap
+            into a 3-line sliver squeezed beside the H1; now it drops as one unit.
+            The heartbeat squiggle and the year in the date are gone (decoration,
+            not data). */}
+        <div className="tk-titlerow">
+          <h1>Today</h1>
+          <span className="tk-date">{formatTodayDate().replace(/,\s*\d{4}$/, '')}</span>
           <div style={{ flex: 1 }} />
           {/* PI-only: run /process on THIS machine via the mnccore:// local
-              protocol (fire-and-forget). Gold = user-driven action (Rule 59).
-              No server route — purely a local-protocol trigger. */}
+              protocol (fire-and-forget). No server route — purely a
+              local-protocol trigger. */}
           {user.isPi && (
             <>
               {/* PomodoroControl: calls localhost:5555 directly from the browser.
@@ -505,7 +511,7 @@ export default function TodayPage() {
               <PomodoroControl />
               {/* G1-A1: verb-only Quick Chat button — fires mnccore://quickchat which
                   runs Quick_Chat_seeded.bat (loads today's context on startup).
-                  Computer-origin only; no launch_log row, no backend. Rule 59 gold. */}
+                  Computer-origin only; no launch_log row, no backend. */}
               <button
                 type="button"
                 onClick={() => launchProcess(MNCCORE_QUICKCHAT_URI, {
@@ -514,14 +520,9 @@ export default function TodayPage() {
                 })}
                 title="Open Quick Chat on this machine"
                 aria-label="Open Quick Chat on this machine"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'center',
-                  background: withAlpha(ACCENT_GOLD, 12), border: `1px solid ${withAlpha(ACCENT_GOLD, 35)}`,
-                  color: ACCENT_GOLD, borderRadius: 6, padding: '5px 11px',
-                  fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
-                }}
+                className="tk-btn"
               >
-                💬 Quick Chat
+                <MessageSquare {...ICON_PROPS} size={13} aria-hidden />Quick Chat
               </button>
               <button
                 type="button"
@@ -530,24 +531,32 @@ export default function TodayPage() {
                   copyMessage: 'Launching /process on this machine…',
                 })}
                 title="Run /process on this machine"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'center',
-                  background: withAlpha(ACCENT_GOLD, 12), border: `1px solid ${withAlpha(ACCENT_GOLD, 35)}`,
-                  color: ACCENT_GOLD, borderRadius: 6, padding: '5px 11px',
-                  fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
-                }}
+                className="tk-btn"
               >
-                ⚙ Process
+                <Settings {...ICON_PROPS} size={13} aria-hidden />Process
               </button>
             </>
           )}
         </div>
+
+        {/* "Needs you" questions — a process is waiting on Nick's answer. Shown
+            above PendingMeetingsCard: an unanswered question blocks something,
+            a captured meeting is merely awaiting triage. Both are the warm gold
+            attention card and sit FIRST, ahead of the stat line. */}
+        <QuestionsCard tasks={questionTasks} band={false} />
+
+        {/* Pending meetings triage card. Disappears automatically once all
+            pending meetings are accepted or declined. */}
+        <PendingMeetingsCard tasks={pendingMeetingTasks} band={false} />
+
+        <StatLine counts={counts} />
+
         {/* N1.21 — flex-start keeps the dismiss × anchored to the first line
             instead of floating detached mid-text when the hint wraps. */}
         {!howToDismissed && (
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: INK_DIM, marginBottom: 16 }}>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              Click a task to expand · 📌 or drag ⋮⋮ to plan · click a meeting for notes.
+          <div className="tk-hint">
+            <span>
+              Click a task to expand · pin or drag the grip to plan · click a meeting for notes.
             </span>
             <button
               type="button"
@@ -557,29 +566,15 @@ export default function TodayPage() {
               // WCAG 2.2 SC 2.5.8 24x24 CSS-px floor -- this is a standalone
               // icon button (no larger click surface around it, unlike the
               // CollapseChevron glyphs whose whole header row is the real
-              // target). 5px/8px brings it to ~26x26 without visibly
-              // growing the transparent-background glyph.
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: INK_DIM, fontSize: 16, lineHeight: 1, padding: '5px 8px', flexShrink: 0, opacity: 0.85 }}
+              // target). 5px/8px (in .tk-hint button) brings it to ~26x26.
             >
               ×
             </button>
           </div>
         )}
 
-        {/* "Needs you" questions — a process is waiting on Nick's answer. Shown
-            above PendingMeetingsCard: an unanswered question blocks something,
-            a captured meeting is merely awaiting triage. */}
-        <QuestionsCard tasks={questionTasks} />
-
-        {/* Pending meetings triage card — shown before the pill strip so captured
-            meetings requiring a decision are the first thing Nick sees. Disappears
-            automatically once all pending meetings are accepted or declined. */}
-        <PendingMeetingsCard tasks={pendingMeetingTasks} />
-
-        <PillStrip counts={counts} />
-
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 12 }}>
-          <span style={{ fontSize: 14, marginTop: 2 }}>🧠</span>
+        <div className="tk-compose">
+          <Brain {...ICON_PROPS} size={16} aria-hidden style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <MorningThoughtCompose />
           </div>
@@ -651,57 +646,18 @@ export default function TodayPage() {
             onToggleOpen={() => setTimelineOpen((o) => !o)}
           />
         ) : (
-          <section data-b2-agenda style={{ marginBottom: 24 }}>
-            {/* Header with toggle — mirrors Timeline header for consistent affordance.
-                Only the icon+title+chevron are the collapse-click target — the
-                view-toggle group and hint are siblings, not descendants, so their
-                clicks never reach the collapse handler. */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <div
-                {...collapseToggleProps(timelineOpen, () => setTimelineOpen((o) => !o), 'Today section')}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
-              >
-                <span style={{ fontSize: 16 }}>📅</span>
-                <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>Today</h2>
-                <CollapseChevron open={timelineOpen} color={ACCENT_GOLD} />
-              </div>
-              <div
-                role="group"
-                aria-label="Today view"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  border: `1px solid ${withAlpha(ACCENT_GOLD, 22)}`,
-                  borderRadius: 6,
-                  overflow: 'hidden',
-                  flexShrink: 0,
-                }}
-              >
-                {(['timeline', 'agenda'] as const).map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => setTodayView(v)}
-                    aria-pressed={todayView === v}
-                    title={v === 'timeline' ? 'Timeline — drag tasks into gaps' : 'Agenda — scan your day'}
-                    style={{
-                      background: todayView === v ? withAlpha(ACCENT_GOLD, 15) : 'transparent',
-                      border: 'none',
-                      color: todayView === v ? ACCENT_GOLD : INK_DIM,
-                      fontSize: 11,
-                      fontWeight: todayView === v ? 600 : 400,
-                      cursor: 'pointer',
-                      padding: '3px 9px',
-                      letterSpacing: '0.02em',
-                      transition: 'all 120ms',
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {v === 'timeline' ? 'Timeline' : 'Agenda'}
-                  </button>
-                ))}
-              </div>
-              <span style={{ fontSize: 11, color: INK_DIM }}>scan your day · click to open · × to hide</span>
-            </div>
+          <section data-b2-agenda className="tk-panel tk-blk">
+            {/* Header with toggle — the same TodayHeader the Timeline mounts, so
+                the collapse affordance is identical in both views. */}
+            <TodayHeader
+              open={timelineOpen}
+              onToggleOpen={() => setTimelineOpen((o) => !o)}
+              eventCount={todaysMeetings.filter((e) => !dismissedEventIds[e.id]).length}
+              activeView={todayView}
+              onToggleView={setTodayView}
+              hiddenCount={Object.keys(dismissedEventIds).length}
+              onRestore={onRestoreAllDismissed}
+            />
             {timelineOpen && (
               <AgendaListView
                 events={todaysMeetings}
@@ -719,17 +675,19 @@ export default function TodayPage() {
 
         {/* #105: heading no longer claims "All" — the pool is now what the due
             window admits, and the window picker sits next to the claim it makes. */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, marginTop: 8, flexWrap: 'wrap' }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>📋 Tasks</h2>
+        <div className="tk-ph" style={{ marginTop: 6 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--sk-t1)', margin: 0, whiteSpace: 'nowrap' }}>Tasks</h2>
           {/* The ONE locked toggle anatomy — never re-mint the inline pill group
-              (docs/design-system.md; ui/SegmentedToggle.tsx). The labels are
-              self-evident, so per the tooltip doctrine they carry none. */}
+              (docs/design-system.md; ui/SegmentedToggle.tsx). skin="tk" draws it
+              as the Today tray. The labels are self-evident, so per the tooltip
+              doctrine they carry none. */}
           <SegmentedToggle
             options={DUE_WINDOW_OPTIONS}
             value={dueWindow}
             onChange={setDueWindow}
             accent="teal"
             size="sm"
+            skin="tk"
             ariaLabel="Show tasks due within"
           />
           <button
@@ -737,28 +695,24 @@ export default function TodayPage() {
             onClick={() => setShowMilestones((v) => !v)}
             aria-pressed={showMilestones}
             aria-label="Show milestones"
-            className="tip"
+            className="tk-pill tk-btnp tip planned-chip"
             data-tip={showMilestones ? 'Hide milestone rules' : 'Show milestone rules'}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+            style={showMilestones ? { color: 'var(--sk-gold)' } : undefined}
           >
-            {/* Same pill the quick-add modal uses for its milestone toggle. */}
-            <Chip pill bordered size="sm" filled={showMilestones} color={showMilestones ? 'var(--gold)' : 'var(--slate)'}>
-              <Diamond {...ICON_PROPS} size={11} />
-              Milestones
-            </Chip>
+            <Diamond {...ICON_PROPS} size={11} />
+            Milestones
           </button>
           {hiddenByWindow > 0 && (
             <button
+              type="button"
               onClick={() => setDueWindow('all')}
               data-tip="Show every open task again"
-              style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 11, cursor: 'pointer', padding: 0 }}
+              className="tk-further"
             >
               {hiddenByWindow} further out →
             </button>
           )}
-          <span className="today-section-hint" style={{ fontSize: 12, color: INK_DIM }}>click to expand · 📌 or drag ⋮⋮ to plan</span>
-          {/* --border-default is rgba(255,255,255,0.08) in dark mode (the old literal) and an ink alpha in light, where a white alpha was invisible. */}
-          <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
+          <span className="tk-hintx today-section-hint">click to expand · pin or drag the grip to plan</span>
         </div>
 
         {isLoading ? (
@@ -777,38 +731,35 @@ export default function TodayPage() {
 
         </TodayDndContext>
 
-        <div data-b2-completed style={{ marginTop: 24, paddingTop: 16, borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
-          <div
-            {...collapseToggleProps(completedOpen, () => setCompletedOpen(!completedOpen), 'Completed today')}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 0' }}
-          >
-            <span style={{ fontSize: 12, color: ACCENT_GREEN }}>✓</span>
-            <span style={{ fontSize: 11, color: INK_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 500 }}>
-              Completed today ({doneTodayDetail.length + localDoneIds.length})
-            </span>
-            <CollapseChevron open={completedOpen} />
+        <section data-b2-completed className="tk-panel tk-blk">
+          <div className="tk-ph">
+            <div {...collapseToggleProps(completedOpen, () => setCompletedOpen(!completedOpen), 'Completed today')} className="tk-ctog">
+              <CollapseChevron open={completedOpen} />
+              <h3>Completed today</h3>
+              <span className="tk-cnt">{doneTodayDetail.length + localDoneIds.length}</span>
+            </div>
           </div>
           {completedOpen && (
-            <div style={{ marginTop: 12, paddingLeft: 20 }}>
+            <div>
               {doneTodayDetail.map((t) => (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', paddingLeft: 12 }}>
-                  <DoneBox done onToggle={() => state.uncheck(t.id)} />
-                  <span style={{ fontSize: 12, color: INK_MUTED, textDecoration: 'line-through' }}>{t.short_title || t.title}</span>
+                <div key={t.id} className="tk-crow">
+                  <CardCheck done onToggle={() => state.uncheck(t.id)} />
+                  <span>{t.short_title || t.title}</span>
                 </div>
               ))}
               {localDoneIds.map((id) => {
                 const t = (tasksQuery.data ?? []).find((x) => x.id === id)
                 if (!t) return null
                 return (
-                  <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', paddingLeft: 12 }}>
-                    <DoneBox done onToggle={() => state.uncheck(id)} />
-                    <span style={{ fontSize: 12, color: INK_MUTED, textDecoration: 'line-through' }}>{t.short_title || t.title}</span>
+                  <div key={id} className="tk-crow">
+                    <CardCheck done onToggle={() => state.uncheck(id)} />
+                    <span>{t.short_title || t.title}</span>
                   </div>
                 )
               })}
             </div>
           )}
-        </div>
+        </section>
       </main>
 
       <aside className="b2-rail">
