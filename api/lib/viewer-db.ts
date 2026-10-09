@@ -190,10 +190,12 @@ export function scopeSql(sql: string, active: ReadonlyMap<ScopedTable, string>):
     throw new ScopeRefused('viewer-db: SQL that names main./temp./sqlite_/pragma/attach is refused for a scoped viewer')
   }
   // A quoted identifier naming a scoped table ("meetings", [meetings],
-  // `meetings`) is refused rather than reasoned about: no route writes one,
-  // and the rewriter below only reads bare words.
+  // `meetings`, and 'meetings': SQLite accepts a single-quoted string as an
+  // identifier where one is expected, so `UPDATE 'meetings'` reaches the real
+  // table past the guard) is refused rather than reasoned about. No route
+  // writes one; the compile sweep in viewer-db.test.ts pins that.
   for (const t of named) {
-    if (new RegExp(`["\`[]${t}["\`\\]]`, 'i').test(sql)) {
+    if (new RegExp(`["'\`[]${t}["'\`\\]]`, 'i').test(sql)) {
       throw new ScopeRefused(`viewer-db: a quoted identifier naming scoped table ${t} is refused for a scoped viewer`)
     }
   }

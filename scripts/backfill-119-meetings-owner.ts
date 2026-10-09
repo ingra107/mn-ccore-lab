@@ -2,20 +2,26 @@
 // steps from a prod pre-image. Writes SQL files; touches no database.
 //
 // RUNBOOK (operator; test DB first, then prod; nothing here is automatic).
-// Strict order. The new Worker adopts owner-less rows only for the PB key and
-// a PI, so a member's write in the window lands as their own row, never Nick's.
+// Strict order. Between the DDL and the deploy the OLD Worker still writes,
+// and every row it writes has owner_slug NULL, a member's Prep press included.
+// Nothing stamps such a row blind: at runtime only the PB key adopts an
+// owner-less row, and only one created before v119 was applied
+// (schema_migrations.applied_at); here, --window-start holds every NULL-owner
+// row created since then for review.
 //
 //   1. DDL: api/schema-v119-meetings-owner.sql. Then read <T0>, the window
 //      start, IN D1's created_at FORMAT (UTC, 'YYYY-MM-DD HH:MM:SS'; the
-//      comparison is textual):
-//        scripts/wrangler-d1 d1 execute mnccore-lab --remote --command "SELECT datetime('now') AS t0"
+//      comparison is textual). It is the same instant the Worker's runtime
+//      cutoff reads:
+//        scripts/wrangler-d1 d1 execute mnccore-lab --remote --command "SELECT datetime(applied_at) AS t0 FROM schema_migrations WHERE version = 119"
 //   2. Pre-image export (read-only):
 //        scripts/wrangler-d1 d1 execute mnccore-lab --remote --json \
 //          --command "SELECT id, owner_slug, attendees, created_at, date, title FROM meetings ORDER BY id" > pre-meetings.json
 //        scripts/wrangler-d1 d1 execute mnccore-lab --remote --json \
 //          --command "SELECT slug, email FROM team_members WHERE slug IS NOT NULL ORDER BY auto_created ASC, created_at ASC, slug ASC" > pre-team.json
 //   3. Generate, then apply backfill + re-normalization:
-//        npx tsx scripts/backfill-119-meetings-owner.ts --meetings pre-meetings.json --team pre-team.json --out <dir>
+//        npx tsx scripts/backfill-119-meetings-owner.ts --meetings pre-meetings.json --team pre-team.json --out <dir> --window-start "<T0>"
+//      Any HELD row was written after the DDL; review it as in step 5.
 //        scripts/wrangler-d1 d1 execute mnccore-lab --remote --file=<dir>/backfill-119-owner.apply.sql
 //        scripts/wrangler-d1 d1 execute mnccore-lab --remote --file=<dir>/renorm-119-attendees.apply.sql
 //   4. Deploy (Pages, then Worker).

@@ -637,7 +637,7 @@ describe('handleCreateMeeting: owner-less rows and source_id in the deploy windo
   beforeEach(async () => { (await import('../helpers'))._resetPiEmailsCacheForTests() })
 
   it('a PB re-push of a NULL-owner row carrying its source_id dedups to 200 and stamps the owner', async () => {
-    const b = makeStatefulEnv([{ id: 'mtg-old', date: '2026-10-01', title: 'Lab Sync', source_id: 'cal-x', owner_slug: null }])
+    const b = makeStatefulEnv([{ id: 'mtg-old', date: '2026-10-01', title: 'Lab Sync', source_id: 'cal-x', owner_slug: null, created_at: '2020-01-01 00:00:00' }])
     const res = await handleCreateMeeting(serviceRequest({ date: '2026-10-01', title: 'Lab Sync', source_id: 'cal-x', notes: 'debrief' }), makeUser(), b.env)
     expect(res.status).toBe(200)
     expect(b.meetings()).toHaveLength(1)
@@ -657,12 +657,37 @@ describe('handleCreateMeeting: owner-less rows and source_id in the deploy windo
     expect(b.meetings()[0]).toMatchObject({ id: 'mtg-c', owner_slug: 'casey-eddington', notes: 'n' })
   })
 
-  it('a PI adopts a NULL-owner row by title', async () => {
-    const b = makeStatefulEnv([{ id: 'mtg-old', date: '2026-10-01', title: 'Lab Sync', owner_slug: null }])
-    b.db.prepare("UPDATE lab_settings SET value = ? WHERE key = 'pi_emails'").run(JSON.stringify(['ingra107@umn.edu']))
-    const res = await handleCreateMeeting(piRequest({ date: '2026-10-01', title: 'lab sync', notes: 'n' }), makeUser(), b.env)
+  // created_at before the v119 ledger row the chain wrote = a pre-v119 row.
+  const PRE_V119 = '2020-01-01 00:00:00'
+
+  it('the PB service adopts a pre-v119 NULL-owner row by title', async () => {
+    const b = makeStatefulEnv([{ id: 'mtg-old', date: '2026-10-01', title: 'Lab Sync', owner_slug: null, created_at: PRE_V119 }])
+    const res = await handleCreateMeeting(serviceRequest({ date: '2026-10-01', title: 'lab sync', notes: 'n' }), makeUser(), b.env)
     expect(res.status).toBe(200)
     expect(b.meetings()).toEqual([expect.objectContaining({ id: 'mtg-old', owner_slug: 'nick-ingraham' })])
+  })
+
+  it('a PI browser session does not adopt a NULL-owner row', async () => {
+    const b = makeStatefulEnv([{ id: 'mtg-old', date: '2026-10-01', title: 'Lab Sync', owner_slug: null, created_at: PRE_V119 }])
+    b.db.prepare("UPDATE lab_settings SET value = ? WHERE key = 'pi_emails'").run(JSON.stringify(['ingra107@umn.edu']))
+    const res = await handleCreateMeeting(piRequest({ date: '2026-10-01', title: 'lab sync', notes: 'n' }), makeUser(), b.env)
+    expect(res.status).toBe(201)
+    expect(b.meetings().find((r) => r.id === 'mtg-old')).toMatchObject({ owner_slug: null })
+    expect(b.meetings()).toHaveLength(2)
+  })
+
+  it('the PB service does not adopt a NULL-owner row created after v119 was applied (a window row)', async () => {
+    const b = makeStatefulEnv([{ id: 'mtg-window', date: '2026-10-01', title: 'Lab Sync', owner_slug: null, created_at: '2999-01-01 00:00:00' }])
+    const res = await handleCreateMeeting(serviceRequest({ date: '2026-10-01', title: 'Lab Sync', notes: 'n' }), makeUser(), b.env)
+    expect(res.status).toBe(201)
+    expect(b.meetings().find((r) => r.id === 'mtg-window')).toMatchObject({ owner_slug: null, notes: null })
+  })
+
+  it('a source_id match on a window row updates it but does not stamp an owner', async () => {
+    const b = makeStatefulEnv([{ id: 'mtg-window', date: '2026-10-01', title: 'Lab Sync', source_id: 'cal-w', owner_slug: null, created_at: '2999-01-01 00:00:00' }])
+    const res = await handleCreateMeeting(serviceRequest({ date: '2026-10-01', title: 'Lab Sync', source_id: 'cal-w', notes: 'n' }), makeUser(), b.env)
+    expect(res.status).toBe(200)
+    expect(b.meetings()).toEqual([expect.objectContaining({ id: 'mtg-window', owner_slug: null, notes: 'n' })])
   })
 
   it('a member never adopts a NULL-owner row, and a member source_id is dropped', async () => {

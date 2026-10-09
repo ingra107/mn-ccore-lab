@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical, pbTaskVisibilitySql, isPiRequest } from '../helpers';
+import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical, pbTaskVisibilitySql } from '../helpers';
 import { validateApiKey } from '../middleware/api-key-auth';
 import { TASK_SELECT_COLS } from '../lib/task-cols';
 import { normalizeAttendees, attendeesColumnValue, type NormalizedAttendees } from '../lib/meeting-write';
@@ -532,9 +532,6 @@ interface MeetingWriter {
   owner: string | null;
   /** The PB service key: may set source_id and dedups on it first. */
   service: boolean;
-  /** PB key or a PI: may adopt an owner-less row (one written before
-   *  schema-v119's backfill reached it), stamping its own slug on it. */
-  adoptsUnowned: boolean;
 }
 
 async function meetingWriter(request: Request, user: AuthUser, env: Env): Promise<MeetingWriter> {
@@ -542,9 +539,16 @@ async function meetingWriter(request: Request, user: AuthUser, env: Env): Promis
     user,
     owner: meetingOwner(user),
     service: validateApiKey(request, env) === true,
-    adoptsUnowned: await isPiRequest(request, env),
   };
 }
+
+// An owner-less row the PB service may adopt: created BEFORE schema-v119 was
+// applied (its schema_migrations.applied_at). Every such row predates any
+// second writer and is PB's. A NULL-owner row created after it was written
+// in the deploy window by the old Worker, possibly from a member's Prep press,
+// so it is never adopted at runtime; the backfill's --window-start review
+// decides it. No ledger row (v119 not applied) adopts nothing.
+const ADOPTABLE_UNOWNED = `owner_slug IS NULL AND datetime(created_at) < (SELECT datetime(applied_at) FROM schema_migrations WHERE version = 119)`;
 
 interface MeetingUpsert {
   date: string; title: string; type?: string;
@@ -590,8 +594,8 @@ async function upsertMeeting(env: Env, writer: MeetingWriter, input: MeetingUpse
   //      is PB's identity for the meeting and UNIQUE; a re-push of a row the
   //      title match would miss must update it, not 500 or duplicate.
   //   2. the caller's own rows on that date, by normalized title;
-  //   3. for the PB key or a PI only, an owner-less row on that date (written
-  //      before the v119 backfill reached it), which it then adopts.
+  //   3. for the PB key only, an owner-less row on that date created before
+  //      schema-v119 was applied (ADOPTABLE_UNOWNED), which it then adopts.
   // The dedup path never rewrites a non-NULL owner.
   type Candidate = { id: string; date: string; title: string; notes: string | null; owner_slug: string | null };
   let existing: Candidate | undefined;
@@ -601,15 +605,16 @@ async function upsertMeeting(env: Env, writer: MeetingWriter, input: MeetingUpse
   }
   if (!existing) {
     const sameDate = await env.DB.prepare(
-      'SELECT * FROM meetings WHERE date = ? AND (owner_slug IS ? OR (? = 1 AND owner_slug IS NULL))'
-    ).bind(input.date, owner, writer.adoptsUnowned ? 1 : 0).all<Candidate>();
+      `SELECT * FROM meetings WHERE date = ? AND (owner_slug IS ? OR (? = 1 AND ${ADOPTABLE_UNOWNED}))`
+    ).bind(input.date, owner, writer.service ? 1 : 0).all<Candidate>();
     const titled = (sameDate.results ?? []).filter((m) => normalizeMeetingTitle(m.title) === normalizedTitle);
     existing = titled.find((m) => m.owner_slug !== null) ?? titled[0];
   }
-  if (existing && existing.owner_slug === null && owner) {
-    await env.DB.prepare('UPDATE meetings SET owner_slug = ? WHERE id = ? AND owner_slug IS NULL')
+  if (existing && existing.owner_slug === null && owner && writer.service) {
+    // A source_id match can land here on a window row; the same cutoff decides.
+    const stamped = await env.DB.prepare(`UPDATE meetings SET owner_slug = ? WHERE id = ? AND ${ADOPTABLE_UNOWNED}`)
       .bind(owner, existing.id).run();
-    existing = { ...existing, owner_slug: owner };
+    if (stamped.meta?.changes) existing = { ...existing, owner_slug: owner };
   }
   if (existing) {
     // Upsert: if the re-push carries notes/decisions/tags/type, refresh the
