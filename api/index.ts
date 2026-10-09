@@ -2818,9 +2818,9 @@ defineRoute({
 });
 
 // Launch log writes
-defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c)) });
+defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c), c.get('canSeePb') === true) });
 defineRoute({ method: 'POST', path: '/api/launch-log/:id/status', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleSetLaunchStatus(c.req.param('id'), R(c), USER(c), E(c)) });
-defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c)) });
+defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c), c.get('canSeePb') === true) });
 // PI/API-key gated in-handler (isPiRequest — same idiom as /api/bug-reports
 // above, not the /api/pb/* path middleware). Backlog #250: closes the gap
 // where any team member holding (or guessing) the opaque lnch_ id could
