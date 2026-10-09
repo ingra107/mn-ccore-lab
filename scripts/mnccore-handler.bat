@@ -83,6 +83,11 @@ if "!url:~0,5!"=="open/" (
 )
 if "!url:~0,7!"=="launch/" (
     set "arg=!url:~7!"
+    rem CALL re-expands percent signs in its arguments, so %%26 arrived at the gate as 6.
+    rem Doubling every percent first hands the gate the arg as cmd received it, and a
+    rem percent sign then fails the gate. A %%NAME%% pair is expanded by cmd itself
+    rem before this file runs; nothing here can see it, the resolver re-validates.
+    set "arg=!arg:%%=%%%%!"
     rem NO :decode here — the launch arg must stay an opaque token. Decoding would
     rem turn percent-encoded shell metacharacters (%22 %26 ...) into live chars;
     rem leaving them inert lets verb_launch's strict alnum gate reject them.
@@ -408,9 +413,16 @@ exit /b 0
 
 
 :: ── :fail <message> ── echo + brief pause for debuggability, exit 1 ──────────
+:: SECURITY (2026-10-09): the message carries URL text, and an `echo %~1` line is
+:: parsed AFTER %~1 is substituted, so an `&` or `|` from the URL ran as a second
+:: command (proven: mnccore://zzz/x&echo PWNED>file wrote the file through the
+:: registered handler). The quoted `set` keeps & and | literal, and a !var!
+:: expansion happens after the parser has already split commands, so the
+:: echo can only ever print the text.
 :fail
-echo %~1
-echo %date% %time% FAIL: %~1 >> "%TEMP%\mnccore-handler.log"
+set "failmsg=%~1"
+echo(!failmsg!
+>>"%TEMP%\mnccore-handler.log" echo(%date% %time% FAIL: !failmsg!
 :: Brief pause so a double-click / protocol-spawned window is readable. Skip the
 :: pause under dry-run (tests are non-interactive).
 if not defined MNCCORE_HANDLER_DRYRUN (
