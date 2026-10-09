@@ -248,6 +248,8 @@ export default function App() {
                     happens before any auth gate — the portal URL handles
                     auth. Kept indefinitely; cost is negligible. */}
                 <Route path="/dashboard" element={<NavigateKeepSearch to="/portal/dashboard" />} />
+                {/* Bare /portal had no route and fell into the public Not-found page. */}
+                <Route path="/portal" element={<NavigateKeepSearch to="/portal/dashboard" />} />
                 <Route path="/personal" element={<NavigateKeepSearch to="/portal/personal" />} />
                 {/* Entity-bearing legacy redirects MUST keep the query string —
                     notification links are minted as /tasks?open=<id>; a plain

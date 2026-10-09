@@ -2476,7 +2476,7 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 .dark{--sk-rim:rgba(255,255,255,.06);--sk-amb:0 10px 30px rgba(0,0,0,.35);--sk-top:color-mix(in srgb,var(--sk-card) 94%,#fff)}
 .tk .tk-card{background:linear-gradient(180deg,var(--sk-top) 0%,var(--sk-card) 60%);box-shadow:inset 0 1px 0 var(--sk-rim),var(--sk-amb)}
 :root:not(.dark) .tk .tk-card{background:linear-gradient(180deg,#fff 0%,#fff 40%,var(--sk-panel) 160%)}
-.tk .tk-card:hover,.tk .tk-mc.tk-nowm,.tk .tk-tc.tk-exp{box-shadow:inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
+.tk .tk-card:hover,.tk .tk-mc.tk-nowm{box-shadow:inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
 .tk .tk-tc.tk-urg{box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim),var(--sk-amb)}
 .tk .tk-tc.tk-urg:hover{box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
 .tk .tk-btn.tk-pri,.tk .tk-btn.tk-ac,.tk .tk-join,.tk .tk-ck.tk-on{background:linear-gradient(180deg,color-mix(in srgb,var(--sk-ac) 82%,#fff) 0%,var(--sk-ac) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 2px rgba(0,0,0,.18)}
@@ -2725,8 +2725,6 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-compose textarea::placeholder{color:var(--sk-t3) !important;opacity:1}
 .tk .tk-compose label{color:var(--sk-t3) !important}
 .tk .tk-rail-p ul{list-style:disc;margin:6px 0 0;padding-left:18px}
-.tk .tk-lkicon{color:var(--sk-t3) !important}
-.tk .tk-lkicon:hover{color:var(--sk-t1) !important}
 .tk .tk-tlab{white-space:nowrap}
 .tk .tk-ft button[aria-label*="project folder"],.tk .tk-ft button[aria-label*="Claude"],.tk .tk-tr-r button[aria-label*="project folder"],.tk .tk-tr-r button[aria-label*="Claude"]{color:var(--sk-t3) !important}
 .tk .tk-ft button[aria-label*="project folder"]:hover,.tk .tk-ft button[aria-label*="Claude"]:hover,.tk .tk-tr-r button[aria-label*="project folder"]:hover,.tk .tk-tr-r button[aria-label*="Claude"]:hover{color:var(--sk-t1) !important}
@@ -2739,7 +2737,6 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 /* dark depth: the later flat .tk-card rule beat the dark gradient; restate it above that specificity */
 .dark .tk .tk-card{background:linear-gradient(180deg,var(--sk-top) 0%,var(--sk-card) 60%)}
 .tk .tk-dense .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:7px 12px}
-.tk .tk-tc.tk-dense .tk-ft{padding-bottom:7px}
 /* timeline compact meeting card: one line, proportional height */
 .tk .tk-mcc{display:flex;flex-direction:column;justify-content:flex-start}
 .tk .tk-mcr{display:flex;align-items:center;gap:8px;padding:4px 10px;min-height:26px;min-width:0}
@@ -2781,3 +2778,83 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-thr .tk-tag{margin-left:0}
 .tk .tk-thr-t{color:var(--sk-t3);font-size:11px}
 .tk .tk-thr-c{margin-left:auto;color:var(--sk-t3);transition:transform 140ms}
+
+/* ══ Today round 2 (Nick 2026-10-09, approved on the live-page mock) ══
+   Collapsed card "Option B": title row, then ONE context line (project, due,
+   workflow pills, faces) with fixed action slots at its right end. The right
+   column is a fixed 50px: assignee face on top, folder + Work on pinned under
+   it, so the three form a triangle by layout. 92px -> ~69px. */
+.tk .tk-tch{align-items:stretch;padding:9px 12px 8px}
+.tk .tk-tch .tk-ck{align-self:flex-start}
+.tk .tk-tch .tk-hdr{display:flex;flex-direction:column;justify-content:space-between;gap:2px}
+.tk .tk-ctx{display:flex;align-items:center;gap:4px 12px;min-height:24px;min-width:0;flex-wrap:wrap}
+.tk .tk-ctx .tk-cs{margin:0;min-width:0;flex:0 1 auto;max-width:40%}
+.tk .tk-ctx .tk-sp{flex:1;min-width:0}
+.tk .tk-ctx .tk-faces{flex-shrink:0}
+.tk .tk-slots{display:inline-flex;align-items:center;flex-shrink:0}
+.tk .tk-lks{display:inline-flex;align-items:center;justify-content:flex-end;min-width:74px;height:24px}
+.tk .tk-mks{display:inline-grid;place-items:center;width:24px;height:24px}
+.tk .tk-mks .tk-mt{display:grid;place-items:center;width:24px;height:24px;gap:0}
+.tk .tk-tch>.tk-tr-r{flex-direction:column;align-items:center;justify-content:space-between;gap:0;width:50px;margin-left:4px}
+.tk .tk-av{display:grid;place-items:center;width:26px;height:26px}
+.tk .tk-wk{display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:24px}
+.tk .tk-wk .tk-wo{color:var(--sk-t3) !important}
+.tk .tk-wk .tk-wo:hover{color:var(--sk-t1) !important}
+html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px 12px}
+@media (max-width:640px){
+  .tk .tk-lks{min-width:0}
+}
+
+/* Link icon tints (row + drawer): muted brand = 70% brand / 30% gray; hover
+   goes to the full brand color. Tint kind comes from linkTintForType(). */
+.tk .tk-lkicon,.tk .tk-lkc{--lk:var(--sk-t3)}
+.tk [data-lk=doc]{--lk:#5b8def}
+.tk [data-lk=sheet]{--lk:#3fa66b}
+.tk [data-lk=slides]{--lk:#e3a93a}
+.tk [data-lk=artifact]{--lk:#d0805e}
+.tk [data-lk=email]{--lk:#dd6a5f}
+.tk .tk-lkicon{color:color-mix(in srgb,var(--lk) 70%,var(--sk-t3)) !important}
+.tk .tk-lkicon:hover{color:var(--sk-t1) !important}
+.tk .tk-lkicon[data-lk]:hover{color:var(--lk) !important}
+
+/* Accent: a 3x13 teal tick before every Today section title (panels + rail),
+   and a 2px teal left edge on the expanded task card. Urgent keeps its own
+   rail (a standing signal outranks "this one is open"). */
+.tk .tk-ph h3::before{content:"";display:inline-block;width:3px;height:13px;border-radius:2px;background:var(--sk-ac);margin-right:8px;vertical-align:-1px}
+.tk .tk-tc.tk-exp:not(.tk-urg){box-shadow:inset 2px 0 0 var(--sk-ac),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
+
+/* Meeting summary on Today. MarkdownView sizes everything inline (em, ink), so
+   the scoped overrides need !important. Body 13.5px/1.6 t2 regular; bold 500
+   t1; headings 13.5px/600, "Summary" 15px. */
+.tk .tk-msum{font-size:13.5px !important}
+.tk .tk-msum p,.tk .tk-msum li,.tk .tk-msum ul,.tk .tk-msum ol{font-size:13.5px;line-height:1.6 !important;color:var(--sk-t2) !important;font-weight:400}
+.tk .tk-msum strong,.tk .tk-msum b{font-weight:500 !important;color:var(--sk-t1) !important}
+.tk .tk-msum h1,.tk .tk-msum h2,.tk .tk-msum h3,.tk .tk-msum h4,.tk .tk-msum h5,.tk .tk-msum h6{font-size:13.5px !important;font-weight:600 !important;color:var(--sk-t1) !important;margin:14px 0 4px !important;line-height:1.35 !important}
+.tk .tk-msum [data-summary-h]{font-size:15px !important}
+.tk .tk-msum>:first-child{margin-top:0 !important}
+
+/* Task drawer: one quiet segmented control (hairline inset outline, 2px
+   padding, 26px items, 12px/500 t2, t3 icons, hairline dividers). Overdue due
+   keeps red TEXT only; Plan turns teal while the task is planned. */
+.tk .tk-segc{display:inline-flex;align-items:center;flex-wrap:wrap;max-width:100%;padding:2px;margin-bottom:10px;border-radius:var(--r-ctl);box-shadow:inset 0 0 0 1px var(--sk-line2)}
+.tk .tk-segc>*{position:relative;display:inline-flex;align-items:center}
+.tk .tk-segc>*+*::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:1px;background:var(--sk-line2);pointer-events:none}
+.tk .tk-segc .tk-si,.tk .tk-segc [data-ghost-pill] button{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px !important;border:0 !important;border-radius:6px;background:none;font:500 12px var(--font-body) !important;color:var(--sk-t2) !important;opacity:1 !important;cursor:pointer;white-space:nowrap}
+.tk .tk-segc .tk-si:hover,.tk .tk-segc [data-ghost-pill] button:hover{background:var(--sk-ac-soft) !important;color:var(--sk-t1) !important}
+.tk .tk-segc .tk-si.tk-open{background:var(--sk-ac-soft);color:var(--sk-t1) !important}
+.tk .tk-segc .tk-si svg,.tk .tk-segc [data-ghost-pill] svg{color:var(--sk-t3);flex-shrink:0}
+.tk .tk-segc .tk-si.tk-planned-on,.tk .tk-segc .tk-si.tk-planned-on svg{color:var(--sk-ac) !important}
+.tk .tk-segc .tk-segdue[data-overdue] [data-ghost-pill] button{color:var(--sk-od) !important}
+.tk .tk-segc .tk-si:focus-visible,.tk .tk-segc [data-ghost-pill] button:focus-visible{outline:2px solid var(--sk-ac);outline-offset:-2px}
+
+/* Task drawer links: left-aligned block, a muted label, then a card grid. */
+.tk .tk-lkblock{margin:2px 0 12px}
+.tk .tk-lkblock .tk-lbl{margin-bottom:6px}
+.tk .tk-lkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px}
+.tk .tk-lkc{display:flex;align-items:center;gap:8px;min-width:0;padding:7px 10px;border-radius:8px;text-decoration:none;color:var(--sk-t1);background:linear-gradient(180deg,color-mix(in srgb,var(--sk-card) 92%,#fff) 0%,var(--sk-card) 100%);box-shadow:inset 0 0 0 1px var(--sk-line2)}
+:root:not(.dark) .tk .tk-lkc{background:linear-gradient(180deg,#fff 0%,var(--sk-panel) 100%)}
+.tk .tk-lkc:hover{box-shadow:inset 0 0 0 1px var(--sk-t3)}
+.tk .tk-lkc:focus-visible{outline:2px solid var(--sk-ac);outline-offset:1px}
+.tk .tk-lkc svg{flex-shrink:0;color:color-mix(in srgb,var(--lk) 70%,var(--sk-t3))}
+.tk .tk-lkc:hover svg{color:var(--lk)}
+.tk .tk-lkt{font-size:12.5px;font-weight:500;color:var(--sk-t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}

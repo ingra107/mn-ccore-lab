@@ -2,9 +2,12 @@
 // 2026-10-09). Opt-in via `card` on SharedTaskRow (tasks/TaskRow.tsx), which
 // dispatches here; every other surface keeps the standard row.
 //
-// One anatomy, repeated: bold title, the project's short name as a muted line
-// under it, the assignee's face top right, other people bottom-left, small
-// icon + counts bottom-right, due as a dot pill. Priority is gray except
+// One anatomy, repeated (round 2, 2026-10-09): a bold title row, then ONE
+// context line (project short name, due pill, workflow pills, other people)
+// with fixed action slots at its right end (links, meeting marker). The right
+// column is a fixed 50px: the assignee's face on top, folder + Work on pinned
+// under it, so face / folder / Work-on form a triangle. No expand caret: the
+// body click still expands. Priority is gray except
 // Urgent, which gets the one orange rail and an "Urgent" tag (HIGH no longer
 // paints a rail: a second color for a second priority is the equal-weight
 // color noise the reskin removes). No subtask steps and no invented content.
@@ -73,9 +76,9 @@ function CardDuePill({ due, status }: { due: string; status?: string }) {
 }
 
 function CardProjectLine({ project }: { project: { name: string; slug: string } | null }) {
-  if (!project) return <div className="tk-cs">No project</div>
+  if (!project) return <span className="tk-cs">No project</span>
   return (
-    <div className="tk-cs">
+    <span className="tk-cs">
       <Link
         to={PATHS.project(project.slug)}
         onClick={(e) => e.stopPropagation()}
@@ -83,16 +86,16 @@ function CardProjectLine({ project }: { project: { name: string; slug: string } 
       >
         {project.name}
       </Link>
-    </div>
+    </span>
   )
 }
 
 export function CardRow(props: CardTaskRowProps) {
   const {
-    task, project, isDone, onToggleDone, isExpanded, onToggleExpand, hideCaret,
+    task, project, isDone, onToggleDone, isExpanded, onToggleExpand,
     onOpenEditor, dense = false, draggable = false, onDragStart, onTogglePlan,
     isPlanned = false, plannedLabel, showGroupOverridePin = false,
-    leadingTag, extraMeta, belowTitle, footPills, children,
+    leadingTag, extraMeta, belowTitle, footPills, linksSlot, meetingSlot, workSlot, children,
   } = props
 
   const { user } = useAuth()
@@ -192,26 +195,32 @@ export function CardRow(props: CardTaskRowProps) {
             {planBtn}
             {grip}
           </div>
-          <CardProjectLine project={project} />
+          <div className="tk-ctx">
+            <CardProjectLine project={project} />
+            {task.due_date && !isDone && <CardDuePill due={task.due_date} status={task.status} />}
+            {!isDone && footPills}
+            {plannedPill}
+            {belowTitle}
+            {others.length > 0 && <Faces slugs={others} />}
+            <span className="tk-sp" />
+            {activityRow && (
+              <span className="tk-mt" title={`${activityRow.new_count} new`}>
+                <MessageSquare {...ICON_PROPS} size={13} aria-hidden />{activityRow.new_count}
+              </span>
+            )}
+            {extraMeta}
+            {/* Fixed slots: they render even when empty so the right edge of
+                every card lines up (Nick 2026-10-09). */}
+            <span className="tk-slots">
+              <span className="tk-lks">{linksSlot}</span>
+              <span className="tk-mks">{meetingSlot}</span>
+            </span>
+          </div>
         </div>
         <div className="tk-tr-r">
-          {task.assignee && <Face slug={task.assignee} lg />}
-          {!hideCaret && <span className="tk-caret">{isExpanded ? '▾' : '▸'}</span>}
+          <span className="tk-av">{task.assignee && <Face slug={task.assignee} lg />}</span>
+          <span className="tk-wk">{workSlot}</span>
         </div>
-      </div>
-      <div className="tk-ft">
-        {others.length > 0 && <Faces slugs={others} />}
-        {task.due_date && !isDone && <CardDuePill due={task.due_date} status={task.status} />}
-        {!isDone && footPills}
-        {plannedPill}
-        {belowTitle}
-        <span className="tk-sp" />
-        {activityRow && (
-          <span className="tk-mt" title={`${activityRow.new_count} new`}>
-            <MessageSquare {...ICON_PROPS} size={13} aria-hidden />{activityRow.new_count}
-          </span>
-        )}
-        {extraMeta}
       </div>
       {isExpanded && children}
     </div>

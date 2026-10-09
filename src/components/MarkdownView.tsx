@@ -218,6 +218,9 @@ function parseBlocks(source: string): ReactNode[] {
           `h${Math.min(level, 6)}`,
           {
             key: `blk-${key++}`,
+            // Lets a surface style the document's own "Summary" heading
+            // (Today's meeting card) without a per-surface fork of this parser.
+            ...(h[2].trim().toLowerCase() === 'summary' ? { 'data-summary-h': '' } : {}),
             style: {
               fontSize: sizes[level - 1],
               fontWeight: 600,

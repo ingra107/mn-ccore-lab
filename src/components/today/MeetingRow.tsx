@@ -172,7 +172,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
                       Open meeting →
                     </Link>
                   </div>
-                  <MarkdownView source={e.meetingNotes} />
+                  <MarkdownView source={e.meetingNotes} className="tk-msum" />
                 </>
               ) : (
                 <>

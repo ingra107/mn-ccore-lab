@@ -102,3 +102,32 @@ export function iconForType(type: string | null | undefined): LinkIconSpec {
   if (!type) return FALLBACK
   return ICON_MAP[type] ?? FALLBACK
 }
+
+/**
+ * Muted-tint family for the Today skin's link icons and link cards (Nick
+ * 2026-10-09: "still leveraged, but more subtle"). This maps the stored/
+ * normalized link `type` (the output of the canonical classifier,
+ * normalizeLink / link.type) to one of five tint names; the colors live in
+ * index.css (`[data-lk]`), not here. Anything else returns null and stays gray.
+ */
+export type LinkTint = 'doc' | 'sheet' | 'slides' | 'artifact' | 'email'
+
+export function linkTintForType(type: string | null | undefined): LinkTint | null {
+  switch (type) {
+    case 'google_doc': return 'doc'
+    case 'google_sheet': return 'sheet'
+    case 'google_slide': return 'slides'
+    case 'artifact': return 'artifact'
+    case 'gmail_thread':
+    case 'gmail_draft': return 'email'
+    default: return null
+  }
+}
+
+/**
+ * Drops the " (Google Doc)" style kind suffix PB appends to a link's short
+ * title: the tinted type icon already says what it is.
+ */
+export function stripLinkKindSuffix(title: string): string {
+  return title.replace(/\s*\((?:Google (?:Docs?|Sheets?|Slides?|Forms?)|Gmail(?: [a-z]+)?|(?:Claude )?artifact)\)\s*$/i, '').trim() || title
+}

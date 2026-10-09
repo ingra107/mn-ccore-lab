@@ -1,6 +1,6 @@
 // TaskDetailDrawer — inline expand drawer for tasks on TodayPage.
-// Shown when the user clicks a task row body. Action bar with 📂▶ Work /
-// 📌 Plan / Move → / Unplan; SmartCompose directly under action bar;
+// Shown when the user clicks a task row body. Segmented action bar (Plan /
+// Set section / Due / Full editor) then a Links block; SmartCompose directly under action bar;
 // full-width activity feed under composer; chips + subtasks/blocks/workflow
 // below the feed.
 //
@@ -22,7 +22,10 @@ import type { WorkflowFields } from '../tasks/detail/FieldControls'
 import { TaskInlineFieldRow, DueInlineSelect } from '../tasks/detail/FieldControls'
 import { ActivityPeek } from './ActivityPeek'
 import TaskDetailPanel from '../tasks/TaskDetailPanel'
-import StoredLinkChip from '../StoredLinkChip'
+import { LinkCards } from './LinkCards'
+import { Pin, Rows3, Maximize2, ChevronDown } from 'lucide-react'
+import { ICON_PROPS } from '../../lib/iconProps'
+import { isOverdue } from '../../lib/dateUtils'
 import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
 import {
   ACCENT_TEAL, ACCENT_ORANGE, ACCENT_GREEN,
@@ -33,7 +36,6 @@ import { fmtDuration } from './utils'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { STATUS_OPTIONS } from '../../lib/taskConstants'
 import { stripMeetingMarker } from '../../lib/textUtils'
-import { Button } from '../ui/Button'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
@@ -67,6 +69,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   // Next step: first open subtask (Option 1 per design doc B).
   const nextStep = subtasks.find((s) => s.completed !== 1) ?? null
   const isDone = isTaskDone(task)
+  const dueOverdue = !isDone && isOverdue(task.due_date, task.status)
 
   // Move → popover wiring (parity with UnifiedMyTasks).
   const updateTask = useUpdateTask()
@@ -128,79 +131,79 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   // drawer hugs the row instead of opening with a gap.
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ padding: '10px 18px 16px', borderTop: '1px solid var(--border-subtle)' }}>
-      {/* Action row — de-duplicated + de-boxed (#93).
-          REMOVED: "✓ Complete" (the task ROW's DoneBox already completes) and
-          WorkOnActions (folder/▶ live in the row's title area) — show each
-          control once. LEFT: Plan / Set section / Full editor. RIGHT: project-
-          link chips, quiet + right-aligned (no "Project links" label), wrapping
-          below on narrow drawers. Composer follows immediately. */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
-        {/* Left: actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          {!isPlanned && !isDone && (
-            <Button
-              variant="ghost-gold"
-              size="sm"
-              onClick={() => state.planAt(task.id, 'strip')}
-              style={{ padding: '4px 10px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}
-            >📌 Plan for today</Button>
-          )}
-          {isPlanned && (
-            <button onClick={() => state.unplan(task.id)} style={{ padding: '4px 10px', background: 'transparent', color: INK_MUTED, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Unplan</button>
-          )}
-          <div ref={moveRef} style={{ position: 'relative' }}>
-            {/* #93: "Move →" renamed "Set section" — it re-buckets the task into a
-                Today section (Deep work / Priorities / Quick / …) via group_override,
-                NOT moving it between projects. */}
-            <button onClick={() => setMoveOpen((o) => !o)} title="Set which Today section this task lives in (Deep work / Priorities / Quick / …)" style={{ padding: '4px 10px', background: moveOpen ? withAlpha(ACCENT_TEAL, 20) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'transparent'}`, borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Set section ▾</button>
-            {moveOpen && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
-                {TODAY_MOVE_OPTIONS.map((opt) => (
+      {/* Action row — ONE quiet segmented control (Today round 2, 2026-10-09):
+          Plan / Set section / Due / Full editor share a hairline-outlined
+          capsule with hairline dividers, t2 text, t3 icons. Overdue keeps red
+          text only; Plan turns teal while the task is planned.
+          Still de-duplicated (#93): no "Complete" (the row's box does that) and
+          no WorkOnActions (folder / Work on live in the card's right column).
+          Links follow as their own left-aligned block. */}
+      <div className="tk-segc" role="group" aria-label="Task actions">
+        {!isDone && (
+          <button
+            type="button"
+            className={`tk-si${isPlanned ? ' tk-planned-on' : ''}`}
+            onClick={() => (isPlanned ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
+            title={isPlanned ? 'Planned for today. Click to unplan' : 'Plan this task for today'}
+          >
+            <Pin {...ICON_PROPS} size={13} />{isPlanned ? 'Unplan' : 'Plan for today'}
+          </button>
+        )}
+        <div ref={moveRef} style={{ position: 'relative' }}>
+          {/* #93: "Move →" renamed "Set section" — it re-buckets the task into a
+              Today section (Deep work / Priorities / Quick / …) via group_override,
+              NOT moving it between projects. */}
+          <button
+            type="button"
+            className={`tk-si${moveOpen ? ' tk-open' : ''}`}
+            onClick={() => setMoveOpen((o) => !o)}
+            aria-haspopup="menu"
+            aria-expanded={moveOpen}
+            title="Set which Today section this task lives in (Deep work / Priorities / Quick / …)"
+          >
+            <Rows3 {...ICON_PROPS} size={13} />Set section<ChevronDown {...ICON_PROPS} size={11} />
+          </button>
+          {moveOpen && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+              {TODAY_MOVE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => moveToGroup(opt)}
+                  disabled={updateTask.isPending}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? withAlpha(ACCENT_TEAL, 15) : 'transparent', border: 'none', color: task.group_override === opt.key ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
+                >{opt.label}{task.group_override === opt.key ? ' ✓' : ''}</button>
+              ))}
+              {task.group_override && (
+                <>
+                  <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
                   <button
-                    key={opt.key}
-                    onClick={() => moveToGroup(opt)}
+                    onClick={resetGroup}
                     disabled={updateTask.isPending}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? withAlpha(ACCENT_TEAL, 15) : 'transparent', border: 'none', color: task.group_override === opt.key ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
-                  >{opt.label}{task.group_override === opt.key ? ' ✓' : ''}</button>
-                ))}
-                {task.group_override && (
-                  <>
-                    <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
-                    <button
-                      onClick={resetGroup}
-                      disabled={updateTask.isPending}
-                      style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK_DIM, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', fontStyle: 'italic' }}
-                    >↺ Reset to auto-classify</button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-          {/* #143 (Nick 2026-10-08): Due date sits right after "Set section", before
-              "Full editor" - the field he changes most. Removed from the Status
-              row below (hideDue) so it shows once. */}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK_DIM, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', fontStyle: 'italic' }}
+                  >↺ Reset to auto-classify</button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+        {/* #143 (Nick 2026-10-08): Due date sits right after "Set section", before
+            "Full editor" - the field he changes most. Removed from the Status
+            row below (hideDue) so it shows once. */}
+        <div className="tk-segdue" data-overdue={dueOverdue ? '' : undefined}>
           <DueInlineSelect
             value={task.due_date || ''}
             onChange={(v) => updateTask.mutate({ id: task.id, fields: { due_date: v || null } })}
           />
-          {/* #93: explicit Full editor entry (the drawer previously only reached it
-              via "view all →" / the empty-description opener). */}
-          <button onClick={() => setFullEditorTask(task)} title="Open the full task editor" style={{ padding: '4px 10px', background: 'transparent', color: 'var(--teal)', border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>⊞ Full editor</button>
         </div>
-        {/* Right: quiet link chips (no label) — task-own overflow (#910) first,
-            then inherited project links; pushed to the right edge, wraps below
-            the actions on a narrow drawer. */}
-        {(overflowLinks.length > 0 || projectLinks.length > 0) && (
-          <div className="flex flex-wrap gap-2" style={{ marginLeft: 'auto', justifyContent: 'flex-end' }}>
-            {overflowLinks.map((link) => (
-              <StoredLinkChip key={link.id} link={link} />
-            ))}
-            {projectLinks.map((link) => (
-              <StoredLinkChip key={link.id} link={link} />
-            ))}
-          </div>
-        )}
+        {/* #93: explicit Full editor entry (the drawer previously only reached it
+            via "view all →" / the empty-description opener). */}
+        <button type="button" className="tk-si" onClick={() => setFullEditorTask(task)} title="Open the full task editor">
+          <Maximize2 {...ICON_PROPS} size={13} />Full editor
+        </button>
       </div>
+
+      {/* Links — task-own overflow (#910) first, then inherited project links. */}
+      <LinkCards links={[...overflowLinks, ...projectLinks]} />
 
       {/* SmartCompose — directly under action bar; @me lock toggle */}
       <SmartCompose

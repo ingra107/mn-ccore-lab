@@ -17,7 +17,9 @@ interface Props {
   primaryFolder: string
   /** Human label for the project, used in toasts. */
   projectLabel?: string
-  variant?: 'buttons' | 'compact'
+  /** 'slot' = the Today card's fixed action slot: two 24x24 grid-centered boxes,
+   *  14px glyphs, colors from the .tk-wk CSS (no inline color/padding). */
+  variant?: 'buttons' | 'compact' | 'slot'
 }
 
 export default function WorkOnActions({ primaryFolder, projectLabel, variant = 'buttons' }: Props) {
@@ -37,6 +39,20 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
       successMessage: `Launching Claude${label} on this machine…`,
       copyMessage: `Launching Claude${label}… (path copied as backup — run "Start Claude.bat" if it doesn't open)`,
     })
+
+  if (variant === 'slot') {
+    const box: React.CSSProperties = { display: 'inline-grid', placeItems: 'center', width: 24, height: 24, background: 'none', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }
+    return (
+      <>
+        <button type="button" onClick={openFolder} className="tip tk-wo" data-tip="Open folder" aria-label="Open project folder" style={box}>
+          <FolderOpen {...ICON_PROPS} size={14} />
+        </button>
+        <button type="button" onClick={workOn} className="tip tk-wo" data-tip="Work on in Claude" aria-label="Work on this in Claude" style={box}>
+          <Play {...ICON_PROPS} size={14} />
+        </button>
+      </>
+    )
+  }
 
   if (variant === 'compact') {
     const iconBtn: React.CSSProperties = {

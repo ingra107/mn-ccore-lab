@@ -282,8 +282,15 @@ export type CardTaskRowProps = Omit<SharedTaskRowProps, 'card' | 'rowActions' | 
   selectionActive?: never
   onToggleSelect?: never
   stack?: never
-  /** extra pills in the footer, after the due pill (workflow pills). */
+  /** extra pills on the context line, after the due pill (workflow pills). */
   footPills?: ReactNode
+  /** Fixed action slots on the context line (Today round 2, 2026-10-09). Each
+   *  keeps its space when empty so cards line up: links (min 74px, right-
+   *  aligned) then the 24px meeting marker. */
+  linksSlot?: ReactNode
+  meetingSlot?: ReactNode
+  /** folder + Work-on, pinned bottom-right under the assignee face. */
+  workSlot?: ReactNode
 }
 
 // DragHandle — hover-revealed grab icon co-located with the 📌 plan pin.

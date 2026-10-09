@@ -63,14 +63,14 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
       ? [{ url, desc: desc ?? undefined } satisfies TaskLink]
       : [],
   )
-  const linkMeta = rowLinks.length > 0 ? <LinkRow links={rowLinks} /> : null
+  const linkMeta = rowLinks.length > 0 ? <LinkRow links={rowLinks} slot /> : null
 
-  // Compact WorkOnActions (📂 + ▶) — shown when the task's project has a
+  // Slot WorkOnActions (📂 + ▶, 24px boxes) — shown when the task's project has a
   // primary_folder. stopPropagation prevents the icon clicks from bubbling to
   // the row body expand handler (row-click hazard rule).
   const workOnMeta = project?.primary_folder ? (
-    <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
-      <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.name} variant="compact" />
+    <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} style={{ display: 'inline-flex' }}>
+      <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.name} variant="slot" />
     </div>
   ) : null
 
@@ -89,7 +89,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
       data-tip={meetingLabel === 'From a meeting' ? 'Created from a meeting' : `From meeting: ${meetingLabel}`}
       className="tk-mt"
     >
-      <Users size={12} strokeWidth={1.5} absoluteStrokeWidth />
+      <Users size={14} strokeWidth={1.5} absoluteStrokeWidth />
       <span className="sr-only">{meetingLabel}</span>
     </span>
   ) : null
@@ -188,7 +188,9 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
       onTogglePlan={() => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
       card
       footPills={workflowPills}
-      extraMeta={<>{meetingMeta}{workOnMeta}{linkMeta}</>}
+      linksSlot={linkMeta}
+      meetingSlot={meetingMeta}
+      workSlot={workOnMeta}
     >
       <TaskDetailDrawer task={task} project={project} state={state} />
     </SharedTaskRow>
