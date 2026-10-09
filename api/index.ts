@@ -30,6 +30,7 @@ import { handleMarkSeen, handleGetUnseenActivity } from './routes/seen';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
 import { handleGetProjectMembers, handleAddProjectMember, handleRemoveProjectMember, handleGetMemberProjects } from './routes/project-members';
+import { handleGetPins, handleCreatePin, handleDeletePin } from './routes/pins';
 import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleUpdateMeetingMeta, handleMeetingPrep, handleGenerateAgenda, handlePrepMeetingFromEvent } from './routes/meetings';
 import { handleGetPublications, handleGetGrants, handleGetStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
@@ -929,6 +930,31 @@ defineRoute({
   auth: 'authed',
   entity: 'team',
   handler: (c) => handleGetMemberProjects(c.req.param('slug'), E(c)),
+});
+
+// A person's pinned projects (the sidebar "My projects" list, the Projects page
+// star). Stored in the existing watchlist table, one row per person per
+// project; every statement names the caller's own slug. api/routes/pins.ts.
+defineRoute({
+  method: 'GET',
+  path: '/api/pins',
+  auth: 'authed',
+  entity: 'projects',
+  handler: (c) => handleGetPins(USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/pins',
+  auth: 'authed',
+  entity: 'projects',
+  handler: (c) => handleCreatePin(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'DELETE',
+  path: '/api/pins/:project',
+  auth: 'authed',
+  entity: 'projects',
+  handler: (c) => handleDeletePin(c.req.param('project'), USER(c), E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

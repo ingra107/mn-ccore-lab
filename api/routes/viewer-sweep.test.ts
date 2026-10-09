@@ -153,6 +153,9 @@ function seedLaneB() {
   insertRow(db, 'hub_pomodoro_slots', { id: 'pom-sweep', task_id: TASK, plan_date: TODAY, slot_type: `${MARK}`, started_at: TODAY })
   // PB-internal tables stay lab (PI-gated routes): a leak here shows the route is not.
   insertRow(db, 'dispatch_queue', { id: 'dq-sweep', task_id: TASK, task_title: `${MARK} dq`, comment: `${MARK}` })
+  // Nick's pin on the hidden project (GET/POST/DELETE /api/pins): Casey may
+  // neither read nor remove it.
+  insertRow(db, 'watchlist', { id: 'w-sweep-pin', member_slug: 'nick-ingraham', entity_type: 'project', entity_id: PROJ })
 }
 
 async function call(method: string, path: string, who: 'apikey' | string, body?: unknown, extra: Record<string, string> = {}) {
@@ -202,6 +205,7 @@ const hiddenRows = () => JSON.stringify([
     ['reviewer_comments', 'revision_id', REVISION], ['lab_answers', 'question_id', QUESTION], ['reactions', 'target_id', TASK_ENTRY],
     ['links', 'owner_id', TASK], ['links', 'owner_id', PROJ], ['file_attachments', 'entity_id', PROJ], ['file_attachments', 'entity_id', TASK],
     ['project_state_log', 'project_id', PROJ], ['file_activity_daily', 'project_id', PROJ], ['ai_requests', 'project_slug', PROJ_SLUG],
+    ['watchlist', 'entity_id', PROJ],
   ] as const).map(([t, col, v]) => db.prepare(`SELECT * FROM ${t} WHERE ${col} = ? ORDER BY 1`).all(v)),
 ])
 
