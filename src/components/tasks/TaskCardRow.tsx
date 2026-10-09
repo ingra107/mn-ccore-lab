@@ -173,7 +173,26 @@ export function CardRow(props: CardTaskRowProps) {
       data-task-id={task.id}
       className={`tk-card tk-tc${dense ? ' tk-dense' : ''}${isDone ? ' tk-done' : ''}${urgent ? ' tk-urg' : ''}${isExpanded ? ' tk-exp' : ''}`}
     >
-      <div className="tk-tch" onClick={onToggleExpand}>
+      {/* The header is the card's ONE keyboard owner: Enter/Space expands. The
+          Today adapter no longer spreads dnd-kit's role/tabIndex on the wrapper
+          (a second focus stop), and Enter/Space stop here so dnd-kit's keyboard
+          sensor cannot also pick the row up. Keys from inner controls (box, pin,
+          links) are ignored: only a key pressed ON the header acts. */}
+      <div
+        className="tk-tch"
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+        onClick={onToggleExpand}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            e.stopPropagation()
+            onToggleExpand()
+          }
+        }}
+      >
         <CardCheck done={isDone} onToggle={onToggleDone} />
         <div className="tk-hdr">
           <div className="tk-ct">

@@ -1,4 +1,4 @@
-import { Suspense, Component } from 'react'
+import { Suspense, Component, useEffect } from 'react'
 import { lazyRoute, isStaleChunkError } from './lib/lazyRoute'
 import type { ReactNode, ErrorInfo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom'
@@ -202,6 +202,12 @@ function NavigateKeepSearch({ to }: { to: string }) {
   return <Navigate to={`${to}${search}`} replace />
 }
 
+function FullLoadRedirect({ to }: { to: string }) {
+  const { search, hash } = useLocation()
+  useEffect(() => { window.location.replace(`${to}${search}${hash}`) }, [to, search, hash])
+  return <PageLoader />
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -248,8 +254,11 @@ export default function App() {
                     happens before any auth gate — the portal URL handles
                     auth. Kept indefinitely; cost is negligible. */}
                 <Route path="/dashboard" element={<NavigateKeepSearch to="/portal/dashboard" />} />
-                {/* Bare /portal had no route and fell into the public Not-found page. */}
-                <Route path="/portal" element={<NavigateKeepSearch to="/portal/dashboard" />} />
+                {/* Bare /portal had no route and fell into the public Not-found page.
+                    A FULL load, not a client-side hop: bare /portal is outside the
+                    Cloudflare Access policy, so only a real request to
+                    /portal/dashboard reaches the edge login for signed-out users. */}
+                <Route path="/portal" element={<FullLoadRedirect to="/portal/dashboard" />} />
                 <Route path="/personal" element={<NavigateKeepSearch to="/portal/personal" />} />
                 {/* Entity-bearing legacy redirects MUST keep the query string —
                     notification links are minted as /tasks?open=<id>; a plain

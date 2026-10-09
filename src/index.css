@@ -2858,3 +2858,4 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk .tk-lkc svg{flex-shrink:0;color:color-mix(in srgb,var(--lk) 70%,var(--sk-t3))}
 .tk .tk-lkc:hover svg{color:var(--lk)}
 .tk .tk-lkt{font-size:12.5px;font-weight:500;color:var(--sk-t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tk .tk-tch:focus-visible{outline:2px solid var(--sk-ac);outline-offset:-2px;border-radius:var(--r-card)}

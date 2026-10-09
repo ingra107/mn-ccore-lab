@@ -139,7 +139,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           no WorkOnActions (folder / Work on live in the card's right column).
           Links follow as their own left-aligned block. */}
       <div className="tk-segc" role="group" aria-label="Task actions">
-        {!isDone && (
+        {(isPlanned || !isDone) && (
           <button
             type="button"
             className={`tk-si${isPlanned ? ' tk-planned-on' : ''}`}
@@ -164,10 +164,11 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
             <Rows3 {...ICON_PROPS} size={13} />Set section<ChevronDown {...ICON_PROPS} size={11} />
           </button>
           {moveOpen && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+            <div role="menu" aria-label="Set section" style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
               {TODAY_MOVE_OPTIONS.map((opt) => (
                 <button
                   key={opt.key}
+                  role="menuitem"
                   onClick={() => moveToGroup(opt)}
                   disabled={updateTask.isPending}
                   style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? withAlpha(ACCENT_TEAL, 15) : 'transparent', border: 'none', color: task.group_override === opt.key ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
@@ -177,6 +178,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
                 <>
                   <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
                   <button
+                    role="menuitem"
                     onClick={resetGroup}
                     disabled={updateTask.isPending}
                     style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK_DIM, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', fontStyle: 'italic' }}

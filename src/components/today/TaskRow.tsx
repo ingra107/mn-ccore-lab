@@ -43,7 +43,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
   // the drag. The SharedTaskRow's DragHandle grip is the visual affordance;
   // draggable=false on SharedTaskRow disables the browser's native HTML5 DnD
   // so only dnd-kit fires.
-  const { attributes: dragAttrs, listeners: dragListeners, setNodeRef: setDragNodeRef, isDragging: isListDragging } = useDraggable({
+  const { listeners: dragListeners, setNodeRef: setDragNodeRef, isDragging: isListDragging } = useDraggable({
     id: `list-task:${task.id}`,
     disabled: isDone || milestone,
     data: { taskId: task.id, source: 'list', task },
@@ -122,8 +122,10 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
     // user grabs the row (specifically the grip icon inside SharedTaskRow).
     // opacity: 0.5 while actively dragging for visual feedback.
     //
-    // #482: dragAttrs (role="button", tabIndex, aria-roledescription) is
-    // spread ONLY while collapsed. dragListeners (the actual drag-activation
+    // Keyboard focus (round 2): dragAttrs (role="button", tabIndex) is no longer
+    // spread at all. The card header in TaskCardRow owns focus + Enter/Space, and
+    // two nested focus stops were a trap. #482 (history): dragAttrs was spread
+    // ONLY while collapsed. dragListeners (the actual drag-activation
     // handlers) stays unconditional either way -- dnd-kit returns these as
     // two fully independent objects (verified against useDraggable's own
     // .d.ts), so this changes NOTHING about drag activation: pointer-
@@ -138,7 +140,6 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
     // needing Nick's call, not an a11y-only fix.
     <div
       ref={setDragNodeRef}
-      {...(expanded || milestone ? {} : dragAttrs)}
       {...(milestone ? {} : dragListeners)}
       style={{ opacity: isListDragging ? 0.5 : 1 }}
     >

@@ -27,7 +27,7 @@ function LinkCard({ link }: { link: StoredLink }) {
     e.stopPropagation()
     if (!isHttp) {
       e.preventDefault()
-      void launch(launchUri, { copyText: url, successMessage: `Opening ${link.type}… (path copied as backup)` })
+      void launch(launchUri, { copyText: url, successMessage: `Opening ${link.type || 'link'}… (path copied as backup)` })
     }
   }
 
@@ -37,7 +37,7 @@ function LinkCard({ link }: { link: StoredLink }) {
       target={isHttp ? '_blank' : undefined}
       rel={isHttp ? 'noopener noreferrer' : undefined}
       onClick={onClick}
-      title={`${link.type} · ${link.short_title || url}`}
+      title={`${link.type || 'link'} · ${link.short_title || url}`}
       className="tk-lkc"
       data-lk={tint ?? undefined}
     >
