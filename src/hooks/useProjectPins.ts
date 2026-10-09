@@ -5,9 +5,11 @@
 //
 // Pins used to live in this browser's localStorage under 'pinned-projects'
 // (a JSON array of slugs). The first time the server list loads, each of
-// those slugs is posted once and the key is removed, so nobody loses a pin in
-// the move. A slug the server refuses (a project this person cannot see, or
-// one since deleted) is dropped with the key: there is nothing to pin.
+// those slugs is posted once. A slug is done when the server answers 2xx or
+// 404 (a project this person cannot see, or one since deleted: nothing to
+// pin). A network failure, 401/403 or 5xx is not an answer about the pin, so
+// that slug stays in the key and the next load retries it (lib/pinImport.ts).
+// The key is removed only when nothing is left to retry.
 //
 // Not to be confused with useWatchlist (localStorage 'mnccore-watchlist-v1',
 // the WatchButton): that is a separate, browser-local feature.
@@ -15,6 +17,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './useAuth'
+import { unsettledPins } from '../lib/pinImport'
 
 export const LEGACY_PINS_KEY = 'pinned-projects'
 const PINS_KEY = ['project-pins'] as const
@@ -33,12 +36,22 @@ async function fetchPins(): Promise<ProjectPin[]> {
 }
 
 async function postPin(project: string): Promise<boolean> {
-  const res = await fetch('/api/pins', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ project }),
-  })
-  return res.ok
+  const status = await postPinStatus(project)
+  return status !== null && status >= 200 && status < 300
+}
+
+/** The HTTP status of a pin POST, or null when the request never got an answer. */
+async function postPinStatus(project: string): Promise<number | null> {
+  try {
+    const res = await fetch('/api/pins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project }),
+    })
+    return res.status
+  } catch {
+    return null
+  }
 }
 
 async function deletePin(project: string): Promise<boolean> {
@@ -82,11 +95,13 @@ export function useProjectPins() {
     }
     const have = new Set((query.data ?? []).flatMap((p) => [p.slug, p.project_id]))
     const todo = legacy.filter((s) => !have.has(s))
-    void Promise.all(todo.map((s) => postPin(s).catch(() => false))).then(() => {
-      // The key goes once every post has answered, accepted or refused; a
-      // refused slug names nothing this person can pin.
-      try { localStorage.removeItem(LEGACY_PINS_KEY) } catch { /* storage off */ }
-      if (todo.length > 0) void queryClient.invalidateQueries({ queryKey: PINS_KEY })
+    void Promise.all(todo.map(postPinStatus)).then((statuses) => {
+      const retry = unsettledPins(todo, statuses)
+      try {
+        if (retry.length === 0) localStorage.removeItem(LEGACY_PINS_KEY)
+        else localStorage.setItem(LEGACY_PINS_KEY, JSON.stringify(retry))
+      } catch { /* storage off */ }
+      if (todo.length > retry.length) void queryClient.invalidateQueries({ queryKey: PINS_KEY })
     })
   }, [query.isSuccess, query.data, queryClient])
 

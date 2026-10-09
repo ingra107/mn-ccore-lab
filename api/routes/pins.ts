@@ -76,7 +76,9 @@ export async function handleCreatePin(request: Request, user: AuthUser, env: Env
 export async function handleDeletePin(ref: string, user: AuthUser, env: Env): Promise<Response> {
   const me = callerSlug(user)
   if (!me) return error('Authentication required', 401)
-  const project = await visibleProject(env, decodeURIComponent(ref ?? '').trim())
+  // c.req.param() has already decoded the segment; decoding again would throw
+  // on a literal '%'.
+  const project = await visibleProject(env, (ref ?? '').trim())
   if (!project) return error('Project not found', 404)
   // Both spellings: the typed id this route writes, and a slug an older row
   // may hold. Idempotent: unpinning what is not pinned answers 200.

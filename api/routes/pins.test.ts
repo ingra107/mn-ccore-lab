@@ -135,6 +135,12 @@ describe('/api/pins through the real worker', () => {
     expect(rows()).toEqual([])
   })
 
+  it('a ref with a literal percent answers 404, not a decode error', async () => {
+    // The router decodes the path segment once; a second decode in the
+    // handler threw URIError on '%' (a 500).
+    expect((await call('DELETE', '/api/pins/100%25', CASEY_EMAIL)).status).toBe(404)
+  })
+
   it('a missing project field is a 400', async () => {
     expect((await call('POST', '/api/pins', CASEY_EMAIL, {})).status).toBe(400)
   })
