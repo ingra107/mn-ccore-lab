@@ -39,3 +39,14 @@ export async function projectResponseFor(canSeePb: boolean, res: Response): Prom
   headers.delete('content-length')
   return new Response(JSON.stringify(body), { status: res.status, statusText: res.statusText, headers })
 }
+
+// Typed links of type 'local_folder' carry the same thing: a path on the PI's
+// machine ("~/Box/Research/...", or the derived mnccore://open/<path>). Prod
+// held 6 explicit rows on 2026-10-09, 4 of them on MNCCORE projects or tasks a
+// member can open. A non-PI never receives a local_folder link.
+export const PI_ONLY_LINK_TYPES = ['local_folder'] as const
+
+/** `rows` without the links only the PI can use (local folder paths). */
+export function withoutPiOnlyLinks<T extends Record<string, unknown>>(rows: T[]): T[] {
+  return rows.filter((r) => !(PI_ONLY_LINK_TYPES as readonly unknown[]).includes(r.type))
+}

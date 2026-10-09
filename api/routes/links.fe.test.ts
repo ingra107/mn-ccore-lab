@@ -761,6 +761,26 @@ describe('handleGetProjectLinks — derived project-field links in links', () =>
     expect(body.links.find(l => l.type === 'local_folder')?.canonical_url).toBe(FOLDER_DERIVED_URL)
   })
 
+  it('P7: a non-PI caller gets no EXPLICIT local_folder row, on the task or its project; a PI does', async () => {
+    const LOCAL = '~/Box/Research/K proposal/.K-Grant/RPPR/'
+    const folderRow = (id: string) => ({ id, role: 'key', type: 'local_folder', canonical_url: LOCAL, short_title: 'RPPR folder', sort_order: 0 })
+    const docRow = { id: 'lnk_doc', role: 'key', type: 'google_doc', canonical_url: 'https://docs.google.com/document/d/abc', short_title: 'Doc', sort_order: 1 }
+    const env = makeEnv({
+      taskRow: { project_id: 'proj_001' },
+      projectRow: { id: 'proj_001' },
+      taskLinks: [folderRow('lnk_tf'), docRow],
+      projectLinks: [folderRow('lnk_pf')],
+    })
+    const member = await (await handleGetTaskLinks('task_001', makeRequest(), env, false)).text()
+    expect(member).not.toContain(LOCAL)
+    expect(member).toContain('lnk_doc')
+    const memberProj = await (await handleGetProjectLinks('my-project', makeRequest(), env, false)).text()
+    expect(memberProj).not.toContain(LOCAL)
+    const pi = await (await handleGetTaskLinks('task_001', makeRequest(), env, true)).text()
+    expect(pi).toContain('lnk_tf')
+    expect(pi).toContain('lnk_pf')
+  })
+
   it('P7: a non-PI caller gets no derived folder link; task links too', async () => {
     const env = makeEnv({
       taskRow: { project_id: 'proj_001' },

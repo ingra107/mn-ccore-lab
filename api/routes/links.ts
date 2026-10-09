@@ -36,7 +36,7 @@
 
 import type { Env } from '../types';
 import type { AuthUser } from '../helpers';
-import { withoutPiOnlyProjectFields } from '../lib/pi-only-project-fields';
+import { withoutPiOnlyLinks } from '../lib/pi-only-project-fields';
 import { json, error, isPiRequest, assertProjectVisible, generateId, getValidationFlags } from '../helpers';
 import { assertEnumDomain } from '../lib/enum-domains';
 import { nowInstant } from '../lib/time';
@@ -336,16 +336,17 @@ async function fetchProjectWithLinks(
 // Explicit rows first (sort_order ASC, id ASC from the DB query), then derived
 // folder → github → box. Dedup: explicit wins when canonical_url matches.
 //
-// canSeePb false (a non-PI caller): the derived 'Project folder' link is not
-// built. It is an mnccore://open/<PI's local path> URL, readable and usable
-// only on the PI's own machines (P7, api/lib/pi-only-project-fields.ts).
+// canSeePb false (a non-PI caller): no local_folder link, explicit or derived.
+// Either is a path on the PI's own machine (an mnccore://open/<path> URL or a
+// stored "~/Box/..." row), readable and usable only there (P7,
+// api/lib/pi-only-project-fields.ts).
 export function buildProjectLinks(
   fields: ProjectLinkFields,
   explicitRows: Record<string, unknown>[],
   canSeePb: boolean,
 ): Record<string, unknown>[] {
-  const derived = buildDerivedProjectLinks(canSeePb ? fields : withoutPiOnlyProjectFields(fields), explicitRows);
-  return [...explicitRows, ...derived];
+  const all = [...explicitRows, ...buildDerivedProjectLinks(fields, explicitRows)];
+  return canSeePb ? all : withoutPiOnlyLinks(all);
 }
 
 // GET /api/tasks/:id/links
@@ -398,7 +399,7 @@ export async function handleGetTaskLinks(
     ? buildProjectLinks(projectData.fields, projectExplicit, canSeePb)
     : [];
 
-  return json({ links: taskLinks, projectLinks });
+  return json({ links: canSeePb ? taskLinks : withoutPiOnlyLinks(taskLinks), projectLinks });
 }
 
 // GET /api/projects/:slug/links
