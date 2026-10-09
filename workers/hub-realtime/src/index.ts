@@ -1,4 +1,5 @@
-import { Server, Connection, routePartykitRequest } from "partyserver";
+import { Server, routePartykitRequest } from "partyserver";
+import type { Connection, ConnectionContext } from "partyserver";
 import {
   REALTIME_TICKET_PARAM,
   REALTIME_TICKET_TTL_MS,
@@ -16,6 +17,12 @@ interface Env {
 }
 
 const TICKET_PREFIX = "ticket:";
+// Set by NotificationHub.fetch from the consumed ticket, after any client copy
+// of the header is overwritten; read once by onConnect.
+const MEMBER_HEADER = "x-hub-member";
+
+type Ticket = { member: string; expires: number };
+type ConnState = { member: string };
 
 function randomTicket(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
@@ -23,21 +30,26 @@ function randomTicket(): string {
 }
 
 export class NotificationHub extends Server implements RealtimeHubRpc {
+
   async notify(body: string): Promise<void> {
     this.broadcast(body);
   }
 
-  async issueTicket(): Promise<string> {
+  async issueTicket(memberSlug: string): Promise<string> {
+    if (typeof memberSlug !== "string" || !memberSlug.trim()) {
+      throw new Error("issueTicket needs the member's slug");
+    }
     const now = Date.now();
     // Tickets are consumed within seconds, so this list stays short. Expired
     // ones (a client that fetched a ticket and never connected) go here.
-    const all = await this.ctx.storage.list<number>({ prefix: TICKET_PREFIX });
-    const expired = [...all].filter(([, exp]) => exp <= now).map(([k]) => k);
+    const all = await this.ctx.storage.list<Ticket>({ prefix: TICKET_PREFIX });
+    const expired = [...all].filter(([, t]) => t.expires <= now).map(([k]) => k);
     for (let i = 0; i < expired.length; i += 128) {
       await this.ctx.storage.delete(expired.slice(i, i + 128));
     }
     const ticket = randomTicket();
-    await this.ctx.storage.put(TICKET_PREFIX + ticket, now + REALTIME_TICKET_TTL_MS);
+    const value: Ticket = { member: memberSlug, expires: now + REALTIME_TICKET_TTL_MS };
+    await this.ctx.storage.put(TICKET_PREFIX + ticket, value);
     return ticket;
   }
 
@@ -45,14 +57,15 @@ export class NotificationHub extends Server implements RealtimeHubRpc {
     return "ok";
   }
 
-  /** True once per live ticket; the ticket is gone afterwards either way. */
-  async #consumeTicket(ticket: string | null): Promise<boolean> {
-    if (!ticket) return false;
+  /** The ticket's member, once per live ticket; the ticket is gone afterwards
+   *  either way. */
+  async #consumeTicket(ticket: string | null): Promise<string | null> {
+    if (!ticket) return null;
     const key = TICKET_PREFIX + ticket;
-    const exp = await this.ctx.storage.get<number>(key);
-    if (exp === undefined) return false;
+    const t = await this.ctx.storage.get<Ticket>(key);
+    if (t === undefined) return null;
     await this.ctx.storage.delete(key);
-    return exp > Date.now();
+    return t.expires > Date.now() ? t.member : null;
   }
 
   // Every public request reaches the DO through here (routePartykitRequest
@@ -63,17 +76,35 @@ export class NotificationHub extends Server implements RealtimeHubRpc {
       return new Response("websocket only", { status: 426 });
     }
     const ticket = new URL(request.url).searchParams.get(REALTIME_TICKET_PARAM);
-    if (!(await this.#consumeTicket(ticket))) {
+    const member = await this.#consumeTicket(ticket);
+    if (!member) {
       return new Response("unauthorized", { status: 401 });
     }
-    return super.fetch(request);
+    const admitted = new Request(request);
+    admitted.headers.set(MEMBER_HEADER, member);
+    return super.fetch(admitted);
   }
 
-  onMessage(sender: Connection, message: string | ArrayBuffer) {
-    // Presence / typing / intent: relay to every other connection. Only
-    // ticketed (member) connections exist, so only members send or receive.
-    const msg = typeof message === "string" ? message : new TextDecoder().decode(message);
-    this.broadcast(msg, [sender.id]);
+  onConnect(connection: Connection<ConnState>, ctx: ConnectionContext) {
+    // fetch() above set this header from the consumed ticket.
+    connection.setState({ member: ctx.request.headers.get(MEMBER_HEADER)! });
+  }
+
+  onMessage(sender: Connection<ConnState>, message: string | ArrayBuffer) {
+    // Presence / typing / intent: relay to every other connection, with `slug`
+    // set to the sender's ticket member whatever the client wrote. A message
+    // that is not a JSON object has no relay path.
+    const member = sender.state?.member;
+    if (!member) return;
+    const text = typeof message === "string" ? message : new TextDecoder().decode(message);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      return;
+    }
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return;
+    this.broadcast(JSON.stringify({ ...parsed, slug: member }), [sender.id]);
   }
 }
 

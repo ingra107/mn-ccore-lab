@@ -12,6 +12,8 @@
  *     GET /api/realtime/ticket. That route sits behind the API's auth and member
  *     gate, so only a Hub member gets one. A ticket is single use and expires
  *     after REALTIME_TICKET_TTL_MS; the DO refuses an upgrade without a live one.
+ *   - A relayed client message goes out with `slug` set to the member the
+ *     ticket was minted for; a message that is not a JSON object is dropped.
  */
 
 export const REALTIME_ROOM = 'mnccore'
@@ -24,9 +26,12 @@ export const REALTIME_TICKET_TTL_MS = 60_000
 export interface RealtimeHubRpc {
   /** Send `body` to every open connection. */
   notify(body: string): Promise<void>
-  /** Mint a single-use connect ticket. The caller has already decided the
-   *  requester is a member; the DO does not know who anyone is. */
-  issueTicket(): Promise<string>
+  /** Mint a single-use connect ticket for `memberSlug`. The caller (the API's
+   *  member gate) has already decided the requester is that member; the DO
+   *  does not judge membership. The connection opened with the ticket carries
+   *  this slug, and every message it relays has its `slug` field set to it, so
+   *  one member cannot speak as another in presence/typing/intent traffic. */
+  issueTicket(memberSlug: string): Promise<string>
   /** Liveness for /api/health: proves the binding reaches the DO. */
   ping(): Promise<string>
 }

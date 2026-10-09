@@ -23,13 +23,13 @@ const CTX = { waitUntil: () => {}, passThroughOnException: () => {} } as unknown
 const TEST_KEY = 'local-test-key-do-not-use-in-prod'
 
 function fakeNamespace() {
-  const calls = { notify: [] as string[], issueTicket: 0, rooms: [] as string[] }
+  const calls = { notify: [] as string[], issueTicket: 0, members: [] as string[], rooms: [] as string[] }
   const ns = {
     idFromName(name: string) { calls.rooms.push(name); return { name } },
     get() {
       return {
         async notify(body: string) { calls.notify.push(body) },
-        async issueTicket() { calls.issueTicket++; return `t${calls.issueTicket}` },
+        async issueTicket(member: string) { calls.issueTicket++; calls.members.push(member); return `t${calls.issueTicket}` },
         async ping() { return 'ok' },
       }
     },
@@ -49,8 +49,8 @@ function envWith(binding: unknown): Env {
   return { DB: d1Adapter(db), REQUIRE_AUTH: '1', TEST_MODE_KEY: TEST_KEY, NOTIFICATION_HUB: binding } as unknown as Env
 }
 
-async function getTicket(env: Env, signedIn: boolean) {
-  const headers: Record<string, string> = signedIn ? { 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': 'nate@umn.edu' } : {}
+async function getTicket(env: Env, signedIn: boolean, email = 'nate@umn.edu') {
+  const headers: Record<string, string> = signedIn ? { 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': email } : {}
   return worker.fetch(new Request(`https://hub.test${REALTIME_TICKET_PATH}`, { headers }), env, CTX)
 }
 
@@ -74,6 +74,16 @@ describe('GET /api/realtime/ticket', () => {
     expect(await res.json()).toEqual({ ticket: 't1' })
     expect(res.headers.get('Cache-Control')).toBe('no-store')
     expect(calls.rooms).toEqual(['mnccore'])
+    // The DO stamps relayed messages with this; it is the team_members slug.
+    expect(calls.members).toEqual(['nate-member'])
+  })
+
+  it('refuses a signed-in non-member with 403 not_a_member and mints nothing', async () => {
+    const { ns, calls } = fakeNamespace()
+    const res = await getTicket(envWith(ns), true, 'stranger@umn.edu')
+    expect(res.status).toBe(403)
+    expect(((await res.json()) as { code?: string }).code).toBe('not_a_member')
+    expect(calls.issueTicket).toBe(0)
   })
 
   it('answers 503 where the namespace is not bound', async () => {

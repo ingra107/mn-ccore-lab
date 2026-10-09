@@ -554,7 +554,11 @@ defineRoute({
   handler: async (c) => {
     const hub = realtimeHub(E(c));
     if (!hub) return error('Realtime is not available on this deployment', 503);
-    const ticket = await hub.issueTicket();
+    // The slug the auth middleware resolved from team_members; the DO stamps
+    // it on everything this connection relays.
+    const slug = USER(c)?.slug;
+    if (!slug || slug === 'anonymous') return error('No member identity for a realtime ticket', 403);
+    const ticket = await hub.issueTicket(slug);
     return new Response(JSON.stringify({ ticket }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...corsHeaders },
