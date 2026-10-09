@@ -187,10 +187,10 @@ async function main() {
     if (!noteResp.ok()) bug(s, 'TASK-NOTE-POST', 'P1', '1.L POST /updates', `HTTP ${noteResp.status()}`, '200')
     else pass(s, '1.L Note POST accepted')
 
-    const updates = await apiGet<Array<{ content: string }>>(s, `/api/tasks/${task.id}/updates`)
-    const foundNote = updates?.some((u) => u.content === noteBody)
-    if (foundNote) pass(s, '1.L Note visible via GET /updates')
-    else bug(s, 'TASK-NOTE-NOT-RETURNED', 'P1', '1.L GET /updates returns posted note', `${updates?.length ?? 0} updates, marker missing`, 'update with marker text')
+    const updates = await apiGet<Array<{ body: string }>>(s, `/api/tasks/${task.id}/activity`)
+    const foundNote = updates?.some((u) => u.body === noteBody)
+    if (foundNote) pass(s, '1.L Note visible via GET /activity')
+    else bug(s, 'TASK-NOTE-NOT-RETURNED', 'P1', '1.L GET /activity returns posted note', `${updates?.length ?? 0} updates, marker missing`, 'update with marker text')
 
     section(s, '1.M  Activity feed contains task creation + updates')
     // activity_log stores related_id + description (not source_id + body).

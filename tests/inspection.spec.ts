@@ -128,10 +128,10 @@ test.describe('API — Write Endpoints', () => {
     // Verify readback
     const comments = await (await request.get(`${BASE}/api/tasks/${id}/comments`)).json()
     expect(comments.data.length).toBeGreaterThanOrEqual(1)
-    const notes = await (await request.get(`${BASE}/api/tasks/${id}/updates`)).json()
-    expect(notes.data.length).toBeGreaterThanOrEqual(1)
+    // Notes are read back through the unified feed (GET /updates was removed).
     const activity = await (await request.get(`${BASE}/api/tasks/${id}/activity`)).json()
     expect(activity.data.length).toBeGreaterThanOrEqual(1)
+    expect(activity.data.some((e: { body?: string }) => e.body === 'Inspection note')).toBe(true)
   })
 
   test('API POST: Create idea', async ({ request }) => {
@@ -185,13 +185,6 @@ test.describe('API — Schema Integrity', () => {
     expect('updated_at' in task).toBe(true)
   })
 
-  test('task_updates endpoint exists', async ({ request }) => {
-    const tasks = await (await request.get(`${BASE}/api/tasks?limit=1`)).json()
-    const id = tasks.data?.[0]?.id
-    if (!id) { test.skip(); return }
-    const res = await request.get(`${BASE}/api/tasks/${id}/updates`)
-    expect(res.status()).toBe(200)
-  })
 })
 
 // ═══════════════════════════════════════════════════════════════════

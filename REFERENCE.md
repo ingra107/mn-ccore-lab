@@ -59,7 +59,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | ideas | dynamic | Research ideas board with voting |
 | activity_entries | dynamic | **v77 unified timeline (2026-06-10)** — ALL task/project human messages + completions/system events; ONE write path `postActivityEntry()` (CLAUDE.md Rule 70) |
 | task_comments | DROPPED 2026-06-10 | schema-v78; endpoints remain as activity_entries projections; snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
-| task_updates | DROPPED 2026-06-10 | schema-v78; endpoints remain as activity_entries projections; snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
+| task_updates | DROPPED 2026-06-10 | schema-v78; the GET /api/tasks/:id/updates projection was removed 2026-10-09 (POST stays); snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
 | lab_settings | 7 | Key-value settings store (includes `pi_emails` JSON, schema v44) |
 | workflow_templates | 3+ | Custom project stage templates |
 | email_drafts | RETIRING | No reader or writer since the mirror was retired 2026-09-30 (#8836); drop pending in schema-v115 |
@@ -374,7 +374,7 @@ Discovered during the 2026-04-17/18 deep-audit. Canonical, non-obvious patterns 
 - Task URL params use `id` only (no slug concept on tasks).
 
 ### Single-entity GET endpoints
-- **`GET /api/tasks/:id` EXISTS** (added post-mechanic-I5; registered after the `/:id/<sub>` routes so Hono matches specifics first). Sub-resources: `/:id/comments`, `/:id/files`, `/:id/updates`, `/:id/activity`, `/:id/subtasks`, `/:id/handoffs`. The deep-audit harness `apiGetTaskFromList()` predates it and still list-filters — fine.
+- **`GET /api/tasks/:id` EXISTS** (added post-mechanic-I5; registered after the `/:id/<sub>` routes so Hono matches specifics first). Sub-resources: `/:id/comments`, `/:id/files`, `/:id/activity`, `/:id/subtasks`, `/:id/handoffs`. The deep-audit harness `apiGetTaskFromList()` predates it and still list-filters — fine.
 - **There is no `GET /api/projects/:slug`** either — list + sub-resources only.
 - **Questions:** answers are embedded inside `GET /api/questions/:id` (as `data.answers[]`). **`GET /api/questions/:id/answers`** also exists as a dedicated list endpoint (Phase 35).
 

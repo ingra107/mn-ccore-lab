@@ -1665,13 +1665,10 @@ test.describe('SYNC — Comment and note persistence', () => {
     expect(comments.data?.length).toBeGreaterThanOrEqual(1)
     expect(comments.data[0].content).toContain('First comment')
 
-    // Read back notes
-    const notes = await (await request.get(`${BASE}/api/tasks/${id}/updates`)).json()
-    expect(notes.data?.length).toBeGreaterThanOrEqual(1)
-
-    // Activity should contain both
+    // Activity (the unified feed) should contain both, and the note by body
     const activity = await (await request.get(`${BASE}/api/tasks/${id}/activity`)).json()
     expect(activity.data?.length).toBeGreaterThanOrEqual(2)
+    expect(activity.data.some((e: { body?: string }) => e.body === 'Progress update')).toBe(true)
   })
 })
 

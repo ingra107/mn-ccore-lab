@@ -171,7 +171,7 @@ for TYPE in progress blocker result question; do
 done
 
 # Verify note count = 4
-NOTE_COUNT=$(d1get "/api/tasks/$TASK_ID/updates" | python -c "import sys,json; print(len(json.load(sys.stdin).get('data',[])))" 2>/dev/null)
+NOTE_COUNT=$(d1get "/api/tasks/$TASK_ID/activity" | python -c "import sys,json; print(len([e for e in json.load(sys.stdin).get('data',[]) if e.get('kind')=='update']))" 2>/dev/null)
 [ "$NOTE_COUNT" -ge 4 ] && pass "A9: Verified $NOTE_COUNT notes total" || fail "A9: Note count" "got $NOTE_COUNT, expected >=4"
 
 # A10: Edit task description
@@ -236,7 +236,7 @@ REOPEN_OK=$(echo "$REOPEN_RES" | python -c "import sys,json; d=json.load(sys.std
 # A12: Verify comments + notes readback
 echo "A12: Verify comments and notes..."
 CMTS=$(d1get "/api/tasks/$TASK_ID/comments" | python -c "import sys,json; print(len(json.load(sys.stdin).get('data',[])))" 2>/dev/null)
-NOTES=$(d1get "/api/tasks/$TASK_ID/updates" | python -c "import sys,json; print(len(json.load(sys.stdin).get('data',[])))" 2>/dev/null)
+NOTES=$(d1get "/api/tasks/$TASK_ID/activity" | python -c "import sys,json; print(len([e for e in json.load(sys.stdin).get('data',[]) if e.get('kind')=='update']))" 2>/dev/null)
 ACTS=$(d1get "/api/tasks/$TASK_ID/activity" | python -c "import sys,json; print(len(json.load(sys.stdin).get('data',[])))" 2>/dev/null)
 [ "$CMTS" -ge 1 ] && pass "A12a: Comment readback ($CMTS comments)" || fail "A12a: Comments" "count=$CMTS"
 [ "$NOTES" -ge 1 ] && pass "A12b: Notes readback ($NOTES notes)" || fail "A12b: Notes" "count=$NOTES"
