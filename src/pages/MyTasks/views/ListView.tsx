@@ -4,7 +4,7 @@
 // over folder + Work on, fixed tinted link slots, and the inline drawer on expand.
 // The dense sortable table that used to be this view is TableView.
 //
-// What stays from the old List: j/k cursor, e/Enter opens the full editor panel,
+// What stays from the old List: j/k cursor, e opens the full editor panel (Enter acts on the focused card or control),
 // x/Space selects, Esc clears, shift-click range select, ctrl/cmd-click toggle,
 // double-click opens the editor, title click opens the editor, virtualized so 600+
 // tasks do not paint up front. What the card adds: click expands in place (the

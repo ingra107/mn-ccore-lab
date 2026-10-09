@@ -80,7 +80,7 @@ export default function MeetingProjectsSection({ meeting, derivedTags = [], allP
   return (
     <div className="mt-4" data-testid="meeting-projects">
       <div className="flex items-center gap-2 flex-wrap">
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 'var(--label-weight)' }}>
+        <span style={{ fontSize: '12px', color: 'var(--sk-t3)', fontWeight: 500 }}>
           Projects
         </span>
         {pills.map((p) => {

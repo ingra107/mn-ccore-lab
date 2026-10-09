@@ -25,6 +25,7 @@ import { useUpdateTaskStatus } from './mutations/useTaskMutations'
 import { useUndoToast } from '../components/UndoToast'
 import { useTodayPlan, useLegacyPlanMigration, derivePlanState } from '../lib/todayPlan'
 import { todayKey } from '../lib/taskGrouping'
+import { statusToRestore } from '../lib/undoStatus'
 import type { TaskRow } from '../lib/api'
 
 export interface TodayStateShape {
@@ -102,6 +103,9 @@ export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = NO
     // optimistic UI + a 5s undo on every state change).
     const wasPlanned = !!planned[id]
     const prevSlot = planned[id]?.slot
+    // Undo restores the status the task had, not a blanket 'todo' (an in_progress
+    // or waiting task used to come back as To Do).
+    const priorStatus = statusToRestore(tasks.find((t) => t.id === id)?.status)
 
     setDone((p) => ({ ...p, [id]: true }))
     // Unplan on completion (mark-done unplans + sinks — Rule 61). The status
@@ -118,7 +122,7 @@ export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = NO
       // Undo: re-open the task and restore its prior planned slot.
       setDone((p) => { const n = { ...p }; delete n[id]; return n })
       if (wasPlanned) plan.planTask(id, prevSlot ?? 'strip', tasks)
-      updateStatus.mutate({ id, status: 'todo' })
+      updateStatus.mutate({ id, status: priorStatus })
     })
   }, [updateStatus, undoToast, plan, planned, tasks])
 

@@ -12,9 +12,15 @@
 import { useMemo } from 'react'
 import { useAttendeeViews, type AttendeeView } from '../../hooks/useAttendeeViews'
 
+/** Hover text: the full name for a team member; outsiders and unnamed ids say so. */
+function attendeeTitle(a: AttendeeView): string {
+  if (a.onTeam) return a.name
+  return a.listed ? `${a.name} (not on the team)` : `${a.raw} (not on the team)`
+}
+
 function FaceDisc({ a, sm = false }: { a: AttendeeView; sm?: boolean }) {
   return (
-    <span role="img" className={`tk-face${sm ? ' tk-sm' : ''}`} title={a.listed ? a.name : `Not in the team list: ${a.raw}`} aria-label={a.name}>
+    <span role="img" className={`tk-face${sm ? ' tk-sm' : ''}`} title={attendeeTitle(a)} aria-label={a.name}>
       {a.initials}
     </span>
   )
@@ -39,7 +45,7 @@ export function AttendeePeople({ values }: { values: readonly unknown[] | null |
   return (
     <div className="tk-ppl">
       {people.map((a) => (
-        <span key={a.key + a.name} className="tk-per" title={a.listed ? a.name : `Not in the team list: ${a.raw}`}>
+        <span key={a.key + a.name} className="tk-per" title={attendeeTitle(a)}>
           <FaceDisc a={a} sm />
           <span className={`tk-pn${a.listed ? '' : ' tk-dim'}`}>{a.first}</span>
         </span>

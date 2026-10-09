@@ -41,6 +41,7 @@ import { NoTasksMatch, AllCaughtUp } from './MyTasksEmpty'
 import WorkOnActions from '../../../components/WorkOnActions'
 import type { TaskRow } from '../../../lib/api'
 import { isMilestone } from '../../../../shared/taskKinds'
+import { getPersonInfo } from '../../../data/team'
 
 type SortKey = 'title' | 'project' | 'due' | 'priority' | 'status' | 'owner'
 type SortDir = 'asc' | 'desc'
@@ -71,19 +72,20 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
   const filtered = useMemo(() => {
     if (!sort) return unsorted
     const sign = sort.dir === 'asc' ? 1 : -1
-    // 'zzzz' sorts a blank owner / project / date after every real value.
-    const rank = (t: TaskRow): number | string => {
+    // null = blank owner / project / date: always last, in both directions.
+    const rank = (t: TaskRow): number | string | null => {
       switch (sort.key) {
         case 'priority': return PRIORITY_ORDER[t.priority] ?? 9
         case 'status': return STATUS_ORDER[t.status] ?? 9
-        case 'owner': return (t.assignee ?? 'zzzz').toLowerCase()
-        case 'due': return t.due_date ? t.due_date.slice(0, 10) : '9999-99-99'
-        case 'project': return (t.project_id ? projectsByPid.get(t.project_id)?.name ?? t.project_id : 'zzzz').toLowerCase()
+        case 'owner': return t.assignee ? getPersonInfo(t.assignee).name.toLowerCase() : null
+        case 'due': return t.due_date ? t.due_date.slice(0, 10) : null
+        case 'project': return t.project_id ? (projectsByPid.get(t.project_id)?.name ?? t.project_id).toLowerCase() : null
         default: return (t.short_title || t.title || '').toLowerCase()
       }
     }
     return [...unsorted].sort((a, b) => {
       const ra = rank(a), rb = rank(b)
+      if (ra === null || rb === null) return ra === rb ? 0 : ra === null ? 1 : -1
       return (ra < rb ? -1 : ra > rb ? 1 : 0) * sign
     })
   }, [unsorted, sort, projectsByPid])

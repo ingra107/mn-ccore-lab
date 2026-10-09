@@ -111,7 +111,7 @@ const STAGE_LIST_OPTIONS = STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s]
 
 // One grid for the header and every row (they drifted apart once, #91): title,
 // status, stage, PI, group, five 24px link slots, folder + Work on.
-const PROJECT_COLS = 'minmax(280px, 3fr) 110px 128px 120px 104px 124px 52px'
+const PROJECT_COLS = 'minmax(280px, 3fr) 140px 128px 120px 104px 124px 52px'
 
 // Fully-cleaned display title for a pipeline row: strip the consortium tag
 // first, then — if the project's own `type` says it's a grant — the
@@ -162,8 +162,14 @@ const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i)
 // 2026-06-17 rule): no outline, sharp, hover tooltip. Non-http links open via
 // useProtocolLaunch (mnccore:// handler + clipboard backup).
 const LINKS_OVERFLOW_THRESHOLD = 4
-function ProjectLinksCell({ links }: { links: StoredLink[] }) {
+function ProjectLinksCell({ links: all, primaryFolder }: { links: StoredLink[]; primaryFolder?: string | null }) {
   const { launch } = useProtocolLaunch()
+  // The project's own folder is already the Open-folder icon in the Work-on slot;
+  // showing it again as a link is the same icon twice in one row.
+  const norm = (p: string) => p.split(String.fromCharCode(92)).join('/').split('/').filter(Boolean).join('/').toLowerCase()
+  const links = primaryFolder
+    ? all.filter((l) => !(l.type === 'local_folder' && norm(l.canonical_url) === norm(primaryFolder)))
+    : all
   // Sort: type-priority (displayRank) primary, existing sort_order as tiebreaker.
   // Stable sort mirrors PB sections.py render order so both surfaces agree.
   const sorted = [...links].sort(
@@ -978,7 +984,7 @@ export default function Projects() {
                             </div>
 
                             {/* Links — Mode-B icon-only, borderless, stopPropagation handled inside */}
-                            <ProjectLinksCell links={allProjectLinks[project.id ?? ''] ?? []} />
+                            <ProjectLinksCell links={allProjectLinks[project.id ?? ''] ?? []} primaryFolder={project.primary_folder} />
                             {/* WorkOnActions compact — only when project has a folder.
                                 stopPropagation + preventDefault prevents Link navigation. */}
                             <div

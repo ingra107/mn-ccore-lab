@@ -958,7 +958,7 @@ export default function MeetingDetail() {
 
             {decisions.length > 0 && (
               <div className="tk">
-                <ul className="tk-card tk-decs">
+                <ul className="tk-decs tk-flat">
                   {decisions.map((d, i) => (
                     <li key={i} className="tk-dec"><span className="tk-dia" aria-hidden="true">&#9670;</span><span>{d}</span></li>
                   ))}

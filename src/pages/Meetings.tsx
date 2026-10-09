@@ -558,10 +558,11 @@ export default function Meetings() {
   // Viewing a meeting in the split-panel detail (default-selected or
   // clicked) counts as "seen" for the new-notes badge/pill — this is the
   // primary browsing path, not just the standalone /meetings/:id route.
+  const selectedMeetingId_ = selectedMeeting?.id
   useEffect(() => {
-    if (!selectedMeeting) return
-    markSeen('meeting', selectedMeeting.id)
-  }, [selectedMeeting?.id, markSeen])
+    if (!selectedMeetingId_) return
+    markSeen('meeting', selectedMeetingId_)
+  }, [selectedMeetingId_, markSeen])
 
   useListKeyboardNav({ itemCount: filteredMeetings.length, focusedIndex, setFocusedIndex })
 

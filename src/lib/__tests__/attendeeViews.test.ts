@@ -19,6 +19,7 @@ describe('resolveAttendeeViews', () => {
     expect(a.first).toBe('Dana')
     expect(a.initials).toBe('DR')
     expect(a.listed).toBe(true)
+    expect(a.onTeam).toBe(true)
   })
 
   it('resolves a bare internet id through the member whose address is <id>@umn.edu', () => {
@@ -52,6 +53,9 @@ describe('resolveAttendeeViews', () => {
     expect(a.first).toBe('Jane')
     expect(b.first).toBe('Lianne')
     expect(b.initials).toBe('LS')
+    expect(a.onTeam).toBe(false)
+    expect(b.onTeam).toBe(false)
+    expect(a.listed && b.listed).toBe(true)
   })
 
   it('does not match an outside address by its local part', () => {

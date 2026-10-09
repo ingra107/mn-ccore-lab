@@ -18,7 +18,10 @@ export interface AttendeeView {
   initials: string
   /** The stored value, kept for the tooltip when the person could not be named. */
   raw: string
+  /** Named (shown readable). False = an id nobody could name (shown raw and muted). */
   listed: boolean
+  /** A team member. False for outside emails, typed names and unnamed ids; the tooltip says so. */
+  onTeam: boolean
 }
 
 function words(local: string): string {
@@ -30,11 +33,11 @@ function words(local: string): string {
 }
 
 function unlisted(raw: string): AttendeeView {
-  return { key: raw, name: raw, first: raw, initials: '?', raw, listed: false }
+  return { key: raw, name: raw, first: raw, initials: '?', raw, listed: false, onTeam: false }
 }
 
-function fromName(raw: string, name: string, first?: string): AttendeeView {
-  return { key: raw, name, first: first ?? firstOf(name), initials: initialsOfName(name), raw, listed: true }
+function fromName(raw: string, name: string, first?: string, onTeam = false): AttendeeView {
+  return { key: raw, name, first: first ?? firstOf(name), initials: initialsOfName(name), raw, listed: true, onTeam }
 }
 
 export function resolveAttendeeViews(values: readonly unknown[] | null | undefined, team: readonly TeamMember[]): AttendeeView[] {
@@ -57,7 +60,7 @@ export function resolveAttendeeViews(values: readonly unknown[] | null | undefin
       const name = known ? fullNameForSlug(slug) : rowName
       view = !name || NETID.test(name)
         ? unlisted(v)
-        : fromName(v, name, known ? firstNameFor(slug) : undefined)
+        : fromName(v, name, known ? firstNameFor(slug) : undefined, true)
     } else if (v.includes('@')) {
       const local = v.split('@')[0] ?? ''
       view = NETID.test(local) ? unlisted(v) : fromName(v, words(local) || v)

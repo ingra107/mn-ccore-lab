@@ -2912,3 +2912,10 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk .tk-dec+.tk-dec{border-top:1px solid var(--sk-line)}
 .tk .tk-dec .tk-dia{color:var(--sk-gold);font-size:9px;margin-top:6px;flex-shrink:0}
 .tk .tk-pn.tk-dim{color:var(--sk-t3)}
+/* On the full meeting page the Decisions panel is already the card: one surface, rows only. */
+.tk .tk-decs.tk-flat{padding:0}
+
+/* Meeting people badges in the light theme: darker, heavier initials so the 16px
+   disc reads (the default face text is too faint at 7px). */
+.tk .tk-ppl .tk-face.tk-sm,.tk .tk-mlr .tk-face{font-size:8px;font-weight:700}
+:root:not(.dark) .tk .tk-ppl .tk-face,:root:not(.dark) .tk .tk-mlr .tk-face{background:#c9ced3;color:#1b2530}
