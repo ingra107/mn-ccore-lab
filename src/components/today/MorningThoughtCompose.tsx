@@ -223,6 +223,9 @@ export function MorningThoughtCompose() {
         ownLaunchRouting
         uploadContext={{ type: 'daily_thought', id: todayKey(), entityType: 'task' }}
       />
+      {/* "send to home" queues @quickchat on Nick's home machine -- a control
+          for the PI's own machines. A member has no home machine to send to. */}
+      {user.isPi && (
       <label className="flex items-center gap-1.5 justify-end text-xs text-neutral-400 cursor-pointer select-none mt-1">
         <input
           type="checkbox"
@@ -232,6 +235,7 @@ export function MorningThoughtCompose() {
         />
         send to home
       </label>
+      )}
     </>
   )
 }

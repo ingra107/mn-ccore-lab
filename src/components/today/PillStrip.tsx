@@ -1,30 +1,21 @@
 // PillStrip — clickable daily glance row.
-// Six pills: overdue / stalled / planned / meetings / done today / lab health.
-// Each pill scrollIntoView()s its anchor section. Lab Health is a Link to
-// /portal/overview because it's a navigation cue, not an in-page jump.
+// Five pills: overdue / stalled / planned / meetings / done today. Each pill
+// scrollIntoView()s its anchor section.
+//
+// The "Day score" chip that closed this row was deleted 2026-10-09 (D5). Its
+// sigmoid 100/(1+e^(0.05·overdue+0.02·stalled)) peaks at 50, so a "/100"
+// score could never pass half and read red on any real day, and it restated
+// the overdue + stalled pills beside it. The composite Lab Health score lives
+// on Lab Overview (/portal/overview), reachable from the nav.
 // Extracted from src/pages/portal/TodayPage.tsx (B2_PillStrip).
 
-import { Link } from 'react-router-dom'
-import { PATHS } from '../../constants/paths'
 import { Pill } from './primitives'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
   type DailyCounts,
 } from './constants'
-import { withAlpha } from '../../lib/taskGrouping'
 
 export function PillStrip({ counts }: { counts: DailyCounts }) {
-  // P6-B9: renamed from "Lab Health" to "Day Score" to avoid confusion with
-  // the 6-signal canonical LabHealthScore in /portal/overview (Dashboard).
-  // This 2-signal (overdue+stalled) sigmoid is a quick daily gauge, not the
-  // composite Lab Health. Formula unchanged: 100 / (1 + e^(0.05·o + 0.02·s)).
-  const dayScore = Math.round(100 / (1 + Math.exp(0.05 * counts.overdue + 0.02 * counts.stalled)))
-  const healthColor = dayScore >= 35 ? ACCENT_GREEN : dayScore >= 25 ? ACCENT_GOLD : ACCENT_CORAL
-  const tooltipReasons: string[] = []
-  if (counts.overdue > 0) tooltipReasons.push(`${counts.overdue} overdue task${counts.overdue === 1 ? '' : 's'}`)
-  if (counts.stalled > 0) tooltipReasons.push(`${counts.stalled} stalled project${counts.stalled === 1 ? '' : 's'}`)
-  const tooltipReasonText = tooltipReasons.length > 0 ? tooltipReasons.join(' · ') : 'No active drag'
-  const tooltipText = `Day Score: ${dayScore}/100 (overdue + stalled signal)\n${tooltipReasonText}\nSee full Lab Health score on Lab Overview →`
   const scrollTo = (sel: string) => document.querySelector(sel)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   return (
@@ -34,19 +25,6 @@ export function PillStrip({ counts }: { counts: DailyCounts }) {
       <Pill icon="📌" color={ACCENT_GOLD} count={counts.planned} label="planned today" title="Scroll to planned queue" onClick={() => scrollTo('[data-b2-timeline]')} />
       <Pill icon="📅" color={ACCENT_TEAL} count={counts.meetings} label="meetings" title="Scroll to today's timeline" onClick={() => scrollTo('[data-b2-timeline]')} />
       <Pill icon="✓" color={ACCENT_GREEN} count={counts.doneToday} label="done today" title="Scroll to completed" onClick={() => scrollTo('[data-b2-completed]')} />
-      <div style={{ flex: 1 }} />
-      <Link
-        to={PATHS.overview}
-        title={tooltipText}
-        className="hov-bg"
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px', background: withAlpha(healthColor, 6), border: `1px solid ${withAlpha(healthColor, 31)}`, borderRadius: 999, textDecoration: 'none', transition: 'all 150ms', '--hov-bg': withAlpha(healthColor, 13) } as React.CSSProperties}
-      >
-        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: healthColor }}>Day score</span>
-        <span style={{ fontSize: 18, fontWeight: 700, color: healthColor, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{dayScore}</span>
-        {/* S20: the "X overdue · Y stalled" subtitle was a 3rd restatement of the
-            overdue/stalled pills in the same row — dropped. The score + pills say
-            it once; the full breakdown stays in the hover tooltip + the rail. */}
-      </Link>
     </div>
   )
 }
