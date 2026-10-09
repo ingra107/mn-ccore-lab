@@ -44,6 +44,8 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { parseDbUtc, formatDbLocal } from '../../lib/time'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../Avatar'
+import { Face } from '../today/skin'
+import { firstNameFor } from '../../lib/personLabel'
 import LinkifiedText, { ImageChip } from '../LinkifiedText'
 import HermesMark from '../HermesMark'
 import HermesResponse from '../HermesResponse'
@@ -269,6 +271,10 @@ export interface ActivityEntryItemProps {
    */
   avatarSize?: 'xs' | 'base-sm'
 
+  /** Today skin: name people as an initials badge + FIRST name (the Face the cards
+   *  use) instead of the photo Avatar + full name. Only valid under a .tk ancestor. */
+  badgePeople?: boolean
+
   /**
    * Font-size token for the author name + body.  Defaults to '--text-small'
    * (12 px) — the canonical body size.
@@ -446,7 +452,7 @@ function DismissedTag() {
 // Hover-revealed dismiss / restore toggle (thread ROOT only). Dismiss hides the
 // whole thread from feeds but RETAINS the rows; it is reversible ("Show hidden" →
 // Restore), so — unlike delete — it is a single click with no two-step confirm.
-function DismissEntryButton({ isHidden, onClick }: { isHidden?: boolean; onClick: () => void }) {
+export function DismissEntryButton({ isHidden, onClick }: { isHidden?: boolean; onClick: () => void }) {
   const label = isHidden ? 'Restore to feed' : 'Dismiss thread'
   const Icon = isHidden ? Eye : EyeOff
   return (
@@ -675,6 +681,7 @@ function ActivityEntryWrapper({
 export function ActivityEntryItem({
   entry,
   avatarSize = AVATAR_SIZE,
+  badgePeople = false,
   textSize = BODY_FONT_SIZE,
   avatarGap = AVATAR_GAP,
   showCommentBadge = false,
@@ -831,13 +838,17 @@ export function ActivityEntryItem({
         <div className={`flex items-center ${AVATAR_GAP} mb-1.5`} style={{ minWidth: 0 }}>
           {/* Avatar slot — HermesMark via Avatar's slug prop */}
           <div className="flex-shrink-0" style={{ width: avatarDim, height: avatarDim }}>
-            <Avatar
-              name="Hermes"
-              initials="H"
-              size={avatarSize}
-              variant="gold"
-              slug="claude-ai"
-            />
+            {badgePeople ? (
+              <span className="tk-face tk-herm" title="Hermes" aria-label="Hermes">H</span>
+            ) : (
+              <Avatar
+                name="Hermes"
+                initials="H"
+                size={avatarSize}
+                variant="gold"
+                slug="claude-ai"
+              />
+            )}
           </div>
           <div className="flex items-center gap-1.5 flex-wrap min-w-0" style={{ flex: 1 }}>
             <span
@@ -902,13 +913,17 @@ export function ActivityEntryItem({
           className="flex-shrink-0 mt-0.5"
           style={{ width: avatarDim, height: avatarDim }}
         >
-          <Avatar
-            name={person.name}
-            initials={person.initials}
-            photoUrl={person.photoUrl}
-            size={avatarSize}
-            variant="ice"
-          />
+          {badgePeople ? (
+            <Face slug={entry.actor_slug} />
+          ) : (
+            <Avatar
+              name={person.name}
+              initials={person.initials}
+              photoUrl={person.photoUrl}
+              size={avatarSize}
+              variant="ice"
+            />
+          )}
         </div>
 
         {/* Text column */}
@@ -926,7 +941,7 @@ export function ActivityEntryItem({
                 flexShrink: 0,
               }}
             >
-              {person.name}
+              {badgePeople ? firstNameFor(entry.actor_slug) : person.name}
             </span>
             {nameBadge}
             {entry.visibility === 'author' && <AuthorOnlyBadge />}

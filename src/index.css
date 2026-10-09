@@ -2752,3 +2752,23 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-mcr .tk-pill,.tk .tk-mcr .tk-join,.tk .tk-mcr .tk-joinq{padding-top:1px;padding-bottom:1px;line-height:1.3;flex-shrink:0}
 .tk .tk-mcr .tk-sp{flex:1;min-width:0}
 .tk .tk-tlab{width:52px;padding-right:6px;font-size:9.5px;box-sizing:border-box}
+/* people pattern: initials badge + first name */
+.tk .tk-face.tk-sm{width:16px;height:16px;font-size:7px;box-shadow:none}
+.tk .tk-face.tk-herm{background:var(--sk-ac-soft);color:var(--sk-ac)}
+.tk .tk-pn{color:inherit}
+.tk .tk-pill .tk-face{margin:0 1px 0 -1px}
+.tk .tk-pill .tk-pn{margin-left:2px}
+.tk .tk-feedl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sk-t2);padding:4px 0;min-width:0}
+.tk .tk-feedl b{font-weight:500;color:var(--sk-t1)}
+.tk .tk-feedt{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk .tk-feedm{flex-shrink:0;color:var(--sk-t3);font-variant-numeric:tabular-nums}
+.tk .tk-feedm::before{content:"\00b7";margin-right:8px}
+/* drawer activity lines: controls on hover/focus (opacity keeps them focusable), always on touch */
+.tk .tk-feedl{position:relative}
+.tk .tk-feedctl{display:inline-flex;align-items:center;gap:2px;margin-left:auto;flex-shrink:0;opacity:0;transition:opacity .12s}
+.tk .tk-feedl:hover .tk-feedctl,.tk .tk-feedl:focus-within .tk-feedctl,.tk .tk-feedctl:focus-within{opacity:1}
+.tk .tk-feedl .tk-feedctl .ae-delete{visibility:visible !important}
+.tk .tk-feedl.tk-hid .tk-feedctl{opacity:1}
+.tk .tk-feedl.tk-hid .tk-feedt{opacity:.6;text-decoration:line-through}
+@media (hover:none){.tk .tk-feedctl{opacity:1}}
+.tk .tk-feedctl:has(.ae-delete[aria-label^="Click again"]){opacity:1}

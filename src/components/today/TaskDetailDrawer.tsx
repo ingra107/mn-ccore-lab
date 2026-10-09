@@ -20,7 +20,7 @@ import { useUndoToast } from '../UndoToast'
 import { WorkflowSection } from '../tasks/detail/FieldControls'
 import type { WorkflowFields } from '../tasks/detail/FieldControls'
 import { TaskInlineFieldRow, DueInlineSelect } from '../tasks/detail/FieldControls'
-import { TaskActivityFeed } from '../tasks/detail/TaskActivityFeed'
+import { ActivityPeek } from './ActivityPeek'
 import TaskDetailPanel from '../tasks/TaskDetailPanel'
 import StoredLinkChip from '../StoredLinkChip'
 import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
@@ -215,11 +215,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
 
       {/* Activity peek — 3 entries newest-first; "view all →" opens full editor */}
       <div style={{ marginTop: 14 }}>
-        <TaskActivityFeed taskId={task.id} peekCount={3} hidePills avatarSize="xs" />
-        <button
-          onClick={() => setFullEditorTask(task)}
-          style={{ fontSize: 10, color: ACCENT_TEAL, background: 'transparent', border: 'none', padding: '3px 0', cursor: 'pointer', fontFamily: 'inherit' }}
-        >view all →</button>
+        <ActivityPeek taskId={task.id} count={3} onViewAll={() => setFullEditorTask(task)} />
       </div>
 
       {/* #108: meeting provenance, with room for the name and the link. The row

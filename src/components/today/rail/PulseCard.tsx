@@ -13,7 +13,7 @@
 import { useState } from 'react'
 import { CollapseChevron } from '../SectionCollapseToggle'
 import { collapseToggleProps } from '../collapseToggleProps'
-import { NameFace } from '../skin'
+import { Person } from '../skin'
 
 // focusMin === null: the viewer has no pomodoro data source (a non-PI member;
 // /api/pb/* is PI-only), so the FOCUS tile and header minutes are not drawn.
@@ -55,8 +55,7 @@ export function PulseCard({ focusMin, milestones, mentees }: { focusMin: number 
           <div className="tk-rsub">Mentees</div>
           {mentees.slice(0, 4).map((m, i) => (
             <div key={i} className="tk-rli" style={{ alignItems: 'center' }}>
-              <NameFace name={m.name} />
-              <span className="tk-t">{m.name}</span>
+              <span className="tk-t" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Person name={m.name} /></span>
               <span className="tk-d">{m.next}</span>
             </div>
           ))}

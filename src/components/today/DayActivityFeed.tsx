@@ -16,13 +16,17 @@ import { ActivityThread } from '../activity/ActivityThread'
 import { ActivityEntryItem, type ActivityEntryItemRow } from '../activity/activityRender'
 import { ShowHiddenToggle } from '../activity/ShowHiddenToggle'
 import { isRepliableKind } from '../../../shared/activityKinds'
-import { useDismissThread } from '../../hooks/useMutations'
+import { canDeleteActivityEntry } from '../activity/activityPermissions'
+import { useAuth } from '../../hooks/useAuth'
+import { useDeleteActivityEntry, useDismissThread } from '../../hooks/useMutations'
 
 const isPending = (body: string) => /Thinking about this/.test(body)
 
 export function DayActivityFeed({ dateKey }: { dateKey: string }) {
   const [showHidden, setShowHidden] = useState(false)
   const dismissThread = useDismissThread()
+  const deleteEntry = useDeleteActivityEntry()
+  const { user } = useAuth()
 
   const { data: feed } = useQuery<{ entries: ActivityEntryItemRow[]; hiddenCount: number }>({
     queryKey: ['day-activity', dateKey, showHidden],
@@ -53,12 +57,19 @@ export function DayActivityFeed({ dateKey }: { dateKey: string }) {
     <div className="flex flex-col gap-1.5" style={{ marginBottom: 12 }}>
       {entries.map((entry) =>
         !isRepliableKind(entry.kind) ? (
-          <ActivityEntryItem key={entry.id} entry={entry} />
+          <ActivityEntryItem
+            key={entry.id}
+            entry={entry}
+            badgePeople
+            onDelete={canDeleteActivityEntry(user, entry.actor_slug) ? () => deleteEntry.mutate({ id: entry.id, dayKey: dateKey }) : undefined}
+          />
         ) : (
           <ActivityThread
             key={entry.id}
             root={entry}
+            itemProps={{ badgePeople: true }}
             invalidateKeys={[['day-activity', dateKey]]}
+            onDelete={(e) => deleteEntry.mutate({ id: e.id, dayKey: dateKey })}
             onDismiss={(e) => dismissThread.mutate({ id: e.id, hidden: !e.hidden_at, dayKey: dateKey })}
           />
         ),

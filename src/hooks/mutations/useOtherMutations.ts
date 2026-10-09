@@ -90,7 +90,7 @@ export function useDeleteActivityEntry() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { id: string; taskId?: string; projectSlug?: string }) =>
+    mutationFn: (input: { id: string; taskId?: string; projectSlug?: string; dayKey?: string }) =>
       fetchApi(`/api/activity/${input.id}/delete`, { method: 'POST' }),
 
     onSettled: (_data, _err, input) => {
@@ -101,6 +101,9 @@ export function useDeleteActivityEntry() {
       }
       if (input.projectSlug) {
         queryClient.invalidateQueries({ queryKey: ['project-activity', input.projectSlug] })
+      }
+      if (input.dayKey) {
+        queryClient.invalidateQueries({ queryKey: ['day-activity', input.dayKey] })
       }
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
