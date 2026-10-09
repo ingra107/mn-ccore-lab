@@ -7,7 +7,7 @@ import { stageIndex, toApiStage, stageLabel } from '../lib/stageNormalize'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
-import { PANEL_BG, daysSince, withAlpha } from '../lib/taskGrouping'
+import { PANEL_BG, daysSince, isStalledProject, withAlpha } from '../lib/taskGrouping'
 import { parseDbUtc } from '../lib/time'
 import { useCreateProject, useUpdateProjectFields } from '../hooks/useMutations'
 import InlineSelect from '../components/InlineSelect'
@@ -415,6 +415,18 @@ export default function Projects() {
       return out
     }, { replace: true })
   }, [setSearchParams])
+  // `?filter=stalled` is the Today stat line's "stalled" link (and the rail's
+  // "+N more"): active projects quiet for 10+ days, the same predicate Today
+  // counts with (isStalledProject). URL-backed like category and status.
+  const stalledOnly = searchParams.get('filter') === 'stalled'
+  const setStalledOnly = useCallback((on: boolean) => {
+    setSearchParams((prev) => {
+      const out = new URLSearchParams(prev)
+      if (on) out.set('filter', 'stalled')
+      else out.delete('filter')
+      return out
+    }, { replace: true })
+  }, [setSearchParams])
   const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list')
   const [showDeps, setShowDeps] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
@@ -467,6 +479,7 @@ export default function Projects() {
       })
     }
     else base = statusScoped.filter((p) => p.category === activeCategory)
+    if (stalledOnly) base = base.filter(isStalledProject)
     return [...base].sort((a, b) => {
       const pinCmp =
         (pinnedSlugs.has(a.slug) ? 0 : 1) - (pinnedSlugs.has(b.slug) ? 0 : 1)
@@ -505,7 +518,7 @@ export default function Projects() {
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
     })
-  }, [activeCategory, statusScoped, sortKey, sortAsc, pinnedSlugs, healthBySlug, prefs.projectStaleDays])
+  }, [activeCategory, statusScoped, sortKey, sortAsc, pinnedSlugs, healthBySlug, prefs.projectStaleDays, stalledOnly])
 
   // Project slugs in display order for keyboard nav
   const projectSlugs = useMemo(() => filtered.map((p) => p.slug), [filtered])
@@ -514,7 +527,7 @@ export default function Projects() {
   // "adjusting state based on a prop change" pattern:
   // https://react.dev/learn/you-might-not-need-an-effect) instead of an
   // effect, avoiding an extra commit-then-effect cascade.
-  const focusResetKey = `${activeCategory}|${activeStatus}|${viewMode}`
+  const focusResetKey = `${activeCategory}|${activeStatus}|${viewMode}|${stalledOnly}`
   const [prevFocusResetKey, setPrevFocusResetKey] = useState(focusResetKey)
   if (focusResetKey !== prevFocusResetKey) {
     setPrevFocusResetKey(focusResetKey)
@@ -624,6 +637,12 @@ export default function Projects() {
               title={f.title}
             />
           ))}
+          <FilterPill
+            label="Stalled"
+            active={stalledOnly}
+            onClick={() => setStalledOnly(!stalledOnly)}
+            title="Active projects with no activity in 10+ days"
+          />
         </>
       }
       rightExtra={

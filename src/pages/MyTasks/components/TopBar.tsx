@@ -5,7 +5,7 @@
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx.
 
 import { useState } from 'react'
-import { AlertTriangle, Clock, Plus, Sparkles, Pin, SlidersHorizontal, Timer, ThumbsDown } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Clock, Plus, Sparkles, Pin, SlidersHorizontal, Timer, ThumbsDown } from 'lucide-react'
 import { researchTeam } from '../../../data/team'
 import SavedViewsMenu from '../../../components/SavedViewsMenu'
 import { ViewPicker } from './ViewPicker'
@@ -46,6 +46,8 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
     // sidebar badge count + the gold NEW chip on rows). Drains on open.
     { k: 'new', l: <><Sparkles {...ICON_PROPS} size={11} style={{ color: ACCENT_GOLD }} /> New</>, color: ACCENT_GOLD },
     { k: 'today', l: <><Pin {...ICON_PROPS} size={11} style={{ color: ACCENT_GOLD }} /> Today</>, color: ACCENT_GOLD },
+    { k: 'planned', l: <><Pin {...ICON_PROPS} size={11} style={{ color: ACCENT_GOLD }} /> Planned</>, color: ACCENT_GOLD },
+    { k: 'done-today', l: <><CheckCircle2 {...ICON_PROPS} size={11} style={{ color: ACCENT_GREEN }} /> Done today</>, color: ACCENT_GREEN },
     { k: 'overdue', l: <><AlertTriangle {...ICON_PROPS} size={11} style={{ color: ACCENT_CORAL }} /> Overdue</>, color: ACCENT_CORAL },
     { k: 'waiting', l: <><Clock {...ICON_PROPS} size={11} style={{ color: ACCENT_ORANGE }} /> Waiting on</>, color: ACCENT_ORANGE },
     { k: 'stale', l: <><Timer {...ICON_PROPS} size={11} style={{ color: ACCENT_ORANGE }} /> Stale</>, color: ACCENT_ORANGE },

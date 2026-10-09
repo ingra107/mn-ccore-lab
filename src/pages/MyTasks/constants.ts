@@ -25,7 +25,7 @@ import { dueLabelCompact, isOverdue } from '../../lib/dateUtils'
 // ──────────────────────────────────────────────────────────────────────────
 
 export type ViewMode = 'columns' | 'lanes' | 'list' | 'board'
-export type QuickViewKey = 'all' | 'new' | 'today' | 'overdue' | 'waiting' | 'stale' | 'declined'
+export type QuickViewKey = 'all' | 'new' | 'today' | 'planned' | 'done-today' | 'overdue' | 'waiting' | 'stale' | 'declined'
 
 export interface GroupMeta { icon: string; label: string; color: string; desc: string }
 

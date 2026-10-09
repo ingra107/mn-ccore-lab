@@ -247,6 +247,22 @@ export function daysSince(iso: string | null | undefined): number {
   return Math.floor((Date.now() - d.getTime()) / 86400000)
 }
 
+/** Days of silence after which an active project counts as stalled. */
+export const STALLED_AFTER_DAYS = 10
+
+/**
+ * A project is "stalled" when it is active and its last activity is
+ * STALLED_AFTER_DAYS or more days old. ONE definition for the Today stat line
+ * and rail AND the Projects page's `?filter=stalled` list that the stat line
+ * links to, so the number on Today and the list it opens cannot disagree.
+ * No lastActivity at all is not stalled (never started), same as before.
+ */
+export function isStalledProject(p: { status?: string | null; lastActivity?: string | null }): boolean {
+  if (p.status !== 'active') return false
+  const d = daysSince(p.lastActivity)
+  return d >= STALLED_AFTER_DAYS && d < Infinity
+}
+
 /**
  * Tag glyph for a task — left-of-title category cue per CD spec.
  * Used identically on Today landing and MyTasks page.

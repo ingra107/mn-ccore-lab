@@ -14,6 +14,7 @@ import {
   type GroupKey, type FilterState, type QuickViewKey,
 } from '../constants'
 import { isOverdue } from '../../../lib/dateUtils'
+import { isToday } from '../../../components/today/constants'
 import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import { useAuth } from '../../../hooks/useAuth'
 import type { TaskRow } from '../../../lib/api'
@@ -43,12 +44,16 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
     let base: TaskRow[] = allTasks
     if (quickView === 'new') base = base.filter((t) => t.assignee === viewerSlug && !t.acknowledged_at && !isTaskDone(t))
     if (quickView === 'today') base = base.filter((t) => plannedSet.has(t.id) || t.due_date?.slice(0, 10) === today)
+    // Today page stat-line links: planned for today, and finished today.
+    if (quickView === 'planned') base = base.filter((t) => plannedSet.has(t.id) && !isTaskDone(t))
+    if (quickView === 'done-today') base = base.filter((t) => t.completed === 1 && isToday(t.completed_at))
     if (quickView === 'overdue') base = base.filter((t) => t.due_date && t.due_date.slice(0, 10) < today && !isTaskDone(t))
     if (quickView === 'waiting') base = base.filter((t) => t.status === 'waiting_external' && !isTaskDone(t))
     if (quickView === 'stale') base = base.filter((t) => daysSince(t.updated_at) >= taskStaleDays && t.status === 'in_progress' && !isTaskDone(t))
     if (quickView === 'declined') base = base.filter((t) => t.approval_status === 'declined')
     return base.filter((t) => {
-      if (filter.hideCompleted && isTaskDone(t)) return false
+      // 'done-today' is the one view that is ABOUT completed rows.
+      if (filter.hideCompleted && quickView !== 'done-today' && isTaskDone(t)) return false
       if (filter.priority && t.priority !== filter.priority) return false
       if (filter.project && t.project_id !== filter.project) return false
       if (filter.mentee) {

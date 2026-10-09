@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 import { Activity, Calendar, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useListKeyboardNav } from '../hooks/useListKeyboardNav'
@@ -32,7 +32,7 @@ import MarkdownView from '../components/MarkdownView'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha, isTaskDone } from '../lib/taskGrouping'
 
-type FilterMode = 'all' | 'decisions' | 'actions'
+type FilterMode = 'all' | 'decisions' | 'actions' | 'today'
 
 const ALL_TEAM_MEMBERS = [
   ...directors.map((d) => ({ slug: d.slug, name: d.name, initials: d.initials, photoUrl: d.photoUrl })),
@@ -420,7 +420,10 @@ export default function Meetings() {
   usePageMeta('Meetings · MN-CCORE', 'MNCCORE biweekly meetings, decisions, and action items archive.')
 
   const headerRef = useScrollReveal<HTMLDivElement>()
-  const [filter, setFilter] = useState<FilterMode>('all')
+  // `?filter=today` is the Today page's "meetings" stat line link: this page's
+  // list narrowed to today's meeting records.
+  const [searchParams] = useSearchParams()
+  const [filter, setFilter] = useState<FilterMode>(searchParams.get('filter') === 'today' ? 'today' : 'all')
   const [searchQuery, setSearchQuery] = useState('')
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null)
@@ -527,7 +530,8 @@ export default function Meetings() {
 
   const filteredMeetings = useMemo(() => {
     let result = [...meetings].sort((a, b) => b.date.localeCompare(a.date))
-    if (filter === 'decisions') result = result.filter((m) => m.decisions && m.decisions.length > 0)
+    if (filter === 'today') result = result.filter((m) => m.date.slice(0, 10) === localDateKey())
+    else if (filter === 'decisions') result = result.filter((m) => m.decisions && m.decisions.length > 0)
     else if (filter === 'actions') result = result.filter((m) => m.actionItems && m.actionItems.length > 0)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
@@ -559,6 +563,7 @@ export default function Meetings() {
 
   const FILTER_OPTIONS: { key: FilterMode; label: string }[] = [
     { key: 'all', label: 'All' },
+    { key: 'today', label: 'Today' },
     { key: 'decisions', label: 'Decisions' },
     { key: 'actions', label: 'Actions' },
   ]
