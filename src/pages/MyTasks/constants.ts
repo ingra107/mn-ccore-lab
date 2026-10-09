@@ -17,7 +17,7 @@ export {
 } from '../../lib/taskGrouping'
 
 import type { GroupKey } from '../../lib/taskGrouping'
-import { ACCENT_CORAL, ACCENT_GOLD, INK_MUTED, todayKey } from '../../lib/taskGrouping'
+import { todayKey } from '../../lib/taskGrouping'
 import { dueLabelCompact, isOverdue } from '../../lib/dateUtils'
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -116,13 +116,6 @@ export function dueLabel(due: string | null, status?: string): string {
   const d = new Date(due + 'T12:00:00')
   if (isNaN(d.getTime())) return '—'
   return dueLabelCompact(due, isOverdue(due, status))
-}
-
-export function dueColor(t: TaskRow): string {
-  const today = todayKey()
-  if (t.due_date && t.due_date.slice(0, 10) < today) return ACCENT_CORAL
-  if (t.due_date && t.due_date.slice(0, 10) === today) return ACCENT_GOLD
-  return INK_MUTED
 }
 
 // Planned-today set — Workstream B (schema v75): derives from the SYNCED task

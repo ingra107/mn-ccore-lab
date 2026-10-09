@@ -206,16 +206,6 @@ export function extractMeetingUrl(location: string | null | undefined): string |
   return m ? m[0] : undefined
 }
 
-// TP-09 + TP-11: minutes-since-midnight from an ISO timestamp, in the
-// browser's local TZ. Returns undefined for all-day events (no clock
-// position to report).
-export function localMinutesFromIso(iso: string | null | undefined): number | undefined {
-  if (!iso) return undefined
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return undefined
-  return d.getHours() * 60 + d.getMinutes()
-}
-
 export function isToday(isoDate: string | null | undefined): boolean {
   if (!isoDate) return false
   const today = todayKey()

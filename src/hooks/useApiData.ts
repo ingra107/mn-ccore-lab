@@ -30,7 +30,6 @@ import {
   fetchQuestionDetail,
   fetchRevisions,
   fetchRevisionComments,
-  fetchActiveRevisions,
   fetchManuscriptsAttention,
   fetchMenteeMilestones,
   fetchMenteeOverview,
@@ -465,15 +464,6 @@ export interface ProjectUpdateRow {
   id: string
   project_id: string
   author: string
-  content: string
-  update_type: string
-  created_at: string
-}
-
-export interface TaskUpdateRow {
-  id: string
-  task_id: string
-  author_slug: string
   content: string
   update_type: string
   created_at: string
@@ -1036,18 +1026,6 @@ export function useProjectDocuments(slug: string) {
   })
 }
 
-export function useTaskUpdates(taskId: string) {
-  return useQuery({
-    queryKey: ['task-updates', taskId],
-    queryFn: async () => {
-      const data = await fetchJson<{ data?: TaskUpdateRow[] }>(`/api/tasks/${taskId}/updates`)
-      return data.data ?? []
-    },
-    staleTime: 30 * 1000,
-    enabled: !!taskId,
-  })
-}
-
 // ── Team Pulse ──────────────────────────────────────────────
 
 interface TeamPulseData {
@@ -1427,14 +1405,6 @@ export function useRevisionComments(revisionId: string) {
     queryFn: () => fetchRevisionComments(revisionId).then((r) => r.data),
     enabled: !!revisionId,
     staleTime: 30 * 1000,
-  })
-}
-
-export function useActiveRevisions() {
-  return useQuery({
-    queryKey: ['revisions-active'],
-    queryFn: () => fetchActiveRevisions().then((r) => r.data),
-    staleTime: 60 * 1000,
   })
 }
 

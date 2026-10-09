@@ -821,10 +821,6 @@ export function fetchRevisionComments(revisionId: string) {
   return fetchApi<ReviewerCommentRow[]>(`/api/revisions/${revisionId}/comments`)
 }
 
-export function fetchActiveRevisions() {
-  return fetchApi<RevisionRow[]>('/api/revisions/active')
-}
-
 export interface ManuscriptsAttentionRow {
   id: string
   project_id?: string
