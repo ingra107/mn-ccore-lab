@@ -2859,3 +2859,55 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk .tk-lkc:hover svg{color:var(--lk)}
 .tk .tk-lkt{font-size:12.5px;font-weight:500;color:var(--sk-t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .tk .tk-tch:focus-visible{outline:2px solid var(--sk-ac);outline-offset:-2px;border-radius:var(--r-card)}
+
+/* ══ Tasks / Projects / Meetings carry the Today card (Nick 2026-10-09) ══
+   Everything here is under `.tk` or a tk- prefix, so it cannot leak. */
+
+/* Tasks List: one card per row inside the virtualized list. The cursor ring
+   shows only after the cursor was used; a selected row gets a solid accent ring
+   and a faint wash (the wash is a pseudo-element so the card keeps its depth). */
+.tk .tk-lrow{position:relative;border-radius:var(--r-card)}
+.tk .tk-lrow[data-cursor=true]{outline:1.5px solid color-mix(in srgb,var(--sk-ac) 50%,transparent);outline-offset:2px}
+.tk .tk-lrow[data-selected=true]{outline:2px solid var(--sk-ac);outline-offset:2px}
+.tk .tk-lrow[data-selected=true]::after{content:"";position:absolute;inset:0;border-radius:var(--r-card);background:var(--sk-ac-soft);pointer-events:none}
+
+/* Projects list ("reskinned table", Nick 2026-10-09): the same grid and editors,
+   in the card family. Sentence-case headers in t3, link icons in five fixed 24px
+   slots with the card's tints, folder + Work on pinned right in two more. */
+.tk .table-container.pj-table{background:var(--sk-panel);border:1px solid var(--sk-line);border-radius:var(--r-panel)}
+.tk .pj-head{border-bottom:1px solid var(--sk-line) !important}
+.tk .pj-head .col-header,.tk .pj-hl{font:500 12px var(--font-body);text-transform:none;letter-spacing:0;color:var(--sk-t3);opacity:1;user-select:none}
+.tk .pj-head .col-header[aria-label*="currently"]{color:var(--sk-t1) !important;opacity:1 !important}
+.tk .pj-lks{display:inline-flex;align-items:center;justify-content:flex-start;min-width:0}
+.tk .pj-lk{display:inline-grid;place-items:center;width:24px;height:24px;text-decoration:none;flex-shrink:0}
+.tk .pj-more{display:inline-grid;place-items:center;width:24px;height:24px;font-size:11px;color:var(--sk-t3);font-variant-numeric:tabular-nums}
+.tk .pj-wk{display:flex;align-items:center;justify-content:flex-end}
+.tk .pj-wk .tk-wo{color:var(--sk-t3) !important}
+.tk .pj-wk .tk-wo:hover{color:var(--sk-t1) !important}
+
+/* Meetings (Nick 2026-10-09, "quiet decisions"): the left list as cards, the
+   detail's date tile, people as badge + first name, and decisions as a plain
+   list on the card surface (gold diamond, t1 text, hairline between rows). */
+.tk .tk-mlist{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.tk .tk-mlc{display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;padding:9px 11px 9px;cursor:pointer;font:inherit;color:inherit}
+.tk .tk-mlc.tk-sel{box-shadow:inset 2px 0 0 var(--sk-ac),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
+.tk .tk-mlc:focus-visible{outline:2px solid var(--sk-ac);outline-offset:2px}
+.tk .tk-mlr{display:flex;align-items:center;gap:8px;min-width:0}
+.tk .tk-mlr .tk-sp{flex:1;min-width:0}
+.tk .tk-mld{font-size:11.5px;color:var(--sk-t3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tk .tk-mln{font-size:11.5px;color:var(--sk-ac);white-space:nowrap}
+.tk .tk-mlc.tk-nx .tk-mld{color:var(--sk-ac);font-weight:500}
+.tk .tk-mlt{font-size:13px;font-weight:600;line-height:1.35;color:var(--sk-t1);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tk .tk-mlf{min-height:22px}
+.tk .tk-mlf .tk-cs.tk-mlp{margin:0;min-width:0;flex:0 1 auto}
+.tk .tk-udot{width:6px;height:6px;border-radius:50%;background:var(--sk-ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--sk-ac) 18%,transparent);flex-shrink:0}
+.tk .tk-mlr .tk-tag{margin-left:0}
+.tk .tk-dtile{display:flex;flex-direction:column;align-items:center;justify-content:center;width:56px;height:56px;border-radius:var(--r-card);background:var(--sk-card);box-shadow:inset 0 0 0 1px var(--sk-line2)}
+.tk .tk-dtm{font-size:11.5px;color:var(--sk-t3);line-height:1}
+.tk .tk-dtd{font:600 22px/1.15 var(--font-display);color:var(--sk-t1);font-variant-numeric:tabular-nums}
+.tk .tk-ppl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+.tk .tk-per{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--sk-t1)}
+.tk .tk-decs{list-style:none;margin:0;padding:2px 14px}
+.tk .tk-dec{display:flex;align-items:flex-start;gap:10px;padding:9px 0;font-size:13.5px;line-height:1.5;color:var(--sk-t1)}
+.tk .tk-dec+.tk-dec{border-top:1px solid var(--sk-line)}
+.tk .tk-dec .tk-dia{color:var(--sk-gold);font-size:9px;margin-top:6px;flex-shrink:0}

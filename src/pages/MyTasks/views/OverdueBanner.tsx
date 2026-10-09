@@ -1,4 +1,5 @@
-// OverdueBanner — P1-12. One coral "Overdue" group header with a live count,
+// OverdueBanner — P1-12. One coral "Overdue" group header (sentence case since
+// 2026-10-09: the all-caps label is retired site-wide, rules-ui-design #2) with a live count,
 // shared by all three My Tasks views. Answers "where do I focus" before the
 // user reads a single row: overdue work is sorted to the top within each group
 // (useTaskFilter) AND announced once here, with the coral accent (Rule 59).
@@ -32,7 +33,7 @@ export function OverdueBanner({ tasks }: { tasks: TaskRow[] }) {
       }}
     >
       <span aria-hidden="true" style={{ fontSize: 13 }}>⚠</span>
-      <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: ACCENT_CORAL }}>
+      <span style={{ fontSize: 12.5, fontWeight: 600, color: ACCENT_CORAL }}>
         Overdue
       </span>
       <span style={{ fontSize: 12, color: ACCENT_CORAL, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>

@@ -32,6 +32,10 @@ export function useListKeyboard({ filtered, toggleSelect, setDrawer, setSelected
     const onKey = (e: KeyboardEvent) => {
       const tag = (document.activeElement as HTMLElement | null)?.tagName
       if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return
+      // Enter / Space belong to the focused control. A task card header, a done
+      // box or a link handles its own activation; without this guard the same
+      // keypress also fired the list's open-drawer / select shortcut.
+      if ((e.key === 'Enter' || e.key === ' ') && (document.activeElement as HTMLElement | null)?.closest('button, a, [role="button"]')) return
       if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); setCursor(Math.min(maxIdx, cursor + 1)) }
       else if (e.key === 'k' || e.key === 'ArrowUp') { e.preventDefault(); setCursor(Math.max(0, cursor - 1)) }
       else if (e.key === 'x' || e.key === ' ') { e.preventDefault(); const t = filtered[cursor]; if (t) toggleSelect(t.id) }

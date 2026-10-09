@@ -9,7 +9,8 @@ import { ACCENT_TEAL, INK_MUTED, withAlpha, type ViewMode } from '../constants'
 
 export function ViewPicker({ view, setView }: { view: ViewMode; setView: (v: ViewMode) => void }) {
   const views: { k: ViewMode; l: string; icon: string; desc: string }[] = [
-    { k: 'list',    l: 'List',    icon: '≡', desc: 'Dense table · keyboard-first' },
+    { k: 'list',    l: 'List',    icon: '≡', desc: 'Task cards, the same as Today · keyboard-first' },
+    { k: 'table',   l: 'Table',   icon: '▤', desc: 'Dense table · click a header to sort' },
     { k: 'lanes',   l: 'Lanes',   icon: '☰', desc: 'Stacked lanes · collapse and peek' },
     { k: 'columns', l: 'Columns', icon: '⊞', desc: 'Kanban board · all groups side-by-side' },
     { k: 'board',   l: 'Board',   icon: '▦', desc: 'Status board · drag to change status' },

@@ -27,9 +27,25 @@ import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
-export function TaskRow({ task, project, state, expandedId, onExpand, milestoneRole }: { task: TaskRowData; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; expandedId: string | null; onExpand: (id: string) => void; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>; milestoneRole?: MilestoneRole }) {
+export function TaskRow({ task, project, state, expandedId, onExpand, milestoneRole, done = false, noDrag = false, onOpenEditor }: {
+  task: TaskRowData
+  project: { name: string; slug: string; primary_folder?: string | null } | null
+  state: TodayStateApi
+  expandedId: string | null
+  onExpand: (id: string) => void
+  projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
+  milestoneRole?: MilestoneRole
+  /** Tasks page: the row is already done in the cache (Today keeps done rows in
+   *  its own "Completed today" list, so it never needed this). */
+  done?: boolean
+  /** Tasks page: no drag-to-plan target exists there, so the grip is hidden and
+   *  the dnd-kit draggable is disabled. */
+  noDrag?: boolean
+  /** Tasks page: a title click opens the full editor panel. */
+  onOpenEditor?: () => void
+}) {
   const [density] = useDensity()
-  const isDone = !!state.done[task.id]
+  const isDone = !!state.done[task.id] || done
   const planned = state.planned[task.id]
   const expanded = expandedId === task.id && !isDone
   // A milestone is never planned/dragged/promoted — it is a dated rule with
@@ -45,7 +61,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
   // so only dnd-kit fires.
   const { listeners: dragListeners, setNodeRef: setDragNodeRef, isDragging: isListDragging } = useDraggable({
     id: `list-task:${task.id}`,
-    disabled: isDone || milestone,
+    disabled: isDone || milestone || noDrag,
     data: { taskId: task.id, source: 'list', task },
   })
   const onDragStart = undefined  // No HTML5 drag; dnd-kit handles it
@@ -184,7 +200,8 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
       // the only real effect was silently deleting the grip icon (regression,
       // found while root-causing drag-to-plan test failures; see #492 handoff).
       // Restored to the pre-migration `!isDone` gate.
-      draggable={!isDone}
+      draggable={!isDone && !noDrag}
+      onOpenEditor={onOpenEditor}
       onDragStart={onDragStart}
       onTogglePlan={() => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
       card

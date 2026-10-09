@@ -68,6 +68,7 @@ import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
 import MeetingActivityFeed from '../components/meetings/MeetingActivityFeed'
 import MeetingProjectsSection from '../components/meetings/MeetingProjectsSection'
 import { isLabSeriesTitle } from '../../shared/meetingAudience'
+import { AttendeeBadge } from '../components/meetings/Attendees'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -955,12 +956,15 @@ export default function MeetingDetail() {
               )}
             </AnimatePresence>
 
-            {decisions.map((d, i) => (
-              <div key={i} className="flex items-start gap-3 py-2" style={{ borderBottom: i < decisions.length - 1 ? `1px solid ${withAlpha(ACCENT_GOLD, 6)}` : 'none' }}>
-                <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--gold)', marginTop: '7px', flexShrink: 0 }} />
-                <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>{d}</p>
+            {decisions.length > 0 && (
+              <div className="tk">
+                <ul className="tk-card tk-decs">
+                  {decisions.map((d, i) => (
+                    <li key={i} className="tk-dec"><span className="tk-dia" aria-hidden="true">&#9670;</span><span>{d}</span></li>
+                  ))}
+                </ul>
               </div>
-            ))}
+            )}
 
             {decisions.length === 0 && !showDecisionForm && (
               <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
@@ -1067,9 +1071,9 @@ export default function MeetingDetail() {
                 </div>
               </div>
             ) : (
-              <div className="relative group">
+              <div className="relative group tk">
                 {meeting?.notes ? (
-                  <MarkdownView source={meeting.notes} />
+                  <MarkdownView source={meeting.notes} className="tk-msum" />
                 ) : (
                   <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontStyle: 'italic', margin: 0, cursor: 'pointer' }}
                     onClick={() => { setNotesDraft(''); setEditingNotes(true) }}>
@@ -1166,10 +1170,9 @@ function AttendeeChip({ slug }: { slug: string }) {
       onMouseEnter={handlers.onMouseEnter}
       onMouseLeave={handlers.onMouseLeave}
     >
-      <div style={{ width: 24, height: 24 }}>
-        <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="tight" variant="ice" />
-      </div>
-      <span style={{ fontSize: '12px', color: 'var(--ink)', whiteSpace: 'nowrap' }}>{p.name.split(' ')[0]}</span>
+      <span className="tk inline-flex items-center gap-1.5" style={{ fontSize: '12.5px', color: 'var(--sk-t1)', whiteSpace: 'nowrap' }}>
+        <AttendeeBadge value={slug} />
+      </span>
       <HoverCard
         data={memberData}
         isVisible={isVisible}
@@ -1451,7 +1454,7 @@ function AttendanceSection({ attendees, updateMeta, canEdit }: { attendees: stri
     <div className="mt-4">
       <div className="flex items-center gap-2 mb-2">
         <Users {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', flexShrink: 0 }} />
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 'var(--label-weight)' }}>
+        <span style={{ fontSize: '12px', color: 'var(--sk-t3)', fontWeight: 500 }}>
           Attendees
         </span>
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>

@@ -17,6 +17,7 @@ import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
 import DataPage from '../components/DataPage'
+import { TableSkeleton } from '../components/LoadingSkeleton'
 import { ColumnHeader, TableContainer } from '../components/table'
 import { directors } from '../data/team'
 import { displayName } from '../lib/nameUtils'
@@ -24,13 +25,12 @@ import type { Project } from '../data/types'
 import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import { staggerContainer, staggerItem } from '../lib/animations'
 import { stripConsortiumPrefix, stripGrantTypePrefix, isGrantProjectType } from '../lib/textUtils'
-import { mechanismFamily, MECHANISM_ACCENT } from '../lib/grantMechanism'
 import { Chip } from '../components/ui/Chip'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { useAllProjectLinks, useAllProjectPublications } from '../hooks/useApiData'
 import type { StoredLink } from '../hooks/useApiData'
-import { iconForType } from '../lib/linkIcon'
+import { linkTintForType, iconForType } from '../lib/linkIcon'
 import { classifyUrl } from '../lib/urlClassify'
 import { displayRank } from '../lib/pbLinkDisplayOrder.generated'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
@@ -97,26 +97,21 @@ function statusScope(status: string, projects: Project[]): Project[] {
   return projects.filter((p) => !isProjectDone(p.status))
 }
 
-const CATEGORY_DOT: Record<string, string> = {
-  // Canonical 3-bucket
-  MNCCORE: 'var(--teal)',
-  CLIF: 'var(--maroon)',
-  'Peripheral Brain': 'var(--slate)',
-  // Legacy fallbacks for soft-deleted rows
-  clif: 'var(--maroon)',
-  lab: 'var(--teal)',
-  nate: 'var(--orange)',
-  mentee: 'var(--gold)',
-}
+// Option sets for the list's inline editors, in the Today card's grayscale
+// (rules-ui-design #1: color is spent, not sprinkled). Status keeps color for
+// blocked and waiting only; stage and PI read t2; group is muted t3. The label
+// colors reach both the trigger and the menu through InlineSelect's `color`.
+const T2 = 'var(--sk-t2)'
+const T3 = 'var(--sk-t3)'
+const STATUS_LIST_OPTIONS = PROJECT_STATUS_OPTIONS.map((o) => ({
+  ...o,
+  color: o.value === 'blocked' || o.value === 'waiting_external' ? o.color : T2,
+}))
+const STAGE_LIST_OPTIONS = STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s], color: T2 }))
 
-// Grant-mechanism badge colors (projects.type, schema-v73). One tier more
-// specific than the category dot — R01/R03/K read at a glance in the dense
-// pipeline row. Colors come from the shared family primitive
-// (lib/grantMechanism): non-grant types (CLIF, Nick_Lab, Friends, Mentees,
-// Admin, Personal) map to family 'other' = slate, and never render a badge
-// anyway (see isGrantProjectType).
-const grantTypeColor = (type: string | null | undefined): string =>
-  MECHANISM_ACCENT[mechanismFamily(type)]
+// One grid for the header and every row (they drifted apart once, #91): title,
+// status, stage, PI, group, five 24px link slots, folder + Work on.
+const PROJECT_COLS = 'minmax(280px, 3fr) 110px 128px 120px 104px 124px 52px'
 
 // Fully-cleaned display title for a pipeline row: strip the consortium tag
 // first, then — if the project's own `type` says it's a grant — the
@@ -152,7 +147,7 @@ function PublishedChip({
       className="tip"
       data-tip={primary?.title || cleanProjectTitle(project)}
     >
-      <Chip color="var(--teal)" bordered>
+      <Chip color={T2} bordered>
         {journal || 'Published'}{year ? ` · ${year}` : ''}
       </Chip>
     </span>
@@ -161,14 +156,14 @@ function PublishedChip({
 
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
-// Mode-B icon-only link bar for a project row.
-// Max 4 icons shown inline; overflow shown as "+N" label.
-// Borderless glyph (Nick 2026-06-17 rule): no outline, sharp, hover tooltip.
-// Non-http links open via useProtocolLaunch (mnccore:// handler + clipboard backup).
+// Link icons for a project row: up to four in fixed 24px slots with the muted
+// brand tints the Today card uses (tk-lkicon + data-lk, index.css), and a fifth
+// slot for "+N" so the right edge lines up on every row. Borderless glyph (Nick
+// 2026-06-17 rule): no outline, sharp, hover tooltip. Non-http links open via
+// useProtocolLaunch (mnccore:// handler + clipboard backup).
 const LINKS_OVERFLOW_THRESHOLD = 4
 function ProjectLinksCell({ links }: { links: StoredLink[] }) {
   const { launch } = useProtocolLaunch()
-  if (links.length === 0) return null
   // Sort: type-priority (displayRank) primary, existing sort_order as tiebreaker.
   // Stable sort mirrors PB sections.py render order so both surfaces agree.
   const sorted = [...links].sort(
@@ -177,12 +172,9 @@ function ProjectLinksCell({ links }: { links: StoredLink[] }) {
   const visible = sorted.slice(0, LINKS_OVERFLOW_THRESHOLD)
   const overflow = links.length - visible.length
   return (
-    <span
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 3, flexWrap: 'nowrap' }}
-      onClick={(e) => e.preventDefault()}
-    >
+    <span className="pj-lks" onClick={(e) => e.preventDefault()}>
       {visible.map((link) => {
-        const { Icon, color } = iconForType(link.type)
+        const { Icon } = iconForType(link.type)
         // classifyUrl resolves [[wikilink]] canonical_urls to the correct
         // mnccore://obsidian/<target> launch URI. isHttp is authoritative here.
         const { href: launchUri, isHttp } = classifyUrl(link.canonical_url)
@@ -195,6 +187,8 @@ function ProjectLinksCell({ links }: { links: StoredLink[] }) {
             rel={isHttp ? 'noopener noreferrer' : undefined}
             title={tooltip}
             aria-label={tooltip}
+            className="tk-lkicon pj-lk"
+            data-lk={linkTintForType(link.type) ?? undefined}
             onClick={(e) => {
               e.stopPropagation()
               if (!isHttp) {
@@ -205,36 +199,12 @@ function ProjectLinksCell({ links }: { links: StoredLink[] }) {
                 })
               }
             }}
-            style={{
-              width: 16,
-              height: 16,
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color,
-              textDecoration: 'none',
-              transition: 'opacity 150ms',
-              opacity: 0.85,
-              flexShrink: 0,
-            }}
           >
             <Icon {...ICON_PROPS} size={14} aria-hidden="true" />
           </a>
         )
       })}
-      {overflow > 0 && (
-        <span
-          style={{
-            fontSize: '10px',
-            color: 'var(--slate)',
-            opacity: 0.7,
-            flexShrink: 0,
-            lineHeight: 1,
-          }}
-        >
-          +{overflow}
-        </span>
-      )}
+      {overflow > 0 && <span className="pj-more">+{overflow}</span>}
     </span>
   )
 }
@@ -243,11 +213,11 @@ function ProjectLinksCell({ links }: { links: StoredLink[] }) {
 // PI value is a non-director slug (legacy "nick", a bare email, a non-director
 // member), prepend a resolved option so InlineSelect renders a clean display
 // name instead of the raw slug.
-function piOptions(currentPi?: string | null): { value: string; label: string }[] {
-  const base = directors.map((d) => ({ value: d.slug, label: displayName(d.slug, 'display') }))
+function piOptions(currentPi?: string | null): { value: string; label: string; color: string }[] {
+  const base = directors.map((d) => ({ value: d.slug, label: displayName(d.slug, 'display'), color: T2 }))
   const pi = (currentPi || '').trim()
   if (pi && !base.some((o) => o.value === pi)) {
-    return [{ value: pi, label: displayName(pi, 'display') }, ...base]
+    return [{ value: pi, label: displayName(pi, 'display'), color: T2 }, ...base]
   }
   return base
 }
@@ -315,7 +285,7 @@ export default function Projects() {
   const navigate = useNavigate()
   const allProjectsOn = useAllProjectsOn()
   const isPi = useAuth().user.isPi
-  const { data: projects = [] } = useProjects()
+  const { data: projects = [], isLoading: projectsLoading } = useProjects()
   // One title writer (D3(a)): this used to race a second raw document.title
   // effect, so the tab read "My projects" or "Projects (N active)" depending
   // on which ran last.
@@ -334,6 +304,9 @@ export default function Projects() {
     () => CATEGORY_OPTIONS.filter((o) => isPi || o.value !== PB_CATEGORY),
     [isPi],
   )
+  // The list shows group as muted t3 text, not teal / maroon words. The colored
+  // CATEGORY_OPTIONS stay for any surface that wants them.
+  const categoryListOptions = useMemo(() => categoryOptions.map((o) => ({ ...o, color: T3 })), [categoryOptions])
 
   const { data: allTasks = [] } = useTasks()
   // #507 follow-up opt-out: dependencies/healthData/allProjectLinks are all
@@ -640,7 +613,8 @@ export default function Projects() {
       }
       rightExtra={
         <>
-          <span
+          {/* "0 projects" while the list is still loading is a false claim. */}
+          {!(projectsLoading && projects.length === 0) && <span
             className="text-xs"
             style={{
               color: 'var(--slate)',
@@ -648,7 +622,7 @@ export default function Projects() {
             }}
           >
               {totalCount} projects &middot; {mncoreCount} MN-CCORE &middot; {clifCount} CLIF{pbCount > 0 ? ` \u00b7 ${pbCount} PB` : ''}{hiddenCount > 0 ? ` · ${hiddenCount} ${hiddenLabel}` : ''}
-          </span>
+          </span>}
           {viewMode === 'pipeline' && (
             <button
               type="button"
@@ -691,17 +665,23 @@ export default function Projects() {
       }
     >
         {/* ─── LIST VIEW ─── */}
-        {viewMode === 'list' && (
-          <TableContainer>
+        {projectsLoading && projects.length === 0 && (
+          <div role="status" aria-label="Loading projects" className="tk">
+            <TableSkeleton rows={10} cols={6} />
+          </div>
+        )}
+        {!(projectsLoading && projects.length === 0) && viewMode === 'list' && (
+          <div className="tk">
+          <TableContainer className="pj-table">
 
             {/* Table header */}
             <div
-              className="hidden md:grid"
+              className="hidden md:grid pj-head"
               style={{
                 /* #91 (Nick 2026-06-24): header grid must match the ROW grid —
                    the row has a trailing 52px Links/Work column the header
                    lacked, so columns drifted out of alignment. */
-                gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px 90px 52px',
+                gridTemplateColumns: PROJECT_COLS,
                 padding: 'var(--sp-sm) var(--sp-xl)',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
@@ -717,17 +697,7 @@ export default function Projects() {
                 />
               ))}
               {/* Links column — not sortable; plain label matches ColumnHeader visual style */}
-              <span
-                style={{
-                  fontSize: 'var(--label-size)',
-                  fontWeight: 'var(--label-weight)',
-                  color: 'var(--slate)',
-                  opacity: 'var(--ink-label)',
-                  userSelect: 'none',
-                }}
-              >
-                Links
-              </span>
+              <span className="pj-hl">Links</span>
             </div>
 
             {/* Stage-grouped rows with stagger animation */}
@@ -770,30 +740,13 @@ export default function Projects() {
                               gap: 'var(--sp-sm)',
                             }}
                           >
-                            <span
-                              style={{
-                                fontSize: 'var(--label-size)',
-                                fontWeight: 'var(--label-weight)',
-                                color: 'var(--slate)',
-                                opacity: 'var(--ink-label)',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.06em',
-                                flexShrink: 0,
-                              }}
-                            >
+                            <span style={{ fontSize: 12.5, fontWeight: 600, color: T2, flexShrink: 0 }}>
                               {stageLabel(project.stage)}
                             </span>
-                            <span
-                              style={{
-                                fontSize: 'var(--label-size)',
-                                color: 'var(--slate)',
-                                opacity: 0.75,
-                                flexShrink: 0,
-                              }}
-                            >
+                            <span style={{ fontSize: 12, color: T3, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
                               {filtered.filter((p) => (p.stage || '') === normalizedStage).length}
                             </span>
-                            <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+                            <div style={{ flex: 1, height: '1px', background: 'var(--sk-line)' }} />
                           </div>
                         )}
 
@@ -806,9 +759,9 @@ export default function Projects() {
                           <div
                             className={`project-list-row${isFocused ? ' project-row-focused' : ''} hidden md:grid`}
                             style={{
-                              gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px 90px 52px',
+                              gridTemplateColumns: PROJECT_COLS,
                               padding: `var(--row-padding-y) 24px`,
-                              borderBottom: '1px solid var(--border-subtle)',
+                              borderBottom: '1px solid var(--sk-line)',
                               // Plain centering is correct again now that the title
                               // cell is a single line (short_name moved to the hover
                               // tip). Every cell is one line, so they all center on
@@ -831,7 +784,7 @@ export default function Projects() {
                                   cursor: 'pointer',
                                   padding: 0,
                                   flexShrink: 0,
-                                  color: pinnedSlugs.has(project.slug) ? 'var(--gold)' : 'var(--slate)',
+                                  color: pinnedSlugs.has(project.slug) ? 'var(--sk-gold)' : 'var(--sk-t3)',
                                   // S21/P1-11: a 0.15 pin star was an invisible
                                   // affordance (especially on touch). Raise the
                                   // resting floor to discoverable-but-quiet.
@@ -845,26 +798,15 @@ export default function Projects() {
                                 data-tip={pinnedSlugs.has(project.slug) ? 'Unpin project' : 'Pin to top'}
                                 aria-label={pinnedSlugs.has(project.slug) ? 'Unpin project' : 'Pin to top'}
                               >
-                                <Star {...ICON_PROPS} size={12} fill={pinnedSlugs.has(project.slug) ? 'var(--gold)' : 'none'} />
+                                <Star {...ICON_PROPS} size={12} fill={pinnedSlugs.has(project.slug) ? 'var(--sk-gold)' : 'none'} />
                               </button>
-                              <span
-                                style={{
-                                  width: 6,
-                                  height: 6,
-                                  borderRadius: 'var(--radius-circle)',
-                                  background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
-                                  flexShrink: 0,
-                                  opacity: 0.85,
-                                  marginTop: '-1px',
-                                }}
-                              />
                               {/* Grant-mechanism badge (projects.type, schema-v73) —
                                   data-driven, never text pattern-matched. Only the 3
                                   grant values (R01/R03/K) render; CLIF/Nick_Lab/etc
                                   get no badge. */}
                               {isGrantProjectType(project.type) && (
                                 <Chip
-                                  color={grantTypeColor(project.type)}
+                                  color={T3}
                                   bordered
                                   title={`Grant mechanism: ${project.type}`}
                                 >
@@ -911,9 +853,9 @@ export default function Projects() {
                                     return short && short !== clean ? `${clean} · ${short}` : clean
                                   })()}
                                   style={{
-                                    fontSize: '14px',
+                                    fontSize: '13.5px',
                                     fontWeight: 500,
-                                    color: 'var(--ink)',
+                                    color: 'var(--sk-t1)',
                                     lineHeight: 1.35,
                                     minWidth: 0,
                                     whiteSpace: 'nowrap',
@@ -929,7 +871,7 @@ export default function Projects() {
                               {(() => {
                                 const tc = taskCountByProject.get(project.slug) || 0
                                 return tc > 0 ? (
-                                  <span className="tip" style={{ fontSize: '10px', color: 'var(--teal)', flexShrink: 0 }} data-tip={`${tc} open task${tc !== 1 ? 's' : ''}`} aria-label={`${tc} open task${tc !== 1 ? 's' : ''}`}>
+                                  <span className="tip" style={{ fontSize: '11px', color: 'var(--sk-t2)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }} data-tip={`${tc} open task${tc !== 1 ? 's' : ''}`} aria-label={`${tc} open task${tc !== 1 ? 's' : ''}`}>
                                     {tc}
                                   </span>
                                 ) : null
@@ -946,7 +888,7 @@ export default function Projects() {
                                     width: 24,
                                     height: 4,
                                     borderRadius: 'var(--radius-sm)',
-                                    background: 'var(--border-subtle)',
+                                    background: 'var(--sk-line2)',
                                     overflow: 'hidden',
                                     display: 'inline-block',
                                   }}>
@@ -973,8 +915,8 @@ export default function Projects() {
                                         width: 4,
                                         height: 4,
                                         borderRadius: 'var(--radius-circle)',
-                                        background: si <= currentIdx ? 'var(--teal-solid)' : 'var(--border-subtle)',
-                                        opacity: si <= currentIdx ? 0.8 : 0.85,
+                                        background: si <= currentIdx ? 'var(--sk-ac)' : 'var(--sk-line2)',
+                                        opacity: 1,
                                       }}
                                     />
                                   )
@@ -987,8 +929,7 @@ export default function Projects() {
                                 return (
                                   <span style={{
                                     fontSize: '10px',
-                                    color: days > 30 ? 'var(--maroon)' : days > 14 ? 'var(--orange)' : 'var(--slate)',
-                                    opacity: 0.85,
+                                    color: days > 30 ? 'var(--sk-od)' : 'var(--sk-t3)',
                                     flexShrink: 0,
                                   }} className="tip" data-tip={`Last activity ${days} days ago`} aria-label={`Last activity ${days} days ago`}>
                                     {days}d ago
@@ -1000,14 +941,14 @@ export default function Projects() {
                             {/* Status (inline editable) */}
                             <InlineSelect
                               value={normalizeProjectStatus(project.status)}
-                              options={PROJECT_STATUS_OPTIONS}
+                              options={STATUS_LIST_OPTIONS}
                               onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
                             />
 
                             {/* Stage (inline editable) — S17: instant + undo */}
                             <InlineSelect
                               value={project.stage || 'idea'}
-                              options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
+                              options={STAGE_LIST_OPTIONS}
                               onChange={(val) => handleStageChange(project.slug, val, project.stage)}
                             />
 
@@ -1031,7 +972,7 @@ export default function Projects() {
                             <div className="flex items-center" onClick={(e) => e.preventDefault()}>
                               <InlineSelect
                                 value={project.category || ''}
-                                options={categoryOptions}
+                                options={categoryListOptions}
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
                               />
                             </div>
@@ -1043,10 +984,10 @@ export default function Projects() {
                             <div
                               onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
                               onMouseDown={(e) => e.stopPropagation()}
-                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
+                              className="pj-wk"
                             >
                               {project.primary_folder && (
-                                <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.short_name || project.title} variant="compact" />
+                                <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.short_name || project.title} variant="slot" />
                               )}
                             </div>
                           </div>
@@ -1056,27 +997,16 @@ export default function Projects() {
                             className={`project-list-row${isFocused ? ' project-row-focused' : ''} md:hidden`}
                             style={{
                               padding: `var(--row-padding-y) 16px`,
-                              borderBottom: '1px solid var(--border-subtle)',
+                              borderBottom: '1px solid var(--sk-line)',
                               cursor: 'pointer',
                               transition: 'background var(--duration-fast) ease-out',
                             }}
                           >
                             {/* Title row */}
                             <div className="flex items-start gap-2" style={{ marginBottom: 'var(--sp-sm)' }}>
-                              <span
-                                style={{
-                                  width: 6,
-                                  height: 6,
-                                  borderRadius: 'var(--radius-circle)',
-                                  background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
-                                  flexShrink: 0,
-                                  opacity: 0.85,
-                                  marginTop: '6px',
-                                }}
-                              />
                               {isGrantProjectType(project.type) && (
                                 <Chip
-                                  color={grantTypeColor(project.type)}
+                                  color={T3}
                                   bordered
                                   title={`Grant mechanism: ${project.type}`}
                                   style={{ flexShrink: 0, marginTop: '2px' }}
@@ -1086,9 +1016,9 @@ export default function Projects() {
                               )}
                               <span
                                 style={{
-                                  fontSize: '14px',
+                                  fontSize: '13.5px',
                                   fontWeight: 500,
-                                  color: 'var(--ink)',
+                                  color: 'var(--sk-t1)',
                                   lineHeight: 1.35,
                                   flex: 1,
                                 }}
@@ -1096,9 +1026,8 @@ export default function Projects() {
                                 {cleanProjectTitle(project)}
                                 {project.short_name && (
                                   <span style={{
-                                    fontSize: '11px',
-                                    color: 'var(--slate)',
-                                    opacity: 0.75,
+                                    fontSize: '11.5px',
+                                    color: 'var(--sk-t3)',
                                     display: 'block',
                                     marginTop: '1px',
                                   }}>
@@ -1124,18 +1053,18 @@ export default function Projects() {
                             <div className="flex items-center gap-3" style={{ paddingLeft: '14px' }}>
                               <InlineSelect
                                 value={normalizeProjectStatus(project.status)}
-                                options={PROJECT_STATUS_OPTIONS}
+                                options={STATUS_LIST_OPTIONS}
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
                               />
                               <InlineSelect
                                 value={project.stage || 'idea'}
-                                options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
+                                options={STAGE_LIST_OPTIONS}
                                 onChange={(val) => handleStageChange(project.slug, val, project.stage)}
                               />
                               <div onClick={(e) => e.preventDefault()} style={{ marginLeft: 'auto' }}>
                                 <InlineSelect
                                   value={project.category || ''}
-                                  options={categoryOptions}
+                                  options={categoryListOptions}
                                   onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
                                 />
                               </div>
@@ -1156,9 +1085,8 @@ export default function Projects() {
               >
                 <span
                   style={{
-                    fontSize: '14px',
-                    color: 'var(--slate)',
-                    opacity: 'var(--ink-label)',
+                    fontSize: '13.5px',
+                    color: 'var(--sk-t3)',
                   }}
                 >
                   No projects in this category
@@ -1173,8 +1101,8 @@ export default function Projects() {
                   display: 'flex',
                   gap: 'var(--sp-xl)',
                   padding: 'var(--sp-sm) var(--sp-xl)',
-                  borderTop: '1px solid var(--border-subtle)',
-                  background: 'var(--teal-hover)',
+                  borderTop: '1px solid var(--sk-line)',
+                  background: 'transparent',
                 }}
               >
                 {[
@@ -1191,18 +1119,19 @@ export default function Projects() {
                     }, {} as Record<string, number>)
                   ).map(([stage, count]) => ({ label: stageLabel(stage), value: count })),
                 ].map(s => (
-                  <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                  <span key={s.label} style={{ fontSize: 12, color: 'var(--sk-t3)' }}>
                     {s.label}{' '}
-                    <span style={{ fontWeight: 600, opacity: 1 }}>{s.value}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--sk-t2)', fontVariantNumeric: 'tabular-nums' }}>{s.value}</span>
                   </span>
                 ))}
               </div>
             )}
           </TableContainer>
+          </div>
         )}
 
         {/* ─── PIPELINE VIEW ─── */}
-        {viewMode === 'pipeline' && (
+        {!(projectsLoading && projects.length === 0) && viewMode === 'pipeline' && (
           <>
             {/* Stage progression line (desktop) */}
             <div
@@ -1363,17 +1292,17 @@ export default function Projects() {
         }
 
         .project-list-row:hover {
-          background: var(--gold-hover) !important;
+          background: color-mix(in srgb, var(--sk-t1) 4%, transparent) !important;
           transition: background var(--duration-fast) ease-out !important;
         }
         .project-list-row:active {
-          background: var(--gold-active) !important;
+          background: color-mix(in srgb, var(--sk-t1) 7%, transparent) !important;
           transition: background 0.05s ease-out !important;
         }
 
         .project-row-focused {
           position: relative;
-          background: var(--gold-hover) !important;
+          background: color-mix(in srgb, var(--sk-t1) 4%, transparent) !important;
         }
         .project-row-focused::before {
           content: '';
@@ -1382,7 +1311,7 @@ export default function Projects() {
           top: 0;
           bottom: 0;
           width: 2px;
-          background: var(--gold);
+          background: var(--sk-ac);
           border-radius: 0 1px 1px 0;
         }
 
@@ -1404,14 +1333,12 @@ export default function Projects() {
         .dark .project-card:hover {
           background-image: linear-gradient(var(--surface-3), var(--surface-3)) !important;
         }
-        .dark .project-row-focused {
-          background: var(--gold-hover) !important;
-        }
+        .dark .project-row-focused,
         .dark .project-list-row:hover {
-          background: var(--gold-active) !important;
+          background: color-mix(in srgb, var(--sk-t1) 6%, transparent) !important;
         }
         .dark .project-list-row:active {
-          background: var(--gold-emphasis) !important;
+          background: color-mix(in srgb, var(--sk-t1) 9%, transparent) !important;
         }
       `}</style>
     </>

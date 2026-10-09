@@ -26,6 +26,7 @@ import { BulkBar } from './components/BulkBar'
 import { ColumnsView } from './views/ColumnsView'
 import { LanesView } from './views/LanesView'
 import { ListView } from './views/ListView'
+import { TableView } from './views/TableView'
 const TaskBoardView = lazyRoute(() => import('../../components/tasks/TaskBoardView'))
 import { useTaskFilter } from './hooks/useTaskFilter'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
@@ -59,7 +60,7 @@ export default function UnifiedMyTasks() {
 
   const initialView: ViewMode = (() => {
     const fromUrl = searchParams.get('view') as ViewMode | null
-    if (fromUrl === 'columns' || fromUrl === 'lanes' || fromUrl === 'list' || fromUrl === 'board') return fromUrl
+    if (fromUrl === 'columns' || fromUrl === 'lanes' || fromUrl === 'list' || fromUrl === 'table' || fromUrl === 'board') return fromUrl
     return 'list'
   })()
   const [view, setView] = useState<ViewMode>(initialView)
@@ -133,7 +134,7 @@ export default function UnifiedMyTasks() {
     setSearch(p.get('q') ?? '')
     setQuickView((p.get('filter') as QuickViewKey | null) ?? 'all')
     const v = p.get('view') as ViewMode | null
-    if (v === 'columns' || v === 'lanes' || v === 'list') setView(v)
+    if (v === 'columns' || v === 'lanes' || v === 'list' || v === 'table') setView(v)
     else setView('list')
     setFilter({
       priority: p.get('priority'),
@@ -377,6 +378,8 @@ export default function UnifiedMyTasks() {
             <ColumnsView filtered={filtered} isEmpty={isEmpty} byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
           ) : effectiveView === 'lanes' ? (
             <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
+          ) : effectiveView === 'table' ? (
+            <TableView filtered={filtered} isEmpty={isEmpty} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} projectOptions={projectOptions} plannedSet={plannedSet} />
           ) : effectiveView === 'board' ? (
             <Suspense fallback={<div className="mt-band" style={{ paddingTop: 24 }}><TableSkeleton /></div>}>
               <TaskBoardView tasks={filtered} onStatusChange={onBoardStatusChange} onSelect={(t) => setDrawer(t.id)} />
@@ -388,7 +391,7 @@ export default function UnifiedMyTasks() {
                   <span style={{ fontSize: 11, color: 'var(--muted)', opacity: 0.85 }}>{view === 'board' ? 'Board' : 'Columns'} is a desktop view — showing List on this screen.</span>
                 </div>
               )}
-              <ListView filtered={filtered} isEmpty={isEmpty} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} projectOptions={projectOptions} plannedSet={plannedSet} />
+              <ListView filtered={filtered} isEmpty={isEmpty} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} />
             </>
           )}
         </div>

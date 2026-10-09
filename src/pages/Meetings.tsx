@@ -16,13 +16,15 @@ import { directors, getAllMembers, getPersonInfo } from '../data/team'
 import { projects as projectOptions } from '../data/projects'
 import QuickAddForm, { QuickAddTrigger } from '../components/QuickAddForm'
 import Avatar from '../components/Avatar'
+import { AttendeeFaces, AttendeePeople } from '../components/meetings/Attendees'
+import MeetingListCard from '../components/meetings/MeetingListCard'
 import PageHeader from '../components/PageHeader'
 import InlineSelect from '../components/InlineSelect'
 import InlineAssigneePicker from '../components/InlineAssigneePicker'
 import Field from '../components/ui/Field'
 import { TaskRow as SharedTaskRow } from '../components/tasks/TaskRow'
 import { emDashifyTitle } from '../lib/textUtils'
-import { civilDaysUntil, formatFullDate, formatShortDate, localDateKey } from '../lib/dateUtils'
+import { civilDaysUntil, formatFullDate, localDateKey } from '../lib/dateUtils'
 import PageTooltip, { dismissPageTooltip } from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
 import { PATHS } from '../constants/paths'
@@ -193,57 +195,42 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
     <div>
       <div className="mb-6">
         <div className="flex items-start gap-4">
-          <div
-            className="shrink-0 flex flex-col items-center justify-center rounded-xl"
-            style={{ width: '60px', height: '60px', background: 'var(--gold-light)', border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}` }}
-          >
-            <span style={{ fontSize: '10px', color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1 }}>
+          <div className="tk-dtile shrink-0">
+            <span className="tk-dtm">
               {new Date(meeting.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short' })}
             </span>
-            <span style={{ fontSize: '22px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2 }}>
+            <span className="tk-dtd">
               {new Date(meeting.date + 'T12:00:00').getDate()}
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-medium leading-snug" style={{ color: 'var(--ink)', margin: 0 }}>
+            <h2 className="text-xl font-medium leading-snug" style={{ color: 'var(--sk-t1)', margin: 0 }}>
               {emDashifyTitle(meeting.title)}
             </h2>
-            <p className="text-sm mt-1" style={{ color: 'var(--slate)', opacity: 0.85 }}>
+            <p className="text-sm mt-1" style={{ color: 'var(--sk-t3)' }}>
               {formatFullDate(meeting.date)}
             </p>
             <div className="flex flex-wrap items-center gap-3 mt-2">
-              <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--muted)' }}>
+              <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--sk-t3)' }}>
                 <Users {...ICON_PROPS} size={12} />
                 {meeting.attendees?.length ?? 0} attendees
               </span>
               {totalActions > 0 && (
-                <span className="flex items-center gap-1 text-xs" style={{ color: pendingActions > 0 ? 'var(--gold)' : 'var(--teal)' }}>
+                <span className="flex items-center gap-1 text-xs" style={{ color: pendingActions > 0 ? 'var(--sk-t2)' : 'var(--sk-t3)' }}>
                   <ListChecks {...ICON_PROPS} size={12} />
                   {pendingActions > 0 ? `${pendingActions} pending` : `${totalActions} done`}
                 </span>
               )}
               {fInfo && (
-                <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--teal)' }}>
+                <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--sk-t3)' }}>
                   <UserCheck {...ICON_PROPS} size={12} />
                   Facilitated by {fInfo.name}
                 </span>
               )}
             </div>
           </div>
-          <div className="hidden sm:flex items-center -space-x-2 shrink-0">
-            {meeting.attendees?.slice(0, 5).map((slug) => {
-              const info = getPersonInfo(slug)
-              return (
-                <div key={slug} style={{ width: 28, height: 28 }}>
-                  <Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="base-sm" />
-                </div>
-              )
-            })}
-            {(meeting.attendees?.length ?? 0) > 5 && (
-              <span className="text-xs pl-2" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-                +{(meeting.attendees?.length ?? 0) - 5}
-              </span>
-            )}
+          <div className="hidden sm:flex items-center shrink-0">
+            <AttendeeFaces values={meeting.attendees} max={5} />
           </div>
         </div>
       </div>
@@ -332,19 +319,7 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
       {meeting.attendees && meeting.attendees.length > 0 && (
         <div className="mb-6">
           <h4 className="mtg-section-label mb-2">Attendees</h4>
-          <div className="flex flex-wrap items-center gap-2">
-            {meeting.attendees.map((slug) => {
-              const info = getPersonInfo(slug)
-              return (
-                <div key={slug} className="flex items-center gap-1.5">
-                  <div style={{ width: 24, height: 24 }}>
-                    <Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="tight" />
-                  </div>
-                  <span className="text-xs" style={{ color: 'var(--ink)' }}>{info.name}</span>
-                </div>
-              )
-            })}
-          </div>
+          <AttendeePeople values={meeting.attendees} />
         </div>
       )}
 
@@ -353,7 +328,7 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
           <h4 className="mtg-section-label mb-2">Agenda</h4>
           <ol className="list-decimal list-inside space-y-1">
             {meeting.agenda.map((item, i) => (
-              <li key={i} className="text-sm leading-relaxed" style={{ color: 'var(--ink)' }}>{item}</li>
+              <li key={i} className="text-sm leading-relaxed" style={{ color: 'var(--sk-t1)' }}>{item}</li>
             ))}
           </ol>
         </div>
@@ -361,16 +336,15 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
 
       {meeting.decisions && meeting.decisions.length > 0 && (
         <div className="mb-6">
-          <h4 className="mtg-section-label mtg-section-label--gold mb-2">Decisions</h4>
-          <div className="space-y-2">
+          <h4 className="mtg-section-label mb-2">Decisions</h4>
+          <ul className="tk-card tk-decs">
             {meeting.decisions.map((decision, i) => (
-              <div key={i} className="flex gap-2 px-3 py-2 rounded-md text-sm"
-                style={{ background: 'var(--gold-active)', border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`, color: 'var(--ink)' }}>
-                <span style={{ color: 'var(--gold)', flexShrink: 0, marginTop: '1px' }}>&#9670;</span>
-                {decision}
-              </div>
+              <li key={i} className="tk-dec">
+                <span className="tk-dia" aria-hidden="true">&#9670;</span>
+                <span>{decision}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
 
@@ -380,7 +354,7 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
           status without navigating). */}
       {realActionItems.length > 0 && (
         <div className="mb-6">
-          <h4 className="mtg-section-label mb-2">Action Items</h4>
+          <h4 className="mtg-section-label mb-2">Action items</h4>
           <div>
             {realActionItems.map((item) => {
               const project = item.project_id
@@ -407,7 +381,7 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
       {meeting.notes && (
         <div className="mb-6">
           <h4 className="mtg-section-label mb-2">Notes</h4>
-          <MarkdownView source={meeting.notes} />
+          <MarkdownView source={meeting.notes} className="tk-msum" />
         </div>
       )}
 
@@ -438,6 +412,7 @@ export default function Meetings() {
   const [mobileShowDetail, setMobileShowDetail] = useState(false)
 
   const { data: meetingRows = [], isLoading: meetingsLoading } = useMeetingsApi()
+  const { data: projectList = [] } = useProjects()
   const { data: cadence } = useMeetingCadence()
   const createTaskMutation = useCreateTask()
   // T12: server-backed seen tracking (schema v81) replaces the per-device
@@ -554,6 +529,28 @@ export default function Meetings() {
     }
     return result
   }, [filter, searchQuery, meetings])
+
+  // The muted project line on each list card: the meeting's tagged projects
+  // (what it discussed), else its action items' projects. Only projects this
+  // viewer can see have a name here; a hidden one is skipped, never shown as a slug.
+  const projectLinesByMeeting = useMemo(() => {
+    const byRef = new Map<string, string>()
+    for (const pr of projectList) {
+      const label = pr.short_name?.trim() || pr.title
+      byRef.set(pr.slug, label)
+      if (pr.id) byRef.set(pr.id, label)
+    }
+    const rowTags = new Map(meetingRows.map((r) => [r.id, parseJsonArray(r.tags)]))
+    const out = new Map<string, { first: string | null; extra: number }>()
+    for (const m of meetings) {
+      const refs = rowTags.get(m.id)?.length
+        ? rowTags.get(m.id) ?? []
+        : [...new Set((m.actionItems ?? []).map((a) => a.projectSlug).filter((x): x is string => !!x))]
+      const names = [...new Set(refs.map((ref) => byRef.get(ref)).filter((x): x is string => !!x))]
+      out.set(m.id, { first: names[0] ?? null, extra: Math.max(0, names.length - 1) })
+    }
+    return out
+  }, [projectList, meetingRows, meetings])
 
   const effectiveSelectedId = selectedMeetingId ?? filteredMeetings[0]?.id ?? null
   const selectedMeeting = filteredMeetings.find((m) => m.id === effectiveSelectedId) ?? null
@@ -823,8 +820,8 @@ export default function Meetings() {
       </div>
 
       {/* M-03: 240px list, M-28: minHeight 400px, M-34: mobile-detail class */}
-      <div className={`meetings-split-panel${mobileShowDetail ? ' mobile-detail' : ''}`}
-        style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 0, height: 'calc(100vh - 130px)', overflow: 'hidden' }}>
+      <div className={`meetings-split-panel tk${mobileShowDetail ? ' mobile-detail' : ''}`}
+        style={{ display: 'grid', gridTemplateColumns: '290px 1fr', gap: 0, height: 'calc(100vh - 130px)', overflow: 'hidden' }}>
 
         {/* Left panel — M-28: minHeight, M-34: hidden when mobile-detail active */}
         <div className="meetings-list-panel" style={{ overflowY: 'auto', borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
@@ -851,7 +848,7 @@ export default function Meetings() {
             </div>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', minHeight: 500 }}>
+          <div className="tk-mlist" style={{ flex: 1, overflowY: 'auto', minHeight: 500 }}>
             {meetingsLoading && filteredMeetings.length === 0 ? (
               // CLS fix (C8): skeleton meeting rows reserve list height before data arrives
               Array.from({ length: 10 }).map((_, i) => (
@@ -880,51 +877,26 @@ export default function Meetings() {
                 const meetingSeen = unseen?.meetings.get(meeting.id)
                 const isNeverSeen = meetingSeen?.never_seen === 1
                 const hasUpdateSinceSeen = !!meetingSeen && !isNeverSeen
+                const proj = projectLinesByMeeting.get(meeting.id)
                 return (
-                  <button key={meeting.id} type="button" className="cursor-pointer w-full text-left hov-bg"
-                    style={{ display: 'block', padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', background: isSelected ? 'rgba(45,138,138,0.08)' : 'transparent', borderLeft: isNext ? '3px solid var(--teal)' : isSelected ? '3px solid rgba(45,138,138,0.4)' : '3px solid transparent', transition: 'background 150ms ease', outline: 'none', '--hov-bg': isSelected ? 'rgba(45,138,138,0.08)' : withAlpha(ACCENT_GOLD, 4) } as React.CSSProperties}
-                    onClick={() => { setSelectedMeetingId(meeting.id); setFocusedIndex(idx); setMobileShowDetail(true); dismissPageTooltip('meetings-prep-hint') }}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span style={{ fontSize: '11px', color: isNext ? 'var(--teal)' : 'var(--slate)', opacity: isNext ? 1 : 0.85, flexShrink: 0, fontWeight: isNext ? 600 : 400, minWidth: '46px' }}>
-                        {formatShortDate(meeting.date)}
-                      </span>
-                      <div className="flex items-center gap-1" style={{ flexShrink: 0 }}>
-                        {isNeverSeen && (
-                          <span
-                            title="New notes since your last visit"
-                            style={{ fontSize: '9px', fontWeight: 700, padding: '1px 6px', borderRadius: '10px', background: 'var(--gold)', color: '#1a1a1a', letterSpacing: '0.02em' }}
-                          >
-                            NEW
-                          </span>
-                        )}
-                        {hasUpdateSinceSeen && (
-                          <span
-                            aria-hidden="true"
-                            title="Updated since you last looked"
-                            style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--teal)', boxShadow: '0 0 0 2.5px rgba(45,138,138,0.15)', flexShrink: 0 }}
-                          />
-                        )}
-                        {meeting.audience === 'lab' && (
-                          <span title="Lab meeting: every member can see it" style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '10px', border: '1px solid var(--border-subtle)', color: 'var(--slate)', fontWeight: 500 }}>
-                            Lab
-                          </span>
-                        )}
-                        {actionCount > 0 && (
-                          <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '10px', background: pendingCount > 0 ? withAlpha(ACCENT_GOLD, 15) : 'rgba(45,138,138,0.12)', color: pendingCount > 0 ? 'var(--gold)' : 'var(--teal)', fontWeight: 500 }}>
-                            {pendingCount > 0 ? `${pendingCount} actions` : '✓'}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '12px', color: isSelected ? 'var(--ink)' : 'var(--slate)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: isSelected ? 1 : 0.85, fontWeight: isSelected ? 500 : 400 }}>
-                      {emDashifyTitle(meeting.title)}
-                    </p>
-                    {isNext && (
-                      <span style={{ fontSize: '10px', color: 'var(--teal)', marginTop: '2px', display: 'block', opacity: 0.8 }}>
-                        Next meeting
-                      </span>
-                    )}
-                  </button>
+                  <MeetingListCard
+                    key={meeting.id}
+                    id={meeting.id}
+                    date={meeting.date}
+                    title={meeting.title}
+                    attendees={meeting.attendees}
+                    project={proj?.first ?? null}
+                    extraProjects={proj?.extra ?? 0}
+                    actionCount={actionCount}
+                    pendingCount={pendingCount}
+                    isSelected={isSelected}
+                    isNext={isNext}
+                    isNeverSeen={isNeverSeen}
+                    hasUpdateSinceSeen={hasUpdateSinceSeen}
+                    // Lab pill (meeting-access): a quiet outlined tag in the card's badge slot.
+                    badges={meeting.audience === 'lab' ? <span className="tk-tag tk-n" title="Lab meeting: every member can see it">Lab</span> : undefined}
+                    onSelect={() => { setSelectedMeetingId(meeting.id); setFocusedIndex(idx); setMobileShowDetail(true); dismissPageTooltip('meetings-prep-hint') }}
+                  />
                 )
               })
             ) : (
@@ -996,10 +968,8 @@ export default function Meetings() {
         }
         .dark select, .dark input[type="date"] { color-scheme: dark; }
         .mtg-section-label {
-          font-size: 10px; font-weight: 600; text-transform: uppercase;
-          letter-spacing: 0.06em; color: var(--slate); opacity: 0.85;
+          font-size: 12px; font-weight: 500; color: var(--sk-t3);
         }
-        .mtg-section-label--gold { color: var(--gold) !important; opacity: 1 !important; }
         .carried-count-badge {
           display: inline-flex; align-items: center; justify-content: center;
           font-size: 9px; font-weight: 600; padding: 0px 4px; border-radius: 9999px;
