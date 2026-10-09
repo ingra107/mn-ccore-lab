@@ -15,15 +15,10 @@
 //   9. GET /api/tasks/:id/comments              (tasks.ts:handleGetTaskComments)
 //  10. GET /api/tasks/:id/activity              (tasks.ts:handleGetTaskActivity)
 //  11. GET /api/tasks/:id/detail                (tasks.ts:handleGetTaskDetail)
-//  12. GET /api/tasks/:id/updates               (tasks.ts:handleGetTaskUpdates)
 //
 // Covered endpoints (Pattern B — cross-project feed with canSeePb flag):
 //  13. GET /api/updates/recent                  (projects.ts:handleRecentUpdates)
 //  14. GET /api/task-updates/recent             (tasks.ts:handleGetRecentTaskUpdates)
-//  15. GET /api/revisions/active                (revisions.ts:handleGetActiveRevisions)
-//
-// Covered endpoints (Pattern C — projection only):
-//  16. GET /api/team/:slug/cv-data              (team.ts:handleCVData) — no email/auto_created
 //
 // Per-endpoint assertions:
 //   - Non-PI caller blocked (403/filtered-out) on a PB-category project resource
@@ -53,11 +48,8 @@ import {
   handleGetTaskComments,
   handleGetTaskActivity,
   handleGetTaskDetail,
-  handleGetTaskUpdates,
   handleGetRecentTaskUpdates,
 } from './tasks'
-import { handleGetActiveRevisions } from './revisions'
-import { handleCVData } from './team'
 import type { Env } from '../helpers'
 
 // ── Test primitives ────────────────────────────────────────────────────────────
@@ -497,40 +489,6 @@ describe('handleGetTaskDetail — PB visibility gate (via task.project_id)', () 
   })
 })
 
-// ── 12. Task updates ──────────────────────────────────────────────────────────
-
-describe('handleGetTaskUpdates — PB visibility gate (via task.project_id)', () => {
-  it('blocks non-PI caller on a task in a PB-category project', async () => {
-    const env = makeEnv()
-    const res = await handleGetTaskUpdates(TASK_PB, nonPiRequest(), env)
-    expect(res.status).toBe(403)
-  })
-
-  it('allows non-PI caller on a task in a non-PB project', async () => {
-    const env = makeEnv()
-    const res = await handleGetTaskUpdates(TASK_MN, nonPiRequest(), env)
-    expect(res.status).toBe(200)
-  })
-
-  it('allows non-PI caller on a task with NO project_id (unassigned task)', async () => {
-    const env = makeEnv()
-    const res = await handleGetTaskUpdates('task_none', nonPiRequest(), env)
-    expect(res.status).toBe(200)
-  })
-
-  it('allows PI caller on a task in a PB-category project', async () => {
-    const env = makeEnv()
-    const res = await handleGetTaskUpdates(TASK_PB, piRequest(), env)
-    expect(res.status).toBe(200)
-  })
-
-  it('allows API-key caller on a task in a PB-category project', async () => {
-    const env = makeEnv()
-    const res = await handleGetTaskUpdates(TASK_PB, apiKeyRequest(), env)
-    expect(res.status).toBe(200)
-  })
-})
-
 // ── 13. Recent project updates (Pattern B — canSeePb filter) ──────────────────
 
 describe('handleRecentUpdates — canSeePb filter (Pattern B)', () => {
@@ -585,43 +543,5 @@ describe('handleGetRecentTaskUpdates — canSeePb filter (Pattern B)', () => {
 
   it('canSeePb=true — both come back', async () => {
     expect(await contents(true)).toEqual([`TASK UPDATE ON ${TASK_MN}`, `TASK UPDATE ON ${TASK_PB}`])
-  })
-})
-
-// ── 15. Active revisions (Pattern B — canSeePb flag) ─────────────────────────
-
-describe('handleGetActiveRevisions — canSeePb filter (Pattern B)', () => {
-  const ids = async (canSeePb: boolean) => {
-    const res = await handleGetActiveRevisions(makeEnv(), canSeePb)
-    expect(res.status).toBe(200)
-    return ((await res.json()) as { data: Array<{ id: string }> }).data.map((r) => r.id).sort()
-  }
-
-  it('canSeePb=false — the PB project revision is filtered out', async () => {
-    expect(await ids(false)).toEqual(['rev_mnccore-proj'])
-  })
-
-  it('canSeePb=true — both revisions come back', async () => {
-    expect(await ids(true)).toEqual(['rev_mnccore-proj', 'rev_pb-proj'])
-  })
-})
-
-// ── 16. CV data — Pattern C (no email/auto_created in response) ───────────────
-
-describe('handleCVData — no email/auto_created projection', () => {
-  it('returns 200 with member data, and never the stored email or auto_created flag', async () => {
-    // The seeded member HAS an email and auto_created=1, so a SELECT * would leak both.
-    const res = await handleCVData('nate-mesfin', makeEnv())
-    expect(res.status).toBe(200)
-    const body = await res.json() as { data: { member: Record<string, unknown> } }
-    expect(body.data.member).toMatchObject({ name: 'Nate Mesfin', slug: 'nate-mesfin' })
-    expect(body.data.member).not.toHaveProperty('email')
-    expect(body.data.member).not.toHaveProperty('auto_created')
-    expect(JSON.stringify(body)).not.toContain(NON_PI_EMAIL)
-  })
-
-  it('returns 404 when slug not found', async () => {
-    const res = await handleCVData('ghost-slug', makeEnv())
-    expect(res.status).toBe(404)
   })
 })

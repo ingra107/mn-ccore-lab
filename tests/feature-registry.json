@@ -327,24 +327,6 @@
       "covered": true
     },
     {
-      "id": "api-get-collab-graph",
-      "component": "api/routes/publications.ts",
-      "type": "api",
-      "description": "GET /api/graph/collaboration — collaboration graph",
-      "test_file": "tests/inspection.spec.ts",
-      "test_name": "API GET Collaboration graph",
-      "covered": true
-    },
-    {
-      "id": "api-get-revisions-active",
-      "component": "api/routes/revisions.ts",
-      "type": "api",
-      "description": "GET /api/revisions/active — active revisions",
-      "test_file": "tests/inspection.spec.ts",
-      "test_name": "API GET Active revisions",
-      "covered": true
-    },
-    {
       "id": "api-get-submissions-active",
       "component": "api/routes/submissions.ts",
       "type": "api",
@@ -714,24 +696,6 @@
       "covered": true
     },
     {
-      "id": "api-get-team-by-expertise",
-      "component": "api/routes/pi-dashboard.ts",
-      "type": "api",
-      "description": "GET /api/team/by-expertise — team by expertise tag",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "API GET: Team by expertise tag",
-      "covered": true
-    },
-    {
-      "id": "api-get-team-cv-data",
-      "component": "api/routes/team.ts",
-      "type": "api",
-      "description": "GET /api/team/:slug/cv-data — CV data for member",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "API GET: CV data for member",
-      "covered": true
-    },
-    {
       "id": "api-get-team-trajectory",
       "component": "api/routes/trajectory.ts",
       "type": "api",
@@ -747,15 +711,6 @@
       "description": "GET /api/team/:slug/contributions — contribution data",
       "test_file": "tests/inspection-workflows.spec.ts",
       "test_name": "API GET: Contribution data for member",
-      "covered": true
-    },
-    {
-      "id": "api-get-expertise-suggest",
-      "component": "api/routes/expertise.ts",
-      "type": "api",
-      "description": "GET /api/expertise/suggest — expertise suggestions",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "API GET: Expertise suggestions",
       "covered": true
     },
     {
@@ -3264,9 +3219,9 @@
     "form-publication-search"
   ],
   "summary": {
-    "total": 360,
-    "covered": 314,
+    "total": 355,
+    "covered": 309,
     "uncovered": 46,
-    "coverage_pct": 87.2
+    "coverage_pct": 87.0
   }
 }

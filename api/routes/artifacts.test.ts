@@ -62,7 +62,6 @@ import {
   handleGetArtifact,
   handleCreateArtifact,
   handleReviseArtifact,
-  handleDeleteArtifact,
   handleAddArtifactComment,
 } from './artifacts';
 
@@ -412,38 +411,5 @@ describe('artifacts routes', () => {
     seedArtifact({ id: 'art_1' });
     await handleAddArtifactComment('art_1', req({ content: '@me private note', visibility: 'author' }), USER, env);
     expect(mockPostActivity.mock.calls[0][0].visibility).toBe('author');
-  });
-
-  // ── delete ────────────────────────────────────────────────────────────────────
-
-  it('delete: 403 for non-PI caller, and the artifact stays', async () => {
-    mockIsPi.mockResolvedValue(false);
-    seedArtifact({ id: 'art_1' });
-    const res = await handleDeleteArtifact('art_1', req({}), env);
-    expect(res.status).toBe(403);
-    expect(artifact('art_1')).toBeDefined();
-  });
-
-  it('delete: PI cascades activity_entries + versions + artifact', async () => {
-    mockIsPi.mockResolvedValue(true);
-    seedArtifact({ id: 'art_1', version: 2 });
-    insertRow(db, 'artifact_versions', { artifact_id: 'art_1', version: 1, body_md: 'v1' });
-    insertRow(db, 'activity_entries', { id: 'ae_art1', entity_type: 'artifact', entity_id: 'art_1', kind: 'comment', actor_slug: 'nick-ingraham', body: 'note' });
-    seedArtifact({ id: 'art_keep' });
-
-    const res = await handleDeleteArtifact('art_1', req({}), env);
-    expect(res.status).toBe(200);
-    expect(artifact('art_1')).toBeUndefined();
-    expect(count("SELECT COUNT(*) AS n FROM artifact_versions WHERE artifact_id = 'art_1'")).toBe(0);
-    expect(count("SELECT COUNT(*) AS n FROM activity_entries WHERE entity_type = 'artifact' AND entity_id = 'art_1'")).toBe(0);
-    expect(artifact('art_keep')).toBeDefined();
-  });
-
-  it('delete: idempotent when artifact already gone (PI)', async () => {
-    mockIsPi.mockResolvedValue(true);
-    const res = await handleDeleteArtifact('art_gone', req({}), env);
-    expect(res.status).toBe(200);
-    const payload = await res.json() as { data: { idempotent: boolean } };
-    expect(payload.data.idempotent).toBe(true);
   });
 });

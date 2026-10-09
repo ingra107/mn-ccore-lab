@@ -170,7 +170,32 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(274) // +4: #145 Lane B project membership routes
+    // 259 as of 2026-10-09 — dead-route sweep (-15): GET /api/team/:slug/cv-data,
+    //   /api/team/by-expertise, /api/graph/collaboration, /api/papers/by-project,
+    //   /api/expertise/suggest, /api/revisions/active, /api/tasks/:id/updates;
+    //   POST /api/artifacts/:id/delete, /api/deadline-dependencies (+ :id/delete),
+    //   /api/decisions/:id/update, /api/digest-email (+ /send),
+    //   /api/mentee-milestones/:id/complete, /api/regulatory/:id/renew.
+    //   No client in any repo called them.
+    expect(ROUTE_REGISTRY).toHaveLength(259)
+  })
+
+  // cv-data returned team_members.email for mentee rows to any signed-in user
+  // and nothing called it. A route that does not exist cannot leak, so the
+  // fix is the absence: this pins it. Re-adding a route here needs a caller.
+  it('the dead routes stay deleted', () => {
+    const gone = [
+      'GET /api/team/:slug/cv-data', 'GET /api/team/by-expertise', 'GET /api/graph/collaboration',
+      'GET /api/papers/by-project', 'GET /api/expertise/suggest', 'GET /api/revisions/active',
+      'GET /api/tasks/:id/updates', 'POST /api/artifacts/:id/delete', 'POST /api/deadline-dependencies',
+      'POST /api/deadline-dependencies/:id/delete', 'POST /api/decisions/:id/update',
+      'POST /api/digest-email', 'POST /api/digest-email/send',
+      'POST /api/mentee-milestones/:id/complete', 'POST /api/regulatory/:id/renew',
+    ]
+    const have = new Set(ROUTE_REGISTRY.map((r) => `${r.method} ${r.path}`))
+    for (const key of gone) expect(have.has(key), `${key} is back`).toBe(false)
+    // The POST sibling of the deleted GET stays.
+    expect(have.has('POST /api/tasks/:id/updates')).toBe(true)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

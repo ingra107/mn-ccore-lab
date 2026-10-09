@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, buildUpdate, resolveActor, isPiRequest, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, logActivity, resolveActor, isPiRequest, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 
 // GET /api/decisions?project_slug=&status=pending|recorded|revisited&tag=
@@ -111,32 +111,6 @@ export async function handleUpdateDecisionOutcome(id: string, request: Request, 
 
   const actor = user.slug;
   await logActivity(env, 'decision_outcome', `Outcome recorded for decision`, actor, id, 'decision');
-
-  const updated = await env.DB.prepare('SELECT * FROM hub_decisions WHERE id = ?').bind(id).first();
-  if (!updated) return error('Decision not found', 404);
-  return json({ data: updated });
-}
-
-// POST /api/decisions/:id/update — update decision fields (tags, linked_projects, etc.)
-export async function handleUpdateDecision(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as Record<string, unknown>;
-
-  // Normalize tags to CSV on write (repair path for historical JSON-array format).
-  if (typeof body.tags === 'string') {
-    body.tags = parseTagsField(body.tags).join(',') || null;
-  }
-
-  const allowedFields = ['title', 'rationale', 'context', 'project_slug', 'tags', 'linked_projects', 'outcome_sentiment'];
-  const { sql, params: values, hasUpdates } = buildUpdate(body, allowedFields);
-
-  if (!hasUpdates) return error('No valid fields to update', 400);
-
-  await env.DB.prepare(
-    `UPDATE hub_decisions SET ${sql} WHERE id = ?`
-  ).bind(...values, id).run();
-
-  const actor = user.slug;
-  await logActivity(env, 'decision_update', `Decision updated`, actor, id, 'decision');
 
   const updated = await env.DB.prepare('SELECT * FROM hub_decisions WHERE id = ?').bind(id).first();
   if (!updated) return error('Decision not found', 404);

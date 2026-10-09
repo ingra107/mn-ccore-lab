@@ -2,20 +2,6 @@ import type { AuthUser, Env } from '../helpers';
 import { json, error, logActivity, getPiEmails, generateId } from '../helpers';
 import { slugFromName, MEMBER_SLUG, UMN_EMAIL } from '../../shared/memberSlug';
 
-// AM-3 (SEC-T0-1): public-safe team_members projection. Excludes `email`
-// (PII) and `auto_created` (the internal PENDING-REVIEW flag). Keeps every
-// display field the marketing site + portal UI render (name, photo, role,
-// bio, credentials, scholar/citation stats). Used by the cv-data handler
-// below; GET /api/team returns the full row and leaves anonymous callers to
-// its anonShape in api/index.ts.
-const TEAM_PUBLIC_COLS = [
-  'id', 'name', 'slug', 'preferred_name', 'full_name', 'role', 'credentials',
-  'photo_url', 'bio', 'scholar_id', 'author_name', 'title', 'department',
-  'member_type', 'expertise_tags', 'citation_count', 'h_index',
-  'last_scholar_refresh', 'created_at',
-  // NOTE: `email` + `auto_created` deliberately omitted from the public path.
-].join(', ');
-
 // GET /api/team
 // Signed-in and API-key callers get the full row (email/auto_created
 // included). An anonymous caller's view is the route's anonShape in
@@ -34,30 +20,6 @@ export async function handleTeamSlugs(env: Env): Promise<Response> {
   // team_members row (author slug is claude-ai; the mention token is @hermes,
   // matching the /@(hermes|claude)\b/i detection in questions.ts/projects.ts).
   return json({ data: [{ slug: 'hermes', name: 'Hermes' }, ...(result.results || [])] });
-}
-
-// GET /api/team/:slug/cv-data
-// Pattern C (Phase 1b-B): use the public column projection to prevent email/auto_created leakage.
-// This endpoint is publicly reachable (no auth wall); SELECT * would expose PII.
-export async function handleCVData(slug: string, env: Env): Promise<Response> {
-  const [member, pubs, grants, mentees] = await Promise.all([
-    env.DB.prepare(`SELECT ${TEAM_PUBLIC_COLS} FROM team_members WHERE slug = ?`).bind(slug).first(),
-    env.DB.prepare("SELECT * FROM publications WHERE author_slugs LIKE ? ORDER BY year DESC")
-      .bind(`%"${slug}"%`).all(),
-    env.DB.prepare('SELECT * FROM grants WHERE pi = ? ORDER BY proposed ASC, mechanism ASC').bind(slug).all(),
-    env.DB.prepare("SELECT * FROM team_members WHERE bio LIKE ?").bind(`%mentor%${slug}%`).all(),
-  ]);
-
-  if (!member) return error('Team member not found', 404);
-
-  return json({
-    data: {
-      member,
-      publications: pubs.results || [],
-      grants: grants.results || [],
-      mentees: mentees.results || [],
-    },
-  });
 }
 
 // Self-edit fields — anyone can update on their own profile.

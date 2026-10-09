@@ -1,27 +1,9 @@
 import type { Env } from '../helpers';
-import { json, error, corsHeaders, getAuthUser, isPiRequest, getPiEmails } from '../helpers';
+import { json, error, corsHeaders, isPiRequest, getPiEmails } from '../helpers';
 import { viewerDb, personViewer } from '../lib/viewer-db';
 import { escapeHtml } from '../lib/escapeHtml';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
-
-/**
- * B6 (SEC-T0-3): owner-or-PI authorization for digest generate/send.
- * A member may generate/send only their OWN digest; a PI (or the API-key
- * service path) may act for anyone. Returns an error message string when the
- * caller is not authorized for `memberSlug`, or null when allowed.
- */
-async function authorizeDigestFor(
-  request: Request,
-  env: Env,
-  memberSlug: string,
-): Promise<string | null> {
-  if (await isPiRequest(request, env)) return null; // PI / service key
-  const user = await getAuthUser(request, env);
-  if (!user?.email || user.email === 'anonymous') return 'Authentication required';
-  if (user.slug === memberSlug) return null; // own digest
-  return 'Forbidden — you can only generate/send your own digest';
-}
 
 const HUB_URL = 'https://mn-ccore-lab.pages.dev';
 
@@ -337,41 +319,6 @@ function timeAgo(isoDate: string): string {
 // ── API handlers ──────────────────────────────────────────────
 
 /**
- * POST /api/digest-email — generate daily digest for a member
- * Body: { memberSlug: string }
- * Returns the digest data + HTML content (does NOT send email)
- */
-export async function handleGenerateDigestEmail(
-  request: Request,
-  env: Env,
-): Promise<Response> {
-  try {
-    const body = await request.json() as { memberSlug?: string };
-    if (!body.memberSlug) {
-      return error('memberSlug is required', 400);
-    }
-
-    // B6: owner-or-PI authorization.
-    const authzErr = await authorizeDigestFor(request, env, body.memberSlug);
-    if (authzErr) return error(authzErr, authzErr === 'Authentication required' ? 401 : 403);
-
-    const digest = await generateDigest(body.memberSlug, env);
-    const html = buildDigestHtml(digest);
-
-    return json({
-      data: {
-        ...digest,
-        html,
-        subject: buildSubjectLine(digest),
-      },
-    });
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return error(`Failed to generate digest: ${msg}`, 500);
-  }
-}
-
-/**
  * GET /api/digest-preview?member=slug — render digest as HTML page for testing
  * Returns raw HTML (not JSON) so it can be viewed in a browser
  */
@@ -402,75 +349,6 @@ export async function handleDigestPreview(
       headers: { 'Content-Type': 'text/html', ...corsHeaders },
     });
   }
-}
-
-/**
- * POST /api/digest-email/send — generate and send digest via Resend
- * Body: { memberSlug: string, to: string }
- * Requires RESEND_API_KEY to be configured
- */
-export async function handleSendDigestEmail(
-  request: Request,
-  env: Env,
-): Promise<Response> {
-  try {
-    const body = await request.json() as { memberSlug?: string; to?: string };
-    if (!body.memberSlug || !body.to) {
-      return error('memberSlug and to (email address) are required', 400);
-    }
-
-    // B6: owner-or-PI authorization — a member can only send their own digest.
-    const authzErr = await authorizeDigestFor(request, env, body.memberSlug);
-    if (authzErr) return error(authzErr, authzErr === 'Authentication required' ? 401 : 403);
-
-    // Restrict outbound destinations to allowlisted domains. Without this,
-    // an authenticated user could trigger Resend sends to arbitrary addresses
-    // (consultant review 2026-04-18). Add new domains here (or move to env)
-    // when collaborators from other institutions join the lab.
-    const ALLOWED_DOMAINS = ['umn.edu', 'gmail.com'];
-    const toDomain = body.to.split('@')[1]?.toLowerCase() ?? '';
-    if (!ALLOWED_DOMAINS.includes(toDomain)) {
-      return error(`to: must be a ${ALLOWED_DOMAINS.join(' or ')} address`, 400);
-    }
-
-    if (!env.RESEND_API_KEY) {
-      return error('Email sending not configured (RESEND_API_KEY missing). Use /api/digest-preview to test.', 503);
-    }
-
-    const digest = await generateDigest(body.memberSlug, env);
-    const html = buildDigestHtml(digest);
-    const subject = buildSubjectLine(digest);
-
-    const { sendEmail } = await import('../lib/email');
-    const sent = await sendEmail(env.RESEND_API_KEY, {
-      to: body.to,
-      subject,
-      html,
-    });
-
-    return json({
-      data: {
-        sent,
-        to: body.to,
-        subject,
-        overdue: digest.overdue.length,
-        dueToday: digest.dueToday.length,
-        meetings: digest.meetings.length,
-      },
-    });
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return error(`Failed to send digest: ${msg}`, 500);
-  }
-}
-
-function buildSubjectLine(digest: DigestData): string {
-  const parts: string[] = [];
-  if (digest.overdue.length > 0) parts.push(`${digest.overdue.length} overdue`);
-  if (digest.dueToday.length > 0) parts.push(`${digest.dueToday.length} due today`);
-  if (digest.meetings.length > 0) parts.push(`${digest.meetings.length} meeting${digest.meetings.length > 1 ? 's' : ''}`);
-  if (parts.length === 0) return 'MN-CCORE Daily Digest: All clear';
-  return `MN-CCORE Daily Digest: ${parts.join(', ')}`;
 }
 
 // ── Daily Coordinator Digest ──────────────────────────────────

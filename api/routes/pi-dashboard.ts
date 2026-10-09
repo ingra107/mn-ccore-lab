@@ -334,23 +334,3 @@ export async function handleTeamEngagement(env: Env): Promise<Response> {
     },
   });
 }
-
-// ── GET /api/team/by-expertise?tag=X ───────────────────────
-// Returns team members with a specific expertise tag
-export async function handleTeamByExpertise(url: URL, env: Env): Promise<Response> {
-  const tag = url.searchParams.get('tag');
-  if (!tag) {
-    return json({ data: [], error: 'tag parameter required' }, 400);
-  }
-
-  const results = await env.DB.prepare(`
-    SELECT et.tag, et.confidence, et.source,
-      tm.slug, tm.name, tm.role, tm.credentials, tm.photo_url, tm.bio
-    FROM expertise_tags et
-    JOIN team_members tm ON tm.slug = et.member_slug
-    WHERE LOWER(et.tag) = LOWER(?)
-    ORDER BY et.confidence DESC
-  `).bind(tag).all();
-
-  return json({ data: results.results || [] });
-}

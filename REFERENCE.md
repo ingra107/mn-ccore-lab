@@ -114,7 +114,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 - POST /api/tasks/:id/acknowledge (accepts `body.slug` override for server-side / API-key callers)
 - GET /api/tasks/:id/comments, POST /api/tasks/:id/comments — **projection over activity_entries since v77** (shape byte-preserved; writes via postActivityEntry)
 - **GET /api/task-comments/recent?since=&since_id=&limit=** — projection; compound (created_at,id) cursor since 2026-06-10 (PB collector adopted)
-- GET /api/tasks/:id/updates, POST /api/tasks/:id/updates — projection over activity_entries (kind='update')
+- POST /api/tasks/:id/updates — projection over activity_entries (kind='update')
 - GET /api/tasks/:id/activity — **the unified v77 feed** (all kinds, visibility-gated, newest-first)
 - GET /api/projects/:slug/activity — whole-picture project feed (project rows ∪ task rows by project_id)
 - POST /api/tasks/sync-bulk (brain.db bulk load)
@@ -125,7 +125,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 
 ### Decisions (Enhanced Phase 19)
 - GET /api/decisions (?tag= filter), POST /api/decisions
-- POST /api/decisions/:id/update, POST /api/decisions/:id/outcome
+- POST /api/decisions/:id/outcome
 - GET /api/decisions/tags (unique tags with counts)
 - GET /api/decisions/similar?context=, GET /api/decisions/similar-by-id?id=
 
@@ -137,7 +137,6 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 - GET /api/analytics/mentee-velocity
 - GET /api/analytics/response-time
 - GET /api/analytics/team-engagement
-- GET /api/team/by-expertise?tag=
 
 ### Calendar & Activity
 - GET /api/calendar/events, /api/activity/heatmap?slug=&days=
@@ -145,7 +144,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 ### Artifacts (Hermes deliverables, schema v79, 2026-06-11)
 - GET /api/artifacts (?since= for PB collection), GET /api/artifacts/:id, GET /api/artifacts/:id/activity
 - POST /api/artifacts, POST /api/artifacts/:id/revise (version++, old body → artifact_versions)
-- POST /api/artifacts/:id/comments (→ activity_entries entity_type='artifact'), POST /api/artifacts/:id/delete (PI-gated, cascades entries)
+- POST /api/artifacts/:id/comments (→ activity_entries entity_type='artifact')
 
 ### Search & Settings
 - GET /api/search?q=, /api/settings, /api/workflow-templates
@@ -161,7 +160,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 - POST /api/questions, POST /api/questions/:id/answers, POST /api/answers/:id/accept
 
 ### Manuscript Revisions
-- GET /api/revisions?project_id=, GET /api/revisions/active
+- GET /api/revisions?project_id=
 - **GET /api/projects/:slug/revisions** — slug-aware convenience alias (Phase 35)
 - POST /api/revisions (accepts `project_id` OR `project_slug`, `reviewer_comments` alias for `notes`)
 - POST /api/revisions/:id, POST /api/revisions/:id/comments

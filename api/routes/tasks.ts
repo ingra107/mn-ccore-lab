@@ -1395,23 +1395,6 @@ export async function handleGetRecentTaskComments(url: URL, env: Env, canSeePb =
   return json({ data: result.results || [] });
 }
 
-// GET /api/tasks/:id/updates — get task notes/updates
-// Projection over activity_entries (kind='update') preserving the legacy
-// task_updates shape (id, task_id, author_slug, content, update_type, created_at).
-export async function handleGetTaskUpdates(taskId: string, request: Request, env: Env): Promise<Response> {
-  // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.
-  const guard = await guardTaskProject(env, request, taskId);
-  if (guard.block) return guard.block;
-  const vis = await activityVisibilityGate(request, env);
-  const result = await env.DB.prepare(
-    `SELECT id, entity_id AS task_id, actor_slug AS author_slug, body AS content, update_type, created_at
-     FROM activity_entries
-     WHERE entity_type = 'task' AND entity_id = ? AND kind = 'update' AND hidden_at IS NULL AND ${vis.clause}
-     ORDER BY created_at DESC, id DESC`
-  ).bind(taskId, ...vis.binds).all();
-  return json({ data: result.results || [] });
-}
-
 // POST /api/tasks/:id/updates — post a task note/update
 // Writes through postActivityEntry() (kind='update'). The primitive owns @me/
 // visibility + @mention notifications (preserving source_type='task' for

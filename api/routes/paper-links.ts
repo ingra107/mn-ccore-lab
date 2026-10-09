@@ -74,24 +74,6 @@ export async function handleUnlinkPaper(id: string, request: Request, env: Env):
   return idempotentDelete({ table: 'paper_project_links', id, mode: 'hard', request, env, projectColumn: 'project_slug' });
 }
 
-// GET /api/papers/by-project?project_id= — publications linked to a project (with full pub data)
-export async function handlePapersByProject(url: URL, env: Env): Promise<Response> {
-  const projectId = url.searchParams.get('project_id');
-  if (!projectId) return error('project_id is required', 400);
-
-  const result = await env.DB.prepare(
-    `SELECT ppl.id as link_id, ppl.link_type, ppl.note, ppl.created_at as linked_at,
-            p.id, p.title, p.authors, p.journal, p.year, p.status, p.doi, p.abstract,
-            p.topics, p.featured, p.author_slugs
-     FROM paper_project_links ppl
-     JOIN publications p ON p.id = ppl.paper_id
-     WHERE ppl.project_slug = ?
-     ORDER BY p.year DESC, ppl.created_at DESC`
-  ).bind(projectId).all();
-
-  return json({ data: result.results });
-}
-
 // GET /api/papers/by-publication?publication_id= — projects linked to a publication
 export async function handlePapersByPublication(url: URL, env: Env): Promise<Response> {
   const publicationId = url.searchParams.get('publication_id');

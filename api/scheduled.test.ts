@@ -39,9 +39,7 @@ vi.mock('./routes/impact-trace', () => ({
 }))
 
 vi.mock('./routes/digest-email', () => ({
-  handleGenerateDigestEmail: vi.fn(),
   handleDigestPreview: vi.fn(),
-  handleSendDigestEmail: vi.fn(),
   handleSendDailyDigests: mockHandleSendDailyDigests,
 }))
 

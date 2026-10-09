@@ -89,18 +89,3 @@ export async function handleUpdateMenteeMilestone(id: string, request: Request, 
   if (!updated) return error('Milestone not found', 404);
   return json({ data: updated });
 }
-
-// POST /api/mentee-milestones/:id/complete — mark completed
-export async function handleCompleteMenteeMilestone(id: string, user: AuthUser, env: Env): Promise<Response> {
-  await env.DB.prepare(
-    "UPDATE mentee_milestones SET status = 'completed', completed_at = datetime('now') WHERE id = ?"
-  ).bind(id).run();
-
-  const updated = await env.DB.prepare('SELECT * FROM mentee_milestones WHERE id = ?').bind(id).first();
-  if (!updated) return error('Milestone not found', 404);
-
-  const actor = user.slug;
-  await logActivity(env, 'mentee_milestone', `Completed milestone: "${(updated as Record<string, unknown>).title}"`, actor, id, 'mentee_milestone');
-
-  return json({ data: updated });
-}

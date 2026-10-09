@@ -1,6 +1,6 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
-import type { PublicationRow, TeamMemberRow, CollaborationGraph, GraphNode, GraphEdge, Stats } from '../types';
+import type { Stats } from '../types';
 
 // GET /api/publications?year=&status=&topic=
 export async function handleGetPublications(url: URL, env: Env): Promise<Response> {
@@ -39,81 +39,6 @@ export async function handleGetGrants(env: Env): Promise<Response> {
     'SELECT * FROM grants ORDER BY mechanism, title'
   ).all();
   return json({ data: result.results, count: result.results.length });
-}
-
-// GET /api/graph/collaboration
-// Builds a co-authorship network from publications.
-// Nodes = team members who appear in author_slugs.
-// Edges = co-authorship pairs weighted by number of shared publications.
-export async function handleCollaborationGraph(env: Env): Promise<Response> {
-  const pubs = await env.DB.prepare(
-    'SELECT id, title, author_slugs FROM publications WHERE author_slugs IS NOT NULL'
-  ).all<Pick<PublicationRow, 'id' | 'title' | 'author_slugs'>>();
-
-  const members = await env.DB.prepare(
-    'SELECT id, name, slug FROM team_members WHERE slug IS NOT NULL'
-  ).all<Pick<TeamMemberRow, 'id' | 'name' | 'slug'>>();
-
-  // Build slug -> member lookup
-  const memberBySlug = new Map<string, { id: string; name: string; slug: string }>();
-  for (const m of members.results) {
-    if (m.slug) memberBySlug.set(m.slug, m as { id: string; name: string; slug: string });
-  }
-
-  // Count publications per author and build co-authorship edges
-  const pubCounts = new Map<string, number>();
-  const edgeMap = new Map<string, { weight: number; sharedPublications: string[] }>();
-
-  for (const pub of pubs.results) {
-    if (!pub.author_slugs) continue;
-    let slugs: string[];
-    try {
-      slugs = JSON.parse(pub.author_slugs);
-    } catch {
-      continue;
-    }
-
-    // Count per-author publications
-    for (const slug of slugs) {
-      pubCounts.set(slug, (pubCounts.get(slug) || 0) + 1);
-    }
-
-    // Build co-authorship pairs
-    for (let i = 0; i < slugs.length; i++) {
-      for (let j = i + 1; j < slugs.length; j++) {
-        const key = [slugs[i], slugs[j]].sort().join('::');
-        const existing = edgeMap.get(key);
-        if (existing) {
-          existing.weight++;
-          existing.sharedPublications.push(pub.id);
-        } else {
-          edgeMap.set(key, { weight: 1, sharedPublications: [pub.id] });
-        }
-      }
-    }
-  }
-
-  // Build nodes (only authors that appear in at least one publication)
-  const nodes: GraphNode[] = [];
-  for (const [slug, count] of pubCounts) {
-    const member = memberBySlug.get(slug);
-    nodes.push({
-      id: slug,
-      name: member?.name || slug,
-      slug,
-      publicationCount: count,
-    });
-  }
-
-  // Build edges
-  const edges: GraphEdge[] = [];
-  for (const [key, data] of edgeMap) {
-    const [source, target] = key.split('::');
-    edges.push({ source, target, ...data });
-  }
-
-  const graph: CollaborationGraph = { nodes, edges };
-  return json({ data: graph });
 }
 
 // GET /api/stats

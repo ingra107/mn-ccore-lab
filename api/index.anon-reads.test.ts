@@ -128,7 +128,6 @@ const NOW_SIGNED_IN_ONLY = [
   '/api/team/slugs',
   '/api/team/pulse',
   '/api/citations',
-  '/api/graph/collaboration',
   '/api/digest/dates',
   '/api/digest/comment-counts',
   '/api/digest/digest-1/comments',

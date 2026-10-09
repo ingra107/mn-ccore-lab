@@ -34,7 +34,6 @@ import type { AuthUser, Env } from '../helpers'
 import { postActivityEntry } from './activity-entry'
 import {
   handleGetTaskComments,
-  handleGetTaskUpdates,
   handleAddTaskComment,
   handlePostTaskUpdate,
   handleDeleteTask,
@@ -552,15 +551,6 @@ describe('projection shapes match the legacy endpoints', () => {
     expect(body.data[0].content).toBe('a comment')
     expect(body.data[0].author_slug).toBe('nate-mesfin')
     expect(body.data[0].task_id).toBe('t1')
-  })
-
-  it('GET /updates returns id, task_id, author_slug, content, update_type, created_at', async () => {
-    const ctx = makeEnv(FX)
-    await handlePostTaskUpdate('t1', natePostReq({ content: 'progress note', update_type: 'blocker' }), NATE, ctx.env)
-    const res = await handleGetTaskUpdates('t1', piReq(), ctx.env)
-    const body = await res.json() as { data: Record<string, unknown>[] }
-    expect(Object.keys(body.data[0]).sort()).toEqual(['author_slug', 'content', 'created_at', 'id', 'task_id', 'update_type'])
-    expect(body.data[0].update_type).toBe('blocker')
   })
 })
 

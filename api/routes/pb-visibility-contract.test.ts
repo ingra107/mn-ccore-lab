@@ -56,7 +56,6 @@ import {
   handleGetExpiringItems,
   handleCreateRegulatoryItem,
   handleUpdateRegulatoryItem,
-  handleRenewRegulatoryItem,
 } from './regulatory'
 import {
   handleGetCascade,
@@ -67,7 +66,6 @@ import {
   handleGetTaskComments,
   handleGetTaskActivity,
   handleGetTaskDetail,
-  handleGetTaskUpdates,
   handleGetRecentTaskUpdates,
   handleAddTaskComment,
   handlePostTaskUpdate,
@@ -86,7 +84,6 @@ import {
   handleGetRevisionComments,
   handleCreateRevisionComment,
   handleUpdateRevisionComment,
-  handleGetActiveRevisions,
 } from './revisions'
 import { handleGetMeeting } from './meetings'
 import { handleCalendarEvents } from './calendar'
@@ -321,10 +318,6 @@ const patternACases: PatternACase[] = [
   {
     label: 'GET /api/tasks/:id/detail (handleGetTaskDetail)',
     call: (c, r, env) => handleGetTaskDetail(r.task, c.get(), env),
-  },
-  {
-    label: 'GET /api/tasks/:id/updates (handleGetTaskUpdates)',
-    call: (c, r, env) => handleGetTaskUpdates(r.task, c.get(), env),
   },
   // Phase 1b-extended additions: revisions reads + cross-graph reads
   {
@@ -578,11 +571,6 @@ const patternWriteCases: PatternWriteCase[] = [
     touches: ['regulatory_items'],
     call: (c, r, env) => handleUpdateRegulatoryItem(r.reg, c.post({ notes: 'x' }), c.user, env),
   },
-  {
-    label: 'POST /api/regulatory/:id/renew (handleRenewRegulatoryItem)',
-    touches: ['regulatory_items'],
-    call: (c, r, env) => handleRenewRegulatoryItem(r.reg, c.post({}), c.user, env),
-  },
   // Lifecycle CRUD — revisions
   {
     label: 'POST /api/revisions (handleCreateRevision)',
@@ -706,11 +694,6 @@ const patternBCases: PatternBCase[] = [
     callPi:    (env) => handleGetTasks(new URL('https://x/api/tasks'), env, true),
   },
   {
-    label: 'GET /api/revisions/active — filtered for non-PI',
-    callNonPi: (env) => handleGetActiveRevisions(env, false),
-    callPi:    (env) => handleGetActiveRevisions(env, true),
-  },
-  {
     label: 'GET /api/conferences (cross-project) — filtered for non-PI',
     callNonPi: (env) => handleGetConferences(new URL('https://x/api/conferences'), nonPiRequest(), env, false),
     callPi:    (env) => handleGetConferences(new URL('https://x/api/conferences'), piRequest(), env, true),
@@ -801,7 +784,7 @@ describe('PB-visibility contract — registry drift guard', () => {
     //     now returns 404 not 403, so it can't use the shared 403-asserting loop)
     // -1: handleUpdateConference moved to Pattern W with blockedStatus:404 (codex #2,
     //     2026-05-28; uses withExistingRowProject so hidden row → 404 not 403)
-    expect(patternACases.length).toBeGreaterThanOrEqual(14)
+    expect(patternACases.length).toBeGreaterThanOrEqual(13) // -1: GET /api/tasks/:id/updates deleted 2026-10-09
   })
 
   it('Pattern W (writes) registry has at least the expected number of cases', () => {
@@ -818,7 +801,7 @@ describe('PB-visibility contract — registry drift guard', () => {
   it('Pattern B (feeds) registry has at least the expected number of cases', () => {
     // 3 originals + 5 new cross-project feeds + 1 Fix 2a (handleGetTasks list) = 9
     // + #8842 R6 meeting detail + calendar events = 11
-    expect(patternBCases.length).toBeGreaterThanOrEqual(11)
+    expect(patternBCases.length).toBeGreaterThanOrEqual(10) // -1: GET /api/revisions/active deleted 2026-10-09
   })
 })
 

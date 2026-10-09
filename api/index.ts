@@ -24,16 +24,16 @@ import { REALTIME_TICKET_PATH } from '../shared/realtime';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleGetTasks, handleGetTask, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleRestoreTask, handleMobileTasksToHub } from './routes/tasks';
+import { handleGetTasks, handleGetTask, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleRestoreTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleMarkSeen, handleGetUnseenActivity } from './routes/seen';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
 import { handleGetProjectMembers, handleAddProjectMember, handleRemoveProjectMember, handleGetMemberProjects } from './routes/project-members';
 import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleUpdateMeetingMeta, handleMeetingPrep, handleGenerateAgenda, handlePrepMeetingFromEvent } from './routes/meetings';
-import { handleGetPublications, handleGetGrants, handleCollaborationGraph, handleGetStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
+import { handleGetPublications, handleGetGrants, handleGetStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
 import { handleGetCitations } from './routes/citations';
-import { handleGetTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember, handleCreateTeamMember } from './routes/team';
+import { handleGetTeam, handleTeamSlugs, handleUpdateTeamMember, handleCreateTeamMember } from './routes/team';
 import { handleGetMemberFeaturedPublications, handlePutMemberFeaturedPublications } from './routes/member-featured-publications';
 import { handleGetDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper, handleGetDigestComments, handleCreateDigestComment, handleDigestCommentCounts } from './routes/digest';
 import { handleGetIdeas, handleCreateIdea, handleUpdateIdea, handleVoteIdea } from './routes/ideas';
@@ -50,7 +50,7 @@ import { handleGetDayActivity, handlePostDayActivity } from './routes/days';
 import { handleGetMeetingActivity, handlePostMeetingActivity } from './routes/meeting-activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
-import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper, handlePapersByProject, handlePapersByPublication } from './routes/paper-links';
+import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper, handlePapersByPublication } from './routes/paper-links';
 import { handleGetProjectPublications, handleLinkProjectPublication, handleUnlinkProjectPublication, handleGetAllProjectPublications } from './routes/project-publications';
 import { handleInsightConnections, handleInsightSuggestions, handleInsightsDashboard } from './routes/insights';
 import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
@@ -58,20 +58,20 @@ import { handleTrajectory } from './routes/trajectory';
 import { handleGetContributions } from './routes/contributions';
 import { handleContributionsDecay } from './routes/contributions-decay';
 import { handleSimilarGrants } from './routes/grant-intelligence';
-import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleUpdateDecision, handleGetDecisionsNeedingReview, handleGetDecisionTags } from './routes/decisions';
+import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleGetDecisionsNeedingReview, handleGetDecisionTags } from './routes/decisions';
 import { handleSimilarDecisions, handleSimilarDecisionsById } from './routes/decision-replay';
 import { handleGetNarratives } from './routes/narratives';
-import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise, handleSuggestExperts } from './routes/expertise';
+import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise } from './routes/expertise';
 import { handleGetQuestions, handleGetQuestionDetail, handleCreateQuestion, handleCreateAnswer, handleAcceptAnswer } from './routes/questions';
 import { handleGetHandoffs, handleCreateHandoff, handleAcknowledgeHandoff } from './routes/handoffs';
 import { handleCheckImpact } from './routes/impact-trace';
 // pi-analytics.ts retired 2026-05-05 (5.9) — 0 frontend callers; /api/analytics/pi-dashboard is canonical
-import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeamEngagement, handleTeamByExpertise } from './routes/pi-dashboard';
+import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeamEngagement } from './routes/pi-dashboard';
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
 import { handleGetHermesDayIndex } from './routes/hermes';
 import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRefireLaunch, handleClaimLaunch, handleListPendingLaunches } from './routes/launch-log';
-import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleDeleteArtifact, handleAddArtifactComment, handleGetArtifactGallery, handleSearchArtifacts, handleGetArtifactTags, handleAddArtifactTag, handleRemoveArtifactTag } from './routes/artifacts';
+import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleAddArtifactComment, handleGetArtifactGallery, handleSearchArtifacts, handleGetArtifactTags, handleAddArtifactTag, handleRemoveArtifactTag } from './routes/artifacts';
 import { escapeHtml } from './lib/escapeHtml';
 import { handlePBCapture, handlePBDefer, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
@@ -79,17 +79,17 @@ import { handleGetSessions } from './routes/sessions';
 import { handleLane3List } from './routes/lane3';
 import { handleGetTodayMd } from './routes/pb-today'; // POST /api/pb/today retired 2026-05-05 (5.9)
 import { handlePBHealth } from './routes/pb-health';
-import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleGetActiveRevisions, handleAttentionManuscripts } from './routes/revisions';
-import { handleGetMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone, handleCompleteMenteeMilestone } from './routes/mentee-milestones';
-import { handleGetCascade, handleGetImpact, handleGetAllCascades, handleCreateDeadlineDependency, handleDeleteDeadlineDependency } from './routes/deadline-cascade';
+import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleAttentionManuscripts } from './routes/revisions';
+import { handleGetMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone } from './routes/mentee-milestones';
+import { handleGetCascade, handleGetImpact, handleGetAllCascades } from './routes/deadline-cascade';
 import { handleGetSubmissions, handleCreateSubmission, handleUpdateSubmission, handleDeleteSubmission, handleGetActiveSubmissions } from './routes/submissions';
-import { handleGetRegulatoryItems, handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRenewRegulatoryItem, handleRegulatoryIcs } from './routes/regulatory';
+import { handleGetRegulatoryItems, handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRegulatoryIcs } from './routes/regulatory';
 import { handleGetGrantMilestones, handleUpcomingGrantMilestones, handleCreateGrantMilestone, handleUpdateGrantMilestone, handleCompleteGrantMilestone } from './routes/grant-milestones';
 import { handleGetConferences, handleGetUpcomingConferences, handleCreateConference, handleUpdateConference, handleDeleteConference } from './routes/conferences';
 import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeleteProjectDocument } from './routes/project-documents';
 import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
-import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail, handleSendDailyDigests } from './routes/digest-email';
+import { handleDigestPreview, handleSendDailyDigests } from './routes/digest-email';
 import { pruneAllLedgers, monitorD1Health, compactProcessedMutationsJson } from './lib/ledger-retention';
 import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleSetLinkRole } from './routes/links';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
@@ -696,14 +696,6 @@ defineRoute({
   visibility: 'na',
   handler: (c) => handleContributionsDecay(U(c), E(c)),
 });
-defineRoute({
-  method: 'GET',
-  path: '/api/team/by-expertise',
-  auth: 'authed',
-  entity: 'team',
-  visibility: 'na',
-  handler: (c) => handleTeamByExpertise(U(c), E(c)),
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Digest (specific first, catch-all last)
@@ -779,14 +771,6 @@ defineRoute({
 // ─────────────────────────────────────────────────────────────────────────────
 // Papers
 // ─────────────────────────────────────────────────────────────────────────────
-defineRoute({
-  method: 'GET',
-  path: '/api/papers/by-project',
-  auth: 'authed',
-  entity: 'misc',
-  visibility: 'na',
-  handler: (c) => handlePapersByProject(U(c), E(c)),
-});
 defineRoute({
   method: 'GET',
   path: '/api/papers/by-publication',
@@ -1065,14 +1049,6 @@ defineRoute({
 // ─────────────────────────────────────────────────────────────────────────────
 defineRoute({
   method: 'GET',
-  path: '/api/revisions/active',
-  auth: 'authed',
-  entity: 'revisions',
-  visibility: 'pb-aware',
-  handler: (c) => handleGetActiveRevisions(E(c), CSP(c)),
-});
-defineRoute({
-  method: 'GET',
   path: '/api/revisions/:id/comments',
   auth: 'authed',
   entity: 'revisions',
@@ -1213,14 +1189,6 @@ defineRoute({
 // ─────────────────────────────────────────────────────────────────────────────
 // Expertise
 // ─────────────────────────────────────────────────────────────────────────────
-defineRoute({
-  method: 'GET',
-  path: '/api/expertise/suggest',
-  auth: 'authed',
-  entity: 'expertise',
-  visibility: 'na',
-  handler: (c) => handleSuggestExperts(U(c), E(c)),
-});
 defineRoute({
   method: 'GET',
   path: '/api/expertise',
@@ -1449,14 +1417,6 @@ defineRoute({
   entity: 'team',
   visibility: 'na',
   handler: (c) => handleTeamPulse(U(c), E(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/graph/collaboration',
-  auth: 'authed',
-  entity: 'publications',
-  visibility: 'na',
-  handler: (c) => handleCollaborationGraph(E(c)),
 });
 defineRoute({
   method: 'GET',
@@ -1768,14 +1728,6 @@ defineRoute({
 // ─────────────────────────────────────────────────────────────────────────────
 defineRoute({
   method: 'GET',
-  path: '/api/team/:slug/cv-data',
-  auth: 'authed',
-  entity: 'team',
-  visibility: 'na',
-  handler: (c) => handleCVData(c.req.param('slug'), E(c)),
-});
-defineRoute({
-  method: 'GET',
   path: '/api/team/:slug/trajectory',
   auth: 'authed',
   entity: 'team',
@@ -2023,14 +1975,6 @@ defineRoute({
   ).bind(taskId).all();
   return json({ data: results });
 },
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/tasks/:id/updates',
-  auth: 'authed',
-  entity: 'tasks',
-  visibility: 'na',
-  handler: (c) => handleGetTaskUpdates(c.req.param('id'), R(c), E(c)),
 });
 defineRoute({
   method: 'GET',
@@ -2808,14 +2752,6 @@ defineRoute({
   visibility: 'na',
   handler: (c) => handleUpdateDecisionOutcome(c.req.param('id'), R(c), USER(c), E(c)),
 });
-defineRoute({
-  method: 'POST',
-  path: '/api/decisions/:id/update',
-  auth: 'authed',
-  entity: 'decisions',
-  visibility: 'na',
-  handler: (c) => handleUpdateDecision(c.req.param('id'), R(c), USER(c), E(c)),
-});
 
 // Expertise
 defineRoute({
@@ -2908,14 +2844,6 @@ defineRoute({
   entity: 'artifacts',
   visibility: 'na',
   handler: (c) => handleAddArtifactComment(c.req.param('id'), R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/artifacts/:id/delete',
-  auth: 'authed',
-  entity: 'artifacts',
-  visibility: 'na',
-  handler: (c) => handleDeleteArtifact(c.req.param('id'), R(c), E(c)),
 });
 defineRoute({
   method: 'POST',
@@ -3080,14 +3008,6 @@ defineRoute({
 });
 defineRoute({
   method: 'POST',
-  path: '/api/mentee-milestones/:id/complete',
-  auth: 'authed',
-  entity: 'mentee-milestones',
-  visibility: 'na',
-  handler: (c) => handleCompleteMenteeMilestone(c.req.param('id'), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
   path: '/api/mentee-milestones/:id',
   auth: 'authed',
   entity: 'mentee-milestones',
@@ -3142,14 +3062,6 @@ defineRoute({
 });
 defineRoute({
   method: 'POST',
-  path: '/api/regulatory/:id/renew',
-  auth: 'authed',
-  entity: 'regulatory',
-  visibility: 'na',
-  handler: (c) => handleRenewRegulatoryItem(c.req.param('id'), R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
   path: '/api/regulatory/:id',
   auth: 'authed',
   entity: 'regulatory',
@@ -3184,40 +3096,8 @@ defineRoute({
 });
 
 // Deadline dependencies
-defineRoute({
-  method: 'POST',
-  path: '/api/deadline-dependencies',
-  auth: 'authed',
-  entity: 'deadline-cascade',
-  visibility: 'na',
-  handler: (c) => handleCreateDeadlineDependency(R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/deadline-dependencies/:id/delete',
-  auth: 'authed',
-  entity: 'deadline-cascade',
-  visibility: 'na',
-  handler: (c) => handleDeleteDeadlineDependency(c.req.param('id'), R(c), E(c)),
-});
 
 // Digest email
-defineRoute({
-  method: 'POST',
-  path: '/api/digest-email',
-  auth: 'authed',
-  entity: 'digest',
-  visibility: 'na',
-  handler: (c) => handleGenerateDigestEmail(R(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/digest-email/send',
-  auth: 'authed',
-  entity: 'digest',
-  visibility: 'na',
-  handler: (c) => handleSendDigestEmail(R(c), E(c)),
-});
 defineRoute({
   method: 'POST',
   path: '/api/digest-email/daily',

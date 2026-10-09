@@ -1,5 +1,5 @@
-import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, assertProjectVisible, resolveAndGuardProject } from '../helpers';
+import type { Env } from '../helpers';
+import { json, error, assertProjectVisible, resolveAndGuardProject } from '../helpers';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -322,90 +322,4 @@ async function nodeProjectId(env: Env, nodeId: string, nodeType: string): Promis
   if (m) return m.project_id ?? null;
   const t = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ?').bind(nodeId).first<{ project_id: string | null }>();
   return t?.project_id ?? null;
-}
-
-export async function handleCreateDeadlineDependency(request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as {
-    upstream_id: string;
-    upstream_type: string;
-    downstream_id: string;
-    downstream_type: string;
-    lag_days?: number;
-    notes?: string;
-  };
-
-  if (!body.upstream_id || !body.upstream_type) return error('upstream_id and upstream_type required', 400);
-  if (!body.downstream_id || !body.downstream_type) return error('downstream_id and downstream_type required', 400);
-
-  const validTypes = ['milestone', 'task', 'deadline'];
-  if (!validTypes.includes(body.upstream_type)) return error(`Invalid upstream_type. Must be: ${validTypes.join(', ')}`, 400);
-  if (!validTypes.includes(body.downstream_type)) return error(`Invalid downstream_type. Must be: ${validTypes.join(', ')}`, 400);
-
-  if (body.upstream_id === body.downstream_id) return error('Cannot create self-referencing dependency', 400);
-
-  // Phase 1b-extended: deadline_dependencies span a graph that can cross
-  // projects. Gate BOTH endpoints (upstream + downstream) so a non-PI cannot
-  // attach a PB milestone/task to a non-PB one (or vice versa) and use the
-  // edge to leak/poison a PB cascade.
-  const upstreamProjId = await nodeProjectId(env, body.upstream_id, body.upstream_type);
-  if (upstreamProjId) {
-    const block = await assertProjectVisible(request, env, upstreamProjId);
-    if (block) return block;
-  }
-  const downstreamProjId = await nodeProjectId(env, body.downstream_id, body.downstream_type);
-  if (downstreamProjId) {
-    const block = await assertProjectVisible(request, env, downstreamProjId);
-    if (block) return block;
-  }
-
-  // Check for duplicate
-  const existing = await env.DB.prepare(
-    'SELECT id FROM deadline_dependencies WHERE upstream_id = ? AND downstream_id = ?'
-  ).bind(body.upstream_id, body.downstream_id).first();
-  if (existing) return error('Dependency already exists', 409);
-
-  const id = generateId();
-  await env.DB.prepare(
-    'INSERT INTO deadline_dependencies (id, upstream_id, upstream_type, downstream_id, downstream_type, lag_days, notes) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).bind(id, body.upstream_id, body.upstream_type, body.downstream_id, body.downstream_type, body.lag_days || 0, body.notes || null).run();
-
-  await logActivity(env, 'deadline_dependency', `Dependency created: ${body.upstream_type} → ${body.downstream_type}`, user.slug, id, 'deadline_dependency');
-
-  const created = await env.DB.prepare('SELECT * FROM deadline_dependencies WHERE id = ?').bind(id).first();
-  return json({ data: created }, 201);
-}
-
-// ── POST /api/deadline-dependencies/:id/delete ─────────────
-// Hard-delete (deadline_dependencies has no deleted_at column).
-// SEC-10.3: Idempotent — check meta.changes; repeat calls return 200 with
-// idempotent:true instead of 404.
-// Phase 1b-extended: gate on the existing edge's BOTH endpoints (mirrors
-// handleCreateDeadlineDependency). If the row is already gone we return 200
-// idempotent without leaking existence.
-//
-// Z4.3 exempt: deadline_dependencies straddles TWO project IDs (upstream_id +
-// downstream_id). idempotentDelete() supports a single project_id gate via a
-// single assertProjectVisible call; this handler needs a DOUBLE gate — one for
-// the upstream node's project and one for the downstream node's project. Until
-// idempotentDelete() gains a multi-project hook, this delete stays hand-rolled
-// with the double gate preserved exactly as written below.
-export async function handleDeleteDeadlineDependency(id: string, request: Request, env: Env): Promise<Response> {
-  const existing = await env.DB.prepare(
-    'SELECT upstream_id, upstream_type, downstream_id, downstream_type FROM deadline_dependencies WHERE id = ?'
-  ).bind(id).first<{ upstream_id: string; upstream_type: string; downstream_id: string; downstream_type: string }>();
-  if (existing) {
-    const upstreamProjId = await nodeProjectId(env, existing.upstream_id, existing.upstream_type);
-    if (upstreamProjId) {
-      const block = await assertProjectVisible(request, env, upstreamProjId);
-      if (block) return block;
-    }
-    const downstreamProjId = await nodeProjectId(env, existing.downstream_id, existing.downstream_type);
-    if (downstreamProjId) {
-      const block = await assertProjectVisible(request, env, downstreamProjId);
-      if (block) return block;
-    }
-  }
-  const result = await env.DB.prepare('DELETE FROM deadline_dependencies WHERE id = ?').bind(id).run();
-  const changed = (result.meta?.changes ?? 0) > 0;
-  return json({ data: { deleted: true, id, idempotent: !changed } });
 }

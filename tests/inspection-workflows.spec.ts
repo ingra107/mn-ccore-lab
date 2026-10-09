@@ -132,13 +132,9 @@ test.describe('API — Missing GET endpoints', () => {
     ['/api/deadline-cascade/all', 'All deadline cascades'],
     ['/api/deadline-cascade/all', 'Deadline cascade data'],
     ['/api/decisions/similar?context=CLIF', 'Similar decisions by context'],
-    ['/api/team/by-expertise?tag=critical+care', 'Team by expertise tag'],
     // CV page removed — feature cut
     ['/api/team/nick-ingraham/trajectory', 'Trajectory data for member'],
     ['/api/team/nick-ingraham/contributions', 'Contribution data for member'],
-    ['/api/expertise/suggest?topic=critical+care', 'Expertise suggestions'],
-    ['/api/graph/collaboration', 'Collaboration network graph'],
-    ['/api/revisions/active', 'Active paper revisions'],
     ['/api/submissions/active', 'Active conference submissions'],
     ['/api/conferences/upcoming', 'Upcoming conferences'],
     ['/api/regulatory/expiring', 'Expiring regulatory items'],

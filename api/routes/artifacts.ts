@@ -525,30 +525,6 @@ export async function handleReviseArtifact(
   return json({ data: updated });
 }
 
-// ── POST /api/artifacts/:id/delete ──────────────────────────────────────────────
-// Hard-delete an artifact + cascade its version history AND its activity_entries
-// (Rule 70: entity delete must clear the unified timeline). PI/service gated —
-// artifacts are deliverables, not throwaway rows; a team member shouldn't nuke
-// the lit-review someone else is commenting on.
-export async function handleDeleteArtifact(
-  id: string,
-  request: Request,
-  env: Env,
-): Promise<Response> {
-  if (!(await isPiRequest(request, env))) {
-    return error('Forbidden — PI access only', 403);
-  }
-  const existing = await env.DB.prepare('SELECT id FROM artifacts WHERE id = ? LIMIT 1').bind(id).first<{ id: string }>();
-  if (!existing) return json({ data: { deleted: id, idempotent: true } });
-
-  await env.DB.batch([
-    env.DB.prepare("DELETE FROM activity_entries WHERE entity_type = 'artifact' AND entity_id = ?").bind(id),
-    env.DB.prepare('DELETE FROM artifact_versions WHERE artifact_id = ?').bind(id),
-    env.DB.prepare('DELETE FROM artifacts WHERE id = ?').bind(id),
-  ]);
-  return json({ data: { deleted: id, idempotent: false } });
-}
-
 // ── GET /api/artifacts/:id/activity ─────────────────────────────────────────────
 // The unified feed for an artifact (every activity_entries kind, visibility-gated,
 // newest-first) — same shape as /api/tasks/:id/activity so the frontend reuses the
