@@ -42,9 +42,14 @@
 -- projects.pi) is a separate, reviewed step generated from a prod pre-image:
 -- scripts/backfill-120-project-members.ts.
 --
--- ORDER: this DDL, then the seed, then the Worker deploy that reads the table.
--- The deployed Worker before that deploy never names project_members, so the
--- table and triggers are inert to it.
+-- ORDER: this DDL (test, then prod), then the seed (test, then prod), then
+-- `npm run deploy:pages:gated` (/api is served by the Pages Function,
+-- functions/api/[[route]].ts, which imports api/index), then
+-- `npm run deploy:worker` (the crons: Pulse, the daily digest), then the
+-- window sweep (scripts/backfill-120-project-members.ts --window-since).
+-- The code live before that deploy never names project_members, so the table
+-- and triggers are inert to it. The seed MUST land before the deploy: the new
+-- code shows every person only the projects they are a member of.
 --
 -- APPLY (test first, then prod; sanctioned wrapper only):
 --   scripts/wrangler-d1 d1 execute mnccore-lab-test --remote --file=api/schema-v120-project-members.sql

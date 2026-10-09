@@ -22,11 +22,20 @@
 //      It prints the per-person list (Nick approves the LIST, not a count),
 //      every value it could not resolve, and every Peripheral Brain pair it
 //      skipped. It writes <dir>/seed-120-members.list.txt with the same text.
-//   3. Apply:
+//   3. Apply (test, then prod):
 //        scripts/wrangler-d1 d1 execute mnccore-lab --remote --file=<dir>/seed-120-members.apply.sql
-//   ROLLBACK: <dir>/seed-120-members.rollback.sql (deletes only rows with
-//   added_by='backfill-v120' and the exact pairs this plan wrote). Keep the
-//   pre-*.json files with them; they are the pre-image.
+//      Nick's rows are ONE statement over the projects live at apply time
+//      (INSERT OR IGNORE ... SELECT id ... WHERE deleted_at IS NULL), so a
+//      project created after the export is covered too.
+//   ROLLBACK: <dir>/seed-120-members.rollback.sql (deletes Nick's rows by
+//   added_by='backfill-v120', and every other exact pair by its own added_by:
+//   'backfill-v120' or 'backfill-v120-title'). It carries the export-time
+//   project list as a comment. Keep the pre-*.json files with it.
+//   4. After the deploy, the WINDOW SWEEP (projects created between the DDL
+//      and the deploy got no creator row from the old code):
+//        npx tsx scripts/backfill-120-project-members.ts --window-since "YYYY-MM-DD HH:MM:SS" --out <dir>
+//      (the DDL apply time, UTC), then apply <dir>/window-120.apply.sql.
+//      Rollback: <dir>/window-120.rollback.sql (added_by='window-v120').
 //
 // The pure planner and its tests: scripts/project-members-120-plan.ts,
 // api/lib/project-members-120-plan.test.ts.
@@ -34,7 +43,24 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { rowsFrom } from './meetings-119-plan'
-import { planProjectMembers, type AssignmentPreImage, type ProjectPreImage, type TeamPreImage } from './project-members-120-plan'
+import { planProjectMembers, windowSweep, type AssignmentPreImage, type ProjectPreImage, type TeamPreImage } from './project-members-120-plan'
+
+function opt(name: string): string | undefined {
+  const i = process.argv.indexOf(`--${name}`)
+  return i === -1 ? undefined : process.argv[i + 1]
+}
+
+const windowSince = opt('window-since')
+if (windowSince) {
+  const out = opt('out')
+  if (!out) throw new Error('--out <dir> is required')
+  mkdirSync(out, { recursive: true })
+  const w = windowSweep(windowSince)
+  writeFileSync(join(out, 'window-120.apply.sql'), `-- project_members window sweep since ${windowSince} UTC: apply\n${w.apply}\n`)
+  writeFileSync(join(out, 'window-120.rollback.sql'), `-- project_members window sweep: rollback\n${w.rollback}\n`)
+  console.log(`wrote window-120.apply.sql and window-120.rollback.sql to ${out}`)
+  process.exit(0)
+}
 
 function arg(name: string): string {
   const i = process.argv.indexOf(`--${name}`)
@@ -55,6 +81,7 @@ const plan = planProjectMembers(projects, assignments, team)
 const stamp = `generated ${new Date().toISOString()} from ${projects.length} projects, ${assignments.length} assignment pairs, ${team.length} team rows`
 const list = [
   `#145 project membership seed: ${plan.pairs.length} rows (${stamp})`,
+  'Source after each project: nick (Nick, every live project), pi (projects.pi), assignee (a live task), title ("Topic (LastName)").',
   '',
   ...plan.perPerson,
   '',
@@ -63,6 +90,9 @@ const list = [
   '',
   `Not seeded, Peripheral Brain project (${plan.skippedPb.length}):`,
   ...plan.skippedPb.map((s) => `    ${s}`),
+  '',
+  `Title "(LastName)" not used, no single member matches (${plan.titleSkipped.length}):`,
+  ...plan.titleSkipped.map((s) => `    ${s}`),
 ].join('\n')
 writeFileSync(join(out, 'seed-120-members.apply.sql'), `-- project_members seed: apply\n-- ${stamp}\n${plan.apply}\n`)
 writeFileSync(join(out, 'seed-120-members.rollback.sql'), `-- project_members seed: rollback\n-- ${stamp}\n${plan.rollback}\n`)

@@ -3,18 +3,25 @@
 
 import { describe, it, expect } from 'vitest'
 import { prodSchemaDb, insertRow } from '../test-support/prod-schema-db'
-import { planProjectMembers, SEED_SOURCE } from '../../scripts/project-members-120-plan'
+import { planProjectMembers, windowSweep, titleSurname, surnameOf, SEED_SOURCE, TITLE_SOURCE, WINDOW_SOURCE } from '../../scripts/project-members-120-plan'
 
 const team = [
   { slug: 'nick-ingraham', email: 'ingra107@umn.edu', name: 'Nick Ingraham' },
   { slug: 'casey-eddington', email: 'eddin022@umn.edu', name: 'Casey Eddington' },
   { slug: 'nate-mesfin', email: 'mesfin@umn.edu', name: 'Nate Mesfin' },
+  { slug: 'kendall-mceachron', email: 'kmc@umn.edu', name: 'Kendall McEachron' },
+  { slug: 'pat-smith', email: 'ps@umn.edu', name: 'Pat Smith' },
+  { slug: 'lee-smith', email: 'ls@umn.edu', name: 'Lee Smith' },
 ]
 const projects = [
   { id: 'proj_a', slug: 'a', title: 'Alpha', category: 'MNCCORE', pi: 'nate-mesfin', deleted_at: null },
   { id: 'proj_b', slug: 'b', title: 'Beta', category: 'CLIF', pi: 'Some Outside PI', deleted_at: null },
   { id: 'proj_pb', slug: 'pb', title: 'PB thing', category: 'Peripheral Brain', pi: 'nick-ingraham', deleted_at: null },
   { id: 'proj_gone', slug: 'gone', title: 'Gone', category: 'MNCCORE', pi: 'casey-eddington', deleted_at: '2026-01-01' },
+  { id: 'proj_cl', slug: 'cl', title: 'Central Line Days Disparities (McEachron)', category: 'MNCCORE', pi: null, deleted_at: null },
+  { id: 'proj_sm', slug: 'sm', title: 'Something (Smith)', category: 'MNCCORE', pi: null, deleted_at: null },
+  { id: 'proj_nx', slug: 'nx', title: 'Outside Work (Jones)', category: 'MNCCORE', pi: null, deleted_at: null },
+  { id: 'proj_ce', slug: 'ce', title: 'Casey Study (Eddington)', category: 'MNCCORE', pi: null, deleted_at: null },
 ]
 const assignments = [
   { project_id: 'proj_a', assignee: 'casey-eddington' },
@@ -23,42 +30,87 @@ const assignments = [
   { project_id: 'proj_pb', assignee: 'casey-eddington' },  // PB: skipped
   { project_id: 'proj_gone', assignee: 'nate-mesfin' },    // deleted project: not seeded
   { project_id: 'proj_missing', assignee: 'nate-mesfin' }, // unknown project: ignored
+  { project_id: 'proj_ce', assignee: 'casey-eddington' },  // assignee AND title
 ]
 
 describe('the seed plan', () => {
   const plan = planProjectMembers(projects, assignments, team)
+  const pair = (slug: string, id: string) => plan.pairs.find((p) => p.member_slug === slug && p.project_id === id)
 
-  it('Nick on every live project; others from assignees and pi; no PB, deleted or unknown person', () => {
+  it('title parsing: a trailing single-word (LastName), and a surname is the last word of a name', () => {
+    expect(titleSurname('Central Line Days Disparities (McEachron)')).toBe('mceachron')
+    expect(titleSurname('No surname')).toBeNull()
+    expect(titleSurname('Two (Words Here)')).toBeNull()
+    expect(surnameOf('Kendall McEachron')).toBe('mceachron')
+    expect(surnameOf('Cher')).toBeNull()
+  })
+
+  it('Nick on every live project; others from assignees, pi and a unique title surname; no PB, deleted or unknown person', () => {
     expect(plan.pairs.map((p) => `${p.member_slug}@${p.project_id}`)).toEqual([
-      'casey-eddington@proj_a', 'casey-eddington@proj_b',
+      'casey-eddington@proj_a', 'casey-eddington@proj_b', 'casey-eddington@proj_ce',
+      'kendall-mceachron@proj_cl',
       'nate-mesfin@proj_a',
-      'nick-ingraham@proj_a', 'nick-ingraham@proj_b', 'nick-ingraham@proj_pb',
+      'nick-ingraham@proj_a', 'nick-ingraham@proj_b', 'nick-ingraham@proj_ce', 'nick-ingraham@proj_cl',
+      'nick-ingraham@proj_nx', 'nick-ingraham@proj_pb', 'nick-ingraham@proj_sm',
     ])
+    expect(pair('kendall-mceachron', 'proj_cl')).toMatchObject({ reasons: ['title'], added_by: TITLE_SOURCE })
+    expect(pair('casey-eddington', 'proj_ce')).toMatchObject({ reasons: ['assignee', 'title'], added_by: SEED_SOURCE })
     expect(plan.unresolved.join('\n')).toContain('not_a_real_person')
     expect(plan.unresolved.join('\n')).toContain('Some Outside PI')
     expect(plan.skippedPb).toEqual(['casey-eddington on pb: Peripheral Brain project, not seeded'])
+    expect(plan.titleSkipped.join('\n')).toContain('"smith" matches 2 members (pat-smith, lee-smith)')
+    expect(plan.titleSkipped.join('\n')).toContain('"jones" matches no member')
   })
 
-  it('prints a per-person list', () => {
-    expect(plan.perPerson[0]).toBe('casey-eddington (Casey Eddington): 2 project(s)')
-    expect(plan.perPerson.join('\n')).toContain('Alpha [a]  <- assignee')
-    expect(plan.perPerson.join('\n')).toContain('every live project (3)')
+  it("prints a per-person list with each row's source", () => {
+    expect(plan.perPerson[0]).toBe('casey-eddington (Casey Eddington): 3 project(s)')
+    const text = plan.perPerson.join('\n')
+    expect(text).toContain('Alpha [a]  <- assignee')
+    expect(text).toContain('Alpha [a]  <- pi')
+    expect(text).toContain('Central Line Days Disparities (McEachron) [cl]  <- title')
+    expect(text).toContain('Casey Study (Eddington) [ce]  <- assignee, title')
+    expect(text).toContain('every live project (7)  <- nick')
   })
 
-  it('applies on the migrated schema, is idempotent, and its rollback removes exactly its rows', () => {
+  it('applies on the migrated schema, is idempotent, covers a project created after the export, and its rollback removes exactly its rows', () => {
     const db = prodSchemaDb()
     for (const t of team) insertRow(db, 'team_members', { id: `tm-${t.slug}`, name: t.name, slug: t.slug, email: t.email })
     for (const p of projects) insertRow(db, 'projects', { ...p, status: 'active', stage: 'idea' })
+    // Created after the export: not in the plan's pairs, but Nick's statement covers it.
+    insertRow(db, 'projects', { id: 'proj_late', slug: 'late', title: 'Late', category: 'MNCCORE', status: 'active', stage: 'idea' })
     // A trigger-made row (the pi trigger adds nate on proj_a) must survive the rollback.
     const before = db.prepare('SELECT project_id, member_slug, added_by FROM project_members ORDER BY 1, 2').all()
-    // The pi trigger skips proj_gone (deleted) and proj_pb (Peripheral Brain).
     expect(before).toEqual([{ project_id: 'proj_a', member_slug: 'nate-mesfin', added_by: 'pi' }])
     db.exec(plan.apply)
     db.exec(plan.apply)
-    const seeded = db.prepare('SELECT COUNT(*) AS n FROM project_members WHERE added_by = ?').get(SEED_SOURCE) as { n: number }
-    expect(seeded.n).toBe(5) // 6 pairs, nate@proj_a already there from the trigger
+    const by = (a: string) => (db.prepare('SELECT COUNT(*) AS n FROM project_members WHERE added_by = ?').get(a) as { n: number }).n
+    expect(by(SEED_SOURCE)).toBe(8 + 3) // Nick on 8 live projects (7 + late) + casey x3
+    expect(by(TITLE_SOURCE)).toBe(1)
+    expect(db.prepare("SELECT 1 AS x FROM project_members WHERE project_id = 'proj_late' AND member_slug = 'nick-ingraham'").get()).toEqual({ x: 1 })
     db.exec(plan.rollback)
     expect(db.prepare('SELECT project_id, member_slug, added_by FROM project_members ORDER BY 1, 2').all()).toEqual(before)
+  })
+})
+
+describe('the window sweep', () => {
+  it("joins each creator from the 'Created project' log row since the DDL, and Nick; rollback removes only its rows", () => {
+    const db = prodSchemaDb()
+    for (const t of team) insertRow(db, 'team_members', { id: `tm-${t.slug}`, name: t.name, slug: t.slug, email: t.email })
+    insertRow(db, 'projects', { id: 'proj_w', slug: 'w', title: 'W', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id: 'proj_old', slug: 'old', title: 'Old', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'activity_log', { id: 'al1', type: 'project', description: 'Created project: W', actor: 'mesfin@umn.edu', related_id: 'proj_w', timestamp: '2026-10-09 06:00:00' })
+    insertRow(db, 'activity_log', { id: 'al2', type: 'project', description: 'Created project: Old', actor: 'eddin022@umn.edu', related_id: 'proj_old', timestamp: '2026-10-01 00:00:00' })
+    const w = windowSweep('2026-10-09 05:00:00')
+    db.exec(w.apply)
+    const rows = db.prepare('SELECT project_id, member_slug FROM project_members WHERE added_by = ? ORDER BY 1, 2').all(WINDOW_SOURCE)
+    expect(rows).toEqual([
+      { project_id: 'proj_old', member_slug: 'nick-ingraham' },
+      { project_id: 'proj_w', member_slug: 'nate-mesfin' },
+      { project_id: 'proj_w', member_slug: 'nick-ingraham' },
+    ])
+    db.exec(w.rollback)
+    expect(db.prepare('SELECT COUNT(*) AS n FROM project_members').get()).toEqual({ n: 0 })
+    expect(() => windowSweep('yesterday')).toThrow()
   })
 })
 
