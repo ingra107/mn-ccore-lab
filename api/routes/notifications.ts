@@ -117,22 +117,52 @@ export async function handleCreateCommitment(request: Request, env: Env): Promis
     return error('id, commitment, and to_whom required', 400);
   }
 
-  await env.DB.prepare(
-    `INSERT OR REPLACE INTO commitments (id, commitment, to_whom, to_slug, status, due_date, source, project, task_id, created_at, completed_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind(
-    body.id as string,
+  // #145: read through the caller's handle, then UPDATE or INSERT; never
+  // INSERT OR REPLACE, which would overwrite a commitment the caller cannot
+  // see (commitments follow their project and task). A project or task the
+  // caller cannot see does not exist for them, so naming one is a 404.
+  const project = (body.project as string) ?? null;
+  const taskId = (body.task_id as string) ?? null;
+  if (project) {
+    const p = await env.DB.prepare('SELECT id FROM projects WHERE id = ? OR slug = ? LIMIT 1').bind(project, project).first();
+    if (!p) return error('Project not found', 404);
+  }
+  if (taskId) {
+    const t = await env.DB.prepare('SELECT id FROM tasks WHERE id = ?').bind(taskId).first();
+    if (!t) return error('Task not found', 404);
+  }
+  const values = [
     body.commitment as string,
     body.to_whom as string,
     (body.to_slug as string) ?? null,
     (body.status as string) ?? 'open',
     (body.due_date as string) ?? null,
     (body.source as string) ?? null,
-    (body.project as string) ?? null,
-    (body.task_id as string) ?? null,
+    project,
+    taskId,
     (body.created_at as string) ?? nowInstant(),
     (body.completed_at as string) ?? null,
-  ).run();
+  ];
+  const existing = await env.DB.prepare('SELECT id FROM commitments WHERE id = ?').bind(body.id as string).first();
+  if (existing) {
+    await env.DB.prepare(
+      `UPDATE commitments SET commitment = ?, to_whom = ?, to_slug = ?, status = ?, due_date = ?, source = ?,
+              project = ?, task_id = ?, created_at = ?, completed_at = ? WHERE id = ?`
+    ).bind(...values, body.id as string).run();
+    return json({ success: true }, 201);
+  }
+  try {
+    await env.DB.prepare(
+      `INSERT INTO commitments (id, commitment, to_whom, to_slug, status, due_date, source, project, task_id, created_at, completed_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(body.id as string, ...values).run();
+  } catch (e) {
+    // The id is taken by a commitment this caller cannot see.
+    if (/UNIQUE constraint failed|SQLITE_CONSTRAINT/.test(e instanceof Error ? e.message : String(e))) {
+      return error('Commitment id already in use', 409);
+    }
+    throw e;
+  }
 
   return json({ success: true }, 201);
 }

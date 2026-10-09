@@ -37,6 +37,8 @@ const UNCLASSIFIED_BASELINE = new Set([
   'GET /api/team/:slug/contributions',
   'GET /api/team/:slug/trajectory',
   'GET /api/team/pulse',
+  'POST /api/commitments', // #145 Lane B: the reads that check the parent through the scoped handle
+  'POST /api/tasks/:id/subtasks',
   'POST /api/sync/mobile-tasks-to-hub',
   'POST /api/tasks',
   'POST /api/tasks/:id/handoffs',

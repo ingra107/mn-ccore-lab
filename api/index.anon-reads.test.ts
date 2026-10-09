@@ -46,6 +46,8 @@ beforeAll(() => {
     box_url: `https://box.com/${S}`, primary_folder: `C:/${S}/folder`, manuscript_path: `C:/${S}/ms`,
     analysis_path: `C:/${S}/an`, key_files: `${S} files`,
   })
+  // #145 Lane B: a member reads the projects they are on; the session user is Nate.
+  insertRow(db, 'project_members', { project_id: 'proj_anon1', member_slug: 'nate-mesfin', added_by: 'test' })
   insertRow(db, 'activity_log', {
     id: 'act1', type: 'project_update', description: `${S} internal progress note`,
     related_id: 'anon-project', related_type: 'project', actor: 'nick-ingraham',

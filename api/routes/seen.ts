@@ -74,11 +74,22 @@ export async function handleMarkSeen(request: Request, env: Env): Promise<Respon
     return error("entity_type ('task'|'project'|'meeting'|'day') and entity_id required", 400);
   }
   try {
-    await env.DB.prepare(
-      `INSERT INTO entity_seen (entity_type, entity_id, viewer_slug, last_seen_at)
-       VALUES (?, ?, ?, datetime('now'))
-       ON CONFLICT(entity_type, entity_id, viewer_slug) DO UPDATE SET last_seen_at = excluded.last_seen_at`
-    ).bind(entityType, entityId, viewer).run();
+    // #145: update-then-insert, never an upsert. entity_seen is scoped by the
+    // entity's visibility; an upsert's DO UPDATE would reach the real row
+    // past the caller's handle, and viewer-db refuses it for a scoped viewer.
+    // The UPDATE runs through the handle (a hidden entity's row: 0 changes);
+    // the INSERT OR IGNORE then adds the caller's own row or leaves an
+    // existing one alone. Both in one batch (one transaction).
+    await env.DB.batch([
+      env.DB.prepare(
+        `UPDATE entity_seen SET last_seen_at = datetime('now')
+          WHERE entity_type = ? AND entity_id = ? AND viewer_slug = ?`
+      ).bind(entityType, entityId, viewer),
+      env.DB.prepare(
+        `INSERT OR IGNORE INTO entity_seen (entity_type, entity_id, viewer_slug, last_seen_at)
+         VALUES (?, ?, ?, datetime('now'))`
+      ).bind(entityType, entityId, viewer),
+    ]);
     return json({ data: { ok: true } });
   } catch (e) {
     console.error('handleMarkSeen failed (entity_seen missing pre-migration?):', e);

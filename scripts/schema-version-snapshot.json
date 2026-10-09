@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "e45d17eef92ecf231c6e9a19f59478d6df0d04effddab4eff66ee7c5870cace1",
-  "file_count": 123,
+  "hash": "0642f34b9160996d39be44b266d1ce2487e8683d9bf2a8867a8830757eff0509",
+  "file_count": 124,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -125,11 +125,12 @@
     "schema-v116-calendar-events-attendees.sql",
     "schema-v117-launch-log-page-route.sql",
     "schema-v118-team-members-email-unique.sql",
-    "schema-v119-meetings-owner.sql"
+    "schema-v119-meetings-owner.sql",
+    "schema-v120-project-members.sql"
   ],
   "version_range": [
     2,
-    119
+    120
   ],
   "gaps": [
     35,

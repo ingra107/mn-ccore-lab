@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { Env } from './types';
 import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, isTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible } from './helpers';
-import { viewerDb, personViewer, serviceViewer, nobodyViewer, type Viewer } from './lib/viewer-db';
+import { viewerDb, personViewer, serviceViewer, nobodyViewer, isSiteAdmin, ALL_PROJECTS_HEADER, type Viewer } from './lib/viewer-db';
 
 // The PB service key IS Nick's automation (Brief-7, 2026-06-11).
 const PB_SERVICE_EMAIL = 'ingra107@umn.edu';
@@ -28,6 +28,7 @@ import { handleGetTasks, handleGetTask, handleOverdueCount, handleUpdateTaskStat
 import { handleMarkSeen, handleGetUnseenActivity } from './routes/seen';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
+import { handleGetProjectMembers, handleAddProjectMember, handleRemoveProjectMember, handleGetMemberProjects } from './routes/project-members';
 import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleUpdateMeetingMeta, handleMeetingPrep, handleGenerateAgenda, handlePrepMeetingFromEvent } from './routes/meetings';
 import { handleGetPublications, handleGetGrants, handleCollaborationGraph, handleGetStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
@@ -374,8 +375,14 @@ app.use('*', async (c, next) => {
 // admit; see api/lib/viewer-db.ts. The middleware above this one (auth, the
 // /api/pb/* gate, the write gate) decides WHO is calling on the raw handle.
 //   - valid PB Bearer key           -> service (never scoped)
-//   - signed-in member              -> person (scoped per table; a PI person
-//                                      is unscoped on every Lane A table)
+//   - signed-in member              -> person (scoped per table: projects,
+//                                      tasks and their rows by membership for
+//                                      everyone, a PI included; meetings and
+//                                      PB-session rows exempt a PI)
+//   - the site admin (Nick) sending X-Hub-All-Projects: 1 -> person with
+//     allProjects: the project rules lift for that request only. Anyone else
+//     sending the header gets the ordinary scoped viewer (personViewer
+//     ignores it), so it is a server capability, not a client filter.
 //   - anyone else (anonymous, a non-member reading a public GET, a
 //     credential-less local-dev caller) -> nobody
 app.use('/api/*', async (c, next) => {
@@ -386,7 +393,7 @@ app.use('/api/*', async (c, next) => {
   const viewer: Viewer = c.get('apiKeyValid') === true
     ? serviceViewer()
     : authed && c.get('callerKind') === 'member'
-      ? personViewer({ slug: authed.slug, email: authed.email, pi })
+      ? personViewer({ slug: authed.slug, email: authed.email, pi, allProjects: c.req.header(ALL_PROJECTS_HEADER) === '1' })
       : nobodyViewer();
   c.set('viewer', viewer);
   c.set('env', { ...env, DB: viewerDb(env.DB, viewer) });
@@ -474,7 +481,10 @@ defineRoute({
      WHERE email IS NOT NULL AND email != '' AND slug IS NOT NULL AND slug != ''
      ORDER BY auto_created ASC, created_at ASC`
   ).all<{ email: string; slug: string }>();
-  return json({ authenticated: true, isMember: true, isPi, ...user, directory: dir.results ?? [] });
+  // #145 Lane B: the Projects page shows its "show all projects" switch only
+  // when this is true; the server ignores the switch's header for anyone else.
+  const canShowAllProjects = isSiteAdmin({ slug: user.slug, pi: isPi });
+  return json({ authenticated: true, isMember: true, isPi, canShowAllProjects, ...user, directory: dir.results ?? [] });
 },
 });
 
@@ -926,6 +936,40 @@ defineRoute({
   entity: 'projects',
   visibility: 'pb-aware',
   handler: (c) => handleGetProject(c.req.param('id'), E(c), c.get('user'), c.get('apiKeyValid') === true),
+});
+// #145 Lane B: project membership. Each reads and writes through the caller's
+// handle, so a project the caller cannot see is a 404 here too.
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:id/members',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleGetProjectMembers(c.req.param('id'), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/projects/:id/members',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleAddProjectMember(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'DELETE',
+  path: '/api/projects/:id/members/:slug',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleRemoveProjectMember(c.req.param('id'), c.req.param('slug'), USER(c), c.get('viewer'), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/team/:slug/projects',
+  auth: 'authed',
+  entity: 'team',
+  visibility: 'na',
+  handler: (c) => handleGetMemberProjects(c.req.param('slug'), E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3318,7 +3362,7 @@ export default {
           // Get their pending action items
           const actions = await recipientDb.prepare(
             'SELECT title, description, due_date, priority, status FROM tasks WHERE assignee = ? AND completed = 0 ORDER BY due_date ASC'
-          ).bind(member.slug).all<{ description: string; due_date: string | null }>();
+          ).bind(member.slug).all<{ title: string | null; description: string | null; due_date: string | null }>();
 
           // Get unread notifications
           const notifCount = await recipientDb.prepare(
@@ -3367,7 +3411,7 @@ export default {
               const dueLabel = item.due_date
                 ? `<span style="color:${overdue ? '#7a0019' : '#64748b'};font-size:12px;"> — ${overdue ? 'overdue' : 'due'} ${escapeHtml(item.due_date)}</span>`
                 : '';
-              itemsHtml += `<li style="margin-bottom:8px;font-size:14px;color:#0f1923;">${escapeHtml(item.description.replace(/^\[Carried forward\]\s*/i, ''))}${dueLabel}</li>`;
+              itemsHtml += `<li style="margin-bottom:8px;font-size:14px;color:#0f1923;">${escapeHtml((item.description || item.title || '').replace(/^\[Carried forward\]\s*/i, ''))}${dueLabel}</li>`;
             }
             itemsHtml += '</ul>';
           }

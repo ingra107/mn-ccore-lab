@@ -116,6 +116,11 @@ export async function handleUpdateMilestoneNote(
 }
 
 // POST /api/projects — create new project
+/** A project INSERT refused because a live project already holds the slug. */
+function isSlugTaken(reason: string | undefined): boolean {
+  return /UNIQUE constraint failed: projects\.slug|idx_projects_slug_active/.test(reason ?? '');
+}
+
 export async function handleCreateProject(
   request: Request,
   user: AuthUser,
@@ -174,7 +179,14 @@ export async function handleCreateProject(
   // {Research, Grants, Teaching, Personal, Professional Development}; tier
   // ∈ {1-Weekly, 2-Biweekly, 3-Monthly}) so a Hub-created project is never
   // worse-defaulted than a PB-created one.
-  const createProjMut = await applyMutation(env, {
+  // #145 Lane B: the slug loop above reads through the caller's handle, so a
+  // live project the caller is not on is invisible to it, and its slug looks
+  // free. The INSERT then hits idx_projects_slug_active. Treat that refusal as
+  // "taken" and try the next suffix, so a member never gets a 409 for a
+  // project name they cannot see (the slug suffix is all they learn).
+  let createProjMut: Awaited<ReturnType<typeof applyMutation>>;
+  for (;;) {
+  createProjMut = await applyMutation(env, {
     table: 'projects',
     record_id: id,
     op: 'insert',
@@ -194,6 +206,11 @@ export async function handleCreateProject(
     route: 'handleCreateProject',
     user,
   });
+  if (createProjMut.status === 'accepted' || !isSlugTaken(createProjMut.reason)) break;
+  slug = `${baseSlug}-${attempt}`;
+  attempt += 1;
+  if (attempt > 100) return error(`Cannot generate unique slug after 100 attempts from "${baseSlug}"`, 500);
+  }
   if (createProjMut.status !== 'accepted') {
     return error(`mutation rejected: ${createProjMut.status} — ${createProjMut.reason ?? ''}`, 409);
   }

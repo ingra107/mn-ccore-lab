@@ -17,6 +17,7 @@ import { TABLE_SCOPE } from './table-scope'
 const CASEY = personViewer({ slug: 'casey-eddington', email: 'eddin022@umn.edu', pi: false })
 const NATE = personViewer({ slug: 'nate-mesfin', email: 'mesfin@umn.edu', pi: false })
 const NICK = personViewer({ slug: 'nick-ingraham', email: 'ingra107@umn.edu', pi: true })
+const NICK_ALL = personViewer({ slug: 'nick-ingraham', email: 'ingra107@umn.edu', pi: true, allProjects: true })
 
 function seeded(): InstanceType<typeof Database> {
   const db = prodSchemaDb()
@@ -37,6 +38,8 @@ function seeded(): InstanceType<typeof Database> {
   m('m-facil', ['nick-ingraham'], { facilitator: 'casey-eddington' }) // facilitator confers nothing
   m('m-owned', null, { owner_slug: 'casey-eddington' })                // her own Prep meeting, no attendees
   m('m-src', ['nate-mesfin'], { source_id: 'cal-src-1' })
+  // Casey's own project-less task: the task rows below follow it (Lane B).
+  insertRow(db, 'tasks', { id: 'task-x', title: 'tx', assignee: 'casey-eddington' })
   insertRow(db, 'agenda_items', { id: 'ag-mine', meeting_id: 'm-slug', content: 'mine', added_by: 'x' })
   insertRow(db, 'agenda_items', { id: 'ag-other', meeting_id: 'm-other', content: 'other', added_by: 'x' })
   insertRow(db, 'hub_decisions', { id: 'd-mine', title: 'dm', meeting_id: 'm-slug' })
@@ -86,10 +89,13 @@ describe('who sees which meeting', () => {
     expect(await ids(h, 'SELECT id FROM meetings')).toEqual(['m-other', 'm-src'])
   })
 
-  it('a PI person and the service key get the raw handle and see all', async () => {
+  it('the service key, and the site admin with show-all-projects on, get the raw handle and see all', async () => {
     const db = seeded()
     const raw = d1Adapter(db) as unknown as D1Database
-    expect(viewerDb(raw, NICK)).toBe(raw)
+    expect(viewerDb(raw, NICK_ALL)).toBe(raw)
+    // Lane B: without the switch Nick is membership-scoped like everyone else.
+    expect(viewerDb(raw, NICK)).not.toBe(raw)
+    expect(await ids(viewerDb(raw, NICK), 'SELECT id FROM meetings')).toHaveLength(11)
     expect(viewerDb(raw, serviceViewer())).toBe(raw)
     expect(await ids(raw, 'SELECT id FROM meetings')).toHaveLength(11)
   })
@@ -106,7 +112,8 @@ describe('rows that hang off a meeting follow it', () => {
     expect(await ids(h, 'SELECT id FROM agenda_items')).toEqual(['ag-mine'])
     expect(await ids(h, 'SELECT id FROM hub_decisions')).toEqual(['d-free', 'd-mine'])
     expect(await ids(h, 'SELECT id FROM activity_entries')).toEqual(['ae-mine', 'ae-task'])
-    expect(await ids(h, 'SELECT id FROM file_attachments')).toEqual(['f-mine', 'f-proj'])
+    // f-proj names a project Casey is not on (Lane B): hidden.
+    expect(await ids(h, 'SELECT id FROM file_attachments')).toEqual(['f-mine'])
     expect(await ids(h, 'SELECT id FROM activity_log')).toEqual(['l-mine', 'l-task'])
     const nate = viewerDb(d1Adapter(seeded()) as unknown as D1Database, NATE)
     expect(await ids(nate, 'SELECT id FROM hub_decisions')).toEqual(['d-free', 'd-other', 'd-other-src'])
@@ -117,7 +124,8 @@ describe('rows that hang off a meeting follow it', () => {
     const raw = d1Adapter(db) as unknown as D1Database
     expect(await ids(viewerDb(raw, NICK), "SELECT id FROM activity_log WHERE type IN ('pb_session','sync')")).toEqual(['l-pb', 'l-sync'])
     expect(await ids(viewerDb(raw, CASEY), "SELECT id FROM activity_log WHERE type IN ('pb_session','sync')")).toEqual([])
-    expect(await ids(viewerDb(raw, nobodyViewer()), 'SELECT id FROM activity_log')).toEqual(['l-task'])
+    // Nobody reads no task, so no task's log row either (Lane B).
+    expect(await ids(viewerDb(raw, nobodyViewer()), 'SELECT id FROM activity_log')).toEqual([])
   })
 
   it('the shadow holds through joins, aliases, subqueries, counts and INSERT..SELECT', async () => {
@@ -190,7 +198,7 @@ describe('the statement forms routes use', () => {
 
   it('SQL that does not name a scoped table is passed through untouched', () => {
     const active = activeScopes(CASEY)
-    const sql = 'SELECT id FROM tasks WHERE id = ?'
+    const sql = 'SELECT id FROM grants WHERE id = ?'
     expect(scopeSql(sql, active)).toBe(sql)
   })
 

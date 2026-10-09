@@ -90,11 +90,17 @@ export async function handleLinkProjectPublication(
 
   // Upsert: relinking with a different role updates the role rather than
   // 409ing — the pair IS the identity, the role is an attribute of it.
-  await env.DB.prepare(
-    `INSERT INTO project_publications (project_id, publication_id, role)
-     VALUES (?, ?, ?)
-     ON CONFLICT(project_id, publication_id) DO UPDATE SET role = excluded.role`,
-  ).bind(projectId, publicationId, role).run();
+  // #145: update-then-insert, not an upsert (viewer-db refuses DO UPDATE on a
+  // scoped table). The project was resolved through the caller's handle above,
+  // so every row of it is visible here and the UPDATE sees the existing pair.
+  await env.DB.batch([
+    env.DB.prepare(
+      'UPDATE project_publications SET role = ? WHERE project_id = ? AND publication_id = ?',
+    ).bind(role, projectId, publicationId),
+    env.DB.prepare(
+      'INSERT OR IGNORE INTO project_publications (project_id, publication_id, role) VALUES (?, ?, ?)',
+    ).bind(projectId, publicationId, role),
+  ]);
 
   await logActivity(
     env,

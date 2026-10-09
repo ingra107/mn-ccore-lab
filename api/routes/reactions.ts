@@ -38,7 +38,16 @@ export async function handleToggleReaction(request: Request, user: AuthUser, env
     return error('target_type and target_id required', 400);
   }
 
-  const emoji = body.emoji || '\u{1F44D}';
+  // #145: a reaction targets an activity entry (a comment or a project
+  // update). INSERT is not a read, so the target is checked through the
+  // caller's handle first: an entry they cannot see does not exist for them.
+  if (body.target_type === 'comment' || body.target_type === 'project_update') {
+    // activity-hidden-exempt: write-path parent check (exists for the caller), not a feed read
+    const target = await env.DB.prepare('SELECT id FROM activity_entries WHERE id = ?').bind(body.target_id).first<{ id: string }>();
+    if (!target) return error('Not found', 404);
+  }
+
+  const emoji = body.emoji ||'\u{1F44D}';
   const userSlug = user.slug;
 
   // Check if reaction already exists

@@ -26,7 +26,8 @@ describe('TABLE_SCOPE covers the migrated schema', () => {
     for (const [t, s] of Object.entries(TABLE_SCOPE)) {
       if (s.kind !== 'scoped') continue
       const cols = (db.prepare(`PRAGMA table_info(${t})`).all() as { name: string; pk: number }[])
-      expect(cols.find((c) => c.name === s.key)?.pk, `${t}.${s.key} must be the primary key`).toBe(1)
+      const pk = cols.filter((c) => c.pk > 0).sort((a, b) => a.pk - b.pk).map((c) => c.name)
+      expect(typeof s.key === 'string' ? [s.key] : [...s.key], `${t}: the DML key must be the whole primary key`).toEqual(pk)
       for (const d of s.dependsOn) expect(TABLE_SCOPE[d].kind, `${t} depends on ${d}`).toBe('scoped')
     }
   })

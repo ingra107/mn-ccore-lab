@@ -35,18 +35,26 @@
 //   - service: the PB Bearer key. Never scoped; viewerDb returns the raw
 //     handle. PB sync, Hermes and every PB read depend on seeing everything.
 //   - person:  a signed-in member. Each table's rule decides from the person's
-//     slug, email and `pi` flag; a rule that returns null leaves that table
-//     whole for that person. In Lane A the meetings rule returns null for a
-//     PI, so Nick's session is unchanged. A person with no restricted table
-//     gets the raw handle too (no prefix, no cost).
+//     slug, email, `pi` flag and `allProjects` flag; a rule that returns null
+//     leaves that table whole for that person. Projects, tasks and the rows
+//     that hang off them follow project membership for EVERY person, a PI
+//     included (Lane B, Nick 2026-10-08: "the default should always be only
+//     projects that I'm on"). The meetings and PB-session rules still exempt
+//     a PI. A person with no restricted table gets the raw handle.
+//   - allProjects: the site admin's "show all projects" switch. Only
+//     personViewer sets it, and only for SITE_ADMIN_SLUG with the PI flag;
+//     for anyone else the request is ignored. It lifts the project rules,
+//     nothing else (meetings stay as they are). Off unless the request asks.
 //
 // COST. For a scoped person, EVERY statement that names a scoped table is
 // prefixed, not only meeting reads: activity_entries, activity_log,
 // agenda_items, hub_decisions and file_attachments rules read the meetings
 // CTE, so the activity feeds pay too. Measured on prod D1 for Casey (#145
-// review): `SELECT COUNT(*) FROM meetings` rows_read 73 -> 533; activity_log
-// top 50 rows_read 50 -> 621. Nick and the PB key get the raw handle and pay
-// nothing. Statements naming no scoped table are passed through unchanged.
+// review, Lane A rules): `SELECT COUNT(*) FROM meetings` rows_read 73 -> 533;
+// activity_log top 50 rows_read 50 -> 621. Since Lane B, Nick's own session
+// is scoped too (projects and tasks) and pays the same kind of prefix; only
+// the PB key, and Nick with "show all projects" on, get the raw handle.
+// Statements naming no scoped table are passed through unchanged.
 //   - nobody:  no identity (anonymous, a signed-in non-member on a public GET,
 //     a credential-less local caller). Every scoped table is empty.
 // Service and person are separate kinds on purpose: Lane B scopes Nick's
@@ -64,6 +72,8 @@ export type Viewer =
       readonly slug: string
       readonly email: string
       readonly pi: boolean
+      /** The site admin asked for every project on this request (see SITE_ADMIN_SLUG). */
+      readonly allProjects: boolean
       readonly [viewerBrand]: true
     }
   | { readonly kind: 'nobody'; readonly [viewerBrand]: true }
@@ -92,8 +102,29 @@ export function nobodyViewer(): Viewer {
   return { kind: 'nobody' } as Viewer
 }
 
-/** A signed-in member. Throws on a slug or email no team_members row could hold. */
-export function personViewer(args: { slug: string; email: string | null | undefined; pi: boolean }): Viewer {
+/**
+ * The one person who may switch on "show all projects" (Nick, 2026-10-08:
+ * "that should only be for me not for anybody else"; its purpose is cleaning
+ * out projects of people who left). Keyed on the slug the server resolved from
+ * the session's email AND the PI flag, so neither a client value nor a second
+ * PI email reaches it. Not a role: no director, no other PI.
+ */
+export const SITE_ADMIN_SLUG = 'nick-ingraham'
+
+/** The request header the Projects page's "show all projects" switch sends ('1' = on). */
+export const ALL_PROJECTS_HEADER = 'X-Hub-All-Projects'
+
+/** True when this signed-in caller may switch on "show all projects". */
+export function isSiteAdmin(args: { slug: string; pi: boolean }): boolean {
+  return args.pi && (args.slug ?? '').trim().toLowerCase() === SITE_ADMIN_SLUG
+}
+
+/**
+ * A signed-in member. Throws on a slug or email no team_members row could hold.
+ * `allProjects` is honoured only for the site admin; anyone else asking for it
+ * gets an ordinary membership-scoped viewer.
+ */
+export function personViewer(args: { slug: string; email: string | null | undefined; pi: boolean; allProjects?: boolean }): Viewer {
   const slug = (args.slug ?? '').trim().toLowerCase()
   const email = (args.email ?? '').trim().toLowerCase()
   if (!slug || slug === 'anonymous') throw new Error('personViewer: a person needs a real slug')
@@ -101,7 +132,8 @@ export function personViewer(args: { slug: string; email: string | null | undefi
     throw new Error('personViewer: slug or email carries a forbidden character')
   }
   if (email && !/^[^@\s]+@[^@\s]+$/.test(email)) throw new Error('personViewer: malformed email')
-  return { kind: 'person', slug, email, pi: args.pi } as Viewer
+  const allProjects = args.allProjects === true && isSiteAdmin({ slug, pi: args.pi })
+  return { kind: 'person', slug, email, pi: args.pi, allProjects } as Viewer
 }
 
 /** A SQL string literal. */
@@ -189,13 +221,16 @@ export function scopeSql(sql: string, active: ReadonlyMap<ScopedTable, string>):
   if (FORBIDDEN_SQL.test(sql)) {
     throw new ScopeRefused('viewer-db: SQL that names main./temp./sqlite_/pragma/attach is refused for a scoped viewer')
   }
-  // A quoted identifier naming a scoped table ("meetings", [meetings],
-  // `meetings`, and 'meetings': SQLite accepts a single-quoted string as an
-  // identifier where one is expected, so `UPDATE 'meetings'` reaches the real
-  // table past the guard) is refused rather than reasoned about. No route
-  // writes one; the compile sweep in viewer-db.test.ts pins that.
+  // A quoted identifier naming a scoped table where SQLite reads a TABLE
+  // name ("meetings", [meetings], `meetings`, and 'meetings': SQLite accepts
+  // a single-quoted string as an identifier there, so `UPDATE 'meetings'`
+  // reaches the real table past the guard) is refused rather than reasoned
+  // about. Only the table positions (after FROM, JOIN, INTO, UPDATE, TABLE):
+  // a string VALUE that spells a table, like links.owner_table = 'tasks', is
+  // data, and Lane B scopes both tasks and projects. No route writes a quoted
+  // table name; the compile sweep in viewer-db.test.ts pins that.
   for (const t of named) {
-    if (new RegExp(`["'\`[]${t}["'\`\\]]`, 'i').test(sql)) {
+    if (new RegExp(`\\b(?:from|join|into|update|table)\\s+["'\`[]${t}["'\`\\]]`, 'i').test(sql)) {
       throw new ScopeRefused(`viewer-db: a quoted identifier naming scoped table ${t} is refused for a scoped viewer`)
     }
   }
@@ -204,13 +239,22 @@ export function scopeSql(sql: string, active: ReadonlyMap<ScopedTable, string>):
   if (semi !== -1 && scanned.slice(semi + 1).some((w) => w.word !== ';')) {
     throw new ScopeRefused('viewer-db: more than one statement in one prepare() is refused for a scoped viewer')
   }
-  for (const t of [...named]) {
-    const s = TABLE_SCOPE[t]
-    if (s.kind === 'scoped') for (const d of s.dependsOn) if (active.has(d)) named.add(d)
+  // The full dependency closure, not one level: task_files reads tasks, which
+  // reads projects. A dependency left out of the WITH clause would resolve to
+  // the REAL table inside the CTE that names it, and read every row.
+  const work = [...named]
+  while (work.length > 0) {
+    const s = TABLE_SCOPE[work.pop()!]
+    if (s.kind !== 'scoped') continue
+    for (const d of s.dependsOn) {
+      if (active.has(d) && !named.has(d)) { named.add(d); work.push(d) }
+    }
   }
-  // Dependencies first: a CTE may read an earlier one (activity_log reads meetings).
+  // Dependencies first: a CTE may read only an earlier one. Depth is the
+  // longest dependency chain under the table, so every table sorts after
+  // everything it reads.
   const ordered = [...active.keys()].filter((t) => named.has(t))
-  ordered.sort((a, b) => depRank(a) - depRank(b))
+  ordered.sort((a, b) => depDepth(a) - depDepth(b))
   const ctes = ordered
     .map((t) => `${t} AS NOT MATERIALIZED (SELECT * FROM main.${t} AS ${t} WHERE ${active.get(t)})`)
     .join(', ')
@@ -232,9 +276,19 @@ export function scopeSql(sql: string, active: ReadonlyMap<ScopedTable, string>):
   return applyDmlRestriction(`${sql.slice(0, first.start)}WITH ${ctes} ${sql.slice(first.start)}`, active, named)
 }
 
-function depRank(t: ScopedTable): number {
+const depthMemo = new Map<ScopedTable, number>()
+/** Longest dependency chain under `t` (0 = reads no scoped table). Exported for tests. */
+export function depDepth(t: ScopedTable, seen: ReadonlySet<ScopedTable> = new Set()): number {
+  const memo = depthMemo.get(t)
+  if (memo !== undefined) return memo
+  if (seen.has(t)) throw new Error(`table-scope: dependency cycle through ${t}`)
   const s = TABLE_SCOPE[t]
-  return s.kind === 'scoped' ? s.dependsOn.length : 0
+  const next = new Set(seen).add(t)
+  const d = s.kind === 'scoped' && s.dependsOn.length > 0
+    ? 1 + Math.max(...s.dependsOn.map((x) => depDepth(x, next)))
+    : 0
+  depthMemo.set(t, d)
+  return d
 }
 
 // UPDATE / DELETE whose target is a scoped table: AND `<key> IN (SELECT <key>
@@ -290,7 +344,10 @@ function applyDmlRestriction(sql: string, active: ReadonlyMap<ScopedTable, strin
   if (scope.kind !== 'scoped') return sql
   const rest = words.slice(verbIdx + 1).filter((w) => w.depth === 0)
   const where = rest.find((w) => w.word === 'where' && w.start > target!.end)
-  const guard = `${table}.${scope.key} IN (SELECT ${scope.key} FROM ${table})`
+  const keys = typeof scope.key === 'string' ? [scope.key] : scope.key
+  const guard = keys.length === 1
+    ? `${table}.${keys[0]} IN (SELECT ${keys[0]} FROM ${table})`
+    : `(${keys.map((k) => `${table}.${k}`).join(', ')}) IN (SELECT ${keys.join(', ')} FROM ${table})`
   const tailKw = (from: number) => rest.find((w, k) =>
     w.start > from && (w.word === 'returning' || w.word === 'limit'
       || (w.word === 'order' && rest[k + 1]?.word === 'by')))

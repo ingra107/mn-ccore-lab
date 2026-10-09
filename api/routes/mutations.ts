@@ -29,6 +29,7 @@ import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
 import { emitLifecycleActivity } from '../lib/lifecycle-activity';
 import { TASK_TITLE_DEDUP_SELECT } from '../lib/task-dedup-sql';
 import { touchesKeyLinkSlots, slotLinkStatements, touchedLinksRead } from '../lib/key-link';
+import { creatorMembershipStatement } from '../lib/project-membership';
 import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumerCloseError, questionConsumedError } from '../lib/task-question';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 import type { RefusalCode } from '../../pb-schema/pb_schema/generated/refusal-codes.generated.ts';
@@ -835,9 +836,15 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     (mut.table === 'tasks' || mut.table === 'projects') &&
     touchesKeyLinkSlots(mut.payload as Record<string, unknown>);
   let touchedLinks: Record<string, unknown>[] = [];
+  // #145 Lane B: a new project's creator is its first member, in the same
+  // transaction as the INSERT (a project nobody can see would be lost to its
+  // own author). Every project-create lane reaches this chokepoint.
+  const creatorJoins = mut.table === 'projects'
+    ? creatorMembershipStatement(env.DB, mut.record_id, user?.slug)
+    : null;
 
   try {
-    if (mirrorSlots) {
+    if (mirrorSlots || creatorJoins) {
       const pk = pkWhere(mut.table, mut.record_id);
       const landed: SqlFragment = {
         sql: `EXISTS (SELECT 1 FROM ${mut.table} WHERE ${pk.sql} AND last_mutation_id = ?)`,
@@ -845,13 +852,16 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
       };
       const res = await env.DB.batch<Record<string, unknown>>([
         env.DB.prepare(sql).bind(...vals),
-        ...slotLinkStatements(
-          env.DB, mut.table as 'tasks' | 'projects', mut.record_id,
-          {}, mut.payload as Record<string, unknown>, mut.mutation_id, landed,
-        ),
-        touchedLinksRead(env.DB, mut.mutation_id),
+        ...(mirrorSlots
+          ? slotLinkStatements(
+            env.DB, mut.table as 'tasks' | 'projects', mut.record_id,
+            {}, mut.payload as Record<string, unknown>, mut.mutation_id, landed,
+          )
+          : []),
+        ...(creatorJoins ? [creatorJoins] : []),
+        ...(mirrorSlots ? [touchedLinksRead(env.DB, mut.mutation_id)] : []),
       ]);
-      touchedLinks = (res[res.length - 1]?.results ?? []) as Record<string, unknown>[];
+      if (mirrorSlots) touchedLinks = (res[res.length - 1]?.results ?? []) as Record<string, unknown>[];
     } else {
       // No slot columns: the insert runs exactly as it always has.
       await env.DB.prepare(sql).bind(...vals).run();

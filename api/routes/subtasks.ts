@@ -31,6 +31,11 @@ export async function handleCreateSubtask(taskId: string, request: Request, user
     return error('title is required', 400);
   }
 
+  // #145: an INSERT is not a read, so the parent task is checked through the
+  // caller's handle first; a task they cannot see does not exist for them.
+  const parent = await env.DB.prepare('SELECT id FROM tasks WHERE id = ?').bind(taskId).first<{ id: string }>();
+  if (!parent) return error('Task not found', 404);
+
   // Get max sort_order for this task
   const maxOrder = await env.DB.prepare(
     'SELECT MAX(sort_order) as max_order FROM task_subtasks WHERE task_id = ?'

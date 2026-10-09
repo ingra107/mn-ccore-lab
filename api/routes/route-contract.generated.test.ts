@@ -170,7 +170,7 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(270)
+    expect(ROUTE_REGISTRY).toHaveLength(274) // +4: #145 Lane B project membership routes
   })
 
   it('every non-public route has either entity or visibility metadata', () => {
