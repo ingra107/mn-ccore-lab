@@ -27,6 +27,8 @@ import { generateId, parseMentions, actorSlugFromRequest, isPiRequest, resolveSl
 // (src/components/hermesPendingUtil.ts). One literal, three consumers — do not
 // reword it without updating all three.
 const HERMES_PENDING_BODY = 'Thinking about this... (AI response pending)';
+/** SQL LIKE prefix for the pending placeholder (constant, no quotes or wildcards). */
+const HERMES_PENDING_PREFIX = 'Thinking about this';
 
 // #98 thread-context bounds. A follow-up needs the recent exchange, not the
 // whole history: unbounded, one long thread would blow the model's context and
@@ -1112,9 +1114,15 @@ export function replySummaryColumns(
   includeHidden: boolean,
 ): { sql: string; binds: string[] } {
   const from = `FROM activity_entries r WHERE r.parent_id = ae.id AND ${activityHiddenClause('r', includeHidden)} AND ${gate.clause}`;
+  // A Hermes reply keeps created_at at ASK time and stamps answered_at when the
+  // answer lands (ai-requests.ts), so "when did this reply arrive" is
+  // COALESCE(answered_at, created_at) -- same rule as seen.ts. The pending
+  // placeholder is not an arrival, so it never sets last_reply_at/actor.
+  const landed = `COALESCE(r.answered_at, r.created_at)`;
+  const arrived = `${from} AND r.body NOT LIKE '${HERMES_PENDING_PREFIX}%'`;
   const sql = `(SELECT COUNT(*) ${from}) AS reply_count,
-            (SELECT MAX(r.created_at) ${from}) AS last_reply_at,
-            (SELECT r.actor_slug ${from} ORDER BY r.created_at DESC, r.id DESC LIMIT 1) AS last_reply_actor,
+            (SELECT MAX(${landed}) ${arrived}) AS last_reply_at,
+            (SELECT r.actor_slug ${arrived} ORDER BY ${landed} DESC, r.id DESC LIMIT 1) AS last_reply_actor,
             (SELECT GROUP_CONCAT(s) FROM (SELECT r.actor_slug AS s ${from} GROUP BY r.actor_slug ORDER BY MIN(r.created_at))) AS participants`;
   return { sql, binds: [...gate.binds, ...gate.binds, ...gate.binds, ...gate.binds] };
 }

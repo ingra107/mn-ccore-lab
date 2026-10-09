@@ -34,6 +34,8 @@ export function useThreadNew(root: ActivityEntryItemRow, viewerSlug: string) {
   const [local, setLocal] = useState<string | null>(() => readLocal(root.id))
 
   const last = root.last_reply_at ?? null
+  // last_reply_at/actor come from the server already excluding the Hermes
+  // "Thinking..." placeholder and using answered_at for Hermes replies.
   const byOther = !!root.last_reply_actor && root.last_reply_actor !== viewerSlug
   const serverNew = !!last && byOther && !!snap?.seenAt && last > snap.seenAt
   const hasNew = serverNew && !(local && last && local >= last)
