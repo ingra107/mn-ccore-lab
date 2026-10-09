@@ -9,6 +9,7 @@
 export const P = {
   // Gated
   dashboard: '/portal/dashboard',
+  team: '/portal/team',
   overview: '/portal/overview',
   personal: '/portal/personal',
   myItems: '/portal/my-items',

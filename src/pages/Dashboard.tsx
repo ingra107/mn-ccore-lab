@@ -155,7 +155,7 @@ function getVisibleCards(roleCards?: string[]): Set<string> {
 
 export default function Dashboard() {
   usePageMeta(
-    'Dashboard | MN-CCORE Lab',
+    'Lab Overview · MN-CCORE',
     'Research command center for MN-CCORE. Track active projects, grant timelines, action items, and collaboration metrics across the consortium.'
   )
   const { user } = useAuth()

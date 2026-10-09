@@ -691,7 +691,7 @@ function NoResults() {
 
 export default function Digest() {
   usePageMeta(
-    'Research Digest | MN-CCORE Lab',
+    'Research Digest · MN-CCORE',
     'Daily PubMed papers relevant to MNCCORE research including critical care, lung-protective ventilation, clinical decision-making, and CLIF data standards.'
   )
 

@@ -1033,7 +1033,7 @@ export default function PersonalPage() {
           )
         })}
 
-        {recent.length > 1 && (
+        {recent.length > 0 && (
           <>
             <div style={{ width: 1, height: 16, background: 'var(--border-subtle)' }} />
             <History {...ICON_PROPS} size={11} style={{ color: 'var(--slate)', opacity: 0.75 }} />
