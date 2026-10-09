@@ -306,11 +306,14 @@ export default function TodayPage() {
   // each with the due date of their soonest open task; — if none. It was a
   // filter over the viewer's OWN task list, so it could never match a mentee.
   const focusMin = useMemo(() => {
+    // Non-PI: usePBSessionStats never fires (PI-only endpoint), so there is
+    // no focus reading to show -- null hides the tile rather than faking 0.
+    if (!user.isPi) return null
     const today = todayKey()
     const perDay = sessionStatsQuery.data?.per_day ?? []
     const todayRow = perDay.find((d) => d.day === today)
     return todayRow?.total_minutes ?? 0
-  }, [sessionStatsQuery.data])
+  }, [sessionStatsQuery.data, user.isPi])
   const mentees = useMemo(() => {
     return (menteesQuery.data ?? []).map((m) => {
       let next = '—'
