@@ -31,17 +31,19 @@ describe('resolveAttendeeViews', () => {
     expect(a.first).toBe('Dana')
   })
 
-  it('shows an auto-created member whose only name is its id as Unlisted, never the id', () => {
+  it('shows an auto-created member whose only name is its id as the raw id, flagged unlisted (rendered muted with a ? badge)', () => {
     const [a] = resolveAttendeeViews(['kaur0147'], team)
-    expect(a.first).toBe('Unlisted')
+    expect(a.first).toBe('kaur0147')
+    expect(a.name).toBe('kaur0147')
     expect(a.initials).toBe('?')
     expect(a.listed).toBe(false)
     expect(a.raw).toBe('kaur0147')
   })
 
-  it('shows an id nobody has as Unlisted', () => {
+  it('shows an id nobody has as the raw id', () => {
     const [a] = resolveAttendeeViews(['zzzz9999'], team)
-    expect(a.first).toBe('Unlisted')
+    expect(a.first).toBe('zzzz9999')
+    expect(a.listed).toBe(false)
   })
 
   it('reads an outside email as a name and keeps a typed display name', () => {
@@ -54,7 +56,8 @@ describe('resolveAttendeeViews', () => {
 
   it('does not match an outside address by its local part', () => {
     const [a] = resolveAttendeeViews(['reyes001@stanford.edu'], team)
-    expect(a.first).toBe('Unlisted')
+    expect(a.listed).toBe(false)
+    expect(a.first).toBe('reyes001@stanford.edu')
   })
 
   it('drops blanks and repeats', () => {

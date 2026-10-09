@@ -5,7 +5,7 @@
 // and the Worker do (shared/attendees.ts: slug stays, exact team email -> slug),
 // then, for a bare internet id, matches a team member whose address is
 // <id>@umn.edu. A value that still reads as an internet id after that shows as
-// "Unlisted" with the raw value in the tooltip: the id is never the label.
+// the raw id, muted, with a ? badge and the value in the tooltip (Nick 2026-10-09).
 //
 // Presentation only. It never writes, and it does not touch the attendee editor.
 
@@ -41,7 +41,7 @@ export function AttendeePeople({ values }: { values: readonly unknown[] | null |
       {people.map((a) => (
         <span key={a.key + a.name} className="tk-per" title={a.listed ? a.name : `Not in the team list: ${a.raw}`}>
           <FaceDisc a={a} sm />
-          <span className="tk-pn">{a.first}</span>
+          <span className={`tk-pn${a.listed ? '' : ' tk-dim'}`}>{a.first}</span>
         </span>
       ))}
     </div>
@@ -56,7 +56,7 @@ export function AttendeeBadge({ value }: { value: string }) {
   return (
     <>
       <FaceDisc a={a} sm />
-      <span className="tk-pn">{a.first}</span>
+      <span className={`tk-pn${a.listed ? '' : ' tk-dim'}`}>{a.first}</span>
     </>
   )
 }

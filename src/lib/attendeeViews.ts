@@ -30,7 +30,7 @@ function words(local: string): string {
 }
 
 function unlisted(raw: string): AttendeeView {
-  return { key: raw, name: 'Unlisted', first: 'Unlisted', initials: '?', raw, listed: false }
+  return { key: raw, name: raw, first: raw, initials: '?', raw, listed: false }
 }
 
 function fromName(raw: string, name: string, first?: string): AttendeeView {

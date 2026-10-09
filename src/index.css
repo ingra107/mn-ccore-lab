@@ -2911,3 +2911,4 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk .tk-dec{display:flex;align-items:flex-start;gap:10px;padding:9px 0;font-size:13.5px;line-height:1.5;color:var(--sk-t1)}
 .tk .tk-dec+.tk-dec{border-top:1px solid var(--sk-line)}
 .tk .tk-dec .tk-dia{color:var(--sk-gold);font-size:9px;margin-top:6px;flex-shrink:0}
+.tk .tk-pn.tk-dim{color:var(--sk-t3)}
