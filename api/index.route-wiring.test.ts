@@ -73,15 +73,23 @@ function makeEnv(overrides: Partial<Env> = {}): Env {
     R2_ACCESS_KEY_ID: 'test-access-key',
     R2_SECRET_ACCESS_KEY: 'test-secret-key',
     CF_ACCOUNT_ID: 'test-account-id',
+    PB_API_KEY: SERVICE_KEY,
     ...overrides,
   } as unknown as Env
 }
 
 const CTX = {} as ExecutionContext
 
+// These tests pin the ROUTING seam (raw flag, emitted URL), so they call as the
+// PB service key. Since #145 a non-PI caller gets bytes only when a visible
+// file_attachments row names the key; the stub DB above has no rows, and the
+// access rule itself is covered by api/routes/viewer-sweep.test.ts.
+const SERVICE_KEY = 'route-wiring-service-key'
+const AUTH = { Authorization: `Bearer ${SERVICE_KEY}` }
+
 describe('#546 GET /api/files/:rest{.+} — raw flag seam (both conventions)', () => {
   it('?raw=1 (the form upload/done emits) resolves to real bytes, not the JSON envelope', async () => {
-    const req = new Request('https://hub.test/api/files/task/abc123/photo.png?raw=1')
+    const req = new Request('https://hub.test/api/files/task/abc123/photo.png?raw=1', { headers: AUTH })
     const res = await worker.fetch(req, makeEnv(), CTX)
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toBe('image/png')
@@ -89,7 +97,7 @@ describe('#546 GET /api/files/:rest{.+} — raw flag seam (both conventions)', (
   })
 
   it('/raw path suffix resolves to real bytes', async () => {
-    const req = new Request('https://hub.test/api/files/task/abc123/photo.png/raw')
+    const req = new Request('https://hub.test/api/files/task/abc123/photo.png/raw', { headers: AUTH })
     const res = await worker.fetch(req, makeEnv(), CTX)
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toBe('image/png')
@@ -97,7 +105,7 @@ describe('#546 GET /api/files/:rest{.+} — raw flag seam (both conventions)', (
   })
 
   it('no raw flag returns the JSON presign envelope, never raw bytes', async () => {
-    const req = new Request('https://hub.test/api/files/task/abc123/photo.png')
+    const req = new Request('https://hub.test/api/files/task/abc123/photo.png', { headers: AUTH })
     const res = await worker.fetch(req, makeEnv(), CTX)
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toBe('application/json')
@@ -111,7 +119,7 @@ describe('#546 POST /api/upload/done emitted URL resolves to bytes through the r
     const env = makeEnv()
     const doneReq = new Request('https://hub.test/api/upload/done', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...AUTH },
       body: JSON.stringify({
         key: 'meeting/xyz789/notes.png',
         filename: 'notes.png',
@@ -129,7 +137,7 @@ describe('#546 POST /api/upload/done emitted URL resolves to bytes through the r
 
     // Follow the emitted URL through the SAME router, not a direct handler
     // call — this is the exact composition #546 says nothing exercised.
-    const followReq = new Request(`https://hub.test${emittedUrl}`)
+    const followReq = new Request(`https://hub.test${emittedUrl}`, { headers: AUTH })
     const followRes = await worker.fetch(followReq, env, CTX)
     expect(followRes.status).toBe(200)
     expect(followRes.headers.get('content-type')).toBe('image/png')

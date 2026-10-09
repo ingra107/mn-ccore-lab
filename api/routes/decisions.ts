@@ -43,6 +43,15 @@ export async function handleCreateDecision(request: Request, user: AuthUser, env
   const actorResult = await resolveActor(env, user, body.decided_by ?? null, { allowImpersonation: isPi });
   if ('error' in actorResult) return error(actorResult.error, 400);
 
+  // #145: a decision filed on a meeting is that meeting's row. The
+  // viewer-bound handle hides it from anyone who cannot see the meeting, but an
+  // INSERT is not a read, so check the parent through the handle first.
+  if (body.meeting_id) {
+    const meeting = await env.DB.prepare('SELECT id FROM meetings WHERE id = ? OR source_id = ?')
+      .bind(body.meeting_id, body.meeting_id).first();
+    if (!meeting) return error('Meeting not found', 404);
+  }
+
   const id = generateId();
   const decidedBy = actorResult.slug;
   // Normalize tags to CSV on write (historical data was JSON-stringified arrays).

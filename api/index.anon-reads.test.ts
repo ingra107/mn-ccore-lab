@@ -54,6 +54,8 @@ beforeAll(() => {
   insertRow(db, 'meetings', {
     id: 'mtg_anon', date: '2999-01-01', title: `${S} meeting title`, type: 'biweekly', status: 'upcoming',
     notes: `${S} notes`,
+    // #145: a member reads the meetings that name them; the session user is Nate.
+    attendees: JSON.stringify(['nate-mesfin']), owner_slug: 'nick-ingraham',
   })
   insertRow(db, 'grants', {
     id: 'g1', mechanism: 'R01', title: `${S} proposal title`, agency: 'NIH', pi: 'nick-ingraham', proposed: 1,

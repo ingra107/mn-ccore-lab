@@ -17,7 +17,11 @@ export async function handleNextMeeting(env: Env): Promise<Response> {
 // One-shot "debrief landed" bell: fires only when a push transitions a meeting
 // from notes-less to notes-full (insert-with-notes or first notes upsert).
 // Later re-pushes surface via the entity_seen teal dot, never a second bell.
-async function fireMeetingDebriefNotification(env: Env, meetingId: string, sourceId: string | null, title: string): Promise<void> {
+// The bell goes to the meeting's owner (schema-v119). It was hard-coded to
+// nick-ingraham while PB was the only writer; a meeting with no owner rings
+// no one rather than someone who may not be able to open it.
+async function fireMeetingDebriefNotification(env: Env, meetingId: string, sourceId: string | null, title: string, ownerSlug: string | null): Promise<void> {
+  if (!ownerSlug) return;
   const ids = sourceId ? [meetingId, sourceId] : [meetingId];
   const placeholders = ids.map(() => '?').join(',');
   const cnt = await env.DB.prepare(
@@ -27,7 +31,7 @@ async function fireMeetingDebriefNotification(env: Env, meetingId: string, sourc
   await env.DB.prepare(
     'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
-    generateId(), 'nick-ingraham', 'meeting_debrief', 'meeting', meetingId,
+    generateId(), ownerSlug, 'meeting_debrief', 'meeting', meetingId,
     `Meeting debriefed: ${title}`,
     n > 0 ? `${n} task${n === 1 ? '' : 's'} linked — review, edit, or reassign` : 'Notes ready to review',
     `/portal/meetings/${meetingId}`,
@@ -106,6 +110,11 @@ export async function handleGetAgendaItems(meetingId: string, env: Env, isAuthed
 export async function handleAddAgendaItem(meetingId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { content: string; project_id?: string; type?: string; document_url?: string };
   if (!body.content) return error('content required', 400);
+  // #145: an INSERT is not a read, so the viewer-bound handle cannot stop an
+  // agenda item landing on a meeting the caller cannot see. Read the parent
+  // through the handle first; hidden and missing answer the same 404.
+  const parent = await env.DB.prepare('SELECT id FROM meetings WHERE id = ?').bind(meetingId).first();
+  if (!parent) return error('Meeting not found', 404);
 
   // Z3.2: canonicalize project_id before insert so agenda_items stores a
   // stable canonical slug (not a raw id or stale alias).
@@ -501,6 +510,16 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
   });
 }
 
+/**
+ * The owner a new meeting is stamped with: the caller's session slug (the PB
+ * API key's user is PB_SERVICE_SLUG, nick-ingraham). Never a body field. The
+ * credential-less local-dev caller ('anonymous') owns nothing.
+ */
+function meetingOwner(user: AuthUser): string | null {
+  const slug = (user.slug ?? '').trim();
+  return slug && slug !== 'anonymous' ? slug : null;
+}
+
 interface MeetingUpsert {
   date: string; title: string; type?: string;
   attendees: NormalizedAttendees;
@@ -509,8 +528,13 @@ interface MeetingUpsert {
 }
 
 // The one INSERT-or-dedup-UPDATE for meetings, shared by POST /api/meetings
-// and POST /api/meetings/prep-from-event. Keyed on (date, normalized title).
+// and POST /api/meetings/prep-from-event. Keyed on (owner, date, normalized
+// title) since schema-v119: the old key had no owner, so a member's Prep press
+// on "Lab meeting" merged into (and was answered with) another member's row of
+// the same title and day, notes included. Two people's same-titled meetings
+// are now two rows; the dedup path never rewrites owner_slug.
 async function upsertMeeting(env: Env, user: AuthUser, input: MeetingUpsert): Promise<Response> {
+  const owner = meetingOwner(user);
   // #102: who actually ran the meeting. The UI used to DERIVE this from a hash
   // of the date, so it was wrong ~always; now it renders the stored value or
   // nothing. Give the value a writer so the read isn't pointed at a column
@@ -535,8 +559,8 @@ async function upsertMeeting(env: Env, user: AuthUser, input: MeetingUpsert): Pr
   // comparing. This beats a naive `WHERE date=? AND title=?` match which would
   // miss "Lab Meeting" vs "lab  meeting".
   const sameDate = await env.DB.prepare(
-    'SELECT * FROM meetings WHERE date = ?'
-  ).bind(input.date).all<{ id: string; date: string; title: string; notes: string | null }>();
+    'SELECT * FROM meetings WHERE owner_slug IS ? AND date = ?'
+  ).bind(owner, input.date).all<{ id: string; date: string; title: string; notes: string | null; owner_slug: string | null }>();
   const existing = (sameDate.results ?? []).find(
     (m) => normalizeMeetingTitle(m.title) === normalizedTitle,
   );
@@ -580,7 +604,7 @@ async function upsertMeeting(env: Env, user: AuthUser, input: MeetingUpsert): Pr
         existing.id,
       ).run();
       if (hasNotes && !hadNotes) {
-        await fireMeetingDebriefNotification(env, existing.id, input.source_id ?? null, input.title);
+        await fireMeetingDebriefNotification(env, existing.id, input.source_id ?? null, input.title, existing.owner_slug);
       }
       const refreshed = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(existing.id).first();
       return json({ data: refreshed }, 200);
@@ -590,18 +614,18 @@ async function upsertMeeting(env: Env, user: AuthUser, input: MeetingUpsert): Pr
 
   const id = `mtg-${input.date}-${generateId().slice(0, 8)}`;
   await env.DB.prepare(
-    'INSERT INTO meetings (id, date, title, type, attendees, notes, decisions, tags, status, source_id, facilitator) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO meetings (id, date, title, type, attendees, notes, decisions, tags, status, source_id, facilitator, owner_slug) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     id, input.date, input.title, input.type ?? 'biweekly',
     attendeesJson,
     input.notes ?? null, input.decisions ?? null, tagsJson, 'upcoming',
-    input.source_id ?? null, facilitator,
+    input.source_id ?? null, facilitator, owner,
   ).run();
 
   await logActivity(env, 'meeting', `Created meeting: "${input.title}" on ${input.date}`, user.email, id, 'meeting');
 
   if (input.notes !== undefined && input.notes !== null) {
-    await fireMeetingDebriefNotification(env, id, input.source_id ?? null, input.title);
+    await fireMeetingDebriefNotification(env, id, input.source_id ?? null, input.title, owner);
   }
 
   const created = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();

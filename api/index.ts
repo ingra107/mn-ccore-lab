@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { Env } from './types';
 import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, isTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible } from './helpers';
+import { viewerDb, personViewer, serviceViewer, nobodyViewer, type Viewer } from './lib/viewer-db';
 
 // The PB service key IS Nick's automation (Brief-7, 2026-06-11).
 const PB_SERVICE_EMAIL = 'ingra107@umn.edu';
@@ -121,6 +122,9 @@ type AppEnv = {
      *  True iff the caller can see Peripheral Brain content (PI email or
      *  valid API key). Read via the CSP helper at handler registrations. */
     canSeePb: boolean;
+    /** #145: whose rows this request may read. Set with the canSeePb flag;
+     *  env.DB is already bound to it (viewerDb). */
+    viewer: Viewer;
     /** Who the route gate sees (member / non-member / anonymous), set by the
      *  auth middleware. Read only by bindRegistryToHono and /api/auth/me. */
     callerKind: CallerKind;
@@ -363,9 +367,29 @@ app.use('*', async (c, next) => {
 // (handler(url, env, canSeePb = false)). The 'false' default in handlers
 // means "fail-closed" (no PB) on any path that forgets to forward the flag.
 // ─────────────────────────────────────────────────────────────────────────────
+//
+// #145: the same middleware binds the request's database to its viewer. Every
+// handler reads `E(c).DB`, so from here on a member's reads (and UPDATE/DELETE
+// targets) are limited to the rows the table rules in api/lib/table-scope.ts
+// admit; see api/lib/viewer-db.ts. The middleware above this one (auth, the
+// /api/pb/* gate, the write gate) decides WHO is calling on the raw handle.
+//   - valid PB Bearer key           -> service (never scoped)
+//   - signed-in member              -> person (scoped per table; a PI person
+//                                      is unscoped on every Lane A table)
+//   - anyone else (anonymous, a non-member reading a public GET, a
+//     credential-less local-dev caller) -> nobody
 app.use('/api/*', async (c, next) => {
   const env = c.get('env');
-  c.set('canSeePb', await isPiRequest(c.req.raw, env));
+  const pi = await isPiRequest(c.req.raw, env);
+  c.set('canSeePb', pi);
+  const authed = c.get('authedUser');
+  const viewer: Viewer = c.get('apiKeyValid') === true
+    ? serviceViewer()
+    : authed && c.get('callerKind') === 'member'
+      ? personViewer({ slug: authed.slug, email: authed.email, pi })
+      : nobodyViewer();
+  c.set('viewer', viewer);
+  c.set('env', { ...env, DB: viewerDb(env.DB, viewer) });
   await next();
 });
 
@@ -3274,28 +3298,45 @@ export default {
           return;
         }
 
+        // #145: each email is built on a handle bound to its recipient, the
+        // same rule the request path uses, so a member is never mailed rows
+        // they could not open in the Hub. The cron runs on the raw binding.
+        const piEmails = await getPiEmails(env);
         let sent = 0;
         for (const member of members.results) {
           const email = member.email || `${member.slug}@umn.edu`;
           const firstName = member.name.split(' ')[0];
+          const recipientIsPi = !!member.email && piEmails.has(member.email.toLowerCase());
+          let recipientDb: D1Database;
+          try {
+            recipientDb = viewerDb(env.DB, personViewer({ slug: member.slug, email: member.email, pi: recipientIsPi }));
+          } catch (e) {
+            console.log(`[Pulse] Skipping ${member.slug}: ${(e as Error).message}`);
+            continue;
+          }
 
           // Get their pending action items
-          const actions = await env.DB.prepare(
+          const actions = await recipientDb.prepare(
             'SELECT title, description, due_date, priority, status FROM tasks WHERE assignee = ? AND completed = 0 ORDER BY due_date ASC'
           ).bind(member.slug).all<{ description: string; due_date: string | null }>();
 
           // Get unread notifications
-          const notifCount = await env.DB.prepare(
+          const notifCount = await recipientDb.prepare(
             'SELECT COUNT(*) as c FROM notifications WHERE recipient_slug = ? AND read = 0'
           ).bind(member.slug).first<{ c: number }>();
 
           // Get recent team activity (last 24 hours) — activity_entries kind='update'
-          const recentUpdates = await env.DB.prepare(
-            "SELECT actor_slug AS author, body AS content, project_id FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL AND created_at > datetime('now', '-1 day') AND actor_slug != ? ORDER BY created_at DESC LIMIT 5"
+          const recentUpdates = await recipientDb.prepare(
+            // Peripheral Brain projects are Nick's alone (the request path's
+            // rule since 2026-05-08); this cron mailed their updates to every
+            // member. Lane B's project scoping subsumes this clause.
+            "SELECT actor_slug AS author, body AS content, project_id FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL AND created_at > datetime('now', '-1 day') AND actor_slug != ?"
+            + (recipientIsPi ? '' : " AND NOT EXISTS (SELECT 1 FROM projects pbv WHERE (pbv.id = activity_entries.project_id OR pbv.slug = activity_entries.project_id) AND pbv.category = 'Peripheral Brain')")
+            + ' ORDER BY created_at DESC LIMIT 5'
           ).bind(member.slug).all<{ author: string; content: string; project_id: string }>();
 
           // Get milestones with Future Me notes due within 3 days
-          const futureNotes = await env.DB.prepare(
+          const futureNotes = await recipientDb.prepare(
             `SELECT m.title, m.target_date, m.future_note, m.future_note_author, g.mechanism
              FROM milestones m
              LEFT JOIN grants g ON m.grant_id = g.id

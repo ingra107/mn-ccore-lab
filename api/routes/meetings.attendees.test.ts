@@ -108,7 +108,7 @@ describe('normalizeAttendees through the create endpoint (#551)', () => {
 describe('dedup push is fill-only for attendees', () => {
   it('a push does not overwrite an existing attendee list', async () => {
     const db = makeDb()
-    insertRow(db, 'meetings', { id: 'mtg-edit', date: '2026-10-06', title: 'Lab Sync', attendees: JSON.stringify(['zz-nate-mesfin']) })
+    insertRow(db, 'meetings', { owner_slug: 'nick-ingraham', id: 'mtg-edit', date: '2026-10-06', title: 'Lab Sync', attendees: JSON.stringify(['zz-nate-mesfin']) })
     const res = await handleCreateMeeting(post('/api/meetings', {
       date: '2026-10-06', title: 'lab  sync', notes: 'debrief', attendees: ['dudley@umn.edu', 'x@other.org'],
     }), NICK, envOf(db))
@@ -120,7 +120,7 @@ describe('dedup push is fill-only for attendees', () => {
 
   it("a push fills a '[]' list (older dialog inserts stored it; it reads as empty)", async () => {
     const db = makeDb()
-    insertRow(db, 'meetings', { id: 'mtg-empty', date: '2026-10-06', title: 'Lab Sync', attendees: '[]' })
+    insertRow(db, 'meetings', { owner_slug: 'nick-ingraham', id: 'mtg-empty', date: '2026-10-06', title: 'Lab Sync', attendees: '[]' })
     await handleCreateMeeting(post('/api/meetings', {
       date: '2026-10-06', title: 'Lab Sync', notes: 'n', attendees: ['dudley@umn.edu'],
     }), NICK, envOf(db))
@@ -129,14 +129,14 @@ describe('dedup push is fill-only for attendees', () => {
 
   it("a push with no attendees leaves a '[]' list as it is", async () => {
     const db = makeDb()
-    insertRow(db, 'meetings', { id: 'mtg-empty2', date: '2026-10-06', title: 'Lab Sync', attendees: '[]' })
+    insertRow(db, 'meetings', { owner_slug: 'nick-ingraham', id: 'mtg-empty2', date: '2026-10-06', title: 'Lab Sync', attendees: '[]' })
     await handleCreateMeeting(post('/api/meetings', { date: '2026-10-06', title: 'Lab Sync', notes: 'n' }), NICK, envOf(db))
     expect(attendeesOf(db, 'mtg-empty2')).toEqual([])
   })
 
   it('a push fills a NULL list, normalized', async () => {
     const db = makeDb()
-    insertRow(db, 'meetings', { id: 'mtg-null', date: '2026-10-06', title: 'Lab Sync', attendees: null })
+    insertRow(db, 'meetings', { owner_slug: 'nick-ingraham', id: 'mtg-null', date: '2026-10-06', title: 'Lab Sync', attendees: null })
     await handleCreateMeeting(post('/api/meetings', {
       date: '2026-10-06', title: 'Lab Sync', attendees: ['dudley@umn.edu', 'x@other.org'],
     }), NICK, envOf(db))
@@ -147,7 +147,7 @@ describe('dedup push is fill-only for attendees', () => {
 describe('meta edit (the human path) normalizes and may overwrite', () => {
   it('stores the normalized list', async () => {
     const db = makeDb()
-    insertRow(db, 'meetings', { id: 'mtg-meta', date: '2026-10-06', title: 'T', attendees: JSON.stringify(['old@umn.edu']) })
+    insertRow(db, 'meetings', { owner_slug: 'nick-ingraham', id: 'mtg-meta', date: '2026-10-06', title: 'T', attendees: JSON.stringify(['old@umn.edu']) })
     const res = await handleUpdateMeetingMeta('mtg-meta', post('/api/meetings/mtg-meta/meta', {
       attendees: ['nmesfin@umn.edu', 'nate@stanford.edu'],
     }), NICK, envOf(db))
@@ -204,7 +204,7 @@ describe('POST /api/meetings/prep-from-event (#2225)', () => {
 
   it("fills attendees on an existing meeting whose list is '[]'", async () => {
     const db = makeDb()
-    insertRow(db, 'meetings', { id: 'mtg-early2', date: '2026-10-06', title: 'Lab Sync', attendees: '[]' })
+    insertRow(db, 'meetings', { owner_slug: 'nick-ingraham', id: 'mtg-early2', date: '2026-10-06', title: 'Lab Sync', attendees: '[]' })
     seedFeedEvent(db, { uid: 'fill2', start_at: START, summary: 'Lab Sync', attendees: JSON.stringify(['dudley@umn.edu']) })
     const res = await handlePrepMeetingFromEvent(post('/x', { uid: 'fill2', start_at: START, day: '2026-10-06' }), NICK, envOf(db))
     expect(res.status).toBe(200)
@@ -213,7 +213,7 @@ describe('POST /api/meetings/prep-from-event (#2225)', () => {
 
   it('fills attendees on an existing meeting whose list is empty', async () => {
     const db = makeDb()
-    insertRow(db, 'meetings', { id: 'mtg-early', date: '2026-10-06', title: 'Lab Sync', attendees: null })
+    insertRow(db, 'meetings', { owner_slug: 'nick-ingraham', id: 'mtg-early', date: '2026-10-06', title: 'Lab Sync', attendees: null })
     seedFeedEvent(db, { uid: 'fill', start_at: START, summary: 'Lab Sync', attendees: JSON.stringify(['dudley@umn.edu']) })
     const res = await handlePrepMeetingFromEvent(post('/x', { uid: 'fill', start_at: START, day: '2026-10-06' }), NICK, envOf(db))
     expect(res.status).toBe(200)

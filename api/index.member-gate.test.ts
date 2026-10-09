@@ -57,7 +57,9 @@ function seed(requireAuth: boolean) {
   insertRow(db, 'publications', { id: 'pub_prep', title: `${S} paper in preparation`, authors: 'Ingraham N', year: 2026, status: 'In Preparation', author_slugs: '["nick-ingraham"]' })
   insertRow(db, 'member_featured_publications', { member_slug: 'nick-ingraham', publication_id: 'pub_pub', sort_order: 0 })
   insertRow(db, 'member_featured_publications', { member_slug: 'nick-ingraham', publication_id: 'pub_rev', sort_order: 1 })
-  insertRow(db, 'meetings', { id: 'mtg_gate', date: '2999-01-01', title: `${S} meeting title`, type: 'biweekly', status: 'upcoming', notes: `${S} notes` })
+  insertRow(db, 'meetings', { id: 'mtg_gate', date: '2999-01-01', title: `${S} meeting title`, type: 'biweekly', status: 'upcoming', notes: `${S} notes`, owner_slug: 'nick-ingraham', attendees: JSON.stringify(['casey-eddington']) })
+  // #145: a meeting Casey is not on. Members read their own meetings only.
+  insertRow(db, 'meetings', { id: 'mtg_private', date: '2999-01-02', title: 'PRIVATEMEETING title', type: 'biweekly', status: 'upcoming', owner_slug: 'nick-ingraham' })
   env = {
     DB: d1Adapter(db),
     TEST_MODE_KEY: TEST_KEY,
@@ -188,6 +190,8 @@ describe('members and service callers are unchanged', () => {
     expect(project.text).toContain(`${S} next action`)
     const meetings = await call('GET', '/api/meetings', MEMBER_EMAIL)
     expect(meetings.text).toContain(`${S} meeting title`)
+    // #145: a meeting that does not name Casey is not hers to read.
+    expect(meetings.text).not.toContain('PRIVATEMEETING')
   })
 
   it('member email match is case-insensitive', async () => {
@@ -202,7 +206,9 @@ describe('members and service callers are unchanged', () => {
 
   it('the PB API key reads and writes', async () => {
     expect((await call('GET', '/api/tasks', 'apikey')).status).toBe(200)
-    expect((await call('GET', '/api/meetings', 'apikey')).text).toContain(`${S} meeting title`)
+    const all = await call('GET', '/api/meetings', 'apikey')
+    expect(all.text).toContain(`${S} meeting title`)
+    expect(all.text).toContain('PRIVATEMEETING')
   })
 
   it('an anonymous caller still gets 401 on a member route', async () => {

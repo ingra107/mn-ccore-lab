@@ -29,7 +29,9 @@ type Row = Record<string, unknown>
 /** A fresh migrated database seeded with `seed` meetings; reads are live. */
 function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: () => Row[]; notifications: () => Row[]; db: InstanceType<typeof Database> } {
   const db = prodSchemaDb()
-  for (const r of seed) insertRow(db, 'meetings', r)
+  // Seeded rows are owned by nick-ingraham unless a case says otherwise: the
+  // schema-v119 backfill leaves every pre-existing prod meeting that way.
+  for (const r of seed) insertRow(db, 'meetings', { owner_slug: 'nick-ingraham', ...r })
   const env = { DB: d1Adapter(db) } as unknown as Env
   return {
     env,
@@ -39,8 +41,8 @@ function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: () => Row[]; n
   }
 }
 
-function makeUser(email = 'ingra107@umn.edu'): AuthUser {
-  return { email, name: 'Nick Ingraham' } as AuthUser
+function makeUser(email = 'ingra107@umn.edu', slug = 'nick-ingraham'): AuthUser {
+  return { email, name: 'Nick Ingraham', slug } as AuthUser
 }
 
 function makeRequest(body: Record<string, unknown>): Request {
@@ -562,5 +564,49 @@ describe('handleUpdateMeetingMeta — T5 metadata edit endpoint', () => {
     expect(res.status).toBe(200)
     expect(meetings()[0].attendees).toBe(JSON.stringify(attendees))
     expect(JSON.parse(body.data.attendees as string)).toEqual(attendees)
+  })
+})
+
+// #145 Lane A (schema-v119): a meeting has an owner, stamped from the session,
+// and the dedup key is (owner, date, normalized title).
+describe('handleCreateMeeting: owner stamping and owner-scoped dedup', () => {
+  it('stamps owner_slug from the session and ignores one in the body', async () => {
+    const b = makeStatefulEnv()
+    const res = await handleCreateMeeting(makeRequest({ date: '2026-10-09', title: 'Lab Sync', owner_slug: 'someone-else' }), makeUser('eddin022@umn.edu', 'casey-eddington'), b.env)
+    expect(res.status).toBe(201)
+    expect(b.meetings()[0].owner_slug).toBe('casey-eddington')
+  })
+
+  it("a second member's same-titled meeting on the same day is a new row; the first owner's row is untouched", async () => {
+    const b = makeStatefulEnv([{ id: 'mtg-nick', date: '2026-10-09', title: 'Lab Sync', notes: 'NICK PRIVATE NOTES' }])
+    const res = await handleCreateMeeting(makeRequest({ date: '2026-10-09', title: 'lab  sync', notes: 'casey notes', tags: ['x'] }), makeUser('eddin022@umn.edu', 'casey-eddington'), b.env)
+    expect(res.status).toBe(201)
+    expect(await res.text()).not.toContain('NICK PRIVATE NOTES')
+    const rows = b.meetings()
+    expect(rows).toHaveLength(2)
+    const nick = rows.find((r) => r.id === 'mtg-nick')!
+    expect(nick).toMatchObject({ owner_slug: 'nick-ingraham', notes: 'NICK PRIVATE NOTES', tags: null })
+    expect(rows.find((r) => r.id !== 'mtg-nick')).toMatchObject({ owner_slug: 'casey-eddington', notes: 'casey notes' })
+  })
+
+  it('the same owner still dedups (the PB re-push path), and the dedup never rewrites owner_slug', async () => {
+    const b = makeStatefulEnv([{ id: 'mtg-nick', date: '2026-10-09', title: 'Lab Sync' }])
+    const res = await handleCreateMeeting(makeRequest({ date: '2026-10-09', title: 'LAB SYNC', notes: 'debrief' }), makeUser(), b.env)
+    expect(res.status).toBe(200)
+    expect(b.meetings()).toHaveLength(1)
+    expect(b.meetings()[0]).toMatchObject({ id: 'mtg-nick', owner_slug: 'nick-ingraham', notes: 'debrief' })
+  })
+
+  it('the debrief bell goes to the owner, not a hard-coded slug', async () => {
+    const b = makeStatefulEnv()
+    await handleCreateMeeting(makeRequest({ date: '2026-10-09', title: 'Casey 1:1', notes: 'n' }), makeUser('eddin022@umn.edu', 'casey-eddington'), b.env)
+    expect(b.notifications().map((n) => n.recipient_slug)).toEqual(['casey-eddington'])
+  })
+
+  it('a meeting with no owner rings no one', async () => {
+    const b = makeStatefulEnv()
+    await handleCreateMeeting(makeRequest({ date: '2026-10-09', title: 'Dev', notes: 'n' }), makeUser('anonymous', 'anonymous'), b.env)
+    expect(b.meetings()[0].owner_slug).toBeNull()
+    expect(b.notifications()).toEqual([])
   })
 })

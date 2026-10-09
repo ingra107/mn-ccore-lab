@@ -1,6 +1,6 @@
 import { AwsClient } from 'aws4fetch';
 import type { Env } from '../types';
-import { isPiRequest } from '../helpers';
+import { isPiRequest, pbTaskVisibilitySql } from '../helpers';
 import type { AuthUser } from '../helpers';
 import { safeRow } from '../lib/task-cols';
 
@@ -25,17 +25,28 @@ function error(msg: string, status = 400) {
 }
 
 /**
- * AM-6 / B11 (SEC-T0): can the caller see attachments on this entity?
+ * AM-6 / B11 (SEC-T0), #145: can the caller see attachments on this entity?
  *
- * The only entity-class with restricted visibility today is a
- * 'Peripheral Brain'-category PROJECT — its files must not be enumerable /
- * downloadable / deletable by non-PI callers. `canSeePb` (PI/Nick/service) is
- * resolved by the route via isPiRequest. Tasks/meetings and non-PB projects
- * are visible to any authed caller. Returns true=allowed, false=blocked.
+ * FAILS CLOSED. Until #145 this answered true for every entity that was not a
+ * project and for a project ref it could not find, so a meeting's files were
+ * open to every member and an unknown ref was "not a PB leak". Now:
+ *   - PI / service (`canSeePb`): everything.
+ *   - project: the row must exist and not be a 'Peripheral Brain' project.
+ *   - meeting: the row must be visible through env.DB, which the request
+ *     middleware binds to the caller (api/lib/viewer-db.ts); a hidden meeting
+ *     and a missing one answer the same.
+ *   - task: a known task in a Peripheral Brain project is refused. An UNKNOWN
+ *     task id is allowed, because the morning-thought composer records its
+ *     files as entity 'task' keyed by the day (MorningThoughtCompose.tsx), and
+ *     tasks carry no per-person rule until #145 Lane B.
+ *   - question / answer / daily_thought: lab-wide content, allowed.
+ *   - anything else: refused.
  *
- * entityType/entityId can be a project id OR slug (file_attachments stores
- * whatever the uploader passed); we match both.
+ * entityId can be a project id OR slug (file_attachments stores whatever the
+ * uploader passed); we match both.
  */
+const LAB_WIDE_UPLOAD_TYPES = new Set(['question', 'answer', 'daily_thought']);
+
 async function canAccessEntity(
   env: Env,
   entityType: string,
@@ -43,12 +54,27 @@ async function canAccessEntity(
   canSeePb: boolean,
 ): Promise<boolean> {
   if (canSeePb) return true;
-  if (entityType !== 'project') return true; // only PB-projects are gated
-  const proj = await env.DB.prepare(
-    'SELECT category FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-  ).bind(entityId, entityId).first<{ category: string | null }>();
-  if (!proj) return true; // unknown/orphaned entity — not a PB leak
-  return proj.category !== 'Peripheral Brain';
+  if (LAB_WIDE_UPLOAD_TYPES.has(entityType)) return true;
+  if (entityType === 'project') {
+    const proj = await env.DB.prepare(
+      'SELECT category FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+    ).bind(entityId, entityId).first<{ category: string | null }>();
+    return !!proj && proj.category !== 'Peripheral Brain';
+  }
+  if (entityType === 'meeting') {
+    const meeting = await env.DB.prepare('SELECT id FROM meetings WHERE id = ? LIMIT 1').bind(entityId).first();
+    return !!meeting;
+  }
+  if (entityType === 'task') {
+    const task = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? LIMIT 1')
+      .bind(entityId).first<{ project_id: string | null }>();
+    if (!task) return true;
+    const visible = await env.DB.prepare(
+      `SELECT 1 AS ok FROM tasks t WHERE t.id = ?${pbTaskVisibilitySql('t', false)} LIMIT 1`
+    ).bind(entityId).first();
+    return !!visible;
+  }
+  return false;
 }
 
 /** POST /api/upload/url — generate presigned PUT URL for direct browser→R2 upload */
@@ -188,17 +214,17 @@ export async function handleListFiles(url: URL, env: Env, canSeePb = false): Pro
  *  `:rest{.+}` wildcard this route already registers, verified empirically.)
  */
 export async function handleGetFile(key: string, env: Env, canSeePb = false, raw = false): Promise<Response> {
-  // B11: resolve the attachment row (authoritative entity_type/entity_id —
-  // the key prefix alone is client-supplied) and block signing a download URL
-  // for files on a PB-category project for non-PI callers. If no row matches
-  // the key we fall back to the key prefix so legacy keys still gate.
+  // B11, #145: the attachment row is the authority (entity_type/entity_id; the
+  // key is client-supplied). env.DB is bound to the caller, so a file on a
+  // meeting they cannot see has no row here. No row = no bytes for anyone but
+  // a PI or the service: the old fallback read the entity off the key prefix
+  // and served the file whenever that prefix did not name a PB project.
   const row = await env.DB.prepare(
     'SELECT entity_type, entity_id, filename, content_type FROM file_attachments WHERE r2_key = ? LIMIT 1'
   ).bind(key).first<{ entity_type: string; entity_id: string; filename: string | null; content_type: string | null }>();
-  const entityType = row?.entity_type ?? key.split('/')[0] ?? '';
-  const entityId = row?.entity_id ?? key.split('/')[1] ?? '';
-  if (entityType && !(await canAccessEntity(env, entityType, entityId, canSeePb))) {
-    return error('Forbidden', 403);
+  if (!canSeePb) {
+    if (!row) return error('File not found', 404);
+    if (!(await canAccessEntity(env, row.entity_type, row.entity_id, canSeePb))) return error('Forbidden', 403);
   }
 
   if (raw) {
