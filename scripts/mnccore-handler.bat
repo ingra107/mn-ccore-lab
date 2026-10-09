@@ -65,6 +65,18 @@ echo %date% %time% ARGS: %* >> "%TEMP%\mnccore-handler.log"
 
 set "url=%~1"
 
+:: SECURITY (2026-10-09): refuse a URL holding a literal double quote before any
+:: verb sees it. A quote toggles cmd's quoting, so every later "%~1" or "!x!" line
+:: that wraps the value in quotes would have its & | > live again. Both lines use
+:: delayed expansion only, which runs after cmd has split commands, so the check
+:: itself cannot be fooled by what it is checking. No browser sends a raw quote
+:: (they percent-encode it as %22); one arriving here was hand-built.
+set "_noq=!url:"=!"
+if not "!_noq!"=="!url!" (
+    call :fail "Refused: a mnccore:// URL may not contain a double quote."
+    exit /b 1
+)
+
 :: Strip the protocol prefix.
 set "url=!url:mnccore://=!"
 

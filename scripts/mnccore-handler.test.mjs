@@ -64,6 +64,40 @@ describe('mnccore-handler.bat routing (DRYRUN)', { skip }, () => {
     assert.equal(hit, false, 'a URL ran as a command: the handler parsed URL text')
   })
 
+  // A literal double quote. A URL whose quotes are unbalanced (x"&cmd) is split by
+  // the cmd.exe that Windows starts for the .bat BEFORE this file runs: a do-nothing
+  // stub .bat measured the same injection (2026-10-09), so no line in the handler can
+  // stop it. That case rests on the browser: the URL parser percent-encodes " (and
+  // space and >) in a mnccore://host/path URL. The router refuses the quotes that DO
+  // reach the handler, so no later "!x!" line ever holds one.
+  for (const url of [
+    `mnccore://desk/a/x""&echo PWNED>${MARK}`,
+    `mnccore://zzz/x""&echo PWNED>${MARK}`,
+    `mnccore://launch/lnch_a""&echo PWNED>${MARK}`,
+  ]) {
+    it(`refuses a literal quote at the router: ${url}`, () => {
+      const r = fire(url)
+      assert.equal(r.code, 1, r.out)
+      assert.ok(r.out.includes('may not contain a double quote'), r.out)
+      assert.equal(existsSync(MARK), false, `${url} executed: ${r.out}`)
+    })
+  }
+
+  // ! and ^: delayed expansion and caret escapes mangle the value, never run it.
+  for (const url of [
+    `mnccore://desk/a/x!PATH!&echo PWNED>${MARK}`,
+    `mnccore://desk/a/x^&echo PWNED>${MARK}`,
+    `mnccore://desk/a/x^|echo PWNED>${MARK}`,
+    `mnccore://launch/lnch_a!x!^&echo PWNED>${MARK}`,
+  ]) {
+    it(`refuses and never runs ${url}`, () => {
+      const r = fire(url)
+      assert.equal(r.code, 1, r.out)
+      assert.ok(!r.out.includes('DRYRUN'), r.out)
+      assert.equal(existsSync(MARK), false, `${url} executed: ${r.out}`)
+    })
+  }
+
   it('a refusal never executes URL text (unknown verb, workon, launch)', () => {
     for (const url of [
       `mnccore://zzz/x&echo PWNED>${MARK}`,
