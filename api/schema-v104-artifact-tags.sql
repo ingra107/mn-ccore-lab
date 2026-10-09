@@ -11,10 +11,9 @@
 --   - tag is stored lowercased/trimmed, [a-z0-9-] only (the writer's normalizeTag
 --     in api/routes/artifacts.ts is the single normalization point).
 --   - PRIMARY KEY (artifact_id, tag) makes a re-add a no-op (INSERT OR IGNORE).
---   - ON DELETE CASCADE: deleting an artifact drops its tags. (D1 does not enforce
---     FKs unless PRAGMA foreign_keys=ON per-connection, which the Worker does not
---     set; the artifact delete path — handleDeleteArtifact — is the belt-and-braces
---     cleanup. The FK is declared for schema intent + when-enabled correctness.)
+--   - ON DELETE CASCADE: deleting an artifact drops its tags. D1 enforces FKs
+--     (prod PRAGMA foreign_keys = 1, 2026-10-09; this note said it did not until
+--     #145). handleDeleteArtifact also deletes the tags itself.
 --   - idx_artifact_tags_tag powers GET /api/artifact-tags (GROUP BY tag) and the
 --     ?tag= gallery filter.
 --

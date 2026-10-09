@@ -27,12 +27,12 @@
 --     rows cheaply in SQLite and would buy nothing the replace-set write does
 --     not already give: the PUT rejects >10 before it writes anything.
 --   - ON DELETE CASCADE on both FKs: retiring a team member or a publication
---     drops the feature rows with it. D1 does NOT enforce foreign keys unless
---     PRAGMA foreign_keys=ON is set per-connection, which this Worker does not
---     set (same caveat as schema-v104-artifact-tags.sql). So the FKs here are
---     schema INTENT + correctness-when-enabled; the PUT handler validates both
---     `team_members.slug` and every `publications.id` itself before inserting,
---     which is what actually prevents orphan rows today.
+--     drops the feature rows with it. D1 ENFORCES foreign keys on every query
+--     (prod `PRAGMA foreign_keys` reads 1, 2026-10-09; Cloudflare's D1
+--     foreign-key docs say the same). This comment said otherwise until #145;
+--     it was wrong. The PUT handler still validates `team_members.slug` and
+--     every `publications.id` before inserting, so a bad id answers a 404/400
+--     instead of an FK error.
 --   - No created_at / updated_at. This is a small mutable selection set that is
 --     rewritten wholesale, not an append-only event log, so it has no retention
 --     story to register (scripts/check-ledger-registry.py) and no timestamp a

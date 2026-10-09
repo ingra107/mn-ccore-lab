@@ -97,8 +97,8 @@ export async function handlePutMemberFeaturedPublications(
   }
 
   // ── the member must exist ────────────────────────────────────────────────
-  // D1 does not enforce the declared FK (no PRAGMA foreign_keys=ON), so this
-  // is what actually keeps orphan rows out of the table.
+  // D1 enforces the declared FK (prod PRAGMA foreign_keys = 1), so an unknown
+  // slug could not land anyway; this check turns that FK error into a 404.
   const member = await env.DB.prepare(
     'SELECT 1 AS ok FROM team_members WHERE slug = ? LIMIT 1',
   ).bind(slug).first<{ ok: number }>();
