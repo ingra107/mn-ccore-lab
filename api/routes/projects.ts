@@ -1,6 +1,8 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, isPiRequest, resolveActor, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { ctToday } from '../lib/ct-date';
+import { validateApiKey } from '../middleware/api-key-auth';
+import { isValidProjectSlug, looksLikeProjectId } from '../lib/project-slug';
 import { nowInstant } from '../lib/time';
 import { lastWorkedIso } from '../lib/project-recency';
 import { applyMutation } from './mutations';
@@ -565,14 +567,16 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
 // can paginate forward and never miss the oldest rows; when no `since`
 // (UI-style "give me 20 newest"), keep DESC for back-compat. Brain.db
 // pull_project_updates now paginates until response_count < limit.
-export async function handleRecentUpdates(url: URL, env: Env): Promise<Response> {
+export async function handleRecentUpdates(url: URL, env: Env, isPi = false): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
   const since = url.searchParams.get('since');
   // Repointed to activity_entries (kind='update', entity_type='project') after project_updates
   // was frozen (P2-A, 2026-06-10). Column aliases preserve the legacy wire shape so PB's
   // pull_project_updates / d1_project_updates mirror keep working unchanged.
   const cols = `id, project_id, actor_slug AS author, body AS content, update_type, created_at`;
-  let query = `SELECT ${cols} FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL`;
+  // A PI or the PB key (isPi) sees author-only (@me) updates too, as
+  // /api/task-updates/recent does; anyone else sees visibility='team' only.
+  let query = `SELECT ${cols} FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL${isPi ? '' : " AND visibility = 'team'"}`;
   const binds: unknown[] = [];
   if (since) {
     query += ' AND created_at > ?';
@@ -649,6 +653,12 @@ export async function handleUpdateProject(
       if (PROJECT_REQUIRED_FIELDS.has(key) && (val === null || val === undefined || val === '')) {
         return error(`Protected field "${key}" on projects cannot be null or empty`, 400);
       }
+      // A slug is a project reference (the visibility rule reads it as one),
+      // so it takes the create format and can never spell a project id
+      // (api/lib/project-slug.ts).
+      if (key === 'slug' && !isValidProjectSlug(val)) {
+        return error('Invalid slug: use lowercase letters, digits and single hyphens', 400);
+      }
       // Enum validation — reject unknown values instead of silently storing them.
       const guard = PROJECT_ENUM_GUARDS[key];
       if (guard && typeof val === 'string' && !guard.has(val)) {
@@ -671,13 +681,14 @@ export async function handleUpdateProject(
   ).bind(id, id).first<{ id: string; stage: string | null; pi: string | null; title: string | null; category: string | null }>();
 
   if (!existingCheck) {
-    // existingCheck reads through the caller's handle, so for a member "not
-    // found" also means "a project you are not on". Upsert-create stays for
-    // the PB key and a PI (its legacy callers); a member gets the same 404 as
-    // a missing project, never an INSERT that collides with the hidden row's
+    // existingCheck reads through the caller's handle, so for a person "not
+    // found" also means "a project you are not on". Upsert-create is the PB
+    // key's legacy sync path only (projects are created with POST
+    // /api/projects): a person, Nick's browser included, gets the same 404 as
+    // a missing project, never an INSERT that collides with a hidden row's
     // slug (that answered 409, confirmed the project exists, and left a
     // mutation receipt).
-    if (!(await isPiRequest(request, env))) return error('Project not found', 404);
+    if (validateApiKey(request, env) !== true) return error('Project not found', 404);
     // Project doesn't exist — create it (upsert; preserves legacy behavior).
     // Run enum guards on the incoming values before INSERT so non-canonical
     // status/stage/category are rejected with 400 (mirrors the UPDATE branch).
@@ -691,6 +702,9 @@ export async function handleUpdateProject(
       }
     }
     const upsertSlug = (body.slug as string) || id;
+    if (!isValidProjectSlug(upsertSlug)) {
+      return error('Invalid slug: use lowercase letters, digits and single hyphens', 400);
+    }
     const newId = id.length === 32 ? id : generateId('project');
     const upsertMut = await applyMutation(env, {
       table: 'projects',
@@ -844,21 +858,25 @@ export async function handleDeleteProject(
   // DB half-cleaned. The edge match keys on existing.id (the canonical proj_*);
   // a belt-and-suspenders OR existing.slug arm is omitted because edges store
   // only proj_* PKs after Slice D.
+  // The slug arm reaches slug-keyed legacy rows. A slug shaped like a project
+  // id is never a reference to this project (api/lib/project-slug.ts), so it
+  // falls back to the id and cannot reach another project's rows.
+  const slugRef = existing.slug && !looksLikeProjectId(existing.slug) ? existing.slug : existing.id;
   try {
     await env.DB.batch([
       // comments/project_updates dropped (schema-v78, 2026-06-10).
-      env.DB.prepare('DELETE FROM project_documents WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
-      env.DB.prepare('DELETE FROM milestones WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
-      env.DB.prepare('DELETE FROM conference_submissions WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
-      env.DB.prepare('DELETE FROM submission_events WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
-      env.DB.prepare('DELETE FROM regulatory_items WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
+      env.DB.prepare('DELETE FROM project_documents WHERE project_id = ? OR project_id = ?').bind(existing.id, slugRef),
+      env.DB.prepare('DELETE FROM milestones WHERE project_id = ? OR project_id = ?').bind(existing.id, slugRef),
+      env.DB.prepare('DELETE FROM conference_submissions WHERE project_id = ? OR project_id = ?').bind(existing.id, slugRef),
+      env.DB.prepare('DELETE FROM submission_events WHERE project_id = ? OR project_id = ?').bind(existing.id, slugRef),
+      env.DB.prepare('DELETE FROM regulatory_items WHERE project_id = ? OR project_id = ?').bind(existing.id, slugRef),
       env.DB.prepare('DELETE FROM project_dependencies WHERE from_project_id = ? OR to_project_id = ?').bind(existing.id, existing.id),
       // Design C (v77): clear the project's own unified-timeline rows. Task rows
       // (entity_type='task') are intentionally NOT removed here — the cascade
       // below soft-orphans those tasks (project_id=NULL) rather than deleting
       // them, so their activity history survives with the task.
-      env.DB.prepare("DELETE FROM activity_entries WHERE entity_type = 'project' AND (entity_id = ? OR entity_id = ?)").bind(existing.id, existing.slug),
-      env.DB.prepare('UPDATE tasks SET project_id = NULL, updated_at = datetime(\'now\') WHERE (project_id = ? OR project_id = ?) AND deleted_at IS NULL').bind(existing.id, existing.slug),
+      env.DB.prepare("DELETE FROM activity_entries WHERE entity_type = 'project' AND (entity_id = ? OR entity_id = ?)").bind(existing.id, slugRef),
+      env.DB.prepare('UPDATE tasks SET project_id = NULL, updated_at = datetime(\'now\') WHERE (project_id = ? OR project_id = ?) AND deleted_at IS NULL').bind(existing.id, slugRef),
     ]);
   } catch (e) {
     // R3: fail loud — a swallowed cascade failure leaves orphaned child rows.

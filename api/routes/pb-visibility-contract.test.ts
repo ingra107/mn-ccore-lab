@@ -894,3 +894,59 @@ describe('P8 — handleGetRevisionComments oracle-closed (hidden revision → 40
     expect(await res.text()).toContain(PB_MARK)
   })
 })
+
+// ── Restored from phase1b-b-visibility.test.ts (deleted 2026-10-09) ────────────
+// The two cases that file had and this one did not, restated for membership.
+
+describe('a task with no project is visible only to the people it names', () => {
+  const loose = (db: InstanceType<typeof Database>) =>
+    insertRow(db, 'tasks', { id: 'task-loose', title: 'LOOSEMARK task', assignee: 'nate-mesfin', status: 'todo', priority: 'medium' })
+
+  for (const [label, call] of [
+    ['GET /api/tasks/:id/comments', (env: Env) => handleGetTaskComments('task-loose', nonPiRequest(), env)],
+    ['GET /api/tasks/:id/activity', (env: Env) => handleGetTaskActivity('task-loose', nonPiRequest(), env)],
+    ['GET /api/tasks/:id/detail', (env: Env) => handleGetTaskDetail('task-loose', nonPiRequest(), env)],
+  ] as const) {
+    it(`${label}: the assignee reads it; Nick, who is not named, gets 404`, async () => {
+      expect((await call(as(NON_PI, world(loose)))).status).toBe(200)
+      expect((await call(as(PI, world(loose)))).status).toBe(404)
+    })
+  }
+})
+
+describe('project-scoped reads answer 400 when project_id is missing (no visibility question asked)', () => {
+  it('GET /api/submissions', async () => {
+    expect((await handleGetSubmissions(new URL('https://x/api/submissions'), nonPiRequest(), as(NON_PI, world()))).status).toBe(400)
+  })
+  it('GET /api/deadline-cascade', async () => {
+    expect((await handleGetCascade(new URL('https://x/api/deadline-cascade'), nonPiRequest(), as(NON_PI, world()))).status).toBe(400)
+  })
+})
+
+describe('GET /api/deadline-cascade?project_id= drops edges to nodes the caller cannot see', () => {
+  it('an edge from a team node to the hidden project\'s task is not returned to a non-member', async () => {
+    const w = world((db) => insertRow(db, 'deadline_dependencies', { id: 'dep-x', upstream_id: TEAM.task, upstream_type: 'task', downstream_id: PB.task, downstream_type: 'task' }))
+    const res = await handleGetCascade(q('?project_id={ref}', TEAM), nonPiRequest(), as(NON_PI, w))
+    expect(res.status).toBe(200)
+    const text = await res.text()
+    expect(text).not.toContain(PB.task)
+    // Nick, a member of both, gets the edge.
+    const nick = await handleGetCascade(q('?project_id={ref}', TEAM), piRequest(), as(PI, w))
+    expect(await nick.text()).toContain(PB.task)
+  })
+})
+
+describe('GET /api/updates/recent: author-only updates reach only a PI or the PB key', () => {
+  const authorOnly = (db: InstanceType<typeof Database>) => insertRow(db, 'activity_entries', {
+    id: 'ae-me', entity_type: 'project', entity_id: TEAM.id, project_id: TEAM.id, kind: 'update', visibility: 'author',
+    actor_slug: 'nick-ingraham', body: 'MEONLYMARK note',
+  })
+  it('a member does not get it', async () => {
+    const res = await handleRecentUpdates(new URL('https://x/api/updates/recent?limit=500'), as(NON_PI, world(authorOnly)))
+    expect(await res.text()).not.toContain('MEONLYMARK')
+  })
+  it('the PB key (isPi) does', async () => {
+    const res = await handleRecentUpdates(new URL('https://x/api/updates/recent?limit=500'), as(API_KEY, world(authorOnly)), true)
+    expect(await res.text()).toContain('MEONLYMARK')
+  })
+})

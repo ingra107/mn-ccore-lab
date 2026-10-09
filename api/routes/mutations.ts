@@ -22,6 +22,7 @@
 // write path through this endpoint as part of A3 ship.
 
 import type { AuthUser, Env, ValidationFlags } from '../helpers';
+import { looksLikeProjectId } from '../lib/project-slug';
 import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeRow, projectRefToCanonical, isPiRequest, logActivity } from '../helpers';
 import { FK_SLUG_FIELDS } from '../lib/task-cols';
 import { nowInstant } from '../lib/time';
@@ -479,6 +480,15 @@ async function processOne(
     const protectedErr = assertProtectedNotNull(mut.table, fields);
     if (protectedErr) {
       const r = mutErr(mut.mutation_id, 'protected_null', protectedErr);
+      const idem = await recordProcessedAtomic(env, mut, r);
+      return idem ?? r;
+    }
+    // A project slug may never spell a project id, from any caller (PB key
+    // included): the visibility rule reads slugs as project references, so an
+    // id-shaped slug would be a key to another project (api/lib/project-slug.ts).
+    // schema-v121 refuses the same value in D1.
+    if (mut.table === 'projects' && looksLikeProjectId(fields.slug)) {
+      const r = mutErr(mut.mutation_id, 'value_invalid', `project slug "${String(fields.slug)}" may not be a project id`);
       const idem = await recordProcessedAtomic(env, mut, r);
       return idem ?? r;
     }

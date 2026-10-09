@@ -1453,7 +1453,7 @@ defineRoute({
   path: '/api/updates/recent',
   auth: 'authed',
   entity: 'projects',
-  handler: (c) => handleRecentUpdates(U(c), E(c)),
+  handler: (c) => handleRecentUpdates(U(c), E(c), PI(c)),
 });
 defineRoute({
   method: 'GET',
@@ -3002,8 +3002,9 @@ export default {
           // Get recent team activity (last 24 hours) — activity_entries kind='update'
           const recentUpdates = await recipientDb.prepare(
             // recipientDb is bound to this member, so only updates on
-            // projects they are on reach their email.
-            "SELECT actor_slug AS author, body AS content, project_id FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL AND created_at > datetime('now', '-1 day') AND actor_slug != ?"
+            // projects they are on reach their email; an author-only (@me)
+            // update is someone else's (actor_slug != recipient), so never.
+            "SELECT actor_slug AS author, body AS content, project_id FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL AND visibility = 'team' AND created_at > datetime('now', '-1 day') AND actor_slug != ?"
             + ' ORDER BY created_at DESC LIMIT 5'
           ).bind(member.slug).all<{ author: string; content: string; project_id: string }>();
 

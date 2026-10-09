@@ -324,6 +324,40 @@ describe('write sweep: no write route changes or adds a row of a meeting the cal
   })
 })
 
+// Cold review 2026-10-09: the visibility rule reads a project's slug as a
+// reference to it, so a member who renames their OWN project's slug to a
+// hidden project's typed id must gain nothing. Three layers, each tested.
+describe('slug spoof: renaming your own project\'s slug to a hidden project id grants nothing', () => {
+  it('the route refuses the rename (400) and the project row is unchanged', async () => {
+    const r = await call('POST', `/api/projects/${CASEY_PROJ}`, CASEY_EMAIL, { slug: PROJ })
+    expect(r.status).toBe(400)
+    expect((db.prepare('SELECT slug FROM projects WHERE id = ?').get(CASEY_PROJ) as { slug: string }).slug).toBe('casey-own')
+  })
+
+  it('D1 refuses it too (schema-v121), whoever writes', () => {
+    expect(() => db.prepare('UPDATE projects SET slug = ? WHERE id = ?').run(PROJ, CASEY_PROJ)).toThrow(/may not be a project id/)
+    expect(() => db.prepare('UPDATE projects SET slug = ? WHERE id = ?').run('PROJ_anything', CASEY_PROJ)).toThrow(/may not be a project id/)
+  })
+
+  it('a spoofed slug that predates the guards still reads and deletes nothing of the hidden project', async () => {
+    db.exec('DROP TRIGGER trg_projects_slug_not_id_upd')
+    db.prepare('UPDATE projects SET slug = ? WHERE id = ?').run(PROJ, CASEY_PROJ)
+    const before = hiddenRows()
+    const leaks: string[] = []
+    for (const route of ROUTE_REGISTRY.filter((x) => x.method === 'GET')) {
+      for (const id of route.path.includes(':') ? [PROJ, TASK, REVISION] : ['']) {
+        const res = await call('GET', fill(route.path, id) + QUERY(id || PROJ), CASEY_EMAIL)
+        if (res.text.toUpperCase().includes(MARK)) leaks.push(`GET ${route.path} [${id}] ${res.status}: ${res.text.slice(0, 160)}`)
+      }
+    }
+    expect(leaks).toEqual([])
+    // Her own project's delete cascades by id and slug; the slug arm must not
+    // reach the hidden project's rows.
+    await call('POST', `/api/projects/${CASEY_PROJ}/delete`, CASEY_EMAIL, {})
+    expect(hiddenRows()).toBe(before)
+  }, 120_000)
+})
+
 describe('Lane B: projects are channels, membership is the one default rule', () => {
   const ALL = { 'X-Hub-All-Projects': '1' }
   const texts = async (who: string, extra: Record<string, string> = {}) =>

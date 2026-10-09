@@ -48,6 +48,29 @@ function error(msg: string, status = 400) {
  */
 const LAB_WIDE_UPLOAD_TYPES = new Set(['question', 'answer', 'daily_thought']);
 
+// The context.type a key was minted under (POST /api/upload/url builds the key
+// as `${context.type}/${context.id}/<ts>-<name>`) may differ from the
+// entityType the attachment is recorded under: Ask the Lab answers record as
+// 'question', the morning-thought composer records 'daily_thought' files as
+// 'task' keyed by the day (r2Upload.ts callers).
+const KEY_PREFIX_TYPES: Record<string, readonly string[]> = {
+  question: ['question', 'answer'],
+  task: ['task', 'daily_thought'],
+};
+
+/**
+ * True when `key` was minted for this entity: its first two segments are a
+ * context type that records as `entityType`, and `entityId`. upload/done takes
+ * the key from the client, so without this a caller could record a key that
+ * belongs to another entity's file under an entity they can see, and read the
+ * bytes through it. The UNIQUE r2_key index (schema-v121) stops a second row
+ * for any key, including one the caller's handle cannot see.
+ */
+function keyBelongsTo(key: string, entityType: string, entityId: string): boolean {
+  const [type, id] = key.split('/');
+  return id === entityId && (KEY_PREFIX_TYPES[entityType] ?? [entityType]).includes(type);
+}
+
 async function canAccessEntity(
   env: Env,
   entityType: string,
@@ -144,6 +167,9 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
   if (!(await canAccessEntity(env, body.entityType, body.entityId, isService))) {
     return error('Forbidden', 403);
   }
+  if (!isService && !keyBelongsTo(body.key, body.entityType, body.entityId)) {
+    return error('Key does not belong to this entity', 403);
+  }
 
   // Verify file actually landed in R2 before writing the DB record.
   // Without this check a client could register arbitrary keys that were
@@ -162,15 +188,24 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
   const uploadedBy = user.slug;
 
   const id = crypto.randomUUID().slice(0, 16);
-  await env.DB.prepare(
-    `INSERT INTO file_attachments (id, entity_type, entity_id, filename, content_type, size_bytes, r2_key, uploaded_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind(
-    id, body.entityType, body.entityId,
-    body.filename, body.contentType || null,
-    body.sizeBytes || null, body.key,
-    uploadedBy
-  ).run();
+  try {
+    await env.DB.prepare(
+      `INSERT INTO file_attachments (id, entity_type, entity_id, filename, content_type, size_bytes, r2_key, uploaded_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      id, body.entityType, body.entityId,
+      body.filename, body.contentType || null,
+      body.sizeBytes || null, body.key,
+      uploadedBy
+    ).run();
+  } catch (e) {
+    // idx_file_attachments_r2_key_unique (schema-v121): this object already
+    // has an attachment row, possibly one this caller cannot see.
+    if (/UNIQUE constraint failed: file_attachments\.r2_key/i.test((e as Error).message ?? '')) {
+      return error('This file is already attached', 409);
+    }
+    throw e;
+  }
 
   // `url` is a same-origin, non-expiring pointer at the raw-bytes route below
   // (unlike the presigned R2 URL from /api/upload/url, which expires in 1h —

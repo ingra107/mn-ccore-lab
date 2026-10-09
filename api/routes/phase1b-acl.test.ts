@@ -363,6 +363,35 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
     expect(attachments()).toEqual([])
   })
 
+  it('handleUploadDone: refuses a key minted for another entity, and stores nothing', async () => {
+    const req = post('/api/upload/done', NON_PI_EMAIL, {
+      key: 'project/pb-secret/file.pdf', filename: 'file.pdf', contentType: 'application/pdf', sizeBytes: 1, entityType: 'project', entityId: 'mnccore-project',
+    })
+    const res = await handleUploadDone(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, uploadsEnv())
+    expect(res.status).toBe(403)
+    expect(attachments()).toEqual([])
+  })
+
+  it('handleUploadDone: a second row for a key that already has one is a 409 (schema-v121 UNIQUE)', async () => {
+    const body = { key: 'project/mnccore-project/f.pdf', filename: 'f.pdf', contentType: 'application/pdf', sizeBytes: 1, entityType: 'project', entityId: 'mnccore-project' }
+    const nate = { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }
+    expect((await handleUploadDone(post('/api/upload/done', NON_PI_EMAIL, body), nate, uploadsEnv())).status).toBe(200)
+    expect((await handleUploadDone(post('/api/upload/done', NON_PI_EMAIL, body), nate, uploadsEnv())).status).toBe(409)
+    expect(attachments()).toHaveLength(1)
+  })
+
+  it('handleUploadDone: the composer aliases still bind (daily_thought records as task, answer as question)', async () => {
+    const nate = { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }
+    const day = await handleUploadDone(post('/api/upload/done', NON_PI_EMAIL, {
+      key: 'daily_thought/2026-10-09/1-a.png', filename: 'a.png', contentType: 'image/png', sizeBytes: 1, entityType: 'task', entityId: '2026-10-09',
+    }), nate, uploadsEnv())
+    expect(day.status).toBe(200)
+    const ans = await handleUploadDone(post('/api/upload/done', NON_PI_EMAIL, {
+      key: 'answer/q1/1-b.png', filename: 'b.png', contentType: 'image/png', sizeBytes: 1, entityType: 'question', entityId: 'q1',
+    }), nate, uploadsEnv())
+    expect(ans.status).toBe(200)
+  })
+
   it('handleUploadDone: allows PI to commit a file record on a PB project', async () => {
     const req = post('/api/upload/done', PI_EMAIL, {
       key: 'project/pb-secret/file.pdf', filename: 'file.pdf', contentType: 'application/pdf', sizeBytes: 1024, entityType: 'project', entityId: 'pb-secret',

@@ -148,7 +148,23 @@ describe('Fix 1b — handleAddTaskComment: @hermes creates ai_request + placehol
 // ── Fix 2: Upsert-on-miss enum guards ─────────────────────────────────────────
 
 describe('Fix 2 — handleUpdateProject upsert-on-miss enum guards', () => {
+  // Upsert-create is the PB key's legacy sync path only (2026-10-09).
+  const PB_KEY = { Authorization: 'Bearer valid-test-api-key' };
   const projectCount = () => count('projects');
+
+  it('a person, the PI included, gets 404 on a miss and nothing is created', async () => {
+    const before = projectCount();
+    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', status: 'active', stage: 'idea', category: 'MNCCORE' }), NICK, env);
+    expect(res.status).toBe(404);
+    expect(projectCount()).toBe(before);
+  });
+
+  it('the PB key cannot upsert a slug shaped like a project id', async () => {
+    const before = projectCount();
+    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'X', slug: 'proj_01HIDDEN', status: 'active', stage: 'idea', category: 'MNCCORE' }, PB_KEY), NICK, env);
+    expect(res.status).toBe(400);
+    expect(projectCount()).toBe(before);
+  });
 
   it.each([
     ['stage', { status: 'active', stage: 'not_a_real_stage', category: 'MNCCORE' }, /Invalid stage/i],
@@ -156,7 +172,7 @@ describe('Fix 2 — handleUpdateProject upsert-on-miss enum guards', () => {
     ['category', { status: 'active', stage: 'idea', category: 'lab' }, /Invalid category/i],
   ])('returns 400 for invalid %s on upsert-on-miss branch, and creates nothing', async (_f, fields, msg) => {
     const before = projectCount();
-    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', ...fields }), NICK, env);
+    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', ...fields }, PB_KEY), NICK, env);
     expect(res.status).toBe(400);
     const body = await res.json() as { error: string };
     expect(body.error).toMatch(msg);
@@ -164,7 +180,7 @@ describe('Fix 2 — handleUpdateProject upsert-on-miss enum guards', () => {
   });
 
   it('accepts canonical values and inserts the project on upsert-on-miss branch', async () => {
-    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', status: 'active', stage: 'idea', category: 'MNCCORE' }), NICK, env);
+    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', status: 'active', stage: 'idea', category: 'MNCCORE' }, PB_KEY), NICK, env);
     expect(res.status).toBe(200);
     const stored = rows("SELECT id, status, stage, category FROM projects WHERE slug = 'new-project-id'");
     expect(stored).toHaveLength(1);

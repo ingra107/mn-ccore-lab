@@ -41,15 +41,19 @@ describe('TASK_SELECT_COLS — project_id resolved to slug at the read boundary'
   // column (the P2 `aa85c71b` half-migration bug: ~20 tasks rendered unlinked +
   // sync silently broken). Decision: PB
   // 2026-06-05-tasks-project-id-store-typed-present-slug.md.
-  it('aliases a COALESCE(slug, raw) subquery AS project_id', () => {
+  // 2026-10-09: no raw fallback. A scoped caller's handle hides a project
+  // they are not on, and COALESCE(slug, t.project_id) then handed them that
+  // hidden project's typed id (the first step of the slug spoof).
+  it('aliases a slug subquery (by id or legacy slug) AS project_id, with no raw fallback', () => {
     expect(TASK_SELECT_COLS).toContain('AS project_id')
-    expect(TASK_SELECT_COLS).toMatch(
-      /COALESCE\(\(SELECT p\.slug FROM projects p WHERE p\.id = t\.project_id\), t\.project_id\) AS project_id/,
+    expect(TASK_SELECT_COLS).toContain(
+      '(SELECT p.slug FROM projects p WHERE p.id = t.project_id OR p.slug = t.project_id LIMIT 1) AS project_id',
     )
+    expect(TASK_SELECT_COLS).not.toContain('COALESCE((SELECT p.slug')
   })
 
   it('never selects the raw t.project_id column on its own (would leak the typed PK)', () => {
-    // Inside the COALESCE the token is followed by ')', so this standalone-column
+    // Inside the subquery the token is followed by ' OR'/' LIMIT', so this standalone-column
     // pattern must NOT match anywhere in the select list.
     expect(TASK_SELECT_COLS).not.toMatch(/(^|,\s*)t\.project_id(\s*,|\s*$)/)
   })

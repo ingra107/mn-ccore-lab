@@ -156,10 +156,24 @@ export async function handleGetCascade(url: URL, request: Request, env: Env): Pr
     })),
   ];
 
+  // deadline_dependencies is a lab table: an edge from this project's node to
+  // a node the caller cannot see would name that node's id. Keep an edge only
+  // when its other end is a node the caller can read (same rule as /all).
+  const edges = (deps.results || []) as DeadlineDep[];
+  const ends = [...new Set(edges.flatMap((d) => [d.upstream_id, d.downstream_id]))];
+  const visible = new Set<string>();
+  if (ends.length > 0) {
+    const ph = ends.map(() => '?').join(',');
+    const seen = await env.DB.prepare(
+      `SELECT id FROM milestones WHERE id IN (${ph}) UNION SELECT id FROM tasks WHERE id IN (${ph})`
+    ).bind(...ends, ...ends).all<{ id: string }>();
+    for (const r of seen.results ?? []) visible.add(r.id);
+  }
+
   return json({
     data: {
       nodes,
-      dependencies: (deps.results || []) as DeadlineDep[],
+      dependencies: edges.filter((d) => visible.has(d.upstream_id) && visible.has(d.downstream_id)),
     } as CascadeGraph,
   });
 }

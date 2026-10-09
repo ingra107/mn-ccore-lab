@@ -29,9 +29,9 @@ describe('TASK_SELECT_COLS_TYPED — A2 typed wire shape (Slice C)', () => {
     )
   })
 
-  it('TASK_SELECT_COLS still has the COALESCE alias (unchanged — pinned by task-cols.test.ts)', () => {
-    expect(TASK_SELECT_COLS).toMatch(
-      /COALESCE\(\(SELECT p\.slug FROM projects p WHERE p\.id = t\.project_id\), t\.project_id\) AS project_id/,
+  it('TASK_SELECT_COLS keeps its slug alias (pinned by task-cols.test.ts)', () => {
+    expect(TASK_SELECT_COLS).toContain(
+      '(SELECT p.slug FROM projects p WHERE p.id = t.project_id OR p.slug = t.project_id LIMIT 1) AS project_id',
     )
   })
 

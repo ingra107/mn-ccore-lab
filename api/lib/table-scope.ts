@@ -148,7 +148,16 @@ function projectRule(v: ScopedViewer): string | null {
 const projectsScoped = (v: ScopedViewer) => projectRule(v) !== null
 
 /** Every spelling of a visible project's reference: the typed id, and the legacy slug. */
-const VISIBLE_PROJECT_REFS = '(SELECT id FROM projects UNION ALL SELECT slug FROM projects WHERE slug IS NOT NULL)'
+// The slug arm stays because slug-keyed columns exist (contributions,
+// lab_questions, hub_decisions, ai_requests, narrative_projects,
+// paper_project_links carry project_slug, and legacy tasks may store a slug).
+// It ignores any slug shaped like, or equal to, a project id: a slug that
+// spells another project's id would otherwise make that project's id-keyed
+// rows visible to whoever can see the slug's own project (the slug-spoof,
+// api/lib/project-slug.ts). The write paths and schema-v121 refuse such a
+// slug; this keeps a row that predates them inert.
+const VISIBLE_PROJECT_REFS = '(SELECT id FROM projects UNION ALL SELECT slug FROM projects WHERE slug IS NOT NULL '
+  + "AND lower(substr(slug, 1, 5)) <> 'proj_' AND slug NOT IN (SELECT id FROM main.projects))"
 
 /** `col` names a visible project. NULL is not a project reference: callers decide. */
 const inVisibleProject = (col: string) => `${col} IN ${VISIBLE_PROJECT_REFS}`

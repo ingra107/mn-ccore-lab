@@ -26,8 +26,14 @@ export { TASK_PLAIN_COLS };
 // paths — applyInsert/advanceProjectMovement/cascade — keep using the stored
 // typed PK; this is purely the wire/presentation form.) See decision doc
 // Context/Decisions/2026-06-05-tasks-project-id-store-typed-present-slug.md.
+// 2026-10-09: no raw fallback. A scoped caller's handle hides a project they
+// are not on, so the old `COALESCE(<slug>, t.project_id)` handed a member who
+// can see a task (it names them) the hidden project's typed id, which was the
+// first step of the slug spoof (api/lib/project-slug.ts). The subquery now
+// also matches a legacy slug-stored value, so a visible project always
+// resolves to its slug; anything else (hidden, or no such project) is NULL.
 const PROJECT_ID_AS_SLUG =
-  'COALESCE((SELECT p.slug FROM projects p WHERE p.id = t.project_id), t.project_id) AS project_id';
+  '(SELECT p.slug FROM projects p WHERE p.id = t.project_id OR p.slug = t.project_id LIMIT 1) AS project_id';
 
 export const TASK_SELECT_COLS = [
   ...TASK_PLAIN_COLS.map((c) => `t.${c}`),

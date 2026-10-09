@@ -539,10 +539,12 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [showAgendaForm, setShowAgendaForm] = useState(false)
   const [agendaNote, setAgendaNote] = useState('')
   useEffect(() => { if (showAgendaForm) agendaNoteInputRef.current?.focus({ preventScroll: true }) }, [showAgendaForm])
-  // A project's meetings are the ones its tags name (Nick, 2026-10-09; the
-  // server shows a tagged meeting to the project's members). The agenda
-  // picker offers only this project's upcoming meetings, soonest first; it
-  // used to post to the lab's next meeting whatever the project.
+  // A project's meetings are the ones its tags name (Nick, 2026-10-09), out
+  // of the meetings this viewer can already see: /api/meetings is scoped to
+  // owner and attendees, and a tag grants no access while the server's tag
+  // arm (MEETING_TAGS_GRANT_ACCESS, table-scope.ts) is off. The agenda picker
+  // offers only those, upcoming, soonest first; it used to post to the lab's
+  // next meeting whatever the project.
   const projectMeetings = useMemo(
     () => meetingsForProject(apiMeetings, { id: project.id ?? '', slug: project.slug }, localDateKey()),
     [apiMeetings, project.id, project.slug],
