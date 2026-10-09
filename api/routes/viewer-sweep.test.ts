@@ -434,6 +434,15 @@ describe('Lane B: projects are channels, membership is the one default rule', ()
     expect(JSON.stringify(db.prepare('SELECT * FROM tasks WHERE id = ?').get(LOOSE))).toBe(before)
   })
 
+  it('Casey cannot attach a file to a task she cannot see; the morning-thought day key still works', async () => {
+    const before = db.prepare("SELECT COUNT(*) AS n FROM file_attachments WHERE entity_type = 'task' AND entity_id = ?").get(TASK)
+    const hidden = await call('POST', '/api/upload/done', CASEY_EMAIL, { key: `task/${TASK}/x.pdf`, filename: 'x.pdf', contentType: 'application/pdf', sizeBytes: 1, entityType: 'task', entityId: TASK })
+    expect(hidden.status).toBe(403)
+    expect(db.prepare("SELECT COUNT(*) AS n FROM file_attachments WHERE entity_type = 'task' AND entity_id = ?").get(TASK)).toEqual(before)
+    const day = await call('POST', '/api/upload/done', CASEY_EMAIL, { key: `task/${TODAY}/x.pdf`, filename: 'x.pdf', contentType: 'application/pdf', sizeBytes: 1, entityType: 'task', entityId: TODAY })
+    expect(day.status).not.toBe(403)
+  })
+
   it('members: a member adds, a non-member cannot see the list, only a PI or the member removes', async () => {
     const list = await call('GET', `/api/projects/${PROJ}/members`, 'mesfin@umn.edu')
     expect(list.status).toBe(200)

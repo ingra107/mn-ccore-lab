@@ -35,10 +35,10 @@ function error(msg: string, status = 400) {
  *   - meeting: the row must be visible through env.DB, which the request
  *     middleware binds to the caller (api/lib/viewer-db.ts); a hidden meeting
  *     and a missing one answer the same.
- *   - task: a known task in a Peripheral Brain project is refused. An UNKNOWN
- *     task id is allowed, because the morning-thought composer records its
- *     files as entity 'task' keyed by the day (MorningThoughtCompose.tsx), and
- *     tasks carry no per-person rule until #145 Lane B.
+ *   - task: the task must be visible through env.DB (Lane B scopes tasks).
+ *     A missing id is allowed only when it is a YYYY-MM-DD day key: the
+ *     morning-thought composer records its files as entity 'task' keyed by
+ *     the day (MorningThoughtCompose.tsx).
  *   - question / answer / daily_thought: lab-wide content, allowed.
  *   - anything else: refused.
  *
@@ -68,7 +68,10 @@ async function canAccessEntity(
   if (entityType === 'task') {
     const task = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? LIMIT 1')
       .bind(entityId).first<{ project_id: string | null }>();
-    if (!task) return true;
+    // #145 Lane B: tasks are scoped now, so a task the caller cannot see reads
+    // as missing. Only the morning-thought composer's day key (YYYY-MM-DD,
+    // todayKey() in src/lib/taskGrouping.ts) is a legitimate non-task id here.
+    if (!task) return /^\d{4}-\d{2}-\d{2}$/.test(entityId);
     const visible = await env.DB.prepare(
       `SELECT 1 AS ok FROM tasks t WHERE t.id = ?${pbTaskVisibilitySql('t', false)} LIMIT 1`
     ).bind(entityId).first();

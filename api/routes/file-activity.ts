@@ -58,14 +58,21 @@ export async function handleSyncFileActivity(request: Request, env: Env): Promis
 
   for (let i = 0; i < body.entries.length; i += BATCH_SIZE) {
     const batch = body.entries.slice(i, i + BATCH_SIZE);
-    const stmts = batch.map(e =>
+    // #145: update-then-insert, not an upsert. file_activity_daily follows its
+    // project, and viewer-db refuses ON CONFLICT DO UPDATE on a scoped table
+    // (the DO UPDATE would reach a row the caller cannot read). PB's key gets
+    // the raw handle; this keeps Nick's own session working too. Same result
+    // as the upsert: `project_id = ?` never matches NULL, exactly as the
+    // UNIQUE(date, project_id) conflict never fired for a NULL project.
+    const stmts = batch.flatMap(e => [
       env.DB.prepare(
-        `INSERT INTO file_activity_daily (id, date, project_id, project_name, file_count, total_events)
-         VALUES (?, ?, ?, ?, ?, ?)
-         ON CONFLICT(date, project_id) DO UPDATE SET
-           project_name = COALESCE(excluded.project_name, file_activity_daily.project_name),
-           file_count = excluded.file_count,
-           total_events = excluded.total_events`
+        `UPDATE file_activity_daily
+            SET project_name = COALESCE(?, project_name), file_count = ?, total_events = ?
+          WHERE date = ? AND project_id = ?`
+      ).bind(e.project_name ?? null, e.file_count ?? 0, e.total_events ?? 0, e.date, e.project_id ?? null),
+      env.DB.prepare(
+        `INSERT OR IGNORE INTO file_activity_daily (id, date, project_id, project_name, file_count, total_events)
+         VALUES (?, ?, ?, ?, ?, ?)`
       ).bind(
         generateId(),
         e.date,
@@ -73,8 +80,8 @@ export async function handleSyncFileActivity(request: Request, env: Env): Promis
         e.project_name ?? null,
         e.file_count ?? 0,
         e.total_events ?? 0
-      )
-    );
+      ),
+    ]);
     await env.DB.batch(stmts);
     upserted += batch.length;
   }
