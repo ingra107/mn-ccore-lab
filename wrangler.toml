@@ -60,10 +60,11 @@ crons = ["0 13 * * 1-5", "0 11 * * *", "0 * * * *"]
 binding = "FILES"
 bucket_name = "mnccore-files"
 
-# Service binding to the hub-realtime Worker for DO broadcast. Cross-Worker
-# Durable Object access requires this — `env.NOTIFICATION_HUB.fetch(...)`
-# routes internally through the CF edge to hub-realtime, which forwards to
-# the DO's onRequest for broadcast.
-[[env.production.services]]
-binding = "NOTIFICATION_HUB"
-service = "hub-realtime"
+# The hub-realtime Worker's NotificationHub Durable Object, bound directly (the
+# Pages project binds the same namespace). api/lib/notify.ts calls its RPC
+# methods (shared/realtime.ts); there is no HTTP broadcast path. Was a service
+# binding + public-URL fallback until 2026-10-08.
+[[env.production.durable_objects.bindings]]
+name = "NOTIFICATION_HUB"
+class_name = "NotificationHub"
+script_name = "hub-realtime"

@@ -81,6 +81,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 ### Meta + auth
 - GET /api/version — current data version (React Query invalidator)
 - GET /api/health — D1 + realtime binding runbook ([docs/OBSERVABILITY.md](docs/OBSERVABILITY.md))
+- GET /api/realtime/ticket — single-use, 60s ticket the hub-realtime WebSocket requires (`src/lib/realtimeBus.ts` fetches one per connect)
 - GET /api/auth/me — `{authenticated, email, name, isPi}` (Phase 36: adds `isPi` + awaits JWT verify)
   - #8945: also `slug` (the caller's team slug, resolved from `team_members.email`) and `directory: [{email, slug}]` for rendering stored emails. The UI reads `useAuth().user.slug`; there is no email-to-slug map.
   - **Membership (2026-10-08): `isMember`.** CF Access admits any @umn.edu account, so a valid sign-in is not membership. A member is an email on a `team_members` row (case-insensitive) or a PI email; sign-in writes nothing (the old `ensureTeamMember` ghost rows and prefix-slug claims are gone). A signed-in non-member gets `{authenticated: true, isMember: false, isPi: false, email, name}` here (no slug, no directory), the anonShape of every public GET, and `403 {error, code: 'not_a_member'}` from every other route. The gate is `bindRegistryToHono` (`api/lib/route-dsl.ts`): a route is members-only unless it is a public GET; `servesNonMembers` (public GET only) is how this route answers in full. The SPA shows a members-only page with a Request access mailto.
@@ -398,7 +399,7 @@ Discovered during the 2026-04-17/18 deep-audit. Canonical, non-obvious patterns 
 ### Mutation → client update flow
 1. Mutation hits the API via wrapped handler `withVersionBump`.
 2. `withVersionBump` runs `bumpVersion(env.DB)` + `notifyClients(env, 'data')` on any 2xx response from a non-GET.
-3. `notifyClients` tries to `fetch()` the NOTIFICATION_HUB durable object. **Currently no-op** because wrangler.toml lacks the service binding — tracked as follow-up.
+3. `notifyClients` (`api/lib/notify.ts`) calls the hub-realtime NotificationHub DO's RPC method `notify` through the NOTIFICATION_HUB namespace binding (Pages dashboard binding + API worker `[env.production]`). No HTTP request; the worker has no HTTP broadcast route (2026-10-08, `shared/realtime.ts`). Clients connect to the WebSocket only with a single-use ticket from `GET /api/realtime/ticket` (members only).
 4. All clients poll `/api/version` every 15s (`useRealtimeSync`, `refetchIntervalInBackground: true`). On version change → `invalidateQueries` on all non-`_version` keys → React Query refetches active queries → UI updates.
 5. `BroadcastChannel('mnccore-sync')` + `notifyLocalTabs()` provide instant same-device cross-tab sync for locally-initiated mutations.
 

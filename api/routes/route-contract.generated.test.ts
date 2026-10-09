@@ -164,11 +164,13 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   which read the viewer's own task list and so never matched a mentee.
     // 269 as of 2026-10-08 — POST /api/team (+1): a PI adds a member. Sign-in
     //   no longer creates team_members rows, so this is how an email joins.
+    // 270 as of 2026-10-08 — GET /api/realtime/ticket (+1): the single-use
+    //   ticket hub-realtime now requires before it accepts a WebSocket.
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(269)
+    expect(ROUTE_REGISTRY).toHaveLength(270)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

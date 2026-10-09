@@ -1,4 +1,10 @@
 import PartySocket from 'partysocket'
+import {
+  REALTIME_PARTY,
+  REALTIME_ROOM,
+  REALTIME_TICKET_PARAM,
+  REALTIME_TICKET_PATH,
+} from '../../shared/realtime'
 
 // Shared PartySocket dispatcher. All realtime hooks (presence, typing, intent,
 // version-invalidation) route through ONE socket per (host, room, party) tuple.
@@ -28,6 +34,17 @@ interface BusEntry {
 
 const buses = new Map<string, BusEntry>()
 
+// The worker refuses an upgrade without a single-use ticket from the API
+// (shared/realtime.ts). PartySocket calls this before EVERY connect attempt,
+// reconnects included, so each attempt carries a fresh ticket. A refusal (401
+// signed out, 403 not a member) rejects, and PartySocket retries with backoff.
+async function ticketQuery(): Promise<Record<string, string>> {
+  const res = await fetch(REALTIME_TICKET_PATH, { credentials: 'include', cache: 'no-store' })
+  if (!res.ok) throw new Error(`realtime ticket refused: ${res.status}`)
+  const { ticket } = (await res.json()) as { ticket: string }
+  return { [REALTIME_TICKET_PARAM]: ticket }
+}
+
 function busKey(room: string, party: string): string {
   return `${WS_HOST}::${room}::${party}`
 }
@@ -42,7 +59,7 @@ function ensureBus(room: string, party: string): BusEntry {
     }
     return existing
   }
-  const socket = new PartySocket({ host: WS_HOST, room, party })
+  const socket = new PartySocket({ host: WS_HOST, room, party, query: ticketQuery })
   const entry: BusEntry = {
     socket,
     listeners: new Set(),
@@ -93,7 +110,7 @@ export interface RealtimeBus {
   isOpen(): boolean
 }
 
-export function getRealtimeBus(room = 'mnccore', party = 'notification-hub'): RealtimeBus {
+export function getRealtimeBus(room = REALTIME_ROOM, party = REALTIME_PARTY): RealtimeBus {
   const key = busKey(room, party)
   const entry = ensureBus(room, party)
 

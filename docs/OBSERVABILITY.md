@@ -55,7 +55,7 @@ HTTP/1.1 503 Service Unavailable
 | `projects` count | Project data lost or D1 down |
 | `team` count (≥5) | team_members seed drifted or table missing |
 | `last_activity` (≤14 days) | Activity pipeline stalled; users may have stopped using it OR a write path is broken |
-| `realtime` | Optional. `not_bound` is fine (CF Pages binding absent). `5xx` means hub-realtime Worker down. |
+| `realtime` | `ok` = the NOTIFICATION_HUB namespace binding reached the DO (RPC `ping`). `not_bound` = no binding on this deployment (preview, local); live updates and WebSocket tickets are off there. `probe_error` = hub-realtime Worker down or lacks the RPC methods (deploy it). |
 | `duration_ms` | All DB probes combined; >500ms is slowish but not broken |
 
 ## Wiring external monitoring
@@ -108,7 +108,7 @@ gates RED. This catches production regressions before merge/deploy.
    at `/api/activity` directly. If it's empty but tasks are being created,
    `logActivity()` is silently failing — check the helper for a thrown
    exception getting swallowed.
-3. **`realtime 5xx`** → hub-realtime Worker is down. Users still work (WS
+3. **`realtime unreachable`** → hub-realtime Worker is down. Users still work (WS
    falls back to 15s version poll) but presence + live updates are broken.
    `wrangler tail hub-realtime` to see what's crashing.
 4. **`duration_ms > 2000`** → D1 is throttled or a table needs an index.

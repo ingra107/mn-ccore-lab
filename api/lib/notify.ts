@@ -1,57 +1,50 @@
 /**
- * Notify connected WebSocket clients via the hub-realtime Durable Object.
- * Fire-and-forget — never blocks the mutation response.
+ * The main API's handle on the hub-realtime Durable Object.
  *
- * Cross-Worker DO access runs through a service binding (wrangler.toml:
- * `[[services]] binding = "NOTIFICATION_HUB" service = "hub-realtime"`).
- * `env.NOTIFICATION_HUB` is a Fetcher bound to the hub-realtime worker.
- * We POST to `/parties/notification-hub/mnccore`, the party URL that
- * `routePartykitRequest` forwards into the DO's `onRequest`, which calls
- * `broadcast(body)`. Clients receive over their existing PartySocket WS
- * connection within <1s.
- *
- * Fallback: if the binding is missing (e.g. stale wrangler config on a
- * preview deploy), fall back to a public HTTP fetch. Polling still covers
- * the cross-tab case at 15s either way.
+ * Both deployments bind the NotificationHub namespace directly as
+ * NOTIFICATION_HUB: the Pages project (dashboard binding, which serves /api)
+ * and the API worker (wrangler.toml [env.production], crons only). The API
+ * calls the DO's RPC methods (shared/realtime.ts); no HTTP request is made, and
+ * the hub-realtime worker has no HTTP route that broadcasts.
  *
  * History:
- *  - Pre-2026-04-18: env.NOTIFICATION_HUB as DurableObjectNamespace —
- *    binding never existed, silent no-op, clients saw updates only on
- *    next /api/version poll.
- *  - 2026-04-18 AM: HTTP-only path via public URL (worked but DNS+TLS).
- *  - 2026-04-18 late: service binding wired; internal fetch is the
- *    primary path, HTTP fallback retained for preview safety.
+ *  - Pre-2026-04-18: binding typed as a namespace but never existed; no-op.
+ *  - 2026-04-18: POST to the public workers.dev URL, then a worker service
+ *    binding with the public URL kept as a fallback "for previews".
+ *  - Until 2026-10-08 Pages bound the namespace (not a service), so its env
+ *    had no `.fetch` and every Hub write broadcast through the public URL,
+ *    which accepted a POST from anyone. Replaced by RPC; the fallback is gone.
  */
-const PUBLIC_FALLBACK_URL = 'https://hub-realtime.nicholas-ingraham.workers.dev/parties/notification-hub/mnccore';
+import { REALTIME_ROOM, type RealtimeHubRpc } from '../../shared/realtime';
 
-interface NotifyEnv {
-  NOTIFICATION_HUB?: { fetch(request: Request): Promise<Response> };
+interface HubNamespace {
+  idFromName(name: string): DurableObjectId;
+  get(id: DurableObjectId): unknown;
 }
 
-export async function notifyClients(env: NotifyEnv, type: string): Promise<void> {
-  const payload = JSON.stringify({ type, timestamp: Date.now() });
-  const headers = { 'Content-Type': 'application/json' };
+export interface RealtimeEnv {
+  NOTIFICATION_HUB?: unknown;
+}
 
-  // Prefer the service binding — routes internally, no network hop.
-  if (env?.NOTIFICATION_HUB?.fetch) {
-    try {
-      await env.NOTIFICATION_HUB.fetch(
-        new Request('https://hub-realtime/parties/notification-hub/mnccore', {
-          method: 'POST',
-          headers,
-          body: payload,
-        }),
-      );
-      return;
-    } catch (e) {
-      console.error('DO service-binding notify failed, falling back to public URL:', e);
-    }
+/** The room's DO stub, or null when this deployment has no namespace binding
+ *  (a Pages preview, local dev). */
+export function realtimeHub(env: RealtimeEnv | undefined): RealtimeHubRpc | null {
+  const ns = env?.NOTIFICATION_HUB as HubNamespace | undefined;
+  if (!ns || typeof ns.idFromName !== 'function' || typeof ns.get !== 'function') return null;
+  return ns.get(ns.idFromName(REALTIME_ROOM)) as RealtimeHubRpc;
+}
+
+/** Fire-and-forget: tell connected clients that data changed. Never throws;
+ *  clients still poll /api/version, so a miss costs latency, not data. */
+export async function notifyClients(env: RealtimeEnv, type: string): Promise<void> {
+  const hub = realtimeHub(env);
+  if (!hub) {
+    console.warn('[realtime] NOTIFICATION_HUB namespace not bound; no broadcast');
+    return;
   }
-
-  // Fallback: public HTTP POST (used on previews without the binding).
   try {
-    await fetch(PUBLIC_FALLBACK_URL, { method: 'POST', headers, body: payload });
+    await hub.notify(JSON.stringify({ type, timestamp: Date.now() }));
   } catch (e) {
-    console.error('DO public-URL notify failed:', e);
+    console.error('[realtime] notify failed:', e);
   }
 }

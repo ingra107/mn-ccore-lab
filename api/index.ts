@@ -18,7 +18,8 @@ import { validateApiKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
 import { ctToday } from './lib/ct-date';
 import { nowInstant } from './lib/time';
-import { notifyClients } from './lib/notify';
+import { notifyClients, realtimeHub } from './lib/notify';
+import { REALTIME_TICKET_PATH } from '../shared/realtime';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
@@ -498,13 +499,14 @@ defineRoute({
     if (!r?.t) failures.push('no activity in last 14 days — pipeline may be stalled');
   } catch (e) { failures.push(`activity query: ${(e as Error).message.slice(0, 80)}`); }
 
-  const hub = (env as unknown as { NOTIFICATION_HUB?: { fetch?: (u: string) => Promise<Response> } }).NOTIFICATION_HUB;
-  if (hub && typeof hub.fetch === 'function') {
+  const hub = realtimeHub(env);
+  if (hub) {
     try {
-      const r = await hub.fetch('https://hub-realtime.local/health');
-      checks.realtime = r.status;
-      if (r.status >= 500) failures.push(`realtime ${r.status}`);
-    } catch (e) { checks.realtime = `probe_error: ${(e as Error).message.slice(0, 40)}`; }
+      checks.realtime = await hub.ping();
+    } catch (e) {
+      checks.realtime = `probe_error: ${(e as Error).message.slice(0, 40)}`;
+      failures.push('realtime unreachable');
+    }
   } else {
     checks.realtime = 'not_bound';
   }
@@ -539,6 +541,26 @@ defineRoute({
 });
 // PI-gated: sessions + lane3 contain private brain.db data. R(c) carries JWT/API-key
 // so isPiRequest inside the handler can distinguish PI/service from team callers.
+// Realtime connect ticket (2026-10-08). The hub-realtime worker refuses a
+// WebSocket upgrade without a live single-use ticket, and only this route mints
+// one. auth: 'authed' puts it behind the route gate (members only once the
+// member gate is on), so the worker never decides who is a member.
+defineRoute({
+  method: 'GET',
+  path: REALTIME_TICKET_PATH,
+  auth: 'authed',
+  entity: 'misc',
+  visibility: 'na',
+  handler: async (c) => {
+    const hub = realtimeHub(E(c));
+    if (!hub) return error('Realtime is not available on this deployment', 503);
+    const ticket = await hub.issueTicket();
+    return new Response(JSON.stringify({ ticket }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...corsHeaders },
+    });
+  },
+});
 defineRoute({
   method: 'GET',
   path: '/api/sessions',
