@@ -287,8 +287,10 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | `tests/test-seed.ts` | globalSetup: seeds DB_TEST via API before Playwright runs |
 | `scripts/run-tests.sh` | Test runner (4 modes: quick/ui/sync/all) |
 | `scripts/inspection-scanner.py` | Feature scanner (15 patterns, registry cross-ref) |
-| `scripts/setup-mnccore-protocol.reg` | Windows registry for mnccore:// protocol handler |
-| `scripts/mnccore-handler.bat` | Opens local folders/scripts from Hub links |
+| `scripts/mnccore_handler.py` | mnccore:// protocol handler (verb router; runs under pythonw.exe, no cmd.exe) |
+| `scripts/register_mnccore_protocol.py` | Registers mnccore:// (HKCU) to the Python handler; `--revert-to-bat` rolls back |
+| `scripts/mnccore-handler.bat` | DEPRECATED 2026-10-09, rollback for one release |
+| `scripts/setup-mnccore-protocol.bat` / `.reg` | DEPRECATED, register the old .bat handler |
 | `tests/feature-registry.json` | 353 interactive elements mapped with test coverage |
 | `TESTING.md` | Testing guide — suites, runner, conventions |
 

@@ -4,6 +4,10 @@ setlocal
 :: ============================================================================
 :: setup-mnccore-protocol.bat — register the mnccore:// URL protocol (HKCU).
 ::
+:: DEPRECATED 2026-10-09: this registers the deprecated mnccore-handler.bat. Use
+::   python scripts\register_mnccore_protocol.py --apply
+:: which registers scripts\mnccore_handler.py under pythonw.exe (no cmd.exe).
+::
 :: SUPERSEDES setup-mnccore-protocol.reg (hardcoded C:\Users\ingra107 path —
 :: only worked for the work laptop). This script derives the handler path from
 :: its OWN location (%~dp0), so it registers correctly as-is on BOTH machines:

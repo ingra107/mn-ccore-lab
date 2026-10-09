@@ -223,7 +223,7 @@ export const MNCCORE_PROCESS_URI = 'mnccore://process'
 /**
  * The verb-only `mnccore://quickchat` URI — runs Quick_Chat_seeded.bat on the
  * local machine, which loads today's context from .pb-seed.txt on startup. No
- * path segment (the handler matches the bare verb, mnccore-handler.bat L241).
+ * path segment (the handler matches the bare verb, mnccore_handler.py BARE_VERBS).
  * Computer-origin only; mobile uses the launch_log + home-poller path instead.
  */
 export const MNCCORE_QUICKCHAT_URI = 'mnccore://quickchat'

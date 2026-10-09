@@ -9,7 +9,7 @@ echo %date% %time% backlog-wave launched >> "%TEMP%\backlog-wave.log"
 :: lands the work, writes the row statuses, and closes the session.
 ::
 :: Invoked by:
-::   - mnccore://backlogwave  (scripts\mnccore-handler.bat -> this file)
+::   - mnccore://backlogwave  (scripts\mnccore_handler.py -> this file)
 ::   - the Command Palette "Backlog Wave" entry (PI-only, fires that URI)
 ::   - direct double-click
 ::

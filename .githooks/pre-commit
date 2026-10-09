@@ -185,6 +185,7 @@ fi
 # cannot run elsewhere, and the test skips itself there.
 if git diff --cached --name-only --diff-filter=ACMR \
         | grep -qE "^scripts/mnccore-handler\.(bat|test\.mjs)$"; then
+    # Deprecated .bat (rollback for one release, 2026-10-09); kept green until deleted.
     if ! node scripts/mnccore-handler.test.mjs >/tmp/mnccore-handler-test.$$ 2>&1; then
         grep -E "^\s*not ok|error:" /tmp/mnccore-handler-test.$$ | head -20
         rm -f /tmp/mnccore-handler-test.$$
@@ -193,6 +194,19 @@ if git diff --cached --name-only --diff-filter=ACMR \
         exit 1
     fi
     rm -f /tmp/mnccore-handler-test.$$
+fi
+# The Python handler that replaced it (2026-10-09). Fires through the registered
+# command line with DRYRUN; raw-quote and marker-file cases, never a GUI program.
+if git diff --cached --name-only --diff-filter=ACMR \
+        | grep -qE "^scripts/(mnccore_handler\.(py|test\.mjs)|register_mnccore_protocol\.py)$"; then
+    if ! node scripts/mnccore_handler.test.mjs >/tmp/mnccore-pyhandler-test.$$ 2>&1; then
+        grep -E "^\s*not ok|error:" /tmp/mnccore-pyhandler-test.$$ | head -20
+        rm -f /tmp/mnccore-pyhandler-test.$$
+        echo ""
+        echo "BLOCKED: scripts/mnccore_handler.test.mjs failed (run it with node to see why)."
+        exit 1
+    fi
+    rm -f /tmp/mnccore-pyhandler-test.$$
 fi
 
 # ---------------------------------------------------------------------------

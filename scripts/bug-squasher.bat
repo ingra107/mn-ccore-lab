@@ -7,7 +7,7 @@ echo %date% %time% bug-squasher launched >> "%TEMP%\bug-squasher.log"
 :: bug report filed via the Hub's /api/bug-report and gets after them.
 ::
 :: Invoked by:
-::   - mnccore://bugsquash  (scripts\mnccore-handler.bat -> this file)
+::   - mnccore://bugsquash  (scripts\mnccore_handler.py -> this file)
 ::   - the Command Palette "Bug Squasher" entry (PI-only, fires that URI)
 ::   - direct double-click
 ::

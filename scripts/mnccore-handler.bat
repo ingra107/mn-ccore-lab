@@ -3,6 +3,13 @@ setlocal enabledelayedexpansion
 echo %date% %time% ARGS: %* >> "%TEMP%\mnccore-handler.log"
 
 :: ============================================================================
+:: DEPRECATED 2026-10-09: superseded by scripts\mnccore_handler.py, registered by
+:: scripts\register_mnccore_protocol.py --apply. Windows starts a .bat handler under
+:: cmd.exe, which splits a URL holding an unbalanced quote before this file runs, so
+:: no line here can stop that injection. Kept for one release as the rollback:
+::   python scripts\register_mnccore_protocol.py --revert-to-bat
+:: Delete it, setup-mnccore-protocol.bat/.reg and mnccore-handler.test.mjs after that.
+::
 :: mnccore:// protocol handler — verb router.
 ::
 :: Registered (HKCU\Software\Classes\mnccore) by scripts\setup-mnccore-protocol.bat.

@@ -3,8 +3,8 @@ import { useToast } from './useToast'
 // Shared chokepoint for firing `mnccore://` protocol URLs from the UI.
 //
 // The `mnccore://` scheme needs a Windows URL-handler registration on the
-// user's machine (scripts/mnccore-handler.bat + setup-mnccore-protocol.bat in
-// the Hub repo). If the handler isn't installed the browser silently does
+// user's machine (scripts/mnccore_handler.py, registered by
+// scripts/register_mnccore_protocol.py in the Hub repo). If the handler isn't installed the browser silently does
 // nothing, so every launch ships a fallback: copy a human-actionable string to
 // the clipboard + show a toast. This mirrors KeyLinksEditor's handleNonHttpClick
 // — one behavior for all local-protocol affordances across the app.
