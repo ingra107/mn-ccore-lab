@@ -38,6 +38,7 @@ import WorkOnActions from '../components/WorkOnActions'
 import { AllProjectsBanner, AllProjectsSwitch } from '../components/AllProjectsControls'
 import { useAllProjectsOn } from '../lib/allProjects'
 import { useAuth } from '../hooks/useAuth'
+import { useProjectPins } from '../hooks/useProjectPins'
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
@@ -437,17 +438,9 @@ export default function Projects() {
   // first) — the "what's moving" view. Other column headers still re-sort.
   const [sortKey, setSortKey] = useState<ProjectSortKey>('activity')
   const [sortAsc, setSortAsc] = useState(true)
-  const [pinnedSlugs, setPinnedSlugs] = useState<Set<string>>(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('pinned-projects') || '[]')) } catch { return new Set() }
-  })
-  const togglePin = (slug: string) => {
-    setPinnedSlugs(prev => {
-      const next = new Set(prev)
-      if (next.has(slug)) next.delete(slug); else next.add(slug)
-      localStorage.setItem('pinned-projects', JSON.stringify([...next]))
-      return next
-    })
-  }
+  // Pins are per person on the server (2026-10-09); the sidebar's "My
+  // projects" list reads the same set. The old localStorage pins import once.
+  const { pinnedSlugs, togglePin } = useProjectPins()
   const toggleSort = (key: ProjectSortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc)
     else { setSortKey(key); setSortAsc(true) }
