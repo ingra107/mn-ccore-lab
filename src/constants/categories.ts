@@ -21,3 +21,14 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
   { value: 'CLIF', label: 'CLIF', color: 'var(--maroon)' },
   { value: 'Peripheral Brain', label: 'Peripheral Brain', color: 'var(--slate)' },
 ]
+
+/**
+ * The categories the New Project form offers. 'Peripheral Brain' is the bucket
+ * for Nick's own admin and personal projects, so only the site admin
+ * (useAuth().canShowAllProjects, which the server sets for Nick alone) gets
+ * it. It is a label: since 2026-10-09 membership alone decides who sees a
+ * project, so this keeps the bucket meaningful, not private.
+ */
+export function createCategoryOptions(isSiteAdmin: boolean): CategoryOption[] {
+  return isSiteAdmin ? CATEGORY_OPTIONS : CATEGORY_OPTIONS.filter((c) => c.value !== 'Peripheral Brain')
+}

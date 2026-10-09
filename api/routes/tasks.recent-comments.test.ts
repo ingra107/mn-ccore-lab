@@ -76,14 +76,16 @@ describe('handleGetRecentTaskComments', () => {
     expect(captured[0].binds).toEqual([10])
   })
 
-  it('non-PB caller (canSeePb=false) excludes Peripheral Brain category + author-only rows', async () => {
+  // Which tasks' comments a caller sees is the viewer-bound handle's rule;
+  // the handler adds only the author-only (@me) cut, and no category rule.
+  it('a non-PI caller gets team-visibility rows only, and no category clause', async () => {
     const { env, captured } = makeEnv()
     await handleGetRecentTaskComments(makeUrl(''), env, false)
-    expect(captured[0].sql).toContain("p.category != 'Peripheral Brain'")
+    expect(captured[0].sql).not.toContain('Peripheral Brain')
     expect(captured[0].sql).toContain("ae.visibility = 'team'")
   })
 
-  it('PB caller (canSeePb=true) has no category exclusion and sees author-only', async () => {
+  it('a PI or the PB collector (isPi) sees author-only rows too', async () => {
     const { env, captured } = makeEnv()
     await handleGetRecentTaskComments(makeUrl(''), env, true)
     expect(captured[0].sql).not.toContain('Peripheral Brain')

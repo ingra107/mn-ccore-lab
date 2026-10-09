@@ -160,24 +160,18 @@ export interface ProjectPublicationLinkRow {
 
 // GET /api/project-publications — every link, for list-page chips. The
 // junction is small (one row per paper a project produced), so one fetch
-// beats N per-project requests from a 100-row table. PB-category projects
-// are hidden from non-PI callers by the same predicate the list endpoints
-// use: category = 'Peripheral Brain' rows are dropped unless the caller is
-// PI/API-key — `canSeePb` is what /api/projects applies, and the row chip
-// never needs a paper for a project the caller cannot open.
-export async function handleGetAllProjectPublications(
-  env: Env,
-  canSeePb: boolean,
-): Promise<Response> {
+// beats N per-project requests from a 100-row table. project_publications
+// follows its project through the caller's handle, so a chip never names a
+// paper for a project the caller cannot open.
+export async function handleGetAllProjectPublications(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
     `SELECT pp.project_id, pr.slug AS project_slug, pp.publication_id, pp.role,
             p.title, p.journal, p.year, p.doi, p.pubmed, pp.created_at AS linked_at
        FROM project_publications pp
        JOIN publications p ON p.id = pp.publication_id
        LEFT JOIN projects pr ON pr.id = pp.project_id
-      WHERE (? = 1 OR pr.category IS NULL OR pr.category != 'Peripheral Brain')
       ORDER BY ${ROLE_ORDER}, p.year DESC, p.id ASC`,
-  ).bind(canSeePb ? 1 : 0).all<ProjectPublicationLinkRow>();
+  ).all<ProjectPublicationLinkRow>();
   const rows = result.results ?? [];
   return json({ data: rows, count: rows.length });
 }

@@ -97,8 +97,10 @@ describe('handleSetLinkRole', () => {
     expect(applyUpdate).not.toHaveBeenCalled();
   });
 
-  it('403s a Peripheral Brain project link for a non-PI caller', async () => {
-    const env = makeEnv({ link_P: PROJECT_LINK }, { proj_A: { id: 'proj_A', category: 'Peripheral Brain' } });
+  // The projects map stands in for the caller's handle: an empty map is a
+  // project the caller is not on (membership is the only rule, 2026-10-09).
+  it('403s a link on a project the caller is not on', async () => {
+    const env = makeEnv({ link_P: PROJECT_LINK }, {});
     const res = await handleSetLinkRole('link_P', req({ role: 'archive' }), { ...USER, isPi: false }, env);
     expect(res.status).toBe(403);
     expect(applyUpdate).not.toHaveBeenCalled();

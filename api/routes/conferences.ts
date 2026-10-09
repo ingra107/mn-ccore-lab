@@ -10,28 +10,18 @@ const VALID_MATERIALS = ['not_started', 'drafting', 'review', 'final'] as const;
 const VALID_PRESENTATION_TYPES = ['poster', 'oral', 'rapid', 'workshop'] as const;
 
 // ── GET /api/conferences?project_id=&status= ──
-// Phase 1b-extended: when no project_id filter is supplied, this is a
-// cross-project feed; filter PB-category rows out for non-PI callers.
-export async function handleGetConferences(url: URL, request: Request, env: Env, canSeePb = false): Promise<Response> {
+// The handle (api/lib/table-scope.ts) limits rows to the caller's projects.
+export async function handleGetConferences(url: URL, request: Request, env: Env): Promise<Response> {
   const projectId = url.searchParams.get('project_id');
   const status = url.searchParams.get('status');
 
-  // Phase 1b-B: when scoped to a specific project, block non-PI callers from
-  // reading conference submissions of a PB-category project.
+  // A project the caller cannot see is a 403, not an empty list.
   if (projectId) {
     const block = await assertProjectVisible(request, env, projectId);
     if (block) return block;
   }
 
-  // Phase 1b-extended cross-project filter: only applied when there's no
-  // explicit project_id scope (the per-project gate above already covers that).
-  const pbFilter = (!projectId && !canSeePb)
-    ? " AND (p.category IS NULL OR p.category != 'Peripheral Brain')"
-    : '';
-
-  let query = `SELECT cs.* FROM conference_submissions cs
-               LEFT JOIN projects p ON p.id = cs.project_id OR p.slug = cs.project_id
-               WHERE 1=1${pbFilter}`;
+  let query = `SELECT cs.* FROM conference_submissions cs WHERE 1=1`;
   const params: string[] = [];
 
   if (projectId) {
@@ -51,15 +41,13 @@ export async function handleGetConferences(url: URL, request: Request, env: Env,
 
 // ── GET /api/conferences/upcoming ──
 // Conferences with deadlines in the next 90 days
-// Phase 1b-extended: cross-project feed; filter PB-category rows for non-PI.
-export async function handleGetUpcomingConferences(env: Env, canSeePb = false): Promise<Response> {
+export async function handleGetUpcomingConferences(env: Env): Promise<Response> {
   // AM-7: bind CT-anchored today / today+90 instead of SQLite date('now')
   // (UTC), which after ~6pm CT shifted the 90-day window a day. abstract_due
   // and conference_date are CT calendar dates. Bind order matches the textual
   // ? order: today, +90, today, +90, today (WHERE), then today (ORDER BY).
   const today = ctToday();
   const in90 = ctToday(90);
-  const pbFilter = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
   const result = await env.DB.prepare(`
     SELECT cs.*, p.title as project_title, p.slug as project_slug
     FROM conference_submissions cs
@@ -69,7 +57,7 @@ export async function handleGetUpcomingConferences(env: Env, canSeePb = false): 
         (cs.abstract_due IS NOT NULL AND cs.abstract_due >= ? AND cs.abstract_due <= ?)
         OR (cs.conference_date IS NOT NULL AND cs.conference_date >= ? AND cs.conference_date <= ?)
         OR (cs.status IN ('accepted', 'preparing') AND cs.conference_date >= ?)
-      )${pbFilter}
+      )
     ORDER BY
       CASE
         WHEN cs.abstract_due IS NOT NULL AND cs.abstract_due >= ? AND cs.status = 'planning' THEN cs.abstract_due

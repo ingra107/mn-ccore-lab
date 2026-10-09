@@ -3,9 +3,10 @@
 // Stage 4 #12-followup (2026-05-09): validates:
 //   1. PROJECT_CATEGORY_VALUES allowlist rejects old values ('lab', 'clif', etc.)
 //      and accepts new three-bucket values ('MNCCORE', 'CLIF', 'Peripheral Brain').
-//   2. handleGetProjects Nick-only visibility gate: Nick sees 'Peripheral Brain'
-//      rows; non-Nick callers have them filtered out.
-//   3. handleGetProject single-record fetch, with the same gate.
+//   2. handleGetProjects returns the projects the caller's handle admits:
+//      membership, whatever the category (Nick, 2026-10-09: membership is the
+//      only visibility rule; 'Peripheral Brain' is a label).
+//   3. handleGetProject single-record fetch, through the same handle.
 //
 // #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts).
 // The first cut's stub answered every SELECT by pattern-matching the SQL text
@@ -23,6 +24,7 @@ import { handleGetProjects, handleGetProject, handleUpdateProject } from './proj
 import { _resetValidationFlagsCache } from '../helpers';
 import type { AuthUser } from '../helpers';
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
+import { viewerDb, personViewer, nobodyViewer } from '../lib/viewer-db';
 
 interface ProjectRow {
   id: string;
@@ -58,9 +60,27 @@ function makeUrl(params: Record<string, string> = {}) {
 }
 
 const NICK_USER: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick', slug: 'nick-ingraham' };
-const PERSONAL_EMAIL_NICK: AuthUser = { email: 'nicholas.ingraham@gmail.com', name: 'Nick Personal', slug: 'nicholas.ingraham' };
-const NON_NICK_USER: AuthUser = { email: 'collaborator@example.com', name: 'Collaborator', slug: 'collaborator' };
-const ANON_USER: AuthUser = { email: 'anonymous', name: 'Team Member', slug: 'anonymous' };
+
+// Each caller reads through the handle the request middleware would give it.
+type Who = 'nick' | 'collaborator' | 'nobody' | 'pbkey';
+function envAs(who: Who) {
+  const raw = d1Adapter(db);
+  if (who === 'pbkey') return { DB: raw } as any;
+  if (who === 'nobody') return { DB: viewerDb(raw, nobodyViewer()) } as any;
+  const v = who === 'nick'
+    ? personViewer({ slug: 'nick-ingraham', email: 'ingra107@umn.edu', pi: true })
+    : personViewer({ slug: 'collaborator', email: 'collaborator@example.com', pi: false });
+  return { DB: viewerDb(raw, v) } as any;
+}
+function members(projectId: string, ...slugs: string[]) {
+  for (const s of slugs) {
+    db.prepare("INSERT OR IGNORE INTO project_members (project_id, member_slug, added_by) VALUES (?, ?, 'test')").run(projectId, s);
+  }
+}
+function people() {
+  insertRow(db, 'team_members', { id: 'tm-nick', name: 'Nick', slug: 'nick-ingraham', email: 'ingra107@umn.edu' });
+  insertRow(db, 'team_members', { id: 'tm-collab', name: 'Collaborator', slug: 'collaborator', email: 'collaborator@example.com' });
+}
 
 // ── Sample project rows ──────────────────────────────────────────────────────
 
@@ -71,78 +91,56 @@ const SAMPLE_ROWS = [
   { id: 'proj_4', title: 'Nick Admin Tasks', category: 'Peripheral Brain' },
 ];
 
-async function list(params: Record<string, string>, user: AuthUser, apiKeyValid?: boolean) {
-  const res = await handleGetProjects(makeUrl(params), env(), user, apiKeyValid);
+async function list(params: Record<string, string>, who: Who) {
+  const res = await handleGetProjects(makeUrl(params), envAs(who));
   const body = await res.json() as { data: ProjectRow[]; count: number };
   return ours(body.data);
 }
+const ids = (rows: ProjectRow[]) => rows.map((r) => r.id).sort();
 
-// ── Tests: handleGetProjects visibility gate ────────────────────────────────────
+// ── Tests: handleGetProjects visibility (membership) ─────────────────────────
 
-describe('handleGetProjects — Nick-only Peripheral Brain gate', () => {
-  beforeEach(() => seed(SAMPLE_ROWS));
-
-  it('Nick (UMN email) sees all categories including Peripheral Brain', async () => {
-    const rows = await list({}, NICK_USER);
-    expect(rows.map((r) => r.category)).toContain('Peripheral Brain');
-    expect(rows).toHaveLength(4);
+describe('handleGetProjects — membership is the only rule', () => {
+  beforeEach(() => {
+    seed(SAMPLE_ROWS);
+    people();
+    // Nick is on everything; the collaborator on one team project and one
+    // Peripheral Brain project.
+    for (const r of SAMPLE_ROWS) members(r.id, 'nick-ingraham');
+    members('proj_1', 'collaborator');
+    members('proj_3', 'collaborator');
   });
 
-  it('Nick (personal gmail) also sees Peripheral Brain rows', async () => {
-    const rows = await list({}, PERSONAL_EMAIL_NICK);
-    expect(rows.map((r) => r.category)).toContain('Peripheral Brain');
+  it('Nick, a member of all four, sees all four, Peripheral Brain included', async () => {
+    expect(ids(await list({}, 'nick'))).toEqual(['proj_1', 'proj_2', 'proj_3', 'proj_4']);
   });
 
-  it('non-Nick user does NOT see Peripheral Brain rows', async () => {
-    const rows = await list({}, NON_NICK_USER);
-    expect(rows.map((r) => r.category)).not.toContain('Peripheral Brain');
-    expect(rows.map((r) => r.id).sort()).toEqual(['proj_1', 'proj_2']); // Only CLIF + MNCCORE rows
+  it('a member sees exactly the projects they are on, whatever the category', async () => {
+    expect(ids(await list({}, 'collaborator'))).toEqual(['proj_1', 'proj_3']);
   });
 
-  it('anonymous user (no auth) does NOT see Peripheral Brain rows', async () => {
-    const rows = await list({}, ANON_USER);
-    expect(rows.map((r) => r.category)).not.toContain('Peripheral Brain');
+  it('a non-member cannot see a project, in cursor mode too', async () => {
+    const rows = await list({ seq_after: '0', limit: '100' }, 'collaborator');
+    expect(ids(rows)).toEqual(['proj_1', 'proj_3']);
   });
 
-  it('gate applies in cursor mode (seq_after) — non-Nick cannot page past Peripheral Brain', async () => {
-    const rows = await list({ seq_after: '0', limit: '100' }, NON_NICK_USER);
-    expect(rows.map((r) => r.category)).not.toContain('Peripheral Brain');
-    expect(rows.map((r) => r.id).sort()).toEqual(['proj_1', 'proj_2']);
-  });
-
-  it('gate applies in cursor mode — Nick CAN page and see Peripheral Brain', async () => {
-    const rows = await list({ seq_after: '0', limit: '100' }, NICK_USER);
-    expect(rows.map((r) => r.category)).toContain('Peripheral Brain');
-  });
-
-  it('gate applies with include_deleted=1 — non-Nick cannot see Peripheral Brain tombstones', async () => {
-    insertRow(db, 'projects', { id: 'proj_5', slug: 'proj-5', title: 'Deleted PB project', category: 'Peripheral Brain', deleted_at: '2026-05-01T00:00:00Z' });
+  it('include_deleted=1 shows a non-member no tombstone of a project they were never on', async () => {
+    insertRow(db, 'projects', { id: 'proj_5', slug: 'proj-5', title: 'Deleted project', category: 'MNCCORE', deleted_at: '2026-05-01T00:00:00Z' });
     seeded.push('proj_5');
-    const rows = await list({ include_deleted: '1', seq_after: '0', limit: '100' }, NON_NICK_USER);
-    expect(rows.map((r) => r.category)).not.toContain('Peripheral Brain');
-    // Control: Nick does see the tombstone through the same query.
-    const nick = await list({ include_deleted: '1', seq_after: '0', limit: '100' }, NICK_USER);
-    expect(nick.map((r) => r.id)).toContain('proj_5');
+    members('proj_5', 'nick-ingraham');
+    const rows = await list({ include_deleted: '1', seq_after: '0', limit: '100' }, 'collaborator');
+    expect(ids(rows)).not.toContain('proj_5');
+    expect(ids(await list({ include_deleted: '1', seq_after: '0', limit: '100' }, 'nick'))).toContain('proj_5');
   });
 
-  // 2026-05-09 v2 fix: PB cross-machine sync uses PB_API_KEY (apiKeyValid=true)
-  // and is anonymous from JWT perspective. Without this bypass, home's PB sync
-  // can never pull Nick's 'Peripheral Brain' projects -> silent data loss class.
-  // Caught by home 2026-05-09T01:40Z when proj_01KR561PW3G2P2TKDG6H66X73K never
-  // propagated cross-machine.
-  it('apiKeyValid=true bypasses gate (anon user can see Peripheral Brain via PB_API_KEY)', async () => {
-    const rows = await list({ seq_after: '0', limit: '100' }, ANON_USER, true);
-    expect(rows.map((r) => r.category)).toContain('Peripheral Brain');
+  // 2026-05-09 v2 fix: PB cross-machine sync uses PB_API_KEY and must see every
+  // project, or home's PB sync never pulls Nick's projects (silent data loss).
+  it('the PB key (unscoped handle) sees every project', async () => {
+    expect(ids(await list({ seq_after: '0', limit: '100' }, 'pbkey'))).toEqual(['proj_1', 'proj_2', 'proj_3', 'proj_4']);
   });
 
-  it('apiKeyValid=undefined preserves anon-blocked behavior (gate still fires)', async () => {
-    const rows = await list({ seq_after: '0', limit: '100' }, ANON_USER);
-    expect(rows.map((r) => r.category)).not.toContain('Peripheral Brain');
-  });
-
-  it('apiKeyValid=false (invalid Bearer) preserves gate', async () => {
-    const rows = await list({ seq_after: '0', limit: '100' }, ANON_USER, false);
-    expect(rows.map((r) => r.category)).not.toContain('Peripheral Brain');
+  it('nobody (the public count) sees the projects outside the Peripheral Brain bucket', async () => {
+    expect(ids(await list({}, 'nobody'))).toEqual(['proj_1', 'proj_2']);
   });
 });
 
@@ -195,7 +193,7 @@ describe('PROJECT_CATEGORY_VALUES — three-bucket allowlist enforcement', () =>
 describe('handleGetProject — GET /api/projects/:id', () => {
   it('returns 200 with the project row for an existing non-deleted project (by id)', async () => {
     seed([{ id: 'proj_001', slug: 'my-project', title: 'My Project', category: 'MNCCORE' }]);
-    const res = await handleGetProject('proj_001', env(), NICK_USER);
+    const res = await handleGetProject('proj_001', env());
     expect(res.status).toBe(200);
     const body = await res.json() as { data: ProjectRow };
     expect(body.data.id).toBe('proj_001');
@@ -204,7 +202,7 @@ describe('handleGetProject — GET /api/projects/:id', () => {
 
   it('returns 200 with the project row when fetched by slug', async () => {
     seed([{ id: 'proj_002', slug: 'slug-lookup', title: 'Slug Project', category: 'CLIF' }]);
-    const res = await handleGetProject('slug-lookup', env(), NICK_USER);
+    const res = await handleGetProject('slug-lookup', env());
     expect(res.status).toBe(200);
     const body = await res.json() as { data: ProjectRow };
     expect(body.data.slug).toBe('slug-lookup');
@@ -212,7 +210,7 @@ describe('handleGetProject — GET /api/projects/:id', () => {
   });
 
   it('returns 404 when the project does not exist', async () => {
-    const res = await handleGetProject('proj_nonexistent', env(), NICK_USER);
+    const res = await handleGetProject('proj_nonexistent', env());
     expect(res.status).toBe(404);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Project not found');
@@ -220,29 +218,33 @@ describe('handleGetProject — GET /api/projects/:id', () => {
 
   it('returns 404 for a soft-deleted project (deleted_at IS NOT NULL)', async () => {
     seed([{ id: 'proj_003', slug: 'deleted-proj', title: 'Deleted Project', deleted_at: '2026-05-01T00:00:00Z' }]);
-    const res = await handleGetProject('proj_003', env(), NICK_USER);
+    const res = await handleGetProject('proj_003', env());
     expect(res.status).toBe(404);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Project not found');
   });
 
-  it('non-Nick user receives 404 for a Peripheral Brain project', async () => {
+  it('a non-member receives 404 for a project they are not on', async () => {
     seed([{ id: 'proj_004', slug: 'pb-proj', title: 'PB Admin', category: 'Peripheral Brain' }]);
-    const res = await handleGetProject('proj_004', env(), NON_NICK_USER);
+    people();
+    members('proj_004', 'nick-ingraham');
+    const res = await handleGetProject('proj_004', envAs('collaborator'));
     expect(res.status).toBe(404);
   });
 
-  it('Nick user can fetch a Peripheral Brain project', async () => {
-    seed([{ id: 'proj_005', slug: 'pb-proj-nick', title: 'Nick PB', category: 'Peripheral Brain' }]);
-    const res = await handleGetProject('proj_005', env(), NICK_USER);
+  it('a member can fetch a Peripheral Brain project (category is a label)', async () => {
+    seed([{ id: 'proj_005', slug: 'pb-proj-member', title: 'Shared PB', category: 'Peripheral Brain' }]);
+    people();
+    members('proj_005', 'collaborator');
+    const res = await handleGetProject('proj_005', envAs('collaborator'));
     expect(res.status).toBe(200);
     const body = await res.json() as { data: ProjectRow };
     expect(body.data.category).toBe('Peripheral Brain');
   });
 
-  it('apiKeyValid=true bypasses Nick gate for Peripheral Brain projects', async () => {
+  it('the PB key fetches any project', async () => {
     seed([{ id: 'proj_006', slug: 'pb-api-key', title: 'PB via API Key', category: 'Peripheral Brain' }]);
-    const res = await handleGetProject('proj_006', env(), ANON_USER, true);
+    const res = await handleGetProject('proj_006', envAs('pbkey'));
     expect(res.status).toBe(200);
   });
 });

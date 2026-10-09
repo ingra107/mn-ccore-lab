@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, resolveSlug, isPiRequest, resolveActor, assertProjectVisible, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, logActivity, resolveSlug, isPiRequest, resolveActor, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
@@ -14,17 +14,15 @@ import { postActivityEntry, activityVisibilityGate, activityHiddenClause, source
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 import { DEFAULT_TASK_KIND, TASK_KINDS, isTaskKind, type TaskKind } from '../../shared/taskKinds';
 
-// ── Fix 3: guardTaskProject ────────────────────────────────────────────────────
-//
-// Consolidates the repeated pattern:
-//   SELECT project_id FROM tasks WHERE id=?  →  assertProjectVisible
-// used in 6 task-subresource handlers. Returns { block: Response, projectId: null }
-// when the caller is denied, or { block: null, projectId } when allowed. Callers
-// can reuse `projectId` downstream (e.g. the @hermes path in handleAddTaskComment
-// previously did a second identical SELECT).
+// guardTaskProject: reads the live task through the caller's handle. A task
+// the caller may not read (api/lib/table-scope.ts taskRule) is absent, so
+// hidden and missing are the same 404. There is no second check on the task's
+// project: the task rule also admits a task that names the caller (assignee,
+// assigned_by, watcher) when they are not on its project, and a project gate
+// here refused exactly those. Returns the task's project_id for reuse.
 async function guardTaskProject(
   env: Env,
-  request: Request,
+  _request: Request,
   taskId: string,
 ): Promise<{ block: Response; projectId: null } | { block: null; projectId: string | null }> {
   const task = await env.DB.prepare(
@@ -32,10 +30,6 @@ async function guardTaskProject(
   ).bind(taskId).first<{ project_id: string | null }>();
   if (!task) {
     return { block: error('Task not found', 404), projectId: null };
-  }
-  if (task.project_id) {
-    const block = await assertProjectVisible(request, env, task.project_id);
-    if (block) return { block, projectId: null };
   }
   return { block: null, projectId: task.project_id ?? null };
 }
@@ -74,9 +68,9 @@ export async function handleOverdueCount(url: URL, env: Env): Promise<Response> 
 // (default 2000). Canonical pull path for brain.db's hub.py post-cutover.
 // updated_since/created_since remain for back-compat. seq_after wins.
 //
-// Fix 2a: canSeePb=false (non-PI callers) filters out tasks belonging to
-// Peripheral Brain category projects. Mirrors the pattern in handleGetRecentTaskUpdates.
-export async function handleGetTasks(url: URL, env: Env, canSeePb = false): Promise<Response> {
+// Which tasks the caller sees is the handle's rule (api/lib/table-scope.ts).
+// `isPi` (a PI or the PB key) only unlocks ?wire=typed below.
+export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<Response> {
   const assignee = url.searchParams.get('assignee');
   const status = url.searchParams.get('status');
   const priority = url.searchParams.get('priority');
@@ -104,15 +98,15 @@ export async function handleGetTasks(url: URL, env: Env, canSeePb = false): Prom
 
   // A2 (Slice C, 2026-06-08): ?wire=typed returns the raw stored `proj_*` PK in
   // project_id (TASK_SELECT_COLS_TYPED) instead of the COALESCE slug form used by
-  // the browser. Gated to authenticated/PI callers only (canSeePb) — a public
+  // the browser. Gated to PI / PB-key callers only (isPi) — a public
   // browser request never receives raw PKs. The sync pull path (hub.py seq_after
   // cursor) uses this to store the canonical typed PK in brain.db's local cache.
-  const wireTyped = url.searchParams.get('wire') === 'typed' && canSeePb;
+  const wireTyped = url.searchParams.get('wire') === 'typed' && isPi;
   const selectCols = wireTyped ? TASK_SELECT_COLS_TYPED : TASK_SELECT_COLS;
 
   const deletedFilter = includeDeleted ? '1=1' : 't.deleted_at IS NULL';
-  // Which tasks the caller sees (Peripheral Brain projects included) is the
-  // viewer-bound handle's rule, api/lib/table-scope.ts (#145 Lane B).
+  // Which tasks the caller sees is the viewer-bound handle's rule,
+  // api/lib/table-scope.ts (#145 Lane B).
   let query = `SELECT ${selectCols}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}`;
   const params: (string | number)[] = [];
 
@@ -208,9 +202,7 @@ async function decorateMeetingRefs(
 
 // POST /api/tasks/:id/status — change task status (todo/in_progress/done/blocked/waiting_external)
 export async function handleUpdateTaskStatus(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  // T1.1: PB-visibility gate. Mirrors handleGetTaskComments / handlePostTaskUpdate
-  // — non-PI callers cannot mutate tasks attached to Peripheral Brain projects.
-  // API-key callers (PB sync, Hermes) pass via isPiRequest=true.
+  // The task must be one the caller may read (guardTaskProject).
   const guard = await guardTaskProject(env, request, id);
   if (guard.block) return guard.block;
 
@@ -264,21 +256,13 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
 // a task visible in GET /api/tasks?limit=500 is always reachable here.
 // mechanic I5: previously no GET-by-PK route existed — direct lookups
 // returned 404 for every task regardless of status.
-// Fix 2b: assertProjectVisible guards PB-category task visibility for non-PI callers.
-// T1.4: request is now NON-optional. The previous optional signature created
-// a silent-bypass footgun — any internal caller that forgot to pass the
-// request would skip the PB gate entirely. Single call site in api/index.ts
-// already passes R(c).
-export async function handleGetTask(id: string, env: Env, request: Request): Promise<Response> {
+// The row is read through the caller's handle, so a task the caller may not
+// read is a 404.
+export async function handleGetTask(id: string, env: Env): Promise<Response> {
   const task = await env.DB.prepare(
     `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE t.id = ? AND t.deleted_at IS NULL`
   ).bind(id).first<Record<string, unknown> & { project_id?: string | null }>();
   if (!task) return error('Task not found', 404);
-  // Gate on PB visibility before returning the task row.
-  if (task.project_id) {
-    const block = await assertProjectVisible(request, env, task.project_id as string);
-    if (block) return block;
-  }
   // Same meeting-ref bridge as the list read, so the detail panel resolves the
   // meeting too — otherwise a task would badge its meeting in the row and lose
   // it the moment you opened the task.
@@ -310,8 +294,7 @@ const VALID_PLAN_SLOT_RE = /^(right_now|strip|between-\d+)$/;
 const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee', 'kind']);
 
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  // T1.1: PB-visibility gate. Non-PI callers cannot mutate tasks attached
-  // to Peripheral Brain projects. API-key callers pass via isPiRequest=true.
+  // The task must be one the caller may read (guardTaskProject).
   const guard = await guardTaskProject(env, request, id);
   if (guard.block) return guard.block;
 
@@ -623,7 +606,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
 // task_comments response shape (id, task_id, author_slug, content, created_at)
 // so the frontend + PB's process_hub_comments.py consume it unmodified.
 export async function handleGetTaskComments(taskId: string, request: Request, env: Env): Promise<Response> {
-  // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.
+  // guardTaskProject: the task must be one the caller may read.
   const guard = await guardTaskProject(env, request, taskId);
   if (guard.block) return guard.block;
   const vis = await activityVisibilityGate(request, env);
@@ -692,7 +675,7 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
 // All activity_entries for the task (every kind), visibility-gated, newest-first.
 // This is the endpoint the frontend will adopt, replacing the 3-way client merge.
 export async function handleGetTaskActivity(taskId: string, request: Request, env: Env): Promise<Response> {
-  // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.
+  // guardTaskProject: the task must be one the caller may read.
   const guard = await guardTaskProject(env, request, taskId);
   if (guard.block) return guard.block;
   // #98: ROOTS only. Replies load on demand via GET /api/activity/:id/replies —
@@ -1055,10 +1038,8 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
 // task_subtasks inside the soft-delete's batch, each gated on that soft-delete
 // having landed. (task_comments/task_updates were dropped in schema-v78.)
 export async function handleDeleteTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  // T1.1: PB-visibility gate. Non-PI callers cannot soft-delete tasks attached
-  // to Peripheral Brain projects. API-key callers (sync) pass via isPiRequest.
-  //
-  // Inline (rather than guardTaskProject) because the idempotent re-delete
+  // The row is read through the caller's handle: a task the caller may not
+  // read is the 404 below. Inline (rather than guardTaskProject) because the idempotent re-delete
   // path needs to read already-soft-deleted rows; guardTaskProject's
   // `deleted_at IS NULL` filter would 404 on the second call and break the
   // documented idempotent: true return.
@@ -1070,14 +1051,6 @@ export async function handleDeleteTask(id: string, request: Request, user: AuthU
     return error('Task not found', 404);
   }
 
-  // T1.1: PB-visibility gate on the parent project. Done AFTER the existence
-  // probe (so 404 is preserved as the correctness signal) but BEFORE the
-  // idempotent return + cascade — non-PI must not be able to confirm or alter
-  // PB-task lifecycle.
-  if (existing.project_id) {
-    const block = await assertProjectVisible(request, env, existing.project_id);
-    if (block) return block;
-  }
 
   const label = existing.title || existing.description || id;
 
@@ -1171,13 +1144,6 @@ export async function handleRestoreTask(id: string, request: Request, user: Auth
     return error('Task not found', 404);
   }
 
-  // T1.1 PB-visibility gate — same placement as handleDeleteTask: AFTER the
-  // existence probe (404 stays the correctness signal) but BEFORE the
-  // idempotent return, so non-PI can neither confirm nor alter PB-task lifecycle.
-  if (existing.project_id) {
-    const block = await assertProjectVisible(request, env, existing.project_id);
-    if (block) return block;
-  }
 
   const label = existing.title || existing.description || id;
 
@@ -1237,14 +1203,6 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
   const task = await env.DB.prepare('SELECT title, description, assigned_by, acknowledged_at, project_id FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assigned_by: string | null; acknowledged_at: string | null; project_id: string | null }>();
   if (!task) return error('Task not found', 404);
 
-  // T1.1: PB-visibility gate. Non-PI callers cannot acknowledge tasks attached
-  // to Peripheral Brain projects. Done AFTER existence probe (404 preserved)
-  // and BEFORE idempotent already_acknowledged shortcut so non-PI cannot
-  // confirm a PB-task acknowledgement state.
-  if (task.project_id) {
-    const block = await assertProjectVisible(request, env, task.project_id);
-    if (block) return block;
-  }
 
   if (task.acknowledged_at) {
     return json({ data: { already_acknowledged: true, acknowledged_at: task.acknowledged_at } });
@@ -1305,29 +1263,24 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
 // 2026-04-28 (Codex review fix): when ?since= is present, ORDER BY ASC so
 // brain.db pull_task_updates can paginate forward without losing rows when
 // volume between pulls exceeds limit. DESC kept for UI-style "newest 100".
-// Phase 1b-B: canSeePb=false for non-PI callers — filter out updates for PB-project tasks.
-// A server-to-server (canSeePb) caller sees author-only rows too; a non-PB
-// caller is gated to visibility='team' (PB exclusion already removes Nick's PB
-// tasks, but the visibility gate also covers @me notes on shared-project tasks).
-export async function handleGetRecentTaskUpdates(url: URL, env: Env, canSeePb = false): Promise<Response> {
+// A PI or PB-key caller (isPi) sees author-only (@me) rows too; anyone else
+// sees visibility='team' rows only.
+export async function handleGetRecentTaskUpdates(url: URL, env: Env, isPi = false): Promise<Response> {
   const limit = parseInt(url.searchParams.get('limit') || '100')
   const since = url.searchParams.get('since') // ISO timestamp for delta sync
-  // Mirror the category filter from search/activity for non-PI callers.
-  // activity_entries stores project_id directly, but keep the join-shape filter
-  // for parity with the prior task_updates path (entity_id is the task id).
   // Which updates the caller sees follows their task through the viewer-bound
   // handle (activity_entries rule, api/lib/table-scope.ts, #145 Lane B); a
   // non-PI caller additionally sees only team-visibility rows.
-  const pbExclusion = canSeePb ? '' : ` AND visibility = 'team'`
+  const teamOnly = isPi ? '' : ` AND visibility = 'team'`
   const cols = `id, entity_id AS task_id, actor_slug AS author_slug, body AS content, update_type, created_at`
   let query = `SELECT ${cols} FROM activity_entries WHERE entity_type = 'task' AND kind = 'update' AND hidden_at IS NULL`
   const binds: unknown[] = []
   if (since) {
-    query += ` AND created_at > ?${pbExclusion}`
+    query += ` AND created_at > ?${teamOnly}`
     binds.push(since)
     query += ' ORDER BY created_at ASC, id ASC LIMIT ?'
   } else {
-    query += `${pbExclusion} ORDER BY created_at DESC, id DESC LIMIT ?`
+    query += `${teamOnly} ORDER BY created_at DESC, id DESC LIMIT ?`
   }
   binds.push(Math.min(limit, 500))
   const stmt = env.DB.prepare(query)
@@ -1340,9 +1293,8 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env, canSeePb = 
 //
 // T2.8 (2026-05-28): extracted from an inline handler in api/index.ts so the
 // /api/task-comments/recent registration is a one-liner alongside
-// /api/task-updates/recent. PB filter mirrors handleGetRecentTaskUpdates'
-// non-PI exclusion (join task_comments → tasks → projects), with LEFT JOINs
-// so orphan task_comments still surface (no project link → no PB risk).
+// /api/task-updates/recent. Rows follow their task through the handle; the
+// team-only filter mirrors handleGetRecentTaskUpdates.
 //
 // 2026-06-10 (TODAY.md-parity build): the row shape now joins the parent task's
 // title (`task_title`) so the PB collector can render an actionable digest
@@ -1351,14 +1303,12 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env, canSeePb = 
 // SyncCursor monotonically and never skip a row at a page boundary. The no-since
 // UI case keeps DESC ("give me the N newest") for back-compat with existing
 // activity-drawer callers.
-export async function handleGetRecentTaskComments(url: URL, env: Env, canSeePb = false): Promise<Response> {
+export async function handleGetRecentTaskComments(url: URL, env: Env, isPi = false): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '200', 10), 500);
   const since = url.searchParams.get('since');
-  // canSeePb (server-to-server / PB collector) sees author-only rows too; a
-  // non-PB caller is gated to visibility='team' AND non-PB-category projects.
-  const pbFilter = canSeePb
-    ? ''
-    : " AND (p.category IS NULL OR p.category != 'Peripheral Brain') AND ae.visibility = 'team'";
+  // A PI or the PB collector (isPi) sees author-only rows too; anyone else
+  // sees visibility='team' rows only.
+  const teamOnly = isPi ? '' : " AND ae.visibility = 'team'";
   // Design C (v77): projection over activity_entries (kind='comment') preserving
   // the legacy row shape (id, task_id, author_slug, content, created_at,
   // task_title) so the PB /process collector consumes it unmodified. The
@@ -1378,8 +1328,7 @@ export async function handleGetRecentTaskComments(url: URL, env: Env, canSeePb =
       : 'ae.created_at > ?';
     q = `SELECT ${cols} FROM activity_entries ae
        LEFT JOIN tasks t ON ae.entity_id = t.id
-       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE ae.entity_type = 'task' AND ae.kind = 'comment' AND ae.hidden_at IS NULL AND ${cursorClause}${pbFilter}
+       WHERE ae.entity_type = 'task' AND ae.kind = 'comment' AND ae.hidden_at IS NULL AND ${cursorClause}${teamOnly}
        ORDER BY ae.created_at ASC, ae.id ASC LIMIT ?`;
     result = sinceId
       ? await env.DB.prepare(q).bind(since, since, sinceId, limit).all()
@@ -1387,8 +1336,7 @@ export async function handleGetRecentTaskComments(url: URL, env: Env, canSeePb =
   } else {
     q = `SELECT ${cols} FROM activity_entries ae
        LEFT JOIN tasks t ON ae.entity_id = t.id
-       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE ae.entity_type = 'task' AND ae.kind = 'comment' AND ae.hidden_at IS NULL${pbFilter}
+       WHERE ae.entity_type = 'task' AND ae.kind = 'comment' AND ae.hidden_at IS NULL${teamOnly}
        ORDER BY ae.created_at DESC, ae.id DESC LIMIT ?`;
     result = await env.DB.prepare(q).bind(limit).all();
   }
@@ -1404,7 +1352,7 @@ export async function handlePostTaskUpdate(taskId: string, request: Request, use
   const body = await request.json() as { content: string; update_type?: string; author_slug?: string; visibility?: string; source_table?: string | null; source_id?: string | null };
   if (!body.content?.trim()) return error('content required', 400);
 
-  // Fix 3: guardTaskProject replaces the duplicate SELECT+assertProjectVisible.
+  // guardTaskProject: the task must be one the caller may read.
   const guard = await guardTaskProject(env, request, taskId);
   if (guard.block) return guard.block;
 

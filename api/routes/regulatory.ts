@@ -22,25 +22,17 @@ const VALID_TYPES = ['irb', 'irb_amendment', 'dua', 'dta', 'coi', 'training', 'o
 const VALID_STATUSES = ['active', 'expired', 'pending', 'exempt', 'action_needed', 'expiring_soon'] as const;
 
 // GET /api/regulatory?project_id=
-// Phase 1b-extended: cross-project feed when project_id is absent — filter PB
-// rows for non-PI callers.
-export async function handleGetRegulatoryItems(url: URL, request: Request, env: Env, canSeePb = false): Promise<Response> {
+// Rows come through the caller's handle: only the caller's projects.
+export async function handleGetRegulatoryItems(url: URL, request: Request, env: Env): Promise<Response> {
   const projectId = url.searchParams.get('project_id');
 
-  // Phase 1b-B: when scoped to a specific project, block non-PI callers from
-  // reading regulatory items of a PB-category project.
+  // A project the caller cannot see is a 403, not an empty list.
   if (projectId) {
     const block = await assertProjectVisible(request, env, projectId);
     if (block) return block;
   }
 
-  const pbFilter = (!projectId && !canSeePb)
-    ? " AND (p.category IS NULL OR p.category != 'Peripheral Brain')"
-    : '';
-
-  let query = `SELECT r.* FROM regulatory_items r
-               LEFT JOIN projects p ON p.id = r.project_id OR p.slug = r.project_id
-               WHERE 1=1${pbFilter}`;
+  let query = `SELECT r.* FROM regulatory_items r WHERE 1=1`;
   const params: string[] = [];
 
   if (projectId) {
@@ -55,8 +47,7 @@ export async function handleGetRegulatoryItems(url: URL, request: Request, env: 
 }
 
 // GET /api/regulatory/expiring?days=30
-// Phase 1b-extended: cross-project feed; filter PB rows for non-PI callers.
-export async function handleGetExpiringItems(url: URL, env: Env, canSeePb = false): Promise<Response> {
+export async function handleGetExpiringItems(url: URL, env: Env): Promise<Response> {
   const days = parseInt(url.searchParams.get('days') || '30', 10);
   const now = new Date();
   // AM-7: CT-anchored cutoff (was UTC `cutoff.toISOString()`, which after ~6pm
@@ -65,7 +56,6 @@ export async function handleGetExpiringItems(url: URL, env: Env, canSeePb = fals
   // (`nowIso` was dead — never referenced in the query — so it's removed.)
   const cutoffIso = ctToday(days);
 
-  const pbFilter = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
   // Get items expiring within N days (including already expired), joined with project title
   const result = await env.DB.prepare(`
     SELECT r.*, p.title as project_title, p.slug as project_slug
@@ -73,7 +63,7 @@ export async function handleGetExpiringItems(url: URL, env: Env, canSeePb = fals
     LEFT JOIN projects p ON r.project_id = p.slug OR r.project_id = p.id
     WHERE r.status IN ('active','action_needed','expiring_soon','pending')
       AND r.expiration_date IS NOT NULL
-      AND r.expiration_date <= ?${pbFilter}
+      AND r.expiration_date <= ?
     ORDER BY r.expiration_date ASC
   `).bind(cutoffIso).all();
 
@@ -196,8 +186,8 @@ export async function handleRegulatoryIcs(id: string, env: Env, request: Request
   ).bind(id).first() as Record<string, unknown> | null;
   if (!item) return error('Regulatory item not found', 404);
 
-  // Phase 1b-extended: block non-PI callers from generating an ICS for a
-  // regulatory item attached to a PB-category project.
+  // The item was read through the caller's handle; the project check is a
+  // backstop (assertProjectVisible).
   if (item.project_id) {
     const block = await assertProjectVisible(request, env, item.project_id as string);
     if (block) return block;

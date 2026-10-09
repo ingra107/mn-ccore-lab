@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, isPiRequest, resolveActor, assertProjectVisible, canSeePbProjectRow, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, logActivity, isPiRequest, resolveActor, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { lastWorkedIso } from '../lib/project-recency';
@@ -7,21 +7,6 @@ import { applyMutation } from './mutations';
 import { activityVisibilityGate, activityHiddenClause, postActivityEntry, sourceKeyFrom } from '../lib/activity-entry';
 import { enumFieldsFor } from '../lib/enum-domains';
 import { PROJECT_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
-
-// Stage 4 #12-followup (2026-05-09): Nick-only visibility gate for
-// 'Peripheral Brain' category. Two ways to be "Nick" for this gate:
-//   (a) JWT-authed as Nick (browser via CF Access).
-//   (b) Valid PB_API_KEY (cross-machine PB sync — runs on Nick's two
-//       laptops only; key is in secrets.ps1, not shared with team).
-// Without (b) the v1 ship blocked PB-to-PB sync from pulling Nick's own
-// 'Peripheral Brain' projects on the second machine. Caught by home
-// 2026-05-09T01:40Z when project never propagated. If team auth model
-// tightens, replace this with a role-based check.
-// Decision doc: ~/Peripheral-Brain/Context/Decisions/2026-05-08-hub-category-three-bucket-design.md
-function isNick(user: AuthUser, apiKeyValid?: boolean): boolean {
-  if (apiKeyValid === true) return true;
-  return user.email === 'ingra107@umn.edu' || user.email === 'nicholas.ingraham@gmail.com';
-}
 
 // (P2-A 2026-06-10: the per-route @hermes copy `handleClaudeMention` is gone —
 // project composers route through postActivityEntry, which owns Hermes
@@ -232,11 +217,9 @@ export async function handleCreateProject(
 // driver post-seq-cursor cutover. Wall-clock updated_at remains usable
 // for non-sync clients; seq_after takes precedence when both are sent.
 //
-// 2026-05-09 (Stage 4 #12-followup): user is now required so the
-// 'Peripheral Brain' visibility gate can be applied. Nick (ingra107@umn.edu
-// or nicholas.ingraham@gmail.com) sees all categories; all other callers
-// have 'Peripheral Brain' rows excluded from every read path.
-export async function handleGetProjects(url: URL, env: Env, user: AuthUser, apiKeyValid?: boolean): Promise<Response> {
+// Which projects a caller sees is project membership, applied by the
+// caller's handle (api/lib/table-scope.ts); category is a label here.
+export async function handleGetProjects(url: URL, env: Env): Promise<Response> {
   const status = url.searchParams.get('status');
   const category = url.searchParams.get('category');
   const includeDeleted = url.searchParams.get('include_deleted') === '1';
@@ -264,15 +247,6 @@ export async function handleGetProjects(url: URL, env: Env, user: AuthUser, apiK
   if (category) {
     query += ' AND category = ?';
     params.push(category);
-  }
-
-  // Stage 4 #12-followup (2026-05-09): Nick-only visibility gate.
-  // Non-Nick callers never see 'Peripheral Brain' rows (Admin/Personal/
-  // uncategorized projects that exist in PB but shouldn't appear in team view).
-  // Applied at every read path (main, cursor mode, deleted-include mode) so
-  // the gate cannot be bypassed by query-param combination.
-  if (!isNick(user, apiKeyValid)) {
-    query += " AND (category != 'Peripheral Brain' OR category IS NULL)";
   }
 
   if (seqAfterRaw !== null) {
@@ -343,7 +317,7 @@ export async function handleGetProjects(url: URL, env: Env, user: AuthUser, apiK
 
 // GET /api/projects/:id/comments
 export async function handleGetComments(projectId: string, request: Request, env: Env): Promise<Response> {
-  // Phase 1b-B: block non-PI callers from reading PB-category project comments.
+  // A project the caller is not on is a 403 (assertProjectVisible).
   const block = await assertProjectVisible(request, env, projectId);
   if (block) return block;
   // P2-A (2026-06-10): PROJECTION over activity_entries (legacy `comments` is
@@ -372,7 +346,7 @@ export async function handleGetComments(projectId: string, request: Request, env
 
 // GET /api/projects/:slug/updates
 export async function handleGetProjectUpdates(slug: string, request: Request, env: Env): Promise<Response> {
-  // Phase 1b-B: block non-PI callers from reading PB-category project updates.
+  // A project the caller is not on is a 403 (assertProjectVisible).
   const block = await assertProjectVisible(request, env, slug);
   if (block) return block;
   // P2-A (2026-06-10): PROJECTION over activity_entries (legacy project_updates
@@ -401,7 +375,7 @@ export async function handleGetProjectUpdates(slug: string, request: Request, en
 // visibility-gated, newest-first. The slug is resolved to the canonical typed
 // proj_* id so the project_id rollup join matches the stored task FKs.
 export async function handleGetProjectActivity(idOrSlug: string, request: Request, env: Env): Promise<Response> {
-  // PB-category visibility: non-PI callers can't read PB project feeds.
+  // A project the caller is not on is a 403 (assertProjectVisible).
   const block = await assertProjectVisible(request, env, idOrSlug);
   if (block) return block;
   const canonicalId = await projectRefToCanonical(env, idOrSlug);
@@ -450,9 +424,8 @@ export async function handleGetProjectActivity(idOrSlug: string, request: Reques
 }
 
 // GET /api/projects/health — project health metrics (scored 0-100)
-// AM-3 (SEC-T0-1): `canSeePb` true for PI/Nick/service. Non-PI/unauth callers
-// never see 'Peripheral Brain' project titles in the health list.
-export async function handleProjectHealth(env: Env, canSeePb = false): Promise<Response> {
+// The caller's handle limits the list to the projects the caller may read.
+export async function handleProjectHealth(env: Env): Promise<Response> {
   // Batched implementation — prior version ran 7 queries per active project
   // (N+1 anti-pattern). With 68 projects this was ~476 sequential queries
   // and 8.8s p95. Found via deep-audit Suite 14.
@@ -460,9 +433,8 @@ export async function handleProjectHealth(env: Env, canSeePb = false): Promise<R
   // New approach: one aggregation query per data source, keyed by project_id,
   // merged in memory. Total query count is now constant (6 regardless of
   // project count). Benchmarked ~80ms for 68 projects.
-  const pbFilter = canSeePb ? '' : " AND (category != 'Peripheral Brain' OR category IS NULL)";
   const projects = await env.DB.prepare(
-    `SELECT id, slug, title, stage, status, updated_at FROM projects WHERE status = 'active'${pbFilter}`
+    `SELECT id, slug, title, stage, status, updated_at FROM projects WHERE status = 'active'`
   ).all<{ id: string; slug: string; title: string; stage: string; status: string; updated_at: string }>();
 
   const now = new Date();
@@ -593,14 +565,9 @@ export async function handleProjectHealth(env: Env, canSeePb = false): Promise<R
 // can paginate forward and never miss the oldest rows; when no `since`
 // (UI-style "give me 20 newest"), keep DESC for back-compat. Brain.db
 // pull_project_updates now paginates until response_count < limit.
-export async function handleRecentUpdates(url: URL, env: Env, canSeePb = false): Promise<Response> {
+export async function handleRecentUpdates(url: URL, env: Env): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
   const since = url.searchParams.get('since');
-  // Phase 1b-B: mirror the category filter from search/activity — exclude PB
-  // project updates for non-PI callers. Matches by project_id (id OR slug).
-  const pbExclusion = canSeePb ? '' : ` AND project_id NOT IN (
-    SELECT id FROM projects WHERE category = 'Peripheral Brain'
-    UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain')`;
   // Repointed to activity_entries (kind='update', entity_type='project') after project_updates
   // was frozen (P2-A, 2026-06-10). Column aliases preserve the legacy wire shape so PB's
   // pull_project_updates / d1_project_updates mirror keep working unchanged.
@@ -608,13 +575,13 @@ export async function handleRecentUpdates(url: URL, env: Env, canSeePb = false):
   let query = `SELECT ${cols} FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL`;
   const binds: unknown[] = [];
   if (since) {
-    query += ` AND created_at > ?${pbExclusion}`;
+    query += ' AND created_at > ?';
     binds.push(since);
     // Sync mode: ASC + tiebreak on id ensures the client can resume
     // exactly from the last seen (created_at, id) pair without overlap or skip.
     query += ' ORDER BY created_at ASC, id ASC LIMIT ?';
   } else {
-    query += `${pbExclusion} ORDER BY created_at DESC LIMIT ?`;
+    query += ' ORDER BY created_at DESC LIMIT ?';
   }
   binds.push(limit);
   const result = await env.DB.prepare(query).bind(...binds).all();
@@ -641,7 +608,9 @@ const PROJECT_STAGE_VALUES = new Set(['idea', 'data_collection', 'data_analysis'
 // Stage 4 #12-followup (2026-05-09): three-bucket two-views model.
 // MNCCORE = team-visible lab work (Ingraham/Mesfin/Grant/Friends/Mentees)
 // CLIF = consortium, team-visible
-// Peripheral Brain = Nick-only forensic (Admin/Personal/uncategorized)
+// Peripheral Brain = Nick's Admin/Personal/uncategorized. A label only since
+// 2026-10-09 (Nick): membership decides who sees a project, and a PB project
+// stays private because Nick is its only member.
 // Decision doc: ~/Peripheral-Brain/Context/Decisions/2026-05-08-hub-category-three-bucket-design.md
 const PROJECT_CATEGORY_VALUES = new Set(['MNCCORE', 'CLIF', 'Peripheral Brain']);
 // W1 (schema-v55) operational state — distinct from .status (lifecycle).
@@ -702,19 +671,19 @@ export async function handleUpdateProject(
   ).bind(id, id).first<{ id: string; stage: string | null; pi: string | null; title: string | null; category: string | null }>();
 
   if (!existingCheck) {
+    // existingCheck reads through the caller's handle, so for a member "not
+    // found" also means "a project you are not on". Upsert-create stays for
+    // the PB key and a PI (its legacy callers); a member gets the same 404 as
+    // a missing project, never an INSERT that collides with the hidden row's
+    // slug (that answered 409, confirmed the project exists, and left a
+    // mutation receipt).
+    if (!(await isPiRequest(request, env))) return error('Project not found', 404);
     // Project doesn't exist — create it (upsert; preserves legacy behavior).
     // Run enum guards on the incoming values before INSERT so non-canonical
     // status/stage/category are rejected with 400 (mirrors the UPDATE branch).
     const upsertStatus = (body.status as string) || 'active';
     const upsertStage = (body.stage as string) || 'idea';
     const upsertCategory = (body.category as string) || 'MNCCORE';
-    // T3.1 (2026-05-28): PI visibility gate for upsert-INSERT path.
-    // A non-PI caller must not create a Peripheral Brain project.
-    // Mirrors the UPDATE branch gate added below. assertProjectVisible is
-    // called on upsert with the incoming category because no row exists yet.
-    if (upsertCategory === 'Peripheral Brain' && !isNick(user, await isPiRequest(request, env))) {
-      return error('Project not found', 403);
-    }
     for (const [key, val] of [['status', upsertStatus], ['stage', upsertStage], ['category', upsertCategory]] as [string, string][]) {
       const guard = PROJECT_ENUM_GUARDS[key];
       if (guard && !guard.has(val)) {
@@ -743,10 +712,9 @@ export async function handleUpdateProject(
       return error(`mutation rejected: ${upsertMut.status} — ${upsertMut.reason ?? ''}`, 409);
     }
   } else {
-    // T3.1 (2026-05-28): PI visibility gate for UPDATE path. Mirrors the read
-    // side (handleGetComments, handleGetProjectUpdates, etc.) which all call
-    // assertProjectVisible. Pre-fix: any CF Access-authed team member could
-    // overwrite or rename Nick's Peripheral Brain projects (security finding F04).
+    // T3.1 (2026-05-28): visibility gate for the UPDATE path, like the read
+    // side (security finding F04: a member could rename Nick's projects).
+    // existingCheck came through the caller's handle, so this is a backstop.
     const block = await assertProjectVisible(request, env, existingCheck.id);
     if (block) return block;
 
@@ -817,7 +785,7 @@ export async function handleDeleteProject(
   id: string,
   user: AuthUser,
   env: Env,
-  request: Request,
+  _request: Request,
 ): Promise<Response> {
   const existing = await env.DB.prepare(
     'SELECT id, title, slug, category FROM projects WHERE id = ? OR slug = ?'
@@ -827,16 +795,9 @@ export async function handleDeleteProject(
     return error('Project not found', 404);
   }
 
-  // T3.1 (2026-05-28): PI visibility gate for DELETE path. Mirrors the UPDATE
-  // gate and the read-side gates (assertProjectVisible). Pre-fix: any CF
-  // Access-authed team member could soft-delete Nick's Peripheral Brain projects
-  // (security finding F04). Symmetric with handleUpdateProject's gate above.
-  //
-  // canSeePbProjectRow is used here (instead of assertProjectVisible) because
-  // `existing` already carries the row's category — no second DB query needed.
-  if (!(await canSeePbProjectRow(request, env, existing))) {
-    return error('Project not found', 403);
-  }
+  // `existing` was read through the caller's handle, so a project the caller
+  // is not on is the 404 above (security finding F04 was a member deleting
+  // Nick's projects; membership now answers it).
 
   // Check idempotency BEFORE cascade: already soft-deleted?
   // Pre-fix this ran AFTER the cascade, so a retry would re-NULL re-associated
@@ -981,20 +942,14 @@ export async function handleGetDeletedProjectsSince(
 // GET /api/projects/:id — fetch a single project by primary key or slug.
 // Applies the same deleted_at IS NULL filter as the list endpoint so a
 // project visible in GET /api/projects is always reachable here.
-// Nick-scoped: apiKeyValid bypasses JWT gate (PB cross-machine sync path).
+// A project the caller is not on is a 404 (the handle hides it).
 // codex Q4 (2026-05-12): added to unblock 9 stuck PB recovery-pull entries
 // that needed a deterministic single-record probe path for projects.
-export async function handleGetProject(id: string, env: Env, user: AuthUser, apiKeyValid?: boolean): Promise<Response> {
+export async function handleGetProject(id: string, env: Env): Promise<Response> {
   const project = await env.DB.prepare(
     'SELECT * FROM projects WHERE (id = ? OR slug = ?) AND deleted_at IS NULL'
   ).bind(id, id).first();
   if (!project) return error('Project not found', 404);
-  // Nick-only visibility gate (mirrors handleProjects gate: Stage 4 #12-followup).
-  // Non-Nick callers cannot probe 'Peripheral Brain' projects by ID/slug.
-  const row = project as Record<string, unknown>;
-  if (!isNick(user, apiKeyValid) && row['category'] === 'Peripheral Brain') {
-    return error('Project not found', 404);
-  }
   return json({ data: project });
 }
 
@@ -1011,7 +966,7 @@ export async function handleAddComment(
     return error('Comment content is required', 400);
   }
 
-  // Phase 1b-extended: block non-PI callers from posting comments on a PB-category project.
+  // A project the caller is not on is a 403 (assertProjectVisible).
   // assertProjectVisible fails-closed if the project is unknown, so we don't need a
   // separate existence check for unauthorized callers.
   const block = await assertProjectVisible(request, env, projectId);
@@ -1058,7 +1013,7 @@ export async function handlePostProjectUpdate(slug: string, request: Request, us
   const body = await request.json() as { content: string; update_type?: string; author?: string; source_table?: string | null; source_id?: string | null };
   if (!body.content) return error('content required', 400);
 
-  // Phase 1b-extended: block non-PI callers from posting updates on a PB-category project.
+  // A project the caller is not on is a 403 (assertProjectVisible).
   const block = await assertProjectVisible(request, env, slug);
   if (block) return block;
 

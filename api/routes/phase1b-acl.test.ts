@@ -41,6 +41,7 @@ import { handleCreateDecision } from './decisions'
 import { handleSyncFileActivity } from './file-activity'
 import { handleGetMeeting, handleGetAgendaItems, handleMeetingPrep, handleGenerateAgenda } from './meetings'
 import type { Env } from '../helpers'
+import { viewerDb, personViewer } from '../lib/viewer-db'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
 // ── Shared test primitives ────────────────────────────────────────────────────
@@ -328,10 +329,12 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
     })
   }
   const attachments = () => db.prepare('SELECT entity_type, entity_id, r2_key, uploaded_by FROM file_attachments ORDER BY r2_key').all()
+  /** Nate's own handle: he is on no project here, so pb-secret is one he is not on. */
+  const asNate = (e: Env) => ({ ...e, DB: viewerDb(e.DB, personViewer({ slug: 'nate-mesfin', email: NON_PI_EMAIL, pi: false })) }) as Env
 
-  it('handleUploadUrl: blocks non-PI uploading to a PB-category project', async () => {
+  it('handleUploadUrl: blocks a non-member uploading to a project they are not on', async () => {
     const req = post('/api/upload/url', NON_PI_EMAIL, { filename: 'secret.pdf', contentType: 'application/pdf', context: { type: 'project', id: 'pb-secret' } })
-    const res = await handleUploadUrl(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, uploadsEnv())
+    const res = await handleUploadUrl(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, asNate(uploadsEnv()))
     expect(res.status).toBe(403)
   })
 
@@ -351,11 +354,11 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
     expect(new URL(data.uploadUrl).pathname).toBe(`/mnccore-files/${data.key}`)
   })
 
-  it('handleUploadDone: blocks non-PI committing a file record on a PB project, and stores nothing', async () => {
+  it('handleUploadDone: blocks a non-member committing a file record on a project they are not on, and stores nothing', async () => {
     const req = post('/api/upload/done', NON_PI_EMAIL, {
       key: 'project/pb-secret/file.pdf', filename: 'file.pdf', contentType: 'application/pdf', sizeBytes: 1024, entityType: 'project', entityId: 'pb-secret',
     })
-    const res = await handleUploadDone(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, uploadsEnv())
+    const res = await handleUploadDone(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, asNate(uploadsEnv()))
     expect(res.status).toBe(403)
     expect(attachments()).toEqual([])
   })

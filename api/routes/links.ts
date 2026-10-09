@@ -355,16 +355,14 @@ export async function handleGetTaskLinks(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  // Resolve task existence + project visibility in one lookup (mirrors guardTaskProject).
+  // Read through the caller's handle: a task the caller may not read is a 404.
+  // A task can be visible without its project (it names the caller); the
+  // project half below then reads nothing.
   const task = await env.DB
     .prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL')
     .bind(taskId)
     .first<{ project_id: string | null }>();
   if (!task) return error('Task not found', 404);
-  if (task.project_id) {
-    const block = await assertProjectVisible(request, env, task.project_id);
-    if (block) return block;
-  }
 
   // Fetch task links + project (explicit links + canonical fields) in parallel.
   const [taskLinks, projectData] = await Promise.all([
@@ -416,7 +414,7 @@ export async function handleGetProjectLinks(
     .first<{ id: string } & ProjectLinkFields>();
   if (!project) return error('Project not found', 404);
 
-  // Gate: assertProjectVisible checks Peripheral Brain category for non-PI.
+  // Gate: assertProjectVisible (membership, through the caller's handle).
   const block = await assertProjectVisible(request, env, project.id);
   if (block) return block;
 
@@ -438,7 +436,7 @@ export async function handleGetProjectLinks(
 // lookups from a table row: `linksByProject[row.id] ?? []`.
 //
 // Efficiency: two bulk queries — no per-project loops:
-//   Q1  SELECT id, primary_folder, github_url, box_url, category FROM projects
+//   Q1  SELECT id, primary_folder, github_url, box_url FROM projects
 //         WHERE deleted_at IS NULL
 //   Q2  SELECT id, role, type, canonical_url, short_title, sort_order,
 //             owner_id FROM links
@@ -447,24 +445,19 @@ export async function handleGetProjectLinks(
 // Q2 rows are grouped in memory by owner_id. Then for each visible project
 // we call buildProjectLinks(fields, explicitRows) to union the derived links.
 //
-// Visibility: PB-category projects are filtered out for non-PI callers (same
-// gate as assertProjectVisible / canSeePbProject). PI/API-key see all.
-// Auth: authed (CF Access JWT — no PI/API-key required for non-PB projects).
+// Visibility: both queries read through the caller's handle, so only the
+// projects the caller is on (and their links) come back.
 export async function handleGetAllProjectLinks(
-  request: Request,
+  _request: Request,
   env: Env,
 ): Promise<Response> {
-  // Determine caller's PI status once — used to gate PB-category projects.
-  const callerIsPi = await isPiRequest(request, env);
-
-  // Q1: fetch all live projects with the three derived-link source columns.
-  // category is required for the visibility gate.
-  type ProjectBulkRow = { id: string; category: string | null } & ProjectLinkFields;
+  // Q1: fetch the caller's live projects with the three derived-link source columns.
+  type ProjectBulkRow = { id: string } & ProjectLinkFields;
   let projects: ProjectBulkRow[];
   try {
     const res = await env.DB
       .prepare(
-        'SELECT id, primary_folder, github_url, box_url, category FROM projects WHERE deleted_at IS NULL',
+        'SELECT id, primary_folder, github_url, box_url FROM projects WHERE deleted_at IS NULL',
       )
       .all<ProjectBulkRow>();
     projects = res.results ?? [];
@@ -506,20 +499,13 @@ export async function handleGetAllProjectLinks(
     const pid = row.owner_id;
     if (!explicitByProject.has(pid)) explicitByProject.set(pid, []);
     // Omit owner_id from the final Link shape — callers don't need it.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { owner_id: _oid, ...linkFields } = row;
     explicitByProject.get(pid)!.push(linkFields);
   }
 
   // Build the result map: { projectId → Link[] }.
-  // Filter PB-category projects for non-PI callers.
   const result: Record<string, Record<string, unknown>[]> = {};
   for (const proj of projects) {
-    // Visibility gate: PB-category projects excluded for non-PI.
-    // We have the category in hand from Q1 so no additional DB lookup needed.
-    // isPiRequest was evaluated once above and cached in callerIsPi.
-    if (proj.category === 'Peripheral Brain' && !callerIsPi) continue;
-
     const explicit = explicitByProject.get(proj.id) ?? [];
     result[proj.id] = buildProjectLinks(proj, explicit);
   }

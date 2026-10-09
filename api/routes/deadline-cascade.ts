@@ -166,12 +166,11 @@ export async function handleGetCascade(url: URL, request: Request, env: Env): Pr
 
 // ── GET /api/deadline-cascade/impact?id=&type=&new_date= ───
 //
-// Phase 1b-extended: this returns the projected ripple from changing a single
-// node's date. The starting node's project is known via id+type; if it
-// resolves to a PB-category project, gate the call (non-PI must not learn
-// downstream impact of a PB milestone). We gate at the entry point rather
-// than filtering nodes from the result so PI-only graphs return 403, not
-// "0 nodes shifted" — which would silently mislead the UI.
+// This returns the projected ripple from changing a single node's date. The
+// node is read through the caller's handle: a node the caller may not read
+// resolves to no project and answers exactly as an unknown id does (nothing
+// shifted, nothing named). A visible node on a project the caller is not on
+// (a task that names them) is a 403 from assertProjectVisible.
 export async function handleGetImpact(url: URL, request: Request, env: Env): Promise<Response> {
   const id = url.searchParams.get('id');
   const type = url.searchParams.get('type');
@@ -246,13 +245,11 @@ export async function handleGetImpact(url: URL, request: Request, env: Env): Pro
 }
 
 // ── GET /api/deadline-cascade/all ──────────────────────────
-// Phase 1b-extended: cross-project feed. For non-PI callers, filter the node
-// list to non-PB projects AND drop any dependency edge whose either endpoint
-// referenced a PB node — otherwise the response leaks PB node IDs via the
-// dependency table even though their content is filtered out.
-export async function handleGetAllCascades(env: Env, canSeePb = false): Promise<Response> {
-  const pbFilter = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
-
+// Cross-project feed. Milestones and tasks come through the caller's handle, so
+// they are already the caller's; deadline_dependencies is a lab table, so an
+// edge whose either end is a node the caller cannot see is dropped here, or
+// the response would leak that node's id.
+export async function handleGetAllCascades(env: Env): Promise<Response> {
   const allDeps = await env.DB.prepare('SELECT * FROM deadline_dependencies ORDER BY created_at ASC').all();
   const depsRaw = (allDeps.results || []) as DeadlineDep[];
 
@@ -261,7 +258,7 @@ export async function handleGetAllCascades(env: Env, canSeePb = false): Promise<
     `SELECT m.id, m.title, m.target_date as due_date, m.status, m.project_id, p.title as project_title
      FROM milestones m
      LEFT JOIN projects p ON m.project_id = p.slug OR m.project_id = p.id
-     WHERE m.target_date IS NOT NULL${pbFilter}
+     WHERE m.target_date IS NOT NULL
      ORDER BY m.target_date ASC`
   ).all();
 
@@ -269,7 +266,7 @@ export async function handleGetAllCascades(env: Env, canSeePb = false): Promise<
     `SELECT t.id, COALESCE(t.title, t.description) as title, t.due_date, t.status, t.project_id, p.title as project_title
      FROM tasks t
      LEFT JOIN projects p ON t.project_id = p.slug OR t.project_id = p.id
-     WHERE t.due_date IS NOT NULL AND t.completed = 0${pbFilter}
+     WHERE t.due_date IS NOT NULL AND t.completed = 0
      ORDER BY t.due_date ASC`
   ).all();
 
@@ -294,11 +291,8 @@ export async function handleGetAllCascades(env: Env, canSeePb = false): Promise<
     })),
   ];
 
-  // Drop edges whose either endpoint isn't in the (already PB-filtered) node set.
   const visibleNodeIds = new Set(nodes.map(n => n.id));
-  const dependencies = canSeePb
-    ? depsRaw
-    : depsRaw.filter(d => visibleNodeIds.has(d.upstream_id) && visibleNodeIds.has(d.downstream_id));
+  const dependencies = depsRaw.filter(d => visibleNodeIds.has(d.upstream_id) && visibleNodeIds.has(d.downstream_id));
 
   return json({ data: { nodes, dependencies } as CascadeGraph });
 }

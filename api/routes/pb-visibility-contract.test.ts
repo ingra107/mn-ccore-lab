@@ -1,26 +1,21 @@
-// pb-visibility-contract.test.ts — Phase 10.2 + Phase 1b-extended regression guardrail
+// pb-visibility-contract.test.ts — project visibility contract (membership)
 //
 // Parameterized contract test: for every project-linked route (READ or WRITE),
-// every lifecycle resource CRUD, and every cross-project feed, assert the four-
-// caller matrix:
-//   1. Non-PI caller blocked on PB project (403 for Pattern A; PB-filtered body
-//      for Pattern B; same for Pattern C/D write/lifecycle).
-//   2. Non-PI caller allowed on non-PB project (2xx).
-//   3. PI caller allowed on PB project (2xx).
-//   4. API-key caller allowed on PB project (2xx).
+// every lifecycle resource CRUD, and every cross-project feed, assert the
+// caller matrix through each caller's OWN handle (viewerDb), as the request
+// middleware gives it:
+//   1. A member is blocked on a project they are not on (403 for Pattern A;
+//      the row absent from the body for Pattern B; refused writes for W).
+//   2. A member is allowed on a project they are on (2xx).
+//   3. Nick, a member of both, is allowed on both.
+//   4. The PB API key (unscoped handle) is allowed everywhere.
+//   5. Category is a label: a member of the 'Peripheral Brain'-category
+//      project reads it like any other (Nick, 2026-10-09: membership is the
+//      only visibility rule).
 //
-// PURPOSE: if a future route is added that exposes PB-project content without
-// the assertProjectVisible / canSeePb gate, adding it to one of the registries
-// below makes the test fail-fast. This is the regression guardrail for the
-// Phase 1 + Phase 1b-extended ACL sweep (hub-hardening-2026-05-27).
-//
-// Registries:
-//   patternACases       — readers gated by assertProjectVisible (returns 403)
-//   patternWriteCases   — writers (POST) gated by assertProjectVisible
-//   patternBFeedCases   — cross-project feeds; non-PI gets 200 with PB-filtered body
-//
-// Adding a new gated route ⇒ add a row here. The "Phase 1b-extended write rows"
-// section codifies the new sweep so subsequent reviews catch regressions.
+// The world's 'PB' side is the 'Peripheral Brain'-category project Nate is not
+// on; the 'TEAM' side is the MNCCORE project he is on. Adding a project-linked
+// route ⇒ add a row here.
 
 import { describe, it, expect } from 'vitest'
 import type Database from 'better-sqlite3'
@@ -241,6 +236,14 @@ function world(prep?: (db: InstanceType<typeof Database>) => void): World {
   insertRow(db, 'meetings', { id: 'mtg-id', date: ctToday(), title: 'Lab meeting' })
   seedSide(db, PB, 'Peripheral Brain')
   seedSide(db, TEAM, 'MNCCORE')
+  // The PB-side task is Nick's: a task that names Nate (assignee, assigned_by,
+  // watcher) is his to see on any project, so the non-member side must not.
+  db.prepare("UPDATE tasks SET assignee = 'nick-ingraham' WHERE id = ?").run(PB.task)
+  // Membership decides. Nick is on both projects; Nate on the team one only
+  // (the assignment trigger already joined him to TEAM; it skips PB).
+  for (const [pid, who] of [[PB.id, 'nick-ingraham'], [TEAM.id, 'nick-ingraham'], [TEAM.id, 'nate-mesfin']]) {
+    db.prepare("INSERT OR IGNORE INTO project_members (project_id, member_slug, added_by) VALUES (?, ?, 'test')").run(pid, who)
+  }
   prep?.(db)
   const env = {
     TEST_MODE_KEY: 'local-test-key-do-not-use-in-prod',
@@ -256,12 +259,17 @@ interface Caller {
   get: () => Request
   post: (body: unknown) => Request
   user: { email: string; name: string }
-  /** What index.ts passes as canSeePb for this caller. */
-  canSeePb: boolean
+  /** The viewer the request middleware binds this caller's handle to; null = the PB key (raw handle). */
+  viewer: { slug: string; email: string; pi: boolean } | null
 }
-const NON_PI: Caller = { get: nonPiRequest, post: nonPiPost, user: { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, canSeePb: false }
-const PI: Caller = { get: piRequest, post: piPost, user: { email: PI_EMAIL, name: 'Nick', slug: 'nick-ingraham' }, canSeePb: true }
-const API_KEY: Caller = { get: apiKeyRequest, post: apiKeyPost, user: { email: 'service@api', name: 'S', slug: 'service' }, canSeePb: true }
+const NON_PI: Caller = { get: nonPiRequest, post: nonPiPost, user: { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, viewer: { slug: 'nate-mesfin', email: NON_PI_EMAIL, pi: false } }
+const PI: Caller = { get: piRequest, post: piPost, user: { email: PI_EMAIL, name: 'Nick', slug: 'nick-ingraham' }, viewer: { slug: 'nick-ingraham', email: PI_EMAIL, pi: true } }
+const API_KEY: Caller = { get: apiKeyRequest, post: apiKeyPost, user: { email: 'service@api', name: 'S', slug: 'service' }, viewer: null }
+
+/** The env this caller's request would run on: its own viewer-bound handle. */
+function as(c: Caller, w: World): Env {
+  return c.viewer ? { ...w.env, DB: viewerDb(w.env.DB, personViewer(c.viewer)) } as Env : w.env
+}
 
 type Call = (c: Caller, r: Ref, env: Env) => Promise<Response>
 const q = (path: string, r: Ref) => new URL(`https://x/${path}`.replace('{ref}', r.slug))
@@ -271,6 +279,8 @@ const q = (path: string, r: Ref) => new URL(`https://x/${path}`.replace('{ref}',
 interface PatternACase {
   label: string
   call: Call
+  /** A hidden row answers as an unknown id does (200, nothing named) rather than a refusal. */
+  hiddenReadsAsUnknown?: true
 }
 
 const patternACases: PatternACase[] = [
@@ -292,7 +302,7 @@ const patternACases: PatternACase[] = [
   },
   {
     label: 'GET /api/conferences?project_id= (handleGetConferences)',
-    call: (c, r, env) => handleGetConferences(q('?project_id={ref}', r), c.get(), env, c.canSeePb),
+    call: (c, r, env) => handleGetConferences(q('?project_id={ref}', r), c.get(), env),
   },
   {
     // NOTE: handleUpdateConference was moved from Pattern A to Pattern W
@@ -301,7 +311,7 @@ const patternACases: PatternACase[] = [
     // loop asserts 403 for all cases; this handler now belongs in Pattern W with
     // blockedStatus: 404 where the per-case expected status is respected.
     label: 'GET /api/regulatory?project_id= (handleGetRegulatoryItems)',
-    call: (c, r, env) => handleGetRegulatoryItems(q('?project_id={ref}', r), c.get(), env, c.canSeePb),
+    call: (c, r, env) => handleGetRegulatoryItems(q('?project_id={ref}', r), c.get(), env),
   },
   {
     label: 'GET /api/deadline-cascade?project_id= (handleGetCascade)',
@@ -333,11 +343,12 @@ const patternACases: PatternACase[] = [
   {
     label: 'GET /api/deadline-cascade/impact (handleGetImpact)',
     call: (c, r, env) => handleGetImpact(new URL(`https://x/?id=${r.task}&type=task&new_date=2026-06-01`), c.get(), env),
+    hiddenReadsAsUnknown: true,
   },
   // Fix 2b: GET /api/tasks/:id is now gated by assertProjectVisible (was unguarded)
   {
     label: 'GET /api/tasks/:id (handleGetTask) — Fix 2b: single task PB gate',
-    call: (c, r, env) => handleGetTask(r.task, env, c.get()),
+    call: (_c, r, env) => handleGetTask(r.task, env),
   },
 ]
 
@@ -345,29 +356,38 @@ const patternACases: PatternACase[] = [
 //
 // A denied read must not carry the PB row's content in its error body either.
 
-describe('PB-visibility contract — Pattern A (assertProjectVisible gates)', () => {
+describe('Project visibility contract — Pattern A (reads)', () => {
   for (const tc of patternACases) {
     describe(tc.label, () => {
-      it('non-PI caller is blocked (403) on a PB-category project', async () => {
-        const res = await tc.call(NON_PI, PB, world().env)
-        expect(res.status, `Expected 403 for non-PI on PB project`).toBe(403)
+      it('a non-member is refused on a project they are not on, and reads none of it', async () => {
+        const res = await tc.call(NON_PI, PB, as(NON_PI, world()))
+        const text = await res.text()
+        // 400/403/404: a hidden project answers like an unknown one.
+        if (!tc.hiddenReadsAsUnknown) expect(res.status >= 400, `Expected a refusal for a non-member, got ${res.status}`).toBe(true)
+        expect(text).not.toContain(PB_MARK)
+        expect(text).not.toContain(PB.task)
+      })
+
+      it('a member is allowed (200) on a project they are on', async () => {
+        const res = await tc.call(NON_PI, TEAM, as(NON_PI, world()))
+        expect(res.status, `Expected 200 for a member`).toBe(200)
         expect(await res.text()).not.toContain(PB_MARK)
       })
 
-      it('non-PI caller is allowed (200) on a non-PB project', async () => {
-        const res = await tc.call(NON_PI, TEAM, world().env)
-        expect(res.status, `Expected 200 for non-PI on non-PB project`).toBe(200)
-        expect(await res.text()).not.toContain(PB_MARK)
+      it('category is a label: a member of the Peripheral Brain project reads it', async () => {
+        const w = world((db) => db.prepare("INSERT INTO project_members (project_id, member_slug, added_by) VALUES (?, 'nate-mesfin', 'test')").run(PB.id))
+        const res = await tc.call(NON_PI, PB, as(NON_PI, w))
+        expect(res.status, `Expected 200 for a member of the PB-category project`).toBe(200)
       })
 
-      it('PI caller is allowed (200) on a PB-category project', async () => {
-        const res = await tc.call(PI, PB, world().env)
-        expect(res.status, `Expected 200 for PI on PB project`).toBe(200)
+      it('Nick, a member, is allowed (200) on the Peripheral Brain project', async () => {
+        const res = await tc.call(PI, PB, as(PI, world()))
+        expect(res.status, `Expected 200 for Nick`).toBe(200)
       })
 
-      it('API-key caller is allowed (200) on a PB-category project', async () => {
-        const res = await tc.call(API_KEY, PB, world().env)
-        expect(res.status, `Expected 200 for API-key on PB project`).toBe(200)
+      it('the PB API key is allowed (200) everywhere', async () => {
+        const res = await tc.call(API_KEY, PB, as(API_KEY, world()))
+        expect(res.status, `Expected 200 for the API key`).toBe(200)
       })
     })
   }
@@ -614,40 +634,45 @@ async function expectLanded(tc: PatternWriteCase, r: Ref, w: Awaited<ReturnType<
 }
 
 async function runWrite(tc: PatternWriteCase, c: Caller, r: Ref) {
-  const { db, env } = world(tc.prep)
+  const w0 = world(tc.prep)
+  const { db } = w0
+  const env = as(c, w0)
   const before = snapshot(db, tc.touches)
   const receiptsBefore = receiptCount(db)
   const res = await tc.call(c, r, env)
   return { res, db, before, after: snapshot(db, tc.touches), receiptsBefore, receiptsAfter: receiptCount(db) }
 }
 
-describe('PB-visibility contract — Pattern W (write-side gates)', () => {
+describe('Project visibility contract — Pattern W (writes)', () => {
   for (const tc of patternWriteCases) {
     const expectedBlock = tc.blockedStatus ?? 403
     describe(tc.label, () => {
       // Denial branch: refused, and nothing it would have written exists.
-      it(`non-PI caller is blocked (${expectedBlock}) on a PB-parent`, async () => {
+      it('a non-member is blocked on a project they are not on, and nothing lands', async () => {
         const w = await runWrite(tc, NON_PI, PB)
-        expect(w.res.status, `Expected ${expectedBlock} for non-PI on PB parent`).toBe(expectedBlock)
-        expect(await w.res.text()).not.toContain(PB_MARK)
+        const text = await w.res.text()
+        // A refusal, or the idempotent answer a missing row gets (a hidden row
+        // looks missing); either way the store assertions below decide.
+        expect(w.res.status >= 400 || /idempotent/.test(text), `Expected a refusal (${expectedBlock} before #145) for a non-member, got ${w.res.status}: ${text}`).toBe(true)
+        expect(text).not.toContain(PB_MARK)
         expect(w.after, 'a refused write must leave the store untouched').toBe(w.before)
         expect(w.receiptsAfter, 'a refused write must leave no processed_mutations receipt').toBe(w.receiptsBefore)
       })
 
       // Allowed branches: 2xx AND the write is in the stored rows.
-      it('non-PI caller is allowed (2xx) on a non-PB parent', async () => {
+      it('a member is allowed (2xx) on a project they are on', async () => {
         const w = await runWrite(tc, NON_PI, TEAM)
         expect(w.res.status >= 200 && w.res.status < 300, `Expected 2xx for non-PI on non-PB parent, got ${w.res.status}: ${await w.res.clone().text()}`).toBe(true)
         await expectLanded(tc, TEAM, w)
       })
 
-      it('PI caller is allowed (2xx) on a PB parent', async () => {
+      it('Nick, a member, is allowed (2xx) on the Peripheral Brain project', async () => {
         const w = await runWrite(tc, PI, PB)
         expect(w.res.status >= 200 && w.res.status < 300, `Expected 2xx for PI on PB parent, got ${w.res.status}: ${await w.res.clone().text()}`).toBe(true)
         await expectLanded(tc, PB, w)
       })
 
-      it('API-key caller is allowed (2xx) on a PB parent', async () => {
+      it('the PB API key is allowed (2xx) everywhere', async () => {
         const w = await runWrite(tc, API_KEY, PB)
         expect(w.res.status >= 200 && w.res.status < 300, `Expected 2xx for API-key on PB parent, got ${w.res.status}: ${await w.res.clone().text()}`).toBe(true)
         await expectLanded(tc, PB, w)
@@ -674,13 +699,15 @@ interface PatternBCase {
   callPi: (env: Env) => Promise<Response>
   /** Extra seed rows this feed needs beyond the shared world. */
   prep?: (db: InstanceType<typeof Database>) => void
+  /** The feed is the caller's own rows only, so Nick's carries no team row of Nate's. */
+  ownRowsOnly?: true
 }
 
 const patternBCases: PatternBCase[] = [
   {
     label: 'GET /api/updates/recent — filtered for non-PI',
-    callNonPi: (env) => handleRecentUpdates(new URL('https://x/api/updates/recent'), env, false),
-    callPi:    (env) => handleRecentUpdates(new URL('https://x/api/updates/recent'), env, true),
+    callNonPi: (env) => handleRecentUpdates(new URL('https://x/api/updates/recent'), env),
+    callPi:    (env) => handleRecentUpdates(new URL('https://x/api/updates/recent'), env),
   },
   {
     label: 'GET /api/task-updates/recent — filtered for non-PI',
@@ -695,70 +722,65 @@ const patternBCases: PatternBCase[] = [
   },
   {
     label: 'GET /api/conferences (cross-project) — filtered for non-PI',
-    callNonPi: (env) => handleGetConferences(new URL('https://x/api/conferences'), nonPiRequest(), env, false),
-    callPi:    (env) => handleGetConferences(new URL('https://x/api/conferences'), piRequest(), env, true),
+    callNonPi: (env) => handleGetConferences(new URL('https://x/api/conferences'), nonPiRequest(), env),
+    callPi:    (env) => handleGetConferences(new URL('https://x/api/conferences'), piRequest(), env),
   },
   {
     label: 'GET /api/conferences/upcoming — filtered for non-PI',
-    callNonPi: (env) => handleGetUpcomingConferences(env, false),
-    callPi:    (env) => handleGetUpcomingConferences(env, true),
+    callNonPi: (env) => handleGetUpcomingConferences(env),
+    callPi:    (env) => handleGetUpcomingConferences(env),
   },
   {
     label: 'GET /api/regulatory (cross-project) — filtered for non-PI',
-    callNonPi: (env) => handleGetRegulatoryItems(new URL('https://x/api/regulatory'), nonPiRequest(), env, false),
-    callPi:    (env) => handleGetRegulatoryItems(new URL('https://x/api/regulatory'), piRequest(), env, true),
+    callNonPi: (env) => handleGetRegulatoryItems(new URL('https://x/api/regulatory'), nonPiRequest(), env),
+    callPi:    (env) => handleGetRegulatoryItems(new URL('https://x/api/regulatory'), piRequest(), env),
   },
   {
     label: 'GET /api/regulatory/expiring — filtered for non-PI',
-    callNonPi: (env) => handleGetExpiringItems(new URL('https://x/api/regulatory/expiring'), env, false),
-    callPi:    (env) => handleGetExpiringItems(new URL('https://x/api/regulatory/expiring'), env, true),
+    callNonPi: (env) => handleGetExpiringItems(new URL('https://x/api/regulatory/expiring'), env),
+    callPi:    (env) => handleGetExpiringItems(new URL('https://x/api/regulatory/expiring'), env),
   },
   {
     label: 'GET /api/deadline-cascade/all — filtered for non-PI',
-    callNonPi: (env) => handleGetAllCascades(env, false),
-    callPi:    (env) => handleGetAllCascades(env, true),
+    callNonPi: (env) => handleGetAllCascades(env),
+    callPi:    (env) => handleGetAllCascades(env),
   },
   // #8842 R6. The filter is also exercised in meetings.pb-visibility.test.ts.
   {
     label: 'GET /api/meetings/:id (action_items) — filtered for non-PI',
-    callNonPi: (env) => handleGetMeeting('mtg-id', env, false),
-    callPi:    (env) => handleGetMeeting('mtg-id', env, true),
+    callNonPi: (env) => handleGetMeeting('mtg-id', env),
+    callPi:    (env) => handleGetMeeting('mtg-id', env),
   },
   {
     label: 'GET /api/calendar/events (task deadlines) — filtered for non-PI',
-    callNonPi: (env) => handleCalendarEvents(new URL('https://x/api/calendar/events'), env, 'nate-mesfin', false),
-    callPi:    (env) => handleCalendarEvents(new URL('https://x/api/calendar/events'), env, 'nate-mesfin', true),
+    callNonPi: (env) => handleCalendarEvents(new URL('https://x/api/calendar/events'), env, 'nate-mesfin'),
+    callPi:    (env) => handleCalendarEvents(new URL('https://x/api/calendar/events'), env, 'nick-ingraham'),
+    ownRowsOnly: true,
   },
 ]
 
-describe('PB-visibility contract — Pattern B (cross-project feed filters; body-content)', () => {
+describe('Project visibility contract — Pattern B (cross-project feeds; body content)', () => {
   for (const tc of patternBCases) {
     describe(tc.label, () => {
-      it('non-PI caller gets 200 and body excludes Peripheral Brain rows', async () => {
-        // #145 Lane B: the PB rule lives in the viewer-bound handle, not in the
-        // handler. Nate is put on BOTH projects (an accidental add to the PB
-        // one) and on the meeting, and reads through his own handle, as the
-        // request middleware gives him: the PB rows must still not reach him.
+      it('a member gets 200 and the body carries no row of a project they are not on', async () => {
+        // The rule lives in the viewer-bound handle, not in the handler. Nate
+        // is on TEAM only and on the meeting, and reads through his own handle,
+        // as the request middleware gives him.
         const w = world(tc.prep)
-        // (the assignment trigger already put him on TEAM; PB it skips)
-        for (const p of [PB.id, TEAM.id]) {
-          w.db.prepare("INSERT OR IGNORE INTO project_members (project_id, member_slug, added_by) VALUES (?, 'nate-mesfin', 'test')").run(p)
-        }
         w.db.prepare(`UPDATE meetings SET attendees = '["nate-mesfin"]' WHERE id = 'mtg-id'`).run()
-        const env = { ...w.env, DB: viewerDb(w.env.DB, personViewer({ slug: 'nate-mesfin', email: NON_PI_EMAIL, pi: false })) } as Env
-        const res = await tc.callNonPi(env)
+        const res = await tc.callNonPi(as(NON_PI, w))
         expect(res.status).toBe(200)
         const body = await res.text()
         expect(body, 'the feed must return the team rows (a vacuous empty body proves nothing)').toContain(TEAM_MARK)
-        expect(body, 'a non-PI feed must carry no Peripheral Brain row').not.toContain(PB_MARK)
+        expect(body, "a member's feed must carry no row of a project they are not on").not.toContain(PB_MARK)
       })
 
-      it('PI caller gets 200', async () => {
-        const res = await tc.callPi(world(tc.prep).env)
+      it('Nick, a member of both, gets 200 and both projects\' rows', async () => {
+        const res = await tc.callPi(as(PI, world(tc.prep)))
         expect(res.status).toBe(200)
         const body = await res.text()
-        expect(body, 'the PI feed carries the PB rows the non-PI feed drops').toContain(PB_MARK)
-        expect(body).toContain(TEAM_MARK)
+        expect(body, "Nick's feed carries the rows Nate's drops").toContain(PB_MARK)
+        if (!tc.ownRowsOnly) expect(body).toContain(TEAM_MARK)
       })
     })
   }
@@ -847,15 +869,15 @@ describe('T1.2 — handleGetRevisionComments existence oracle (unknown revision 
 
 describe('P8 — handleGetRevisionComments oracle-closed (hidden revision → 404 not 403)', () => {
   it('non-PI caller on PB-category revision → 404 (not 403)', async () => {
-    const res = await handleGetRevisionComments(PB.rev, nonPiRequest(), world().env)
+    const res = await handleGetRevisionComments(PB.rev, nonPiRequest(), as(NON_PI, world()))
     expect(res.status).toBe(404)
     // The uniform envelope: byte-identical to the unknown-revision 404.
-    const unknown = await handleGetRevisionComments('unknown-rev', nonPiRequest(), world().env)
+    const unknown = await handleGetRevisionComments('unknown-rev', nonPiRequest(), as(NON_PI, world()))
     expect(await res.text()).toBe(await unknown.text())
   })
 
   it('non-PI caller on non-PB revision → 200', async () => {
-    const res = await handleGetRevisionComments(TEAM.rev, nonPiRequest(), world().env)
+    const res = await handleGetRevisionComments(TEAM.rev, nonPiRequest(), as(NON_PI, world()))
     expect(res.status).toBe(200)
     expect(await res.text()).toContain(TEAM_MARK)
   })
@@ -870,46 +892,5 @@ describe('P8 — handleGetRevisionComments oracle-closed (hidden revision → 40
     const res = await handleGetRevisionComments(PB.rev, apiKeyRequest(), world().env)
     expect(res.status).toBe(200)
     expect(await res.text()).toContain(PB_MARK)
-  })
-})
-
-// ── Fix 1: soft-deleted project — PI pass-through, non-PI fail-closed ─────────
-//
-// Before Fix 1, canSeePbProject filtered with `deleted_at IS NULL`. A soft-deleted
-// PB project returned proj=null → fail-closed for EVERYONE including PI. Fix 1
-// drops the filter so deleted rows are readable (category doesn't change on
-// soft-delete) and changes unknown-ref handling so PI/API-key pass through while
-// non-PI remain fail-closed.
-//
-// The ref 'soft-deleted-pb-proj' resolves to no project row in the seeded world
-// (the old code's view of a soft-deleted row). A second block soft-deletes the
-// real PB project and pins that its category still gates non-PI.
-
-describe('Fix 1 — canSeePbProject: soft-deleted/unknown project — PI pass-through, non-PI fail-closed', () => {
-  it('PI caller on soft-deleted/unknown PB project → pass (true); route can return its own 404', async () => {
-    // PI should not get a spurious 403 for soft-deleted projects (Fix 1 regression).
-    const { canSeePbProject } = await import('../helpers')
-    const result = await canSeePbProject(piRequest(), world().env, 'soft-deleted-pb-proj')
-    expect(result).toBe(true)
-  })
-
-  it('API-key caller on soft-deleted/unknown PB project → pass (true)', async () => {
-    const { canSeePbProject } = await import('../helpers')
-    const result = await canSeePbProject(apiKeyRequest(), world().env, 'soft-deleted-pb-proj')
-    expect(result).toBe(true)
-  })
-
-  it('non-PI caller on soft-deleted/unknown project → fail-closed (false)', async () => {
-    // Non-PI must still be blocked on unknown refs — the ref could be a PB project.
-    const { canSeePbProject } = await import('../helpers')
-    const result = await canSeePbProject(nonPiRequest(), world().env, 'soft-deleted-pb-proj')
-    expect(result).toBe(false)
-  })
-
-  it('a soft-deleted PB project still reads as PB: PI true, non-PI false', async () => {
-    const { canSeePbProject } = await import('../helpers')
-    const softDeleted = () => world((db) => db.prepare("UPDATE projects SET deleted_at = '2026-09-01 00:00:00' WHERE id = ?").run(PB.id)).env
-    expect(await canSeePbProject(piRequest(), softDeleted(), PB.slug)).toBe(true)
-    expect(await canSeePbProject(nonPiRequest(), softDeleted(), PB.slug)).toBe(false)
   })
 })

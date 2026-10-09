@@ -286,25 +286,17 @@ describe('handleGetTaskLinks — GET /api/tasks/:id/links', () => {
     expect(row).not.toHaveProperty('deleted_at')
   })
 
-  it('calls assertProjectVisible when task has a project_id', async () => {
-    const env = makeEnv({
-      taskRow: { project_id: 'proj_001' },
-    })
-    await handleGetTaskLinks('task_001', makeRequest(), env)
-    expect(mockAssertProjectVisible).toHaveBeenCalledWith(
-      expect.any(Request),
-      env,
-      'proj_001',
-    )
-  })
-
-  it('returns 403 when assertProjectVisible blocks (PB-gated project)', async () => {
+  // The task row is read through the caller's handle, which decides. A task
+  // can be visible without its project (it names the caller), so there is no
+  // second gate on the project (2026-10-09; the old gate refused exactly those).
+  it('does not gate on the task\'s project: a visible task answers 200', async () => {
     mockAssertProjectVisible.mockResolvedValue(
       new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 }),
     )
-    const env = makeEnv({ taskRow: { project_id: 'proj_pb_001' } })
+    const env = makeEnv({ taskRow: { project_id: 'proj_hidden_001' } })
     const res = await handleGetTaskLinks('task_001', makeRequest(), env)
-    expect(res.status).toBe(403)
+    expect(res.status).toBe(200)
+    expect(mockAssertProjectVisible).not.toHaveBeenCalled()
   })
 
   it('does not call assertProjectVisible for tasks without a project', async () => {
@@ -418,23 +410,10 @@ describe('handleGetAllProjectLinks — GET /api/projects/links (bulk)', () => {
     expect(boxLinks[0].short_title).toBe('Curated Box label')
   })
 
-  it('excludes PB-category projects for non-PI callers', async () => {
+  // The handle returns only the caller's projects; the handler adds no
+  // category rule of its own (membership is the only rule, 2026-10-09).
+  it('returns every project the handle returns, whatever its category', async () => {
     mockIsPiRequest.mockResolvedValue(false)
-    const env = makeEnvBulk({
-      projectRows: [
-        { id: 'proj_visible', category: 'Nick_Lab' },
-        { id: 'proj_pb', category: 'Peripheral Brain' },
-      ],
-      linkRows: [],
-    })
-    const res = await handleGetAllProjectLinks(makeRequest(), env)
-    const body = await res.json() as { projects: Record<string, unknown[]> }
-    expect(Object.keys(body.projects)).toContain('proj_visible')
-    expect(Object.keys(body.projects)).not.toContain('proj_pb')
-  })
-
-  it('includes PB-category projects for PI/API-key callers', async () => {
-    mockIsPiRequest.mockResolvedValue(true)
     const env = makeEnvBulk({
       projectRows: [
         { id: 'proj_visible', category: 'Nick_Lab' },

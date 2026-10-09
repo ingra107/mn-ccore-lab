@@ -4,11 +4,9 @@ import { ctToday } from '../lib/ct-date';
 
 // GET /api/calendar/events?start=&end=
 //
-// `canSeePb` (#8842 R6): the task-deadline rows are TASK rows, so a non-PI
-// caller gets the shared PB-project filter; before this every authed team
-// member saw PB-private task titles and assignees on the calendar. Soft-
-// deleted tasks are excluded too (the query had no tombstone filter, so a
-// deleted task kept its deadline on the calendar).
+// Task rows come through the caller's handle (#145), so the calendar shows only
+// tasks the caller may read. Soft-deleted tasks are excluded too (the query had
+// no tombstone filter, so a deleted task kept its deadline on the calendar).
 //
 // `viewerSlug` (2026-10-08, Nick: "the lab calendar and Today page show tasks
 // not assigned to the user"): task deadlines are the CALLER'S OWN tasks.
@@ -17,7 +15,7 @@ import { ctToday } from '../lib/ct-date';
 // slug is the Worker-resolved identity (`user.slug`, #8945), never a query
 // param, so no client can ask for someone else's tasks here, and a caller
 // with no team identity ('anonymous') matches no assignee and gets none.
-export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: string, _canSeePb = false): Promise<Response> {
+export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: string): Promise<Response> {
   const startDate = url.searchParams.get('start') || ctToday(-30);
   const endDate = url.searchParams.get('end') || ctToday(90);
 

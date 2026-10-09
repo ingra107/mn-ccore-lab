@@ -39,7 +39,7 @@ export const TASK_SELECT_COLS = [
  *
  * Returns the raw stored `t.project_id` (the typed `proj_*` PK) instead of the
  * COALESCE slug-resolution. Consumed by `handleGetTasks` when `?wire=typed` is
- * present (gated to authenticated/PI callers via `canSeePb`). The browser/Hub-UI
+ * present (gated to PI / PB-key callers via `isPi`). The browser/Hub-UI
  * always uses the default TASK_SELECT_COLS (slug form); PB sync pull uses typed
  * so the brain.db cache stores the same PK form that Hub stores internally.
  *

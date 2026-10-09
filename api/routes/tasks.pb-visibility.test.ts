@@ -60,18 +60,17 @@ beforeEach(() => {
   update('u_private', 't_team', 'AUTHOR-ONLY UPDATE', 'author')
   env = { DB: d1Adapter(db) }
   insertRow(db, 'team_members', { id: 'tm-casey', name: 'Casey', slug: 'casey-eddington', email: 'eddin022@umn.edu' })
-  for (const p of ['proj_team', 'proj_pb']) {
-    db.prepare("INSERT OR IGNORE INTO project_members (project_id, member_slug, added_by) VALUES (?, 'casey-eddington', 'test')").run(p)
-  }
+  db.prepare("INSERT OR IGNORE INTO project_members (project_id, member_slug, added_by) VALUES ('proj_team', 'casey-eddington', 'test')").run()
   db.prepare(`UPDATE tasks SET watchers = '["casey-eddington"]' WHERE id = 't_none'`).run()
   memberEnv = { DB: viewerDb(env.DB, personViewer({ slug: 'casey-eddington', email: 'eddin022@umn.edu', pi: false })) }
 })
 
-// #145 Lane B: the PB rule for task rows lives in the viewer-bound handle
-// (api/lib/table-scope.ts), not in the handler, so every non-PI case reads
+// #145 Lane B: the rule for task rows lives in the viewer-bound handle
+// (api/lib/table-scope.ts), not in the handler, so every member case reads
 // through a member's handle, as the request middleware gives it. Casey is on
-// BOTH projects (an accidental add to the PB one) and watches the
-// project-less task; the PB rows must still not reach her.
+// the team project, not the Peripheral Brain one, and watches the
+// project-less task; the PB project's rows must not reach her (membership is
+// the only rule since 2026-10-09).
 
 
 const sorted = (xs: unknown[]) => (xs as string[]).slice().sort()

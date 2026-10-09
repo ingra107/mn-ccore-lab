@@ -30,7 +30,6 @@ describe('defineRoute()', () => {
       path: '/api/test/x',
       auth: 'authed',
       entity: 'tasks',
-      visibility: 'pb-aware',
       handler,
     })
     expect(ROUTE_REGISTRY).toHaveLength(1)
@@ -39,7 +38,6 @@ describe('defineRoute()', () => {
       path: '/api/test/x',
       auth: 'authed',
       entity: 'tasks',
-      visibility: 'pb-aware',
     })
     expect(ROUTE_REGISTRY[0].handler).toBe(handler)
   })

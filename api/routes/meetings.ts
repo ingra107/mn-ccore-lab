@@ -54,7 +54,7 @@ export async function handleGetMeetings(env: Env): Promise<Response> {
 //
 // Action items are TASK rows, read through the viewer-bound handle, so the
 // caller gets the same task rule as every other feed (#145 Lane B).
-export async function handleGetMeeting(id: string, env: Env, _canSeePb = false): Promise<Response> {
+export async function handleGetMeeting(id: string, env: Env): Promise<Response> {
   const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();
   if (!meeting) return error('Meeting not found', 404);
 
@@ -206,9 +206,9 @@ export async function handleUpdateMeetingMeta(meetingId: string, request: Reques
 // GET /api/meetings/:id/prep — facilitator prep view data.
 // Auth-gated: prep data contains task details, prior action items, activity log.
 // Unauth callers get 401 (mirrors the handleGetMeeting pattern).
-// Phase 1b-extended: cross-project feed; filter PB-category rows for non-PI.
-// `canSeePb` is piped from the dispatch site (`await isPiRequest(...)`).
-export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = false, canSeePb = false): Promise<Response> {
+// Every read below goes through the caller's handle, so it holds only rows the
+// caller may read (api/lib/table-scope.ts).
+export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = false): Promise<Response> {
   if (!isAuthed) return error('Authentication required', 401);
   const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first();
   if (!meeting) return error('Meeting not found', 404);
@@ -235,7 +235,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     agendaItemsRes,
     overdueTasksRes,
   ] = await Promise.all([
-    // Action items from previous meeting (if any). PB-filtered via the join.
+    // Action items from previous meeting (if any).
     // v95: matches either the Hub id or PB's calendar-match source_id.
     prevMeeting
       ? env.DB.prepare(
@@ -247,17 +247,10 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
       : Promise.resolve({ results: [] as Record<string, unknown>[] }),
     // Recent project activity (last 14 days) — stage changes, completed tasks, comments.
     env.DB.prepare(
-      canSeePb
-        ? `SELECT a.type, a.description, a.actor, a.related_id as entity_id, a.related_type as entity_type, a.timestamp as created_at
-           FROM activity_log a
-           WHERE a.timestamp > ?
-           ORDER BY a.timestamp DESC LIMIT 30`
-        : `SELECT a.type, a.description, a.actor, a.related_id as entity_id, a.related_type as entity_type, a.timestamp as created_at
-           FROM activity_log a
-           LEFT JOIN projects p ON a.related_type = 'project' AND (p.id = a.related_id OR p.slug = a.related_id)
-           WHERE a.timestamp > ?
-             AND (a.related_type != 'project' OR p.category IS NULL OR p.category != 'Peripheral Brain')
-           ORDER BY a.timestamp DESC LIMIT 30`
+      `SELECT a.type, a.description, a.actor, a.related_id as entity_id, a.related_type as entity_type, a.timestamp as created_at
+       FROM activity_log a
+       WHERE a.timestamp > ?
+       ORDER BY a.timestamp DESC LIMIT 30`
     ).bind(twoWeeksAgo).all(),
     // Upcoming deadlines (next 14 days)
     env.DB.prepare(
@@ -300,8 +293,8 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
 // GET /api/meetings/:id/generate-agenda — autogenerate agenda from carried-forward + open items.
 // Auth-gated: generated agenda surfaces task titles, assignees, regulatory items (internal).
 // Unauth callers get 401 (mirrors the handleGetMeeting pattern).
-// Phase 1b-extended: cross-project feed; filter PB-category rows for non-PI.
-export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed = false, canSeePb = false): Promise<Response> {
+// Every read goes through the caller's handle (api/lib/table-scope.ts).
+export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed = false): Promise<Response> {
   if (!isAuthed) return error('Authentication required', 401);
   const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first<{ id: string; title: string; date: string }>();
   if (!meeting) return error('Meeting not found', 404);
@@ -313,11 +306,6 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
 
   const prevDate = prevMeeting?.date ?? '1970-01-01';
 
-  // Task rows are scoped by the viewer-bound handle (#145 Lane B); pbFilterP
-  // stays for the non-task rows (regulatory items, project updates) that
-  // join projects p themselves.
-  const pbFilterP = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
-  const pbFilterDirect = canSeePb ? '' : " AND (category IS NULL OR category != 'Peripheral Brain')";
   const today = ctToday();
   const weekOut = ctToday(7);
 
@@ -354,7 +342,7 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
       `SELECT id, title, stage, category, updated_at
        FROM projects
        WHERE status IN ('active','In Review','In Preparation')
-         AND julianday('now') - julianday(updated_at) > 30${pbFilterDirect}
+         AND julianday('now') - julianday(updated_at) > 30
        ORDER BY updated_at ASC
        LIMIT 8`
     ).all<{ id: string; title: string; stage: string; category: string; updated_at: string }>(),
@@ -362,9 +350,8 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
     env.DB.prepare(
       `SELECT r.id, r.title, r.item_type, r.expiration_date, r.status
        FROM regulatory_items r
-       LEFT JOIN projects p ON p.id = r.project_id OR p.slug = r.project_id
        WHERE r.status IN ('active','action_needed','expiring_soon')
-         AND r.expiration_date < date('now', '+60 days')${pbFilterP}
+         AND r.expiration_date < date('now', '+60 days')
        ORDER BY r.expiration_date ASC
        LIMIT 10`
     ).all<{ id: string; title: string; item_type: string; expiration_date: string; status: string }>(),
@@ -373,7 +360,7 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
       `SELECT ae.id, ae.body AS content, ae.update_type, ae.actor_slug AS author, ae.created_at, p.title as project_title
        FROM activity_entries ae
        LEFT JOIN projects p ON ae.project_id = p.id
-       WHERE ae.entity_type='project' AND ae.kind='update' AND ae.hidden_at IS NULL AND ae.created_at > ?${pbFilterP}
+       WHERE ae.entity_type='project' AND ae.kind='update' AND ae.hidden_at IS NULL AND ae.created_at > ?
        ORDER BY ae.created_at DESC
        LIMIT 15`
     ).bind(prevDate).all<{ id: string; content: string; update_type: string; author: string; created_at: string; project_title: string }>(),

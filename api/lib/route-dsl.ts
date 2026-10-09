@@ -3,7 +3,8 @@
 // Metadata-first route registration.
 //
 // Replaces raw `app.get/post(...)` calls so every route declares its auth/
-// visibility/entity contract once. ROUTE_REGISTRY drives:
+// entity contract once. (Row visibility is not route metadata: the viewer-bound
+// handle, api/lib/viewer-db.ts, applies it below every route.) ROUTE_REGISTRY drives:
 //   - generated contract tests (route-contract.generated.test.ts) — Z1.4
 //   - the `SELECT *` lint (Phase Z3.4)
 //   - the Hono binding step in api/index.ts
@@ -19,8 +20,8 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 export type AuthLevel = 'public' | 'authed' | 'pi'
 
 // Canonical entity taxonomy. Add a new value here before declaring the first
-// route that maps to it — the generated test (Z1.4) asserts every
-// visibility='pb-aware' route has a known entity.
+// route that maps to it — the generated test (Z1.4) asserts every non-public
+// route declares one.
 export type EntityName =
   | 'tasks'
   | 'projects'
@@ -80,12 +81,9 @@ export type EntityName =
   | 'links'
   | 'misc'
 
-export type VisibilityPolicy = 'pb-aware' | 'na'
-
 interface RouteMetadataBase {
   path: string
   entity?: EntityName
-  visibility?: VisibilityPolicy
   /**
    * True when result rows go through safeRow(table, row) before send.
    * Drives the SELECT * lint (Phase Z3.4): unless this is true OR auth='pi',

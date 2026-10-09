@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { prodSchemaDb, d1Adapter, insertRow } from './test-support/prod-schema-db'
 import {
   resolveSlug, isTeamMember, _resetPiEmailsCacheForTests, assertProtectedNotNull, resolveActor,
-  actorSlugFromRequest, canSeePbProject, assertProjectVisible,
+  actorSlugFromRequest, assertProjectVisible,
   projectRefToCanonical, safeTaskRow, safeRow, TABLE_PRIVATE_COLS,
 } from './helpers'
 import type { AuthUser, Env } from './helpers'
@@ -295,29 +295,22 @@ describe('projectRefToCanonical — A3', () => {
   })
 })
 
-// ── A2: canSeePbProject + assertProjectVisible ────────────────────────────────
+// ── A2: assertProjectVisible ──────────────────────────────────────────────────
+//
+// The stub DB stands in for the caller's viewer-bound handle: `visible` is the
+// set of projects the handle returns, i.e. the projects the caller is a member
+// of. Membership is the only rule (Nick, 2026-10-09); category plays no part.
 
-// DB stub that can return projects with a category, plus lab_settings for PI emails
-function makePbEnv(projects: Array<{ id: string; slug: string | null; category: string }>): Env {
+function makeHandleEnv(visible: Array<{ id: string; slug: string | null; category: string }>): Env {
   const piEmailsRow = { value: JSON.stringify(['ingra107@umn.edu', 'nicholas.ingraham@gmail.com']) }
-
   return {
     TEST_MODE_KEY: 'test-key',
     DB: {
       prepare: (sql: string) => {
-        // lab_settings query (PI emails)
-        if (sql.includes('lab_settings')) {
-          return {
-            first: async () => piEmailsRow,
-          }
-        }
-        // project lookup — two bound params (id, slug)
+        if (sql.includes('lab_settings')) return { first: async () => piEmailsRow }
         return {
           bind: (ref1: string, ref2: string) => ({
-            first: async () => {
-              const row = projects.find(p => p.id === ref1 || p.slug === ref2)
-              return row ?? null
-            },
+            first: async () => visible.find(p => p.id === ref1 || p.slug === ref2) ?? null,
           }),
         }
       },
@@ -325,97 +318,47 @@ function makePbEnv(projects: Array<{ id: string; slug: string | null; category: 
   } as unknown as Env
 }
 
-function makePbRequest(email: string, testKey = 'test-key'): Request {
+function memberRequest(email: string, testKey = 'test-key'): Request {
   return new Request('https://example.com/', {
-    headers: {
-      'X-Test-Mode-Key': testKey,
-      'X-Test-User': email,
-    },
+    headers: { 'X-Test-Mode-Key': testKey, 'X-Test-User': email },
   })
 }
 
-describe('canSeePbProject + assertProjectVisible — A2', () => {
-  const projects = [
+describe('assertProjectVisible — A2 (membership through the handle)', () => {
+  // The member is on these two, one of them a Peripheral Brain project.
+  const env = makeHandleEnv([
     { id: 'proj_PB', slug: 'pb-project', category: 'Peripheral Brain' },
     { id: 'proj_MC', slug: 'mnccore-project', category: 'MNCCORE' },
-  ]
-  const env = makePbEnv(projects)
+  ])
 
-  it('PI caller + PB project → canSeePbProject true', async () => {
-    const req = makePbRequest('ingra107@umn.edu')
-    const result = await canSeePbProject(req, env, 'pb-project')
-    expect(result).toBe(true)
+  it('a project the handle returns passes, whatever its category', async () => {
+    const req = memberRequest('nate@umn.edu')
+    expect(await assertProjectVisible(req, env, 'mnccore-project')).toBeNull()
+    expect(await assertProjectVisible(req, env, 'proj_MC')).toBeNull()
   })
 
-  it('non-PI caller + PB project → canSeePbProject false', async () => {
-    const req = makePbRequest('nate@umn.edu')
-    const result = await canSeePbProject(req, env, 'pb-project')
-    expect(result).toBe(false)
+  it('a Peripheral Brain project the caller is a member of passes (category is a label)', async () => {
+    expect(await assertProjectVisible(memberRequest('nate@umn.edu'), env, 'pb-project')).toBeNull()
   })
 
-  it('non-PI caller + non-PB project → canSeePbProject true', async () => {
-    const req = makePbRequest('nate@umn.edu')
-    const result = await canSeePbProject(req, env, 'mnccore-project')
-    expect(result).toBe(true)
-  })
-
-  it('PI caller + non-PB project → canSeePbProject true', async () => {
-    const req = makePbRequest('ingra107@umn.edu')
-    const result = await canSeePbProject(req, env, 'mnccore-project')
-    expect(result).toBe(true)
-  })
-
-  it('PI caller + unknown project ref → canSeePbProject true (PI pass-through; route handles 404)', async () => {
-    // Fix 1: PI/API-key callers get true on unknown refs so the route's own 404
-    // logic runs. Previously this was fail-closed, causing a spurious 403 before
-    // the 404 was ever reached (soft-deleted PB projects triggered this).
-    const req = makePbRequest('ingra107@umn.edu')
-    const result = await canSeePbProject(req, env, 'does-not-exist')
-    expect(result).toBe(true)
-  })
-
-  it('non-PI caller + unknown project ref → canSeePbProject false (fail-closed)', async () => {
-    // Non-PI callers remain fail-closed on unknown refs — the ref could be a PB
-    // project and we can't prove otherwise without a DB row.
-    const req = makePbRequest('nate@umn.edu')
-    const result = await canSeePbProject(req, env, 'does-not-exist')
-    expect(result).toBe(false)
-  })
-
-  it('assertProjectVisible: non-PI + PB project → 403 Response', async () => {
-    const req = makePbRequest('nate@umn.edu')
-    const response = await assertProjectVisible(req, env, 'pb-project')
+  it('a non-member cannot see a project: hidden by the handle is a 403', async () => {
+    const outsider = makeHandleEnv([])
+    const response = await assertProjectVisible(memberRequest('nate@umn.edu'), outsider, 'pb-project')
     expect(response).not.toBeNull()
+    expect(response!.status).toBe(403)
+    const other = await assertProjectVisible(memberRequest('nate@umn.edu'), outsider, 'mnccore-project')
+    expect(other!.status).toBe(403)
+  })
+
+  it('a member and an unknown ref is a 403 (hidden and missing look the same)', async () => {
+    const response = await assertProjectVisible(memberRequest('nate@umn.edu'), env, 'not-a-project')
     expect(response!.status).toBe(403)
   })
 
-  it('assertProjectVisible: PI + PB project → null (pass)', async () => {
-    const req = makePbRequest('ingra107@umn.edu')
-    const response = await assertProjectVisible(req, env, 'pb-project')
-    expect(response).toBeNull()
-  })
-
-  it('assertProjectVisible: non-PI + non-PB project → null (pass)', async () => {
-    const req = makePbRequest('nate@umn.edu')
-    const response = await assertProjectVisible(req, env, 'mnccore-project')
-    expect(response).toBeNull()
-  })
-
-  it('assertProjectVisible: PI + unknown ref → null (pass; route handles 404)', async () => {
-    // Fix 1: PI callers pass through on unknown refs so the route returns 404,
-    // not the spurious 403 that was generated when soft-deleted PB projects
-    // returned null from the (now-removed) deleted_at IS NULL filter.
-    const req = makePbRequest('ingra107@umn.edu')
-    const response = await assertProjectVisible(req, env, 'not-a-project')
-    expect(response).toBeNull()
-  })
-
-  it('assertProjectVisible: non-PI + unknown ref → 403 (fail-closed)', async () => {
-    // Non-PI callers still get 403 on unknown refs — the ref could be a PB project.
-    const req = makePbRequest('nate@umn.edu')
-    const response = await assertProjectVisible(req, env, 'not-a-project')
-    expect(response).not.toBeNull()
-    expect(response!.status).toBe(403)
+  it('a PI with a hidden or unknown ref passes through, so the route answers 404', async () => {
+    const outsider = makeHandleEnv([])
+    expect(await assertProjectVisible(memberRequest('ingra107@umn.edu'), outsider, 'pb-project')).toBeNull()
+    expect(await assertProjectVisible(memberRequest('ingra107@umn.edu'), env, 'not-a-project')).toBeNull()
   })
 })
 

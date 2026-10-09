@@ -80,8 +80,8 @@ export async function handleCreateProjectDocument(
 // SEC-10.3: Idempotent — idempotentDelete() handles the meta.changes check;
 // repeat calls return 200 with idempotent:true instead of 404.
 //
-// Phase 1b-extended: idempotentDelete() gates on project_id via
-// assertProjectVisible before mutating — PB-category projects are protected.
+// idempotentDelete() gates on project_id via assertProjectVisible before
+// mutating, so a project the caller is not on is protected.
 // If the document row is already gone the pre-flight SELECT returns null and
 // we return idempotent 200 (no project to gate on).
 export async function handleDeleteProjectDocument(

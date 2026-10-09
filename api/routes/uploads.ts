@@ -1,6 +1,5 @@
 import { AwsClient } from 'aws4fetch';
 import type { Env } from '../types';
-import { isPiRequest } from '../helpers';
 import type { AuthUser } from '../helpers';
 import { safeRow } from '../lib/task-cols';
 
@@ -30,8 +29,10 @@ function error(msg: string, status = 400) {
  * FAILS CLOSED. Until #145 this answered true for every entity that was not a
  * project and for a project ref it could not find, so a meeting's files were
  * open to every member and an unknown ref was "not a PB leak". Now:
- *   - PI / service (`canSeePb`): everything.
- *   - project: the row must exist and not be a 'Peripheral Brain' project.
+ *   - the PB key (`isService`): everything; its handle is unscoped anyway.
+ *     A PI person gets no bypass: membership is the one rule (Nick,
+ *     2026-10-09), and the old PI pass served a file by bare key.
+ *   - project: the row must be visible through env.DB (membership).
  *   - meeting: the row must be visible through env.DB, which the request
  *     middleware binds to the caller (api/lib/viewer-db.ts); a hidden meeting
  *     and a missing one answer the same.
@@ -51,15 +52,15 @@ async function canAccessEntity(
   env: Env,
   entityType: string,
   entityId: string,
-  canSeePb: boolean,
+  isService: boolean,
 ): Promise<boolean> {
-  if (canSeePb) return true;
+  if (isService) return true;
   if (LAB_WIDE_UPLOAD_TYPES.has(entityType)) return true;
   if (entityType === 'project') {
     const proj = await env.DB.prepare(
-      'SELECT category FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-    ).bind(entityId, entityId).first<{ category: string | null }>();
-    return !!proj && proj.category !== 'Peripheral Brain';
+      'SELECT id FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+    ).bind(entityId, entityId).first();
+    return !!proj;
   }
   if (entityType === 'meeting') {
     const meeting = await env.DB.prepare('SELECT id FROM meetings WHERE id = ? LIMIT 1').bind(entityId).first();
@@ -79,7 +80,7 @@ async function canAccessEntity(
 }
 
 /** POST /api/upload/url — generate presigned PUT URL for direct browser→R2 upload */
-export async function handleUploadUrl(request: Request, user: AuthUser, env: Env): Promise<Response> {
+export async function handleUploadUrl(request: Request, user: AuthUser, env: Env, isService = false): Promise<Response> {
   if (!env.R2_ACCESS_KEY_ID || !env.R2_SECRET_ACCESS_KEY || !env.CF_ACCOUNT_ID) {
     return error('R2 not configured', 503);
   }
@@ -94,10 +95,9 @@ export async function handleUploadUrl(request: Request, user: AuthUser, env: Env
     return error('filename and context required');
   }
 
-  // B11: block uploading a file on a PB-category project for non-PI callers.
-  // Mirror the same canAccessEntity gate used by list/download/delete.
-  const canSeePb = await isPiRequest(request, env);
-  if (!(await canAccessEntity(env, body.context.type, body.context.id, canSeePb))) {
+  // B11: no upload onto an entity the caller cannot see. Same gate as
+  // list/download/delete.
+  if (!(await canAccessEntity(env, body.context.type, body.context.id, isService))) {
     return error('Forbidden', 403);
   }
 
@@ -125,7 +125,7 @@ export async function handleUploadUrl(request: Request, user: AuthUser, env: Env
 }
 
 /** POST /api/upload/done — record file metadata in D1 after successful upload */
-export async function handleUploadDone(request: Request, user: AuthUser, env: Env): Promise<Response> {
+export async function handleUploadDone(request: Request, user: AuthUser, env: Env, isService = false): Promise<Response> {
   const body = await request.json() as {
     key: string;
     filename: string;
@@ -139,11 +139,9 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
     return error('key, entityType, entityId required');
   }
 
-  // B11: block recording an attachment on a PB-category project for non-PI callers.
-  // The presigned-URL step already gates this, but upload/done is a separate
-  // POST that could be called independently with an already-known key.
-  const canSeePb = await isPiRequest(request, env);
-  if (!(await canAccessEntity(env, body.entityType, body.entityId, canSeePb))) {
+  // B11: the presigned-URL step already gates this, but upload/done is a
+  // separate POST that could be called independently with an already-known key.
+  if (!(await canAccessEntity(env, body.entityType, body.entityId, isService))) {
     return error('Forbidden', 403);
   }
 
@@ -184,7 +182,7 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
 }
 
 /** GET /api/files?entity_type=X&entity_id=Y — list attachments */
-export async function handleListFiles(url: URL, env: Env, canSeePb = false): Promise<Response> {
+export async function handleListFiles(url: URL, env: Env, isService = false): Promise<Response> {
   const entityType = url.searchParams.get('entity_type');
   const entityId = url.searchParams.get('entity_id');
 
@@ -192,8 +190,8 @@ export async function handleListFiles(url: URL, env: Env, canSeePb = false): Pro
     return error('entity_type and entity_id required');
   }
 
-  // B11: block listing files on a PB-category project for non-PI callers.
-  if (!(await canAccessEntity(env, entityType, entityId, canSeePb))) {
+  // B11: no listing for an entity the caller cannot see.
+  if (!(await canAccessEntity(env, entityType, entityId, isService))) {
     return error('Forbidden', 403);
   }
 
@@ -214,18 +212,18 @@ export async function handleListFiles(url: URL, env: Env, canSeePb = false): Pro
  *  api/index.ts; a literal defineRoute for `/raw` can't win against the
  *  `:rest{.+}` wildcard this route already registers, verified empirically.)
  */
-export async function handleGetFile(key: string, env: Env, canSeePb = false, raw = false): Promise<Response> {
+export async function handleGetFile(key: string, env: Env, isService = false, raw = false): Promise<Response> {
   // B11, #145: the attachment row is the authority (entity_type/entity_id; the
   // key is client-supplied). env.DB is bound to the caller, so a file on a
   // meeting they cannot see has no row here. No row = no bytes for anyone but
-  // a PI or the service: the old fallback read the entity off the key prefix
-  // and served the file whenever that prefix did not name a PB project.
+  // the PB key: the old fallback read the entity off the key prefix and
+  // served the file whenever that prefix did not name a PB project.
   const row = await env.DB.prepare(
     'SELECT entity_type, entity_id, filename, content_type FROM file_attachments WHERE r2_key = ? LIMIT 1'
   ).bind(key).first<{ entity_type: string; entity_id: string; filename: string | null; content_type: string | null }>();
-  if (!canSeePb) {
+  if (!isService) {
     if (!row) return error('File not found', 404);
-    if (!(await canAccessEntity(env, row.entity_type, row.entity_id, canSeePb))) return error('Forbidden', 403);
+    if (!(await canAccessEntity(env, row.entity_type, row.entity_id, false))) return error('Forbidden', 403);
   }
 
   if (raw) {
@@ -275,7 +273,7 @@ export async function handleGetFile(key: string, env: Env, canSeePb = false, raw
 // Keep this handler hand-rolled with the R2 side-effect preserved exactly as
 // written below. If a future version of idempotentDelete() gains a
 // beforeDelete callback, revisit this site.
-export async function handleDeleteFile(id: string, env: Env, canSeePb = false): Promise<Response> {
+export async function handleDeleteFile(id: string, env: Env, isService = false): Promise<Response> {
   // Get the R2 key + parent entity before deleting the record.
   const row = await env.DB.prepare('SELECT r2_key, entity_type, entity_id FROM file_attachments WHERE id = ?').bind(id).first<{ r2_key: string; entity_type: string; entity_id: string }>();
 
@@ -284,8 +282,8 @@ export async function handleDeleteFile(id: string, env: Env, canSeePb = false): 
     return json({ deleted: id, idempotent: true });
   }
 
-  // B11: block deleting a file on a PB-category project for non-PI callers.
-  if (!(await canAccessEntity(env, row.entity_type, row.entity_id, canSeePb))) {
+  // B11: no delete on an entity the caller cannot see.
+  if (!(await canAccessEntity(env, row.entity_type, row.entity_id, isService))) {
     return error('Forbidden', 403);
   }
 

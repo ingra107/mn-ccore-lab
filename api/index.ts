@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { Env } from './types';
-import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, isTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible } from './helpers';
+import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, isTeamMember, actorSlugFromRequest, logActivity } from './helpers';
 import { viewerDb, personViewer, serviceViewer, nobodyViewer, isSiteAdmin, ALL_PROJECTS_HEADER, type Viewer } from './lib/viewer-db';
 
 // The PB service key IS Nick's automation (Brief-7, 2026-06-11).
@@ -119,11 +119,11 @@ type AppEnv = {
     /** Effective user for handler calls. On writes this falls back to the
      *  anonymous shim unless REQUIRE_AUTH is set + auth is missing. */
     user: AuthUser;
-    /** T2.7: precomputed PB visibility flag (set by the /api/* middleware).
-     *  True iff the caller can see Peripheral Brain content (PI email or
-     *  valid API key). Read via the CSP helper at handler registrations. */
-    canSeePb: boolean;
-    /** #145: whose rows this request may read. Set with the canSeePb flag;
+    /** T2.7: precomputed PI flag (set by the /api/* middleware): a PI
+     *  email or a valid PB API key. A privilege flag, not a visibility rule:
+     *  which rows a caller reads is `viewer` below. Read via PI(c). */
+    isPi: boolean;
+    /** #145: whose rows this request may read. Set with the isPi flag;
      *  env.DB is already bound to it (viewerDb). */
     viewer: Viewer;
     /** #145: the database BEFORE viewer binding. Read ONLY by GET /api/health
@@ -362,16 +362,12 @@ app.use('*', async (c, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5b. T2.7 (2026-05-28): canSeePb middleware — resolve PB visibility ONCE.
-// 12+ list-route registrations were doing `await isPiRequest(R(c), E(c))`
-// inline at the handler invocation site. Each call re-parses the JWT or
-// re-validates the API key. Compute once per request, stash on context,
-// and let handlers read it via c.get('canSeePb').
-//
-// Polarity: canSeePb = true when the caller is permitted to see PB content
-// (PI email OR valid API key). Matches the handler signature shape
-// (handler(url, env, canSeePb = false)). The 'false' default in handlers
-// means "fail-closed" (no PB) on any path that forgets to forward the flag.
+// 5b. T2.7 (2026-05-28): resolve the PI flag ONCE per request (a PI email
+// or a valid API key; each isPiRequest call re-parses the JWT or re-validates
+// the key) and stash it as c.get('isPi'). It grants PI privileges (typed wire
+// rows, author-only notes, adding members); it never decides which projects
+// a caller sees. Since 2026-10-09 (Nick) project membership is the only
+// visibility rule, applied by the viewer-bound handle set here.
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // #145: the same middleware binds the request's database to its viewer. Every
@@ -393,7 +389,7 @@ app.use('*', async (c, next) => {
 app.use('/api/*', async (c, next) => {
   const env = c.get('env');
   const pi = await isPiRequest(c.req.raw, env);
-  c.set('canSeePb', pi);
+  c.set('isPi', pi);
   const authed = c.get('authedUser');
   const viewer: Viewer = c.get('apiKeyValid') === true
     ? serviceViewer()
@@ -450,11 +446,11 @@ const E = (c: Context<AppEnv>) => c.get('env');
 const U = (c: Context<AppEnv>) => new URL(c.req.url);
 const R = (c: Context<AppEnv>) => c.req.raw;
 const USER = (c: Context<AppEnv>) => c.get('user');
-// T2.7: precomputed canSeePb (set by the /api/* middleware above). True iff
-// the caller can see Peripheral Brain content (PI email or valid API key).
-// Replaces `await isPiRequest(R(c), E(c))` at handler-invocation sites that
-// were re-doing JWT parsing / API-key validation on every route call.
-const CSP = (c: Context<AppEnv>) => c.get('canSeePb') === true;
+// T2.7: the precomputed PI flag (a PI email or a valid API key).
+const PI = (c: Context<AppEnv>) => c.get('isPi') === true;
+// The PB service key: its handle is unscoped, and the file routes let it read
+// a file by key alone.
+const SERVICE = (c: Context<AppEnv>) => c.get('apiKeyValid') === true;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Meta + auth endpoints
@@ -574,7 +570,6 @@ defineRoute({
   path: '/api/pb/dispatch/pending',
   auth: 'pi',
   entity: 'pb',
-  visibility: 'na',
   handler: (c) => handleGetPendingDispatch(E(c)),
 });
 defineRoute({
@@ -582,7 +577,6 @@ defineRoute({
   path: '/api/pb/today',
   auth: 'pi',
   entity: 'pb',
-  visibility: 'na',
   handler: (c) => handleGetTodayMd(E(c)),
 });
 // PI-gated: sessions + lane3 contain private brain.db data. R(c) carries JWT/API-key
@@ -596,7 +590,6 @@ defineRoute({
   path: REALTIME_TICKET_PATH,
   auth: 'authed',
   entity: 'misc',
-  visibility: 'na',
   handler: async (c) => {
     const hub = realtimeHub(E(c));
     if (!hub) return error('Realtime is not available on this deployment', 503);
@@ -616,7 +609,6 @@ defineRoute({
   path: '/api/sessions',
   auth: 'authed',
   entity: 'sessions',
-  visibility: 'na',
   handler: (c) => handleGetSessions(U(c), E(c), R(c)),
 });
 defineRoute({
@@ -624,7 +616,6 @@ defineRoute({
   path: '/api/lane3/:table',
   auth: 'authed',
   entity: 'misc',
-  visibility: 'na',
   handler: (c) => handleLane3List(c.req.param('table'), U(c), E(c), R(c)),
 });
 defineRoute({
@@ -632,7 +623,6 @@ defineRoute({
   path: '/api/pb/sessions',
   auth: 'pi',
   entity: 'pb',
-  visibility: 'na',
   handler: (c) => handlePBSessions(R(c), E(c)),
 });
 defineRoute({
@@ -640,7 +630,6 @@ defineRoute({
   path: '/api/pb/sessions/stats',
   auth: 'pi',
   entity: 'pb',
-  visibility: 'na',
   handler: (c) => handlePBSessionStats(E(c)),
 });
 defineRoute({
@@ -648,7 +637,6 @@ defineRoute({
   path: '/api/pb/health',
   auth: 'pi',
   entity: 'pb',
-  visibility: 'na',
   handler: (c) => handlePBHealth(E(c)),
 });
 
@@ -661,7 +649,6 @@ defineRoute({
   path: '/api/analytics/pi-dashboard',
   auth: 'authed',
   entity: 'analytics',
-  visibility: 'na',
   handler: (c) => handlePIDashboard(E(c)),
 });
 defineRoute({
@@ -669,7 +656,6 @@ defineRoute({
   path: '/api/analytics/mentee-velocity',
   auth: 'authed',
   entity: 'analytics',
-  visibility: 'na',
   handler: (c) => handleMenteeVelocity(E(c)),
 });
 defineRoute({
@@ -677,7 +663,6 @@ defineRoute({
   path: '/api/analytics/response-time',
   auth: 'authed',
   entity: 'analytics',
-  visibility: 'na',
   handler: (c) => handleResponseTime(E(c)),
 });
 defineRoute({
@@ -685,7 +670,6 @@ defineRoute({
   path: '/api/analytics/team-engagement',
   auth: 'authed',
   entity: 'analytics',
-  visibility: 'na',
   handler: (c) => handleTeamEngagement(E(c)),
 });
 defineRoute({
@@ -693,7 +677,6 @@ defineRoute({
   path: '/api/analytics/contributions',
   auth: 'authed',
   entity: 'analytics',
-  visibility: 'na',
   handler: (c) => handleContributionsDecay(U(c), E(c)),
 });
 
@@ -705,7 +688,6 @@ defineRoute({
   path: '/api/digest/dates',
   auth: 'authed',
   entity: 'digest',
-  visibility: 'na',
   handler: (c) => handleDigestDates(E(c)),
 });
 defineRoute({
@@ -713,7 +695,6 @@ defineRoute({
   path: '/api/digest/comment-counts',
   auth: 'authed',
   entity: 'digest',
-  visibility: 'na',
   handler: (c) => handleDigestCommentCounts(U(c), E(c)),
 });
 defineRoute({
@@ -732,7 +713,6 @@ defineRoute({
   path: '/api/digest/:id/comments',
   auth: 'authed',
   entity: 'digest',
-  visibility: 'na',
   handler: (c) => handleGetDigestComments(c.req.param('id'), E(c)),
 });
 
@@ -744,7 +724,6 @@ defineRoute({
   path: '/api/insights/connections',
   auth: 'authed',
   entity: 'insights',
-  visibility: 'na',
   handler: (c) => handleInsightConnections(E(c)),
 });
 defineRoute({
@@ -752,7 +731,6 @@ defineRoute({
   path: '/api/insights/suggestions',
   auth: 'authed',
   entity: 'insights',
-  visibility: 'na',
   handler: (c) => handleInsightSuggestions(U(c), E(c)),
 });
 defineRoute({
@@ -760,7 +738,6 @@ defineRoute({
   path: '/api/insights/dashboard',
   auth: 'authed',
   entity: 'insights',
-  visibility: 'pb-aware',
   handler: async (c) => {
   if (!(await isPiRequest(c.req.raw, E(c)))) return error('Forbidden — PI access only', 403);
   const week = c.req.query('week') || undefined;
@@ -776,7 +753,6 @@ defineRoute({
   path: '/api/papers/by-publication',
   auth: 'authed',
   entity: 'misc',
-  visibility: 'na',
   handler: (c) => handlePapersByPublication(U(c), E(c)),
 });
 
@@ -791,7 +767,7 @@ defineRoute({
     // The /pulse kiosk's health scene reads only the summary counts.
     summary: { total: true, healthy: true, needs_attention: true, at_risk: true, critical: true, avg_score: true },
   },
-  handler: (c) => handleProjectHealth(E(c), CSP(c)),
+  handler: (c) => handleProjectHealth(E(c)),
 });
 // Tombstone endpoint — consumed by sync_d1_pull.pull_hub_projects to mirror
 // Hub project deletes into brain.db. Airtable cascade comment: handleDeleteProject
@@ -801,7 +777,6 @@ defineRoute({
   path: '/api/projects/deleted-since',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleGetDeletedProjectsSince(U(c), E(c)),
 });
 defineRoute({
@@ -809,7 +784,6 @@ defineRoute({
   path: '/api/projects/:slug/comments',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleGetComments(c.req.param('slug'), R(c), E(c)),
 });
 defineRoute({
@@ -817,7 +791,6 @@ defineRoute({
   path: '/api/projects/:slug/updates',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleGetProjectUpdates(c.req.param('slug'), R(c), E(c)),
 });
 // Design C (v77): whole-picture project activity feed (project rows + task
@@ -827,7 +800,6 @@ defineRoute({
   path: '/api/projects/:slug/activity',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleGetProjectActivity(c.req.param('slug'), R(c), E(c)),
 });
 defineRoute({
@@ -835,7 +807,6 @@ defineRoute({
   path: '/api/projects/:slug/documents',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleGetProjectDocuments(c.req.param('slug'), R(c), E(c)),
 });
 defineRoute({
@@ -843,7 +814,6 @@ defineRoute({
   path: '/api/projects/:slug/papers',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleGetPaperLinks(c.req.param('slug'), E(c)),
 });
 // #129 (2026-09-16): a project's PUBLISHED OUTPUT — the project_publications
@@ -854,7 +824,6 @@ defineRoute({
   path: '/api/projects/:slug/publications',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleGetProjectPublications(c.req.param('slug'), R(c), E(c)),
 });
 defineRoute({
@@ -862,7 +831,6 @@ defineRoute({
   path: '/api/projects/:slug/publications',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleLinkProjectPublication(c.req.param('slug'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -870,7 +838,6 @@ defineRoute({
   path: '/api/projects/:slug/publications/:pubId/delete',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleUnlinkProjectPublication(c.req.param('slug'), c.req.param('pubId'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -878,15 +845,13 @@ defineRoute({
   path: '/api/project-publications',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
-  handler: (c) => handleGetAllProjectPublications(E(c), CSP(c)),
+  handler: (c) => handleGetAllProjectPublications(E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/projects/:slug/dependencies',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleGetProjectDependencies(c.req.param('slug'), E(c)),
 });
 defineRoute({
@@ -894,7 +859,6 @@ defineRoute({
   path: '/api/projects/:slug/revisions',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: async (c) => {
   const ref = c.req.param('slug');
   const env = E(c);
@@ -920,7 +884,7 @@ defineRoute({
     data: [{ status: true }],
     count: true,
   },
-  handler: (c) => handleGetProjects(U(c), E(c), c.get('user'), c.get('apiKeyValid') === true),
+  handler: (c) => handleGetProjects(U(c), E(c)),
 });
 // GET /api/projects/:id — single-record fetch by id or slug (codex Q4 2026-05-12).
 // Must be registered AFTER static paths (/health, /deleted-since) and before POST routes
@@ -930,8 +894,7 @@ defineRoute({
   path: '/api/projects/:id',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'pb-aware',
-  handler: (c) => handleGetProject(c.req.param('id'), E(c), c.get('user'), c.get('apiKeyValid') === true),
+  handler: (c) => handleGetProject(c.req.param('id'), E(c)),
 });
 // #145 Lane B: project membership. Each reads and writes through the caller's
 // handle, so a project the caller cannot see is a 404 here too.
@@ -940,7 +903,6 @@ defineRoute({
   path: '/api/projects/:id/members',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleGetProjectMembers(c.req.param('id'), E(c)),
 });
 defineRoute({
@@ -948,7 +910,6 @@ defineRoute({
   path: '/api/projects/:id/members',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleAddProjectMember(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -956,7 +917,6 @@ defineRoute({
   path: '/api/projects/:id/members/:slug',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleRemoveProjectMember(c.req.param('id'), c.req.param('slug'), USER(c), c.get('viewer'), E(c)),
 });
 defineRoute({
@@ -964,7 +924,6 @@ defineRoute({
   path: '/api/team/:slug/projects',
   auth: 'authed',
   entity: 'team',
-  visibility: 'na',
   handler: (c) => handleGetMemberProjects(c.req.param('slug'), E(c)),
 });
 
@@ -976,7 +935,6 @@ defineRoute({
   path: '/api/meetings/cadence-check',
   auth: 'authed',
   entity: 'meetings',
-  visibility: 'na',
   handler: (c) => handleCadenceCheck(E(c)),
 });
 defineRoute({
@@ -984,7 +942,6 @@ defineRoute({
   path: '/api/meetings/next',
   auth: 'authed',
   entity: 'meetings',
-  visibility: 'na',
   handler: (c) => handleNextMeeting(E(c)),
 });
 // Agenda/prep/generate-agenda are auth-gated (isAuthed flag mirrors handleGetMeeting pattern).
@@ -994,7 +951,6 @@ defineRoute({
   path: '/api/meetings/:id/agenda',
   auth: 'authed',
   entity: 'meetings',
-  visibility: 'na',
   handler: (c) => handleGetAgendaItems(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true),
 });
 defineRoute({
@@ -1002,16 +958,14 @@ defineRoute({
   path: '/api/meetings/:id/generate-agenda',
   auth: 'authed',
   entity: 'meetings',
-  visibility: 'pb-aware',
-  handler: (c) => handleGenerateAgenda(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true, CSP(c)),
+  handler: (c) => handleGenerateAgenda(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true),
 });
 defineRoute({
   method: 'GET',
   path: '/api/meetings/:id/prep',
   auth: 'authed',
   entity: 'meetings',
-  visibility: 'pb-aware',
-  handler: (c) => handleMeetingPrep(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true, CSP(c)),
+  handler: (c) => handleMeetingPrep(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true),
 });
 // Meeting detail — authed callers get full row; unauth get public-safe cols only.
 defineRoute({
@@ -1020,15 +974,13 @@ defineRoute({
   auth: 'authed',
   entity: 'meetings',
   // #8842 R6: action items are task rows; non-PI callers get the PB filter.
-  visibility: 'pb-aware',
-  handler: (c) => handleGetMeeting(c.req.param('id'), E(c), CSP(c)),
+  handler: (c) => handleGetMeeting(c.req.param('id'), E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/meetings',
   auth: 'authed',
   entity: 'meetings',
-  visibility: 'na',
   handler: (c) => handleGetMeetings(E(c)),
 });
 
@@ -1040,7 +992,6 @@ defineRoute({
   path: '/api/dependencies',
   auth: 'authed',
   entity: 'dependencies',
-  visibility: 'na',
   handler: (c) => handleGetDependencies(E(c)),
 });
 
@@ -1052,7 +1003,6 @@ defineRoute({
   path: '/api/revisions/:id/comments',
   auth: 'authed',
   entity: 'revisions',
-  visibility: 'na',
   handler: (c) => handleGetRevisionComments(c.req.param('id'), R(c), E(c)),
 });
 defineRoute({
@@ -1060,7 +1010,6 @@ defineRoute({
   path: '/api/revisions',
   auth: 'authed',
   entity: 'revisions',
-  visibility: 'na',
   handler: (c) => handleGetRevisions(U(c), R(c), E(c)),
 });
 defineRoute({
@@ -1068,7 +1017,6 @@ defineRoute({
   path: '/api/manuscripts/attention',
   auth: 'authed',
   entity: 'manuscripts',
-  visibility: 'na',
   handler: async (c) => {
   const env = E(c);
   const user = c.get('authedUser') || (await getAuthUser(c.req.raw, env));
@@ -1085,7 +1033,6 @@ defineRoute({
   path: '/api/submissions/active',
   auth: 'authed',
   entity: 'submissions',
-  visibility: 'na',
   handler: (c) => handleGetActiveSubmissions(E(c)),
 });
 defineRoute({
@@ -1093,7 +1040,6 @@ defineRoute({
   path: '/api/submissions',
   auth: 'authed',
   entity: 'submissions',
-  visibility: 'na',
   handler: (c) => handleGetSubmissions(U(c), R(c), E(c)),
 });
 
@@ -1105,7 +1051,6 @@ defineRoute({
   path: '/api/grants/similar',
   auth: 'authed',
   entity: 'grants',
-  visibility: 'na',
   handler: (c) => handleSimilarGrants(U(c), E(c)),
 });
 defineRoute({
@@ -1138,7 +1083,6 @@ defineRoute({
   path: '/api/narratives',
   auth: 'authed',
   entity: 'narratives',
-  visibility: 'na',
   handler: (c) => handleGetNarratives(E(c)),
 });
 
@@ -1150,7 +1094,6 @@ defineRoute({
   path: '/api/decisions/similar',
   auth: 'authed',
   entity: 'decisions',
-  visibility: 'na',
   handler: (c) => handleSimilarDecisions(U(c), E(c)),
 });
 defineRoute({
@@ -1158,7 +1101,6 @@ defineRoute({
   path: '/api/decisions/similar-by-id',
   auth: 'authed',
   entity: 'decisions',
-  visibility: 'na',
   handler: (c) => handleSimilarDecisionsById(U(c), E(c)),
 });
 defineRoute({
@@ -1166,7 +1108,6 @@ defineRoute({
   path: '/api/decisions/review',
   auth: 'authed',
   entity: 'decisions',
-  visibility: 'na',
   handler: (c) => handleGetDecisionsNeedingReview(E(c)),
 });
 defineRoute({
@@ -1174,7 +1115,6 @@ defineRoute({
   path: '/api/decisions/tags',
   auth: 'authed',
   entity: 'decisions',
-  visibility: 'na',
   handler: (c) => handleGetDecisionTags(E(c)),
 });
 defineRoute({
@@ -1182,7 +1122,6 @@ defineRoute({
   path: '/api/decisions',
   auth: 'authed',
   entity: 'decisions',
-  visibility: 'na',
   handler: (c) => handleGetDecisions(U(c), E(c)),
 });
 
@@ -1208,7 +1147,6 @@ defineRoute({
   path: '/api/ai-requests',
   auth: 'authed',
   entity: 'ai-requests',
-  visibility: 'na',
   // The REQUEST is passed so the handler can scope results to the requester.
   // Previously only (url, env) went through, which is precisely why this read
   // had no way to tell whose Hermes exchanges it was returning.
@@ -1224,7 +1162,6 @@ defineRoute({
   path: '/api/hermes/day-index',
   auth: 'pi',
   entity: 'ai-requests',
-  visibility: 'na',
   handler: (c) => handleGetHermesDayIndex(R(c), E(c)),
 });
 
@@ -1236,7 +1173,6 @@ defineRoute({
   path: '/api/launch-log',
   auth: 'authed',
   entity: 'launch-log',
-  visibility: 'na',
   handler: (c) => handleListLaunches(U(c), USER(c), E(c)),
 });
 defineRoute({
@@ -1244,7 +1180,6 @@ defineRoute({
   path: '/api/pb/launch-log/pending',
   auth: 'pi',
   entity: 'pb',
-  visibility: 'na',
   // PI-gate enforced by app.use('/api/pb/*') middleware (index.ts:282). UNSCOPED — returns
   // all mobile pending rows regardless of requested_by (browser's email-equality filter stays
   // on handleListLaunches; that filter is the recovery-view privacy scope, not the queue gate).
@@ -1261,7 +1196,6 @@ defineRoute({
   path: '/api/artifacts',
   auth: 'authed',
   entity: 'artifacts',
-  visibility: 'na',
   handler: (c) => handleGetArtifacts(U(c), E(c)),
 });
 // Reference Gallery (schema-v104) — curated, tagged artifacts. `gallery` and
@@ -1272,7 +1206,6 @@ defineRoute({
   path: '/api/artifacts/gallery',
   auth: 'authed',
   entity: 'artifacts',
-  visibility: 'na',
   handler: (c) => handleGetArtifactGallery(U(c), E(c)),
 });
 defineRoute({
@@ -1280,7 +1213,6 @@ defineRoute({
   path: '/api/artifacts/search',
   auth: 'authed',
   entity: 'artifacts',
-  visibility: 'na',
   handler: (c) => handleSearchArtifacts(U(c), E(c)),
 });
 defineRoute({
@@ -1288,7 +1220,6 @@ defineRoute({
   path: '/api/artifact-tags',
   auth: 'authed',
   entity: 'artifacts',
-  visibility: 'na',
   handler: (c) => handleGetArtifactTags(E(c)),
 });
 defineRoute({
@@ -1296,7 +1227,6 @@ defineRoute({
   path: '/api/artifacts/:id/activity',
   auth: 'authed',
   entity: 'artifacts',
-  visibility: 'na',
   handler: (c) => handleGetArtifactActivity(c.req.param('id'), R(c), E(c)),
 });
 // The `day` entity feed (Hermes wave Phase 3) — Today-bar conversations, keyed by
@@ -1307,7 +1237,6 @@ defineRoute({
   path: '/api/days/:date/activity',
   auth: 'authed',
   entity: 'activity',
-  visibility: 'na',
   handler: (c) => handleGetDayActivity(c.req.param('date'), R(c), E(c)),
 });
 defineRoute({
@@ -1315,7 +1244,6 @@ defineRoute({
   path: '/api/days/:date/activity',
   auth: 'authed',
   entity: 'activity',
-  visibility: 'na',
   handler: (c) => handlePostDayActivity(c.req.param('date'), R(c), USER(c), E(c)),
 });
 // The `meeting` entity feed (#124) — conversations on a meeting page, so the
@@ -1326,7 +1254,6 @@ defineRoute({
   path: '/api/meetings/:id/activity',
   auth: 'authed',
   entity: 'activity',
-  visibility: 'na',
   handler: (c) => handleGetMeetingActivity(c.req.param('id'), R(c), E(c)),
 });
 defineRoute({
@@ -1334,7 +1261,6 @@ defineRoute({
   path: '/api/meetings/:id/activity',
   auth: 'authed',
   entity: 'activity',
-  visibility: 'na',
   handler: (c) => handlePostMeetingActivity(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -1342,7 +1268,6 @@ defineRoute({
   path: '/api/artifacts/:id',
   auth: 'authed',
   entity: 'artifacts',
-  visibility: 'na',
   handler: (c) => handleGetArtifact(c.req.param('id'), E(c)),
 });
 
@@ -1354,7 +1279,6 @@ defineRoute({
   path: '/api/questions',
   auth: 'authed',
   entity: 'questions',
-  visibility: 'na',
   handler: (c) => handleGetQuestions(U(c), E(c)),
 });
 defineRoute({
@@ -1362,7 +1286,6 @@ defineRoute({
   path: '/api/questions/:id/answers',
   auth: 'authed',
   entity: 'questions',
-  visibility: 'na',
   handler: async (c) => {
   const env = E(c);
   const rows = await env.DB.prepare(
@@ -1376,7 +1299,6 @@ defineRoute({
   path: '/api/questions/:id',
   auth: 'authed',
   entity: 'questions',
-  visibility: 'na',
   handler: (c) => handleGetQuestionDetail(c.req.param('id'), E(c)),
 });
 
@@ -1407,7 +1329,6 @@ defineRoute({
   path: '/api/team/slugs',
   auth: 'authed',
   entity: 'team',
-  visibility: 'na',
   handler: (c) => handleTeamSlugs(E(c)),
 });
 defineRoute({
@@ -1415,7 +1336,6 @@ defineRoute({
   path: '/api/team/pulse',
   auth: 'authed',
   entity: 'team',
-  visibility: 'na',
   handler: (c) => handleTeamPulse(U(c), E(c)),
 });
 defineRoute({
@@ -1435,7 +1355,6 @@ defineRoute({
   path: '/api/citations',
   auth: 'authed',
   entity: 'citations',
-  visibility: 'na',
   handler: (c) => handleGetCitations(E(c)),
 });
 defineRoute({
@@ -1448,14 +1367,13 @@ defineRoute({
     data: [{ id: true, type: true, actor: true, timestamp: true }],
     count: true,
   },
-  handler: (c) => handleGetActivity(U(c), E(c), CSP(c)),
+  handler: (c) => handleGetActivity(U(c), E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/activity/heatmap',
   auth: 'authed',
   entity: 'activity',
-  visibility: 'na',
   handler: (c) => handleActivityHeatmap(U(c), E(c)),
 });
 // Manual activity deletion (author or PI) — house delete shape (POST :id/delete,
@@ -1465,7 +1383,6 @@ defineRoute({
   path: '/api/activity/:id/delete',
   auth: 'authed',
   entity: 'activity',
-  visibility: 'na',
   handler: (c) => handleDeleteActivityEntry(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -1473,7 +1390,6 @@ defineRoute({
   path: '/api/activity/:id/edit',
   auth: 'authed',
   entity: 'activity',
-  visibility: 'na',
   handler: (c) => handleEditActivityEntry(c.req.param('id'), R(c), USER(c), E(c)),
 });
 // Dismiss / restore a thread root (+ its replies). Body { hidden: boolean }.
@@ -1484,7 +1400,6 @@ defineRoute({
   path: '/api/activity/:id/hide',
   auth: 'authed',
   entity: 'activity',
-  visibility: 'na',
   handler: (c) => handleSetActivityHidden(c.req.param('id'), R(c), USER(c), E(c)),
 });
 // #98 threaded replies. GET is 'public' like the other activity reads — the
@@ -1494,7 +1409,6 @@ defineRoute({
   path: '/api/activity/:id/replies',
   auth: 'authed',
   entity: 'activity',
-  visibility: 'na',
   handler: (c) => handleGetActivityReplies(c.req.param('id'), R(c), E(c)),
 });
 defineRoute({
@@ -1502,7 +1416,6 @@ defineRoute({
   path: '/api/activity/:id/replies',
   auth: 'authed',
   entity: 'activity',
-  visibility: 'na',
   handler: (c) => handleCreateActivityReply(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -1510,7 +1423,6 @@ defineRoute({
   path: '/api/tasks/overdue-count',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleOverdueCount(U(c), E(c)),
 });
 // Per-viewer seen tracking (schema v81) — the new-activity signal, distinct
@@ -1520,7 +1432,6 @@ defineRoute({
   path: '/api/seen',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleMarkSeen(R(c), E(c)),
 });
 defineRoute({
@@ -1528,7 +1439,6 @@ defineRoute({
   path: '/api/seen/unseen',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleGetUnseenActivity(R(c), E(c)),
 });
 defineRoute({
@@ -1536,24 +1446,21 @@ defineRoute({
   path: '/api/tasks',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'pb-aware',
-  handler: (c) => handleGetTasks(U(c), E(c), CSP(c)),
+  handler: (c) => handleGetTasks(U(c), E(c), PI(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/updates/recent',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'pb-aware',
-  handler: (c) => handleRecentUpdates(U(c), E(c), CSP(c)),
+  handler: (c) => handleRecentUpdates(U(c), E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/task-updates/recent',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'pb-aware',
-  handler: (c) => handleGetRecentTaskUpdates(U(c), E(c), CSP(c)),
+  handler: (c) => handleGetRecentTaskUpdates(U(c), E(c), PI(c)),
 });
 // T2.8 (2026-05-28): extracted to api/routes/tasks.ts::handleGetRecentTaskComments
 // — one-liner alongside /api/task-updates/recent. Single place to maintain.
@@ -1562,8 +1469,7 @@ defineRoute({
   path: '/api/task-comments/recent',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'pb-aware',
-  handler: (c) => handleGetRecentTaskComments(U(c), E(c), CSP(c)),
+  handler: (c) => handleGetRecentTaskComments(U(c), E(c), PI(c)),
 });
 // Notifications: recipient derived from auth (R(c) carries the JWT/test headers)
 defineRoute({
@@ -1571,7 +1477,6 @@ defineRoute({
   path: '/api/notifications',
   auth: 'authed',
   entity: 'notifications',
-  visibility: 'na',
   handler: (c) => handleNotifications(U(c), R(c), E(c)),
 });
 defineRoute({
@@ -1579,7 +1484,6 @@ defineRoute({
   path: '/api/notifications/count',
   auth: 'authed',
   entity: 'notifications',
-  visibility: 'na',
   handler: (c) => handleNotificationCount(U(c), R(c), E(c)),
 });
 defineRoute({
@@ -1587,7 +1491,6 @@ defineRoute({
   path: '/api/commitments',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleCommitments(U(c), E(c)),
 });
 defineRoute({
@@ -1595,7 +1498,6 @@ defineRoute({
   path: '/api/ideas',
   auth: 'authed',
   entity: 'ideas',
-  visibility: 'na',
   handler: (c) => handleGetIdeas(U(c), E(c)),
 });
 // GET /api/inbox retired 2026-05-05 (5.3a) — use /api/inbox-events
@@ -1604,17 +1506,15 @@ defineRoute({
   path: '/api/search',
   auth: 'authed',
   entity: 'search',
-  visibility: 'pb-aware',
   // R(c) is passed so search can apply the @me visibility gate — without the
   // request it had no requester to gate on and leaked author-only bodies.
-  handler: (c) => handleGetSearch(U(c), E(c), CSP(c), R(c)),
+  handler: (c) => handleGetSearch(U(c), E(c), R(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/settings',
   auth: 'authed',
   entity: 'settings',
-  visibility: 'na',
   handler: (c) => handleGetSettings(E(c)),
 });
 defineRoute({
@@ -1622,7 +1522,6 @@ defineRoute({
   path: '/api/workflow-templates',
   auth: 'authed',
   entity: 'settings',
-  visibility: 'na',
   handler: (c) => handleGetWorkflowTemplates(E(c)),
 });
 defineRoute({
@@ -1632,8 +1531,7 @@ defineRoute({
   entity: 'calendar',
   // #8842 R6: task deadlines are task rows; non-PI callers get the PB filter.
   // 2026-10-08: and only the caller's own tasks (viewer = resolved user slug).
-  visibility: 'pb-aware',
-  handler: (c) => handleCalendarEvents(U(c), E(c), USER(c).slug, CSP(c)),
+  handler: (c) => handleCalendarEvents(U(c), E(c), USER(c).slug),
 });
 defineRoute({
   method: 'GET',
@@ -1643,8 +1541,7 @@ defineRoute({
   // 2026-10-08: Today's MENTEES row. The viewer's mentees (a director's
   // research team) with each one's next open due date; [] for anyone else.
   // Viewer = resolved user slug, never a query param. Non-PI: PB filter.
-  visibility: 'pb-aware',
-  handler: (c) => handleTodayMentees(E(c), USER(c).slug, CSP(c)),
+  handler: (c) => handleTodayMentees(E(c), USER(c).slug),
 });
 
 // Personal iCal calendar feeds (issue #45). Per-user, secret URL stays in D1.
@@ -1655,7 +1552,6 @@ defineRoute({
   path: '/api/integrations/calendar/feeds',
   auth: 'authed',
   entity: 'calendar-feeds',
-  visibility: 'na',
   handler: (c) => handleListFeeds(E(c), c.get('authedUser')),
 });
 defineRoute({
@@ -1663,7 +1559,6 @@ defineRoute({
   path: '/api/integrations/calendar/feeds',
   auth: 'authed',
   entity: 'calendar-feeds',
-  visibility: 'na',
   handler: (c) => handleAddFeed(R(c), E(c), c.get('authedUser'), (p) => c.executionCtx.waitUntil(p)),
 });
 defineRoute({
@@ -1671,7 +1566,6 @@ defineRoute({
   path: '/api/integrations/calendar/feeds/:id/delete',
   auth: 'authed',
   entity: 'calendar-feeds',
-  visibility: 'na',
   handler: (c) => handleDeleteFeed(R(c), E(c), c.get('authedUser'), c.req.param('id')),
 });
 defineRoute({
@@ -1679,7 +1573,6 @@ defineRoute({
   path: '/api/integrations/calendar/events',
   auth: 'authed',
   entity: 'calendar-feeds',
-  visibility: 'na',
   handler: (c) => handleListEvents(U(c), E(c), c.get('authedUser'), (p) => c.executionCtx.waitUntil(p)),
 });
 
@@ -1691,8 +1584,7 @@ defineRoute({
   path: '/api/files',
   auth: 'authed',
   entity: 'files',
-  visibility: 'pb-aware',
-  handler: (c) => handleListFiles(U(c), E(c), CSP(c)),
+  handler: (c) => handleListFiles(U(c), E(c), SERVICE(c)),
 });
 // GET /api/files/:key+ — presigned download URL (JSON envelope).
 // GET /api/files/:key+/raw — the actual bytes (see handleGetFile).
@@ -1707,7 +1599,6 @@ defineRoute({
   path: '/api/files/:rest{.+}',
   auth: 'authed',
   entity: 'files',
-  visibility: 'pb-aware',
   handler: (c) => {
   let key = c.req.param('rest');
   // Raw bytes are requested either as a `/raw` path suffix or `?raw=1` —
@@ -1719,7 +1610,7 @@ defineRoute({
     raw = true;
     key = key.slice(0, -'/raw'.length);
   }
-  return handleGetFile(key, E(c), CSP(c), raw);
+  return handleGetFile(key, E(c), SERVICE(c), raw);
 },
 });
 
@@ -1731,7 +1622,6 @@ defineRoute({
   path: '/api/team/:slug/trajectory',
   auth: 'authed',
   entity: 'team',
-  visibility: 'na',
   handler: (c) => handleTrajectory(c.req.param('slug'), E(c)),
 });
 defineRoute({
@@ -1739,7 +1629,6 @@ defineRoute({
   path: '/api/team/:slug/contributions',
   auth: 'authed',
   entity: 'team',
-  visibility: 'na',
   handler: (c) => handleGetContributions(c.req.param('slug'), U(c), E(c)),
 });
 // #906 — the member's own curated Top-10. GET is public because it renders on
@@ -1760,7 +1649,6 @@ defineRoute({
   path: '/api/team/:slug/featured-publications',
   auth: 'authed',
   entity: 'publications',
-  visibility: 'na',
   handler: (c) => handlePutMemberFeaturedPublications(c.req.param('slug'), R(c), E(c)),
 });
 
@@ -1772,15 +1660,13 @@ defineRoute({
   path: '/api/deadline-cascade/all',
   auth: 'authed',
   entity: 'deadline-cascade',
-  visibility: 'pb-aware',
-  handler: (c) => handleGetAllCascades(E(c), CSP(c)),
+  handler: (c) => handleGetAllCascades(E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/deadline-cascade/impact',
   auth: 'authed',
   entity: 'deadline-cascade',
-  visibility: 'na',
   handler: (c) => handleGetImpact(U(c), R(c), E(c)),
 });
 defineRoute({
@@ -1788,7 +1674,6 @@ defineRoute({
   path: '/api/deadline-cascade',
   auth: 'authed',
   entity: 'deadline-cascade',
-  visibility: 'na',
   handler: (c) => handleGetCascade(U(c), R(c), E(c)),
 });
 
@@ -1800,7 +1685,6 @@ defineRoute({
   path: '/api/mentee-milestones/overview',
   auth: 'authed',
   entity: 'mentee-milestones',
-  visibility: 'na',
   handler: (c) => handleMenteeMilestoneOverview(E(c)),
 });
 defineRoute({
@@ -1808,7 +1692,6 @@ defineRoute({
   path: '/api/mentee-milestones',
   auth: 'authed',
   entity: 'mentee-milestones',
-  visibility: 'na',
   handler: (c) => handleGetMenteeMilestones(U(c), E(c)),
 });
 
@@ -1820,7 +1703,6 @@ defineRoute({
   path: '/api/milestones',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleGetMilestones(U(c), E(c)),
 });
 
@@ -1832,7 +1714,6 @@ defineRoute({
   path: '/api/grant-milestones/upcoming',
   auth: 'authed',
   entity: 'grant-milestones',
-  visibility: 'na',
   handler: (c) => handleUpcomingGrantMilestones(U(c), E(c)),
 });
 defineRoute({
@@ -1840,7 +1721,6 @@ defineRoute({
   path: '/api/grant-milestones',
   auth: 'authed',
   entity: 'grant-milestones',
-  visibility: 'na',
   handler: (c) => handleGetGrantMilestones(U(c), E(c)),
 });
 
@@ -1852,8 +1732,7 @@ defineRoute({
   path: '/api/regulatory/expiring',
   auth: 'authed',
   entity: 'regulatory',
-  visibility: 'pb-aware',
-  handler: (c) => handleGetExpiringItems(U(c), E(c), CSP(c)),
+  handler: (c) => handleGetExpiringItems(U(c), E(c)),
 });
 // Auth-only (not PI) — team members need iCal access to renewal reminders.
 defineRoute({
@@ -1861,7 +1740,6 @@ defineRoute({
   path: '/api/regulatory/:id/ics',
   auth: 'authed',
   entity: 'regulatory',
-  visibility: 'na',
   handler: (c) => handleRegulatoryIcs(c.req.param('id'), E(c), R(c)),
 });
 defineRoute({
@@ -1869,8 +1747,7 @@ defineRoute({
   path: '/api/regulatory',
   auth: 'authed',
   entity: 'regulatory',
-  visibility: 'pb-aware',
-  handler: (c) => handleGetRegulatoryItems(U(c), R(c), E(c), CSP(c)),
+  handler: (c) => handleGetRegulatoryItems(U(c), R(c), E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1881,16 +1758,14 @@ defineRoute({
   path: '/api/conferences/upcoming',
   auth: 'authed',
   entity: 'conferences',
-  visibility: 'pb-aware',
-  handler: (c) => handleGetUpcomingConferences(E(c), CSP(c)),
+  handler: (c) => handleGetUpcomingConferences(E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/conferences',
   auth: 'authed',
   entity: 'conferences',
-  visibility: 'pb-aware',
-  handler: (c) => handleGetConferences(U(c), R(c), E(c), CSP(c)),
+  handler: (c) => handleGetConferences(U(c), R(c), E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1901,7 +1776,6 @@ defineRoute({
   path: '/api/proactive-brief',
   auth: 'authed',
   entity: 'proactive-brief',
-  visibility: 'na',
   handler: (c) => handleProactiveBrief(R(c), E(c)),
 });
 defineRoute({
@@ -1909,7 +1783,6 @@ defineRoute({
   path: '/api/digest-preview',
   auth: 'authed',
   entity: 'digest',
-  visibility: 'na',
   handler: (c) => handleDigestPreview(U(c), E(c)),
 });
 // /api/file-activity/heatmap (and potentially future subpaths) — the original
@@ -1921,7 +1794,6 @@ defineRoute({
   path: '/api/file-activity/heatmap',
   auth: 'authed',
   entity: 'file-activity',
-  visibility: 'na',
   handler: (c) => handleGetFileActivity(U(c), E(c)),
 });
 
@@ -1933,7 +1805,6 @@ defineRoute({
   path: '/api/reactions',
   auth: 'authed',
   entity: 'reactions',
-  visibility: 'na',
   handler: (c) => handleGetReactions(U(c), E(c)),
 });
 
@@ -1945,7 +1816,6 @@ defineRoute({
   path: '/api/tasks/:id/comments',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleGetTaskComments(c.req.param('id'), R(c), E(c)),
 });
 defineRoute({
@@ -1953,23 +1823,14 @@ defineRoute({
   path: '/api/tasks/:id/files',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'pb-aware',
   handler: async (c) => {
   const env = E(c);
   // Auth required — task files are team-internal content.
   const authedUser = c.get('authedUser');
   if (!authedUser && c.get('apiKeyValid') !== true) return error('Authentication required', 401);
-  // Phase 1b-extended: if the task belongs to a PB-category project, block non-PI
-  // callers from listing the file metadata. Mirrors the read-side gates on
-  // task comments/updates/activity (api/routes/tasks.ts).
+  // task_files follows its task through the caller's handle, so a task the
+  // caller may not read lists no files.
   const taskId = c.req.param('id');
-  const taskRowForGate = await env.DB.prepare(
-    'SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL'
-  ).bind(taskId).first<{ project_id: string | null }>();
-  if (taskRowForGate?.project_id) {
-    const block = await assertProjectVisible(R(c), env, taskRowForGate.project_id);
-    if (block) return block;
-  }
   const { results } = await env.DB.prepare(
     'SELECT id, task_id, filename, url, file_type, uploaded_by, created_at FROM task_files WHERE task_id = ? ORDER BY created_at DESC'
   ).bind(taskId).all();
@@ -1981,7 +1842,6 @@ defineRoute({
   path: '/api/tasks/:id/activity',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleGetTaskActivity(c.req.param('id'), R(c), E(c)),
 });
 defineRoute({
@@ -1989,7 +1849,6 @@ defineRoute({
   path: '/api/tasks/:id/detail',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleGetTaskDetail(c.req.param('id'), R(c), E(c)),
 });
 defineRoute({
@@ -1997,7 +1856,6 @@ defineRoute({
   path: '/api/tasks/:id/subtasks',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleGetSubtasks(c.req.param('id'), E(c)),
 });
 defineRoute({
@@ -2005,7 +1863,6 @@ defineRoute({
   path: '/api/tasks/:id/handoffs',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleGetHandoffs(c.req.param('id'), E(c)),
 });
 // GET /api/tasks/:id — fetch single task by PK (mechanic I5: was missing, always 404)
@@ -2015,8 +1872,7 @@ defineRoute({
   path: '/api/tasks/:id',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
-  handler: (c) => handleGetTask(c.req.param('id'), E(c), R(c)),
+  handler: (c) => handleGetTask(c.req.param('id'), E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2031,24 +1887,21 @@ defineRoute({
   path: '/api/upload/url',
   auth: 'authed',
   entity: 'misc',
-  visibility: 'na',
-  handler: (c) => handleUploadUrl(R(c), USER(c), E(c)),
+  handler: (c) => handleUploadUrl(R(c), USER(c), E(c), SERVICE(c)),
 });
 defineRoute({
   method: 'POST',
   path: '/api/upload/done',
   auth: 'authed',
   entity: 'misc',
-  visibility: 'na',
-  handler: (c) => handleUploadDone(R(c), USER(c), E(c)),
+  handler: (c) => handleUploadDone(R(c), USER(c), E(c), SERVICE(c)),
 });
 defineRoute({
   method: 'POST',
   path: '/api/files/:id/delete',
   auth: 'authed',
   entity: 'files',
-  visibility: 'pb-aware',
-  handler: (c) => handleDeleteFile(c.req.param('id'), E(c), CSP(c)),
+  handler: (c) => handleDeleteFile(c.req.param('id'), E(c), SERVICE(c)),
 });
 
 // Projects (specific first)
@@ -2057,7 +1910,6 @@ defineRoute({
   path: '/api/projects',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleCreateProject(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2065,7 +1917,6 @@ defineRoute({
   path: '/api/projects/:slug/delete',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleDeleteProject(c.req.param('slug'), USER(c), E(c), R(c)),
 });
 defineRoute({
@@ -2073,7 +1924,6 @@ defineRoute({
   path: '/api/projects/:slug/comments',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleAddComment(c.req.param('slug'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2081,7 +1931,6 @@ defineRoute({
   path: '/api/projects/:slug/updates',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handlePostProjectUpdate(c.req.param('slug'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2089,7 +1938,6 @@ defineRoute({
   path: '/api/projects/:slug/documents',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleCreateProjectDocument(c.req.param('slug'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2097,7 +1945,6 @@ defineRoute({
   path: '/api/projects/:slug/documents/:docId/delete',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleDeleteProjectDocument(c.req.param('docId'), R(c), E(c)),
 });
 defineRoute({
@@ -2105,7 +1952,6 @@ defineRoute({
   path: '/api/projects/:slug',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleUpdateProject(c.req.param('slug'), R(c), USER(c), E(c)),
 });
 
@@ -2117,15 +1963,13 @@ defineRoute({
   path: '/api/team',
   auth: 'pi',
   entity: 'team',
-  visibility: 'na',
-  handler: (c) => handleCreateTeamMember(R(c), USER(c), E(c), CSP(c)),
+  handler: (c) => handleCreateTeamMember(R(c), USER(c), E(c), PI(c)),
 });
 defineRoute({
   method: 'POST',
   path: '/api/team/:slug',
   auth: 'authed',
   entity: 'team',
-  visibility: 'na',
   handler: (c) => handleUpdateTeamMember(c.req.param('slug'), R(c), USER(c), E(c), c.get('apiKeyValid') === true),
 });
 
@@ -2135,7 +1979,6 @@ defineRoute({
   path: '/api/inbox-events/sync-bulk',
   auth: 'authed',
   entity: 'inbox-events',
-  visibility: 'na',
   handler: (c) => handleSyncBulkInboxEvents(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2143,7 +1986,6 @@ defineRoute({
   path: '/api/inbox-events/:id/delete',
   auth: 'authed',
   entity: 'inbox-events',
-  visibility: 'na',
   handler: (c) => handleDeleteInboxEvent(c.req.param('id'), R(c), USER(c), E(c)),
 });
 // Browser single-capture — 'authed' (CF-Access OR Bearer), NOT PI-gated.
@@ -2153,7 +1995,6 @@ defineRoute({
   path: '/api/inbox-events',
   auth: 'authed',
   entity: 'inbox-events',
-  visibility: 'na',
   handler: (c) => handleCreateInboxEvent(R(c), USER(c), E(c)),
 });
 // PI-or-API-key gate: raw_payload_json/notes are private to Nick's capture pipeline.
@@ -2162,7 +2003,6 @@ defineRoute({
   path: '/api/inbox-events',
   auth: 'authed',
   entity: 'inbox-events',
-  visibility: 'na',
   handler: (c) => handleInboxEvents(U(c), E(c), R(c)),
 });
 
@@ -2175,7 +2015,6 @@ defineRoute({
   path: '/api/mutations',
   auth: 'authed',
   entity: 'mutations',
-  visibility: 'na',
   handler: (c) => handleMutations(R(c), USER(c), E(c)),
 });
 
@@ -2186,7 +2025,6 @@ defineRoute({
   path: '/api/links',
   auth: 'authed',
   entity: 'links',
-  visibility: 'na',
   handler: (c) => handleGetLinks(new URL(R(c).url), R(c), E(c)),
 });
 
@@ -2199,7 +2037,6 @@ defineRoute({
   path: '/api/tasks/:id/links',
   auth: 'authed',
   entity: 'links',
-  visibility: 'na',
   handler: (c) => handleGetTaskLinks(c.req.param('id'), R(c), E(c)),
 });
 // Bulk project-links (backlog #147). Defined after GET /api/projects/:id,
@@ -2210,7 +2047,6 @@ defineRoute({
   path: '/api/projects/links',
   auth: 'authed',
   entity: 'links',
-  visibility: 'na',
   handler: (c) => handleGetAllProjectLinks(R(c), E(c)),
 });
 defineRoute({
@@ -2218,7 +2054,6 @@ defineRoute({
   path: '/api/projects/:slug/links',
   auth: 'authed',
   entity: 'links',
-  visibility: 'na',
   handler: (c) => handleGetProjectLinks(c.req.param('slug'), R(c), E(c)),
 });
 // Archive / restore one project link from the project page (#2089).
@@ -2228,7 +2063,6 @@ defineRoute({
   path: '/api/links/:id/role',
   auth: 'authed',
   entity: 'links',
-  visibility: 'na',
   handler: (c) => handleSetLinkRole(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
@@ -2238,7 +2072,6 @@ defineRoute({
   path: '/api/tasks/batch',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleBatchUpdateTasks(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2246,7 +2079,6 @@ defineRoute({
   path: '/api/tasks/:id/delete',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleDeleteTask(c.req.param('id'), R(c), USER(c), E(c)),
 });
 // Symmetric counterpart to :id/delete — un-sets the tombstone so a delete can
@@ -2256,7 +2088,6 @@ defineRoute({
   path: '/api/tasks/:id/restore',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleRestoreTask(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2264,7 +2095,6 @@ defineRoute({
   path: '/api/tasks/:id/acknowledge',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleAcknowledgeTask(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2272,7 +2102,6 @@ defineRoute({
   path: '/api/tasks/:id/status',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleUpdateTaskStatus(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2280,7 +2109,6 @@ defineRoute({
   path: '/api/tasks/:id/comments',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleAddTaskComment(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2288,7 +2116,6 @@ defineRoute({
   path: '/api/tasks/:id/updates',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handlePostTaskUpdate(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2296,7 +2123,6 @@ defineRoute({
   path: '/api/tasks/:id/subtasks/reorder',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleReorderSubtasks(c.req.param('id'), R(c), E(c)),
 });
 defineRoute({
@@ -2304,7 +2130,6 @@ defineRoute({
   path: '/api/tasks/:id/subtasks',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleCreateSubtask(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2312,7 +2137,6 @@ defineRoute({
   path: '/api/tasks/:id/handoffs',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleCreateHandoff(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2320,23 +2144,17 @@ defineRoute({
   path: '/api/tasks/:id/files',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'pb-aware',
   handler: async (c) => {
   const env = E(c);
   const id = c.req.param('id');
   // Owner-or-PI gate: only the task owner/assignee or a PI may attach files.
   const callerSlug = await actorSlugFromRequest(R(c), env);
   if (!callerSlug) return error('Authentication required', 401);
-  // Phase 1b-extended: also gate on PB-project visibility. Pull project_id in
-  // the same row read so we don't pay a second round-trip.
+  // Read through the caller's handle: a task the caller may not read is a 404.
   const task = await env.DB.prepare(
-    'SELECT assignee, project_id FROM tasks WHERE id = ? LIMIT 1'
-  ).bind(id).first<{ assignee: string | null; project_id: string | null }>();
+    'SELECT assignee FROM tasks WHERE id = ? LIMIT 1'
+  ).bind(id).first<{ assignee: string | null }>();
   if (!task) return error('Task not found', 404);
-  if (task.project_id) {
-    const block = await assertProjectVisible(R(c), env, task.project_id);
-    if (block) return block;
-  }
   // Null-assignee guard: unassigned tasks are NOT locked to any owner.
   // Only block when assignee is non-null AND differs AND caller is not PI.
   if (task.assignee != null && task.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
@@ -2356,7 +2174,6 @@ defineRoute({
   path: '/api/tasks/:id',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleUpdateTask(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2364,7 +2181,6 @@ defineRoute({
   path: '/api/tasks',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleCreateTask(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2372,7 +2188,6 @@ defineRoute({
   path: '/api/sync/mobile-tasks-to-hub',
   auth: 'authed',
   entity: 'misc',
-  visibility: 'na',
   handler: (c) => handleMobileTasksToHub(R(c), USER(c), E(c)),
 });
 
@@ -2385,27 +2200,21 @@ defineRoute({
   path: '/api/task-files/:id/delete',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'pb-aware',
   handler: async (c) => {
   const env = E(c);
   const fileId = c.req.param('id');
   const callerSlug = await actorSlugFromRequest(R(c), env);
   if (!callerSlug) return error('Authentication required', 401);
-  // Look up the file to get the parent task, its assignee, and project_id.
+  // Look up the file and its task's assignee. task_files follows its task
+  // through the caller's handle, so a file on a task the caller may not read
+  // is absent and takes the idempotent path below.
   const fileRow = await env.DB.prepare(
-    'SELECT tf.id, tf.task_id, tf.filename, t.assignee, t.project_id FROM task_files tf LEFT JOIN tasks t ON tf.task_id = t.id WHERE tf.id = ? LIMIT 1'
-  ).bind(fileId).first<{ id: string; task_id: string; filename: string; assignee: string | null; project_id: string | null }>();
+    'SELECT tf.id, tf.task_id, tf.filename, t.assignee FROM task_files tf LEFT JOIN tasks t ON tf.task_id = t.id WHERE tf.id = ? LIMIT 1'
+  ).bind(fileId).first<{ id: string; task_id: string; filename: string; assignee: string | null }>();
   // SEC-10.3 + Phase 1b-extended: idempotent — repeat delete (row already gone)
   // returns 200 with idempotent:true. Codex flagged that the prior 404 leaked
   // existence of file IDs to non-owners.
   if (!fileRow) return json({ data: { deleted: fileId, idempotent: true } });
-  // Phase 1b-extended: gate on PB-project visibility before the assignee check.
-  // A non-PI knowing a PB task-file id must not be able to delete (or learn
-  // about its existence via a different error code).
-  if (fileRow.project_id) {
-    const block = await assertProjectVisible(R(c), env, fileRow.project_id);
-    if (block) return block;
-  }
   // Null-assignee guard: unassigned tasks are NOT locked to any owner.
   // Only block when assignee is non-null AND differs AND caller is not PI.
   if (fileRow.assignee != null && fileRow.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
@@ -2423,7 +2232,6 @@ defineRoute({
   path: '/api/subtasks/:id/toggle',
   auth: 'authed',
   entity: 'subtasks',
-  visibility: 'na',
   handler: (c) => handleToggleSubtask(c.req.param('id'), USER(c), E(c)),
 });
 defineRoute({
@@ -2431,7 +2239,6 @@ defineRoute({
   path: '/api/subtasks/:id/delete',
   auth: 'authed',
   entity: 'subtasks',
-  visibility: 'na',
   handler: (c) => handleDeleteSubtask(c.req.param('id'), R(c), E(c)),
 });
 
@@ -2444,7 +2251,6 @@ defineRoute({
   path: '/api/meetings',
   auth: 'authed',
   entity: 'meetings',
-  visibility: 'na',
   handler: (c) => handleCreateMeeting(R(c), USER(c), E(c)),
 });
 // #2225: the Today Prep pill. Title + attendees come from the caller's own
@@ -2454,7 +2260,6 @@ defineRoute({
   path: '/api/meetings/prep-from-event',
   auth: 'authed',
   entity: 'meetings',
-  visibility: 'na',
   handler: (c) => handlePrepMeetingFromEvent(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2462,7 +2267,6 @@ defineRoute({
   path: '/api/meetings/:id/notes',
   auth: 'authed',
   entity: 'meetings',
-  visibility: 'na',
   handler: (c) => handleUpdateMeetingNotes(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2470,7 +2274,6 @@ defineRoute({
   path: '/api/meetings/:id/meta',
   auth: 'authed',
   entity: 'meetings',
-  visibility: 'na',
   handler: (c) => handleUpdateMeetingMeta(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2478,7 +2281,6 @@ defineRoute({
   path: '/api/meetings/:id/agenda/reorder',
   auth: 'authed',
   entity: 'meetings',
-  visibility: 'na',
   handler: (c) => handleReorderAgenda(c.req.param('id'), R(c), E(c)),
 });
 defineRoute({
@@ -2486,7 +2288,6 @@ defineRoute({
   path: '/api/meetings/:id/agenda',
   auth: 'authed',
   entity: 'meetings',
-  visibility: 'na',
   handler: (c) => handleAddAgendaItem(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
@@ -2496,7 +2297,6 @@ defineRoute({
   path: '/api/milestones/:id/note',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleUpdateMilestoneNote(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2504,7 +2304,6 @@ defineRoute({
   path: '/api/milestones/:id/complete',
   auth: 'authed',
   entity: 'projects',
-  visibility: 'na',
   handler: (c) => handleUpdateMilestoneCompletion(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
@@ -2514,7 +2313,6 @@ defineRoute({
   path: '/api/commitments',
   auth: 'authed',
   entity: 'tasks',
-  visibility: 'na',
   handler: (c) => handleCreateCommitment(R(c), E(c)),
 });
 
@@ -2525,7 +2323,6 @@ defineRoute({
   path: '/api/notifications/read-all',
   auth: 'authed',
   entity: 'notifications',
-  visibility: 'na',
   handler: async (c) => {
   const env = E(c);
   const callerSlug = await actorSlugFromRequest(R(c), env);
@@ -2538,7 +2335,6 @@ defineRoute({
   path: '/api/notifications/:id/read',
   auth: 'authed',
   entity: 'notifications',
-  visibility: 'na',
   handler: (c) => handleMarkNotificationRead(c.req.param('id'), R(c), E(c)),
 });
 
@@ -2548,7 +2344,6 @@ defineRoute({
   path: '/api/reactions',
   auth: 'authed',
   entity: 'reactions',
-  visibility: 'na',
   handler: (c) => handleToggleReaction(R(c), USER(c), E(c)),
 });
 
@@ -2558,7 +2353,6 @@ defineRoute({
   path: '/api/publications',
   auth: 'authed',
   entity: 'publications',
-  visibility: 'na',
   handler: async (c) => {
   const env = E(c);
   const body = await c.req.json() as { title: string; authors: string; journal?: string; year?: number; doi?: string; pubmed?: string; abstract?: string; topics?: string[]; status?: string };
@@ -2576,7 +2370,6 @@ defineRoute({
   path: '/api/handoffs/:id/acknowledge',
   auth: 'authed',
   entity: 'handoffs',
-  visibility: 'na',
   handler: (c) => handleAcknowledgeHandoff(c.req.param('id'), USER(c), E(c)),
 });
 
@@ -2586,7 +2379,6 @@ defineRoute({
   path: '/api/settings',
   auth: 'authed',
   entity: 'settings',
-  visibility: 'na',
   handler: (c) => handleUpdateSettings(R(c), E(c)),
 });
 defineRoute({
@@ -2594,7 +2386,6 @@ defineRoute({
   path: '/api/workflow-templates',
   auth: 'authed',
   entity: 'settings',
-  visibility: 'na',
   handler: (c) => handleCreateWorkflowTemplate(R(c), E(c)),
 });
 
@@ -2604,7 +2395,6 @@ defineRoute({
   path: '/api/ideas',
   auth: 'authed',
   entity: 'ideas',
-  visibility: 'na',
   handler: (c) => handleCreateIdea(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2612,7 +2402,6 @@ defineRoute({
   path: '/api/ideas/:id/vote',
   auth: 'authed',
   entity: 'ideas',
-  visibility: 'na',
   handler: (c) => handleVoteIdea(c.req.param('id'), E(c)),
 });
 defineRoute({
@@ -2620,7 +2409,6 @@ defineRoute({
   path: '/api/ideas/:id',
   auth: 'authed',
   entity: 'ideas',
-  visibility: 'na',
   handler: (c) => handleUpdateIdea(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
@@ -2637,7 +2425,6 @@ defineRoute({
   path: '/api/bug-report',
   auth: 'authed',
   entity: 'bug-report',
-  visibility: 'na',
   handler: async (c) => {
   const env = E(c);
   const requireAuth = (env as unknown as { REQUIRE_AUTH?: string }).REQUIRE_AUTH === '1';
@@ -2661,7 +2448,6 @@ defineRoute({
   path: '/api/bug-reports',
   auth: 'pi',
   entity: 'bug-report',
-  visibility: 'na',
   handler: (c) => handleListBugReports(R(c), E(c)),
 });
 defineRoute({
@@ -2669,7 +2455,6 @@ defineRoute({
   path: '/api/bug-reports/:id/status',
   auth: 'pi',
   entity: 'bug-report',
-  visibility: 'na',
   handler: (c) => handleUpdateBugReportStatus(c.req.param('id'), R(c), E(c)),
 });
 
@@ -2679,7 +2464,6 @@ defineRoute({
   path: '/api/digest',
   auth: 'authed',
   entity: 'digest',
-  visibility: 'na',
   handler: (c) => handleCreateDigestPaper(R(c), E(c)),
 });
 defineRoute({
@@ -2687,7 +2471,6 @@ defineRoute({
   path: '/api/digest/:id/comments',
   auth: 'authed',
   entity: 'digest',
-  visibility: 'na',
   handler: (c) => handleCreateDigestComment(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2695,7 +2478,6 @@ defineRoute({
   path: '/api/digest/:id/status',
   auth: 'authed',
   entity: 'digest',
-  visibility: 'na',
   handler: (c) => handleUpdateDigestStatus(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
@@ -2705,7 +2487,6 @@ defineRoute({
   path: '/api/paper-links',
   auth: 'authed',
   entity: 'paper-links',
-  visibility: 'na',
   handler: (c) => handleLinkPaper(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2713,7 +2494,6 @@ defineRoute({
   path: '/api/paper-links/:id/delete',
   auth: 'authed',
   entity: 'paper-links',
-  visibility: 'na',
   handler: (c) => handleUnlinkPaper(c.req.param('id'), R(c), E(c)),
 });
 
@@ -2723,7 +2503,6 @@ defineRoute({
   path: '/api/dependencies',
   auth: 'authed',
   entity: 'dependencies',
-  visibility: 'na',
   handler: (c) => handleCreateDependency(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2731,7 +2510,6 @@ defineRoute({
   path: '/api/dependencies/:id/delete',
   auth: 'authed',
   entity: 'dependencies',
-  visibility: 'na',
   handler: (c) => handleDeleteDependency(c.req.param('id'), R(c), E(c)),
 });
 
@@ -2741,7 +2519,6 @@ defineRoute({
   path: '/api/decisions',
   auth: 'authed',
   entity: 'decisions',
-  visibility: 'na',
   handler: (c) => handleCreateDecision(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2749,7 +2526,6 @@ defineRoute({
   path: '/api/decisions/:id/outcome',
   auth: 'authed',
   entity: 'decisions',
-  visibility: 'na',
   handler: (c) => handleUpdateDecisionOutcome(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
@@ -2759,7 +2535,6 @@ defineRoute({
   path: '/api/expertise',
   auth: 'authed',
   entity: 'expertise',
-  visibility: 'na',
   handler: (c) => handleAddExpertise(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2767,7 +2542,6 @@ defineRoute({
   path: '/api/expertise/:id/delete',
   auth: 'authed',
   entity: 'expertise',
-  visibility: 'na',
   handler: (c) => handleRemoveExpertise(c.req.param('id'), R(c), E(c)),
 });
 
@@ -2777,7 +2551,6 @@ defineRoute({
   path: '/api/questions',
   auth: 'authed',
   entity: 'questions',
-  visibility: 'na',
   handler: (c) => handleCreateQuestion(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2785,7 +2558,6 @@ defineRoute({
   path: '/api/questions/:id/answers',
   auth: 'authed',
   entity: 'questions',
-  visibility: 'na',
   handler: (c) => handleCreateAnswer(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2793,7 +2565,6 @@ defineRoute({
   path: '/api/answers/:id/accept',
   auth: 'authed',
   entity: 'questions',
-  visibility: 'na',
   handler: (c) => handleAcceptAnswer(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
@@ -2803,7 +2574,6 @@ defineRoute({
   path: '/api/ai-requests',
   auth: 'authed',
   entity: 'ai-requests',
-  visibility: 'na',
   handler: (c) => handleCreateAIRequest(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2811,21 +2581,20 @@ defineRoute({
   path: '/api/ai-requests/:id/response',
   auth: 'authed',
   entity: 'ai-requests',
-  visibility: 'na',
   handler: (c) => handleUpdateAIResponse(c.req.param('id'), R(c), E(c)),
 });
 
 // Launch log writes
-defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c)) });
-defineRoute({ method: 'POST', path: '/api/launch-log/:id/status', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleSetLaunchStatus(c.req.param('id'), R(c), USER(c), E(c)) });
-defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c)) });
+defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c)) });
+defineRoute({ method: 'POST', path: '/api/launch-log/:id/status', auth: 'authed', entity: 'launch-log', handler: (c) => handleSetLaunchStatus(c.req.param('id'), R(c), USER(c), E(c)) });
+defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c)) });
 // PI/API-key gated in-handler (isPiRequest — same idiom as /api/bug-reports
 // above, not the /api/pb/* path middleware). Backlog #250: closes the gap
 // where any team member holding (or guessing) the opaque lnch_ id could
 // consume a pending mobile launch and read its seed. Both live claimants
 // (resolve_launch.py, hub_ai_listener.py) already send Bearer PB_API_KEY and
 // pass unchanged — see api/routes/launch-log.ts:handleClaimLaunch for detail.
-defineRoute({ method: 'POST', path: '/api/launch-log/:id/claim',  auth: 'pi',     entity: 'launch-log', visibility: 'na', handler: (c) => handleClaimLaunch(c.req.param('id'), R(c), USER(c), E(c)) });
+defineRoute({ method: 'POST', path: '/api/launch-log/:id/claim',  auth: 'pi',     entity: 'launch-log', handler: (c) => handleClaimLaunch(c.req.param('id'), R(c), USER(c), E(c)) });
 
 // Artifacts writes — specific-before-generic. Create is authed (Hermes via API
 // key, or a team member). Revise/comments authed; delete PI-gated in-handler.
@@ -2834,7 +2603,6 @@ defineRoute({
   path: '/api/artifacts/:id/revise',
   auth: 'authed',
   entity: 'artifacts',
-  visibility: 'na',
   handler: (c) => handleReviseArtifact(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2842,7 +2610,6 @@ defineRoute({
   path: '/api/artifacts/:id/comments',
   auth: 'authed',
   entity: 'artifacts',
-  visibility: 'na',
   handler: (c) => handleAddArtifactComment(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2850,7 +2617,6 @@ defineRoute({
   path: '/api/artifacts',
   auth: 'authed',
   entity: 'artifacts',
-  visibility: 'na',
   handler: (c) => handleCreateArtifact(R(c), USER(c), E(c)),
 });
 // Collection-tag writes (schema-v104). Authed-team — the handlers gate on the
@@ -2864,7 +2630,6 @@ defineRoute({
   path: '/api/artifacts/:id/tags',
   auth: 'authed',
   entity: 'artifacts',
-  visibility: 'na',
   handler: (c) => handleAddArtifactTag(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2872,7 +2637,6 @@ defineRoute({
   path: '/api/artifacts/:id/tags/:tag',
   auth: 'authed',
   entity: 'artifacts',
-  visibility: 'na',
   handler: (c) => handleRemoveArtifactTag(c.req.param('id'), c.req.param('tag'), R(c), USER(c), E(c)),
 });
 
@@ -2882,7 +2646,6 @@ defineRoute({
   path: '/api/pb/capture',
   auth: 'pi',
   entity: 'pb',
-  visibility: 'na',
   handler: (c) => handlePBCapture(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2890,7 +2653,6 @@ defineRoute({
   path: '/api/pb/defer',
   auth: 'pi',
   entity: 'pb',
-  visibility: 'na',
   handler: (c) => handlePBDefer(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2898,7 +2660,6 @@ defineRoute({
   path: '/api/pb/dispatch/add',
   auth: 'pi',
   entity: 'pb',
-  visibility: 'na',
   handler: (c) => handleAddToDispatch(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2906,7 +2667,6 @@ defineRoute({
   path: '/api/pb/dispatch/send',
   auth: 'pi',
   entity: 'pb',
-  visibility: 'na',
   handler: (c) => handleSendDispatch(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2914,7 +2674,6 @@ defineRoute({
   path: '/api/pb/dispatch/complete',
   auth: 'pi',
   entity: 'pb',
-  visibility: 'na',
   handler: (c) => handleCompleteDispatchItem(R(c), E(c)),
 });
 defineRoute({
@@ -2922,7 +2681,6 @@ defineRoute({
   path: '/api/pb/sessions',
   auth: 'pi',
   entity: 'pb',
-  visibility: 'na',
   handler: (c) => handleCreatePBSession(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2930,7 +2688,6 @@ defineRoute({
   path: '/api/pb/sessions/bulk',
   auth: 'pi',
   entity: 'pb',
-  visibility: 'na',
   handler: (c) => handleBulkCreatePBSessions(R(c), USER(c), E(c)),
 });
 // POST /api/pb/today retired 2026-05-05 (5.9): 0 callers; GET preserved for frontend use
@@ -2943,7 +2700,6 @@ defineRoute({
   path: '/api/revisions',
   auth: 'authed',
   entity: 'revisions',
-  visibility: 'na',
   handler: (c) => handleCreateRevision(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2951,7 +2707,6 @@ defineRoute({
   path: '/api/revisions/comments/:id',
   auth: 'authed',
   entity: 'revisions',
-  visibility: 'na',
   handler: (c) => handleUpdateRevisionComment(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2959,7 +2714,6 @@ defineRoute({
   path: '/api/revisions/:id/comments',
   auth: 'authed',
   entity: 'revisions',
-  visibility: 'na',
   handler: (c) => handleCreateRevisionComment(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2967,7 +2721,6 @@ defineRoute({
   path: '/api/revisions/:id',
   auth: 'authed',
   entity: 'revisions',
-  visibility: 'na',
   handler: (c) => handleUpdateRevision(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
@@ -2977,7 +2730,6 @@ defineRoute({
   path: '/api/submissions',
   auth: 'authed',
   entity: 'submissions',
-  visibility: 'na',
   handler: (c) => handleCreateSubmission(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2985,7 +2737,6 @@ defineRoute({
   path: '/api/submissions/:id/delete',
   auth: 'authed',
   entity: 'submissions',
-  visibility: 'na',
   handler: (c) => handleDeleteSubmission(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -2993,7 +2744,6 @@ defineRoute({
   path: '/api/submissions/:id',
   auth: 'authed',
   entity: 'submissions',
-  visibility: 'na',
   handler: (c) => handleUpdateSubmission(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
@@ -3003,7 +2753,6 @@ defineRoute({
   path: '/api/mentee-milestones',
   auth: 'authed',
   entity: 'mentee-milestones',
-  visibility: 'na',
   handler: (c) => handleCreateMenteeMilestone(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -3011,7 +2760,6 @@ defineRoute({
   path: '/api/mentee-milestones/:id',
   auth: 'authed',
   entity: 'mentee-milestones',
-  visibility: 'na',
   handler: (c) => handleUpdateMenteeMilestone(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
@@ -3021,7 +2769,6 @@ defineRoute({
   path: '/api/grant-milestones',
   auth: 'authed',
   entity: 'grant-milestones',
-  visibility: 'na',
   handler: (c) => handleCreateGrantMilestone(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -3029,7 +2776,6 @@ defineRoute({
   path: '/api/grant-milestones/:id/complete',
   auth: 'authed',
   entity: 'grant-milestones',
-  visibility: 'na',
   handler: (c) => handleCompleteGrantMilestone(c.req.param('id'), USER(c), E(c)),
 });
 defineRoute({
@@ -3037,7 +2783,6 @@ defineRoute({
   path: '/api/grant-milestones/:id',
   auth: 'authed',
   entity: 'grant-milestones',
-  visibility: 'na',
   handler: (c) => handleUpdateGrantMilestone(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
@@ -3047,7 +2792,6 @@ defineRoute({
   path: '/api/grants/:id',
   auth: 'authed',
   entity: 'grants',
-  visibility: 'na',
   handler: (c) => handleUpdateGrant(c.req.param('id'), R(c), E(c)),
 });
 
@@ -3057,7 +2801,6 @@ defineRoute({
   path: '/api/regulatory',
   auth: 'authed',
   entity: 'regulatory',
-  visibility: 'na',
   handler: (c) => handleCreateRegulatoryItem(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -3065,7 +2808,6 @@ defineRoute({
   path: '/api/regulatory/:id',
   auth: 'authed',
   entity: 'regulatory',
-  visibility: 'na',
   handler: (c) => handleUpdateRegulatoryItem(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
@@ -3075,7 +2817,6 @@ defineRoute({
   path: '/api/conferences',
   auth: 'authed',
   entity: 'conferences',
-  visibility: 'na',
   handler: (c) => handleCreateConference(R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -3083,7 +2824,6 @@ defineRoute({
   path: '/api/conferences/:id/delete',
   auth: 'authed',
   entity: 'conferences',
-  visibility: 'na',
   handler: (c) => handleDeleteConference(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
@@ -3091,7 +2831,6 @@ defineRoute({
   path: '/api/conferences/:id',
   auth: 'authed',
   entity: 'conferences',
-  visibility: 'na',
   handler: (c) => handleUpdateConference(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
@@ -3103,7 +2842,6 @@ defineRoute({
   path: '/api/digest-email/daily',
   auth: 'authed',
   entity: 'digest',
-  visibility: 'na',
   // The fan-out builds each email on its recipient's handle, from the pre-binding database.
   handler: (c) => handleSendDailyDigests(E(c), { kind: 'http', request: R(c), unscopedDb: c.get('unscopedDb') }),
 });
@@ -3114,7 +2852,6 @@ defineRoute({
   path: '/api/file-activity/sync',
   auth: 'authed',
   entity: 'file-activity',
-  visibility: 'na',
   handler: (c) => handleSyncFileActivity(R(c), E(c)),
 });
 
@@ -3264,11 +3001,9 @@ export default {
 
           // Get recent team activity (last 24 hours) — activity_entries kind='update'
           const recentUpdates = await recipientDb.prepare(
-            // Peripheral Brain projects are Nick's alone (the request path's
-            // rule since 2026-05-08); this cron mailed their updates to every
-            // member. Lane B's project scoping subsumes this clause.
+            // recipientDb is bound to this member, so only updates on
+            // projects they are on reach their email.
             "SELECT actor_slug AS author, body AS content, project_id FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL AND created_at > datetime('now', '-1 day') AND actor_slug != ?"
-            + (recipientIsPi ? '' : " AND NOT EXISTS (SELECT 1 FROM projects pbv WHERE (pbv.id = activity_entries.project_id OR pbv.slug = activity_entries.project_id) AND pbv.category = 'Peripheral Brain')")
             + ' ORDER BY created_at DESC LIMIT 5'
           ).bind(member.slug).all<{ author: string; content: string; project_id: string }>();
 

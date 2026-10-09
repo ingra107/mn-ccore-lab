@@ -19,6 +19,10 @@ import {
   PUBLICATION_ROLES,
 } from './project-publications';
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
+import { viewerDb, personViewer } from '../lib/viewer-db';
+
+/** Casey's own handle: she is on no project here (membership is the only rule). */
+const caseyEnv = () => ({ ...env, DB: viewerDb(env.DB, personViewer({ slug: 'casey-eddington', email: 'eddington@umn.edu', pi: false })) }) as Env;
 
 const TEST_KEY = 'test-mode-key-129';
 const PROJ_ID = 'proj_01HTESTREADMISSIONS000000';
@@ -89,7 +93,7 @@ describe('POST /api/projects/:slug/publications', () => {
 });
 
 describe('PB visibility on link', () => {
-  it('a non-PI cannot link on a Peripheral Brain project (403 from the visibility gate)', async () => {
+  it('a non-member cannot link on a project they are not on, whatever its category', async () => {
     seed('Peripheral Brain');
     const req = new Request('https://mn-ccore-lab.pages.dev/x', {
       method: 'POST',
@@ -97,9 +101,9 @@ describe('PB visibility on link', () => {
       body: JSON.stringify({ publication_id: PUB_ID }),
     });
     const res = await handleLinkProjectPublication(
-      PROJ_SLUG, req, { email: 'eddington@umn.edu', name: 'Casey', slug: 'casey-eddington' } as import('../helpers').AuthUser, env,
+      PROJ_SLUG, req, { email: 'eddington@umn.edu', name: 'Casey', slug: 'casey-eddington' } as import('../helpers').AuthUser, caseyEnv(),
     );
-    expect(res.status).toBe(403);
+    expect(res.status >= 400 && res.status < 500, `expected a refusal, got ${res.status}`).toBe(true);
     expect(links()).toEqual([]);
   });
 });
@@ -136,16 +140,16 @@ describe('GET /api/projects/:slug/publications', () => {
 });
 
 describe('GET /api/project-publications', () => {
-  it('hides links on a Peripheral Brain project from a caller without PB visibility', async () => {
+  it('hides links on a project from a caller who is not on it; the PB key sees them', async () => {
     seed('Peripheral Brain');
     insertRow(db, 'project_publications', { project_id: PROJ_ID, publication_id: PUB_ID, role: 'primary' });
     const ours = (rows: Array<Record<string, unknown>>) => rows.filter((r) => JSON.stringify(r).includes(PUB_ID));
 
-    const hidden = await handleGetAllProjectPublications(env, false);
+    const hidden = await handleGetAllProjectPublications(caseyEnv());
     expect(hidden.status).toBe(200);
     expect(ours((await hidden.json() as { data: Array<Record<string, unknown>> }).data)).toEqual([]);
 
-    const shown = await handleGetAllProjectPublications(env, true);
+    const shown = await handleGetAllProjectPublications(env);
     expect(ours((await shown.json() as { data: Array<Record<string, unknown>> }).data)).toHaveLength(1);
   });
 });

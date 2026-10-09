@@ -24,7 +24,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type Database from 'better-sqlite3';
 import type { AuthUser, Env } from '../helpers';
-import { _resetValidationFlagsCache } from '../helpers';
+import { _resetValidationFlagsCache, _resetPiEmailsCacheForTests } from '../helpers';
 import { applyInsert } from './mutations';
 import { handleUpdateProject, handleAddComment, handleDeleteProject } from './projects';
 import { handleAddTaskComment, handleDeleteTask } from './tasks';
@@ -72,6 +72,9 @@ let env: Env;
 beforeEach(() => {
   _resetValidationFlagsCache();
   db = prodSchemaDb();
+  // The caller is the PI, as the header says: seed that, do not inherit it.
+  db.prepare("UPDATE lab_settings SET value = ? WHERE key = 'pi_emails'").run(JSON.stringify([NICK.email]));
+  _resetPiEmailsCacheForTests();
   env = { DB: d1Adapter(db), TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
   insertRow(db, 'team_members', { id: 'member_001', name: 'Nick Ingraham', slug: 'nick-ingraham', email: NICK.email });
   insertRow(db, 'projects', { id: PROJ_ID, slug: PROJ_SLUG, title: 'My Project', category: 'MNCCORE' });

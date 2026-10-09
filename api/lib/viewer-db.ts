@@ -2,7 +2,7 @@
 //
 // The access rule used to be a SQL fragment each route had to remember
 // (pbTaskVisibilitySql, canSeePbProject, the canSeePb flag threaded through
-// ~20 handlers). A route that forgot it leaked, silently, and #8842 R6 and
+// ~20 handlers; all deleted, the last on 2026-10-09). A route that forgot it leaked, silently, and #8842 R6 and
 // the 2026-10-08 meetings leak were both that. This module moves the rule
 // below the routes: the request middleware in api/index.ts swaps env.DB for
 // viewerDb(raw, viewer), so every handler that reads `E(c).DB` reads through

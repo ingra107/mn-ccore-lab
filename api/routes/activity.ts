@@ -6,12 +6,10 @@ import { ctToday } from '../lib/ct-date';
 import { activityVisibilityGate, activityHiddenClause, postActivityEntry } from '../lib/activity-entry';
 
 // GET /api/activity?limit=20&actor=slug
-// AM-3 (SEC-T0-1): `canSeePb` true for PI/Nick/service. This endpoint stays
-// public (the /pulse kiosk consumes it unauthenticated), but for non-PI
-// callers we exclude activity_log rows tied to a 'Peripheral Brain'-category
-// project so PB project titles/state don't leak via free-text descriptions.
-// Rows that aren't project-related (related_type != 'project') are unaffected.
-export async function handleGetActivity(url: URL, env: Env, canSeePb = false): Promise<Response> {
+// Public (the /pulse kiosk reads it signed out). Which rows a caller sees is
+// the activity_log rule in api/lib/table-scope.ts: a project's or task's rows
+// follow it, so a project the caller is not on adds nothing here.
+export async function handleGetActivity(url: URL, env: Env): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
   const actor = url.searchParams.get('actor');
   const includeFixtures = url.searchParams.get('include_fixtures') === '1';
@@ -21,15 +19,6 @@ export async function handleGetActivity(url: URL, env: Env, canSeePb = false): P
   if (actor) {
     where.push('actor = ?');
     params.push(actor);
-  }
-  if (!canSeePb) {
-    // Exclude rows whose related project is PB-category. related_id stores the
-    // project id OR slug, so match on either. Non-project rows (related_type
-    // != 'project') and rows with no matching PB project pass through.
-    where.push(`NOT (related_type = 'project' AND related_id IN (
-      SELECT id FROM projects WHERE category = 'Peripheral Brain'
-      UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain'
-    ))`);
   }
   if (where.length > 0) {
     query += ' WHERE ' + where.join(' AND ');

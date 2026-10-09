@@ -11,26 +11,12 @@
  */
 
 import { describe, it, expect } from 'vitest'
+import { createCategoryOptions } from '../constants/categories'
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Helpers mirrored from the components (keep in sync if constants move)
-// ──────────────────────────────────────────────────────────────────────────────
-
-const CATEGORIES_BASE = [
-  { value: 'MNCCORE', label: 'MN-CCORE', color: 'var(--teal)' },
-  { value: 'CLIF', label: 'CLIF', color: 'var(--maroon)' },
-]
-const CATEGORY_PERIPHERAL_BRAIN = { value: 'Peripheral Brain', label: 'Peripheral Brain', color: 'var(--slate)' }
-
-function checkIsNick(email: string): boolean {
-  return email === 'ingra107@umn.edu' || email === 'nicholas.ingraham@gmail.com'
-}
-
-function categoriesFor(email: string) {
-  return checkIsNick(email)
-    ? [...CATEGORIES_BASE, CATEGORY_PERIPHERAL_BRAIN]
-    : CATEGORIES_BASE
-}
+// The New Project form's options come from the real function, keyed on the
+// site-admin flag the server sets (useAuth().canShowAllProjects), not on an
+// email literal (the old checkIsNick copy, deleted 2026-10-09).
+const CATEGORIES_BASE = createCategoryOptions(false)
 
 // CategoryIcon slug logic (mirrors component)
 function iconSlug(category: string | null | undefined): string {
@@ -62,22 +48,16 @@ function iconArm(category: string | null | undefined): string {
 // ──────────────────────────────────────────────────────────────────────────────
 
 describe('CreateProjectModal category options', () => {
-  it('non-Nick user gets exactly 2 options (MNCCORE + CLIF)', () => {
-    const cats = categoriesFor('someone@example.com')
+  it('a member who is not the site admin gets exactly 2 options (MNCCORE + CLIF)', () => {
+    const cats = createCategoryOptions(false)
     expect(cats).toHaveLength(2)
     expect(cats.map((c) => c.value)).toEqual(['MNCCORE', 'CLIF'])
   })
 
-  it('Nick (UMN email) gets 3 options including Peripheral Brain', () => {
-    const cats = categoriesFor('ingra107@umn.edu')
+  it('the site admin gets 3 options including Peripheral Brain', () => {
+    const cats = createCategoryOptions(true)
     expect(cats).toHaveLength(3)
     expect(cats.map((c) => c.value)).toEqual(['MNCCORE', 'CLIF', 'Peripheral Brain'])
-  })
-
-  it('Nick (personal email) gets 3 options including Peripheral Brain', () => {
-    const cats = categoriesFor('nicholas.ingraham@gmail.com')
-    expect(cats).toHaveLength(3)
-    expect(cats.map((c) => c.value)).toContain('Peripheral Brain')
   })
 
   it('default category is MNCCORE (not the old "research" or "lab")', () => {
@@ -99,7 +79,7 @@ describe('CreateProjectModal category options', () => {
   })
 
   it('Peripheral Brain option has slate color token', () => {
-    expect(CATEGORY_PERIPHERAL_BRAIN.color).toBe('var(--slate)')
+    expect(createCategoryOptions(true).find((c) => c.value === 'Peripheral Brain')?.color).toBe('var(--slate)')
   })
 })
 

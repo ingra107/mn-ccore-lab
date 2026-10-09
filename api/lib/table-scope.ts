@@ -16,9 +16,8 @@
 // Rules run inside `SELECT * FROM main.<t> AS <t> WHERE <rule>`, so a rule
 // names its own columns as `<t>.<col>` and reaches another scoped table by
 // its bare name (which then reads that table's CTE). A rule that must see a
-// table WHOLE (membership itself; "is this a Peripheral Brain project")
-// names it `main.<t>`: rule text is ours, never a route's, so viewer-db's
-// main. refusal does not apply to it.
+// table WHOLE (membership itself) names it `main.<t>`: rule text is ours,
+// never a route's, so viewer-db's main. refusal does not apply to it.
 //
 // Lane A: meetings and the rows that hang off a meeting.
 // Lane B: projects by membership (project_members, schema-v120), tasks by
@@ -27,6 +26,14 @@
 // every person, a PI included (Nick, 2026-10-08). Only the site admin's
 // "show all projects" switch (viewer.allProjects) lifts it. The PB key never
 // reaches this file (viewer-db returns the raw handle for it).
+//
+// 2026-10-09 (Nick): project membership is the ONLY visibility rule. The
+// 'Peripheral Brain' category no longer hides anything from a person; it is a
+// label. A PB project stays private because Nick is its only member (the
+// schema-v120 join triggers skip PB projects, so assigning a PB task to
+// someone does not make them a member). Nick also ruled that a meeting tagged
+// with a project be visible to its members; that arm is built but held OFF
+// (MEETING_TAGS_GRANT_ACCESS below) pending his re-ruling.
 
 import type { ScopedViewer } from './viewer-db'
 
@@ -74,45 +81,67 @@ function idList(v: ScopedViewer): string {
 // ── meetings (Lane A) ────────────────────────────────────────────────────────
 
 /**
+ * Whether a project tag on a meeting (meetings.tags) shows the meeting to the
+ * project's members. OFF, held 2026-10-09 pending Nick's re-ruling, for two
+ * reasons found the same day:
+ *   1. meetings.tags records every project a meeting DISCUSSED (schema-v72,
+ *      PB meeting_debrief._discussed_tags), not the projects it belongs to.
+ *      On prod it would show 14 meetings to 5 non-attendees, including 1:1s.
+ *   2. Tags hold project SLUGS, and a member can create a project with any
+ *      unused slug or rename their own (slug is in PROJECT_ALLOWED_FIELDS),
+ *      then join every meeting carrying that tag. viewer-sweep.test.ts's write
+ *      sweep caught this (its POST /api/projects took the slug of a tag).
+ * Turning this on needs a tag that names a project's id, written by the
+ * meeting's owner, not a free-text slug.
+ */
+export const MEETING_TAGS_GRANT_ACCESS = false
+
+/**
  * A meeting is visible to its owner (owner_slug, stamped server-side from the
- * creator's session, schema-v119) and to a member its attendee list names
- * EXACTLY: the member's slug, or the member's whole email address (case
- * folded). Never by email prefix or local part: an external `nate@stanford.edu`
- * is not nate-mesfin (shared/attendees.ts). Tags (project slugs) confer
- * nothing; a 1:1 that discussed a project is not the project's. A PI person
- * sees every meeting (the "show all projects" switch is not meeting access).
- * Nobody sees none.
+ * creator's session, schema-v119), to a member its attendee list names
+ * EXACTLY (the member's slug, or the member's whole email address, case
+ * folded; never by email prefix or local part: an external `nate@stanford.edu`
+ * is not nate-mesfin, shared/attendees.ts), and to the members of any project
+ * its tags name (meetings.tags, schema-v72: a JSON array of project slugs).
+ * The tag arm reads the projects CTE, so "a project the viewer can see" is
+ * exactly project membership. Nick, 2026-10-09, reversing Lane A's "tags
+ * confer nothing": a meeting tagged with a project is that project's.
+ * The tag arm is OFF (MEETING_TAGS_GRANT_ACCESS) pending his re-ruling.
+ * A PI person sees every meeting (the "show all projects" switch is not
+ * meeting access). Nobody sees none.
  */
 function meetingRule(v: ScopedViewer): string | null {
   if (v.kind === 'person' && v.pi) return null
   if (v.kind !== 'person') return '0'
+  const tagArm = MEETING_TAGS_GRANT_ACCESS
+    ? ` OR EXISTS (SELECT 1 FROM json_each(CASE WHEN json_valid(meetings.tags) THEN meetings.tags ELSE '[]' END) tg `
+      + `WHERE tg.type = 'text' AND tg.value IN ${VISIBLE_PROJECT_REFS})`
+    : ''
   return `(meetings.owner_slug = ${sqlList([v.slug])} OR EXISTS (SELECT 1 FROM json_each(CASE WHEN json_valid(meetings.attendees) THEN meetings.attendees ELSE '[]' END) att `
-    + `WHERE att.type = 'text' AND lower(att.value) IN (${idList(v)})))`
+    + `WHERE att.type = 'text' AND lower(att.value) IN (${idList(v)}))${tagArm})`
 }
 
 // ── projects and tasks (Lane B) ──────────────────────────────────────────────
 
-const PB_CATEGORY = 'Peripheral Brain'
-
 /**
- * A project is visible to its members (project_members). Nothing else grants
- * it: not a role, not the PI flag, not being a task's assignee (the
- * assignment trigger makes the assignee a member instead, schema-v120).
- * A 'Peripheral Brain' project stays PI-only on top of that, so an
- * accidental add never shows a member Nick's private projects.
+ * A project is visible to its members (project_members), and to no one else:
+ * not a role, not the PI flag, not the project's category, not being a task's
+ * assignee (the assignment trigger makes the assignee a member instead,
+ * schema-v120). The site admin with "show all projects" on is not restricted.
  *
- * The site admin with "show all projects" on is not restricted. Nobody (an
- * anonymous caller, a signed-in non-member on a public GET) keeps the
- * pre-#145 rule, every project outside Peripheral Brain: the public home and
- * /pulse count projects through anonShapes that expose `status` alone, and
- * every non-public route refuses nobody before its handler runs.
+ * Nobody (an anonymous caller, a signed-in non-member on a public GET) is not
+ * a person and has no membership. It reads projects only through the public
+ * GETs' anonShapes, which expose `status` and counts alone (the public home
+ * and /pulse count active projects); every non-public route refuses it before
+ * its handler runs. For that count it keeps the pre-#145 cut, every project
+ * outside the 'Peripheral Brain' bucket, so Nick's admin and personal projects
+ * are not counted as lab work on the public site. That is the public
+ * counter's rule, not a visibility rule for any person.
  */
 function projectRule(v: ScopedViewer): string | null {
   if (v.kind === 'person' && v.allProjects) return null
-  const notPb = `COALESCE(projects.category, '') <> '${PB_CATEGORY}'`
-  if (v.kind !== 'person') return notPb
-  const member = `projects.id IN (SELECT pm.project_id FROM main.project_members pm WHERE pm.member_slug = ${sqlList([v.slug])})`
-  return v.pi ? member : `(${member} AND ${notPb})`
+  if (v.kind !== 'person') return `COALESCE(projects.category, '') <> 'Peripheral Brain'`
+  return `projects.id IN (SELECT pm.project_id FROM main.project_members pm WHERE pm.member_slug = ${sqlList([v.slug])})`
 }
 
 /** True when project rows are filtered for this viewer (every rule below keys on it). */
@@ -130,10 +159,10 @@ const inVisibleProject = (col: string) => `${col} IN ${VISIBLE_PROJECT_REFS}`
  * 'anonymous' or NULL), or a watcher. That second arm is how a task with no
  * project reaches anyone at all (Nick's 417 project-less tasks are his as
  * assignee), and how a member removed from a project still sees the tasks
- * that are theirs to finish. For a non-PI, a task inside a 'Peripheral Brain'
- * project stays hidden on both arms (the pre-#145 rule). A task's meeting_id
- * neither grants nor narrows: project membership (or the task naming you)
- * decides.
+ * that are theirs to finish. It holds for every project, Peripheral Brain
+ * included: a task Nick assigns someone is theirs to see, while its project
+ * and the project's other tasks stay hidden. A task's meeting_id neither
+ * grants nor narrows: project membership (or the task naming you) decides.
  */
 function taskRule(v: ScopedViewer): string | null {
   if (!projectsScoped(v)) return null
@@ -141,8 +170,7 @@ function taskRule(v: ScopedViewer): string | null {
   const ids = idList(v)
   const mine = `(tasks.assignee = ${sqlList([v.slug])} OR lower(COALESCE(tasks.assigned_by, '')) IN (${ids}) `
     + `OR (json_valid(tasks.watchers) AND EXISTS (SELECT 1 FROM json_each(tasks.watchers) w WHERE w.type = 'text' AND lower(w.value) IN (${ids}))))`
-  const notInPb = `NOT EXISTS (SELECT 1 FROM main.projects pbp WHERE (pbp.id = tasks.project_id OR pbp.slug = tasks.project_id) AND pbp.category = '${PB_CATEGORY}')`
-  return `(${inVisibleProject('tasks.project_id')} OR (${mine}${v.pi ? '' : ` AND ${notInPb}`}))`
+  return `(${inVisibleProject('tasks.project_id')} OR ${mine})`
 }
 
 /** A visible task's id. */
@@ -194,7 +222,8 @@ function entityVisible(v: ScopedViewer, typeCol: string, idCol: string, extra: R
 const ALL_PARENTS: readonly HubTable[] = ['meetings', 'projects', 'tasks']
 
 export const TABLE_SCOPE: Record<HubTable, Scope> = {
-  meetings: { kind: 'scoped', key: 'id', dependsOn: [], where: meetingRule },
+  // The tag arm, when on, reads the projects CTE.
+  meetings: { kind: 'scoped', key: 'id', dependsOn: MEETING_TAGS_GRANT_ACCESS ? ['projects'] : [], where: meetingRule },
   agenda_items: {
     kind: 'scoped', key: 'id', dependsOn: ['meetings'],
     where: (v) => (meetingRule(v) === null ? null : 'agenda_items.meeting_id IN (SELECT id FROM meetings)'),

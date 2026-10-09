@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { createCategoryOptions } from '../constants/categories'
 import InlineSelect from './InlineSelect'
 import InlineAssigneePicker from './InlineAssigneePicker'
 import Field from './ui/Field'
@@ -25,20 +26,10 @@ interface CreateProjectModalProps {
   }) => void
 }
 
-// Hub canonical 3-bucket categories (Stage 4 #12-followup, 2026-05-08).
-// 'Peripheral Brain' option is gated to Nick only — checked at render time.
+// Hub canonical 3-bucket categories (Stage 4 #12-followup, 2026-05-08); the
+// 'Peripheral Brain' option is the site admin's only (createCategoryOptions).
 // Legacy 4-bucket values (clif/lab/nate-mesfin/mentee) may still exist on
 // soft-deleted rows; CategoryIcon keeps fallback arms for those.
-const CATEGORIES_BASE = [
-  { value: 'MNCCORE', label: 'MN-CCORE', color: 'var(--teal)' },
-  { value: 'CLIF', label: 'CLIF', color: 'var(--maroon)' },
-]
-const CATEGORY_PERIPHERAL_BRAIN = { value: 'Peripheral Brain', label: 'Peripheral Brain', color: 'var(--slate)' }
-
-// Email-based Nick check — mirrors isNick() in api/routes/projects.ts.
-function checkIsNick(email: string): boolean {
-  return email === 'ingra107@umn.edu' || email === 'nicholas.ingraham@gmail.com'
-}
 
 // 7-stage UI ladder including Revisions (added 2026-04-23, GH #26).
 // Values are D1 lowercase canonical; labels are Title Case for display.
@@ -56,8 +47,7 @@ const STAGES = [
 export default function CreateProjectModal({ open, onClose, prefill, onCreate }: CreateProjectModalProps) {
   const { user } = useAuth()
 
-  const isNick = checkIsNick(user.email)
-  const categories = isNick ? [...CATEGORIES_BASE, CATEGORY_PERIPHERAL_BRAIN] : CATEGORIES_BASE
+  const categories = createCategoryOptions(user.canShowAllProjects)
 
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('MNCCORE')

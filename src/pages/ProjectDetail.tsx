@@ -35,6 +35,7 @@ import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
 import TypingIndicator from '../components/TypingIndicator'
 import { formatShortDate, formatMediumDate, localDateKey } from '../lib/dateUtils'
+import { meetingsForProject } from '../lib/projectMeetings'
 import { formatDbLocal } from '../lib/time'
 import Avatar from '../components/Avatar'
 import InlineSelect from '../components/InlineSelect'
@@ -80,7 +81,7 @@ import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 // P2-5: notes + comments collapsed into the single chronological `activity`
 // stream (Notes / Comments / All are filters over it, not separate tabs).
-type Tab = 'overview' | 'tasks' | 'files' | 'activity' | 'revisions' | 'literature'
+type Tab = 'overview' | 'tasks' | 'meetings' | 'files' | 'activity' | 'revisions' | 'literature'
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
@@ -210,7 +211,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   const initialTab = (() => {
     const tab = searchParams.get('tab')
     if (tab === 'notes' || tab === 'comments') return 'activity' as Tab
-    if (tab && ['overview', 'tasks', 'files', 'activity', 'revisions', 'literature'].includes(tab)) return tab as Tab
+    if (tab && ['overview', 'tasks', 'meetings', 'files', 'activity', 'revisions', 'literature'].includes(tab)) return tab as Tab
     return 'overview' as Tab
   })()
   const [activeTab, setActiveTabState] = useState<Tab>(initialTab)
@@ -538,16 +539,17 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [showAgendaForm, setShowAgendaForm] = useState(false)
   const [agendaNote, setAgendaNote] = useState('')
   useEffect(() => { if (showAgendaForm) agendaNoteInputRef.current?.focus({ preventScroll: true }) }, [showAgendaForm])
-  const nextUpcomingMeeting = useMemo(() => {
-    const today = localDateKey()
-    const upcoming = apiMeetings.find((m) => m.status === 'upcoming')
-    if (upcoming) return upcoming
-    const future = [...apiMeetings]
-      .filter((m) => m.date >= today)
-      .sort((a, b) => a.date.localeCompare(b.date))
-    return future[0] ?? null
-  }, [apiMeetings])
-  const addAgenda = useAddAgendaItem(nextUpcomingMeeting?.id ?? '')
+  // A project's meetings are the ones its tags name (Nick, 2026-10-09; the
+  // server shows a tagged meeting to the project's members). The agenda
+  // picker offers only this project's upcoming meetings, soonest first; it
+  // used to post to the lab's next meeting whatever the project.
+  const projectMeetings = useMemo(
+    () => meetingsForProject(apiMeetings, { id: project.id ?? '', slug: project.slug }, localDateKey()),
+    [apiMeetings, project.id, project.slug],
+  )
+  const [agendaMeetingPick, setAgendaMeetingPick] = useState<string | null>(null)
+  const agendaMeeting = projectMeetings.upcoming.find((m) => m.id === agendaMeetingPick) ?? projectMeetings.upcoming[0] ?? null
+  const addAgenda = useAddAgendaItem(agendaMeeting?.id ?? '')
 
   // S17 (2026-06-09): instant write + 5s undo, matching Projects/Manuscripts.
   // Stage writes go through toApiStage() (Rule 35) — the API 400s on
@@ -839,9 +841,10 @@ function ProjectDetailInner({ project }: InnerProps) {
             onChange={(val) => handleStageChange(val as Stage)}
           />
 
-          {isAuthenticated && nextUpcomingMeeting && (
+          {isAuthenticated && agendaMeeting && (
             <button
               onClick={() => setShowAgendaForm(!showAgendaForm)}
+              title={`Add an agenda item to one of this project's meetings`}
               className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px]"
               style={{
                 background: showAgendaForm ? 'var(--gold)' : 'var(--gold-active)',
@@ -891,7 +894,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
       {/* Inline agenda form */}
       <AnimatePresence>
-        {showAgendaForm && nextUpcomingMeeting && (
+        {showAgendaForm && agendaMeeting && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -918,7 +921,34 @@ function ProjectDetailInner({ project }: InnerProps) {
                       letterSpacing: '0.06em',
                     }}
                   >
-                    Add to: {nextUpcomingMeeting.title.split(':')[0]} ({formatShortDate(nextUpcomingMeeting.date)})
+                    {projectMeetings.upcoming.length === 1 ? (
+                      <>Add to: {agendaMeeting.title.split(':')[0]} ({formatShortDate(agendaMeeting.date)})</>
+                    ) : (
+                      <label className="inline-flex items-center gap-1">
+                        Add to:
+                        <select
+                          aria-label="Meeting to add this agenda item to"
+                          value={agendaMeeting.id}
+                          onChange={(e) => setAgendaMeetingPick(e.target.value)}
+                          style={{
+                            fontSize: '11px',
+                            textTransform: 'none',
+                            letterSpacing: 'normal',
+                            color: 'var(--ink)',
+                            background: 'var(--cream)',
+                            border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+                            borderRadius: 'var(--radius-md)',
+                            padding: '1px 4px',
+                          }}
+                        >
+                          {projectMeetings.upcoming.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.title.split(':')[0]} ({formatShortDate(m.date)})
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
                   </span>
                   <button
                     type="button"
@@ -995,9 +1025,11 @@ function ProjectDetailInner({ project }: InnerProps) {
       >
         {(() => {
           const activityCount = projectUpdates.length + projectComments.length
+          const meetingCount = projectMeetings.upcoming.length + projectMeetings.past.length
           const tabs: Array<{ id: Tab; label: string }> = [
             { id: 'overview', label: 'Overview' },
             { id: 'tasks', label: `Tasks${pendingTasks.length ? ` (${pendingTasks.length})` : ''}` },
+            { id: 'meetings', label: `Meetings${meetingCount ? ` (${meetingCount})` : ''}` },
             { id: 'activity', label: `Activity${activityCount ? ` (${activityCount})` : ''}` },
             { id: 'files', label: `Files${filesData.length ? ` (${filesData.length})` : ''}` },
             { id: 'revisions', label: `Revisions${revisions.length ? ` (${revisions.length})` : ''}` },
@@ -1885,6 +1917,49 @@ function ProjectDetailInner({ project }: InnerProps) {
           <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: 'var(--sp-sm)' }}>
             Drop a file or click to upload. Attachments are stored on R2 and searchable via the Search page.
           </p>
+        </div>
+      )}
+
+      {/* ── MEETINGS TAB ── the meetings whose tags name this project (Nick,
+          2026-10-09), out of the meetings the viewer can already see: the
+          list comes from the viewer-scoped /api/meetings, and a tag grants no
+          access while MEETING_TAGS_GRANT_ACCESS is off (table-scope.ts). */}
+      {activeTab === 'meetings' && (
+        <div role="tabpanel" id="projectdetail-tabpanel-meetings" aria-labelledby="projectdetail-tab-meetings" style={{ marginBottom: '2rem' }}>
+          {projectMeetings.upcoming.length + projectMeetings.past.length === 0 ? (
+            <EmptyState
+              icon={<Calendar size={32} />}
+              title="No meetings for this project yet"
+              subtitle="A meeting you own or attend appears here once it is tagged with this project."
+            />
+          ) : (
+            ([['Upcoming', projectMeetings.upcoming], ['Past', projectMeetings.past]] as const).map(([label, rows]) =>
+              rows.length === 0 ? null : (
+                <section key={label} style={{ marginBottom: 'var(--sp-lg)' }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      {label} ({rows.length})
+                    </span>
+                  </div>
+                  <ul className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-xs) 0', listStyle: 'none', margin: 0 }}>
+                    {rows.map((m) => (
+                      <li key={m.id}>
+                        <Link
+                          to={`/portal/meetings/${m.id}`}
+                          className="flex items-center gap-3"
+                          style={{ padding: 'var(--sp-sm) var(--sp-lg)', color: 'var(--ink)', textDecoration: 'none', fontSize: 'var(--value-size)' }}
+                        >
+                          <Calendar {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', flexShrink: 0 }} />
+                          <span style={{ color: 'var(--slate)', minWidth: '5.5rem', fontSize: '12px' }}>{formatShortDate(m.date)}</span>
+                          <span className="truncate">{m.title}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ),
+            )
+          )}
         </div>
       )}
 

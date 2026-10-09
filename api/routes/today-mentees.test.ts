@@ -39,7 +39,7 @@ beforeEach(() => {
   member('zz-mentee-b', 'research_team')
   member('zz-mentee-c', 'research_team')
   // mentee-a: soonest open task is 2026-10-12; the earlier ones are done,
-  // deleted, PB-private, or a QA fixture.
+  // deleted, on a project the director is not on, or a QA fixture.
   task('zz-mentee-a', '2026-10-20')
   task('zz-mentee-a', '2026-10-12')
   task('zz-mentee-a', '2026-10-01', { completed: 1, status: 'done', completed_at: '2026-10-02 00:00:00' })
@@ -53,10 +53,10 @@ beforeEach(() => {
   task('zz-director', '2026-09-01')
   env = { DB: d1Adapter(db) }
   // #145 Lane B: a non-PI director reads through their own handle. They are on
-  // the team project (and, by accident, the PB one: still hidden).
-  for (const p of ['proj_team', 'proj_pb']) {
-    db.prepare("INSERT OR IGNORE INTO project_members (project_id, member_slug, added_by) VALUES (?, 'zz-director', 'test')").run(p)
-  }
+  // the team project and not on the Peripheral Brain one, so its task is
+  // hidden: a non-member cannot see it (membership is the only rule since
+  // 2026-10-09; the category no longer hides anything by itself).
+  db.prepare("INSERT OR IGNORE INTO project_members (project_id, member_slug, added_by) VALUES ('proj_team', 'zz-director', 'test')").run()
   directorEnv = { DB: viewerDb(env.DB, personViewer({ slug: 'zz-director', email: null, pi: false })) }
 })
 
@@ -64,7 +64,7 @@ const ours = (body: any) => (body.data as Array<{ slug: string }>).filter((m) =>
 
 describe('GET /api/today/mentees', () => {
   it("a director gets each research-team member's soonest open due date, soonest first", async () => {
-    const body = await (await handleTodayMentees(directorEnv, 'zz-director', false)).json() as any
+    const body = await (await handleTodayMentees(directorEnv, 'zz-director')).json() as any
     expect(ours(body)).toEqual([
       { slug: 'zz-mentee-b', name: 'ZZ-MENTEE-B', next_due: '2026-09-21' },
       { slug: 'zz-mentee-a', name: 'ZZ-MENTEE-A', next_due: '2026-10-12' },
@@ -72,22 +72,26 @@ describe('GET /api/today/mentees', () => {
     ])
   })
 
-  it("a PI director also sees a PB-private task's date", async () => {
-    const body = await (await handleTodayMentees(env, 'zz-director', true)).json() as any
+  it("a director who is a member of the Peripheral Brain project sees its task's date (category is a label)", async () => {
+    db.prepare("INSERT INTO project_members (project_id, member_slug, added_by) VALUES ('proj_pb', 'zz-director', 'test')").run()
+    const body = await (await handleTodayMentees(directorEnv, 'zz-director')).json() as any
+    expect(ours(body).find((m: any) => m.slug === 'zz-mentee-a')).toMatchObject({ next_due: '2026-10-03' })
+  })
+
+  it("the PB key's unscoped handle sees every task's date", async () => {
+    const body = await (await handleTodayMentees(env, 'zz-director')).json() as any
     expect(ours(body).find((m: any) => m.slug === 'zz-mentee-a')).toMatchObject({ next_due: '2026-10-03' })
   })
 
   it('a non-director member, a mentee, and a caller with no team row get nothing', async () => {
     for (const viewer of ['zz-faculty', 'zz-mentee-a', 'anonymous']) {
-      for (const pi of [false, true]) {
-        const body = await (await handleTodayMentees(env, viewer, pi)).json() as any
-        expect(body.data, `${viewer} pi=${pi}`).toEqual([])
-      }
+      const body = await (await handleTodayMentees(env, viewer)).json() as any
+      expect(body.data, viewer).toEqual([])
     }
   })
 
   it('never returns a task title, only dates', async () => {
-    const text = await (await handleTodayMentees(env, 'zz-director', true)).text()
+    const text = await (await handleTodayMentees(env, 'zz-director')).text()
     expect(text).not.toContain('ZZ TASK')
     expect(text).not.toContain('test_delete_probe')
   })

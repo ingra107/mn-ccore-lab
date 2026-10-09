@@ -71,7 +71,7 @@ describe('#552 handleGetSearch — action_items leg retired', () => {
   it('never issues a query against the action_items table', async () => {
     const preparedSql: string[] = []
     const url = new URL('https://x/api/search?q=follow')
-    await handleGetSearch(url, makeEnv(preparedSql), true)
+    await handleGetSearch(url, makeEnv(preparedSql), new Request('https://internal/search'))
     const hitsActionItems = preparedSql.some((sql) => /\baction_items\b/i.test(sql))
     expect(hitsActionItems).toBe(false)
   })
@@ -79,7 +79,7 @@ describe('#552 handleGetSearch — action_items leg retired', () => {
   it('a meeting-linked task surfaces exactly once, never duplicated as type="action_item"', async () => {
     const preparedSql: string[] = []
     const url = new URL('https://x/api/search?q=follow')
-    const res = await handleGetSearch(url, makeEnv(preparedSql), true)
+    const res = await handleGetSearch(url, makeEnv(preparedSql), new Request('https://internal/search'))
     const body = await res.json() as { data: { type: string; id: string }[] }
     const hits = body.data.filter((r) => r.id === 'task-mtg-1')
     expect(hits).toHaveLength(1)

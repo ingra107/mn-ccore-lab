@@ -19,15 +19,15 @@ import { isTestFixture } from '../lib/fixtures';
 //   - every other viewer, including one with no team row ('anonymous'), gets [].
 // The viewer is the Worker-resolved slug (user.slug, #8945), passed in by the
 // route, never read from the query string, so no client can widen it. Only a
-// date leaves the server, never a task title, and PB-private tasks are dropped
-// for a non-PI caller by the same rule /api/tasks uses (the viewer-bound handle).
+// date leaves the server, never a task title, and only tasks the caller may
+// read count, by the same rule /api/tasks uses (the viewer-bound handle).
 export interface TodayMentee {
   slug: string;
   name: string;
   next_due: string | null;
 }
 
-export async function handleTodayMentees(env: Env, viewerSlug: string, _canSeePb = false): Promise<Response> {
+export async function handleTodayMentees(env: Env, viewerSlug: string): Promise<Response> {
   const mentees = await env.DB.prepare(
     `SELECT tm.slug, tm.name FROM team_members tm
      WHERE tm.member_type = 'research_team' AND tm.slug IS NOT NULL

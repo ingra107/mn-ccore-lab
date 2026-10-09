@@ -1000,9 +1000,9 @@ async function dispatchHermes(
 // Every projection / feed read of activity_entries MUST apply the visibility
 // gate IN SQL so author-only (@me) rows never reach the wire for the wrong
 // caller. Policy:
-//   - API-key / PI callers (server-to-server, canSeePb=true) see ALL rows —
+//   - API-key / PI callers (server-to-server, isPiRequest) see ALL rows —
 //     including author-only. PB is Nick's own system: his @me notes must flow to
-//     /process via the recent feeds. (A browser PI is also canSeePb=true; that's
+//     /process via the recent feeds. (A browser PI passes isPiRequest too; that's
 //     intended — the PI is the author of his own @me notes anyway.)
 //   - Browser (team) callers see team rows PLUS their own author-only rows:
 //     `visibility='team' OR actor_slug=<their slug>`.
@@ -1029,7 +1029,7 @@ export async function activityVisibilityGate(
   rootColumn?: string,
 ): Promise<ActivityVisibilityGate> {
   const p = column ? `${column}.` : '';
-  // canSeePb: API-key + PI callers see everything (including author-only).
+  // API-key + PI callers see everything (including author-only).
   if (await isPiRequest(request, env)) {
     return { clause: '1=1', binds: [] };
   }

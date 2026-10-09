@@ -20,7 +20,7 @@ export async function handleGetSubmissions(url: URL, request: Request, env: Env)
   const projectId = url.searchParams.get('project_id');
   if (!projectId) return error('project_id required', 400);
 
-  // Phase 1b-B: block non-PI callers from reading submissions of a PB-category project.
+  // A project the caller is not on is a 403 (assertProjectVisible).
   const block = await assertProjectVisible(request, env, projectId);
   if (block) return block;
 
