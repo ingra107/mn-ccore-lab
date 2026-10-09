@@ -454,7 +454,7 @@ export default function SearchPage() {
     const defaults = [
       { path: PATHS.myTasks, label: 'My tasks', icon: SquareCheck, color: 'var(--teal)' },
       { path: PATHS.deadlines, label: 'Urgent deadlines', icon: Activity, color: 'var(--maroon)' },
-      { path: PATHS.ideas, label: 'New ideas', icon: Lightbulb, color: 'var(--gold)' },
+      { path: PATHS.ideasTab, label: 'New ideas', icon: Lightbulb, color: 'var(--gold)' },
       { path: PATHS.decisions, label: 'Decisions log', icon: MessageSquare, color: 'var(--slate)' },
     ]
     const lruPaths = new Set(lru.map(e => e.path))
@@ -469,7 +469,7 @@ export default function SearchPage() {
   const iconForJumpToPath = (path: string): { Icon: typeof Search; color: string } => {
     if (path === PATHS.myTasks || path === PATHS.tasks) return { Icon: SquareCheck, color: 'var(--teal)' }
     if (path === PATHS.deadlines) return { Icon: Activity, color: 'var(--maroon)' }
-    if (path === PATHS.ideas) return { Icon: Lightbulb, color: 'var(--gold)' }
+    if (path === PATHS.ideasTab) return { Icon: Lightbulb, color: 'var(--gold)' }
     if (path === PATHS.decisions) return { Icon: MessageSquare, color: 'var(--slate)' }
     if (path === PATHS.projects) return { Icon: FolderKanban, color: 'var(--gold)' }
     if (path === PATHS.meetings) return { Icon: Users, color: 'var(--teal)' }

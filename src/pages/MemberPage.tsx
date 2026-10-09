@@ -958,7 +958,7 @@ function MemberMilestones({ slug }: { slug: string }) {
             </span>
           )}
           <Link
-            to={PATHS.menteeMilestones}
+            to={PATHS.menteeMilestonesTab}
             style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--teal)', textDecoration: 'none' }}
           >
             View all

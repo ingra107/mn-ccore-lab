@@ -18,41 +18,51 @@ export const PATHS = {
   // moves to /portal/overview as "Lab Overview."
   dashboard: `${PORTAL_PREFIX}/dashboard`,
   overview: `${PORTAL_PREFIX}/overview`,
-  personal: `${PORTAL_PREFIX}/personal`,
+  // Lab Overview's tabs (nav redesign 2026-10-09). The old pages
+  // /portal/pi/analytics, /portal/mentee-milestones and
+  // /portal/deadline-cascade redirect here.
+  piAnalyticsTab: `${PORTAL_PREFIX}/overview?tab=pi-analytics`,
+  menteeMilestonesTab: `${PORTAL_PREFIX}/overview?tab=mentee-milestones`,
+  deadlineCascadeTab: `${PORTAL_PREFIX}/overview?tab=deadline-cascade`,
   myItems: `${PORTAL_PREFIX}/my-items`,
 
   myTasks: `${PORTAL_PREFIX}/my-tasks`,
   tasks: `${PORTAL_PREFIX}/tasks`,
   calendar: `${PORTAL_PREFIX}/calendar`,
   deadlines: `${PORTAL_PREFIX}/deadlines`,
-  deadlineCascade: `${PORTAL_PREFIX}/deadline-cascade`,
 
   projects: `${PORTAL_PREFIX}/projects`,
+  // Ideas is a tab on Projects (2026-10-09); /portal/ideas redirects here.
+  ideasTab: `${PORTAL_PREFIX}/projects?tab=ideas`,
   project: (slug: string) => `${PORTAL_PREFIX}/projects/${slug}`,
   // Reference Gallery index (curated, tagged artifacts). The artifact(id) detail
   // helper below is the per-artifact page — keep both.
   artifacts: `${PORTAL_PREFIX}/artifacts`,
   artifact: (id: string) => `${PORTAL_PREFIX}/artifacts/${id}`,
+  // Library = Artifacts + Research Digest as two tabs (2026-10-09).
+  // /portal/artifacts (the index) and /portal/digest redirect here.
+  library: `${PORTAL_PREFIX}/library`,
+  digestTab: `${PORTAL_PREFIX}/library?tab=digest`,
   manuscripts: `${PORTAL_PREFIX}/manuscripts`,
-  ideas: `${PORTAL_PREFIX}/ideas`,
   ask: `${PORTAL_PREFIX}/ask`,
   decisions: `${PORTAL_PREFIX}/decisions`,
   narratives: `${PORTAL_PREFIX}/narratives`,
-  digest: `${PORTAL_PREFIX}/digest`,
   search: `${PORTAL_PREFIX}/search`,
   grants: `${PORTAL_PREFIX}/grants`,
 
   meetings: `${PORTAL_PREFIX}/meetings`,
   meeting: (id: string | number) => `${PORTAL_PREFIX}/meetings/${id}`,
   meetingPrep: (id: string | number) => `${PORTAL_PREFIX}/meetings/${id}/prep`,
-  meetingNotes: `${PORTAL_PREFIX}/meeting-notes`,
+  // Transcripts is a tab on Meetings (2026-10-09); /portal/meeting-notes
+  // redirects here.
+  transcriptsTab: `${PORTAL_PREFIX}/meetings?tab=transcripts`,
 
   activity: `${PORTAL_PREFIX}/activity`,
   analytics: `${PORTAL_PREFIX}/analytics`,
   insights: `${PORTAL_PREFIX}/insights`,
-  piAnalytics: `${PORTAL_PREFIX}/pi/analytics`,
-  menteeMilestones: `${PORTAL_PREFIX}/mentee-milestones`,
   sessions: `${PORTAL_PREFIX}/sessions`,
+  // My Launches (PI), moved out of the retired My Hub page (2026-10-09).
+  launches: `${PORTAL_PREFIX}/launches`,
   settings: `${PORTAL_PREFIX}/settings`,
   profile: `${PORTAL_PREFIX}/profile`,
 
@@ -74,6 +84,8 @@ export const PUBLIC_PATHS = {
   publication: (id: string | number) => `/publications/${id}`,
   network: '/network',
   contact: '/contact',
+  // The public "Member Hub" tab's page for a signed-in non-member (2026-10-09).
+  join: '/join',
 } as const
 
 // Note: legacy root-path redirects are defined inline as <Navigate> elements

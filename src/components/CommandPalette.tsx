@@ -6,7 +6,7 @@ import {
   Clock, FolderKanban, FileText, Lightbulb, HelpCircle, BookOpen, DollarSign,
   Users, Plus, ArrowRight, Command, CalendarPlus,
   CheckCircle2, AlertTriangle, Flag, CircleDot, Scale, GitBranch,
-  Activity, BarChart3, Settings, Bug, Library, ListChecks,
+  Activity, BarChart3, Settings, Bug, Library, ListChecks, ExternalLink,
 } from 'lucide-react'
 import { spring } from '../lib/animations'
 import { localDateKey, isOverdue } from '../lib/dateUtils'
@@ -153,35 +153,44 @@ export default function CommandPalette() {
     }
 
     // Navigation commands
-    // piOnly: the sidebar shows these only to a PI (Sidebar.tsx "PI View" /
-    // "PI Tools"); a member reaching them here landed on a PI-only page.
+    // piOnly: the sidebar shows these only to a PI (Sidebar.tsx Lab Overview
+    // tabs and the avatar menu's PI tools); a member reaching them here landed
+    // on a PI-only page.
     const navItems: { path: string; label: string; icon: typeof Search; shortcut?: string; piOnly?: boolean }[] = [
       { path: PATHS.dashboard, label: 'Today', icon: LayoutDashboard, shortcut: 'G D' },
       { path: PATHS.overview, label: 'Lab Overview', icon: LayoutDashboard },
-      { path: PATHS.personal, label: 'My Hub', icon: User, shortcut: 'G H' },
       { path: PATHS.tasks, label: 'All Tasks', icon: ListTodo, shortcut: 'G T' },
       { path: PATHS.myTasks, label: 'My Tasks', icon: SquareCheck, shortcut: 'G Y' },
       { path: PATHS.calendar, label: 'Calendar', icon: Calendar, shortcut: 'G C' },
       { path: PATHS.deadlines, label: 'Deadlines', icon: Clock, shortcut: 'G K' },
-      { path: PATHS.deadlineCascade, label: 'Deadline Cascade', icon: GitBranch },
+      { path: PATHS.deadlineCascadeTab, label: 'Deadline Cascade', icon: GitBranch },
       { path: PATHS.projects, label: 'Projects', icon: FolderKanban, shortcut: 'G P' },
       { path: PATHS.manuscripts, label: 'Manuscripts', icon: FileText },
-      { path: PATHS.ideas, label: 'Ideas', icon: Lightbulb },
+      { path: PATHS.ideasTab, label: 'Ideas', icon: Lightbulb },
       { path: PATHS.ask, label: 'Ask the Lab', icon: HelpCircle },
       { path: PATHS.decisions, label: 'Decisions', icon: Scale },
-      { path: PATHS.digest, label: 'Research Digest', icon: BookOpen, shortcut: 'G L' },
+      { path: PATHS.digestTab, label: 'Research Digest', icon: BookOpen, shortcut: 'G L' },
       { path: PATHS.grants, label: 'Grants', icon: DollarSign },
       { path: PATHS.meetings, label: 'Meetings', icon: Users, shortcut: 'G M' },
-      { path: PATHS.artifacts, label: 'Artifacts', icon: Library },
+      { path: PATHS.library, label: 'Library', icon: Library },
+      { path: `${PATHS.library}?tab=artifacts`, label: 'Artifacts', icon: Library },
       { path: PATHS.activity, label: 'Activity', icon: Activity },
       { path: PATHS.analytics, label: 'Analytics', icon: BarChart3 },
-      { path: PATHS.piAnalytics, label: 'PI Analytics', icon: BarChart3, piOnly: true },
+      { path: PATHS.piAnalyticsTab, label: 'PI Analytics', icon: BarChart3, piOnly: true },
+      { path: PATHS.menteeMilestonesTab, label: 'Mentee Milestones', icon: GitBranch },
+      { path: PATHS.insights, label: 'Insights', icon: BarChart3 },
+      { path: PATHS.profile, label: 'My Profile', icon: User },
+      { path: PATHS.myItems, label: 'My Items', icon: SquareCheck },
       { path: PATHS.settings, label: 'Settings', icon: Settings },
       { path: PATHS.team, label: 'Team', icon: Users },
       { path: PATHS.search, label: 'Search', icon: Search, shortcut: 'G S' },
       { path: PATHS.sessions, label: 'Session History', icon: Clock, piOnly: true },
+      { path: PATHS.launches, label: 'My Launches', icon: Clock, piOnly: true },
       { path: PATHS.narratives, label: 'Narratives', icon: BookOpen },
-      { path: PATHS.meetingNotes, label: 'Transcripts', icon: FileText },
+      { path: PATHS.transcriptsTab, label: 'Transcripts', icon: FileText },
+      // G H has always gone to the public site (useKeyboardShortcuts); the
+      // palette used to label it My Hub.
+      { path: '/', label: 'Back to website', icon: ExternalLink, shortcut: 'G H' },
     ]
     for (const nav of navItems) {
       if (nav.piOnly && !user?.isPi) continue
@@ -223,7 +232,7 @@ export default function CommandPalette() {
       label: 'Submit Idea',
       sublabel: 'Add a new research idea',
       icon: Lightbulb,
-      action: () => { navigate(`${PATHS.ideas}?create=true`); setOpen(false) },
+      action: () => { navigate(`${PATHS.ideasTab}&create=true`); setOpen(false) },
       category: 'action',
     })
     items.push({

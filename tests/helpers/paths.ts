@@ -11,7 +11,14 @@ export const P = {
   dashboard: '/portal/dashboard',
   team: '/portal/team',
   overview: '/portal/overview',
+  // Nav redesign (2026-10-09): these old pages now REDIRECT to a tab --
+  // personal -> dashboard, deadlineCascade/piAnalytics/menteeMilestones ->
+  // overview?tab=..., artifacts (index)/digest -> library, ideas ->
+  // projects?tab=ideas, meetingNotes -> meetings?tab=transcripts. Kept so
+  // tests that visit them exercise the redirect.
   personal: '/portal/personal',
+  library: '/portal/library',
+  launches: '/portal/launches',
   myItems: '/portal/my-items',
   myTasks: '/portal/my-tasks',
   myTasksLegacy: '/portal/my-tasks-legacy',
@@ -56,6 +63,7 @@ export const P = {
   publication: (id: string | number) => `/publications/${id}`,
   network: '/network',
   contact: '/contact',
+  join: '/join',
 } as const
 
 /**

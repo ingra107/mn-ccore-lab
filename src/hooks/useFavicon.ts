@@ -5,22 +5,19 @@ import { useUnreadCount } from './useNotifications'
 
 const SECTION_EMOJIS: Record<string, string> = {
   '/dashboard': '📊',
-  '/personal': '🏠',
   '/tasks': '✅',
   '/my-tasks': '📋',
   '/calendar': '📅',
   '/deadlines': '⏰',
   '/projects': '📁',
   '/manuscripts': '📝',
-  '/ideas': '💡',
-  '/digest': '📚',
+  '/library': '📚',
   '/grants': '💰',
   '/meetings': '🤝',
   '/activity': '⚡',
   '/analytics': '📈',
   '/search': '🔍',
   '/settings': '⚙️',
-  '/meeting-notes': '🎙️',
   '/pulse': '💓',
 }
 

@@ -19,7 +19,6 @@ import { UndoToastProvider } from './UndoToast'
 import StatusBar from './StatusBar'
 import PhaseReleaseBanner from './PhaseReleaseBanner'
 import { PATHS } from '../constants/paths'
-import { useRecordRecentlyViewed } from '../hooks/useRecentlyViewed'
 import { PORTAL_PAGE_LABELS, portalTitle } from '../constants/pageLabels'
 import { ICON_PROPS } from '../lib/iconProps'
 
@@ -27,7 +26,6 @@ export default function PortalLayout() {
   const { mode, setTheme } = useDarkMode()
   useFavicon()
   useRealtimeSync()
-  useRecordRecentlyViewed()
   const [showThemeMenu, setShowThemeMenu] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const { showHelp, setShowHelp, gPending } = useKeyboardShortcuts()

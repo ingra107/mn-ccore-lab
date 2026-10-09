@@ -139,7 +139,7 @@ export default function LatestDigest() {
             </p>
           </div>
           <Link
-            to={PATHS.digest}
+            to={PATHS.digestTab}
             className="hidden sm:flex items-center gap-1.5 text-xs transition-colors duration-200"
             style={{
               color: 'var(--gold)',
@@ -161,7 +161,7 @@ export default function LatestDigest() {
         {/* Mobile link */}
         <div className="mt-6 text-center sm:hidden">
           <Link
-            to={PATHS.digest}
+            to={PATHS.digestTab}
             className="inline-flex items-center gap-2 text-sm font-medium transition-opacity duration-200 hover:opacity-80"
             style={{
               color: 'var(--gold)',

@@ -8,7 +8,7 @@ const ROUTES = [
   { path: P.network, title: 'Network', section: 'public' },
   { path: P.contact, title: 'Contact', section: 'public' },
   { path: P.dashboard, title: 'Dashboard', section: 'portal' },
-  { path: P.personal, title: 'Personal', section: 'portal' },
+  { path: P.library, title: 'Library', section: 'portal' },
   { path: P.myItems, title: 'My Items', section: 'portal' },
   { path: P.myTasks, title: 'Tasks', section: 'portal' },
   { path: P.calendar, title: 'Calendar', section: 'portal' },

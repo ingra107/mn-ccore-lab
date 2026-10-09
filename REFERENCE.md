@@ -15,17 +15,17 @@ shims in `src/App.tsx` placed outside `RequireAuth`.
 |---|---|---|
 | **Gated (portal)** | `/portal/*` | CF Access + `RequireAuth` + `PortalLayout` chrome. 27 canonical routes. |
 | Today (Phase 38) | `/portal/dashboard` | `TodayPage.tsx` — operating-day surface (Right Now / timeline / 5 task groups / right rail) |
-| Lab Overview (Phase 38) | `/portal/overview` | `Dashboard.tsx` (was `/portal/dashboard` pre-Phase-38) — weekly-planning card grid |
+| Lab Overview (Phase 38) | `/portal/overview` | `hosts/LabOverviewHost.tsx` tabs (2026-10-09): Overview = `Dashboard.tsx` (weekly-planning card grid), `?tab=pi-analytics` (PI only), `?tab=mentee-milestones`, `?tab=deadline-cascade`. Sidebar entry is PI-only; the page is open to all. |
 | Tasks | `/portal/tasks`, `/portal/my-tasks`, `/portal/my-items` | `/portal/tasks` redirects → `/portal/my-tasks`. `/portal/my-tasks` = `UnifiedMyTasks.tsx` (Phase 38 — 3 views, shared toolbar). `/portal/my-tasks-legacy` still mounted (retire overdue since 2026-05-02 — removal tracked in WORKPLAN "Codex 5-pass review" T2' DEL). |
-| Projects | `/portal/projects`, `/portal/projects/:slug` | — |
-| Data | `/portal/manuscripts`, `/portal/deadlines`, `/portal/deadline-cascade`, `/portal/ideas`, `/portal/decisions`, `/portal/grants`, `/portal/publications` | — |
-| Meetings | `/portal/meetings`, `/portal/meetings/:id`, `/portal/meeting-prep`, `/portal/meeting-notes` | — |
+| Projects | `/portal/projects`, `/portal/projects/:slug` | `hosts/ProjectsHost.tsx`: Projects tab + `?tab=ideas` (2026-10-09). Star = per-person server pin (`/api/pins`, watchlist table). |
+| Data | `/portal/manuscripts`, `/portal/deadlines`, `/portal/decisions`, `/portal/grants`, `/portal/library` | Library = Artifacts + `?tab=digest` (2026-10-09). Deadlines carries the expiring-regulatory list with per-item .ics. |
+| Meetings | `/portal/meetings`, `/portal/meetings/:id`, `/portal/meetings/:id/prep` | `hosts/MeetingsHost.tsx`: Meetings tab + `?tab=transcripts` (2026-10-09). |
 | Calendar | `/portal/calendar` | — |
-| Analytics | `/portal/analytics`, `/portal/pi-analytics`, `/portal/personal` | — |
+| Analytics | `/portal/analytics`, `/portal/insights` | Avatar menu (2026-10-09). |
 | Team (portal) | `/portal/team/:slug`, `/portal/team/:slug/trajectory` | Phase 36c — keeps chrome for logged-in users |
-| Other | `/portal/settings`, `/portal/search`, `/portal/activity`, `/portal/narratives`, `/portal/sessions`, `/portal/ask`, `/portal/digest`, `/portal/mentee-milestones` | `/portal/pb` retired 2026-06-10 (IA-1) |
-| **Public (marketing)** | `/`, `/team`, `/team/:slug`, `/team/:slug/trajectory`, `/nick`, `/nate`, `/publications`, `/publications/:id`, `/network`, `/contact`, `/pulse` | Layout chrome — no auth |
-| **Redirects** | `/dashboard`, `/projects/:slug`, ... → `/portal/...` | `<Navigate>` shims; outside `RequireAuth` so bookmarks bounce pre-auth |
+| Other | `/portal/settings`, `/portal/profile`, `/portal/search`, `/portal/activity`, `/portal/narratives`, `/portal/sessions`, `/portal/launches`, `/portal/ask` | `/portal/pb` retired 2026-06-10 (IA-1). Sessions + Launches = avatar menu PI tools. |
+| **Public (marketing)** | `/`, `/team`, `/team/:slug`, `/team/:slug/trajectory`, `/nick`, `/nate`, `/publications`, `/publications/:id`, `/network`, `/contact`, `/join`, `/pulse` | Layout chrome — no auth. The "Member Hub" tab goes to Today (member), the CF Access login (signed out) or `/join` (signed-in non-member). |
+| **Redirects** | `/dashboard`, `/projects/:slug`, ... → `/portal/...` | `<Navigate>` shims; outside `RequireAuth` so bookmarks bounce pre-auth. Nav redesign (2026-10-09): `/portal/personal` → Today; `/portal/artifacts` (index) → Library; `/portal/digest` → Library digest tab; `/portal/ideas` → Projects ideas tab; `/portal/meeting-notes` → Meetings transcripts tab; `/portal/pi/analytics`, `/portal/mentee-milestones`, `/portal/deadline-cascade` → Lab Overview tabs (query kept). |
 
 **API routes** (`/api/*`) are NOT gated by CF Access. Auth enforced
 server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.

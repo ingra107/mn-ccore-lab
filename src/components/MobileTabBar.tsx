@@ -2,7 +2,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { lazyRoute } from '../lib/lazyRoute'
 import { Link, useLocation } from 'react-router-dom'
 import {
-  Home,
+  LayoutDashboard,
   ListChecks,
   FolderKanban,
   Search,
@@ -11,35 +11,43 @@ import {
   Calendar,
   Clock,
   FileText,
-  Lightbulb,
-  SquareCheck,
   Users,
   Activity,
   BarChart3,
   HelpCircle,
   Award,
   BookOpen,
-  Newspaper,
+  Library,
   Target,
   Settings,
   Bug,
   LayoutGrid,
+  User,
+  TrendingUp,
+  History,
+  Zap,
+  Video,
+  ExternalLink,
 } from 'lucide-react'
 import { PATHS } from '../constants/paths'
+import { PORTAL_PAGE_LABELS } from '../constants/pageLabels'
 import { ICON_PROPS } from '../lib/iconProps'
+import { useAuth } from '../hooks/useAuth'
 
 const BugReportModal = lazyRoute(() => import('./BugReportModal'))
 
 
 /**
- * Mobile bottom tab bar — 4 primary routes + "More" overflow drawer
- * that exposes the remaining ~14 portal routes. Hidden on desktop via
+ * Mobile bottom tab bar — Today, Tasks, Projects, Search + a "More" drawer
+ * whose groups mirror the desktop sidebar (nav redesign, 2026-10-09). Hidden on desktop via
  * `lg:hidden` — it stays visible through iPad portrait (768–1023), the band
  * where the desktop sidebar is absent (UX-9, 2026-06-09). Respects
  * safe-area-inset-bottom.
  */
 export default function MobileTabBar() {
   const { pathname } = useLocation()
+  const { user } = useAuth()
+  const isPi = user?.isPi ?? false
   const [overflowOpen, setOverflowOpen] = useState(false)
   const [bugReportOpen, setBugReportOpen] = useState(false)
 
@@ -63,7 +71,7 @@ export default function MobileTabBar() {
   }, [overflowOpen])
 
   const primaryTabs = [
-    { to: PATHS.dashboard, icon: Home, label: 'Home' },
+    { to: PATHS.dashboard, icon: LayoutDashboard, label: 'Today' },
     { to: PATHS.myTasks, icon: ListChecks, label: 'Tasks' },
     { to: PATHS.projects, icon: FolderKanban, label: 'Projects' },
     { to: PATHS.search, icon: Search, label: 'Search' },
@@ -107,7 +115,7 @@ export default function MobileTabBar() {
           )
         })}
 
-        {/* "More" overflow button — exposes remaining 14 portal routes */}
+        {/* "More" — every other page, grouped like the sidebar */}
         <button
           type="button"
           onClick={() => setOverflowOpen(true)}
@@ -165,13 +173,11 @@ export default function MobileTabBar() {
               <div
                 style={{
                   fontSize: 'var(--text-label)',
-                  textTransform: 'uppercase' as const,
-                  letterSpacing: '0.06em',
                   opacity: 0.85,
                   fontWeight: 500,
                 }}
               >
-                All Sections
+                All pages
               </div>
               <button
                 type="button"
@@ -191,13 +197,11 @@ export default function MobileTabBar() {
               </button>
             </div>
 
-            {OVERFLOW_SECTIONS.map((section) => (
+            {OVERFLOW_SECTIONS.filter((section) => !section.piOnly || isPi).map((section) => (
               <div key={section.title} style={{ marginBottom: 12 }}>
                 <div
                   style={{
                     fontSize: '10px',
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: '0.06em',
                     opacity: 0.85,
                     marginBottom: 6,
                     paddingLeft: 12,
@@ -237,8 +241,6 @@ export default function MobileTabBar() {
               <div
                 style={{
                   fontSize: '10px',
-                  textTransform: 'uppercase' as const,
-                  letterSpacing: '0.06em',
                   opacity: 0.85,
                   marginBottom: 6,
                   paddingLeft: 12,
@@ -265,7 +267,7 @@ export default function MobileTabBar() {
                 }}
               >
                 <Bug size={18} {...ICON_PROPS} aria-hidden="true" />
-                <span>Report a Bug</span>
+                <span>Report a bug</span>
               </button>
             </div>
           </div>
@@ -280,44 +282,57 @@ export default function MobileTabBar() {
   )
 }
 
-// Overflow routes — the ~16 portal routes not in the primary 4 tabs.
-// Grouped by functional section; sorted within each section by usage frequency.
-const OVERFLOW_SECTIONS: {
-  title: string
-  routes: { to: string; icon: typeof Home; label: string }[]
-}[] = [
+// Overflow routes, grouped like the desktop sidebar (2026-10-09): the main
+// items not in the tab bar, Lab Overview for a PI, the avatar menu, PI tools,
+// then the pages reached only from the command palette on desktop (kept here
+// because a phone has no Ctrl+K). Labels come from the one page-name map.
+type OverflowRoute = { to: string; icon: typeof LayoutDashboard; label: string }
+const OVERFLOW_SECTIONS: { title: string; piOnly?: boolean; routes: OverflowRoute[] }[] = [
   {
-    title: 'Work',
+    title: 'Hub',
     routes: [
-      { to: PATHS.personal, icon: SquareCheck, label: 'Personal' },
-      { to: PATHS.calendar, icon: Calendar, label: 'Calendar' },
-      { to: PATHS.deadlines, icon: Clock, label: 'Deadlines' },
+      { to: PATHS.calendar, icon: Calendar, label: PORTAL_PAGE_LABELS[PATHS.calendar] },
+      { to: PATHS.deadlines, icon: Clock, label: PORTAL_PAGE_LABELS[PATHS.deadlines] },
+      { to: PATHS.meetings, icon: Video, label: PORTAL_PAGE_LABELS[PATHS.meetings] },
+      { to: PATHS.manuscripts, icon: FileText, label: PORTAL_PAGE_LABELS[PATHS.manuscripts] },
+      { to: PATHS.grants, icon: Award, label: PORTAL_PAGE_LABELS[PATHS.grants] },
+      { to: PATHS.library, icon: Library, label: PORTAL_PAGE_LABELS[PATHS.library] },
+      { to: PATHS.team, icon: Users, label: PORTAL_PAGE_LABELS[PATHS.team] },
+    ],
+  },
+  {
+    title: 'PI',
+    piOnly: true,
+    routes: [
+      { to: PATHS.overview, icon: LayoutGrid, label: PORTAL_PAGE_LABELS[PATHS.overview] },
+    ],
+  },
+  {
+    title: 'You',
+    routes: [
+      { to: PATHS.profile, icon: User, label: PORTAL_PAGE_LABELS[PATHS.profile] },
       { to: PATHS.myItems, icon: Target, label: 'My Items' },
-      { to: PATHS.overview, icon: LayoutGrid, label: 'Lab Overview' },
+      { to: PATHS.settings, icon: Settings, label: PORTAL_PAGE_LABELS[PATHS.settings] },
+      { to: PATHS.activity, icon: Activity, label: PORTAL_PAGE_LABELS[PATHS.activity] },
+      { to: PATHS.analytics, icon: BarChart3, label: PORTAL_PAGE_LABELS[PATHS.analytics] },
+      { to: PATHS.insights, icon: TrendingUp, label: PORTAL_PAGE_LABELS[PATHS.insights] },
     ],
   },
   {
-    title: 'Research',
+    title: 'PI tools',
+    piOnly: true,
     routes: [
-      { to: PATHS.manuscripts, icon: FileText, label: 'Manuscripts' },
-      { to: PATHS.ideas, icon: Lightbulb, label: 'Ideas' },
-      { to: PATHS.decisions, icon: HelpCircle, label: 'Decisions' },
-      { to: PATHS.grants, icon: Award, label: 'Grants' },
-      { to: PATHS.meetings, icon: Users, label: 'Meetings' },
-      { to: PATHS.meetingNotes, icon: BookOpen, label: 'Meeting Notes' },
-      { to: PATHS.digest, icon: Newspaper, label: 'Research Digest' },
-      { to: PATHS.ask, icon: HelpCircle, label: 'Ask the Lab' },
-      { to: PATHS.narratives, icon: BookOpen, label: 'Narratives' },
+      { to: PATHS.sessions, icon: History, label: PORTAL_PAGE_LABELS[PATHS.sessions] },
+      { to: PATHS.launches, icon: Zap, label: PORTAL_PAGE_LABELS[PATHS.launches] },
     ],
   },
   {
-    title: 'Lab',
+    title: 'More',
     routes: [
-      { to: PATHS.activity, icon: Activity, label: 'Activity' },
-      { to: PATHS.analytics, icon: BarChart3, label: 'Analytics' },
-      { to: PATHS.piAnalytics, icon: BarChart3, label: 'PI Analytics' },
-      { to: PATHS.menteeMilestones, icon: Target, label: 'Mentee Milestones' },
-      { to: PATHS.settings, icon: Settings, label: 'Settings' },
+      { to: PATHS.ask, icon: HelpCircle, label: PORTAL_PAGE_LABELS[PATHS.ask] },
+      { to: PATHS.narratives, icon: BookOpen, label: PORTAL_PAGE_LABELS[PATHS.narratives] },
+      { to: PATHS.decisions, icon: HelpCircle, label: PORTAL_PAGE_LABELS[PATHS.decisions] },
+      { to: '/', icon: ExternalLink, label: 'Back to website' },
     ],
   },
 ]

@@ -562,7 +562,7 @@ export default function Dashboard() {
               Meeting
             </Button>
             <Link
-              to={`${PATHS.ideas}?create=true`}
+              to={`${PATHS.ideasTab}&create=true`}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5 portal-footer-link"
               style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
             >
@@ -607,7 +607,7 @@ export default function Dashboard() {
 
         {expiringRegulatory.length > 0 && (
           <Link
-            to={PATHS.personal}
+            to={`${PATHS.deadlines}#regulatory`}
             className="flex items-center gap-3 mb-2 px-4 py-2.5 rounded-xl"
             style={{
               background: 'var(--maroon-hover)',

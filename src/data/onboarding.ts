@@ -32,10 +32,12 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 'personal',
     day: 1,
-    title: 'Check your Personal Hub',
-    description: 'Your assigned tasks, deadlines, and notifications live here.',
-    action: 'Visit Personal Hub',
-    link: '/personal',
+    // My Hub merged into Today (2026-10-09); the step id stays so a stored
+    // completion still counts.
+    title: 'Check Today',
+    description: 'Your tasks, meetings, and what needs you today.',
+    action: 'Visit Today',
+    link: '/portal/dashboard',
     category: 'explore',
   },
 

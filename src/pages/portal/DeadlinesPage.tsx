@@ -29,6 +29,7 @@ import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import type { TaskRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import RegulatoryExpiringList from '../../components/RegulatoryExpiringList'
 
 interface DeadlineItem {
   id: string
@@ -266,7 +267,7 @@ export default function DeadlinesPage() {
             })}
           </div>
           <Link
-            to={PATHS.deadlineCascade}
+            to={PATHS.deadlineCascadeTab}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
             style={{
               fontSize: '12px',
@@ -319,6 +320,10 @@ export default function DeadlinesPage() {
           />
         </div>
       </PageHeader>
+
+      {/* Regulatory items expiring within 60 days, each with an .ics reminder
+          (moved here from the retired My Hub page, 2026-10-09). */}
+      <RegulatoryExpiringList />
 
       {/* Urgent deadline banner — CLS fix R7: reserve 72px slot */}
       <div style={{ minHeight: '72px', marginTop: 'var(--sp-md)', contain: 'layout' }}>

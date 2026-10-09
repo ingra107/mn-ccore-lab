@@ -38,7 +38,7 @@ export default function WelcomeBanner() {
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)', flexShrink: 0 }}>
           <Link
-            to={PATHS.personal}
+            to={PATHS.profile}
             className="portal-footer-link"
             style={{
               fontSize: 'var(--text-small)',

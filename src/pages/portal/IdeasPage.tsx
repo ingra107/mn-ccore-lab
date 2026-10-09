@@ -73,7 +73,14 @@ export default function IdeasPage() {
     if (searchParams.get('create') === 'true') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowCreate(true)
-      setSearchParams({}, { replace: true })
+      // Drop only ?create. Ideas is a tab on Projects (?tab=ideas, 2026-10-09);
+      // clearing every param would switch the page back to the Projects tab
+      // and unmount this form the moment it opened.
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('create')
+        return next
+      }, { replace: true })
     }
   }, [searchParams, setSearchParams])
 

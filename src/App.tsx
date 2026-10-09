@@ -15,7 +15,7 @@ import { TooltipLayer } from './components/TooltipLayer'
 const Home = lazyRoute(() => import('./pages/Home'))
 import { AuthProvider } from './context/AuthContext'
 import { AllProjectsRouteGuard } from './components/AllProjectsControls'
-import { PATHS } from './constants/paths'
+import { PATHS, PUBLIC_PATHS } from './constants/paths'
 
 // Error boundary to prevent one page crash from taking down the app
 class ErrorBoundary extends Component<
@@ -120,46 +120,44 @@ const MemberPage = lazyRoute(() => import('./pages/MemberPage'))
 const Publications = lazyRoute(() => import('./pages/Publications'))
 const PublicationDetail = lazyRoute(() => import('./pages/PublicationDetail'))
 const Contact = lazyRoute(() => import('./pages/Contact'))
+const JoinPage = lazyRoute(() => import('./pages/JoinPage'))
 const NotFound = lazyRoute(() => import('./pages/NotFound'))
 const Network = lazyRoute(() => import('./pages/Network'))
 
 // Portal pages — lazy-loaded (existing)
-const Dashboard = lazyRoute(() => import('./pages/Dashboard'))
 const TodayPage = lazyRoute(() => import('./pages/portal/TodayPage'))
-const Projects = lazyRoute(() => import('./pages/Projects'))
 const ProjectDetail = lazyRoute(() => import('./pages/ProjectDetail'))
 const ArtifactPage = lazyRoute(() => import('./pages/portal/ArtifactPage'))
-const ArtifactsGalleryPage = lazyRoute(() => import('./pages/portal/ArtifactsGalleryPage'))
-const Meetings = lazyRoute(() => import('./pages/Meetings'))
 const MeetingDetail = lazyRoute(() => import('./pages/MeetingDetail'))
 const MeetingPrep = lazyRoute(() => import('./pages/MeetingPrep'))
-const Digest = lazyRoute(() => import('./pages/Digest'))
+
+// Tabbed pages (nav redesign, 2026-10-09). Each tab renders the page it
+// replaced, unchanged; the old routes redirect to the tab (see below).
+const LabOverviewHost = lazyRoute(() => import('./pages/portal/hosts/LabOverviewHost'))
+const ProjectsHost = lazyRoute(() => import('./pages/portal/hosts/ProjectsHost'))
+const MeetingsHost = lazyRoute(() => import('./pages/portal/hosts/MeetingsHost'))
+const LibraryPage = lazyRoute(() => import('./pages/portal/hosts/LibraryPage'))
+const LaunchesPage = lazyRoute(() => import('./pages/portal/LaunchesPage'))
 
 const TrajectoryPage = lazyRoute(() => import('./pages/TrajectoryPage'))
 const MyItems = lazyRoute(() => import('./pages/MyItems'))
 
 // New portal pages (Phase H1 — placeholders, built out in later phases)
-const PersonalPage = lazyRoute(() => import('./pages/portal/PersonalPage'))
 const UnifiedMyTasks = lazyRoute(() => import('./pages/MyTasks'))
 const CalendarPage = lazyRoute(() => import('./pages/portal/CalendarPage'))
 const DeadlinesPage = lazyRoute(() => import('./pages/portal/DeadlinesPage'))
 const ManuscriptsPage = lazyRoute(() => import('./pages/portal/ManuscriptsPage'))
-const IdeasPage = lazyRoute(() => import('./pages/portal/IdeasPage'))
 const SearchPage = lazyRoute(() => import('./pages/portal/SearchPage'))
 const ActivityPage = lazyRoute(() => import('./pages/portal/ActivityPage'))
 const AnalyticsPage = lazyRoute(() => import('./pages/portal/AnalyticsPage'))
 const InsightsPage = lazyRoute(() => import('./pages/portal/InsightsPage'))
 const SettingsPage = lazyRoute(() => import('./pages/portal/SettingsPage'))
 const ProfilePage = lazyRoute(() => import('./pages/portal/ProfilePage'))
-const MeetingNotesPage = lazyRoute(() => import('./pages/portal/MeetingNotesPage'))
 const DecisionsPage = lazyRoute(() => import('./pages/portal/DecisionsPage'))
 const NarrativesPage = lazyRoute(() => import('./pages/portal/NarrativesPage'))
 const AskTheLab = lazyRoute(() => import('./pages/portal/AskTheLab'))
-const PIAnalytics = lazyRoute(() => import('./pages/portal/PIAnalytics'))
 const TeamDirectoryPage = lazyRoute(() => import('./pages/portal/TeamDirectoryPage'))
 const SessionHistory = lazyRoute(() => import('./pages/portal/SessionHistory'))
-const MenteeMilestonesPage = lazyRoute(() => import('./pages/portal/MenteeMilestonesPage'))
-const DeadlineCascadePage = lazyRoute(() => import('./pages/portal/DeadlineCascadePage'))
 const Pulse = lazyRoute(() => import('./pages/Pulse'))
 const GrantsPage = lazyRoute(() => import('./pages/portal/GrantsPage'))
 
@@ -208,6 +206,21 @@ function FullLoadRedirect({ to }: { to: string }) {
   return <PageLoader />
 }
 
+/**
+ * Redirect to a target that carries its own query (a tab: /portal/projects?
+ * tab=ideas) and MERGE the incoming query into it, so /portal/ideas?create=true
+ * lands on /portal/projects?tab=ideas&create=true. NavigateKeepSearch would
+ * append a second '?'. The target's own keys win over an incoming duplicate.
+ */
+function NavigateToTab({ to }: { to: string }) {
+  const { search } = useLocation()
+  const [path, query = ''] = to.split('?')
+  const merged = new URLSearchParams(search)
+  for (const [k, v] of new URLSearchParams(query)) merged.set(k, v)
+  const qs = merged.toString()
+  return <Navigate to={qs ? `${path}?${qs}` : path} replace />
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -241,6 +254,8 @@ export default function App() {
                   <Route path="/publications/:id" element={<ErrorBoundary><PublicationDetail /></ErrorBoundary>} />
                   <Route path="/network" element={<ErrorBoundary><Network /></ErrorBoundary>} />
                   <Route path="/contact" element={<ErrorBoundary><Contact /></ErrorBoundary>} />
+                  {/* The Member Hub tab's page for a signed-in non-member. */}
+                  <Route path={PUBLIC_PATHS.join} element={<ErrorBoundary><JoinPage /></ErrorBoundary>} />
                   {/* Unknown paths: a not-found page in the public chrome, with
                       a link home and one into the Hub (sign-in when logged
                       out). It replaced a redirect to /portal/dashboard, which
@@ -259,7 +274,8 @@ export default function App() {
                     Cloudflare Access policy, so only a real request to
                     /portal/dashboard reaches the edge login for signed-out users. */}
                 <Route path="/portal" element={<FullLoadRedirect to="/portal/dashboard" />} />
-                <Route path="/personal" element={<NavigateKeepSearch to="/portal/personal" />} />
+                {/* My Hub merged into Today (2026-10-09). */}
+                <Route path="/personal" element={<NavigateKeepSearch to={PATHS.dashboard} />} />
                 {/* Entity-bearing legacy redirects MUST keep the query string —
                     notification links are minted as /tasks?open=<id>; a plain
                     <Navigate> drops ?open so the click landed on "just another
@@ -269,30 +285,45 @@ export default function App() {
                 <Route path="/tasks" element={<NavigateKeepSearch to="/portal/my-tasks" />} />
                 <Route path="/calendar" element={<NavigateKeepSearch to="/portal/calendar" />} />
                 <Route path="/deadlines" element={<NavigateKeepSearch to="/portal/deadlines" />} />
-                <Route path="/deadline-cascade" element={<NavigateKeepSearch to="/portal/deadline-cascade" />} />
+                <Route path="/deadline-cascade" element={<NavigateToTab to={PATHS.deadlineCascadeTab} />} />
                 <Route path="/projects" element={<NavigateKeepSearch to="/portal/projects" />} />
                 <Route path="/projects/:slug" element={<NavigateWithParams to="/portal/projects/:slug" />} />
                 <Route path="/manuscripts" element={<NavigateKeepSearch to="/portal/manuscripts" />} />
-                <Route path="/ideas" element={<NavigateKeepSearch to="/portal/ideas" />} />
+                <Route path="/ideas" element={<NavigateToTab to={PATHS.ideasTab} />} />
                 <Route path="/ask" element={<NavigateKeepSearch to="/portal/ask" />} />
                 <Route path="/decisions" element={<NavigateKeepSearch to="/portal/decisions" />} />
                 <Route path="/narratives" element={<NavigateKeepSearch to="/portal/narratives" />} />
-                <Route path="/digest" element={<NavigateKeepSearch to="/portal/digest" />} />
-                <Route path="/research-digest" element={<NavigateKeepSearch to="/portal/digest" />} />
+                <Route path="/digest" element={<NavigateToTab to={PATHS.digestTab} />} />
+                <Route path="/research-digest" element={<NavigateToTab to={PATHS.digestTab} />} />
                 <Route path="/search" element={<NavigateKeepSearch to="/portal/search" />} />
                 <Route path="/grants" element={<NavigateKeepSearch to="/portal/grants" />} />
                 <Route path="/meetings" element={<NavigateKeepSearch to="/portal/meetings" />} />
                 <Route path="/meetings/:id" element={<NavigateWithParams to="/portal/meetings/:id" />} />
                 <Route path="/meetings/:id/prep" element={<NavigateWithParams to="/portal/meetings/:id/prep" />} />
                 <Route path="/meeting-prep" element={<NavigateKeepSearch to="/portal/meetings" />} />
-                <Route path="/meeting-notes" element={<NavigateKeepSearch to="/portal/meeting-notes" />} />
+                <Route path="/meeting-notes" element={<NavigateToTab to={PATHS.transcriptsTab} />} />
                 <Route path="/activity" element={<NavigateKeepSearch to="/portal/activity" />} />
                 <Route path="/analytics" element={<NavigateKeepSearch to="/portal/analytics" />} />
-                <Route path="/pi/analytics" element={<Navigate to="/portal/pi/analytics" replace />} />
-                <Route path="/pi-analytics" element={<Navigate to="/portal/pi/analytics" replace />} />
-                <Route path="/mentee-milestones" element={<NavigateKeepSearch to="/portal/mentee-milestones" />} />
+                <Route path="/pi/analytics" element={<NavigateToTab to={PATHS.piAnalyticsTab} />} />
+                <Route path="/pi-analytics" element={<NavigateToTab to={PATHS.piAnalyticsTab} />} />
+                <Route path="/mentee-milestones" element={<NavigateToTab to={PATHS.menteeMilestonesTab} />} />
                 <Route path="/sessions" element={<NavigateKeepSearch to="/portal/sessions" />} />
                 <Route path="/settings" element={<NavigateKeepSearch to="/portal/settings" />} />
+                <Route path="/artifacts" element={<NavigateToTab to={PATHS.library} />} />
+                <Route path="/library" element={<NavigateToTab to={PATHS.library} />} />
+
+                {/* Pages merged by the nav redesign (2026-10-09). Every old
+                    portal URL redirects to its new home, query kept, so no
+                    bookmark, notification link or test path 404s. Outside
+                    RequireAuth like the shims above: the target handles auth. */}
+                <Route path="/portal/personal" element={<NavigateKeepSearch to={PATHS.dashboard} />} />
+                <Route path="/portal/artifacts" element={<NavigateToTab to={PATHS.library} />} />
+                <Route path="/portal/digest" element={<NavigateToTab to={PATHS.digestTab} />} />
+                <Route path="/portal/ideas" element={<NavigateToTab to={PATHS.ideasTab} />} />
+                <Route path="/portal/meeting-notes" element={<NavigateToTab to={PATHS.transcriptsTab} />} />
+                <Route path="/portal/pi/analytics" element={<NavigateToTab to={PATHS.piAnalyticsTab} />} />
+                <Route path="/portal/mentee-milestones" element={<NavigateToTab to={PATHS.menteeMilestonesTab} />} />
+                <Route path="/portal/deadline-cascade" element={<NavigateToTab to={PATHS.deadlineCascadeTab} />} />
 
                 {/* Portal pages: sidebar layout — wrapped in RequireAuth so
                     flipping VITE_REQUIRE_AUTH=1 or appending ?strict=1 to
@@ -303,8 +334,7 @@ export default function App() {
                       The old card-grid Dashboard moved to /portal/overview
                       below, kept indefinitely as Lab Overview. */}
                   <Route path="/portal/dashboard" element={<ErrorBoundary><PageErrorBoundary pageName="Today"><TodayPage /></PageErrorBoundary></ErrorBoundary>} />
-                  <Route path="/portal/overview" element={<ErrorBoundary><PageErrorBoundary pageName="LabOverview"><Dashboard /></PageErrorBoundary></ErrorBoundary>} />
-                  <Route path="/portal/personal" element={<ErrorBoundary><PersonalPage /></ErrorBoundary>} />
+                  <Route path="/portal/overview" element={<ErrorBoundary><LabOverviewHost /></ErrorBoundary>} />
                   <Route path="/portal/my-items" element={<ErrorBoundary><MyItems /></ErrorBoundary>} />
                   {/* MyTasks Round 2 — unified 3-view page (List / Lanes / Columns,
                       List default on bare arrival; ?view= deep-links win). */}
@@ -312,29 +342,24 @@ export default function App() {
                   <Route path="/portal/tasks" element={<NavigateKeepSearch to="/portal/my-tasks" />} />
                   <Route path="/portal/calendar" element={<ErrorBoundary><CalendarPage /></ErrorBoundary>} />
                   <Route path="/portal/deadlines" element={<ErrorBoundary><DeadlinesPage /></ErrorBoundary>} />
-                  <Route path="/portal/deadline-cascade" element={<ErrorBoundary><DeadlineCascadePage /></ErrorBoundary>} />
-                  <Route path="/portal/projects" element={<ErrorBoundary><Projects /></ErrorBoundary>} />
+                  <Route path="/portal/projects" element={<ErrorBoundary><ProjectsHost /></ErrorBoundary>} />
                   <Route path="/portal/projects/:slug" element={<ErrorBoundary><PageErrorBoundary pageName="ProjectDetail"><ProjectDetail /></PageErrorBoundary></ErrorBoundary>} />
-                  <Route path="/portal/artifacts" element={<ErrorBoundary><PageErrorBoundary pageName="ArtifactsGalleryPage"><ArtifactsGalleryPage /></PageErrorBoundary></ErrorBoundary>} />
+                  <Route path="/portal/library" element={<ErrorBoundary><PageErrorBoundary pageName="Library"><LibraryPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/artifacts/:id" element={<ErrorBoundary><PageErrorBoundary pageName="ArtifactPage"><ArtifactPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/manuscripts" element={<ErrorBoundary><ManuscriptsPage /></ErrorBoundary>} />
-                  <Route path="/portal/ideas" element={<ErrorBoundary><IdeasPage /></ErrorBoundary>} />
                   <Route path="/portal/ask" element={<ErrorBoundary><AskTheLab /></ErrorBoundary>} />
                   <Route path="/portal/decisions" element={<ErrorBoundary><PageErrorBoundary pageName="DecisionsPage"><DecisionsPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/narratives" element={<ErrorBoundary><NarrativesPage /></ErrorBoundary>} />
-                  <Route path="/portal/digest" element={<ErrorBoundary><Digest /></ErrorBoundary>} />
                   <Route path="/portal/search" element={<ErrorBoundary><SearchPage /></ErrorBoundary>} />
                   <Route path="/portal/grants" element={<ErrorBoundary><PageErrorBoundary pageName="Grants"><GrantsPage /></PageErrorBoundary></ErrorBoundary>} />
-                  <Route path="/portal/meetings" element={<ErrorBoundary><Meetings /></ErrorBoundary>} />
+                  <Route path="/portal/meetings" element={<ErrorBoundary><MeetingsHost /></ErrorBoundary>} />
                   <Route path="/portal/meetings/:id" element={<ErrorBoundary><MeetingDetail /></ErrorBoundary>} />
                   <Route path="/portal/meetings/:id/prep" element={<ErrorBoundary><MeetingPrep /></ErrorBoundary>} />
-                  <Route path="/portal/meeting-notes" element={<ErrorBoundary><MeetingNotesPage /></ErrorBoundary>} />
                   <Route path="/portal/activity" element={<ErrorBoundary><ActivityPage /></ErrorBoundary>} />
                   <Route path="/portal/analytics" element={<ErrorBoundary><AnalyticsPage /></ErrorBoundary>} />
                   <Route path="/portal/insights" element={<ErrorBoundary><InsightsPage /></ErrorBoundary>} />
-                  <Route path="/portal/pi/analytics" element={<ErrorBoundary><PageErrorBoundary pageName="PIAnalytics"><PIAnalytics /></PageErrorBoundary></ErrorBoundary>} />
-                  <Route path="/portal/mentee-milestones" element={<ErrorBoundary><MenteeMilestonesPage /></ErrorBoundary>} />
                   <Route path="/portal/sessions" element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />
+                  <Route path="/portal/launches" element={<ErrorBoundary><LaunchesPage /></ErrorBoundary>} />
                   <Route path="/portal/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
                   <Route path="/portal/profile" element={<ErrorBoundary><ProfilePage /></ErrorBoundary>} />
 
