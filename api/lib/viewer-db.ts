@@ -39,12 +39,15 @@
 //     leaves that table whole for that person. Projects, tasks and the rows
 //     that hang off them follow project membership for EVERY person, a PI
 //     included (Lane B, Nick 2026-10-08: "the default should always be only
-//     projects that I'm on"). The meetings and PB-session rules still exempt
-//     a PI. A person with no restricted table gets the raw handle.
+//     projects that I'm on"). Meetings follow their own rule (owner,
+//     attendee, lab audience, granted project; schema-v122) with no PI or
+//     admin exemption, so every person is scoped on meetings. The PB-session
+//     rule still exempts a PI.
 //   - allProjects: the site admin's "show all projects" switch. Only
 //     personViewer sets it, and only for SITE_ADMIN_SLUG with the PI flag;
 //     for anyone else the request is ignored. It lifts the project rules,
-//     nothing else (meetings stay as they are). Off unless the request asks.
+//     nothing else (Nick, 2026-10-09: never the meeting rule). Off unless the
+//     request asks.
 //
 // COST. For a scoped person, EVERY statement that names a scoped table is
 // prefixed, not only meeting reads: activity_entries, activity_log,
@@ -52,8 +55,9 @@
 // CTE, so the activity feeds pay too. Measured on prod D1 for Casey (#145
 // review, Lane A rules): `SELECT COUNT(*) FROM meetings` rows_read 73 -> 533;
 // activity_log top 50 rows_read 50 -> 621. Since Lane B, Nick's own session
-// is scoped too (projects and tasks) and pays the same kind of prefix; only
-// the PB key, and Nick with "show all projects" on, get the raw handle.
+// is scoped too (projects and tasks) and pays the same kind of prefix; since
+// schema-v122 "show all projects" keeps the meeting prefix too, so only the
+// PB key gets the raw handle.
 // Statements naming no scoped table are passed through unchanged.
 //   - nobody:  no identity (anonymous, a signed-in non-member on a public GET,
 //     a credential-less local caller). Every scoped table is empty.

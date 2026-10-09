@@ -27,24 +27,28 @@
 // "show all projects" switch (viewer.allProjects) lifts it. The PB key never
 // reaches this file (viewer-db returns the raw handle for it).
 //
-// 2026-10-09 (Nick): project membership is the ONLY visibility rule. The
-// 'Peripheral Brain' category no longer hides anything from a person; it is a
-// label. A PB project stays private because Nick is its only member (the
-// schema-v120 join triggers skip PB projects, so assigning a PB task to
-// someone does not make them a member). Nick also ruled that a meeting tagged
-// with a project be visible to its members; that arm is built but held OFF
-// (MEETING_TAGS_GRANT_ACCESS below) pending his re-ruling.
+// 2026-10-09 (Nick): project membership is the ONLY visibility rule for
+// projects. The 'Peripheral Brain' category no longer hides anything from a
+// person; it is a label. A PB project stays private because Nick is its only
+// member (the schema-v120 join triggers skip PB projects, so assigning a PB
+// task to someone does not make them a member).
+//
+// Meetings (schema-v122, Nick 2026-10-09) have their own rule, meetingRule
+// below: owner, attendee, lab audience, or member of a project the meeting was
+// GRANTED to (meeting_project_grants). meetings.tags (projects discussed)
+// confers nothing. No PI or admin arm: Nick's "show all projects" switch does
+// not reach meetings ("No, never").
 
 import type { ScopedViewer } from './viewer-db'
 
 export const HUB_TABLES = [
-  '_meta', 'activity_entries', 'activity_log', 'agenda_items', 'agent_knowledge', 'ai_requests',
+  '_meta', 'activity_entries', 'activity_log', 'activity_thread_seen', 'agenda_items', 'agent_knowledge', 'ai_requests',
   'artifact_tags', 'artifact_versions', 'artifacts', 'bug_reports', 'commitments',
   'conference_submissions', 'contributions', 'day_capacity', 'deadline_dependencies', 'decisions',
   'digest_comments', 'dispatch_queue', 'entity_seen', 'expertise_tags', 'file_activity_daily',
   'file_attachments', 'grant_milestones', 'grants', 'hub_decisions', 'hub_pomodoro_slots', 'ideas',
   'inbox', 'inbox_events', 'kg_entities', 'kg_relation_type_registry', 'kg_relations', 'lab_answers',
-  'lab_questions', 'lab_settings', 'launch_log', 'links', 'manuscript_revisions', 'meetings',
+  'lab_questions', 'lab_settings', 'launch_log', 'links', 'manuscript_revisions', 'meeting_project_grants', 'meetings',
   'member_featured_publications', 'memory_facts', 'mentee_milestones', 'milestones',
   'narrative_projects', 'nih_grants', 'notifications', 'open_science_resources', 'paper_project_links',
   'pb_sessions', 'pomodoro_sessions', 'processed_mutations', 'project_dependencies',
@@ -80,45 +84,51 @@ function idList(v: ScopedViewer): string {
 
 // ── meetings (Lane A) ────────────────────────────────────────────────────────
 
-/**
- * Whether a project tag on a meeting (meetings.tags) shows the meeting to the
- * project's members. OFF, held 2026-10-09 pending Nick's re-ruling, for two
- * reasons found the same day:
- *   1. meetings.tags records every project a meeting DISCUSSED (schema-v72,
- *      PB meeting_debrief._discussed_tags), not the projects it belongs to.
- *      On prod it would show 14 meetings to 5 non-attendees, including 1:1s.
- *   2. Tags hold project SLUGS, and a member can create a project with any
- *      unused slug or rename their own (slug is in PROJECT_ALLOWED_FIELDS),
- *      then join every meeting carrying that tag. viewer-sweep.test.ts's write
- *      sweep caught this (its POST /api/projects took the slug of a tag).
- * Turning this on needs a tag that names a project's id, written by the
- * meeting's owner, not a free-text slug.
- */
-export const MEETING_TAGS_GRANT_ACCESS = false
+/** The ways a person can see a meeting, named (GET /api/meetings/:id/access reports them). */
+export type MeetingArm = 'owner' | 'attendee' | 'lab' | 'project'
 
 /**
- * A meeting is visible to its owner (owner_slug, stamped server-side from the
- * creator's session, schema-v119), to a member its attendee list names
- * EXACTLY (the member's slug, or the member's whole email address, case
- * folded; never by email prefix or local part: an external `nate@stanford.edu`
- * is not nate-mesfin, shared/attendees.ts), and to the members of any project
- * its tags name (meetings.tags, schema-v72: a JSON array of project slugs).
- * The tag arm reads the projects CTE, so "a project the viewer can see" is
- * exactly project membership. Nick, 2026-10-09, reversing Lane A's "tags
- * confer nothing": a meeting tagged with a project is that project's.
- * The tag arm is OFF (MEETING_TAGS_GRANT_ACCESS) pending his re-ruling.
- * A PI person sees every meeting (the "show all projects" switch is not
- * meeting access). Nobody sees none.
+ * The meeting rule's arms for one person, each a predicate over `meetings.*`.
+ * Nick's rulings, 2026-10-09 (PB Context/Decisions/2026-10-09-hub-meeting-access.md):
+ *   owner     owner_slug (stamped server-side from the creator's session, v119);
+ *   attendee  the attendee list names the person EXACTLY (slug, or whole email,
+ *             case folded; never an email prefix or local part: an external
+ *             `nate@stanford.edu` is not nate-mesfin, shared/attendees.ts);
+ *   lab       audience = 'lab' (schema-v122: the three lab series by title, or
+ *             flipped by the owner or Nick): every member;
+ *   project   the meeting is GRANTED to a live project the person is a member
+ *             of (meeting_project_grants, v122; written only by the owner or
+ *             Nick on the meeting page). Reads membership and grants whole
+ *             (`main.`), as projectRule does, so meetings reads no other CTE.
+ * meetings.tags (the projects a meeting DISCUSSED, schema-v72) is not an arm:
+ * it is a free-text slug list PB refreshes on every push.
+ * There is no PI arm and no admin arm. Nobody has no arms.
  */
-function meetingRule(v: ScopedViewer): string | null {
-  if (v.kind === 'person' && v.pi) return null
-  if (v.kind !== 'person') return '0'
-  const tagArm = MEETING_TAGS_GRANT_ACCESS
-    ? ` OR EXISTS (SELECT 1 FROM json_each(CASE WHEN json_valid(meetings.tags) THEN meetings.tags ELSE '[]' END) tg `
-      + `WHERE tg.type = 'text' AND tg.value IN ${VISIBLE_PROJECT_REFS})`
-    : ''
-  return `(meetings.owner_slug = ${sqlList([v.slug])} OR EXISTS (SELECT 1 FROM json_each(CASE WHEN json_valid(meetings.attendees) THEN meetings.attendees ELSE '[]' END) att `
-    + `WHERE att.type = 'text' AND lower(att.value) IN (${idList(v)}))${tagArm})`
+export function meetingArms(v: ScopedViewer): { arm: MeetingArm; sql: string }[] {
+  if (v.kind !== 'person') return []
+  const slug = sqlList([v.slug])
+  return [
+    { arm: 'owner', sql: `meetings.owner_slug = ${slug}` },
+    {
+      arm: 'attendee',
+      sql: `EXISTS (SELECT 1 FROM json_each(CASE WHEN json_valid(meetings.attendees) THEN meetings.attendees ELSE '[]' END) att `
+        + `WHERE att.type = 'text' AND lower(att.value) IN (${idList(v)}))`,
+    },
+    { arm: 'lab', sql: `meetings.audience = 'lab'` },
+    {
+      arm: 'project',
+      sql: 'EXISTS (SELECT 1 FROM main.meeting_project_grants g '
+        + 'JOIN main.project_members pm ON pm.project_id = g.project_id '
+        + 'JOIN main.projects gp ON gp.id = g.project_id '
+        + `WHERE g.meeting_id = meetings.id AND pm.member_slug = ${slug} AND gp.deleted_at IS NULL)`,
+    },
+  ]
+}
+
+/** A meeting is visible when any arm holds. Never null: no viewer reads meetings whole. */
+function meetingRule(v: ScopedViewer): string {
+  const arms = meetingArms(v)
+  return arms.length === 0 ? '0' : `(${arms.map((a) => a.sql).join(' OR ')})`
 }
 
 // ── projects and tasks (Lane B) ──────────────────────────────────────────────
@@ -214,37 +224,37 @@ function byTask(table: HubTable, col: string): Scope {
 /**
  * The visibility of an (entity_type, entity_id) pair, as a CASE over the
  * types that name a scoped parent; any other type is not restricted here.
- * Returns null when no arm restricts this viewer.
+ * Meetings are scoped for every viewer, so there is always at least one arm.
  */
-function entityVisible(v: ScopedViewer, typeCol: string, idCol: string, extra: Record<string, string> = {}): string | null {
-  const arms: string[] = []
-  if (meetingRule(v) !== null) arms.push(`WHEN 'meeting' THEN ${idCol} IN (SELECT id FROM meetings)`)
+function entityVisible(v: ScopedViewer, typeCol: string, idCol: string, extra: Record<string, string> = {}): string {
+  const arms = [`WHEN 'meeting' THEN ${idCol} IN (SELECT id FROM meetings)`]
   if (projectsScoped(v)) {
     arms.push(`WHEN 'project' THEN ${inVisibleProject(idCol)}`)
     arms.push(`WHEN 'task' THEN ${idCol} IN ${VISIBLE_TASK_IDS}`)
     for (const [type, pred] of Object.entries(extra)) arms.push(`WHEN '${type}' THEN ${pred}`)
   }
-  if (arms.length === 0) return null
   return `(CASE COALESCE(${typeCol}, '') ${arms.join(' ')} ELSE 1 END)`
 }
 
 const ALL_PARENTS: readonly HubTable[] = ['meetings', 'projects', 'tasks']
 
 export const TABLE_SCOPE: Record<HubTable, Scope> = {
-  // The tag arm, when on, reads the projects CTE.
-  meetings: { kind: 'scoped', key: 'id', dependsOn: MEETING_TAGS_GRANT_ACCESS ? ['projects'] : [], where: meetingRule },
+  meetings: { kind: 'scoped', key: 'id', dependsOn: [], where: meetingRule },
+  // A grant row is visible with its meeting (the pill row on the meeting page).
+  meeting_project_grants: {
+    kind: 'scoped', key: ['meeting_id', 'project_id'], dependsOn: ['meetings'],
+    where: () => 'meeting_project_grants.meeting_id IN (SELECT id FROM meetings)',
+  },
   agenda_items: {
     kind: 'scoped', key: 'id', dependsOn: ['meetings'],
-    where: (v) => (meetingRule(v) === null ? null : 'agenda_items.meeting_id IN (SELECT id FROM meetings)'),
+    where: () => 'agenda_items.meeting_id IN (SELECT id FROM meetings)',
   },
   // A decision follows its meeting (by id or the PB source id) and, when it
   // names a project, that project.
   hub_decisions: {
     kind: 'scoped', key: 'id', dependsOn: ['meetings', 'projects'],
     where: (v) => all([
-      meetingRule(v) === null
-        ? null
-        : '(hub_decisions.meeting_id IS NULL OR hub_decisions.meeting_id IN (SELECT id FROM meetings UNION ALL SELECT source_id FROM meetings WHERE source_id IS NOT NULL))',
+      '(hub_decisions.meeting_id IS NULL OR hub_decisions.meeting_id IN (SELECT id FROM meetings UNION ALL SELECT source_id FROM meetings WHERE source_id IS NOT NULL))',
       projectsScoped(v) ? `(hub_decisions.project_slug IS NULL OR ${inVisibleProject('hub_decisions.project_slug')})` : null,
     ]),
   },
@@ -280,12 +290,21 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
     kind: 'scoped', key: 'id', dependsOn: ALL_PARENTS,
     where: (v) => {
       const base = entityVisible(v, 'file_attachments.entity_type', 'file_attachments.entity_id')
-      if (base === null || !projectsScoped(v) || v.kind !== 'person') return base
+      if (!projectsScoped(v) || v.kind !== 'person') return base
       const mine = [...new Set([v.slug, v.email, v.email.split('@')[0]].filter((s) => s.length > 0))]
       return `(${base} OR (file_attachments.entity_type = 'task' `
         + `AND file_attachments.entity_id GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' `
         + `AND lower(COALESCE(file_attachments.uploaded_by, '')) IN (${sqlList(mine)})))`
     },
+  },
+  // A reader's own place in a thread (schema-v122): their rows only, and only
+  // on a thread root they can still see.
+  activity_thread_seen: {
+    kind: 'scoped', key: ['root_id', 'viewer_slug'], dependsOn: ['activity_entries'],
+    // activity-hidden-exempt: an access rule, not a read of entries; a dismissed thread's marker stays its reader's
+    where: (v) => (v.kind === 'person'
+      ? `(activity_thread_seen.viewer_slug = ${sqlList([v.slug])} AND activity_thread_seen.root_id IN (SELECT id FROM activity_entries))`
+      : '0'),
   },
   entity_seen: {
     kind: 'scoped', key: ['entity_type', 'entity_id', 'viewer_slug'], dependsOn: ALL_PARENTS,
@@ -300,10 +319,8 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   // A reaction on an activity entry (a project update or a comment) follows it.
   reactions: {
     kind: 'scoped', key: 'id', dependsOn: ['activity_entries'],
-    where: (v) => (projectsScoped(v) || meetingRule(v) !== null
-      // activity-hidden-exempt: an access rule, not a read of entries; a hidden (dismissed) entry's reactions stay its own
-      ? '(reactions.target_id IN (SELECT id FROM activity_entries) OR reactions.target_id NOT IN (SELECT id FROM main.activity_entries))'
-      : null),
+    // activity-hidden-exempt: an access rule, not a read of entries; a hidden (dismissed) entry's reactions stay its own
+    where: () => '(reactions.target_id IN (SELECT id FROM activity_entries) OR reactions.target_id NOT IN (SELECT id FROM main.activity_entries))',
   },
   links: {
     kind: 'scoped', key: 'id', dependsOn: ['projects', 'tasks'],
@@ -319,8 +336,7 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   activity_log: {
     kind: 'scoped', key: 'id', dependsOn: ALL_PARENTS,
     where: (v) => {
-      const arms: string[] = []
-      if (meetingRule(v) !== null) arms.push(`WHEN 'meeting' THEN activity_log.related_id IN (SELECT id FROM meetings)`)
+      const arms = [`WHEN 'meeting' THEN activity_log.related_id IN (SELECT id FROM meetings)`]
       if (projectsScoped(v)) {
         arms.push(`WHEN 'project' THEN ${inVisibleProject('activity_log.related_id')}`)
         arms.push(`WHEN 'projects' THEN ${inVisibleProject('activity_log.related_id')}`)
@@ -332,7 +348,7 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
         // A row written with no related_type (handleCreateProject logs
         // type='project', related_id=<id>, related_type NULL) is typed by its
         // `type`, so "Created project: X" follows project X.
-        arms.length === 0 ? null : `(CASE COALESCE(NULLIF(activity_log.related_type, ''), activity_log.type, '') ${arms.join(' ')} ELSE 1 END)`,
+        `(CASE COALESCE(NULLIF(activity_log.related_type, ''), activity_log.type, '') ${arms.join(' ')} ELSE 1 END)`,
       ])
     },
   },

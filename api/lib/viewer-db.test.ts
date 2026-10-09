@@ -89,15 +89,17 @@ describe('who sees which meeting', () => {
     expect(await ids(h, 'SELECT id FROM meetings')).toEqual(['m-other', 'm-src'])
   })
 
-  it('the service key, and the site admin with show-all-projects on, get the raw handle and see all', async () => {
+  it('the service key gets the raw handle; Nick sees only his own meetings, with or without show-all-projects (v122)', async () => {
     const db = seeded()
     const raw = d1Adapter(db) as unknown as D1Database
-    expect(viewerDb(raw, NICK_ALL)).toBe(raw)
-    // Lane B: without the switch Nick is membership-scoped like everyone else.
-    expect(viewerDb(raw, NICK)).not.toBe(raw)
-    expect(await ids(viewerDb(raw, NICK), 'SELECT id FROM meetings')).toHaveLength(11)
     expect(viewerDb(raw, serviceViewer())).toBe(raw)
     expect(await ids(raw, 'SELECT id FROM meetings')).toHaveLength(11)
+    // Nick, 2026-10-09: the admin switch never reaches meetings, and there is
+    // no PI arm. He sees what he is on (here: an attendee of three).
+    for (const v of [NICK, NICK_ALL]) {
+      expect(viewerDb(raw, v)).not.toBe(raw)
+      expect(await ids(viewerDb(raw, v), 'SELECT id FROM meetings')).toEqual(['m-facil', 'm-slug', 'm-tags'])
+    }
   })
 
   it('nobody sees no meeting', async () => {

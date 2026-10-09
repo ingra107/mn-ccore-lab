@@ -539,15 +539,15 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [showAgendaForm, setShowAgendaForm] = useState(false)
   const [agendaNote, setAgendaNote] = useState('')
   useEffect(() => { if (showAgendaForm) agendaNoteInputRef.current?.focus({ preventScroll: true }) }, [showAgendaForm])
-  // A project's meetings are the ones its tags name (Nick, 2026-10-09), out
-  // of the meetings this viewer can already see: /api/meetings is scoped to
-  // owner and attendees, and a tag grants no access while the server's tag
-  // arm (MEETING_TAGS_GRANT_ACCESS, table-scope.ts) is off. The agenda picker
-  // offers only those, upcoming, soonest first; it used to post to the lab's
-  // next meeting whatever the project.
+  // A project's meetings are the ones GRANTED to it (schema-v122, Nick
+  // 2026-10-09: "belongs to", chosen on the meeting page), out of the meetings
+  // this viewer can already see. A meeting that only DISCUSSED the project
+  // (meetings.tags) is not listed. The agenda picker offers only these,
+  // upcoming, soonest first; it used to post to the lab's next meeting
+  // whatever the project.
   const projectMeetings = useMemo(
-    () => meetingsForProject(apiMeetings, { id: project.id ?? '', slug: project.slug }, localDateKey()),
-    [apiMeetings, project.id, project.slug],
+    () => meetingsForProject(apiMeetings, { id: project.id ?? '' }, localDateKey()),
+    [apiMeetings, project.id],
   )
   const [agendaMeetingPick, setAgendaMeetingPick] = useState<string | null>(null)
   const agendaMeeting = projectMeetings.upcoming.find((m) => m.id === agendaMeetingPick) ?? projectMeetings.upcoming[0] ?? null
@@ -1922,17 +1922,16 @@ function ProjectDetailInner({ project }: InnerProps) {
         </div>
       )}
 
-      {/* ── MEETINGS TAB ── the meetings whose tags name this project (Nick,
-          2026-10-09), out of the meetings the viewer can already see: the
-          list comes from the viewer-scoped /api/meetings, and a tag grants no
-          access while MEETING_TAGS_GRANT_ACCESS is off (table-scope.ts). */}
+      {/* ── MEETINGS TAB ── the meetings GRANTED to this project (schema-v122,
+          Nick 2026-10-09), out of the meetings the viewer can already see:
+          the list comes from the viewer-scoped /api/meetings. */}
       {activeTab === 'meetings' && (
         <div role="tabpanel" id="projectdetail-tabpanel-meetings" aria-labelledby="projectdetail-tab-meetings" style={{ marginBottom: '2rem' }}>
           {projectMeetings.upcoming.length + projectMeetings.past.length === 0 ? (
             <EmptyState
               icon={<Calendar size={32} />}
               title="No meetings for this project yet"
-              subtitle="A meeting you own or attend appears here once it is tagged with this project."
+              subtitle="A meeting shows here once its owner or Nick gives this project access on the meeting page."
             />
           ) : (
             ([['Upcoming', projectMeetings.upcoming], ['Past', projectMeetings.past]] as const).map(([label, rows]) =>

@@ -779,7 +779,11 @@ describe('Project visibility contract — Pattern B (cross-project feeds; body c
       })
 
       it('Nick, a member of both, gets 200 and both projects\' rows', async () => {
-        const res = await tc.callPi(as(PI, world(tc.prep)))
+        // schema-v122: a PI has no meeting exemption, so Nick reads the
+        // meeting as its owner (as every PB-pushed meeting is his).
+        const w = world(tc.prep)
+        w.db.prepare(`UPDATE meetings SET owner_slug = 'nick-ingraham' WHERE id = 'mtg-id'`).run()
+        const res = await tc.callPi(as(PI, w))
         expect(res.status).toBe(200)
         const body = await res.text()
         expect(body, "Nick's feed carries the rows Nate's drops").toContain(PB_MARK)

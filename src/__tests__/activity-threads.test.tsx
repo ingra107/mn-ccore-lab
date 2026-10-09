@@ -15,7 +15,7 @@ import { threadParticipants } from '../components/activity/threadParticipants'
 import { mount, cleanupMountsAfterEach } from './testMount'
 
 cleanupMountsAfterEach()
-beforeEach(() => { localStorage.clear(); replies = [...ALL_REPLIES] })
+beforeEach(() => { localStorage.clear(); replies = [...ALL_REPLIES]; threadMarks = [] })
 
 const row = (over: Record<string, unknown>) => ({
   id: 'r', entity_type: 'day', entity_id: '2026-10-09', project_id: null, kind: 'comment', visibility: 'author',
@@ -48,10 +48,20 @@ const ALL_REPLIES = [
   row({ id: 'a', parent_id: 'old', actor_slug: 'lianne-siegel', body: 'first answer', created_at: '2026-10-09 12:10:00' }),
 ]
 let replies = [...ALL_REPLIES]
+// The server's per-thread read markers (GET /api/thread-seen, schema-v122).
+let threadMarks: { root_id: string; read_up_to: string }[] = []
 
 const SEEN_AT = '2026-10-09 12:05:00' // server-side entity_seen: before the newest reply
 function stub() {
   const f = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+    if (String(url).includes('/api/thread-seen')) {
+      if (init?.method === 'POST') {
+        const b = JSON.parse(String(init.body)) as { root_id: string; read_up_to: string }
+        threadMarks = [...threadMarks.filter((m) => m.root_id !== b.root_id), b]
+        return { ok: true, status: 200, json: async () => ({ data: b }) }
+      }
+      return { ok: true, status: 200, json: async () => ({ data: threadMarks }) }
+    }
     if (init?.method === 'POST' && String(url).endsWith('/delete')) {
       const id = String(url).split('/')[3]
       replies = replies.filter((r) => r.id !== id)
@@ -146,10 +156,32 @@ describe('Slack-style threads', () => {
     const replyBtn = [...host.querySelectorAll('button')].filter((b) => b.textContent === 'Reply')[1] as HTMLButtonElement
     replyBtn.click()
     for (let i = 0; i < 50 && !(host.textContent ?? '').includes('second answer'); i++) await wait(10)
-    expect(localStorage.getItem('thread-seen:old')).toBe('2026-10-09 12:20:00')
+    // The marker goes to the server (cross-device), not the browser.
+    for (let i = 0; i < 50 && threadMarks.length === 0; i++) await wait(10)
+    expect(threadMarks).toEqual([{ root_id: 'old', read_up_to: '2026-10-09 12:20:00' }])
+    expect(localStorage.getItem('thread-seen:old')).toBeNull()
     ;(host.querySelector('.tk-thr') as HTMLButtonElement).click() // collapse
     await wait(30)
     expect(host.querySelector('.tk-thr')!.textContent).not.toContain('New')
+    vi.unstubAllGlobals()
+  })
+
+  it('a thread read on another device shows no New here (server marker)', async () => {
+    threadMarks = [{ root_id: 'old', read_up_to: '2026-10-09 12:20:00' }]
+    stub()
+    const host = await mount(wrap(<DayActivityFeed dateKey="2026-10-09" />), { ready, label: 'DayActivityFeed' })
+    await wait(80)
+    expect(host.querySelector('.tk-thr')!.textContent).toContain('2 replies')
+    expect(host.querySelector('.tk-thr')!.textContent).not.toContain('New')
+    vi.unstubAllGlobals()
+  })
+
+  it('a marker older than the newest reply still shows New', async () => {
+    threadMarks = [{ root_id: 'old', read_up_to: '2026-10-09 12:10:00' }]
+    stub()
+    const host = await mount(wrap(<DayActivityFeed dateKey="2026-10-09" />), { ready, label: 'DayActivityFeed' })
+    await wait(80)
+    expect(host.querySelector('.tk-thr')!.textContent).toContain('New')
     vi.unstubAllGlobals()
   })
 

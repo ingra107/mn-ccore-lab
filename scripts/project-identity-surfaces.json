@@ -38,6 +38,7 @@
       {"table": "tasks", "column": "project_id", "kind": "fk", "policy": "typed_required", "note": "storage typed; read presents slug via task-cols.ts"},
       {"table": "comments", "column": "project_id", "kind": "fk", "policy": "typed_required"},
       {"table": "project_members", "column": "project_id", "kind": "fk", "policy": "typed_required", "note": "v120 (#145): FK to projects(id); Hub-only, not on the PB wire"},
+      {"table": "meeting_project_grants", "column": "project_id", "kind": "fk", "policy": "typed_required", "note": "v122: FK to projects(id); the meeting \"belongs to\" grant; Hub-only, not on the PB wire"},
       {"table": "project_updates", "column": "project_id", "kind": "fk", "policy": "typed_required"},
       {"table": "milestones", "column": "project_id", "kind": "fk", "policy": "typed_required"},
       {"table": "conference_submissions", "column": "project_id", "kind": "fk", "policy": "typed_required"},

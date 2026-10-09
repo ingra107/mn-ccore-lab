@@ -93,13 +93,48 @@ export function useUpdateMeetingNotes(meetingId: string) {
 export function useUpdateMeetingMeta(meetingId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { attendees?: string[]; title?: string; type?: string; tags?: string[] }) =>
+    mutationFn: (input: { attendees?: string[]; title?: string; type?: string; tags?: string[]; audience?: 'private' | 'lab' }) =>
       fetchApi(`/api/meetings/${meetingId}/meta`, {
         method: 'POST',
         body: JSON.stringify(input),
       }),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] })
+      queryClient.invalidateQueries({ queryKey: ['meetings'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// ── "Belongs to" project grants (schema-v122) ───────────────
+//
+// The owner or Nick gives a project's members access to a meeting
+// (POST /api/meetings/:id/projects, body {project: id or slug}) or takes it
+// away (DELETE /api/meetings/:id/projects/:projectId). The server decides who
+// may; the page only offers the toggle when the meeting says
+// can_manage_access.
+
+export function useGrantMeetingProject(meetingId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (project: string) =>
+      fetchApi(`/api/meetings/${meetingId}/projects`, { method: 'POST', body: JSON.stringify({ project }) }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] })
+      queryClient.invalidateQueries({ queryKey: ['meetings'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useRevokeMeetingProject(meetingId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (projectId: string) =>
+      fetchApi(`/api/meetings/${meetingId}/projects/${encodeURIComponent(projectId)}`, { method: 'DELETE' }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] })
+      queryClient.invalidateQueries({ queryKey: ['meetings'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })

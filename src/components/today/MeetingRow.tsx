@@ -10,9 +10,11 @@
 // learns one layout. Title bold on top, "time · place" as the muted line under
 // it, the footer carries the small controls (notes marker, Agenda / Prep, Join).
 // Join is the filled teal primary only while the meeting is happening now; the
-// rest of the day it is a plain link. Attendee faces, the meeting's project and
-// action counts are NOT here: the Today payload does not carry them yet (a
-// separate meeting build).
+// rest of the day it is a plain link. The card also carries the meeting's
+// attendee faces (badge style, bottom left), the project it belongs to (its
+// granted project's short name, the muted line under the title) and its open
+// action items (icon + count, bottom right); GET /api/meetings carries them
+// since schema-v122 (meetingCardFields in ./constants).
 //
 // `.meeting-row-header` stays on the clickable top block as a stable hook
 // (src/__tests__/meeting-row-placeholder-copy.test.tsx drives the card
@@ -20,7 +22,7 @@
 
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ListChecks, StickyNote } from 'lucide-react'
+import { CheckSquare, ListChecks, StickyNote } from 'lucide-react'
 import type { TodayEvent } from './constants'
 import { useNowMinutes } from './useNowMinutes'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -29,6 +31,7 @@ import MarkdownView from '../MarkdownView'
 import { useUnseenActivity, useMarkSeen } from '../../hooks/useEntitySeen'
 import { usePrepMeetingFromEvent } from '../../hooks/mutations/useMeetingMutations'
 import { useToast } from '../../hooks/useToast'
+import { Faces } from './skin'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved'
 
@@ -104,6 +107,20 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
 
   const hasNotes = (note && note.length > 0) || !!e.meetingNotes
   const place = e.loc ?? null
+
+  const facesEl = e.people && e.people.length > 0 && <Faces slugs={e.people} />
+  const total = e.actionCount ?? 0
+  const open = e.openActionCount ?? 0
+  const actionsEl = total > 0 && (
+    <span className="tk-mt" title={`${open} open of ${total} action item${total === 1 ? '' : 's'}`} aria-label={`${open} open action items`}>
+      <CheckSquare {...ICON_PROPS} size={13} aria-hidden />{open}
+    </span>
+  )
+  const projectEl = e.project && (
+    <Link to={PATHS.project(e.project.slug)} onClick={(ev) => ev.stopPropagation()} aria-label={`Open ${e.project.name}`}>
+      {e.project.name}
+    </Link>
+  )
 
   const notesEl = (
     hasNotes && (
@@ -225,10 +242,11 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
           <span className="tk-mt" title={timeLine(e)}>{start}</span>
           <span className="tk-ct">{e.title}</span>
           {place && <span className="tk-cs tk-inl" title={place}>{place}</span>}
+          {projectEl && <span className="tk-cs tk-inl">{projectEl}</span>}
           {isNow && <span className="tk-pill tk-box"><i />Now</span>}
           {isNeverSeenMeeting && <span className="tk-tag" title="New notes since your last visit">New notes</span>}
           <span className="tk-sp" />
-          {notesEl}{agendaEl}{prepEl}{joinEl}
+          {facesEl}{actionsEl}{notesEl}{agendaEl}{prepEl}{joinEl}
           {hasUpdateSinceSeenMeeting && <span aria-hidden="true" title="Updated since you last looked" className="tk-dotg" />}
           <span className="tk-caret">{expanded ? '▾' : '▸'}</span>
           <button
@@ -259,6 +277,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
             <div className="tk-cs" title={place ? `${timeLine(e)} · ${place}` : timeLine(e)}>
               {timeLine(e)}{place ? ` · ${place}` : ''}
             </div>
+            {projectEl && <div className="tk-cs">{projectEl}</div>}
           </div>
           <div className="tk-tr-r">
             {hasUpdateSinceSeenMeeting && (
@@ -279,10 +298,11 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
           </div>
         </div>
         <div className="tk-ft">
+          {facesEl}
           {isNow && <span className="tk-pill tk-box"><i />Now</span>}
           {isNeverSeenMeeting && <span className="tk-tag" title="New notes since your last visit">New notes</span>}
           <span className="tk-sp" />
-          {notesEl}{agendaEl}{prepEl}{joinEl}
+          {actionsEl}{notesEl}{agendaEl}{prepEl}{joinEl}
         </div>
       </div>
       {expanded && notesPanel}

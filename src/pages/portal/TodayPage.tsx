@@ -30,7 +30,7 @@ import {
   GROUP_ORDER,
   INK, INK_MUTED, PAGE_BG,
   todayKey, formatTodayDate,
-  meetingToEvent, projectCalendarEventToDay, isToday,
+  meetingToEvent, meetingCardFields, projectCalendarEventToDay, isToday,
   matchMeetingRecord, normalizeMeetingTitle,
   getGroupForTask, isTaskDone,
   type GroupKey, type TodayEvent, type DailyCounts,
@@ -377,6 +377,10 @@ export default function TodayPage() {
     const decoratedPersonal = personal.map((e) => {
       const match = matchMeetingRecord(e, rawMeetings, normalizeMeetingTitle)
       if (!match) return e
+      // The card fields (faces, project, action count) follow the matched
+      // meeting either way; they gate nothing.
+      const row = rawMeetings.find((m) => m.id === match.id)
+      const card = row ? meetingCardFields(row) : {}
       // #550: a match with no notes yet stays undecorated (7b5188de — the
       // native untimed row below keeps the live jot), but flag it so
       // MeetingRow can stop claiming "no meeting record" when one exists.
@@ -384,9 +388,9 @@ export default function TodayPage() {
       // page instead of offering to create a second one. It deliberately does
       // NOT set meetingId — that field still gates the jot/unseen behavior
       // #550 left on the native row.
-      if (!match.notes) return { ...e, hasUndebriefedMatch: true, matchedMeetingId: match.id }
+      if (!match.notes) return { ...e, ...card, hasUndebriefedMatch: true, matchedMeetingId: match.id }
       matchedMeetingIds.add(match.id)
-      return { ...e, meetingId: match.id, meetingNotes: match.notes }
+      return { ...e, ...card, meetingId: match.id, meetingNotes: match.notes }
     })
     const dedupedMeetings = meetings.filter((m) => !matchedMeetingIds.has(m.id))
 

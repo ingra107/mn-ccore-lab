@@ -66,6 +66,8 @@ import { TaskRowActions } from '../components/tasks/TaskRowActions'
 import { InlineDetail } from './MyTasks/components/InlineDetail'
 import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
 import MeetingActivityFeed from '../components/meetings/MeetingActivityFeed'
+import MeetingProjectsSection from '../components/meetings/MeetingProjectsSection'
+import { isLabSeriesTitle } from '../../shared/meetingAudience'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -492,6 +494,7 @@ export default function MeetingDetail() {
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
+            <LabToggle meeting={meeting} updateMeta={updateMeta} />
             <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
             {viewerSlugs.length > 0 && <PresenceAvatars slugs={viewerSlugs} peerIntents={meetingPeerIntents} />}
             <Link
@@ -626,10 +629,17 @@ export default function MeetingDetail() {
           <div style={{ height: '1px', background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.85, marginTop: '1.5rem' }} />
         </motion.div>
 
-        {/* Projects discussed — schema-v72 `tags` (everything the meeting
-            touched, set by the PB push or edited here) when present; else
-            fall back to the action items' project_id (read-only derivation). */}
-        <TagsSection meeting={meeting} actionItems={actionItems} allProjects={allProjects} updateMeta={updateMeta} />
+        {/* Projects (schema-v122): the projects this meeting DISCUSSED (tags,
+            set by the PB push; else the action items' projects) as faded
+            pills, the projects it is GRANTED to at full contrast. The owner
+            or Nick clicks a pill to give or take that project's access. It
+            sits here, beside the action items Nick reviews. */}
+        <MeetingProjectsSection
+          meeting={meeting}
+          derivedTags={[...new Set(actionItems.filter((a) => a.project_id).map((a) => a.project_id!))]}
+          allProjects={allProjects.filter((p): p is typeof p & { id: string } => !!p.id)}
+          updateMeta={updateMeta}
+        />
 
         {/* Two-column: Agenda + Action Items (action items first on mobile) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
@@ -1490,96 +1500,34 @@ function AttendanceSection({ attendees, updateMeta }: { attendees: string[]; upd
   )
 }
 
-// ── Tags Section (projects discussed) ───────────────────────
-function TagsSection({ meeting, actionItems, allProjects, updateMeta }: {
-  meeting: { tags: string | null }
-  actionItems: TaskRow[]
-  allProjects: { slug: string; title: string }[]
-  updateMeta: ReturnType<typeof useUpdateMeetingMeta>
-}) {
-  const [expanded, setExpanded] = useState(false)
-  const storedTags = parseJsonArray(meeting.tags)
-  // Fallback derivation (read-only until the user edits): projects implied by
-  // the action items, shown when no explicit tags have been set yet.
-  const derivedTags = [...new Set(actionItems.filter(a => a.project_id).map(a => a.project_id!))]
-  const displayTags = storedTags.length > 0 ? storedTags : derivedTags
-  // Seed the editable draft from whatever is currently showing, so opening
-  // the editor on a never-tagged meeting lets Nick just confirm the
-  // auto-derived list into real tags with one click.
-  const [localTags, setLocalTags] = useState<string[]>(displayTags)
-
-  if (displayTags.length === 0 && !expanded) return null
-
-  const projectTitle = (slug: string) => allProjects.find(p => p.slug === slug)?.title
-    ?? slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-
-  const toggleTag = (slug: string) => {
-    const newList = localTags.includes(slug)
-      ? localTags.filter(s => s !== slug)
-      : [...localTags, slug]
-    setLocalTags(newList)
-    updateMeta.mutate({ tags: newList })
+// ── Lab meeting toggle (schema-v122) ─────────────────────
+// A lab meeting is visible to every member. The three lab series are set by
+// title when the meeting is created; the owner or Nick can flip any meeting
+// (the server checks again). Everyone else sees a quiet "Lab meeting" label.
+function LabToggle({ meeting, updateMeta }: { meeting: MeetingDetailData; updateMeta: ReturnType<typeof useUpdateMeetingMeta> }) {
+  const isLab = meeting.audience === 'lab'
+  const canFlip = meeting.can_manage_access === true
+  if (!canFlip && !isLab) return null
+  const auto = isLabSeriesTitle(meeting.title)
+  const label = <>Lab meeting{auto && <span style={{ color: 'var(--muted)', fontWeight: 400 }}> · auto: lab series</span>}</>
+  const style: React.CSSProperties = {
+    fontSize: 'var(--label-size)', padding: '1px 8px', borderRadius: '999px', fontFamily: 'inherit',
+    background: isLab ? 'var(--teal-active)' : 'none',
+    color: isLab ? 'var(--teal)' : 'var(--slate)',
+    border: `1px solid ${isLab ? 'transparent' : 'var(--border-subtle)'}`,
   }
-
+  if (!canFlip) return <span title="Every member can see this meeting" style={style}>{label}</span>
   return (
-    <div className="mt-4">
-      <div className="flex items-center gap-2 flex-wrap">
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 'var(--label-weight)' }}>
-          Projects discussed
-        </span>
-        {(expanded ? localTags : displayTags).map((slug: string) => (
-          <a
-            key={slug}
-            href={PATHS.project(slug)}
-            onClick={(e) => { if (expanded) e.preventDefault() }}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 4,
-              fontSize: 'var(--label-size)',
-              padding: '2px 8px',
-              borderRadius: 'var(--radius-lg)',
-              backgroundColor: 'var(--teal-active)',
-              color: 'var(--teal)',
-              textDecoration: 'none',
-              fontWeight: 'var(--label-weight)',
-            }}
-          >
-            {projectTitle(slug)}
-            {expanded && (
-              <X {...ICON_PROPS} size={10} onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleTag(slug) }} />
-            )}
-          </a>
-        ))}
-        <button
-          onClick={() => { if (!expanded) setLocalTags(displayTags); setExpanded(!expanded) }}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', color: 'var(--teal)' }}
-        >
-          {expanded ? 'Done' : '+ Edit'}
-        </button>
-      </div>
-      {expanded && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mt-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)', border: '1px solid var(--border-subtle)' }}>
-          {allProjects.map(project => {
-            const present = localTags.includes(project.slug)
-            return (
-              <button
-                key={project.slug}
-                onClick={() => toggleTag(project.slug)}
-                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] transition-colors text-left"
-                style={{
-                  background: present ? 'var(--teal-active)' : 'none',
-                  border: `1px solid ${present ? 'var(--teal)' : 'var(--border-subtle)'}`,
-                  color: present ? 'var(--teal)' : 'var(--slate)',
-                  cursor: 'pointer',
-                  opacity: present ? 1 : 0.85,
-                }}
-              >
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.title}</span>
-                {present && <Check {...ICON_PROPS} size={10} style={{ marginLeft: 'auto', flexShrink: 0 }} />}
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={isLab}
+      disabled={updateMeta.isPending}
+      onClick={() => updateMeta.mutate({ audience: isLab ? 'private' : 'lab' })}
+      title={isLab ? 'Every member can see this meeting. Click to make it private.' : 'Only you, its attendees and granted projects see this. Click to share it with the lab.'}
+      style={{ ...style, cursor: 'pointer' }}
+    >
+      {label}
+    </button>
   )
 }

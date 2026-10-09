@@ -49,7 +49,8 @@ describe('handleGetMeetings — signed-in callers get the full row', () => {
       DB: {
         prepare: (sql: string) => ({
           all: async () => {
-            expect(sql).toMatch(/SELECT \* FROM meetings/i)
+            // The whole meeting row (plus the v122 card fields), not a column list.
+            expect(sql).toMatch(/SELECT meetings\.\*/i)
             return { results: [{ id: 'mtg1', date: '2026-05-22', title: 'Lab meeting', notes: 'PRIVATE NOTES' }] }
           },
         }),

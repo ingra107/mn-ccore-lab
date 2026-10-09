@@ -26,13 +26,13 @@ import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, hand
 
 // ── Route modules ──────────────────────────────────────────
 import { handleGetTasks, handleGetTask, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleRestoreTask, handleMobileTasksToHub } from './routes/tasks';
-import { handleMarkSeen, handleGetUnseenActivity } from './routes/seen';
+import { handleMarkSeen, handleGetUnseenActivity, handleGetThreadSeen, handleMarkThreadSeen } from './routes/seen';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
 import { handleGetProjectMembers, handleAddProjectMember, handleRemoveProjectMember, handleGetMemberProjects } from './routes/project-members';
 import { handleGetPins, handleCreatePin, handleDeletePin } from './routes/pins';
 import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
-import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleUpdateMeetingMeta, handleMeetingPrep, handleGenerateAgenda, handlePrepMeetingFromEvent } from './routes/meetings';
+import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleUpdateMeetingMeta, handleMeetingPrep, handleGenerateAgenda, handlePrepMeetingFromEvent, handleGrantMeetingProject, handleRevokeMeetingProject, handleMeetingAccess } from './routes/meetings';
 import { handleGetPublications, handleGetGrants, handleGetStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
 import { handleGetCitations } from './routes/citations';
 import { handleGetTeam, handleTeamSlugs, handleUpdateTeamMember, handleCreateTeamMember } from './routes/team';
@@ -382,10 +382,14 @@ app.use('*', async (c, next) => {
 //   - valid PB Bearer key           -> service (never scoped)
 //   - signed-in member              -> person (scoped per table: projects,
 //                                      tasks and their rows by membership for
-//                                      everyone, a PI included; meetings and
-//                                      PB-session rows exempt a PI)
+//                                      everyone, a PI included; meetings by
+//                                      owner / attendee / lab / granted
+//                                      project for everyone, with no PI or
+//                                      admin exemption; PB-session rows
+//                                      exempt a PI)
 //   - the site admin (Nick) sending X-Hub-All-Projects: 1 -> person with
-//     allProjects: the project rules lift for that request only. Anyone else
+//     allProjects: the project rules lift for that request only (never
+//     the meeting rule). Anyone else
 //     sending the header gets the ordinary scoped viewer (personViewer
 //     ignores it), so it is a server capability, not a client filter.
 //   - anyone else (anonymous, a non-member reading a public GET, a
@@ -990,6 +994,17 @@ defineRoute({
   entity: 'meetings',
   handler: (c) => handleGenerateAgenda(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true),
 });
+// schema-v122: whether a member may see a meeting, by the Hub's own rule.
+// PB key only (Hermes stages a transcript only when this says visible);
+// `auth: 'pi'` documents the server-to-server class, validateApiKey() in the
+// handler is the gate (same as /api/hermes/day-index).
+defineRoute({
+  method: 'GET',
+  path: '/api/meetings/:id/access',
+  auth: 'pi',
+  entity: 'meetings',
+  handler: (c) => handleMeetingAccess(c.req.param('id'), R(c), E(c)),
+});
 defineRoute({
   method: 'GET',
   path: '/api/meetings/:id/prep',
@@ -1004,7 +1019,7 @@ defineRoute({
   auth: 'authed',
   entity: 'meetings',
   // #8842 R6: action items are task rows; non-PI callers get the PB filter.
-  handler: (c) => handleGetMeeting(c.req.param('id'), E(c)),
+  handler: (c) => handleGetMeeting(c.req.param('id'), E(c), c.get('viewer')),
 });
 defineRoute({
   method: 'GET',
@@ -1470,6 +1485,21 @@ defineRoute({
   auth: 'authed',
   entity: 'tasks',
   handler: (c) => handleGetUnseenActivity(R(c), E(c)),
+});
+// schema-v122: how far the caller has read each thread (the cross-device "New").
+defineRoute({
+  method: 'GET',
+  path: '/api/thread-seen',
+  auth: 'authed',
+  entity: 'tasks',
+  handler: (c) => handleGetThreadSeen(R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/thread-seen',
+  auth: 'authed',
+  entity: 'tasks',
+  handler: (c) => handleMarkThreadSeen(R(c), E(c)),
 });
 defineRoute({
   method: 'GET',
@@ -2310,7 +2340,23 @@ defineRoute({
   path: '/api/meetings/:id/meta',
   auth: 'authed',
   entity: 'meetings',
-  handler: (c) => handleUpdateMeetingMeta(c.req.param('id'), R(c), USER(c), E(c)),
+  handler: (c) => handleUpdateMeetingMeta(c.req.param('id'), R(c), USER(c), E(c), c.get('viewer')),
+});
+// schema-v122 "belongs to" grants: the owner or Nick gives a project's members
+// access to a meeting (api/routes/meetings.ts handleGrantMeetingProject).
+defineRoute({
+  method: 'POST',
+  path: '/api/meetings/:id/projects',
+  auth: 'authed',
+  entity: 'meetings',
+  handler: (c) => handleGrantMeetingProject(c.req.param('id'), R(c), USER(c), c.get('viewer'), E(c)),
+});
+defineRoute({
+  method: 'DELETE',
+  path: '/api/meetings/:id/projects/:projectId',
+  auth: 'authed',
+  entity: 'meetings',
+  handler: (c) => handleRevokeMeetingProject(c.req.param('id'), c.req.param('projectId'), USER(c), c.get('viewer'), E(c)),
 });
 defineRoute({
   method: 'POST',

@@ -5,6 +5,9 @@ import { TASK_SELECT_COLS } from '../lib/task-cols';
 import { normalizeAttendees, attendeesColumnValue, type NormalizedAttendees } from '../lib/meeting-write';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
+import { initialAudience, isLabSeriesTitle, isMeetingAudience } from '../../shared/meetingAudience';
+import { isSiteAdmin, personViewer, type Viewer } from '../lib/viewer-db';
+import { meetingArms } from '../lib/table-scope';
 
 // GET /api/meetings/next — next upcoming meeting (lightweight, for sidebar badge)
 export async function handleNextMeeting(env: Env): Promise<Response> {
@@ -39,14 +42,45 @@ async function fireMeetingDebriefNotification(env: Env, meetingId: string, sourc
   ).run();
 }
 
+// The projects a meeting is GRANTED to (schema-v122), as a JSON array of
+// {id, slug, short_name, title}. Read through the caller's handle: a granted
+// project the caller is not on keeps its id and loses its names (null), and a
+// grant to a deleted project is left out (the read rule ignores it too).
+const GRANTED_PROJECTS_SQL = `(SELECT json_group_array(json_object('id', g.project_id, 'slug', gp.slug, 'short_name', gp.short_name, 'title', gp.title))
+     FROM meeting_project_grants g LEFT JOIN projects gp ON gp.id = g.project_id
+    WHERE g.meeting_id = meetings.id AND (gp.id IS NULL OR gp.deleted_at IS NULL))`;
+
 // GET /api/meetings — list all meetings. The route is auth: 'authed'; an
 // anonymous caller is refused before this runs (bindRegistryToHono), so the
 // old per-handler public column list (AM-3) is gone.
+//
+// Each row also carries what a Today meeting card shows (Nick, 2026-10-09:
+// attendee faces, the meeting's project, action count): granted_projects
+// (above) and the live action items linked to it, all and open, counted over
+// the tasks the caller can see. v95: tasks.meeting_id holds the Hub id or
+// PB's source_id, so both are counted (once, when they are the same).
 export async function handleGetMeetings(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
-    'SELECT * FROM meetings ORDER BY date DESC'
+    `WITH tc AS (
+       SELECT meeting_id, COUNT(*) AS n, SUM(CASE WHEN completed = 0 THEN 1 ELSE 0 END) AS open_n
+         FROM tasks WHERE deleted_at IS NULL AND meeting_id IS NOT NULL GROUP BY meeting_id
+     )
+     SELECT meetings.*,
+            ${GRANTED_PROJECTS_SQL} AS granted_projects,
+            COALESCE(a.n, 0) + COALESCE(b.n, 0) AS action_count,
+            COALESCE(a.open_n, 0) + COALESCE(b.open_n, 0) AS open_action_count
+       FROM meetings
+       LEFT JOIN tc a ON a.meeting_id = meetings.id
+       LEFT JOIN tc b ON b.meeting_id = meetings.source_id AND meetings.source_id <> meetings.id
+      ORDER BY meetings.date DESC`
   ).all();
   return json({ data: result.results, count: result.results.length });
+}
+
+/** Owner or the site admin: the only people who may flip a meeting's audience or grant it to a project. */
+function canManageMeetingAccess(viewer: Viewer, ownerSlug: string | null | undefined): boolean {
+  if (viewer.kind !== 'person') return false;
+  return (!!ownerSlug && ownerSlug === viewer.slug) || isSiteAdmin(viewer);
 }
 
 // GET /api/meetings/:id — single meeting with action items + agenda items.
@@ -54,8 +88,10 @@ export async function handleGetMeetings(env: Env): Promise<Response> {
 //
 // Action items are TASK rows, read through the viewer-bound handle, so the
 // caller gets the same task rule as every other feed (#145 Lane B).
-export async function handleGetMeeting(id: string, env: Env): Promise<Response> {
-  const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();
+export async function handleGetMeeting(id: string, env: Env, viewer?: Viewer): Promise<Response> {
+  const meeting = await env.DB.prepare(
+    `SELECT meetings.*, ${GRANTED_PROJECTS_SQL} AS granted_projects FROM meetings WHERE meetings.id = ?`
+  ).bind(id).first<Record<string, unknown>>();
   if (!meeting) return error('Meeting not found', 404);
 
   // SEC-P2-02: exclude the private `notes` column from task rows returned in
@@ -91,6 +127,9 @@ export async function handleGetMeeting(id: string, env: Env): Promise<Response> 
       ...meeting,
       action_items: actionItems.results,
       agenda_items: agendaItems.results,
+      // Who may flip the audience and toggle project access: decided here,
+      // not by the browser (the handlers below check it again).
+      can_manage_access: viewer ? canManageMeetingAccess(viewer, meeting.owner_slug as string | null) : false,
     },
   });
 }
@@ -177,10 +216,30 @@ export async function handleUpdateMeetingNotes(meetingId: string, request: Reque
 // (The comment this replaces said the PB pipeline only set these on INSERT;
 // that stopped being true for attendees + type in b3ebe90b, 2026-07-15.)
 // Date is NOT editable (it is half of the dedup key).
-export async function handleUpdateMeetingMeta(meetingId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { attendees?: string[]; title?: string; type?: string; tags?: string[]; facilitator?: string | null };
+//
+// audience (schema-v122): 'private' | 'lab', and only the meeting's owner or
+// Nick may change it (Nick, 2026-10-09). Every other field stays editable by
+// anyone who can see the meeting, a lab meeting included (Nick: "everybody
+// should be able to edit because we'll still have the full transcript"). The
+// PB key never sets it: no automated writer decides who sees a meeting.
+export async function handleUpdateMeetingMeta(meetingId: string, request: Request, user: AuthUser, env: Env, viewer: Viewer): Promise<Response> {
+  const body = await request.json() as { attendees?: string[]; title?: string; type?: string; tags?: string[]; facilitator?: string | null; audience?: unknown };
   const sets: string[] = [];
   const binds: unknown[] = [];
+  let audienceChange: string | null = null;
+  if (body.audience !== undefined) {
+    if (!isMeetingAudience(body.audience)) return error("audience must be 'private' or 'lab'", 400);
+    const current = await env.DB.prepare('SELECT owner_slug, audience FROM meetings WHERE id = ?')
+      .bind(meetingId).first<{ owner_slug: string | null; audience: string }>();
+    if (!current) return error('Meeting not found', 404);
+    if (!canManageMeetingAccess(viewer, current.owner_slug)) {
+      return error("Only the meeting's owner or Nick can change who sees it", 403);
+    }
+    if (current.audience !== body.audience) {
+      sets.push('audience = ?'); binds.push(body.audience);
+      audienceChange = body.audience;
+    }
+  }
   if (Array.isArray(body.attendees)) {
     const attendees: NormalizedAttendees = await normalizeAttendees(env, body.attendees);
     sets.push('attendees = ?'); binds.push(JSON.stringify(attendees));
@@ -193,14 +252,138 @@ export async function handleUpdateMeetingMeta(meetingId: string, request: Reques
   // facilitator is worse than none.
   if (body.facilitator === null) { sets.push('facilitator = NULL'); }
   else if (typeof body.facilitator === 'string' && body.facilitator.trim()) { sets.push('facilitator = ?'); binds.push(body.facilitator.trim()); }
-  if (sets.length === 0) return error('no editable fields provided', 400);
-  const result = await env.DB.prepare(
-    `UPDATE meetings SET ${sets.join(', ')}, updated_at = datetime('now') WHERE id = ?`
-  ).bind(...binds, meetingId).run();
+  if (sets.length === 0) {
+    // An audience already at the asked value is a no-op, not an error.
+    if (body.audience !== undefined) {
+      const same = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first();
+      return json({ data: same });
+    }
+    return error('no editable fields provided', 400);
+  }
+  let result: D1Result;
+  try {
+    result = await env.DB.prepare(
+      `UPDATE meetings SET ${sets.join(', ')}, updated_at = datetime('now') WHERE id = ?`
+    ).bind(...binds, meetingId).run();
+  } catch (e) {
+    // schema-v122: one lab meeting per title per day. Marking this one lab,
+    // or renaming a lab meeting, onto another lab meeting's title that day.
+    if (isLabTitleCollision(e)) {
+      return error('Another lab meeting with this title is already on this date', 409);
+    }
+    throw e;
+  }
   if (!result.meta || result.meta.changes === 0) return error('Meeting not found', 404);
-  await logActivity(env, 'meeting', `Updated meeting details`, user.email, meetingId, 'meeting');
+  if (audienceChange) {
+    await logActivity(env, 'meeting', audienceChange === 'lab' ? 'Marked as lab meeting' : 'Marked private', user.email, meetingId, 'meeting');
+  }
+  if (sets.length > (audienceChange ? 1 : 0)) {
+    await logActivity(env, 'meeting', `Updated meeting details`, user.email, meetingId, 'meeting');
+  }
   const updated = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first();
   return json({ data: updated });
+}
+
+// ── "Belongs to" grants (schema-v122) ────────────────────────────────────────
+//
+// Nick, 2026-10-09: on the meeting page the projects the meeting DISCUSSED
+// show as faded pills; clicking one gives that project's members access to the
+// meeting (the pill goes full contrast), clicking again takes it away, and
+// "+ add project" covers a project the debrief did not detect. The grant is
+// its own table (meeting_project_grants), never meetings.tags, so a PB re-push
+// that rewrites tags cannot add or remove access.
+//
+// Only the meeting's owner or Nick may grant or revoke; the PB key may not
+// (nothing automated writes a grant). Every read goes through the caller's
+// handle: a meeting they cannot see is 404, and so is a project they are not
+// on (the same answer as one that does not exist).
+
+async function grantTarget(meetingId: string, viewer: Viewer, env: Env): Promise<Response | { owner: string | null }> {
+  if (viewer.kind !== 'person') return error('Project access is given by a person on the meeting page', 403);
+  const meeting = await env.DB.prepare('SELECT id, owner_slug FROM meetings WHERE id = ?')
+    .bind(meetingId).first<{ id: string; owner_slug: string | null }>();
+  if (!meeting) return error('Meeting not found', 404);
+  if (!canManageMeetingAccess(viewer, meeting.owner_slug)) {
+    return error("Only the meeting's owner or Nick can give a project access", 403);
+  }
+  return { owner: meeting.owner_slug };
+}
+
+async function grantedProjects(env: Env, meetingId: string): Promise<unknown[]> {
+  const row = await env.DB.prepare(`SELECT ${GRANTED_PROJECTS_SQL} AS granted_projects FROM meetings WHERE meetings.id = ?`)
+    .bind(meetingId).first<{ granted_projects: string | null }>();
+  return row?.granted_projects ? JSON.parse(row.granted_projects) as unknown[] : [];
+}
+
+// POST /api/meetings/:id/projects  body { project: <project id or slug> }
+export async function handleGrantMeetingProject(meetingId: string, request: Request, user: AuthUser, viewer: Viewer, env: Env): Promise<Response> {
+  const target = await grantTarget(meetingId, viewer, env);
+  if (target instanceof Response) return target;
+  const body = await request.json().catch(() => null) as { project?: unknown } | null;
+  const ref = typeof body?.project === 'string' ? body.project.trim() : '';
+  if (!ref) return error('project (id or slug) required', 400);
+  const project = await env.DB.prepare(
+    'SELECT id, title, short_name FROM projects WHERE (id = ? OR slug = ?) AND deleted_at IS NULL ORDER BY (id = ?) DESC LIMIT 1'
+  ).bind(ref, ref, ref).first<{ id: string; title: string; short_name: string | null }>();
+  if (!project) return error('Project not found', 404);
+  const res = await env.DB.prepare(
+    'INSERT OR IGNORE INTO meeting_project_grants (meeting_id, project_id, granted_by) VALUES (?, ?, ?)'
+  ).bind(meetingId, project.id, viewer.kind === 'person' ? viewer.slug : '').run();
+  if ((res.meta?.changes ?? 0) > 0) {
+    await logActivity(env, 'meeting', `Gave ${project.short_name || project.title} access`, user.email, meetingId, 'meeting');
+  }
+  return json({ data: await grantedProjects(env, meetingId), meeting_id: meetingId, project_id: project.id });
+}
+
+// DELETE /api/meetings/:id/projects/:projectId
+export async function handleRevokeMeetingProject(meetingId: string, projectRef: string, user: AuthUser, viewer: Viewer, env: Env): Promise<Response> {
+  const target = await grantTarget(meetingId, viewer, env);
+  if (target instanceof Response) return target;
+  const ref = (projectRef ?? '').trim();
+  if (!ref) return error('project required', 400);
+  // A grant to a project the caller can no longer see (or that was deleted)
+  // is still removable by its id.
+  const project = await env.DB.prepare(
+    'SELECT id, title, short_name FROM projects WHERE id = ? OR slug = ? ORDER BY (id = ?) DESC LIMIT 1'
+  ).bind(ref, ref, ref).first<{ id: string; title: string; short_name: string | null }>();
+  const projectId = project?.id ?? ref;
+  const res = await env.DB.prepare('DELETE FROM meeting_project_grants WHERE meeting_id = ? AND project_id = ?')
+    .bind(meetingId, projectId).run();
+  if ((res.meta?.changes ?? 0) > 0) {
+    await logActivity(env, 'meeting', `Removed ${project?.short_name || project?.title || projectId} access`, user.email, meetingId, 'meeting');
+  }
+  return json({ data: await grantedProjects(env, meetingId), meeting_id: meetingId, project_id: projectId });
+}
+
+// GET /api/meetings/:id/access?member=<slug> — the PB key only (Hermes).
+//
+// Whether a member may see this meeting, decided by the Hub's own rule
+// (api/lib/table-scope.ts meetingArms), and through which arms. Hermes stages
+// a meeting's transcript only when this says visible (Nick, 2026-10-09:
+// access to a meeting covers its transcript), so the rule lives in one place
+// and PB keeps no copy of it. An unknown member is not visible.
+export async function handleMeetingAccess(meetingId: string, request: Request, env: Env): Promise<Response> {
+  if (validateApiKey(request, env) !== true) return error('Forbidden — API key required', 403);
+  const member = (new URL(request.url).searchParams.get('member') ?? '').trim().toLowerCase();
+  if (!member) return error('member (team slug) required', 400);
+  const exists = await env.DB.prepare('SELECT id FROM meetings WHERE id = ?').bind(meetingId).first();
+  if (!exists) return error('Meeting not found', 404);
+  const tm = await env.DB.prepare('SELECT slug, email FROM team_members WHERE lower(slug) = ? LIMIT 1')
+    .bind(member).first<{ slug: string; email: string | null }>();
+  if (!tm) return json({ data: { meeting_id: meetingId, member, visible: false, arms: [], reason: 'not a team member' } });
+  let viewer: Viewer;
+  try {
+    viewer = personViewer({ slug: tm.slug, email: tm.email, pi: false });
+  } catch {
+    return json({ data: { meeting_id: meetingId, member, visible: false, arms: [], reason: 'unusable team identity' } });
+  }
+  const arms = meetingArms(viewer as Exclude<Viewer, { kind: 'service' }>);
+  // The service handle is the raw database, so the arms' `main.` reads run as written.
+  const row = await env.DB.prepare(
+    `SELECT ${arms.map((a) => `CASE WHEN ${a.sql} THEN 1 ELSE 0 END AS ${a.arm}`).join(', ')} FROM meetings WHERE meetings.id = ?`
+  ).bind(meetingId).first<Record<string, number>>();
+  const held = arms.filter((a) => row?.[a.arm] === 1).map((a) => a.arm);
+  return json({ data: { meeting_id: meetingId, member: tm.slug, visible: held.length > 0, arms: held } });
 }
 
 // GET /api/meetings/:id/prep — facilitator prep view data.
@@ -540,12 +723,44 @@ interface MeetingUpsert {
   source_id?: string | null; facilitator?: string | null;
 }
 
+//** D1/SQLite refusing a second lab meeting of one title on one day (schema-v122). */
+function isLabTitleCollision(e: unknown): boolean {
+  const msg = e instanceof Error ? e.message : String(e);
+  return /UNIQUE constraint failed/i.test(msg) && /idx_meetings_lab_date_title|meetings\.date/i.test(msg);
+}
+
+type Candidate = { id: string; date: string; title: string; notes: string | null; owner_slug: string | null; audience?: string };
+
+/**
+ * The lab meeting of this series title on this date, whoever owns it, or
+ * undefined. Only for a title that is itself a lab series
+ * (shared/meetingAudience.ts), and only onto a row that is lab: a member's
+ * private "Journal club" never merges into a lab "Journal club" (its notes
+ * would go lab-wide); a series title would have been lab anyway, so the merge
+ * exposes nothing new.
+ */
+async function findLabSeriesRow(env: Env, date: string, title: string): Promise<Candidate | undefined> {
+  if (!isLabSeriesTitle(title)) return undefined;
+  const normalized = normalizeMeetingTitle(title);
+  const lab = await env.DB.prepare(
+    `SELECT * FROM meetings WHERE date = ? AND audience = 'lab' ORDER BY created_at, id`
+  ).bind(date).all<Candidate>();
+  return (lab.results ?? []).find((m) => normalizeMeetingTitle(m.title) === normalized);
+}
+
 // The one INSERT-or-dedup-UPDATE for meetings, shared by POST /api/meetings
 // and POST /api/meetings/prep-from-event. Keyed on (owner, date, normalized
 // title) since schema-v119: the old key had no owner, so a member's Prep press
 // on "Lab meeting" merged into (and was answered with) another member's row of
 // the same title and day, notes included. Two people's same-titled meetings
 // are now two rows; the dedup path never rewrites owner_slug.
+//
+// schema-v122: a LAB series meeting (MNCCORE, Pulmonary HSR, CLIF WG) is one
+// row whoever writes it first: a member's Prep press before the meeting and
+// Nick's debrief push after it land on the same row (match step 2 below), and
+// a unique index makes a racing second INSERT impossible (it retries onto the
+// winner). A new row's audience comes from its title here and nowhere else;
+// the caller has no audience field.
 async function upsertMeeting(env: Env, writer: MeetingWriter, input: MeetingUpsert): Promise<Response> {
   const { owner, user } = writer;
   // #102: who actually ran the meeting. The UI used to DERIVE this from a hash
@@ -576,16 +791,18 @@ async function upsertMeeting(env: Env, writer: MeetingWriter, input: MeetingUpse
   //   1. the PB service with a source_id: that row, whoever owns it. source_id
   //      is PB's identity for the meeting and UNIQUE; a re-push of a row the
   //      title match would miss must update it, not 500 or duplicate.
-  //   2. the caller's own rows on that date, by normalized title;
-  //   3. for the PB key only, an owner-less row on that date created before
+  //   2. a lab series title: the lab row of that title on that date, whoever
+  //      owns it (findLabSeriesRow);
+  //   3. the caller's own rows on that date, by normalized title;
+  //   4. for the PB key only, an owner-less row on that date created before
   //      schema-v119 was applied (ADOPTABLE_UNOWNED), which it then adopts.
-  // The dedup path never rewrites a non-NULL owner.
-  type Candidate = { id: string; date: string; title: string; notes: string | null; owner_slug: string | null };
+  // The dedup path never rewrites a non-NULL owner, nor audience.
   let existing: Candidate | undefined;
   if (writer.service && input.source_id) {
     existing = (await env.DB.prepare('SELECT * FROM meetings WHERE source_id = ? LIMIT 1')
       .bind(input.source_id).first<Candidate>()) ?? undefined;
   }
+  if (!existing) existing = await findLabSeriesRow(env, input.date, input.title);
   if (!existing) {
     const sameDate = await env.DB.prepare(
       `SELECT * FROM meetings WHERE date = ? AND (owner_slug IS ? OR (? = 1 AND ${ADOPTABLE_UNOWNED}))`
@@ -599,63 +816,80 @@ async function upsertMeeting(env: Env, writer: MeetingWriter, input: MeetingUpse
       .bind(owner, existing.id).run();
     if (stamped.meta?.changes) existing = { ...existing, owner_slug: owner };
   }
-  if (existing) {
-    // Upsert: if the re-push carries notes/decisions/tags/type, refresh the
-    // row. The COALESCE-on-carried-value pattern means an absent/empty field
-    // never wipes an existing value — only a provided (non-null / non-empty)
-    // value overwrites. attendees and source_id are the opposite direction,
-    // FILL-ONLY (existing wins): source_id is identity, and attendees may hold
-    // a person's edit (see the header above). attendees fill when NULL or
-    // '[]'; a NULL bind leaves the column as it is.
-    const hadNotes = !!(existing as { notes?: string | null }).notes;
+
+  // Upsert onto an existing row: if the push carries notes/decisions/tags/type,
+  // refresh the row. The COALESCE-on-carried-value pattern means an
+  // absent/empty field never wipes an existing value — only a provided
+  // (non-null / non-empty) value overwrites. attendees and source_id are the
+  // opposite direction, FILL-ONLY (existing wins): source_id is identity, and
+  // attendees may hold a person's edit (see the header above). attendees fill
+  // when NULL or '[]'; a NULL bind leaves the column as it is.
+  const updateExisting = async (row: Candidate): Promise<Response> => {
+    const hadNotes = !!row.notes;
     const hasNotes = input.notes !== undefined && input.notes !== null;
     const hasDecisions = input.decisions !== undefined && input.decisions !== null;
     const hasTags = tagsJson !== null;
     const hasAttendees = attendeesJson !== null;
     // type: only overwrite when the payload carries a real value — never
-    // clobber an existing row's type with a default (matches the INSERT
-    // branch's `type ?? 'biweekly'` default applying to NEW rows only).
+    // clobber an existing row's type with a default.
     const hasType = typeof input.type === 'string' && input.type.length > 0;
-    if (hasNotes || hasDecisions || hasTags || hasAttendees || hasType || input.source_id || facilitator) {
-      await env.DB.prepare(
-        `UPDATE meetings
-            SET notes = COALESCE(?, notes),
-                decisions = COALESCE(?, decisions),
-                tags = COALESCE(?, tags),
-                attendees = CASE WHEN attendees IS NULL OR attendees = '[]' THEN COALESCE(?, attendees) ELSE attendees END,
-                type = COALESCE(?, type),
-                facilitator = COALESCE(?, facilitator),
-                source_id = COALESCE(source_id, ?),
-                updated_at = datetime('now')
-          WHERE id = ?`
-      ).bind(
-        hasNotes ? input.notes : null,
-        hasDecisions ? input.decisions : null,
-        hasTags ? tagsJson : null,
-        hasAttendees ? attendeesJson : null,
-        hasType ? input.type : null,
-        facilitator,
-        input.source_id ?? null,
-        existing.id,
-      ).run();
-      if (hasNotes && !hadNotes) {
-        await fireMeetingDebriefNotification(env, existing.id, input.source_id ?? null, input.title, existing.owner_slug);
-      }
-      const refreshed = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(existing.id).first();
-      return json({ data: refreshed }, 200);
+    if (!(hasNotes || hasDecisions || hasTags || hasAttendees || hasType || input.source_id || facilitator)) {
+      return json({ data: row }, 200);
     }
-    return json({ data: existing }, 200);
-  }
+    await env.DB.prepare(
+      `UPDATE meetings
+          SET notes = COALESCE(?, notes),
+              decisions = COALESCE(?, decisions),
+              tags = COALESCE(?, tags),
+              attendees = CASE WHEN attendees IS NULL OR attendees = '[]' THEN COALESCE(?, attendees) ELSE attendees END,
+              type = COALESCE(?, type),
+              facilitator = COALESCE(?, facilitator),
+              source_id = COALESCE(source_id, ?),
+              updated_at = datetime('now')
+        WHERE id = ?`
+    ).bind(
+      hasNotes ? input.notes : null,
+      hasDecisions ? input.decisions : null,
+      hasTags ? tagsJson : null,
+      hasAttendees ? attendeesJson : null,
+      hasType ? input.type : null,
+      facilitator,
+      input.source_id ?? null,
+      row.id,
+    ).run();
+    if (hasNotes && !hadNotes) {
+      // The debrief bell rings for whoever wrote the debrief when that is the
+      // PB service (Nick's push onto a lab row a member prepped rings Nick,
+      // not the member); otherwise for the row's owner.
+      const recipient = writer.service ? (owner ?? row.owner_slug) : row.owner_slug;
+      await fireMeetingDebriefNotification(env, row.id, input.source_id ?? null, input.title, recipient);
+    }
+    const refreshed = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(row.id).first();
+    return json({ data: refreshed }, 200);
+  };
+
+  if (existing) return updateExisting(existing);
 
   const id = `mtg-${input.date}-${generateId().slice(0, 8)}`;
-  await env.DB.prepare(
-    'INSERT INTO meetings (id, date, title, type, attendees, notes, decisions, tags, status, source_id, facilitator, owner_slug) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).bind(
-    id, input.date, input.title, input.type ?? 'biweekly',
-    attendeesJson,
-    input.notes ?? null, input.decisions ?? null, tagsJson, 'upcoming',
-    input.source_id ?? null, facilitator, owner,
-  ).run();
+  try {
+    await env.DB.prepare(
+      'INSERT INTO meetings (id, date, title, type, attendees, notes, decisions, tags, status, source_id, facilitator, owner_slug, audience) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(
+      // type: whatever the writer said, or NULL. The old 'biweekly' default
+      // stamped every Prep row and every untyped push a biweekly meeting.
+      id, input.date, input.title, typeof input.type === 'string' && input.type ? input.type : null,
+      attendeesJson,
+      input.notes ?? null, input.decisions ?? null, tagsJson, 'upcoming',
+      input.source_id ?? null, facilitator, owner, initialAudience(input.title),
+    ).run();
+  } catch (e) {
+    // Another writer inserted this lab meeting between our lookup and our
+    // INSERT. Land on its row instead (once; a second miss is a real error).
+    if (!isLabTitleCollision(e)) throw e;
+    const winner = await findLabSeriesRow(env, input.date, input.title);
+    if (!winner) throw e;
+    return updateExisting(winner);
+  }
 
   await logActivity(env, 'meeting', `Created meeting: "${input.title}" on ${input.date}`, user.email, id, 'meeting');
 

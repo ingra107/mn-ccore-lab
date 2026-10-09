@@ -447,6 +447,17 @@ export interface MeetingRow {
    *  join in handleGetMeeting matches `IN (id, source_id)`; any client-side
    *  aggregation across meeting_id (T8 list-row counts) must do the same. */
   source_id?: string | null
+  /** schema-v119: who created the row (stamped server-side). */
+  owner_slug?: string | null
+  /** schema-v122: 'private' | 'lab'. A lab meeting is visible to every member. */
+  audience?: string
+  /** schema-v122: JSON array of {id, slug, short_name, title} the meeting is
+   *  GRANTED to (its "belongs to" projects). Names are null for a project the
+   *  viewer is not on. Absent on a Worker older than v122. */
+  granted_projects?: string | null
+  /** Live action items linked to the meeting (tasks.meeting_id IN (id, source_id)), as the viewer sees them. */
+  action_count?: number
+  open_action_count?: number
 }
 
 export interface AgendaItemRow {
@@ -476,6 +487,8 @@ export interface MeetingDetail extends MeetingRow {
   // table + its /api/action-items routes/hooks were retired in T19 (#547).
   action_items: TaskRow[]
   agenda_items: AgendaItemRow[]
+  /** The server's answer to "may this viewer flip the audience and grant projects" (owner or Nick). */
+  can_manage_access?: boolean
 }
 
 // Static meeting data for dev fallback

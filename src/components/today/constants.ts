@@ -20,6 +20,7 @@ import { todayKey } from '../../lib/taskGrouping'
 import type { GroupKey } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
 import { isMilestone } from '../../../shared/taskKinds'
+import { grantedProjectList, projectShortLabel } from '../../lib/projectMeetings'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Types
@@ -93,6 +94,16 @@ export interface TodayEvent {
   // POST /api/meetings/prep-from-event, which copies title + attendees from
   // the cache server-side. Set on every cal- row, absent on native D1 rows.
   calendarRef?: { uid: string; startAt: string }
+
+  // ── Meeting card (schema-v122, Nick 2026-10-09: "meeting cards get
+  // attendee faces + project + action count") ──────────────────────────
+  // Filled from the D1 meeting row (native rows, and cal- rows matched to
+  // one). The attendee team slugs (faces), the first granted project the
+  // viewer can name (short name), and the live action items linked to it.
+  people?: string[]
+  project?: { name: string; slug: string } | null
+  actionCount?: number
+  openActionCount?: number
 
   // ── #107: cross-day span ────────────────────────────────────────────────
   // startMin/endMin are minutes-since-midnight, which cannot express a span
@@ -187,9 +198,30 @@ export function formatTodayDate(): string {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
 }
 
+// A team slug ("casey-eddington"), not an email, a NetID or an external's name.
+const TEAM_SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)+$/
+
+/** What a meeting card shows beyond its title: faces, project, action counts. */
+export function meetingCardFields(m: MeetingRow): Pick<TodayEvent, 'people' | 'project' | 'actionCount' | 'openActionCount'> {
+  let people: string[] = []
+  try {
+    const parsed: unknown = m.attendees ? JSON.parse(m.attendees) : []
+    if (Array.isArray(parsed)) {
+      people = Array.from(new Set(parsed.filter((a): a is string => typeof a === 'string' && TEAM_SLUG_RE.test(a))))
+    }
+  } catch { /* not JSON: no faces */ }
+  const named = grantedProjectList(m.granted_projects).find((g) => g.slug && (g.short_name || g.title))
+  return {
+    people,
+    project: named ? { name: projectShortLabel(named), slug: named.slug! } : null,
+    actionCount: m.action_count ?? 0,
+    openActionCount: m.open_action_count ?? 0,
+  }
+}
+
 export function meetingToEvent(m: MeetingRow): TodayEvent {
   // Hub MeetingRow has only `date`, no time fields. Render as untimed.
-  return { id: m.id, time: '—', title: m.title, notes: m.notes }
+  return { id: m.id, time: '—', title: m.title, notes: m.notes, ...meetingCardFields(m) }
 }
 
 // TP-10: detect a meeting URL in the location field. ics-parser already

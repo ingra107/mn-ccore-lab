@@ -92,6 +92,9 @@ function seed() {
   insertRow(db, 'activity_log', { id: 'log-sweep-pb', type: 'pb_session', description: `${MARK} PB session`, actor: 'nick-ingraham' })
   insertRow(db, 'activity_log', { id: 'log-sweep-sync', type: 'sync', description: `${MARK} sync` })
   seedLaneB()
+  // schema-v122: the hidden meeting is granted to the hidden project; a write
+  // route that could add, remove or reach a grant shows up in hiddenRows.
+  insertRow(db, 'meeting_project_grants', { meeting_id: HIDDEN, project_id: PROJ, granted_by: 'nick-ingraham' })
   env ={ DB: d1Adapter(db), TEST_MODE_KEY: TEST_KEY, PB_API_KEY: API_KEY, REQUIRE_AUTH: '1' } as unknown as Env
 }
 
@@ -190,6 +193,8 @@ const hiddenRows = () => JSON.stringify([
   db.prepare("SELECT * FROM activity_entries WHERE (entity_type = 'meeting' AND entity_id = ?) OR id = ? OR parent_id = ? ORDER BY id").all(HIDDEN, ENTRY, ENTRY),
   db.prepare("SELECT * FROM file_attachments WHERE (entity_type = 'meeting' AND entity_id = ?) OR id = ? ORDER BY id").all(HIDDEN, FILE_ID),
   db.prepare("SELECT id, type, description, related_id FROM activity_log WHERE related_id = ? AND related_type = 'meeting' ORDER BY id").all(HIDDEN),
+  db.prepare('SELECT * FROM meeting_project_grants WHERE meeting_id = ? ORDER BY project_id').all(HIDDEN),
+  db.prepare('SELECT * FROM activity_thread_seen WHERE root_id IN (?, ?, ?) ORDER BY root_id, viewer_slug').all(ENTRY, TASK_ENTRY, PROJ_ENTRY),
   // Lane B: the hidden project, its members, its tasks and everything under them.
   db.prepare('SELECT * FROM projects WHERE id IN (?, ?) OR slug = ? ORDER BY id').all(PROJ, NICK_ONLY, PROJ_SLUG),
   db.prepare('SELECT project_id, member_slug FROM project_members WHERE project_id IN (?, ?) ORDER BY 1, 2').all(PROJ, NICK_ONLY),
@@ -287,6 +292,7 @@ describe('write sweep: no write route changes or adds a row of a meeting the cal
       meeting_id: HIDDEN, entity_type: 'meeting', entity_id: HIDDEN, entityType: 'meeting', entityId: HIDDEN,
       key: FILE_KEY, filename: 'f.pdf', contentType: 'application/pdf', sizeBytes: 1, context: { type: 'meeting', id: HIDDEN },
       parent_id: ENTRY, id, uid: 'x', start_at: TODAY, day: TODAY, rationale: 'sweep',
+      root_id: ENTRY, read_up_to: '2026-10-09 10:00:00', audience: 'lab',
       // Lane B: name the hidden project and task in every field a handler might read.
       project_id: PROJ, project_slug: PROJ_SLUG, project: PROJ, task_id: TASK, slug: 'casey-eddington',
       assignee: 'casey-eddington', revision_id: REVISION, question_id: QUESTION, target_type: 'comment', target_id: TASK_ENTRY,

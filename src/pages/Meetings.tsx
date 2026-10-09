@@ -73,6 +73,7 @@ function meetingRowToMeeting(row: MeetingRow, tasksByMeetingId: Map<string, Task
     notes: row.notes || undefined,
     updated_at: row.updated_at || undefined,
     facilitator: row.facilitator ?? null,
+    audience: row.audience === 'lab' ? 'lab' : 'private',
     actionItems: meetingActions.map((t) => ({
       id: t.id,
       description: t.description,
@@ -604,7 +605,6 @@ export default function Meetings() {
       body: JSON.stringify({
         date: newMeetingDate,
         title: newMeetingTitle.trim(),
-        type: 'biweekly',
         attendees: newMeetingAttendees,
         agenda: newMeetingAgenda.filter((a) => a.trim()),
       }),
@@ -903,6 +903,11 @@ export default function Meetings() {
                             title="Updated since you last looked"
                             style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--teal)', boxShadow: '0 0 0 2.5px rgba(45,138,138,0.15)', flexShrink: 0 }}
                           />
+                        )}
+                        {meeting.audience === 'lab' && (
+                          <span title="Lab meeting: every member can see it" style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '10px', border: '1px solid var(--border-subtle)', color: 'var(--slate)', fontWeight: 500 }}>
+                            Lab
+                          </span>
                         )}
                         {actionCount > 0 && (
                           <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '10px', background: pendingCount > 0 ? withAlpha(ACCENT_GOLD, 15) : 'rgba(45,138,138,0.12)', color: pendingCount > 0 ? 'var(--gold)' : 'var(--teal)', fontWeight: 500 }}>

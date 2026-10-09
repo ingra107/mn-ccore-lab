@@ -282,3 +282,66 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
     return json({ data: [], count: 0 });
   }
 }
+
+// ── Thread read markers (schema-v122) ────────────────────────────────────────
+//
+// A collapsed thread's "New" tag (src/components/activity/useThreadNew.ts)
+// needs to know how far THIS reader has read THIS thread. The entity-wide
+// entity_seen marker above cannot say it, and the browser's localStorage
+// marker that refined it did not travel between devices (Nick, 2026-10-09).
+// activity_thread_seen holds one row per (thread root, reader): the newest
+// reply timestamp they have seen. It only moves forward.
+//
+// GET  /api/thread-seen   -> [{root_id, read_up_to}] for the caller
+// POST /api/thread-seen   {root_id, read_up_to}
+
+const READ_UP_TO_RE = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d{1,6})?Z?$/;
+const THREAD_SEEN_LIMIT = 2000;
+
+export async function handleGetThreadSeen(request: Request, env: Env): Promise<Response> {
+  const viewer = await actorSlugFromRequest(request, env);
+  if (!viewer) return json({ data: [], count: 0 });
+  const { results } = await env.DB.prepare(
+    `SELECT root_id, read_up_to FROM activity_thread_seen WHERE viewer_slug = ?
+      ORDER BY updated_at DESC LIMIT ${THREAD_SEEN_LIMIT}`
+  ).bind(viewer).all<{ root_id: string; read_up_to: string }>();
+  return json({ data: results ?? [], count: (results ?? []).length });
+}
+
+export async function handleMarkThreadSeen(request: Request, env: Env): Promise<Response> {
+  const viewer = await actorSlugFromRequest(request, env);
+  if (!viewer) return error('Authentication required', 401);
+  const body = await request.json().catch(() => null) as { root_id?: unknown; read_up_to?: unknown } | null;
+  const rootId = typeof body?.root_id === 'string' ? body.root_id : '';
+  const readUpTo = typeof body?.read_up_to === 'string' ? body.read_up_to : '';
+  if (!rootId || !READ_UP_TO_RE.test(readUpTo)) return error('root_id and read_up_to (a timestamp) required', 400);
+  // The thread must be a root the caller can see (the handle decides). An
+  // INSERT is not a read, so this check is what keeps a marker off a hidden
+  // thread.
+  const root = await env.DB.prepare(
+    // activity-hidden-exempt: write-path lookup of a thread root by id; a dismissed thread's marker is harmless and its own
+    'SELECT id FROM activity_entries WHERE id = ? AND parent_id IS NULL'
+  ).bind(rootId).first();
+  if (!root) return error('Thread not found', 404);
+  // Update-then-insert (never an upsert: a scoped handle refuses DO UPDATE).
+  // The UPDATE moves the marker only forward.
+  try {
+    await env.DB.batch([
+      env.DB.prepare(
+        `UPDATE activity_thread_seen SET read_up_to = ?, updated_at = datetime('now')
+          WHERE root_id = ? AND viewer_slug = ? AND read_up_to < ?`
+      ).bind(readUpTo, rootId, viewer, readUpTo),
+      env.DB.prepare(
+        `INSERT OR IGNORE INTO activity_thread_seen (root_id, viewer_slug, read_up_to) VALUES (?, ?, ?)`
+      ).bind(rootId, viewer, readUpTo),
+    ]);
+  } catch (e) {
+    // The only constraint a well-formed call can trip is the reader FK: a
+    // signed-in caller with no team_members row.
+    console.error('handleMarkThreadSeen failed:', e);
+    return error('Not a team member', 403);
+  }
+  const row = await env.DB.prepare('SELECT read_up_to FROM activity_thread_seen WHERE root_id = ? AND viewer_slug = ?')
+    .bind(rootId, viewer).first<{ read_up_to: string }>();
+  return json({ data: { root_id: rootId, read_up_to: row?.read_up_to ?? readUpTo } });
+}

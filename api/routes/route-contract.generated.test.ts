@@ -163,7 +163,10 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 262 as of 2026-10-09 — a person's pinned projects (+3, nav redesign):
     //   GET /api/pins, POST /api/pins, DELETE /api/pins/:project. Stored in
     //   the existing watchlist table (schema-v49); api/routes/pins.ts.
-    expect(ROUTE_REGISTRY).toHaveLength(262)
+    // 267 as of 2026-10-09 — meeting access, schema-v122 (+5): GET
+    //   /api/meetings/:id/access (PB key, Hermes), POST /api/meetings/:id/projects,
+    //   DELETE /api/meetings/:id/projects/:projectId, GET + POST /api/thread-seen.
+    expect(ROUTE_REGISTRY).toHaveLength(267)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

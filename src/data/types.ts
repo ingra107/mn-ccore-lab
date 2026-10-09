@@ -175,4 +175,6 @@ export interface Meeting {
   updated_at?: string  // server row timestamp — drives the new-notes freshness pill
   /** Who ran the meeting, recorded — never derived. NULL renders nothing (#102). */
   facilitator?: string | null
+  /** schema-v122: 'lab' = every member sees it (the three lab series, or flipped by its owner / Nick). */
+  audience?: 'private' | 'lab'
 }
