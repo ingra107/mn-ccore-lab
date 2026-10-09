@@ -15,6 +15,7 @@ import FileUpload from '../FileUpload'
 const RichTextEditor = lazyRoute(() => import('../RichTextEditor'))
 import { useUpdateTask, useUpdateTaskStatus, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useTaskViewTracking } from '../../hooks/useTaskViewTracking'
+import { useAuth } from '../../hooks/useAuth'
 import { useProjects, useDecisions, useTaskLinks } from '../../hooks/useApiData'
 import { QueryErrorNote } from '../QueryErrorNote'
 import StoredLinkChip from '../StoredLinkChip'
@@ -1523,6 +1524,10 @@ export function OverviewQuickAdd({
   const [text, setText] = useState('')
   const [focused, setFocused] = useState(false)
   const [forHermes, setForHermes] = useState(false)
+  // Queue-for-Claude POSTs /api/pb/dispatch/add, PI-only on the server (403
+  // for anyone else, swallowed below as fire-and-forget), so the toggle is a
+  // PI control. A member never sees it, so forHermes stays false for them.
+  const isPi = useAuth().user.isPi
   const [meOnly, setMeOnly] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   // Instant optimistic preview while the real R2 upload runs in the
@@ -1910,7 +1915,7 @@ export function OverviewQuickAdd({
                 Distinct from the typed @hermes prefix above: this queues the
                 comment to dispatch_queue for Nick's next Claude Code session,
                 it is NOT a real-time Hermes round-trip (#520). */}
-            {mode === 'comment' && (
+            {mode === 'comment' && isPi && (
               <button
                 type="button"
                 role="switch"
