@@ -26,13 +26,16 @@ import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-
 
 type Row = Record<string, unknown>
 
+const SERVICE_KEY = 'create-notes-service-key'
+const TEST_KEY = 'create-notes-test-key'
+
 /** A fresh migrated database seeded with `seed` meetings; reads are live. */
 function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: () => Row[]; notifications: () => Row[]; db: InstanceType<typeof Database> } {
   const db = prodSchemaDb()
   // Seeded rows are owned by nick-ingraham unless a case says otherwise: the
   // schema-v119 backfill leaves every pre-existing prod meeting that way.
   for (const r of seed) insertRow(db, 'meetings', { owner_slug: 'nick-ingraham', ...r })
-  const env = { DB: d1Adapter(db) } as unknown as Env
+  const env = { DB: d1Adapter(db), PB_API_KEY: SERVICE_KEY, TEST_MODE_KEY: TEST_KEY } as unknown as Env
   return {
     env,
     db,
@@ -608,5 +611,67 @@ describe('handleCreateMeeting: owner stamping and owner-scoped dedup', () => {
     await handleCreateMeeting(makeRequest({ date: '2026-10-09', title: 'Dev', notes: 'n' }), makeUser('anonymous', 'anonymous'), b.env)
     expect(b.meetings()[0].owner_slug).toBeNull()
     expect(b.notifications()).toEqual([])
+  })
+})
+
+// The deploy window (#145 fix pass): rows written before the v119 owner
+// backfill reaches them have owner_slug NULL. The PB service and a PI adopt
+// such a row instead of duplicating it; a member never does. The service also
+// matches on source_id first, because v95 makes it UNIQUE.
+function serviceRequest(body: Record<string, unknown>): Request {
+  return new Request('https://example.com/api/meetings', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', Authorization: `Bearer ${SERVICE_KEY}` },
+    body: JSON.stringify(body),
+  })
+}
+function piRequest(body: Record<string, unknown>): Request {
+  return new Request('https://example.com/api/meetings', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': 'ingra107@umn.edu' },
+    body: JSON.stringify(body),
+  })
+}
+
+describe('handleCreateMeeting: owner-less rows and source_id in the deploy window', () => {
+  beforeEach(async () => { (await import('../helpers'))._resetPiEmailsCacheForTests() })
+
+  it('a PB re-push of a NULL-owner row carrying its source_id dedups to 200 and stamps the owner', async () => {
+    const b = makeStatefulEnv([{ id: 'mtg-old', date: '2026-10-01', title: 'Lab Sync', source_id: 'cal-x', owner_slug: null }])
+    const res = await handleCreateMeeting(serviceRequest({ date: '2026-10-01', title: 'Lab Sync', source_id: 'cal-x', notes: 'debrief' }), makeUser(), b.env)
+    expect(res.status).toBe(200)
+    expect(b.meetings()).toHaveLength(1)
+    expect(b.meetings()[0]).toMatchObject({ id: 'mtg-old', owner_slug: 'nick-ingraham', notes: 'debrief', source_id: 'cal-x' })
+  })
+
+  it('the source_id match wins even when the title no longer matches', async () => {
+    const b = makeStatefulEnv([{ id: 'mtg-old', date: '2026-10-01', title: 'Lab Sync (moved)', source_id: 'cal-x', owner_slug: null }])
+    const res = await handleCreateMeeting(serviceRequest({ date: '2026-10-01', title: 'Lab Sync', source_id: 'cal-x' }), makeUser(), b.env)
+    expect(res.status).toBe(200)
+    expect(b.meetings()).toHaveLength(1)
+  })
+
+  it('a source_id match never rewrites an existing owner', async () => {
+    const b = makeStatefulEnv([{ id: 'mtg-c', date: '2026-10-01', title: 'Casey 1:1', source_id: 'cal-y', owner_slug: 'casey-eddington' }])
+    await handleCreateMeeting(serviceRequest({ date: '2026-10-01', title: 'Casey 1:1', source_id: 'cal-y', notes: 'n' }), makeUser(), b.env)
+    expect(b.meetings()[0]).toMatchObject({ id: 'mtg-c', owner_slug: 'casey-eddington', notes: 'n' })
+  })
+
+  it('a PI adopts a NULL-owner row by title', async () => {
+    const b = makeStatefulEnv([{ id: 'mtg-old', date: '2026-10-01', title: 'Lab Sync', owner_slug: null }])
+    b.db.prepare("UPDATE lab_settings SET value = ? WHERE key = 'pi_emails'").run(JSON.stringify(['ingra107@umn.edu']))
+    const res = await handleCreateMeeting(piRequest({ date: '2026-10-01', title: 'lab sync', notes: 'n' }), makeUser(), b.env)
+    expect(res.status).toBe(200)
+    expect(b.meetings()).toEqual([expect.objectContaining({ id: 'mtg-old', owner_slug: 'nick-ingraham' })])
+  })
+
+  it('a member never adopts a NULL-owner row, and a member source_id is dropped', async () => {
+    const b = makeStatefulEnv([{ id: 'mtg-old', date: '2026-10-01', title: 'Lab Sync', source_id: 'cal-x', owner_slug: null, notes: 'PRIVATE' }])
+    const res = await handleCreateMeeting(makeRequest({ date: '2026-10-01', title: 'Lab Sync', source_id: 'cal-x' }), makeUser('eddin022@umn.edu', 'casey-eddington'), b.env)
+    expect(res.status).toBe(201)
+    expect(await res.text()).not.toContain('PRIVATE')
+    const rows = b.meetings()
+    expect(rows.find((r) => r.id === 'mtg-old')).toMatchObject({ owner_slug: null, notes: 'PRIVATE' })
+    expect(rows.find((r) => r.id !== 'mtg-old')).toMatchObject({ owner_slug: 'casey-eddington', source_id: null })
   })
 })

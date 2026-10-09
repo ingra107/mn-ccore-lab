@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical, pbTaskVisibilitySql } from '../helpers';
+import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical, pbTaskVisibilitySql, isPiRequest } from '../helpers';
+import { validateApiKey } from '../middleware/api-key-auth';
 import { TASK_SELECT_COLS } from '../lib/task-cols';
 import { normalizeAttendees, attendeesColumnValue, type NormalizedAttendees } from '../lib/meeting-write';
 import { ctToday } from '../lib/ct-date';
@@ -497,7 +498,8 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
     source_id?: string | null; facilitator?: string | null;
   };
   if (!body.date || !body.title) return error('date and title required', 400);
-  return upsertMeeting(env, user, {
+  const writer = await meetingWriter(request, user, env);
+  return upsertMeeting(env, writer, {
     date: body.date,
     title: body.title,
     type: body.type,
@@ -505,7 +507,11 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
     notes: body.notes,
     decisions: body.decisions,
     tags: body.tags,
-    source_id: body.source_id,
+    // source_id is PB's calendar-match identity (v95: UNIQUE where not NULL).
+    // Only the PB service may set it: a member's value could squat on the id
+    // PB is about to push (blocking Nick's debrief with a UNIQUE 500), and that
+    // 500 would also tell the member the id exists.
+    source_id: writer.service ? body.source_id : undefined,
     facilitator: body.facilitator,
   });
 }
@@ -518,6 +524,26 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
 function meetingOwner(user: AuthUser): string | null {
   const slug = (user.slug ?? '').trim();
   return slug && slug !== 'anonymous' ? slug : null;
+}
+
+/** Who is writing a meeting, as upsertMeeting needs to know it. */
+interface MeetingWriter {
+  user: AuthUser;
+  owner: string | null;
+  /** The PB service key: may set source_id and dedups on it first. */
+  service: boolean;
+  /** PB key or a PI: may adopt an owner-less row (one written before
+   *  schema-v119's backfill reached it), stamping its own slug on it. */
+  adoptsUnowned: boolean;
+}
+
+async function meetingWriter(request: Request, user: AuthUser, env: Env): Promise<MeetingWriter> {
+  return {
+    user,
+    owner: meetingOwner(user),
+    service: validateApiKey(request, env) === true,
+    adoptsUnowned: await isPiRequest(request, env),
+  };
 }
 
 interface MeetingUpsert {
@@ -533,8 +559,8 @@ interface MeetingUpsert {
 // on "Lab meeting" merged into (and was answered with) another member's row of
 // the same title and day, notes included. Two people's same-titled meetings
 // are now two rows; the dedup path never rewrites owner_slug.
-async function upsertMeeting(env: Env, user: AuthUser, input: MeetingUpsert): Promise<Response> {
-  const owner = meetingOwner(user);
+async function upsertMeeting(env: Env, writer: MeetingWriter, input: MeetingUpsert): Promise<Response> {
+  const { owner, user } = writer;
   // #102: who actually ran the meeting. The UI used to DERIVE this from a hash
   // of the date, so it was wrong ~always; now it renders the stored value or
   // nothing. Give the value a writer so the read isn't pointed at a column
@@ -558,12 +584,33 @@ async function upsertMeeting(env: Env, user: AuthUser, input: MeetingUpsert): Pr
   // Fetch candidates on the same date and normalize each one's title before
   // comparing. This beats a naive `WHERE date=? AND title=?` match which would
   // miss "Lab Meeting" vs "lab  meeting".
-  const sameDate = await env.DB.prepare(
-    'SELECT * FROM meetings WHERE owner_slug IS ? AND date = ?'
-  ).bind(owner, input.date).all<{ id: string; date: string; title: string; notes: string | null; owner_slug: string | null }>();
-  const existing = (sameDate.results ?? []).find(
-    (m) => normalizeMeetingTitle(m.title) === normalizedTitle,
-  );
+  //
+  // Match order:
+  //   1. the PB service with a source_id: that row, whoever owns it. source_id
+  //      is PB's identity for the meeting and UNIQUE; a re-push of a row the
+  //      title match would miss must update it, not 500 or duplicate.
+  //   2. the caller's own rows on that date, by normalized title;
+  //   3. for the PB key or a PI only, an owner-less row on that date (written
+  //      before the v119 backfill reached it), which it then adopts.
+  // The dedup path never rewrites a non-NULL owner.
+  type Candidate = { id: string; date: string; title: string; notes: string | null; owner_slug: string | null };
+  let existing: Candidate | undefined;
+  if (writer.service && input.source_id) {
+    existing = (await env.DB.prepare('SELECT * FROM meetings WHERE source_id = ? LIMIT 1')
+      .bind(input.source_id).first<Candidate>()) ?? undefined;
+  }
+  if (!existing) {
+    const sameDate = await env.DB.prepare(
+      'SELECT * FROM meetings WHERE date = ? AND (owner_slug IS ? OR (? = 1 AND owner_slug IS NULL))'
+    ).bind(input.date, owner, writer.adoptsUnowned ? 1 : 0).all<Candidate>();
+    const titled = (sameDate.results ?? []).filter((m) => normalizeMeetingTitle(m.title) === normalizedTitle);
+    existing = titled.find((m) => m.owner_slug !== null) ?? titled[0];
+  }
+  if (existing && existing.owner_slug === null && owner) {
+    await env.DB.prepare('UPDATE meetings SET owner_slug = ? WHERE id = ? AND owner_slug IS NULL')
+      .bind(owner, existing.id).run();
+    existing = { ...existing, owner_slug: owner };
+  }
   if (existing) {
     // Upsert: if the re-push carries notes/decisions/tags/type, refresh the
     // row. The COALESCE-on-carried-value pattern means an absent/empty field
@@ -680,7 +727,7 @@ export async function handlePrepMeetingFromEvent(request: Request, user: AuthUse
   // The poller writes this column with JSON.stringify; a parse failure is a
   // bug worth a 500, not a silent empty list.
   const cached: unknown = ev.attendees ? JSON.parse(ev.attendees) : [];
-  return upsertMeeting(env, user, {
+  return upsertMeeting(env, await meetingWriter(request, user, env), {
     date: day,
     title: ev.summary?.trim() || '(no title)',
     attendees: await normalizeAttendees(env, cached),

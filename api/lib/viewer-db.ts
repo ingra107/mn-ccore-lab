@@ -39,6 +39,14 @@
 //     whole for that person. In Lane A the meetings rule returns null for a
 //     PI, so Nick's session is unchanged. A person with no restricted table
 //     gets the raw handle too (no prefix, no cost).
+//
+// COST. For a scoped person, EVERY statement that names a scoped table is
+// prefixed, not only meeting reads: activity_entries, activity_log,
+// agenda_items, hub_decisions and file_attachments rules read the meetings
+// CTE, so the activity feeds pay too. Measured on prod D1 for Casey (#145
+// review): `SELECT COUNT(*) FROM meetings` rows_read 73 -> 533; activity_log
+// top 50 rows_read 50 -> 621. Nick and the PB key get the raw handle and pay
+// nothing. Statements naming no scoped table are passed through unchanged.
 //   - nobody:  no identity (anonymous, a signed-in non-member on a public GET,
 //     a credential-less local caller). Every scoped table is empty.
 // Service and person are separate kinds on purpose: Lane B scopes Nick's
@@ -147,6 +155,7 @@ function topLevelWords(sql: string): Tok[] {
     }
     if (ch === '(') { depth++; i++; continue }
     if (ch === ')') { depth--; i++; continue }
+    if (ch === ';') { out.push({ word: ';', start: i, end: i + 1, depth }); i++; continue }
     if (/[A-Za-z_]/.test(ch)) {
       const start = i
       while (i < n && /[A-Za-z0-9_$]/.test(sql[i])) i++
@@ -158,7 +167,9 @@ function topLevelWords(sql: string): Tok[] {
   return out
 }
 
-const FORBIDDEN_SQL = /\b(main|temp)\s*\.|\bsqlite_(master|schema|temp_master)\b|\bpragma\b|\battach\b|\bdetach\b/i
+// `main.` / `temp.` in any quoting ("main". [main]. `temp`.), the schema
+// tables, pragma, attach/detach.
+const FORBIDDEN_SQL = /(?:\b|["`[])(main|temp)["`\]]?\s*\.|\bsqlite_(master|schema|temp_master)\b|\bpragma\b|\battach\b|\bdetach\b/i
 
 export class ScopeRefused extends Error {}
 
@@ -177,6 +188,19 @@ export function scopeSql(sql: string, active: ReadonlyMap<ScopedTable, string>):
   if (named.size === 0) return sql
   if (FORBIDDEN_SQL.test(sql)) {
     throw new ScopeRefused('viewer-db: SQL that names main./temp./sqlite_/pragma/attach is refused for a scoped viewer')
+  }
+  // A quoted identifier naming a scoped table ("meetings", [meetings],
+  // `meetings`) is refused rather than reasoned about: no route writes one,
+  // and the rewriter below only reads bare words.
+  for (const t of named) {
+    if (new RegExp(`["\`[]${t}["\`\\]]`, 'i').test(sql)) {
+      throw new ScopeRefused(`viewer-db: a quoted identifier naming scoped table ${t} is refused for a scoped viewer`)
+    }
+  }
+  const scanned = topLevelWords(sql)
+  const semi = scanned.findIndex((w) => w.word === ';' && w.depth === 0)
+  if (semi !== -1 && scanned.slice(semi + 1).some((w) => w.word !== ';')) {
+    throw new ScopeRefused('viewer-db: more than one statement in one prepare() is refused for a scoped viewer')
   }
   for (const t of [...named]) {
     const s = TABLE_SCOPE[t]
@@ -221,6 +245,24 @@ function applyDmlRestriction(sql: string, active: ReadonlyMap<ScopedTable, strin
   const verbIdx = words.findIndex((w) => w.depth === 0 && ['select', 'insert', 'update', 'delete', 'replace', 'values'].includes(w.word))
   if (verbIdx === -1) return sql
   const verb = words[verbIdx]
+  const scopedTarget = (t: Tok | undefined) => !!t && named.has(t.word as ScopedTable) && active.has(t.word as ScopedTable)
+  // INSERT / REPLACE: an INSERT that only adds a row is the handler's to
+  // guard (parent check). One that can REPLACE or UPDATE an existing row
+  // reaches a row the viewer may not see, so it is refused on a scoped table.
+  if (verb.word === 'insert' || verb.word === 'replace') {
+    let j = verbIdx + 1
+    let replaces = verb.word === 'replace'
+    if (words[j]?.word === 'or') { replaces = replaces || words[j + 1]?.word === 'replace'; j += 2 }
+    if (words[j]?.word === 'into') j += 1
+    const target = words[j]
+    if (!scopedTarget(target)) return sql
+    const tail = words.slice(j + 1).filter((w) => w.depth === 0)
+    const upserts = tail.some((w, k) => w.word === 'do' && tail[k + 1]?.word === 'update')
+    if (replaces || upserts) {
+      throw new ScopeRefused(`viewer-db: REPLACE / ON CONFLICT DO UPDATE on scoped table ${target!.word} is refused for a scoped viewer`)
+    }
+    return sql
+  }
   let target: Tok | undefined
   if (verb.word === 'update') {
     let j = verbIdx + 1
@@ -234,6 +276,14 @@ function applyDmlRestriction(sql: string, active: ReadonlyMap<ScopedTable, strin
   if (!target) return sql
   const table = target.word as ScopedTable
   if (!named.has(table) || !active.has(table)) return sql
+  // The guard names the target by its table name, so an alias (UPDATE
+  // meetings AS m / DELETE FROM meetings m) would leave it pointing at the
+  // CTE. No route aliases a DML target; refuse rather than guess.
+  const next = words.find((w) => w.start >= target!.end && w.depth === 0)
+  const allowedNext = verb.word === 'update' ? ['set', 'indexed', 'not'] : ['where', 'returning', 'order', 'limit', 'indexed', 'not', ';']
+  if (next && !allowedNext.includes(next.word)) {
+    throw new ScopeRefused(`viewer-db: an aliased ${verb.word.toUpperCase()} target (${table} ${next.word}) is refused for a scoped viewer`)
+  }
   const scope = TABLE_SCOPE[table]
   if (scope.kind !== 'scoped') return sql
   const rest = words.slice(verbIdx + 1).filter((w) => w.depth === 0)

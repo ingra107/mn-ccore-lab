@@ -201,6 +201,33 @@ describe('the statement forms routes use', () => {
     expect(() => scopeSql('PRAGMA table_info(meetings)', active)).toThrow(ScopeRefused)
   })
 
+  it('quoted identifiers, quoted main., multi-statement SQL, upserts, REPLACE and aliased DML targets are refused', () => {
+    const active = activeScopes(CASEY)
+    const refused = [
+      'SELECT id FROM "meetings"',
+      'SELECT id FROM [meetings]',
+      'SELECT id FROM `meetings`',
+      'SELECT COUNT(*) FROM "main".meetings',
+      'SELECT COUNT(*) FROM [main].meetings',
+      'SELECT COUNT(*) FROM temp.meetings',
+      "SELECT 1 FROM meetings; DELETE FROM meetings",
+      "INSERT INTO meetings (id, date, title) VALUES ('x', 'd', 't') ON CONFLICT(id) DO UPDATE SET notes = 'x'",
+      "INSERT OR REPLACE INTO meetings (id, date, title) VALUES ('x', 'd', 't')",
+      "REPLACE INTO agenda_items (id, meeting_id, content) VALUES ('x', 'm', 'c')",
+      "UPDATE meetings AS m SET notes = 'x' WHERE m.id = ?",
+      'DELETE FROM agenda_items AS a WHERE a.id = ?',
+      'DELETE FROM agenda_items a WHERE a.id = ?',
+    ]
+    for (const sql of refused) expect(() => scopeSql(sql, active), sql).toThrow(ScopeRefused)
+    // what stays legal: a trailing semicolon, INSERT OR IGNORE, a plain INSERT, DO NOTHING
+    for (const sql of [
+      'DELETE FROM agenda_items WHERE id = ?;',
+      "INSERT OR IGNORE INTO activity_entries (id, entity_type, entity_id, kind, actor_slug, body) VALUES ('a','meeting','m','comment','x','b')",
+      "INSERT INTO agenda_items (id, meeting_id, content) VALUES ('x', 'm', 'c') ON CONFLICT DO NOTHING",
+      "SELECT 'meetings; and more' FROM meetings",
+    ]) expect(() => scopeSql(sql, active), sql).not.toThrow()
+  })
+
   it('batch() runs the scoped statements as one transaction', async () => {
     const { db, h } = handle(CASEY)
     await expect(h.batch([
@@ -248,26 +275,57 @@ describe('every prepared SQL literal in api/ still compiles under a scoped viewe
     }
     return out
   }
+  const UNCOMPILED_CEILING = 7 // measured 2026-10-09: dynamic column lists (meeting meta, decision update, postActivityEntry, search); all driven by viewer-sweep.test.ts
   const LITERAL = /\.prepare\(\s*(`(?:[^`\\]|\\.)*`|'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")/g
+
+  // A template literal's `${...}` holes are filled with each placeholder in
+  // turn (empty, a number, NULL, a column, a WHERE fragment) until the skeleton
+  // compiles; a literal no placeholder makes compile is listed, and the count
+  // of those that name a scoped table is pinned so it cannot grow unseen.
+  const HOLES = ['', '1', 'NULL', 'id', ' AND 1', '1 = 1']
+  function decode(raw: string, hole: string): string {
+    return raw.slice(1, -1).replace(/\$\{[^}]*\}/g, hole).replace(/\\(['"`\\])/g, '$1').replace(/\\n/g, '\n')
+  }
 
   it('compiles', () => {
     const db = prodSchemaDb()
     const active = activeScopes(CASEY)
     let scopedCount = 0
+    let templateCount = 0
     const broken: string[] = []
+    const uncompiled: string[] = []
     for (const file of walk(join(__dirname, '..'))) {
       const src = readFileSync(file, 'utf8')
       for (const m of src.matchAll(LITERAL)) {
-        const sql = m[1].slice(1, -1).replace(/\$\{[^}]*\}/g, '').replace(/\\(['"`\\])/g, '$1').replace(/\\n/g, '\n')
-        try { db.prepare(sql) } catch { continue }
-        const out = scopeSql(sql, active)
+        let sql: string | null = null
+        for (const hole of HOLES) {
+          const candidate = decode(m[1], hole)
+          try { db.prepare(candidate); sql = candidate; break } catch { /* next placeholder */ }
+        }
+        if (sql === null) {
+          const skeleton = decode(m[1], '')
+          if (/\b(meetings|agenda_items|hub_decisions|activity_entries|file_attachments|activity_log)\b/i.test(skeleton)) {
+            uncompiled.push(`${file.replace(/.*[\\/]api[\\/]/, 'api/')}: ${skeleton.replace(/\s+/g, ' ').slice(0, 100)}`)
+          }
+          continue
+        }
+        let out: string
+        try { out = scopeSql(sql, active) } catch (e) {
+          broken.push(`${file}: REFUSED ${(e as Error).message}\n  ${sql.slice(0, 160)}`)
+          continue
+        }
         if (out === sql) continue
         scopedCount++
+        if (m[1].includes('${')) templateCount++
         try { db.prepare(out) } catch (e) { broken.push(`${file}: ${(e as Error).message}\n  ${sql.slice(0, 160)}`) }
       }
     }
     expect(broken).toEqual([])
     expect(scopedCount, 'the sweep must reach the meeting statements, or it proves nothing').toBeGreaterThan(40)
+    expect(templateCount, 'template literals must be in the sweep too').toBeGreaterThan(5)
+    // Literals naming a scoped table whose skeleton no placeholder compiles.
+    // Each is covered only by viewer-sweep.test.ts. Pinned: a new one fails here.
+    expect(uncompiled.length, uncompiled.join('\n')).toBeLessThanOrEqual(UNCOMPILED_CEILING)
   })
 })
 

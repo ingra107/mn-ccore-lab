@@ -82,3 +82,21 @@ it('rowsFrom reads wrangler --json output and a bare array', () => {
   expect(rowsFrom([{ id: 2 }])).toEqual([{ id: 2 }])
   expect(() => rowsFrom({})).toThrow()
 })
+
+describe('owner backfill: the deploy-window review', () => {
+  it('holds owner-less rows created in the window, by created_at, unless named', () => {
+    const rows = [
+      { id: 'old', owner_slug: null, attendees: null, created_at: '2026-09-01 10:00:00', date: '2026-09-01', title: 'Old' },
+      { id: 'w2', owner_slug: null, attendees: null, created_at: '2026-10-09 12:05:00', date: '2026-10-09', title: 'Casey prep' },
+      { id: 'w1', owner_slug: null, attendees: null, created_at: '2026-10-09 12:01:00', date: '2026-10-09', title: 'PB push' },
+      { id: 'owned', owner_slug: 'casey-eddington', attendees: null, created_at: '2026-10-09 12:02:00' },
+    ]
+    const plan = planOwnerBackfill(rows, { windowStart: '2026-10-09 12:00:00' })
+    expect(plan.detail).toEqual(['old'])
+    expect(plan.held.map((h) => h.split('  ')[1])).toEqual(['w1', 'w2'])
+    const named = planOwnerBackfill(rows, { windowStart: '2026-10-09 12:00:00', includeIds: ['w1'] })
+    expect(named.detail).toEqual(['old', 'w1'])
+    expect(named.held.map((h) => h.split('  ')[1])).toEqual(['w2'])
+    expect(named.apply).not.toContain("'w2'")
+  })
+})

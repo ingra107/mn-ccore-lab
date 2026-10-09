@@ -98,7 +98,10 @@ const QUERY = (id: string) => `?id=${id}&meeting_id=${id}&entity_type=meeting&en
   + `&limit=500&days=3650&start=2000-01-01&end=2999-12-31&date=${TODAY}&include_hidden=1&include_fixtures=1`
 
 const hiddenRows = () => JSON.stringify([
-  db.prepare('SELECT * FROM meetings WHERE id = ? OR (date = ? AND title LIKE ?) ORDER BY id').all(HIDDEN, TODAY, `%${MARK}%`),
+  // The hidden row, plus any same-titled row that is not Casey's own: her POST
+  // with the hidden meeting's title rightly makes HER meeting; a write into
+  // anyone else's is the leak.
+  db.prepare("SELECT * FROM meetings WHERE id = ? OR (date = ? AND title LIKE ? AND COALESCE(owner_slug, '') <> 'casey-eddington') ORDER BY id").all(HIDDEN, TODAY, `%${MARK}%`),
   db.prepare('SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY id').all(HIDDEN),
   db.prepare('SELECT * FROM hub_decisions WHERE meeting_id IN (?, ?) ORDER BY id').all(HIDDEN, 'cal-sweep-src'),
   db.prepare("SELECT * FROM activity_entries WHERE (entity_type = 'meeting' AND entity_id = ?) OR id = ? OR parent_id = ? ORDER BY id").all(HIDDEN, ENTRY, ENTRY),

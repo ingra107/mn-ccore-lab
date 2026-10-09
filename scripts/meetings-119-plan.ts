@@ -25,7 +25,7 @@ import { buildAttendeeLookup, resolveAttendeeList } from '../shared/attendees'
 
 export const BACKFILL_OWNER = 'nick-ingraham'
 
-export interface MeetingPreImage { id: string; owner_slug: string | null; attendees: string | null }
+export interface MeetingPreImage { id: string; owner_slug: string | null; attendees: string | null; created_at?: string | null; title?: string | null; date?: string | null }
 export interface TeamRow { slug: string | null; email: string | null }
 
 /** Rows from `wrangler d1 execute --json` output ([{ results: [...] }]) or a bare array. */
@@ -43,9 +43,26 @@ function lit(v: string | null): string {
 
 export interface Plan { apply: string; rollback: string; count: number; detail: string[] }
 
-export function planOwnerBackfill(meetings: readonly MeetingPreImage[]): Plan {
-  const ids = meetings.filter((m) => m.owner_slug === null).map((m) => m.id).sort()
+/**
+ * `windowStart` (an ISO/SQLite timestamp) marks the deploy window: an
+ * owner-less row CREATED AT OR AFTER it was written while the new Worker was
+ * live or rolling out, and may be a member's Prep meeting, so it is NOT
+ * stamped nick-ingraham blind. It goes to `held` (by created_at) for review,
+ * and is stamped only when its id is in `includeIds`.
+ */
+export function planOwnerBackfill(
+  meetings: readonly MeetingPreImage[],
+  opts: { windowStart?: string; includeIds?: readonly string[] } = {},
+): Plan & { held: string[] } {
+  const include = new Set(opts.includeIds ?? [])
+  const unowned = meetings.filter((m) => m.owner_slug === null)
+  const inWindow = (m: MeetingPreImage) => !!opts.windowStart && !!m.created_at && m.created_at >= opts.windowStart
+  const held = unowned.filter((m) => inWindow(m) && !include.has(m.id))
+    .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))
+    .map((m) => `${m.created_at}  ${m.id}  ${m.date ?? ''}  ${m.title ?? ''}`)
+  const ids = unowned.filter((m) => !inWindow(m) || include.has(m.id)).map((m) => m.id).sort()
   return {
+    held,
     count: ids.length,
     detail: ids,
     apply: ids.map((id) => `UPDATE meetings SET owner_slug = ${lit(BACKFILL_OWNER)} WHERE id = ${lit(id)} AND owner_slug IS NULL;`).join('\n'),
