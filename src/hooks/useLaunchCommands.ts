@@ -21,7 +21,7 @@
 // re-pass a receiver-detached native fetch (the #543 regression).
 
 import { useCallback } from 'react'
-import { matchLaunchCommand, executeLaunchCommand, currentPageRoute, type LaunchExecutionContext } from '../lib/launchCommands'
+import { matchLaunchCommand, executeLaunchCommand, currentPageRoute, LAUNCH_AUTH_UNRESOLVED_MSG, type LaunchExecutionContext } from '../lib/launchCommands'
 import { detectOrigin } from '../lib/launchOrigin'
 import { useProtocolLaunch } from './useProtocolLaunch'
 import { useToast } from './useToast'
@@ -45,11 +45,17 @@ export function useLaunchCommands() {
   const { launch: protocolLaunch } = useProtocolLaunch()
   const { showInfo, showError } = useToast()
   // PI-only (2026-10-09): a launch starts a session on the PI's own machine
-  // and POST /api/launch-log refuses everyone else. For a non-PI the tags are
-  // not commands, so both functions answer "not routed" and the caller posts
-  // the text as it would any other. The seed-isolation contract above is about
-  // the PI's launch seeds; a member's text was always theirs to post.
-  const isPi = useAuth().user.isPi
+  // and POST /api/launch-log refuses everyone else. Three viewer states:
+  //   PI (resolved)          -> launch, as before.
+  //   known non-PI (resolved) -> "not routed": the caller posts the text as
+  //                              any other comment. It is the member's text.
+  //   unresolved (/api/auth/me not answered yet, or failed) -> CONSUMED and
+  //     refused with a toast: neither launched nor posted. Treating "unknown"
+  //     as non-PI would post a PI's private seed as team-visible text, which
+  //     is exactly what the seed-isolation contract above forbids.
+  const { isPi, piResolved } = useAuth().user
+  // 'launch' | 'plain' | 'refuse' for a text that IS a launch tag.
+  const disposition = isPi ? 'launch' : piResolved ? 'plain' : 'refuse'
 
   /** Route text as a launch command if it starts with @workon/@quickchat.
    *  Returns true when routed — the caller must NOT post the text anywhere
@@ -59,12 +65,13 @@ export function useLaunchCommands() {
    *  "completed" — completion is signaled via onLaunched. */
   const tryLaunchCommand = useCallback(
     (text: string, ctx: LaunchCommandContext = {}, onLaunched?: () => void): boolean => {
-      const cmd = isPi ? matchLaunchCommand(text) : null
-      if (!cmd) return false
+      const cmd = matchLaunchCommand(text)
+      if (!cmd || disposition === 'plain') return false
+      if (disposition === 'refuse') { showError(LAUNCH_AUTH_UNRESOLVED_MSG); return true }
       void executeLaunchCommand(cmd, ctx, { detectOriginFn: detectOrigin, pageRouteFn: currentPageRoute, protocolLaunch, showInfo, showError }, onLaunched)
       return true
     },
-    [isPi, protocolLaunch, showInfo, showError],
+    [disposition, protocolLaunch, showInfo, showError],
   )
 
   /** Same routing as tryLaunchCommand, but AWAITS the full launch attempt
@@ -76,12 +83,13 @@ export function useLaunchCommands() {
    *  success or failure (executeLaunchCommand never rejects). */
   const tryLaunchCommandAwaited = useCallback(
     async (text: string, ctx: LaunchCommandContext = {}, onLaunched?: () => void): Promise<boolean> => {
-      const cmd = isPi ? matchLaunchCommand(text) : null
-      if (!cmd) return false
+      const cmd = matchLaunchCommand(text)
+      if (!cmd || disposition === 'plain') return false
+      if (disposition === 'refuse') { showError(LAUNCH_AUTH_UNRESOLVED_MSG); return true }
       await executeLaunchCommand(cmd, ctx, { detectOriginFn: detectOrigin, pageRouteFn: currentPageRoute, protocolLaunch, showInfo, showError }, onLaunched)
       return true
     },
-    [isPi, protocolLaunch, showInfo, showError],
+    [disposition, protocolLaunch, showInfo, showError],
   )
 
   return { tryLaunchCommand, tryLaunchCommandAwaited }

@@ -67,6 +67,20 @@ describe('recently viewed (D3a)', () => {
     expect(stored.map((s) => s.label)).toEqual(['My Hub', 'Lab Overview', 'Calendar'])
   })
 
+  it('the reader shows the CURRENT name for a path, not the stored one', async () => {
+    localStorage.setItem(LS_KEY, JSON.stringify([
+      { path: PATHS.dashboard, label: 'Dashboard', timestamp: 2 },
+      { path: PATHS.meetingNotes, label: 'Meeting Transcripts', timestamp: 1 },
+    ]))
+    const host = await mount(
+      <MemoryRouter initialEntries={[PATHS.personal]}>
+        <Reader />
+      </MemoryRouter>,
+      { ready: (h) => h.querySelector('[data-testid="recent"]'), label: 'Reader' },
+    )
+    expect(host.querySelector('[data-testid="recent"]')?.textContent).toBe('Today|Transcripts')
+  })
+
   it('the reader drops the current page and legacy pre-/portal entries', async () => {
     localStorage.setItem(LS_KEY, JSON.stringify([
       { path: PATHS.personal, label: 'My Hub', timestamp: 3 },

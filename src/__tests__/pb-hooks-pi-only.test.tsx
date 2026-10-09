@@ -35,6 +35,7 @@ function user(isPi: boolean): AuthUser {
     isPi,
     isMember: true,
     canShowAllProjects: isPi,
+    piResolved: true,
   } as AuthUser
 }
 

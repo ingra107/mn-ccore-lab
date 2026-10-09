@@ -28,6 +28,7 @@ import { nowInstant } from '../../lib/time'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { localDateKey } from '../../lib/dateUtils'
 import { useLaunchCommands } from '../../hooks/useLaunchCommands'
+import { LAUNCH_AUTH_UNRESOLVED_MSG } from '../../lib/launchCommands'
 import { isBacklogPrefix, stripBacklogPrefix, isHermesPrefix } from '../../lib/hermesRouting'
 import { askHermesOnDay, dayActivityQueryKey, hermesOutcomeToast } from '../../lib/askHermes'
 
@@ -98,9 +99,17 @@ export function MorningThoughtCompose() {
     // Seed-isolation guard: intercept before the default task-creation
     // path so a seed-shaped string cannot post as a team-visible task.
     // The right surface is a task comment box (OverviewQuickAdd).
-    if (user.isPi && /^@workon\b/i.test(content)) {
-      undoToast.showInfo('@workon needs a task — open a task and type @workon there')
-      return
+    // Same three states as useLaunchCommands: PI -> explain; unknown (auth not
+    // resolved) -> refuse, never post; known non-PI -> plain text, fall through.
+    if (/^@workon\b/i.test(content)) {
+      if (!user.piResolved) {
+        undoToast.showError(LAUNCH_AUTH_UNRESOLVED_MSG)
+        return
+      }
+      if (user.isPi) {
+        undoToast.showInfo('@workon needs a task — open a task and type @workon there')
+        return
+      }
     }
 
     // Route 1 — @hermes prefix → a `day` conversation (Hermes wave Phase 3).

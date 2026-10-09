@@ -1089,7 +1089,9 @@ export default function PersonalPage() {
               projectsCount={projects.length}
               pendingCount={pendingTasks.length}
             />
-            {currentUser && (
+            {/* PI-only: launches are PI-only (POST /api/launch-log 403s anyone
+                else), so a member's panel could only ever be empty. */}
+            {currentUser && authUser.isPi && (
               <CompactCard title="My Launches" icon={Zap} iconColor="var(--slate)">
                 <LaunchLogPanel />
               </CompactCard>

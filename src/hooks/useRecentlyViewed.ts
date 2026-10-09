@@ -71,5 +71,11 @@ export function useRecentlyViewed() {
   // Read once at mount: the recorder in PortalLayout writes this visit after
   // the page's own render, and the current page is filtered out regardless.
   const [stored] = useState<RecentPage[]>(loadRecent)
-  return { recent: stored.filter((p) => p.path !== location.pathname) }
+  // The label shown is today's name for the path, not the one stored when it
+  // was visited, so a renamed page (Dashboard -> Today) never shows its old name.
+  return {
+    recent: stored
+      .filter((p) => p.path !== location.pathname)
+      .map((p) => ({ ...p, label: labelForPath(p.path) ?? p.label })),
+  }
 }
