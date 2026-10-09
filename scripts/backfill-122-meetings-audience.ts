@@ -7,10 +7,15 @@
 //        scripts/wrangler-d1 d1 execute mnccore-lab --remote --command "SELECT datetime(applied_at) AS t0 FROM schema_migrations WHERE version = 122"
 //   2. Pre-image export (read-only):
 //        scripts/wrangler-d1 d1 execute mnccore-lab --remote --json \
-//          --command "SELECT id, date, title, owner_slug, source_id, created_at, audience FROM meetings ORDER BY id" > pre-meetings.json
-//   3. Dry run, read every line, then generate:
-//        npx tsx scripts/backfill-122-meetings-audience.ts --meetings pre-meetings.json --dry-run
-//        npx tsx scripts/backfill-122-meetings-audience.ts --meetings pre-meetings.json --out <dir>
+//          --command "SELECT id, date, title, owner_slug, source_id, created_at, audience, attendees FROM meetings ORDER BY id" > pre-meetings.json
+//        scripts/wrangler-d1 d1 execute mnccore-lab --remote --json \
+//          --command "SELECT slug, email FROM team_members WHERE slug IS NOT NULL ORDER BY slug" > pre-team.json
+//   3. Generate RIGHT BEFORE applying, from an export taken minutes earlier:
+//      a D1 --file run is not atomic, so a row written since the export (a new
+//      Nick-owned series twin, say) can stop the file mid-way. Dry run, read
+//      every line, then generate:
+//        npx tsx scripts/backfill-122-meetings-audience.ts --meetings pre-meetings.json --team pre-team.json --dry-run
+//        npx tsx scripts/backfill-122-meetings-audience.ts --meetings pre-meetings.json --team pre-team.json --out <dir>
 //      A COLLISION refuses the plan (exit 2, no files). Re-run with
 //      --keep-private id1,id2 naming the rows that stay private (recommended:
 //      a member's own Prep row; Nick's row with a source_id goes lab).
@@ -19,13 +24,18 @@
 //      The second file re-owns every series row to Nick (his 2026-10-09
 //      ruling: he owns every series row). A row whose date and exact title
 //      Nick already owns is listed as BLOCKED and left as it is.
+//        scripts/wrangler-d1 d1 execute mnccore-lab --remote --file=<dir>/backfill-122-attendee-prefixes.apply.sql
+//      The third rewrites attendee entries stored as a bare email prefix
+//      ("mesfin") to the member's slug (Nick, 2026-10-09: "fix prefixes,
+//      leave April"); an unmatched or ambiguous prefix is listed and left.
 //   4. Deploy: npm run deploy:pages:gated, then npm run deploy:worker.
 //   5. Window sweep: re-export pre-meetings.json, then
-//        npx tsx scripts/backfill-122-meetings-audience.ts --meetings pre-meetings.json --out <dir2> --window-start "<T0>"
+//        npx tsx scripts/backfill-122-meetings-audience.ts --meetings pre-meetings.json --team pre-team.json --out <dir2> --window-start "<T0>"
 //      Only rows CREATED at or after <T0> are candidates (the old Worker made
 //      them all 'private'); a row flipped by hand is not flipped back.
 //   ROLLBACK: <dir>/backfill-122-audience.rollback.sql and
-//   <dir>/backfill-122-series-owner.rollback.sql (and <dir2>'s). Keep
+//   <dir>/backfill-122-series-owner.rollback.sql and
+//   <dir>/backfill-122-attendee-prefixes.rollback.sql (and <dir2>'s). Keep
 //   pre-meetings.json with them; it is the pre-image.
 //
 // The pure planner and its tests: scripts/meetings-122-plan.ts, api/lib/meetings-122-plan.test.ts.
@@ -33,7 +43,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { rowsFrom } from './meetings-119-plan'
-import { planAudienceBackfill, planSeriesReown, type MeetingAudiencePreImage } from './meetings-122-plan'
+import { planAttendeePrefixes, planAudienceBackfill, planSeriesReown, type MeetingAudiencePreImage, type TeamSlugEmail } from './meetings-122-plan'
 
 function optional(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`)
@@ -47,6 +57,8 @@ function required(name: string): string {
 
 const meetings = rowsFrom<MeetingAudiencePreImage>(JSON.parse(readFileSync(required('meetings'), 'utf8')))
 if (meetings.length === 0) throw new Error('the meetings export is empty; refusing to write an empty plan')
+const team = rowsFrom<TeamSlugEmail>(JSON.parse(readFileSync(required('team'), 'utf8')))
+if (team.length === 0) throw new Error('the team export is empty; refusing to plan attendee prefixes against no members')
 const dryRun = process.argv.includes('--dry-run')
 const plan = planAudienceBackfill(meetings, {
   windowStart: optional('window-start'),
@@ -72,6 +84,13 @@ if (owners.blocked.length) {
   console.log(`series owner BLOCKED (Nick already owns that date + exact title; left as is): ${owners.blocked.length}`)
   for (const b of owners.blocked) console.log(`  ${b}`)
 }
+const prefixes = planAttendeePrefixes(meetings, team)
+console.log(`attendee prefixes: ${prefixes.count} meetings rewritten; map ${JSON.stringify(prefixes.map)}`)
+for (const d of prefixes.detail) console.log(`  ${d}`)
+if (prefixes.unresolved.length) {
+  console.log(`attendee prefixes LEFT AS IS (unmatched or ambiguous): ${prefixes.unresolved.length}`)
+  for (const u of prefixes.unresolved) console.log(`  ${u}`)
+}
 console.log('grants: none generated (default = no project granted)')
 if (dryRun) {
   console.log('dry run: no files written')
@@ -83,5 +102,7 @@ if (dryRun) {
   writeFileSync(join(out, 'backfill-122-audience.rollback.sql'), header('audience backfill: rollback') + plan.rollback + '\n')
   writeFileSync(join(out, 'backfill-122-series-owner.apply.sql'), header('series owner: apply') + owners.apply + '\n')
   writeFileSync(join(out, 'backfill-122-series-owner.rollback.sql'), header('series owner: rollback') + owners.rollback + '\n')
-  console.log(`wrote 4 files to ${out}`)
+  writeFileSync(join(out, 'backfill-122-attendee-prefixes.apply.sql'), header('attendee prefixes: apply') + prefixes.apply + '\n')
+  writeFileSync(join(out, 'backfill-122-attendee-prefixes.rollback.sql'), header('attendee prefixes: rollback') + prefixes.rollback + '\n')
+  console.log(`wrote 6 files to ${out}`)
 }

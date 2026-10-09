@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { prodSchemaDb, insertRow } from '../test-support/prod-schema-db'
-import { planAudienceBackfill, planSeriesReown, sqliteLowerTrim, type MeetingAudiencePreImage } from '../../scripts/meetings-122-plan'
+import { planAttendeePrefixes, planAudienceBackfill, planSeriesReown,sqliteLowerTrim, type MeetingAudiencePreImage } from '../../scripts/meetings-122-plan'
 
 function world() {
   const db = prodSchemaDb()
@@ -100,6 +100,37 @@ describe('audience backfill', () => {
     db.exec(plan.rollback)
     expect(owners()).toEqual(before)
     expect(planSeriesReown(pre(), { windowStart: '2026-10-02 00:00:00' }).detail.map((d) => d.split('  ')[0])).toEqual(['m-casey'])
+  })
+
+  it('attendee prefixes: a bare email prefix becomes its member slug; unmatched, ambiguous and display names stay; rolls back exactly', () => {
+    const { db } = world()
+    const team = [
+      { slug: 'nate-mesfin', email: 'mesfin@umn.edu' },
+      { slug: 'casey-eddington', email: 'Eddin022@umn.edu' },
+      { slug: 'dup-one', email: 'same@umn.edu' },
+      { slug: 'dup-two', email: 'same@va.gov' },
+      { slug: 'no-email', email: null },
+    ]
+    const m = (id: string, attendees: string | null) =>
+      insertRow(db, 'meetings', { id, date: '2026-10-08', title: id, attendees, created_at: '2026-10-02 00:00:00' })
+    m('p-hsr', JSON.stringify(['ingra107@umn.edu', 'mesfin', 'eddin022']))
+    m('p-dupe', JSON.stringify(['nate-mesfin', 'mesfin']))          // already there: kept once
+    m('p-left', JSON.stringify(['JC', 'same', 'Nick E Ingraham']))  // unmatched, ambiguous, display name
+    m('p-none', null)
+    const pre = () => db.prepare('SELECT id, date, title, attendees FROM meetings ORDER BY id').all() as MeetingAudiencePreImage[]
+    const att = () => Object.fromEntries((db.prepare('SELECT id, attendees FROM meetings').all() as { id: string; attendees: string | null }[]).map((r) => [r.id, r.attendees]))
+    const before = att()
+    const plan = planAttendeePrefixes(pre(), team)
+    expect(plan.map).toEqual({ mesfin: 'nate-mesfin', eddin022: 'casey-eddington' })
+    expect(plan.detail.map((d) => d.split(':')[0])).toEqual(['p-dupe', 'p-hsr'])
+    expect(plan.unresolved.map((u) => u.split('  ').slice(0, 2).join(' '))).toEqual(['p-left JC', 'p-left same'])
+    db.exec(plan.apply)
+    expect(JSON.parse(att()['p-hsr']!)).toEqual(['ingra107@umn.edu', 'nate-mesfin', 'casey-eddington'])
+    expect(JSON.parse(att()['p-dupe']!)).toEqual(['nate-mesfin'])
+    expect(att()['p-left']).toBe(before['p-left'])
+    expect(planAttendeePrefixes(pre(), team).count).toBe(0) // nothing left to fix
+    db.exec(plan.rollback)
+    expect(att()).toEqual(before)
   })
 
   it('folds case and trims spaces the way SQLite does', () => {

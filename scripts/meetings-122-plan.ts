@@ -38,6 +38,8 @@ export interface MeetingAudiencePreImage {
   created_at?: string | null
   /** Absent in a pre-DDL export: read as 'private' (the column's default). */
   audience?: string | null
+  /** The raw column (a JSON array or NULL); only planAttendeePrefixes reads it. */
+  attendees?: string | null
 }
 
 export interface AudiencePlan {
@@ -103,6 +105,81 @@ export function planAudienceBackfill(
 // the v119 per-owner index (Nick already owns a row of that exact date and
 // title) is not planned but listed: the Worker treats a series title as Nick's
 // alone by its title, so such a row is already unmanageable by its member.
+
+// ATTENDEE PREFIXES. Nick, 2026-10-09, on attendee entries stored only as an
+// email prefix ("mesfin", "eddin022"): "fix prefixes, leave April". Attendees
+// are a read arm (api/lib/table-scope.ts meetingArms matches the member's
+// SLUG), so a prefix admits no one and the member it names cannot see the
+// meeting. Once, here: each prefix becomes the slug of the one team_members
+// row whose email local-part equals it (case-insensitive). A prefix with no
+// such row, or with more than one, is listed and left as it is. A prefix is a
+// single token with no '@' that is not already a team slug; a display name
+// ("Nick E Ingraham") is not a prefix and is not touched. Each UPDATE is
+// guarded on the exact column text it read; the April duplicate pairs are not
+// touched by anything in this file.
+
+export interface TeamSlugEmail { slug: string | null; email: string | null }
+
+export interface AttendeePrefixPlan {
+  apply: string
+  rollback: string
+  count: number
+  /** "<id>: <old> -> <new>" per row that changes. */
+  detail: string[]
+  /** prefix -> slug, for every prefix mapped. */
+  map: Record<string, string>
+  /** "<id>  <prefix>  <why>" per prefix left as it is. */
+  unresolved: string[]
+}
+
+const PREFIX_RE = /^[A-Za-z0-9._-]+$/
+
+export function planAttendeePrefixes(
+  meetings: readonly MeetingAudiencePreImage[],
+  team: readonly TeamSlugEmail[],
+): AttendeePrefixPlan {
+  const slugs = new Set(team.map((t) => (t.slug ?? '').trim()).filter(Boolean))
+  const byLocal = new Map<string, string[]>()
+  for (const t of team) {
+    const slug = (t.slug ?? '').trim()
+    const email = (t.email ?? '').trim().toLowerCase()
+    if (!slug || !email.includes('@')) continue
+    const local = email.slice(0, email.indexOf('@'))
+    byLocal.set(local, [...new Set([...(byLocal.get(local) ?? []), slug])])
+  }
+  const apply: string[] = []
+  const rollback: string[] = []
+  const detail: string[] = []
+  const unresolved: string[] = []
+  const map: Record<string, string> = {}
+  for (const m of [...meetings].sort((a, b) => a.id.localeCompare(b.id))) {
+    if (!m.attendees) continue
+    let parsed: unknown
+    try { parsed = JSON.parse(m.attendees) } catch { unresolved.push(`${m.id}  (column)  not JSON`); continue }
+    if (!Array.isArray(parsed)) { unresolved.push(`${m.id}  (column)  not an array`); continue }
+    let changed = false
+    const out: unknown[] = []
+    for (const v of parsed) {
+      if (typeof v !== 'string' || v.includes('@') || slugs.has(v) || !PREFIX_RE.test(v)) { out.push(v); continue }
+      const hits = byLocal.get(v.toLowerCase()) ?? []
+      if (hits.length !== 1) {
+        unresolved.push(`${m.id}  ${v}  ${hits.length === 0 ? 'no team email local-part matches' : `ambiguous: ${hits.join(', ')}`}`)
+        out.push(v)
+        continue
+      }
+      map[v] = hits[0]
+      out.push(hits[0])
+      changed = true
+    }
+    if (!changed) continue
+    const deduped = out.filter((v, i) => typeof v !== 'string' || out.indexOf(v) === i)
+    const after = JSON.stringify(deduped)
+    apply.push(`UPDATE meetings SET attendees = ${lit(after)} WHERE id = ${lit(m.id)} AND attendees = ${lit(m.attendees)};`)
+    rollback.push(`UPDATE meetings SET attendees = ${lit(m.attendees)} WHERE id = ${lit(m.id)} AND attendees = ${lit(after)};`)
+    detail.push(`${m.id}: ${m.attendees} -> ${after}`)
+  }
+  return { apply: apply.join('\n'), rollback: rollback.join('\n'), count: apply.length, detail, map, unresolved }
+}
 
 export interface SeriesOwnerPlan {
   apply: string
