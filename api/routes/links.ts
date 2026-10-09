@@ -228,7 +228,9 @@ interface ProjectLinkFields {
   box_url?: string | null;
 }
 
-interface DerivedLink {
+// A type alias, not an interface: an alias is assignable to Record<string, unknown>,
+// so explicit rows and derived links share one array type.
+type DerivedLink = {
   id: string;
   role: 'derived';
   type: string;

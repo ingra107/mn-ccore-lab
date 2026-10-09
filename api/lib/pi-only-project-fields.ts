@@ -47,6 +47,6 @@ export async function projectResponseFor(canSeePb: boolean, res: Response): Prom
 export const PI_ONLY_LINK_TYPES = ['local_folder'] as const
 
 /** `rows` without the links only the PI can use (local folder paths). */
-export function withoutPiOnlyLinks<T extends Record<string, unknown>>(rows: T[]): T[] {
-  return rows.filter((r) => !(PI_ONLY_LINK_TYPES as readonly unknown[]).includes(r.type))
+export function withoutPiOnlyLinks<T extends object>(rows: T[]): T[] {
+  return rows.filter((r) => !(PI_ONLY_LINK_TYPES as readonly unknown[]).includes((r as { type?: unknown }).type))
 }
