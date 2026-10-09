@@ -25,6 +25,7 @@ import { matchLaunchCommand, executeLaunchCommand, currentPageRoute, type Launch
 import { detectOrigin } from '../lib/launchOrigin'
 import { useProtocolLaunch } from './useProtocolLaunch'
 import { useToast } from './useToast'
+import { useAuth } from './useAuth'
 
 export type LaunchCommandContext = LaunchExecutionContext
 
@@ -43,6 +44,12 @@ export function taskLaunchContext(
 export function useLaunchCommands() {
   const { launch: protocolLaunch } = useProtocolLaunch()
   const { showInfo, showError } = useToast()
+  // PI-only (2026-10-09): a launch starts a session on the PI's own machine
+  // and POST /api/launch-log refuses everyone else. For a non-PI the tags are
+  // not commands, so both functions answer "not routed" and the caller posts
+  // the text as it would any other. The seed-isolation contract above is about
+  // the PI's launch seeds; a member's text was always theirs to post.
+  const isPi = useAuth().user.isPi
 
   /** Route text as a launch command if it starts with @workon/@quickchat.
    *  Returns true when routed — the caller must NOT post the text anywhere
@@ -52,12 +59,12 @@ export function useLaunchCommands() {
    *  "completed" — completion is signaled via onLaunched. */
   const tryLaunchCommand = useCallback(
     (text: string, ctx: LaunchCommandContext = {}, onLaunched?: () => void): boolean => {
-      const cmd = matchLaunchCommand(text)
+      const cmd = isPi ? matchLaunchCommand(text) : null
       if (!cmd) return false
       void executeLaunchCommand(cmd, ctx, { detectOriginFn: detectOrigin, pageRouteFn: currentPageRoute, protocolLaunch, showInfo, showError }, onLaunched)
       return true
     },
-    [protocolLaunch, showInfo, showError],
+    [isPi, protocolLaunch, showInfo, showError],
   )
 
   /** Same routing as tryLaunchCommand, but AWAITS the full launch attempt
@@ -69,12 +76,12 @@ export function useLaunchCommands() {
    *  success or failure (executeLaunchCommand never rejects). */
   const tryLaunchCommandAwaited = useCallback(
     async (text: string, ctx: LaunchCommandContext = {}, onLaunched?: () => void): Promise<boolean> => {
-      const cmd = matchLaunchCommand(text)
+      const cmd = isPi ? matchLaunchCommand(text) : null
       if (!cmd) return false
       await executeLaunchCommand(cmd, ctx, { detectOriginFn: detectOrigin, pageRouteFn: currentPageRoute, protocolLaunch, showInfo, showError }, onLaunched)
       return true
     },
-    [protocolLaunch, showInfo, showError],
+    [isPi, protocolLaunch, showInfo, showError],
   )
 
   return { tryLaunchCommand, tryLaunchCommandAwaited }
