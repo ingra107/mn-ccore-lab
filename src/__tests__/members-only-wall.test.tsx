@@ -43,6 +43,33 @@ describe('members-only wall', () => {
     expect(host.querySelector('[data-testid="portal"]')).toBeNull()
   })
 
+  // The sign-in wall's link must be a FULL page load of a /portal/* URL (the
+  // Access policy intercepts that at the edge), never the on-host
+  // /cdn-cgi/access/login path, which is a live 404.
+  it('sign-in wall links a full load of the page you wanted, or Today outside /portal/*', async () => {
+    const original = window.location.pathname + window.location.search
+    const signedOut = (
+      <AuthContext.Provider value={{ user: { ...user(false), isAuthenticated: false }, isAuthenticated: false, isLoading: false }}>
+        <RequireAuth><div data-testid="portal">portal</div></RequireAuth>
+      </AuthContext.Provider>
+    )
+    try {
+      window.history.replaceState(null, '', '/portal/projects?tab=ideas&strict=1')
+      let host = await mount(signedOut, { ready: (h) => h.querySelector('[data-testid="signin-cta"]'), label: 'sign-in wall' })
+      let cta = host.querySelector('[data-testid="signin-cta"]')!
+      expect(cta.tagName).toBe('A')
+      expect(cta.getAttribute('href')).toBe('/portal/projects?tab=ideas&strict=1')
+
+      window.history.replaceState(null, '', '/portal?strict=1')
+      host = await mount(signedOut, { ready: (h) => h.querySelector('[data-testid="signin-cta"]'), label: 'sign-in wall (bare /portal)' })
+      cta = host.querySelector('[data-testid="signin-cta"]')!
+      expect(cta.getAttribute('href')).toBe('/portal/dashboard')
+      expect(host.innerHTML).not.toContain('cdn-cgi')
+    } finally {
+      window.history.replaceState(null, '', original)
+    }
+  })
+
   it('lets a member through to the portal', async () => {
     const host = await mount(gated(true), { ready: (h) => h.querySelector('[data-testid="portal"]'), label: 'portal' })
     expect(host.querySelector('[data-testid="members-only"]')).toBeNull()

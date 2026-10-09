@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { memberHubTarget, MEMBER_HUB_LOGIN } from '../memberHubTarget'
+import { memberHubTarget } from '../memberHubTarget'
 
 describe('memberHubTarget (the public Member Hub tab)', () => {
-  it('a signed-in member goes to Today', () => {
+  it('a signed-in member goes to Today by router link', () => {
     expect(memberHubTarget({ isLoading: false, isAuthenticated: true, isMember: true })).toEqual({ href: '/portal/dashboard', external: false })
   })
 
@@ -10,13 +10,17 @@ describe('memberHubTarget (the public Member Hub tab)', () => {
     expect(memberHubTarget({ isLoading: false, isAuthenticated: true, isMember: false })).toEqual({ href: '/join', external: false })
   })
 
-  it('a visitor who is not signed in goes to the login, which returns to Today', () => {
-    const t = memberHubTarget({ isLoading: false, isAuthenticated: false, isMember: false })
-    expect(t).toEqual({ href: MEMBER_HUB_LOGIN, external: true })
-    expect(decodeURIComponent(t.href)).toContain('redirect_url=/portal/dashboard')
+  it('a visitor who is not signed in gets a FULL page load of Today, which Access intercepts at the edge', () => {
+    expect(memberHubTarget({ isLoading: false, isAuthenticated: false, isMember: false })).toEqual({ href: '/portal/dashboard', external: true })
   })
 
-  it('while the session is still loading, Today (the portal gate decides)', () => {
-    expect(memberHubTarget({ isLoading: true, isAuthenticated: false, isMember: false }).href).toBe('/portal/dashboard')
+  it('while the session is still loading, also a full page load of Today', () => {
+    expect(memberHubTarget({ isLoading: true, isAuthenticated: false, isMember: false })).toEqual({ href: '/portal/dashboard', external: true })
+  })
+
+  it('never targets the on-host /cdn-cgi/access/login path (a live 404)', () => {
+    for (const isLoading of [true, false]) for (const isAuthenticated of [true, false]) for (const isMember of [true, false]) {
+      expect(memberHubTarget({ isLoading, isAuthenticated, isMember }).href).not.toContain('cdn-cgi')
+    }
   })
 })

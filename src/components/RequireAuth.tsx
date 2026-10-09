@@ -64,14 +64,18 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
 // Sign-in wall
 
 function SignInWall() {
-  // Preserve the deep-link the user was trying to reach so CF Access can
-  // bounce them back after auth. CF Access reads `redirect_url` on the
-  // login endpoint.
-  const returnTo =
+  // Sign in = a FULL page load (GoldCta is a plain <a>) of the page the user
+  // was trying to reach. The Cloudflare Access policy on /portal/* answers it
+  // with a 302 to the Access login, which returns them to that same page.
+  // It used to link /cdn-cgi/access/login?redirect_url=... on our own host,
+  // which is a live 404 (measured 2026-10-09). Bare /portal (and anything
+  // else outside /portal/*) is NOT under the policy (live 200), so it falls
+  // back to Today, which is.
+  const here =
     typeof window !== 'undefined'
       ? window.location.pathname + window.location.search
-      : '/dashboard'
-  const loginHref = `/cdn-cgi/access/login?redirect_url=${encodeURIComponent(returnTo)}`
+      : ''
+  const loginHref = here.startsWith('/portal/') ? here : '/portal/dashboard'
 
   return (
     <GateShell>
