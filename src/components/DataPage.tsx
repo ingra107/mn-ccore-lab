@@ -162,12 +162,10 @@ export default function DataPage({
         {!wideBody && <div style={{ maxWidth: 'var(--col-main)' }}>{body}</div>}
       </div>
 
-      {/* Anchored-wide body (Nick 2026-06-10b): rendered OUTSIDE the band so it
-          can grow rightward to the viewport (minus standard right padding); the
-          .band-anchored-wide left edge is computed to match .content-container's
-          content edge exactly, so the header above and this body share one left
-          edge at every viewport width. Used for wide multi-column bodies like
-          the Projects Pipeline kanban. */}
+      {/* Anchored-wide body: .band-anchored-wide shares .content-container's
+          left edge and stops at --page-width (Today's width, principle 17), so
+          the header above and this body line up on both edges. Wider content
+          (the Projects Pipeline kanban) scrolls inside it. */}
       {wideBody && <div className="band-anchored-wide">{body}</div>}
     </div>
   )

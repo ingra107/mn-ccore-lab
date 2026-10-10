@@ -337,8 +337,8 @@ export default function Dashboard() {
     <div style={{ minHeight: '100vh', overflowX: 'hidden' }}>
       {/* P1-1 (Nick 2026-06-10): the band is universal — Lab Overview shares the
           same centered band + left edge as every other page. The old
-          maxWidth:'100%' override is gone; as a pure card grid it may fill the
-          full --content-band (the one documented dashboard exception). */}
+          maxWidth:'100%' override is gone. Since 2026-10-10 (principle 17) the
+          card grid stops at --page-width like every page; no exception. */}
       <div className="content-container" style={{ paddingBottom: '4rem', minHeight: 'calc(100vh - 120px)' }}>
         {/* DD-#3: operational status chips replace the editorial greeting. */}
         {(() => {

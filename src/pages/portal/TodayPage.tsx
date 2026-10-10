@@ -499,20 +499,11 @@ export default function TodayPage() {
           grid-template-columns: minmax(0, var(--col-main)) var(--col-rail);
           max-width: var(--content-band);
           margin-left: auto; margin-right: auto;
-          padding-left: 1.5rem; padding-right: 1.5rem;
+          padding-left: var(--band-pad); padding-right: var(--band-pad);
         }
         .b2-main { padding: 28px 32px 40px 0; min-width: 0; }
         /* Rail: its own column beside main, panels stacked with 14px between. */
         .b2-rail { padding: 28px 0 28px 24px; min-width: 0; border-left: 1px solid var(--sk-line); }
-        @media (max-width: 639px) {
-          .b2-grid { padding-left: 12px; padding-right: 12px; }
-        }
-        @media (min-width: 640px) {
-          .b2-grid { padding-left: 2rem; padding-right: 2rem; }
-        }
-        @media (min-width: 1024px) {
-          .b2-grid { padding-left: 3rem; padding-right: 3rem; }
-        }
         @media (max-width: 1024px) {
           .b2-grid { grid-template-columns: 1fr; }
           .b2-main { padding: 20px 0; }
