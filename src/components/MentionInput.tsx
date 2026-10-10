@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTeamSlugs } from '../hooks/useMentionAutocomplete'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
@@ -43,6 +43,80 @@ interface MentionInputProps {
    *  composers near the top of a scroll container (OverviewQuickAdd)
    *  where an upward menu would clip. */
   dropdownPosition?: 'above' | 'below'
+  /** Grow the field with its content up to this many lines, then scroll
+   *  inside it. Unset keeps the fixed `rows` height. */
+  maxRows?: number
+  /** Where the "command recognized" badge goes. 'below' (default) is its own
+   *  row under the field; 'none' leaves it to the caller (SmartCompose puts it
+   *  in its toolbar via <CommandBadge>). There is no option that draws it over
+   *  the text: an absolutely positioned badge sat on top of whatever was typed
+   *  in the field's bottom-right corner (Today compose, 2026-10-10). */
+  commandBadge?: 'below' | 'none'
+}
+
+/** The command @-tag at the start of `value` (e.g. "@quickchat ..."), or null.
+ *  Shared by MentionInput's own badge row and SmartCompose's toolbar slot so
+ *  the two cannot disagree on what counts as a recognized command. */
+function useDetectedCommand(value: string) {
+  const isPi = useAuth().user.isPi
+  const commandTags = useMemo(() => commandTagsFor(isPi), [isPi])
+  return useMemo(() => {
+    const m = value.match(COMMAND_TAG_PREFIX_RE)
+    if (!m) return null
+    return commandTags[m[1].toLowerCase()] ?? null
+  }, [value, commandTags])
+}
+
+/** The "command recognized" pill. Renders in normal flow, never absolute. */
+export function CommandBadge({ value }: { value: string }) {
+  const cmd = useDetectedCommand(value)
+  if (!cmd) return null
+  return (
+    <span
+      aria-live="polite"
+      aria-label={`Command recognized: ${cmd.label}`}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 3,
+        padding: '1px 6px',
+        borderRadius: 'var(--radius-sm)',
+        background: cmd.bg,
+        color: cmd.color,
+        fontSize: 10,
+        fontWeight: 600,
+        fontFamily: 'var(--font-body, inherit)',
+        userSelect: 'none',
+        lineHeight: 1.6,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {cmd.label}
+    </span>
+  )
+}
+
+// Grow a textarea to fit its content, capped at `maxRows` lines; past the cap
+// it scrolls inside its own padding. Reads the field's computed line height,
+// padding and border, so CSS overrides on a host page (.tk-compose) are
+// honored instead of guessed.
+function fitTextarea(ta: HTMLTextAreaElement, maxRows: number) {
+  const cs = window.getComputedStyle(ta)
+  const fontSize = parseFloat(cs.fontSize) || 13
+  const lineHeight = parseFloat(cs.lineHeight) || fontSize * 1.4
+  const padding = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0)
+  const border = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0)
+  const max = Math.ceil(lineHeight * maxRows + padding + border)
+  ta.style.height = 'auto'
+  const full = ta.scrollHeight + border
+  ta.style.height = `${Math.min(full, max)}px`
+  const scrolls = full > max
+  ta.style.overflowY = scrolls ? 'auto' : 'hidden'
+  // Past the cap, soften the top and bottom edges so a line scrolled half out
+  // of view fades instead of being sliced against the field's edge.
+  const fade = scrolls ? 'linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 6px), transparent 100%)' : ''
+  ta.style.maskImage = fade
+  ta.style.setProperty('-webkit-mask-image', fade)
 }
 
 export default function MentionInput({
@@ -59,6 +133,8 @@ export default function MentionInput({
   onPaste,
   inputRef,
   dropdownPosition = 'above',
+  maxRows,
+  commandBadge = 'below',
 }: MentionInputProps) {
   const { data: teamSlugs = [] } = useTeamSlugs()
   // Launch tags (@quickchat/@workon) are PI-only commands; for anyone else
@@ -257,23 +333,55 @@ export default function MentionInput({
   // Show the overlay whenever there are any @-mentions (person or command).
   const hasMentions = highlightedParts.some((p) => p.isMention)
 
-  // Detect a known command @-tag at the START of the value (token complete =
-  // followed by whitespace or end-of-string). Drives the command-badge below
-  // the textarea — visible in both light and dark mode regardless of overlay.
-  const detectedCommand = useMemo(() => {
-    const m = value.match(COMMAND_TAG_PREFIX_RE)
-    if (!m) return null
-    return commandTags[m[1].toLowerCase()] ?? null
-  }, [value, commandTags])
+  const overlayRef = useRef<HTMLDivElement>(null)
+
+  // Auto-grow + overlay sync. The overlay copies the textarea's COMPUTED box
+  // (padding, border, font, line height) and height, and follows its scroll,
+  // so the pills stay under their words even when a host stylesheet overrides
+  // the inline style (Today's .tk-compose sets its own padding).
+  const syncLayout = useCallback(() => {
+    const ta = textareaRef.current
+    if (!ta) return
+    if (maxRows) fitTextarea(ta, maxRows)
+    const ov = overlayRef.current
+    if (!ov) return
+    const cs = window.getComputedStyle(ta)
+    ov.style.padding = cs.padding
+    ov.style.borderWidth = cs.borderWidth
+    ov.style.fontSize = cs.fontSize
+    ov.style.fontFamily = cs.fontFamily
+    ov.style.lineHeight = cs.lineHeight
+    ov.style.letterSpacing = cs.letterSpacing
+    ov.style.height = `${ta.offsetHeight}px`
+    ov.scrollTop = ta.scrollTop
+  }, [maxRows])
+
+  useLayoutEffect(() => { syncLayout() }, [value, hasMentions, syncLayout])
+
+  // Re-fit when the field's WIDTH changes (lines re-wrap). Height changes are
+  // ignored, or our own resize would re-trigger the observer.
+  useEffect(() => {
+    const ta = textareaRef.current
+    if (!ta || typeof ResizeObserver === 'undefined') return
+    let lastWidth = ta.clientWidth
+    const ro = new ResizeObserver(() => {
+      if (ta.clientWidth === lastWidth) return
+      lastWidth = ta.clientWidth
+      syncLayout()
+    })
+    ro.observe(ta)
+    return () => ro.disconnect()
+  }, [syncLayout])
 
   return (
     <div style={{ position: 'relative', flex: 1 }}>
+     <div style={{ position: 'relative' }}>
       {/* Highlight overlay (behind the textarea) */}
       {hasMentions && (
         <div
+          ref={overlayRef}
           aria-hidden
           style={{
-            ...style,
             position: 'absolute',
             top: 0,
             left: 0,
@@ -283,12 +391,18 @@ export default function MentionInput({
             wordWrap: 'break-word',
             overflow: 'hidden',
             color: 'transparent',
-            // Match textarea dimensions
+            // Never the field's fill: the overlay drew the caller's background
+            // as a second, differently-colored box behind a transparent field.
+            background: 'transparent',
+            borderStyle: 'solid',
+            borderColor: 'transparent',
+            // Box metrics are copied from the textarea by syncLayout.
             padding: style?.padding || '10px 12px',
             fontSize: style?.fontSize || '13px',
             fontFamily: style?.fontFamily || 'var(--font-body)',
             lineHeight: style?.lineHeight || 1.5,
-            border: '1px solid transparent',
+            borderWidth: 1,
+            boxSizing: 'border-box',
           }}
         >
           {highlightedParts.map((part, i) =>
@@ -341,37 +455,17 @@ export default function MentionInput({
           // unchanged) — the overlay behind it draws background pills only.
           // Explicit caret color keeps the cursor visible against those pills.
           caretColor: hasMentions ? 'var(--ink)' : undefined,
+          ...(maxRows ? { resize: 'none' as const } : {}),
         }}
+        onScroll={(e) => { if (overlayRef.current) overlayRef.current.scrollTop = e.currentTarget.scrollTop }}
       />
+     </div>
 
-      {/* Command @-tag badge — bottom-right corner of the textarea (absolute,
-          no layout shift). Visible in both light and dark mode because it
-          carries its own background — supplements the overlay which only
-          shows through transparent/near-transparent textarea bgs. */}
-      {detectedCommand && (
-        <div
-          aria-live="polite"
-          aria-label={`Command recognized: ${detectedCommand.label}`}
-          style={{
-            position: 'absolute',
-            bottom: 4,
-            right: 6,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 3,
-            padding: '1px 6px',
-            borderRadius: 'var(--radius-sm)',
-            background: detectedCommand.bg,
-            color: detectedCommand.color,
-            fontSize: 9,
-            fontWeight: 600,
-            fontFamily: 'var(--font-body, inherit)',
-            userSelect: 'none',
-            lineHeight: 1.6,
-            pointerEvents: 'none',
-          }}
-        >
-          {detectedCommand.label}
+      {/* Command @-tag badge — its own row under the field, never over the
+          text (see the commandBadge prop). */}
+      {commandBadge === 'below' && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
+          <CommandBadge value={value} />
         </div>
       )}
 
