@@ -330,7 +330,7 @@ export default function SettingsPage() {
               role="tab"
               aria-selected={isActive ? "true" : "false"}
               onClick={() => setActiveTab(tab.key)}
-              className="px-3 py-2 text-sm transition-colors flex-shrink-0 whitespace-nowrap"
+              className="px-3 py-2 text-sm transition-colors flex-shrink-0 whitespace-nowrap touch-tall"
               style={{
                 color: isActive ? 'var(--teal)' : 'var(--slate)',
                 borderBottom: `2px solid ${isActive ? 'var(--teal)' : 'transparent'}`,

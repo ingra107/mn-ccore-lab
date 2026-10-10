@@ -42,6 +42,7 @@ export default function PageTabs({ tabs, ariaLabel }: { tabs: PageTab[]; ariaLab
             value={active.key}
             onChange={select}
             scrollable
+            tall
           />
         </div>
       )}
