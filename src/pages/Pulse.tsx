@@ -514,7 +514,7 @@ export default function Pulse() {
       </div>
 
       {/* ── Footer: scene markers + clock ───────────────────── */}
-      <footer className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10">
+      <footer className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-3 px-6 py-6 sm:px-16 sm:py-10 z-10">
         <div className="flex items-center gap-3">
           {scenes.map((s, i) => (
             <button
@@ -612,8 +612,14 @@ function Clock() {
     month: 'long',
     day: 'numeric',
   })
+  // Phone: short date so the clock stays on one line beside the scene dots.
+  const dateShort = now.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
   return (
-    <div className="flex items-baseline gap-4">
+    <div className="flex items-baseline gap-2 sm:gap-4 whitespace-nowrap">
       <span
         className="tabular-nums"
         style={{
@@ -636,7 +642,8 @@ function Clock() {
           fontWeight: 500,
         }}
       >
-        {date}
+        <span className="sm:hidden">{dateShort}</span>
+        <span className="hidden sm:inline">{date}</span>
       </span>
     </div>
   )

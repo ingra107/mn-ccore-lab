@@ -276,7 +276,7 @@ function UpcomingCard() {
               {/* Description */}
               <div className="flex-1 min-w-0">
                 <p
-                  className="flex items-center gap-1"
+                  className="flex items-start gap-1"
                   style={{
                     fontSize: '12px',
                     color: 'var(--ink)',
@@ -294,7 +294,14 @@ function UpcomingCard() {
                       }}
                     />
                   )}
-                  {d.label}
+                  {/* A bare text node in this flex row cannot shrink below its longest
+                      token (snake_case names), so it overflowed the card. */}
+                  <span
+                    title={d.label}
+                    style={{ minWidth: 0, overflowWrap: 'anywhere', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3, overflow: 'hidden' }}
+                  >
+                    {d.label}
+                  </span>
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <div

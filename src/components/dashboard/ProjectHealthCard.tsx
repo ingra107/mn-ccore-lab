@@ -314,7 +314,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
   return (
     <Link
       to={PATHS.project(project.slug)}
-      className="flex items-center gap-2.5 py-2 group transition-colors hover:bg-[var(--gold-hover)]"
+      className="flex items-center flex-wrap gap-x-2.5 gap-y-1 py-2 group transition-colors hover:bg-[var(--gold-hover)]"
       style={{
         textDecoration: 'none',
         borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}`,
@@ -345,7 +345,9 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
           fontSize: '12px',
           color: 'var(--ink)',
           fontWeight: isBad ? 600 : 400,
-          flex: 1,
+          // Basis 110px: in a narrow card the bar/score/status cluster wraps to a
+          // second line instead of squeezing the name down to "Prim...".
+          flex: '1 1 110px',
           minWidth: 0,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -366,7 +368,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
       {/* Health bar + score */}
       <div
         className="flex items-center gap-2"
-        style={{ flexShrink: 0, position: 'relative' }}
+        style={{ flexShrink: 0, position: 'relative', marginLeft: 'auto' }}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >

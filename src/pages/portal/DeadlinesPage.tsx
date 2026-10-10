@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch, Presentation, Download } from 'lucide-react'
 import { useDensity } from '../../components/DensityToggle'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import QueryState from '../../components/QueryState'
@@ -795,11 +796,16 @@ function DeadlineTableSection({ title, items: allItems, limit, color, onStatusCh
   const parentRef = useRef<HTMLDivElement>(null)
   const [density] = useDensity()
   const rowHeight = DENSITY_ROW_HEIGHT[density] ?? 44
+  // Phone rows are stacked cards (92-225px, title wraps). The estimate only seeds
+  // the first paint; measureElement below reads the real box of each mounted row.
+  const isMobile = useIsMobile()
+  const estimateRow = isMobile ? 120 : rowHeight
 
   const virtualizer = useVirtualizer({
     count: items.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => rowHeight,
+    estimateSize: () => estimateRow,
+    measureElement: (el) => el.getBoundingClientRect().height,
     overscan: 5,
     enabled: useVirtual,
   })
@@ -841,7 +847,7 @@ function DeadlineTableSection({ title, items: allItems, limit, color, onStatusCh
       {expanded && useVirtual && (
         <div
           ref={parentRef}
-          style={{ height: Math.min(items.length * rowHeight, 440), minHeight: Math.min(items.length * rowHeight, 440), overflow: 'auto' }}
+          style={{ height: Math.min(items.length * estimateRow, 440), minHeight: Math.min(items.length * estimateRow, 440), overflow: 'auto' }}
         >
           <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
             {virtualizer.getVirtualItems().map((virtualRow) => {
@@ -849,11 +855,12 @@ function DeadlineTableSection({ title, items: allItems, limit, color, onStatusCh
               return (
                 <div
                   key={item.id}
+                  data-index={virtualRow.index}
+                  ref={virtualizer.measureElement}
                   style={{
                     position: 'absolute',
                     top: virtualRow.start,
                     width: '100%',
-                    height: virtualRow.size,
                   }}
                 >
                   <DeadlineItemRow

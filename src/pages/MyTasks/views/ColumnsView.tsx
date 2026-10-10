@@ -47,16 +47,20 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
   // F39: show the right-edge fade whenever the grid really overflows, not at a
   // fixed viewport breakpoint (at 1680px the 5 columns still overflow the band).
   const scrollerRef = useRef<HTMLDivElement | null>(null)
-  const [overflows, setOverflows] = useState(false)
+  // The cue is a sibling overlay, not a ::after inside the scroller: a float after
+  // the grid lands below it and never reaches the right edge. It hides once the
+  // scroller reaches its right end, and its button pages one column right.
+  const [moreRight, setMoreRight] = useState(false)
   useEffect(() => {
     const el = scrollerRef.current
     if (!el) return
-    const measure = () => setOverflows(el.scrollWidth > el.clientWidth + 1)
+    const measure = () => setMoreRight(el.scrollWidth - el.clientWidth - el.scrollLeft > 4)
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(el)
     if (el.firstElementChild) ro.observe(el.firstElementChild)
-    return () => ro.disconnect()
+    el.addEventListener('scroll', measure, { passive: true })
+    return () => { ro.disconnect(); el.removeEventListener('scroll', measure) }
   }, [colCount, filtered.length])
 
   const selectionActive = selectModeActive || selected.size > 0
@@ -77,10 +81,10 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
     // exceed the available viewport width (not when they exceed an arbitrary
     // 960px box). Dropped the maxWidth:--col-main cap that previously crammed
     // 4-5 columns into 960px and forced a horizontal scroll inside the band.
-    <div className="band-anchored-wide" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+    <div className="band-anchored-wide" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', position: 'relative' }}>
     <div
       ref={scrollerRef}
-      className={`mt-columns-scroll fab-clear${overflows ? ' mt-columns-overflow' : ''}`}
+      className="mt-columns-scroll fab-clear"
       style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 20, position: 'relative', width: '100%' }}
       onClickCapture={(e) => {
         lastModifiers.current = { shift: e.shiftKey, ctrlMeta: e.ctrlKey || e.metaKey }
@@ -94,18 +98,6 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
         .mt-columns-scroll::-webkit-scrollbar { height: 8px; }
         .mt-columns-scroll::-webkit-scrollbar-track { background: transparent; }
         .mt-columns-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
-        .mt-columns-overflow::after {
-          content: '';
-          position: sticky;
-          top: 0; right: 0;
-          float: right;
-          width: 32px;
-          height: 100%;
-          margin-left: -32px;
-          pointer-events: none;
-          background: linear-gradient(to right, transparent, ${PAGE_BG} 80%);
-          z-index: 2;
-        }
       `}</style>
       <OverdueBanner tasks={filtered} />
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${colCount}, minmax(236px, 1fr))`, gap: 14, minWidth }}>
@@ -153,6 +145,19 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
       </div>
       {filtered.length === 0 && (isEmpty ? <AllCaughtUp /> : <NoTasksMatch />)}
     </div>
+    {moreRight && (
+      <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 64, pointerEvents: 'none', zIndex: 3, background: `linear-gradient(to right, transparent, ${PAGE_BG} 85%)`, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingTop: 44 }}>
+        <button
+          type="button"
+          aria-label="Scroll columns right"
+          title="More columns to the right"
+          onClick={() => scrollerRef.current?.scrollBy({ left: 260, behavior: 'smooth' })}
+          style={{ pointerEvents: 'auto', width: 28, height: 28, marginRight: 4, borderRadius: '50%', border: '1px solid var(--border-strong)', background: PAGE_BG, color: INK_MUTED, cursor: 'pointer', fontSize: 16, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          ›
+        </button>
+      </div>
+    )}
     </div>
   )
 }
