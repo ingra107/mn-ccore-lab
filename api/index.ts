@@ -80,7 +80,6 @@ import { handlePBCapture, handlePBDefer, handleAddToDispatch, handleGetPendingDi
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
 import { handleGetSessions } from './routes/sessions';
 import { handleLane3List } from './routes/lane3';
-import { handleGetTodayMd } from './routes/pb-today'; // POST /api/pb/today retired 2026-05-05 (5.9)
 import { handlePBHealth } from './routes/pb-health';
 import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleAttentionManuscripts } from './routes/revisions';
 import { handleGetMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone } from './routes/mentee-milestones';
@@ -579,13 +578,6 @@ defineRoute({
   auth: 'pi',
   entity: 'pb',
   handler: (c) => handleGetPendingDispatch(E(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/pb/today',
-  auth: 'pi',
-  entity: 'pb',
-  handler: (c) => handleGetTodayMd(E(c)),
 });
 // PI-gated: sessions + lane3 contain private brain.db data. R(c) carries JWT/API-key
 // so isPiRequest inside the handler can distinguish PI/service from team callers.
@@ -2772,7 +2764,7 @@ defineRoute({
   entity: 'pb',
   handler: (c) => handleBulkCreatePBSessions(R(c), USER(c), E(c)),
 });
-// POST /api/pb/today retired 2026-05-05 (5.9): 0 callers; GET preserved for frontend use
+// /api/pb/today removed 2026-10-09 (sweep4 N3)
 
 // Impact check — route removed 2026-05-05 (5.3b); handleCheckImpact used internally by cron at line 1269
 
