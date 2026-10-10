@@ -174,6 +174,12 @@ describe('anonymous reads (REQUIRE_AUTH=1)', () => {
     expect(Object.keys(health).sort()).toEqual(['failures', 'ok', 'timestamp'])
     const me = JSON.parse((await get('/api/auth/me')).text)
     expect(me).toEqual({ authenticated: false })
+    // Grants: status is private, the derived bucket is public (g1 is submitted -> proposed).
+    for (const path of ['/api/grants', '/api/grants/timeline']) {
+      const grants = JSON.parse((await get(path)).text)
+      expect(grants.data[0]).toMatchObject({ id: 'g1', bucket: 'proposed' })
+      expect(grants.data[0]).not.toHaveProperty('status')
+    }
   })
 
   for (const path of NOW_SIGNED_IN_ONLY) {

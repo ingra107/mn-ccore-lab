@@ -87,7 +87,6 @@ import { publications as _devPublications } from '../data/publications'
 import { getAllMembers as _devGetAllMembers } from '../data/team'
 import { projects as _devProjects } from '../data/projects'
 import { grants as _devGrants } from '../data/grants'
-import { grantBucket } from '../lib/grantBucket'
 
 // ── Transform D1 rows → frontend types ──────────────────────
 
@@ -176,14 +175,12 @@ export function rowToProject(row: ProjectRow): Project {
 }
 
 function rowToGrant(row: GrantRow): Grant {
-  const bucket = grantBucket(row)
   return {
     mechanism: row.mechanism || '',
     title: row.title,
     agency: row.agency || '',
     pi: row.pi || '',
-    proposed: bucket === 'proposed',
-    status: bucket === 'proposed' ? 'Pending' : bucket === 'ended' ? 'Completed' : 'Active',
+    bucket: row.bucket,
     end_date: row.end_date || undefined,
   }
 }

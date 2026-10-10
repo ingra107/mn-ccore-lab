@@ -14,16 +14,19 @@ const grants = [
     mechanism: 'R01',
     title: 'LPV Precision Practice Assistance',
     agency: 'NHLBI',
+    bucket: 'active' as const,
   },
   {
     mechanism: 'R01',
     title: 'Provider Variation Across CLIF',
     agency: 'NHLBI',
+    bucket: 'active' as const,
   },
   {
     mechanism: 'R03',
     title: 'Decision-Making Styles of Medical Trainees',
     agency: 'NHLBI',
+    bucket: 'active' as const,
   },
 ]
 

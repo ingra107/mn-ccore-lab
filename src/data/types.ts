@@ -63,13 +63,15 @@ export type GrantLifecycleStatus =
   | 'declined'
   | 'closed'
 
+// Where a grant sits for every reader. The API derives it from status; nothing re-derives it.
+export type GrantBucket = 'active' | 'proposed' | 'ended'
+
 export interface Grant {
   mechanism: string
   title: string
   agency: string
   pi: string
-  proposed?: boolean
-  status?: GrantLifecycleStatus | 'Active' | 'Pending' | 'Completed'
+  bucket: GrantBucket // server-derived from status (GRANT_BUCKET_SQL); the only bucket source
   end_date?: string // ISO date — grant period end, mapped from D1 GrantRow.end_date
   visibility?: 'public' | 'internal' // default: 'public'
 }

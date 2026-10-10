@@ -1,4 +1,4 @@
-// SQL twin of src/lib/grantBucket.ts. Evaluates to 'active' | 'proposed' | 'ended'.
+// The one place a grant's bucket is derived (status first, `proposed` only when status is unset). Evaluates to 'active' | 'proposed' | 'ended'.
 // `proposed` is read only when status is unset.
 export const GRANT_BUCKET_SQL = `CASE
   WHEN status = 'funded' THEN 'active'

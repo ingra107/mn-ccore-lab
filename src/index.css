@@ -702,9 +702,8 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   /* Light mode: full opacity (contrast comes from the token itself).
      Dark mode: 0.85 opacity applied via .dark override below. */
   opacity: 1;
-  /* Sentence case (cards spec ruling for table headers). */
-  text-transform: none;
-  letter-spacing: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 .dark .col-header {
   opacity: var(--ink-label);  /* 0.85 in dark mode — was the global value */

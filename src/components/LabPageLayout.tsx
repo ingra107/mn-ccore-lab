@@ -2,7 +2,7 @@ import { type ReactNode, useEffect, useState } from 'react'
 import { ArrowRight, ExternalLink, GraduationCap, FlaskConical } from 'lucide-react'
 import Avatar from './Avatar'
 import PublicationCard from './PublicationCard'
-import type { Publication, Mentee } from '../data/types'
+import type { Publication, Mentee, GrantBucket } from '../data/types'
 import { getMemberBySlug } from '../data/team'
 import { projects } from '../data/projects'
 import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
@@ -223,8 +223,7 @@ interface GrantRow {
   mechanism: string
   title: string
   agency: string
-  proposed?: boolean
-  status?: 'Active' | 'Pending' | 'Completed'
+  bucket: GrantBucket
 }
 
 export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants: GrantRow[]; id?: string; title?: string }) {
@@ -236,8 +235,8 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
     g.title.trim() !== 'Departmental Operational Support' &&
     g.mechanism?.trim() &&
     g.mechanism.trim() !== '---'
-  const activeGrants = grants.filter((g) => !g.proposed && g.status !== 'Completed' && isRealGrant(g))
-  const pendingGrants = grants.filter((g) => g.proposed && isRealGrant(g))
+  const activeGrants = grants.filter((g) => g.bucket === 'active' && isRealGrant(g))
+  const pendingGrants = grants.filter((g) => g.bucket === 'proposed' && isRealGrant(g))
 
   return (
     <section className="mb-16" id={id}>

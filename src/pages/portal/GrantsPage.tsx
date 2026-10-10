@@ -34,7 +34,6 @@ import { formatMediumDate, isOverdue, civilDaysUntil } from '../../lib/dateUtils
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
-import { grantBucket } from '../../lib/grantBucket'
 import { mechanismFamily, MECHANISM_ACCENT } from '../../lib/grantMechanism'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 
@@ -148,7 +147,7 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
             {grant.mechanism}
           </span>
           <span style={{ fontSize: '10px', color: 'var(--slate)' }}>{grant.agency}</span>
-          {grantBucket(grant) === 'proposed' && (
+          {grant.bucket === 'proposed' && (
             <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 600 }}>
               PROPOSED
             </span>
@@ -272,8 +271,8 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
           const barX = yearToX(startYear, chartWidth)
           const barWidth = yearToX(endYear, chartWidth) - barX
           const barY = CHART_PADDING_TOP + index * (BAR_HEIGHT + BAR_GAP)
-          const color = ganttMechanismColor(grant.mechanism, grantBucket(grant) === 'proposed')
-          const isProposed = grantBucket(grant) === 'proposed'
+          const color = ganttMechanismColor(grant.mechanism, grant.bucket === 'proposed')
+          const isProposed = grant.bucket === 'proposed'
 
           return (
             <g
@@ -434,8 +433,8 @@ export default function GrantsPage() {
     else { setSortKey(key as SortKey); setSortAsc(true) }
   }
 
-  const active = useMemo(() => grants.filter((g) => grantBucket(g) === 'active'), [grants])
-  const proposed = useMemo(() => grants.filter((g) => grantBucket(g) === 'proposed'), [grants])
+  const active = useMemo(() => grants.filter((g) => g.bucket === 'active'), [grants])
+  const proposed = useMemo(() => grants.filter((g) => g.bucket === 'proposed'), [grants])
   const endedCount = grants.length - active.length - proposed.length
 
   const totalFunding = useMemo(
@@ -455,7 +454,7 @@ export default function GrantsPage() {
         case 'title': cmp = a.title.localeCompare(b.title); break
         case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
         case 'mechanism': cmp = (a.mechanism || '').localeCompare(b.mechanism || ''); break
-        case 'status': cmp = grantBucket(a).localeCompare(grantBucket(b)); break
+        case 'status': cmp = a.bucket.localeCompare(b.bucket); break
         case 'start_date': cmp = (a.start_date || '').localeCompare(b.start_date || ''); break
         case 'end_date': cmp = (a.end_date || '').localeCompare(b.end_date || ''); break
         case 'agency': cmp = (a.agency || '').localeCompare(b.agency || ''); break
@@ -512,7 +511,7 @@ export default function GrantsPage() {
           onViewChange={(v) => setView(v as ViewMode)}
           filters={filterPills}
           count={filteredGrants.length}
-          countLabel="grants"
+          countLabel={filteredGrants.length === 1 ? 'grant' : 'grants'}
         />
       </PageHeader>
 
@@ -565,22 +564,22 @@ export default function GrantsPage() {
             <TableContainer>
               {/* Column headers */}
               <div
-                className="hidden sm:grid"
+                className="hidden sm:grid [&_.col-header]:normal-case [&_.col-header]:tracking-normal"
                 style={{ gridTemplateColumns: GRANT_GRID_COLUMNS, padding: '0 16px' }}
               >
-                <ColumnHeader label="TITLE" sortKey="title" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+                <ColumnHeader label="Title" sortKey="title" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
                 <ColumnHeader label="PI" sortKey="pi" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="STATUS" sortKey="status" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="MECHANISM" sortKey="mechanism" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="PERIOD" sortKey="start_date" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="AGENCY" sortKey="agency" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+                <ColumnHeader label="Status" sortKey="status" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+                <ColumnHeader label="Mechanism" sortKey="mechanism" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+                <ColumnHeader label="Period" sortKey="start_date" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+                <ColumnHeader label="Agency" sortKey="agency" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
               </div>
 
               {/* Rows */}
               {filteredGrants.map((grant) => {
                 const pi = getPersonInfo(grant.pi)
                 const mc = MECHANISM_CHIP
-                const bucket = grantBucket(grant)
+                const bucket = grant.bucket
                 const isProposed = bucket === 'proposed'
 
                 // Progress: funded grants only
@@ -714,11 +713,11 @@ export default function GrantsPage() {
                     >
                       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Full title</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Full title</div>
                           <div>{grant.title}</div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>PI</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>PI</div>
                           <div className="flex items-center gap-2">
                             <div style={{ width: 22, height: 22, flexShrink: 0 }}>
                               <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm-plus" variant="ice" />
@@ -727,15 +726,15 @@ export default function GrantsPage() {
                           </div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Mechanism</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Mechanism</div>
                           <div>{grant.mechanism || '—'}</div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Agency</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Agency</div>
                           <div>{grant.agency || '—'}</div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Period</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Period</div>
                           <div>
                             {grant.start_date ? formatMediumDate(grant.start_date) : '?'}
                             {' – '}
@@ -743,7 +742,7 @@ export default function GrantsPage() {
                           </div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Status</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Status</div>
                           <div>{bucket === 'proposed' ? 'Proposed' : bucket === 'ended' ? 'Ended' : 'Active'}{bucket === 'active' && progress > 0 ? ` · ${Math.round(progress)}% through period` : ''}</div>
                         </div>
                       </div>
