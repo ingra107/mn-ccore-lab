@@ -1,31 +1,45 @@
+// ProjectDocuments — the project_documents rows, rendered INSIDE the project's
+// one Links card (ProjectLinkLibrary `documents` slot). The page used to mount
+// this as a second "Key Documents" card with a colored type rainbow and an
+// uppercase type pill, below the Links card (audit F45, 2026-10-09). The store
+// stays separate (project_documents vs links, Nick 2026-07-21); only the
+// rendering is merged. Rows use the library's anatomy: the StoredLinkChip pill
+// on the left, a right-aligned slot (date + remove) on the right. The type is a
+// neutral glyph plus the hover title, never a color. "Add another" opens the
+// form, with the type chosen inside it, so there are no preset buttons.
 import { useState } from 'react'
-import { FolderOpen, FileText, Database, FlaskConical, Upload, Link2, Plus, X, ExternalLink } from 'lucide-react'
+import { FolderOpen, FileText, Database, FlaskConical, Upload, Link2, Plus, X } from 'lucide-react'
 import { useProjectDocuments } from '../../hooks/useApiData'
 import { useAddProjectDocument, useDeleteProjectDocument } from '../../hooks/useMutations'
 import type { ProjectDocumentRow } from '../../hooks/useApiData'
 import InlineSelect from '../../components/InlineSelect'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { formatDbLocal } from '../../lib/time'
 import { Button } from '../../components/ui/Button'
 
 interface ProjectDocumentsProps {
   projectSlug: string
 }
 
-const DOC_TYPE_CONFIG: Record<string, { icon: typeof FolderOpen; label: string; color: string }> = {
-  folder:     { icon: FolderOpen,   label: 'Folder',     color: 'var(--gold)' },
-  draft:      { icon: FileText,     label: 'Draft',      color: 'var(--teal)' },
-  data:       { icon: Database,     label: 'Dataset',    color: 'var(--green)' },
-  protocol:   { icon: FlaskConical, label: 'Protocol',   color: 'var(--orange)' },
-  submission: { icon: Upload,       label: 'Submission', color: 'var(--maroon)' },
-  link:       { icon: Link2,        label: 'Link',       color: 'var(--slate)' },
+const DOC_TYPE_CONFIG: Record<string, { icon: typeof FolderOpen; label: string; placeholder: string }> = {
+  folder:     { icon: FolderOpen,   label: 'Folder',     placeholder: 'https://umn.box.com/...' },
+  draft:      { icon: FileText,     label: 'Draft',      placeholder: 'https://docs.google.com/...' },
+  data:       { icon: Database,     label: 'Dataset',    placeholder: 'https://...' },
+  protocol:   { icon: FlaskConical, label: 'Protocol',   placeholder: 'https://...' },
+  submission: { icon: Upload,       label: 'Submission', placeholder: 'https://...' },
+  link:       { icon: Link2,        label: 'Link',       placeholder: 'https://...' },
 }
 
-const PRESETS: { label: string; doc_type: ProjectDocumentRow['doc_type']; placeholder: string }[] = [
-  { label: 'Box Folder',   doc_type: 'folder',   placeholder: 'https://umn.box.com/...' },
-  { label: 'Google Doc',   doc_type: 'draft',    placeholder: 'https://docs.google.com/...' },
-  { label: 'Dataset',      doc_type: 'data',     placeholder: 'https://...' },
-  { label: 'Protocol',     doc_type: 'protocol', placeholder: 'https://...' },
-]
+const inputStyle: React.CSSProperties = {
+  fontSize: '13px',
+  color: 'var(--ink)',
+  background: 'var(--cream)',
+  border: '1px solid var(--border-subtle)',
+  borderRadius: 'var(--radius-md)',
+  padding: '8px 10px',
+  outline: 'none',
+  width: '100%',
+}
 
 export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps) {
   const { data: documents = [] } = useProjectDocuments(projectSlug)
@@ -36,333 +50,153 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
   const [docType, setDocType] = useState<ProjectDocumentRow['doc_type']>('link')
-  const [urlPlaceholder, setUrlPlaceholder] = useState('https://...')
-  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
-  function handlePreset(preset: typeof PRESETS[number]) {
-    setDocType(preset.doc_type)
-    setUrlPlaceholder(preset.placeholder)
-    setShowForm(true)
-    setTitle('')
-    setUrl('')
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!title.trim() || !url.trim()) return
-    addDocument.mutate({ title: title.trim(), url: url.trim(), doc_type: docType })
+  function reset() {
     setTitle('')
     setUrl('')
     setDocType('link')
     setShowForm(false)
   }
 
-  function handleDelete(docId: string) {
-    deleteDocument.mutate(docId)
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!title.trim() || !url.trim()) return
+    addDocument.mutate({ title: title.trim(), url: url.trim(), doc_type: docType })
+    reset()
   }
 
+  const canSave = title.trim().length > 0 && url.trim().length > 0
+
   return (
-    <div style={{ marginBottom: '1.5rem' }}>
-      <div className="flex items-center gap-2 mb-3">
-        <FolderOpen {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
-        <span
-          style={{
-            fontSize: 'var(--label-size)',
-            fontWeight: 500,
-            color: 'var(--slate)',
-            opacity: 'var(--ink-label)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-          }}
-        >
-          Key Documents
-        </span>
-        {documents.length > 0 && (
-          <span
-            style={{
-              fontSize: 'var(--label-size)',
-              color: 'var(--slate)',
-              opacity: 0.75,
-            }}
-          >
-            {documents.length}
-          </span>
-        )}
-      </div>
-
-      <div
-        style={{
-          background: 'var(--ice)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '16px 20px',
-        }}
-        className="detail-card"
-      >
-        {/* Document list */}
-        {documents.length > 0 && (
-          <div style={{ marginBottom: showForm ? '12px' : 0 }}>
-            {documents.map((doc) => {
-              const config = DOC_TYPE_CONFIG[doc.doc_type] || DOC_TYPE_CONFIG.link
-              const Icon = config.icon
-              return (
-                <div
-                  key={doc.id}
-                  className="flex items-center gap-3"
-                  style={{
-                    padding: 'var(--sp-sm) var(--sp-xs)',
-                    borderBottom: '1px solid var(--border-subtle)',
-                    transition: 'background 150ms ease',
-                    background: hoveredId === doc.id ? 'var(--gold-hover)' : 'transparent',
-                    borderRadius: 'var(--radius-sm)',
-                  }}
-                  onMouseEnter={() => setHoveredId(doc.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                >
-                  <Icon {...ICON_PROPS}
-                    size={16}
-                    style={{ color: config.color, flexShrink: 0, opacity: 0.8 }}
-                  />
-                  <a
-                    href={doc.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5"
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      fontSize: '13px',
-                      color: 'var(--ink)',
-                      textDecoration: 'none',
-                      fontWeight: 400,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {doc.title}
-                    <ExternalLink {...ICON_PROPS}
-                      size={10}
-                      style={{ opacity: 0.85, flexShrink: 0 }}
-                    />
-                  </a>
-                  <span
-                    className="inline-block px-1.5 py-0.5 rounded-full"
-                    style={{
-                      fontSize: '10px',
-                      fontWeight: 500,
-                      color: config.color,
-                      background: `color-mix(in srgb, ${config.color} 12%, transparent)`,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {config.label}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleDelete(doc.id)}
-                    style={{
-                      padding: '2px',
-                      color: 'var(--slate)',
-                      opacity: hoveredId === doc.id ? 0.85 : 0,
-                      transition: 'opacity 150ms ease',
-                      flexShrink: 0,
-                    }}
-                    title="Remove document link"
-                    aria-label="Remove document link"
-                  >
-                    <X {...ICON_PROPS} size={14} />
-                  </Button>
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Empty state */}
-        {documents.length === 0 && !showForm && (
-          <div className="text-center" style={{ padding: 'var(--sp-lg) 0 var(--sp-md)' }}>
-            <FolderOpen
-              size={24}
-              style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-sm)' }}
-            />
-            <p
+    <div className="flex flex-col gap-1.5">
+      {documents.map((doc) => {
+        const config = DOC_TYPE_CONFIG[doc.doc_type] || DOC_TYPE_CONFIG.link
+        const Icon = config.icon
+        const date = formatDbLocal(doc.created_at, 'date')
+        const tooltip = `${config.label} · ${doc.title}`
+        return (
+          <div key={doc.id} className="group flex items-center justify-between gap-2">
+            <a
+              href={doc.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={tooltip}
+              className="inline-flex items-center gap-1.5 self-start"
               style={{
-                fontSize: '12px',
+                padding: '4px 7px 4px 9px',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--ice)',
+                border: '1px solid var(--border-subtle)',
+                maxWidth: 240,
+                fontSize: 12,
+                fontWeight: 500,
+                textDecoration: 'none',
                 color: 'var(--slate)',
-                opacity: 'var(--ink-label)',
-                margin: '0 0 var(--sp-xs)',
               }}
             >
-              No documents linked yet
-            </p>
-            <p
-              style={{
-                fontSize: '11px',
-                color: 'var(--slate)',
-                opacity: 'var(--ink-hint)',
-                margin: 0,
-              }}
-            >
-              Link Box folders, Google Docs, datasets, and protocols
-            </p>
-          </div>
-        )}
-
-        {/* Preset buttons */}
-        {!showForm && (
-          <div
-            className="flex flex-wrap items-center gap-2"
-            style={{ marginTop: documents.length > 0 ? '10px' : '12px' }}
-          >
-            {PRESETS.map((preset) => {
-              const config = DOC_TYPE_CONFIG[preset.doc_type]
-              const Icon = config.icon
-              return (
-                <Button
-                  key={preset.doc_type}
-                  variant="secondary"
-                  onClick={() => handlePreset(preset)}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-                  style={{
-                    background: 'transparent',
-                    color: 'var(--slate)',
-                    padding: '6px 10px',
-                    borderRadius: 'var(--radius-lg)',
-                    opacity: 0.85,
-                  }}
-                >
-                  <Icon {...ICON_PROPS} size={12} style={{ color: config.color }} />
-                  {preset.label}
-                </Button>
-              )
-            })}
-            <Button
-              variant="secondary"
-              onClick={() => { setShowForm(true); setDocType('link'); setUrlPlaceholder('https://...') }}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-              style={{
-                background: 'transparent',
-                color: 'var(--teal)',
-                border: '1px solid var(--teal)',
-                padding: '6px 10px',
-                borderRadius: 'var(--radius-lg)',
-                opacity: 0.8,
-              }}
-            >
-              <Plus {...ICON_PROPS} size={12} />
-              Other
-            </Button>
-          </div>
-        )}
-
-        {/* Add form */}
-        {showForm && (
-          <form onSubmit={handleSubmit} style={{ marginTop: documents.length > 0 ? '4px' : '12px' }}>
-            <div className="flex items-center gap-2 mb-2">
-              <span
-                style={{
-                  fontSize: '10px',
-                  fontWeight: 500,
-                  color: 'var(--slate)',
-                  opacity: 0.75,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                }}
-              >
-                Add {DOC_TYPE_CONFIG[docType]?.label || 'Link'}
+              <Icon {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', flexShrink: 0 }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                {doc.title}
               </span>
-              <InlineSelect
-                value={docType}
-                options={Object.entries(DOC_TYPE_CONFIG).map(([key, cfg]) => ({ value: key, label: cfg.label }))}
-                onChange={(v) => setDocType(v as ProjectDocumentRow['doc_type'])}
-                alwaysShowChevron
-              />
+            </a>
+            <span className="flex items-center gap-1.5" style={{ flexShrink: 0 }}>
+              {date && (
+                <span style={{ fontSize: '10px', color: 'var(--muted)', whiteSpace: 'nowrap' }}>{date}</span>
+              )}
               <Button
                 variant="ghost"
-                type="button"
-                onClick={() => { setShowForm(false); setTitle(''); setUrl('') }}
-                style={{
-                  marginLeft: 'auto',
-                  color: 'var(--slate)',
-                  opacity: 0.75,
-                  padding: '2px',
-                }}
-                aria-label="Cancel"
+                onClick={() => deleteDocument.mutate(doc.id)}
+                data-tip="Remove document link"
+                aria-label={`Remove document link: ${doc.title}`}
+                className="tip opacity-60 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                style={{ color: 'var(--slate)', padding: 0, display: 'grid' }}
               >
-                <X {...ICON_PROPS} size={14} />
+                <X {...ICON_PROPS} size={12} />
               </Button>
-            </div>
-            <div className="flex flex-col gap-2">
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Document title"
-                autoFocus
-                style={{
-                  fontSize: '13px',
-                  color: 'var(--ink)',
-                  background: 'var(--cream)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '8px 10px',
-                  outline: 'none',
-                  width: '100%',
-                }}
-              />
-              <input
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder={urlPlaceholder}
-                type="url"
-                style={{
-                  fontSize: '13px',
-                  color: 'var(--ink)',
-                  background: 'var(--cream)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '8px 10px',
-                  outline: 'none',
-                  width: '100%',
-                }}
-              />
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-              <Button
-                variant="primary"
-                type="submit"
-                disabled={!title.trim() || !url.trim()}
-                className="px-3 py-1.5 rounded-md text-xs font-medium"
-                style={{
-                  background: title.trim() && url.trim() ? 'var(--teal-solid)' : 'var(--slate)',
-                  color: 'var(--ink-bright, #fff)',
-                  padding: '6px 12px',
-                  borderRadius: 'var(--radius-md)',
-                  cursor: title.trim() && url.trim() ? 'pointer' : 'not-allowed',
-                  opacity: title.trim() && url.trim() ? 1 : 0.85,
-                }}
-              >
-                Add Link
-              </Button>
-              <Button
-                variant="secondary"
-                type="button"
-                onClick={() => { setShowForm(false); setTitle(''); setUrl('') }}
-                className="px-3 py-1.5 rounded-md text-xs"
-                style={{
-                  color: 'var(--slate)',
-                  background: 'none',
-                  padding: '6px 12px',
-                  borderRadius: 'var(--radius-md)',
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        )}
-      </div>
+            </span>
+          </div>
+        )
+      })}
+
+      {!showForm && (
+        <Button
+          variant="ghost"
+          onClick={() => setShowForm(true)}
+          aria-label="Add another document"
+          className="flex items-center gap-1 self-start rounded transition-colors hov-opacity hov-bg"
+          style={{
+            padding: '3px 4px',
+            fontSize: 'var(--text-small)',
+            color: 'var(--teal)',
+            opacity: 0.75,
+            fontFamily: 'inherit',
+            '--hov-opacity': '1',
+            '--hov-bg': 'var(--teal-hover)',
+          } as React.CSSProperties}
+        >
+          <Plus {...ICON_PROPS} size={11} />
+          Add another
+        </Button>
+      )}
+
+      {showForm && (
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); reset() } }}
+          className="flex flex-col gap-2 p-3 rounded-lg"
+          style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
+        >
+          <div className="flex items-center gap-2">
+            <InlineSelect
+              value={docType}
+              options={Object.entries(DOC_TYPE_CONFIG).map(([key, cfg]) => ({ value: key, label: cfg.label }))}
+              onChange={(v) => setDocType(v as ProjectDocumentRow['doc_type'])}
+              alwaysShowChevron
+            />
+          </div>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Document title"
+            autoFocus
+            style={inputStyle}
+          />
+          <input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder={DOC_TYPE_CONFIG[docType]?.placeholder ?? 'https://...'}
+            type="url"
+            style={inputStyle}
+          />
+          <div className="flex items-center gap-2 justify-end">
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={reset}
+              style={{ borderRadius: 'var(--radius-md)', padding: '4px 10px', fontSize: 'var(--text-small)' }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={!canSave}
+              style={{
+                background: canSave ? 'var(--teal-solid)' : 'var(--border-subtle)',
+                borderRadius: 'var(--radius-md)',
+                padding: '4px 10px',
+                fontSize: 'var(--text-small)',
+                color: canSave ? 'var(--ink-bright)' : 'var(--slate)',
+                cursor: canSave ? 'pointer' : 'not-allowed',
+                fontWeight: 500,
+                opacity: 1,
+              }}
+            >
+              Add
+            </Button>
+          </div>
+        </form>
+      )}
     </div>
   )
 }

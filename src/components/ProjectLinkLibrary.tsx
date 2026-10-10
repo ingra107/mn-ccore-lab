@@ -37,10 +37,11 @@ import CollapsibleSection from './CollapsibleSection'
 import { Button } from './ui/Button'
 import { canChangeRole, partitionForProjectPage } from '../lib/projectLinkLibrary'
 import { formatDbLocal } from '../lib/time'
+import { stripLinkKindSuffix } from '../lib/linkIcon'
 import { ICON_PROPS } from '../lib/iconProps'
 import type { StoredLink } from '../hooks/useApiData'
 
-import { LABEL_STYLE } from './ui/labelStyle'
+import { LABEL_STYLE, LABEL_ICON_COLOR } from './ui/labelStyle'
 
 type Role = 'key' | 'archive'
 
@@ -58,7 +59,7 @@ function LinkRow({
   const label = archived ? 'Restore link' : 'Archive link'
   return (
     <div className="group flex items-center justify-between gap-2">
-      <StoredLinkChip link={link} />
+      <StoredLinkChip link={{ ...link, short_title: link.short_title ? stripLinkKindSuffix(link.short_title) : link.short_title }} />
       <span className="flex items-center gap-1.5" style={{ flexShrink: 0 }}>
         {date && (
           // --muted, not a dimmed --slate: the opacity policy floors secondary
@@ -93,20 +94,22 @@ interface Props {
   slotUrls?: ReadonlyArray<string | null | undefined>
   /** The pinned-slot editor (KeyLinksEditor on the project page), rendered as the card's top row. */
   pinnedEditor?: ReactNode
+  /** The project's document rows (project_documents), rendered in this card below the library. A separate store, merged in the RENDER only (Nick 2026-07-21). */
+  documents?: ReactNode
   onSetRole?: (link: StoredLink, role: Role) => void
 }
 
-export default function ProjectLinkLibrary({ links, isLoading, slotUrls = [], pinnedEditor, onSetRole }: Props) {
+export default function ProjectLinkLibrary({ links, isLoading, slotUrls = [], pinnedEditor, documents, onSetRole }: Props) {
   const { current, archived } = isLoading
     ? { current: [], archived: [] }
     : partitionForProjectPage(links ?? [], slotUrls)
   // With no pinned row to host, an empty library renders nothing at all.
-  if (!pinnedEditor && current.length === 0 && archived.length === 0) return null
+  if (!pinnedEditor && !documents && current.length === 0 && archived.length === 0) return null
 
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <Link2 {...ICON_PROPS} size={13} style={{ color: 'var(--teal)' }} />
+        <Link2 {...ICON_PROPS} size={13} style={{ color: LABEL_ICON_COLOR }} />
         <span style={LABEL_STYLE}>Links</span>
       </div>
 
@@ -120,8 +123,12 @@ export default function ProjectLinkLibrary({ links, isLoading, slotUrls = [], pi
         </div>
       )}
 
+      {documents && (
+        <div style={{ marginTop: pinnedEditor || current.length > 0 ? '10px' : 0 }}>{documents}</div>
+      )}
+
       {archived.length > 0 && (
-        <div style={{ marginTop: pinnedEditor || current.length > 0 ? '10px' : 0 }}>
+        <div style={{ marginTop: pinnedEditor || current.length > 0 || documents ? '10px' : 0 }}>
           <CollapsibleSection
             title="Archived"
             icon={<Archive {...ICON_PROPS} size={11} style={{ color: 'var(--slate)' }} />}

@@ -55,6 +55,16 @@ function findMatchingKeywords(text: string): string[] {
   return matches
 }
 
+// Raw stage enum -> reader label ("data_collection" -> "Data Collection").
+// Mirrors CANONICAL_STAGE_LABELS in src/lib/stageNormalize.ts, which the Worker
+// does not import; an unknown value still reads as words, never a slug.
+function humanizeStage(stage: string): string {
+  return stage
+    .split('_')
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(' ')
+}
+
 // GET /api/insights/connections — full cross-project analysis
 export async function handleInsightConnections(env: Env): Promise<Response> {
   // Fetch all active projects with their details
@@ -75,6 +85,18 @@ export async function handleInsightConnections(env: Env): Promise<Response> {
   }>()
 
   const rows = projects.results || []
+
+  // Person slug -> first name, so reasons never show "nick-ingraham". A slug with
+  // no team row falls back to its first hyphen part, capitalised.
+  const people = await env.DB.prepare('SELECT slug, name FROM team_members').all<{ slug: string; name: string | null }>()
+  const personLabel = new Map<string, string>()
+  for (const t of people.results || []) {
+    const first = (t.name || '').trim().split(' ')[0]
+    if (first) personLabel.set(t.slug, first)
+  }
+  const labelPerson = (slug: string): string =>
+    personLabel.get(slug) ?? slug.split('-')[0].replace(/^./, (c) => c.toUpperCase())
+
   const edges: InsightEdge[] = []
   const seen = new Set<string>()
 
@@ -105,7 +127,7 @@ export async function handleInsightConnections(env: Env): Promise<Response> {
         const strength = piOnly ? 0.3 : Math.min(0.9, shared.length * 0.3)
         addEdge(
           a.slug, b.slug, a.title, b.title,
-          `Shared team: ${shared.join(', ')}`,
+          `Shared team: ${shared.map(labelPerson).join(', ')}`,
           strength
         )
       }
@@ -128,7 +150,7 @@ export async function handleInsightConnections(env: Env): Promise<Response> {
         if (a.stage && b.stage && a.stage === b.stage) {
           addEdge(
             a.slug, b.slug, a.title, b.title,
-            `Same category & stage (${a.stage})`,
+            `Same category & stage (${humanizeStage(a.stage)})`,
             0.4
           )
         }
