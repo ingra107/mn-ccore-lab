@@ -564,7 +564,7 @@ export default function GrantsPage() {
             <TableContainer>
               {/* Column headers */}
               <div
-                className="hidden sm:grid [&_.col-header]:normal-case [&_.col-header]:tracking-normal"
+                className="hidden sm:grid [&_.col-header]:!normal-case [&_.col-header]:!tracking-normal"
                 style={{ gridTemplateColumns: GRANT_GRID_COLUMNS, padding: '0 16px' }}
               >
                 <ColumnHeader label="Title" sortKey="title" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import { useCountUp } from '../hooks/useCountUp'
-import { usePublications, useProjects, useTeam, useGrants } from '../hooks/useApiData'
+import { usePublications, useProjects, useTeam } from '../hooks/useApiData'
 import { isProjectActive } from '../lib/taskConstants'
 import NetworkBackground from '../components/NetworkBackground'
 import FeaturedResearch from '../components/FeaturedResearch'
@@ -105,7 +105,6 @@ export default function Home() {
   const { data: publications = [] } = usePublications()
   const { data: projects = [] } = useProjects()
   const { data: team = [] } = useTeam()
-  const { data: grants = [] } = useGrants()
   const { isAuthenticated } = useAuth()
   const pillarsRef = useScrollRevealGroup('.fade-in-up', 150)
   const affiliatesRef = useScrollRevealGroup('.fade-in-up', 100)
@@ -114,9 +113,8 @@ export default function Home() {
     const pubCount = publications.length || 63
     const activeProjects = projects.filter(p => isProjectActive(p.status)).length || 6
     const teamCount = team.length || 12
-    const activeGrants = grants.filter(g => g.bucket === 'active').length || 2
-    return { pubCount, activeProjects, teamCount, activeGrants }
-  }, [publications, projects, team, grants])
+    return { pubCount, activeProjects, teamCount }
+  }, [publications, projects, team])
 
   // JSON-LD structured data for organization
   useEffect(() => {

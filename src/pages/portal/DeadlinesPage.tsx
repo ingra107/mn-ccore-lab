@@ -405,7 +405,7 @@ export default function DeadlinesPage() {
           <TableContainer>
             {/* Column headers — hidden on mobile */}
             <div
-              className="hidden sm:grid"
+              className="hidden sm:grid [&_.col-header]:!normal-case [&_.col-header]:!tracking-normal"
               style={{
                 gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px', columnGap: 'var(--sp-md)',
                 padding: 'var(--sp-sm) var(--sp-lg)',
