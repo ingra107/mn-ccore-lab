@@ -94,7 +94,12 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
     ro.observe(el)
     // A sibling added later (phone filter panel, banner) moves the list without
     // resizing any observed node; re-measure and observe the newcomer.
-    const mo = new MutationObserver(() => { watch(); measure() })
+    // Rows the virtualizer mounts while scrolling mutate inside the list; they
+    // cannot move it, so skip them (measure() forces a layout on the scroll path).
+    const mo = new MutationObserver((recs) => {
+      if (recs.every((r) => el.contains(r.target))) return
+      watch(); measure()
+    })
     mo.observe(sp, { childList: true, subtree: true })
     return () => { ro.disconnect(); mo.disconnect() }
   }, [pageScrollRef, filtered.length])
