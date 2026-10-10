@@ -12,7 +12,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8787',
+        // HUB_API_PORT: set by scripts/run-journey-spec.mjs --gate, which runs
+        // its own wrangler on a free port so it never tests someone else's API.
+        target: `http://localhost:${process.env.HUB_API_PORT ?? 8787}`,
         changeOrigin: true,
       },
     },

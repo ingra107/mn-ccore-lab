@@ -52,6 +52,18 @@ if (-not $SkipBuild) {
     Write-Host '[1/3] Skipping build (-SkipBuild).' -ForegroundColor DarkGray
 }
 
+# 1b. Member page sweep (same gate as deploy:pages:gated; own ports + own local D1).
+#     It serves dist/ with vite preview, so with -SkipBuild it sweeps the same
+#     dist/ that step 2 deploys, never newer source.
+Write-Host ''
+Write-Host '[1b/3] Member page sweep...' -ForegroundColor Yellow
+npm run test:journeys:sweep:gate
+if ($LASTEXITCODE -ne 0) {
+    Write-Host 'MEMBER PAGE SWEEP FAILED - aborting deploy.' -ForegroundColor Red
+    exit 1
+}
+Write-Host '  Sweep OK.' -ForegroundColor Green
+
 # 2. Pages deploy (frontend + bundled /api Functions Worker)
 Write-Host ''
 Write-Host '[2/3] Deploying Pages (mn-ccore-lab frontend + Functions)...' -ForegroundColor Yellow

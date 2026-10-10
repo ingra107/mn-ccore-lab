@@ -13,10 +13,13 @@ export function localD1(sql: string): string {
   const env = { ...process.env }
   delete env.CLOUDFLARE_API_TOKEN
   delete env.CLOUDFLARE_ACCOUNT_ID
+  // HUB_LOCAL_D1_PERSIST: the deploy gate's own local D1 (run-journey-spec.mjs --gate).
+  const persist = process.env.HUB_LOCAL_D1_PERSIST
+  const persistFlag = persist ? ` --persist-to="${persist.replace(/\\/g, '/')}"` : ''
   for (let attempt = 1; ; attempt++) {
     try {
       return execSync(
-        `npx wrangler d1 execute mnccore-lab --local --config=wrangler.local.toml --json --command "${sql}"`, // wrangler-d1-allowed: --local Miniflare, no cloud auth
+        `npx wrangler d1 execute mnccore-lab --local --config=wrangler.local.toml --json${persistFlag} --command "${sql}"`, // wrangler-d1-allowed: --local Miniflare, no cloud auth
         { env, stdio: ['ignore', 'pipe', 'pipe'] },
       ).toString()
     } catch (e) {

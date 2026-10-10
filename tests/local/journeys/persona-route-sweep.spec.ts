@@ -5,8 +5,11 @@ import { localD1 } from './localD1'
 // as two non-PI members and fails on an error boundary, any /api/pb/* request,
 // or any 4xx/5xx from /api. Catches the 1015421c class (empty-list crash) and
 // the d2b59803 class (a 403 rendered as text). It cannot see POST authorization
-// (6419c9b0) or edge Access (18f602f5). Not wired into any deploy gate: run
-// `npm run test:journeys:sweep` and read the time first.
+// (6419c9b0) or edge Access (18f602f5). A deploy gate since S4-2 H3:
+// deploy:pages:gated runs `npm run test:journeys:sweep:gate` (own free ports,
+// own fresh local D1, the built dist/ via vite preview) before `wrangler pages
+// deploy`. By hand, from any checkout: `npm run build` then
+// `npm run test:journeys:sweep:gate`.
 //
 // Both emails are on no NetID map in code; the team_members row is the only
 // thing that makes them members (262b9444 class).
