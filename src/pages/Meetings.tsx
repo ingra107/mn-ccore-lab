@@ -433,7 +433,27 @@ export default function Meetings() {
     }
     fit()
     window.addEventListener('resize', fit)
-    return () => window.removeEventListener('resize', fit)
+    // Layout changes with no window resize: the header growing (record form,
+    // cadence details), focus mode collapsing the top bar, the shell reflowing.
+    // fit() clears the height before measuring, so it cannot feed back into
+    // the observed header; the rAF coalesces bursts.
+    let raf = 0
+    const refit = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit) }
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(refit) : null
+    if (ro) {
+      if (el.firstElementChild) ro.observe(el.firstElementChild)
+      ro.observe(document.body)
+      const main = el.closest('#portal-main')
+      if (main) ro.observe(main)
+    }
+    // PageTransition animates the page in; re-measure once it has settled.
+    const settle = window.setTimeout(fit, 450)
+    return () => {
+      window.removeEventListener('resize', fit)
+      ro?.disconnect()
+      cancelAnimationFrame(raf)
+      window.clearTimeout(settle)
+    }
   }, [isPhone])
   // `?filter=today` is the Today page's "meetings" stat line link: this page's
   // list narrowed to today's meeting records.
@@ -863,7 +883,7 @@ export default function Meetings() {
 
       {/* M-03: 240px list, M-28: minHeight 400px, M-34: mobile-detail class */}
       <div className={`meetings-split-panel tk${mobileShowDetail ? ' mobile-detail' : ''}`}
-        style={{ display: 'grid', gridTemplateColumns: '290px 1fr', gridTemplateRows: 'minmax(0, 1fr)', gap: 0, flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        style={{ display: 'grid', gridTemplateColumns: '290px 1fr', gridTemplateRows: 'minmax(0, 1fr)', gap: 0, flex: 1, minHeight: 360, overflow: 'hidden' }}>
 
         {/* Left panel — M-28: minHeight, M-34: hidden when mobile-detail active */}
         <div className="meetings-list-panel" style={{ borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>

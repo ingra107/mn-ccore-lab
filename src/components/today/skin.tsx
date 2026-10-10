@@ -30,7 +30,10 @@ export function Person({ slug, name }: { slug?: string; name?: string }) {
 
 /** A name that is a person: 1-3 capitalised words ("Casey", "Dr. Grandon",
  *  "Lianne Siegel"). A sentence or a lowercase phrase is not. */
-const NAME_LIKE = /^[A-Z][A-Za-z0-9_.'-]*( +[A-Z][A-Za-z0-9_.'-]*){0,2}$/
+// Each word needs a lowercase letter after the capital, so acronyms and
+// all-caps values (IRB, NIH) are not names. "Pharmacy" still passes: a word
+// shape cannot tell it from a surname; the roster slug check runs first.
+const NAME_LIKE = /^[A-Z][a-z][A-Za-z0-9_.'-]*( +[A-Z][a-z][A-Za-z0-9_.'-]*){0,2}$/
 const SLUG_LIKE = /^[a-z][a-z0-9-]*$/
 
 /** waiting_on / promised_to are free text. A face + first name only when the

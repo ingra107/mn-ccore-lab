@@ -306,6 +306,7 @@ function AgendaGapRow({
   baseHeight,
   gapStartMin,
   gapEndMin,
+  nowMin,
   freeWindows,
   tasks,
   state,
@@ -320,6 +321,8 @@ function AgendaGapRow({
   baseHeight: number
   /** Minutes-since-midnight of the gap start. Used for absolute block top/height.
    *  Zero for untimed gaps (UntimedUnit) — those never use the absolute lane. */
+  /** Current minute-of-day; the gap holding it labels only its remaining part. */
+  nowMin?: number
   gapStartMin: number
   /** Minutes-since-midnight of the gap end. Used for move-clamp upper bound. */
   gapEndMin: number
@@ -426,9 +429,14 @@ function AgendaGapRow({
     }
   }, [ghostState, timedTasks, gapStartMin])
 
-  const fmtFree = freeMinutes >= 60
-    ? `${Math.floor(freeMinutes / 60)}h${freeMinutes % 60 > 0 ? ` ${freeMinutes % 60}m` : ''} free`
-    : freeMinutes > 0 ? `${freeMinutes}m free` : 'drop here'
+  // Elapsed time is not free (matches the day-balance strip): the gap that
+  // holds the now-line labels only what is left of it.
+  const labelMinutes = nowMin != null && nowMin > gapStartMin && nowMin < gapEndMin
+    ? Math.max(0, gapEndMin - nowMin)
+    : freeMinutes
+  const fmtFree = labelMinutes >= 60
+    ? `${Math.floor(labelMinutes / 60)}h${labelMinutes % 60 > 0 ? ` ${labelMinutes % 60}m` : ''} free`
+    : labelMinutes > 0 ? `${labelMinutes}m free` : 'drop here'
 
   return (
     <div
@@ -933,6 +941,7 @@ export function TimelineGrid({
           baseHeight={unit.baseHeight}
           gapStartMin={unit.startMin}
           gapEndMin={unit.endMin}
+          nowMin={now}
           freeWindows={freeWindows}
           tasks={tasks}
           state={state}
