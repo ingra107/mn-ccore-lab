@@ -3,16 +3,8 @@ import { lazyRoute } from '../lib/lazyRoute'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 const BugReportModal = lazyRoute(() => import('./BugReportModal'))
 import {
-  LayoutDashboard,
   User,
-  SquareCheck,
-  Calendar,
-  Clock,
-  FolderKanban,
-  FileText,
   Search,
-  DollarSign,
-  Users as UsersIcon,
   Activity,
   BarChart3,
   Settings,
@@ -23,17 +15,15 @@ import {
   Bug,
   History,
   TrendingUp,
-  LayoutGrid,
-  Library,
   Star,
   LogOut,
   Target,
   Zap,
-  Video,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
 import { useDarkMode } from '../hooks/useDarkMode'
+import { modKeyLabel, openCommandPalette } from '../lib/platform'
 import NotificationBell from './NotificationBell'
 import { useNextMeeting, useProjects } from '../hooks/useApiData'
 import { civilDaysUntil } from '../lib/dateUtils'
@@ -42,7 +32,7 @@ import { useProjectPins } from '../hooks/useProjectPins'
 import { projectsForSidebar } from '../lib/sidebarProjects'
 import { todayKey } from '../lib/taskGrouping'
 import { PATHS } from '../constants/paths'
-import { PORTAL_PAGE_LABELS } from '../constants/pageLabels'
+import { PORTAL_PAGE_LABELS, PORTAL_PAGE_ICONS } from '../constants/pageLabels'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -100,22 +90,22 @@ interface NavItem {
 const MAIN_NAV: NavItem[] = [
   // "Today" replaces "Dashboard" as the primary landing label after the
   // Today B2 cutover (see CLAUDE.md Rule 52). Route stays /portal/dashboard.
-  { to: PATHS.dashboard, label: PORTAL_PAGE_LABELS[PATHS.dashboard], icon: LayoutDashboard },
+  { to: PATHS.dashboard, label: PORTAL_PAGE_LABELS[PATHS.dashboard], icon: PORTAL_PAGE_ICONS[PATHS.dashboard] },
   // SquareCheck (check contained INSIDE the square) over the old
   // CheckSquare whose check overflowed the frame — reads cleaner at 18px.
-  { to: PATHS.myTasks, label: PORTAL_PAGE_LABELS[PATHS.myTasks], icon: SquareCheck },
-  { to: PATHS.calendar, label: PORTAL_PAGE_LABELS[PATHS.calendar], icon: Calendar },
-  { to: PATHS.deadlines, label: PORTAL_PAGE_LABELS[PATHS.deadlines], icon: Clock },
-  { to: PATHS.meetings, label: PORTAL_PAGE_LABELS[PATHS.meetings], icon: Video },
-  { to: PATHS.projects, label: PORTAL_PAGE_LABELS[PATHS.projects], icon: FolderKanban },
-  { to: PATHS.manuscripts, label: PORTAL_PAGE_LABELS[PATHS.manuscripts], icon: FileText },
-  { to: PATHS.grants, label: PORTAL_PAGE_LABELS[PATHS.grants], icon: DollarSign },
-  { to: PATHS.library, label: PORTAL_PAGE_LABELS[PATHS.library], icon: Library },
-  { to: PATHS.team, label: PORTAL_PAGE_LABELS[PATHS.team], icon: UsersIcon },
+  { to: PATHS.myTasks, label: PORTAL_PAGE_LABELS[PATHS.myTasks], icon: PORTAL_PAGE_ICONS[PATHS.myTasks] },
+  { to: PATHS.calendar, label: PORTAL_PAGE_LABELS[PATHS.calendar], icon: PORTAL_PAGE_ICONS[PATHS.calendar] },
+  { to: PATHS.deadlines, label: PORTAL_PAGE_LABELS[PATHS.deadlines], icon: PORTAL_PAGE_ICONS[PATHS.deadlines] },
+  { to: PATHS.meetings, label: PORTAL_PAGE_LABELS[PATHS.meetings], icon: PORTAL_PAGE_ICONS[PATHS.meetings] },
+  { to: PATHS.projects, label: PORTAL_PAGE_LABELS[PATHS.projects], icon: PORTAL_PAGE_ICONS[PATHS.projects] },
+  { to: PATHS.manuscripts, label: PORTAL_PAGE_LABELS[PATHS.manuscripts], icon: PORTAL_PAGE_ICONS[PATHS.manuscripts] },
+  { to: PATHS.grants, label: PORTAL_PAGE_LABELS[PATHS.grants], icon: PORTAL_PAGE_ICONS[PATHS.grants] },
+  { to: PATHS.library, label: PORTAL_PAGE_LABELS[PATHS.library], icon: PORTAL_PAGE_ICONS[PATHS.library] },
+  { to: PATHS.team, label: PORTAL_PAGE_LABELS[PATHS.team], icon: PORTAL_PAGE_ICONS[PATHS.team] },
 ]
 
 const PI_NAV: NavItem[] = [
-  { to: PATHS.overview, label: PORTAL_PAGE_LABELS[PATHS.overview], icon: LayoutGrid },
+  { to: PATHS.overview, label: PORTAL_PAGE_LABELS[PATHS.overview], icon: PORTAL_PAGE_ICONS[PATHS.overview] },
 ]
 
 interface MenuLink { to: string; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number; absoluteStrokeWidth?: boolean }> }
@@ -403,10 +393,16 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         <Link
           to={PATHS.search}
           prefetch="intent"
-          onClick={onNavigate}
+          onClick={(e) => {
+            // Desktop sidebar: the Ctrl+K hint promises the palette, so open it.
+            // The phone/tablet overlay (onNavigate set) still goes to the page.
+            if (onNavigate) { onNavigate(); return }
+            e.preventDefault()
+            openCommandPalette()
+          }}
           className="flex items-center gap-3 px-3 py-2 mb-2 rounded-lg text-[12px] transition-colors border"
           style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)' }}
-          title={collapsed ? 'Search (Ctrl+K)' : undefined}
+          title={collapsed ? `Search (${modKeyLabel()}+K)` : undefined}
           aria-label="Search"
         >
           <Search size={16} {...ICON_PROPS} />
@@ -416,7 +412,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
               className="text-[10px] px-1.5 py-0.5 rounded border"
               style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-subtle)', color: 'var(--slate)' }}
             >
-              {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+K
+              {modKeyLabel()}+K
             </kbd>
           )}
         </Link>
@@ -436,7 +432,20 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         {!collapsed && (
           <div data-testid="sidebar-my-projects" style={{ marginTop: 4 }}>
             {divider}
-            <div className="px-3 pb-1 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>My projects</div>
+            <div className="px-3 pb-1 text-[11px] flex items-center justify-between" style={{ color: 'var(--slate)' }}>
+              <span style={{ opacity: 0.85 }}>My projects</span>
+              {/* Lives on the label row, not as the list's last child: with pins
+                  plus recents the list scrolled and the link sat below the fold. */}
+              <Link
+                to={PATHS.projects}
+                onClick={onNavigate}
+                className="inline-flex items-center gap-0.5 hover:underline"
+                style={{ color: 'var(--slate)' }}
+              >
+                All projects
+                <ChevronRight size={11} {...ICON_PROPS} style={{ flexShrink: 0 }} />
+              </Link>
+            </div>
             {myProjects.length === 0 && (
               <div className="px-3 py-1 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                 Star a project to keep it here.
@@ -470,15 +479,6 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                 </Link>
               )
             })}
-            <Link
-              to={PATHS.projects}
-              onClick={onNavigate}
-              className="sb-proj"
-              style={{ color: 'var(--slate)' }}
-            >
-              <ChevronRight size={11} {...ICON_PROPS} style={{ flexShrink: 0 }} />
-              <span>All projects</span>
-            </Link>
           </div>
         )}
       </nav>

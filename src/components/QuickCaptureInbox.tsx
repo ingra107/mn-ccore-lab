@@ -444,7 +444,8 @@ export default function QuickCaptureInbox() {
 
   return (
     <>
-      {/* FAB: positioned above the existing quick-add FAB (bottom: ~36px) */}
+      {/* FAB: desktop only (lg+), above the quick-add FAB. Below lg it covered
+          the card action column; the More drawer has a Capture entry instead. */}
       <Button
         variant="ghost"
         type="button"
@@ -452,7 +453,7 @@ export default function QuickCaptureInbox() {
         aria-label="Quick capture to inbox (Ctrl+I)"
         title="Quick capture to inbox (Ctrl+I)"
         data-testid="fab-quick-capture-inbox"
-        className="fixed right-5 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+        className="fixed right-5 hidden lg:flex items-center justify-center transition-all hover:scale-105 active:scale-95"
         style={{
           bottom: 'var(--fab-stack-2)',
           width: 44,

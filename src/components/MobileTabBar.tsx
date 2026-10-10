@@ -3,34 +3,16 @@ import { lazyRoute } from '../lib/lazyRoute'
 import { Link, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
-  ListChecks,
-  FolderKanban,
-  Search,
   MoreHorizontal,
   X,
-  Calendar,
-  Clock,
-  FileText,
-  Users,
-  Activity,
-  BarChart3,
-  HelpCircle,
-  Award,
-  BookOpen,
-  Library,
   Target,
-  Settings,
   Bug,
-  LayoutGrid,
-  User,
-  TrendingUp,
-  History,
-  Zap,
-  Video,
   ExternalLink,
+  Plus,
+  Inbox,
 } from 'lucide-react'
 import { PATHS } from '../constants/paths'
-import { PORTAL_PAGE_LABELS } from '../constants/pageLabels'
+import { PORTAL_PAGE_LABELS, PORTAL_PAGE_ICONS } from '../constants/pageLabels'
 import { ICON_PROPS } from '../lib/iconProps'
 import { useAuth } from '../hooks/useAuth'
 
@@ -71,10 +53,10 @@ export default function MobileTabBar() {
   }, [overflowOpen])
 
   const primaryTabs = [
-    { to: PATHS.dashboard, icon: LayoutDashboard, label: 'Today' },
-    { to: PATHS.myTasks, icon: ListChecks, label: 'Tasks' },
-    { to: PATHS.projects, icon: FolderKanban, label: 'Projects' },
-    { to: PATHS.search, icon: Search, label: 'Search' },
+    { to: PATHS.dashboard, icon: PORTAL_PAGE_ICONS[PATHS.dashboard], label: 'Today' },
+    { to: PATHS.myTasks, icon: PORTAL_PAGE_ICONS[PATHS.myTasks], label: 'Tasks' },
+    { to: PATHS.projects, icon: PORTAL_PAGE_ICONS[PATHS.projects], label: 'Projects' },
+    { to: PATHS.search, icon: PORTAL_PAGE_ICONS[PATHS.search], label: 'Search' },
   ]
 
   return (
@@ -235,6 +217,44 @@ export default function MobileTabBar() {
               </div>
             ))}
 
+            {/* Capture — the two floating buttons (quick add, inbox) are hidden
+                below lg: they sat on the right-edge Work-on / folder slot of
+                whichever card row was behind them. They open the same sheets
+                through the same events the FABs and shortcuts use. */}
+            <div style={{ marginBottom: 12 }}>
+              <div
+                style={{ fontSize: '10px', opacity: 0.85, marginBottom: 6, paddingLeft: 12, fontWeight: 500 }}
+              >
+                Capture
+              </div>
+              {[
+                { label: 'Quick add task', icon: Plus, event: 'mn-ccore:open-quick-add' },
+                { label: 'Quick capture to inbox', icon: Inbox, event: 'mn-ccore:open-inbox' },
+              ].map(({ label, icon: Icon, event }) => (
+                <button
+                  key={event}
+                  type="button"
+                  data-testid={event === 'mn-ccore:open-inbox' ? 'more-quick-capture-inbox' : 'more-quick-add'}
+                  onClick={() => { setOverflowOpen(false); window.dispatchEvent(new CustomEvent(event)) }}
+                  className="flex items-center gap-3 rounded-md"
+                  style={{
+                    padding: '10px 12px',
+                    minHeight: 44,
+                    width: '100%',
+                    color: 'var(--ink)',
+                    fontSize: 'var(--text-base)',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <Icon size={18} {...ICON_PROPS} aria-hidden="true" />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+
             {/* Support — mobile users can't reach the sidebar's Report-a-Bug
                 button, so expose it here. Surfaced via deep-audit persona test. */}
             <div style={{ marginBottom: 12 }}>
@@ -291,47 +311,47 @@ const OVERFLOW_SECTIONS: { title: string; piOnly?: boolean; routes: OverflowRout
   {
     title: 'Hub',
     routes: [
-      { to: PATHS.calendar, icon: Calendar, label: PORTAL_PAGE_LABELS[PATHS.calendar] },
-      { to: PATHS.deadlines, icon: Clock, label: PORTAL_PAGE_LABELS[PATHS.deadlines] },
-      { to: PATHS.meetings, icon: Video, label: PORTAL_PAGE_LABELS[PATHS.meetings] },
-      { to: PATHS.manuscripts, icon: FileText, label: PORTAL_PAGE_LABELS[PATHS.manuscripts] },
-      { to: PATHS.grants, icon: Award, label: PORTAL_PAGE_LABELS[PATHS.grants] },
-      { to: PATHS.library, icon: Library, label: PORTAL_PAGE_LABELS[PATHS.library] },
-      { to: PATHS.team, icon: Users, label: PORTAL_PAGE_LABELS[PATHS.team] },
+      { to: PATHS.calendar, icon: PORTAL_PAGE_ICONS[PATHS.calendar], label: PORTAL_PAGE_LABELS[PATHS.calendar] },
+      { to: PATHS.deadlines, icon: PORTAL_PAGE_ICONS[PATHS.deadlines], label: PORTAL_PAGE_LABELS[PATHS.deadlines] },
+      { to: PATHS.meetings, icon: PORTAL_PAGE_ICONS[PATHS.meetings], label: PORTAL_PAGE_LABELS[PATHS.meetings] },
+      { to: PATHS.manuscripts, icon: PORTAL_PAGE_ICONS[PATHS.manuscripts], label: PORTAL_PAGE_LABELS[PATHS.manuscripts] },
+      { to: PATHS.grants, icon: PORTAL_PAGE_ICONS[PATHS.grants], label: PORTAL_PAGE_LABELS[PATHS.grants] },
+      { to: PATHS.library, icon: PORTAL_PAGE_ICONS[PATHS.library], label: PORTAL_PAGE_LABELS[PATHS.library] },
+      { to: PATHS.team, icon: PORTAL_PAGE_ICONS[PATHS.team], label: PORTAL_PAGE_LABELS[PATHS.team] },
     ],
   },
   {
     title: 'PI',
     piOnly: true,
     routes: [
-      { to: PATHS.overview, icon: LayoutGrid, label: PORTAL_PAGE_LABELS[PATHS.overview] },
+      { to: PATHS.overview, icon: PORTAL_PAGE_ICONS[PATHS.overview], label: PORTAL_PAGE_LABELS[PATHS.overview] },
     ],
   },
   {
     title: 'You',
     routes: [
-      { to: PATHS.profile, icon: User, label: PORTAL_PAGE_LABELS[PATHS.profile] },
+      { to: PATHS.profile, icon: PORTAL_PAGE_ICONS[PATHS.profile], label: PORTAL_PAGE_LABELS[PATHS.profile] },
       { to: PATHS.myItems, icon: Target, label: 'My Items' },
-      { to: PATHS.settings, icon: Settings, label: PORTAL_PAGE_LABELS[PATHS.settings] },
-      { to: PATHS.activity, icon: Activity, label: PORTAL_PAGE_LABELS[PATHS.activity] },
-      { to: PATHS.analytics, icon: BarChart3, label: PORTAL_PAGE_LABELS[PATHS.analytics] },
-      { to: PATHS.insights, icon: TrendingUp, label: PORTAL_PAGE_LABELS[PATHS.insights] },
+      { to: PATHS.settings, icon: PORTAL_PAGE_ICONS[PATHS.settings], label: PORTAL_PAGE_LABELS[PATHS.settings] },
+      { to: PATHS.activity, icon: PORTAL_PAGE_ICONS[PATHS.activity], label: PORTAL_PAGE_LABELS[PATHS.activity] },
+      { to: PATHS.analytics, icon: PORTAL_PAGE_ICONS[PATHS.analytics], label: PORTAL_PAGE_LABELS[PATHS.analytics] },
+      { to: PATHS.insights, icon: PORTAL_PAGE_ICONS[PATHS.insights], label: PORTAL_PAGE_LABELS[PATHS.insights] },
     ],
   },
   {
     title: 'PI tools',
     piOnly: true,
     routes: [
-      { to: PATHS.sessions, icon: History, label: PORTAL_PAGE_LABELS[PATHS.sessions] },
-      { to: PATHS.launches, icon: Zap, label: PORTAL_PAGE_LABELS[PATHS.launches] },
+      { to: PATHS.sessions, icon: PORTAL_PAGE_ICONS[PATHS.sessions], label: PORTAL_PAGE_LABELS[PATHS.sessions] },
+      { to: PATHS.launches, icon: PORTAL_PAGE_ICONS[PATHS.launches], label: PORTAL_PAGE_LABELS[PATHS.launches] },
     ],
   },
   {
     title: 'More',
     routes: [
-      { to: PATHS.ask, icon: HelpCircle, label: PORTAL_PAGE_LABELS[PATHS.ask] },
-      { to: PATHS.narratives, icon: BookOpen, label: PORTAL_PAGE_LABELS[PATHS.narratives] },
-      { to: PATHS.decisions, icon: HelpCircle, label: PORTAL_PAGE_LABELS[PATHS.decisions] },
+      { to: PATHS.ask, icon: PORTAL_PAGE_ICONS[PATHS.ask], label: PORTAL_PAGE_LABELS[PATHS.ask] },
+      { to: PATHS.narratives, icon: PORTAL_PAGE_ICONS[PATHS.narratives], label: PORTAL_PAGE_LABELS[PATHS.narratives] },
+      { to: PATHS.decisions, icon: PORTAL_PAGE_ICONS[PATHS.decisions], label: PORTAL_PAGE_LABELS[PATHS.decisions] },
       { to: '/', icon: ExternalLink, label: 'Back to website' },
     ],
   },

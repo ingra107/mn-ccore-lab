@@ -137,7 +137,7 @@
      The Today/My Tasks task panel was the last holdout at #f4f5f7. */
   --bg-rgb: 243, 242, 238;  /* = --sk-page */
   --page-bg: var(--sk-page);
-  color-scheme: light dark;
+  color-scheme: light;   /* the app theme, not the OS: .dark flips it (native checkbox/select/scrollbar) */
 
   /* FAB stack — desktop baseline (no MobileTabBar).
      Three FABs stacked vertically in the bottom-right corner with 16px gaps.
@@ -146,8 +146,8 @@
   --fab-gap: 16px;
   --fab-height: 40px;
   --fab-stack-1: var(--fab-base);                                                 /* Quick Add */
-  --fab-stack-2: calc(var(--fab-base) + var(--fab-height) + var(--fab-gap));      /* ScrollToTop */
-  --fab-stack-3: calc(var(--fab-base) + (var(--fab-height) + var(--fab-gap)) * 2);/* Quick Capture Inbox */
+  --fab-stack-2: calc(var(--fab-base) + var(--fab-height) + var(--fab-gap));      /* Quick Capture Inbox */
+  --fab-stack-3: calc(var(--fab-base) + (var(--fab-height) + var(--fab-gap)) * 2);/* ScrollToTop */
 }
 
 /* Mobile + tablet: lift the whole stack above MobileTabBar (56px) + safe area.
@@ -210,6 +210,7 @@
      the literal functional value, which axe's parser resolves to a much
      darker sRGB than the browser renders. 2026-04-18 axe AA. */
   --slate: #b0b5b9;
+  color-scheme: dark;
   --gold: #dcb355;          /* was oklch(0.73 0.12 85) — brighter for AA on #0b0b0b */
   --gold-light: oklch(0.18 0 0);         /* true achromatic — not used as text */
   --cream: oklch(0.12 0 0);              /* dark body bg in dark mode */
@@ -722,6 +723,9 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
 
 html {
   scroll-behavior: smooth;
+  /* Reserve the scrollbar's width so a body overflow lock (Modal,
+     useComposeSheet) or a short page does not shift the layout 6px. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -1078,9 +1082,10 @@ a:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--slate);
+  /* alpha in the colour: Chrome ignores `opacity` on scrollbar pieces, which
+     painted the light-theme thumb solid near-black. */
+  background: color-mix(in srgb, var(--slate) 35%, transparent);
   border-radius: 3px;
-  opacity: 0.5;
 }
 
 /* ── Selection ── */
@@ -1899,21 +1904,36 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   align-items: center;
 }
 
-/* Global mobile touch-target floor — filter chips, selects, inline links.
-   .done-box / .stage-dot are exempt (N1.08/N1.16): small squares/dots whose
-   44px hit area comes from their ::before pseudo-element below, not from
-   stretching the visual.
-   .planned-chip is exempt (#111): tiny inline chip — 44px makes it taller
-   than the row header, causing a layout jerk on expand for scheduled tasks.
-   ⚠ The SAME :not() chain exists in the UX-9 tablet block (~60 lines down) —
-   new exemptions must be added in BOTH. */
-@media (max-width: 768px) {
-  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip),
+/* Global touch-target floor -- filter chips, selects, inline links, plain
+   buttons. ONE rule for phone (<=768px) and for touch tablets
+   ((hover:none) and (pointer:coarse), 769px up; UX-9: a 900px mouse-driven
+   desktop window keeps its dense tables). It used to be two copies of the same
+   :not() chain that had to be edited in step.
+   min-height STRETCHES the visual, so it is only right for a stand-alone
+   full-size button. Controls that live inside a flex/inline row (cards,
+   chips, pills, segmented items, tiny checkboxes, hover pins) are exempt and
+   get their 44px target from an invisible ::before instead (hit-area rule
+   below), so the visual never changes size:
+     - .done-box / .stage-dot / .planned-chip (N1.08/N1.16, #111)
+     - .tk-card / .tk-mlc: a card that is a <button>; a 44px floor on a flex
+       child made every Meetings list card shrink to 44px and overlap
+     - .tk-hov / .today-plan-btn: inline-flex pin; a 44px floor inflated the
+       last title line of every task card
+     - [role="tab"] and .tk-seg items: segmented controls
+     - Select/Deselect task checkboxes (inline 18px squares)
+     - anything inside .tk: the Today skin sizes its own controls */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) and (min-width: 769px) {
+  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip):not(.tk-card):not(.tk-mlc):not(.tk-hov):not(.today-plan-btn):not([role="tab"]):not([aria-label="Select task"]):not([aria-label="Deselect task"]):not(.tk button),
   a.inline-link,
   select,
   .filter-chip,
   .inline-select-trigger {
     min-height: 44px;
+  }
+}
+@media (hover: none) and (pointer: coarse) and (min-width: 769px) {
+  input, textarea, select {
+    font-size: 16px !important;
   }
 }
 
@@ -1968,18 +1988,30 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    layout). Touch devices still get the bigger AAA-ish zone below, since
    touch has no hover fallback and coarser input. */
 .done-box,
-.stage-dot {
+.stage-dot,
+.tk .tk-hov,
+.tk-seg button,
+button[aria-label="Select task"],
+button[aria-label="Deselect task"] {
   position: relative;
 }
 .done-box::before,
-.stage-dot::before {
+.stage-dot::before,
+.tk .tk-hov::before,
+.tk-seg button::before,
+button[aria-label="Select task"]::before,
+button[aria-label="Deselect task"]::before {
   content: '';
   position: absolute;
   inset: -8px;
 }
+.tk-seg button::before { inset: -12px 0; } /* segments touch side by side: extend vertically only */
 @media (hover: none) {
   .done-box::before,
-  .stage-dot::before {
+  .stage-dot::before,
+  .tk .tk-hov::before,
+  button[aria-label="Select task"]::before,
+  button[aria-label="Deselect task"]::before {
     inset: -13px;
   }
 }
@@ -2025,18 +2057,6 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    so they reach every touch device regardless of width, without imposing a
    44px floor on a 900px desktop window driven by a mouse (which would bloat
    dense tables). Desktop power-grid is untouched: it has a fine pointer. */
-@media (hover: none) and (pointer: coarse) and (min-width: 769px) {
-  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip),
-  a.inline-link,
-  select,
-  .filter-chip,
-  .inline-select-trigger {
-    min-height: 44px;
-  }
-  input, textarea, select {
-    font-size: 16px !important;
-  }
-}
 
 /* P6 mobile pass — iOS Safari auto-zooms (and pans) when focusing a form
    control whose font-size is < 16px. Force 16px on touch-width viewports so
