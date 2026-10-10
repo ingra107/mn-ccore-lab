@@ -20,10 +20,18 @@ describe('virtualizers measure real row heights', () => {
   it('finds the known call sites', () => {
     expect(files.length).toBeGreaterThanOrEqual(4)
   })
+  // Comments are stripped first, so a comment that mentions measureElement cannot
+  // satisfy the check; and each virtualizer in a file needs its own measuring ref
+  // (`.measureElement}` as a ref, or `.measureElement(` from a callback ref).
+  const code = (f: string) =>
+    readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
   for (const f of files) {
     it(`${f.replace(process.cwd(), '')} uses measureElement + data-index`, () => {
-      const s = readFileSync(f, 'utf8')
-      expect(s).toMatch(/measureElement/)
+      const s = code(f)
+      const virtualizers = (s.match(/use(Window)?Virtualizer\(/g) ?? []).length
+      const measuringRefs = (s.match(/\.measureElement\s*[(}]/g) ?? []).length
+      expect(virtualizers).toBeGreaterThan(0)
+      expect(measuringRefs).toBeGreaterThanOrEqual(virtualizers)
       expect(s).toMatch(/data-index=/)
     })
   }

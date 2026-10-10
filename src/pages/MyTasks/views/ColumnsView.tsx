@@ -62,6 +62,16 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
     el.addEventListener('scroll', measure, { passive: true })
     return () => { ro.disconnect(); el.removeEventListener('scroll', measure) }
   }, [colCount, filtered.length])
+  // The button unmounts at the right end; if it held keyboard focus, hand focus
+  // to the scroller instead of letting it fall to <body>.
+  const moreBtnRef = useRef<HTMLButtonElement>(null)
+  const moreBtnFocused = useRef(false)
+  useEffect(() => {
+    if (!moreRight && moreBtnFocused.current) {
+      moreBtnFocused.current = false
+      scrollerRef.current?.focus({ preventScroll: true })
+    }
+  }, [moreRight])
 
   const selectionActive = selectModeActive || selected.size > 0
   // 2026-06-10b: align the grid's intrinsic floor to the column minmax floor
@@ -84,6 +94,7 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
     <div className="band-anchored-wide" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', position: 'relative' }}>
     <div
       ref={scrollerRef}
+      tabIndex={-1}
       className="mt-columns-scroll fab-clear"
       style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 20, position: 'relative', width: '100%' }}
       onClickCapture={(e) => {
@@ -148,7 +159,10 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
     {moreRight && (
       <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 64, pointerEvents: 'none', zIndex: 3, background: `linear-gradient(to right, transparent, ${PAGE_BG} 85%)`, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingTop: 44 }}>
         <button
+          ref={moreBtnRef}
           type="button"
+          onFocus={() => { moreBtnFocused.current = true }}
+          onBlur={() => { moreBtnFocused.current = false }}
           aria-label="Scroll columns right"
           title="More columns to the right"
           onClick={() => scrollerRef.current?.scrollBy({ left: 260, behavior: 'smooth' })}
