@@ -772,7 +772,7 @@ export default function GrantsPage() {
               {mechanisms.length > 0 && (
                 <>
                   {totalFunding > 0 && <span style={{ opacity: 0.85 }}>·</span>}
-                  <span>mechanisms: {mechanisms.join(', ')}</span>
+                  <span>Active mechanisms: {mechanisms.join(', ')}</span>
                 </>
               )}
             </div>
@@ -875,7 +875,7 @@ export default function GrantsPage() {
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
-              {['GRANT', 'TYPE', 'TITLE', 'DUE DATE', 'STATUS'].map((col) => (
+              {['Grant', 'Type', 'Title', 'Due date', 'Status'].map((col) => (
                 <span
                   key={col}
                   style={{
@@ -883,8 +883,7 @@ export default function GrantsPage() {
                     fontWeight: 500,
                     color: 'var(--slate)',
                     opacity: 'var(--ink-label)' as unknown as number,
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: '0.06em',
+                    letterSpacing: 0,
                   }}
                 >
                   {col}

@@ -229,10 +229,10 @@ export default function Pulse() {
           <PulseScene
             eyebrow="Funding portfolio"
             title="What's keeping the lights on."
-            subtitle={`${active.length} active grants, ${pending.length} proposals in flight.`}
+            subtitle={`${active.length} active ${active.length === 1 ? 'grant' : 'grants'}, ${pending.length} ${pending.length === 1 ? 'proposal' : 'proposals'} in flight.`}
           >
-            <div className="grid grid-cols-2 gap-x-16 gap-y-8 max-w-[1400px]">
-              {grants.slice(0, 6).map((g) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8 max-w-[1400px]">
+              {[...active, ...pending].slice(0, 6).map((g) => (
                 <div key={g.id} className="flex items-baseline gap-6">
                   <span
                     className="tabular-nums"

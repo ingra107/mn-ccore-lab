@@ -491,9 +491,6 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
         <h3 className="text-lg font-normal" style={{ color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
           {isToday ? 'Today' : formatLongDate(dateStr)}
         </h3>
-        <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-          {dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}
-        </span>
       </div>
 
       <div className="p-4">

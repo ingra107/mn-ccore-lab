@@ -439,7 +439,7 @@ export default function DeadlinesPage() {
                 { title: 'This week', items: thisWeek, color: 'var(--teal)' },
                 { title: 'Next week', items: nextWeek, color: 'var(--gold)' },
                 { title: 'Later', items: later, color: 'var(--slate)' },
-                { title: `Completed (${completed.length})`, items: completed.slice(0, 5), color: 'var(--green)' },
+                { title: 'Completed', items: completed.slice(0, 5), color: 'var(--green)' },
               ].filter(g => g.items.length > 0).map((group) => (
                 <motion.div key={group.title} variants={{ hidden: { y: 8 }, visible: { y: 0 } }}>
                   <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} onMilestoneStatusChange={handleMilestoneStatusChange} onDueDateChange={handleDueDateChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} selectedIds={selectedIds} onToggleSelect={toggleSelect} />

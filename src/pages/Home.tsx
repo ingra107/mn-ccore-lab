@@ -13,6 +13,7 @@ import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import { useCountUp } from '../hooks/useCountUp'
 import { usePublications, useProjects, useTeam, useGrants } from '../hooks/useApiData'
 import { isProjectActive } from '../lib/taskConstants'
+import { grantBucket } from '../lib/grantBucket'
 import NetworkBackground from '../components/NetworkBackground'
 import FeaturedResearch from '../components/FeaturedResearch'
 import CollaborationNetwork from '../components/CollaborationNetwork'
@@ -114,7 +115,7 @@ export default function Home() {
     const pubCount = publications.length || 63
     const activeProjects = projects.filter(p => isProjectActive(p.status)).length || 6
     const teamCount = team.length || 12
-    const activeGrants = grants.filter(g => !g.proposed && g.status !== 'Completed').length || 2
+    const activeGrants = grants.filter(g => grantBucket(g) === 'active').length || 2
     return { pubCount, activeProjects, teamCount, activeGrants }
   }, [publications, projects, team, grants])
 
