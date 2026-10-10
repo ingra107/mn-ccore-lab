@@ -944,10 +944,38 @@ a:hover {
   }
 }
 
-/* Projects list shows stacked cards up to 1299px (grid needs more width), so the
-   cards must grow with their content in that band too. */
-@media (min-width: 768px) and (max-width: 1299px) {
+/* Projects list shows stacked cards below 1024px (the grid needs the width), so
+   the cards must grow with their content in the 768-1023 band too. */
+@media (min-width: 768px) and (max-width: 1023px) {
   .project-list-row { height: auto; min-height: var(--row-height); }
+}
+
+/* Projects grid at 1024-1299: band is 624-880px. Drop PI and Group (4th, 5th
+   cells); keep sort headers, star, Status, Stage, Links, Work on. Tracks are
+   !important because PROJECT_COLS is an inline style. */
+@media (min-width: 1024px) and (max-width: 1299px) {
+  .pj-head,
+  .pj-grid-row {
+    grid-template-columns: minmax(150px, 1fr) 132px 116px 124px 52px !important;
+  }
+  .pj-head > :nth-child(4),
+  .pj-head > :nth-child(5),
+  .pj-grid-row > :nth-child(4),
+  .pj-grid-row > :nth-child(5) {
+    display: none !important;
+  }
+}
+/* 1024-1179: not enough width for Title and Links together; Links (6th cell)
+   goes too, Work on stays. */
+@media (min-width: 1024px) and (max-width: 1179px) {
+  .pj-head,
+  .pj-grid-row {
+    grid-template-columns: minmax(150px, 1fr) 132px 116px 52px !important;
+  }
+  .pj-head > :nth-child(6),
+  .pj-grid-row > :nth-child(6) {
+    display: none !important;
+  }
 }
 
 /* ── Card base ── */
