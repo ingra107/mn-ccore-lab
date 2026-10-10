@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth'
 import HeartbeatLine from './HeartbeatLine'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import JoinSteps from './JoinSteps'
+import ErrorReporterBinding from './ErrorReporterBinding'
 
 /**
  * RequireAuth — route guard + branded sign-in wall + members-only wall.
@@ -34,7 +35,12 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
     return <MembersOnlyWall email={user.email} name={user.name ?? ''} />
   }
 
-  if (!enforce) return <>{children}</>
+  // Error reporting (src/lib/clientErrors.ts) exists only for a confirmed
+  // member: this is the one place a sender is attached, so a public page,
+  // a signed-out visitor and a non-member never report.
+  const reporter = isAuthenticated && user.isMember ? <ErrorReporterBinding /> : null
+
+  if (!enforce) return <>{reporter}{children}</>
 
   if (isLoading) {
     return (
@@ -57,7 +63,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
 
   if (!isAuthenticated) return <SignInWall />
 
-  return <>{children}</>
+  return <>{reporter}{children}</>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

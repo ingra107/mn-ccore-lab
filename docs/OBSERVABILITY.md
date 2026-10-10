@@ -113,3 +113,32 @@ gates RED. This catches production regressions before merge/deploy.
    `wrangler tail hub-realtime` to see what's crashing.
 4. **`duration_ms > 2000`** → D1 is throttled or a table needs an index.
    Recent N+1 regression likely; check recent commits.
+
+## Error ledger (`hub_errors`, schema-v123, 2026-10-10)
+
+`/api` runs as a Pages Function, which keeps no logs, so the ledger is the
+record of Hub errors. One row per `(fingerprint, day)`; a repeat adds to
+`count`. Writer: `api/lib/error-ledger.ts`.
+
+What lands there:
+- every `console.error` in the API (the console is teed once per isolate;
+  the original still prints);
+- every throw that reaches `app.onError`, with the `request_id` the 500
+  returned as `last_request_id` (so a user's request id finds its row);
+- a rejected `ctx.waitUntil` promise and a throwing cron run (the default
+  export is built by `withErrorLedger`);
+- a signed-in member's browser errors, through `POST /api/client-errors`
+  (React root error options + window listeners, attached only inside
+  `RequireAuth`). Public pages never report.
+
+Reading it: `GET /api/hub-errors/weekly?weeks=N` with the PB API key (403 for
+any person; no member handle can read a row). From PB:
+`python -X utf8 -m scripts.utils.hub_error_count`. Row-level detail (prod):
+`scripts/wrangler-d1 d1 execute mnccore-lab --remote --json --command "SELECT day, source, count, sample_message, path, last_request_id FROM hub_errors ORDER BY last_seen_at DESC LIMIT 20"`.
+
+Not covered: silent `catch {}` blocks, errors while D1 itself is down (the
+flush fails to the original console), an isolate evicted before its flush,
+the other Pages Functions (`functions/og|team|a|assets`), hub-realtime, and
+`console.warn`. A `console.error` during a test-mode request lands in prod's
+table; onError, waitUntil and client entries for a verified test-mode request
+go to `DB_TEST`. Retention: 400 days (`LEDGER_REGISTRY`).

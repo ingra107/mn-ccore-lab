@@ -77,6 +77,16 @@ export const LEDGER_REGISTRY: readonly LedgerEntry[] = [
       'Team activity feed. Default read window is 90d (activity.ts:51); ' +
       '180d retention keeps a comfortable buffer. 22k rows as of 2026-06-18.',
   },
+  {
+    table: 'hub_errors',
+    retentionColumn: 'day',
+    retentionDays: 400,
+    maxRows: 20_000,
+    requiredIndex: 'idx_hub_errors_day',
+    note:
+      'Hub error ledger (schema-v123). One row per fingerprint per day (PK upsert), ' +
+      'so rows are bounded by distinct errors x days. 400d keeps a year of weekly counts.',
+  },
 ] as const;
 
 // ── Pruning ──────────────────────────────────────────────────────────────────
@@ -319,7 +329,7 @@ async function _createHealthAlert(
   const body =
     `D1 ledger alert at ${checkedAt}:\n` +
     lines.join('\n') +
-    '\nPrune errors are listed above. Older runs: Workers Logs for mn-ccore-lab-api. DB may be approaching timeout threshold.';
+    '\nPrune errors are listed above. Older runs: hub_errors (source cron) and Workers Logs for mn-ccore-lab-api. DB may be approaching timeout threshold.';
 
   try {
     await db

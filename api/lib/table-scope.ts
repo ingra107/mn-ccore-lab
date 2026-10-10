@@ -46,7 +46,7 @@ export const HUB_TABLES = [
   'artifact_tags', 'artifact_versions', 'artifacts', 'bug_reports', 'commitments',
   'conference_submissions', 'contributions', 'day_capacity', 'deadline_dependencies', 'decisions',
   'digest_comments', 'dispatch_queue', 'entity_seen', 'expertise_tags', 'file_activity_daily',
-  'file_attachments', 'grant_milestones', 'grants', 'hub_decisions', 'hub_pomodoro_slots', 'ideas',
+  'file_attachments', 'grant_milestones', 'grants', 'hub_decisions', 'hub_errors', 'hub_pomodoro_slots', 'ideas',
   'inbox', 'inbox_events', 'kg_entities', 'kg_relation_type_registry', 'kg_relations', 'lab_answers',
   'lab_questions', 'lab_settings', 'launch_log', 'links', 'manuscript_revisions', 'meeting_project_grants', 'meetings',
   'member_featured_publications', 'memory_facts', 'mentee_milestones', 'milestones',
@@ -240,6 +240,11 @@ const ALL_PARENTS: readonly HubTable[] = ['meetings', 'projects', 'tasks']
 
 export const TABLE_SCOPE: Record<HubTable, Scope> = {
   meetings: { kind: 'scoped', key: 'id', dependsOn: [], where: meetingRule },
+  // Error text (schema-v123) can carry SQL, paths and other members' input.
+  // No person and nobody reads a row: the rule is false for every scoped
+  // viewer, so only a raw handle (the PB key's service viewer, and the
+  // ledger's own flush in api/lib/error-ledger.ts) sees the table.
+  hub_errors: { kind: 'scoped', key: ['fingerprint', 'day'], dependsOn: [], where: () => '0' },
   // A grant row is visible with its meeting (the pill row on the meeting page).
   meeting_project_grants: {
     kind: 'scoped', key: ['meeting_id', 'project_id'], dependsOn: ['meetings'],

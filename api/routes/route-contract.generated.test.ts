@@ -168,7 +168,10 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   DELETE /api/meetings/:id/projects/:projectId, GET + POST /api/thread-seen.
     // 266 as of 2026-10-09 — GET /api/pb/today retired (-1): no caller in
     //   any repo; its POST was retired 2026-05-05.
-    expect(ROUTE_REGISTRY).toHaveLength(266)
+    // 268 as of 2026-10-10 — the error ledger, schema-v123 (+2):
+    //   POST /api/client-errors (a member's browser reports its errors),
+    //   GET /api/hub-errors/weekly (PB key: errors per 7-day window).
+    expect(ROUTE_REGISTRY).toHaveLength(268)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

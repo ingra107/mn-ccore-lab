@@ -93,6 +93,9 @@ import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 import { handleDigestPreview, handleSendDailyDigests } from './routes/digest-email';
 import { pruneAllLedgers, monitorD1Health, compactProcessedMutationsJson } from './lib/ledger-retention';
+import { withErrorLedger, logServerError } from './lib/error-ledger';
+import { testDbRequested } from './lib/test-mode';
+import { handleClientErrors, handleHubErrorsWeekly } from './routes/hub-errors';
 import { projectResponseFor } from './lib/pi-only-project-fields';
 import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleSetLinkRole } from './routes/links';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
@@ -140,6 +143,9 @@ type AppEnv = {
     /** This request carried the matching X-Test-Mode-Key. Set by the test-mode
      *  middleware; read by onError to decide whether a 500 may show its message. */
     testKeyVerified: boolean;
+    /** This request runs on DB_TEST (api/lib/test-mode.ts). Error-ledger
+     *  entries written for it go to DB_TEST's hub_errors, not prod's. */
+    testDb: boolean;
   };
 };
 
@@ -179,7 +185,8 @@ const PUBLISHED_ONLY: AnonRowFilter = (row) => row.status === 'Published';
 //
 // SEC-10.1: In production, suppress raw error messages (SQL/D1/stack details
 // that could leak internal schema). Return a sanitized envelope with a
-// correlation request_id so support can cross-reference console.error logs.
+// correlation request_id. The full message is stored in hub_errors (schema-v123,
+// api/lib/error-ledger.ts) with that id as last_request_id.
 // The full message is included only for ENVIRONMENT=development or a request
 // that proved the test key. TEST_MODE_KEY is set on production (headless test
 // access), so its mere presence must not switch every prod 500 to raw text.
@@ -196,7 +203,20 @@ app.onError((err, c) => {
 
   // Always log full details server-side for correlation.
   const url = new URL(c.req.url);
-  console.error(`[error] request_id=${requestId} method=${c.req.method} path=${url.pathname} message=${message}`, err instanceof Error ? err.stack : err);
+  // Recorded once in hub_errors (the message, not this line: the line embeds
+  // the random request_id) and printed on the original console.error.
+  logServerError(
+    {
+      source: 'server',
+      message: err instanceof Error ? `${err.name}: ${message}` : message,
+      stack: err instanceof Error ? err.stack ?? null : null,
+      path: url.pathname,
+      requestId,
+      target: c.get('testDb') === true ? 'test' : 'prod',
+    },
+    `[error] request_id=${requestId} method=${c.req.method} path=${url.pathname} message=${message}`,
+    err instanceof Error ? err.stack : err,
+  );
 
   if (isDev) {
     // Dev/test: include message for debuggability.
@@ -233,12 +253,9 @@ app.use('*', async (c, next) => {
   let env: Env = c.env;
   const testModeKey = (env as unknown as { TEST_MODE_KEY?: string }).TEST_MODE_KEY;
   c.set('testKeyVerified', Boolean(testModeKey) && c.req.header('X-Test-Mode-Key') === testModeKey);
-  if (
-    c.req.header('X-Test-Mode') === 'true'
-    && env.DB_TEST
-    && testModeKey
-    && c.req.header('X-Test-Mode-Key') === testModeKey
-  ) {
+  const testDb = testDbRequested(c.req.raw, env as unknown as Record<string, unknown>);
+  c.set('testDb', testDb);
+  if (testDb && env.DB_TEST) {
     env = { ...env, DB: env.DB_TEST };
   }
   c.set('env', env);
@@ -435,11 +452,16 @@ app.use('/api/*', async (c, next) => {
 // Any successful non-GET response triggers a fire-and-forget version bump
 // (React Query uses /api/version to invalidate) and a DO broadcast to
 // PartySocket clients. Matches the original withVersionBump wrapper.
+// POST /api/client-errors changes no data a client renders; bumping on it
+// would make every open tab refetch, and a render-loop crash would then feed
+// itself (each report -> refetch -> crash -> report).
 // ─────────────────────────────────────────────────────────────────────────────
+const NO_VERSION_BUMP_PATHS: ReadonlySet<string> = new Set(['/api/client-errors']);
 app.use('*', async (c, next) => {
   await next();
   const method = c.req.method;
   if (method === 'GET' || method === 'OPTIONS' || method === 'HEAD') return;
+  if (NO_VERSION_BUMP_PATHS.has(c.req.path)) return;
   const res = c.res;
   if (!res || res.status < 200 || res.status >= 300) return;
   const env = c.get('env');
@@ -2942,6 +2964,27 @@ defineRoute({
 // Test cleanup uses /api/tasks/batch (action='delete').
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Error ledger (schema-v123, api/lib/error-ledger.ts).
+// A member's browser reports its errors; anonymous and non-member callers are
+// refused by the registry gate (auth 'authed'). Public pages hold no sender.
+defineRoute({
+  method: 'POST',
+  path: '/api/client-errors',
+  auth: 'authed',
+  entity: 'health',
+  handler: (c) => handleClientErrors(R(c), USER(c), c.get('testDb') === true),
+});
+// Errors per 7-day window, PB API key only (`auth: 'pi'` documents the class;
+// the handler checks validateApiKey, as GET /api/hermes/day-index does). The
+// key's handle is raw, so it reads hub_errors; a member's handle reads no row.
+defineRoute({
+  method: 'GET',
+  path: '/api/hub-errors/weekly',
+  auth: 'pi',
+  entity: 'health',
+  handler: (c) => handleHubErrorsWeekly(R(c), E(c)),
+});
+
 // 404 fallback.
 // Hono's default 404 returns a text "404 Not Found" response — override so
 // clients get the same { error: "Not found" } JSON shape they got before.
@@ -2969,6 +3012,9 @@ app.notFound(() => error('Not found', 404));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Default export: { fetch, scheduled } — matches Cloudflare Worker module shape.
+// Built only through withErrorLedger (api/lib/error-ledger.ts): console.error,
+// escaping throws, rejected waitUntil work and cron failures all land in
+// hub_errors, and no entry point exists outside the wrapper.
 // - fetch: Hono app, invoked by functions/api/[[route]].ts for all /api/* requests.
 // - scheduled: dispatches by event.cron (explicit switch — each cron fires exactly
 //   one handler):
@@ -2979,8 +3025,8 @@ app.notFound(() => error('Not found', 404));
 //   NOTE: cron "*/15 * * * *" was removed in commit 441ec212 (2026-05-05);
 //   the guard here was not updated at the time — fixed in this commit.
 // ─────────────────────────────────────────────────────────────────────────────
-export default {
-  fetch: app.fetch.bind(app),
+export default withErrorLedger<Env>({
+  fetch: (request, env, ctx) => app.fetch(request, env, ctx),
 
   async scheduled(event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     switch (event.cron) {
@@ -3040,7 +3086,7 @@ export default {
             console.log(`[Pulse] Impact check created ${impactData.data.notifications_created} notifications`);
           }
         } catch (e) {
-          console.log(`[Pulse] Impact check failed (non-fatal): ${e}`);
+          console.error(`[Pulse] Impact check failed (non-fatal): ${e}`);
         }
 
         const members = await env.DB.prepare(
@@ -3069,7 +3115,7 @@ export default {
           try {
             recipientDb = viewerDb(env.DB, personViewer({ slug: member.slug, email: member.email, pi: recipientIsPi }));
           } catch (e) {
-            console.log(`[Pulse] Skipping ${member.slug}: ${(e as Error).message}`);
+            console.error(`[Pulse] Skipping ${member.slug}: ${(e as Error).message}`);
             continue;
           }
 
@@ -3194,7 +3240,7 @@ export default {
         try {
           await handleSendDailyDigests(env, { kind: 'cron' });
         } catch (e) {
-          console.log(`[DailyDigest] Failed (non-fatal): ${e}`);
+          console.error(`[DailyDigest] Failed (non-fatal): ${e}`);
         }
         return;
       }
@@ -3204,4 +3250,4 @@ export default {
         return;
     }
   },
-};
+});

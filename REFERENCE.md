@@ -112,6 +112,9 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
   - GET `/api/meetings/:id/access?member=<slug>` — PB key only (Hermes): `{visible, arms[]}` from the same rule.
   - GET `/api/meetings` rows also carry `granted_projects` (JSON `[{id, slug, short_name, title}]`, names null for a project the caller is not on), `action_count`, `open_action_count`; GET `/api/meetings/:id` carries `granted_projects` and `can_manage_access`.
   - GET/POST `/api/thread-seen` `{root_id, read_up_to}` — the caller's per-thread read marker (`activity_thread_seen`), so a thread's New clears on every device.
+- **Error ledger (schema-v123, `hub_errors`, 2026-10-10):** `api/lib/error-ledger.ts`; runbook `docs/OBSERVABILITY.md` "Error ledger".
+  - POST `/api/client-errors` `{errors: [{message, stack?, path?, kind?, count?}]}` (max 20) — a signed-in member's browser errors; 401 anonymous, 403 non-member, 202 accepted. Does not bump `/api/version`.
+  - GET `/api/hub-errors/weekly?weeks=N` — PB key only (403 for any person): errors per 7-day America/Chicago window, by source.
 - ⚠️ There is **no** `/api/meetings/:id/action-items` and **no** `/api/meetings/:id/decisions` — both were documented here but neither has ever been registered (`api/index.ts`), and the first 404s on prod. A meeting's action items are **tasks** (`tasks.meeting_id`) since #547/#552, so create one with `POST /api/tasks`; decisions live on their own `/api/decisions*` family, not under a meeting.
 
 ### Task System
