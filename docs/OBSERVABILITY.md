@@ -139,6 +139,9 @@ any person; no member handle can read a row). From PB:
 Not covered: silent `catch {}` blocks, errors while D1 itself is down (the
 flush fails to the original console), an isolate evicted before its flush,
 the other Pages Functions (`functions/og|team|a|assets`), hub-realtime, and
-`console.warn`. A `console.error` during a test-mode request lands in prod's
-table; onError, waitUntil and client entries for a verified test-mode request
-go to `DB_TEST`. Retention: 400 days (`LEDGER_REGISTRY`).
+`console.warn`. Test mode: only four doors know their request and send a
+verified test-mode request's entries to `DB_TEST` (onError, a rejected
+`waitUntil`, an escaping throw in the fetch wrapper, `POST /api/client-errors`).
+A `console.error` during a prod e2e request lands in PROD's `hub_errors`: the
+Pages Function runtime has no nodejs_compat, so no AsyncLocalStorage ties a
+console line to its request. Retention: 400 days (`LEDGER_REGISTRY`).

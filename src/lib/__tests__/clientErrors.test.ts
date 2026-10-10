@@ -33,24 +33,56 @@ describe('no sender, no report', () => {
     expect(sent).toEqual([])
   })
 
-  it('detachSender() drops the queue', () => {
+  it('detachSender() sends what is queued, then drops the queue', () => {
     attachSender((items) => sent.push(items))
     capture(new Error('x'), 'caught', now)
-    detachSender()
+    detachSender(now)
+    expect(sent).toHaveLength(1)
+    expect(sent[0][0]).toMatchObject({ message: 'Error: x', count: 1 })
     attachSender((items) => sent.push(items))
     vi.advanceTimersByTime(SEND_WINDOW_MS * 2)
-    expect(sent).toEqual([])
+    expect(sent).toHaveLength(1)
+  })
+
+  it('a white screen is sent: a capture followed by the unmount still reaches the sender', () => {
+    attachSender((items) => sent.push(items))
+    capture(again(), 'caught', now)
+    vi.advanceTimersByTime(1_000)
+    clock += 1_000
+    // Inside the repeat window, so only a forced send can deliver it.
+    capture(again(), 'caught', now)
+    detachSender(now)
+    expect(sent).toHaveLength(2)
+    expect(sent[1][0].count).toBe(1)
+  })
+
+  it('an uncaught error is sent at once, not behind the batch timer', () => {
+    attachSender((items) => sent.push(items))
+    capture(new Error('render crash'), 'uncaught', now)
+    expect(sent).toHaveLength(1)
+    expect(sent[0][0]).toMatchObject({ kind: 'uncaught', count: 1 })
+  })
+
+  it('an uncaught loop is still capped: one send now, the rest counted for the next', () => {
+    attachSender((items) => sent.push(items))
+    const crash = () => new Error('uncaught loop')
+    for (let i = 0; i < 300; i++) capture(crash(), 'uncaught', now)
+    expect(sent).toHaveLength(1)
+    detachSender(now)
+    expect(sent).toHaveLength(2)
+    expect(sent[1][0].count).toBe(299)
   })
 })
 
 describe('coalescing', () => {
   it('a loop of 500 identical errors is one send with count 500', () => {
     attachSender((items) => sent.push(items))
-    for (let i = 0; i < 500; i++) capture(new Error('render loop'), 'uncaught', now)
+    const loop = () => new Error('render loop')
+    for (let i = 0; i < 500; i++) capture(loop(), 'caught', now)
     vi.advanceTimersByTime(1_000)
     expect(sent).toHaveLength(1)
     expect(sent[0]).toHaveLength(1)
-    expect(sent[0][0]).toMatchObject({ message: 'Error: render loop', kind: 'uncaught', count: 500 })
+    expect(sent[0][0]).toMatchObject({ message: 'Error: render loop', kind: 'caught', count: 500 })
   })
 
   it('a repeat inside the window waits for the window, then sends the new count', () => {

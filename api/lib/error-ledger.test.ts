@@ -173,6 +173,16 @@ describe('flood control and failure', () => {
     expect(rows()[0].count).toBe(3)
   })
 
+  it('a huge message is cut before normalizing: two that differ past 2,000 chars are one entry', () => {
+    const head = 'payload '.repeat(300)
+    recordError({ source: 'server', message: `${head}${'a'.repeat(500_000)}` })
+    recordError({ source: 'server', message: `${head}${'b'.repeat(500_000)}` })
+    const p = _pendingForTests()
+    expect(p).toHaveLength(1)
+    expect(p[0].count).toBe(2)
+    expect(p[0].message.length).toBeLessThanOrEqual(500)
+  })
+
   it('the buffer holds at most MAX_PENDING distinct entries', () => {
     for (let i = 0; i < MAX_PENDING + 50; i++) recordError({ source: 'server', message: `distinct error word${'x'.repeat(i % 7)}${String.fromCharCode(97 + (i % 26))}${String.fromCharCode(97 + Math.floor(i / 26))}` })
     expect(_pendingForTests().length).toBeLessThanOrEqual(MAX_PENDING)

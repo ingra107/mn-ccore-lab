@@ -62,15 +62,19 @@ function schedule(now: () => number): void {
   timer = setTimeout(() => { timer = null; flush(now) }, BATCH_DELAY_MS)
 }
 
-/** Send every slot whose window has passed and that has unsent occurrences. */
-export function flush(now: () => number = Date.now): void {
+/**
+ * Send every slot whose window has passed and that has unsent occurrences.
+ * `force` ignores the window: detachSender and an uncaught error use it,
+ * because the page (or the root) is going away and a later send never comes.
+ */
+export function flush(now: () => number = Date.now, force = false): void {
   if (!sender) return
   const t = now()
   const due: ClientErrorItem[] = []
   let waiting = false
   for (const slot of slots.values()) {
     if (slot.unsent === 0) continue
-    if (slot.lastSentAt !== null && t - slot.lastSentAt < SEND_WINDOW_MS) { waiting = true; continue }
+    if (!force && slot.lastSentAt !== null && t - slot.lastSentAt < SEND_WINDOW_MS) { waiting = true; continue }
     if (due.length >= MAX_BATCH) { waiting = true; continue }
     due.push({ ...slot.item, count: slot.unsent })
     slot.unsent = 0
@@ -96,7 +100,11 @@ export function capture(err: unknown, kind: ClientErrorKind, now: () => number =
     if (slots.size >= MAX_FINGERPRINTS) return
     slots.set(key, { item: { message: message.slice(0, 2000), stack: stack?.slice(0, 8000), path: currentPath(), kind, count: 1 }, unsent: 1, lastSentAt: null })
   }
-  schedule(now)
+  // An uncaught render error unmounts the root, and with it the binding that
+  // holds the sender: send now rather than behind the batch timer.
+  // The repeat window still applies (a crash loop is one send a minute).
+  if (kind === 'uncaught') flush(now)
+  else schedule(now)
 }
 
 /** POST to the Hub. keepalive so a report survives the page unloading; failures stay silent (no report loop). */
@@ -124,8 +132,14 @@ export function attachSender(send: Sender = fetchSender): void {
   }
 }
 
-/** Drop the sender, the listeners and anything queued. */
-export function detachSender(): void {
+/**
+ * Send whatever is still queued (window ignored, keepalive carries it past an
+ * unload), then drop the sender, the listeners and the queue. The binding's
+ * cleanup calls this when the root unmounts, which is exactly when a white
+ * screen's report is still waiting on the batch timer.
+ */
+export function detachSender(now: () => number = Date.now): void {
+  flush(now, true)
   sender = null
   detachListeners?.()
   detachListeners = null

@@ -32,6 +32,14 @@
 // the other Pages Functions (functions/og, team, a, assets), hub-realtime,
 // console.warn.
 //
+// Test mode: only four doors know their request, so only they send a verified
+// test-mode request's entries to DB_TEST: onError, a rejected waitUntil, an
+// escaping throw in the fetch wrapper, and POST /api/client-errors. A
+// console.error cannot be tied to its request (the Pages Function runtime has
+// no nodejs_compat, so no AsyncLocalStorage: api/routes/mutations.ts records
+// that Buffer is undefined there), so a console.error during a prod e2e
+// request lands in PROD's hub_errors.
+//
 // Re-entrancy: the module keeps `rawError` (console.error as it was at load)
 // and reports its own failures only through it, so a failing flush cannot
 // record itself.
@@ -63,6 +71,7 @@ export const REPEAT_WINDOW_MS = 60_000
 export const MAX_PENDING = 200
 const MAX_COUNT = 1_000_000
 const MESSAGE_CHARS = 500
+const MAX_INPUT_CHARS = 2000
 const STACK_CHARS = 4000
 
 interface Pending {
@@ -128,7 +137,9 @@ function sqlTime(ms: number): string {
 
 /** Buffer one error. Synchronous, never throws to its caller's control flow. */
 export function recordError(e: ErrorEntry, now: number = Date.now()): void {
-  const message = String(e.message ?? '').trim() || '(empty message)'
+  // Cut before normalizing: the regexes and the buffer key never see more
+  // than MAX_INPUT_CHARS, whatever a caller logged.
+  const message = String(e.message ?? '').slice(0, MAX_INPUT_CHARS).trim() || '(empty message)'
   const stack = e.stack ? String(e.stack) : null
   const normalized = normalizeMessage(message)
   const frame = topFrame(stack)
@@ -241,8 +252,8 @@ export function _pendingForTests(): { source: ErrorSource; message: string; coun
 /**
  * Which door this isolate serves. Pages runs fetch only and the cron Worker
  * runs scheduled only, so the entry point that last ran names the source of
- * a captured console.error. (No AsyncLocalStorage: no route attribution, so
- * captured rows carry path NULL.)
+ * a captured console.error. (No AsyncLocalStorage on Pages: no route
+ * attribution, so captured rows carry path NULL and target 'prod'.)
  */
 let isolateSource: ErrorSource = 'server'
 let installed = false
