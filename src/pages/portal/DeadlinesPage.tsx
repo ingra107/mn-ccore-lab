@@ -439,10 +439,10 @@ export default function DeadlinesPage() {
                 { title: 'This week', items: thisWeek, color: 'var(--teal)' },
                 { title: 'Next week', items: nextWeek, color: 'var(--gold)' },
                 { title: 'Later', items: later, color: 'var(--slate)' },
-                { title: 'Completed', items: completed.slice(0, 5), color: 'var(--green)', total: completed.length },
+                { title: 'Completed', items: completed, color: 'var(--green)', limit: 5 },
               ].filter(g => g.items.length > 0).map((group) => (
                 <motion.div key={group.title} variants={{ hidden: { y: 8 }, visible: { y: 0 } }}>
-                  <DeadlineTableSection title={group.title} items={group.items} totalCount={'total' in group ? group.total : undefined} color={group.color} onStatusChange={handleStatusChange} onMilestoneStatusChange={handleMilestoneStatusChange} onDueDateChange={handleDueDateChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} selectedIds={selectedIds} onToggleSelect={toggleSelect} />
+                  <DeadlineTableSection title={group.title} items={group.items} limit={'limit' in group ? group.limit : undefined} color={group.color} onStatusChange={handleStatusChange} onMilestoneStatusChange={handleMilestoneStatusChange} onDueDateChange={handleDueDateChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} selectedIds={selectedIds} onToggleSelect={toggleSelect} />
                 </motion.div>
               ))}
             </motion.div>
@@ -782,8 +782,13 @@ const VIRTUAL_THRESHOLD = 20  // sections exceeding this row count get virtualiz
 // Row heights match CSS density values: compact=36, default=44, relaxed=52
 const DENSITY_ROW_HEIGHT: Record<string, number> = { compact: 36, default: 44, relaxed: 52 }
 
-function DeadlineTableSection({ title, items, totalCount, color, onStatusChange, onMilestoneStatusChange, onDueDateChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: { title: string; items: DeadlineItem[]; totalCount?: number; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onMilestoneStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onDueDateChange?: (id: string, newDate: string | null) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string>; selectedIds?: Set<string>; onToggleSelect?: (id: string) => void }) {
+function DeadlineTableSection({ title, items: allItems, limit, color, onStatusChange, onMilestoneStatusChange, onDueDateChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: { title: string; items: DeadlineItem[]; limit?: number; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onMilestoneStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onDueDateChange?: (id: string, newDate: string | null) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string>; selectedIds?: Set<string>; onToggleSelect?: (id: string) => void }) {
   const [expanded, setExpanded] = useState(!title.startsWith('Completed'))
+  // A capped group (Completed) shows `limit` rows with a Show all control, so the
+  // header count and the list always agree.
+  const [showAll, setShowAll] = useState(false)
+  const capped = limit !== undefined && allItems.length > limit
+  const items = capped && !showAll ? allItems.slice(0, limit) : allItems
   const useVirtual = expanded && items.length > VIRTUAL_THRESHOLD
   const parentRef = useRef<HTMLDivElement>(null)
   const [density] = useDensity()
@@ -810,7 +815,7 @@ function DeadlineTableSection({ title, items, totalCount, color, onStatusChange,
           {title}
         </span>
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
-          {totalCount ?? items.length}
+          {allItems.length}
         </span>
         <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
       </button>
@@ -864,6 +869,17 @@ function DeadlineTableSection({ title, items, totalCount, color, onStatusChange,
             })}
           </div>
         </div>
+      )}
+
+      {expanded && capped && (
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
+          className="hit-area link-affordance"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 16px', fontSize: 'var(--text-label)', color: 'var(--teal)' }}
+        >
+          {showAll ? 'Show fewer' : `Show all ${allItems.length} (+${allItems.length - (limit ?? 0)} more)`}
+        </button>
       )}
     </div>
   )

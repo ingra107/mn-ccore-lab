@@ -789,7 +789,8 @@ export default function GrantsPage() {
               subtitle="Add a grant to see its budget period and submission cycle on the timeline."
             />
           ) : (
-            <GanttChart grants={[...active, ...proposed]} />
+            // The All / Active / Proposed filter applies here too (ended grants never plot).
+            <GanttChart grants={filter === 'active' ? active : filter === 'proposed' ? proposed : [...active, ...proposed]} />
           )}
         </div>
       )}

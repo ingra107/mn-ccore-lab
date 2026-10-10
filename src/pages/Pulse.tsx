@@ -230,19 +230,19 @@ export default function Pulse() {
             title="What's keeping the lights on."
             subtitle={`${active.length} active ${active.length === 1 ? 'grant' : 'grants'}, ${pending.length} ${pending.length === 1 ? 'proposal' : 'proposals'} in flight.`}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8 max-w-[1400px]">
-              {[...active, ...pending].slice(0, 6).map((g) => (
-                <div key={g.id} className="flex items-baseline gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4 md:gap-y-8 max-w-[1400px]">
+              {/* Phone shows the first three: six stacked rows overrun the viewport and the eyebrow. */}
+              {[...active, ...pending].slice(0, 6).map((g, i) => (
+                <div key={g.id} className={`${i >= 3 ? 'hidden md:flex' : 'flex'} items-baseline gap-3 md:gap-6`}>
                   <span
-                    className="tabular-nums"
+                    className="tabular-nums min-w-[72px] md:min-w-[120px]"
                     style={{
                       fontFamily: 'var(--font-display)',
                       fontWeight: 500,
-                      fontSize: 'clamp(40px, 4vw, 56px)',
+                      fontSize: 'clamp(28px, 4vw, 56px)',
                       letterSpacing: '-0.03em',
                       color: g.bucket === 'proposed' ? '#dcb355' : '#5cbcb4',
                       lineHeight: 1,
-                      minWidth: 120,
                     }}
                   >
                     {g.mechanism}
@@ -251,7 +251,7 @@ export default function Pulse() {
                     <span
                       style={{
                         fontFamily: 'var(--font-sans)',
-                        fontSize: 'clamp(18px, 1.4vw, 24px)',
+                        fontSize: 'clamp(16px, 1.4vw, 24px)',
                         color: '#f5efe2',
                         fontWeight: 400,
                         lineHeight: 1.2,

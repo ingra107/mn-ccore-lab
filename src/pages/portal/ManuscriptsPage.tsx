@@ -435,7 +435,7 @@ export default function ManuscriptsPage() {
           <TableContainer id="manuscripts-table">
             {/* Table header — sortable */}
             <div
-              className="hidden sm:grid manuscripts-grid-row"
+              className="hidden sm:grid manuscripts-grid-row [&_.col-header]:!normal-case [&_.col-header]:!tracking-normal"
               style={{
                 gridTemplateColumns: 'minmax(200px, 3fr) 90px 100px 140px 80px 68px',
                 padding: 'var(--sp-sm) var(--sp-xl)',
