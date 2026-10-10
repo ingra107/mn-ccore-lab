@@ -1,2 +1,0 @@
-{"section":"K-notifications","viewport":"desktop","theme":"dark","level":"PASS","scenario":"K /api/notifications returns 0 item(s)"}
-{"section":"K-notifications","viewport":"desktop","theme":"dark","level":"PASS","scenario":"K /api/notifications/count reachable"}

@@ -2,7 +2,7 @@
 -- Run against: mnccore-lab (PROD), id b8453e9b-7c5f-4029-b07d-dd89c05d00cf
 -- How to run: npx wrangler d1 execute mnccore-lab --remote --file=scripts/round9/r9-d1-cleanup.sql
 --
--- Rationale in review/round8-d1-data-integrity.md sections DI-3 and DI-8.
+-- Rationale in review/round8-d1-data-integrity.md @133a8e74 sections DI-3 and DI-8.
 
 -- 1. Delete 2 test_delete_ grants stuck in production (DI-3)
 DELETE FROM grants WHERE id = 'test_delete_grant_k23_ihca';
