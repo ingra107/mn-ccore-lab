@@ -70,16 +70,19 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
 
   if (loading) {
     return (
-      <div data-testid="dashboard-status-line" className="tk tk-stats" style={ROW_STYLE} aria-hidden>
+      <div data-testid="dashboard-status-line" className="tk" aria-hidden>
+        <div className="tk-stats" style={ROW_STYLE}>
         {[0, 1, 2, 3].map((i) => (
           <div key={i} style={{ height: 30, width: 72, borderRadius: 'var(--radius-md)', background: 'var(--surface-2)', animation: 'pulse 1.6s ease-in-out infinite' }} />
         ))}
+        </div>
       </div>
     )
   }
 
   return (
-    <div data-testid="dashboard-status-line" className="tk tk-stats" style={ROW_STYLE}>
+    <div data-testid="dashboard-status-line" className="tk">
+      <div className="tk-stats" style={ROW_STYLE}>
       {stats.map((s) => {
         const inner = (
           <>
@@ -97,6 +100,7 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
           <Link key={s.key} to={s.to} className="tk-st" aria-label={`${s.value} ${s.label}: open ${s.dest}`} title={s.dest}>{inner}</Link>
         )
       })}
+      </div>
     </div>
   )
 }

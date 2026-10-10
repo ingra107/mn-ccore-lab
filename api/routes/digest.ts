@@ -203,10 +203,9 @@ export async function handleCreateDigestPaper(request: Request, env: Env): Promi
   //     `excluded.summary` erased 74 stored summaries that no source still
   //     holds. Absent means "not parsed this run", never "clear it".
   //     `title` is the exception: it is required, so it always lands, and
-  //     `relevance_score` takes MAX for the same reason COALESCE is right
-  //     elsewhere -- PB derives the score from which fields it parsed, so a
-  //     run that parsed fewer of them is missing information, not evidence
-  //     that the paper got less relevant.
+  //     `relevance_score` is written whenever the push carries one (a real
+  //     score below the old field-presence 0.7/0.8 must replace it; MAX kept
+  //     the fake value) and left alone when the push sends none (site audit F87).
   await env.DB.prepare(
     `INSERT INTO research_digest (id, title, authors, journal, pub_date, abstract, summary, significance, pmid, doi, relevance_score, relevance_reason, topics, status, digest_date)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -220,7 +219,7 @@ export async function handleCreateDigestPaper(request: Request, env: Env): Promi
        significance = COALESCE(excluded.significance, research_digest.significance),
        pmid = COALESCE(excluded.pmid, research_digest.pmid),
        doi = COALESCE(excluded.doi, research_digest.doi),
-       relevance_score = MAX(excluded.relevance_score, research_digest.relevance_score),
+       relevance_score = COALESCE(?, research_digest.relevance_score),
        relevance_reason = COALESCE(excluded.relevance_reason, research_digest.relevance_reason),
        topics = COALESCE(excluded.topics, research_digest.topics),
        digest_date = COALESCE(research_digest.digest_date, excluded.digest_date)`
@@ -240,6 +239,7 @@ export async function handleCreateDigestPaper(request: Request, env: Env): Promi
     (body.topics as string) ?? null,
     (body.status as string) ?? 'new',
     (body.digest_date as string) ?? null,
+    typeof body.relevance_score === 'number' ? body.relevance_score : null,
   ).run();
 
   return json({ data: { id: body.id } }, 201);

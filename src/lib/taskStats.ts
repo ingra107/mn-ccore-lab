@@ -1,11 +1,11 @@
 // One definition of "overdue" and "done today" for stat lines.
 //
-// Today's stat line (TodayPage.tsx) and Lab Overview's status line used to count
-// these two numbers with their own filters, so the same task set gave two
-// answers: Overview did not drop approvals or questions, and it matched
-// completed_at against a UTC date prefix. Any surface that shows these counts
-// calls the functions below. Scope (one person or the whole lab) is the
-// caller's choice, made by what it passes in.
+// Lab Overview's status line uses the functions below. Today's own stat line
+// (src/pages/portal/TodayPage.tsx, doneTodayDetail and overdueTasks) has NOT been
+// migrated yet and still keeps its own filters, so the two can drift until it
+// is; that file belongs to the Today lane. New surfaces should call these.
+// Scope (one person or the whole lab) is the caller's choice, made by what it
+// passes in.
 
 import type { TaskRow } from './api'
 import { isApprovalPending, isApprovalTriaged, isQuestionTask, todayKey } from './taskGrouping'

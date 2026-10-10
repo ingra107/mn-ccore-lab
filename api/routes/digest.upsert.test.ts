@@ -97,9 +97,14 @@ describe('handleCreateDigestPaper upsert', () => {
     for (const col of ['summary', 'significance', 'abstract', 'relevance_reason', 'journal', 'authors', 'pub_date', 'doi', 'topics', 'pmid'] as const) {
       expect(row[col], col).toBe(FULL[col]);
     }
-    // relevance_score is derived from which fields PB parsed, so a thinner
-    // run is missing information, not a demotion.
+    // No score sent: the stored one stays.
     expect(row.relevance_score).toBe(7);
+  });
+
+  it('a lower score that is sent replaces the stored one', async () => {
+    await push(FULL);
+    await push({ ...FULL, relevance_score: 3 });
+    expect(paper().relevance_score).toBe(3);
   });
 
   it('a present field and a title correction do land', async () => {

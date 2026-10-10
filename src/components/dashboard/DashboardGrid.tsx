@@ -58,21 +58,43 @@ export default function DashboardGrid({
     setLayouts(prev => reconcileLayouts(cards, prev))
   }
 
+  // Grow-to-fit rows are a render-time minimum kept apart from the saved
+  // layout, so a briefly tall card (error note, expanded list) never enlarges a
+  // card for good and nothing auto-sized reaches localStorage.
+  const [fitRows, setFitRows] = useState<Record<string, number>>({})
+  const [fitBp, setFitBp] = useState(currentBp)
+  if (fitBp !== currentBp) { setFitBp(currentBp); setFitRows({}) }
+  const effectiveLayouts = useMemo<Layouts>(() => {
+    const list = layouts[currentBp]
+    if (!list) return layouts
+    return { ...layouts, [currentBp]: list.map(l => (fitRows[l.i] && fitRows[l.i] > l.h ? { ...l, h: fitRows[l.i], maxH: Math.max(l.maxH ?? 0, fitRows[l.i]) } : l)) }
+  }, [layouts, fitRows, currentBp])
+  const stateRef = useRef({ layouts, effectiveLayouts, currentBp })
+  useEffect(() => { stateRef.current = { layouts, effectiveLayouts, currentBp } })
+
   const handleLayoutChange = useCallback(
     (_current: Layout[], all: Layouts) => {
-      setLayouts(all)
-      saveLayouts(section, userSlug, all)
+      // Undo the render-time minimum: an item still at the effective height
+      // keeps the height the user saved.
+      const { layouts: stored, effectiveLayouts: eff, currentBp: bp } = stateRef.current
+      const list = all[bp]
+      let next = all
+      if (list) {
+        next = {
+          ...all,
+          [bp]: list.map(l => {
+            const e = eff[bp]?.find(x => x.i === l.i)
+            const u = stored[bp]?.find(x => x.i === l.i)
+            return e && u && l.h === e.h && e.h !== u.h ? { ...l, h: u.h } : l
+          }),
+        }
+      }
+      setLayouts(next)
+      saveLayouts(section, userSlug, next)
     },
     [section, userSlug],
   )
 
-  // Grow-to-fit (site audit F90). Every cell used to be a fixed 3x3 box that
-  // clips whatever does not fit (Upcoming and Pipeline were cut mid-row). After
-  // each render and on any DOM or width change, measure each card's natural
-  // height and add rows until it fits. Grow only, so a card is never shorter
-  // than its content; a card the user is resizing right now is left alone.
-  // Cards with their own inner scroller (Recent Activity) report no overflow
-  // and stay as they are.
   const wrapRef = useRef<HTMLDivElement>(null)
   const resizing = useRef<Set<string>>(new Set())
   useEffect(() => {
@@ -91,16 +113,11 @@ export default function DashboardGrid({
         need.set(id, rows)
       })
       if (need.size === 0) return
-      setLayouts(prev => {
-        const list = prev[currentBp]
-        if (!list || !list.some(l => (need.get(l.i) ?? 0) > l.h)) return prev
-        return {
-          ...prev,
-          [currentBp]: list.map(l => {
-            const rows = need.get(l.i)
-            return rows && rows > l.h ? { ...l, h: rows, maxH: Math.max(l.maxH ?? rows, rows) } : l
-          }),
-        }
+      setFitRows(prev => {
+        let changed = false
+        const next = { ...prev }
+        need.forEach((rows, id) => { if (rows > (next[id] ?? 0)) { next[id] = rows; changed = true } })
+        return changed ? next : prev
       })
     }
     const schedule = () => { window.clearTimeout(timer); timer = window.setTimeout(fit, 120) }
@@ -118,7 +135,7 @@ export default function DashboardGrid({
     <div ref={wrapRef}>
     <ResponsiveGridLayout
       className="dashboard-grid"
-      layouts={layouts}
+      layouts={effectiveLayouts}
       breakpoints={DASHBOARD_GRID_BREAKPOINTS}
       cols={DASHBOARD_GRID_COLS}
       rowHeight={DASHBOARD_GRID_ROW_HEIGHT[currentBp]}

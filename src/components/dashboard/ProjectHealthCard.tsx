@@ -191,11 +191,10 @@ function ProjectHealthCard() {
                     aspectRatio: '1',
                     borderRadius: 'var(--radius-sm)',
                     background: STATUS_FILLS[p.status] ?? 'var(--slate)',
-                    opacity: p.status === 'Healthy' ? 0.5 : 0.85,
-                    transition: 'opacity var(--transition-fast) ease, transform var(--transition-fast) ease',
+                    transition: 'transform var(--transition-fast) ease',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.15)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = p.status === 'Healthy' ? '0.5' : '0.85'; e.currentTarget.style.transform = 'scale(1)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.15)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
                 />
               ))}
             </div>
