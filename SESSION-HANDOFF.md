@@ -1,3 +1,15 @@
+# ▶▶ 2026-10-10 (work): SITE AUDIT + ERROR LEDGER LIVE. main `efc09ad3`, Worker `1cfeeec8`, every Pages probe PASS. **Schema v123** (`hub_errors`, applied test + prod). **Routes 268.**
+
+Full record: PB `Projects/peripheral-brain-system/SESSION-HANDOFF.md`, top section dated 2026-10-10.
+
+- **Touch targets:** the phone/touch `button:not(...)` 44px floor is GONE. Tap targets are opt-in: `.touch-tall`, plus `.hit-area` `::before`. Do not bring back a blanket min-height on buttons.
+- **Virtualizers:** every `useVirtualizer` must measure its rows (`measureElement` + `data-index`). `src/lib/__tests__/virtualizerMeasures.test.ts` fails the lib suite otherwise.
+- **Overdue labels:** "Nd overdue" everywhere and the compact "Nd" in tight rows. A done item is never overdue: `isOverdue(due, status, done)`, and `InlineDatePicker` takes a `done` prop.
+- **Production errors:** prod 500s are sanitized unless the request proved `X-Test-Mode-Key` (`testKeyVerified`). `TEST_MODE_KEY` IS set on prod, on purpose.
+- **Error ledger:** every Hub error lands in `hub_errors`, which no member handle can read. Weekly count: `GET /api/hub-errors/weekly` (PB key). Runbook: `docs/OBSERVABILITY.md`.
+- **Live-site checks:** headless real-data checks of the live site work through `tests/helpers/capture-auth.ts` (CF Access service token).
+- **Open rows:** PB backlog #8965-#8975.
+
 # ▶▶ BUG SWEEP #133–#136 — ALL FOUR SHIPPED + DEPLOYED, plus two self-inflicted data defects found, repaired and gated (2026-09-22, work laptop). Live = `21975872` (probe PASS). Bug queue EMPTY; GitHub #133–#136 closed. **Schema v112**, **routes 271** (unchanged), PB 2 commits. Gates: 1403 api · 305 lib · 188 src · eslint 0 errors.
 
 <!-- content-shrink-exempt -->
