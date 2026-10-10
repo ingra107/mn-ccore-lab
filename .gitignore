@@ -38,19 +38,10 @@ test_run*.txt
 test_sidebar.txt
 test_views.txt
 
-# Audit output — per-run screenshots, regenerate locally via hub-audit.ts
-review/audit/
-review/deep-audit/
-review/dogfood/
-review/dogfood-round*/
-review/visual-audit/
-review/journey-*.png
-review/audit-0609/
-review/audit-results.json
-review/edge-fix-*/
-review/light-*/
-review/codex-*.md
-review/MN-CCORE Lab Hub Design System*/
+# Audit output and design captures. Untracked 2026-10-10: every file that was
+# committed under review/ is still in history at 133a8e74
+# (`git show 133a8e74:review/<path>`). Runs regenerate it locally.
+review/
 # Session scratch + build-output copies (regenerable / handoff-only)
 Scratch-handoff/
 dist-screenshot/
@@ -62,20 +53,6 @@ dist-screenshot/
 # stale PNGs sat committed under `src/__tests__/__screenshots__/` — named for
 # tests that no longer exist (backlog #1042).
 **/__screenshots__/
-review/*.png
-review/audit-newteammate/
-review/a11y-deep/
-review/debox-audit-*/
-review/n1-mobile-audit-*/
-review/claude-design-*/
-review/claude-design-*.zip
-review/interactions-*/
-review/audit-detail/
-review/massive-audit/
-review/gh-issues/
-review/post-track-a-*/
-review/post-*-*/
-review/mobile-sweep-*/
 
 # Stitch design sandbox — generated mockups, regenerate via stitch-design skill
 .stitch/designs/
@@ -89,12 +66,9 @@ Scratch/
 dist-dryrun/
 Archive/Scratch/
 __pycache__/
-review/audit-results.json
-review/test-summary.txt
 scripts/fixtures/
 scripts/seed/_local-*.sql
 scripts/_incremental-migrate.py
 
 backups/
-review/edge-fix-0610b/
 data/snapshots/

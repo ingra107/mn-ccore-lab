@@ -8,7 +8,7 @@
 ## How to use
 
 1. Open the Claude Design project on claude.ai.
-2. Attach or reference the latest capture bundle (`review/post-track-a-2026-04-23/` or newer) if the project doesn't already have it.
+2. Attach or reference the latest capture bundle (`review/post-track-a-2026-04-23/` @133a8e74 or newer) if the project doesn't already have it.
 3. Paste the prompt below.
 
 ---

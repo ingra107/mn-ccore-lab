@@ -80,10 +80,18 @@ export type { DependencyRow, ExpertiseTag, MenteeMilestoneRow, PBSessionRow, Rev
 import type { Publication, TeamMember, Project, Grant } from '../data/types'
 
 // Static data fallbacks — dev only.
-// import.meta.env.DEV is replaced with a boolean constant at build time, so Vite/Rolldown
-// dead-code-eliminates the false branch and tree-shakes these modules out of the production
-// bundle entirely (publications ~43 KB, projects ~9 KB, team ~7 KB, grants ~1 KB = ~60 KB saved).
-import { publications as _devPublications } from '../data/publications'
+// Publications load through a DEV-gated dynamic import. A static import was NOT tree-shaken:
+// data/publications.ts calls mergePublications() at module top level over the 358 KB
+// publications.generated.ts, and a top-level call is a side effect the bundler must keep, so
+// the whole set shipped in the prod useApiData chunk (94.5 KB gzip, measured 2026-10-10).
+// With the import inside `if (import.meta.env.DEV)` the prod build has no edge to the module
+// at all. Until the import resolves in dev, initialData returns undefined and the query fetches.
+// team / projects / grants stay static: other components import them directly, so a dynamic
+// import here would save nothing.
+let _devPublications: Publication[] | undefined
+if (import.meta.env.DEV) {
+  void import('../data/publications').then((m) => { _devPublications = m.publications })
+}
 import { getAllMembers as _devGetAllMembers } from '../data/team'
 import { projects as _devProjects } from '../data/projects'
 import { grants as _devGrants } from '../data/grants'

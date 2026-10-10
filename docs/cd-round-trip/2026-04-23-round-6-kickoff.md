@@ -2,7 +2,7 @@
 
 **Use:** copy the code block below, paste into the CD claude.ai project chat.
 If the project doesn't already have the latest capture bundle, attach
-`review/post-track-a-2026-04-23/` screenshots first.
+`review/post-track-a-2026-04-23/` @133a8e74 screenshots first.
 
 ---
 
@@ -86,7 +86,7 @@ Two possibilities:
 
 Please:
 
-1. Look at the current live page — attach a fresh screenshot if needed, or pull from review/post-track-a-2026-04-23/.
+1. Look at the current live page — attach a fresh screenshot if needed, or pull from review/post-track-a-2026-04-23/ @133a8e74.
 2. Tell me specifically what UI you had in mind:
    - Grouping criteria (which papers surface there)
    - Placement (top of page vs inline vs modal)

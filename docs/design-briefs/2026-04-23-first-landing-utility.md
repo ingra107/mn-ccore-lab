@@ -4,7 +4,7 @@
 **Scope:** Whole-Hub audit after a full day of first-landing + Airtable+Slack fixes shipped
 **Deliverable:** Ticket list (15-30 tickets), not Figma mocks
 **Current deploy:** `d76a60a0.mn-ccore-lab.pages.dev` (aliased to `mn-ccore-lab.pages.dev`)
-**Screenshots:** `review/post-track-a-2026-04-23/` (41 desktop + 6 mobile)
+**Screenshots:** `review/post-track-a-2026-04-23/` @133a8e74 (41 desktop + 6 mobile)
 
 ---
 
@@ -167,7 +167,7 @@ Expected volume: **15-30 tickets**. Bias toward P1 quality-of-life fixes. Track 
 - **Context**: `CLAUDE.md`, `REFERENCE.md`, `CHANGELOG.md`, this brief
 - **Memory**: `feedback_nick-design-philosophy.md`, `project_hub-vision-airtable-slack-hybrid.md` (agent-side)
 - **PI**: Nick Ingraham (nicholas.ingraham@gmail.com / ingra107@umn.edu)
-- **Screenshots this round**: `review/post-track-a-2026-04-23/` (41 desktop + 6 mobile)
+- **Screenshots this round**: `review/post-track-a-2026-04-23/` @133a8e74 (41 desktop + 6 mobile)
 
 ---
 

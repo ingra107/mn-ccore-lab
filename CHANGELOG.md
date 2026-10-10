@@ -3,6 +3,10 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-10-10 — review/ out of the tree; publications out of the prod bundle
+
+`review/` is no longer tracked: 3,815 audit captures (screenshots, videos, reports) left the index and `.gitignore` now ignores the whole folder in one line instead of 29 sub-patterns. History keeps every file at 133a8e74 (`git show 133a8e74:review/<path>`), and the docs that cite one now say `@133a8e74`. Anything under `review/` that was never committed (the Design System exports, `edge-fix-0610`, the handoff folders) lives only on the machine that made it. The prod `useApiData` chunk dropped from 94.5 KB to 7.6 KB gzip: the dev-only publications fallback was a static import, and `data/publications.ts` calls `mergePublications()` at module top level over the 358 KB generated list, so the bundler kept it. It is now a dynamic import inside `if (import.meta.env.DEV)`.
+
 ## 2026-10-10 — Hub error ledger (schema-v123)
 
 Hub errors per week is now a number. `/api` runs as a Pages Function, which keeps no logs, so every `console.error` and the `request_id` a sanitized 500 returns joined to nothing. New table `hub_errors`, one row per (fingerprint, day), where the fingerprint strips ids, digits, hex runs and the request_id; repeats add to `count`; `last_request_id` keeps the 500's id. One writer, `api/lib/error-ledger.ts`: the default export is built by `withErrorLedger` (fetch, scheduled, and every `ctx.waitUntil` rejection), `console.error` is teed once per isolate, and `onError` records with its request id. A fingerprint is written at most once a minute per isolate. A signed-in member's browser reports through `POST /api/client-errors` (React 19 root error options and window listeners, attached only inside `RequireAuth`, so public pages never report); the version-bump middleware skips that route. `GET /api/hub-errors/weekly` (PB key only) gives the count per 7-day window; no member handle reads a row (`table-scope.ts` rule `0`). Pruned at 400 days via `LEDGER_REGISTRY`. A verified test-mode request's onError, waitUntil, escaping-throw and client entries go to `DB_TEST`; its `console.error` lines land in prod's table (Pages has no nodejs_compat, so no AsyncLocalStorage to tie them to the request). An uncaught render error is sent at once, and unmounting the reporter sends anything still queued, so a white screen is reported. Three `console.log` failure lines in the cron became `console.error`. Tests: `api/lib/error-ledger.test.ts`, `src/lib/__tests__/clientErrors.test.ts`. Routes 266 → 268. v123 applied to test and prod D1 on 2026-10-10.
@@ -865,7 +869,7 @@ Design round-3 packaged with 174 PNGs + 30 WebM videos.
 ### Additional packaging
 
 - **Design brief rewrite:** `docs/design-briefs/2026-04-23-first-landing-utility.md` rewritten post-Round-5 with 3-priority ask + 9 guardrails + design-system constraints.
-- **Claude Design bundle** `review/post-track-a-2026-04-23/`: 174 PNGs + 30 WebM (47 hero, 79 scroll-chunks, 20 rich-states, 8 focus-asks, 20 light-mode, 30 videos).
+- **Claude Design bundle** `review/post-track-a-2026-04-23/` @133a8e74: 174 PNGs + 30 WebM (47 hero, 79 scroll-chunks, 20 rich-states, 8 focus-asks, 20 light-mode, 30 videos).
 - **`tests/capture-for-design.spec.ts`** accepts `CAPTURE_BASE_URL` env (preview-hash URL bypasses CF Access via injected fake-auth cookie).
 - **`scripts/local-db-bootstrap.ts`** skips `schema-v43.sql` + `schema-v48-index-reconcile.sql` on fresh bootstrap. `npm run test:local` now green.
 - **`.gitignore`** adds `review/post-track-a-*/` + `review/post-*-*/` for future bundles (today's bundle force-added as one-time handoff).
@@ -1306,7 +1310,7 @@ Files touched: `.github/workflows/schema-drift.yml`, `api/schema-v14.sql`,
 ## Round-2 design handoff (2026-04-20 → 2026-04-21)
 
 **43 tickets implemented across three deploys.** Claude Design's round-2
-review (`review/design_handoff_round2/`) returned 34 new tickets + 4
+review (`review/design_handoff_round2/` @133a8e74) returned 34 new tickets + 4
 focus-area asks + 6 motion polish items. Round-2 verification also
 exposed 2 pre-existing test failures that were fixed.
 
@@ -2443,7 +2447,7 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 
 After Phase 31.5 hit 9.44/10 aggregate, Nick spent 10 minutes using the site and found 11 bugs automated audits missed — semantic, workflow, interactive, cross-page. Triggered a new audit methodology: journey-based instead of page-based.
 
-**Round 8** — 9-agent audit. 3 discovery agents (data integrity / FAB collision / interactive surface) + 6 user journey agents (PI morning / Coordinator / Grant management / Data entry / Research reader / Mobile PI). Full reports in `review/round8-*.md`; consolidated in `review/round8-AGGREGATED-FINDINGS.md`.
+**Round 8** — 9-agent audit. 3 discovery agents (data integrity / FAB collision / interactive surface) + 6 user journey agents (PI morning / Coordinator / Grant management / Data entry / Research reader / Mobile PI). Full reports in `review/round8-*.md`; consolidated in `review/round8-AGGREGATED-FINDINGS.md` @133a8e74.
 
 Key findings that reshaped the roadmap:
 - `grants.status` column didn't exist in D1 at all — Nick's taxonomy problem was a schema gap, not a UI bug
