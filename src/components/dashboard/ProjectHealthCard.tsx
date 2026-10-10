@@ -191,6 +191,9 @@ function ProjectHealthCard() {
                     aspectRatio: '1',
                     borderRadius: 'var(--radius-sm)',
                     background: STATUS_FILLS[p.status] ?? 'var(--slate)',
+                    // Hairline in the theme's ink: Critical (L 0.40) vanishes on a dark
+                    // card (1.05:1) and Attention (L 0.83) on a light one (1.58:1).
+                    boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--ink) 24%, transparent)',
                     transition: 'transform var(--transition-fast) ease',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.15)' }}
@@ -335,6 +338,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
           height: 8,
           borderRadius: 'var(--radius-circle)',
           background: fill,
+          boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--ink) 24%, transparent)',
           flexShrink: 0,
         }}
       />

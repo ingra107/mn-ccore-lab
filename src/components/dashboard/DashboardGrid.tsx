@@ -69,8 +69,13 @@ export default function DashboardGrid({
     if (!list) return layouts
     return { ...layouts, [currentBp]: list.map(l => (fitRows[l.i] && fitRows[l.i] > l.h ? { ...l, h: fitRows[l.i], maxH: Math.max(l.maxH ?? 0, fitRows[l.i]) } : l)) }
   }, [layouts, fitRows, currentBp])
+  // Set during render, not in an effect: react-grid-layout fires onLayoutChange
+  // from its componentDidUpdate (commit layout phase), before a parent passive
+  // effect would refresh this, so an effect leaves the previous render's
+  // effectiveLayouts here and the fit height gets persisted.
   const stateRef = useRef({ layouts, effectiveLayouts, currentBp })
-  useEffect(() => { stateRef.current = { layouts, effectiveLayouts, currentBp } })
+  // eslint-disable-next-line react-hooks/refs
+  stateRef.current = { layouts, effectiveLayouts, currentBp }
 
   const handleLayoutChange = useCallback(
     (_current: Layout[], all: Layouts) => {
@@ -146,7 +151,12 @@ export default function DashboardGrid({
       onLayoutChange={handleLayoutChange}
       onBreakpointChange={(bp) => setCurrentBp(bp as keyof typeof DASHBOARD_GRID_ROW_HEIGHT)}
       onResizeStart={(_l, item) => { resizing.current.add(item.i) }}
-      onResizeStop={(_l, item) => { resizing.current.delete(item.i) }}
+      onResizeStop={(_l, item) => {
+        resizing.current.delete(item.i)
+        // Drop this card's fit minimum so a manual shrink holds; the next
+        // measure re-grows it only if the content is clipped.
+        setFitRows(prev => { if (!(item.i in prev)) return prev; const n = { ...prev }; delete n[item.i]; return n })
+      }}
       isBounded={false}
       useCSSTransforms
       compactType="vertical"
