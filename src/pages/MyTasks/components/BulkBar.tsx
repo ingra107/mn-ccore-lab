@@ -51,7 +51,7 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
     <button
       key={label}
       onClick={onClick}
-      style={{ padding: '3px 9px', fontSize: 11, border: `1px solid ${active ? ACCENT_TEAL : accent ? withAlpha(accent, 25) : 'rgba(255,255,255,0.12)'}`, borderRadius: 'var(--radius-sm)', background: active ? withAlpha(ACCENT_TEAL, 13) : accent ? withAlpha(accent, 8) : 'transparent', color: active ? ACCENT_TEAL : accent ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
+      style={{ padding: '3px 9px', fontSize: 11, border: `1px solid ${active ? ACCENT_TEAL : accent ? withAlpha(accent, 25) : 'var(--border-strong)'}`, borderRadius: 'var(--radius-sm)', background: active ? withAlpha(ACCENT_TEAL, 13) : accent ? withAlpha(accent, 8) : 'transparent', color: active ? ACCENT_TEAL : accent ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
     >{label}</button>
   )
 
@@ -111,7 +111,7 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
             <button
               key={a.slug}
               onClick={() => { onReassign(a.slug); setPicker(null) }}
-              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-strong)', background: 'rgba(255,255,255,0.02)', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}
+              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-strong)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}
             >{a.name}</button>
           ))}
           <span style={{ flex: 1 }} />

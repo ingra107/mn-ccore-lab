@@ -9,7 +9,7 @@
 // sidebar, not a tab, not a top-right toggle). Order List | Lanes | Columns;
 // bare arrival defaults to List (Nick 2026-06-10); URL ?view= deep-links win.
 
-import { useState, useMemo, useCallback, useEffect, Suspense } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef, Suspense } from 'react'
 import { lazyRoute } from '../../lib/lazyRoute'
 import { useSearchParams } from 'react-router-dom'
 import { useTasks, useProjects } from '../../hooks/useApiData'
@@ -72,6 +72,10 @@ export default function UnifiedMyTasks() {
   const isPhone = useIsMobile(768)
   // Both Columns and Board are desktop-only wide layouts; collapse to List on phone.
   const effectiveView: ViewMode = isPhone && (view === 'columns' || view === 'board') ? 'list' : view
+  // Phone List: the whole page scrolls (toolbar scrolls away) and ListView's
+  // virtualizer follows it, instead of ~270px of fixed chrome above an inner scroller.
+  const shellRef = useRef<HTMLDivElement>(null)
+  const pageScroll = isPhone && effectiveView === 'list'
 
   const [search, setSearch] = useState(searchParams.get('q') ?? '')
   const [filter, setFilter] = useState<FilterState>({
@@ -338,7 +342,7 @@ export default function UnifiedMyTasks() {
        page"). The toolbar + views band-center their content via .mt-band so the
        primary column's left edge matches the data pages. Cards/rows keep their
        own surfaces. */
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', color: 'var(--task-ink)', fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', overflow: 'hidden' }}>
+    <div ref={shellRef} style={{ display: 'flex', flexDirection: 'column', height: '100vh', color: 'var(--task-ink)', fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', overflow: pageScroll ? 'auto' : 'hidden' }}>
       <TopBar
         view={view} setView={setView}
         search={search} setSearch={setSearch}
@@ -364,8 +368,8 @@ export default function UnifiedMyTasks() {
           assigneeOptions={assigneeOptions}
         />
       )}
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={pageScroll ? { display: 'flex', flexShrink: 0 } : { flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
+        <div style={pageScroll ? { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' } : { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* "Needs you" questions — shown above the pending-meetings card, same
               guard shape. Disappears once every question is answered. */}
           {!isLoading && <QuestionsCard tasks={questionTasks} />}
@@ -382,7 +386,12 @@ export default function UnifiedMyTasks() {
             <TableView filtered={filtered} isEmpty={isEmpty} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} projectOptions={projectOptions} plannedSet={plannedSet} />
           ) : effectiveView === 'board' ? (
             <Suspense fallback={<div className="mt-band" style={{ paddingTop: 24 }}><TableSkeleton /></div>}>
-              <TaskBoardView tasks={filtered} onStatusChange={onBoardStatusChange} onSelect={(t) => setDrawer(t.id)} />
+              {/* F38: Board owns no scroller; give it the same one the other views have. */}
+              <div className="fab-clear" style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+                <div className="mt-band">
+                  <TaskBoardView tasks={filtered} onStatusChange={onBoardStatusChange} onSelect={(t) => setDrawer(t.id)} />
+                </div>
+              </div>
             </Suspense>
           ) : (
             <>
@@ -391,7 +400,7 @@ export default function UnifiedMyTasks() {
                   <span style={{ fontSize: 11, color: 'var(--muted)', opacity: 0.85 }}>{view === 'board' ? 'Board' : 'Columns'} is a desktop view — showing List on this screen.</span>
                 </div>
               )}
-              <ListView filtered={filtered} isEmpty={isEmpty} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} />
+              <ListView filtered={filtered} isEmpty={isEmpty} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} pageScrollRef={pageScroll ? shellRef : undefined} />
             </>
           )}
         </div>

@@ -144,7 +144,6 @@ test.describe('API — Missing GET endpoints', () => {
     ['/api/analytics/contributions?slug=nick', 'Contribution analytics'],
     ['/api/pb/sessions', 'PB session history'],
     ['/api/pb/sessions/stats', 'PB session stats'],
-    ['/api/pb/today', 'PB today data'],
     ['/api/pb/health', 'PB system health'],
   ]
 

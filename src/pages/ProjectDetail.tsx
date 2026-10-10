@@ -42,7 +42,7 @@ import InlineSelect from '../components/InlineSelect'
 import InlineAssigneePicker from '../components/InlineAssigneePicker'
 import CategoryIcon from '../components/CategoryIcon'
 import WatchButton from '../components/WatchButton'
-import TaskCard from '../components/tasks/TaskCard'
+import { ProjectOpenTaskCards } from '../components/project/ProjectOpenTaskCards'
 import TaskGridView from '../components/tasks/TaskGridView'
 import CreateTaskModal from '../components/tasks/CreateTaskModal'
 import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
@@ -73,6 +73,8 @@ import SmartCompose from '../components/SmartCompose'
 import ProjectDocuments from './project/ProjectDocuments'
 import { PATHS } from '../constants/paths'
 import { CATEGORY_OPTIONS } from '../constants/categories'
+import { LABEL_STYLE, LABEL_ICON_COLOR } from '../components/ui/labelStyle'
+import { STATUS_LIST_OPTIONS, stageListOptions, mutedCategoryOptions, LIST_T3 } from '../lib/projectListOptions'
 import { useOpenParam } from '../hooks/useOpenParam'
 import EmptyStateArt from '../components/EmptyStateArt'
 import EmptyState from '../components/EmptyState'
@@ -809,12 +811,13 @@ function ProjectDetailInner({ project }: InnerProps) {
         {/* Meta row: category, PI, status, stage, agenda button — all inline-editable */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <CategoryIcon category={project.category || 'MNCCORE'} size={14} />
+            <CategoryIcon category={project.category || 'MNCCORE'} size={14} color={LIST_T3} />
             {/* S3: canonical 3-bucket options — legacy clif/lab/nate/mentee
-                400'd at the API and silently reverted. */}
+                400'd at the API and silently reverted. Muted t3 like the
+                Projects list (shared option helpers, lib/projectListOptions). */}
             <InlineSelect
               value={project.category || ''}
-              options={CATEGORY_OPTIONS}
+              options={mutedCategoryOptions(CATEGORY_OPTIONS)}
               onChange={(val) => d1Update.mutate({ category: val } as Partial<Project>)}
             />
           </div>
@@ -824,24 +827,24 @@ function ProjectDetailInner({ project }: InnerProps) {
             onChange={(slug) => d1Update.mutate({ pi: slug } as Partial<Project>)}
           />
 
-          <div style={{ width: '1px', height: '16px', background: 'var(--border-subtle)' }} />
+          {/* Divider only where status + stage share the line with group + PI. */}
+          <div className="hidden md:block" style={{ width: '1px', height: '16px', background: 'var(--border-subtle)' }} />
 
-          <InlineSelect
-            value={project.status || 'active'}
-            options={[
-              { value: 'active', label: 'Active', color: 'var(--green)' },
-              { value: 'waiting_external', label: 'Waiting', color: 'var(--gold)' },
-              { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
-              { value: 'done', label: 'Done', color: 'var(--slate)' },
-            ]}
-            onChange={(val) => d1Update.mutate({ status: val } as Partial<Project>)}
-          />
+          {/* Status and stage stay together (nowrap) so a narrow screen breaks
+              between the two pairs and never leaves stage alone on a line. */}
+          <div className="flex items-center gap-3 flex-nowrap" style={{ flexShrink: 0 }}>
+            <InlineSelect
+              value={project.status || 'active'}
+              options={STATUS_LIST_OPTIONS}
+              onChange={(val) => d1Update.mutate({ status: val } as Partial<Project>)}
+            />
 
-          <InlineSelect
-            value={project.stage || 'idea'}
-            options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
-            onChange={(val) => handleStageChange(val as Stage)}
-          />
+            <InlineSelect
+              value={project.stage || 'idea'}
+              options={stageListOptions(STAGES, STAGE_LABELS)}
+              onChange={(val) => handleStageChange(val as Stage)}
+            />
+          </div>
 
           {isAuthenticated && agendaMeeting && (
             <button
@@ -863,35 +866,35 @@ function ProjectDetailInner({ project }: InnerProps) {
 
         </div>
 
-        {/* Quick stats strip */}
-        <div className="flex items-center gap-4 mt-2 flex-wrap">
-          {pendingTasks.length > 0 && (
-            <span className="inline-flex items-center gap-1 text-[10px]" style={{ color: 'var(--teal)', fontWeight: 500 }}>
-              <span style={{ width: 5, height: 5, borderRadius: 'var(--radius-circle)', background: 'var(--teal-solid)' }} />
-              {pendingTasks.length} active
-            </span>
-          )}
-          {(() => {
-            const overdue = pendingTasks.filter(t => t.due_date && t.due_date < localDateKey())
-            return overdue.length > 0 ? (
-              <span className="inline-flex items-center gap-1 text-[10px]" style={{ color: 'var(--maroon)', fontWeight: 500 }}>
-                <span style={{ width: 5, height: 5, borderRadius: 'var(--radius-circle)', background: 'var(--maroon-solid)' }} />
-                {overdue.length} overdue
-              </span>
-            ) : null
-          })()}
-          {completedTasks.length > 0 && (
-            <span className="inline-flex items-center gap-1 text-[10px]" style={{ color: 'var(--green)', fontWeight: 500 }}>
-              <span style={{ width: 5, height: 5, borderRadius: 'var(--radius-circle)', background: 'var(--green)' }} />
-              {completedTasks.length} done
-            </span>
-          )}
-          {project.lastActivity && (
-            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-              Last activity {formatShortDate(project.lastActivity)}
-            </span>
-          )}
-        </div>
+        {/* Header counts in Today's stat anatomy (.tk-stats / .tk-st: display-face
+            number, muted label, 2px rule). Plain numbers, not links: Tasks has no
+            per-project filter to land on, and a count that looks clickable and
+            goes nowhere is the thing Nick asked us not to build. Last activity
+            lives once, in the Details card. Zeros are not rendered. */}
+        {(() => {
+          const overdueCount = pendingTasks.filter(t => t.due_date && t.due_date < localDateKey()).length
+          const stats = [
+            { key: 'active', value: pendingTasks.length, label: 'active', rule: 't' },
+            { key: 'overdue', value: overdueCount, label: 'overdue', rule: 'o' },
+            { key: 'done', value: completedTasks.length, label: 'done', rule: 'n' },
+          ].filter((s) => s.value > 0)
+          if (stats.length === 0) return null
+          return (
+            <div className="tk">
+              <div className="tk-stats" style={{ margin: '10px 0 0', paddingBottom: 12 }}>
+                {stats.map((s) => (
+                  <div key={s.key} className="tk-st" aria-label={`${s.value} ${s.label}`}>
+                    <span className={`tk-rl tk-${s.rule}`} aria-hidden="true" />
+                    <span>
+                      <span className="tk-v" style={{ display: 'block' }}>{s.value}</span>
+                      <span className="tk-l">{s.label}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
       </motion.div>
 
       {/* Inline agenda form */}
@@ -915,13 +918,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               >
                 <div className="flex items-center justify-between mb-2">
                   <span
-                    style={{
-                      fontSize: '10px',
-                      color: 'var(--slate)',
-                      opacity: 0.75,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                    }}
+                    style={LABEL_STYLE}
                   >
                     {projectMeetings.upcoming.length === 1 ? (
                       <>Add to: {agendaMeeting.title.split(':')[0]} ({formatShortDate(agendaMeeting.date)})</>
@@ -1103,9 +1100,9 @@ function ProjectDetailInner({ project }: InnerProps) {
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <CheckCircle2 {...ICON_PROPS} size={13} style={{ color: 'var(--teal)' }} />
-                <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  Open Tasks
+                <CheckCircle2 {...ICON_PROPS} size={13} style={{ color: LABEL_ICON_COLOR }} />
+                <span style={LABEL_STYLE}>
+                  Open tasks
                 </span>
                 {pendingTasks.length > 0 && (
                   <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
@@ -1145,30 +1142,13 @@ function ProjectDetailInner({ project }: InnerProps) {
                 .
               </div>
             ) : (
-              <div className="flex flex-col gap-1.5">
-                {pendingTasks
+              <ProjectOpenTaskCards
+                tasks={pendingTasks
                   .slice()
-                  .sort((a, b) => {
-                    const ad = a.due_date || '9999-12-31'
-                    const bd = b.due_date || '9999-12-31'
-                    return ad.localeCompare(bd)
-                  })
-                  .slice(0, 5)
-                  .map((task) => (
-                    <div key={task.id} style={{ minWidth: 0 }}>
-                      <TaskCard
-                        task={task}
-                        hideProjectChip
-                        onStatusChange={(id, status) => {
-                          const prev = task.status
-                          updateTaskStatus.mutate({ id, status })
-                          showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
-                        }}
-                        onClick={() => setSelectedTask(task)}
-                      />
-                    </div>
-                  ))}
-              </div>
+                  .sort((x, y) => (x.due_date || '9999-12-31').localeCompare(y.due_date || '9999-12-31'))
+                  .slice(0, 5)}
+                onOpenEditor={setSelectedTask}
+              />
             )}
           </div>
 
@@ -1179,8 +1159,8 @@ function ProjectDetailInner({ project }: InnerProps) {
             {project.primary_folder && (
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <FolderOpen {...ICON_PROPS} size={13} style={{ color: 'var(--teal)' }} />
-                  <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  <FolderOpen {...ICON_PROPS} size={13} style={{ color: LABEL_ICON_COLOR }} />
+                  <span style={LABEL_STYLE}>
                     On this machine
                   </span>
                 </div>
@@ -1198,6 +1178,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               isLoading={linksLoading}
               slotUrls={[project.key_link_1, project.key_link_2, project.key_link_3]}
               onSetRole={(link, role) => setLinkRole.mutate({ linkId: link.id, role })}
+              documents={<ProjectDocuments projectSlug={project.slug} />}
               pinnedEditor={
                 <KeyLinksEditor
                   hideLabel
@@ -1232,8 +1213,8 @@ function ProjectDetailInner({ project }: InnerProps) {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Clock {...ICON_PROPS} size={13} style={{ color: 'var(--gold)' }} />
-                  <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  <Clock {...ICON_PROPS} size={13} style={{ color: LABEL_ICON_COLOR }} />
+                  <span style={LABEL_STYLE}>
                     Recent
                   </span>
                 </div>
@@ -1445,14 +1426,11 @@ function ProjectDetailInner({ project }: InnerProps) {
               <Compass {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
               <span
                 style={{
-                  fontSize: '10px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
+                  ...LABEL_STYLE,
                   color: 'var(--gold)',
-                  fontWeight: 600,
                 }}
               >
-                Why This Matters Now
+                Why this matters now
               </span>
             </div>
             {isPi && !editingStrategic && (
@@ -1591,7 +1569,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 left: '16px',
                 width: `${(currentStageIndex / (STAGES.length - 1)) * (100 - 6)}%`,
                 height: '2px',
-                background: 'var(--gold)',
+                background: 'var(--teal)',
                 transform: 'translateY(-50%)',
                 zIndex: 'var(--z-base)',
               }}
@@ -1626,14 +1604,14 @@ function ProjectDetailInner({ project }: InnerProps) {
                     height: isCurrent ? '20px' : '14px',
                     borderRadius: 'var(--radius-circle)',
                     border: isCurrent
-                      ? '3px solid var(--gold)'
+                      ? '3px solid var(--teal)'
                       : isPast
-                        ? '2px solid var(--gold)'
+                        ? '2px solid var(--teal)'
                         : '2px solid var(--ice)',
                     background: isCurrent
-                      ? 'var(--gold)'
+                      ? 'var(--teal)'
                       : isPast
-                        ? 'var(--gold)'
+                        ? 'var(--teal)'
                         : 'var(--cream)',
                     transition: 'all 0.2s ease',
                     padding: 0,
@@ -1648,7 +1626,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   data-tip={STAGE_LABELS[stage]}
                   style={{
                     fontSize: '10px',
-                    color: isCurrent ? 'var(--gold)' : isFuture ? 'var(--slate)' : 'var(--ink)',
+                    color: isCurrent ? 'var(--teal)' : isFuture ? 'var(--slate)' : 'var(--ink)',
                     opacity: isCurrent ? 1 : isFuture ? 0.85 : 0.85,
                     fontWeight: isCurrent ? 700 : 400,
                     marginTop: 'var(--sp-sm)',
@@ -1700,11 +1678,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             <div style={{ marginBottom: 'var(--sp-lg)' }}>
               <label
                 style={{
-                  fontSize: '10px',
-                  color: 'var(--slate)',
-                  opacity: 0.75,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
+                  ...LABEL_STYLE,
                   display: 'block',
                   marginBottom: '4px',
                 }}
@@ -1801,11 +1775,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               <div style={{ marginBottom: 'var(--sp-lg)' }}>
                 <label
                   style={{
-                    fontSize: '10px',
-                    color: 'var(--slate)',
-                    opacity: 0.75,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
+                    ...LABEL_STYLE,
                     display: 'block',
                     marginBottom: 'var(--sp-sm)',
                   }}
@@ -1892,9 +1862,6 @@ function ProjectDetailInner({ project }: InnerProps) {
 
       </div>
 
-      {/* Key Documents */}
-      <ProjectDocuments projectSlug={project.slug} />
-
       {/* Related Projects (AI Insights) */}
       <InsightPanel projectSlug={project.slug} />
 
@@ -1909,8 +1876,8 @@ function ProjectDetailInner({ project }: InnerProps) {
       {activeTab === 'files' && (
         <div role="tabpanel" id="projectdetail-tabpanel-files" aria-labelledby="projectdetail-tab-files" style={{ marginBottom: '2rem' }}>
           <div className="flex items-center gap-2 mb-3">
-            <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Project Files
+            <span style={LABEL_STYLE}>
+              Project files
             </span>
           </div>
           <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
@@ -1938,7 +1905,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               rows.length === 0 ? null : (
                 <section key={label} style={{ marginBottom: 'var(--sp-lg)' }}>
                   <div className="flex items-center gap-2 mb-2">
-                    <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    <span style={LABEL_STYLE}>
                       {label} ({rows.length})
                     </span>
                   </div>

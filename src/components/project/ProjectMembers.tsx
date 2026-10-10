@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom'
 import { Users, X } from 'lucide-react'
 import Avatar from '../Avatar'
 import GhostSelect, { type GhostSelectOption } from '../ui/GhostSelect'
-import { LABEL_STYLE } from '../ui/labelStyle'
+import { LABEL_STYLE, LABEL_ICON_COLOR } from '../ui/labelStyle'
 import { useUndoToast } from '../UndoToast'
 import { useAuth } from '../../hooks/useAuth'
 import { useTeam } from '../../hooks/useApiData'
@@ -88,7 +88,7 @@ export default function ProjectMembers({ projectRef, projectTitle }: ProjectMemb
   return (
     <section aria-label="Project members" data-testid="project-members">
       <div className="flex items-center gap-2 mb-2">
-        <Users {...ICON_PROPS} size={13} style={{ color: 'var(--teal)' }} aria-hidden="true" />
+        <Users {...ICON_PROPS} size={13} style={{ color: LABEL_ICON_COLOR }} aria-hidden="true" />
         <span ref={headingRef} tabIndex={-1} style={{ ...LABEL_STYLE, outline: 'none' }}>Members</span>
         {members.length > 0 && (
           <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.85 }}>{members.length}</span>

@@ -239,7 +239,7 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
               ))}
               {task.group_override && (
                 <>
-                  <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
+                  <div style={{ height: 1, background: 'var(--border-subtle)', margin: '4px 0' }} />
                   <button
                     onClick={resetGroup}
                     disabled={updateTask.isPending}

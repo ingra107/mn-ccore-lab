@@ -319,7 +319,7 @@ async function _createHealthAlert(
   const body =
     `D1 ledger alert at ${checkedAt}:\n` +
     lines.join('\n') +
-    '\nCheck wrangler tail for prune errors. DB may be approaching timeout threshold.';
+    '\nPrune errors are listed above. Older runs: Workers Logs for mn-ccore-lab-api. DB may be approaching timeout threshold.';
 
   try {
     await db
