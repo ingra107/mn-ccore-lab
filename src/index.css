@@ -1919,12 +1919,14 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
        child made every Meetings list card shrink to 44px and overlap
      - .tk-hov / .today-plan-btn: inline-flex pin; a 44px floor inflated the
        last title line of every task card
+     - .pill-btn / .seg-btn: stand-alone pill chips and segmented items
+       (filter chips, view switcher, Meetings pills); hit-area ::before
      - .tk-seg items: segmented controls (real [role=tab] tabs keep the floor)
      - Select/Deselect task checkboxes (inline 18px squares)
      - named .tk controls (btn, pill, join, ck, wo, si, rmore): the Today
        skin sizes them; they get the hit-area ::before below */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) and (min-width: 769px) {
-  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip):not(.tk-card):not(.tk-mlc):not(.tk-hov):not(.today-plan-btn):not([aria-label="Select task"]):not([aria-label="Deselect task"]):not(.tk-seg button):not(.tk .tk-btn):not(.tk .tk-pill):not(.tk .tk-join):not(.tk .tk-joinq):not(.tk .tk-ck):not(.tk .tk-wo):not(.tk .tk-si):not(.tk .tk-rmore),
+  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip):not(.pill-btn):not(.seg-btn):not(.tk-card):not(.tk-mlc):not(.tk-hov):not(.today-plan-btn):not([aria-label="Select task"]):not([aria-label="Deselect task"]):not(.tk-seg button):not(.tk .tk-btn):not(.tk .tk-pill):not(.tk .tk-join):not(.tk .tk-joinq):not(.tk .tk-ck):not(.tk .tk-wo):not(.tk .tk-si):not(.tk .tk-rmore),
   a.inline-link,
   select,
   .filter-chip,
@@ -1990,6 +1992,8 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    touch has no hover fallback and coarser input. */
 .done-box,
 .stage-dot,
+.pill-btn,
+.seg-btn,
 .tk .tk-hov,
 .today-plan-btn,
 .tk button.tk-btn,
@@ -2007,6 +2011,8 @@ button[aria-label="Deselect task"] {
 }
 .done-box::before,
 .stage-dot::before,
+.pill-btn::before,
+.seg-btn::before,
 .tk .tk-hov::before,
 .today-plan-btn::before,
 .tk button.tk-btn::before,
@@ -2024,10 +2030,12 @@ button[aria-label="Deselect task"]::before {
   position: absolute;
   inset: -8px;
 }
-.tk-seg button::before { inset: -12px 0; } /* segments touch side by side: extend vertically only */
+.tk-seg button::before,
+.seg-btn::before { inset: -12px 0; } /* segments touch side by side: extend vertically only */
 @media (hover: none) {
   .done-box::before,
   .stage-dot::before,
+  .pill-btn::before,
   .tk .tk-hov::before,
   .today-plan-btn::before,
   .tk button.tk-btn::before,
@@ -2967,3 +2975,8 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    disc reads (the default face text is too faint at 7px). */
 .tk .tk-ppl .tk-face.tk-sm,.tk .tk-mlr .tk-face{font-size:8px;font-weight:700}
 :root:not(.dark) .tk .tk-ppl .tk-face,:root:not(.dark) .tk .tk-mlr .tk-face{background:#c9ced3;color:#1b2530}
+
+/* Desktop-only floating button. Button.tsx sets an inline display, which beats
+   Tailwind's `hidden`, so the breakpoint lives in a rule with !important. */
+.fab-desktop-only { display: none !important; }
+@media (min-width: 1024px) { .fab-desktop-only { display: flex !important; } }

@@ -453,7 +453,7 @@ export default function QuickCaptureInbox() {
         aria-label="Quick capture to inbox (Ctrl+I)"
         title="Quick capture to inbox (Ctrl+I)"
         data-testid="fab-quick-capture-inbox"
-        className="fixed right-5 hidden lg:flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+        className="fab-desktop-only fixed right-5 items-center justify-center transition-all hover:scale-105 active:scale-95"
         style={{
           bottom: 'var(--fab-stack-2)',
           width: 44,

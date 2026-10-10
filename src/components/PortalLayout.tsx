@@ -25,7 +25,7 @@ import { PORTAL_PAGE_LABELS, portalTitle } from '../constants/pageLabels'
 import { ICON_PROPS } from '../lib/iconProps'
 
 export default function PortalLayout() {
-  const { mode, setTheme } = useDarkMode()
+  const { mode, setTheme, isDark } = useDarkMode()
   useFavicon()
   useRealtimeSync()
   const [quickAddOpen, setQuickAddOpen] = useState(false)
@@ -176,7 +176,7 @@ export default function PortalLayout() {
             style={{ color: 'inherit' }}
           >
             <img
-              src="/logos/mnccore-logo-mark.svg"
+              src={isDark ? "/logos/mnccore-logo-mark-dark.svg" : "/logos/mnccore-logo-mark.svg"}
               alt=""
               width={28}
               height={28}

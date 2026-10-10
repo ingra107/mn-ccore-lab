@@ -101,6 +101,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           return (
             <button
               key={tab.k}
+              className="pill-btn"
               onClick={() => setQuickView(tab.k)}
               // withAlpha, NOT hex-suffix concat: the accents are var() strings,
               // so the old `color + hexAlpha` pattern produced invalid CSS (active pill border/bg never
@@ -118,6 +119,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
         {showFilterChips && !isPhone && <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)', margin: '0 4px' }} />}
         {isPhone && (
           <button
+            className="pill-btn"
             onClick={() => setFiltersOpen((o) => !o)}
             aria-expanded={filtersOpen}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${filtersOpen || activeFilterCount > 0 ? withAlpha(ACCENT_TEAL, 44) : 'rgba(255,255,255,0.1)'}`, background: filtersOpen || activeFilterCount > 0 ? withAlpha(ACCENT_TEAL, 8) : 'transparent', color: filtersOpen || activeFilterCount > 0 ? ACCENT_TEAL : INK_MUTED }}

@@ -748,7 +748,7 @@ export default function Meetings() {
                           const selected = newMeetingAttendees.includes(m.slug)
                           return (
                             <button key={m.slug} type="button" onClick={() => toggleAttendee(m.slug)}
-                              className="cursor-pointer inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs"
+                              className="pill-btn cursor-pointer inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs"
                               style={{ fontSize: 'var(--label-size)', background: selected ? withAlpha(ACCENT_GOLD, 20) : 'var(--ice)', color: selected ? 'var(--ink)' : 'var(--slate)', border: selected ? '1px solid var(--gold)' : `1px solid ${withAlpha(ACCENT_GOLD, 10)}`, transition: 'all 0.15s ease' }}>
                               <div style={{ width: 16, height: 16 }}><Avatar name={m.name} initials={m.initials} photoUrl={m.photoUrl} variant="ice" size="2xs" /></div>
                               {m.name.split(' ')[0]}
@@ -830,7 +830,7 @@ export default function Meetings() {
             <div className="flex items-center gap-1.5">
               {FILTER_OPTIONS.map((f) => (
                 <motion.button key={f.key} type="button" onClick={() => setFilter(f.key)}
-                  className="cursor-pointer inline-flex items-center px-2.5 py-1 rounded-full text-xs"
+                  className="pill-btn cursor-pointer inline-flex items-center px-2.5 py-1 rounded-full text-xs"
                   // Active: theme-agnostic dark-gold + white text =
                   // AA both modes. r7 2026-04-22.
                   style={{ background: filter === f.key ? 'var(--stage-fill-analysis)' : 'var(--ice)', color: filter === f.key ? '#fff' : 'var(--slate)', border: 'none', transitionProperty: 'background-color, color', transitionDuration: '150ms', transitionTimingFunction: 'ease' }}
