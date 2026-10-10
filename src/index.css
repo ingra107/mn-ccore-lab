@@ -2834,7 +2834,6 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-btn:disabled{cursor:not-allowed}
 .tk .tk-btn svg,.tk .tk-pill svg{vertical-align:-2px}
 .tk .tk-compose > div{min-width:0}
-.tk .tk-compose{align-items:center}
 .tk .tk-stack > div{min-width:0}
 .tk .tk-ph .tk-hintx{margin-left:2px}
 .tk .tk-ph h2{font-size:15px}
@@ -2852,8 +2851,14 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
   .tk .tk-titlerow{gap:8px 10px}
   .tk .tk-stats{gap:10px 18px}
 }
-.tk .tk-compose{flex-wrap:wrap}
-.tk .tk-compose textarea{background:transparent !important;border:none !important;box-shadow:none !important;padding:4px 2px !important;font-size:13px !important;color:var(--sk-t1) !important;resize:none !important}
+/* Today compose = one visible field (principle 20): its own edge and a
+   slightly lifted fill, a focus ring, the brain glyph on the first text line,
+   tools + Capture in their own row under the text. Nothing is positioned over
+   the textarea; it grows with what is typed (SmartCompose maxRows). */
+.tk .tk-compose{align-items:flex-start;border-color:var(--sk-line2);background:color-mix(in srgb,var(--sk-t1) 3%,var(--sk-card));transition:border-color .12s,box-shadow .12s}
+.tk .tk-compose:focus-within{border-color:color-mix(in srgb,var(--sk-ac) 55%,transparent);box-shadow:0 0 0 3px var(--sk-rim-ac)}
+.tk .tk-compose > svg{margin-top:5px}
+.tk .tk-compose textarea{background:transparent !important;border:none !important;box-shadow:none !important;padding:4px 0 !important;font-size:13px !important;line-height:1.4 !important;color:var(--sk-t1) !important;resize:none !important}
 .tk .tk-compose textarea::placeholder{color:var(--sk-t3) !important;opacity:1}
 .tk .tk-compose label{color:var(--sk-t3) !important}
 .tk .tk-rail-p ul{list-style:disc;margin:6px 0 0;padding-left:18px}

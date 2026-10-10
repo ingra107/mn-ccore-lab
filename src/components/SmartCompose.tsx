@@ -25,7 +25,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Paperclip, Smile, AtSign, Loader2, Send } from 'lucide-react'
 import { MeLockToggle } from './ui/MeLockToggle'
-import MentionInput from './MentionInput'
+import MentionInput, { CommandBadge } from './MentionInput'
 import HermesMark from './HermesMark'
 import { useQueryClient } from '@tanstack/react-query'
 import { usePostTaskUpdate } from '../hooks/useMutations'
@@ -66,8 +66,12 @@ interface BaseProps {
   theme?: 'dark' | 'light'
   /** Hide the wrapper margin/divider so caller controls spacing. */
   bare?: boolean
-  /** rows for the textarea; default 2. */
+  /** rows for the textarea; default 2. This is the RESTING height. */
   rows?: number
+  /** The field grows with what is typed up to this many lines, then scrolls
+   *  inside itself; default 8. A fixed-height field scrolled its first line
+   *  out of view while typing (Today compose, 2026-10-10). */
+  maxRows?: number
   /** Auto-focus the textarea on mount (e.g. when opening a chat slot). */
   autoFocus?: boolean
   /** Force the toolbar visible even when not focused/empty. */
@@ -146,6 +150,7 @@ export default function SmartCompose(props: SmartComposeProps) {
     theme = 'dark',
     bare = false,
     rows = 2,
+    maxRows = 8,
     autoFocus = false,
     alwaysShowToolbar = false,
     submitLabel = 'Post',
@@ -430,7 +435,6 @@ export default function SmartCompose(props: SmartComposeProps) {
         fontSize: 12,
         fontFamily: 'inherit',
         outline: 'none',
-        resize: 'vertical',
       }
     : {
         width: '100%',
@@ -442,7 +446,6 @@ export default function SmartCompose(props: SmartComposeProps) {
         fontSize: 13,
         fontFamily: 'inherit',
         outline: 'none',
-        resize: 'vertical',
         lineHeight: 1.4,
       }
 
@@ -463,6 +466,9 @@ export default function SmartCompose(props: SmartComposeProps) {
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 100) /* let buttons handle clicks first */}
         rows={rows}
+        maxRows={maxRows}
+        // The badge goes in the toolbar row below, never over the text.
+        commandBadge="none"
         style={textareaStyle}
       />
       <input
@@ -591,6 +597,8 @@ export default function SmartCompose(props: SmartComposeProps) {
           )}
           {/* Spacer */}
           <span style={{ flex: 1 }} />
+          {/* "Command recognized" badge (e.g. Quick Chat launch) */}
+          <CommandBadge value={val} />
           {/* ⌘⏎ hint */}
           {!hideKbdHint && val.trim().length > 0 && (
             <kbd style={{

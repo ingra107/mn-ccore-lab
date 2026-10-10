@@ -17,7 +17,9 @@
 // The brief says to use SmartCompose; we do — `theme="light"` + `bare`: the
 // light theme reads the page tokens, so it is legible in BOTH modes (the dark
 // theme hard-codes pale ink and was faint on the light page). The .tk-compose
-// card on TodayPage supplies the box; .tk-compose textarea strips SmartCompose's own.
+// field on TodayPage supplies the box; .tk-compose textarea strips SmartCompose's
+// own. Every control (tools, command badge, Capture, send to home) sits in its
+// own row below the text, never over it.
 
 import { useCallback, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -223,6 +225,10 @@ export function MorningThoughtCompose() {
         theme="light"
         bare
         rows={1}
+        // Grows with the thought up to 8 lines, then scrolls inside the field.
+        maxRows={8}
+        // Tools stay visible at rest so the box reads as a field (principle 20).
+        alwaysShowToolbar
         submitLabel="Capture"
         submittingLabel="Capturing…"
         onSubmit={handleSubmit}
