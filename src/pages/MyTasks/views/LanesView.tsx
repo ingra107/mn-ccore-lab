@@ -60,10 +60,10 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
   const allTasks = useMemo(() => visibleGroups.flatMap((g) => byGroup[g]), [visibleGroups, byGroup])
 
   return (
-    // P1-1 (Nick 2026-06-10): outer scroll fills the surface; .mt-band centers
-    // on --content-band (matching the data pages); the inner --col-main block is
-    // left-anchored within the band so the primary column's left edge equals
-    // Projects + the other two views + Today. The 1100px literal is gone.
+    // P1-1 (Nick 2026-06-10): outer scroll fills the surface; .mt-band sets the
+    // same left edge as the data pages and stops at --page-width (Today's
+    // width); the inner --col-main block is left-anchored within it so the
+    // primary column's left edge equals Projects, the other views and Today.
     <div
       className="fab-clear"
       style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 40 }}

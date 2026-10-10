@@ -84,13 +84,10 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
   // users discover the 5 columns scroll horizontally on small viewports
   // (eval Issue 5).
   return (
-    // 2026-06-10b (Nick): Columns is WIDE multi-column content, so it uses
-    // .band-anchored-wide — left edge anchored identical to the toolbar + data
-    // pages, right edge FLUID to the viewport (minus standard right padding).
-    // The kanban grid grows rightward to fit; it only h-scrolls when the columns
-    // exceed the available viewport width (not when they exceed an arbitrary
-    // 960px box). Dropped the maxWidth:--col-main cap that previously crammed
-    // 4-5 columns into 960px and forced a horizontal scroll inside the band.
+    // Columns uses .band-anchored-wide: left edge identical to the toolbar and
+    // data pages, right edge at --page-width (Today's main + rail, principle 17,
+    // 2026-10-10). 5 x 236px + gaps fits inside it; on a narrower viewport the
+    // grid h-scrolls inside this box, never past it.
     <div className="band-anchored-wide" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', position: 'relative' }}>
     <div
       ref={scrollerRef}

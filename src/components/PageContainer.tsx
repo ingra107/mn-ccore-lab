@@ -8,8 +8,9 @@ interface PageContainerProps {
 /**
  * Shared page-root wrapper for portal pages.
  *
- * Owns the single content-width contract: max-width 1440px, centered, with
- * responsive horizontal padding (the `.content-container` rules in index.css).
+ * Owns the single content-width contract (the `.content-container` rule in
+ * index.css): the --content-band left edge, and content no wider than
+ * --page-width, Today's main + rail (principle 17).
  * The portal `<main>` (PortalLayout) already supplies vertical padding, so
  * pages should NOT add their own `minHeight`/`paddingBottom` on top of this.
  *

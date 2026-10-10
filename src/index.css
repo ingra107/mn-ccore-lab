@@ -70,21 +70,29 @@
      identical on every page, so the user's focus never moves on nav. An
      optional right rail extends OUTWARD into the band beside the column — it
      never recenters or widens the main column. Pages with no rail leave that
-     space empty rather than re-centering. Dashboards (pure card grids) may
-     fill the full band — the one documented exception.
+     space empty rather than re-centering. Nothing runs past main + rail
+     (--page-width, principle 17); the old dashboard exception is gone.
 
      --col-main settled at 960px (not the ticket's starting 880px): the widest
      real table is the My Tasks List power-grid (8 fixed columns = 678px + 32px
      padding); 880px would crush its 1fr Title column to ~170px and truncate
      short_titles, 960px gives it ~250px and keeps every data table from
      horizontally scrolling. Honors decision #1 (principle over px). */
-  --content-band: 1440px;  /* centered band; ≥ main + 16px gap + rail. Widened
+  --content-band: 1440px;  /* centered band; ≥ main + rail (Today's grid has no gap). Widened
      1296→1440 (Nick, bug #70 2026-06-11: "left edge can move closer to the nav")
      — pulls every page's anchored left edge ~72px toward the sidebar at 1920
      and gives the centered pages the extra width. No change below ~1570px
      viewports (the padding floor binds there, exactly as before). */
   --col-main: 960px;       /* anchored primary column (tables, lists, detail) */
   --col-rail: 320px;       /* optional right rail; absent = empty, no expand */
+  /* Page width = Today's width (principle 17, Nick 2026-10-10: "1 is the
+     goal"). Today's main + rail is the widest any portal page's content may
+     run. The band (--content-band) still sets the LEFT edge, so the left edge
+     does not move; this caps how far right content goes. A view wider than
+     this scrolls inside it; it never widens the page. */
+  --page-width: calc(var(--col-main) + var(--col-rail));
+  /* Band side padding, one ramp for every band class (12px / 1.5 / 2 / 3rem). */
+  --band-pad: 1.5rem;
 
   /* Border-radius scale */
   --radius-sm: 4px;
@@ -1134,103 +1142,57 @@ a:hover {
    Was a 1440px literal; redefined in terms of --content-band so every page
    that uses .content-container shares the band width. Class name unchanged
    on purpose (no global rename this wave — concurrent page edits). */
-.content-container {
+@media (min-width: 640px) { :root { --band-pad: 2rem; } }
+@media (min-width: 1024px) { :root { --band-pad: 3rem; } }
+@media (max-width: 639px) { :root { --band-pad: 12px; } }
+/* The band classes drop to 12px at 640 itself (Today's grid keeps 2rem there),
+   exactly as the old per-class (max-width: 640px) rules did. */
+@media (max-width: 640px) {
+  .content-container, .mt-band, .band-anchored-wide { --band-pad: 12px; }
+}
+
+.content-container,
+.mt-band {
   max-width: var(--content-band);
   margin-left: auto;
   margin-right: auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+  padding-left: var(--band-pad);
+  padding-right: var(--band-pad);
 }
 
-@media (min-width: 640px) {
-  .content-container {
-    padding-left: 2rem;
-    padding-right: 2rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .content-container {
-    padding-left: 3rem;
-    padding-right: 3rem;
-  }
+/* Principle 17, portal only: content inside a band ends where Today's rail
+   ends. The right padding grows by whatever the band holds beyond
+   --page-width, so the left edge is unchanged and the content box is
+   min(band - 2P, --page-width). (100% in padding = the containing block, so
+   min(100%, band) = this box.) Public pages (Layout) are not inside
+   .portal-content and keep the symmetric, centered band. */
+.portal-content .content-container,
+.mt-band {
+  padding-right: max(var(--band-pad), calc(min(100%, var(--content-band)) - var(--band-pad) - var(--page-width)));
 }
 
 /* ── My Tasks band (P1-1, Nick 2026-06-10) ──
    My Tasks is a height:100vh flex-col where the toolbar + views scroll
    independently, so it can't simply wrap in one .content-container. Instead the
    full-width chrome strips (TopBar / BulkBar / each view's scroll area) keep
-   their full-bleed borders, and their *inner content* gets .mt-band — the SAME
-   centered band + responsive padding as .content-container — so the primary
-   column's left edge matches the data pages and the other operating surfaces
-   exactly. Identical padding ramp to .content-container above. */
-.mt-band {
-  max-width: var(--content-band);
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-}
-@media (min-width: 640px) {
-  .mt-band { padding-left: 2rem; padding-right: 2rem; }
-}
-@media (min-width: 1024px) {
-  .mt-band { padding-left: 3rem; padding-right: 3rem; }
-}
-/* Mobile parity with .content-container (Nick 2026-06-10b): the data pages
-   tighten to 12px below 640px; mirror it here so My Tasks' toolbar/title/views
-   share the SAME left edge as the rest of the app on small screens (and so the
-   .band-anchored-wide views, which match this, stay aligned with the toolbar). */
-@media (max-width: 640px) {
-  .mt-band { padding-left: 12px; padding-right: 12px; }
-}
+   their full-bleed borders, and their *inner content* gets .mt-band, which
+   shares the .content-container rule above (same band, same padding ramp,
+   same --page-width cap), so its left and right edges match every page. */
 
-/* ── Anchored wide band (Nick 2026-06-10b) ──
-   Completes the anchored-edge rule: LEFT edge anchored (identical to
-   .content-container's content edge), RIGHT edge FLUID to the viewport minus
-   the standard responsive right padding. Use this for genuinely WIDE,
-   multi-column content that should grow rightward to fit instead of being
-   capped at --col-main and h-scrolling inside a 960px box: My Tasks Columns
-   (kanban), Projects Pipeline (kanban), and any future Gantt-/board-like view.
+/* ── Anchored wide band (Nick 2026-06-10b; capped 2026-10-10, principle 17) ──
+   For wide multi-column views (My Tasks Columns, Projects Pipeline): the LEFT
+   edge is identical to .content-container's content edge, and the box runs
+   right to the viewport minus P, but never past --page-width. Content wider
+   than that scrolls inside the view's own scroller; the page does not widen.
 
-   How the left edge stays IDENTICAL to .content-container at every width:
-   .content-container is `max-width:var(--content-band); margin:auto;
-   padding-left:P`, so its content's left edge from the viewport
-   = max(P, (100% - var(--content-band))/2 + P) — i.e.
-   P below the band width, then it tracks the centered band above it. We
-   reproduce that edge as this element's own margin-left, drop the
-   --content-band max-width cap, and pad only the right side (P), so content
-   extends from the anchored left edge to (viewport - P) and only h-scrolls
-   when its intrinsic width exceeds THAT. Padding tiers match .content-container
-   / .mt-band exactly (1.5 / 2 / 3rem at base / 640 / 1024) so the left edge is
-   pixel-identical to the toolbar + the data pages on the same viewport.
-
-   Mobile (<640px): the band width never binds, so margin-left collapses to the
-   12px tier (matching the .content-container mobile override) — graceful. */
+   Left edge: .content-container's content edge from the viewport is
+   max(P, (100% - var(--content-band))/2 + P); we reproduce it as margin-left. */
 .band-anchored-wide {
-  max-width: none;
-  margin-left: max(1.5rem, calc((100% - var(--content-band)) / 2 + 1.5rem));
-  margin-right: 1.5rem;
+  max-width: var(--page-width);
+  margin-left: max(var(--band-pad), calc((100% - var(--content-band)) / 2 + var(--band-pad)));
+  margin-right: var(--band-pad);
   padding-left: 0;
   padding-right: 0;
-}
-@media (min-width: 640px) {
-  .band-anchored-wide {
-    margin-left: max(2rem, calc((100% - var(--content-band)) / 2 + 2rem));
-    margin-right: 2rem;
-  }
-}
-@media (min-width: 1024px) {
-  .band-anchored-wide {
-    margin-left: max(3rem, calc((100% - var(--content-band)) / 2 + 3rem));
-    margin-right: 3rem;
-  }
-}
-@media (max-width: 640px) {
-  .band-anchored-wide {
-    margin-left: max(12px, calc((100% - var(--content-band)) / 2 + 12px));
-    margin-right: 12px;
-  }
 }
 
 /* ── Section Header accent line ── */
@@ -1816,12 +1778,6 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 
 /* ── Mobile UX improvements ── */
 @media (max-width: 640px) {
-  /* Content container — tighter horizontal padding on small screens */
-  .content-container {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
   /* Filter pills — larger tap targets for touch. R4-P2-06: raise to
      44px (WCAG 2.5.5 touch-target floor) from the prior 36px. */
   .filter-pill {
