@@ -22,7 +22,8 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import { PATHS } from '../../constants/paths'
 import { useAuth } from '../../hooks/useAuth'
 import { useUnseenActivity } from '../../hooks/useEntitySeen'
-import { dueLabelCompact, dueTone, formatShortDate, isOverdue } from '../../lib/dateUtils'
+import { civilDaysOverdue, dueLabelCompact, dueTone, formatShortDate, isOverdue } from '../../lib/dateUtils'
+import { slugForEmail } from '../../lib/emailSlug'
 import type { MilestoneEntry } from '../../lib/taskGrouping'
 import { Face, Faces, CheckGlyph } from '../today/skin'
 import TaskTitle from './TaskTitle'
@@ -55,7 +56,7 @@ function dueWords(due: string, overdue: boolean): string {
   if (isNaN(target.getTime())) return due.slice(0, 10)
   const todayNoon = new Date(); todayNoon.setHours(12, 0, 0, 0)
   const days = Math.round((target.getTime() - todayNoon.getTime()) / 86400000)
-  if (overdue) return days >= -1 ? 'Yesterday' : `${-days}d late`
+  if (overdue) { const n = civilDaysOverdue(due); return n <= 1 ? 'Yesterday' : `${n}d overdue` }
   if (days === 0) return 'Due today'
   if (days === 1) return 'Tomorrow'
   if (days <= 6) return WEEKDAYS[target.getDay()]
@@ -106,6 +107,8 @@ export function CardRow(props: CardTaskRowProps) {
   const urgent = !isDone && task.priority === 'urgent'
   const displayTitle = task.short_title || task.title
   const others = [task.assigned_by, ...(task.watchers ? task.watchers.split(',').map((w) => w.trim()) : [])]
+    // assigned_by is often stored as an email, assignee as a slug: compare slugs.
+    .map((s) => (s && s.includes('@') ? slugForEmail(s) : s))
     .filter((s): s is string => !!s && s !== task.assignee)
 
   const titleNode = onOpenEditor ? (

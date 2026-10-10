@@ -166,7 +166,9 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 267 as of 2026-10-09 — meeting access, schema-v122 (+5): GET
     //   /api/meetings/:id/access (PB key, Hermes), POST /api/meetings/:id/projects,
     //   DELETE /api/meetings/:id/projects/:projectId, GET + POST /api/thread-seen.
-    expect(ROUTE_REGISTRY).toHaveLength(267)
+    // 266 as of 2026-10-09 — GET /api/pb/today retired (-1): no caller in
+    //   any repo; its POST was retired 2026-05-05.
+    expect(ROUTE_REGISTRY).toHaveLength(266)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

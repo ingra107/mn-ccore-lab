@@ -732,15 +732,6 @@
       "covered": true
     },
     {
-      "id": "api-get-pb-today",
-      "component": "api/routes/pb-today.ts",
-      "type": "api",
-      "description": "GET /api/pb/today — PB today data",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "API GET: PB today data",
-      "covered": true
-    },
-    {
       "id": "api-get-pb-health",
       "component": "api/routes/pb-health.ts",
       "type": "api",

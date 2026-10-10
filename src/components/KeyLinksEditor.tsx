@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Link2, Plus, Pencil, Check, X } from 'lucide-react'
+import { Link2, Pin, Plus, Pencil, Check, X } from 'lucide-react'
 import { classifyUrl } from '../lib/urlClassify'
 import { normalizeLink } from '../lib/pbLinks.generated'
-import { iconForType } from '../lib/linkIcon'
+import { iconForType, stripLinkKindSuffix } from '../lib/linkIcon'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import { ICON_PROPS } from '../lib/iconProps'
 import { Button } from './ui/Button'
@@ -60,7 +60,8 @@ function LinkRow({
   const iconColor = stored ? stored.color : 'var(--teal)'
   const { launch } = useProtocolLaunch()
 
-  const displayLabel = link.desc || typeLabel || url
+  // Same label rule as Today's link cards: drop the "(Google Doc)" kind suffix.
+  const displayLabel = stripLinkKindSuffix(link.desc || typeLabel || url)
   const tooltip = resolvedType
     ? `${resolvedType} · ${displayLabel}`
     : (isHttp ? url : `Click to copy path: ${url}`)
@@ -73,54 +74,62 @@ function LinkRow({
     })
   }
 
-  // Mode-A labeled chip: neutral ice/slate pill + brand-color glyph + label.
+  // Same anatomy as ProjectLinkLibrary's LinkRow: the chip on the left (the
+  // StoredLinkChip pill, one link), a right-aligned trailing slot on the right.
+  // A pinned row has no date, so the pin glyph sits where the date would, and
+  // marks the row as pinned; edit + remove follow it.
   return (
-    <span
-      className="group inline-flex items-center gap-1.5"
-      style={{ padding: '4px 7px 4px 9px', borderRadius: 'var(--radius-md)', background: 'var(--ice)', border: '1px solid var(--border-subtle)', maxWidth: 220 }}
-    >
+    <div className="group flex items-center justify-between gap-2">
       <a
         href={isHttp ? href : url}
         target={isHttp ? '_blank' : undefined}
         rel={isHttp ? 'noopener noreferrer' : undefined}
         onClick={isHttp ? undefined : handleNonHttpClick}
-        style={{ color: iconColor, display: 'flex', alignItems: 'center', flexShrink: 0 }}
         title={tooltip}
+        className="inline-flex items-center gap-1.5 self-start"
+        style={{
+          padding: '4px 7px 4px 9px',
+          borderRadius: 'var(--radius-md)',
+          background: 'var(--ice)',
+          border: '1px solid var(--border-subtle)',
+          maxWidth: 240,
+          fontSize: 12,
+          fontWeight: 500,
+          textDecoration: 'none',
+          color: 'var(--slate)',
+        }}
       >
-        <Icon {...ICON_PROPS} size={14} />
+        <Icon {...ICON_PROPS} size={14} style={{ color: iconColor, flexShrink: 0 }} />
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+          {displayLabel}
+        </span>
       </a>
-      <a
-        href={isHttp ? href : url}
-        target={isHttp ? '_blank' : undefined}
-        rel={isHttp ? 'noopener noreferrer' : undefined}
-        onClick={isHttp ? undefined : handleNonHttpClick}
-        className="text-xs hover:underline"
-        style={{ color: 'var(--slate)', textDecoration: 'none', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}
-        title={tooltip}
-      >
-        {displayLabel}
-      </a>
-      <Button
-        variant="ghost"
-        onClick={onEdit}
-        data-tip="Edit link"
-        aria-label="Edit link"
-        className="opacity-0 group-hover:opacity-100 transition-opacity tip"
-        style={{ color: 'var(--slate)', padding: 0, display: 'grid', flexShrink: 0 }}
-      >
-        <Pencil {...ICON_PROPS} size={11} />
-      </Button>
-      <Button
-        variant="ghost"
-        onClick={onRemove}
-        data-tip="Remove link"
-        aria-label="Remove link"
-        className="tip"
-        style={{ color: 'var(--slate)', padding: 0, display: 'grid', flexShrink: 0, opacity: 0.7 }}
-      >
-        <X {...ICON_PROPS} size={12} />
-      </Button>
-    </span>
+      <span className="flex items-center gap-1.5" style={{ flexShrink: 0 }}>
+        <span className="tip" data-tip="Pinned link" aria-label="Pinned link" role="img" style={{ color: 'var(--muted)', display: 'grid' }}>
+          <Pin {...ICON_PROPS} size={11} />
+        </span>
+        <Button
+          variant="ghost"
+          onClick={onEdit}
+          data-tip="Edit link"
+          aria-label="Edit link"
+          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity tip"
+          style={{ color: 'var(--slate)', padding: 0, display: 'grid' }}
+        >
+          <Pencil {...ICON_PROPS} size={11} />
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={onRemove}
+          data-tip="Remove link"
+          aria-label="Remove link"
+          className="tip opacity-60 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+          style={{ color: 'var(--slate)', padding: 0, display: 'grid' }}
+        >
+          <X {...ICON_PROPS} size={12} />
+        </Button>
+      </span>
+    </div>
   )
 }
 
@@ -267,11 +276,11 @@ export default function KeyLinksEditor({ links, onSave, hideLabel = false, maxSl
         </label>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-1.5">
         {populated.map((link, idx) => {
           if (editingIdx === idx) {
             return (
-              <div key={`edit-${idx}`} style={{ flexBasis: '100%', minWidth: 240 }}>
+              <div key={`edit-${idx}`}>
                 <LinkForm
                   initial={link}
                   onSave={(v) => handleEditSave(idx, v)}
@@ -291,7 +300,7 @@ export default function KeyLinksEditor({ links, onSave, hideLabel = false, maxSl
         })}
 
         {addingNew && (
-          <div style={{ flexBasis: '100%', minWidth: 240 }}>
+          <div>
             <LinkForm
               initial={{ url: null, desc: null }}
               onSave={handleAdd}
@@ -319,7 +328,7 @@ export default function KeyLinksEditor({ links, onSave, hideLabel = false, maxSl
             } as React.CSSProperties}
           >
             <Plus {...ICON_PROPS} size={11} />
-            {populated.length === 0 ? 'Add a key link' : 'Add another'}
+            {populated.length === 0 ? 'Add a key link' : 'Add key link'}
           </Button>
         )}
       </div>

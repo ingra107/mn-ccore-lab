@@ -69,7 +69,9 @@ export function stripConsortiumPrefix(title: string): { clean: string; consortiu
   ]
   for (const re of patterns) {
     const m = title.match(re)
-    if (m && m[2]) {
+    // A remainder that starts with "(" is the acronym's own expansion
+    // ("MNCCORE (Minnesota ...)"), not a sub-project title: keep the name whole.
+    if (m && m[2] && !m[2].trim().startsWith('(')) {
       return {
         clean: m[2].trim(),
         consortium: m[1].toUpperCase().replace(/-/g, ''),
