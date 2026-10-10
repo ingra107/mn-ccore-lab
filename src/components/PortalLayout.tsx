@@ -31,13 +31,6 @@ export default function PortalLayout() {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const { showHelp, setShowHelp, gPending } = useKeyboardShortcuts()
   useQuickAddShortcut(useCallback(() => setQuickAddOpen(true), []))
-  // The More drawer (phone/tablet) opens quick add through this event, since
-  // the floating button is desktop-only.
-  useEffect(() => {
-    const open = () => setQuickAddOpen(true)
-    window.addEventListener('mn-ccore:open-quick-add', open)
-    return () => window.removeEventListener('mn-ccore:open-quick-add', open)
-  }, [])
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
     return localStorage.getItem('mn-ccore-sidebar-collapsed') === 'true'

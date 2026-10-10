@@ -249,7 +249,9 @@ async function auditTasks(ctx: Ctx) {
       finding(ctx, 'INFO', '1.3 GlobalQuickAdd FAB not found — creation flow moved off MyTasks; needs separate test path')
       return
     }
-    await fab.click()
+    // The FAB is lg+ only; below that, open the modal through the same global event the More drawer uses.
+    if (await fab.isVisible()) await fab.click()
+    else await page.evaluate(() => window.dispatchEvent(new Event('mn-ccore:open-quick-add')))
     await page.waitForTimeout(500)
     await snap(ctx, 'quickadd-modal-open', 400)
 

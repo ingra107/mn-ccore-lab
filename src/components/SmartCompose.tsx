@@ -551,7 +551,7 @@ export default function SmartCompose(props: SmartComposeProps) {
                   ? `color-mix(in srgb, var(--gold) ${isDark ? 12 : 10}%, transparent)`
                   : 'transparent',
                 color: hermesLocked
-                  ? (isDark ? 'var(--gold)' : 'var(--gold)')
+                  ? 'var(--gold)'
                   : (isDark ? INK_DIM_DARK : 'var(--slate)'),
                 fontSize: 10,
                 fontWeight: hermesLocked ? 600 : 400,

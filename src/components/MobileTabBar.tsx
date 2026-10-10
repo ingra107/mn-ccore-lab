@@ -15,6 +15,7 @@ import { PATHS } from '../constants/paths'
 import { PORTAL_PAGE_LABELS, PORTAL_PAGE_ICONS } from '../constants/pageLabels'
 import { ICON_PROPS } from '../lib/iconProps'
 import { useAuth } from '../hooks/useAuth'
+import { QUICK_ADD_EVENT, openGlobalQuickAdd } from './GlobalQuickAddModal'
 
 const BugReportModal = lazyRoute(() => import('./BugReportModal'))
 
@@ -228,14 +229,14 @@ export default function MobileTabBar() {
                 Capture
               </div>
               {[
-                { label: 'Quick add task', icon: Plus, event: 'mn-ccore:open-quick-add' },
+                { label: 'Quick add task', icon: Plus, event: QUICK_ADD_EVENT },
                 { label: 'Quick capture to inbox', icon: Inbox, event: 'mn-ccore:open-inbox' },
               ].map(({ label, icon: Icon, event }) => (
                 <button
                   key={event}
                   type="button"
                   data-testid={event === 'mn-ccore:open-inbox' ? 'more-quick-capture-inbox' : 'more-quick-add'}
-                  onClick={() => { setOverflowOpen(false); window.dispatchEvent(new CustomEvent(event)) }}
+                  onClick={() => { setOverflowOpen(false); if (event === QUICK_ADD_EVENT) openGlobalQuickAdd(); else window.dispatchEvent(new CustomEvent(event)) }}
                   className="flex items-center gap-3 rounded-md"
                   style={{
                     padding: '10px 12px',

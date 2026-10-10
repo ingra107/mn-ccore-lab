@@ -1919,11 +1919,12 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
        child made every Meetings list card shrink to 44px and overlap
      - .tk-hov / .today-plan-btn: inline-flex pin; a 44px floor inflated the
        last title line of every task card
-     - [role="tab"] and .tk-seg items: segmented controls
+     - .tk-seg items: segmented controls (real [role=tab] tabs keep the floor)
      - Select/Deselect task checkboxes (inline 18px squares)
-     - anything inside .tk: the Today skin sizes its own controls */
+     - named .tk controls (btn, pill, join, ck, wo, si, rmore): the Today
+       skin sizes them; they get the hit-area ::before below */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) and (min-width: 769px) {
-  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip):not(.tk-card):not(.tk-mlc):not(.tk-hov):not(.today-plan-btn):not([role="tab"]):not([aria-label="Select task"]):not([aria-label="Deselect task"]):not(.tk button),
+  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip):not(.tk-card):not(.tk-mlc):not(.tk-hov):not(.today-plan-btn):not([aria-label="Select task"]):not([aria-label="Deselect task"]):not(.tk-seg button):not(.tk .tk-btn):not(.tk .tk-pill):not(.tk .tk-join):not(.tk .tk-joinq):not(.tk .tk-ck):not(.tk .tk-wo):not(.tk .tk-si):not(.tk .tk-rmore),
   a.inline-link,
   select,
   .filter-chip,
@@ -1990,6 +1991,15 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 .done-box,
 .stage-dot,
 .tk .tk-hov,
+.today-plan-btn,
+.tk button.tk-btn,
+.tk button.tk-pill,
+.tk button.tk-join,
+.tk button.tk-joinq,
+.tk button.tk-ck,
+.tk button.tk-wo,
+.tk button.tk-si,
+.tk button.tk-rmore,
 .tk-seg button,
 button[aria-label="Select task"],
 button[aria-label="Deselect task"] {
@@ -1998,6 +2008,15 @@ button[aria-label="Deselect task"] {
 .done-box::before,
 .stage-dot::before,
 .tk .tk-hov::before,
+.today-plan-btn::before,
+.tk button.tk-btn::before,
+.tk button.tk-pill::before,
+.tk button.tk-join::before,
+.tk button.tk-joinq::before,
+.tk button.tk-ck::before,
+.tk button.tk-wo::before,
+.tk button.tk-si::before,
+.tk button.tk-rmore::before,
 .tk-seg button::before,
 button[aria-label="Select task"]::before,
 button[aria-label="Deselect task"]::before {
@@ -2010,6 +2029,7 @@ button[aria-label="Deselect task"]::before {
   .done-box::before,
   .stage-dot::before,
   .tk .tk-hov::before,
+  .today-plan-btn::before,
   button[aria-label="Select task"]::before,
   button[aria-label="Deselect task"]::before {
     inset: -13px;
