@@ -74,7 +74,10 @@ function d1Flush(label: string) {
   writeFileSync(sqlFile, pendingSql.join('\n'))
   const forwardFile = sqlFile.replace(/\\/g, '/')
   const forwardCfg = WRANGLER_CONFIG.replace(/\\/g, '/')
-  const cmd = `npx wrangler d1 execute ${DB_NAME} --local --config="${forwardCfg}" --file="${forwardFile}"` // wrangler-d1-allowed: --local Miniflare, no cloud auth
+  // HUB_LOCAL_D1_PERSIST: same separate local D1 the bootstrap used (run-journey-spec.mjs --gate).
+  const persist = process.env.HUB_LOCAL_D1_PERSIST
+  const persistFlag = persist ? ` --persist-to="${persist.replace(/\\/g, '/')}"` : ''
+  const cmd = `npx wrangler d1 execute ${DB_NAME} --local --config="${forwardCfg}" --file="${forwardFile}"${persistFlag}` // wrangler-d1-allowed: --local Miniflare, no cloud auth
   const env = { ...process.env }
   delete env.CLOUDFLARE_API_TOKEN
   delete env.CLOUDFLARE_ACCOUNT_ID

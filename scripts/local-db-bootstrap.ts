@@ -40,7 +40,7 @@
  */
 
 import { existsSync, rmSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
-import { join, dirname } from 'node:path'
+import { join, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execSync } from 'node:child_process'
 
@@ -57,7 +57,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = join(__dirname, '..')
 const WRANGLER_CONFIG = join(REPO_ROOT, 'wrangler.local.toml')
 const DB_NAME = 'mnccore-lab'
-const LOCAL_D1_STATE = join(REPO_ROOT, '.wrangler/state/v3/d1')
+// HUB_LOCAL_D1_PERSIST (set by scripts/run-journey-spec.mjs --gate) moves the
+// local D1 to its own directory so the deploy gate never wipes or shares the
+// dev database another wrangler dev may be holding. Unset = wrangler's default.
+const PERSIST = process.env.HUB_LOCAL_D1_PERSIST
+const PERSIST_FLAG = PERSIST ? ` --persist-to="${PERSIST.replace(/\\/g, '/')}"` : ''
+const LOCAL_D1_STATE = join(PERSIST ? resolve(REPO_ROOT, PERSIST) : join(REPO_ROOT, '.wrangler/state'), 'v3/d1')
 const STRIP_TMP_DIR = join(REPO_ROOT, '.wrangler', '_bootstrap-strip-tmp')
 
 /**
@@ -108,7 +113,7 @@ function applyBundle() {
   mkdirSync(dirname(BUNDLE_PATH), { recursive: true })
   writeFileSync(BUNDLE_PATH, bundleParts.join('\n\n'), 'utf8')
   const forwardPath = BUNDLE_PATH.replace(/\\/g, '/')
-  const cmd = `npx wrangler d1 execute ${DB_NAME} --local --config="${WRANGLER_CONFIG.replace(/\\/g, '/')}" --file="${forwardPath}"` // wrangler-d1-allowed: --local Miniflare, no cloud auth
+  const cmd = `npx wrangler d1 execute ${DB_NAME} --local --config="${WRANGLER_CONFIG.replace(/\\/g, '/')}" --file="${forwardPath}"${PERSIST_FLAG}` // wrangler-d1-allowed: --local Miniflare, no cloud auth
   process.stdout.write(`[local-db-bootstrap] applying bundle (${bundleParts.length} files, one invocation) ... `)
   try {
     execSync(cmd, { stdio: ['ignore', 'pipe', 'pipe'], env: wranglerEnv() })
