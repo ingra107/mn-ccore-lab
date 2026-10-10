@@ -17,7 +17,7 @@ import {
   GROUP_META, GROUP_ORDER,
   ACCENT_GOLD, ACCENT_CORAL,
   INK_MUTED, INK_DIM,
-  withAlpha, isTaskDone,
+  isTaskDone,
   type GroupKey,
 } from '../constants'
 import { isOverdue } from '../../../lib/dateUtils'
@@ -90,9 +90,9 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
           <section key={gkey} style={{ marginBottom: 18, overflow: 'hidden' }}>
             <button
               onClick={() => toggleC(gkey)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', borderBottom: isCollapsed ? 'none' : `1px solid ${withAlpha(meta.color, 15)}` }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', borderBottom: isCollapsed ? 'none' : '1px solid var(--border-subtle)' }}
             >
-              <span style={{ fontSize: 14, transition: 'transform 200ms', display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0)', color: meta.color, width: 10 }}>▾</span>
+              <span style={{ fontSize: 14, transition: 'transform 200ms', display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0)', color: 'var(--sk-t3)', width: 10 }}>▾</span>
               <h3 style={{ fontSize: 14, fontWeight: 500, color: INK_MUTED, margin: 0, whiteSpace: 'nowrap' }}>{meta.label}</h3>
               {/* N1.20 — single-line description with ellipsis; on phones the
                   label and desc were double-wrapping into a 4-line header. */}

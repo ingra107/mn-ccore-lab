@@ -207,7 +207,7 @@ export function dueLabelText(due: string, overdue: boolean): string {
   const todayNoon = () => { const d = new Date(); d.setHours(12, 0, 0, 0); return d }
 
   if (overdue) {
-    const days = Math.round((todayNoon().getTime() - noon(dueDay).getTime()) / 86400000)
+    const days = civilDaysOverdue(dueDay)
     return days <= 1 ? 'Yesterday' : `${days}d overdue`
   }
   if (dueDay === today) return 'Today'

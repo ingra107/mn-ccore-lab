@@ -88,9 +88,15 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
     }
     measure()
     const ro = new ResizeObserver(measure)
-    Array.from(sp.children).forEach((c) => ro.observe(c))
+    const seen = new Set<Element>()
+    const watch = () => Array.from(sp.children).forEach((c) => { if (!seen.has(c)) { seen.add(c); ro.observe(c) } })
+    watch()
     ro.observe(el)
-    return () => ro.disconnect()
+    // A sibling added later (phone filter panel, banner) moves the list without
+    // resizing any observed node; re-measure and observe the newcomer.
+    const mo = new MutationObserver(() => { watch(); measure() })
+    mo.observe(sp, { childList: true, subtree: true })
+    return () => { ro.disconnect(); mo.disconnect() }
   }, [pageScrollRef, filtered.length])
 
   useEffect(() => {

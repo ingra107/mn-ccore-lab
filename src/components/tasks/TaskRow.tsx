@@ -45,7 +45,7 @@ import { dueLabelCompact, dueTone, isOverdue } from '../../lib/dateUtils'
 import { CardRow, MilestoneCardRow } from './TaskCardRow'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
-// Reserved priority-dot color. urgent/high carry a colored dot; everything
+// Reserved priority-dot color. only urgent carries a colored dot; everything
 // else gets a transparent dot of the SAME width so every title starts at the
 // identical x (handoff rule #6 — one fixed left edge).
 // Urgency rail colours (2026-07-22; Urgent-only per Nick 2026-10-09, "gray except Urgent"): 'medium'

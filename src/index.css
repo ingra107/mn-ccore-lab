@@ -2807,9 +2807,11 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    slots flush right; only the project name gives way (ellipsis). Wrapping sent
    the slots to a left-aligned third line (site audit F07). */
 @media (max-width:640px){
-  .tk .tk-ctx{flex-wrap:nowrap}
+  .tk .tk-ctx{flex-wrap:nowrap;column-gap:6px}
   .tk .tk-ctx .tk-cs{max-width:none}
-  .tk .tk-ctx>:not(.tk-cs):not(.tk-sp){flex-shrink:0}
+  /* Pills shrink and ellipsize too; faces and the fixed slots keep their width. */
+  .tk .tk-ctx>:not(.tk-cs):not(.tk-sp):not(.tk-faces):not(.tk-slots){flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tk .tk-ctx>.tk-faces,.tk .tk-ctx>.tk-slots{flex-shrink:0}
   .tk .tk-lks{min-width:52px}
 }
 

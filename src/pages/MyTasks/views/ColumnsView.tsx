@@ -25,7 +25,7 @@ import {
   GROUP_META, GROUP_ORDER,
   ACCENT_ORANGE,
   INK_DIM, INK_MUTED, PAGE_BG,
-  daysSince, withAlpha, isTaskDone,
+  daysSince, isTaskDone,
   type GroupKey,
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
@@ -115,7 +115,7 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
           const incomplete = tasks.filter((t) => !isTaskDone(t)).length
           return (
             <div key={gkey} style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 4px 8px', borderBottom: `1px solid ${withAlpha(meta.color, 15)}`, marginBottom: 8, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 4px 8px', borderBottom: '1px solid var(--border-subtle)', marginBottom: 8, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
                 <h3 style={{ fontSize: 13, fontWeight: 500, color: INK_MUTED, margin: 0 }}>{meta.label}</h3>
                 <span style={{ fontSize: 11, color: INK_DIM, marginLeft: 'auto' }}>
                   {incomplete}{tasks.length > incomplete && <span> · {tasks.length - incomplete}✓</span>}
