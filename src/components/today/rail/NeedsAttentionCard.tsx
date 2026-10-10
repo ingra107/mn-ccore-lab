@@ -8,7 +8,7 @@
 
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { daysSince } from '../constants'
+import { civilDaysOverdue } from '../../../lib/dateUtils'
 import { CollapseChevron } from '../SectionCollapseToggle'
 import { collapseToggleProps } from '../collapseToggleProps'
 import { PATHS } from '../../../constants/paths'
@@ -39,7 +39,7 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
             <div style={{ fontSize: 12, color: 'var(--sk-t3)' }}>None. Clean slate.</div>
           )}
           {overdueTasks.slice(0, 5).map((t) => {
-            const days = daysSince(t.due_date)
+            const days = t.due_date ? civilDaysOverdue(t.due_date) : NaN
             return (
               <div key={t.id} className="tk-rli">
                 {/* C13 TaskTitle — surfaces [Carried forward] chip */}

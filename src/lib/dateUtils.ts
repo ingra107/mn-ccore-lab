@@ -112,6 +112,15 @@ export function civilDaysUntil(dateStr: string, now: Date = new Date(), zone?: s
   return Math.round((toUtcDay(dateStr) - toUtcDay(todayCivil(zone, now))) / 86400000)
 }
 
+/**
+ * Whole calendar days a date-only `due_date` is past (0 = due today, 3 = three
+ * days ago). Use this, never `daysSince`, for due dates: `daysSince` parses a
+ * date-only string as UTC midnight, which adds a day after 19:00 CDT.
+ */
+export function civilDaysOverdue(dateStr: string, now: Date = new Date(), zone?: string): number {
+  return Math.max(0, -civilDaysUntil(dateStr, now, zone))
+}
+
 /** `YYYY-MM-DD` plus `n` calendar days (negative ok), no timezone involved. */
 export function addDaysYmd(ymd: string, n: number): string {
   const [y, m, d] = ymd.slice(0, 10).split('-').map(Number)
@@ -198,7 +207,7 @@ export function dueLabelText(due: string, overdue: boolean): string {
   const todayNoon = () => { const d = new Date(); d.setHours(12, 0, 0, 0); return d }
 
   if (overdue) {
-    const days = Math.round((todayNoon().getTime() - noon(dueDay).getTime()) / 86400000)
+    const days = civilDaysOverdue(dueDay)
     return days <= 1 ? 'Yesterday' : `${days}d overdue`
   }
   if (dueDay === today) return 'Today'

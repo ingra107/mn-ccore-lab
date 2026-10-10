@@ -80,7 +80,6 @@ import { handlePBCapture, handlePBDefer, handleAddToDispatch, handleGetPendingDi
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
 import { handleGetSessions } from './routes/sessions';
 import { handleLane3List } from './routes/lane3';
-import { handleGetTodayMd } from './routes/pb-today'; // POST /api/pb/today retired 2026-05-05 (5.9)
 import { handlePBHealth } from './routes/pb-health';
 import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleAttentionManuscripts } from './routes/revisions';
 import { handleGetMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone } from './routes/mentee-milestones';
@@ -138,6 +137,9 @@ type AppEnv = {
     /** Who the route gate sees (member / non-member / anonymous), set by the
      *  auth middleware. Read only by bindRegistryToHono and /api/auth/me. */
     callerKind: CallerKind;
+    /** This request carried the matching X-Test-Mode-Key. Set by the test-mode
+     *  middleware; read by onError to decide whether a 500 may show its message. */
+    testKeyVerified: boolean;
   };
 };
 
@@ -178,8 +180,9 @@ const PUBLISHED_ONLY: AnonRowFilter = (row) => row.status === 'Published';
 // SEC-10.1: In production, suppress raw error messages (SQL/D1/stack details
 // that could leak internal schema). Return a sanitized envelope with a
 // correlation request_id so support can cross-reference console.error logs.
-// In dev / test (TEST_MODE_KEY present or ENVIRONMENT=development) the full
-// message is included for debuggability.
+// The full message is included only for ENVIRONMENT=development or a request
+// that proved the test key. TEST_MODE_KEY is set on production (headless test
+// access), so its mere presence must not switch every prod 500 to raw text.
 // ─────────────────────────────────────────────────────────────────────────────
 app.onError((err, c) => {
   const message = err instanceof Error ? err.message : 'Internal server error';
@@ -188,8 +191,8 @@ app.onError((err, c) => {
     .map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 12);
 
   // Determine if we're in a dev/test context where detailed errors are safe.
-  const env = c.get('env') as unknown as { ENVIRONMENT?: string; TEST_MODE_KEY?: string } | undefined;
-  const isDev = env?.ENVIRONMENT === 'development' || Boolean(env?.TEST_MODE_KEY);
+  const env = c.get('env') as unknown as { ENVIRONMENT?: string } | undefined;
+  const isDev = env?.ENVIRONMENT === 'development' || c.get('testKeyVerified') === true;
 
   // Always log full details server-side for correlation.
   const url = new URL(c.req.url);
@@ -229,6 +232,7 @@ app.options('*', (c) => new Response(null, {
 app.use('*', async (c, next) => {
   let env: Env = c.env;
   const testModeKey = (env as unknown as { TEST_MODE_KEY?: string }).TEST_MODE_KEY;
+  c.set('testKeyVerified', Boolean(testModeKey) && c.req.header('X-Test-Mode-Key') === testModeKey);
   if (
     c.req.header('X-Test-Mode') === 'true'
     && env.DB_TEST
@@ -579,13 +583,6 @@ defineRoute({
   auth: 'pi',
   entity: 'pb',
   handler: (c) => handleGetPendingDispatch(E(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/pb/today',
-  auth: 'pi',
-  entity: 'pb',
-  handler: (c) => handleGetTodayMd(E(c)),
 });
 // PI-gated: sessions + lane3 contain private brain.db data. R(c) carries JWT/API-key
 // so isPiRequest inside the handler can distinguish PI/service from team callers.
@@ -2772,7 +2769,7 @@ defineRoute({
   entity: 'pb',
   handler: (c) => handleBulkCreatePBSessions(R(c), USER(c), E(c)),
 });
-// POST /api/pb/today retired 2026-05-05 (5.9): 0 callers; GET preserved for frontend use
+// /api/pb/today removed 2026-10-09 (sweep4 N3)
 
 // Impact check — route removed 2026-05-05 (5.3b); handleCheckImpact used internally by cron at line 1269
 

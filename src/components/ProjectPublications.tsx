@@ -24,7 +24,7 @@ import { useLinkProjectPublication, useUnlinkProjectPublication } from '../hooks
 import { PUBLIC_PATHS } from '../constants/paths'
 import { PUBLICATION_ROLES, type PublicationRole } from '../../shared/publicationRoles'
 
-import { LABEL_STYLE } from './ui/labelStyle'
+import { LABEL_STYLE, LABEL_ICON_COLOR } from './ui/labelStyle'
 
 const ROLE_OPTIONS: GhostSelectOption[] = PUBLICATION_ROLES.map((r) => ({ value: r, label: r[0].toUpperCase() + r.slice(1) }))
 
@@ -64,7 +64,7 @@ export default function ProjectPublications({ projectSlug, projectTitle, isPi, v
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <BookOpenText {...ICON_PROPS} size={13} style={{ color: 'var(--teal)' }} />
+        <BookOpenText {...ICON_PROPS} size={13} style={{ color: LABEL_ICON_COLOR }} />
         <span style={LABEL_STYLE}>{isCard ? 'Published' : 'Published from this project'}</span>
         {links.length > 0 && (
           <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
@@ -102,6 +102,9 @@ export default function ProjectPublications({ projectSlug, projectTitle, isPi, v
               options={pickerOptions}
               onChange={(pubId) => linkMutation.mutate({ publication_id: pubId, role })}
             />
+            {/* Visible label: the role is chosen BEFORE the link is made, so a
+                bare "Primary" dropdown reads as stray. */}
+            <span style={{ fontSize: 'var(--label-size)', color: 'var(--muted)' }}>as</span>
             <GhostSelect
               aria-label="Publication role"
               value={role}

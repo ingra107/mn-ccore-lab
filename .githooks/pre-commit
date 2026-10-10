@@ -300,17 +300,41 @@ fi
 # tests) had to be run ad-hoc via `npx tsx`, outside any gate. #546 is the
 # concrete cost of an untested seam shipping through a green-but-never-run
 # suite. Scoped to fire only when api/, src/, a vitest config, or
-# package.json is staged — keeps doc-only / Scratch-only commits fast. All
-# three suites combined run in ~5-10s on a full checkout.
-if git diff --cached --name-only --diff-filter=ACMR \
-        | grep -qE "^api/.*\.tsx?$|^src/.*\.tsx?$|^vitest\.config.*\.ts$|^package\.json$"; then
-    echo "[hub-precommit] api/ or src/ staged -- running vitest gate (api + lib + src)..."
-    if ! npm run --silent test:vitest; then
-        echo ""
-        echo "BLOCKED: vitest suite failed (api/lib/src). Fix the code or the test"
-        echo "before committing -- see CLAUDE.md 'Testing' section for the three configs."
-        exit 1
-    fi
+# package.json is staged — keeps doc-only / Scratch-only commits fast.
+# Since SWEEP4 B4 (2026-10-09) shared/ also fires it and each side runs only
+# its own config(s). CI timings per config: api ~26s, lib ~10s, src ~20s
+# (browser mode); local wall time varies by machine.
+#   api-only commit  -> test:api
+#   src-only commit  -> test:lib + test:src
+# Cross-side inputs run all three, because a test on one side imports them
+# from the other (enumerated by grep at HEAD):
+#   shared/                               imported by api/ and src/ (src/lib/__tests__ too)
+#   pb-schema (submodule pointer)         imported by api/ and src/lib/__tests__/rowContract.test.ts
+#   src/lib/__tests__/link-fixtures.json  read by api/lib/artifact-link-mirror.test.ts
+#   src/hooks/mutations/utils.ts          imported by api/routes/optimistic-rollback.test.ts
+#   vitest.config*.ts, package.json       shape every config
+staged_all=$(git diff --cached --name-only --diff-filter=ACMR)
+vt_both=$(printf '%s\n' "$staged_all" | grep -E "^shared/|^pb-schema$|^src/lib/__tests__/link-fixtures[.]json$|^src/hooks/mutations/utils[.]ts$|^vitest[.]config.*[.]ts$|^package[.]json$" || true)
+vt_api=$(printf '%s\n' "$staged_all" | grep -E "^api/.*[.]tsx?$" || true)
+vt_src=$(printf '%s\n' "$staged_all" | grep -E "^src/.*[.]tsx?$" || true)
+vt_scripts=""
+if [ -n "$vt_both" ] || { [ -n "$vt_api" ] && [ -n "$vt_src" ]; }; then
+    vt_scripts="test:api test:lib test:src"
+elif [ -n "$vt_api" ]; then
+    vt_scripts="test:api"
+elif [ -n "$vt_src" ]; then
+    vt_scripts="test:lib test:src"
+fi
+if [ -n "$vt_scripts" ]; then
+    echo "[hub-precommit] vitest gate: $vt_scripts"
+    for vt_script in $vt_scripts; do
+        if ! npm run --silent "$vt_script"; then
+            echo ""
+            echo "BLOCKED: vitest suite failed ($vt_script). Fix the code or the test"
+            echo "before committing -- see CLAUDE.md 'Testing' section for the three configs."
+            exit 1
+        fi
+    done
     # eslint zero-error ratchet (backlog #174 burn-down, 2026-07-16): src/ reached
     # 0 errors via a 4-agent wave; this gate keeps it there. eslint exits nonzero
     # only on ERRORS (warnings pass), so this is the errors-stay-zero contract.
