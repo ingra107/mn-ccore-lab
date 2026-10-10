@@ -33,6 +33,14 @@ name = "mn-ccore-lab-api"
 # calls it. Crons and the service binding do not need it.
 workers_dev = false
 
+# Workers Logs: keeps console.error from the cron runs only. Before this the
+# ledger prune error lived only in console.error (July to 10-08) and was lost.
+# The NotificationHub DO runs in hub-realtime (workers/hub-realtime/wrangler.toml),
+# which this block does not cover. /api is served by the Pages Function, which has
+# its own logging setting. Syntax: developers.cloudflare.com/workers/observability/logs/workers-logs
+[env.production.observability]
+enabled = true
+
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "mnccore-lab"

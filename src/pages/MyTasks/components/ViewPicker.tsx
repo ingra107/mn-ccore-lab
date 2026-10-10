@@ -7,19 +7,22 @@
 
 import { ACCENT_TEAL, INK_MUTED, withAlpha, type ViewMode } from '../constants'
 
-export function ViewPicker({ view, setView }: { view: ViewMode; setView: (v: ViewMode) => void }) {
-  const views: { k: ViewMode; l: string; icon: string; desc: string }[] = [
+export function ViewPicker({ view, setView, isPhone = false }: { view: ViewMode; setView: (v: ViewMode) => void; isPhone?: boolean }) {
+  const allViews: { k: ViewMode; l: string; icon: string; desc: string }[] = [
     { k: 'list',    l: 'List',    icon: '≡', desc: 'Task cards, the same as Today · keyboard-first' },
     { k: 'table',   l: 'Table',   icon: '▤', desc: 'Dense table · click a header to sort' },
     { k: 'lanes',   l: 'Lanes',   icon: '☰', desc: 'Stacked lanes · collapse and peek' },
     { k: 'columns', l: 'Columns', icon: '⊞', desc: 'Kanban board · all groups side-by-side' },
     { k: 'board',   l: 'Board',   icon: '▦', desc: 'Status board · drag to change status' },
   ]
+  // Columns and Board cannot render on a phone (index.tsx falls back to List for
+  // deep links); do not offer choices that never show.
+  const views = isPhone ? allViews.filter((v) => v.k !== 'columns' && v.k !== 'board') : allViews
   return (
     // P2-6: pill height is content-driven (minHeight, not fixed) so the touch
     // 44px button floor can grow the segments on coarse-pointer devices without
     // clipping the labels inside a fixed 26px box. Desktop stays compact.
-    <div style={{ display: 'inline-flex', alignItems: 'stretch', border: '1px solid var(--border-strong)', borderRadius: 999, background: 'rgba(255,255,255,0.02)', overflow: 'hidden', minHeight: 26 }}>
+    <div style={{ display: 'inline-flex', alignItems: 'stretch', border: '1px solid var(--border-strong)', borderRadius: 999, background: 'transparent', overflow: 'hidden', minHeight: 26 }}>
       {views.map((v, i) => {
         const active = view === v.k
         return (

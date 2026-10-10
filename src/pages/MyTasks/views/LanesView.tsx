@@ -17,7 +17,7 @@ import {
   GROUP_META, GROUP_ORDER,
   ACCENT_GOLD, ACCENT_CORAL,
   INK_MUTED, INK_DIM,
-  withAlpha, isTaskDone,
+  isTaskDone,
   type GroupKey,
 } from '../constants'
 import { isOverdue } from '../../../lib/dateUtils'
@@ -90,11 +90,10 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
           <section key={gkey} style={{ marginBottom: 18, overflow: 'hidden' }}>
             <button
               onClick={() => toggleC(gkey)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', borderBottom: isCollapsed ? 'none' : `1px solid ${withAlpha(meta.color, 15)}` }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', borderBottom: isCollapsed ? 'none' : '1px solid var(--border-subtle)' }}
             >
-              <span style={{ fontSize: 14, transition: 'transform 200ms', display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0)', color: meta.color, width: 10 }}>▾</span>
-              <span style={{ fontSize: 16 }}>{meta.icon}</span>
-              <h3 style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: meta.color, margin: 0, whiteSpace: 'nowrap' }}>{meta.label}</h3>
+              <span style={{ fontSize: 14, transition: 'transform 200ms', display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0)', color: 'var(--sk-t3)', width: 10 }}>▾</span>
+              <h3 style={{ fontSize: 14, fontWeight: 500, color: INK_MUTED, margin: 0, whiteSpace: 'nowrap' }}>{meta.label}</h3>
               {/* N1.20 — single-line description with ellipsis; on phones the
                   label and desc were double-wrapping into a 4-line header. */}
               <span style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic', marginLeft: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flexShrink: 1 }}>{meta.desc}</span>
@@ -131,7 +130,7 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
                 {hidden > 0 && (
                   <button
                     onClick={() => toggleP(gkey)}
-                    style={{ margin: '6px 14px 12px', padding: '6px 10px', fontSize: 11.5, fontWeight: 500, border: '1px dashed rgba(255,255,255,0.08)', borderRadius: 4, background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: 'pointer', width: 'calc(100% - 28px)', textAlign: 'center' }}
+                    style={{ margin: '6px 14px 12px', padding: '6px 10px', fontSize: 11.5, fontWeight: 500, border: '1px dashed var(--border-subtle)', borderRadius: 4, background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: 'pointer', width: 'calc(100% - 28px)', textAlign: 'center' }}
                   >{isPeek ? '▴ show less' : `▾ +${hidden} more`}</button>
                 )}
               </div>

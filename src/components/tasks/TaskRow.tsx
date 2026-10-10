@@ -38,17 +38,17 @@ import { useUnseenActivity } from '../../hooks/useEntitySeen'
 import { AttentionChip } from './AttentionChip'
 import TaskTitle from './TaskTitle'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN, ACCENT_BLUE,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_GREEN, ACCENT_BLUE,
   INK, INK_MUTED, withAlpha, type MilestoneRole, type MilestoneEntry,
 } from '../../lib/taskGrouping'
 import { dueLabelCompact, dueTone, isOverdue } from '../../lib/dateUtils'
 import { CardRow, MilestoneCardRow } from './TaskCardRow'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
-// Reserved priority-dot color. urgent/high carry a colored dot; everything
+// Reserved priority-dot color. only urgent carries a colored dot; everything
 // else gets a transparent dot of the SAME width so every title starts at the
 // identical x (handoff rule #6 — one fixed left edge).
-// Urgency rail colours (2026-07-22). ONLY urgent + high get a rail: 'medium'
+// Urgency rail colours (2026-07-22; Urgent-only per Nick 2026-10-09, "gray except Urgent"): 'medium'
 // and 'low' are the shapeless middle of the scale and painting them turns the
 // rail back into noise. The old map carried medium/gold + low/dim entries that
 // were UNREACHABLE — the dot they fed only ever rendered urgent/high — which is
@@ -56,7 +56,6 @@ import type { TaskRow as TaskRowData } from '../../lib/api'
 // about. Absent rail = "not urgent", and that reads fine.
 const PRIORITY_COLOR: Record<string, string> = {
   urgent: ACCENT_CORAL,
-  high: ACCENT_ORANGE,
 }
 
 // ── DoneBox — the canonical complete control. check = DONE, same everywhere ──
@@ -135,7 +134,7 @@ function ProjectTag({ project }: { project: { name: string; slug: string } | nul
       onClick={(e) => e.stopPropagation()}
       aria-label={`Open ${project.name}`}
       className="link-affordance"
-      style={{ fontSize: 11, color: ACCENT_TEAL, opacity: 0.92, flexShrink: 0, whiteSpace: 'nowrap', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}
+      style={{ fontSize: 11, color: 'var(--sk-t3)', flexShrink: 0, whiteSpace: 'nowrap', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}
     >
       {project.name}
     </Link>

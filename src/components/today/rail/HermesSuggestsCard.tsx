@@ -17,7 +17,7 @@
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Alert).
 
 import { useState } from 'react'
-import { daysSince } from '../constants'
+import { civilDaysOverdue } from '../../../lib/dateUtils'
 import { CollapseChevron } from '../SectionCollapseToggle'
 import { collapseToggleProps } from '../collapseToggleProps'
 import type { TaskRow } from '../../../lib/api'
@@ -48,7 +48,7 @@ export function HermesSuggestsCard({ overdueTasks, stalledProjects, menteesWithD
   if (overdueTasks.length > 0) {
     const longest = [...overdueTasks].sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))[0]
     if (longest) {
-      const days = daysSince(longest.due_date)
+      const days = longest.due_date ? civilDaysOverdue(longest.due_date) : NaN
       // Short title first: the long title is what leaked here (Nick: display
       // short names everywhere).
       bullets.push(`Tackle "${(longest.short_title || longest.title).slice(0, 60)}" — ${Number.isFinite(days) ? `${days}d overdue` : 'overdue'}.`)

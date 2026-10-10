@@ -37,8 +37,8 @@ const columns = [
 
 const priorityConfig: Record<string, { label: string; color: string; bg: string }> = {
   urgent: { label: 'Urgent', color: 'var(--maroon)', bg: 'var(--maroon-hover)' },
-  high: { label: 'High', color: 'var(--orange)', bg: 'var(--orange-hover)' },
-  medium: { label: 'Medium', color: 'var(--gold)', bg: 'var(--gold-hover)' },
+  high: { label: 'High', color: 'var(--slate)', bg: 'rgba(100,116,139,0.06)' },
+  medium: { label: 'Medium', color: 'var(--slate)', bg: 'rgba(100,116,139,0.06)' },
   low: { label: 'Low', color: 'var(--slate)', bg: 'rgba(100,116,139,0.06)' },
 }
 

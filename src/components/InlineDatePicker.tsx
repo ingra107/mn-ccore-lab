@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, CalendarDays } from 'lucide-react'
-import { formatShortDate, addDaysYmd } from '../lib/dateUtils'
+import { formatShortDate, addDaysYmd, dueLabelText } from '../lib/dateUtils'
 import { ICON_PROPS } from '../lib/iconProps'
 import { usePortalDropdown, type PortalDropdownPosition } from '../hooks/usePortalDropdown'
 
@@ -169,7 +169,7 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
       >
         <CalendarDays {...ICON_PROPS} size={11} />
         <span>{!value ? 'Set date' : isOverdue
-          ? (() => { const days = Math.ceil((today.getTime() - dueDate!.getTime()) / 86400000); return days === 1 ? 'Yesterday' : `${days}d ago` })()
+          ? dueLabelText(value, true)
           : isToday ? 'Today' : isTomorrow ? 'Tomorrow'
           : isThisWeek ? (() => { const days = Math.ceil((dueDate!.getTime() - today.getTime()) / 86400000); return `in ${days}d` })()
           : formatShortDate(value)

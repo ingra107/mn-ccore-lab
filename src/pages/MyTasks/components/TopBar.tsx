@@ -13,7 +13,7 @@ import { FilterChip } from './FilterChip'
 import { useIsMobile } from '../../../hooks/useIsMobile'
 import {
   GROUP_META, GROUP_ORDER,
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
+  ACCENT_TEAL, ACCENT_CORAL,
   INK, INK_MUTED, INK_DIM, withAlpha,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from '../constants'
@@ -44,14 +44,14 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
     { k: 'all', l: 'All' },
     // 'New' = your tasks you haven't opened yet (Slack-style seen; matches the
     // sidebar badge count + the gold NEW chip on rows). Drains on open.
-    { k: 'new', l: <><Sparkles {...ICON_PROPS} size={11} style={{ color: ACCENT_GOLD }} /> New</>, color: ACCENT_GOLD },
-    { k: 'today', l: <><Pin {...ICON_PROPS} size={11} style={{ color: ACCENT_GOLD }} /> Today</>, color: ACCENT_GOLD },
-    { k: 'planned', l: <><Pin {...ICON_PROPS} size={11} style={{ color: ACCENT_GOLD }} /> Planned</>, color: ACCENT_GOLD },
-    { k: 'done-today', l: <><CheckCircle2 {...ICON_PROPS} size={11} style={{ color: ACCENT_GREEN }} /> Done today</>, color: ACCENT_GREEN },
-    { k: 'overdue', l: <><AlertTriangle {...ICON_PROPS} size={11} style={{ color: ACCENT_CORAL }} /> Overdue</>, color: ACCENT_CORAL },
-    { k: 'waiting', l: <><Clock {...ICON_PROPS} size={11} style={{ color: ACCENT_ORANGE }} /> Waiting on</>, color: ACCENT_ORANGE },
-    { k: 'stale', l: <><Timer {...ICON_PROPS} size={11} style={{ color: ACCENT_ORANGE }} /> Stale</>, color: ACCENT_ORANGE },
-    { k: 'declined', l: <><ThumbsDown {...ICON_PROPS} size={11} style={{ color: ACCENT_CORAL }} /> Declined</>, color: ACCENT_CORAL },
+    { k: 'new', l: <><Sparkles {...ICON_PROPS} size={11} /> New</> },
+    { k: 'today', l: <><Pin {...ICON_PROPS} size={11} /> Today</> },
+    { k: 'planned', l: <><Pin {...ICON_PROPS} size={11} /> Planned</> },
+    { k: 'done-today', l: <><CheckCircle2 {...ICON_PROPS} size={11} /> Done today</> },
+    { k: 'overdue', l: <><AlertTriangle {...ICON_PROPS} size={11} /> Overdue</>, color: ACCENT_CORAL },
+    { k: 'waiting', l: <><Clock {...ICON_PROPS} size={11} /> Waiting on</> },
+    { k: 'stale', l: <><Timer {...ICON_PROPS} size={11} /> Stale</> },
+    { k: 'declined', l: <><ThumbsDown {...ICON_PROPS} size={11} /> Declined</> },
   ]
   const hasFilters = filter.priority || filter.project || filter.mentee || filter.group || search || quickView !== 'all'
   return (
@@ -90,7 +90,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search tasks…"
           // N1.20 — phones: fill the row (the 260px cap left a dead gap).
-          style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: INK, fontSize: 12, flex: '1 1 200px', minWidth: 140, maxWidth: isPhone ? 'none' : 260, fontFamily: 'inherit', outline: 'none' }}
+          style={{ padding: '6px 12px', background: 'var(--border-subtle)', border: '1px solid var(--border-strong)', borderRadius: 6, color: INK, fontSize: 12, flex: '1 1 200px', minWidth: 140, maxWidth: isPhone ? 'none' : 260, fontFamily: 'inherit', outline: 'none' }}
         />
       </div>
       {/* N1.10 / ROW 25: swipeable-on-phones → CSS .topbar-tab-strip (@media in index.css) */}
@@ -106,23 +106,23 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
               // withAlpha, NOT hex-suffix concat: the accents are var() strings,
               // so the old `color + hexAlpha` pattern produced invalid CSS (active pill border/bg never
               // rendered). /simplify catch, 2026-06-11.
-              style={{ padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${active ? withAlpha(c, 44) : 'rgba(255,255,255,0.1)'}`, background: active ? withAlpha(c, 8) : 'transparent', color: active ? c : INK_MUTED, flexShrink: 0, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+              style={{ padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${active ? withAlpha(c, 44) : 'var(--border-strong)'}`, background: active ? withAlpha(c, 8) : 'transparent', color: active ? c : INK_MUTED, flexShrink: 0, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}
             >{tab.l}</button>
           )
         })}
       </div>
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-        <ViewPicker view={view} setView={setView} />
+        <ViewPicker view={view} setView={setView} isPhone={isPhone} />
         <SavedViewsMenu page="my-tasks" currentQuery={currentQuery} onApply={onApplyView} />
         {/* N1.20 — divider only when the chips render beside it (it stranded
             itself at wrapped line ends on phones). */}
-        {showFilterChips && !isPhone && <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)', margin: '0 4px' }} />}
+        {showFilterChips && !isPhone && <div style={{ width: 1, height: 18, background: 'var(--border-strong)', margin: '0 4px' }} />}
         {isPhone && (
           <button
             className="pill-btn"
             onClick={() => setFiltersOpen((o) => !o)}
             aria-expanded={filtersOpen}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${filtersOpen || activeFilterCount > 0 ? withAlpha(ACCENT_TEAL, 44) : 'rgba(255,255,255,0.1)'}`, background: filtersOpen || activeFilterCount > 0 ? withAlpha(ACCENT_TEAL, 8) : 'transparent', color: filtersOpen || activeFilterCount > 0 ? ACCENT_TEAL : INK_MUTED }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${filtersOpen || activeFilterCount > 0 ? withAlpha(ACCENT_TEAL, 44) : 'var(--border-strong)'}`, background: filtersOpen || activeFilterCount > 0 ? withAlpha(ACCENT_TEAL, 8) : 'transparent', color: filtersOpen || activeFilterCount > 0 ? ACCENT_TEAL : INK_MUTED }}
           >
             <SlidersHorizontal size={11} strokeWidth={1.5} absoluteStrokeWidth />
             Filters{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ''}
@@ -132,7 +132,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
         <FilterChip
           label="Group"
           value={filter.group}
-          options={[{ v: null, l: 'All' }, ...GROUP_ORDER.map((k) => ({ v: k, l: `${GROUP_META[k].icon} ${GROUP_META[k].label}` }))]}
+          options={[{ v: null, l: 'All' }, ...GROUP_ORDER.map((k) => ({ v: k, l: GROUP_META[k].label }))]}
           onChange={(v) => setFilter((f) => ({ ...f, group: v as GroupKey | null }))}
         />
         <FilterChip
@@ -152,14 +152,14 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           value={filter.mentee}
           options={[
             { v: null, l: 'Any' },
-            { v: '__any_mentee__', l: '🎓 Any mentee' },
+            { v: '__any_mentee__', l: 'Any mentee' },
             ...researchTeam.filter((m) => !!m.slug).map((m) => ({ v: m.slug as string, l: m.name })),
           ]}
           onChange={(v) => setFilter((f) => ({ ...f, mentee: v }))}
         />
         <button
           onClick={() => setFilter((f) => ({ ...f, hideCompleted: !f.hideCompleted }))}
-          style={{ padding: '4px 10px', fontSize: 11, border: '1px solid var(--border-strong)', borderRadius: 999, background: filter.hideCompleted ? 'rgba(255,255,255,0.02)' : 'rgba(110,232,154,0.1)', color: filter.hideCompleted ? INK_MUTED : ACCENT_GREEN, fontFamily: 'inherit', cursor: 'pointer' }}
+          style={{ padding: '4px 10px', fontSize: 11, border: '1px solid var(--border-strong)', borderRadius: 999, background: 'transparent', color: INK_MUTED, fontFamily: 'inherit', cursor: 'pointer' }}
         >{filter.hideCompleted ? 'Show completed' : 'Hide completed'}</button>
         {hasFilters && (
           <button

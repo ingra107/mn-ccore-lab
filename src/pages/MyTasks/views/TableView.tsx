@@ -35,7 +35,7 @@ import {
   daysSince, withAlpha, isTaskDone,
   type GroupKey, type FilterOption,
 } from '../constants'
-import { isOverdue } from '../../../lib/dateUtils'
+import { isOverdue, civilDaysOverdue } from '../../../lib/dateUtils'
 import { OverdueBanner } from './OverdueBanner'
 import { NoTasksMatch, AllCaughtUp } from './MyTasksEmpty'
 import WorkOnActions from '../../../components/WorkOnActions'
@@ -146,7 +146,7 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
       .map(o => ({ value: o.v, label: o.l, color: ACCENT_TEAL }))]
   ), [projectOptions])
 
-  const kbdStyle = { fontFamily: 'var(--font-mono), JetBrains Mono, monospace', fontSize: 9, padding: '1px 4px', background: 'rgba(255,255,255,0.08)', borderRadius: 2, color: INK_MUTED }
+  const kbdStyle = { fontFamily: 'var(--font-mono), JetBrains Mono, monospace', fontSize: 9, padding: '1px 4px', background: 'var(--border-subtle)', borderRadius: 2, color: INK_MUTED }
 
   return (
     // Bug #70 (Nick 2026-06-11): the List grid was capped at --col-main (960px),
@@ -159,7 +159,7 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
       <div ref={scrollRef} className="fab-clear" style={{ flex: 1, overflow: 'auto' }}>
        <div className="mt-band">
         <div>
-        <div style={{ padding: '10px 16px 0' }}><OverdueBanner tasks={filtered} /></div>
+        <div style={{ padding: '10px 0 0' }}><OverdueBanner tasks={filtered} /></div>
         {/* #81 (Nick 2026-06-24): header grid must match the ROW grid exactly —
             the row has a trailing 52px Work column the header was missing, so the
             1fr Title soaked up the extra 52px and every column after it drifted
@@ -275,7 +275,7 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
   const meta = GROUP_META[(task as TaskRow & { _group?: GroupKey })._group ?? 'deep']
   // Rule 68: status-aware isOverdue(), never a hand-rolled date compare.
   const overdue = !!task.due_date && !isTaskDone(task) && isOverdue(task.due_date, task.status)
-  const overdueDays = overdue && task.due_date ? daysSince(task.due_date) : 0
+  const overdueDays = overdue && task.due_date ? civilDaysOverdue(task.due_date) : 0
   const stale = task.updated_at && daysSince(task.updated_at) >= staleDays && task.status === 'in_progress' ? daysSince(task.updated_at) : 0
   const isCompleted = isTaskDone(task)
 
@@ -302,7 +302,7 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
         alignItems: 'center',
         fontSize: 12,
         height: 44,
-        borderBottom: '1px solid rgba(255,255,255,0.04)',
+        borderBottom: '1px solid var(--border-subtle)',
         // Issue 4/5: selected (teal 3px) wins over planned/overdue.
         // Use TEAL for selection — NOT gold — so it's visually distinct from
         // the planned gold bar and overdue coral bar.
@@ -338,7 +338,7 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isCompleted ? INK_DIM : INK, textDecoration: isCompleted ? 'line-through' : 'none', fontWeight: 500, paddingRight: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
         {/* #112: dot = task group indicator; tooltip names the group */}
         <span title={`Group: ${meta.label}`} aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: withAlpha(meta.color, 50), flexShrink: 0 }} />
-        {!isMilestone(task) && <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>}
+        {!isMilestone(task) && (task as TaskRow & { _tag?: string })._tag && <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag}</span>}
         {/* Title-click opens the full editor (Nick 2026-06-10) — single click,
             not just the double-click/e/⏎ paths. stop() keeps the cursor-move
             row click from also firing.
@@ -358,8 +358,8 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
         {isNew && <AttentionChip kind="new" />}
         {!isNew && newActivity > 0 && <AttentionChip kind="activity" count={newActivity} />}
         {task.group_override && <span title={`Moved manually (${task.group_override})`} style={{ display: 'inline-flex', alignItems: 'center', color: ACCENT_TEAL, flexShrink: 0 }}><MapPin {...ICON_PROPS} size={11} /></span>}
-        {planned && <span style={{ fontSize: 9, color: ACCENT_GOLD, fontWeight: 700, letterSpacing: '0.1em' }}>PLANNED</span>}
-        {overdueDays > 0 && <span style={{ fontSize: 9, color: ACCENT_CORAL, fontWeight: 700 }}>{overdueDays}d LATE</span>}
+        {planned && <span style={{ fontSize: 10, color: ACCENT_GOLD, fontWeight: 500 }}>Planned</span>}
+        {overdueDays > 0 && <span style={{ fontSize: 10, color: ACCENT_CORAL, fontWeight: 500 }}>{overdueDays}d overdue</span>}
         {stale > 0 && <span style={{ fontSize: 9, color: ACCENT_ORANGE }}>{stale}d stale</span>}
       </div>
       {/* Project — inline editable */}
@@ -378,7 +378,7 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
       <div className="list-view-col-priority" onClick={stop}>
         <InlineSelect
           value={task.priority}
-          options={PRIORITY_OPTIONS.map(p => ({ value: p.value, label: p.label, color: p.color }))}
+          options={PRIORITY_OPTIONS.map(p => ({ value: p.value, label: p.label, color: p.value === 'urgent' ? p.color : INK_MUTED }))}
           onChange={onPriorityChange}
         />
       </div>
@@ -386,7 +386,7 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
       <div className="list-view-col-status" onClick={stop}>
         <InlineSelect
           value={task.status}
-          options={STATUS_OPTIONS.map(s => ({ value: s.value, label: s.label, color: s.color }))}
+          options={STATUS_OPTIONS.map(s => ({ value: s.value, label: s.label, color: s.value === 'blocked' || s.value === 'waiting_external' ? s.color : INK_MUTED }))}
           onChange={onStatusChange}
         />
       </div>
