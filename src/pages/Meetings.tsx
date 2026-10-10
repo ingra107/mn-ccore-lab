@@ -420,6 +420,10 @@ export default function Meetings() {
       el.style.height = ''
       el.style.minHeight = '0px'
       const top = el.getBoundingClientRect().top + window.scrollY
+      // Natural height with the height cleared: header + the split's 360px
+      // floor. The page grows to it, so a tall header scrolls the document
+      // instead of pushing the split over the status bar.
+      const natural = el.offsetHeight
       let below = 0
       const main = el.closest('#portal-main') as HTMLElement | null
       if (main) {
@@ -429,7 +433,7 @@ export default function Meetings() {
           if (pos !== 'fixed' && pos !== 'absolute') below += sib.offsetHeight
         }
       }
-      el.style.height = `${Math.max(480, Math.round(window.innerHeight - top - below))}px`
+      el.style.height = `${Math.max(480, natural, Math.round(window.innerHeight - top - below))}px`
     }
     fit()
     window.addEventListener('resize', fit)

@@ -319,10 +319,10 @@ function AgendaGapRow({
   slot: PlannedSlot
   freeMinutes: number
   baseHeight: number
-  /** Minutes-since-midnight of the gap start. Used for absolute block top/height.
-   *  Zero for untimed gaps (UntimedUnit) — those never use the absolute lane. */
   /** Current minute-of-day; the gap holding it labels only its remaining part. */
   nowMin?: number
+  /** Minutes-since-midnight of the gap start. Used for absolute block top/height.
+   *  Zero for untimed gaps (UntimedUnit) — those never use the absolute lane. */
   gapStartMin: number
   /** Minutes-since-midnight of the gap end. Used for move-clamp upper bound. */
   gapEndMin: number

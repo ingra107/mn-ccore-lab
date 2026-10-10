@@ -2927,4 +2927,4 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    keyboard focus (opacity rule above still drives the reveal, the verbs stay
    focusable). Scoped, so TaskRow's other surfaces keep the reserved space. */
 .md-actions [data-task-id]{position:relative}
-.md-actions .task-row-verbs{position:absolute;top:4px;right:6px;background:var(--cream);border-radius:6px}
+.md-actions .task-row-verbs{position:absolute;top:4px;right:6px;background:var(--ice);border-radius:6px}

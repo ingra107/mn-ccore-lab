@@ -32,7 +32,9 @@ export function Person({ slug, name }: { slug?: string; name?: string }) {
  *  "Lianne Siegel"). A sentence or a lowercase phrase is not. */
 // Each word needs a lowercase letter after the capital, so acronyms and
 // all-caps values (IRB, NIH) are not names. "Pharmacy" still passes: a word
-// shape cannot tell it from a surname; the roster slug check runs first.
+// shape cannot tell it from a surname. The roster check (SLUG_LIKE) only sees
+// lowercase slugs, so it never vets a capitalised value; only a roster of
+// display names or known organisations could.
 const NAME_LIKE = /^[A-Z][a-z][A-Za-z0-9_.'-]*( +[A-Z][a-z][A-Za-z0-9_.'-]*){0,2}$/
 const SLUG_LIKE = /^[a-z][a-z0-9-]*$/
 
