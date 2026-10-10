@@ -41,9 +41,11 @@ function PipelineCard() {
     const review = publications.filter((p) => p.status === 'In Review').length
     const published = publications.filter((p) => p.status === 'Published').length
     return [
-      { label: 'In Preparation', status: 'In Preparation', count: prep, color: '#ffffff', colorEnd: '#e8e0cc' },
-      { label: 'In Review', status: 'In Review', count: review, color: '#c9a84c', colorEnd: '#b8943e' },
-      { label: 'Published', status: 'Published', count: published, color: '#0f1923', colorEnd: 'oklch(0.16 0.005 250)' },
+      // Theme tokens, not hex: the old white and near-black fills each vanished
+      // against the track in one theme. The darker end is a mix toward ink.
+      { label: 'In Preparation', status: 'In Preparation', count: prep, color: 'var(--slate)', colorEnd: 'color-mix(in srgb, var(--slate) 70%, var(--ink))' },
+      { label: 'In Review', status: 'In Review', count: review, color: 'var(--gold)', colorEnd: 'color-mix(in srgb, var(--gold) 70%, var(--ink))' },
+      { label: 'Published', status: 'Published', count: published, color: 'var(--teal)', colorEnd: 'color-mix(in srgb, var(--teal) 70%, var(--ink))' },
     ]
   }, [publications])
 

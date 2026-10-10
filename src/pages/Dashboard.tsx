@@ -428,8 +428,12 @@ export default function Dashboard() {
                     <Settings2 size={12} strokeWidth={1.5} absoluteStrokeWidth />
                     Customize
                   </button>
-                  <span className="hidden md:block">
-                    <PageTooltip id="dashboard-filter-hint" text="Press F to toggle filters on any page" />
+                  {/* Zero-width anchor: the one-time hint floats below the controls
+                      instead of taking flex width and pushing Customize to its own row. */}
+                  <span className="hidden md:block" style={{ position: 'relative', width: 0, height: 0 }}>
+                    <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 28px)', width: 'max-content', maxWidth: 'min(92vw, 480px)', zIndex: 20 }}>
+                      <PageTooltip id="dashboard-filter-hint" text="Press F to toggle filters on any page" />
+                    </div>
                   </span>
                 </div>
               </div>
