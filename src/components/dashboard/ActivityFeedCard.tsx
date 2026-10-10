@@ -96,8 +96,8 @@ function ActivityFeedCard() {
           }}
         >
           <div className="relative">
-            {/* Vertical line */}
-            <div
+            {/* Vertical line: only beside entries, never on the empty state */}
+            {items.length > 0 && <div
               style={{
                 position: 'absolute',
                 left: '7px',
@@ -107,7 +107,7 @@ function ActivityFeedCard() {
                 background: 'linear-gradient(to top, var(--gold), transparent)',
                 opacity: 0.15,
               }}
-            />
+            />}
 
             {items.length === 0 && (
               isError ? (

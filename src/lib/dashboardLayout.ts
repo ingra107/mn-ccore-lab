@@ -17,6 +17,15 @@ export const GRID_SCALE = 3
 /** Vertical gap between cells, in px (DashboardGrid's `margin` prop). */
 export const GRID_MARGIN_Y = 20
 
+/** Breakpoint for a measured container width, same rule react-grid-layout uses. */
+export function breakpointForWidth(width: number): keyof typeof DASHBOARD_GRID_BREAKPOINTS {
+  const asc = (Object.entries(DASHBOARD_GRID_BREAKPOINTS) as [keyof typeof DASHBOARD_GRID_BREAKPOINTS, number][])
+    .sort((a, b) => a[1] - b[1])
+  let match = asc[0][0]
+  for (const [name, min] of asc) if (width >= min) match = name
+  return match
+}
+
 export const DASHBOARD_GRID_COLS = { lg: 12, md: 9, sm: 6, xs: 3 } as const
 
 // rowHeight must satisfy `GRID_SCALE * rh + (GRID_SCALE - 1) * marginY` = the

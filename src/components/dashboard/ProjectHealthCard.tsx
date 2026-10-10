@@ -12,24 +12,13 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import SegmentedToggle from '../ui/SegmentedToggle'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import { QueryErrorNote } from '../QueryErrorNote'
+import { STATUS_FILLS } from '../../lib/projectHealthFills'
 
 const STATUS_COLORS: Record<string, string> = {
   'Healthy': 'var(--green)',
   'Needs Attention': 'var(--gold)',
   'At Risk': 'var(--orange)',
   'Critical': 'var(--maroon)',
-}
-
-// Fills for swatches and the heatmap. STATUS_COLORS above are AA TEXT tokens
-// (--gold and --orange land at almost the same lightness in light mode, and
-// Attention borrowed the brand gold). Fills are a separate map: severity steps
-// clearly in lightness (0.40 / 0.60 / 0.83), so it still reads without hue,
-// and Attention is lemon, not brand gold. Same values in both themes.
-const STATUS_FILLS: Record<string, string> = {
-  'Healthy': 'oklch(0.72 0.13 150)',
-  'Needs Attention': 'oklch(0.83 0.13 100)',
-  'At Risk': 'oklch(0.60 0.18 40)',
-  'Critical': 'oklch(0.40 0.16 20)',
 }
 
 const FACTOR_LABELS: Record<keyof HealthFactors, { label: string; max: number }> = {
