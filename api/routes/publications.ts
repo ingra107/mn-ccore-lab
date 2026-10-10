@@ -115,6 +115,13 @@ export async function handleUpdateGrant(id: string, request: Request, env: Env):
     binds.push(value === '' ? null : value)
   }
 
+  // `proposed` is derived from status (funded/declined/closed = not proposed) so
+  // the flag cannot go stale when status is edited. GET still orders by it.
+  if (typeof body.status === 'string' && body.status) {
+    sets.push('proposed = ?')
+    binds.push(['planning', 'in_preparation', 'submitted', 'resubmission'].includes(body.status) ? 1 : 0)
+  }
+
   if (sets.length === 0) return json({ error: 'No valid fields to update' }, 400)
 
   binds.push(id)

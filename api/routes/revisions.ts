@@ -332,11 +332,15 @@ export async function handleAttentionManuscripts(
       ORDER BY c.created_at ASC
     `).bind(actor, `-${reviewDays} days`).all(),
     env.DB.prepare(`
-      SELECT id, title, status, updated_at, authors, journal
-      FROM publications
-      WHERE status = 'In Preparation'
-        AND (updated_at IS NULL OR updated_at < datetime('now', ?))
-      ORDER BY updated_at ASC
+      SELECT pub.id, pub.title, pub.status, pub.updated_at, pub.authors, pub.journal,
+             (SELECT p.slug FROM project_publications pp JOIN projects p ON p.id = pp.project_id
+               WHERE pp.publication_id = pub.id ORDER BY pp.created_at LIMIT 1) AS project_slug,
+             (SELECT p.id FROM project_publications pp JOIN projects p ON p.id = pp.project_id
+               WHERE pp.publication_id = pub.id ORDER BY pp.created_at LIMIT 1) AS project_id
+      FROM publications pub
+      WHERE pub.status = 'In Preparation'
+        AND (pub.updated_at IS NULL OR pub.updated_at < datetime('now', ?))
+      ORDER BY pub.updated_at ASC
     `).bind(`-${staleDays} days`).all(),
   ]);
 

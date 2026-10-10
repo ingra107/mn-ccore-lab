@@ -18,7 +18,7 @@ type ViewMode = 'month' | 'week' | 'day' | 'agenda'
 
 const eventColors: Record<string, { color: string; bg: string }> = {
   meeting: { color: 'var(--teal)', bg: 'color-mix(in srgb, var(--teal) 12%, transparent)' },
-  task: { color: 'var(--gold)', bg: 'var(--gold-emphasis)' },
+  task: { color: 'var(--slate)', bg: 'var(--hover-subtle)' },
   milestone: { color: 'var(--maroon)', bg: 'color-mix(in srgb, var(--maroon) 12%, transparent)' },
 }
 
@@ -39,7 +39,10 @@ function eventLinkTo(e: CalendarEvent): string | null {
 }
 
 export default function CalendarPage() {
-  const [view, setView] = useState<ViewMode>('month')
+  const [view, setView] = useState<ViewMode>(() =>
+    // Phone: a 7-column month grid leaves ~48px cells, so start on the agenda list.
+    typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches ? 'agenda' : 'month',
+  )
   const [currentDate, setCurrentDate] = useState(new Date())
   // P3-08: dense-week toggle. When on, MonthView collapses any all-empty
   // week (Sun-Sat row with zero events) to a single rule line.
@@ -89,6 +92,16 @@ export default function CalendarPage() {
   // Day label
   const dayLabel = formatLongDate(localDateKey(currentDate))
 
+  // Count only what the current view shows (the fetch window spans 3 months).
+  const monthPrefix = localDateKey(currentDate).slice(0, 7)
+  const visibleEvents = events.filter((e) => {
+    if (view === 'week') return e.date >= localDateKey(weekStart) && e.date <= localDateKey(weekEnd)
+    if (view === 'day') return e.date === localDateKey(currentDate)
+    return e.date.startsWith(monthPrefix)
+  })
+  const visibleCount = visibleEvents.length
+  const visibleLabel = `event${visibleCount === 1 ? '' : 's'} ${view === 'week' ? 'this week' : view === 'day' ? 'this day' : 'this month'}`
+
   const goToPrev = () => {
     const d = new Date(currentDate)
     if (view === 'month') d.setMonth(d.getMonth() - 1)
@@ -104,6 +117,11 @@ export default function CalendarPage() {
     setCurrentDate(d)
   }
   const goToToday = () => setCurrentDate(new Date())
+  const openDay = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-').map(Number)
+    setCurrentDate(new Date(y, m - 1, d))
+    setView('day')
+  }
 
   const headerLabel = view === 'month' ? monthLabel : view === 'week' ? weekLabel : view === 'day' ? dayLabel : monthLabel
 
@@ -149,10 +167,9 @@ export default function CalendarPage() {
           const todayStr = localDateKey()
           const todayCount = events.filter(e => e.date === todayStr).length
           return todayCount > 0
-            ? `${events.length} events · ${todayCount} today`
-            : `${events.length} events`
+            ? `${visibleCount} ${visibleLabel} · ${todayCount} today`
+            : `${visibleCount} ${visibleLabel}`
         })()}
-        count={events.length}
         actions={
           <button
             onClick={exportICal}
@@ -231,7 +248,7 @@ export default function CalendarPage() {
       </PageHeader>
 
       {/* Content — CLS fix (C8): reserve calendar grid height before events arrive */}
-      <div className="mt-5" style={{ minHeight: 600 }}>
+      <div className="mt-5">
         {isLoading ? (
           <div
             aria-hidden="true"
@@ -245,7 +262,7 @@ export default function CalendarPage() {
           />
         ) : (
           <>
-            {view === 'month' && <MonthView currentDate={currentDate} events={events} denseWeek={denseWeek} />}
+            {view === 'month' && <MonthView currentDate={currentDate} events={events} denseWeek={denseWeek} onOpenDay={openDay} />}
             {view === 'week' && <WeekView weekStart={weekStart} events={events} />}
             {view === 'day' && <DayView date={currentDate} events={events} />}
             {view === 'agenda' && <AgendaView events={events} />}
@@ -258,8 +275,8 @@ export default function CalendarPage() {
         {Object.entries(eventColors).map(([type, config]) => (
           <div key={type} className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: config.color }} />
-            <span className="text-[10px] capitalize" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-              {type === 'task' ? 'Task Due' : type}s
+            <span className="text-[10px] first-letter:uppercase" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+              {type === 'task' ? 'Task due dates' : `${type}s`}
             </span>
           </div>
         ))}
@@ -270,7 +287,7 @@ export default function CalendarPage() {
 
 // ── Month View ───────────────────────────────────────────────
 
-function MonthView({ currentDate, events, denseWeek = false }: { currentDate: Date; events: CalendarEvent[]; denseWeek?: boolean }) {
+function MonthView({ currentDate, events, denseWeek = false, onOpenDay }: { currentDate: Date; events: CalendarEvent[]; denseWeek?: boolean; onOpenDay: (dateStr: string) => void }) {
   const today = localDateKey()
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -343,12 +360,12 @@ function MonthView({ currentDate, events, denseWeek = false }: { currentDate: Da
             {week.map((cell, ci) => {
               if (cell.kind === 'fill') {
                 return (
-                  <div key={`fill-${wi}-${ci}`} className="md:min-h-[80px] border-b border-r" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--hover-subtle)' }} />
+                  <div key={`fill-${wi}-${ci}`} className="min-h-[56px] md:min-h-[80px] border-b border-r" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--hover-subtle)' }} />
                 )
               }
               const dateStr = cell.dateStr
               return (
-                <DayCellRender key={dateStr} dateStr={dateStr} today={today} dayEvents={eventsByDate.get(dateStr) || []} />
+                <DayCellRender key={dateStr} dateStr={dateStr} today={today} dayEvents={eventsByDate.get(dateStr) || []} onOpenDay={onOpenDay} />
               )
             })}
           </div>
@@ -360,14 +377,14 @@ function MonthView({ currentDate, events, denseWeek = false }: { currentDate: Da
 
 // ── Day cell (extracted for dense-week mode reuse) ───────────
 
-function DayCellRender({ dateStr, today, dayEvents }: { dateStr: string; today: string; dayEvents: CalendarEvent[] }) {
+function DayCellRender({ dateStr, today, dayEvents, onOpenDay }: { dateStr: string; today: string; dayEvents: CalendarEvent[]; onOpenDay: (dateStr: string) => void }) {
   const dayNum = parseInt(dateStr.split('-')[2])
   const isToday = dateStr === today
   return (
-    <div className="md:min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: isToday ? 'var(--teal-hover)' : 'var(--cream)', boxShadow: isToday ? 'inset 0 0 0 2px rgba(45,138,138,0.2)' : 'none' }}>
-      <span className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal-solid)' : 'transparent' }}>
+    <div className="min-h-[56px] md:min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: isToday ? 'var(--teal-hover)' : 'var(--cream)', boxShadow: isToday ? 'inset 0 0 0 2px rgba(45,138,138,0.2)' : 'none' }}>
+      <button type="button" onClick={() => onOpenDay(dateStr)} aria-label={`Open ${formatLongDate(dateStr)}`} className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal-solid)' : 'transparent', cursor: 'pointer', border: 'none', padding: 0 }}>
         {dayNum}
-      </span>
+      </button>
       <div className="flex flex-col gap-0.5 mt-0.5">
         {dayEvents.slice(0, 3).map((e) => {
           const config = eventColors[e.type] || eventColors.task
@@ -376,12 +393,12 @@ function DayCellRender({ dateStr, today, dayEvents }: { dateStr: string; today: 
           const wrapperProps = to ? { to } : {}
           return (
             <Wrapper key={e.id} {...wrapperProps} className="text-[10px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
-              {(() => { const t = formatBrandName(e.title); return t.length > 20 ? t.slice(0, 20) + '...' : t })()}
+              {formatBrandName(e.title)}
             </Wrapper>
           )
         })}
         {dayEvents.length > 3 && (
-          <span className="text-[10px] px-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>+{dayEvents.length - 3} more</span>
+          <button type="button" onClick={() => onOpenDay(dateStr)} className="text-[10px] px-1 text-left hover:underline" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', background: 'none', border: 'none', cursor: 'pointer' }}>+{dayEvents.length - 3} more</button>
         )}
       </div>
     </div>

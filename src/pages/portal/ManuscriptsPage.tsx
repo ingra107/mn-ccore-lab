@@ -309,7 +309,7 @@ export default function ManuscriptsPage() {
               // N1b de-box: resting hairline -> transparent (borderless until
               // active); 1px kept transparent so the active border adds no shift.
               border: active ? '1px solid var(--teal)' : '1px solid transparent',
-              background: active ? 'var(--teal-subtle)' : 'transparent',
+              background: active ? 'var(--teal-active)' : 'transparent',
               color: active ? 'var(--teal)' : 'var(--slate)',
               fontSize: '12px',
               fontWeight: active ? 600 : 400,
@@ -333,7 +333,6 @@ export default function ManuscriptsPage() {
       <DataPage
         icon={<FileText {...ICON_PROPS} size={20} />}
         title="Manuscripts"
-        count={activeCount}
         actions={
           <button
             onClick={() => setShowCreate(true)}
@@ -491,8 +490,6 @@ export default function ManuscriptsPage() {
                               fontWeight: 500,
                               color: 'var(--slate)',
                               opacity: 0.75,
-                              textTransform: 'uppercase' as const,
-                              letterSpacing: '0.06em',
                               flexShrink: 0,
                             }}
                           >
@@ -518,13 +515,13 @@ export default function ManuscriptsPage() {
                             transition: 'background var(--duration-fast) ease-out',
                           }}
                         >
-                          <div className="flex items-center gap-2.5" style={{ paddingRight: '16px' }}>
+                          <div className="flex items-center gap-2.5" style={{ paddingRight: '16px', minWidth: 0 }}>
                             <CategoryIcon
                               category={project.category}
                               size={14}
                               style={{ flexShrink: 0 }}
                             />
-                            <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.35 }}>
+                            <span title={project.title} style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
                               {project.title}
                             </span>
                             {tc > 0 && (

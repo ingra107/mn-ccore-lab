@@ -292,15 +292,12 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
       <Link
         key={r.id}
         to={href}
-        className="block"
+        className="grid grid-cols-1 gap-y-0.5 py-2 pl-4 pr-4 sm:pl-9 sm:grid-cols-[minmax(180px,1fr)_70px_110px_130px] sm:gap-y-0"
         style={{
-          padding: '8px 16px 8px 36px',
           borderTop: '1px solid var(--border-subtle)',
           textDecoration: 'none',
           color: 'inherit',
           fontSize: '12px',
-          display: 'grid',
-          gridTemplateColumns: 'minmax(180px, 1fr) 70px 110px 130px',
           columnGap: '12px',
           alignItems: 'center',
         }}
@@ -324,15 +321,12 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
       <Link
         key={r.id}
         to={href}
-        className="block"
+        className="grid grid-cols-1 gap-y-0.5 py-2 pl-4 pr-4 sm:pl-9 sm:grid-cols-[minmax(180px,1fr)_minmax(180px,2fr)_80px] sm:gap-y-0"
         style={{
-          padding: '8px 16px 8px 36px',
           borderTop: '1px solid var(--border-subtle)',
           textDecoration: 'none',
           color: 'inherit',
           fontSize: '12px',
-          display: 'grid',
-          gridTemplateColumns: 'minmax(180px, 1fr) minmax(180px, 2fr) 80px',
           columnGap: '12px',
           alignItems: 'center',
         }}
@@ -352,32 +346,36 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
 
   // stale-drafts
   const ageDays = r.updated_at ? Math.max(0, Math.floor((Date.now() - parseDbUtc(r.updated_at).getTime()) / 86_400_000)) : 0
-  return (
-    <Link
-      key={r.id}
-      to={href}
-      className="block"
-      style={{
-        padding: '8px 16px 8px 36px',
-        borderTop: '1px solid var(--border-subtle)',
-        textDecoration: 'none',
-        color: 'inherit',
-        fontSize: '12px',
-        display: 'grid',
-        gridTemplateColumns: 'minmax(220px, 2fr) minmax(120px, 1fr) 110px',
-        columnGap: '12px',
-        alignItems: 'center',
-      }}
-    >
+  // Publications with no linked project have nowhere to go: plain row, not a
+  // self-link back to this page. A journal that only repeats the status
+  // ("In preparation") says nothing, so leave it blank.
+  const jl = (r.journal ?? '').trim().toLowerCase()
+  const journal = jl && jl !== 'in preparation' && jl !== (r.status ?? '').trim().toLowerCase() ? (r.journal ?? '') : ''
+  const rowClass = 'grid grid-cols-1 gap-y-0.5 py-2 pl-4 pr-4 sm:pl-9 sm:grid-cols-[minmax(220px,2fr)_minmax(120px,1fr)_110px] sm:gap-y-0'
+  const rowStyle = {
+    borderTop: '1px solid var(--border-subtle)',
+    textDecoration: 'none',
+    color: 'inherit',
+    fontSize: '12px',
+    columnGap: '12px',
+    alignItems: 'center',
+  } as const
+  const cells = (
+    <>
       <span style={{ color: 'var(--ink)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {r.title || 'Untitled'}
       </span>
       <span style={{ color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {r.journal ?? 'No journal set'}
+        {journal}
       </span>
       <span style={{ color: 'var(--muted)' }}>
         Idle {ageDays}d
       </span>
-    </Link>
+    </>
+  )
+  return slug ? (
+    <Link key={r.id} to={href} className={rowClass} style={rowStyle}>{cells}</Link>
+  ) : (
+    <div key={r.id} className={rowClass} style={rowStyle}>{cells}</div>
   )
 }

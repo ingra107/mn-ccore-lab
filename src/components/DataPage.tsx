@@ -135,6 +135,9 @@ export default function DataPage({
       {/* Centered band (P1-1). PortalLayout's <main> owns bottom clearance
           (pb-[calc(3rem+56px+safe-area)]) — no rogue page-level paddingBottom. */}
       <div className="content-container">
+        {/* Header + controls share the body's --col-main cap so their right
+            edge lines up with the table (wideBody pages keep the full band). */}
+        <div style={wideBody ? undefined : { maxWidth: 'var(--col-main)' }}>
         <PageHeader icon={icon} title={title} count={count} subtitle={subtitle} actions={actions}>
           {showControls && (
             <TableControls
@@ -148,6 +151,7 @@ export default function DataPage({
             />
           )}
         </PageHeader>
+        </div>
 
         {/* Anchored primary column (P1-1): left edge + width identical on
             every data page. Pages with no rail leave the space beside it
