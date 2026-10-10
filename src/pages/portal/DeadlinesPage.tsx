@@ -878,7 +878,7 @@ function DeadlineTableSection({ title, items: allItems, limit, color, onStatusCh
           className="hit-area link-affordance"
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 16px', fontSize: 'var(--text-label)', color: 'var(--teal)' }}
         >
-          {showAll ? 'Show fewer' : `Show all ${allItems.length} (+${allItems.length - (limit ?? 0)} more)`}
+          {showAll ? 'Show fewer' : `Show all ${allItems.length}`}
         </button>
       )}
     </div>
