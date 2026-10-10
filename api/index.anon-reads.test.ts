@@ -60,7 +60,7 @@ beforeAll(() => {
     attendees: JSON.stringify(['nate-mesfin']), owner_slug: 'nick-ingraham',
   })
   insertRow(db, 'grants', {
-    id: 'g1', mechanism: 'R01', title: `${S} proposal title`, agency: 'NIH', pi: 'nick-ingraham', proposed: 1,
+    id: 'g1', mechanism: 'R01', title: `${S} proposal title`, agency: 'NIH', pi: 'nick-ingraham', proposed: 1, status: 'submitted',
   })
   insertRow(db, 'publications', {
     id: 'pub1', title: 'A published paper', authors: 'Ingraham N', journal: 'CHEST', year: 2025,

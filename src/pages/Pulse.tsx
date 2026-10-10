@@ -10,6 +10,7 @@ import {
   useTeam,
 } from '../hooks/useApiData'
 import { useGrantTimeline } from '../hooks/useGrantTimeline'
+import { grantBucket } from '../lib/grantBucket'
 import { isProjectActive } from '../lib/taskConstants'
 import { isOverdue } from '../lib/dateUtils'
 import { parseDbUtc } from '../lib/time'
@@ -220,8 +221,8 @@ export default function Pulse() {
 
     // Scene 5 — Grant portfolio (active mechanisms).
     if (grants.length) {
-      const active = grants.filter((g) => !g.proposed)
-      const pending = grants.filter((g) => g.proposed)
+      const active = grants.filter((g) => grantBucket(g) === 'active')
+      const pending = grants.filter((g) => grantBucket(g) === 'proposed')
       list.push({
         key: 'grants',
         render: () => (
@@ -240,7 +241,7 @@ export default function Pulse() {
                       fontWeight: 500,
                       fontSize: 'clamp(40px, 4vw, 56px)',
                       letterSpacing: '-0.03em',
-                      color: g.proposed ? '#dcb355' : '#5cbcb4',
+                      color: grantBucket(g) === 'proposed' ? '#dcb355' : '#5cbcb4',
                       lineHeight: 1,
                       minWidth: 120,
                     }}
@@ -266,11 +267,11 @@ export default function Pulse() {
                         fontFamily: 'var(--font-sans)',
                         fontSize: 12,
                         letterSpacing: '0.18em',
-                        color: g.proposed ? '#dcb355' : '#5cbcb4',
+                        color: grantBucket(g) === 'proposed' ? '#dcb355' : '#5cbcb4',
                         fontWeight: 500,
                       }}
                     >
-                      {g.proposed ? 'In preparation' : 'Active'} · {g.agency}
+                      {grantBucket(g) === 'proposed' ? 'In preparation' : 'Active'} · {g.agency}
                     </span>
                   </div>
                 </div>

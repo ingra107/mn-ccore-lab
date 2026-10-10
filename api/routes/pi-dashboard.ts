@@ -105,7 +105,7 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
 
     // P6-B8: proposed=0 means "currently active/awarded", NOT "funded".
     // There is no funded flag in the grants schema. Relabel to true meaning.
-    // submitted = proposed=1 (pending), active = proposed=0 (awarded/running).
+    // submitted = bucket 'proposed', active = bucket 'active' (derived from status, see grant-bucket.ts).
     env.DB.prepare(`
       SELECT
         SUM(CASE WHEN ${GRANT_BUCKET_SQL} = 'proposed' THEN 1 ELSE 0 END) as submitted,

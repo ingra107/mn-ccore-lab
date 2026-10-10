@@ -83,7 +83,7 @@ export default function Team() {
   }
 
   function getDirectorStats(slug: string) {
-    const grantCount = grants.filter((g) => g.pi === slug && !g.proposed).length
+    const grantCount = grants.filter((g) => g.pi === slug && !g.proposed && g.status !== 'Completed').length
     const pubCount = publications.filter((p) => p.authorSlugs?.includes(slug)).length
     const menteeCount = mentees.filter((m) => m.mentor === 'shared' || m.mentor === slug).length
     return { grantCount, pubCount, menteeCount }

@@ -116,8 +116,8 @@ export async function handleUpdateGrant(id: string, request: Request, env: Env):
     binds.push(value === '' ? null : value)
   }
 
-  // `proposed` is derived from status (funded/declined/closed = not proposed) so
-  // the flag cannot go stale when status is edited. GET still orders by it.
+  // `proposed` is kept in step with status on write, but readers derive the bucket
+  // from status (GRANT_BUCKET_SQL / grantBucket); GET orders by that, not this flag.
   if (typeof body.status === 'string' && body.status) {
     sets.push('proposed = ?')
     binds.push(['planning', 'in_preparation', 'submitted', 'resubmission'].includes(body.status) ? 1 : 0)
