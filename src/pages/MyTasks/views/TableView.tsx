@@ -152,12 +152,10 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
   const kbdStyle = { fontFamily: 'var(--font-mono), JetBrains Mono, monospace', fontSize: 9, padding: '1px 4px', background: 'var(--border-subtle)', borderRadius: 2, color: INK_MUTED }
 
   return (
-    // Bug #70 (Nick 2026-06-11): the List grid was capped at --col-main (960px),
-    // leaving the 1fr Title column ~250px at 1920. Now it fills the FULL
-    // centered band — .mt-band with no inner --col-main cap — so its width
-    // matches Calendar and My Hub exactly (same left AND right edge; Nick:
-    // "the same width as calendar and hub", not fluid-to-viewport). The 1fr
-    // Title column absorbs the extra band width.
+    // Bug #70 (Nick 2026-06-11): the List grid is not capped at --col-main;
+    // it fills .mt-band, which stops at --page-width (Today's main + rail,
+    // principle 17), so its left and right edges match Today, Calendar and
+    // every other portal page. The 1fr Title column absorbs the extra width.
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <div ref={scrollRef} className="fab-clear" style={{ flex: 1, overflow: 'auto' }}>
        <div className="mt-band">
