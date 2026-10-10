@@ -45,4 +45,4 @@ Final D1 state: 1773 papers, 19 without a summary = 3 permanently lost + **16 th
 
 ---
 
-Older entries (2026-06-09 through 2026-09-16) moved verbatim to `docs/archived/SESSION-HANDOFF-through-2026-09-21.md`. Pointers elsewhere that cite an older handoff section (CHANGELOG gap notice, WORKPLAN "OPEN THREAD", the stale-chunk runbook) resolve there.
+Older entries (2026-05-15 through 2026-09-16) moved verbatim to `docs/archived/SESSION-HANDOFF-through-2026-09-21.md`. Pointers elsewhere that cite an older handoff section (CHANGELOG gap notice, WORKPLAN "OPEN THREAD", the stale-chunk runbook) resolve there.

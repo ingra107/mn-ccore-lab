@@ -1,4 +1,4 @@
-# SESSION-HANDOFF archive: entries 2026-06-09 through 2026-09-16
+# SESSION-HANDOFF archive: entries 2026-05-15 through 2026-09-16
 
 Moved verbatim from the repo-root `SESSION-HANDOFF.md` on 2026-10-09 so that file stays one page (CLAUDE.md first-read item 1). Newest entry first, as it stood. Live pointers that name an older handoff section (the CHANGELOG 07-22..08-05 gap notice, the WORKPLAN "OPEN THREAD" P2 rekey, the stale-chunk runbook, `api/routes/hermes.ts` line refs) resolve here.
 
