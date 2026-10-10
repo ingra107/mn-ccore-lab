@@ -1147,6 +1147,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   .slice()
                   .sort((x, y) => (x.due_date || '9999-12-31').localeCompare(y.due_date || '9999-12-31'))
                   .slice(0, 5)}
+                project={project}
                 onOpenEditor={setSelectedTask}
               />
             )}

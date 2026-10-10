@@ -15,7 +15,6 @@ import { getUserRoleFromAuth, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
 import ReleaseRibbon from '../components/ReleaseRibbon'
 import { PATHS } from '../constants/paths'
-import PageTooltip from '../components/PageTooltip'
 import PipelineCard from '../components/dashboard/PipelineCard'
 import StatsCard from '../components/dashboard/StatsCard'
 import UpcomingCard from '../components/dashboard/UpcomingCard'
@@ -428,13 +427,10 @@ export default function Dashboard() {
                     <Settings2 size={12} strokeWidth={1.5} absoluteStrokeWidth />
                     Customize
                   </button>
-                  {/* Zero-width anchor: the one-time hint floats below the controls
-                      instead of taking flex width and pushing Customize to its own row. */}
-                  <span className="hidden md:block" style={{ position: 'relative', width: 0, height: 0 }}>
-                    <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 28px)', width: 'max-content', maxWidth: 'min(92vw, 480px)', zIndex: 20 }}>
-                      <PageTooltip id="dashboard-filter-hint" text="Press F to toggle filters on any page" />
-                    </div>
-                  </span>
+                  {/* The one-time "Press F to toggle filters" hint lived here as a
+                      floating layer; it covered the 'This week' banner (#8973) and its
+                      text was wrong on this page (F is focus mode here, filters only on
+                      task pages). The shortcut stays listed in ShortcutHelp ('?'). */}
                 </div>
               </div>
             </div>

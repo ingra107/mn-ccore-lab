@@ -583,7 +583,7 @@ export default function SettingsPage() {
               <div>
                 <p className="text-sm" style={{ color: 'var(--ink)' }}>Re-enable product tips</p>
                 <p className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                  Restores all dismissed page tooltips ("Press F to toggle filters", etc.)
+                  Restores all dismissed page tooltips ("Click a meeting for prep and actions", etc.)
                 </p>
               </div>
               <button

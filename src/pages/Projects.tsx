@@ -708,6 +708,25 @@ export default function Projects() {
               <span className="pj-hl">Links</span>
             </div>
 
+            {/* Below 1024px the column headers are hidden, so they cannot sort.
+                The card list gets the same sort keys as one small select (#8965). */}
+            <div
+              className="flex min-[1024px]:hidden items-center gap-2"
+              style={{ padding: '8px 16px', borderBottom: '1px solid var(--sk-line)', fontSize: 12, color: T3 }}
+            >
+              <label htmlFor="pj-sort">Sort</label>
+              <select
+                id="pj-sort"
+                value={sortKey}
+                onChange={(e) => { setSortKey(e.target.value as ProjectSortKey); setSortAsc(true) }}
+                style={{ fontSize: 12, color: 'var(--sk-t1)', background: 'transparent', border: '1px solid var(--sk-line2)', borderRadius: 6, padding: '3px 6px', minHeight: 28 }}
+              >
+                {([['activity', 'Recent activity'], ['title', 'Title'], ['status', 'Status'], ['stage', 'Stage'], ['pi', 'PI'], ['category', 'Group']] as const).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Stage-grouped rows with stagger animation */}
             {filtered.length > 0 ? (
               <motion.div
@@ -726,6 +745,37 @@ export default function Projects() {
                         links={publicationsBySlug?.get(project.slug)}
                         onOpen={() => navigate(`${PATHS.project(project.slug)}?tab=literature`)}
                       />
+                    )
+                    // One pin star for both layouts (#8965: the <1024px card had none).
+                    // `touch` widens the hit area to 24px with a cancelling negative
+                    // margin, so the card gets a tappable star without moving its title.
+                    const pinned = pinnedSlugs.has(project.slug)
+                    const pinStar = (touch: boolean) => (
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePin(project.slug) }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: touch ? 6 : 0,
+                          margin: touch ? -6 : 0,
+                          flexShrink: 0,
+                          color: pinned ? 'var(--sk-gold)' : 'var(--sk-t3)',
+                          // S21/P1-11: a 0.15 pin star was an invisible
+                          // affordance (especially on touch). Raise the
+                          // resting floor to discoverable-but-quiet.
+                          opacity: pinned ? 1 : 0.45,
+                          transition: 'opacity 150ms ease, color 150ms ease',
+                          lineHeight: 0,
+                        }}
+                        onMouseOver={(e) => { if (!pinned) e.currentTarget.style.opacity = '0.75' }}
+                        onMouseOut={(e) => { if (!pinned) e.currentTarget.style.opacity = '0.45' }}
+                        className="tip"
+                        data-tip={pinned ? 'Unpin project' : 'Pin to top'}
+                        aria-label={pinned ? 'Unpin project' : 'Pin to top'}
+                      >
+                        <Star {...ICON_PROPS} size={12} fill={pinned ? 'var(--sk-gold)' : 'none'} />
+                      </button>
                     )
                     // #91-class fix, now structural (Hub #361a): project.stage
                     // is already canonical at ingress, so a legacy-cased value
@@ -784,30 +834,7 @@ export default function Projects() {
                           >
                             {/* Title with pin star, category dot, and health indicator */}
                             <div className="flex items-center gap-2.5" style={{ paddingRight: 'var(--sp-lg)' }}>
-                              <button
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePin(project.slug) }}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  padding: 0,
-                                  flexShrink: 0,
-                                  color: pinnedSlugs.has(project.slug) ? 'var(--sk-gold)' : 'var(--sk-t3)',
-                                  // S21/P1-11: a 0.15 pin star was an invisible
-                                  // affordance (especially on touch). Raise the
-                                  // resting floor to discoverable-but-quiet.
-                                  opacity: pinnedSlugs.has(project.slug) ? 1 : 0.45,
-                                  transition: 'opacity 150ms ease, color 150ms ease',
-                                  lineHeight: 0,
-                                }}
-                                onMouseOver={(e) => { if (!pinnedSlugs.has(project.slug)) e.currentTarget.style.opacity = '0.75' }}
-                                onMouseOut={(e) => { if (!pinnedSlugs.has(project.slug)) e.currentTarget.style.opacity = '0.45' }}
-                                className="tip"
-                                data-tip={pinnedSlugs.has(project.slug) ? 'Unpin project' : 'Pin to top'}
-                                aria-label={pinnedSlugs.has(project.slug) ? 'Unpin project' : 'Pin to top'}
-                              >
-                                <Star {...ICON_PROPS} size={12} fill={pinnedSlugs.has(project.slug) ? 'var(--sk-gold)' : 'none'} />
-                              </button>
+                              {pinStar(false)}
                               {/* Grant-mechanism badge (projects.type, schema-v73) —
                                   data-driven, never text pattern-matched. Only the 3
                                   grant values (R01/R03/K) render; CLIF/Nick_Lab/etc
@@ -1028,6 +1055,7 @@ export default function Projects() {
                           >
                             {/* Title row */}
                             <div className="flex items-start gap-2" style={{ marginBottom: 'var(--sp-sm)' }}>
+                              <span style={{ flexShrink: 0, marginTop: '3px', lineHeight: 0 }}>{pinStar(true)}</span>
                               {isGrantProjectType(project.type) && (
                                 <Chip
                                   color={T3}
@@ -1098,13 +1126,29 @@ export default function Projects() {
                               </div>
                               <div onClick={(e) => e.preventDefault()} style={{ minWidth: 0 }}>
                                 <InlineSelect
+                                  value={project.pi || ''}
+                                  options={piOptions(project.pi)}
+                                  onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { pi: val } })}
+                                />
+                              </div>
+                              <div onClick={(e) => e.preventDefault()} style={{ minWidth: 0 }}>
+                                <InlineSelect
                                   value={project.category || ''}
                                   options={categoryListOptions}
                                   onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
                                 />
                               </div>
-                              <div style={{ marginLeft: 'auto', paddingRight: '8px' }}>
+                              <div className="flex items-center gap-1" style={{ marginLeft: 'auto', paddingRight: '8px' }}>
                                 <ProjectLinksCell links={allProjectLinks[project.id ?? ''] ?? []} primaryFolder={project.primary_folder} />
+                                {/* Same Work-on slot as the wide row (#8965). */}
+                                {project.primary_folder && (
+                                  <div
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                  >
+                                    <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.short_name || project.title} variant="slot" />
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
