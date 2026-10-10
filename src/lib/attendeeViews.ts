@@ -5,7 +5,7 @@
 
 import { buildAttendeeLookup, resolveAttendeeList } from '../../shared/attendees'
 import { fullNameForSlug } from './nameUtils'
-import { firstNameFor, firstOf, initialsOfName } from './personLabel'
+import { firstNameFor, firstOf, initialsOfName, photoFor, slugForName } from './personLabel'
 import type { TeamMember } from '../data/types'
 
 /** A UMN internet id: letters then digits ("kaur0147", "eddin022"). */
@@ -22,6 +22,8 @@ export interface AttendeeView {
   listed: boolean
   /** A team member. False for outside emails, typed names and unnamed ids; the tooltip says so. */
   onTeam: boolean
+  /** Profile photo for a team member who has one (rules-ui-design 18). */
+  photo?: string
 }
 
 function words(local: string): string {
@@ -63,14 +65,15 @@ export function resolveAttendeeViews(values: readonly unknown[] | null | undefin
       const name = known ? fullNameForSlug(slug) : rowName
       view = !name || NETID.test(name)
         ? unlisted(v)
-        : fromName(v, name, known ? firstNameFor(slug) : undefined, true)
+        : { ...fromName(v, name, known ? firstNameFor(slug) : undefined, true), photo: photoFor(slug) ?? row?.photoUrl }
     } else if (v.includes('@')) {
       const local = v.split('@')[0] ?? ''
       view = NETID.test(local) ? unlisted(v) : fromName(v, words(local) || v)
     } else if (NETID.test(v)) {
       view = unlisted(v)
     } else {
-      view = fromName(v, v) // a display name someone typed
+      const named = slugForName(v) // a display name someone typed; a team member's name gets their photo
+      view = { ...fromName(v, v), photo: named ? photoFor(named) : undefined }
     }
     if (seen.has(view.key + '|' + view.name)) continue
     seen.add(view.key + '|' + view.name)

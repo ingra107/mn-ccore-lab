@@ -11,6 +11,7 @@
 
 import { useMemo } from 'react'
 import { useAttendeeViews, type AttendeeView } from '../../hooks/useAttendeeViews'
+import { FaceDisc as Disc } from '../today/skin'
 
 /** Hover text: the full name for a team member; outsiders and unnamed ids say so. */
 function attendeeTitle(a: AttendeeView): string {
@@ -20,9 +21,7 @@ function attendeeTitle(a: AttendeeView): string {
 
 function FaceDisc({ a, sm = false }: { a: AttendeeView; sm?: boolean }) {
   return (
-    <span role="img" className={`tk-face${sm ? ' tk-sm' : ''}`} title={attendeeTitle(a)} aria-label={a.name}>
-      {a.initials}
-    </span>
+    <Disc initials={a.initials} photo={a.photo} label={a.name} title={attendeeTitle(a)} sm={sm} />
   )
 }
 

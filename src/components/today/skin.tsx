@@ -3,22 +3,42 @@
 // person label (face + first name) and the check glyph. Presentational only.
 
 
-import { initialsFor, firstNameFor, firstOf, initialsOfName, fullNameReadable } from '../../lib/personLabel'
+import { initialsFor, firstNameFor, firstOf, initialsOfName, fullNameReadable, photoFor, slugForName } from '../../lib/personLabel'
 import { fullNameForSlug } from '../../lib/nameUtils'
 
-/** One person as an initials disc. `lg` is the 26px corner face on a card; `sm` 16px. */
-export function Face({ slug, lg = false, sm = false }: { slug: string; lg?: boolean; sm?: boolean }) {
-  const name = fullNameReadable(slug)
+/** THE face circle: the photo when there is one, else the initials
+ *  (rules-ui-design 18). Same size and ring either way. Every face on Today,
+ *  the drawers, rails, threads and meeting attendees renders through this, so
+ *  no surface can show initials for someone who has a photo. */
+export function FaceDisc({ initials, photo, label, title, lg = false, sm = false, decorative = false }: {
+  initials: string
+  photo?: string
+  label: string
+  title?: string
+  lg?: boolean
+  sm?: boolean
+  /** Hidden from screen readers (the name is printed beside it). */
+  decorative?: boolean
+}) {
+  const cls = `tk-face${lg ? ' tk-lg' : ''}${sm ? ' tk-sm' : ''}${photo ? ' tk-photo' : ''}`
+  const a11y = decorative ? { 'aria-hidden': true as const } : { role: 'img', 'aria-label': label }
   return (
-    <span role="img" className={`tk-face${lg ? ' tk-lg' : ''}${sm ? ' tk-sm' : ''}`} title={name} aria-label={name}>
-      {initialsFor(slug)}
+    <span className={cls} title={title ?? label} {...a11y}>
+      {photo ? <img src={photo} alt="" loading="lazy" decoding="async" /> : initials}
     </span>
   )
 }
 
-/** A face from a bare display name (mentees and waiting-on arrive as names). */
+/** One person as a face. `lg` is the 26px corner face on a card; `sm` 16px. */
+export function Face({ slug, lg = false, sm = false }: { slug: string; lg?: boolean; sm?: boolean }) {
+  return <FaceDisc initials={initialsFor(slug)} photo={photoFor(slug)} label={fullNameReadable(slug)} lg={lg} sm={sm} />
+}
+
+/** A face from a bare display name (mentees and waiting-on arrive as names).
+ *  A name that is exactly a team member's gets that member's photo. */
 export function NameFace({ name, sm = false }: { name: string; sm?: boolean }) {
-  return <span className={`tk-face${sm ? ' tk-sm' : ''}`} title={name} aria-hidden="true">{initialsOfName(name)}</span>
+  const slug = slugForName(name)
+  return <FaceDisc initials={initialsOfName(name)} photo={slug ? photoFor(slug) : undefined} label={name} sm={sm} decorative />
 }
 
 /** THE people pattern on Today: badge + FIRST name. Pass a slug, or a free-text name. */

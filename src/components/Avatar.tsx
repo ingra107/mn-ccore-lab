@@ -1,17 +1,18 @@
 import HermesMark from './HermesMark'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
-/** Lab-aesthetic generated portrait — used when a team member has no
- *  photo_url. Two stacked geometric arcs (suggesting a tilted-head
- *  silhouette) in a muted token-aligned palette, with the initials
- *  layered on top. Same name → same portrait (deterministic hash). */
-function GeneratedPortrait({ name, initials, fallbackColor, textClass }: { name: string; initials: string; fallbackColor: string; textClass: string }) {
+/** The initials disc used when a team member has no photo_url, on a muted
+ *  token-aligned swatch (same name → same swatch, deterministic hash).
+ *  Initials only: the silhouette arcs that used to sit under them drew the
+ *  letters over a head-and-shoulders outline (#8969, Casey's member page).
+ *  rules-ui-design 18: the photo where there is one, else the initials disc. */
+function InitialsDisc({ name, initials, fallbackColor, textClass }: { name: string; initials: string; fallbackColor: string; textClass: string }) {
   // Pick one of 4 palette swatches deterministically.
   const palette = [
-    { bg: 'color-mix(in srgb, var(--teal) 22%, var(--cream))',  arc: 'var(--teal)' },
-    { bg: 'color-mix(in srgb, var(--gold) 22%, var(--cream))',  arc: 'var(--gold)' },
-    { bg: 'color-mix(in srgb, var(--maroon) 18%, var(--cream))', arc: 'var(--maroon)' },
-    { bg: 'color-mix(in srgb, var(--green) 22%, var(--cream))', arc: 'var(--green)' },
+    { bg: 'color-mix(in srgb, var(--teal) 22%, var(--cream))' },
+    { bg: 'color-mix(in srgb, var(--gold) 22%, var(--cream))' },
+    { bg: 'color-mix(in srgb, var(--maroon) 18%, var(--cream))' },
+    { bg: 'color-mix(in srgb, var(--green) 22%, var(--cream))' },
   ]
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0
@@ -19,7 +20,6 @@ function GeneratedPortrait({ name, initials, fallbackColor, textClass }: { name:
   return (
     <span
       style={{
-        position: 'relative',
         width: '100%',
         height: '100%',
         display: 'inline-flex',
@@ -28,20 +28,9 @@ function GeneratedPortrait({ name, initials, fallbackColor, textClass }: { name:
         background: swatch.bg,
       }}
     >
-      <svg
-        viewBox="0 0 64 64"
-        width="100%"
-        height="100%"
-        style={{ position: 'absolute', inset: 0, opacity: 0.55 }}
-        aria-hidden="true"
-      >
-        <path d="M14 50 Q32 38 50 50" fill="none" stroke={swatch.arc} strokeWidth="2" strokeLinecap="round" />
-        <circle cx="32" cy="26" r="9" fill="none" stroke={swatch.arc} strokeWidth="2" />
-      </svg>
       <span
         className={`${textClass} font-bold select-none`}
         style={{
-          position: 'relative',
           fontFamily: 'var(--font-display)',
           color: fallbackColor,
         }}
@@ -191,7 +180,7 @@ export default function Avatar({
           className="w-full h-full rounded-full object-cover"
         />
       ) : (
-        <GeneratedPortrait name={name} initials={initials} fallbackColor={styles.color} textClass={text} />
+        <InitialsDisc name={name} initials={initials} fallbackColor={styles.color} textClass={text} />
       )}
     </div>
   )

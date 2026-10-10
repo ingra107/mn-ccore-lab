@@ -4,6 +4,23 @@
 // The badge is today/skin.tsx's Face; these helpers feed it.
 
 import { fullNameForSlug, displayName } from './nameUtils'
+import { getPersonInfo, getAllMembers } from '../data/team'
+
+/** The person's profile photo, or undefined. The same lookup every Avatar
+ *  caller uses (getPersonInfo), so a face on Today and a face on the Team page
+ *  show the same picture (rules-ui-design 18). */
+export function photoFor(slug: string): string | undefined {
+  return slug ? getPersonInfo(slug).photoUrl : undefined
+}
+
+/** A free-text name ("Casey Eddington") that is exactly a team member's name
+ *  maps to that member's slug; anything else is not a team member. */
+export function slugForName(name: string): string | undefined {
+  const n = name.trim().toLowerCase()
+  if (!n) return undefined
+  const hit = getAllMembers().find((m) => m.slug && (m.name.toLowerCase() === n || fullNameForSlug(m.slug).toLowerCase() === n))
+  return hit?.slug
+}
 
 /** A slug the static team data does not know ("lianne-siegel") reads as a name
  *  ("Lianne Siegel") rather than as a raw slug. Known people pass through. */
