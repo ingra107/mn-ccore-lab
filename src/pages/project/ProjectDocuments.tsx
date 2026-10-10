@@ -3,10 +3,12 @@
 // this as a second "Key Documents" card with a colored type rainbow and an
 // uppercase type pill, below the Links card (audit F45, 2026-10-09). The store
 // stays separate (project_documents vs links, Nick 2026-07-21); only the
-// rendering is merged. Rows use the library's anatomy: the StoredLinkChip pill
-// on the left, a right-aligned slot (date + remove) on the right. The type is a
-// neutral glyph plus the hover title, never a color. "Add another" opens the
-// form, with the type chosen inside it, so there are no preset buttons.
+// rendering is merged. Rows use the library's anatomy: StoredLinkChip-style pill
+// on the left, a right-aligned slot (date + remove) on the right. The pill is a
+// local copy of StoredLinkChip's styles (that component takes a stored links
+// row; these are project_documents rows), so keep the two in step. The type is
+// a neutral glyph plus the hover title, never a color. "Add document" opens
+// the form, with the type chosen inside it, so there are no preset buttons.
 import { useState } from 'react'
 import { FolderOpen, FileText, Database, FlaskConical, Upload, Link2, Plus, X } from 'lucide-react'
 import { useProjectDocuments } from '../../hooks/useApiData'
@@ -122,7 +124,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
         <Button
           variant="ghost"
           onClick={() => setShowForm(true)}
-          aria-label="Add another document"
+          aria-label={documents.length === 0 ? 'Add a document' : 'Add another document'}
           className="flex items-center gap-1 self-start rounded transition-colors hov-opacity hov-bg"
           style={{
             padding: '3px 4px',
@@ -135,7 +137,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
           } as React.CSSProperties}
         >
           <Plus {...ICON_PROPS} size={11} />
-          Add another
+          {documents.length === 0 ? 'Add a document' : 'Add document'}
         </Button>
       )}
 

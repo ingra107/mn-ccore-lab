@@ -328,7 +328,7 @@ export default function KeyLinksEditor({ links, onSave, hideLabel = false, maxSl
             } as React.CSSProperties}
           >
             <Plus {...ICON_PROPS} size={11} />
-            {populated.length === 0 ? 'Add a key link' : 'Add another'}
+            {populated.length === 0 ? 'Add a key link' : 'Add key link'}
           </Button>
         )}
       </div>

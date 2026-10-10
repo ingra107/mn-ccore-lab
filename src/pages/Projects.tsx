@@ -944,7 +944,7 @@ export default function Projects() {
                                   <span
                                     style={{
                                       display: 'inline-block',
-                                      width: 38,
+                                      width: 48,
                                       textAlign: 'right',
                                       fontSize: '10px',
                                       color: 'var(--sk-t3)',
