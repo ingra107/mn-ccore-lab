@@ -3,7 +3,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
-  capture, attachSender, detachSender, flush, SEND_WINDOW_MS, MAX_FINGERPRINTS,
+  capture, attachSender, detachSender, flush, fetchSender, SEND_WINDOW_MS, MAX_FINGERPRINTS,
+  MAX_MESSAGE_CHARS, MAX_STACK_CHARS, MAX_BODY_BYTES,
   type ClientErrorItem,
 } from '../clientErrors'
 
@@ -118,5 +119,48 @@ describe('skipped', () => {
     capture(abort, 'rejection', now)
     vi.advanceTimersByTime(SEND_WINDOW_MS)
     expect(sent).toEqual([])
+  })
+})
+
+describe('request size (keepalive body quota is 64 KB)', () => {
+  const calls: { body: string; keepalive: boolean }[] = []
+  beforeEach(() => {
+    calls.length = 0
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init: RequestInit) => {
+      calls.push({ body: init.body as string, keepalive: init.keepalive === true })
+      return new Response(null, { status: 202 })
+    }))
+  })
+  afterEach(() => { vi.unstubAllGlobals() })
+
+  it('20 items at max message and stack length go out as more than one request, each under 56 KB', () => {
+    const items: ClientErrorItem[] = Array.from({ length: 20 }, (_, i) => ({
+      message: `${i}`.padEnd(MAX_MESSAGE_CHARS, 'm'), stack: `${i}`.padEnd(MAX_STACK_CHARS, 's'),
+      path: '/portal/dashboard', kind: 'caught', count: 1,
+    }))
+    fetchSender(items, false)
+    expect(calls.length).toBeGreaterThan(1)
+    for (const c of calls) expect(new Blob([c.body]).size).toBeLessThan(MAX_BODY_BYTES)
+    expect(calls.flatMap((c) => JSON.parse(c.body).errors)).toHaveLength(20)
+  })
+
+  it('a stack is cut to MAX_STACK_CHARS at capture', () => {
+    attachSender((items) => sent.push(items))
+    const e = new Error('long')
+    e.stack = 'Error: long\n' + '    at f (x.js:1:1)\n'.repeat(2000)
+    capture(e, 'caught', now)
+    detachSender(now)
+    expect(sent[0][0].stack!.length).toBeLessThanOrEqual(MAX_STACK_CHARS)
+  })
+
+  it('keepalive only on the unmount flush', () => {
+    attachSender(fetchSender)
+    capture(new Error('timed'), 'caught', now)
+    vi.advanceTimersByTime(1_000)
+    expect(calls.map((c) => c.keepalive)).toEqual([false])
+    clock += 1_000
+    capture(new Error('at unmount'), 'caught', now)
+    detachSender(now)
+    expect(calls.map((c) => c.keepalive)).toEqual([false, true])
   })
 })

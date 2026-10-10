@@ -24,10 +24,19 @@ import { isStaleChunkError } from './lazyRoute'
 
 export type ClientErrorKind = 'caught' | 'uncaught' | 'recoverable' | 'window' | 'rejection'
 export interface ClientErrorItem { message: string; stack?: string; path: string; kind: ClientErrorKind; count: number }
-export type Sender = (items: ClientErrorItem[]) => void
+/** `keepalive` is true only for the unmount flush (detachSender). */
+export type Sender = (items: ClientErrorItem[], keepalive: boolean) => void
 
 export const SEND_WINDOW_MS = 60_000
 export const MAX_FINGERPRINTS = 20
+export const MAX_MESSAGE_CHARS = 2000
+export const MAX_STACK_CHARS = 2000
+/**
+ * Largest request body. A keepalive fetch shares a 64 KB body quota across
+ * every in-flight keepalive request, and over quota the fetch rejects, losing
+ * the whole batch; 56 KB leaves room for a second request in flight.
+ */
+export const MAX_BODY_BYTES = 56_000
 const BATCH_DELAY_MS = 1_000
 const MAX_BATCH = 20
 
@@ -80,7 +89,7 @@ export function flush(now: () => number = Date.now, force = false): void {
     slot.unsent = 0
     slot.lastSentAt = t
   }
-  if (due.length > 0) sender(due)
+  if (due.length > 0) sender(due, force)
   if (waiting && timer === null) {
     timer = setTimeout(() => { timer = null; flush(now) }, SEND_WINDOW_MS)
   }
@@ -98,7 +107,7 @@ export function capture(err: unknown, kind: ClientErrorKind, now: () => number =
     slot.unsent++
   } else {
     if (slots.size >= MAX_FINGERPRINTS) return
-    slots.set(key, { item: { message: message.slice(0, 2000), stack: stack?.slice(0, 8000), path: currentPath(), kind, count: 1 }, unsent: 1, lastSentAt: null })
+    slots.set(key, { item: { message: message.slice(0, MAX_MESSAGE_CHARS), stack: stack?.slice(0, MAX_STACK_CHARS), path: currentPath(), kind, count: 1 }, unsent: 1, lastSentAt: null })
   }
   // An uncaught render error unmounts the root, and with it the binding that
   // holds the sender: send now rather than behind the batch timer.
@@ -107,15 +116,44 @@ export function capture(err: unknown, kind: ClientErrorKind, now: () => number =
   else schedule(now)
 }
 
-/** POST to the Hub. keepalive so a report survives the page unloading; failures stay silent (no report loop). */
-export const fetchSender: Sender = (items) => {
-  void fetch('/api/client-errors', {
-    method: 'POST',
-    keepalive: true,
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ errors: items }),
-  }).catch(() => { /* reporting must never raise a reportable error */ })
+const bodyBytes = (body: string) => new Blob([body]).size
+
+/**
+ * Split items into request bodies each under MAX_BODY_BYTES. One item is
+ * always under it (message and stack are cut to 2,000 chars each at capture).
+ */
+export function chunkBodies(items: ClientErrorItem[]): string[] {
+  const bodies: string[] = []
+  let chunk: ClientErrorItem[] = []
+  for (const item of items) {
+    const next = [...chunk, item]
+    if (chunk.length > 0 && bodyBytes(JSON.stringify({ errors: next })) > MAX_BODY_BYTES) {
+      bodies.push(JSON.stringify({ errors: chunk }))
+      chunk = [item]
+    } else {
+      chunk = next
+    }
+  }
+  if (chunk.length > 0) bodies.push(JSON.stringify({ errors: chunk }))
+  return bodies
+}
+
+/**
+ * POST to the Hub, one request per chunk. keepalive only on the unmount
+ * flush, so a report survives the page going away; elsewhere a plain fetch
+ * (no shared quota). Failures stay silent: reporting must never raise a
+ * reportable error.
+ */
+export const fetchSender: Sender = (items, keepalive) => {
+  for (const body of chunkBodies(items)) {
+    void fetch('/api/client-errors', {
+      method: 'POST',
+      keepalive,
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    }).catch(() => { /* silent by design: no report loop */ })
+  }
 }
 
 /** Attach the member's sender and the window listeners. Called by ErrorReporterBinding only. */
