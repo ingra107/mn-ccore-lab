@@ -2030,6 +2030,14 @@ button[aria-label="Deselect task"]::before {
   .stage-dot::before,
   .tk .tk-hov::before,
   .today-plan-btn::before,
+  .tk button.tk-btn::before,
+  .tk button.tk-pill::before,
+  .tk button.tk-join::before,
+  .tk button.tk-joinq::before,
+  .tk button.tk-ck::before,
+  .tk button.tk-wo::before,
+  .tk button.tk-si::before,
+  .tk button.tk-rmore::before,
   button[aria-label="Select task"]::before,
   button[aria-label="Deselect task"]::before {
     inset: -13px;

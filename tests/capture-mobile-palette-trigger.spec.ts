@@ -54,6 +54,6 @@ test('palette trigger is hidden on desktop; the sidebar Search opens the palette
   await page.goto(`${BASE}/portal/dashboard`, { waitUntil: 'networkidle' })
 
   await expect(page.locator(TRIGGER)).toBeHidden()
-  await page.getByRole('button', { name: 'Search', exact: true }).first().click()
+  await page.getByRole('link', { name: 'Search', exact: true }).first().click()
   await expect(page.getByPlaceholder(/search/i)).toBeVisible()
 })
