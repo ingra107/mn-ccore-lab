@@ -29,7 +29,7 @@ export function useProjectPickerList() {
       const res = await fetch('/api/projects')
       if (!res.ok) return []
       const data = await res.json()
-      return data.data as { slug: string; title: string }[]
+      return data.data as { slug: string; title: string; short_name?: string | null }[]
     },
     staleTime: 5 * 60 * 1000,
   })

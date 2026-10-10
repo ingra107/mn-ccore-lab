@@ -42,14 +42,20 @@ function timeLine(e: TodayEvent): string {
   return e.end ? `${e.time} – ${e.end}` : e.time
 }
 
-export function EventRow({ e, onDismiss, overlap = false, compact = false, note, onNote, saveStatus = 'idle', isCalEvent = false, minHeight }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; compact?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean; minHeight?: number }) {
-  const [expanded, setExpanded] = useState(false)
+export function EventRow({ e, onDismiss, overlap = false, compact = false, note, onNote, saveStatus = 'idle', isCalEvent = false, isPhone = false, minHeight, scan = false, notToday = false }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; compact?: boolean; note?: string; onNote?: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean; minHeight?: number; /** Agenda scan mode: no notes panel, the card does not expand. */ scan?: boolean; /** A row that is not on today's clock (Tomorrow): never "Now", never "ended". */ notToday?: boolean }) {
+  const [expandedState, setExpanded] = useState(false)
+  const expanded = scan ? false : expandedState
 
   // Happening now: the Join link becomes the filled primary and the card gets
   // a teal edge. The clock is the same 60s ticker the now-line uses.
   const nowMin = useNowMinutes()
-  const isNow = typeof e.startMin === 'number' && typeof e.endMin === 'number' && !e.isAllDay
+  const isNow = !notToday && typeof e.startMin === 'number' && typeof e.endMin === 'number' && !e.isAllDay
     && e.startMin <= nowMin && nowMin < e.endMin
+  // Over: a timed row on today's clock whose end has passed. Join is dead chrome
+  // then, and the Prep button reads "Notes" (same action: it makes the meeting
+  // page for a calendar row, which post-meeting notes need).
+  const ended = !notToday && !e.isAllDay && typeof e.startMin === 'number' && typeof e.endMin === 'number'
+    && e.startMin <= e.endMin && e.endMin <= nowMin
 
   // T13: NEW tag / teal dot for a cal- row matched to a D1 meeting
   // (same visual rule as the meetings tab — Meetings.tsx). Unmatched cal-
@@ -148,17 +154,17 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
         type="button"
         onClick={handlePrep}
         disabled={prep.isPending}
-        title="Build an agenda for this meeting — links, notes, decisions"
-        aria-label={`Prep ${e.title}`}
+        title={ended ? 'Open a meeting page for notes and decisions' : 'Build an agenda for this meeting — links, notes, decisions'}
+        aria-label={`${ended ? 'Notes for' : 'Prep'} ${e.title}`}
         className="tk-pill tk-btnp planned-chip"
         style={{ cursor: prep.isPending ? 'wait' : 'pointer', opacity: prep.isPending ? 0.6 : 1 }}
       >
-        <ListChecks {...ICON_PROPS} size={11} aria-hidden />{prep.isPending ? 'Prepping' : 'Prep'}
+        <ListChecks {...ICON_PROPS} size={11} aria-hidden />{prep.isPending ? (ended ? 'Opening' : 'Prepping') : (ended ? 'Notes' : 'Prep')}
       </button>
     )
   )
   const joinEl = (
-    e.meetingUrl && (
+    e.meetingUrl && !ended && (
       <a
         href={e.meetingUrl}
         target="_blank"
@@ -204,7 +210,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
                   </div>
                   <textarea
                     value={isCalEvent ? '' : (note || '')}
-                    onChange={isCalEvent ? undefined : (ev) => onNote(e.id, ev.target.value)}
+                    onChange={isCalEvent || !onNote ? undefined : (ev) => onNote(e.id, ev.target.value)}
                     readOnly={isCalEvent}
                     disabled={isCalEvent}
                     placeholder={
@@ -238,7 +244,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
         className={`tk-card tk-mc tk-mcc${isNow ? ' tk-nowm' : ''}`}
         style={{ minHeight }}
       >
-        <div onClick={() => setExpanded(!expanded)} className={`meeting-row-header tk-mcr${overlap ? ' tk-wrap' : ''}`} style={{ cursor: 'pointer' }}>
+        <div onClick={() => setExpanded(!expanded)} className={`meeting-row-header tk-mcr${overlap || isPhone ? ' tk-wrap' : ''}`} style={{ cursor: 'pointer' }}>
           <span className="tk-mt" title={timeLine(e)}>{start}</span>
           <span className="tk-ct">{e.title}</span>
           {place && <span className="tk-cs tk-inl" title={place}>{place}</span>}
@@ -270,8 +276,8 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
       className={`tk-card tk-mc${isNow ? ' tk-nowm' : ''}`}
       style={{ minHeight }}
     >
-      <div onClick={() => setExpanded(!expanded)} className="meeting-row-header" style={{ cursor: 'pointer' }}>
-        <div className="tk-mch">
+      <div onClick={scan ? undefined : () => setExpanded(!expandedState)} className="meeting-row-header" style={{ cursor: scan ? 'default' : 'pointer' }}>
+        <div className="tk-mch" style={scan ? { cursor: 'default' } : undefined}>
           <div className="tk-hdr">
             <div className="tk-ct" style={{ fontSize: 13 }}>{e.title}</div>
             <div className="tk-cs" title={place ? `${timeLine(e)} · ${place}` : timeLine(e)}>
@@ -287,7 +293,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
                 className="tk-dotg"
               />
             )}
-            <span className="tk-caret">{expanded ? '▾' : '▸'}</span>
+            {!scan && <span className="tk-caret">{expanded ? '▾' : '▸'}</span>}
             <button
               type="button"
               onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}

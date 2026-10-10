@@ -369,15 +369,17 @@ export function buildTimelineModel(
   //      (a) at least MORNING_FLOOR (7 AM morning planning window),
   //      (b) the current time (now-line never falls before the axis top),
   //      (c) 30 min lead before the earliest event.
-  //    dayEnd extends to include nowMin (now-line never falls after axis bottom)
-  //    plus a 30-min tail on the last event.
+  //    dayEnd is the later of the default end and the last event + 30 min. It
+  //    does NOT follow nowMin: a clock past the last event used to stretch the
+  //    axis to now and render the elapsed evening as a droppable "6h free" gap.
+  //    The now-line past dayEnd is drawn after the last unit (TimelineGrid
+  //    computeNowPlacement 'trail'), on no height at all.
   let dayStart = defaultDayStart
   let dayEnd = defaultDayEnd
   // Factor in nowMin first (before event-based narrowing) so the window always
   // encompasses the current time regardless of whether there are timed events.
   if (nowMin != null) {
     dayStart = Math.min(dayStart, nowMin)
-    dayEnd   = Math.max(dayEnd,   nowMin)
   }
   if (timedEvents.length > 0) {
     const minStart = Math.min(...timedEvents.map((e) => e.startMin as number))
@@ -468,11 +470,16 @@ export function buildTimelineModel(
   // Whole-day totals from MINUTES, not from the heights we just computed.
   // An overlap contributes its SPAN, not the sum of its events — two meetings
   // at the same hour cost one hour of the day, not two.
+  // Free = free time still AHEAD. Gap minutes before nowMin are over, so they
+  // are not counted (the unit keeps its full freeMinutes: that is its geometry).
   let freeMinutes = 0
   let meetingMinutes = 0
   for (const u of units) {
-    if (u.kind === 'gap') freeMinutes += u.freeMinutes
-    else if (u.kind === 'meeting') meetingMinutes += u.minutes
+    if (u.kind === 'gap') {
+      freeMinutes += nowMin == null
+        ? u.freeMinutes
+        : Math.max(0, Math.min(u.freeMinutes, u.endMin - Math.max(u.startMin, nowMin)))
+    } else if (u.kind === 'meeting') meetingMinutes += u.minutes
     else if (u.kind === 'overlap') meetingMinutes += u.spanMinutes
   }
   const serviceMinutes = serviceBlocks.reduce((sum, e) => {

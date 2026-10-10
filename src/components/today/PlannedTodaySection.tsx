@@ -62,11 +62,13 @@ export function PlannedTodaySection({
           <h3>Planned, no specific time</h3>
           <span className="tk-cnt">{stripTasks.length}</span>
         </div>
-        {open && <span className="tk-hintx today-section-hint">check to finish · × to unplan</span>}
+        {open && stripTasks.length > 0 && <span className="tk-hintx today-section-hint">check to finish · × to unplan</span>}
       </div>
 
       {open && (stripTasks.length === 0 ? (
-        <div className="tk-empty">
+        // One quiet line, no box (design-system: empty states never reserve a
+        // bordered block). The section's .tk-over outline is the drop cue.
+        <div style={{ fontSize: 12, color: 'var(--sk-t3)', padding: '0 2px 2px' }}>
           Nothing planned. Drag a task into the timeline or onto this strip to plan it for today.
         </div>
       ) : (

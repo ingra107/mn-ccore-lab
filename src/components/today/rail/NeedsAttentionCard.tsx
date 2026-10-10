@@ -63,7 +63,7 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
               {s.slug
                 ? <Link to={PATHS.project(s.slug)} className="tk-t" style={{ color: 'inherit', textDecoration: 'none' }}>{s.name}</Link>
                 : <span className="tk-t">{s.name}</span>}
-              <span className="tk-d">{s.days}d</span>
+              <span className="tk-d">{Number.isFinite(s.days) ? `${s.days}d` : '—'}</span>
             </div>
           ))}
           {stalledExtra > 0 && (

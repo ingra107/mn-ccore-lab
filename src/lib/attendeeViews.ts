@@ -33,7 +33,10 @@ function words(local: string): string {
 }
 
 function unlisted(raw: string): AttendeeView {
-  return { key: raw, name: raw, first: raw, initials: '?', raw, listed: false, onTeam: false }
+  // "kaur0147@umn.edu" shows its id, "kaur0147" (Nick: "show the id, muted").
+  // The full address stays in `raw`, which the badge puts in its tooltip.
+  const label = raw.toLowerCase().endsWith('@umn.edu') ? raw.slice(0, raw.indexOf('@')) : raw
+  return { key: raw, name: label, first: label, initials: '?', raw, listed: false, onTeam: false }
 }
 
 function fromName(raw: string, name: string, first?: string, onTeam = false): AttendeeView {

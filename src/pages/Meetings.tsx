@@ -1,7 +1,7 @@
-import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react'
+import { useState, useMemo, useRef, useEffect, useLayoutEffect, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
-import { Activity, Calendar, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale } from 'lucide-react'
+import { Activity, Calendar, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale, Video } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
@@ -16,7 +16,7 @@ import { directors, getAllMembers, getPersonInfo } from '../data/team'
 import { projects as projectOptions } from '../data/projects'
 import QuickAddForm, { QuickAddTrigger } from '../components/QuickAddForm'
 import Avatar from '../components/Avatar'
-import { AttendeeFaces, AttendeePeople } from '../components/meetings/Attendees'
+import { AttendeePeople } from '../components/meetings/Attendees'
 import MeetingListCard from '../components/meetings/MeetingListCard'
 import PageHeader from '../components/PageHeader'
 import InlineSelect from '../components/InlineSelect'
@@ -28,6 +28,9 @@ import { civilDaysUntil, formatFullDate, localDateKey } from '../lib/dateUtils'
 import PageTooltip, { dismissPageTooltip } from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
 import { PATHS } from '../constants/paths'
+import { projectShortLabel } from '../lib/projectMeetings'
+import { SegmentedToggle } from '../components/ui/SegmentedToggle'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { useOpenParam } from '../hooks/useOpenParam'
 import { useUnseenActivity, useMarkSeen } from '../hooks/useEntitySeen'
 import MarkdownView from '../components/MarkdownView'
@@ -89,18 +92,26 @@ function meetingRowToMeeting(row: MeetingRow, tasksByMeetingId: Map<string, Task
 
 function getNextMeetingDate(meetingsList: Meeting[]): Date {
   const today = new Date()
+  // Compare DATE KEYS, not instants: a meeting dated today is still "next"
+  // after noon (the old T12:00 instant compare dropped it at 12:01).
+  const todayKey = localDateKey(today)
+  const at = (m: Meeting) => new Date(m.date.slice(0, 10) + 'T12:00:00')
   const upcoming = meetingsList
-    .map((m) => new Date(m.date + 'T12:00:00'))
-    .filter((d) => d >= today)
+    .filter((m) => m.date.slice(0, 10) >= todayKey)
+    .map(at)
     .sort((a, b) => a.getTime() - b.getTime())
   if (upcoming.length > 0) return upcoming[0]
-  const sortedDates = meetingsList
-    .map((m) => new Date(m.date + 'T12:00:00'))
+  // Nothing booked: project the next date from the lab cadence only (the
+  // biweekly series). Any-type projection invented a cadence that does not
+  // exist (a one-on-one + 14 days). No lab meeting at all -> next Tuesday.
+  const cadence = meetingsList
+    .filter((m) => m.type === 'biweekly')
+    .map(at)
     .sort((a, b) => b.getTime() - a.getTime())
-  if (sortedDates.length > 0) {
-    const next = new Date(sortedDates[0])
+  if (cadence.length > 0) {
+    const next = new Date(cadence[0])
     next.setDate(next.getDate() + 14)
-    while (next < today) next.setDate(next.getDate() + 14)
+    while (localDateKey(next) < todayKey) next.setDate(next.getDate() + 14)
     return next
   }
   const day = today.getDay()
@@ -229,9 +240,6 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
               )}
             </div>
           </div>
-          <div className="hidden sm:flex items-center shrink-0">
-            <AttendeeFaces values={meeting.attendees} max={5} />
-          </div>
         </div>
       </div>
 
@@ -246,9 +254,9 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
           <Link
             to={PATHS.meeting(meeting.id)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-            // Theme-agnostic dark-gold fill + white text = 7.5:1 AA both
-            // modes. --gold light failed with dark text (2.46:1). r7 2026-04-22.
-            style={{ background: 'var(--stage-fill-analysis)', color: '#fff', textDecoration: 'none', transition: 'opacity 0.2s' }}
+            // Primary action = the teal fill (white on --teal-solid is 6.1:1, AA
+            // both modes). The gold fill read as a second accent on the page.
+            style={{ background: 'var(--teal-solid)', color: '#fff', textDecoration: 'none', transition: 'opacity 0.2s' }}
           >
             View Full Meeting <ArrowRight {...ICON_PROPS} size={11} />
           </Link>
@@ -319,7 +327,7 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
       {meeting.attendees && meeting.attendees.length > 0 && (
         <div className="mb-6">
           <h4 className="mtg-section-label mb-2">Attendees</h4>
-          <AttendeePeople values={meeting.attendees} />
+          <AttendeePeople values={meeting.attendees} max={8} />
         </div>
       )}
 
@@ -358,7 +366,7 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
           <div>
             {realActionItems.map((item) => {
               const project = item.project_id
-                ? (() => { const p = allProjects.find((pr) => pr.slug === item.project_id); return p ? { name: p.title, slug: p.slug } : null })()
+                ? (() => { const p = allProjects.find((pr) => pr.slug === item.project_id); return p ? { name: projectShortLabel(p), slug: p.slug } : null })()
                 : null
               return (
                 <SharedTaskRow
@@ -395,6 +403,61 @@ export default function Meetings() {
   usePageMeta('Meetings · MN-CCORE', 'MNCCORE biweekly meetings, decisions, and action items archive.')
 
   const headerRef = useScrollReveal<HTMLDivElement>()
+  // Desktop page height = viewport minus everything the shell puts above and
+  // below this page (top bar, host tabs, main padding, status bar), MEASURED
+  // so no calc(100vh - N) guess can drift when the chrome changes. Written
+  // straight onto the element (an external-system update, not React state).
+  const pageRef = useRef<HTMLDivElement>(null)
+  const isPhone = useIsMobile(768)
+  useLayoutEffect(() => {
+    const el = pageRef.current
+    if (!el) return
+    const fit = () => {
+      if (isPhone) { el.style.height = ''; el.style.minHeight = '100vh'; return }
+      el.style.minHeight = '0px'
+      const top = el.getBoundingClientRect().top + window.scrollY
+      // The header is flexShrink:0, so its height does not depend on the page
+      // height. (Measuring the page's own offsetHeight would not work: the page
+      // is an auto-height flex column and the split is flex:1, so it reports
+      // full content height.) The page grows to header + the split's 360px
+      // floor, so a tall header scrolls the document instead of pushing the
+      // split over the status bar.
+      const headerH = (el.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0
+      let below = 0
+      const main = el.closest('#portal-main') as HTMLElement | null
+      if (main) {
+        below += parseFloat(getComputedStyle(main).paddingBottom) || 0
+        for (let sib = main.nextElementSibling as HTMLElement | null; sib; sib = sib.nextElementSibling as HTMLElement | null) {
+          const pos = getComputedStyle(sib).position
+          if (pos !== 'fixed' && pos !== 'absolute') below += sib.offsetHeight
+        }
+      }
+      el.style.height = `${Math.max(480, headerH + 360, Math.round(window.innerHeight - top - below))}px`
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    // Layout changes with no window resize: the header growing (record form,
+    // cadence details), focus mode collapsing the top bar, the shell reflowing.
+    // fit() only reads the header's height, which the page height does not
+    // change, so it cannot feed back into the observer; the rAF coalesces bursts.
+    let raf = 0
+    const refit = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit) }
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(refit) : null
+    if (ro) {
+      if (el.firstElementChild) ro.observe(el.firstElementChild)
+      ro.observe(document.body)
+      const main = el.closest('#portal-main')
+      if (main) ro.observe(main)
+    }
+    // PageTransition animates the page in; re-measure once it has settled.
+    const settle = window.setTimeout(fit, 450)
+    return () => {
+      window.removeEventListener('resize', fit)
+      ro?.disconnect()
+      cancelAnimationFrame(raf)
+      window.clearTimeout(settle)
+    }
+  }, [isPhone])
   // `?filter=today` is the Today page's "meetings" stat line link: this page's
   // list narrowed to today's meeting records.
   const [searchParams, setSearchParams] = useSearchParams()
@@ -536,7 +599,7 @@ export default function Meetings() {
   const projectLinesByMeeting = useMemo(() => {
     const byRef = new Map<string, string>()
     for (const pr of projectList) {
-      const label = pr.short_name?.trim() || pr.title
+      const label = projectShortLabel(pr)
       byRef.set(pr.slug, label)
       if (pr.id) byRef.set(pr.id, label)
     }
@@ -631,11 +694,7 @@ export default function Meetings() {
     fontSize: 'var(--value-size)', outline: 'none', borderRadius: 'var(--radius-lg)', padding: '6px 10px', width: '100%',
   }
   function isNextMeeting(meeting: Meeting): boolean {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const d = new Date(meeting.date + 'T12:00:00')
-    d.setHours(0, 0, 0, 0)
-    return d >= today && meeting.date === nextMeetingDateStr
+    return meeting.date.slice(0, 10) >= localDateKey() && meeting.date.slice(0, 10) === nextMeetingDateStr
   }
 
   // H-02: subtitle for PageHeader
@@ -691,13 +750,18 @@ export default function Meetings() {
   )
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    // Desktop: the page is exactly the room below the shell chrome (pageH,
+    // measured), so the split fills it and the list/detail scroll inside it:
+    // one page, no page scroll. Phone: natural height, the page scrolls once.
+    <div ref={pageRef} style={{ display: 'flex', flexDirection: 'column' }}>
 
-      {/* H-02: PageHeader replaces inline H1 */}
-      <div className="content-container" style={{ paddingTop: '1.5rem', paddingBottom: '1rem', flexShrink: 0 }}>
+      {/* H-02: PageHeader replaces inline H1. width:100% stops the auto side
+          margins of .content-container from shrinking and centring it inside
+          this flex column (it is the host-tab band's own left edge). */}
+      <div className="content-container" style={{ paddingTop: '1.5rem', paddingBottom: '1rem', flexShrink: 0, width: '100%' }}>
         <div ref={headerRef} className="fade-in-up">
           <PageHeader
-            icon={<Users {...ICON_PROPS} size={18} />}
+            icon={<Video {...ICON_PROPS} size={18} />}
             title="Meeting Hub"
             subtitle={pageSubtitle || undefined}
             count={meetings.length}
@@ -792,14 +856,14 @@ export default function Meetings() {
             return (
               <details className="mt-3 px-3 py-2 rounded-lg group"
                 style={{ background: 'var(--gold-hover)', border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}` }}>
-                <summary className="flex items-center gap-2 cursor-pointer list-none"
+                <summary className="flex flex-wrap items-center gap-x-2 gap-y-0.5 cursor-pointer list-none"
                   style={{ outline: 'none' }}>
                   <Activity {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-                  <span style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600 }}>
+                  <span style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600, whiteSpace: 'nowrap' }}>
                     {cadence.emoji} {cadence.recommendation}
                   </span>
                   {lead && (
-                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 'var(--ink-label)', flex: '1 1 auto' }}>
                       {lead}
                     </span>
                   )}
@@ -822,34 +886,31 @@ export default function Meetings() {
 
       {/* M-03: 240px list, M-28: minHeight 400px, M-34: mobile-detail class */}
       <div className={`meetings-split-panel tk${mobileShowDetail ? ' mobile-detail' : ''}`}
-        style={{ display: 'grid', gridTemplateColumns: '290px 1fr', gap: 0, height: 'calc(100vh - 130px)', overflow: 'hidden' }}>
+        style={{ display: 'grid', gridTemplateColumns: '290px 1fr', gridTemplateRows: 'minmax(0, 1fr)', gap: 0, flex: 1, minHeight: 360, overflow: 'hidden' }}>
 
         {/* Left panel — M-28: minHeight, M-34: hidden when mobile-detail active */}
-        <div className="meetings-list-panel" style={{ overflowY: 'auto', borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
+        <div className="meetings-list-panel" style={{ borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div style={{ padding: '12px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div className="flex items-center gap-1.5">
-              {FILTER_OPTIONS.map((f) => (
-                <motion.button key={f.key} type="button" onClick={() => setFilter(f.key)}
-                  className="pill-btn cursor-pointer inline-flex items-center px-2.5 py-1 rounded-full text-xs"
-                  // Active: theme-agnostic dark-gold + white text =
-                  // AA both modes. r7 2026-04-22.
-                  style={{ background: filter === f.key ? 'var(--stage-fill-analysis)' : 'var(--ice)', color: filter === f.key ? '#fff' : 'var(--slate)', border: 'none', transitionProperty: 'background-color, color', transitionDuration: '150ms', transitionTimingFunction: 'ease' }}
-                  whileTap={{ scale: 0.95 }} aria-pressed={filter === f.key}>
-                  {f.label}
-                </motion.button>
-              ))}
-            </div>
+            <SegmentedToggle
+              options={FILTER_OPTIONS.map((f) => ({ value: f.key, label: f.label }))}
+              value={filter}
+              onChange={setFilter}
+              accent="teal"
+              size="sm"
+              ariaLabel="Filter meetings"
+              scrollable
+            />
             <div className="relative">
               <Search {...ICON_PROPS} size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
               <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-7 pr-3 py-1.5 rounded-lg text-xs"
-                style={{ background: 'var(--ice)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, color: 'var(--ink)', outline: 'none' }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15) }} />
+                style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)', color: 'var(--ink)', outline: 'none' }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--teal)' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)' }} />
             </div>
           </div>
 
-          <div className="tk-mlist" style={{ flex: 1, overflowY: 'auto', minHeight: 500 }}>
+          <div className="tk-mlist" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
             {meetingsLoading && filteredMeetings.length === 0 ? (
               // CLS fix (C8): skeleton meeting rows reserve list height before data arrives
               Array.from({ length: 10 }).map((_, i) => (
@@ -918,7 +979,7 @@ export default function Meetings() {
         </div>
 
         {/* Right panel: meeting detail */}
-        <div className="meetings-detail-panel" style={{ overflowY: 'auto', padding: 'var(--sp-xl)', minHeight: 'calc(100vh - 240px)', contain: 'layout' }}>
+        <div className="meetings-detail-panel" style={{ overflowY: 'auto', padding: 'var(--sp-xl)', minHeight: 0, contain: 'layout' }}>
           {/* M-34: mobile back button */}
           <button
             type="button"
@@ -981,9 +1042,10 @@ export default function Meetings() {
         @media (max-width: 767px) {
           .meetings-split-panel {
             grid-template-columns: 1fr !important;
-            height: calc(100vh - 200px) !important;
-            overflow: hidden !important;
+            height: auto !important;
+            overflow: visible !important;
           }
+          .meetings-list-panel .tk-mlist { overflow: visible !important; }
           .meetings-list-panel { display: flex !important; }
           .meetings-detail-panel { display: none !important; }
           .meetings-split-panel.mobile-detail .meetings-list-panel { display: none !important; }

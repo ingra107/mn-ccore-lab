@@ -14,7 +14,8 @@
 //     — Agenda has no time axis). Uses useDroppable() (same model as TimelineGrid).
 //   - Read-mostly: complete tasks (DoneBox) + open drawer (click title).
 //   - Tomorrow section: shows tomorrow's D1 meetings so Nick can scan ahead.
-//   - No notes textarea (scan-mode; click title → drawer for details).
+//   - No notes textarea (scan mode: EventRow `scan` hides the notes panel; the
+//     Agenda pill opens the meeting page).
 //   - Now-marker chip on the current meeting/task block.
 //
 // SLOT IDENTITY (Phase 6): buildTimelineModel is now the single source of truth
@@ -28,84 +29,30 @@
 // untimed events.
 
 import { useMemo, useState, useCallback } from 'react'
-import { useDroppable } from '@dnd-kit/core'
+import { useDroppable, useDndContext } from '@dnd-kit/core'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import { buildTimelineModel } from './timelineModel'
 import type { TodayEvent, PlannedSlot } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import { useNowMinutes, formatNowLabel } from './useNowMinutes'
-import { fmtDuration } from './utils'
+import { EventRow } from './MeetingRow'
 
-// ── helpers ───────────────────────────────────────────────────────────────
-
-function fmtMin(min: number): string {
-  const h = Math.floor(min / 60)
-  const m = min % 60
-  const hour = h > 12 ? h - 12 : h === 0 ? 12 : h
-  const ampm = h < 12 ? 'am' : 'pm'
-  return m === 0 ? `${hour}${ampm}` : `${hour}:${String(m).padStart(2, '0')}${ampm}`
-}
-
-function durationLabel(startMin: number, endMin: number): string {
-  return fmtDuration(endMin - startMin)
-}
-
-// ── AgendaEventRow ────────────────────────────────────────────────────────
-// A single meeting row in the Agenda list: chip-time | title | loc | duration.
-// Click-to-dismiss only (no notes — this is scan mode).
-function AgendaEventRow({
-  event,
-  isNow,
-  onDismiss,
-}: {
-  event: TodayEvent
-  isNow: boolean
-  onDismiss: (id: string) => void
-}) {
-  const hasTime = typeof event.startMin === 'number'
-  const timeStr = hasTime ? fmtMin(event.startMin as number) : event.time
-  const durStr = hasTime && typeof event.endMin === 'number'
-    ? durationLabel(event.startMin as number, event.endMin)
-    : null
-
-  const sub = [timeStr, durStr, event.loc].filter(Boolean).join(' · ')
-
+// ── Meeting rows ───────────────────────────────────────────────────────────
+// Agenda renders the SAME card as the Timeline's all-day band (EventRow, full
+// anatomy: faces, project, action count, notes marker, Agenda/Prep, Join). The
+// only difference is scan mode: no notes panel and no expand. Click the Agenda
+// pill to open the meeting page.
+function AgendaEventRow({ event, onDismiss, notToday = false }: { event: TodayEvent; onDismiss: (id: string) => void; notToday?: boolean }) {
   return (
-    <div data-agenda-list-row="meeting" className={`tk-card tk-mc${isNow ? ' tk-nowm' : ''}`}>
-      <div className="tk-mch" style={{ cursor: 'default' }}>
-        <div className="tk-hdr">
-          <div className="tk-ct" style={{ fontSize: 13 }}>{event.title}</div>
-          <div className="tk-cs" title={sub}>{sub}</div>
-        </div>
-        <div className="tk-tr-r">
-          {isNow && <span className="tk-pill tk-box"><i />Now</span>}
-          {event.meetingUrl && (
-            // Join: the filled primary only while the meeting is on now, a plain
-            // link the rest of the day (same rule as the timeline card).
-            <a
-              href={event.meetingUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              title="Join meeting"
-              aria-label="Join meeting"
-              className={isNow ? 'tk-join' : 'tk-joinq'}
-            >
-              Join
-            </a>
-          )}
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onDismiss(event.id) }}
-            title="Hide from today's view"
-            aria-label={`Hide ${event.title}`}
-            className="tk-x"
-          >
-            ×
-          </button>
-        </div>
-      </div>
+    <div data-agenda-list-row="meeting">
+      <EventRow
+        e={event}
+        onDismiss={onDismiss}
+        scan
+        notToday={notToday}
+        isCalEvent={event.id.startsWith('cal-')}
+      />
     </div>
   )
 }
@@ -120,16 +67,25 @@ function SectionHeader({ label }: { label: string }) {
 // list. Slot-only write (no plan_start_min — Agenda has no time axis).
 // GH#150: replaced HTML5 onDragOver/onDrop with useDroppable() to match the
 // TimelineGrid pattern. No className needed; visibility controlled by isOver.
+// F29: at rest the separator takes NO space (height 0, and a -ROW_GAP margin
+// cancels the flex gap it would otherwise add), so every card sits ROW_GAP from
+// its neighbour whether the units between them are gaps or overlaps. It grows
+// to an 8px target only while a drag is active, and 22px under the pointer.
+const ROW_GAP = 4
+
 function AgendaDropSeparator({ slot }: { slot: PlannedSlot }) {
   const { isOver, setNodeRef } = useDroppable({ id: `slot:${slot}` })
+  const { active } = useDndContext()
+  const dragging = !!active
 
   return (
     <div
       ref={setNodeRef}
       className={`tk-asep${isOver ? ' tk-over' : ''}`}
       style={{
-        height: isOver ? 22 : 8,
-        transition: 'all 120ms',
+        height: isOver ? 22 : dragging ? 8 : 0,
+        marginTop: dragging ? 0 : -ROW_GAP,
+        transition: 'height 120ms',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -325,7 +281,6 @@ export function AgendaListView({
                 <AgendaEventRow
                   key={e.id}
                   event={e}
-                  isNow={false}
                   onDismiss={onDismiss}
                 />
               ))}
@@ -346,7 +301,6 @@ export function AgendaListView({
                 <AgendaEventRow
                   key={e.id}
                   event={e}
-                  isNow={typeof e.startMin === 'number' && typeof e.endMin === 'number' && e.startMin <= now && now < e.endMin}
                   onDismiss={onDismiss}
                 />
               ))}
@@ -355,30 +309,26 @@ export function AgendaListView({
       )}
 
       {/* Today section header */}
-      {hasTodayContent && <SectionHeader label="Today" />}
+      {hasTodayContent && (allDayEvents.length > 0 || serviceBlocks.some((e) => !dismissedIds[e.id]) || visibleTomorrow.length > 0) && <SectionHeader label="Today" />}
 
       {/* Interleaved timed meetings, gaps (drop zones + tasks), now-marker */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: ROW_GAP }}>
         {rows.map((row, i) => {
           if (row.type === 'now') {
             return <div key={`now-${i}`}>{renderNowMarker()}</div>
           }
           if (row.type === 'meeting') {
-            const isNow = typeof row.event.startMin === 'number' &&
-              typeof row.event.endMin === 'number' &&
-              row.event.startMin <= now && now < row.event.endMin
             return (
               <AgendaEventRow
                 key={row.event.id}
                 event={row.event}
-                isNow={isNow}
                 onDismiss={onDismiss}
               />
             )
           }
           // drop zone + any tasks in this slot
           return (
-            <div key={`drop-${row.slot}`} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div key={`drop-${row.slot}`} style={{ display: 'contents' }}>
               <AgendaDropSeparator slot={row.slot} />
               {row.tasks.map((task) => (
                 <PlannedTaskRow
@@ -430,7 +380,7 @@ export function AgendaListView({
                 <AgendaEventRow
                   key={e.id}
                   event={e}
-                  isNow={false}
+                  notToday
                   onDismiss={onDismiss}
                 />
               ))}

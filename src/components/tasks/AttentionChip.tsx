@@ -1,9 +1,9 @@
 // AttentionChip — THE rendering for the two attention signals (one place to
 // style them; TaskRow, MyTasks ListView, and My Items all render through it).
 //
-//   kind='new'      → gold ✦ NEW   — assigned to you, never opened
+//   kind='new'      → gold ✦ New   — assigned to you, never opened
 //                     (tasks.acknowledged_at IS NULL; auto-ack clears it).
-//   kind='activity' → teal ● n NEW — an entity you HAVE seen has team-visible
+//   kind='activity' → teal ● n new — an entity you HAVE seen has team-visible
 //                     entries by others since your last look (entity_seen v81).
 //
 // When both could apply, 'new' wins (callers gate on isNewToViewer first) —
@@ -13,7 +13,7 @@
 // handed to you re-fires gold even if you'd seen it under its old owner.
 //
 // Premium = restraint: hairline border (color @ ~28%), whisper fill (~9%),
-// full-radius pill, micro caps with wide tracking, tabular count, and a
+// full-radius pill, sentence case like Today's cards, tabular count, and a
 // ringed dot for the activity variant. No animation — Rule 44 (axe catches
 // mid-transition contrast) and the Right-Now glow stays the only glow.
 
@@ -40,9 +40,9 @@ export function AttentionChip({ kind, count = 0, style }: AttentionChipProps) {
         display: 'inline-flex',
         alignItems: 'center',
         gap: 4,
-        fontSize: 8.5,
-        fontWeight: 700,
-        letterSpacing: '0.12em',
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: 0,
         fontVariantNumeric: 'tabular-nums',
         lineHeight: 1,
         color,
@@ -64,7 +64,7 @@ export function AttentionChip({ kind, count = 0, style }: AttentionChipProps) {
           style={{ width: 5, height: 5, borderRadius: '50%', background: color, boxShadow: `0 0 0 2.5px ${withAlpha(color, 15)}`, flexShrink: 0 }}
         />
       )}
-      {isNew ? 'NEW' : `${count} NEW`}
+      {isNew ? 'New' : `${count} new`}
     </span>
   )
 }

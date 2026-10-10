@@ -122,7 +122,9 @@ test.describe('Meeting action items — quick row actions', () => {
     const meetings = await (await request.get(`${API}/api/meetings`, { headers: AUTH })).json()
     const meetingId = meetings.data[0].id as string
     const projects = await (await request.get(`${API}/api/projects`, { headers: AUTH })).json()
-    const target = projects.data[0] as { slug: string; title: string }
+    const target = projects.data[0] as { slug: string; title: string; short_name?: string | null }
+    // The picker labels a project by its short name (title when it has none).
+    const targetLabel = target.short_name?.trim() || target.title
 
     const title = `Reassign probe ${Date.now()}`
     const createRes = await request.post(`${API}/api/tasks`, {
@@ -146,10 +148,10 @@ test.describe('Meeting action items — quick row actions', () => {
       await expect(row.getByRole('link', { name: /^Open / })).toHaveCount(0)
 
       await chip.click()
-      await page.getByRole('option', { name: target.title, exact: true }).first().click()
+      await page.getByRole('option', { name: targetLabel, exact: true }).first().click()
 
       // Chip updates in place — no panel, no expand.
-      await expect(chip).toHaveText(new RegExp(target.title.slice(0, 12)), { timeout: 10000 })
+      await expect(chip).toHaveText(new RegExp(targetLabel.slice(0, 12)), { timeout: 10000 })
 
       const after = await (await request.get(`${API}/api/meetings/${meetingId}`, { headers: AUTH })).json()
       const moved = after.data.action_items.find((a: { id: string }) => a.id === taskId)

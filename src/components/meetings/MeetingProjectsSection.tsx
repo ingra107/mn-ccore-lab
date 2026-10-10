@@ -48,7 +48,9 @@ function pillStyle(p: ProjectPill, clickable: boolean): React.CSSProperties {
     // Granted: normal contrast, the house teal pill.
     ? { ...PILL_BASE, background: 'var(--teal-active)', color: 'var(--teal)', borderWidth: 1, borderStyle: 'solid', borderColor: 'transparent', cursor: clickable ? 'pointer' : undefined }
     // Discussed only: faded. Muted text, no fill, a dashed hairline.
-    : { ...PILL_BASE, background: 'none', color: 'var(--muted)', borderWidth: 1, borderStyle: 'dashed', borderColor: 'var(--border-subtle)', cursor: clickable ? 'pointer' : undefined }
+    // Dimmer than the row label (--sk-t3) and a regular weight: --muted at the
+    // label weight (600) read brighter and bolder than the label beside it.
+    : { ...PILL_BASE, background: 'none', color: 'var(--sk-t3)', fontWeight: 400, borderWidth: 1, borderStyle: 'dashed', borderColor: 'var(--border-subtle)', cursor: clickable ? 'pointer' : undefined }
 }
 
 export default function MeetingProjectsSection({ meeting, derivedTags = [], allProjects, updateMeta }: MeetingProjectsSectionProps) {

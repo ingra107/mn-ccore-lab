@@ -86,9 +86,9 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
         <MessageCircle {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
         <span style={{
           fontSize: '10px', color: 'var(--gold)',
-          textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600,
+          fontWeight: 600,
         }}>
-          Opening Round
+          Opening round
         </span>
         <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           · {categoryLabel}
@@ -142,7 +142,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
           </div>
         </div>
       ) : (
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.p
             key={displayText}
             initial={{ opacity: 0, y: 3 }}

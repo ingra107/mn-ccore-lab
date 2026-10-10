@@ -24,7 +24,7 @@ import { CardCheck } from '../../components/tasks/TaskCardRow'
 import { useTodayView } from '../../hooks/useTodayView'
 import { AgendaListView } from '../../components/today/AgendaListView'
 import { useTodayState } from '../../hooks/useTodayState'
-import { civilDaysUntil } from '../../lib/dateUtils'
+import { civilDaysOverdue, civilDaysUntil } from '../../lib/dateUtils'
 import { daysSince } from '../../lib/taskGrouping'
 import {
   GROUP_ORDER,
@@ -346,7 +346,7 @@ export default function TodayPage() {
       let next = '—'
       if (m.next_due) {
         const days = civilDaysUntil(m.next_due)
-        next = days < 0 ? `${Math.abs(days)}d late` : days === 0 ? 'today' : `${days}d`
+        next = days < 0 ? `${civilDaysOverdue(m.next_due)}d overdue` : days === 0 ? 'today' : `${days}d`
       }
       return { name: m.name, next }
     })
@@ -431,9 +431,8 @@ export default function TodayPage() {
     overdue: overdueTasks.length,
     stalled: stalledProjects.length,
     planned: state.plannedIds().length,
-    // The number matches the list its link opens: the Meetings page's meeting
-    // records for today (calendar-only events are on the Today section below).
-    meetings: (meetingsQuery.data ?? []).filter((m) => isToday(m.date)).length,
+    // Matches the timeline header: D1 meeting records plus calendar events.
+    meetings: todaysMeetings.length,
     doneToday: doneTodayCount,
   }
 

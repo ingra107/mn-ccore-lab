@@ -571,7 +571,7 @@ function StandardRow(props: SharedTaskRowProps) {
     <button
       type="button"
       data-plan-btn={task.id}
-      className="today-plan-btn tip"
+      className="today-plan-btn hit-area tip"
       onClick={(e) => { e.stopPropagation(); onTogglePlan() }}
       onMouseDown={(e) => e.stopPropagation()}
       data-tip="Plan for today"

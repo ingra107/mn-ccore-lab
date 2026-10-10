@@ -107,8 +107,10 @@ type NowPlacement =
   | { mode: 'trail' }
   | null
 
-function computeNowPlacement(units: TimelineUnit[], now: number, dayStart: number, dayEnd: number): NowPlacement {
-  if (now < dayStart || now > dayEnd) return null
+function computeNowPlacement(units: TimelineUnit[], now: number, dayStart: number): NowPlacement {
+  // Past dayEnd (an evening after the last event) the line still draws, after
+  // the last unit, on no height: the axis no longer stretches to the clock.
+  if (now < dayStart) return null
   for (let i = 0; i < units.length; i++) {
     const u = units[i]
     if (u.kind === 'untimed') continue
@@ -304,6 +306,7 @@ function AgendaGapRow({
   baseHeight,
   gapStartMin,
   gapEndMin,
+  nowMin,
   freeWindows,
   tasks,
   state,
@@ -321,6 +324,8 @@ function AgendaGapRow({
   gapStartMin: number
   /** Minutes-since-midnight of the gap end. Used for move-clamp upper bound. */
   gapEndMin: number
+  /** Current minute-of-day; the gap holding it labels only its remaining part. */
+  nowMin?: number
   /** All droppable gap windows for the day — enables cross-gap drag.
    *  Each entry includes startMin, endMin, and the slot to write when a task
    *  lands there. Passed through to useTaskBlockGesture on each timed block. */
@@ -424,9 +429,17 @@ function AgendaGapRow({
     }
   }, [ghostState, timedTasks, gapStartMin])
 
-  const fmtFree = freeMinutes >= 60
-    ? `${Math.floor(freeMinutes / 60)}h${freeMinutes % 60 > 0 ? ` ${freeMinutes % 60}m` : ''} free`
-    : freeMinutes > 0 ? `${freeMinutes}m free` : 'drop here'
+  // Elapsed time is not free (matches the day-balance strip): the gap that
+  // holds the now-line labels only what is left of it.
+  const gapElapsed = nowMin != null && gapEndMin > 0 && gapEndMin <= nowMin
+  const labelMinutes = gapElapsed
+    ? 0
+    : nowMin != null && nowMin > gapStartMin && nowMin < gapEndMin
+      ? Math.max(0, gapEndMin - nowMin)
+      : freeMinutes
+  const fmtFree = gapElapsed ? 'passed' : labelMinutes >= 60
+    ? `${Math.floor(labelMinutes / 60)}h${labelMinutes % 60 > 0 ? ` ${labelMinutes % 60}m` : ''} free`
+    : labelMinutes > 0 ? `${labelMinutes}m free` : 'drop here'
 
   return (
     <div
@@ -608,6 +621,12 @@ function AgendaGapRow({
   )
 }
 
+// A line drawn through a meeting card strikes its title through, so inside a
+// meeting card the now-line sits on the nearer card edge instead.
+function nowEdgeTop(offsetPx: number, cardHeight: number): number | string {
+  return offsetPx < cardHeight / 2 ? 0 : '100%'
+}
+
 // ── AgendaMeetingRow ─────────────────────────────────────────────────────
 // In-flow meeting row: duration frame + notes expand below (OPAQUE, pushes down).
 // Wraps EventRow; the minHeight = baseHeight is applied to the outer shell.
@@ -649,12 +668,12 @@ function AgendaMeetingRow({
         margin: '3px 0',
       }}
     >
-      {/* #83: now-line at fractional position within this meeting */}
+      {/* #83: now-line at fractional position at the nearest edge of this meeting */}
       {nowLineEl != null && nowOffsetPx != null && (
         <div
           style={{
             position: 'absolute',
-            top: nowOffsetPx,
+            top: nowEdgeTop(nowOffsetPx, baseHeight),
             left: 0,
             right: 0,
             pointerEvents: 'none',
@@ -716,18 +735,21 @@ function AgendaOverlapRegion({
   nowLineEl?: ReactNode
   nowOffsetPx?: number
 }) {
-  const colCount = unit.placements[0]?.colCount ?? 1
+  // Phone: the spine is ~250px, so two 200px-min columns overflow and scroll
+  // sideways. Stack the overlapping meetings in ONE full-width column (no stagger
+  // offset: stacked cards read top to bottom in start order). Desktop unchanged.
+  const colCount = isPhone ? 1 : (unit.placements[0]?.colCount ?? 1)
 
   // Build columns: array of arrays, indexed by colIdx
   const columns: TodayEvent[][] = Array.from({ length: colCount }, () => [])
   unit.events.forEach((e, i) => {
     const { colIdx } = unit.placements[i]
-    columns[colIdx].push(e)
+    columns[isPhone ? 0 : colIdx].push(e)
   })
 
   // Start offset for stagger: minutes from cluster start → px
   const startOffsetPx = (e: TodayEvent): number =>
-    typeof e.startMin === 'number'
+    !isPhone && typeof e.startMin === 'number'
       ? Math.round(minToPx(e.startMin - unit.startMin))
       : 0
 
@@ -740,12 +762,12 @@ function AgendaOverlapRegion({
         position: 'relative',
       }}
     >
-      {/* #83: now-line at fractional position within this overlap cluster */}
+      {/* #83: now-line at fractional position at the nearest edge of this overlap cluster */}
       {nowLineEl != null && nowOffsetPx != null && (
         <div
           style={{
             position: 'absolute',
-            top: nowOffsetPx,
+            top: nowEdgeTop(nowOffsetPx, unit.baseHeight),
             left: 0,
             right: 0,
             pointerEvents: 'none',
@@ -763,7 +785,7 @@ function AgendaOverlapRegion({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${colCount}, minmax(200px, 1fr))`,
+          gridTemplateColumns: isPhone ? 'minmax(0, 1fr)' : `repeat(${colCount}, minmax(200px, 1fr))`,
           gap: 6,
           overflowX: colCount > 1 ? 'auto' : 'visible',
           alignItems: 'start',
@@ -867,7 +889,7 @@ export function TimelineGrid({
         color: nowColor,
         background: 'var(--sk-panel)',
         flexShrink: 0,
-        marginRight: 2,
+        marginRight: 8,
         whiteSpace: 'nowrap',
       }}>
         {nowLabel} now
@@ -898,8 +920,8 @@ export function TimelineGrid({
   // before its start ('before') or inside it ('within'), stop — matching the
   // old first-writer-wins semantics without any reassignment.
   const nowPlacement = useMemo(
-    () => computeNowPlacement(units, now, model.dayStart, model.dayEnd),
-    [units, now, model.dayStart, model.dayEnd],
+    () => computeNowPlacement(units, now, model.dayStart),
+    [units, now, model.dayStart],
   )
 
   // Build agenda unit elements with now-line injection
@@ -928,6 +950,7 @@ export function TimelineGrid({
           baseHeight={unit.baseHeight}
           gapStartMin={unit.startMin}
           gapEndMin={unit.endMin}
+          nowMin={now}
           freeWindows={freeWindows}
           tasks={tasks}
           state={state}
