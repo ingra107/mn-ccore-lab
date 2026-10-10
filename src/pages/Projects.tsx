@@ -106,7 +106,7 @@ const T3 = LIST_T3
 
 // One grid for the header and every row (they drifted apart once, #91): title,
 // status, stage, PI, group, five 24px link slots, folder + Work on.
-const PROJECT_COLS = 'minmax(280px, 3fr) 140px 128px 120px 124px 124px 52px'
+const PROJECT_COLS = 'minmax(320px, 1fr) 88px 108px 112px 104px 124px 52px'
 
 // Fully-cleaned display title for a pipeline row: strip the consortium tag
 // first, then — if the project's own `type` says it's a grant — the

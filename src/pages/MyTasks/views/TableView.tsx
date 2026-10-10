@@ -35,7 +35,7 @@ import {
   daysSince, withAlpha, isTaskDone,
   type GroupKey, type FilterOption,
 } from '../constants'
-import { isOverdue, civilDaysOverdue } from '../../../lib/dateUtils'
+import { isOverdue } from '../../../lib/dateUtils'
 import { OverdueBanner } from './OverdueBanner'
 import { NoTasksMatch, AllCaughtUp } from './MyTasksEmpty'
 import WorkOnActions from '../../../components/WorkOnActions'
@@ -127,6 +127,9 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
     count: filtered.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => 45,
+    // Phone rows grow past 44px (height:auto, min 44, title wraps); measure the
+    // real box so rows do not overlap.
+    measureElement: (el) => el.getBoundingClientRect().height,
     overscan: 12,
   })
 
@@ -164,7 +167,7 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
             the row has a trailing 52px Work column the header was missing, so the
             1fr Title soaked up the extra 52px and every column after it drifted
             out of alignment. Add the matching Work column (empty header cell). */}
-        <div className="list-view-header" role="row" style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px 52px', padding: '6px 16px', borderBottom: '1px solid var(--border-default)', fontSize: 11.5, fontWeight: 500, color: INK_DIM, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
+        <div className="list-view-header" role="row" style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 124px 80px 110px 110px 70px 52px', padding: '6px 16px', borderBottom: '1px solid var(--border-default)', fontSize: 11.5, fontWeight: 500, color: INK_DIM, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
           <div className="list-view-col-cursor"></div>
           <div className="list-view-col-done"></div>
           <SortHead label="Title" k="title" sort={sort} onSort={onSort} />
@@ -184,6 +187,8 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
               return (
                 <div
                   key={t.id}
+                  data-index={row.index}
+                  ref={virtualizer.measureElement}
                   style={{
                     position: 'absolute',
                     top: 0, left: 0,
@@ -275,7 +280,6 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
   const meta = GROUP_META[(task as TaskRow & { _group?: GroupKey })._group ?? 'deep']
   // Rule 68: status-aware isOverdue(), never a hand-rolled date compare.
   const overdue = !!task.due_date && !isTaskDone(task) && isOverdue(task.due_date, task.status)
-  const overdueDays = overdue && task.due_date ? civilDaysOverdue(task.due_date) : 0
   const stale = task.updated_at && daysSince(task.updated_at) >= staleDays && task.status === 'in_progress' ? daysSince(task.updated_at) : 0
   const isCompleted = isTaskDone(task)
 
@@ -297,7 +301,7 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
       onDoubleClick={onDouble}
       style={{
         display: 'grid',
-        gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px 52px',
+        gridTemplateColumns: '32px 26px 1fr 150px 124px 80px 110px 110px 70px 52px',
         padding: '5px 16px',
         alignItems: 'center',
         fontSize: 12,
@@ -359,7 +363,6 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
         {!isNew && newActivity > 0 && <AttentionChip kind="activity" count={newActivity} />}
         {task.group_override && <span title={`Moved manually (${task.group_override})`} style={{ display: 'inline-flex', alignItems: 'center', color: ACCENT_TEAL, flexShrink: 0 }}><MapPin {...ICON_PROPS} size={11} /></span>}
         {planned && <span style={{ fontSize: 10, color: ACCENT_GOLD, fontWeight: 500 }}>Planned</span>}
-        {overdueDays > 0 && <span style={{ fontSize: 10, color: ACCENT_CORAL, fontWeight: 500 }}>{overdueDays}d overdue</span>}
         {stale > 0 && <span style={{ fontSize: 9, color: ACCENT_ORANGE }}>{stale}d stale</span>}
       </div>
       {/* Project — inline editable */}
@@ -372,7 +375,7 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
       </div>
       {/* Due — inline date picker */}
       <div className="list-view-col-due" onClick={stop}>
-        <InlineDatePicker value={task.due_date ?? null} onChange={onDateChange} />
+        <InlineDatePicker value={task.due_date ?? null} onChange={onDateChange} tableCell />
       </div>
       {/* Priority — inline */}
       <div className="list-view-col-priority" onClick={stop}>

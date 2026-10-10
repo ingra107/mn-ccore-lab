@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, CalendarDays } from 'lucide-react'
-import { formatShortDate, addDaysYmd, dueLabelText } from '../lib/dateUtils'
+import { formatShortDate, addDaysYmd, dueLabelText, dueLabelCompact } from '../lib/dateUtils'
 import { ICON_PROPS } from '../lib/iconProps'
 import { usePortalDropdown, type PortalDropdownPosition } from '../hooks/usePortalDropdown'
 
 interface InlineDatePickerProps {
   value: string | null
   onChange: (date: string | null) => void
+  /** Table cells: overdue shows "Nd overdue" on wide screens and the signless
+   *  compact "Nd" below 1024px, always on one line. */
+  tableCell?: boolean
 }
 
 // ── date helpers (local, no UTC drift) ──────────────────────────────────────
@@ -28,7 +31,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 // { value, onChange } contract is unchanged, so every consumer (ListView,
 // Deadlines, Today drawer via DateInput/DueInlineSelect, Insights, grid)
 // keeps working without edits.
-export default function InlineDatePicker({ value, onChange }: InlineDatePickerProps) {
+export default function InlineDatePicker({ value, onChange, tableCell }: InlineDatePickerProps) {
   const [open, setOpen] = useState(false)
 
   const now = new Date()
@@ -168,8 +171,10 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
         } as React.CSSProperties}
       >
         <CalendarDays {...ICON_PROPS} size={11} />
-        <span>{!value ? 'Set date' : isOverdue
-          ? dueLabelText(value, true)
+        <span style={tableCell ? { whiteSpace: 'nowrap' } : undefined}>{!value ? 'Set date' : isOverdue
+          ? (tableCell
+            ? <><span className="tk-due-full-lg">{dueLabelText(value, true)}</span><span className="tk-due-short-lg">{dueLabelCompact(value, true)}</span></>
+            : dueLabelText(value, true))
           : isToday ? 'Today' : isTomorrow ? 'Tomorrow'
           : isThisWeek ? (() => { const days = Math.ceil((dueDate!.getTime() - today.getTime()) / 86400000); return `in ${days}d` })()
           : formatShortDate(value)

@@ -2701,6 +2701,11 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-tc.tk-done .tk-ct{color:var(--sk-t3);text-decoration:line-through;font-weight:500}
 .tk .tk-mt svg{flex-shrink:0}
 .tk .tk-pill svg{flex-shrink:0}
+.tk-due-full-lg{display:none}.tk-due-short-lg{display:inline}
+@media (min-width: 1024px){.tk-due-full-lg{display:inline}.tk-due-short-lg{display:none}}
+.tk .tk-pill.tk-duepill{flex-shrink:0}
+.tk .tk-due-short{display:none}
+@media (max-width: 640px){.tk .tk-due-full{display:none}.tk .tk-due-short{display:inline}}
 .tk .tk-btn:disabled{cursor:not-allowed}
 .tk .tk-btn svg,.tk .tk-pill svg{vertical-align:-2px}
 .tk .tk-compose > div{min-width:0}
