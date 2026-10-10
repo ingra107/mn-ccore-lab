@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { localDateKey, formatPublicationDate } from './dateUtils'
+import { localDateKey, formatPublicationDate, isOverdue, isDoneStatus } from './dateUtils'
 
 describe('localDateKey', () => {
   it('returns YYYY-MM-DD built from local getters, not the UTC ISO date', () => {
@@ -53,5 +53,28 @@ describe('formatPublicationDate', () => {
     expect(formatPublicationDate(null)).toBe('')
     expect(formatPublicationDate('')).toBe('')
     expect(formatPublicationDate('n/a')).toBe('')
+  })
+})
+
+describe('isOverdue: a done item is never overdue', () => {
+  const past = '2020-01-01'
+  it('flags an open past-due item', () => {
+    expect(isOverdue(past)).toBe(true)
+    expect(isOverdue(past, 'in_progress')).toBe(true)
+  })
+  it('never flags done or completed status', () => {
+    expect(isOverdue(past, 'done')).toBe(false)
+    expect(isOverdue(past, 'completed')).toBe(false)
+  })
+  it('never flags when the caller passes the done flag', () => {
+    expect(isOverdue(past, 'in_progress', true)).toBe(false)
+    expect(isOverdue(past, undefined, true)).toBe(false)
+  })
+  it('is false with no due date; isDoneStatus matches both words', () => {
+    expect(isOverdue(null)).toBe(false)
+    expect(isDoneStatus('done')).toBe(true)
+    expect(isDoneStatus('completed')).toBe(true)
+    expect(isDoneStatus('open')).toBe(false)
+    expect(isDoneStatus(undefined)).toBe(false)
   })
 })

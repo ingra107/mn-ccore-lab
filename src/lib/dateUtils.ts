@@ -92,8 +92,17 @@ export function formatRelativeTime(dateStr: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-export function isOverdue(dueDate: string | null, status?: string): boolean {
-  if (!dueDate || status === 'done' || status === 'completed') return false
+/** A finished item (task `done`, milestone `completed`). Never overdue. */
+export function isDoneStatus(status?: string | null): boolean {
+  return status === 'done' || status === 'completed'
+}
+
+/**
+ * Past due and still open. A done item is never overdue: pass its status, or
+ * `done` for callers that hold a flag (e.g. `task.completed`) instead.
+ */
+export function isOverdue(dueDate: string | null, status?: string, done?: boolean): boolean {
+  if (!dueDate || done || isDoneStatus(status)) return false
   return new Date(dueDate + 'T23:59:59') < new Date()
 }
 

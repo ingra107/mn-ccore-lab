@@ -11,6 +11,8 @@ interface InlineDatePickerProps {
   /** Table cells: overdue shows "Nd overdue" on wide screens and the signless
    *  compact "Nd" below 1024px, always on one line. */
   tableCell?: boolean
+  /** The item is done/completed: its date reads neutrally, never as overdue. */
+  done?: boolean
 }
 
 // ── date helpers (local, no UTC drift) ──────────────────────────────────────
@@ -31,17 +33,17 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 // { value, onChange } contract is unchanged, so every consumer (ListView,
 // Deadlines, Today drawer via DateInput/DueInlineSelect, Insights, grid)
 // keeps working without edits.
-export default function InlineDatePicker({ value, onChange, tableCell }: InlineDatePickerProps) {
+export default function InlineDatePicker({ value, onChange, tableCell, done }: InlineDatePickerProps) {
   const [open, setOpen] = useState(false)
 
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const todayStr = ymd(today)
   const dueDate = value ? parseYmd(value) : null
-  const isOverdue = dueDate && dueDate < today
+  const isOverdue = !done && dueDate && dueDate < today
   const isToday = dueDate && dueDate.toDateString() === today.toDateString()
   const isTomorrow = dueDate && dueDate.toDateString() === new Date(today.getTime() + 86400000).toDateString()
-  const isThisWeek = dueDate && !isOverdue && !isToday && !isTomorrow && dueDate < new Date(today.getTime() + 7 * 86400000)
+  const isThisWeek = dueDate && dueDate >= today && !isOverdue && !isToday && !isTomorrow && dueDate < new Date(today.getTime() + 7 * 86400000)
 
   // The month currently shown in the grid, and the keyboard "focus" day.
   const [cursor, setCursor] = useState<Date>(() => (value ? parseYmd(value) : today))

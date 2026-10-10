@@ -762,9 +762,9 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
     <div className="space-y-2">
       {milestones.map((ms, i) => {
         const dueDate = ms.due_date ? new Date(ms.due_date + 'T12:00:00') : null
-        const isOverdue = dueDate ? dueDate < today : false
-        const isUpcoming = dueDate && !isOverdue ? dueDate <= in14Days : false
         const isComplete = ms.status === 'completed'
+        const isOverdue = !isComplete && dueDate ? dueDate < today : false
+        const isUpcoming = !isComplete && dueDate && !isOverdue ? dueDate <= in14Days : false
 
         let dateColor = 'var(--slate)'
         if (isComplete) dateColor = 'var(--teal)'

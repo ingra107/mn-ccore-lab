@@ -632,6 +632,7 @@ function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueD
             <InlineDatePicker
               value={item.due_date}
               onChange={(newDate) => onDueDateChange(item.id, newDate)}
+              done={isDone}
             />
           </div>
         ) : (
@@ -728,6 +729,7 @@ function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueD
                 <InlineDatePicker
                   value={item.due_date}
                   onChange={(newDate) => onDueDateChange(item.id, newDate)}
+                  done={isDone}
                 />
               </div>
             ) : (

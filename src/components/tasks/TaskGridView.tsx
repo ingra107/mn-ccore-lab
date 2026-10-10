@@ -1380,6 +1380,7 @@ function TaskGridRow({
                 <InlineDatePicker
                   value={task.due_date}
                   onChange={(date) => onFieldChange(task.id, 'due_date', date)}
+                  done={isTaskDone(task)}
                 />
               </div>
             )

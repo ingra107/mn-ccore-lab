@@ -375,7 +375,7 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
       </div>
       {/* Due — inline date picker */}
       <div className="list-view-col-due" onClick={stop}>
-        <InlineDatePicker value={task.due_date ?? null} onChange={onDateChange} tableCell />
+        <InlineDatePicker value={task.due_date ?? null} onChange={onDateChange} tableCell done={isTaskDone(task)} />
       </div>
       {/* Priority — inline */}
       <div className="list-view-col-priority" onClick={stop}>
