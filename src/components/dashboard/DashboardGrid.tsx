@@ -1,9 +1,12 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Responsive, WidthProvider, type Layout, type Layouts } from 'react-grid-layout'
 import {
   DASHBOARD_GRID_BREAKPOINTS,
   DASHBOARD_GRID_COLS,
   DASHBOARD_GRID_ROW_HEIGHT,
+  GRID_MARGIN_Y,
+  GRID_SCALE,
+  breakpointForWidth,
   buildDefaultLayouts,
   loadSavedLayouts,
   reconcileLayouts,
@@ -47,6 +50,12 @@ export default function DashboardGrid({
     return saved ? reconcileLayouts(cards, saved) : buildDefaultLayouts(cards)
   })
   const [currentBp, setCurrentBp] = useState<keyof typeof DASHBOARD_GRID_ROW_HEIGHT>('lg')
+  // The grid is not rendered until the wrapper has been measured, so the first
+  // layout and currentBp both come from the real container width. WidthProvider
+  // otherwise assumes 1280px (lg, 12 cols) for the first render and phones
+  // painted half-width cards until a breakpoint change corrected it.
+  const [measured, setMeasured] = useState(false)
+  const hasCards = cards.length > 0
 
   // Reconcile when the card set changes (visibility toggles, pinning).
   // Adjusted during render (React's "adjusting state when a prop changes"
@@ -56,20 +65,120 @@ export default function DashboardGrid({
     setLayouts(prev => reconcileLayouts(cards, prev))
   }
 
+  // Fit rows are the card's content height, recomputed on every change (it
+  // grows and shrinks). They are a render-time override kept apart from the
+  // saved layout, so nothing auto-sized reaches localStorage.
+  const [fitRows, setFitRows] = useState<Record<string, number>>({})
+  const [fitBp, setFitBp] = useState(currentBp)
+  if (fitBp !== currentBp) { setFitBp(currentBp); setFitRows({}) }
+  const defaultRows = useMemo(() => {
+    const m = new Map<string, number>()
+    cards.forEach(c => m.set(c.id, (c.defaultH ?? 1) * GRID_SCALE))
+    return m
+  }, [cards])
+  const effectiveLayouts = useMemo<Layouts>(() => {
+    const list = layouts[currentBp]
+    if (!list) return layouts
+    const cols = DASHBOARD_GRID_COLS[currentBp]
+    return {
+      ...layouts,
+      [currentBp]: list.map(l => {
+        // A card never renders narrower than its minimum width, so a stale
+        // narrow saved layout cannot leave a phone card at half width.
+        const w = Math.min(Math.max(l.w, l.minW ?? 1), cols)
+        const fit = fitRows[l.i]
+        // Size to content, shrinking as well as growing, unless the user
+        // resized this card away from its default height.
+        const userSized = l.h !== defaultRows.get(l.i)
+        if (!fit || (userSized && fit < l.h)) return w === l.w ? l : { ...l, w }
+        const h = Math.max(fit, l.minH ?? GRID_SCALE)
+        return { ...l, w, h, maxH: Math.max(l.maxH ?? 0, h) }
+      }),
+    }
+  }, [layouts, fitRows, currentBp, defaultRows])
+  // Set during render, not in an effect: react-grid-layout fires onLayoutChange
+  // from its componentDidUpdate (commit layout phase), before a parent passive
+  // effect would refresh this, so an effect leaves the previous render's
+  // effectiveLayouts here and the fit height gets persisted.
+  const stateRef = useRef({ layouts, effectiveLayouts, currentBp })
+  // eslint-disable-next-line react-hooks/refs
+  stateRef.current = { layouts, effectiveLayouts, currentBp }
+
   const handleLayoutChange = useCallback(
     (_current: Layout[], all: Layouts) => {
-      setLayouts(all)
-      saveLayouts(section, userSlug, all)
+      // Undo the render-time minimum: an item still at the effective height
+      // keeps the height the user saved.
+      const { layouts: stored, effectiveLayouts: eff, currentBp: bp } = stateRef.current
+      const list = all[bp]
+      let next = all
+      if (list) {
+        next = {
+          ...all,
+          [bp]: list.map(l => {
+            const e = eff[bp]?.find(x => x.i === l.i)
+            const u = stored[bp]?.find(x => x.i === l.i)
+            return e && u && l.h === e.h && e.h !== u.h ? { ...l, h: u.h } : l
+          }),
+        }
+      }
+      setLayouts(next)
+      saveLayouts(section, userSlug, next)
     },
     [section, userSlug],
   )
 
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const resizing = useRef<Set<string>>(new Set())
+  useLayoutEffect(() => {
+    const root = wrapRef.current
+    if (!root) return
+    setCurrentBp(breakpointForWidth(root.clientWidth))
+    setMeasured(true)
+  }, [hasCards])
+  useEffect(() => {
+    const root = wrapRef.current
+    if (!root || !measured) return
+    const rh = DASHBOARD_GRID_ROW_HEIGHT[currentBp]
+    let timer = 0
+    const fit = () => {
+      const need: Record<string, number> = {}
+      root.querySelectorAll<HTMLElement>('.dashboard-grid-item[data-card-id]').forEach(item => {
+        const id = item.dataset.cardId as string
+        if (resizing.current.has(id)) return
+        const el = item.querySelector<HTMLElement>('.bento-card') ?? item.querySelector<HTMLElement>('.dashboard-grid-card')
+        if (!el) return
+        // Natural height: let the card size to its content for one synchronous
+        // read (no paint between), then put the inline height back.
+        const prev = el.style.height
+        el.style.height = 'auto'
+        const natural = el.offsetHeight
+        el.style.height = prev
+        if (!natural) return
+        need[id] = Math.min(Math.max(Math.ceil((natural + GRID_MARGIN_Y) / (rh + GRID_MARGIN_Y)), GRID_SCALE), 6 * GRID_SCALE)
+      })
+      setFitRows(prev => {
+        const ids = Object.keys(need)
+        const same = ids.length === Object.keys(prev).length && ids.every(k => prev[k] === need[k])
+        return same ? prev : need
+      })
+    }
+    const schedule = () => { window.clearTimeout(timer); timer = window.setTimeout(fit, 120) }
+    schedule()
+    const mo = new MutationObserver(schedule)
+    mo.observe(root, { childList: true, subtree: true, characterData: true })
+    const ro = new ResizeObserver(schedule)
+    ro.observe(root)
+    return () => { window.clearTimeout(timer); mo.disconnect(); ro.disconnect() }
+  }, [currentBp, cardsKey, measured])
+
   if (cards.length === 0) return null
 
   return (
+    <div ref={wrapRef}>
+    {measured && (
     <ResponsiveGridLayout
       className="dashboard-grid"
-      layouts={layouts}
+      layouts={effectiveLayouts}
       breakpoints={DASHBOARD_GRID_BREAKPOINTS}
       cols={DASHBOARD_GRID_COLS}
       rowHeight={DASHBOARD_GRID_ROW_HEIGHT[currentBp]}
@@ -79,12 +188,19 @@ export default function DashboardGrid({
       resizeHandles={['se']}
       onLayoutChange={handleLayoutChange}
       onBreakpointChange={(bp) => setCurrentBp(bp as keyof typeof DASHBOARD_GRID_ROW_HEIGHT)}
+      onResizeStart={(_l, item) => { resizing.current.add(item.i) }}
+      onResizeStop={(_l, item) => {
+        resizing.current.delete(item.i)
+        // Drop this card's fit height; a user-sized card then keeps its size
+        // (the fit never shrinks a card the user resized).
+        setFitRows(prev => { if (!(item.i in prev)) return prev; const n = { ...prev }; delete n[item.i]; return n })
+      }}
       isBounded={false}
       useCSSTransforms
       compactType="vertical"
     >
       {cards.map(card => (
-        <div key={card.id} data-testid={`card-${card.id}`} className="dashboard-grid-item">
+        <div key={card.id} data-testid={`card-${card.id}`} data-card-id={card.id} className="dashboard-grid-item">
           <div
             className="dashboard-grid-card"
             // Cards contain their own interactive elements (buttons, links),
@@ -123,5 +239,7 @@ export default function DashboardGrid({
         </div>
       ))}
     </ResponsiveGridLayout>
+    )}
+    </div>
   )
 }

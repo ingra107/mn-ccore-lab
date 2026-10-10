@@ -92,38 +92,23 @@ const BUCKET_COLOR: Record<HealthBucket, string> = {
   red: 'var(--maroon)',
 }
 
-const BUCKET_BG: Record<HealthBucket, string> = {
-  green: 'color-mix(in oklch, var(--green) 12%, transparent)',
-  amber: 'color-mix(in oklch, var(--gold) 14%, transparent)',
-  orange: 'color-mix(in oklch, var(--orange) 14%, transparent)',
-  red: 'color-mix(in oklch, var(--maroon) 14%, transparent)',
-}
-
+// Rendered in Today's StatLine anatomy (a thin colored rule, a number in the
+// display face, a muted label), matching the stat line beside it. The reasons
+// live in the tooltip. `.tk` scopes the shared classes in index.css.
 export default function LabHealthScore() {
   const signals = useLabHealthSignals()
   const health = useMemo(() => computeHealthScore(signals), [signals])
 
   if (signals.loading) {
     return (
-      <div
-        aria-label="Lab health loading"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--sp-sm)',
-          padding: '4px 10px',
-          borderRadius: 'var(--radius-md)',
-          background: 'var(--surface-1)',
-          boxShadow: '0 0 0 1px var(--border-subtle)',
-          height: 32,
-          minWidth: 120,
-          flexShrink: 0,
-        }}
-      >
-        <div style={{ width: 8, height: 8, borderRadius: 'var(--radius-circle)', background: 'var(--border-subtle)' }} />
-        <span style={{ fontSize: 'var(--text-label)', color: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Lab Health
-        </span>
+      <div className="tk" aria-label="Lab health loading">
+        <div className="tk-st tk-zero">
+          <span className="tk-rl" aria-hidden="true" />
+          <span>
+            <span className="tk-v" style={{ display: 'block' }}>&ndash;</span>
+            <span className="tk-l">lab health</span>
+          </span>
+        </div>
       </div>
     )
   }
@@ -133,73 +118,22 @@ export default function LabHealthScore() {
     : health.label
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-label={`Lab health score ${health.score} out of 100: ${health.label}`}
-      title={tooltip}
-      data-testid="lab-health-score"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--sp-sm)',
-        padding: '4px 10px',
-        borderRadius: 'var(--radius-md)',
-        background: BUCKET_BG[health.bucket],
-        boxShadow: `0 0 0 1px ${BUCKET_COLOR[health.bucket]}`,
-        minHeight: 32,
-        flexShrink: 0,
-        cursor: 'help',
-      }}
-    >
-      <span
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: 'var(--radius-circle)',
-          background: BUCKET_COLOR[health.bucket],
-          boxShadow: `0 0 6px ${BUCKET_COLOR[health.bucket]}`,
-          flexShrink: 0,
-        }}
-      />
-      <span
-        style={{
-          fontSize: 'var(--text-label)',
-          color: 'var(--ink-label)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.06em',
-          fontWeight: 'var(--weight-ui)',
-          whiteSpace: 'nowrap',
-        }}
+    <div className="tk">
+      <div
+        className="tk-st"
+        role="status"
+        aria-live="polite"
+        aria-label={`Lab health score ${health.score} out of 100: ${health.label}`}
+        title={tooltip}
+        data-testid="lab-health-score"
+        style={{ cursor: 'help' }}
       >
-        Lab Health
-      </span>
-      <span
-        style={{
-          fontSize: 'var(--text-md)',
-          fontWeight: 'var(--weight-metric)',
-          color: BUCKET_COLOR[health.bucket],
-          fontVariantNumeric: 'tabular-nums',
-          lineHeight: 1,
-        }}
-      >
-        {health.score}
-      </span>
-      {health.reasons.length > 0 && (
-        <span
-          style={{
-            fontSize: 'var(--text-caption)',
-            color: 'var(--ink-muted)',
-            whiteSpace: 'nowrap',
-            maxWidth: 280,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-          className="lab-health-reasons"
-        >
-          {health.reasons.slice(0, 2).join(' · ')}
+        <span className="tk-rl" aria-hidden="true" style={{ background: BUCKET_COLOR[health.bucket] }} />
+        <span>
+          <span className="tk-v" style={{ display: 'block' }}>{health.score}</span>
+          <span className="tk-l">lab health</span>
         </span>
-      )}
+      </div>
     </div>
   )
 }

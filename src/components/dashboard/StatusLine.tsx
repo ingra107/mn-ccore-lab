@@ -1,149 +1,106 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, CalendarDays, ShieldAlert, CheckCircle2 } from 'lucide-react'
 import type { TaskRow } from '../../lib/api'
 import { useExpiringRegulatory } from '../../hooks/useApiData'
 import { PATHS } from '../../constants/paths'
-import { localDateKey, isOverdue } from '../../lib/dateUtils'
 import { isTaskDone } from '../../lib/taskGrouping'
-import { ICON_PROPS } from '../../lib/iconProps'
+import { countDoneToday, countOverdue, isWorkTask } from '../../lib/taskStats'
+
+// Lab Overview's status line, in Today's StatLine anatomy: a number in the
+// display face, a muted label, a thin colored rule. No pill, no box. The
+// classes (.tk-stats / .tk-st / .tk-rl / .tk-v / .tk-l) live under `.tk` in
+// index.css, so the root carries `tk`.
+//
+// Scope: `tasks` is the WHOLE lab's task list (Dashboard asks for every
+// member's), while My Tasks lists only the viewer's. So the labels say "lab"
+// and the link titles say where they land. Overdue and done-today come from
+// lib/taskStats, the same rules Today uses. "due this week" has no My Tasks
+// view, so it is a plain number, never a link.
 
 interface StatusLineProps {
   tasks: TaskRow[]
   loading?: boolean
 }
 
-interface Chip {
+type Rule = 'o' | 'g' | 'n' | 't'
+
+interface Stat {
   key: string
-  icon: typeof AlertTriangle
+  value: number
   label: string
-  count: number
-  href: string
-  fill: string
+  rule: Rule
+  /** Absent = a plain number, never a link. */
+  to?: string
+  dest?: string
 }
+
+// The line sits in the page header row beside the live dot, not as a page
+// section, so drop .tk-stats' section margin, divider and progress rule.
+const ROW_STYLE = {
+  margin: 0,
+  paddingBottom: 0,
+  borderBottom: 'none',
+  minWidth: 0,
+  '--prog': '0%',
+} as React.CSSProperties
 
 export default function StatusLine({ tasks, loading }: StatusLineProps) {
   const { data: regulatory = [] } = useExpiringRegulatory(60)
 
-  const chips = useMemo<Chip[]>(() => {
+  const stats = useMemo<Stat[]>(() => {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
     const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7)
-    const todayStr = localDateKey(today)
 
-    // R4: pass status — canonical pattern; isTaskDone guard is belt-and-suspenders.
-    const overdue = tasks.filter((t) => !isTaskDone(t) && isOverdue(t.due_date, t.status)).length
     const thisWeek = tasks.filter((t) => {
-      if (isTaskDone(t) || !t.due_date) return false
+      if (isTaskDone(t) || !isWorkTask(t) || !t.due_date) return false
       const d = new Date(t.due_date + 'T12:00:00')
       return d >= tomorrow && d < weekEnd
     }).length
     const irb = regulatory.length
-    const doneToday = tasks.filter((t) => t.completed_at && t.completed_at.startsWith(todayStr)).length
 
     return [
-      { key: 'overdue',  icon: AlertTriangle,  label: 'overdue',    count: overdue,   href: `${PATHS.myTasks}?filter=overdue`,   fill: 'var(--stage-fill-review)' },
-      { key: 'week',     icon: CalendarDays,   label: 'this week',  count: thisWeek,  href: `${PATHS.myTasks}?filter=this_week`, fill: 'var(--stage-fill-writing)' },
-      { key: 'irb',      icon: ShieldAlert,    label: irb === 1 ? 'IRB renewal' : 'IRB renewals', count: irb, href: PATHS.deadlines, fill: 'var(--stage-fill-analysis)' },
-      { key: 'done',     icon: CheckCircle2,   label: 'done today', count: doneToday, href: `${PATHS.myTasks}?filter=today`,     fill: 'var(--stage-fill-published)' },
+      { key: 'overdue', value: countOverdue(tasks), label: 'overdue · lab', rule: 'o', to: `${PATHS.myTasks}?filter=overdue`, dest: 'My Tasks filtered to overdue (the number counts the whole lab)' },
+      { key: 'week', value: thisWeek, label: 'due this week · lab', rule: 'n' },
+      { key: 'irb', value: irb, label: irb === 1 ? 'IRB renewal' : 'IRB renewals', rule: 'g', to: PATHS.deadlines, dest: 'Deadlines' },
+      { key: 'done', value: countDoneToday(tasks), label: 'done today · lab', rule: 't', to: `${PATHS.myTasks}?filter=done-today`, dest: 'My Tasks done today (the number counts the whole lab)' },
     ]
   }, [tasks, regulatory])
 
   if (loading) {
     return (
-      <div data-testid="dashboard-status-line" className="flex items-center gap-2 flex-wrap max-[640px]:flex-nowrap max-[640px]:overflow-x-auto">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            aria-hidden
-            style={{
-              height: 24, width: 88,
-              borderRadius: 'var(--radius-full)',
-              background: 'var(--surface-2)',
-              animation: 'pulse 1.6s ease-in-out infinite',
-            }}
-          />
+      <div data-testid="dashboard-status-line" className="tk" aria-hidden>
+        <div className="tk-stats dash-stats" style={ROW_STYLE}>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} style={{ height: 30, width: 72, borderRadius: 'var(--radius-md)', background: 'var(--surface-2)', animation: 'pulse 1.6s ease-in-out infinite' }} />
         ))}
+        </div>
       </div>
     )
   }
 
-  const allZero = chips.every((c) => c.count === 0)
-
-  // Phones: status chips WRAP rather than a nowrap scroll strip — the strip
-  // clipped "0 this week" mid-word with no scroll affordance (read broken).
-  // Few short chips, so wrapping stays compact + everything is visible.
   return (
-    <div
-      data-testid="dashboard-status-line"
-      className="flex items-center gap-2 flex-wrap"
-      style={{ minWidth: 0 }}
-    >
-      {allZero && (
-        <span
-          className="inline-flex items-center gap-1.5 rounded-full"
-          style={{
-            padding: '3px 10px',
-            fontSize: '11px',
-            fontWeight: 500,
-            background: 'var(--teal-hover)',
-            color: 'var(--teal)',
-            border: '1px solid rgba(45,138,138,0.3)',
-          }}
-        >
-          <CheckCircle2 {...ICON_PROPS} size={12} />
-          All clear
-        </span>
-      )}
-      {chips.map(({ key, icon: Icon, label, count, href, fill }) => {
-        const muted = count === 0
+    <div data-testid="dashboard-status-line" className="tk">
+      <div className="tk-stats dash-stats" style={ROW_STYLE}>
+      {stats.map((s) => {
         const inner = (
           <>
-            <Icon {...ICON_PROPS} size={11} />
-            <span>{count} {label}</span>
+            <span className={`tk-rl${s.value > 0 ? ` tk-${s.rule}` : ''}`} aria-hidden="true" />
+            <span>
+              <span className="tk-v" style={{ display: 'block' }}>{s.value}</span>
+              <span className="tk-l">{s.label}{s.value > 0 && s.to && <span className="tk-ar" aria-hidden="true">&rarr;</span>}</span>
+            </span>
           </>
         )
-        const sharedStyle: React.CSSProperties = {
-          padding: '3px 10px',
-          fontSize: '11px',
-          fontWeight: 500,
-          background: muted ? 'var(--surface-2)' : fill,
-          // Zero-count chips use --muted (passes AA at full opacity on both
-          // themes); non-zero chips use white text on the stage fill. Parent
-          // opacity on slate/colored children would compound below AA —
-          // see Rule 43. Keep opacity=1 for both paths.
-          color: muted ? 'var(--muted)' : '#fff',
-          border: muted ? '1px solid var(--border-subtle)' : 'none',
-          textDecoration: 'none',
-          whiteSpace: 'nowrap',
-          flexShrink: 0,
-        }
-        if (muted) {
-          return (
-            <span
-              key={key}
-              className="inline-flex items-center gap-1.5 rounded-full"
-              style={sharedStyle}
-              aria-label={`${count} ${label}`}
-            >
-              {inner}
-            </span>
-          )
+        if (!s.to || s.value === 0) {
+          return <div key={s.key} className={`tk-st${s.value === 0 ? ' tk-zero' : ''}`} aria-label={`${s.value} ${s.label}`}>{inner}</div>
         }
         return (
-          <Link
-            key={key}
-            to={href}
-            className="inline-flex items-center gap-1.5 rounded-full transition-transform"
-            style={sharedStyle}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-          >
-            {inner}
-          </Link>
+          <Link key={s.key} to={s.to} className="tk-st" aria-label={`${s.value} ${s.label}: open ${s.dest}`} title={s.dest}>{inner}</Link>
         )
       })}
+      </div>
     </div>
   )
 }

@@ -244,7 +244,7 @@ export default function PublicationCard({
           {/* Author column (#133) — opt-in, Publications-page only */}
           {showAuthorColumn && (
             <div className="flex-shrink-0 self-start w-full sm:w-52">
-              <AuthorColumn pub={pub} />
+              <AuthorColumn pub={pub} maxVisible={4} />
             </div>
           )}
 

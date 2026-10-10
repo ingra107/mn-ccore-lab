@@ -12,6 +12,7 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import SegmentedToggle from '../ui/SegmentedToggle'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import { QueryErrorNote } from '../QueryErrorNote'
+import { STATUS_FILLS } from '../../lib/projectHealthFills'
 
 const STATUS_COLORS: Record<string, string> = {
   'Healthy': 'var(--green)',
@@ -111,7 +112,7 @@ function ProjectHealthCard() {
 
         {/* Summary counts */}
         <div
-          className="flex items-center gap-4 mb-3 pb-3"
+          className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3 pb-3"
           style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 8)}` }}
         >
           {[
@@ -126,8 +127,7 @@ function ProjectHealthCard() {
                   width: 8,
                   height: 8,
                   borderRadius: 'var(--radius-circle)',
-                  background: STATUS_COLORS[s.status],
-                  boxShadow: s.count > 0 ? `0 0 6px ${STATUS_COLORS[s.status]}40` : 'none',
+                  background: STATUS_FILLS[s.status],
                 }}
               />
               <span
@@ -148,6 +148,7 @@ function ProjectHealthCard() {
                   opacity: 'var(--ink-hint)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.03em',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {s.label}
@@ -163,7 +164,10 @@ function ProjectHealthCard() {
             tabIndex={0}
             role="region"
             aria-label="Project health heatmap"
-            style={{ maxHeight: '320px' }}
+            // minHeight: one row of cells plus the caption. Without it the
+            // flex-1 scroller collapses to 0 inside the fixed-height card and the
+            // grid's grow-to-fit (which reads the outer card's scrollHeight) never fires.
+            style={{ maxHeight: '320px', minHeight: '84px' }}
           >
             <div
               className="grid gap-1.5"
@@ -179,12 +183,14 @@ function ProjectHealthCard() {
                     display: 'block',
                     aspectRatio: '1',
                     borderRadius: 'var(--radius-sm)',
-                    background: STATUS_COLORS[p.status] ?? 'var(--slate)',
-                    opacity: p.status === 'Healthy' ? 0.5 : 0.85,
-                    transition: 'opacity var(--transition-fast) ease, transform var(--transition-fast) ease',
+                    background: STATUS_FILLS[p.status] ?? 'var(--slate)',
+                    // Hairline in the theme's ink: Critical (L 0.40) vanishes on a dark
+                    // card (1.05:1) and Attention (L 0.83) on a light one (1.58:1).
+                    boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--ink) 24%, transparent)',
+                    transition: 'transform var(--transition-fast) ease',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.15)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = p.status === 'Healthy' ? '0.5' : '0.85'; e.currentTarget.style.transform = 'scale(1)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.15)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
                 />
               ))}
             </div>
@@ -202,7 +208,7 @@ function ProjectHealthCard() {
           tabIndex={0}
           role="region"
           aria-label="Project health"
-          style={{ maxHeight: '280px', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}
+          style={{ maxHeight: '280px', minHeight: '96px', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}
         >
           {/* Projects needing attention (sorted worst first) */}
           {needsWork.map((p) => (
@@ -286,7 +292,8 @@ export default memo(ProjectHealthCard)
 
 function ProjectHealthRow({ project }: { project: ProjectHealth }) {
   const [showTooltip, setShowTooltip] = useState(false)
-  const color = STATUS_COLORS[project.status]
+  const color = STATUS_COLORS[project.status] // text (AA)
+  const fill = STATUS_FILLS[project.status] // swatch
   const isBad = project.status === 'Critical' || project.status === 'At Risk'
   const {
     isVisible: hoverIsVisible,
@@ -323,9 +330,9 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
           width: 8,
           height: 8,
           borderRadius: 'var(--radius-circle)',
-          background: color,
+          background: fill,
+          boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--ink) 24%, transparent)',
           flexShrink: 0,
-          boxShadow: isBad ? `0 0 6px ${color}50` : 'none',
         }}
       />
 
@@ -378,7 +385,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
               width: `${project.score}%`,
               height: '100%',
               borderRadius: 'var(--radius-sm)',
-              background: color,
+              background: fill,
               transition: 'width 0.3s ease-out, background 0.15s',
             }}
           />

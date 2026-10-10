@@ -69,18 +69,6 @@ function parseTopics(topicsJson: string | null): string[] {
   }
 }
 
-function relevanceColor(score: number): { bg: string; text: string; label: string } {
-  if (score >= 0.7) return { bg: 'rgba(34, 197, 94, 0.12)', text: 'var(--green)', label: 'High' }
-  if (score >= 0.4) return { bg: 'var(--gold-emphasis)', text: 'var(--gold)', label: 'Medium' }
-  return { bg: 'rgba(100, 116, 139, 0.1)', text: 'var(--slate)', label: 'Low' }
-}
-
-function relevanceColorDark(score: number): { bg: string; text: string } {
-  if (score >= 0.7) return { bg: 'rgba(34, 197, 94, 0.15)', text: 'var(--green-light)' }
-  if (score >= 0.4) return { bg: withAlpha(ACCENT_GOLD, 20), text: 'var(--gold)' }
-  return { bg: 'rgba(100, 116, 139, 0.15)', text: '#94a3b8' }
-}
-
 // ── Paper Card ───────────────────────────────────────────────
 
 interface ProjectOption {
@@ -99,8 +87,6 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
   const createComment = useCreateDigestComment()
   const { data: comments } = useDigestComments(showComments ? paper.id : null)
   const topics = parseTopics(paper.topics)
-  const rel = relevanceColor(paper.relevance_score)
-  const relDark = relevanceColorDark(paper.relevance_score)
   const isSaved = paper.status === 'saved'
   const isDismissed = paper.status === 'dismissed'
 
@@ -136,40 +122,14 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
         transition: 'transform var(--duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--duration-slow) var(--ease-out), background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
       }}
     >
-      <div className="flex items-start gap-3 sm:gap-4">
-        {/* Relevance badge */}
-        <div
-          className="flex-shrink-0 rounded-md px-2 py-1 text-center"
-          style={{
-            minWidth: '52px',
-            fontSize: 'var(--label-size)',
-            fontWeight: 600,
-          }}
-        >
-          <div
-            className="rounded-md px-2 py-1"
-            style={{ background: rel.bg, color: rel.text }}
-          >
-            <span className="dark:hidden">{Math.round(paper.relevance_score * 100)}%</span>
-            <span className="hidden dark:inline" style={{ color: relDark.text }}>
-              {Math.round(paper.relevance_score * 100)}%
-            </span>
-          </div>
-          <div
-            className="mt-0.5 text-center"
-            style={{ fontSize: '10px', color: 'var(--slate)', letterSpacing: '0.05em' }}
-          >
-            {rel.label}
-          </div>
-        </div>
-
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4">
         {/* Main content */}
         <div className="flex-1 min-w-0">
           {/* Title */}
           <h3
             className="text-sm sm:text-base leading-snug mb-1"
             style={{
-              fontWeight: 400,
+              fontWeight: 500,
               color: 'var(--ink)',
             }}
           >
@@ -387,7 +347,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
         </div>
 
         {/* Action buttons */}
-        <div className="flex flex-col gap-2 flex-shrink-0">
+        <div className="flex flex-row sm:flex-col gap-2 flex-shrink-0">
           <button
             onClick={handleSave}
             className="cursor-pointer p-2 rounded-md transition-colors duration-200"
@@ -747,10 +707,11 @@ export default function Digest() {
     return Array.from(topicSet).sort()
   }, [allPapersForDate])
   const statusCounts = useMemo(() => {
-    const counts = { all: allPapersForDate.length, new: 0, saved: 0 }
+    const counts = { all: allPapersForDate.length, new: 0, saved: 0, dismissed: 0 }
     allPapersForDate.forEach((p) => {
       if (p.status === 'new') counts.new++
       if (p.status === 'saved') counts.saved++
+      if (p.status === 'dismissed') counts.dismissed++
     })
     return counts
   }, [allPapersForDate])
@@ -788,7 +749,7 @@ export default function Digest() {
       <div className="flex-1 max-w-xs h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border-subtle)' }}>
         <div
           style={{
-            width: `${((statusCounts.saved + (statusCounts.all - statusCounts.new - statusCounts.saved)) / statusCounts.all) * 100}%`,
+            width: `${((statusCounts.saved + statusCounts.dismissed) / statusCounts.all) * 100}%`,
             height: '100%',
             borderRadius: 'var(--radius-full)',
             background: 'var(--gold)',
@@ -797,7 +758,7 @@ export default function Digest() {
         />
       </div>
       <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-        {statusCounts.saved} saved · {statusCounts.new} unread · {statusCounts.all} total
+        {statusCounts.saved} saved · {statusCounts.dismissed} dismissed · {statusCounts.new} unread · {statusCounts.all} total
       </span>
     </div>
   ) : null
@@ -845,9 +806,11 @@ export default function Digest() {
                 }}
               >
                 <span>Digest Date</span>
-                <span className="flex-1 h-px" style={{ background: withAlpha(ACCENT_GOLD, 20) }} />
+                <span className="flex-1 h-px" style={{ background: 'var(--border-subtle)' }} />
               </div>
-              <div className="flex flex-wrap gap-2">
+              {/* One scrolling row on phones (14 wrapped pills pushed every paper
+                  below the fold); wraps on larger screens. */}
+              <div className="flex flex-nowrap sm:flex-wrap gap-2 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0" style={{ scrollbarWidth: 'thin' }}>
                 {dates.slice(0, 14).map((d) => {
                   const isActive = d.date === activeDate
                   return (
@@ -857,14 +820,16 @@ export default function Digest() {
                         setSelectedDate(d.date)
                         setTopicFilter(null)
                       }}
-                      className="cursor-pointer rounded-full px-3 py-1.5 text-sm"
+                      className="cursor-pointer rounded-full px-3 py-1.5 text-sm flex-shrink-0 whitespace-nowrap"
                       style={{
                         fontWeight: isActive ? 600 : 400,
-                        background: isActive ? 'var(--gold)' : 'var(--gold-active)',
-                        color: isActive ? 'var(--cream)' : 'var(--ink)',
+                        // Neutral pills, teal selected state (site audit F107):
+                        // gold is for "wants you now", not an everyday toggle.
+                        background: isActive ? 'var(--teal-active)' : 'transparent',
+                        color: isActive ? 'var(--teal)' : 'var(--ink)',
                         border: isActive
-                          ? '1px solid var(--gold)'
-                          : `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+                          ? '1px solid var(--teal)'
+                          : '1px solid var(--border-subtle)',
                         transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
                       }}
                     >

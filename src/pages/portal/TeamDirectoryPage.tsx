@@ -7,11 +7,13 @@
 // the live team_members rows from /api/team, each linking to the in-portal
 // member page.
 
-import { Link } from 'react-router-dom'
-import { Users } from 'lucide-react'
+import { useMemo } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { Users, X } from 'lucide-react'
+import Avatar from '../../components/Avatar'
 import PageHeader from '../../components/PageHeader'
 import QueryState from '../../components/QueryState'
-import { useTeam } from '../../hooks/useApiData'
+import { useTeam, useExpertise } from '../../hooks/useApiData'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -19,7 +21,18 @@ import { ICON_PROPS } from '../../lib/iconProps'
 export default function TeamDirectoryPage() {
   usePageMeta('Team · MN-CCORE', 'Everyone on the MN-CCORE team.')
   const teamQuery = useTeam()
-  const members = [...(teamQuery.data ?? [])].sort((a, b) => a.name.localeCompare(b.name))
+  const allMembers = [...(teamQuery.data ?? [])].sort((a, b) => a.name.localeCompare(b.name))
+
+  // ?expertise=<tag>: the member page's expertise chips land here (F91), so a
+  // signed-in member filters the roster without leaving the portal.
+  const [params, setParams] = useSearchParams()
+  const expertise = params.get('expertise') || ''
+  const { data: allExpertise = [] } = useExpertise()
+  const taggedSlugs = useMemo(() => {
+    const want = expertise.toLowerCase()
+    return new Set(allExpertise.filter((t) => t.tag.toLowerCase() === want).map((t) => t.member_slug))
+  }, [allExpertise, expertise])
+  const members = expertise ? allMembers.filter((m) => !!m.slug && taggedSlugs.has(m.slug)) : allMembers
 
   return (
     <div className="content-container">
@@ -29,6 +42,24 @@ export default function TeamDirectoryPage() {
         subtitle="Everyone on the MN-CCORE team"
         count={members.length || undefined}
       />
+      {expertise && (
+        <div style={{ marginBottom: 'var(--sp-md)' }}>
+          <button
+            type="button"
+            onClick={() => setParams({})}
+            className="inline-flex items-center gap-1 cursor-pointer"
+            aria-label={`Clear expertise filter: ${expertise}`}
+            style={{
+              fontSize: 11, padding: '4px 10px', borderRadius: 'var(--radius-full)',
+              background: 'var(--teal-active)', color: 'var(--teal)',
+              border: '1px solid var(--teal)',
+            }}
+          >
+            {expertise}
+            <X {...ICON_PROPS} size={10} />
+          </button>
+        </div>
+      )}
       <QueryState
         isLoading={teamQuery.isLoading}
         isError={teamQuery.isError}
@@ -45,19 +76,7 @@ export default function TeamDirectoryPage() {
           {members.map((m) => {
             const body = (
               <>
-                <span
-                  aria-hidden
-                  style={{
-                    width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, fontWeight: 600, overflow: 'hidden',
-                    background: 'var(--surface-2)', color: 'var(--slate)',
-                  }}
-                >
-                  {m.photoUrl
-                    ? <img src={m.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : m.initials}
-                </span>
+                <Avatar name={m.name} initials={m.initials} photoUrl={m.photoUrl} size="base-lg" slug={m.slug} />
                 <span style={{ minWidth: 0 }}>
                   <span style={{ display: 'block', fontSize: 14, fontWeight: 500, color: 'var(--ink)' }}>
                     {m.name}{m.credentials ? `, ${m.credentials}` : ''}

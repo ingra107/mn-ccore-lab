@@ -13,6 +13,8 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { getAllMembers } from '../data/team'
+import { resolveBylineAuthors } from '../lib/authorAvatars'
 
 // High-impact journal names for the "Key Publications" section
 const KEY_JOURNALS = [
@@ -197,11 +199,13 @@ export default function Publications() {
   )
 
   const pubsRef = useScrollRevealGroup('.fade-in-up', 80)
+  const publishedCount = useMemo(() => publications.filter((p) => p.status === 'Published').length, [publications])
+  const labMembers = useMemo(() => getAllMembers(), [])
 
   return (
     <PageLayout>
       {/* Header — min-height reserves space to prevent CLS (H-15) */}
-      <section className="pt-4 pb-6 sm:pb-8 content-container" style={{ minHeight: '140px', contain: 'layout' }}>
+      <section className="pt-4 pb-6 sm:pb-8 content-container w-full" style={{ minHeight: '140px', contain: 'layout' }}>
         <h1
           className="text-3xl sm:text-4xl lg:text-5xl mb-3 sm:mb-4"
           style={{
@@ -216,9 +220,9 @@ export default function Publications() {
           className="text-base sm:text-lg max-w-2xl"
           style={{ color: 'var(--slate)', minHeight: '1.5em' }}
         >
-          {publications.filter((p) => p.status === 'Published').length} published
-          papers from MN-CCORE lab members. Click any paper to view its abstract
-          and links.
+          {publications.length} papers from MN-CCORE lab members
+          {publishedCount < publications.length ? ` (${publishedCount} published)` : ''}.
+          Click any paper to view its abstract and links.
         </p>
 
         {/* Year distribution mini-chart — fixed-height slot prevents CLS when chart appears (H-15) */}
@@ -244,7 +248,7 @@ export default function Publications() {
                         backgroundColor: activeYears.includes(year) ? 'var(--gold)' : withAlpha(ACCENT_GOLD, 30),
                       }}
                     />
-                    <span className="text-[7px]" style={{ color: activeYears.includes(year) ? 'var(--gold)' : 'var(--slate)', opacity: activeYears.includes(year) ? 1 : 0.85 }}>
+                    <span className="text-[10px]" style={{ color: activeYears.includes(year) ? 'var(--gold)' : 'var(--slate)', opacity: activeYears.includes(year) ? 1 : 0.85 }}>
                       {String(year).slice(2)}
                     </span>
                   </button>
@@ -262,17 +266,17 @@ export default function Publications() {
           >
             {(() => {
               const journalCount = new Set(filtered.map(p => p.journal).filter(Boolean)).size
-              const firstAuthorCount = filtered.filter(p => {
-                const first = (p.authors || '').split(/[,;]/)[0]?.trim().toLowerCase() || ''
-                const slugs = (p.authorSlugs ?? []).join(',')
-                return /\bingraham\b/i.test(first) || /(^|,)\s*nick-ingraham\s*(,|$)/i.test(slugs)
-              }).length
+              // Lab-wide: a paper counts when its first author resolves to ANY
+              // lab member (same byline match the author column uses).
+              const firstAuthorCount = filtered.filter(
+                p => !!resolveBylineAuthors(p, labMembers)[0]?.member,
+              ).length
               const thisYear = new Date().getFullYear()
               const thisYearCount = filtered.filter(p => p.year === thisYear).length
               const stats = [
-                { value: filtered.length, label: 'publications' },
+                { value: filtered.length, label: 'papers' },
                 { value: journalCount, label: 'journals' },
-                { value: firstAuthorCount, label: 'first-author' },
+                { value: firstAuthorCount, label: 'lab first-author' },
                 { value: thisYearCount, label: String(thisYear) },
               ]
               return stats.map(s => (

@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { useParams, Navigate, Link, useLocation } from 'react-router-dom'
+import { useParams, Navigate, Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
 import MemberFeaturedPublications from '../components/MemberFeaturedPublications'
@@ -19,6 +19,7 @@ import type { CommitmentRow } from '../hooks/useCommitments'
 import { getMemberBySlug, getPersonInfo } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
 import { projects } from '../data/projects'
+import { stageLabel } from '../lib/stageNormalize'
 import { formatShortDate, isOverdue } from '../lib/dateUtils'
 import { displayName as formatTier, fullNameForSlug } from '../lib/nameUtils'
 import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
@@ -154,15 +155,19 @@ export default function MemberPage() {
   // Same component renders at /team/:slug (public chrome) and
   // /portal/team/:slug (portal chrome). Trajectory link should preserve context.
   const location = useLocation()
+  const navigate = useNavigate()
   const isPortalRoute = location.pathname.startsWith('/portal/')
   const teamBase = isPortalRoute ? '/portal/team' : '/team'
   const member = slug ? getMemberBySlug(slug) : undefined
 
   // Check if this member is also a mentee (trainee)
   const mentee = slug ? getMenteeBySlug(slug) : undefined
-  const menteeProjects = mentee?.projectSlugs
+  // The static list is the PUBLIC page's only project source. In the portal the
+  // live list (MemberProjects, #145) is the one list, so it is empty there and
+  // the two can never disagree on one screen (site audit F86).
+  const menteeProjects = isPortalRoute ? [] : (mentee?.projectSlugs
     ?.map((s) => projects.find((p) => p.slug === s))
-    .filter(Boolean) ?? []
+    .filter(Boolean) ?? [])
 
   // Expertise tags for this member
   const { data: expertiseTags = [], isError: expertiseError, refetch: refetchExpertise } = useExpertise(slug)
@@ -274,7 +279,7 @@ export default function MemberPage() {
   )
 
   if (!member) {
-    return <Navigate to="/team" replace />
+    return <Navigate to={teamBase} replace />
   }
 
   // Build links
@@ -307,7 +312,7 @@ export default function MemberPage() {
       links={memberLinks}
       photoUrl={member.photoUrl}
       portalChrome={location.pathname.startsWith('/portal/')}
-      breadcrumb={<Breadcrumb backTo="/team" backLabel="Team" current={formalFullName} />}
+      breadcrumb={<Breadcrumb backTo={teamBase} backLabel="Team" current={formalFullName} />}
       sections={[
         ...(mentee
           ? [{ id: 'research-focus', label: 'Research Focus' }]
@@ -339,7 +344,7 @@ export default function MemberPage() {
             to={`${teamBase}/${slug}/trajectory`}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium hov-border hov-color"
             style={{
-              background: 'var(--ice)',
+              background: 'var(--sk-card)',
               color: 'var(--slate)',
               border: '1px solid transparent',
               textDecoration: 'none',
@@ -392,7 +397,7 @@ export default function MemberPage() {
             <div
               className="inline-flex items-center gap-2 px-3 py-2 rounded-md"
               style={{
-                background: 'var(--ice)',
+                background: 'var(--sk-panel)',
                 border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
               }}
             >
@@ -462,7 +467,7 @@ export default function MemberPage() {
                       className="text-xs mt-2"
                       style={{ color: 'var(--muted)' }}
                     >
-                      Stage: {project.stage}
+                      Stage: {stageLabel(project.stage)}
                     </p>
                   )}
                 </div>
@@ -508,7 +513,7 @@ export default function MemberPage() {
                       color: 'var(--teal)',
                       border: '1px solid rgba(45,138,138,0.2)',
                     }}
-                    onClick={() => window.location.href = `/team?expertise=${encodeURIComponent(t.tag)}`}
+                    onClick={() => navigate(`${teamBase}?expertise=${encodeURIComponent(t.tag)}`)}
                     role="link"
                     tabIndex={0}
                   >
@@ -587,7 +592,7 @@ export default function MemberPage() {
                   ref={newTagInputRef}
                   className="px-3 py-1.5 rounded-md text-sm"
                   style={{
-                    background: 'var(--ice)',
+                    background: 'var(--sk-card)',
                     color: 'var(--ink)',
                     border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                     outline: 'none',
@@ -608,7 +613,7 @@ export default function MemberPage() {
                   disabled={!newTag.trim() || addExpertiseMut.isPending}
                   className="px-3 py-1.5 rounded-md text-xs font-medium"
                   style={{
-                    background: newTag.trim() ? 'var(--gold)' : 'var(--ice)',
+                    background: newTag.trim() ? 'var(--gold)' : 'var(--sk-card)',
                     color: newTag.trim() ? 'var(--ink)' : 'var(--slate)',
                     border: 'none',
                     cursor: newTag.trim() ? 'pointer' : 'default',
@@ -856,8 +861,9 @@ function ContributionScoreCard({ slug }: { slug: string }) {
       style={{
         padding: '1rem 1.25rem',
         display: 'flex',
+        flexWrap: 'wrap',
         alignItems: 'center',
-        gap: '1.25rem',
+        gap: '0.75rem 1.25rem',
         borderLeft: '3px solid var(--teal)',
       }}
     >
@@ -878,7 +884,7 @@ function ContributionScoreCard({ slug }: { slug: string }) {
       </div>
 
       {/* Sparkline */}
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: '1 1 120px', minWidth: 0 }}>
         <MiniSparkline data={data.sparkline} />
         <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, marginTop: 2 }}>
           Last 14 days (decay-weighted)
@@ -897,6 +903,9 @@ function ContributionScoreCard({ slug }: { slug: string }) {
               <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>{type}s</div>
             </div>
           ))}
+        <div style={{ alignSelf: 'center', fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }} title="Counts cover this window">
+          &middot; {data.days}d
+        </div>
       </div>
     </div>
   )

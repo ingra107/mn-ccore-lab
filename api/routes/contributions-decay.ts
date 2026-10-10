@@ -15,7 +15,11 @@ const BASE_POINTS: Record<string, number> = {
   update: 2,
   decision: 4,
   meeting: 2,
-  publication: 10,
+  // No 'publication': publications carry only a calendar `year`, which cannot be
+  // placed inside a 90-day window. Selecting by year and dating each paper Jan 1
+  // counted every paper of the current year as "recent" and scored it ~0 after
+  // decay, so the card said "2 publications" beside a Publications list of 7
+  // (site audit F94). The Publications list is the place publications are counted.
 };
 
 function decayScore(basePoints: number, daysSinceEvent: number): number {
@@ -46,7 +50,7 @@ export async function handleContributionsDecay(url: URL, env: Env): Promise<Resp
   const cutoff = new Date(now.getTime() - days * 86400000).toISOString();
   const halfCutoff = new Date(now.getTime() - (days / 2) * 86400000).toISOString();
 
-  const [tasks, updates, comments, decisions, meetings, publications] = await Promise.all([
+  const [tasks, updates, comments, decisions, meetings] = await Promise.all([
     env.DB.prepare(
       "SELECT completed_at FROM tasks WHERE completed_by LIKE ? AND completed = 1 AND completed_at > ?"
     ).bind(`%${slug}%`, cutoff).all(),
@@ -68,10 +72,6 @@ export async function handleContributionsDecay(url: URL, env: Env): Promise<Resp
 
     env.DB.prepare(
       "SELECT DISTINCT m.date FROM meetings m INNER JOIN agenda_items ai ON m.id = ai.meeting_id WHERE ai.added_by LIKE ? AND m.date > ?"
-    ).bind(`%${slug}%`, cutoff.split('T')[0]).all(),
-
-    env.DB.prepare(
-      "SELECT year FROM publications WHERE author_slugs LIKE ? AND year >= CAST(substr(?, 1, 4) AS INTEGER)"
     ).bind(`%${slug}%`, cutoff.split('T')[0]).all(),
   ]);
 
@@ -120,7 +120,6 @@ export async function handleContributionsDecay(url: URL, env: Env): Promise<Resp
     ['comment', (comments.results || []) as Record<string, unknown>[], 'created_at'],
     ['decision', (decisions.results || []) as Record<string, unknown>[], 'created_at'],
     ['meeting', (meetings.results || []) as Record<string, unknown>[], 'date'],
-    ['publication', (publications.results || []) as Record<string, unknown>[], 'year'],
   ];
 
   for (const [type, items, dateField] of types) {

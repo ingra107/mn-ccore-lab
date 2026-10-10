@@ -45,7 +45,9 @@ import { DashboardMountedContext } from '../components/dashboard/dashboardMounte
 type DashboardTab = 'overview' | 'projects' | 'people' | 'deadlines'
 
 const TAB_CONFIG: { id: DashboardTab; label: string }[] = [
-  { id: 'overview', label: 'Overview' },
+  // Not "Overview": the host's own first tab already says that. This control
+  // only filters which cards show, so its first option reads "All cards".
+  { id: 'overview', label: 'All cards' },
   { id: 'projects', label: 'Projects' },
   { id: 'people', label: 'People' },
   { id: 'deadlines', label: 'Deadlines' },
@@ -342,51 +344,51 @@ export default function Dashboard() {
         {(() => {
           return (
             <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '0.625rem', paddingTop: '0.25rem' }}>
-              {/* Row A: greeting stats + tabs + customize */}
+              {/* One wrapping row. Desktop: stats, lab health, card filter, then
+                  Customize pushed right. Phone: stats on their own row, then lab
+                  health beside Customize, then the card filter. */}
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
                   minHeight: '40px',
-                  gap: '0.75rem',
+                  gap: '10px 22px',
                   flexWrap: 'wrap',
                 }}
               >
-                {/* Left: live dot + operational status chips (DD-#3 Option C) */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: 'var(--radius-circle)',
-                      background: 'var(--green-light)',
-                      boxShadow: '0 0 8px rgba(34, 197, 94, 0.4)',
-                      animation: 'status-pulse 2s ease-in-out infinite',
-                      flexShrink: 0,
-                    }}
-                    aria-label="Live"
-                  />
+                {/* Static dot, hidden on phones where it wrapped onto a line of
+                    its own (site audit F24/F97: color is spent, not pulsed). */}
+                <div
+                  className="max-[640px]:hidden"
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: 'var(--radius-circle)',
+                    background: 'var(--green-light)',
+                    flexShrink: 0,
+                  }}
+                  aria-label="Live"
+                />
+                <div className="dash-stats-wrap" style={{ minWidth: 0 }}>
                   <StatusLine tasks={allTasks} loading={!mounted} />
-                  <span style={{ color: 'var(--slate)', opacity: 0.55, fontSize: '12px', flexShrink: 0 }}>{'·'}</span>
-                  <LabHealthScore />
+                </div>
+                <LabHealthScore />
+
+                {/* Card filter in Today's light segmented style. `.tk` scopes
+                    the skin; `dashboard-tabs` keeps the phone scroll CSS. */}
+                <div className="tk dashboard-tabs-wrap">
+                  <SegmentedToggle
+                    className="dashboard-tabs"
+                    ariaLabel="Filter cards"
+                    skin="tk"
+                    options={TAB_CONFIG.map(tab => ({ value: tab.id, label: tab.label }))}
+                    value={activeTab}
+                    onChange={handleTabChange}
+                  />
                 </div>
 
-                {/* Center: tabs — shared SegmentedToggle, gold accent (the
-                    Lab Overview identity). `dashboard-tabs` class keeps the
-                    mobile horizontal-scroll CSS; scrollable opts into overflow. */}
-                <SegmentedToggle
-                  className="dashboard-tabs"
-                  ariaLabel="Dashboard view"
-                  accent="gold"
-                  scrollable
-                  options={TAB_CONFIG.map(tab => ({ value: tab.id, label: tab.label }))}
-                  value={activeTab}
-                  onChange={handleTabChange}
-                />
-
                 {/* Right: adaptive indicator + customize + tooltip */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                <div className="dash-controls" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, marginLeft: 'auto' }}>
                   {adaptive && activeTab === 'overview' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
@@ -598,7 +600,7 @@ export default function Dashboard() {
             </div>
             <span
               className="px-3 py-1 rounded-lg text-[11px] font-medium"
-              style={{ backgroundColor: 'var(--gold)', color: '#0f1923' }}
+              style={{ backgroundColor: 'var(--stage-fill-analysis)', color: '#fff' }}
             >
               Prepare
             </span>
@@ -745,21 +747,20 @@ export default function Dashboard() {
 
       {/* Inline styles for cards + animations (grid layout is owned by DashboardGrid) */}
       <style>{`
-        /* Mobile tab row hotfix */
+        /* Mobile header: stats fill their own row as 2 x 2 (no lone 4th stat),
+           lab health and Customize share the next row, the filter sits last. */
+        @media (max-width: 640px) {
+          .dash-stats-wrap { flex: 1 1 100%; }
+          .tk .tk-stats.dash-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+          .dash-controls { margin-left: auto; }
+          .dashboard-tabs-wrap { order: 10; flex: 1 1 100%; overflow-x: auto; scrollbar-width: none; }
+          .dashboard-tabs-wrap::-webkit-scrollbar { display: none; }
+        }
         @media (max-width: 640px) {
           .bento-card {
             padding: 1rem 1rem !important;
             border-radius: 12px !important;
           }
-          .dashboard-tabs {
-            order: 10;
-            width: 100%;
-            overflow-x: auto;
-            flex-wrap: nowrap !important;
-            scrollbar-width: none;
-          }
-          .dashboard-tabs::-webkit-scrollbar { display: none; }
-          .dashboard-tabs > button { flex-shrink: 0; }
         }
 
         /* Dark mode card overrides */
@@ -823,7 +824,6 @@ export default function Dashboard() {
 
         .customize-panel { background-color: var(--teal-hover); }
         .dark .customize-panel { background-color: var(--teal-hover); }
-        .dark .dashboard-tabs { background: transparent !important; }
 
         @keyframes status-pulse {
           0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); }
