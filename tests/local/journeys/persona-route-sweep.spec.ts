@@ -23,12 +23,17 @@ const ROUTES = [
   'sessions', 'launches', 'settings', 'profile', 'team',
 ].map((r) => `/portal/${r}`)
 
-// Known, deliberate non-2xx answers. Anything else fails the run.
-//  - /api/realtime/ticket 503: the hub-realtime Durable Object is not bound in
-//    the local worker (the journey fixtures stub the WebSocket for the same reason).
-//  - /api/insights/dashboard 403 on /portal/insights: the route is PI-only and
-//    InsightsPage turns the 403 into its 'PI-only' state on purpose.
-const EXPECTED = new Set(['503 GET /api/realtime/ticket', '403 GET /api/insights/dashboard'])
+// Known, deliberate non-2xx answers, keyed by the route that may see them.
+//  - /api/realtime/ticket 503 (any route, the app shell asks for it): the
+//    hub-realtime Durable Object is not bound in the local worker. The journey
+//    fixtures' WebSocket stub does not cover the ticket fetch, so allow this one
+//    exact status, method and path.
+//  - /api/insights/dashboard 403, only on /portal/insights: the route is PI-only
+//    and InsightsPage turns the 403 into its 'PI-only' state on purpose.
+const EXPECTED_ANYWHERE = new Set(['503 GET /api/realtime/ticket'])
+const EXPECTED_BY_ROUTE: Record<string, Set<string>> = {
+  '/portal/insights': new Set(['403 GET /api/insights/dashboard']),
+}
 
 const PERSONAS = [
   { name: 'member with data', email: 'sweepdata@umn.edu', slug: 'sweep-data', tasks: true },
@@ -47,24 +52,33 @@ test.beforeAll(() => {
   }
 })
 
-async function visit(page: Page, path: string): Promise<string[]> {
-  const problems: string[] = []
+// One set of listeners per page. Each problem is filed under the route that
+// was current when the event fired, so a late response from route N is not
+// reported under route N+1.
+function watch(page: Page) {
+  const state = { route: '(before first visit)' }
+  const failures: string[] = []
+  const add = (msg: string) => failures.push(`${state.route}: ${msg}`)
   page.on('pageerror', (e) => {
-    if (!/WebSocket|hub-realtime/.test(e.message)) problems.push(`pageerror: ${e.message}`)
+    if (!/WebSocket|hub-realtime/.test(e.message)) add(`pageerror: ${e.message}`)
   })
   page.on('response', (r) => {
     const url = new URL(r.url())
     if (!url.pathname.startsWith('/api')) return
-    if (url.pathname.startsWith('/api/pb/')) problems.push(`pb request: ${url.pathname}`)
+    if (url.pathname.startsWith('/api/pb/')) add(`pb request: ${url.pathname}`)
     else if (r.status() >= 400) {
       const hit = `${r.status()} ${r.request().method()} ${url.pathname}`
-      if (!EXPECTED.has(hit)) problems.push(hit)
+      if (!EXPECTED_ANYWHERE.has(hit) && !EXPECTED_BY_ROUTE[state.route]?.has(hit)) add(hit)
     }
   })
+  return { state, failures, add }
+}
+
+async function visit(page: Page, path: string, w: ReturnType<typeof watch>) {
+  w.state.route = path
   await page.goto(path, { waitUntil: 'load', timeout: 20_000 })
   await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {})
-  if (await page.getByText('Something went wrong').count()) problems.push('error boundary rendered')
-  return problems
+  if (await page.getByText('Something went wrong').count()) w.add('error boundary rendered')
 }
 
 for (const persona of PERSONAS) {
@@ -72,12 +86,9 @@ for (const persona of PERSONAS) {
     test(`portal sweep as ${persona.name}`, async ({ page }) => {
       test.setTimeout(240_000)
       await page.setExtraHTTPHeaders({ ...HEADERS, 'X-Test-User': persona.email })
-      const failures: string[] = []
-      for (const route of ROUTES) {
-        const problems = await visit(page, route)
-        for (const p of problems) failures.push(`${route}: ${p}`)
-      }
-      expect(failures, failures.join('\n')).toEqual([])
+      const w = watch(page)
+      for (const route of ROUTES) await visit(page, route, w)
+      expect(w.failures, w.failures.join('\n')).toEqual([])
     })
   })
 }
