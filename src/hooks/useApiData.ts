@@ -90,8 +90,12 @@ import type { Publication, TeamMember, Project, Grant } from '../data/types'
 // import here would save nothing.
 let _devPublications: Publication[] | undefined
 if (import.meta.env.DEV) {
-  void import('../data/publications').then((m) => { _devPublications = m.publications })
+  void import('../data/publications')
+    .then((m) => { _devPublications = m.publications })
+    // A failed load leaves _devPublications undefined, so the query fetches as it does in prod.
+    .catch((err: unknown) => { console.warn('[useApiData] dev publications fallback did not load; fetching instead', err) })
 }
+// No static import of data/publications anywhere in src/: src/lib/__tests__/publicationsBundle.test.ts.
 import { getAllMembers as _devGetAllMembers } from '../data/team'
 import { projects as _devProjects } from '../data/projects'
 import { grants as _devGrants } from '../data/grants'

@@ -2447,7 +2447,7 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 
 After Phase 31.5 hit 9.44/10 aggregate, Nick spent 10 minutes using the site and found 11 bugs automated audits missed — semantic, workflow, interactive, cross-page. Triggered a new audit methodology: journey-based instead of page-based.
 
-**Round 8** — 9-agent audit. 3 discovery agents (data integrity / FAB collision / interactive surface) + 6 user journey agents (PI morning / Coordinator / Grant management / Data entry / Research reader / Mobile PI). Full reports in `review/round8-*.md`; consolidated in `review/round8-AGGREGATED-FINDINGS.md` @133a8e74.
+**Round 8** — 9-agent audit. 3 discovery agents (data integrity / FAB collision / interactive surface) + 6 user journey agents (PI morning / Coordinator / Grant management / Data entry / Research reader / Mobile PI). Full reports in `review/round8-*.md` @133a8e74; consolidated in `review/round8-AGGREGATED-FINDINGS.md` @133a8e74.
 
 Key findings that reshaped the roadmap:
 - `grants.status` column didn't exist in D1 at all — Nick's taxonomy problem was a schema gap, not a UI bug

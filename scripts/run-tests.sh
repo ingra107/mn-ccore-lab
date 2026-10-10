@@ -23,7 +23,8 @@ echo "║  Mode: $MODE | $(date '+%Y-%m-%d %H:%M')               ║"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
 
-# Initialize summary
+# Initialize summary. review/ is untracked, so a fresh clone or worktree has no such folder.
+mkdir -p "$(dirname "$SUMMARY")"
 echo "# Test Run: $TIMESTAMP (mode: $MODE)" > "$SUMMARY"
 echo "" >> "$SUMMARY"
 
