@@ -89,12 +89,12 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: INK_DIM }}>
           <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT_BLUE, flexShrink: 0 }} />
           Internal
-          <DueInlineSelect title="Internal date" value={task.due_date || ''} onChange={setDueDate} />
+          <DueInlineSelect title="Internal date" value={task.due_date || ''} onChange={setDueDate} done={isDone} />
         </span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: INK_DIM }}>
           <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT_GOLD, flexShrink: 0 }} />
           Hard
-          <DueInlineSelect title="Hard date" value={task.deadline || ''} onChange={setDeadline} />
+          <DueInlineSelect title="Hard date" value={task.deadline || ''} onChange={setDeadline} done={isDone} />
         </span>
       </div>
 

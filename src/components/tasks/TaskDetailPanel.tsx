@@ -571,17 +571,20 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                   title="Internal date"
                   value={task.due_date || ''}
                   onChange={(v) => handleFieldUpdate('due_date', v || null)}
+                  done={isTaskDone(task)}
                 />
                 <DueInlineSelect
                   title="Hard date"
                   value={task.deadline || ''}
                   onChange={(v) => handleFieldUpdate('deadline', v || null)}
+                  done={isTaskDone(task)}
                 />
               </>
             ) : (
               <DueInlineSelect
                 value={task.due_date || ''}
                 onChange={(v) => handleFieldUpdate('due_date', v || null)}
+                done={isTaskDone(task)}
               />
             )}
             <button

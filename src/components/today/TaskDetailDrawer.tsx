@@ -195,6 +195,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           <DueInlineSelect
             value={task.due_date || ''}
             onChange={(v) => updateTask.mutate({ id: task.id, fields: { due_date: v || null } })}
+            done={isDone}
           />
         </div>
         {/* #93: explicit Full editor entry (the drawer previously only reached it

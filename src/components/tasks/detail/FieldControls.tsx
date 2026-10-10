@@ -6,6 +6,7 @@ import {
   Circle, Clock, Handshake,
 } from 'lucide-react'
 import InlineDatePicker from '../../InlineDatePicker'
+import { isDoneStatus } from '../../../lib/dateUtils'
 import { ICON_PROPS } from '../../../lib/iconProps'
 import { projectShortLabel } from '../../../lib/projectMeetings'
 
@@ -182,8 +183,8 @@ export function EditableTextarea({ value, onSave, placeholder }: { value: string
 // Kept as a thin wrapper so the `''`↔`null` contract its callers rely on is
 // preserved.
 
-export function DateInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return <InlineDatePicker value={value || null} onChange={(d) => onChange(d ?? '')} />
+export function DateInput({ value, onChange, done }: { value: string; onChange: (v: string) => void; done?: boolean }) {
+  return <InlineDatePicker value={value || null} onChange={(d) => onChange(d ?? '')} done={done} />
 }
 
 // ── Workflow Section ─────────────────────────────────────────
@@ -312,7 +313,7 @@ export function ProjectInlineGhostSelect({ value, onChange }: { value: string; o
   )
 }
 
-export function DueInlineSelect({ value, onChange, title = 'Due date' }: { value: string; onChange: (v: string) => void; title?: string }) {
+export function DueInlineSelect({ value, onChange, title = 'Due date', done }: { value: string; onChange: (v: string) => void; title?: string; done?: boolean }) {
   // #82 (Nick 2026-06-24): the date control is a single ghost pill — the inner
   // InlineDatePicker already provides the hover tint. The old wrapper added its
   // OWN hover tint + padding around the picker, which double-layered and read as
@@ -323,7 +324,7 @@ export function DueInlineSelect({ value, onChange, title = 'Due date' }: { value
   // own tooltip to disambiguate — a plain task keeps the "Due date" default.
   return (
     <div data-ghost-pill title={title} style={{ display: 'inline-flex', alignItems: 'center' }}>
-      <DateInput value={value} onChange={onChange} />
+      <DateInput value={value} onChange={onChange} done={done} />
     </div>
   )
 }
@@ -410,6 +411,7 @@ export function TaskInlineFieldRow({
         <DueInlineSelect
           value={dueDate || ''}
           onChange={(v) => onUpdate({ due_date: v || null })}
+          done={isDoneStatus(status)}
         />
       )}
       {/* "Open full editor" moved to the surface-level action bar (#114).
