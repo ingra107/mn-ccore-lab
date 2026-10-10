@@ -463,6 +463,14 @@ export default function GrantsPage() {
     })
   }, [grants, active, proposed, filter, sortKey, sortAsc])
 
+  // What the Timeline plots: the same filter, minus ended grants (they never plot).
+  // The count and the empty state read this same list, so they cannot disagree with the bars.
+  const timelineGrants = useMemo(
+    () => (filter === 'active' ? active : filter === 'proposed' ? proposed : [...active, ...proposed]),
+    [filter, active, proposed]
+  )
+  const shownCount = view === 'timeline' ? timelineGrants.length : filteredGrants.length
+
   // Unique mechanisms for the calc row
   const mechanisms = useMemo(() => {
     const seen = new Set<string>()
@@ -510,8 +518,8 @@ export default function GrantsPage() {
           activeView={view}
           onViewChange={(v) => setView(v as ViewMode)}
           filters={filterPills}
-          count={filteredGrants.length}
-          countLabel={filteredGrants.length === 1 ? 'grant' : 'grants'}
+          count={shownCount}
+          countLabel={shownCount === 1 ? 'grant' : 'grants'}
         />
       </PageHeader>
 
@@ -788,9 +796,14 @@ export default function GrantsPage() {
               title="Nothing to plot yet"
               subtitle="Add a grant to see its budget period and submission cycle on the timeline."
             />
+          ) : timelineGrants.length === 0 ? (
+            <EmptyState
+              icon={<GanttChartSquare size={40} />}
+              title={filter === 'all' ? 'No current grants to plot' : `No ${filter} grants`}
+              subtitle={filter === 'all' ? 'Ended grants stay in the list view; they do not plot.' : 'Switch the filter to All to see the rest.'}
+            />
           ) : (
-            // The All / Active / Proposed filter applies here too (ended grants never plot).
-            <GanttChart grants={filter === 'active' ? active : filter === 'proposed' ? proposed : [...active, ...proposed]} />
+            <GanttChart grants={timelineGrants} />
           )}
         </div>
       )}
