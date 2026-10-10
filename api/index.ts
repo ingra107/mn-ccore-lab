@@ -1101,7 +1101,8 @@ defineRoute({
   auth: 'public',
   anonShape: {
     // /pulse grant scene. Titles stay private: proposals in preparation are listed here too.
-    data: [{ id: true, mechanism: true, agency: true, proposed: true }],
+    // `bucket` is the server-derived active/proposed/ended label every page reads.
+    data: [{ id: true, mechanism: true, agency: true, proposed: true, bucket: true }],
   },
   handler: (c) => handleGrantsTimeline(E(c)),
 });
@@ -1110,8 +1111,8 @@ defineRoute({
   path: '/api/grants',
   auth: 'public',
   anonShape: {
-    // Home counts active grants from `proposed`.
-    data: [{ id: true, mechanism: true, agency: true, proposed: true }],
+    // Home counts active grants from `bucket`.
+    data: [{ id: true, mechanism: true, agency: true, proposed: true, bucket: true }],
     count: true,
   },
   handler: (c) => handleGetGrants(E(c)),

@@ -49,7 +49,7 @@ function toBar(g: GrantTimelineItem): GrantBar | null {
   // Fill missing endpoints sensibly so a single-date grant still shows a bar.
   const startYear = start ?? (end ?? CURRENT_YEAR)
   const endYear = end ?? Math.max(startYear, CURRENT_YEAR)
-  const proposed = g.proposed === 1 || g.status === 'in_preparation' || g.status === 'submitted' || g.status === 'planning'
+  const proposed = g.bucket === 'proposed'
   return {
     id: g.id,
     mechanism: g.mechanism || '—',

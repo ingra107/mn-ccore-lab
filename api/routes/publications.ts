@@ -1,5 +1,6 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
+import { GRANT_BUCKET_SQL } from './grant-bucket';
 import type { Stats } from '../types';
 
 // GET /api/publications?year=&status=&topic=
@@ -36,7 +37,7 @@ export async function handleGetPublications(url: URL, env: Env): Promise<Respons
 // GET /api/grants
 export async function handleGetGrants(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
-    'SELECT * FROM grants ORDER BY mechanism, title'
+    `SELECT *, ${GRANT_BUCKET_SQL} AS bucket FROM grants ORDER BY mechanism, title`
   ).all();
   return json({ data: result.results, count: result.results.length });
 }
@@ -68,7 +69,7 @@ export async function handleGetStats(env: Env): Promise<Response> {
 // GET /api/grants/timeline
 export async function handleGrantsTimeline(env: Env): Promise<Response> {
   const grants = await env.DB.prepare(
-    'SELECT * FROM grants ORDER BY proposed ASC, start_date ASC'
+    `SELECT *, ${GRANT_BUCKET_SQL} AS bucket FROM grants ORDER BY CASE ${GRANT_BUCKET_SQL} WHEN 'active' THEN 0 WHEN 'proposed' THEN 1 ELSE 2 END, start_date ASC`
   ).all();
 
   // Fetch milestones for each grant
@@ -113,6 +114,14 @@ export async function handleUpdateGrant(id: string, request: Request, env: Env):
     }
     sets.push(`${key} = ?`)
     binds.push(value === '' ? null : value)
+  }
+
+  // `proposed` is kept in step with status on write for legacy readers only. Every
+  // reader takes the `bucket` field that GET /api/grants and /api/grants/timeline
+  // derive from status (GRANT_BUCKET_SQL).
+  if (typeof body.status === 'string' && body.status) {
+    sets.push('proposed = ?')
+    binds.push(['planning', 'in_preparation', 'submitted', 'resubmission'].includes(body.status) ? 1 : 0)
   }
 
   if (sets.length === 0) return json({ error: 'No valid fields to update' }, 400)

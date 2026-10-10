@@ -1,5 +1,6 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
+import { GRANT_BUCKET_SQL } from './grant-bucket';
 
 // ── GET /api/analytics/pi-dashboard ─────────────────────────
 // Returns all computed metrics for the PI leadership dashboard
@@ -65,9 +66,9 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
     env.DB.prepare(`
       SELECT
         COUNT(*) as total,
-        SUM(CASE WHEN proposed = 1 THEN 1 ELSE 0 END) as pending,
-        SUM(CASE WHEN proposed = 0 THEN 1 ELSE 0 END) as active,
-        SUM(CASE WHEN proposed = 0 THEN total_funding ELSE 0 END) as active_funding
+        SUM(CASE WHEN ${GRANT_BUCKET_SQL} = 'proposed' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN ${GRANT_BUCKET_SQL} = 'active' THEN 1 ELSE 0 END) as active,
+        SUM(CASE WHEN ${GRANT_BUCKET_SQL} = 'active' THEN total_funding ELSE 0 END) as active_funding
       FROM grants
     `).first(),
 
@@ -102,13 +103,12 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
       ORDER BY year
     `).all(),
 
-    // P6-B8: proposed=0 means "currently active/awarded", NOT "funded".
-    // There is no funded flag in the grants schema. Relabel to true meaning.
-    // submitted = proposed=1 (pending), active = proposed=0 (awarded/running).
+    // Counts come from the status-derived bucket (GRANT_BUCKET_SQL, grant-bucket.ts),
+    // not the `proposed` flag: 'submitted' = bucket 'proposed', 'active' = bucket 'active'.
     env.DB.prepare(`
       SELECT
-        SUM(CASE WHEN proposed = 1 THEN 1 ELSE 0 END) as submitted,
-        SUM(CASE WHEN proposed = 0 THEN 1 ELSE 0 END) as active
+        SUM(CASE WHEN ${GRANT_BUCKET_SQL} = 'proposed' THEN 1 ELSE 0 END) as submitted,
+        SUM(CASE WHEN ${GRANT_BUCKET_SQL} = 'active' THEN 1 ELSE 0 END) as active
       FROM grants
     `).first(),
 

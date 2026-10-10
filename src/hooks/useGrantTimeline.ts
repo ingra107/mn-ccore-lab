@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import type { GrantBucket } from '../data/types'
 
 export interface GrantMilestone {
   id: string
@@ -19,6 +20,7 @@ export interface GrantTimelineItem {
   end_date: string | null
   proposed: number
   status: GrantStatus | null
+  bucket: GrantBucket
   total_funding: number | null
   milestones: GrantMilestone[]
 }

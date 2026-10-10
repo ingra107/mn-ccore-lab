@@ -180,8 +180,7 @@ function rowToGrant(row: GrantRow): Grant {
     title: row.title,
     agency: row.agency || '',
     pi: row.pi || '',
-    proposed: row.proposed === 1,
-    status: row.proposed ? 'Pending' : 'Active',
+    bucket: row.bucket,
     end_date: row.end_date || undefined,
   }
 }

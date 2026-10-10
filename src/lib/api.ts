@@ -1,5 +1,6 @@
 import type { TaskKind } from '../../shared/taskKinds'
 import type { PublicationRole } from '../../shared/publicationRoles'
+import type { GrantBucket } from '../data/types'
 /**
  * Typed API client for MN-CCORE D1 backend.
  *
@@ -151,6 +152,8 @@ export interface GrantRow {
   start_date: string | null
   end_date: string | null
   proposed: number
+  status?: string | null
+  bucket: GrantBucket
   total_funding: number | null
   created_at: string
 }

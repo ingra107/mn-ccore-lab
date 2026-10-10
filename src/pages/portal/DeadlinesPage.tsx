@@ -20,7 +20,7 @@ import { useUpdateTask, useBulkUpdateTasks, useUpdateGrantMilestone } from '../.
 import { useTaskFieldEditors } from '../../hooks/useTaskFieldEditors'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate, localDateKey, isOverdue } from '../../lib/dateUtils'
+import { formatShortDate, localDateKey, isOverdue, dueLabelText } from '../../lib/dateUtils'
 import DueLabel from '../../components/DueLabel'
 import { PATHS } from '../../constants/paths'
 import { useQueryClient } from '@tanstack/react-query'
@@ -242,8 +242,8 @@ export default function DeadlinesPage() {
         icon={<Clock {...ICON_PROPS} size={20} />}
         title="Deadlines & Milestones"
         subtitle={overdue.length > 0
-          ? `${overdue.length} overdue, ${thisWeek.length + nextWeek.length} upcoming`
-          : `${thisWeek.length + nextWeek.length} upcoming`
+          ? `${overdue.length} overdue, ${thisWeek.length + nextWeek.length + later.length} upcoming`
+          : `${thisWeek.length + nextWeek.length + later.length} upcoming`
         }
       >
         <div className="flex items-center gap-3 flex-wrap">
@@ -331,9 +331,8 @@ export default function DeadlinesPage() {
         const nextUrgent = [...overdue, ...thisWeek].filter(d => d.status !== 'done' && d.status !== 'completed')[0]
         if (!nextUrgent) return null
         const isOver = nextUrgent.isOverdue
-        const daysText = isOver
-          ? `${Math.abs(nextUrgent.daysUntil)}d overdue`
-          : nextUrgent.daysUntil === 0 ? 'Due today' : nextUrgent.daysUntil === 1 ? 'Due tomorrow' : `${nextUrgent.daysUntil}d away`
+        // Same wording as the rows below, so the banner and the list never disagree.
+        const daysText = dueLabelText(nextUrgent.due_date, isOver)
         return (
           <div
             className="flex items-center gap-3 px-4 py-3 rounded-lg border"
@@ -369,7 +368,7 @@ export default function DeadlinesPage() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px',
+                gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px', columnGap: 'var(--sp-md)',
                 padding: 'var(--sp-sm) var(--sp-lg)',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
@@ -406,9 +405,9 @@ export default function DeadlinesPage() {
           <TableContainer>
             {/* Column headers — hidden on mobile */}
             <div
-              className="hidden sm:grid"
+              className="hidden sm:grid [&_.col-header]:!normal-case [&_.col-header]:!tracking-normal"
               style={{
-                gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px',
+                gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px', columnGap: 'var(--sp-md)',
                 padding: 'var(--sp-sm) var(--sp-lg)',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
@@ -417,7 +416,7 @@ export default function DeadlinesPage() {
               {([
                 { label: 'Title', key: 'title' as const },
                 { label: 'Project', key: 'project' as const },
-                { label: 'Due Date', key: 'due_date' as const },
+                { label: 'Due date', key: 'due_date' as const },
                 { label: 'Assignee', key: 'assignee' as const },
                 { label: 'Status', key: 'status' as const },
                 { label: 'Type', key: 'type' as const },
@@ -437,13 +436,13 @@ export default function DeadlinesPage() {
             <motion.div initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
               {[
                 { title: 'Overdue', items: overdue, color: 'var(--maroon)' },
-                { title: 'This Week', items: thisWeek, color: 'var(--teal)' },
-                { title: 'Next Week', items: nextWeek, color: 'var(--gold)' },
+                { title: 'This week', items: thisWeek, color: 'var(--teal)' },
+                { title: 'Next week', items: nextWeek, color: 'var(--gold)' },
                 { title: 'Later', items: later, color: 'var(--slate)' },
-                { title: `Completed (${completed.length})`, items: completed.slice(0, 5), color: 'var(--green)' },
+                { title: 'Completed', items: completed.slice(0, 5), color: 'var(--green)', total: completed.length },
               ].filter(g => g.items.length > 0).map((group) => (
                 <motion.div key={group.title} variants={{ hidden: { y: 8 }, visible: { y: 0 } }}>
-                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} onMilestoneStatusChange={handleMilestoneStatusChange} onDueDateChange={handleDueDateChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} selectedIds={selectedIds} onToggleSelect={toggleSelect} />
+                  <DeadlineTableSection title={group.title} items={group.items} totalCount={'total' in group ? group.total : undefined} color={group.color} onStatusChange={handleStatusChange} onMilestoneStatusChange={handleMilestoneStatusChange} onDueDateChange={handleDueDateChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} selectedIds={selectedIds} onToggleSelect={toggleSelect} />
                 </motion.div>
               ))}
             </motion.div>
@@ -470,8 +469,8 @@ export default function DeadlinesPage() {
                 {([
                   { label: 'Total', value: deadlines.length },
                   ...(overdue.length > 0 ? [{ label: 'Overdue', value: overdue.length, color: 'var(--maroon)' }] : []),
-                  { label: 'This Week', value: thisWeek.length },
-                  { label: 'Next Week', value: nextWeek.length },
+                  { label: 'This week', value: thisWeek.length },
+                  { label: 'Next week', value: nextWeek.length },
                   { label: 'Later', value: later.length },
                   { label: 'Done', value: completed.length, color: 'var(--green)' },
                 ] as { label: string; value: number; color?: string }[]).map(s => (
@@ -560,7 +559,7 @@ function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueD
       <div
         className="deadline-list-row hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
         style={{
-          gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px',
+          gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px', columnGap: 'var(--sp-md)',
           padding: `var(--row-padding-y, 8px) 16px`,
           alignItems: 'center',
         }}
@@ -594,7 +593,7 @@ function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueD
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
             minWidth: 0,
             cursor: item.type === 'task' && onOpenDetail ? 'pointer' : 'default',
-            borderRadius: 'var(--radius-sm)', padding: '1px 4px', margin: '-1px -4px',
+            borderRadius: 'var(--radius-sm)', padding: '1px 4px', margin: '-1px 0',
             transition: 'background var(--transition-fast) ease',
           }}
         >
@@ -714,6 +713,14 @@ function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueD
           }}>
             {item.title}
           </span>
+          {item.project && (
+            <span style={{
+              display: 'block', marginBottom: '4px',
+              fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)',
+            }}>
+              {projectMap.get(item.project) || item.project}
+            </span>
+          )}
           {/* Metadata row */}
           <div className="flex items-center gap-3 flex-wrap">
             {item.type === 'task' && onDueDateChange ? (
@@ -775,7 +782,7 @@ const VIRTUAL_THRESHOLD = 20  // sections exceeding this row count get virtualiz
 // Row heights match CSS density values: compact=36, default=44, relaxed=52
 const DENSITY_ROW_HEIGHT: Record<string, number> = { compact: 36, default: 44, relaxed: 52 }
 
-function DeadlineTableSection({ title, items, color, onStatusChange, onMilestoneStatusChange, onDueDateChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onMilestoneStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onDueDateChange?: (id: string, newDate: string | null) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string>; selectedIds?: Set<string>; onToggleSelect?: (id: string) => void }) {
+function DeadlineTableSection({ title, items, totalCount, color, onStatusChange, onMilestoneStatusChange, onDueDateChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: { title: string; items: DeadlineItem[]; totalCount?: number; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onMilestoneStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onDueDateChange?: (id: string, newDate: string | null) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string>; selectedIds?: Set<string>; onToggleSelect?: (id: string) => void }) {
   const [expanded, setExpanded] = useState(!title.startsWith('Completed'))
   const useVirtual = expanded && items.length > VIRTUAL_THRESHOLD
   const parentRef = useRef<HTMLDivElement>(null)
@@ -799,11 +806,11 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onMilestone
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '12px 16px 6px', textAlign: 'left' }}
       >
         <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: color, flexShrink: 0 }} />
-        <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+        <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', }}>
           {title}
         </span>
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
-          {items.length}
+          {totalCount ?? items.length}
         </span>
         <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
       </button>
@@ -1119,11 +1126,9 @@ function UpcomingConferencesSection() {
             fontWeight: 'var(--label-weight)',
             color: 'var(--slate)',
             opacity: 'var(--ink-label)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
           }}
         >
-          Upcoming Conferences
+          Upcoming conferences
         </span>
         <span style={{ fontSize: '10px', color: 'var(--teal)' }}>
           ({conferences.length})

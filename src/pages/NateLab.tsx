@@ -14,7 +14,7 @@ const grants = [
     mechanism: 'K23',
     title: 'IHCA Survivability Calculator',
     agency: 'NHLBI',
-    proposed: true,
+    bucket: 'proposed' as const,
   },
 ]
 

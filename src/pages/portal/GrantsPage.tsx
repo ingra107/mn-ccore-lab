@@ -2,6 +2,7 @@ import { useMemo, useState, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Wallet,
+  DollarSign,
   Calendar,
   Banknote,
   Diamond,
@@ -33,7 +34,7 @@ import { formatMediumDate, isOverdue, civilDaysUntil } from '../../lib/dateUtils
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
-import { mechanismFamily, MECHANISM_ACCENT, type MechanismFamily } from '../../lib/grantMechanism'
+import { mechanismFamily, MECHANISM_ACCENT } from '../../lib/grantMechanism'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 // ── Gantt chart constants ──────────────────────────────────────
@@ -75,21 +76,12 @@ function formatFunding(amount: number): string {
   return `$${amount.toLocaleString()}`
 }
 
-// Badge text color comes from the shared family accent (lib/grantMechanism);
-// the tinted bg is this page's local render concern. K family is GOLD per the
-// shared map (was teal here — a 2026-03-30 flattening of K23 into R01's teal
-// with no recorded rationale; the dashboard + Projects badge both say gold).
-const MECHANISM_BADGE_BG: Record<MechanismFamily, string> = {
-  R01: 'var(--teal-active)',
-  R03: 'rgba(122,0,25,0.1)',
-  K: 'var(--gold-active)',
-  other: 'rgba(26,41,57,0.10)',
-}
+// F83: the mechanism is a label, not a status. Neutral hairline chip so colour
+// stays reserved for meaning (the gantt keeps the family accents as chart marks).
+const MECHANISM_CHIP = { bg: 'transparent', color: 'var(--ink)' }
 
-function mechanismColor(mechanism: string): { bg: string; color: string } {
-  const family = mechanismFamily(mechanism)
-  return { bg: MECHANISM_BADGE_BG[family], color: MECHANISM_ACCENT[family] }
-}
+// One grid template for header and rows, so the columns cannot drift apart.
+const GRANT_GRID_COLUMNS = 'minmax(200px, 2fr) 120px 120px 80px minmax(120px, 1fr) 100px'
 
 // ── Gantt helpers ──────────────────────────────────────────────
 
@@ -136,7 +128,7 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
     zIndex: 'var(--z-dropdown)',
     pointerEvents: 'none',
   }
-  const mc = mechanismColor(grant.mechanism)
+  const mc = MECHANISM_CHIP
   return (
     <div style={tooltipStyle}>
       <div
@@ -150,12 +142,12 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
         <div className="flex items-center gap-2 mb-1.5">
           <span
             className="px-1.5 py-0.5 rounded text-xs font-bold"
-            style={{ background: mc.bg, color: mc.color, fontSize: '11px' }}
+            style={{ background: mc.bg, color: mc.color, fontSize: '11px', border: '1px solid var(--border-subtle)' }}
           >
             {grant.mechanism}
           </span>
           <span style={{ fontSize: '10px', color: 'var(--slate)' }}>{grant.agency}</span>
-          {grant.proposed && (
+          {grant.bucket === 'proposed' && (
             <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 600 }}>
               PROPOSED
             </span>
@@ -279,8 +271,8 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
           const barX = yearToX(startYear, chartWidth)
           const barWidth = yearToX(endYear, chartWidth) - barX
           const barY = CHART_PADDING_TOP + index * (BAR_HEIGHT + BAR_GAP)
-          const color = ganttMechanismColor(grant.mechanism, !!grant.proposed)
-          const isProposed = !!grant.proposed
+          const color = ganttMechanismColor(grant.mechanism, grant.bucket === 'proposed')
+          const isProposed = grant.bucket === 'proposed'
 
           return (
             <g
@@ -441,8 +433,9 @@ export default function GrantsPage() {
     else { setSortKey(key as SortKey); setSortAsc(true) }
   }
 
-  const active = useMemo(() => grants.filter((g) => !g.proposed), [grants])
-  const proposed = useMemo(() => grants.filter((g) => g.proposed), [grants])
+  const active = useMemo(() => grants.filter((g) => g.bucket === 'active'), [grants])
+  const proposed = useMemo(() => grants.filter((g) => g.bucket === 'proposed'), [grants])
+  const endedCount = grants.length - active.length - proposed.length
 
   const totalFunding = useMemo(
     () => grants.reduce((sum, g) => sum + (g.total_funding || 0), 0),
@@ -461,7 +454,7 @@ export default function GrantsPage() {
         case 'title': cmp = a.title.localeCompare(b.title); break
         case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
         case 'mechanism': cmp = (a.mechanism || '').localeCompare(b.mechanism || ''); break
-        case 'status': cmp = (a.proposed ? 'Proposed' : 'Active').localeCompare(b.proposed ? 'Proposed' : 'Active'); break
+        case 'status': cmp = a.bucket.localeCompare(b.bucket); break
         case 'start_date': cmp = (a.start_date || '').localeCompare(b.start_date || ''); break
         case 'end_date': cmp = (a.end_date || '').localeCompare(b.end_date || ''); break
         case 'agency': cmp = (a.agency || '').localeCompare(b.agency || ''); break
@@ -505,10 +498,9 @@ export default function GrantsPage() {
   return (
     <div className="content-container">
       <PageHeader
-        icon={<Wallet {...ICON_PROPS} size={20} />}
+        icon={<DollarSign {...ICON_PROPS} size={20} />}
         title="Grants & Funding"
-        subtitle={`${active.length} active, ${proposed.length} proposed`}
-        count={grants.length}
+        subtitle={`${active.length} active, ${proposed.length} proposed${endedCount > 0 ? `, ${endedCount} ended` : ''}`}
       >
         <TableControls
           views={[
@@ -519,7 +511,7 @@ export default function GrantsPage() {
           onViewChange={(v) => setView(v as ViewMode)}
           filters={filterPills}
           count={filteredGrants.length}
-          countLabel="grants"
+          countLabel={filteredGrants.length === 1 ? 'grant' : 'grants'}
         />
       </PageHeader>
 
@@ -572,26 +564,27 @@ export default function GrantsPage() {
             <TableContainer>
               {/* Column headers */}
               <div
-                className="hidden sm:grid"
-                style={{ gridTemplateColumns: 'minmax(200px, 2fr) 120px 100px 80px minmax(120px, 1fr) 100px' }}
+                className="hidden sm:grid [&_.col-header]:!normal-case [&_.col-header]:!tracking-normal"
+                style={{ gridTemplateColumns: GRANT_GRID_COLUMNS, padding: '0 16px' }}
               >
-                <ColumnHeader label="TITLE" sortKey="title" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+                <ColumnHeader label="Title" sortKey="title" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
                 <ColumnHeader label="PI" sortKey="pi" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="STATUS" sortKey="status" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="MECHANISM" sortKey="mechanism" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="PERIOD" sortKey="start_date" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="AGENCY" sortKey="agency" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+                <ColumnHeader label="Status" sortKey="status" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+                <ColumnHeader label="Mechanism" sortKey="mechanism" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+                <ColumnHeader label="Period" sortKey="start_date" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+                <ColumnHeader label="Agency" sortKey="agency" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
               </div>
 
               {/* Rows */}
               {filteredGrants.map((grant) => {
                 const pi = getPersonInfo(grant.pi)
-                const mc = mechanismColor(grant.mechanism)
-                const isProposed = !!grant.proposed
+                const mc = MECHANISM_CHIP
+                const bucket = grant.bucket
+                const isProposed = bucket === 'proposed'
 
-                // Progress
+                // Progress: funded grants only
                 let progress = 0
-                if (grant.start_date && grant.end_date && !isProposed) {
+                if (grant.start_date && grant.end_date && bucket === 'active') {
                   const start = new Date(grant.start_date).getTime()
                   const end = new Date(grant.end_date).getTime()
                   // eslint-disable-next-line react-hooks/purity -- grant timeline progress bar, intentionally recomputed fresh each render
@@ -605,7 +598,7 @@ export default function GrantsPage() {
                   <div
                     className="sm:grid items-center hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
                     style={{
-                      gridTemplateColumns: 'minmax(200px, 2fr) 120px 100px 80px minmax(120px, 1fr) 100px',
+                      gridTemplateColumns: GRANT_GRID_COLUMNS,
                       minHeight: 'var(--row-height)',
                       padding: `var(--row-padding-y, 10px) 16px`,
                       borderBottom: isExpanded ? 'none' : '1px solid var(--border-subtle)',
@@ -640,7 +633,7 @@ export default function GrantsPage() {
                         {grant.title}
                       </span>
                       {/* Progress bar for active grants */}
-                      {!isProposed && progress > 0 && (
+                      {bucket === 'active' && progress > 0 && (
                         <div className="mt-1 flex items-center gap-2">
                           <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)', maxWidth: 160, width: '100%' }}>
                             <div
@@ -682,8 +675,8 @@ export default function GrantsPage() {
                     {/* Mechanism */}
                     <div>
                       <span
-                        className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold"
-                        style={{ backgroundColor: mc.bg, color: mc.color }}
+                        className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium"
+                        style={{ backgroundColor: mc.bg, color: mc.color, border: '1px solid var(--border-subtle)' }}
                       >
                         {grant.mechanism}
                       </span>
@@ -720,11 +713,11 @@ export default function GrantsPage() {
                     >
                       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Full title</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Full title</div>
                           <div>{grant.title}</div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>PI</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>PI</div>
                           <div className="flex items-center gap-2">
                             <div style={{ width: 22, height: 22, flexShrink: 0 }}>
                               <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm-plus" variant="ice" />
@@ -733,15 +726,15 @@ export default function GrantsPage() {
                           </div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Mechanism</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Mechanism</div>
                           <div>{grant.mechanism || '—'}</div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Agency</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Agency</div>
                           <div>{grant.agency || '—'}</div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Period</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Period</div>
                           <div>
                             {grant.start_date ? formatMediumDate(grant.start_date) : '?'}
                             {' – '}
@@ -749,8 +742,8 @@ export default function GrantsPage() {
                           </div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Status</div>
-                          <div>{isProposed ? 'Proposed' : 'Active'}{!isProposed && progress > 0 ? ` · ${Math.round(progress)}% through period` : ''}</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Status</div>
+                          <div>{bucket === 'proposed' ? 'Proposed' : bucket === 'ended' ? 'Ended' : 'Active'}{bucket === 'active' && progress > 0 ? ` · ${Math.round(progress)}% through period` : ''}</div>
                         </div>
                       </div>
                     </div>
@@ -767,14 +760,8 @@ export default function GrantsPage() {
               className="mt-2 px-4 py-2 rounded-lg text-xs flex items-center gap-1.5 flex-wrap"
               style={{ color: 'var(--slate)', opacity: 0.85, fontSize: '12px' }}
             >
-              <span>{grants.length} grants</span>
-              <span style={{ opacity: 0.85 }}>·</span>
-              <span>{active.length} active</span>
-              <span style={{ opacity: 0.85 }}>·</span>
-              <span>{proposed.length} proposed</span>
               {totalFunding > 0 && (
                 <>
-                  <span style={{ opacity: 0.85 }}>·</span>
                   <span className="flex items-center gap-1">
                     <Banknote {...ICON_PROPS} size={11} />
                     {formatFunding(totalFunding)} total funding
@@ -783,8 +770,8 @@ export default function GrantsPage() {
               )}
               {mechanisms.length > 0 && (
                 <>
-                  <span style={{ opacity: 0.85 }}>·</span>
-                  <span>mechanisms: {mechanisms.join(', ')}</span>
+                  {totalFunding > 0 && <span style={{ opacity: 0.85 }}>·</span>}
+                  <span>Active mechanisms: {mechanisms.join(', ')}</span>
                 </>
               )}
             </div>
@@ -887,7 +874,7 @@ export default function GrantsPage() {
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
-              {['GRANT', 'TYPE', 'TITLE', 'DUE DATE', 'STATUS'].map((col) => (
+              {['Grant', 'Type', 'Title', 'Due date', 'Status'].map((col) => (
                 <span
                   key={col}
                   style={{
@@ -895,8 +882,7 @@ export default function GrantsPage() {
                     fontWeight: 500,
                     color: 'var(--slate)',
                     opacity: 'var(--ink-label)' as unknown as number,
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: '0.06em',
+                    letterSpacing: 0,
                   }}
                 >
                   {col}
