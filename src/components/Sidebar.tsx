@@ -3,8 +3,16 @@ import { lazyRoute } from '../lib/lazyRoute'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 const BugReportModal = lazyRoute(() => import('./BugReportModal'))
 import {
+  LayoutDashboard,
   User,
+  SquareCheck,
+  Calendar,
+  Clock,
+  FolderKanban,
+  FileText,
   Search,
+  DollarSign,
+  Users as UsersIcon,
   Activity,
   BarChart3,
   Settings,
@@ -15,10 +23,13 @@ import {
   Bug,
   History,
   TrendingUp,
+  LayoutGrid,
+  Library,
   Star,
   LogOut,
   Target,
   Zap,
+  Video,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
@@ -32,7 +43,7 @@ import { useProjectPins } from '../hooks/useProjectPins'
 import { projectsForSidebar } from '../lib/sidebarProjects'
 import { todayKey } from '../lib/taskGrouping'
 import { PATHS } from '../constants/paths'
-import { PORTAL_PAGE_LABELS, PORTAL_PAGE_ICONS } from '../constants/pageLabels'
+import { PORTAL_PAGE_LABELS } from '../constants/pageLabels'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -90,22 +101,22 @@ interface NavItem {
 const MAIN_NAV: NavItem[] = [
   // "Today" replaces "Dashboard" as the primary landing label after the
   // Today B2 cutover (see CLAUDE.md Rule 52). Route stays /portal/dashboard.
-  { to: PATHS.dashboard, label: PORTAL_PAGE_LABELS[PATHS.dashboard], icon: PORTAL_PAGE_ICONS[PATHS.dashboard] },
+  { to: PATHS.dashboard, label: PORTAL_PAGE_LABELS[PATHS.dashboard], icon: LayoutDashboard },
   // SquareCheck (check contained INSIDE the square) over the old
   // CheckSquare whose check overflowed the frame — reads cleaner at 18px.
-  { to: PATHS.myTasks, label: PORTAL_PAGE_LABELS[PATHS.myTasks], icon: PORTAL_PAGE_ICONS[PATHS.myTasks] },
-  { to: PATHS.calendar, label: PORTAL_PAGE_LABELS[PATHS.calendar], icon: PORTAL_PAGE_ICONS[PATHS.calendar] },
-  { to: PATHS.deadlines, label: PORTAL_PAGE_LABELS[PATHS.deadlines], icon: PORTAL_PAGE_ICONS[PATHS.deadlines] },
-  { to: PATHS.meetings, label: PORTAL_PAGE_LABELS[PATHS.meetings], icon: PORTAL_PAGE_ICONS[PATHS.meetings] },
-  { to: PATHS.projects, label: PORTAL_PAGE_LABELS[PATHS.projects], icon: PORTAL_PAGE_ICONS[PATHS.projects] },
-  { to: PATHS.manuscripts, label: PORTAL_PAGE_LABELS[PATHS.manuscripts], icon: PORTAL_PAGE_ICONS[PATHS.manuscripts] },
-  { to: PATHS.grants, label: PORTAL_PAGE_LABELS[PATHS.grants], icon: PORTAL_PAGE_ICONS[PATHS.grants] },
-  { to: PATHS.library, label: PORTAL_PAGE_LABELS[PATHS.library], icon: PORTAL_PAGE_ICONS[PATHS.library] },
-  { to: PATHS.team, label: PORTAL_PAGE_LABELS[PATHS.team], icon: PORTAL_PAGE_ICONS[PATHS.team] },
+  { to: PATHS.myTasks, label: PORTAL_PAGE_LABELS[PATHS.myTasks], icon: SquareCheck },
+  { to: PATHS.calendar, label: PORTAL_PAGE_LABELS[PATHS.calendar], icon: Calendar },
+  { to: PATHS.deadlines, label: PORTAL_PAGE_LABELS[PATHS.deadlines], icon: Clock },
+  { to: PATHS.meetings, label: PORTAL_PAGE_LABELS[PATHS.meetings], icon: Video },
+  { to: PATHS.projects, label: PORTAL_PAGE_LABELS[PATHS.projects], icon: FolderKanban },
+  { to: PATHS.manuscripts, label: PORTAL_PAGE_LABELS[PATHS.manuscripts], icon: FileText },
+  { to: PATHS.grants, label: PORTAL_PAGE_LABELS[PATHS.grants], icon: DollarSign },
+  { to: PATHS.library, label: PORTAL_PAGE_LABELS[PATHS.library], icon: Library },
+  { to: PATHS.team, label: PORTAL_PAGE_LABELS[PATHS.team], icon: UsersIcon },
 ]
 
 const PI_NAV: NavItem[] = [
-  { to: PATHS.overview, label: PORTAL_PAGE_LABELS[PATHS.overview], icon: PORTAL_PAGE_ICONS[PATHS.overview] },
+  { to: PATHS.overview, label: PORTAL_PAGE_LABELS[PATHS.overview], icon: LayoutGrid },
 ]
 
 interface MenuLink { to: string; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number; absoluteStrokeWidth?: boolean }> }
@@ -220,7 +231,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         badge: dayUnseen,
         badgeStyle: {
           bg: 'var(--gold)',
-          color: '#1a1a1a',
+          color: 'var(--on-gold)',
           title: `${dayUnseen} Hermes ${dayUnseen === 1 ? 'answer' : 'answers'} on Today`,
         },
       }
@@ -230,8 +241,8 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         badge: myUnseen,
         badgeStyle: {
           bg: 'var(--gold)',
-          // Gold bg takes a fixed dark literal, not var(--ink) (CLAUDE.md gold rule).
-          color: '#1a1a1a',
+          // --on-gold flips with --gold (dark ink on the light-gold fill in dark mode, white on the dark-gold fill in light mode).
+          color: 'var(--on-gold)',
           title: `${myUnseen} task${myUnseen === 1 ? '' : 's'} you haven't opened yet — click to triage in My Items`,
         },
         badgeAction: {
@@ -248,7 +259,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           badge: newMeetingsCount,
           badgeStyle: {
             bg: 'var(--gold)',
-            color: '#1a1a1a',
+            color: 'var(--on-gold)',
             title: `${newMeetingsCount} meeting${newMeetingsCount === 1 ? '' : 's'} with new notes`,
           },
         }

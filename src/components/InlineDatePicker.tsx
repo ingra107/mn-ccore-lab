@@ -148,7 +148,7 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
     <div ref={triggerRef} style={{ position: 'relative' }}>
       <button
         onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}
-        className="inline-flex items-center gap-1 rounded-md transition-colors hov-bg"
+        className="inline-flex items-center gap-1 rounded-md transition-colors hov-bg hit-area"
         aria-haspopup="dialog"
         aria-expanded={open}
         style={{

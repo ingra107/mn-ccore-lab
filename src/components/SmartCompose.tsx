@@ -34,21 +34,16 @@ import { isHermesPrefix } from '../lib/hermesRouting'
 import { askHermesOnTask, hermesOutcomeToast } from '../lib/askHermes'
 import { useUndoToast } from './UndoToast'
 import { ICON_PROPS } from '../lib/iconProps'
+import { withAlpha } from '../lib/taskGrouping'
 import { uploadFileToR2 } from '../lib/r2Upload'
 import { useUploadQueue } from '../lib/useUploadQueue'
 
 const EMOJI_QUICK = ['👍', '❤️', '🎉', '👀', '🔥', '💡', '✅', '⚠️', '📝', '🤖', '🚀', '🙏']
 
-// The default ("dark") variant used hex-pinned dark colours, so a caller that
-// passed no theme (task drawer, inline detail, activity thread) painted
-// near-white text and white-alpha borders on the light page. Every value is
-// now a page token, which flips with the app theme.
-const INK_DARK = 'var(--sk-t1)'
-const INK_DIM_DARK = 'var(--sk-t3)'
+const INK_DARK = '#e2e8f0'
+const INK_DIM_DARK = '#7a828c'
 const ACCENT_GOLD = '#c9a84c'
-const ACCENT_TEAL = 'var(--teal)'
-const tealMix = (pct: number) => `color-mix(in srgb, var(--teal) ${pct}%, transparent)`
-const inkMix = (pct: number) => `color-mix(in srgb, var(--sk-t1) ${pct}%, transparent)`
+const ACCENT_TEAL = '#5cbcb4'
 
 export type SmartComposeUploadContext = {
   /** Server-side context.type for /api/upload/url. */
@@ -427,8 +422,8 @@ export default function SmartCompose(props: SmartComposeProps) {
   const textareaStyle: React.CSSProperties = isDark
     ? {
         width: '100%',
-        background: inkMix(3),
-        border: '1px solid var(--sk-line)',
+        background: 'rgba(255,255,255,0.02)',
+        border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: 'var(--radius-sm)',
         padding: '6px 10px',
         color: INK_DARK,
@@ -483,7 +478,7 @@ export default function SmartCompose(props: SmartComposeProps) {
           {pendingUploads.map((p) => (
             <div
               key={p.id}
-              style={{ position: 'relative', flexShrink: 0, width: 40, height: 40, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: isDark ? '1px solid var(--sk-line2)' : '1px solid var(--border-subtle)' }}
+              style={{ position: 'relative', flexShrink: 0, width: 40, height: 40, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid var(--border-subtle)' }}
             >
               <img src={p.dataUrl} alt={p.filename} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               <div
@@ -545,13 +540,13 @@ export default function SmartCompose(props: SmartComposeProps) {
                 height: 22,
                 padding: '0 6px', borderRadius: 'var(--radius-sm)',
                 border: hermesLocked
-                  ? `1px solid color-mix(in srgb, var(--gold) ${isDark ? 55 : 35}%, transparent)`
-                  : `1px solid ${isDark ? 'var(--sk-line)' : 'var(--border-subtle)'}`,
+                  ? `1px solid ${isDark ? 'rgba(220,179,85,0.55)' : 'rgba(107,84,32,0.35)'}`
+                  : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'var(--border-subtle)'}`,
                 background: hermesLocked
-                  ? `color-mix(in srgb, var(--gold) ${isDark ? 12 : 10}%, transparent)`
+                  ? (isDark ? 'rgba(220,179,85,0.12)' : 'rgba(107,84,32,0.10)')
                   : 'transparent',
                 color: hermesLocked
-                  ? 'var(--gold)'
+                  ? (isDark ? '#dcb355' : 'var(--gold)')
                   : (isDark ? INK_DIM_DARK : 'var(--slate)'),
                 fontSize: 10,
                 fontWeight: hermesLocked ? 600 : 400,
@@ -561,7 +556,7 @@ export default function SmartCompose(props: SmartComposeProps) {
                 whiteSpace: 'nowrap',
               }}
             >
-              <HermesMark size={11} color={hermesLocked ? 'var(--gold)' : 'currentColor'} />
+              <HermesMark size={11} color={hermesLocked ? (isDark ? '#dcb355' : 'var(--gold)') : 'currentColor'} />
               Queue for Claude
             </button>
           )}
@@ -573,8 +568,8 @@ export default function SmartCompose(props: SmartComposeProps) {
               left: 0,
               marginBottom: 6,
               padding: 6,
-              background: isDark ? 'var(--sk-card)' : 'var(--cream)',
-              border: isDark ? '1px solid var(--sk-line2)' : '1px solid var(--border-subtle)',
+              background: isDark ? '#0f1923' : 'var(--cream)',
+              border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid var(--border-subtle)',
               borderRadius: 'var(--radius-md)',
               display: 'flex',
               gap: 2,
@@ -588,7 +583,7 @@ export default function SmartCompose(props: SmartComposeProps) {
                   onMouseDown={(ev) => ev.preventDefault()}
                   onClick={() => { insertAtCursor(e); setEmojiOpen(false) }}
                   style={{ width: 24, height: 24, fontSize: 15, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 3 }}
-                  onMouseEnter={(ev) => { ev.currentTarget.style.background = isDark ? inkMix(8) : 'var(--gold-active)' }}
+                  onMouseEnter={(ev) => { ev.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'var(--gold-active)' }}
                   onMouseLeave={(ev) => { ev.currentTarget.style.background = 'transparent' }}
                 >{e}</button>
               ))}
@@ -602,7 +597,7 @@ export default function SmartCompose(props: SmartComposeProps) {
               fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
               fontSize: 9,
               padding: '1px 4px',
-              border: isDark ? '1px solid var(--sk-line)' : '1px solid var(--border-subtle)',
+              border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid var(--border-subtle)',
               borderRadius: 2,
               color: isDark ? INK_DIM_DARK : 'var(--muted)',
             }}>⌘⏎</kbd>
@@ -661,7 +656,7 @@ export default function SmartCompose(props: SmartComposeProps) {
 
   if (isDark && boxed) {
     return (
-      <div style={{ marginTop: 18, padding: '10px 12px', background: inkMix(3), border: '1px solid var(--sk-line)', borderRadius: 4 }}>
+      <div style={{ marginTop: 18, padding: '10px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 4 }}>
         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM_DARK, marginBottom: 6 }}>Add note</div>
         {composeWrapper}
       </div>
@@ -670,7 +665,7 @@ export default function SmartCompose(props: SmartComposeProps) {
 
   if (isDark) {
     return (
-      <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--sk-line2)' }}>
+      <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
         {composeWrapper}
       </div>
     )
@@ -684,9 +679,9 @@ function ToolbarBtn({ children, onClick, label, active, disabled, theme }: { chi
   const isDark = theme !== 'light'
   const baseColor = isDark ? INK_DIM_DARK : 'var(--slate)'
   const activeColor = isDark ? ACCENT_TEAL : 'var(--teal)'
-  const baseBorder = isDark ? '1px solid var(--sk-line)' : '1px solid var(--border-subtle)'
-  const activeBorder = isDark ? `1px solid ${tealMix(30)}` : '1px solid var(--teal)'
-  const activeBg = isDark ? tealMix(15) : 'var(--teal-active)'
+  const baseBorder = isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid var(--border-subtle)'
+  const activeBorder = isDark ? `1px solid ${withAlpha(ACCENT_TEAL, 30)}` : '1px solid var(--teal)'
+  const activeBg = isDark ? withAlpha(ACCENT_TEAL, 15) : 'var(--teal-active)'
   // N5 — CSS hover via the hov-* utilities. The old !active guard is moot:
   // hover color/border equal the active values, so hovering an active button
   // is a visual no-op either way.
@@ -710,7 +705,7 @@ function ToolbarBtn({ children, onClick, label, active, disabled, theme }: { chi
         opacity: disabled ? 0.5 : 1,
         fontFamily: 'inherit',
         '--hov-color': activeColor,
-        '--hov-border': isDark ? tealMix(30) : 'var(--teal)',
+        '--hov-border': isDark ? withAlpha(ACCENT_TEAL, 30) : 'var(--teal)',
       } as React.CSSProperties}
     >{children}</button>
   )

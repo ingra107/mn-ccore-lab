@@ -1,9 +1,8 @@
 import { useState, useCallback, useEffect, useLayoutEffect } from 'react'
 import { Outlet, useLocation, Link } from 'react-router-dom'
-import { Menu, X, Search, Plus } from 'lucide-react'
+import { Menu, X, Sun, Moon, Monitor, Search, Plus } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
-import ThemeMenu from './ThemeMenu'
 import { modKeyLabel, openCommandPalette } from '../lib/platform'
 import Sidebar from './Sidebar'
 import CommandPalette from './CommandPalette'
@@ -28,6 +27,7 @@ export default function PortalLayout() {
   const { mode, setTheme, isDark } = useDarkMode()
   useFavicon()
   useRealtimeSync()
+  const [showThemeMenu, setShowThemeMenu] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const { showHelp, setShowHelp, gPending } = useKeyboardShortcuts()
   useQuickAddShortcut(useCallback(() => setQuickAddOpen(true), []))
@@ -219,7 +219,48 @@ export default function PortalLayout() {
               in Settings → Appearance (key: hub-table-density, compact default). */}
 
           {/* Theme picker */}
-          <ThemeMenu />
+          <div className="relative">
+            <button
+              onClick={() => setShowThemeMenu(!showThemeMenu)}
+              className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md transition-colors"
+              style={{ color: 'var(--slate)' }}
+              aria-label="Change theme"
+            >
+              {mode === 'light' ? <Sun {...ICON_PROPS} size={18} /> : mode === 'dark' ? <Moon {...ICON_PROPS} size={18} /> : <Monitor {...ICON_PROPS} size={18} />}
+            </button>
+            {showThemeMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowThemeMenu(false)} />
+                <div
+                  className="absolute right-0 top-full mt-1 rounded-lg border shadow-lg z-50 py-1 min-w-[140px]"
+                  style={{ backgroundColor: 'var(--cream, #fff)', borderColor: 'var(--border-subtle)' }}
+                >
+                  {([
+                    { key: 'light' as const, icon: Sun, label: 'Light' },
+                    { key: 'dark' as const, icon: Moon, label: 'Dark' },
+                    { key: 'system' as const, icon: Monitor, label: 'System' },
+                  ]).map(({ key, icon: Icon, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => { setTheme(key); setShowThemeMenu(false) }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                      style={{
+                        color: mode === key ? 'var(--teal)' : 'var(--ink)',
+                        fontWeight: mode === key ? 500 : 400,
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Icon {...ICON_PROPS} size={15} style={{ opacity: mode === key ? 1 : 0.85 }} />
+                      {label}
+                      {mode === key && <span className="ml-auto text-[10px]" style={{ color: 'var(--teal)' }}>&#10003;</span>}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </header>
 
         {/* Page content */}

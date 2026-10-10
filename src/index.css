@@ -16,6 +16,7 @@
      4.5:1 on both white and the tinted hover bgs (gold-active, teal-active,
      etc.). Visual identity is preserved — just sturdier contrast. */
   --gold: #6b5420;       /* Darker than before; passes on gold-active (self-tint) + white */
+  --on-gold: #ffffff;    /* text on a solid --gold fill (7.4:1 on #6b5420) */
   --gold-light: #f0efe8;
   --cream: #ffffff;
   --maroon: #7a0019;
@@ -212,6 +213,7 @@
   --slate: #b0b5b9;
   color-scheme: dark;
   --gold: #dcb355;          /* was oklch(0.73 0.12 85) — brighter for AA on #0b0b0b */
+  --on-gold: #1a1a1a;       /* text on a solid --gold fill (8.9:1 on #dcb355) */
   --gold-light: oklch(0.18 0 0);         /* true achromatic — not used as text */
   --cream: oklch(0.12 0 0);              /* dark body bg in dark mode */
   --maroon: #f0737e;         /* was oklch(0.65 0.15 20) — brighter for AA */
@@ -1904,34 +1906,40 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   align-items: center;
 }
 
-/* Global touch-target floor -- filter chips, selects, inline links, plain
-   buttons. ONE rule for phone (<=768px) and for touch tablets
-   ((hover:none) and (pointer:coarse), 769px up; UX-9: a 900px mouse-driven
-   desktop window keeps its dense tables). It used to be two copies of the same
-   :not() chain that had to be edited in step.
-   min-height STRETCHES the visual, so it is only right for a stand-alone
-   full-size button. Controls that live inside a flex/inline row (cards,
-   chips, pills, segmented items, tiny checkboxes, hover pins) are exempt and
-   get their 44px target from an invisible ::before instead (hit-area rule
-   below), so the visual never changes size:
-     - .done-box / .stage-dot / .planned-chip (N1.08/N1.16, #111)
-     - .tk-card / .tk-mlc: a card that is a <button>; a 44px floor on a flex
-       child made every Meetings list card shrink to 44px and overlap
-     - .tk-hov / .today-plan-btn: inline-flex pin; a 44px floor inflated the
-       last title line of every task card
-     - .pill-btn / .seg-btn: stand-alone pill chips and segmented items
-       (filter chips, view switcher, Meetings pills); hit-area ::before
-     - .tk-seg items: segmented controls (real [role=tab] tabs keep the floor)
-     - Select/Deselect task checkboxes (inline 18px squares)
-     - named .tk controls (btn, pill, join, ck, wo, si, rmore): the Today
-       skin sizes them; they get the hit-area ::before below */
+/* Touch targets. NO rule here sizes a <button> by default: a blanket
+   `button { min-height: 44px }` (with a :not() list of exemptions) stretched
+   every classless small button it did not know about, so each new icon button
+   leaked as a 22x44 bar. Two opt-in constructions replace it, and a new small
+   button is never stretched:
+     .hit-area   an invisible ::before that grows the tap zone to 44x44 without
+                 changing layout. The offsets are min(0, (100% - 44px) / 2), so a
+                 control already 44px or larger gets no extension and a small one
+                 gets exactly enough. Put it on any small button, link or trigger.
+                 position is :where() so a class or inline style that makes the
+                 control absolute/fixed still wins.
+     .touch-tall a real 44px minimum height, for stand-alone full-size controls
+                 only (the shared Button at md/lg, tabs). Never on a control that
+                 sits inside a flex or inline row.
+   Phone (<=768px) and touch tablets ((hover:none) and (pointer:coarse), 769px up;
+   a 900px mouse-driven desktop window keeps its dense tables). The older
+   .done-box / .stage-dot / .pill-btn / .tk-* lists below predate .hit-area and
+   keep their own fixed-inset hit areas. */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) and (min-width: 769px) {
-  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip):not(.pill-btn):not(.seg-btn):not(.tk-card):not(.tk-mlc):not(.tk-hov):not(.today-plan-btn):not([aria-label="Select task"]):not([aria-label="Deselect task"]):not(.tk-seg button):not(.tk .tk-btn):not(.tk .tk-pill):not(.tk .tk-join):not(.tk .tk-joinq):not(.tk .tk-ck):not(.tk .tk-wo):not(.tk .tk-si):not(.tk .tk-rmore),
+  [role="tab"],
+  .touch-tall,
   a.inline-link,
   select,
-  .filter-chip,
-  .inline-select-trigger {
+  .filter-chip {
     min-height: 44px;
+  }
+  :where(.hit-area) { position: relative; }
+  .hit-area::before {
+    content: '';
+    position: absolute;
+    top: min(0px, calc((100% - 44px) / 2));
+    bottom: min(0px, calc((100% - 44px) / 2));
+    left: min(0px, calc((100% - 44px) / 2));
+    right: min(0px, calc((100% - 44px) / 2));
   }
 }
 @media (hover: none) and (pointer: coarse) and (min-width: 769px) {

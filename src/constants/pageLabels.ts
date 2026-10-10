@@ -9,12 +9,6 @@
 // a page may still set its own (a count suffix, a record's name) through
 // usePageMeta or portalTitle.
 
-import type { LucideIcon } from 'lucide-react'
-import {
-  LayoutDashboard, SquareCheck, Calendar, LayoutGrid, FolderKanban, FileText, DollarSign,
-  Clock, Library, Video, Users, Activity, BarChart3, TrendingUp, User, Settings, History,
-  Zap, Search, HelpCircle, BookOpen,
-} from 'lucide-react'
 import { PATHS } from './paths'
 
 export const PORTAL_PAGE_LABELS: Record<string, string> = {
@@ -40,34 +34,6 @@ export const PORTAL_PAGE_LABELS: Record<string, string> = {
   [PATHS.decisions]: 'Decisions',
   [PATHS.ask]: 'Ask the Lab',
   [PATHS.narratives]: 'Research Narratives',
-}
-
-// One icon per portal page, beside the one name. The sidebar and the mobile
-// More drawer both read this, so Grants cannot be a dollar sign in one and a
-// medal in the other. Page headers (other files) should read it too.
-export const PORTAL_PAGE_ICONS: Record<string, LucideIcon> = {
-  [PATHS.dashboard]: LayoutDashboard,
-  [PATHS.myTasks]: SquareCheck,
-  [PATHS.calendar]: Calendar,
-  [PATHS.overview]: LayoutGrid,
-  [PATHS.projects]: FolderKanban,
-  [PATHS.manuscripts]: FileText,
-  [PATHS.grants]: DollarSign,
-  [PATHS.deadlines]: Clock,
-  [PATHS.library]: Library,
-  [PATHS.meetings]: Video,
-  [PATHS.team]: Users,
-  [PATHS.activity]: Activity,
-  [PATHS.analytics]: BarChart3,
-  [PATHS.insights]: TrendingUp,
-  [PATHS.profile]: User,
-  [PATHS.settings]: Settings,
-  [PATHS.sessions]: History,
-  [PATHS.launches]: Zap,
-  [PATHS.search]: Search,
-  [PATHS.decisions]: HelpCircle,
-  [PATHS.ask]: HelpCircle,
-  [PATHS.narratives]: BookOpen,
 }
 
 /** "<label> · MN-CCORE", or "<label> (<detail>) · MN-CCORE" with a detail. */

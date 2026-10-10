@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { Menu, X, ChevronUp } from 'lucide-react'
+import { Menu, X, Sun, Moon, ChevronUp } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
-import ThemeMenu from './ThemeMenu'
 import { useAuth } from '../hooks/useAuth'
 import PageTransition from './PageTransition'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -44,7 +43,7 @@ const footerQuickLinks = [
 ]
 
 export default function Layout() {
-  const { isDark } = useDarkMode()
+  const { isDark, toggle } = useDarkMode()
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -170,13 +169,27 @@ export default function Layout() {
               )
             })}
             <NotificationBell />
-            <ThemeMenu />
+            <button
+              onClick={toggle}
+              className="ml-2 p-2 rounded-md cursor-pointer transition-colors duration-200"
+              style={{ color: 'var(--slate)' }}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? <Sun {...ICON_PROPS} size={18} /> : <Moon {...ICON_PROPS} size={18} />}
+            </button>
           </div>
 
           {/* Mobile menu button */}
           <div className="flex lg:hidden items-center gap-2">
             <NotificationBell />
-            <ThemeMenu />
+            <button
+              onClick={toggle}
+              className="p-2 rounded-md cursor-pointer"
+              style={{ color: 'var(--slate)' }}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? <Sun {...ICON_PROPS} size={18} /> : <Moon {...ICON_PROPS} size={18} />}
+            </button>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="p-2 rounded-md cursor-pointer"

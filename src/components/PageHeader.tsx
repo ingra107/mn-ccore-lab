@@ -23,13 +23,13 @@ export default function PageHeader({
       <div
         style={{
           display: 'flex',
-          alignItems: 'flex-end',
+          alignItems: 'flex-start',
           justifyContent: 'space-between',
           gap: 'var(--sp-lg)',
           flexWrap: 'wrap',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, minWidth: 0, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexWrap: 'wrap' }}>
           {icon && (
             <span
               style={{
@@ -38,25 +38,20 @@ export default function PageHeader({
                 justifyContent: 'center',
                 flexShrink: 0,
                 color: 'var(--teal)',
-                paddingBottom: 6,
               }}
             >
               {icon}
             </span>
           )}
-          {/* Title + muted inline meta, laid out like Today's title row
-              (.tk-titlerow): display h1 at the baseline with the count and
-              subtitle beside it as quiet text. No filled count pill. */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px 14px', flexWrap: 'wrap', minWidth: 0 }}>
+          {/* Title + inline badges — wraps naturally at <420px so subtitle drops below */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
             <h1
               style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 28,
-                fontWeight: 600,
-                letterSpacing: '-0.02em',
+                fontSize: 20,
+                fontWeight: 500,
                 color: 'var(--ink)',
                 margin: 0,
-                lineHeight: 1.15,
+                lineHeight: 1.3,
               }}
             >
               {title}
@@ -66,10 +61,17 @@ export default function PageHeader({
                 aria-live="polite"
                 aria-atomic="true"
                 style={{
-                  fontSize: 13,
-                  color: 'var(--sk-t3)',
-                  fontVariantNumeric: 'tabular-nums',
-                  paddingBottom: 4,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: 'var(--slate)',
+                  opacity: 0.75,
+                  backgroundColor: 'var(--border-subtle)',
+                  borderRadius: 'var(--radius-full)',
+                  padding: '2px 8px',
+                  lineHeight: 1.4,
                   flexShrink: 0,
                 }}
               >
@@ -82,8 +84,8 @@ export default function PageHeader({
                 style={{
                   fontSize: 13,
                   fontWeight: 400,
-                  color: 'var(--sk-t3)',
-                  paddingBottom: 4,
+                  color: 'var(--slate)',
+                  opacity: 0.85,
                   flexShrink: 1,
                   minWidth: 0,
                 }}
@@ -112,9 +114,18 @@ export default function PageHeader({
         )}
       </div>
 
+      {/* Horizontal rule */}
+      <div
+        style={{
+          height: 1,
+          backgroundColor: 'var(--border-subtle)',
+          marginTop: 'var(--sp-md)',
+        }}
+      />
+
       {/* Children (filters, view controls, tabs) */}
       {children && (
-        <div style={{ paddingTop: 'var(--sp-lg)' }}>
+        <div style={{ paddingTop: 'var(--sp-md)' }}>
           {children}
         </div>
       )}
