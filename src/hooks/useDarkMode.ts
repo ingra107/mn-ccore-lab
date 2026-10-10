@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 
-type ThemeMode = 'light' | 'dark' | 'system'
+export type ThemeMode = 'light' | 'dark' | 'system'
 
 const STORAGE_KEY = 'mn-ccore-theme'
 
@@ -19,40 +19,68 @@ function getInitialMode(): ThemeMode {
   return 'system'
 }
 
+// One module-level store shared by every useDarkMode() caller (Sidebar,
+// Layout, PortalLayout). Before, each call kept its own useState, so a theme
+// change made in one component left the others (the sidebar wordmark) on the
+// old value, and an OS scheme change updated the html class but no state.
+interface ThemeState { mode: ThemeMode; isDark: boolean }
+
+function compute(mode: ThemeMode): ThemeState {
+  return { mode, isDark: mode === 'dark' || (mode === 'system' && getSystemPreference()) }
+}
+
+let state: ThemeState = compute(getInitialMode())
+const listeners = new Set<() => void>()
+let mq: MediaQueryList | null = null
+
+function applyToDom() {
+  if (typeof document === 'undefined') return
+  document.documentElement.classList.toggle('dark', state.isDark)
+}
+
+function update(mode: ThemeMode) {
+  state = compute(mode)
+  applyToDom()
+  if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, mode)
+  listeners.forEach((l) => l())
+}
+
+function onSystemChange() {
+  if (state.mode !== 'system') return
+  state = compute('system')
+  applyToDom()
+  listeners.forEach((l) => l())
+}
+
+function subscribe(listener: () => void) {
+  if (listeners.size === 0 && typeof window !== 'undefined') {
+    // Re-read in case storage changed while nobody was subscribed.
+    state = compute(getInitialMode())
+    applyToDom()
+    mq = window.matchMedia('(prefers-color-scheme: dark)')
+    mq.addEventListener('change', onSystemChange)
+  }
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+    if (listeners.size === 0 && mq) {
+      mq.removeEventListener('change', onSystemChange)
+      mq = null
+    }
+  }
+}
+
+function getSnapshot() { return state }
+
 export function useDarkMode() {
-  const [mode, setMode] = useState<ThemeMode>(getInitialMode)
-
-  const isDark = mode === 'dark' || (mode === 'system' && getSystemPreference())
-
-  useEffect(() => {
-    const root = document.documentElement
-    if (isDark) {
-      root.classList.add('dark')
-    } else {
-      root.classList.remove('dark')
-    }
-    localStorage.setItem(STORAGE_KEY, mode)
-  }, [isDark, mode])
-
-  // Listen for system preference changes when in system mode
-  useEffect(() => {
-    if (mode !== 'system') return
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const handler = () => {
-      const root = document.documentElement
-      if (mq.matches) root.classList.add('dark')
-      else root.classList.remove('dark')
-    }
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [mode])
+  const { mode, isDark } = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 
   const toggle = useCallback(() => {
-    setMode(prev => prev === 'light' ? 'dark' : prev === 'dark' ? 'system' : 'light')
+    update(state.mode === 'light' ? 'dark' : state.mode === 'dark' ? 'system' : 'light')
   }, [])
 
   const setTheme = useCallback((newMode: ThemeMode) => {
-    setMode(newMode)
+    update(newMode)
   }, [])
 
   return { isDark, mode, toggle, setTheme }

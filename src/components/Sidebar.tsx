@@ -34,6 +34,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
 import { useDarkMode } from '../hooks/useDarkMode'
+import { modKeyLabel, openCommandPalette } from '../lib/platform'
 import NotificationBell from './NotificationBell'
 import { useNextMeeting, useProjects } from '../hooks/useApiData'
 import { civilDaysUntil } from '../lib/dateUtils'
@@ -230,7 +231,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         badge: dayUnseen,
         badgeStyle: {
           bg: 'var(--gold)',
-          color: '#1a1a1a',
+          color: 'var(--on-gold)',
           title: `${dayUnseen} Hermes ${dayUnseen === 1 ? 'answer' : 'answers'} on Today`,
         },
       }
@@ -240,8 +241,8 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         badge: myUnseen,
         badgeStyle: {
           bg: 'var(--gold)',
-          // Gold bg takes a fixed dark literal, not var(--ink) (CLAUDE.md gold rule).
-          color: '#1a1a1a',
+          // --on-gold flips with --gold (dark ink on the light-gold fill in dark mode, white on the dark-gold fill in light mode).
+          color: 'var(--on-gold)',
           title: `${myUnseen} task${myUnseen === 1 ? '' : 's'} you haven't opened yet — click to triage in My Items`,
         },
         badgeAction: {
@@ -258,7 +259,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           badge: newMeetingsCount,
           badgeStyle: {
             bg: 'var(--gold)',
-            color: '#1a1a1a',
+            color: 'var(--on-gold)',
             title: `${newMeetingsCount} meeting${newMeetingsCount === 1 ? '' : 's'} with new notes`,
           },
         }
@@ -403,10 +404,16 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         <Link
           to={PATHS.search}
           prefetch="intent"
-          onClick={onNavigate}
+          onClick={(e) => {
+            // Desktop sidebar: the Ctrl+K hint promises the palette, so open it.
+            // The phone/tablet overlay (onNavigate set) still goes to the page.
+            if (onNavigate) { onNavigate(); return }
+            e.preventDefault()
+            openCommandPalette()
+          }}
           className="flex items-center gap-3 px-3 py-2 mb-2 rounded-lg text-[12px] transition-colors border"
           style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)' }}
-          title={collapsed ? 'Search (Ctrl+K)' : undefined}
+          title={collapsed ? `Search (${modKeyLabel()}+K)` : undefined}
           aria-label="Search"
         >
           <Search size={16} {...ICON_PROPS} />
@@ -416,7 +423,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
               className="text-[10px] px-1.5 py-0.5 rounded border"
               style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-subtle)', color: 'var(--slate)' }}
             >
-              {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+K
+              {modKeyLabel()}+K
             </kbd>
           )}
         </Link>
@@ -436,7 +443,20 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         {!collapsed && (
           <div data-testid="sidebar-my-projects" style={{ marginTop: 4 }}>
             {divider}
-            <div className="px-3 pb-1 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>My projects</div>
+            <div className="px-3 pb-1 text-[11px] flex items-center justify-between" style={{ color: 'var(--slate)' }}>
+              <span style={{ opacity: 0.85 }}>My projects</span>
+              {/* Lives on the label row, not as the list's last child: with pins
+                  plus recents the list scrolled and the link sat below the fold. */}
+              <Link
+                to={PATHS.projects}
+                onClick={onNavigate}
+                className="inline-flex items-center gap-0.5 hover:underline"
+                style={{ color: 'var(--slate)' }}
+              >
+                All projects
+                <ChevronRight size={11} {...ICON_PROPS} style={{ flexShrink: 0 }} />
+              </Link>
+            </div>
             {myProjects.length === 0 && (
               <div className="px-3 py-1 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                 Star a project to keep it here.
@@ -470,15 +490,6 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                 </Link>
               )
             })}
-            <Link
-              to={PATHS.projects}
-              onClick={onNavigate}
-              className="sb-proj"
-              style={{ color: 'var(--slate)' }}
-            >
-              <ChevronRight size={11} {...ICON_PROPS} style={{ flexShrink: 0 }} />
-              <span>All projects</span>
-            </Link>
           </div>
         )}
       </nav>

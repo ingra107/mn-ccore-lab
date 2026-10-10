@@ -125,9 +125,16 @@ export function Button<E extends ElementType = 'button'>({
   // an invalid DOM prop. Only forward it when we actually render a <button>.
   const disabledProp = Component === 'button' ? { disabled } : {}
 
+  // Touch target (index.css): a stand-alone md/lg <button> gets the 44px
+  // minimum height; everything else (sm, or an anchor/Link) gets a hit area
+  // that grows the tap zone without changing the layout.
+  const { className: extraClass, ...restProps } = rest as { className?: string }
+  const touchClass = Component === 'button' && size !== 'sm' ? 'touch-tall' : 'hit-area'
+  const className = extraClass ? `${touchClass} ${extraClass}` : touchClass
+
   return createElement(
     Component,
-    { ...disabledProp, style: computedStyle, ...rest },
+    { ...disabledProp, style: computedStyle, ...restProps, className },
     children,
   )
 }

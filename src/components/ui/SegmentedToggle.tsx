@@ -27,6 +27,8 @@ interface SegmentedToggleProps<T extends string> {
   uppercase?: boolean
   /** horizontal-scroll when options overflow (Dashboard tabs on mobile). */
   scrollable?: boolean
+  /** stand-alone page-level tab row: give each tab a 44px touch floor */
+  tall?: boolean
   className?: string
   ariaLabel?: string
   /** 'tk' = the Today skin's tray (.tk-seg: the active segment is the brighter
@@ -53,6 +55,7 @@ export function SegmentedToggle<T extends string>({
   size = 'md',
   uppercase = false,
   scrollable = false,
+  tall = false,
   className,
   ariaLabel,
   skin,
@@ -100,7 +103,7 @@ export function SegmentedToggle<T extends string>({
             aria-selected={active}
             onClick={() => onChange(opt.value)}
             title={opt.label}
-            className="flex items-center gap-1.5 cursor-pointer"
+            className={`flex items-center gap-1.5 cursor-pointer${tall ? ' touch-tall' : ''}`}
             style={{
               padding: s.padding,
               fontSize: s.fontSize,

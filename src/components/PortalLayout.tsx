@@ -3,6 +3,7 @@ import { Outlet, useLocation, Link } from 'react-router-dom'
 import { Menu, X, Sun, Moon, Monitor, Search, Plus } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
+import { modKeyLabel, openCommandPalette } from '../lib/platform'
 import Sidebar from './Sidebar'
 import CommandPalette from './CommandPalette'
 import ShortcutHelp from './ShortcutHelp'
@@ -23,7 +24,7 @@ import { PORTAL_PAGE_LABELS, portalTitle } from '../constants/pageLabels'
 import { ICON_PROPS } from '../lib/iconProps'
 
 export default function PortalLayout() {
-  const { mode, setTheme } = useDarkMode()
+  const { mode, setTheme, isDark } = useDarkMode()
   useFavicon()
   useRealtimeSync()
   const [showThemeMenu, setShowThemeMenu] = useState(false)
@@ -175,7 +176,7 @@ export default function PortalLayout() {
             style={{ color: 'inherit' }}
           >
             <img
-              src="/logos/mnccore-logo-mark.svg"
+              src={isDark ? "/logos/mnccore-logo-mark-dark.svg" : "/logos/mnccore-logo-mark.svg"}
               alt=""
               width={28}
               height={28}
@@ -184,22 +185,23 @@ export default function PortalLayout() {
           </Link>
 
           {/* Search trigger — the ONLY way into the command palette on a device
-              with no keyboard, so it must render at every width. It used to be
+              with no keyboard, so it must render below lg. At lg+ the sidebar
+              Search entry opens the palette, so this would be a second copy. It used to be
               `hidden sm:flex`, which made the palette unreachable on a phone:
               no Cmd+K, no trigger, and every palette-only action (Bug Squasher,
               Backlog Wave, quick filters) went with it. Below `sm` it collapses
               to the icon alone; the label, the fixed width and the ⌘K hint are
               desktop affordances and stay behind the breakpoint. */}
           <button
-            onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+            onClick={openCommandPalette}
             aria-label="Open command palette"
-            className="flex items-center gap-2 px-3 sm:px-5 py-2 sm:min-w-[220px] rounded-lg border text-sm transition-colors hover:bg-black/5"
+            className="lg:hidden flex items-center gap-2 px-3 sm:px-5 py-2 sm:min-w-[220px] rounded-lg border text-sm transition-colors hover:bg-black/5"
             style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', cursor: 'pointer', background: 'none' }}
           >
             <Search {...ICON_PROPS} size={14} />
             <span className="hidden sm:inline">Search...</span>
             <kbd className="hidden sm:inline text-[10px] px-1 py-0.5 rounded border ml-2" style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-subtle)' }}>
-              ⌘K
+              {modKeyLabel()}+K
             </kbd>
           </button>
 
@@ -307,11 +309,12 @@ export default function PortalLayout() {
       {/* Universal Quick Capture → Peripheral Brain inbox (Ctrl+I) */}
       <QuickCaptureInbox />
 
-      {/* Floating quick-add button */}
+      {/* Floating quick-add button: desktop only. Below lg it sat on the right-edge
+          action slot of the card behind it; the More drawer has a Capture entry. */}
       <button
         data-testid="fab-quick-add"
         onClick={() => setQuickAddOpen(true)}
-        className="fixed right-5 z-40 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
+        className="fixed right-5 z-40 w-10 h-10 rounded-full hidden lg:flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
         style={{
           bottom: 'var(--fab-stack-1)',
           background: 'var(--teal-solid)',

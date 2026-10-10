@@ -52,7 +52,7 @@ export default function SavedViewsMenu({ page, currentQuery, onApply }: Props) {
         onClick={() => setOpen((o) => !o)}
         aria-label="Saved views"
         aria-expanded={open ? 'true' : 'false'}
-        className="inline-flex items-center gap-1.5 rounded-full"
+        className="pill-btn inline-flex items-center gap-1.5 rounded-full"
         style={{
           fontSize: '11px',
           fontWeight: 500,

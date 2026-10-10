@@ -28,6 +28,7 @@ export function ViewPicker({ view, setView, isPhone = false }: { view: ViewMode;
         return (
           <button
             key={v.k}
+            className="seg-btn"
             onClick={() => setView(v.k)}
             title={v.desc}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0 11px', fontSize: 11, fontFamily: 'inherit', cursor: 'pointer', border: 'none', background: active ? withAlpha(ACCENT_TEAL, 15) : 'transparent', color: active ? ACCENT_TEAL : INK_MUTED, fontWeight: active ? 600 : 500, borderRight: i < views.length - 1 ? '1px solid var(--border-subtle)' : 'none', whiteSpace: 'nowrap' }}

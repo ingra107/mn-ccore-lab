@@ -48,11 +48,12 @@ for (const width of [375, 390, 430]) {
   })
 }
 
-test('palette trigger keeps its label and hint on desktop', async ({ page }) => {
+test('palette trigger is hidden on desktop; the sidebar Search opens the palette', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await injectFakeAuth(page.context(), BASE)
   await page.goto(`${BASE}/portal/dashboard`, { waitUntil: 'networkidle' })
 
-  await expect(page.locator(TRIGGER)).toBeVisible()
-  await expect(page.getByText('Search...', { exact: true })).toBeVisible()
+  await expect(page.locator(TRIGGER)).toBeHidden()
+  await page.getByRole('link', { name: 'Search', exact: true }).first().click()
+  await expect(page.getByPlaceholder(/search/i)).toBeVisible()
 })

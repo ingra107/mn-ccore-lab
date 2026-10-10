@@ -28,11 +28,14 @@ import {
   Zap,
   Video,
   ExternalLink,
+  Plus,
+  Inbox,
 } from 'lucide-react'
 import { PATHS } from '../constants/paths'
 import { PORTAL_PAGE_LABELS } from '../constants/pageLabels'
 import { ICON_PROPS } from '../lib/iconProps'
 import { useAuth } from '../hooks/useAuth'
+import { QUICK_ADD_EVENT, openGlobalQuickAdd } from './GlobalQuickAddModal'
 
 const BugReportModal = lazyRoute(() => import('./BugReportModal'))
 
@@ -167,6 +170,7 @@ export default function MobileTabBar() {
               maxHeight: '75vh',
               overflowY: 'auto',
               boxShadow: '0 -4px 24px rgba(0,0,0,0.3)',
+              borderTop: '1px solid var(--border-default)',
             }}
           >
             <div className="flex items-center justify-between mb-3">
@@ -195,6 +199,44 @@ export default function MobileTabBar() {
               >
                 <X size={20} {...ICON_PROPS} />
               </button>
+            </div>
+
+            {/* Capture — the two floating buttons (quick add, inbox) are hidden
+                below lg: they sat on the right-edge Work-on / folder slot of
+                whichever card row was behind them. They open the same sheets
+                through the same events the FABs and shortcuts use. */}
+            <div style={{ marginBottom: 12 }}>
+              <div
+                style={{ fontSize: '10px', opacity: 0.85, marginBottom: 6, paddingLeft: 12, fontWeight: 500 }}
+              >
+                Capture
+              </div>
+              {[
+                { label: 'Quick add task', icon: Plus, event: QUICK_ADD_EVENT },
+                { label: 'Quick capture to inbox', icon: Inbox, event: 'mn-ccore:open-inbox' },
+              ].map(({ label, icon: Icon, event }) => (
+                <button
+                  key={event}
+                  type="button"
+                  data-testid={event === 'mn-ccore:open-inbox' ? 'more-quick-capture-inbox' : 'more-quick-add'}
+                  onClick={() => { setOverflowOpen(false); if (event === QUICK_ADD_EVENT) openGlobalQuickAdd(); else window.dispatchEvent(new CustomEvent(event)) }}
+                  className="flex items-center gap-3 rounded-md"
+                  style={{
+                    padding: '10px 12px',
+                    minHeight: 44,
+                    width: '100%',
+                    color: 'var(--ink)',
+                    fontSize: 'var(--text-base)',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <Icon size={18} {...ICON_PROPS} aria-hidden="true" />
+                  <span>{label}</span>
+                </button>
+              ))}
             </div>
 
             {OVERFLOW_SECTIONS.filter((section) => !section.piOnly || isPi).map((section) => (
