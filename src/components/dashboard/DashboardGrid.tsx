@@ -177,7 +177,6 @@ export default function DashboardGrid({
     <div ref={wrapRef}>
     {measured && (
     <ResponsiveGridLayout
-      measureBeforeMount
       className="dashboard-grid"
       layouts={effectiveLayouts}
       breakpoints={DASHBOARD_GRID_BREAKPOINTS}
