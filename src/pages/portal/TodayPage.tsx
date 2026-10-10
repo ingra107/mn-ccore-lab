@@ -431,8 +431,9 @@ export default function TodayPage() {
     overdue: overdueTasks.length,
     stalled: stalledProjects.length,
     planned: state.plannedIds().length,
-    // Matches the timeline header: D1 meeting records plus calendar events.
-    meetings: todaysMeetings.length,
+    // The number matches the list its link opens: the Meetings page's meeting
+    // records for today (calendar-only events are on the Today section below).
+    meetings: (meetingsQuery.data ?? []).filter((m) => isToday(m.date)).length,
     doneToday: doneTodayCount,
   }
 

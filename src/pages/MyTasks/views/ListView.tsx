@@ -104,10 +104,13 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
     return () => { ro.disconnect(); mo.disconnect() }
   }, [pageScrollRef, filtered.length])
 
+  // Follow the cursor only after it has been used (click or j/k). On mount the
+  // cursor sits on row 0, and scrolling to it jumps the page past the title and
+  // filter chips above the list.
   useEffect(() => {
-    if (cursor < 0 || cursor >= filtered.length) return
+    if (!showCursor || cursor < 0 || cursor >= filtered.length) return
     virtualizer.scrollToIndex(cursor, { align: 'auto', behavior: 'auto' })
-  }, [cursor, filtered.length, virtualizer])
+  }, [showCursor, cursor, filtered.length, virtualizer])
 
   const kbdStyle = { fontFamily: 'var(--font-mono), JetBrains Mono, monospace', fontSize: 9, padding: '1px 4px', background: 'var(--sk-line)', borderRadius: 2, color: 'var(--sk-t3)' }
 

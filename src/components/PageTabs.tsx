@@ -35,7 +35,7 @@ export default function PageTabs({ tabs, ariaLabel }: { tabs: PageTab[]; ariaLab
       {visible.length > 1 && (
         // The pill sizes to its tabs (a flex row, not a block), with a little
         // air above the hosted page's own header.
-        <div className="content-container page-tabs" data-testid="page-tabs" style={{ display: 'flex', paddingTop: 4, marginBottom: 16 }}>
+        <div className="content-container page-tabs" data-testid="page-tabs" style={{ display: 'flex', minWidth: 0, paddingTop: 4, marginBottom: 16 }}>
           <SegmentedToggle
             ariaLabel={ariaLabel}
             options={visible.map((t) => ({ value: t.key, label: t.label }))}
