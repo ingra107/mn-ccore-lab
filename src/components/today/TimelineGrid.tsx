@@ -107,8 +107,10 @@ type NowPlacement =
   | { mode: 'trail' }
   | null
 
-function computeNowPlacement(units: TimelineUnit[], now: number, dayStart: number, dayEnd: number): NowPlacement {
-  if (now < dayStart || now > dayEnd) return null
+function computeNowPlacement(units: TimelineUnit[], now: number, dayStart: number): NowPlacement {
+  // Past dayEnd (an evening after the last event) the line still draws, after
+  // the last unit, on no height: the axis no longer stretches to the clock.
+  if (now < dayStart) return null
   for (let i = 0; i < units.length; i++) {
     const u = units[i]
     if (u.kind === 'untimed') continue
@@ -716,18 +718,21 @@ function AgendaOverlapRegion({
   nowLineEl?: ReactNode
   nowOffsetPx?: number
 }) {
-  const colCount = unit.placements[0]?.colCount ?? 1
+  // Phone: the spine is ~250px, so two 200px-min columns overflow and scroll
+  // sideways. Stack the overlapping meetings in ONE full-width column (no stagger
+  // offset: stacked cards read top to bottom in start order). Desktop unchanged.
+  const colCount = isPhone ? 1 : (unit.placements[0]?.colCount ?? 1)
 
   // Build columns: array of arrays, indexed by colIdx
   const columns: TodayEvent[][] = Array.from({ length: colCount }, () => [])
   unit.events.forEach((e, i) => {
     const { colIdx } = unit.placements[i]
-    columns[colIdx].push(e)
+    columns[isPhone ? 0 : colIdx].push(e)
   })
 
   // Start offset for stagger: minutes from cluster start → px
   const startOffsetPx = (e: TodayEvent): number =>
-    typeof e.startMin === 'number'
+    !isPhone && typeof e.startMin === 'number'
       ? Math.round(minToPx(e.startMin - unit.startMin))
       : 0
 
@@ -763,7 +768,7 @@ function AgendaOverlapRegion({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${colCount}, minmax(200px, 1fr))`,
+          gridTemplateColumns: isPhone ? 'minmax(0, 1fr)' : `repeat(${colCount}, minmax(200px, 1fr))`,
           gap: 6,
           overflowX: colCount > 1 ? 'auto' : 'visible',
           alignItems: 'start',
@@ -898,8 +903,8 @@ export function TimelineGrid({
   // before its start ('before') or inside it ('within'), stop — matching the
   // old first-writer-wins semantics without any reassignment.
   const nowPlacement = useMemo(
-    () => computeNowPlacement(units, now, model.dayStart, model.dayEnd),
-    [units, now, model.dayStart, model.dayEnd],
+    () => computeNowPlacement(units, now, model.dayStart),
+    [units, now, model.dayStart],
   )
 
   // Build agenda unit elements with now-line injection

@@ -41,6 +41,14 @@ describe('resolveAttendeeViews', () => {
     expect(a.raw).toBe('kaur0147')
   })
 
+  it('shows an unresolved @umn.edu address as its id, keeping the full address in raw', () => {
+    const [a] = resolveAttendeeViews(['zzzz9999@umn.edu'], team)
+    expect(a.first).toBe('zzzz9999')
+    expect(a.name).toBe('zzzz9999')
+    expect(a.raw).toBe('zzzz9999@umn.edu')
+    expect(a.listed).toBe(false)
+  })
+
   it('shows an id nobody has as the raw id', () => {
     const [a] = resolveAttendeeViews(['zzzz9999'], team)
     expect(a.first).toBe('zzzz9999')

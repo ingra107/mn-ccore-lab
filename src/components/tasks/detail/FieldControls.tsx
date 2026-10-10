@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import InlineDatePicker from '../../InlineDatePicker'
 import { ICON_PROPS } from '../../../lib/iconProps'
+import { projectShortLabel } from '../../../lib/projectMeetings'
 
 // ── Field Block Wrapper ──────────────────────────────────────
 
@@ -198,6 +199,7 @@ export interface WorkflowFields {
 
 function WorkflowTextInput({ value, placeholder, onSave, compact }: { value: string; placeholder: string; onSave: (v: string | null) => void; compact?: boolean }) {
   const [draft, setDraft] = useState(value)
+  const [focused, setFocused] = useState(false)
   useEffect(() => { setDraft(value) }, [value])
   const commit = () => { onSave(draft.trim() || null) }
   // compact=true (Today drawer): smaller input — px-2 py-1 text-xs vs px-3 py-1.5 text-sm.
@@ -208,10 +210,15 @@ function WorkflowTextInput({ value, placeholder, onSave, compact }: { value: str
       value={draft}
       placeholder={placeholder}
       onChange={(e) => setDraft(e.target.value)}
-      onBlur={commit}
+      onFocus={() => setFocused(true)}
+      onBlur={() => { setFocused(false); commit() }}
       onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
-      className={`w-full outline-none rounded-md ${sizeClass}`}
-      style={{ color: 'var(--ink)', background: 'var(--field-bg, rgba(0,0,0,0.04))', border: '1px solid var(--border-subtle)' }}
+      // compact (Today drawer) = the .tk ghost: no box at rest, hover tint only,
+      // a quiet ring on focus. The full editor keeps the boxed field.
+      className={`w-full outline-none rounded-md ${sizeClass}${compact ? ' hov-bg' : ''}`}
+      style={compact
+        ? ({ color: 'var(--ink)', background: 'transparent', border: `1px solid ${focused ? 'var(--teal)' : 'transparent'}`, '--hov-bg': 'var(--hover-subtle)' } as React.CSSProperties)
+        : { color: 'var(--ink)', background: 'var(--field-bg, rgba(0,0,0,0.04))', border: '1px solid var(--border-subtle)' }}
     />
   )
 }
@@ -289,7 +296,7 @@ export function ProjectInlineGhostSelect({ value, onChange }: { value: string; o
 
   const options = [
     { value: '', label: 'No project' },
-    ...projectList.map((p) => ({ value: p.slug, label: p.title })),
+    ...projectList.map((p) => ({ value: p.slug, label: projectShortLabel(p) })),
   ]
 
   return (

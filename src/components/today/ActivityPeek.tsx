@@ -31,7 +31,15 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 
 /** One plain line of text from an entry body: markdown marks and newlines flattened. */
 function oneLine(body: string): string {
-  return body.replace(/[*_`#>]/g, '').replace(/\s+/g, ' ').trim()
+  // Strip markdown SYNTAX only: heading/quote marks at line start, code ticks,
+  // and emphasis that wraps text at word boundaries. A bare _ * # > inside text
+  // ("stable_2026_05", "a > b", "#123") is content and stays.
+  return body
+    .replace(/^[ \t]{0,3}(?:#{1,6}[ \t]+|>[ \t]?)/gm, '')
+    .replace(/`+/g, '')
+    .replace(/(?<![\w*_])(\*{1,3}|_{1,3})(?=\S)(.+?)(?<=\S)\1(?![\w*_])/g, '$2')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 /** "2h", "5m", "3d" (formatRelativeTime without its " ago"). */

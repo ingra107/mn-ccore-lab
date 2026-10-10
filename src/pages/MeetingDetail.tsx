@@ -69,6 +69,7 @@ import MeetingActivityFeed from '../components/meetings/MeetingActivityFeed'
 import MeetingProjectsSection from '../components/meetings/MeetingProjectsSection'
 import { isLabSeriesTitle } from '../../shared/meetingAudience'
 import { AttendeeBadge } from '../components/meetings/Attendees'
+import { meetingStatus } from '../lib/meetingStatus'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -87,6 +88,9 @@ function parseJsonArray(s: string | null): string[] {
   if (!s) return []
   try { return JSON.parse(s) } catch { return [] }
 }
+
+// Section headings: Today's treatment (15px / 600 / --sk-t1, TodayPage's h2).
+const SECTION_HEADING: React.CSSProperties = { fontWeight: 600, fontSize: '15px', color: 'var(--sk-t1)', margin: 0 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   upcoming: { bg: 'var(--teal-emphasis)', text: 'var(--teal)' },
@@ -260,7 +264,8 @@ export default function MeetingDetail() {
   const attendees = parseJsonArray(meeting.attendees)
   const autoAgenda = parseJsonArray(meeting.agenda)
   const decisions = parseJsonArray(meeting.decisions)
-  const statusStyle = STATUS_COLORS[meeting.status] || STATUS_COLORS.completed
+  const status = meetingStatus(meeting)
+  const statusStyle = STATUS_COLORS[status] || STATUS_COLORS.completed
   const actionItems = dedupedActionItems
   const rawTeamAgendaItems = meeting.agenda_items || []
   // S9: apply the local drag order so a reordered agenda stays put (mirrors
@@ -480,7 +485,7 @@ export default function MeetingDetail() {
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs"
               style={{ fontSize: 'var(--label-size)', background: statusStyle.bg, color: statusStyle.text }}>
-              <Calendar {...ICON_PROPS} size={12} /> {meeting.status}
+              <Calendar {...ICON_PROPS} size={12} /> {status}
             </span>
             <select
               aria-label="Meeting type"
@@ -508,7 +513,7 @@ export default function MeetingDetail() {
                 background: 'var(--teal-hover)',
               }}
             >
-              <ListChecks {...ICON_PROPS} size={11} /> Prep View
+              <ListChecks {...ICON_PROPS} size={11} /> Prep view
             </Link>
             <button
               onClick={() => {
@@ -550,7 +555,7 @@ export default function MeetingDetail() {
               }}
             >
               {copiedSummary ? <Check {...ICON_PROPS} size={11} /> : <Copy {...ICON_PROPS} size={11} />}
-              {copiedSummary ? 'Copied!' : 'Copy Summary'}
+              {copiedSummary ? 'Copied!' : 'Copy summary'}
             </button>
             <button
               onClick={handleGenerateAgenda}
@@ -566,7 +571,7 @@ export default function MeetingDetail() {
               }}
             >
               {agendaCopied ? <Check {...ICON_PROPS} size={11} /> : <Sparkles {...ICON_PROPS} size={11} />}
-              {agendaCopied ? 'Copied!' : generatingAgenda ? 'Generating…' : 'Generate Agenda'}
+              {agendaCopied ? 'Copied!' : generatingAgenda ? 'Generating…' : 'Generate agenda'}
             </button>
           </div>
 
@@ -648,8 +653,8 @@ export default function MeetingDetail() {
           {/* Left: Agenda (order-2 on mobile so actions show first) */}
           <motion.div className="order-2 lg:order-1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.1 }}>
             <div className="flex items-center gap-2 mb-3">
-              <ListChecks {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
-              <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+              <ListChecks {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
+              <h2 style={SECTION_HEADING}>
                 Agenda
               </h2>
             </div>
@@ -698,9 +703,9 @@ export default function MeetingDetail() {
           {/* Right: Action Items (order-1 on mobile so actions show first) */}
           <motion.div className="order-1 lg:order-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.15 }}>
             <div className="flex items-center gap-2 mb-3">
-              <CheckCircle2 {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
-              <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
-                Action Items
+              <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
+              <h2 style={SECTION_HEADING}>
+                Action items
               </h2>
               <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                 {completedActions.length}/{actionItems.length}
@@ -759,7 +764,7 @@ export default function MeetingDetail() {
 
               {/* Pending items — real task rows via the shared TaskRow */}
               {pendingActions.length > 0 && (
-                <div className="mb-3">
+                <div className="mb-3 md-actions">
                   {pendingActions.map((item) => {
                     const project = item.project_id ? projectsBySlug.get(item.project_id) ?? null : null
                     return (
@@ -771,6 +776,11 @@ export default function MeetingDetail() {
                         // row must not also render ProjectTag — that would
                         // print the project name twice on the same line.
                         project={null}
+                        // stack: title on its own full-width line, the meta
+                        // (owner, due, project) wraps beneath it. The inline
+                        // layout pins the meta at flex-shrink:0 and squeezed the
+                        // title to ~120px in this half-width column.
+                        stack
                         isDone={false}
                         onToggleDone={() => handleToggleActionDone(item)}
                         isExpanded={expandedActionId === item.id}
@@ -805,7 +815,7 @@ export default function MeetingDetail() {
 
               {/* Completed items */}
               {completedActions.length > 0 && (
-                <div>
+                <div className="md-actions">
                   <p style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', marginBottom: '6px' }}>
                     Completed
                   </p>
@@ -818,6 +828,7 @@ export default function MeetingDetail() {
                         // See the pending list above — TaskRowActions owns both
                         // project affordances on this page.
                         project={null}
+                        stack
                         isDone={true}
                         onToggleDone={() => handleToggleActionDone(item)}
                         isExpanded={expandedActionId === item.id}
@@ -866,8 +877,8 @@ export default function MeetingDetail() {
         {/* Decisions */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.2 }} className="mt-8">
           <div className="flex items-center gap-2 mb-3">
-            <Scale {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
-            <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+            <Scale {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
+            <h2 style={SECTION_HEADING}>
               Decisions
             </h2>
             {isAuthenticated && (
@@ -880,7 +891,7 @@ export default function MeetingDetail() {
                   display: 'flex', alignItems: 'center', gap: '4px',
                 }}
               >
-                <Plus {...ICON_PROPS} size={12} /> Log Decision
+                <Plus {...ICON_PROPS} size={12} /> Log decision
               </button>
             )}
           </div>
@@ -978,8 +989,8 @@ export default function MeetingDetail() {
         {meeting.id && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.22 }} className="mt-8">
             <div className="flex items-center gap-2 mb-3">
-              <UploadIcon {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
-              <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+              <UploadIcon {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
+              <h3 style={SECTION_HEADING}>
                 Files
               </h3>
             </div>
@@ -992,9 +1003,9 @@ export default function MeetingDetail() {
         {/* Notes */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.25 }} className="mt-8">
           <div className="flex items-center gap-2 mb-3">
-            <FileText {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
-            <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
-              Meeting Notes
+            <FileText {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
+            <h3 style={SECTION_HEADING}>
+              Meeting notes
             </h3>
             {/* #96 — one-click copy of the notes body so Nick can paste them
                 straight to the team. Copies the raw markdown source (what
@@ -1097,8 +1108,8 @@ export default function MeetingDetail() {
         {meeting?.id && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.3 }} className="mt-8">
             <div className="flex items-center gap-2 mb-3">
-              <MessageSquarePlus {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
-              <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+              <MessageSquarePlus {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
+              <h3 style={SECTION_HEADING}>
                 Discussion
               </h3>
             </div>
@@ -1463,13 +1474,13 @@ function AttendanceSection({ attendees, updateMeta, canEdit }: { attendees: stri
         {canEdit && (
           <button
             onClick={() => setExpanded(!expanded)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', color: 'var(--teal)', marginLeft: 'auto' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'var(--label-size)', color: 'var(--teal)', padding: 0 }}
           >
             {expanded ? 'Done' : '+ Edit'}
           </button>
         )}
       </div>
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+      <div className="flex flex-wrap items-center gap-2 pb-1">
         {resolvedAttendees.map(slug => <AttendeeChip key={slug} slug={slug} />)}
         {resolvedAttendees.length === 0 && !expanded && (
           <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No attendees logged</span>

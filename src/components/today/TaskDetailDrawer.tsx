@@ -320,25 +320,25 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
 
           {/* Duration stepper */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 10, color: INK_DIM, minWidth: 52 }}>Duration</span>
+            <span className="tk-lbl" style={{ minWidth: 52, margin: 0 }}>Duration</span>
             <button
               onClick={() => adjustDuration(-DURATION_STEP)}
               disabled={durationMins <= DURATION_MIN}
               aria-label="Decrease duration by 15 minutes"
-              style={{ width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: `1px solid var(--border-strong)`, borderRadius: 4, color: durationMins <= DURATION_MIN ? INK_DIM : INK, cursor: durationMins <= DURATION_MIN ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins <= DURATION_MIN ? 0.35 : 0.8 }}
+              className="hov-bg" style={{ '--hov-bg': 'var(--hover-subtle)', width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: 'none', borderRadius: 6, color: durationMins <= DURATION_MIN ? INK_DIM : INK, cursor: durationMins <= DURATION_MIN ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins <= DURATION_MIN ? 0.35 : 0.8 } as React.CSSProperties}
             >−</button>
             <span style={{ fontSize: 11, color: INK, fontVariantNumeric: 'tabular-nums', minWidth: 36, textAlign: 'center' }}>{fmtDuration(durationMins)}</span>
             <button
               onClick={() => adjustDuration(DURATION_STEP)}
               disabled={durationMins >= DURATION_MAX}
               aria-label="Increase duration by 15 minutes"
-              style={{ width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: `1px solid var(--border-strong)`, borderRadius: 4, color: durationMins >= DURATION_MAX ? INK_DIM : INK, cursor: durationMins >= DURATION_MAX ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins >= DURATION_MAX ? 0.35 : 0.8 }}
+              className="hov-bg" style={{ '--hov-bg': 'var(--hover-subtle)', width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: 'none', borderRadius: 6, color: durationMins >= DURATION_MAX ? INK_DIM : INK, cursor: durationMins >= DURATION_MAX ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins >= DURATION_MAX ? 0.35 : 0.8 } as React.CSSProperties}
             >+</button>
           </div>
 
           {/* Subtasks + Blocks */}
           <div>
-            <div style={{ fontSize: 10, color: INK_DIM, marginBottom: 6 }}>Subtasks</div>
+            <div className="tk-lbl">Subtasks</div>
             {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
             {!detailQuery.isLoading && subtasks.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None yet.</div>}
             {subtasks.map((s) => (
@@ -368,7 +368,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         {/* RIGHT column: Workflow — top-aligned with left col's status pills.
             compact=true: smaller input height + font, de-emphasised. */}
         <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-          <div style={{ fontSize: 10, color: INK_DIM, marginBottom: 8 }}>Workflow</div>
+          <div className="tk-lbl" style={{ marginBottom: 8 }}>Workflow</div>
           <WorkflowSection fields={workflowFields} onChange={saveWorkflowField} compact />
         </div>
       </div>

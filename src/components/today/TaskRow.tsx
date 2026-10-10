@@ -21,7 +21,7 @@ import { LinkRow, type TaskLink } from './primitives'
 import { formatShortDate } from '../../lib/dateUtils'
 import { Users, Hourglass, Handshake, Repeat } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { Person } from './skin'
+import { Who } from './skin'
 import { isFromMeeting, meetingLabelFor } from '../../lib/meetingOrigin'
 import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
@@ -117,12 +117,12 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
     <>
       {task.waiting_on && (
         <span className="tk-pill" title={`Waiting on: ${task.waiting_on}`}>
-          <Hourglass {...ICON_PROPS} size={12} aria-hidden />Waiting on <Person name={task.waiting_on} />
+          <Hourglass {...ICON_PROPS} size={12} aria-hidden />Waiting on <Who value={task.waiting_on} />
         </span>
       )}
       {task.promised_to && (
         <span className="tk-pill" title={`Promised to: ${task.promised_to}${task.promise_date ? ` by ${task.promise_date}` : ''}`}>
-          <Handshake {...ICON_PROPS} size={12} aria-hidden />Promised to <Person name={task.promised_to} />{task.promise_date ? ` · ${formatShortDate(task.promise_date)}` : ''}
+          <Handshake {...ICON_PROPS} size={12} aria-hidden />Promised to <Who value={task.promised_to} />{task.promise_date ? ` · ${formatShortDate(task.promise_date)}` : ''}
         </span>
       )}
       {task.next_checkin_date && !task.waiting_on && (

@@ -90,3 +90,27 @@ describe('day balance', () => {
     expect(balance.freeMinutes).toBe(540)
   })
 })
+
+describe('a clock past the last event', () => {
+  const ev = (id: string, startMin: number, endMin: number): TodayEvent => ({
+    id, time: '', title: id, startMin, endMin,
+  })
+
+  it('does not stretch the axis to now, and counts no elapsed time as free', () => {
+    const events = [ev('a', 9 * 60, 10 * 60)]
+    const opts = { defaultDayStart: 8 * 60, defaultDayEnd: 17 * 60 }
+    const open = buildTimelineModel(events, opts)
+    // 22:42 is long past the day: same axis as with no clock at all.
+    const late = buildTimelineModel(events, { ...opts, nowMin: 22 * 60 + 42 })
+    expect(late.dayEnd).toBe(open.dayEnd)
+    expect(late.units.length).toBe(open.units.length)
+    expect(late.balance.freeMinutes).toBe(0)
+  })
+
+  it('counts only the free time still ahead when now is inside a gap', () => {
+    const events = [ev('a', 9 * 60, 10 * 60)]
+    const { balance } = buildTimelineModel(events, { defaultDayStart: 8 * 60, defaultDayEnd: 17 * 60, nowMin: 15 * 60 })
+    // gap 10:00-17:00 minus the elapsed 10:00-15:00 = 120 min; 8:30-9:00 is over too.
+    expect(balance.freeMinutes).toBe(120)
+  })
+})

@@ -71,11 +71,12 @@ describe('Projects row on the meeting page', () => {
     expect(pill(host, 'DNR').dataset.pill).toBe('granted')
     expect(pill(host, 'LPV').dataset.pill).toBe('discussed')
     expect(pill(host, 'sedation').dataset.pill).toBe('discussed')
-    // Faded = muted text on a dashed hairline; granted = the teal pill.
+    // Faded = dim (--sk-t3), regular-weight text on a dashed hairline; granted = the teal pill.
     const dnr = pill(host, 'DNR').style
     const lpv = pill(host, 'LPV').style
     expect(lpv.borderStyle).toBe('dashed')
-    expect(lpv.color).toBe('var(--muted)')
+    expect(lpv.color).toBe('var(--sk-t3)')
+    expect(lpv.fontWeight).toBe('400')
     expect(dnr.borderStyle).toBe('solid')
     expect(dnr.color).toBe('var(--teal)')
     expect(dnr.background).toContain('var(--teal-active)')

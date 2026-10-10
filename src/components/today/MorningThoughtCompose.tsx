@@ -237,12 +237,12 @@ export function MorningThoughtCompose() {
       {/* "send to home" queues @quickchat on Nick's home machine -- a control
           for the PI's own machines. A member has no home machine to send to. */}
       {user.isPi && (
-      <label className="flex items-center gap-1.5 justify-end text-xs text-neutral-400 cursor-pointer select-none mt-1">
+      <label className="flex items-center gap-1.5 justify-end text-xs cursor-pointer select-none mt-1" style={{ color: 'var(--sk-t3)' }}>
         <input
           type="checkbox"
           checked={forceHome}
           onChange={e => setForceHome(e.target.checked)}
-          className="accent-violet-400"
+          style={{ accentColor: 'var(--sk-ac)' }}
         />
         send to home
       </label>

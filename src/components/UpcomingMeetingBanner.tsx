@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Calendar, ArrowRight, CheckCircle2, UserCheck } from 'lucide-react'
 import { useMeetingsApi, useMeetingLinkedTasks } from '../hooks/useApiData'
 import { localDateKey } from '../lib/dateUtils'
+import { meetingStatus } from '../lib/meetingStatus'
 import { countActionsByMeetingId } from '../lib/meetingTaskCounts'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
@@ -17,8 +18,12 @@ export default function UpcomingMeetingBanner() {
   const nextMeeting = useMemo(() => {
     const today = localDateKey()
 
-    // First try status='upcoming'
-    const upcoming = meetings.find((m) => m.status === 'upcoming')
+    // First the earliest meeting whose DERIVED status is upcoming. The stored
+    // status is 'upcoming' on every row (never updated), so `find` on it just
+    // returned whichever row sorted first.
+    const upcoming = meetings
+      .filter((m) => meetingStatus(m) === 'upcoming')
+      .sort((a, b) => a.date.localeCompare(b.date))[0]
     if (upcoming) return upcoming
 
     // Fallback: first meeting with date >= today, sorted ascending
