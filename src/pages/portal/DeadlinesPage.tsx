@@ -436,8 +436,8 @@ export default function DeadlinesPage() {
             <motion.div initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
               {[
                 { title: 'Overdue', items: overdue, color: 'var(--maroon)' },
-                { title: 'This Week', items: thisWeek, color: 'var(--teal)' },
-                { title: 'Next Week', items: nextWeek, color: 'var(--gold)' },
+                { title: 'This week', items: thisWeek, color: 'var(--teal)' },
+                { title: 'Next week', items: nextWeek, color: 'var(--gold)' },
                 { title: 'Later', items: later, color: 'var(--slate)' },
                 { title: `Completed (${completed.length})`, items: completed.slice(0, 5), color: 'var(--green)' },
               ].filter(g => g.items.length > 0).map((group) => (
@@ -469,8 +469,8 @@ export default function DeadlinesPage() {
                 {([
                   { label: 'Total', value: deadlines.length },
                   ...(overdue.length > 0 ? [{ label: 'Overdue', value: overdue.length, color: 'var(--maroon)' }] : []),
-                  { label: 'This Week', value: thisWeek.length },
-                  { label: 'Next Week', value: nextWeek.length },
+                  { label: 'This week', value: thisWeek.length },
+                  { label: 'Next week', value: nextWeek.length },
                   { label: 'Later', value: later.length },
                   { label: 'Done', value: completed.length, color: 'var(--green)' },
                 ] as { label: string; value: number; color?: string }[]).map(s => (

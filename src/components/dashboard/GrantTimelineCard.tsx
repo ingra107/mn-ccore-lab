@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react'
+import { grantBucket } from '../../lib/grantBucket'
 import { Banknote } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { useGrantTimeline, type GrantTimelineItem } from '../../hooks/useGrantTimeline'
@@ -49,7 +50,7 @@ function toBar(g: GrantTimelineItem): GrantBar | null {
   // Fill missing endpoints sensibly so a single-date grant still shows a bar.
   const startYear = start ?? (end ?? CURRENT_YEAR)
   const endYear = end ?? Math.max(startYear, CURRENT_YEAR)
-  const proposed = g.proposed === 1 || g.status === 'in_preparation' || g.status === 'submitted' || g.status === 'planning'
+  const proposed = grantBucket(g) === 'proposed'
   return {
     id: g.id,
     mechanism: g.mechanism || '—',

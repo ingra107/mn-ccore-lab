@@ -151,6 +151,7 @@ export interface GrantRow {
   start_date: string | null
   end_date: string | null
   proposed: number
+  status?: string | null
   total_funding: number | null
   created_at: string
 }

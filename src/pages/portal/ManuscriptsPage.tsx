@@ -52,11 +52,11 @@ function isManuscriptStage(stage: string | null | undefined): boolean {
   return idx >= 0 && idx >= WRITING_STAGE_INDEX
 }
 
-// Values are D1 lowercase canonical; labels are Title Case for display.
+// Values are D1 lowercase canonical; labels are sentence case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
 const STAGE_LABELS: Record<typeof STAGES[number], string> = {
   idea: 'Idea',
-  data_collection: 'Data Collection',
+  data_collection: 'Data collection',
   analysis: 'Analysis',
   writing: 'Writing',
   review: 'Review',

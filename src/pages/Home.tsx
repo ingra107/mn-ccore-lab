@@ -114,7 +114,7 @@ export default function Home() {
     const pubCount = publications.length || 63
     const activeProjects = projects.filter(p => isProjectActive(p.status)).length || 6
     const teamCount = team.length || 12
-    const activeGrants = grants.filter(g => !g.proposed).length || 2
+    const activeGrants = grants.filter(g => !g.proposed && g.status !== 'Completed').length || 2
     return { pubCount, activeProjects, teamCount, activeGrants }
   }, [publications, projects, team, grants])
 

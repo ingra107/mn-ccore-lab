@@ -34,6 +34,7 @@ import { formatMediumDate, isOverdue, civilDaysUntil } from '../../lib/dateUtils
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { grantBucket } from '../../lib/grantBucket'
 import { mechanismFamily, MECHANISM_ACCENT } from '../../lib/grantMechanism'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 
@@ -78,21 +79,7 @@ function formatFunding(amount: number): string {
 
 // F83: the mechanism is a label, not a status. Neutral hairline chip so colour
 // stays reserved for meaning (the gantt keeps the family accents as chart marks).
-function mechanismColor(_mechanism: string): { bg: string; color: string } {
-  return { bg: 'transparent', color: 'var(--ink)' }
-}
-
-// F72: bucket comes from status, not the stale `proposed` flag (the PATCH
-// never kept it in step). Falls back to the flag only when status is unset.
-type GrantBucket = 'active' | 'proposed' | 'ended'
-function grantBucket(g: { status: GrantStatus | null; proposed?: boolean | number | null }): GrantBucket {
-  switch (g.status) {
-    case 'funded': return 'active'
-    case 'planning': case 'in_preparation': case 'submitted': case 'resubmission': return 'proposed'
-    case 'declined': case 'closed': return 'ended'
-    default: return g.proposed ? 'proposed' : 'active'
-  }
-}
+const MECHANISM_CHIP = { bg: 'transparent', color: 'var(--ink)' }
 
 // One grid template for header and rows, so the columns cannot drift apart.
 const GRANT_GRID_COLUMNS = 'minmax(200px, 2fr) 120px 120px 80px minmax(120px, 1fr) 100px'
@@ -142,7 +129,7 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
     zIndex: 'var(--z-dropdown)',
     pointerEvents: 'none',
   }
-  const mc = mechanismColor(grant.mechanism)
+  const mc = MECHANISM_CHIP
   return (
     <div style={tooltipStyle}>
       <div
@@ -592,7 +579,7 @@ export default function GrantsPage() {
               {/* Rows */}
               {filteredGrants.map((grant) => {
                 const pi = getPersonInfo(grant.pi)
-                const mc = mechanismColor(grant.mechanism)
+                const mc = MECHANISM_CHIP
                 const bucket = grantBucket(grant)
                 const isProposed = bucket === 'proposed'
 

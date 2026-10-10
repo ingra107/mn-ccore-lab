@@ -1,5 +1,6 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
+import { GRANT_BUCKET_SQL } from './grant-bucket';
 import type { Stats } from '../types';
 
 // GET /api/publications?year=&status=&topic=
@@ -68,7 +69,7 @@ export async function handleGetStats(env: Env): Promise<Response> {
 // GET /api/grants/timeline
 export async function handleGrantsTimeline(env: Env): Promise<Response> {
   const grants = await env.DB.prepare(
-    'SELECT * FROM grants ORDER BY proposed ASC, start_date ASC'
+    `SELECT * FROM grants ORDER BY CASE ${GRANT_BUCKET_SQL} WHEN 'active' THEN 0 WHEN 'proposed' THEN 1 ELSE 2 END, start_date ASC`
   ).all();
 
   // Fetch milestones for each grant

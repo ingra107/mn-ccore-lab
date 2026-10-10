@@ -236,7 +236,7 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
     g.title.trim() !== 'Departmental Operational Support' &&
     g.mechanism?.trim() &&
     g.mechanism.trim() !== '---'
-  const activeGrants = grants.filter((g) => !g.proposed && isRealGrant(g))
+  const activeGrants = grants.filter((g) => !g.proposed && g.status !== 'Completed' && isRealGrant(g))
   const pendingGrants = grants.filter((g) => g.proposed && isRealGrant(g))
 
   return (

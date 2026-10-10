@@ -97,10 +97,14 @@ export default function CalendarPage() {
   const visibleEvents = events.filter((e) => {
     if (view === 'week') return e.date >= localDateKey(weekStart) && e.date <= localDateKey(weekEnd)
     if (view === 'day') return e.date === localDateKey(currentDate)
+    // Same filter as AgendaView: from today forward across the fetch window.
+    if (view === 'agenda') return e.date >= localDateKey()
     return e.date.startsWith(monthPrefix)
   })
   const visibleCount = visibleEvents.length
-  const visibleLabel = `event${visibleCount === 1 ? '' : 's'} ${view === 'week' ? 'this week' : view === 'day' ? 'this day' : 'this month'}`
+  const isCurrentMonth = monthPrefix === localDateKey().slice(0, 7)
+  const monthPhrase = isCurrentMonth ? 'this month' : `in ${currentDate.toLocaleDateString('en-US', { month: 'long' })}`
+  const visibleLabel = `event${visibleCount === 1 ? '' : 's'} ${view === 'week' ? 'this week' : view === 'day' ? 'this day' : view === 'agenda' ? 'upcoming' : monthPhrase}`
 
   const goToPrev = () => {
     const d = new Date(currentDate)
