@@ -52,7 +52,9 @@ if (-not $SkipBuild) {
     Write-Host '[1/3] Skipping build (-SkipBuild).' -ForegroundColor DarkGray
 }
 
-# 1b. Member page sweep (same gate as deploy:pages:gated; own ports + own local D1)
+# 1b. Member page sweep (same gate as deploy:pages:gated; own ports + own local D1).
+#     It serves dist/ with vite preview, so with -SkipBuild it sweeps the same
+#     dist/ that step 2 deploys, never newer source.
 Write-Host ''
 Write-Host '[1b/3] Member page sweep...' -ForegroundColor Yellow
 npm run test:journeys:sweep:gate

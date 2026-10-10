@@ -7,8 +7,9 @@ import { localD1 } from './localD1'
 // the d2b59803 class (a 403 rendered as text). It cannot see POST authorization
 // (6419c9b0) or edge Access (18f602f5). A deploy gate since S4-2 H3:
 // deploy:pages:gated runs `npm run test:journeys:sweep:gate` (own free ports,
-// own fresh local D1) before `wrangler pages deploy`. By hand, from any
-// checkout: `npm run test:journeys:sweep:gate`.
+// own fresh local D1, the built dist/ via vite preview) before `wrangler pages
+// deploy`. By hand, from any checkout: `npm run build` then
+// `npm run test:journeys:sweep:gate`.
 //
 // Both emails are on no NetID map in code; the team_members row is the only
 // thing that makes them members (262b9444 class).
