@@ -123,7 +123,7 @@ function ProjectHealthCard() {
 
         {/* Summary counts */}
         <div
-          className="flex items-center gap-4 mb-3 pb-3"
+          className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3 pb-3"
           style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 8)}` }}
         >
           {[
@@ -159,6 +159,7 @@ function ProjectHealthCard() {
                   opacity: 'var(--ink-hint)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.03em',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {s.label}
@@ -174,7 +175,10 @@ function ProjectHealthCard() {
             tabIndex={0}
             role="region"
             aria-label="Project health heatmap"
-            style={{ maxHeight: '320px' }}
+            // minHeight: one row of cells plus the caption. Without it the
+            // flex-1 scroller collapses to 0 inside the fixed-height card and the
+            // grid's grow-to-fit (which reads the outer card's scrollHeight) never fires.
+            style={{ maxHeight: '320px', minHeight: '84px' }}
           >
             <div
               className="grid gap-1.5"
@@ -215,7 +219,7 @@ function ProjectHealthCard() {
           tabIndex={0}
           role="region"
           aria-label="Project health"
-          style={{ maxHeight: '280px', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}
+          style={{ maxHeight: '280px', minHeight: '96px', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}
         >
           {/* Projects needing attention (sorted worst first) */}
           {needsWork.map((p) => (

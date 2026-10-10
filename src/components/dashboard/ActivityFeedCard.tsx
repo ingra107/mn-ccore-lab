@@ -91,6 +91,7 @@ function ActivityFeedCard() {
           aria-label="Activity feed"
           style={{
             maxHeight: '340px',
+            minHeight: '72px',
             scrollbarWidth: 'thin',
           }}
         >

@@ -356,7 +356,7 @@ export default function Dashboard() {
                 }}
               >
                 {/* Left: live dot + operational status chips (DD-#3 Option C) */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flex: '1 1 100%', minWidth: 0 }}>
                   {/* Static dot, hidden on phones where it wrapped onto a line of
                       its own (site audit F24/F97: color is spent, not pulsed). */}
                   <div
