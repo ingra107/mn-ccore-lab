@@ -2298,7 +2298,8 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   .list-view-col-priority,
   .list-view-col-status,
   .list-view-col-owner,
-  .list-view-col-links {
+  .list-view-col-links,
+  .list-view-col-work {
     display: none !important;
   }
 }
@@ -2316,7 +2317,8 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   .list-view-col-cursor,
   .list-view-col-priority,
   .list-view-col-owner,
-  .list-view-col-links {
+  .list-view-col-links,
+  .list-view-col-work {
     display: none !important;
   }
 }
@@ -2801,8 +2803,14 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-wk .tk-wo{color:var(--sk-t3) !important}
 .tk .tk-wk .tk-wo:hover{color:var(--sk-t1) !important}
 html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px 12px}
+/* Phone: keep project, pills, faces and the fixed slots on ONE line with the
+   slots flush right; only the project name gives way (ellipsis). Wrapping sent
+   the slots to a left-aligned third line (site audit F07). */
 @media (max-width:640px){
-  .tk .tk-lks{min-width:0}
+  .tk .tk-ctx{flex-wrap:nowrap}
+  .tk .tk-ctx .tk-cs{max-width:none}
+  .tk .tk-ctx>:not(.tk-cs):not(.tk-sp){flex-shrink:0}
+  .tk .tk-lks{min-width:52px}
 }
 
 /* Link icon tints (row + drawer): muted brand = 70% brand / 30% gray; hover

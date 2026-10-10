@@ -73,7 +73,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
       style={{
         borderColor: isOverdue ? 'var(--maroon)' : 'var(--border-subtle)',
         borderLeft: `3px solid ${effectiveBorderColor}`,
-        backgroundColor: isDone ? 'var(--hover-subtle)' : 'var(--cream)',
+        backgroundColor: isDone ? 'var(--hover-subtle)' : 'var(--sk-card)',
         opacity: isDone ? 0.85 : 1,
         cursor: onClick ? 'pointer' : 'default',
       }}
@@ -121,7 +121,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
               textDecoration: isDone ? 'line-through' : 'none',
             }}
           >
-            <TaskTitle title={task.title} fallback={task.description} />
+            <TaskTitle title={task.short_title || task.title} fallback={task.description} />
           </p>
 
           {/* Meta row */}
@@ -142,10 +142,10 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             {/* Priority badge */}
             <Chip
               size="sm"
-              color={priority.color}
+              color={task.priority === 'urgent' ? priority.color : 'var(--slate)'}
               filled={false}
               className="status-transition"
-              style={{ background: priority.bg, padding: '2px 6px', opacity: 0.85 }}
+              style={{ background: task.priority === 'urgent' ? priority.bg : 'transparent', padding: '2px 6px', opacity: 0.85 }}
             >
               {priority.label}
             </Chip>

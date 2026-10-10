@@ -12,7 +12,7 @@
 // links). The skin is the `.tk` wrapper below: its --sk-* tokens are global, but
 // every card rule in index.css is scoped under `.tk`, exactly as TodayPage does.
 
-import { useEffect, useRef, useMemo, useCallback, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useMemo, useCallback, useState, type RefObject } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { TaskRow as CardTaskRow } from '../../../components/today/TaskRow'
 import { useTodayState } from '../../../hooks/useTodayState'
@@ -34,14 +34,19 @@ interface ListViewProps {
   setSelected: React.Dispatch<React.SetStateAction<Set<string>>>
   setDrawer: (id: string | null) => void
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
+  /** Phone: the page shell scrolls (toolbar scrolls away with the list) and the
+   *  virtualizer follows it, instead of an inner scroller under fixed chrome. */
+  pageScrollRef?: RefObject<HTMLElement | null>
 }
 
 // A card is 69px collapsed; 8px gap. measureElement corrects it per row, so an
 // expanded drawer pushes the rows below it down instead of overlapping them.
 const ESTIMATE = 80
 
-export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRange, anchorId, setSelected, setDrawer, projectsByPid }: ListViewProps) {
+export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRange, anchorId, setSelected, setDrawer, projectsByPid, pageScrollRef }: ListViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const [scrollMargin, setScrollMargin] = useState(0)
   const { cursor, setCursor } = useListKeyboard({ filtered, toggleSelect, setDrawer, setSelected })
   const selectModeActive = useSelectMode(true)
   const state = useTodayState(filtered)
@@ -65,10 +70,28 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
 
   const virtualizer = useVirtualizer({
     count: filtered.length,
-    getScrollElement: () => scrollRef.current,
+    getScrollElement: () => (pageScrollRef ? pageScrollRef.current : scrollRef.current),
+    scrollMargin: pageScrollRef ? scrollMargin : 0,
     estimateSize: () => ESTIMATE,
     overscan: 8,
   })
+
+  // Offset of the list inside the page scroller, so rows line up when chrome
+  // (toolbar, banners) sits above it in the same scroll.
+  useLayoutEffect(() => {
+    const sp = pageScrollRef?.current
+    const el = listRef.current
+    if (!sp || !el) { setScrollMargin(0); return }
+    const measure = () => {
+      const m = Math.round(el.getBoundingClientRect().top - sp.getBoundingClientRect().top + sp.scrollTop)
+      setScrollMargin((p) => (p === m ? p : m))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    Array.from(sp.children).forEach((c) => ro.observe(c))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [pageScrollRef, filtered.length])
 
   useEffect(() => {
     if (cursor < 0 || cursor >= filtered.length) return
@@ -78,14 +101,14 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
   const kbdStyle = { fontFamily: 'var(--font-mono), JetBrains Mono, monospace', fontSize: 9, padding: '1px 4px', background: 'var(--sk-line)', borderRadius: 2, color: 'var(--sk-t3)' }
 
   return (
-    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-      <div ref={scrollRef} className="fab-clear" style={{ flex: 1, overflow: 'auto' }}>
+    <div style={pageScrollRef ? { display: 'flex', flexDirection: 'column' } : { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+      <div ref={scrollRef} className="fab-clear" style={pageScrollRef ? undefined : { flex: 1, overflow: 'auto' }}>
         <div className="mt-band">
           <div className="tk" style={{ paddingTop: 10 }}>
             <OverdueBanner tasks={filtered} />
             {filtered.length === 0 && (isEmpty ? <AllCaughtUp /> : <NoTasksMatch />)}
             {filtered.length > 0 && (
-              <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
+              <div ref={listRef} style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
                 {virtualizer.getVirtualItems().map((row) => {
                   const t = filtered[row.index]
                   const isSel = selected.has(t.id)
@@ -95,7 +118,7 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
                       key={t.id}
                       data-index={row.index}
                       ref={virtualizer.measureElement}
-                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${row.start}px)`, paddingBottom: 8 }}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${row.start - (pageScrollRef ? scrollMargin : 0)}px)`, paddingBottom: 8 }}
                     >
                       <div
                         className="tk-lrow"
@@ -144,7 +167,7 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
           </div>
         </div>
       </div>
-      <div style={{ borderTop: '1px solid var(--border-subtle)', background: 'rgba(0,0,0,0.2)', flexShrink: 0 }}>
+      {!pageScrollRef && <div style={{ borderTop: '1px solid var(--border-subtle)', background: 'rgba(0,0,0,0.2)', flexShrink: 0 }}>
         <div className="mt-band" style={{ paddingTop: 5, paddingBottom: 5, fontSize: 10, color: 'var(--sk-t3)', display: 'flex', gap: 14 }}>
           <span style={{ fontFamily: 'var(--font-mono), JetBrains Mono, monospace' }}>{filtered.length > 0 ? `${cursor + 1}/${filtered.length}` : '0/0'}</span>
           <span style={{ flex: 1 }} />
@@ -153,7 +176,7 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
           <span><kbd style={kbdStyle}>e</kbd> editor</span>
           <span><kbd style={kbdStyle}>esc</kbd> deselect</span>
         </div>
-      </div>
+      </div>}
     </div>
   )
 }

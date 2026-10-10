@@ -11,7 +11,7 @@
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx (ColumnsView + Card).
 
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { TaskRow as SharedTaskRow } from '../../../components/tasks/TaskRow'
 import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import { useDensity } from '../../../components/DensityToggle'
@@ -24,7 +24,7 @@ import { NoTasksMatch, AllCaughtUp, LaneEmpty } from './MyTasksEmpty'
 import {
   GROUP_META, GROUP_ORDER,
   ACCENT_ORANGE,
-  INK_DIM, PAGE_BG,
+  INK_DIM, INK_MUTED, PAGE_BG,
   daysSince, withAlpha, isTaskDone,
   type GroupKey,
 } from '../constants'
@@ -44,6 +44,20 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
   // Track the last pointer-event modifiers in a capture-phase ref so that
   // onSelect (called by SharedTaskRow with no event arg) can read them.
   const lastModifiers = useRef({ shift: false, ctrlMeta: false })
+  // F39: show the right-edge fade whenever the grid really overflows, not at a
+  // fixed viewport breakpoint (at 1680px the 5 columns still overflow the band).
+  const scrollerRef = useRef<HTMLDivElement | null>(null)
+  const [overflows, setOverflows] = useState(false)
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    const measure = () => setOverflows(el.scrollWidth > el.clientWidth + 1)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    if (el.firstElementChild) ro.observe(el.firstElementChild)
+    return () => ro.disconnect()
+  }, [colCount, filtered.length])
 
   const selectionActive = selectModeActive || selected.size > 0
   // 2026-06-10b: align the grid's intrinsic floor to the column minmax floor
@@ -51,7 +65,7 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
   // fluid width and only overflows (h-scroll) when colCount*260 + gaps exceeds
   // the available viewport — so the floor must match the minmax(260px,...) below
   // or the grid would force a scroll a touch early.
-  const minWidth = colCount * 260
+  const minWidth = colCount * 236
   // Mobile scroll cue — right-edge fade gradient + visible thin scrollbar so
   // users discover the 5 columns scroll horizontally on small viewports
   // (eval Issue 5).
@@ -65,7 +79,8 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
     // 4-5 columns into 960px and forced a horizontal scroll inside the band.
     <div className="band-anchored-wide" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
     <div
-      className="mt-columns-scroll fab-clear"
+      ref={scrollerRef}
+      className={`mt-columns-scroll fab-clear${overflows ? ' mt-columns-overflow' : ''}`}
       style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 20, position: 'relative', width: '100%' }}
       onClickCapture={(e) => {
         lastModifiers.current = { shift: e.shiftKey, ctrlMeta: e.ctrlKey || e.metaKey }
@@ -75,27 +90,25 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
       onMouseDownCapture={(e) => { if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault() }}
     >
       <style>{`
-        .mt-columns-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }
+        .mt-columns-scroll { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
         .mt-columns-scroll::-webkit-scrollbar { height: 8px; }
         .mt-columns-scroll::-webkit-scrollbar-track { background: transparent; }
-        .mt-columns-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 4px; }
-        @media (max-width: 1024px) {
-          .mt-columns-scroll::after {
-            content: '';
-            position: sticky;
-            top: 0; right: 0;
-            float: right;
-            width: 32px;
-            height: 100%;
-            margin-left: -32px;
-            pointer-events: none;
-            background: linear-gradient(to right, transparent, ${PAGE_BG} 80%);
-            z-index: 2;
-          }
+        .mt-columns-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+        .mt-columns-overflow::after {
+          content: '';
+          position: sticky;
+          top: 0; right: 0;
+          float: right;
+          width: 32px;
+          height: 100%;
+          margin-left: -32px;
+          pointer-events: none;
+          background: linear-gradient(to right, transparent, ${PAGE_BG} 80%);
+          z-index: 2;
         }
       `}</style>
       <OverdueBanner tasks={filtered} />
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${colCount}, minmax(260px, 1fr))`, gap: 14, minWidth }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${colCount}, minmax(236px, 1fr))`, gap: 14, minWidth }}>
         {visibleGroups.map((gkey) => {
           const meta = GROUP_META[gkey]
           const tasks = byGroup[gkey]
@@ -103,8 +116,7 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
           return (
             <div key={gkey} style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 4px 8px', borderBottom: `1px solid ${withAlpha(meta.color, 15)}`, marginBottom: 8, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
-                <span style={{ fontSize: 14 }}>{meta.icon}</span>
-                <h3 style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: meta.color, margin: 0 }}>{meta.label}</h3>
+                <h3 style={{ fontSize: 13, fontWeight: 500, color: INK_MUTED, margin: 0 }}>{meta.label}</h3>
                 <span style={{ fontSize: 11, color: INK_DIM, marginLeft: 'auto' }}>
                   {incomplete}{tasks.length > incomplete && <span> · {tasks.length - incomplete}✓</span>}
                 </span>
@@ -180,7 +192,7 @@ export function MyTasksRow({ task, project, selected, selectionActive, onSelect,
       isPlanned={planned}
       plannedLabel="today"
       showGroupOverridePin
-      leadingTag={isMilestone(task) ? undefined : ((task as TaskRow & { _tag?: string })._tag ?? '📝')}
+      leadingTag={isMilestone(task) ? undefined : ((task as TaskRow & { _tag?: string })._tag ?? undefined)}
       extraMeta={rowExtraMeta(task, prefs.taskStaleDays)}
     >
       {isMilestone(task) ? (
