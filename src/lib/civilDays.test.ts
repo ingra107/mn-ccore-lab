@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { civilDaysUntil, addDaysYmd } from './dateUtils'
+import { civilDaysUntil, civilDaysOverdue, addDaysYmd } from './dateUtils'
 
 describe('civilDaysUntil (#137)', () => {
   const CHI = 'America/Chicago'
@@ -38,5 +38,15 @@ describe('addDaysYmd (#143 cumulative +7)', () => {
     expect(addDaysYmd('2026-12-28', 7)).toBe('2027-01-04')
     expect(addDaysYmd('2026-10-30', 7)).toBe('2026-11-06')
     expect(addDaysYmd('2026-03-01', -1)).toBe('2026-02-28')
+  })
+})
+
+describe('civilDaysOverdue (site audit F03)', () => {
+  it('stays a whole calendar-day count after 19:00 CDT (no UTC-midnight +1)', () => {
+    // 2026-10-10T03:45Z = 10:45 PM CDT on Oct 9
+    const now = new Date('2026-10-10T03:45:00Z')
+    expect(civilDaysOverdue('2026-09-22', now, 'America/Chicago')).toBe(17)
+    expect(civilDaysOverdue('2026-10-09', now, 'America/Chicago')).toBe(0)
+    expect(civilDaysOverdue('2026-10-20', now, 'America/Chicago')).toBe(0)
   })
 })

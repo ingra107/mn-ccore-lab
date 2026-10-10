@@ -71,7 +71,7 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
 
   const active = options.find((o) => o.v === value)
   return (
-    <div ref={triggerRef} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', border: '1px solid var(--border-strong)', borderRadius: 999, background: 'rgba(255,255,255,0.02)', fontSize: 11, minHeight: 26 }}>
+    <div ref={triggerRef} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', border: '1px solid var(--border-strong)', borderRadius: 999, background: 'transparent', fontSize: 11, minHeight: 26 }}>
       <span style={{ color: INK_DIM, paddingLeft: 10, paddingRight: 6, letterSpacing: '0.02em' }}>{label}</span>
       <button
         onClick={() => setOpen(!open)}
@@ -95,7 +95,7 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
                 onKeyDown={onKey}
                 placeholder={`Filter ${label.toLowerCase()}…`}
                 aria-label={`Filter ${label} options`}
-                style={{ width: '100%', padding: '4px 8px', fontSize: 11, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 4, color: INK, outline: 'none', fontFamily: 'inherit' }}
+                style={{ width: '100%', padding: '4px 8px', fontSize: 11, background: 'var(--border-subtle)', border: '1px solid var(--border-strong)', borderRadius: 4, color: INK, outline: 'none', fontFamily: 'inherit' }}
               />
             </div>
           )}
