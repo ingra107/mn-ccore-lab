@@ -856,14 +856,14 @@ export default function Meetings() {
             return (
               <details className="mt-3 px-3 py-2 rounded-lg group"
                 style={{ background: 'var(--gold-hover)', border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}` }}>
-                <summary className="flex items-center gap-2 cursor-pointer list-none"
+                <summary className="flex flex-wrap items-center gap-x-2 gap-y-0.5 cursor-pointer list-none"
                   style={{ outline: 'none' }}>
                   <Activity {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-                  <span style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600 }}>
+                  <span style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600, whiteSpace: 'nowrap' }}>
                     {cadence.emoji} {cadence.recommendation}
                   </span>
                   {lead && (
-                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 'var(--ink-label)', flex: '1 1 auto' }}>
                       {lead}
                     </span>
                   )}

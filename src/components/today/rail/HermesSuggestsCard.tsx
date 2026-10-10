@@ -56,7 +56,7 @@ export function HermesSuggestsCard({ overdueTasks, stalledProjects, menteesWithD
   }
   if (stalledProjects.length > 0) {
     const top = stalledProjects[0]
-    bullets.push(`Nudge ${top.name} (${top.days}d quiet) — even a one-line note moves the needle.`)
+    bullets.push(`Nudge ${top.name}${Number.isFinite(top.days) ? ` (${top.days}d quiet)` : ''} — even a one-line note moves the needle.`)
   }
   const overdueMentee = menteesWithDue.find((m) => m.next.endsWith('overdue'))
     ?? menteesWithDue.find((m) => m.next === 'today')

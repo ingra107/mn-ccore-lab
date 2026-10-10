@@ -621,6 +621,12 @@ function AgendaGapRow({
   )
 }
 
+// A line drawn through a meeting card strikes its title through, so inside a
+// meeting card the now-line sits on the nearer card edge instead.
+function nowEdgeTop(offsetPx: number, cardHeight: number): number | string {
+  return offsetPx < cardHeight / 2 ? 0 : '100%'
+}
+
 // ── AgendaMeetingRow ─────────────────────────────────────────────────────
 // In-flow meeting row: duration frame + notes expand below (OPAQUE, pushes down).
 // Wraps EventRow; the minHeight = baseHeight is applied to the outer shell.
@@ -662,12 +668,12 @@ function AgendaMeetingRow({
         margin: '3px 0',
       }}
     >
-      {/* #83: now-line at fractional position within this meeting */}
+      {/* #83: now-line at fractional position at the nearest edge of this meeting */}
       {nowLineEl != null && nowOffsetPx != null && (
         <div
           style={{
             position: 'absolute',
-            top: nowOffsetPx,
+            top: nowEdgeTop(nowOffsetPx, baseHeight),
             left: 0,
             right: 0,
             pointerEvents: 'none',
@@ -756,12 +762,12 @@ function AgendaOverlapRegion({
         position: 'relative',
       }}
     >
-      {/* #83: now-line at fractional position within this overlap cluster */}
+      {/* #83: now-line at fractional position at the nearest edge of this overlap cluster */}
       {nowLineEl != null && nowOffsetPx != null && (
         <div
           style={{
             position: 'absolute',
-            top: nowOffsetPx,
+            top: nowEdgeTop(nowOffsetPx, unit.baseHeight),
             left: 0,
             right: 0,
             pointerEvents: 'none',
@@ -883,7 +889,7 @@ export function TimelineGrid({
         color: nowColor,
         background: 'var(--sk-panel)',
         flexShrink: 0,
-        marginRight: 2,
+        marginRight: 8,
         whiteSpace: 'nowrap',
       }}>
         {nowLabel} now

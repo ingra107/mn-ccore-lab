@@ -1906,9 +1906,11 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    .planned-chip is exempt (#111): tiny inline chip — 44px makes it taller
    than the row header, causing a layout jerk on expand for scheduled tasks.
    ⚠ The SAME :not() chain exists in the UX-9 tablet block (~60 lines down) —
-   new exemptions must be added in BOTH. */
+   new exemptions must be added in BOTH.
+   .today-plan-btn is exempt: stretching it made unplanned cards taller than
+   planned ones; its 44px hit area is a ::after (below), not layout. */
 @media (max-width: 768px) {
-  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip),
+  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip):not(.today-plan-btn),
   a.inline-link,
   select,
   .filter-chip,
@@ -1992,6 +1994,21 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
     visibility: visible !important;
   }
 }
+/* 44px touch hit area for the plan pin without adding layout height. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .today-plan-btn {
+    position: relative;
+  }
+  .today-plan-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+}
 
 /* TaskRowActions verb strip (done / edit / delete) — revealed on row hover.
    `opacity`, NOT `visibility: hidden` / `display: none`: those remove the
@@ -2026,7 +2043,7 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    44px floor on a 900px desktop window driven by a mouse (which would bloat
    dense tables). Desktop power-grid is untouched: it has a fine pointer. */
 @media (hover: none) and (pointer: coarse) and (min-width: 769px) {
-  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip),
+  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip):not(.today-plan-btn),
   a.inline-link,
   select,
   .filter-chip,
@@ -2929,9 +2946,6 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    disc reads (the default face text is too faint at 7px). */
 .tk .tk-ppl .tk-face.tk-sm,.tk .tk-mlr .tk-face{font-size:8px;font-weight:700}
 :root:not(.dark) .tk .tk-ppl .tk-face,:root:not(.dark) .tk .tk-mlr .tk-face{background:#c9ced3;color:#1b2530}
-
-/* Overlapping face stack on the meeting list rows. */
-.tk .tk-mlr .tk-faces .tk-face+.tk-face{margin-left:-3px}
 
 /* Meeting page action items (MeetingDetail .md-actions). The shared TaskRow
    reserves in-flow room for the hover verbs (.task-row-verbs is opacity:0, so
