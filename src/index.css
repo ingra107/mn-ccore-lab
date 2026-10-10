@@ -944,6 +944,40 @@ a:hover {
   }
 }
 
+/* Projects list shows stacked cards below 1024px (the grid needs the width), so
+   the cards must grow with their content in the 768-1023 band too. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .project-list-row { height: auto; min-height: var(--row-height); }
+}
+
+/* Projects grid at 1024-1299: band is 624-880px. Drop PI and Group (4th, 5th
+   cells); keep sort headers, star, Status, Stage, Links, Work on. Tracks are
+   !important because PROJECT_COLS is an inline style. */
+@media (min-width: 1024px) and (max-width: 1299px) {
+  .pj-head,
+  .pj-grid-row {
+    grid-template-columns: minmax(150px, 1fr) 132px 116px 124px 52px !important;
+  }
+  .pj-head > :nth-child(4),
+  .pj-head > :nth-child(5),
+  .pj-grid-row > :nth-child(4),
+  .pj-grid-row > :nth-child(5) {
+    display: none !important;
+  }
+}
+/* 1024-1179: not enough width for Title and Links together; Links (6th cell)
+   goes too, Work on stays. */
+@media (min-width: 1024px) and (max-width: 1179px) {
+  .pj-head,
+  .pj-grid-row {
+    grid-template-columns: minmax(150px, 1fr) 132px 116px 52px !important;
+  }
+  .pj-head > :nth-child(6),
+  .pj-grid-row > :nth-child(6) {
+    display: none !important;
+  }
+}
+
 /* ── Card base ── */
 .card {
   background: var(--cream);
@@ -2304,6 +2338,35 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   }
 }
 
+/* 1024-1279: sidebar + band leave ~690px, less than the full grid needs. Drop
+   cursor, Priority, Owner, Links and Work, like the 768 tier. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .list-view-header,
+  .list-view-row {
+    grid-template-columns: 26px 1fr 130px 124px 110px !important;
+  }
+  .list-view-col-cursor,
+  .list-view-col-priority,
+  .list-view-col-links,
+  .list-view-col-owner,
+  .list-view-col-work {
+    display: none !important;
+  }
+}
+
+/* 1280-1439: band is 880-1040px; the full grid leaves the Title ~90px. Drop
+   Owner and Work only. */
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .list-view-header,
+  .list-view-row {
+    grid-template-columns: 32px 26px 1fr 140px 124px 80px 110px 70px !important;
+  }
+  .list-view-col-owner,
+  .list-view-col-work {
+    display: none !important;
+  }
+}
+
 /* N1.01 — the 768-1023 band runs mobile-nav chrome (useIsMobile = 1024) but
    previously fell through to the desktop tracks (678px fixed + 1fr), crushing
    the Title column to ZERO width at 768. Mid collapse for the tablet band:
@@ -2701,6 +2764,11 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-tc.tk-done .tk-ct{color:var(--sk-t3);text-decoration:line-through;font-weight:500}
 .tk .tk-mt svg{flex-shrink:0}
 .tk .tk-pill svg{flex-shrink:0}
+.tk-due-full-lg{display:none}.tk-due-short-lg{display:inline}
+@media (min-width: 1024px){.tk-due-full-lg{display:inline}.tk-due-short-lg{display:none}}
+.tk .tk-pill.tk-duepill{flex-shrink:0}
+.tk .tk-due-short{display:none}
+@media (max-width: 640px){.tk .tk-due-full{display:none}.tk .tk-due-short{display:inline}}
 .tk .tk-btn:disabled{cursor:not-allowed}
 .tk .tk-btn svg,.tk .tk-pill svg{vertical-align:-2px}
 .tk .tk-compose > div{min-width:0}

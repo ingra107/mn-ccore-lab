@@ -106,7 +106,7 @@ const T3 = LIST_T3
 
 // One grid for the header and every row (they drifted apart once, #91): title,
 // status, stage, PI, group, five 24px link slots, folder + Work on.
-const PROJECT_COLS = 'minmax(280px, 3fr) 140px 128px 120px 124px 124px 52px'
+const PROJECT_COLS = 'minmax(200px, 1fr) 132px 128px 112px 104px 124px 52px'
 
 // Fully-cleaned display title for a pipeline row: strip the consortium tag
 // first, then — if the project's own `type` says it's a grant — the
@@ -684,7 +684,7 @@ export default function Projects() {
 
             {/* Table header */}
             <div
-              className="hidden md:grid pj-head"
+              className="hidden min-[1024px]:grid pj-head"
               style={{
                 /* #91 (Nick 2026-06-24): header grid must match the ROW grid —
                    the row has a trailing 52px Links/Work column the header
@@ -765,7 +765,7 @@ export default function Projects() {
                         >
                           {/* Desktop: 5-column grid */}
                           <div
-                            className={`project-list-row${isFocused ? ' project-row-focused' : ''} hidden md:grid`}
+                            className={`project-list-row${isFocused ? ' project-row-focused' : ''} pj-grid-row hidden min-[1024px]:grid`}
                             style={{
                               gridTemplateColumns: PROJECT_COLS,
                               padding: `var(--row-padding-y) 24px`,
@@ -1018,7 +1018,7 @@ export default function Projects() {
 
                           {/* Mobile: stacked card layout */}
                           <div
-                            className={`project-list-row${isFocused ? ' project-row-focused' : ''} md:hidden`}
+                            className={`project-list-row${isFocused ? ' project-row-focused' : ''} min-[1024px]:hidden`}
                             style={{
                               padding: `var(--row-padding-y) 16px`,
                               borderBottom: '1px solid var(--sk-line)',
