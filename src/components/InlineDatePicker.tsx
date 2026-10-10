@@ -151,6 +151,7 @@ export default function InlineDatePicker({ value, onChange, tableCell }: InlineD
     <div ref={triggerRef} style={{ position: 'relative' }}>
       <button
         onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}
+        aria-label={tableCell && value && isOverdue ? `Due ${dueLabelText(value, true)}` : undefined}
         className="inline-flex items-center gap-1 rounded-md transition-colors hov-bg"
         aria-haspopup="dialog"
         aria-expanded={open}

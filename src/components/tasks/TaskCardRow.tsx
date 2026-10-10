@@ -70,7 +70,8 @@ function CardDuePill({ due, status }: { due: string; status?: string }) {
   const label = dueWords(due, overdue)
   // Phone: an overdue pill swaps to the signless compact form ("9d") so the
   // word is never clipped by ellipsis (Nick 2026-09-17 compact rule). CSS
-  // picks which span shows; both stay in the DOM text only once visible.
+  // shows one span at a time (display:none also hides the other from screen
+  // readers); the compact form carries a hidden " overdue" for them.
   const compact = overdue ? dueLabelCompact(due, overdue) : null
   const cls = overdue ? 'tk-pill tk-o tk-duepill' : tone === 'today' ? 'tk-pill tk-g' : 'tk-pill'
   return (
@@ -79,7 +80,7 @@ function CardDuePill({ due, status }: { due: string; status?: string }) {
       {compact ? (
         <>
           <span className="tk-due-full">{label}</span>
-          <span className="tk-due-short" aria-hidden="true">{compact}</span>
+          <span className="tk-due-short">{compact}<span className="sr-only"> overdue</span></span>
         </>
       ) : label}
     </span>

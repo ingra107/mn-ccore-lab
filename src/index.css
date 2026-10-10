@@ -944,6 +944,12 @@ a:hover {
   }
 }
 
+/* Projects list shows stacked cards up to 1299px (grid needs more width), so the
+   cards must grow with their content in that band too. */
+@media (min-width: 768px) and (max-width: 1299px) {
+  .project-list-row { height: auto; min-height: var(--row-height); }
+}
+
 /* ── Card base ── */
 .card {
   background: var(--cream);
@@ -2299,6 +2305,35 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   .list-view-col-status,
   .list-view-col-owner,
   .list-view-col-links,
+  .list-view-col-work {
+    display: none !important;
+  }
+}
+
+/* 1024-1279: sidebar + band leave ~690px, less than the full grid needs. Drop
+   cursor, Priority, Owner, Links and Work, like the 768 tier. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .list-view-header,
+  .list-view-row {
+    grid-template-columns: 26px 1fr 130px 124px 110px !important;
+  }
+  .list-view-col-cursor,
+  .list-view-col-priority,
+  .list-view-col-links,
+  .list-view-col-owner,
+  .list-view-col-work {
+    display: none !important;
+  }
+}
+
+/* 1280-1439: band is 880-1040px; the full grid leaves the Title ~90px. Drop
+   Owner and Work only. */
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .list-view-header,
+  .list-view-row {
+    grid-template-columns: 32px 26px 1fr 140px 124px 80px 110px 70px !important;
+  }
+  .list-view-col-owner,
   .list-view-col-work {
     display: none !important;
   }
