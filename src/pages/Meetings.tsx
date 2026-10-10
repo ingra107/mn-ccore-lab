@@ -16,7 +16,7 @@ import { directors, getAllMembers, getPersonInfo } from '../data/team'
 import { projects as projectOptions } from '../data/projects'
 import QuickAddForm, { QuickAddTrigger } from '../components/QuickAddForm'
 import Avatar from '../components/Avatar'
-import { AttendeeFaces, AttendeePeople } from '../components/meetings/Attendees'
+import { AttendeePeople } from '../components/meetings/Attendees'
 import MeetingListCard from '../components/meetings/MeetingListCard'
 import PageHeader from '../components/PageHeader'
 import InlineSelect from '../components/InlineSelect'
@@ -240,9 +240,6 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
               )}
             </div>
           </div>
-          <div className="hidden sm:flex items-center shrink-0">
-            <AttendeeFaces values={meeting.attendees} max={5} />
-          </div>
         </div>
       </div>
 
@@ -330,7 +327,7 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
       {meeting.attendees && meeting.attendees.length > 0 && (
         <div className="mb-6">
           <h4 className="mtg-section-label mb-2">Attendees</h4>
-          <AttendeePeople values={meeting.attendees} />
+          <AttendeePeople values={meeting.attendees} max={8} />
         </div>
       )}
 
@@ -417,13 +414,15 @@ export default function Meetings() {
     if (!el) return
     const fit = () => {
       if (isPhone) { el.style.height = ''; el.style.minHeight = '100vh'; return }
-      el.style.height = ''
       el.style.minHeight = '0px'
       const top = el.getBoundingClientRect().top + window.scrollY
-      // Natural height with the height cleared: header + the split's 360px
-      // floor. The page grows to it, so a tall header scrolls the document
-      // instead of pushing the split over the status bar.
-      const natural = el.offsetHeight
+      // The header is flexShrink:0, so its height does not depend on the page
+      // height. (Measuring the page's own offsetHeight would not work: the page
+      // is an auto-height flex column and the split is flex:1, so it reports
+      // full content height.) The page grows to header + the split's 360px
+      // floor, so a tall header scrolls the document instead of pushing the
+      // split over the status bar.
+      const headerH = (el.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0
       let below = 0
       const main = el.closest('#portal-main') as HTMLElement | null
       if (main) {
@@ -433,14 +432,14 @@ export default function Meetings() {
           if (pos !== 'fixed' && pos !== 'absolute') below += sib.offsetHeight
         }
       }
-      el.style.height = `${Math.max(480, natural, Math.round(window.innerHeight - top - below))}px`
+      el.style.height = `${Math.max(480, headerH + 360, Math.round(window.innerHeight - top - below))}px`
     }
     fit()
     window.addEventListener('resize', fit)
     // Layout changes with no window resize: the header growing (record form,
     // cadence details), focus mode collapsing the top bar, the shell reflowing.
-    // fit() clears the height before measuring, so it cannot feed back into
-    // the observed header; the rAF coalesces bursts.
+    // fit() only reads the header's height, which the page height does not
+    // change, so it cannot feed back into the observer; the rAF coalesces bursts.
     let raf = 0
     const refit = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit) }
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(refit) : null

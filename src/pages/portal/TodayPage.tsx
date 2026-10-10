@@ -24,7 +24,7 @@ import { CardCheck } from '../../components/tasks/TaskCardRow'
 import { useTodayView } from '../../hooks/useTodayView'
 import { AgendaListView } from '../../components/today/AgendaListView'
 import { useTodayState } from '../../hooks/useTodayState'
-import { civilDaysUntil } from '../../lib/dateUtils'
+import { civilDaysOverdue, civilDaysUntil } from '../../lib/dateUtils'
 import { daysSince } from '../../lib/taskGrouping'
 import {
   GROUP_ORDER,
@@ -346,7 +346,7 @@ export default function TodayPage() {
       let next = '—'
       if (m.next_due) {
         const days = civilDaysUntil(m.next_due)
-        next = days < 0 ? `${Math.abs(days)}d late` : days === 0 ? 'today' : `${days}d`
+        next = days < 0 ? `${civilDaysOverdue(m.next_due)}d overdue` : days === 0 ? 'today' : `${days}d`
       }
       return { name: m.name, next }
     })

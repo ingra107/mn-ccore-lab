@@ -38,18 +38,22 @@ export function AttendeeFaces({ values, max = 3 }: { values: readonly unknown[] 
   )
 }
 
-/** Badge + first name for each person, wrapping. The detail panel's attendee list. */
-export function AttendeePeople({ values }: { values: readonly unknown[] | null | undefined }) {
+/** Badge + first name for each person, wrapping. The detail panel's attendee
+ *  list. With `max`, the rest collapse into a "+n" chip (names in its tooltip). */
+export function AttendeePeople({ values, max }: { values: readonly unknown[] | null | undefined; max?: number }) {
   const people = useAttendeeViews(values)
   if (people.length === 0) return null
   return (
     <div className="tk-ppl">
-      {people.map((a) => (
+      {(max === undefined ? people : people.slice(0, max)).map((a) => (
         <span key={a.key + a.name} className="tk-per" title={attendeeTitle(a)}>
           <FaceDisc a={a} sm />
           <span className={`tk-pn${a.listed ? '' : ' tk-dim'}`}>{a.first}</span>
         </span>
       ))}
+      {max !== undefined && people.length > max && (
+        <span className="tk-per tk-pn tk-dim" title={people.slice(max).map((a) => a.name).join(', ')}>+{people.length - max}</span>
+      )}
     </div>
   )
 }

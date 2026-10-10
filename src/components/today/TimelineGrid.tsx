@@ -319,13 +319,13 @@ function AgendaGapRow({
   slot: PlannedSlot
   freeMinutes: number
   baseHeight: number
-  /** Current minute-of-day; the gap holding it labels only its remaining part. */
-  nowMin?: number
   /** Minutes-since-midnight of the gap start. Used for absolute block top/height.
    *  Zero for untimed gaps (UntimedUnit) — those never use the absolute lane. */
   gapStartMin: number
   /** Minutes-since-midnight of the gap end. Used for move-clamp upper bound. */
   gapEndMin: number
+  /** Current minute-of-day; the gap holding it labels only its remaining part. */
+  nowMin?: number
   /** All droppable gap windows for the day — enables cross-gap drag.
    *  Each entry includes startMin, endMin, and the slot to write when a task
    *  lands there. Passed through to useTaskBlockGesture on each timed block. */

@@ -52,8 +52,8 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
   const isNow = !notToday && typeof e.startMin === 'number' && typeof e.endMin === 'number' && !e.isAllDay
     && e.startMin <= nowMin && nowMin < e.endMin
   // Over: a timed row on today's clock whose end has passed. Join is dead chrome
-  // then. Prep stays (it is the only way to make a meeting page for a calendar
-  // row, which post-meeting notes need).
+  // then, and the Prep button reads "Notes" (same action: it makes the meeting
+  // page for a calendar row, which post-meeting notes need).
   const ended = !notToday && !e.isAllDay && typeof e.startMin === 'number' && typeof e.endMin === 'number'
     && e.startMin <= e.endMin && e.endMin <= nowMin
 
@@ -154,12 +154,12 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
         type="button"
         onClick={handlePrep}
         disabled={prep.isPending}
-        title="Build an agenda for this meeting — links, notes, decisions"
-        aria-label={`Prep ${e.title}`}
+        title={ended ? 'Open a meeting page for notes and decisions' : 'Build an agenda for this meeting — links, notes, decisions'}
+        aria-label={`${ended ? 'Notes for' : 'Prep'} ${e.title}`}
         className="tk-pill tk-btnp planned-chip"
         style={{ cursor: prep.isPending ? 'wait' : 'pointer', opacity: prep.isPending ? 0.6 : 1 }}
       >
-        <ListChecks {...ICON_PROPS} size={11} aria-hidden />{prep.isPending ? 'Prepping' : 'Prep'}
+        <ListChecks {...ICON_PROPS} size={11} aria-hidden />{prep.isPending ? (ended ? 'Opening' : 'Prepping') : (ended ? 'Notes' : 'Prep')}
       </button>
     )
   )
