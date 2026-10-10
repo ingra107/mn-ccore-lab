@@ -1906,9 +1906,11 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    .planned-chip is exempt (#111): tiny inline chip — 44px makes it taller
    than the row header, causing a layout jerk on expand for scheduled tasks.
    ⚠ The SAME :not() chain exists in the UX-9 tablet block (~60 lines down) —
-   new exemptions must be added in BOTH. */
+   new exemptions must be added in BOTH.
+   .today-plan-btn is exempt: the always-visible touch pin made unplanned cards
+   ~19px taller than planned ones; it pads its own hit area instead. */
 @media (max-width: 768px) {
-  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip),
+  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip):not(.today-plan-btn),
   a.inline-link,
   select,
   .filter-chip,
@@ -2026,7 +2028,7 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    44px floor on a 900px desktop window driven by a mouse (which would bloat
    dense tables). Desktop power-grid is untouched: it has a fine pointer. */
 @media (hover: none) and (pointer: coarse) and (min-width: 769px) {
-  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip),
+  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip):not(.today-plan-btn),
   a.inline-link,
   select,
   .filter-chip,
@@ -2924,7 +2926,9 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    reserves in-flow room for the hover verbs (.task-row-verbs is opacity:0, so
    it keeps its width), which left an empty band in the stacked meta line. Here
    they come out of layout: pinned top-right of the row, revealed on row hover or
-   keyboard focus (opacity rule above still drives the reveal, the verbs stay
+   keyboard focus, inset 30px from the right so the expand caret stays reachable (opacity rule above still drives the reveal, the verbs stay
    focusable). Scoped, so TaskRow's other surfaces keep the reserved space. */
 .md-actions [data-task-id]{position:relative}
-.md-actions .task-row-verbs{position:absolute;top:4px;right:6px;background:var(--ice);border-radius:6px}
+.md-actions .task-row-verbs{position:absolute;top:4px;right:30px;background:var(--ice);border-radius:6px}
+.tk .tk-mlr .tk-faces .tk-face+.tk-face{margin-left:-3px}
+.tk .tk-hov.today-plan-btn{padding:8px 6px;margin:-8px -6px}

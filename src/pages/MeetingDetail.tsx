@@ -1113,7 +1113,7 @@ export default function MeetingDetail() {
                 Discussion
               </h3>
             </div>
-            <div className="detail-card" style={{ borderRadius: 8, padding: '14px 16px' }}>
+            <div className="detail-card" style={{ borderRadius: 8, padding: '14px 16px', background: 'var(--ice)' }}>
               <MeetingActivityFeed meetingId={meeting.id} />
             </div>
           </motion.div>
@@ -1296,7 +1296,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentCha
               onSubmit={handleSubmit}
               submitting={createTask.isPending}
               uploadContext={{ type: 'meeting', id: meetingId }}
-              placeholder="@nick Review draft p2 Friday (drop/paste files to attach)"
+              placeholder="@nick Review draft p2 Friday"
               rows={1}
               alwaysShowToolbar={hasContent ?? false}
               submitLabel="Add"

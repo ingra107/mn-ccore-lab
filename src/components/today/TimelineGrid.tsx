@@ -431,10 +431,13 @@ function AgendaGapRow({
 
   // Elapsed time is not free (matches the day-balance strip): the gap that
   // holds the now-line labels only what is left of it.
-  const labelMinutes = nowMin != null && nowMin > gapStartMin && nowMin < gapEndMin
-    ? Math.max(0, gapEndMin - nowMin)
-    : freeMinutes
-  const fmtFree = labelMinutes >= 60
+  const gapElapsed = nowMin != null && gapEndMin > 0 && gapEndMin <= nowMin
+  const labelMinutes = gapElapsed
+    ? 0
+    : nowMin != null && nowMin > gapStartMin && nowMin < gapEndMin
+      ? Math.max(0, gapEndMin - nowMin)
+      : freeMinutes
+  const fmtFree = gapElapsed ? 'passed' : labelMinutes >= 60
     ? `${Math.floor(labelMinutes / 60)}h${labelMinutes % 60 > 0 ? ` ${labelMinutes % 60}m` : ''} free`
     : labelMinutes > 0 ? `${labelMinutes}m free` : 'drop here'
 
