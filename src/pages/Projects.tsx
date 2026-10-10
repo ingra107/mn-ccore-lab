@@ -12,7 +12,7 @@ import { parseDbUtc } from '../lib/time'
 import { useCreateProject, useUpdateProjectFields } from '../hooks/useMutations'
 import InlineSelect from '../components/InlineSelect'
 import { useUndoToast } from '../components/UndoToast'
-import { PROJECT_STATUS_OPTIONS, normalizeProjectStatus, isProjectActive, isProjectDone, isProjectFinished, isStalledProject } from '../lib/taskConstants'
+import { normalizeProjectStatus, isProjectActive, isProjectDone, isProjectFinished, isStalledProject } from '../lib/taskConstants'
 import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
@@ -39,6 +39,7 @@ import { AllProjectsBanner, AllProjectsSwitch } from '../components/AllProjectsC
 import { useAllProjectsOn } from '../lib/allProjects'
 import { useAuth } from '../hooks/useAuth'
 import { useProjectPins } from '../hooks/useProjectPins'
+import { STATUS_LIST_OPTIONS, stageListOptions, mutedCategoryOptions, LIST_T2, LIST_T3 } from '../lib/projectListOptions'
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
@@ -57,7 +58,7 @@ const STAGE_LABELS: Record<Stage, string> = {
 // 'stale' is a pseudo-filter (P2-9: stale-by-shared-threshold OR health < 50),
 // not a real category value.
 const CATEGORY_FILTERS = [
-  { key: 'all', label: 'All' },
+  { key: 'all', label: 'All groups' },
   { key: 'MNCCORE', label: 'MN-CCORE' },
   { key: 'CLIF', label: 'CLIF' },
   { key: 'Peripheral Brain', label: 'Peripheral Brain' },
@@ -86,7 +87,7 @@ const CATEGORY_OPTIONS = [
 const STATUS_FILTERS = [
   { key: 'open', label: 'Open', title: 'Active, blocked and waiting — everything not finished' },
   { key: 'active', label: 'Active', title: 'Active only — no waiting or blocked' },
-  { key: 'all', label: 'All', title: 'Every project, including finished ones' },
+  { key: 'all', label: 'Any status', title: 'Every project, including finished ones' },
   { key: 'done', label: 'Done', title: 'Finished — status done or stage published' },
 ] as const
 
@@ -97,21 +98,15 @@ function statusScope(status: string, projects: Project[]): Project[] {
   return projects.filter((p) => !isProjectDone(p.status))
 }
 
-// Option sets for the list's inline editors, in the Today card's grayscale
-// (rules-ui-design #1: color is spent, not sprinkled). Status keeps color for
-// blocked and waiting only; stage and PI read t2; group is muted t3. The label
-// colors reach both the trigger and the menu through InlineSelect's `color`.
-const T2 = 'var(--sk-t2)'
-const T3 = 'var(--sk-t3)'
-const STATUS_LIST_OPTIONS = PROJECT_STATUS_OPTIONS.map((o) => ({
-  ...o,
-  color: o.value === 'blocked' || o.value === 'waiting_external' ? o.color : T2,
-}))
-const STAGE_LIST_OPTIONS = STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s], color: T2 }))
+// Option sets for the list's inline editors live in lib/projectListOptions
+// (shared with the project detail meta row).
+const STAGE_LIST_OPTIONS = stageListOptions(STAGES, STAGE_LABELS)
+const T2 = LIST_T2
+const T3 = LIST_T3
 
 // One grid for the header and every row (they drifted apart once, #91): title,
 // status, stage, PI, group, five 24px link slots, folder + Work on.
-const PROJECT_COLS = 'minmax(280px, 3fr) 140px 128px 120px 104px 124px 52px'
+const PROJECT_COLS = 'minmax(280px, 3fr) 140px 128px 120px 124px 124px 52px'
 
 // Fully-cleaned display title for a pipeline row: strip the consortium tag
 // first, then — if the project's own `type` says it's a grant — the
@@ -228,12 +223,13 @@ function piOptions(currentPi?: string | null): { value: string; label: string; c
   return base
 }
 
+// Health reads as bar length on the one accent (rules-ui-design #1: color is
+// spent, not sprinkled); only Critical keeps a status color. The tooltip says
+// the word.
 const HEALTH_STATUS_COLOR: Record<string, string> = {
-  'Healthy': 'var(--green)',
-  'Needs Attention': 'var(--gold)',
-  'At Risk': 'var(--orange)',
   'Critical': 'var(--maroon)',
 }
+const healthColor = (status: string): string => HEALTH_STATUS_COLOR[status] ?? 'var(--sk-ac)'
 
 // N1b — locked-canon ghost pill: active = teal tint + teal text, never a solid
 // fill block in a toolbar. One definition serves both filter axes (#123) so the
@@ -312,7 +308,7 @@ export default function Projects() {
   )
   // The list shows group as muted t3 text, not teal / maroon words. The colored
   // CATEGORY_OPTIONS stay for any surface that wants them.
-  const categoryListOptions = useMemo(() => categoryOptions.map((o) => ({ ...o, color: T3 })), [categoryOptions])
+  const categoryListOptions = useMemo(() => mutedCategoryOptions(categoryOptions), [categoryOptions])
 
   const { data: allTasks = [] } = useTasks()
   // #507 follow-up opt-out: dependencies/healthData/allProjectLinks are all
@@ -587,6 +583,11 @@ export default function Projects() {
           {/* S21: removed the "Try Pipeline view" promo coach-mark — it rendered
               inline in the toolbar and occluded the Pipeline toggle mid-word.
               The Pipeline view toggle (above) is already visible chrome. */}
+          {/* Phone: one nowrap row that scrolls sideways, so the status axis
+              never splits across wrapped lines. From md up the wrapper is
+              display:contents and the pills wrap as before. TableControls
+              (shared) is untouched. */}
+          <div className="flex items-center gap-1.5 overflow-x-auto md:contents" style={{ maxWidth: '100%', scrollbarWidth: 'none' }}>
           {categoryFilters.map((f) => (
             <FilterPill
               key={f.key}
@@ -615,6 +616,7 @@ export default function Projects() {
             onClick={() => setStalledOnly(!stalledOnly)}
             title="Active projects with no movement in the stale window (Settings, Lab Preferences)"
           />
+          </div>
         </>
       }
       rightExtra={
@@ -903,14 +905,14 @@ export default function Projects() {
                                       width: `${Math.min(projectHealth.score, 100)}%`,
                                       height: '100%',
                                       borderRadius: 'var(--radius-sm)',
-                                      background: HEALTH_STATUS_COLOR[projectHealth.status] ?? 'var(--slate)',
+                                      background: healthColor(projectHealth.status),
                                       transition: 'width 300ms ease',
                                     }} />
                                   </span>
                                 </span>
                               )}
                               {/* Stage progress dots */}
-                              <span className="inline-flex items-center gap-0.5 ml-1 tip" data-tip={`Stage: ${project.stage || 'idea'}`} aria-label={`Stage: ${project.stage || 'idea'}`}>
+                              <span className="inline-flex items-center gap-0.5 ml-1 tip" data-tip={`Stage: ${stageLabel(project.stage || 'idea')}`} aria-label={`Stage: ${stageLabel(project.stage || 'idea')}`}>
                                 {STAGES.map((s, si) => {
                                   // Brain.db granular stages → 6-stage canonical (P2-R2-14)
                                   const currentIdx = stageIndex(project.stage)
@@ -929,16 +931,32 @@ export default function Projects() {
                                 })}
                               </span>
                               {/* Last activity / staleness indicator */}
-                              {project.lastActivity && (() => {
-                                const days = Math.floor((Date.now() - parseDbUtc(project.lastActivity).getTime()) / 86400000)
-                                if (days < 7) return null
+                              {/* Fixed-width slot, empty when recent, so the health
+                                  bar and stage dots sit at the same x on every row
+                                  (rules-ui-design #14). t3 at every age: --sk-od is
+                                  reserved for overdue. */}
+                              {(() => {
+                                const days = project.lastActivity
+                                  ? Math.floor((Date.now() - parseDbUtc(project.lastActivity).getTime()) / 86400000)
+                                  : 0
+                                const show = days >= 7
                                 return (
-                                  <span style={{
-                                    fontSize: '10px',
-                                    color: days > 30 ? 'var(--sk-od)' : 'var(--sk-t3)',
-                                    flexShrink: 0,
-                                  }} className="tip" data-tip={`Last activity ${days} days ago`} aria-label={`Last activity ${days} days ago`}>
-                                    {days}d ago
+                                  <span
+                                    style={{
+                                      display: 'inline-block',
+                                      width: 48,
+                                      textAlign: 'right',
+                                      fontSize: '10px',
+                                      color: 'var(--sk-t3)',
+                                      flexShrink: 0,
+                                      fontVariantNumeric: 'tabular-nums',
+                                    }}
+                                    className={show ? 'tip' : undefined}
+                                    data-tip={show ? `Last activity ${days} days ago` : undefined}
+                                    aria-label={show ? `Last activity ${days} days ago` : undefined}
+                                    aria-hidden={show ? undefined : true}
+                                  >
+                                    {show ? `${days}d ago` : ''}
                                   </span>
                                 )
                               })()}
@@ -1044,11 +1062,14 @@ export default function Projects() {
                               {publishedChip}
                               {projectHealth && (
                                 <span
+                                  role="img"
+                                  title={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
+                                  aria-label={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
                                   style={{
                                     width: 6,
                                     height: 6,
                                     borderRadius: 'var(--radius-circle)',
-                                    background: HEALTH_STATUS_COLOR[projectHealth.status] ?? 'var(--slate)',
+                                    background: healthColor(projectHealth.status),
                                     flexShrink: 0,
                                     marginTop: '6px',
                                   }}
@@ -1056,23 +1077,34 @@ export default function Projects() {
                               )}
                             </div>
                             {/* Metadata row */}
-                            <div className="flex items-center gap-3" style={{ paddingLeft: '14px' }}>
-                              <InlineSelect
-                                value={normalizeProjectStatus(project.status)}
-                                options={STATUS_LIST_OPTIONS}
-                                onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
-                              />
-                              <InlineSelect
-                                value={project.stage || 'idea'}
-                                options={STAGE_LIST_OPTIONS}
-                                onChange={(val) => handleStageChange(project.slug, val, project.stage)}
-                              />
-                              <div onClick={(e) => e.preventDefault()} style={{ marginLeft: 'auto' }}>
+                            {/* Status and stage never shrink (they ellipsised to
+                                "Acti..."); the row wraps instead and only the group
+                                cell may shrink. No indent: values line up with the
+                                title (the -8px cancels the trigger's own padding). */}
+                            <div className="flex items-center flex-wrap gap-x-3 gap-y-1" style={{ marginLeft: '-8px' }}>
+                              <div style={{ flexShrink: 0 }}>
+                                <InlineSelect
+                                  value={normalizeProjectStatus(project.status)}
+                                  options={STATUS_LIST_OPTIONS}
+                                  onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
+                                />
+                              </div>
+                              <div style={{ flexShrink: 0 }}>
+                                <InlineSelect
+                                  value={project.stage || 'idea'}
+                                  options={STAGE_LIST_OPTIONS}
+                                  onChange={(val) => handleStageChange(project.slug, val, project.stage)}
+                                />
+                              </div>
+                              <div onClick={(e) => e.preventDefault()} style={{ minWidth: 0 }}>
                                 <InlineSelect
                                   value={project.category || ''}
                                   options={categoryListOptions}
                                   onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
                                 />
+                              </div>
+                              <div style={{ marginLeft: 'auto', paddingRight: '8px' }}>
+                                <ProjectLinksCell links={allProjectLinks[project.id ?? ''] ?? []} primaryFolder={project.primary_folder} />
                               </div>
                             </div>
                           </div>

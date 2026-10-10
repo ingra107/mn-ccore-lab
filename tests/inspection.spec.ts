@@ -1448,15 +1448,15 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
     }
   })
 
-  // ── Project documents section (Key Documents) ─────────────────────
-  test('FEATURE: Key Documents section on project detail page', async ({ page, request }) => {
+  // ── Project documents (rendered inside the one Links card, audit F45) ──
+  test('FEATURE: Links card (with project documents) on project detail page', async ({ page, request }) => {
     const projects = await (await request.get(`${BASE}/api/projects`)).json()
     const slug = projects.data?.find((p: any) => p.slug && /^[a-z0-9-]+$/.test(p.slug))?.slug
     if (!slug) { test.skip(); return }
     await loadPage(page, P.project(slug))
-    const keyDocs = page.locator('text=Key Documents')
-    const visible = await keyDocs.isVisible({ timeout: 5000 }).catch(() => false)
-    expect(visible, 'Key Documents section should exist on project detail').toBe(true)
+    const linksCard = page.getByText('Links', { exact: true }).first()
+    const visible = await linksCard.isVisible({ timeout: 5000 }).catch(() => false)
+    expect(visible, 'Links card should exist on project detail').toBe(true)
     await page.screenshot({ path: 'review/phase30-project-key-docs.png' })
   })
 
