@@ -151,7 +151,7 @@ export default function LabPageLayout({
                     rel="noopener noreferrer"
                     className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 hov-border hov-color"
                     style={{
-                      background: 'var(--ice)',
+                      background: 'var(--sk-card)',
                       color: 'var(--slate)',
                       border: '1px solid transparent',
                       '--hov-border': 'var(--gold)',
@@ -561,7 +561,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
                 style={{
                   fontSize: '10px',
                   letterSpacing: '0.02em',
-                  background: 'var(--ice)',
+                  background: 'var(--sk-panel)',
                   color: 'var(--slate)',
                   border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
                 }}

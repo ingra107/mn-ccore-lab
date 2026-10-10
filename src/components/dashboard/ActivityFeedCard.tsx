@@ -15,7 +15,9 @@ import { QueryErrorNote } from '../QueryErrorNote'
 interface FeedItem {
   id: string
   dotColor: string
+  /** First name only, with the initials badge beside it (principle 12). */
   actorName: string | null
+  actorInitials: string | null
   description: string
   time: string
   link?: string
@@ -60,7 +62,8 @@ function ActivityFeedCard() {
         return {
           id: a.id,
           dotColor: dotColorForType(a.type || ''),
-          actorName: person?.name ?? null,
+          actorName: person ? person.name.split(' ')[0] : null,
+          actorInitials: person?.initials ?? null,
           description: a.description || '',
           time: formatRelativeTime(a.timestamp),
           link: PATHS.activity,
@@ -153,7 +156,14 @@ function ActivityFeedCard() {
                       }}
                     >
                       {item.actorName ? (
-                        <span style={{ fontWeight: 500 }}>{item.actorName}</span>
+                        <>
+                          {/* .tk scopes the shared Today initials badge (.tk-face) */}
+                          <span className="tk" style={{ display: 'inline-block', verticalAlign: 'middle', fontSize: 'inherit', color: 'inherit' }}>
+                            <span className="tk-face tk-sm" aria-hidden="true">{item.actorInitials}</span>
+                          </span>
+                          {' '}
+                          <span style={{ fontWeight: 500 }}>{item.actorName}</span>
+                        </>
                       ) : null}
                       {item.actorName ? ' ' : ''}
                       {item.description}

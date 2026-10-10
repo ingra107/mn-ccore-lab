@@ -117,7 +117,10 @@ export default function AuthorColumn({
 
   if (authors.length === 0) return null
 
-  const visible = showAll ? authors : authors.slice(0, maxVisible)
+  // The first `maxVisible` in byline order, PLUS any lab member further down:
+  // lab people are the signal this column exists to show (#133), so a cap must
+  // never hide one behind "+N more" (site audit F101).
+  const visible = showAll ? authors : authors.filter((a, i) => i < maxVisible || !!a.member)
   const overflow = authors.length - visible.length
 
   return (

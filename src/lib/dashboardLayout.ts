@@ -14,6 +14,9 @@ export const DASHBOARD_GRID_BREAKPOINTS = { lg: 960, md: 720, sm: 480, xs: 0 } a
 // SMALLER than they could before: minW/minH are pinned at GRID_SCALE.
 export const GRID_SCALE = 3
 
+/** Vertical gap between cells, in px (DashboardGrid's `margin` prop). */
+export const GRID_MARGIN_Y = 20
+
 export const DASHBOARD_GRID_COLS = { lg: 12, md: 9, sm: 6, xs: 3 } as const
 
 // rowHeight must satisfy `GRID_SCALE * rh + (GRID_SCALE - 1) * marginY` = the

@@ -20,6 +20,18 @@ const STATUS_COLORS: Record<string, string> = {
   'Critical': 'var(--maroon)',
 }
 
+// Fills for swatches and the heatmap. STATUS_COLORS above are AA TEXT tokens
+// (--gold and --orange land at almost the same lightness in light mode, and
+// Attention borrowed the brand gold). Fills are a separate map: severity steps
+// clearly in lightness (0.40 / 0.60 / 0.83), so it still reads without hue,
+// and Attention is lemon, not brand gold. Same values in both themes.
+const STATUS_FILLS: Record<string, string> = {
+  'Healthy': 'oklch(0.72 0.13 150)',
+  'Needs Attention': 'oklch(0.83 0.13 100)',
+  'At Risk': 'oklch(0.60 0.18 40)',
+  'Critical': 'oklch(0.40 0.16 20)',
+}
+
 const FACTOR_LABELS: Record<keyof HealthFactors, { label: string; max: number }> = {
   activity: { label: 'Activity recency', max: 30 },
   velocity: { label: 'Task velocity', max: 25 },
@@ -126,8 +138,7 @@ function ProjectHealthCard() {
                   width: 8,
                   height: 8,
                   borderRadius: 'var(--radius-circle)',
-                  background: STATUS_COLORS[s.status],
-                  boxShadow: s.count > 0 ? `0 0 6px ${STATUS_COLORS[s.status]}40` : 'none',
+                  background: STATUS_FILLS[s.status],
                 }}
               />
               <span
@@ -179,7 +190,7 @@ function ProjectHealthCard() {
                     display: 'block',
                     aspectRatio: '1',
                     borderRadius: 'var(--radius-sm)',
-                    background: STATUS_COLORS[p.status] ?? 'var(--slate)',
+                    background: STATUS_FILLS[p.status] ?? 'var(--slate)',
                     opacity: p.status === 'Healthy' ? 0.5 : 0.85,
                     transition: 'opacity var(--transition-fast) ease, transform var(--transition-fast) ease',
                   }}
@@ -286,7 +297,8 @@ export default memo(ProjectHealthCard)
 
 function ProjectHealthRow({ project }: { project: ProjectHealth }) {
   const [showTooltip, setShowTooltip] = useState(false)
-  const color = STATUS_COLORS[project.status]
+  const color = STATUS_COLORS[project.status] // text (AA)
+  const fill = STATUS_FILLS[project.status] // swatch
   const isBad = project.status === 'Critical' || project.status === 'At Risk'
   const {
     isVisible: hoverIsVisible,
@@ -323,9 +335,8 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
           width: 8,
           height: 8,
           borderRadius: 'var(--radius-circle)',
-          background: color,
+          background: fill,
           flexShrink: 0,
-          boxShadow: isBad ? `0 0 6px ${color}50` : 'none',
         }}
       />
 
@@ -378,7 +389,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
               width: `${project.score}%`,
               height: '100%',
               borderRadius: 'var(--radius-sm)',
-              background: color,
+              background: fill,
               transition: 'width 0.3s ease-out, background 0.15s',
             }}
           />

@@ -1,9 +1,11 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Responsive, WidthProvider, type Layout, type Layouts } from 'react-grid-layout'
 import {
   DASHBOARD_GRID_BREAKPOINTS,
   DASHBOARD_GRID_COLS,
   DASHBOARD_GRID_ROW_HEIGHT,
+  GRID_MARGIN_Y,
+  GRID_SCALE,
   buildDefaultLayouts,
   loadSavedLayouts,
   reconcileLayouts,
@@ -64,9 +66,56 @@ export default function DashboardGrid({
     [section, userSlug],
   )
 
+  // Grow-to-fit (site audit F90). Every cell used to be a fixed 3x3 box that
+  // clips whatever does not fit (Upcoming and Pipeline were cut mid-row). After
+  // each render and on any DOM or width change, measure each card's natural
+  // height and add rows until it fits. Grow only, so a card is never shorter
+  // than its content; a card the user is resizing right now is left alone.
+  // Cards with their own inner scroller (Recent Activity) report no overflow
+  // and stay as they are.
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const resizing = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    const root = wrapRef.current
+    if (!root) return
+    const rh = DASHBOARD_GRID_ROW_HEIGHT[currentBp]
+    let timer = 0
+    const fit = () => {
+      const need = new Map<string, number>()
+      root.querySelectorAll<HTMLElement>('.dashboard-grid-item[data-card-id]').forEach(item => {
+        const id = item.dataset.cardId as string
+        if (resizing.current.has(id)) return
+        const el = item.querySelector<HTMLElement>('.bento-card') ?? item.querySelector<HTMLElement>('.dashboard-grid-card')
+        if (!el || el.scrollHeight <= el.clientHeight + 1) return
+        const rows = Math.min(Math.ceil((el.scrollHeight + GRID_MARGIN_Y) / (rh + GRID_MARGIN_Y)), 6 * GRID_SCALE)
+        need.set(id, rows)
+      })
+      if (need.size === 0) return
+      setLayouts(prev => {
+        const list = prev[currentBp]
+        if (!list || !list.some(l => (need.get(l.i) ?? 0) > l.h)) return prev
+        return {
+          ...prev,
+          [currentBp]: list.map(l => {
+            const rows = need.get(l.i)
+            return rows && rows > l.h ? { ...l, h: rows, maxH: Math.max(l.maxH ?? rows, rows) } : l
+          }),
+        }
+      })
+    }
+    const schedule = () => { window.clearTimeout(timer); timer = window.setTimeout(fit, 120) }
+    schedule()
+    const mo = new MutationObserver(schedule)
+    mo.observe(root, { childList: true, subtree: true, characterData: true })
+    const ro = new ResizeObserver(schedule)
+    ro.observe(root)
+    return () => { window.clearTimeout(timer); mo.disconnect(); ro.disconnect() }
+  }, [currentBp, cardsKey])
+
   if (cards.length === 0) return null
 
   return (
+    <div ref={wrapRef}>
     <ResponsiveGridLayout
       className="dashboard-grid"
       layouts={layouts}
@@ -79,12 +128,14 @@ export default function DashboardGrid({
       resizeHandles={['se']}
       onLayoutChange={handleLayoutChange}
       onBreakpointChange={(bp) => setCurrentBp(bp as keyof typeof DASHBOARD_GRID_ROW_HEIGHT)}
+      onResizeStart={(_l, item) => { resizing.current.add(item.i) }}
+      onResizeStop={(_l, item) => { resizing.current.delete(item.i) }}
       isBounded={false}
       useCSSTransforms
       compactType="vertical"
     >
       {cards.map(card => (
-        <div key={card.id} data-testid={`card-${card.id}`} className="dashboard-grid-item">
+        <div key={card.id} data-testid={`card-${card.id}`} data-card-id={card.id} className="dashboard-grid-item">
           <div
             className="dashboard-grid-card"
             // Cards contain their own interactive elements (buttons, links),
@@ -123,5 +174,6 @@ export default function DashboardGrid({
         </div>
       ))}
     </ResponsiveGridLayout>
+    </div>
   )
 }

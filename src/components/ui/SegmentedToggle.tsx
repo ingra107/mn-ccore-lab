@@ -86,7 +86,9 @@ export function SegmentedToggle<T extends string>({
       style={{
         border: '1px solid var(--border-subtle)',
         borderRadius: 999,
-        flexShrink: 0,
+        // A scrollable pill must be allowed to shrink to its container, or it
+        // never overflows itself and pushes the whole page sideways instead.
+        ...(scrollable ? { flexShrink: 1, minWidth: 0, maxWidth: '100%' } : { flexShrink: 0 }),
         overflow: scrollable ? 'auto hidden' : 'hidden',
       }}
     >

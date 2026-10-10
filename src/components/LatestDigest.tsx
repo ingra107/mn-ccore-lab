@@ -6,18 +6,6 @@ import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
-function relevanceColor(score: number): string {
-  if (score >= 80) return 'var(--teal)'
-  if (score >= 60) return 'var(--gold)'
-  return 'var(--slate)'
-}
-
-function relevanceBg(score: number): string {
-  if (score >= 80) return 'color-mix(in srgb, var(--teal) 12%, transparent)'
-  if (score >= 60) return 'var(--gold-emphasis)'
-  return 'rgba(44,62,80,0.08)'
-}
-
 function topicPill(topic: string) {
   return (
     <span
@@ -39,7 +27,6 @@ function topicPill(topic: string) {
 
 function PaperCard({ paper }: { paper: DigestPaper }) {
   const topics: string[] = paper.topics ? JSON.parse(paper.topics) : []
-  const score = Math.round(paper.relevance_score * 100)
   const displayTitle =
     paper.title.length > 100 ? paper.title.slice(0, 97) + '...' : paper.title
 
@@ -48,26 +35,15 @@ function PaperCard({ paper }: { paper: DigestPaper }) {
       className="card p-4 sm:p-5 flex flex-col"
       style={{ minHeight: '160px' }}
     >
-      {/* Top row: relevance badge + journal */}
+      {/* Top row: journal. (The relevance % badge is gone: PB derived it from which fields were parsed, not from relevance. Site audit F87.) */}
       <div className="flex items-center justify-between mb-3 gap-2">
-        <span
-          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-          style={{
-            fontSize: '11px',
-            background: relevanceBg(score),
-            color: relevanceColor(score),
-          }}
-        >
-          {score}%
-        </span>
         {paper.journal && (
           <span
             className="text-xs truncate"
             style={{
               color: 'var(--slate)',
               fontStyle: 'italic',
-              maxWidth: '60%',
-              textAlign: 'right',
+              maxWidth: '100%',
             }}
           >
             {paper.journal}

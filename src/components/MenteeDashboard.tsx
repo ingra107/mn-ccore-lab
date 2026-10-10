@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import {
-  FlaskConical,
   ListChecks,
   BookOpen,
   TrendingUp,
@@ -8,12 +7,8 @@ import {
   Circle,
   ArrowRight,
 } from 'lucide-react'
-import HoverCard from './HoverCard'
-import type { HoverCardData } from './HoverCard'
-import { useHoverCard } from '../hooks/useHoverCard'
-import { usePublications, useMeetingLinkedTasks, useProjects } from '../hooks/useApiData'
+import { usePublications, useMeetingLinkedTasks } from '../hooks/useApiData'
 import TaskTitle from './tasks/TaskTitle'
-import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { isTaskDone } from '../lib/taskGrouping'
 
@@ -27,13 +22,15 @@ export default function MenteeDashboard({ slug, name }: Props) {
   // T19 (#547): meeting-linked tasks (tasks.meeting_id), not the dead
   // action_items table — see useMeetingLinkedTasks() doc comment.
   const { data: actionItems = [] } = useMeetingLinkedTasks({ assignee: slug })
-  const { data: projects = [] } = useProjects()
 
+  // No Projects card or count here: this component used to filter projects on
+  // `p.team`, a field the API never returns, so it showed 0 for every non-PI
+  // and disagreed with the live list. The Team member page lists a member's
+  // projects once, from useMemberProjects (MemberProjects, #145).
   // Filter data for this person
   const myPubs = publications.filter((p) => p.authorSlugs?.includes(slug))
   const myPending = actionItems.filter((a) => !isTaskDone(a))
   const myCompleted = actionItems.filter((a) => isTaskDone(a))
-  const myProjects = projects.filter((p) => p.pi === slug || p.team?.includes(slug))
 
   const firstName = name.split(' ')[0]
 
@@ -45,33 +42,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         {firstName}'s Dashboard
       </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Projects card */}
-        <div className="card p-4" style={{ borderRadius: 'var(--radius-xl)' }}>
-          <div className="flex items-center gap-2 mb-3">
-            <FlaskConical {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
-            <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-              Projects
-            </span>
-          </div>
-          {myProjects.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              {myProjects.slice(0, 4).map((p) => (
-                <MenteeProjectLink key={p.slug} project={p} />
-              ))}
-              {myProjects.length > 4 && (
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
-                  +{myProjects.length - 4} more
-                </span>
-              )}
-            </div>
-          ) : (
-            <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, margin: 0 }}>
-              No projects assigned
-            </p>
-          )}
-        </div>
-
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Action Items card */}
         <div className="card p-4" style={{ borderRadius: 'var(--radius-xl)' }}>
           <div className="flex items-center gap-2 mb-3">
@@ -158,10 +129,6 @@ export default function MenteeDashboard({ slug, name }: Props) {
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>Projects</span>
-              <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>{myProjects.length}</span>
-            </div>
-            <div className="flex items-center justify-between">
               <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>Publications</span>
               <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>{myPubs.length}</span>
             </div>
@@ -177,49 +144,5 @@ export default function MenteeDashboard({ slug, name }: Props) {
         </div>
       </div>
     </div>
-  )
-}
-
-function MenteeProjectLink({ project }: { project: { slug: string; title: string; stage?: string; status?: string; category?: string; description?: string; pi?: string; team?: string[] } }) {
-  const {
-    isVisible: hoverIsVisible,
-    position: hoverPosition,
-    triggerRef: hoverTriggerRef,
-    cardRef: hoverCardRef,
-    handlers: hoverHandlers,
-    cardHandlers: hoverCardHandlers,
-  } = useHoverCard()
-  const projectData: HoverCardData = {
-    type: 'project',
-    title: project.title,
-    stage: project.stage,
-    status: project.status,
-    category: project.category,
-    description: project.description,
-    pi: project.pi,
-    team: project.team,
-  }
-
-  return (
-    <Link
-      ref={hoverTriggerRef as React.RefObject<HTMLAnchorElement>}
-      to={PATHS.project(project.slug)}
-      style={{ fontSize: '12px', color: 'var(--ink)', textDecoration: 'none', lineHeight: 1.3 }}
-      className="hover:opacity-80"
-      onMouseEnter={hoverHandlers.onMouseEnter}
-      onMouseLeave={hoverHandlers.onMouseLeave}
-    >
-      <span style={{ fontSize: '10px', color: 'var(--gold)', marginRight: 'var(--sp-xs)' }}>
-        {project.stage || project.status}
-      </span>
-      {project.title.length > 50 ? project.title.slice(0, 47) + '...' : project.title}
-      <HoverCard
-        data={projectData}
-        isVisible={hoverIsVisible}
-        position={hoverPosition}
-        cardRef={hoverCardRef}
-        cardHandlers={hoverCardHandlers}
-      />
-    </Link>
   )
 }

@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FileText, ArrowRight, Sparkles, Search } from 'lucide-react'
 import PageContainer from '../../components/PageContainer'
+import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import HermesMark from '../../components/HermesMark'
 import { Chip } from '../../components/ui/Chip'
@@ -59,24 +60,14 @@ export default function ArtifactsGalleryPage() {
 
   return (
     <PageContainer>
-      <div style={{ paddingTop: '1.5rem', paddingBottom: '3rem' }}>
-        {/* ── Header ── */}
-        <div className="flex items-start gap-3" style={{ marginBottom: '1rem' }}>
-          <div
-            className="flex-shrink-0 flex items-center justify-center"
-            style={{ width: 36, height: 36, borderRadius: 'var(--radius-lg)', background: 'var(--gold-active)', color: 'var(--gold)' }}
-          >
-            <FileText {...ICON_PROPS} size={20} />
-          </div>
-          <div>
-            <h1 style={{ fontSize: '1.4rem', fontWeight: 600, color: 'var(--ink)', margin: 0, lineHeight: 1.25 }}>
-              Artifacts
-            </h1>
-            <p style={{ fontSize: 13, color: 'var(--slate)', opacity: 0.85, margin: '2px 0 0' }}>
-              Curated, reusable reference artifacts. Tag an artifact to shelve it here.
-            </p>
-          </div>
-        </div>
+      <div style={{ paddingBottom: '3rem' }}>
+        {/* ── Header ── the shared PageHeader, same anatomy and top spacing as
+            the Digest tab beside it (site audit F22). */}
+        <PageHeader
+          icon={<FileText {...ICON_PROPS} size={20} />}
+          title="Artifacts"
+          subtitle="Curated, reusable reference artifacts. Tag an artifact to shelve it here."
+        />
 
         {/* ── Search ── title, tag, author, and the text inside an artifact.
             Composes with the tag chips below (search AND tag), so you can
@@ -99,7 +90,7 @@ export default function ArtifactsGalleryPage() {
               padding: '7px 11px 7px 32px',
               borderRadius: 'var(--radius-full)',
               border: '1px solid var(--border-subtle)',
-              background: 'var(--ice)',
+              background: 'var(--sk-card)',
               color: 'var(--ink)',
             }}
           />
@@ -146,7 +137,7 @@ export default function ArtifactsGalleryPage() {
             ))}
           </div>
         ) : artifacts.length === 0 ? (
-          <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)' }}>
+          <div className="detail-card" style={{ background: 'var(--sk-card)', borderRadius: 'var(--radius-xl)' }}>
             <EmptyState
               icon={<FileText size={28} />}
               title="No shelved artifacts yet"
@@ -154,7 +145,7 @@ export default function ArtifactsGalleryPage() {
             />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)' }}>
+          <div className="detail-card" style={{ background: 'var(--sk-card)', borderRadius: 'var(--radius-xl)' }}>
             <EmptyState
               icon={<FileText size={28} />}
               title="Nothing matches"
@@ -234,7 +225,7 @@ const gridStyle: React.CSSProperties = {
 }
 
 const cardStyle: React.CSSProperties = {
-  background: 'var(--ice)',
+  background: 'var(--sk-card)',
   borderRadius: 'var(--radius-xl)',
   padding: '1rem 1.15rem',
   border: '1px solid var(--border-subtle)',

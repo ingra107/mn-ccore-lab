@@ -45,7 +45,9 @@ import { DashboardMountedContext } from '../components/dashboard/dashboardMounte
 type DashboardTab = 'overview' | 'projects' | 'people' | 'deadlines'
 
 const TAB_CONFIG: { id: DashboardTab; label: string }[] = [
-  { id: 'overview', label: 'Overview' },
+  // Not "Overview": the host's own first tab already says that. This control
+  // only filters which cards show, so its first option reads "All cards".
+  { id: 'overview', label: 'All cards' },
   { id: 'projects', label: 'Projects' },
   { id: 'people', label: 'People' },
   { id: 'deadlines', label: 'Deadlines' },
@@ -355,20 +357,21 @@ export default function Dashboard() {
               >
                 {/* Left: live dot + operational status chips (DD-#3 Option C) */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                  {/* Static dot, hidden on phones where it wrapped onto a line of
+                      its own (site audit F24/F97: color is spent, not pulsed). */}
                   <div
+                    className="max-[640px]:hidden"
                     style={{
                       width: 7,
                       height: 7,
                       borderRadius: 'var(--radius-circle)',
                       background: 'var(--green-light)',
-                      boxShadow: '0 0 8px rgba(34, 197, 94, 0.4)',
-                      animation: 'status-pulse 2s ease-in-out infinite',
                       flexShrink: 0,
                     }}
                     aria-label="Live"
                   />
                   <StatusLine tasks={allTasks} loading={!mounted} />
-                  <span style={{ color: 'var(--slate)', opacity: 0.55, fontSize: '12px', flexShrink: 0 }}>{'·'}</span>
+                  <span className="max-[640px]:hidden" style={{ color: 'var(--slate)', opacity: 0.55, fontSize: '12px', flexShrink: 0 }}>{'·'}</span>
                   <LabHealthScore />
                 </div>
 
@@ -377,7 +380,7 @@ export default function Dashboard() {
                     mobile horizontal-scroll CSS; scrollable opts into overflow. */}
                 <SegmentedToggle
                   className="dashboard-tabs"
-                  ariaLabel="Dashboard view"
+                  ariaLabel="Filter cards"
                   accent="gold"
                   scrollable
                   options={TAB_CONFIG.map(tab => ({ value: tab.id, label: tab.label }))}
@@ -598,7 +601,7 @@ export default function Dashboard() {
             </div>
             <span
               className="px-3 py-1 rounded-lg text-[11px] font-medium"
-              style={{ backgroundColor: 'var(--gold)', color: '#0f1923' }}
+              style={{ backgroundColor: 'var(--stage-fill-analysis)', color: '#fff' }}
             >
               Prepare
             </span>
