@@ -79,6 +79,7 @@ describe('a real raw call still blocks', () => {
     expect(hits('docs/x.md', `npx ${WD} execute db  wrangler-d1-allowed\n`)).toEqual([])
     expect(hits('.github/workflows/x.yml', `run: ${WD} execute db\n`)).toEqual([])
     expect(hits('Archive/2026-10-11-x/plan.md', `Run \`npx ${WD} execute db\`\n`)).toEqual([])
+    expect(hits('Archive/2026-10-11-x/run.sh', `npx ${WD} execute db\n`).length).toBe(1)
   })
 })
 

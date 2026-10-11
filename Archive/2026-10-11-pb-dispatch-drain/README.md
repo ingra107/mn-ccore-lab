@@ -7,3 +7,5 @@ Later the same day (Nick: "cut it all"): the Queue for Claude lane went too. POS
 Still live: /api/pb/capture. SmartCompose's "Queue for Claude" toggle is not this lane: it prefixes the note with @hermes (a real Hermes ask).
 
 PB-FOLLOWUP: the PB startup hook that GETs /api/pb/dispatch/pending now gets a 404.
+
+removed-callers-and-routes.patch (this folder) holds the rest: the import lines and defineRoute blocks removed from api/index.ts, and the Queue for Claude toggle (TaskDetailPanel) and Review draft card (TaskIntelligence), as `git diff 9a0de385 HEAD` over those three files. It also carries the unrelated edits those files took in the same range; reverse-apply only the hunks you want.

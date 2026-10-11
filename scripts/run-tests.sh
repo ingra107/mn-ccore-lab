@@ -2,11 +2,14 @@
 # MN-CCORE Lab Hub — Full Test Runner
 #
 # Usage:
-#   ./scripts/run-tests.sh           # Run all 4 suites
+#   ./scripts/run-tests.sh           # Run all suites (inspection + sync)
 #   ./scripts/run-tests.sh quick     # Run only API + page render tests (~2 min)
-#   ./scripts/run-tests.sh ui        # Run daily-superuser only (~6 min)
 #   ./scripts/run-tests.sh sync      # Run sync pipeline only (~5 min)
-#   ./scripts/run-tests.sh all       # Run everything (~20 min)
+#   ./scripts/run-tests.sh all       # Run everything
+#
+# inspection-workflows.spec.ts and daily-superuser.spec.ts are not run here:
+# playwright.config.prod.ts matches only smoke + inspection, and no other config
+# selects them, so they ran 0 tests. A suite that finds 0 tests now FAILS.
 #
 # Results saved to: review/test-summary.txt
 
@@ -50,6 +53,13 @@ run_playwright() {
 
   local status="✓"
   [ "$failed" -gt 0 ] && status="✗"
+  # A suite that ran nothing is a failure, never a pass (a config that matches no spec).
+  if [ $((passed + failed + skipped)) -eq 0 ]; then
+    status="✗"
+    failed=1
+    TOTAL_FAILED=$((TOTAL_FAILED + 1))
+    echo "  (no tests ran: $output)"
+  fi
 
   echo "  $status $name: $passed passed, $failed failed, $skipped skipped"
   echo "| $name | $passed | $failed | $skipped | $status |" >> "$SUMMARY"
@@ -82,16 +92,11 @@ case "$MODE" in
   quick)
     run_playwright "API + Pages" "tests/inspection.spec.ts"
     ;;
-  ui)
-    run_playwright "Daily Super-User" "tests/daily-superuser.spec.ts"
-    ;;
   sync)
     run_sync
     ;;
   all|"")
     run_playwright "Inspection" "tests/inspection.spec.ts"
-    run_playwright "Workflows" "tests/inspection-workflows.spec.ts"
-    run_playwright "Daily Super-User" "tests/daily-superuser.spec.ts"
     run_sync
     ;;
 esac

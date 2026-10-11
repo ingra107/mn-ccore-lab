@@ -639,7 +639,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             >
               <OverviewQuickAdd
                 taskId={task.id}
-                  projectSlug={task.project_id}
+                projectSlug={task.project_id}
                 primaryFolder={taskProject?.primary_folder}
                 onJumpToTab={(tab) => setActiveTab(tab)}
                 onContentChange={setQuickAddHasContent}
