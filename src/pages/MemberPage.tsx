@@ -27,26 +27,16 @@ import { memberPublications, countPublications } from '../lib/publicationCounts'
 import WatchButton from '../components/WatchButton'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { QueryErrorNote } from '../components/QueryErrorNote'
 import { topicLabel } from '../lib/topics'
-
-const TOPIC_COLORS: Record<string, string> = {
-  clif: '#3b82f6',
-  covid: '#dc2626',
-  ventilation: 'var(--green)',
-  'decision-making': '#9333ea',
-  quality: '#d97706',
-  sepsis: '#db2777',
-  disparities: '#0284c7',
-}
 
 // isOverdue imported from dateUtils
 
 function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
   const isDone = item.status === 'done'
   const overdue = !isDone && isOverdue(item.due_date)
-  const borderColor = isDone ? 'var(--teal)' : overdue ? 'var(--maroon)' : 'var(--gold)'
+  // Color jobs (rules-ui-design 21): only overdue earns a color edge (red).
+  const borderColor = overdue ? 'var(--maroon)' : 'var(--border-subtle)'
   // to_slug is authoritative when present (WS2.4); falls back to to_whom text
   const toPersonInfo = item.to_slug ? getPersonInfo(item.to_slug) : null
 
@@ -68,7 +58,7 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
         <div
           style={{
-            color: isDone ? 'var(--teal)' : 'var(--slate)',
+            color: 'var(--slate)',
             opacity: isDone ? 1 : 0.85,
             flexShrink: 0,
             marginTop: 2,
@@ -121,7 +111,7 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
                   {toPersonInfo?.photoUrl ? (
                     <img src={toPersonInfo.photoUrl} alt={toPersonInfo.name} style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover' }} />
                   ) : toPersonInfo ? (
-                    <span style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--gold-light)', border: '1px solid var(--gold)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: 'var(--gold)', flexShrink: 0 }}>{toPersonInfo.initials}</span>
+                    <span style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--ice)', border: '1px solid var(--border-subtle)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: 'var(--slate)', flexShrink: 0 }}>{toPersonInfo.initials}</span>
                   ) : null}
                   {toPersonInfo ? toPersonInfo.name : item.to_whom}
                 </span>
@@ -354,7 +344,7 @@ export default function MemberPage() {
         <>
           <section className="mb-8" id="research-focus">
             <div className="flex items-center gap-3 mb-4">
-              <GraduationCap {...ICON_PROPS} size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <GraduationCap {...ICON_PROPS} size={20} style={{ color: 'var(--slate)' }} aria-hidden="true" />
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
@@ -372,10 +362,10 @@ export default function MemberPage() {
                     key={interest}
                     className="inline-flex items-center px-3 py-1.5 rounded-full text-sm"
                     style={{
-                      background: 'var(--gold-active)',
-                      color: 'var(--gold)',
+                      background: 'var(--ice)',
+                      color: 'var(--ink)',
                       fontWeight: 500,
-                      border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+                      border: '1px solid var(--border-subtle)',
                     }}
                   >
                     {interest}
@@ -387,7 +377,7 @@ export default function MemberPage() {
               className="inline-flex items-center gap-2 px-3 py-2 rounded-md"
               style={{
                 background: 'var(--sk-panel)',
-                border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
+                border: '1px solid var(--border-subtle)',
               }}
             >
               <span className="text-xs" style={{ color: 'var(--slate)' }}>
@@ -407,7 +397,7 @@ export default function MemberPage() {
         <>
           <section className="mb-8" id="active-projects">
             <div className="flex items-center gap-3 mb-4">
-              <FlaskConical {...ICON_PROPS} size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <FlaskConical {...ICON_PROPS} size={20} style={{ color: 'var(--slate)' }} aria-hidden="true" />
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
@@ -424,7 +414,7 @@ export default function MemberPage() {
                   key={project.slug}
                   className="card p-5 sm:p-6"
                   style={{
-                    borderLeft: '3px solid var(--gold)',
+                    borderLeft: '3px solid var(--border-subtle)',
                   }}
                 >
                   <div className="flex items-center justify-between gap-3 mb-2">
@@ -473,7 +463,7 @@ export default function MemberPage() {
         <>
           <section className="mb-8" id="expertise">
             <div className="flex items-center gap-3 mb-4">
-              <Sparkles {...ICON_PROPS} size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <Sparkles {...ICON_PROPS} size={20} style={{ color: 'var(--slate)' }} aria-hidden="true" />
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
@@ -498,9 +488,9 @@ export default function MemberPage() {
                     className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] cursor-pointer transition-opacity hover:opacity-80"
                     style={{
                       fontWeight: 400,
-                      background: 'var(--teal-active)',
-                      color: 'var(--teal)',
-                      border: '1px solid rgba(45,138,138,0.2)',
+                      background: 'var(--ice)',
+                      color: 'var(--ink)',
+                      border: '1px solid var(--border-subtle)',
                     }}
                     onClick={() => navigate(`${teamBase}?expertise=${encodeURIComponent(t.tag)}`)}
                     role="link"
@@ -543,8 +533,8 @@ export default function MemberPage() {
                     border: '1px dashed rgba(100,116,139,0.3)',
                     cursor: 'pointer',
                     transition: 'border-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out)',
-                    '--hov-border': 'var(--gold)',
-                    '--hov-color': 'var(--gold)',
+                    '--hov-border': 'var(--teal)',
+                    '--hov-color': 'var(--teal)',
                   } as React.CSSProperties}
                 >
                   <Plus {...ICON_PROPS} size={10} />
@@ -583,7 +573,7 @@ export default function MemberPage() {
                   style={{
                     background: 'var(--sk-card)',
                     color: 'var(--ink)',
-                    border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+                    border: '1px solid var(--border-subtle)',
                     outline: 'none',
                     width: '240px',
                   }}
@@ -602,8 +592,8 @@ export default function MemberPage() {
                   disabled={!newTag.trim() || addExpertiseMut.isPending}
                   className="px-3 py-1.5 rounded-md text-xs font-medium"
                   style={{
-                    background: newTag.trim() ? 'var(--gold)' : 'var(--sk-card)',
-                    color: newTag.trim() ? 'var(--ink)' : 'var(--slate)',
+                    background: newTag.trim() ? 'var(--teal-solid)' : 'var(--sk-card)',
+                    color: newTag.trim() ? '#fff' : 'var(--slate)',
                     border: 'none',
                     cursor: newTag.trim() ? 'pointer' : 'default',
                     opacity: newTag.trim() ? 1 : 0.85,
@@ -640,7 +630,7 @@ export default function MemberPage() {
         <>
           <section className="mb-8" id="activity">
             <div className="flex items-center gap-3 mb-4">
-              <Activity {...ICON_PROPS} size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <Activity {...ICON_PROPS} size={20} style={{ color: 'var(--slate)' }} aria-hidden="true" />
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
@@ -679,8 +669,8 @@ export default function MemberPage() {
                   key={topic}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm"
                   style={{
-                    background: `${TOPIC_COLORS[topic] ?? 'var(--gold)'}15`,
-                    color: TOPIC_COLORS[topic] ?? 'var(--gold)',
+                    background: 'var(--ice)',
+                    color: 'var(--ink)',
                     fontWeight: 500,
                   }}
                 >
@@ -731,7 +721,7 @@ export default function MemberPage() {
           <div className="py-4" />
           <section className="mb-8" id="commitments">
             <div className="flex items-center gap-3 mb-4">
-              <Handshake {...ICON_PROPS} size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <Handshake {...ICON_PROPS} size={20} style={{ color: 'var(--slate)' }} aria-hidden="true" />
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
@@ -806,9 +796,10 @@ export default function MemberPage() {
 // ── Contribution Score Card ──────────────────────────────
 
 const TREND_ARROWS: Record<string, { symbol: string; color: string }> = {
-  increasing: { symbol: '\u2191', color: 'var(--green)' },
+  // The arrow carries the direction; a trend is not overdue (red) or done (green).
+  increasing: { symbol: '\u2191', color: 'var(--slate)' },
   stable: { symbol: '\u2192', color: 'var(--slate)' },
-  declining: { symbol: '\u2193', color: 'var(--maroon)' },
+  declining: { symbol: '\u2193', color: 'var(--slate)' },
 }
 
 function MiniSparkline({ data }: { data: number[] }) {
@@ -823,7 +814,7 @@ function MiniSparkline({ data }: { data: number[] }) {
       <polyline
         points={points}
         fill="none"
-        stroke="var(--teal)"
+        stroke="var(--slate)"
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -853,7 +844,7 @@ function ContributionScoreCard({ slug }: { slug: string }) {
         flexWrap: 'wrap',
         alignItems: 'center',
         gap: '0.75rem 1.25rem',
-        borderLeft: '3px solid var(--teal)',
+        borderLeft: '3px solid var(--border-subtle)',
       }}
     >
       {/* Score */}
@@ -914,6 +905,7 @@ const MILESTONE_TYPE_LABELS: Record<string, string> = {
 }
 
 const MILESTONE_STATUS_COLORS: Record<string, string> = {
+  // Only overdue has a color job (red); every other status is a gray word.
   upcoming: 'var(--slate)',
   in_progress: 'var(--teal)',
   completed: 'var(--st-done)',
@@ -943,7 +935,7 @@ function MemberMilestones({ slug }: { slug: string }) {
       <div className="py-4" />
       <section className="mb-8" id="milestones">
         <div className="flex items-center gap-3 mb-4">
-          <GraduationCap {...ICON_PROPS} size={20} style={{ color: 'var(--teal)' }} aria-hidden="true" />
+          <GraduationCap {...ICON_PROPS} size={20} style={{ color: 'var(--slate)' }} aria-hidden="true" />
           <h2
             className="text-xl sm:text-2xl"
             style={{ fontWeight: 500, color: 'var(--ink)' }}
@@ -957,7 +949,7 @@ function MemberMilestones({ slug }: { slug: string }) {
           )}
           <Link
             to={PATHS.menteeMilestonesTab}
-            style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--teal)', textDecoration: 'none' }}
+            style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--slate)', textDecoration: 'none' }}
           >
             View all
           </Link>
@@ -988,7 +980,7 @@ function MilestoneMiniCard({
   isOverdue: boolean
 }) {
   const isDone = milestone.status === 'completed'
-  const borderColor = isDone ? 'var(--green)' : isOverdue ? 'var(--maroon)' : 'var(--teal)'
+  const borderColor = isOverdue ? 'var(--maroon)' : 'var(--border-subtle)'
 
   return (
     <motion.div
@@ -1016,7 +1008,7 @@ function MilestoneMiniCard({
             {milestone.title}
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--gold)', opacity: 0.85 }}>
+            <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.85 }}>
               {MILESTONE_TYPE_LABELS[milestone.milestone_type] || milestone.milestone_type}
             </span>
             {milestone.due_date && (

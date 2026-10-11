@@ -173,7 +173,7 @@ export default function ArtifactsGalleryPage() {
                 >
                   {/* Title */}
                   <div className="flex items-start gap-2">
-                    <FileText {...ICON_PROPS} size={16} style={{ color: 'var(--gold)', flexShrink: 0, marginTop: 2 }} />
+                    <FileText {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', flexShrink: 0, marginTop: 2 }} />
                     <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', margin: 0, lineHeight: 1.35 }}>
                       {a.title}
                     </h2>
@@ -183,7 +183,7 @@ export default function ArtifactsGalleryPage() {
                   {a.tags.length > 0 && (
                     <div className="flex items-center gap-1 flex-wrap">
                       {a.tags.map((t) => (
-                        <Chip key={t} color="var(--teal)" pill size="xs">{t}</Chip>
+                        <Chip key={t} pill size="xs">{t}</Chip>
                       ))}
                     </div>
                   )}
@@ -191,19 +191,19 @@ export default function ArtifactsGalleryPage() {
                   {/* Meta row: author · updated · Open */}
                   <div className="flex items-center gap-2" style={{ marginTop: 'auto', fontSize: 11, color: 'var(--slate)' }}>
                     {a.created_by === 'claude-ai' ? (
-                      <span className="inline-flex items-center gap-1" style={{ color: 'var(--gold)', fontWeight: 500 }}>
-                        <HermesMark size={12} variant="avatar" /> Hermes
+                      <span className="inline-flex items-center gap-1" style={{ fontWeight: 500 }}>
+                        <HermesMark size={12} variant="avatar" color="var(--slate)" bg="var(--surface-2)" /> Hermes
                       </span>
                     ) : (
                       <span>{creator.name}</span>
                     )}
                     {a.content_type === 'html' && (
-                      <span className="inline-flex items-center gap-1" style={{ color: 'var(--teal)', opacity: 0.85 }}>
+                      <span className="inline-flex items-center gap-1">
                         <Sparkles {...ICON_PROPS} size={10} /> interactive
                       </span>
                     )}
                     <span style={{ opacity: 0.7 }}>· {formatRelativeTime(a.updated_at)}</span>
-                    <span className="inline-flex items-center gap-1" style={{ marginLeft: 'auto', color: 'var(--teal)', fontWeight: 500 }}>
+                    <span className="inline-flex items-center gap-1" style={{ marginLeft: 'auto', color: 'var(--ink)', fontWeight: 500 }}>
                       Open <ArrowRight {...ICON_PROPS} size={11} />
                     </span>
                   </div>

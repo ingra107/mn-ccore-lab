@@ -9,7 +9,6 @@ import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import { QueryErrorNote } from '../QueryErrorNote'
 
 interface FeedItem {
@@ -212,9 +211,9 @@ function ActivityFeedCard() {
           className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
           style={{
             fontSize: 'var(--label-size)',
-            color: 'var(--gold)',
+            color: 'var(--slate)',
             textDecoration: 'none',
-            borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
+            borderTop: '1px solid var(--border-subtle)',
             transition: 'opacity 0.2s ease',
           }}
         >

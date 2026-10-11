@@ -5,7 +5,7 @@ import { useMeetingsApi, useMeetingLinkedTasks, useMeetingCadence, useTasks } fr
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { localDateKey } from '../../lib/dateUtils'
 import { countActionsByMeetingId } from '../../lib/meetingTaskCounts'
-import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
+import { isTaskDone } from '../../lib/taskGrouping'
 import { getPersonInfo } from '../../data/team'
 import BentoCard from './BentoCard'
 import { PATHS } from '../../constants/paths'
@@ -20,14 +20,6 @@ interface Deadline {
 
 function formatDateShort(d: Date): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-function typeColor(type: Deadline['type']): string {
-  switch (type) {
-    case 'task': return 'var(--teal)'
-    case 'grant': return 'var(--gold)'
-    case 'milestone': return 'var(--slate)'
-  }
 }
 
 function UpcomingCard() {
@@ -131,7 +123,7 @@ function UpcomingCard() {
           style={{
             // N1b de-box: was a bg+border sub-box inside the card. Flattened to
             // a left-accent section — identity via the accent + whitespace, not a box.
-            borderLeft: `2px solid ${withAlpha(ACCENT_GOLD, 35)}`,
+            borderLeft: '2px solid var(--border-subtle)',
             paddingLeft: '10px',
           }}
         >
@@ -207,7 +199,7 @@ function UpcomingCard() {
               className="inline-flex items-center gap-1"
               style={{
                 fontSize: '10px',
-                color: 'var(--gold)',
+                color: 'var(--slate)',
                 textDecoration: 'none',
                 fontWeight: 'var(--label-weight)',
                 marginLeft: 'auto',
@@ -309,7 +301,8 @@ function UpcomingCard() {
                       width: 6,
                       height: 6,
                       borderRadius: 'var(--radius-circle)',
-                      background: typeColor(d.type),
+                      // A type is not a color job (rules-ui-design 21); the label names it.
+                      background: 'var(--slate)',
                       opacity: 0.85,
                     }}
                   />

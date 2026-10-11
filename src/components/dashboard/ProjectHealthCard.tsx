@@ -10,15 +10,16 @@ import type { ProjectHealth, HealthFactors } from '../../hooks/useApiData'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import SegmentedToggle from '../ui/SegmentedToggle'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import { QueryErrorNote } from '../QueryErrorNote'
 import { STATUS_FILLS } from '../../lib/projectHealthFills'
 
+// Color jobs (rules-ui-design 21): orange = going stale, so only the at-risk
+// band (At Risk, Critical) carries it; Healthy and Attention are gray text.
 const STATUS_COLORS: Record<string, string> = {
-  'Healthy': 'var(--green)',
-  'Needs Attention': 'var(--gold)',
+  'Healthy': 'var(--slate)',
+  'Needs Attention': 'var(--slate)',
   'At Risk': 'var(--orange)',
-  'Critical': 'var(--maroon)',
+  'Critical': 'var(--orange)',
 }
 
 const FACTOR_LABELS: Record<keyof HealthFactors, { label: string; max: number }> = {
@@ -113,7 +114,7 @@ function ProjectHealthCard() {
         {/* Summary counts */}
         <div
           className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3 pb-3"
-          style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 8)}` }}
+          style={{ borderBottom: '1px solid var(--border-subtle)' }}
         >
           {[
             { status: 'Critical' as const, count: summary.critical, label: 'Critical' },
@@ -254,7 +255,7 @@ function ProjectHealthCard() {
                 className="flex flex-col items-center justify-center py-8"
                 style={{ opacity: 0.85 }}
               >
-                <HeartPulse size={24} style={{ color: 'var(--teal)', marginBottom: '8px' }} />
+                <HeartPulse size={24} style={{ color: 'var(--slate)', marginBottom: '8px' }} />
                 <p
                   style={{
                     fontSize: '12px',
@@ -276,9 +277,9 @@ function ProjectHealthCard() {
           className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
           style={{
             fontSize: 'var(--label-size)',
-            color: 'var(--gold)',
+            color: 'var(--slate)',
             textDecoration: 'none',
-            borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
+            borderTop: '1px solid var(--border-subtle)',
           }}
         >
           View all projects <ArrowRight {...ICON_PROPS} size={11} />
@@ -314,10 +315,10 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
   return (
     <Link
       to={PATHS.project(project.slug)}
-      className="flex items-center flex-wrap gap-x-2.5 gap-y-1 py-2 group transition-colors hover:bg-[var(--gold-hover)]"
+      className="flex items-center flex-wrap gap-x-2.5 gap-y-1 py-2 group transition-colors hover:bg-[var(--surface-1)]"
       style={{
         textDecoration: 'none',
-        borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}`,
+        borderBottom: '1px solid var(--border-subtle)',
         borderRadius: 'var(--radius-sm)',
         padding: 'var(--sp-sm) var(--sp-xs)',
         margin: '0 -4px',
@@ -378,7 +379,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
             width: '48px',
             height: '4px',
             borderRadius: 'var(--radius-sm)',
-            background: 'var(--gold-active)',
+            background: 'var(--surface-2)',
             overflow: 'hidden',
           }}
         >
@@ -414,7 +415,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
             fontSize: '10px',
             padding: '1px 5px',
             borderRadius: 'var(--radius-sm)',
-            background: `${color}14`,
+            background: isBad ? 'var(--orange-hover)' : 'transparent',
             color,
             flexShrink: 0,
             letterSpacing: '0.02em',

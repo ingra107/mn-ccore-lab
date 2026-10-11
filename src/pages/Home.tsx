@@ -30,13 +30,16 @@ import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 // Lazy-loaded: pulls recharts (PublicationTimeline) — deferred until scrolled into view
 const ResearchImpact = lazyRoute(() => import('../components/ResearchImpact'))
 
+// The public site keeps gold as its brand color (Nick 2026-10-11): all four
+// pillars wear the one brand gold, not four hues.
+const PILLAR_ACCENT = 'var(--gold)'
+
 const pillars = [
   {
     icon: Stethoscope,
     title: 'Provider Variation',
     description:
       'Characterizing how individual clinician practice patterns shape ICU outcomes across diverse hospital settings.',
-    color: 'var(--gold)',
     stat: '6 active studies',
   },
   {
@@ -44,7 +47,6 @@ const pillars = [
     title: 'ICU Quality Metrics',
     description:
       'Developing and validating evidence-based quality measures for critical care using multi-center data.',
-    color: 'var(--teal)',
     stat: '13 consortium sites',
   },
   {
@@ -52,7 +54,6 @@ const pillars = [
     title: 'Clinical Decision-Making',
     description:
       'Understanding how cognitive styles and heuristics influence provider behavior at the bedside.',
-    color: 'var(--maroon)',
     stat: '2 NIH-funded',
   },
   {
@@ -60,7 +61,6 @@ const pillars = [
     title: 'Multi-Center Data Science',
     description:
       'Building open data infrastructure through the CLIF Consortium to enable reproducible ICU research.',
-    color: 'var(--teal)',
     stat: 'Open source',
   },
 ]
@@ -425,7 +425,7 @@ export default function Home() {
                   key={pillar.title}
                   className="fade-in-up card p-5 sm:p-6 cursor-default flex flex-col"
                   style={{
-                    borderTop: `3px solid ${pillar.color}`,
+                    borderTop: `3px solid ${PILLAR_ACCENT}`,
                     borderRadius: 'var(--radius-xl)',
                     minHeight: '260px',
                   }}
@@ -437,7 +437,7 @@ export default function Home() {
                         fontStyle: 'italic',
                         fontSize: '32px',
                         fontWeight: 400,
-                        color: pillar.color,
+                        color: PILLAR_ACCENT,
                         // 0.75 — large-text 3:1 AA (prev 0.6 = 2.84:1 fail).
                         // r7 2026-04-22.
                         opacity: 0.75,
@@ -446,7 +446,7 @@ export default function Home() {
                     >
                       0{i + 1}
                     </span>
-                    <Icon size={22} strokeWidth={1.4} style={{ color: pillar.color, opacity: 0.85 }} aria-hidden="true" />
+                    <Icon size={22} strokeWidth={1.4} style={{ color: PILLAR_ACCENT, opacity: 0.85 }} aria-hidden="true" />
                   </div>
                   <h3
                     className="mb-2"
@@ -471,9 +471,9 @@ export default function Home() {
                     style={{
                       fontSize: '10px',
                       letterSpacing: '0.04em',
-                      background: `${pillar.color}12`,
-                      color: pillar.color,
-                      border: `1px solid ${pillar.color}20`,
+                      background: `color-mix(in srgb, ${PILLAR_ACCENT} 7%, transparent)`,
+                      color: PILLAR_ACCENT,
+                      border: `1px solid color-mix(in srgb, ${PILLAR_ACCENT} 13%, transparent)`,
                     }}
                   >
                     {pillar.stat}
