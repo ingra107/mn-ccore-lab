@@ -1302,9 +1302,6 @@ a:hover {
   --task-accent-coral:   #8a1f2e;   /* matches --maroon-solid */
   --task-accent-orange:  #a23d08;   /* matches --orange light */
   --task-accent-green:   #066e2f;   /* matches --green light */
-  /* Two-date milestone rendering (Nick 2026-09-17): the internal/slipped
-     date reads distinctly from the hard (sponsor/journal) date, which stays
-     gold. Not an existing --*-solid pin — chosen for AA contrast on #fff. */
 }
 
 .dark {
@@ -2912,12 +2909,12 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    Everything here is under `.tk` or a tk- prefix, so it cannot leak. */
 
 /* Tasks List: one card per row inside the virtualized list. The cursor ring
-   shows only after the cursor was used; a selected row gets a solid accent ring
-   and a faint wash (the wash is a pseudo-element so the card keeps its depth). */
+   shows only after the cursor was used; a selected row gets a faint wash and no
+   ring (the wash is a pseudo-element so the card keeps its depth). Ring = where
+   you are, wash = what is chosen; a row can be both. */
 .tk .tk-lrow{position:relative;border-radius:var(--r-card)}
-.tk .tk-lrow[data-cursor=true]{outline:2px solid color-mix(in srgb,var(--job-accent) 80%,transparent);outline-offset:2px;box-shadow:0 0 0 5px color-mix(in srgb,var(--job-accent) 16%,transparent)}
-.tk .tk-lrow[data-selected=true]{outline:2px solid var(--job-accent);outline-offset:2px}
-.tk .tk-lrow[data-selected=true]::after{content:"";position:absolute;inset:0;border-radius:var(--r-card);background:color-mix(in srgb, var(--job-accent) 10%, transparent);pointer-events:none}
+.tk .tk-lrow[data-cursor=true]{outline:2px solid var(--job-accent);outline-offset:2px}
+.tk .tk-lrow[data-selected=true]::after{content:"";position:absolute;inset:0;border-radius:var(--r-card);background:color-mix(in srgb, var(--job-accent) 14%, transparent);pointer-events:none}
 
 /* Tasks Board (Nick approved the mock 2026-10-10): the Today card in each column.
    Column heads are plain text with a muted count, no coloured rule; an empty
@@ -3232,7 +3229,6 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
 .now-mk-dot{width:6px;height:6px;border-radius:50%;background:var(--job-accent);box-shadow:0 0 0 4px color-mix(in srgb, var(--job-accent) 10%, transparent);flex-shrink:0;margin-left:-3px}
 .now-mk-line{flex:1;height:1.5px;border-radius:2px;background:var(--job-accent);min-width:8px}
 .now-mk-lbl{font-size:10px;font-weight:600;line-height:1;white-space:nowrap;padding:0 4px;background:var(--now-mk-bg,var(--sk-panel))}
-/* edge: lies along the top edge of a cell or column (Calendar), dot at the left */
 /* the "today" date disc gets the same halo */
 .now-halo{box-shadow:0 0 0 4px color-mix(in srgb, var(--job-accent) 10%, transparent)}
 

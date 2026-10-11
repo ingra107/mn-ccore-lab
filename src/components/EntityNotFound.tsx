@@ -90,7 +90,7 @@ export default function EntityNotFound({
 
         {siblings.length > 0 && (
           <div style={{ marginTop: '1.75rem' }}>
-            <SectionHead title={`Recent ${lower}s`} as="h2" className="mb-2" />
+            <SectionHead title={`Recent ${lower}s`} as="h2" />
             <div className="flex flex-col gap-1">
               {siblings.map((s) => (
                 <Link
