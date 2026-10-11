@@ -91,14 +91,11 @@ export default function MeetingActivityFeed({ meetingId }: { meetingId: string }
   return (
     <div className="flex flex-col gap-3">
       {/* Today's compose field (principle 20): .tk-compose supplies the
-          visible edge, focus ring and readable placeholder; SmartCompose's
-          light theme reads page tokens. The default dark theme hard-coded pale
-          ink and a white 2% fill, so on the light page the field had no edge
-          and a near-invisible placeholder (item 32). */}
+          visible edge, focus ring and readable placeholder; SmartCompose
+          reads page tokens (its old hex-pinned dark theme, which left the
+          field edgeless on the light page, is gone; item 32). */}
       <div className="tk"><div className="tk-compose" style={{ marginBottom: 0 }}><div style={{ flex: 1, minWidth: 0 }}>
         <SmartCompose
-          theme="light"
-          bare
           value={text}
           onChange={setText}
           onSubmit={handleSubmit}

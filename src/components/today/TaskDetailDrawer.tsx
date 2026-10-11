@@ -214,7 +214,6 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         placeholder="Note or @hermes…"
         showMeLock
         showHermesToggle
-        bare
         alwaysShowToolbar
         launchContext={{ projectSlug: project?.slug ?? task.project_id ?? null, primaryFolder: project?.primary_folder ?? null }}
       />

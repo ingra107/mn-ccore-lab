@@ -277,8 +277,6 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
         ) : activeComposeKind === 'note' ? (
           <SmartCompose
             key="note-composer"
-            theme="light"
-            bare
             onSubmit={handlePostNote}
             submitting={postUpdate.isPending}
             uploadContext={{ type: 'project', id: slug }}
@@ -295,8 +293,6 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
         ) : (
           <SmartCompose
             key="comment-composer"
-            theme="light"
-            bare
             onSubmit={handlePostComment}
             submitting={addComment.isPending}
             uploadContext={{ type: 'project', id: slug }}

@@ -160,7 +160,6 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
 
           {(composing || expanded) && (
             <SmartCompose
-              bare
               autoFocus={composing}
               rows={2}
               value={replyDraft}

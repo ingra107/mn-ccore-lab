@@ -386,8 +386,6 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
       {detail.status === 'open' && (
         <div className="mt-4">
           <SmartCompose
-            theme="light"
-            bare
             value={answerText}
             onChange={setAnswerText}
             onSubmit={handleSubmitAnswer}
@@ -479,8 +477,6 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
               team list. The modal footer's "Ask the Lab" button drives the
               form (hideSubmitButton); Cmd+Enter submits via the form keydown. */}
           <SmartCompose
-            theme="light"
-            bare
             value={questionText}
             onChange={setQuestionText}
             onSubmit={async () => submitQuestion()}
