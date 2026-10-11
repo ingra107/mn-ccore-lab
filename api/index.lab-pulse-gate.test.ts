@@ -120,6 +120,8 @@ describe('Lab pulse routes are PI-only', () => {
     expect(member.teamEngagement).toEqual([])
     const pi = JSON.parse((await get('/api/analytics/pi-dashboard', PI_EMAIL)).text).data
     expect(pi.teamEngagement.map((m: { slug: string }) => m.slug)).toContain('nate-mesfin')
+    const piRes = await worker.fetch(new Request('https://hub.test/api/analytics/pi-dashboard', { headers: { 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': PI_EMAIL } }), env, CTX)
+    expect(piRes.headers.get('Cache-Control')).toBe('private, no-store')
   })
 
   it('the PI reads lab-wide: a task and an action on a project the PI is not a member of still count', async () => {

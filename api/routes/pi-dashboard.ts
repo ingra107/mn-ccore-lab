@@ -136,7 +136,7 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
     total_tasks: rt?.overall.completed ?? 0,
   };
 
-  return json({
+  const res = json({
     data: {
       commitments: commitmentStats || { total: 0, completed: 0, overdue: 0 },
       responseMetrics,
@@ -148,6 +148,8 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
       projectsByStage: (projectsByStage.results || []) as Array<{ stage: string; count: number }>,
     },
   });
+  // Lab-wide numbers for the PI: no shared or edge cache may keep them.
+  return isPi ? noStore(res) : res;
 }
 
 // ── Lab pulse (Nick, 2026-10-11) ───────────────────────────
@@ -326,8 +328,11 @@ async function computeResponseTime(env: Env, now: Date) {
 // (kind comment/update, source_table NULL = typed by a person, not a PB progress
 // note, gardener or meeting row; hidden rows left out). Every comment and
 // project update is ALSO written to activity_log (tasks.ts, projects.ts), so
-// reading both counted each twice; activity_log's own history (before the P2-A
-// cutover, 2026-06-10) falls outside every window used here. Rows posted
+// reading both counted each twice. The 30/60-day counts never reach before the
+// P2-A cutover (2026-06-10), but the 180-day collaborator gate and the 365-day
+// last_active DO, and the P2-A backfill rows carry source_table='activity_log'
+// (so the NULL filter skips them): a collaborator active only Apr-Jun 2026 drops
+// out of the denominator until about mid-December. Rows posted
 // through Nick's own session (PB automation under nick-ingraham) count as his:
 // that touches only his row. Opening is entity_seen
 // (POST /api/seen on every detail open), the only durable per-person
