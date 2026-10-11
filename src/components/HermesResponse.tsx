@@ -99,8 +99,8 @@ export default function HermesResponse({ content }: { content: string }) {
               aria-label={`Operation finding: ${f.value} ${f.label}`}
               style={{
                 borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--gold)',
-                background: 'var(--gold-emphasis)',
+                border: '1px solid var(--sk-t2)',
+                background: 'color-mix(in srgb, var(--sk-t1) 8%, transparent)',
                 padding: 'var(--sp-sm) var(--sp-md)',
                 display: 'flex',
                 flexDirection: 'column',
@@ -113,7 +113,7 @@ export default function HermesResponse({ content }: { content: string }) {
                   fontWeight: 600,
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  color: 'var(--gold-on-emphasis)',
+                  color: 'var(--sk-t2)',
                   opacity: 0.85,
                 }}
               >
@@ -125,7 +125,7 @@ export default function HermesResponse({ content }: { content: string }) {
                     fontFamily: 'var(--font-sans)',
                     fontWeight: 700,
                     fontSize: 22,
-                    color: 'var(--gold-on-emphasis)',
+                    color: 'var(--sk-t2)',
                     fontVariantNumeric: 'tabular-nums',
                     lineHeight: 1.1,
                   }}

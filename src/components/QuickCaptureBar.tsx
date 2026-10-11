@@ -28,10 +28,10 @@ export default function QuickCaptureBar({ noMargin }: { noMargin?: boolean }) {
           boxShadow: '0 0 0 1px var(--border-subtle)',
           cursor: 'pointer',
           transition: 'border-color 150ms ease, box-shadow 150ms ease',
-          '--hov-border': 'var(--teal)',
+          '--hov-border': 'var(--job-accent)',
         } as React.CSSProperties}
       >
-        <Plus {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
+        <Plus {...ICON_PROPS} size={14} style={{ color: 'var(--job-accent)', opacity: 0.85, flexShrink: 0 }} />
         <span
           className="flex-1 text-[13px]"
           style={{ color: 'var(--slate)', opacity: 0.85, fontFamily: 'inherit' }}

@@ -71,22 +71,22 @@ export default function PublicationTimeline({ publications }: PublicationTimelin
             }}
             labelStyle={{ color: 'var(--ink)', fontWeight: 500 }}
           />
-          <Bar dataKey="published" stackId="pubs" fill="var(--gold)" fillOpacity={0.9} radius={[0, 0, 0, 0]} name="Published" />
-          <Bar dataKey="review" stackId="pubs" fill="var(--gold)" fillOpacity={0.45} name="In Review" />
-          <Bar dataKey="prep" stackId="pubs" fill="var(--gold)" fillOpacity={0.25} radius={[3, 3, 0, 0]} name="In Prep" />
+          <Bar dataKey="published" stackId="pubs" fill="var(--job-brand)" fillOpacity={0.9} radius={[0, 0, 0, 0]} name="Published" />
+          <Bar dataKey="review" stackId="pubs" fill="var(--job-brand)" fillOpacity={0.45} name="In Review" />
+          <Bar dataKey="prep" stackId="pubs" fill="var(--job-brand)" fillOpacity={0.25} radius={[3, 3, 0, 0]} name="In Prep" />
         </BarChart>
       </ResponsiveContainer>
 
       {/* Legend */}
       <div className="flex items-center gap-4 mt-3 justify-center">
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--gold)', opacity: 0.9 }} />
+          <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--job-brand)', opacity: 0.9 }} />
           <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)' }}>
             Published
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--gold)', opacity: 0.85 }} />
+          <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--job-brand)', opacity: 0.85 }} />
           <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)' }}>
             In Review / Prep
           </span>

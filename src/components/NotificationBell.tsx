@@ -7,7 +7,7 @@ import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '.
 import { formatRelativeTime, formatMediumDate, localDateKey } from '../lib/dateUtils'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 
 const TYPE_ICONS: Record<string, typeof Bell> = {
   mention: AtSign,
@@ -125,7 +125,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
               position: 'absolute',
               top: '2px',
               right: '2px',
-              background: 'var(--gold)',
+              background: 'var(--job-wants)',
               color: '#0f1923',
               fontSize: '10px',
               lineHeight: '16px',
@@ -159,7 +159,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
               width: '360px',
               maxHeight: '480px',
               background: 'var(--cream)',
-              border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+              border: `1px solid ${withAlpha('var(--sk-t1)', 10)}`,
               borderRadius: 'var(--radius-xl)',
               boxShadow: 'var(--shadow-elevated)',
               zIndex: 'var(--z-sidebar)',
@@ -172,7 +172,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
             <div
               style={{
                 padding: 'var(--sp-md) var(--sp-lg)',
-                borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
+                borderBottom: `1px solid ${withAlpha('var(--sk-t1)', 6)}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -195,10 +195,10 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                   className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md transition-colors duration-150 hov-bg"
                   style={{
                     fontSize: '10px',
-                    color: 'var(--gold)',
-                    background: 'var(--gold-active)',
+                    color: 'var(--sk-t2)',
+                    background: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',
                     border: 'none',
-                    '--hov-bg': 'var(--gold-emphasis)',
+                    '--hov-bg': 'color-mix(in srgb, var(--sk-t1) 10%, transparent)',
                   } as React.CSSProperties}
                 >
                   <CheckCheck {...ICON_PROPS} size={11} />
@@ -239,7 +239,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                       style={{
                         padding: '6px 16px 4px',
                         fontSize: '10px',
-                        color: group.label === 'Today' ? 'var(--teal)' : 'var(--slate)',
+                        color: group.label === 'Today' ? 'var(--job-accent)' : 'var(--slate)',
                         opacity: group.label === 'Today' ? 1 : 'var(--ink-label)',
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
@@ -261,12 +261,12 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                             cursor: 'pointer',
                             transition: 'background 0.15s',
                             background: isImpact
-                              ? 'var(--gold-active)'
-                              : isUnread ? 'var(--gold-hover)' : 'transparent',
+                              ? 'color-mix(in srgb, var(--job-wants) 10%, transparent)'
+                              : isUnread ? 'color-mix(in srgb, var(--job-wants) 6%, transparent)' : 'transparent',
                             borderLeft: isImpact
-                              ? '3px solid var(--gold)'
-                              : isUnread ? '3px solid var(--gold)' : '3px solid transparent',
-                            '--hov-bg': isImpact ? 'var(--gold-emphasis)' : 'var(--gold-active)',
+                              ? '3px solid var(--job-wants)'
+                              : isUnread ? '3px solid var(--job-wants)' : '3px solid transparent',
+                            '--hov-bg': isImpact ? 'color-mix(in srgb, var(--job-wants) 15%, transparent)' : 'color-mix(in srgb, var(--job-wants) 10%, transparent)',
                           } as React.CSSProperties}
                         >
                           <div
@@ -276,14 +276,14 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                               height: '28px',
                               borderRadius: 'var(--radius-circle)',
                               background: isImpact
-                                ? withAlpha(ACCENT_GOLD, 20)
-                                : isUnread ? 'var(--gold-emphasis)' : 'var(--ice)',
+                                ? withAlpha('var(--job-wants)', 20)
+                                : isUnread ? 'color-mix(in srgb, var(--job-wants) 15%, transparent)' : 'var(--ice)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                             }}
                           >
-                            <Icon {...ICON_PROPS} size={14} style={{ color: isImpact ? 'var(--gold)' : isUnread ? 'var(--gold)' : 'var(--slate)' }} />
+                            <Icon {...ICON_PROPS} size={14} style={{ color: isImpact ? 'var(--job-wants)' : isUnread ? 'var(--job-wants)' : 'var(--slate)' }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div
@@ -328,7 +328,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                           {isUnread && (
                             <div
                               className="flex-shrink-0 mt-2"
-                              style={{ width: '6px', height: '6px', borderRadius: 'var(--radius-circle)', background: 'var(--gold)' }}
+                              style={{ width: '6px', height: '6px', borderRadius: 'var(--radius-circle)', background: 'var(--job-wants)' }}
                             />
                           )}
                         </div>
@@ -367,9 +367,9 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                 padding: '10px 16px',
                 textAlign: 'center',
                 fontSize: 'var(--label-size)',
-                color: 'var(--gold)',
+                color: 'var(--sk-t2)',
                 textDecoration: 'none',
-                borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+                borderTop: `1px solid ${withAlpha('var(--sk-t1)', 8)}`,
               }}
             >
               View all items

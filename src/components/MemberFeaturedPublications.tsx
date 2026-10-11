@@ -33,7 +33,7 @@ import { Star, ChevronUp, ChevronDown, X, Plus, Check } from 'lucide-react'
 import type { Publication } from '../data/types'
 import PublicationCard from './PublicationCard'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 import { useMemberFeaturedPublications } from '../hooks/useApiData'
 import { useSetMemberFeaturedPublications } from '../hooks/useMutations'
 
@@ -130,9 +130,9 @@ export default function MemberFeaturedPublications({
     return (
       <section className="mb-8" id="featured-publications">
         <div className="flex items-center gap-2 mb-2">
-          <Star {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} aria-hidden="true" />
-          <h2 className="text-sm" style={{ color: 'var(--gold)', fontSize: 'var(--text-small)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            Featured Articles
+          <Star {...ICON_PROPS} size={16} style={{ color: 'var(--job-brand)' }} aria-hidden="true" />
+          <h2 className="text-sm" style={{ color: 'var(--job-brand)', fontSize: 'var(--text-small)', fontWeight: 600 }}>
+            Featured articles
           </h2>
         </div>
         <p style={{ fontSize: 'var(--text-small)', color: 'var(--slate)' }}>
@@ -151,17 +151,16 @@ export default function MemberFeaturedPublications({
   return (
     <section className="mb-8" id="featured-publications">
       <div className="flex items-center gap-2 mb-4">
-        <Star {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+        <Star {...ICON_PROPS} size={16} style={{ color: 'var(--job-brand)' }} aria-hidden="true" />
         <h2
           className="text-sm"
           style={{
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em',
-            color: 'var(--gold)',
+            color: 'var(--job-brand)',
             fontSize: 'var(--text-small)',
+            fontWeight: 600,
           }}
         >
-          Featured Articles
+          Featured articles
         </h2>
         {canEdit && !editing && (
           <button
@@ -293,7 +292,7 @@ export default function MemberFeaturedPublications({
                 padding: '4px 10px',
                 borderRadius: 'var(--radius-sm)',
                 border: '1px solid var(--border-subtle)',
-                background: withAlpha(ACCENT_GOLD, 10),
+                background: withAlpha('var(--sk-t1)', 5),
                 color: 'var(--ink)',
                 cursor: save.isPending ? 'default' : 'pointer',
               }}

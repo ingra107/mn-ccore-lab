@@ -26,9 +26,9 @@ const INTENT_LABEL: Record<Intent, string> = {
 }
 
 const INTENT_COLOR: Record<Intent, string> = {
-  viewing: 'var(--green)',
-  editing: 'var(--orange)',
-  commenting: 'var(--teal-solid)',
+  viewing: 'var(--sk-t2)',
+  editing: 'var(--sk-t2)',
+  commenting: 'var(--sk-t2)',
 }
 
 function aggregateIntent(peerIntents: Record<string, Intent>): Intent {
@@ -55,11 +55,11 @@ export default function PresenceAvatars({ slugs, size = '2xs', limit = 4, peerIn
       className="flex items-center"
       title={`${tooltipBase}: ${tooltipNames}`}
       style={{
-        background: 'var(--teal-active)',
+        background: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',
         borderRadius: 'var(--radius-full)',
         padding: '2px 6px 2px 4px',
         fontSize: '10px',
-        color: 'var(--teal)',
+        color: 'var(--sk-t2)',
         fontWeight: 500,
       }}
     >

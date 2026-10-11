@@ -24,7 +24,7 @@ export default function WelcomeBanner() {
           minHeight: 44,
           padding: 'var(--sp-sm) var(--sp-lg)',
           backgroundColor: 'var(--surface-1)',
-          borderLeft: '3px solid var(--teal-subtle)',
+          borderLeft: '3px solid var(--sk-t2)',
           borderRadius: 'var(--radius-md)',
           display: 'flex',
           alignItems: 'center',
@@ -42,7 +42,7 @@ export default function WelcomeBanner() {
             className="portal-footer-link"
             style={{
               fontSize: 'var(--text-small)',
-              color: 'var(--teal)',
+              color: 'var(--sk-t2)',
               textDecoration: 'none',
             }}
           >

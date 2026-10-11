@@ -287,7 +287,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
                 color: 'var(--slate)',
                 opacity: 0.85,
               }}
-              onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.color = 'var(--teal)'; e.currentTarget.style.opacity = '1' }}
+              onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--job-accent)'; e.currentTarget.style.color = 'var(--job-accent)'; e.currentTarget.style.opacity = '1' }}
               onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--slate)'; e.currentTarget.style.opacity = '0.7' }}
             >
               <Icon {...ICON_PROPS} size={11} />
@@ -322,7 +322,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           {/* Autofill suggestion chips */}
           {visibleSuggestions.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-              <Sparkles {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
+              <Sparkles {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)', opacity: 0.85, flexShrink: 0 }} />
               {visibleSuggestions.map((s) => (
                 <button
                   key={s.field}
@@ -332,8 +332,8 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
                   style={{
                     fontSize: 'var(--label-size)',
                     lineHeight: '18px',
-                    color: 'var(--teal)',
-                    border: '1px solid var(--teal)',
+                    color: 'var(--job-accent)',
+                    border: '1px solid var(--job-accent)',
                     background: 'transparent',
                     cursor: 'pointer',
                     opacity: 0.85,

@@ -138,7 +138,7 @@ export default function ProjectMembers({ projectRef, projectTitle }: ProjectMemb
             aria-label={`Add a member to ${projectTitle}`}
             value=""
             triggerLabel="+ Add a member"
-            triggerColor="var(--teal)"
+            triggerColor="var(--job-accent)"
             searchable
             maxWidth={220}
             options={pickerOptions}

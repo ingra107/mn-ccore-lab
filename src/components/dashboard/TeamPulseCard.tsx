@@ -3,7 +3,7 @@ import { Users } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { useTeamPulse } from '../../hooks/useApiData'
 import { directors, getAllMembers } from '../../data/team'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { withAlpha } from '../../lib/taskGrouping'
 import { QueryErrorNote } from '../QueryErrorNote'
 
 function TeamPulseCard() {
@@ -51,8 +51,8 @@ function TeamPulseCard() {
           <div
             style={{
               width: 8, height: 8, borderRadius: 'var(--radius-circle)',
-              background: activeThisWeek > 0 ? 'var(--green-light)' : 'rgba(100, 116, 139, 0.3)',
-              boxShadow: activeThisWeek > 0 ? '0 0 6px rgba(34, 197, 94, 0.4)' : 'none',
+              background: activeThisWeek > 0 ? 'var(--sk-t2)' : 'rgba(100, 116, 139, 0.3)',
+              boxShadow: activeThisWeek > 0 ? 'none' : 'none',
               flexShrink: 0,
               animation: activeThisWeek > 0 ? 'status-pulse 2s ease-in-out infinite' : 'none',
             }}
@@ -82,12 +82,12 @@ function TeamPulseCard() {
         </div>
 
         {/* Activity summary */}
-        <div className="flex items-center gap-4 pt-1" style={{ borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 8)}` }}>
+        <div className="flex items-center gap-4 pt-1" style={{ borderTop: `1px solid ${withAlpha('var(--sk-t1)', 4)}` }}>
           {hasActivity ? (
             <>
               {totalUpdates > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--teal)' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--sk-t2)' }}>
                     {totalUpdates}
                   </span>
                   <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
@@ -97,7 +97,7 @@ function TeamPulseCard() {
               )}
               {totalCompletions > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gold)' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--sk-t2)' }}>
                     {totalCompletions}
                   </span>
                   <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
@@ -128,8 +128,8 @@ function MemberDot({ name, initials, photoUrl, isActive }: {
       <div
         style={{
           width: 32, height: 32, borderRadius: 'var(--radius-circle)', overflow: 'hidden',
-          background: isActive ? 'var(--green-hover)' : 'rgba(100, 116, 139, 0.08)',
-          border: isActive ? '1.5px solid rgba(34, 197, 94, 0.35)' : '1.5px solid rgba(100, 116, 139, 0.15)',
+          background: isActive ? 'color-mix(in srgb, var(--sk-t1) 3%, transparent)' : 'rgba(100, 116, 139, 0.08)',
+          border: isActive ? '1.5px solid color-mix(in srgb, var(--sk-t1) 30%, transparent)' : '1.5px solid rgba(100, 116, 139, 0.15)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: 'border-color 0.2s',
         }}
@@ -139,7 +139,7 @@ function MemberDot({ name, initials, photoUrl, isActive }: {
         ) : (
           <span style={{
             fontSize: '10px', fontWeight: 700,
-            color: isActive ? 'var(--green-light)' : 'var(--slate)', opacity: isActive ? 1 : 0.85,
+            color: isActive ? 'var(--sk-t2)' : 'var(--slate)', opacity: isActive ? 1 : 0.85,
           }}>
             {initials}
           </span>
@@ -147,9 +147,9 @@ function MemberDot({ name, initials, photoUrl, isActive }: {
       </div>
       <div style={{
         position: 'absolute', bottom: 0, right: 0, width: 8, height: 8, borderRadius: 'var(--radius-circle)',
-        background: isActive ? 'var(--green-light)' : 'rgba(100, 116, 139, 0.25)',
+        background: isActive ? 'var(--sk-t2)' : 'rgba(100, 116, 139, 0.25)',
         border: '1.5px solid var(--cream)',
-        boxShadow: isActive ? '0 0 4px rgba(34, 197, 94, 0.5)' : 'none',
+        boxShadow: isActive ? 'none' : 'none',
       }} />
     </div>
   )

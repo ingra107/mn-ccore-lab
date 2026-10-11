@@ -183,10 +183,10 @@ export default function InlineDatePicker({ value, onChange, tableCell, done, dis
           cursor: 'pointer',
           fontSize: 'var(--text-label)',
           fontWeight: isOverdue || isToday ? 500 : 400,
-          color: isOverdue ? 'var(--maroon)' : isToday ? 'var(--teal)' : isThisWeek ? 'var(--gold)' : 'var(--slate)',
+          color: isOverdue ? 'var(--job-overdue)' : isToday ? 'var(--job-accent)' : isThisWeek ? 'var(--sk-t2)' : 'var(--slate)',
           opacity: 0.85,
           fontVariantNumeric: 'tabular-nums',
-          '--hov-bg': 'var(--teal-hover)',
+          '--hov-bg': 'color-mix(in srgb, var(--job-accent) 6%, transparent)',
         } as React.CSSProperties}
       >
         <CalendarDays {...ICON_PROPS} size={11} />
@@ -236,8 +236,8 @@ export default function InlineDatePicker({ value, onChange, tableCell, done, dis
                 style={{
                   flex: 1, padding: '4px 2px', borderRadius: 'var(--radius-md)', border: 'none',
                   fontSize: 10, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap',
-                  background: !p.step && value === p.value ? 'var(--teal-emphasis)' : 'transparent',
-                  color: !p.step && value === p.value ? 'var(--teal)' : 'var(--slate)',
+                  background: !p.step && value === p.value ? 'color-mix(in srgb, var(--job-accent) 15%, transparent)' : 'transparent',
+                  color: !p.step && value === p.value ? 'var(--job-accent)' : 'var(--slate)',
                 }}
               >
                 {p.label}
@@ -282,10 +282,10 @@ export default function InlineDatePicker({ value, onChange, tableCell, done, dis
                   onMouseDown={(e) => { e.preventDefault(); commit(ds) }}
                   style={{
                     aspectRatio: '1 / 1', display: 'grid', placeItems: 'center',
-                    border: isTod && !isSel ? '1px solid var(--teal)' : '1px solid transparent',
+                    border: isTod && !isSel ? '1px solid var(--job-accent)' : '1px solid transparent',
                     borderRadius: 'var(--radius-md)',
                     fontSize: 11.5, fontWeight: isSel ? 600 : 400, cursor: 'pointer',
-                    background: isSel ? 'var(--gold)' : isCur ? 'var(--teal-hover)' : 'transparent',
+                    background: isSel ? 'var(--job-accent)' : isCur ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
                     color: isSel ? '#1a1a1a' : 'var(--ink)',
                     outline: 'none',
                   }}
@@ -303,7 +303,7 @@ export default function InlineDatePicker({ value, onChange, tableCell, done, dis
               disabled={!value}
               style={{
                 border: 'none', background: 'transparent', cursor: value ? 'pointer' : 'default',
-                color: value ? 'var(--maroon)' : 'var(--slate)', opacity: value ? 0.85 : 0.4,
+                color: value ? 'var(--sk-t2)' : 'var(--slate)', opacity: value ? 0.85 : 0.4,
                 fontSize: 11, fontWeight: 500, padding: '2px 6px', borderRadius: 'var(--radius-sm)',
               }}
             >

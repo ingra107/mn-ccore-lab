@@ -23,13 +23,13 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
       style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}
     >
       <div className="flex items-center gap-2 mb-3">
-        <Sparkles {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
+        <Sparkles {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
         <span
           style={{
             fontSize: '10px',
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
-            color: 'var(--teal)',
+            color: 'var(--sk-t2)',
             fontWeight: 600,
           }}
         >
@@ -56,9 +56,9 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hov-border"
               style={{
                 background: 'var(--ice)',
-                border: '1px solid var(--teal-active)',
+                border: '1px solid var(--border-subtle)',
                 textDecoration: 'none',
-                '--hov-border': 'rgba(45,138,138,0.2)',
+                '--hov-border': 'color-mix(in srgb, var(--sk-t1) 20%, transparent)',
               } as React.CSSProperties}
             >
               {/* Strength indicator */}
@@ -67,7 +67,7 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
                   width: 3,
                   height: 28,
                   borderRadius: 'var(--radius-sm)',
-                  background: `rgba(45,138,138,${Math.max(0.2, s.strength)})`,
+                  background: `color-mix(in srgb, var(--job-accent) ${Math.round(Math.max(0.2, s.strength) * 100)}%, transparent)`,
                   flexShrink: 0,
                 }}
               />
@@ -91,8 +91,8 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
                       key={i}
                       className="inline-block px-1.5 py-0.5 rounded text-[10px]"
                       style={{
-                        background: 'var(--teal-active)',
-                        color: 'var(--teal)',
+                        background: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',
+                        color: 'var(--sk-t2)',
                       }}
                     >
                       {r}

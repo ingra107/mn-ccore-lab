@@ -33,7 +33,7 @@ import { motion } from 'framer-motion'
 import { localDateKey } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
+import { isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import EmptyState from '../EmptyState'
 import { tealRamp, BAR_TRACK } from '../../lib/tealRamp'
 import { Chip } from '../ui/Chip'
@@ -591,11 +591,11 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
           transition: background var(--duration-normal) var(--ease-out);
         }
         .resize-handle:hover {
-          background: var(--teal);
+          background: var(--job-accent);
           opacity: 0.85;
         }
         .resize-handle-active {
-          background: var(--teal);
+          background: var(--job-accent);
           opacity: 0.85;
         }
         /* Column drag handles — subtle on hover */
@@ -611,7 +611,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         }
         /* Cell focus ring for Tab navigation */
         .cell-focused {
-          outline: 2px solid var(--teal);
+          outline: 2px solid var(--job-accent);
           outline-offset: -2px;
           border-radius: var(--radius-sm);
         }
@@ -932,8 +932,8 @@ function TaskGridRow({
         aria-hidden
         style={{
           position: 'absolute', inset: 0,
-          background: 'var(--green-hover, rgba(28,115,59,0.12))',
-          color: 'var(--green)',
+          background: 'color-mix(in srgb, var(--job-accent) 12%, transparent)',
+          color: 'var(--sk-t2)',
           display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
           padding: '0 var(--sp-lg)',
           fontSize: '12px', fontWeight: 600,
@@ -947,8 +947,8 @@ function TaskGridRow({
         aria-hidden
         style={{
           position: 'absolute', inset: 0,
-          background: `var(--gold-hover, ${withAlpha(ACCENT_GOLD, 15)})`,
-          color: 'var(--gold)',
+          background: `var(--gold-hover, ${withAlpha('var(--sk-t1)', 8)})`,
+          color: 'var(--sk-t2)',
           display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
           padding: '0 var(--sp-lg)',
           fontSize: '12px', fontWeight: 600,
@@ -971,8 +971,8 @@ function TaskGridRow({
         fontSize: 'var(--cell-font-size)',
         borderBottom: '1px solid var(--border-subtle)',
         borderLeft: `3px solid ${
-          task.priority === 'urgent' ? 'var(--maroon)' :
-          task.priority === 'high' ? 'var(--orange)' :
+          task.priority === 'urgent' ? 'var(--job-stale)' :
+          task.priority === 'high' ? 'var(--sk-t2)' :
           'transparent'
         }`,
         cursor: selectModeActive && onToggleSelect ? 'cell' : (onOpenDetail || onSelect) ? 'pointer' : 'default',
@@ -1054,23 +1054,23 @@ function TaskGridRow({
           /* Select-mode affordance: show a selection-square when Ctrl/Meta held */
           <div style={{
             width: 16, height: 16, borderRadius: 'var(--radius-sm)',
-            border: '1.5px solid var(--teal-solid)',
+            border: '1.5px solid var(--job-accent-solid)',
             background: 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'background var(--transition-fast), border var(--transition-fast)',
           }}>
-            <Square {...ICON_PROPS} size={8} style={{ color: 'var(--teal-solid)' }} />
+            <Square {...ICON_PROPS} size={8} style={{ color: 'var(--job-accent-solid)' }} />
           </div>
         ) : (
           <div style={{
             width: 16, height: 16, borderRadius: 'var(--radius-circle)',
-            border: selected ? '2px solid var(--teal-solid)' : isDone ? 'none' : '1.5px solid var(--border-subtle)',
-            background: isDone ? 'var(--teal-solid)' : selected ? 'var(--teal-emphasis)' : 'transparent',
+            border: selected ? '2px solid var(--job-accent-solid)' : isDone ? 'none' : '1.5px solid var(--border-subtle)',
+            background: isDone ? 'var(--job-accent-solid)' : selected ? 'color-mix(in srgb, var(--job-accent) 15%, transparent)' : 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'background var(--transition-fast), border var(--transition-fast)',
           }}>
             {isDone && <CheckCircle2 {...ICON_PROPS} size={10} style={{ color: '#fff' }} />}
-            {!isDone && selected && <CheckCircle2 {...ICON_PROPS} size={10} style={{ color: 'var(--teal-solid)' }} />}
+            {!isDone && selected && <CheckCircle2 {...ICON_PROPS} size={10} style={{ color: 'var(--job-accent-solid)' }} />}
           </div>
         )}
       </div>
@@ -1112,7 +1112,7 @@ function TaskGridRow({
                   </button>
                   {hasBlockers && (
                     <span className="relative group" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
-                      <Link2 {...ICON_PROPS} size={12} style={{ color: 'var(--maroon)', opacity: 0.85 }} />
+                      <Link2 {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)', opacity: 0.85 }} />
                       <span
                         className="absolute left-full ml-2 hidden group-hover:block z-30 rounded-lg shadow-lg border py-2 px-3"
                         style={{
@@ -1124,7 +1124,7 @@ function TaskGridRow({
                           transform: 'translateY(-50%)',
                         }}
                       >
-                        <span className="text-[10px] uppercase tracking-wider block mb-1.5" style={{ color: 'var(--maroon)', fontWeight: 600 }}>Blocked by</span>
+                        <span className="text-[10px] uppercase tracking-wider block mb-1.5" style={{ color: 'var(--sk-t2)', fontWeight: 600 }}>Blocked by</span>
                         {blockerIds.map(id => {
                           const bt = allTasks.find(t => t.id === id)
                           if (!bt) return null
@@ -1132,7 +1132,7 @@ function TaskGridRow({
                             <span key={id} className="flex items-center gap-1.5 text-[11px] mb-1" style={{ color: 'var(--ink)' }}>
                               <span style={{
                                 width: 6, height: 6, borderRadius: 'var(--radius-circle)',
-                                background: bt.completed ? 'var(--green)' : bt.status === 'in_progress' ? 'var(--teal-solid)' : 'var(--slate)',
+                                background: bt.completed ? 'var(--sk-t2)' : bt.status === 'in_progress' ? 'var(--job-accent-solid)' : 'var(--slate)',
                                 flexShrink: 0,
                               }} />
                               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1162,7 +1162,7 @@ function TaskGridRow({
                         fontWeight: 400,
                         color: 'var(--ink)',
                         background: 'var(--cream)',
-                        border: '1px solid var(--teal)',
+                        border: '1px solid var(--job-accent)',
                         borderRadius: 'var(--radius-sm)',
                         padding: '2px 6px',
                         outline: 'none',
@@ -1219,11 +1219,11 @@ function TaskGridRow({
                         fontSize: '10px',
                         padding: '1px 5px',
                         borderRadius: 'var(--radius-lg)',
-                        backgroundColor: task.source === 'meeting' ? 'var(--teal-active)' :
-                          task.source === 'recurrence' ? 'var(--gold-active)' :
+                        backgroundColor: task.source === 'meeting' ? 'color-mix(in srgb, var(--sk-t1) 5%, transparent)' :
+                          task.source === 'recurrence' ? 'color-mix(in srgb, var(--sk-t1) 5%, transparent)' :
                           'rgba(148,163,184,0.1)',
-                        color: task.source === 'meeting' ? 'var(--teal)' :
-                          task.source === 'recurrence' ? 'var(--gold)' :
+                        color: task.source === 'meeting' ? 'var(--sk-t2)' :
+                          task.source === 'recurrence' ? 'var(--sk-t2)' :
                           'var(--slate)',
                         flexShrink: 0,
                         lineHeight: '14px',
@@ -1237,8 +1237,8 @@ function TaskGridRow({
                     if (!dateStr) return null
                     const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
                     if (days < 7) return null
-                    const bgColor = days > 30 ? 'var(--maroon-hover)' : days > 14 ? 'var(--gold-hover)' : 'var(--hover-light)'
-                    const textColor = days > 30 ? 'var(--maroon)' : days > 14 ? 'var(--gold)' : 'var(--slate)'
+                    const bgColor = days > 30 ? 'color-mix(in srgb, var(--job-stale) 6%, transparent)' : days > 14 ? 'color-mix(in srgb, var(--job-stale) 6%, transparent)' : 'var(--hover-light)'
+                    const textColor = days > 30 ? 'var(--job-stale)' : days > 14 ? 'var(--job-stale)' : 'var(--slate)'
                     return (
                       <span
                         className="hover-badge"
@@ -1269,7 +1269,7 @@ function TaskGridRow({
                         padding: '1px 5px',
                         borderRadius: 'var(--radius-sm)',
                         backgroundColor: 'var(--surface-3)',
-                        borderLeft: '2px solid var(--teal)',
+                        borderLeft: '2px solid var(--sk-t3)',
                         color: 'var(--slate)',
                         flexShrink: 0,
                         lineHeight: '14px',
@@ -1279,8 +1279,8 @@ function TaskGridRow({
                         whiteSpace: 'nowrap',
                         textDecoration: 'none',
                         transition: 'background-color 150ms ease, color 150ms ease',
-                        '--hov-bg': 'var(--teal-active)',
-                        '--hov-color': 'var(--teal)',
+                        '--hov-bg': 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
+                        '--hov-color': 'var(--job-accent)',
                       } as React.CSSProperties}
                       title={`Work on ${task.project_id}`}
                     >
@@ -1316,7 +1316,7 @@ function TaskGridRow({
                       width: 6,
                       height: 6,
                       borderRadius: 'var(--radius-circle)',
-                      backgroundColor: 'var(--gold)',
+                      backgroundColor: 'var(--job-wants)',
                       flexShrink: 0,
                       opacity: 0.8,
                     }}
@@ -1348,7 +1348,7 @@ function TaskGridRow({
                       <span
                         style={{
                           fontSize: 'var(--text-small)',
-                          color: name ? 'var(--teal)' : 'var(--slate)',
+                          color: name ? 'var(--sk-t2)' : 'var(--slate)',
                           opacity: name ? 0.85 : 'var(--ink-hint)',
                           maxWidth: '110px',
                           overflow: 'hidden',
@@ -1433,7 +1433,7 @@ function TaskGridRow({
                   return (
                     <span
                       title={`In progress for ${days} days \u2014 consider updating`}
-                      style={{ fontSize: 'var(--text-micro)', color: 'var(--orange)', opacity: 0.85, marginTop: '1px' }}
+                      style={{ fontSize: 'var(--text-micro)', color: 'var(--job-stale)', opacity: 0.85, marginTop: '1px' }}
                     >
                       {'\u26A0'} {days}d
                     </span>
@@ -1561,7 +1561,7 @@ function TaskGridRow({
               onBlur={() => { if (!commentDraft.trim()) { setQuickComment(false); setCommentDraft('') } }}
               placeholder="Add a quick note..."
               className="flex-1 text-[12px] px-2.5 py-1.5 rounded-lg border bg-transparent"
-              style={{ color: 'var(--ink)', borderColor: 'var(--teal)', outline: 'none' }}
+              style={{ color: 'var(--ink)', borderColor: 'var(--job-accent)', outline: 'none' }}
             />
           </div>
         </div>
@@ -1580,7 +1580,7 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
   const resolvedType = normalizeLink(url)?.type
   const iconSpec = resolvedType ? iconForType(resolvedType) : null
   const Icon = iconSpec ? iconSpec.Icon : FallbackIcon
-  const iconColor = iconSpec ? iconSpec.tint : 'var(--teal)'
+  const iconColor = iconSpec ? iconSpec.tint : 'var(--job-accent)'
 
   // Non-http links fire through the ONE protocol-launch chokepoint
   // (clipboard backup + toast — that toast is the single feedback path).
@@ -1686,7 +1686,7 @@ function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; t
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
       >
         {subtask.completed ? (
-          <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
+          <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
         ) : (
           <Circle {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         )}
@@ -1768,7 +1768,7 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
         style={{
           padding: '6px 16px 10px 48px',
           borderBottom: '1px solid var(--border-subtle)',
-          background: 'var(--teal-hover)',
+          background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
         }}
       >
         {total > 0 && (
@@ -1918,7 +1918,7 @@ function InlineCellSelect({
           cursor: 'pointer',
           fontSize: '12px',
           fontWeight: 400,
-          '--hov-bg': open ? 'none' : 'var(--teal-hover)',
+          '--hov-bg': open ? 'none' : 'color-mix(in srgb, var(--job-accent) 6%, transparent)',
           '--hov-border': open ? 'transparent' : 'var(--border-subtle)',
         } as React.CSSProperties}
       >
@@ -1981,14 +1981,14 @@ function InlineCellSelect({
                   display: 'flex', alignItems: 'center', gap: '6px', width: '100%',
                   padding: '7px 12px', border: 'none', cursor: 'pointer',
                   background: idx === focusedIdx
-                    ? 'var(--teal-active)'
-                    : opt.value === value ? 'var(--teal-hover)' : 'none',
+                    ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)'
+                    : opt.value === value ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'none',
                   fontSize: '12px', fontWeight: opt.value === value ? 500 : 400,
                   color: opt.color || 'var(--ink)', textAlign: 'left',
                   transition: 'background var(--duration-fast) var(--ease-out)',
                 }}
-                onMouseEnter={(e) => { setFocusedIdx(idx); e.currentTarget.style.background = 'var(--teal-active)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = idx === focusedIdx ? 'var(--teal-active)' : opt.value === value ? 'var(--teal-hover)' : 'none' }}
+                onMouseEnter={(e) => { setFocusedIdx(idx); e.currentTarget.style.background = 'color-mix(in srgb, var(--job-accent) 10%, transparent)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = idx === focusedIdx ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : opt.value === value ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'none' }}
               >
                 {opt.label}
               </button>
@@ -2019,10 +2019,10 @@ function CalculationsRow({ tasks }: { tasks: TaskRow[] }) {
     const pct = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0
     return [
       { label: 'Count', value: tasks.length },
-      ...(overdue > 0 ? [{ label: 'Overdue', value: overdue, color: 'var(--maroon)' }] : []),
+      ...(overdue > 0 ? [{ label: 'Overdue', value: overdue, color: 'var(--job-overdue)' }] : []),
       { label: 'To Do', value: todo },
-      { label: 'In Progress', value: inProgress, color: 'var(--teal)' },
-      ...(done > 0 ? [{ label: 'Done', value: `${done} (${pct}%)`, color: 'var(--green)' }] : []),
+      { label: 'In Progress', value: inProgress, color: 'var(--job-accent)' },
+      ...(done > 0 ? [{ label: 'Done', value: `${done} (${pct}%)`, color: 'var(--sk-t2)' }] : []),
     ]
   }, [tasks])
 

@@ -48,10 +48,10 @@ export function NowMarker({
 export function NowMarkerSvg({ x, y1, y2, label = 'Today' }: { x: number; y1: number; y2: number; label?: string }) {
   return (
     <g data-testid="now-marker" aria-hidden="true">
-      <line x1={x} y1={y1} x2={x} y2={y2} stroke="var(--sk-ac)" strokeWidth={1.5} />
-      <circle cx={x} cy={y1} r={7} fill="var(--sk-ac)" fillOpacity={0.18} />
-      <circle cx={x} cy={y1} r={3} fill="var(--sk-ac)" />
-      <text x={x + 10} y={y1 + 3.5} style={{ fontSize: '10px', fontWeight: 600, fill: 'var(--sk-ac)' }}>{label}</text>
+      <line x1={x} y1={y1} x2={x} y2={y2} stroke="var(--job-accent)" strokeWidth={1.5} />
+      <circle cx={x} cy={y1} r={7} fill="var(--job-accent)" fillOpacity={0.18} />
+      <circle cx={x} cy={y1} r={3} fill="var(--job-accent)" />
+      <text x={x + 10} y={y1 + 3.5} style={{ fontSize: '10px', fontWeight: 600, fill: 'var(--job-accent)' }}>{label}</text>
     </g>
   )
 }

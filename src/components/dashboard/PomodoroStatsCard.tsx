@@ -30,9 +30,9 @@ function FocusBarChart({ bars }: { bars: FocusBarDatum[] }) {
           const x = i * (barW + gap)
           const y = chartH - barH
           const fill = bar.isToday
-            ? 'var(--teal)'
+            ? 'var(--job-accent)'
             : bar.minutes > 0
-              ? 'rgba(45,138,138,0.4)'
+              ? 'color-mix(in srgb, var(--job-accent) 40%, transparent)'
               : 'var(--border-subtle)'
           return (
             <g key={i}>
@@ -159,7 +159,7 @@ export default function PomodoroStatsCard() {
           {/* Streak + top project */}
           <div className="flex items-center justify-between mt-2">
             {streak > 0 && (
-              <span className="text-[10px]" style={{ color: 'var(--teal)', opacity: 0.8, fontVariantNumeric: 'tabular-nums' }}>
+              <span className="text-[10px]" style={{ color: 'var(--sk-t3)', opacity: 0.8, fontVariantNumeric: 'tabular-nums' }}>
                 {streak}-day streak
               </span>
             )}

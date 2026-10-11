@@ -99,7 +99,7 @@ export default function NetworkBackground() {
             y1={edge.y1}
             x2={edge.x2}
             y2={edge.y2}
-            stroke="#c9a84c"
+            stroke="var(--job-brand)"
             strokeWidth="0.5"
             opacity={edge.opacity}
           />
@@ -111,7 +111,7 @@ export default function NetworkBackground() {
             cx={node.cx}
             cy={node.cy}
             r={node.r}
-            fill="#c9a84c"
+            fill="var(--job-brand)"
             opacity={node.opacity}
             style={{
               animation: `networkFloat${node.id} ${node.duration}s ease-in-out ${node.delay}s infinite`,

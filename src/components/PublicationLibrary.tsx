@@ -2,14 +2,14 @@ import { useMemo } from 'react'
 import { ExternalLink } from 'lucide-react'
 import type { Publication } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 
 const JOURNAL_COLORS: Record<string, string> = {
-  'Critical Care Medicine': 'var(--maroon)',
-  'Intensive Care Medicine': 'var(--teal)',
-  'JAMA Network Open': 'var(--gold)',
-  'Chest': 'var(--orange)',
-  'Annals of the American Thoracic Society': 'var(--green)',
+  'Critical Care Medicine': 'var(--sk-t2)',
+  'Intensive Care Medicine': 'var(--sk-t2)',
+  'JAMA Network Open': 'var(--sk-t2)',
+  'Chest': 'var(--sk-t2)',
+  'Annals of the American Thoracic Society': 'var(--sk-t2)',
 }
 
 function getJournalAccent(journal: string): string {
@@ -57,7 +57,7 @@ export default function PublicationLibrary({ publications }: PublicationLibraryP
             >
               {pubs.length} paper{pubs.length !== 1 ? 's' : ''}
             </span>
-            <div style={{ flex: 1, height: '1px', background: withAlpha(ACCENT_GOLD, 20) }} />
+            <div style={{ flex: 1, height: '1px', background: withAlpha('var(--job-brand)', 20) }} />
           </div>
 
           {/* Horizontal scroll */}

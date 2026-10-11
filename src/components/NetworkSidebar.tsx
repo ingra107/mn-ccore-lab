@@ -7,7 +7,7 @@ import type { NetworkNode, NetworkEdge } from './CollaborationGraph'
 import { directors, getAllMembers } from '../data/team'
 import type { TeamMember, Director } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../lib/taskGrouping'
+import { PANEL_BG, withAlpha } from '../lib/taskGrouping'
 
 interface NetworkSidebarProps {
   selectedNode: NetworkNode | null
@@ -120,7 +120,7 @@ export default function NetworkSidebar({
             background: withAlpha(PANEL_BG, 85),
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            borderLeft: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+            borderLeft: `1px solid ${withAlpha('var(--job-brand)', 20)}`,
             zIndex: 'var(--z-dropdown)',
           }}
         >
@@ -130,10 +130,10 @@ export default function NetworkSidebar({
             className="absolute top-4 right-4 p-2 rounded-lg cursor-pointer transition-colors duration-200 hov-border hov-color"
             style={{
               background: 'var(--hover-light)',
-              border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+              border: `1px solid ${withAlpha('var(--job-brand)', 15)}`,
               color: 'rgba(255, 255, 255, 0.6)',
               zIndex: 'var(--z-dropdown)',
-              '--hov-border': withAlpha(ACCENT_GOLD, 40),
+              '--hov-border': withAlpha('var(--job-brand)', 40),
               '--hov-color': 'rgba(255, 255, 255, 0.9)',
             } as React.CSSProperties}
             aria-label="Close panel"
@@ -263,13 +263,13 @@ function NodeDetail({
         className="grid grid-cols-2 gap-3 mb-6 p-4 rounded-lg"
         style={{
           background: 'var(--hover-light)',
-          border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
+          border: `1px solid ${withAlpha('var(--job-brand)', 10)}`,
         }}
       >
         <div className="text-center">
           <div
             className="text-xl font-bold"
-            style={{ fontFamily: 'var(--font-display)', color: 'var(--gold)' }}
+            style={{ fontFamily: 'var(--font-display)', color: 'var(--job-brand)' }}
           >
             {node.papers}
           </div>
@@ -286,7 +286,7 @@ function NodeDetail({
         <div className="text-center">
           <div
             className="text-xl font-bold"
-            style={{ fontFamily: 'var(--font-display)', color: 'var(--gold)' }}
+            style={{ fontFamily: 'var(--font-display)', color: 'var(--job-brand)' }}
           >
             {connections.length}
           </div>
@@ -308,14 +308,14 @@ function NodeDetail({
           to={slug === 'nick-ingraham' || slug === 'nate-mesfin' ? `/${slug}` : `/team/${slug}`}
           className="flex items-center gap-2 mb-6 px-4 py-3 rounded-lg transition-all duration-200 hov-bg hov-border"
           style={{
-            background: 'var(--gold-active)',
-            border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
-            color: 'var(--gold)',
+            background: 'color-mix(in srgb, var(--job-brand) 10%, transparent)',
+            border: `1px solid ${withAlpha('var(--job-brand)', 20)}`,
+            color: 'var(--job-brand)',
             textDecoration: 'none',
             fontSize: '13px',
             fontWeight: 500,
-            '--hov-bg': 'var(--gold-emphasis)',
-            '--hov-border': withAlpha(ACCENT_GOLD, 40),
+            '--hov-bg': 'color-mix(in srgb, var(--job-brand) 15%, transparent)',
+            '--hov-border': withAlpha('var(--job-brand)', 40),
           } as React.CSSProperties}
         >
           <Users {...ICON_PROPS} size={14} />
@@ -351,7 +351,7 @@ function NodeDetail({
                   className="flex items-center justify-between px-3 py-2 rounded-md"
                   style={{
                     background: 'var(--hover-subtle)',
-                    border: `1px solid ${withAlpha(ACCENT_GOLD, 6)}`,
+                    border: `1px solid ${withAlpha('var(--job-brand)', 6)}`,
                   }}
                 >
                   <div className="flex items-center gap-2 min-w-0">
@@ -369,7 +369,7 @@ function NodeDetail({
                   <span
                     className="text-xs flex-shrink-0 ml-2"
                     style={{
-                      color: withAlpha(ACCENT_GOLD, 60),
+                      color: withAlpha('var(--job-brand)', 60),
                       fontSize: '10px',
                     }}
                   >
@@ -418,12 +418,12 @@ function EdgeDetail({
         <div className="flex flex-col items-center">
           <div
             className="w-8 h-px"
-            style={{ background: withAlpha(ACCENT_GOLD, 40) }}
+            style={{ background: withAlpha('var(--job-brand)', 40) }}
           />
           <span
             className="text-xs mt-1"
             style={{
-              color: withAlpha(ACCENT_GOLD, 60),
+              color: withAlpha('var(--job-brand)', 60),
               fontSize: '10px',
             }}
           >
@@ -476,7 +476,7 @@ function EdgeDetail({
               className="p-3 rounded-lg"
               style={{
                 background: 'var(--hover-subtle)',
-                border: `1px solid ${withAlpha(ACCENT_GOLD, 6)}`,
+                border: `1px solid ${withAlpha('var(--job-brand)', 6)}`,
               }}
             >
               <p
@@ -488,7 +488,7 @@ function EdgeDetail({
               <span
                 className="text-xs mt-1.5 inline-block"
                 style={{
-                  color: withAlpha(ACCENT_GOLD, 50),
+                  color: withAlpha('var(--job-brand)', 50),
                   fontSize: '10px',
                 }}
               >

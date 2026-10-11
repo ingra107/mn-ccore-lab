@@ -184,7 +184,7 @@ function SubmenuItem({
       <div
         style={{
           ...itemStyles,
-          background: open ? 'var(--gold-hover)' : 'none',
+          background: open ? 'color-mix(in srgb, var(--sk-t1) 3%, transparent)' : 'none',
         }}
       >
         <span>{label}</span>
@@ -310,7 +310,7 @@ export default function TaskContextMenu({
           return (
             <MenuItem
               key={s.value}
-              style={{ color: isCurrent ? 'var(--teal)' : s.color }}
+              style={{ color: isCurrent ? 'var(--job-accent)' : s.color }}
               onClick={() => handleAction(() => onStatusChange(task.id, s.value))}
             >
               <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
@@ -330,7 +330,7 @@ export default function TaskContextMenu({
           return (
             <MenuItem
               key={p.value}
-              style={{ color: isCurrent ? 'var(--teal)' : 'var(--ink, #e2e8f0)' }}
+              style={{ color: isCurrent ? 'var(--job-accent)' : 'var(--ink, #e2e8f0)' }}
               onClick={() => handleAction(() => {
                 onFieldChange?.(task.id, 'priority', p.value)
               })}

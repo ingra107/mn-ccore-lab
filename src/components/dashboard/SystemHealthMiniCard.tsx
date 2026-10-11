@@ -50,9 +50,9 @@ export default function SystemHealthMiniCard() {
   }
 
   const statusColors: Record<string, string> = {
-    green: 'var(--green-light)',
-    amber: '#f59e0b',
-    red: '#ef4444',
+    green: 'var(--sk-t2)',
+    amber: 'var(--job-stale)',
+    red: 'var(--job-stale)',
   }
 
   return (
@@ -72,7 +72,7 @@ export default function SystemHealthMiniCard() {
                 height: 12,
                 borderRadius: 'var(--radius-circle)',
                 backgroundColor: statusColors[status],
-                boxShadow: `0 0 8px ${statusColors[status]}40`,
+                boxShadow: `0 0 8px color-mix(in srgb, ${statusColors[status]} 25%, transparent)`,
                 flexShrink: 0,
               }}
             />

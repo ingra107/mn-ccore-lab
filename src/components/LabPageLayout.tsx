@@ -9,7 +9,7 @@ import { getMemberBySlug } from '../data/team'
 import { projects } from '../data/projects'
 import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 import { memberHue } from '../lib/memberHue'
 
 interface ProfileLink {
@@ -134,7 +134,7 @@ export default function LabPageLayout({
                 className="text-sm mb-1"
                 style={{
                   /* R4-P2-03: muted caption replaces gold in portal chrome. */
-                  color: portalChrome ? 'var(--ink-muted, var(--slate))' : 'var(--gold)',
+                  color: portalChrome ? 'var(--ink-muted, var(--slate))' : 'var(--job-brand)',
                   fontSize: '12px',
                 }}
               >
@@ -175,8 +175,8 @@ export default function LabPageLayout({
                       background: 'var(--sk-card)',
                       color: 'var(--slate)',
                       border: '1px solid transparent',
-                      '--hov-border': 'var(--gold)',
-                      '--hov-color': 'var(--gold)',
+                      '--hov-border': 'var(--job-brand)',
+                      '--hov-color': 'var(--job-brand)',
                     } as React.CSSProperties}
                   >
                     {link.label}
@@ -215,9 +215,9 @@ export default function LabPageLayout({
                                  member's personal hue stays the page's one
                                  accent (color rule 2026-10-11). The public
                                  site keeps its gold brand. */
-                              color: isActive ? (portalChrome ? 'var(--ink)' : 'var(--gold)') : 'var(--slate)',
+                              color: isActive ? (portalChrome ? 'var(--ink)' : 'var(--job-brand)') : 'var(--slate)',
                               borderLeft: isActive
-                                ? `2px solid ${portalChrome ? 'var(--ink)' : 'var(--gold)'}`
+                                ? `2px solid ${portalChrome ? 'var(--ink)' : 'var(--job-brand)'}`
                                 : '2px solid transparent',
                             }}
                           >
@@ -382,7 +382,7 @@ function ProjectCardItem({ project }: { project: ProjectCard }) {
     <div
       className="card p-5 sm:p-6 pl-6 sm:pl-8 cursor-pointer relative"
       style={{
-        borderLeft: hovered ? '5px solid var(--gold)' : '3px solid var(--gold)',
+        borderLeft: hovered ? '5px solid var(--job-brand)' : '3px solid var(--job-brand)',
         outline: 'none',
         transition: 'border-left-width var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out)',
       }}
@@ -410,7 +410,7 @@ function ProjectCardItem({ project }: { project: ProjectCard }) {
             aria-hidden="true"
             className="transition-opacity duration-200"
             style={{
-              color: 'var(--gold)',
+              color: 'var(--job-brand)',
               opacity: hovered ? 1 : 0,
             }}
           />
@@ -503,7 +503,7 @@ export function PublicationsSection({
             type="button"
             onClick={() => setShowAll((v) => !v)}
             className="text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
-            style={{ color: portalChrome ? 'var(--ink)' : 'var(--gold)', background: 'none', border: 'none' }}
+            style={{ color: portalChrome ? 'var(--ink)' : 'var(--job-brand)', background: 'none', border: 'none' }}
           >
             {showAll ? 'Show fewer' : `View all ${sorted.length} papers`}
           </button>
@@ -526,7 +526,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
       className="card p-0 overflow-hidden cursor-pointer block"
       style={{
         textDecoration: 'none',
-        borderLeft: hovered ? '4px solid var(--gold)' : '4px solid transparent',
+        borderLeft: hovered ? '4px solid var(--job-brand)' : '4px solid transparent',
         transition: 'border-color var(--duration-slow) var(--ease-out)',
       }}
       onMouseEnter={() => setHovered(true)}
@@ -554,7 +554,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
             <p
               className="text-xs mt-0.5"
               style={{
-                color: 'var(--gold)',
+                color: 'var(--job-brand)',
                 letterSpacing: '0.02em',
               }}
             >
@@ -590,7 +590,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
                   letterSpacing: '0.02em',
                   background: 'var(--sk-panel)',
                   color: 'var(--slate)',
-                  border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
+                  border: `1px solid ${withAlpha('var(--job-brand)', 12)}`,
                 }}
               >
                 {interest}
@@ -603,10 +603,10 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
         {menteeProjects.length > 0 && (
           <div
             className="pt-3"
-            style={{ borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 10)}` }}
+            style={{ borderTop: `1px solid ${withAlpha('var(--job-brand)', 10)}` }}
           >
             <div className="flex items-center gap-1.5 mb-2">
-              <FlaskConical {...ICON_PROPS} size={12} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <FlaskConical {...ICON_PROPS} size={12} style={{ color: 'var(--job-brand)' }} aria-hidden="true" />
               <span
                 className="text-xs uppercase"
                 style={{
@@ -659,7 +659,7 @@ export function MenteesSection({ mentees, id, title = 'MNCCORE Trainees' }: { me
   return (
     <section className="mb-16" id={id}>
       <div className="flex items-center gap-3 mb-2">
-        <GraduationCap size={22} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+        <GraduationCap size={22} style={{ color: 'var(--job-brand)' }} aria-hidden="true" />
         <h2
           className="text-xl sm:text-2xl"
           style={{

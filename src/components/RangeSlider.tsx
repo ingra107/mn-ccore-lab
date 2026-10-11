@@ -65,7 +65,7 @@ export default function RangeSlider({
           height: 4,
           appearance: 'none',
           WebkitAppearance: 'none',
-          background: `linear-gradient(to right, var(--teal) 0%, var(--teal) ${pct}%, var(--border-subtle) ${pct}%, var(--border-subtle) 100%)`,
+          background: `linear-gradient(to right, var(--job-accent) 0%, var(--job-accent) ${pct}%, var(--border-subtle) ${pct}%, var(--border-subtle) 100%)`,
           borderRadius: 'var(--radius-full)',
           outline: 'none',
           cursor: 'pointer',
@@ -93,9 +93,9 @@ export default function RangeSlider({
           width: 16px;
           height: 16px;
           border-radius: var(--radius-full);
-          background: var(--teal);
+          background: var(--job-accent);
           border: 2px solid var(--cream);
-          box-shadow: 0 0 0 1px var(--teal);
+          box-shadow: 0 0 0 1px var(--job-accent);
           cursor: pointer;
           transition: transform 120ms ease-out;
         }
@@ -104,13 +104,13 @@ export default function RangeSlider({
           width: 14px;
           height: 14px;
           border-radius: var(--radius-full);
-          background: var(--teal);
+          background: var(--job-accent);
           border: 2px solid var(--cream);
-          box-shadow: 0 0 0 1px var(--teal);
+          box-shadow: 0 0 0 1px var(--job-accent);
           cursor: pointer;
         }
         .range-slider:focus-visible {
-          box-shadow: 0 0 0 3px color-mix(in oklch, var(--teal) 35%, transparent);
+          box-shadow: 0 0 0 3px color-mix(in oklch, var(--job-accent) 35%, transparent);
         }
       `}</style>
     </div>

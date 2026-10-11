@@ -142,7 +142,7 @@ function UpcomingCard() {
                 // #102: recorded facilitator only — never derived from the date.
                 const fInfo = nextMeeting.facilitator ? getPersonInfo(nextMeeting.facilitator) : null
                 return fInfo ? (
-                  <p className="flex items-center gap-1" style={{ fontSize: '10px', color: 'var(--teal)', margin: '2px 0 0 0' }}>
+                  <p className="flex items-center gap-1" style={{ fontSize: '10px', color: 'var(--sk-t2)', margin: '2px 0 0 0' }}>
                     <UserCheck {...ICON_PROPS} size={10} />
                     {fInfo.name.split(' ')[0]}
                   </p>
@@ -156,20 +156,20 @@ function UpcomingCard() {
               className="flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-full"
               style={{
                 background: cadence.score >= 40
-                  ? 'var(--green-hover)'
+                  ? 'color-mix(in srgb, var(--sk-t1) 3%, transparent)'
                   : cadence.score >= 20
-                    ? 'rgba(234, 179, 8, 0.08)'
+                    ? 'color-mix(in srgb, var(--job-stale) 6%, transparent)'
                     : cadence.score >= 0
-                      ? 'rgba(249, 115, 22, 0.08)'
-                      : 'rgba(239, 68, 68, 0.08)',
+                      ? 'color-mix(in srgb, var(--job-stale) 8%, transparent)'
+                      : 'color-mix(in srgb, var(--job-stale) 12%, transparent)',
                 border: `1px solid ${
                   cadence.score >= 40
-                    ? 'rgba(34, 197, 94, 0.2)'
+                    ? 'var(--border-subtle)'
                     : cadence.score >= 20
-                      ? 'rgba(234, 179, 8, 0.2)'
+                      ? 'color-mix(in srgb, var(--job-stale) 15%, transparent)'
                       : cadence.score >= 0
-                        ? 'rgba(249, 115, 22, 0.2)'
-                        : 'rgba(239, 68, 68, 0.2)'
+                        ? 'color-mix(in srgb, var(--job-stale) 25%, transparent)'
+                        : 'color-mix(in srgb, var(--job-stale) 35%, transparent)'
                 }`,
                 width: 'fit-content',
               }}
@@ -188,7 +188,7 @@ function UpcomingCard() {
           <div className="flex items-center justify-between mt-2">
             {meetingActionCounts.total > 0 && (
               <div className="flex items-center gap-1.5">
-                <ListChecks {...ICON_PROPS} size={11} style={{ color: 'var(--teal)', opacity: 0.8 }} />
+                <ListChecks {...ICON_PROPS} size={11} style={{ color: 'var(--sk-t2)', opacity: 0.8 }} />
                 <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, fontVariantNumeric: 'tabular-nums' }}>
                   {meetingActionCounts.pending}/{meetingActionCounts.total} pending
                 </span>
@@ -235,7 +235,7 @@ function UpcomingCard() {
               className="flex items-start gap-2.5 py-2"
               style={{
                 borderBottom: i < deadlines.length - 1
-                  ? '1px solid var(--gold-hover)'
+                  ? '1px solid color-mix(in srgb, var(--sk-t1) 3%, transparent)'
                   : 'none',
               }}
             >
@@ -247,16 +247,16 @@ function UpcomingCard() {
                   padding: '3px 6px',
                   borderRadius: 'var(--radius-md)',
                   background: isOverdue
-                    ? 'rgba(122, 0, 25, 0.1)'
+                    ? 'color-mix(in srgb, var(--job-overdue) 10%, transparent)'
                     : isUrgent
-                      ? 'var(--gold-emphasis)'
+                      ? 'color-mix(in srgb, var(--job-stale) 15%, transparent)'
                       : 'rgba(100, 116, 139, 0.06)',
                   fontSize: '10px',
                   fontWeight: 600,
                   color: isOverdue
-                    ? 'var(--maroon)'
+                    ? 'var(--job-overdue)'
                     : isUrgent
-                      ? 'var(--gold)'
+                      ? 'var(--job-stale)'
                       : 'var(--slate)',
                   lineHeight: 1.3,
                   fontVariantNumeric: 'tabular-nums',
@@ -280,7 +280,7 @@ function UpcomingCard() {
                     <AlertCircle {...ICON_PROPS}
                       size={11}
                       style={{
-                        color: 'var(--maroon)',
+                        color: 'var(--job-overdue)',
                         flexShrink: 0,
                         animation: 'overdue-pulse 2s ease-in-out infinite',
                       }}

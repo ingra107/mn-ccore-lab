@@ -38,10 +38,7 @@ import { useUnseenActivity } from '../../hooks/useEntitySeen'
 import { AttentionChip } from './AttentionChip'
 import TaskTitle from './TaskTitle'
 import { useCompletionRing } from '../../lib/completionMoment'
-import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_BLUE,
-  INK, INK_MUTED, withAlpha, type MilestoneRole, type MilestoneEntry,
-} from '../../lib/taskGrouping'
+import { ACCENT_BLUE, INK, INK_MUTED, withAlpha, type MilestoneRole, type MilestoneEntry } from '../../lib/taskGrouping'
 import { dueLabelCompact, dueTone, isOverdue } from '../../lib/dateUtils'
 import { CardRow, MilestoneCardRow } from './TaskCardRow'
 import type { TaskRow as TaskRowData } from '../../lib/api'
@@ -57,14 +54,14 @@ import { taskShortLabel } from '../../lib/displayNames'
 // exactly the kind of dead branch that makes a signal impossible to reason
 // about. Absent rail = "not urgent", and that reads fine.
 const PRIORITY_COLOR: Record<string, string> = {
-  urgent: ACCENT_CORAL,
+  urgent: 'var(--job-stale)',
 }
 
 // ── DoneBox — the canonical complete control. check = DONE, same everywhere ──
 // Fills teal (the accent: progress), not green: green has no job under the color
 // rule (rules-ui-design 21). `taskId` lets the box play the completion moment's
 // fading ring once the Hub accepts the write (lib/completionMoment).
-export function DoneBox({ done, onToggle, color = ACCENT_TEAL, taskId }: { done: boolean; onToggle: () => void; color?: string; taskId?: string }) {
+export function DoneBox({ done, onToggle, color = 'var(--job-accent)', taskId }: { done: boolean; onToggle: () => void; color?: string; taskId?: string }) {
   const ring = useCompletionRing(done ? taskId : undefined)
   return (
     <button
@@ -108,7 +105,8 @@ function DueChip({ due, status }: { due: string; status?: string }) {
   const dueDay = due.slice(0, 10)
   const overdue = isOverdue(due, status)
   const tone = dueTone(due, overdue)
-  const color = tone === 'overdue' ? ACCENT_CORAL : tone === 'today' || tone === 'tomorrow' ? ACCENT_GOLD : INK_MUTED
+  // Due today wants you now (gold); tomorrow is just a date (rules-ui-design 21).
+  const color = tone === 'overdue' ? 'var(--job-overdue)' : tone === 'today' ? 'var(--job-wants)' : INK_MUTED
   return (
     <span
       className="tip tip-end"
@@ -162,7 +160,7 @@ function PlannedChip({ label = 'planned', onUnplan }: { label?: string; onUnplan
   // class exempts this button from the 44px mobile min-height rule — same
   // treatment as .done-box. lineHeight:1 + consistent padding keeps both
   // the button and span variant at identical height (~16px).
-  const base = { fontSize: 10, color: ACCENT_GOLD, padding: '2px 6px', background: withAlpha(ACCENT_GOLD, 9), border: `1px solid ${withAlpha(ACCENT_GOLD, 28)}`, borderRadius: 999, letterSpacing: '0.04em', whiteSpace: 'nowrap' as const, lineHeight: 1 }
+  const base = { fontSize: 10, color: 'var(--sk-t2)', padding: '2px 6px', background: withAlpha('var(--sk-t1)', 5), border: `1px solid ${withAlpha('var(--sk-t1)', 14)}`, borderRadius: 999, letterSpacing: '0.04em', whiteSpace: 'nowrap' as const, lineHeight: 1 }
   // When the surface wires planning (Today), the chip itself is the unplan
   // control — so there is exactly one 📌 on the row (status + toggle), never a
   // duplicate pushpin alongside a separate plan button.
@@ -358,7 +356,7 @@ function MilestoneRow(props: SharedTaskRowProps) {
   const { task, project, isDone, isExpanded, onToggleExpand, hideCaret, children, milestoneRole } = props
 
   const isBlueRole = milestoneRole === 'internal' || milestoneRole === 'slipped'
-  const diamondColor = isBlueRole ? ACCENT_BLUE : ACCENT_GOLD
+  const diamondColor = isBlueRole ? ACCENT_BLUE : 'var(--job-milestone)'
   const dimmed = milestoneRole === 'slipped'
   const titleOpacity = dimmed ? 0.6 : 0.85
   const emphasisOpacity = dimmed ? 0.55 : 1
@@ -440,7 +438,7 @@ function MilestoneChips({ task, role, status }: { task: TaskRowData; role?: Mile
 // is what the paired hard-date chip is for).
 function MilestoneChip({ role, date, status }: { role: MilestoneRole; date: string; status?: string }) {
   const overdue = role === 'hard' && isOverdue(date, status)
-  const color = role === 'hard' ? (overdue ? ACCENT_CORAL : ACCENT_GOLD) : ACCENT_BLUE
+  const color = role === 'hard' ? (overdue ? 'var(--job-overdue)' : 'var(--job-milestone)') : ACCENT_BLUE
   const dimmed = role === 'slipped'
   const tip = role === 'hard' ? 'Hard date' : dimmed ? 'Internal date slipped' : 'Internal date'
   return (
@@ -594,7 +592,7 @@ function StandardRow(props: SharedTaskRowProps) {
       aria-label="Plan task for today"
       // ~50% larger hit area (Nick 2026-06-19): padding grows the click target;
       // negative margin keeps the row layout from shifting.
-      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 5px', margin: '-4px -3px', color: ACCENT_GOLD, lineHeight: 1, flexShrink: 0, verticalAlign: 'baseline', visibility: hover ? 'visible' : 'hidden', display: 'inline-flex', alignItems: 'center' }}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 5px', margin: '-4px -3px', color: 'var(--sk-t2)', lineHeight: 1, flexShrink: 0, verticalAlign: 'baseline', visibility: hover ? 'visible' : 'hidden', display: 'inline-flex', alignItems: 'center' }}
     >
       <Pin {...ICON_PROPS} size={12} />
     </button>
@@ -636,7 +634,7 @@ function StandardRow(props: SharedTaskRowProps) {
         // In select mode (selectionActive || isSelected) suppress the
         // isExpanded bg so teal selection is the SOLE visual emphasis.
         // Outside select mode isExpanded keeps its subtle ink bg.
-        background: isSelected ? withAlpha(ACCENT_TEAL, 22)
+        background: isSelected ? withAlpha('var(--job-accent)', 22)
           : isExpanded && !selectionActive ? withAlpha(INK, 3)
           : 'transparent',
         // P1-7: NO whole-row opacity — that compounded with the muted title and
@@ -646,7 +644,7 @@ function StandardRow(props: SharedTaskRowProps) {
         // transient thing YOU are doing right now, urgency is a standing
         // property of the task, and the active gesture has to be unambiguous.
         boxShadow: isSelected
-          ? `inset 3px 0 0 ${ACCENT_TEAL}`
+          ? `inset 3px 0 0 var(--job-accent)`
           : (railColor ? `inset 2px 0 0 ${railColor}` : 'none'),
         transition: 'background 160ms',
       }}
@@ -713,7 +711,7 @@ function StandardRow(props: SharedTaskRowProps) {
                   {titleNode}
                 {newChip}
                 {showGroupOverridePin && task.group_override && (
-                  <span className="tip" data-tip={`Moved manually (${task.group_override})`} aria-label={`Moved manually (${task.group_override})`} style={{ display: 'inline-flex', alignItems: 'center', color: ACCENT_TEAL, padding: '1px 5px', background: withAlpha(ACCENT_TEAL, 9), border: `1px solid ${withAlpha(ACCENT_TEAL, 28)}`, borderRadius: 999, marginLeft: 6 }}>
+                  <span className="tip" data-tip={`Moved manually (${task.group_override})`} aria-label={`Moved manually (${task.group_override})`} style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--sk-t3)', padding: '1px 5px', background: withAlpha('var(--job-accent)', 9), border: `1px solid ${withAlpha('var(--job-accent)', 28)}`, borderRadius: 999, marginLeft: 6 }}>
                     <MapPin {...ICON_PROPS} size={11} />
                   </span>
                 )}

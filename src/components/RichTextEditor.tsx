@@ -49,7 +49,7 @@ export default function RichTextEditor({
       Placeholder.configure({ placeholder }),
       Link.configure({
         openOnClick: true,
-        HTMLAttributes: { style: 'color: var(--teal); text-decoration: underline;' },
+        HTMLAttributes: { style: 'color: var(--job-accent); text-decoration: underline;' },
       }),
     ],
     content: parseContent(content, plainTextFallback),
@@ -138,8 +138,8 @@ function ToolbarButton({ active, onClick, children }: { active: boolean; onClick
       type="button"
       onClick={onClick}
       style={{
-        background: active ? 'var(--teal-emphasis)' : 'transparent',
-        color: active ? 'var(--teal)' : 'var(--slate)',
+        background: active ? 'color-mix(in srgb, var(--job-accent) 15%, transparent)' : 'transparent',
+        color: active ? 'var(--job-accent)' : 'var(--slate)',
         border: 'none',
         borderRadius: 'var(--radius-sm)',
         padding: '4px 6px',

@@ -132,7 +132,7 @@ export default function LinkifiedText({ text, className, style }: Props) {
         className="inline-flex items-center gap-1 align-baseline"
         style={{
           fontSize: 'inherit',
-          color: 'var(--teal)',
+          color: 'var(--job-accent)',
           textDecoration: 'none',
           whiteSpace: 'nowrap',
           maxWidth: '100%',

@@ -33,7 +33,7 @@ export default function FeaturedResearch() {
   return (
     <section
       className="py-8 sm:py-12 lg:py-16"
-      style={{ background: 'linear-gradient(135deg, var(--ice) 0%, var(--gold-light) 100%)' }}
+      style={{ background: 'linear-gradient(135deg, var(--ice) 0%, color-mix(in srgb, var(--job-brand) 8%, var(--sk-card)) 100%)' }}
     >
       <div className="content-container">
         {/* Header */}
@@ -73,7 +73,7 @@ export default function FeaturedResearch() {
                     // var(--gold) bg flips dark↔light with theme; var(--ink)
                     // text does the same → both themes fail AA (2.72 light,
                     // 1.56 dark). Use fixed light gold + dark literal text.
-                    background: '#dcb355',
+                    background: 'var(--job-brand)',
                     color: '#1a1a1a',
                   }}
                 >
@@ -134,7 +134,7 @@ export default function FeaturedResearch() {
                   to="/publications"
                   className="inline-flex items-center gap-1.5 text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
                   style={{
-                    color: 'var(--gold)',
+                    color: 'var(--job-brand)',
                     textDecoration: 'none',
                   }}
                 >
@@ -152,7 +152,7 @@ export default function FeaturedResearch() {
             to="/publications"
             className="inline-flex items-center gap-2 text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
             style={{
-              color: 'var(--gold)',
+              color: 'var(--job-brand)',
               textDecoration: 'none',
             }}
           >

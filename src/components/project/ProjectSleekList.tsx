@@ -46,7 +46,7 @@ import type { Project } from '../../data/types'
 import type { StoredLink, ProjectPublicationLink } from '../../hooks/useApiData'
 
 // Only Critical keeps a status color on the bar; the tooltip says the word.
-const healthColor = (status: string): string => (status === 'Critical' ? 'var(--maroon)' : 'var(--sk-ac)')
+const healthColor = (status: string): string => (status === 'Critical' ? 'var(--job-stale)' : 'var(--sk-t2)')
 
 // A stage as a header or footer names it; an empty stage sorts last and says so.
 const stageName = (stage: string | null | undefined): string => stageLabel(stage || '') || 'No stage'
@@ -206,7 +206,7 @@ export default function ProjectSleekList({
             aria-label={pinned ? 'Unpin project' : 'Pin to top'}
             aria-pressed={pinned}
           >
-            <Star {...ICON_PROPS} size={12} fill={pinned ? 'var(--sk-gold)' : 'none'} />
+            <Star {...ICON_PROPS} size={12} fill={pinned ? 'var(--sk-t2)' : 'none'} />
           </button>
         )
       },

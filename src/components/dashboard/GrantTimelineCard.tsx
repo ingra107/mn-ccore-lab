@@ -181,7 +181,7 @@ function GrantTimelineCard() {
                           transform: 'translateX(-50%)',
                           width: '1.5px',
                           height: '120px',
-                          background: 'var(--teal)',
+                          background: 'var(--job-accent)',
                           opacity: 0.85,
                         }}
                       />
@@ -189,7 +189,7 @@ function GrantTimelineCard() {
                     <span
                       style={{
                         fontSize: '10px',
-                        color: isCurrent ? 'var(--teal)' : 'var(--slate)',
+                        color: isCurrent ? 'var(--job-accent)' : 'var(--slate)',
                         opacity: isCurrent ? 1 : 0.85,
                         fontWeight: isCurrent ? 700 : 400,
                         fontVariantNumeric: 'tabular-nums',

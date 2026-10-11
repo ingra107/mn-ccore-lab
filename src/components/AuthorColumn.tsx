@@ -156,7 +156,7 @@ export default function AuthorColumn({
             className="cursor-pointer"
             style={{
               fontSize: '10px',
-              color: 'var(--teal)',
+              color: 'var(--sk-t2)',
               background: 'none',
               border: 'none',
               padding: 0,

@@ -47,7 +47,7 @@ const PILL_BASE: React.CSSProperties = {
 function pillStyle(p: ProjectPill, clickable: boolean): React.CSSProperties {
   return p.granted
     // Granted: normal contrast, the house teal pill.
-    ? { ...PILL_BASE, background: 'var(--teal-active)', color: 'var(--teal)', borderWidth: 1, borderStyle: 'solid', borderColor: 'transparent', cursor: clickable ? 'pointer' : undefined }
+    ? { ...PILL_BASE, background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)', color: 'var(--job-accent)', borderWidth: 1, borderStyle: 'solid', borderColor: 'transparent', cursor: clickable ? 'pointer' : undefined }
     // Discussed only: faded. Muted text, no fill, a dashed hairline.
     // Dimmer than the row label (--sk-t3) and a regular weight: --muted at the
     // label weight (600) read brighter and bolder than the label beside it.
@@ -143,9 +143,9 @@ export default function MeetingProjectsSection({ meeting, derivedTags = [], allP
                 aria-pressed={present}
                 className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] transition-colors text-left"
                 style={{
-                  background: present ? 'var(--teal-active)' : 'none',
-                  border: `1px solid ${present ? 'var(--teal)' : 'var(--border-subtle)'}`,
-                  color: present ? 'var(--teal)' : 'var(--slate)',
+                  background: present ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'none',
+                  border: `1px solid ${present ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
+                  color: present ? 'var(--job-accent)' : 'var(--slate)',
                   cursor: 'pointer',
                   fontFamily: 'inherit',
                 }}

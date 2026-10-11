@@ -58,8 +58,8 @@ export default function SavedViewsMenu({ page, currentQuery, onApply }: Props) {
           fontWeight: 500,
           padding: '3px 10px',
           border: '1px solid var(--border-subtle)',
-          background: activeId ? 'var(--teal-active)' : 'var(--surface-2)',
-          color: activeId ? 'var(--teal)' : 'var(--slate)',
+          background: activeId ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'var(--surface-2)',
+          color: activeId ? 'var(--job-accent)' : 'var(--slate)',
           cursor: 'pointer',
         }}
       >
@@ -101,7 +101,7 @@ export default function SavedViewsMenu({ page, currentQuery, onApply }: Props) {
               type="button"
               onClick={() => { setNaming(true); setDraftName('') }}
               className="w-full flex items-center gap-2 px-3 py-2"
-              style={{ border: 'none', background: 'transparent', color: 'var(--teal)', fontSize: '12px', cursor: 'pointer', textAlign: 'left' }}
+              style={{ border: 'none', background: 'transparent', color: 'var(--job-accent)', fontSize: '12px', cursor: 'pointer', textAlign: 'left' }}
             >
               <Plus {...ICON_PROPS} size={12} />
               Save current as view…
@@ -135,7 +135,7 @@ export default function SavedViewsMenu({ page, currentQuery, onApply }: Props) {
                 disabled={!draftName.trim()}
                 style={{
                   padding: '4px 6px', border: 'none', background: 'transparent',
-                  color: 'var(--teal)', cursor: draftName.trim() ? 'pointer' : 'default',
+                  color: 'var(--job-accent)', cursor: draftName.trim() ? 'pointer' : 'default',
                   opacity: draftName.trim() ? 1 : 0.45,
                 }}
               >
@@ -164,7 +164,7 @@ function SavedViewRow({ view, active, onApply, onRemove }: {
   onRemove: () => void
 }) {
   return (
-    <div className="flex items-center gap-1 px-3 py-1.5" style={{ background: active ? 'var(--teal-active)' : 'transparent' }}>
+    <div className="flex items-center gap-1 px-3 py-1.5" style={{ background: active ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent' }}>
       <button
         type="button"
         onClick={onApply}
@@ -172,7 +172,7 @@ function SavedViewRow({ view, active, onApply, onRemove }: {
         style={{
           border: 'none', background: 'transparent', cursor: 'pointer',
           fontSize: '12px', fontWeight: active ? 600 : 500,
-          color: active ? 'var(--teal)' : 'var(--ink)',
+          color: active ? 'var(--job-accent)' : 'var(--ink)',
           padding: '2px 0',
         }}
       >

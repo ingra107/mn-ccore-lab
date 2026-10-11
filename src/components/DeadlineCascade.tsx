@@ -5,7 +5,7 @@ import type { CascadeGraph, ImpactResult, DeadlineNode } from '../lib/api'
 import { formatShortDate, isOverdue, civilDaysUntil } from '../lib/dateUtils'
 import { getStatusColor } from '../lib/statusColors'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 
 // ── Status helpers ──────────────────────────────────────────
 
@@ -150,9 +150,9 @@ function CascadeRow({
           borderRadius: 'var(--radius-md)',
           border: isSelected ? `1px solid ${color}` : '1px solid transparent',
           background: isImpacted
-            ? 'var(--gold-active)'
+            ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)'
             : isSelected
-              ? 'var(--teal-hover)'
+              ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)'
               : 'transparent',
           transition: 'all 150ms ease',
         }}
@@ -216,7 +216,7 @@ function CascadeRow({
         <span style={{
           fontSize: 'var(--label-size)',
           fontWeight: status === 'overdue' ? 500 : 400,
-          color: status === 'overdue' ? 'var(--maroon)' : 'var(--slate)',
+          color: status === 'overdue' ? 'var(--job-overdue)' : 'var(--slate)',
           opacity: status === 'overdue' ? 1 : 0.85,
           flexShrink: 0,
         }}>
@@ -231,8 +231,8 @@ function CascadeRow({
             style={{
               fontSize: '10px',
               fontWeight: 500,
-              color: impactItem.shift_days > 0 ? 'var(--gold)' : 'var(--teal)',
-              background: impactItem.shift_days > 0 ? 'var(--gold-emphasis)' : 'color-mix(in srgb, var(--teal) 12%, transparent)',
+              color: impactItem.shift_days > 0 ? 'var(--job-stale)' : 'var(--sk-t2)',
+              background: impactItem.shift_days > 0 ? 'color-mix(in srgb, var(--job-stale) 15%, transparent)' : 'color-mix(in srgb, var(--sk-t2) 12%, transparent)',
               padding: '2px 6px',
               borderRadius: 'var(--radius-sm)',
               flexShrink: 0,
@@ -265,7 +265,7 @@ function CascadeRow({
         <span style={{
           fontSize: '10px',
           fontWeight: 500,
-          color: node.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
+          color: node.type === 'milestone' ? 'var(--job-milestone)' : 'var(--sk-t2)',
           flexShrink: 0,
         }}>
           {node.type === 'milestone' ? 'Milestone' : 'Task'}
@@ -352,14 +352,14 @@ function WhatIfPanel({
         marginTop: 'var(--sp-md)',
         padding: 'var(--sp-lg)',
         borderRadius: 'var(--radius-lg)',
-        border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
-        background: 'var(--gold-hover)',
+        border: `1px solid ${withAlpha('var(--sk-t1)', 10)}`,
+        background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--sp-md)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
-          <Calendar {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
-          <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--gold)' }}>
+          <Calendar {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
+          <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--sk-t2)' }}>
             What-if: Move "{node.title}"
           </span>
         </div>
@@ -391,7 +391,7 @@ function WhatIfPanel({
             fontSize: '12px',
             padding: 'var(--sp-xs) var(--sp-sm)',
             borderRadius: 'var(--radius-sm)',
-            border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`,
+            border: `1px solid ${withAlpha('var(--job-stale)', 30)}`,
             background: 'var(--cream)',
             color: 'var(--ink)',
             outline: 'none',
@@ -405,9 +405,9 @@ function WhatIfPanel({
             fontWeight: 'var(--label-weight)',
             padding: 'var(--sp-xs) var(--sp-md)',
             borderRadius: 'var(--radius-sm)',
-            border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`,
-            background: 'var(--gold-active)',
-            color: 'var(--gold)',
+            border: `1px solid ${withAlpha('var(--job-stale)', 30)}`,
+            background: 'color-mix(in srgb, var(--job-stale) 10%, transparent)',
+            color: 'var(--job-stale)',
             cursor: !newDate || isLoading ? 'not-allowed' : 'pointer',
             opacity: !newDate || isLoading ? 0.85 : 1,
           }}
@@ -420,8 +420,8 @@ function WhatIfPanel({
       {impactResults.length > 0 && (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 'var(--sp-sm)' }}>
-            <AlertTriangle {...ICON_PROPS} size={12} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
+            <AlertTriangle {...ICON_PROPS} size={12} style={{ color: 'var(--job-stale)' }} />
+            <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--job-stale)' }}>
               {impactResults.length} downstream {impactResults.length === 1 ? 'item' : 'items'} affected
             </span>
           </div>
@@ -433,7 +433,7 @@ function WhatIfPanel({
                 gap: 'var(--sp-sm)',
                 padding: '6px 10px',
                 borderRadius: 'var(--radius-sm)',
-                background: item.shift_days > 0 ? 'var(--gold-hover)' : 'var(--teal-hover)',
+                background: item.shift_days > 0 ? 'color-mix(in srgb, var(--job-stale) 6%, transparent)' : 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
               }}>
                 <span style={{ fontSize: '12px', color: 'var(--ink)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
                   {item.title}
@@ -441,11 +441,11 @@ function WhatIfPanel({
                 <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }}>
                   {item.original_date ? formatShortDate(item.original_date) : 'No date'}
                 </span>
-                <ArrowRight {...ICON_PROPS} size={10} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                <ArrowRight {...ICON_PROPS} size={10} style={{ color: 'var(--job-stale)', flexShrink: 0 }} />
                 <span style={{
                   fontSize: '10px',
                   fontWeight: 500,
-                  color: item.shift_days > 0 ? 'var(--gold)' : 'var(--teal)',
+                  color: item.shift_days > 0 ? 'var(--job-stale)' : 'var(--sk-t2)',
                   flexShrink: 0,
                 }}>
                   {formatShortDate(item.projected_date)}
@@ -453,7 +453,7 @@ function WhatIfPanel({
                 <span style={{
                   fontSize: '10px',
                   fontWeight: 500,
-                  color: item.shift_days > 0 ? 'var(--maroon)' : 'var(--teal)',
+                  color: item.shift_days > 0 ? 'var(--job-stale)' : 'var(--sk-t2)',
                   opacity: 0.85,
                   flexShrink: 0,
                 }}>
@@ -560,21 +560,21 @@ export default function DeadlineCascade({
               <>
                 {overdueCount > 0 && (
                   <span style={{ fontSize: 'var(--label-size)', display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)' }}>
-                    <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--maroon)' }} />
-                    <span style={{ color: 'var(--maroon)', fontWeight: 500 }}>{overdueCount}</span>
+                    <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--job-overdue)' }} />
+                    <span style={{ color: 'var(--job-overdue)', fontWeight: 500 }}>{overdueCount}</span>
                     <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>overdue</span>
                   </span>
                 )}
                 {atRiskCount > 0 && (
                   <span style={{ fontSize: 'var(--label-size)', display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)' }}>
-                    <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--gold)' }} />
-                    <span style={{ color: 'var(--gold)', fontWeight: 500 }}>{atRiskCount}</span>
+                    <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--job-stale)' }} />
+                    <span style={{ color: 'var(--job-stale)', fontWeight: 500 }}>{atRiskCount}</span>
                     <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>at risk</span>
                   </span>
                 )}
                 <span style={{ fontSize: 'var(--label-size)', display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)' }}>
-                  <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--teal)' }} />
-                  <span style={{ color: 'var(--teal)', fontWeight: 500 }}>{onTrackCount}</span>
+                  <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--sk-t2)' }} />
+                  <span style={{ color: 'var(--sk-t2)', fontWeight: 500 }}>{onTrackCount}</span>
                   <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>on track</span>
                 </span>
                 {completedCount > 0 && (

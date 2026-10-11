@@ -15,7 +15,7 @@ export default function TypingIndicator({ slugs, className, style }: TypingIndic
     <p
       className={className}
       style={{
-        color: 'var(--teal)',
+        color: 'var(--sk-t2)',
         opacity: 0.85,
         fontStyle: 'italic',
         fontSize: '10px',

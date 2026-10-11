@@ -90,7 +90,7 @@ function renderInlineNoCode(text: string, keyPrefix: string): ReactNode[] {
         href={href}
         target={isHttp ? '_blank' : undefined}
         rel={isHttp ? 'noopener noreferrer' : undefined}
-        style={{ color: 'var(--teal)', textDecoration: 'underline' }}
+        style={{ color: 'var(--job-accent)', textDecoration: 'underline' }}
       >
         {m[1]}
       </a>,

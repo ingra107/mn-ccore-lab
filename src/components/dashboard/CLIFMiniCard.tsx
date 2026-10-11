@@ -55,7 +55,7 @@ function CLIFMiniCard() {
             <path
               d={US_PATH}
               fill="none"
-              stroke="var(--gold)"
+              stroke="var(--job-accent)"
               strokeWidth="1"
               opacity={0.15}
             />
@@ -69,7 +69,7 @@ function CLIFMiniCard() {
                   cy={site.y}
                   r={animated ? 8 : 0}
                   fill="none"
-                  stroke="#2d8a8a"
+                  stroke="var(--job-accent)"
                   strokeWidth="0.5"
                   opacity={animated ? 0 : 0.85}
                   style={{
@@ -81,7 +81,7 @@ function CLIFMiniCard() {
                   cx={site.x}
                   cy={site.y}
                   r={animated ? 3.5 : 0}
-                  fill="#2d8a8a"
+                  fill="var(--job-accent)"
                   opacity={0.85}
                   style={{
                     transition: `r 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${300 + i * 80}ms`,
@@ -92,7 +92,7 @@ function CLIFMiniCard() {
                   cx={site.x}
                   cy={site.y}
                   r={animated ? 6 : 0}
-                  fill="#2d8a8a"
+                  fill="var(--job-accent)"
                   opacity={0.15}
                   style={{
                     transition: `r 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${300 + i * 80}ms`,
@@ -139,7 +139,7 @@ function CLIFMiniCard() {
             className="inline-flex items-center gap-1 mt-3"
             style={{
               fontSize: '10px',
-              color: 'var(--gold)',
+              color: 'var(--sk-t2)',
               textDecoration: 'none',
               transition: 'opacity 0.2s ease',
             }}

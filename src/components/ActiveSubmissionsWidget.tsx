@@ -37,10 +37,10 @@ function MiniCard({ row }: { row: ActiveSubmissionRow }) {
   const dueIn = row.days_until_revision_due
   const accent =
     dueIn !== null && dueIn !== undefined && dueIn < 0
-      ? 'var(--orange)'
+      ? 'var(--job-overdue)'
       : dueIn !== null && dueIn !== undefined && dueIn <= 14
-        ? 'var(--gold)'
-        : 'var(--teal)'
+        ? 'var(--job-stale)'
+        : 'var(--sk-t2)'
 
   return (
     <Link
@@ -111,7 +111,7 @@ export default function ActiveSubmissionsWidget() {
   return (
     <div style={{ marginBottom: '1.25rem' }}>
       <div className="flex items-center gap-2 mb-2">
-        <Send {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
+        <Send {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
         <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
           Active submissions
         </h3>
@@ -155,7 +155,7 @@ export default function ActiveSubmissionsWidget() {
                 alignSelf: 'center',
                 padding: '6px 12px',
                 fontSize: '11px',
-                color: 'var(--teal)',
+                color: 'var(--sk-t2)',
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',

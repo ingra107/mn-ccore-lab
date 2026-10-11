@@ -32,9 +32,9 @@ function MiniBarChart({ bars }: { bars: BarDatum[] }) {
           const x = i * (barW + gap)
           const y = chartH - barH
           const fill = bar.isToday
-            ? 'var(--teal)'
+            ? 'var(--job-accent)'
             : bar.count > 0
-              ? 'rgba(45,138,138,0.4)'
+              ? 'color-mix(in srgb, var(--job-accent) 40%, transparent)'
               : 'var(--border-subtle)'
           return (
             <g key={i}>
@@ -131,8 +131,8 @@ export default function WeeklyProgressCard() {
       <MiniBarChart bars={bars} />
       {trend !== 'flat' && (
         <div className="flex items-center gap-1 mt-2">
-          <TrendingUp {...ICON_PROPS} size={10} style={{ color: trend === 'up' ? 'var(--green)' : 'var(--maroon)', transform: trend === 'down' ? 'scaleY(-1)' : undefined }} />
-          <span className="text-[10px]" style={{ color: trend === 'up' ? 'var(--green)' : 'var(--maroon)', opacity: 0.85 }}>
+          <TrendingUp {...ICON_PROPS} size={10} style={{ color: trend === 'up' ? 'var(--sk-t2)' : 'var(--sk-t2)', transform: trend === 'down' ? 'scaleY(-1)' : undefined }} />
+          <span className="text-[10px]" style={{ color: trend === 'up' ? 'var(--sk-t2)' : 'var(--sk-t2)', opacity: 0.85 }}>
             {trend === 'up' ? 'Trending up' : 'Slowing down'}
           </span>
         </div>

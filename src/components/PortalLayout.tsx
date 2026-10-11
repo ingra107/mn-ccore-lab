@@ -103,14 +103,14 @@ export default function PortalLayout() {
 
   return (
     <UndoToastProvider>
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg)' }}>
+    <div className="min-h-screen portal-shell" style={{ backgroundColor: 'var(--bg)' }}>
       {/* Skip to content — first focusable element, visible on focus only.
           Keyboard users can press Tab once from page-load to jump past the
           sidebar + header and land in the main region. */}
       <a
         href="#portal-main"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded"
-        style={{ background: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)' }}
+        style={{ background: 'var(--job-accent-solid)', color: 'var(--ink-bright, #fff)' }}
       >
         Skip to content
       </a>
@@ -247,7 +247,7 @@ export default function PortalLayout() {
                       onClick={() => { setTheme(key); setShowThemeMenu(false) }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                       style={{
-                        color: mode === key ? 'var(--teal)' : 'var(--ink)',
+                        color: mode === key ? 'var(--job-accent)' : 'var(--ink)',
                         fontWeight: mode === key ? 500 : 400,
                         background: 'none',
                         border: 'none',
@@ -256,7 +256,7 @@ export default function PortalLayout() {
                     >
                       <Icon {...ICON_PROPS} size={15} style={{ opacity: mode === key ? 1 : 0.85 }} />
                       {label}
-                      {mode === key && <span className="ml-auto text-[10px]" style={{ color: 'var(--teal)' }}>&#10003;</span>}
+                      {mode === key && <span className="ml-auto text-[10px]" style={{ color: 'var(--job-accent)' }}>&#10003;</span>}
                     </button>
                   ))}
                 </div>
@@ -299,7 +299,7 @@ export default function PortalLayout() {
         <button
           onClick={() => setFocusMode(false)}
           className="fixed top-3 right-3 z-50 px-2.5 py-1 rounded-full text-[10px] font-medium border transition-opacity opacity-30 hover:opacity-100"
-          style={{ color: 'var(--teal)', borderColor: 'var(--teal)', background: 'var(--cream)', cursor: 'pointer' }}
+          style={{ color: 'var(--job-accent)', borderColor: 'var(--job-accent)', background: 'var(--cream)', cursor: 'pointer' }}
         >
           Focus · F to exit
         </button>
@@ -319,11 +319,11 @@ export default function PortalLayout() {
         className="fixed right-5 z-40 w-10 h-10 rounded-full hidden lg:flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
         style={{
           bottom: 'var(--fab-stack-1)',
-          background: 'var(--teal-solid)',
+          background: 'var(--job-accent-solid)',
           color: 'var(--ink-bright, #fff)',
           border: 'none',
           cursor: 'pointer',
-          boxShadow: '0 2px 8px rgba(45,138,138,0.25)',
+          boxShadow: '0 2px 8px color-mix(in srgb, var(--job-accent) 25%, transparent)',
           opacity: 0.85,
         }}
         aria-label="Quick add task (press q)"
@@ -385,7 +385,7 @@ export default function PortalLayout() {
               width: '6px',
               height: '6px',
               borderRadius: '50%',
-              backgroundColor: 'var(--teal-solid)',
+              backgroundColor: 'var(--job-accent-solid)',
               animation: 'chord-dot-pulse 1s ease-in-out infinite',
               flexShrink: 0,
             }}

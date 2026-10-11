@@ -47,8 +47,8 @@ export default function ProactiveBriefCard() {
               <span
                 className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium"
                 style={{
-                  backgroundColor: 'rgba(122,0,25,0.1)',
-                  color: 'var(--maroon)',
+                  backgroundColor: 'color-mix(in srgb, var(--job-overdue) 10%, transparent)',
+                  color: 'var(--job-overdue)',
                 }}
               >
                 {brief.overdue_count} overdue
@@ -58,8 +58,8 @@ export default function ProactiveBriefCard() {
               <span
                 className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium"
                 style={{
-                  backgroundColor: 'var(--gold-emphasis)',
-                  color: 'var(--gold)',
+                  backgroundColor: 'color-mix(in srgb, var(--job-wants) 15%, transparent)',
+                  color: 'var(--job-wants)',
                 }}
               >
                 {brief.due_today_count} due today
@@ -93,13 +93,13 @@ export default function ProactiveBriefCard() {
               style={{
                 // N1b de-box: was a bg+border sub-box. Left-accent flatten; the
                 // "Start" pill stays (legit action button).
-                borderLeft: '2px solid rgba(45,138,138,0.3)',
+                borderLeft: '2px solid var(--border-subtle)',
                 paddingLeft: '10px',
               }}
             >
-              <Lightbulb {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+              <Lightbulb {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)', flexShrink: 0 }} />
               <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-medium" style={{ color: 'var(--teal)' }}>
+                <span className="text-[10px] font-medium" style={{ color: 'var(--sk-t2)' }}>
                   Suggested focus
                 </span>
                 <p className="text-[12px] truncate" style={{ color: 'var(--ink)', margin: 0, marginTop: 1 }}>
@@ -110,8 +110,8 @@ export default function ProactiveBriefCard() {
                 href={`${PATHS.myTasks}?id=${brief.suggested_focus.id}`}
                 className="text-[10px] px-2 py-1 rounded-md font-medium flex-shrink-0"
                 style={{
-                  color: 'var(--teal)',
-                  background: 'var(--teal-active)',
+                  color: 'var(--job-accent)',
+                  background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
                   textDecoration: 'none',
                 }}
               >

@@ -44,7 +44,7 @@ import { useState, useCallback } from 'react'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { PlannedSlot } from './constants'
 import type { TaskRow } from '../../lib/api'
-import { ACCENT_GOLD, INK, withAlpha } from './constants'
+import { INK, withAlpha } from './constants'
 import { pxToMin, TIMELINE_TASK_BLOCKS } from './timelineModel'
 import { taskShortLabel } from '../../lib/displayNames'
 
@@ -71,8 +71,8 @@ function TaskDragGhost({ active }: { active: Active | null }) {
     <div
       style={{
         padding: '4px 10px',
-        background: withAlpha(ACCENT_GOLD, 18),
-        border: `1.5px dashed ${ACCENT_GOLD}`,
+        background: withAlpha('var(--job-accent)', 18),
+        border: `1.5px dashed var(--job-accent)`,
         borderRadius: 6,
         fontSize: 11,
         fontWeight: 500,
@@ -83,7 +83,7 @@ function TaskDragGhost({ active }: { active: Active | null }) {
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
-        boxShadow: `0 2px 8px ${withAlpha(ACCENT_GOLD, 25)}`,
+        boxShadow: `0 2px 8px ${withAlpha('var(--job-accent)', 25)}`,
       }}
     >
       {label}

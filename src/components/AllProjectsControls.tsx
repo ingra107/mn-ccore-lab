@@ -33,9 +33,9 @@ export function AllProjectsSwitch() {
         minHeight: 32,
         fontSize: 'var(--label-size)',
         fontWeight: on ? 600 : 400,
-        color: on ? 'var(--maroon)' : 'var(--slate)',
+        color: on ? 'var(--job-accent)' : 'var(--slate)',
         background: 'transparent',
-        border: `1px solid ${on ? 'var(--maroon)' : 'var(--border-subtle)'}`,
+        border: `1px solid ${on ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
         cursor: 'pointer',
         whiteSpace: 'nowrap',
       }}
@@ -59,11 +59,11 @@ export function AllProjectsBanner() {
       style={{
         fontSize: 'var(--value-size)',
         color: 'var(--ink)',
-        border: '1px solid var(--maroon)',
-        background: 'color-mix(in srgb, var(--maroon) 8%, transparent)',
+        border: '1px solid var(--border-subtle)',
+        background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
       }}
     >
-      <Eye {...ICON_PROPS} size={14} style={{ color: 'var(--maroon)' }} aria-hidden="true" />
+      <Eye {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} aria-hidden="true" />
       <span>
         Admin view: this list is unfiltered. It shows every project, including ones you are not a member of.
       </span>
@@ -72,7 +72,7 @@ export function AllProjectsBanner() {
         onClick={() => {
           flipAllProjects(queryClient, false)
         }}
-        style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--teal)', cursor: 'pointer', fontSize: 'var(--label-size)', minHeight: 32 }}
+        style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--job-accent)', cursor: 'pointer', fontSize: 'var(--label-size)', minHeight: 32 }}
       >
         Turn off
       </button>

@@ -46,7 +46,7 @@ function MiniStat({ icon: Icon, value, label, suffix = '', delay, displayOverrid
           flexShrink: 0,
         }}
       >
-        <Icon {...ICON_PROPS} size={18} style={{ color: 'var(--gold)' }} />
+        <Icon {...ICON_PROPS} size={18} style={{ color: 'var(--sk-t2)' }} />
       </div>
       <div>
         <div

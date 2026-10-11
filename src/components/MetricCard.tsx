@@ -99,8 +99,8 @@ export default function MetricCard({ icon: Icon, label, value, color, subtitle, 
         // maroon span colors, dropping them below 4.5:1 on light-mode card
         // bg. Use --muted directly (passes AA without opacity). r7 2026-04-22.
         <div className="mt-1 flex items-center gap-1" style={{ fontSize: 'var(--text-micro)', color: 'var(--muted)' }}>
-          {delta > 0 && <span style={{ color: 'var(--green)', fontWeight: 500 }}>▲ {delta}</span>}
-          {delta < 0 && <span style={{ color: 'var(--maroon)', fontWeight: 500 }}>▼ {Math.abs(delta)}</span>}
+          {delta > 0 && <span style={{ color: 'var(--sk-t2)', fontWeight: 500 }}>▲ {delta}</span>}
+          {delta < 0 && <span style={{ color: 'var(--sk-t2)', fontWeight: 500 }}>▼ {Math.abs(delta)}</span>}
           {delta === 0 && <span>→ no change</span>}
           <span>{previousLabel ?? 'vs prior'}</span>
         </div>
@@ -112,7 +112,7 @@ export default function MetricCard({ icon: Icon, label, value, color, subtitle, 
         <svg viewBox={`0 0 ${(sparklineData.length - 1) * 12} 32`} style={{ width: '100%', height: 32, marginTop: 'var(--sp-xs)' }}>
           <polyline
             fill="none"
-            stroke="var(--teal)"
+            stroke="var(--job-accent)"
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"

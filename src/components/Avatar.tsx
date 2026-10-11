@@ -1,5 +1,4 @@
 import HermesMark from './HermesMark'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 /** The initials disc used when a team member has no photo_url, on a muted
  *  token-aligned swatch (same name → same swatch, deterministic hash).
@@ -7,16 +6,10 @@ import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
  *  letters over a head-and-shoulders outline (#8969, Casey's member page).
  *  rules-ui-design 18: the photo where there is one, else the initials disc. */
 function InitialsDisc({ name, initials, fallbackColor, textClass, plain = false }: { name: string; initials: string; fallbackColor: string; textClass: string; plain?: boolean }) {
-  // Pick one of 4 palette swatches deterministically.
-  const palette = [
-    { bg: 'color-mix(in srgb, var(--teal) 22%, var(--cream))' },
-    { bg: 'color-mix(in srgb, var(--gold) 22%, var(--cream))' },
-    { bg: 'color-mix(in srgb, var(--maroon) 18%, var(--cream))' },
-    { bg: 'color-mix(in srgb, var(--green) 22%, var(--cream))' },
-  ]
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0
-  const swatch = palette[hash % palette.length]
+  // One gray face for everyone (rules-ui-design 21: a hue needs a job, and a
+  // name has none). The member's own page adds their personal hue via 'hue'.
+  void name
+  const swatch = { bg: 'var(--sk-face)' }
   return (
     <span
       style={{
@@ -49,7 +42,7 @@ interface AvatarProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xs' | 'xs' | 'sm-icon' | 'sm-plus' | 'tight' | 'base-sm' | 'base' | 'base-lg' | 'base-xl'
   /** 'hue': the member's own hue (color back pick 8). Only inside a
    *  `.member-hue` scope, which LabPageLayout sets on a member's own page. */
-  variant?: 'gold' | 'ice' | 'hue'
+  variant?: 'neutral' | 'gold' | 'ice' | 'hue'
   /** Slug — used to swap in the HermesMark when slug === 'claude-ai' so
    *  Hermes shows up as a peer avatar instead of "AI" letter initials. */
   slug?: string
@@ -117,14 +110,22 @@ const sizeConfig = {
 } as const
 
 const variantStyles = {
+  // The default since 2026-10-11: gray face, hairline ring (the user-menu
+  // avatar and every portal face). Gold has no job on a face.
+  neutral: {
+    background: 'var(--sk-face)',
+    border: '1px solid var(--sk-line2)',
+    color: 'var(--sk-face-t)',
+  },
+  // Public site only: gold is its brand color (--job-brand).
   gold: {
-    background: 'var(--gold-light)',
-    border: '2px solid var(--gold)',
-    color: 'var(--gold)',
+    background: 'color-mix(in srgb, var(--job-brand) 8%, var(--sk-card))',
+    border: '2px solid var(--job-brand)',
+    color: 'var(--job-brand)',
   },
   ice: {
     background: 'var(--ice)',
-    border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+    border: '1px solid var(--sk-line2)',
     color: 'var(--slate)',
   },
   hue: {
@@ -139,7 +140,7 @@ export default function Avatar({
   initials,
   photoUrl,
   size = 'md',
-  variant = 'gold',
+  variant = 'neutral',
   slug,
   className,
 }: AvatarProps) {
@@ -173,10 +174,10 @@ export default function Avatar({
             justifyContent: 'center',
             width: '70%',
             height: '70%',
-            color: 'var(--gold)',
+            color: 'var(--sk-t2)',
           }}
         >
-          <HermesMark variant="icon" size={32} color="var(--gold)" pulse />
+          <HermesMark variant="icon" size={32} pulse />
         </span>
       ) : photoUrl ? (
         <img

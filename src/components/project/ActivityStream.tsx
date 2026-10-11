@@ -39,7 +39,7 @@ import { ActivityThread } from '../activity/ActivityThread'
 import { ShowHiddenToggle } from '../activity/ShowHiddenToggle'
 import { canDeleteActivityEntry } from '../activity/activityPermissions'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { withAlpha } from '../../lib/taskGrouping'
 
 // ── Unified feed row shape (activity_entries) ─────────────────────────────────
 
@@ -60,10 +60,10 @@ interface Props {
 
 // Note-type pills (mirrors ProjectUpdateFeed TYPE_CONFIG).
 const NOTE_TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; bg: string; borderBg: string; label: string }> = {
-  progress: { icon: TrendingUp,    color: 'var(--teal)',        bg: 'var(--teal-active)',       borderBg: 'rgba(45,138,138,0.25)',   label: 'Progress' },
-  blocker:  { icon: AlertTriangle, color: 'var(--maroon)',      bg: 'rgba(122,0,25,0.1)',       borderBg: 'rgba(122,0,25,0.25)',     label: 'Blocker' },
-  result:   { icon: CheckCircle,   color: 'var(--green-light)', bg: 'rgba(34,197,94,0.1)',      borderBg: 'rgba(34,197,94,0.25)',    label: 'Result' },
-  question: { icon: HelpCircle,    color: 'var(--gold)',        bg: 'var(--gold-active)',        borderBg: withAlpha(ACCENT_GOLD, 25),  label: 'Question' },
+  progress: { icon: TrendingUp,    color: 'var(--sk-t2)',        bg: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',       borderBg: 'color-mix(in srgb, var(--sk-t1) 15%, transparent)',   label: 'Progress' },
+  blocker:  { icon: AlertTriangle, color: 'var(--sk-t2)',      bg: 'color-mix(in srgb, var(--job-stale) 8%, transparent)',       borderBg: 'color-mix(in srgb, var(--job-stale) 25%, transparent)',     label: 'Blocker' },
+  result:   { icon: CheckCircle,   color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',      borderBg: 'color-mix(in srgb, var(--sk-t1) 15%, transparent)',    label: 'Result' },
+  question: { icon: HelpCircle,    color: 'var(--sk-t2)',        bg: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',        borderBg: withAlpha('var(--sk-t1)', 13),  label: 'Question' },
 }
 
 // Discriminated union of every event kind the stream carries.
@@ -214,8 +214,8 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
                 style={{
                   fontSize: '10px', fontWeight: composeKind === 'note' ? 600 : 500, padding: '4px 12px',
                   borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
-                  background: composeKind === 'note' ? 'var(--teal-active)' : 'transparent',
-                  color: composeKind === 'note' ? 'var(--teal)' : 'var(--slate)',
+                  background: composeKind === 'note' ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                  color: composeKind === 'note' ? 'var(--job-accent)' : 'var(--slate)',
                 }}
               >
                 Note
@@ -226,8 +226,8 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
                 style={{
                   fontSize: '10px', fontWeight: composeKind === 'comment' ? 600 : 500, padding: '4px 12px',
                   borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
-                  background: composeKind === 'comment' ? 'var(--gold-active)' : 'transparent',
-                  color: composeKind === 'comment' ? 'var(--gold-on-emphasis)' : 'var(--slate)',
+                  background: composeKind === 'comment' ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                  color: composeKind === 'comment' ? 'var(--job-accent)' : 'var(--slate)',
                 }}
               >
                 Comment
@@ -271,7 +271,7 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
           </span>
         ) : signedOut ? (
           <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>
-            <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 500, textDecoration: 'underline' }}>Sign in</a>
+            <a href="/api/auth/login" style={{ color: 'var(--job-accent)', fontWeight: 500, textDecoration: 'underline' }}>Sign in</a>
             {activeComposeKind === 'note' ? ' to post notes' : ' to comment'}
           </span>
         ) : activeComposeKind === 'note' ? (

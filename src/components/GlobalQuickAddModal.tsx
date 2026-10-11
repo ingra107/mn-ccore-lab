@@ -26,7 +26,7 @@ import { useToast } from '../hooks/useToast'
 import { useAuth } from '../hooks/useAuth'
 import { isEditableTarget } from '../lib/editableTarget'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 import { Chip } from './ui/Chip'
 import { isHermesPrefix } from '../lib/hermesRouting'
 import { askHermesOnDay, dayActivityQueryKey, hermesOutcomeToast } from '../lib/askHermes'
@@ -181,7 +181,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
             <div
               style={{
                 background: 'var(--cream)',
-                border: `1px solid ${withAlpha(ACCENT_GOLD, 28)}`,
+                border: `1px solid ${withAlpha('var(--sk-t1)', 14)}`,
                 borderRadius: 'var(--radius-2xl)',
                 boxShadow: 'var(--shadow-elevated)',
                 overflow: 'hidden',
@@ -194,10 +194,10 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                   alignItems: 'center',
                   gap: '8px',
                   padding: '12px 16px 10px',
-                  borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
+                  borderBottom: `1px solid ${withAlpha('var(--sk-t1)', 5)}`,
                 }}
               >
-                <Zap {...ICON_PROPS} size={15} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                <Zap {...ICON_PROPS} size={15} style={{ color: 'var(--sk-t2)', flexShrink: 0 }} />
                 <span
                   style={{
                     fontSize: '10px',
@@ -219,7 +219,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                     background: 'var(--ice)',
                     padding: '1px 5px',
                     borderRadius: 'var(--radius-sm)',
-                    border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+                    border: `1px solid ${withAlpha('var(--sk-t1)', 8)}`,
                   }}
                 >
                   esc
@@ -262,10 +262,10 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                   padding: '8px 16px 14px',
                 }}
               >
-                <TokenHint prefix="@name"   desc="assignee" color="var(--gold)" />
-                <TokenHint prefix="#project" desc="project"  color="var(--teal)" />
-                <TokenHint prefix="p1-p3"   desc="priority" color="var(--maroon)" />
-                <TokenHint prefix="Apr 15"  desc="due date" color="var(--teal)" />
+                <TokenHint prefix="@name"   desc="assignee" color="var(--sk-t2)" />
+                <TokenHint prefix="#project" desc="project"  color="var(--sk-t2)" />
+                <TokenHint prefix="p1-p3"   desc="priority" color="var(--job-stale)" />
+                <TokenHint prefix="Apr 15"  desc="due date" color="var(--sk-t2)" />
                 <div style={{ flex: 1 }} />
                 <button
                   type="button"
@@ -278,7 +278,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                 >
                   {/* Chip owns the pill look (fill/border alpha, radius) so this
                       toggle stays in step with every other pill in the app. */}
-                  <Chip pill bordered size="sm" filled={isMilestoneDraft} color={isMilestoneDraft ? 'var(--gold)' : 'var(--slate)'}>
+                  <Chip pill bordered size="sm" filled={isMilestoneDraft} color={isMilestoneDraft ? 'var(--job-milestone)' : 'var(--slate)'}>
                     <Diamond {...ICON_PROPS} size={11} />
                     Milestone
                   </Chip>
@@ -287,7 +287,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                   onClick={handleSubmit}
                   disabled={!parseQuickAddInput(value).title.trim()}
                   style={{
-                    background: parseQuickAddInput(value).title.trim() ? 'var(--gold)' : withAlpha(ACCENT_GOLD, 30),
+                    background: parseQuickAddInput(value).title.trim() ? 'var(--job-accent-solid)' : withAlpha('var(--sk-t1)', 15),
                     color: parseQuickAddInput(value).title.trim() ? 'var(--ink)' : 'var(--slate)',
                     border: 'none',
                     borderRadius: 'var(--radius-lg)',

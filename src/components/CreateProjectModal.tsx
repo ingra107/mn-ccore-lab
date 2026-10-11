@@ -116,7 +116,7 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
             aria-describedby={!title.trim() ? 'project-submit-hint' : undefined}
             className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
             style={{
-              backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--gold)',
+              backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--job-accent-solid)',
               color: !title.trim() ? 'var(--slate)' : 'var(--ink)',
               cursor: !title.trim() ? 'not-allowed' : 'pointer',
               border: 'none',

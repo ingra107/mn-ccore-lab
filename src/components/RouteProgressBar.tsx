@@ -61,14 +61,14 @@ export default function RouteProgressBar() {
         style={{
           height: '100%',
           width: `${progress}%`,
-          background: 'var(--teal)',
+          background: 'var(--job-accent)',
           transition: progress === 0
             ? 'none'
             : progress === 100
               ? 'width 150ms ease-out, opacity 200ms ease-out 100ms'
               : 'width 300ms ease-out',
           opacity: progress === 100 ? 0 : 1,
-          boxShadow: '0 0 8px rgba(45, 138, 138, 0.4)',
+          boxShadow: '0 0 8px color-mix(in srgb, var(--job-accent) 40%, transparent)',
         }}
       />
     </div>

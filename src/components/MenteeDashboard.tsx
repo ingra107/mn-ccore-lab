@@ -43,7 +43,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
 
   return (
     <div style={{ marginTop: '2rem', marginBottom: '2rem' }}>
-      <div style={{ height: '1px', background: 'linear-gradient(to right, var(--teal), transparent)', opacity: 0.85, marginBottom: '1.5rem' }} />
+      <div style={{ height: '1px', background: 'linear-gradient(to right, var(--sk-t2), transparent)', opacity: 0.85, marginBottom: '1.5rem' }} />
 
       <h2 style={{ fontWeight: 500, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', color: 'var(--ink)', marginBottom: '1rem' }}>
         {firstName}'s Dashboard
@@ -53,12 +53,12 @@ export default function MenteeDashboard({ slug, name }: Props) {
         {/* Action Items card */}
         <div className="card p-4" style={{ borderRadius: 'var(--radius-xl)' }}>
           <div className="flex items-center gap-2 mb-3">
-            <ListChecks {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
+            <ListChecks {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Action Items
             </span>
             {myPending.length > 0 && (
-              <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 600 }}>
+              <span style={{ fontSize: '10px', color: 'var(--sk-t2)', fontWeight: 600 }}>
                 {myPending.length}
               </span>
             )}
@@ -69,7 +69,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
                 const isOverdue = item.due_date && new Date(item.due_date) < new Date()
                 return (
                   <div key={item.id} className="flex items-start gap-1.5">
-                    <Circle {...ICON_PROPS} size={10} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, marginTop: '3px', flexShrink: 0 }} />
+                    <Circle {...ICON_PROPS} size={10} style={{ color: isOverdue ? 'var(--job-overdue)' : 'var(--slate)', opacity: 0.85, marginTop: '3px', flexShrink: 0 }} />
                     {/* The row names the TASK, not its description.
                         `tasks.description` is nullable, and reading .length off
                         it crashed this whole page for any member holding an open
@@ -94,7 +94,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 {...ICON_PROPS} size={12} style={{ color: 'var(--teal)' }} />
+              <CheckCircle2 {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)' }} />
               <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
                 All caught up ({myCompleted.length} done)
               </span>
@@ -105,7 +105,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         {/* Publications card */}
         <div className="card p-4" style={{ borderRadius: 'var(--radius-xl)' }}>
           <div className="flex items-center gap-2 mb-3">
-            <BookOpen {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
+            <BookOpen {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Publications
             </span>
@@ -120,7 +120,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
           )}
           {myPubs.length > 0 && (
             <Link to="/publications" className="inline-flex items-center gap-1 mt-2"
-              style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
+              style={{ fontSize: '10px', color: 'var(--sk-t2)', textDecoration: 'none' }}>
               View all <ArrowRight {...ICON_PROPS} size={9} />
             </Link>
           )}
@@ -129,7 +129,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         {/* Activity summary card */}
         <div className="card p-4" style={{ borderRadius: 'var(--radius-xl)' }}>
           <div className="flex items-center gap-2 mb-3">
-            <TrendingUp {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
+            <TrendingUp {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Summary
             </span>
@@ -141,11 +141,11 @@ export default function MenteeDashboard({ slug, name }: Props) {
             </div>
             <div className="flex items-center justify-between">
               <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>Actions pending</span>
-              <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: myPending.length > 0 ? 'var(--gold)' : 'var(--teal)' }}>{myPending.length}</span>
+              <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: myPending.length > 0 ? 'var(--sk-t2)' : 'var(--sk-t2)' }}>{myPending.length}</span>
             </div>
             <div className="flex items-center justify-between">
               <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>Actions completed</span>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--teal)' }}>{myCompleted.length}</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--sk-t2)' }}>{myCompleted.length}</span>
             </div>
           </div>
         </div>

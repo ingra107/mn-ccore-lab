@@ -18,8 +18,8 @@ import { STATUS_FILLS } from '../../lib/projectHealthFills'
 const STATUS_COLORS: Record<string, string> = {
   'Healthy': 'var(--slate)',
   'Needs Attention': 'var(--slate)',
-  'At Risk': 'var(--orange)',
-  'Critical': 'var(--orange)',
+  'At Risk': 'var(--job-stale)',
+  'Critical': 'var(--job-stale)',
 }
 
 const FACTOR_LABELS: Record<keyof HealthFactors, { label: string; max: number }> = {
@@ -415,7 +415,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
             fontSize: '10px',
             padding: '1px 5px',
             borderRadius: 'var(--radius-sm)',
-            background: isBad ? 'var(--orange-hover)' : 'transparent',
+            background: isBad ? 'color-mix(in srgb, var(--job-stale) 6%, transparent)' : 'transparent',
             color,
             flexShrink: 0,
             letterSpacing: '0.02em',

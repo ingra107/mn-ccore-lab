@@ -28,7 +28,6 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import { isOverdue } from '../../lib/dateUtils'
 import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
 import {
-  ACCENT_TEAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PANEL_BG,
   TODAY_MOVE_OPTIONS, withAlpha,
 } from './constants'
@@ -171,7 +170,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
                   role="menuitem"
                   onClick={() => moveToGroup(opt)}
                   disabled={updateTask.isPending}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? withAlpha(ACCENT_TEAL, 15) : 'transparent', border: 'none', color: task.group_override === opt.key ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? withAlpha('var(--job-accent)', 15) : 'transparent', border: 'none', color: task.group_override === opt.key ? 'var(--job-accent)' : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
                 >{opt.label}{task.group_override === opt.key ? ' ✓' : ''}</button>
               ))}
               {task.group_override && (
@@ -229,7 +228,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           Links only when the meetings join resolved — see lib/meetingOrigin. */}
       {isFromMeeting(task) && (
         <div style={{ marginTop: 12, fontSize: 11, color: INK_DIM }}>
-          <MeetingOriginTag task={task} color={ACCENT_TEAL} />
+          <MeetingOriginTag task={task} color={'var(--sk-t2)'} />
         </div>
       )}
 
@@ -349,14 +348,14 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
                   onChange={() => toggleSubtask.mutate(s.id, {
                     onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
                   })}
-                  style={{ marginTop: 2, accentColor: ACCENT_GREEN, cursor: 'pointer' }}
+                  style={{ marginTop: 2, accentColor: 'var(--job-accent)', cursor: 'pointer' }}
                 />
                 <span style={{ fontSize: 12, color: s.completed === 1 ? INK_DIM : INK, textDecoration: s.completed === 1 ? 'line-through' : 'none', lineHeight: 1.4 }}>{s.title}</span>
               </div>
             ))}
             {blocks.length > 0 && (
               <div style={{ marginTop: 10 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_ORANGE, marginBottom: 4 }}>Blocks</div>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--sk-t2)', marginBottom: 4 }}>Blocks</div>
                 {blocks.map((b) => (
                   <div key={b.id} style={{ fontSize: 11, color: INK, padding: '2px 0' }}>↳ {b.title}</div>
                 ))}

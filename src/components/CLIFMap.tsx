@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 
 interface CLIFSite {
   name: string
@@ -103,7 +103,7 @@ export default function CLIFMap() {
                   padding: '20px 20px 18px',
                   borderRadius: 'var(--radius-xl)',
                   background: 'rgba(255, 255, 255, 0.03)',
-                  border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+                  border: `1px solid ${withAlpha('var(--job-brand)', 15)}`,
                 }}
               >
                 <div
@@ -123,7 +123,7 @@ export default function CLIFMap() {
                   <span
                     style={{
                       fontSize: '12px',
-                      color: withAlpha(ACCENT_GOLD, 90),
+                      color: withAlpha('var(--job-brand)', 90),
                       fontWeight: 500,
                     }}
                   >
@@ -139,8 +139,8 @@ export default function CLIFMap() {
                       style={{
                         padding: '8px 10px',
                         borderRadius: 'var(--radius-md)',
-                        background: site.isHome ? withAlpha(ACCENT_GOLD, 12) : 'transparent',
-                        border: site.isHome ? `1px solid ${withAlpha(ACCENT_GOLD, 35)}` : '1px solid transparent',
+                        background: site.isHome ? withAlpha('var(--job-brand)', 12) : 'transparent',
+                        border: site.isHome ? `1px solid ${withAlpha('var(--job-brand)', 35)}` : '1px solid transparent',
                         transition: 'background 150ms ease, border-color 150ms ease',
                       }}
                     >
@@ -151,8 +151,8 @@ export default function CLIFMap() {
                           width: site.isHome ? 10 : 8,
                           height: site.isHome ? 10 : 8,
                           borderRadius: 'var(--radius-circle)',
-                          background: '#dcb355',
-                          boxShadow: site.isHome ? '0 0 0 3px rgba(220,179,85,0.25)' : 'none',
+                          background: 'var(--job-brand)',
+                          boxShadow: site.isHome ? '0 0 0 3px color-mix(in srgb, var(--job-brand) 25%, transparent)' : 'none',
                           flexShrink: 0,
                         }}
                       />
@@ -191,7 +191,7 @@ export default function CLIFMap() {
                             fontWeight: 600,
                             letterSpacing: '0.06em',
                             textTransform: 'uppercase',
-                            color: '#dcb355',
+                            color: 'var(--job-brand)',
                             flexShrink: 0,
                           }}
                         >

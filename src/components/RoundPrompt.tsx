@@ -120,7 +120,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               onClick={commitEdit}
               title="Save"
               style={{
-                background: 'var(--teal-solid)', border: 'none', borderRadius: 'var(--radius-md)',
+                background: 'var(--job-accent-solid)', border: 'none', borderRadius: 'var(--radius-md)',
                 padding: '7px', cursor: 'pointer', color: '#fff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}

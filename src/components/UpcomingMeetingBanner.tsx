@@ -8,7 +8,7 @@ import { countActionsByMeetingId } from '../lib/meetingTaskCounts'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 
 export default function UpcomingMeetingBanner() {
   const { data: meetings = [] } = useMeetingsApi()
@@ -61,16 +61,16 @@ export default function UpcomingMeetingBanner() {
           style={{
             textDecoration: 'none',
             background:
-              `linear-gradient(135deg, ${withAlpha(ACCENT_GOLD, 6)}, rgba(45,138,138,0.04))`,
-            border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+              `linear-gradient(135deg, ${withAlpha('var(--job-brand)', 6)}, color-mix(in srgb, var(--job-accent) 4%, transparent))`,
+            border: `1px solid ${withAlpha('var(--job-brand)', 15)}`,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 30)
+            e.currentTarget.style.borderColor = withAlpha('var(--job-brand)', 30)
             e.currentTarget.style.boxShadow =
-              '0 4px 20px var(--gold-active)'
+              '0 4px 20px color-mix(in srgb, var(--job-brand) 10%, transparent)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--gold-emphasis)'
+            e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--job-brand) 15%, transparent)'
             e.currentTarget.style.boxShadow = 'none'
           }}
         >
@@ -79,12 +79,12 @@ export default function UpcomingMeetingBanner() {
             <div className="flex items-start gap-4">
               <div
                 className="flex-shrink-0 p-3 rounded-xl"
-                style={{ background: 'var(--gold-emphasis)' }}
+                style={{ background: 'color-mix(in srgb, var(--job-brand) 15%, transparent)' }}
               >
                 <Calendar
                   size={22}
                   strokeWidth={1.5}
-                  style={{ color: 'var(--gold)' }}
+                  style={{ color: 'var(--job-brand)' }}
                   aria-hidden="true"
                 />
               </div>
@@ -92,7 +92,7 @@ export default function UpcomingMeetingBanner() {
                 <p
                   className="text-xs mb-1"
                   style={{
-                    color: 'var(--gold)',
+                    color: 'var(--job-brand)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.12em',
                     fontSize: '10px',
@@ -122,7 +122,7 @@ export default function UpcomingMeetingBanner() {
                   return fInfo ? (
                     <p
                       className="flex items-center gap-1.5 text-xs mt-1"
-                      style={{ color: 'var(--teal)', margin: 'var(--sp-xs) 0 0 0' }}
+                      style={{ color: 'var(--job-accent)', margin: 'var(--sp-xs) 0 0 0' }}
                     >
                       <UserCheck size={13} strokeWidth={1.5} aria-hidden="true" />
                       Facilitated by {fInfo.name}
@@ -139,7 +139,7 @@ export default function UpcomingMeetingBanner() {
                   <CheckCircle2
                     size={16}
                     strokeWidth={1.5}
-                    style={{ color: 'var(--teal)' }}
+                    style={{ color: 'var(--job-accent)' }}
                     aria-hidden="true"
                   />
                   <span
@@ -157,7 +157,7 @@ export default function UpcomingMeetingBanner() {
                 <span
                   className="text-sm font-medium hidden sm:inline"
                   style={{
-                    color: 'var(--gold)',
+                    color: 'var(--job-brand)',
                   }}
                 >
                   View Meeting
@@ -165,7 +165,7 @@ export default function UpcomingMeetingBanner() {
                 <ArrowRight {...ICON_PROPS}
                   size={16}
                   className="transition-transform duration-200 group-hover:translate-x-1"
-                  style={{ color: 'var(--gold)' }}
+                  style={{ color: 'var(--job-brand)' }}
                   aria-hidden="true"
                 />
               </div>

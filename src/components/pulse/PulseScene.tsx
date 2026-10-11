@@ -57,13 +57,13 @@ export default function PulseScene({
             height={28}
             strokeWidth={1.5}
             variant="slow"
-            color="#dcb355"
+            color="var(--job-brand)"
           />
           <span
             className="uppercase tracking-[0.32em]"
             style={{
               fontFamily: 'var(--font-sans)',
-              color: '#dcb355',
+              color: 'var(--job-brand)',
               fontWeight: 500,
               fontSize: 13,
               letterSpacing: '0.32em',
@@ -73,7 +73,7 @@ export default function PulseScene({
           </span>
           <div
             className="flex-1 h-px"
-            style={{ background: 'linear-gradient(to right, rgba(220,179,85,0.35), transparent)' }}
+            style={{ background: 'linear-gradient(to right, color-mix(in srgb, var(--job-brand) 35%, transparent), transparent)' }}
           />
         </div>
 

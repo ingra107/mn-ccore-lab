@@ -67,7 +67,7 @@ export default function PulseMetric({
         className="uppercase"
         style={{
           fontFamily: 'var(--font-sans)',
-          color: '#dcb355',
+          color: 'var(--job-brand)',
           fontWeight: 500,
           fontSize: 'clamp(13px, 1.05vw, 16px)',
           letterSpacing: '0.18em',

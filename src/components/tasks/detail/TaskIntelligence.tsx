@@ -7,7 +7,7 @@ import HermesMark from '../../HermesMark'
 import { parseDateOnlyOrTimestamp } from '../../../lib/dateUtils'
 import type { TaskRow } from '../../../lib/api'
 import { ICON_PROPS } from '../../../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../../../lib/taskGrouping'
+import { withAlpha } from '../../../lib/taskGrouping'
 
 interface TaskIntelligenceProps {
   task: TaskRow
@@ -102,7 +102,7 @@ function Sparkline({ values }: { values: number[] }) {
     <svg width={w} height={h} aria-hidden="true" style={{ display: 'block' }}>
       <polyline
         fill="none"
-        stroke="var(--teal)"
+        stroke="var(--job-accent)"
         strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -114,7 +114,7 @@ function Sparkline({ values }: { values: number[] }) {
           cx={i * stepX}
           cy={h - (v / max) * (h - 4) - 2}
           r={1.5}
-          fill="var(--teal)"
+          fill="var(--job-accent)"
         />
       ))}
     </svg>
@@ -159,9 +159,9 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
   }
 
   const ringColor =
-    score >= 75 ? 'var(--maroon)' :
-    score >= 55 ? 'var(--gold)' :
-    'var(--teal)'
+    score >= 75 ? 'var(--job-stale)' :
+    score >= 55 ? 'var(--sk-t2)' :
+    'var(--sk-t2)'
 
   return (
     <div className="flex flex-col" style={{ gap: 'var(--sp-lg)' }}>
@@ -213,7 +213,7 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
                 gap: 4,
                 marginLeft: 'auto',
                 fontSize: 11,
-                color: delta > 0 ? 'var(--green)' : delta < 0 ? 'var(--maroon)' : 'var(--slate)',
+                color: delta > 0 ? 'var(--sk-t2)' : delta < 0 ? 'var(--sk-t2)' : 'var(--slate)',
                 opacity: 0.9,
                 fontWeight: 500,
               }}
@@ -241,8 +241,8 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
         style={{
           padding: 'var(--sp-md)',
           borderRadius: 'var(--radius-lg)',
-          background: 'var(--gold-hover)',
-          border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+          background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
+          border: `1px solid ${withAlpha('var(--sk-t1)', 10)}`,
           display: 'flex',
           flexDirection: 'column',
           gap: 'var(--sp-sm)',
@@ -250,7 +250,7 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
       >
         <div className="flex items-center" style={{ gap: 8 }}>
           <HermesMark size={14} variant="avatar" />
-          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--gold)', letterSpacing: '0.04em' }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--sk-t2)', letterSpacing: '0.04em' }}>
             Pre-draft a note
           </span>
         </div>
@@ -268,7 +268,7 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
             fontSize: 12,
             fontWeight: 500,
             color: '#1a1a1a',
-            background: 'var(--gold)',
+            background: 'var(--sk-t2)',
             border: 'none',
             borderRadius: 'var(--radius-md)',
             cursor: draftRequested ? 'default' : 'pointer',

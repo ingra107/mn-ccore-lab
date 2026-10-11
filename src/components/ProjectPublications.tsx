@@ -96,7 +96,7 @@ export default function ProjectPublications({ projectSlug, projectTitle, isPi, v
               aria-label={`Link a publication to ${projectTitle}`}
               value=""
               triggerLabel="+ Link a publication"
-              triggerColor="var(--teal)"
+              triggerColor="var(--job-accent)"
               searchable
               maxWidth={260}
               options={pickerOptions}
@@ -171,7 +171,7 @@ function PublicationLinkRow({
               target="_blank"
               rel="noopener noreferrer"
               className="link-affordance"
-              style={{ color: 'var(--teal)' }}
+              style={{ color: 'var(--job-accent)' }}
             >
               DOI
             </a>
@@ -182,7 +182,7 @@ function PublicationLinkRow({
               target="_blank"
               rel="noopener noreferrer"
               className="link-affordance"
-              style={{ color: 'var(--teal)' }}
+              style={{ color: 'var(--job-accent)' }}
             >
               PubMed
             </a>

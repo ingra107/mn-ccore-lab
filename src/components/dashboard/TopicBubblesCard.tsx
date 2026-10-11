@@ -5,15 +5,7 @@ import { usePublications } from '../../hooks/useApiData'
 import { useDashboardMounted } from './dashboardMounted'
 import { topicLabel } from '../../lib/topics'
 
-const TOPIC_BUBBLE_COLORS: Record<string, string> = {
-  clif: '#3b82f6',
-  covid: '#dc2626',
-  ventilation: 'var(--green)',
-  'decision-making': '#9333ea',
-  quality: '#d97706',
-  sepsis: '#db2777',
-  disparities: '#0284c7',
-}
+// One teal for every topic (the data ramp): size carries the count, not a rainbow.
 
 interface BubbleData {
   topic: string
@@ -131,7 +123,7 @@ function TopicBubblesCard() {
       topic,
       label: topicLabel(topic),
       count,
-      color: TOPIC_BUBBLE_COLORS[topic] ?? '#c9a84c',
+      color: 'var(--job-accent-solid)',
       radius: 14 + (count / maxCount) * 26,
       x: 0,
       y: 0,

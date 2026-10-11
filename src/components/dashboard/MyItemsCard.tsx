@@ -47,7 +47,7 @@ function MyItemsCard() {
         {/* Summary row */}
         <div className="flex items-center gap-4 mb-1">
           <div className="flex items-center gap-1.5">
-            <Circle {...ICON_PROPS} size={12} style={{ color: 'var(--gold)' }} />
+            <Circle {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)' }} />
             <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
               {pending.length}
             </span>
@@ -57,11 +57,11 @@ function MyItemsCard() {
           </div>
           {overdueCount > 0 && (
             <div className="flex items-center gap-1.5">
-              <AlertTriangle {...ICON_PROPS} size={12} style={{ color: 'var(--maroon)' }} />
-              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--maroon)', fontVariantNumeric: 'tabular-nums' }}>
+              <AlertTriangle {...ICON_PROPS} size={12} style={{ color: 'var(--job-overdue)' }} />
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--job-overdue)', fontVariantNumeric: 'tabular-nums' }}>
                 {overdueCount}
               </span>
-              <span style={{ fontSize: '11px', color: 'var(--maroon)', opacity: 0.85 }}>
+              <span style={{ fontSize: '11px', color: 'var(--job-overdue)', opacity: 0.85 }}>
                 overdue
               </span>
             </div>
@@ -73,11 +73,11 @@ function MyItemsCard() {
                   width: 6,
                   height: 6,
                   borderRadius: 'var(--radius-circle)',
-                  background: 'var(--gold)',
+                  background: 'var(--job-wants)',
                   display: 'inline-block',
                 }}
               />
-              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gold)', fontVariantNumeric: 'tabular-nums' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--job-wants)', fontVariantNumeric: 'tabular-nums' }}>
                 {unreadCount}
               </span>
               <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>
@@ -96,11 +96,11 @@ function MyItemsCard() {
               key={item.id}
               className="flex items-start gap-2 py-1.5"
               style={{
-                borderLeft: overdue ? '2px solid var(--maroon)' : '2px solid transparent',
+                borderLeft: overdue ? '2px solid var(--job-overdue)' : '2px solid transparent',
                 paddingLeft: '8px',
               }}
             >
-              <Circle {...ICON_PROPS} size={12} className="flex-shrink-0 mt-0.5" style={{ color: overdue ? 'var(--maroon)' : 'var(--gold)' }} />
+              <Circle {...ICON_PROPS} size={12} className="flex-shrink-0 mt-0.5" style={{ color: overdue ? 'var(--job-overdue)' : 'var(--sk-t2)' }} />
               <div className="min-w-0 flex-1">
                 <div
                   style={{
@@ -136,7 +136,7 @@ function MyItemsCard() {
             </div>
           ) : (
             <div className="flex items-center gap-2 py-3">
-              <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
+              <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
               <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>
                 All caught up
               </span>

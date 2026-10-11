@@ -4,7 +4,7 @@ import { ExternalLink, ChevronDown, ClipboardCopy, Check, ArrowRight } from 'luc
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Publication } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 import AuthorColumn from './AuthorColumn'
 import { topicLabel } from '../lib/topics'
 
@@ -257,7 +257,7 @@ export default function PublicationCard({
             <div
               className="px-4 sm:px-6 pb-4 sm:pb-6 pt-0"
               style={{
-                borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`,
+                borderTop: `1px solid ${withAlpha('var(--job-brand)', 30)}`,
               }}
             >
               <div className="pt-4 sm:pt-5 sm:pl-36">
@@ -305,9 +305,9 @@ export default function PublicationCard({
                       rel="noopener noreferrer"
                       className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
                       style={{
-                        background: 'var(--gold-active)',
-                        color: 'var(--gold)',
-                        border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+                        background: 'color-mix(in srgb, var(--job-brand) 10%, transparent)',
+                        color: 'var(--job-brand)',
+                        border: `1px solid ${withAlpha('var(--job-brand)', 20)}`,
                         minHeight: '32px',
                       }}
                       onClick={(e) => e.stopPropagation()}
@@ -322,9 +322,9 @@ export default function PublicationCard({
                       rel="noopener noreferrer"
                       className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
                       style={{
-                        background: 'var(--gold-active)',
-                        color: 'var(--gold)',
-                        border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+                        background: 'color-mix(in srgb, var(--job-brand) 10%, transparent)',
+                        color: 'var(--job-brand)',
+                        border: `1px solid ${withAlpha('var(--job-brand)', 15)}`,
                         minHeight: '32px',
                       }}
                       onClick={(e) => e.stopPropagation()}
@@ -339,7 +339,7 @@ export default function PublicationCard({
                     style={{
                       background: 'transparent',
                       color: 'var(--slate)',
-                      border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+                      border: `1px solid ${withAlpha('var(--job-brand)', 15)}`,
                       minHeight: '32px',
                     }}
                   >
@@ -361,8 +361,8 @@ export default function PublicationCard({
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
                     style={{
                       background: 'transparent',
-                      color: 'var(--teal)',
-                      border: '1px solid rgba(45, 138, 138, 0.15)',
+                      color: 'var(--sk-t2)',
+                      border: '1px solid var(--border-subtle)',
                       textDecoration: 'none',
                       minHeight: '32px',
                     }}

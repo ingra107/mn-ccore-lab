@@ -14,23 +14,23 @@ import type { DependencyRow } from '../hooks/useApiData'
 
 const STAGE_COLORS: Record<string, string> = {
   idea: '#64748b',
-  data_collection: '#5b8abf',
-  data_analysis: '#2d8a8a',
-  analysis: '#2d8a8a',
-  writing: '#c9a84c',
-  review: '#7a0019',
-  submitted: '#7a0019',
-  revisions: '#c9a84c',
-  accepted: 'var(--green-light)',
-  published: 'var(--green-light)',
+  data_collection: 'color-mix(in srgb, var(--job-accent) 45%, var(--sk-card))',
+  data_analysis: 'color-mix(in srgb, var(--job-accent) 70%, var(--sk-card))',
+  analysis: 'color-mix(in srgb, var(--job-accent) 70%, var(--sk-card))',
+  writing: 'var(--job-accent)',
+  review: 'var(--sk-t2)',
+  submitted: 'var(--sk-t2)',
+  revisions: 'var(--job-accent)',
+  accepted: 'var(--sk-t2)',
+  published: 'var(--sk-t2)',
 }
 
 // ── Relationship arrow colors ──────────────────────────────
 
 const REL_COLORS: Record<string, string> = {
-  feeds_into: '#c9a84c',
-  blocks: '#7a0019',
-  shares_data: '#2d8a8a',
+  feeds_into: 'var(--sk-t1)',
+  blocks: 'var(--sk-t2)',
+  shares_data: 'var(--sk-t3)',
   related_to: '#64748b',
 }
 

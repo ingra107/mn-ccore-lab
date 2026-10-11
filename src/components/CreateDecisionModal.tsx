@@ -12,7 +12,7 @@ import Modal from './ui/Modal'
 import { parseTagsString } from '../lib/tagUtils'
 import { parseDbUtc } from '../lib/time'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 
 // ── Tag auto-suggestion ──────────────────────────────────────
 
@@ -122,7 +122,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
     fontSize: 'var(--value-size)',
     color: 'var(--ink)',
     background: 'var(--cream)',
-    border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+    border: `1px solid ${withAlpha('var(--sk-t1)', 8)}`,
     borderRadius: 'var(--radius-lg)',
     padding: 'var(--sp-sm) var(--sp-md)',
     outline: 'none',
@@ -136,7 +136,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
       maxWidth="md"
       variant="modal"
       animated
-      icon={<Scale {...ICON_PROPS} size={18} style={{ color: 'var(--gold)' }} />}
+      icon={<Scale {...ICON_PROPS} size={18} style={{ color: 'var(--sk-t2)' }} />}
       onExtraKeyDown={handleExtraKeyDown}
       footer={
         <>
@@ -174,15 +174,15 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
             />
           </Field>
           {similarDecisions.length > 0 && (
-            <div className="mt-3 p-3 rounded-lg" style={{ background: 'var(--gold-hover)', border: `1px dashed ${withAlpha(ACCENT_GOLD, 20)}` }}>
+            <div className="mt-3 p-3 rounded-lg" style={{ background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)', border: `1px dashed ${withAlpha('var(--sk-t1)', 10)}` }}>
               <div className="flex items-center gap-1.5 mb-2">
-                <History {...ICON_PROPS} size={12} style={{ color: 'var(--gold)' }} />
-                <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
+                <History {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)' }} />
+                <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--sk-t2)' }}>
                   Similar past decisions
                 </span>
               </div>
               {similarDecisions.map(d => (
-                <div key={d.id} className="py-2" style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 6)}` }}>
+                <div key={d.id} className="py-2" style={{ borderBottom: `1px solid ${withAlpha('var(--sk-t1)', 3)}` }}>
                   <div className="flex items-center gap-2">
                     <p style={{ fontSize: 'var(--value-size)', fontWeight: 500, color: 'var(--ink)', margin: 0 }}>
                       {d.title}
@@ -192,7 +192,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
                     )}
                   </div>
                   {d.outcome && (
-                    <p style={{ fontSize: '12px', color: 'var(--teal)', marginTop: 2, marginBottom: 0 }}>
+                    <p style={{ fontSize: '12px', color: 'var(--sk-t2)', marginTop: 2, marginBottom: 0 }}>
                       Outcome: {d.outcome}
                     </p>
                   )}
@@ -262,9 +262,9 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
                     onClick={() => addTag(tag)}
                     className="text-[10px] px-1.5 py-0.5 rounded-full transition-colors"
                     style={{
-                      color: 'var(--teal)',
-                      backgroundColor: 'var(--teal-hover)',
-                      border: '1px dashed rgba(45,138,138,0.2)',
+                      color: 'var(--sk-t2)',
+                      backgroundColor: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',
+                      border: '1px dashed var(--border-subtle)',
                       cursor: 'pointer',
                     }}
                   >
@@ -287,13 +287,13 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
                   <span
                     key={slug}
                     className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px]"
-                    style={{ backgroundColor: 'var(--teal-active)', color: 'var(--teal)' }}
+                    style={{ backgroundColor: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)', color: 'var(--sk-t2)' }}
                   >
                     {projTitle}
                     <button
                       type="button"
                       onClick={() => toggleLinkedProject(slug)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', padding: '0 2px', fontSize: '10px' }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sk-t3)', padding: '0 2px', fontSize: '10px' }}
                     >
                       x
                     </button>

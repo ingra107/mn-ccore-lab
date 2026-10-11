@@ -44,7 +44,7 @@ export default function PageHeader({
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
-                color: 'var(--teal)',
+                color: 'var(--sk-t2)',
               }}
             >
               {icon}

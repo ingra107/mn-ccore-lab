@@ -251,8 +251,8 @@ function AddEventForm({
             padding: '5px 14px',
             fontSize: '12px',
             fontWeight: 600,
-            border: '1px solid var(--teal)',
-            background: 'var(--teal-solid)',
+            border: '1px solid var(--job-accent)',
+            background: 'var(--job-accent-solid)',
             color: 'var(--ink-bright, #fff)',
             cursor: createEvent.isPending ? 'wait' : 'pointer',
             opacity: createEvent.isPending ? 0.85 : 1,
@@ -344,7 +344,7 @@ function TimelineEvent({
             style={{
               fontSize: 'var(--label-size)',
               fontWeight: 'var(--label-weight)',
-              color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
+              color: isOverdue ? 'var(--job-overdue)' : 'var(--slate)',
               opacity: isOverdue ? 1 : 0.85,
             }}
           >
@@ -360,11 +360,11 @@ function TimelineEvent({
             style={{
               fontSize: 'var(--label-size)',
               fontWeight: 'var(--label-weight)',
-              color: isOverdue ? 'var(--maroon)' : 'var(--teal)',
+              color: isOverdue ? 'var(--job-overdue)' : 'var(--sk-t2)',
               opacity: isOverdue ? 1 : 0.85,
               padding: '1px 6px',
               borderRadius: 'var(--radius-lg)',
-              background: isOverdue ? 'var(--maroon-hover)' : 'var(--teal-hover)',
+              background: isOverdue ? 'color-mix(in srgb, var(--job-overdue) 6%, transparent)' : 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',
             }}
           >
             {relativeDate}
@@ -431,7 +431,7 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Send {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
+          <Send {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
           <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
             Submission Timeline
           </h3>
@@ -452,10 +452,10 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
             fontSize: '12px',
             fontWeight: 'var(--label-weight)',
             background: 'transparent',
-            color: 'var(--teal)',
+            color: 'var(--sk-t2)',
             transition: 'background 0.12s ease-out',
           }}
-          onMouseEnter={(e) => { (e.target as HTMLElement).style.background = 'var(--teal-hover)' }}
+          onMouseEnter={(e) => { (e.target as HTMLElement).style.background = 'color-mix(in srgb, var(--job-accent) 6%, transparent)' }}
           onMouseLeave={(e) => { (e.target as HTMLElement).style.background = 'transparent' }}
         >
           <Plus {...ICON_PROPS} size={12} />

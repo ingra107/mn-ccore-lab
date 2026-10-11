@@ -166,7 +166,7 @@ export function TaskRowActions({
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--teal)',
+            color: 'var(--sk-t2)',
             opacity: 0.9,
             padding: 'var(--sp-xs)',
             borderRadius: 'var(--radius-md)',
@@ -179,7 +179,7 @@ export function TaskRowActions({
       )}
       <div className="task-row-verbs" style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
         <VerbButton label={isDone ? 'Mark not done' : 'Mark done'} onClick={onToggleDone} decorative>
-          <Check {...ICON_PROPS} size={13} style={{ color: isDone ? 'var(--green)' : undefined }} />
+          <Check {...ICON_PROPS} size={13} style={{ color: isDone ? 'var(--sk-t2)' : undefined }} />
         </VerbButton>
         <VerbButton label="Edit action item" onClick={onOpenEditor}>
           <Pencil {...ICON_PROPS} size={13} />

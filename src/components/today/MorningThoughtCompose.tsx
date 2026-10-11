@@ -245,7 +245,7 @@ export function MorningThoughtCompose() {
           type="checkbox"
           checked={forceHome}
           onChange={e => setForceHome(e.target.checked)}
-          style={{ accentColor: 'var(--sk-ac)' }}
+          style={{ accentColor: 'var(--job-accent)' }}
         />
         send to home
       </label>

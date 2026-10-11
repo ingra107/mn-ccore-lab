@@ -42,7 +42,7 @@
 
   --muted: #5a6370; /* 6.0:1 on #fff, 5.6:1 on #f5f5f5 — was #6b7280 (4.2:1 on grey panels, edge failure). 2026-04-22 */
 
-  --border-light: color-mix(in srgb, var(--task-accent-gold) 12%, transparent);
+  --border-light: color-mix(in srgb, var(--sk-t1) 8%, transparent);
   /* Light-mode border alphas bumped per R4-04 — form inputs on /settings
      were barely distinguishable from the surrounding surface at 0.06 /
      0.12 / 0.20. Bumped to 0.08 / 0.14 / 0.24 — visible bordered field
@@ -332,6 +332,33 @@
    back changes one line here, not every map. Declared on :root and resolved
    against the theme's --sk-t3 (.dark sits on <html>, the same element). */
 :root {
+  /* The six color JOBS. Every hue in src/ goes through one of these or the
+     gray ramp (--sk-t1/--sk-t2/--sk-t3); scripts/check-color-jobs.mjs counts
+     every raw var(--gold)/var(--teal)/ACCENT_* use against a baseline that
+     only goes down. Light and dark both resolve here: these alias the --sk-*
+     and palette tokens, which .dark redefines on the same <html> element. */
+  --job-overdue: var(--sk-od);     /* red: overdue, nothing else */
+  --job-wants: var(--sk-gold);     /* gold: wants you now (needs-you asks, due today, new/unread) */
+  --job-milestone: var(--sk-gold); /* gold: milestones keep it */
+  --job-accent: var(--sk-ac);      /* teal: the one accent (primary action, selection, focus, today, Saved, In Progress) */
+  --job-stale: var(--sk-urg);      /* orange: going stale (urgent edge/tag, stalled/idle days, at risk) */
+  --job-brand: var(--gold);        /* gold as the PUBLIC site's brand color only */
+  /* The accent's solid fill under white text (primary buttons). Same job as
+     --job-accent, a darker step so white text holds AA in both themes. */
+  --job-accent-solid: var(--teal-solid);
+  /* Link-type tints (color-back pick 2026-10-11): each link kind keeps its own
+     brand hue, dimmed through --link-strength where it is drawn. */
+  --lk-doc: #5b8def;
+  --lk-sheet: #3fa66b;
+  --lk-slides: #e3a93a;
+  --lk-artifact: #d0805e;
+  --lk-email: #dd6a5f;
+}
+/* Brand gold belongs to the public site only. Shared public/portal components
+   (LabPageLayout, PublicationCard, avatars) read --job-brand; inside the portal
+   shell it is the gray ramp, so brand gold cannot leak onto a portal page. */
+.portal-shell {
+  --job-brand: var(--sk-t2);
   --st-blocked: var(--sk-t3);
   --st-waiting: var(--sk-t3);
   --st-done: var(--sk-t3);
@@ -619,7 +646,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   background: var(--field-bg-hover);
 }
 .field-container:focus-within {
-  border-color: var(--teal);
+  border-color: var(--job-accent);
 }
 
 /* Description editor — border is now managed by the DescriptionField
@@ -653,14 +680,14 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   font-weight: 500;
   padding: 2px 6px;
   border-radius: 9999px;
-  background: color-mix(in srgb, var(--task-accent-gold) 12%, transparent);
-  color: #5a4518;
+  background: color-mix(in srgb, var(--sk-t1) 6%, transparent);
+  color: var(--sk-t2);
   white-space: nowrap;
   vertical-align: middle;
   margin-right: 6px;
 }
 .dark .carried-badge {
-  color: #dcb355;
+  color: var(--sk-t2);
 }
 
 /* ── Tiptap rich text editor styles ── */
@@ -696,9 +723,9 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   float: left;
 }
 .rich-text-editor .tiptap .mention {
-  color: var(--teal);
+  color: var(--job-accent);
   font-weight: 500;
-  background: rgba(45, 138, 138, 0.08);
+  background: color-mix(in srgb, var(--sk-t1) 8%, transparent);
   padding: 1px 4px;
   border-radius: 4px;
 }
@@ -722,11 +749,11 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
    .task-grid-select-mode, replacing the neutral hover with a teal tint so
    it's immediately obvious that clicks will SELECT, not open. */
 .task-grid-select-mode .task-grid-row:hover {
-  background: var(--teal-active) !important;
+  background: color-mix(in srgb, var(--job-accent) 10%, transparent) !important;
   cursor: cell;
 }
 .dark .task-grid-select-mode .task-grid-row:hover {
-  background: var(--teal-active) !important;
+  background: color-mix(in srgb, var(--job-accent) 10%, transparent) !important;
 }
 
 /* Density: compact table rows */
@@ -835,26 +862,26 @@ h3 {
 }
 
 a {
-  color: var(--maroon);
+  color: var(--job-accent);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 a:hover {
-  color: var(--gold);
+  color: var(--sk-t1);
 }
 
 /* ── Focus States ── */
 /* Light mode: teal has better contrast on white (~4.5:1) than gold (2.29:1) */
 :focus-visible {
-  outline: 2px solid var(--teal);
+  outline: 2px solid var(--job-accent);
   outline-offset: 2px;
   border-radius: 2px;
 }
 
 /* Dark mode: gold works well on dark backgrounds */
 .dark :focus-visible {
-  outline-color: var(--gold);
+  outline-color: var(--job-accent);
 }
 
 /* Data-table rows get a subtler focus treatment than the global outline
@@ -865,16 +892,16 @@ a:hover {
 .deadline-row:focus-visible,
 .idea-row:focus-visible,
 .decision-list-row:focus-visible {
-  outline: 2px solid color-mix(in oklch, var(--teal) 55%, transparent);
+  outline: 2px solid color-mix(in oklch, var(--job-accent) 55%, transparent);
   outline-offset: -2px;
-  background: rgba(45, 138, 138, 0.05);
+  background: color-mix(in srgb, var(--job-accent) 5%, transparent);
   border-radius: var(--radius-sm);
 }
 .dark .deadline-row:focus-visible,
 .dark .idea-row:focus-visible,
 .dark .decision-list-row:focus-visible {
-  outline-color: color-mix(in oklch, #5cbcb4 55%, transparent);
-  background: color-mix(in srgb, var(--task-accent-teal) 8%, transparent);
+  outline-color: color-mix(in oklch, var(--job-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--job-accent) 8%, transparent);
 }
 
 /* ── Scroll Animations ── */
@@ -923,11 +950,6 @@ a:hover {
   100% { transform: scale(1); }
 }
 
-@keyframes badge-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(122, 0, 25, 0.4); }
-  50% { opacity: 0.85; box-shadow: 0 0 0 4px rgba(122, 0, 25, 0); }
-}
-
 /* ── Chord leader indicator animations ── */
 @keyframes chord-pulse {
   0%, 100% { opacity: 1; }
@@ -947,7 +969,7 @@ a:hover {
 /* ── Gold rule divider ── */
 .gold-rule {
   height: 1px;
-  background: linear-gradient(to right, var(--gold), transparent);
+  background: linear-gradient(to right, var(--job-brand), transparent);
   border: none;
   opacity: 0.5;
 }
@@ -1063,8 +1085,8 @@ a:hover {
   font-size: 12px;
   font-weight: 500;
   font-family: var(--font-sans);
-  background: color-mix(in srgb, var(--task-accent-gold) 15%, transparent);
-  color: var(--gold);
+  background: color-mix(in srgb, var(--sk-t1) 7%, transparent);
+  color: var(--sk-t2);
 }
 
 /* ── Scrollbar ── */
@@ -1085,7 +1107,7 @@ a:hover {
 
 /* ── Selection ── */
 ::selection {
-  background: var(--gold);
+  background: color-mix(in srgb, var(--job-accent) 30%, transparent);
   color: #ffffff;
 }
 
@@ -1320,10 +1342,10 @@ a:hover {
   line-height: 1.35;
 }
 .table-row-hover:hover {
-  background-color: color-mix(in srgb, var(--task-accent-gold) 6%, transparent);
+  background-color: color-mix(in srgb, var(--sk-t1) 4%, transparent);
 }
 .dark .table-row-hover:hover {
-  background-color: color-mix(in srgb, var(--task-accent-gold) 6%, transparent);
+  background-color: color-mix(in srgb, var(--sk-t1) 4%, transparent);
 }
 
 /* ── Print styles ── */
@@ -1420,12 +1442,12 @@ a:hover {
   }
 }
 .context-menu-item:hover {
-  background: color-mix(in srgb, var(--task-accent-gold) 6%, transparent);
+  background: color-mix(in srgb, var(--sk-t1) 4%, transparent);
 }
 
 /* Trajectory project cards: gold border + shadow on hover */
 .trajectory-project-card:hover {
-  border-left-color: var(--gold) !important;
+  border-left-color: var(--job-brand) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
@@ -1446,8 +1468,8 @@ a:hover {
 /* Completed row — green flash then settle */
 @keyframes task-row-complete {
   0% { background-color: transparent; opacity: 1; }
-  15% { background-color: rgba(34, 197, 94, 0.12); }
-  50% { background-color: rgba(34, 197, 94, 0.06); }
+  15% { background-color: color-mix(in srgb, var(--job-accent) 12%, transparent); }
+  50% { background-color: color-mix(in srgb, var(--job-accent) 6%, transparent); }
   100% { background-color: transparent; opacity: 0.5; }
 }
 
@@ -1469,10 +1491,10 @@ a:hover {
    violated Rule 44: mount animations are transform-only). The glyph now stays
    fully visible and only scales/rotates/halos in. */
 @keyframes hermes-pulse-in {
-  0%   { transform: scale(0.7) rotate(-18deg); box-shadow: 0 0 0 0 rgba(220, 179, 85, 0); }
-  35%  { transform: scale(1.12) rotate(4deg);  box-shadow: 0 0 0 8px rgba(220, 179, 85, 0.18); }
-  70%  { transform: scale(0.98) rotate(-1deg); box-shadow: 0 0 0 14px rgba(220, 179, 85, 0.06); }
-  100% { transform: scale(1) rotate(0);        box-shadow: 0 0 0 0 rgba(220, 179, 85, 0); }
+  0%   { transform: scale(0.7) rotate(-18deg); box-shadow: 0 0 0 0 color-mix(in srgb, var(--sk-t1) 0%, transparent); }
+  35%  { transform: scale(1.12) rotate(4deg);  box-shadow: 0 0 0 8px color-mix(in srgb, var(--sk-t1) 14%, transparent); }
+  70%  { transform: scale(0.98) rotate(-1deg); box-shadow: 0 0 0 14px color-mix(in srgb, var(--sk-t1) 5%, transparent); }
+  100% { transform: scale(1) rotate(0);        box-shadow: 0 0 0 0 color-mix(in srgb, var(--sk-t1) 0%, transparent); }
 }
 .hermes-mark-pulse {
   animation: hermes-pulse-in 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1515,9 +1537,9 @@ a:hover {
   gap: 6px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: color-mix(in oklch, var(--teal) 10%, transparent);
-  border: 1px solid color-mix(in oklch, var(--teal) 30%, transparent);
-  color: var(--teal);
+  background: color-mix(in oklch, var(--job-accent) 10%, transparent);
+  border: 1px solid color-mix(in oklch, var(--job-accent) 30%, transparent);
+  color: var(--job-accent);
   font-size: 12px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -1525,12 +1547,12 @@ a:hover {
   white-space: nowrap;
   transition: background-color var(--duration-fast, 100ms) ease-out;
 }
-.phase-pill:hover { background: color-mix(in oklch, var(--teal) 16%, transparent); }
-.phase-pill:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.phase-pill:hover { background: color-mix(in oklch, var(--job-accent) 16%, transparent); }
+.phase-pill:focus-visible { outline: 2px solid var(--job-accent); outline-offset: 2px; }
 .phase-pill-dot {
   width: 6px; height: 6px;
   border-radius: 50%;
-  background: var(--teal);
+  background: var(--job-accent);
   animation: phase-pulse 2s ease-in-out infinite;
   flex-shrink: 0;
 }
@@ -1580,7 +1602,7 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    See design_handoff_round2 § 0 Ask 3 + ticket P1-R2-05. */
 .task-row-focused {
   position: relative;
-  background: rgba(45, 138, 138, 0.06) !important;
+  background: color-mix(in srgb, var(--job-accent) 6%, transparent) !important;
 }
 
 .task-row-focused::before {
@@ -1590,12 +1612,12 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   top: 0;
   bottom: 0;
   width: 3px;
-  background: var(--teal);
+  background: var(--job-accent);
   border-radius: 0 1px 1px 0;
 }
 
 .dark .task-row-focused {
-  background: rgba(61, 184, 184, 0.10) !important;
+  background: color-mix(in srgb, var(--job-accent) 10%, transparent) !important;
 }
 
 /* Forced-colors / high-contrast: outline survives when bg colors are stripped. */
@@ -1613,7 +1635,7 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    Visually distinct from selection: lighter, narrower bar, no border ring. */
 .task-grid-row:focus-visible {
   outline: none;
-  background: rgba(45, 138, 138, 0.06) !important;
+  background: color-mix(in srgb, var(--job-accent) 6%, transparent) !important;
   position: relative;
 }
 .task-grid-row:focus-visible::before {
@@ -1623,11 +1645,11 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   top: 0;
   bottom: 0;
   width: 2px;
-  background: color-mix(in oklch, var(--teal) 55%, transparent);
+  background: color-mix(in oklch, var(--job-accent) 55%, transparent);
   border-radius: 0 1px 1px 0;
 }
 .dark .task-grid-row:focus-visible {
-  background: rgba(61, 184, 184, 0.08) !important;
+  background: color-mix(in srgb, var(--job-accent) 8%, transparent) !important;
 }
 
 /* SELECTED state — issue 3: stronger 20% bg (was 10/14%) so it reads clearly
@@ -1635,7 +1657,7 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    Teal is distinct from gold (planned) and coral (overdue). */
 .task-grid-row[data-selected="true"] {
   outline: none;
-  background: rgba(45, 138, 138, 0.20) !important;
+  background: color-mix(in srgb, var(--job-accent) 20%, transparent) !important;
   position: relative;
 }
 .task-grid-row[data-selected="true"]::before {
@@ -1645,19 +1667,19 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   top: 0;
   bottom: 0;
   width: 3px;
-  background: var(--teal);
+  background: var(--job-accent);
   border-radius: 0 1px 1px 0;
 }
 .task-grid-row[data-selected="true"]::after {
   content: '';
   position: absolute;
   inset: 0;
-  border: 1px solid color-mix(in oklch, var(--teal) 40%, transparent);
+  border: 1px solid color-mix(in oklch, var(--job-accent) 40%, transparent);
   border-radius: var(--radius-sm);
   pointer-events: none;
 }
 .dark .task-grid-row[data-selected="true"] {
-  background: rgba(61, 184, 184, 0.20) !important;
+  background: color-mix(in srgb, var(--job-accent) 20%, transparent) !important;
 }
 @media (forced-colors: active) {
   .task-grid-row:focus-visible,
@@ -1669,10 +1691,10 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 
 /* Task title clickable hover */
 .task-title-clickable:hover {
-  background: rgba(45, 138, 138, 0.06);
+  background: color-mix(in srgb, var(--sk-t1) 6%, transparent);
 }
 .dark .task-title-clickable:hover {
-  background: rgba(61, 184, 184, 0.08);
+  background: color-mix(in srgb, var(--sk-t1) 8%, transparent);
 }
 
 /* Hover row actions — in-flow grid column */
@@ -1706,23 +1728,23 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 400;
-  color: var(--teal);
+  color: var(--job-accent);
   white-space: nowrap;
   transition: background var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
 }
 
 .task-grid-row-action-btn:hover {
-  background: rgba(45, 138, 138, 0.08);
-  border-color: rgba(45, 138, 138, 0.15);
+  background: color-mix(in srgb, var(--sk-t1) 8%, transparent);
+  border-color: color-mix(in srgb, var(--sk-t1) 15%, transparent);
 }
 
 .dark .task-grid-row-action-btn {
-  color: var(--teal);
+  color: var(--job-accent);
 }
 
 .dark .task-grid-row-action-btn:hover {
-  background: rgba(61, 184, 184, 0.1);
-  border-color: rgba(61, 184, 184, 0.2);
+  background: color-mix(in srgb, var(--sk-t1) 10%, transparent);
+  border-color: color-mix(in srgb, var(--sk-t1) 20%, transparent);
 }
 
 /* ── Mobile UX improvements ── */
@@ -2346,7 +2368,7 @@ button[aria-label="Deselect task"]::before {
     min-height: 48px;
     border-radius: var(--radius-lg);
     border: none;
-    background: var(--teal-solid);
+    background: var(--job-accent-solid);
     color: #fff;
     font-weight: var(--weight-ui, 500);
     font-size: 15px;
@@ -2405,7 +2427,7 @@ button[aria-label="Deselect task"]::before {
 /* ══ Today skin (.tk) — ported from the approved reskin mockup ══
    Every class is tk-prefixed so nothing here can leak onto other pages.
    Modifiers are tk-prefixed too (tk-btn tk-ac). */
-:root{--sk-rim:rgba(255,255,255,.9);--sk-amb:0 1px 2px color-mix(in srgb,var(--sk-t1) 5%,transparent);--sk-rim-ac:color-mix(in srgb,var(--sk-ac) 25%,transparent);--sk-top:color-mix(in srgb,var(--sk-card) 97%,#000)}
+:root{--sk-rim:rgba(255,255,255,.9);--sk-amb:0 1px 2px color-mix(in srgb,var(--sk-t1) 5%,transparent);--sk-rim-ac:color-mix(in srgb,var(--job-accent) 25%,transparent);--sk-top:color-mix(in srgb,var(--sk-card) 97%,#000)}
 .dark{--sk-rim:rgba(255,255,255,.06);--sk-amb:0 10px 30px rgba(0,0,0,.35);--sk-top:color-mix(in srgb,var(--sk-card) 94%,#fff)}
 /* Card material (color back pick 1, Nick 2026-10-11): lit top edge, top-to-bottom
    tone, soft ambient shadow. ONE rule for every leaf card: Today's cards, the
@@ -2425,12 +2447,12 @@ button[aria-label="Deselect task"]::before {
    accent. Every bar sits on --sk-bar-track, and the floors hold the dim end
    at 3:1 against that track (light 78% = 3.26, dark 68% = 3.19), which is
    the background the fill is actually read against (tealRamp.test.ts). */
-:root{--sk-ramp-dim:color-mix(in srgb,var(--sk-ac) 78%,var(--sk-card));--sk-bar-track:color-mix(in srgb,var(--sk-t1) 10%,transparent)}
-.dark{--sk-ramp-dim:color-mix(in srgb,var(--sk-ac) 68%,var(--sk-card))}
+:root{--sk-ramp-dim:color-mix(in srgb,var(--job-accent) 78%,var(--sk-card));--sk-bar-track:color-mix(in srgb,var(--sk-t1) 10%,transparent)}
+.dark{--sk-ramp-dim:color-mix(in srgb,var(--job-accent) 68%,var(--sk-card))}
 .tk .tk-card:hover,.tk .tk-mc.tk-nowm{box-shadow:inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
-.tk .tk-tc.tk-urg{box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim),var(--sk-amb)}
-.tk .tk-tc.tk-urg:hover{box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
-.tk .tk-btn.tk-pri,.tk .tk-btn.tk-ac,.tk .tk-join,.tk .tk-ck.tk-on{background:linear-gradient(180deg,color-mix(in srgb,var(--sk-ac) 82%,#fff) 0%,var(--sk-ac) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 2px rgba(0,0,0,.18)}
+.tk .tk-tc.tk-urg{box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim),var(--sk-amb)}
+.tk .tk-tc.tk-urg:hover{box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
+.tk .tk-btn.tk-pri,.tk .tk-btn.tk-ac,.tk .tk-join,.tk .tk-ck.tk-on{background:linear-gradient(180deg,color-mix(in srgb,var(--job-accent) 82%,#fff) 0%,var(--job-accent) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 2px rgba(0,0,0,.18)}
 .tk .tk-face{background:linear-gradient(180deg,color-mix(in srgb,var(--sk-face) 82%,#fff) 0%,var(--sk-face) 100%)}
 .tk{color:var(--sk-t1);font-size:13px}
 .tk aside{border-left:1px solid var(--sk-line)}
@@ -2439,24 +2461,24 @@ button[aria-label="Deselect task"]::before {
 .tk .tk-date{font-size:13px;color:var(--sk-t3);white-space:nowrap;padding-bottom:4px}
 .tk .tk-btn{display:inline-flex;align-items:center;gap:6px;border-radius:var(--r-ctl);padding:6px 11px;font-size:12.5px;font-weight:500;color:var(--sk-t1);background:var(--sk-card);box-shadow:inset 0 0 0 1px var(--sk-line2);flex-shrink:0}
 .tk .tk-btn:hover{box-shadow:inset 0 0 0 1px var(--sk-t3)}
-.tk .tk-btn.tk-ac{background:var(--sk-ac);color:var(--sk-ac-fg);box-shadow:none;font-variant-numeric:tabular-nums}
+.tk .tk-btn.tk-ac{background:var(--job-accent);color:var(--sk-ac-fg);box-shadow:none;font-variant-numeric:tabular-nums}
 .tk .tk-btn.tk-off{color:var(--sk-t3);cursor:not-allowed;background:transparent}
 .tk .tk-btn.tk-sm{padding:4px 9px;font-size:12px}
-.tk .tk-btn.tk-pri{background:var(--sk-ac);color:var(--sk-ac-fg);box-shadow:none}
-.tk .tk-btn.tk-sel{box-shadow:inset 0 0 0 1.5px var(--sk-ac);color:var(--sk-ac)}
+.tk .tk-btn.tk-pri{background:var(--job-accent);color:var(--sk-ac-fg);box-shadow:none}
+.tk .tk-btn.tk-sel{box-shadow:inset 0 0 0 1.5px var(--job-accent);color:var(--job-accent)}
 /* stat line */
 .tk .tk-stats{position:relative;display:flex;flex-wrap:wrap;gap:10px 22px;margin:14px 0 18px;padding-bottom:14px;border-bottom:1px solid var(--sk-line)}
 /* day progress: the divider under the stat line fills teal with done / (done + still planned) */
-.tk .tk-stats::after{content:"";position:absolute;left:0;bottom:-1px;height:2px;width:var(--prog,0%);border-radius:2px;background:linear-gradient(90deg,color-mix(in srgb,var(--sk-ac) 55%,transparent),var(--sk-ac));transition:width .4s ease}
+.tk .tk-stats::after{content:"";position:absolute;left:0;bottom:-1px;height:2px;width:var(--prog,0%);border-radius:2px;background:linear-gradient(90deg,color-mix(in srgb,var(--job-accent) 55%,transparent),var(--job-accent));transition:width .4s ease}
 .tk .tk-st{display:flex;gap:8px;align-items:stretch;color:inherit;text-decoration:none;border-radius:6px}
 .tk .tk-st .tk-rl{width:2px;border-radius:2px;background:var(--sk-line2);flex-shrink:0}
-.tk .tk-st .tk-rl.tk-o{background:var(--sk-od)} .tk .tk-st .tk-rl.tk-g{background:var(--sk-gold)} .tk .tk-st .tk-rl.tk-t{background:var(--sk-ac)} .tk .tk-st .tk-rl.tk-u{background:var(--sk-urg)}
+.tk .tk-st .tk-rl.tk-o{background:var(--job-overdue)} .tk .tk-st .tk-rl.tk-g{background:var(--job-wants)} .tk .tk-st .tk-rl.tk-t{background:var(--job-accent)} .tk .tk-st .tk-rl.tk-u{background:var(--job-stale)}
 .tk .tk-st .tk-v{font:500 22px/1 var(--font-display);color:var(--sk-t1);font-variant-numeric:tabular-nums}
 .tk .tk-st .tk-l{font-size:11px;color:var(--sk-t3);margin-top:3px;white-space:nowrap;display:flex;gap:3px}
 .tk .tk-st .tk-ar{opacity:0;transition:opacity .15s}
 .tk a.tk-st:hover .tk-l,.tk a.tk-st:focus-visible .tk-l{color:var(--sk-t1);text-decoration:underline;text-underline-offset:3px}
 .tk a.tk-st:hover .tk-ar,.tk a.tk-st:focus-visible .tk-ar{opacity:1}
-.tk a.tk-st:focus-visible,.tk button:focus-visible{outline:2px solid var(--sk-ac);outline-offset:2px}
+.tk a.tk-st:focus-visible,.tk button:focus-visible{outline:2px solid var(--job-accent);outline-offset:2px}
 .tk .tk-st.tk-zero .tk-v{opacity:.45;color:var(--sk-t3)} .tk .tk-st.tk-zero .tk-l{color:var(--sk-t3);opacity:.8}
 .tk .tk-hint{display:flex;gap:8px;font-size:12px;color:var(--sk-t3);margin:0 0 14px;align-items:flex-start}
 .tk .tk-hint span{flex:1;min-width:0}
@@ -2467,13 +2489,13 @@ button[aria-label="Deselect task"]::before {
 .tk .tk-qcard{margin-bottom:12px}
 /* attention items (Needs you, meeting triage): ONE card, no box-in-box, and visibly not part of the everyday page:
    warm gold wash + a gold rail + gold label. Gold = "something wants you now", used rarely. */
-.tk .tk-attn{position:relative;margin:14px 0 10px;border-radius:var(--r-card);background:linear-gradient(180deg,color-mix(in srgb,var(--sk-gold) 14%,var(--sk-card)) 0%,color-mix(in srgb,var(--sk-gold) 7%,var(--sk-card)) 100%);border:1px solid color-mix(in srgb,var(--sk-gold) 38%,transparent);box-shadow:inset 3px 0 0 var(--sk-gold),inset 0 1px 0 color-mix(in srgb,var(--sk-gold) 30%,transparent),var(--sk-amb)}
+.tk .tk-attn{position:relative;margin:14px 0 10px;border-radius:var(--r-card);background:linear-gradient(180deg,color-mix(in srgb,var(--job-wants) 14%,var(--sk-card)) 0%,color-mix(in srgb,var(--job-wants) 7%,var(--sk-card)) 100%);border:1px solid color-mix(in srgb,var(--job-wants) 38%,transparent);box-shadow:inset 3px 0 0 var(--job-wants),inset 0 1px 0 color-mix(in srgb,var(--job-wants) 30%,transparent),var(--sk-amb)}
 .tk .tk-attn+.tk-attn{margin-top:8px}
-.tk .tk-attn-h{display:flex;align-items:center;gap:8px;padding:10px 14px 0 17px;font-size:12px;font-weight:600;color:var(--sk-gold);letter-spacing:.01em}
-.tk .tk-attn-h .tk-cnt{color:var(--sk-gold);font-weight:500} /* gold on the wash: 5.8:1 light, 6.5:1 dark */
-.tk .tk-attn-dot{width:7px;height:7px;border-radius:50%;background:var(--sk-gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--sk-gold) 22%,transparent)}
+.tk .tk-attn-h{display:flex;align-items:center;gap:8px;padding:10px 14px 0 17px;font-size:12px;font-weight:600;color:var(--job-wants);letter-spacing:.01em}
+.tk .tk-attn-h .tk-cnt{color:var(--job-wants);font-weight:500} /* gold on the wash: 5.8:1 light, 6.5:1 dark */
+.tk .tk-attn-dot{width:7px;height:7px;border-radius:50%;background:var(--job-wants);box-shadow:0 0 0 3px color-mix(in srgb,var(--job-wants) 22%,transparent)}
 .tk .tk-attn .tk-qrow{padding:6px 14px 12px 17px}
-.tk .tk-attn .tk-qrow+.tk-qrow{border-top:1px solid color-mix(in srgb,var(--sk-gold) 22%,transparent);padding-top:10px}
+.tk .tk-attn .tk-qrow+.tk-qrow{border-top:1px solid color-mix(in srgb,var(--job-wants) 22%,transparent);padding-top:10px}
 .tk .tk-ph{display:flex;align-items:center;gap:8px;margin:0 0 10px;flex-wrap:wrap}
 .tk .tk-ph h2,.tk .tk-ph h3{font:600 14px var(--font-body);margin:0;color:var(--sk-t1);white-space:nowrap}
 .tk .tk-cnt{font-size:12px;color:var(--sk-t3);font-variant-numeric:tabular-nums}
@@ -2489,7 +2511,7 @@ button[aria-label="Deselect task"]::before {
 .tk .tk-thread{background:var(--sk-card);border:1px solid var(--sk-line);border-radius:var(--r-card);padding:10px 12px;margin-bottom:8px;font-size:12.5px;color:var(--sk-t2)}
 .tk .tk-thread b{color:var(--sk-t1);font-weight:500}
 .tk .tk-err{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--sk-t3);margin:0 0 10px}
-.tk .tk-err button{color:var(--sk-ac);text-decoration:underline;text-underline-offset:2px}
+.tk .tk-err button{color:var(--job-accent);text-decoration:underline;text-underline-offset:2px}
 .tk .tk-seg{display:inline-flex;background:var(--sk-panel);box-shadow:inset 0 0 0 1px var(--sk-line2);border-radius:var(--r-ctl);padding:2px}
 .tk .tk-seg button{padding:2px 9px;font-size:11.5px;color:var(--sk-t3);border-radius:6px}
 .tk .tk-seg button.tk-on{background:var(--sk-card);color:var(--sk-t1);font-weight:500;box-shadow:inset 0 0 0 1px var(--sk-line2)}
@@ -2497,11 +2519,11 @@ button[aria-label="Deselect task"]::before {
 .tk .tk-stack{display:flex;flex-direction:column;gap:8px}
 /* task card */
 .tk .tk-tc{position:relative}
-.tk .tk-tc.tk-urg{box-shadow:inset 2px 0 0 var(--sk-urg)}
+.tk .tk-tc.tk-urg{box-shadow:inset 2px 0 0 var(--job-stale)}
 .tk .tk-tch{display:flex;gap:10px;align-items:flex-start;padding:11px 12px 10px;cursor:pointer}
 html[data-density="compact"] .tk .tk-tch{padding:7px 12px 7px}
 .tk .tk-ck{width:17px;height:17px;border-radius:5px;flex-shrink:0;margin-top:1px;box-shadow:inset 0 0 0 1.5px var(--sk-t3);display:grid;place-items:center;color:var(--sk-ac-fg)}
-.tk .tk-ck.tk-on{background:var(--sk-ac);box-shadow:none}
+.tk .tk-ck.tk-on{background:var(--job-accent);box-shadow:none}
 .tk .tk-hdr{flex:1;min-width:0}
 .tk .tk-ct{font-size:13.5px;font-weight:600;color:var(--sk-t1);line-height:1.35}
 .tk .tk-tc.tk-done .tk-ct{color:var(--sk-t3);text-decoration:line-through;font-weight:500}
@@ -2519,19 +2541,21 @@ html[data-density="compact"] .tk .tk-tch{padding:7px 12px 7px}
 html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-ft .tk-sp{flex:1}
 .tk .tk-mt{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--sk-t3);font-variant-numeric:tabular-nums}
-.tk .tk-mt.tk-ac{color:var(--sk-ac)}
+.tk .tk-mt.tk-ac{color:var(--job-accent)}
 .tk .tk-pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--sk-t2);white-space:nowrap}
 .tk .tk-pill i{width:6px;height:6px;border-radius:50%;background:var(--sk-t3);flex-shrink:0}
-.tk .tk-pill.tk-g{color:var(--sk-gold);font-weight:500} .tk .tk-pill.tk-g i{background:var(--sk-gold)}
-.tk .tk-pill.tk-o{color:var(--sk-od);font-weight:500} .tk .tk-pill.tk-o i{background:var(--sk-od)}
-.tk .tk-pill.tk-ac{color:var(--sk-ac);font-weight:500} .tk .tk-pill.tk-ac i{background:var(--sk-ac)}
-.tk .tk-pill.tk-box{padding:2px 8px;border-radius:999px;background:var(--sk-ac-soft);color:var(--sk-ac);font-weight:500}
-.tk .tk-pill.tk-box i{background:var(--sk-ac)}
+.tk .tk-pill.tk-g{color:var(--job-wants);font-weight:500} .tk .tk-pill.tk-g i{background:var(--job-wants)}
+.tk .tk-pill.tk-o{color:var(--job-overdue);font-weight:500} .tk .tk-pill.tk-o i{background:var(--job-overdue)}
+.tk .tk-pill.tk-ac{color:var(--job-accent);font-weight:500} .tk .tk-pill.tk-ac i{background:var(--job-accent)}
+.tk .tk-pill.tk-box{padding:2px 8px;border-radius:999px;background:color-mix(in srgb, var(--job-accent) 10%, transparent);color:var(--job-accent);font-weight:500}
+.tk .tk-pill.tk-box i{background:var(--job-accent)}
 .tk .tk-pill.tk-btnp{padding:2px 8px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--sk-line2)}
 .tk .tk-pill.tk-btnp:hover{color:var(--sk-t1)}
-.tk .tk-tag{font-size:10px;font-weight:600;color:var(--sk-gold);background:var(--sk-gold-soft);padding:1px 6px;border-radius:999px;margin-left:6px;vertical-align:1px}
-.tk .tk-tag.tk-ac{color:var(--sk-ac);background:var(--sk-ac-soft)}
+.tk .tk-tag{font-size:10px;font-weight:600;color:var(--job-wants);background:color-mix(in srgb, var(--job-wants) 11%, transparent);padding:1px 6px;border-radius:999px;margin-left:6px;vertical-align:1px}
+.tk .tk-tag.tk-ac{color:var(--job-accent);background:color-mix(in srgb, var(--job-accent) 10%, transparent)}
 .tk .tk-tag.tk-n{color:var(--sk-t3);background:transparent;box-shadow:inset 0 0 0 1px var(--sk-line2)}
+/* Going stale is orange's job (rules-ui-design 21): stalled / idle days. */
+.tk .tk-tag.tk-stale{color:var(--job-stale);background:transparent;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--job-stale) 35%,transparent)}
 .tk .tk-lk{display:inline-flex;gap:6px;color:var(--sk-t3)}
 .tk .tk-lk a{color:inherit;display:inline-flex}.tk .tk-lk a:hover{color:var(--sk-t1)}
 .tk .tk-hov{visibility:hidden;color:var(--sk-t3);padding:2px 3px;margin-left:2px;vertical-align:-1px}
@@ -2549,9 +2573,9 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-x:hover{color:var(--sk-t1)}
 /* milestone rule */
 .tk .tk-ms{display:flex;align-items:center;gap:9px;padding:4px 12px;cursor:pointer;min-height:24px}
-.tk .tk-ms .tk-dia{width:17px;text-align:center;font-size:11px;color:var(--sk-gold)}
+.tk .tk-ms .tk-dia{width:17px;text-align:center;font-size:11px;color:var(--job-milestone)}
 .tk .tk-ms .tk-mt2{font-size:12.5px;font-weight:500;color:var(--sk-t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.tk .tk-ms .tk-lead{flex:1;min-width:24px;height:1px;background:var(--sk-gold-soft)}
+.tk .tk-ms .tk-lead{flex:1;min-width:24px;height:1px;background:color-mix(in srgb, var(--job-milestone) 11%, transparent)}
 .tk .tk-ms.tk-int .tk-dia,.tk .tk-ms.tk-int .tk-lead{opacity:.75}
 .tk .tk-ms.tk-slip{opacity:.55}
 .tk .tk-msw{border-top:1px solid var(--sk-line);border-bottom:1px solid var(--sk-line);margin:2px 0}
@@ -2560,7 +2584,7 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-dact{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .tk .tk-menu{position:absolute;top:100%;left:0;margin-top:4px;min-width:200px;background:var(--sk-card);border:1px solid var(--sk-line2);border-radius:var(--r-ctl);z-index:30;padding:4px}
 .tk .tk-menu button{display:block;width:100%;text-align:left;padding:6px 10px;font-size:12px;border-radius:6px;color:var(--sk-t2)}
-.tk .tk-menu button:hover{background:var(--sk-ac-soft);color:var(--sk-t1)}
+.tk .tk-menu button:hover{background:color-mix(in srgb, var(--job-accent) 10%, transparent);color:var(--sk-t1)}
 .tk .tk-sel{background:var(--sk-card);color:var(--sk-t1);border:none;box-shadow:inset 0 0 0 1px var(--sk-line2);border-radius:var(--r-ctl);font-size:12px;padding:4px 8px}
 .tk .tk-smc{display:flex;gap:6px;align-items:center;background:var(--sk-panel);border:1px solid var(--sk-line);border-radius:var(--r-ctl);padding:7px 9px;font-size:12px;color:var(--sk-t3)}
 .tk .tk-feedl{font-size:12px;color:var(--sk-t2);padding:4px 0;display:flex;gap:8px;align-items:center}
@@ -2572,7 +2596,7 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-stp{width:22px;height:22px;display:inline-grid;place-items:center;border-radius:6px;box-shadow:inset 0 0 0 1px var(--sk-line2)}
 /* planned */
 .tk .tk-planned{border-radius:var(--r-panel);outline:1.5px dashed transparent;outline-offset:3px}
-.tk .tk-planned.tk-over,.tk .tk-gap.tk-over,.tk .tk-asep.tk-over{outline-color:var(--sk-ac);background:var(--sk-ac-soft)}
+.tk .tk-planned.tk-over,.tk .tk-gap.tk-over,.tk .tk-asep.tk-over{outline-color:var(--job-accent);background:color-mix(in srgb, var(--job-accent) 10%, transparent)}
 .tk .tk-prow{position:relative;background:var(--sk-card);border:1px dashed var(--sk-line2);border-radius:var(--r-card);overflow:hidden}
 .tk .tk-prow::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:repeating-linear-gradient(-45deg,var(--sk-hatch) 0 2px,transparent 2px 5px)}
 .tk .tk-prh{display:flex;gap:10px;padding:10px 12px 10px 14px;align-items:flex-start;cursor:pointer}
@@ -2580,20 +2604,20 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 /* timeline */
 .tk .tk-bal{margin-bottom:12px}
 .tk .tk-balbar{display:flex;height:6px;border-radius:3px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--sk-line)}
-.tk .tk-balbar .tk-f{background:repeating-linear-gradient(-45deg,var(--sk-hatch) 0 2px,transparent 2px 5px)} .tk .tk-balbar .tk-m{background:var(--sk-ac)}
+.tk .tk-balbar .tk-f{background:repeating-linear-gradient(-45deg,var(--sk-hatch) 0 2px,transparent 2px 5px)} .tk .tk-balbar .tk-m{background:var(--job-accent)}
 .tk .tk-baltx{display:flex;gap:12px;font-size:11.5px;color:var(--sk-t3);margin-top:5px;flex-wrap:wrap}
 .tk .tk-baltx b{color:var(--sk-t1);font-weight:500}
 .tk .tk-alld{font-size:11px;color:var(--sk-t3);padding:0 2px 6px;font-weight:500}
 .tk .tk-mc{position:relative}
-.tk .tk-mc.tk-nowm{border-color:color-mix(in srgb,var(--sk-ac) 50%,transparent)}
+.tk .tk-mc.tk-nowm{border-color:color-mix(in srgb,var(--job-accent) 50%,transparent)}
 .tk .tk-mch{display:flex;gap:10px;align-items:flex-start;padding:9px 11px 8px;cursor:pointer}
 .tk .tk-mc .tk-ft{padding:0 11px 9px 11px}
-.tk .tk-join{font-size:11.5px;font-weight:600;color:var(--sk-ac-fg);background:var(--sk-ac);border-radius:6px;padding:2px 9px;text-decoration:none}
-.tk .tk-joinq{font-size:11.5px;font-weight:500;color:var(--sk-ac);text-decoration:none}
+.tk .tk-join{font-size:11.5px;font-weight:600;color:var(--sk-ac-fg);background:var(--job-accent);border-radius:6px;padding:2px 9px;text-decoration:none}
+.tk .tk-joinq{font-size:11.5px;font-weight:500;color:var(--job-accent);text-decoration:none}
 .tk .tk-joinq:hover{text-decoration:underline}
 .tk .tk-mexp{padding:10px 12px 12px;border-top:1px solid var(--sk-line)}
 .tk .tk-mexp textarea{width:100%;min-height:72px;background:var(--sk-panel);border:1px solid var(--sk-line);border-radius:var(--r-ctl);padding:8px 10px;color:var(--sk-t1);font-size:12.5px;resize:vertical}
-.tk .tk-nd{outline:1px dashed #6f9be8;outline-offset:1px;border-radius:4px}
+.tk .tk-nd{outline:1px dashed var(--job-wants);outline-offset:1px;border-radius:4px}
 .tk-nonew .tk .tk-nd{display:none!important}
 .tk .tk-tlw{display:flex;gap:8px;align-items:flex-start}
 .tk .tk-spine{flex:1;min-width:0;padding-left:46px;position:relative}
@@ -2605,8 +2629,8 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-tblock .tk-rs{position:absolute;left:0;right:0;bottom:0;height:6px;cursor:ns-resize}
 .tk .tk-ovr{display:flex;gap:6px}
 .tk .tk-ovr>*{flex:1;min-width:0}
-.tk .tk-now{position:relative;height:0;border-top:1.5px solid var(--sk-ac);z-index:3}
-.tk .tk-now span{position:absolute;right:0;top:-15px;font-size:10px;font-weight:600;color:var(--sk-ac);background:var(--sk-panel);padding:0 3px}
+.tk .tk-now{position:relative;height:0;border-top:1.5px solid var(--job-accent);z-index:3}
+.tk .tk-now span{position:absolute;right:0;top:-15px;font-size:10px;font-weight:600;color:var(--job-accent);background:var(--sk-panel);padding:0 3px}
 .tk .tk-svc{width:clamp(96px,25%,180px);flex-shrink:0}
 .tk .tk-svch{font-size:11px;color:var(--sk-t3);padding-bottom:4px}
 .tk .tk-svcb{border:1px solid var(--sk-line);border-radius:var(--r-ctl);padding:6px 7px;min-height:72px;background:repeating-linear-gradient(-45deg,var(--sk-line) 0 1px,transparent 1px 6px)}
@@ -2627,14 +2651,14 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-rli{display:flex;gap:8px;font-size:12px;padding:3px 0;align-items:baseline;color:var(--sk-t1)}
 .tk .tk-rli .tk-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tk .tk-rli .tk-d{font-size:11px;flex-shrink:0;color:var(--sk-t3)}
-.tk .tk-rli .tk-d.tk-o{color:var(--sk-od);font-weight:500}
-.tk .tk-rmore{font-size:11.5px;color:var(--sk-ac)}
+.tk .tk-rli .tk-d.tk-o{color:var(--job-overdue);font-weight:500}
+.tk .tk-rmore{font-size:11.5px;color:var(--job-accent)}
 .tk .tk-jump{width:100%;padding:6px 10px;background:var(--sk-card);border:1px solid var(--sk-line);border-radius:var(--r-ctl);font-size:12px;color:var(--sk-t1);margin-bottom:8px}
 .tk .tk-proj{display:block;padding:7px 8px;border-radius:var(--r-ctl);color:inherit;text-decoration:none}
 .tk .tk-proj:hover{background:var(--sk-card)}
 .tk .tk-proj .tk-n{font-size:12.5px;font-weight:500;display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tk .tk-proj .tk-a{font-size:11.5px;color:var(--sk-t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tk .tk-dotg{width:5px;height:5px;border-radius:50%;background:var(--sk-ac);flex-shrink:0}
+.tk .tk-dotg{width:5px;height:5px;border-radius:50%;background:var(--job-accent);flex-shrink:0}
 .tk .tk-fm{font:500 22px/1 var(--font-display);font-variant-numeric:tabular-nums}
 @media (max-width:768px){
   .tk .tk-ft{padding-left:12px}
@@ -2646,7 +2670,7 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 }
 
 /* ── Today skin: additions beyond the mockup's CSS ── */
-.tk .tk-tag.tk-urgtag{color:var(--sk-urg);background:transparent;box-shadow:inset 0 0 0 1px var(--sk-urg)}
+.tk .tk-tag.tk-urgtag{color:var(--job-stale);background:transparent;box-shadow:inset 0 0 0 1px var(--job-stale)}
 .tk .tk-tag{display:inline-flex;align-items:center;gap:3px}
 .tk .tk-hov,.tk .tk-grip{background:none;border:none;line-height:1}
 .tk .tk-hov{padding:2px 3px;margin-left:2px}
@@ -2654,7 +2678,7 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-grip{display:inline-flex;align-items:center}
 .tk .tk-prh:hover .tk-hovv,.tk .tk-prh:focus-within .tk-hovv{visibility:visible}
 @media (hover:none){.tk .tk-hov,.tk .tk-grip,.tk .tk-hovv{visibility:visible}}
-.tk .tk-dotg{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--sk-ac);flex-shrink:0}
+.tk .tk-dotg{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--job-accent);flex-shrink:0}
 .tk .tk-tc.tk-done .tk-ct{color:var(--sk-t3);text-decoration:line-through;font-weight:500}
 .tk .tk-mt svg{flex-shrink:0}
 .tk .tk-pill svg{flex-shrink:0}
@@ -2688,7 +2712,7 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
    tools + Capture in their own row under the text. Nothing is positioned over
    the textarea; it grows with what is typed (SmartCompose maxRows). */
 .tk .tk-compose{align-items:flex-start;border-color:var(--sk-line2);background:color-mix(in srgb,var(--sk-t1) 3%,var(--sk-card));transition:border-color .12s,box-shadow .12s}
-.tk .tk-compose:focus-within{border-color:color-mix(in srgb,var(--sk-ac) 55%,transparent);box-shadow:0 0 0 3px var(--sk-rim-ac)}
+.tk .tk-compose:focus-within{border-color:color-mix(in srgb,var(--job-accent) 55%,transparent);box-shadow:0 0 0 3px var(--sk-rim-ac)}
 .tk .tk-compose > svg{margin-top:5px}
 .tk .tk-compose textarea{background:transparent !important;border:none !important;box-shadow:none !important;padding:4px 0 !important;font-size:13px !important;line-height:1.4 !important;color:var(--sk-t1) !important;resize:none !important}
 .tk .tk-compose textarea::placeholder{color:var(--sk-t3) !important;opacity:1}
@@ -2722,7 +2746,7 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-tlab{width:52px;padding-right:6px;font-size:9.5px;box-sizing:border-box}
 /* people pattern: initials badge + first name */
 .tk .tk-face.tk-sm{width:16px;height:16px;font-size:7px;box-shadow:none}
-.tk .tk-face.tk-herm{background:var(--sk-ac-soft);color:var(--sk-ac)}
+.tk .tk-face.tk-herm{background:color-mix(in srgb, var(--job-accent) 10%, transparent);color:var(--job-accent)}
 .tk .tk-pn{color:inherit}
 .tk .tk-pill .tk-face{margin:0 1px 0 -1px}
 .tk .tk-pill .tk-pn{margin-left:2px}
@@ -2744,9 +2768,9 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 /* Thread summary row (Slack-style): faces . N replies . New . last reply, under the parent comment */
 .tk .tk-thr{display:flex;align-items:center;gap:8px;width:100%;margin:2px 0 0 20px;padding:4px 8px;max-width:calc(100% - 20px);background:transparent;border:0;border-radius:8px;cursor:pointer;color:var(--sk-t2);font-size:12px;text-align:left}
 .tk .tk-thr:hover,.tk .tk-thr:focus-visible{background:var(--sk-card2, var(--sk-card))}
-.tk .tk-thr:focus-visible{outline:2px solid var(--sk-ac);outline-offset:1px}
+.tk .tk-thr:focus-visible{outline:2px solid var(--job-accent);outline-offset:1px}
 .tk .tk-thr .tk-faces .tk-face{box-shadow:0 0 0 2px var(--sk-card)}
-.tk .tk-thr-n{font-weight:500;color:var(--sk-ac)}
+.tk .tk-thr-n{font-weight:500;color:var(--job-accent)}
 .tk .tk-thr .tk-tag{margin-left:0}
 .tk .tk-thr-t{color:var(--sk-t3);font-size:11px}
 .tk .tk-thr-c{margin-left:auto;color:var(--sk-t3);transition:transform 140ms}
@@ -2803,11 +2827,11 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 /* Link icon tints (row + drawer): muted brand = --link-strength brand, the
    rest gray (one knob, :root above); hover goes to the full brand color. Tint kind comes from linkTintForType(). */
 .tk .tk-lkicon,.tk .tk-lkc{--lk:var(--sk-t3)}
-.tk [data-lk=doc]{--lk:#5b8def}
-.tk [data-lk=sheet]{--lk:#3fa66b}
-.tk [data-lk=slides]{--lk:#e3a93a}
-.tk [data-lk=artifact]{--lk:#d0805e}
-.tk [data-lk=email]{--lk:#dd6a5f}
+.tk [data-lk=doc]{--lk:var(--lk-doc)}
+.tk [data-lk=sheet]{--lk:var(--lk-sheet)}
+.tk [data-lk=slides]{--lk:var(--lk-slides)}
+.tk [data-lk=artifact]{--lk:var(--lk-artifact)}
+.tk [data-lk=email]{--lk:var(--lk-email)}
 .tk .tk-lkicon{color:color-mix(in srgb,var(--lk) var(--link-strength),var(--sk-t3)) !important}
 .tk .tk-lkicon:hover{color:var(--sk-t1) !important}
 .tk .tk-lkicon[data-lk]:hover{color:var(--lk) !important}
@@ -2816,7 +2840,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    keeps its own rail (a standing signal outranks "this one is open"). The teal
    tick that sat before every section title is gone (color jobs, 2026-10-11):
    spent on all eleven headers, the accent marked nothing. */
-.tk .tk-tc.tk-exp:not(.tk-urg){box-shadow:inset 2px 0 0 var(--sk-ac),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
+.tk .tk-tc.tk-exp:not(.tk-urg){box-shadow:inset 2px 0 0 var(--job-accent),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
 
 /* Meeting summary on Today. MarkdownView sizes everything inline (em, ink), so
    the scoped overrides need !important. Body 13.5px/1.6 t2 regular; bold 500
@@ -2835,12 +2859,12 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk .tk-segc>*{position:relative;display:inline-flex;align-items:center}
 .tk .tk-segc>*+*::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:1px;background:var(--sk-line2);pointer-events:none}
 .tk .tk-segc .tk-si,.tk .tk-segc [data-ghost-pill] button{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px !important;border:0 !important;border-radius:6px;background:none;font:500 12px var(--font-body) !important;color:var(--sk-t2) !important;opacity:1 !important;cursor:pointer;white-space:nowrap}
-.tk .tk-segc .tk-si:hover,.tk .tk-segc [data-ghost-pill] button:hover{background:var(--sk-ac-soft) !important;color:var(--sk-t1) !important}
-.tk .tk-segc .tk-si.tk-open{background:var(--sk-ac-soft);color:var(--sk-t1) !important}
+.tk .tk-segc .tk-si:hover,.tk .tk-segc [data-ghost-pill] button:hover{background:color-mix(in srgb, var(--job-accent) 10%, transparent) !important;color:var(--sk-t1) !important}
+.tk .tk-segc .tk-si.tk-open{background:color-mix(in srgb, var(--job-accent) 10%, transparent);color:var(--sk-t1) !important}
 .tk .tk-segc .tk-si svg,.tk .tk-segc [data-ghost-pill] svg{color:var(--sk-t3);flex-shrink:0}
-.tk .tk-segc .tk-si.tk-planned-on,.tk .tk-segc .tk-si.tk-planned-on svg{color:var(--sk-ac) !important}
-.tk .tk-segc .tk-segdue[data-overdue] [data-ghost-pill] button{color:var(--sk-od) !important}
-.tk .tk-segc .tk-si:focus-visible,.tk .tk-segc [data-ghost-pill] button:focus-visible{outline:2px solid var(--sk-ac);outline-offset:-2px}
+.tk .tk-segc .tk-si.tk-planned-on,.tk .tk-segc .tk-si.tk-planned-on svg{color:var(--job-accent) !important}
+.tk .tk-segc .tk-segdue[data-overdue] [data-ghost-pill] button{color:var(--job-overdue) !important}
+.tk .tk-segc .tk-si:focus-visible,.tk .tk-segc [data-ghost-pill] button:focus-visible{outline:2px solid var(--job-accent);outline-offset:-2px}
 
 /* Task drawer links: left-aligned block, a muted label, then a card grid. */
 .tk .tk-lkblock{margin:2px 0 12px}
@@ -2849,11 +2873,11 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk .tk-lkc{display:flex;align-items:center;gap:8px;min-width:0;padding:7px 10px;border-radius:8px;text-decoration:none;color:var(--sk-t1);background:linear-gradient(180deg,color-mix(in srgb,var(--sk-card) 92%,#fff) 0%,var(--sk-card) 100%);box-shadow:inset 0 0 0 1px var(--sk-line2)}
 :root:not(.dark) .tk .tk-lkc{background:linear-gradient(180deg,#fff 0%,var(--sk-panel) 100%)}
 .tk .tk-lkc:hover{box-shadow:inset 0 0 0 1px var(--sk-t3)}
-.tk .tk-lkc:focus-visible{outline:2px solid var(--sk-ac);outline-offset:1px}
+.tk .tk-lkc:focus-visible{outline:2px solid var(--job-accent);outline-offset:1px}
 .tk .tk-lkc svg{flex-shrink:0;color:color-mix(in srgb,var(--lk) var(--link-strength),var(--sk-t3))}
 .tk .tk-lkc:hover svg{color:var(--lk)}
 .tk .tk-lkt{font-size:12.5px;font-weight:500;color:var(--sk-t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.tk .tk-tch:focus-visible{outline:2px solid var(--sk-ac);outline-offset:-2px;border-radius:var(--r-card)}
+.tk .tk-tch:focus-visible{outline:2px solid var(--job-accent);outline-offset:-2px;border-radius:var(--r-card)}
 
 /* ══ Tasks / Projects / Meetings carry the Today card (Nick 2026-10-09) ══
    Everything here is under `.tk` or a tk- prefix, so it cannot leak. */
@@ -2862,9 +2886,9 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    shows only after the cursor was used; a selected row gets a solid accent ring
    and a faint wash (the wash is a pseudo-element so the card keeps its depth). */
 .tk .tk-lrow{position:relative;border-radius:var(--r-card)}
-.tk .tk-lrow[data-cursor=true]{outline:1.5px solid color-mix(in srgb,var(--sk-ac) 50%,transparent);outline-offset:2px}
-.tk .tk-lrow[data-selected=true]{outline:2px solid var(--sk-ac);outline-offset:2px}
-.tk .tk-lrow[data-selected=true]::after{content:"";position:absolute;inset:0;border-radius:var(--r-card);background:var(--sk-ac-soft);pointer-events:none}
+.tk .tk-lrow[data-cursor=true]{outline:1.5px solid color-mix(in srgb,var(--job-accent) 50%,transparent);outline-offset:2px}
+.tk .tk-lrow[data-selected=true]{outline:2px solid var(--job-accent);outline-offset:2px}
+.tk .tk-lrow[data-selected=true]::after{content:"";position:absolute;inset:0;border-radius:var(--r-card);background:color-mix(in srgb, var(--job-accent) 10%, transparent);pointer-events:none}
 
 /* Tasks Board (Nick approved the mock 2026-10-10): the Today card in each column.
    Column heads are plain text with a muted count, no coloured rule; an empty
@@ -2877,7 +2901,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk.tk-board .tk-bd-group button:hover{color:var(--sk-t1)}
 .tk.tk-board .tk-bd-group button.tk-on{background:var(--sk-card);color:var(--sk-t1);font-weight:500;box-shadow:inset 0 0 0 1px var(--sk-line2),var(--sk-amb)}
 .tk .tk-bd-colw{padding:4px;border-radius:var(--r-card);transition:background .15s,box-shadow .15s}
-.tk .tk-bd-over{background:var(--sk-ac-soft);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sk-ac) 45%,transparent)}
+.tk .tk-bd-over{background:color-mix(in srgb, var(--job-accent) 10%, transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--job-accent) 45%,transparent)}
 .tk .tk-bd-h{display:flex;align-items:center;gap:6px;margin:0 0 10px;padding:0 4px 8px 0;font-size:13px;font-weight:600;color:var(--sk-t1)}
 .tk .tk-bd-h.tk-bd-sm{font-size:12px;font-weight:500;color:var(--sk-t2);margin-bottom:6px;padding:0 4px 4px}
 .tk .tk-bd-n{font-size:11.5px;font-weight:500;color:var(--sk-t3);font-variant-numeric:tabular-nums}
@@ -2888,11 +2912,11 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk .tk-bd-empty{height:64px;display:grid;place-items:center;border-radius:var(--r-card);background:var(--sk-panel);box-shadow:inset 0 0 0 1px var(--sk-line);color:var(--sk-t3);font-size:12px}
 .tk .tk-bd-empty.tk-bd-sm{height:44px;font-size:11.5px}
 .tk .tk-bd-collapsed{display:flex;flex-direction:column;align-items:center;gap:8px;min-height:200px;padding:8px 4px;border-radius:var(--r-card);background:var(--sk-panel);box-shadow:inset 0 0 0 1px var(--sk-line);cursor:pointer;transition:background .15s}
-.tk .tk-bd-collapsed.tk-bd-over{background:var(--sk-ac-soft)}
+.tk .tk-bd-collapsed.tk-bd-over{background:color-mix(in srgb, var(--job-accent) 10%, transparent)}
 .tk .tk-bd-vert{writing-mode:vertical-rl;font-size:12px;font-weight:600;color:var(--sk-t2);letter-spacing:.02em}
 .tk .tk-bd-lh{display:flex;align-items:center;gap:8px;width:100%;margin-bottom:8px;padding:4px 0 8px;background:none;color:var(--sk-t3);box-shadow:0 1px 0 var(--sk-line);text-align:left}
 .tk .tk-bd-lane{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--sk-t1)}
-.tk .tk-bd-lane.tk-bd-urg{color:var(--sk-urg)}
+.tk .tk-bd-lane.tk-bd-urg{color:var(--job-stale)}
 .tk .tk-bd-card{border-radius:var(--r-card);touch-action:manipulation}
 .tk .tk-bd-lift{transform:rotate(2deg);opacity:.92;border-radius:var(--r-card);box-shadow:var(--sk-amb)}
 /* Board card grid, the mock's .kc: box | title | face on the first row, then
@@ -2913,7 +2937,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk.tk-board .tk-ctx>.tk-cs{flex-basis:100%;max-width:none}
 /* Urgent's tag moves to the context line, as the priority control. */
 .tk.tk-board .tk-ct .tk-urgtag{display:none}
-.tk.tk-board .tk-prio.tk-urgtag{margin:0;padding:1px 6px;font-size:10px;font-weight:600;border-radius:999px;color:var(--sk-urg)}
+.tk.tk-board .tk-prio.tk-urgtag{margin:0;padding:1px 6px;font-size:10px;font-weight:600;border-radius:999px;color:var(--job-stale)}
 /* A board column is ~240px: an empty links/meeting slot would wrap onto a blank
    line of its own, so on the board a slot takes room only when it holds something. */
 .tk.tk-board .tk-lks{min-width:0}
@@ -2935,8 +2959,8 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .pj-name{color:inherit;text-decoration:none}
 .sr .pj-pin{all:unset;cursor:pointer;line-height:0;color:var(--sk-t3);opacity:.45;transition:opacity .15s,color .15s;padding:4px;margin:-4px;border-radius:4px}
 .sr .pj-pin:hover{opacity:.8}
-.sr .pj-pin:focus-visible{outline:2px solid var(--sk-ac);opacity:1}
-.sr .pj-pin.pj-pinned{color:var(--sk-gold);opacity:1}
+.sr .pj-pin:focus-visible{outline:2px solid var(--job-accent);opacity:1}
+.sr .pj-pin.pj-pinned{color:var(--sk-t2);opacity:1}
 .sr .pj-health{display:inline-block;width:24px;height:4px;border-radius:2px;background:var(--sk-line2);overflow:hidden;flex-shrink:0}
 .sr .pj-health>span{display:block;height:100%;border-radius:2px}
 .sr .sr-tt .tk-tag{margin-left:0;flex-shrink:0}
@@ -2954,17 +2978,17 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    list on the card surface (gold diamond, t1 text, hairline between rows). */
 .tk .tk-mlist{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
 .tk .tk-mlc{display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;padding:9px 11px 9px;cursor:pointer;font:inherit;color:inherit}
-.tk .tk-mlc.tk-sel{box-shadow:inset 2px 0 0 var(--sk-ac),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
-.tk .tk-mlc:focus-visible{outline:2px solid var(--sk-ac);outline-offset:2px}
+.tk .tk-mlc.tk-sel{box-shadow:inset 2px 0 0 var(--job-accent),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
+.tk .tk-mlc:focus-visible{outline:2px solid var(--job-accent);outline-offset:2px}
 .tk .tk-mlr{display:flex;align-items:center;gap:8px;min-width:0}
 .tk .tk-mlr .tk-sp{flex:1;min-width:0}
 .tk .tk-mld{font-size:11.5px;color:var(--sk-t3);font-variant-numeric:tabular-nums;white-space:nowrap}
-.tk .tk-mln{font-size:11.5px;color:var(--sk-ac);white-space:nowrap}
-.tk .tk-mlc.tk-nx .tk-mld{color:var(--sk-ac);font-weight:500}
+.tk .tk-mln{font-size:11.5px;color:var(--job-accent);white-space:nowrap}
+.tk .tk-mlc.tk-nx .tk-mld{color:var(--job-accent);font-weight:500}
 .tk .tk-mlt{font-size:13px;font-weight:600;line-height:1.35;color:var(--sk-t1);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .tk .tk-mlf{min-height:22px}
 .tk .tk-mlf .tk-cs.tk-mlp{margin:0;min-width:0;flex:0 1 auto}
-.tk .tk-udot{width:6px;height:6px;border-radius:50%;background:var(--sk-ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--sk-ac) 18%,transparent);flex-shrink:0}
+.tk .tk-udot{width:6px;height:6px;border-radius:50%;background:var(--job-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--job-accent) 18%,transparent);flex-shrink:0}
 .tk .tk-mlr .tk-tag{margin-left:0}
 .tk .tk-dtile{display:flex;flex-direction:column;align-items:center;justify-content:center;width:56px;height:56px;border-radius:var(--r-card);background:var(--sk-card);box-shadow:inset 0 0 0 1px var(--sk-line2)}
 .tk .tk-dtm{font-size:11.5px;color:var(--sk-t3);line-height:1}
@@ -3014,17 +3038,17 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr:focus,.sr:focus-visible{outline:none}
 .sr .sr-hd button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:3px;border-radius:4px}
 .sr .sr-hd button:hover,.sr .sr-hd button.sr-on{color:var(--sk-t1)}
-.sr .sr-hd button:focus-visible{outline:2px solid var(--sk-ac);outline-offset:2px}
+.sr .sr-hd button:focus-visible{outline:2px solid var(--job-accent);outline-offset:2px}
 .sr .sr-arr{font-size:9px}
 .sr .sr-hd .sr-end{text-align:right}
 .sr .sr-row{position:relative;min-height:40px;border-radius:9px;cursor:pointer;transition:background .12s,box-shadow .12s}
 @media (min-width:768px){.sr:not(.sr-narrow) .sr-row{height:40px}}
 .sr .sr-row:hover{background:var(--sr-hov)}
 .sr .sr-row.sr-cur,.sr .sr-row.sr-exp{background:var(--sr-hov);box-shadow:inset 0 0 0 1px var(--sk-line2)}
-.sr .sr-row.sr-urg{box-shadow:inset 2px 0 0 var(--sk-urg)}
-.sr .sr-row.sr-urg.sr-cur,.sr .sr-row.sr-urg.sr-exp{box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 0 0 1px var(--sk-line2)}
-.sr .sr-row.sr-sel{background:var(--sk-ac-soft);box-shadow:inset 2px 0 0 var(--sk-ac)}
-.sr .sr-row.sr-sel.sr-cur{box-shadow:inset 2px 0 0 var(--sk-ac),inset 0 0 0 1px var(--sk-line2)}
+.sr .sr-row.sr-urg{box-shadow:inset 2px 0 0 var(--job-stale)}
+.sr .sr-row.sr-urg.sr-cur,.sr .sr-row.sr-urg.sr-exp{box-shadow:inset 2px 0 0 var(--job-stale),inset 0 0 0 1px var(--sk-line2)}
+.sr .sr-row.sr-sel{background:color-mix(in srgb, var(--job-accent) 10%, transparent);box-shadow:inset 2px 0 0 var(--job-accent)}
+.sr .sr-row.sr-sel.sr-cur{box-shadow:inset 2px 0 0 var(--job-accent),inset 0 0 0 1px var(--sk-line2)}
 .sr .sr-row.sr-selmode{cursor:cell}
 /* Rows lift on hover (color back pick 6, Nick 2026-10-11): the row under the
    pointer takes the card material and a faint teal rim. Nothing moves, no
@@ -3034,9 +3058,9 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr{--sr-amb:var(--sk-amb)}
 .dark .sr{--sr-amb:0 1px 3px rgba(0,0,0,.4)}
 .sr .sr-row:hover:not(.sr-sel){background:var(--sk-mat-bg);box-shadow:inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-rim-ac),var(--sr-amb)}
-.sr .sr-row.sr-urg:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-rim-ac),var(--sr-amb)}
+.sr .sr-row.sr-urg:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-rim-ac),var(--sr-amb)}
 .sr .sr-row.sr-cur:hover:not(.sr-sel),.sr .sr-row.sr-exp:hover:not(.sr-sel){box-shadow:inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-line2),var(--sr-amb)}
-.sr .sr-row.sr-urg.sr-cur:hover:not(.sr-sel),.sr .sr-row.sr-urg.sr-exp:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-line2),var(--sr-amb)}
+.sr .sr-row.sr-urg.sr-cur:hover:not(.sr-sel),.sr .sr-row.sr-urg.sr-exp:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-line2),var(--sr-amb)}
 @media (prefers-reduced-motion:reduce){.sr .sr-row{transition:none}}
 .sr .sr-c{display:flex;align-items:center;gap:6px;min-width:0}
 .sr .sr-c.sr-end{justify-content:flex-end}
@@ -3049,23 +3073,23 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-x{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .sr .sr-open{cursor:pointer;border-radius:3px}
 .sr .sr-open:hover{text-decoration:underline dotted;text-underline-offset:3px}
-.sr .sr-open:focus-visible{outline:2px solid var(--sk-ac);outline-offset:1px}
+.sr .sr-open:focus-visible{outline:2px solid var(--job-accent);outline-offset:1px}
 .sr .sr-row.sr-done .sr-x{color:var(--sk-t3);text-decoration:line-through;font-weight:500}
 .sr .tk-tag{margin-left:0;flex-shrink:0;white-space:nowrap}
-.sr .sr-dia{color:var(--sk-gold);flex-shrink:0}
+.sr .sr-dia{color:var(--job-milestone);flex-shrink:0}
 .sr .sr-ms-dates{display:inline-flex;align-items:center;gap:6px;min-width:0;white-space:nowrap}
 /* Quiet text cells and status pills */
 .sr .sr-m{font-size:11.5px;color:var(--sk-t3);white-space:nowrap}
 .sr .sr-m.sr-hi{color:var(--sk-t2)}
 .tk .tk-pill.sr-td i{background:transparent;box-shadow:inset 0 0 0 1.2px var(--sk-t3)}
-.tk .tk-pill.sr-ip i{background:var(--sk-ac)}
+.tk .tk-pill.sr-ip i{background:var(--job-accent)}
 .tk .tk-pill.sr-wt i{background:var(--st-waiting)}
 .tk .tk-pill.sr-bl i{background:var(--st-blocked)}
-.tk .tk-pill.sr-od i{background:var(--sk-od)}
+.tk .tk-pill.sr-od i{background:var(--job-overdue)}
 /* Inline-edit trigger: the value as it reads elsewhere, a caret on row hover */
 .sr .sr-trig{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:4px;min-width:0;max-width:100%;min-height:24px;padding:2px 6px;margin-left:-6px;border-radius:6px;cursor:pointer}
 .sr .sr-trig:hover,.sr .sr-trig[aria-expanded="true"]{background:var(--sr-hov);box-shadow:inset 0 0 0 1px var(--sk-line)}
-.sr .sr-trig:focus-visible{outline:2px solid var(--sk-ac);outline-offset:1px}
+.sr .sr-trig:focus-visible{outline:2px solid var(--job-accent);outline-offset:1px}
 .sr .sr-trig .tk-cs{margin:0;min-width:0}
 .sr .sr-car{visibility:hidden;color:var(--sk-t3);font-size:9px;flex-shrink:0}
 .sr .sr-row:hover .sr-car,.sr .sr-trig:focus-visible .sr-car,.sr .sr-trig[aria-expanded="true"] .sr-car{visibility:visible}
@@ -3094,35 +3118,35 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-sorter select{background:none;border:none;color:var(--sk-t2);font:inherit;font-size:12px;margin-left:6px;cursor:pointer;padding:2px 0}
 /* Quiet overdue line above a table */
 .sr-ovl{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--sk-t2);padding:2px 10px 12px}
-.sr-ovl i{width:6px;height:6px;border-radius:50%;background:var(--sk-od);flex-shrink:0}
-.sr-ovl b{color:var(--sk-od);font-weight:600}
+.sr-ovl i{width:6px;height:6px;border-radius:50%;background:var(--job-overdue);flex-shrink:0}
+.sr-ovl b{color:var(--job-overdue);font-weight:600}
 /* Grouped tables (Lanes): a quiet heading, then one panel holding the rows */
 .sr-grp-h{all:unset;box-sizing:border-box;width:100%;display:flex;gap:10px;align-items:baseline;padding:4px 10px 8px;cursor:pointer;color:var(--sk-t1);min-width:0}
-.sr-grp-h:focus-visible{outline:2px solid var(--sk-ac);outline-offset:2px;border-radius:6px}
+.sr-grp-h:focus-visible{outline:2px solid var(--job-accent);outline-offset:2px;border-radius:6px}
 .sr-grp-h h3{font-size:14px;font-weight:600;margin:0;white-space:nowrap}
 .sr-grp-h .sr-chev{color:var(--sk-t3);font-size:13px;width:10px;display:inline-block;transition:transform .2s}
 .sr-grp-h .sr-n{font-size:11.5px;color:var(--sk-t3);font-variant-numeric:tabular-nums}
 .sr-grp-h .sr-sp{flex:1}
-.sr-grp-h .sr-od{font-size:11.5px;color:var(--sk-od);white-space:nowrap}
-.sr-grp-h .sr-pl{font-size:11.5px;color:var(--sk-gold);white-space:nowrap}
+.sr-grp-h .sr-od{font-size:11.5px;color:var(--job-overdue);white-space:nowrap}
+.sr-grp-h .sr-pl{font-size:11.5px;color:var(--sk-t2);white-space:nowrap}
 .sr.sr-panel{background:var(--sk-panel);border-radius:12px;box-shadow:inset 0 0 0 1px var(--sk-line);padding:6px;margin-bottom:16px}
 /* A group heading that does not collapse (Calendar Agenda's day headings); "Today" takes the accent (now). */
 .sr-grp-h.sr-grp-static{cursor:default}
-.sr-grp-h.sr-grp-now h3{color:var(--sk-ac)}
+.sr-grp-h.sr-grp-now h3{color:var(--job-accent)}
 /* Rows with no destination, and titles that are real links (Calendar Agenda) */
 .sr .sr-row.sr-static{cursor:default}
 .sr a.sr-lk{color:inherit;text-decoration:none}
 .sr .sr-kind{display:inline-flex;color:var(--sk-t3)}
 .sr .sr-more{all:unset;cursor:pointer;font-size:11.5px;color:var(--sk-t3);padding:6px 10px 4px;border-radius:6px}
 .sr .sr-more:hover{color:var(--sk-t1)}
-.sr .sr-more:focus-visible{outline:2px solid var(--sk-ac)}
+.sr .sr-more:focus-visible{outline:2px solid var(--job-accent)}
 /* Keyboard hints under a table */
 .sr-foot{display:flex;gap:14px;font-size:10.5px;color:var(--sk-t3)}
 .sr-foot kbd{font-family:var(--font-mono),'JetBrains Mono',monospace;font-size:9px;padding:1px 4px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--sk-line2);color:var(--sk-t2)}
 /* Grants list on the sleek row (GrantSleekList): progress stays the accent at any percent */
 .gr-list .gr-prog{display:inline-flex;align-items:center;gap:6px;min-width:0}
 .gr-list .gr-bar{width:36px;height:3px;border-radius:999px;background:var(--sk-bar-track);overflow:hidden;flex-shrink:0}
-.gr-list .gr-bar i{display:block;height:100%;border-radius:999px;background:var(--sk-ac)}
+.gr-list .gr-bar i{display:block;height:100%;border-radius:999px;background:var(--job-accent)}
 .gr-list .gr-prog .sr-m{font-variant-numeric:tabular-nums}
 .gr-list .gr-detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 24px;padding:10px 10px 16px 10px;font-size:13px;color:var(--sk-t1)}
 .gr-list .gr-dl{font-size:11px;color:var(--sk-t3);margin-bottom:3px}
@@ -3140,7 +3164,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .cm-ring{animation:cm-ring .45s ease-out}
 /* "done this week": its rule lights teal for a beat, then rests gray */
 .tk .tk-st .tk-rl{transition:background-color .4s}
-.tk .tk-st .tk-rl.cm-beat{background:var(--sk-ac)}
+.tk .tk-st .tk-rl.cm-beat{background:var(--job-accent)}
 
 /* Pick 2 -- one hero number per page, in Today's stat face, beside the title.
    No pill, no box. A link only when it goes somewhere real. */
@@ -3148,7 +3172,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .pg-hero-n{font:500 30px/1 var(--font-display);font-variant-numeric:tabular-nums;color:var(--sk-t1);letter-spacing:-.01em}
 .pg-hero-l{font-size:12px;color:var(--sk-t3)}
 a.pg-hero:hover .pg-hero-l,a.pg-hero:focus-visible .pg-hero-l{color:var(--sk-t1);text-decoration:underline;text-underline-offset:3px}
-a.pg-hero:focus-visible{outline:2px solid var(--sk-ac);outline-offset:3px;border-radius:6px}
+a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;border-radius:6px}
 @media (max-width:640px){.pg-hero-n{font-size:24px}}
 
 /* Pick 10 -- the heartbeat line under a page title: the lab's ECG mark in gray,
@@ -3159,14 +3183,14 @@ a.pg-hero:focus-visible{outline:2px solid var(--sk-ac);outline-offset:3px;border
 
 /* Pick 4 -- one "now" marker wherever time is drawn: a teal hairline, a 6px dot
    with a soft halo, and "Today" (or the time). Teal already owns "today". */
-.now-mk{display:flex;align-items:center;gap:6px;height:0;overflow:visible;pointer-events:none;color:var(--sk-ac)}
-.now-mk-dot{width:6px;height:6px;border-radius:50%;background:var(--sk-ac);box-shadow:0 0 0 4px var(--sk-ac-soft);flex-shrink:0;margin-left:-3px}
-.now-mk-line{flex:1;height:1.5px;border-radius:2px;background:var(--sk-ac);min-width:8px}
+.now-mk{display:flex;align-items:center;gap:6px;height:0;overflow:visible;pointer-events:none;color:var(--job-accent)}
+.now-mk-dot{width:6px;height:6px;border-radius:50%;background:var(--job-accent);box-shadow:0 0 0 4px color-mix(in srgb, var(--job-accent) 10%, transparent);flex-shrink:0;margin-left:-3px}
+.now-mk-line{flex:1;height:1.5px;border-radius:2px;background:var(--job-accent);min-width:8px}
 .now-mk-lbl{font-size:10px;font-weight:600;line-height:1;white-space:nowrap;padding:0 4px;background:var(--now-mk-bg,var(--sk-panel))}
 /* edge: lies along the top edge of a cell or column (Calendar), dot at the left */
 .now-mk.now-mk-edge{position:absolute;left:6px;right:6px;top:-1px;z-index:1}
 /* the "today" date disc gets the same halo */
-.now-halo{box-shadow:0 0 0 4px var(--sk-ac-soft)}
+.now-halo{box-shadow:0 0 0 4px color-mix(in srgb, var(--job-accent) 10%, transparent)}
 
 @media (prefers-reduced-motion: reduce){
   .cm-ring{animation:none}
@@ -3175,6 +3199,6 @@ a.pg-hero:focus-visible{outline:2px solid var(--sk-ac);outline-offset:3px;border
 }
 .pg-hb.pg-hb-tight{margin:2px 0 6px}
 .pg-hb.pg-hb-row{flex-basis:100%;order:10;margin-top:0}
-.cal-today-lbl{margin-left:6px;font-size:10px;font-weight:600;color:var(--sk-ac)}
+.cal-today-lbl{margin-left:6px;font-size:10px;font-weight:600;color:var(--job-accent)}
 .pg-hero.pg-hero-zero .pg-hero-n{opacity:.45;color:var(--sk-t3)}
 .pg-hb.pg-hb-gap{margin-bottom:10px}

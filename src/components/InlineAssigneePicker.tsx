@@ -135,7 +135,7 @@ export default function InlineAssigneePicker({ value, onChange, compact, display
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.borderColor = 'var(--border-subtle)'
-          e.currentTarget.style.background = 'var(--teal-hover)'
+          e.currentTarget.style.background = 'color-mix(in srgb, var(--job-accent) 6%, transparent)'
           if (!open && memberData) hoverHandlers.onMouseEnter()
         }}
         onMouseLeave={(e) => {
@@ -230,7 +230,7 @@ export default function InlineAssigneePicker({ value, onChange, compact, display
                     padding: '6px 12px',
                     border: 'none',
                     cursor: 'pointer',
-                    background: focused ? 'var(--teal-active)' : (isSelected ? 'var(--teal-hover)' : 'none'),
+                    background: focused ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : (isSelected ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'none'),
                     fontSize: '12px',
                     fontWeight: isSelected ? 500 : 400,
                     color: 'var(--ink)',
@@ -251,7 +251,7 @@ export default function InlineAssigneePicker({ value, onChange, compact, display
                     {m.name}
                   </span>
                   {isSelected && (
-                    <span style={{ color: 'var(--teal)', fontSize: '13px', lineHeight: 1 }}>&#10003;</span>
+                    <span style={{ color: 'var(--job-accent)', fontSize: '13px', lineHeight: 1 }}>&#10003;</span>
                   )}
                 </button>
               )

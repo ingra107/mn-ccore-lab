@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTeamSlugs } from '../hooks/useMentionAutocomplete'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 // Known command @-tags — visually distinguished from person @-mentions and
 // excluded from person-autocomplete when the filter exactly matches. Also
 // carries the Hermes model-tag variants' gating logic (#891) — see
@@ -321,7 +321,7 @@ export default function MentionInput({
         parts.push({ text: value.slice(lastIndex, match.index), isMention: false })
       }
       const cmd = commandTags[match[1].toLowerCase()]
-      parts.push({ text: match[0], isMention: true, bg: cmd ? cmd.bg : 'var(--gold-active)' })
+      parts.push({ text: match[0], isMention: true, bg: cmd ? cmd.bg : 'color-mix(in srgb, var(--sk-t1) 5%, transparent)' })
       lastIndex = match.index + match[0].length
     }
     if (lastIndex < value.length) {
@@ -488,7 +488,7 @@ export default function MentionInput({
               maxHeight: '200px',
               overflowY: 'auto',
               background: 'var(--cream)',
-              border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+              border: `1px solid ${withAlpha('var(--sk-t1)', 10)}`,
               borderRadius: 'var(--radius-lg)',
               boxShadow: 'var(--shadow-menu)',
               zIndex: 'var(--z-dropdown)',
@@ -518,7 +518,7 @@ export default function MentionInput({
                     border: 'none',
                     borderBottom:
                       index === filteredCommands.length - 1 && filteredSlugs.length > 0
-                        ? `1px solid ${withAlpha(ACCENT_GOLD, 10)}`
+                        ? `1px solid ${withAlpha('var(--sk-t1)', 5)}`
                         : 'none',
                     transition: 'background 0.1s',
                   }}
@@ -543,7 +543,7 @@ export default function MentionInput({
                     padding: 'var(--sp-sm) var(--sp-md)',
                     fontSize: '13px',
                     color: 'var(--ink)',
-                    background: index === selectedIndex ? 'var(--gold-active)' : 'transparent',
+                    background: index === selectedIndex ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
                     border: 'none',
                     transition: 'background 0.1s',
                   }}
@@ -559,7 +559,7 @@ export default function MentionInput({
                   <span
                     style={{
                       fontSize: '11px',
-                      color: 'var(--gold)',
+                      color: 'var(--sk-t2)',
                       opacity: 0.85,
                     }}
                   >

@@ -10,7 +10,7 @@ import { useRef, useCallback, useEffect } from 'react'
 import { parseQuickAddInput, type TokenType } from '../lib/parseQuickAdd'
 import { formatShortDate } from '../lib/dateUtils'
 import type { ParsedQuickAdd } from '../lib/parseQuickAdd'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 
 // ── Token color map ──────────────────────────────────────────
 
@@ -21,10 +21,10 @@ interface TokenStyle {
 }
 
 const TOKEN_STYLES: Record<TokenType, TokenStyle> = {
-  assignee: { color: 'var(--gold)', bg: 'var(--gold-emphasis)', fontWeight: 600 },
-  project:  { color: 'var(--teal)', bg: 'var(--teal-emphasis)', fontWeight: 600 },
-  priority: { color: 'var(--ink-bright, #fff)',        bg: 'var(--maroon)',         fontWeight: 700 },
-  date:     { color: 'var(--teal)', bg: 'var(--teal-active)', fontWeight: 600 },
+  assignee: { color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--sk-t1) 8%, transparent)', fontWeight: 600 },
+  project:  { color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--sk-t1) 8%, transparent)', fontWeight: 600 },
+  priority: { color: 'var(--job-stale)', bg: 'color-mix(in srgb, var(--job-stale) 12%, transparent)', fontWeight: 700 },
+  date:     { color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)', fontWeight: 600 },
   plain:    { color: 'inherit' },
 }
 
@@ -47,7 +47,7 @@ function Chip({ label, value, color = 'var(--slate)' }: ChipProps) {
         padding: '2px 7px',
         borderRadius: 'var(--radius-md)',
         background: 'var(--cream)',
-        border: `1px solid ${withAlpha(ACCENT_GOLD, 18)}`,
+        border: `1px solid ${withAlpha('var(--sk-t1)', 9)}`,
         fontFamily: FONT_FAMILY,
         fontSize: '10px',
         lineHeight: '16px',
@@ -73,24 +73,24 @@ function ParsedPreview({ parsed }: { parsed: ParsedQuickAdd }) {
         marginTop: '8px',
         padding: '7px 10px',
         borderRadius: 'var(--radius-lg)',
-        background: 'var(--gold-hover)',
-        border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
+        background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
+        border: `1px solid ${withAlpha('var(--sk-t1)', 6)}`,
       }}
     >
       {parsed.title && (
         <Chip label="title" value={parsed.title} color="var(--ink)" />
       )}
       {parsed.assigneeName && (
-        <Chip label="@" value={parsed.assigneeName} color="var(--gold)" />
+        <Chip label="@" value={parsed.assigneeName} color="var(--sk-t2)" />
       )}
       {parsed.priority && (
-        <Chip label="priority" value={`P${parsed.priority}`} color="var(--maroon)" />
+        <Chip label="priority" value={`P${parsed.priority}`} color="var(--job-stale)" />
       )}
       {parsed.dueDate && (
-        <Chip label="due" value={formatShortDate(parsed.dueDate)} color="var(--teal)" />
+        <Chip label="due" value={formatShortDate(parsed.dueDate)} color="var(--sk-t2)" />
       )}
       {parsed.projectTitle && (
-        <Chip label="#" value={parsed.projectTitle} color="var(--teal)" />
+        <Chip label="#" value={parsed.projectTitle} color="var(--sk-t2)" />
       )}
     </div>
   )
@@ -157,7 +157,7 @@ export default function QuickAddTaskInput({
         style={{
           position: 'relative',
           background: 'var(--ice)',
-          border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+          border: `1px solid ${withAlpha('var(--sk-t1)', 10)}`,
           borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
           height: '38px',
@@ -222,13 +222,13 @@ export default function QuickAddTaskInput({
           }}
           onFocus={() => {
             if (textareaRef.current?.parentElement) {
-              textareaRef.current.parentElement.style.borderColor = withAlpha(ACCENT_GOLD, 50)
+              textareaRef.current.parentElement.style.borderColor = withAlpha('var(--job-accent)', 50)
             }
             onFocusChange?.(true)
           }}
           onBlur={() => {
             if (textareaRef.current?.parentElement) {
-              textareaRef.current.parentElement.style.borderColor = withAlpha(ACCENT_GOLD, 20)
+              textareaRef.current.parentElement.style.borderColor = withAlpha('var(--sk-t1)', 10)
             }
             onFocusChange?.(false)
           }}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Search, X } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 
 interface PublicationSearchProps {
   value: string
@@ -55,17 +55,17 @@ export default function PublicationSearch({
             fontSize: '14px',
             background: 'var(--cream)',
             color: 'var(--ink)',
-            border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+            border: `1px solid ${withAlpha('var(--job-brand)', 20)}`,
             minHeight: '44px',
             outline: 'none',
             transitionProperty: 'border-color',
             transitionDuration: '150ms',
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = 'var(--gold)'
+            e.currentTarget.style.borderColor = 'var(--job-brand)'
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 20)
+            e.currentTarget.style.borderColor = withAlpha('var(--job-brand)', 20)
           }}
           aria-label="Search publications"
         />

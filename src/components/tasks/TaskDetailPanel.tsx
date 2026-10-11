@@ -29,7 +29,7 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { appendCharToInput, stripMeetingMarker } from '../../lib/textUtils'
 import { isFromMeeting } from '../../lib/meetingOrigin'
 import { MeetingOriginTag } from './MeetingOriginTag'
-import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrouping'
+import { PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import { uploadFileToR2 } from '../../lib/r2Upload'
 import { useUploadQueue } from '../../lib/useUploadQueue'
 import MentionInput from '../MentionInput'
@@ -501,7 +501,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               {task.source && (
                 <span className="flex items-center gap-2" style={{ whiteSpace: 'nowrap' }}>
                   <span aria-hidden="true">·</span>
-                  <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--teal-active)', color: 'var(--teal)', opacity: 1 }}>
+                  <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)', color: 'var(--sk-t2)', opacity: 1 }}>
                     {task.source}
                   </span>
                 </span>
@@ -509,7 +509,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               {task.recurrence && (
                 <span className="flex items-center gap-2" style={{ whiteSpace: 'nowrap' }}>
                   <span aria-hidden="true">·</span>
-                  <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--gold-active)', color: 'var(--gold)', opacity: 1 }}>
+                  <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)', color: 'var(--sk-t2)', opacity: 1 }}>
                     <RefreshCw size={8} strokeWidth={1.5} absoluteStrokeWidth style={{ display: 'inline', marginRight: 2 }} aria-hidden="true" />
                     {task.recurrence}
                   </span>
@@ -663,14 +663,14 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               style={{
                 whiteSpace: 'nowrap',
                 flexShrink: 0,
-                color: activeTab === key ? 'var(--teal)' : 'var(--slate)',
+                color: activeTab === key ? 'var(--job-accent)' : 'var(--slate)',
                 opacity: activeTab === key ? 1 : 0.85,
-                borderBottom: activeTab === key ? '2px solid var(--teal)' : '2px solid transparent',
+                borderBottom: activeTab === key ? '2px solid var(--job-accent)' : '2px solid transparent',
                 background: 'none',
                 border: 'none',
                 borderBottomWidth: '2px',
                 borderBottomStyle: 'solid',
-                borderBottomColor: activeTab === key ? 'var(--teal)' : 'transparent',
+                borderBottomColor: activeTab === key ? 'var(--job-accent)' : 'transparent',
                 cursor: 'pointer',
                 marginBottom: '-1px',
               }}
@@ -725,7 +725,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                       onClick={() => { onClose(); navigate(PATHS.project(task.project_id!)) }}
                       aria-label="Open project"
                       className="link-affordance"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', fontSize: 'var(--text-small)', fontWeight: 500, padding: '2px 4px' }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--job-accent)', fontSize: 'var(--text-small)', fontWeight: 500, padding: '2px 4px' }}
                     >
                       Open <ExternalLink size={12} strokeWidth={1.5} absoluteStrokeWidth />
                     </button>
@@ -829,7 +829,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               </FieldBlock>
               <div>
                 {task.recurrence && task.recurrence !== 'none' && (
-                  <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.8 }}>
+                  <span style={{ fontSize: '10px', color: 'var(--sk-t2)', opacity: 0.8 }}>
                     Auto-creates next task when completed
                   </span>
                 )}
@@ -867,7 +867,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {task.project_id && (
               <CollapsibleSection
                 title="Related Decisions"
-                icon={<Scale size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--gold)', opacity: 0.85 }} />}
+                icon={<Scale size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--sk-t2)', opacity: 0.85 }} />}
                 defaultOpen={false}
                 storageKey={`task-decisions-${task.id}`}
               >
@@ -1024,7 +1024,7 @@ function DescriptionField({
           isEmpty && !isEditing
             ? { display: 'none' }
             : {
-                border: isEditing ? '1px solid var(--teal)' : '1px solid transparent',
+                border: isEditing ? '1px solid var(--job-accent)' : '1px solid transparent',
                 borderRadius: 'var(--radius-lg)',
                 transition: 'border-color 0.15s',
                 cursor: isEmpty ? 'text' : undefined,
@@ -1084,13 +1084,13 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
           <span
             key={slug}
             className="flex items-center gap-1 pl-1 pr-2 py-0.5 rounded-full text-[10px]"
-            style={{ backgroundColor: 'var(--teal-active)', color: 'var(--teal)' }}
+            style={{ backgroundColor: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)', color: 'var(--sk-t2)' }}
           >
             <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="2xs" />
             {p.name.split(' ')[0]}
             <button
               onClick={() => removeWatcher(slug)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', padding: 0, lineHeight: 1 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sk-t3)', padding: 0, lineHeight: 1 }}
             >
               <X size={9} strokeWidth={1.5} absoluteStrokeWidth />
             </button>
@@ -1128,7 +1128,7 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
                 onClick={() => addWatcher(slug)}
                 className="w-full flex items-center gap-2 px-3 py-2 text-left text-[12px] transition-colors"
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink)', borderBottom: '1px solid var(--border-subtle)' }}
-                onMouseOver={e => (e.currentTarget.style.backgroundColor = 'var(--teal-hover)')}
+                onMouseOver={e => (e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--job-accent) 6%, transparent)')}
                 onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
                 <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="xs" />
@@ -1165,7 +1165,7 @@ function OverviewActivityPeek({
         <button
           type="button"
           onClick={onViewAll}
-          style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}
+          style={{ fontSize: 'var(--label-size)', color: 'var(--job-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}
         >
           view all →
         </button>
@@ -1180,10 +1180,10 @@ function OverviewActivityPeek({
 // Used in the Details tab's Related Decisions collapsible.
 
 const DECISIONS_SENTIMENT_BADGE: Record<string, { color: string; bg: string }> = {
-  positive: { color: 'var(--teal)', bg: 'var(--teal-active)' },
-  negative: { color: 'var(--maroon)', bg: 'rgba(128,0,0,0.08)' },
+  positive: { color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)' },
+  negative: { color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)' },
   neutral: { color: 'var(--slate)', bg: 'rgba(100,116,139,0.08)' },
-  pending: { color: 'var(--gold)', bg: 'var(--gold-active)' },
+  pending: { color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)' },
 }
 
 function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
@@ -1212,10 +1212,10 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
           <div
             key={d.id}
             className="p-2.5 rounded-lg"
-            style={{ background: 'var(--gold-hover)', border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}` }}
+            style={{ background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)', border: `1px solid ${withAlpha('var(--sk-t1)', 5)}` }}
           >
             <div className="flex items-center gap-2 mb-1">
-              <Scale size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--gold)', flexShrink: 0 }} />
+              <Scale size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--sk-t2)', flexShrink: 0 }} />
               <span style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>
                 {d.title}
               </span>
@@ -1227,7 +1227,7 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
               </span>
             </div>
             {d.outcome && (
-              <p style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', margin: '2px 0 0 0' }}>
+              <p style={{ fontSize: 'var(--label-size)', color: 'var(--sk-t2)', margin: '2px 0 0 0' }}>
                 {d.outcome}
               </p>
             )}
@@ -1239,7 +1239,7 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
                 <span
                   key={tag}
                   className="text-[10px] px-1 py-0.5 rounded-full"
-                  style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}
+                  style={{ color: 'var(--sk-t2)', backgroundColor: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)' }}
                 >
                   {tag}
                 </span>
@@ -1416,7 +1416,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
         <button
           onClick={() => setShowAdd(true)}
           className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg"
-          style={{ background: 'none', border: '1px solid var(--teal)', color: 'var(--teal)', cursor: 'pointer', opacity: 0.8 }}
+          style={{ background: 'none', border: '1px solid var(--border-subtle)', color: 'var(--sk-t2)', cursor: 'pointer', opacity: 0.8 }}
         >
           <Plus size={11} strokeWidth={1.5} absoluteStrokeWidth />
           Add Link
@@ -1445,7 +1445,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
               onClick={() => { if (filename && url) addFile.mutate({ filename, url }) }}
               disabled={!filename || !url}
               className="text-[11px] px-3 py-1 rounded-lg font-medium"
-              style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer', opacity: filename && url ? 1 : 0.85 }}
+              style={{ backgroundColor: 'var(--job-accent-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer', opacity: filename && url ? 1 : 0.85 }}
             >
               Add
             </button>
@@ -1464,7 +1464,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
         <div className="flex flex-col gap-1">
           {files.map(f => (
             <div key={f.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--ice)' }}>
-              <Link2 size={13} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--teal)', flexShrink: 0 }} />
+              <Link2 size={13} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--sk-t2)', flexShrink: 0 }} />
               <a
                 href={f.url}
                 target="_blank"
@@ -1735,7 +1735,7 @@ export function OverviewQuickAdd({
             enqueueUploads(e.dataTransfer.files)
           }}
           style={{
-            outline: dragOver ? '2px dashed var(--teal)' : 'none',
+            outline: dragOver ? '2px dashed var(--job-accent)' : 'none',
             outlineOffset: '2px',
             borderRadius: 'var(--radius-lg)',
           }}
@@ -1763,8 +1763,8 @@ export function OverviewQuickAdd({
                     fontWeight: isActive ? 600 : 400,
                     padding: '3px 10px',
                     borderRadius: 'var(--radius-full)',
-                    background: isActive ? 'var(--teal-active)' : 'transparent',
-                    color: isActive ? 'var(--teal)' : 'var(--slate)',
+                    background: isActive ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                    color: isActive ? 'var(--job-accent)' : 'var(--slate)',
                     border: 'none',
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em',
@@ -1812,7 +1812,7 @@ export function OverviewQuickAdd({
             placeholder={PLACEHOLDERS[mode]}
             onFocus={(e) => {
               setFocused(true)
-              e.currentTarget.style.borderColor = 'var(--teal)'
+              e.currentTarget.style.borderColor = 'var(--job-accent)'
             }}
             onBlur={(e) => {
               // Delay so toolbar button clicks register before composing goes false
@@ -1935,10 +1935,10 @@ export function OverviewQuickAdd({
                   paddingRight: 6,
                   borderRadius: 'var(--radius-sm)',
                   border: forHermes
-                    ? `1px solid ${withAlpha(ACCENT_GOLD, 40)}`
+                    ? `1px solid ${withAlpha('var(--job-accent)', 40)}`
                     : '1px solid var(--border-subtle)',
-                  background: forHermes ? 'var(--gold-active)' : 'transparent',
-                  color: forHermes ? 'var(--gold)' : 'var(--slate)',
+                  background: forHermes ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                  color: forHermes ? 'var(--job-accent)' : 'var(--slate)',
                   opacity: forHermes ? 1 : 0.70,
                   fontWeight: forHermes ? 600 : 400,
                   fontSize: 10,
@@ -1954,7 +1954,7 @@ export function OverviewQuickAdd({
                     width: 6,
                     height: 6,
                     borderRadius: 'var(--radius-circle)',
-                    background: forHermes ? 'var(--gold)' : 'var(--slate)',
+                    background: forHermes ? 'var(--job-accent)' : 'var(--slate)',
                     flexShrink: 0,
                     opacity: forHermes ? 1 : 0.70,
                   }}
@@ -1997,7 +1997,7 @@ export function OverviewQuickAdd({
                 data-tip={`${mode === 'comment' ? (forHermes ? 'Post + queue' : 'Post') : 'Add note'} · Ctrl+Enter`}
                 className="flex-shrink-0 inline-flex items-center justify-center tip tip-end"
                 style={{
-                  background: forHermes && mode === 'comment' ? 'var(--gold)' : 'var(--teal-solid)',
+                  background: forHermes && mode === 'comment' ? 'var(--job-accent-solid)' : 'var(--job-accent-solid)',
                   color: 'var(--ink-bright, #fff)',
                   border: 'none',
                   borderRadius: 'var(--radius-sm)',
@@ -2073,7 +2073,7 @@ function CompactAssigneeRow({ value, onChange }: { value?: string | null; onChan
           }
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = 'var(--teal)'
+          e.currentTarget.style.borderColor = 'var(--job-accent)'
           e.currentTarget.style.background = 'transparent'
         }}
         onBlur={(e) => {
@@ -2116,7 +2116,7 @@ function CompactAssigneeRow({ value, onChange }: { value?: string | null; onChan
             onClick={() => { onChange(''); setOpen(false) }}
             className="w-full flex items-center gap-2 px-3 py-2 text-left text-[12px]"
             style={{ background: 'none', border: 'none', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', color: 'var(--slate)', opacity: 0.85 }}
-            onMouseOver={e => (e.currentTarget.style.backgroundColor = 'var(--teal-hover)')}
+            onMouseOver={e => (e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--job-accent) 6%, transparent)')}
             onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
             Unassigned
@@ -2131,7 +2131,7 @@ function CompactAssigneeRow({ value, onChange }: { value?: string | null; onChan
                 onClick={() => { onChange(p.slug!); setOpen(false) }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-left text-[12px]"
                 style={{ background: 'none', border: 'none', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', color: 'var(--ink)' }}
-                onMouseOver={e => (e.currentTarget.style.backgroundColor = 'var(--teal-hover)')}
+                onMouseOver={e => (e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--job-accent) 6%, transparent)')}
                 onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
                 <Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} size="xs" />

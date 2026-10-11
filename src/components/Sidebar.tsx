@@ -230,7 +230,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         ...item,
         badge: dayUnseen,
         badgeStyle: {
-          bg: 'var(--gold)',
+          bg: 'var(--job-wants)',
           color: 'var(--on-gold)',
           title: `${dayUnseen} Hermes ${dayUnseen === 1 ? 'answer' : 'answers'} on Today`,
         },
@@ -240,7 +240,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         ...item,
         badge: myUnseen,
         badgeStyle: {
-          bg: 'var(--gold)',
+          bg: 'var(--job-wants)',
           // --on-gold flips with --gold (dark ink on the light-gold fill in dark mode, white on the dark-gold fill in light mode).
           color: 'var(--on-gold)',
           title: `${myUnseen} task${myUnseen === 1 ? '' : 's'} you haven't opened yet — click to triage in My Items`,
@@ -258,7 +258,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           ...next,
           badge: newMeetingsCount,
           badgeStyle: {
-            bg: 'var(--gold)',
+            bg: 'var(--job-wants)',
             color: 'var(--on-gold)',
             title: `${newMeetingsCount} meeting${newMeetingsCount === 1 ? '' : 's'} with new notes`,
           },
@@ -286,8 +286,8 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         aria-current={active ? 'page' : undefined}
         className="relative flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] transition-colors duration-[150ms] mb-0.5"
         style={{
-          backgroundColor: active ? 'color-mix(in srgb, var(--teal-subtle) 12%, transparent)' : 'transparent',
-          color: active ? 'var(--teal)' : 'var(--slate)',
+          backgroundColor: active ? 'color-mix(in srgb, var(--job-accent) 12%, transparent)' : 'transparent',
+          color: active ? 'var(--job-accent)' : 'var(--slate)',
           fontWeight: active ? 500 : 400,
         }}
         title={collapsed ? item.label : undefined}
@@ -298,8 +298,8 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           <span
             className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full"
             style={{
-              backgroundColor: item.hint === 'Today' ? 'var(--teal-active)' : 'var(--gold-active)',
-              color: item.hint === 'Today' ? 'var(--teal)' : 'var(--gold)',
+              backgroundColor: item.hint === 'Today' ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',
+              color: item.hint === 'Today' ? 'var(--job-accent)' : 'var(--sk-t2)',
             }}
           >
             {item.hint}
@@ -317,7 +317,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             onClick={item.badgeAction ? (e) => { e.preventDefault(); e.stopPropagation(); navigate(item.badgeAction!.navigateTo); onNavigate?.() } : undefined}
             onKeyDown={item.badgeAction ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); navigate(item.badgeAction!.navigateTo); onNavigate?.() } } : undefined}
             style={{
-              backgroundColor: item.badgeStyle?.bg ?? 'var(--maroon-solid)',
+              backgroundColor: item.badgeStyle?.bg ?? 'var(--job-wants)',
               color: item.badgeStyle?.color ?? 'var(--ink-bright, #fff)',
               cursor: item.badgeAction ? 'pointer' : undefined,
             }}
@@ -327,7 +327,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         )}
         {/* Collapsed: a dot in place of the count, so the signal survives. */}
         {collapsed && item.badge !== undefined && item.badge > 0 && (
-          <span aria-hidden="true" className="sb-dot" style={{ background: item.badgeStyle?.bg ?? 'var(--maroon-solid)' }} />
+          <span aria-hidden="true" className="sb-dot" style={{ background: item.badgeStyle?.bg ?? 'var(--job-wants)' }} />
         )}
       </Link>
     )
@@ -472,7 +472,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   onClick={onNavigate}
                   className="sb-proj"
                   aria-current={active ? 'page' : undefined}
-                  style={{ color: active ? 'var(--teal)' : 'var(--ink)', fontWeight: active ? 500 : 400 }}
+                  style={{ color: active ? 'var(--job-accent)' : 'var(--ink)', fontWeight: active ? 500 : 400 }}
                 >
                   {/* Pinned star is neutral (color jobs, 2026-10-11): gold means "wants you now". */}
                   {p.pinned
@@ -483,7 +483,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                     <span
                       className="text-[10px] px-1.5 rounded-full"
                       title={`${unread} new update${unread === 1 ? '' : 's'}`}
-                      style={{ background: 'var(--teal-active)', color: 'var(--teal)' }}
+                      style={{ background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)', color: 'var(--job-accent)' }}
                     >
                       {unread}
                     </span>
@@ -563,7 +563,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           >
             <div style={{ width: 24, height: 24, flexShrink: 0 }}>
               {person
-                ? <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="tight" variant="gold" />
+                ? <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="tight" />
                 : <User size={18} {...ICON_PROPS} />}
             </div>
             {!collapsed && (

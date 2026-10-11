@@ -36,8 +36,8 @@ export default function TaskTitle({
           style={{
             fontSize: 'var(--text-micro)',
             fontWeight: 'var(--weight-ui)',
-            color: 'var(--gold)',
-            background: 'color-mix(in oklch, var(--gold) 12%, transparent)',
+            color: 'var(--sk-t2)',
+            background: 'color-mix(in oklch, var(--sk-t2) 12%, transparent)',
             padding: '1px 5px',
             borderRadius: 'var(--radius-sm)',
             marginRight: 6,

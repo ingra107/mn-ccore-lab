@@ -61,7 +61,7 @@ export default function RegulatoryExpiringList() {
                 {reg.title}
               </span>
               {reg.days_remaining != null && (
-                <span style={{ fontSize: 11, fontWeight: 500, color: soon ? 'var(--maroon)' : 'var(--slate)', flexShrink: 0 }}>
+                <span style={{ fontSize: 11, fontWeight: 500, color: soon ? 'var(--job-stale)' : 'var(--slate)', flexShrink: 0 }}>
                   {reg.days_remaining}d
                 </span>
               )}

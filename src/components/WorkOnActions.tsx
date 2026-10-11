@@ -57,7 +57,7 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
   if (variant === 'compact') {
     const iconBtn: React.CSSProperties = {
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)',
+      background: 'none', border: 'none', cursor: 'pointer', color: 'var(--job-accent)',
       padding: '2px 4px', flexShrink: 0,
     }
     return (
@@ -94,7 +94,7 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
         onClick={workOn}
         className="tip"
         data-tip="Launch here"
-        style={{ ...btn, background: 'var(--teal-solid)', color: 'var(--ink-bright)', border: '1px solid var(--teal-solid)' }}
+        style={{ ...btn, background: 'var(--job-accent-solid)', color: 'var(--ink-bright)', border: '1px solid var(--job-accent-solid)' }}
       >
         <Play {...ICON_PROPS} size={14} /> Work on this in Claude
       </button>

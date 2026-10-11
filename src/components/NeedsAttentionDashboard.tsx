@@ -26,8 +26,8 @@ const SUBGROUPS: Array<{
   label: string
   dot: string
 }> = [
-  { key: 'revisions-overdue', label: 'Revisions overdue', dot: 'var(--orange)' },
-  { key: 'awaiting-review', label: 'Awaiting your review', dot: 'var(--teal)' },
+  { key: 'revisions-overdue', label: 'Revisions overdue', dot: 'var(--job-overdue)' },
+  { key: 'awaiting-review', label: 'Awaiting your review', dot: 'var(--job-wants)' },
   { key: 'stale-drafts', label: 'Stale drafts', dot: 'var(--slate)' },
 ]
 
@@ -121,7 +121,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange }: Prop
     <div style={{ marginBottom: '1.5rem' }}>
       {/* Section header with count + section collapse */}
       <div className="flex items-center gap-2 mb-3">
-        <AlertTriangle {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
+        <AlertTriangle {...ICON_PROPS} size={16} style={{ color: 'var(--job-wants)' }} />
         <h2 style={{ fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
           Needs your attention
         </h2>
@@ -205,7 +205,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange }: Prop
                     {active && (
                       <span style={{
                         marginLeft: 'auto', fontSize: '10px', fontWeight: 500,
-                        color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.04em',
+                        color: 'var(--sk-t2)', textTransform: 'uppercase', letterSpacing: '0.04em',
                       }}>
                         Filtering
                       </span>
@@ -248,7 +248,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange }: Prop
                 onClick={() => onFilterChange(null)}
                 className="text-xs"
                 style={{
-                  border: 'none', background: 'transparent', color: 'var(--teal)',
+                  border: 'none', background: 'transparent', color: 'var(--job-accent)',
                   cursor: 'pointer', padding: '2px 6px', fontWeight: 500,
                 }}
               >
@@ -269,8 +269,8 @@ function CountBadge({ n }: { n: number }) {
       style={{
         fontSize: '11px', fontWeight: 600,
         padding: '1px 8px', borderRadius: 'var(--radius-full)',
-        color: high ? 'var(--gold-on-emphasis)' : 'var(--slate)',
-        background: high ? 'var(--gold-emphasis)' : 'var(--surface-2)',
+        color: high ? 'var(--job-wants)' : 'var(--slate)',
+        background: high ? 'color-mix(in srgb, var(--job-wants) 15%, transparent)' : 'var(--surface-2)',
         letterSpacing: '0.02em', flexShrink: 0,
       }}
     >
@@ -307,7 +307,7 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
         </span>
         <span style={{ color: 'var(--muted)' }}>R{r.round ?? ''}</span>
         <span style={{ color: 'var(--muted)' }}>{r.journal ?? '—'}</span>
-        <span style={{ color: 'var(--orange)', fontWeight: 500 }}>
+        <span style={{ color: 'var(--job-overdue)', fontWeight: 500 }}>
           Due {dueLabel}{outstanding > 0 ? ` · ${outstanding} open` : ''}
         </span>
       </Link>
@@ -337,7 +337,7 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
         <span style={{ color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {snippet}
         </span>
-        <span style={{ color: 'var(--teal)', fontWeight: 500 }}>
+        <span style={{ color: 'var(--job-stale)', fontWeight: 500 }}>
           {ageDays}d waiting
         </span>
       </Link>

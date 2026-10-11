@@ -1,7 +1,7 @@
 import { useMemo, useRef, useEffect, useState } from 'react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePublications } from '../hooks/useApiData'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 import { countPublications, isPublished } from '../lib/publicationCounts'
 
 interface Node {
@@ -165,8 +165,8 @@ export default function CollaborationNetwork() {
       ctx.moveTo(source.x * scaleX, source.y * scaleY)
       ctx.lineTo(target.x * scaleX, target.y * scaleY)
       ctx.strokeStyle = isHighlighted
-        ? withAlpha(ACCENT_GOLD, 60)
-        : withAlpha(ACCENT_GOLD, 12)
+        ? withAlpha('var(--job-brand)', 60)
+        : withAlpha('var(--job-brand)', 12)
       ctx.lineWidth = Math.min(edge.weight * 0.5, 3) * (isHighlighted ? 1.5 : 1)
       ctx.stroke()
     })
@@ -198,7 +198,7 @@ export default function CollaborationNetwork() {
 
       if (isHovered) {
         ctx.font = '500 10px "JetBrains Mono", monospace'
-        ctx.fillStyle = withAlpha(ACCENT_GOLD, 80)
+        ctx.fillStyle = withAlpha('var(--job-brand)', 80)
         ctx.fillText(`${node.papers} papers`, x, y + r + 26)
       }
     })
@@ -230,7 +230,7 @@ export default function CollaborationNetwork() {
     <section ref={sectionRef} className="fade-in-up section-ink relative py-8 sm:py-12">
       <div
         className="absolute top-0 left-0 right-0"
-        style={{ height: '1px', background: 'var(--gold)', opacity: 0.85 }}
+        style={{ height: '1px', background: 'var(--job-brand)', opacity: 0.85 }}
       />
 
       <div className="content-container">
@@ -261,7 +261,7 @@ export default function CollaborationNetwork() {
 
       <div
         className="absolute bottom-0 left-0 right-0"
-        style={{ height: '1px', background: 'var(--gold)', opacity: 0.85 }}
+        style={{ height: '1px', background: 'var(--job-brand)', opacity: 0.85 }}
       />
     </section>
   )

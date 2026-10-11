@@ -414,7 +414,7 @@ export default function SmartCompose(props: SmartComposeProps) {
     // --cream is white in light and the body black in dark, so the field sits
     // as a well against any card or drawer surface in both modes.
     background: 'var(--cream)',
-    border: `1px solid ${focused ? 'var(--teal)' : 'var(--field-edge)'}`,
+    border: `1px solid ${focused ? 'var(--job-accent)' : 'var(--field-edge)'}`,
     borderRadius: 'var(--radius-md)',
     padding: '8px 10px',
     color: 'var(--ink)',
@@ -521,9 +521,9 @@ export default function SmartCompose(props: SmartComposeProps) {
                 padding: '0 6px', borderRadius: 'var(--radius-sm)',
                 // Built from --gold so the "queued, not posted" state keeps its
                 // edge and wash in dark mode (#dcb355) as well as light (#6b5420).
-                border: hermesLocked ? '1px solid color-mix(in srgb, var(--gold) 45%, transparent)' : '1px solid var(--border-subtle)',
-                background: hermesLocked ? 'color-mix(in srgb, var(--gold) 12%, transparent)' : 'transparent',
-                color: hermesLocked ? 'var(--gold)' : 'var(--slate)',
+                border: hermesLocked ? '1px solid color-mix(in srgb, var(--job-accent) 45%, transparent)' : '1px solid var(--border-subtle)',
+                background: hermesLocked ? 'color-mix(in srgb, var(--job-accent) 12%, transparent)' : 'transparent',
+                color: hermesLocked ? 'var(--job-accent)' : 'var(--slate)',
                 fontSize: 10,
                 fontWeight: hermesLocked ? 600 : 400,
                 opacity: hermesLocked ? 1 : 0.70,
@@ -532,7 +532,7 @@ export default function SmartCompose(props: SmartComposeProps) {
                 whiteSpace: 'nowrap',
               }}
             >
-              <HermesMark size={11} color={hermesLocked ? 'var(--gold)' : 'currentColor'} />
+              <HermesMark size={11} color={hermesLocked ? 'var(--job-accent)' : 'currentColor'} />
               Queue for Claude
             </button>
           )}
@@ -559,7 +559,7 @@ export default function SmartCompose(props: SmartComposeProps) {
                   onMouseDown={(ev) => ev.preventDefault()}
                   onClick={() => { insertAtCursor(e); setEmojiOpen(false) }}
                   style={{ width: 24, height: 24, fontSize: 15, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 3 }}
-                  onMouseEnter={(ev) => { ev.currentTarget.style.background = 'var(--gold-active)' }}
+                  onMouseEnter={(ev) => { ev.currentTarget.style.background = 'color-mix(in srgb, var(--job-accent) 10%, transparent)' }}
                   onMouseLeave={(ev) => { ev.currentTarget.style.background = 'transparent' }}
                 >{e}</button>
               ))}
@@ -593,7 +593,7 @@ export default function SmartCompose(props: SmartComposeProps) {
                 gap: 3,
                 padding: '4px 12px',
                 fontSize: 11,
-                background: 'var(--teal-solid)',
+                background: 'var(--job-accent-solid)',
                 color: 'var(--ink-bright, #fff)',
                 border: 'none',
                 borderRadius: 'var(--radius-sm)',
@@ -622,7 +622,7 @@ export default function SmartCompose(props: SmartComposeProps) {
       data-drag-over={dragOver ? 'true' : undefined}
       style={{
         borderRadius: 'var(--radius-md)',
-        outline: dragOver ? '2px dashed var(--teal)' : 'none',
+        outline: dragOver ? '2px dashed var(--job-accent)' : 'none',
         outlineOffset: '2px',
       }}
     >
@@ -646,15 +646,15 @@ function ToolbarBtn({ children, onClick, label, active, disabled }: { children: 
       style={{
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         width: 22, height: 22, borderRadius: 'var(--radius-sm)',
-        background: active ? 'var(--teal-active)' : 'transparent',
-        border: active ? '1px solid var(--teal)' : '1px solid var(--border-subtle)',
-        color: active ? 'var(--teal)' : 'var(--slate)',
+        background: active ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+        border: active ? '1px solid var(--job-accent)' : '1px solid var(--border-subtle)',
+        color: active ? 'var(--job-accent)' : 'var(--slate)',
         fontSize: 11,
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.5 : 1,
         fontFamily: 'inherit',
-        '--hov-color': 'var(--teal)',
-        '--hov-border': 'var(--teal)',
+        '--hov-color': 'var(--job-accent)',
+        '--hov-border': 'var(--job-accent)',
       } as React.CSSProperties}
     >{children}</button>
   )

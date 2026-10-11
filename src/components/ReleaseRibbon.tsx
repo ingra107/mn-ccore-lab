@@ -78,8 +78,8 @@ export default function ReleaseRibbon() {
         style={{
           minHeight: 44,
           padding: 'var(--sp-sm) var(--sp-lg)',
-          background: 'var(--gold-hover)',
-          borderLeft: '3px solid var(--gold)',
+          background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
+          borderLeft: '3px solid var(--sk-t2)',
           borderRadius: 'var(--radius-md)',
           display: 'flex',
           alignItems: 'center',
@@ -89,7 +89,7 @@ export default function ReleaseRibbon() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)', flex: 1, minWidth: 0 }}>
-          <Sparkles {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <Sparkles {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)', flexShrink: 0 }} />
           <span style={{ fontSize: 'var(--text-small)', color: 'var(--ink)', fontWeight: 'var(--weight-ui)' as unknown as number }}>
             {release.title}:
           </span>

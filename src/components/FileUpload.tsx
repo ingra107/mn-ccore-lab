@@ -117,13 +117,13 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         style={{
-          border: `2px dashed ${dragOver ? 'var(--teal)' : 'var(--border-subtle)'}`,
+          border: `2px dashed ${dragOver ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
           borderRadius: 'var(--radius-lg)',
           padding: 'var(--sp-lg)',
           textAlign: 'center',
           cursor: 'pointer',
           transition: 'border-color 150ms, background 150ms',
-          background: dragOver ? 'var(--teal-hover)' : 'transparent',
+          background: dragOver ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
         }}
         onClick={() => document.getElementById(`file-input-${entityType}-${entityId}`)?.click()}
       >
@@ -137,7 +137,7 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
             ends, after `uploading` clears. Gating on `uploading` alone hid
             every "Upload failed: ..." line the instant it was written. */}
         {uploading || uploadProgress ? (
-          <div className="flex items-center justify-center gap-2" style={{ color: uploading ? 'var(--teal)' : 'var(--maroon)' }}>
+          <div className="flex items-center justify-center gap-2" style={{ color: uploading ? 'var(--job-accent)' : 'var(--maroon)' }}>
             {uploading && <Loader2 {...ICON_PROPS} size={16} className="animate-spin" />}
             <span className="text-xs" role={uploading ? undefined : 'alert'}>{uploadProgress}</span>
           </div>
@@ -180,7 +180,7 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
                 <button
                   onClick={() => handleDownload(f.r2_key, f.filename)}
                   title="Download"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', padding: '2px' }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--job-accent)', padding: '2px' }}
                 >
                   <Download {...ICON_PROPS} size={13} />
                 </button>

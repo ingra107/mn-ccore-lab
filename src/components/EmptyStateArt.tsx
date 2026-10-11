@@ -46,7 +46,7 @@ export default function EmptyStateArt({
   width = 160,
   height = 120,
   color = 'currentColor',
-  accent = 'var(--gold)',
+  accent = 'var(--sk-t2)',
   className,
   style,
   title,

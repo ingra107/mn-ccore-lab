@@ -17,7 +17,7 @@ export default function MemberProjects({ slug }: { slug: string }) {
   return (
     <section className="mb-8" id="member-projects" aria-labelledby="member-projects-h" data-testid="member-projects">
       <div className="flex items-center gap-3 mb-4">
-        <FolderKanban {...ICON_PROPS} size={20} style={{ color: 'var(--teal)' }} aria-hidden="true" />
+        <FolderKanban {...ICON_PROPS} size={20} style={{ color: 'var(--sk-t2)' }} aria-hidden="true" />
         <h2 id="member-projects-h" className="text-xl sm:text-2xl" style={{ fontWeight: 500, color: 'var(--ink)' }}>
           Projects
         </h2>

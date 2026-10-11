@@ -81,7 +81,7 @@ export default function CalendarFeedsPanel() {
         style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}
       >
         <div className="flex items-center gap-2">
-          <CalendarIcon {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
+          <CalendarIcon {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
           <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Add a calendar feed</span>
         </div>
         <p className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75, lineHeight: 1.5 }}>
@@ -114,7 +114,7 @@ export default function CalendarFeedsPanel() {
             className="inline-flex items-center justify-center gap-1.5 rounded"
             style={{
               fontSize: 11, fontWeight: 500, padding: '6px 14px',
-              background: 'var(--teal)', border: 'none', color: '#fff',
+              background: 'var(--job-accent)', border: 'none', color: '#fff',
               cursor: addFeed.isPending || !url.trim() ? 'not-allowed' : 'pointer',
               opacity: addFeed.isPending || !url.trim() ? 0.5 : 1,
             }}
@@ -128,7 +128,7 @@ export default function CalendarFeedsPanel() {
       </div>
 
       <div className="flex items-start gap-2 px-1">
-        <Info {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', marginTop: 2, flexShrink: 0 }} />
+        <Info {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)', marginTop: 2, flexShrink: 0 }} />
         <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75, lineHeight: 1.5 }}>
           The URL is the secret — anyone with it can read the calendar. Hub stores it in D1
           and never re-displays it after save (you'll see a host preview instead). Remove a feed any time above.
@@ -149,9 +149,9 @@ function CalendarFeedRow({ feed, onRemove }: { feed: CalendarFeed; onRemove: () 
     >
       <div
         className="flex items-center justify-center w-9 h-9 rounded-md flex-shrink-0"
-        style={{ background: 'var(--teal-active)' }}
+        style={{ background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)' }}
       >
-        <CalendarIcon {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
+        <CalendarIcon {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t2)' }} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
@@ -161,7 +161,7 @@ function CalendarFeedRow({ feed, onRemove }: { feed: CalendarFeed; onRemove: () 
               error
             </span>
           ) : feed.lastPolledAt ? (
-            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(110,232,154,0.12)', color: 'var(--green)' }}>
+            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)', color: 'var(--sk-t2)' }}>
               connected
             </span>
           ) : (

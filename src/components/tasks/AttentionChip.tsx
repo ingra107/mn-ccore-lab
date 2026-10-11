@@ -18,7 +18,7 @@
 // mid-transition contrast) and the Right-Now glow stays the only glow.
 
 import type { CSSProperties } from 'react'
-import { ACCENT_GOLD, ACCENT_TEAL, withAlpha } from '../../lib/taskGrouping'
+import { withAlpha } from '../../lib/taskGrouping'
 
 export interface AttentionChipProps {
   kind: 'new' | 'activity'
@@ -29,7 +29,10 @@ export interface AttentionChipProps {
 
 export function AttentionChip({ kind, count = 0, style }: AttentionChipProps) {
   const isNew = kind === 'new'
-  const color = isNew ? ACCENT_GOLD : ACCENT_TEAL
+  // Never opened = new to you = gold (wants you now); fresh activity on a
+  // task you have opened = the accent, the same split Today's cards draw
+  // (.tk-tag vs .tk-tag.tk-ac). rules-ui-design 21.
+  const color = isNew ? 'var(--job-wants)' : 'var(--job-accent)'
   const title = isNew
     ? "New to you — you haven't opened this yet"
     : `${count} new ${count === 1 ? 'entry' : 'entries'} since you last opened this`

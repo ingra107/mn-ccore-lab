@@ -44,7 +44,7 @@ export default function ResearchImpact() {
     <section className="section-ink relative py-10 sm:py-14">
       <div
         className="absolute top-0 left-0 right-0"
-        style={{ height: '1px', background: 'var(--gold)', opacity: 0.85 }}
+        style={{ height: '1px', background: 'var(--job-brand)', opacity: 0.85 }}
       />
 
       <div className="content-container">
@@ -113,7 +113,7 @@ export default function ResearchImpact() {
                           style={{
                             // Fixed #dcb355 (light gold) on section-ink dark bg
                             // for AA in both themes. See Home.tsx:484 note.
-                            color: isHighImpact ? '#dcb355' : 'rgba(255, 255, 255, 0.7)',
+                            color: isHighImpact ? 'var(--job-brand)' : 'rgba(255, 255, 255, 0.7)',
                             fontWeight: isHighImpact ? 500 : 400,
                           }}
                         >
@@ -125,7 +125,7 @@ export default function ResearchImpact() {
                         style={{
                           width: `${widthPercent}%`,
                           background: isHighImpact
-                            ? 'var(--gold)'
+                            ? 'var(--job-brand)'
                             : 'rgba(255, 255, 255, 0.2)',
                           opacity: isHighImpact ? 0.8 : 0.85,
                         }}
@@ -151,7 +151,7 @@ export default function ResearchImpact() {
 
       <div
         className="absolute bottom-0 left-0 right-0"
-        style={{ height: '1px', background: 'var(--gold)', opacity: 0.85 }}
+        style={{ height: '1px', background: 'var(--job-brand)', opacity: 0.85 }}
       />
     </section>
   )

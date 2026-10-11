@@ -244,7 +244,7 @@ export default function QuickCaptureInbox() {
               gap: 'var(--sp-sm)',
             }}
           >
-            <Inbox {...ICON_PROPS} size={16} style={{ color: 'var(--teal)', opacity: 0.85 }} />
+            <Inbox {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t2)', opacity: 0.85 }} />
             Quick capture
             <span
               style={{
@@ -324,11 +324,11 @@ export default function QuickCaptureInbox() {
                   minHeight: 44,
                   borderRadius: 'var(--radius-full)',
                   border: '1px solid',
-                  borderColor: active ? 'var(--teal)' : 'var(--border-subtle)',
+                  borderColor: active ? 'var(--job-accent)' : 'var(--border-subtle)',
                   background: active
-                    ? 'var(--teal-hover, rgba(45,138,138,0.12))'
+                    ? 'color-mix(in srgb, var(--job-accent) 12%, transparent)'
                     : 'transparent',
-                  color: active ? 'var(--teal)' : 'var(--ink-muted, var(--slate))',
+                  color: active ? 'var(--job-accent)' : 'var(--ink-muted, var(--slate))',
                   fontSize: 'var(--text-label, 11px)',
                   fontWeight: 500,
                   cursor: 'pointer',
@@ -397,8 +397,8 @@ export default function QuickCaptureInbox() {
               disabled={!text.trim() || submitting}
               style={{
                 padding: '6px 14px',
-                background: 'var(--teal-solid)',
-                border: '1px solid var(--teal)',
+                background: 'var(--job-accent-solid)',
+                border: '1px solid var(--job-accent)',
                 borderRadius: 'var(--radius-md)',
                 color: 'var(--ink-bright, #fff)',
                 fontSize: 'var(--text-small, 12px)',
@@ -460,7 +460,7 @@ export default function QuickCaptureInbox() {
           height: 44,
           borderRadius: 'var(--radius-full)',
           background: 'var(--cream)',
-          color: 'var(--teal)',
+          color: 'var(--job-accent)',
           border: 'none',
           boxShadow: 'var(--shadow-card, 0 2px 8px rgba(0,0,0,0.15))',
           zIndex: 'var(--z-sticky)' as unknown as number,

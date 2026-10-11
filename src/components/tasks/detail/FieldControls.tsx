@@ -56,7 +56,7 @@ export function EditableTitle({ value, onSave }: { value: string; onSave: (v: st
           fontSize: '1.125rem',
           fontWeight: 'var(--weight-heading, 600)',
           color: 'var(--ink)',
-          borderColor: 'var(--teal)',
+          borderColor: 'var(--job-accent)',
           background: 'none',
         }}
       />
@@ -112,7 +112,7 @@ export function EditableShortTitle({ value, onSave }: { value: string; onSave: (
         onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setDraft(value); setEditing(false) } }}
         placeholder="Short title (concise row label)…"
         className="w-full text-sm outline-none border-b pb-0.5"
-        style={{ color: 'var(--ink)', borderColor: 'var(--teal)', background: 'none', minWidth: 0 }}
+        style={{ color: 'var(--ink)', borderColor: 'var(--job-accent)', background: 'none', minWidth: 0 }}
       />
     )
   }
@@ -160,7 +160,7 @@ export function EditableTextarea({ value, onSave, placeholder }: { value: string
         onKeyDown={(e) => { if (e.key === 'Escape') { setDraft(value); setEditing(false) } }}
         rows={3}
         className="w-full text-sm outline-none border rounded-md px-3 py-2 resize-none"
-        style={{ color: 'var(--ink)', borderColor: 'var(--teal)', background: 'none' }}
+        style={{ color: 'var(--ink)', borderColor: 'var(--job-accent)', background: 'none' }}
       />
     )
   }
@@ -218,7 +218,7 @@ function WorkflowTextInput({ value, placeholder, onSave, compact }: { value: str
       // a quiet ring on focus. The full editor keeps the boxed field.
       className={`w-full outline-none rounded-md ${sizeClass}${compact ? ' hov-bg' : ''}`}
       style={compact
-        ? ({ color: 'var(--ink)', background: 'transparent', border: `1px solid ${focused ? 'var(--teal)' : 'transparent'}`, '--hov-bg': 'var(--hover-subtle)' } as React.CSSProperties)
+        ? ({ color: 'var(--ink)', background: 'transparent', border: `1px solid ${focused ? 'var(--job-accent)' : 'transparent'}`, '--hov-bg': 'var(--hover-subtle)' } as React.CSSProperties)
         : { color: 'var(--ink)', background: 'var(--field-bg, rgba(0,0,0,0.04))', border: '1px solid var(--border-subtle)' }}
     />
   )
@@ -306,7 +306,7 @@ export function ProjectInlineGhostSelect({ value, onChange }: { value: string; o
       value={value}
       onChange={onChange}
       options={options}
-      triggerColor={value ? 'var(--teal)' : undefined}
+      triggerColor={value ? 'var(--job-accent)' : undefined}
       maxWidth={160}
       searchable
     />

@@ -218,7 +218,7 @@ export default function GhostSelect({
           }
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = 'var(--teal)'
+          e.currentTarget.style.borderColor = 'var(--job-accent)'
           e.currentTarget.style.background = 'transparent'
         }}
         onBlur={(e) => {
@@ -280,7 +280,7 @@ export default function GhostSelect({
                   outline: 'none',
                   fontFamily: 'inherit',
                 }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--teal)' }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--job-accent)' }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)' }}
               />
             </div>
@@ -310,7 +310,7 @@ export default function GhostSelect({
                     borderBottom: idx < filteredOptions.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                     cursor: 'pointer',
                     color: opt.color ?? 'var(--ink)',
-                    backgroundColor: focused ? 'var(--teal-active)' : selected ? 'var(--hover-subtle)' : 'transparent',
+                    backgroundColor: focused ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : selected ? 'var(--hover-subtle)' : 'transparent',
                     fontWeight: selected ? 600 : 400,
                     outline: 'none',
                     fontFamily: 'inherit',
@@ -319,7 +319,7 @@ export default function GhostSelect({
                 >
                   <span style={{ flex: 1 }}>{opt.label}</span>
                   {selected && (
-                    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style={{ color: 'var(--teal)', flexShrink: 0 }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style={{ color: 'var(--job-accent)', flexShrink: 0 }}>
                       <path d="M2 6l3 3 5-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}

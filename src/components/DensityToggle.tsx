@@ -98,8 +98,8 @@ export default function DensityToggle({
             height: '24px',
             border: 'none',
             cursor: 'pointer',
-            background: value === key ? 'var(--teal-active)' : 'none',
-            color: value === key ? 'var(--teal)' : 'var(--slate)',
+            background: value === key ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'none',
+            color: value === key ? 'var(--job-accent)' : 'var(--slate)',
             opacity: value === key ? 1 : 0.85,
             transition: `background var(--duration-fast), opacity var(--duration-fast)`,
           }}

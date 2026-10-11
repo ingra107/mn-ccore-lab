@@ -126,9 +126,9 @@ export function TaskActivityFeed({ taskId, peekCount, hidePills, avatarSize }: T
                 style={{
                   fontSize: '10px',
                   fontWeight: active ? 600 : 400,
-                  background: active ? 'var(--teal-active)' : 'transparent',
-                  color: active ? 'var(--teal)' : 'var(--slate)',
-                  border: `1px solid ${active ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                  background: active ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                  color: active ? 'var(--job-accent)' : 'var(--slate)',
+                  border: `1px solid ${active ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
                   opacity: active ? 1 : 0.85,
                 }}
               >

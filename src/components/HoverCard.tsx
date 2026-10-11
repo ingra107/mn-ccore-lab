@@ -5,7 +5,7 @@ import { getPersonInfo } from '../data/team'
 import { formatRelativeTime } from '../lib/dateUtils'
 import { STATUS_CONFIG, PRIORITY_CONFIG, STAGE_COLORS } from '../lib/taskConstants'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -80,10 +80,10 @@ function MiniAvatar({ slug }: { slug: string }) {
     <div
       className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
       style={{
-        background: info.photoUrl ? 'transparent' : 'var(--gold-emphasis)',
-        border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+        background: info.photoUrl ? 'transparent' : 'color-mix(in srgb, var(--sk-t1) 8%, transparent)',
+        border: `1px solid ${withAlpha('var(--sk-t1)', 10)}`,
         fontSize: '10px',
-        color: 'var(--gold)',
+        color: 'var(--sk-t2)',
         fontWeight: 500,
       }}
       title={info.name}
@@ -157,7 +157,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
     <div className="flex flex-col gap-2.5">
       {/* Title row */}
       <div className="flex items-start gap-2">
-        <FolderKanban {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', marginTop: 2, flexShrink: 0, opacity: 0.8 }} />
+        <FolderKanban {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)', marginTop: 2, flexShrink: 0, opacity: 0.8 }} />
         <span
           className="text-[13px] leading-tight"
           style={{ color: 'var(--ink)', fontWeight: 400 }}
@@ -227,10 +227,10 @@ function MemberContent({ data }: { data: MemberCardData }) {
       <div
         className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
         style={{
-          background: data.photoUrl ? 'transparent' : 'var(--gold-emphasis)',
-          border: `1px solid ${withAlpha(ACCENT_GOLD, 25)}`,
+          background: data.photoUrl ? 'transparent' : 'color-mix(in srgb, var(--sk-t1) 8%, transparent)',
+          border: `1px solid ${withAlpha('var(--sk-t1)', 13)}`,
           fontSize: '12px',
-          color: 'var(--gold)',
+          color: 'var(--sk-t2)',
           fontWeight: 500,
         }}
       >
@@ -265,9 +265,9 @@ function MemberContent({ data }: { data: MemberCardData }) {
                 key={tag}
                 className="inline-flex px-1.5 py-0.5 rounded text-[10px]"
                 style={{
-                  color: 'var(--teal)',
-                  background: 'var(--teal-active)',
-                  border: '1px solid rgba(45, 138, 138, 0.15)',
+                  color: 'var(--sk-t2)',
+                  background: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',
+                  border: '1px solid var(--border-subtle)',
                   fontWeight: 400,
                 }}
               >

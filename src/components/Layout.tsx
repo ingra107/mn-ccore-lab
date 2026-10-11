@@ -7,7 +7,7 @@ import { useDarkMode } from '../hooks/useDarkMode'
 import { useAuth } from '../hooks/useAuth'
 import PageTransition from './PageTransition'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../lib/taskGrouping'
+import { PANEL_BG, withAlpha } from '../lib/taskGrouping'
 import { PATHS, PUBLIC_PATHS } from '../constants/paths'
 import { memberHubTarget } from '../lib/memberHubTarget'
 
@@ -84,7 +84,7 @@ export default function Layout() {
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded"
-        style={{ background: 'var(--gold)', color: 'var(--cream)' }}
+        style={{ background: 'var(--job-brand)', color: 'var(--cream)' }}
       >
         Skip to content
       </a>
@@ -103,7 +103,7 @@ export default function Layout() {
               : 'transparent',
           backdropFilter: scrolled || isHome ? 'blur(8px)' : 'none',
           WebkitBackdropFilter: scrolled || isHome ? 'blur(8px)' : 'none',
-          borderBottom: scrolled ? `1px solid ${withAlpha(ACCENT_GOLD, 20)}` : isHome ? '1px solid var(--border-subtle)' : 'none',
+          borderBottom: scrolled ? `1px solid ${withAlpha('var(--job-brand)', 20)}` : isHome ? '1px solid var(--border-subtle)' : 'none',
           padding: scrolled ? '10px 0' : '16px 0',
         }}
       >
@@ -141,8 +141,8 @@ export default function Layout() {
               to="/"
               className="cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap"
               style={{
-                color: location.pathname === '/' ? 'var(--gold)' : 'var(--slate)',
-                borderBottom: location.pathname === '/' ? '2px solid var(--gold)' : '2px solid transparent',
+                color: location.pathname === '/' ? 'var(--job-brand)' : 'var(--slate)',
+                borderBottom: location.pathname === '/' ? '2px solid var(--job-brand)' : '2px solid transparent',
               }}
             >
               Home
@@ -151,8 +151,8 @@ export default function Layout() {
             {/* Remaining top-level links, Member Hub before Contact */}
             {navLinks.filter((link) => link.to !== '/').map((link) => {
               const style = (active: boolean) => ({
-                color: active ? 'var(--gold)' : 'var(--slate)',
-                borderBottom: active ? '2px solid var(--gold)' : '2px solid transparent',
+                color: active ? 'var(--job-brand)' : 'var(--slate)',
+                borderBottom: active ? '2px solid var(--job-brand)' : '2px solid transparent',
               })
               const cls = 'cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap'
               return (
@@ -220,8 +220,8 @@ export default function Layout() {
               onClick={() => setMenuOpen(false)}
               className="block px-4 py-3 rounded-md cursor-pointer text-base font-medium transition-colors duration-200"
               style={{
-                color: location.pathname === '/' ? 'var(--gold)' : 'var(--ink)',
-                background: location.pathname === '/' ? 'var(--gold-active)' : 'transparent',
+                color: location.pathname === '/' ? 'var(--job-brand)' : 'var(--ink)',
+                background: location.pathname === '/' ? 'color-mix(in srgb, var(--job-brand) 10%, transparent)' : 'transparent',
                 minHeight: '44px',
                 display: 'flex',
                 alignItems: 'center',
@@ -233,8 +233,8 @@ export default function Layout() {
             {/* Remaining top-level links, Member Hub before Contact */}
             {navLinks.filter((link) => link.to !== '/').map((link) => {
               const style = (active: boolean) => ({
-                color: active ? 'var(--gold)' : 'var(--ink)',
-                background: active ? 'var(--gold-active)' : 'transparent',
+                color: active ? 'var(--job-brand)' : 'var(--ink)',
+                background: active ? 'color-mix(in srgb, var(--job-brand) 10%, transparent)' : 'transparent',
                 minHeight: '44px',
                 display: 'flex',
                 alignItems: 'center',
@@ -271,7 +271,7 @@ export default function Layout() {
         style={{
           background: isDark ? '#0a1118' : 'var(--ink)',
           color: 'var(--cream)',
-          borderTop: '2px solid var(--gold)',
+          borderTop: '2px solid var(--job-brand)',
         }}
       >
         <div className="content-container py-8 md:py-12">
@@ -332,7 +332,7 @@ export default function Layout() {
                     <Link
                       to={link.to}
                       className="text-sm cursor-pointer transition-colors duration-200 hov-color"
-                      style={{ color: 'rgba(255, 255, 255, 0.7)', '--hov-color': 'var(--gold)' } as React.CSSProperties}
+                      style={{ color: 'rgba(255, 255, 255, 0.7)', '--hov-color': 'var(--job-brand)' } as React.CSSProperties}
                     >
                       {link.label}
                     </Link>
@@ -358,7 +358,7 @@ export default function Layout() {
                     <Link
                       to={link.to}
                       className="text-sm cursor-pointer transition-colors duration-200 hov-color"
-                      style={{ color: 'rgba(255, 255, 255, 0.7)', '--hov-color': 'var(--gold)' } as React.CSSProperties}
+                      style={{ color: 'rgba(255, 255, 255, 0.7)', '--hov-color': 'var(--job-brand)' } as React.CSSProperties}
                     >
                       {link.label}
                     </Link>
@@ -400,7 +400,7 @@ export default function Layout() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm cursor-pointer transition-colors duration-200 hov-color"
-                      style={{ color: 'rgba(255, 255, 255, 0.7)', '--hov-color': 'var(--gold)' } as React.CSSProperties}
+                      style={{ color: 'rgba(255, 255, 255, 0.7)', '--hov-color': 'var(--job-brand)' } as React.CSSProperties}
                     >
                       {link.label}
                     </a>
@@ -428,7 +428,7 @@ export default function Layout() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm cursor-pointer transition-colors duration-200 hov-color"
-                      style={{ color: 'rgba(255, 255, 255, 0.7)', '--hov-color': 'var(--gold)' } as React.CSSProperties}
+                      style={{ color: 'rgba(255, 255, 255, 0.7)', '--hov-color': 'var(--job-brand)' } as React.CSSProperties}
                     >
                       {link.label}
                     </a>
@@ -442,7 +442,7 @@ export default function Layout() {
           <div
             className="mt-8 md:mt-12 pt-6 md:pt-8 text-center text-xs"
             style={{
-              borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+              borderTop: `1px solid ${withAlpha('var(--job-brand)', 20)}`,
               color: 'rgba(255, 255, 255, 0.75)',
             }}
           >
@@ -467,7 +467,7 @@ export default function Layout() {
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="fixed bottom-6 right-6 p-3 rounded-full cursor-pointer transition-all duration-200 z-40"
           style={{
-            background: 'var(--gold)',
+            background: 'var(--job-brand)',
             color: 'var(--cream)',
             boxShadow: 'var(--shadow-card)',
           }}

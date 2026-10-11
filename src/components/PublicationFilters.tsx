@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import type { Publication } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 import { topicLabel } from '../lib/topics'
 
 interface PublicationFiltersProps {
@@ -34,7 +34,7 @@ function Pill({
       className="cursor-pointer inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
       style={{
         minHeight: '32px',
-        background: active ? 'var(--gold)' : 'var(--ice)',
+        background: active ? 'var(--job-brand)' : 'var(--ice)',
         color: active ? '#0f1923' : 'var(--slate)',
         border: 'none',
         transitionProperty: 'background-color, color',
@@ -77,7 +77,7 @@ export default function PublicationFilters({
   return (
     <div
       className="card p-4 sm:p-5"
-      style={{ border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}` }}
+      style={{ border: `1px solid ${withAlpha('var(--job-brand)', 12)}` }}
     >
       {/* Year row */}
       <FilterRow label="Year">
@@ -116,7 +116,7 @@ export default function PublicationFilters({
       </FilterRow>
 
       {/* Result count + clear */}
-      <div className="flex items-center justify-between mt-4 pt-3" style={{ borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 25)}` }}>
+      <div className="flex items-center justify-between mt-4 pt-3" style={{ borderTop: `1px solid ${withAlpha('var(--job-brand)', 25)}` }}>
         <span
           className="text-xs"
           style={{
@@ -140,7 +140,7 @@ export default function PublicationFilters({
               style={{
                 color: 'var(--slate)',
                 background: 'transparent',
-                border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+                border: `1px solid ${withAlpha('var(--job-brand)', 20)}`,
                 minHeight: '32px',
                 transitionProperty: 'border-color, color',
                 transitionDuration: '150ms',

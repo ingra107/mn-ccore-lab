@@ -55,7 +55,7 @@ export default function LinkChip({
   // A typed link: the glyph carries the (dimmed) brand color and the label
   // stays neutral, so a Gmail chip never reads as overdue red. An untyped
   // link keeps the teal accent on both.
-  const color = stored ? 'var(--slate)' : 'var(--teal)'
+  const color = stored ? 'var(--slate)' : 'var(--job-accent)'
   const glyph = stored ? stored.tint : color
   const { launch } = useProtocolLaunch()
 

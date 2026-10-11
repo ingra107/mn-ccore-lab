@@ -48,7 +48,7 @@ export function TodayHeader({
           : 'drag tasks into the gaps · click meetings to take notes · × to hide'}
       </span>
       {hiddenCount > 0 && (
-        <button type="button" onClick={onRestore} style={{ marginLeft: 'auto', color: 'var(--sk-ac)', fontSize: 11.5 }}>
+        <button type="button" onClick={onRestore} style={{ marginLeft: 'auto', color: 'var(--job-accent)', fontSize: 11.5 }}>
           Restore {hiddenCount} hidden
         </button>
       )}

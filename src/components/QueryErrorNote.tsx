@@ -27,7 +27,7 @@ export function QueryErrorNote({ label, onRetry }: QueryErrorNoteProps) {
       <span>{label} unavailable</span>
       <button
         onClick={onRetry}
-        style={{ background: 'none', border: 'none', color: 'var(--sk-ac)', textDecoration: 'underline', textUnderlineOffset: 2, fontSize: 12, cursor: 'pointer', padding: 0 }}
+        style={{ background: 'none', border: 'none', color: 'var(--job-accent)', textDecoration: 'underline', textUnderlineOffset: 2, fontSize: 12, cursor: 'pointer', padding: 0 }}
       >
         retry
       </button>

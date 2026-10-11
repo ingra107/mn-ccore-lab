@@ -53,7 +53,7 @@ import { isHermesPending } from '../hermesPendingUtil'
 import { LifecycleActivityLine } from './LifecycleActivityLine'
 import ReactionBar from '../ReactionBar'
 import type { StoredKind, UpdateType } from '../../../shared/activityKinds'
-import { ACCENT_CORAL, ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { ACCENT_CORAL, withAlpha } from '../../lib/taskGrouping'
 // canDeleteActivityEntry moved to ./activityPermissions.ts (2026-07-16 lint
 // burndown, #174) — this file's react-refresh contract is components-only;
 // that predicate was the sole non-component export besides UPDATE_TYPE_CONFIG
@@ -128,10 +128,10 @@ interface UpdateTypeRenderConfig {
 // Module-private — no external caller imports this (verified 2026-07-16);
 // exporting it was the other non-component export tripping react-refresh.
 const UPDATE_TYPE_CONFIG: Record<UpdateType, UpdateTypeRenderConfig> = {
-  progress: { icon: TrendingUp,    color: 'var(--teal)',   bg: 'var(--teal-active)',     borderColor: 'rgba(45,138,138,0.4)',   label: 'Progress' },
-  blocker:  { icon: AlertTriangle, color: 'var(--maroon)', bg: 'rgba(122,0,25,0.1)',     borderColor: 'rgba(122,0,25,0.4)',     label: 'Blocker' },
-  result:   { icon: CheckCircle,   color: 'var(--green)',  bg: 'rgba(34,197,94,0.1)',    borderColor: 'rgba(34,197,94,0.4)',    label: 'Result' },
-  question: { icon: HelpCircle,    color: 'var(--gold)',   bg: 'var(--gold-active)',     borderColor: withAlpha(ACCENT_GOLD, 40),   label: 'Question' },
+  progress: { icon: TrendingUp,    color: 'var(--sk-t2)',   bg: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',     borderColor: 'color-mix(in srgb, var(--sk-t1) 25%, transparent)',   label: 'Progress' },
+  blocker:  { icon: AlertTriangle, color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--job-stale) 8%, transparent)',     borderColor: 'color-mix(in srgb, var(--job-stale) 40%, transparent)',     label: 'Blocker' },
+  result:   { icon: CheckCircle,   color: 'var(--sk-t2)',  bg: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',    borderColor: 'color-mix(in srgb, var(--sk-t1) 25%, transparent)',    label: 'Result' },
+  question: { icon: HelpCircle,    color: 'var(--sk-t2)',   bg: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',     borderColor: withAlpha('var(--sk-t1)', 20),   label: 'Question' },
   session:  { icon: Terminal,      color: 'var(--slate)',  bg: 'rgba(100,116,139,0.08)', borderColor: 'rgba(100,116,139,0.25)', label: 'Session' },
 }
 
@@ -166,9 +166,9 @@ const STYLE_NAME_ROW: React.CSSProperties = { marginBottom: 2 }
 // identical across all kinds.
 
 const KIND_BAR: Record<StoredKind, string> = {
-  comment:    withAlpha(ACCENT_GOLD, 40),       // gold  — discussion
-  update:     'rgba(45,138,138,0.4)',        // teal  — overridden per update_type below
-  completion: 'rgba(110,232,154,0.5)',       // green — done
+  comment:    withAlpha('var(--sk-t1)', 20),       // gold  — discussion
+  update:     'color-mix(in srgb, var(--sk-t1) 30%, transparent)', // gray — overridden per update_type below
+  completion: 'color-mix(in srgb, var(--job-accent) 50%, transparent)', // teal — done (the completion moment)
   system:     'rgba(100,116,139,0.25)',      // slate — automated
 }
 
@@ -466,7 +466,7 @@ export function DismissEntryButton({ isHidden, onClick }: { isHidden?: boolean; 
         // A restored-state eye stays visible (it's the affordance to re-hide a
         // shown-hidden row); a dismiss eye is a quiet hover action like edit.
         opacity: isHidden ? 0.85 : 0.45, padding: 0,
-        '--hov-color': 'var(--teal)',
+        '--hov-color': 'var(--job-accent)',
       } as React.CSSProperties}
     >
       <Icon size={11} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
@@ -486,7 +486,7 @@ function EditEntryButton({ onClick }: { onClick: () => void }) {
       style={{
         width: 18, height: 18, flexShrink: 0, background: 'transparent', border: 'none',
         borderRadius: 'var(--radius-sm)', color: 'var(--slate)', opacity: 0.45, padding: 0,
-        '--hov-color': 'var(--teal)',
+        '--hov-color': 'var(--job-accent)',
       } as React.CSSProperties}
     >
       <Pencil size={11} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
@@ -524,7 +524,7 @@ function InlineCommentEditor({ initial, onSave, onCancel }: { initial: string; o
           onClick={() => { if (val.trim()) onSave(val.trim()) }}
           disabled={!val.trim()}
           className="cursor-pointer"
-          style={{ fontSize: META_FONT_SIZE, fontWeight: 'var(--weight-ui)' as React.CSSProperties['fontWeight'], color: '#fff', background: 'var(--teal-solid)', border: 'none', borderRadius: 'var(--radius-sm)', padding: '3px 12px' }}
+          style={{ fontSize: META_FONT_SIZE, fontWeight: 'var(--weight-ui)' as React.CSSProperties['fontWeight'], color: '#fff', background: 'var(--job-accent-solid)', border: 'none', borderRadius: 'var(--radius-sm)', padding: '3px 12px' }}
         >
           Save
         </button>
@@ -560,8 +560,8 @@ function TaskOriginBadge({
       className="inline-flex items-center gap-1 self-start"
       style={{
         fontSize: META_FONT_SIZE,
-        color: 'var(--teal)',
-        background: 'var(--teal-active)',
+        color: 'var(--job-accent)',
+        background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
         borderRadius: 'var(--radius-sm)',
         padding: '2px 6px',
         textDecoration: 'none',
@@ -742,7 +742,7 @@ export function ActivityEntryItem({
     const ut = entry.update_type
     barColor = UPDATE_TYPE_CONFIG[ut]?.borderColor ?? barColor
   }
-  if (isHermes) barColor = withAlpha(ACCENT_GOLD, 35) // gold for Hermes
+  if (isHermes) barColor = withAlpha('var(--sk-t1)', 18) // gold for Hermes
 
   // Task-origin rows in the project feed get a subtle left-inset.
   const taskOriginStyle =
@@ -759,11 +759,11 @@ export function ActivityEntryItem({
     // reading (Nick 2026-07-09). The surface, edge and lift now come from the
     // shared card material on .detail-card (color back pick 1, 2026-10-11).
     // Hermes keeps its gold-ring treatment.
-    ...(isHermes ? { background: 'var(--gold-hover)' } : {}),
+    ...(isHermes ? { background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)' } : {}),
     borderRadius: 'var(--radius-lg)',
     padding: cardPadding,
     ...(isHermes
-      ? { border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderLeft: `3px solid ${barColor}` }
+      ? { border: `1px solid ${withAlpha('var(--sk-t1)', 8)}`, borderLeft: `3px solid ${barColor}` }
       : { borderLeft: `3px solid ${barColor}` }),
     // Dismissed (shown-hidden) roots read as "not in the live feed" via a DASHED
     // muted spine — NOT a whole-card opacity dim, which would compound with the
@@ -816,7 +816,6 @@ export function ActivityEntryItem({
                 name="Hermes"
                 initials="H"
                 size={avatarSize}
-                variant="gold"
                 slug="claude-ai"
               />
             )}
@@ -826,7 +825,7 @@ export function ActivityEntryItem({
               style={{
                 fontSize: textSize,
                 fontWeight: 'var(--weight-ui)' as React.CSSProperties['fontWeight'],
-                color: 'var(--gold)',
+                color: 'var(--sk-t2)',
                 flexShrink: 0,
               }}
             >

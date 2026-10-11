@@ -48,7 +48,7 @@ export default function ColumnHeader({
         border: 'none',
         cursor: 'pointer',
         padding: 0,
-        color: isActive ? 'var(--teal)' : undefined,
+        color: isActive ? 'var(--job-accent)' : undefined,
         opacity: isActive ? 0.9 : undefined,
         whiteSpace: 'nowrap',
       }}

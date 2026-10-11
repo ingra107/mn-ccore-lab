@@ -145,11 +145,11 @@ export interface DailyCounts {
 // --task-ink-muted (the same token used for secondary text on the
 // surface) — gives 4.6:1+ on both light and dark task-page-bg.
 export const GROUP_META: Record<GroupKey, GroupMeta> = {
-  deep:       { label: 'Deep work',        icon: '🎯', color: 'var(--task-accent-gold)' },
-  priorities: { label: 'Priorities',       icon: '✅', color: 'var(--task-accent-teal)' },
-  quick:      { label: 'Quick',            icon: '⚡', color: 'var(--task-accent-orange)' },
+  deep:       { label: 'Deep work',        icon: '🎯', color: 'var(--sk-t2)' },
+  priorities: { label: 'Priorities',       icon: '✅', color: 'var(--sk-t2)' },
+  quick:      { label: 'Quick',            icon: '⚡', color: 'var(--sk-t2)' },
   pb:         { label: 'Peripheral Brain', icon: '🧠', color: 'var(--task-ink-muted)' },
-  etl:        { label: 'CQODE · CLIF ETL', icon: '🔧', color: 'var(--task-accent-teal)' },
+  etl:        { label: 'CQODE · CLIF ETL', icon: '🔧', color: 'var(--sk-t2)' },
 }
 
 // Move → popover options — same set as UnifiedMyTasks. Writes group_override

@@ -102,7 +102,7 @@ function AddMemberForm({ onClose }: { onClose: () => void }) {
       onSubmit={submit}
       data-testid="add-member-form"
       className="card p-4 sm:p-5 mt-4 w-full"
-      style={{ maxWidth: 560, borderTop: '3px solid var(--gold)' }}
+      style={{ maxWidth: 560, borderTop: '3px solid var(--sk-t2)' }}
       noValidate
     >
       <div className="flex items-center justify-between mb-3">
@@ -119,7 +119,7 @@ function AddMemberForm({ onClose }: { onClose: () => void }) {
       </div>
 
       {added && (
-        <p role="status" data-testid="add-member-added" className="text-sm mb-3 rounded-md px-3 py-2" style={{ background: 'var(--teal-active)', color: 'var(--ink)' }}>
+        <p role="status" data-testid="add-member-added" className="text-sm mb-3 rounded-md px-3 py-2" style={{ background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)', color: 'var(--ink)' }}>
           Added {added.name}. They can sign in now with {added.email}.
         </p>
       )}

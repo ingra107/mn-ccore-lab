@@ -2,7 +2,7 @@ import { type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, X } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 
 interface QuickAddFormProps {
   isOpen: boolean
@@ -40,10 +40,10 @@ export function QuickAddTrigger({
       className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium quick-add-trigger hov-border hov-color"
       style={{
         background: 'var(--ice)',
-        color: active ? 'var(--gold)' : 'var(--slate)',
-        border: `1px dashed ${withAlpha(ACCENT_GOLD, 30)}`,
+        color: active ? 'var(--job-accent)' : 'var(--slate)',
+        border: `1px dashed ${withAlpha('var(--sk-t1)', 15)}`,
         transition: 'all 0.2s ease',
-        '--hov-border': 'var(--gold)',
+        '--hov-border': 'var(--job-accent)',
         '--hov-color': 'var(--ink)',
       } as React.CSSProperties}
     >
@@ -96,14 +96,14 @@ export default function QuickAddForm({
               style={{
                 // Recipe A: lift above the dark page bg (gold border + shadow = edge).
                 background: 'var(--surface-2)',
-                border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+                border: `1px solid ${withAlpha('var(--sk-t1)', 10)}`,
                 boxShadow: 'var(--shadow-card)',
               }}
             >
               {children}
 
               {/* Action buttons */}
-              <div className="flex items-center justify-end gap-2 mt-3 pt-3" style={{ borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 10)}` }}>
+              <div className="flex items-center justify-end gap-2 mt-3 pt-3" style={{ borderTop: `1px solid ${withAlpha('var(--sk-t1)', 5)}` }}>
                 <button
                   type="button"
                   onClick={onCancel}
@@ -111,7 +111,7 @@ export default function QuickAddForm({
                   style={{
                     background: 'transparent',
                     color: 'var(--slate)',
-                    border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+                    border: `1px solid ${withAlpha('var(--sk-t1)', 8)}`,
                   }}
                 >
                   <X {...ICON_PROPS} size={12} />
@@ -122,7 +122,7 @@ export default function QuickAddForm({
                   onClick={onSubmit}
                   className="cursor-pointer inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium"
                   style={{
-                    background: 'var(--gold)',
+                    background: 'var(--job-accent-solid)',
                     color: '#0f1923',
                     border: 'none',
                   }}

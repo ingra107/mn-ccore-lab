@@ -15,7 +15,7 @@ import TaskDetailPanel from '../tasks/TaskDetailPanel'
 import TaskTitle from '../tasks/TaskTitle'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
+import { isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 import { taskShortLabel } from '../../lib/displayNames'
 
@@ -66,7 +66,7 @@ function ActionBoardCard() {
                     {assigneeItems.map((item) => {
                       return (
                         <div key={item.id} className="flex items-start gap-2 py-1.5 pl-7 action-board-row"
-                          style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}`, cursor: 'pointer', borderRadius: 'var(--radius-sm)', margin: '0 -4px', padding: '6px 4px 6px 28px', transition: 'background 0.15s' }}
+                          style={{ borderBottom: `1px solid ${withAlpha('var(--sk-t1)', 3)}`, cursor: 'pointer', borderRadius: 'var(--radius-sm)', margin: '0 -4px', padding: '6px 4px 6px 28px', transition: 'background 0.15s' }}
                           onClick={() => setDetailTask(item)}>
                           {/* C15 DoneBox — canonical square = complete */}
                           <DoneBox
@@ -87,7 +87,7 @@ function ActionBoardCard() {
                             <div className="flex items-center gap-2 mt-0.5">
                               <DueLabel due={item.due_date} style={{ fontSize: 10 }} />
                               {item.priority && item.priority !== 'medium' && (
-                                <span style={{ fontSize: '10px', color: item.priority === 'urgent' ? 'var(--maroon)' : item.priority === 'high' ? 'var(--orange)' : 'var(--slate)', opacity: 0.85 }}>
+                                <span style={{ fontSize: '10px', color: item.priority === 'urgent' ? 'var(--job-stale)' : item.priority === 'high' ? 'var(--sk-t2)' : 'var(--slate)', opacity: 0.85 }}>
                                   {item.priority}
                                 </span>
                               )}
@@ -109,7 +109,7 @@ function ActionBoardCard() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8" style={{ opacity: 0.85 }}>
-              <CheckCircle2 size={24} style={{ color: 'var(--teal)', marginBottom: '8px' }} />
+              <CheckCircle2 size={24} style={{ color: 'var(--sk-t2)', marginBottom: '8px' }} />
               <p style={{ fontSize: '12px', color: 'var(--slate)', margin: 0 }}>
                 All caught up
               </p>
@@ -132,8 +132,8 @@ function ActionBoardCard() {
         document.body,
       )}
       <style>{`
-        .action-board-row:active { background: var(--gold-hover); }
-        .action-board-row:hover { background: var(--gold-hover); }
+        .action-board-row:active { background: color-mix(in srgb, var(--sk-t1) 3%, transparent); }
+        .action-board-row:hover { background: color-mix(in srgb, var(--sk-t1) 3%, transparent); }
       `}</style>
     </BentoCard>
   )

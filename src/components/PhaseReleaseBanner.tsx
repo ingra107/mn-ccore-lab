@@ -152,7 +152,7 @@ export default function PhaseReleaseBanner() {
           >
             <div className="flex items-start justify-between gap-2" style={{ marginBottom: 6 }}>
               <div>
-                <div style={{ fontSize: 10, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: 10, color: 'var(--sk-t2)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                   {/* Was "Just shipped ·" — the pill stays up until dismissed,
                       so it kept calling a months-old release brand new. */}
                   Released · {release.date}

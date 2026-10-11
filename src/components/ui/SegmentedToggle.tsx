@@ -37,9 +37,9 @@ interface SegmentedToggleProps<T extends string> {
 }
 
 const ACCENT = {
-  teal: { active: 'var(--teal-active)', text: 'var(--teal)' },
+  teal: { active: 'color-mix(in srgb, var(--job-accent) 10%, transparent)', text: 'var(--job-accent)' },
   // gold text on the gold tint uses --gold-on-emphasis for AA (Rule 42).
-  gold: { active: 'var(--gold-active)', text: 'var(--gold-on-emphasis)' },
+  gold: { active: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)', text: 'var(--sk-t2)' },
 } as const
 
 const SIZE = {

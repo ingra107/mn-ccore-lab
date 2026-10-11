@@ -23,12 +23,12 @@ export default function WatchButton({ id, type, label, slug, compact }: WatchBut
       }}
       title={watching ? 'Unwatch' : 'Watch for updates'}
       style={{
-        background: watching ? 'var(--teal-active)' : 'none',
-        border: watching ? '1px solid rgba(45,138,138,0.2)' : '1px solid var(--border-subtle)',
+        background: watching ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'none',
+        border: watching ? '1px solid color-mix(in srgb, var(--job-accent) 20%, transparent)' : '1px solid var(--border-subtle)',
         borderRadius: compact ? 'var(--radius-sm)' : 'var(--radius-md)',
         padding: compact ? '2px 6px' : '4px 10px',
         cursor: 'pointer',
-        color: watching ? 'var(--teal)' : 'var(--slate)',
+        color: watching ? 'var(--job-accent)' : 'var(--slate)',
         opacity: watching ? 1 : 0.85,
         display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)',
         fontSize: '11px',

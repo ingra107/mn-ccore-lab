@@ -124,7 +124,7 @@ export default function LaunchLogPanel() {
               minHeight: 28,
             }}
           >
-            <span style={{ fontFamily: 'monospace', color: 'var(--teal)', flexShrink: 0 }}>
+            <span style={{ fontFamily: 'monospace', color: 'var(--sk-t2)', flexShrink: 0 }}>
               @{r.tag}
             </span>
             <span style={{ color: 'var(--slate)', opacity: 0.6, flexShrink: 0 }}>
@@ -150,7 +150,7 @@ export default function LaunchLogPanel() {
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: 'var(--teal)',
+                color: 'var(--sk-t2)',
                 fontSize: 'var(--text-label)',
                 padding: '0 2px',
                 flexShrink: 0,

@@ -36,12 +36,12 @@ const CLAMP_STYLE: React.CSSProperties = {
  * Keeps the feed visually scannable without inventing a per-row icon.
  */
 function dotColorForType(type: string): string {
-  if (type.startsWith('task')) return '#c9a84c'   // gold — user-driven action
-  if (type.startsWith('project')) return '#2d8a8a' // teal — system / project work
-  if (type.startsWith('comment')) return '#5cbcb4'
-  if (type.startsWith('meeting')) return '#5cbcb4'
-  if (type.startsWith('idea')) return '#c9a84c'
-  if (type.startsWith('decision')) return '#7a0019' // maroon — decision
+  if (type.startsWith('task')) return 'var(--sk-t2)'
+  if (type.startsWith('project')) return 'var(--sk-t2)'
+  if (type.startsWith('comment')) return 'var(--sk-t2)'
+  if (type.startsWith('meeting')) return 'var(--sk-t2)'
+  if (type.startsWith('idea')) return 'var(--sk-t2)'
+  if (type.startsWith('decision')) return 'var(--sk-t2)'
   return 'var(--slate)'
 }
 
@@ -103,7 +103,7 @@ function ActivityFeedCard() {
                 top: '12px',
                 bottom: '12px',
                 width: '1.5px',
-                background: 'linear-gradient(to top, var(--gold), transparent)',
+                background: 'linear-gradient(to top, var(--sk-t2), transparent)',
                 opacity: 0.15,
               }}
             />}
@@ -126,7 +126,7 @@ function ActivityFeedCard() {
                   className="flex items-start gap-3 py-2.5 relative group"
                   style={{
                     borderBottom: i < items.length - 1
-                      ? '1px solid var(--gold-hover)'
+                      ? '1px solid color-mix(in srgb, var(--sk-t1) 3%, transparent)'
                       : 'none',
                   }}
                 >
@@ -173,7 +173,7 @@ function ActivityFeedCard() {
                         onClick={() => toggle(item.id)}
                         style={{
                           fontSize: '10px',
-                          color: 'var(--teal)',
+                          color: 'var(--sk-t2)',
                           background: 'none',
                           border: 'none',
                           padding: '2px 0 0',

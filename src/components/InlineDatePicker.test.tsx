@@ -23,17 +23,17 @@ afterEach(() => {
 })
 
 describe('InlineDatePicker overdue state', () => {
-  it('done + past date: plain date, no overdue, no maroon', () => {
+  it('done + past date: plain date, no overdue, no overdue red', () => {
     const btn = mount(true)
     const text = btn.textContent ?? ''
     expect(text).not.toContain('in -')
     expect(text.toLowerCase()).not.toContain('overdue')
     expect(text).toContain('Jan 15')
-    expect(btn.style.color).not.toContain('maroon')
+    expect(btn.style.color).not.toContain('--job-overdue')
   })
-  it('not done + past date: Nd overdue in maroon', () => {
+  it('not done + past date: Nd overdue in the overdue job color', () => {
     const btn = mount(false)
     expect(btn.textContent).toMatch(/\d+d overdue/)
-    expect(btn.style.color).toContain('maroon')
+    expect(btn.style.color).toContain('--job-overdue')
   })
 })

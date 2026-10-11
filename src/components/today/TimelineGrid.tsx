@@ -221,7 +221,7 @@ function TimedTaskBlock({
     touchAction: 'none',  // prevent browser scroll-hijack during pointer gesture
     userSelect: 'none',
     willChange: isDragging ? 'transform' : isResizing ? 'height' : 'auto',
-    outline: isDragging ? '2px solid var(--sk-ac)' : 'none',
+    outline: isDragging ? '2px solid var(--job-accent)' : 'none',
   }
 
   const durLabel = fmtDuration(dur)
@@ -515,9 +515,9 @@ function AgendaGapRow({
                   left: `${leftPct}%`,
                   width: `${widthPct}%`,
                   boxSizing: 'border-box',
-                  border: '2px dashed var(--sk-ac)',
+                  border: '2px dashed var(--job-accent)',
                   borderRadius: 'var(--r-ctl)',
-                  background: 'var(--sk-ac-soft)',
+                  background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
                   pointerEvents: 'none',
                   zIndex: 20,
                   transition: 'top 80ms ease, height 80ms ease',
@@ -551,7 +551,7 @@ function AgendaGapRow({
               // Opaque background so the drawer hides lower blocks cleanly.
               background: 'var(--sk-panel)',
               // Teal left border visually connects the drawer to its block.
-              borderLeft: '3px solid var(--sk-ac)',
+              borderLeft: '3px solid var(--job-accent)',
               // Above the absolute block layer (z 1) and ghost (z 2).
               zIndex: 10,
             }}
@@ -599,7 +599,7 @@ function AgendaGapRow({
         userSelect: 'none',
         pointerEvents: 'none',
       }}>
-        <span className="tk-gapl" style={dragOver ? { color: 'var(--sk-ac)' } : undefined}>{dragOver ? '↓ drop here' : fmtFree}</span>
+        <span className="tk-gapl" style={dragOver ? { color: 'var(--job-accent)' } : undefined}>{dragOver ? '↓ drop here' : fmtFree}</span>
       </div>
 
       {/* Now-line at fractional position within this gap.

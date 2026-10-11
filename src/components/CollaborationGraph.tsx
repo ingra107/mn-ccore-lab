@@ -3,7 +3,7 @@ import { GraphCanvas, darkTheme } from 'reagraph'
 import type { GraphCanvasRef } from 'reagraph'
 import type { GraphNode as ReagraphNode, GraphEdge as ReagraphEdge, InternalGraphNode, InternalGraphEdge, Theme } from 'reagraph'
 import type { Publication } from '../data/types'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 import { isPublished } from '../lib/publicationCounts'
 
 // Re-export the same interfaces the sidebar/filters expect
@@ -87,7 +87,7 @@ const mnccoreTheme: Theme = {
   },
   edge: {
     ...darkTheme.edge,
-    fill: withAlpha(ACCENT_GOLD, 25),
+    fill: withAlpha('var(--job-brand)', 25),
     activeFill: GOLD,
     opacity: 1,
     selectedOpacity: 1,
@@ -103,8 +103,8 @@ const mnccoreTheme: Theme = {
     activeFill: GOLD,
   },
   lasso: {
-    background: withAlpha(ACCENT_GOLD, 10),
-    border: withAlpha(ACCENT_GOLD, 50),
+    background: withAlpha('var(--job-brand)', 10),
+    border: withAlpha('var(--job-brand)', 50),
   },
 }
 

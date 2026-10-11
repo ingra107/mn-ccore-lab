@@ -79,7 +79,7 @@ function SortableSubtaskItem({
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
       >
         {subtask.completed ? (
-          <CheckCircle2 {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
+          <CheckCircle2 {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t2)' }} />
         ) : (
           <Circle {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         )}

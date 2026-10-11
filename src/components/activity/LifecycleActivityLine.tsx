@@ -72,7 +72,7 @@ export function LifecycleActivityLine({
               href={taskHref}
               onClick={onTaskLinkClick ?? ((e) => e.stopPropagation())}
               className="link-affordance"
-              style={{ fontStyle: 'normal', color: 'var(--teal)' }}
+              style={{ fontStyle: 'normal', color: 'var(--sk-t2)' }}
             >
               {taskLabel}
             </a>

@@ -78,7 +78,7 @@ export default function RecentActivity() {
             to="/publications"
             className="text-xs flex items-center gap-1 transition-colors duration-200"
             style={{
-              color: 'var(--gold)',
+              color: 'var(--job-brand)',
               textDecoration: 'none',
             }}
           >
@@ -96,14 +96,14 @@ export default function RecentActivity() {
                 style={{
                   borderBottom:
                     i < activities.length - 1
-                      ? '1px solid var(--gold-active)'
+                      ? '1px solid color-mix(in srgb, var(--job-brand) 10%, transparent)'
                       : 'none',
                 }}
               >
                 <Icon {...ICON_PROPS}
                   size={16}
                   className="flex-shrink-0 mt-0.5"
-                  style={{ color: 'var(--gold)' }}
+                  style={{ color: 'var(--job-brand)' }}
                   aria-hidden="true"
                 />
                 <div className="flex-1 min-w-0">

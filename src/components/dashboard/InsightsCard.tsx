@@ -37,10 +37,10 @@ function InsightsCard() {
           style={{
             // N1b de-box: ghost utility button — no resting box/border (not a
             // primary action). Quiet teal text + icon; hover tint via hov-bg.
-            color: 'var(--teal)',
+            color: 'var(--sk-t2)',
             background: 'transparent',
             border: 'none',
-            '--hov-bg': 'var(--teal-hover)',
+            '--hov-bg': 'color-mix(in srgb, var(--job-accent) 6%, transparent)',
             cursor: refreshing ? 'default' : 'pointer',
             opacity: refreshing ? 0.85 : 1,
           } as React.CSSProperties}
@@ -85,7 +85,7 @@ function InsightsCard() {
                 key={`${edge.from}-${edge.to}-${i}`}
                 className="flex items-center gap-2 py-2 px-2 rounded-lg transition-colors"
                 style={{
-                  borderBottom: i < top5.length - 1 ? '1px solid rgba(45,138,138,0.06)' : undefined,
+                  borderBottom: i < top5.length - 1 ? '1px solid var(--border-subtle)' : undefined,
                 }}
               >
                 {/* Strength indicator */}
@@ -94,7 +94,7 @@ function InsightsCard() {
                     width: 4,
                     height: 24,
                     borderRadius: 'var(--radius-sm)',
-                    background: `rgba(45,138,138,${Math.max(0.15, edge.strength)})`,
+                    background: `color-mix(in srgb, var(--job-accent) ${Math.round(Math.max(0.15, edge.strength) * 100)}%, transparent)`,
                     flexShrink: 0,
                   }}
                 />
@@ -121,7 +121,7 @@ function InsightsCard() {
                     <span
                       style={{
                         fontSize: '10px',
-                        color: 'var(--teal)',
+                        color: 'var(--sk-t3)',
                         opacity: 0.85,
                         flexShrink: 0,
                       }}
@@ -149,8 +149,8 @@ function InsightsCard() {
                     <span
                       className="inline-block px-1.5 py-0.5 rounded text-[10px]"
                       style={{
-                        background: 'var(--teal-active)',
-                        color: 'var(--teal)',
+                        background: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',
+                        color: 'var(--sk-t2)',
                         maxWidth: '260px',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -178,14 +178,14 @@ function InsightsCard() {
                   className="flex-shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded"
                   style={{
                     background: edge.strength > 0.7
-                      ? 'color-mix(in srgb, var(--teal) 12%, transparent)'
+                      ? 'color-mix(in srgb, var(--sk-t1) 8%, transparent)'
                       : edge.strength > 0.4
-                      ? 'var(--gold-active)'
+                      ? 'color-mix(in srgb, var(--sk-t1) 5%, transparent)'
                       : 'rgba(100,116,139,0.08)',
                     color: edge.strength > 0.7
-                      ? 'var(--teal)'
+                      ? 'var(--sk-t1)'
                       : edge.strength > 0.4
-                      ? 'var(--gold)'
+                      ? 'var(--sk-t2)'
                       : 'var(--slate)',
                   }}
                 >

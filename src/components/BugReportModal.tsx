@@ -151,7 +151,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
         disabled={!description.trim() || submitting}
         className="cursor-pointer px-4 py-2 rounded-md text-sm flex items-center gap-2"
         style={{
-          background: description.trim() && !submitting ? 'var(--teal-solid)' : 'var(--surface-2)',
+          background: description.trim() && !submitting ? 'var(--job-accent-solid)' : 'var(--surface-2)',
           color: description.trim() && !submitting ? 'var(--cream)' : 'var(--slate)',
           border: 'none',
           cursor: description.trim() && !submitting ? 'pointer' : 'default',
@@ -171,9 +171,9 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
             <div className="text-center py-4">
               <div
                 className="mx-auto mb-3 w-12 h-12 rounded-full flex items-center justify-center"
-                style={{ background: 'rgba(22,163,74,0.1)' }}
+                style={{ background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)' }}
               >
-                <Send {...ICON_PROPS} size={20} style={{ color: 'var(--green)' }} />
+                <Send {...ICON_PROPS} size={20} style={{ color: 'var(--sk-t2)' }} />
               </div>
               <p style={{ fontWeight: 500, color: 'var(--ink)', fontSize: 'var(--text-base)' }}>
                 Bug reported!
@@ -183,7 +183,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block mt-2 text-sm"
-                style={{ color: 'var(--teal)' }}
+                style={{ color: 'var(--job-accent)' }}
               >
                 View issue #{result.number} on GitHub
               </a>

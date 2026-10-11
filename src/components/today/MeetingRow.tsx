@@ -205,7 +205,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
                       <span style={{ fontSize: 10.5, color: 'var(--sk-t3)' }}>saving…</span>
                     )}
                     {!isCalEvent && saveStatus === 'saved' && (
-                      <span style={{ fontSize: 10.5, color: 'var(--sk-ac)' }}>saved</span>
+                      <span style={{ fontSize: 10.5, color: 'var(--job-accent)' }}>saved</span>
                     )}
                   </div>
                   <textarea

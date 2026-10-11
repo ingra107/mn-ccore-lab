@@ -56,10 +56,10 @@ export function ProfileSetupPrompt() {
         gap: 12,
         padding: '10px 14px',
         marginBottom: 14,
-        borderLeft: '2px solid var(--sk-gold, var(--gold))',
+        borderLeft: '2px solid var(--sk-gold, var(--job-wants))',
       }}
     >
-      <UserRound {...ICON_PROPS} size={16} aria-hidden style={{ color: 'var(--sk-gold, var(--gold))', flexShrink: 0 }} />
+      <UserRound {...ICON_PROPS} size={16} aria-hidden style={{ color: 'var(--sk-gold, var(--job-wants))', flexShrink: 0 }} />
       <div style={{ flex: '1 1 220px', minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--sk-t1, var(--ink))' }}>Set up your profile</div>
         <div style={{ fontSize: 12, color: 'var(--sk-t2, var(--slate))' }}>

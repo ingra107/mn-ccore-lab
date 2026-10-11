@@ -114,7 +114,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
       {/* Header row */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <MessageSquare {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
+          <MessageSquare {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t2)' }} />
           <h3
             style={{
               fontWeight: 600,
@@ -137,13 +137,13 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hov-bg"
           style={{
             background: 'transparent',
-            color: 'var(--teal)',
+            color: 'var(--sk-t2)',
             fontSize: '12px',
             fontWeight: 500,
             padding: '6px 12px',
             borderRadius: 'var(--radius-lg)',
             transition: 'background 150ms ease-out',
-            '--hov-bg': 'var(--teal-hover)',
+            '--hov-bg': 'color-mix(in srgb, var(--job-accent) 6%, transparent)',
           } as React.CSSProperties}
         >
           <Plus {...ICON_PROPS} size={14} />
@@ -163,7 +163,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
             <div
               className="rounded-xl p-4"
               style={{
-                background: 'var(--teal-hover)',
+                background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
                 border: '1px solid var(--border-subtle)',
               }}
             >
@@ -210,7 +210,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                   onClick={handleAddRound}
                   className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg"
                   style={{
-                    background: 'var(--teal-solid)',
+                    background: 'var(--job-accent-solid)',
                     color: 'var(--ink-bright, #fff)',
                     fontSize: 'var(--value-size)',
                     fontWeight: 500,
@@ -303,7 +303,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
           gap: '12px',
           padding: '14px 16px',
           transition: 'background 150ms',
-          '--hov-bg': 'var(--gold-hover)',
+          '--hov-bg': 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
         } as React.CSSProperties}
       >
         {/* Round badge */}
@@ -316,7 +316,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
             flexShrink: 0,
           }}
         >
-          <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: statusOpt?.color || 'var(--teal)' }}>
+          <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: statusOpt?.color || 'var(--sk-t2)' }}>
             R{revision.round}
           </span>
         </div>
@@ -349,7 +349,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
               </span>
             )}
             {revision.response_due && (
-              <span style={{ fontSize: 'var(--label-size)', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 0.9 : 'var(--ink-label)' }}>
+              <span style={{ fontSize: 'var(--label-size)', color: isOverdue ? 'var(--job-overdue)' : 'var(--slate)', opacity: isOverdue ? 0.9 : 'var(--ink-label)' }}>
                 Due {formatMediumDate(revision.response_due)}
               </span>
             )}
@@ -382,7 +382,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
                     width: `${progress}%`,
                     height: '100%',
                     borderRadius: 'var(--radius-sm)',
-                    background: progress === 100 ? 'var(--green)' : 'var(--teal)',
+                    background: progress === 100 ? 'var(--sk-t2)' : 'var(--job-accent)',
                     transition: 'width 250ms ease-out',
                   }}
                 />
@@ -561,7 +561,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                               <div
                                 className="mt-2 pl-3 rounded"
                                 style={{
-                                  borderLeft: '2px solid var(--teal)',
+                                  borderLeft: '2px solid var(--sk-t3)',
                                   paddingTop: 'var(--sp-xs)',
                                   paddingBottom: 'var(--sp-xs)',
                                 }}
@@ -612,7 +612,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                     style={{
                                       fontSize: 'var(--label-size)',
                                       color: 'var(--ink-bright, #fff)',
-                                      background: 'var(--teal-solid)',
+                                      background: 'var(--job-accent-solid)',
                                       borderRadius: 'var(--radius-md)',
                                       padding: '4px 10px',
                                     }}
@@ -644,7 +644,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                 }}
                                 style={{
                                   fontSize: 'var(--label-size)',
-                                  color: 'var(--teal)',
+                                  color: 'var(--sk-t2)',
                                   opacity: 0.85,
                                   padding: 'var(--sp-xs) 0 0',
                                   marginTop: 'var(--sp-xs)',
@@ -706,7 +706,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
             className="flex items-center gap-1.5"
             style={{
               fontSize: '12px',
-              color: 'var(--teal)',
+              color: 'var(--sk-t2)',
               opacity: 0.85,
               padding: 0,
             }}
@@ -720,7 +720,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
             animate={{ opacity: 1, y: 0 }}
             className="rounded-lg p-3"
             style={{
-              background: 'var(--teal-hover)',
+              background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
               border: '1px solid var(--border-subtle)',
             }}
           >
@@ -792,7 +792,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                   fontSize: '12px',
                   fontWeight: 500,
                   color: 'var(--ink-bright, #fff)',
-                  background: newCommentText.trim() ? 'var(--teal-solid)' : 'var(--slate)',
+                  background: newCommentText.trim() ? 'var(--job-accent-solid)' : 'var(--slate)',
                   padding: '4px 12px',
                   borderRadius: 'var(--radius-md)',
                   cursor: newCommentText.trim() ? 'pointer' : 'not-allowed',

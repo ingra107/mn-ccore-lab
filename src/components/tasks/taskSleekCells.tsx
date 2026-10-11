@@ -55,9 +55,9 @@ export function TaskTitleCell({ task, isDone, onOpen, selecting = false, planned
       <span {...open} title={hint}>{title}</span>
       {!isDone && task.priority === 'urgent' && <span className="sr-only">Urgent</span>}
       <CardTags task={task} isNew={isNewToViewer} activityCount={activityRow?.new_count ?? 0} showMoved={showMoved} />
-      {planned && !isDone && <span className="tk-tag">Planned</span>}
+      {planned && !isDone && <span className="tk-tag tk-n">Planned</span>}
       {showWaiting && !isDone && task.status === 'waiting_external' && <span className="tk-tag tk-n">Waiting</span>}
-      {staleDays > 0 && <span className="tk-tag tk-n" title="In progress with no movement">{staleDays}d stale</span>}
+      {staleDays > 0 && <span className="tk-tag tk-stale" title="In progress with no movement">{staleDays}d stale</span>}
     </div>
   )
 }

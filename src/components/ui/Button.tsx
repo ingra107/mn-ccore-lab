@@ -36,7 +36,7 @@ export type ButtonProps<E extends ElementType = 'button'> = ButtonOwnProps & {
 
 const VARIANT_STYLES: Record<NonNullable<ButtonProps['variant']>, CSSProperties> = {
   primary: {
-    background: 'var(--teal-solid)',
+    background: 'var(--job-accent-solid)',
     color: 'var(--ink-bright, #fff)',
     border: 'none',
   },
@@ -55,20 +55,19 @@ const VARIANT_STYLES: Record<NonNullable<ButtonProps['variant']>, CSSProperties>
     border: '1px solid var(--maroon)',
     color: 'var(--maroon)',
   },
-  // gold — solid gold fill; for primary actions on the Today/task surfaces that
-  // use ACCENT_GOLD (--task-accent-gold) as their accent (not teal).
+  // gold — solid brand fill for the public site (LabPageLayout, /network).
+  // --job-brand is gray inside .portal-shell, so a portal use renders neutral.
   gold: {
-    background: 'var(--task-accent-gold)',
+    background: 'var(--job-brand)',
     color: 'var(--task-page-bg)',
     border: 'none',
   },
-  // ghost-gold — transparent bg, gold text, no border; for secondary/ghost
-  // actions on gold-accented surfaces (e.g. "Plan for today" alongside the
-  // solid gold "Work on this now" button).
+  // ghost-gold — transparent bg, milestone gold text, no border. Its one use is
+  // the milestone drawer's "Mark complete": milestones keep gold (principle 21).
   'ghost-gold': {
     background: 'none',
     border: 'none',
-    color: 'var(--task-accent-gold)',
+    color: 'var(--job-milestone)',
   },
 }
 

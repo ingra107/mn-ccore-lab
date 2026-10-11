@@ -90,7 +90,7 @@ export default function HermesPending({ askedAt }: { askedAt: string }) {
               width: 4,
               height: 4,
               borderRadius: 'var(--radius-circle)',
-              background: 'var(--gold)',
+              background: 'var(--sk-t2)',
               display: 'inline-block',
             }}
             animate={{ y: [0, -3, 0] }}

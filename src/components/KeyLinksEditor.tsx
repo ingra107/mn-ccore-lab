@@ -57,7 +57,7 @@ function LinkRow({
   const Icon = stored ? stored.Icon : FallbackIcon
   // Mode-A: brand-color glyph on neutral ice/slate pill (Nick 2026-06-17).
   // Labeled chips keep the pill box; only icon-only affordances go borderless.
-  const iconColor = stored ? stored.tint : 'var(--teal)'
+  const iconColor = stored ? stored.tint : 'var(--job-accent)'
   const { launch } = useProtocolLaunch()
 
   // Same label rule as Today's link cards: drop the "(Google Doc)" kind suffix.
@@ -205,7 +205,7 @@ function LinkForm({
           onClick={() => canSave && onSave({ url: url.trim(), desc: desc.trim() || null })}
           disabled={!canSave}
           style={{
-            background: canSave ? 'var(--teal-solid)' : 'var(--border-subtle)',
+            background: canSave ? 'var(--job-accent-solid)' : 'var(--border-subtle)',
             borderRadius: 'var(--radius-md)',
             padding: '4px 10px',
             fontSize: 'var(--text-small)',
@@ -320,11 +320,11 @@ export default function KeyLinksEditor({ links, onSave, hideLabel = false, maxSl
             style={{
               padding: '3px 4px',
               fontSize: 'var(--text-small)',
-              color: 'var(--teal)',
+              color: 'var(--sk-t2)',
               opacity: 0.75,
               fontFamily: 'inherit',
               '--hov-opacity': '1',
-              '--hov-bg': 'var(--teal-hover)',
+              '--hov-bg': 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',
             } as React.CSSProperties}
           >
             <Plus {...ICON_PROPS} size={11} />

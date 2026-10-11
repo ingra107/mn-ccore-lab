@@ -36,7 +36,7 @@ const STEPS = [
 ] as const
 
 const TONES = {
-  page: { ink: 'var(--ink)', muted: 'var(--slate)', card: 'var(--surface-1)', line: 'var(--border-subtle)', link: 'var(--teal)' },
+  page: { ink: 'var(--ink)', muted: 'var(--slate)', card: 'var(--surface-1)', line: 'var(--border-subtle)', link: 'var(--job-accent)' },
   dark: { ink: '#e2e8f0', muted: 'rgba(226,232,240,0.75)', card: 'rgba(255,255,255,0.04)', line: 'rgba(255,255,255,0.08)', link: '#5cbcb4' },
 } as const
 

@@ -29,7 +29,7 @@ export default function DueLabel({
   const overdue = isOverdue(due, status)
   const dueDay = due.slice(0, 10)
   const isToday = !overdue && dueDay === localDateKey()
-  const color = overdue ? 'var(--maroon)' : isToday ? 'var(--gold)' : 'var(--muted)'
+  const color = overdue ? 'var(--job-overdue)' : isToday ? 'var(--job-wants)' : 'var(--muted)'
   return (
     <span
       className={className}

@@ -13,15 +13,15 @@ interface BulkActionToolbarProps {
 }
 
 const priorityOptions = [
-  { value: 'urgent', label: 'Urgent', color: 'var(--maroon)' },
-  { value: 'high', label: 'High', color: '#dc2626' },
-  { value: 'medium', label: 'Medium', color: 'var(--gold)' },
+  { value: 'urgent', label: 'Urgent', color: 'var(--job-stale)' },
+  { value: 'high', label: 'High', color: 'var(--job-stale)' },
+  { value: 'medium', label: 'Medium', color: 'var(--sk-t2)' },
   { value: 'low', label: 'Low', color: 'var(--slate)' },
 ]
 
 const statusOptions = [
   { value: 'todo', label: 'To Do', color: 'var(--slate)' },
-  { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
+  { value: 'in_progress', label: 'In Progress', color: 'var(--job-accent)' },
   { value: 'waiting_external', label: 'Waiting External', color: 'var(--st-waiting)' },
   { value: 'blocked', label: 'Blocked', color: 'var(--st-blocked)' },
   { value: 'done', label: 'Done', color: 'var(--st-done)' },
@@ -72,7 +72,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
         zIndex: 'var(--z-dropdown)',
         background: 'var(--ink)',
         borderRadius: 'var(--radius-xl)',
-        border: '1px solid var(--gold)',
+        border: '1px solid var(--job-accent)',
         padding: 'var(--sp-sm) var(--sp-lg)',
         display: 'flex',
         alignItems: 'center',
@@ -90,7 +90,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
             style={{
               fontSize: 13,
               fontWeight: 600,
-              color: 'var(--gold)',
+              color: 'var(--job-accent)',
               whiteSpace: 'nowrap',
             }}
           >
@@ -128,7 +128,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
             disabled={isUpdating}
             style={{
               ...buttonStyle(),
-              color: allCompleted ? 'rgba(255,255,255,0.8)' : 'var(--teal)',
+              color: allCompleted ? 'rgba(255,255,255,0.8)' : 'var(--job-accent)',
             }}
           >
             {allCompleted ? <Circle {...ICON_PROPS} size={14} /> : <CheckCircle2 {...ICON_PROPS} size={14} />}
@@ -268,8 +268,8 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                         width: 24,
                         height: 24,
                         borderRadius: 'var(--radius-md)',
-                        background: 'var(--gold-emphasis)',
-                        color: 'var(--gold)',
+                        background: 'color-mix(in srgb, var(--sk-t1) 8%, transparent)',
+                        color: 'var(--sk-t2)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -368,7 +368,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
               disabled={isUpdating}
               style={{
                 ...buttonStyle(),
-                color: 'var(--gold)',
+                color: 'var(--sk-t2)',
               }}
             >
               <AlarmClock {...ICON_PROPS} size={14} />

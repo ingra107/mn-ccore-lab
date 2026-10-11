@@ -94,7 +94,7 @@ function AgendaDropSeparator({ slot }: { slot: PlannedSlot }) {
       }}
     >
       {isOver && (
-        <span className="tk-gapl" style={{ position: 'static', color: 'var(--sk-ac)', userSelect: 'none', pointerEvents: 'none' }}>
+        <span className="tk-gapl" style={{ position: 'static', color: 'var(--job-accent)', userSelect: 'none', pointerEvents: 'none' }}>
           drop here
         </span>
       )}
@@ -238,7 +238,7 @@ export function AgendaListView({
   // One teal rule: the coral-while-in-a-meeting variant is dropped (the meeting
   // card says "Now" itself).
   void inMeetingNow
-  const nowColor = 'var(--sk-ac)'
+  const nowColor = 'var(--job-accent)'
 
   const renderNowMarker = () => (
     <div

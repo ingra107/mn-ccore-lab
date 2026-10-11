@@ -98,7 +98,7 @@ export default function EntityNotFound({
                   key={s.to}
                   to={s.to}
                   className="text-sm hover:underline"
-                  style={{ color: 'var(--teal)', textDecoration: 'none' }}
+                  style={{ color: 'var(--job-accent)', textDecoration: 'none' }}
                 >
                   {s.label}
                 </Link>

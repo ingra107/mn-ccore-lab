@@ -116,6 +116,25 @@ if ! node scripts/check-color-string-concat.mjs --enforce; then
 fi
 
 # ---------------------------------------------------------------------------
+# Color-job ratchet (2026-10-11). Each hue has one job (PB rules-ui-design
+# principle 21): red = overdue, gold = wants you now / milestones, teal = the
+# accent, orange = going stale, the rest gray; the public site keeps gold as
+# its brand. A strip pass that fixed only the sites someone looked at left raw
+# var(--gold) / var(--teal) / ACCENT_GOLD in ~190 files, so this counts every
+# raw hue use under src/ per file against scripts/check-color-jobs.baseline.json
+# and blocks a rise or a new file. Fires when src/ or the gate itself is
+# staged; a full scan is ~1s.
+if git diff --cached --name-only --diff-filter=ACMR \
+        | grep -qE "^src/|^scripts/check-color-jobs(\.baseline\.json|\.mjs)$"; then
+    if ! node scripts/check-color-jobs.mjs; then
+        echo ""
+        echo "BLOCKED: raw hue use(s) rose (see the file:line list above)."
+        echo "Route each through a --job-* token (src/index.css) or the gray ramp."
+        exit 1
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # Tailwind arbitrary-value runtime-interpolation gate (2026-06-17, backlog #94).
 # Tailwind JIT emits CSS only for COMPLETE LITERAL arbitrary values seen at
 # build time.  Templating a runtime expression inside a Tailwind arbitrary

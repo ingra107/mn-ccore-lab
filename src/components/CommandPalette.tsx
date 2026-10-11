@@ -700,7 +700,7 @@ export default function CommandPalette() {
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
           {isProjectMode
-            ? <FolderKanban {...ICON_PROPS} size={16} style={{ color: 'var(--teal)', opacity: 0.85 }} />
+            ? <FolderKanban {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t2)', opacity: 0.85 }} />
             : <Search {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
           }
           <input
@@ -746,14 +746,14 @@ export default function CommandPalette() {
                       tabIndex={-1}
                       className="flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors"
                       style={{
-                        backgroundColor: isSelected ? 'var(--teal-active)' : 'transparent',
+                        backgroundColor: isSelected ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
                       }}
                       onClick={item.action}
                       onMouseEnter={() => setSelectedIndex(currentIdx)}
                     >
-                      <Icon {...ICON_PROPS} size={15} style={{ color: isSelected ? 'var(--teal)' : 'var(--slate)', opacity: isSelected ? 1 : 0.85, flexShrink: 0 }} />
+                      <Icon {...ICON_PROPS} size={15} style={{ color: isSelected ? 'var(--job-accent)' : 'var(--slate)', opacity: isSelected ? 1 : 0.85, flexShrink: 0 }} />
                       <div className="flex-1 min-w-0">
-                        <span className="text-sm truncate block" style={{ color: isSelected ? 'var(--teal)' : 'var(--ink)', fontWeight: isSelected ? 500 : 400 }}>
+                        <span className="text-sm truncate block" style={{ color: isSelected ? 'var(--job-accent)' : 'var(--ink)', fontWeight: isSelected ? 500 : 400 }}>
                           {item.label}
                         </span>
                         {item.sublabel && (
@@ -767,7 +767,7 @@ export default function CommandPalette() {
                           {item.shortcut}
                         </kbd>
                       )}
-                      {isSelected && <ArrowRight {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)' }} />}
+                      {isSelected && <ArrowRight {...ICON_PROPS} size={12} style={{ color: 'var(--job-accent)', opacity: 'var(--ink-label)' }} />}
                     </div>
                   )
                 })}
@@ -794,7 +794,7 @@ export default function CommandPalette() {
               type="button"
               onClick={() => { navigate(`${PATHS.search}?q=${encodeURIComponent(query)}`); setOpen(false) }}
               className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px]"
-              style={{ color: 'var(--teal)', background: 'var(--teal-hover)', border: '1px solid rgba(45,138,138,0.3)', cursor: 'pointer' }}
+              style={{ color: 'var(--job-accent)', background: 'color-mix(in srgb, var(--job-accent) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--job-accent) 30%, transparent)', cursor: 'pointer' }}
               title="Open full Search page with this query"
             >
               View all <ArrowRight {...ICON_PROPS} size={9} />

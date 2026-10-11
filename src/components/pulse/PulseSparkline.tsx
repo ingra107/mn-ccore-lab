@@ -38,8 +38,8 @@ interface PulseSparklineProps {
 export default function PulseSparkline({
   data,
   height = 360,
-  color = 'rgba(220, 179, 85, 0.55)',
-  emphasisColor = '#dcb355',
+  color = 'color-mix(in srgb, var(--job-brand) 55%, transparent)',
+  emphasisColor = 'var(--job-brand)',
   baseline = true,
   showValues = true,
 }: PulseSparklineProps) {
@@ -78,7 +78,7 @@ export default function PulseSparkline({
           x2={VIEW_W - PAD_X}
           y1={VIEW_H - PAD_BOTTOM + 0.5}
           y2={VIEW_H - PAD_BOTTOM + 0.5}
-          stroke="rgba(220,179,85,0.30)"
+          stroke="color-mix(in srgb, var(--job-brand) 30%, transparent)"
           strokeWidth={1}
         />
       )}

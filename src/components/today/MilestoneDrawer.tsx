@@ -22,7 +22,7 @@ import { Button } from '../ui/Button'
 import { PATHS } from '../../constants/paths'
 import { Link } from 'react-router-dom'
 import { stripMeetingMarker } from '../../lib/textUtils'
-import { ACCENT_BLUE, ACCENT_GOLD, ACCENT_TEAL, INK_DIM, INK_MUTED } from './constants'
+import { ACCENT_BLUE, INK_DIM, INK_MUTED } from './constants'
 import type { TaskRow } from '../../lib/api'
 
 const OPEN_TASKS_CAP = 8
@@ -91,7 +91,7 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
           <DueInlineSelect title="Internal date" value={task.due_date || ''} onChange={setDueDate} done={isDone} />
         </span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: INK_DIM }}>
-          <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT_GOLD, flexShrink: 0 }} />
+          <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--job-milestone)', flexShrink: 0 }} />
           Hard
           <DueInlineSelect title="Hard date" value={task.deadline || ''} onChange={setDeadline} done={isDone} />
         </span>
@@ -106,7 +106,7 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
           ) : (
             <Button variant="ghost-gold" size="sm" onClick={toggleDone} style={{ padding: '4px 10px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}>✓ Mark complete</Button>
           )}
-          <button onClick={() => setFullEditorTask(task)} title="Open the full task editor" style={{ padding: '4px 10px', background: 'transparent', color: 'var(--teal)', border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>⊞ Full editor</button>
+          <button onClick={() => setFullEditorTask(task)} title="Open the full task editor" style={{ padding: '4px 10px', background: 'transparent', color: 'var(--job-accent)', border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>⊞ Full editor</button>
           {fullProject?.primary_folder && (
             <WorkOnActions primaryFolder={fullProject.primary_folder} projectLabel={fullProject.title} variant="compact" />
           )}
@@ -195,7 +195,7 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
                 ))}
               </div>
               {hiddenOpenCount > 0 && (
-                <Link to={`${PATHS.project(project.slug)}?tab=tasks`} style={{ display: 'inline-block', marginTop: 6, fontSize: 11, color: ACCENT_TEAL, textDecoration: 'none' }}>
+                <Link to={`${PATHS.project(project.slug)}?tab=tasks`} style={{ display: 'inline-block', marginTop: 6, fontSize: 11, color: 'var(--job-accent)', textDecoration: 'none' }}>
                   {hiddenOpenCount} more →
                 </Link>
               )}

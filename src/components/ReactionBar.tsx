@@ -94,10 +94,10 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
             padding: '0 var(--sp-sm)',
             fontSize: '11px',
             lineHeight: 1,
-            background: userReacted ? 'var(--teal-active)' : 'transparent',
-            color: userReacted ? 'var(--teal)' : 'var(--slate)',
+            background: userReacted ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+            color: userReacted ? 'var(--job-accent)' : 'var(--slate)',
             border: userReacted
-              ? '1px solid rgba(45,138,138,0.35)'
+              ? '1px solid color-mix(in srgb, var(--job-accent) 35%, transparent)'
               : '1px solid var(--border-light, var(--hover-medium))',
             cursor: 'pointer',
           }}

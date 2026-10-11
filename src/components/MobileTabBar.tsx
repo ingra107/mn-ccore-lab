@@ -105,7 +105,7 @@ export default function MobileTabBar() {
                 minHeight: 56,
                 paddingTop: 'var(--sp-sm)',
                 paddingBottom: 'var(--sp-sm)',
-                color: active ? 'var(--teal)' : 'var(--ink-muted)',
+                color: active ? 'var(--job-accent)' : 'var(--ink-muted)',
                 textDecoration: 'none',
                 fontWeight: active ? 500 : 400,
               }}
@@ -127,7 +127,7 @@ export default function MobileTabBar() {
             minHeight: 56,
             paddingTop: 'var(--sp-sm)',
             paddingBottom: 'var(--sp-sm)',
-            color: overflowOpen ? 'var(--teal)' : 'var(--ink-muted)',
+            color: overflowOpen ? 'var(--job-accent)' : 'var(--ink-muted)',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
@@ -263,10 +263,10 @@ export default function MobileTabBar() {
                       style={{
                         padding: '10px 12px',
                         minHeight: 44,
-                        color: active ? 'var(--teal)' : 'var(--ink)',
+                        color: active ? 'var(--job-accent)' : 'var(--ink)',
                         textDecoration: 'none',
                         fontSize: 'var(--text-base)',
-                        background: active ? 'var(--teal-active)' : 'transparent',
+                        background: active ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
                       }}
                     >
                       <Icon size={18} {...ICON_PROPS} aria-hidden="true" />

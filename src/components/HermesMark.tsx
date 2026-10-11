@@ -34,7 +34,7 @@ interface HermesMarkProps {
 export default function HermesMark({
   size = 14,
   variant = 'icon',
-  color = 'var(--gold)',
+  color = 'var(--sk-t2)',
   bg,
   className,
   style,
@@ -44,7 +44,7 @@ export default function HermesMark({
   const pulseClass = pulse ? 'hermes-mark-pulse' : ''
   const composedClass = [className, pulseClass].filter(Boolean).join(' ') || undefined
   if (variant === 'avatar') {
-    const ringBg = bg ?? 'color-mix(in srgb, var(--gold) 18%, transparent)'
+    const ringBg = bg ?? 'color-mix(in srgb, var(--sk-t1) 8%, transparent)'
     return (
       <span
         className={composedClass}
@@ -87,9 +87,11 @@ function Glyph({ size, color }: { size: number; color: string }) {
   // head-circle gives it a distinct silhouette against both gold and
   // teal surfaces. When `color` prop is explicitly overridden by a
   // caller, preserve the single-tone render (legacy callers).
-  const isDefault = color === 'var(--gold)'
-  const accent = isDefault ? 'var(--teal)' : color
-  const core = isDefault ? 'var(--gold)' : color
+  // Gray two-tone since 2026-10-11: Hermes is an identity, not one of the
+  // color jobs (rules-ui-design 21), so the mark sits on the gray ramp.
+  const isDefault = color === 'var(--sk-t2)'
+  const accent = isDefault ? 'var(--sk-t3)' : color
+  const core = isDefault ? 'var(--sk-t2)' : color
   return (
     <svg
       width={size}

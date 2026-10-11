@@ -44,10 +44,10 @@ export default function YourWeekCard() {
   }, [tasks, meetings, slug])
 
   const items = [
-    { icon: CalendarDays, label: 'Due this week', value: stats.dueThisWeek, color: 'var(--teal)' },
-    ...(stats.overdue > 0 ? [{ icon: AlertTriangle, label: 'Overdue', value: stats.overdue, color: 'var(--maroon)' }] : []),
-    { icon: CheckCircle2, label: 'Done this week', value: stats.completedThisWeek, color: 'var(--green)' },
-    { icon: Clock, label: 'Meetings', value: stats.meetingsThisWeek, color: 'var(--gold)' },
+    { icon: CalendarDays, label: 'Due this week', value: stats.dueThisWeek, color: 'var(--sk-t2)' },
+    ...(stats.overdue > 0 ? [{ icon: AlertTriangle, label: 'Overdue', value: stats.overdue, color: 'var(--job-overdue)' }] : []),
+    { icon: CheckCircle2, label: 'Done this week', value: stats.completedThisWeek, color: 'var(--sk-t2)' },
+    { icon: Clock, label: 'Meetings', value: stats.meetingsThisWeek, color: 'var(--sk-t2)' },
   ]
 
   return (

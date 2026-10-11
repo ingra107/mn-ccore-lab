@@ -48,9 +48,9 @@ const TOAST_STYLES: Record<Toast['type'], {
   Icon: typeof Check | null
   iconColor: string
 }> = {
-  success: { testId: 'success-toast', borderColor: 'var(--teal)',   Icon: Check,       iconColor: 'var(--teal)' },
+  success: { testId: 'success-toast', borderColor: 'var(--job-accent)',   Icon: Check,       iconColor: 'var(--job-accent)' },
   error:   { testId: 'error-toast',   borderColor: 'var(--maroon)', Icon: AlertCircle, iconColor: 'var(--maroon)' },
-  info:    { testId: 'info-toast',    borderColor: 'var(--gold)',   Icon: Info,        iconColor: 'var(--gold)' },
+  info:    { testId: 'info-toast',    borderColor: 'var(--sk-t2)',   Icon: Info,        iconColor: 'var(--sk-t2)' },
   undo:    { testId: 'undo-toast',    borderColor: null,            Icon: null,        iconColor: '' },
 }
 
@@ -235,7 +235,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
                   borderRadius: 'var(--radius-md)',
                   border: 'none',
                   background: 'rgba(255,255,255,0.15)',
-                  color: 'var(--gold)',
+                  color: 'var(--job-accent)',
                   fontSize: '12px',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -256,7 +256,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
                   borderRadius: 'var(--radius-md)',
                   border: 'none',
                   background: 'rgba(255,255,255,0.15)',
-                  color: 'var(--gold)',
+                  color: 'var(--job-accent)',
                   fontSize: '12px',
                   fontWeight: 600,
                   cursor: 'pointer',

@@ -86,10 +86,10 @@ function computeHealthScore(signals: {
 }
 
 const BUCKET_COLOR: Record<HealthBucket, string> = {
-  green: 'var(--green)',
-  amber: 'var(--gold)',
-  orange: 'var(--orange)',
-  red: 'var(--maroon)',
+  green: 'var(--sk-t2)',
+  amber: 'var(--sk-t2)',
+  orange: 'var(--job-stale)',
+  red: 'var(--job-stale)',
 }
 
 // Rendered in Today's StatLine anatomy (a thin colored rule, a number in the

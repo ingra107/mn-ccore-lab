@@ -18,7 +18,7 @@ const TIP = 'Open this meeting — its notes and the other tasks from it'
 export function MeetingOriginTag({
   task,
   iconSize = 12,
-  color = 'var(--teal)',
+  color = 'var(--sk-t2)',
   style,
 }: {
   task: MeetingOriginFields

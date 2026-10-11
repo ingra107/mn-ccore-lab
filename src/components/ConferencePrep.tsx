@@ -124,7 +124,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
   return (
     <CollapsibleSection
       title="Conferences"
-      icon={<Presentation {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', opacity: 0.85 }} />}
+      icon={<Presentation {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)', opacity: 0.85 }} />}
       badge={activeConfs.length || null}
       storageKey={`conf-${projectId}`}
     >
@@ -219,7 +219,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                         style={{
                           fontSize: 'var(--label-size)',
                           color: isOverdue(conf.abstract_due) && conf.status === 'planning'
-                            ? 'var(--maroon)'
+                            ? 'var(--job-overdue)'
                             : 'var(--ink)',
                           fontWeight: isOverdue(conf.abstract_due) && conf.status === 'planning' ? 600 : 400,
                         }}
@@ -269,12 +269,12 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                       <Plane {...ICON_PROPS}
                         size={13}
                         style={{
-                          color: conf.travel_booked ? 'var(--teal)' : 'var(--slate)',
+                          color: conf.travel_booked ? 'var(--sk-t2)' : 'var(--slate)',
                           opacity: conf.travel_booked ? 1 : 0.85,
                         }}
                       />
                       {conf.travel_booked ? (
-                        <Check {...ICON_PROPS} size={10} style={{ color: 'var(--teal)' }} />
+                        <Check {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t2)' }} />
                       ) : null}
                     </Button>
                   </td>
@@ -311,7 +311,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             padding: 'var(--sp-md)',
             borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)',
-            background: 'var(--teal-hover)',
+            background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
           }}
         >
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
@@ -393,7 +393,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                 fontWeight: 'var(--label-weight)',
                 padding: '5px 14px',
                 borderRadius: 'var(--radius-md)',
-                background: 'var(--teal-solid)',
+                background: 'var(--job-accent-solid)',
                 color: 'var(--ink-bright, #fff)',
                 cursor: !form.conference.trim() || !form.title.trim() ? 'not-allowed' : 'pointer',
                 opacity: !form.conference.trim() || !form.title.trim() ? 0.85 : 1,
@@ -427,7 +427,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             gap: '4px',
             marginTop: activeConfs.length > 0 ? '8px' : '0',
             fontSize: 'var(--label-size)',
-            color: 'var(--teal)',
+            color: 'var(--sk-t2)',
             padding: 'var(--sp-xs) 0',
             opacity: 0.85,
             '--hov-opacity': '1',

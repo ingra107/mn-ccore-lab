@@ -143,7 +143,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
           // box. Per-cell boxes on every inline editor made the whole table read
           // as boxy. Border stays transparent; keyboard focus keeps its outline.
           transition: 'background-color var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out)',
-          '--hov-bg': open ? 'none' : 'var(--teal-hover)',
+          '--hov-bg': open ? 'none' : 'color-mix(in srgb, var(--job-accent) 6%, transparent)',
         } as React.CSSProperties}
       >
         {/* N1.01: inline-flex children don't ellipsize a bare text node —
@@ -222,9 +222,9 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
                 padding: 'var(--sp-sm) var(--sp-md)',
                 border: 'none',
                 background: idx === focusedIdx
-                  ? 'var(--teal-active)'
+                  ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)'
                   : opt.value === value
-                    ? 'var(--teal-hover)'
+                    ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)'
                     : 'none',
                 cursor: 'pointer',
                 fontSize,

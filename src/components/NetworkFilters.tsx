@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Filter, X } from 'lucide-react'
 import type { Publication } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../lib/taskGrouping'
+import { PANEL_BG, withAlpha } from '../lib/taskGrouping'
 import { topicLabel } from '../lib/topics'
 import { isPublished } from '../lib/publicationCounts'
 
@@ -36,10 +36,10 @@ function Pill({
       style={{
         fontSize: '11px',
         minHeight: '28px',
-        background: active ? withAlpha(ACCENT_GOLD, 90) : 'var(--hover-medium)',
+        background: active ? withAlpha('var(--job-brand)', 90) : 'var(--hover-medium)',
         color: active ? '#0f1923' : 'rgba(255, 255, 255, 0.6)',
         border: active
-          ? `1px solid ${withAlpha(ACCENT_GOLD, 60)}`
+          ? `1px solid ${withAlpha('var(--job-brand)', 60)}`
           : '1px solid var(--hover-medium)',
         transitionProperty: 'background-color, color, border-color',
         transitionDuration: '150ms',
@@ -103,13 +103,13 @@ export default function NetworkFilters({
         background: withAlpha(PANEL_BG, 60),
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
+        border: `1px solid ${withAlpha('var(--job-brand)', 12)}`,
       }}
     >
       {/* Filter icon */}
       <Filter {...ICON_PROPS}
         size={14}
-        style={{ color: withAlpha(ACCENT_GOLD, 50), flexShrink: 0 }}
+        style={{ color: withAlpha('var(--job-brand)', 50), flexShrink: 0 }}
       />
 
       {/* Year range */}
@@ -139,7 +139,7 @@ export default function NetworkFilters({
             })
           }
           className="network-range-slider"
-          style={{ width: '60px', accentColor: '#c9a84c' }}
+          style={{ width: '60px', accentColor: 'var(--job-brand)' }}
           aria-label="Start year"
         />
         <span
@@ -168,7 +168,7 @@ export default function NetworkFilters({
             })
           }
           className="network-range-slider"
-          style={{ width: '60px', accentColor: '#c9a84c' }}
+          style={{ width: '60px', accentColor: 'var(--job-brand)' }}
           aria-label="End year"
         />
       </div>
@@ -179,7 +179,7 @@ export default function NetworkFilters({
         style={{
           width: '1px',
           height: '20px',
-          background: 'var(--gold-emphasis)',
+          background: 'color-mix(in srgb, var(--job-brand) 15%, transparent)',
         }}
       />
 
@@ -201,7 +201,7 @@ export default function NetworkFilters({
         style={{
           width: '1px',
           height: '20px',
-          background: 'var(--gold-emphasis)',
+          background: 'color-mix(in srgb, var(--job-brand) 15%, transparent)',
         }}
       />
 
@@ -214,11 +214,11 @@ export default function NetworkFilters({
           fontSize: '11px',
           minHeight: '28px',
           background: filters.mnccoreOnly
-            ? withAlpha(ACCENT_GOLD, 90)
+            ? withAlpha('var(--job-brand)', 90)
             : 'var(--hover-medium)',
           color: filters.mnccoreOnly ? '#0f1923' : 'rgba(255, 255, 255, 0.6)',
           border: filters.mnccoreOnly
-            ? `1px solid ${withAlpha(ACCENT_GOLD, 60)}`
+            ? `1px solid ${withAlpha('var(--job-brand)', 60)}`
             : '1px solid var(--hover-medium)',
           transitionProperty: 'background-color, color, border-color',
           transitionDuration: '150ms',
@@ -228,7 +228,7 @@ export default function NetworkFilters({
       >
         <span
           className="inline-block w-2 h-2 rounded-full"
-          style={{ background: filters.mnccoreOnly ? '#0f1923' : '#c9a84c' }}
+          style={{ background: filters.mnccoreOnly ? '#0f1923' : 'var(--job-brand)' }}
         />
         MNCCORE Only
       </motion.button>
@@ -245,7 +245,7 @@ export default function NetworkFilters({
             fontSize: '10px',
             color: 'rgba(255, 255, 255, 0.5)',
             background: 'transparent',
-            border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+            border: `1px solid ${withAlpha('var(--job-brand)', 15)}`,
           }}
         >
           <X {...ICON_PROPS} size={10} />

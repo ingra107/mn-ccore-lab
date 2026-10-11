@@ -4,7 +4,7 @@ import { useDigest } from '../hooks/useApiData'
 import type { DigestPaper } from '../hooks/useApiData'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 
 function topicPill(topic: string) {
   return (
@@ -14,9 +14,9 @@ function topicPill(topic: string) {
       style={{
         fontSize: '10px',
         letterSpacing: '0.02em',
-        background: 'var(--gold-active)',
+        background: 'color-mix(in srgb, var(--job-brand) 10%, transparent)',
         color: 'var(--slate)',
-        border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
+        border: `1px solid ${withAlpha('var(--job-brand)', 12)}`,
         whiteSpace: 'nowrap',
       }}
     >
@@ -94,7 +94,7 @@ export default function LatestDigest() {
               <Newspaper
                 size={20}
                 strokeWidth={1.5}
-                style={{ color: 'var(--gold)' }}
+                style={{ color: 'var(--job-brand)' }}
                 aria-hidden="true"
               />
               <h2
@@ -118,7 +118,7 @@ export default function LatestDigest() {
             to={PATHS.digestTab}
             className="hidden sm:flex items-center gap-1.5 text-xs transition-colors duration-200"
             style={{
-              color: 'var(--gold)',
+              color: 'var(--job-brand)',
               textDecoration: 'none',
               whiteSpace: 'nowrap',
             }}
@@ -140,7 +140,7 @@ export default function LatestDigest() {
             to={PATHS.digestTab}
             className="inline-flex items-center gap-2 text-sm font-medium transition-opacity duration-200 hover:opacity-80"
             style={{
-              color: 'var(--gold)',
+              color: 'var(--job-brand)',
               textDecoration: 'none',
             }}
           >

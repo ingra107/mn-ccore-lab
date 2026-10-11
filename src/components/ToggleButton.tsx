@@ -11,9 +11,9 @@ export default function ToggleButton({ active, onClick, children, className }: T
       onClick={onClick}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] border transition-colors ${className || ''}`}
       style={{
-        borderColor: active ? 'var(--teal)' : 'var(--border-subtle)',
-        backgroundColor: active ? 'var(--teal-active)' : 'transparent',
-        color: active ? 'var(--teal)' : 'var(--slate)',
+        borderColor: active ? 'var(--job-accent)' : 'var(--border-subtle)',
+        backgroundColor: active ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+        color: active ? 'var(--job-accent)' : 'var(--slate)',
         fontWeight: active ? 500 : 400,
         cursor: 'pointer',
       }}

@@ -98,7 +98,7 @@ export default function CollapsibleSection({
           <span
             style={{
               fontSize: '10px',
-              color: 'var(--teal)',
+              color: 'var(--sk-t3)',
               opacity: 0.85,
               marginLeft: '2px',
             }}

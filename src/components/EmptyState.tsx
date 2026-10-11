@@ -89,7 +89,7 @@ export default function EmptyState({ icon, title, subtitle, action, compact = fa
             color: 'var(--ink)',
             cursor: 'pointer',
             transition: 'background 0.15s ease',
-            '--hov-bg': 'var(--teal-hover)',
+            '--hov-bg': 'color-mix(in srgb, var(--job-accent) 6%, transparent)',
           } as React.CSSProperties}
         >
           {action.label}

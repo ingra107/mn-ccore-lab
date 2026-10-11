@@ -60,11 +60,11 @@ export default function FileActivityCard() {
 
   // Color intensity by total_events
   function getCellColor(events: number, isToday: boolean): string {
-    if (isToday) return 'rgba(45,138,138,1)'
+    if (isToday) return 'var(--job-accent)'
     if (events === 0) return 'var(--border-subtle)'
-    if (events <= 5) return 'rgba(45,138,138,0.25)'
-    if (events <= 20) return 'rgba(45,138,138,0.5)'
-    return 'rgba(45,138,138,0.8)'
+    if (events <= 5) return 'color-mix(in srgb, var(--job-accent) 25%, transparent)'
+    if (events <= 20) return 'color-mix(in srgb, var(--job-accent) 50%, transparent)'
+    return 'color-mix(in srgb, var(--job-accent) 80%, transparent)'
   }
 
   return (
