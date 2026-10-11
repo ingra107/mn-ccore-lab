@@ -48,7 +48,9 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
    *  expanding the inline drawer. A narrow board column has no room for it. */
   onOpen?: () => void
   /** Tasks Board: pills appended to the context line after the workflow pills
-   *  (priority, re-accept). */
+   *  (priority, re-accept). Unlike the workflow pills they also render on a
+   *  done card (a declined meeting task is done, and still needs Re-accept);
+   *  the caller decides which of its pills a done card keeps. */
   extraPills?: ReactNode
 }) {
   const [density] = useDensity()
@@ -212,7 +214,8 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
       onDragStart={onDragStart}
       onTogglePlan={() => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
       card
-      footPills={extraPills ? <>{workflowPills}{extraPills}</> : workflowPills}
+      footPills={workflowPills}
+      belowTitle={extraPills}
       linksSlot={linkMeta}
       meetingSlot={meetingMeta}
       workSlot={workOnMeta}

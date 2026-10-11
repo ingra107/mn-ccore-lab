@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect } from 'react'
+import { useMemo, useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -58,7 +58,12 @@ const PRIORITY_CYCLE = ['low', 'medium', 'high', 'urgent'] as const
 
 const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
 
-const COLLAPSED_KEY = 'mnccore-board-collapsed-v1'
+// Enter on a card opens it, so only Space picks one up (SortableTaskCard).
+const BOARD_DRAG_INSTRUCTIONS = {
+  draggable: 'Enter opens the task. Space picks the card up; the arrow keys move it to another column, Space drops it, Escape cancels.',
+}
+
+const COLLAPSED_KEY ='mnccore-board-collapsed-v1'
 const SWIMLANE_COLLAPSED_KEY = 'mnccore-swimlane-collapsed-v1'
 
 function loadCollapsed(): Record<string, boolean> {
@@ -241,6 +246,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect, project
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      accessibility={{ screenReaderInstructions: BOARD_DRAG_INSTRUCTIONS }}
     >
       <div className="tk tk-board">
         {/* Group By selector */}
@@ -422,15 +428,20 @@ type CardProps = {
 const noop = () => {}
 
 /** The Today card with the Board's extras on its context line: the priority
- *  word (a click cycles it, as the old card's flag button did), Blocked, and
- *  Re-accept on a declined meeting task. Urgent shows no word here: the card's
- *  title row already carries the Urgent tag and the orange edge. */
+ *  word (a click cycles low -> medium -> high -> urgent -> low, as the old
+ *  card's flag button did), Blocked, and Re-accept on a declined meeting task.
+ *  Urgent's word is the orange Urgent tag (the mock's context line), so the
+ *  title row drops its own copy on the board (index.css) and urgent can still
+ *  step back down. Re-accept shows on done cards too: declining a meeting task
+ *  marks it done (PendingMeetingsCard), so the Done column is the only place
+ *  it can appear. */
 export function BoardCard({ task, state, projectsByPid, onSelect }: { task: TaskRow } & CardProps) {
   const { mutate: mutateTask } = useUpdateTask()
   const { showUndo } = useUndoToast()
   const done = isTaskDone(task)
   const blocked = !done && !!task.blocked_by && task.blocked_by.split(',').some((s) => s.trim())
   const pri = task.priority || 'medium'
+  const urgent = pri === 'urgent'
 
   const cyclePriority = () => {
     const idx = PRIORITY_CYCLE.indexOf(pri as typeof PRIORITY_CYCLE[number])
@@ -441,10 +452,10 @@ export function BoardCard({ task, state, projectsByPid, onSelect }: { task: Task
 
   const extraPills = (
     <>
-      {pri !== 'urgent' && (
+      {!done && (
         <button
           type="button"
-          className={`tk-prio tip${pri === 'high' ? ' tk-hi' : ''}`}
+          className={`tk-prio tip${urgent ? ' tk-tag tk-urgtag' : pri === 'high' ? ' tk-hi' : ''}`}
           onClick={(e) => { e.stopPropagation(); cyclePriority() }}
           onMouseDown={(e) => e.stopPropagation()}
           data-tip="Priority: click to change"
@@ -489,7 +500,8 @@ export function BoardCard({ task, state, projectsByPid, onSelect }: { task: Task
       projectsByPid={projectsByPid}
       done={done}
       noDrag
-      onOpenEditor={open}
+      // No onOpenEditor: the title would be its own role=button focus stop,
+      // and on the board a title click already opens through the header.
       onOpen={open ?? noop}
       extraPills={extraPills}
     />
@@ -503,6 +515,7 @@ function SortableTaskCard({ task, ...cardProps }: { task: TaskRow } & CardProps)
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -510,6 +523,21 @@ function SortableTaskCard({ task, ...cardProps }: { task: TaskRow } & CardProps)
     id: task.id,
     data: { type: 'task', status: task.status },
   })
+  const wrapRef = useRef<HTMLDivElement | null>(null)
+  const describedBy = attributes['aria-describedby']
+
+  // The card header (.tk-tch) is the card's ONE focus stop: Enter opens the
+  // task, Space picks the card up (arrows move it, Space drops, Esc cancels).
+  // The wrapper used to carry dnd-kit's role=button + tabIndex too, a second
+  // nested focus stop on every card. Making the header the activator node also
+  // means a Space or Enter from an inner control (the done box, the priority
+  // word) can never pick the card up: dnd-kit only activates when the key's
+  // target IS the activator. Focus returns to the header after a drop.
+  useLayoutEffect(() => {
+    const header = wrapRef.current?.querySelector<HTMLElement>('.tk-tch') ?? null
+    setActivatorNodeRef(header)
+    header?.setAttribute('aria-describedby', describedBy)
+  }, [setActivatorNodeRef, describedBy])
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -518,11 +546,24 @@ function SortableTaskCard({ task, ...cardProps }: { task: TaskRow } & CardProps)
     cursor: 'grab' as const,
   }
 
-  // The wrapper keeps dnd-kit's focus stop so a card can still be picked up
-  // from the keyboard (Space/Enter, arrows, Space to drop), as before; the card
-  // header inside it is the stop that opens the task.
   return (
-    <div ref={setNodeRef} style={style} className="tk-bd-card" {...attributes} {...listeners}>
+    <div
+      ref={(el) => { wrapRef.current = el; setNodeRef(el) }}
+      style={style}
+      className="tk-bd-card"
+      {...listeners}
+      // The header handles its own Space (it expands on Today) and stops it,
+      // so on the board Space is handed to dnd-kit here, before the header
+      // sees it, and marked handled (preventDefault) so the header skips it.
+      // No stopPropagation: React's would also stop the native event, and
+      // the drop Space must reach dnd-kit's window listener. Enter still
+      // reaches the header and opens the task.
+      onKeyDownCapture={(e) => {
+        if (e.key !== ' ' || !(e.target as HTMLElement).classList.contains('tk-tch')) return
+        listeners?.onKeyDown?.(e)
+        e.preventDefault()
+      }}
+    >
       <BoardCard task={task} {...cardProps} />
     </div>
   )

@@ -5,10 +5,11 @@
 // - a click on a card, or Enter on its header, opens the task panel;
 // - the done box completes and does NOT open the panel;
 // - the priority word cycles priority and does NOT open the panel;
-// - every card keeps dnd-kit's focus stop, so a card can still be picked up
-//   and moved between columns from the keyboard;
-// - folder + Work on are hidden until hover; urgent keeps the orange edge and
-//   shows no priority word (its title row says Urgent);
+// - the card header is the one focus stop: Enter opens, Space picks the card up
+//   for a keyboard move between columns, and a Space from the done box does not;
+// - folder + Work on are hidden until hover; due + priority share one line;
+//   urgent keeps the orange edge and its Urgent tag cycles back to low;
+// - the Done column keeps Re-accept, and reopening from it has an undo;
 // - an empty column is a quiet "Nothing here" panel, and column heads carry no
 //   coloured rule.
 //
@@ -18,6 +19,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import TaskBoardView from '../components/tasks/TaskBoardView'
+import { UndoToastProvider } from '../components/UndoToast'
 import type { TaskRow } from '../lib/api'
 import css from '../index.css?raw'
 import { mount, cleanupMountsAfterEach } from './testMount'
@@ -103,22 +105,99 @@ describe('Tasks Board cards', () => {
     expect(bodies.some((b) => b.includes('"status":"done"'))).toBe(true)
   })
 
-  it('keeps the keyboard drag stop on every card', async () => {
+  it('the header is the one focus stop; Space on it picks the card up, Space from an inner control does not', async () => {
     const host = await board()
     for (const w of host.querySelectorAll<HTMLElement>('.tk-bd-card')) {
-      expect(w.tabIndex).toBe(0)
-      expect(w.getAttribute('aria-roledescription')).toBe('sortable')
+      // The wrapper is no longer a second (nested) role=button focus stop.
+      expect(w.hasAttribute('tabindex')).toBe(false)
+      expect(w.getAttribute('role')).toBeNull()
+      const header = w.querySelector<HTMLElement>('.tk-tch')!
+      expect(header.tabIndex).toBe(0)
+      // dnd-kit's drag instructions are announced on the header (dnd-kit
+      // portals the instruction text in after its first mount, so wait for it).
+      const id = header.getAttribute('aria-describedby') ?? ''
+      for (let i = 0; i < 50 && !document.getElementById(id); i++) await new Promise((r) => setTimeout(r, 20))
+      expect(document.getElementById(id)?.textContent).toMatch(/Space picks the card up/)
+      // No title span stop on the board: the header already opens the task.
+      expect(w.querySelector('.tk-ct [role="button"]')).toBeNull()
     }
+    const space = { key: ' ', code: 'Space', bubbles: true, cancelable: true }
+    // Space on the done box: no pick-up.
+    card(host, 'a').querySelector<HTMLElement>('button.tk-ck')!.dispatchEvent(new KeyboardEvent('keydown', space))
+    await new Promise((r) => setTimeout(r, 30))
+    expect(host.querySelector('.tk-bd-lift')).toBeNull()
+    // Space on the header: the card lifts into the drag overlay.
+    const header = card(host, 'a').querySelector<HTMLElement>('.tk-tch')!
+    header.focus()
+    header.dispatchEvent(new KeyboardEvent('keydown', space))
+    await new Promise((r) => setTimeout(r, 30))
+    expect(document.querySelector('.tk-bd-lift')).not.toBeNull()
+    // Escape cancels (the overlay then plays its drop animation out).
+    header.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true }))
+    await new Promise((r) => setTimeout(r, 600))
+    expect(document.querySelector('.tk-bd-lift')).toBeNull()
   })
 
-  it('urgent keeps the orange edge and no priority word; folder + Work on wait for hover', async () => {
+  it('urgent keeps the orange edge and its tag is the priority control, which steps back to low', async () => {
     const host = await board()
     const urgent = card(host, 'b')
     expect(urgent.classList.contains('tk-urg')).toBe(true)
-    expect(urgent.querySelector('button.tk-prio')).toBeNull()
+    // The title row's own Urgent tag is hidden on the board; the context line carries it.
+    expect(getComputedStyle(urgent.querySelector<HTMLElement>('.tk-ct .tk-urgtag')!).display).toBe('none')
+    const prio = urgent.querySelector<HTMLButtonElement>('.tk-ctx button.tk-prio')!
+    expect(prio.textContent).toBe('Urgent')
+    prio.click()
+    await new Promise((r) => setTimeout(r, 50))
+    const bodies = fetchMock.mock.calls.map(([, init]) => String((init as RequestInit | undefined)?.body ?? ''))
+    expect(bodies.some((b) => b.includes('"priority":"low"'))).toBe(true)
     expect(card(host, 'a').classList.contains('tk-urg')).toBe(false)
-    const wk = card(host, 'a').querySelector<HTMLElement>('.tk-wk')!
+  })
+
+  it('folder + Work on wait for hover, and due + priority share one line in the column', async () => {
+    const host = await board()
+    const a = card(host, 'a')
+    const wk = a.querySelector<HTMLElement>('.tk-wk')!
     expect(wk.querySelector('button')).not.toBeNull()
     expect(getComputedStyle(wk).opacity).toBe('0')
+    // An overdue due pill and the priority word sit on the same line.
+    const due = a.querySelector<HTMLElement>('.tk-duepill')!.getBoundingClientRect()
+    const pri = a.querySelector<HTMLElement>('button.tk-prio')!.getBoundingClientRect()
+    expect(Math.abs(due.top + due.height / 2 - (pri.top + pri.height / 2))).toBeLessThan(4)
+    // The context line spans the face column: wider than the title.
+    const ctxW = a.querySelector<HTMLElement>('.tk-ctx')!.getBoundingClientRect().width
+    const titleW = a.querySelector<HTMLElement>('.tk-ct')!.getBoundingClientRect().width
+    expect(ctxW).toBeGreaterThan(titleW)
+  })
+})
+
+describe('Tasks Board Done column', () => {
+  it('a declined meeting task (done) keeps Re-accept; a done card shows no priority word', async () => {
+    localStorage.removeItem('mnccore-board-collapsed-v1')
+    const done = [
+      task('d', 'Declined sync', { status: 'done', completed: 1, approval_status: 'declined' } as Partial<TaskRow>),
+      task('e', 'Finished thing', { status: 'done', completed: 1 }),
+    ]
+    const host = await mount(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <UndoToastProvider>
+          <MemoryRouter>
+            <div style={{ width: 1200 }}>
+              <TaskBoardView tasks={done} onStatusChange={() => {}} projectsByPid={projects} />
+            </div>
+          </MemoryRouter>
+        </UndoToastProvider>
+      </QueryClientProvider>,
+      { ready: (h) => h.querySelectorAll('.tk-tc').length === 2, label: 'done cards' },
+    )
+    expect(card(host, 'd').querySelector('[data-testid="approval-reaccept"]')).not.toBeNull()
+    expect(card(host, 'e').querySelector('[data-testid="approval-reaccept"]')).toBeNull()
+    expect(card(host, 'd').querySelector('button.tk-prio')).toBeNull()
+    // Reopening from the Done column writes todo and offers an undo.
+    card(host, 'e').querySelector<HTMLElement>('button.tk-ck')!.click()
+    await new Promise((r) => setTimeout(r, 50))
+    const bodies = fetchMock.mock.calls.map(([, init]) => String((init as RequestInit | undefined)?.body ?? ''))
+    expect(bodies.some((b) => b.includes('"status":"todo"'))).toBe(true)
+    expect(document.body.textContent).toContain('Task reopened')
+    expect([...document.querySelectorAll('button')].some((b) => /Undo/i.test(b.textContent ?? '') || /Undo/i.test(b.getAttribute('aria-label') ?? ''))).toBe(true)
   })
 })

@@ -223,7 +223,9 @@ export function CardRow(props: CardTaskRowProps) {
         aria-expanded={isExpanded}
         onClick={onToggleExpand}
         onKeyDown={(e) => {
-          if (e.target !== e.currentTarget) return
+          // defaultPrevented: a wrapper already handled this key (the Tasks
+          // Board hands Space to its drag sensor).
+          if (e.target !== e.currentTarget || e.defaultPrevented) return
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
             e.stopPropagation()
