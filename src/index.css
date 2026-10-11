@@ -830,7 +830,6 @@ a:hover {
    top/bottom hairlines reads as three horizontal rules. Instead: dimmed
    inset outline + bg tint, matching the J/K `.task-row-focused` pattern.
    Applied to Projects / Manuscripts / Deadlines / Ideas / Decisions rows. */
-.project-list-row:focus-visible,
 .manuscript-list-row:focus-visible,
 .deadline-row:focus-visible,
 .idea-row:focus-visible,
@@ -840,7 +839,6 @@ a:hover {
   background: rgba(45, 138, 138, 0.05);
   border-radius: var(--radius-sm);
 }
-.dark .project-list-row:focus-visible,
 .dark .manuscript-list-row:focus-visible,
 .dark .deadline-row:focus-visible,
 .dark .idea-row:focus-visible,
@@ -943,7 +941,6 @@ a:hover {
 /* Desktop only — at mobile (<768px) rows switch to stacked card layout that needs to grow */
 @media (min-width: 768px) {
   .table-container [role="row"]:not([aria-rowindex="1"]),
-  .project-list-row,
   .manuscript-list-row,
   .deadline-list-row {
     height: var(--row-height);
@@ -955,46 +952,11 @@ a:hover {
 /* Mobile: allow rows to grow with their content (stacked cards need ≥72px) */
 @media (max-width: 767px) {
   .table-container [role="row"]:not([aria-rowindex="1"]),
-  .project-list-row,
   .manuscript-list-row,
   .deadline-list-row {
     height: auto;
     min-height: var(--row-height);
     box-sizing: border-box;
-  }
-}
-
-/* Projects list shows stacked cards below 1024px (the grid needs the width), so
-   the cards must grow with their content in the 768-1023 band too. */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .project-list-row { height: auto; min-height: var(--row-height); }
-}
-
-/* Projects grid at 1024-1299: band is 624-880px. Drop PI and Group (4th, 5th
-   cells); keep sort headers, star, Status, Stage, Links, Work on. Tracks are
-   !important because PROJECT_COLS is an inline style. */
-@media (min-width: 1024px) and (max-width: 1299px) {
-  .pj-head,
-  .pj-grid-row {
-    grid-template-columns: minmax(150px, 1fr) 132px 116px 124px 52px !important;
-  }
-  .pj-head > :nth-child(4),
-  .pj-head > :nth-child(5),
-  .pj-grid-row > :nth-child(4),
-  .pj-grid-row > :nth-child(5) {
-    display: none !important;
-  }
-}
-/* 1024-1179: not enough width for Title and Links together; Links (6th cell)
-   goes too, Work on stays. */
-@media (min-width: 1024px) and (max-width: 1179px) {
-  .pj-head,
-  .pj-grid-row {
-    grid-template-columns: minmax(150px, 1fr) 132px 116px 52px !important;
-  }
-  .pj-head > :nth-child(6),
-  .pj-grid-row > :nth-child(6) {
-    display: none !important;
   }
 }
 
@@ -1600,9 +1562,6 @@ a:hover {
 .task-row-focused .inline-select-chevron,
 .idea-row:hover .inline-select-chevron,
 .idea-row:focus-within .inline-select-chevron,
-.project-list-row:hover .inline-select-chevron,
-.project-list-row:focus-within .inline-select-chevron,
-.project-row-focused .inline-select-chevron,
 .manuscript-list-row:hover .inline-select-chevron,
 .manuscript-list-row:focus-within .inline-select-chevron,
 .deadline-row:hover .inline-select-chevron,
@@ -1791,7 +1750,6 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
      already have mobile stacked-card variants; this sets the height
      on the remaining table rows that stay grid-based. */
   .task-grid-row,
-  .project-list-row,
   .manuscript-list-row,
   .deadline-row,
   .idea-row {
@@ -2951,16 +2909,27 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 /* Projects list ("reskinned table", Nick 2026-10-09): the same grid and editors,
    in the card family. Sentence-case headers in t3, link icons in five fixed 24px
    slots with the card's tints, folder + Work on pinned right in two more. */
-.tk .table-container.pj-table{background:var(--sk-panel);border:1px solid var(--sk-line);border-radius:var(--r-panel)}
-.tk .pj-head{border-bottom:1px solid var(--sk-line) !important}
-.tk .pj-head .col-header,.tk .pj-hl{font:500 12px var(--font-body);text-transform:none;letter-spacing:0;color:var(--sk-t3);opacity:1;user-select:none}
-.tk .pj-head .col-header[aria-label*="currently"]{color:var(--sk-t1) !important;opacity:1 !important}
 .tk .pj-lks{display:inline-flex;align-items:center;justify-content:flex-start;min-width:0}
 .tk .pj-lk{display:inline-grid;place-items:center;width:24px;height:24px;text-decoration:none;flex-shrink:0}
 .tk .pj-more{display:inline-grid;place-items:center;width:24px;height:24px;font-size:11px;color:var(--sk-t3);font-variant-numeric:tabular-nums}
-.tk .pj-wk{display:flex;align-items:center;justify-content:flex-end}
-.tk .pj-wk .tk-wo{color:var(--sk-t3) !important}
-.tk .pj-wk .tk-wo:hover{color:var(--sk-t1) !important}
+/* Projects list on the sleek row (components/project/ProjectSleekList). */
+.sr .pj-name{color:inherit;text-decoration:none}
+.sr .pj-pin{all:unset;cursor:pointer;line-height:0;color:var(--sk-t3);opacity:.45;transition:opacity .15s,color .15s;padding:4px;margin:-4px;border-radius:4px}
+.sr .pj-pin:hover{opacity:.8}
+.sr .pj-pin:focus-visible{outline:2px solid var(--sk-ac);opacity:1}
+.sr .pj-pin.pj-pinned{color:var(--sk-gold);opacity:1}
+.sr .pj-health{display:inline-block;width:24px;height:4px;border-radius:2px;background:var(--sk-line2);overflow:hidden;flex-shrink:0}
+.sr .pj-health>span{display:block;height:100%;border-radius:2px}
+.sr .sr-tt .tk-tag{margin-left:0;flex-shrink:0}
+/* The phone line carries status, stage, group, "Nd ago", links and Work on: it wraps rather than clip. */
+.sr.pj-list .sr-ph-l{flex-wrap:wrap;row-gap:2px}
+.sr .pj-slots .tk-wo{color:var(--sk-t3)}
+.sr .pj-slots .tk-wo:hover{color:var(--sk-t1)}
+.sr .pj-stage-h{display:flex;align-items:center;gap:8px;padding:16px 10px 6px;font-size:12.5px;font-weight:600;color:var(--sk-t2)}
+.sr .pj-stage-h i{flex:1;height:1px;background:var(--sk-line)}
+.sr .pj-empty{padding:48px 24px;text-align:center;font-size:13.5px;color:var(--sk-t3)}
+.pj-foot{display:flex;flex-wrap:wrap;gap:6px 20px;padding:12px 10px 4px;font-size:12px;color:var(--sk-t3)}
+.pj-foot b{font-weight:600;color:var(--sk-t2);font-variant-numeric:tabular-nums}
 
 /* Meetings (Nick 2026-10-09, "quiet decisions"): the left list as cards, the
    detail's date tile, people as badge + first name, and decisions as a plain
@@ -3066,6 +3035,8 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-row:hover .sr-car,.sr .sr-trig:focus-visible .sr-car,.sr .sr-trig[aria-expanded="true"] .sr-car{visibility:visible}
 @media (hover:none){.sr .sr-car{visibility:visible}}
 .sr.sr-narrow .sr-car{display:none}
+/* Phone line editors sit flush: the desktop trigger's -6px pull clipped their text by its padding. */
+.sr.sr-narrow .sr-ph-l .sr-trig{margin-left:0;padding-left:0;padding-right:0}
 /* Fixed action slots: links, folder, Work on */
 .sr .sr-slots{display:inline-flex;align-items:center;justify-content:flex-end}
 .sr .sr-lks{display:inline-flex;align-items:center;justify-content:flex-end;width:72px}
@@ -3080,6 +3051,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-ph-t .sr-tt{font-size:13.5px}
 .sr .sr-ph-l{display:flex;align-items:center;gap:8px;min-width:0;margin-top:2px}
 .sr .sr-ph-l>.sr-c{flex-shrink:0}
+.sr .sr-ph-l>.sr-c:empty{display:none}
 .sr .sr-ph-l>.sr-c:first-child{flex:0 1 auto}
 .sr .sr-sorter{display:flex;justify-content:space-between;font-size:11px;color:var(--sk-t3);padding:0 8px 6px}
 .sr .sr-sorter select{background:none;border:none;color:var(--sk-t2);font:inherit;font-size:12px;margin-left:6px;cursor:pointer;padding:2px 0}
