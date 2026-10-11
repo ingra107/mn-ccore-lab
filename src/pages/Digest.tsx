@@ -27,7 +27,6 @@ import Avatar from '../components/Avatar'
 import PageHeader from '../components/PageHeader'
 import HeartbeatLine from '../components/HeartbeatLine'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { QueryErrorNote } from '../components/QueryErrorNote'
 
 type StatusFilter = 'all' | 'new' | 'saved'
@@ -118,7 +117,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
         // multiplies with every coloured child and fails AA (CLAUDE.md rule
         // 43). The rail is one channel carrying one signal -- processed or
         // not -- and the chip below is its text equivalent (rule 76).
-        borderLeft: `3px solid ${isSaved ? ACCENT_GOLD : isDismissed ? 'var(--border-subtle)' : 'transparent'}`,
+        borderLeft: `3px solid ${isSaved ? 'var(--teal)' : isDismissed ? 'var(--border-subtle)' : 'transparent'}`,
         transition: 'transform var(--duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--duration-slow) var(--ease-out), background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
       }}
     >
@@ -138,7 +137,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                 href={pubmedUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="transition-colors hover:!text-[var(--gold)]"
+                className="transition-colors hover:!text-[var(--teal)]"
                 style={{ color: 'inherit', textDecoration: 'none' }}
               >
                 {paper.title}
@@ -166,8 +165,8 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                 style={{
                   fontSize: '10px',
                   fontWeight: 500,
-                  background: isSaved ? 'var(--gold-emphasis)' : 'var(--ice)',
-                  color: isSaved ? 'var(--gold-on-emphasis)' : 'var(--slate)',
+                  background: isSaved ? 'var(--teal-active)' : 'var(--ice)',
+                  color: isSaved ? 'var(--teal)' : 'var(--slate)',
                 }}
               >
                 <Check {...ICON_PROPS} size={10} />
@@ -215,10 +214,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
           {paper.relevance_reason && (
             <p
               className="text-xs mb-2"
-              style={{
-                color: 'var(--teal)',
-                fontStyle: 'italic',
-              }}
+              style={{ color: 'var(--slate)' }}
             >
               {paper.relevance_reason}
             </p>
@@ -233,9 +229,9 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                   className="inline-block rounded-full px-2 py-0.5 text-xs"
                   style={{
                     fontSize: '10px',
-                    background: 'var(--gold-active)',
-                    color: 'var(--gold)',
-                    border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+                    background: 'var(--ice)',
+                    color: 'var(--slate)',
+                    border: '1px solid var(--border-subtle)',
                   }}
                 >
                   {topic}
@@ -307,10 +303,10 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
               className="text-xs leading-relaxed mb-2 pl-3"
               style={{
                 color: 'var(--slate)',
-                borderLeft: `2px solid ${withAlpha(ACCENT_GOLD, 30)}`,
+                borderLeft: '2px solid var(--border-subtle)',
               }}
             >
-              <span style={{ color: 'var(--gold)', fontWeight: 500 }}>Why this matters — </span>
+              <span style={{ color: 'var(--ink)', fontWeight: 500 }}>Why this matters — </span>
               {paper.significance}
             </p>
           )}
@@ -352,8 +348,8 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
             onClick={handleSave}
             className="cursor-pointer p-2 rounded-md transition-colors duration-200"
             style={{
-              background: isSaved ? 'var(--gold-emphasis)' : 'transparent',
-              color: isSaved ? 'var(--gold)' : 'var(--slate)',
+              background: isSaved ? 'var(--teal-active)' : 'transparent',
+              color: isSaved ? 'var(--teal)' : 'var(--slate)',
               border: 'none',
               minWidth: '36px',
               minHeight: '36px',
@@ -370,8 +366,8 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
             onClick={handleDismiss}
             className="cursor-pointer p-2 rounded-md transition-colors duration-200"
             style={{
-              background: isDismissed ? 'rgba(122, 0, 25, 0.1)' : 'transparent',
-              color: isDismissed ? 'var(--maroon)' : 'var(--slate)',
+              background: isDismissed ? 'var(--ice)' : 'transparent',
+              color: isDismissed ? 'var(--ink)' : 'var(--slate)',
               border: 'none',
               minWidth: '36px',
               minHeight: '36px',
@@ -430,8 +426,8 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
               onClick={(e) => { e.stopPropagation(); setShowLinkPicker(!showLinkPicker) }}
               className="cursor-pointer p-2 rounded-md transition-colors duration-200"
               style={{
-                background: showLinkPicker ? 'var(--gold-emphasis)' : 'transparent',
-                color: linkSuccess ? 'var(--teal)' : showLinkPicker ? 'var(--gold)' : 'var(--slate)',
+                background: showLinkPicker ? 'var(--teal-active)' : 'transparent',
+                color: linkSuccess || showLinkPicker ? 'var(--teal)' : 'var(--slate)',
                 border: 'none',
                 minWidth: '36px',
                 minHeight: '36px',
@@ -452,7 +448,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                   top: '100%',
                   marginTop: '4px',
                   background: 'var(--cream)',
-                  border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+                  border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-lg)',
                   boxShadow: 'var(--shadow-menu)',
                   minWidth: '220px',
@@ -483,13 +479,13 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                       setLinkSuccess(proj.title)
                       setTimeout(() => setLinkSuccess(null), 2000)
                     }}
-                    className="cursor-pointer w-full text-left px-3 py-2 text-sm transition-colors duration-150 hover:bg-[var(--gold-active)]"
+                    className="cursor-pointer w-full text-left px-3 py-2 text-sm transition-colors duration-150 hover:bg-[var(--teal-hover)]"
                     style={{
                       fontSize: '12px',
                       color: 'var(--ink)',
                       background: 'none',
                       border: 'none',
-                      borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 6)}`,
+                      borderTop: '1px solid var(--border-subtle)',
                       display: 'block',
                     }}
                   >
@@ -604,9 +600,9 @@ function EmptyState() {
     <div className="text-center py-16 sm:py-24">
       <div
         className="mx-auto mb-6 w-16 h-16 rounded-2xl flex items-center justify-center"
-        style={{ background: 'var(--gold-active)' }}
+        style={{ background: 'var(--ice)' }}
       >
-        <Search size={28} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+        <Search size={28} style={{ color: 'var(--slate)', opacity: 0.85 }} />
       </div>
       <h2
         className="text-xl sm:text-2xl mb-3"
@@ -752,7 +748,7 @@ export default function Digest() {
             width: `${((statusCounts.saved + statusCounts.dismissed) / statusCounts.all) * 100}%`,
             height: '100%',
             borderRadius: 'var(--radius-full)',
-            background: 'var(--gold)',
+            background: 'var(--teal)',
             transition: 'width var(--duration-slow) var(--ease-out)',
           }}
         />
@@ -865,7 +861,7 @@ export default function Digest() {
 
           {/* Status filter tabs — minHeight prevents reflow as counts load */}
           <div className="flex flex-wrap items-center gap-4 mb-4" style={{ minHeight: '40px' }}>
-            <div className="flex gap-1 rounded-lg p-1" style={{ background: 'var(--gold-hover)' }}>
+            <div className="flex gap-1 rounded-lg p-1" style={{ background: 'var(--ice)' }}>
               {(
                 [
                   { key: 'all' as StatusFilter, label: 'All', count: statusCounts.all },
@@ -980,16 +976,16 @@ export default function Digest() {
                 className="cursor-pointer rounded-full px-3 py-1.5 text-xs inline-flex items-center gap-1.5 mb-2"
                 style={{
                   fontSize: '11px',
-                  background: topicFilter ? 'var(--gold-hover)' : 'transparent',
-                  color: topicFilter ? 'var(--gold)' : 'var(--slate)',
-                  border: `1px solid ${topicFilter ? 'var(--gold)' : 'var(--border-subtle)'}`,
+                  background: topicFilter ? 'var(--teal-active)' : 'transparent',
+                  color: topicFilter ? 'var(--teal)' : 'var(--slate)',
+                  border: `1px solid ${topicFilter ? 'var(--teal)' : 'var(--border-subtle)'}`,
                   fontWeight: topicFilter ? 500 : 400,
                 }}
                 aria-expanded={topicsExpanded}
               >
                 Topics
                 {topicFilter && (
-                  <span style={{ fontSize: '10px', background: 'var(--gold)', color: 'var(--cream)', padding: '0 5px', borderRadius: 'var(--radius-full)' }}>
+                  <span style={{ fontSize: '10px', background: 'var(--teal-solid)', color: '#fff', padding: '0 5px', borderRadius: 'var(--radius-full)' }}>
                     1
                   </span>
                 )}
@@ -1003,9 +999,9 @@ export default function Digest() {
                   className="cursor-pointer rounded-full px-2.5 py-1 text-xs"
                   style={{
                     fontSize: '10px',
-                    background: 'var(--maroon-hover)',
-                    color: 'var(--maroon)',
-                    border: '1px solid rgba(122, 0, 25, 0.2)',
+                    background: 'transparent',
+                    color: 'var(--slate)',
+                    border: '1px solid var(--border-subtle)',
                     transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out)',
                   }}
                 >
@@ -1021,13 +1017,9 @@ export default function Digest() {
                     className="cursor-pointer rounded-full px-2.5 py-1 text-xs"
                     style={{
                       fontSize: '10px',
-                      background: isActive
-                        ? 'var(--gold)'
-                        : 'var(--gold-active)',
-                      color: isActive ? 'var(--cream)' : 'var(--gold)',
-                      border: isActive
-                        ? '1px solid var(--gold)'
-                        : '1px solid var(--gold-emphasis)',
+                      background: isActive ? 'var(--teal-active)' : 'transparent',
+                      color: isActive ? 'var(--teal)' : 'var(--ink)',
+                      border: isActive ? '1px solid var(--teal)' : '1px solid var(--border-subtle)',
                       transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
                     }}
                   >
@@ -1044,7 +1036,7 @@ export default function Digest() {
           <div style={{ minHeight: '600px' }}>
           {isLoading ? (
             <div className="flex items-center justify-center py-12" role="status" aria-label="Loading digest">
-              <HeartbeatLine width={200} height={52} color="var(--gold)" ariaLabel="Loading digest" />
+              <HeartbeatLine width={200} height={52} color="var(--slate)" ariaLabel="Loading digest" />
             </div>
           ) : filteredPapers.length === 0 ? (
             searchQuery ? (

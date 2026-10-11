@@ -2,9 +2,9 @@
  * CategoryIcon — distinct minimal glyphs for each project category.
  *
  * Replaces the 6px colored dot with an iconography that doubles as
- * a quick-scan category indicator. Single-color, sized to match a
- * status pill (default 14px). Stays compatible: pages can fall back
- * to the existing CATEGORY_DOT color via the `color` prop.
+ * a quick-scan category indicator. Single gray color (the glyph shape,
+ * not a hue, tells categories apart), sized to match a status pill
+ * (default 14px). Callers may override with the `color` prop.
  *
  * Canonical 3-bucket categories (Stage 4 #12-followup, 2026-05-08):
  *   MNCCORE          → flask (general MN-CCORE lab work)
@@ -41,17 +41,6 @@ const CATEGORY_LABEL: Record<string, string> = {
   mentee: 'Mentee',
 }
 
-const CATEGORY_COLOR: Record<string, string> = {
-  // Canonical 3-bucket
-  mnccore: 'var(--teal)',
-  clif: 'var(--maroon)',
-  'peripheral brain': 'var(--slate)',
-  // Legacy fallbacks
-  lab: 'var(--teal)',
-  nate: 'var(--orange)',
-  mentee: 'var(--gold)',
-}
-
 export default function CategoryIcon({
   category,
   size = 14,
@@ -61,7 +50,9 @@ export default function CategoryIcon({
   title,
 }: CategoryIconProps) {
   const slug = (category ?? '').toLowerCase()
-  const stroke = color ?? CATEGORY_COLOR[slug] ?? 'var(--slate)'
+  // A category is a label, not a meaning: one gray glyph, the shape tells them
+  // apart (rules-ui-design 21, Nick 2026-10-11). Callers may still pass `color`.
+  const stroke = color ?? 'var(--slate)'
   const label = title ?? CATEGORY_LABEL[slug] ?? slug ?? 'Uncategorized'
   const common = {
     width: size,

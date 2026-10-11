@@ -8,16 +8,6 @@ import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import AuthorColumn from './AuthorColumn'
 import { topicLabel } from '../lib/topics'
 
-const TOPIC_COLORS: Record<string, { bg: string; color: string; darkBg: string; darkColor: string }> = {
-  clif: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', darkBg: 'rgba(96, 165, 250, 0.15)', darkColor: '#60a5fa' },
-  covid: { bg: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', darkBg: 'rgba(248, 113, 113, 0.15)', darkColor: '#f87171' },
-  ventilation: { bg: 'rgba(34, 197, 94, 0.1)', color: 'var(--green)', darkBg: 'rgba(74, 222, 128, 0.15)', darkColor: 'var(--green-light)' },
-  'decision-making': { bg: 'rgba(168, 85, 247, 0.1)', color: '#9333ea', darkBg: 'rgba(192, 132, 252, 0.15)', darkColor: '#c084fc' },
-  quality: { bg: 'rgba(245, 158, 11, 0.1)', color: '#d97706', darkBg: 'rgba(251, 191, 36, 0.15)', darkColor: '#fbbf24' },
-  sepsis: { bg: 'rgba(236, 72, 153, 0.1)', color: '#db2777', darkBg: 'rgba(244, 114, 182, 0.15)', darkColor: '#f472b6' },
-  disparities: { bg: 'rgba(14, 165, 233, 0.1)', color: '#0284c7', darkBg: 'rgba(56, 189, 248, 0.15)', darkColor: '#38bdf8' },
-}
-
 const mnccoreMembers = [
   'Ingraham NE',
   'Mesfin N',
@@ -47,14 +37,6 @@ const clifMembers = [
   'Chhikara K', 'Chaudhari V', 'Lyons PG', 'Gao CA', 'Buell KG',
   'Barker AK', 'Amagai S', 'Nour M',
 ]
-
-function topicColor(topic: string, isDark: boolean) {
-  const tc = TOPIC_COLORS[topic]
-  if (!tc) return { bg: 'var(--gold-active)', color: 'var(--gold)' }
-  return isDark
-    ? { bg: tc.darkBg, color: tc.darkColor }
-    : { bg: tc.bg, color: tc.color }
-}
 
 function formatCitation(pub: Publication): string {
   const doiStr = pub.doi ? ` ${pub.doi}` : ''
@@ -137,7 +119,6 @@ export default function PublicationCard({
 }) {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
-  const isDark = document.documentElement.classList.contains('dark')
 
   const statusBadgeClass = () => {
     switch (pub.status) {
@@ -192,8 +173,8 @@ export default function PublicationCard({
             <span
               className="text-xs font-medium px-2 py-1 rounded"
               style={{
-                background: 'var(--gold-active)',
-                color: 'var(--gold)',
+                background: 'var(--ice)',
+                color: 'var(--slate)',
               }}
             >
               {pub.year}
@@ -299,22 +280,20 @@ export default function PublicationCard({
                 {/* Topic chips */}
                 {pub.topics.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
-                    {pub.topics.map((t) => {
-                      const tc = topicColor(t, isDark)
-                      return (
-                        <span
-                          key={t}
-                          className="inline-flex items-center px-2.5 py-1 rounded-full"
-                          style={{
-                            fontSize: '11px',
-                            background: tc.bg,
-                            color: tc.color,
-                          }}
-                        >
-                          {topicLabel(t)}
-                        </span>
-                      )
-                    })}
+                    {/* Topics are labels, not meanings: neutral chips (rules-ui-design 21). */}
+                    {pub.topics.map((t) => (
+                      <span
+                        key={t}
+                        className="inline-flex items-center px-2.5 py-1 rounded-full"
+                        style={{
+                          fontSize: '11px',
+                          background: 'var(--ice)',
+                          color: 'var(--slate)',
+                        }}
+                      >
+                        {topicLabel(t)}
+                      </span>
+                    ))}
                   </div>
                 )}
 

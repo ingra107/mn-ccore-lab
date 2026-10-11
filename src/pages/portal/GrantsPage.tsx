@@ -31,10 +31,9 @@ import { useSimilarGrants, useUpcomingGrantMilestones } from '../../hooks/useApi
 import { useCreateGrantMilestone, useUpdateGrantMilestone, useCompleteGrantMilestone, useUpdateGrant } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { displayName } from '../../lib/nameUtils'
-import { formatMediumDate, isOverdue, civilDaysUntil } from '../../lib/dateUtils'
+import { formatMediumDate, isOverdue } from '../../lib/dateUtils'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
-import { mechanismFamily, MECHANISM_ACCENT } from '../../lib/grantMechanism'
+import { GRANT_BAR_FILL, GRANT_BAR_STROKE } from '../../lib/grantBar'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 // ── Gantt chart constants ──────────────────────────────────────
@@ -61,8 +60,8 @@ const MILESTONE_TYPES = [
 
 const MILESTONE_STATUS_OPTIONS = [
   { value: 'upcoming', label: 'Upcoming', color: 'var(--slate)' },
-  { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
-  { value: 'completed', label: 'Completed', color: 'var(--green)' },
+  { value: 'in_progress', label: 'In Progress', color: 'var(--slate)' },
+  { value: 'completed', label: 'Completed', color: 'var(--slate)' },
   { value: 'overdue', label: 'Overdue', color: 'var(--maroon)' },
 ]
 
@@ -81,15 +80,6 @@ function formatFunding(amount: number): string {
 const MECHANISM_CHIP = { bg: 'transparent', color: 'var(--ink)' }
 
 // ── Gantt helpers ──────────────────────────────────────────────
-
-// Page-local override: on this gantt, gold-dashed-hatched = proposed. Funded
-// bars take the shared family accent (K gold is distinguishable from proposed
-// gold by solid-vs-dashed fill, same coexistence the dashboard has rendered
-// since 2026-03).
-function ganttMechanismColor(mechanism: string, proposed: boolean): string {
-  if (proposed) return 'var(--gold)'
-  return MECHANISM_ACCENT[mechanismFamily(mechanism)]
-}
 
 function parseYear(dateStr: string | null): number | null {
   if (!dateStr) return null
@@ -132,7 +122,7 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
         className="rounded-lg p-3"
         style={{
           background: 'var(--cream)',
-          border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`,
+          border: '1px solid var(--border-subtle)',
           boxShadow: 'var(--shadow-card-hover)',
         }}
       >
@@ -145,8 +135,8 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
           </span>
           <span style={{ fontSize: '10px', color: 'var(--slate)' }}>{grant.agency}</span>
           {grant.bucket === 'proposed' && (
-            <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 600 }}>
-              PROPOSED
+            <span style={{ fontSize: '10px', color: 'var(--slate)', fontWeight: 500 }}>
+              Proposed
             </span>
           )}
         </div>
@@ -164,7 +154,7 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
           </p>
         )}
         {grant.total_funding ? (
-          <p style={{ fontSize: '11px', color: 'var(--teal)', fontWeight: 600, margin: '4px 0 0' }}>
+          <p style={{ fontSize: '11px', color: 'var(--ink)', fontWeight: 600, margin: '4px 0 0' }}>
             {formatFunding(grant.total_funding)}
           </p>
         ) : null}
@@ -249,14 +239,14 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
         <line
           x1={todayX} y1={CHART_PADDING_TOP - 16}
           x2={todayX} y2={chartHeight - CHART_PADDING_BOTTOM + 12}
-          stroke="var(--maroon)" strokeWidth={2} strokeOpacity={0.7}
+          stroke="var(--teal)" strokeWidth={2} strokeOpacity={0.7}
         />
         <text
           x={todayX} y={CHART_PADDING_TOP - 20}
           textAnchor="middle"
-          style={{ fontSize: '10px', fill: 'var(--maroon)', fontWeight: 700 }}
+          style={{ fontSize: '10px', fill: 'var(--teal)', fontWeight: 600 }}
         >
-          TODAY
+          Today
         </text>
 
         {/* Grant bars */}
@@ -268,7 +258,6 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
           const barX = yearToX(startYear, chartWidth)
           const barWidth = yearToX(endYear, chartWidth) - barX
           const barY = CHART_PADDING_TOP + index * (BAR_HEIGHT + BAR_GAP)
-          const color = ganttMechanismColor(grant.mechanism, grant.bucket === 'proposed')
           const isProposed = grant.bucket === 'proposed'
 
           return (
@@ -281,12 +270,12 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
               {/* Mechanism badge */}
               <rect
                 x={0} y={barY + 4} width={42} height={BAR_HEIGHT - 8} rx={4}
-                fill={isProposed ? 'var(--gold-emphasis)' : 'var(--teal-emphasis)'}
+                fill="var(--surface-2)"
               />
               <text
                 x={21} y={barY + BAR_HEIGHT / 2 + 1}
                 textAnchor="middle" dominantBaseline="middle"
-                style={{ fontSize: '10px', fontWeight: 700, fill: color }}
+                style={{ fontSize: '10px', fontWeight: 700, fill: 'var(--ink)' }}
               >
                 {grant.mechanism}
               </text>
@@ -300,34 +289,14 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
                 {piDisplayName(grant.pi)}
               </text>
 
-              {/* Bar */}
-              {isProposed ? (
-                <>
-                  <rect
-                    x={barX} y={barY + 2} width={Math.max(barWidth, 4)} height={BAR_HEIGHT - 4} rx={6}
-                    fill={withAlpha(ACCENT_GOLD, 8)} stroke={color} strokeWidth={1.5} strokeDasharray="6 4" opacity={0.7}
-                    className="transition-opacity duration-200 hover:opacity-100"
-                  />
-                  <clipPath id={`clip-${grant.id}`}>
-                    <rect x={barX} y={barY + 2} width={Math.max(barWidth, 4)} height={BAR_HEIGHT - 4} rx={6} />
-                  </clipPath>
-                  {Array.from({ length: Math.ceil(barWidth / 12) + 2 }, (_, i) => (
-                    <line
-                      key={`hatch-${i}`}
-                      x1={barX + i * 12 - BAR_HEIGHT} y1={barY + BAR_HEIGHT - 2}
-                      x2={barX + i * 12} y2={barY + 2}
-                      stroke={color} strokeWidth={0.5} strokeOpacity={0.15}
-                      clipPath={`url(#clip-${grant.id})`}
-                    />
-                  ))}
-                </>
-              ) : (
-                <rect
-                  x={barX} y={barY + 2} width={Math.max(barWidth, 4)} height={BAR_HEIGHT - 4} rx={6}
-                  fill={color} opacity={0.85}
-                  className="transition-opacity duration-200 hover:opacity-100"
-                />
-              )}
+              {/* Bar: funded solid gray, proposed dashed outline (grantBar.ts) */}
+              <rect
+                x={barX} y={barY + 2} width={Math.max(barWidth, 4)} height={BAR_HEIGHT - 4} rx={6}
+                {...(isProposed
+                  ? { fill: 'none', stroke: GRANT_BAR_STROKE, strokeWidth: 1.5, strokeDasharray: '6 4', opacity: 0.7 }
+                  : { fill: GRANT_BAR_FILL, opacity: 0.85 })}
+                className="transition-opacity duration-200 hover:opacity-100"
+              />
 
               {/* Inline bar label */}
               {barWidth > 120 && (
@@ -336,7 +305,7 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
                   dominantBaseline="middle"
                   style={{
                     fontSize: '10px',
-                    fill: isProposed ? 'var(--gold)' : 'var(--ink-bright, #fff)',
+                    fill: isProposed ? GRANT_BAR_STROKE : 'var(--ink-bright, #fff)',
                     opacity: isProposed ? 0.8 : 0.9,
                   }}
                 >
@@ -631,7 +600,7 @@ export default function GrantsPage() {
       <div className="mt-5 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <ClipboardList {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
+            <ClipboardList {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
             <h3 className="text-sm font-normal" style={{ color: 'var(--ink)', margin: 0 }}>
               Post-Award Milestones
             </h3>
@@ -702,7 +671,6 @@ export default function GrantsPage() {
             </div>
 
             {enrichedPostAward.map((m) => {
-              const daysUntil = m.due_date ? civilDaysUntil(m.due_date) : null
               return (
                 <div
                   key={m.id}
@@ -719,7 +687,7 @@ export default function GrantsPage() {
                     {m.grant_mechanism && (
                       <span
                         className="inline-block mr-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold"
-                        style={{ color: 'var(--teal)', background: 'var(--teal-active)' }}
+                        style={{ color: 'var(--slate)', background: 'var(--ice)' }}
                       >
                         {m.grant_mechanism}
                       </span>
@@ -736,7 +704,8 @@ export default function GrantsPage() {
                     {m.title}
                   </span>
                   <span className="text-[11px]" style={{
-                    color: m._isOverdue ? 'var(--maroon)' : (daysUntil !== null && daysUntil <= 14 ? 'var(--gold)' : 'var(--slate)'),
+                    // Red is overdue only; a near date is a date, not a color job.
+                    color: m._isOverdue ? 'var(--maroon)' : 'var(--slate)',
                     opacity: m._isOverdue ? 1 : 0.85,
                     fontWeight: m._isOverdue ? 600 : 400,
                   }}>
@@ -770,7 +739,7 @@ export default function GrantsPage() {
       {/* Grant Landscape — NIH RePORTER (P3-04: lifted to top tab) */}
       <div className="mt-6 mb-6">
         <div className="flex items-center gap-2 mb-3">
-          <Telescope {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
+          <Telescope {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} />
           <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
             Grant Landscape (NIH RePORTER)
           </h3>
@@ -795,11 +764,10 @@ export default function GrantsPage() {
           <button
             onClick={() => setActiveSearch(searchKeywords)}
             style={{
-              // Pin to literal #dcb355 (light gold) — var(--gold) actually
-              // flips #6b5420 (light) ↔ #dcb355 (dark), breaking dark text
-              // in light mode (1.5:1). 2026-04-22 gold-bg class-bug.
-              background: '#dcb355',
-              color: '#1a1a1a',
+              // Primary action = teal (rules-ui-design 21). --teal-solid is
+              // the same hex in both themes, 6.1:1 with white text.
+              background: 'var(--teal-solid)',
+              color: '#fff',
               border: 'none',
               borderRadius: 'var(--radius-lg)',
               padding: 'var(--sp-sm) var(--sp-lg)',
@@ -834,7 +802,7 @@ export default function GrantsPage() {
           <div
             key={grant.project_num}
             className="p-3 rounded-lg mb-2"
-            style={{ background: 'var(--gold-hover)', border: `1px solid ${withAlpha(ACCENT_GOLD, 8)}` }}
+            style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}
           >
             <div className="flex items-start justify-between gap-2">
               <div>
@@ -846,7 +814,7 @@ export default function GrantsPage() {
                 </span>
               </div>
               {grant.award_amount > 0 && (
-                <span style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', whiteSpace: 'nowrap' }}>
                   ${(grant.award_amount / 1000).toFixed(0)}K
                 </span>
               )}

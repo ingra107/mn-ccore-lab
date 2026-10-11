@@ -150,7 +150,7 @@ function MyItemsCard() {
           className="inline-flex items-center gap-1 mt-auto pt-2 portal-footer-link"
           style={{
             fontSize: '10px',
-            color: 'var(--gold)',
+            color: 'var(--slate)',
             textDecoration: 'none',
           }}
         >

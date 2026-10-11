@@ -46,7 +46,8 @@ describe('project health heatmap fills (computed colors)', () => {
   })
 
   it('severity steps clearly in lightness, so it reads without hue', () => {
-    const order = ['Needs Attention', 'Healthy', 'At Risk', 'Critical']
+    // Lightest to darkest = least to most severe (gray, gray, orange, orange).
+    const order = ['Healthy', 'Needs Attention', 'At Risk', 'Critical']
     for (let i = 1; i < order.length; i++) {
       expect(contrast(fills[order[i - 1]], fills[order[i]]), `${order[i - 1]} vs ${order[i]}`).toBeGreaterThanOrEqual(1.3)
     }

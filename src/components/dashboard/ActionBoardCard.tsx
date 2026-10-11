@@ -92,7 +92,7 @@ function ActionBoardCard() {
                               )}
                               {item.meeting_id && item.meeting_title && (
                                 <Link to={PATHS.meeting(item.meeting_id)}
-                                  style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none', opacity: 0.85 }}
+                                  style={{ fontSize: '10px', color: 'var(--slate)', textDecoration: 'none', opacity: 0.85 }}
                                   onClick={(e) => e.stopPropagation()}>
                                   {formatBrandName(item.meeting_title?.split(':')[0] || '')}
                                 </Link>
@@ -117,7 +117,7 @@ function ActionBoardCard() {
         </div>
 
         <Link to={PATHS.myTasks} className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
-          style={{ fontSize: 'var(--label-size)', color: 'var(--gold)', textDecoration: 'none', borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 10)}` }}>
+          style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textDecoration: 'none', borderTop: '1px solid var(--border-subtle)' }}>
           View all tasks <ArrowRight {...ICON_PROPS} size={11} />
         </Link>
       </div>

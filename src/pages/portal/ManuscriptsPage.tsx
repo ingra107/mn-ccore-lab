@@ -63,12 +63,14 @@ const STAGE_LABELS: Record<typeof STAGES[number], string> = {
   revisions: 'Revisions',
   published: 'Published',
 }
-// The edit menu keeps its colored swatches; the row shows the quiet pill.
+// Status and group are words, not meanings: the edit menus list them in plain
+// ink (rules-ui-design 21, Nick 2026-10-11 -- green has no job, gold is "wants
+// you now", red is overdue).
 const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active', color: 'var(--green)' },
-  { value: 'waiting_external', label: 'Waiting', color: 'var(--gold)' },
-  { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
-  { value: 'done', label: 'Done', color: 'var(--slate)' },
+  { value: 'active', label: 'Active' },
+  { value: 'waiting_external', label: 'Waiting' },
+  { value: 'blocked', label: 'Blocked' },
+  { value: 'done', label: 'Done' },
 ]
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
@@ -81,18 +83,6 @@ function daysInStage(project: Project): number {
   // through parseDateOnlyOrTimestamp which appends 'Z' so elapsed-ms is correct.
   const ms = Date.now() - parseDateOnlyOrTimestamp(dateStr).getTime()
   return Math.floor(ms / (1000 * 60 * 60 * 24))
-}
-
-const CATEGORY_DOT: Record<string, string> = {
-  // Canonical 3-bucket (Stage 4 #12-followup, 2026-05-08)
-  'MNCCORE': 'var(--teal)',
-  'CLIF': 'var(--maroon)',
-  'Peripheral Brain': 'var(--gold)',
-  // Legacy fallbacks for soft-deleted rows with pre-migration values
-  clif: 'var(--maroon)',
-  lab: 'var(--teal)',
-  nate: 'var(--gold)',
-  mentee: 'var(--slate)',
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -128,7 +118,6 @@ const CANONICAL_CATEGORY_KEYS = ['MNCCORE', 'CLIF', 'Peripheral Brain'] as const
 const CATEGORY_OPTIONS = CANONICAL_CATEGORY_KEYS.map((value) => ({
   value,
   label: CATEGORY_LABEL[value],
-  color: CATEGORY_DOT[value],
 }))
 
 export default function ManuscriptsPage() {
@@ -290,7 +279,7 @@ export default function ManuscriptsPage() {
     >
       {[
         { value: '', label: 'All' },
-        ...CATEGORY_OPTIONS.map(({ value, label }) => ({ value, label })),
+        ...CATEGORY_OPTIONS,
       ].map((opt) => {
         const active = filterCategory === opt.value
         return (
@@ -560,14 +549,14 @@ export default function ManuscriptsPage() {
                     <div
                       className="px-4 pt-4 pb-3"
                       style={{
-                        background: 'linear-gradient(135deg, var(--teal-active), var(--gold-active))',
+                        background: 'var(--ice)',
                         borderBottom: '1px solid var(--border-subtle)',
                       }}
                     >
                       <div
                         className={pubTitle ? 'tip' : undefined}
                         data-tip={pubTitle}
-                        style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '11px', color: 'var(--ink-bright, #fff)', opacity: 0.85, letterSpacing: '0.04em' }}
+                        style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '11px', color: 'var(--ink)', opacity: 0.85, letterSpacing: '0.04em' }}
                       >
                         {journal || 'Journal'} {year ? `· ${year}` : ''}
                       </div>
@@ -577,7 +566,7 @@ export default function ManuscriptsPage() {
                           fontFamily: 'var(--font-display)',
                           fontWeight: 500,
                           fontSize: '15px',
-                          color: 'var(--ink-bright, #fff)',
+                          color: 'var(--ink)',
                           lineHeight: 1.25,
                           minHeight: '3em',
                           overflow: 'hidden',
@@ -591,7 +580,7 @@ export default function ManuscriptsPage() {
                     </div>
                     <div className="flex-1 p-3 flex flex-col justify-between">
                       <div className="flex items-center gap-2 text-[11px]" style={{ color: 'var(--slate)' }}>
-                        <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--green)' }} />
+                        <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--slate)' }} />
                         Published
                       </div>
                       {doi && (
@@ -721,7 +710,8 @@ function DroppableColumn({
       style={{
         background: isOver ? 'var(--teal-hover)' : 'var(--ice)',
         borderRadius: 'var(--radius-xl)',
-        borderTop: isOver ? '2px solid var(--gold)' : '2px solid var(--teal)',
+        // Teal only marks the drop target (a selection); a resting column is gray.
+        borderTop: isOver ? '2px solid var(--teal)' : '2px solid var(--border-subtle)',
         padding: 'var(--sp-lg)',
         minHeight: '200px',
         transition: 'background var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out',

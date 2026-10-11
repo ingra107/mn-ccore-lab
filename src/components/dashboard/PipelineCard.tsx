@@ -4,15 +4,12 @@ import { GitBranch } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { usePublications } from '../../hooks/useApiData'
 import { useDashboardMounted } from './dashboardMounted'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import { countPublications } from '../../lib/publicationCounts'
 
 interface Stage {
   label: string
   status: 'In Preparation' | 'In Review' | 'Published'
   count: number
-  color: string
-  colorEnd: string
 }
 
 function PipelineCard() {
@@ -42,9 +39,11 @@ function PipelineCard() {
     return [
       // Theme tokens, not hex: the old white and near-black fills each vanished
       // against the track in one theme. The darker end is a mix toward ink.
-      { label: 'In Preparation', status: 'In Preparation', count: prep, color: 'var(--slate)', colorEnd: 'color-mix(in srgb, var(--slate) 70%, var(--ink))' },
-      { label: 'In Review', status: 'In Review', count: review, color: 'var(--gold)', colorEnd: 'color-mix(in srgb, var(--gold) 70%, var(--ink))' },
-      { label: 'Published', status: 'Published', count: published, color: 'var(--teal)', colorEnd: 'color-mix(in srgb, var(--teal) 70%, var(--ink))' },
+      // Color jobs (rules-ui-design 21): the funnel is ONE series, so every
+      // stage draws in the one accent; the label tells the stages apart.
+      { label: 'In Preparation', status: 'In Preparation', count: prep },
+      { label: 'In Review', status: 'In Review', count: review },
+      { label: 'Published', status: 'Published', count: published },
     ]
   }, [publications])
 
@@ -79,7 +78,7 @@ function PipelineCard() {
                     style={{
                       fontSize: '22px',
                       fontWeight: 700,
-                      color: i === 2 ? 'var(--ink)' : 'var(--gold)',
+                      color: 'var(--ink)',
                       lineHeight: 1,
                       fontVariantNumeric: 'tabular-nums',
                     }}
@@ -93,7 +92,8 @@ function PipelineCard() {
                   style={{
                     height: '32px',
                     borderRadius: 'var(--radius-lg)',
-                    background: 'var(--gold-hover)',
+                    // A 10% ink track stays visible in both themes (--surface-2 is 6% in dark and vanished).
+                    background: 'color-mix(in srgb, var(--ink) 10%, transparent)',
                     overflow: 'hidden',
                     position: 'relative',
                   }}
@@ -103,9 +103,8 @@ function PipelineCard() {
                       height: '100%',
                       width: animated ? `${widthPct}%` : '0%',
                       borderRadius: 'var(--radius-lg)',
-                      background: `linear-gradient(135deg, ${stage.color}, ${stage.colorEnd})`,
+                      background: 'linear-gradient(135deg, var(--teal), color-mix(in srgb, var(--teal) 70%, var(--ink)))',
                       transition: `width 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${i * 150}ms`,
-                      border: i === 0 ? `1px solid ${withAlpha(ACCENT_GOLD, 20)}` : 'none',
                       position: 'relative',
                     }}
                   >
@@ -143,7 +142,7 @@ function PipelineCard() {
               </div>
               {i < stages.length - 1 && (
                 <svg width="16" height="8" viewBox="0 0 16 8" style={{ opacity: 0.85 }}>
-                  <path d="M0 4 L12 4 M10 1 L14 4 L10 7" fill="none" stroke="var(--gold)" strokeWidth="1.5" />
+                  <path d="M0 4 L12 4 M10 1 L14 4 L10 7" fill="none" stroke="var(--slate)" strokeWidth="1.5" />
                 </svg>
               )}
             </div>

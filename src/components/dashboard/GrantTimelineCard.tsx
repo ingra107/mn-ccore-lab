@@ -2,15 +2,9 @@ import { memo, useMemo } from 'react'
 import { Banknote } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { useGrantTimeline, type GrantTimelineItem } from '../../hooks/useGrantTimeline'
-import { mechanismFamily, MECHANISM_FILL } from '../../lib/grantMechanism'
+import { GRANT_BAR_FILL, GRANT_BAR_STROKE } from '../../lib/grantBar'
 
 const CURRENT_YEAR = new Date().getFullYear()
-
-// White text sits ON these bars, so they use the theme-stable FILL lane
-// (literal hex, Rule 41 class) — never the theme-flipping accent vars.
-function mechanismColor(mechanism: string): string {
-  return MECHANISM_FILL[mechanismFamily(mechanism)]
-}
 
 interface GrantBar {
   id: string
@@ -107,7 +101,6 @@ function GrantTimelineCard() {
               {bars.map((g) => {
                 const startPct = ((g.startYear - minYear) / totalYears) * 100
                 const widthPct = ((g.endYear - g.startYear + 1) / totalYears) * 100
-                const color = mechanismColor(g.mechanism)
 
                 return (
                   <div key={g.id} className="relative" style={{ height: '26px' }}>
@@ -120,12 +113,9 @@ function GrantTimelineCard() {
                         top: 0,
                         bottom: 0,
                         borderRadius: 'var(--radius-md)',
-                        background: g.proposed
-                          ? 'transparent'
-                          : color,
-                        border: g.proposed
-                          ? `1.5px dashed ${color}`
-                          : 'none',
+                        // Funded solid gray, proposed dashed outline (grantBar.ts).
+                        background: g.proposed ? 'transparent' : GRANT_BAR_FILL,
+                        border: g.proposed ? `1.5px dashed ${GRANT_BAR_STROKE}` : 'none',
                         opacity: 0.85,
                         display: 'flex',
                         alignItems: 'center',
@@ -142,7 +132,7 @@ function GrantTimelineCard() {
                         style={{
                           fontSize: '10px',
                           fontWeight: 700,
-                          color: g.proposed ? color : '#fff',
+                          color: g.proposed ? GRANT_BAR_STROKE : '#fff',
                           flexShrink: 0,
                           letterSpacing: '0.02em',
                         }}
@@ -189,7 +179,7 @@ function GrantTimelineCard() {
                           transform: 'translateX(-50%)',
                           width: '1.5px',
                           height: '120px',
-                          background: 'var(--gold)',
+                          background: 'var(--teal)',
                           opacity: 0.85,
                         }}
                       />
@@ -197,7 +187,7 @@ function GrantTimelineCard() {
                     <span
                       style={{
                         fontSize: '10px',
-                        color: isCurrent ? 'var(--gold)' : 'var(--slate)',
+                        color: isCurrent ? 'var(--teal)' : 'var(--slate)',
                         opacity: isCurrent ? 1 : 0.85,
                         fontWeight: isCurrent ? 700 : 400,
                         fontVariantNumeric: 'tabular-nums',
@@ -213,11 +203,11 @@ function GrantTimelineCard() {
             {/* Legend */}
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-1.5">
-                <div style={{ width: 14, height: 6, borderRadius: 'var(--radius-sm)', background: '#2d8a8a' }} />
+                <div style={{ width: 14, height: 6, borderRadius: 'var(--radius-sm)', background: GRANT_BAR_FILL }} />
                 <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>Funded</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div style={{ width: 14, height: 6, borderRadius: 'var(--radius-sm)', border: '1.5px dashed #2d8a8a', opacity: 0.85 }} />
+                <div style={{ width: 14, height: 6, borderRadius: 'var(--radius-sm)', border: `1.5px dashed ${GRANT_BAR_STROKE}`, opacity: 0.85 }} />
                 <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>In prep / Submitted</span>
               </div>
             </div>
