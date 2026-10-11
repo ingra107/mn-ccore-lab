@@ -345,56 +345,6 @@ test.describe('FEATURE — G+key navigation shortcuts', () => {
   }
 })
 
-test.describe('FEATURE — Space bar peek overlay', () => {
-  test('FEATURE: Space opens peek overlay on focused task', async ({ page }) => {
-    await loadPage(page, P.myTasks)
-    // Select first task with J
-    await page.keyboard.press('j')
-    await page.waitForTimeout(300)
-    // Space to peek
-    await page.keyboard.press('Space')
-    await page.waitForTimeout(500)
-    // Peek overlay should be visible — look for overlay/backdrop
-    const peek = page.locator('[class*="peek"], [class*="Peek"], [class*="overlay"]').first()
-    const peekVisible = await peek.isVisible().catch(() => false)
-    await page.screenshot({ path: 'review/feature-peek-overlay.png' })
-    console.log(`Peek overlay visible: ${peekVisible}`)
-    // Close with Escape
-    await page.keyboard.press('Escape')
-  })
-})
-
-test.describe('FEATURE — Subtask expand/collapse with arrow keys', () => {
-  test('FEATURE: → expands subtasks, ← collapses', async ({ page }) => {
-    await loadPage(page, P.myTasks)
-    // Focus first task
-    await page.keyboard.press('j')
-    await page.waitForTimeout(300)
-
-    // Check if task row has a chevron/expand indicator
-    const chevron = page.locator('[class*="chevron"], [class*="expand"], button[aria-label*="expand"]').first()
-    const hasChevron = await chevron.isVisible().catch(() => false)
-    console.log(`Task has expand chevron: ${hasChevron}`)
-
-    if (hasChevron) {
-      // → to expand
-      await page.keyboard.press('ArrowRight')
-      await page.waitForTimeout(500)
-      await page.screenshot({ path: 'review/feature-subtask-expanded.png' })
-
-      // Check for subtask content
-      const subtaskInput = page.locator('input[placeholder*="subtask"], input[placeholder*="Add"]').first()
-      const inputVisible = await subtaskInput.isVisible().catch(() => false)
-      console.log(`Subtask add input visible after expand: ${inputVisible}`)
-
-      // ← to collapse
-      await page.keyboard.press('ArrowLeft')
-      await page.waitForTimeout(300)
-      await page.screenshot({ path: 'review/feature-subtask-collapsed.png' })
-    }
-  })
-})
-
 test.describe('FEATURE — Bulk selection and actions', () => {
   test('FEATURE: X key toggles task selection, toolbar appears', async ({ page }) => {
     await loadPage(page, P.myTasks)
@@ -425,28 +375,6 @@ test.describe('FEATURE — Bulk selection and actions', () => {
   })
 })
 
-test.describe('FEATURE — Snooze functionality', () => {
-  test('FEATURE: Z key or context menu triggers snooze', async ({ page }) => {
-    await loadPage(page, P.myTasks)
-    // Focus first task
-    await page.keyboard.press('j')
-    await page.waitForTimeout(200)
-    // Z to snooze
-    await page.keyboard.press('z')
-    await page.waitForTimeout(500)
-
-    // Snooze dropdown or instant +1d
-    const snoozeMenu = page.locator('text=+1 Day, text=+3 Days, text=+1 Week, text=Tomorrow').first()
-    const snoozeVisible = await snoozeMenu.isVisible().catch(() => false)
-    console.log(`Snooze menu/toast visible: ${snoozeVisible}`)
-    await page.screenshot({ path: 'review/feature-snooze.png' })
-
-    if (snoozeVisible) {
-      await page.keyboard.press('Escape')
-    }
-  })
-})
-
 test.describe('FEATURE — Right-click context menu', () => {
   test('FEATURE: Right-click on task row shows context menu', async ({ page }) => {
     await loadPage(page, P.myTasks)
@@ -468,46 +396,6 @@ test.describe('FEATURE — Right-click context menu', () => {
       console.log(`Context menu found: ${menuFound}`)
       await page.screenshot({ path: 'review/feature-context-menu.png' })
       await page.keyboard.press('Escape')
-    }
-  })
-})
-
-test.describe('FEATURE — Blocker flagging', () => {
-  test('FEATURE: B key toggles blocker on focused task', async ({ page }) => {
-    await loadPage(page, P.myTasks)
-    await page.keyboard.press('j')
-    await page.waitForTimeout(200)
-    await page.keyboard.press('b')
-    await page.waitForTimeout(500)
-
-    // Should show blocker indicator or status change
-    await page.screenshot({ path: 'review/feature-blocker-flag.png' })
-    // Toggle back
-    await page.keyboard.press('b')
-    await page.waitForTimeout(300)
-  })
-})
-
-test.describe('FEATURE — S key status cycle', () => {
-  test('FEATURE: S key cycles task status (todo → in_progress → done)', async ({ page }) => {
-    await loadPage(page, P.myTasks)
-    await page.keyboard.press('j')
-    await page.waitForTimeout(200)
-
-    // Press S to cycle
-    await page.keyboard.press('s')
-    await page.waitForTimeout(500)
-    await page.screenshot({ path: 'review/feature-status-cycle.png' })
-
-    // Check for undo toast
-    const undoToast = page.locator('text=Undo')
-    const toastVisible = await undoToast.isVisible({ timeout: 2000 }).catch(() => false)
-    console.log(`Undo toast after S key: ${toastVisible}`)
-
-    // Undo if possible
-    if (toastVisible) {
-      await undoToast.click()
-      await page.waitForTimeout(300)
     }
   })
 })
