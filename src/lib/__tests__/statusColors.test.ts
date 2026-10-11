@@ -34,3 +34,26 @@ describe('status colors keep each color in its one job', () => {
     expect(getStatusBg('revision_due')).toBe(getStatusBg('review'))
   })
 })
+
+// A local status-option copy (value + label + its own color) outranks the
+// shared map on its page: RevisionTracker kept red Rejected / Won't Fix after
+// the map went neutral. Neutral words may never wear red in any local copy.
+describe('no local copy paints a neutral status word red', () => {
+  it('rejected / wont_fix / withdrawn are never maroon or red outside the map', async () => {
+    const { readdirSync, readFileSync, statSync } = await import('node:fs')
+    const { join, resolve } = await import('node:path')
+    const root = resolve(__dirname, '../..')
+    const files: string[] = []
+    const walk = (d: string) => {
+      for (const n of readdirSync(d)) {
+        const p = join(d, n)
+        if (statSync(p).isDirectory()) { if (n !== '__tests__') walk(p) }
+        else if (/\.tsx?$/.test(n)) files.push(p)
+      }
+    }
+    walk(root)
+    const bad = /value:\s*'(rejected|wont_fix|withdrawn)'[^}\n]*color:\s*'var\(--(maroon|red)/
+    const hits = files.filter((f) => bad.test(readFileSync(f, 'utf8')))
+    expect(hits).toEqual([])
+  })
+})

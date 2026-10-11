@@ -52,7 +52,10 @@ export default function LinkChip({
   const resolvedType = type || normalizeLink(url)?.type
   const stored = resolvedType ? iconForType(resolvedType) : null
   const Icon = stored ? stored.Icon : FallbackIcon
-  const color = stored ? stored.color : 'var(--teal)'
+  // A typed link: the glyph carries the (dimmed) brand color and the label
+  // stays neutral, so a Gmail chip never reads as overdue red. An untyped
+  // link keeps the teal accent on both.
+  const color = stored ? 'var(--slate)' : 'var(--teal)'
   const glyph = stored ? stored.tint : color
   const { launch } = useProtocolLaunch()
 

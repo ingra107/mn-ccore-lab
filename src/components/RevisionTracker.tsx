@@ -35,25 +35,30 @@ import { getPersonInfo } from '../data/team'
 import { formatMediumDate } from '../lib/dateUtils'
 import { TableSkeleton } from './LoadingSkeleton'
 import EmptyState from './EmptyState'
-import { getStatusBg } from '../lib/statusColors'
+import { getStatusBg, getStatusColor } from '../lib/statusColors'
 import { ICON_PROPS } from '../lib/iconProps'
 import { Button } from './ui/Button'
 
 // ── Constants ──
 
-const REVISION_STATUS_OPTIONS = [
-  { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
-  { value: 'submitted', label: 'Submitted', color: 'var(--green)' },
-  { value: 'accepted', label: 'Accepted', color: 'var(--gold)' },
-  { value: 'rejected', label: 'Rejected', color: 'var(--maroon)' },
-]
+// Colors come from the shared status map, never a local copy, so a status
+// word wears the same color here as everywhere else (principle 21).
+const withStatusColor = (opts: { value: string; label: string }[]) =>
+  opts.map((o) => ({ ...o, color: getStatusColor(o.value) }))
 
-const COMMENT_STATUS_OPTIONS = [
-  { value: 'pending', label: 'Pending', color: 'var(--slate)' },
-  { value: 'in_progress', label: 'Working', color: 'var(--teal)' },
-  { value: 'done', label: 'Done', color: 'var(--st-done)' },
-  { value: 'wont_fix', label: "Won't Fix", color: 'var(--maroon)' },
-]
+const REVISION_STATUS_OPTIONS = withStatusColor([
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'submitted', label: 'Submitted' },
+  { value: 'accepted', label: 'Accepted' },
+  { value: 'rejected', label: 'Rejected' },
+])
+
+const COMMENT_STATUS_OPTIONS = withStatusColor([
+  { value: 'pending', label: 'Pending' },
+  { value: 'in_progress', label: 'Working' },
+  { value: 'done', label: 'Done' },
+  { value: 'wont_fix', label: "Won't Fix" },
+])
 
 const COMMENT_STATUS_ICON: Record<string, typeof Circle> = {
   pending: Circle,

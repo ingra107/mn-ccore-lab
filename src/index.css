@@ -205,6 +205,9 @@
   --link-strength:      55%;
 }
 
+/* Hover lifts every dimmed link glyph (dimLinkColor) to its full brand color. */
+:where(a, button):hover { --lk-on: 100%; }
+
 .dark {
   /* GitHub near-black → light on dark surfaces (colorDark: #E6EDF3) */
   --link-github-repo:   #E6EDF3;

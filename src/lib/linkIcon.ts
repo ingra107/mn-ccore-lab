@@ -50,9 +50,11 @@ export interface LinkIconSpec {
  * just need to have them dimmer but use the colors we are already using for
  * those... i like the red green blue etc". The strength is ONE knob,
  * --link-strength in index.css, shared with the Today skin's [data-lk] icons.
+ * A hovered link or button sets --lk-on: 100% (index.css), so the glyph shows
+ * its full brand color on hover on every surface, with no per-site hover rule.
  */
 export function dimLinkColor(color: string): string {
-  return `color-mix(in srgb, ${color} var(--link-strength), var(--sk-t3))`
+  return `color-mix(in srgb, ${color} var(--lk-on, var(--link-strength)), var(--sk-t3))`
 }
 
 /**

@@ -70,7 +70,7 @@ describe('link icon tint (same colors, dimmer)', () => {
     for (const t of ['gmail_thread', 'google_sheet', 'google_doc', 'artifact', '???']) {
       const { color, tint } = iconForType(t)
       expect(tint).toBe(dimLinkColor(color))
-      expect(tint).toBe(`color-mix(in srgb, ${color} var(--link-strength), var(--sk-t3))`)
+      expect(tint).toBe(`color-mix(in srgb, ${color} var(--lk-on, var(--link-strength)), var(--sk-t3))`)
     }
   })
 
