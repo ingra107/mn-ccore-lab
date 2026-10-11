@@ -26,8 +26,9 @@ import { isFromMeeting, meetingLabelFor } from '../../lib/meetingOrigin'
 import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
+import type { ReactNode } from 'react'
 
-export function TaskRow({ task, project, state, expandedId, onExpand, milestoneRole, done = false, noDrag = false, onOpenEditor }: {
+export function TaskRow({ task, project, state, expandedId, onExpand, milestoneRole, done = false, noDrag = false, onOpenEditor, onOpen, extraPills }: {
   task: TaskRowData
   project: { name: string; slug: string; primary_folder?: string | null } | null
   state: TodayStateApi
@@ -43,6 +44,12 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
   noDrag?: boolean
   /** Tasks page: a title click opens the full editor panel. */
   onOpenEditor?: () => void
+  /** Tasks Board: a body click (or Enter on the card) opens the task instead of
+   *  expanding the inline drawer. A narrow board column has no room for it. */
+  onOpen?: () => void
+  /** Tasks Board: pills appended to the context line after the workflow pills
+   *  (priority, re-accept). */
+  extraPills?: ReactNode
 }) {
   const [density] = useDensity()
   const isDone = !!state.done[task.id] || done
@@ -171,7 +178,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
         isExpanded={expanded}
         // Not gated on isDone: the milestone row has no done box, so the
         // drawer's Reopen is its only way back once Mark complete fires.
-        onToggleExpand={() => onExpand(task.id)}
+        onToggleExpand={() => (onOpen ? onOpen() : onExpand(task.id))}
       >
         <MilestoneDrawer
           task={task}
@@ -187,7 +194,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
       isDone={isDone}
       onToggleDone={() => (isDone ? state.uncheck(task.id) : state.markDone(task.id))}
       isExpanded={expanded}
-      onToggleExpand={() => { if (!isDone) onExpand(task.id) }}
+      onToggleExpand={() => { if (onOpen) onOpen(); else if (!isDone) onExpand(task.id) }}
       isPlanned={!!planned}
       plannedLabel={planned?.slot === 'strip' ? 'planned' : 'scheduled'}
       showGroupOverridePin
@@ -205,7 +212,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
       onDragStart={onDragStart}
       onTogglePlan={() => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
       card
-      footPills={workflowPills}
+      footPills={extraPills ? <>{workflowPills}{extraPills}</> : workflowPills}
       linksSlot={linkMeta}
       meetingSlot={meetingMeta}
       workSlot={workOnMeta}

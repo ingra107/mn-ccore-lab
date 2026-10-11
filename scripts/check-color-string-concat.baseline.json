@@ -1684,29 +1684,5 @@
     "line": 100,
     "kind": "token-rgba-literal",
     "sample": "rgba(15, 25, 35, 0.1)"
-  },
-  {
-    "file": "src/components/tasks/TaskCard.tsx",
-    "line": 237,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(15,25,35,0.10)"
-  },
-  {
-    "file": "src/components/tasks/TaskCard.tsx",
-    "line": 259,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(15,25,35,0.10)"
-  },
-  {
-    "file": "src/components/tasks/TaskCard.tsx",
-    "line": 281,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(15,25,35,0.10)"
-  },
-  {
-    "file": "src/components/tasks/TaskCard.tsx",
-    "line": 310,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(15,25,35,0.10)"
   }
 ]
