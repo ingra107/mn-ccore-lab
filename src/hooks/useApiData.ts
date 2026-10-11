@@ -1290,6 +1290,8 @@ interface ContributionScoreData {
   slug: string
   days: number
   total_score: number
+  /** Unweighted contributions in the window; equals the heatmap total. */
+  count: number
   trend: 'increasing' | 'stable' | 'declining'
   breakdown: Record<string, { count: number; raw_score: number; decay_score: number }>
   sparkline: number[]

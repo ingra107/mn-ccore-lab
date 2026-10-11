@@ -11,6 +11,8 @@ import type { Env } from '../helpers';
 import { handleContributionsDecay } from '../routes/contributions-decay';
 import { handleActivityHeatmap } from '../routes/activity';
 import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db';
+import { ctToday } from './ct-date';
+import { formatContributionScore } from '../../src/lib/contributionScore';
 
 function insertRow(db: ReturnType<typeof prodSchemaDb>, table: string, vals: Record<string, unknown>) {
   const cols = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string; notnull: number; dflt_value: unknown; pk: number; type: string }>;
@@ -63,5 +65,44 @@ describe('member contributions: score card and heatmap agree', () => {
     const heatTotal = Object.values(heat).reduce((n, v) => n + v, 0);
     expect(scored).toBe(4);
     expect(heatTotal).toBe(scored);
+  });
+
+  it('an old contribution never shows as a 0 score above a non-zero count', async () => {
+    const db = prodSchemaDb();
+    // One task 75 days ago scores 3*e^(-2.25) = 0.32, which used to round to 0.
+    insertRow(db, 'tasks', { id: 'old', title: 'Old', assignee: 'casey-eddington', status: 'done', completed: 1, completed_at: daysAgo(75), completed_by: 'nick-ingraham' });
+    const env = { DB: d1Adapter(db) } as unknown as Env;
+    const score = await body<{ total_score: number; count: number }>(
+      await handleContributionsDecay(new URL('https://h/api/analytics/contributions?slug=casey-eddington&days=90'), env),
+    );
+    expect(score.count).toBe(1);
+    expect(score.total_score).toBeLessThan(0.5);
+    expect(formatContributionScore(score.total_score, score.count)).not.toBe('0');
+  });
+
+  it('an event on the first day of the window counts in both or in neither', async () => {
+    const db = prodSchemaDb();
+    // Noon UTC on the window's first CT calendar day: the heatmap's text
+    // compare admits it, so the score window must too.
+    insertRow(db, 'tasks', { id: 'edge', title: 'Edge', assignee: 'casey-eddington', status: 'done', completed: 1, completed_at: `${ctToday(-90)}T12:00:00Z`, completed_by: 'casey-eddington' });
+    const env = { DB: d1Adapter(db) } as unknown as Env;
+    const score = await body<{ count: number }>(
+      await handleContributionsDecay(new URL('https://h/api/analytics/contributions?slug=casey-eddington&days=90'), env),
+    );
+    const heat = await body<Record<string, number>>(
+      await handleActivityHeatmap(new URL('https://h/api/activity/heatmap?slug=casey-eddington&days=90'), env),
+    );
+    const heatTotal = Object.values(heat).reduce((n, v) => n + v, 0);
+    expect(heatTotal).toBe(score.count);
+  });
+});
+
+describe('formatContributionScore', () => {
+  it('shows 0 only when nothing counted', () => {
+    expect(formatContributionScore(0, 0)).toBe('0');
+    expect(formatContributionScore(0.32, 1)).toBe('0.3');
+    expect(formatContributionScore(0.04, 1)).toBe('<0.1');
+    expect(formatContributionScore(4, 3)).toBe('4');
+    expect(formatContributionScore(23.6, 12)).toBe('24');
   });
 });

@@ -31,6 +31,7 @@ import { QueryErrorNote } from '../components/QueryErrorNote'
 import { topicLabel } from '../lib/topics'
 import SectionHead from '../components/ui/SectionHead'
 import { statusLabel } from '../lib/textUtils'
+import { formatContributionScore } from '../lib/contributionScore'
 
 // isOverdue imported from dateUtils
 
@@ -764,10 +765,13 @@ function ContributionScoreCard({ slug }: { slug: string }) {
       {/* Score */}
       <div style={{ textAlign: 'center', minWidth: 60 }}>
         <div style={{ fontSize: '28px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.1 }}>
-          {Math.round(data.total_score)}
+          {formatContributionScore(data.total_score, data.count)}
         </div>
-        <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, marginTop: 2 }}>
-          contribution score
+        <div
+          style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, marginTop: 2 }}
+          title={`Recent work counts more: each contribution loses half its weight every ${data.half_life_days} days. ${data.count} contribution${data.count === 1 ? '' : 's'} in the last ${data.days} days.`}
+        >
+          weighted score
         </div>
       </div>
 

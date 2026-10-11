@@ -5,6 +5,7 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
 import { memberContributionEvents, CONTRIBUTION_TYPES } from '../lib/member-contributions';
+import { ctToday } from '../lib/ct-date';
 
 // Decay constant: 0.03 gives a half-life of ~23 days (ln(2)/0.03 ≈ 23.1)
 const DECAY_CONSTANT = 0.03;
@@ -48,7 +49,9 @@ export async function handleContributionsDecay(url: URL, env: Env): Promise<Resp
 
   const days = parseInt(url.searchParams.get('days') || '90', 10);
   const now = new Date();
-  const cutoff = new Date(now.getTime() - days * 86400000).toISOString();
+  // Same window start as the member heatmap (activity.ts): a CT calendar date,
+  // so an event on the window's first day counts in both or in neither.
+  const cutoff = ctToday(-days);
   const halfCutoff = new Date(now.getTime() - (days / 2) * 86400000).toISOString();
 
   // The same contribution list the member heatmap counts (lib/member-contributions),
@@ -136,6 +139,8 @@ export async function handleContributionsDecay(url: URL, env: Env): Promise<Resp
       slug,
       days,
       total_score: Math.round(totalScore * 10) / 10,
+      // Unweighted: the number the heatmap's "N contributions" shows.
+      count: events.length,
       trend,
       breakdown,
       sparkline,

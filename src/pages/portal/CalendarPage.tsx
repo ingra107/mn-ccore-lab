@@ -377,7 +377,7 @@ export function MonthView({ currentDate, events, denseWeek = false, onOpenDay }:
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-subtle)' }}>
       <div className="grid grid-cols-7">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-          <div key={d} className="px-2 py-2 text-center text-[10px] uppercase tracking-wider font-semibold border-b" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
+          <div key={d} className="px-2 py-2 text-center text-[11px] font-semibold border-b" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
             {d}
           </div>
         ))}
@@ -390,7 +390,7 @@ export function MonthView({ currentDate, events, denseWeek = false, onOpenDay }:
           return (
             <div
               key={`week-${wi}`}
-              className="border-b px-3 py-1.5 text-[10px] uppercase tracking-wider"
+              className="border-b px-3 py-1.5 text-[11px]"
               style={{ color: 'var(--slate)', opacity: 0.85, borderColor: 'var(--border-subtle)', background: 'var(--hover-subtle)' }}
             >
               {label} · no events
@@ -491,7 +491,7 @@ export function WeekView({ weekStart, events }: { weekStart: Date; events: Calen
             {/* Today: the date disc below is the one now marker (pick 4), as in Month. */}
             {/* Day header */}
             <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-subtle)' }}>
-              <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{dayNames[i]}</div>
+              <div className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{dayNames[i]}</div>
               <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8 now-halo' : ''}`} style={{ color: isToday ? 'var(--sk-card)' : 'var(--ink)', backgroundColor: isToday ? 'var(--job-accent)' : 'transparent' }}>
                 {dayNum}
               </div>

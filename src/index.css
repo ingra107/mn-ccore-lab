@@ -296,17 +296,20 @@
      highest-chroma color of its hue that still holds 4.5:1 for text on its
      own 15% tint over the page (the tag and pill case); on plain page
      #f3f2ee / panel #f9f8f6 / card #fff it is 5.6-6.7:1, and white text on
-     the fill is 6.3:1 or more. OKLCH: red L.50 C.20 h22, orange L.50 C.14
-     h50, gold L.49 C.10 h88 (hues 28 and 38 degrees apart; OKLab deltaE
-     9.9 red-orange, 8.7 orange-gold, 18.4 red-gold). Orange cannot get
-     brighter: any lighter orange drops under 4.5:1 on these surfaces. */
+     the fill is 6.3:1 or more. That ceiling pins all three at OKLCH L.50, so
+     hue and chroma carry the difference: red L.50 C.20 h16 (crimson), orange
+     L.50 C.14 h44 (burnt orange, the hue of #cc5500), gold L.49 C.10 h88.
+     Hues 28 and 44 degrees apart; OKLab deltaE 9.9 red-orange, 10.1
+     orange-gold, 19.4 red-gold (scratch check, python OKLab from sRGB).
+     Orange cannot get lighter: any lighter orange drops under 4.5:1 on its
+     tint over these surfaces. */
   --sk-gold: #785c00;
   --sk-gold-soft: rgba(120, 92, 0, 0.11);
   --sk-wants-fg: #ffffff;  /* text on a solid --job-wants fill: 6.3:1 */
-  --sk-od: #ba0329;
-  --sk-od-soft: rgba(186, 3, 41, 0.08);
+  --sk-od: #ba003a;
+  --sk-od-soft: rgba(186, 0, 58, 0.08);
   --sk-od-inv: #f0737e;    /* red on an inverted (ink) bar: the other theme's red */
-  --sk-urg: #9c4700;
+  --sk-urg: #a34003;
   --sk-hatch: color-mix(in srgb, var(--sk-t1) 13%, transparent);
   --sk-face: #d9dcdf;
   --sk-face-t: #3a4450;
@@ -331,7 +334,7 @@
   --sk-wants-fg: #0f1923;  /* dark ink on the bright dark-mode gold */
   --sk-od: #f0737e;
   --sk-od-soft: color-mix(in srgb, var(--sk-od) 10%, transparent);
-  --sk-od-inv: #ba0329;
+  --sk-od-inv: #ba003a;
   --sk-urg: #f08a5b;
   --sk-hatch: rgba(255, 255, 255, 0.11);
   --sk-face: #2a323b;
