@@ -71,6 +71,7 @@ import { isLabSeriesTitle } from '../../shared/meetingAudience'
 import { AttendeeBadge } from '../components/meetings/Attendees'
 import { meetingStatus } from '../lib/meetingStatus'
 import { taskShortLabel } from '../lib/displayNames'
+import SectionHead from '../components/ui/SectionHead'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -650,12 +651,7 @@ export default function MeetingDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
           {/* Left: Agenda (order-2 on mobile so actions show first) */}
           <motion.div className="order-2 lg:order-1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.1 }}>
-            <div className="sk-hd">
-              <ListChecks {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-              <h2 className="sk-hd-t">
-                Agenda
-              </h2>
-            </div>
+            <SectionHead icon={<ListChecks {...ICON_PROPS} size={14} />} title="Agenda" />
 
             {/* Opening Round icebreaker prompt */}
             <RoundPrompt meetingId={meeting.id} />
@@ -700,15 +696,7 @@ export default function MeetingDetail() {
 
           {/* Right: Action Items (order-1 on mobile so actions show first) */}
           <motion.div className="order-1 lg:order-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.15 }}>
-            <div className="sk-hd">
-              <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-              <h2 className="sk-hd-t">
-                Action items
-              </h2>
-              <span className="sk-hd-c">
-                {completedActions.length}/{actionItems.length}
-              </span>
-            </div>
+            <SectionHead icon={<CheckCircle2 {...ICON_PROPS} size={14} />} title="Action items" count={<>{completedActions.length}/{actionItems.length}</>} />
 
             <div style={{ borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
               {/* Inline add action item */}
@@ -874,25 +862,25 @@ export default function MeetingDetail() {
 
         {/* Decisions */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.2 }} className="mt-8">
-          <div className="sk-hd">
-            <Scale {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-            <h2 className="sk-hd-t">
-              Decisions
-            </h2>
-            {isAuthenticated && (
-              <button
-                onClick={() => setShowDecisionForm(!showDecisionForm)}
-                style={{
-                  marginLeft: 'auto', background: 'none', border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-md)', padding: '4px 10px', cursor: 'pointer',
-                  fontSize: 'var(--label-size)', color: 'var(--slate)',
-                  display: 'flex', alignItems: 'center', gap: '4px',
-                }}
-              >
-                <Plus {...ICON_PROPS} size={12} /> Log decision
-              </button>
-            )}
-          </div>
+          <SectionHead
+            icon={<Scale {...ICON_PROPS} size={14} />}
+            title="Decisions"
+            right={<>
+              {isAuthenticated && (
+                <button
+                  onClick={() => setShowDecisionForm(!showDecisionForm)}
+                  style={{
+                    background: 'none', border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)', padding: '4px 10px', cursor: 'pointer',
+                    fontSize: 'var(--label-size)', color: 'var(--slate)',
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                  }}
+                >
+                  <Plus {...ICON_PROPS} size={12} /> Log decision
+                </button>
+              )}
+            </>}
+          />
           <div style={{ borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
             {/* Inline decision form */}
             <AnimatePresence>
@@ -986,12 +974,7 @@ export default function MeetingDetail() {
         {/* T-50 Files section — files attached to this meeting. */}
         {meeting.id && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.22 }} className="mt-8">
-            <div className="sk-hd">
-              <UploadIcon {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-              <h3 className="sk-hd-t">
-                Files
-              </h3>
-            </div>
+            <SectionHead as="h3" icon={<UploadIcon {...ICON_PROPS} size={14} />} title="Files" />
             <div style={{ borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
               <FileUpload entityType="meeting" entityId={meeting.id} />
             </div>
@@ -1000,41 +983,42 @@ export default function MeetingDetail() {
 
         {/* Notes */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.25 }} className="mt-8">
-          <div className="sk-hd">
-            <FileText {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-            <h3 className="sk-hd-t">
-              Meeting notes
-            </h3>
-            {/* #96 — one-click copy of the notes body so Nick can paste them
-                straight to the team. Copies the raw markdown source (what
-                pastes cleanly into mail/Slack), not the rendered DOM. Sits in
-                the section header rather than the hover layer: "copy quick"
-                means always visible, unlike the Edit affordance below. */}
-            {!editingNotes && meeting?.notes && (
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(meeting.notes || '').then(() => {
-                    setCopiedNotes(true)
-                    setTimeout(() => setCopiedNotes(false), 2000)
-                  }).catch(() => showError('Could not copy notes'))
-                }}
-                data-tip={copiedNotes ? 'Copied' : 'Copy notes as text'}
-                aria-label="Copy meeting notes"
-                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors ml-auto"
-                style={{
-                  fontSize: 'var(--label-size)',
-                  color: 'var(--slate)',
-                  border: '1px solid var(--border-subtle)',
-                  background: 'none',
-                  cursor: 'pointer',
-                  opacity: copiedNotes ? 1 : 0.85,
-                }}
-              >
-                {copiedNotes ? <Check {...ICON_PROPS} size={11} /> : <Copy {...ICON_PROPS} size={11} />}
-                {copiedNotes ? 'Copied!' : 'Copy'}
-              </button>
-            )}
-          </div>
+          <SectionHead
+            as="h3"
+            icon={<FileText {...ICON_PROPS} size={14} />}
+            title="Meeting notes"
+            right={<>
+              {/* #96 — one-click copy of the notes body so Nick can paste them
+                  straight to the team. Copies the raw markdown source (what
+                  pastes cleanly into mail/Slack), not the rendered DOM. Sits in
+                  the section header rather than the hover layer: "copy quick"
+                  means always visible, unlike the Edit affordance below. */}
+              {!editingNotes && meeting?.notes && (
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(meeting.notes || '').then(() => {
+                      setCopiedNotes(true)
+                      setTimeout(() => setCopiedNotes(false), 2000)
+                    }).catch(() => showError('Could not copy notes'))
+                  }}
+                  data-tip={copiedNotes ? 'Copied' : 'Copy notes as text'}
+                  aria-label="Copy meeting notes"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors"
+                  style={{
+                    fontSize: 'var(--label-size)',
+                    color: 'var(--slate)',
+                    border: '1px solid var(--border-subtle)',
+                    background: 'none',
+                    cursor: 'pointer',
+                    opacity: copiedNotes ? 1 : 0.85,
+                  }}
+                >
+                  {copiedNotes ? <Check {...ICON_PROPS} size={11} /> : <Copy {...ICON_PROPS} size={11} />}
+                  {copiedNotes ? 'Copied!' : 'Copy'}
+                </button>
+              )}
+            </>}
+          />
           <div style={{ borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
             {editingNotes ? (
               <div onKeyDown={(e) => {
@@ -1103,13 +1087,10 @@ export default function MeetingDetail() {
             purpose: you read what happened, then you ask about it. */}
         {meeting?.id && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.3 }} className="mt-8">
-            <div className="sk-hd">
-              <MessageSquarePlus {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-              <h3 className="sk-hd-t">
-                Discussion
-              </h3>
-            </div>
-            <div className="detail-card" style={{ borderRadius: 8, padding: '14px 16px' }}>
+            <SectionHead as="h3" icon={<MessageSquarePlus {...ICON_PROPS} size={14} />} title="Discussion" />
+            {/* A flat panel: each comment is its own material card, so the
+                wrapper stays plain (no box-in-box, color back pick 1). */}
+            <div>
               <MeetingActivityFeed meetingId={meeting.id} />
             </div>
           </motion.div>

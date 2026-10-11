@@ -68,6 +68,14 @@ export function stageIndex(stage: string | null | undefined): number {
   return CANONICAL_STAGES.indexOf(normalized)
 }
 
+// Where a stage sits on the teal data ramp (lib/tealRamp.ts): 0 = Idea (the
+// dim end) to 1 = Published (the full accent), so a stage bar's brightness
+// carries the order of the pipeline. An unknown stage takes the dim end.
+export function stageRampStep(stage: string | null | undefined): number {
+  const i = stageIndex(stage)
+  return i < 0 ? 0 : i / (CANONICAL_STAGES.length - 1)
+}
+
 // UI → API stage value. The API (api/routes/projects.ts PROJECT_STAGE_VALUES)
 // only accepts brain.db's canonical 7-stage vocabulary, which uses
 // "Data Analysis" / "Submitted" / "Accepted" where the UI strip shows

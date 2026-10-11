@@ -1137,8 +1137,9 @@ a:hover {
 .sk-hd-c{font-size:12.5px;font-weight:400;color:var(--sk-t3);font-variant-numeric:tabular-nums;white-space:nowrap}
 .sk-hd-ic{color:var(--sk-t3);flex-shrink:0;display:inline-flex}
 .sk-hd-r{margin-left:auto;display:flex;align-items:center;gap:6px}
-/* Controls in a head (a link, a + button) sit after the fade, on the right. */
-.sk-hd>.sk-hd-r,.sk-hd>button,.sk-hd>a{order:2}
+/* Controls in a head (a link, a + button) go in SectionHead's `right` slot:
+   after the fade, pinned to the right edge. */
+.sk-hd>.sk-hd-r{order:2}
 .sk-hd::after,.tk .tk-ctog::after,.sk-fade{content:"";display:block;flex:none;width:clamp(32px,12vw,120px);height:1px;background:linear-gradient(90deg,var(--sk-line2),transparent)}
 .sk-hd::after{order:1}
 
@@ -2390,12 +2391,18 @@ button[aria-label="Deselect task"]::before {
 .dark{--sk-mat-bg:linear-gradient(180deg,var(--sk-top) 0%,var(--sk-card) 60%)}
 .tk .tk-card,.sk-mat,.detail-card,.card{background:var(--sk-mat-bg);box-shadow:inset 0 1px 0 var(--sk-rim),var(--sk-amb)}
 .sk-mat,.detail-card,.card{border:1px solid var(--sk-line)}
+/* No box-in-box: a material card inside another keeps its border but drops
+   the second gradient and shadow. Pages still put the material on the leaf
+   and keep the panel flat; this keeps a missed nesting from doubling up. */
+:is(.sk-mat,.detail-card,.card) :is(.sk-mat,.detail-card,.card){background:transparent;box-shadow:none}
 /* Data bars run teal dark to bright (color back pick 7, Nick 2026-10-11: "for 7
    i think you can use teal just do the dark to bright with that color!").
    --sk-ramp-dim is the dim end; lib/tealRamp.ts mixes from it to the full
-   accent. Floors keep the dim end at 3:1 on the card (light 70%, dark 55%). */
-:root{--sk-ramp-dim:color-mix(in srgb,var(--sk-ac) 70%,var(--sk-card))}
-.dark{--sk-ramp-dim:color-mix(in srgb,var(--sk-ac) 55%,var(--sk-card))}
+   accent. Every bar sits on --sk-bar-track, and the floors hold the dim end
+   at 3:1 against that track (light 78% = 3.26, dark 68% = 3.19), which is
+   the background the fill is actually read against (tealRamp.test.ts). */
+:root{--sk-ramp-dim:color-mix(in srgb,var(--sk-ac) 78%,var(--sk-card));--sk-bar-track:color-mix(in srgb,var(--sk-t1) 10%,transparent)}
+.dark{--sk-ramp-dim:color-mix(in srgb,var(--sk-ac) 68%,var(--sk-card))}
 .tk .tk-card:hover,.tk .tk-mc.tk-nowm{box-shadow:inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
 .tk .tk-tc.tk-urg{box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim),var(--sk-amb)}
 .tk .tk-tc.tk-urg:hover{box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
@@ -2997,9 +3004,15 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-row.sr-selmode{cursor:cell}
 /* Rows lift on hover (color back pick 6, Nick 2026-10-11): the row under the
    pointer takes the card material and a faint teal rim. Nothing moves, no
-   grid lines. A selected row keeps its own teal tint. */
-.sr .sr-row:hover:not(.sr-sel){background:var(--sk-mat-bg);box-shadow:inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-rim-ac),var(--sk-amb)}
-.sr .sr-row.sr-urg:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-rim-ac),var(--sk-amb)}
+   grid lines. A selected row keeps its own teal tint. A row is 40px, so it
+   casts the mock's small row shadow (--sr-amb), not the card's 30px blur.
+   The keyboard-cursor row keeps its gray ring under the pointer. */
+.sr{--sr-amb:var(--sk-amb)}
+.dark .sr{--sr-amb:0 1px 3px rgba(0,0,0,.4)}
+.sr .sr-row:hover:not(.sr-sel){background:var(--sk-mat-bg);box-shadow:inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-rim-ac),var(--sr-amb)}
+.sr .sr-row.sr-urg:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-rim-ac),var(--sr-amb)}
+.sr .sr-row.sr-cur:hover:not(.sr-sel),.sr .sr-row.sr-exp:hover:not(.sr-sel){box-shadow:inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-line2),var(--sr-amb)}
+.sr .sr-row.sr-urg.sr-cur:hover:not(.sr-sel),.sr .sr-row.sr-urg.sr-exp:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-line2),var(--sr-amb)}
 @media (prefers-reduced-motion:reduce){.sr .sr-row{transition:none}}
 .sr .sr-c{display:flex;align-items:center;gap:6px;min-width:0}
 .sr .sr-c.sr-end{justify-content:flex-end}
@@ -3084,7 +3097,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr-foot kbd{font-family:var(--font-mono),'JetBrains Mono',monospace;font-size:9px;padding:1px 4px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--sk-line2);color:var(--sk-t2)}
 /* Grants list on the sleek row (GrantSleekList): progress stays the accent at any percent */
 .gr-list .gr-prog{display:inline-flex;align-items:center;gap:6px;min-width:0}
-.gr-list .gr-bar{width:36px;height:3px;border-radius:999px;background:var(--sk-line2);overflow:hidden;flex-shrink:0}
+.gr-list .gr-bar{width:36px;height:3px;border-radius:999px;background:var(--sk-bar-track);overflow:hidden;flex-shrink:0}
 .gr-list .gr-bar i{display:block;height:100%;border-radius:999px;background:var(--sk-ac)}
 .gr-list .gr-prog .sr-m{font-variant-numeric:tabular-nums}
 .gr-list .gr-detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 24px;padding:10px 10px 16px 10px;font-size:13px;color:var(--sk-t1)}

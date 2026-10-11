@@ -11,7 +11,7 @@ import { userEvent } from 'vitest/browser'
 import { MemoryRouter } from 'react-router-dom'
 import SectionHead from '../components/ui/SectionHead'
 import { SleekTable, SleekRow, type SleekColumn } from '../components/table/SleekRows'
-import { tealRamp } from '../lib/tealRamp'
+import { tealRamp, BAR_TRACK } from '../lib/tealRamp'
 import css from '../index.css?raw'
 import { mount, cleanupMountsAfterEach } from './testMount'
 
@@ -52,6 +52,19 @@ describe('pick 1: one card material', () => {
       expect(sh[0]).toMatch(/inset/)
       for (const e of els) expect(cs(e).borderTopWidth).toBe('1px')
     })
+
+    it(`no box-in-box: a card inside a card drops the second material (${theme})`, async () => {
+      if (theme === 'dark') document.documentElement.classList.add('dark')
+      const host = await mount(
+        <div className="detail-card" data-k="outer"><div className="detail-card" data-k="inner">c</div></div>,
+        { ready: (h) => h.querySelector('[data-k="inner"]'), label: 'nested cards' },
+      )
+      const outer = host.querySelector('[data-k="outer"]')!, inner = host.querySelector('[data-k="inner"]')!
+      expect(cs(outer).backgroundImage).toMatch(/^linear-gradient/)
+      expect(cs(inner).backgroundImage).toBe('none')
+      expect(cs(inner).boxShadow).toBe('none')
+      expect(cs(inner).borderTopWidth).toBe('1px')
+    })
   }
 })
 
@@ -91,6 +104,23 @@ describe('pick 3: section heads by weight', () => {
     expect(hd.querySelector('h3')!.textContent).toBe('Agenda')
     expect(hd.querySelector('.sk-hd-c')).toBeNull()
     expect(hd.querySelector('.sk-hd-r')).toBeNull()
+  })
+
+  it('every page head goes through SectionHead: no hand-built .sk-hd markup, no local head with its own look', () => {
+    const src = import.meta.glob('../{pages,components}/**/*.tsx', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+    const raw = Object.entries(src)
+      .filter(([f, s]) => !f.endsWith('ui/SectionHead.tsx') && /className="sk-hd"|className=\{`sk-hd/.test(s))
+      .map(([f]) => f)
+    expect(raw).toEqual([])
+    // A page-local SectionHeader may only adapt props onto SectionHead. Two
+    // keep their own look: TaskIntelligence's 10px field labels inside the
+    // task drawer, and Today's agenda sub-labels (.tk-ash); neither is a page head.
+    const OWN = ['TaskIntelligence.tsx', 'AgendaListView.tsx']
+    const local = Object.entries(src)
+      .filter(([f, s]) => /function SectionHeader\b/.test(s) && !OWN.some((o) => f.endsWith(o)))
+      .filter(([, s]) => !/function SectionHeader[\s\S]*?return[\s\S]*?<SectionHead\b/.test(s))
+      .map(([f]) => f)
+    expect(local).toEqual([])
   })
 
   it("Today's collapsible heads draw the same fade", async () => {
@@ -144,8 +174,35 @@ describe('pick 6: rows lift on hover', () => {
     await new Promise((r) => setTimeout(r, 200))
   }
 
-  it('the stylesheet carries the lift for plain and urgent rows', () => {
-    expect(hov.textContent!.match(/cb-hov/g)!.length).toBe(2)
+  it('the stylesheet carries the lift for plain, urgent and cursor rows', () => {
+    expect(hov.textContent!.match(/cb-hov/g)!.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('dark: a lifted row casts the small row shadow, not the 30px card blur', async () => {
+    document.documentElement.classList.add('dark')
+    const host = await table()
+    const a = host.querySelector<HTMLElement>('.sr-row')!
+    await hover(a)
+    const sh = cs(a).boxShadow
+    expect(sh).toMatch(/0px 1px 3px/)
+    expect(sh).not.toMatch(/30px/)
+  })
+
+  it('the keyboard-cursor row keeps its gray ring while the pointer is on it', async () => {
+    const host = await table()
+    const a = host.querySelector<HTMLElement>('.sr-row')!
+    a.classList.add('sr-cur')
+    await new Promise((r) => setTimeout(r, 200)) // let the row's shadow transition settle
+    // the cursor ring's color as the browser serializes it
+    const probe = document.createElement('i')
+    probe.style.color = 'var(--sk-line2)'
+    host.appendChild(probe)
+    const gray = cs(probe).color
+    expect(cs(a).boxShadow).toContain(`${gray} 0px 0px 0px 1px inset`)
+    await hover(a)
+    // still there under the pointer, with the lift's material
+    expect(cs(a).boxShadow).toContain(`${gray} 0px 0px 0px 1px inset`)
+    expect(cs(a).backgroundImage).toMatch(/^linear-gradient/)
   })
 
   it('the hovered row takes the card material and a teal rim; the others stay flat; nothing moves', async () => {
@@ -201,25 +258,42 @@ describe('pick 7: teal data ramp', () => {
     return (a + 0.05) / (b + 0.05)
   }
 
+  // alpha of a computed color (color(srgb r g b / a) or rgba(r, g, b, a)); 1 when opaque
+  const alpha = (s: string) => {
+    const m = s.match(/\/\s*([\d.]+)\)$/) ?? s.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)$/)
+    return m ? Number(m[1]) : 1
+  }
+  const over = (fg: number[], a: number, bg: number[]) => fg.map((v, i) => v * a + bg[i] * (1 - a))
+
   for (const theme of ['light', 'dark'] as const) {
-    it(`dim end to full accent, and the dim end holds 3:1 on the card (${theme})`, async () => {
+    it(`dim end to full accent, and the dim end holds 3:1 on the bar track it sits on (${theme})`, async () => {
       if (theme === 'dark') document.documentElement.classList.add('dark')
       const host = await mount(
         <div>
           <i data-k="card" style={{ background: 'var(--sk-card)' }} />
+          <i data-k="track" style={{ background: BAR_TRACK }} />
           {[0, 0.5, 1].map((t) => <i key={t} data-t={t} style={{ background: tealRamp(t) }} />)}
           <i data-k="ac" style={{ background: 'var(--sk-ac)' }} />
         </div>,
         { ready: (h) => h.querySelector('[data-k="ac"]'), label: 'ramp' },
       )
-      const col = (sel: string) => rgb(cs(host.querySelector(sel)!).backgroundColor)
+      const raw = (sel: string) => cs(host.querySelector(sel)!).backgroundColor
+      const col = (sel: string) => rgb(raw(sel))
       const card = col('[data-k="card"]')
+      // the track is translucent: the eye reads the track over the card
+      const trackA = alpha(raw('[data-k="track"]'))
+      const track = over(col('[data-k="track"]'), trackA, card)
       const dim = col('[data-t="0"]'), mid = col('[data-t="0.5"]'), full = col('[data-t="1"]')
       expect(full).toEqual(col('[data-k="ac"]'))
-      // brightness carries the order: each step sits further from the card
+      // the empty track shows, and the fill holds 3:1 against the track (what a
+      // bar's edge is read against) as well as against the card
+      expect(trackA).toBeGreaterThan(0)
+      expect(trackA).toBeLessThan(1)
+      expect(contrast(dim, track)).toBeGreaterThanOrEqual(3)
       expect(contrast(dim, card)).toBeGreaterThanOrEqual(3)
-      expect(contrast(mid, card)).toBeGreaterThan(contrast(dim, card))
-      expect(contrast(full, card)).toBeGreaterThan(contrast(mid, card))
+      // brightness carries the order: each step sits further from the track
+      expect(contrast(mid, track)).toBeGreaterThan(contrast(dim, track))
+      expect(contrast(full, track)).toBeGreaterThan(contrast(mid, track))
     })
   }
 })

@@ -23,6 +23,7 @@ import HeartbeatLine from '../components/HeartbeatLine'
 import { PATHS } from '../constants/paths'
 import { parseDbUtc } from '../lib/time'
 import { ICON_PROPS } from '../lib/iconProps'
+import SectionHead from '../components/ui/SectionHead'
 
 // ── Stage colors ───────────────────────────────────────────
 
@@ -831,40 +832,14 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
 
 // ── Section Header ─────────────────────────────────────────
 
-function SectionHeader({
-  icon: Icon,
-  title,
-  count,
-}: {
-  icon: typeof BookOpen
-  title: string
-  count?: number
-}) {
+// The shared section head (ui/SectionHead): bold title, dim count, gray fade.
+function SectionHeader({ icon: Icon, title, count }: { icon: typeof BookOpen; title: string; count?: number }) {
   return (
-    <div className="flex items-center gap-3 mb-5">
-      <Icon {...ICON_PROPS} size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
-      <h2
-        style={{
-          fontWeight: 500,
-          fontSize: '1.25rem',
-          color: 'var(--ink)',
-          margin: 0,
-        }}
-      >
-        {title}
-      </h2>
-      {count !== undefined && count > 0 && (
-        <span
-          style={{
-            fontSize: 'var(--label-size)',
-            color: 'var(--slate)',
-            opacity: 0.75,
-          }}
-        >
-          {count}
-        </span>
-      )}
-    </div>
+    <SectionHead
+      icon={<Icon {...ICON_PROPS} size={14} />}
+      title={title}
+      count={count !== undefined && count > 0 ? count : undefined}
+    />
   )
 }
 

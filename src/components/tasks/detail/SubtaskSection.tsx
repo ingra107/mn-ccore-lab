@@ -12,6 +12,7 @@ import { useSubtasks } from '../../../hooks/useApiData'
 import { useCreateSubtask, useToggleSubtask, useDeleteSubtask, useReorderSubtasks } from '../../../hooks/useMutations'
 import { ICON_PROPS } from '../../../lib/iconProps'
 import { InputSafePointerSensor, InputSafeTouchSensor } from '../../../lib/dndSensors'
+import { tealRamp, BAR_TRACK } from '../../../lib/tealRamp'
 
 // ── Subtask Section (collapsible wrapper) ───────────────────
 
@@ -131,7 +132,6 @@ function SubtaskChecklist({ taskId }: { taskId: string }) {
   const completed = subtasks.filter((s) => s.completed).length
   const total = subtasks.length
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0
-  const allDone = total > 0 && completed === total
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault()
@@ -162,8 +162,9 @@ function SubtaskChecklist({ taskId }: { taskId: string }) {
 
       {/* Progress bar */}
       {total > 0 && (
-        <div style={{ width: '100%', height: 4, borderRadius: 'var(--radius-sm)', background: 'var(--gold-emphasis)', overflow: 'hidden', marginBottom: '0.75rem' }}>
-          <div style={{ width: `${pct}%`, height: '100%', background: allDone ? 'var(--teal-solid)' : 'var(--gold)', borderRadius: 'var(--radius-sm)', transition: 'width 0.3s ease' }} />
+        // Teal data ramp: dim early, the full accent when every subtask is done.
+        <div style={{ width: '100%', height: 4, borderRadius: 'var(--radius-sm)', background: BAR_TRACK, overflow: 'hidden', marginBottom: '0.75rem' }}>
+          <div style={{ width: `${pct}%`, height: '100%', background: tealRamp(pct / 100), borderRadius: 'var(--radius-sm)', transition: 'width 0.3s ease' }} />
         </div>
       )}
 

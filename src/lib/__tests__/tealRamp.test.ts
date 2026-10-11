@@ -1,7 +1,8 @@
 // The teal data ramp (color back pick 7, Nick 2026-10-11): stages run from the
 // dim end to the full accent, and funded grant bars are teal with white text.
 import { describe, it, expect } from 'vitest'
-import { tealRamp, rampStep, litFill, TEAL_STABLE } from '../tealRamp'
+import { tealRamp, rampStep, litFill, rampBar, BAR_TRACK, LIT_EDGE, TEAL_STABLE } from '../tealRamp'
+import { stageRampStep } from '../stageNormalize'
 import { GRANT_BAR_FILL, GRANT_BAR_TOP, GRANT_BAR_LIT } from '../grantBar'
 
 describe('tealRamp', () => {
@@ -24,6 +25,23 @@ describe('tealRamp', () => {
 
   it('a lit fill keeps the color below a lighter top edge', () => {
     expect(litFill('red')).toBe('linear-gradient(180deg, color-mix(in srgb, red 84%, #fff) 0%, red 70%)')
+  })
+
+  it('rampBar is the lit ramp color plus its top highlight; the track is the shared token', () => {
+    expect(rampBar(0.5)).toEqual({ background: litFill(tealRamp(0.5)), boxShadow: LIT_EDGE })
+    expect(BAR_TRACK).toBe('var(--sk-bar-track)')
+  })
+
+  it('a stage bar takes its brightness from the stage order, Idea dim to Published bright', () => {
+    expect(stageRampStep('idea')).toBe(0)
+    expect(stageRampStep('Idea')).toBe(0)
+    expect(stageRampStep('published')).toBe(1)
+    expect(stageRampStep('Accepted')).toBe(1)
+    const order = ['idea', 'data_collection', 'data_analysis', 'writing', 'submitted', 'revisions', 'published'].map(stageRampStep)
+    expect([...order].sort((a, b) => a - b)).toEqual(order)
+    expect(new Set(order).size).toBe(order.length)
+    expect(stageRampStep('nonsense')).toBe(0)
+    expect(stageRampStep(null)).toBe(0)
   })
 })
 

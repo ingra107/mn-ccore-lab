@@ -19,6 +19,8 @@ import { PRIORITY_COLORS, isProjectActive } from '../../lib/taskConstants'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import DueLabel from '../../components/DueLabel'
+import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
+import { stageRampStep } from '../../lib/stageNormalize'
 import { taskShortLabel } from '../../lib/displayNames'
 
 // D1 lowercase stage value → display label.
@@ -604,31 +606,15 @@ export default function AnalyticsPage() {
             {projectsByStage.map(([stage, count]) => {
               const maxCount = Math.max(...projectsByStage.map(([, c]) => c))
               const width = (count / maxCount) * 100
-              // Theme-agnostic fills so #fff text passes AA in BOTH modes.
-              // --slate/--teal/--gold flip to LIGHT dark-mode variants (e.g.
-              // --teal dark = #5cbcb4), where white text fails 2:1. r7 2026-04-22.
-              const stageColors: Record<string, string> = {
-                'idea': 'var(--stage-fill-idea)',
-                'data_collection': 'var(--stage-fill-data-collection)',
-                'analysis': 'var(--stage-fill-analysis)',
-                'data_analysis': 'var(--stage-fill-analysis)',
-                'writing': 'var(--stage-fill-writing)',
-                'review': 'var(--stage-fill-review)',
-                'submitted': 'var(--stage-fill-review)',
-                'revisions': 'var(--stage-fill-revisions)',
-                'accepted': 'var(--stage-fill-published)',
-                'published': 'var(--stage-fill-published)',
-              }
               return (
                 <div key={stage} className="flex items-center gap-3">
                   <span className="text-xs w-28" style={{ color: 'var(--ink)' }}>{STAGE_DISPLAY[stage] ?? stage}</span>
-                  <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
-                    <div className="h-full rounded transition-all flex items-center px-2" style={{ width: `${width}%`, backgroundColor: stageColors[stage] || 'var(--teal)', minWidth: 24 }}>
-                      {/* Stage bar fills are dark-saturated (teal/maroon/slate); white
-                          text gives 6+:1 AA. #1a1a1a on dark fills was invisible. */}
-                      <span className="text-[10px] font-semibold" style={{ color: '#fff' }}>{count}</span>
-                    </div>
+                  {/* Teal data ramp: brightness carries the stage order, Idea dim to
+                      Published bright (tealRamp.ts). The count sits beside the bar. */}
+                  <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: BAR_TRACK }}>
+                    <div className="h-full rounded transition-all" style={{ width: `${width}%`, minWidth: 4, ...rampBar(stageRampStep(stage)) }} />
                   </div>
+                  <span className="text-[11px] font-semibold w-6 text-right" style={{ color: 'var(--sk-t2)', fontVariantNumeric: 'tabular-nums' }}>{count}</span>
                 </div>
               )
             })}

@@ -8,6 +8,7 @@ import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
+import SectionHead from '../../components/ui/SectionHead'
 
 interface ProjectDecisionsProps {
   projectSlug: string
@@ -30,22 +31,22 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
       transition={{ duration: 0.25, delay: 0.1 }}
       style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
     >
-      <div className="sk-hd">
-        <h2 className="sk-hd-t">
-          <Scale {...ICON_PROPS} size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px', color: 'var(--sk-t3)' }} />
-          Decisions
-        </h2>
-        <Link
-          to={PATHS.decisions}
-          style={{
-            fontSize: 'var(--label-size)',
-            color: 'var(--teal)',
-            textDecoration: 'none',
-          }}
-        >
-          View all
-        </Link>
-      </div>
+      <SectionHead
+        icon={<Scale {...ICON_PROPS} size={16} />}
+        title="Decisions"
+        right={<>
+          <Link
+            to={PATHS.decisions}
+            style={{
+              fontSize: 'var(--label-size)',
+              color: 'var(--teal)',
+              textDecoration: 'none',
+            }}
+          >
+            View all
+          </Link>
+        </>}
+      />
 
       <div
         style={{

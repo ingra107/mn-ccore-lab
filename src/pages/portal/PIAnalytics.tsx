@@ -40,6 +40,7 @@ import { staggerContainer, staggerItem } from '../../lib/animations'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -624,32 +625,27 @@ export default function PIAnalytics() {
                       >
                         {person.name}
                       </span>
+                      {/* Teal data ramp: brighter as the count rises (tealRamp.ts).
+                          The count sits beside the bar. */}
                       <div
                         className="flex-1 h-5 rounded overflow-hidden"
-                        style={{ backgroundColor: 'var(--border-subtle)' }}
+                        style={{ backgroundColor: BAR_TRACK }}
                       >
                         <div
-                          className="h-full rounded flex items-center px-2"
+                          className="h-full rounded"
                           style={{
-                            width: `${Math.max(barWidth, 8)}%`,
-                            // Theme-agnostic dark fills so #fff passes AA in
-                            // both modes. --slate/--gold flip to LIGHT
-                            // dark-mode variants (#dcb355 gold dark, #b0b5b9
-                            // slate dark) where white text fails ~2:1.
-                            // r7 2026-04-22.
-                            backgroundColor: member.actions < 3 ? 'var(--stage-fill-idea)' : 'var(--stage-fill-analysis)',
+                            width: `${Math.max(barWidth, 4)}%`,
                             transition: 'width 0.6s ease',
-                            minWidth: 24,
+                            ...rampBar(barWidth / 100),
                           }}
-                        >
-                          <span
-                            className="text-[10px] font-semibold"
-                            style={{ color: '#fff' }}
-                          >
-                            {member.actions}
-                          </span>
-                        </div>
+                        />
                       </div>
+                      <span
+                        className="text-[11px] font-semibold w-6 text-right"
+                        style={{ color: 'var(--sk-t2)', fontVariantNumeric: 'tabular-nums' }}
+                      >
+                        {member.actions}
+                      </span>
                       <span
                         className="text-[10px] w-8 text-right"
                         style={{ color: 'var(--teal)' }}

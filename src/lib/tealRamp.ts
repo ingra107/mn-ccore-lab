@@ -26,6 +26,18 @@ export function litFill(color: string, top = 84): string {
 /** The 1px highlight along a lit bar's top edge (same as the glossy button). */
 export const LIT_EDGE = 'inset 0 1px 0 rgba(255,255,255,0.25)'
 
+/** The whole fill of a data bar at ramp position t: the lit teal plus its top
+ *  highlight. Every data bar draws its fill with this and its track with
+ *  BAR_TRACK, so the dim end's 3:1 floor (index.css --sk-ramp-dim) is held
+ *  against the background the fill actually sits on. No text goes inside the
+ *  fill: in dark the accent is light, so a count sits beside the bar. */
+export function rampBar(t: number): { background: string; boxShadow: string } {
+  return { background: litFill(tealRamp(t)), boxShadow: LIT_EDGE }
+}
+
+/** The empty part of a data bar (index.css --sk-bar-track). */
+export const BAR_TRACK = 'var(--sk-bar-track)'
+
 /** Teal that does NOT flip with the theme, for bars that carry white text
  *  (CLAUDE.md Rule 41 class): the light theme's accent, 6.6:1 with #fff. */
 export const TEAL_STABLE = '#006b66'

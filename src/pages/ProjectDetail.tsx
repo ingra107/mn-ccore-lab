@@ -81,6 +81,7 @@ import EmptyState from '../components/EmptyState'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { projectShortLabel } from '../lib/displayNames'
+import SectionHead from '../components/ui/SectionHead'
 
 // P2-5: notes + comments collapsed into the single chronological `activity`
 // stream (Notes / Comments / All are filters over it, not separate tabs).
@@ -1534,9 +1535,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         transition={{ duration: 0.25, delay: 0.1 }}
         style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
       >
-        <div className="sk-hd">
-          <h2 className="sk-hd-t">Stage</h2>
-        </div>
+        <SectionHead title="Stage" />
         <div className="flex items-center gap-0" style={{ position: 'relative' }}>
           {/* Connecting line */}
           <div
@@ -1647,9 +1646,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, delay: 0.15 }}
         >
-          <div className="sk-hd">
-            <h2 className="sk-hd-t">Details</h2>
-          </div>
+          <SectionHead title="Details" />
 
           <div
             style={{

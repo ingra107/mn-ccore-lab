@@ -8,6 +8,7 @@ import { formatPublicationDate } from '../../lib/dateUtils'
 import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../../lib/taskGrouping'
 import { Button } from '../../components/ui/Button'
 import ProjectPublications from '../../components/ProjectPublications'
+import SectionHead from '../../components/ui/SectionHead'
 
 interface ProjectLiteratureProps {
   projectSlug: string
@@ -27,31 +28,29 @@ export default function ProjectLiterature({ projectSlug, projectTitle, isPi }: P
         <ProjectPublications projectSlug={projectSlug} projectTitle={projectTitle} isPi={isPi} variant="list" />
       </div>
       <div style={{ marginBottom: '2.5rem' }}>
-      <div className="sk-hd">
-        <BookOpen {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t3)' }} />
-        <h2 className="sk-hd-t">
-          Related Literature
-        </h2>
-        <span className="sk-hd-c">
-          {papers.length}
-        </span>
-        {isPi && (
-          <button
-            onClick={() => setShowLinkModal(true)}
-            className="ml-auto flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors"
-            style={{
-              backgroundColor: 'transparent',
-              color: 'var(--teal)',
-              border: '1px solid var(--teal)',
-              cursor: 'pointer',
-              opacity: 0.8,
-            }}
-          >
-            <Plus {...ICON_PROPS} size={12} />
-            Link Paper
-          </button>
-        )}
-      </div>
+      <SectionHead
+        icon={<BookOpen {...ICON_PROPS} size={16} />}
+        title="Related Literature"
+        count={papers.length}
+        right={<>
+          {isPi && (
+            <button
+              onClick={() => setShowLinkModal(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors"
+              style={{
+                backgroundColor: 'transparent',
+                color: 'var(--teal)',
+                border: '1px solid var(--teal)',
+                cursor: 'pointer',
+                opacity: 0.8,
+              }}
+            >
+              <Plus {...ICON_PROPS} size={12} />
+              Link Paper
+            </button>
+          )}
+        </>}
+      />
       <div
         style={{
           borderRadius: 'var(--radius-xl)',

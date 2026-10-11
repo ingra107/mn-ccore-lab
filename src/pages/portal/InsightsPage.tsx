@@ -15,9 +15,11 @@ import { useToast } from '../../hooks/useToast'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import { PATHS } from '../../constants/paths'
-import { stageLabel, toApiStage } from '../../lib/stageNormalize'
+import { stageLabel, toApiStage, stageRampStep } from '../../lib/stageNormalize'
+import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { ICON_PROPS } from '../../lib/iconProps'
+import SectionHead from '../../components/ui/SectionHead'
 
 interface DashboardData {
   week: string
@@ -36,15 +38,6 @@ interface DashboardData {
   stalledRegistry: { slug: string; title: string; daysIdle: number; openTasks: number }[]
 }
 
-const STAGE_FILL: Record<string, string> = {
-  'Idea': 'var(--stage-fill-idea)',
-  'Data Collection': 'var(--stage-fill-data-collection)',
-  'Data Analysis': 'var(--stage-fill-analysis)',
-  'Writing': 'var(--stage-fill-writing)',
-  'Review': 'var(--stage-fill-review)',
-  'Submitted': 'var(--stage-fill-submitted)',
-  'Published': 'var(--stage-fill-published)',
-}
 
 // INS-04: bump / shift an ISO-week string by N weeks. Returns the new YYYY-Www.
 function shiftIsoWeek(weekStr: string, deltaWeeks: number): string {
@@ -343,18 +336,9 @@ export default function InsightsPage() {
   )
 }
 
+// The shared section head (ui/SectionHead): bold label, dim count, gray fade.
 function SectionHeader({ icon, label, count }: { icon: React.ReactNode; label: string; count?: number }) {
-  return (
-    <div className="flex items-center" style={{ gap: 8, marginBottom: 'var(--sp-sm)' }}>
-      <span style={{ color: 'var(--slate)', display: 'inline-flex' }}>{icon}</span>
-      <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', margin: 0, letterSpacing: '0.02em' }}>{label}</h2>
-      {count !== undefined && count > 0 && (
-        <span style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85, fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
-          {count}
-        </span>
-      )}
-    </div>
-  )
+  return <SectionHead icon={icon} title={label} count={count !== undefined && count > 0 ? count : undefined} />
 }
 
 function WorkloadHeatmap({ rows }: { rows: DashboardData['workloadHeatmap'] }) {
@@ -476,13 +460,14 @@ function TasksPerPersonBars({ distribution }: { distribution: { slug: string; co
               <span style={{ flex: '0 0 130px', fontSize: 12, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {person.name}
               </span>
-              <div style={{ flex: 1, height: 18, background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)', position: 'relative' }}>
+              {/* One series, so one step of the ramp: the full accent. */}
+              <div style={{ flex: 1, height: 18, background: BAR_TRACK, borderRadius: 'var(--radius-sm)', position: 'relative' }}>
                 <div
                   style={{
                     width: `${pct}%`,
                     height: '100%',
-                    background: 'var(--stage-fill-data-collection)',
                     borderRadius: 'var(--radius-sm)',
+                    ...rampBar(1),
                   }}
                 />
               </div>
@@ -639,26 +624,21 @@ function PipelineFunnel({ rows }: { rows: DashboardData['pipelineFunnel'] }) {
               <span style={{ flex: '0 0 110px', fontSize: 11, color: 'var(--slate)', textAlign: 'right', whiteSpace: 'nowrap' }}>
                 {r.stage}
               </span>
-              <div style={{ flex: 1, height: 22, position: 'relative', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
+              {/* Teal data ramp: Idea dim to Published bright (tealRamp.ts); the
+                  count sits beside the bar. */}
+              <div style={{ flex: 1, height: 22, position: 'relative', background: BAR_TRACK, borderRadius: 'var(--radius-sm)' }}>
                 <div
                   style={{
                     width: `${pct}%`,
                     height: '100%',
-                    background: STAGE_FILL[r.stage] ?? 'var(--stage-fill-idea)',
                     borderRadius: 'var(--radius-sm)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-end',
-                    paddingRight: 8,
-                    color: '#fff',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    fontVariantNumeric: 'tabular-nums',
+                    ...rampBar(stageRampStep(r.stage)),
                   }}
-                >
-                  {r.count > 0 ? r.count : ''}
-                </div>
+                />
               </div>
+              <span style={{ flex: '0 0 36px', textAlign: 'right', fontSize: 11, fontWeight: 600, color: 'var(--sk-t2)', fontVariantNumeric: 'tabular-nums' }}>
+                {r.count}
+              </span>
             </Link>
           )
         })}

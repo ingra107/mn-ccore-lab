@@ -11,6 +11,7 @@ import Field from '../../components/ui/Field'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
+import SectionHead from '../../components/ui/SectionHead'
 
 interface ProjectDependenciesProps {
   project: Project
@@ -83,29 +84,29 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
       transition={{ duration: 0.25, delay: 0.15 }}
       style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
     >
-      <div className="sk-hd">
-        <h2 className="sk-hd-t">
-          <GitBranch {...ICON_PROPS} size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px', color: 'var(--sk-t3)' }} />
-          Dependencies
-        </h2>
-        {isPi && !showAddForm && (
-          <motion.button
-            type="button"
-            onClick={() => setShowAddForm(true)}
-            className="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs"
-            style={{
-              fontSize: 'var(--label-size)',
-              background: 'var(--teal-active)',
-              color: 'var(--teal)',
-              border: '1px solid rgba(45, 138, 138, 0.2)',
-            }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Plus {...ICON_PROPS} size={12} />
-            Add dependency
-          </motion.button>
-        )}
-      </div>
+      <SectionHead
+        icon={<GitBranch {...ICON_PROPS} size={16} />}
+        title="Dependencies"
+        right={<>
+          {isPi && !showAddForm && (
+            <motion.button
+              type="button"
+              onClick={() => setShowAddForm(true)}
+              className="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs"
+              style={{
+                fontSize: 'var(--label-size)',
+                background: 'var(--teal-active)',
+                color: 'var(--teal)',
+                border: '1px solid rgba(45, 138, 138, 0.2)',
+              }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Plus {...ICON_PROPS} size={12} />
+              Add dependency
+            </motion.button>
+          )}
+        </>}
+      />
 
       {/* Add dependency form */}
       <AnimatePresence>

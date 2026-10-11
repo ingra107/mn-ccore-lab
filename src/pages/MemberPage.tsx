@@ -29,6 +29,7 @@ import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { QueryErrorNote } from '../components/QueryErrorNote'
 import { topicLabel } from '../lib/topics'
+import SectionHead from '../components/ui/SectionHead'
 
 // isOverdue imported from dateUtils
 
@@ -343,12 +344,7 @@ export default function MemberPage() {
       {mentee && (
         <>
           <section className="mb-8" id="research-focus">
-            <div className="sk-hd">
-              <GraduationCap {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} aria-hidden="true" />
-              <h2 className="sk-hd-t">
-                Research Focus
-              </h2>
-            </div>
+            <SectionHead icon={<GraduationCap {...ICON_PROPS} size={16} />} title="Research Focus" />
             {mentee.researchInterests && mentee.researchInterests.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
                 {mentee.researchInterests.map((interest) => (
@@ -390,12 +386,7 @@ export default function MemberPage() {
       {menteeProjects.length > 0 && (
         <>
           <section className="mb-8" id="active-projects">
-            <div className="sk-hd">
-              <FlaskConical {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} aria-hidden="true" />
-              <h2 className="sk-hd-t">
-                Active Projects
-              </h2>
-            </div>
+            <SectionHead icon={<FlaskConical {...ICON_PROPS} size={16} />} title="Active Projects" />
             <div className="space-y-3">
               {menteeProjects.map((project) => project && (
                 <div
@@ -450,12 +441,7 @@ export default function MemberPage() {
       {(expertiseTags.length > 0 || isAuthenticated) && (
         <>
           <section className="mb-8" id="expertise">
-            <div className="sk-hd">
-              <Sparkles {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} aria-hidden="true" />
-              <h2 className="sk-hd-t">
-                Expertise
-              </h2>
-            </div>
+            <SectionHead icon={<Sparkles {...ICON_PROPS} size={16} />} title="Expertise" />
 
             <div className="flex flex-wrap gap-1.5 mb-4">
               <AnimatePresence mode="popLayout">
@@ -611,12 +597,7 @@ export default function MemberPage() {
       {slug && (
         <>
           <section className="mb-8" id="activity">
-            <div className="sk-hd">
-              <Activity {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} aria-hidden="true" />
-              <h2 className="sk-hd-t">
-                Activity
-              </h2>
-            </div>
+            <SectionHead icon={<Activity {...ICON_PROPS} size={16} />} title="Activity" />
             <ContributionScoreCard slug={slug} />
             <div style={{ marginTop: '1rem' }} />
             <ActivityHeatmap slug={slug} days={90} />
@@ -630,9 +611,7 @@ export default function MemberPage() {
       {topicCounts.length > 0 && (
         <>
           <section className="mb-8" id="research-areas">
-            <div className="sk-hd">
-              <h2 className="sk-hd-t">Research Areas</h2>
-            </div>
+            <SectionHead title="Research Areas" />
             <div className="flex flex-wrap gap-2 mb-4">
               {topicCounts.map(([topic, count]) => (
                 <span
@@ -690,17 +669,7 @@ export default function MemberPage() {
           <SectionDivider />
           <div className="py-4" />
           <section className="mb-8" id="commitments">
-            <div className="sk-hd">
-              <Handshake {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} aria-hidden="true" />
-              <h2 className="sk-hd-t">
-                Commitments
-              </h2>
-              {openCommitments.length > 0 && (
-                <span className="sk-hd-c">
-                  {openCommitments.length} open
-                </span>
-              )}
-            </div>
+            <SectionHead icon={<Handshake {...ICON_PROPS} size={16} />} title="Commitments" count={openCommitments.length > 0 ? <>{openCommitments.length} open</> : undefined} />
 
             <AnimatePresence mode="popLayout">
               {openCommitments.map((c) => (
@@ -892,23 +861,19 @@ function MemberMilestones({ slug }: { slug: string }) {
       <SectionDivider />
       <div className="py-4" />
       <section className="mb-8" id="milestones">
-        <div className="sk-hd">
-          <GraduationCap {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} aria-hidden="true" />
-          <h2 className="sk-hd-t">
-            Milestones
-          </h2>
-          {open.length > 0 && (
-            <span className="sk-hd-c">
-              {open.length} upcoming
-            </span>
-          )}
-          <Link
-            to={PATHS.menteeMilestonesTab}
-            style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--slate)', textDecoration: 'none' }}
-          >
-            View all
-          </Link>
-        </div>
+        <SectionHead
+          icon={<GraduationCap {...ICON_PROPS} size={16} />}
+          title="Milestones"
+          count={open.length > 0 ? <>{open.length} upcoming</> : undefined}
+          right={<>
+            <Link
+              to={PATHS.menteeMilestonesTab}
+              style={{ fontSize: '11px', color: 'var(--slate)', textDecoration: 'none' }}
+            >
+              View all
+            </Link>
+          </>}
+        />
 
         {isError ? (
           <QueryErrorNote label="milestones" onRetry={() => refetch()} />

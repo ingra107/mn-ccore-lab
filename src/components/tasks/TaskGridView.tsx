@@ -35,6 +35,7 @@ import { parseDbUtc } from '../../lib/time'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import EmptyState from '../EmptyState'
+import { tealRamp, BAR_TRACK } from '../../lib/tealRamp'
 import { Chip } from '../ui/Chip'
 import { projectShortLabel, taskShortLabel } from '../../lib/displayNames'
 
@@ -1772,8 +1773,9 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
       >
         {total > 0 && (
           <div className="flex items-center gap-2 mb-1.5">
-            <div style={{ flex: 1, height: 2, borderRadius: 'var(--radius-sm)', background: 'var(--gold-emphasis)', overflow: 'hidden' }}>
-              <div style={{ width: `${total > 0 ? (completed / total) * 100 : 0}%`, height: '100%', background: completed === total ? 'var(--teal-solid)' : 'var(--gold)', borderRadius: 'var(--radius-sm)', transition: 'width var(--duration-slow) var(--ease-out)' }} />
+            {/* Teal data ramp: dim early, the full accent when all are done. */}
+            <div style={{ flex: 1, height: 2, borderRadius: 'var(--radius-sm)', background: BAR_TRACK, overflow: 'hidden' }}>
+              <div style={{ width: `${total > 0 ? (completed / total) * 100 : 0}%`, height: '100%', background: tealRamp(total > 0 ? completed / total : 0), borderRadius: 'var(--radius-sm)', transition: 'width var(--duration-slow) var(--ease-out)' }} />
             </div>
             <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{completed}/{total}</span>
           </div>

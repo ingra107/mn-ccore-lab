@@ -18,6 +18,7 @@ import { staggerContainer, staggerItem } from '../lib/animations'
 import EntityNotFound from '../components/EntityNotFound'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import SectionHead from '../components/ui/SectionHead'
 
 interface PrepData {
   meeting: { id: string; title: string; date: string; status: string; attendees: string | null; facilitator?: string | null }
@@ -335,20 +336,9 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
   )
 }
 
+// The shared section head (ui/SectionHead): bold title, dim subtitle, gray fade.
 function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle?: string }) {
-  return (
-    <div className="flex items-center gap-2 mb-2">
-      <span style={{ color: 'var(--gold)' }}>{icon}</span>
-      <h2 style={{ fontWeight: 500, fontSize: 14, color: 'var(--ink)', margin: 0 }}>
-        {title}
-      </h2>
-      {subtitle && (
-        <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.85 }}>
-          {subtitle}
-        </span>
-      )}
-    </div>
-  )
+  return <SectionHead icon={icon} title={title} count={subtitle} />
 }
 
 function ActionRow({ item }: { item: { id: string; description: string; assignee: string; completed: number; due_date: string | null } }) {

@@ -243,20 +243,6 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
           </linearGradient>
         </defs>
 
-        {/* Today marker */}
-        <line
-          x1={todayX} y1={CHART_PADDING_TOP - 16}
-          x2={todayX} y2={chartHeight - CHART_PADDING_BOTTOM + 12}
-          stroke="var(--teal)" strokeWidth={2} strokeOpacity={0.7}
-        />
-        <text
-          x={todayX} y={CHART_PADDING_TOP - 20}
-          textAnchor="middle"
-          style={{ fontSize: '10px', fill: 'var(--teal)', fontWeight: 600 }}
-        >
-          Today
-        </text>
-
         {/* Grant bars */}
         {grants.map((grant, index) => {
           const startYear = parseYear(grant.start_date)
@@ -345,6 +331,29 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
             </g>
           )
         })}
+
+        {/* Today marker, drawn after the bars so it stays on top of the teal
+            funded bars; a card-colored halo keeps the teal line readable where
+            it crosses teal. It takes no pointer events, so bar hover still works. */}
+        <g pointerEvents="none">
+          <line
+            x1={todayX} y1={CHART_PADDING_TOP - 16}
+            x2={todayX} y2={chartHeight - CHART_PADDING_BOTTOM + 12}
+            stroke="var(--sk-card)" strokeWidth={5}
+          />
+          <line
+            x1={todayX} y1={CHART_PADDING_TOP - 16}
+            x2={todayX} y2={chartHeight - CHART_PADDING_BOTTOM + 12}
+            stroke="var(--teal)" strokeWidth={2}
+          />
+          <text
+            x={todayX} y={CHART_PADDING_TOP - 20}
+            textAnchor="middle"
+            style={{ fontSize: '10px', fill: 'var(--teal)', fontWeight: 600 }}
+          >
+            Today
+          </text>
+        </g>
       </svg>
 
       {tooltip && <GanttTooltip data={tooltip} chartWidth={chartWidth} />}

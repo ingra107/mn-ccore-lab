@@ -5,7 +5,7 @@ import BentoCard from './BentoCard'
 import { usePublications } from '../../hooks/useApiData'
 import { useDashboardMounted } from './dashboardMounted'
 import { countPublications } from '../../lib/publicationCounts'
-import { tealRamp, rampStep, litFill, LIT_EDGE } from '../../lib/tealRamp'
+import { rampStep, rampBar, BAR_TRACK } from '../../lib/tealRamp'
 
 interface Stage {
   label: string
@@ -93,8 +93,9 @@ function PipelineCard() {
                   style={{
                     height: '32px',
                     borderRadius: 'var(--radius-lg)',
-                    // A 10% ink track stays visible in both themes (--surface-2 is 6% in dark and vanished).
-                    background: 'color-mix(in srgb, var(--ink) 10%, transparent)',
+                    // The shared bar track: visible in both themes, and the
+                    // ramp's dim end holds 3:1 against it (tealRamp.ts).
+                    background: BAR_TRACK,
                     overflow: 'hidden',
                     position: 'relative',
                   }}
@@ -104,8 +105,7 @@ function PipelineCard() {
                       height: '100%',
                       width: animated ? `${widthPct}%` : '0%',
                       borderRadius: 'var(--radius-lg)',
-                      background: litFill(tealRamp(rampStep(i, stages.length))),
-                      boxShadow: LIT_EDGE,
+                      ...rampBar(rampStep(i, stages.length)),
                       transition: `width 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${i * 150}ms`,
                       position: 'relative',
                     }}

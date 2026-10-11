@@ -28,6 +28,8 @@ import PageHeader from '../components/PageHeader'
 import HeartbeatLine from '../components/HeartbeatLine'
 import { ICON_PROPS } from '../lib/iconProps'
 import { QueryErrorNote } from '../components/QueryErrorNote'
+import { tealRamp, BAR_TRACK } from '../lib/tealRamp'
+import SectionHead from '../components/ui/SectionHead'
 
 type StatusFilter = 'all' | 'new' | 'saved'
 
@@ -742,13 +744,14 @@ export default function Digest() {
   // Reading progress bar — rendered as PageHeader child
   const progressBar = statusCounts.all > 0 ? (
     <div className="flex items-center gap-3">
-      <div className="flex-1 max-w-xs h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border-subtle)' }}>
+      {/* Teal data ramp: dim early, the full accent once every paper is read. */}
+      <div className="flex-1 max-w-xs h-1.5 rounded-full overflow-hidden" style={{ background: BAR_TRACK }}>
         <div
           style={{
             width: `${((statusCounts.saved + statusCounts.dismissed) / statusCounts.all) * 100}%`,
             height: '100%',
             borderRadius: 'var(--radius-full)',
-            background: 'var(--teal)',
+            background: tealRamp((statusCounts.saved + statusCounts.dismissed) / statusCounts.all),
             transition: 'width var(--duration-slow) var(--ease-out)',
           }}
         />
@@ -792,18 +795,7 @@ export default function Digest() {
           {/* Date selector */}
           {dates.length > 0 && (
             <div className="mb-6">
-              <div
-                className="flex items-center gap-2 mb-3"
-                style={{
-                  fontSize: 'var(--label-size)',
-                  textTransform: 'uppercase' as const,
-                  letterSpacing: '0.1em',
-                  color: 'var(--slate)',
-                }}
-              >
-                <span>Digest Date</span>
-                <span className="flex-1 h-px" style={{ background: 'var(--border-subtle)' }} />
-              </div>
+              <SectionHead title="Digest date" />
               {/* One scrolling row on phones (14 wrapped pills pushed every paper
                   below the fold); wraps on larger screens. */}
               <div className="flex flex-nowrap sm:flex-wrap gap-2 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0" style={{ scrollbarWidth: 'thin' }}>
