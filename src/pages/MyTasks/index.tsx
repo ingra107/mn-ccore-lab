@@ -35,6 +35,7 @@ import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionWaiting
 import { useSelection } from './hooks/useSelection'
 import { useOpenParam } from '../../hooks/useOpenParam'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import { useFitViewportHeight } from '../../hooks/useFitViewportHeight'
 import {
   readPlannedToday, isTaskDone, parseViewMode,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
@@ -72,6 +73,9 @@ export default function UnifiedMyTasks() {
   // virtualizer follows it, instead of ~270px of fixed chrome above an inner scroller.
   const shellRef = useRef<HTMLDivElement>(null)
   const pageScroll = isPhone && effectiveView === 'list'
+  // The shell is a fixed-height app frame inside the portal's padded <main>; fit it to
+  // the room left so its inner scroller ends on screen (j/k to the last row stays visible).
+  useFitViewportHeight(shellRef)
 
   const [search, setSearch] = useState(searchParams.get('q') ?? '')
   const [filter, setFilter] = useState<FilterState>({
@@ -337,7 +341,7 @@ export default function UnifiedMyTasks() {
        page"). The toolbar + views band-center their content via .mt-band so the
        primary column's left edge matches the data pages. Cards/rows keep their
        own surfaces. */
-    <div ref={shellRef} style={{ display: 'flex', flexDirection: 'column', height: '100vh', color: 'var(--task-ink)', fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', overflow: pageScroll ? 'auto' : 'hidden' }}>
+    <div ref={shellRef} style={{ display: 'flex', flexDirection: 'column', minHeight: 320, color: 'var(--task-ink)', fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', overflow: pageScroll ? 'auto' : 'hidden' }}>
       <TopBar
         view={view} setView={setView}
         search={search} setSearch={setSearch}

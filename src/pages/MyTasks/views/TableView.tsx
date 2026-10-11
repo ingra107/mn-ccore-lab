@@ -12,7 +12,7 @@
 // useTaskFieldEditors), links + folder + Work on in fixed slots. Virtualized
 // via @tanstack/react-virtual (MT-04).
 
-import { useEffect, useRef, useMemo, useCallback, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useMemo, useCallback, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { SleekTable, SleekRow, SleekOverdueLine, type SleekColumn, type SleekSort } from '../../../components/table/SleekRows'
 import { TaskTitleCell, TaskStatusPill, TaskPriorityLabel, TaskCheckCell, TaskDueCell, taskHasDuePill } from '../../../components/tasks/taskSleekCells'
@@ -98,12 +98,38 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
 
   // MT-04 — virtualize. 40px rows; the phone layout is taller (two lines), so
   // every row is measured.
+  // The rows start below the page padding, the overdue line and the sticky column
+  // header, all inside the same scroller. The virtualizer has to know both: the
+  // list's offset (scrollMargin) so "scroll to the bottom row" lands on the
+  // scroller's real bottom, and the sticky header's height (scrollPaddingStart) so
+  // k never parks the cursor row under it.
+  const listRef = useRef<HTMLDivElement>(null)
+  const [lead, setLead] = useState({ margin: 0, head: 0 })
+  useLayoutEffect(() => {
+    const sc = scrollRef.current
+    const list = listRef.current
+    if (!sc || !list) return
+    const measure = () => {
+      const margin = Math.round(list.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop)
+      const hd = sc.querySelector<HTMLElement>('.sr-hd')
+      const head = hd ? Math.round(hd.offsetHeight + (parseFloat(getComputedStyle(hd).marginBottom) || 0)) : 0
+      setLead((p) => (p.margin === margin && p.head === head ? p : { margin, head }))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(list)
+    if (sc.firstElementChild) ro.observe(sc.firstElementChild)
+    return () => ro.disconnect()
+  }, [filtered.length])
+
   const virtualizer = useVirtualizer({
     count: filtered.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => 40,
     measureElement: (el) => el.getBoundingClientRect().height,
     overscan: 12,
+    scrollMargin: lead.margin,
+    scrollPaddingStart: lead.head,
   })
 
   // Scroll cursor into view across virtualized list.
@@ -247,7 +273,7 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
         <SleekTable columns={columns} sort={sort} onSort={setSort} defaultSortLabel="Overdue first">
           {filtered.length === 0 && (isEmpty ? <AllCaughtUp /> : <NoTasksMatch />)}
           {filtered.length > 0 && (
-            <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
+            <div ref={listRef} style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
               {virtualizer.getVirtualItems().map((row) => {
                 const t = filtered[row.index]
                 return (
@@ -255,7 +281,7 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
                     key={t.id}
                     data-index={row.index}
                     ref={virtualizer.measureElement}
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${row.start}px)` }}
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${row.start - lead.margin}px)` }}
                   >
                     <SleekRow
                       row={t}

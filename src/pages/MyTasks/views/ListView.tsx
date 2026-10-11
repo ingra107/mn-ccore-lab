@@ -61,18 +61,20 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
     else toggleSelect(id)
   }, [selectRange, filteredIds, anchorId, toggleSelect])
 
+  const scroller = pageScrollRef ?? scrollRef
   const virtualizer = useVirtualizer({
     count: filtered.length,
-    getScrollElement: () => (pageScrollRef ? pageScrollRef.current : scrollRef.current),
-    scrollMargin: pageScrollRef ? scrollMargin : 0,
+    getScrollElement: () => scroller.current,
+    scrollMargin,
     estimateSize: () => ESTIMATE,
     overscan: 8,
   })
 
-  // Offset of the list inside the page scroller, so rows line up when chrome
-  // (toolbar, banners) sits above it in the same scroll.
+  // Offset of the list inside its scroller (the page on phone, the inner scroller
+  // elsewhere), so rows line up and scrollToIndex lands on the scroller's real
+  // bottom when chrome (toolbar, banners, padding) sits above the list.
   useLayoutEffect(() => {
-    const sp = pageScrollRef?.current
+    const sp = scroller.current
     const el = listRef.current
     if (!sp || !el) { setScrollMargin(0); return }
     const measure = () => {
@@ -95,7 +97,7 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
     })
     mo.observe(sp, { childList: true, subtree: true })
     return () => { ro.disconnect(); mo.disconnect() }
-  }, [pageScrollRef, filtered.length])
+  }, [scroller, filtered.length])
 
   // Follow the cursor only after it has been used (click or j/k). On mount the
   // cursor sits on row 0, and scrolling to it jumps the page past the title and
@@ -125,7 +127,7 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
                       key={t.id}
                       data-index={row.index}
                       ref={virtualizer.measureElement}
-                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${row.start - (pageScrollRef ? scrollMargin : 0)}px)`, paddingBottom: 8 }}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${row.start - scrollMargin}px)`, paddingBottom: 8 }}
                     >
                       <div
                         className="tk-lrow"

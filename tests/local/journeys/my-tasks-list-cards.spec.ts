@@ -74,6 +74,8 @@ test.describe('My Tasks List cards', () => {
     await expect(page.locator(`.tk-tc[data-task-id="${todo.id}"]`)).not.toHaveClass(/tk-urg/)
 
     await page.locator('body').click({ position: { x: 700, y: 120 } })
+    // The first j only shows the cursor on row 0; each later j moves it.
+    await page.keyboard.press('j')
     await page.keyboard.press('j')
     await page.keyboard.press('j')
     expect(await cursorIndex(page)).toBe(2)
