@@ -35,7 +35,7 @@ import { useOpenParam } from '../hooks/useOpenParam'
 import { useUnseenActivity, useMarkSeen } from '../hooks/useEntitySeen'
 import MarkdownView from '../components/MarkdownView'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha, isTaskDone } from '../lib/taskGrouping'
+import { isTaskDone } from '../lib/taskGrouping'
 
 type FilterMode = 'all' | 'decisions' | 'actions' | 'today'
 
@@ -256,7 +256,7 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
             // Primary action = the teal fill (white on --teal-solid is 6.1:1, AA
             // both modes). The gold fill read as a second accent on the page.
-            style={{ background: 'var(--teal-solid)', color: '#fff', textDecoration: 'none', transition: 'opacity 0.2s' }}
+            style={{ background: 'var(--job-accent)', color: 'var(--sk-card)', textDecoration: 'none', transition: 'opacity 0.2s' }}
           >
             View Full Meeting <ArrowRight {...ICON_PROPS} size={11} />
           </Link>
@@ -288,11 +288,11 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
                 ref={decisionTitleRef}
                 style={{
                   width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
-                  background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 'var(--radius-lg)',
+                  background: 'var(--cream)', border: `1px solid var(--sk-line2)`, borderRadius: 'var(--radius-lg)',
                   padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
                 }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-                onBlur={(e) => (e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15))}
+                onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--job-accent)')}
+                onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--sk-line2)')}
               />
               <input
                 type="text"
@@ -302,13 +302,13 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
                 aria-label="Why? (optional rationale)"
                 style={{
                   width: '100%', fontSize: '12px', color: 'var(--ink)',
-                  background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`, borderRadius: 'var(--radius-lg)',
+                  background: 'var(--cream)', border: `1px solid var(--sk-line2)`, borderRadius: 'var(--radius-lg)',
                   padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
                 }}
               />
               <div className="flex gap-2">
-                {/* Theme-agnostic dark-gold fill + white text = 7.5:1
-                    AA both modes. --gold light (#6b5420) failed with
+                {/* Theme-agnostic dark fill + white text = 7.5:1
+                    AA both modes. The old light gold failed with
                     dark text (2.46:1). r7 2026-04-22. */}
                 <button type="submit"
                   style={{ background: 'var(--stage-fill-analysis)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
@@ -690,7 +690,7 @@ export default function Meetings() {
   }
 
   const inputStyle: React.CSSProperties = {
-    background: 'var(--ice)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, color: 'var(--ink)',
+    background: 'var(--ice)', border: `1px solid var(--sk-line2)`, color: 'var(--ink)',
     fontSize: 'var(--value-size)', outline: 'none', borderRadius: 'var(--radius-lg)', padding: '6px 10px', width: '100%',
   }
   function isNextMeeting(meeting: Meeting): boolean {
@@ -721,8 +721,8 @@ export default function Meetings() {
       <div className="space-y-3">
         <Field label="Description" htmlFor="meeting-action-desc" size="micro" noContainer>
           <input id="meeting-action-desc" type="text" value={newActionDesc} onChange={(e) => setNewActionDesc(e.target.value)} placeholder="What needs to be done?" style={inputStyle}
-            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--job-accent)' }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--sk-line2)' }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAddActionItem() }} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
@@ -769,8 +769,8 @@ export default function Meetings() {
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Next meeting pill */}
                 <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
-                  style={{ background: 'var(--gold-light)', border: `1px solid ${withAlpha(ACCENT_GOLD, 25)}` }}>
-                  <Calendar {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                  style={{ background: daysUntil === 0 ? 'color-mix(in srgb, var(--job-wants) 10%, transparent)' : 'transparent', border: `1px solid ${daysUntil === 0 ? 'color-mix(in srgb, var(--job-wants) 40%, transparent)' : 'var(--sk-line2)'}` }}>
+                  <Calendar {...ICON_PROPS} size={14} style={{ color: daysUntil === 0 ? 'var(--job-wants)' : 'var(--sk-t3)', flexShrink: 0 }} />
                   <div>
                     <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>
                       {nextMeeting.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -783,7 +783,7 @@ export default function Meetings() {
                         read a recorded facilitator from. Nothing to show beats a
                         guess. */}
                   </div>
-                  <Clock {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', marginLeft: 4 }} />
+                  <Clock {...ICON_PROPS} size={12} style={{ color: daysUntil === 0 ? 'var(--job-wants)' : 'var(--sk-t3)', marginLeft: 4 }} />
                 </div>
 
                 {/* Record Meeting */}
@@ -802,8 +802,8 @@ export default function Meetings() {
                       </Field>
                       <Field label="Title" htmlFor="new-meeting-title" size="micro" noContainer>
                         <input id="new-meeting-title" type="text" value={newMeetingTitle} onChange={(e) => setNewMeetingTitle(e.target.value)} placeholder="Meeting title" style={inputStyle}
-                          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }} />
+                          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--job-accent)' }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--sk-line2)' }} />
                       </Field>
                     </div>
                     <Field label="Attendees" size="micro" noContainer>
@@ -813,7 +813,7 @@ export default function Meetings() {
                           return (
                             <button key={m.slug} type="button" onClick={() => toggleAttendee(m.slug)}
                               className="pill-btn cursor-pointer inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs"
-                              style={{ fontSize: 'var(--label-size)', background: selected ? withAlpha(ACCENT_GOLD, 20) : 'var(--ice)', color: selected ? 'var(--ink)' : 'var(--slate)', border: selected ? '1px solid var(--gold)' : `1px solid ${withAlpha(ACCENT_GOLD, 10)}`, transition: 'all 0.15s ease' }}>
+                              style={{ fontSize: 'var(--label-size)', background: selected ? 'color-mix(in srgb, var(--job-accent) 12%, transparent)' : 'var(--ice)', color: selected ? 'var(--ink)' : 'var(--slate)', border: selected ? '1px solid var(--job-accent)' : '1px solid var(--sk-line2)', transition: 'all 0.15s ease' }}>
                               <div style={{ width: 16, height: 16 }}><Avatar name={m.name} initials={m.initials} photoUrl={m.photoUrl} variant="ice" size="2xs" /></div>
                               {m.name.split(' ')[0]}
                             </button>
@@ -828,8 +828,8 @@ export default function Meetings() {
                             <span className="shrink-0 text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', width: '18px' }}>{i + 1}.</span>
                             <input type="text" value={item} onChange={(e) => updateAgendaItem(i, e.target.value)} placeholder="Agenda item"
                               style={{ ...inputStyle, flex: 1 }}
-                              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }} />
+                              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--job-accent)' }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--sk-line2)' }} />
                             {newMeetingAgenda.length > 1 && (
                               <button type="button" onClick={() => removeAgendaItem(i)} className="cursor-pointer shrink-0 text-xs"
                                 style={{ background: 'none', border: 'none', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: 'var(--sp-xs)' }}>x</button>
@@ -837,7 +837,7 @@ export default function Meetings() {
                           </div>
                         ))}
                         <button type="button" onClick={addAgendaItem} className="cursor-pointer inline-flex items-center gap-1 text-xs"
-                          style={{ background: 'none', border: 'none', color: 'var(--gold)', padding: 'var(--sp-xs) 0' }}>
+                          style={{ background: 'none', border: 'none', color: 'var(--sk-t2)', padding: 'var(--sp-xs) 0' }}>
                           <Plus {...ICON_PROPS} size={12} />Add agenda item
                         </button>
                       </div>
@@ -855,10 +855,10 @@ export default function Meetings() {
             const rest = cadence.reasons.slice(1)
             return (
               <details className="mt-3 px-3 py-2 rounded-lg group"
-                style={{ background: 'var(--gold-hover)', border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}` }}>
+                style={{ background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)', border: '1px solid var(--sk-line)' }}>
                 <summary className="flex flex-wrap items-center gap-x-2 gap-y-0.5 cursor-pointer list-none"
                   style={{ outline: 'none' }}>
-                  <Activity {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                  <Activity {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
                   <span style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600, whiteSpace: 'nowrap' }}>
                     {cadence.emoji} {cadence.recommendation}
                   </span>
@@ -913,7 +913,7 @@ export default function Meetings() {
               <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-7 pr-3 py-1.5 rounded-lg text-xs"
                 style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)', color: 'var(--ink)', outline: 'none' }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--teal)' }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--job-accent)' }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)' }} />
             </div>
           </div>
@@ -993,7 +993,7 @@ export default function Meetings() {
             type="button"
             className="meetings-back-btn"
             onClick={() => setMobileShowDetail(false)}
-            style={{ display: 'none', alignItems: 'center', gap: '6px', marginBottom: '12px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', fontSize: '13px', padding: '4px 0' }}
+            style={{ display: 'none', alignItems: 'center', gap: '6px', marginBottom: '12px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--job-accent)', fontSize: '13px', padding: '4px 0' }}
           >
             <ChevronLeft {...ICON_PROPS} size={16} /> Back to meetings
           </button>
@@ -1041,7 +1041,7 @@ export default function Meetings() {
         .carried-count-badge {
           display: inline-flex; align-items: center; justify-content: center;
           font-size: 9px; font-weight: 600; padding: 0px 4px; border-radius: 9999px;
-          background: ${withAlpha(ACCENT_GOLD, 15)}; color: var(--gold);
+          background: var(--sk-line); color: var(--sk-t2);
           margin-right: 4px; vertical-align: middle;
         }
         /* M-34: Mobile — show only list OR detail, not both stacked */

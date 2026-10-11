@@ -325,6 +325,20 @@
   --sk-face-t: #c9d0d6;
 }
 
+/* Job tokens (principle 21, Nick 2026-10-11). Every semantic color in src/
+   goes through one of these or the gray ramp (--sk-t1/--sk-t2/--sk-t3).
+   They alias the --sk-* values, which flip under .dark on the same element,
+   so one declaration serves light and dark. --job-brand is the public site's
+   gold and is the only gold allowed on /, /team/*, /publications. */
+:root {
+  --job-overdue: var(--sk-od);
+  --job-wants: var(--sk-gold);
+  --job-milestone: var(--sk-gold);
+  --job-accent: var(--sk-ac);
+  --job-stale: var(--sk-urg);
+  --job-brand: var(--gold);
+}
+
 /* Color jobs (Nick 2026-10-11; rules-ui-design principle 21). Red = overdue,
    gold = wants you now (milestones keep it), teal = the one accent, orange =
    going stale; every other status is a neutral word. These tokens name the

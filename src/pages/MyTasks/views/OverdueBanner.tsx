@@ -8,7 +8,7 @@
 // the three views agree without threading a prop through MyTasks/index.tsx.
 
 import { isOverdue } from '../../../lib/dateUtils'
-import { ACCENT_CORAL, withAlpha, isTaskDone } from '../constants'
+import { JOB_OVERDUE, withAlpha, isTaskDone } from '../constants'
 import type { TaskRow } from '../../../lib/api'
 
 // Not exported — zero consumers outside this file (react-refresh/only-export-components
@@ -28,15 +28,15 @@ export function OverdueBanner({ tasks }: { tasks: TaskRow[] }) {
         margin: '0 0 10px',
         padding: '8px 12px',
         borderRadius: 8,
-        background: withAlpha(ACCENT_CORAL, 8),
-        borderLeft: `3px solid ${ACCENT_CORAL}`,
+        background: withAlpha(JOB_OVERDUE, 8),
+        borderLeft: `3px solid ${JOB_OVERDUE}`,
       }}
     >
       <span aria-hidden="true" style={{ fontSize: 13 }}>⚠</span>
-      <span style={{ fontSize: 12.5, fontWeight: 600, color: ACCENT_CORAL }}>
+      <span style={{ fontSize: 12.5, fontWeight: 600, color: JOB_OVERDUE }}>
         Overdue
       </span>
-      <span style={{ fontSize: 12, color: ACCENT_CORAL, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+      <span style={{ fontSize: 12, color: JOB_OVERDUE, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
         {n}
       </span>
       <span style={{ fontSize: 11.5, color: 'var(--task-ink-muted)', marginLeft: 2 }}>

@@ -65,9 +65,9 @@ function notificationIcon(type: string) {
 // T-37 type-coded left-border accent on notification cards.
 function notificationAccent(type: string): string {
   switch (type) {
-    case 'mention':    return 'var(--gold)'
-    case 'assignment': return 'var(--teal)'
-    case 'deadline':   return 'var(--maroon)'
+    case 'mention':    return 'var(--job-wants)'
+    case 'assignment': return 'var(--sk-t3)'
+    case 'deadline':   return 'var(--sk-t3)'
     default:           return 'var(--slate)'
   }
 }
@@ -196,8 +196,6 @@ function StatCard({
             fontSize: 'var(--label-size)',
             color: 'var(--slate)',
             opacity: 'var(--ink-label)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
             marginTop: 2,
           }}
         >
@@ -238,7 +236,7 @@ function ActionItemCard({
       style={{
         padding: '1rem 1.25rem',
         marginBottom: '0.5rem',
-        borderLeft: overdue ? '3px solid var(--maroon)' : '3px solid transparent',
+        borderLeft: overdue ? '3px solid var(--job-overdue)' : '3px solid transparent',
         cursor: 'default',
       }}
     >
@@ -250,7 +248,7 @@ function ActionItemCard({
             border: 'none',
             padding: 2,
             cursor: 'pointer',
-            color: isDone ? 'var(--teal)' : 'var(--slate)',
+            color: isDone ? 'var(--sk-t3)' : 'var(--slate)',
             opacity: isDone ? 1 : 0.85,
             flexShrink: 0,
             marginTop: 2,
@@ -290,15 +288,15 @@ function ActionItemCard({
                   width: 18,
                   height: 18,
                   borderRadius: 'var(--radius-circle)',
-                  background: person.photoUrl ? undefined : 'var(--gold-light)',
-                  border: '1px solid var(--gold)',
+                  background: person.photoUrl ? undefined : 'var(--sk-face)',
+                  border: '1px solid var(--sk-line2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   overflow: 'hidden',
                   fontSize: 'var(--text-micro)',
                   fontWeight: 700,
-                  color: 'var(--gold)',
+                  color: 'var(--sk-face-t)',
                   flexShrink: 0,
                 }}
               >
@@ -390,11 +388,11 @@ function NotificationCard({
             width: 32,
             height: 32,
             borderRadius: 'var(--radius-lg)',
-            background: isUnread ? 'var(--gold-emphasis)' : 'var(--ice)',
+            background: isUnread ? 'color-mix(in srgb, var(--job-wants) 15%, transparent)' : 'var(--ice)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: isUnread ? 'var(--gold)' : 'var(--slate)',
+            color: isUnread ? 'var(--job-wants)' : 'var(--slate)',
             flexShrink: 0,
           }}
         >
@@ -445,7 +443,7 @@ function NotificationCard({
               width: 8,
               height: 8,
               borderRadius: 'var(--radius-circle)',
-              background: 'var(--gold)',
+              background: 'var(--job-wants)',
               flexShrink: 0,
               marginTop: 6,
             }}
@@ -475,7 +473,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
     item.to_slug ?? item.to_whom.split(' ').pop()?.toLowerCase() ?? ''
   )
 
-  const borderColor = isDone ? 'var(--teal)' : overdue ? 'var(--maroon)' : 'var(--gold)'
+  const borderColor = isDone ? 'var(--sk-line2)' : overdue ? 'var(--job-overdue)' : 'var(--sk-line2)'
 
   return (
     <motion.div
@@ -495,7 +493,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
         <div
           style={{
-            color: isDone ? 'var(--teal)' : 'var(--slate)',
+            color: isDone ? 'var(--sk-t3)' : 'var(--slate)',
             flexShrink: 0,
             marginTop: 2,
           }}
@@ -531,15 +529,15 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
                   width: 18,
                   height: 18,
                   borderRadius: 'var(--radius-circle)',
-                  background: person.photoUrl ? undefined : 'var(--gold-light)',
-                  border: '1px solid var(--gold)',
+                  background: person.photoUrl ? undefined : 'var(--sk-face)',
+                  border: '1px solid var(--sk-line2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   overflow: 'hidden',
                   fontSize: 'var(--text-micro)',
                   fontWeight: 700,
-                  color: 'var(--gold)',
+                  color: 'var(--sk-face-t)',
                   flexShrink: 0,
                 }}
               >
@@ -767,7 +765,7 @@ export default function MyItems() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center" style={{ minHeight: '60vh', opacity: 0.85 }}>
-        <HeartbeatLine variant="slow" color="var(--gold)" strokeWidth={1.5} width={280} height={48} />
+        <HeartbeatLine variant="slow" color="var(--sk-t3)" strokeWidth={1.5} width={280} height={48} />
       </div>
     )
   }
@@ -841,14 +839,14 @@ export default function MyItems() {
               display: 'flex',
               alignItems: 'center',
               gap: '0.75rem',
-              borderLeft: '3px solid var(--gold)',
+              borderLeft: '3px solid var(--sk-line2)',
               fontSize: '13px',
               color: 'var(--slate)',
             }}
           >
-            <Bell {...ICON_PROPS} size={16} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+            <Bell {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
             <span style={{ flex: 1 }}>
-              Showing Nick's items. <a href="/api/auth/login" style={{ color: 'var(--teal)', textDecoration: 'underline' }}>Sign in with @umn.edu</a> to see your own.
+              Showing Nick's items. <a href="/api/auth/login" style={{ color: 'var(--job-accent)', textDecoration: 'underline' }}>Sign in with @umn.edu</a> to see your own.
             </span>
           </div>
         )}
@@ -864,27 +862,27 @@ export default function MyItems() {
         >
           <StatCard
             count={newTasks.length}
-            label="New to You"
+            label="New to you"
             icon={<BellDot {...ICON_PROPS} size={20} />}
-            accentColor="var(--gold)"
+            accentColor={newTasks.length > 0 ? 'var(--job-wants)' : 'var(--sk-t3)'}
           />
           <StatCard
             count={pending.length}
-            label="Pending Action Items"
+            label="Pending action items"
             icon={<Circle {...ICON_PROPS} size={20} />}
-            accentColor="var(--gold)"
+            accentColor="var(--sk-t3)"
           />
           <StatCard
             count={unreadCount}
-            label="Unread Notifications"
+            label="Unread notifications"
             icon={<BellDot {...ICON_PROPS} size={20} />}
-            accentColor="var(--teal)"
+            accentColor={unreadCount > 0 ? 'var(--job-wants)' : 'var(--sk-t3)'}
           />
           <StatCard
             count={openCommitments.length}
-            label="Open Commitments"
+            label="Open commitments"
             icon={<Handshake {...ICON_PROPS} size={20} />}
-            accentColor="var(--maroon)"
+            accentColor="var(--sk-t3)"
           />
         </div>
 
@@ -899,11 +897,11 @@ export default function MyItems() {
                 <NewItemRow
                   key={t.id}
                   onClick={() => setOpenTask(t)}
-                  accentColor="var(--gold)"
+                  accentColor="var(--job-wants)"
                   chip={<AttentionChip kind="new" />}
                   title={taskShortLabel(t)}
                   meta={t.due_date && (
-                    <span style={{ fontSize: '11px', color: isOverdue(t.due_date, t.status) ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+                    <span style={{ fontSize: '11px', color: isOverdue(t.due_date, t.status) ? 'var(--job-overdue)' : 'var(--slate)', opacity: 0.85, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
                       {formatShortDate(t.due_date)}
                     </span>
                   )}
@@ -924,7 +922,7 @@ export default function MyItems() {
                 <NewItemRow
                   key={`${r.entity_type}:${r.entity_id}`}
                   onClick={() => openActivityRow(r)}
-                  accentColor="var(--teal)"
+                  accentColor="var(--job-accent)"
                   chip={<AttentionChip kind="activity" count={r.new_count} />}
                   entityTypeLabel={r.entity_type}
                   title={r.title ?? r.entity_id}
@@ -990,7 +988,7 @@ export default function MyItems() {
                   alignItems: 'center',
                   gap: 'var(--sp-xs)',
                   fontSize: 'var(--label-size)',
-                  color: 'var(--teal)',
+                  color: 'var(--job-accent)',
                   // Full opacity — teal on #f5f5f5 passes AA (5.2:1);
                   // 0.8 opacity blend dropped it to #318783 = 3.91:1.
                   // Disabled attribute already dims the button on pending.

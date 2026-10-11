@@ -29,7 +29,7 @@ type ViewMode = 'month' | 'week' | 'day' | 'agenda'
 const eventColors: Record<string, { color: string; bg: string; border?: string; mark?: string }> = {
   meeting: { color: 'var(--ink)', bg: 'var(--hover-subtle)', border: 'var(--border-subtle)' },
   task: { color: 'var(--slate)', bg: 'var(--hover-subtle)' },
-  milestone: { color: 'var(--ink)', bg: 'var(--hover-subtle)', border: 'var(--border-subtle)', mark: 'var(--sk-gold)' },
+  milestone: { color: 'var(--ink)', bg: 'var(--hover-subtle)', border: 'var(--border-subtle)', mark: 'var(--job-milestone)' },
 }
 
 /** The gold diamond before a milestone's title; nothing for other types. */
@@ -269,7 +269,7 @@ export default function CalendarPage() {
               <button
                 onClick={goToToday}
                 className="px-3 py-1.5 rounded-md text-xs font-medium border transition-colors"
-                style={{ color: 'var(--teal)', borderColor: 'var(--teal)', cursor: 'pointer', background: 'none' }}
+                style={{ color: 'var(--job-accent)', borderColor: 'var(--job-accent)', cursor: 'pointer', background: 'none' }}
               >
                 Today
               </button>
@@ -306,7 +306,7 @@ export default function CalendarPage() {
         {view === 'agenda' ? (
           <>
             <span className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}><Users {...ICON_PROPS} size={11} aria-hidden="true" />Meetings</span>
-            <span className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}><span aria-hidden="true" style={{ color: 'var(--sk-gold)' }}>◆</span>Milestones</span>
+            <span className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}><span aria-hidden="true" style={{ color: 'var(--job-milestone)' }}>◆</span>Milestones</span>
             <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>Plain rows are your task due dates</span>
           </>
         ) : Object.entries(eventColors).map(([type, config]) => (
@@ -427,7 +427,7 @@ function DayCellRender({ dateStr, today, dayEvents, onOpenDay }: { dateStr: stri
     // date disc (color-back pick 4), in place of the tinted cell and inset ring.
     <div className="min-h-[56px] md:min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
       {isToday && <NowMarker edge showLabel={false} />}
-      <button type="button" onClick={() => onOpenDay(dateStr)} aria-label={`Open ${formatLongDate(dateStr)}`} className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full now-halo' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal-solid)' : 'transparent', cursor: 'pointer', border: 'none', padding: 0 }}>
+      <button type="button" onClick={() => onOpenDay(dateStr)} aria-label={`Open ${formatLongDate(dateStr)}`} className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full now-halo' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--sk-card)' : 'var(--ink)', backgroundColor: isToday ? 'var(--job-accent)' : 'transparent', cursor: 'pointer', border: 'none', padding: 0 }}>
         {dayNum}
       </button>
       {isToday && <span className="cal-today-lbl">Today</span>}
@@ -492,7 +492,7 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
             {/* Day header */}
             <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{dayNames[i]}</div>
-              <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8 now-halo' : ''}`} style={{ color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal-solid)' : 'transparent' }}>
+              <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8 now-halo' : ''}`} style={{ color: isToday ? 'var(--sk-card)' : 'var(--ink)', backgroundColor: isToday ? 'var(--job-accent)' : 'transparent' }}>
                 {dayNum}
               </div>
               {isToday && <div className="cal-today-lbl" style={{ marginLeft: 0, marginTop: 2 }}>Today</div>}
@@ -533,7 +533,7 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
   return (
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-subtle)' }}>
       <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
-        <h3 className="text-lg font-normal" style={{ color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
+        <h3 className="text-lg font-normal" style={{ color: isToday ? 'var(--job-accent)' : 'var(--ink)' }}>
           {isToday ? 'Today' : formatLongDate(dateStr)}
         </h3>
         {/* The shared now marker under "Today" (an edge marker would clip in this rounded box). */}

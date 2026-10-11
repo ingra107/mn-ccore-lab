@@ -20,7 +20,6 @@ import { useLabPrefs } from '../../hooks/useLabPrefs'
 import RangeSlider from '../../components/RangeSlider'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface WorkflowTemplate {
   id: string
@@ -101,9 +100,9 @@ function TodayDefaultViewControl() {
               aria-pressed={defaultView === key}
               title={views.find((v) => v.key === key)?.desc}
               style={{
-                background: defaultView === key ? withAlpha(ACCENT_GOLD, 15) : 'none',
+                background: defaultView === key ? 'color-mix(in srgb, var(--job-accent) 12%, transparent)' : 'none',
                 border: 'none',
-                color: defaultView === key ? ACCENT_GOLD : 'var(--slate)',
+                color: defaultView === key ? 'var(--job-accent)' : 'var(--slate)',
                 fontSize: 11,
                 fontWeight: defaultView === key ? 600 : 400,
                 cursor: 'pointer',
@@ -144,9 +143,9 @@ function LabIconPicker({ value, onChange }: { value: string; onChange: (next: st
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: 'var(--radius-md)',
-              border: `1px solid ${isSelected ? 'var(--teal)' : 'var(--border-subtle)'}`,
-              background: isSelected ? 'color-mix(in oklch, var(--teal) 12%, transparent)' : 'transparent',
-              color: isSelected ? 'var(--teal)' : 'var(--slate)',
+              border: `1px solid ${isSelected ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
+              background: isSelected ? 'color-mix(in oklch, var(--job-accent) 12%, transparent)' : 'transparent',
+              color: isSelected ? 'var(--job-accent)' : 'var(--slate)',
               cursor: 'pointer',
             }}
           >
@@ -303,8 +302,8 @@ export default function SettingsPage() {
           backgroundColor: 'var(--surface-1)',
         }}
       >
-        <div className="flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0" style={{ backgroundColor: 'var(--teal-active)' }}>
-          <Users {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
+        <div className="flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0" style={{ backgroundColor: 'var(--sk-line)' }}>
+          <Users {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
         </div>
         <div style={{ flex: 1 }}>
           <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Team Directory</span>
@@ -332,8 +331,8 @@ export default function SettingsPage() {
               onClick={() => setActiveTab(tab.key)}
               className="px-3 py-2 text-sm transition-colors flex-shrink-0 whitespace-nowrap touch-tall"
               style={{
-                color: isActive ? 'var(--teal)' : 'var(--slate)',
-                borderBottom: `2px solid ${isActive ? 'var(--teal)' : 'transparent'}`,
+                color: isActive ? 'var(--job-accent)' : 'var(--slate)',
+                borderBottom: `2px solid ${isActive ? 'var(--job-accent)' : 'transparent'}`,
                 background: 'none',
                 cursor: 'pointer',
                 marginBottom: '-1px',
@@ -348,7 +347,7 @@ export default function SettingsPage() {
                     display: 'inline-block',
                     width: 6, height: 6, borderRadius: '50%',
                     marginLeft: 6, verticalAlign: 'middle',
-                    background: 'var(--teal)',
+                    background: 'var(--job-accent)',
                   }}
                 />
               )}
@@ -420,24 +419,17 @@ export default function SettingsPage() {
                       {template.name}
                     </span>
                     {template.is_default === 1 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-active)' }}>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--sk-t2)', backgroundColor: 'var(--sk-line)' }}>
                         Default
                       </span>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-1.5 mb-2">
                     {stages.map((stage, i) => {
-                      // Cycle through palette colors for each stage
+                      // One neutral chip for every stage: a stage is not a color
+                      // job (rules-ui-design principle 21).
                       const colors = [
-                        { bg: 'var(--teal-active)', text: 'var(--teal)', border: 'rgba(45,138,138,0.3)' },
-                        { bg: 'var(--gold-active)', text: 'var(--gold)', border: withAlpha(ACCENT_GOLD, 30) },
-                        { bg: 'var(--maroon-hover)', text: 'var(--maroon)', border: 'rgba(122,0,25,0.2)' },
-                        { bg: 'rgba(34,197,94,0.1)', text: 'var(--green)', border: 'rgba(34,197,94,0.3)' },
-                        // Lighter blue/purple for AA contrast on near-black
-                        // dark-mode bg (was #2563eb/#7c3aed — 3.4/3.1 on tinted
-                        // alpha backgrounds). 2026-04-18 axe AA.
-                        { bg: 'rgba(59,130,246,0.1)', text: '#60a5fa', border: 'rgba(59,130,246,0.3)' },
-                        { bg: 'rgba(168,85,247,0.1)', text: '#c084fc', border: 'rgba(168,85,247,0.3)' },
+                        { bg: 'var(--sk-line)', text: 'var(--sk-t2)', border: 'var(--sk-line2)' },
                       ]
                       const c = colors[i % colors.length]
                       return (
@@ -491,12 +483,12 @@ export default function SettingsPage() {
               className="flex-1 rounded-lg border-2 p-3 transition-all cursor-pointer"
               aria-pressed={currentTheme === 'light' ? "true" : "false"}
               style={{
-                borderColor: currentTheme !== 'dark' ? 'var(--teal)' : 'var(--border-subtle)',
+                borderColor: currentTheme !== 'dark' ? 'var(--job-accent)' : 'var(--border-subtle)',
                 background: '#ffffff',
               }}
             >
               <div className="flex items-center gap-2 mb-2">
-                <Sun {...ICON_PROPS} size={12} style={{ color: '#c9a84c' }} />
+                <Sun {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t3)' }} />
                 <span className="text-[11px] font-medium" style={{ color: '#0f1923' }}>Light</span>
               </div>
               <div className="rounded" style={{ background: '#f5f5f5', padding: 6 }}>
@@ -511,12 +503,12 @@ export default function SettingsPage() {
               className="flex-1 rounded-lg border-2 p-3 transition-all cursor-pointer"
               aria-pressed={currentTheme === 'dark' ? "true" : "false"}
               style={{
-                borderColor: currentTheme === 'dark' ? 'var(--teal)' : 'var(--border-subtle)',
+                borderColor: currentTheme === 'dark' ? 'var(--job-accent)' : 'var(--border-subtle)',
                 background: '#0b1017',
               }}
             >
               <div className="flex items-center gap-2 mb-2">
-                <Moon {...ICON_PROPS} size={12} style={{ color: '#c9a84c' }} />
+                <Moon {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t3)' }} />
                 <span className="text-[11px] font-medium" style={{ color: '#e2e8f0' }}>Dark</span>
               </div>
               <div className="rounded" style={{ background: 'color-mix(in oklch, var(--cream), white 3%)', padding: 6 }}>
@@ -555,7 +547,7 @@ export default function SettingsPage() {
                   setTimeout(() => setSaved(false), 2000)
                 }}
                 className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
-                style={{ color: 'var(--maroon)', border: '1px solid rgba(122,0,25,0.2)', background: 'none', cursor: 'pointer' }}
+                style={{ color: 'var(--sk-t2)', border: '1px solid var(--sk-line2)', background: 'none', cursor: 'pointer' }}
               >
                 Reset
               </button>
@@ -574,7 +566,7 @@ export default function SettingsPage() {
                   setTimeout(() => setSaved(false), 2000)
                 }}
                 className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
-                style={{ color: 'var(--maroon)', border: '1px solid rgba(122,0,25,0.2)', background: 'none', cursor: 'pointer' }}
+                style={{ color: 'var(--sk-t2)', border: '1px solid var(--sk-line2)', background: 'none', cursor: 'pointer' }}
               >
                 Clear
               </button>
@@ -595,7 +587,7 @@ export default function SettingsPage() {
                   setTimeout(() => setSaved(false), 2000)
                 }}
                 className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
-                style={{ color: 'var(--teal)', border: '1px solid rgba(13,111,104,0.25)', background: 'none', cursor: 'pointer' }}
+                style={{ color: 'var(--job-accent)', border: '1px solid color-mix(in srgb, var(--job-accent) 25%, transparent)', background: 'none', cursor: 'pointer' }}
               >
                 Restore
               </button>
@@ -623,9 +615,9 @@ export default function SettingsPage() {
                 }}
                 className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 style={{
-                  color: showDebugItems ? 'var(--teal)' : 'var(--slate)',
-                  border: `1px solid ${showDebugItems ? 'var(--teal)' : 'var(--border-subtle)'}`,
-                  background: showDebugItems ? 'var(--teal-hover)' : 'none',
+                  color: showDebugItems ? 'var(--job-accent)' : 'var(--slate)',
+                  border: `1px solid ${showDebugItems ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
+                  background: showDebugItems ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'none',
                   cursor: 'pointer',
                 }}
               >
@@ -638,9 +630,9 @@ export default function SettingsPage() {
 
         {/* Save indicator */}
         {saved && (
-          <div className="fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg border" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--teal)' }}>
-            <Check {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
-            <span className="text-sm" style={{ color: 'var(--teal)' }}>Saved</span>
+          <div className="fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg border" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--job-accent)' }}>
+            <Check {...ICON_PROPS} size={14} style={{ color: 'var(--job-accent)' }} />
+            <span className="text-sm" style={{ color: 'var(--job-accent)' }}>Saved</span>
           </div>
         )}
       </div>
@@ -671,8 +663,8 @@ function SettingsSection({ title, subtitle, icon: Icon, children }: { title: str
       backgroundColor: 'var(--surface-card)',
     }}>
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--teal-active)' }}>
-          <Icon {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--sk-line)' }}>
+          <Icon {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t3)' }} />
         </div>
         <div>
           <h3 style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--weight-ui)', color: 'var(--ink)', margin: 0 }}>{title}</h3>
@@ -863,7 +855,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
       <button
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors hover:bg-black/5 mt-2"
-        style={{ borderColor: 'var(--border-subtle)', color: 'var(--teal)', cursor: 'pointer', background: 'none' }}
+        style={{ borderColor: 'var(--border-subtle)', color: 'var(--job-accent)', cursor: 'pointer', background: 'none' }}
       >
         <Plus {...ICON_PROPS} size={14} />
         Create Custom Template
@@ -872,7 +864,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
   }
 
   return (
-    <div className="mt-2 rounded-lg border p-4" style={{ borderColor: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}>
+    <div className="mt-2 rounded-lg border p-4" style={{ borderColor: 'var(--job-accent)', backgroundColor: 'color-mix(in srgb, var(--job-accent) 6%, transparent)' }}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>New Workflow Template</span>
         <button onClick={() => setOpen(false)} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}>
@@ -914,7 +906,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
           <button
             onClick={addStage}
             className="flex items-center gap-1 text-xs px-2 py-1 rounded self-start"
-            style={{ color: 'var(--teal)', cursor: 'pointer', background: 'none', border: 'none' }}
+            style={{ color: 'var(--job-accent)', cursor: 'pointer', background: 'none', border: 'none' }}
           >
             <Plus {...ICON_PROPS} size={12} /> Add stage
           </button>

@@ -11,12 +11,18 @@ import { researchTeam } from '../../data/team'
 export {
   type GroupKey,
   GROUP_ORDER,
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
   todayKey, daysSince, tagForTask, withAlpha, isTaskDone,
 } from '../../lib/taskGrouping'
 
 import type { GroupKey } from '../../lib/taskGrouping'
+
+// Color jobs (rules-ui-design principle 21). The MyTasks surface speaks
+// only these plus the ink ramp: accent = selection / primary action / in
+// progress, overdue = red, stale = orange (urgent edge, stale days).
+export const JOB_ACCENT = 'var(--job-accent)'
+export const JOB_OVERDUE = 'var(--job-overdue)'
+export const JOB_STALE = 'var(--job-stale)'
 import { todayKey } from '../../lib/taskGrouping'
 import { dueLabelCompact, isOverdue } from '../../lib/dateUtils'
 
@@ -46,30 +52,29 @@ export interface FilterOption { v: string | null; l: string }
 // ──────────────────────────────────────────────────────────────────────────
 
 // GROUP_META + STATUS_COLOR + PRIORITY_COLOR reference CSS-var tokens so
-// the chips / dots / borders flip with theme (Phase 7, 2026-05-27). The
-// MyTasks "quick" lane is coral here (P3 with overdue tinge) whereas
-// Today's quick lane is orange — that's an intentional surface difference
-// kept from the original constants. PB grey uses --task-ink-muted.
+// the chips / dots / borders flip with theme (Phase 7, 2026-05-27). Groups
+// are not a color job, so every lane is the same muted ink (principle 21);
+// only urgent keeps a color (the orange stale edge) and in-progress the accent.
 export const GROUP_META: Record<GroupKey, GroupMeta> = {
-  deep:       { icon: '🎯', label: 'Deep work',        color: 'var(--task-accent-gold)',   desc: 'Scheduled focus blocks' },
-  priorities: { icon: '✅', label: 'Priorities',       color: 'var(--task-accent-teal)',   desc: 'P1 ops & commitments' },
-  quick:      { icon: '⚡', label: 'Quick',            color: 'var(--task-accent-coral)',  desc: 'Sub-15-min lifts' },
+  deep:       { icon: '🎯', label: 'Deep work',        color: 'var(--task-ink-muted)',   desc: 'Scheduled focus blocks' },
+  priorities: { icon: '✅', label: 'Priorities',       color: 'var(--task-ink-muted)',   desc: 'P1 ops & commitments' },
+  quick:      { icon: '⚡', label: 'Quick',            color: 'var(--task-ink-muted)',  desc: 'Sub-15-min lifts' },
   pb:         { icon: '🧠', label: 'Peripheral Brain', color: 'var(--task-ink-muted)',     desc: 'Reflection & low-urgency' },
-  etl:        { icon: '🔧', label: 'CQODE · CLIF ETL', color: 'var(--task-accent-teal)',   desc: 'Data pipeline ops' },
+  etl:        { icon: '🔧', label: 'CQODE · CLIF ETL', color: 'var(--task-ink-muted)',   desc: 'Data pipeline ops' },
 }
 
 export const STATUS_LABEL: Record<string, string> = { todo: 'Todo', in_progress: 'Active', waiting_external: 'Waiting', blocked: 'Blocked', done: 'Done' }
 export const STATUS_COLOR: Record<string, string> = {
   todo:             'var(--task-ink-muted)',
-  in_progress:      'var(--task-accent-teal)',
+  in_progress:      'var(--job-accent)',
   waiting_external: 'var(--st-waiting)',
   blocked:          'var(--st-blocked)',
   done:             'var(--st-done)',
 }
 export const PRIORITY_COLOR: Record<string, string> = {
-  urgent: 'var(--task-accent-coral)',
-  high:   'var(--task-accent-coral)',
-  medium: 'var(--task-accent-gold)',
+  urgent: 'var(--job-stale)',
+  high:   'var(--task-ink-muted)',
+  medium: 'var(--task-ink-muted)',
   low:    'var(--task-ink-muted)',
 }
 export const PRIORITY_SHORT: Record<string, string> = { urgent: 'P1', high: 'P1', medium: 'P2', low: 'P3' }

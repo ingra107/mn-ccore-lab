@@ -48,8 +48,8 @@ class ErrorBoundary extends Component<
       const errorMsg = this.state.error?.message || 'Unknown error'
       return (
         <div style={{ padding: '3rem 2rem', textAlign: 'center', minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: 56, height: 56, borderRadius: 'var(--radius-circle)', backgroundColor: 'var(--maroon-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--maroon)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div style={{ width: 56, height: 56, borderRadius: 'var(--radius-circle)', backgroundColor: 'var(--sk-line)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--sk-t2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
@@ -167,7 +167,7 @@ function PageLoader() {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="flex flex-col items-center gap-3" role="status" aria-label="Loading">
-        <HeartbeatLine width={180} height={48} color="var(--gold)" ariaLabel="Loading" />
+        <HeartbeatLine width={180} height={48} color="var(--sk-t3)" ariaLabel="Loading" />
       </div>
     </div>
   )

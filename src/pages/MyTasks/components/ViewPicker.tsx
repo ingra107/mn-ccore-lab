@@ -5,7 +5,7 @@
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx.
 
-import { ACCENT_TEAL, INK_MUTED, withAlpha, type ViewMode } from '../constants'
+import { JOB_ACCENT, INK_MUTED, withAlpha, type ViewMode } from '../constants'
 
 export function ViewPicker({ view, setView, isPhone = false }: { view: ViewMode; setView: (v: ViewMode) => void; isPhone?: boolean }) {
   const allViews: { k: ViewMode; l: string; icon: string; desc: string }[] = [
@@ -31,7 +31,7 @@ export function ViewPicker({ view, setView, isPhone = false }: { view: ViewMode;
             className="seg-btn"
             onClick={() => setView(v.k)}
             title={v.desc}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0 11px', fontSize: 11, fontFamily: 'inherit', cursor: 'pointer', border: 'none', background: active ? withAlpha(ACCENT_TEAL, 15) : 'transparent', color: active ? ACCENT_TEAL : INK_MUTED, fontWeight: active ? 600 : 500, borderRight: i < views.length - 1 ? '1px solid var(--border-subtle)' : 'none', whiteSpace: 'nowrap' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0 11px', fontSize: 11, fontFamily: 'inherit', cursor: 'pointer', border: 'none', background: active ? withAlpha(JOB_ACCENT, 15) : 'transparent', color: active ? JOB_ACCENT : INK_MUTED, fontWeight: active ? 600 : 500, borderRight: i < views.length - 1 ? '1px solid var(--border-subtle)' : 'none', whiteSpace: 'nowrap' }}
           >
             <span style={{ fontSize: 12 }}>{v.icon}</span>
             {v.l}

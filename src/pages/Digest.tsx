@@ -119,7 +119,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
         // multiplies with every coloured child and fails AA (CLAUDE.md rule
         // 43). The rail is one channel carrying one signal -- processed or
         // not -- and the chip below is its text equivalent (rule 76).
-        borderLeft: `3px solid ${isSaved ? 'var(--teal)' : isDismissed ? 'var(--border-subtle)' : 'transparent'}`,
+        borderLeft: `3px solid ${isSaved ? 'var(--job-accent)' : isDismissed ? 'var(--border-subtle)' : 'transparent'}`,
         transition: 'transform var(--duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--duration-slow) var(--ease-out), background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
       }}
     >
@@ -139,7 +139,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                 href={pubmedUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="transition-colors hover:!text-[var(--teal)]"
+                className="transition-colors hover:!text-[var(--job-accent)]"
                 style={{ color: 'inherit', textDecoration: 'none' }}
               >
                 {paper.title}
@@ -167,8 +167,8 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                 style={{
                   fontSize: '10px',
                   fontWeight: 500,
-                  background: isSaved ? 'var(--teal-active)' : 'var(--ice)',
-                  color: isSaved ? 'var(--teal)' : 'var(--slate)',
+                  background: isSaved ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'var(--ice)',
+                  color: isSaved ? 'var(--job-accent)' : 'var(--slate)',
                 }}
               >
                 <Check {...ICON_PROPS} size={10} />
@@ -203,7 +203,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs"
-                style={{ color: 'var(--teal)' }}
+                style={{ color: 'var(--job-accent)' }}
                 title="View via DOI"
               >
                 <Link2 {...ICON_PROPS} size={11} />
@@ -350,8 +350,8 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
             onClick={handleSave}
             className="cursor-pointer p-2 rounded-md transition-colors duration-200"
             style={{
-              background: isSaved ? 'var(--teal-active)' : 'transparent',
-              color: isSaved ? 'var(--teal)' : 'var(--slate)',
+              background: isSaved ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+              color: isSaved ? 'var(--job-accent)' : 'var(--slate)',
               border: 'none',
               minWidth: '36px',
               minHeight: '36px',
@@ -386,8 +386,8 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
             onClick={() => setShowComments(!showComments)}
             className="cursor-pointer p-2 rounded-md transition-colors duration-200"
             style={{
-              background: showComments ? 'var(--teal-hover)' : 'transparent',
-              color: showComments ? 'var(--teal)' : 'var(--slate)',
+              background: showComments ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
+              color: showComments ? 'var(--job-accent)' : 'var(--slate)',
               border: 'none',
               minWidth: '36px',
               minHeight: '36px',
@@ -408,8 +408,8 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                   right: '2px',
                   fontSize: '9px',
                   fontWeight: 700,
-                  color: 'var(--cream)',
-                  background: 'var(--teal)',
+                  color: 'var(--sk-card)',
+                  background: 'var(--job-accent)',
                   borderRadius: '50%',
                   width: '14px',
                   height: '14px',
@@ -428,8 +428,8 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
               onClick={(e) => { e.stopPropagation(); setShowLinkPicker(!showLinkPicker) }}
               className="cursor-pointer p-2 rounded-md transition-colors duration-200"
               style={{
-                background: showLinkPicker ? 'var(--teal-active)' : 'transparent',
-                color: linkSuccess || showLinkPicker ? 'var(--teal)' : 'var(--slate)',
+                background: showLinkPicker ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                color: linkSuccess || showLinkPicker ? 'var(--job-accent)' : 'var(--slate)',
                 border: 'none',
                 minWidth: '36px',
                 minHeight: '36px',
@@ -481,7 +481,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                       setLinkSuccess(proj.title)
                       setTimeout(() => setLinkSuccess(null), 2000)
                     }}
-                    className="cursor-pointer w-full text-left px-3 py-2 text-sm transition-colors duration-150 hover:bg-[var(--teal-hover)]"
+                    className="cursor-pointer w-full text-left px-3 py-2 text-sm transition-colors duration-150 hover:bg-[color-mix(in_srgb,var(--job-accent)_6%,transparent)]"
                     style={{
                       fontSize: '12px',
                       color: 'var(--ink)',
@@ -580,8 +580,8 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
               style={{
                 padding: '6px',
                 borderRadius: 'var(--radius-md)',
-                background: commentText.trim() ? 'var(--teal-solid)' : 'transparent',
-                color: commentText.trim() ? 'var(--cream)' : 'var(--slate)',
+                background: commentText.trim() ? 'var(--job-accent)' : 'transparent',
+                color: commentText.trim() ? 'var(--sk-card)' : 'var(--slate)',
                 cursor: 'pointer',
                 opacity: commentText.trim() ? 1 : 0.85,
               }}
@@ -815,10 +815,10 @@ export default function Digest() {
                         fontWeight: isActive ? 600 : 400,
                         // Neutral pills, teal selected state (site audit F107):
                         // gold is for "wants you now", not an everyday toggle.
-                        background: isActive ? 'var(--teal-active)' : 'transparent',
-                        color: isActive ? 'var(--teal)' : 'var(--ink)',
+                        background: isActive ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                        color: isActive ? 'var(--job-accent)' : 'var(--ink)',
                         border: isActive
-                          ? '1px solid var(--teal)'
+                          ? '1px solid var(--job-accent)'
                           : '1px solid var(--border-subtle)',
                         transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
                       }}
@@ -905,10 +905,10 @@ export default function Digest() {
                   // solid --teal-solid fill (those are reserved for action buttons).
                   // Converges on the TableControls/ViewPicker pill anatomy.
                   fontWeight: forYouFilter ? 600 : 400,
-                  background: forYouFilter ? 'var(--teal-active)' : 'transparent',
-                  color: 'var(--teal)',
+                  background: forYouFilter ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                  color: 'var(--job-accent)',
                   border: forYouFilter
-                    ? '1px solid var(--teal)'
+                    ? '1px solid var(--job-accent)'
                     : '1px solid var(--border-subtle)',
                   transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
                 }}
@@ -970,16 +970,16 @@ export default function Digest() {
                 className="cursor-pointer rounded-full px-3 py-1.5 text-xs inline-flex items-center gap-1.5 mb-2"
                 style={{
                   fontSize: '11px',
-                  background: topicFilter ? 'var(--teal-active)' : 'transparent',
-                  color: topicFilter ? 'var(--teal)' : 'var(--slate)',
-                  border: `1px solid ${topicFilter ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                  background: topicFilter ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                  color: topicFilter ? 'var(--job-accent)' : 'var(--slate)',
+                  border: `1px solid ${topicFilter ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
                   fontWeight: topicFilter ? 500 : 400,
                 }}
                 aria-expanded={topicsExpanded}
               >
                 Topics
                 {topicFilter && (
-                  <span style={{ fontSize: '10px', background: 'var(--teal-solid)', color: '#fff', padding: '0 5px', borderRadius: 'var(--radius-full)' }}>
+                  <span style={{ fontSize: '10px', background: 'var(--job-accent)', color: 'var(--sk-card)', padding: '0 5px', borderRadius: 'var(--radius-full)' }}>
                     1
                   </span>
                 )}
@@ -1011,9 +1011,9 @@ export default function Digest() {
                     className="cursor-pointer rounded-full px-2.5 py-1 text-xs"
                     style={{
                       fontSize: '10px',
-                      background: isActive ? 'var(--teal-active)' : 'transparent',
-                      color: isActive ? 'var(--teal)' : 'var(--ink)',
-                      border: isActive ? '1px solid var(--teal)' : '1px solid var(--border-subtle)',
+                      background: isActive ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                      color: isActive ? 'var(--job-accent)' : 'var(--ink)',
+                      border: isActive ? '1px solid var(--job-accent)' : '1px solid var(--border-subtle)',
                       transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
                     }}
                   >

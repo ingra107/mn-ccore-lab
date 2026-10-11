@@ -4,7 +4,7 @@ import HeartbeatLine from '../../../components/HeartbeatLine'
 export function TabFallback() {
   return (
     <div className="flex items-center justify-center min-h-[40vh]" role="status" aria-label="Loading">
-      <HeartbeatLine width={140} height={40} color="var(--gold)" ariaLabel="Loading" />
+      <HeartbeatLine width={140} height={40} color="var(--sk-t3)" ariaLabel="Loading" />
     </div>
   )
 }

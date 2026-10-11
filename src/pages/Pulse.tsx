@@ -41,6 +41,10 @@ import type { SparkPoint } from '../components/pulse/PulseSparkline'
  *       3. Scene transition pulse — fires on scene change
  *   - Respects prefers-reduced-motion: scenes still rotate (you need the
  *     cycle to function as a kiosk), but Ken Burns + ECG draws pause.
+ *   - Colors are fixed hex (dark-only kiosk) but follow the job rule: red
+ *     #f0737e = overdue, orange #f08a5b = attention/at risk/critical (as on
+ *     Analytics), teal #5cbcb4 = live/now and the active scene marker,
+ *     gold #dcb355 = brand only (wordmark, heartbeat), the rest gray.
  */
 
 const ROTATE_INTERVAL = 8000
@@ -185,7 +189,6 @@ export default function Pulse() {
                 value={pendingTasks.length}
                 label="In flight"
                 size="md"
-                color="#5cbcb4"
               />
               <PulseMetric
                 value={overdueTasks.length}
@@ -212,10 +215,10 @@ export default function Pulse() {
             staticFrame
           >
             <div className="grid grid-cols-4 gap-12">
-              <HealthOrb color="#16a34a" label="Healthy" count={health.healthy} />
-              <HealthOrb color="#dcb355" label="Attention" count={health.needs_attention} />
+              <HealthOrb color="#94a3b8" label="Healthy" count={health.healthy} />
+              <HealthOrb color="#f08a5b" label="Attention" count={health.needs_attention} />
               <HealthOrb color="#f08a5b" label="At risk" count={health.at_risk} />
-              <HealthOrb color="#f0737e" label="Critical" count={health.critical} />
+              <HealthOrb color="#f08a5b" label="Critical" count={health.critical} />
             </div>
           </PulseScene>
         ),
@@ -245,7 +248,7 @@ export default function Pulse() {
                       fontWeight: 500,
                       fontSize: 'clamp(28px, 4vw, 56px)',
                       letterSpacing: '-0.03em',
-                      color: g.bucket === 'proposed' ? '#dcb355' : '#5cbcb4',
+                      color: '#f5efe2',
                       lineHeight: 1,
                     }}
                   >
@@ -270,7 +273,7 @@ export default function Pulse() {
                         fontFamily: 'var(--font-sans)',
                         fontSize: 12,
                         letterSpacing: '0.18em',
-                        color: g.bucket === 'proposed' ? '#dcb355' : '#5cbcb4',
+                        color: 'rgba(226,232,240,0.55)',
                         fontWeight: 500,
                       }}
                     >
@@ -309,7 +312,7 @@ export default function Pulse() {
                 >
                   <span
                     className="w-2 h-2 rounded-full mt-2"
-                    style={{ background: '#dcb355', flexShrink: 0 }}
+                    style={{ background: '#94a3b8', flexShrink: 0 }}
                     aria-hidden
                   />
                   <span
@@ -531,7 +534,7 @@ export default function Pulse() {
                 height: 4,
                 borderRadius: 2,
                 background:
-                  i === activeIndex ? '#dcb355' : 'rgba(220,179,85,0.22)',
+                  i === activeIndex ? '#5cbcb4' : 'rgba(226,232,240,0.22)',
                 border: 'none',
                 padding: 0,
                 cursor: 'pointer',
@@ -590,7 +593,7 @@ function HealthOrb({ color, label, count }: { color: string; label: string; coun
           fontFamily: 'var(--font-sans)',
           fontSize: 12,
           letterSpacing: '0.24em',
-          color: '#dcb355',
+          color: '#94a3b8',
           fontWeight: 500,
         }}
       >

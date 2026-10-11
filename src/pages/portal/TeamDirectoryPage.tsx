@@ -51,8 +51,8 @@ export default function TeamDirectoryPage() {
             aria-label={`Clear expertise filter: ${expertise}`}
             style={{
               fontSize: 11, padding: '4px 10px', borderRadius: 'var(--radius-full)',
-              background: 'var(--teal-active)', color: 'var(--teal)',
-              border: '1px solid var(--teal)',
+              background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)', color: 'var(--job-accent)',
+              border: '1px solid var(--job-accent)',
             }}
           >
             {expertise}

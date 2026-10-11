@@ -200,7 +200,7 @@ export default function ArtifactPage() {
         <div className="flex items-start gap-3" style={{ marginBottom: '0.75rem' }}>
           <div
             className="flex-shrink-0 flex items-center justify-center"
-            style={{ width: 36, height: 36, borderRadius: 'var(--radius-lg)', background: 'var(--gold-active)', color: 'var(--gold)' }}
+            style={{ width: 36, height: 36, borderRadius: 'var(--radius-lg)', background: 'var(--sk-line)', color: 'var(--sk-t3)' }}
           >
             <FileText {...ICON_PROPS} size={20} />
           </div>
@@ -210,7 +210,7 @@ export default function ArtifactPage() {
             </h1>
             <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: 4 }}>
               {artifact.created_by === 'claude-ai' ? (
-                <span className="inline-flex items-center gap-1" style={{ fontSize: 11, color: 'var(--gold)', fontWeight: 500 }}>
+                <span className="inline-flex items-center gap-1" style={{ fontSize: 11, color: 'var(--sk-t2)', fontWeight: 500 }}>
                   <HermesMark size={12} variant="avatar" /> Hermes
                 </span>
               ) : (
@@ -237,7 +237,7 @@ export default function ArtifactPage() {
               aria-label="Version history"
               style={{
                 fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 'var(--radius-full)',
-                background: 'var(--teal-active)', color: 'var(--teal)', border: '1px solid var(--teal)',
+                background: 'transparent', color: 'var(--sk-t2)', border: '1px solid var(--sk-line2)',
               }}
             >
               <History {...ICON_PROPS} size={11} /> v{artifact.version}
@@ -256,7 +256,7 @@ export default function ArtifactPage() {
                 <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--slate)', opacity: 0.7, padding: '4px 8px' }}>
                   Version history
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--ink)', padding: '6px 8px', borderRadius: 'var(--radius-md)', background: 'var(--teal-active)' }}>
+                <div style={{ fontSize: 12, color: 'var(--ink)', padding: '6px 8px', borderRadius: 'var(--radius-md)', background: 'var(--sk-line)' }}>
                   <strong>v{artifact.version}</strong> (current) · {getPersonInfo(artifact.created_by).name}
                 </div>
                 {artifact.versions.map((v) => (
@@ -276,7 +276,7 @@ export default function ArtifactPage() {
             <Link
               to={`${PATHS.myTasks}?openTask=${encodeURIComponent(artifact.task_id)}`}
               className="inline-flex items-center gap-1"
-              style={{ fontSize: 11, color: 'var(--teal)', background: 'var(--teal-active)', borderRadius: 'var(--radius-full)', padding: '3px 10px', textDecoration: 'none' }}
+              style={{ fontSize: 11, color: 'var(--sk-t2)', background: 'var(--sk-line)', borderRadius: 'var(--radius-full)', padding: '3px 10px', textDecoration: 'none' }}
             >
               <ClipboardList {...ICON_PROPS} size={11} /> origin task
             </Link>
@@ -287,7 +287,7 @@ export default function ArtifactPage() {
             <Link
               to={PATHS.project(artifact.project_id)}
               className="inline-flex items-center gap-1"
-              style={{ fontSize: 11, color: 'var(--gold)', background: 'var(--gold-active)', borderRadius: 'var(--radius-full)', padding: '3px 10px', textDecoration: 'none' }}
+              style={{ fontSize: 11, color: 'var(--sk-t2)', background: 'var(--sk-line)', borderRadius: 'var(--radius-full)', padding: '3px 10px', textDecoration: 'none' }}
             >
               <FolderKanban {...ICON_PROPS} size={11} /> origin project
             </Link>
@@ -340,7 +340,7 @@ export default function ArtifactPage() {
                 <span
                   key={t}
                   className="inline-flex items-center gap-1"
-                  style={{ fontSize: 11, fontWeight: 500, color: 'var(--teal)', background: 'var(--teal-active)', borderRadius: 'var(--radius-full)', padding: '3px 8px 3px 10px' }}
+                  style={{ fontSize: 11, fontWeight: 500, color: 'var(--sk-t2)', background: 'var(--sk-line)', borderRadius: 'var(--radius-full)', padding: '3px 8px 3px 10px' }}
                 >
                   {t}
                   {canEdit && (
@@ -349,7 +349,7 @@ export default function ArtifactPage() {
                       onClick={() => removeTag.mutate(t, { onError: () => showError('Could not remove tag') })}
                       aria-label={`Remove tag ${t}`}
                       className="inline-flex items-center cursor-pointer"
-                      style={{ background: 'none', border: 'none', color: 'var(--teal)', padding: 0, opacity: 0.8 }}
+                      style={{ background: 'none', border: 'none', color: 'var(--job-accent)', padding: 0, opacity: 0.8 }}
                     >
                       <X {...ICON_PROPS} size={11} />
                     </button>
@@ -435,7 +435,7 @@ export default function ArtifactPage() {
         >
           {!isAuthenticated && import.meta.env.PROD ? (
             <span style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.85 }}>
-              <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 500, textDecoration: 'underline' }}>Sign in</a> to comment.
+              <a href="/api/auth/login" style={{ color: 'var(--job-accent)', fontWeight: 500, textDecoration: 'underline' }}>Sign in</a> to comment.
             </span>
           ) : (
             <>
@@ -478,8 +478,8 @@ export default function ArtifactPage() {
                   style={{
                     marginLeft: 'auto', gap: '4px', fontSize: 12, fontWeight: 500, padding: '5px 14px',
                     borderRadius: 'var(--radius-md)',
-                    background: comment.trim() ? 'var(--teal-solid)' : 'var(--surface-2, rgba(100,116,139,0.2))',
-                    color: comment.trim() ? 'var(--ink-bright, #fff)' : 'var(--slate)',
+                    background: comment.trim() ? 'var(--job-accent)' : 'var(--surface-2, rgba(100,116,139,0.2))',
+                    color: comment.trim() ? 'var(--sk-card)' : 'var(--slate)',
                     cursor: comment.trim() ? 'pointer' : 'not-allowed', opacity: postComment.isPending ? 0.7 : 1,
                   }}
                 >

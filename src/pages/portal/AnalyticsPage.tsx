@@ -17,7 +17,7 @@ import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
 import { PRIORITY_COLORS, isProjectActive } from '../../lib/taskConstants'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
+import { isTaskDone } from '../../lib/taskGrouping'
 import DueLabel from '../../components/DueLabel'
 import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
 import { stageRampStep } from '../../lib/stageNormalize'
@@ -181,11 +181,11 @@ export default function AnalyticsPage() {
     const now = new Date()
     const active = tasks.filter(t => !t.completed && t.created_at)
     const buckets = [
-      { label: '<1w', max: 7, count: 0, fill: 'var(--teal)' },
-      { label: '1-2w', max: 14, count: 0, fill: 'var(--teal)' },
-      { label: '2-4w', max: 28, count: 0, fill: 'var(--gold)' },
-      { label: '1-2m', max: 60, count: 0, fill: 'var(--maroon)' },
-      { label: '2m+', max: Infinity, count: 0, fill: 'var(--maroon)' },
+      { label: '<1w', max: 7, count: 0, fill: 'var(--sk-t3)' },
+      { label: '1-2w', max: 14, count: 0, fill: 'var(--sk-t3)' },
+      { label: '2-4w', max: 28, count: 0, fill: 'color-mix(in srgb, var(--job-stale) 55%, var(--sk-t3))' },
+      { label: '1-2m', max: 60, count: 0, fill: 'var(--job-stale)' },
+      { label: '2m+', max: Infinity, count: 0, fill: 'var(--job-stale)' },
     ]
     for (const t of active) {
       const age = Math.floor((now.getTime() - parseDbUtc(t.created_at).getTime()) / 86400000)
@@ -394,7 +394,7 @@ export default function AnalyticsPage() {
           <ChevronLeft {...ICON_PROPS} size={16} />
         </button>
         <div className="flex items-center gap-2">
-          <Calendar {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
+          <Calendar {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
           <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
             {formatWeekRange(selectedWeekStart)}
           </span>
@@ -412,7 +412,7 @@ export default function AnalyticsPage() {
           <button
             onClick={() => setWeekOffset(0)}
             className="px-3 py-1 rounded-lg text-xs font-medium border transition-colors"
-            style={{ color: 'var(--teal)', borderColor: 'var(--teal)', background: 'none', cursor: 'pointer' }}
+            style={{ color: 'var(--job-accent)', borderColor: 'var(--job-accent)', background: 'none', cursor: 'pointer' }}
           >
             This Week
           </button>
@@ -426,8 +426,8 @@ export default function AnalyticsPage() {
               onClick={() => setRange(r)}
               className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors"
               style={{
-                background: range === r ? 'var(--teal-solid)' : 'transparent',
-                color: range === r ? 'var(--ink-bright, #fff)' : 'var(--slate)',
+                background: range === r ? 'var(--job-accent)' : 'transparent',
+                color: range === r ? 'var(--sk-card)' : 'var(--slate)',
                 border: 'none',
                 cursor: 'pointer',
               }}
@@ -440,19 +440,19 @@ export default function AnalyticsPage() {
 
       {/* Weekly Summary Cards */}
       <motion.div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3" variants={staggerContainer} initial="hidden" animate="visible">
-        <motion.div variants={staggerItem}><MetricCard icon={CheckCircle2} label="Completed" value={weekStats.completed} previous={weekStats.completedPrior} previousLabel="vs last week" color="var(--green)" sparklineData={sparkCompleted} /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard icon={Plus} label="Created" value={weekStats.created} previous={weekStats.createdPrior} previousLabel="vs last week" color="var(--teal)" sparklineData={sparkCreated} /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard icon={AlertTriangle} label="Overdue" value={weekStats.overdue} previous={weekStats.overduePrior} previousLabel="vs last week" color="var(--maroon)" sparklineData={sparkOverdue} /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard icon={TrendingUp} label="Activity" value={weekStats.activityCount} previous={weekStats.activityPrior} previousLabel="vs last week" color="var(--gold)" sparklineData={sparkActivity} /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={CheckCircle2} label="Completed" value={weekStats.completed} previous={weekStats.completedPrior} previousLabel="vs last week" color="var(--sk-t3)" sparklineData={sparkCompleted} /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={Plus} label="Created" value={weekStats.created} previous={weekStats.createdPrior} previousLabel="vs last week" color="var(--sk-t3)" sparklineData={sparkCreated} /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={AlertTriangle} label="Overdue" value={weekStats.overdue} previous={weekStats.overduePrior} previousLabel="vs last week" color="var(--job-overdue)" sparklineData={sparkOverdue} /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={TrendingUp} label="Activity" value={weekStats.activityCount} previous={weekStats.activityPrior} previousLabel="vs last week" color="var(--sk-t3)" sparklineData={sparkActivity} /></motion.div>
       </motion.div>
 
       {/* Lab health summary */}
       {health && (
         <div className="mt-3 flex items-center gap-2 text-[11px]" style={{ color: 'var(--muted)' }}>
           <span>Lab health:</span>
-          <span style={{ color: 'var(--green)' }}>{health.healthy} healthy</span>
-          {(health.needs_attention || 0) > 0 && <span style={{ color: 'var(--gold)' }}>{health.needs_attention} need attention</span>}
-          {((health.at_risk || 0) + (health.critical || 0)) > 0 && <span style={{ color: 'var(--maroon)' }}>{(health.at_risk || 0) + (health.critical || 0)} at risk</span>}
+          <span style={{ color: 'var(--sk-t2)' }}>{health.healthy} healthy</span>
+          {(health.needs_attention || 0) > 0 && <span style={{ color: 'var(--job-stale)' }}>{health.needs_attention} need attention</span>}
+          {((health.at_risk || 0) + (health.critical || 0)) > 0 && <span style={{ color: 'var(--job-stale)' }}>{(health.at_risk || 0) + (health.critical || 0)} at risk</span>}
           <span>&middot;</span>
           <span>Net this week: {weekStats.completed - weekStats.created > 0 ? '+' : ''}{weekStats.completed - weekStats.created} tasks ({weekStats.completed} done, {weekStats.created} created)</span>
         </div>
@@ -460,10 +460,10 @@ export default function AnalyticsPage() {
 
       {/* Attention Required — positive empty state when clear */}
       {weekStats.overdue > 0 ? (
-        <div className="mt-4 rounded-xl border p-4" style={{ borderColor: 'var(--maroon)', borderLeftWidth: 3 }}>
+        <div className="mt-4 rounded-xl border p-4" style={{ borderColor: 'var(--job-overdue)', borderLeftWidth: 3 }}>
           <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle {...ICON_PROPS} size={14} style={{ color: 'var(--maroon)' }} />
-            <h3 className="text-sm font-normal" style={{ color: 'var(--maroon)' }}>
+            <AlertTriangle {...ICON_PROPS} size={14} style={{ color: 'var(--job-overdue)' }} />
+            <h3 className="text-sm font-normal" style={{ color: 'var(--job-overdue)' }}>
               Attention Required
             </h3>
             <span className="text-xs" style={{ color: 'var(--muted)' }}>
@@ -473,7 +473,7 @@ export default function AnalyticsPage() {
           <div className="flex flex-col gap-1">
             {tasks.filter(t => !isTaskDone(t) && t.due_date && isOverdue(t.due_date, t.status)).slice(0, 5).map(t => (
               <div key={t.id} className="flex items-center gap-2 text-xs" style={{ color: 'var(--ink)' }}>
-                <Circle {...ICON_PROPS} size={10} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+                <Circle {...ICON_PROPS} size={10} style={{ color: 'var(--job-overdue)', flexShrink: 0 }} />
                 <span className="truncate">{taskShortLabel(t)}</span>
                 {t.due_date && <DueLabel due={t.due_date} status={t.status} style={{ fontSize: '10px', flexShrink: 0 }} />}
               </div>
@@ -482,7 +482,7 @@ export default function AnalyticsPage() {
         </div>
       ) : (
         <div className="mt-4 rounded-xl border p-4 text-center" style={{ borderColor: 'var(--border-subtle)' }}>
-          <CheckCircle2 size={24} style={{ color: 'var(--green)', margin: '0 auto 6px' }} />
+          <CheckCircle2 size={24} style={{ color: 'var(--sk-t3)', margin: '0 auto 6px' }} />
           <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>All caught up!</p>
           <p className="text-xs" style={{ color: 'var(--muted)' }}>No overdue tasks. Keep up the momentum.</p>
         </div>
@@ -498,10 +498,10 @@ export default function AnalyticsPage() {
 
       {/* Second row: summary hero stats — DD-6 display variant */}
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard variant="display" icon={FolderKanban} label="Active Projects" value={projects.filter((p) => isProjectActive(p.status)).length} color="var(--teal)" subtitle={`${projects.length} total`} />
-        <MetricCard variant="display" icon={Lightbulb} label="Research Ideas" value={activeIdeas} color="var(--gold)" subtitle={`${ideas.length} total`} />
+        <MetricCard variant="display" icon={FolderKanban} label="Active Projects" value={projects.filter((p) => isProjectActive(p.status)).length} color="var(--sk-t3)" subtitle={`${projects.length} total`} />
+        <MetricCard variant="display" icon={Lightbulb} label="Research Ideas" value={activeIdeas} color="var(--sk-t3)" subtitle={`${ideas.length} total`} />
         <MetricCard variant="display" icon={FileText} label="Pending Tasks" value={pendingTasks} color="var(--ink)" subtitle={`${tasks.length} total`} />
-        <MetricCard variant="display" icon={Users} label="Project Health" value={health?.healthy || 0} color="var(--green)" subtitle={`${health?.needs_attention || 0} attention · ${(health?.at_risk || 0) + (health?.critical || 0)} at risk`} />
+        <MetricCard variant="display" icon={Users} label="Project Health" value={health?.healthy || 0} color="var(--sk-t3)" subtitle={`${health?.needs_attention || 0} attention · ${(health?.at_risk || 0) + (health?.critical || 0)} at risk`} />
       </div>
 
       {/* Task Velocity — completions per week, last 8 weeks */}
@@ -522,8 +522,8 @@ export default function AnalyticsPage() {
               }}
               labelStyle={{ color: 'var(--ink)', fontWeight: 500 }}
             />
-            <Bar dataKey="completed" fill="var(--teal)" radius={[4, 4, 0, 0]} name="Completed" />
-            <Bar dataKey="created" fill="var(--gold)" radius={[4, 4, 0, 0]} name="Created" opacity={0.6} />
+            <Bar dataKey="completed" fill="var(--job-accent)" radius={[4, 4, 0, 0]} name="Completed" />
+            <Bar dataKey="created" fill="color-mix(in srgb, var(--job-accent) 45%, var(--sk-t3))" radius={[4, 4, 0, 0]} name="Created" opacity={0.6} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -554,13 +554,13 @@ export default function AnalyticsPage() {
                     </span>
                     {/* Progress bar */}
                     <div className="flex-1 h-4 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
-                      <div className="h-full rounded-full transition-all" style={{ width: `${rate}%`, backgroundColor: rate > 70 ? 'var(--green)' : rate > 40 ? 'var(--gold)' : 'var(--maroon)' }} />
+                      <div className="h-full rounded-full transition-all" style={{ width: `${rate}%`, backgroundColor: 'var(--job-accent)' }} />
                     </div>
                     <span className="text-[11px] w-16 text-right" style={{ color: 'var(--slate)' }}>
                       {done}/{total}
                     </span>
                     {overdue > 0 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--maroon)', backgroundColor: 'var(--maroon-hover)' }}>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--job-overdue)', backgroundColor: 'color-mix(in srgb, var(--job-overdue) 6%, transparent)' }}>
                         {overdue} overdue
                       </span>
                     )}
@@ -579,7 +579,7 @@ export default function AnalyticsPage() {
             </h3>
             <div className="text-center py-6">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <span className="text-3xl font-bold" style={{ color: 'var(--teal)' }}>
+                <span className="text-3xl font-bold" style={{ color: 'var(--job-accent)' }}>
                   {/* eslint-disable-next-line react-hooks/purity -- rolling 7-day cutoff, intentionally recomputed fresh each render */}
                   {tasks.filter(t => t.completed_at && t.completed_at >= new Date(Date.now() - 7 * 86400000).toISOString()).length}
                 </span>
@@ -589,7 +589,7 @@ export default function AnalyticsPage() {
                 {pendingTasks} still pending across the lab
               </p>
             </div>
-            <div className="text-center pt-3 mt-3" style={{ borderTop: `1px dashed ${withAlpha(ACCENT_GOLD, 15)}` }}>
+            <div className="text-center pt-3 mt-3" style={{ borderTop: `1px dashed var(--sk-line)` }}>
               <p style={{ fontSize: 'var(--value-size)', color: 'var(--muted)' }}>
                 Individual performance metrics are visible to PIs only
               </p>
@@ -696,11 +696,11 @@ export default function AnalyticsPage() {
                       <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
                         <div className="h-full rounded-full" style={{
                           width: `${(count / max) * 100}%`,
-                          backgroundColor: count > 8 ? 'var(--maroon-solid)' : count > 5 ? 'var(--gold)' : 'var(--teal)',
+                          backgroundColor: count > 8 ? 'var(--job-accent)' : count > 5 ? 'color-mix(in srgb, var(--job-accent) 70%, var(--sk-t3))' : 'color-mix(in srgb, var(--job-accent) 40%, var(--sk-t3))',
                           transition: 'width 300ms ease',
                         }} />
                       </div>
-                      <span className="text-[10px] w-6 text-right font-medium" style={{ color: count > 8 ? 'var(--maroon)' : 'var(--slate)' }}>{count}</span>
+                      <span className="text-[10px] w-6 text-right font-medium" style={{ color: count > 8 ? 'var(--sk-t1)' : 'var(--slate)' }}>{count}</span>
                     </div>
                   )
                 })}
@@ -738,13 +738,13 @@ export default function AnalyticsPage() {
                   </div>
                   {counts.map((count, wi) => {
                     const bg = count === 0 ? 'var(--border-subtle)'
-                      : count <= 2 ? 'rgba(22, 163, 74, 0.2)'
-                      : count <= 5 ? withAlpha(ACCENT_GOLD, 25)
-                      : 'rgba(122, 0, 25, 0.25)'
+                      : count <= 2 ? 'color-mix(in srgb, var(--job-accent) 12%, transparent)'
+                      : count <= 5 ? 'color-mix(in srgb, var(--job-accent) 25%, transparent)'
+                      : 'color-mix(in srgb, var(--job-accent) 40%, transparent)'
                     const fg = count === 0 ? 'var(--slate)'
-                      : count <= 2 ? 'var(--green)'
-                      : count <= 5 ? 'var(--gold)'
-                      : 'var(--maroon)'
+                      : count <= 2 ? 'var(--sk-t2)'
+                      : count <= 5 ? 'var(--sk-t1)'
+                      : 'var(--sk-t1)'
                     return (
                       <div
                         key={wi}
@@ -767,17 +767,17 @@ export default function AnalyticsPage() {
               )
             })}
           </div>
-          <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: `1px dashed ${withAlpha(ACCENT_GOLD, 15)}` }}>
+          <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: `1px dashed var(--sk-line)` }}>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(22, 163, 74, 0.2)' }} />
+              <div className="w-3 h-3 rounded" style={{ backgroundColor: 'color-mix(in srgb, var(--job-accent) 12%, transparent)' }} />
               <span className="text-[10px]" style={{ color: 'var(--slate)' }}>0-2 tasks</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded" style={{ backgroundColor: withAlpha(ACCENT_GOLD, 25) }} />
+              <div className="w-3 h-3 rounded" style={{ backgroundColor: 'color-mix(in srgb, var(--job-accent) 25%, transparent)' }} />
               <span className="text-[10px]" style={{ color: 'var(--slate)' }}>3-5 tasks</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(122, 0, 25, 0.25)' }} />
+              <div className="w-3 h-3 rounded" style={{ backgroundColor: 'color-mix(in srgb, var(--job-accent) 40%, transparent)' }} />
               <span className="text-[10px]" style={{ color: 'var(--slate)' }}>6+ tasks</span>
             </div>
           </div>

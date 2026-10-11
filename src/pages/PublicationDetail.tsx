@@ -7,7 +7,6 @@ import Avatar from '../components/Avatar'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { QueryErrorNote } from '../components/QueryErrorNote'
 import type { Publication } from '../data/types'
 import { topicLabel } from '../lib/topics'
@@ -59,9 +58,9 @@ export default function PublicationDetail() {
   }
 
   const statusColors: Record<string, { bg: string; color: string }> = {
-    Published: { bg: 'rgba(34,197,94,0.1)', color: 'var(--green)' },
-    'In Review': { bg: 'var(--gold-active)', color: 'var(--gold)' },
-    'In Preparation': { bg: 'rgba(100,116,139,0.1)', color: 'var(--slate)' },
+    Published: { bg: 'var(--sk-line)', color: 'var(--sk-t2)' },
+    'In Review': { bg: 'var(--sk-line)', color: 'var(--sk-t2)' },
+    'In Preparation': { bg: 'var(--sk-line)', color: 'var(--sk-t3)' },
   }
   const sc = statusColors[pub.status] ?? statusColors['In Preparation']
 
@@ -100,8 +99,8 @@ export default function PublicationDetail() {
               className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
               style={{
                 fontSize: 'var(--label-size)',
-                background: 'var(--gold-active)',
-                color: 'var(--gold)',
+                background: 'color-mix(in srgb, var(--job-brand) 10%, transparent)',
+                color: 'var(--job-brand)',
                 letterSpacing: '0.04em',
               }}
             >
@@ -122,8 +121,8 @@ export default function PublicationDetail() {
                 className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
                 style={{
                   fontSize: 'var(--label-size)',
-                  background: 'var(--teal-active)',
-                  color: 'var(--teal)',
+                  background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
+                  color: 'var(--job-accent)',
                 }}
               >
                 Featured
@@ -197,7 +196,7 @@ export default function PublicationDetail() {
           <div
             style={{
               height: '1px',
-              background: 'linear-gradient(to right, var(--gold), transparent)',
+              background: 'linear-gradient(to right, var(--job-brand), transparent)',
               opacity: 0.85,
               marginBottom: '2rem',
             }}
@@ -239,8 +238,8 @@ export default function PublicationDetail() {
                     className="inline-flex items-center px-2.5 py-1 rounded-full transition-colors hover:opacity-80"
                     style={{
                       fontSize: 'var(--label-size)',
-                      background: 'var(--gold-active)',
-                      color: 'var(--gold)',
+                      background: 'color-mix(in srgb, var(--job-brand) 10%, transparent)',
+                      color: 'var(--job-brand)',
                       textDecoration: 'none',
                     }}
                   >
@@ -258,9 +257,9 @@ export default function PublicationDetail() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors hover:opacity-80"
                   style={{
-                    background: 'var(--gold-active)',
-                    color: 'var(--gold)',
-                    border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+                    background: 'color-mix(in srgb, var(--job-brand) 10%, transparent)',
+                    color: 'var(--job-brand)',
+                    border: `1px solid color-mix(in srgb, var(--job-brand) 20%, transparent)`,
                     textDecoration: 'none',
                     minHeight: '32px',
                   }}
@@ -275,9 +274,9 @@ export default function PublicationDetail() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors hover:opacity-80"
                   style={{
-                    background: 'var(--teal-active)',
-                    color: 'var(--teal)',
-                    border: '1px solid rgba(45, 138, 138, 0.15)',
+                    background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
+                    color: 'var(--job-accent)',
+                    border: '1px solid color-mix(in srgb, var(--job-accent) 15%, transparent)',
                     textDecoration: 'none',
                     minHeight: '32px',
                   }}
@@ -317,10 +316,10 @@ function TrialRegSection({ pub }: { pub: PublicationWithTrialReg }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.25 }} style={{ marginTop: '2rem' }}>
       <div className="flex items-center gap-2 mb-3">
-        <ExternalLink {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
+        <ExternalLink {...ICON_PROPS} size={16} style={{ color: 'var(--job-brand)' }} />
         <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>Trial Registration</h2>
       </div>
-      <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)', fontSize: 'var(--value-size)', textDecoration: 'underline' }}>
+      <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--job-accent)', fontSize: 'var(--value-size)', textDecoration: 'underline' }}>
         {nct}
       </a>
     </motion.div>
@@ -335,7 +334,7 @@ function RelatedPublicationsSection({ pub, allPubs }: { pub: Publication; allPub
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.3 }} style={{ marginTop: '2rem' }}>
       <div className="flex items-center gap-2 mb-3">
-        <FolderOpen {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
+        <FolderOpen {...ICON_PROPS} size={16} style={{ color: 'var(--job-accent)' }} />
         <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>Related Publications</h2>
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>{related.length}</span>
       </div>
@@ -345,7 +344,7 @@ function RelatedPublicationsSection({ pub, allPubs }: { pub: Publication; allPub
             key={p.id}
             to={`/publications/${encodeURIComponent(p.id)}`}
             className="flex items-start gap-3 py-1.5"
-            style={{ textDecoration: 'none', color: 'var(--ink)', borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 6)}` }}
+            style={{ textDecoration: 'none', color: 'var(--ink)', borderBottom: `1px solid color-mix(in srgb, var(--job-brand) 6%, transparent)` }}
           >
             <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, flexShrink: 0, minWidth: 36 }}>{p.year}</span>
             <span style={{ fontSize: 'var(--value-size)', flex: 1 }}>{p.title}</span>
@@ -376,9 +375,9 @@ function PressMentionsSection({ pub }: { pub: Publication }) {
 // ── Linked Projects Section ─────────────────────────────────
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  clif: { bg: 'var(--maroon)', text: 'var(--ink-bright, #fff)', label: 'CLIF' },
-  lab: { bg: 'var(--teal)', text: 'var(--ink-bright, #fff)', label: 'Lab' },
-  nate: { bg: 'var(--gold)', text: '#0f1923', label: 'Mesfin' },
+  clif: { bg: 'var(--sk-line)', text: 'var(--sk-t1)', label: 'CLIF' },
+  lab: { bg: 'var(--sk-line)', text: 'var(--sk-t1)', label: 'Lab' },
+  nate: { bg: 'var(--sk-line)', text: 'var(--sk-t1)', label: 'Mesfin' },
 }
 
 // #124: `link_type` on this route can be a `paper_project_links` value
@@ -408,7 +407,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
       ) : (
       <>
       <div className="flex items-center gap-2 mb-3">
-        <FolderOpen {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
+        <FolderOpen {...ICON_PROPS} size={16} style={{ color: 'var(--job-accent)' }} />
         <h2
           style={{
             fontWeight: 500,
@@ -450,7 +449,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
                 className="flex items-center gap-3 py-2 transition-colors"
                 style={{
                   textDecoration: 'none',
-                  borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 6)}`,
+                  borderBottom: `1px solid color-mix(in srgb, var(--job-brand) 6%, transparent)`,
                 }}
               >
                 <span
@@ -475,8 +474,8 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
                   <span
                     className="inline-block px-1.5 py-0.5 rounded text-[10px]"
                     style={{
-                      background: 'var(--teal-active)',
-                      color: 'var(--teal)',
+                      background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
+                      color: 'var(--job-accent)',
                     }}
                   >
                     {LINK_TYPE_LABEL[project.link_type] ?? project.link_type}

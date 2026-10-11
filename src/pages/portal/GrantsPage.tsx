@@ -61,9 +61,9 @@ const MILESTONE_TYPES = [
 
 const MILESTONE_STATUS_OPTIONS = [
   { value: 'upcoming', label: 'Upcoming', color: 'var(--slate)' },
-  { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
+  { value: 'in_progress', label: 'In Progress', color: 'var(--job-accent)' },
   { value: 'completed', label: 'Completed', color: 'var(--st-done)' },
-  { value: 'overdue', label: 'Overdue', color: 'var(--maroon)' },
+  { value: 'overdue', label: 'Overdue', color: 'var(--job-overdue)' },
 ]
 
 function getMilestoneTypeLabel(type: string): string {
@@ -326,7 +326,7 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
                   <g key={m.id}>
                     <polygon
                       points={`${mx},${my - 5} ${mx + 5},${my} ${mx},${my + 5} ${mx - 5},${my}`}
-                      fill="var(--gold)" stroke="var(--cream)" strokeWidth={1}
+                      fill="var(--job-milestone)" stroke="var(--cream)" strokeWidth={1}
                     />
                   </g>
                 )
@@ -347,12 +347,12 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
           <line
             x1={todayX} y1={CHART_PADDING_TOP - 16}
             x2={todayX} y2={chartHeight - CHART_PADDING_BOTTOM + 12}
-            stroke="var(--teal)" strokeWidth={2}
+            stroke="var(--job-accent)" strokeWidth={2}
           />
           <text
             x={todayX} y={CHART_PADDING_TOP - 20}
             textAnchor="middle"
-            style={{ fontSize: '10px', fill: 'var(--teal)', fontWeight: 600 }}
+            style={{ fontSize: '10px', fill: 'var(--job-accent)', fontWeight: 600 }}
           >
             Today
           </text>
@@ -461,9 +461,9 @@ export default function GrantsPage() {
             className="px-3 py-1.5 rounded-full text-xs transition-colors border"
             style={{
               fontWeight: isActive ? 500 : 400,
-              borderColor: isActive ? 'var(--teal)' : 'var(--border-subtle)',
-              backgroundColor: isActive ? 'var(--teal-active)' : 'transparent',
-              color: isActive ? 'var(--teal)' : 'var(--slate)',
+              borderColor: isActive ? 'var(--job-accent)' : 'var(--border-subtle)',
+              backgroundColor: isActive ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+              color: isActive ? 'var(--job-accent)' : 'var(--slate)',
               cursor: 'pointer',
             }}
           >
@@ -515,8 +515,8 @@ export default function GrantsPage() {
               onClick={() => setActiveTab(tab.key)}
               className="px-3 py-2 text-sm transition-colors touch-tall"
               style={{
-                color: isActive ? 'var(--teal)' : 'var(--slate)',
-                borderBottom: `2px solid ${isActive ? 'var(--teal)' : 'transparent'}`,
+                color: isActive ? 'var(--job-accent)' : 'var(--slate)',
+                borderBottom: `2px solid ${isActive ? 'var(--job-accent)' : 'transparent'}`,
                 background: 'none',
                 cursor: 'pointer',
                 marginBottom: '-1px',
@@ -605,12 +605,12 @@ export default function GrantsPage() {
       {/* Milestone tracking consolidated in Post-Award tab */}
       {!isLoading && enrichedPostAward.length > 0 && (
         <div className="mt-5 flex items-center gap-2 text-xs" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-          <Diamond {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <Diamond {...ICON_PROPS} size={12} style={{ color: 'var(--job-milestone)', flexShrink: 0 }} />
           <span>
             {enrichedPostAward.length} upcoming milestone{enrichedPostAward.length !== 1 ? 's' : ''} —{' '}
             <button
               onClick={() => setActiveTab('post-award')}
-              style={{ background: 'none', border: 'none', padding: 0, color: 'var(--teal)', cursor: 'pointer', fontWeight: 500, fontSize: 'inherit' }}
+              style={{ background: 'none', border: 'none', padding: 0, color: 'var(--job-accent)', cursor: 'pointer', fontWeight: 500, fontSize: 'inherit' }}
             >
               view in Post-Award
             </button>
@@ -635,8 +635,8 @@ export default function GrantsPage() {
                 style={{
                   fontSize: '10px',
                   fontWeight: 600,
-                  color: 'var(--maroon)',
-                  background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',
+                  color: 'var(--job-overdue)',
+                  background: 'color-mix(in srgb, var(--job-overdue) 12%, transparent)',
                 }}
               >
                 <AlertTriangle {...ICON_PROPS} size={10} />
@@ -704,8 +704,8 @@ export default function GrantsPage() {
                     gridTemplateColumns: 'minmax(140px, 1fr) 140px minmax(200px, 2fr) 100px 100px',
                     padding: `var(--row-padding-y, 8px) 12px`,
                     borderBottom: '1px solid var(--border-subtle)',
-                    background: m._isOverdue ? 'var(--maroon-hover)' : 'transparent',
-                    borderLeft: m._isOverdue ? '3px solid var(--maroon)' : '3px solid transparent',
+                    background: m._isOverdue ? 'color-mix(in srgb, var(--job-overdue) 6%, transparent)' : 'transparent',
+                    borderLeft: m._isOverdue ? '3px solid var(--job-overdue)' : '3px solid transparent',
                   }}
                 >
                   <span className="text-xs truncate" style={{ color: 'var(--ink)', fontWeight: 500 }}>
@@ -730,7 +730,7 @@ export default function GrantsPage() {
                   </span>
                   <span className="text-[11px]" style={{
                     // Red is overdue only; a near date is a date, not a color job.
-                    color: m._isOverdue ? 'var(--maroon)' : 'var(--slate)',
+                    color: m._isOverdue ? 'var(--job-overdue)' : 'var(--slate)',
                     opacity: m._isOverdue ? 1 : 0.85,
                     fontWeight: m._isOverdue ? 600 : 400,
                   }}>
@@ -789,10 +789,10 @@ export default function GrantsPage() {
           <button
             onClick={() => setActiveSearch(searchKeywords)}
             style={{
-              // Primary action = teal (rules-ui-design 21). --teal-solid is
-              // the same hex in both themes, 6.1:1 with white text.
-              background: 'var(--teal-solid)',
-              color: '#fff',
+              // Primary action = the accent fill with card-colored text,
+              // AA in both themes (dark text on the bright dark-mode teal).
+              background: 'var(--job-accent)',
+              color: 'var(--sk-card)',
               border: 'none',
               borderRadius: 'var(--radius-lg)',
               padding: 'var(--sp-sm) var(--sp-lg)',
@@ -1032,8 +1032,8 @@ function AddGrantMilestoneModal({
               padding: 'var(--sp-sm) var(--sp-lg)',
               borderRadius: 'var(--radius-lg)',
               border: 'none',
-              background: !grantId || !title.trim() ? 'var(--border-subtle)' : 'var(--teal)',
-              color: !grantId || !title.trim() ? 'var(--slate)' : 'var(--ink-bright, #fff)',
+              background: !grantId || !title.trim() ? 'var(--border-subtle)' : 'var(--job-accent)',
+              color: !grantId || !title.trim() ? 'var(--slate)' : 'var(--sk-card)',
               fontSize: 'var(--value-size)',
               fontWeight: 600,
               cursor: !grantId || !title.trim() ? 'not-allowed' : 'pointer',

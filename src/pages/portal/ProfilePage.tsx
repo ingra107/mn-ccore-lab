@@ -17,7 +17,6 @@ import Avatar from '../../components/Avatar'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface ProfileForm {
   preferred_name: string
@@ -151,7 +150,7 @@ export default function ProfilePage() {
           <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>{user?.email}</p>
           <div className="flex flex-wrap items-center gap-2 mt-2">
             {m.role && (
-              <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: withAlpha(ACCENT_GOLD, 14), color: 'var(--gold)' }}>
+              <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: 'var(--sk-line)', color: 'var(--sk-t2)' }}>
                 {m.role}
               </span>
             )}
@@ -163,7 +162,7 @@ export default function ProfilePage() {
             <Link
               to={PATHS.teamMember(slug)}
               className="inline-flex items-center gap-1 text-[11px]"
-              style={{ color: 'var(--teal)' }}
+              style={{ color: 'var(--job-accent)' }}
             >
               View public profile <ExternalLink {...ICON_PROPS} size={11} />
             </Link>
@@ -190,12 +189,12 @@ export default function ProfilePage() {
           ))}
         </div>
         {save.isError && (
-          <p className="text-[11px] mt-2" style={{ color: 'var(--maroon)' }}>
+          <p className="text-[11px] mt-2" style={{ color: 'var(--sk-t1)' }}>
             {(save.error as Error).message}
           </p>
         )}
         {showSavedHint && (
-          <p className="text-[11px] mt-2 inline-flex items-center gap-1" style={{ color: 'var(--green)' }}>
+          <p className="text-[11px] mt-2 inline-flex items-center gap-1" style={{ color: 'var(--job-accent)' }}>
             <Save {...ICON_PROPS} size={11} /> Saved
           </p>
         )}
@@ -204,7 +203,7 @@ export default function ProfilePage() {
       {/* Calendar feeds */}
       <section className="mb-6">
         <div className="flex items-center gap-2 mb-3">
-          <CalendarIcon {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
+          <CalendarIcon {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t3)' }} />
           <h3 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Calendar feeds</h3>
         </div>
         <p className="text-[11px] mb-3" style={{ color: 'var(--muted)', lineHeight: 1.5 }}>
@@ -219,7 +218,7 @@ export default function ProfilePage() {
         <Link
           to={PATHS.settings}
           className="inline-flex items-center gap-2 text-xs"
-          style={{ color: 'var(--teal)' }}
+          style={{ color: 'var(--job-accent)' }}
         >
           <SettingsIcon {...ICON_PROPS} size={14} /> Open full Settings (theme, lab thresholds, etc.)
         </Link>

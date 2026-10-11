@@ -25,14 +25,13 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 // Lazy-loaded: pulls recharts (PublicationTimeline) — deferred until scrolled into view
 const ResearchImpact = lazyRoute(() => import('../components/ResearchImpact'))
 
 // The public site keeps gold as its brand color (Nick 2026-10-11): all four
 // pillars wear the one brand gold, not four hues.
-const PILLAR_ACCENT = 'var(--gold)'
+const PILLAR_ACCENT = 'var(--job-brand)'
 
 const pillars = [
   {
@@ -176,7 +175,7 @@ export default function Home() {
           className="absolute inset-0"
           style={{
             background:
-              `radial-gradient(ellipse at 20% 40%, ${withAlpha(ACCENT_GOLD, 12)} 0%, transparent 55%), radial-gradient(ellipse at 80% 60%, rgba(45,138,138,0.08) 0%, transparent 50%)`,
+              `radial-gradient(ellipse at 20% 40%, color-mix(in srgb, var(--job-brand) 12%, transparent) 0%, transparent 55%), radial-gradient(ellipse at 80% 60%, color-mix(in srgb, var(--job-accent) 8%, transparent) 0%, transparent 50%)`,
             animation: 'gradientShift 20s ease-in-out infinite alternate',
           }}
         />
@@ -194,7 +193,7 @@ export default function Home() {
             className="mb-3"
             style={{
               fontSize: 'var(--text-small, 12px)',
-              color: 'var(--gold)',
+              color: 'var(--job-brand)',
               letterSpacing: '0.15em',
               textTransform: 'uppercase',
               fontWeight: 'var(--weight-ui, 500)',
@@ -226,7 +225,7 @@ export default function Home() {
             <svg viewBox="0 0 44 22" style={{ width: 'clamp(2rem, 5vw, 4rem)', height: 'auto', display: 'inline-block', verticalAlign: 'baseline', marginBottom: '0.08em' }}>
               <path
                 d="M 2 11 L 8 11 L 12 3 L 17 19 L 22 7 L 27 13 L 32 9 L 42 9"
-                stroke="var(--gold)"
+                stroke="var(--job-brand)"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -271,7 +270,7 @@ export default function Home() {
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm"
               style={{
                 // Use literal #dcb355 (= dark-mode --gold) + fixed dark text:
-                // var(--gold) flips light↔dark across themes so any fixed text
+                // var(--job-brand) flips light↔dark across themes so any fixed text
                 // color fails in one theme. Gold button bg should stay LIGHT
                 // in both modes; pair with dark literal text for 6+:1 AA.
                 background: '#dcb355',
@@ -310,7 +309,7 @@ export default function Home() {
         <div
           className="relative z-10"
           style={{
-            borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 25)}`,
+            borderTop: `1px solid color-mix(in srgb, var(--job-brand) 25%, transparent)`,
             background: 'rgba(0, 0, 0, 0.2)',
             backdropFilter: 'blur(12px)',
             opacity: heroVisible ? 1 : 0,
@@ -344,7 +343,7 @@ export default function Home() {
                       fontWeight: 700,
                       fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
                       letterSpacing: '-0.03em',
-                      color: 'var(--gold)',
+                      color: 'var(--job-brand)',
                       lineHeight: 1,
                     }}
                   >
@@ -387,7 +386,7 @@ export default function Home() {
             <p
               className="fade-in-up text-xs mb-2"
               style={{
-                color: 'var(--gold)',
+                color: 'var(--job-brand)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.15em',
               }}
@@ -499,7 +498,7 @@ export default function Home() {
               className="text-xs mb-2"
               style={{
                 // section-ink is fixed dark bg in both themes, so gold text
-                // needs the LIGHT gold (#dcb355) for AA. var(--gold) flips
+                // needs the LIGHT gold (#dcb355) for AA. var(--job-brand) flips
                 // dark↔light with theme and fails in light mode (2.46:1).
                 color: '#dcb355',
                 textTransform: 'uppercase',
@@ -621,7 +620,7 @@ export default function Home() {
           <div
             style={{
               height: '1px',
-              background: 'linear-gradient(to right, transparent, var(--gold), transparent)',
+              background: 'linear-gradient(to right, transparent, var(--job-brand), transparent)',
               opacity: 0.85,
             }}
           />
@@ -677,7 +676,7 @@ export default function Home() {
                   <ExternalLink {...ICON_PROPS}
                     size={14}
                     className="flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    style={{ color: 'var(--gold)' }}
+                    style={{ color: 'var(--job-brand)' }}
                     aria-hidden="true"
                   />
                 </div>

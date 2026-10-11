@@ -47,8 +47,8 @@ const GRID_TEMPLATE =
   'minmax(200px, 3fr) 160px 120px 140px 100px 140px 80px'
 
 const OUTCOME_OPTIONS = [
-  { value: 'pending', label: 'Pending', color: 'var(--gold)' },
-  { value: 'recorded', label: 'Recorded', color: 'var(--teal)' },
+  { value: 'pending', label: 'Pending', color: 'var(--sk-t2)' },
+  { value: 'recorded', label: 'Recorded', color: 'var(--sk-t3)' },
   { value: 'revisited', label: 'Revisited', color: 'var(--slate)' },
 ]
 
@@ -91,7 +91,7 @@ function DecisionTimeline({
     <div className="relative pl-8" style={{ paddingTop: '4px' }}>
       <div
         className="absolute left-3 top-0 bottom-0"
-        style={{ width: '2px', backgroundColor: 'var(--gold-hover)' }}
+        style={{ width: '2px', backgroundColor: 'var(--sk-line)' }}
       />
       {grouped.map((group) => (
         <div key={group.key}>
@@ -181,8 +181,8 @@ function DecisionTimeline({
                     style={{
                       fontSize: 'var(--text-micro)',
                       fontWeight: 400,
-                      color: 'var(--teal)',
-                      backgroundColor: 'var(--teal-hover)',
+                      color: 'var(--job-accent)',
+                      backgroundColor: 'color-mix(in srgb, var(--job-accent) 6%, transparent)',
                       borderRadius: 'var(--radius-full)',
                     }}
                   >
@@ -194,7 +194,7 @@ function DecisionTimeline({
                 <p
                   style={{
                     fontSize: 'var(--text-small)',
-                    color: 'var(--teal)',
+                    color: 'var(--job-accent)',
                     marginTop: '4px',
                     marginBottom: 0,
                   }}
@@ -208,7 +208,7 @@ function DecisionTimeline({
                   className="flex items-center gap-1 mt-1"
                   style={{
                     fontSize: 'var(--text-label)',
-                    color: 'var(--teal)',
+                    color: 'var(--job-accent)',
                     textDecoration: 'none',
                     opacity: 0.85,
                   }}
@@ -274,7 +274,7 @@ function ReviewCard({
     >
       <div className="p-4" style={{ background: 'var(--surface-1)' }}>
         <div className="flex items-center gap-2 mb-2">
-          <Scale {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
+          <Scale {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
           <span
             style={{
               fontWeight: 'var(--weight-heading)',
@@ -318,7 +318,7 @@ function ReviewCard({
               className="flex items-center gap-1"
               style={{
                 fontSize: 'var(--text-label)',
-                color: 'var(--teal)',
+                color: 'var(--job-accent)',
                 textDecoration: 'none',
               }}
             >
@@ -334,28 +334,28 @@ function ReviewCard({
           onClick={() => setFormOpen(true)}
           className="w-full p-3 flex items-center gap-2 cursor-pointer"
           style={{
-            background: 'var(--gold-hover)',
+            background: 'color-mix(in srgb, var(--job-wants) 6%, transparent)',
             borderTop: '1px solid var(--border-subtle)',
-            borderLeft: '3px solid var(--gold)',
+            borderLeft: '3px solid var(--job-wants)',
             color: 'var(--ink)',
             fontSize: 'var(--text-small)',
             fontWeight: 500,
             textAlign: 'left',
           }}
         >
-          <Scale {...ICON_PROPS} size={13} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <Scale {...ICON_PROPS} size={13} style={{ color: 'var(--job-wants)', flexShrink: 0 }} />
           <span style={{ flex: 1, minWidth: 0 }}>
             Made {days} days ago · Record outcome
           </span>
-          <span aria-hidden="true" style={{ color: 'var(--gold)' }}>→</span>
+          <span aria-hidden="true" style={{ color: 'var(--job-wants)' }}>→</span>
         </button>
       ) : (
       <div
         className="p-4"
         style={{
-          background: 'var(--gold-hover)',
+          background: 'color-mix(in srgb, var(--job-wants) 6%, transparent)',
           borderTop: '1px solid var(--border-subtle)',
-          borderLeft: '3px solid var(--gold)',
+          borderLeft: '3px solid var(--job-wants)',
         }}
       >
         <p
@@ -403,8 +403,8 @@ function ReviewCard({
             disabled={!outcome.trim()}
             className="cursor-pointer px-4 py-1.5"
             style={{
-              background: outcome.trim() ? 'var(--gold)' : 'var(--gold-hover)',
-              color: outcome.trim() ? 'var(--ink)' : 'var(--slate)',
+              background: outcome.trim() ? 'var(--job-accent)' : 'var(--sk-line)',
+              color: outcome.trim() ? 'var(--sk-card)' : 'var(--slate)',
               border: 'none',
               borderRadius: 'var(--radius-md)',
               fontSize: 'var(--text-small)',
@@ -621,7 +621,7 @@ function DecisionRowItem({
                 fontSize: 'var(--text-small)',
                 // Drop --ink-label (0.55): teal at 0.55 on white = 2.1:1
                 // FAIL. Full opacity teal = 5.8:1 AA pass.
-                color: 'var(--teal)',
+                color: 'var(--job-accent)',
                 textDecoration: 'none',
               }}
             >
@@ -725,8 +725,8 @@ function DecisionRowItem({
                 <div
                   className="px-3 py-2"
                   style={{
-                    background: 'var(--teal-hover)',
-                    borderLeft: '3px solid var(--teal)',
+                    background: 'color-mix(in srgb, var(--sk-t1) 4%, transparent)',
+                    borderLeft: '3px solid var(--sk-line2)',
                     borderRadius: 'var(--radius-md)',
                     marginBottom: 'var(--sp-sm)',
                   }}
@@ -977,9 +977,9 @@ export default function DecisionsPage() {
                 style={{
                   fontSize: 'var(--text-small)',
                   fontWeight: 500,
-                  color: viewMode === 'list' ? 'var(--teal)' : 'var(--slate)',
+                  color: viewMode === 'list' ? 'var(--job-accent)' : 'var(--slate)',
                   backgroundColor:
-                    viewMode === 'list' ? 'var(--teal-active)' : 'transparent',
+                    viewMode === 'list' ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                 }}
@@ -1000,9 +1000,9 @@ export default function DecisionsPage() {
                 style={{
                   fontSize: 'var(--text-small)',
                   fontWeight: 500,
-                  color: viewMode === 'timeline' ? 'var(--teal)' : 'var(--slate)',
+                  color: viewMode === 'timeline' ? 'var(--job-accent)' : 'var(--slate)',
                   backgroundColor:
-                    viewMode === 'timeline' ? 'var(--teal-active)' : 'transparent',
+                    viewMode === 'timeline' ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                 }}
@@ -1052,12 +1052,12 @@ export default function DecisionsPage() {
                 style={{
                   fontSize: 'var(--text-small)',
                   fontWeight: 500,
-                  color: filterStatus === f.key ? 'var(--teal)' : 'var(--slate)',
+                  color: filterStatus === f.key ? 'var(--job-accent)' : 'var(--slate)',
                   backgroundColor:
-                    filterStatus === f.key ? 'var(--teal-active)' : 'transparent',
+                    filterStatus === f.key ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
                   border: `1px solid ${
                     filterStatus === f.key
-                      ? 'var(--teal-emphasis)'
+                      ? 'color-mix(in srgb, var(--job-accent) 15%, transparent)'
                       : 'var(--border-subtle)'
                   }`,
                   borderRadius: 'var(--radius-full)',
@@ -1098,9 +1098,9 @@ export default function DecisionsPage() {
                 style={{
                   fontSize: 'var(--text-micro)',
                   fontWeight: 500,
-                  color: 'var(--maroon)',
-                  backgroundColor: 'var(--maroon-hover)',
-                  border: '1px solid var(--maroon-emphasis)',
+                  color: 'var(--sk-t2)',
+                  backgroundColor: 'transparent',
+                  border: '1px solid var(--sk-line2)',
                   borderRadius: 'var(--radius-full)',
                   cursor: 'pointer',
                 }}
@@ -1117,11 +1117,11 @@ export default function DecisionsPage() {
                   fontSize: 'var(--text-micro)',
                   fontWeight: 500,
                   color:
-                    filterTag === tc.tag ? 'var(--ink-bright, #fff)' : 'var(--teal)',
+                    filterTag === tc.tag ? 'var(--sk-card)' : 'var(--sk-t2)',
                   backgroundColor:
-                    filterTag === tc.tag ? 'var(--teal-solid)' : 'var(--teal-hover)',
+                    filterTag === tc.tag ? 'var(--job-accent)' : 'transparent',
                   border: `1px solid ${
-                    filterTag === tc.tag ? 'var(--teal)' : 'var(--teal-emphasis)'
+                    filterTag === tc.tag ? 'var(--job-accent)' : 'var(--sk-line2)'
                   }`,
                   borderRadius: 'var(--radius-full)',
                   cursor: 'pointer',
@@ -1137,7 +1137,7 @@ export default function DecisionsPage() {
       {reviewDecisions.length > 0 && !filterStatus && !filterTag && (
         <div className="mt-8">
           <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
+            <AlertTriangle {...ICON_PROPS} size={16} style={{ color: 'var(--job-wants)' }} />
             <h2
               style={{
                 fontWeight: 500,
@@ -1152,8 +1152,8 @@ export default function DecisionsPage() {
               className="px-2 py-0.5"
               style={{
                 fontSize: 'var(--text-small)',
-                backgroundColor: 'var(--gold-emphasis)',
-                color: 'var(--gold)',
+                backgroundColor: 'color-mix(in srgb, var(--job-wants) 15%, transparent)',
+                color: 'var(--job-wants)',
                 borderRadius: 'var(--radius-full)',
               }}
             >
@@ -1291,8 +1291,8 @@ export default function DecisionsPage() {
               >
                 {[
                   { label: 'Total', value: filteredDecisions.length },
-                  { label: 'Pending', value: pendingCount, color: 'var(--gold)' },
-                  { label: 'Recorded', value: recordedCount, color: 'var(--teal)' },
+                  { label: 'Pending', value: pendingCount, color: 'var(--sk-t2)' },
+                  { label: 'Recorded', value: recordedCount, color: 'var(--sk-t3)' },
                 ].map((s) => (
                   // Parent opacity compounds with gold/teal count → fails AA.
                   // Use --muted (no opacity). r7 2026-04-22.

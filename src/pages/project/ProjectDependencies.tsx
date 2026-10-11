@@ -9,7 +9,6 @@ import { PATHS } from '../../constants/paths'
 import InlineSelect from '../../components/InlineSelect'
 import Field from '../../components/ui/Field'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import SectionHead from '../../components/ui/SectionHead'
 
@@ -19,9 +18,9 @@ interface ProjectDependenciesProps {
 }
 
 const REL_COLORS: Record<string, string> = {
-  feeds_into: 'var(--gold)',
-  blocks: 'var(--maroon)',
-  shares_data: 'var(--teal)',
+  feeds_into: 'var(--sk-t2)',
+  blocks: 'var(--sk-t2)',
+  shares_data: 'var(--sk-t2)',
   related_to: 'var(--slate)',
 }
 
@@ -95,9 +94,9 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
               className="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs"
               style={{
                 fontSize: 'var(--label-size)',
-                background: 'var(--teal-active)',
-                color: 'var(--teal)',
-                border: '1px solid rgba(45, 138, 138, 0.2)',
+                background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
+                color: 'var(--job-accent)',
+                border: '1px solid color-mix(in srgb, var(--job-accent) 20%, transparent)',
               }}
               whileTap={{ scale: 0.95 }}
             >
@@ -121,7 +120,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
               style={{
                 borderRadius: 'var(--radius-lg)',
                 padding: '14px 16px',
-                border: '1px solid rgba(45, 138, 138, 0.15)',
+                border: '1px solid color-mix(in srgb, var(--job-accent) 15%, transparent)',
               }}
               className="detail-card"
             >
@@ -174,7 +173,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   fontSize: '12px',
                   color: 'var(--ink)',
                   background: 'var(--cream)',
-                  border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+                  border: `1px solid var(--sk-line)`,
                   borderRadius: 'var(--radius-md)',
                   padding: '6px 10px',
                   outline: 'none',
@@ -189,8 +188,8 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   disabled={!newTarget}
                   className="cursor-pointer px-3 py-1.5 rounded-md text-xs font-medium"
                   style={{
-                    background: newTarget ? 'var(--teal-solid)' : 'var(--ice)',
-                    color: newTarget ? 'var(--ink-bright, #fff)' : 'var(--slate)',
+                    background: newTarget ? 'var(--job-accent)' : 'var(--ice)',
+                    color: newTarget ? 'var(--sk-card)' : 'var(--slate)',
                     border: 'none',
                     opacity: newTarget ? 1 : 0.85,
                   }}
@@ -249,7 +248,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 className="flex items-center gap-3"
                 style={{
                   padding: 'var(--sp-sm) 0',
-                  borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 8)}`,
+                  borderBottom: `1px solid var(--sk-line)`,
                 }}
               >
                 <span
@@ -319,7 +318,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 className="flex items-center gap-3"
                 style={{
                   padding: 'var(--sp-sm) 0',
-                  borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 8)}`,
+                  borderBottom: `1px solid var(--sk-line)`,
                 }}
               >
                 <Link

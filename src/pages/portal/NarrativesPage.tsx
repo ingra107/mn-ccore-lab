@@ -11,7 +11,6 @@ import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
 import { stageColor, stageLabel } from '../../lib/stageNormalize'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 // useNarratives() (Hub #361a) is the ingress chokepoint for this shape: it
@@ -100,7 +99,7 @@ export default function NarrativesPage() {
             <div key={arc.id} className="p-5 rounded-xl" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-subtle)' }}>
               {/* Header */}
               <div className="flex items-center gap-2 mb-3">
-                <BookOpen {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
+                <BookOpen {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t3)' }} />
                 <h3 style={{ fontWeight: 500, fontSize: '18px', color: 'var(--ink)', margin: 0 }}>
                   {arc.title}
                 </h3>
@@ -108,7 +107,7 @@ export default function NarrativesPage() {
                   {arc.projectCount} project{arc.projectCount !== 1 ? 's' : ''}
                 </span>
                 {arc.connectedCount > 0 && (
-                  <span className="flex items-center gap-1" style={{ fontSize: 'var(--label-size)', color: 'var(--teal)' }}>
+                  <span className="flex items-center gap-1" style={{ fontSize: 'var(--label-size)', color: 'var(--sk-t3)' }}>
                     <GitBranch {...ICON_PROPS} size={10} />
                     {arc.connectedCount} linked
                   </span>
@@ -116,13 +115,13 @@ export default function NarrativesPage() {
               </div>
 
               {/* Stage pipeline — labeled so each dot's meaning is obvious */}
-              <div className="flex items-center gap-2 mb-4 p-2 rounded-lg" style={{ background: 'var(--gold-hover)' }}>
+              <div className="flex items-center gap-2 mb-4 p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)' }}>
                 <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 4 }}>
                   Pipeline
                 </span>
                 {arc.stageDistribution.map((s, i) => (
                   <div key={s.stage} className="flex items-center gap-1">
-                    {i > 0 && <div style={{ width: 8, height: 1, background: 'var(--gold-emphasis)' }} />}
+                    {i > 0 && <div style={{ width: 8, height: 1, background: 'var(--sk-line2)' }} />}
                     <div className="flex flex-col items-center" style={{ gap: 2 }}>
                       <div style={{
                         width: s.count > 0 ? 10 + s.count * 4 : 8,
@@ -167,7 +166,7 @@ export default function NarrativesPage() {
                     <span
                       key={t.topic}
                       className="px-2 py-0.5 rounded-full text-[10px]"
-                      style={{ background: 'var(--gold-active)', color: 'var(--gold)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}` }}
+                      style={{ background: 'transparent', color: 'var(--sk-t2)', border: '1px solid var(--sk-line2)' }}
                     >
                       {t.topic} ({t.count})
                     </span>

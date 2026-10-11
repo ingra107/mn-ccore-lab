@@ -8,7 +8,7 @@ import NetworkSidebar from '../components/NetworkSidebar'
 import NetworkFilters, { type NetworkFilterState } from '../components/NetworkFilters'
 import type { NetworkNode, NetworkEdge } from '../components/CollaborationGraph'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../lib/taskGrouping'
+import { PANEL_BG, withAlpha } from '../lib/taskGrouping'
 import { isPublished } from '../lib/publicationCounts'
 
 export default function Network() {
@@ -116,7 +116,7 @@ export default function Network() {
           <div className="flex items-center gap-3">
             <Link
               to="/"
-              className="flex items-center gap-1.5 text-sm transition-colors duration-200 hover:!text-[var(--gold)]"
+              className="flex items-center gap-1.5 text-sm transition-colors duration-200 hover:!text-[var(--job-brand)]"
               style={{
                 color: 'rgba(255, 255, 255, 0.5)',
                 textDecoration: 'none',
@@ -125,7 +125,7 @@ export default function Network() {
               <ArrowLeft {...ICON_PROPS} size={14} />
               Home
             </Link>
-            <span style={{ color: withAlpha(ACCENT_GOLD, 20) }}>/</span>
+            <span style={{ color: 'color-mix(in srgb, var(--job-brand) 20%, transparent)' }}>/</span>
             <h1
               className="text-lg sm:text-xl"
               style={{
@@ -140,9 +140,9 @@ export default function Network() {
           <div className="hidden sm:flex items-center gap-4">
             {networkStats && (
               <div className="flex items-center gap-3 text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                <span><strong style={{ color: 'rgba(45,138,138,0.8)' }}>{networkStats.nodes}</strong> authors</span>
+                <span><strong style={{ color: 'var(--job-accent)' }}>{networkStats.nodes}</strong> authors</span>
                 <span>&middot;</span>
-                <span><strong style={{ color: withAlpha(ACCENT_GOLD, 80) }}>{networkStats.edges}</strong> connections</span>
+                <span><strong style={{ color: 'color-mix(in srgb, var(--job-brand) 80%, transparent)' }}>{networkStats.edges}</strong> connections</span>
                 <span>&middot;</span>
                 <span>{networkStats.avgConnections} avg</span>
                 {networkStats.hub && (

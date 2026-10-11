@@ -13,7 +13,7 @@ import { FilterChip } from './FilterChip'
 import { useIsMobile } from '../../../hooks/useIsMobile'
 import {
   GROUP_META, GROUP_ORDER,
-  ACCENT_TEAL, ACCENT_CORAL,
+  JOB_ACCENT, JOB_OVERDUE,
   INK, INK_MUTED, INK_DIM, withAlpha,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from '../constants'
@@ -49,7 +49,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
     { k: 'today', l: <><Pin {...ICON_PROPS} size={11} /> Today</> },
     { k: 'planned', l: <><Pin {...ICON_PROPS} size={11} /> Planned</> },
     { k: 'done-today', l: <><CheckCircle2 {...ICON_PROPS} size={11} /> Done today</> },
-    { k: 'overdue', l: <><AlertTriangle {...ICON_PROPS} size={11} /> Overdue</>, color: ACCENT_CORAL },
+    { k: 'overdue', l: <><AlertTriangle {...ICON_PROPS} size={11} /> Overdue</>, color: JOB_OVERDUE },
     { k: 'waiting', l: <><Clock {...ICON_PROPS} size={11} /> Waiting on</> },
     { k: 'stale', l: <><Timer {...ICON_PROPS} size={11} /> Stale</> },
     { k: 'declined', l: <><ThumbsDown {...ICON_PROPS} size={11} /> Declined</> },
@@ -81,7 +81,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 500,
               fontFamily: 'inherit', cursor: 'pointer', border: 'none',
-              backgroundColor: ACCENT_TEAL, color: 'var(--ink-bright, #fff)',
+              backgroundColor: JOB_ACCENT, color: 'var(--sk-card)',
               flexShrink: 0, whiteSpace: 'nowrap',
             }}
           >
@@ -101,7 +101,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
       <div className="topbar-tab-strip">
         {tabs.map((tab) => {
           const active = quickView === tab.k
-          const c = tab.color || ACCENT_TEAL
+          const c = tab.color || JOB_ACCENT
           return (
             <button
               key={tab.k}
@@ -126,7 +126,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
             className="pill-btn"
             onClick={() => setFiltersOpen((o) => !o)}
             aria-expanded={filtersOpen}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${filtersOpen || activeFilterCount > 0 ? withAlpha(ACCENT_TEAL, 44) : 'var(--border-strong)'}`, background: filtersOpen || activeFilterCount > 0 ? withAlpha(ACCENT_TEAL, 8) : 'transparent', color: filtersOpen || activeFilterCount > 0 ? ACCENT_TEAL : INK_MUTED }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${filtersOpen || activeFilterCount > 0 ? withAlpha(JOB_ACCENT, 44) : 'var(--border-strong)'}`, background: filtersOpen || activeFilterCount > 0 ? withAlpha(JOB_ACCENT, 8) : 'transparent', color: filtersOpen || activeFilterCount > 0 ? JOB_ACCENT : INK_MUTED }}
           >
             <SlidersHorizontal size={11} strokeWidth={1.5} absoluteStrokeWidth />
             Filters{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ''}
@@ -168,7 +168,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
         {hasFilters && (
           <button
             onClick={() => { setFilter((f) => ({ priority: null, project: null, mentee: null, group: null, hideCompleted: f.hideCompleted })); setSearch(''); setQuickView('all') }}
-            style={{ padding: '4px 10px', fontSize: 11, border: 'none', background: 'transparent', color: ACCENT_CORAL, fontFamily: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}
+            style={{ padding: '4px 10px', fontSize: 11, border: 'none', background: 'transparent', color: 'var(--sk-t2)', fontFamily: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}
           >clear all</button>
         )}
         </>}

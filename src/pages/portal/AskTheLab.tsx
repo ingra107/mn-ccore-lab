@@ -27,8 +27,8 @@ import type { QuestionRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  open: { label: 'Open', color: 'var(--gold)', bg: 'var(--gold-active)' },
-  resolved: { label: 'Resolved', color: 'var(--teal)', bg: 'var(--teal-active)' },
+  open: { label: 'Open', color: 'var(--sk-t1)', bg: 'var(--sk-line)' },
+  resolved: { label: 'Resolved', color: 'var(--sk-t3)', bg: 'var(--sk-line)' },
 }
 
 export default function AskTheLab() {
@@ -161,9 +161,9 @@ function QuestionCard({
     <div
       className="rounded-xl border overflow-hidden transition-shadow"
       style={{
-        borderColor: expanded ? 'var(--teal)' : 'var(--border-subtle)',
+        borderColor: expanded ? 'var(--job-accent)' : 'var(--border-subtle)',
         backgroundColor: 'var(--cream)',
-        boxShadow: expanded ? '0 0 0 1px var(--teal)' : 'none',
+        boxShadow: expanded ? '0 0 0 1px var(--job-accent)' : 'none',
       }}
     >
       {/* Clickable header */}
@@ -209,7 +209,7 @@ function QuestionCard({
             {question.project_slug && (
               <span
                 className="text-[10px] px-1.5 py-0.5 rounded-full"
-                style={{ color: 'var(--gold-on-emphasis)', backgroundColor: 'var(--gold-emphasis)' }}
+                style={{ color: 'var(--sk-t2)', backgroundColor: 'var(--sk-line)' }}
               >
                 {question.project_slug}
               </span>
@@ -220,7 +220,7 @@ function QuestionCard({
         {/* Right side: status + answer count + chevron */}
         <div className="flex items-center gap-3 flex-shrink-0 pt-0.5">
           {/* Answer count badge */}
-          <div className="flex items-center gap-1" style={{ color: answerCount > 0 ? 'var(--teal)' : 'var(--slate)', opacity: answerCount > 0 ? 1 : 0.85 }}>
+          <div className="flex items-center gap-1" style={{ color: answerCount > 0 ? 'var(--sk-t1)' : 'var(--slate)', opacity: answerCount > 0 ? 1 : 0.85 }}>
             <MessageSquare {...ICON_PROPS} size={14} />
             <span className="text-xs font-medium">
               {answerCount}
@@ -335,7 +335,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                 key={answer.id}
                 style={
                   answer.is_accepted
-                    ? { borderRadius: 'var(--radius-lg)', outline: '1px solid rgba(45,138,138,0.25)' }
+                    ? { borderRadius: 'var(--radius-lg)', outline: '1px solid color-mix(in srgb, var(--job-accent) 25%, transparent)' }
                     : undefined
                 }
               >
@@ -347,8 +347,8 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                     className="flex items-center gap-1 px-3 pb-1"
                     style={{ fontSize: 'var(--text-caption)' }}
                   >
-                    <Check {...ICON_PROPS} size={10} style={{ color: 'var(--teal)' }} aria-hidden="true" />
-                    <span style={{ color: 'var(--teal)' }}>Accepted answer</span>
+                    <Check {...ICON_PROPS} size={10} style={{ color: 'var(--job-accent)' }} aria-hidden="true" />
+                    <span style={{ color: 'var(--job-accent)' }}>Accepted answer</span>
                   </div>
                 )}
                 {/* Accept button — PI OR the asker can accept (Stack Overflow model). D1 in DECISIONS-RESOLVED. */}
@@ -359,9 +359,9 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                       className="flex items-center gap-1 px-2 py-1 rounded-md transition-colors hover:bg-black/5"
                       style={{
                         fontSize: 'var(--text-caption)',
-                        color: 'var(--teal)',
+                        color: 'var(--job-accent)',
                         background: 'none',
-                        border: '1px solid rgba(45,138,138,0.2)',
+                        border: '1px solid color-mix(in srgb, var(--job-accent) 20%, transparent)',
                         cursor: 'pointer',
                       }}
                     >
@@ -450,8 +450,8 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
             aria-describedby={!questionText.trim() ? 'question-submit-hint' : undefined}
             className="px-4 py-2 rounded-md text-sm font-medium"
             style={{
-              backgroundColor: !questionText.trim() ? 'var(--border-subtle)' : 'var(--teal)',
-              color: !questionText.trim() ? 'var(--slate)' : 'var(--ink-bright, #fff)',
+              backgroundColor: !questionText.trim() ? 'var(--border-subtle)' : 'var(--job-accent)',
+              color: !questionText.trim() ? 'var(--slate)' : 'var(--sk-card)',
               cursor: !questionText.trim() ? 'not-allowed' : 'pointer',
               border: 'none',
             }}

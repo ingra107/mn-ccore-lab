@@ -128,7 +128,7 @@ function CompletionRing({ rate, size = 120 }: { rate: number; size?: number }) {
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (rate / 100) * circumference
-  const color = rate >= 80 ? 'var(--green)' : rate >= 60 ? 'var(--gold)' : 'var(--maroon)'
+  const color = 'var(--sk-t1)'
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
@@ -148,7 +148,7 @@ function CompletionRing({ rate, size = 120 }: { rate: number; size?: number }) {
 }
 
 // Sparkline — inline SVG line chart
-export function Sparkline({ values, width = 60, height = 24, color = 'var(--teal)' }: {
+export function Sparkline({ values, width = 60, height = 24, color = 'var(--job-accent)' }: {
   values: number[]
   width?: number
   height?: number
@@ -203,7 +203,7 @@ function PubsBarChart({ data }: {
           labelStyle={{ color: 'var(--ink)', fontWeight: 500 }}
           formatter={(value) => [value, 'Publications']}
         />
-        <Bar dataKey="value" fill="var(--teal)" radius={[4, 4, 0, 0]} name="Publications" />
+        <Bar dataKey="value" fill="var(--job-accent)" radius={[4, 4, 0, 0]} name="Publications" />
       </RechartsBarChart>
     </ResponsiveContainer>
   )
@@ -259,8 +259,8 @@ function StackedBar({ segments, height = 28 }: {
 
 // Trend arrow component
 export function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' | string }) {
-  if (trend === 'up') return <ArrowUp {...ICON_PROPS} size={12} style={{ color: 'var(--green)' }} />
-  if (trend === 'down') return <ArrowDown {...ICON_PROPS} size={12} style={{ color: 'var(--maroon)' }} />
+  if (trend === 'up') return <ArrowUp {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)' }} />
+  if (trend === 'down') return <ArrowDown {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t3)' }} />
   return <Minus {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
 }
 
@@ -412,7 +412,7 @@ export default function PIAnalytics() {
           icon={Target}
           label="Commitments Kept"
           value={`${commitRate}%`}
-          color={commitRate >= 80 ? 'var(--green)' : commitRate >= 60 ? 'var(--gold)' : 'var(--maroon)'}
+          color={'var(--sk-t3)'}
           subtitle={`${data?.commitments.completed || 0} of ${data?.commitments.total || 0}`}
         /></motion.div>
         <motion.div variants={staggerItem}><MetricCard
@@ -420,7 +420,7 @@ export default function PIAnalytics() {
           icon={Clock}
           label="Avg Response"
           value={`${data?.responseMetrics.avg_days || 0}d`}
-          color="var(--teal)"
+          color="var(--sk-t3)"
           subtitle={data?.responseMetrics.trend === 'improving' ? 'Getting faster' : data?.responseMetrics.trend === 'slowing' ? 'Getting slower' : 'Stable'}
         /></motion.div>
         <motion.div variants={staggerItem}><MetricCard
@@ -428,7 +428,7 @@ export default function PIAnalytics() {
           icon={DollarSign}
           label="Active Funding"
           value={data?.grantPipeline.active_funding ? formatCurrency(data.grantPipeline.active_funding) : '$0'}
-          color="var(--gold)"
+          color="var(--sk-t3)"
           subtitle={`${data?.grantPipeline.active || 0} active grants`}
         /></motion.div>
         <motion.div variants={staggerItem}><MetricCard
@@ -436,7 +436,7 @@ export default function PIAnalytics() {
           icon={BookOpen}
           label="Trainee Pubs"
           value={data?.menteeVelocity.reduce((s, m) => s + m.pub_count, 0) || 0}
-          color="var(--green)"
+          color="var(--sk-t3)"
           subtitle={`${data?.menteeVelocity.length || 0} trainees`}
         /></motion.div>
       </motion.div>
@@ -479,13 +479,13 @@ export default function PIAnalytics() {
                   style={{ color: 'var(--ink)', lineHeight: 1.5 }}
                 >
                   You kept{' '}
-                  <strong style={{ color: 'var(--teal)' }}>{data?.commitments.completed || 0}</strong>{' '}
+                  <strong style={{ color: 'var(--sk-t1)' }}>{data?.commitments.completed || 0}</strong>{' '}
                   of <strong>{data?.commitments.total || 0}</strong> promises to your team.
                 </p>
                 <div className="grid grid-cols-3 gap-3">
-                  <MetricCard icon={CheckCircle2} label="Completed" value={data?.commitments.completed || 0} color="var(--green)" />
-                  <MetricCard icon={Target} label="Total" value={data?.commitments.total || 0} color="var(--teal)" />
-                  <MetricCard icon={AlertTriangle} label="Overdue" value={data?.commitments.overdue || 0} color="var(--maroon)" />
+                  <MetricCard icon={CheckCircle2} label="Completed" value={data?.commitments.completed || 0} color="var(--sk-t3)" />
+                  <MetricCard icon={Target} label="Total" value={data?.commitments.total || 0} color="var(--sk-t3)" />
+                  <MetricCard icon={AlertTriangle} label="Overdue" value={data?.commitments.overdue || 0} color="var(--job-overdue)" />
                 </div>
               </div>
             </div>
@@ -523,15 +523,15 @@ export default function PIAnalytics() {
                 <div className="flex items-center gap-1.5 mt-1">
                   {data?.responseMetrics.trend === 'improving' ? (
                     <>
-                      <TrendingDown {...ICON_PROPS} size={14} style={{ color: 'var(--green)' }} />
-                      <span className="text-xs" style={{ color: 'var(--green)' }}>
+                      <TrendingDown {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
+                      <span className="text-xs" style={{ color: 'var(--sk-t2)' }}>
                         Improving
                       </span>
                     </>
                   ) : data?.responseMetrics.trend === 'slowing' ? (
                     <>
-                      <TrendingUp {...ICON_PROPS} size={14} style={{ color: 'var(--maroon)' }} />
-                      <span className="text-xs" style={{ color: 'var(--maroon)' }}>
+                      <TrendingUp {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
+                      <span className="text-xs" style={{ color: 'var(--sk-t2)' }}>
                         Slowing
                       </span>
                     </>
@@ -546,13 +546,13 @@ export default function PIAnalytics() {
                 </div>
               </div>
               <div className="flex-1 grid grid-cols-2 gap-3">
-                <div className="rounded-lg p-3" style={{ backgroundColor: 'var(--teal-hover)' }}>
+                <div className="rounded-lg p-3" style={{ backgroundColor: 'color-mix(in srgb, var(--sk-t1) 4%, transparent)' }}>
                   <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)' }}>
                     Last 90 days
                   </span>
                   <div
                     className="text-lg font-semibold"
-                    style={{ color: 'var(--teal)' }}
+                    style={{ color: 'var(--sk-t1)' }}
                   >
                     {data?.responseMetrics.avg_days_recent || 0}d
                   </div>
@@ -727,7 +727,7 @@ export default function PIAnalytics() {
                         <td className="text-right text-sm font-semibold" style={{ color: 'var(--ink)' }}>
                           {mentee.pub_count}
                         </td>
-                        <td className="text-right text-sm" style={{ color: 'var(--teal)' }}>
+                        <td className="text-right text-sm" style={{ color: 'var(--sk-t1)' }}>
                           {mentee.rate > 0 ? `${mentee.rate}/yr` : '--'}
                         </td>
                         <td className="text-right">
@@ -735,8 +735,8 @@ export default function PIAnalytics() {
                             <span
                               className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded"
                               style={{
-                                color: 'var(--green)',
-                                backgroundColor: 'var(--green-hover)',
+                                color: 'var(--sk-t2)',
+                                backgroundColor: 'var(--sk-line)',
                               }}
                             >
                               <TrendingUp {...ICON_PROPS} size={10} />
@@ -815,8 +815,8 @@ export default function PIAnalytics() {
                 Grants: Pending vs Active
               </h4>
               <div className="grid grid-cols-2 gap-3">
-                <MetricCard icon={Target} label="Pending" value={data?.grantsFunnel.submitted || 0} color="var(--gold)" />
-                <MetricCard icon={CheckCircle2} label="Active" value={data?.grantsFunnel.active || 0} color="var(--green)" />
+                <MetricCard icon={Target} label="Pending" value={data?.grantsFunnel.submitted || 0} color="var(--sk-t3)" />
+                <MetricCard icon={CheckCircle2} label="Active" value={data?.grantsFunnel.active || 0} color="var(--sk-t3)" />
               </div>
             </div>
 
@@ -860,14 +860,14 @@ export default function PIAnalytics() {
                   info: Lightbulb,
                 }
                 const colorMap = {
-                  good: 'var(--green)',
-                  warning: 'var(--maroon)',
-                  info: 'var(--teal)',
+                  good: 'var(--sk-t3)',
+                  warning: 'var(--job-stale)',
+                  info: 'var(--sk-t3)',
                 }
                 const bgMap = {
-                  good: 'var(--green-hover)',
-                  warning: 'var(--maroon-hover)',
-                  info: 'var(--teal-hover)',
+                  good: 'var(--sk-line)',
+                  warning: 'color-mix(in srgb, var(--job-stale) 8%, transparent)',
+                  info: 'var(--sk-line)',
                 }
                 const InsightIcon = iconMap[insight.type]
                 return (

@@ -34,16 +34,6 @@ function formatTime(dateStr: string): string {
   }
 }
 
-function getProjectColor(name: string): string {
-  // Deterministic color from project name
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const hue = Math.abs(hash) % 360
-  return `hsl(${hue}, 45%, 55%)`
-}
-
 // ── Activity Chart (inline SVG) ────────────────────────────────
 
 function ActivityChart({ data }: { data: { day: string; count: number; total_minutes: number }[] }) {
@@ -117,7 +107,7 @@ function ActivityChart({ data }: { data: { day: string; count: number; total_min
                   width={7}
                   height={barH}
                   rx={1.5}
-                  fill={d.count > 0 ? (isHovered ? 'var(--teal)' : 'rgba(0,200,180,0.5)') : 'var(--border-subtle)'}
+                  fill={d.count > 0 ? (isHovered ? 'var(--job-accent)' : 'color-mix(in srgb, var(--job-accent) 50%, transparent)') : 'var(--border-subtle)'}
                   opacity={d.count > 0 ? 1 : 0.85}
                   style={{ transition: 'fill 0.15s, opacity 0.15s' }}
                 />
@@ -347,8 +337,8 @@ export default function SessionHistory() {
                   // Teal-solid + white = 5.4:1 AA both themes. Prev code
                   // used undefined var(--surface) + white text → 1.09:1
                   // (white on inherited page bg). r7 2026-04-22.
-                  backgroundColor: isActive ? 'var(--teal-solid)' : 'transparent',
-                  color: isActive ? '#fff' : 'var(--slate)',
+                  backgroundColor: isActive ? 'var(--job-accent)' : 'transparent',
+                  color: isActive ? 'var(--sk-card)' : 'var(--slate)',
                   cursor: 'pointer',
                   transition: 'all 0.15s',
                 }}
@@ -452,10 +442,10 @@ export default function SessionHistory() {
                     padding: '10px 12px 6px',
                     fontSize: 12,
                     fontWeight: 500,
-                    color: 'var(--gold)',
+                    color: 'var(--sk-t2)',
                     opacity: 0.85,
                     borderBottom: '1px solid var(--border-subtle)',
-                    backgroundColor: 'rgba(var(--gold-rgb, 191,155,48), 0.04)',
+                    backgroundColor: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
                   }}
                 >
                   {formatMediumDate(date)}
@@ -482,8 +472,8 @@ export default function SessionHistory() {
                         fontSize: 13,
                         color: 'var(--ink)',
                         borderBottom: '1px solid var(--border-subtle)',
-                        backgroundColor: isFocused ? 'rgba(0,200,180,0.06)' : 'transparent',
-                        outline: isFocused ? '1px solid rgba(0,200,180,0.3)' : 'none',
+                        backgroundColor: isFocused ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
+                        outline: isFocused ? '1px solid color-mix(in srgb, var(--job-accent) 30%, transparent)' : 'none',
                         outlineOffset: -1,
                         borderRadius: 'var(--radius-sm)',
                         minHeight: 36,
@@ -512,7 +502,7 @@ export default function SessionHistory() {
                                 width: 6,
                                 height: 6,
                                 borderRadius: 'var(--radius-circle)',
-                                backgroundColor: getProjectColor(session.project_name),
+                                backgroundColor: 'var(--sk-t3)',
                                 flexShrink: 0,
                               }}
                             />
@@ -543,7 +533,7 @@ export default function SessionHistory() {
                       <div style={{ textAlign: 'center', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
                         {session.actions_count > 0 ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                            <Zap {...ICON_PROPS} size={10} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+                            <Zap {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)', opacity: 0.85 }} />
                             {session.actions_count}
                           </span>
                         ) : (
@@ -555,7 +545,7 @@ export default function SessionHistory() {
                       <div style={{ textAlign: 'center', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
                         {session.commits_count > 0 ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                            <GitCommit {...ICON_PROPS} size={10} style={{ color: 'var(--teal)', opacity: 0.85 }} />
+                            <GitCommit {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)', opacity: 0.85 }} />
                             {session.commits_count}
                           </span>
                         ) : (

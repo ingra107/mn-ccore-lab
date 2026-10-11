@@ -29,12 +29,12 @@ import PageHeartbeat from '../components/moments/PageHeartbeat'
 // ── Stage colors ───────────────────────────────────────────
 
 const STAGE_COLORS: Record<string, string> = {
-  Idea: 'var(--slate)',
-  'Data Collection': '#5b8abf',
-  Analysis: 'var(--teal)',
-  Writing: 'var(--gold)',
-  Review: 'var(--maroon)',
-  Published: 'var(--green-light)',
+  Idea: 'var(--sk-t3)',
+  'Data Collection': 'color-mix(in srgb, var(--job-accent) 25%, var(--sk-t3))',
+  Analysis: 'color-mix(in srgb, var(--job-accent) 50%, var(--sk-t3))',
+  Writing: 'color-mix(in srgb, var(--job-accent) 70%, var(--sk-t3))',
+  Review: 'color-mix(in srgb, var(--job-accent) 85%, var(--sk-t3))',
+  Published: 'var(--job-accent)',
 }
 
 // ── Cumulative Publication Curve ──────────────────────────
@@ -44,7 +44,7 @@ function PubDot(props: Record<string, unknown>) {
   const { cx, cy, payload } = props as { cx: number; cy: number; payload: { count: number } }
   if (!payload || payload.count === 0) return null
   return (
-    <circle cx={cx} cy={cy} r={3.5} fill="var(--gold)" stroke="var(--cream, #fff)" strokeWidth={1.5} />
+    <circle cx={cx} cy={cy} r={3.5} fill="var(--job-accent)" stroke="var(--cream, #fff)" strokeWidth={1.5} />
   )
 }
 
@@ -97,7 +97,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
         </p>
         <Link
           to={PATHS.settings}
-          style={{ fontSize: '12px', color: 'var(--teal)', textDecoration: 'underline' }}
+          style={{ fontSize: '12px', color: 'var(--job-accent)', textDecoration: 'underline' }}
         >
           Link ORCID →
         </Link>
@@ -111,10 +111,10 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Cumulative Publications Over Time
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', }}>
+          Cumulative publications over time
         </span>
-        <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--teal)' }}>
+        <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--job-accent)' }}>
           {maxCount}
         </span>
       </div>
@@ -152,11 +152,11 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
           <Area
             type="monotone"
             dataKey="cumulative"
-            stroke="var(--teal)"
+            stroke="var(--job-accent)"
             strokeWidth={2}
-            fill="rgba(45,138,138,0.08)"
+            fill="color-mix(in srgb, var(--job-accent) 8%, transparent)"
             dot={<PubDot />}
-            activeDot={{ r: 4, fill: 'var(--gold)', stroke: 'var(--cream, #fff)', strokeWidth: 1.5 }}
+            activeDot={{ r: 4, fill: 'var(--job-accent)', stroke: 'var(--cream, #fff)', strokeWidth: 1.5 }}
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -259,7 +259,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                     style={{
                       width: `${Math.max(totalWidth, 4)}%`,
                       height: '100%',
-                      backgroundColor: 'var(--teal-emphasis)',
+                      backgroundColor: 'color-mix(in srgb, var(--job-accent) 15%, transparent)',
                       position: 'relative',
                     }}
                   >
@@ -274,7 +274,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                         /* R4-P2-02: drop per-stage color on the bar so one
                            accent holds the view. Stage signal lives on the
                            pill badge at the row label — no legend needed. */
-                        backgroundColor: 'var(--teal)',
+                        backgroundColor: 'var(--job-accent)',
                         borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
                         opacity: 0.85,
                       }}
@@ -321,21 +321,21 @@ function TaskMetricsRow({ metrics }: { metrics: TrajectoryData['taskMetrics'] })
     {
       label: 'Completion Rate',
       value: `${completionRate}%`,
-      color: completionRate > 70 ? 'var(--teal)' : completionRate > 40 ? 'var(--gold)' : 'var(--maroon)',
+      color: 'var(--sk-t1)',
       icon: CheckCircle2,
       subtitle: `${metrics.completed} of ${metrics.total}`,
     },
     {
       label: 'Avg Days to Complete',
       value: metrics.avg_days != null ? `${metrics.avg_days}` : '--',
-      color: 'var(--gold)',
+      color: 'var(--sk-t1)',
       icon: Clock,
       subtitle: 'per task',
     },
     {
       label: 'Overdue',
       value: `${metrics.overdue}`,
-      color: metrics.overdue > 0 ? 'var(--maroon)' : 'var(--teal)',
+      color: metrics.overdue > 0 ? 'var(--job-overdue)' : 'var(--sk-t1)',
       icon: AlertTriangle,
       subtitle: metrics.total - metrics.completed > 0 ? `${overdueRate}% of open` : 'none open',
     },
@@ -437,7 +437,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
           top: '8px',
           bottom: '8px',
           width: '2px',
-          background: 'var(--teal)',
+          background: 'var(--sk-line2)',
           opacity: 0.85,
           borderRadius: 'var(--radius-sm)',
         }}
@@ -454,7 +454,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
             paddingBottom: i < publications.length - 1 ? '1.5rem' : 0,
           }}
         >
-          {/* Gold dot */}
+          {/* Timeline dot */}
           <div
             style={{
               position: 'absolute',
@@ -463,7 +463,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
               width: '16px',
               height: '16px',
               borderRadius: 'var(--radius-circle)',
-              background: 'var(--gold)',
+              background: 'var(--sk-t3)',
               border: '3px solid var(--cream, #ffffff)',
               zIndex: 'var(--z-base)',
             }}
@@ -473,7 +473,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
             className="card"
             style={{
               padding: '1rem 1.25rem',
-              borderLeft: '3px solid var(--gold)',
+              borderLeft: '3px solid var(--sk-line2)',
             }}
           >
             <h4
@@ -500,7 +500,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
                 <span
                   style={{
                     fontSize: 'var(--label-size)',
-                    color: 'var(--teal)',
+                    color: 'var(--sk-t2)',
                     fontStyle: 'italic',
                   }}
                 >
@@ -529,7 +529,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
                 rel="noopener noreferrer"
                 style={{
                   fontSize: 'var(--label-size)',
-                  color: 'var(--teal)',
+                  color: 'var(--job-accent)',
                   textDecoration: 'none',
                   marginTop: '0.25rem',
                   display: 'inline-block',
@@ -607,7 +607,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
           style={{
             fontSize: '20px',
             fontWeight: 700,
-            color: 'var(--gold)',
+            color: 'var(--sk-t1)',
           }}
         >
           {totalCompleted}
@@ -640,7 +640,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
             {months.map((m, index) => (
               <Cell
                 key={index}
-                fill={m.isCurrent ? 'var(--teal)' : 'var(--gold)'}
+                fill={m.isCurrent ? 'var(--job-accent)' : 'color-mix(in srgb, var(--job-accent) 55%, var(--sk-t3))'}
                 fillOpacity={m.completed === 0 ? 0.15 : m.isCurrent ? 1 : 0.85}
               />
             ))}
@@ -769,9 +769,9 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
         const isUpcoming = !isComplete && dueDate && !isOverdue ? dueDate <= in14Days : false
 
         let dateColor = 'var(--slate)'
-        if (isComplete) dateColor = 'var(--teal)'
-        else if (isOverdue) dateColor = 'var(--maroon)'
-        else if (isUpcoming) dateColor = 'var(--gold)'
+        if (isComplete) dateColor = 'var(--sk-t3)'
+        else if (isOverdue) dateColor = 'var(--job-overdue)'
+        else if (isUpcoming) dateColor = 'var(--sk-t1)'
 
         return (
           <motion.div
@@ -883,8 +883,8 @@ function PeriodSelector({
               fontWeight: active ? 600 : 400,
               padding: '4px 10px',
               borderRadius: 'var(--radius-md)',
-              border: `1px solid ${active ? 'var(--gold)' : 'var(--border-light, #e8eff5)'}`,
-              background: active ? 'var(--gold)' : 'transparent',
+              border: `1px solid ${active ? 'var(--job-accent)' : 'var(--border-light, #e8eff5)'}`,
+              background: active ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
               color: active ? 'var(--ink)' : 'var(--slate)',
               cursor: 'pointer',
               transition: 'all 0.15s',
@@ -964,12 +964,12 @@ const TYPE_CONFIG: Record<
   TimelineEntry['type'],
   { icon: typeof CheckCircle2; color: string; label: string }
 > = {
-  task: { icon: CheckCircle2, color: 'var(--teal)', label: 'Task' },
-  update: { icon: FileText, color: 'var(--gold)', label: 'Update' },
-  comment: { icon: MessageSquare, color: 'var(--ink)', label: 'Comment' },
-  decision: { icon: GitBranch, color: 'var(--maroon)', label: 'Decision' },
-  meeting: { icon: Users, color: 'var(--teal)', label: 'Meeting' },
-  publication: { icon: BookOpen, color: 'var(--gold)', label: 'Publication' },
+  task: { icon: CheckCircle2, color: 'var(--sk-t3)', label: 'Task' },
+  update: { icon: FileText, color: 'var(--sk-t3)', label: 'Update' },
+  comment: { icon: MessageSquare, color: 'var(--sk-t3)', label: 'Comment' },
+  decision: { icon: GitBranch, color: 'var(--sk-t3)', label: 'Decision' },
+  meeting: { icon: Users, color: 'var(--sk-t3)', label: 'Meeting' },
+  publication: { icon: BookOpen, color: 'var(--sk-t3)', label: 'Publication' },
 }
 
 function buildTimeline(data: ContributionsData): TimelineEntry[] {
@@ -1062,7 +1062,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
           top: '8px',
           bottom: '8px',
           width: '2px',
-          background: 'var(--gold)',
+          background: 'var(--sk-t3)',
           opacity: 0.2,
           borderRadius: 'var(--radius-sm)',
         }}
@@ -1193,7 +1193,7 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16" role="status" aria-label="Loading">
-        <HeartbeatLine width={200} height={52} color="var(--gold)" ariaLabel="Loading" />
+        <HeartbeatLine width={200} height={52} color="var(--sk-t3)" ariaLabel="Loading" />
       </div>
     )
   }
@@ -1209,7 +1209,7 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
         </p>
         <button
           onClick={() => refetchContributions()}
-          style={{ fontSize: '13px', color: 'var(--teal)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer' }}
+          style={{ fontSize: '13px', color: 'var(--job-accent)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer' }}
         >
           Retry
         </button>
@@ -1264,12 +1264,12 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
         className="grid gap-3 mb-8"
         style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}
       >
-        <ContribMetricCard label="Tasks Completed" count={s.tasks_completed} color="var(--teal)" icon={CheckCircle2} />
-        <ContribMetricCard label="Updates Posted" count={s.updates_posted} color="var(--gold)" icon={FileText} />
-        <ContribMetricCard label="Comments Made" count={s.comments_made} color="var(--ink)" icon={MessageSquare} />
-        <ContribMetricCard label="Decisions Made" count={s.decisions_made} color="var(--maroon)" icon={GitBranch} />
-        <ContribMetricCard label="Meetings" count={s.meetings_contributed} color="var(--teal)" icon={Users} />
-        <ContribMetricCard label="Publications" count={s.publications} color="var(--gold)" icon={BookOpen} />
+        <ContribMetricCard label="Tasks Completed" count={s.tasks_completed} color="var(--sk-t3)" icon={CheckCircle2} />
+        <ContribMetricCard label="Updates Posted" count={s.updates_posted} color="var(--sk-t3)" icon={FileText} />
+        <ContribMetricCard label="Comments Made" count={s.comments_made} color="var(--sk-t3)" icon={MessageSquare} />
+        <ContribMetricCard label="Decisions Made" count={s.decisions_made} color="var(--sk-t3)" icon={GitBranch} />
+        <ContribMetricCard label="Meetings" count={s.meetings_contributed} color="var(--sk-t3)" icon={Users} />
+        <ContribMetricCard label="Publications" count={s.publications} color="var(--sk-t3)" icon={BookOpen} />
       </div>
 
       <Divider />
@@ -1363,7 +1363,7 @@ export default function TrajectoryPage() {
                 height: 56,
                 borderRadius: 'var(--radius-circle)',
                 objectFit: 'cover',
-                border: '2px solid var(--gold)',
+                border: '2px solid var(--sk-line2)',
               }}
             />
           ) : (
@@ -1372,13 +1372,13 @@ export default function TrajectoryPage() {
                 width: 56,
                 height: 56,
                 borderRadius: 'var(--radius-circle)',
-                background: 'linear-gradient(135deg, var(--gold), var(--teal))',
+                background: 'var(--sk-face)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '18px',
                 fontWeight: 700,
-                color: 'var(--ink-bright, #fff)',
+                color: 'var(--sk-face-t)',
               }}
             >
               {member.initials}
@@ -1414,7 +1414,7 @@ export default function TrajectoryPage() {
         {/* Export button */}
         <button
           onClick={() => window.print()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium no-print hover:border-[var(--gold)] hover:text-[var(--gold)] transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium no-print hover:border-[var(--sk-line2)] hover:text-[var(--sk-t1)] transition-colors"
           style={{
             fontSize: '12px',
             background: 'var(--ice)',
@@ -1452,10 +1452,10 @@ export default function TrajectoryPage() {
                 padding: '0.75rem 1.25rem',
                 fontSize: '12px',
                 fontWeight: active ? 600 : 400,
-                color: active ? 'var(--gold)' : 'var(--slate)',
+                color: active ? 'var(--job-accent)' : 'var(--slate)',
                 background: 'transparent',
                 border: 'none',
-                borderBottom: `2px solid ${active ? 'var(--gold)' : 'transparent'}`,
+                borderBottom: `2px solid ${active ? 'var(--job-accent)' : 'transparent'}`,
                 marginBottom: '-2px',
                 cursor: 'pointer',
                 transition: 'color 0.15s, border-color 0.15s',
@@ -1483,7 +1483,7 @@ export default function TrajectoryPage() {
             {/* Loading state */}
             {isLoading && (
               <div className="flex items-center justify-center py-16" role="status" aria-label="Loading">
-                <HeartbeatLine width={200} height={52} color="var(--gold)" ariaLabel="Loading" />
+                <HeartbeatLine width={200} height={52} color="var(--sk-t3)" ariaLabel="Loading" />
               </div>
             )}
 
@@ -1578,7 +1578,7 @@ export default function TrajectoryPage() {
                 </p>
                 <button
                   onClick={() => refetchTrajectory()}
-                  style={{ fontSize: '13px', color: 'var(--teal)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer' }}
+                  style={{ fontSize: '13px', color: 'var(--job-accent)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer' }}
                 >
                   Retry
                 </button>

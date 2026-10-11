@@ -58,8 +58,8 @@ const CATEGORY_FILTERS = [
 // shown to a PI only. Display only -- the visibility rule lives in the API.
 const PB_CATEGORY = 'Peripheral Brain'
 const CATEGORY_OPTIONS = [
-  { value: 'MNCCORE', label: 'MN-CCORE', color: 'var(--teal)' },
-  { value: 'CLIF', label: 'CLIF', color: 'var(--maroon)' },
+  { value: 'MNCCORE', label: 'MN-CCORE', color: 'var(--sk-t3)' },
+  { value: 'CLIF', label: 'CLIF', color: 'var(--sk-t3)' },
   { value: PB_CATEGORY, label: 'Peripheral Brain', color: 'var(--slate)' },
 ]
 
@@ -106,8 +106,8 @@ function FilterPill({ label, active, onClick, title }: { label: string; active: 
         fontWeight: active ? 600 : ('var(--label-weight)' as React.CSSProperties['fontWeight']),
         fontSize: 'var(--label-size)',
         borderRadius: 'var(--radius-full)',
-        background: active ? 'var(--teal-active)' : 'transparent',
-        color: active ? 'var(--teal)' : 'var(--slate)',
+        background: active ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+        color: active ? 'var(--job-accent)' : 'var(--slate)',
         border: '1px solid transparent',
         transition: 'all 0.15s',
       }}
@@ -386,7 +386,7 @@ export default function Projects() {
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg new-project-btn"
           style={{
             background: 'transparent',
-            color: 'var(--teal)',
+            color: 'var(--job-accent)',
             fontSize: '13px',
             fontWeight: 600,
             border: '1px solid var(--border-subtle)',
@@ -472,8 +472,8 @@ export default function Projects() {
               style={{
                 fontSize: 'var(--label-size)',
                 fontWeight: showDeps ? 600 : ('var(--label-weight)' as React.CSSProperties['fontWeight']),
-                background: showDeps ? 'var(--teal-active)' : 'transparent',
-                color: 'var(--teal)',
+                background: showDeps ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                color: 'var(--job-accent)',
                 border: '1px solid transparent',
                 transition: 'all 0.2s',
                 whiteSpace: 'nowrap',
@@ -547,7 +547,7 @@ export default function Projects() {
                   left: '2%',
                   right: '2%',
                   height: '2px',
-                  background: 'linear-gradient(to right, rgba(45,138,138,0.1), var(--teal), rgba(45,138,138,0.1))',
+                  background: 'linear-gradient(to right, transparent, var(--sk-line2), transparent)',
                   borderRadius: 'var(--radius-sm)',
                 }}
               />
@@ -561,7 +561,7 @@ export default function Projects() {
                     width: '8px',
                     height: '8px',
                     borderRadius: 'var(--radius-circle)',
-                    background: 'var(--teal-solid)',
+                    background: 'var(--sk-t3)',
                     border: '2px solid var(--cream)',
                   }}
                 />
@@ -589,7 +589,7 @@ export default function Projects() {
                     style={{
                       background: 'var(--ice)',
                       borderRadius: 'var(--radius-xl)',
-                      borderTop: '2px solid var(--teal)',
+                      borderTop: '2px solid var(--sk-line2)',
                       padding: 'var(--sp-lg)',
                       minHeight: '300px',
                       minWidth: '200px',
@@ -680,7 +680,7 @@ export default function Projects() {
         .pipeline-board {
           -webkit-overflow-scrolling: touch;
           scrollbar-width: thin;
-          scrollbar-color: var(--teal) transparent;
+          scrollbar-color: var(--sk-line2) transparent;
         }
         .pipeline-board::-webkit-scrollbar {
           height: 6px;
@@ -689,12 +689,12 @@ export default function Projects() {
           background: transparent;
         }
         .pipeline-board::-webkit-scrollbar-thumb {
-          background: rgba(45, 138, 138, 0.3);
+          background: var(--sk-line2);
           border-radius: 3px;
         }
 
         .new-project-btn:hover {
-          background: var(--teal-hover) !important;
+          background: color-mix(in srgb, var(--job-accent) 6%, transparent) !important;
         }
 
         .filter-pill:hover {
