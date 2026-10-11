@@ -436,7 +436,7 @@ export function ProjectsSection({
 export function PublicationsSection({
   publications,
   id,
-  title = 'Publications',
+  title = 'Papers',
   recentCount = 10,
 }: {
   publications: Publication[]

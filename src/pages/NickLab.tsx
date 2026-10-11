@@ -86,7 +86,7 @@ export default function NickLab() {
         { id: 'lab-projects', label: 'Lab Projects' },
         { id: 'clif-projects', label: 'CLIF Projects' },
         { id: 'mentees', label: 'Trainees' },
-        { id: 'publications', label: 'Publications' },
+        { id: 'publications', label: 'Papers' },
       ]}
     >
       <GrantsSection grants={grants} id="grants" title="Active Funding" />

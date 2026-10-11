@@ -11,7 +11,7 @@ import { usePublications, useMeetingLinkedTasks } from '../hooks/useApiData'
 import TaskTitle from './tasks/TaskTitle'
 import { ICON_PROPS } from '../lib/iconProps'
 import { isTaskDone } from '../lib/taskGrouping'
-import { memberPublications } from '../lib/publicationCounts'
+import { memberPublications, countPublications } from '../lib/publicationCounts'
 import { getMemberBySlug } from '../data/team'
 
 interface Props {
@@ -31,6 +31,10 @@ export default function MenteeDashboard({ slug, name }: Props) {
   // projects once, from useMemberProjects (MemberProjects, #145).
   // Filter data for this person
   const myPubs = memberPublications(publications, getMemberBySlug(slug) ?? { slug })
+  // "Publications" is the Published count, the number the member page header
+  // and the Team card show; pipeline papers are named beside it.
+  const pubCounts = countPublications(myPubs)
+  const inProgress = pubCounts.all - pubCounts.published
   const myPending = actionItems.filter((a) => !isTaskDone(a))
   const myCompleted = actionItems.filter((a) => isTaskDone(a))
 
@@ -106,13 +110,13 @@ export default function MenteeDashboard({ slug, name }: Props) {
             </span>
           </div>
           <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
-            {myPubs.length}
+            {pubCounts.published}
           </div>
-          <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, margin: 'var(--sp-xs) 0 0' }}>
-            {myPubs.filter((p) => p.status === 'Published').length} published
-            {myPubs.filter((p) => p.status !== 'Published').length > 0 &&
-              ` · ${myPubs.filter((p) => p.status !== 'Published').length} in progress`}
-          </p>
+          {inProgress > 0 && (
+            <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, margin: 'var(--sp-xs) 0 0' }}>
+              plus {inProgress} in progress
+            </p>
+          )}
           {myPubs.length > 0 && (
             <Link to="/publications" className="inline-flex items-center gap-1 mt-2"
               style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
@@ -132,7 +136,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>Publications</span>
-              <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>{myPubs.length}</span>
+              <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>{pubCounts.published}</span>
             </div>
             <div className="flex items-center justify-between">
               <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>Actions pending</span>

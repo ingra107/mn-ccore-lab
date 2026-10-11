@@ -4,7 +4,7 @@ import { BookOpen, Award, Users, ArrowRight } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePublications } from '../hooks/useApiData'
 import { ICON_PROPS } from '../lib/iconProps'
-import { isPublished } from '../lib/publicationCounts'
+import { isPublished, isInReview } from '../lib/publicationCounts'
 
 interface ActivityItem {
   icon: typeof BookOpen
@@ -38,7 +38,7 @@ export default function RecentActivity() {
     })
 
     // Papers in review
-    const inReview = publications.filter((p) => p.status === 'In Review')
+    const inReview = publications.filter(isInReview)
     if (inReview.length > 0) {
       items.push({
         icon: Award,

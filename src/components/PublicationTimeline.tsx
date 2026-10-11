@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import type { Publication } from '../data/types'
+import { isPublished, isInReview } from '../lib/publicationCounts'
 
 interface PublicationTimelineProps {
   publications: Publication[]
@@ -24,8 +25,8 @@ export default function PublicationTimeline({ publications }: PublicationTimelin
 
     publications.forEach((p) => {
       if (!counts[p.year]) counts[p.year] = { published: 0, review: 0, prep: 0 }
-      if (p.status === 'Published') counts[p.year].published++
-      else if (p.status === 'In Review') counts[p.year].review++
+      if (isPublished(p)) counts[p.year].published++
+      else if (isInReview(p)) counts[p.year].review++
       else counts[p.year].prep++
     })
 

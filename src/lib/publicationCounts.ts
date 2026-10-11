@@ -12,8 +12,12 @@
  *   - A lab "publication" is a row with status 'Published'. Papers in review or
  *     in preparation are named as such, never folded into the headline.
  *   - A member's papers are the rows whose `authorSlugs` carry the member's slug
- *     OR whose byline carries the member's `authorName` (the MemberPage rule;
- *     `authorSlugs` alone misses co-authored rows, see lib/authorAvatars.ts).
+ *     OR whose byline lists the member's `authorName` as a whole name (the
+ *     MemberPage rule; `authorSlugs` alone misses co-authored rows, see
+ *     lib/authorAvatars.ts).
+ *   - The status literals live here only. Components call isPublished /
+ *     isInReview / countPublications; publicationCounts.test.ts fails on a raw
+ *     `status === '...'` comparison anywhere else under src/.
  */
 import type { Publication, TeamMember } from '../data/types'
 
@@ -44,6 +48,29 @@ export function isPublished(p: Pick<Publication, 'status'>): boolean {
   return p.status === 'Published'
 }
 
+export function isInReview(p: Pick<Publication, 'status'>): boolean {
+  return p.status === 'In Review'
+}
+
+/** One byline name, normalised: no leading "and", no punctuation or markers
+ *  ("Ingraham NE*" -> "Ingraham NE"), single spaces. */
+function normaliseAuthor(s: string): string {
+  return s
+    .trim()
+    .replace(/^and\s+/i, '')
+    .replace(/[^\p{L}\s'-]+/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/** True when the byline lists `authorName` as a whole name. A substring test
+ *  lets "Collins C" match "Collins CA", a different author. */
+export function bylineHasAuthor(authors: string | undefined, authorName: string): boolean {
+  if (!authors) return false
+  const want = normaliseAuthor(authorName)
+  return authors.split(/[,;]/).some((a) => normaliseAuthor(a) === want)
+}
+
 export function isMemberPublication(
   pub: Pick<Publication, 'authors' | 'authorSlugs'>,
   member: Pick<TeamMember, 'slug' | 'authorName'>,
@@ -55,7 +82,7 @@ export function isMemberPublication(
     ? raw.map((s) => String(s).trim().toLowerCase())
     : typeof raw === 'string' ? raw.split(',').map((s) => s.trim().toLowerCase()) : []
   if (slug && slugs.includes(slug)) return true
-  if (member.authorName && pub.authors?.includes(member.authorName)) return true
+  if (member.authorName && bylineHasAuthor(pub.authors, member.authorName)) return true
   return false
 }
 

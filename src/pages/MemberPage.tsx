@@ -786,7 +786,7 @@ export default function MemberPage() {
       )}
 
       {memberPubs.length > 0 && (
-        <PublicationsSection publications={memberPubs} id="publications" title="All Publications" />
+        <PublicationsSection publications={memberPubs} id="publications" title="All papers" />
       )}
       {memberPubs.length === 0 && (
         <div

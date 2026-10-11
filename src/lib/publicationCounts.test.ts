@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Publication } from '../data/types'
-import { countPublications, memberPublications, isMemberPublication } from './publicationCounts'
+import { countPublications, memberPublications, isMemberPublication, bylineHasAuthor } from './publicationCounts'
 
 function pub(over: Partial<Publication>): Publication {
   return {
@@ -51,5 +51,45 @@ describe('memberPublications', () => {
 
   it('returns [] for an unknown member', () => {
     expect(memberPublications([pub({})], undefined)).toEqual([])
+  })
+})
+
+describe('bylineHasAuthor', () => {
+  it('matches a whole name, not a longer one that starts the same way', () => {
+    // "Collins C" is a different author from "Collins CA".
+    expect(bylineHasAuthor('Smith J, Collins CA, Doe K', 'Collins C')).toBe(false)
+    expect(bylineHasAuthor('Smith J, Collins C, Doe K', 'Collins C')).toBe(true)
+  })
+
+  it('ignores markers, a leading "and" and a trailing period', () => {
+    expect(bylineHasAuthor('Smith J, Ingraham NE*', 'Ingraham NE')).toBe(true)
+    expect(bylineHasAuthor('Smith J and Doe K; and Ingraham NE.', 'Ingraham NE')).toBe(true)
+  })
+
+  it('is false for an empty byline', () => {
+    expect(bylineHasAuthor(undefined, 'Ingraham NE')).toBe(false)
+  })
+})
+
+describe('status literals live in publicationCounts only', () => {
+  // A surface that compares p.status to a publication status itself can drift
+  // from the lab's one definition; it must call isPublished / isInReview /
+  // countPublications instead.
+  const sources = import.meta.glob(['/src/**/*.{ts,tsx}', '!/src/**/*.test.{ts,tsx}', '!/src/lib/publicationCounts.ts'], {
+    query: '?raw',
+    import: 'default',
+    eager: true,
+  }) as Record<string, string>
+
+  it('scans the source tree', () => {
+    expect(Object.keys(sources).length).toBeGreaterThan(50)
+  })
+
+  it('finds no raw status comparison outside the lib', () => {
+    const literal = /(===|!==)\s*['"](Published|In Review|In Preparation)['"]/
+    const offenders = Object.entries(sources)
+      .filter(([, text]) => literal.test(text))
+      .map(([path]) => path)
+    expect(offenders).toEqual([])
   })
 })

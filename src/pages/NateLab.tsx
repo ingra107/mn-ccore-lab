@@ -75,7 +75,7 @@ export default function NateLab() {
         { id: 'grants', label: 'Grants & Proposals' },
         { id: 'research-projects', label: 'Research Projects' },
         { id: 'trainees', label: 'MNCCORE Trainees' },
-        { id: 'publications', label: 'Publications' },
+        { id: 'publications', label: 'Papers' },
       ]}
     >
       <GrantsSection grants={grants} id="grants" title="Grants & Proposals" />

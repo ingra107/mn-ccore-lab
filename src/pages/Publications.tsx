@@ -15,7 +15,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { getAllMembers } from '../data/team'
 import { resolveBylineAuthors } from '../lib/authorAvatars'
-import { countPublications } from '../lib/publicationCounts'
+import { countPublications, isPublished } from '../lib/publicationCounts'
 
 // High-impact journal names for the "Key Publications" section
 const KEY_JOURNALS = [
@@ -173,7 +173,7 @@ export default function Publications() {
     () =>
       publications.filter(
         (p) =>
-          p.status === 'Published' &&
+          isPublished(p) &&
           KEY_JOURNALS.some((j) => p.journal.includes(j))
       ),
     [publications]
