@@ -90,8 +90,14 @@ export default function MeetingActivityFeed({ meetingId }: { meetingId: string }
 
   return (
     <div className="flex flex-col gap-3">
-      <div>
+      {/* Today's compose field (principle 20): .tk-compose supplies the
+          visible edge, focus ring and readable placeholder; SmartCompose's
+          light theme reads page tokens. The default dark theme hard-coded pale
+          ink and a white 2% fill, so on the light page the field had no edge
+          and a near-invisible placeholder (item 32). */}
+      <div className="tk"><div className="tk-compose" style={{ marginBottom: 0 }}><div style={{ flex: 1, minWidth: 0 }}>
         <SmartCompose
+          theme="light"
           bare
           value={text}
           onChange={setText}
@@ -102,7 +108,7 @@ export default function MeetingActivityFeed({ meetingId }: { meetingId: string }
           submitLabel="Post"
           placeholder="Ask about this meeting, or @hermes to reread the transcript…"
         />
-      </div>
+      </div></div></div>
       {entries.length === 0 && hiddenCount === 0 ? (
         <p className="text-xs flex items-center gap-1.5" style={{ color: 'var(--muted)' }}>
           <MessageSquare {...ICON_PROPS} size={13} aria-hidden />

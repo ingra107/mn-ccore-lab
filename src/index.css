@@ -2900,9 +2900,11 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 @media (max-width:640px){
   .tk .tk-ctx{flex-wrap:nowrap;column-gap:6px}
   .tk .tk-ctx .tk-cs{max-width:none}
-  /* Pills shrink and ellipsize too; faces and the fixed slots keep their width. */
-  .tk .tk-ctx>:not(.tk-cs):not(.tk-sp):not(.tk-faces):not(.tk-slots){flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .tk .tk-ctx>.tk-faces,.tk .tk-ctx>.tk-slots{flex-shrink:0}
+  /* Other pills shrink and ellipsize; the due label, faces and the fixed
+     slots keep their width. The due label is excluded here, not restored by a
+     later rule, because this selector outranks any short one (item 1/2/28). */
+  .tk .tk-ctx>:not(.tk-cs):not(.tk-sp):not(.tk-faces):not(.tk-slots):not(.tk-duepill){flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tk .tk-ctx>.tk-faces,.tk .tk-ctx>.tk-slots,.tk .tk-ctx>.tk-duepill{flex-shrink:0;white-space:nowrap}
   .tk .tk-lks{min-width:52px}
 }
 

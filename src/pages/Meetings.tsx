@@ -884,8 +884,11 @@ export default function Meetings() {
         </div>
       </div>
 
-      {/* M-03: 240px list, M-28: minHeight 400px, M-34: mobile-detail class */}
-      <div className={`meetings-split-panel tk${mobileShowDetail ? ' mobile-detail' : ''}`}
+      {/* M-03: 240px list, M-28: minHeight 400px, M-34: mobile-detail class.
+          .band-anchored-wide puts the split on the header's band (left edge
+          = the header's, capped at --page-width), so it lines up with the
+          header rule instead of running to main's padding (item 33). */}
+      <div className={`meetings-split-panel band-anchored-wide tk${mobileShowDetail ? ' mobile-detail' : ''}`}
         style={{ display: 'grid', gridTemplateColumns: '290px 1fr', gridTemplateRows: 'minmax(0, 1fr)', gap: 0, flex: 1, minHeight: 360, overflow: 'hidden' }}>
 
         {/* Left panel — M-28: minHeight, M-34: hidden when mobile-detail active */}

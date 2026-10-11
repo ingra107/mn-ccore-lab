@@ -73,7 +73,9 @@ function CardDuePill({ due, status }: { due: string; status?: string }) {
   // shows one span at a time (display:none also hides the other from screen
   // readers); the compact form carries a hidden " overdue" for them.
   const compact = overdue ? dueLabelCompact(due, overdue) : null
-  const cls = overdue ? 'tk-pill tk-o tk-duepill' : tone === 'today' ? 'tk-pill tk-g' : 'tk-pill'
+  // tk-duepill marks EVERY due label, whatever its tone: the phone context
+  // line never shrinks it, so the project name gives way first.
+  const cls = overdue ? 'tk-pill tk-o tk-duepill' : tone === 'today' ? 'tk-pill tk-g tk-duepill' : 'tk-pill tk-duepill'
   return (
     <span className={cls} data-tip={`Due ${dueDay}`} aria-label={`Due ${dueDay}`}>
       <i />
