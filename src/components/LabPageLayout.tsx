@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react'
+import { type CSSProperties, type ReactNode, useEffect, useState } from 'react'
 import { ArrowRight, ExternalLink, GraduationCap, FlaskConical } from 'lucide-react'
 import Avatar from './Avatar'
 import PublicationCard from './PublicationCard'
@@ -10,6 +10,7 @@ import { projects } from '../data/projects'
 import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { memberHue } from '../lib/memberHue'
 
 interface ProfileLink {
   label: string
@@ -38,6 +39,9 @@ interface LabPageLayoutProps {
   portalChrome?: boolean
   /** Portal only: the page's one telling number under the name (color-back pick 2). */
   hero?: HeroNumberProps
+  /** A member's own page passes their slug: the page then carries that
+   *  member's one personal hue (avatar ring + activity cells; pick 8). */
+  hueSeed?: string
 }
 
 export default function LabPageLayout({
@@ -54,6 +58,7 @@ export default function LabPageLayout({
   breadcrumb,
   portalChrome = false,
   hero,
+  hueSeed,
 }: LabPageLayoutProps) {
   const [activeSection, setActiveSection] = useState<string>('')
 
@@ -91,7 +96,10 @@ export default function LabPageLayout({
   }
 
   return (
-    <div className="pt-8 pb-8 sm:pb-12 lg:pb-16 content-container">
+    <div
+      className={`pt-8 pb-8 sm:pb-12 lg:pb-16 content-container${hueSeed ? ' member-hue' : ''}`}
+      style={hueSeed ? ({ '--mh-h': memberHue(hueSeed) } as CSSProperties) : undefined}
+    >
       {breadcrumb}
       <div className="lg:grid lg:grid-cols-12 lg:gap-12">
         {/* Left Column (Sticky) */}
@@ -104,7 +112,7 @@ export default function LabPageLayout({
                 initials={initials}
                 photoUrl={photoUrl}
                 size="lg"
-                variant="gold"
+                variant={hueSeed ? 'hue' : 'gold'}
               />
             </div>
 

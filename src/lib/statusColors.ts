@@ -2,10 +2,11 @@ import { ACCENT_GOLD, withAlpha } from './taskGrouping'
 /**
  * statusColors — Shared status → color map for the 5-color palette.
  *
- * Palette:
+ * Palette (color jobs, rules-ui-design principle 21):
  *   teal   = active / in-progress / on-track
- *   gold   = review / warning / at-risk
- *   maroon = overdue / rejected / error
+ *   gold   = wants you now: review, a revision due date
+ *   orange = going stale: at-risk
+ *   maroon = overdue only (rejected / won't fix are neutral words)
  *   --st-* = done / completed / accepted, blocked, waiting: neutral words
  *            (color jobs, Nick 2026-10-11; one token each in index.css)
  *   slate  = default / pending / unknown
@@ -31,12 +32,12 @@ const STATUS_COLOR: Record<string, string> = {
   submitted: 'var(--teal)',
   resubmitted: 'var(--teal)',
   accepted: 'var(--st-done)',
-  rejected: 'var(--maroon)',
-  wont_fix: 'var(--maroon)',
+  rejected: 'var(--slate)',
+  wont_fix: 'var(--slate)',
   draft: 'var(--slate)',
   review: 'var(--gold)',
   review_received: 'var(--gold)',
-  revision_due: 'var(--maroon)',
+  revision_due: 'var(--gold)',
   withdrawn: 'var(--slate)',
   completed: 'var(--st-done)',
 
@@ -47,7 +48,7 @@ const STATUS_COLOR: Record<string, string> = {
 
   // Cascade-specific
   'on-track': 'var(--teal)',
-  'at-risk': 'var(--gold)',
+  'at-risk': 'var(--orange)',
 
   // Materials
   not_started: 'var(--slate)',
@@ -71,12 +72,12 @@ export const STATUS_BG_EXTENDED: Record<string, string> = {
   submitted: 'rgba(60, 130, 130, 0.12)',
   resubmitted: 'rgba(60, 130, 130, 0.12)',
   accepted: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
-  rejected: 'rgba(122, 0, 25, 0.15)',
-  wont_fix: 'rgba(122, 0, 25, 0.15)',
+  rejected: 'rgba(100, 116, 139, 0.15)',
+  wont_fix: 'rgba(100, 116, 139, 0.15)',
   draft: 'rgba(148, 163, 184, 0.15)',
   review: withAlpha(ACCENT_GOLD, 15),
   review_received: withAlpha(ACCENT_GOLD, 15),
-  revision_due: 'rgba(122, 0, 25, 0.15)',
+  revision_due: withAlpha(ACCENT_GOLD, 15),
   withdrawn: 'rgba(100, 116, 139, 0.15)',
   completed: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
 
@@ -87,7 +88,7 @@ export const STATUS_BG_EXTENDED: Record<string, string> = {
 
   // Cascade-specific
   'on-track': 'rgba(60, 130, 130, 0.12)',
-  'at-risk': withAlpha(ACCENT_GOLD, 15),
+  'at-risk': 'color-mix(in srgb, var(--orange) 14%, transparent)',
 
   // Materials
   not_started: 'rgba(148, 163, 184, 0.15)',

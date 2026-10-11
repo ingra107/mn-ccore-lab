@@ -1952,7 +1952,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     setTimeout(() => setTasksCopied(false), 2000)
                   }}
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors border tip"
-                  style={{ color: tasksCopied ? 'var(--green)' : 'var(--slate)', borderColor: tasksCopied ? 'var(--green)' : 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: tasksCopied ? 1 : 0.85 }}
+                  style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: tasksCopied ? 1 : 0.85 }}
                   data-tip={tasksCopied ? 'Copied!' : 'Copy task list to clipboard'}
                   aria-label={tasksCopied ? 'Copied!' : 'Copy task list to clipboard'}
                 >

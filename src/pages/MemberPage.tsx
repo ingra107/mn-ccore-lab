@@ -298,6 +298,7 @@ export default function MemberPage() {
       hero={publishedCount > 0
         ? { value: publishedCount, label: 'published' }
         : undefined}
+      hueSeed={member.slug ?? member.name}
       breadcrumb={<Breadcrumb backTo={teamBase} backLabel="Team" current={formalFullName} />}
       sections={[
         ...(mentee

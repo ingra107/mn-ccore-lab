@@ -43,7 +43,7 @@ export function LinkRow({ links, slot = false }: { links: TaskLink[]; slot?: boo
         const resolvedType = l.type || normalizeLink(l.url)?.type
         const stored = resolvedType ? iconForType(resolvedType) : null
         const Icon = stored ? stored.Icon : FallbackIcon
-        const color = stored ? stored.color : INK_MUTED
+        const color = stored ? stored.tint : INK_MUTED
         // Mode-B tooltip (link spec §B): "{type} · {desc}" when a type is
         // present, else fall back to the human desc (then classifyUrl label).
         const tooltip = l.type

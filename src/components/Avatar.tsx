@@ -6,7 +6,7 @@ import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
  *  Initials only: the silhouette arcs that used to sit under them drew the
  *  letters over a head-and-shoulders outline (#8969, Casey's member page).
  *  rules-ui-design 18: the photo where there is one, else the initials disc. */
-function InitialsDisc({ name, initials, fallbackColor, textClass }: { name: string; initials: string; fallbackColor: string; textClass: string }) {
+function InitialsDisc({ name, initials, fallbackColor, textClass, plain = false }: { name: string; initials: string; fallbackColor: string; textClass: string; plain?: boolean }) {
   // Pick one of 4 palette swatches deterministically.
   const palette = [
     { bg: 'color-mix(in srgb, var(--teal) 22%, var(--cream))' },
@@ -25,7 +25,8 @@ function InitialsDisc({ name, initials, fallbackColor, textClass }: { name: stri
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: swatch.bg,
+        // plain: the container already paints the face (the member hue).
+        background: plain ? 'transparent' : swatch.bg,
       }}
     >
       <span
@@ -46,7 +47,9 @@ interface AvatarProps {
   initials: string
   photoUrl?: string
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xs' | 'xs' | 'sm-icon' | 'sm-plus' | 'tight' | 'base-sm' | 'base' | 'base-lg' | 'base-xl'
-  variant?: 'gold' | 'ice'
+  /** 'hue': the member's own hue (color back pick 8). Only inside a
+   *  `.member-hue` scope, which LabPageLayout sets on a member's own page. */
+  variant?: 'gold' | 'ice' | 'hue'
   /** Slug — used to swap in the HermesMark when slug === 'claude-ai' so
    *  Hermes shows up as a peer avatar instead of "AI" letter initials. */
   slug?: string
@@ -124,6 +127,11 @@ const variantStyles = {
     border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
     color: 'var(--slate)',
   },
+  hue: {
+    background: 'var(--mh-face)',
+    border: 'none',
+    color: 'var(--sk-face-t)',
+  },
 } as const
 
 export default function Avatar({
@@ -145,6 +153,7 @@ export default function Avatar({
       style={{
         background: styles.background,
         border: styles.border,
+        boxShadow: variant === 'hue' ? 'var(--mh-ring)' : undefined,
         transition: 'transform var(--duration-normal, 150ms) var(--ease-out)',
       }}
       onMouseEnter={(e) => {
@@ -180,7 +189,7 @@ export default function Avatar({
           className="w-full h-full rounded-full object-cover"
         />
       ) : (
-        <InitialsDisc name={name} initials={initials} fallbackColor={styles.color} textClass={text} />
+        <InitialsDisc name={name} initials={initials} fallbackColor={styles.color} textClass={text} plain={variant === 'hue'} />
       )}
     </div>
   )

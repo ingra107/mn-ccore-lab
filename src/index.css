@@ -198,7 +198,15 @@
   --link-web:           #475569;
   --link-artifact:      #6B5420;   /* Hermes artifact gold (dark override below) */
   --link-iwd:           #4F46E5;   /* IWD indigo (dark override below) */
+  /* Glyphs paint the brand color at this strength, the rest the gray ramp
+     (--sk-t3): same red/green/blue, dimmer (color back, Nick 2026-10-11).
+     One knob for every link icon: dimLinkColor() in linkIcon.ts and the
+     Today skin's [data-lk] icons both read it. Hover keeps the full brand. */
+  --link-strength:      55%;
 }
+
+/* Hover lifts every dimmed link glyph (dimLinkColor) to its full brand color. */
+:where(a, button):hover { --lk-on: 100%; }
 
 .dark {
   /* GitHub near-black → light on dark surfaces (colorDark: #E6EDF3) */
@@ -327,6 +335,22 @@
   --st-blocked: var(--sk-t3);
   --st-waiting: var(--sk-t3);
   --st-done: var(--sk-t3);
+}
+
+/* One personal hue per member (color back pick 8, Nick 2026-10-11). Only a
+   member's own page sets it (LabPageLayout hueSeed -> .member-hue with the
+   hue in --mh-h, from memberHue.ts). Low chroma, from a blue-to-violet window
+   kept 45deg+ from red, orange, gold and teal. It paints exactly two things:
+   the avatar (ring + a faint wash under the initials) and the activity
+   heatmap cells (ActivityHeatmap reads --heat). Never text, never a dot. */
+.member-hue {
+  --id: oklch(0.52 0.08 var(--mh-h));
+  --heat: var(--id);
+  --mh-face: linear-gradient(180deg, color-mix(in srgb, var(--id) 30%, var(--sk-face)), color-mix(in srgb, var(--id) 18%, var(--sk-face)));
+  --mh-ring: 0 0 0 3px var(--sk-page), 0 0 0 5px var(--id);
+}
+.dark .member-hue {
+  --id: oklch(0.74 0.07 var(--mh-h));
 }
 
 /* ── Z-Index Hierarchy ── */
@@ -2776,15 +2800,15 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
   .tk .tk-lks{min-width:52px}
 }
 
-/* Link icon tints (row + drawer): muted brand = 70% brand / 30% gray; hover
-   goes to the full brand color. Tint kind comes from linkTintForType(). */
+/* Link icon tints (row + drawer): muted brand = --link-strength brand, the
+   rest gray (one knob, :root above); hover goes to the full brand color. Tint kind comes from linkTintForType(). */
 .tk .tk-lkicon,.tk .tk-lkc{--lk:var(--sk-t3)}
 .tk [data-lk=doc]{--lk:#5b8def}
 .tk [data-lk=sheet]{--lk:#3fa66b}
 .tk [data-lk=slides]{--lk:#e3a93a}
 .tk [data-lk=artifact]{--lk:#d0805e}
 .tk [data-lk=email]{--lk:#dd6a5f}
-.tk .tk-lkicon{color:color-mix(in srgb,var(--lk) 70%,var(--sk-t3)) !important}
+.tk .tk-lkicon{color:color-mix(in srgb,var(--lk) var(--link-strength),var(--sk-t3)) !important}
 .tk .tk-lkicon:hover{color:var(--sk-t1) !important}
 .tk .tk-lkicon[data-lk]:hover{color:var(--lk) !important}
 
@@ -2826,7 +2850,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 :root:not(.dark) .tk .tk-lkc{background:linear-gradient(180deg,#fff 0%,var(--sk-panel) 100%)}
 .tk .tk-lkc:hover{box-shadow:inset 0 0 0 1px var(--sk-t3)}
 .tk .tk-lkc:focus-visible{outline:2px solid var(--sk-ac);outline-offset:1px}
-.tk .tk-lkc svg{flex-shrink:0;color:color-mix(in srgb,var(--lk) 70%,var(--sk-t3))}
+.tk .tk-lkc svg{flex-shrink:0;color:color-mix(in srgb,var(--lk) var(--link-strength),var(--sk-t3))}
 .tk .tk-lkc:hover svg{color:var(--lk)}
 .tk .tk-lkt{font-size:12.5px;font-weight:500;color:var(--sk-t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .tk .tk-tch:focus-visible{outline:2px solid var(--sk-ac);outline-offset:-2px;border-radius:var(--r-card)}

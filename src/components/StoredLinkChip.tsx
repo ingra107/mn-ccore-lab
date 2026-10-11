@@ -26,7 +26,7 @@ interface Props {
 
 export default function StoredLinkChip({ link }: Props) {
   const { launch } = useProtocolLaunch()
-  const { Icon, color } = iconForType(link.type)
+  const { Icon, tint } = iconForType(link.type)
   const url = link.canonical_url
   // Route through classifyUrl so [[wikilink]] canonical_urls become the correct
   // mnccore://obsidian/<target> launch URI rather than a raw [[…]] that the
@@ -66,7 +66,7 @@ export default function StoredLinkChip({ link }: Props) {
         color: 'var(--slate)',
       }}
     >
-      <Icon size={14} strokeWidth={1.5} style={{ color, flexShrink: 0 }} />
+      <Icon size={14} strokeWidth={1.5} style={{ color: tint, flexShrink: 0 }} />
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
         {displayLabel}
       </span>

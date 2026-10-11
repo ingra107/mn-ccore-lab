@@ -1580,7 +1580,7 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
   const resolvedType = normalizeLink(url)?.type
   const iconSpec = resolvedType ? iconForType(resolvedType) : null
   const Icon = iconSpec ? iconSpec.Icon : FallbackIcon
-  const iconColor = iconSpec ? iconSpec.color : 'var(--teal)'
+  const iconColor = iconSpec ? iconSpec.tint : 'var(--teal)'
 
   // Non-http links fire through the ONE protocol-launch chokepoint
   // (clipboard backup + toast — that toast is the single feedback path).

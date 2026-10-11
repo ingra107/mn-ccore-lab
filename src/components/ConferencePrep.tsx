@@ -9,23 +9,25 @@ import { useCreateConference, useUpdateConference, useDeleteConference } from '.
 import { formatShortDate, localDateKey, isOverdue } from '../lib/dateUtils'
 import type { ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus } from '../lib/api'
 import { ICON_PROPS } from '../lib/iconProps'
+import { getStatusColor } from '../lib/statusColors'
 import { Button } from './ui/Button'
 
-const STATUS_OPTIONS: { value: ConferenceStatus; label: string; color: string }[] = [
-  { value: 'planning', label: 'Planning', color: 'var(--slate)' },
-  { value: 'submitted', label: 'Submitted', color: 'var(--gold)' },
-  { value: 'accepted', label: 'Accepted', color: 'var(--teal)' },
-  { value: 'preparing', label: 'Preparing', color: 'var(--blue, #5b9bd5)' },
-  { value: 'presented', label: 'Presented', color: 'var(--st-done)' },
-  { value: 'rejected', label: 'Rejected', color: 'var(--maroon)' },
-]
+// Colors come from the shared status map, never a local copy (principle 21).
+const STATUS_OPTIONS: { value: ConferenceStatus; label: string; color: string }[] = ([
+  { value: 'planning', label: 'Planning' },
+  { value: 'submitted', label: 'Submitted' },
+  { value: 'accepted', label: 'Accepted' },
+  { value: 'preparing', label: 'Preparing' },
+  { value: 'presented', label: 'Presented' },
+  { value: 'rejected', label: 'Rejected' },
+] as const).map((o) => ({ ...o, color: getStatusColor(o.value) }))
 
-const MATERIALS_OPTIONS: { value: MaterialsStatus; label: string; color: string }[] = [
-  { value: 'not_started', label: 'Not Started', color: 'var(--slate)' },
-  { value: 'drafting', label: 'Drafting', color: 'var(--gold)' },
-  { value: 'review', label: 'In Review', color: 'var(--teal)' },
-  { value: 'final', label: 'Final', color: 'var(--st-done)' },
-]
+const MATERIALS_OPTIONS: { value: MaterialsStatus; label: string; color: string }[] = ([
+  { value: 'not_started', label: 'Not Started' },
+  { value: 'drafting', label: 'Drafting' },
+  { value: 'review', label: 'In Review' },
+  { value: 'final', label: 'Final' },
+] as const).map((o) => ({ ...o, color: getStatusColor(o.value) }))
 
 const TYPE_OPTIONS: { value: ConferenceSubmissionType; label: string }[] = [
   { value: 'abstract', label: 'Abstract' },
