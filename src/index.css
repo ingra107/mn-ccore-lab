@@ -941,8 +941,7 @@ a:hover {
 /* Desktop only — at mobile (<768px) rows switch to stacked card layout that needs to grow */
 @media (min-width: 768px) {
   .table-container [role="row"]:not([aria-rowindex="1"]),
-  .manuscript-list-row,
-  .deadline-list-row {
+  .manuscript-list-row {
     height: var(--row-height);
     box-sizing: border-box;
     scroll-margin-top: 72px;
@@ -952,8 +951,7 @@ a:hover {
 /* Mobile: allow rows to grow with their content (stacked cards need ≥72px) */
 @media (max-width: 767px) {
   .table-container [role="row"]:not([aria-rowindex="1"]),
-  .manuscript-list-row,
-  .deadline-list-row {
+  .manuscript-list-row {
     height: auto;
     min-height: var(--row-height);
     box-sizing: border-box;
@@ -2989,6 +2987,9 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr{--sr-hov:color-mix(in srgb,var(--sk-t1) 3.5%,transparent)}
 .sr .sr-g{display:grid;grid-template-columns:var(--sr-cols);align-items:center;column-gap:8px;padding:0 10px}
 .sr .sr-hd{position:sticky;top:0;z-index:2;height:32px;margin-bottom:6px;font-size:11px;font-weight:500;color:var(--sk-t3);background:color-mix(in srgb,var(--sk-page) 88%,transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 1px 0 var(--sk-line)}
+/* A sleek table in a window-scrolled page (Deadlines) docks its header under the portal top bar. */
+.sr.sr-page .sr-hd{top:var(--portal-header-h,0px)}
+.sr.sr-page .sr-row{scroll-margin-top:calc(var(--portal-header-h,0px) + 40px)}
 .sr .sr-hd button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:3px;border-radius:4px}
 .sr .sr-hd button:hover,.sr .sr-hd button.sr-on{color:var(--sk-t1)}
 .sr .sr-hd button:focus-visible{outline:2px solid var(--sk-ac);outline-offset:2px}
