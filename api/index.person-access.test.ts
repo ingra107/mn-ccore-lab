@@ -53,6 +53,7 @@ describe('a member sees only their own per-person activity', () => {
   const ROUTES = [
     (slug: string) => `/api/analytics/contributions?slug=${slug}&days=90`,
     (slug: string) => `/api/team/${slug}/contributions?period=90`,
+    (slug: string) => `/api/activity/heatmap?slug=${slug}&days=90`,
   ]
 
   for (const route of ROUTES) {
@@ -68,6 +69,17 @@ describe('a member sees only their own per-person activity', () => {
       expect((await get(route('nate-mesfin'), 'apikey')).status).toBe(200)
     })
   }
+
+  it('/api/team/:slug/trajectory: another member gets publications only; self, PI and PB key get the activity', async () => {
+    const other = JSON.parse((await get('/api/team/nate-mesfin/trajectory', CASEY)).text).data
+    expect(other.taskStats).toEqual([])
+    expect(other.projects).toEqual([])
+    expect(other.taskMetrics.total).toBe(0)
+    for (const who of [PI_EMAIL, 'nate@umn.edu', 'apikey']) {
+      const d = JSON.parse((await get('/api/team/nate-mesfin/trajectory', who)).text).data
+      expect(d.taskMetrics.total, who).toBe(1)
+    }
+  })
 
   it('the contribution list names the task only to the person it is about or the PI', async () => {
     expect((await get('/api/team/nate-mesfin/contributions?period=90', PI_EMAIL)).text).toContain('Nate finished this')

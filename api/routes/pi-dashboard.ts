@@ -1,7 +1,6 @@
 import type { Env } from '../helpers';
 import { json, error } from '../helpers';
 import { GRANT_BUCKET_SQL } from './grant-bucket';
-import { ctDateString } from '../lib/ct-date';
 
 // A trainee: the member types the dashboard counts as trainees, or a role that
 // names one. One definition for the dashboard and the Lab pulse routes below.
@@ -303,14 +302,14 @@ export async function handleResponseTime(env: Env, isPi: boolean, now = new Date
     SELECT priority,
       substr(completed_at, 1, 7) as month,
       julianday(completed_at) - julianday(created_at) as days,
-      julianday('now') - julianday(completed_at) as age
+      julianday(?1) - julianday(completed_at) as age
     FROM tasks
     WHERE completed = 1 AND completed_at IS NOT NULL AND created_at IS NOT NULL
       AND deleted_at IS NULL AND COALESCE(kind, 'task') = 'task'
       AND julianday(completed_at) >= julianday(created_at)
-      AND julianday('now') - julianday(completed_at) BETWEEN 0 AND 365
+      AND julianday(?1) - julianday(completed_at) BETWEEN 0 AND 365
     LIMIT 50000
-  `).all();
+  `).bind(now.toISOString()).all();
   const rows = (done.results || []) as Array<{ priority: string | null; month: string; days: number; age: number }>;
 
   const monthMap = new Map<string, number[]>();
@@ -334,7 +333,9 @@ export async function handleResponseTime(env: Env, isPi: boolean, now = new Date
 
   // `monthly` is the current month and the eleven before it, so a month label
   // never appears twice (a 365-day window reaches into the same month a year ago).
-  const [cy, cm] = ctDateString(now).split('-').map(Number);
+  // UTC month, the same clock as substr(completed_at,1,7) above, so the window edge and the row buckets agree.
+  // eslint-disable-next-line local/time-discipline -- UTC month on purpose: rows are bucketed by substr(completed_at,1,7), a UTC string
+  const [cy, cm] = now.toISOString().slice(0, 7).split('-').map(Number);
   const back = cy * 12 + (cm - 1) - 11;
   const first = `${Math.floor(back / 12)}-${String((back % 12) + 1).padStart(2, '0')}`;
 

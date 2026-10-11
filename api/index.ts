@@ -1449,7 +1449,7 @@ defineRoute({
   path: '/api/activity/heatmap',
   auth: 'authed',
   entity: 'activity',
-  handler: (c) => handleActivityHeatmap(U(c), E(c)),
+  handler: (c) => handleActivityHeatmap(U(c), E(c), c.get('viewer'), PI(c)),
 });
 // Manual activity deletion (author or PI) — house delete shape (POST :id/delete,
 // same as /api/conferences/:id/delete).
@@ -1712,7 +1712,7 @@ defineRoute({
   path: '/api/team/:slug/trajectory',
   auth: 'authed',
   entity: 'team',
-  handler: (c) => handleTrajectory(c.req.param('slug'), E(c)),
+  handler: (c) => handleTrajectory(c.req.param('slug'), E(c), c.get('viewer'), PI(c)),
 });
 defineRoute({
   method: 'GET',

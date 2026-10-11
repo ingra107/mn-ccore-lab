@@ -4,6 +4,8 @@ import { idempotentDelete } from '../lib/idempotent-delete';
 import { isTestFixture } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { memberContributionEvents, contributionsByDay } from '../lib/member-contributions';
+import { mayReadPerson } from '../lib/person-access';
+import type { Viewer } from '../lib/viewer-db';
 import { activityVisibilityGate, activityHiddenClause, postActivityEntry } from '../lib/activity-entry';
 
 // GET /api/activity?limit=20&actor=slug
@@ -267,8 +269,10 @@ export async function handleCreateActivityReply(
 }
 
 // GET /api/activity/heatmap?slug=&days=
-export async function handleActivityHeatmap(url: URL, env: Env): Promise<Response> {
+export async function handleActivityHeatmap(url: URL, env: Env, viewer: Viewer, isPi: boolean): Promise<Response> {
   const slug = url.searchParams.get('slug');
+  // A member's daily counts are the score card's counts: theirs and the PI's alone.
+  if (slug && !mayReadPerson(viewer, isPi, slug)) return json({ error: 'Forbidden — a member sees only their own contributions' }, 403);
   const days = parseInt(url.searchParams.get('days') || '90');
   const since = ctToday(-days);
 

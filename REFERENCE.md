@@ -139,13 +139,13 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 - GET /api/decisions/similar?context=, GET /api/decisions/similar-by-id?id=
 
 ### Trainee Trajectories (Phase 19)
-- GET /api/team/:slug/trajectory (publications, projects, tasks, activity, milestones)
+- GET /api/team/:slug/trajectory (activity parts only for that member or the PI; others get publications only; publications, projects, tasks, activity, milestones)
 
 ### PI Analytics (Phase 19)
 - GET /api/analytics/pi-dashboard
-- GET /api/analytics/mentee-velocity
-- GET /api/analytics/response-time
-- GET /api/analytics/team-engagement
+- GET /api/analytics/mentee-velocity (PI only, 403 otherwise; `data` = `{mentees, perYear, pace}`, `median_days`, `active/of`)
+- GET /api/analytics/response-time (PI only; median days, `summary`/`monthly`/`byPriority`)
+- GET /api/analytics/team-engagement (PI only)
 
 ### Calendar & Activity
 - GET /api/calendar/events, /api/activity/heatmap?slug=&days=

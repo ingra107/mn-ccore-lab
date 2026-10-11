@@ -595,7 +595,8 @@ export default function MemberPage() {
                 <div style={{ marginTop: '1rem' }} />
               </>
             )}
-            <ActivityHeatmap slug={slug} days={90} />
+            {/* The heatmap counts the same events as the score: theirs and the PI's alone. */}
+            {canSeeScore && <ActivityHeatmap slug={slug} days={90} />}
           </section>
           <SectionDivider />
           <div className="py-4" />
