@@ -21,14 +21,13 @@ import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { IdeaRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 type SortKey = 'title' | 'submitter' | 'status' | 'votes' | 'created_at'
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  new: { label: 'New', color: 'var(--teal)', bg: 'var(--teal-active)' },
-  under_review: { label: 'Under Review', color: 'var(--gold)', bg: 'var(--gold-active)' },
-  approved: { label: 'Approved', color: 'var(--green)', bg: 'var(--green-hover)' },
+  new: { label: 'New', color: 'var(--sk-t1)', bg: 'var(--sk-line)' },
+  under_review: { label: 'Under Review', color: 'var(--sk-t2)', bg: 'var(--sk-line)' },
+  approved: { label: 'Approved', color: 'var(--sk-t3)', bg: 'var(--sk-line)' },
   parked: { label: 'Parked', color: 'var(--slate)', bg: 'var(--hover-subtle)' },
   archived: { label: 'Archived', color: 'var(--slate)', bg: 'var(--hover-subtle)' },
 }
@@ -315,12 +314,12 @@ export default function IdeasPage() {
             if (!lopsided || dismissed) return null
             return (
               <div className="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg"
-                style={{ background: 'var(--gold-hover)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, fontSize: '12px', color: 'var(--slate)' }}>
+                style={{ background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)', border: `1px solid var(--sk-line)`, fontSize: '12px', color: 'var(--slate)' }}>
                 <span>Most ideas are still in <strong>New</strong>.</span>
                 <button
                   type="button"
                   onClick={() => setViewMode('list')}
-                  style={{ background: 'none', border: 'none', color: 'var(--teal)', cursor: 'pointer', textDecoration: 'underline', padding: 0, fontSize: '12px' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--job-accent)', cursor: 'pointer', textDecoration: 'underline', padding: 0, fontSize: '12px' }}
                 >
                   Switch to List view →
                 </button>
@@ -371,7 +370,7 @@ export default function IdeasPage() {
                               {person.name.split(' ')[0]}
                             </span>
                             {idea.votes > 0 && (
-                              <span style={{ fontSize: '10px', color: 'var(--teal)' }}>
+                              <span style={{ fontSize: '10px', color: 'var(--sk-t2)' }}>
                                 ▲ {idea.votes}
                               </span>
                             )}
@@ -395,9 +394,9 @@ export default function IdeasPage() {
                               onClick={(e) => { e.stopPropagation(); setPromotingIdea(idea) }}
                               className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md text-xs font-medium"
                               style={{
-                                background: 'var(--teal-active)',
-                                color: 'var(--teal)',
-                                border: '1px solid rgba(45,138,138,0.2)',
+                                background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
+                                color: 'var(--job-accent)',
+                                border: '1px solid color-mix(in srgb, var(--job-accent) 20%, transparent)',
                                 cursor: 'pointer',
                                 padding: '5px 8px',
                               }}
@@ -489,7 +488,7 @@ export default function IdeasPage() {
               }, {})
               const voted = sortedIdeas.filter(i => i.votes > 0).length
               const statusLabels: Record<string, string> = { new: 'New', under_review: 'Under Review', approved: 'Approved', parked: 'Parked', archived: 'Archived' }
-              const statusColors: Record<string, string> = { new: 'var(--teal)', under_review: 'var(--gold)', approved: 'var(--green)', parked: 'var(--slate)', archived: 'var(--slate)' }
+              const statusColors: Record<string, string> = { new: 'var(--sk-t1)', under_review: 'var(--sk-t2)', approved: 'var(--sk-t3)', parked: 'var(--slate)', archived: 'var(--slate)' }
               const stats: { label: string; value: number; color?: string }[] = [
                 { label: 'Count', value: sortedIdeas.length },
                 ...Object.entries(statusCounts).map(([key, count]) => ({
@@ -497,7 +496,7 @@ export default function IdeasPage() {
                   value: count,
                   color: statusColors[key],
                 })),
-                ...(voted > 0 ? [{ label: 'Voted', value: voted, color: 'var(--teal)' }] : []),
+                ...(voted > 0 ? [{ label: 'Voted', value: voted, color: 'var(--sk-t2)' }] : []),
               ]
               return (
                 <div
@@ -650,7 +649,7 @@ function IdeaRowView({
               style={{
                 display: 'block',
                 fontSize: 'var(--text-label)',
-                color: 'var(--gold)',
+                color: 'var(--sk-t3)',
                 opacity: 0.85,
                 marginTop: 2,
               }}
@@ -685,9 +684,9 @@ function IdeaRowView({
           <InlineSelect
             value={idea.status}
             options={[
-              { value: 'new', label: 'New', color: 'var(--teal)' },
-              { value: 'under_review', label: 'Review', color: 'var(--gold)' },
-              { value: 'approved', label: 'Approved', color: 'var(--green)' },
+              { value: 'new', label: 'New', color: 'var(--sk-t1)' },
+              { value: 'under_review', label: 'Review', color: 'var(--sk-t2)' },
+              { value: 'approved', label: 'Approved', color: 'var(--sk-t3)' },
               { value: 'parked', label: 'Parked', color: 'var(--slate)' },
               { value: 'archived', label: 'Archived', color: 'var(--slate)' },
             ]}
@@ -704,7 +703,7 @@ function IdeaRowView({
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)',
+              color: idea.votes > 0 ? 'var(--sk-t1)' : 'var(--slate)',
               transition: 'transform var(--duration-normal) var(--ease-out), color var(--duration-normal)',
               padding: '2px var(--sp-sm)',
               minHeight: '44px',
@@ -752,8 +751,8 @@ function IdeaRowView({
               onClick={(e) => { e.stopPropagation(); onPromote() }}
               style={{
                 background: 'none',
-                border: '1px solid rgba(45,138,138,0.3)',
-                color: 'var(--teal)',
+                border: '1px solid color-mix(in srgb, var(--job-accent) 30%, transparent)',
+                color: 'var(--job-accent)',
                 cursor: 'pointer',
                 padding: '4px',
                 minHeight: '44px',
@@ -843,7 +842,7 @@ function IdeaRowView({
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)',
+              color: idea.votes > 0 ? 'var(--sk-t1)' : 'var(--slate)',
               padding: '0 var(--sp-sm)',
               minHeight: '44px',
               transition: 'transform var(--duration-normal) var(--ease-out)',
@@ -862,7 +861,7 @@ function IdeaRowView({
             {(statusConfig[idea.status] || statusConfig.new).label}
           </span>
           {idea.research_area && (
-            <span style={{ fontSize: 'var(--text-label)', color: 'var(--gold)', opacity: 0.85 }}>
+            <span style={{ fontSize: 'var(--text-label)', color: 'var(--sk-t3)', opacity: 0.85 }}>
               {idea.research_area}
             </span>
           )}
@@ -882,8 +881,8 @@ function IdeaRowView({
                 className="rounded-md flex items-center justify-center"
                 style={{
                   background: 'none',
-                  border: '1px solid rgba(45,138,138,0.3)',
-                  color: 'var(--teal)',
+                  border: '1px solid color-mix(in srgb, var(--job-accent) 30%, transparent)',
+                  color: 'var(--job-accent)',
                   cursor: 'pointer',
                   padding: '4px',
                   minHeight: '44px',
@@ -1035,7 +1034,7 @@ function IdeaRowView({
             {idea.research_area && (
               <div>
                 <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Research area</div>
-                <div style={{ color: 'var(--gold)' }}>{idea.research_area}</div>
+                <div style={{ color: 'var(--sk-t3)' }}>{idea.research_area}</div>
               </div>
             )}
             <div>
@@ -1048,7 +1047,7 @@ function IdeaRowView({
             </div>
             <div>
               <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Votes</div>
-              <div style={{ color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)' }}>{idea.votes}</div>
+              <div style={{ color: idea.votes > 0 ? 'var(--sk-t1)' : 'var(--slate)' }}>{idea.votes}</div>
             </div>
           </div>
           )}
@@ -1234,8 +1233,8 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
               aria-describedby={!title.trim() ? 'idea-submit-hint' : undefined}
               className="rounded-md"
               style={{
-                backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--teal)',
-                color: !title.trim() ? 'var(--slate)' : 'var(--ink-bright)',
+                backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--job-accent)',
+                color: !title.trim() ? 'var(--slate)' : 'var(--sk-card)',
                 cursor: !title.trim() ? 'not-allowed' : 'pointer',
                 border: 'none',
                 padding: 'var(--sp-sm) var(--sp-lg)',

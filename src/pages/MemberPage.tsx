@@ -37,7 +37,7 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
   const isDone = item.status === 'done'
   const overdue = !isDone && isOverdue(item.due_date)
   // Color jobs (rules-ui-design 21): only overdue earns a color edge (red).
-  const borderColor = overdue ? 'var(--maroon)' : 'var(--border-subtle)'
+  const borderColor = overdue ? 'var(--job-overdue)' : 'var(--border-subtle)'
   // to_slug is authoritative when present (WS2.4); falls back to to_whom text
   const toPersonInfo = item.to_slug ? getPersonInfo(item.to_slug) : null
 
@@ -95,7 +95,7 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
               <span
                 style={{
                   fontSize: '11px',
-                  color: overdue ? 'var(--maroon)' : 'var(--slate)',
+                  color: overdue ? 'var(--job-overdue)' : 'var(--slate)',
                   opacity: overdue ? 1 : 0.85,
                   fontWeight: overdue ? 600 : 400,
                 }}
@@ -336,8 +336,8 @@ export default function MemberPage() {
               border: '1px solid transparent',
               textDecoration: 'none',
               transition: 'border-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out)',
-              '--hov-border': 'var(--teal)',
-              '--hov-color': 'var(--teal)',
+              '--hov-border': 'var(--job-accent)',
+              '--hov-color': 'var(--job-accent)',
             } as React.CSSProperties}
           >
             <TrendingUp {...ICON_PROPS} size={12} />
@@ -508,8 +508,8 @@ export default function MemberPage() {
                     border: '1px dashed rgba(100,116,139,0.3)',
                     cursor: 'pointer',
                     transition: 'border-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out)',
-                    '--hov-border': 'var(--teal)',
-                    '--hov-color': 'var(--teal)',
+                    '--hov-border': 'var(--job-accent)',
+                    '--hov-color': 'var(--job-accent)',
                   } as React.CSSProperties}
                 >
                   <Plus {...ICON_PROPS} size={10} />
@@ -567,8 +567,8 @@ export default function MemberPage() {
                   disabled={!newTag.trim() || addExpertiseMut.isPending}
                   className="px-3 py-1.5 rounded-md text-xs font-medium"
                   style={{
-                    background: newTag.trim() ? 'var(--teal-solid)' : 'var(--sk-card)',
-                    color: newTag.trim() ? '#fff' : 'var(--slate)',
+                    background: newTag.trim() ? 'var(--job-accent)' : 'var(--sk-card)',
+                    color: newTag.trim() ? 'var(--sk-card)' : 'var(--slate)',
                     border: 'none',
                     cursor: newTag.trim() ? 'pointer' : 'default',
                     opacity: newTag.trim() ? 1 : 0.85,
@@ -841,9 +841,9 @@ const MILESTONE_TYPE_LABELS: Record<string, string> = {
 const MILESTONE_STATUS_COLORS: Record<string, string> = {
   // Only overdue has a color job (red); every other status is a gray word.
   upcoming: 'var(--slate)',
-  in_progress: 'var(--teal)',
+  in_progress: 'var(--job-accent)',
   completed: 'var(--st-done)',
-  overdue: 'var(--maroon)',
+  overdue: 'var(--job-overdue)',
 }
 
 function MemberMilestones({ slug }: { slug: string }) {
@@ -907,7 +907,7 @@ function MilestoneMiniCard({
   isOverdue: boolean
 }) {
   const isDone = milestone.status === 'completed'
-  const borderColor = isOverdue ? 'var(--maroon)' : 'var(--border-subtle)'
+  const borderColor = isOverdue ? 'var(--job-overdue)' : 'var(--border-subtle)'
 
   return (
     <motion.div
@@ -942,7 +942,7 @@ function MilestoneMiniCard({
               <span
                 style={{
                   fontSize: '10px',
-                  color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
+                  color: isOverdue ? 'var(--job-overdue)' : 'var(--slate)',
                   fontWeight: isOverdue ? 500 : 400,
                   opacity: isOverdue ? 1 : 0.85,
                 }}

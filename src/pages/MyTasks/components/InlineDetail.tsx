@@ -22,7 +22,7 @@ import StoredLinkChip from '../../../components/StoredLinkChip'
 import { taskOwnOverflowLinks } from '../../../lib/taskLinkOverflow'
 import LinkifiedText from '../../../components/LinkifiedText'
 import {
-  ACCENT_TEAL, ACCENT_GREEN,
+  JOB_ACCENT,
   INK, INK_DIM, PANEL_BG,
   MOVE_OPTIONS,
   isTaskDone,
@@ -226,7 +226,7 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
           <button onClick={planToday} title="Add to today's planned strip" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Pin {...ICON_PROPS} size={12} /> Plan today</button>
         )}
         <div ref={moveRef} style={{ position: 'relative' }}>
-          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (changes priority to match)" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: `1px solid ${moveOpen ? ACCENT_TEAL : 'transparent'}`, background: moveOpen ? withAlpha(ACCENT_TEAL, 13) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: 'pointer' }}>Move →</button>
+          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (changes priority to match)" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: `1px solid ${moveOpen ? JOB_ACCENT : 'transparent'}`, background: moveOpen ? withAlpha(JOB_ACCENT, 13) : 'transparent', color: moveOpen ? JOB_ACCENT : INK, fontFamily: 'inherit', cursor: 'pointer' }}>Move →</button>
           {moveOpen && (
             <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
               {MOVE_OPTIONS.map((opt) => (
@@ -234,7 +234,7 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
                   key={opt.key}
                   onClick={() => moveToGroup(opt)}
                   disabled={updateTask.isPending}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? withAlpha(ACCENT_TEAL, 15) : 'transparent', border: 'none', color: task.group_override === opt.key ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? withAlpha(JOB_ACCENT, 15) : 'transparent', border: 'none', color: task.group_override === opt.key ? JOB_ACCENT : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
                 >{opt.label}{task.group_override === opt.key ? ' ✓' : ''}</button>
               ))}
               {task.group_override && (
@@ -253,10 +253,10 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
         {/* #114: Open full editor — promoted from TaskInlineFieldRow bottom to
             action bar next to Move → so it's immediately visible without
             scrolling past the field row. */}
-        <button onClick={handleViewAll} title="Open full task editor" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: 'var(--teal)', fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}>⊞ Full editor</button>
+        <button onClick={handleViewAll} title="Open full task editor" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: 'var(--job-accent)', fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}>⊞ Full editor</button>
         <button onClick={snooze} title="Push due date +1 day" disabled={updateTask.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', opacity: updateTask.isPending ? 0.5 : 1 }}>Snooze +1d</button>
         {!isCompleted && (
-          <button onClick={complete} title="Mark complete" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: ACCENT_GREEN, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer', opacity: bulkUpdate.isPending ? 0.5 : 1 }}>✓ Complete</button>
+          <button onClick={complete} title="Mark complete" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: JOB_ACCENT, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer', opacity: bulkUpdate.isPending ? 0.5 : 1 }}>✓ Complete</button>
         )}
         <button onClick={archive} title="Soft-delete this task" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer' }}>Archive</button>
       </div>
@@ -284,7 +284,7 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
         <TaskActivityFeed taskId={task.id} peekCount={3} hidePills avatarSize="xs" />
         <button
           onClick={handleViewAll}
-          style={{ fontSize: 10, color: ACCENT_TEAL, background: 'transparent', border: 'none', padding: '3px 0', cursor: 'pointer', fontFamily: 'inherit' }}
+          style={{ fontSize: 10, color: JOB_ACCENT, background: 'transparent', border: 'none', padding: '3px 0', cursor: 'pointer', fontFamily: 'inherit' }}
         >view all →</button>
       </div>
 

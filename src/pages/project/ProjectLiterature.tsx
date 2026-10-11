@@ -5,7 +5,7 @@ import { useProjectPapers, usePublications } from '../../hooks/useApiData'
 import { useUnlinkPaper, useLinkPaper } from '../../hooks/useMutations'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { formatPublicationDate } from '../../lib/dateUtils'
-import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../../lib/taskGrouping'
+import { PANEL_BG, withAlpha } from '../../lib/taskGrouping'
 import { Button } from '../../components/ui/Button'
 import ProjectPublications from '../../components/ProjectPublications'
 import SectionHead from '../../components/ui/SectionHead'
@@ -39,8 +39,8 @@ export default function ProjectLiterature({ projectSlug, projectTitle, isPi }: P
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors"
               style={{
                 backgroundColor: 'transparent',
-                color: 'var(--teal)',
-                border: '1px solid var(--teal)',
+                color: 'var(--job-accent)',
+                border: '1px solid var(--job-accent)',
                 cursor: 'pointer',
                 opacity: 0.8,
               }}
@@ -64,7 +64,7 @@ export default function ProjectLiterature({ projectSlug, projectTitle, isPi }: P
               <div
                 key={p.id}
                 className="flex items-start gap-3 py-2.5"
-                style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 6)}` }}
+                style={{ borderBottom: `1px solid var(--sk-line)` }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p
@@ -105,7 +105,7 @@ export default function ProjectLiterature({ projectSlug, projectTitle, isPi }: P
                     <p
                       style={{
                         fontSize: 'var(--label-size)',
-                        color: 'var(--teal)',
+                        color: 'var(--job-accent)',
                         fontStyle: 'italic',
                         margin: 'var(--sp-xs) 0 0',
                       }}
@@ -122,7 +122,7 @@ export default function ProjectLiterature({ projectSlug, projectTitle, isPi }: P
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs"
                       style={{
-                        color: 'var(--gold)',
+                        color: 'var(--sk-t3)',
                         fontSize: '10px',
                         textDecoration: 'none',
                       }}
@@ -275,8 +275,8 @@ function LinkPaperModal({ linkedPaperIds, onLink, onClose }: {
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: tab === 'search' ? 'var(--teal)' : 'var(--slate)',
-              borderBottom: tab === 'search' ? '2px solid var(--teal)' : '2px solid transparent',
+              color: tab === 'search' ? 'var(--job-accent)' : 'var(--slate)',
+              borderBottom: tab === 'search' ? '2px solid var(--job-accent)' : '2px solid transparent',
               marginBottom: '-1px',
             }}
           >
@@ -288,8 +288,8 @@ function LinkPaperModal({ linkedPaperIds, onLink, onClose }: {
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: tab === 'doi' ? 'var(--teal)' : 'var(--slate)',
-              borderBottom: tab === 'doi' ? '2px solid var(--teal)' : '2px solid transparent',
+              color: tab === 'doi' ? 'var(--job-accent)' : 'var(--slate)',
+              borderBottom: tab === 'doi' ? '2px solid var(--job-accent)' : '2px solid transparent',
               marginBottom: '-1px',
             }}
           >
@@ -334,14 +334,14 @@ function LinkPaperModal({ linkedPaperIds, onLink, onClose }: {
                       opacity: alreadyLinked ? 0.85 : 1,
                       borderBottom: '1px solid var(--border-subtle)',
                     }}
-                    onMouseOver={e => { if (!alreadyLinked) (e.currentTarget.style.backgroundColor = 'var(--teal-hover)') }}
+                    onMouseOver={e => { if (!alreadyLinked) (e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--job-accent) 6%, transparent)') }}
                     onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
                     <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>{pub.title}</p>
                     <div className="flex items-center gap-2 mt-1">
                       {pub.journal && <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85 }}>{pub.journal}</span>}
                       {pub.year && <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{pub.year}</span>}
-                      {alreadyLinked && <span style={{ fontSize: '10px', color: 'var(--teal)', fontWeight: 'var(--label-weight)' }}>Already linked</span>}
+                      {alreadyLinked && <span style={{ fontSize: '10px', color: 'var(--job-accent)', fontWeight: 'var(--label-weight)' }}>Already linked</span>}
                     </div>
                   </button>
                 )
@@ -385,14 +385,14 @@ function LinkPaperModal({ linkedPaperIds, onLink, onClose }: {
           </div>
 
           {doiError && (
-            <p style={{ fontSize: '12px', color: 'var(--maroon)', margin: 0 }}>{doiError}</p>
+            <p style={{ fontSize: '12px', color: 'var(--job-overdue)', margin: 0 }}>{doiError}</p>
           )}
 
           {doiData && (
             <div className="flex flex-col gap-2 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)', border: '1px solid var(--border-subtle)' }}>
               <div className="flex items-center gap-2 mb-1">
-                <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--green)' }} />
-                <span className="text-[11px] font-medium" style={{ color: 'var(--green)' }}>Citation found</span>
+                <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--job-accent)' }} />
+                <span className="text-[11px] font-medium" style={{ color: 'var(--job-accent)' }}>Citation found</span>
               </div>
               <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0, fontWeight: 'var(--label-weight)', lineHeight: 1.4 }}>
                 {doiData.title}

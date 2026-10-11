@@ -43,7 +43,7 @@ export interface ManuscriptsListProps {
 
 // The status word stays gray; the dot carries the state (the task status pill's classes).
 const STATUS_DOT: Record<string, string> = { active: 'sr-ip', waiting_external: 'sr-wt', blocked: 'sr-bl', done: '' }
-const STALLED: CSSProperties = { color: 'var(--sk-urg)', fontWeight: 600 }
+const STALLED: CSSProperties = { color: 'var(--job-stale)', fontWeight: 600 }
 
 export function ManuscriptsList({
   manuscripts, sort, onSort, stages, stageLabels, statusOptions, piOptions, categoryOptions, categoryLabel,

@@ -129,11 +129,11 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
           style={{
             padding: '3px 4px',
             fontSize: 'var(--text-small)',
-            color: 'var(--teal)',
+            color: 'var(--job-accent)',
             opacity: 0.75,
             fontFamily: 'inherit',
             '--hov-opacity': '1',
-            '--hov-bg': 'var(--teal-hover)',
+            '--hov-bg': 'color-mix(in srgb, var(--job-accent) 6%, transparent)',
           } as React.CSSProperties}
         >
           <Plus {...ICON_PROPS} size={11} />
@@ -184,11 +184,11 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
               type="submit"
               disabled={!canSave}
               style={{
-                background: canSave ? 'var(--teal-solid)' : 'var(--border-subtle)',
+                background: canSave ? 'var(--job-accent)' : 'var(--border-subtle)',
                 borderRadius: 'var(--radius-md)',
                 padding: '4px 10px',
                 fontSize: 'var(--text-small)',
-                color: canSave ? 'var(--ink-bright)' : 'var(--slate)',
+                color: canSave ? 'var(--sk-card)' : 'var(--slate)',
                 cursor: canSave ? 'pointer' : 'not-allowed',
                 fontWeight: 500,
                 opacity: 1,

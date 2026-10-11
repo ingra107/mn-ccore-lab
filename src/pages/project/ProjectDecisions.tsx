@@ -6,7 +6,6 @@ import type { DecisionRow } from '../../hooks/useApiData'
 import { formatMediumDate } from '../../lib/dateUtils'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import SectionHead from '../../components/ui/SectionHead'
 
@@ -39,7 +38,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
             to={PATHS.decisions}
             style={{
               fontSize: 'var(--label-size)',
-              color: 'var(--teal)',
+              color: 'var(--job-accent)',
               textDecoration: 'none',
             }}
           >
@@ -64,11 +63,11 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
               key={decision.id}
               style={{
                 padding: '10px 0',
-                borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 8)}`,
+                borderBottom: `1px solid var(--sk-line)`,
               }}
             >
               <div className="flex items-center gap-2 mb-1">
-                <Scale {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                <Scale {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
                 <span
                   style={{
                     fontSize: 'var(--value-size)',
@@ -82,8 +81,8 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
                   <span
                     className="text-[10px] px-1.5 py-0.5 rounded-full"
                     style={{
-                      color: decision.outcome_status === 'recorded' ? 'var(--teal)' : 'var(--gold)',
-                      backgroundColor: decision.outcome_status === 'recorded' ? 'var(--teal-active)' : 'var(--gold-active)',
+                      color: decision.outcome_status === 'recorded' ? 'var(--sk-t3)' : 'var(--sk-t2)',
+                      backgroundColor: 'var(--sk-line)',
                     }}
                   >
                     {decision.outcome_status}
@@ -106,7 +105,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
                 <p
                   style={{
                     fontSize: 'var(--label-size)',
-                    color: 'var(--teal)',
+                    color: 'var(--job-accent)',
                     margin: '4px 0 0 20px',
                     fontStyle: 'italic',
                   }}
@@ -134,7 +133,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
               to={PATHS.decisions}
               style={{
                 fontSize: 'var(--label-size)',
-                color: 'var(--teal)',
+                color: 'var(--job-accent)',
                 textDecoration: 'none',
                 textAlign: 'center',
                 padding: 'var(--sp-sm) 0',

@@ -79,7 +79,6 @@ import { useOpenParam } from '../hooks/useOpenParam'
 import EmptyStateArt from '../components/EmptyStateArt'
 import EmptyState from '../components/EmptyState'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { projectShortLabel } from '../lib/displayNames'
 import SectionHead from '../components/ui/SectionHead'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
@@ -632,7 +631,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   color: 'var(--ink)',
                   background: 'none',
                   border: 'none',
-                  borderBottom: '2px solid var(--teal)',
+                  borderBottom: '2px solid var(--job-accent)',
                   outline: 'none',
                   padding: '2px 0',
                   width: '100%',
@@ -678,7 +677,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   color: 'var(--ink)',
                   background: 'none',
                   border: 'none',
-                  borderBottom: '1px solid var(--teal)',
+                  borderBottom: '1px solid var(--job-accent)',
                   outline: 'none',
                   padding: '2px 0',
                   marginTop: '2px',
@@ -714,7 +713,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             <button
               onClick={handleCopyLink}
               className="p-1.5 rounded-md transition-colors hover:bg-black/5 tip"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--teal)' : 'var(--slate)', opacity: copied ? 1 : 0.85 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--job-accent)' : 'var(--slate)', opacity: copied ? 1 : 0.85 }}
               data-tip={copied ? 'Link copied!' : 'Copy link'}
               aria-label={copied ? 'Link copied!' : 'Copy link'}
             >
@@ -797,7 +796,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     className="hov-bg"
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
-                      padding: '8px 10px', fontSize: '12px', color: 'var(--maroon)',
+                      padding: '8px 10px', fontSize: '12px', color: 'var(--job-overdue)',
                       background: 'none', border: 'none', borderRadius: 'var(--radius-md)',
                       cursor: 'pointer', textAlign: 'left',
                       '--hov-bg': 'var(--hover-subtle)',
@@ -857,9 +856,9 @@ function ProjectDetailInner({ project }: InnerProps) {
               title={`Add an agenda item to one of this project's meetings`}
               className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px]"
               style={{
-                background: showAgendaForm ? 'var(--gold)' : 'var(--gold-active)',
-                color: showAgendaForm ? '#0f1923' : 'var(--gold-on-emphasis)',
-                border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+                background: showAgendaForm ? 'var(--job-accent)' : 'transparent',
+                color: showAgendaForm ? 'var(--sk-card)' : 'var(--sk-t2)',
+                border: `1px solid ${showAgendaForm ? 'var(--job-accent)' : 'var(--sk-line2)'}`,
                 fontWeight: 500,
                 cursor: 'pointer',
               }}
@@ -916,7 +915,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 style={{
                   borderRadius: 'var(--radius-lg)',
                   padding: 'var(--sp-md) var(--sp-lg)',
-                  border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+                  border: `1px solid var(--sk-line)`,
                 }}
                 className="detail-card"
               >
@@ -939,7 +938,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                             letterSpacing: 'normal',
                             color: 'var(--ink)',
                             background: 'var(--cream)',
-                            border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+                            border: `1px solid var(--sk-line2)`,
                             borderRadius: 'var(--radius-md)',
                             padding: '1px 4px',
                           }}
@@ -987,14 +986,14 @@ function ProjectDetailInner({ project }: InnerProps) {
                       fontSize: 'var(--value-size)',
                       color: 'var(--ink)',
                       background: 'var(--cream)',
-                      border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+                      border: `1px solid var(--sk-line2)`,
                       borderRadius: 'var(--radius-lg)',
                       padding: 'var(--sp-sm) var(--sp-md)',
                       outline: 'none',
                       transition: 'border-color 0.2s',
                     }}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--gold-emphasis)')}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--job-accent)')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--sk-line2)')}
                   />
                   {agendaNote.trim() && (
                     <motion.button
@@ -1002,7 +1001,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
-                      style={{ background: 'var(--gold)', color: '#0f1923', border: 'none' }}
+                      style={{ background: 'var(--job-accent)', color: 'var(--sk-card)', border: 'none' }}
                       whileTap={{ scale: 0.95 }}
                     >
                       <Send {...ICON_PROPS} size={14} />
@@ -1066,8 +1065,8 @@ function ProjectDetailInner({ project }: InnerProps) {
               }}
               className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap"
               style={{
-                color: activeTab === tab.id ? 'var(--teal)' : 'var(--slate)',
-                backgroundColor: activeTab === tab.id ? 'var(--teal-active)' : 'transparent',
+                color: activeTab === tab.id ? 'var(--job-accent)' : 'var(--slate)',
+                backgroundColor: activeTab === tab.id ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
                 border: 'none',
                 cursor: 'pointer',
                 opacity: activeTab === tab.id ? 1 : 0.85,
@@ -1118,7 +1117,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 <button
                   type="button"
                   onClick={() => setShowCreateTask(true)}
-                  style={{ fontSize: '11px', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}
+                  style={{ fontSize: '11px', color: 'var(--job-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}
                 >
                   + Add task
                 </button>
@@ -1126,7 +1125,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   <button
                     type="button"
                     onClick={() => setActiveTab('tasks')}
-                    style={{ fontSize: '11px', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    style={{ fontSize: '11px', color: 'var(--job-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                   >
                     View all →
                   </button>
@@ -1139,7 +1138,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 <button
                   type="button"
                   onClick={() => setShowCreateTask(true)}
-                  style={{ color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', textDecoration: 'underline' }}
+                  style={{ color: 'var(--job-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', textDecoration: 'underline' }}
                 >
                   Add one
                 </button>
@@ -1227,7 +1226,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   <button
                     type="button"
                     onClick={() => goToStream('all')}
-                    style={{ fontSize: '11px', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    style={{ fontSize: '11px', color: 'var(--job-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                   >
                     All →
                   </button>
@@ -1264,7 +1263,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                           style={{
                             flexShrink: 0, marginTop: 4, width: 5, height: 5,
                             borderRadius: 'var(--radius-circle)',
-                            background: item.kind === 'note' ? 'var(--teal)' : 'var(--gold)',
+                            background: item.kind === 'note' ? 'var(--sk-t2)' : 'var(--sk-t3)',
                           }}
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -1355,8 +1354,8 @@ function ProjectDetailInner({ project }: InnerProps) {
                 style={{
                   fontSize: '10px', fontWeight: quickComposeKind === 'note' ? 600 : 500, padding: '4px 10px',
                   borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
-                  background: quickComposeKind === 'note' ? 'var(--teal-active)' : 'transparent',
-                  color: quickComposeKind === 'note' ? 'var(--teal)' : 'var(--slate)',
+                  background: quickComposeKind === 'note' ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                  color: quickComposeKind === 'note' ? 'var(--job-accent)' : 'var(--slate)',
                 }}
               >
                 Note
@@ -1367,8 +1366,8 @@ function ProjectDetailInner({ project }: InnerProps) {
                 style={{
                   fontSize: '10px', fontWeight: quickComposeKind === 'comment' ? 600 : 500, padding: '4px 10px',
                   borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
-                  background: quickComposeKind === 'comment' ? 'var(--gold-active)' : 'transparent',
-                  color: quickComposeKind === 'comment' ? 'var(--gold-on-emphasis)' : 'var(--slate)',
+                  background: quickComposeKind === 'comment' ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                  color: quickComposeKind === 'comment' ? 'var(--job-accent)' : 'var(--slate)',
                 }}
               >
                 Comment
@@ -1426,11 +1425,11 @@ function ProjectDetailInner({ project }: InnerProps) {
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <Compass {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
+              <Compass {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
               <span
                 style={{
                   ...LABEL_STYLE,
-                  color: 'var(--gold)',
+                  color: 'var(--sk-t1)',
                 }}
               >
                 Why this matters now
@@ -1465,7 +1464,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   fontSize: '14px',
                   color: 'var(--ink)',
                   background: 'var(--cream)',
-                  border: '1px solid var(--gold)',
+                  border: '1px solid var(--job-accent)',
                   borderRadius: 'var(--radius-lg)',
                   padding: 'var(--sp-sm) var(--sp-md)',
                   lineHeight: 1.6,
@@ -1487,7 +1486,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 <button
                   onClick={() => { d1Update.mutate({ strategic_context: strategicDraft.trim() || undefined }); setEditingStrategic(false) }}
                   className="px-3 py-1 rounded-md text-xs font-medium"
-                  style={{ background: 'var(--gold)', color: '#0f1923', border: 'none', cursor: 'pointer' }}
+                  style={{ background: 'var(--job-accent)', color: 'var(--sk-card)', border: 'none', cursor: 'pointer' }}
                 >
                   Save
                 </button>
@@ -1563,7 +1562,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 left: '16px',
                 width: `${(currentStageIndex / (STAGES.length - 1)) * (100 - 6)}%`,
                 height: '2px',
-                background: 'var(--teal)',
+                background: 'var(--job-accent)',
                 transform: 'translateY(-50%)',
                 zIndex: 'var(--z-base)',
               }}
@@ -1598,14 +1597,14 @@ function ProjectDetailInner({ project }: InnerProps) {
                     height: isCurrent ? '20px' : '14px',
                     borderRadius: 'var(--radius-circle)',
                     border: isCurrent
-                      ? '3px solid var(--teal)'
+                      ? '3px solid var(--job-accent)'
                       : isPast
-                        ? '2px solid var(--teal)'
+                        ? '2px solid var(--job-accent)'
                         : '2px solid var(--ice)',
                     background: isCurrent
-                      ? 'var(--teal)'
+                      ? 'var(--job-accent)'
                       : isPast
-                        ? 'var(--teal)'
+                        ? 'var(--job-accent)'
                         : 'var(--cream)',
                     transition: 'all 0.2s ease',
                     padding: 0,
@@ -1620,7 +1619,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   data-tip={STAGE_LABELS[stage]}
                   style={{
                     fontSize: '10px',
-                    color: isCurrent ? 'var(--teal)' : isFuture ? 'var(--slate)' : 'var(--ink)',
+                    color: isCurrent ? 'var(--job-accent)' : isFuture ? 'var(--slate)' : 'var(--ink)',
                     opacity: isCurrent ? 1 : isFuture ? 0.85 : 0.85,
                     fontWeight: isCurrent ? 700 : 400,
                     marginTop: 'var(--sp-sm)',
@@ -1691,7 +1690,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     fontSize: '14px',
                     color: 'var(--ink)',
                     background: 'var(--cream)',
-                    border: '1px solid var(--gold)',
+                    border: '1px solid var(--job-accent)',
                     borderRadius: 'var(--radius-md)',
                     padding: '8px 10px',
                     lineHeight: 1.5,
@@ -1718,7 +1717,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       borderBottom: '1px dashed transparent',
                       transition: 'border-color 0.2s',
                       whiteSpace: 'pre-wrap',
-                      '--hov-border': withAlpha(ACCENT_GOLD, 40),
+                      '--hov-border': 'var(--sk-line2)',
                       ...(!descExpanded && project.description && project.description.length > 200 ? {
                         overflow: 'hidden',
                         display: '-webkit-box',
@@ -1740,7 +1739,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                         border: 'none',
                         cursor: 'pointer',
                         fontSize: 'var(--label-size)',
-                        color: 'var(--teal)',
+                        color: 'var(--job-accent)',
                         padding: 'var(--sp-xs) 0',
                         opacity: 0.8,
                       }}
@@ -1805,7 +1804,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   className="inline-flex items-center gap-1.5"
                   style={{
                     fontSize: '12px',
-                    color: 'var(--gold)',
+                    color: 'var(--sk-t2)',
                     textDecoration: 'none',
                   }}
                 >
@@ -1931,9 +1930,9 @@ function ProjectDetailInner({ project }: InnerProps) {
                       onClick={() => setTaskFilter(f)}
                       className="text-[10px] px-2.5 py-1 rounded-full font-medium transition-colors"
                       style={{
-                        background: taskFilter === f ? 'var(--teal-active)' : 'none',
-                        color: taskFilter === f ? 'var(--teal)' : 'var(--slate)',
-                        border: `1px solid ${taskFilter === f ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                        background: taskFilter === f ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'none',
+                        color: taskFilter === f ? 'var(--job-accent)' : 'var(--slate)',
+                        border: `1px solid ${taskFilter === f ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
                         cursor: 'pointer',
                         opacity: taskFilter === f ? 1 : 0.85,
                       }}
@@ -1962,7 +1961,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 <button
                   onClick={() => setShowCreateTask(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-                  style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
+                  style={{ backgroundColor: 'var(--job-accent)', color: 'var(--sk-card)', border: 'none', cursor: 'pointer' }}
                 >
                   <Plus {...ICON_PROPS} size={13} />
                   New Task
@@ -2077,9 +2076,9 @@ function ProjectDetailInner({ project }: InnerProps) {
                 onClick={() => setStreamFilter(f)}
                 className="text-[11px] px-3 py-1 rounded-full font-medium transition-colors"
                 style={{
-                  background: streamFilter === f ? 'var(--teal-active)' : 'none',
-                  color: streamFilter === f ? 'var(--teal)' : 'var(--slate)',
-                  border: `1px solid ${streamFilter === f ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                  background: streamFilter === f ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'none',
+                  color: streamFilter === f ? 'var(--job-accent)' : 'var(--slate)',
+                  border: `1px solid ${streamFilter === f ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
                   cursor: 'pointer',
                   opacity: streamFilter === f ? 1 : 0.85,
                 }}

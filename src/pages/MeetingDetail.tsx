@@ -244,7 +244,7 @@ export default function MeetingDetail() {
   if (isLoading) {
     return (
       <div className="content-container" style={{ paddingTop: '4rem', display: 'flex', justifyContent: 'center', opacity: 0.85 }}>
-        <HeartbeatLine variant="slow" color="var(--gold)" strokeWidth={1.5} width="100%" height={48} />
+        <HeartbeatLine variant="slow" color="var(--sk-t3)" strokeWidth={1.5} width="100%" height={48} />
       </div>
     )
   }
@@ -562,9 +562,9 @@ export default function MeetingDetail() {
               style={{
                 fontSize: 'var(--label-size)',
                 // The page's one primary action: the teal accent (color jobs, 2026-10-11).
-                color: '#fff',
+                color: 'var(--sk-card)',
                 border: '1px solid transparent',
-                background: 'var(--teal-solid)',
+                background: 'var(--job-accent)',
                 fontWeight: 600,
                 cursor: generatingAgenda ? 'wait' : 'pointer',
                 opacity: generatingAgenda ? 0.85 : 1,
@@ -588,7 +588,7 @@ export default function MeetingDetail() {
               aria-label="Edit meeting title"
               style={{
                 fontWeight: 600, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)',
-                background: 'none', border: 'none', borderBottom: '2px solid var(--teal)', outline: 'none',
+                background: 'none', border: 'none', borderBottom: '2px solid var(--job-accent)', outline: 'none',
                 padding: '2px 0', width: '100%', fontFamily: 'inherit', lineHeight: 1.15,
               }}
             />
@@ -723,11 +723,11 @@ export default function MeetingDetail() {
                     <div
                       className="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg"
                       style={{
-                        background: 'var(--teal-hover)',
-                        border: '1px solid rgba(45,138,138,0.15)',
+                        background: 'color-mix(in srgb, var(--job-accent) 6%, transparent)',
+                        border: '1px solid color-mix(in srgb, var(--job-accent) 15%, transparent)',
                       }}
                     >
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--teal)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--job-accent)' }}>
                         {selectedActionIds.size} selected
                       </span>
                       <Button
@@ -923,7 +923,7 @@ export default function MeetingDetail() {
                       background: 'var(--cream)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)',
                       padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
                     }}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--job-accent)')}
                     onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
                   />
                   <input
@@ -940,7 +940,7 @@ export default function MeetingDetail() {
                   <div className="flex gap-2">
                     <button
                       type="submit"
-                      style={{ background: 'var(--teal-solid)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                      style={{ background: 'var(--job-accent)', color: 'var(--sk-card)', border: 'none', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
                     >
                       Save
                     </button>
@@ -1204,7 +1204,7 @@ function AssigneeMeta({ slug }: { slug: string }) {
 // ── Add Action Item (NLP quick-add) ─────────────────────────
 
 const PRIORITY_LABELS: Record<number, string> = { 1: 'Urgent', 2: 'High', 3: 'Medium' }
-const PRIORITY_COLORS: Record<number, string> = { 1: 'var(--maroon)', 2: 'var(--orange)', 3: 'var(--gold)' }
+const PRIORITY_COLORS: Record<number, string> = { 1: 'var(--job-stale)', 2: 'var(--sk-t2)', 3: 'var(--sk-t3)' }
 
 function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentChange }: { meetingId: string; isAuthenticated: boolean; onSuccess: () => void; onContentChange?: (hasContent: boolean) => void }) {
   const [text, setText] = useState('')
@@ -1250,13 +1250,13 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentCha
   }
 
   return (
-    <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid rgba(45,138,138,0.08)' }}>
+    <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid var(--sk-line)' }}>
       <div className="flex items-start gap-2">
-        <Plus {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0, marginTop: 10 }} />
+        <Plus {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)', opacity: 0.85, flexShrink: 0, marginTop: 10 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           {!isAuthenticated && import.meta.env.PROD ? (
             <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, display: 'inline-block', padding: '8px 0' }}>
-              <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as React.CSSProperties['fontWeight'], textDecoration: 'underline' }}>Sign in</a> to add action items
+              <a href="/api/auth/login" style={{ color: 'var(--job-accent)', fontWeight: 'var(--weight-ui)' as React.CSSProperties['fontWeight'], textDecoration: 'underline' }}>Sign in</a> to add action items
             </span>
           ) : (
             <SmartCompose
@@ -1294,17 +1294,17 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentCha
             </span>
           )}
           {parsed.priority && (
-            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'rgba(122,0,25,0.1)', color: PRIORITY_COLORS[parsed.priority] }}>
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'var(--sk-line)', color: PRIORITY_COLORS[parsed.priority] }}>
               P{parsed.priority} {PRIORITY_LABELS[parsed.priority]}
             </span>
           )}
           {parsed.dueDate && (
-            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'var(--teal-active)', color: 'var(--teal)' }}>
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'var(--sk-line)', color: 'var(--sk-t2)' }}>
               Due {parsed.dueDate}
             </span>
           )}
           {parsed.projectTitle && (
-            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'var(--teal-active)', color: 'var(--teal)' }}>
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'var(--sk-line)', color: 'var(--sk-t2)' }}>
               #{parsed.projectTitle}
             </span>
           )}
@@ -1353,13 +1353,13 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
               background: 'var(--cream)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)',
               padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', transition: 'border-color 0.2s',
             }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
+            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--job-accent)')}
             onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
           />
         </div>
         {!isAuthenticated && import.meta.env.PROD && !text.trim() && (
           <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
-            <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as React.CSSProperties['fontWeight'], textDecoration: 'underline' }}>Sign in</a> to add items
+            <a href="/api/auth/login" style={{ color: 'var(--job-accent)', fontWeight: 'var(--weight-ui)' as React.CSSProperties['fontWeight'], textDecoration: 'underline' }}>Sign in</a> to add items
           </span>
         )}
         {text.trim() && (
@@ -1373,7 +1373,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
             </motion.button>
             <motion.button type="submit" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
               className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
-              style={{ background: 'var(--teal-solid)', color: '#fff', border: 'none' }}>
+              style={{ background: 'var(--job-accent)', color: 'var(--sk-card)', border: 'none' }}>
               <Plus {...ICON_PROPS} size={14} />
             </motion.button>
           </>
@@ -1472,9 +1472,9 @@ function AttendanceSection({ attendees, updateMeta, canEdit }: { attendees: stri
                 onClick={() => toggleAttendee(slug)}
                 className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] transition-colors"
                 style={{
-                  background: present ? 'var(--teal-active)' : 'none',
-                  border: `1px solid ${present ? 'var(--teal)' : 'var(--border-subtle)'}`,
-                  color: present ? 'var(--teal)' : 'var(--slate)',
+                  background: present ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'none',
+                  border: `1px solid ${present ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
+                  color: present ? 'var(--job-accent)' : 'var(--slate)',
                   cursor: 'pointer',
                   opacity: present ? 1 : 0.85,
                 }}
@@ -1503,8 +1503,8 @@ function LabToggle({ meeting, updateMeta }: { meeting: MeetingDetailData; update
   const label = <>Lab meeting{auto && <span style={{ color: 'var(--muted)', fontWeight: 400 }}> · auto: lab series</span>}</>
   const style: React.CSSProperties = {
     fontSize: 'var(--label-size)', padding: '1px 8px', borderRadius: '999px', fontFamily: 'inherit',
-    background: isLab ? 'var(--teal-active)' : 'none',
-    color: isLab ? 'var(--teal)' : 'var(--slate)',
+    background: isLab ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'none',
+    color: isLab ? 'var(--job-accent)' : 'var(--slate)',
     border: `1px solid ${isLab ? 'transparent' : 'var(--border-subtle)'}`,
   }
   // Teal marks a SELECTED toggle only (the color-jobs rule). Someone who cannot

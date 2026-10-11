@@ -67,7 +67,7 @@ const STAGE_LABELS: Record<typeof STAGES[number], string> = {
 // ink (rules-ui-design 21, Nick 2026-10-11 -- green has no job, gold is "wants
 // you now", red is overdue).
 const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active', color: 'var(--task-accent-teal)' },
+  { value: 'active', label: 'Active', color: 'var(--sk-t2)' },
   { value: 'waiting_external', label: 'Waiting', color: 'var(--st-waiting)' },
   { value: 'blocked', label: 'Blocked', color: 'var(--st-blocked)' },
   { value: 'done', label: 'Done', color: 'var(--st-done)' },
@@ -297,9 +297,9 @@ export default function ManuscriptsPage() {
               borderRadius: 'var(--radius-full)',
               // N1b de-box: resting hairline -> transparent (borderless until
               // active); 1px kept transparent so the active border adds no shift.
-              border: active ? '1px solid var(--teal)' : '1px solid transparent',
-              background: active ? 'var(--teal-active)' : 'transparent',
-              color: active ? 'var(--teal)' : 'var(--slate)',
+              border: active ? '1px solid var(--job-accent)' : '1px solid transparent',
+              background: active ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+              color: active ? 'var(--job-accent)' : 'var(--slate)',
               fontSize: '12px',
               fontWeight: active ? 600 : 400,
               cursor: 'pointer',
@@ -328,7 +328,7 @@ export default function ManuscriptsPage() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg new-project-btn"
             style={{
               background: 'transparent',
-              color: 'var(--teal)',
+              color: 'var(--job-accent)',
               fontSize: '13px',
               fontWeight: 600,
               border: '1px solid var(--border-subtle)',
@@ -368,9 +368,9 @@ export default function ManuscriptsPage() {
                 padding: '4px 10px',
                 borderRadius: 'var(--radius-full)',
                 // N1b de-box: resting hairline -> transparent (borderless until active).
-                border: filterStalled ? '1px solid var(--orange)' : '1px solid transparent',
-                background: filterStalled ? 'var(--orange-hover)' : 'transparent',
-                color: filterStalled ? 'var(--orange)' : 'var(--slate)',
+                border: filterStalled ? '1px solid var(--job-stale)' : '1px solid transparent',
+                background: filterStalled ? 'color-mix(in srgb, var(--job-stale) 6%, transparent)' : 'transparent',
+                color: filterStalled ? 'var(--job-stale)' : 'var(--slate)',
                 fontSize: '12px',
                 fontWeight: filterStalled ? 600 : 400,
                 cursor: 'pointer',
@@ -389,7 +389,7 @@ export default function ManuscriptsPage() {
                     minWidth: '16px',
                     height: '16px',
                     borderRadius: 'var(--radius-full)',
-                    background: 'var(--orange)',
+                    background: 'var(--job-stale)',
                     color: 'white',
                     fontSize: '10px',
                     fontWeight: 700,
@@ -479,7 +479,7 @@ export default function ManuscriptsPage() {
                     </span>
                   ))}
                   {stalledCount > 0 && (
-                    <span style={{ color: 'var(--sk-urg)', marginLeft: 'auto' }}>
+                    <span style={{ color: 'var(--job-stale)', marginLeft: 'auto' }}>
                       {stalledCount} stalled
                     </span>
                   )}
@@ -589,7 +589,7 @@ export default function ManuscriptsPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-[11px] mt-2"
-                          style={{ color: 'var(--teal)', textDecoration: 'none' }}
+                          style={{ color: 'var(--job-accent)', textDecoration: 'none' }}
                         >
                           <ExternalLink {...ICON_PROPS} size={11} />
                           DOI
@@ -612,7 +612,7 @@ export default function ManuscriptsPage() {
 
       <style>{`
         .new-project-btn:hover {
-          background: var(--teal-hover) !important;
+          background: color-mix(in srgb, var(--job-accent) 6%, transparent) !important;
         }
       `}</style>
     </>
@@ -708,10 +708,10 @@ function DroppableColumn({
     <div
       ref={setNodeRef}
       style={{
-        background: isOver ? 'var(--teal-hover)' : 'var(--ice)',
+        background: isOver ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'var(--ice)',
         borderRadius: 'var(--radius-xl)',
         // Teal only marks the drop target (a selection); a resting column is gray.
-        borderTop: isOver ? '2px solid var(--teal)' : '2px solid var(--border-subtle)',
+        borderTop: isOver ? '2px solid var(--job-accent)' : '2px solid var(--border-subtle)',
         padding: 'var(--sp-lg)',
         minHeight: '200px',
         transition: 'background var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out',

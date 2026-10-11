@@ -64,7 +64,7 @@ function HowTranscriptsWorkPanel({ collapsedByDefault }: { collapsedByDefault: b
         aria-expanded={expanded}
       >
         <h3 className="text-sm font-normal flex items-center gap-2" style={{ color: 'var(--ink)' }}>
-          <Brain {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
+          <Brain {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t3)' }} />
           How Meeting Transcripts Work
         </h3>
         <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.75 }}>
@@ -82,8 +82,8 @@ function HowTranscriptsWorkPanel({ collapsedByDefault }: { collapsedByDefault: b
             const Icon = item.icon
             return (
               <div key={item.step} className="flex flex-col items-center text-center gap-2 p-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--teal-active)' }}>
-                  <Icon {...ICON_PROPS} size={18} style={{ color: 'var(--teal)' }} />
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--sk-line)' }}>
+                  <Icon {...ICON_PROPS} size={18} style={{ color: 'var(--sk-t3)' }} />
                 </div>
                 <h4 className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>{item.title}</h4>
                 <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>{item.desc}</p>
@@ -144,10 +144,10 @@ export default function MeetingNotesPage() {
 
       {/* Stats */}
       <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <MetricCard icon={Sparkles} label="Processed Meetings" value={processedCount} color="var(--gold)" />
-        <MetricCard icon={CheckCircle2} label="With Notes" value={processedCount} color="var(--green)" />
+        <MetricCard icon={Sparkles} label="Processed Meetings" value={processedCount} color="var(--sk-t3)" />
+        <MetricCard icon={CheckCircle2} label="With Notes" value={processedCount} color="var(--sk-t3)" />
         <MetricCard icon={Clock} label="Pending" value={totalCount - processedCount} color="var(--slate)" />
-        <MetricCard icon={Users} label="Total Meetings" value={totalCount} color="var(--teal)" />
+        <MetricCard icon={Users} label="Total Meetings" value={totalCount} color="var(--sk-t3)" />
       </div>
 
       {/* How it works — auto-collapsed after 3+ transcripts exist */}
@@ -179,8 +179,8 @@ export default function MeetingNotesPage() {
                 className="flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm"
                 style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
               >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: m.notes ? 'var(--green-hover)' : 'rgba(100,116,139,0.06)' }}>
-                  {m.notes ? <CheckCircle2 {...ICON_PROPS} size={16} style={{ color: 'var(--green)' }} /> : <FileText {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />}
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--sk-line)' }}>
+                  {m.notes ? <CheckCircle2 {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t2)' }} /> : <FileText {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{m.title}</p>
@@ -194,7 +194,7 @@ export default function MeetingNotesPage() {
                         <span
                           key={t}
                           className="text-[9px] px-1.5 py-0.5 rounded-full truncate max-w-[10rem]"
-                          style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-active)' }}
+                          style={{ color: 'var(--sk-t2)', backgroundColor: 'var(--sk-line)' }}
                         >
                           {tagLabel(t)}
                         </span>
@@ -211,8 +211,8 @@ export default function MeetingNotesPage() {
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-full${isMeetingNew(m) ? ' font-semibold' : ''}`}
                     style={isMeetingNew(m)
-                      ? { color: '#1a1a1a', backgroundColor: 'var(--gold)' }
-                      : { color: 'var(--green)', backgroundColor: 'var(--green-hover)' }}
+                      ? { color: 'var(--job-wants)', backgroundColor: 'color-mix(in srgb, var(--job-wants) 15%, transparent)' }
+                      : { color: 'var(--sk-t2)', backgroundColor: 'var(--sk-line)' }}
                   >
                     {isMeetingNew(m) ? 'New notes' : 'Notes available'}
                   </span>

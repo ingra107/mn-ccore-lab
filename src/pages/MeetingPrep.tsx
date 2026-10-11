@@ -17,7 +17,6 @@ import { PATHS } from '../constants/paths'
 import { staggerContainer, staggerItem } from '../lib/animations'
 import EntityNotFound from '../components/EntityNotFound'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import SectionHead from '../components/ui/SectionHead'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
 
@@ -86,8 +85,8 @@ export default function MeetingPrep() {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
           <div className="flex items-center gap-2 mb-2">
-            <ListChecks {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
-            <span style={{ fontSize: 11, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>
+            <ListChecks {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t3)' }} />
+            <span style={{ fontSize: 11, color: 'var(--sk-t2)', fontWeight: 500 }}>
               Facilitator Prep
             </span>
           </div>
@@ -124,8 +123,8 @@ export default function MeetingPrep() {
               <span
                 className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
                 style={{
-                  backgroundColor: days === 0 ? 'var(--teal-active)' : 'var(--gold-active)',
-                  color: days === 0 ? 'var(--teal)' : 'var(--gold)',
+                  backgroundColor: days === 0 ? 'color-mix(in srgb, var(--job-wants) 15%, transparent)' : 'var(--sk-line)',
+                  color: days === 0 ? 'var(--job-wants)' : 'var(--sk-t2)',
                 }}
               >
                 <Clock {...ICON_PROPS} size={10} />
@@ -133,7 +132,7 @@ export default function MeetingPrep() {
               </span>
             )
           })()}
-          <div style={{ height: 1, background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.85, marginTop: '1rem', marginBottom: '1.5rem' }} />
+          <div style={{ height: 1, background: 'linear-gradient(to right, var(--sk-line2), transparent)', opacity: 0.85, marginTop: '1rem', marginBottom: '1.5rem' }} />
         </motion.div>
 
         {/* Stats row */}
@@ -143,10 +142,10 @@ export default function MeetingPrep() {
           initial="hidden"
           animate="visible"
         >
-          <StatCard icon={<AlertTriangle {...ICON_PROPS} size={14} />} label="Overdue" value={overdueTasks.length} color="var(--maroon)" />
-          <StatCard icon={<Clock {...ICON_PROPS} size={14} />} label="Pending from last" value={pendingPrev.length} color="var(--orange)" />
-          <StatCard icon={<Calendar {...ICON_PROPS} size={14} />} label="Deadlines (14d)" value={upcomingDeadlines.length} color="var(--teal)" />
-          <StatCard icon={<Activity {...ICON_PROPS} size={14} />} label="Recent activity" value={recentActivity.length} color="var(--gold)" />
+          <StatCard icon={<AlertTriangle {...ICON_PROPS} size={14} />} label="Overdue" value={overdueTasks.length} color="var(--job-overdue)" />
+          <StatCard icon={<Clock {...ICON_PROPS} size={14} />} label="Pending from last" value={pendingPrev.length} color="var(--sk-t3)" />
+          <StatCard icon={<Calendar {...ICON_PROPS} size={14} />} label="Deadlines (14d)" value={upcomingDeadlines.length} color="var(--sk-t3)" />
+          <StatCard icon={<Activity {...ICON_PROPS} size={14} />} label="Recent activity" value={recentActivity.length} color="var(--sk-t3)" />
         </motion.div>
 
         {/* Three-column layout */}
@@ -158,7 +157,7 @@ export default function MeetingPrep() {
             <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {pendingPrev.length > 0 && (
                 <div className="mb-3">
-                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--orange)', opacity: 0.85, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--sk-t2)', marginBottom: 6 }}>
                     Still pending ({pendingPrev.length})
                   </p>
                   {pendingPrev.map(item => (
@@ -191,13 +190,13 @@ export default function MeetingPrep() {
               {/* Overdue items first */}
               {overdueTasks.length > 0 && (
                 <div className="mb-3">
-                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--maroon)', opacity: 0.85, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--job-overdue)', marginBottom: 6 }}>
                     Discuss: Overdue items
                   </p>
                   {overdueTasks.slice(0, 5).map(task => {
                     const person = getPersonInfo(task.assignee)
                     return (
-                      <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}` }}>
+                      <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid var(--sk-line)` }}>
                         <Flag {...ICON_PROPS} size={10} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)', flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
@@ -212,11 +211,11 @@ export default function MeetingPrep() {
               {/* Team-added agenda items */}
               {agendaItems.length > 0 && (
                 <div className="mb-3">
-                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--teal)', opacity: 0.85, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--sk-t2)', marginBottom: 6 }}>
                     Team agenda ({agendaItems.length})
                   </p>
                   {agendaItems.map((item, i) => (
-                    <div key={item.id} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < agendaItems.length - 1 ? `1px solid ${withAlpha(ACCENT_GOLD, 4)}` : 'none' }}>
+                    <div key={item.id} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < agendaItems.length - 1 ? `1px solid var(--sk-line)` : 'none' }}>
                       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.85, marginTop: 2, flexShrink: 0 }}>{i + 1}.</span>
                       <span style={{ fontSize: 12, color: 'var(--ink)' }}>{item.content}</span>
                     </div>
@@ -227,14 +226,14 @@ export default function MeetingPrep() {
               {/* Pending carry-forwards */}
               {pendingPrev.length > 0 && (
                 <div>
-                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--orange)', opacity: 0.85, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--sk-t2)', marginBottom: 6 }}>
                     Carry forward ({pendingPrev.length})
                   </p>
                   {pendingPrev.map(item => {
                     const person = getPersonInfo(item.assignee)
                     return (
                       <div key={item.id} className="flex items-center gap-2 py-1.5">
-                        <Circle {...ICON_PROPS} size={10} style={{ color: 'var(--orange)', flexShrink: 0 }} />
+                        <Circle {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{item.description}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                           <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
@@ -261,8 +260,8 @@ export default function MeetingPrep() {
                 upcomingDeadlines.slice(0, 8).map(task => {
                   const person = getPersonInfo(task.assignee)
                   return (
-                    <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}` }}>
-                      <Calendar {...ICON_PROPS} size={10} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+                    <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid var(--sk-line)` }}>
+                      <Calendar {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
                       <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
                       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.85 }}>{formatShortDate(task.due_date)}</span>
                       <div style={{ width: 16, height: 16, flexShrink: 0 }}>
@@ -285,7 +284,7 @@ export default function MeetingPrep() {
                   // Rule 34: never split('@')[0] — route through the team_members directory.
                   const person = getPersonInfo(slugForEmail(act.actor || ''))
                   return (
-                    <div key={i} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < Math.min(recentActivity.length, 10) - 1 ? `1px solid ${withAlpha(ACCENT_GOLD, 4)}` : 'none' }}>
+                    <div key={i} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < Math.min(recentActivity.length, 10) - 1 ? `1px solid var(--sk-line)` : 'none' }}>
                       <div style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }}>
                         <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
                       </div>
@@ -306,7 +305,7 @@ export default function MeetingPrep() {
         <div className="mt-8 text-center">
           <Link
             to={PATHS.meeting(meeting.id)}
-            style={{ fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}
+            style={{ fontSize: 13, color: 'var(--job-accent)', textDecoration: 'none' }}
           >
             Back to meeting details
           </Link>
@@ -349,11 +348,11 @@ function ActionRow({ item }: { item: { id: string; description: string; assignee
   // R4: canonical isOverdue() uses T23:59:59 — hand-rolled missed same-day items.
   const isOverdue = item.due_date && !item.completed && isItemOverdue(item.due_date)
   return (
-    <div className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}` }}>
+    <div className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid var(--sk-line)` }}>
       {item.completed ? (
         <CheckCircle2 {...ICON_PROPS} size={12} style={{ color: 'var(--st-done)', flexShrink: 0 }} />
       ) : (
-        <Circle {...ICON_PROPS} size={12} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, flexShrink: 0 }} />
+        <Circle {...ICON_PROPS} size={12} style={{ color: isOverdue ? 'var(--job-overdue)' : 'var(--slate)', opacity: 0.85, flexShrink: 0 }} />
       )}
       <span style={{
         fontSize: 12, color: 'var(--ink)', flex: 1,

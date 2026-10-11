@@ -240,8 +240,8 @@ function chipButtonStyle(active: boolean): React.CSSProperties {
     fontWeight: 500,
     padding: '4px 12px',
     borderRadius: 'var(--radius-full)',
-    background: active ? 'var(--teal-active)' : 'transparent',
-    color: active ? 'var(--teal)' : 'var(--slate)',
-    border: `1px solid ${active ? 'var(--teal)' : 'var(--border-subtle)'}`,
+    background: active ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+    color: active ? 'var(--job-accent)' : 'var(--slate)',
+    border: `1px solid ${active ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
   }
 }

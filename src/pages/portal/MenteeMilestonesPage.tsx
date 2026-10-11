@@ -38,9 +38,9 @@ const MILESTONE_TYPES = [
 
 const STATUS_OPTIONS = [
   { value: 'upcoming', label: 'Upcoming', color: 'var(--slate)' },
-  { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
+  { value: 'in_progress', label: 'In Progress', color: 'var(--job-accent)' },
   { value: 'completed', label: 'Completed', color: 'var(--st-done)' },
-  { value: 'overdue', label: 'Overdue', color: 'var(--maroon)' },
+  { value: 'overdue', label: 'Overdue', color: 'var(--job-overdue)' },
 ]
 
 // ── Activity Lapse Detection (P2-06) ───────────────────────
@@ -309,10 +309,10 @@ export default function MenteeMilestonesPage() {
                           fontWeight: 'var(--weight-ui)',
                           padding: '2px 6px',
                           borderRadius: 'var(--radius-sm)',
-                          // Amber for both buckets — we're flagging PI action, not
+                          // Orange (going stale) for both buckets — we're flagging PI action, not
                           // calling out the trainee. Red was too harsh.
-                          backgroundColor: 'color-mix(in oklch, var(--gold) 15%, transparent)',
-                          color: 'var(--gold)',
+                          backgroundColor: 'color-mix(in srgb, var(--job-stale) 15%, transparent)',
+                          color: 'var(--job-stale)',
                           flexShrink: 0,
                         }}
                       >
@@ -321,7 +321,7 @@ export default function MenteeMilestonesPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-3 mt-1">
-                    <span style={{ fontSize: 'var(--label-size)', color: 'var(--teal)' }}>
+                    <span style={{ fontSize: 'var(--label-size)', color: 'var(--sk-t2)' }}>
                       {stats?.upcoming_count ?? 0} upcoming
                     </span>
                     {(stats?.overdue_count ?? 0) > 0 && (
@@ -330,8 +330,8 @@ export default function MenteeMilestonesPage() {
                         style={{
                           fontSize: '10px',
                           fontWeight: 600,
-                          color: 'var(--maroon)',
-                          background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',
+                          color: 'var(--job-overdue)',
+                          background: 'color-mix(in srgb, var(--job-overdue) 12%, transparent)',
                         }}
                       >
                         <AlertTriangle {...ICON_PROPS} size={10} />
@@ -357,9 +357,9 @@ export default function MenteeMilestonesPage() {
             onClick={() => setFilterMentee('')}
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-colors"
             style={{
-              background: 'var(--teal-active)',
-              color: 'var(--teal)',
-              border: '1px solid rgba(45,138,138,0.2)',
+              background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
+              color: 'var(--job-accent)',
+              border: '1px solid color-mix(in srgb, var(--job-accent) 20%, transparent)',
               cursor: 'pointer',
               fontWeight: 500,
             }}
@@ -442,19 +442,19 @@ export default function MenteeMilestonesPage() {
                   gap: 20,
                   padding: 'var(--sp-sm) var(--sp-lg)',
                   borderTop: '1px solid var(--border-subtle)',
-                  background: 'var(--teal-hover)',
+                  background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
                 }}
               >
                 {[
                   { label: 'Total', value: flatList.length },
                   ...(overdueTotal > 0
-                    ? [{ label: 'Overdue', value: overdueTotal, color: 'var(--maroon)' }]
+                    ? [{ label: 'Overdue', value: overdueTotal, color: 'var(--job-overdue)' }]
                     : []),
                   { label: 'Upcoming', value: upcomingTotal },
                   {
                     label: 'Completed',
                     value: overview.reduce((s, o) => s + o.completed_count, 0),
-                    color: 'var(--green)',
+                    color: 'var(--sk-t3)',
                   },
                 ].map((s) => (
                   <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
@@ -558,8 +558,8 @@ function MenteeGroup({
             style={{
               fontSize: '10px',
               fontWeight: 600,
-              color: 'var(--maroon)',
-              background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',
+              color: 'var(--job-overdue)',
+              background: 'color-mix(in srgb, var(--job-overdue) 12%, transparent)',
             }}
           >
             {overdueCount} overdue
@@ -573,8 +573,8 @@ function MenteeGroup({
               padding: '2px 6px',
               borderRadius: 'var(--radius-sm)',
               // Amber for both — neutral framing (P2-06).
-              backgroundColor: 'color-mix(in oklch, var(--gold) 15%, transparent)',
-              color: 'var(--gold)',
+              backgroundColor: 'color-mix(in srgb, var(--job-stale) 15%, transparent)',
+              color: 'var(--job-stale)',
               flexShrink: 0,
             }}
           >
@@ -629,9 +629,9 @@ function MilestoneRow({
         borderBottom: '1px solid var(--border-subtle)',
         opacity: isDone ? 0.85 : 1,
         background: item._isOverdue
-          ? 'var(--maroon-hover)'
+          ? 'color-mix(in srgb, var(--job-overdue) 6%, transparent)'
           : isFocused
-            ? 'var(--teal-hover)'
+            ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)'
             : 'transparent',
         transition: 'background var(--transition-fast, 150ms) ease',
       }}
@@ -689,7 +689,7 @@ function MilestoneRow({
           style={{
             fontSize: 'var(--label-size)',
             fontWeight: 500,
-            color: 'var(--gold)',
+            color: 'var(--sk-t3)',
             opacity: 0.85,
           }}
         >
@@ -703,8 +703,8 @@ function MilestoneRow({
             style={{
               fontSize: '11px',
               fontWeight: 600,
-              color: 'var(--maroon)',
-              background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',
+              color: 'var(--job-overdue)',
+              background: 'color-mix(in srgb, var(--job-overdue) 12%, transparent)',
               whiteSpace: 'nowrap' as const,
             }}
           >
@@ -744,8 +744,8 @@ function MilestoneRow({
               style={{
                 fontSize: '10px',
                 fontWeight: 600,
-                color: 'var(--maroon)',
-                background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',
+                color: 'var(--job-overdue)',
+                background: 'color-mix(in srgb, var(--job-overdue) 12%, transparent)',
               }}
             >
               <AlertTriangle {...ICON_PROPS} size={9} />
@@ -756,7 +756,7 @@ function MilestoneRow({
               {dueStr}
             </span>
           )}
-          <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--gold)', opacity: 0.85 }}>
+          <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--sk-t3)', opacity: 0.85 }}>
             {getTypeLabel(item.milestone_type)}
           </span>
           <div style={{ width: 18, height: 18, flexShrink: 0 }}>
@@ -818,11 +818,11 @@ function MilestoneRow({
                     lineHeight: 1.5,
                     padding: 'var(--sp-sm) var(--sp-md)',
                     borderRadius: 'var(--radius-md)',
-                    background: 'var(--teal-hover)',
+                    background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
                     border: '1px solid var(--border-subtle)',
                   }}
                 >
-                  <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--teal)', display: 'block', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--sk-t3)', display: 'block', marginBottom: '4px' }}>
                     Notes
                   </span>
                   {item.notes}
@@ -1049,8 +1049,8 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
               gap: '0.375rem',
               padding: 'var(--sp-sm) var(--sp-lg)',
               borderRadius: 'var(--radius-lg)',
-              background: title.trim() ? 'var(--teal-solid)' : 'var(--border-subtle)',
-              color: title.trim() ? 'var(--ink-bright, #fff)' : 'var(--slate)',
+              background: title.trim() ? 'var(--job-accent)' : 'var(--border-subtle)',
+              color: title.trim() ? 'var(--sk-card)' : 'var(--slate)',
               fontSize: 'var(--value-size)',
               fontWeight: 500,
               cursor: title.trim() ? 'pointer' : 'not-allowed',

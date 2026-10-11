@@ -23,7 +23,6 @@ import { useSelection } from '../MyTasks/hooks/useSelection'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import type { TaskRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import RegulatoryExpiringList from '../../components/RegulatoryExpiringList'
 import { projectFullTitleHint, projectShortLabel, taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
 import { DeadlineList, type DeadlineItem, type DeadlineProject } from './DeadlineList'
@@ -250,8 +249,8 @@ export default function DeadlinesPage() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
             style={{
               fontSize: '12px',
-              color: 'var(--teal)',
-              border: '1px solid rgba(45,138,138,0.2)',
+              color: 'var(--job-accent)',
+              border: '1px solid var(--sk-line2)',
               textDecoration: 'none',
             }}
           >
@@ -316,19 +315,19 @@ export default function DeadlinesPage() {
           <div
             className="flex items-center gap-3 px-4 py-3 rounded-lg border"
             style={{
-              background: isOver ? 'var(--maroon-hover)' : 'var(--teal-hover)',
-              borderColor: isOver ? 'rgba(122,0,25,0.2)' : 'rgba(45,138,138,0.2)',
+              background: isOver ? 'color-mix(in srgb, var(--job-overdue) 6%, transparent)' : 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
+              borderColor: isOver ? 'color-mix(in srgb, var(--job-overdue) 20%, transparent)' : 'var(--sk-line2)',
             }}
           >
-            <AlertTriangle {...ICON_PROPS} size={16} style={{ color: isOver ? 'var(--maroon)' : 'var(--gold)', flexShrink: 0 }} />
+            <AlertTriangle {...ICON_PROPS} size={16} style={{ color: isOver ? 'var(--job-overdue)' : 'var(--sk-t3)', flexShrink: 0 }} />
             <div className="min-w-0 flex-1 truncate text-sm" style={{ color: 'var(--ink)' }}>
               {nextUrgent.title}
             </div>
             <span
               className="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0"
               style={{
-                backgroundColor: isOver ? 'rgba(122,0,25,0.1)' : 'var(--teal-active)',
-                color: isOver ? 'var(--maroon)' : 'var(--teal)',
+                backgroundColor: isOver ? 'color-mix(in srgb, var(--job-overdue) 10%, transparent)' : 'var(--sk-line)',
+                color: isOver ? 'var(--job-overdue)' : 'var(--sk-t2)',
               }}
             >
               {daysText}
@@ -390,7 +389,7 @@ export default function DeadlinesPage() {
                 ] as { label: string; value: number; overdue?: boolean }[]).map(s => (
                   <span key={s.label}>
                     {s.label}{' '}
-                    <span style={{ fontWeight: 600, color: s.overdue ? 'var(--sk-od)' : 'var(--sk-t2)', fontVariantNumeric: 'tabular-nums' }}>{s.value}</span>
+                    <span style={{ fontWeight: 600, color: s.overdue ? 'var(--job-overdue)' : 'var(--sk-t2)', fontVariantNumeric: 'tabular-nums' }}>{s.value}</span>
                   </span>
                 ))}
                 <span style={{ flex: 1 }} />
@@ -470,11 +469,11 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       >
         {/* Type icon */}
         {isMilestone ? (
-          <FolderKanban {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <FolderKanban {...ICON_PROPS} size={14} style={{ color: 'var(--job-milestone)', flexShrink: 0 }} />
         ) : item.isOverdue ? (
-          <AlertTriangle {...ICON_PROPS} size={14} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+          <AlertTriangle {...ICON_PROPS} size={14} style={{ color: 'var(--job-overdue)', flexShrink: 0 }} />
         ) : (
-          <Clock {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.85 }} />
+          <Clock {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)', flexShrink: 0, opacity: 0.85 }} />
         )}
 
         {/* Title */}
@@ -495,7 +494,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
             onClick={() => setEditingNote(true)}
             className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
             style={{
-              color: 'var(--gold)',
+              color: 'var(--sk-t3)',
               opacity: 0.85,
               background: 'none',
               border: 'none',
@@ -510,14 +509,14 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
 
         {/* Project */}
         {item.project && (
-          <span className="text-[10px] hidden sm:block" style={{ color: 'var(--gold)', opacity: 0.85 }}>
+          <span className="text-[10px] hidden sm:block" style={{ color: 'var(--sk-t3)', opacity: 0.85 }}>
             {item.project}
           </span>
         )}
 
         {/* Priority */}
         {item.priority && (item.priority === 'urgent' || item.priority === 'high') && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ color: item.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)', backgroundColor: item.priority === 'urgent' ? 'var(--maroon-hover)' : 'var(--orange-hover)' }}>
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ color: item.priority === 'urgent' ? 'var(--job-stale)' : 'var(--sk-t2)', backgroundColor: item.priority === 'urgent' ? 'color-mix(in srgb, var(--job-stale) 10%, transparent)' : 'var(--sk-line)' }}>
             {item.priority}
           </span>
         )}
@@ -541,14 +540,14 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       {/* Future Me note callout — shown when milestone is due within 7 days */}
       {isMilestone && item.future_note && isDueSoon && !isDone && (
         <div className="ml-8 mr-3 mt-1 mb-2 p-3 rounded-lg" style={{
-          background: 'var(--gold-hover)',
-          border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
-          borderLeft: '3px solid var(--gold)',
+          background: 'color-mix(in srgb, var(--job-milestone) 6%, transparent)',
+          border: `1px solid color-mix(in srgb, var(--job-milestone) 15%, transparent)`,
+          borderLeft: '3px solid var(--job-milestone)',
         }}>
           <div className="flex items-center justify-between gap-1.5 mb-1">
             <div className="flex items-center gap-1.5">
-              <Clock {...ICON_PROPS} size={10} style={{ color: 'var(--gold)' }} />
-              <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
+              <Clock {...ICON_PROPS} size={10} style={{ color: 'var(--job-milestone)' }} />
+              <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--job-milestone)' }}>
                 Note from past you
               </span>
             </div>
@@ -570,7 +569,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       {/* Future Me note — compact indicator when not due soon */}
       {isMilestone && item.future_note && !isDueSoon && !isDone && (
         <div className="ml-8 mr-3 mt-0.5 mb-1 flex items-center gap-1.5">
-          <Clock {...ICON_PROPS} size={9} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+          <Clock {...ICON_PROPS} size={9} style={{ color: 'var(--sk-t3)', opacity: 0.85 }} />
           <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
             Future Me note attached
           </span>
@@ -587,12 +586,12 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       {/* Inline note editor */}
       {isMilestone && editingNote && (
         <div className="ml-8 mr-3 mt-1 mb-2 p-3 rounded-lg" style={{
-          background: 'var(--gold-hover)',
-          border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+          background: 'var(--sk-card)',
+          border: `1px solid var(--sk-line2)`,
         }}>
           <div className="flex items-center gap-1.5 mb-2">
-            <Pencil {...ICON_PROPS} size={10} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
+            <Pencil {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)' }} />
+            <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--sk-t2)' }}>
               Note to future me
             </span>
           </div>
@@ -608,7 +607,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               lineHeight: 1.5,
               width: '100%',
               resize: 'vertical',
-              border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+              border: `1px solid var(--sk-line2)`,
               borderRadius: 'var(--radius-md)',
               padding: '8px 10px',
               background: 'var(--cream)',
@@ -629,9 +628,9 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               disabled={saving}
               className="flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors"
               style={{
-                color: 'var(--gold)',
-                background: 'var(--gold-active)',
-                border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+                color: 'var(--sk-card)',
+                background: 'var(--job-accent)',
+                border: `1px solid var(--job-accent)`,
                 cursor: saving ? 'wait' : 'pointer',
                 opacity: saving ? 0.85 : 1,
               }}
@@ -649,12 +648,12 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
 // ── Upcoming Conferences ────────────────────────────────────
 
 const CONF_STATUS_PILL: Record<string, { bg: string; color: string }> = {
-  planning: { bg: 'rgba(129,140,153,0.12)', color: 'var(--slate)' },
-  submitted: { bg: 'var(--gold-emphasis)', color: 'var(--gold)' },
-  accepted: { bg: 'color-mix(in srgb, var(--teal) 12%, transparent)', color: 'var(--teal)' },
-  preparing: { bg: 'rgba(91,155,213,0.12)', color: '#5b9bd5' },
-  presented: { bg: 'rgba(52,168,83,0.12)', color: '#34a853' },
-  rejected: { bg: 'rgba(134,48,62,0.12)', color: 'var(--maroon)' },
+  planning: { bg: 'var(--sk-line)', color: 'var(--sk-t3)' },
+  submitted: { bg: 'var(--sk-line)', color: 'var(--sk-t2)' },
+  accepted: { bg: 'var(--sk-line)', color: 'var(--sk-t1)' },
+  preparing: { bg: 'var(--sk-line)', color: 'var(--sk-t2)' },
+  presented: { bg: 'var(--sk-line)', color: 'var(--sk-t3)' },
+  rejected: { bg: 'var(--sk-line)', color: 'var(--sk-t3)' },
 }
 
 const CONF_MATERIALS_LABEL: Record<string, string> = {
@@ -678,7 +677,7 @@ function UpcomingConferencesSection() {
       }}
     >
       <div className="flex items-center gap-2 mb-3">
-        <Presentation {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', opacity: 0.85 }} />
+        <Presentation {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)', opacity: 0.85 }} />
         <span
           style={{
             fontSize: 'var(--label-size)',
@@ -689,7 +688,7 @@ function UpcomingConferencesSection() {
         >
           Upcoming conferences
         </span>
-        <span style={{ fontSize: '10px', color: 'var(--teal)' }}>
+        <span style={{ fontSize: '10px', color: 'var(--sk-t3)' }}>
           ({conferences.length})
         </span>
       </div>
@@ -750,7 +749,7 @@ function UpcomingConferencesSection() {
                       to={PATHS.project(conf.project_slug)}
                       style={{
                         fontSize: 'var(--label-size)',
-                        color: 'var(--teal)',
+                        color: 'var(--job-accent)',
                         textDecoration: 'none',
                       }}
                     >
@@ -766,7 +765,7 @@ function UpcomingConferencesSection() {
                       <span
                         style={{
                           fontSize: 'var(--label-size)',
-                          color: isOverdue ? 'var(--maroon)' : 'var(--ink)',
+                          color: isOverdue ? 'var(--job-overdue)' : 'var(--ink)',
                           fontWeight: isOverdue ? 600 : 400,
                         }}
                       >
@@ -776,7 +775,7 @@ function UpcomingConferencesSection() {
                         <span
                           style={{
                             fontSize: '10px',
-                            color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
+                            color: isOverdue ? 'var(--job-overdue)' : 'var(--slate)',
                             opacity: isOverdue ? 0.8 : 0.85,
                             marginLeft: '4px',
                           }}
@@ -887,7 +886,7 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
             {/* Week dot */}
             <div
               className="absolute -left-4 top-0.5 w-3 h-3 rounded-full border-2"
-              style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--teal)' }}
+              style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--sk-line2)' }}
             />
 
             {/* Week label */}

@@ -12,7 +12,6 @@ import PageLayout from '../components/PageLayout'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { getAllMembers } from '../data/team'
 import { resolveBylineAuthors } from '../lib/authorAvatars'
 import { countPublications, isPublished } from '../lib/publicationCounts'
@@ -247,10 +246,10 @@ export default function Publications() {
                       style={{
                         width: 20,
                         height: `${Math.max((count / max) * 24, 2)}px`,
-                        backgroundColor: activeYears.includes(year) ? 'var(--gold)' : withAlpha(ACCENT_GOLD, 30),
+                        backgroundColor: activeYears.includes(year) ? 'var(--job-brand)' : 'color-mix(in srgb, var(--job-brand) 30%, transparent)',
                       }}
                     />
-                    <span className="text-[10px]" style={{ color: activeYears.includes(year) ? 'var(--gold)' : 'var(--slate)', opacity: activeYears.includes(year) ? 1 : 0.85 }}>
+                    <span className="text-[10px]" style={{ color: activeYears.includes(year) ? 'var(--job-brand)' : 'var(--slate)', opacity: activeYears.includes(year) ? 1 : 0.85 }}>
                       {String(year).slice(2)}
                     </span>
                   </button>
@@ -326,13 +325,13 @@ export default function Publications() {
         <>
           <section className="py-6 sm:py-8 content-container">
             <div className="flex items-center gap-2 mb-4">
-              <Star {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <Star {...ICON_PROPS} size={16} style={{ color: 'var(--job-brand)' }} aria-hidden="true" />
               <h2
                 className="text-sm"
                 style={{
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
-                  color: 'var(--gold)',
+                  color: 'var(--job-brand)',
                   fontSize: '12px',
                 }}
               >
@@ -355,13 +354,13 @@ export default function Publications() {
         <div style={{ background: 'var(--surface-1)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', minHeight: '200px', contain: 'layout' }}>
           <section className="py-6 sm:py-8 content-container">
             <div className="flex items-center gap-2 mb-4">
-              <Award {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <Award {...ICON_PROPS} size={16} style={{ color: 'var(--job-brand)' }} aria-hidden="true" />
               <h2
                 className="text-sm"
                 style={{
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
-                  color: 'var(--gold)',
+                  color: 'var(--job-brand)',
                   fontSize: '12px',
                 }}
               >
@@ -373,13 +372,13 @@ export default function Publications() {
                 <div
                   key={pub.id}
                   className="flex items-start gap-3 py-2 px-3 rounded-lg transition-colors duration-200"
-                  style={{ background: 'var(--gold-hover)' }}
+                  style={{ background: 'color-mix(in srgb, var(--job-brand) 6%, transparent)' }}
                 >
                   <span
                     className="flex-shrink-0 text-xs mt-0.5 px-1.5 py-0.5 rounded"
                     style={{
-                      background: 'var(--gold-emphasis)',
-                      color: 'var(--gold)',
+                      background: 'color-mix(in srgb, var(--job-brand) 15%, transparent)',
+                      color: 'var(--job-brand)',
                       fontSize: '10px',
                     }}
                   >
@@ -429,9 +428,9 @@ export default function Publications() {
               onClick={() => setViewMode('list')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
               style={{
-                backgroundColor: viewMode === 'list' ? 'var(--teal-active)' : 'transparent',
-                color: viewMode === 'list' ? 'var(--teal)' : 'var(--slate)',
-                border: `1px solid ${viewMode === 'list' ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                backgroundColor: viewMode === 'list' ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                color: viewMode === 'list' ? 'var(--job-accent)' : 'var(--slate)',
+                border: `1px solid ${viewMode === 'list' ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
                 cursor: 'pointer',
                 opacity: viewMode === 'list' ? 1 : 0.85,
               }}
@@ -443,9 +442,9 @@ export default function Publications() {
               onClick={() => setViewMode('library')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
               style={{
-                backgroundColor: viewMode === 'library' ? 'var(--teal-active)' : 'transparent',
-                color: viewMode === 'library' ? 'var(--teal)' : 'var(--slate)',
-                border: `1px solid ${viewMode === 'library' ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                backgroundColor: viewMode === 'library' ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                color: viewMode === 'library' ? 'var(--job-accent)' : 'var(--slate)',
+                border: `1px solid ${viewMode === 'library' ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
                 cursor: 'pointer',
                 opacity: viewMode === 'library' ? 1 : 0.85,
               }}
@@ -531,7 +530,7 @@ export default function Publications() {
                   type="button"
                   onClick={() => setShowAllPubs(true)}
                   className="text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
-                  style={{ color: 'var(--gold)', background: 'none', border: 'none' }}
+                  style={{ color: 'var(--job-brand)', background: 'none', border: 'none' }}
                 >
                   View all {filtered.length} papers
                 </button>
@@ -545,7 +544,7 @@ export default function Publications() {
                 type="button"
                 onClick={() => setShowAllPubs(false)}
                 className="text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
-                style={{ color: 'var(--gold)', background: 'none', border: 'none' }}
+                style={{ color: 'var(--job-brand)', background: 'none', border: 'none' }}
               >
                 Show recent only
               </button>

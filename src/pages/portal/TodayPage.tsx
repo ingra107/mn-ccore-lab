@@ -748,7 +748,7 @@ export default function TodayPage() {
             aria-label="Show milestones"
             className="tk-pill tk-btnp tip planned-chip"
             data-tip={showMilestones ? 'Hide milestone rules' : 'Show milestone rules'}
-            style={showMilestones ? { color: 'var(--sk-gold)' } : undefined}
+            style={showMilestones ? { color: 'var(--job-milestone)' } : undefined}
           >
             <Diamond {...ICON_PROPS} size={11} />
             Milestones

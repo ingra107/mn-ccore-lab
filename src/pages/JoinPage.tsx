@@ -31,7 +31,7 @@ export default function JoinPage() {
 
       {isMember && (
         <p style={{ marginTop: 16, fontSize: 14 }}>
-          You are already a member. <Link to={PATHS.dashboard} style={{ color: 'var(--teal)' }}>Go to Today</Link>
+          You are already a member. <Link to={PATHS.dashboard} style={{ color: 'var(--job-accent)' }}>Go to Today</Link>
         </p>
       )}
 

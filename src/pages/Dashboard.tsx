@@ -39,7 +39,7 @@ import FileActivityCard from '../components/dashboard/FileActivityCard'
 import LabHealthScore from '../components/dashboard/LabHealthScore'
 import StatusLine from '../components/dashboard/StatusLine'
 import QuickCaptureBar from '../components/QuickCaptureBar'
-import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../lib/taskGrouping'
+import { PANEL_BG, withAlpha } from '../lib/taskGrouping'
 import { DashboardMountedContext } from '../components/dashboard/dashboardMounted'
 
 // Tab categories for card filtering
@@ -377,7 +377,7 @@ export default function Dashboard() {
                     width: 7,
                     height: 7,
                     borderRadius: 'var(--radius-circle)',
-                    background: 'var(--green-light)',
+                    background: 'var(--job-accent)',
                     flexShrink: 0,
                   }}
                   aria-label="Live"
@@ -430,10 +430,10 @@ export default function Dashboard() {
                     onClick={() => setShowCustomize(!showCustomize)}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
                     style={{
-                      color: showCustomize ? 'var(--teal)' : 'var(--slate)',
-                      backgroundColor: showCustomize ? 'var(--teal-active)' : 'transparent',
+                      color: showCustomize ? 'var(--job-accent)' : 'var(--slate)',
+                      backgroundColor: showCustomize ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
                       border: '1px solid',
-                      borderColor: showCustomize ? 'var(--teal)' : 'var(--border-subtle)',
+                      borderColor: showCustomize ? 'var(--job-accent)' : 'var(--border-subtle)',
                       cursor: 'pointer',
                       opacity: showCustomize ? 1 : 0.85,
                     }}
@@ -473,9 +473,9 @@ export default function Dashboard() {
                 onClick={() => toggleCard(card.id)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border"
                 style={{
-                  color: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--slate)',
-                  backgroundColor: visibleCards.has(card.id) ? 'var(--teal-active)' : 'transparent',
-                  borderColor: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--border-subtle)',
+                  color: visibleCards.has(card.id) ? 'var(--job-accent)' : 'var(--slate)',
+                  backgroundColor: visibleCards.has(card.id) ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+                  borderColor: visibleCards.has(card.id) ? 'var(--job-accent)' : 'var(--border-subtle)',
                   cursor: 'pointer',
                   opacity: visibleCards.has(card.id) ? 1 : 0.85,
                 }}
@@ -493,7 +493,7 @@ export default function Dashboard() {
                     cursor: 'pointer',
                     minHeight: 44,
                     minWidth: 44,
-                    color: pinnedCards.has(card.id) ? 'var(--gold)' : 'var(--slate)',
+                    color: pinnedCards.has(card.id) ? 'var(--job-accent)' : 'var(--slate)',
                     opacity: pinnedCards.has(card.id) ? 1 : 0.85,
                   }}
                   title={pinnedCards.has(card.id) ? 'Unpin' : 'Pin to top'}
@@ -521,8 +521,8 @@ export default function Dashboard() {
                   }}
                   className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium"
                   style={{
-                    color: 'var(--ink-bright, #fff)',
-                    background: 'var(--teal-solid)',
+                    color: 'var(--sk-card)',
+                    background: 'var(--job-accent)',
                     border: 'none',
                     cursor: 'pointer',
                   }}
@@ -597,13 +597,13 @@ export default function Dashboard() {
             to={PATHS.meetingPrep(upcomingMeeting.id)}
             className="flex items-center gap-3 mb-2 px-4 py-3 rounded-xl transition-all"
             style={{
-              background: `linear-gradient(135deg, ${withAlpha(ACCENT_GOLD, 8)} 0%, rgba(45,138,138,0.06) 100%)`,
-              border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+              background: upcomingMeeting.date === localDateKey() ? 'color-mix(in srgb, var(--job-wants) 8%, transparent)' : 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
+              border: `1px solid ${upcomingMeeting.date === localDateKey() ? 'color-mix(in srgb, var(--job-wants) 25%, transparent)' : 'var(--sk-line2)'}`,
               textDecoration: 'none',
               color: 'var(--ink)',
             }}
           >
-            <Clock size={18} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--gold)', flexShrink: 0 }} />
+            <Clock size={18} strokeWidth={1.5} absoluteStrokeWidth style={{ color: upcomingMeeting.date === localDateKey() ? 'var(--job-wants)' : 'var(--sk-t3)', flexShrink: 0 }} />
             <div className="flex-1">
               <div style={{ fontSize: '13px', fontWeight: 500 }}>
                 {upcomingMeeting.date === localDateKey() ? 'Meeting today' : 'Meeting tomorrow'}: {upcomingMeeting.title}
@@ -626,16 +626,16 @@ export default function Dashboard() {
             to={`${PATHS.deadlines}#regulatory`}
             className="flex items-center gap-3 mb-2 px-4 py-2.5 rounded-xl"
             style={{
-              background: 'var(--maroon-hover)',
+              background: 'color-mix(in srgb, var(--job-stale) 6%, transparent)',
               border: '1px solid var(--border-subtle)',
-              borderLeft: '3px solid var(--maroon)',
+              borderLeft: '3px solid var(--job-stale)',
               textDecoration: 'none',
               color: 'var(--ink)',
               transition: 'background-color 150ms ease',
             }}
           >
-            <AlertTriangle size={15} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--maroon)', flexShrink: 0 }} />
-            <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--maroon)' }}>
+            <AlertTriangle size={15} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--job-stale)', flexShrink: 0 }} />
+            <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--job-stale)' }}>
               {expiringRegulatory.length} regulatory item{expiringRegulatory.length > 1 ? 's' : ''} expiring within 60 days
             </span>
             <span style={{ fontSize: '11px', color: 'var(--muted)', marginLeft: 'auto', flexShrink: 0 }}>
@@ -649,13 +649,11 @@ export default function Dashboard() {
         {pinnedVisibleCards.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
-              <Pin size={14} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--gold)' }} />
+              <Pin size={14} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--sk-t3)' }} />
               <h2
                 style={{
-                  fontSize: '10px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  color: 'var(--gold)',
+                  fontSize: '12px',
+                  color: 'var(--sk-t2)',
                   margin: 0,
                   fontWeight: 500,
                 }}
@@ -800,7 +798,7 @@ export default function Dashboard() {
           border: none;
           border-radius: var(--radius-md);
           background: ${withAlpha(PANEL_BG, 5)};
-          color: var(--gold);
+          color: var(--sk-t3);
           cursor: pointer;
           opacity: 0;
           transition: opacity 120ms ease, background 120ms ease;
@@ -836,12 +834,12 @@ export default function Dashboard() {
         }
         .dashboard-reset-layout:hover { opacity: 1; color: var(--ink); }
 
-        .customize-panel { background-color: var(--teal-hover); }
-        .dark .customize-panel { background-color: var(--teal-hover); }
+        .customize-panel { background-color: color-mix(in srgb, var(--sk-t1) 3%, transparent); }
+        .dark .customize-panel { background-color: color-mix(in srgb, var(--sk-t1) 3%, transparent); }
 
         @keyframes status-pulse {
-          0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); }
-          50% { opacity: 0.85; box-shadow: 0 0 4px rgba(34, 197, 94, 0.2); }
+          0%, 100% { opacity: 1; box-shadow: 0 0 8px color-mix(in srgb, var(--job-accent) 40%, transparent); }
+          50% { opacity: 0.85; box-shadow: 0 0 4px color-mix(in srgb, var(--job-accent) 20%, transparent); }
         }
       `}</style>
     </div>

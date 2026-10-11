@@ -8,7 +8,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Pin } from 'lucide-react'
 import { ICON_PROPS } from '../../../lib/iconProps'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_GREEN,
+  JOB_ACCENT,
   INK, INK_MUTED, INK_DIM, PANEL_BG,
   PRIORITY_COLOR, STATUS_COLOR,
 } from '../constants'
@@ -51,7 +51,7 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
     <button
       key={label}
       onClick={onClick}
-      style={{ padding: '3px 9px', fontSize: 11, border: `1px solid ${active ? ACCENT_TEAL : accent ? withAlpha(accent, 25) : 'var(--border-strong)'}`, borderRadius: 'var(--radius-sm)', background: active ? withAlpha(ACCENT_TEAL, 13) : accent ? withAlpha(accent, 8) : 'transparent', color: active ? ACCENT_TEAL : accent ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
+      style={{ padding: '3px 9px', fontSize: 11, border: `1px solid ${active ? JOB_ACCENT : accent ? withAlpha(accent, 25) : 'var(--border-strong)'}`, borderRadius: 'var(--radius-sm)', background: active ? withAlpha(JOB_ACCENT, 13) : accent ? withAlpha(accent, 8) : 'transparent', color: active ? JOB_ACCENT : accent ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
     >{label}</button>
   )
 
@@ -66,23 +66,23 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
 
   return (
     <div ref={pickerRef} style={{ position: 'relative', flexShrink: 0 }}>
-      {/* P1-1: full-width gold strip + border (outer), band-centered content
+      {/* P1-1: full-width accent strip + border (outer); a selection is the accent's job, band-centered content
           (.mt-band inner) so the bulk bar's controls align to the same left edge
           as the toolbar + views. */}
-      <div style={{ paddingTop: 8, paddingBottom: 8, background: withAlpha(ACCENT_GOLD, 8), borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 20)}` }}>
+      <div style={{ paddingTop: 8, paddingBottom: 8, background: withAlpha(JOB_ACCENT, 8), borderBottom: `1px solid ${withAlpha(JOB_ACCENT, 20)}` }}>
        <div className="mt-band" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
-        <span style={{ color: ACCENT_GOLD, fontWeight: 600 }}>{count} selected</span>
+        <span style={{ color: JOB_ACCENT, fontWeight: 600 }}>{count} selected</span>
         <span style={{ color: INK_DIM }}>·</span>
         <button
           onClick={onPlanToday}
-          style={{ padding: '3px 9px', fontSize: 11, border: `1px solid ${withAlpha(ACCENT_GOLD, 25)}`, borderRadius: 'var(--radius-sm)', background: withAlpha(ACCENT_GOLD, 8), color: ACCENT_GOLD, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+          style={{ padding: '3px 9px', fontSize: 11, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
         ><Pin {...ICON_PROPS} size={11} /> Plan today</button>
         {btn('Snooze +1d', onSnoozeDay)}
         {btn('Status →', () => setPicker(picker === 'status' ? null : 'status'), undefined, picker === 'status')}
         {btn('Reassign', () => setPicker(picker === 'reassign' ? null : 'reassign'), undefined, picker === 'reassign')}
         {btn('Priority', () => setPicker(picker === 'priority' ? null : 'priority'), undefined, picker === 'priority')}
-        {btn('✓ Complete', onComplete, ACCENT_GREEN)}
-        {btn('Archive', onArchive, ACCENT_CORAL)}
+        {btn('✓ Complete', onComplete, JOB_ACCENT)}
+        {btn('Archive', onArchive)}
         <div style={{ flex: 1 }} />
         <button onClick={onClear} style={{ background: 'none', border: 'none', color: INK_MUTED, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>Deselect</button>
        </div>
@@ -97,14 +97,14 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
             <button
               key={p}
               onClick={() => { onPriority(p); setPicker(null) }}
-              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: `1px solid ${PRIORITY_COLOR[p] ?? INK_DIM}40`, background: `${PRIORITY_COLOR[p] ?? INK_DIM}15`, color: PRIORITY_COLOR[p] ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
+              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: `1px solid ${withAlpha(PRIORITY_COLOR[p] ?? INK_DIM, 25)}`, background: withAlpha(PRIORITY_COLOR[p] ?? INK_DIM, 8), color: PRIORITY_COLOR[p] ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
             >{p}</button>
           ))}
           {picker === 'status' && STATUS_OPTS.map((s) => (
             <button
               key={s.v}
               onClick={() => { onStatus(s.v); setPicker(null) }}
-              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: `1px solid ${STATUS_COLOR[s.v] ?? INK_DIM}40`, background: `${STATUS_COLOR[s.v] ?? INK_DIM}15`, color: STATUS_COLOR[s.v] ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
+              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: `1px solid ${withAlpha(STATUS_COLOR[s.v] ?? INK_DIM, 25)}`, background: withAlpha(STATUS_COLOR[s.v] ?? INK_DIM, 8), color: STATUS_COLOR[s.v] ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
             >{s.l}</button>
           ))}
           {picker === 'reassign' && assigneeOptions.map((a) => (

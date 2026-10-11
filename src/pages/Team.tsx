@@ -13,7 +13,6 @@ import { mentees } from '../data/mentees'
 import { displayName } from '../lib/nameUtils'
 import { memberPublications, isPublished } from '../lib/publicationCounts'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { Button } from '../components/ui/Button'
 import AddMemberPanel from '../components/AddMemberPanel'
 import { useAuth } from '../hooks/useAuth'
@@ -127,7 +126,7 @@ export default function Team() {
           <span style={{ opacity: 0.85 }}>
             {directors.length + seniorMentors.length + facultyCollaborators.length + researchTeam.length + mentees.length} members
           </span>
-          {activeSlugs.size > 0 && <> · <span style={{ color: 'var(--green)' }}>{activeSlugs.size} active this week</span></>}
+          {activeSlugs.size > 0 && <> · <span style={{ color: 'var(--sk-t2)' }}>{activeSlugs.size} active this week</span></>}
         </p>
         {/* PI only: who can sign in to the Hub is a team_members row, and
             this is how one is added (2026-10-08). The API refuses anyone else. */}
@@ -145,8 +144,8 @@ export default function Team() {
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] transition-colors"
                 style={{
                   fontWeight: 400,
-                  background: 'var(--teal-solid)',
-                  color: 'var(--ink-bright, #fff)',
+                  background: 'var(--job-accent)',
+                  color: 'var(--sk-card)',
                   padding: '4px 10px',
                   borderRadius: 'var(--radius-full)',
                 }}
@@ -163,9 +162,9 @@ export default function Team() {
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] hover:opacity-80"
                 style={{
                   fontWeight: 400,
-                  background: 'var(--teal-active)',
-                  color: 'var(--teal)',
-                  border: '1px solid rgba(45,138,138,0.2)',
+                  background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
+                  color: 'var(--job-accent)',
+                  border: '1px solid color-mix(in srgb, var(--job-accent) 20%, transparent)',
                   padding: '4px 10px',
                   borderRadius: 'var(--radius-full)',
                   transition: 'opacity var(--duration-normal, 150ms) var(--ease-out)',
@@ -207,7 +206,7 @@ export default function Team() {
                 to={director.path}
                 className="fade-in-up card p-5 sm:p-6 group cursor-pointer"
                 style={{
-                  borderTop: '3px solid var(--gold)',
+                  borderTop: '3px solid var(--job-brand)',
                   textDecoration: 'none',
                   minHeight: '260px',
                 }}
@@ -226,7 +225,7 @@ export default function Team() {
 
                   <div className="flex-1 min-w-0">
                     <h3
-                      className="text-lg sm:text-xl mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
+                      className="text-lg sm:text-xl mb-0.5 group-hover:text-[var(--job-brand)] transition-colors duration-200"
                       style={{
                         fontFamily: 'var(--font-display)',
                         fontWeight: 400,
@@ -242,7 +241,7 @@ export default function Team() {
                             width: 6,
                             height: 6,
                             borderRadius: 'var(--radius-circle)',
-                            background: 'var(--green)',
+                            background: 'var(--job-accent)',
                             marginLeft: 6,
                             verticalAlign: 'middle',
                           }}
@@ -252,7 +251,7 @@ export default function Team() {
                     <p
                       className="mb-0.5"
                       style={{
-                        color: 'var(--gold)',
+                        color: 'var(--job-brand)',
                         fontSize: '11px',
                       }}
                     >
@@ -278,8 +277,8 @@ export default function Team() {
                             className="inline-block px-2 py-0.5 rounded-full text-[11px]"
                             style={{
                               fontWeight: 400,
-                              background: 'var(--teal-active)',
-                              color: 'var(--teal)',
+                              background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
+                              color: 'var(--job-accent)',
                             }}
                           >
                             {t.tag}
@@ -290,7 +289,7 @@ export default function Team() {
                     <p
                       style={{
                         fontSize: '12px',
-                        color: 'var(--gold)',
+                        color: 'var(--job-brand)',
                       }}
                     >
                       {stats.grantCount} Grant{stats.grantCount !== 1 ? 's' : ''}
@@ -304,7 +303,7 @@ export default function Team() {
                   <ArrowRight {...ICON_PROPS}
                     size={16}
                     className="flex-shrink-0 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    style={{ color: 'var(--gold)' }}
+                    style={{ color: 'var(--job-brand)' }}
                     aria-hidden="true"
                   />
                 </div>
@@ -356,12 +355,12 @@ export default function Team() {
                     >
                       {member.slug ? displayName(member.slug, 'formal') : `${member.name}${member.credentials ? ', ' + member.credentials : ''}`}
                     </h3>
-                    <p className="text-sm flex items-center gap-2" style={{ color: 'var(--gold)', fontSize: '12px' }}>
+                    <p className="text-sm flex items-center gap-2" style={{ color: 'var(--job-brand)', fontSize: '12px' }}>
                       <span>{member.role || (member.autoCreated ? 'Role not set' : '')}</span>
                       {member.autoCreated && (
                         <span
                           className="text-[10px] px-1.5 py-0.5 rounded"
-                          style={{ background: 'rgba(220,179,85,0.18)', color: 'var(--gold)', letterSpacing: '0.04em' }}
+                          style={{ background: 'color-mix(in srgb, var(--job-brand) 18%, transparent)', color: 'var(--job-brand)', letterSpacing: '0.04em' }}
                           title="Auto-provisioned on first login. Edit member to assign role / member type / expertise tags."
                         >
                           PENDING REVIEW
@@ -376,8 +375,8 @@ export default function Team() {
                             className="inline-block px-2 py-0.5 rounded-full text-[11px] cursor-pointer transition-opacity hover:opacity-80"
                             style={{
                               fontWeight: 400,
-                              background: 'var(--teal-active)',
-                              color: 'var(--teal)',
+                              background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
+                              color: 'var(--job-accent)',
                             }}
                             onClick={(e) => { e.preventDefault(); setSearchParams({ expertise: t.tag }) }}
                           >
@@ -424,7 +423,7 @@ export default function Team() {
                 className="fade-in-up text-center p-4 rounded-lg cursor-pointer group"
                 style={{
                   background: 'var(--ice)',
-                  border: `1px solid ${withAlpha(ACCENT_GOLD, 8)}`,
+                  border: `1px solid color-mix(in srgb, var(--job-brand) 8%, transparent)`,
                   textDecoration: 'none',
                   transition: 'background-color var(--duration-normal, 150ms) var(--ease-out)',
                   minHeight: '130px',
@@ -441,7 +440,7 @@ export default function Team() {
                   />
                 </div>
                 <h3
-                  className="text-xs sm:text-sm font-normal mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
+                  className="text-xs sm:text-sm font-normal mb-0.5 group-hover:text-[var(--job-brand)] transition-colors duration-200"
                   style={{ color: 'var(--ink)' }}
                 >
                   {member.slug ? displayName(member.slug, 'formal') : `${member.name}${member.credentials ? ', ' + member.credentials : ''}`}
@@ -451,7 +450,7 @@ export default function Team() {
                   {member.autoCreated && (
                     <span
                       className="text-[9px] px-1 py-0.5 rounded"
-                      style={{ background: 'rgba(220,179,85,0.18)', color: 'var(--gold)', letterSpacing: '0.04em' }}
+                      style={{ background: 'color-mix(in srgb, var(--job-brand) 18%, transparent)', color: 'var(--job-brand)', letterSpacing: '0.04em' }}
                       title="Auto-provisioned on first login. Edit to assign role."
                     >
                       PENDING
@@ -466,8 +465,8 @@ export default function Team() {
                         className="inline-block px-1.5 py-0.5 rounded-full text-[10px]"
                         style={{
                           fontWeight: 400,
-                          background: 'var(--teal-active)',
-                          color: 'var(--teal)',
+                          background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
+                          color: 'var(--job-accent)',
                         }}
                       >
                         {t.tag}
@@ -511,7 +510,7 @@ export default function Team() {
                 className="fade-in-up text-center p-4 rounded-lg cursor-pointer group"
                 style={{
                   background: 'var(--ice)',
-                  border: `1px solid ${withAlpha(ACCENT_GOLD, 8)}`,
+                  border: `1px solid color-mix(in srgb, var(--job-brand) 8%, transparent)`,
                   textDecoration: 'none',
                   transition: 'background-color var(--duration-normal, 150ms) var(--ease-out)',
                   minHeight: '130px',
@@ -528,7 +527,7 @@ export default function Team() {
                   />
                 </div>
                 <h3
-                  className="text-xs sm:text-sm font-normal mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
+                  className="text-xs sm:text-sm font-normal mb-0.5 group-hover:text-[var(--job-brand)] transition-colors duration-200"
                   style={{ color: 'var(--ink)' }}
                 >
                   {member.slug ? displayName(member.slug, 'formal') : `${member.name}${member.credentials ? ', ' + member.credentials : ''}`}
@@ -538,7 +537,7 @@ export default function Team() {
                   {member.autoCreated && (
                     <span
                       className="text-[9px] px-1 py-0.5 rounded"
-                      style={{ background: 'rgba(220,179,85,0.18)', color: 'var(--gold)', letterSpacing: '0.04em' }}
+                      style={{ background: 'color-mix(in srgb, var(--job-brand) 18%, transparent)', color: 'var(--job-brand)', letterSpacing: '0.04em' }}
                       title="Auto-provisioned on first login. Edit to assign role."
                     >
                       PENDING
@@ -553,8 +552,8 @@ export default function Team() {
                         className="inline-block px-1.5 py-0.5 rounded-full text-[10px]"
                         style={{
                           fontWeight: 400,
-                          background: 'var(--teal-active)',
-                          color: 'var(--teal)',
+                          background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
+                          color: 'var(--job-accent)',
                         }}
                       >
                         {t.tag}

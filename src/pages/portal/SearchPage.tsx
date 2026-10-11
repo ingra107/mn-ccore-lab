@@ -42,19 +42,19 @@ interface SearchResult {
 }
 
 const typeConfig: Record<string, { icon: typeof Search; color: string; label: string }> = {
-  task: { icon: SquareCheck, color: 'var(--teal)', label: 'Task' },
-  project: { icon: FolderKanban, color: 'var(--gold)', label: 'Project' },
-  meeting: { icon: Users, color: 'var(--teal)', label: 'Meeting' },
-  idea: { icon: Lightbulb, color: 'var(--gold)', label: 'Idea' },
-  note: { icon: ScrollText, color: 'var(--teal)', label: 'Note' },
-  task_note: { icon: ScrollText, color: 'var(--teal)', label: 'Task note' },
+  task: { icon: SquareCheck, color: 'var(--sk-t3)', label: 'Task' },
+  project: { icon: FolderKanban, color: 'var(--sk-t3)', label: 'Project' },
+  meeting: { icon: Users, color: 'var(--sk-t3)', label: 'Meeting' },
+  idea: { icon: Lightbulb, color: 'var(--sk-t3)', label: 'Idea' },
+  note: { icon: ScrollText, color: 'var(--sk-t3)', label: 'Note' },
+  task_note: { icon: ScrollText, color: 'var(--sk-t3)', label: 'Task note' },
   comment: { icon: MessageSquare, color: 'var(--slate)', label: 'Comment' },
   task_comment: { icon: MessageSquare, color: 'var(--slate)', label: 'Task comment' },
-  decision: { icon: Scale, color: 'var(--maroon)', label: 'Decision' },
+  decision: { icon: Scale, color: 'var(--sk-t3)', label: 'Decision' },
   file: { icon: Paperclip, color: 'var(--slate)', label: 'File' },
-  publication: { icon: BookOpen, color: 'var(--gold)', label: 'Publication' },
-  grant: { icon: Banknote, color: 'var(--green)', label: 'Grant' },
-  artifact: { icon: FileText, color: 'var(--gold)', label: 'Artifact' },
+  publication: { icon: BookOpen, color: 'var(--sk-t3)', label: 'Publication' },
+  grant: { icon: Banknote, color: 'var(--sk-t3)', label: 'Grant' },
+  artifact: { icon: FileText, color: 'var(--sk-t3)', label: 'Artifact' },
   activity: { icon: Activity, color: 'var(--slate)', label: 'Activity' },
 }
 
@@ -130,7 +130,7 @@ function HighlightedText({ text, tokens }: { text: string; tokens: string[] }) {
             <mark
               key={i}
               style={{
-                background: 'var(--gold-emphasis)',
+                background: 'color-mix(in srgb, var(--job-accent) 18%, transparent)',
                 color: 'inherit',
                 padding: '0 1px',
                 borderRadius: 2,
@@ -167,8 +167,8 @@ function TypeBadge({ result }: { result: SearchResult }) {
       <span
         className="text-[10px] flex items-center gap-1 rounded-full px-2 py-0.5"
         style={{
-          background: 'var(--teal-hover)',
-          color: 'var(--teal)',
+          background: 'var(--sk-line)',
+          color: 'var(--sk-t2)',
           border: '1px solid var(--border-subtle)',
           flexShrink: 0,
         }}
@@ -185,8 +185,8 @@ function TypeBadge({ result }: { result: SearchResult }) {
       <span
         className="text-[10px] rounded-full px-2 py-0.5"
         style={{
-          background: 'var(--gold-emphasis)',
-          color: 'var(--gold-on-emphasis)',
+          background: 'var(--sk-line)',
+          color: 'var(--sk-t2)',
           flexShrink: 0,
           whiteSpace: 'nowrap',
         }}
@@ -206,8 +206,8 @@ function TypeBadge({ result }: { result: SearchResult }) {
       <span
         className="text-[10px] rounded-full px-2 py-0.5"
         style={{
-          background: 'var(--green-hover, rgba(6,110,47,0.10))',
-          color: 'var(--green)',
+          background: 'var(--sk-line)',
+          color: 'var(--sk-t2)',
           flexShrink: 0,
           whiteSpace: 'nowrap',
         }}
@@ -221,8 +221,8 @@ function TypeBadge({ result }: { result: SearchResult }) {
       <span
         className="text-[10px] rounded-full px-2 py-0.5"
         style={{
-          background: 'var(--maroon-hover, rgba(122,0,25,0.10))',
-          color: 'var(--maroon)',
+          background: 'var(--sk-line)',
+          color: 'var(--sk-t2)',
           flexShrink: 0,
           whiteSpace: 'nowrap',
           maxWidth: 140,
@@ -452,9 +452,9 @@ export default function SearchPage() {
     }
     // Fall back to a default set, append from LRU when partial.
     const defaults = [
-      { path: PATHS.myTasks, label: 'My tasks', icon: SquareCheck, color: 'var(--teal)' },
-      { path: PATHS.deadlines, label: 'Urgent deadlines', icon: Activity, color: 'var(--maroon)' },
-      { path: PATHS.ideasTab, label: 'New ideas', icon: Lightbulb, color: 'var(--gold)' },
+      { path: PATHS.myTasks, label: 'My tasks', icon: SquareCheck, color: 'var(--sk-t3)' },
+      { path: PATHS.deadlines, label: 'Urgent deadlines', icon: Activity, color: 'var(--sk-t3)' },
+      { path: PATHS.ideasTab, label: 'New ideas', icon: Lightbulb, color: 'var(--sk-t3)' },
       { path: PATHS.decisions, label: 'Decisions log', icon: MessageSquare, color: 'var(--slate)' },
     ]
     const lruPaths = new Set(lru.map(e => e.path))
@@ -467,13 +467,13 @@ export default function SearchPage() {
   }, [])
 
   const iconForJumpToPath = (path: string): { Icon: typeof Search; color: string } => {
-    if (path === PATHS.myTasks || path === PATHS.tasks) return { Icon: SquareCheck, color: 'var(--teal)' }
-    if (path === PATHS.deadlines) return { Icon: Activity, color: 'var(--maroon)' }
-    if (path === PATHS.ideasTab) return { Icon: Lightbulb, color: 'var(--gold)' }
+    if (path === PATHS.myTasks || path === PATHS.tasks) return { Icon: SquareCheck, color: 'var(--sk-t3)' }
+    if (path === PATHS.deadlines) return { Icon: Activity, color: 'var(--sk-t3)' }
+    if (path === PATHS.ideasTab) return { Icon: Lightbulb, color: 'var(--sk-t3)' }
     if (path === PATHS.decisions) return { Icon: MessageSquare, color: 'var(--slate)' }
-    if (path === PATHS.projects) return { Icon: FolderKanban, color: 'var(--gold)' }
-    if (path === PATHS.meetings) return { Icon: Users, color: 'var(--teal)' }
-    if (path === PATHS.grants) return { Icon: Banknote, color: 'var(--green)' }
+    if (path === PATHS.projects) return { Icon: FolderKanban, color: 'var(--sk-t3)' }
+    if (path === PATHS.meetings) return { Icon: Users, color: 'var(--sk-t3)' }
+    if (path === PATHS.grants) return { Icon: Banknote, color: 'var(--sk-t3)' }
     return { Icon: Search, color: 'var(--slate)' }
   }
 
@@ -535,9 +535,9 @@ export default function SearchPage() {
               onClick={() => setTypeFilter([])}
               className="rounded-full px-3 py-1 text-xs border transition-colors"
               style={{
-                borderColor: typeFilter.length === 0 ? 'var(--teal)' : 'var(--border-subtle)',
-                color: typeFilter.length === 0 ? 'var(--teal)' : 'var(--slate)',
-                background: typeFilter.length === 0 ? 'var(--teal-hover)' : 'transparent',
+                borderColor: typeFilter.length === 0 ? 'var(--job-accent)' : 'var(--border-subtle)',
+                color: typeFilter.length === 0 ? 'var(--job-accent)' : 'var(--slate)',
+                background: typeFilter.length === 0 ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
                 cursor: 'pointer',
               }}
             >
@@ -643,8 +643,8 @@ export default function SearchPage() {
                   onClick={() => onPersistView(v)}
                   className="rounded-full px-2 py-0.5"
                   style={{
-                    background: view === v ? 'var(--teal-hover)' : 'transparent',
-                    color: view === v ? 'var(--teal)' : 'var(--slate)',
+                    background: view === v ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
+                    color: view === v ? 'var(--job-accent)' : 'var(--slate)',
                     border: 'none',
                     cursor: 'pointer',
                     fontSize: 11,
@@ -707,7 +707,7 @@ export default function SearchPage() {
             {filteredRecents.map(s => (
               <span
                 key={s}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs transition-colors hover:border-[var(--teal)]"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs transition-colors hover:border-[var(--sk-t3)]"
                 style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none' }}
               >
                 <button

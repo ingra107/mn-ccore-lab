@@ -186,9 +186,9 @@ export default function InsightsPage() {
             padding: '6px 10px',
             fontSize: 11,
             fontWeight: 500,
-            color: 'var(--teal)',
+            color: 'var(--job-accent)',
             background: 'transparent',
-            border: '1px solid var(--teal)',
+            border: '1px solid var(--job-accent)',
             borderRadius: 'var(--radius-md)',
             cursor: 'pointer',
           }}
@@ -209,9 +209,9 @@ export default function InsightsPage() {
           padding: '6px 10px',
           fontSize: 11,
           fontWeight: 500,
-          color: 'var(--teal)',
+          color: 'var(--job-accent)',
           background: 'transparent',
-          border: '1px solid var(--teal)',
+          border: '1px solid var(--job-accent)',
           borderRadius: 'var(--radius-md)',
           cursor: isFetching ? 'default' : 'pointer',
           opacity: isFetching ? 0.7 : 1,
@@ -253,8 +253,8 @@ export default function InsightsPage() {
             icon={AlertCircle}
             label="Stalled projects (14d+)"
             value={data.metrics.stalledProjects.count}
-            color={data.metrics.stalledProjects.count > 0 ? 'var(--maroon)' : 'var(--teal)'}
-            // INS-18: was using gold (Rule 59 = AI). Stalled is severity, not AI.
+            color={data.metrics.stalledProjects.count > 0 ? 'var(--job-stale)' : 'var(--sk-t3)'}
+            // Stalled = going stale = orange (principle 21).
             previous={data.metrics.stalledProjects.count - data.metrics.stalledProjects.deltaWoW}
             previousLabel="vs last week"
             sparklineData={data.metrics.stalledProjects.sparkline}
@@ -263,7 +263,7 @@ export default function InsightsPage() {
             icon={Users}
             label="Open tasks per person"
             value={data.metrics.tasksPerPerson.avg}
-            color="var(--teal)"
+            color="var(--sk-t3)"
             subtitle={`${data.metrics.tasksPerPerson.total} total`}
             sparklineData={data.metrics.tasksPerPerson.sparkline}
           />
@@ -284,10 +284,10 @@ export default function InsightsPage() {
             icon={Award}
             label="Grants in pipeline"
             value={data.metrics.grantsInPipeline.count}
-            // INS-18: dropped gold accent. Maroon when deadline tight, slate otherwise.
+            // INS-18: dropped gold accent. Orange (at risk) when the deadline is tight, gray otherwise.
             color={
               data.metrics.grantsInPipeline.daysToNextDeadline !== null && data.metrics.grantsInPipeline.daysToNextDeadline < 14
-                ? 'var(--maroon)'
+                ? 'var(--job-stale)'
                 : 'var(--slate)'
             }
             subtitle={
@@ -534,7 +534,7 @@ function ConnectionsPanel() {
                     <Link to={PATHS.project(edge.from)} title={edge.fromTitle} style={{ fontSize: 12, fontWeight: 500, color: 'var(--ink)', textDecoration: 'none', maxWidth: '40%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {edge.fromTitle}
                     </Link>
-                    <span style={{ fontSize: 10, color: 'var(--teal)', opacity: 0.85 }}>↔</span>
+                    <span style={{ fontSize: 10, color: 'var(--sk-t3)', opacity: 0.85 }}>↔</span>
                     <Link to={PATHS.project(edge.to)} title={edge.toTitle} style={{ fontSize: 12, fontWeight: 500, color: 'var(--ink)', textDecoration: 'none', maxWidth: '40%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {edge.toTitle}
                     </Link>
@@ -545,8 +545,8 @@ function ConnectionsPanel() {
                       style={{
                         fontSize: 10,
                         padding: '1px 6px',
-                        background: 'var(--teal-active)',
-                        color: 'var(--teal)',
+                        background: 'var(--sk-line)',
+                        color: 'var(--sk-t2)',
                         borderRadius: 'var(--radius-sm)',
                       }}
                     >
@@ -565,9 +565,9 @@ function ConnectionsPanel() {
                     padding: '4px 10px',
                     fontSize: 11,
                     fontWeight: 500,
-                    color: 'var(--teal)',
+                    color: 'var(--job-accent)',
                     background: 'transparent',
-                    border: '1px solid var(--teal)',
+                    border: '1px solid var(--job-accent)',
                     borderRadius: 'var(--radius-md)',
                     textDecoration: 'none',
                     flexShrink: 0,
@@ -677,7 +677,7 @@ function VelocityScatter({ rows }: { rows: DashboardData['velocityScatter'] }) {
                 cx={cx}
                 cy={cy}
                 r={r.isOutlier ? 5 : 3}
-                fill={r.isOutlier ? 'var(--maroon)' : 'var(--teal)'}
+                fill={r.isOutlier ? 'var(--job-stale)' : 'var(--job-accent)'}
                 opacity={r.isOutlier ? 0.9 : 0.7}
                 onClick={() => navigate(PATHS.project(r.slug))}
                 style={{ cursor: 'pointer' }}
@@ -704,7 +704,7 @@ function VelocityScatter({ rows }: { rows: DashboardData['velocityScatter'] }) {
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.slug} style={{ color: r.isOutlier ? 'var(--maroon)' : 'var(--ink)' }}>
+              <tr key={r.slug} style={{ color: r.isOutlier ? 'var(--job-stale)' : 'var(--ink)' }}>
                 <td style={{ padding: '4px 8px' }}>
                   <Link to={PATHS.project(r.slug)} style={{ color: 'inherit', textDecoration: 'none' }}>
                     {r.title}
@@ -804,7 +804,7 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
           <Link to={PATHS.project(r.slug)} style={{ color: 'var(--ink)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {r.title}
           </Link>
-          <span style={{ color: 'var(--maroon)', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
+          <span style={{ color: 'var(--job-stale)', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
             {r.daysIdle}d
           </span>
           <span style={{ color: 'var(--slate)', fontVariantNumeric: 'tabular-nums' }}>
@@ -822,9 +822,9 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
               padding: '4px 10px',
               fontSize: 11,
               fontWeight: 500,
-              color: 'var(--teal)',
+              color: 'var(--job-accent)',
               background: 'transparent',
-              border: '1px solid var(--teal)',
+              border: '1px solid var(--job-accent)',
               borderRadius: 'var(--radius-md)',
               cursor: 'pointer',
               width: 'fit-content',
@@ -845,7 +845,7 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
             {r.title}
           </Link>
           <div className="flex items-center" style={{ gap: 12, marginTop: 4, fontSize: 11 }}>
-            <span style={{ color: 'var(--maroon)', fontWeight: 600 }}>{r.daysIdle}d idle</span>
+            <span style={{ color: 'var(--job-stale)', fontWeight: 600 }}>{r.daysIdle}d idle</span>
             <span style={{ color: 'var(--slate)' }}>{r.openTasks} tasks</span>
           </div>
           <div className="flex items-center" style={{ gap: 8, marginTop: 6 }}>
@@ -856,7 +856,7 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
             <button
               onClick={() => followUp.mutate({ slug: r.slug, title: r.title, dueStr: dueFor(r.slug) })}
               disabled={followUp.isPending}
-              style={{ marginLeft: 'auto', padding: '4px 10px', fontSize: 11, color: 'var(--teal)', background: 'transparent', border: '1px solid var(--teal)', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+              style={{ marginLeft: 'auto', padding: '4px 10px', fontSize: 11, color: 'var(--job-accent)', background: 'transparent', border: '1px solid var(--job-accent)', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
             >
               + Set follow-up
             </button>

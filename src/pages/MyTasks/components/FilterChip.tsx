@@ -17,7 +17,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { usePortalDropdown, type PortalDropdownPosition } from '../../../hooks/usePortalDropdown'
-import { ACCENT_TEAL, INK, INK_DIM, PANEL_BG, withAlpha, type FilterOption } from '../constants'
+import { JOB_ACCENT, INK, INK_DIM, PANEL_BG, withAlpha, type FilterOption } from '../constants'
 
 export function FilterChip({ label, value, options, onChange }: { label: string; value: string | null; options: FilterOption[]; onChange: (v: string | null) => void }) {
   const [open, setOpen] = useState(false)
@@ -77,7 +77,7 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
         onClick={() => setOpen(!open)}
         aria-haspopup="listbox"
         aria-expanded={open ? 'true' : 'false'}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, paddingRight: 22, paddingLeft: 2, fontSize: 11, color: value ? ACCENT_TEAL : INK, background: 'transparent', border: 'none', fontFamily: 'inherit', cursor: 'pointer' }}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, paddingRight: 22, paddingLeft: 2, fontSize: 11, color: value ? JOB_ACCENT : INK, background: 'transparent', border: 'none', fontFamily: 'inherit', cursor: 'pointer' }}
       >{active?.l ?? options[0]?.l}</button>
       <span style={{ position: 'absolute', right: 8, pointerEvents: 'none', color: INK_DIM, fontSize: 9 }}>▾</span>
       {open && createPortal(
@@ -111,7 +111,7 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
                 onMouseEnter={() => setFocusedIdx(i)}
                 role="option"
                 aria-selected={o.v === value}
-                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', fontSize: 11, background: focused ? withAlpha(ACCENT_TEAL, 20) : o.v === value ? withAlpha(ACCENT_TEAL, 15) : 'transparent', border: 'none', color: o.v === value ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: 'pointer' }}
+                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', fontSize: 11, background: focused ? withAlpha(JOB_ACCENT, 20) : o.v === value ? withAlpha(JOB_ACCENT, 15) : 'transparent', border: 'none', color: o.v === value ? JOB_ACCENT : INK, fontFamily: 'inherit', cursor: 'pointer' }}
               >{o.l}</button>
             )
           })}

@@ -148,9 +148,9 @@ export default function ActivityPage() {
           onClick={() => setFilterTypes([])}
           className="rounded-full px-3 py-1 text-xs border transition-colors"
           style={{
-            borderColor: filterTypes.length === 0 ? 'var(--teal)' : 'var(--border-subtle)',
-            color: filterTypes.length === 0 ? 'var(--teal)' : 'var(--slate)',
-            background: filterTypes.length === 0 ? 'var(--teal-hover)' : 'transparent',
+            borderColor: filterTypes.length === 0 ? 'var(--job-accent)' : 'var(--border-subtle)',
+            color: filterTypes.length === 0 ? 'var(--job-accent)' : 'var(--slate)',
+            background: filterTypes.length === 0 ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
             cursor: 'pointer',
           }}
         >
@@ -166,9 +166,9 @@ export default function ActivityPage() {
               onClick={(e) => toggleType(o.value, e.shiftKey)}
               className="rounded-full px-3 py-1 text-xs border transition-colors"
               style={{
-                borderColor: active ? 'var(--teal)' : 'var(--border-subtle)',
-                color: active ? 'var(--teal)' : 'var(--slate)',
-                background: active ? 'var(--teal-hover)' : 'transparent',
+                borderColor: active ? 'var(--job-accent)' : 'var(--border-subtle)',
+                color: active ? 'var(--job-accent)' : 'var(--slate)',
+                background: active ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
                 cursor: 'pointer',
               }}
               title="Shift-click for multi-select"
@@ -229,11 +229,11 @@ export default function ActivityPage() {
               <div key={date}>
                 <h3
                   className="text-sm font-normal mb-2 sticky top-0 z-10 py-1"
-                  style={{ color: isToday ? 'var(--teal)' : 'var(--ink)', background: 'var(--page-bg)' }}
+                  style={{ color: isToday ? 'var(--job-accent)' : 'var(--ink)', background: 'var(--page-bg)' }}
                 >
                   {label}
                 </h3>
-                <motion.div className="flex flex-col border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)', paddingLeft: 'var(--sp-md)' }} variants={staggerContainer} initial="hidden" animate="visible">
+                <motion.div className="flex flex-col border-l-2" style={{ borderColor: isToday ? 'var(--job-accent)' : 'var(--border-subtle)', paddingLeft: 'var(--sp-md)' }} variants={staggerContainer} initial="hidden" animate="visible">
                   {items.map((item) => {
                     const person = isRealActor(item.actor) ? getPersonInfo(item.actor) : null
                     const isFocused = focusedIndex === flatIndex
@@ -259,7 +259,7 @@ export default function ActivityPage() {
                         </p>
                         {/* S5: drop the redundant type pill when a type filter is active. */}
                         {filterTypes.length === 0 && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize flex-shrink-0" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize flex-shrink-0" style={{ color: 'var(--sk-t2)', backgroundColor: 'var(--sk-line)' }}>
                             {item.type.replace('_', ' ')}
                           </span>
                         )}

@@ -8,7 +8,6 @@ import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 const affiliateLinks = [
   { label: 'CLIF Consortium', href: 'https://clif-icu.com/' },
@@ -67,7 +66,7 @@ export default function Contact() {
                 <MapPin {...ICON_PROPS}
                   size={20}
                   className="flex-shrink-0 mt-0.5"
-                  style={{ color: 'var(--gold)' }}
+                  style={{ color: 'var(--job-brand)' }}
                   aria-hidden="true"
                 />
                 <div>
@@ -102,7 +101,7 @@ export default function Contact() {
                 <Mail {...ICON_PROPS}
                   size={20}
                   className="flex-shrink-0 mt-0.5"
-                  style={{ color: 'var(--gold)' }}
+                  style={{ color: 'var(--job-brand)' }}
                   aria-hidden="true"
                 />
                 <div>
@@ -118,7 +117,7 @@ export default function Contact() {
                     href="mailto:mnccore@umn.edu"
                     className="cursor-pointer text-sm transition-colors duration-200"
                     style={{
-                      color: 'var(--maroon)',
+                      color: 'var(--job-accent)',
                     }}
                   >
                     mnccore@umn.edu
@@ -128,7 +127,7 @@ export default function Contact() {
             </div>
 
             {/* Google Maps Embed */}
-            <div className="fade-in-up mb-6 rounded-lg overflow-hidden relative" style={{ border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, paddingBottom: '56.25%', height: 0 }}>
+            <div className="fade-in-up mb-6 rounded-lg overflow-hidden relative" style={{ border: `1px solid color-mix(in srgb, var(--job-brand) 15%, transparent)`, paddingBottom: '56.25%', height: 0 }}>
               <iframe
                 title="MN-CCORE Lab Location - Mayo Memorial Building, University of Minnesota"
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2822.764!2d-93.2315!3d44.9720!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x52b32d600f4e4541%3A0x6c4e4e1e4e4e4e4e!2sMayo+Memorial+Building%2C+University+of+Minnesota!5e0!3m2!1sen!2sus!4v1"
@@ -165,8 +164,8 @@ export default function Contact() {
                       border: '1px solid transparent',
                       minHeight: '44px',
                       transition: 'background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
-                      '--hov-border': 'var(--gold)',
-                      '--hov-bg': 'var(--gold-light)',
+                      '--hov-border': 'var(--job-brand)',
+                      '--hov-bg': 'color-mix(in srgb, var(--job-brand) 6%, transparent)',
                     } as React.CSSProperties}
                   >
                     <span
@@ -178,7 +177,7 @@ export default function Contact() {
                     <ExternalLink {...ICON_PROPS}
                       size={14}
                       className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                      style={{ color: 'var(--gold)' }}
+                      style={{ color: 'var(--job-brand)' }}
                       aria-hidden="true"
                     />
                   </a>
@@ -193,14 +192,14 @@ export default function Contact() {
               className="p-4 sm:p-6 rounded-lg"
               style={{
                 background:
-                  `linear-gradient(135deg, ${withAlpha(ACCENT_GOLD, 8)} 0%, rgba(232,239,245,0.3) 100%)`,
-                border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
+                  `linear-gradient(135deg, color-mix(in srgb, var(--job-brand) 8%, transparent) 0%, transparent 100%)`,
+                border: `1px solid color-mix(in srgb, var(--job-brand) 15%, transparent)`,
               }}
             >
               <div className="flex items-center gap-3 mb-4 sm:mb-6">
                 <Users
                   size={24}
-                  style={{ color: 'var(--gold)' }}
+                  style={{ color: 'var(--job-brand)' }}
                   aria-hidden="true"
                 />
                 <h2
@@ -237,7 +236,7 @@ export default function Contact() {
                   >
                     <span
                       className="flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full"
-                      style={{ background: 'var(--gold)' }}
+                      style={{ background: 'var(--job-brand)' }}
                     />
                     {item}
                   </li>
@@ -247,8 +246,8 @@ export default function Contact() {
               <div
                 className="p-3 sm:p-4 rounded-lg"
                 style={{
-                  background: 'var(--gold-active)',
-                  border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
+                  background: 'color-mix(in srgb, var(--job-brand) 10%, transparent)',
+                  border: `1px solid color-mix(in srgb, var(--job-brand) 12%, transparent)`,
                 }}
               >
                 <p
@@ -266,7 +265,7 @@ export default function Contact() {
                     href="mailto:mnccore@umn.edu"
                     className="cursor-pointer font-medium transition-colors duration-200"
                     style={{
-                      color: 'var(--maroon)',
+                      color: 'var(--job-accent)',
                       fontSize: '13px',
                     }}
                   >
