@@ -1,5 +1,9 @@
 import React from 'react'
+import PageHeartbeat from './moments/PageHeartbeat'
+import HeroNumber, { type HeroNumberProps } from './moments/HeroNumber'
 
+// The rule under the title is the heartbeat line (color-back pick 10), and a
+// page with one telling number shows it beside the title as `hero` (pick 2).
 interface PageHeaderProps {
   icon?: React.ReactNode
   title: string
@@ -7,6 +11,8 @@ interface PageHeaderProps {
   actions?: React.ReactNode
   children?: React.ReactNode
   count?: number
+  /** The page's one telling number, in Today's stat face, beside the title. */
+  hero?: HeroNumberProps
 }
 
 export default function PageHeader({
@@ -16,6 +22,7 @@ export default function PageHeader({
   actions,
   children,
   count,
+  hero,
 }: PageHeaderProps) {
   return (
     <div style={{ marginBottom: 'var(--sp-xl)' }}>
@@ -44,7 +51,7 @@ export default function PageHeader({
             </span>
           )}
           {/* Title + inline badges — wraps naturally at <420px so subtitle drops below */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: hero ? 'baseline' : 'center', gap: hero ? '4px 14px' : 8, flexWrap: 'wrap', minWidth: 0 }}>
             <h1
               style={{
                 fontSize: 20,
@@ -56,6 +63,7 @@ export default function PageHeader({
             >
               {title}
             </h1>
+            {hero && <HeroNumber {...hero} />}
             {count !== undefined && (
               <span
                 aria-live="polite"
@@ -114,14 +122,8 @@ export default function PageHeader({
         )}
       </div>
 
-      {/* Horizontal rule */}
-      <div
-        style={{
-          height: 1,
-          backgroundColor: 'var(--border-subtle)',
-          marginTop: 'var(--sp-md)',
-        }}
-      />
+      {/* The heartbeat line: the header's rule */}
+      <PageHeartbeat />
 
       {/* Children (filters, view controls, tabs) */}
       {children && (

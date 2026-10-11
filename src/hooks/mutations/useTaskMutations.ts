@@ -4,6 +4,11 @@ import type { TaskRow } from '../../lib/api'
 import type { TaskKind } from '../../../shared/taskKinds'
 import { TASK_STATUS, optimisticListUpdate, rollbackSnapshots } from './utils'
 import { nowInstant } from '../../lib/time'
+import { beginCompletion, settleCompletion, settleBatchCompletion } from '../../lib/completionMoment'
+
+// Which ids a write completes, for the completion moment (lib/completionMoment):
+// the ring and the done-this-week count wait for the Hub to accept these.
+const completes = (status: unknown, ids: string[]) => (status === TASK_STATUS.DONE ? ids : [])
 
 // ── Task mutations ──────────────────────────────────────────
 
@@ -37,6 +42,7 @@ export function useUpdateTaskStatus() {
       updateTaskStatus(id, status),
 
     onMutate: async ({ id, status }) => {
+      beginCompletion(completes(status, [id]))
       await queryClient.cancelQueries({ queryKey: ['tasks'] })
       const { snapshots } = optimisticListUpdate<TaskRow>(
         queryClient, ['tasks'],
@@ -48,7 +54,12 @@ export function useUpdateTaskStatus() {
       return { snapshots }
     },
 
-    onError: (_err, _vars, context) => {
+    onSuccess: (_data, { id, status }) => {
+      settleCompletion(completes(status, [id]), true)
+    },
+
+    onError: (_err, { id, status }, context) => {
+      settleCompletion(completes(status, [id]), false)
       rollbackSnapshots(queryClient, context?.snapshots)
     },
 
@@ -68,6 +79,7 @@ export function useUpdateTask() {
       updateTask(id, fields),
 
     onMutate: async ({ id, fields }) => {
+      beginCompletion(completes(fields.status, [id]))
       await queryClient.cancelQueries({ queryKey: ['tasks'] })
       // Derive completed / completed_at from status so every caller that sends
       // { status } gets a consistent optimistic patch. Without this, filters
@@ -90,7 +102,12 @@ export function useUpdateTask() {
       return { snapshots }
     },
 
-    onError: (_err, _vars, context) => {
+    onSuccess: (_data, { id, fields }) => {
+      settleCompletion(completes(fields.status, [id]), true)
+    },
+
+    onError: (_err, { id, fields }, context) => {
+      settleCompletion(completes(fields.status, [id]), false)
       rollbackSnapshots(queryClient, context?.snapshots)
     },
 
@@ -118,6 +135,7 @@ export function useBulkUpdateTasks() {
       }),
 
     onMutate: async ({ ids, action, value }) => {
+      beginCompletion(action === 'complete' ? ids : action === 'status' ? completes(value, ids) : [])
       await queryClient.cancelQueries({ queryKey: ['tasks'] })
       const { snapshots } = optimisticListUpdate<TaskRow>(
         queryClient, ['tasks'],
@@ -135,7 +153,13 @@ export function useBulkUpdateTasks() {
       return { snapshots }
     },
 
-    onError: (_err, _vars, context) => {
+    // The batch route answers 200 with refused ids in `failed`; only `applied` ids celebrate.
+    onSuccess: (data, { ids, action, value }) => {
+      settleBatchCompletion(action === 'complete' ? ids : action === 'status' ? completes(value, ids) : [], data)
+    },
+
+    onError: (_err, { ids, action, value }, context) => {
+      settleCompletion(action === 'complete' ? ids : action === 'status' ? completes(value, ids) : [], false)
       rollbackSnapshots(queryClient, context?.snapshots)
     },
 

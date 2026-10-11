@@ -72,6 +72,7 @@ import { AttendeeBadge } from '../components/meetings/Attendees'
 import { meetingStatus } from '../lib/meetingStatus'
 import { taskShortLabel } from '../lib/displayNames'
 import SectionHead from '../components/ui/SectionHead'
+import PageHeartbeat from '../components/moments/PageHeartbeat'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -605,6 +606,8 @@ export default function MeetingDetail() {
           <p style={{ fontSize: '15px', color: 'var(--slate)', marginTop: '6px' }}>
             {formatLongDate(meeting.date)}
           </p>
+          {/* The heartbeat line under the title (color-back pick 10). */}
+          <PageHeartbeat />
 
           {/* Facilitator badge — the RECORDED facilitator only. Blank when the
               meeting doesn't carry one (#102). */}

@@ -70,6 +70,7 @@ function ActionBoardCard() {
                           onClick={() => setDetailTask(item)}>
                           {/* C15 DoneBox — canonical square = complete */}
                           <DoneBox
+                            taskId={item.id}
                             done={isTaskDone(item)}
                             onToggle={() => {
                               const prev = item.status

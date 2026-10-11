@@ -2,6 +2,8 @@ import { type ReactNode, useEffect, useState } from 'react'
 import { ArrowRight, ExternalLink, GraduationCap, FlaskConical } from 'lucide-react'
 import Avatar from './Avatar'
 import PublicationCard from './PublicationCard'
+import PageHeartbeat from './moments/PageHeartbeat'
+import HeroNumber, { type HeroNumberProps } from './moments/HeroNumber'
 import type { Publication, Mentee, GrantBucket } from '../data/types'
 import { getMemberBySlug } from '../data/team'
 import { projects } from '../data/projects'
@@ -34,6 +36,8 @@ interface LabPageLayoutProps {
   /** R4-P2-03: portal context uses DM Sans on the name + muted caption.
    *  Public marketing context keeps Fraunces display. */
   portalChrome?: boolean
+  /** Portal only: the page's one telling number under the name (color-back pick 2). */
+  hero?: HeroNumberProps
 }
 
 export default function LabPageLayout({
@@ -49,6 +53,7 @@ export default function LabPageLayout({
   children,
   breadcrumb,
   portalChrome = false,
+  hero,
 }: LabPageLayoutProps) {
   const [activeSection, setActiveSection] = useState<string>('')
 
@@ -115,6 +120,8 @@ export default function LabPageLayout({
               >
                 {credentials ? `${name}, ${credentials}` : name}
               </h1>
+              {/* Portal: the heartbeat line under the title (color-back pick 10). */}
+              {portalChrome && <PageHeartbeat className="pg-hb-tight" />}
               <p
                 className="text-sm mb-1"
                 style={{
@@ -131,6 +138,12 @@ export default function LabPageLayout({
               >
                 {title}
               </p>
+
+              {portalChrome && hero && (
+                <div className="mb-4 flex justify-center lg:justify-start">
+                  <HeroNumber {...hero} />
+                </div>
+              )}
 
               {bio && (
                 <p

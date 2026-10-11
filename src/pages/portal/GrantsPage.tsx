@@ -35,6 +35,7 @@ import { formatMediumDate, isOverdue } from '../../lib/dateUtils'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { GRANT_BAR_FILL, GRANT_BAR_TOP, GRANT_BAR_STROKE } from '../../lib/grantBar'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
+import { NowMarkerSvg } from '../../components/moments/NowMarker'
 
 // ── Gantt chart constants ──────────────────────────────────────
 const CHART_MIN_YEAR = 2023
@@ -242,6 +243,8 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
             <stop offset="0.7" stopColor={GRANT_BAR_FILL} />
           </linearGradient>
         </defs>
+        {/* Today: the shared now marker (color-back pick 4) */}
+        <NowMarkerSvg x={todayX} y1={CHART_PADDING_TOP - 16} y2={chartHeight - CHART_PADDING_BOTTOM + 12} />
 
         {/* Grant bars */}
         {grants.map((grant, index) => {

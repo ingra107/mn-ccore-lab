@@ -20,10 +20,16 @@
 // that looks clickable and goes nowhere is the thing Nick asked us not to
 // build. No rule color either: it is not the day's number. The PillStrip scroll-to-section behavior is gone: the
 // sections are right below, and the link now goes somewhere new.
+//
+// The completion moment (color-back pick 5, 2026-10-11): when the Hub accepts a
+// completion, "done this week" counts up and its rule lights teal for a beat,
+// then rests gray (useConfirmedCount). The caller leaves still-pending
+// completions out of the number, so it can only move on an accepted write.
 
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import type { DailyCounts } from './constants'
+import { useConfirmedCount } from '../../lib/completionMoment'
 
 type Rule = 'o' | 'u' | 'n' | 't'
 
@@ -36,6 +42,8 @@ interface Stat {
   to?: string
   /** Names the destination for screen readers and the hover title. */
   dest?: string
+  /** Lights the rule for a beat (the completion moment). */
+  beat?: boolean
 }
 
 export function StatLine({ counts, doneThisWeek }: { counts: DailyCounts; doneThisWeek?: number }) {
@@ -46,8 +54,9 @@ export function StatLine({ counts, doneThisWeek }: { counts: DailyCounts; doneTh
     { key: 'meetings', value: counts.meetings, label: counts.meetings === 1 ? 'meeting' : 'meetings', rule: 't', to: `${PATHS.meetings}?filter=today`, dest: "Today's meeting records" },
     { key: 'done', value: counts.doneToday, label: 'done', rule: 't', to: `${PATHS.myTasks}?filter=done-today`, dest: 'Tasks done today' },
   ]
+  const week = useConfirmedCount(doneThisWeek ?? 0)
   if (doneThisWeek !== undefined) {
-    stats.push({ key: 'done-week', value: doneThisWeek, label: 'done this week', rule: 'n' })
+    stats.push({ key: 'done-week', value: week.display, label: 'done this week', rule: 'n', beat: week.beat })
   }
   const total = counts.doneToday + counts.planned
   const pct = total > 0 ? Math.round((counts.doneToday / total) * 100) : 0
@@ -62,7 +71,7 @@ export function StatLine({ counts, doneThisWeek }: { counts: DailyCounts; doneTh
       {stats.map((s) => {
         const inner = (
           <>
-            <span className={`tk-rl${s.value > 0 ? ` tk-${s.rule}` : ''}`} aria-hidden="true" />
+            <span className={`tk-rl${s.value > 0 ? ` tk-${s.rule}` : ''}${s.beat ? ' cm-beat' : ''}`} aria-hidden="true" />
             <span>
               <span className="tk-v" style={{ display: 'block' }}>{s.value}</span>
               <span className="tk-l">{s.label}{s.value > 0 && s.to && <span className="tk-ar" aria-hidden="true">&rarr;</span>}</span>

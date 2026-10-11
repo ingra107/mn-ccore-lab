@@ -24,6 +24,7 @@ import { PATHS } from '../constants/paths'
 import { parseDbUtc } from '../lib/time'
 import { ICON_PROPS } from '../lib/iconProps'
 import SectionHead from '../components/ui/SectionHead'
+import PageHeartbeat from '../components/moments/PageHeartbeat'
 
 // ── Stage colors ───────────────────────────────────────────
 
@@ -1405,6 +1406,8 @@ export default function TrajectoryPage() {
             >
               {member.role}
             </p>
+            {/* The heartbeat line under the title (color-back pick 10). */}
+            <PageHeartbeat />
           </div>
         </div>
 
