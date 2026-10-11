@@ -28,7 +28,7 @@ shims in `src/App.tsx` placed outside `RequireAuth`.
 | **Redirects** | `/dashboard`, `/projects/:slug`, ... → `/portal/...` | `<Navigate>` shims; outside `RequireAuth` so bookmarks bounce pre-auth. Nav redesign (2026-10-09): `/portal/personal` → Today; `/portal/artifacts` (index) → Library; `/portal/digest` → Library digest tab; `/portal/ideas` → Projects ideas tab; `/portal/meeting-notes` → Meetings transcripts tab; `/portal/pi/analytics`, `/portal/mentee-milestones`, `/portal/deadline-cascade` → Lab Overview tabs (query kept). |
 
 **API routes** (`/api/*`) are NOT gated by CF Access. Auth enforced
-server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
+server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 
 ## D1 Tables (75 on 2026-07-22; schema v101)
 
@@ -74,7 +74,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 > Route table is `api/index.ts` (Hono declarative). Route handlers live in
 > `api/routes/*.ts` and are untouched by the Hono migration. Middleware
 > chain: OPTIONS → test-mode swap → API-key → authed-user → PI gate
-> (`/api/pb/*` GET) → REQUIRE_AUTH (POST/PUT) → version-bump-on-success.
+> (`/api/pb/*` GET) → write-auth gate (fail-closed) → version-bump-on-success.
 > Never add routes via `url.pathname === ...` — always use
 > `app.get/post('/api/...')`.
 

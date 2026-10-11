@@ -113,16 +113,13 @@ describe('#909 write-auth gate covers every non-GET method, not just POST/PUT', 
     expect(res.status).not.toBe(401)
   })
 
-  it('REQUIRE_AUTH unset (pre-launch default): the middleware itself lets DELETE through, but the artifacts handler still 401s an anonymous caller', async () => {
+  it('HUB_LOCAL_DEV=1 (local dev only): the middleware itself lets DELETE through, but the artifacts handler still 401s an anonymous caller', async () => {
     // Without an Authorization header the resolved user is the anonymous
-    // shim. WRITE_AUTH_METHODS now runs for DELETE regardless of
-    // REQUIRE_AUTH, but requireAuth=false means the middleware itself does
-    // not reject — it falls through to the handler's own isAnonymous()
-    // check (artifacts.ts), which still fails closed. This proves the
-    // second, in-handler layer is unaffected by the middleware fix, and
-    // that unset REQUIRE_AUTH still preserves its documented pre-launch
-    // semantics for this route.
-    const env = makeEnv() // REQUIRE_AUTH left unset
+    // shim. In local dev the write gate does not reject, so the request falls
+    // through to the handler's own isAnonymous() check (artifacts.ts), which
+    // still fails closed. This proves the second, in-handler layer holds even
+    // where the middleware is open.
+    const env = makeEnv({ HUB_LOCAL_DEV: '1' })
     const req = new Request('https://hub.test/api/artifacts/art_1/tags/some-tag', { method: 'DELETE' })
     const res = await worker.fetch(req, env, CTX)
     expect(res.status).toBe(401)

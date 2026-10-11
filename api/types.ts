@@ -14,10 +14,16 @@ export interface Env {
   PB_API_KEY?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;
   CF_ACCESS_AUD?: string;
-  /** "1" in prod — gates write/non-public-GET auth. Read elsewhere via an
-   *  `as unknown` cast historically; typed here so jwt-verify can fail-closed
-   *  when set without verification configured (B8a). */
+  /** "1" in prod. No longer needed to enforce sign-in (a missing value now
+   *  enforces it); an explicit "1" still overrides HUB_LOCAL_DEV. Read only
+   *  through api/lib/auth-mode.ts authEnforced(). */
   REQUIRE_AUTH?: string;
+  /** "1" opens /api to anonymous callers. Local configs only
+   *  (wrangler.local.toml); never set on Pages or the Worker. */
+  HUB_LOCAL_DEV?: string;
+  /** "worker" on the standalone Worker (set in commit 2 of the /api move);
+   *  stamps X-Hub-Runtime: worker on every /api response. Unset on Pages. */
+  HUB_RUNTIME?: string;
   // Airtable secrets removed in CX-S2 (2026-04-28). Pre-removal these
   // configured an Airtable DELETE cascade in handleDeleteProject; Airtable
   // was retired 2026-04-21 and the cascade no longer ran. Variables are

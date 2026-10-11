@@ -32,13 +32,15 @@
 // the other Pages Functions (functions/og, team, a, assets), hub-realtime,
 // console.warn.
 //
-// Test mode: only four doors know their request, so only they send a verified
-// test-mode request's entries to DB_TEST: onError, a rejected waitUntil, an
-// escaping throw in the fetch wrapper, and POST /api/client-errors. A
-// console.error cannot be tied to its request (the Pages Function runtime has
-// no nodejs_compat, so no AsyncLocalStorage: api/routes/mutations.ts records
-// that Buffer is undefined there), so a console.error during a prod e2e
-// request lands in PROD's hub_errors.
+// Request attribution: withErrorLedger runs each fetch and each cron inside an
+// AsyncLocalStorage store of {source, path, target}, so a captured
+// console.error carries its own request's path and lands in DB_TEST for a
+// verified test-mode request, even when a cron and requests interleave in one
+// isolate. AsyncLocalStorage exists only under nodejs_compat (the Worker,
+// vitest); the Pages Function runtime has none, and there a captured
+// console.error falls back to the isolate's last entry point (path NULL,
+// target prod). The fallback goes when /api leaves Pages (PB plan
+// 2026-10-10-api-worker-reconciled.md, commit 3).
 //
 // Re-entrancy: the module keeps `rawError` (console.error as it was at load)
 // and reports its own failures only through it, so a failing flush cannot
@@ -249,14 +251,64 @@ export function _pendingForTests(): { source: ErrorSource; message: string; coun
 
 // ── console.error capture ────────────────────────────────────────────────────
 
+/** What a captured console.error is attributed to: the entry point it ran under. */
+interface LedgerScope {
+  source: ErrorSource
+  path: string | null
+  target: LedgerTarget
+}
+
+interface ScopeStore {
+  run<R>(scope: LedgerScope, fn: () => R): R
+  getStore(): LedgerScope | undefined
+}
+
 /**
- * Which door this isolate serves. Pages runs fetch only and the cron Worker
- * runs scheduled only, so the entry point that last ran names the source of
- * a captured console.error. (No AsyncLocalStorage on Pages: no route
- * attribution, so captured rows carry path NULL and target 'prod'.)
+ * The AsyncLocalStorage that carries a LedgerScope, or null where the runtime
+ * has none. Resolved through process.getBuiltinModule, never a static
+ * `import 'node:async_hooks'`: the Pages build has no nodejs_compat and would
+ * refuse the import. Measured 2026-10-10 under workerd: nodejs_compat (dates
+ * 2024-09-23 and 2026-03-24) exposes getBuiltinModule and ALS carries across
+ * awaits and timers; with no flag (the Pages runtime) `process` is absent.
+ */
+function resolveScopeStore(): ScopeStore | null {
+  try {
+    const proc = (globalThis as { process?: { getBuiltinModule?: (id: string) => unknown } }).process
+    const mod = proc?.getBuiltinModule?.('node:async_hooks') as { AsyncLocalStorage?: new () => ScopeStore } | undefined
+    return mod?.AsyncLocalStorage ? new mod.AsyncLocalStorage() : null
+  } catch {
+    return null // total fallback on the next line: no ALS means the isolate-level attribution below
+  }
+}
+
+let scopeStore: ScopeStore | null = resolveScopeStore()
+
+/**
+ * Fallback when there is no AsyncLocalStorage (Pages): the entry point that
+ * last ran in this isolate. Pages runs fetch only and the cron Worker runs
+ * scheduled only, so it names the source; it cannot name the path or target.
+ * DEPRECATED once /api runs only on the Worker (commit 3 of the move).
  */
 let isolateSource: ErrorSource = 'server'
 let installed = false
+
+/** Test-only: run with or without AsyncLocalStorage (the Pages fallback). */
+export function _setScopeStoreForTests(mode: 'als' | 'none'): void {
+  scopeStore = mode === 'als' ? resolveScopeStore() : null
+}
+
+/** Test-only: whether this runtime resolved an AsyncLocalStorage. */
+export function _hasScopeStoreForTests(): boolean {
+  return scopeStore !== null
+}
+
+function captureScope(): LedgerScope {
+  return scopeStore?.getStore() ?? { source: isolateSource, path: null, target: 'prod' }
+}
+
+function inScope<R>(scope: LedgerScope, fn: () => R): R {
+  return scopeStore ? scopeStore.run(scope, fn) : fn()
+}
 
 function describe(arg: unknown): string {
   if (arg instanceof Error) return `${arg.name}: ${arg.message}`
@@ -264,9 +316,9 @@ function describe(arg: unknown): string {
   try { return JSON.stringify(arg) ?? String(arg) } catch { return String(arg) }
 }
 
-export function entryFromConsoleArgs(args: unknown[], source: ErrorSource): ErrorEntry {
+export function entryFromConsoleArgs(args: unknown[], scope: LedgerScope): ErrorEntry {
   const err = args.find((a): a is Error => a instanceof Error)
-  return { source, message: args.map(describe).join(' '), stack: err?.stack ?? null }
+  return { ...scope, message: args.map(describe).join(' '), stack: err?.stack ?? null }
 }
 
 /** Patch console.error once per isolate: original first, then buffer. */
@@ -277,7 +329,7 @@ export function installConsoleCapture(): void {
   console.error = function ledgerConsoleError(...args: unknown[]) {
     previous.apply(console, args)
     try {
-      recordError(entryFromConsoleArgs(args, isolateSource))
+      recordError(entryFromConsoleArgs(args, captureScope()))
     } catch (e) {
       rawError('[error-ledger] capture failed:', e instanceof Error ? e.message : e)
     }
@@ -331,7 +383,7 @@ export function withErrorLedger<E extends LedgerEnv>(h: LedgerHandlers<E>): Ledg
       const path = new URL(request.url).pathname
       const target: LedgerTarget = testDbRequested(request, env as unknown as Record<string, unknown>) ? 'test' : 'prod'
       try {
-        return await h.fetch(request, env, recordingCtx(ctx, 'server', path, target))
+        return await inScope({ source: 'server', path, target }, () => h.fetch(request, env, recordingCtx(ctx, 'server', path, target)))
       } catch (err) {
         recordError(errorEntry(err, 'server', path, target))
         throw err
@@ -345,7 +397,7 @@ export function withErrorLedger<E extends LedgerEnv>(h: LedgerHandlers<E>): Ledg
       installConsoleCapture()
       isolateSource = 'cron'
       try {
-        await h.scheduled(event, env, recordingCtx(ctx, 'cron', event.cron, 'prod'))
+        await inScope({ source: 'cron', path: event.cron, target: 'prod' }, () => h.scheduled(event, env, recordingCtx(ctx, 'cron', event.cron, 'prod')))
       } catch (err) {
         recordError(errorEntry(err, 'cron', event.cron, 'prod'))
         throw err

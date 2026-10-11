@@ -95,6 +95,7 @@ import { handleDigestPreview, handleSendDailyDigests } from './routes/digest-ema
 import { pruneAllLedgers, monitorD1Health, compactProcessedMutationsJson } from './lib/ledger-retention';
 import { withErrorLedger, logServerError } from './lib/error-ledger';
 import { testDbRequested } from './lib/test-mode';
+import { authEnforced } from './lib/auth-mode';
 import { handleClientErrors, handleHubErrorsWeekly } from './routes/hub-errors';
 import { projectResponseFor } from './lib/pi-only-project-fields';
 import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleSetLinkRole } from './routes/links';
@@ -123,7 +124,7 @@ type AppEnv = {
     /** Authed CF Access user, or null. */
     authedUser: AuthUser | null;
     /** Effective user for handler calls. On writes this falls back to the
-     *  anonymous shim unless REQUIRE_AUTH is set + auth is missing. */
+     *  anonymous shim unless auth is enforced + missing (authEnforced). */
     user: AuthUser;
     /** T2.7: precomputed PI flag (set by the /api/* middleware): a PI
      *  email or a valid PB API key. A privilege flag, not a visibility rule:
@@ -277,7 +278,7 @@ app.use('*', async (c, next) => {
   }
   c.set('apiKeyValid', result);
   // Default "user" — overridden in the POST/PUT gate below once we know
-  // whether REQUIRE_AUTH is set. Kept here so GETs don't NPE if they ever
+  // whether auth is enforced (authEnforced). Kept here so GETs don't NPE if they ever
   // read c.var.user. Resolve authed user ONCE — JWT verify is async + fetches
   // JWKS so we cache the result on the context instead of re-verifying.
   const authed = await getAuthUser(c.req.raw, env);
@@ -301,7 +302,7 @@ app.use('*', async (c, next) => {
   // is a PI email). Nothing is written here: the old ensureTeamMember created
   // a row for every unknown email and claimed rows by email prefix. A lookup
   // failure throws (500), it never admits.
-  const requireAuth = (env as unknown as { REQUIRE_AUTH?: string }).REQUIRE_AUTH === '1';
+  const requireAuth = authEnforced(env);
   let kind: CallerKind;
   if (result === true) kind = 'member';
   else if (authed) kind = (await isTeamMember(env, authed.email)) ? 'member' : 'non-member';
@@ -327,8 +328,8 @@ app.use('/api/pb/*', async (c, next) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 4. Read + member lockdown lives in bindRegistryToHono (api/lib/route-dsl.ts),
-// at the end of this file, keyed on c.var.callerKind (set above). With
-// REQUIRE_AUTH=1 an anonymous caller of a route that is not a public GET gets
+// at the end of this file, keyed on c.var.callerKind (set above). With auth
+// enforced (everywhere but local dev) an anonymous caller of a route that is not a public GET gets
 // 401 before its handler runs; a signed-in non-member gets 403 on every route
 // except a public GET, which it reads through the route's anonShape like an
 // anonymous caller (GET /api/auth/me alone answers it in full). The decision
@@ -360,9 +361,9 @@ app.use('/api/pb/*', async (c, next) => {
 // instead of a silent hole (ethos #15, Level 1: the wrong state — a
 // write method with no auth gate — is unrepresentable, not merely guarded).
 //
-// If REQUIRE_AUTH=1 and neither a CF Access JWT nor a valid API key is
-// present, return 401. Otherwise fall back to the anonymous "Team Member"
-// identity (preserves pre-launch PI-only behavior).
+// If auth is enforced (always, except local dev: api/lib/auth-mode.ts) and
+// neither a CF Access JWT nor a valid API key is present, return 401. In local
+// dev the anonymous "Team Member" identity passes.
 // ─────────────────────────────────────────────────────────────────────────────
 const WRITE_AUTH_METHODS: Record<Exclude<HttpMethod, 'GET'>, true> = {
   POST: true,
@@ -377,7 +378,7 @@ app.use('*', async (c, next) => {
   const env = c.get('env');
   const authedUser = c.get('authedUser');
   const hasApiKey = c.get('apiKeyValid') === true;
-  const requireAuth = (env as unknown as { REQUIRE_AUTH?: string }).REQUIRE_AUTH === '1';
+  const requireAuth = authEnforced(env);
   if (requireAuth && !authedUser && !hasApiKey) {
     return error('Authentication required', 401);
   }
@@ -2516,12 +2517,9 @@ defineRoute({
 
 // Inbox — POST /api/inbox + /api/inbox/sync retired 2026-05-05 (5.3a); use /api/inbox-events/sync-bulk
 
-// Bug report. Once REQUIRE_AUTH is flipped on (team launch), require an
-// authed user OR API key — bug reports create real GitHub Issues and a
-// stranger could otherwise spam the repo. Until then, accept anonymous
-// reports so Nick (sole pre-launch user, can't yet sign in via CF Access)
-// can submit. Pattern mirrors the rest of /api: writes are anonymous-OK
-// pre-launch, gated post-launch via REQUIRE_AUTH=1.
+// Bug report. Require an authed user OR API key — bug reports create real
+// GitHub Issues and a stranger could otherwise spam the repo. Only local dev
+// (HUB_LOCAL_DEV=1, api/lib/auth-mode.ts) accepts an anonymous report.
 defineRoute({
   method: 'POST',
   path: '/api/bug-report',
@@ -2529,7 +2527,7 @@ defineRoute({
   entity: 'bug-report',
   handler: async (c) => {
   const env = E(c);
-  const requireAuth = (env as unknown as { REQUIRE_AUTH?: string }).REQUIRE_AUTH === '1';
+  const requireAuth = authEnforced(env);
   if (requireAuth) {
     const authed = c.get('authedUser');
     // CX-A3 fix (2026-04-28): use validated apiKeyValid flag from
@@ -3025,8 +3023,19 @@ app.notFound(() => error('Not found', 404));
 //   NOTE: cron "*/15 * * * *" was removed in commit 441ec212 (2026-05-05);
 //   the guard here was not updated at the time — fixed in this commit.
 // ─────────────────────────────────────────────────────────────────────────────
+// X-Hub-Runtime: worker marks a response the standalone Worker served, so the
+// post-deploy probe can tell which runtime answered /api once Pages proxies to
+// it (PB plan 2026-10-10-api-worker-reconciled.md, piece 4). Only the Worker
+// sets HUB_RUNTIME=worker; on Pages the response passes through untouched.
+function stampRuntime(res: Response, env: Pick<Env, 'HUB_RUNTIME'>): Response {
+  if (env.HUB_RUNTIME !== 'worker') return res;
+  const out = new Response(res.body, res);
+  out.headers.set('X-Hub-Runtime', 'worker');
+  return out;
+}
+
 export default withErrorLedger<Env>({
-  fetch: (request, env, ctx) => app.fetch(request, env, ctx),
+  fetch: async (request, env, ctx) => stampRuntime(await app.fetch(request, env, ctx), env),
 
   async scheduled(event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     switch (event.cron) {
