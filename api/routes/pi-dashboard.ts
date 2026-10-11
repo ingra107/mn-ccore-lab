@@ -14,6 +14,8 @@ const TRAINEE_SQL = `(tm.member_type IN ('trainee', 'fellow', 'resident')
 // already; this is the server half.
 export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = env): Promise<Response> {
   const [
+    engagement,
+    rt,
     commitmentStats,
     menteeVelocity,
     grantPipeline,
@@ -21,6 +23,8 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
     grantsFunnel,
     projectsByStage,
   ] = await Promise.all([
+    isPi ? computeEngagement(wideEnv) : Promise.resolve(null),
+    isPi ? computeResponseTime(wideEnv, new Date()) : Promise.resolve(null),
     // Commitment completion rate
     env.DB.prepare(`
       SELECT
@@ -86,9 +90,10 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
     `).all(),
   ]);
 
-  // Team engagement: the Lab pulse definition (computeEngagement below), one
-  // helper for both. PI-only: a member gets an empty list and the query is not run.
-  const engagementScores = !isPi ? [] : (await computeEngagement(wideEnv)).members
+  // Engagement and response time are the Lab pulse definitions (computeEngagement /
+  // computeResponseTime below), one helper each so the dashboard and the Lab pulse
+  // routes cannot drift. PI-only: a member gets an empty list and zeros.
+  const engagementScores = engagement ? engagement.members
     .filter((m) => m.active)
     .map((m) => ({
       slug: m.slug,
@@ -97,7 +102,7 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
       updates: m.updates,
       completions: m.completions,
       score: m.score,
-    }));
+    })) : [];
 
   // Compute mentee velocity with per-year rate
   const currentYear = new Date().getFullYear();
@@ -120,13 +125,10 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
     };
   });
 
-  // Response time: the Lab pulse definition (team tasks, computeResponseTime
-  // below), one helper for both. PI-only, like the rest of the lab-wide numbers.
-  const rt = isPi ? await computeResponseTime(wideEnv, new Date()) : null;
   const responseMetrics = {
-    avg_days: rt?.overall.median_days ?? 0,
-    avg_days_recent: rt?.summary.median_days ?? 0,
-    avg_days_prior: rt?.summary.prior_median_days ?? 0,
+    median_days: rt?.overall.median_days ?? 0,
+    median_days_recent: rt?.summary.median_days ?? 0,
+    median_days_prior: rt?.summary.prior_median_days ?? 0,
     trend: !rt ? 'insufficient_data'
       : rt.summary.trend === 'faster' ? 'improving'
       : rt.summary.trend === 'slower' ? 'slowing'
@@ -259,7 +261,8 @@ async function computeResponseTime(env: Env, now: Date) {
     FROM tasks
     WHERE completed = 1 AND completed_at IS NOT NULL AND created_at IS NOT NULL
       AND deleted_at IS NULL AND COALESCE(kind, 'task') = 'task'
-      AND assignee != '' AND assignee != 'nick-ingraham'
+      AND assignee != '' AND assignee != 'nick-ingraham' AND assignee != 'claude-ai'
+      AND assignee NOT IN (SELECT slug FROM team_members WHERE member_type = 'ai' AND slug IS NOT NULL)
       AND julianday(completed_at) - julianday(created_at) >= 1
       AND julianday(?1) - julianday(completed_at) BETWEEN 0 AND 365
     LIMIT 50000
@@ -319,10 +322,14 @@ async function computeResponseTime(env: Env, now: Date) {
 // 2026-10-11) if, in the window, ANY of: a task ASSIGNED to them was completed
 // (tasks.assignee; completed_by is the clicker, and the Hub stamps the PI on
 // nearly every close), they authored a comment or update, or they opened
-// something in the Hub. Comments and updates are read from both stores:
-// activity_entries (kind comment/update, source_table NULL = typed by a person,
-// not a PB progress note, gardener or meeting row; hidden rows left out) and
-// activity_log (type comment/update/project_update). Opening is entity_seen
+// something in the Hub. Comments and updates come from activity_entries only
+// (kind comment/update, source_table NULL = typed by a person, not a PB progress
+// note, gardener or meeting row; hidden rows left out). Every comment and
+// project update is ALSO written to activity_log (tasks.ts, projects.ts), so
+// reading both counted each twice; activity_log's own history (before the P2-A
+// cutover, 2026-06-10) falls outside every window used here. Rows posted
+// through Nick's own session (PB automation under nick-ingraham) count as his:
+// that touches only his row. Opening is entity_seen
 // (POST /api/seen on every detail open), the only durable per-person
 // "was here" mark: it keeps ONE row per entity holding the LATEST view, so a
 // person seen in both windows shows only in the newer one and the prior count
@@ -346,40 +353,34 @@ async function computeEngagement(env: Env) {
     env.DB.prepare(`
       SELECT slug,
         MAX(ts) as last_active,
-        SUM(CASE WHEN ts > datetime('now', '-30 days') AND t = 'comment' THEN 1 ELSE 0 END) as comments,
-        SUM(CASE WHEN ts > datetime('now', '-30 days') AND t != 'comment' THEN 1 ELSE 0 END) as updates,
-        SUM(CASE WHEN ts > datetime('now', '-60 days') AND ts <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_total,
-        MAX(CASE WHEN ts > datetime('now', '-180 days') THEN 1 ELSE 0 END) as recent
+        SUM(CASE WHEN datetime(ts) > datetime('now', '-30 days') AND t = 'comment' THEN 1 ELSE 0 END) as comments,
+        SUM(CASE WHEN datetime(ts) > datetime('now', '-30 days') AND t != 'comment' THEN 1 ELSE 0 END) as updates,
+        SUM(CASE WHEN datetime(ts) > datetime('now', '-60 days') AND datetime(ts) <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_total,
+        MAX(CASE WHEN datetime(ts) > datetime('now', '-180 days') THEN 1 ELSE 0 END) as recent
       FROM (
-        SELECT actor as slug, timestamp as ts,
-          CASE WHEN type = 'comment' THEN 'comment' ELSE 'update' END as t
-        FROM activity_log
-        WHERE actor IS NOT NULL AND type IN ('comment', 'update', 'project_update')
-          AND timestamp > datetime('now', '-365 days')
-        UNION ALL
-        SELECT actor_slug, created_at, kind
+        SELECT actor_slug as slug, created_at as ts, kind as t
         FROM activity_entries
         WHERE kind IN ('comment', 'update') AND source_table IS NULL AND hidden_at IS NULL
-          AND created_at > datetime('now', '-365 days')
+          AND datetime(created_at) > datetime('now', '-365 days')
       )
       GROUP BY slug
     `).all(),
     env.DB.prepare(`
       SELECT assignee as slug,
-        SUM(CASE WHEN completed_at > datetime('now', '-30 days') THEN 1 ELSE 0 END) as completions,
-        SUM(CASE WHEN completed_at <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_completions,
+        SUM(CASE WHEN datetime(completed_at) > datetime('now', '-30 days') THEN 1 ELSE 0 END) as completions,
+        SUM(CASE WHEN datetime(completed_at) <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_completions,
         MAX(completed_at) as last_done
       FROM tasks
-      WHERE completed = 1 AND completed_at > datetime('now', '-60 days')
+      WHERE completed = 1 AND datetime(completed_at) > datetime('now', '-60 days')
         AND deleted_at IS NULL AND COALESCE(kind, 'task') = 'task'
       GROUP BY assignee
     `).all(),
     env.DB.prepare(`
       SELECT viewer_slug as slug, MAX(last_seen_at) as last_seen,
-        MAX(CASE WHEN last_seen_at > datetime('now', '-30 days') THEN 1 ELSE 0 END) as now_seen,
-        MAX(CASE WHEN last_seen_at > datetime('now', '-60 days') AND last_seen_at <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_seen
+        MAX(CASE WHEN datetime(last_seen_at) > datetime('now', '-30 days') THEN 1 ELSE 0 END) as now_seen,
+        MAX(CASE WHEN datetime(last_seen_at) > datetime('now', '-60 days') AND datetime(last_seen_at) <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_seen
       FROM entity_seen
-      WHERE last_seen_at > datetime('now', '-180 days')
+      WHERE datetime(last_seen_at) > datetime('now', '-180 days')
       GROUP BY viewer_slug
     `).all(),
   ]);

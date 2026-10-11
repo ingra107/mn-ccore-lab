@@ -29,6 +29,10 @@ let env: Env
 // SQLite's own clock, in the format the tables store (datetime('now')).
 const at = (days: number) => (db.prepare("SELECT datetime('now', ?) AS t").get(`${days} days`) as { t: string }).t
 const daysAgo = (n: number) => at(-n)
+// A comment or update as the Hub stores it (activity_entries; the composer also
+// writes an activity_log twin, which the engagement count must NOT add again).
+const entry = (id: string, kind: 'comment' | 'update', actor: string, daysBack: number) =>
+  insertRow(db, 'activity_entries', { id, entity_type: 'task', entity_id: 'e-target', kind, actor_slug: actor, body: 'b', created_at: daysAgo(daysBack) })
 
 beforeEach(() => {
   db = prodSchemaDb()
@@ -40,10 +44,10 @@ beforeEach(() => {
   insertRow(db, 'team_members', { id: 'tm-hermes', name: 'Hermes', slug: 'claude-ai', role: 'ai', member_type: 'ai', email: 'claude-ai@umn.edu' })
   // Nate acted this month and last; Casey only last month; the AI and a PB
   // session row must not count.
-  insertRow(db, 'activity_log', { id: 'al-1', type: 'comment', description: 'c', actor: 'nate-mesfin', timestamp: daysAgo(3) })
-  insertRow(db, 'activity_log', { id: 'al-2', type: 'comment', description: 'c', actor: 'nate-mesfin', timestamp: daysAgo(40) })
-  insertRow(db, 'activity_log', { id: 'al-3', type: 'comment', description: 'c', actor: 'casey-eddington', timestamp: daysAgo(45) })
-  insertRow(db, 'activity_log', { id: 'al-4', type: 'comment', description: 'c', actor: 'claude-ai', timestamp: daysAgo(2) })
+  entry('en-1', 'comment', 'nate-mesfin', 3)
+  entry('en-2', 'comment', 'nate-mesfin', 40)
+  entry('en-3', 'comment', 'casey-eddington', 45)
+  entry('en-4', 'comment', 'claude-ai', 2)
   insertRow(db, 'activity_log', { id: 'al-5', type: 'pb_session', description: 'p', actor: 'nick-ingraham', timestamp: daysAgo(1) })
   env = { DB: d1Adapter(db), TEST_MODE_KEY: TEST_KEY, PB_API_KEY: API_KEY, REQUIRE_AUTH: '1' } as unknown as Env
 })
@@ -84,7 +88,7 @@ describe('Lab pulse routes are PI-only', () => {
   it('the denominator counts people who use the Hub: a collaborator who never acts is out, one who acts is in', async () => {
     insertRow(db, 'team_members', { id: 'tm-fac', name: 'Faye Faculty', slug: 'faye-faculty', role: 'Professor', member_type: 'faculty', email: 'faye@umn.edu' })
     insertRow(db, 'team_members', { id: 'tm-mentor', name: 'Sam Mentor', slug: 'sam-mentor', role: 'Professor', member_type: 'senior_mentor', email: 'sam@umn.edu' })
-    insertRow(db, 'activity_log', { id: 'al-9', type: 'comment', description: 'c', actor: 'sam-mentor', timestamp: daysAgo(100) })
+    entry('en-9', 'comment', 'sam-mentor', 100)
     const d = JSON.parse((await get('/api/analytics/team-engagement', PI_EMAIL)).text).data
     const slugs = d.members.map((m: { slug: string }) => m.slug)
     expect(slugs).not.toContain('faye-faculty')
@@ -122,7 +126,7 @@ describe('Lab pulse routes are PI-only', () => {
     insertRow(db, 'projects', { id: 'proj_other', slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active', stage: 'idea' })
     insertRow(db, 'project_members', { project_id: 'proj_other', member_slug: 'casey-eddington', added_by: 'casey-eddington' })
     insertRow(db, 'tasks', { id: 'task_other', project_id: 'proj_other', title: 'x', assignee: 'casey-eddington', status: 'done', completed: 1, kind: 'task', priority: 'high', created_at: at(-12), completed_at: at(-2) })
-    insertRow(db, 'activity_log', { id: 'al-6', type: 'project_update', description: 'u', actor: 'casey-eddington', related_id: 'proj_other', related_type: 'project', timestamp: daysAgo(1) })
+    entry('en-6', 'update', 'casey-eddington', 1)
     const speed = JSON.parse((await get('/api/analytics/response-time', PI_EMAIL)).text).data
     expect(speed.summary.completed).toBe(1)
     expect(speed.summary.median_days).toBe(10)
@@ -159,7 +163,7 @@ describe('Lab pulse routes are PI-only', () => {
     expect(s5.summary.small_sample).toBe(false)
     // the dashboard's response metrics are the same definition: team tasks, median
     const rm = JSON.parse((await get('/api/analytics/pi-dashboard', PI_EMAIL)).text).data.responseMetrics
-    expect(rm).toMatchObject({ avg_days_recent: s5.summary.median_days, total_tasks: 5, trend: 'insufficient_data' })
+    expect(rm).toMatchObject({ median_days_recent: s5.summary.median_days, total_tasks: 5, trend: 'insufficient_data' })
     const member = JSON.parse((await get('/api/analytics/pi-dashboard', MEMBER_EMAIL)).text).data.responseMetrics
     expect(member.total_tasks).toBe(0)
   })
@@ -189,6 +193,38 @@ describe('Lab pulse routes are PI-only', () => {
     const dash = JSON.parse((await get('/api/analytics/pi-dashboard', PI_EMAIL)).text).data.teamEngagement
     expect(dash.map((m: { slug: string }) => m.slug).sort()).toEqual(eng.members.filter((m: { active: boolean }) => m.active).map((m: { slug: string }) => m.slug).sort())
     expect(dash.find((m: { slug: string }) => m.slug === 'dan-shyu')).toMatchObject({ actions: 1, completions: 1, score: 1 })
+  })
+
+  it('real path: a member comment and a project update posted through the worker count ONCE each', async () => {
+    insertRow(db, 'projects', { id: 'proj_real', slug: 'real', title: 'Real', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'project_members', { project_id: 'proj_real', member_slug: 'casey-eddington', added_by: 'casey-eddington' })
+    insertRow(db, 'tasks', { id: 'task_real', project_id: 'proj_real', title: 'x', assignee: 'casey-eddington', status: 'open', completed: 0, kind: 'task', priority: 'high', created_at: at(-3) })
+    const post = async (path: string, body: object) => {
+      const res = await worker.fetch(new Request(`https://hub.test${path}`, {
+        method: 'POST',
+        headers: { 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': MEMBER_EMAIL, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }), env, CTX)
+      return { status: res.status, text: await res.text() }
+    }
+    const c = await post('/api/tasks/task_real/comments', { content: 'hello' })
+    expect(c.status, c.text).toBeLessThan(300)
+    const u = await post('/api/projects/real/updates', { content: 'progress' })
+    expect(u.status, u.text).toBeLessThan(300)
+    // the route really writes both stores; the count must read one
+    expect((db.prepare("SELECT COUNT(*) AS n FROM activity_log WHERE actor = 'casey-eddington' AND type IN ('comment','project_update')").get() as { n: number }).n).toBe(2)
+    const eng = JSON.parse((await get('/api/analytics/team-engagement', PI_EMAIL)).text).data
+    const casey = eng.members.find((m: { slug: string }) => m.slug === 'casey-eddington')
+    expect(casey.comments).toBe(1)
+    expect(casey.updates).toBe(1)
+  })
+
+  it('team tasks leave out an AI assignee', async () => {
+    const base = { title: 'x', status: 'done', completed: 1, kind: 'task', priority: 'high', created_at: at(-12), completed_at: at(-2) }
+    insertRow(db, 'tasks', { id: 'ai-1', ...base, assignee: 'claude-ai' })
+    insertRow(db, 'tasks', { id: 'ai-2', ...base, assignee: 'casey-eddington' })
+    const s = JSON.parse((await get('/api/analytics/response-time', PI_EMAIL)).text).data
+    expect(s.summary.completed).toBe(1)
   })
 
   it('mentee-velocity counts a paper once when two trainees are on it', async () => {

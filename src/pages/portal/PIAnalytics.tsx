@@ -52,9 +52,9 @@ interface PIDashboardData {
     overdue: number
   }
   responseMetrics: {
-    avg_days: number
-    avg_days_recent: number
-    avg_days_prior: number
+    median_days: number
+    median_days_recent: number
+    median_days_prior: number
     trend: 'improving' | 'slowing' | 'stable' | 'insufficient_data'
     total_tasks: number
   }
@@ -299,12 +299,12 @@ export default function PIAnalytics() {
 
     if (data.responseMetrics.trend === 'improving') {
       items.push({
-        text: `Team task completion speed improving: ${data.responseMetrics.avg_days_recent}d median vs. ${data.responseMetrics.avg_days_prior}d prior quarter.`,
+        text: `Team task completion speed improving: ${data.responseMetrics.median_days_recent}d median vs. ${data.responseMetrics.median_days_prior}d prior quarter.`,
         type: 'good',
       })
     } else if (data.responseMetrics.trend === 'slowing') {
       items.push({
-        text: `Team task completion slowing: ${data.responseMetrics.avg_days_recent}d median vs. ${data.responseMetrics.avg_days_prior}d prior quarter.`,
+        text: `Team task completion slowing: ${data.responseMetrics.median_days_recent}d median vs. ${data.responseMetrics.median_days_prior}d prior quarter.`,
         type: 'warning',
       })
     }
@@ -368,7 +368,7 @@ export default function PIAnalytics() {
                 '',
                 `Commitment Rate: ${commitRate}% (${data.commitments.completed}/${data.commitments.total})`,
                 `Overdue: ${data.commitments.overdue}`,
-                `Days to done, team tasks: ${data.responseMetrics.avg_days}d (${data.responseMetrics.trend})`,
+                `Days to done, team tasks: ${data.responseMetrics.median_days}d (${data.responseMetrics.trend})`,
                 `Active Funding: ${data.grantPipeline.active_funding ? formatCurrency(data.grantPipeline.active_funding) : '$0'} (${data.grantPipeline.active} grants)`,
                 `Trainee Pubs: ${data.menteeVelocity.reduce((s, m) => s + m.pub_count, 0)}`,
                 '',
@@ -423,7 +423,7 @@ export default function PIAnalytics() {
           variant="display"
           icon={Clock}
           label="Days to done, team tasks"
-          value={`${data?.responseMetrics.avg_days || 0}d`}
+          value={`${data?.responseMetrics.median_days || 0}d`}
           color="var(--sk-t3)"
           subtitle={data?.responseMetrics.trend === 'improving' ? 'Getting faster' : data?.responseMetrics.trend === 'slowing' ? 'Getting slower' : 'Stable'}
         /></motion.div>
@@ -518,10 +518,10 @@ export default function PIAnalytics() {
                     className="text-3xl font-bold"
                     style={{ color: 'var(--ink)' }}
                   >
-                    {data?.responseMetrics.avg_days || 0}
+                    {data?.responseMetrics.median_days || 0}
                   </span>
                   <span className="text-sm" style={{ color: 'var(--slate)' }}>
-                    days avg
+                    days median
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 mt-1">
@@ -558,7 +558,7 @@ export default function PIAnalytics() {
                     className="text-lg font-semibold"
                     style={{ color: 'var(--sk-t1)' }}
                   >
-                    {data?.responseMetrics.avg_days_recent || 0}d
+                    {data?.responseMetrics.median_days_recent || 0}d
                   </div>
                 </div>
                 <div className="rounded-lg p-3" style={{ backgroundColor: 'rgba(100, 116, 139, 0.04)' }}>
@@ -569,7 +569,7 @@ export default function PIAnalytics() {
                     className="text-lg font-semibold"
                     style={{ color: 'var(--slate)' }}
                   >
-                    {data?.responseMetrics.avg_days_prior || 0}d
+                    {data?.responseMetrics.median_days_prior || 0}d
                   </div>
                 </div>
               </div>
@@ -578,7 +578,7 @@ export default function PIAnalytics() {
               className="text-xs"
               style={{ color: 'var(--slate)', opacity: 0.75 }}
             >
-              Based on {data?.responseMetrics.total_tasks || 0} completed team tasks
+              Based on {data?.responseMetrics.total_tasks || 0} completed team tasks in the last year
             </p>
           </div>
         </div>

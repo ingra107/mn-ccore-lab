@@ -84,16 +84,17 @@ describe('GET /api/health is about the database, not the caller', () => {
     }
     const uses = lines.filter((l) => !l.includes(ORACLE))
     expect(uses).toHaveLength(3)
-    // The third: labWideEnv hands the unscoped handle to a PI only, and exactly
-    // the three Lab pulse routes call it (each also answers a non-PI 403 itself).
+    // The third: labWideEnv hands the unscoped handle to a PI only. The three Lab
+    // pulse routes and the pi-dashboard call it (the pulse routes also answer a
+    // non-PI 403 themselves; the dashboard hands a member empty results).
     const helper = uses.find((l) => l.includes('const labWideEnv'))
     expect(helper, 'labWideEnv').toBeDefined()
     expect(helper!).toContain('PI(c) ?')
-    expect(src.match(/\(labWideEnv\(c\), PI\(c\)\)/g)).toHaveLength(3)
-    for (const route of ['mentee-velocity', 'response-time', 'team-engagement']) {
+    expect(src.match(/labWideEnv\(c\)/g)).toHaveLength(4) // form-independent: 3 routes + the dashboard
+    for (const route of ['mentee-velocity', 'response-time', 'team-engagement', 'pi-dashboard']) {
       const start = src.indexOf(`path: '/api/analytics/${route}'`)
       const end = src.indexOf('defineRoute(', start)
-      expect(src.slice(start, end), route).toContain('(labWideEnv(c), PI(c))')
+      expect(src.slice(start, end), route).toContain('labWideEnv(c)')
     }
     for (const path of ["path: '/api/health'", "path: '/api/digest-email/daily'"]) {
       const start = src.indexOf(path)
