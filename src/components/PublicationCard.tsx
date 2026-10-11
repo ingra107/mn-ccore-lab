@@ -338,7 +338,7 @@ export default function PublicationCard({
                     className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
                     style={{
                       background: 'transparent',
-                      color: copied ? 'var(--green)' : 'var(--slate)',
+                      color: 'var(--slate)',
                       border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
                       minHeight: '32px',
                     }}

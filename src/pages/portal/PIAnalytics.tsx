@@ -378,7 +378,7 @@ export default function PIAnalytics() {
               setTimeout(() => setCopied(false), 2000)
             }}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-            style={{ color: copied ? 'var(--green)' : 'var(--slate)', border: '1px solid var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
+            style={{ color: 'var(--slate)', border: '1px solid var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
           >
             <Copy {...ICON_PROPS} size={11} />
             {copied ? 'Copied' : 'Copy Report'}

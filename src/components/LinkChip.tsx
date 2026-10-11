@@ -53,6 +53,7 @@ export default function LinkChip({
   const stored = resolvedType ? iconForType(resolvedType) : null
   const Icon = stored ? stored.Icon : FallbackIcon
   const color = stored ? stored.color : 'var(--teal)'
+  const glyph = stored ? stored.tint : color
   const { launch } = useProtocolLaunch()
 
   const displayLabel = label ?? typeLabel ?? shortLabelForUrl(url)
@@ -86,7 +87,7 @@ export default function LinkChip({
         ...style,
       }}
     >
-      <Icon {...ICON_PROPS} size={14} aria-hidden="true" />
+      <Icon {...ICON_PROPS} size={14} aria-hidden="true" style={{ color: glyph }} />
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {displayLabel}
       </span>

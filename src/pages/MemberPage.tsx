@@ -291,6 +291,7 @@ export default function MemberPage() {
       links={memberLinks}
       photoUrl={member.photoUrl}
       portalChrome={location.pathname.startsWith('/portal/')}
+      hueSeed={member.slug ?? member.name}
       breadcrumb={<Breadcrumb backTo={teamBase} backLabel="Team" current={formalFullName} />}
       sections={[
         ...(mentee

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { localDateKey } from '../lib/dateUtils'
+import { heatColor } from '../lib/memberHue'
 
 interface ActivityHeatmapProps {
   slug?: string
@@ -57,10 +58,10 @@ export default function ActivityHeatmap({ slug, days = 90 }: ActivityHeatmapProp
     if (count === 0) return 'var(--border-subtle)'
     if (maxCount === 0) return 'var(--border-subtle)'
     const intensity = count / maxCount
-    if (intensity > 0.75) return 'var(--teal)'
-    if (intensity > 0.5) return 'rgba(45,138,138,0.7)'
-    if (intensity > 0.25) return 'rgba(45,138,138,0.4)'
-    return 'rgba(45,138,138,0.2)'
+    if (intensity > 0.75) return heatColor(1)
+    if (intensity > 0.5) return heatColor(0.7)
+    if (intensity > 0.25) return heatColor(0.4)
+    return heatColor(0.2)
   }
 
   const monthLabels = useMemo(() => {
@@ -99,7 +100,7 @@ export default function ActivityHeatmap({ slug, days = 90 }: ActivityHeatmapProp
                 width: 10,
                 height: 10,
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: intensity === 0 ? 'var(--border-subtle)' : `rgba(45,138,138,${0.2 + intensity * 0.8})`,
+                backgroundColor: intensity === 0 ? 'var(--border-subtle)' : heatColor(0.2 + intensity * 0.8),
               }}
             />
           ))}

@@ -429,7 +429,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 })
               }}
               title="Copy task link"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--green)' : 'var(--slate)', padding: 'var(--sp-xs)', opacity: copied ? 1 : 'var(--ink-hint)', transition: 'all 150ms' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)', opacity: copied ? 1 : 'var(--ink-hint)', transition: 'all 150ms' }}
             >
               {copied ? <Check size={14} strokeWidth={1.5} absoluteStrokeWidth /> : <Copy size={14} strokeWidth={1.5} absoluteStrokeWidth />}
             </button>

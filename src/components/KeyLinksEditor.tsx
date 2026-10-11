@@ -57,7 +57,7 @@ function LinkRow({
   const Icon = stored ? stored.Icon : FallbackIcon
   // Mode-A: brand-color glyph on neutral ice/slate pill (Nick 2026-06-17).
   // Labeled chips keep the pill box; only icon-only affordances go borderless.
-  const iconColor = stored ? stored.color : 'var(--teal)'
+  const iconColor = stored ? stored.tint : 'var(--teal)'
   const { launch } = useProtocolLaunch()
 
   // Same label rule as Today's link cards: drop the "(Google Doc)" kind suffix.

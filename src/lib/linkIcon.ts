@@ -40,6 +40,19 @@ export { ICONS_HASH }
 export interface LinkIconSpec {
   Icon: LucideIcon
   color: string  // CSS variable reference, e.g. 'var(--link-google-doc)'
+  /** The glyph color to paint: the same brand hue, dimmer (see dimLinkColor). */
+  tint: string
+}
+
+/**
+ * Link-type icons keep their own colors (red mail, green sheet, blue doc),
+ * dimmer: the brand color mixed toward the gray ramp. Nick, 2026-10-11: "we
+ * just need to have them dimmer but use the colors we are already using for
+ * those... i like the red green blue etc". The strength is ONE knob,
+ * --link-strength in index.css, shared with the Today skin's [data-lk] icons.
+ */
+export function dimLinkColor(color: string): string {
+  return `color-mix(in srgb, ${color} var(--link-strength), var(--sk-t3))`
 }
 
 /**
@@ -87,11 +100,12 @@ const ICON_MAP: Record<string, LinkIconSpec> = Object.fromEntries(
   Object.entries(PB_LINK_ICONS).map(([type, spec]) => {
     const Icon = LUCIDE_REGISTRY[spec.lucide] ?? Globe
     const token = cssTokenForType(type)
-    return [type, { Icon, color: `var(${token})` }]
+    const color = `var(${token})`
+    return [type, { Icon, color, tint: dimLinkColor(color) }]
   })
 )
 
-const FALLBACK: LinkIconSpec = ICON_MAP.web ?? { Icon: Globe, color: 'var(--link-web)' }
+const FALLBACK: LinkIconSpec = ICON_MAP.web ?? { Icon: Globe, color: 'var(--link-web)', tint: dimLinkColor('var(--link-web)') }
 
 /**
  * Returns the Lucide icon component and CSS-variable color for a stored link
