@@ -293,9 +293,14 @@ export async function handleMenteeVelocity(env: Env, isPi: boolean, now = new Da
 
 // ── GET /api/analytics/response-time ───────────────────────
 // Days from a task being made to it being done, as a MEDIAN (a few year-old
-// tasks closed in a clean-up would drag a mean). Real tasks only: not deleted,
-// not a milestone or question. `summary` compares the last 90 days with the 90
-// before; `monthly` is the last 12 months; `byPriority` the last 6.
+// tasks closed in a clean-up would drag a mean). TEAM tasks only (Nick,
+// 2026-10-11): assigned to someone other than nick-ingraham, and not closed
+// within 24 hours of being made (a quick capture is closed in the same breath
+// and says nothing about the team). Not deleted, not a milestone or question.
+// `summary` compares the last 90 days with the 90 before and flags a sample
+// under 5 tasks (`small_sample`); `monthly` is the last 12 months;
+// `byPriority` the last 6, same filter.
+const SMALL_SAMPLE = 5;
 export async function handleResponseTime(env: Env, isPi: boolean, now = new Date()): Promise<Response> {
   if (!isPi) return PI_ONLY();
   const done = await env.DB.prepare(`
@@ -306,7 +311,8 @@ export async function handleResponseTime(env: Env, isPi: boolean, now = new Date
     FROM tasks
     WHERE completed = 1 AND completed_at IS NOT NULL AND created_at IS NOT NULL
       AND deleted_at IS NULL AND COALESCE(kind, 'task') = 'task'
-      AND julianday(completed_at) >= julianday(created_at)
+      AND assignee != '' AND assignee != 'nick-ingraham'
+      AND julianday(completed_at) - julianday(created_at) >= 1
       AND julianday(?1) - julianday(completed_at) BETWEEN 0 AND 365
     LIMIT 50000
   `).bind(now.toISOString()).all();
@@ -346,6 +352,7 @@ export async function handleResponseTime(env: Env, isPi: boolean, now = new Date
         prior_median_days: med(prior),
         completed: recent.length,
         prior_completed: prior.length,
+        small_sample: recent.length < SMALL_SAMPLE,
         trend,
       },
       monthly: [...monthMap.entries()].filter(([month]) => month >= first).sort(([a], [b]) => a.localeCompare(b))
@@ -360,16 +367,22 @@ export async function handleResponseTime(env: Env, isPi: boolean, now = new Date
 // ── GET /api/analytics/team-engagement ─────────────────────
 // Who did anything in the Hub in the last 30 days, against the 30 before.
 // Per-person numbers and the score are the PI's alone. A member is a
-// team_members row with an email, not the AI. `active` is members with at
-// least one logged action or finished task; PB session and sync rows are the
-// PI's automation, not activity, and are left out. Completions come from tasks
-// (completed_by is the finisher's email on every Hub write path, matched to the
-// member by email or slug), not from activity_log: nothing writes
-// 'task_completed' there. A done task with a NULL completed_by (older or PB
-// writes) belongs to no one and is not counted. A completion adds to `total`.
+// team_members row with an email, not the AI. A member is ACTIVE (Nick,
+// 2026-10-11) if, in the window, ANY of: a task ASSIGNED to them was completed
+// (tasks.assignee; completed_by is the clicker, and the Hub stamps the PI on
+// nearly every close), they authored a comment or update, or they opened
+// something in the Hub. Comments and updates are read from both stores:
+// activity_entries (kind comment/update, source_table NULL = typed by a person,
+// not a PB progress note, gardener or meeting row; hidden rows left out) and
+// activity_log (type comment/update/project_update). Opening is entity_seen
+// (POST /api/seen on every detail open), the only durable per-person
+// "was here" mark: it keeps ONE row per entity holding the LATEST view, so a
+// person seen in both windows shows only in the newer one and the prior count
+// can only undercount. There is no login table. `total` is comments + updates
+// + completions; opening counts toward `active` but not `total` or `score`.
 export async function handleTeamEngagement(env: Env, isPi: boolean): Promise<Response> {
   if (!isPi) return PI_ONLY();
-  const [team, log, done] = await Promise.all([
+  const [team, authored, done, seen] = await Promise.all([
     env.DB.prepare(`
       SELECT slug, name, member_type FROM team_members
       WHERE slug IS NOT NULL AND slug != 'claude-ai'
@@ -377,28 +390,43 @@ export async function handleTeamEngagement(env: Env, isPi: boolean): Promise<Res
         AND COALESCE(member_type, '') != 'ai'
     `).all(),
     env.DB.prepare(`
-      SELECT actor as slug,
-        MAX(timestamp) as last_active,
-        SUM(CASE WHEN timestamp > datetime('now', '-30 days') THEN 1 ELSE 0 END) as total,
-        SUM(CASE WHEN timestamp > datetime('now', '-30 days') AND type = 'comment' THEN 1 ELSE 0 END) as comments,
-        SUM(CASE WHEN timestamp > datetime('now', '-30 days') AND type IN ('update', 'project_update') THEN 1 ELSE 0 END) as updates,
-        SUM(CASE WHEN timestamp > datetime('now', '-60 days') AND timestamp <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_total,
-        MAX(CASE WHEN timestamp > datetime('now', '-180 days') THEN 1 ELSE 0 END) as recent
-      FROM activity_log
-      WHERE actor IS NOT NULL AND timestamp > datetime('now', '-365 days')
-        AND COALESCE(type, '') NOT IN ('pb_session', 'sync')
-      GROUP BY actor
+      SELECT slug,
+        MAX(ts) as last_active,
+        SUM(CASE WHEN ts > datetime('now', '-30 days') AND t = 'comment' THEN 1 ELSE 0 END) as comments,
+        SUM(CASE WHEN ts > datetime('now', '-30 days') AND t != 'comment' THEN 1 ELSE 0 END) as updates,
+        SUM(CASE WHEN ts > datetime('now', '-60 days') AND ts <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_total,
+        MAX(CASE WHEN ts > datetime('now', '-180 days') THEN 1 ELSE 0 END) as recent
+      FROM (
+        SELECT actor as slug, timestamp as ts,
+          CASE WHEN type = 'comment' THEN 'comment' ELSE 'update' END as t
+        FROM activity_log
+        WHERE actor IS NOT NULL AND type IN ('comment', 'update', 'project_update')
+          AND timestamp > datetime('now', '-365 days')
+        UNION ALL
+        SELECT actor_slug, created_at, kind
+        FROM activity_entries
+        WHERE kind IN ('comment', 'update') AND source_table IS NULL AND hidden_at IS NULL
+          AND created_at > datetime('now', '-365 days')
+      )
+      GROUP BY slug
     `).all(),
     env.DB.prepare(`
-      SELECT tm.slug as slug,
-        SUM(CASE WHEN t.completed_at > datetime('now', '-30 days') THEN 1 ELSE 0 END) as completions,
-        SUM(CASE WHEN t.completed_at <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_completions,
-        MAX(t.completed_at) as last_done
-      FROM tasks t
-      JOIN team_members tm ON lower(t.completed_by) IN (lower(tm.email), lower(tm.slug))
-      WHERE t.completed = 1 AND t.completed_at > datetime('now', '-60 days')
-        AND t.deleted_at IS NULL AND COALESCE(t.kind, 'task') = 'task'
-      GROUP BY tm.slug
+      SELECT assignee as slug,
+        SUM(CASE WHEN completed_at > datetime('now', '-30 days') THEN 1 ELSE 0 END) as completions,
+        SUM(CASE WHEN completed_at <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_completions,
+        MAX(completed_at) as last_done
+      FROM tasks
+      WHERE completed = 1 AND completed_at > datetime('now', '-60 days')
+        AND deleted_at IS NULL AND COALESCE(kind, 'task') = 'task'
+      GROUP BY assignee
+    `).all(),
+    env.DB.prepare(`
+      SELECT viewer_slug as slug, MAX(last_seen_at) as last_seen,
+        MAX(CASE WHEN last_seen_at > datetime('now', '-30 days') THEN 1 ELSE 0 END) as now_seen,
+        MAX(CASE WHEN last_seen_at > datetime('now', '-60 days') AND last_seen_at <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_seen
+      FROM entity_seen
+      WHERE last_seen_at > datetime('now', '-180 days')
+      GROUP BY viewer_slug
     `).all(),
   ]);
 
@@ -406,49 +434,57 @@ export async function handleTeamEngagement(env: Env, isPi: boolean): Promise<Res
   for (const r of (done.results || []) as Array<{ slug: string; completions: number; prior_completions: number; last_done: string | null }>) {
     doneBy.set(r.slug, r);
   }
+  const seenBy = new Map<string, { last_seen: string; now_seen: number; prior_seen: number }>();
+  for (const r of (seen.results || []) as Array<{ slug: string; last_seen: string; now_seen: number; prior_seen: number }>) seenBy.set(r.slug, r);
 
   const byActor = new Map<string, {
-    last_active: string | null; total: number; comments: number; updates: number; prior_total: number; recent: number
+    last_active: string | null; comments: number; updates: number; prior_total: number; recent: number
   }>();
-  for (const r of (log.results || []) as Array<{ slug: string; last_active: string | null; total: number; comments: number; updates: number; prior_total: number; recent: number }>) {
+  for (const r of (authored.results || []) as Array<{ slug: string; last_active: string | null; comments: number; updates: number; prior_total: number; recent: number }>) {
     byActor.set(r.slug, r);
   }
 
   // Who counts in "N of M": people who use the Hub. Faculty and senior-mentor
   // collaborators (member_type 'faculty' / 'senior_mentor', the directory's own
   // groups, team.ts MEMBER_TYPES) are advisers who mostly never sign in, so one
-  // counts only if the log shows an action in the last 180 days or they finished
-  // a task in the last 60 (the window the task query reads). Every other type
-  // (director, research_team, and the trainee types fellow/resident/trainee that
-  // TRAINEE_SQL names) always counts. A collaborator who never acts is left out of
-  // both the list and the denominator.
-  const byActorRecent = (slug: string) => (byActor.get(slug)?.recent ?? 0) > 0;
+  // counts only if they authored something or opened something in the last 180
+  // days, or had a task finished in the last 60 (the window the task query
+  // reads). Every other type (director, research_team, and the trainee types
+  // fellow/resident/trainee that TRAINEE_SQL names) always counts. A
+  // collaborator who never acts is left out of both the list and the denominator.
+  const byActorRecent = (slug: string) => (byActor.get(slug)?.recent ?? 0) > 0 || seenBy.has(slug);
   const COLLABORATOR = new Set(['faculty', 'senior_mentor']);
   const roster = ((team.results || []) as Array<{ slug: string; name: string; member_type: string | null }>).filter((m) =>
     !COLLABORATOR.has(m.member_type ?? '') || byActorRecent(m.slug) || doneBy.has(m.slug));
   const members = roster.map((m) => {
     const a = byActor.get(m.slug);
     const d = doneBy.get(m.slug);
+    const v = seenBy.get(m.slug);
+    const comments = a?.comments ?? 0;
+    const updates = a?.updates ?? 0;
     const completions = d?.completions ?? 0;
-    const total = (a?.total ?? 0) + completions;
+    const total = comments + updates + completions;
     const priorTotal = (a?.prior_total ?? 0) + (d?.prior_completions ?? 0);
-    const last = [a?.last_active, d?.last_done].filter((x): x is string => !!x).sort().pop() ?? null;
+    const last = [a?.last_active, d?.last_done, v?.last_seen].filter((x): x is string => !!x).sort().pop() ?? null;
     return {
       slug: m.slug,
       name: m.name,
       total,
-      comments: a?.comments ?? 0,
-      updates: a?.updates ?? 0,
+      comments,
+      updates,
       completions,
-      score: (a?.comments ?? 0) * 3 + (a?.updates ?? 0) * 2 + completions,
+      opened: !!v?.now_seen,
+      active: total > 0 || !!v?.now_seen,
+      prior_active: priorTotal > 0 || !!v?.prior_seen,
+      score: comments * 3 + updates * 2 + completions,
       prior_total: priorTotal,
       trend: total > priorTotal ? 'up' : total < priorTotal ? 'down' : 'flat',
       last_active: last,
     };
   }).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
 
-  const active = members.filter((m) => m.total > 0).length;
-  const priorActive = members.filter((m) => m.prior_total > 0).length;
+  const active = members.filter((m) => m.active).length;
+  const priorActive = members.filter((m) => m.prior_active).length;
   return noStore(json({
     data: {
       members,

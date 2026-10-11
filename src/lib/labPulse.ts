@@ -1,7 +1,7 @@
 // Lab pulse -- the numbers behind the PI Analytics section and the one line on
 // Today (Nick, 2026-10-11). Three PI-only routes feed it:
 //   GET /api/analytics/mentee-velocity   trainee pubs a year
-//   GET /api/analytics/response-time     days from a task made to it done
+//   GET /api/analytics/response-time     days from a team task made to it done
 //   GET /api/analytics/team-engagement   who was active, and per person
 // api/routes/pi-dashboard.ts decides each number; this file only names the
 // shapes and turns them into the words on the line.
@@ -20,6 +20,8 @@ export interface SpeedPulse {
     prior_median_days: number
     completed: number
     prior_completed: number
+    /** Fewer than 5 team tasks in the 90 days: show the number, hint that it is thin. */
+    small_sample: boolean
     trend: 'faster' | 'slower' | 'flat' | 'insufficient_data'
   }
   monthly: Array<{ month: string; completed: number; median_days: number }>
@@ -35,6 +37,11 @@ export interface EngagementPulse {
     updates: number
     completions: number
     score: number
+    /** Opened something in the Hub in the last 30 days (counts toward active, not total). */
+    opened: boolean
+    /** Active now / in the 30 days before: a task assigned to them done, a comment or update, or opened. */
+    active: boolean
+    prior_active: boolean
     prior_total: number
     trend: 'up' | 'down' | 'flat'
     last_active: string | null
@@ -94,7 +101,7 @@ export function pulseParts(pubs?: PubsPulse, speed?: SpeedPulse, eng?: Engagemen
   }
   if (speed && speed.summary.completed > 0) {
     const better = speedBetter(speed)
-    parts.push({ key: 'speed', text: `tasks done in ${formatDays(speed.summary.median_days)}`, mark: ARROW[better], better })
+    parts.push({ key: 'speed', text: `team tasks done in ${formatDays(speed.summary.median_days)}${speed.summary.small_sample ? ' (small sample)' : ''}`, mark: ARROW[better], better })
   }
   if (eng && eng.of > 0) {
     const better = activeBetter(eng)

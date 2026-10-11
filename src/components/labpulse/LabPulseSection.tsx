@@ -152,9 +152,9 @@ function SpeedTile() {
   const maxPrio = Math.max(...prio.map((p) => p.median_days), 0)
   const thisMonth = todayCivil().slice(0, 7)
   return (
-    <Tile title="Days to done" note="Median time from a task made to it done">
+    <Tile title="Days to done, team tasks" note="Median time from a task made to it done, for tasks assigned to someone other than Nick, left out if closed within a day">
       {q.isError ? <Unavailable /> : !d ? <Loading /> : d.summary.completed === 0 ? (
-        <p className="text-sm" style={{ color: 'var(--sk-t3)' }}>No tasks finished in the last 90 days.</p>
+        <p className="text-sm" style={{ color: 'var(--sk-t3)' }}>No team tasks finished in the last 90 days.</p>
       ) : (
         <>
           <Hero
@@ -162,8 +162,8 @@ function SpeedTile() {
             unit={daysHero(d.summary.median_days).unit}
             mark={<Mark better={speedBetter(d)} hint={`${d.summary.trend === 'faster' ? 'Faster' : 'Slower'} than the 90 days before`} />}
             caption={d.summary.prior_completed > 0
-              ? `${d.summary.completed} done in 90 days; ${formatDays(d.summary.prior_median_days)} the 90 days before`
-              : `${d.summary.completed} done in the last 90 days`}
+              ? `${d.summary.completed} done in 90 days; ${formatDays(d.summary.prior_median_days)} the 90 days before${d.summary.small_sample ? ' · small sample' : ''}`
+              : `${d.summary.completed} done in the last 90 days${d.summary.small_sample ? ' · small sample' : ''}`}
           />
           <Bars neutral items={d.monthly.map((m) => ({
             label: monthLabel(m.month),
@@ -191,7 +191,7 @@ function ActiveTile() {
   const maxTotal = d ? Math.max(...d.members.map((m) => m.total), 1) : 1
   const delta = d ? Math.abs(d.active - d.prior_active) : 0
   return (
-    <Tile title="Active members this month" note="Any action in the Hub in the last 30 days, against the 30 before">
+    <Tile title="Active members this month" note="A task assigned to them finished, a comment or update written, or something opened in the Hub, in the last 30 days, against the 30 before">
       {q.isError ? <Unavailable /> : !d ? <Loading /> : (
         <>
           <Hero
@@ -202,14 +202,14 @@ function ActiveTile() {
           />
           <div className="flex flex-col gap-1.5 pt-3" style={{ borderTop: '1px solid var(--sk-line)' }} data-testid="lab-pulse-people">
             {d.members.map((m) => {
-              const quiet = m.total === 0 && m.prior_total > 0
+              const quiet = !m.active && m.prior_active
               return (
                 <RowBar
                   key={m.slug}
                   label={nameOf(m)}
                   value={m.total}
                   max={maxTotal}
-                  text={quiet ? 'quiet' : String(m.total)}
+                  text={quiet ? 'quiet' : m.total === 0 && m.opened ? 'opened' : String(m.total)}
                   stale={quiet}
                   title={`${m.total} actions in 30 days (${m.prior_total} before) · score ${m.score}`}
                 />

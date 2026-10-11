@@ -5,7 +5,7 @@ const pubs = (trend: PubsPulse['pace']['trend'], per_year = 2.4): PubsPulse => (
   mentees: [], perYear: [], pace: { per_year, last_year: 3, earlier_per_year: 2, trend },
 })
 const speed = (trend: SpeedPulse['summary']['trend'], median_days = 6): SpeedPulse => ({
-  summary: { median_days, prior_median_days: 7, completed: 40, prior_completed: 35, trend }, monthly: [], byPriority: [],
+  summary: { median_days, prior_median_days: 7, completed: 40, prior_completed: 35, small_sample: false, trend }, monthly: [], byPriority: [],
 })
 const eng = (active: number, prior_active: number, trend: EngagementPulse['trend']): EngagementPulse => ({
   members: [], active, of: 14, prior_active, trend,
@@ -16,7 +16,7 @@ describe('Lab pulse line', () => {
     const parts = pulseParts(pubs('up'), speed('faster'), eng(9, 11, 'down'))
     expect(parts.map((p) => `${p.text} ${p.mark}`.trim())).toEqual([
       'trainees 2.4 pubs/yr ▲',
-      'tasks done in 6 days ▲',
+      'team tasks done in 6 days ▲',
       '9 of 14 active ▼2',
     ])
   })
@@ -31,6 +31,11 @@ describe('Lab pulse line', () => {
     expect(pulseParts(pubs('insufficient_data'))).toEqual([])
     expect(pulseParts(undefined, { ...speed('flat'), summary: { ...speed('flat').summary, completed: 0 } })).toEqual([])
     expect(pulseParts(undefined, undefined, eng(9, 9, 'flat'))[0].mark).toBe('')
+  })
+
+  it('a thin sample keeps the number and says so', () => {
+    const thin = { ...speed('faster'), summary: { ...speed('faster').summary, completed: 3, small_sample: true } }
+    expect(pulseParts(undefined, thin)[0].text).toBe('team tasks done in 6 days (small sample)')
   })
 
   it('the hero says "Under a day" for a fraction, never "0.4 days"', () => {

@@ -103,7 +103,7 @@ describe('Lab pulse routes are PI-only', () => {
   })
 
   it('days to done has one bar per month, twelve at most, even when a month a year back has rows', async () => {
-    const base = { title: 'x', assignee: 'nick-ingraham', status: 'done', completed: 1, kind: 'task', priority: 'high' }
+    const base = { title: 'x', assignee: 'casey-eddington', status: 'done', completed: 1, kind: 'task', priority: 'high' }
     insertRow(db, 'tasks', { id: 't-now', ...base, created_at: at(-5), completed_at: at(-1) })
     insertRow(db, 'tasks', { id: 't-year', ...base, created_at: at(-370), completed_at: at(-361) })
     const months = JSON.parse((await get('/api/analytics/response-time', PI_EMAIL)).text).data.monthly.map((m: { month: string }) => m.month.slice(5))
@@ -127,18 +127,59 @@ describe('Lab pulse routes are PI-only', () => {
     expect(speed.summary.completed).toBe(1)
     expect(speed.summary.median_days).toBe(10)
     const eng = JSON.parse((await get('/api/analytics/team-engagement', PI_EMAIL)).text).data
-    expect(eng.members.find((m: { slug: string }) => m.slug === 'casey-eddington').total).toBe(1)
+    expect(eng.members.find((m: { slug: string }) => m.slug === 'casey-eddington').total).toBe(2)
     expect(eng.active).toBe(2) // Nate and Casey
   })
 
   it('response-time leaves out deleted tasks, milestones and questions', async () => {
-    const base = { title: 'x', assignee: 'nick-ingraham', status: 'done', completed: 1, priority: 'high', created_at: at(-8), completed_at: at(-2) }
+    const base = { title: 'x', assignee: 'casey-eddington', status: 'done', completed: 1, priority: 'high', created_at: at(-8), completed_at: at(-2) }
     insertRow(db, 'tasks', { id: 't-ok', kind: 'task', ...base })
     insertRow(db, 'tasks', { id: 't-del', kind: 'task', deleted_at: at(-1), ...base })
     insertRow(db, 'tasks', { id: 't-ms', kind: 'milestone', ...base })
     insertRow(db, 'tasks', { id: 't-q', kind: 'question', ...base })
     const speed = JSON.parse((await get('/api/analytics/response-time', PI_EMAIL)).text).data
     expect(speed.summary.completed).toBe(1)
+  })
+
+  it('days to done counts team tasks only: not Nick, not unassigned, not closed within a day; a thin sample is flagged', async () => {
+    const base = { title: 'x', status: 'done', completed: 1, kind: 'task', priority: 'high' }
+    insertRow(db, 'tasks', { id: 'd-1', ...base, assignee: 'casey-eddington', created_at: at(-12), completed_at: at(-2) }) // 10 days
+    insertRow(db, 'tasks', { id: 'd-2', ...base, assignee: 'nate-mesfin', created_at: at(-6), completed_at: at(-2) }) // 4 days
+    insertRow(db, 'tasks', { id: 'd-3', ...base, assignee: 'nick-ingraham', created_at: at(-30), completed_at: at(-2) }) // Nick: out
+    insertRow(db, 'tasks', { id: 'd-4', ...base, assignee: '', created_at: at(-30), completed_at: at(-2) }) // unassigned: out
+    insertRow(db, 'tasks', { id: 'd-5', ...base, assignee: 'casey-eddington', created_at: at(-2.5), completed_at: at(-2) }) // 12 hours: out
+    const s = JSON.parse((await get('/api/analytics/response-time', PI_EMAIL)).text).data
+    expect(s.summary.completed).toBe(2)
+    expect(s.summary.median_days).toBe(7)
+    expect(s.summary.small_sample).toBe(true)
+    expect(s.byPriority).toEqual([{ priority: 'high', count: 2, median_days: 7 }])
+    for (let i = 0; i < 3; i++) insertRow(db, 'tasks', { id: `d-x${i}`, ...base, assignee: 'casey-eddington', created_at: at(-12), completed_at: at(-2) })
+    const s5 = JSON.parse((await get('/api/analytics/response-time', PI_EMAIL)).text).data
+    expect(s5.summary.completed).toBe(5)
+    expect(s5.summary.small_sample).toBe(false)
+  })
+
+  it('active = an assigned task done, a comment or update authored, or something opened; each alone is enough', async () => {
+    insertRow(db, 'team_members', { id: 'tm-dan', name: 'Dan Shyu', slug: 'dan-shyu', role: 'RA', member_type: 'research_team', email: 'dan@umn.edu' })
+    insertRow(db, 'team_members', { id: 'tm-bea', name: 'Bea Open', slug: 'bea-open', role: 'RA', member_type: 'research_team', email: 'bea@umn.edu' })
+    insertRow(db, 'team_members', { id: 'tm-cy', name: 'Cy Idle', slug: 'cy-idle', role: 'RA', member_type: 'research_team', email: 'cy@umn.edu' })
+    // Dan: a task assigned to him, finished by the PI (completed_by = the PI's email).
+    insertRow(db, 'tasks', { id: 'a-1', title: 'x', assignee: 'dan-shyu', status: 'done', completed: 1, kind: 'task', priority: 'high', created_at: at(-9), completed_at: at(-2), completed_by: PI_EMAIL })
+    // Bea: only opened a task. Cy: nothing. Casey: a comment kept in activity_entries.
+    insertRow(db, 'entity_seen', { entity_type: 'task', entity_id: 'a-1', viewer_slug: 'bea-open', last_seen_at: at(-1) })
+    insertRow(db, 'activity_entries', { id: 'e-1', entity_type: 'task', entity_id: 'a-1', kind: 'comment', actor_slug: 'casey-eddington', body: 'b', created_at: at(-3) })
+    // Not authored by a person: a PB progress note and a hidden comment.
+    insertRow(db, 'activity_entries', { id: 'e-2', entity_type: 'task', entity_id: 'a-1', kind: 'update', actor_slug: 'cy-idle', body: 'b', source_table: 'pb_progress_note', created_at: at(-3) })
+    insertRow(db, 'activity_entries', { id: 'e-3', entity_type: 'task', entity_id: 'a-1', kind: 'comment', actor_slug: 'cy-idle', body: 'b', hidden_at: at(-1), created_at: at(-3) })
+    const eng = JSON.parse((await get('/api/analytics/team-engagement', PI_EMAIL)).text).data
+    const by = (slug: string) => eng.members.find((m: { slug: string }) => m.slug === slug)
+    expect(by('dan-shyu')).toMatchObject({ completions: 1, active: true, score: 1 })
+    expect(by('bea-open')).toMatchObject({ total: 0, opened: true, active: true })
+    expect(by('cy-idle')).toMatchObject({ active: false })
+    expect(by('casey-eddington')).toMatchObject({ comments: 1, active: true })
+    expect(by('nick-ingraham').completions).toBe(0) // his clicks on Dan's task are not his completion
+    expect(by('nate-mesfin')).toMatchObject({ comments: 1, active: true })
+    expect(eng.active).toBe(4)
   })
 
   it('mentee-velocity counts a paper once when two trainees are on it', async () => {
@@ -164,17 +205,17 @@ describe('Lab pulse routes are PI-only', () => {
     expect(dash.menteeVelocity.map((m: { slug: string }) => m.slug)).not.toContain('steven-arriaza')
   })
 
-  it('completions come from tasks: counted by completed_by (email or slug), not from activity_log', async () => {
+  it('completions come from tasks: counted by the ASSIGNEE, not completed_by, not activity_log', async () => {
     const base = { title: 'x', assignee: 'nick-ingraham', status: 'done', completed: 1, kind: 'task', priority: 'high', created_at: at(-9) }
-    insertRow(db, 'tasks', { id: 'c-1', completed_at: at(-2), completed_by: MEMBER_EMAIL.toUpperCase(), ...base })
-    insertRow(db, 'tasks', { id: 'c-2', completed_at: at(-3), completed_by: 'casey-eddington', ...base })
-    insertRow(db, 'tasks', { id: 'c-3', completed_at: at(-4), completed_by: null, ...base }) // no finisher: counted for no one
-    insertRow(db, 'tasks', { id: 'c-4', completed_at: at(-5), completed_by: MEMBER_EMAIL, deleted_at: at(-1), ...base })
+    insertRow(db, 'tasks', { id: 'c-1', completed_at: at(-2), completed_by: PI_EMAIL, ...base, assignee: 'casey-eddington' })
+    insertRow(db, 'tasks', { id: 'c-2', completed_at: at(-3), completed_by: 'casey-eddington', ...base, assignee: 'casey-eddington' })
+    insertRow(db, 'tasks', { id: 'c-3', completed_at: at(-4), completed_by: MEMBER_EMAIL, ...base }) // Nick's task, Casey clicked: Nick's, not Casey's
+    insertRow(db, 'tasks', { id: 'c-4', completed_at: at(-5), completed_by: PI_EMAIL, deleted_at: at(-1), ...base, assignee: 'casey-eddington' })
     const d = JSON.parse((await get('/api/analytics/team-engagement', PI_EMAIL)).text).data
     const casey = d.members.find((m: { slug: string }) => m.slug === 'casey-eddington')
     expect(casey.completions).toBe(2)
     expect(casey.score).toBe(2)
-    expect(d.members.reduce((n: number, m: { completions: number }) => n + m.completions, 0)).toBe(2)
+    expect(d.members.find((m: { slug: string }) => m.slug === 'nick-ingraham').completions).toBe(1)
   })
 
   it('no Lab pulse response carries a project name or slug, a task id or a task title', async () => {
