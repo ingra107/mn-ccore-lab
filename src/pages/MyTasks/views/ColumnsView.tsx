@@ -24,7 +24,7 @@ import { OverdueBanner } from './OverdueBanner'
 import { NoTasksMatch, AllCaughtUp, LaneEmpty } from './MyTasksEmpty'
 import {
   GROUP_META, GROUP_ORDER,
-  ACCENT_ORANGE,
+  ACCENT_ORANGE, STATUS_COLOR,
   INK_DIM, INK_MUTED, PAGE_BG,
   daysSince, isTaskDone,
   type GroupKey,
@@ -183,7 +183,7 @@ function rowExtraMeta(task: TaskRow, staleDays: number) {
   if (task.status !== 'waiting_external' && stale <= 0) return null
   return (
     <>
-      {task.status === 'waiting_external' && <Chip color={ACCENT_ORANGE} filled>⏳ waiting</Chip>}
+      {task.status === 'waiting_external' && <Chip color={STATUS_COLOR.waiting_external} filled>⏳ waiting</Chip>}
       {stale > 0 && <Chip color={ACCENT_ORANGE}>{stale}d stale</Chip>}
     </>
   )

@@ -312,7 +312,10 @@ export default function CalendarPage() {
           <div key={type} className="flex items-center gap-1.5">
             {config.mark
               ? <span aria-hidden="true" className="text-[10px]" style={{ color: config.mark }}>◆</span>
-              : <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: config.color, opacity: config.border ? 0.85 : 0.4 }} />}
+              : config.border
+                // An edged chip (meeting) gets an edged swatch, so the key looks like the grid.
+                ? <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: config.bg, border: `1px solid ${config.border}` }} />
+                : <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: config.color, opacity: 0.4 }} />}
             <span className="text-[10px] first-letter:uppercase" style={{ color: 'var(--slate)', opacity: 0.75 }}>
               {type === 'task' ? 'Task due dates' : `${type}s`}
             </span>

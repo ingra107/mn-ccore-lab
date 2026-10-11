@@ -65,7 +65,7 @@ const STAGE_LABELS: Record<typeof STAGES[number], string> = {
 }
 // The edit menu keeps its colored swatches; the row shows the quiet pill.
 const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active', color: 'var(--green)' },
+  { value: 'active', label: 'Active', color: 'var(--task-accent-teal)' },
   { value: 'waiting_external', label: 'Waiting', color: 'var(--st-waiting)' },
   { value: 'blocked', label: 'Blocked', color: 'var(--st-blocked)' },
   { value: 'done', label: 'Done', color: 'var(--st-done)' },
@@ -591,7 +591,7 @@ export default function ManuscriptsPage() {
                     </div>
                     <div className="flex-1 p-3 flex flex-col justify-between">
                       <div className="flex items-center gap-2 text-[11px]" style={{ color: 'var(--slate)' }}>
-                        <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--green)' }} />
+                        <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--st-done)' }} />
                         Published
                       </div>
                       {doi && (

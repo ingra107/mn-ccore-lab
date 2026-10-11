@@ -579,8 +579,8 @@ export default function DeadlineCascade({
                 </span>
                 {completedCount > 0 && (
                   <span style={{ fontSize: 'var(--label-size)', display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)' }}>
-                    <CheckCircle2 {...ICON_PROPS} size={10} style={{ color: 'var(--green)' }} />
-                    <span style={{ color: 'var(--green)', fontWeight: 500 }}>{completedCount}</span>
+                    <CheckCircle2 {...ICON_PROPS} size={10} style={{ color: 'var(--st-done)' }} />
+                    <span style={{ color: 'var(--st-done)', fontWeight: 500 }}>{completedCount}</span>
                     <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>done</span>
                   </span>
                 )}

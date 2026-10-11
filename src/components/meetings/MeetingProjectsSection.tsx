@@ -121,7 +121,7 @@ export default function MeetingProjectsSection({ meeting, derivedTags = [], allP
           type="button"
           onClick={() => setPicking(!picking)}
           aria-expanded={picking}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', gap: 2, fontFamily: 'inherit' }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--slate)', display: 'inline-flex', alignItems: 'center', gap: 2, fontFamily: 'inherit' }}
         >
           {picking ? 'Done' : <><Plus {...ICON_PROPS} size={11} aria-hidden />add project</>}
         </button>

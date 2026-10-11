@@ -93,8 +93,8 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
                     {bt.title || bt.description}
                   </button>
                   <span className="text-[10px] px-1.5 py-0.5 rounded" style={{
-                    color: bt.status === 'done' ? 'var(--green)' : bt.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)',
-                    background: bt.status === 'done' ? 'rgba(34,197,94,0.1)' : bt.status === 'in_progress' ? 'var(--teal-active)' : 'rgba(100,116,139,0.1)',
+                    color: bt.status === 'done' ? 'var(--st-done)' : bt.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)',
+                    background: bt.status === 'done' ? 'rgba(100,116,139,0.1)' : bt.status === 'in_progress' ? 'var(--teal-active)' : 'rgba(100,116,139,0.1)',
                   }}>
                     {bt.status === 'done' ? 'Done' : bt.status === 'in_progress' ? 'In Progress' : bt.status === 'blocked' ? 'Blocked' : 'To Do'}
                   </span>

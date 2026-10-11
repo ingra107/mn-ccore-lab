@@ -164,7 +164,7 @@ export default function MeetingPrep() {
               )}
               {completedPrev.length > 0 && (
                 <div>
-                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--green)', opacity: 0.85, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--st-done)', opacity: 0.85, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Completed ({completedPrev.length})
                   </p>
                   {completedPrev.map(item => (
@@ -361,7 +361,7 @@ function ActionRow({ item }: { item: { id: string; description: string; assignee
   return (
     <div className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}` }}>
       {item.completed ? (
-        <CheckCircle2 {...ICON_PROPS} size={12} style={{ color: 'var(--green)', flexShrink: 0 }} />
+        <CheckCircle2 {...ICON_PROPS} size={12} style={{ color: 'var(--st-done)', flexShrink: 0 }} />
       ) : (
         <Circle {...ICON_PROPS} size={12} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, flexShrink: 0 }} />
       )}

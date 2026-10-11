@@ -45,7 +45,7 @@ export function LifecycleActivityLine({
   const ev = eventOf(entry)
   const glyph = GLYPH[ev] ?? '⇄'
   const glyphColor =
-    ev === 'created' ? 'var(--gold)' : ev === 'completed' ? 'var(--green)' : 'var(--teal)'
+    ev === 'completed' ? 'var(--st-done)' : 'var(--sk-t3)'
   const who = getPersonInfo(entry.actor_slug)?.name ?? entry.actor_slug
 
   // padding L=15px (3px accent bar + 12px card pad), R=12px → the lifecycle

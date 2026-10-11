@@ -18,10 +18,12 @@ interface QueryErrorNoteProps {
   onRetry: () => void
 }
 
+// The dot is gray: red means overdue and nothing else (color jobs, Nick
+// 2026-10-11). The words "unavailable" and "retry" carry the failure.
 export function QueryErrorNote({ label, onRetry }: QueryErrorNoteProps) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--task-ink-muted)', marginBottom: 10 }}>
-      <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--sk-od)', flexShrink: 0 }} />
+      <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--sk-t2)', flexShrink: 0 }} />
       <span>{label} unavailable</span>
       <button
         onClick={onRetry}

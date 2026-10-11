@@ -60,7 +60,7 @@ import SmartCompose from '../components/SmartCompose'
 import HeartbeatLine from '../components/HeartbeatLine'
 import EntityNotFound from '../components/EntityNotFound'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha, isTaskDone } from '../lib/taskGrouping'
+import { isTaskDone } from '../lib/taskGrouping'
 import { TaskRow as SharedTaskRow } from '../components/tasks/TaskRow'
 import { TaskRowActions } from '../components/tasks/TaskRowActions'
 import { InlineDetail } from './MyTasks/components/InlineDetail'
@@ -545,9 +545,9 @@ export default function MeetingDetail() {
               className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors"
               style={{
                 fontSize: 'var(--label-size)',
-                color: copiedSummary ? 'var(--green)' : 'var(--slate)',
-                border: `1px solid ${copiedSummary ? 'var(--green)' : 'var(--border-subtle)'}`,
-                background: copiedSummary ? 'var(--green-hover)' : 'none',
+                color: 'var(--slate)',
+                border: '1px solid var(--border-subtle)',
+                background: 'none',
                 cursor: 'pointer',
                 opacity: copiedSummary ? 1 : 0.85,
               }}
@@ -613,8 +613,8 @@ export default function MeetingDetail() {
             const facilitatorInfo = meeting.facilitator ? getPersonInfo(meeting.facilitator) : null
             return facilitatorInfo ? (
               <div className="flex items-center gap-2 mt-2">
-                <UserCheck {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
-                <span style={{ fontSize: 'var(--label-size)', color: 'var(--teal)' }}>
+                <UserCheck {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--sk-t3)' }}>
                   Facilitator:
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -1025,9 +1025,9 @@ export default function MeetingDetail() {
                 className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors ml-auto"
                 style={{
                   fontSize: 'var(--label-size)',
-                  color: copiedNotes ? 'var(--green)' : 'var(--slate)',
-                  border: `1px solid ${copiedNotes ? 'var(--green)' : 'var(--border-subtle)'}`,
-                  background: copiedNotes ? 'var(--green-hover)' : 'none',
+                  color: 'var(--slate)',
+                  border: '1px solid var(--border-subtle)',
+                  background: 'none',
                   cursor: 'pointer',
                   opacity: copiedNotes ? 1 : 0.85,
                 }}
@@ -1092,7 +1092,7 @@ export default function MeetingDetail() {
                 <button
                   onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
                   className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'var(--gold-active)', border: 'none', borderRadius: 'var(--radius-md)', padding: 'var(--sp-xs) var(--sp-sm)', cursor: 'pointer', color: 'var(--gold)', fontSize: 'var(--label-size)' }}
+                  style={{ background: 'var(--cream)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: 'var(--sp-xs) var(--sp-sm)', cursor: 'pointer', color: 'var(--slate)', fontSize: 'var(--label-size)' }}
                 >
                   Edit
                 </button>
@@ -1120,10 +1120,7 @@ export default function MeetingDetail() {
 
       <style>{`
         .dark .detail-card { background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important; border: 1px solid var(--border-subtle); }
-        .action-item-row:active { background: var(--gold-hover); }
-        .action-item-row:hover { background: var(--gold-hover); }
-        .dark .action-item-row:active { background: var(--gold-active); }
-        .dark .action-item-row:hover { background: var(--gold-hover); }
+        .action-item-row:active, .action-item-row:hover { background: var(--hover-subtle); }
         .attendee-scroll { scrollbar-width: none; -ms-overflow-style: none; }
         .attendee-scroll::-webkit-scrollbar { display: none; }
         @media (max-width: 640px) {
@@ -1151,13 +1148,13 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
       <button {...listeners} aria-label="Reorder item" className="cursor-grab active:cursor-grabbing mt-1 flex-shrink-0" style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.75 }}>
         <GripVertical {...ICON_PROPS} size={14} />
       </button>
-      <Icon {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
+      <Icon {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)', marginTop: '2px', flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
         <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
           Added by {item.added_by}
           {item.document_url && (
-            <> · <a href={item.document_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)' }}>View document</a></>
+            <> · <a href={item.document_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--slate)', textDecoration: 'underline' }}>View document</a></>
           )}
         </span>
       </div>
@@ -1311,7 +1308,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentCha
           className="flex flex-wrap items-center gap-1.5 mt-1.5 ml-6"
         >
           {parsed.assigneeName && (
-            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'var(--gold-emphasis)', color: 'var(--gold)' }}>
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'var(--hover-subtle)', border: '1px solid var(--border-subtle)', color: 'var(--slate)' }}>
               @{parsed.assigneeName}
             </span>
           )}
@@ -1372,11 +1369,11 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
             disabled={!isAuthenticated && import.meta.env.PROD}
             style={{
               width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
-              background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 'var(--radius-lg)',
+              background: 'var(--cream)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)',
               padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', transition: 'border-color 0.2s',
             }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--gold-emphasis)')}
+            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
+            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
           />
         </div>
         {!isAuthenticated && import.meta.env.PROD && !text.trim() && (
@@ -1389,13 +1386,13 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
             <motion.button type="button" onClick={() => setShowDocInput(!showDocInput)}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
-              style={{ background: 'transparent', border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`, color: 'var(--slate)' }}
+              style={{ background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--slate)' }}
               title="Attach document link">
               <FileText {...ICON_PROPS} size={14} />
             </motion.button>
             <motion.button type="submit" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
               className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
-              style={{ background: 'var(--gold)', color: '#0f1923', border: 'none' }}>
+              style={{ background: 'var(--teal-solid)', color: '#fff', border: 'none' }}>
               <Plus {...ICON_PROPS} size={14} />
             </motion.button>
           </>
@@ -1409,7 +1406,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
               placeholder="Document URL (Google Doc, PDF, etc.)"
               style={{
                 width: '100%', fontSize: '12px', color: 'var(--ink)',
-                background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 'var(--radius-lg)',
+                background: 'var(--cream)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)',
                 padding: '6px 10px', outline: 'none', marginTop: '6px',
               }}
             />
@@ -1470,7 +1467,7 @@ function AttendanceSection({ attendees, updateMeta, canEdit }: { attendees: stri
         {canEdit && (
           <button
             onClick={() => setExpanded(!expanded)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'var(--label-size)', color: 'var(--teal)', padding: 0 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'var(--label-size)', color: 'var(--slate)', padding: 0 }}
           >
             {expanded ? 'Done' : '+ Edit'}
           </button>
@@ -1529,7 +1526,9 @@ function LabToggle({ meeting, updateMeta }: { meeting: MeetingDetailData; update
     color: isLab ? 'var(--teal)' : 'var(--slate)',
     border: `1px solid ${isLab ? 'transparent' : 'var(--border-subtle)'}`,
   }
-  if (!canFlip) return <span title="Every member can see this meeting" style={style}>{label}</span>
+  // Teal marks a SELECTED toggle only (the color-jobs rule). Someone who cannot
+  // flip it sees a plain label, so it gets no accent.
+  if (!canFlip) return <span title="Every member can see this meeting" style={{ ...style, background: 'none', color: 'var(--slate)', border: '1px solid var(--border-subtle)' }}>{label}</span>
   return (
     <button
       type="button"
