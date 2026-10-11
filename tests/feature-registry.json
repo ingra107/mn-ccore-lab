@@ -2694,15 +2694,6 @@
       "covered": false
     },
     {
-      "id": "api-get-pb-dispatch-pending",
-      "component": "api/routes/pb-sector.ts",
-      "type": "api",
-      "description": "GET /api/pb/dispatch/pending — pending dispatch queue",
-      "test_file": null,
-      "test_name": null,
-      "covered": false
-    },
-    {
       "id": "api-post-digest-status",
       "component": "api/routes/digest.ts",
       "type": "api",
@@ -3089,7 +3080,6 @@
     "api-get-pi-analytics",
     "api-get-proactive-brief",
     "api-get-file-activity",
-    "api-get-pb-dispatch-pending",
     "api-post-digest-status",
     "api-post-revisions-create",
     "api-post-meetings-notes",
@@ -3109,9 +3099,9 @@
     "form-publication-search"
   ],
   "summary": {
-    "total": 350,
+    "total": 349,
     "covered": 306,
-    "uncovered": 44,
-    "coverage_pct": 87.4
+    "uncovered": 43,
+    "coverage_pct": 87.7
   }
 }

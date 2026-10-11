@@ -23,8 +23,8 @@
 // shows the raw form teaches it, so it still needs the marker.
 //
 // Escape hatch, unchanged: a line carrying `wrangler-d1-allowed` passes.
-// Exempt paths, unchanged: .github/workflows/ (CI uses a D1-scoped secret),
-// and the wrapper itself.
+// Exempt paths: .github/workflows/ (CI uses a D1-scoped secret), Archive/
+// (archived text is never executed), and the wrapper itself.
 //
 // Usage: node scripts/check-raw-wrangler-d1.mjs   (reads the staged index)
 // Exit 0 = clean, 1 = raw call found, 2 = could not read the staged diff.
@@ -37,7 +37,7 @@ const WRAPPER_NAME = /wrangler-d1|wrangler_d1/
 const ALLOW_MARKER = 'wrangler-d1-allowed'
 
 export function isExempt(path) {
-  return path.startsWith('.github/workflows/') || path === 'scripts/wrangler-d1' || path === 'scripts/wrangler_d1.py'
+  return path.startsWith('.github/workflows/') || path.startsWith('Archive/') || path === 'scripts/wrangler-d1' || path === 'scripts/wrangler_d1.py'
 }
 
 function ext(path) {

@@ -81,3 +81,45 @@ export async function handleCompleteDispatchItem(request: Request, env: Env): Pr
 
   return json({ data: { ok: true } })
 }
+
+// ---- Cut 2026-10-11 (Queue for Claude lane removed, Nick: "cut it all") ----
+// POST /api/pb/dispatch/add — add item to dispatch queue
+export async function handleAddToDispatch(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as {
+    task_id?: string
+    task_title?: string
+    project_slug?: string
+    comment: string
+    comment_type?: 'action' | 'info'
+  }
+  if (!body.comment?.trim()) return error('comment required', 400)
+
+  // Z3.2: canonicalize project_slug before insert so dispatch_queue stores a
+  // stable canonical slug (not a raw id or stale alias).
+  const canonicalProjectSlug = body.project_slug
+    ? await projectRefToCanonical(env, body.project_slug)
+    : null;
+
+  const id = generateId()
+  await env.DB.prepare(
+    'INSERT INTO dispatch_queue (id, task_id, task_title, project_slug, comment, comment_type) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(
+    id,
+    body.task_id || null,
+    body.task_title || null,
+    canonicalProjectSlug,
+    body.comment.trim(),
+    body.comment_type || 'action'
+  ).run()
+
+  await logActivity(env, 'dispatch', `Queued for Claude: ${body.comment.trim().slice(0, 80)}`, user.email)
+  return json({ data: { id } }, 201)
+}
+
+// GET /api/pb/dispatch/pending — get pending dispatch items
+export async function handleGetPendingDispatch(env: Env): Promise<Response> {
+  const items = await env.DB.prepare(
+    "SELECT * FROM dispatch_queue WHERE status = 'pending' ORDER BY created_at ASC"
+  ).all()
+  return json({ data: items.results || [], count: (items.results || []).length })
+}

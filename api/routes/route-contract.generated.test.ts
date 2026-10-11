@@ -174,7 +174,9 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 265 as of 2026-10-11 — dead-weight sweep (-3): POST /api/pb/defer,
     //   /api/pb/dispatch/send, /api/pb/dispatch/complete. Their only caller, the PB
     //   dispatch skill, is archived (Archive/2026-10-11-pb-dispatch-drain/).
-    expect(ROUTE_REGISTRY).toHaveLength(265)
+    // 263 as of 2026-10-11 — Queue for Claude lane cut (-2): POST /api/pb/dispatch/add,
+    //   GET /api/pb/dispatch/pending. The dispatch_queue table stays, no DDL.
+    expect(ROUTE_REGISTRY).toHaveLength(263)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

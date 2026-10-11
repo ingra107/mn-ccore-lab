@@ -65,7 +65,7 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | email_drafts | RETIRING | No reader or writer since the mirror was retired 2026-09-30 (#8836); drop pending in schema-v115 |
 | file_activity_daily | dynamic | Aggregated daily file activity from brain.db (schema v37) |
 | pomodoro_sessions | dynamic | Focus sessions synced from brain.db |
-| dispatch_queue | dynamic | Claude action items from Hub |
+| dispatch_queue | dynamic | Retired: no writer since 2026-10-11 (Queue for Claude cut); table kept |
 | pb_sessions | dynamic | Claude Code session history synced from brain.db |
 | inbox | dynamic | Quick Capture entries (FAB + Ctrl+I); synced nightly to PB Inbox/*.md (Phase 32) |
 
@@ -442,6 +442,6 @@ A few endpoints break the `{ data: ... }` convention. Noted here so client code 
 - `/api/team-members` does **not** exist — use `/api/team`.
 - `/api/calendar` does **not** exist — use `/api/calendar/events`.
 - `/api/pomodoro` does **not** exist; `/api/pb/pomodoro/start`+`/complete` were RETIRED 2026-06-10 (Daily Plan substrate — their only caller was the PBSector timer). Pomodoro telemetry still flows via `POST /api/pb/sessions`/`/bulk` (PB push) + `GET /api/pb/sessions/stats` (TodayPage reads).
-- `/api/dispatch` does **not** exist — use `/api/pb/dispatch/pending` + `/api/pb/dispatch/add` + `/complete`.
+- `/api/dispatch` and `/api/pb/dispatch/*` do **not** exist (the Queue for Claude lane was cut 2026-10-11). The `dispatch_queue` table is kept, no writer.
 - `/api/sessions` does **not** exist — use `/api/pb/sessions`.
 - `/api/grants` is **read + status only**. POST /api/grants does not exist; grants flow in via brain.db sync.

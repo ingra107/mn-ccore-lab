@@ -38,7 +38,7 @@ run_playwright() {
   echo "▸ Running: $name..."
 
   local output
-  output=$(npx playwright test "$file" --reporter=list 2>&1 | tail -5)
+  output=$(npx playwright test --config=playwright.config.prod.ts "$file" --reporter=list 2>&1 | tail -5)
 
   local passed=$(echo "$output" | grep -oP '\d+(?= passed)' || echo "0")
   local failed=$(echo "$output" | grep -oP '\d+(?= failed)' || echo "0")

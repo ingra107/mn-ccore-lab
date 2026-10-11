@@ -15,7 +15,6 @@ import FileUpload from '../FileUpload'
 const RichTextEditor = lazyRoute(() => import('../RichTextEditor'))
 import { useUpdateTask, useUpdateTaskStatus, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useTaskViewTracking } from '../../hooks/useTaskViewTracking'
-import { useAuth } from '../../hooks/useAuth'
 import { useProjects, useDecisions, useTaskLinks } from '../../hooks/useApiData'
 import { QueryErrorNote } from '../QueryErrorNote'
 import StoredLinkChip from '../StoredLinkChip'
@@ -625,7 +624,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           {isMobilePanel ? (
             <OverviewQuickAdd
               taskId={task.id}
-              taskTitle={task.title}
               projectSlug={task.project_id}
               primaryFolder={taskProject?.primary_folder}
               onJumpToTab={(tab) => setActiveTab(tab)}
@@ -641,8 +639,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             >
               <OverviewQuickAdd
                 taskId={task.id}
-                taskTitle={task.title}
-                projectSlug={task.project_id}
+                  projectSlug={task.project_id}
                 primaryFolder={taskProject?.primary_folder}
                 onJumpToTab={(tab) => setActiveTab(tab)}
                 onContentChange={setQuickAddHasContent}
@@ -1511,14 +1508,12 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
 // Mobile: whole component sticks to the panel's scroll-container bottom.
 export function OverviewQuickAdd({
   taskId,
-  taskTitle,
   projectSlug,
   primaryFolder,
   onJumpToTab,
   onContentChange,
 }: {
   taskId: string
-  taskTitle?: string | null
   projectSlug?: string | null
   primaryFolder?: string | null
   onJumpToTab: (tab: Tab) => void
@@ -1527,11 +1522,6 @@ export function OverviewQuickAdd({
   const [mode, setMode] = useState<'note' | 'comment'>('comment')
   const [text, setText] = useState('')
   const [focused, setFocused] = useState(false)
-  const [forHermes, setForHermes] = useState(false)
-  // Queue-for-Claude POSTs /api/pb/dispatch/add, PI-only on the server (403
-  // for anyone else, swallowed below as fire-and-forget), so the toggle is a
-  // PI control. A member never sees it, so forHermes stays false for them.
-  const isPi = useAuth().user.isPi
   const [meOnly, setMeOnly] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   // Instant optimistic preview while the real R2 upload runs in the
@@ -1604,7 +1594,6 @@ export function OverviewQuickAdd({
 
   function reset() {
     setText('')
-    setForHermes(false)
     setMeOnly(false)
   }
 
@@ -1616,19 +1605,6 @@ export function OverviewQuickAdd({
       body: JSON.stringify({ content: body }),
     })
     if (!res.ok) throw new Error('comment failed')
-    if (forHermes) {
-      fetch('/api/pb/dispatch/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          task_id: taskId,
-          task_title: taskTitle ?? null,
-          project_slug: projectSlug ?? null,
-          comment: content,
-          comment_type: 'action',
-        }),
-      }).catch(() => { /* fire-and-forget */ })
-    }
     queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] })
     queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
     queryClient.invalidateQueries({ queryKey: ['activity'] })
@@ -1641,14 +1617,11 @@ export function OverviewQuickAdd({
     // ── @workon/@quickchat: seeded launches (shared routing) ─────────────────
     // CRITICAL SEED ISOLATION: must run before submitComment — the seed
     // persists to launch_log ONLY, never /api/tasks/:id/comments or
-    // /api/pb/dispatch/add (team-visible). useLaunchCommands owns the flow;
+    // anything else team-visible. useLaunchCommands owns the flow;
     // reset() fires only on success, so a failed launch keeps the seed in the
     // textarea for retry.
     if (tryLaunchCommand(v, taskLaunchContext(taskId, { projectSlug, primaryFolder }), reset)) return
     // ── @hermes prefix typed directly: PRIVATE Hermes thread on this task ─────
-    // The Queue-for-Claude toggle (forHermes) posts via comment + dispatch/add —
-    // this queues to the dispatch_queue lane for Nick's next Claude Code session
-    // start, it does not fire a real-time Hermes round-trip (see #520).
     // A direct @hermes prefix is a private ask: intercept before submitComment so
     // it doesn't fall through as team-visible activity (owner decision A).
     if (isHermesPrefix(v)) {
@@ -1915,54 +1888,6 @@ export function OverviewQuickAdd({
               onToggle={() => setMeOnly((v) => !v)}
             />
 
-            {/* Queue-for-Claude toggle — only relevant for comments, pill style.
-                Distinct from the typed @hermes prefix above: this queues the
-                comment to dispatch_queue for Nick's next Claude Code session,
-                it is NOT a real-time Hermes round-trip (#520). */}
-            {mode === 'comment' && isPi && (
-              <button
-                type="button"
-                role="switch"
-                aria-checked={forHermes ? "true" : "false"}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => setForHermes((v) => !v)}
-                aria-label={forHermes ? 'Queued for Claude — click to remove' : 'Queue this comment for your next Claude Code session'}
-                data-tip="Queue for Claude"
-                className="flex-shrink-0 inline-flex items-center gap-1 tip"
-                style={{
-                  height: 22,
-                  paddingLeft: 6,
-                  paddingRight: 6,
-                  borderRadius: 'var(--radius-sm)',
-                  border: forHermes
-                    ? `1px solid ${withAlpha('var(--job-accent)', 40)}`
-                    : '1px solid var(--border-subtle)',
-                  background: forHermes ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                  color: forHermes ? 'var(--job-accent)' : 'var(--slate)',
-                  opacity: forHermes ? 1 : 0.70,
-                  fontWeight: forHermes ? 600 : 400,
-                  fontSize: 10,
-                  whiteSpace: 'nowrap',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  flexShrink: 0,
-                }}
-              >
-                <span
-                  aria-hidden="true"
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: 'var(--radius-circle)',
-                    background: forHermes ? 'var(--job-accent)' : 'var(--slate)',
-                    flexShrink: 0,
-                    opacity: forHermes ? 1 : 0.70,
-                  }}
-                />
-                Queue for Claude
-              </button>
-            )}
-
             {/* Spacer pushes Post + See-all to the right */}
             <span style={{ flex: 1 }} />
 
@@ -1991,13 +1916,11 @@ export function OverviewQuickAdd({
             {text.trim() && (
               <button
                 type="submit"
-                aria-label={mode === 'comment'
-                  ? (forHermes ? 'Post comment and queue for Claude' : 'Post comment')
-                  : 'Add note'}
-                data-tip={`${mode === 'comment' ? (forHermes ? 'Post + queue' : 'Post') : 'Add note'} · Ctrl+Enter`}
+                aria-label={mode === 'comment' ? 'Post comment' : 'Add note'}
+                data-tip={`${mode === 'comment' ? 'Post' : 'Add note'} · Ctrl+Enter`}
                 className="flex-shrink-0 inline-flex items-center justify-center tip tip-end"
                 style={{
-                  background: forHermes && mode === 'comment' ? 'var(--job-accent-solid)' : 'var(--job-accent-solid)',
+                  background: 'var(--job-accent-solid)',
                   color: 'var(--ink-bright, #fff)',
                   border: 'none',
                   borderRadius: 'var(--radius-sm)',

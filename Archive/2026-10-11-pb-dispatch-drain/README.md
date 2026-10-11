@@ -2,4 +2,8 @@ Archived 2026-10-11 (s51 dead-weight lane). Handlers cut from api/routes/pb-sect
 
 Proof: git grep over the Hub finds the names only in api/index.ts and pb-sector.ts. In Peripheral-Brain the URLs appear only in .claude/skills/_archived/orphans/dispatch/SKILL.md.archived. src/, functions/, workers/, tests/ and scripts/ never call them. All three sat behind the PI-only /api/pb/* gate.
 
-Still live: /api/pb/capture, /api/pb/dispatch/add (TaskDetailPanel, TaskIntelligence), /api/pb/dispatch/pending (PB startup hook). Nothing can now move a dispatch_queue row out of 'pending'; that was already true once the completer skill was archived.
+Later the same day (Nick: "cut it all"): the Queue for Claude lane went too. POST /api/pb/dispatch/add and GET /api/pb/dispatch/pending are appended at the end of api/routes/pb-sector.ts here, with the two buttons in TaskDetailPanel (comment composer) and TaskIntelligence (Hermes draft card) that were their only callers. The dispatch_queue table is kept (no DDL), now with no writer.
+
+Still live: /api/pb/capture. SmartCompose's "Queue for Claude" toggle is not this lane: it prefixes the note with @hermes (a real Hermes ask).
+
+PB-FOLLOWUP: the PB startup hook that GETs /api/pb/dispatch/pending now gets a 404.

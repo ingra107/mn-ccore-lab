@@ -76,7 +76,7 @@ import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRe
 import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleAddArtifactComment, handleGetArtifactGallery, handleSearchArtifacts, handleGetArtifactTags, handleAddArtifactTag, handleRemoveArtifactTag } from './routes/artifacts';
 import { escapeHtml } from './lib/escapeHtml';
 import { HUB_URL, isEmailRecipient, raw, sendEmail, warnIfRecipientsMatchNobody } from './lib/email';
-import { handlePBCapture, handleAddToDispatch, handleGetPendingDispatch } from './routes/pb-sector';
+import { handlePBCapture } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
 import { handleGetSessions } from './routes/sessions';
 import { handleLane3List } from './routes/lane3';
@@ -600,13 +600,6 @@ defineRoute({
 // ─────────────────────────────────────────────────────────────────────────────
 // PB sector GETs (PI-gated by middleware above)
 // ─────────────────────────────────────────────────────────────────────────────
-defineRoute({
-  method: 'GET',
-  path: '/api/pb/dispatch/pending',
-  auth: 'pi',
-  entity: 'pb',
-  handler: (c) => handleGetPendingDispatch(E(c)),
-});
 // PI-gated: sessions + lane3 contain private brain.db data. R(c) carries JWT/API-key
 // so isPiRequest inside the handler can distinguish PI/service from team callers.
 // Realtime connect ticket (2026-10-08). The hub-realtime worker refuses a
@@ -2747,13 +2740,6 @@ defineRoute({
   auth: 'pi',
   entity: 'pb',
   handler: (c) => handlePBCapture(R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/pb/dispatch/add',
-  auth: 'pi',
-  entity: 'pb',
-  handler: (c) => handleAddToDispatch(R(c), USER(c), E(c)),
 });
 defineRoute({
   method: 'POST',
