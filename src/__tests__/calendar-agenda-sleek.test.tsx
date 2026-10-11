@@ -40,7 +40,7 @@ function Where() {
   return <output data-where data-navs={seenKeys.size}>{loc.pathname + loc.search}</output>
 }
 
-async function mountAgenda(width = 1000) {
+async function mountAgenda(width = 1000, evs: CalendarEvent[] = events) {
   seenKeys.clear()
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return mount(
@@ -48,11 +48,11 @@ async function mountAgenda(width = 1000) {
       <MemoryRouter initialEntries={['/portal/calendar']}>
         <Where />
         <Routes>
-          <Route path="*" element={<div style={{ width }}><AgendaView events={events} /></div>} />
+          <Route path="*" element={<div style={{ width }}><AgendaView events={evs} /></div>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
-    { ready: (h) => h.querySelectorAll('.sr-row').length === 4, label: 'AgendaView' },
+    { ready: (h) => h.querySelectorAll('.sr-row').length === evs.filter((e) => e.date >= today).length, label: 'AgendaView' },
   )
 }
 
@@ -108,6 +108,21 @@ describe('Calendar Agenda: sleek rows', () => {
     await tick()
     expect(where()).toContain('open=t1')
     expect(navs()).toBe(before + 1)
+  })
+
+  it('a day of tasks only has no empty glyph track; a day with a meeting keeps it', async () => {
+    const tasksOnly: CalendarEvent[] = [
+      { id: 'a1', date: today, title: 'Only a task', type: 'task', category: 'medium', meta: { assignee: 'nick-ingraham', status: 'todo' } },
+      { id: 'b1', date: later, title: 'A meeting', type: 'meeting', category: 'biweekly' },
+      { id: 'b2', date: later, title: 'Beside a meeting', type: 'task', category: 'medium', meta: {} },
+    ]
+    const host = await mountAgenda(1000, tasksOnly)
+    const a1 = host.querySelector('[data-event-id="a1"]') as HTMLElement
+    expect(a1.querySelector('[data-col="kind"]')).toBeNull()
+    expect(a1.querySelector('[data-col="title"]')!.firstElementChild!.firstElementChild!.textContent).toBe('Task')
+    const cols = (a1.closest('.sr') as HTMLElement).style.getPropertyValue('--sr-cols')
+    expect(cols.startsWith('minmax(0,1fr)')).toBe(true)
+    expect(host.querySelector('[data-event-id="b2"] [data-col="kind"]')).not.toBeNull()
   })
 
   it('moves to the phone layout below 640px with the glyph, title, context line and face slots', async () => {

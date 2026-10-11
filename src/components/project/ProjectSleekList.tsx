@@ -181,7 +181,11 @@ export default function ProjectSleekList({
   // column at all when no row has a link or a folder.
   const widths = useMemo(() => {
     const statuses = new Set(projects.map((p) => normalizeProjectStatus(p.status)))
-    const status = statuses.has('waiting_external') ? 124 : statuses.has('blocked') || statuses.has('done') ? 76 : 52
+    // Active is the default and prints nothing, so a list where every row is
+    // Active gets no Status column at all: no header over an empty track
+    // (prod check 2026-10-10: 82 of 90 rows Active, the column read blank).
+    const status = [...statuses].every((s) => s === 'active') ? 0
+      : statuses.has('waiting_external') ? 124 : statuses.has('blocked') || statuses.has('done') ? 76 : 52
     const maxLinks = projects.reduce((m, p) => Math.max(m, linksByProjectId[p.id ?? '']?.length ?? 0), 0)
     const linkSlots = maxLinks > LINKS_SHOWN ? LINKS_SHOWN + 1 : maxLinks
     const workOn = projects.some((p) => p.primary_folder) ? WORK_ON_SLOT : 0
@@ -224,6 +228,8 @@ export default function ProjectSleekList({
             >
               {name}
             </Link>
+            {/* With no Status column, screen readers still hear the status. */}
+            {widths.status === 0 && <span className="sr-only">Active</span>}
             {isGrantProjectType(p.type) && <span className="tk-tag tk-n tip" data-tip={`Grant mechanism: ${p.type}`}>{p.type}</span>}
             {tc > 0 && <span className="sr-m tip" data-tip={`${tc} open task${tc !== 1 ? 's' : ''}`} aria-label={`${tc} open task${tc !== 1 ? 's' : ''}`}>{tc}</span>}
             <PublishedChip project={p} links={publicationsBySlug?.get(p.slug)} onOpen={() => navigate(`${PATHS.project(p.slug)}?tab=literature`)} />
@@ -236,9 +242,9 @@ export default function ProjectSleekList({
         )
       },
     },
-    {
-      key: 'status', label: 'Status', width: `${widths.status}px`, sortable: true, interactive: true, phone: 'line',
-      render: (p) => (
+    ...(widths.status > 0 ? [{
+      key: 'status', label: 'Status', width: `${widths.status}px`, sortable: true, interactive: true, phone: 'line' as const,
+      render: (p: Project) => (
         <InlineSelect
           value={normalizeProjectStatus(p.status)}
           options={STATUS_LIST_OPTIONS}
@@ -248,7 +254,7 @@ export default function ProjectSleekList({
       ),
       // The phone line prints nothing for Active (and leaves no empty tap
       // target); Waiting / Blocked / Done stay editable there.
-      renderPhone: (p) => (normalizeProjectStatus(p.status) === 'active' ? null : (
+      renderPhone: (p: Project) => (normalizeProjectStatus(p.status) === 'active' ? null : (
         <InlineSelect
           value={normalizeProjectStatus(p.status)}
           options={STATUS_LIST_OPTIONS}
@@ -256,7 +262,7 @@ export default function ProjectSleekList({
           display={<StatusText status={p.status} />}
         />
       )),
-    },
+    }] : []),
     {
       key: 'stage', label: 'Stage', width: '112px', sortable: true, interactive: true, phone: 'line',
       render: (p) => (

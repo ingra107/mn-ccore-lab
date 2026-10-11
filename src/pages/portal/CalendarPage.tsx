@@ -583,8 +583,15 @@ function agendaContext(e: CalendarEvent) {
   return null
 }
 
-const agendaColumns: SleekColumn<CalendarEvent>[] = [
-  { key: 'kind', width: '18px', phone: 'lead', render: (e) => <KindGlyph e={e} /> },
+// A task has no glyph, so a day of tasks only would leave an empty lead track
+// and every title ~26px in (prod check 2026-10-10). The kind column exists
+// only on a day that has a meeting or a milestone; the kind word for screen
+// readers rides in the title cell when the column is gone.
+const hasGlyph = (e: CalendarEvent) => e.type === 'meeting' || e.type === 'milestone'
+
+const kindColumn: SleekColumn<CalendarEvent> = { key: 'kind', width: '18px', phone: 'lead', render: (e) => <KindGlyph e={e} /> }
+
+const agendaRestColumns = (withKind: boolean): SleekColumn<CalendarEvent>[] => [
   {
     key: 'title', width: 'minmax(0,1fr)', phone: 'title', interactive: true,
     render: (e) => {
@@ -592,6 +599,7 @@ const agendaColumns: SleekColumn<CalendarEvent>[] = [
       const label = eventLabel(e)
       return (
         <div className="sr-tt">
+          {!withKind && <span className="sr-only">{KIND_WORD[e.type] ?? e.type}</span>}
           {to ? <Link to={to} className="sr-x sr-open sr-lk" title={eventFullTitleHint(e)}>{label}</Link> : <span className="sr-x" title={eventFullTitleHint(e)}>{label}</span>}
           {e.type === 'task' && e.category === 'urgent' && <TaskPriorityLabel priority="urgent" />}
         </div>
@@ -604,6 +612,8 @@ const agendaColumns: SleekColumn<CalendarEvent>[] = [
     render: (e) => (e.type === 'task' && typeof e.meta?.assignee === 'string' && e.meta.assignee ? <Face slug={e.meta.assignee} /> : null),
   },
 ]
+const agendaColumnsWithKind = [kindColumn, ...agendaRestColumns(true)]
+const agendaColumnsNoKind = agendaRestColumns(false)
 
 export function AgendaView({ events }: { events: CalendarEvent[] }) {
   const today = localDateKey()
@@ -630,7 +640,7 @@ export function AgendaView({ events }: { events: CalendarEvent[] }) {
               <h3>{isToday ? 'Today' : formatLongDate(date)}</h3>
               <span className="sr-n">{dayEvents.length}</span>
             </div>
-            <SleekTable columns={agendaColumns} header={false} className="sr-panel">
+            <SleekTable columns={dayEvents.some(hasGlyph) ? agendaColumnsWithKind : agendaColumnsNoKind} header={false} className="sr-panel">
               {dayEvents.map((e) => {
                 const to = eventLinkTo(e)
                 return (

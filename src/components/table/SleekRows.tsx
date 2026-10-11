@@ -102,6 +102,8 @@ export function SleekTable<T>({ columns, sort = null, onSort, header = true, nar
         ref={ref}
         className={`tk sr${narrow ? ' sr-narrow' : ''}${className ? ` ${className}` : ''}`}
         role="table"
+        // Focusable by script only: the header click parks focus here (above).
+        tabIndex={-1}
         style={{ ...style, '--sr-cols': template } as CSSProperties}
       >
         {header && !narrow && (
@@ -119,7 +121,14 @@ export function SleekTable<T>({ columns, sort = null, onSort, header = true, nar
                     <button
                       type="button"
                       className={active ? 'sr-on' : undefined}
-                      onClick={() => onSort(nextSleekSort(sort, c.key))}
+                      onClick={(e) => {
+                        onSort(nextSleekSort(sort, c.key))
+                        // A pointer click hands the keyboard back to the rows, so a
+                        // later j/k/Enter moves or opens the cursor row instead of
+                        // pressing this header again (prod check 2026-10-10). A
+                        // keyboard press (detail 0) keeps focus here so Tab order holds.
+                        if (e.detail > 0) ref.current?.focus({ preventScroll: true })
+                      }}
                       title={active ? (sort.dir === 'asc' ? 'Sorted ascending. Click for descending.' : 'Sorted descending. Click to clear.') : `Sort by ${c.label.toLowerCase()}`}
                     >
                       {c.label}{active && <span aria-hidden="true" className="sr-arr">{sort.dir === 'asc' ? '▴' : '▾'}</span>}

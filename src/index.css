@@ -2744,6 +2744,16 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-ctx .tk-cs{margin:0;min-width:0;flex:0 1 auto;max-width:40%}
 .tk .tk-ctx .tk-sp{flex:1;min-width:0}
 .tk .tk-ctx .tk-faces{flex-shrink:0}
+/* Every context-line item stays inside its card: no item is wider than the
+   line, and a pill's free text (a waiting-on phrase) ellipsizes; the pill's
+   title carries the whole value (prod check 2026-10-10, a Board card's
+   "waiting for Dr. Grandon to respond" ran 72px past the edge). */
+.tk .tk-ctx>*{max-width:100%}
+.tk .tk-ctx>.tk-pill{min-width:0}
+.tk .tk-pill>svg{flex-shrink:0}
+/* min-width keeps a few letters + the ellipsis when the line is tight (the
+   phone list), instead of the name shrinking to nothing beside its label. */
+.tk .tk-pill .tk-pn{min-width:min(3em,max-content);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tk .tk-slots{display:inline-flex;align-items:center;flex-shrink:0}
 .tk .tk-lks{display:inline-flex;align-items:center;justify-content:flex-end;min-width:74px;height:24px}
 .tk .tk-mks{display:inline-grid;place-items:center;width:24px;height:24px}
@@ -2979,6 +2989,8 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 /* A sleek table in a window-scrolled page (Deadlines) docks its header under the portal top bar. */
 .sr.sr-page .sr-hd{top:var(--portal-header-h,0px)}
 .sr.sr-page .sr-row{scroll-margin-top:calc(var(--portal-header-h,0px) + 40px)}
+/* The table takes focus by script after a header click (SleekRows): no ring. */
+.sr:focus,.sr:focus-visible{outline:none}
 .sr .sr-hd button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:3px;border-radius:4px}
 .sr .sr-hd button:hover,.sr .sr-hd button.sr-on{color:var(--sk-t1)}
 .sr .sr-hd button:focus-visible{outline:2px solid var(--sk-ac);outline-offset:2px}

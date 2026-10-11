@@ -413,7 +413,9 @@ export default function ManuscriptsPage() {
             </button>
           </>
         }
-        controlsCount={activeCount}
+        // The rows on screen, published included, so the header and the
+        // footer's Total read one number (prod check 2026-10-10: 28 vs 31).
+        controlsCount={manuscripts.length}
         controlsCountLabel="manuscripts"
         isLoading={isLoading}
         skeletonRows={6}

@@ -196,6 +196,14 @@ describe('Projects list on sleek rows', () => {
     expect(host.querySelector('[data-col="links"]')).toBeNull()
   })
 
+  it('no Status column when every visible row is Active; screen readers still hear Active', async () => {
+    const { host, row } = await render(1100, { projects: [project('alpha'), project('golf')] })
+    const heads = [...host.querySelectorAll('[role="columnheader"]')].map((e) => e.textContent)
+    expect(heads).not.toContain('Status')
+    expect(host.querySelector('[data-col="status"]')).toBeNull()
+    expect(row('alpha').querySelector('[data-col="title"] .sr-only')!.textContent).toBe('Active')
+  })
+
   it('an empty stage reads "No stage" in its group header, never a second "Idea"', async () => {
     const { host } = await render(1100, { projects: [project('alpha', { stage: 'idea' }), project('echo', { stage: '' })], sort: { key: 'stage', dir: 'asc' } })
     const heads = [...host.querySelectorAll('.pj-stage-h > span:first-child')].map((e) => e.textContent)

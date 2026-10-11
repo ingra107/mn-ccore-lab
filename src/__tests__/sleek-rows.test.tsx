@@ -170,6 +170,28 @@ describe('My Tasks Table on sleek rows', () => {
     expect(row('t3').className).toContain('sr-cur')
   })
 
+  it('after a header click, Enter opens the cursor row instead of sorting again', async () => {
+    const { host, setDrawer } = await renderTable()
+    const btn = host.querySelector<HTMLButtonElement>('[role="columnheader"] button')!
+    const head = btn.closest('[role="columnheader"]')!
+    // A mouse click focuses the button first, then fires click with detail 1.
+    btn.focus()
+    click(btn, { detail: 1 }); await tick()
+    expect(head.getAttribute('aria-sort')).toBe('ascending')
+    expect(document.activeElement).toBe(host.querySelector('.sr'))
+    key('Enter')
+    expect(setDrawer).toHaveBeenCalledTimes(1)
+    expect(head.getAttribute('aria-sort')).toBe('ascending')
+  })
+
+  it('a keyboard press on a header keeps focus on it, so Tab order holds', async () => {
+    const { host } = await renderTable()
+    const btn = host.querySelector<HTMLButtonElement>('[role="columnheader"] button')!
+    btn.focus()
+    click(btn, { detail: 0 }); await tick()
+    expect(document.activeElement).toBe(btn)
+  })
+
   it('a title click opens the drawer; a modified title click selects instead', async () => {
     const { row, setDrawer, selectRange } = await renderTable()
     click(row('t2').querySelector('.sr-open')!)
