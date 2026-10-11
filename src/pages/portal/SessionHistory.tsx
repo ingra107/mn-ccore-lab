@@ -34,16 +34,6 @@ function formatTime(dateStr: string): string {
   }
 }
 
-function getProjectColor(name: string): string {
-  // Deterministic color from project name
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const hue = Math.abs(hash) % 360
-  return `hsl(${hue}, 45%, 55%)`
-}
-
 // ── Activity Chart (inline SVG) ────────────────────────────────
 
 function ActivityChart({ data }: { data: { day: string; count: number; total_minutes: number }[] }) {
@@ -482,8 +472,8 @@ export default function SessionHistory() {
                         fontSize: 13,
                         color: 'var(--ink)',
                         borderBottom: '1px solid var(--border-subtle)',
-                        backgroundColor: isFocused ? 'rgba(0,200,180,0.06)' : 'transparent',
-                        outline: isFocused ? '1px solid rgba(0,200,180,0.3)' : 'none',
+                        backgroundColor: isFocused ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
+                        outline: isFocused ? '1px solid color-mix(in srgb, var(--job-accent) 30%, transparent)' : 'none',
                         outlineOffset: -1,
                         borderRadius: 'var(--radius-sm)',
                         minHeight: 36,
@@ -512,7 +502,7 @@ export default function SessionHistory() {
                                 width: 6,
                                 height: 6,
                                 borderRadius: 'var(--radius-circle)',
-                                backgroundColor: getProjectColor(session.project_name),
+                                backgroundColor: 'var(--sk-t3)',
                                 flexShrink: 0,
                               }}
                             />

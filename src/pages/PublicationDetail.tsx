@@ -60,7 +60,7 @@ export default function PublicationDetail() {
   const statusColors: Record<string, { bg: string; color: string }> = {
     Published: { bg: 'var(--sk-line)', color: 'var(--sk-t2)' },
     'In Review': { bg: 'var(--sk-line)', color: 'var(--sk-t2)' },
-    'In Preparation': { bg: 'rgba(100,116,139,0.1)', color: 'var(--slate)' },
+    'In Preparation': { bg: 'var(--sk-line)', color: 'var(--sk-t3)' },
   }
   const sc = statusColors[pub.status] ?? statusColors['In Preparation']
 

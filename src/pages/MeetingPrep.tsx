@@ -167,7 +167,7 @@ export default function MeetingPrep() {
               )}
               {completedPrev.length > 0 && (
                 <div>
-                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--st-done)', opacity: 0.85, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--st-done)', opacity: 0.85, marginBottom: 6 }}>
                     Completed ({completedPrev.length})
                   </p>
                   {completedPrev.map(item => (
