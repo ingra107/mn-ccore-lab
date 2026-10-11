@@ -14,9 +14,17 @@ export const GRANT_STATUS_DOT: Partial<Record<GrantStatus, string>> = {
   planning: 'sr-td', submitted: 'sr-wt', resubmission: 'sr-wt', funded: 'sr-ip',
 }
 
+// A grant with no stored status shows the status its bucket implies, so the
+// pill never contradicts the bucket (api/routes/grant-bucket.ts files a
+// null-status grant as 'active' unless it is marked proposed; the old default
+// showed those active grants as "Planning").
+const BUCKET_DEFAULT_STATUS: Record<GrantTimelineItem['bucket'], GrantStatus> = {
+  active: 'funded', proposed: 'in_preparation', ended: 'closed',
+}
+
 /** The status a row shows: the stored one, or the bucket's default. */
 export function grantStatusOf(g: GrantTimelineItem): GrantStatus {
-  return (g.status as GrantStatus | null) ?? (g.bucket === 'proposed' ? 'in_preparation' : 'planning')
+  return (g.status as GrantStatus | null) ?? BUCKET_DEFAULT_STATUS[g.bucket]
 }
 
 /** Percent of the award period elapsed, funded (active) grants only; 0 otherwise. */

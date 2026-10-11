@@ -9,7 +9,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { useState } from 'react'
 import type { SleekSort } from '../components/table/SleekRows'
 import { GrantSleekList } from '../components/grants/GrantSleekList'
-import { grantAward, grantPeriod, grantProgress, sortGrants } from '../lib/grantRows'
+import { grantAward, grantPeriod, grantProgress, grantStatusOf, sortGrants } from '../lib/grantRows'
 import type { GrantTimelineItem } from '../hooks/useGrantTimeline'
 import { mount, cleanupMountsAfterEach } from './testMount'
 
@@ -65,6 +65,12 @@ describe('grantRows helpers', () => {
     expect(sortGrants(G, { key: 'award', dir: 'asc' }).map((g) => g.id)).toEqual(['dp2', 'k23', 'r01'])
     expect(sortGrants(G, { key: 'status', dir: 'desc' }).map((g) => g.id)[0]).toBe('dp2')
   })
+  it('a grant with no stored status shows the status its bucket implies', () => {
+    expect(grantStatusOf(grant('a', { status: null, bucket: 'active' }))).toBe('funded')
+    expect(grantStatusOf(grant('p', { status: null, bucket: 'proposed' }))).toBe('in_preparation')
+    expect(grantStatusOf(grant('e', { status: null, bucket: 'ended' }))).toBe('closed')
+    expect(grantStatusOf(grant('s', { status: 'submitted', bucket: 'proposed' }))).toBe('submitted')
+  })
   it('progress is for funded (active) grants only', () => {
     expect(grantProgress(G[2], NOW)).toBe(0)
     expect(Math.round(grantProgress(G[0], NOW))).toBe(66)
@@ -117,6 +123,28 @@ describe('GrantSleekList', () => {
     expect(rows()[0].className).toContain('sr-cur')
     key('Escape'); await tick()
     expect(rows().some((r) => r.className.includes('sr-cur'))).toBe(false)
+  })
+
+  it('Enter on a focused button runs the button, not the row detail', async () => {
+    const host = await mount(<Harness />, { ready, label: 'grants' })
+    key('j'); await tick()
+    // A real Enter on a focused control: the browser turns an unprevented Enter
+    // on a button into a click, so the hook must leave it unprevented.
+    const press = (el: HTMLElement) => {
+      el.focus()
+      const ev = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+      el.dispatchEvent(ev)
+      if (!ev.defaultPrevented) el.click()
+      return ev
+    }
+    const sortBtn = host.querySelector('[role="columnheader"] button') as HTMLElement
+    expect(press(sortBtn).defaultPrevented).toBe(false); await tick()
+    expect(host.querySelector('[role="columnheader"]')!.getAttribute('aria-sort')).toBe('ascending')
+    expect(host.querySelector('.gr-detail')).toBeNull()
+    const trigger = host.querySelector('[data-grant-id="r01"] [data-col="status"] button') as HTMLElement
+    expect(press(trigger).defaultPrevented).toBe(false); await tick()
+    expect(document.querySelector('[role="listbox"]')).not.toBeNull()
+    expect(host.querySelector('.gr-detail')).toBeNull()
   })
 
   it('a row click moves the cursor and toggles the detail; the status editor keeps its clicks', async () => {
