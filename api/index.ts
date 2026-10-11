@@ -486,6 +486,12 @@ const PI = (c: Context<AppEnv>) => c.get('isPi') === true;
 // The PB service key: its handle is unscoped, and the file routes let it read
 // a file by key alone.
 const SERVICE = (c: Context<AppEnv>) => c.get('apiKeyValid') === true;
+// Lab pulse (PI Analytics + the Today line) reports lab-wide numbers: how long
+// tasks take, how many members acted, trainee pubs. Nick, 2026-10-11: for a
+// PI-only view, lab-wide is fine. So for a PI (or the PB key) these three
+// routes read the unscoped handle, aggregates only, no row content; everyone
+// else keeps the viewer-bound handle and the handlers answer them 403 anyway.
+const labWideEnv = (c: Context<AppEnv>): Env => (PI(c) ? { ...E(c), DB: c.get('unscopedDb') } : E(c));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Meta + auth endpoints
@@ -672,33 +678,34 @@ defineRoute({
 // PI Analytics
 // ─────────────────────────────────────────────────────────────────────────────
 // /api/pi/analytics retired 2026-05-05 (5.9): 0 callers, overlapped /api/analytics/pi-dashboard
+// The three Lab pulse routes below are PI-only IN the handler (auth:'pi' is documentation).
 defineRoute({
   method: 'GET',
   path: '/api/analytics/pi-dashboard',
   auth: 'authed',
   entity: 'analytics',
-  handler: (c) => handlePIDashboard(E(c)),
+  handler: (c) => handlePIDashboard(E(c), PI(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/analytics/mentee-velocity',
-  auth: 'authed',
+  auth: 'pi',
   entity: 'analytics',
-  handler: (c) => handleMenteeVelocity(E(c)),
+  handler: (c) => handleMenteeVelocity(labWideEnv(c), PI(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/analytics/response-time',
-  auth: 'authed',
+  auth: 'pi',
   entity: 'analytics',
-  handler: (c) => handleResponseTime(E(c)),
+  handler: (c) => handleResponseTime(labWideEnv(c), PI(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/analytics/team-engagement',
-  auth: 'authed',
+  auth: 'pi',
   entity: 'analytics',
-  handler: (c) => handleTeamEngagement(E(c)),
+  handler: (c) => handleTeamEngagement(labWideEnv(c), PI(c)),
 });
 defineRoute({
   method: 'GET',

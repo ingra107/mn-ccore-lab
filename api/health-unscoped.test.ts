@@ -62,7 +62,7 @@ describe('GET /api/health is about the database, not the caller', () => {
     expect(readFileSync(join(__dirname, 'routes/insights.ts'), 'utf8')).toContain("'Cache-Control': 'private, no-store'")
   })
 
-  it('the unscoped handle has exactly two readers: health, and the daily-digest fan-out (which rebinds per recipient)', () => {
+  it('the unscoped handle has exactly three readers: health, the daily-digest fan-out (which rebinds per recipient), and the PI-only Lab pulse helper', () => {
     const src = readFileSync(join(__dirname, 'index.ts'), 'utf8')
     // Plus the slug-claim oracle (api/lib/project-slug.ts), which hands the
     // project create/rename routes one yes/no per value, never the handle:
@@ -81,7 +81,18 @@ describe('GET /api/health is about the database, not the caller', () => {
       expect(block, fn).toContain(path)
     }
     const uses = lines.filter((l) => !l.includes(ORACLE))
-    expect(uses).toHaveLength(2)
+    expect(uses).toHaveLength(3)
+    // The third: labWideEnv hands the unscoped handle to a PI only, and exactly
+    // the three Lab pulse routes call it (each also answers a non-PI 403 itself).
+    const helper = uses.find((l) => l.includes('const labWideEnv'))
+    expect(helper, 'labWideEnv').toBeDefined()
+    expect(helper!).toContain('PI(c) ?')
+    expect(src.match(/\(labWideEnv\(c\), PI\(c\)\)/g)).toHaveLength(3)
+    for (const route of ['mentee-velocity', 'response-time', 'team-engagement']) {
+      const start = src.indexOf(`path: '/api/analytics/${route}'`)
+      const end = src.indexOf('defineRoute(', start)
+      expect(src.slice(start, end), route).toContain('(labWideEnv(c), PI(c))')
+    }
     for (const path of ["path: '/api/health'", "path: '/api/digest-email/daily'"]) {
       const start = src.indexOf(path)
       const end = src.indexOf('defineRoute(', start)

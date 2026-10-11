@@ -3215,6 +3215,13 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .pg-hero-l{font-size:12px;color:var(--sk-t3)}
 a.pg-hero:hover .pg-hero-l,a.pg-hero:focus-visible .pg-hero-l{color:var(--sk-t1);text-decoration:underline;text-underline-offset:3px}
 a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;border-radius:6px}
+/* Lab pulse line on Today (PI only): one gray line under the stat line. An arrow is gray; it turns orange only for a number that is slipping. */
+.lab-pulse-line{display:block;margin:-6px 0 16px;font-size:12.5px;line-height:1.5;color:var(--sk-t3);text-decoration:none}
+.lab-pulse-line-k{color:var(--sk-t2);font-weight:500}
+.lab-pulse-slip{color:var(--job-stale)}
+.lab-pulse-line:hover,.lab-pulse-line:focus-visible{color:var(--sk-t1)}
+.lab-pulse-line:hover .lab-pulse-line-k{text-decoration:underline;text-underline-offset:3px}
+.lab-pulse-line:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;border-radius:6px}
 @media (max-width:640px){.pg-hero-n{font-size:24px}}
 
 /* Pick 10 -- the heartbeat line under a page title: the lab's ECG mark in gray,

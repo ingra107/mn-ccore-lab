@@ -1,10 +1,18 @@
 import type { Env } from '../helpers';
-import { json } from '../helpers';
+import { json, error } from '../helpers';
 import { GRANT_BUCKET_SQL } from './grant-bucket';
+
+// A trainee: the member types the dashboard counts as trainees, or a role that
+// names one. One definition for the dashboard and the Lab pulse routes below.
+const TRAINEE_SQL = `(tm.member_type IN ('trainee', 'fellow', 'resident')
+  OR tm.role LIKE '%Fellow%' OR tm.role LIKE '%Resident%' OR tm.role LIKE '%Student%')`;
 
 // ── GET /api/analytics/pi-dashboard ─────────────────────────
 // Returns all computed metrics for the PI leadership dashboard
-export async function handlePIDashboard(env: Env): Promise<Response> {
+// The per-person engagement rows are PI-only (Nick, 2026-10-11): a member gets
+// the dashboard with that list empty. The page's tab is hidden from them
+// already; this is the server half.
+export async function handlePIDashboard(env: Env, isPi = false): Promise<Response> {
   const [
     commitmentStats,
     responseTime,
@@ -58,7 +66,7 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
         MAX(p.year) as latest_year
       FROM team_members tm
       LEFT JOIN publications p ON p.author_slugs LIKE '%"' || tm.slug || '"%'
-      WHERE tm.member_type IN ('trainee', 'fellow', 'resident') OR tm.role LIKE '%Fellow%' OR tm.role LIKE '%Resident%' OR tm.role LIKE '%Student%'
+      WHERE ${TRAINEE_SQL}
       GROUP BY tm.slug
     `).all(),
 
@@ -165,7 +173,7 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
     };
   });
 
-  // Response time trend (6 month buckets)
+  // Response time: last 90 days against the 90 before
   const rt = responseTime as {
     total_tasks: number;
     avg_days: number | null;
@@ -189,7 +197,7 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
       responseMetrics,
       menteeVelocity: velocityRows,
       grantPipeline: grantPipeline || { total: 0, pending: 0, active: 0, active_funding: 0 },
-      teamEngagement: engagementScores,
+      teamEngagement: isPi ? engagementScores : [],
       pubsByQuarter: (pubsByQuarter.results || []) as Array<{ year: number; quarter: string; count: number }>,
       grantsFunnel: grantsFunnel || { submitted: 0, active: 0 },
       projectsByStage: (projectsByStage.results || []) as Array<{ stage: string; count: number }>,
@@ -197,140 +205,206 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
   });
 }
 
-// ── GET /api/analytics/mentee-velocity ─────────────────────
-// Per-mentee publication rates with monthly breakdown
-export async function handleMenteeVelocity(env: Env): Promise<Response> {
-  // P6-B7: use quoted-value LIKE pattern to avoid slug substring false positives.
-  const mentees = await env.DB.prepare(`
-    SELECT tm.slug, tm.name, p.year, COUNT(p.id) as count
-    FROM team_members tm
-    LEFT JOIN publications p ON p.author_slugs LIKE '%"' || tm.slug || '"%'
-    WHERE (tm.member_type IN ('trainee', 'fellow', 'resident')
-      OR tm.role LIKE '%Fellow%' OR tm.role LIKE '%Resident%' OR tm.role LIKE '%Student%')
-    GROUP BY tm.slug, p.year
-    ORDER BY tm.name, p.year
-  `).all();
+// ── Lab pulse (Nick, 2026-10-11) ───────────────────────────
+// Three PI-only routes behind the "Lab pulse" section of PI Analytics and the
+// one line on Today. Each answers 403 to a non-PI before it reads a row: the
+// route DSL's auth:'pi' is documentation, so the gate is in the handler, the
+// way /api/pb/* and /api/insights/dashboard do it (isPiRequest, resolved once
+// per request into c.get('isPi')). They read through the viewer-bound handle
+// like every other route, so a PI sees what the membership rules let a PI see.
 
-  // Group by mentee
+const PI_ONLY = () => error('Forbidden — PI access only', 403);
+
+function median(xs: number[]): number | null {
+  if (xs.length === 0) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  const mid = s.length >> 1;
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+const round1 = (n: number) => +n.toFixed(1);
+
+// ── GET /api/analytics/mentee-velocity ─────────────────────
+// Trainee publication pace. `perYear` counts each published paper once, even
+// when two trainees are on it; `pace` is the mean of the last three COMPLETE
+// calendar years, `trend` compares the latest complete year with the two
+// before it. `mentees` is the per-trainee list.
+export async function handleMenteeVelocity(env: Env, isPi: boolean, now = new Date()): Promise<Response> {
+  if (!isPi) return PI_ONLY();
+  const year = now.getUTCFullYear();
+
+  // P6-B7: use quoted-value LIKE pattern to avoid slug substring false positives.
+  const [mentees, papers] = await Promise.all([
+    env.DB.prepare(`
+      SELECT tm.slug, tm.name, p.year, COUNT(p.id) as count
+      FROM team_members tm
+      LEFT JOIN publications p ON p.author_slugs LIKE '%"' || tm.slug || '"%'
+      WHERE ${TRAINEE_SQL}
+      GROUP BY tm.slug, p.year
+      ORDER BY tm.name, p.year
+    `).all(),
+    env.DB.prepare(`
+      SELECT p.year, COUNT(*) as count
+      FROM publications p
+      WHERE LOWER(p.status) = 'published' AND p.year >= ?
+        AND EXISTS (
+          SELECT 1 FROM team_members tm
+          WHERE ${TRAINEE_SQL} AND p.author_slugs LIKE '%"' || tm.slug || '"%'
+        )
+      GROUP BY p.year
+    `).bind(year - 4).all(),
+  ]);
+
   const byMentee = new Map<string, { name: string; years: Array<{ year: number; count: number }> }>();
   for (const row of (mentees.results || []) as Array<{ slug: string; name: string; year: number | null; count: number }>) {
-    if (!byMentee.has(row.slug)) {
-      byMentee.set(row.slug, { name: row.name, years: [] });
-    }
-    if (row.year) {
-      byMentee.get(row.slug)!.years.push({ year: row.year, count: row.count });
-    }
+    if (!byMentee.has(row.slug)) byMentee.set(row.slug, { name: row.name, years: [] });
+    if (row.year) byMentee.get(row.slug)!.years.push({ year: row.year, count: row.count });
   }
-
-  const data = [...byMentee.entries()].map(([slug, info]) => ({
+  const menteeRows = [...byMentee.entries()].map(([slug, info]) => ({
     slug,
     name: info.name,
     years: info.years,
     total: info.years.reduce((s, y) => s + y.count, 0),
   }));
 
-  return json({ data });
+  const counts = new Map<number, number>();
+  for (const r of (papers.results || []) as Array<{ year: number; count: number }>) counts.set(r.year, r.count);
+  const perYear = Array.from({ length: 5 }, (_, i) => {
+    const y = year - 4 + i;
+    return { year: y, count: counts.get(y) ?? 0, partial: y === year };
+  });
+
+  const c = (back: number) => perYear[4 - back].count; // back=1 is last year
+  const pace = (c(1) + c(2) + c(3)) / 3;
+  const earlier = (c(2) + c(3)) / 2;
+  const total = perYear.reduce((s, r) => s + r.count, 0);
+  const trend = total === 0 ? 'insufficient_data'
+    : c(1) > earlier ? 'up' : c(1) < earlier ? 'down' : 'flat';
+
+  return json({ data: { mentees: menteeRows, perYear, pace: { per_year: round1(pace), last_year: c(1), earlier_per_year: round1(earlier), trend } } });
 }
 
 // ── GET /api/analytics/response-time ───────────────────────
-// Task completion speed metrics with monthly trend
-export async function handleResponseTime(env: Env): Promise<Response> {
-  const monthly = await env.DB.prepare(`
-    SELECT
-      strftime('%Y-%m', completed_at) as month,
-      COUNT(*) as completed,
-      AVG(julianday(completed_at) - julianday(created_at)) as avg_days
+// Days from a task being made to it being done, as a MEDIAN (a few year-old
+// tasks closed in a clean-up would drag a mean). Real tasks only: not deleted,
+// not a milestone or question. `summary` compares the last 90 days with the 90
+// before; `monthly` is the last 12 months; `byPriority` the last 6.
+export async function handleResponseTime(env: Env, isPi: boolean): Promise<Response> {
+  if (!isPi) return PI_ONLY();
+  const done = await env.DB.prepare(`
+    SELECT priority,
+      substr(completed_at, 1, 7) as month,
+      julianday(completed_at) - julianday(created_at) as days,
+      julianday('now') - julianday(completed_at) as age
     FROM tasks
-    WHERE completed = 1 AND completed_at IS NOT NULL
-      AND completed_at > datetime('now', '-12 months')
-    GROUP BY month
-    ORDER BY month
+    WHERE completed = 1 AND completed_at IS NOT NULL AND created_at IS NOT NULL
+      AND deleted_at IS NULL AND COALESCE(kind, 'task') = 'task'
+      AND julianday(completed_at) >= julianday(created_at)
+      AND julianday('now') - julianday(completed_at) BETWEEN 0 AND 365
+    LIMIT 50000
   `).all();
+  const rows = (done.results || []) as Array<{ priority: string | null; month: string; days: number; age: number }>;
 
-  const byPriority = await env.DB.prepare(`
-    SELECT
-      priority,
-      COUNT(*) as count,
-      AVG(julianday(completed_at) - julianday(created_at)) as avg_days
-    FROM tasks
-    WHERE completed = 1 AND completed_at IS NOT NULL
-      AND completed_at > datetime('now', '-6 months')
-    GROUP BY priority
-  `).all();
+  const monthMap = new Map<string, number[]>();
+  const prioMap = new Map<string, number[]>();
+  const recent: number[] = [];
+  const prior: number[] = [];
+  const push = (m: Map<string, number[]>, k: string, v: number) => {
+    const xs = m.get(k);
+    if (xs) xs.push(v); else m.set(k, [v]);
+  };
+  for (const r of rows) {
+    push(monthMap, r.month, r.days);
+    if (r.age <= 182) push(prioMap, r.priority || 'none', r.days);
+    if (r.age <= 90) recent.push(r.days);
+    else if (r.age <= 180) prior.push(r.days);
+  }
+
+  const med = (xs: number[]) => round1(median(xs) ?? 0);
+  const trend = recent.length === 0 || prior.length === 0 ? 'insufficient_data'
+    : med(recent) < med(prior) ? 'faster' : med(recent) > med(prior) ? 'slower' : 'flat';
 
   return json({
     data: {
-      monthly: (monthly.results || []).map((r: Record<string, unknown>) => ({
-        month: r.month,
-        completed: r.completed,
-        avg_days: (r.avg_days as number | null) ? +(r.avg_days as number).toFixed(1) : 0,
-      })),
-      byPriority: (byPriority.results || []).map((r: Record<string, unknown>) => ({
-        priority: r.priority,
-        count: r.count,
-        avg_days: (r.avg_days as number | null) ? +(r.avg_days as number).toFixed(1) : 0,
-      })),
+      summary: {
+        median_days: med(recent),
+        prior_median_days: med(prior),
+        completed: recent.length,
+        prior_completed: prior.length,
+        trend,
+      },
+      monthly: [...monthMap.entries()].sort(([a], [b]) => a.localeCompare(b))
+        .map(([month, xs]) => ({ month, completed: xs.length, median_days: med(xs) })),
+      byPriority: [...prioMap.entries()]
+        .map(([priority, xs]) => ({ priority, count: xs.length, median_days: med(xs) }))
+        .sort((a, b) => b.count - a.count),
     },
   });
 }
 
 // ── GET /api/analytics/team-engagement ─────────────────────
-// Engagement scores per member with trend
-export async function handleTeamEngagement(env: Env): Promise<Response> {
-  const current = await env.DB.prepare(`
-    SELECT actor as slug,
-      COUNT(*) as total,
-      SUM(CASE WHEN type = 'comment' THEN 1 ELSE 0 END) as comments,
-      SUM(CASE WHEN type = 'update' OR type = 'project_update' THEN 1 ELSE 0 END) as updates,
-      SUM(CASE WHEN type = 'task_completed' THEN 1 ELSE 0 END) as completions
-    FROM activity_log
-    WHERE timestamp > datetime('now', '-30 days') AND actor IS NOT NULL
-    GROUP BY actor
-  `).all();
+// Who did anything in the Hub in the last 30 days, against the 30 before.
+// Per-person numbers and the score are the PI's alone. A member is a
+// team_members row with an email, not the AI. `active` is members with at
+// least one logged action; PB session and sync rows are the PI's automation,
+// not activity, and are left out.
+export async function handleTeamEngagement(env: Env, isPi: boolean): Promise<Response> {
+  if (!isPi) return PI_ONLY();
+  const [team, log] = await Promise.all([
+    env.DB.prepare(`
+      SELECT slug, name FROM team_members
+      WHERE slug IS NOT NULL AND slug != 'claude-ai'
+        AND email IS NOT NULL AND email != ''
+        AND COALESCE(member_type, '') != 'ai'
+    `).all(),
+    env.DB.prepare(`
+      SELECT actor as slug,
+        MAX(timestamp) as last_active,
+        SUM(CASE WHEN timestamp > datetime('now', '-30 days') THEN 1 ELSE 0 END) as total,
+        SUM(CASE WHEN timestamp > datetime('now', '-30 days') AND type = 'comment' THEN 1 ELSE 0 END) as comments,
+        SUM(CASE WHEN timestamp > datetime('now', '-30 days') AND type IN ('update', 'project_update') THEN 1 ELSE 0 END) as updates,
+        SUM(CASE WHEN timestamp > datetime('now', '-30 days') AND type = 'task_completed' THEN 1 ELSE 0 END) as completions,
+        SUM(CASE WHEN timestamp > datetime('now', '-60 days') AND timestamp <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_total
+      FROM activity_log
+      WHERE actor IS NOT NULL AND timestamp > datetime('now', '-365 days')
+        AND COALESCE(type, '') NOT IN ('pb_session', 'sync')
+      GROUP BY actor
+    `).all(),
+  ]);
 
-  const prior = await env.DB.prepare(`
-    SELECT actor as slug,
-      COUNT(*) as total
-    FROM activity_log
-    WHERE timestamp BETWEEN datetime('now', '-60 days') AND datetime('now', '-30 days')
-      AND actor IS NOT NULL
-    GROUP BY actor
-  `).all();
-
-  const priorMap = new Map<string, number>();
-  for (const row of (prior.results || []) as Array<{ slug: string; total: number }>) {
-    priorMap.set(row.slug, row.total);
+  const byActor = new Map<string, {
+    last_active: string | null; total: number; comments: number; updates: number; completions: number; prior_total: number
+  }>();
+  for (const r of (log.results || []) as Array<{ slug: string; last_active: string | null; total: number; comments: number; updates: number; completions: number; prior_total: number }>) {
+    byActor.set(r.slug, r);
   }
 
-  const data = ((current.results || []) as Array<{
-    slug: string; total: number; comments: number; updates: number; completions: number;
-  }>).map(row => {
-    const priorTotal = priorMap.get(row.slug) || 0;
-    const trend = row.total > priorTotal ? 'up' : row.total < priorTotal ? 'down' : 'flat';
+  const members = ((team.results || []) as Array<{ slug: string; name: string }>).map((m) => {
+    const a = byActor.get(m.slug);
+    const total = a?.total ?? 0;
+    const priorTotal = a?.prior_total ?? 0;
     return {
-      slug: row.slug,
-      total: row.total,
-      comments: row.comments,
-      updates: row.updates,
-      completions: row.completions,
-      score: Math.round(row.comments * 3 + row.updates * 2 + row.completions),
+      slug: m.slug,
+      name: m.name,
+      total,
+      comments: a?.comments ?? 0,
+      updates: a?.updates ?? 0,
+      completions: a?.completions ?? 0,
+      score: (a?.comments ?? 0) * 3 + (a?.updates ?? 0) * 2 + (a?.completions ?? 0),
       prior_total: priorTotal,
-      trend,
+      trend: total > priorTotal ? 'up' : total < priorTotal ? 'down' : 'flat',
+      last_active: a?.last_active ?? null,
     };
-  });
+  }).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
 
-  // Overall engagement trend
-  const currentTotal = data.reduce((s, d) => s + d.total, 0);
-  const priorTotal = [...priorMap.values()].reduce((s, v) => s + v, 0);
-
+  const active = members.filter((m) => m.total > 0).length;
+  const priorActive = members.filter((m) => m.prior_total > 0).length;
   return json({
     data: {
-      members: data,
-      overall: {
-        current: currentTotal,
-        prior: priorTotal,
-        trend: currentTotal > priorTotal ? 'up' : currentTotal < priorTotal ? 'down' : 'flat',
-      },
+      members,
+      active,
+      of: members.length,
+      prior_active: priorActive,
+      trend: active > priorActive ? 'up' : active < priorActive ? 'down' : 'flat',
     },
   });
 }
