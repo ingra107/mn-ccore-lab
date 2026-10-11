@@ -36,5 +36,5 @@ export function memberHue(seed: string): number {
  */
 export function heatColor(strength: number): string {
   const pct = Math.round(Math.min(1, Math.max(0, strength)) * 100)
-  return `color-mix(in srgb, var(--heat, var(--teal)) ${pct}%, transparent)`
+  return `color-mix(in srgb, var(--heat, var(--job-accent)) ${pct}%, transparent)`
 }

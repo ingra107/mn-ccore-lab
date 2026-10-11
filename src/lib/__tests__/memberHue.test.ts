@@ -79,9 +79,9 @@ describe('memberHue', () => {
 })
 
 describe('heatColor', () => {
-  it('mixes the page heat color (teal by default) and clamps strength', () => {
-    expect(heatColor(1)).toBe('color-mix(in srgb, var(--heat, var(--teal)) 100%, transparent)')
-    expect(heatColor(0.4)).toBe('color-mix(in srgb, var(--heat, var(--teal)) 40%, transparent)')
+  it('mixes the page heat color (the accent by default) and clamps strength', () => {
+    expect(heatColor(1)).toBe('color-mix(in srgb, var(--heat, var(--job-accent)) 100%, transparent)')
+    expect(heatColor(0.4)).toBe('color-mix(in srgb, var(--heat, var(--job-accent)) 40%, transparent)')
     expect(heatColor(2)).toContain(' 100%,')
     expect(heatColor(-1)).toContain(' 0%,')
   })

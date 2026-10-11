@@ -21,7 +21,7 @@ import { ACCENT_GOLD, withAlpha } from './taskGrouping'
 const STATUS_COLOR: Record<string, string> = {
   // Core task statuses
   todo: 'var(--slate)',
-  in_progress: 'var(--teal)',
+  in_progress: 'var(--job-accent)',
   done: 'var(--st-done)',
   blocked: 'var(--st-blocked)',
   waiting_external: 'var(--st-waiting)',

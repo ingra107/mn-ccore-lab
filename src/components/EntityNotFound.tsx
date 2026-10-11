@@ -5,6 +5,7 @@ import type { EmptyArtVariant } from './EmptyStateArt'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { Button } from './ui/Button'
+import SectionHead from './ui/SectionHead'
 
 /**
  * S8 — branded entity-not-found state. Replaces the bare "<Thing> not found"
@@ -89,9 +90,7 @@ export default function EntityNotFound({
 
         {siblings.length > 0 && (
           <div style={{ marginTop: '1.75rem' }}>
-            <p style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.85, marginBottom: '0.5rem' }}>
-              Recent {lower}s
-            </p>
+            <SectionHead title={`Recent ${lower}s`} as="h2" className="mb-2" />
             <div className="flex flex-col gap-1">
               {siblings.map((s) => (
                 <Link

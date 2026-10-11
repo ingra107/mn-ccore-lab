@@ -14,7 +14,7 @@ import { ACCENT_GOLD, withAlpha, daysSince } from './taskGrouping'
 
 export const STATUS_CONFIG = {
   todo: { label: 'To Do', color: 'var(--slate)', icon: 'Circle' },
-  in_progress: { label: 'In Progress', color: 'var(--task-accent-teal)', icon: 'Clock' },
+  in_progress: { label: 'In Progress', color: 'var(--job-accent)', icon: 'Clock' },
   done: { label: 'Done', color: 'var(--st-done)', icon: 'CheckCircle2' },
   blocked: { label: 'Blocked', color: 'var(--st-blocked)', icon: 'AlertTriangle' },
   waiting_external: { label: 'Waiting (External)', color: 'var(--st-waiting)', icon: 'Hourglass' },
@@ -22,7 +22,7 @@ export const STATUS_CONFIG = {
 
 export const STATUS_OPTIONS = [
   { value: 'todo', label: 'To Do', icon: Circle, color: 'var(--slate)' },
-  { value: 'in_progress', label: 'In Progress', icon: Clock, color: 'var(--task-accent-teal)' },
+  { value: 'in_progress', label: 'In Progress', icon: Clock, color: 'var(--job-accent)' },
   { value: 'waiting_external', label: 'Waiting (External)', icon: Hourglass, color: 'var(--st-waiting)' },
   { value: 'blocked', label: 'Blocked', icon: AlertTriangle, color: 'var(--st-blocked)' },
   { value: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--st-done)' },
