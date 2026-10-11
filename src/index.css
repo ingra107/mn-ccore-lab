@@ -729,10 +729,6 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
 .density-compact .table-container .col-header {
   font-size: 10px;
 }
-.density-compact .manuscript-list-row {
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
-}
 
 /* ── Base Styles ── */
 /* Note: margin/padding/box-sizing reset is handled by Tailwind's @layer base preflight */
@@ -829,8 +825,7 @@ a:hover {
    (R4-02). A full-strength 2px outline on a row already bounded by
    top/bottom hairlines reads as three horizontal rules. Instead: dimmed
    inset outline + bg tint, matching the J/K `.task-row-focused` pattern.
-   Applied to Projects / Manuscripts / Deadlines / Ideas / Decisions rows. */
-.manuscript-list-row:focus-visible,
+   Applied to Deadlines / Ideas / Decisions rows. */
 .deadline-row:focus-visible,
 .idea-row:focus-visible,
 .decision-list-row:focus-visible {
@@ -839,7 +834,6 @@ a:hover {
   background: rgba(45, 138, 138, 0.05);
   border-radius: var(--radius-sm);
 }
-.dark .manuscript-list-row:focus-visible,
 .dark .deadline-row:focus-visible,
 .dark .idea-row:focus-visible,
 .dark .decision-list-row:focus-visible {
@@ -940,8 +934,7 @@ a:hover {
 /* Covers all data table rows: task grid, ideas, decisions, projects, manuscripts, deadlines */
 /* Desktop only — at mobile (<768px) rows switch to stacked card layout that needs to grow */
 @media (min-width: 768px) {
-  .table-container [role="row"]:not([aria-rowindex="1"]),
-  .manuscript-list-row {
+  .table-container [role="row"]:not([aria-rowindex="1"]) {
     height: var(--row-height);
     box-sizing: border-box;
     scroll-margin-top: 72px;
@@ -950,8 +943,7 @@ a:hover {
 
 /* Mobile: allow rows to grow with their content (stacked cards need ≥72px) */
 @media (max-width: 767px) {
-  .table-container [role="row"]:not([aria-rowindex="1"]),
-  .manuscript-list-row {
+  .table-container [role="row"]:not([aria-rowindex="1"]) {
     height: auto;
     min-height: var(--row-height);
     box-sizing: border-box;
@@ -1560,8 +1552,14 @@ a:hover {
 .task-row-focused .inline-select-chevron,
 .idea-row:hover .inline-select-chevron,
 .idea-row:focus-within .inline-select-chevron,
+<<<<<<< HEAD
 .manuscript-list-row:hover .inline-select-chevron,
 .manuscript-list-row:focus-within .inline-select-chevron,
+=======
+.project-list-row:hover .inline-select-chevron,
+.project-list-row:focus-within .inline-select-chevron,
+.project-row-focused .inline-select-chevron,
+>>>>>>> s45/w2-manuscripts
 .deadline-row:hover .inline-select-chevron,
 .deadline-row:focus-within .inline-select-chevron,
 tr:hover .inline-select-chevron,
@@ -1748,7 +1746,11 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
      already have mobile stacked-card variants; this sets the height
      on the remaining table rows that stay grid-based. */
   .task-grid-row,
+<<<<<<< HEAD
   .manuscript-list-row,
+=======
+  .project-list-row,
+>>>>>>> s45/w2-manuscripts
   .deadline-row,
   .idea-row {
     min-height: 44px;
@@ -3047,6 +3049,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 /* Phone layout (the table is narrower than narrowBelow): box | title over a
    context line | face. Heights come from content (Rule 15). */
 .sr.sr-narrow .sr-row{display:grid;grid-template-columns:24px minmax(0,1fr) 26px;column-gap:10px;align-items:center;padding:8px;border-radius:10px}
+.sr.sr-narrow .sr-row.sr-nolead{grid-template-columns:minmax(0,1fr) 26px}
 .sr .sr-ph-lead,.sr .sr-ph-trail{display:flex;align-items:center;justify-content:center}
 .sr .sr-ph-mid{min-width:0}
 .sr .sr-ph-t .sr-tt{font-size:13.5px}
