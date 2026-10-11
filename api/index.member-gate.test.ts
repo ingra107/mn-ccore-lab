@@ -64,7 +64,7 @@ function seed(requireAuth: boolean) {
     DB: d1Adapter(db),
     TEST_MODE_KEY: TEST_KEY,
     PB_API_KEY: API_KEY,
-    ...(requireAuth ? { REQUIRE_AUTH: '1' } : {}),
+    ...(requireAuth ? { REQUIRE_AUTH: '1' } : { HUB_LOCAL_DEV: '1' }),
   } as unknown as Env
 }
 
@@ -101,7 +101,7 @@ const MEMBER_ROUTES: Array<[string, string, unknown?]> = [
 ]
 
 for (const requireAuth of [true, false]) {
-  describe(`signed-in non-member (REQUIRE_AUTH=${requireAuth ? '1' : 'unset'})`, () => {
+  describe(`signed-in non-member (${requireAuth ? 'REQUIRE_AUTH=1' : 'HUB_LOCAL_DEV=1'})`, () => {
     beforeEach(() => seed(requireAuth))
 
     for (const [method, path, body] of MEMBER_ROUTES) {

@@ -11,6 +11,7 @@ import { _resetPiEmailsCacheForTests } from '../helpers'
 import {
   withErrorLedger, recordError, flushErrors, normalizeMessage, fingerprint, topFrame,
   installConsoleCapture, _resetErrorLedgerForTests, _pendingForTests, REPEAT_WINDOW_MS, MAX_PENDING,
+  _setScopeStoreForTests, _hasScopeStoreForTests,
 } from './error-ledger'
 import { personViewer, nobodyViewer, viewerDb } from './viewer-db'
 import { ctToday } from './ct-date'
@@ -215,6 +216,88 @@ describe('flood control and failure', () => {
     await settle()
     expect(rows()).toEqual([])
     expect((testDb.prepare('SELECT source, last_actor_slug FROM hub_errors').all())).toEqual([{ source: 'client', last_actor_slug: 'casey-eddington' }])
+  })
+})
+
+describe('request attribution (AsyncLocalStorage)', () => {
+  afterEach(() => _setScopeStoreForTests('als'))
+
+  it('this runtime (Node, like the Worker under nodejs_compat) resolves an AsyncLocalStorage', () => {
+    expect(_hasScopeStoreForTests()).toBe(true)
+  })
+
+  it('interleaved fetch and cron: each console.error keeps its own source, path and target', async () => {
+    const testDb = prodSchemaDb()
+    env = { ...env, DB_TEST: d1Adapter(testDb) } as Env
+    let release!: () => void
+    const gate = new Promise<void>((r) => { release = r })
+    const handlers = withErrorLedger<Env>({
+      fetch: async (req) => {
+        await gate
+        console.error(`[Probe] fetch failed at ${new URL(req.url).pathname}`)
+        return new Response('ok')
+      },
+      scheduled: async () => {
+        await gate
+        console.error('[Probe] cron failed')
+      },
+    })
+    // Started in this order, all three parked on the gate, then released
+    // together: the isolate-level fallback would name every entry by the
+    // last entry point (cron), with no path and no DB_TEST.
+    const prodReq = handlers.fetch(new Request('https://hub.test/api/prod-path'), env, ctx())
+    const testReq = handlers.fetch(new Request('https://hub.test/api/test-path', { headers: { 'X-Test-Mode': 'true', 'X-Test-Mode-Key': TEST_KEY } }), env, ctx())
+    const cron = handlers.scheduled({ cron: '0 13 * * 1-5' } as ScheduledEvent, env, ctx())
+    release()
+    await Promise.all([prodReq, testReq, cron])
+    await settle()
+    const prod = db.prepare('SELECT source, path, sample_message FROM hub_errors ORDER BY source').all()
+    expect(prod).toEqual([
+      { source: 'cron', path: '0 13 * * 1-5', sample_message: '[Probe] cron failed' },
+      { source: 'server', path: '/api/prod-path', sample_message: '[Probe] fetch failed at /api/prod-path' },
+    ])
+    expect(testDb.prepare('SELECT source, path, sample_message FROM hub_errors').all()).toEqual([
+      { source: 'server', path: '/api/test-path', sample_message: '[Probe] fetch failed at /api/test-path' },
+    ])
+  })
+
+  it('a test-mode request through the real app: its console.error lands in DB_TEST, not prod', async () => {
+    const testDb = prodSchemaDb()
+    insertRow(testDb, 'team_members', { id: 'tm-casey', name: 'Casey Eddington', slug: 'casey-eddington', member_type: 'research_team', email: CASEY })
+    env = { ...env, DB_TEST: d1Adapter(testDb) } as Env
+    const handlers = withErrorLedger<Env>({
+      fetch: async (req, e, c) => {
+        // A handler that logs, then hands off to the real app.
+        console.error('[Probe] test-mode handler logged')
+        return worker.fetch(req, e, c)
+      },
+      scheduled: async () => {},
+    })
+    const res = await handlers.fetch(new Request('https://hub.test/api/version', {
+      headers: { 'X-Test-Mode': 'true', 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': CASEY },
+    }), env, ctx())
+    expect(res.status).toBe(200)
+    await settle()
+    expect(rows()).toEqual([])
+    expect(testDb.prepare('SELECT source, path, sample_message FROM hub_errors').all()).toEqual([
+      { source: 'server', path: '/api/version', sample_message: '[Probe] test-mode handler logged' },
+    ])
+  })
+
+  it('without AsyncLocalStorage (the Pages runtime) it falls back to today: last entry point, no path, prod', async () => {
+    _setScopeStoreForTests('none')
+    const testDb = prodSchemaDb()
+    env = { ...env, DB_TEST: d1Adapter(testDb) } as Env
+    const handlers = withErrorLedger<Env>({
+      fetch: async () => { console.error('[Probe] pages fallback'); return new Response('ok') },
+      scheduled: async () => {},
+    })
+    await handlers.fetch(new Request('https://hub.test/api/x', { headers: { 'X-Test-Mode': 'true', 'X-Test-Mode-Key': TEST_KEY } }), env, ctx())
+    await settle()
+    expect(db.prepare('SELECT source, path, sample_message FROM hub_errors').all()).toEqual([
+      { source: 'server', path: null, sample_message: '[Probe] pages fallback' },
+    ])
+    expect(testDb.prepare('SELECT COUNT(*) AS n FROM hub_errors').get()).toEqual({ n: 0 })
   })
 })
 

@@ -6,8 +6,9 @@
 
 > **Note:** post-Phase 37, `/api/*` routes are NOT gated by
 > Cloudflare Access (CF Access only gates `/portal/*`). API auth is
-> enforced server-side via X-API-Key + `REQUIRE_AUTH=1` + JWT
-> verification. `/api/health` is deliberately exempt from auth so
+> enforced server-side via X-API-Key + JWT verification, and fails
+> closed: only `HUB_LOCAL_DEV=1` (local config) admits anonymous callers
+> (`api/lib/auth-mode.ts`). `/api/health` is deliberately exempt from auth so
 > external uptime monitors can probe it.
 >
 > An anonymous caller gets `ok`, `failures` and `timestamp` only (the
@@ -139,9 +140,11 @@ any person; no member handle can read a row). From PB:
 Not covered: silent `catch {}` blocks, errors while D1 itself is down (the
 flush fails to the original console), an isolate evicted before its flush,
 the other Pages Functions (`functions/og|team|a|assets`), hub-realtime, and
-`console.warn`. Test mode: only four doors know their request and send a
-verified test-mode request's entries to `DB_TEST` (onError, a rejected
-`waitUntil`, an escaping throw in the fetch wrapper, `POST /api/client-errors`).
-A `console.error` during a prod e2e request lands in PROD's `hub_errors`: the
-Pages Function runtime has no nodejs_compat, so no AsyncLocalStorage ties a
-console line to its request. Retention: 400 days (`LEDGER_REGISTRY`).
+`console.warn`. Request attribution: `withErrorLedger` runs each request and
+each cron in an AsyncLocalStorage scope, so a `console.error` carries its own
+path and a verified test-mode request's entries go to `DB_TEST`. That needs
+nodejs_compat (the Worker). The Pages Function runtime has none, so while /api
+still runs there a captured `console.error` falls back to path NULL and PROD's
+`hub_errors`; only onError, a rejected `waitUntil`, an escaping throw in the
+fetch wrapper and `POST /api/client-errors` know their request on Pages.
+Retention: 400 days (`LEDGER_REGISTRY`).

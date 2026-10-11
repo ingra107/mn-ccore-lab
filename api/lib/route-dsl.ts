@@ -225,12 +225,12 @@ export function bindOrder(routes: readonly RouteMetadata[]): RouteMetadata[] {
 /**
  * Who is calling, as the route gate sees it. api/index.ts decides (it holds
  * the auth middleware's context vars, the team_members lookup and
- * REQUIRE_AUTH); route-dsl decides what each kind may reach.
+ * authEnforced()); route-dsl decides what each kind may reach.
  *
  *   - 'member'     a signed-in person whose email is on a team_members row
  *                  (or a PI email), or a service caller (valid PB API key).
- *                  With auth not enforced (REQUIRE_AUTH != 1, local dev) a
- *                  credential-less caller is also a member, as it always was.
+ *                  Only in local dev (HUB_LOCAL_DEV=1, auth not enforced) is a
+ *                  credential-less caller also a member.
  *   - 'non-member' a signed-in identity (CF Access admits any @umn.edu) with
  *                  no team_members row.
  *   - 'anonymous'  auth is enforced and the caller has neither a session nor

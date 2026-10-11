@@ -30,7 +30,10 @@ preview_database_id = "local"
 # Value is a fixed deterministic string for local-only use — NOT a production secret.
 [vars]
 TEST_MODE_KEY = "local-test-key-do-not-use-in-prod"
-REQUIRE_AUTH = "0"
+# /api fails closed: a missing flag enforces sign-in (api/lib/auth-mode.ts).
+# Only this local file opens it, so the local stacks (test:local, journeys)
+# keep anonymous-as-member behaviour. Never copy this line to wrangler.toml.
+HUB_LOCAL_DEV = "1"
 
 # Everything below this line is intentionally omitted vs wrangler.toml:
 #   - [triggers] crons       (prod-only scheduled Worker)

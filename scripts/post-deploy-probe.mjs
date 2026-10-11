@@ -4,6 +4,10 @@
 // Hits /api/health on the live prod Pages URL and asserts:
 //   (1) HTTP 200
 //   (2) response body has ok: true
+//   (2a) an ANONYMOUS GET /api/tasks -> 401. /api fails closed
+//       (api/lib/auth-mode.ts); a 200 here means a runtime is serving the
+//       lab to anyone (the 2026-10-08 class). It also reports X-Hub-Runtime
+//       (worker / in-process) so the /api move's cut is visible.
 //
 // Then asserts the two halves of the #508 artifact origin split (Option A,
 // shipped 2026-07-22 — this probe's original Option-D form, 3c6a50a7, watched
@@ -89,7 +93,18 @@ async function probe(baseUrl, attempt) {
   const url = `${baseUrl}/api/health`;
   const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
   const body = await res.json();
-  return { status: res.status, body };
+  return { status: res.status, body, runtime: res.headers.get('X-Hub-Runtime') ?? 'in-process' };
+}
+
+// An anonymous caller must be refused on a member route. Returns { ok, reason }.
+async function probeAnonymousRefused(baseUrl) {
+  const url = `${baseUrl}/api/tasks`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+  await res.body?.cancel();
+  if (res.status !== 401) {
+    return { ok: false, reason: `HTTP ${res.status} (expected 401) for an anonymous GET ${url} — /api is serving member data without sign-in` };
+  }
+  return { ok: true };
 }
 
 // #508: assert the live artifact route on the COOKIELESS origin still serves
@@ -162,10 +177,12 @@ async function main() {
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       let body = null;
+      let runtime = null;
 
       if (!ARTIFACTS_ONLY) {
         const health = await probe(baseUrl, attempt);
         body = health.body;
+        runtime = health.runtime;
         if (health.status !== 200) {
           lastErr = `HTTP ${health.status} (expected 200)`;
           console.error(`  Attempt ${attempt}/${MAX_RETRIES}: FAIL — /api/health — ${lastErr}`);
@@ -176,6 +193,14 @@ async function main() {
           const failures = Array.isArray(body.failures) ? body.failures.join(', ') : JSON.stringify(body.failures);
           lastErr = `ok=false, failures: ${failures}`;
           console.error(`  Attempt ${attempt}/${MAX_RETRIES}: FAIL — /api/health — ${lastErr}`);
+          if (attempt < MAX_RETRIES) { console.log(`  Waiting ${RETRY_DELAY_MS}ms before retry...`); await sleep(RETRY_DELAY_MS); }
+          continue;
+        }
+
+        const anon = await probeAnonymousRefused(baseUrl);
+        if (!anon.ok) {
+          lastErr = anon.reason;
+          console.error(`  Attempt ${attempt}/${MAX_RETRIES}: FAIL — anonymous refusal — ${lastErr}`);
           if (attempt < MAX_RETRIES) { console.log(`  Waiting ${RETRY_DELAY_MS}ms before retry...`); await sleep(RETRY_DELAY_MS); }
           continue;
         }
@@ -198,11 +223,13 @@ async function main() {
         continue;
       }
 
-      console.log(`  Attempt ${attempt}/${MAX_RETRIES}: OK (${ARTIFACTS_ONLY ? 'artifact CSP' : 'health + legacy 301 + artifact CSP'})`);
+      console.log(`  Attempt ${attempt}/${MAX_RETRIES}: OK (${ARTIFACTS_ONLY ? 'artifact CSP' : 'health + anonymous 401 + legacy 301 + artifact CSP'})`);
       console.log('');
       console.log(`[post-deploy-probe] PASS — prod is live and healthy.`);
       if (body) {
         console.log(`  tasks=${body.checks?.tasks ?? '?'}, projects=${body.checks?.projects ?? '?'}, duration_ms=${body.checks?.duration_ms ?? '?'}`);
+        console.log(`  anonymous GET /api/tasks -> 401: OK`);
+        console.log(`  /api runtime (X-Hub-Runtime): ${runtime}`);
         console.log(`  legacy /a/ 301 -> ${ARTIFACTS_URL}: OK`);
       }
       console.log(`  artifact CSP: OK (${KNOWN_PUBLIC_ARTIFACT_ID} @ ${ARTIFACTS_URL})`);

@@ -1,4 +1,5 @@
 import type { Env } from './types';
+import { authEnforced } from './lib/auth-mode';
 
 /**
  * Cloudflare Access JWT signature verification.
@@ -9,9 +10,8 @@ import type { Env } from './types';
  * claiming to be a PI email and access `/api/pb/*` private data.
  *
  * `CF_ACCESS_TEAM_DOMAIN` env var must be set for verification to happen.
- * Until set, falls back to decode-only (logged once per cold start). Do not
- * launch to the team without both `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD`
- * secrets configured — see LAUNCH-CHECKLIST.md.
+ * Without it every JWT is rejected, except in local dev (HUB_LOCAL_DEV=1),
+ * which falls back to decode-only (logged once per cold start).
  */
 
 interface Jwk {
@@ -81,8 +81,8 @@ async function importJwk(jwk: Jwk): Promise<CryptoKey> {
 
 /**
  * Verify CF Access JWT signature + claims. Returns verified payload or null.
- * When `CF_ACCESS_TEAM_DOMAIN` is not set, skips verification and returns the
- * decoded payload (insecure fallback for pre-launch PI-only mode).
+ * When `CF_ACCESS_TEAM_DOMAIN` is not set: null, or in local dev only the
+ * decoded payload (insecure fallback).
  */
 export async function verifyCfAccessJwt(token: string, env: Env): Promise<VerifiedClaims | null> {
   const parts = token.split('.');
@@ -91,16 +91,16 @@ export async function verifyCfAccessJwt(token: string, env: Env): Promise<Verifi
 
   const teamDomain = env.CF_ACCESS_TEAM_DOMAIN?.trim();
   if (!teamDomain) {
-    // B8a (SEC-T0-8): fail CLOSED when REQUIRE_AUTH=1 but verification can't
-    // complete (team domain unconfigured). Returning decoded-but-unverified
-    // claims in a REQUIRE_AUTH'd deployment would let a forged
-    // Cf-Access-Jwt-Assertion header impersonate any email. Prod sets BOTH
-    // REQUIRE_AUTH=1 and CF_ACCESS_TEAM_DOMAIN, so this only bites a
-    // misconfigured/partial deploy — never the dev path (REQUIRE_AUTH unset),
-    // which keeps the decode-only fallback for local/PI-only mode.
-    if (env.REQUIRE_AUTH === '1') {
+    // B8a (SEC-T0-8): fail CLOSED when auth is enforced but verification
+    // can't complete (team domain unconfigured). Returning decoded-but-
+    // unverified claims would let a forged Cf-Access-Jwt-Assertion header
+    // impersonate any email. Enforced means everywhere but local dev
+    // (HUB_LOCAL_DEV=1, api/lib/auth-mode.ts); only local dev keeps the
+    // decode-only fallback. Prod sets CF_ACCESS_TEAM_DOMAIN, so this bites only
+    // a misconfigured or partial deploy.
+    if (authEnforced(env)) {
       if (!fallbackWarningLogged) {
-        console.error('[auth] REQUIRE_AUTH=1 but CF_ACCESS_TEAM_DOMAIN not set — failing CLOSED (rejecting all JWTs). Configure CF_ACCESS_TEAM_DOMAIN.');
+        console.error('[auth] auth enforced but CF_ACCESS_TEAM_DOMAIN not set — failing CLOSED (rejecting all JWTs). Configure CF_ACCESS_TEAM_DOMAIN.');
         fallbackWarningLogged = true;
       }
       return null;
