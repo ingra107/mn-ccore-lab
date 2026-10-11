@@ -72,7 +72,8 @@ done
 # = api/), not a subset of it: until 2026-09-24 it fired only on
 # api/(routes|middleware|lib)/*.ts and api/schema-v*.sql, while the checker
 # walks EVERY api/**/*.sql because #888 found seq-writing risk in
-# backfill-v77, backfill-v102, seed-v2 and bootstrap-schema.sql -- so a commit
+# backfill-v77, backfill-v102 (both archived 2026-10-11), seed-v2 and
+# bootstrap-schema.sql -- so a commit
 # touching only those never ran it (PB backlog #8576). ~2s warm (verdict
 # cache); the staged-path guard still skips doc-only commits.
 if git diff --cached --name-only --diff-filter=ACMR | grep -qE "^api/"; then

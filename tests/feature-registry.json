@@ -1101,8 +1101,17 @@
       "covered": true
     },
     {
+      "id": "keyboard-f-filter-panel",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "F key toggles filter panel on tasks page",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "F key toggles filter panel",
+      "covered": true
+    },
+    {
       "id": "keyboard-jk-task-nav",
-      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
+      "component": "src/pages/MyTasks/hooks/useListKeyboard.ts",
       "type": "keyboard",
       "description": "J/K navigates task rows",
       "test_file": "tests/inspection.spec.ts",
@@ -1111,7 +1120,7 @@
     },
     {
       "id": "keyboard-enter-task-detail",
-      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
+      "component": "src/pages/MyTasks/hooks/useListKeyboard.ts",
       "type": "keyboard",
       "description": "Enter opens TaskDetailPanel",
       "test_file": "tests/inspection.spec.ts",
@@ -1200,66 +1209,12 @@
       "covered": true
     },
     {
-      "id": "keyboard-space-peek",
-      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
-      "type": "keyboard",
-      "description": "Space opens peek overlay on focused task",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "FEATURE: Space opens peek overlay on focused task",
-      "covered": true
-    },
-    {
-      "id": "keyboard-x-bulk-select",
-      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
-      "type": "keyboard",
-      "description": "X key toggles task selection for bulk actions",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "FEATURE: X key toggles task selection, toolbar appears",
-      "covered": true
-    },
-    {
-      "id": "keyboard-s-status-cycle",
-      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
-      "type": "keyboard",
-      "description": "S key cycles task status (todo -> in_progress -> done)",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "FEATURE: S key cycles task status",
-      "covered": true
-    },
-    {
-      "id": "keyboard-z-snooze",
-      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
-      "type": "keyboard",
-      "description": "Z key snoozes focused task",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "FEATURE: Z key or context menu triggers snooze",
-      "covered": true
-    },
-    {
-      "id": "keyboard-b-blocker",
-      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
-      "type": "keyboard",
-      "description": "B key toggles blocker on focused task",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "FEATURE: B key toggles blocker on focused task",
-      "covered": true
-    },
-    {
       "id": "keyboard-bracket-sidebar",
       "component": "src/hooks/useKeyboardShortcuts.ts",
       "type": "keyboard",
       "description": "[ key collapses/expands sidebar",
       "test_file": "tests/inspection-workflows.spec.ts",
       "test_name": "FEATURE: [ key collapses sidebar, [ again expands",
-      "covered": true
-    },
-    {
-      "id": "keyboard-arrow-subtask-expand",
-      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
-      "type": "keyboard",
-      "description": "Arrow right expands subtasks, left collapses",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "FEATURE: Right expands subtasks, left collapses",
       "covered": true
     },
     {
@@ -1296,15 +1251,6 @@
       "description": "P key pins/unpins project on Projects page",
       "test_file": "tests/inspection-workflows.spec.ts",
       "test_name": "FEATURE: P key pins/unpins project on Projects page",
-      "covered": true
-    },
-    {
-      "id": "keyboard-f-filter-panel",
-      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
-      "type": "keyboard",
-      "description": "F key toggles filter panel on tasks page",
-      "test_file": "tests/daily-superuser.spec.ts",
-      "test_name": "F key toggles filter panel",
       "covered": true
     },
     {

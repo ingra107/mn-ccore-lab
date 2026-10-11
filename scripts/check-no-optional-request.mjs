@@ -87,7 +87,7 @@ if (newViolations.length > 0) {
   console.error('check-no-optional-request: NEW optional Request parameter found (not in baseline):')
   for (const f of newViolations) console.error(`  ${f.file}:${f.line}  ${f.sample}`)
   console.error('')
-  console.error('Fix: make request required; use typed wrappers from api/lib/typed-request.ts.')
+  console.error('Fix: make request a required parameter (a plain `request: Request`).')
   console.error('See: docs/superpowers/plans/2026-05-28-primitive-enforcement-plan.md Z1.5/Z1.6.')
   process.exit(1)
 }

@@ -93,7 +93,7 @@ async function newDesktopCtx(browser: any) {
   // Post-launch (2026-04-21) `/portal/*` is gated by CF Access. Forward the
   // service-token headers on every browser request when the env vars are set,
   // otherwise the audit lands on Google Sign-In and every selector misses.
-  // Same env vars used by scripts/massive-audit.
+  // Same env vars tests/helpers/capture-auth.ts reads.
   const cfId = process.env.CF_ACCESS_CLIENT_ID
   const cfSecret = process.env.CF_ACCESS_CLIENT_SECRET
   const extraHTTPHeaders: Record<string, string> = {}

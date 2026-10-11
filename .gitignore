@@ -42,6 +42,14 @@ test_views.txt
 # committed under review/ is still in history at 133a8e74
 # (`git show 133a8e74:review/<path>`). Runs regenerate it locally.
 review/
+# April QA/eval screenshots, MCP snapshots, brainstorm-server files and two
+# stray test PNGs. Untracked 2026-10-11 (s51 dead-weight); history keeps them
+# (`git show 9a0de385:<path>`), see Archive/2026-10-11-tracked-artifacts/README.md.
+qa-screenshots/
+eval-screenshots/
+.playwright-mcp/
+.superpowers/
+tests/e-*.png
 # Session scratch + build-output copies (regenerable / handoff-only)
 Scratch-handoff/
 dist-screenshot/

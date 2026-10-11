@@ -76,7 +76,7 @@ import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRe
 import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleAddArtifactComment, handleGetArtifactGallery, handleSearchArtifacts, handleGetArtifactTags, handleAddArtifactTag, handleRemoveArtifactTag } from './routes/artifacts';
 import { escapeHtml } from './lib/escapeHtml';
 import { HUB_URL, isEmailRecipient, raw, sendEmail, warnIfRecipientsMatchNobody } from './lib/email';
-import { handlePBCapture, handlePBDefer, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
+import { handlePBCapture, handleAddToDispatch, handleGetPendingDispatch } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
 import { handleGetSessions } from './routes/sessions';
 import { handleLane3List } from './routes/lane3';
@@ -2750,31 +2750,10 @@ defineRoute({
 });
 defineRoute({
   method: 'POST',
-  path: '/api/pb/defer',
-  auth: 'pi',
-  entity: 'pb',
-  handler: (c) => handlePBDefer(R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
   path: '/api/pb/dispatch/add',
   auth: 'pi',
   entity: 'pb',
   handler: (c) => handleAddToDispatch(R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/pb/dispatch/send',
-  auth: 'pi',
-  entity: 'pb',
-  handler: (c) => handleSendDispatch(R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/pb/dispatch/complete',
-  auth: 'pi',
-  entity: 'pb',
-  handler: (c) => handleCompleteDispatchItem(R(c), E(c)),
 });
 defineRoute({
   method: 'POST',

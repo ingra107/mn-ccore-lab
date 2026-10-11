@@ -12,7 +12,7 @@
  *
  * Covered entity types: tasks · projects · meetings · ideas · decisions ·
  * commitments. These are every table that inspection.spec.ts,
- * inspection-workflows.spec.ts, m5-workflow-smoke.spec.ts, and the old
+ * inspection-workflows.spec.ts and the old
  * test-seed.ts wrote to.
  */
 import { request as playwrightRequest, type FullConfig } from '@playwright/test'

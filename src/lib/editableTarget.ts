@@ -4,8 +4,8 @@
 // Extracted 2026-07-06 (simplify pass) from dndSensors' private copy; the
 // same day, #486 converged the remaining private copies onto this one:
 // useKeyboardShortcuts, useListKeyboardNav, useProjectKeyboardNav,
-// useTaskKeyboardShortcuts, GlobalQuickAddModal, MeetingDetail (the last two
-// were missing the SELECT check — an oversight, fixed by the convergence).
+// useTaskKeyboardShortcuts (archived 2026-10-11), GlobalQuickAddModal, MeetingDetail
+// (the last two were missing the SELECT check — an oversight, fixed by the convergence).
 // This is the one to import for any future "ignore this shortcut while
 // typing" guard.
 
