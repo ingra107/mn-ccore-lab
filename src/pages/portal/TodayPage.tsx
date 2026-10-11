@@ -66,6 +66,7 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
 import { projectShortLabel, taskShortLabel } from '../../lib/displayNames'
 import PageHeartbeat from '../../components/moments/PageHeartbeat'
+import LabPulseLine from '../../components/labpulse/LabPulseLine'
 
 const SHOW_MILESTONES_KEY = 'hub-today-show-milestones'
 
@@ -601,6 +602,9 @@ export default function TodayPage() {
         <ProfileSetupPrompt />
 
         <StatLine counts={counts} doneThisWeek={doneThisWeek} />
+
+        {/* PI only: the Lab pulse line, one gray line that opens PI Analytics. */}
+        <LabPulseLine />
 
         {/* N1.21 — flex-start keeps the dismiss × anchored to the first line
             instead of floating detached mid-text when the hint wraps. */}

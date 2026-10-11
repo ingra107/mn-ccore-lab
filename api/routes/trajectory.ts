@@ -1,8 +1,29 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
+import { mayReadPerson } from '../lib/person-access';
+import type { Viewer } from '../lib/viewer-db';
 
 // GET /api/team/:slug/trajectory
-export async function handleTrajectory(slug: string, env: Env): Promise<Response> {
+export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, isPi: boolean): Promise<Response> {
+  // Publications are public. Completions, task metrics and assignments are one
+  // person's activity: theirs and the PI's alone (Nick, 2026-10-11).
+  if (!mayReadPerson(viewer, isPi, slug)) {
+    const pubs = await env.DB.prepare(
+      "SELECT id, title, journal, year, doi FROM publications WHERE authors LIKE ? ORDER BY year DESC"
+    ).bind(`%${slug}%`).all();
+    return json({
+      data: {
+        publications: pubs.results || [],
+        taskStats: [],
+        projects: [],
+        milestones: [],
+        taskMetrics: { total: 0, completed: 0, overdue: 0, avg_days: null },
+        projectStages: [],
+      },
+      scope: 'public',
+    });
+  }
+
   // Parallel queries for all trajectory data
   const [publications, taskStats, projectHistory, milestones, taskMetrics, projectStages] = await Promise.all([
     // Publications where this person is an author

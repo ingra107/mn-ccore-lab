@@ -58,6 +58,7 @@ import { handleInsightConnections, handleInsightSuggestions, handleInsightsDashb
 import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
 import { handleTrajectory } from './routes/trajectory';
 import { handleGetContributions } from './routes/contributions';
+import { pulseScope } from './lib/person-access';
 import { handleContributionsDecay } from './routes/contributions-decay';
 import { handleSimilarGrants } from './routes/grant-intelligence';
 import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleGetDecisionsNeedingReview, handleGetDecisionTags } from './routes/decisions';
@@ -486,6 +487,13 @@ const PI = (c: Context<AppEnv>) => c.get('isPi') === true;
 // The PB service key: its handle is unscoped, and the file routes let it read
 // a file by key alone.
 const SERVICE = (c: Context<AppEnv>) => c.get('apiKeyValid') === true;
+// Lab pulse (PI Analytics + the Today line) reports lab-wide numbers: how long
+// tasks take, how many members acted, trainee pubs. Nick, 2026-10-11: for a
+// PI-only view, lab-wide is fine. So for a PI (or the PB key) these three
+// routes read the unscoped handle, aggregates only, no row content; everyone
+// else keeps the viewer-bound handle and the handlers answer them 403 anyway.
+// Nick, 2026-10-11: "Lab-wide totals, no project names".
+const labWideEnv = (c: Context<AppEnv>): Env => (PI(c) ? { ...E(c), DB: c.get('unscopedDb') } : E(c));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Meta + auth endpoints
@@ -665,40 +673,41 @@ defineRoute({
 // PI Analytics
 // ─────────────────────────────────────────────────────────────────────────────
 // /api/pi/analytics retired 2026-05-05 (5.9): 0 callers, overlapped /api/analytics/pi-dashboard
+// The three Lab pulse routes below are PI-only IN the handler (auth:'pi' is documentation).
 defineRoute({
   method: 'GET',
   path: '/api/analytics/pi-dashboard',
   auth: 'authed',
   entity: 'analytics',
-  handler: (c) => handlePIDashboard(E(c)),
+  handler: (c) => handlePIDashboard(E(c), PI(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/analytics/mentee-velocity',
-  auth: 'authed',
+  auth: 'pi',
   entity: 'analytics',
-  handler: (c) => handleMenteeVelocity(E(c)),
+  handler: (c) => handleMenteeVelocity(labWideEnv(c), PI(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/analytics/response-time',
-  auth: 'authed',
+  auth: 'pi',
   entity: 'analytics',
-  handler: (c) => handleResponseTime(E(c)),
+  handler: (c) => handleResponseTime(labWideEnv(c), PI(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/analytics/team-engagement',
-  auth: 'authed',
+  auth: 'pi',
   entity: 'analytics',
-  handler: (c) => handleTeamEngagement(E(c)),
+  handler: (c) => handleTeamEngagement(labWideEnv(c), PI(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/analytics/contributions',
   auth: 'authed',
   entity: 'analytics',
-  handler: (c) => handleContributionsDecay(U(c), E(c)),
+  handler: (c) => handleContributionsDecay(U(c), E(c), c.get('viewer'), PI(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1395,7 +1404,7 @@ defineRoute({
   path: '/api/team/pulse',
   auth: 'authed',
   entity: 'team',
-  handler: (c) => handleTeamPulse(U(c), E(c)),
+  handler: (c) => handleTeamPulse(U(c), E(c), pulseScope(c.get('viewer'), PI(c))),
 });
 defineRoute({
   method: 'GET',
@@ -1433,7 +1442,7 @@ defineRoute({
   path: '/api/activity/heatmap',
   auth: 'authed',
   entity: 'activity',
-  handler: (c) => handleActivityHeatmap(U(c), E(c)),
+  handler: (c) => handleActivityHeatmap(U(c), E(c), c.get('viewer'), PI(c)),
 });
 // Manual activity deletion (author or PI) — house delete shape (POST :id/delete,
 // same as /api/conferences/:id/delete).
@@ -1696,14 +1705,14 @@ defineRoute({
   path: '/api/team/:slug/trajectory',
   auth: 'authed',
   entity: 'team',
-  handler: (c) => handleTrajectory(c.req.param('slug'), E(c)),
+  handler: (c) => handleTrajectory(c.req.param('slug'), E(c), c.get('viewer'), PI(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/team/:slug/contributions',
   auth: 'authed',
   entity: 'team',
-  handler: (c) => handleGetContributions(c.req.param('slug'), U(c), E(c)),
+  handler: (c) => handleGetContributions(c.req.param('slug'), U(c), E(c), c.get('viewer'), PI(c)),
 });
 // #906 — the member's own curated Top-10. GET is public because it renders on
 // the public /team/:slug page (auth: 'public' + anonShape below). PUT is the

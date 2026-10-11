@@ -41,6 +41,7 @@ import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
+import LabPulseSection from '../../components/labpulse/LabPulseSection'
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -395,6 +396,9 @@ export default function PIAnalytics() {
         </div>
       </PageHeader>
 
+      {/* Lab pulse reads its own three routes, so it shows even if the dashboard call fails. */}
+      <LabPulseSection />
+
       <QueryState
         isLoading={false}
         isError={isError}
@@ -681,7 +685,7 @@ export default function PIAnalytics() {
               className="text-xs font-normal uppercase tracking-wider"
               style={{ color: 'var(--slate)' }}
             >
-              Mentee Publication Velocity
+              Trainee Publication Velocity
             </h3>
           </div>
           <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
@@ -690,7 +694,7 @@ export default function PIAnalytics() {
                 <thead>
                   <tr>
                     <th className="text-left text-[10px] uppercase tracking-wider pb-2" style={{ color: 'var(--slate)' }}>
-                      Mentee
+                      Trainee
                     </th>
                     <th className="text-right text-[10px] uppercase tracking-wider pb-2" style={{ color: 'var(--slate)' }}>
                       Papers

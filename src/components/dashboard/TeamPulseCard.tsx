@@ -5,9 +5,11 @@ import { useTeamPulse } from '../../hooks/useApiData'
 import { directors, getAllMembers } from '../../data/team'
 import { withAlpha } from '../../lib/taskGrouping'
 import { QueryErrorNote } from '../QueryErrorNote'
+import { useAuth } from '../../hooks/useAuth'
 
 function TeamPulseCard() {
   const { data, isError, refetch } = useTeamPulse(48)
+  const { user } = useAuth()
 
   const allMembers = useMemo(() => {
     const list: { name: string; initials: string; photoUrl?: string; slug: string }[] = []
@@ -21,6 +23,14 @@ function TeamPulseCard() {
     }
     return list
   }, [])
+
+  // A member's response carries only their own row (api/routes/team-pulse.ts), so
+  // dots for everyone else would all read "quiet". Draw only their own, and say so.
+  const selfOnly = data?.scope === 'self'
+  const shownMembers = useMemo(
+    () => (selfOnly ? allMembers.filter((m) => m.slug === user.slug) : allMembers),
+    [selfOnly, allMembers, user.slug],
+  )
 
   const activeSet = useMemo(() => {
     const set = new Set<string>()
@@ -70,7 +80,7 @@ function TeamPulseCard() {
           className="flex items-center gap-2"
           style={{ overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}
         >
-          {allMembers.map((member) => (
+          {shownMembers.map((member) => (
             <MemberDot
               key={member.slug}
               name={member.name}
@@ -80,6 +90,12 @@ function TeamPulseCard() {
             />
           ))}
         </div>
+
+        {selfOnly && (
+          <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, margin: 0 }}>
+            Only you, here. Each person's activity is theirs and the PI's.
+          </p>
+        )}
 
         {/* Activity summary */}
         <div className="flex items-center gap-4 pt-1" style={{ borderTop: `1px solid ${withAlpha('var(--sk-t1)', 4)}` }}>

@@ -1,11 +1,14 @@
 import type { Env } from '../helpers';
 import { json, resolveSlug } from '../helpers';
+import type { PulseScope } from '../lib/person-access';
 
 // GET /api/team/pulse?hours=48
 // The per-member activity breakdown (who did what) is team-internal. The
 // route is auth: 'authed' (its only reader is the portal TeamPulseCard), so
-// an anonymous caller is refused before this runs.
-export async function handleTeamPulse(url: URL, env: Env): Promise<Response> {
+// an anonymous caller is refused before this runs. Per person, a member sees
+// only their own row (Nick, 2026-10-11); the totals and the count of people
+// active are team-level and stay whole. The PI and the PB key see every row.
+export async function handleTeamPulse(url: URL, env: Env, scope: PulseScope = { all: false, self: null }): Promise<Response> {
   const hours = parseInt(url.searchParams.get('hours') || '48', 10);
   const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
@@ -60,15 +63,20 @@ export async function handleTeamPulse(url: URL, env: Env): Promise<Response> {
     }
   }
 
-  const activity = [...personActivity.values()];
-  const totalUpdates = activity.reduce((sum, a) => sum + a.updates, 0);
-  const totalCompletions = activity.reduce((sum, a) => sum + a.completions, 0);
+  const everyone = [...personActivity.values()];
+  const totalUpdates = everyone.reduce((sum, a) => sum + a.updates, 0);
+  const totalCompletions = everyone.reduce((sum, a) => sum + a.completions, 0);
+  const activity = scope.all ? everyone : everyone.filter((a) => scope.self !== null && a.slug === scope.self);
 
-  return json({
+  const res = json({
     data: {
       activity,
+      scope: scope.all ? 'all' : 'self',
       active_this_week: personActivity.size,
       totals: { updates: totalUpdates, completions: totalCompletions },
     },
   });
+  // Computed per caller, so no shared or edge cache may keep it.
+  res.headers.set('Cache-Control', 'private, no-store');
+  return res;
 }

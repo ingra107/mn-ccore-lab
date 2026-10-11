@@ -1,8 +1,12 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
+import { mayReadPerson } from '../lib/person-access';
+import type { Viewer } from '../lib/viewer-db';
 
 // GET /api/team/:slug/contributions?period=90
-export async function handleGetContributions(slug: string, url: URL, env: Env): Promise<Response> {
+// A member's contribution list is theirs and the PI's alone (Nick, 2026-10-11).
+export async function handleGetContributions(slug: string, url: URL, env: Env, viewer: Viewer, isPi: boolean): Promise<Response> {
+  if (!mayReadPerson(viewer, isPi, slug)) return json({ error: 'Forbidden — a member sees only their own contributions' }, 403);
   const days = parseInt(url.searchParams.get('period') || '90', 10);
   const cutoff = new Date(Date.now() - days * 86400000).toISOString();
 
