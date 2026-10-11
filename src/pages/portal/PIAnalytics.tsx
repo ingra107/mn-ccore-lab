@@ -299,12 +299,12 @@ export default function PIAnalytics() {
 
     if (data.responseMetrics.trend === 'improving') {
       items.push({
-        text: `Task completion speed improving: ${data.responseMetrics.avg_days_recent}d avg vs. ${data.responseMetrics.avg_days_prior}d prior quarter.`,
+        text: `Team task completion speed improving: ${data.responseMetrics.avg_days_recent}d median vs. ${data.responseMetrics.avg_days_prior}d prior quarter.`,
         type: 'good',
       })
     } else if (data.responseMetrics.trend === 'slowing') {
       items.push({
-        text: `Task completion slowing: ${data.responseMetrics.avg_days_recent}d avg vs. ${data.responseMetrics.avg_days_prior}d prior quarter.`,
+        text: `Team task completion slowing: ${data.responseMetrics.avg_days_recent}d median vs. ${data.responseMetrics.avg_days_prior}d prior quarter.`,
         type: 'warning',
       })
     }
@@ -368,7 +368,7 @@ export default function PIAnalytics() {
                 '',
                 `Commitment Rate: ${commitRate}% (${data.commitments.completed}/${data.commitments.total})`,
                 `Overdue: ${data.commitments.overdue}`,
-                `Avg Response: ${data.responseMetrics.avg_days}d (${data.responseMetrics.trend})`,
+                `Days to done, team tasks: ${data.responseMetrics.avg_days}d (${data.responseMetrics.trend})`,
                 `Active Funding: ${data.grantPipeline.active_funding ? formatCurrency(data.grantPipeline.active_funding) : '$0'} (${data.grantPipeline.active} grants)`,
                 `Trainee Pubs: ${data.menteeVelocity.reduce((s, m) => s + m.pub_count, 0)}`,
                 '',
@@ -422,7 +422,7 @@ export default function PIAnalytics() {
         <motion.div variants={staggerItem}><MetricCard
           variant="display"
           icon={Clock}
-          label="Avg Response"
+          label="Days to done, team tasks"
           value={`${data?.responseMetrics.avg_days || 0}d`}
           color="var(--sk-t3)"
           subtitle={data?.responseMetrics.trend === 'improving' ? 'Getting faster' : data?.responseMetrics.trend === 'slowing' ? 'Getting slower' : 'Stable'}
@@ -504,7 +504,7 @@ export default function PIAnalytics() {
               className="text-xs font-normal uppercase tracking-wider"
               style={{ color: 'var(--slate)' }}
             >
-              Response Time
+              Days to done, team tasks
             </h3>
             <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
               Task creation to completion
@@ -578,7 +578,7 @@ export default function PIAnalytics() {
               className="text-xs"
               style={{ color: 'var(--slate)', opacity: 0.75 }}
             >
-              Based on {data?.responseMetrics.total_tasks || 0} completed tasks
+              Based on {data?.responseMetrics.total_tasks || 0} completed team tasks
             </p>
           </div>
         </div>

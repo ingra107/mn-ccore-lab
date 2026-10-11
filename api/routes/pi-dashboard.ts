@@ -15,7 +15,6 @@ const TRAINEE_SQL = `(tm.member_type IN ('trainee', 'fellow', 'resident')
 export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = env): Promise<Response> {
   const [
     commitmentStats,
-    responseTime,
     menteeVelocity,
     grantPipeline,
     pubsByQuarter,
@@ -29,30 +28,6 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
         SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) as completed,
         SUM(CASE WHEN status != 'done' AND due_date < date('now') THEN 1 ELSE 0 END) as overdue
       FROM commitments
-    `).first(),
-
-    // Average response time — task creation to completion
-    env.DB.prepare(`
-      SELECT
-        COUNT(*) as total_tasks,
-        AVG(CASE
-          WHEN completed = 1 AND completed_at IS NOT NULL AND created_at IS NOT NULL
-          THEN julianday(completed_at) - julianday(created_at)
-          ELSE NULL
-        END) as avg_days,
-        AVG(CASE
-          WHEN completed = 1 AND completed_at IS NOT NULL AND created_at IS NOT NULL
-            AND completed_at > datetime('now', '-90 days')
-          THEN julianday(completed_at) - julianday(created_at)
-          ELSE NULL
-        END) as avg_days_recent,
-        AVG(CASE
-          WHEN completed = 1 AND completed_at IS NOT NULL AND created_at IS NOT NULL
-            AND completed_at BETWEEN datetime('now', '-180 days') AND datetime('now', '-90 days')
-          THEN julianday(completed_at) - julianday(created_at)
-          ELSE NULL
-        END) as avg_days_prior
-      FROM tasks
     `).first(),
 
     // Mentee publication velocity — papers with yearly rate.
@@ -145,22 +120,18 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
     };
   });
 
-  // Response time: last 90 days against the 90 before
-  const rt = responseTime as {
-    total_tasks: number;
-    avg_days: number | null;
-    avg_days_recent: number | null;
-    avg_days_prior: number | null;
-  } | null;
-
+  // Response time: the Lab pulse definition (team tasks, computeResponseTime
+  // below), one helper for both. PI-only, like the rest of the lab-wide numbers.
+  const rt = isPi ? await computeResponseTime(wideEnv, new Date()) : null;
   const responseMetrics = {
-    avg_days: rt?.avg_days ? +rt.avg_days.toFixed(1) : 0,
-    avg_days_recent: rt?.avg_days_recent ? +rt.avg_days_recent.toFixed(1) : 0,
-    avg_days_prior: rt?.avg_days_prior ? +rt.avg_days_prior.toFixed(1) : 0,
-    trend: rt?.avg_days_recent && rt?.avg_days_prior
-      ? (rt.avg_days_recent < rt.avg_days_prior ? 'improving' : rt.avg_days_recent > rt.avg_days_prior ? 'slowing' : 'stable')
-      : 'insufficient_data',
-    total_tasks: rt?.total_tasks || 0,
+    avg_days: rt?.overall.median_days ?? 0,
+    avg_days_recent: rt?.summary.median_days ?? 0,
+    avg_days_prior: rt?.summary.prior_median_days ?? 0,
+    trend: !rt ? 'insufficient_data'
+      : rt.summary.trend === 'faster' ? 'improving'
+      : rt.summary.trend === 'slower' ? 'slowing'
+      : rt.summary.trend === 'flat' ? 'stable' : 'insufficient_data',
+    total_tasks: rt?.overall.completed ?? 0,
   };
 
   return json({
@@ -274,6 +245,12 @@ export async function handleMenteeVelocity(env: Env, isPi: boolean, now = new Da
 const SMALL_SAMPLE = 5;
 export async function handleResponseTime(env: Env, isPi: boolean, now = new Date()): Promise<Response> {
   if (!isPi) return PI_ONLY();
+  return noStore(json({ data: await computeResponseTime(env, now) }));
+}
+
+// The one definition of "days to done", shared by response-time and the
+// pi-dashboard's response metrics. `overall` is the whole 365-day window.
+async function computeResponseTime(env: Env, now: Date) {
   const done = await env.DB.prepare(`
     SELECT priority,
       substr(completed_at, 1, 7) as month,
@@ -288,6 +265,7 @@ export async function handleResponseTime(env: Env, isPi: boolean, now = new Date
     LIMIT 50000
   `).bind(now.toISOString()).all();
   const rows = (done.results || []) as Array<{ priority: string | null; month: string; days: number; age: number }>;
+  const all = rows.map((r) => r.days);
 
   const monthMap = new Map<string, number[]>();
   const prioMap = new Map<string, number[]>();
@@ -316,23 +294,22 @@ export async function handleResponseTime(env: Env, isPi: boolean, now = new Date
   const back = cy * 12 + (cm - 1) - 11;
   const first = `${Math.floor(back / 12)}-${String((back % 12) + 1).padStart(2, '0')}`;
 
-  return noStore(json({
-    data: {
-      summary: {
-        median_days: med(recent),
-        prior_median_days: med(prior),
-        completed: recent.length,
-        prior_completed: prior.length,
-        small_sample: recent.length < SMALL_SAMPLE,
-        trend,
-      },
-      monthly: [...monthMap.entries()].filter(([month]) => month >= first).sort(([a], [b]) => a.localeCompare(b))
-        .map(([month, xs]) => ({ month, completed: xs.length, median_days: med(xs) })),
-      byPriority: [...prioMap.entries()]
-        .map(([priority, xs]) => ({ priority, count: xs.length, median_days: med(xs) }))
-        .sort((a, b) => b.count - a.count),
+  return {
+    overall: { median_days: med(all), completed: all.length },
+    summary: {
+      median_days: med(recent),
+      prior_median_days: med(prior),
+      completed: recent.length,
+      prior_completed: prior.length,
+      small_sample: recent.length < SMALL_SAMPLE,
+      trend,
     },
-  }));
+    monthly: [...monthMap.entries()].filter(([month]) => month >= first).sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, xs]) => ({ month, completed: xs.length, median_days: med(xs) })),
+    byPriority: [...prioMap.entries()]
+      .map(([priority, xs]) => ({ priority, count: xs.length, median_days: med(xs) }))
+      .sort((a, b) => b.count - a.count),
+  };
 }
 
 // ── GET /api/analytics/team-engagement ─────────────────────

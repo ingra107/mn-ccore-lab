@@ -157,6 +157,11 @@ describe('Lab pulse routes are PI-only', () => {
     const s5 = JSON.parse((await get('/api/analytics/response-time', PI_EMAIL)).text).data
     expect(s5.summary.completed).toBe(5)
     expect(s5.summary.small_sample).toBe(false)
+    // the dashboard's response metrics are the same definition: team tasks, median
+    const rm = JSON.parse((await get('/api/analytics/pi-dashboard', PI_EMAIL)).text).data.responseMetrics
+    expect(rm).toMatchObject({ avg_days_recent: s5.summary.median_days, total_tasks: 5, trend: 'insufficient_data' })
+    const member = JSON.parse((await get('/api/analytics/pi-dashboard', MEMBER_EMAIL)).text).data.responseMetrics
+    expect(member.total_tasks).toBe(0)
   })
 
   it('active = an assigned task done, a comment or update authored, or something opened; each alone is enough', async () => {
