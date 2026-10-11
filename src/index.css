@@ -3046,6 +3046,13 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr-grp-h .sr-od{font-size:11.5px;color:var(--sk-od);white-space:nowrap}
 .sr-grp-h .sr-pl{font-size:11.5px;color:var(--sk-gold);white-space:nowrap}
 .sr.sr-panel{background:var(--sk-panel);border-radius:12px;box-shadow:inset 0 0 0 1px var(--sk-line);padding:6px;margin-bottom:16px}
+/* A group heading that does not collapse (Calendar Agenda's day headings); "Today" takes the accent (now). */
+.sr-grp-h.sr-grp-static{cursor:default}
+.sr-grp-h.sr-grp-now h3{color:var(--sk-ac)}
+/* Rows with no destination, and titles that are real links (Calendar Agenda) */
+.sr .sr-row.sr-static{cursor:default}
+.sr a.sr-lk{color:inherit;text-decoration:none}
+.sr .sr-kind{display:inline-flex;color:var(--sk-t3)}
 .sr .sr-more{all:unset;cursor:pointer;font-size:11.5px;color:var(--sk-t3);padding:6px 10px 4px;border-radius:6px}
 .sr .sr-more:hover{color:var(--sk-t1)}
 .sr .sr-more:focus-visible{outline:2px solid var(--sk-ac)}

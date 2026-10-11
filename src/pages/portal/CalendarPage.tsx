@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, type ElementType } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Calendar, ChevronLeft, ChevronRight, Users, SquareCheck, Diamond, Download } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
@@ -14,6 +14,9 @@ import type { CalendarEvent } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { SleekTable, SleekRow, type SleekColumn } from '../../components/table/SleekRows'
+import { TaskPriorityLabel, TaskStatusPill } from '../../components/tasks/taskSleekCells'
+import { Face } from '../../components/today/skin'
 
 type ViewMode = 'month' | 'week' | 'day' | 'agenda'
 
@@ -286,9 +289,15 @@ export default function CalendarPage() {
         )}
       </div>
 
-      {/* Legend */}
+      {/* Legend. Agenda rows carry no type color, so its key names the glyphs instead. */}
       <div className="flex items-center gap-4 mt-4 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-        {Object.entries(eventColors).map(([type, config]) => (
+        {view === 'agenda' ? (
+          <>
+            <span className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}><Users {...ICON_PROPS} size={11} aria-hidden="true" />Meetings</span>
+            <span className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}><span aria-hidden="true" style={{ color: 'var(--sk-gold)' }}>◆</span>Milestones</span>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>Plain rows are your task due dates</span>
+          </>
+        ) : Object.entries(eventColors).map(([type, config]) => (
           <div key={type} className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: config.color }} />
             <span className="text-[10px] first-letter:uppercase" style={{ color: 'var(--slate)', opacity: 0.75 }}>
@@ -545,9 +554,60 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
 }
 
 // ── Agenda View ──────────────────────────────────────────────
+// Eval item 87: the agenda is the shared sleek row (components/table/
+// SleekRows), grouped by day the way Lanes groups by lane: a quiet heading,
+// then one soft panel of one-line rows. No type pill on every row. The kind
+// reads from one quiet glyph in a fixed lead slot (people for a meeting, the
+// gold diamond for a milestone, nothing for a task, as on Today); a task keeps
+// Today's Urgent tag, its non-default status and its owner face.
 
-function AgendaView({ events }: { events: CalendarEvent[] }) {
+const KIND_WORD: Record<string, string> = { meeting: 'Meeting', task: 'Task', milestone: 'Milestone' }
+
+function KindGlyph({ e }: { e: CalendarEvent }) {
+  const word = KIND_WORD[e.type] ?? e.type
+  if (e.type === 'meeting') return <span className="sr-kind" title={word}><Users {...ICON_PROPS} size={13} aria-hidden="true" /><span className="sr-only">{word}</span></span>
+  if (e.type === 'milestone') return <span className="sr-dia" title={word}><span aria-hidden="true">◆</span><span className="sr-only">{word}</span></span>
+  return <span className="sr-only">{word}</span>
+}
+
+function agendaContext(e: CalendarEvent) {
+  if (e.type === 'milestone') {
+    const grant = typeof e.meta?.grant_title === 'string' ? e.meta.grant_title : null
+    return grant ? <span className="sr-m">{grant}</span> : null
+  }
+  if (e.type === 'task') {
+    const status = typeof e.meta?.status === 'string' ? e.meta.status : 'todo'
+    // To Do is the default: saying it on every row is the noise item 89 names.
+    return status !== 'todo' && status !== 'done' ? <TaskStatusPill status={status} /> : null
+  }
+  return null
+}
+
+const agendaColumns: SleekColumn<CalendarEvent>[] = [
+  { key: 'kind', width: '18px', phone: 'lead', render: (e) => <KindGlyph e={e} /> },
+  {
+    key: 'title', width: 'minmax(0,1fr)', phone: 'title', interactive: true,
+    render: (e) => {
+      const to = eventLinkTo(e)
+      const label = eventLabel(e)
+      return (
+        <div className="sr-tt">
+          {to ? <Link to={to} className="sr-x sr-open sr-lk" title={eventFullTitleHint(e)}>{label}</Link> : <span className="sr-x" title={eventFullTitleHint(e)}>{label}</span>}
+          {e.type === 'task' && e.category === 'urgent' && <TaskPriorityLabel priority="urgent" />}
+        </div>
+      )
+    },
+  },
+  { key: 'context', width: '200px', phone: 'line', render: agendaContext },
+  {
+    key: 'owner', width: '26px', phone: 'trail',
+    render: (e) => (e.type === 'task' && typeof e.meta?.assignee === 'string' && e.meta.assignee ? <Face slug={e.meta.assignee} /> : null),
+  },
+]
+
+export function AgendaView({ events }: { events: CalendarEvent[] }) {
   const today = localDateKey()
+  const navigate = useNavigate()
 
   const grouped = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>()
@@ -561,38 +621,31 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
   }, [events, today])
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="cal-agenda">
       {grouped.map(([date, dayEvents]) => {
         const isToday = date === today
         return (
-          <div key={date}>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: isToday ? 'var(--teal-solid)' : 'var(--slate)', opacity: isToday ? 1 : 0.85 }} />
-              <span className="text-sm font-semibold" style={{ color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
-                {isToday ? 'Today' : formatLongDate(date)}
-              </span>
+          <section key={date} aria-label={isToday ? 'Today' : formatLongDate(date)}>
+            <div className={`sr-grp-h sr-grp-static${isToday ? ' sr-grp-now' : ''}`}>
+              <h3>{isToday ? 'Today' : formatLongDate(date)}</h3>
+              <span className="sr-n">{dayEvents.length}</span>
             </div>
-            <motion.div className="flex flex-col gap-1.5 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)' }} variants={staggerContainer} initial="hidden" animate="visible">
+            <SleekTable columns={agendaColumns} header={false} className="sr-panel">
               {dayEvents.map((e) => {
-                const config = eventColors[e.type] || eventColors.task
-                const Icon = eventIcons[e.type] || Calendar
                 const to = eventLinkTo(e)
-                const AgendaWrapper: ElementType = to ? Link : 'div'
-                const agendaProps = to ? { to } : {}
                 return (
-                  <motion.div key={e.id} variants={staggerItem}>
-                    <AgendaWrapper {...agendaProps} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors" style={{ textDecoration: 'none' }}>
-                      <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
-                        <Icon {...ICON_PROPS} size={12} style={{ color: config.color }} />
-                      </div>
-                      <span className="flex-1 text-sm" style={{ color: 'var(--ink)' }} title={eventFullTitleHint(e)}>{eventLabel(e)}</span>
-                      <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: config.color, backgroundColor: config.bg }}>{e.type}</span>
-                    </AgendaWrapper>
-                  </motion.div>
+                  <SleekRow
+                    key={`${e.type}:${e.id}`}
+                    row={e}
+                    data={{ 'event-id': e.id, 'event-type': e.type }}
+                    urgent={e.type === 'task' && e.category === 'urgent'}
+                    className={to ? undefined : 'sr-static'}
+                    onClick={to ? () => navigate(to) : undefined}
+                  />
                 )
               })}
-            </motion.div>
-          </div>
+            </SleekTable>
+          </section>
         )
       })}
       {grouped.length === 0 && (
