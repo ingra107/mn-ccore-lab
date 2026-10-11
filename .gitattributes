@@ -24,3 +24,7 @@ src/lib/__tests__/milestone_vectors.json text eol=lf
 *.mts text eol=lf
 *.cts text eol=lf
 *.tsx text eol=lf
+
+# Stylesheets too: tests import src/index.css with `?raw` and match on LF line
+# breaks, so a CRLF checkout (a merge under core.autocrlf=true) breaks them.
+*.css text eol=lf

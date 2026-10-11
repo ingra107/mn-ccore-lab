@@ -1,7 +1,8 @@
 import type { LucideIcon } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
 
-// DD-6: headline stat card — big serif number + small gold label.
+// DD-6: headline stat card — big serif number + small neutral label
+// (gold is reserved for wants-you-now and milestones, color rule 2026-10-11).
 // Pulse Kiosk uses the same Fraunces treatment and it's the product's
 // best visual asset; this shares that DNA. Number stays tabular-nums
 // so decimals line up when multiple display cards sit side-by-side.
@@ -22,7 +23,7 @@ function renderDisplayVariant({
             fontWeight: 600,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
-            color: 'var(--gold)',
+            color: 'var(--slate)',
           }}
         >
           {label}
@@ -71,7 +72,7 @@ interface MetricCardProps {
    *  "no change" so empty hero cards stop reading as broken. */
   previous?: number
   previousLabel?: string
-  /** DD-6: 'display' renders 60px Fraunces number + 11px all-caps gold
+  /** DD-6: 'display' renders 60px Fraunces number + 11px all-caps neutral
    *  label, ~20% extra padding. Pulse Kiosk visual DNA. Use for 4-6
    *  headline hero stats (PI dashboard, Lab Health, Trajectory), never
    *  in dense rows. Default 'default' stays the 20px DM Sans style. */

@@ -446,10 +446,10 @@ export default function PIAnalytics() {
         {/* Commitment Scorecard */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Target {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
+            <Target {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
-              style={{ color: 'var(--gold)' }}
+              style={{ color: 'var(--slate)' }}
             >
               Commitment Scorecard
             </h3>
@@ -495,10 +495,10 @@ export default function PIAnalytics() {
         {/* Response Time Metrics */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Clock {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
+            <Clock {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
-              style={{ color: 'var(--gold)' }}
+              style={{ color: 'var(--slate)' }}
             >
               Response Time
             </h3>
@@ -585,10 +585,10 @@ export default function PIAnalytics() {
         {/* Team Engagement Score */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Users {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
+            <Users {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
-              style={{ color: 'var(--gold)' }}
+              style={{ color: 'var(--slate)' }}
             >
               Team Engagement
             </h3>
@@ -648,7 +648,7 @@ export default function PIAnalytics() {
                       </span>
                       <span
                         className="text-[10px] w-8 text-right"
-                        style={{ color: 'var(--teal)' }}
+                        style={{ color: 'var(--slate)' }}
                         title={`Score: ${member.score}`}
                       >
                         {member.score}
@@ -676,10 +676,10 @@ export default function PIAnalytics() {
         {/* Mentee Publication Velocity */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <BookOpen {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
+            <BookOpen {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
-              style={{ color: 'var(--gold)' }}
+              style={{ color: 'var(--slate)' }}
             >
               Mentee Publication Velocity
             </h3>
@@ -773,10 +773,10 @@ export default function PIAnalytics() {
         {/* Publications per Year */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <BarChart3 {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
+            <BarChart3 {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
-              style={{ color: 'var(--gold)' }}
+              style={{ color: 'var(--slate)' }}
             >
               Publications per Year
             </h3>
@@ -800,10 +800,10 @@ export default function PIAnalytics() {
         {/* Grant Pipeline + Projects by Stage */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <DollarSign {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
+            <DollarSign {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
-              style={{ color: 'var(--gold)' }}
+              style={{ color: 'var(--slate)' }}
             >
               Grant Pipeline & Projects
             </h3>
@@ -842,10 +842,10 @@ export default function PIAnalytics() {
       {/* Leadership Insights */}
       <div className="mt-6">
         <div className="flex items-center gap-2 mb-3">
-          <Lightbulb {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
+          <Lightbulb {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
           <h3
             className="text-xs font-normal uppercase tracking-wider"
-            style={{ color: 'var(--gold)' }}
+            style={{ color: 'var(--slate)' }}
           >
             Leadership Insights
           </h3>

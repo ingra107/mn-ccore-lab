@@ -710,7 +710,7 @@ export default function MemberPage() {
       )}
 
       {memberPubs.length > 0 && (
-        <PublicationsSection publications={memberPubs} id="publications" title="All papers" />
+        <PublicationsSection publications={memberPubs} id="publications" title="All papers" portalChrome={isPortalRoute} />
       )}
       {memberPubs.length === 0 && (
         <div

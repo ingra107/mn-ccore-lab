@@ -211,9 +211,13 @@ export default function LabPageLayout({
                               fontSize: '11px',
                               letterSpacing: '0.05em',
                               padding: '6px 12px',
-                              color: isActive ? 'var(--gold)' : 'var(--slate)',
+                              /* Portal: the active item goes neutral so the
+                                 member's personal hue stays the page's one
+                                 accent (color rule 2026-10-11). The public
+                                 site keeps its gold brand. */
+                              color: isActive ? (portalChrome ? 'var(--ink)' : 'var(--gold)') : 'var(--slate)',
                               borderLeft: isActive
-                                ? '2px solid var(--gold)'
+                                ? `2px solid ${portalChrome ? 'var(--ink)' : 'var(--gold)'}`
                                 : '2px solid transparent',
                             }}
                           >
@@ -459,6 +463,7 @@ export function PublicationsSection({
   id,
   title = 'Papers',
   recentCount = 10,
+  portalChrome = false,
 }: {
   publications: Publication[]
   id?: string
@@ -467,6 +472,8 @@ export function PublicationsSection({
    *  ~250) collapses to the `recentCount` most recent by default, with a
    *  "View all" toggle revealing the rest in place (design principle #3). */
   recentCount?: number
+  /** Portal: the "View all" toggle is neutral, not the public gold brand. */
+  portalChrome?: boolean
 }) {
   const [showAll, setShowAll] = useState(false)
   const sorted = [...publications].sort((a, b) => b.year - a.year)
@@ -496,7 +503,7 @@ export function PublicationsSection({
             type="button"
             onClick={() => setShowAll((v) => !v)}
             className="text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
-            style={{ color: 'var(--gold)', background: 'none', border: 'none' }}
+            style={{ color: portalChrome ? 'var(--ink)' : 'var(--gold)', background: 'none', border: 'none' }}
           >
             {showAll ? 'Show fewer' : `View all ${sorted.length} papers`}
           </button>
