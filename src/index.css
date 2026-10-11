@@ -962,28 +962,15 @@ a:hover {
   }
 }
 
-/* ── Card base ── */
+/* ── Card base ── the surface, edge and shadow are the shared card material
+   (the .sk-mat rule, color back pick 1); .card adds its radius and hover. */
 .card {
-  background: var(--cream);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
-  border: none;
   border-radius: var(--radius-xl);
-  transition: box-shadow 0.25s ease, background-color 0.12s ease;
+  transition: box-shadow 0.25s ease;
 }
 
 .card:hover {
-  box-shadow: var(--shadow-card-hover);
-  background-color: rgba(0, 0, 0, 0.015);
-}
-
-.dark .card {
-  background-color: var(--cream);
-  background-image: linear-gradient(var(--surface-2), var(--surface-2));
-  box-shadow: 0 0 0 1px var(--border-subtle), var(--shadow-card), inset 0 1px 0 rgba(255,255,255,0.03);
-}
-
-.dark .card:hover {
-  background-image: linear-gradient(var(--surface-3), var(--surface-3));
+  box-shadow: inset 0 1px 0 var(--sk-rim), var(--shadow-card-hover);
 }
 
 /* ── Elevated card with dark neumorphism ── */
@@ -994,10 +981,6 @@ a:hover {
   box-shadow: var(--shadow-elevated), inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
-/* Luminance-stepping for bento cards in dark mode */
-.dark .bento-card:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
 
 /* ── Project card hover ── */
 .project-card:hover {
@@ -1143,14 +1126,21 @@ a:hover {
    right to the viewport minus P, so all five columns show at 1440+. */
 .band-anchored-wide.band-anchored-full { max-width: none; }
 
-/* ── Section Header accent line ── */
-.section-header-line {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(to right, var(--gold), transparent);
-  opacity: 0.5;
-  margin-left: 12px;
-}
+/* ── Section heads by weight (color back pick 3, Nick 2026-10-11) ──
+   Bold head, dim count, a short gray hairline that fades out. Replaces the
+   teal tick on Today and the gold rule on My Items. ONE rule draws the fade:
+   .sk-hd (ui/SectionHead.tsx) carries it as ::after, Today's collapsible
+   heads (.tk-ctog) the same way, and .sk-fade is the element form for a
+   head that cannot take the class. Gray only: the line has no job to color. */
+.sk-hd{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.sk-hd-t{font:600 15px/1.3 var(--font-body);color:var(--sk-t1);margin:0;white-space:nowrap}
+.sk-hd-c{font-size:12.5px;font-weight:400;color:var(--sk-t3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sk-hd-ic{color:var(--sk-t3);flex-shrink:0;display:inline-flex}
+.sk-hd-r{margin-left:auto;display:flex;align-items:center;gap:6px}
+/* Controls in a head (a link, a + button) sit after the fade, on the right. */
+.sk-hd>.sk-hd-r,.sk-hd>button,.sk-hd>a{order:2}
+.sk-hd::after,.tk .tk-ctog::after,.sk-fade{content:"";display:block;flex:none;width:clamp(32px,12vw,120px);height:1px;background:linear-gradient(90deg,var(--sk-line2),transparent)}
+.sk-hd::after{order:1}
 
 /* ── Always-dark sections (ink bg) — don't flip in dark mode ── */
 /* Use on ImpactMetrics, CLIFMap, any section that must stay dark on both
@@ -2392,8 +2382,20 @@ button[aria-label="Deselect task"]::before {
    Modifiers are tk-prefixed too (tk-btn tk-ac). */
 :root{--sk-rim:rgba(255,255,255,.9);--sk-amb:0 1px 2px color-mix(in srgb,var(--sk-t1) 5%,transparent);--sk-rim-ac:color-mix(in srgb,var(--sk-ac) 25%,transparent);--sk-top:color-mix(in srgb,var(--sk-card) 97%,#000)}
 .dark{--sk-rim:rgba(255,255,255,.06);--sk-amb:0 10px 30px rgba(0,0,0,.35);--sk-top:color-mix(in srgb,var(--sk-card) 94%,#fff)}
-.tk .tk-card{background:linear-gradient(180deg,var(--sk-top) 0%,var(--sk-card) 60%);box-shadow:inset 0 1px 0 var(--sk-rim),var(--sk-amb)}
-:root:not(.dark) .tk .tk-card{background:linear-gradient(180deg,#fff 0%,#fff 40%,var(--sk-panel) 160%)}
+/* Card material (color back pick 1, Nick 2026-10-11): lit top edge, top-to-bottom
+   tone, soft ambient shadow. ONE rule for every leaf card: Today's cards, the
+   detail pages' .detail-card, and .sk-mat anywhere else (Lab Overview cards,
+   publication and paper cards). Panels stay flat, so no box-in-box. */
+:root{--sk-mat-bg:linear-gradient(180deg,#fff 0%,#fff 40%,var(--sk-panel) 160%)}
+.dark{--sk-mat-bg:linear-gradient(180deg,var(--sk-top) 0%,var(--sk-card) 60%)}
+.tk .tk-card,.sk-mat,.detail-card,.card{background:var(--sk-mat-bg);box-shadow:inset 0 1px 0 var(--sk-rim),var(--sk-amb)}
+.sk-mat,.detail-card,.card{border:1px solid var(--sk-line)}
+/* Data bars run teal dark to bright (color back pick 7, Nick 2026-10-11: "for 7
+   i think you can use teal just do the dark to bright with that color!").
+   --sk-ramp-dim is the dim end; lib/tealRamp.ts mixes from it to the full
+   accent. Floors keep the dim end at 3:1 on the card (light 70%, dark 55%). */
+:root{--sk-ramp-dim:color-mix(in srgb,var(--sk-ac) 70%,var(--sk-card))}
+.dark{--sk-ramp-dim:color-mix(in srgb,var(--sk-ac) 55%,var(--sk-card))}
 .tk .tk-card:hover,.tk .tk-mc.tk-nowm{box-shadow:inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
 .tk .tk-tc.tk-urg{box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim),var(--sk-amb)}
 .tk .tk-tc.tk-urg:hover{box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
@@ -2429,7 +2431,7 @@ button[aria-label="Deselect task"]::before {
 .tk .tk-hint span{flex:1;min-width:0}
 .tk .tk-hint button{font-size:15px;line-height:1;padding:5px 8px;color:var(--sk-t3)}
 .tk .tk-panel{background:var(--sk-panel);border:1px solid var(--sk-line);border-radius:var(--r-panel);padding:14px}
-.tk .tk-card{background:var(--sk-card);border:1px solid var(--sk-line);border-radius:var(--r-card)}
+.tk .tk-card{border:1px solid var(--sk-line);border-radius:var(--r-card)}
 .tk .tk-card:hover{border-color:var(--sk-line2)}
 .tk .tk-qcard{margin-bottom:12px}
 /* attention items (Needs you, meeting triage): ONE card, no box-in-box, and visibly not part of the everyday page:
@@ -2912,7 +2914,6 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .pj-slots .tk-wo{color:var(--sk-t3)}
 .sr .pj-slots .tk-wo:hover{color:var(--sk-t1)}
 .sr .pj-stage-h{display:flex;align-items:center;gap:8px;padding:16px 10px 6px;font-size:12.5px;font-weight:600;color:var(--sk-t2)}
-.sr .pj-stage-h i{flex:1;height:1px;background:var(--sk-line)}
 .sr .pj-empty{padding:48px 24px;text-align:center;font-size:13.5px;color:var(--sk-t3)}
 .pj-foot{display:flex;flex-wrap:wrap;gap:6px 20px;padding:12px 10px 4px;font-size:12px;color:var(--sk-t3)}
 .pj-foot b{font-weight:600;color:var(--sk-t2);font-variant-numeric:tabular-nums}
@@ -2985,7 +2986,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-hd button:focus-visible{outline:2px solid var(--sk-ac);outline-offset:2px}
 .sr .sr-arr{font-size:9px}
 .sr .sr-hd .sr-end{text-align:right}
-.sr .sr-row{position:relative;min-height:40px;border-radius:9px;cursor:pointer;transition:background .12s}
+.sr .sr-row{position:relative;min-height:40px;border-radius:9px;cursor:pointer;transition:background .12s,box-shadow .12s}
 @media (min-width:768px){.sr:not(.sr-narrow) .sr-row{height:40px}}
 .sr .sr-row:hover{background:var(--sr-hov)}
 .sr .sr-row.sr-cur,.sr .sr-row.sr-exp{background:var(--sr-hov);box-shadow:inset 0 0 0 1px var(--sk-line2)}
@@ -2994,6 +2995,12 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-row.sr-sel{background:var(--sk-ac-soft);box-shadow:inset 2px 0 0 var(--sk-ac)}
 .sr .sr-row.sr-sel.sr-cur{box-shadow:inset 2px 0 0 var(--sk-ac),inset 0 0 0 1px var(--sk-line2)}
 .sr .sr-row.sr-selmode{cursor:cell}
+/* Rows lift on hover (color back pick 6, Nick 2026-10-11): the row under the
+   pointer takes the card material and a faint teal rim. Nothing moves, no
+   grid lines. A selected row keeps its own teal tint. */
+.sr .sr-row:hover:not(.sr-sel){background:var(--sk-mat-bg);box-shadow:inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-rim-ac),var(--sk-amb)}
+.sr .sr-row.sr-urg:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-rim-ac),var(--sk-amb)}
+@media (prefers-reduced-motion:reduce){.sr .sr-row{transition:none}}
 .sr .sr-c{display:flex;align-items:center;gap:6px;min-width:0}
 .sr .sr-c.sr-end{justify-content:flex-end}
 /* Hover actions keep their slot (rows line up) and leave the a11y tree while hidden (Rule 27). */

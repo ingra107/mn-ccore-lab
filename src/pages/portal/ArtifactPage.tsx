@@ -411,7 +411,7 @@ export default function ArtifactPage() {
             before via MarkdownView — no regression there. */}
         <div
           className="detail-card"
-          style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '1.5rem 1.75rem', marginBottom: '2rem' }}
+          style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem 1.75rem', marginBottom: '2rem' }}
         >
           {artifact.content_type === 'html' ? (
             <DeskBrokerFrame id={artifact.id} title={artifact.title} html={artifact.body_md} />
@@ -428,7 +428,7 @@ export default function ArtifactPage() {
         {/* Composer */}
         <div
           className="detail-card"
-          style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '14px 18px', marginBottom: '1.25rem' }}
+          style={{ borderRadius: 'var(--radius-xl)', padding: '14px 18px', marginBottom: '1.25rem' }}
         >
           {!isAuthenticated && import.meta.env.PROD ? (
             <span style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.85 }}>
@@ -489,7 +489,7 @@ export default function ArtifactPage() {
 
         {/* Stream */}
         {activity.length === 0 ? (
-          <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)' }}>
+          <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)' }}>
             <EmptyState
               icon={<FileText size={24} />}
               title="No discussion yet"

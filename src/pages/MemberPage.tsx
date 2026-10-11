@@ -343,15 +343,9 @@ export default function MemberPage() {
       {mentee && (
         <>
           <section className="mb-8" id="research-focus">
-            <div className="flex items-center gap-3 mb-4">
-              <GraduationCap {...ICON_PROPS} size={20} style={{ color: 'var(--slate)' }} aria-hidden="true" />
-              <h2
-                className="text-xl sm:text-2xl"
-                style={{
-                  fontWeight: 500,
-                  color: 'var(--ink)',
-                }}
-              >
+            <div className="sk-hd">
+              <GraduationCap {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} aria-hidden="true" />
+              <h2 className="sk-hd-t">
                 Research Focus
               </h2>
             </div>
@@ -396,15 +390,9 @@ export default function MemberPage() {
       {menteeProjects.length > 0 && (
         <>
           <section className="mb-8" id="active-projects">
-            <div className="flex items-center gap-3 mb-4">
-              <FlaskConical {...ICON_PROPS} size={20} style={{ color: 'var(--slate)' }} aria-hidden="true" />
-              <h2
-                className="text-xl sm:text-2xl"
-                style={{
-                  fontWeight: 500,
-                  color: 'var(--ink)',
-                }}
-              >
+            <div className="sk-hd">
+              <FlaskConical {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} aria-hidden="true" />
+              <h2 className="sk-hd-t">
                 Active Projects
               </h2>
             </div>
@@ -462,15 +450,9 @@ export default function MemberPage() {
       {(expertiseTags.length > 0 || isAuthenticated) && (
         <>
           <section className="mb-8" id="expertise">
-            <div className="flex items-center gap-3 mb-4">
-              <Sparkles {...ICON_PROPS} size={20} style={{ color: 'var(--slate)' }} aria-hidden="true" />
-              <h2
-                className="text-xl sm:text-2xl"
-                style={{
-                  fontWeight: 500,
-                  color: 'var(--ink)',
-                }}
-              >
+            <div className="sk-hd">
+              <Sparkles {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} aria-hidden="true" />
+              <h2 className="sk-hd-t">
                 Expertise
               </h2>
             </div>
@@ -629,15 +611,9 @@ export default function MemberPage() {
       {slug && (
         <>
           <section className="mb-8" id="activity">
-            <div className="flex items-center gap-3 mb-4">
-              <Activity {...ICON_PROPS} size={20} style={{ color: 'var(--slate)' }} aria-hidden="true" />
-              <h2
-                className="text-xl sm:text-2xl"
-                style={{
-                  fontWeight: 500,
-                  color: 'var(--ink)',
-                }}
-              >
+            <div className="sk-hd">
+              <Activity {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} aria-hidden="true" />
+              <h2 className="sk-hd-t">
                 Activity
               </h2>
             </div>
@@ -654,15 +630,9 @@ export default function MemberPage() {
       {topicCounts.length > 0 && (
         <>
           <section className="mb-8" id="research-areas">
-            <h2
-              className="text-xl sm:text-2xl mb-4"
-              style={{
-                fontWeight: 500,
-                color: 'var(--ink)',
-              }}
-            >
-              Research Areas
-            </h2>
+            <div className="sk-hd">
+              <h2 className="sk-hd-t">Research Areas</h2>
+            </div>
             <div className="flex flex-wrap gap-2 mb-4">
               {topicCounts.map(([topic, count]) => (
                 <span
@@ -720,25 +690,13 @@ export default function MemberPage() {
           <SectionDivider />
           <div className="py-4" />
           <section className="mb-8" id="commitments">
-            <div className="flex items-center gap-3 mb-4">
-              <Handshake {...ICON_PROPS} size={20} style={{ color: 'var(--slate)' }} aria-hidden="true" />
-              <h2
-                className="text-xl sm:text-2xl"
-                style={{
-                  fontWeight: 500,
-                  color: 'var(--ink)',
-                }}
-              >
+            <div className="sk-hd">
+              <Handshake {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} aria-hidden="true" />
+              <h2 className="sk-hd-t">
                 Commitments
               </h2>
               {openCommitments.length > 0 && (
-                <span
-                  style={{
-                    fontSize: '11px',
-                    color: 'var(--slate)',
-                    opacity: 0.75,
-                  }}
-                >
+                <span className="sk-hd-c">
                   {openCommitments.length} open
                 </span>
               )}
@@ -934,16 +892,13 @@ function MemberMilestones({ slug }: { slug: string }) {
       <SectionDivider />
       <div className="py-4" />
       <section className="mb-8" id="milestones">
-        <div className="flex items-center gap-3 mb-4">
-          <GraduationCap {...ICON_PROPS} size={20} style={{ color: 'var(--slate)' }} aria-hidden="true" />
-          <h2
-            className="text-xl sm:text-2xl"
-            style={{ fontWeight: 500, color: 'var(--ink)' }}
-          >
+        <div className="sk-hd">
+          <GraduationCap {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} aria-hidden="true" />
+          <h2 className="sk-hd-t">
             Milestones
           </h2>
           {open.length > 0 && (
-            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
+            <span className="sk-hd-c">
               {open.length} upcoming
             </span>
           )}

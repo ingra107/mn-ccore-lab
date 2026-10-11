@@ -33,7 +33,7 @@ import { getPersonInfo } from '../../data/team'
 import { displayName } from '../../lib/nameUtils'
 import { formatMediumDate, isOverdue } from '../../lib/dateUtils'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { GRANT_BAR_FILL, GRANT_BAR_STROKE } from '../../lib/grantBar'
+import { GRANT_BAR_FILL, GRANT_BAR_TOP, GRANT_BAR_STROKE } from '../../lib/grantBar'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 // ── Gantt chart constants ──────────────────────────────────────
@@ -235,6 +235,14 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
           )
         })}
 
+        {/* Funded bars are teal-lit: a lighter top edge into the teal (grantBar.ts). */}
+        <defs>
+          <linearGradient id="grant-bar-lit" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={GRANT_BAR_TOP} />
+            <stop offset="0.7" stopColor={GRANT_BAR_FILL} />
+          </linearGradient>
+        </defs>
+
         {/* Today marker */}
         <line
           x1={todayX} y1={CHART_PADDING_TOP - 16}
@@ -289,14 +297,19 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
                 {piDisplayName(grant.pi)}
               </text>
 
-              {/* Bar: funded solid gray, proposed dashed outline (grantBar.ts) */}
+              {/* Bar: funded teal-lit, proposed dashed outline (grantBar.ts) */}
               <rect
                 x={barX} y={barY + 2} width={Math.max(barWidth, 4)} height={BAR_HEIGHT - 4} rx={6}
                 {...(isProposed
-                  ? { fill: 'none', stroke: GRANT_BAR_STROKE, strokeWidth: 1.5, strokeDasharray: '6 4', opacity: 0.7 }
-                  : { fill: GRANT_BAR_FILL, opacity: 0.85 })}
-                className="transition-opacity duration-200 hover:opacity-100"
+                  ? { fill: 'none', stroke: GRANT_BAR_STROKE, strokeWidth: 1.5, strokeDasharray: '6 4', opacity: 0.7, className: 'transition-opacity duration-200 hover:opacity-100' }
+                  : { fill: 'url(#grant-bar-lit)' })}
               />
+              {!isProposed && barWidth > 12 && (
+                <line
+                  x1={barX + 6} y1={barY + 2.6} x2={barX + Math.max(barWidth, 4) - 6} y2={barY + 2.6}
+                  stroke="#fff" strokeOpacity={0.3}
+                />
+              )}
 
               {/* Inline bar label */}
               {barWidth > 120 && (
@@ -305,8 +318,8 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
                   dominantBaseline="middle"
                   style={{
                     fontSize: '10px',
-                    fill: isProposed ? GRANT_BAR_STROKE : 'var(--ink-bright, #fff)',
-                    opacity: isProposed ? 0.8 : 0.9,
+                    fill: isProposed ? GRANT_BAR_STROKE : '#fff',
+                    opacity: isProposed ? 0.8 : 1,
                   }}
                 >
                   {grant.title.length > 35 ? grant.title.slice(0, 35) + '\u2026' : grant.title}

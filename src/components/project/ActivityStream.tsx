@@ -198,7 +198,7 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
     >
       {/* ── Composer ── */}
       <div
-        style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px', marginBottom: '1.5rem' }}
+        style={{ borderRadius: 'var(--radius-xl)', padding: '16px 20px', marginBottom: '1.5rem' }}
         className="detail-card"
       >
         {/* Note / Comment toggle (only in 'all'; the filtered views are fixed) */}
@@ -307,7 +307,7 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
 
       {/* ── Stream ── */}
       {visible.length === 0 ? (
-        <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)' }} className="detail-card">
+        <div style={{ borderRadius: 'var(--radius-xl)' }} className="detail-card">
           <EmptyState
             icon={<ActivityIcon size={28} />}
             title={

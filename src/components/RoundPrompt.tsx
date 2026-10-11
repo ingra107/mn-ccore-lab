@@ -72,11 +72,10 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: 0.08 }}
+      // Neutral card (color jobs, 2026-10-11): gold means "wants you now",
+      // and an icebreaker does not. It takes the shared card material.
+      className="sk-mat"
       style={{
-        // Neutral card (color jobs, 2026-10-11): gold means "wants you now",
-        // and an icebreaker does not.
-        border: '1px solid var(--sk-line)',
-        background: 'var(--sk-card)',
         borderRadius: 'var(--radius-xl)',
         padding: '14px 18px',
         marginTop: '1.5rem',

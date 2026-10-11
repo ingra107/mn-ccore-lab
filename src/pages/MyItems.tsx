@@ -42,6 +42,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import DueLabel from '../components/DueLabel'
 import { isTaskDone } from '../lib/taskGrouping'
 import { taskShortLabel } from '../lib/displayNames'
+import SectionHead from '../components/ui/SectionHead'
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -206,26 +207,10 @@ function StatCard({
   )
 }
 
-// ── Section Header ──────────────────────────────────────────
+// ── Section Header ── the shared head (bold, gray fading line).
 
 function SectionHeader({ title }: { title: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-md)', marginBottom: '1rem' }}>
-      <span
-        style={{
-          fontSize: 'var(--label-size)',
-          color: 'var(--slate)',
-          opacity: 'var(--ink-label)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {title}
-      </span>
-      <div className="section-header-line" />
-    </div>
-  )
+  return <SectionHead title={title} />
 }
 
 // ── Action Item Row ─────────────────────────────────────────
@@ -1107,19 +1092,9 @@ export default function MyItems() {
                 width: '100%',
               }}
             >
-              <span
-                style={{
-                  fontSize: 'var(--label-size)',
-                  color: 'var(--slate)',
-                  opacity: 'var(--ink-label)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Completed ({completed.length})
-              </span>
-              <div className="section-header-line" />
+              <span className="sk-hd-t">Completed</span>
+              <span className="sk-hd-c">{completed.length}</span>
+              <i className="sk-fade" aria-hidden="true" />
               <motion.span
                 animate={{ rotate: showCompleted ? 0 : -90 }}
                 transition={{ duration: 0.2 }}

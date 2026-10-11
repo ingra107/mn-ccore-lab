@@ -151,7 +151,7 @@ export default function MeetingPrep() {
           {/* Left: Previous Action Items */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <SectionHeader icon={<CheckCircle2 {...ICON_PROPS} size={14} />} title="Previous Action Items" subtitle={previousMeeting ? `From ${formatShortDate(previousMeeting.date)}` : undefined} />
-            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
+            <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {pendingPrev.length > 0 && (
                 <div className="mb-3">
                   <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--orange)', opacity: 0.85, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -183,7 +183,7 @@ export default function MeetingPrep() {
           {/* Center: Suggested Agenda */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
             <SectionHeader icon={<ListChecks {...ICON_PROPS} size={14} />} title="Suggested Agenda" />
-            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
+            <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {/* Overdue items first */}
               {overdueTasks.length > 0 && (
                 <div className="mb-3">
@@ -252,7 +252,7 @@ export default function MeetingPrep() {
           {/* Right: Upcoming Deadlines + Activity */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <SectionHeader icon={<Calendar {...ICON_PROPS} size={14} />} title="Upcoming Deadlines" subtitle="Next 14 days" />
-            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)', marginBottom: 'var(--sp-lg)' }}>
+            <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)', marginBottom: 'var(--sp-lg)' }}>
               {upcomingDeadlines.length > 0 ? (
                 upcomingDeadlines.slice(0, 8).map(task => {
                   const person = getPersonInfo(task.assignee)
@@ -275,7 +275,7 @@ export default function MeetingPrep() {
             </div>
 
             <SectionHeader icon={<Activity {...ICON_PROPS} size={14} />} title="Recent Activity" subtitle="Last 14 days" />
-            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
+            <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {recentActivity.length > 0 ? (
                 recentActivity.slice(0, 10).map((act, i) => {
                   // Rule 34: never split('@')[0] — route through the team_members directory.
@@ -309,9 +309,6 @@ export default function MeetingPrep() {
         </div>
       </div>
 
-      <style>{`
-        .dark .detail-card { background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important; border: 1px solid var(--border-subtle); }
-      `}</style>
     </div>
   )
 }
@@ -323,7 +320,7 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
     <motion.div
       variants={staggerItem}
       className="detail-card"
-      style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}
+      style={{ borderRadius: 'var(--radius-xl)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}
     >
       <div style={{ color, opacity: 0.85 }}>{icon}</div>
       <div>

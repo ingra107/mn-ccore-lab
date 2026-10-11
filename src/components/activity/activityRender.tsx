@@ -756,13 +756,15 @@ export function ActivityEntryItem({
     // (a 1px slate ring) so they read as distinct blocks — restoring the
     // figure/ground separation that near-black-on-near-black (--cream == page bg
     // in dark mode) had erased. This is what makes the feed scannable before
-    // reading (Nick 2026-07-09). Hermes keeps its gold-ring treatment.
-    background: isHermes ? 'var(--gold-hover)' : 'var(--surface-2)',
+    // reading (Nick 2026-07-09). The surface, edge and lift now come from the
+    // shared card material on .detail-card (color back pick 1, 2026-10-11).
+    // Hermes keeps its gold-ring treatment.
+    ...(isHermes ? { background: 'var(--gold-hover)' } : {}),
     borderRadius: 'var(--radius-lg)',
     padding: cardPadding,
     ...(isHermes
       ? { border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderLeft: `3px solid ${barColor}` }
-      : { borderLeft: `3px solid ${barColor}`, boxShadow: '0 0 0 1px color-mix(in srgb, var(--slate) 15%, transparent)' }),
+      : { borderLeft: `3px solid ${barColor}` }),
     // Dismissed (shown-hidden) roots read as "not in the live feed" via a DASHED
     // muted spine — NOT a whole-card opacity dim, which would compound with the
     // colored child spans and fail AA (CLAUDE.md compound-opacity rule).

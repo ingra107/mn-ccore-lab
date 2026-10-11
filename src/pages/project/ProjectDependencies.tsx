@@ -83,16 +83,9 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
       transition={{ duration: 0.25, delay: 0.15 }}
       style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
     >
-      <div className="flex items-center justify-between mb-3">
-        <h2
-          style={{
-            fontWeight: 'var(--label-weight)',
-            fontSize: '16px',
-            color: 'var(--ink)',
-            margin: 0,
-          }}
-        >
-          <GitBranch {...ICON_PROPS} size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px', color: 'var(--teal)' }} />
+      <div className="sk-hd">
+        <h2 className="sk-hd-t">
+          <GitBranch {...ICON_PROPS} size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px', color: 'var(--sk-t3)' }} />
           Dependencies
         </h2>
         {isPi && !showAddForm && (
@@ -125,7 +118,6 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
           >
             <div
               style={{
-                background: 'var(--ice)',
                 borderRadius: 'var(--radius-lg)',
                 padding: '14px 16px',
                 border: '1px solid rgba(45, 138, 138, 0.15)',
@@ -227,7 +219,6 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
       {/* Dependency list */}
       <div
         style={{
-          background: 'var(--ice)',
           borderRadius: 'var(--radius-xl)',
           padding: '16px 20px',
         }}

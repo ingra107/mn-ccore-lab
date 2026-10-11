@@ -11,6 +11,7 @@ import type { SleekSort } from '../components/table/SleekRows'
 import { GrantSleekList } from '../components/grants/GrantSleekList'
 import { grantAward, grantPeriod, grantProgress, grantStatusOf, sortGrants } from '../lib/grantRows'
 import type { GrantTimelineItem } from '../hooks/useGrantTimeline'
+import { tealRamp } from '../lib/tealRamp'
 import { mount, cleanupMountsAfterEach } from './testMount'
 
 cleanupMountsAfterEach()
@@ -92,9 +93,11 @@ describe('GrantSleekList', () => {
     const host = await mount(<Harness />, { ready, label: 'grants' })
     const bar = host.querySelector('[data-grant-id="r01"] .gr-bar i') as HTMLElement
     expect(parseFloat(bar.style.width)).toBeGreaterThan(80)
-    // No per-percent colour: the bar takes the one accent from `.gr-bar i` (index.css).
-    expect(bar.style.background).toBe('')
-    expect(bar.style.backgroundColor).toBe('')
+    // Never a warning hue near the end: the bar is the teal data ramp (color back
+    // pick 7, Nick 2026-10-11), dim early in the award, near the full accent here.
+    const pct = Math.round(parseFloat(bar.style.width))
+    expect(bar.style.background).toBe(tealRamp(pct / 100))
+    expect(bar.style.background).toContain('var(--sk-ac)')
     expect(host.querySelector('[data-grant-id="r01"] [data-col="progress"]')!.textContent).toMatch(/^9[0-9]%$/)
   })
 

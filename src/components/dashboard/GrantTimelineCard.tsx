@@ -2,7 +2,8 @@ import { memo, useMemo } from 'react'
 import { Banknote } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { useGrantTimeline, type GrantTimelineItem } from '../../hooks/useGrantTimeline'
-import { GRANT_BAR_FILL, GRANT_BAR_STROKE } from '../../lib/grantBar'
+import { GRANT_BAR_FILL, GRANT_BAR_LIT, GRANT_BAR_STROKE } from '../../lib/grantBar'
+import { LIT_EDGE } from '../../lib/tealRamp'
 
 const CURRENT_YEAR = new Date().getFullYear()
 
@@ -113,10 +114,11 @@ function GrantTimelineCard() {
                         top: 0,
                         bottom: 0,
                         borderRadius: 'var(--radius-md)',
-                        // Funded solid gray, proposed dashed outline (grantBar.ts).
-                        background: g.proposed ? 'transparent' : GRANT_BAR_FILL,
+                        // Funded teal-lit, proposed dashed outline (grantBar.ts).
+                        background: g.proposed ? 'transparent' : GRANT_BAR_LIT,
+                        boxShadow: g.proposed ? undefined : LIT_EDGE,
                         border: g.proposed ? `1.5px dashed ${GRANT_BAR_STROKE}` : 'none',
-                        opacity: 0.85,
+                        opacity: g.proposed ? 0.85 : 1,
                         display: 'flex',
                         alignItems: 'center',
                         paddingLeft: '8px',
@@ -124,7 +126,7 @@ function GrantTimelineCard() {
                         overflow: 'hidden',
                         transition: 'opacity 0.2s ease',
                       }}
-                      className="hover:!opacity-100"
+                      className={g.proposed ? 'hover:!opacity-100' : undefined}
                       title={g.title}
                     >
                       {/* Mechanism badge */}

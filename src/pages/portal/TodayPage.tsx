@@ -701,6 +701,7 @@ export default function TodayPage() {
             window admits, and the window picker sits next to the claim it makes. */}
         <div className="tk-ph" style={{ marginTop: 6 }}>
           <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--sk-t1)', margin: 0, whiteSpace: 'nowrap' }}>Tasks</h2>
+          <i className="sk-fade" aria-hidden="true" />
           {/* The ONE locked toggle anatomy — never re-mint the inline pill group
               (docs/design-system.md; ui/SegmentedToggle.tsx). skin="tk" draws it
               as the Today tray. The labels are self-evident, so per the tooltip

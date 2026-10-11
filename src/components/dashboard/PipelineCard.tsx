@@ -5,6 +5,7 @@ import BentoCard from './BentoCard'
 import { usePublications } from '../../hooks/useApiData'
 import { useDashboardMounted } from './dashboardMounted'
 import { countPublications } from '../../lib/publicationCounts'
+import { tealRamp, rampStep, litFill, LIT_EDGE } from '../../lib/tealRamp'
 
 interface Stage {
   label: string
@@ -40,7 +41,7 @@ function PipelineCard() {
       // Theme tokens, not hex: the old white and near-black fills each vanished
       // against the track in one theme. The darker end is a mix toward ink.
       // Color jobs (rules-ui-design 21): the funnel is ONE series, so every
-      // stage draws in the one accent; the label tells the stages apart.
+      // stage draws in teal, dim to bright by stage (color back pick 7).
       { label: 'In Preparation', status: 'In Preparation', count: prep },
       { label: 'In Review', status: 'In Review', count: review },
       { label: 'Published', status: 'Published', count: published },
@@ -103,7 +104,8 @@ function PipelineCard() {
                       height: '100%',
                       width: animated ? `${widthPct}%` : '0%',
                       borderRadius: 'var(--radius-lg)',
-                      background: 'linear-gradient(135deg, var(--teal), color-mix(in srgb, var(--teal) 70%, var(--ink)))',
+                      background: litFill(tealRamp(rampStep(i, stages.length))),
+                      boxShadow: LIT_EDGE,
                       transition: `width 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${i * 150}ms`,
                       position: 'relative',
                     }}

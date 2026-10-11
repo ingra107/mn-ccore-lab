@@ -30,16 +30,9 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
       transition={{ duration: 0.25, delay: 0.1 }}
       style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
     >
-      <div className="flex items-center justify-between mb-3">
-        <h2
-          style={{
-            fontWeight: 'var(--label-weight)',
-            fontSize: '16px',
-            color: 'var(--ink)',
-            margin: 0,
-          }}
-        >
-          <Scale {...ICON_PROPS} size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px', color: 'var(--gold)' }} />
+      <div className="sk-hd">
+        <h2 className="sk-hd-t">
+          <Scale {...ICON_PROPS} size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px', color: 'var(--sk-t3)' }} />
           Decisions
         </h2>
         <Link
@@ -56,7 +49,6 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
 
       <div
         style={{
-          background: 'var(--ice)',
           borderRadius: 'var(--radius-xl)',
           padding: '16px 20px',
         }}

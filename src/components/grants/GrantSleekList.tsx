@@ -14,6 +14,7 @@ import type { GrantTimelineItem, GrantStatus } from '../../hooks/useGrantTimelin
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { formatMediumDate } from '../../lib/dateUtils'
 import { fullNameReadable } from '../../lib/personLabel'
+import { tealRamp } from '../../lib/tealRamp'
 
 function GrantStatusPill({ status }: { status: GrantStatus }) {
   const label = GRANT_STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status
@@ -25,7 +26,8 @@ function Progress({ pct }: { pct: number }) {
   const n = Math.round(pct)
   return (
     <span className="gr-prog" title={`${n}% through the award period`}>
-      <span className="gr-bar" aria-hidden="true"><i style={{ width: `${n}%` }} /></span>
+      {/* Data bar: teal, dim early in the award, bright near its end (tealRamp). */}
+      <span className="gr-bar" aria-hidden="true"><i style={{ width: `${n}%`, background: tealRamp(n / 100) }} /></span>
       <span className="sr-m">{n}%</span>
     </span>
   )

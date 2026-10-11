@@ -137,7 +137,7 @@ export default function ArtifactsGalleryPage() {
             ))}
           </div>
         ) : artifacts.length === 0 ? (
-          <div className="detail-card" style={{ background: 'var(--sk-card)', borderRadius: 'var(--radius-xl)' }}>
+          <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)' }}>
             <EmptyState
               icon={<FileText size={28} />}
               title="No shelved artifacts yet"
@@ -145,7 +145,7 @@ export default function ArtifactsGalleryPage() {
             />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="detail-card" style={{ background: 'var(--sk-card)', borderRadius: 'var(--radius-xl)' }}>
+          <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)' }}>
             <EmptyState
               icon={<FileText size={28} />}
               title="Nothing matches"
@@ -224,11 +224,10 @@ const gridStyle: React.CSSProperties = {
   gap: 'var(--sp-md)',
 }
 
+// Surface + edge come from .detail-card (the shared card material).
 const cardStyle: React.CSSProperties = {
-  background: 'var(--sk-card)',
   borderRadius: 'var(--radius-xl)',
   padding: '1rem 1.15rem',
-  border: '1px solid var(--border-subtle)',
   minHeight: 120,
 }
 

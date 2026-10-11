@@ -44,7 +44,9 @@ export default function BentoCard({
     <div ref={ref} className={`fade-in-up ${sizeClasses[size]} ${className}`}>
       <motion.div
         layoutId={`bento-${title.replace(/\s+/g, '-').toLowerCase()}`}
-        className="bento-card h-full"
+        // Leaf card: the shared card material (color back pick 1, 2026-10-11)
+        // gives the surface, edge, lit top and ambient shadow; glass overrides.
+        className={`bento-card h-full${glass ? '' : ' sk-mat'}`}
         style={{
           borderRadius: 'var(--radius-2xl)',
           padding: 'var(--density-card-padding, 1.5rem)',
@@ -52,18 +54,15 @@ export default function BentoCard({
           flexDirection: 'column',
           overflow: 'hidden',
           position: 'relative',
-          background: glass
-            ? 'rgba(255, 255, 255, 0.7)'
-            : 'var(--surface-card)',
+          background: glass ? 'rgba(255, 255, 255, 0.7)' : undefined,
           backdropFilter: glass ? 'blur(12px)' : undefined,
           WebkitBackdropFilter: glass ? 'blur(12px)' : undefined,
-          border: 'none',
-          boxShadow: '0 0 0 1px var(--border-subtle), var(--shadow-card)',
+          ...(glass ? { border: 'none', boxShadow: '0 0 0 1px var(--border-subtle), var(--shadow-card)' } : {}),
           transition: 'transform 0.25s ease, box-shadow 0.25s ease, background-color 0.3s ease',
         }}
         whileHover={noLift ? undefined : {
           y: -2,
-          boxShadow: 'var(--shadow-card-hover)',
+          boxShadow: 'inset 0 1px 0 var(--sk-rim), var(--shadow-card-hover)',
         }}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       >

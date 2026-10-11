@@ -376,7 +376,7 @@ export default function ProjectSleekList({
                     <div className="pj-stage-h">
                       <span>{stageName(stage)}</span>
                       <span className="sr-m">{stageCounts.get(stage) ?? 0}</span>
-                      <i aria-hidden="true" />
+                      <i className="sk-fade" aria-hidden="true" />
                     </div>
                   )}
                   <SleekRow

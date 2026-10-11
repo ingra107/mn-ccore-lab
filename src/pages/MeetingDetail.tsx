@@ -91,8 +91,6 @@ function parseJsonArray(s: string | null): string[] {
 }
 
 // Section headings: Today's treatment (15px / 600 / --sk-t1, TodayPage's h2).
-const SECTION_HEADING: React.CSSProperties = { fontWeight: 600, fontSize: '15px', color: 'var(--sk-t1)', margin: 0 }
-
 // The status chip is a neutral word (color jobs, Nick 2026-10-11): upcoming,
 // in progress and completed are facts about the meeting, not asks of him.
 const STATUS_CHIP = { bg: 'var(--hover-subtle)', text: 'var(--sk-t2)' }
@@ -652,9 +650,9 @@ export default function MeetingDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
           {/* Left: Agenda (order-2 on mobile so actions show first) */}
           <motion.div className="order-2 lg:order-1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.1 }}>
-            <div className="flex items-center gap-2 mb-3">
+            <div className="sk-hd">
               <ListChecks {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-              <h2 style={SECTION_HEADING}>
+              <h2 className="sk-hd-t">
                 Agenda
               </h2>
             </div>
@@ -662,7 +660,7 @@ export default function MeetingDetail() {
             {/* Opening Round icebreaker prompt */}
             <RoundPrompt meetingId={meeting.id} />
 
-            <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px', marginTop: '1rem' }} className="detail-card">
+            <div style={{ borderRadius: 'var(--radius-xl)', padding: '16px 20px', marginTop: '1rem' }} className="detail-card">
               {/* Auto-generated agenda items */}
               {autoAgenda.length > 0 && (
                 <div className="mb-4">
@@ -702,17 +700,17 @@ export default function MeetingDetail() {
 
           {/* Right: Action Items (order-1 on mobile so actions show first) */}
           <motion.div className="order-1 lg:order-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.15 }}>
-            <div className="flex items-center gap-2 mb-3">
+            <div className="sk-hd">
               <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-              <h2 style={SECTION_HEADING}>
+              <h2 className="sk-hd-t">
                 Action items
               </h2>
-              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+              <span className="sk-hd-c">
                 {completedActions.length}/{actionItems.length}
               </span>
             </div>
 
-            <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
+            <div style={{ borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
               {/* Inline add action item */}
               <AddActionItemForm
                 meetingId={meeting.id}
@@ -876,9 +874,9 @@ export default function MeetingDetail() {
 
         {/* Decisions */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.2 }} className="mt-8">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="sk-hd">
             <Scale {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-            <h2 style={SECTION_HEADING}>
+            <h2 className="sk-hd-t">
               Decisions
             </h2>
             {isAuthenticated && (
@@ -895,7 +893,7 @@ export default function MeetingDetail() {
               </button>
             )}
           </div>
-          <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
+          <div style={{ borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
             {/* Inline decision form */}
             <AnimatePresence>
               {showDecisionForm && (
@@ -988,13 +986,13 @@ export default function MeetingDetail() {
         {/* T-50 Files section — files attached to this meeting. */}
         {meeting.id && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.22 }} className="mt-8">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="sk-hd">
               <UploadIcon {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-              <h3 style={SECTION_HEADING}>
+              <h3 className="sk-hd-t">
                 Files
               </h3>
             </div>
-            <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
+            <div style={{ borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
               <FileUpload entityType="meeting" entityId={meeting.id} />
             </div>
           </motion.div>
@@ -1002,9 +1000,9 @@ export default function MeetingDetail() {
 
         {/* Notes */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.25 }} className="mt-8">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="sk-hd">
             <FileText {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-            <h3 style={SECTION_HEADING}>
+            <h3 className="sk-hd-t">
               Meeting notes
             </h3>
             {/* #96 — one-click copy of the notes body so Nick can paste them
@@ -1037,7 +1035,7 @@ export default function MeetingDetail() {
               </button>
             )}
           </div>
-          <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
+          <div style={{ borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
             {editingNotes ? (
               <div onKeyDown={(e) => {
                 if (e.key === 'Escape') {
@@ -1105,13 +1103,13 @@ export default function MeetingDetail() {
             purpose: you read what happened, then you ask about it. */}
         {meeting?.id && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.3 }} className="mt-8">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="sk-hd">
               <MessageSquarePlus {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-              <h3 style={SECTION_HEADING}>
+              <h3 className="sk-hd-t">
                 Discussion
               </h3>
             </div>
-            <div className="detail-card" style={{ borderRadius: 8, padding: '14px 16px', background: 'var(--ice)' }}>
+            <div className="detail-card" style={{ borderRadius: 8, padding: '14px 16px' }}>
               <MeetingActivityFeed meetingId={meeting.id} />
             </div>
           </motion.div>
@@ -1119,7 +1117,6 @@ export default function MeetingDetail() {
       </div>
 
       <style>{`
-        .dark .detail-card { background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important; border: 1px solid var(--border-subtle); }
         .action-item-row:active, .action-item-row:hover { background: var(--hover-subtle); }
         .attendee-scroll { scrollbar-width: none; -ms-overflow-style: none; }
         .attendee-scroll::-webkit-scrollbar { display: none; }

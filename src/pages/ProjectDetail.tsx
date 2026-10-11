@@ -910,7 +910,6 @@ function ProjectDetailInner({ project }: InnerProps) {
             >
               <div
                 style={{
-                  background: 'var(--ice)',
                   borderRadius: 'var(--radius-lg)',
                   padding: 'var(--sp-md) var(--sp-lg)',
                   border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
@@ -1535,16 +1534,9 @@ function ProjectDetailInner({ project }: InnerProps) {
         transition={{ duration: 0.25, delay: 0.1 }}
         style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
       >
-        <h2
-          style={{
-            fontWeight: 500,
-            fontSize: '16px',
-            color: 'var(--ink)',
-            margin: '0 0 var(--sp-md) 0',
-          }}
-        >
-          Stage
-        </h2>
+        <div className="sk-hd">
+          <h2 className="sk-hd-t">Stage</h2>
+        </div>
         <div className="flex items-center gap-0" style={{ position: 'relative' }}>
           {/* Connecting line */}
           <div
@@ -1655,20 +1647,12 @@ function ProjectDetailInner({ project }: InnerProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, delay: 0.15 }}
         >
-          <h2
-            style={{
-              fontWeight: 500,
-              fontSize: '16px',
-              color: 'var(--ink)',
-              margin: '0 0 var(--sp-md) 0',
-            }}
-          >
-            Details
-          </h2>
+          <div className="sk-hd">
+            <h2 className="sk-hd-t">Details</h2>
+          </div>
 
           <div
             style={{
-              background: 'var(--ice)',
               borderRadius: 'var(--radius-xl)',
               padding: '20px',
             }}
@@ -1880,7 +1864,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               Project files
             </span>
           </div>
-          <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
+          <div style={{ borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
             <FileUpload entityType="project" entityId={project.slug} />
           </div>
           <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: 'var(--sp-sm)' }}>
@@ -1909,7 +1893,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       {label} ({rows.length})
                     </span>
                   </div>
-                  <ul className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-xs) 0', listStyle: 'none', margin: 0 }}>
+                  <ul className="detail-card" style={{ borderRadius: 'var(--radius-xl)', padding: 'var(--sp-xs) 0', listStyle: 'none', margin: 0 }}>
                     {rows.map((m) => (
                       <li key={m.id}>
                         <Link
@@ -2156,11 +2140,6 @@ function ProjectDetailInner({ project }: InnerProps) {
 
       {/* Scoped dark mode styles */}
       <style>{`
-        .dark .detail-card {
-          background-color: var(--cream) !important;
-          background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
-          border: 1px solid var(--border-subtle);
-        }
         /* M-31: hide scrollbar on tab strip while keeping horizontal scroll */
         .project-tab-strip {
           -webkit-overflow-scrolling: touch;
