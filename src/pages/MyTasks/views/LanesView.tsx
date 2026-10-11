@@ -123,7 +123,6 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
               <span className="sr-chev" aria-hidden="true" style={{ transform: isCollapsed ? 'rotate(-90deg)' : undefined }}>▾</span>
               <h3>{meta.label}</h3>
               <span className="sr-n">{tasks.length}</span>
-              <span className="sr-desc">{meta.desc}</span>
               <span className="sr-sp" />
               {overdueInLane > 0 && <span className="sr-od">{overdueInLane} overdue</span>}
               {plannedInLane > 0 && <span className="sr-pl">{plannedInLane} planned</span>}
