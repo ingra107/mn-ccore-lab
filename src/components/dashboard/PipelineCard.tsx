@@ -5,6 +5,7 @@ import BentoCard from './BentoCard'
 import { usePublications } from '../../hooks/useApiData'
 import { useDashboardMounted } from './dashboardMounted'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { countPublications } from '../../lib/publicationCounts'
 
 interface Stage {
   label: string
@@ -37,9 +38,7 @@ function PipelineCard() {
   }, [])
 
   const stages = useMemo<Stage[]>(() => {
-    const prep = publications.filter((p) => p.status === 'In Preparation').length
-    const review = publications.filter((p) => p.status === 'In Review').length
-    const published = publications.filter((p) => p.status === 'Published').length
+    const { inPreparation: prep, inReview: review, published } = countPublications(publications)
     return [
       // Theme tokens, not hex: the old white and near-black fills each vanished
       // against the track in one theme. The darker end is a mix toward ink.

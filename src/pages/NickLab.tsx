@@ -7,6 +7,8 @@ import LabPageLayout, {
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { usePublications } from '../hooks/useApiData'
+import { memberPublications } from '../lib/publicationCounts'
+import { getMemberBySlug } from '../data/team'
 import { mentees as allMentees } from '../data/mentees'
 
 const grants = [
@@ -84,7 +86,7 @@ export default function NickLab() {
         { id: 'lab-projects', label: 'Lab Projects' },
         { id: 'clif-projects', label: 'CLIF Projects' },
         { id: 'mentees', label: 'Trainees' },
-        { id: 'publications', label: 'Publications' },
+        { id: 'publications', label: 'Papers' },
       ]}
     >
       <GrantsSection grants={grants} id="grants" title="Active Funding" />
@@ -100,7 +102,7 @@ export default function NickLab() {
       <SectionDivider />
       <div className="py-4" />
       <PublicationsSection
-        publications={publications.filter((p) => p.authorSlugs?.includes('nick-ingraham'))}
+        publications={memberPublications(publications, getMemberBySlug('nick-ingraham'))}
         id="publications"
       />
     </LabPageLayout>

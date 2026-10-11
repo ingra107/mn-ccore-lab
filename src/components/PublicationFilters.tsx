@@ -123,7 +123,7 @@ export default function PublicationFilters({
             color: 'var(--slate)',
           }}
         >
-          Showing {resultCount} of {totalCount} publication
+          Showing {resultCount} of {totalCount} paper
           {totalCount !== 1 ? 's' : ''}
         </span>
 

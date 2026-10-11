@@ -13,6 +13,7 @@ import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import { useCountUp } from '../hooks/useCountUp'
 import { usePublications, useProjects, useTeam } from '../hooks/useApiData'
 import { isProjectActive } from '../lib/taskConstants'
+import { countPublications } from '../lib/publicationCounts'
 import NetworkBackground from '../components/NetworkBackground'
 import FeaturedResearch from '../components/FeaturedResearch'
 import CollaborationNetwork from '../components/CollaborationNetwork'
@@ -89,9 +90,12 @@ const affiliates = [
 
 function ImpactNumber({ value, suffix }: { value: number; suffix: string }) {
   const { count, ref } = useCountUp(value, 2000)
+  // 0 means the live list has not arrived yet: show a dash, never a made-up
+  // number (the old `|| 63` / `|| 6` / `|| 12` fallbacks disagreed with the
+  // live counts further down the page).
   return (
     <span ref={ref}>
-      {count}{suffix}
+      {value === 0 ? '\u2014' : `${count}${suffix}`}
     </span>
   )
 }
@@ -110,9 +114,11 @@ export default function Home() {
   const affiliatesRef = useScrollRevealGroup('.fade-in-up', 100)
 
   const impactMetrics = useMemo(() => {
-    const pubCount = publications.length || 63
-    const activeProjects = projects.filter(p => isProjectActive(p.status)).length || 6
-    const teamCount = team.length || 12
+    // Published papers: the same count Research Output, the "View all" link,
+    // /publications and Pulse show (lib/publicationCounts).
+    const pubCount = countPublications(publications).published
+    const activeProjects = projects.filter(p => isProjectActive(p.status)).length
+    const teamCount = team.length
     return { pubCount, activeProjects, teamCount }
   }, [publications, projects, team])
 
@@ -319,7 +325,7 @@ export default function Home() {
               style={{ gap: 0 }}
             >
               {[
-                { value: impactMetrics.pubCount, suffix: '+', label: 'Publications' },
+                { value: impactMetrics.pubCount, suffix: '', label: 'Publications' },
                 { value: impactMetrics.activeProjects, suffix: '', label: 'Active Projects' },
                 { value: 13, suffix: '+', label: 'Consortium Sites' },
                 { value: impactMetrics.teamCount, suffix: '', label: 'Team Members' },

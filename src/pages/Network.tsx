@@ -9,6 +9,7 @@ import NetworkFilters, { type NetworkFilterState } from '../components/NetworkFi
 import type { NetworkNode, NetworkEdge } from '../components/CollaborationGraph'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../lib/taskGrouping'
+import { isPublished } from '../lib/publicationCounts'
 
 export default function Network() {
   usePageMeta(
@@ -19,7 +20,7 @@ export default function Network() {
   const { data: publications = [] } = usePublications()
 
   const publishedPubs = useMemo(
-    () => publications.filter((p) => p.status === 'Published'),
+    () => publications.filter(isPublished),
     [publications]
   )
 

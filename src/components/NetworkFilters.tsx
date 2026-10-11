@@ -5,6 +5,7 @@ import type { Publication } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../lib/taskGrouping'
 import { topicLabel } from '../lib/topics'
+import { isPublished } from '../lib/publicationCounts'
 
 export interface NetworkFilterState {
   yearRange: [number, number]
@@ -58,7 +59,7 @@ export default function NetworkFilters({
   onChange,
 }: NetworkFiltersProps) {
   const publishedPubs = useMemo(
-    () => publications.filter((p) => p.status === 'Published'),
+    () => publications.filter(isPublished),
     [publications]
   )
 

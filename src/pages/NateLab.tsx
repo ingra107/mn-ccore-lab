@@ -7,6 +7,8 @@ import LabPageLayout, {
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { usePublications } from '../hooks/useApiData'
+import { memberPublications } from '../lib/publicationCounts'
+import { getMemberBySlug } from '../data/team'
 import { mentees as allMentees } from '../data/mentees'
 
 const grants = [
@@ -73,7 +75,7 @@ export default function NateLab() {
         { id: 'grants', label: 'Grants & Proposals' },
         { id: 'research-projects', label: 'Research Projects' },
         { id: 'trainees', label: 'MNCCORE Trainees' },
-        { id: 'publications', label: 'Publications' },
+        { id: 'publications', label: 'Papers' },
       ]}
     >
       <GrantsSection grants={grants} id="grants" title="Grants & Proposals" />
@@ -86,7 +88,7 @@ export default function NateLab() {
       <SectionDivider />
       <div className="py-4" />
       <PublicationsSection
-        publications={publications.filter((p) => p.authorSlugs?.includes('nate-mesfin'))}
+        publications={memberPublications(publications, getMemberBySlug('nate-mesfin'))}
         id="publications"
       />
     </LabPageLayout>

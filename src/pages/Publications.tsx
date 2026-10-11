@@ -15,6 +15,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { getAllMembers } from '../data/team'
 import { resolveBylineAuthors } from '../lib/authorAvatars'
+import { countPublications, isPublished } from '../lib/publicationCounts'
 
 // High-impact journal names for the "Key Publications" section
 const KEY_JOURNALS = [
@@ -172,7 +173,7 @@ export default function Publications() {
     () =>
       publications.filter(
         (p) =>
-          p.status === 'Published' &&
+          isPublished(p) &&
           KEY_JOURNALS.some((j) => p.journal.includes(j))
       ),
     [publications]
@@ -199,7 +200,8 @@ export default function Publications() {
   )
 
   const pubsRef = useScrollRevealGroup('.fade-in-up', 80)
-  const publishedCount = useMemo(() => publications.filter((p) => p.status === 'Published').length, [publications])
+  const counts = useMemo(() => countPublications(publications), [publications])
+  const pipelineCount = counts.inReview + counts.inPreparation
   const labMembers = useMemo(() => getAllMembers(), [])
 
   return (
@@ -220,8 +222,8 @@ export default function Publications() {
           className="text-base sm:text-lg max-w-2xl"
           style={{ color: 'var(--slate)', minHeight: '1.5em' }}
         >
-          {publications.length} papers from MN-CCORE lab members
-          {publishedCount < publications.length ? ` (${publishedCount} published)` : ''}.
+          {counts.published} published papers from MN-CCORE lab members
+          {pipelineCount > 0 ? `, plus ${pipelineCount} in review or in preparation` : ''}.
           Click any paper to view its abstract and links.
         </p>
 
@@ -238,7 +240,7 @@ export default function Publications() {
                     onClick={() => handleYearToggle(year)}
                     className="flex flex-col items-center gap-0.5"
                     style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-                    title={`${year}: ${count} publications`}
+                    title={`${year}: ${count} papers`}
                   >
                     <div
                       className="rounded-sm transition-all"
@@ -531,7 +533,7 @@ export default function Publications() {
                   className="text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
                   style={{ color: 'var(--gold)', background: 'none', border: 'none' }}
                 >
-                  View all {filtered.length} publications
+                  View all {filtered.length} papers
                 </button>
               </div>
             )}

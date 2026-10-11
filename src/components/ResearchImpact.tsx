@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePublications } from '../hooks/useApiData'
 import PublicationTimeline from './PublicationTimeline'
+import { isPublished } from '../lib/publicationCounts'
 
 // Journals considered "high impact" for display
 const HIGH_IMPACT_JOURNALS = [
@@ -22,7 +23,7 @@ export default function ResearchImpact() {
   const headingRef = useScrollReveal<HTMLDivElement>()
   const journalsRef = useScrollReveal<HTMLDivElement>()
 
-  const publishedPubs = publications.filter((p) => p.status === 'Published')
+  const publishedPubs = publications.filter(isPublished)
 
   const journalCounts = useMemo(() => {
     const counts: Record<string, number> = {}

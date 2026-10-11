@@ -30,8 +30,6 @@ export default function FeaturedResearch() {
     spotlightCards.push(...latest)
   }
 
-  const totalCount = publications.length
-
   return (
     <section
       className="py-8 sm:py-12 lg:py-16"
@@ -158,7 +156,7 @@ export default function FeaturedResearch() {
               textDecoration: 'none',
             }}
           >
-            View all {totalCount} publications
+            View all publications
             <ArrowRight {...ICON_PROPS} size={16} aria-hidden="true" />
           </Link>
         </div>

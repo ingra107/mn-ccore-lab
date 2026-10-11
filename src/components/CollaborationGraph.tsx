@@ -4,6 +4,7 @@ import type { GraphCanvasRef } from 'reagraph'
 import type { GraphNode as ReagraphNode, GraphEdge as ReagraphEdge, InternalGraphNode, InternalGraphEdge, Theme } from 'reagraph'
 import type { Publication } from '../data/types'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { isPublished } from '../lib/publicationCounts'
 
 // Re-export the same interfaces the sidebar/filters expect
 export interface NetworkNode {
@@ -126,7 +127,7 @@ export default function CollaborationGraph({
     const coauthorPairs: Record<string, { weight: number; papers: { title: string; year: number; id: string }[] }> = {}
     const authorType: Record<string, 'mnccore' | 'clif' | 'external'> = {}
 
-    const publishedPubs = publications.filter((p) => p.status === 'Published')
+    const publishedPubs = publications.filter(isPublished)
 
     publishedPubs.forEach((pub) => {
       const authors = pub.authors
