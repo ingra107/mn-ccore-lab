@@ -4,6 +4,7 @@ import { BookOpen, Award, Users, ArrowRight } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePublications } from '../hooks/useApiData'
 import { ICON_PROPS } from '../lib/iconProps'
+import { isPublished } from '../lib/publicationCounts'
 
 interface ActivityItem {
   icon: typeof BookOpen
@@ -22,7 +23,7 @@ export default function RecentActivity() {
 
     // Recent publications (last 5 published papers by year)
     const recentPubs = publications
-      .filter((p) => p.status === 'Published')
+      .filter(isPublished)
       .sort((a, b) => b.year - a.year)
       .slice(0, 4)
 

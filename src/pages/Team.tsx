@@ -11,6 +11,7 @@ import { usePublications, useExpertise, useActivity } from '../hooks/useApiData'
 import type { ExpertiseTag } from '../hooks/useApiData'
 import { mentees } from '../data/mentees'
 import { displayName } from '../lib/nameUtils'
+import { memberPublications, isPublished } from '../lib/publicationCounts'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { Button } from '../components/ui/Button'
@@ -82,9 +83,12 @@ export default function Team() {
     return filteredSlugs.has(slug)
   }
 
-  function getDirectorStats(slug: string) {
+  function getDirectorStats(director: { slug: string; authorName?: string }) {
+    const slug = director.slug
     const grantCount = grants.filter((g) => g.pi === slug && g.bucket === 'active').length
-    const pubCount = publications.filter((p) => p.authorSlugs?.includes(slug)).length
+    // Same member rule and the same "published" count the member page shows
+    // (lib/publicationCounts), so the card and the page it links to agree.
+    const pubCount = memberPublications(publications, director).filter(isPublished).length
     const menteeCount = mentees.filter((m) => m.mentor === 'shared' || m.mentor === slug).length
     return { grantCount, pubCount, menteeCount }
   }
@@ -195,7 +199,7 @@ export default function Team() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {directors.filter(d => matchesFilter(d.slug)).map((director) => {
-            const stats = getDirectorStats(director.slug)
+            const stats = getDirectorStats(director)
             const tags = expertiseByMember.get(director.slug) || []
             return (
               <Link

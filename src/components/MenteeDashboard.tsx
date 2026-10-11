@@ -11,6 +11,8 @@ import { usePublications, useMeetingLinkedTasks } from '../hooks/useApiData'
 import TaskTitle from './tasks/TaskTitle'
 import { ICON_PROPS } from '../lib/iconProps'
 import { isTaskDone } from '../lib/taskGrouping'
+import { memberPublications } from '../lib/publicationCounts'
+import { getMemberBySlug } from '../data/team'
 
 interface Props {
   slug: string
@@ -28,7 +30,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
   // and disagreed with the live list. The Team member page lists a member's
   // projects once, from useMemberProjects (MemberProjects, #145).
   // Filter data for this person
-  const myPubs = publications.filter((p) => p.authorSlugs?.includes(slug))
+  const myPubs = memberPublications(publications, getMemberBySlug(slug) ?? { slug })
   const myPending = actionItems.filter((a) => !isTaskDone(a))
   const myCompleted = actionItems.filter((a) => isTaskDone(a))
 

@@ -477,7 +477,7 @@ export function PublicationsSection({
             className="text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
             style={{ color: 'var(--gold)', background: 'none', border: 'none' }}
           >
-            {showAll ? 'Show fewer' : `View all ${sorted.length} publications`}
+            {showAll ? 'Show fewer' : `View all ${sorted.length} papers`}
           </button>
         </div>
       )}

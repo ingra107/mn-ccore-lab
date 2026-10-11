@@ -5,6 +5,7 @@ import BentoCard from './BentoCard'
 import { usePublications, useProjects, useTeam, useCitations } from '../../hooks/useApiData'
 import { useDashboardMounted } from './dashboardMounted'
 import { isProjectActive } from '../../lib/taskConstants'
+import { countPublications } from '../../lib/publicationCounts'
 import type { LucideIcon } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { QueryErrorNote } from '../QueryErrorNote'
@@ -105,7 +106,7 @@ function StatsCard() {
 
   const teamSize = team.length
   const activeProjects = projects.filter((p) => isProjectActive(p.status)).length
-  const inReview = publications.filter((p) => p.status === 'In Review').length
+  const inReview = countPublications(publications).inReview
 
   // Citations rendering rules (LO-1 / D2-followup):
   //   1. Loading -> show "…"; do NOT render 0 (would read as "no citations").

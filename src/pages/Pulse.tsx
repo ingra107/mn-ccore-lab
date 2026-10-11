@@ -11,6 +11,7 @@ import {
 } from '../hooks/useApiData'
 import { useGrantTimeline } from '../hooks/useGrantTimeline'
 import { isProjectActive } from '../lib/taskConstants'
+import { countPublications, isPublished } from '../lib/publicationCounts'
 import { isOverdue } from '../lib/dateUtils'
 import { parseDbUtc } from '../lib/time'
 import { formatBrandName } from '../components/BrandName'
@@ -80,12 +81,15 @@ export default function Pulse() {
     ).length
   }, [tasks])
   const health = healthData?.summary
+  const publishedCount = countPublications(publications).published
 
   // Publications by year (last 8 yrs) for the sparkline scene.
   const pubsByYear: SparkPoint[] = useMemo(() => {
     if (!publications.length) return []
     const counts = new Map<number, number>()
-    publications.forEach((p) => {
+    // Published papers only, so the bars, "In <year>" and the total read the
+    // same definition as the public site (lib/publicationCounts).
+    publications.filter(isPublished).forEach((p) => {
       if (!p.year) return
       counts.set(p.year, (counts.get(p.year) || 0) + 1)
     })
@@ -142,13 +146,13 @@ export default function Pulse() {
           <PulseScene
             eyebrow="Publications"
             title="Eight years of output."
-            subtitle={`${stats?.publicationCount ?? publications.length} papers across the lab. ${thisYear} so far this year.`}
+            subtitle={`${publishedCount} published papers across the lab. ${thisYear} so far this year.`}
             staticFrame
           >
             <PulseSparkline data={pubsByYear} height={420} />
             <div className="mt-10 flex items-center gap-12">
               <PulseMetric
-                value={stats?.publicationCount ?? publications.length}
+                value={publishedCount}
                 label="Total publications"
                 size="lg"
               />
@@ -336,7 +340,7 @@ export default function Pulse() {
     activeProjects,
     completedThisWeek,
     team.length,
-    publications.length,
+    publishedCount,
     pubsByYear,
     health,
     grants,

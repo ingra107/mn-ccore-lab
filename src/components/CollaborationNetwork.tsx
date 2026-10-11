@@ -2,6 +2,7 @@ import { useMemo, useRef, useEffect, useState } from 'react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePublications } from '../hooks/useApiData'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { countPublications, isPublished } from '../lib/publicationCounts'
 
 interface Node {
   id: string
@@ -36,7 +37,7 @@ export default function CollaborationNetwork() {
     const authorPaperCount: Record<string, number> = {}
     const coauthorPairs: Record<string, number> = {}
 
-    const publishedPubs = publications.filter((p) => p.status === 'Published')
+    const publishedPubs = publications.filter(isPublished)
 
     publishedPubs.forEach((pub) => {
       const authors = pub.authors
@@ -244,7 +245,7 @@ export default function CollaborationNetwork() {
             className="text-xs"
             style={{ color: 'rgba(255, 255, 255, 0.5)' }}
           >
-            MNCCORE team co-authorship connections across {publications.filter((p) => p.status === 'Published').length} published papers
+            MNCCORE team co-authorship connections across {countPublications(publications).published} published papers
           </p>
         </div>
 

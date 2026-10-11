@@ -23,6 +23,7 @@ import { stageLabel } from '../lib/stageNormalize'
 import { formatShortDate, isOverdue } from '../lib/dateUtils'
 import { displayName as formatTier, fullNameForSlug } from '../lib/nameUtils'
 import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
+import { memberPublications, countPublications } from '../lib/publicationCounts'
 import WatchButton from '../components/WatchButton'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -221,22 +222,10 @@ export default function MemberPage() {
   }, [allCommitments])
   const hasCommitments = openCommitments.length + doneCommitments.length > 0
 
-  // P3-07: filter publications by authorSlugs first (canonical, post Phase
-  // 36b rename) and fall back to substring match on `authors` for legacy
-  // pubs that haven't been re-tagged. Member slug = team_members.slug.
+  // P3-07: authorSlugs OR the byline's authorName. The rule lives in
+  // lib/publicationCounts so the Team card and lab pages count the same way.
   // Must be above the early `if (!member)` return to satisfy Rules of Hooks.
-  const memberPubs = useMemo(() => {
-    if (!member || !publications.length) return []
-    return publications.filter((p) => {
-      const slugs = p.authorSlugs ?? ''
-      const slugList = typeof slugs === 'string'
-        ? slugs.split(',').map((s) => s.trim().toLowerCase())
-        : Array.isArray(slugs) ? slugs.map((s) => String(s).toLowerCase()) : []
-      if (member.slug && slugList.includes(member.slug.toLowerCase())) return true
-      if (member.authorName && p.authors?.includes(member.authorName)) return true
-      return false
-    })
-  }, [publications, member])
+  const memberPubs = useMemo(() => memberPublications(publications, member), [publications, member])
 
   // Derive research topics from publications
   // Must be above the early `if (!member)` return to satisfy Rules of Hooks.
@@ -252,7 +241,7 @@ export default function MemberPage() {
       .slice(0, 6)
   }, [memberPubs])
 
-  const publishedCount = memberPubs.filter((p) => p.status === 'Published').length
+  const publishedCount = countPublications(memberPubs).published
   const yearRange =
     memberPubs.length > 0
       ? `${Math.min(...memberPubs.map((p) => p.year))}–${Math.max(...memberPubs.map((p) => p.year))}`
@@ -333,7 +322,7 @@ export default function MemberPage() {
           ? [{ id: 'commitments', label: `Commitments (${openCommitments.length})` }]
           : []),
         ...(memberPubs.length > 0
-          ? [{ id: 'publications', label: `Publications (${memberPubs.length})` }]
+          ? [{ id: 'publications', label: `Papers (${memberPubs.length})` }]
           : []),
       ]}
     >

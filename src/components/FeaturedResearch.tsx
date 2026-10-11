@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { usePublications } from '../hooks/useApiData'
 import { ICON_PROPS } from '../lib/iconProps'
+import { countPublications } from '../lib/publicationCounts'
 
 function statusBadgeClass(status: string): string {
   switch (status) {
@@ -30,7 +31,7 @@ export default function FeaturedResearch() {
     spotlightCards.push(...latest)
   }
 
-  const totalCount = publications.length
+  const publishedCount = countPublications(publications).published
 
   return (
     <section
@@ -158,7 +159,7 @@ export default function FeaturedResearch() {
               textDecoration: 'none',
             }}
           >
-            View all {totalCount} publications
+            View all {publishedCount} publications
             <ArrowRight {...ICON_PROPS} size={16} aria-hidden="true" />
           </Link>
         </div>
