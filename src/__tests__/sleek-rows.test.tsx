@@ -97,6 +97,23 @@ describe('SleekTable / SleekRow', () => {
     expect(phone.querySelector('.sr-ph-trail')!.textContent).toContain('wide')
   })
 
+  it('a sort on a column the page drops is cleared, so no hidden order and no blank phone select', async () => {
+    const seen: SleekSort[] = []
+    function Dropper() {
+      const [sort, setSort] = useState<SleekSort>({ key: 'gone', dir: 'asc' })
+      seen.push(sort)
+      return (
+        <div style={{ width: 1000 }}>
+          <SleekTable columns={cols} sort={sort} onSort={setSort}>
+            {rows.map((r) => <SleekRow key={r.id} row={r} />)}
+          </SleekTable>
+        </div>
+      )
+    }
+    await mount(<Dropper />, { ready: () => seen.at(-1) === null, label: 'Dropper' })
+    expect(seen.at(-1)).toBeNull()
+  })
+
   it('plain text inside an interactive cell reaches the row; its controls do not', async () => {
     const onRowClick = vi.fn()
     const host = await mount(<Harness onRowClick={onRowClick} width={1000} />, { ready: (h) => h.querySelectorAll('.sr-row').length === 2, label: 'Harness' })

@@ -20,6 +20,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import TaskBoardView from '../components/tasks/TaskBoardView'
 import { UndoToastProvider } from '../components/UndoToast'
+import { Who } from '../components/today/skin'
 import type { TaskRow } from '../lib/api'
 import css from '../index.css?raw'
 import { mount, cleanupMountsAfterEach } from './testMount'
@@ -167,6 +168,46 @@ describe('Tasks Board cards', () => {
     const ctxW = a.querySelector<HTMLElement>('.tk-ctx')!.getBoundingClientRect().width
     const titleW = a.querySelector<HTMLElement>('.tk-ct')!.getBoundingClientRect().width
     expect(ctxW).toBeGreaterThan(titleW)
+  })
+})
+
+describe('Pill names on a tight line', () => {
+  it('a long waiting-on phrase stays inside the card; a pill name keeps a 3em floor; a short name is not padded', async () => {
+    localStorage.removeItem('mnccore-board-collapsed-v1')
+    const waiting = [task('w', 'Decide Oct A0 NOFO/study section', { waiting_on: 'waiting for Dr. Grandon to respond' } as Partial<TaskRow>)]
+    const host = await mount(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter>
+          <div style={{ width: 1200 }}>
+            <TaskBoardView tasks={waiting} onStatusChange={() => {}} projectsByPid={projects} />
+          </div>
+        </MemoryRouter>
+      </QueryClientProvider>,
+      { ready: (h) => h.querySelector('.tk-tc .tk-pill .tk-pn'), label: 'waiting card' },
+    )
+    const c = card(host, 'w')
+    const edge = c.getBoundingClientRect().right
+    for (const el of c.querySelectorAll<HTMLElement>('.tk-ctx > *')) expect(el.getBoundingClientRect().right).toBeLessThanOrEqual(edge + 0.5)
+    const pn = c.querySelector<HTMLElement>('.tk-pill .tk-pn')!
+    expect(pn.classList.contains('tk-pn-s')).toBe(false)
+    const fs = parseFloat(getComputedStyle(pn).fontSize)
+    expect(parseFloat(getComputedStyle(pn).minWidth)).toBeCloseTo(3 * fs, 1)
+
+    const tight = await mount(
+      <div className="tk" style={{ width: 120 }}>
+        <div className="tk-ctx" style={{ flexWrap: 'nowrap' }}>
+          <span className="tk-pill" style={{ minWidth: 0, overflow: 'hidden' }}>Waiting on <Who value="the whole biostatistics core team" /></span>
+          <span className="tk-pill">Ana <Who value="Ana" /></span>
+        </div>
+      </div>,
+      { ready: (h) => h.querySelectorAll('.tk-pn').length === 2, label: 'tight pills' },
+    )
+    const [long, short] = tight.querySelectorAll<HTMLElement>('.tk-pn')
+    // The long phrase keeps ~3em of letters + an ellipsis, never 0px.
+    expect(long.getBoundingClientRect().width).toBeGreaterThanOrEqual(3 * parseFloat(getComputedStyle(long).fontSize) - 0.5)
+    // A short name is its own width, not padded to the floor.
+    expect(short.classList.contains('tk-pn-s')).toBe(true)
+    expect(Math.abs(short.getBoundingClientRect().width - short.scrollWidth)).toBeLessThan(1)
   })
 })
 

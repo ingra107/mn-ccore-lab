@@ -32,7 +32,7 @@
 // CardDuePill): the table wraps itself in `.tk` so they render the same way.
 // Styles: `.sr-*` in index.css.
 
-import { createContext, useContext, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
 
 import { nextSleekSort, type SleekSort } from './sleekSort'
 
@@ -95,6 +95,13 @@ export function SleekTable<T>({ columns, sort = null, onSort, header = true, nar
   const layout = useMemo<Layout>(() => ({ columns: visible, narrow }), [visible, narrow])
   const template = visible.map((c) => c.width).join(' ')
   const sortable = columns.filter((c) => c.sortable && c.label)
+  // A page can drop a column while it is the sort (Projects drops Status when
+  // every row is Active). The rows would stay in that hidden order with no
+  // arrow on any header and a blank phone Sort select, so clear it.
+  const orphanSort = !!sort && !columns.some((c) => c.key === sort.key)
+  useEffect(() => {
+    if (orphanSort) onSort?.(null)
+  }, [orphanSort, onSort])
 
   return (
     <LayoutCtx.Provider value={layout}>

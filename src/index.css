@@ -2752,8 +2752,11 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-ctx>.tk-pill{min-width:0}
 .tk .tk-pill>svg{flex-shrink:0}
 /* min-width keeps a few letters + the ellipsis when the line is tight (the
-   phone list), instead of the name shrinking to nothing beside its label. */
-.tk .tk-pill .tk-pn{min-width:min(3em,max-content);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+   phone list), instead of the name shrinking to nothing beside its label. A
+   short name (tk-pn-s, set by skin.tsx pnClass) keeps its own width rather
+   than being padded to the floor; min(3em,max-content) is not valid CSS. */
+.tk .tk-pill .tk-pn{min-width:3em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk .tk-pill .tk-pn.tk-pn-s{min-width:max-content}
 .tk .tk-slots{display:inline-flex;align-items:center;flex-shrink:0}
 .tk .tk-lks{display:inline-flex;align-items:center;justify-content:flex-end;min-width:74px;height:24px}
 .tk .tk-mks{display:inline-grid;place-items:center;width:24px;height:24px}

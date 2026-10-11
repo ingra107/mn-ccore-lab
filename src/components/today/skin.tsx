@@ -41,11 +41,18 @@ export function NameFace({ name, sm = false }: { name: string; sm?: boolean }) {
   return <FaceDisc initials={initialsOfName(name)} photo={slug ? photoFor(slug) : undefined} label={name} sm={sm} decorative />
 }
 
+/** A pill name shrinks to a 3em floor + ellipsis when the line is tight. A
+ *  name of six characters or fewer is about that wide already, so it keeps its
+ *  own width (`tk-pn-s`) instead of being padded out to the floor. CSS cannot
+ *  say min(3em, max-content), so the text length picks the class. */
+const pnClass = (text: string) => (text.length <= 6 ? 'tk-pn tk-pn-s' : 'tk-pn')
+
 /** THE people pattern on Today: badge + FIRST name. Pass a slug, or a free-text name. */
 export function Person({ slug, name }: { slug?: string; name?: string }) {
-  if (slug) return <><Face slug={slug} sm /><span className="tk-pn">{firstNameFor(slug)}</span></>
+  if (slug) { const first = firstNameFor(slug); return <><Face slug={slug} sm /><span className={pnClass(first)}>{first}</span></> }
   const n = name ?? ''
-  return <><NameFace name={n} sm /><span className="tk-pn">{firstOf(n)}</span></>
+  const first = firstOf(n)
+  return <><NameFace name={n} sm /><span className={pnClass(first)}>{first}</span></>
 }
 
 // Each word needs a lowercase letter after the capital, so acronyms and
@@ -66,7 +73,7 @@ export function Who({ value }: { value: string }) {
   const v = value.trim()
   if (SLUG_LIKE.test(v) && fullNameForSlug(v) !== v) return <Person slug={v} />
   if (NAME_LIKE.test(v)) return <Person name={v} />
-  return <span className="tk-pn">{v}</span>
+  return <span className={pnClass(v)}>{v}</span>
 }
 
 /** Up to `max` overlapping faces, then a "+n" disc. Skips blanks and repeats. */

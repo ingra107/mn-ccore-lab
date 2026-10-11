@@ -415,8 +415,9 @@ export default function ManuscriptsPage() {
         }
         // The rows on screen, published included, so the header and the
         // footer's Total read one number (prod check 2026-10-10: 28 vs 31).
-        controlsCount={manuscripts.length}
-        controlsCountLabel="manuscripts"
+        // Trophy shows only the published ones, so it counts those.
+        controlsCount={view === 'trophy' ? manuscripts.length - activeCount : manuscripts.length}
+        controlsCountLabel={view === 'trophy' ? 'published' : 'manuscripts'}
         isLoading={isLoading}
         skeletonRows={6}
         skeletonCols={5}
