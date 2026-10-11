@@ -3023,6 +3023,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 /* Phone layout (the table is narrower than narrowBelow): box | title over a
    context line | face. Heights come from content (Rule 15). */
 .sr.sr-narrow .sr-row{display:grid;grid-template-columns:24px minmax(0,1fr) 26px;column-gap:10px;align-items:center;padding:8px;border-radius:10px}
+.sr.sr-narrow .sr-row.sr-nolead{grid-template-columns:minmax(0,1fr) 26px}
 .sr .sr-ph-lead,.sr .sr-ph-trail{display:flex;align-items:center;justify-content:center}
 .sr .sr-ph-mid{min-width:0}
 .sr .sr-ph-t .sr-tt{font-size:13.5px}

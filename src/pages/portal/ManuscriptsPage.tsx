@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { portalTitle } from '../../constants/pageLabels'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -22,13 +22,13 @@ import { useCreateProject, useUpdateProjectFields } from '../../hooks/useMutatio
 import InlineSelect from '../../components/InlineSelect'
 import CategoryIcon from '../../components/CategoryIcon'
 import { useUndoToast } from '../../components/UndoToast'
-import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { getPersonInfo } from '../../data/team'
 import { displayName } from '../../lib/nameUtils'
 import type { Project } from '../../data/types'
 import NeedsAttentionDashboard, { type AttentionFilter } from '../../components/NeedsAttentionDashboard'
 import ActiveSubmissionsWidget from '../../components/ActiveSubmissionsWidget'
-import { ColumnHeader, TableContainer } from '../../components/table'
+import type { SleekSort } from '../../components/table/SleekRows'
+import { ManuscriptsList } from './ManuscriptsList'
 import EmptyState from '../../components/EmptyState'
 
 import { usePageMeta } from '../../hooks/usePageMeta'
@@ -63,6 +63,13 @@ const STAGE_LABELS: Record<typeof STAGES[number], string> = {
   revisions: 'Revisions',
   published: 'Published',
 }
+// The edit menu keeps its colored swatches; the row shows the quiet pill.
+const STATUS_OPTIONS = [
+  { value: 'active', label: 'Active', color: 'var(--green)' },
+  { value: 'waiting_external', label: 'Waiting', color: 'var(--gold)' },
+  { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
+  { value: 'done', label: 'Done', color: 'var(--slate)' },
+]
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
 
@@ -139,9 +146,8 @@ export default function ManuscriptsPage() {
   }
   const [filterStalled, setFilterStalled] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
-  const [sortKey, setSortKey] = useState<'stage' | 'title' | 'status' | 'pi' | 'category' | 'days_in_stage'>('stage')
-  const [sortAsc, setSortAsc] = useState(true)
-  const [focusedIndex, setFocusedIndex] = useState(-1)
+  // null = stage order (with stage headers); a header click cycles asc -> desc -> cleared.
+  const [sort, setSort] = useState<SleekSort>(null)
   const [attentionFilter, setAttentionFilter] = useState<AttentionFilter>(null)
   useScrollReveal<HTMLDivElement>()
 
@@ -205,6 +211,8 @@ export default function ManuscriptsPage() {
         filtered = filtered.filter((p) => allow.has(p.slug))
       }
     }
+    const sortKey = sort?.key ?? 'stage'
+    const sortAsc = sort ? sort.dir === 'asc' : true
     return [...filtered].sort((a, b) => {
       let cmp = 0
       switch (sortKey) {
@@ -218,17 +226,8 @@ export default function ManuscriptsPage() {
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
     })
-  }, [projects, filterPI, filterCategory, filterStalled, sortKey, sortAsc, attentionFilter, attentionData, stalledThresholdDays])
+  }, [projects, filterPI, filterCategory, filterStalled, sort, attentionFilter, attentionData, stalledThresholdDays])
 
-  useListKeyboardNav({
-    itemCount: view === 'list' ? manuscripts.length : 0,
-    focusedIndex,
-    setFocusedIndex,
-    disabled: showCreate,
-  })
-
-  // Reset focus when filters or view change
-  useEffect(() => { setFocusedIndex(-1) }, [filterPI, filterCategory, filterStalled, view])
 
   const taskCounts = useMemo(() => {
     const map = new Map<string, number>()
@@ -430,234 +429,30 @@ export default function ManuscriptsPage() {
           </>
         }
       >
-        {/* ─── LIST VIEW ─── */}
+        {/* ─── LIST VIEW ─── the shared sleek row (evaluation item 39) */}
         {view === 'list' && (
-          <TableContainer id="manuscripts-table">
-            {/* Table header — sortable */}
-            <div
-              className="hidden sm:grid manuscripts-grid-row [&_.col-header]:!normal-case [&_.col-header]:!tracking-normal"
-              style={{
-                gridTemplateColumns: 'minmax(200px, 3fr) 90px 100px 140px 80px 68px',
-                padding: 'var(--sp-sm) var(--sp-xl)',
-                borderBottom: '1px solid var(--border-subtle)',
-              }}
-            >
-              {([
-                { label: 'Title', key: 'title' as const, cls: '' },
-                { label: 'Status', key: 'status' as const, cls: '' },
-                { label: 'Stage', key: 'stage' as const, cls: '' },
-                { label: 'PI', key: 'pi' as const, cls: '' },
-                { label: 'Group', key: 'category' as const, cls: 'manuscripts-header-group' },
-                { label: 'Days', key: 'days_in_stage' as const, cls: 'manuscripts-header-days' },
-              ]).map((col) => (
-                <div key={col.key} className={col.cls}>
-                  <ColumnHeader
-                    label={col.label}
-                    sortKey={col.key}
-                    currentSort={sortKey}
-                    sortAsc={sortAsc}
-                    onSort={(k) => {
-                      if (sortKey === k) setSortAsc(!sortAsc)
-                      else { setSortKey(k as typeof sortKey); setSortAsc(true) }
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Stage-grouped rows */}
+          <div id="manuscripts-table">
             {manuscripts.length > 0 ? (
-              (() => {
-                let lastStage = ''
-                let flatIndex = 0
-                return manuscripts.map((project) => {
-                  const pi = piDisplay(project.pi)
-                  const showStageHeader = project.stage !== lastStage
-                  lastStage = project.stage ?? ''
-                  const tc = taskCounts.get(project.slug) || 0
-                  const isFocused = focusedIndex === flatIndex
-                  flatIndex++
-                  const days = daysInStage(project)
-                  const isStalled = project.stage !== 'published' && days > stalledThresholdDays
-
-                  return (
-                    <div key={project.slug}>
-                      {showStageHeader && sortKey === 'stage' && (
-                        <div className="flex items-center" style={{ padding: '20px 24px 8px', gap: '8px' }}>
-                          <span
-                            style={{
-                              fontSize: '11px',
-                              fontWeight: 500,
-                              color: 'var(--slate)',
-                              opacity: 0.75,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {STAGE_LABELS[project.stage as typeof STAGES[number]] ?? project.stage}
-                          </span>
-                          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }}>
-                            {manuscripts.filter((p) => p.stage === project.stage).length}
-                          </span>
-                          <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-                        </div>
-                      )}
-
-                      <Link to={PATHS.project(project.slug)} className={isFocused ? 'task-row-focused' : ''} style={{ textDecoration: 'none', display: 'block' }}>
-                        {/* Desktop: 6-column grid (collapses to 4 cols at 1024-1279px via M-08 CSS) */}
-                        <div
-                          className="manuscript-list-row manuscripts-grid-row hidden sm:grid"
-                          style={{
-                            gridTemplateColumns: 'minmax(200px, 3fr) 90px 100px 140px 80px 68px',
-                            padding: `var(--row-padding-y, 14px) 24px`,
-                            borderBottom: '1px solid var(--border-subtle)',
-                            alignItems: 'center',
-                            cursor: 'pointer',
-                            transition: 'background var(--duration-fast) ease-out',
-                          }}
-                        >
-                          <div className="flex items-center gap-2.5" style={{ paddingRight: '16px', minWidth: 0 }}>
-                            <CategoryIcon
-                              category={project.category}
-                              size={14}
-                              style={{ flexShrink: 0 }}
-                            />
-                            <span title={project.title} style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
-                              {project.title}
-                            </span>
-                            {tc > 0 && (
-                              <span style={{ fontSize: '11px', color: 'var(--teal)', flexShrink: 0 }}>
-                                {tc}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Status (inline editable) — wrapped to stop click bubbling to parent <Link>. M-01. */}
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <InlineSelect
-                              value={project.status || 'active'}
-                              options={[
-                                { value: 'active', label: 'Active', color: 'var(--green)' },
-                                { value: 'waiting_external', label: 'Waiting', color: 'var(--gold)' },
-                                { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
-                                { value: 'done', label: 'Done', color: 'var(--slate)' },
-                              ]}
-                              onChange={(val) => handleFieldChange(project.slug, 'status', val, project.status)}
-                            />
-                          </div>
-
-                          {/* Stage (inline editable) — wrapped to stop click bubbling. M-01.
-                              S17: instant + undo + toApiStage() canonicalization. */}
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <InlineSelect
-                              value={project.stage || 'idea'}
-                              options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
-                              onChange={(val) => handleStageChange(project.slug, val, project.stage)}
-                            />
-                          </div>
-
-                          {/* PI — inline editable. Avatar stays visible as a sibling so the
-                              visual "who owns this?" signal isn't lost when we switch to a select. */}
-                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                            <div style={{ width: 22, height: 22, flexShrink: 0 }}>
-                              <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm-plus" variant="ice" />
-                            </div>
-                            <InlineSelect
-                              value={project.pi || 'nick-ingraham'}
-                              options={piOptions}
-                              onChange={(val) => handleFieldChange(project.slug, 'pi', val, project.pi)}
-                              size="sm"
-                            />
-                          </div>
-
-                          {/* Category — inline editable */}
-                          <div className="manuscripts-cell-group" onClick={(e) => e.stopPropagation()}>
-                            <InlineSelect
-                              value={project.category || 'MNCCORE'}
-                              options={CATEGORY_OPTIONS}
-                              onChange={(val) => handleFieldChange(project.slug, 'category', val, project.category)}
-                              size="sm"
-                            />
-                          </div>
-
-                          {/* Days in stage */}
-                          <span
-                            className="manuscripts-cell-days"
-                            style={{
-                              fontSize: 'var(--text-label)',
-                              fontWeight: isStalled ? 600 : 400,
-                              color: isStalled ? 'var(--orange)' : 'var(--slate)',
-                              opacity: isStalled ? 0.9 : 0.75,
-                              fontVariantNumeric: 'tabular-nums',
-                            }}
-                            title={isStalled ? `Stalled: ${days}d in this stage` : `${days}d in stage`}
-                          >
-                            {days > 0 ? `${days}d` : '—'}
-                          </span>
-                        </div>
-
-                        {/* Mobile: stacked layout */}
-                        <div
-                          className="manuscript-list-row sm:hidden"
-                          style={{
-                            padding: `var(--row-padding-y, 12px) 16px`,
-                            borderBottom: '1px solid var(--border-subtle)',
-                            cursor: 'pointer',
-                            transition: 'background var(--duration-fast) ease-out',
-                          }}
-                        >
-                          {/* Title row: category icon + title + task count */}
-                          <div className="flex items-start gap-2" style={{ marginBottom: '8px' }}>
-                            <CategoryIcon
-                              category={project.category}
-                              size={14}
-                              style={{ flexShrink: 0, marginTop: '2px' }}
-                            />
-                            <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.35, flex: 1 }}>
-                              {project.title}
-                            </span>
-                            {tc > 0 && (
-                              <span style={{ fontSize: '11px', color: 'var(--teal)', flexShrink: 0, marginTop: '4px' }}>
-                                {tc}
-                              </span>
-                            )}
-                          </div>
-                          {/* Metadata row: status + stage + category label right-aligned */}
-                          <div className="flex items-center gap-3" style={{ paddingLeft: '14px' }}>
-                            <div onClick={(e) => e.stopPropagation()}>
-                              <InlineSelect
-                                value={project.status || 'active'}
-                                options={[
-                                  { value: 'active', label: 'Active', color: 'var(--green)' },
-                                  { value: 'waiting_external', label: 'Waiting', color: 'var(--gold)' },
-                                  { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
-                                  { value: 'done', label: 'Done', color: 'var(--slate)' },
-                                ]}
-                                onChange={(val) => handleFieldChange(project.slug, 'status', val, project.status)}
-                              />
-                            </div>
-                            <div onClick={(e) => e.stopPropagation()}>
-                              <InlineSelect
-                                value={project.stage || 'idea'}
-                                options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
-                                onChange={(val) => handleStageChange(project.slug, val, project.stage)}
-                              />
-                            </div>
-                            {/* Category — inline editable on mobile too */}
-                            <div style={{ marginLeft: 'auto' }} onClick={(e) => e.stopPropagation()}>
-                              <InlineSelect
-                                value={project.category || 'MNCCORE'}
-                                options={CATEGORY_OPTIONS}
-                                onChange={(val) => handleFieldChange(project.slug, 'category', val, project.category)}
-                                size="sm"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    </div>
-                  )
-                })
-              })()
+              <ManuscriptsList
+                // A filter change remounts the list, which clears the j/k row
+                // (no reset effect). Leaving the List view unmounts it too.
+                key={`${filterPI}|${filterCategory}|${filterStalled}|${attentionFilter ?? ''}`}
+                manuscripts={manuscripts}
+                sort={sort}
+                onSort={setSort}
+                stages={STAGES}
+                stageLabels={STAGE_LABELS}
+                statusOptions={STATUS_OPTIONS}
+                piOptions={piOptions}
+                categoryOptions={CATEGORY_OPTIONS}
+                categoryLabel={CATEGORY_LABEL}
+                taskCounts={taskCounts}
+                daysInStage={daysInStage}
+                stalledThresholdDays={stalledThresholdDays}
+                onFieldChange={handleFieldChange}
+                onStageChange={handleStageChange}
+                keyboardDisabled={showCreate}
+              />
             ) : (
               <EmptyState
                 icon={<FileText size={40} />}
@@ -666,7 +461,7 @@ export default function ManuscriptsPage() {
               />
             )}
 
-            {/* Calculations row */}
+            {/* The stage tally under the rows */}
             {manuscripts.length > 0 && (() => {
               const stageCounts = manuscripts.reduce<Record<string, number>>((acc, p) => {
                 const stage = p.stage || 'idea'
@@ -683,32 +478,22 @@ export default function ManuscriptsPage() {
                 ...(publishedCount > 0 ? [{ label: 'Published', value: publishedCount }] : []),
               ]
               return (
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: 20,
-                    padding: 'var(--sp-sm) var(--sp-lg)',
-                    borderTop: '1px solid var(--border-subtle)',
-                    background: 'var(--teal-hover)',
-                  }}
-                >
+                <div className="sr-foot" style={{ flexWrap: 'wrap', padding: '10px 10px 4px', marginTop: 8, boxShadow: '0 -1px 0 var(--sk-line)' }}>
                   {stats.map(s => (
-                    <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
+                    <span key={s.label}>
                       {s.label}{' '}
-                      <span style={{ fontWeight: 600, color: 'var(--slate)', opacity: 1 }}>
-                        {s.value}
-                      </span>
+                      <b style={{ fontWeight: 600, color: 'var(--sk-t2)' }}>{s.value}</b>
                     </span>
                   ))}
                   {stalledCount > 0 && (
-                    <span style={{ fontSize: '11px', color: 'var(--orange)', opacity: 0.8, marginLeft: 'auto' }}>
+                    <span style={{ color: 'var(--sk-urg)', marginLeft: 'auto' }}>
                       {stalledCount} stalled
                     </span>
                   )}
                 </div>
               )
             })()}
-          </TableContainer>
+          </div>
         )}
 
         {/* ─── PIPELINE VIEW ─── M-13: drag-and-drop between stages */}
@@ -833,32 +618,8 @@ export default function ManuscriptsPage() {
       />
 
       <style>{`
-        .manuscript-list-row:hover {
-          background: var(--gold-hover) !important;
-        }
-        .manuscript-list-row:active {
-          background: var(--gold-active) !important;
-        }
         .new-project-btn:hover {
           background: var(--teal-hover) !important;
-        }
-        .dark .manuscript-list-row:hover {
-          background: var(--gold-active) !important;
-        }
-        /* M-08: at 1024-1279px (laptop with sidebar) the 6-col grid squeezes
-           the title. Collapse the Days + Group columns at this range; they
-           re-appear at >=1280px. Below 768px the mobile stacked layout
-           takes over (sm:hidden / sm:grid). */
-        @media (min-width: 768px) and (max-width: 1279px) {
-          .manuscripts-grid-row {
-            grid-template-columns: minmax(200px, 3fr) 90px 100px 140px !important;
-          }
-          .manuscripts-cell-group,
-          .manuscripts-cell-days,
-          .manuscripts-header-group,
-          .manuscripts-header-days {
-            display: none !important;
-          }
         }
       `}</style>
     </>
