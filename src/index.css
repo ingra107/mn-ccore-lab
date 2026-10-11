@@ -1552,14 +1552,6 @@ a:hover {
 .task-row-focused .inline-select-chevron,
 .idea-row:hover .inline-select-chevron,
 .idea-row:focus-within .inline-select-chevron,
-<<<<<<< HEAD
-.manuscript-list-row:hover .inline-select-chevron,
-.manuscript-list-row:focus-within .inline-select-chevron,
-=======
-.project-list-row:hover .inline-select-chevron,
-.project-list-row:focus-within .inline-select-chevron,
-.project-row-focused .inline-select-chevron,
->>>>>>> s45/w2-manuscripts
 .deadline-row:hover .inline-select-chevron,
 .deadline-row:focus-within .inline-select-chevron,
 tr:hover .inline-select-chevron,
@@ -1746,11 +1738,6 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
      already have mobile stacked-card variants; this sets the height
      on the remaining table rows that stay grid-based. */
   .task-grid-row,
-<<<<<<< HEAD
-  .manuscript-list-row,
-=======
-  .project-list-row,
->>>>>>> s45/w2-manuscripts
   .deadline-row,
   .idea-row {
     min-height: 44px;
@@ -3080,3 +3067,11 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 /* Keyboard hints under a table */
 .sr-foot{display:flex;gap:14px;font-size:10.5px;color:var(--sk-t3)}
 .sr-foot kbd{font-family:var(--font-mono),'JetBrains Mono',monospace;font-size:9px;padding:1px 4px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--sk-line2);color:var(--sk-t2)}
+/* Grants list on the sleek row (GrantSleekList): progress stays the accent at any percent */
+.gr-list .gr-prog{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.gr-list .gr-bar{width:36px;height:3px;border-radius:999px;background:var(--sk-line2);overflow:hidden;flex-shrink:0}
+.gr-list .gr-bar i{display:block;height:100%;border-radius:999px;background:var(--sk-ac)}
+.gr-list .gr-prog .sr-m{font-variant-numeric:tabular-nums}
+.gr-list .gr-detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 24px;padding:10px 10px 16px 10px;font-size:13px;color:var(--sk-t1)}
+.gr-list .gr-dl{font-size:11px;color:var(--sk-t3);margin-bottom:3px}
+.gr-list .gr-pi{display:inline-flex;align-items:center;gap:6px}

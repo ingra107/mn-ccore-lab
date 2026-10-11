@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PATHS } from '../constants/paths'
-import { isEditableTarget } from '../lib/editableTarget'
+import { isActivatableTarget, isEditableTarget } from '../lib/editableTarget'
 
 interface UseProjectKeyboardNavOptions {
   /** Total number of projects in the list */
@@ -84,6 +84,8 @@ export function useProjectKeyboardNav({
       }
 
       case 'Enter': {
+        // A focused button, link or tab owns its own Enter.
+        if (isActivatableTarget(e.target)) return
         if (idx >= 0 && idx < slugsRef.current.length) {
           e.preventDefault()
           navigate(PATHS.project(slugsRef.current[idx]))

@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react'
-import { isEditableTarget } from '../lib/editableTarget'
+import { isActivatableTarget, isEditableTarget } from '../lib/editableTarget'
 
 interface UseListKeyboardNavOptions {
   /** Total items in the list */
@@ -63,6 +63,8 @@ export function useListKeyboardNav({
         break
 
       case 'Enter':
+        // A focused button, link or tab owns its own Enter.
+        if (isActivatableTarget(e.target)) return
         if (indexRef.current >= 0 && onEnter) {
           e.preventDefault()
           onEnter()

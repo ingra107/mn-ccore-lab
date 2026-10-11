@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Wallet,
   DollarSign,
-  Calendar,
   Banknote,
   Diamond,
   List,
@@ -18,12 +17,14 @@ import {
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
-import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
 import Field from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
 import { useUndoToast } from '../../components/UndoToast'
-import { ColumnHeader, TableContainer, TableControls } from '../../components/table'
+import { TableControls } from '../../components/table'
+import type { SleekSort } from '../../components/table/SleekRows'
+import { GrantSleekList } from '../../components/grants/GrantSleekList'
+import { sortGrants } from '../../lib/grantRows'
 import { useGrantTimeline, GRANT_STATUS_OPTIONS } from '../../hooks/useGrantTimeline'
 import type { GrantTimelineItem, GrantMilestone, GrantStatus } from '../../hooks/useGrantTimeline'
 import { useSimilarGrants, useUpcomingGrantMilestones } from '../../hooks/useApiData'
@@ -31,7 +32,6 @@ import { useCreateGrantMilestone, useUpdateGrantMilestone, useCompleteGrantMiles
 import { getPersonInfo } from '../../data/team'
 import { displayName } from '../../lib/nameUtils'
 import { formatMediumDate, isOverdue, civilDaysUntil } from '../../lib/dateUtils'
-import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import { mechanismFamily, MECHANISM_ACCENT } from '../../lib/grantMechanism'
@@ -79,9 +79,6 @@ function formatFunding(amount: number): string {
 // F83: the mechanism is a label, not a status. Neutral hairline chip so colour
 // stays reserved for meaning (the gantt keeps the family accents as chart marks).
 const MECHANISM_CHIP = { bg: 'transparent', color: 'var(--ink)' }
-
-// One grid template for header and rows, so the columns cannot drift apart.
-const GRANT_GRID_COLUMNS = 'minmax(200px, 2fr) 120px 120px 80px minmax(120px, 1fr) 100px'
 
 // ── Gantt helpers ──────────────────────────────────────────────
 
@@ -377,14 +374,12 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
 
 type ViewMode = 'list' | 'timeline'
 type FilterMode = 'all' | 'active' | 'proposed'
-type SortKey = 'title' | 'pi' | 'mechanism' | 'status' | 'start_date' | 'end_date' | 'agency'
 
 export default function GrantsPage() {
   const { data: grants = [], isLoading } = useGrantTimeline()
   const [view, setView] = useState<ViewMode>('list')
   const [filter, setFilter] = useState<FilterMode>('all')
-  const [sortKey, setSortKey] = useState<SortKey>('start_date')
-  const [sortAsc, setSortAsc] = useState(true)
+  const [sort, setSort] = useState<SleekSort>(null)
   const [searchKeywords, setSearchKeywords] = useState('')
   const [activeSearch, setActiveSearch] = useState('')
   const [focusedIndex, setFocusedIndex] = useState(-1)
@@ -392,7 +387,6 @@ export default function GrantsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   // P3-04: top-level tab strip. RePORTER lifted from footer to a peer tab.
   const [activeTab, setActiveTab] = useState<'grants' | 'post-award' | 'landscape'>('grants')
-  useListKeyboardNav({ itemCount: grants.length, focusedIndex, setFocusedIndex })
   const similarGrants = useSimilarGrants(activeSearch)
 
   const { data: upcomingMilestonesData = [], isLoading: milestonesLoading } = useUpcomingGrantMilestones(90)
@@ -428,11 +422,6 @@ export default function GrantsPage() {
     })
   }, [updateMilestone, completeMilestone, showUndo])
 
-  const handleSort = (key: string) => {
-    if (sortKey === key) setSortAsc(!sortAsc)
-    else { setSortKey(key as SortKey); setSortAsc(true) }
-  }
-
   const active = useMemo(() => grants.filter((g) => g.bucket === 'active'), [grants])
   const proposed = useMemo(() => grants.filter((g) => g.bucket === 'proposed'), [grants])
   const endedCount = grants.length - active.length - proposed.length
@@ -448,20 +437,8 @@ export default function GrantsPage() {
     if (filter === 'active') list = active
     else if (filter === 'proposed') list = proposed
 
-    return [...list].sort((a, b) => {
-      let cmp = 0
-      switch (sortKey) {
-        case 'title': cmp = a.title.localeCompare(b.title); break
-        case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
-        case 'mechanism': cmp = (a.mechanism || '').localeCompare(b.mechanism || ''); break
-        case 'status': cmp = a.bucket.localeCompare(b.bucket); break
-        case 'start_date': cmp = (a.start_date || '').localeCompare(b.start_date || ''); break
-        case 'end_date': cmp = (a.end_date || '').localeCompare(b.end_date || ''); break
-        case 'agency': cmp = (a.agency || '').localeCompare(b.agency || ''); break
-      }
-      return sortAsc ? cmp : -cmp
-    })
-  }, [grants, active, proposed, filter, sortKey, sortAsc])
+    return sortGrants(list, sort)
+  }, [grants, active, proposed, filter, sort])
 
   // What the Timeline plots: the same filter, minus ended grants (they never plot).
   // The count and the empty state read this same list, so they cannot disagree with the bars.
@@ -569,197 +546,17 @@ export default function GrantsPage() {
               subtitle="Active awards and proposals in flight show up here with live countdowns to the next deadline."
             />
           ) : (
-            <TableContainer>
-              {/* Column headers */}
-              <div
-                className="hidden sm:grid [&_.col-header]:!normal-case [&_.col-header]:!tracking-normal"
-                style={{ gridTemplateColumns: GRANT_GRID_COLUMNS, padding: '0 16px' }}
-              >
-                <ColumnHeader label="Title" sortKey="title" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="PI" sortKey="pi" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="Status" sortKey="status" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="Mechanism" sortKey="mechanism" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="Period" sortKey="start_date" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="Agency" sortKey="agency" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-              </div>
-
-              {/* Rows */}
-              {filteredGrants.map((grant) => {
-                const pi = getPersonInfo(grant.pi)
-                const mc = MECHANISM_CHIP
-                const bucket = grant.bucket
-                const isProposed = bucket === 'proposed'
-
-                // Progress: funded grants only
-                let progress = 0
-                if (grant.start_date && grant.end_date && bucket === 'active') {
-                  const start = new Date(grant.start_date).getTime()
-                  const end = new Date(grant.end_date).getTime()
-                  // eslint-disable-next-line react-hooks/purity -- grant timeline progress bar, intentionally recomputed fresh each render
-                  const current = Date.now()
-                  progress = Math.max(0, Math.min(100, ((current - start) / (end - start)) * 100))
-                }
-
-                const isExpanded = expandedId === grant.id
-                return (
-                  <div key={grant.id}>
-                  <div
-                    className="sm:grid items-center hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
-                    style={{
-                      gridTemplateColumns: GRANT_GRID_COLUMNS,
-                      minHeight: 'var(--row-height)',
-                      padding: `var(--row-padding-y, 10px) 16px`,
-                      borderBottom: isExpanded ? 'none' : '1px solid var(--border-subtle)',
-                      background: isExpanded ? 'var(--surface-hover, rgba(0,0,0,0.02))' : undefined,
-                    }}
-                    // role="button" removed 2026-04-18 (axe nested-interactive).
-                    // aria-expanded must live on an interactive role; removed
-                    // together to stay axe-clean. Keyboard users tab to the
-                    // inner row-title link or expand chevron.
-                    // P6-A3: old guard `e.target === e.currentTarget` was
-                    // unreachable when child columns fill the row. Now exclude
-                    // explicit interactive elements (button, a, select, input).
-                    onClick={(e) => {
-                      const t = e.target as HTMLElement
-                      if (t.closest('button, a, select, input, [role="option"]')) return
-                      setExpandedId(isExpanded ? null : grant.id)
-                    }}
-                  >
-                    {/* Title */}
-                    <div className="min-w-0">
-                      <span
-                        className="text-sm block"
-                        style={{
-                          color: 'var(--ink)',
-                          fontWeight: 500,
-                          overflow: 'hidden',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 1,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
-                        {grant.title}
-                      </span>
-                      {/* Progress bar for active grants */}
-                      {bucket === 'active' && progress > 0 && (
-                        <div className="mt-1 flex items-center gap-2">
-                          <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)', maxWidth: 160, width: '100%' }}>
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${progress}%`,
-                                backgroundColor: progress > 80 ? 'var(--maroon-solid)' : 'var(--teal)',
-                              }}
-                            />
-                          </div>
-                          <span className="text-[10px] flex-shrink-0" style={{ color: progress > 80 ? 'var(--maroon)' : 'var(--slate)', opacity: 0.9 }}>
-                            {Math.round(progress)}%
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* PI */}
-                    <div className="flex items-center gap-1.5 sm:block">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-                          <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="xs" variant="ice" />
-                        </div>
-                        <span className="text-xs truncate" style={{ color: 'var(--slate)' }}>
-                          {grant.pi ? displayName(grant.pi, 'short') : pi.name}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Status — inline editable (R10) */}
-                    <div>
-                      <InlineSelect
-                        value={(grant.status as GrantStatus | null) ?? (isProposed ? 'in_preparation' : 'planning')}
-                        options={GRANT_STATUS_OPTIONS}
-                        onChange={(next) => handleGrantStatusChange(grant.id, (grant.status as GrantStatus | null) ?? null, next)}
-                      />
-                    </div>
-
-                    {/* Mechanism */}
-                    <div>
-                      <span
-                        className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium"
-                        style={{ backgroundColor: mc.bg, color: mc.color, border: '1px solid var(--border-subtle)' }}
-                      >
-                        {grant.mechanism}
-                      </span>
-                    </div>
-
-                    {/* Period */}
-                    <div>
-                      <span className="text-xs flex items-center gap-1" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-                        <Calendar {...ICON_PROPS} size={10} style={{ flexShrink: 0 }} />
-                        {grant.start_date ? formatMediumDate(grant.start_date) : '?'}
-                        {' – '}
-                        {grant.end_date ? formatMediumDate(grant.end_date) : '?'}
-                      </span>
-                    </div>
-
-                    {/* Agency */}
-                    <div>
-                      <span className="text-xs truncate block" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-                        {grant.agency || '—'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Inline detail panel (expanded via row click) */}
-                  {isExpanded && (
-                    <div
-                      style={{
-                        padding: '16px 24px',
-                        background: 'var(--surface-hover, rgba(0,0,0,0.02))',
-                        borderBottom: '1px solid var(--border-subtle)',
-                        fontSize: '13px',
-                        color: 'var(--ink)',
-                      }}
-                    >
-                      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-                        <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Full title</div>
-                          <div>{grant.title}</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>PI</div>
-                          <div className="flex items-center gap-2">
-                            <div style={{ width: 22, height: 22, flexShrink: 0 }}>
-                              <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm-plus" variant="ice" />
-                            </div>
-                            <span>{pi.name}</span>
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Mechanism</div>
-                          <div>{grant.mechanism || '—'}</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Agency</div>
-                          <div>{grant.agency || '—'}</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Period</div>
-                          <div>
-                            {grant.start_date ? formatMediumDate(grant.start_date) : '?'}
-                            {' – '}
-                            {grant.end_date ? formatMediumDate(grant.end_date) : '?'}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, marginBottom: 4 }}>Status</div>
-                          <div>{bucket === 'proposed' ? 'Proposed' : bucket === 'ended' ? 'Ended' : 'Active'}{bucket === 'active' && progress > 0 ? ` · ${Math.round(progress)}% through period` : ''}</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  </div>
-                )
-              })}
-            </TableContainer>
+            <GrantSleekList
+              grants={filteredGrants}
+              sort={sort}
+              onSort={setSort}
+              cursor={focusedIndex}
+              setCursor={setFocusedIndex}
+              expandedId={expandedId}
+              setExpandedId={setExpandedId}
+              onStatusChange={handleGrantStatusChange}
+              keyboardDisabled={showAddMilestone}
+            />
           )}
 
           {/* Calculations row */}

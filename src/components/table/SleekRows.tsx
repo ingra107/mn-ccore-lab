@@ -210,9 +210,12 @@ export function SleekRow<T>({ row, cursor = false, selected = false, urgent = fa
   let line: ReactNode
   if (narrow) {
     const at = (slot: SleekColumn<T>['phone']) => columns.filter((c) => c.phone === slot)
+    // A page with no lead column (no complete box) gets no lead track, so its
+    // titles start at the row's edge (.sr-nolead in index.css).
+    const lead = at('lead')
     line = (
       <>
-        {!noLead && <div className="sr-ph-lead">{at('lead').map((c) => cell(c, true))}</div>}
+        {lead.length > 0 && <div className="sr-ph-lead">{lead.map((c) => cell(c, true))}</div>}
         <div className="sr-ph-mid">
           <div className="sr-ph-t">{at('title').map((c) => cell(c, true))}</div>
           {at('line').length > 0 && <div className="sr-ph-l">{at('line').map((c) => cell(c, true))}</div>}
