@@ -234,19 +234,21 @@ export default function TodayPage() {
     try { localStorage.setItem(SHOW_MILESTONES_KEY, showMilestones ? 'on' : 'off') } catch { /* unavailable */ }
   }, [showMilestones])
 
-  // A task completed a moment ago stays in its group (sunk, box filled) until
-  // the Hub has accepted it and the ring has played (completion moment), then
-  // leaves for Completed today. Without this the row vanished on the tick and
-  // the moment had nowhere to show.
-  const settlingTasks = useMemo(
-    () => (tasksQuery.data ?? []).filter((t) => settling.has(t.id) && isTaskDone(t)
-      && !isApprovalPending(t) && !isApprovalTriaged(t) && !isQuestionTask(t)),
-    [tasksQuery.data, settling],
-  )
+  // A task completed a moment ago stays in its group, in its own slot with the
+  // box filled, until the Hub has accepted it and the ring has played
+  // (completion moment), then leaves for Completed today. Without this the row
+  // vanished on the tick and the moment had nowhere to show. One pass over the
+  // cache in its own order, so the settling row keeps the place it had (an
+  // appended copy landed last, past the group's preview cut).
+  const listedTasks = useMemo(() => {
+    const open = new Set(tasks.map((t) => t.id))
+    return (tasksQuery.data ?? []).filter((t) => open.has(t.id) || (settling.has(t.id) && isTaskDone(t)
+      && !isApprovalPending(t) && !isApprovalTriaged(t) && !isQuestionTask(t)))
+  }, [tasks, tasksQuery.data, settling])
   const visibleTasks = useMemo(() => {
     const days = dueWindowDays(dueWindow)
     const edge = days === null ? null : civilDatePlusDays(todayKey(), days)
-    return [...tasks, ...settlingTasks].filter((t) => {
+    return listedTasks.filter((t) => {
       // A milestone is the horizon itself (Nick 2026-09-16: always show) —
       // a grant date six weeks out must not vanish behind a 7d window — unless
       // the milestones toggle is off.
@@ -256,7 +258,13 @@ export default function TodayPage() {
       const due = t.due_date?.slice(0, 10)
       return !!due && due <= edge
     })
-  }, [tasks, settlingTasks, dueWindow, state.planned, showMilestones])
+  }, [listedTasks, dueWindow, state.planned, showMilestones])
+  // A settling task shows in its group AND in Completed today for the beat.
+  // The ring plays once, on the group row; the Completed-today copy stays quiet.
+  const ringsInGroup = useMemo(
+    () => new Set(visibleTasks.filter((t) => settling.has(t.id)).map((t) => t.id)),
+    [visibleTasks, settling],
+  )
 
   const hiddenByWindow = tasks.length - visibleTasks.length
 
@@ -785,7 +793,7 @@ export default function TodayPage() {
             <div>
               {doneTodayDetail.map((t) => (
                 <div key={t.id} className="tk-crow">
-                  <CardCheck done onToggle={() => state.uncheck(t.id)} taskId={t.id} />
+                  <CardCheck done onToggle={() => state.uncheck(t.id)} taskId={ringsInGroup.has(t.id) ? undefined : t.id} />
                   <span>{taskShortLabel(t)}</span>
                 </div>
               ))}
@@ -794,7 +802,7 @@ export default function TodayPage() {
                 if (!t) return null
                 return (
                   <div key={id} className="tk-crow">
-                    <CardCheck done onToggle={() => state.uncheck(id)} taskId={id} />
+                    <CardCheck done onToggle={() => state.uncheck(id)} taskId={ringsInGroup.has(id) ? undefined : id} />
                     <span>{taskShortLabel(t)}</span>
                   </div>
                 )

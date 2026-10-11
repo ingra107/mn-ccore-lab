@@ -66,6 +66,20 @@ export function settleCompletion(ids: readonly string[], accepted: boolean) {
   emit()
 }
 
+/**
+ * Settle a batch write (POST /api/tasks/batch). That route answers HTTP 200
+ * even when it refuses some ids: `{ data: { applied: [...], failed: [...] } }`.
+ * Only ids in `applied` are accepted; every other id sent is settled as a
+ * failure. A response without an `applied` list accepts nothing.
+ */
+export function settleBatchCompletion(sent: readonly string[], response: unknown) {
+  if (sent.length === 0) return
+  const applied = (response as { data?: { applied?: unknown } } | null | undefined)?.data?.applied
+  const ok = new Set(Array.isArray(applied) ? applied.filter((x): x is string => typeof x === 'string') : [])
+  settleCompletion(sent.filter((id) => ok.has(id)), true)
+  settleCompletion(sent.filter((id) => !ok.has(id)), false)
+}
+
 /** How long an accepted completion stays "settling": the ring's length plus a
  *  short rest so the filled box is seen before the row leaves. */
 const LINGER_MS = 1100

@@ -8,6 +8,9 @@ import { MemoryRouter } from 'react-router-dom'
 import HeroNumber from './HeroNumber'
 import { NowMarker, NowMarkerSvg } from './NowMarker'
 import PageHeader from '../PageHeader'
+import { AgendaView } from '../../pages/portal/CalendarPage'
+import { civilDatePlusDays } from '../../lib/taskGrouping'
+import { localDateKey } from '../../lib/dateUtils'
 
 let mounted: { host: HTMLElement; root: Root }[] = []
 const tick = () => new Promise((r) => setTimeout(r, 20))
@@ -74,5 +77,23 @@ describe('NowMarker', () => {
     const g = h.querySelector('g[data-testid="now-marker"]')!
     expect(g.querySelectorAll('circle')).toHaveLength(2)
     expect(g.querySelector('text')?.textContent).toBe('Today')
+  })
+})
+
+describe('Calendar agenda now marker', () => {
+  it('opens the list with a labelled marker when today has no events', async () => {
+    const tomorrow = civilDatePlusDays(localDateKey(), 1)
+    const h = await mount(<AgendaView events={[{ id: 'm1', date: tomorrow, title: 'Lab meeting', type: 'meeting', category: 'meeting' }]} />)
+    const markers = h.querySelectorAll('[data-testid="now-marker"]')
+    expect(markers.length).toBe(1)
+    expect(markers[0].textContent).toBe('Today')
+    // It sits before the first day, not inside it.
+    expect(markers[0].nextElementSibling?.tagName).toBe('SECTION')
+  })
+
+  it('uses the in-group marker when today has events', async () => {
+    const h = await mount(<AgendaView events={[{ id: 'm1', date: localDateKey(), title: 'Lab meeting', type: 'meeting', category: 'meeting' }]} />)
+    expect(h.querySelectorAll('[data-testid="now-marker"]').length).toBe(1)
+    expect(h.querySelector('section [data-testid="now-marker"]')).not.toBeNull()
   })
 })

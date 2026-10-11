@@ -658,6 +658,12 @@ export function AgendaView({ events }: { events: CalendarEvent[] }) {
 
   return (
     <div className="cal-agenda">
+      {/* Agenda lists only days with events (all today or later). With nothing
+          today the now marker still opens the list, labelled, so the phone
+          default view always shows where now is. */}
+      {grouped.length > 0 && grouped[0][0] !== today && (
+        <NowMarker style={{ margin: '2px 10px 10px' }} />
+      )}
       {grouped.map(([date, dayEvents]) => {
         const isToday = date === today
         return (

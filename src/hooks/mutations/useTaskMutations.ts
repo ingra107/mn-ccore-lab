@@ -4,7 +4,7 @@ import type { TaskRow } from '../../lib/api'
 import type { TaskKind } from '../../../shared/taskKinds'
 import { TASK_STATUS, optimisticListUpdate, rollbackSnapshots } from './utils'
 import { nowInstant } from '../../lib/time'
-import { beginCompletion, settleCompletion } from '../../lib/completionMoment'
+import { beginCompletion, settleCompletion, settleBatchCompletion } from '../../lib/completionMoment'
 
 // Which ids a write completes, for the completion moment (lib/completionMoment):
 // the ring and the done-this-week count wait for the Hub to accept these.
@@ -153,8 +153,9 @@ export function useBulkUpdateTasks() {
       return { snapshots }
     },
 
-    onSuccess: (_data, { ids, action, value }) => {
-      settleCompletion(action === 'complete' ? ids : action === 'status' ? completes(value, ids) : [], true)
+    // The batch route answers 200 with refused ids in `failed`; only `applied` ids celebrate.
+    onSuccess: (data, { ids, action, value }) => {
+      settleBatchCompletion(action === 'complete' ? ids : action === 'status' ? completes(value, ids) : [], data)
     },
 
     onError: (_err, { ids, action, value }, context) => {

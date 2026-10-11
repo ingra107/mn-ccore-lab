@@ -910,6 +910,8 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
           </Fragment>
         )
       })}
+      {/* Every item is past due: now sits after the last week. */}
+      {nowBeforeId === null && nowMarker}
     </div>
   )
 }
