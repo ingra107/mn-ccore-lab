@@ -58,6 +58,12 @@
   --border-subtle: color-mix(in srgb, var(--task-ink) 8%, transparent);
   --border-default: color-mix(in srgb, var(--task-ink) 14%, transparent);
   --border-strong: color-mix(in srgb, var(--task-ink) 24%, transparent);
+  /* Text-field edge (principle 20: an input must look like an input). Built on
+     --ink, which .dark redefines on the same <html> element, so this one
+     declaration follows the mode. 15% matches Today's .tk-compose edge
+     (--sk-line2): measured 1.38:1 against the Today drawer surface in light,
+     1.46:1 in dark, where --border-subtle (8%) was a ~1.2:1 hairline. */
+  --field-edge: color-mix(in srgb, var(--ink) 15%, transparent);
 
   /* Letter-spacing — tighten at display sizes (Linear/Vercel/Stripe pattern) */
   --tracking-display: -0.04em;   /* 32px+ headings */
@@ -2826,6 +2832,9 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-ft button[aria-label*="project folder"],.tk .tk-ft button[aria-label*="Claude"],.tk .tk-tr-r button[aria-label*="project folder"],.tk .tk-tr-r button[aria-label*="Claude"]{color:var(--sk-t3) !important}
 .tk .tk-ft button[aria-label*="project folder"]:hover,.tk .tk-ft button[aria-label*="Claude"]:hover,.tk .tk-tr-r button[aria-label*="project folder"]:hover,.tk .tk-tr-r button[aria-label*="Claude"]:hover{color:var(--sk-t1) !important}
 .tk textarea::placeholder{color:var(--sk-t3) !important;opacity:1}
+/* SmartCompose outside .tk (MyTasks, projects, meetings, portal) gets the same
+   placeholder tier; the browser default measured 3.7:1 on its white field. */
+.smart-compose-field::placeholder{color:var(--sk-t3);opacity:1}
 .tk .tk-clk{cursor:pointer}
 /* a11y: muted text on the gold attention wash uses the second text tier (AA) */
 .tk .tk-attn{--sk-t3:var(--sk-t2)}

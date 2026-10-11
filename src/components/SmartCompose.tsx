@@ -411,8 +411,10 @@ export default function SmartCompose(props: SmartComposeProps) {
 
   const textareaStyle: React.CSSProperties = {
     width: '100%',
+    // --cream is white in light and the body black in dark, so the field sits
+    // as a well against any card or drawer surface in both modes.
     background: 'var(--cream)',
-    border: '1px solid var(--border-subtle)',
+    border: `1px solid ${focused ? 'var(--teal)' : 'var(--field-edge)'}`,
     borderRadius: 'var(--radius-md)',
     padding: '8px 10px',
     color: 'var(--ink)',
@@ -439,6 +441,9 @@ export default function SmartCompose(props: SmartComposeProps) {
         maxRows={maxRows}
         // The badge goes in the toolbar row below, never over the text.
         commandBadge="none"
+        // .smart-compose-field sets the placeholder color (index.css); an
+        // inline style cannot reach ::placeholder.
+        className="smart-compose-field"
         style={textareaStyle}
       />
       <input
@@ -514,8 +519,10 @@ export default function SmartCompose(props: SmartComposeProps) {
                 display: 'inline-flex', alignItems: 'center', gap: 3,
                 height: 22,
                 padding: '0 6px', borderRadius: 'var(--radius-sm)',
-                border: hermesLocked ? '1px solid rgba(107,84,32,0.35)' : '1px solid var(--border-subtle)',
-                background: hermesLocked ? 'rgba(107,84,32,0.10)' : 'transparent',
+                // Built from --gold so the "queued, not posted" state keeps its
+                // edge and wash in dark mode (#dcb355) as well as light (#6b5420).
+                border: hermesLocked ? '1px solid color-mix(in srgb, var(--gold) 45%, transparent)' : '1px solid var(--border-subtle)',
+                background: hermesLocked ? 'color-mix(in srgb, var(--gold) 12%, transparent)' : 'transparent',
                 color: hermesLocked ? 'var(--gold)' : 'var(--slate)',
                 fontSize: 10,
                 fontWeight: hermesLocked ? 600 : 400,
