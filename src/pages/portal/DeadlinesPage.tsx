@@ -1,74 +1,48 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { portalTitle } from '../../constants/pageLabels'
-import { useVirtualizer } from '@tanstack/react-virtual'
-import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch, Presentation, Download } from 'lucide-react'
-import { useDensity } from '../../components/DensityToggle'
-import { useIsMobile } from '../../hooks/useIsMobile'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import QueryState from '../../components/QueryState'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
-import InlineDatePicker from '../../components/InlineDatePicker'
 import { useUndoToast } from '../../components/UndoToast'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
-import { ColumnHeader, TableContainer } from '../../components/table'
 import { useTasks, useUpcomingConferences, useProjects } from '../../hooks/useApiData'
 import { useUpdateTask, useBulkUpdateTasks, useUpdateGrantMilestone } from '../../hooks/useMutations'
 import { useTaskFieldEditors } from '../../hooks/useTaskFieldEditors'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate, localDateKey, isOverdue, dueLabelText } from '../../lib/dateUtils'
+import { formatShortDate, localDateKey, isOverdue, dueLabelText, isDoneStatus } from '../../lib/dateUtils'
 import DueLabel from '../../components/DueLabel'
 import { PATHS } from '../../constants/paths'
 import { useQueryClient } from '@tanstack/react-query'
-import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
+import { useSelection } from '../MyTasks/hooks/useSelection'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import type { TaskRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import RegulatoryExpiringList from '../../components/RegulatoryExpiringList'
-import { projectShortLabelMap, taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
-
-interface DeadlineItem {
-  id: string
-  /** What every row shows: a task's SHORT label (displayNames.taskShortLabel). */
-  title: string
-  /** The full title, for hover and the .ics export; unset when title already is it. */
-  fullTitle?: string
-  due_date: string
-  type: 'task' | 'milestone'
-  assignee?: string
-  project?: string
-  status: string
-  priority?: string
-  isOverdue: boolean
-  daysUntil: number
-  future_note?: string | null
-  future_note_author?: string | null
-}
+import { projectFullTitleHint, projectShortLabel, taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
+import { DeadlineList, type DeadlineItem, type DeadlineProject } from './DeadlineList'
 
 type ViewMode = 'list' | 'timeline'
 
 export default function DeadlinesPage() {
   const [view, setView] = useState<ViewMode>('list')
   const [filterType, setFilterType] = useState<string>('')
-  const [focusedIndex, setFocusedIndex] = useState(-1)
-  type DeadlineSortKey = 'title' | 'project' | 'due_date' | 'assignee' | 'status' | 'type'
-  const [sortKey, setSortKey] = useState<DeadlineSortKey>('due_date')
-  const [sortAsc, setSortAsc] = useState(true)
-  const handleSort = (key: string) => {
-    if (sortKey === key) setSortAsc(!sortAsc)
-    else { setSortKey(key as DeadlineSortKey); setSortAsc(true) }
-  }
 
   const { data: tasks = [], isLoading: tasksLoading, isError: tasksError, error: tasksErr } = useTasks()
   const { data: grants = [], isLoading: grantsLoading } = useGrantTimeline()
   const { data: projectsList = [] } = useProjects()
-  const projectMap = useMemo(() => projectShortLabelMap(projectsList), [projectsList])
+  // Short names (wave 0), the long title on hover.
+  const projectsBySlug = useMemo(() => {
+    const m = new Map<string, DeadlineProject>()
+    for (const p of projectsList) if (p.slug) m.set(p.slug, { name: projectShortLabel(p), slug: p.slug, fullTitle: projectFullTitleHint(p) })
+    return m
+  }, [projectsList])
   const updateTask = useUpdateTask()
   const bulkUpdate = useBulkUpdateTasks()
   const updateMilestone = useUpdateGrantMilestone()
@@ -79,8 +53,8 @@ export default function DeadlinesPage() {
   // (grant-milestone mutation + grants-timeline invalidation are Deadlines-specific).
   const taskEditors = useTaskFieldEditors()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const toggleSelect = (id: string) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
+  // Same selection as the Tasks Table: x, shift-click range, ctrl-click toggle.
+  const { selected: selectedIds, setSelected: setSelectedIds, toggleSelect, selectRange, anchorId } = useSelection()
   const isLoading = tasksLoading || grantsLoading
 
   const handleFieldChange = useCallback((id: string, field: string, value: unknown) => {
@@ -114,13 +88,7 @@ export default function DeadlinesPage() {
     bulkUpdate.mutate({ ids: [...selectedIds], action, value }, {
       onSuccess: () => setSelectedIds(new Set()),
     })
-  }, [selectedIds, tasks, handleFieldChange, showUndo, bulkUpdate])
-
-  const handleOpenDetail = useCallback((item: DeadlineItem) => {
-    if (item.type !== 'task') return
-    const task = tasks.find(t => t.id === item.id)
-    if (task) setSelectedTask(task)
-  }, [tasks])
+  }, [selectedIds, setSelectedIds, tasks, handleFieldChange, showUndo, bulkUpdate])
 
   // P2-3: delegate task status to the shared editor (signature adapter — the
   // row callback is (id, next, prev); the shared hook is (id, prev, next)).
@@ -169,6 +137,7 @@ export default function DeadlinesPage() {
         priority: task.priority,
         isOverdue: isOverdue(task.due_date, task.status),
         daysUntil,
+        task,
       })
     }
 
@@ -202,18 +171,27 @@ export default function DeadlinesPage() {
     return filtered.sort((a, b) => a.due_date.localeCompare(b.due_date))
   }, [tasks, grants, filterType])
 
-  // Group by time period
-  const overdue = deadlines.filter((d) => d.isOverdue && d.status !== 'done' && d.status !== 'completed')
-  const thisWeek = deadlines.filter((d) => !d.isOverdue && d.daysUntil >= 0 && d.daysUntil <= 7 && d.status !== 'done')
-  const nextWeek = deadlines.filter((d) => d.daysUntil > 7 && d.daysUntil <= 14 && d.status !== 'done')
-  const later = deadlines.filter((d) => d.daysUntil > 14 && d.status !== 'done')
-  const completed = deadlines.filter((d) => d.status === 'done' || d.status === 'completed')
-
-  useListKeyboardNav({
-    itemCount: view === 'list' ? deadlines.length : 0,
-    focusedIndex,
-    setFocusedIndex,
-  })
+  // Group by time period. Each item lands in exactly one group: a done task
+  // or a completed grant milestone is Completed only (a completed milestone
+  // used to show in Later as well).
+  const { overdue, thisWeek, nextWeek, later, completed } = useMemo(() => {
+    const open = deadlines.filter((d) => !isDoneStatus(d.status))
+    return {
+      overdue: open.filter((d) => d.isOverdue),
+      thisWeek: open.filter((d) => !d.isOverdue && d.daysUntil >= 0 && d.daysUntil <= 7),
+      nextWeek: open.filter((d) => d.daysUntil > 7 && d.daysUntil <= 14),
+      later: open.filter((d) => d.daysUntil > 14),
+      completed: deadlines.filter((d) => isDoneStatus(d.status)),
+    }
+  }, [deadlines])
+  const listGroups = useMemo(() => [
+    { title: 'Overdue', items: overdue },
+    { title: 'This week', items: thisWeek },
+    { title: 'Next week', items: nextWeek },
+    { title: 'Later', items: later },
+    { title: 'Completed', items: completed, limit: 5 },
+  ].filter((g) => g.items.length > 0), [overdue, thisWeek, nextWeek, later, completed])
+  const openTask = useCallback((task: TaskRow) => setSelectedTask(task), [])
 
   // Dynamic page title
   useEffect(() => {
@@ -359,133 +337,69 @@ export default function DeadlinesPage() {
       })()}
       </div>
 
-      {/* Content — CLS fix (C8 R6): reserve viewport height AND render a skeleton whose
-          structural layout (TableContainer + column header + N rows at row-height) mirrors the
-          final list layout pixel-for-pixel. Prevents layout thrash when data swaps in. */}
+      {/* Content — CLS fix (C8 R6): reserve viewport height and render skeleton rows at
+          the list's row height, so the data swaps in without layout thrash. */}
       <div className="mt-5" style={{ minHeight: 'calc(100vh - 280px)', contain: 'layout' }}>
         {isLoading ? (
-          <TableContainer>
-            <div
-              className="hidden sm:grid"
-              style={{
-                gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px', columnGap: 'var(--sp-md)',
-                padding: 'var(--sp-sm) var(--sp-lg)',
-                borderBottom: '1px solid var(--border-subtle)',
-              }}
-              aria-hidden="true"
-            >
-              <div />
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} style={{ height: 10, width: '50%', background: 'var(--surface-2)', opacity: 0.85, borderRadius: 'var(--radius-sm)' }} />
-              ))}
-            </div>
+          // Skeleton rows at the sleek row's height, so the list swaps in without a jump.
+          <div aria-hidden="true" style={{ padding: '38px 10px 0' }}>
             {Array.from({ length: 12 }).map((_, i) => (
-              <div
-                key={`skel-${i}`}
-                style={{
-                  height: 'var(--row-height)',
-                  boxSizing: 'border-box',
-                  borderBottom: '1px solid var(--border-subtle)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0 var(--sp-lg)',
-                  gap: 'var(--sp-md)',
-                  opacity: 0.85,
-                }}
-                aria-hidden="true"
-              >
-                <div style={{ width: 16, height: 16, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
+              <div key={`skel-${i}`} style={{ height: 40, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 16, height: 16, borderRadius: 5, background: 'var(--surface-2)' }} />
                 <div style={{ flex: 1, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
                 <div style={{ width: 80, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
                 <div style={{ width: 60, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
               </div>
             ))}
-          </TableContainer>
+          </div>
         ) : view === 'list' ? (
-          <TableContainer>
-            {/* Column headers — hidden on mobile */}
-            <div
-              className="hidden sm:grid [&_.col-header]:!normal-case [&_.col-header]:!tracking-normal"
-              style={{
-                gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px', columnGap: 'var(--sp-md)',
-                padding: 'var(--sp-sm) var(--sp-lg)',
-                borderBottom: '1px solid var(--border-subtle)',
-              }}
-            >
-              <div />
-              {([
-                { label: 'Title', key: 'title' as const },
-                { label: 'Project', key: 'project' as const },
-                { label: 'Due date', key: 'due_date' as const },
-                { label: 'Assignee', key: 'assignee' as const },
-                { label: 'Status', key: 'status' as const },
-                { label: 'Type', key: 'type' as const },
-              ]).map((col) => (
-                <ColumnHeader
-                  key={col.key}
-                  label={col.label}
-                  sortKey={col.key}
-                  currentSort={sortKey}
-                  sortAsc={sortAsc}
-                  onSort={handleSort}
-                />
-              ))}
-            </div>
-
-            {/* Grouped rows */}
-            <motion.div initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
-              {[
-                { title: 'Overdue', items: overdue, color: 'var(--maroon)' },
-                { title: 'This week', items: thisWeek, color: 'var(--teal)' },
-                { title: 'Next week', items: nextWeek, color: 'var(--gold)' },
-                { title: 'Later', items: later, color: 'var(--slate)' },
-                { title: 'Completed', items: completed, color: 'var(--green)', limit: 5 },
-              ].filter(g => g.items.length > 0).map((group) => (
-                <motion.div key={group.title} variants={{ hidden: { y: 8 }, visible: { y: 0 } }}>
-                  <DeadlineTableSection title={group.title} items={group.items} limit={'limit' in group ? group.limit : undefined} color={group.color} onStatusChange={handleStatusChange} onMilestoneStatusChange={handleMilestoneStatusChange} onDueDateChange={handleDueDateChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} selectedIds={selectedIds} onToggleSelect={toggleSelect} />
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {deadlines.length === 0 && (
+          <>
+            {deadlines.length === 0 ? (
               <EmptyState
                 icon={<Clock size={40} />}
                 title="The runway is clear"
                 subtitle="Nothing due in the next 90 days. Enjoy the quiet — deadlines surface here as tasks and grant milestones land."
               />
+            ) : (
+              <DeadlineList
+                groups={listGroups}
+                projects={projectsBySlug}
+                selected={selectedIds}
+                toggleSelect={toggleSelect}
+                selectRange={selectRange}
+                anchorId={anchorId}
+                setSelected={setSelectedIds}
+                onOpenTask={openTask}
+                onStatusChange={handleStatusChange}
+                onMilestoneStatusChange={handleMilestoneStatusChange}
+                onDueDateChange={handleDueDateChange}
+              />
             )}
 
-            {/* Calculations row */}
+            {/* Counts and the keys, one quiet line under the rows. */}
             {deadlines.length > 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 'var(--sp-xl)',
-                  padding: 'var(--sp-sm) var(--sp-lg)',
-                  borderTop: '1px solid var(--border-subtle)',
-                  background: 'var(--teal-hover)',
-                }}
-              >
+              <div className="sr-foot" style={{ padding: '10px 10px 12px', flexWrap: 'wrap' }}>
                 {([
                   { label: 'Total', value: deadlines.length },
-                  ...(overdue.length > 0 ? [{ label: 'Overdue', value: overdue.length, color: 'var(--maroon)' }] : []),
+                  ...(overdue.length > 0 ? [{ label: 'Overdue', value: overdue.length, overdue: true }] : []),
                   { label: 'This week', value: thisWeek.length },
                   { label: 'Next week', value: nextWeek.length },
                   { label: 'Later', value: later.length },
-                  { label: 'Done', value: completed.length, color: 'var(--green)' },
-                ] as { label: string; value: number; color?: string }[]).map(s => (
-                  // Parent opacity compounds with green/gold count span →
-                  // fails AA. Use --muted directly, no opacity. r7 2026-04-22.
-                  <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--muted)' }}>
+                  { label: 'Done', value: completed.length },
+                ] as { label: string; value: number; overdue?: boolean }[]).map(s => (
+                  <span key={s.label}>
                     {s.label}{' '}
-                    <span style={{ fontWeight: 600, color: s.color || 'var(--slate)', fontVariantNumeric: 'tabular-nums' }}>
-                      {s.value}
-                    </span>
+                    <span style={{ fontWeight: 600, color: s.overdue ? 'var(--sk-od)' : 'var(--sk-t2)', fontVariantNumeric: 'tabular-nums' }}>{s.value}</span>
                   </span>
                 ))}
+                <span style={{ flex: 1 }} />
+                <span className="hidden sm:inline"><kbd>j</kbd> <kbd>k</kbd> move</span>
+                <span className="hidden sm:inline"><kbd>x</kbd> or ⇧click select</span>
+                <span className="hidden sm:inline"><kbd>e</kbd> <kbd>⏎</kbd> open</span>
+                <span className="hidden sm:inline"><kbd>esc</kbd> clear</span>
               </div>
             )}
-          </TableContainer>
+          </>
         ) : (
           <DeadlineTimeline items={[...overdue, ...thisWeek, ...nextWeek, ...later]} />
         )}
@@ -512,388 +426,6 @@ export default function DeadlinesPage() {
     </div>
   )
 }
-
-// ── Deadline Table Section (columnar) ────────────────────────
-
-const STATUS_OPTIONS = [
-  { value: 'todo', label: 'To Do', color: 'var(--slate)' },
-  { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
-  { value: 'waiting_external', label: 'Waiting External', color: 'var(--orange)' },
-  { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
-  { value: 'done', label: 'Done', color: 'var(--green)' },
-]
-
-// S12: grant-milestone status vocab (mirrors GrantsPage MILESTONE_STATUS_OPTIONS).
-const MILESTONE_STATUS_OPTIONS = [
-  { value: 'upcoming', label: 'Upcoming', color: 'var(--slate)' },
-  { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
-  { value: 'completed', label: 'Completed', color: 'var(--green)' },
-  { value: 'overdue', label: 'Overdue', color: 'var(--maroon)' },
-]
-
-// ── Reusable deadline item row ───────────────────────────────────────────────
-
-function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueDateChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: {
-  item: DeadlineItem
-  onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void
-  onMilestoneStatusChange?: (id: string, newStatus: string, prevStatus: string) => void
-  onDueDateChange?: (id: string, newDate: string | null) => void
-  onOpenDetail?: (item: DeadlineItem) => void
-  projectMap: Map<string, string>
-  selectedIds?: Set<string>
-  onToggleSelect?: (id: string) => void
-}) {
-  const person = item.assignee ? getPersonInfo(item.assignee) : null
-  const isDone = item.status === 'done' || item.status === 'completed'
-  // P2-2 visual standardization: carry the shared TaskRow's P1-12 overdue
-  // signal (coral left edge, Rule 59) so "what's slipping" reads in one sweep
-  // here too. P1-7: no whole-row opacity dim — done-ness reads from line-through
-  // + muted title, keeping metadata above the 0.85 floor (no compound opacity).
-  const rowOverdue = item.isOverdue && !isDone
-  return (
-    <div style={{
-      borderBottom: '1px solid var(--border-subtle)',
-      boxShadow: rowOverdue ? 'inset 2px 0 0 var(--maroon-solid)' : 'none',
-    }}>
-      {/* Desktop row — hidden on mobile */}
-      <div
-        className="deadline-list-row hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
-        style={{
-          gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px', columnGap: 'var(--sp-md)',
-          padding: `var(--row-padding-y, 8px) 16px`,
-          alignItems: 'center',
-        }}
-      >
-        {/* Checkbox */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {item.type === 'task' && onToggleSelect ? (
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id) }}
-              style={{
-                width: 18, height: 18, borderRadius: 'var(--radius-sm)',
-                border: `1.5px solid ${selectedIds?.has(item.id) ? 'var(--teal)' : 'var(--border-default)'}`,
-                background: selectedIds?.has(item.id) ? 'var(--teal-solid)' : 'transparent',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: 0, transition: 'all 150ms ease', flexShrink: 0,
-              }}
-              aria-label={selectedIds?.has(item.id) ? 'Deselect task' : 'Select task'}
-            >
-              {selectedIds?.has(item.id) && <Check {...ICON_PROPS} size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
-            </button>
-          ) : <div style={{ width: 18 }} />}
-        </div>
-
-        {/* Title — clickable for tasks */}
-        <span
-          onClick={item.type === 'task' && onOpenDetail ? () => onOpenDetail(item) : undefined}
-          className={item.type === 'task' ? 'task-title-clickable' : ''}
-          style={{
-            fontSize: 'var(--value-size)', fontWeight: 400,
-            color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
-            minWidth: 0,
-            cursor: item.type === 'task' && onOpenDetail ? 'pointer' : 'default',
-            borderRadius: 'var(--radius-sm)', padding: '1px 4px', margin: '-1px 0',
-            transition: 'background var(--transition-fast) ease',
-          }}
-          title={item.fullTitle}
-        >
-          {item.title}
-        </span>
-
-        {/* Project — S12: milestone rows link to the Grants page */}
-        {item.type === 'milestone' && item.project ? (
-          <Link
-            to={PATHS.grants}
-            onClick={(e) => e.stopPropagation()}
-            className="hover:underline"
-            style={{
-              fontSize: 'var(--text-small)',
-              color: 'var(--teal)',
-              textDecoration: 'none',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
-            }}
-          >
-            {item.project}
-          </Link>
-        ) : (
-          <span style={{
-            fontSize: 'var(--text-small)',
-            color: 'var(--teal)',
-            opacity: 0.85,
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
-          }}>
-            {item.project ? (projectMap.get(item.project) || item.project) : ''}
-          </span>
-        )}
-
-        {/* Due date — inline editable for tasks, read-only for milestones (grant timeline is server-derived) */}
-        {item.type === 'task' && onDueDateChange ? (
-          <div onClick={(e) => e.stopPropagation()} data-testid={`task-due-${item.id}`}>
-            <InlineDatePicker
-              value={item.due_date}
-              onChange={(newDate) => onDueDateChange(item.id, newDate)}
-              done={isDone}
-            />
-          </div>
-        ) : (
-          <DueLabel
-            due={item.due_date}
-            status={item.status}
-            style={{ fontSize: 'var(--text-label)', opacity: item.isOverdue ? 1 : 0.85 }}
-          />
-        )}
-
-        {/* Assignee */}
-        <div className="flex items-center gap-1.5">
-          {person ? (
-            <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
-            </div>
-          ) : (
-            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>—</span>
-          )}
-        </div>
-
-        {/* Status — InlineSelect for tasks; S12: editable for milestones too */}
-        <div onClick={(e) => e.stopPropagation()}>
-          {item.type === 'task' && onStatusChange ? (
-            <InlineSelect
-              value={item.status}
-              options={STATUS_OPTIONS}
-              onChange={(val) => onStatusChange(item.id, val, item.status)}
-              size="sm"
-            />
-          ) : item.type === 'milestone' && onMilestoneStatusChange ? (
-            <InlineSelect
-              value={item.status}
-              options={MILESTONE_STATUS_OPTIONS}
-              onChange={(val) => onMilestoneStatusChange(item.id, val, item.status)}
-              size="sm"
-            />
-          ) : (
-            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>—</span>
-          )}
-        </div>
-
-        {/* Type badge */}
-        <span style={{
-          fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
-          color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
-          opacity: 0.85,
-        }}>
-          {item.type === 'milestone' ? 'Milestone' : 'Task'}
-        </span>
-      </div>
-
-      {/* Mobile row — shown only on mobile */}
-      <div
-        className="sm:hidden hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors flex items-start gap-2"
-        style={{ padding: `var(--row-padding-y, 12px) 16px` }}
-      >
-        {item.type === 'task' && onToggleSelect && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id) }}
-            style={{
-              width: 18, height: 18, borderRadius: 'var(--radius-sm)',
-              border: `1.5px solid ${selectedIds?.has(item.id) ? 'var(--teal)' : 'var(--border-default)'}`,
-              background: selectedIds?.has(item.id) ? 'var(--teal-solid)' : 'transparent',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: 0, transition: 'all 150ms ease', flexShrink: 0, marginTop: 2,
-            }}
-            aria-label={selectedIds?.has(item.id) ? 'Deselect task' : 'Select task'}
-          >
-            {selectedIds?.has(item.id) && <Check {...ICON_PROPS} size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
-          </button>
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Title */}
-          <span style={{
-            fontSize: '14px', fontWeight: 500,
-            color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
-            display: 'block', marginBottom: '4px',
-          }} title={item.fullTitle}>
-            {item.title}
-          </span>
-          {item.project && (
-            <span style={{
-              display: 'block', marginBottom: '4px',
-              fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)',
-            }}>
-              {projectMap.get(item.project) || item.project}
-            </span>
-          )}
-          {/* Metadata row */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {item.type === 'task' && onDueDateChange ? (
-              <div onClick={(e) => e.stopPropagation()}>
-                <InlineDatePicker
-                  value={item.due_date}
-                  onChange={(newDate) => onDueDateChange(item.id, newDate)}
-                  done={isDone}
-                />
-              </div>
-            ) : (
-              <DueLabel
-                due={item.due_date}
-                status={item.status}
-                style={{ fontSize: 'var(--label-size)' }}
-              />
-            )}
-            <span style={{
-              fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
-              color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
-              opacity: 0.85,
-            }}>
-              {item.type === 'milestone' ? 'Milestone' : 'Task'}
-            </span>
-            {/* P3-5: status edit works on touch — same shared editor as desktop. */}
-            {item.type === 'task' && onStatusChange ? (
-              <div onClick={(e) => e.stopPropagation()}>
-                <InlineSelect
-                  value={item.status}
-                  options={STATUS_OPTIONS}
-                  onChange={(val) => onStatusChange(item.id, val, item.status)}
-                  size="sm"
-                />
-              </div>
-            ) : item.type === 'milestone' && onMilestoneStatusChange ? (
-              <div onClick={(e) => e.stopPropagation()}>
-                <InlineSelect
-                  value={item.status}
-                  options={MILESTONE_STATUS_OPTIONS}
-                  onChange={(val) => onMilestoneStatusChange(item.id, val, item.status)}
-                  size="sm"
-                />
-              </div>
-            ) : null}
-            {person && (
-              <div style={{ width: 18, height: 18, flexShrink: 0 }}>
-                <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-icon" variant="ice" />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Deadline Table Section (columnar, virtual scrolling for large groups) ────────────
-
-const VIRTUAL_THRESHOLD = 20  // sections exceeding this row count get virtualized
-// Row heights match CSS density values: compact=36, default=44, relaxed=52
-const DENSITY_ROW_HEIGHT: Record<string, number> = { compact: 36, default: 44, relaxed: 52 }
-
-function DeadlineTableSection({ title, items: allItems, limit, color, onStatusChange, onMilestoneStatusChange, onDueDateChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: { title: string; items: DeadlineItem[]; limit?: number; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onMilestoneStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onDueDateChange?: (id: string, newDate: string | null) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string>; selectedIds?: Set<string>; onToggleSelect?: (id: string) => void }) {
-  const [expanded, setExpanded] = useState(!title.startsWith('Completed'))
-  // A capped group (Completed) shows `limit` rows with a Show all control, so the
-  // header count and the list always agree.
-  const [showAll, setShowAll] = useState(false)
-  const capped = limit !== undefined && allItems.length > limit
-  const items = capped && !showAll ? allItems.slice(0, limit) : allItems
-  const useVirtual = expanded && items.length > VIRTUAL_THRESHOLD
-  const parentRef = useRef<HTMLDivElement>(null)
-  const [density] = useDensity()
-  const rowHeight = DENSITY_ROW_HEIGHT[density] ?? 44
-  // Phone rows are stacked cards (92-225px, title wraps). The estimate only seeds
-  // the first paint; measureElement below reads the real box of each mounted row.
-  const isMobile = useIsMobile()
-  const estimateRow = isMobile ? 120 : rowHeight
-
-  const virtualizer = useVirtualizer({
-    count: items.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => estimateRow,
-    measureElement: (el) => el.getBoundingClientRect().height,
-    overscan: 5,
-    enabled: useVirtual,
-  })
-
-  return (
-    <div>
-      {/* Group header */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 w-full"
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '12px 16px 6px', textAlign: 'left' }}
-      >
-        <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: color, flexShrink: 0 }} />
-        <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', }}>
-          {title}
-        </span>
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
-          {allItems.length}
-        </span>
-        <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-      </button>
-
-      {/* Small sections: plain map render */}
-      {expanded && !useVirtual && items.map((item) => (
-        <DeadlineItemRow
-          key={item.id}
-          item={item}
-          onStatusChange={onStatusChange}
-          onMilestoneStatusChange={onMilestoneStatusChange}
-          onDueDateChange={onDueDateChange}
-          onOpenDetail={onOpenDetail}
-          projectMap={projectMap}
-          selectedIds={selectedIds}
-          onToggleSelect={onToggleSelect}
-        />
-      ))}
-
-      {/* Large sections: virtualized scrollable window */}
-      {expanded && useVirtual && (
-        <div
-          ref={parentRef}
-          style={{ height: Math.min(items.length * estimateRow, 440), minHeight: Math.min(items.length * estimateRow, 440), overflow: 'auto' }}
-        >
-          <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
-            {virtualizer.getVirtualItems().map((virtualRow) => {
-              const item = items[virtualRow.index]
-              return (
-                <div
-                  key={item.id}
-                  data-index={virtualRow.index}
-                  ref={virtualizer.measureElement}
-                  style={{
-                    position: 'absolute',
-                    top: virtualRow.start,
-                    width: '100%',
-                  }}
-                >
-                  <DeadlineItemRow
-                    item={item}
-                    onStatusChange={onStatusChange}
-                    onMilestoneStatusChange={onMilestoneStatusChange}
-                    onDueDateChange={onDueDateChange}
-                    onOpenDetail={onOpenDetail}
-                    projectMap={projectMap}
-                    selectedIds={selectedIds}
-                    onToggleSelect={onToggleSelect}
-                  />
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {expanded && capped && (
-        <button
-          type="button"
-          onClick={() => setShowAll((v) => !v)}
-          className="hit-area link-affordance"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 16px', fontSize: 'var(--text-label)', color: 'var(--teal)' }}
-        >
-          {showAll ? 'Show fewer' : `Show all ${allItems.length}`}
-        </button>
-      )}
-    </div>
-  )
-}
-
 
 // ── Deadline Row ─────────────────────────────────────────────
 

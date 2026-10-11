@@ -146,7 +146,9 @@ export default function PortalLayout() {
         className={`transition-all duration-200 ${
           focusMode ? '' : sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60'
         }`}
-        style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}
+        // --portal-header-h: the sticky top bar's height (h-14 = 56px, 0 in focus
+        // mode), so a sticky header inside the page sits just under it.
+        style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', '--portal-header-h': focusMode ? '0px' : '56px' } as React.CSSProperties}
       >
         {/* Top bar (hidden in focus mode) */}
         <header

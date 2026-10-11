@@ -8,6 +8,7 @@ import { CardCheck, CardDuePill, CardTags, useTaskAttention } from './TaskCardRo
 import { dueLabelCompact, isOverdue } from '../../lib/dateUtils'
 import { isMilestone } from '../../../shared/taskKinds'
 import { taskShortLabel } from '../../lib/displayNames'
+import { isTaskDone } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
 
 const STATUS_WORD: Record<string, string> = {
@@ -23,10 +24,12 @@ const modified = (e: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }) 
 /** Title, then its tags: New / n new / moved / Planned / Waiting / Nd stale.
  *  A plain click on the title opens the editor; a modified click (shift,
  *  ctrl, cmd) or any click while `selecting` bubbles to the row to select. */
-export function TaskTitleCell({ task, isDone, onOpen, selecting = false, planned = false, staleDays = 0, showWaiting = false, showMoved = true }: {
+export function TaskTitleCell({ task, isDone, onOpen, selecting = false, planned = false, staleDays = 0, showWaiting = false, showMoved = true, hint }: {
   task: TaskRow
   isDone: boolean
   onOpen?: () => void
+  /** A hover tip on the title (Deadlines shows the full title behind a short one). */
+  hint?: string
   selecting?: boolean
   planned?: boolean
   /** Days since the last movement on an in-progress task; 0 = not stale. */
@@ -49,7 +52,7 @@ export function TaskTitleCell({ task, isDone, onOpen, selecting = false, planned
   return (
     <div className="sr-tt">
       {isMilestone(task) && <span className="sr-dia" aria-hidden="true">◆</span>}
-      <span {...open}>{title}</span>
+      <span {...open} title={hint}>{title}</span>
       {!isDone && task.priority === 'urgent' && <span className="sr-only">Urgent</span>}
       <CardTags task={task} isNew={isNewToViewer} activityCount={activityRow?.new_count ?? 0} showMoved={showMoved} />
       {planned && !isDone && <span className="tk-tag">Planned</span>}
@@ -59,17 +62,27 @@ export function TaskTitleCell({ task, isDone, onOpen, selecting = false, planned
   )
 }
 
-/** The due cell for any task. A task shows its due pill. A milestone shows
- *  its internal date (due_date, muted) and its hard date (deadline, gold, red
- *  once missed) side by side when they differ, else its one date in gold
- *  (the two-date rule, Nick 2026-09-17; same wording as MilestoneCardRow). */
+/** True when TaskDueCell has something to show (a live due date, or any milestone date). */
+// eslint-disable-next-line react-refresh/only-export-components -- a predicate shared by the Table and Deadlines due cells
+export const taskHasDuePill = (t: TaskRow) => (isMilestone(t) ? !!(t.deadline || t.due_date) : !!t.due_date && !isTaskDone(t))
+
+/** The due cell for any task. A task shows its due pill; a milestone shows
+ *  MilestoneDueCell. */
 export function TaskDueCell({ task, isDone }: { task: TaskRow; isDone: boolean }) {
-  const civil = (d: string | null | undefined) => (d ? d.slice(0, 10) : null)
   if (!isMilestone(task)) return task.due_date && !isDone ? <CardDuePill due={task.due_date} status={task.status} /> : null
-  const due = civil(task.due_date)
-  const hard = civil(task.deadline) ?? due
+  return <MilestoneDueCell due={task.due_date} hard={task.deadline} isDone={isDone} />
+}
+
+/** A milestone's dates: its internal date (muted) and its hard date (gold,
+ *  red once missed) side by side when they differ, else its one date in gold
+ *  (the two-date rule, Nick 2026-09-17; same wording as MilestoneCardRow).
+ *  Task milestones and grant milestones (Deadlines) both render here. */
+export function MilestoneDueCell({ due: dueIn, hard: hardIn, isDone }: { due?: string | null; hard?: string | null; isDone: boolean }) {
+  const civil = (d: string | null | undefined) => (d ? d.slice(0, 10) : null)
+  const due = civil(dueIn)
+  const hard = civil(hardIn) ?? due
   if (!hard) return null
-  const missed = !isDone && isOverdue(hard, task.status)
+  const missed = !isDone && isOverdue(hard)
   return (
     <span className="sr-ms-dates">
       {due && due !== hard && (

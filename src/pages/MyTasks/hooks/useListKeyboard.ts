@@ -1,15 +1,16 @@
 // useListKeyboard — j/k navigation, e/Enter open drawer, x/Space toggle
-// select, Escape clears selection. List view only — Columns/Lanes use mouse.
+// select, Escape clears selection. The My Tasks Table and the Deadlines list;
+// Columns/Lanes use the mouse.
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx (the ListView's
 // inline useEffect). Skips when an input/select/textarea has focus so
 // users can type freely in the search bar.
 
 import { useEffect, useState } from 'react'
-import type { TaskRow } from '../../../lib/api'
 
 export interface UseListKeyboardArgs {
-  filtered: TaskRow[]
+  /** The rows on screen, in order. Only `id` is read (Deadlines mixes tasks and grant milestones). */
+  filtered: ReadonlyArray<{ id: string }>
   toggleSelect: (id: string) => void
   setDrawer: (id: string | null) => void
   setSelected: React.Dispatch<React.SetStateAction<Set<string>>>
