@@ -1051,8 +1051,6 @@ export default function MeetingDetail() {
                     emoji, R2 paperclip via uploadContext={type:'meeting'},
                     Cmd+Enter triggers Save Notes via onSubmit. */}
                 <SmartCompose
-                  theme="light"
-                  bare
                   value={notesDraft}
                   onChange={setNotesDraft}
                   onSubmit={async (content) => {
@@ -1285,8 +1283,6 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentCha
             </span>
           ) : (
             <SmartCompose
-              theme="light"
-              bare
               value={text}
               onChange={(next) => {
                 setText(next)

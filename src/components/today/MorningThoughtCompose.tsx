@@ -14,9 +14,8 @@
 //   - placeholder swaps to "Plan tomorrow's first move…"
 //   - default tasks get due_date = tomorrow
 //
-// The brief says to use SmartCompose; we do — `theme="light"` + `bare`: the
-// light theme reads the page tokens, so it is legible in BOTH modes (the dark
-// theme hard-codes pale ink and was faint on the light page). The .tk-compose
+// The brief says to use SmartCompose; we do. It reads the page tokens, so it
+// is legible in BOTH modes. The .tk-compose
 // field on TodayPage supplies the box; .tk-compose textarea strips SmartCompose's
 // own. Every control (tools, command badge, Capture, send to home) sits in its
 // own row below the text, never over it.
@@ -222,8 +221,6 @@ export function MorningThoughtCompose() {
     <>
       <SmartCompose
         placeholder={placeholder}
-        theme="light"
-        bare
         rows={1}
         // Grows with the thought up to 8 lines, then scrolls inside the field.
         maxRows={8}

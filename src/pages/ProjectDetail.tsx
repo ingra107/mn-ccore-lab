@@ -1389,8 +1389,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                 @hermes stays server-side-detected here (postActivityEntry,
                 api/routes/projects.ts), unlike task mode. */}
             <SmartCompose
-              theme="light"
-              bare
               value={quickComposeText}
               onChange={(next) => { setQuickComposeText(next); broadcastProjectTyping(next.trim().length > 0) }}
               onSubmit={async () => { await handleQuickCompose() }}

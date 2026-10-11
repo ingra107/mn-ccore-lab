@@ -16,11 +16,16 @@
 // Closes Phase 38 eval Issue 8 (compose toolbar @/:/📎 were decorative)
 // and the audit-2026-04-28 D14 SmartCompose-universal sweep.
 //
-// Two surface variants:
-//   - `theme="dark"` (default): renders inside dark portal chrome
-//     (TodayPage / drawers). Hex-pinned dark colors.
-//   - `theme="light"` (boxed=false default): renders inside the cream/ice
-//     card shells used by ProjectDetail / MeetingDetail / AskTheLab.
+// One look, read from page tokens (--cream, --border-subtle, --ink, --slate,
+// --teal), so it follows the page into light or dark mode. There used to be a
+// second, default `theme="dark"` that hex-pinned pale ink on a 2% white fill:
+// on a light page the field had no visible edge and its placeholder all but
+// vanished (an input must look like an input, UI principle 20). Callers had to
+// remember `theme="light"` to get a working field, and the four that forgot
+// (Today task + milestone drawers, MyTasks inline detail, thread replies)
+// shipped the broken one. The prop is gone, so no caller can pick it again.
+// `boxed` and `bare` went with it: both only changed the dark wrapper, so the
+// box now always renders flush and the caller owns spacing.
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Paperclip, Smile, AtSign, Loader2, Send } from 'lucide-react'
@@ -34,16 +39,10 @@ import { isHermesPrefix } from '../lib/hermesRouting'
 import { askHermesOnTask, hermesOutcomeToast } from '../lib/askHermes'
 import { useUndoToast } from './UndoToast'
 import { ICON_PROPS } from '../lib/iconProps'
-import { withAlpha } from '../lib/taskGrouping'
 import { uploadFileToR2 } from '../lib/r2Upload'
 import { useUploadQueue } from '../lib/useUploadQueue'
 
 const EMOJI_QUICK = ['👍', '❤️', '🎉', '👀', '🔥', '💡', '✅', '⚠️', '📝', '🤖', '🚀', '🙏']
-
-const INK_DARK = '#e2e8f0'
-const INK_DIM_DARK = '#7a828c'
-const ACCENT_GOLD = '#c9a84c'
-const ACCENT_TEAL = '#5cbcb4'
 
 export type SmartComposeUploadContext = {
   /** Server-side context.type for /api/upload/url. */
@@ -58,14 +57,6 @@ export type SmartComposeUploadContext = {
 
 interface BaseProps {
   placeholder?: string
-  /** When true, the compose is wrapped with a labeled "Add note" header
-   *  (UnifiedMyTasks drawer style). When false, just the textarea + toolbar
-   *  (TodayPage drawer inline style). Only applies to dark theme. */
-  boxed?: boolean
-  /** 'dark' (default — TodayPage/drawer chrome) or 'light' (project/meeting/asktl). */
-  theme?: 'dark' | 'light'
-  /** Hide the wrapper margin/divider so caller controls spacing. */
-  bare?: boolean
   /** rows for the textarea; default 2. This is the RESTING height. */
   rows?: number
   /** The field grows with what is typed up to this many lines, then scrolls
@@ -146,9 +137,6 @@ type SmartComposeProps = TaskModeProps | CustomModeProps
 export default function SmartCompose(props: SmartComposeProps) {
   const {
     placeholder = 'Add a note, or @hermes for AI…',
-    boxed = false,
-    theme = 'dark',
-    bare = false,
     rows = 2,
     maxRows = 8,
     autoFocus = false,
@@ -421,36 +409,18 @@ export default function SmartCompose(props: SmartComposeProps) {
     if (dt.files.length > 0) handleFiles(dt.files)
   }, [uploadContext, handleFiles])
 
-  const isDark = theme === 'dark'
-
-  // Themed styles ------------------------------------------------
-  const textareaStyle: React.CSSProperties = isDark
-    ? {
-        width: '100%',
-        background: 'rgba(255,255,255,0.02)',
-        border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: 'var(--radius-sm)',
-        padding: '6px 10px',
-        color: INK_DARK,
-        fontSize: 12,
-        fontFamily: 'inherit',
-        outline: 'none',
-      }
-    : {
-        width: '100%',
-        background: 'var(--cream)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius-md)',
-        padding: '8px 10px',
-        color: 'var(--ink)',
-        fontSize: 13,
-        fontFamily: 'inherit',
-        outline: 'none',
-        lineHeight: 1.4,
-      }
-
-  const submitBg = isDark ? ACCENT_GOLD : 'var(--teal-solid)'
-  const submitColor = isDark ? '#0b1017' : 'var(--ink-bright, #fff)'
+  const textareaStyle: React.CSSProperties = {
+    width: '100%',
+    background: 'var(--cream)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: 'var(--radius-md)',
+    padding: '8px 10px',
+    color: 'var(--ink)',
+    fontSize: 13,
+    fontFamily: 'inherit',
+    outline: 'none',
+    lineHeight: 1.4,
+  }
 
   const inner = (
     <>
@@ -484,7 +454,7 @@ export default function SmartCompose(props: SmartComposeProps) {
           {pendingUploads.map((p) => (
             <div
               key={p.id}
-              style={{ position: 'relative', flexShrink: 0, width: 40, height: 40, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid var(--border-subtle)' }}
+              style={{ position: 'relative', flexShrink: 0, width: 40, height: 40, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}
             >
               <img src={p.dataUrl} alt={p.filename} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               <div
@@ -503,14 +473,14 @@ export default function SmartCompose(props: SmartComposeProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, position: 'relative' }}>
           {/* Attach */}
           {uploadContext && (
-            <ToolbarBtn theme={theme} label="Attach file" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+            <ToolbarBtn label="Attach file" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
               {uploading ? <Loader2 {...ICON_PROPS} size={11} className="animate-spin" /> : <Paperclip size={11} strokeWidth={1.5} absoluteStrokeWidth />}
             </ToolbarBtn>
           )}
           {/* @mention */}
-          <ToolbarBtn theme={theme} label="Mention someone" onClick={() => insertAtCursor('@')}><AtSign size={11} strokeWidth={1.5} absoluteStrokeWidth /></ToolbarBtn>
+          <ToolbarBtn label="Mention someone" onClick={() => insertAtCursor('@')}><AtSign size={11} strokeWidth={1.5} absoluteStrokeWidth /></ToolbarBtn>
           {/* Emoji */}
-          <ToolbarBtn theme={theme} label="Add emoji" onClick={() => setEmojiOpen((o) => !o)} active={emojiOpen}><Smile size={11} strokeWidth={1.5} absoluteStrokeWidth /></ToolbarBtn>
+          <ToolbarBtn label="Add emoji" onClick={() => setEmojiOpen((o) => !o)} active={emojiOpen}><Smile size={11} strokeWidth={1.5} absoluteStrokeWidth /></ToolbarBtn>
           {/* @me lock — ROW 81: shared MeLockToggle (unified with TaskDetailPanel) */}
           {showMeLock && (
             <MeLockToggle
@@ -521,7 +491,6 @@ export default function SmartCompose(props: SmartComposeProps) {
                   return !l
                 })
               }}
-              theme={theme}
             />
           )}
           {/* Queue-for-Claude toggle — queues this note to dispatch_queue for
@@ -545,15 +514,9 @@ export default function SmartCompose(props: SmartComposeProps) {
                 display: 'inline-flex', alignItems: 'center', gap: 3,
                 height: 22,
                 padding: '0 6px', borderRadius: 'var(--radius-sm)',
-                border: hermesLocked
-                  ? `1px solid ${isDark ? 'rgba(220,179,85,0.55)' : 'rgba(107,84,32,0.35)'}`
-                  : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'var(--border-subtle)'}`,
-                background: hermesLocked
-                  ? (isDark ? 'rgba(220,179,85,0.12)' : 'rgba(107,84,32,0.10)')
-                  : 'transparent',
-                color: hermesLocked
-                  ? (isDark ? '#dcb355' : 'var(--gold)')
-                  : (isDark ? INK_DIM_DARK : 'var(--slate)'),
+                border: hermesLocked ? '1px solid rgba(107,84,32,0.35)' : '1px solid var(--border-subtle)',
+                background: hermesLocked ? 'rgba(107,84,32,0.10)' : 'transparent',
+                color: hermesLocked ? 'var(--gold)' : 'var(--slate)',
                 fontSize: 10,
                 fontWeight: hermesLocked ? 600 : 400,
                 opacity: hermesLocked ? 1 : 0.70,
@@ -562,7 +525,7 @@ export default function SmartCompose(props: SmartComposeProps) {
                 whiteSpace: 'nowrap',
               }}
             >
-              <HermesMark size={11} color={hermesLocked ? (isDark ? '#dcb355' : 'var(--gold)') : 'currentColor'} />
+              <HermesMark size={11} color={hermesLocked ? 'var(--gold)' : 'currentColor'} />
               Queue for Claude
             </button>
           )}
@@ -574,13 +537,13 @@ export default function SmartCompose(props: SmartComposeProps) {
               left: 0,
               marginBottom: 6,
               padding: 6,
-              background: isDark ? '#0f1923' : 'var(--cream)',
-              border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid var(--border-subtle)',
+              background: 'var(--cream)',
+              border: '1px solid var(--border-subtle)',
               borderRadius: 'var(--radius-md)',
               display: 'flex',
               gap: 2,
               zIndex: 20,
-              boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.4)' : 'var(--shadow-menu)',
+              boxShadow: 'var(--shadow-menu)',
             }}>
               {EMOJI_QUICK.map((e) => (
                 <button
@@ -589,7 +552,7 @@ export default function SmartCompose(props: SmartComposeProps) {
                   onMouseDown={(ev) => ev.preventDefault()}
                   onClick={() => { insertAtCursor(e); setEmojiOpen(false) }}
                   style={{ width: 24, height: 24, fontSize: 15, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 3 }}
-                  onMouseEnter={(ev) => { ev.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'var(--gold-active)' }}
+                  onMouseEnter={(ev) => { ev.currentTarget.style.background = 'var(--gold-active)' }}
                   onMouseLeave={(ev) => { ev.currentTarget.style.background = 'transparent' }}
                 >{e}</button>
               ))}
@@ -605,9 +568,9 @@ export default function SmartCompose(props: SmartComposeProps) {
               fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
               fontSize: 9,
               padding: '1px 4px',
-              border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid var(--border-subtle)',
+              border: '1px solid var(--border-subtle)',
               borderRadius: 2,
-              color: isDark ? INK_DIM_DARK : 'var(--muted)',
+              color: 'var(--muted)',
             }}>⌘⏎</kbd>
           )}
           {/* Post button */}
@@ -621,12 +584,12 @@ export default function SmartCompose(props: SmartComposeProps) {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 3,
-                padding: isDark ? '3px 10px' : '4px 12px',
+                padding: '4px 12px',
                 fontSize: 11,
-                background: submitBg,
-                color: submitColor,
+                background: 'var(--teal-solid)',
+                color: 'var(--ink-bright, #fff)',
                 border: 'none',
-                borderRadius: isDark ? 3 : 'var(--radius-sm)',
+                borderRadius: 'var(--radius-sm)',
                 cursor: submitting ? 'wait' : 'pointer',
                 fontFamily: 'inherit',
                 fontWeight: 600,
@@ -641,9 +604,9 @@ export default function SmartCompose(props: SmartComposeProps) {
     </>
   )
 
-  // Hidden paste handler — registers on the textarea via MentionInput
-  // doesn't expose paste; attach via a wrapper so paste-image works.
-  const composeWrapper = (
+  // The wrapper owns paste (MentionInput doesn't expose it) and file drop.
+  // It adds no margin or divider; the caller controls spacing.
+  return (
     <div
       onPaste={handlePaste as unknown as React.ClipboardEventHandler<HTMLDivElement>}
       onDragOver={handleDragOver}
@@ -659,40 +622,11 @@ export default function SmartCompose(props: SmartComposeProps) {
       {inner}
     </div>
   )
-
-  if (bare) return composeWrapper
-
-  if (isDark && boxed) {
-    return (
-      <div style={{ marginTop: 18, padding: '10px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 4 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM_DARK, marginBottom: 6 }}>Add note</div>
-        {composeWrapper}
-      </div>
-    )
-  }
-
-  if (isDark) {
-    return (
-      <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
-        {composeWrapper}
-      </div>
-    )
-  }
-
-  // Light theme — flush wrapper, caller controls spacing via `bare` or wrapping.
-  return composeWrapper
 }
 
-function ToolbarBtn({ children, onClick, label, active, disabled, theme }: { children: React.ReactNode; onClick: () => void; label: string; active?: boolean; disabled?: boolean; theme?: 'dark' | 'light' }) {
-  const isDark = theme !== 'light'
-  const baseColor = isDark ? INK_DIM_DARK : 'var(--slate)'
-  const activeColor = isDark ? ACCENT_TEAL : 'var(--teal)'
-  const baseBorder = isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid var(--border-subtle)'
-  const activeBorder = isDark ? `1px solid ${withAlpha(ACCENT_TEAL, 30)}` : '1px solid var(--teal)'
-  const activeBg = isDark ? withAlpha(ACCENT_TEAL, 15) : 'var(--teal-active)'
-  // N5 — CSS hover via the hov-* utilities. The old !active guard is moot:
-  // hover color/border equal the active values, so hovering an active button
-  // is a visual no-op either way.
+function ToolbarBtn({ children, onClick, label, active, disabled }: { children: React.ReactNode; onClick: () => void; label: string; active?: boolean; disabled?: boolean }) {
+  // N5 — CSS hover via the hov-* utilities. Hover color/border equal the
+  // active values, so hovering an active button is a visual no-op.
   return (
     <button
       type="button"
@@ -705,15 +639,15 @@ function ToolbarBtn({ children, onClick, label, active, disabled, theme }: { chi
       style={{
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         width: 22, height: 22, borderRadius: 'var(--radius-sm)',
-        background: active ? activeBg : 'transparent',
-        border: active ? activeBorder : baseBorder,
-        color: active ? activeColor : baseColor,
+        background: active ? 'var(--teal-active)' : 'transparent',
+        border: active ? '1px solid var(--teal)' : '1px solid var(--border-subtle)',
+        color: active ? 'var(--teal)' : 'var(--slate)',
         fontSize: 11,
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.5 : 1,
         fontFamily: 'inherit',
-        '--hov-color': activeColor,
-        '--hov-border': isDark ? withAlpha(ACCENT_TEAL, 30) : 'var(--teal)',
+        '--hov-color': 'var(--teal)',
+        '--hov-border': 'var(--teal)',
       } as React.CSSProperties}
     >{children}</button>
   )

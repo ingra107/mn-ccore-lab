@@ -5,26 +5,17 @@
 // component so the anatomy (role=switch, aria-checked, height 22, radius-sm,
 // Only me label) is ONE definition.
 //
-// Theme contract:
-//   theme='dark'  — active state uses gold border/bg (for dark drawer chrome).
-//   theme='light' — active state uses slate border/bg (CSS vars; default,
-//                   matches the TaskDetailPanel + cream-surface usage).
+// One look, from page tokens. The gold `theme='dark'` variant existed only for
+// SmartCompose's hex-pinned dark theme, which is gone, so it went too.
 
 import { Lock } from 'lucide-react'
-import { withAlpha } from '../../lib/taskGrouping'
-
-const ACCENT_GOLD = '#c9a84c'
 
 interface MeLockToggleProps {
   locked: boolean
   onToggle: () => void
-  /** 'dark' for TodayPage/drawer chrome; 'light' (default) for cream/panel. */
-  theme?: 'dark' | 'light'
 }
 
-export function MeLockToggle({ locked, onToggle, theme = 'light' }: MeLockToggleProps) {
-  const isDark = theme === 'dark'
-
+export function MeLockToggle({ locked, onToggle }: MeLockToggleProps) {
   return (
     <button
       type="button"
@@ -40,15 +31,9 @@ export function MeLockToggle({ locked, onToggle, theme = 'light' }: MeLockToggle
         paddingLeft: 6,
         paddingRight: 6,
         borderRadius: 'var(--radius-sm)',
-        border: locked
-          ? `1px solid ${isDark ? withAlpha(ACCENT_GOLD, 50) : 'rgba(100,116,139,0.35)'}`
-          : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'var(--border-subtle)'}`,
-        background: locked
-          ? (isDark ? withAlpha(ACCENT_GOLD, 12) : 'rgba(100,116,139,0.12)')
-          : 'transparent',
-        color: locked
-          ? (isDark ? ACCENT_GOLD : 'var(--slate)')
-          : 'var(--slate)',
+        border: locked ? '1px solid rgba(100,116,139,0.35)' : '1px solid var(--border-subtle)',
+        background: locked ? 'rgba(100,116,139,0.12)' : 'transparent',
+        color: 'var(--slate)',
         opacity: locked ? 1 : 0.70,
         fontWeight: locked ? 600 : 400,
         fontSize: 10,

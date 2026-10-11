@@ -73,7 +73,6 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
         placeholder="Note or @hermes…"
         showMeLock
         showHermesToggle
-        bare
         alwaysShowToolbar
         launchContext={{ projectSlug: project?.slug ?? task.project_id ?? null, primaryFolder: fullProject?.primary_folder ?? null }}
       />
