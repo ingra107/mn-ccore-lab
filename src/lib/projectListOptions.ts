@@ -19,6 +19,13 @@ export function stageListOptions<S extends string>(stages: readonly S[], labels:
   return stages.map((s) => ({ value: s, label: labels[s], color: LIST_T2 }))
 }
 
+export type ProjectHealth = { score: number; status: string }
+
+/** Poor health: the one threshold behind both the Projects list's health bar
+ *  and its "Needs Attention" filter, so the two cannot disagree. */
+export const POOR_HEALTH_SCORE = 50
+export const isPoorHealth = (h: ProjectHealth | undefined): h is ProjectHealth => !!h && h.score < POOR_HEALTH_SCORE
+
 /** Any category option set, recolored to muted t3. */
 export function mutedCategoryOptions<T extends { value: string; label: string }>(options: T[]): (T & { color: string })[] {
   return options.map((o) => ({ ...o, color: LIST_T3 }))

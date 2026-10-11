@@ -1,46 +1,32 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { portalTitle } from '../constants/pageLabels'
-import { Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FolderKanban, GitBranch, Plus, List, LayoutGrid, Star } from 'lucide-react'
-import { stageIndex, toApiStage, stageLabel } from '../lib/stageNormalize'
+import { FolderKanban, GitBranch, Plus, List, LayoutGrid } from 'lucide-react'
+import { toApiStage } from '../lib/stageNormalize'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
+import { useProjects, useDependencies, useProjectHealth, useTasks, useAllProjectLinks, useAllProjectPublications } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
 import { PANEL_BG, daysSince, withAlpha } from '../lib/taskGrouping'
 import { parseDbUtc } from '../lib/time'
 import { useCreateProject, useUpdateProjectFields } from '../hooks/useMutations'
-import InlineSelect from '../components/InlineSelect'
 import { useUndoToast } from '../components/UndoToast'
-import { normalizeProjectStatus, isProjectActive, isProjectDone, isProjectFinished, isStalledProject } from '../lib/taskConstants'
+import { isProjectActive, isProjectDone, isProjectFinished, isStalledProject } from '../lib/taskConstants'
 import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
 import DataPage from '../components/DataPage'
 import { TableSkeleton } from '../components/LoadingSkeleton'
-import { ColumnHeader, TableContainer } from '../components/table'
-import { directors } from '../data/team'
-import { displayName } from '../lib/nameUtils'
 import type { Project } from '../data/types'
-import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import { staggerContainer, staggerItem } from '../lib/animations'
-import { stripConsortiumPrefix, stripGrantTypePrefix, isGrantProjectType } from '../lib/textUtils'
-import { Chip } from '../components/ui/Chip'
-import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
-import { useAllProjectLinks, useAllProjectPublications } from '../hooks/useApiData'
-import type { StoredLink } from '../hooks/useApiData'
-import { linkTintForType, iconForType } from '../lib/linkIcon'
-import { classifyUrl } from '../lib/urlClassify'
-import { displayRank } from '../lib/pbLinkDisplayOrder.generated'
-import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
-import WorkOnActions from '../components/WorkOnActions'
 import { AllProjectsBanner, AllProjectsSwitch } from '../components/AllProjectsControls'
 import { useAllProjectsOn } from '../lib/allProjects'
 import { useAuth } from '../hooks/useAuth'
 import { useProjectPins } from '../hooks/useProjectPins'
-import { STATUS_LIST_OPTIONS, stageListOptions, mutedCategoryOptions, LIST_T2, LIST_T3 } from '../lib/projectListOptions'
-import { projectShortLabel } from '../lib/displayNames'
+import { stageListOptions, mutedCategoryOptions, isPoorHealth } from '../lib/projectListOptions'
+import ProjectSleekList from '../components/project/ProjectSleekList'
+import type { SleekSort } from '../components/table/SleekRows'
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
@@ -102,135 +88,8 @@ function statusScope(status: string, projects: Project[]): Project[] {
 // Option sets for the list's inline editors live in lib/projectListOptions
 // (shared with the project detail meta row).
 const STAGE_LIST_OPTIONS = stageListOptions(STAGES, STAGE_LABELS)
-const T2 = LIST_T2
-const T3 = LIST_T3
-
-// One grid for the header and every row (they drifted apart once, #91): title,
-// status, stage, PI, group, five 24px link slots, folder + Work on.
-const PROJECT_COLS = 'minmax(200px, 1fr) 132px 128px 112px 104px 124px 52px'
-
-// Fully-cleaned display title for a pipeline row: strip the consortium tag
-// first, then — if the project's own `type` says it's a grant — the
-// mechanism prefix too. The grant-type badge already shows the mechanism,
-// so leaving a literal "R01: " in the title text would stutter next to it.
-function cleanProjectTitle(project: Project): string {
-  return stripGrantTypePrefix(stripConsortiumPrefix(project.title).clean, project.type)
-}
-
-// #129: a Done/Published project's own paper — the project_publications
-// junction (primary link, if any) wins over the static v71 journal/
-// publication_date columns, since the junction is what a PI actually curated.
-function PublishedChip({
-  project,
-  links,
-  onOpen,
-}: {
-  project: Project
-  links: import('../hooks/useApiData').ProjectPublicationLink[] | undefined
-  onOpen: () => void
-}) {
-  if (!isProjectFinished(project)) return null
-
-  const primary = links?.[0]
-  const journal = primary?.journal || project.journal
-  const year = primary?.year || (project.publication_date ? project.publication_date.slice(0, 4) : undefined)
-  if (!journal && !year) return null
-
-  return (
-    <span
-      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpen() }}
-      style={{ cursor: 'pointer', flexShrink: 0 }}
-      className="tip"
-      data-tip={primary?.title || cleanProjectTitle(project)}
-    >
-      <Chip color={T2} bordered>
-        {journal || 'Published'}{year ? ` · ${year}` : ''}
-      </Chip>
-    </span>
-  )
-}
 
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
-
-// Link icons for a project row: up to four in fixed 24px slots with the muted
-// brand tints the Today card uses (tk-lkicon + data-lk, index.css), and a fifth
-// slot for "+N" so the right edge lines up on every row. Borderless glyph (Nick
-// 2026-06-17 rule): no outline, sharp, hover tooltip. Non-http links open via
-// useProtocolLaunch (mnccore:// handler + clipboard backup).
-const LINKS_OVERFLOW_THRESHOLD = 4
-function ProjectLinksCell({ links: all, primaryFolder }: { links: StoredLink[]; primaryFolder?: string | null }) {
-  const { launch } = useProtocolLaunch()
-  // The project's own folder is already the Open-folder icon in the Work-on slot;
-  // showing it again as a link is the same icon twice in one row.
-  const norm = (p: string) => p.split(String.fromCharCode(92)).join('/').split('/').filter(Boolean).join('/').toLowerCase()
-  const links = primaryFolder
-    ? all.filter((l) => !(l.type === 'local_folder' && norm(l.canonical_url) === norm(primaryFolder)))
-    : all
-  // Sort: type-priority (displayRank) primary, existing sort_order as tiebreaker.
-  // Stable sort mirrors PB sections.py render order so both surfaces agree.
-  const sorted = [...links].sort(
-    (a, b) => displayRank(a.type) - displayRank(b.type) || a.sort_order - b.sort_order
-  )
-  const visible = sorted.slice(0, LINKS_OVERFLOW_THRESHOLD)
-  const overflow = links.length - visible.length
-  return (
-    <span className="pj-lks" onClick={(e) => e.preventDefault()}>
-      {visible.map((link) => {
-        const { Icon } = iconForType(link.type)
-        // classifyUrl resolves [[wikilink]] canonical_urls to the correct
-        // mnccore://obsidian/<target> launch URI. isHttp is authoritative here.
-        const { href: launchUri, isHttp } = classifyUrl(link.canonical_url)
-        const tooltip = `${link.type} · ${link.short_title || link.canonical_url}`
-        return (
-          <a
-            key={link.id}
-            href={isHttp ? link.canonical_url : '#'}
-            target={isHttp ? '_blank' : undefined}
-            rel={isHttp ? 'noopener noreferrer' : undefined}
-            title={tooltip}
-            aria-label={tooltip}
-            className="tk-lkicon pj-lk"
-            data-lk={linkTintForType(link.type) ?? undefined}
-            onClick={(e) => {
-              e.stopPropagation()
-              if (!isHttp) {
-                e.preventDefault()
-                void launch(launchUri, {
-                  copyText: link.canonical_url,
-                  successMessage: `Opening ${link.type}… (path copied as backup)`,
-                })
-              }
-            }}
-          >
-            <Icon {...ICON_PROPS} size={14} aria-hidden="true" />
-          </a>
-        )
-      })}
-      {overflow > 0 && <span className="pj-more">+{overflow}</span>}
-    </span>
-  )
-}
-
-// S19: PI dropdown options. Directors are the canonical choices; if the current
-// PI value is a non-director slug (legacy "nick", a bare email, a non-director
-// member), prepend a resolved option so InlineSelect renders a clean display
-// name instead of the raw slug.
-function piOptions(currentPi?: string | null): { value: string; label: string; color: string }[] {
-  const base = directors.map((d) => ({ value: d.slug, label: displayName(d.slug, 'display'), color: T2 }))
-  const pi = (currentPi || '').trim()
-  if (pi && !base.some((o) => o.value === pi)) {
-    return [{ value: pi, label: displayName(pi, 'display'), color: T2 }, ...base]
-  }
-  return base
-}
-
-// Health reads as bar length on the one accent (rules-ui-design #1: color is
-// spent, not sprinkled); only Critical keeps a status color. The tooltip says
-// the word.
-const HEALTH_STATUS_COLOR: Record<string, string> = {
-  'Critical': 'var(--maroon)',
-}
-const healthColor = (status: string): string => HEALTH_STATUS_COLOR[status] ?? 'var(--sk-ac)'
 
 // N1b — locked-canon ghost pill: active = teal tint + teal text, never a solid
 // fill block in a toolbar. One definition serves both filter axes (#123) so the
@@ -285,7 +144,6 @@ function projectRecencyMs(p: Project): number {
 }
 
 export default function Projects() {
-  const navigate = useNavigate()
   const allProjectsOn = useAllProjectsOn()
   const isPi = useAuth().user.isPi
   const { data: projects = [], isLoading: projectsLoading } = useProjects()
@@ -348,6 +206,9 @@ export default function Projects() {
   }, [healthData])
   const createProject = useCreateProject()
   const inlineUpdate = useUpdateProjectFields()
+  const onFieldChange = useCallback((slug: string, fields: Record<string, string>) => {
+    inlineUpdate.mutate({ slug, fields })
+  }, [inlineUpdate])
   const { showUndo } = useUndoToast()
 
   // S17: stage editing is one grammar everywhere — instant + undo (design Rule 8),
@@ -408,19 +269,15 @@ export default function Projects() {
   const [showDeps, setShowDeps] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
-  const rowRefs = useRef<(HTMLDivElement | null)[]>([])
-  type ProjectSortKey = 'title' | 'status' | 'stage' | 'pi' | 'category' | 'activity'
   // Nick 2026-06-24: the list opens ordered by MOST RECENT ACTIVITY (newest
-  // first) — the "what's moving" view. Other column headers still re-sort.
-  const [sortKey, setSortKey] = useState<ProjectSortKey>('activity')
-  const [sortAsc, setSortAsc] = useState(true)
+  // first) — the "what's moving" view. A header click sorts asc, then desc,
+  // then clears back to recent activity (the sleek row's cycle).
+  const [sort, setSort] = useState<SleekSort>(null)
+  const sortKey = sort?.key ?? 'activity'
+  const sortAsc = sort ? sort.dir === 'asc' : true
   // Pins are per person on the server (2026-10-09); the sidebar's "My
   // projects" list reads the same set. The old localStorage pins import once.
   const { pinnedSlugs, togglePin } = useProjectPins()
-  const toggleSort = (key: ProjectSortKey) => {
-    if (sortKey === key) setSortAsc(!sortAsc)
-    else { setSortKey(key); setSortAsc(true) }
-  }
 
   // #123: the status gate runs FIRST so every downstream consumer — the three
   // category branches, the summary counts, the pipeline columns — sees one
@@ -442,9 +299,7 @@ export default function Projects() {
         // Health score keeps its other inputs, but staleness is reconciled to
         // the shared threshold above — a project needs attention if it's stale
         // OR its overall health is low.
-        const h = healthBySlug.get(p.slug)
-        const lowHealth = !!h && h.score < 50
-        return isStale || lowHealth
+        return isStale || isPoorHealth(healthBySlug.get(p.slug))
       })
     }
     else base = statusScoped.filter((p) => p.category === activeCategory)
@@ -489,9 +344,6 @@ export default function Projects() {
     })
   }, [activeCategory, statusScoped, sortKey, sortAsc, pinnedSlugs, healthBySlug, prefs.projectStaleDays, stalledOnly])
 
-  // Project slugs in display order for keyboard nav
-  const projectSlugs = useMemo(() => filtered.map((p) => p.slug), [filtered])
-
   // Reset focus when filter/view changes. Adjusted during render (React's
   // "adjusting state based on a prop change" pattern:
   // https://react.dev/learn/you-might-not-need-an-effect) instead of an
@@ -502,30 +354,6 @@ export default function Projects() {
     setPrevFocusResetKey(focusResetKey)
     setFocusedIndex(-1)
   }
-
-  // Keyboard navigation (list view only)
-  useProjectKeyboardNav({
-    projectCount: filtered.length,
-    focusedIndex,
-    setFocusedIndex,
-    slugs: projectSlugs,
-    enabled: viewMode === 'list' && !showCreate,
-    togglePin,
-  })
-
-  // Scroll focused row into view — KEEP: this is keyboard-cursor nav only.
-  // focusedIndex is driven by j/k/ArrowUp/ArrowDown in useProjectKeyboardNav;
-  // mouse clicks do NOT change focusedIndex, so no viewport jerk on click.
-  // block:'nearest' is correct (only scrolls if row is outside visible area).
-  const setRowRef = useCallback((index: number) => (el: HTMLDivElement | null) => {
-    rowRefs.current[index] = el
-  }, [])
-
-  useEffect(() => {
-    if (focusedIndex >= 0 && rowRefs.current[focusedIndex]) {
-      rowRefs.current[focusedIndex]!.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-    }
-  }, [focusedIndex])
 
   // Summary stats — 3-bucket canonical (Stage 4 #12-followup, 2026-05-08).
   // #123: counted over statusScoped, not `projects` — the strip must describe
@@ -680,537 +508,24 @@ export default function Projects() {
           </div>
         )}
         {!(projectsLoading && projects.length === 0) && viewMode === 'list' && (
-          <div className="tk">
-          <TableContainer className="pj-table">
-
-            {/* Table header */}
-            <div
-              className="hidden min-[1024px]:grid pj-head"
-              style={{
-                /* #91 (Nick 2026-06-24): header grid must match the ROW grid —
-                   the row has a trailing 52px Links/Work column the header
-                   lacked, so columns drifted out of alignment. */
-                gridTemplateColumns: PROJECT_COLS,
-                padding: 'var(--sp-sm) var(--sp-xl)',
-                borderBottom: '1px solid var(--border-subtle)',
-              }}
-            >
-              {([['Title', 'title'], ['Status', 'status'], ['Stage', 'stage'], ['PI', 'pi'], ['Group', 'category']] as const).map(([label, key]) => (
-                <ColumnHeader
-                  key={key}
-                  label={label}
-                  sortKey={key}
-                  currentSort={sortKey}
-                  sortAsc={sortAsc}
-                  onSort={(k) => toggleSort(k as ProjectSortKey)}
-                />
-              ))}
-              {/* Links column — not sortable; plain label matches ColumnHeader visual style */}
-              <span className="pj-hl">Links</span>
-            </div>
-
-            {/* Below 1024px the column headers are hidden, so they cannot sort.
-                The card list gets the same sort keys as one small select (#8965). */}
-            <div
-              className="flex min-[1024px]:hidden items-center gap-2"
-              style={{ padding: '8px 16px', borderBottom: '1px solid var(--sk-line)', fontSize: 12, color: T3 }}
-            >
-              <label htmlFor="pj-sort">Sort</label>
-              <select
-                id="pj-sort"
-                value={sortKey}
-                onChange={(e) => { setSortKey(e.target.value as ProjectSortKey); setSortAsc(true) }}
-                style={{ fontSize: 12, color: 'var(--sk-t1)', background: 'transparent', border: '1px solid var(--sk-line2)', borderRadius: 6, padding: '3px 6px', minHeight: 28 }}
-              >
-                {([['activity', 'Recent activity'], ['title', 'Title'], ['status', 'Status'], ['stage', 'Stage'], ['pi', 'PI'], ['category', 'Group']] as const).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Stage-grouped rows with stagger animation */}
-            {filtered.length > 0 ? (
-              <motion.div
-                variants={staggerContainer}
-                initial="hidden"
-                animate="visible"
-              >
-                {(() => {
-                  let lastStage = ''
-                  return filtered.map((project, index) => {
-                    const projectHealth = healthBySlug.get(project.slug)
-                    // One element, rendered in both the desktop row and the mobile card.
-                    const publishedChip = (
-                      <PublishedChip
-                        project={project}
-                        links={publicationsBySlug?.get(project.slug)}
-                        onOpen={() => navigate(`${PATHS.project(project.slug)}?tab=literature`)}
-                      />
-                    )
-                    // One pin star for both layouts (#8965: the <1024px card had none).
-                    // `touch` widens the hit area to 24px with a cancelling negative
-                    // margin, so the card gets a tappable star without moving its title.
-                    const pinned = pinnedSlugs.has(project.slug)
-                    const pinStar = (touch: boolean) => (
-                      <button
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePin(project.slug) }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          padding: touch ? 6 : 0,
-                          margin: touch ? -6 : 0,
-                          flexShrink: 0,
-                          color: pinned ? 'var(--sk-gold)' : 'var(--sk-t3)',
-                          // S21/P1-11: a 0.15 pin star was an invisible
-                          // affordance (especially on touch). Raise the
-                          // resting floor to discoverable-but-quiet.
-                          opacity: pinned ? 1 : 0.45,
-                          transition: 'opacity 150ms ease, color 150ms ease',
-                          lineHeight: 0,
-                        }}
-                        onMouseOver={(e) => { if (!pinned) e.currentTarget.style.opacity = '0.75' }}
-                        onMouseOut={(e) => { if (!pinned) e.currentTarget.style.opacity = '0.45' }}
-                        className="tip"
-                        data-tip={pinned ? 'Unpin project' : 'Pin to top'}
-                        aria-label={pinned ? 'Unpin project' : 'Pin to top'}
-                      >
-                        <Star {...ICON_PROPS} size={12} fill={pinned ? 'var(--sk-gold)' : 'none'} />
-                      </button>
-                    )
-                    // #91-class fix, now structural (Hub #361a): project.stage
-                    // is already canonical at ingress, so a legacy-cased value
-                    // ("Idea") can no longer diverge from its canonical form
-                    // ("idea") here — no per-read normalize() needed to avoid
-                    // splitting one group into two identical-looking headers.
-                    const normalizedStage = project.stage || ''
-                    const showStageHeader = normalizedStage !== lastStage
-                    lastStage = normalizedStage
-                    const isFocused = focusedIndex === index
-
-                    return (
-                      <motion.div key={project.slug} variants={staggerItem} ref={setRowRef(index)}>
-                        {/* Stage group divider — minimal, just text */}
-                        {showStageHeader && sortKey === 'stage' && (
-                          <div
-                            className="flex items-center"
-                            style={{
-                              padding: '20px 16px 8px',
-                              gap: 'var(--sp-sm)',
-                            }}
-                          >
-                            <span style={{ fontSize: 12.5, fontWeight: 600, color: T2, flexShrink: 0 }}>
-                              {stageLabel(project.stage)}
-                            </span>
-                            <span style={{ fontSize: 12, color: T3, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
-                              {filtered.filter((p) => (p.stage || '') === normalizedStage).length}
-                            </span>
-                            <div style={{ flex: 1, height: '1px', background: 'var(--sk-line)' }} />
-                          </div>
-                        )}
-
-                        <Link
-                          to={PATHS.project(project.slug)}
-                          style={{ textDecoration: 'none', display: 'block' }}
-                          onClick={() => setFocusedIndex(index)}
-                        >
-                          {/* Desktop: 5-column grid */}
-                          <div
-                            className={`project-list-row${isFocused ? ' project-row-focused' : ''} pj-grid-row hidden min-[1024px]:grid`}
-                            style={{
-                              gridTemplateColumns: PROJECT_COLS,
-                              padding: `var(--row-padding-y) 24px`,
-                              borderBottom: '1px solid var(--sk-line)',
-                              // Plain centering is correct again now that the title
-                              // cell is a single line (short_name moved to the hover
-                              // tip). Every cell is one line, so they all center on
-                              // the same axis — measured identical text centers across
-                              // Title/Status/Stage/PI/Group. The earlier align-items:
-                              // start was only needed to cope with the two-line title
-                              // cell overflowing the fixed row height.
-                              alignItems: 'center',
-                              cursor: 'pointer',
-                              transition: 'background var(--duration-fast) ease-out',
-                            }}
-                          >
-                            {/* Title with pin star, category dot, and health indicator */}
-                            <div className="flex items-center gap-2.5" style={{ paddingRight: 'var(--sp-lg)' }}>
-                              {pinStar(false)}
-                              {/* Grant-mechanism badge (projects.type, schema-v73) —
-                                  data-driven, never text pattern-matched. Only the 3
-                                  grant values (R01/R03/K) render; CLIF/Nick_Lab/etc
-                                  get no badge. */}
-                              {isGrantProjectType(project.type) && (
-                                <Chip
-                                  color={T3}
-                                  bordered
-                                  title={`Grant mechanism: ${project.type}`}
-                                >
-                                  {project.type}
-                                </Chip>
-                              )}
-                              {/* Nick 2026-07-21: the title cell is ONE line, and
-                                  short_name moved onto the hover tip. It used to be a
-                                  two-line stack, which made the cell ~36px of content
-                                  inside a row locked to 44px with 11px padding — a
-                                  22px box. The overflow meant the row's border-bottom,
-                                  painted at the row edge, cut straight THROUGH the
-                                  short_name, and no single-line value column could
-                                  ever align with the title (they centered in the gap
-                                  between the two lines). One line makes the 44px row
-                                  honest: content clears the divider by 12px and plain
-                                  align-items:center lands every column on one line. */}
-                              {/* data-tip sits on the TITLE TEXT, not this wrapper
-                                  (Nick 2026-07-21: "hover should only be if i am ON
-                                  the title... not the whole box"). The wrapper is
-                                  flex:1 so it spans the rest of the 817px column and
-                                  pushes the trailing badges right — putting the tip on
-                                  it armed that entire empty run as a hover target.
-                                  The old reason for hanging it here is DEAD: it dodged
-                                  the CSS `.tip::after`, which the inner span's
-                                  overflow:hidden would clip. Tooltips now render
-                                  through TooltipLayer — a position:fixed chip in a body
-                                  portal that escapes every overflow ancestor — so the
-                                  clipping element is a perfectly good trigger.
-                                  Wrapper is display:flex so the inner span shrink-wraps
-                                  to its TEXT (a flex item sizes to content) instead of
-                                  filling the row as a block; minWidth:0 still lets it
-                                  shrink so the ellipsis engages. */}
-                              <span style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center' }}>
-                                <span
-                                  className="tip"
-                                  data-tip={(() => {
-                                    const clean = cleanProjectTitle(project)
-                                    // Plenty of projects set short_name to the title
-                                    // verbatim; appending it there reads as a stutter
-                                    // ("Teaching · Teaching"), so only add it when it
-                                    // actually carries something the title doesn't.
-                                    const short = project.short_name?.trim()
-                                    return short && short !== clean ? `${clean} · ${short}` : clean
-                                  })()}
-                                  style={{
-                                    fontSize: '13.5px',
-                                    fontWeight: 500,
-                                    color: 'var(--sk-t1)',
-                                    lineHeight: 1.35,
-                                    minWidth: 0,
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                  }}
-                                  aria-label={cleanProjectTitle(project)}
-                                >
-                                  {cleanProjectTitle(project)}
-                                </span>
-                              </span>
-                              {/* Task count badge */}
-                              {(() => {
-                                const tc = taskCountByProject.get(project.slug) || 0
-                                return tc > 0 ? (
-                                  <span className="tip" style={{ fontSize: '11px', color: 'var(--sk-t2)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }} data-tip={`${tc} open task${tc !== 1 ? 's' : ''}`} aria-label={`${tc} open task${tc !== 1 ? 's' : ''}`}>
-                                    {tc}
-                                  </span>
-                                ) : null
-                              })()}
-                              {publishedChip}
-                              {projectHealth && (
-                                <span
-                                  data-tip={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
-                                  aria-label={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
-                                  className="inline-flex items-center gap-1 tip"
-                                  style={{ flexShrink: 0, marginLeft: '-2px' }}
-                                >
-                                  <span style={{
-                                    width: 24,
-                                    height: 4,
-                                    borderRadius: 'var(--radius-sm)',
-                                    background: 'var(--sk-line2)',
-                                    overflow: 'hidden',
-                                    display: 'inline-block',
-                                  }}>
-                                    <span style={{
-                                      display: 'block',
-                                      width: `${Math.min(projectHealth.score, 100)}%`,
-                                      height: '100%',
-                                      borderRadius: 'var(--radius-sm)',
-                                      background: healthColor(projectHealth.status),
-                                      transition: 'width 300ms ease',
-                                    }} />
-                                  </span>
-                                </span>
-                              )}
-                              {/* Stage progress dots */}
-                              <span className="inline-flex items-center gap-0.5 ml-1 tip" data-tip={`Stage: ${stageLabel(project.stage || 'idea')}`} aria-label={`Stage: ${stageLabel(project.stage || 'idea')}`}>
-                                {STAGES.map((s, si) => {
-                                  // Brain.db granular stages → 6-stage canonical (P2-R2-14)
-                                  const currentIdx = stageIndex(project.stage)
-                                  return (
-                                    <span
-                                      key={s}
-                                      style={{
-                                        width: 4,
-                                        height: 4,
-                                        borderRadius: 'var(--radius-circle)',
-                                        background: si <= currentIdx ? 'var(--sk-ac)' : 'var(--sk-line2)',
-                                        opacity: 1,
-                                      }}
-                                    />
-                                  )
-                                })}
-                              </span>
-                              {/* Last activity / staleness indicator */}
-                              {/* Fixed-width slot, empty when recent, so the health
-                                  bar and stage dots sit at the same x on every row
-                                  (rules-ui-design #14). t3 at every age: --sk-od is
-                                  reserved for overdue. */}
-                              {(() => {
-                                const days = project.lastActivity
-                                  ? Math.floor((Date.now() - parseDbUtc(project.lastActivity).getTime()) / 86400000)
-                                  : 0
-                                const show = days >= 7
-                                return (
-                                  <span
-                                    style={{
-                                      display: 'inline-block',
-                                      width: 48,
-                                      textAlign: 'right',
-                                      fontSize: '10px',
-                                      color: 'var(--sk-t3)',
-                                      flexShrink: 0,
-                                      fontVariantNumeric: 'tabular-nums',
-                                    }}
-                                    className={show ? 'tip' : undefined}
-                                    data-tip={show ? `Last activity ${days} days ago` : undefined}
-                                    aria-label={show ? `Last activity ${days} days ago` : undefined}
-                                    aria-hidden={show ? undefined : true}
-                                  >
-                                    {show ? `${days}d ago` : ''}
-                                  </span>
-                                )
-                              })()}
-                            </div>
-
-                            {/* Status (inline editable) */}
-                            <InlineSelect
-                              value={normalizeProjectStatus(project.status)}
-                              options={STATUS_LIST_OPTIONS}
-                              onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
-                            />
-
-                            {/* Stage (inline editable) — S17: instant + undo */}
-                            <InlineSelect
-                              value={project.stage || 'idea'}
-                              options={STAGE_LIST_OPTIONS}
-                              onChange={(val) => handleStageChange(project.slug, val, project.stage)}
-                            />
-
-                            {/* PI (inline editable) — S19: resolve the current
-                                value through displayName so a non-director slug
-                                (e.g. "nick") never renders raw in the cell. */}
-                            {/* The wrapper exists only to swallow the click so the row
-                                Link doesn't navigate — it must not also change layout.
-                                As a bare block it left PI/Group as the only two value
-                                columns NOT flex-centered, sitting 2px below Status and
-                                Stage and visibly breaking the value line. */}
-                            <div className="flex items-center" onClick={(e) => e.preventDefault()}>
-                              <InlineSelect
-                                value={project.pi || ''}
-                                options={piOptions(project.pi)}
-                                onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { pi: val } })}
-                              />
-                            </div>
-
-                            {/* Category (inline editable) — 3-bucket canonical */}
-                            <div className="flex items-center" onClick={(e) => e.preventDefault()}>
-                              <InlineSelect
-                                value={project.category || ''}
-                                options={categoryListOptions}
-                                onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
-                              />
-                            </div>
-
-                            {/* Links — Mode-B icon-only, borderless, stopPropagation handled inside */}
-                            <ProjectLinksCell links={allProjectLinks[project.id ?? ''] ?? []} primaryFolder={project.primary_folder} />
-                            {/* WorkOnActions compact — only when project has a folder.
-                                stopPropagation + preventDefault prevents Link navigation. */}
-                            <div
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              className="pj-wk"
-                            >
-                              {project.primary_folder && (
-                                <WorkOnActions primaryFolder={project.primary_folder} projectLabel={projectShortLabel(project)} variant="slot" />
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Mobile: stacked card layout */}
-                          <div
-                            className={`project-list-row${isFocused ? ' project-row-focused' : ''} min-[1024px]:hidden`}
-                            style={{
-                              padding: `var(--row-padding-y) 16px`,
-                              borderBottom: '1px solid var(--sk-line)',
-                              cursor: 'pointer',
-                              transition: 'background var(--duration-fast) ease-out',
-                            }}
-                          >
-                            {/* Title row */}
-                            <div className="flex items-start gap-2" style={{ marginBottom: 'var(--sp-sm)' }}>
-                              <span style={{ flexShrink: 0, marginTop: '3px', lineHeight: 0 }}>{pinStar(true)}</span>
-                              {isGrantProjectType(project.type) && (
-                                <Chip
-                                  color={T3}
-                                  bordered
-                                  title={`Grant mechanism: ${project.type}`}
-                                  style={{ flexShrink: 0, marginTop: '2px' }}
-                                >
-                                  {project.type}
-                                </Chip>
-                              )}
-                              <span
-                                style={{
-                                  fontSize: '13.5px',
-                                  fontWeight: 500,
-                                  color: 'var(--sk-t1)',
-                                  lineHeight: 1.35,
-                                  flex: 1,
-                                }}
-                              >
-                                {cleanProjectTitle(project)}
-                                {project.short_name && (
-                                  <span style={{
-                                    fontSize: '11.5px',
-                                    color: 'var(--sk-t3)',
-                                    display: 'block',
-                                    marginTop: '1px',
-                                  }}>
-                                    {project.short_name}
-                                  </span>
-                                )}
-                              </span>
-                              {publishedChip}
-                              {projectHealth && (
-                                <span
-                                  role="img"
-                                  title={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
-                                  aria-label={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
-                                  style={{
-                                    width: 6,
-                                    height: 6,
-                                    borderRadius: 'var(--radius-circle)',
-                                    background: healthColor(projectHealth.status),
-                                    flexShrink: 0,
-                                    marginTop: '6px',
-                                  }}
-                                />
-                              )}
-                            </div>
-                            {/* Metadata row */}
-                            {/* Status and stage never shrink (they ellipsised to
-                                "Acti..."); the row wraps instead and only the group
-                                cell may shrink. No indent: values line up with the
-                                title (the -8px cancels the trigger's own padding). */}
-                            <div className="flex items-center flex-wrap gap-x-3 gap-y-1" style={{ marginLeft: '-8px' }}>
-                              <div style={{ flexShrink: 0 }}>
-                                <InlineSelect
-                                  value={normalizeProjectStatus(project.status)}
-                                  options={STATUS_LIST_OPTIONS}
-                                  onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
-                                />
-                              </div>
-                              <div style={{ flexShrink: 0 }}>
-                                <InlineSelect
-                                  value={project.stage || 'idea'}
-                                  options={STAGE_LIST_OPTIONS}
-                                  onChange={(val) => handleStageChange(project.slug, val, project.stage)}
-                                />
-                              </div>
-                              <div onClick={(e) => e.preventDefault()} style={{ minWidth: 0 }}>
-                                <InlineSelect
-                                  value={project.pi || ''}
-                                  options={piOptions(project.pi)}
-                                  onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { pi: val } })}
-                                />
-                              </div>
-                              <div onClick={(e) => e.preventDefault()} style={{ minWidth: 0 }}>
-                                <InlineSelect
-                                  value={project.category || ''}
-                                  options={categoryListOptions}
-                                  onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
-                                />
-                              </div>
-                              <div className="flex items-center gap-1" style={{ marginLeft: 'auto', paddingRight: '8px' }}>
-                                <ProjectLinksCell links={allProjectLinks[project.id ?? ''] ?? []} primaryFolder={project.primary_folder} />
-                                {/* Same Work-on slot as the wide row (#8965). */}
-                                {project.primary_folder && (
-                                  <div
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-                                    onMouseDown={(e) => e.stopPropagation()}
-                                  >
-                                    <WorkOnActions primaryFolder={project.primary_folder} projectLabel={projectShortLabel(project)} variant="slot" />
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      </motion.div>
-                    )
-                  })
-                })()}
-              </motion.div>
-            ) : (
-              <div
-                style={{
-                  padding: '48px 24px',
-                  textAlign: 'center',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: '13.5px',
-                    color: 'var(--sk-t3)',
-                  }}
-                >
-                  No projects in this category
-                </span>
-              </div>
-            )}
-
-            {/* Calculations row */}
-            {filtered.length > 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 'var(--sp-xl)',
-                  padding: 'var(--sp-sm) var(--sp-xl)',
-                  borderTop: '1px solid var(--sk-line)',
-                  background: 'transparent',
-                }}
-              >
-                {[
-                  { label: 'Count', value: filtered.length },
-                  // #91-class fix, now structural (Hub #361a): bucket by
-                  // project.stage directly — ingress normalization means a
-                  // legacy Title-Case alias ("Idea") can no longer fragment
-                  // one logical stage into two separate count entries.
-                  ...Object.entries(
-                    filtered.reduce((acc, p) => {
-                      const stage = p.stage || 'Unknown'
-                      acc[stage] = (acc[stage] || 0) + 1
-                      return acc
-                    }, {} as Record<string, number>)
-                  ).map(([stage, count]) => ({ label: stageLabel(stage), value: count })),
-                ].map(s => (
-                  <span key={s.label} style={{ fontSize: 12, color: 'var(--sk-t3)' }}>
-                    {s.label}{' '}
-                    <span style={{ fontWeight: 600, color: 'var(--sk-t2)', fontVariantNumeric: 'tabular-nums' }}>{s.value}</span>
-                  </span>
-                ))}
-              </div>
-            )}
-          </TableContainer>
-          </div>
+          <ProjectSleekList
+            projects={filtered}
+            sort={sort}
+            onSort={setSort}
+            focusedIndex={focusedIndex}
+            setFocusedIndex={setFocusedIndex}
+            keyboardEnabled={!showCreate}
+            healthBySlug={healthBySlug}
+            taskCountByProject={taskCountByProject}
+            linksByProjectId={allProjectLinks}
+            publicationsBySlug={publicationsBySlug}
+            pinnedSlugs={pinnedSlugs}
+            togglePin={togglePin}
+            stageOptions={STAGE_LIST_OPTIONS}
+            categoryOptions={categoryListOptions}
+            onFieldChange={onFieldChange}
+            onStageChange={handleStageChange}
+          />
         )}
 
         {/* ─── PIPELINE VIEW ─── */}
@@ -1374,30 +689,6 @@ export default function Projects() {
           border-radius: 3px;
         }
 
-        .project-list-row:hover {
-          background: color-mix(in srgb, var(--sk-t1) 4%, transparent) !important;
-          transition: background var(--duration-fast) ease-out !important;
-        }
-        .project-list-row:active {
-          background: color-mix(in srgb, var(--sk-t1) 7%, transparent) !important;
-          transition: background 0.05s ease-out !important;
-        }
-
-        .project-row-focused {
-          position: relative;
-          background: color-mix(in srgb, var(--sk-t1) 4%, transparent) !important;
-        }
-        .project-row-focused::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 0;
-          bottom: 0;
-          width: 2px;
-          background: var(--sk-ac);
-          border-radius: 0 1px 1px 0;
-        }
-
         .new-project-btn:hover {
           background: var(--teal-hover) !important;
         }
@@ -1415,13 +706,6 @@ export default function Projects() {
         }
         .dark .project-card:hover {
           background-image: linear-gradient(var(--surface-3), var(--surface-3)) !important;
-        }
-        .dark .project-row-focused,
-        .dark .project-list-row:hover {
-          background: color-mix(in srgb, var(--sk-t1) 6%, transparent) !important;
-        }
-        .dark .project-list-row:active {
-          background: color-mix(in srgb, var(--sk-t1) 9%, transparent) !important;
         }
       `}</style>
     </>
