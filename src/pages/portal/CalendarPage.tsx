@@ -8,6 +8,7 @@ import ToggleButton from '../../components/ToggleButton'
 import { formatBrandName } from '../../components/BrandName'
 import { useCalendarEvents } from '../../hooks/useApiData'
 import { isProductionVisible } from '../../lib/isProductionVisible'
+import { taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
 import { formatLongDate, formatShortDate, localDateKey } from '../../lib/dateUtils'
 import type { CalendarEvent } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
@@ -26,6 +27,17 @@ const eventIcons: Record<string, typeof Calendar> = {
   meeting: Users,
   task: SquareCheck,
   milestone: Diamond,
+}
+
+// Rows, chips and Agenda show the SHORT task title as Today does (eval item
+// 34); the full title is the hover tip. Meetings and milestones carry no
+// short_title, so they fall through to their title.
+function eventLabel(e: CalendarEvent): string {
+  return formatBrandName(taskShortLabel(e))
+}
+function eventFullTitleHint(e: CalendarEvent): string | undefined {
+  const full = taskFullTitleHint(e)
+  return full ? formatBrandName(full) : undefined
 }
 
 // S13: every calendar event type gets a sensible destination, not just
@@ -397,7 +409,7 @@ function DayCellRender({ dateStr, today, dayEvents, onOpenDay }: { dateStr: stri
           const wrapperProps = to ? { to } : {}
           return (
             <Wrapper key={e.id} {...wrapperProps} className="text-[10px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
-              {formatBrandName(e.title)}
+              {eventLabel(e)}
             </Wrapper>
           )
         })}
@@ -461,8 +473,8 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
                 return (
                   <div key={e.id} className="flex items-start gap-1 p-1.5 rounded" style={{ backgroundColor: config.bg }}>
                     <Icon {...ICON_PROPS} size={10} style={{ color: config.color, marginTop: 2, flexShrink: 0 }} />
-                    <span className="text-[10px] leading-tight" style={{ color: config.color }}>
-                      {(() => { const t = formatBrandName(e.title); return t.length > 32 ? t.slice(0, 32) + '...' : t })()}
+                    <span className="text-[10px] leading-tight" style={{ color: config.color }} title={formatBrandName(e.title)}>
+                      {(() => { const t = eventLabel(e); return t.length > 32 ? t.slice(0, 32) + '...' : t })()}
                     </span>
                   </div>
                 )
@@ -510,7 +522,7 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
                       <Icon {...ICON_PROPS} size={18} style={{ color: config.color }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{formatBrandName(e.title)}</p>
+                      <p className="text-sm font-medium" style={{ color: 'var(--ink)' }} title={eventFullTitleHint(e)}>{eventLabel(e)}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: config.color, backgroundColor: config.bg }}>{e.type}</span>
                       </div>
@@ -573,7 +585,7 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                       <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
                         <Icon {...ICON_PROPS} size={12} style={{ color: config.color }} />
                       </div>
-                      <span className="flex-1 text-sm" style={{ color: 'var(--ink)' }}>{formatBrandName(e.title)}</span>
+                      <span className="flex-1 text-sm" style={{ color: 'var(--ink)' }} title={eventFullTitleHint(e)}>{eventLabel(e)}</span>
                       <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: config.color, backgroundColor: config.bg }}>{e.type}</span>
                     </AgendaWrapper>
                   </motion.div>

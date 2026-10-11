@@ -80,6 +80,7 @@ import EmptyStateArt from '../components/EmptyStateArt'
 import EmptyState from '../components/EmptyState'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { projectShortLabel } from '../lib/displayNames'
 
 // P2-5: notes + comments collapsed into the single chronological `activity`
 // stream (Notes / Comments / All are filters over it, not separate tabs).
@@ -1165,7 +1166,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     On this machine
                   </span>
                 </div>
-                <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.short_name || project.title} />
+                <WorkOnActions primaryFolder={project.primary_folder} projectLabel={projectShortLabel(project)} />
               </div>
             )}
             {/* Members (#145) -- projects work like channels: you see one only if you are on it. */}

@@ -70,6 +70,7 @@ import MeetingProjectsSection from '../components/meetings/MeetingProjectsSectio
 import { isLabSeriesTitle } from '../../shared/meetingAudience'
 import { AttendeeBadge } from '../components/meetings/Attendees'
 import { meetingStatus } from '../lib/meetingStatus'
+import { taskShortLabel } from '../lib/displayNames'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -371,7 +372,7 @@ export default function MeetingDetail() {
   // `prevStatus` is carried into the restore because D1 cannot recover it —
   // applyDelete overwrites `status` with 'deleted' (mutations.ts:1056-1061).
   function handleDeleteAction(item: TaskRow) {
-    const label = item.short_title || item.title || item.description || 'action item'
+    const label = taskShortLabel(item) || 'action item'
     const shortLabel = label.length > 40 ? `${label.slice(0, 40)}…` : label
     const prevStatus = item.status && item.status !== 'deleted' ? item.status : 'todo'
 

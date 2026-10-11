@@ -23,6 +23,7 @@ import { isTaskDone } from '../../lib/taskGrouping'
 import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
+import { taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
 
 export function PlannedTaskRow({ task, project, state, timeHint, small = false, onExpand, expandedId }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; timeHint?: string; small?: boolean; onExpand: (id: string) => void; expandedId: string | null; projectsByPid?: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }> }) {
   const isDone = isTaskDone(task) || !!state.done[task.id]
@@ -52,7 +53,7 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
           {/* Rule 68: planned rows show the curated short_title (full title in
               the expanded drawer), matching the unplanned cards below. */}
           <div className="tk-ct" style={isDone ? { textDecoration: 'line-through', color: 'var(--sk-t3)', fontWeight: 500 } : undefined}>
-            <span title={task.short_title && task.short_title !== task.title ? task.title : undefined}>{task.short_title || task.title}</span>
+            <span title={taskFullTitleHint(task)}>{taskShortLabel(task)}</span>
             {task.group_override && (
               <span className="tk-tag tk-n tip" data-tip={`Moved manually (${task.group_override})`} aria-label={`Moved manually (${task.group_override})`}>
                 <MapPin {...ICON_PROPS} size={10} aria-hidden /> moved

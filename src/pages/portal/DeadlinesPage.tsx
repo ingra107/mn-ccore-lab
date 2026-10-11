@@ -31,10 +31,14 @@ import type { TaskRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import RegulatoryExpiringList from '../../components/RegulatoryExpiringList'
+import { projectShortLabelMap, taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
 
 interface DeadlineItem {
   id: string
+  /** What every row shows: a task's SHORT label (displayNames.taskShortLabel). */
   title: string
+  /** The full title, for hover and the .ics export; unset when title already is it. */
+  fullTitle?: string
   due_date: string
   type: 'task' | 'milestone'
   assignee?: string
@@ -64,13 +68,7 @@ export default function DeadlinesPage() {
   const { data: tasks = [], isLoading: tasksLoading, isError: tasksError, error: tasksErr } = useTasks()
   const { data: grants = [], isLoading: grantsLoading } = useGrantTimeline()
   const { data: projectsList = [] } = useProjects()
-  const projectMap = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const p of projectsList) {
-      if (p.slug) map.set(p.slug, p.short_name || p.title)
-    }
-    return map
-  }, [projectsList])
+  const projectMap = useMemo(() => projectShortLabelMap(projectsList), [projectsList])
   const updateTask = useUpdateTask()
   const bulkUpdate = useBulkUpdateTasks()
   const updateMilestone = useUpdateGrantMilestone()
@@ -161,7 +159,8 @@ export default function DeadlinesPage() {
       const daysUntil = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       items.push({
         id: task.id,
-        title: task.title || task.description,
+        title: taskShortLabel(task),
+        fullTitle: taskFullTitleHint(task),
         due_date: task.due_date,
         type: 'task',
         assignee: task.assignee,
@@ -286,7 +285,7 @@ export default function DeadlinesPage() {
               let ical = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MN-CCORE//Deadlines//EN\nCALSCALE:GREGORIAN\n'
               for (const d of items) {
                 const dateStr = d.due_date.replace(/-/g, '')
-                ical += `BEGIN:VEVENT\nDTSTART;VALUE=DATE:${dateStr}\nSUMMARY:${d.title.replace(/[,;\\]/g, ' ')}\nDESCRIPTION:${d.type} - ${d.status}\nUID:${d.id}@mn-ccore-deadlines\nEND:VEVENT\n`
+                ical += `BEGIN:VEVENT\nDTSTART;VALUE=DATE:${dateStr}\nSUMMARY:${(d.fullTitle ?? d.title).replace(/[,;\\]/g, ' ')}\nDESCRIPTION:${d.type} - ${d.status}\nUID:${d.id}@mn-ccore-deadlines\nEND:VEVENT\n`
               }
               ical += 'END:VCALENDAR'
               const blob = new Blob([ical], { type: 'text/calendar' })
@@ -597,6 +596,7 @@ function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueD
             borderRadius: 'var(--radius-sm)', padding: '1px 4px', margin: '-1px 0',
             transition: 'background var(--transition-fast) ease',
           }}
+          title={item.fullTitle}
         >
           {item.title}
         </span>
@@ -712,7 +712,7 @@ function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueD
             fontSize: '14px', fontWeight: 500,
             color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
             display: 'block', marginBottom: '4px',
-          }}>
+          }} title={item.fullTitle}>
             {item.title}
           </span>
           {item.project && (
@@ -951,6 +951,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
             color: 'var(--ink)',
             textDecoration: isDone ? 'line-through' : 'none',
           }}
+          title={item.fullTitle}
         >
           {item.title}
         </span>

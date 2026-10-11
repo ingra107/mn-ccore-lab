@@ -21,6 +21,7 @@ import { civilDaysOverdue } from '../../../lib/dateUtils'
 import { CollapseChevron } from '../SectionCollapseToggle'
 import { collapseToggleProps } from '../collapseToggleProps'
 import type { TaskRow } from '../../../lib/api'
+import { taskShortLabel } from '../../../lib/displayNames'
 
 interface HermesSuggestsProps {
   overdueTasks: TaskRow[]
@@ -51,7 +52,7 @@ export function HermesSuggestsCard({ overdueTasks, stalledProjects, menteesWithD
       const days = longest.due_date ? civilDaysOverdue(longest.due_date) : NaN
       // Short title first: the long title is what leaked here (Nick: display
       // short names everywhere).
-      bullets.push(`Tackle "${(longest.short_title || longest.title).slice(0, 60)}" — ${Number.isFinite(days) ? `${days}d overdue` : 'overdue'}.`)
+      bullets.push(`Tackle "${taskShortLabel(longest).slice(0, 60)}" — ${Number.isFinite(days) ? `${days}d overdue` : 'overdue'}.`)
     }
   }
   if (stalledProjects.length > 0) {

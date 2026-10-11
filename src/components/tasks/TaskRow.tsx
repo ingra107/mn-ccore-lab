@@ -44,6 +44,7 @@ import {
 import { dueLabelCompact, dueTone, isOverdue } from '../../lib/dateUtils'
 import { CardRow, MilestoneCardRow } from './TaskCardRow'
 import type { TaskRow as TaskRowData } from '../../lib/api'
+import { taskShortLabel } from '../../lib/displayNames'
 
 // Reserved priority-dot color. only urgent carries a colored dot; everything
 // else gets a transparent dot of the SAME width so every title starts at the
@@ -123,7 +124,7 @@ function DueChip({ due, status }: { due: string; status?: string }) {
 // editor, both inline drawers, and now TaskRowActions. Corrected rather than
 // left in place: a comment naming a control that does not exist is what a
 // future reader would design against.
-function ProjectTag({ project }: { project: { name: string; slug: string } | null }) {
+function ProjectTag({ project }: { project: { name: string; slug: string; fullTitle?: string } | null }) {
   if (!project) return null
   return (
     // Teal color + hover-underline (.link-affordance) make the link self-evident —
@@ -133,6 +134,7 @@ function ProjectTag({ project }: { project: { name: string; slug: string } | nul
       to={PATHS.project(project.slug)}
       onClick={(e) => e.stopPropagation()}
       aria-label={`Open ${project.name}`}
+      title={project.fullTitle}
       className="link-affordance"
       style={{ fontSize: 11, color: 'var(--sk-t3)', flexShrink: 0, whiteSpace: 'nowrap', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}
     >
@@ -171,7 +173,8 @@ function PlannedChip({ label = 'planned', onUnplan }: { label?: string; onUnplan
 
 export interface SharedTaskRowProps {
   task: TaskRowData
-  project: { name: string; slug: string } | null
+  /** name = the SHORT label (displayNames.projectShortLabel); fullTitle = hover only. */
+  project: { name: string; slug: string; fullTitle?: string } | null
 
   // ── kind (schema-v109, GH #131/#132) ── 'milestone' renders a half-height
   // dated rule instead of the normal row: no DoneBox (a milestone is not
@@ -367,7 +370,7 @@ function MilestoneRow(props: SharedTaskRowProps) {
               textDecoration: isDone ? 'line-through' : 'none',
             }}
           >
-            {task.short_title || task.title}
+            {taskShortLabel(task)}
           </span>
           <span aria-hidden="true" style={{ flex: 1, minWidth: 24, height: 1, background: withAlpha(diamondColor, 28), opacity: emphasisOpacity }} />
           <ProjectTag project={project} />
@@ -530,7 +533,7 @@ function StandardRow(props: SharedTaskRowProps) {
   // The full title is available in the expanded drawer — NOT on hover (Nick
   // 2026-07-09: "i don't need the long title when i hover over tasks"). A complete
   // short title is not a truncation — Rule 68 unaffected.
-  const displayTitle = task.short_title || task.title
+  const displayTitle = taskShortLabel(task)
 
   // Title-click → full editor (only when the surface wires onOpenEditor).
   // Select gestures keep working from the title: shift-click / selection-mode

@@ -17,6 +17,7 @@ import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import type { TaskRow as TaskRowData } from '../../lib/api'
+import { taskShortLabel } from '../../lib/displayNames'
 
 function ActionBoardCard() {
   const { data: items = [] } = useTasks() // Already deduped by useTasks hook
@@ -80,7 +81,7 @@ function ActionBoardCard() {
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: '11.5px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
                               {/* C2 short_title · C13 TaskTitle ([Carried forward] chip) */}
-                              <TaskTitle title={item.short_title || item.title} fallback={item.description} />
+                              <TaskTitle title={taskShortLabel(item)} fallback={item.description} />
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <DueLabel due={item.due_date} style={{ fontSize: 10 }} />

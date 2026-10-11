@@ -15,6 +15,7 @@ import type { TaskRow } from '../../lib/api'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { Chip } from '../ui/Chip'
 import { isFromMeeting, meetingTitleFor } from '../../lib/meetingOrigin'
+import { projectShortLabel, taskShortLabel } from '../../lib/displayNames'
 
 function hasBlockers(task: TaskRow): boolean {
   return !!task.blocked_by && task.blocked_by.split(',').filter(s => s.trim()).length > 0
@@ -43,7 +44,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
   const projectMap = useMemo(() => {
     const map = new Map<string, string>()
     for (const p of projects) {
-      if (p.slug) map.set(p.slug, p.short_name || p.title)
+      if (p.slug) map.set(p.slug, projectShortLabel(p))
     }
     return map
   }, [projects])
@@ -121,7 +122,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
               textDecoration: isDone ? 'line-through' : 'none',
             }}
           >
-            <TaskTitle title={task.short_title || task.title} fallback={task.description} />
+            <TaskTitle title={taskShortLabel(task)} fallback={task.description} />
           </p>
 
           {/* Meta row */}

@@ -11,6 +11,8 @@
 // Callers pass the viewer-scoped /api/meetings list, so this only filters
 // meetings the viewer can already see; it grants nothing.
 
+import { projectShortLabel } from './displayNames'
+
 export interface GrantedProject {
   id: string
   slug: string | null
@@ -89,11 +91,6 @@ export interface ProjectPill {
 }
 
 interface KnownProject { id: string; slug: string; title: string; short_name?: string | null }
-
-/** Short name first, then title, then the slug. Never a "#". */
-export function projectShortLabel(p: { short_name?: string | null; title?: string | null; slug?: string | null; id?: string }): string {
-  return p.short_name?.trim() || p.title?.trim() || p.slug || p.id || ''
-}
 
 /**
  * The pills a meeting shows: every DISCUSSED project (faded until granted),

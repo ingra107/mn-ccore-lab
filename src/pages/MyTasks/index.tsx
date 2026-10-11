@@ -40,6 +40,7 @@ import {
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from './constants'
 import { localDateKey } from '../../lib/dateUtils'
+import { projectFullTitleHint, projectShortLabel } from '../../lib/displayNames'
 import { useTodayPlan } from '../../lib/todayPlan'
 import type { TaskRow } from '../../lib/api'
 
@@ -156,15 +157,16 @@ export default function UnifiedMyTasks() {
   const plan = useTodayPlan()
 
   const projectsByPid = useMemo(() => {
-    const m = new Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>()
+    // Short name as on Today (eval item 3); the long title is hover-only.
+    const m = new Map<string, { name: string; fullTitle?: string; slug: string; category?: string | null; primary_folder?: string | null }>()
     for (const p of projectsQuery.data ?? []) {
-      m.set(p.slug, { name: p.title ?? p.slug, slug: p.slug, category: p.category ?? null, primary_folder: p.primary_folder ?? null })
+      m.set(p.slug, { name: projectShortLabel(p), fullTitle: projectFullTitleHint(p), slug: p.slug, category: p.category ?? null, primary_folder: p.primary_folder ?? null })
     }
     return m
   }, [projectsQuery.data])
 
   const projectOptions: FilterOption[] = useMemo(() => (
-    (projectsQuery.data ?? []).map((p) => ({ v: p.slug, l: p.title ?? p.slug }))
+    (projectsQuery.data ?? []).map((p) => ({ v: p.slug, l: projectShortLabel(p) }))
   ), [projectsQuery.data])
 
   const allTasks = tasksQuery.data ?? []

@@ -36,6 +36,7 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import EmptyState from '../EmptyState'
 import { Chip } from '../ui/Chip'
+import { projectShortLabel, taskShortLabel } from '../../lib/displayNames'
 
 // ── Column definitions for resize + tab nav ─────────────────
 // Full column set: checkbox + DATA_COLUMNS + actions
@@ -250,13 +251,13 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
   const projectMap = useMemo(() => {
     const map = new Map<string, string>()
     for (const p of projects) {
-      if (p.slug) map.set(p.slug, p.short_name || p.title)
+      if (p.slug) map.set(p.slug, projectShortLabel(p))
     }
     return map
   }, [projects])
   const projectOptions = useMemo(() => [
     { value: '', label: 'None' },
-    ...projects.filter(p => p.slug).map(p => ({ value: p.slug, label: p.short_name || p.title })),
+    ...projects.filter(p => p.slug).map(p => ({ value: p.slug, label: projectShortLabel(p) })),
   ], [projects])
   const { state: contextMenuState, openMenu: openContextMenu, closeMenu: closeContextMenu } = useContextMenu()
 
@@ -1208,7 +1209,7 @@ function TaskGridRow({
                       }}
                       className="task-title-clickable"
                     >
-                      <TaskTitle title={task.short_title || task.title} fallback={task.description} />
+                      <TaskTitle title={taskShortLabel(task)} fallback={task.description} />
                     </span>
                   )}
                   {task.source && task.source !== 'manual' && (

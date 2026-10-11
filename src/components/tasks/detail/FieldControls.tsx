@@ -8,7 +8,7 @@ import {
 import InlineDatePicker from '../../InlineDatePicker'
 import { isDoneStatus } from '../../../lib/dateUtils'
 import { ICON_PROPS } from '../../../lib/iconProps'
-import { projectShortLabel } from '../../../lib/projectMeetings'
+import { projectShortLabel } from '../../../lib/displayNames'
 
 // ── Field Block Wrapper ──────────────────────────────────────
 

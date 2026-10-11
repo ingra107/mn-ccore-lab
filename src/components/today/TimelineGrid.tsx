@@ -50,6 +50,7 @@ import { fmtDuration } from './utils'
 import { formatNowLabel } from './useNowMinutes'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
+import { taskShortLabel } from '../../lib/displayNames'
 
 // ── Time label helper ──────────────────────────────────────────────────
 function fmtMin(min: number): string {
@@ -234,7 +235,7 @@ function TimedTaskBlock({
       onMouseLeave={() => setIsHovered(false)}
       title={task.title}
       data-task-id={task.id}
-      aria-label={`${task.short_title || task.title} — ${durLabel}`}
+      aria-label={`${taskShortLabel(task)} — ${durLabel}`}
       {...attributes}
       {...listeners}
     >
@@ -261,7 +262,7 @@ function TimedTaskBlock({
           flex: 1,
           minWidth: 0,
         }}>
-          {task.short_title || task.title}
+          {taskShortLabel(task)}
         </span>
         <span className="tk-mt" style={{ fontSize: 10.5, flexShrink: 0 }}>
           {durLabel}

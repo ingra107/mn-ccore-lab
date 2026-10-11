@@ -41,6 +41,7 @@ import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import DueLabel from '../components/DueLabel'
 import { isTaskDone } from '../lib/taskGrouping'
+import { taskShortLabel } from '../lib/displayNames'
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -920,7 +921,7 @@ export default function MyItems() {
                   onClick={() => setOpenTask(t)}
                   accentColor="var(--gold)"
                   chip={<AttentionChip kind="new" />}
-                  title={t.short_title || t.title}
+                  title={taskShortLabel(t)}
                   meta={t.due_date && (
                     <span style={{ fontSize: '11px', color: isOverdue(t.due_date, t.status) ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
                       {formatShortDate(t.due_date)}

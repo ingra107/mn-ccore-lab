@@ -20,7 +20,8 @@ import { todayKey } from '../../lib/taskGrouping'
 import type { GroupKey } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
 import { isMilestone } from '../../../shared/taskKinds'
-import { grantedProjectList, projectShortLabel } from '../../lib/projectMeetings'
+import { grantedProjectList } from '../../lib/projectMeetings'
+import { projectShortLabel } from '../../lib/displayNames'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Types
@@ -210,7 +211,7 @@ export function meetingCardFields(m: MeetingRow): Pick<TodayEvent, 'people' | 'p
       people = Array.from(new Set(parsed.filter((a): a is string => typeof a === 'string' && TEAM_SLUG_RE.test(a))))
     }
   } catch { /* not JSON: no faces */ }
-  const named = grantedProjectList(m.granted_projects).find((g) => g.slug && (g.short_name || g.title))
+  const named = grantedProjectList(m.granted_projects).find((g) => g.slug && projectShortLabel({ short_name: g.short_name, title: g.title }))
   return {
     people,
     project: named ? { name: projectShortLabel(named), slug: named.slug! } : null,

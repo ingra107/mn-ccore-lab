@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { isProjectMeeting, meetingTagList, meetingsForProject, grantedProjectList, meetingProjectPills, projectShortLabel } from './projectMeetings'
+import { isProjectMeeting, meetingTagList, meetingsForProject, grantedProjectList, meetingProjectPills } from './projectMeetings'
+import { projectShortLabel } from './displayNames'
 
 const project = { id: 'proj_abc', slug: 'lpv-adherence-paper' }
 const granted = (...ids: string[]) => JSON.stringify(ids.map((id) => ({ id, slug: null, short_name: null, title: null })))
