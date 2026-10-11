@@ -63,6 +63,13 @@ export function formatDays(n: number): string {
   return `${v} ${v === 1 ? 'day' : 'days'}`
 }
 
+/** The big number and its unit for a days figure: "6" "days", "Under a day" with no unit. */
+export function daysHero(n: number): { value: string; unit: string } {
+  if (n < 1) return { value: 'Under a day', unit: '' }
+  const v = n >= 10 ? Math.round(n) : Math.round(n * 10) / 10
+  return { value: String(v), unit: v === 1 ? 'day' : 'days' }
+}
+
 export const ARROW: Record<Better, string> = { better: '▲', worse: '▼', flat: '' }
 
 export interface PulsePart {

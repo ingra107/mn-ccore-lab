@@ -4,6 +4,8 @@
 // 5.3c audit 2026-05-05: dual-path concern verified resolved — one canonical endpoint.
 import type { Env } from '../helpers';
 import { json } from '../helpers';
+import { mayReadPerson } from '../lib/person-access';
+import type { Viewer } from '../lib/viewer-db';
 import { memberContributionEvents, CONTRIBUTION_TYPES } from '../lib/member-contributions';
 import { ctToday } from '../lib/ct-date';
 
@@ -43,9 +45,11 @@ function computeTrend(recentScore: number, olderScore: number): 'increasing' | '
 }
 
 // GET /api/analytics/contributions?slug=&days=90
-export async function handleContributionsDecay(url: URL, env: Env): Promise<Response> {
+// A member's score is theirs and the PI's alone (Nick, 2026-10-11).
+export async function handleContributionsDecay(url: URL, env: Env, viewer: Viewer, isPi: boolean): Promise<Response> {
   const slug = url.searchParams.get('slug');
   if (!slug) return json({ error: 'slug parameter required' }, 400);
+  if (!mayReadPerson(viewer, isPi, slug)) return json({ error: 'Forbidden — a member sees only their own contributions' }, 403);
 
   const days = parseInt(url.searchParams.get('days') || '90', 10);
   const now = new Date();

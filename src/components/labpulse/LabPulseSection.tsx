@@ -16,10 +16,11 @@
 import { useId } from 'react'
 import { Activity } from 'lucide-react'
 import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
+import { todayCivil } from '../../lib/time'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { getPersonInfo } from '../../data/team'
 import { usePubsPulse, useSpeedPulse, useEngagementPulse } from '../../hooks/useLabPulse'
-import { ARROW, formatDays, pubsBetter, speedBetter, activeBetter, type Better } from '../../lib/labPulse'
+import { ARROW, formatDays, daysHero, pubsBetter, speedBetter, activeBetter, type Better } from '../../lib/labPulse'
 
 /** The static roster's name when it knows the slug, else the name the API holds. */
 function nameOf(m: { slug: string; name: string }): string {
@@ -31,8 +32,11 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 function monthLabel(ym: string): string {
   const m = Number(ym.slice(5, 7))
-  return MONTHS[m - 1]?.slice(0, 1) ?? ''
+  return MONTHS[m - 1] ?? ''
 }
+
+/** A bar that is neither good nor bad by length: the one color for "how long". */
+const NEUTRAL_BAR = { background: 'color-mix(in srgb, var(--slate) 45%, transparent)' }
 
 /** An arrow in the job color: orange when slipping, gray otherwise. */
 function Mark({ better, hint, children }: { better: Better; hint: string; children?: React.ReactNode }) {
@@ -79,16 +83,21 @@ function Hero({ value, unit, mark, caption }: { value: string; unit?: string; ma
   )
 }
 
-/** Vertical bars on the teal ramp; the tallest is the bright end. */
-function Bars({ items, height = 56 }: { items: Array<{ label: string; value: number; title: string }>; height?: number }) {
+/**
+ * Vertical bars. Default: the teal ramp, tallest = bright end (right where more
+ * is better). `neutral`: every bar gray and only the item marked `now` in teal,
+ * for a figure where taller is worse (days to done): the brightest bar must
+ * never mark the worst value (principle 21, rules-ui-design.md).
+ */
+function Bars({ items, height = 56, neutral = false }: { items: Array<{ label: string; value: number; title: string; now?: boolean }>; height?: number; neutral?: boolean }) {
   const max = Math.max(...items.map((i) => i.value), 1)
   return (
     <div className="flex items-end gap-1.5" style={{ height: height + 28 }} role="img" aria-label={items.map((i) => i.title).join('; ')}>
       {items.map((i) => (
         <div key={i.label + i.title} className="flex-1 flex flex-col items-center justify-end gap-1" style={{ minWidth: 0 }} title={i.title}>
           <span className="text-[10px] tabular-nums" style={{ color: 'var(--sk-t3)' }}>{i.value || ''}</span>
-          <div className="w-full rounded-t" style={{ height: Math.max((i.value / max) * height, i.value > 0 ? 3 : 1), ...(i.value > 0 ? rampBar(i.value / max) : { background: BAR_TRACK }) }} />
-          <span className="text-[10px]" style={{ color: 'var(--sk-t3)' }}>{i.label}</span>
+          <div className="w-full rounded-t" style={{ height: Math.max((i.value / max) * height, i.value > 0 ? 3 : 1), ...(i.value <= 0 ? { background: BAR_TRACK } : neutral ? (i.now ? rampBar(1) : NEUTRAL_BAR) : rampBar(i.value / max)) }} />
+          <span className="text-[10px]" style={{ color: i.now ? 'var(--sk-t1)' : 'var(--sk-t3)', fontWeight: i.now ? 600 : 400 }}>{i.label}</span>
         </div>
       ))}
     </div>
@@ -96,13 +105,13 @@ function Bars({ items, height = 56 }: { items: Array<{ label: string; value: num
 }
 
 /** One labeled horizontal bar with its number beside it. */
-function RowBar({ label, value, max, text, title, stale }: { label: string; value: number; max: number; text: string; title?: string; stale?: boolean }) {
+function RowBar({ label, value, max, text, title, stale, neutral = false }: { label: string; value: number; max: number; text: string; title?: string; stale?: boolean; neutral?: boolean }) {
   const t = max > 0 ? value / max : 0
   return (
     <div className="flex items-center gap-2.5" title={title}>
       <span className="text-xs w-24 truncate" style={{ color: stale ? 'var(--job-stale)' : 'var(--sk-t1)' }}>{label}</span>
       <div className="flex-1 h-3.5 rounded overflow-hidden" style={{ backgroundColor: BAR_TRACK }}>
-        {value > 0 && <div className="h-full rounded" style={{ width: `${Math.max(t * 100, 4)}%`, transition: 'width 0.6s ease', ...rampBar(t) }} />}
+        {value > 0 && <div className="h-full rounded" style={{ width: `${Math.max(t * 100, 4)}%`, transition: 'width 0.6s ease', ...(neutral ? NEUTRAL_BAR : rampBar(t)) }} />}
       </div>
       <span className="text-[11px] w-14 text-right tabular-nums" style={{ color: stale ? 'var(--job-stale)' : 'var(--sk-t2)' }}>{text}</span>
     </div>
@@ -141,6 +150,7 @@ function SpeedTile() {
   const d = q.data
   const prio = d ? d.byPriority.filter((p) => p.count > 0) : []
   const maxPrio = Math.max(...prio.map((p) => p.median_days), 0)
+  const thisMonth = todayCivil().slice(0, 7)
   return (
     <Tile title="Days to done" note="Median time from a task made to it done">
       {q.isError ? <Unavailable /> : !d ? <Loading /> : d.summary.completed === 0 ? (
@@ -148,23 +158,24 @@ function SpeedTile() {
       ) : (
         <>
           <Hero
-            value={String(d.summary.median_days < 10 ? d.summary.median_days : Math.round(d.summary.median_days))}
-            unit="days"
+            value={daysHero(d.summary.median_days).value}
+            unit={daysHero(d.summary.median_days).unit}
             mark={<Mark better={speedBetter(d)} hint={`${d.summary.trend === 'faster' ? 'Faster' : 'Slower'} than the 90 days before`} />}
             caption={d.summary.prior_completed > 0
               ? `${d.summary.completed} done in 90 days; ${formatDays(d.summary.prior_median_days)} the 90 days before`
               : `${d.summary.completed} done in the last 90 days`}
           />
-          <Bars items={d.monthly.map((m) => ({
+          <Bars neutral items={d.monthly.map((m) => ({
             label: monthLabel(m.month),
             value: m.median_days,
+            now: m.month === thisMonth,
             title: `${m.month}: ${formatDays(m.median_days)} median, ${m.completed} done`,
           }))} />
           {prio.length > 0 && (
             <div className="flex flex-col gap-1.5 pt-3" style={{ borderTop: '1px solid var(--sk-line)' }}>
               <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--sk-t3)' }}>By priority, last 6 months</span>
               {prio.map((p) => (
-                <RowBar key={p.priority} label={p.priority} value={p.median_days} max={maxPrio} text={formatDays(p.median_days).replace(' days', 'd').replace(' day', 'd')} title={`${p.count} done`} />
+                <RowBar neutral key={p.priority} label={p.priority} value={p.median_days} max={maxPrio} text={p.median_days < 1 ? '<1d' : formatDays(p.median_days).replace(' days', 'd').replace(' day', 'd')} title={`${p.count} done`} />
               ))}
             </div>
           )}

@@ -15,6 +15,7 @@ import {
 } from 'recharts'
 import { ArrowLeft, Printer, BookOpen, BarChart3, FolderKanban, Flag, ClipboardList, MessageSquare, GitBranch, Users, FileText, CheckCircle2, Clock, AlertTriangle, TrendingUp } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { useCanSeePerson } from '../hooks/useCanSeePerson'
 import { useTrajectory, useContributions } from '../hooks/useApiData'
 import type { TrajectoryData, ContributionsData } from '../hooks/useApiData'
 import { getMemberBySlug } from '../data/team'
@@ -1296,6 +1297,8 @@ export default function TrajectoryPage() {
   const member = slug ? getMemberBySlug(slug) : undefined
   const { data: trajectory, isLoading, refetch: refetchTrajectory } = useTrajectory(slug || '')
   const [activeTab, setActiveTab] = useState<TabId>('trajectory')
+  // Contributions are the member's and the PI's alone; the server refuses others.
+  const canSeeContributions = useCanSeePerson(slug)
 
   usePageMeta(
     member ? `${member.name} — Development Trajectory | MN-CCORE Lab` : 'Trajectory | MN-CCORE Lab',
@@ -1312,7 +1315,7 @@ export default function TrajectoryPage() {
 
   const tabs: { id: TabId; label: string; icon: typeof BarChart3 }[] = [
     { id: 'trajectory', label: 'Trajectory', icon: BarChart3 },
-    { id: 'contributions', label: 'Contributions', icon: ClipboardList },
+    ...(canSeeContributions ? [{ id: 'contributions' as const, label: 'Contributions', icon: ClipboardList }] : []),
   ]
 
   return (
@@ -1428,7 +1431,8 @@ export default function TrajectoryPage() {
         </button>
       </motion.div>
 
-      {/* Tab bar */}
+      {/* Tab bar: one tab is no choice, so a viewer without Contributions sees none */}
+      {tabs.length > 1 && (
       <div
         className="no-print"
         style={{
@@ -1469,6 +1473,7 @@ export default function TrajectoryPage() {
           )
         })}
       </div>
+      )}
 
       {/* Tab content */}
       <AnimatePresence mode="wait">
@@ -1587,7 +1592,7 @@ export default function TrajectoryPage() {
           </motion.div>
         )}
 
-        {activeTab === 'contributions' && slug && (
+        {activeTab === 'contributions' && slug && canSeeContributions && (
           <motion.div
             key="contributions"
             initial={{ opacity: 0, y: 8 }}

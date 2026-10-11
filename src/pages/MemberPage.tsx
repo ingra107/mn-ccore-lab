@@ -15,6 +15,7 @@ import type { MenteeMilestoneRow } from '../hooks/useApiData'
 import { useCommitments } from '../hooks/useCommitments'
 import { useAddExpertise, useRemoveExpertise } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
+import { useCanSeePerson } from '../hooks/useCanSeePerson'
 import type { CommitmentRow } from '../hooks/useCommitments'
 import { getMemberBySlug, getPersonInfo } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
@@ -174,6 +175,8 @@ export default function MemberPage() {
     if (showAddTag) newTagInputRef.current?.focus({ preventScroll: true })
   }, [showAddTag])
   const { user, isAuthenticated } = useAuth()
+  // The weighted score is the member's and the PI's alone; the server refuses others.
+  const canSeeScore = useCanSeePerson(slug)
   // #906 — who may edit this member's featured list. Portal route only (the
   // public /team/:slug page stays read-only chrome), and only the member
   // themselves or a PI. The server re-checks this; the flag just decides
@@ -586,8 +589,12 @@ export default function MemberPage() {
         <>
           <section className="mb-8" id="activity">
             <SectionHead icon={<Activity {...ICON_PROPS} size={16} />} title="Activity" />
-            <ContributionScoreCard slug={slug} />
-            <div style={{ marginTop: '1rem' }} />
+            {canSeeScore && (
+              <>
+                <ContributionScoreCard slug={slug} />
+                <div style={{ marginTop: '1rem' }} />
+              </>
+            )}
             <ActivityHeatmap slug={slug} days={90} />
           </section>
           <SectionDivider />

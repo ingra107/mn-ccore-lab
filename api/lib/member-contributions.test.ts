@@ -10,6 +10,7 @@ import { describe, it, expect } from 'vitest';
 import type { Env } from '../helpers';
 import { handleContributionsDecay } from '../routes/contributions-decay';
 import { handleActivityHeatmap } from '../routes/activity';
+import { serviceViewer } from './viewer-db';
 import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db';
 import { ctToday } from './ct-date';
 import { formatContributionScore } from '../../src/lib/contributionScore';
@@ -47,7 +48,7 @@ describe('member contributions: score card and heatmap agree', () => {
   it('credits a completed task to its assignee even when someone else clicked done', async () => {
     const { env } = setup();
     const score = await body<{ total_score: number; breakdown: Record<string, { count: number }> }>(
-      await handleContributionsDecay(new URL('https://h/api/analytics/contributions?slug=casey-eddington&days=90'), env),
+      await handleContributionsDecay(new URL('https://h/api/analytics/contributions?slug=casey-eddington&days=90'), env, serviceViewer(), true),
     );
     expect(score.breakdown.task.count).toBe(4);
     expect(score.total_score).toBeGreaterThan(0);
@@ -56,10 +57,10 @@ describe('member contributions: score card and heatmap agree', () => {
   it('the heatmap total equals the score card count, contribution for contribution', async () => {
     const { env } = setup();
     const score = await body<{ breakdown: Record<string, { count: number }> }>(
-      await handleContributionsDecay(new URL('https://h/api/analytics/contributions?slug=casey-eddington&days=90'), env),
+      await handleContributionsDecay(new URL('https://h/api/analytics/contributions?slug=casey-eddington&days=90'), env, serviceViewer(), true),
     );
     const heat = await body<Record<string, number>>(
-      await handleActivityHeatmap(new URL('https://h/api/activity/heatmap?slug=casey-eddington&days=90'), env),
+      await handleActivityHeatmap(new URL('https://h/api/activity/heatmap?slug=casey-eddington&days=90'), env, serviceViewer(), true),
     );
     const scored = Object.values(score.breakdown).reduce((n, v) => n + v.count, 0);
     const heatTotal = Object.values(heat).reduce((n, v) => n + v, 0);
@@ -73,7 +74,7 @@ describe('member contributions: score card and heatmap agree', () => {
     insertRow(db, 'tasks', { id: 'old', title: 'Old', assignee: 'casey-eddington', status: 'done', completed: 1, completed_at: daysAgo(75), completed_by: 'nick-ingraham' });
     const env = { DB: d1Adapter(db) } as unknown as Env;
     const score = await body<{ total_score: number; count: number }>(
-      await handleContributionsDecay(new URL('https://h/api/analytics/contributions?slug=casey-eddington&days=90'), env),
+      await handleContributionsDecay(new URL('https://h/api/analytics/contributions?slug=casey-eddington&days=90'), env, serviceViewer(), true),
     );
     expect(score.count).toBe(1);
     expect(score.total_score).toBeLessThan(0.5);
@@ -87,10 +88,10 @@ describe('member contributions: score card and heatmap agree', () => {
     insertRow(db, 'tasks', { id: 'edge', title: 'Edge', assignee: 'casey-eddington', status: 'done', completed: 1, completed_at: `${ctToday(-90)}T12:00:00Z`, completed_by: 'casey-eddington' });
     const env = { DB: d1Adapter(db) } as unknown as Env;
     const score = await body<{ count: number }>(
-      await handleContributionsDecay(new URL('https://h/api/analytics/contributions?slug=casey-eddington&days=90'), env),
+      await handleContributionsDecay(new URL('https://h/api/analytics/contributions?slug=casey-eddington&days=90'), env, serviceViewer(), true),
     );
     const heat = await body<Record<string, number>>(
-      await handleActivityHeatmap(new URL('https://h/api/activity/heatmap?slug=casey-eddington&days=90'), env),
+      await handleActivityHeatmap(new URL('https://h/api/activity/heatmap?slug=casey-eddington&days=90'), env, serviceViewer(), true),
     );
     const heatTotal = Object.values(heat).reduce((n, v) => n + v, 0);
     expect(heatTotal).toBe(score.count);

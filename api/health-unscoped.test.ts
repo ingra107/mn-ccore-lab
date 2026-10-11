@@ -60,6 +60,8 @@ describe('GET /api/health is about the database, not the caller', () => {
     const offenders = files.filter((f) => /Cache-Control['"]?\s*[,:]\s*['"]public/.test(readFileSync(join(__dirname, f), 'utf8')) && !allowed.has(f))
     expect(offenders).toEqual([])
     expect(readFileSync(join(__dirname, 'routes/insights.ts'), 'utf8')).toContain("'Cache-Control': 'private, no-store'")
+    // The Lab pulse routes read the unscoped handle too: never cacheable.
+    expect(readFileSync(join(__dirname, 'routes/pi-dashboard.ts'), 'utf8')).toContain("'Cache-Control', 'private, no-store'")
   })
 
   it('the unscoped handle has exactly three readers: health, the daily-digest fan-out (which rebinds per recipient), and the PI-only Lab pulse helper', () => {

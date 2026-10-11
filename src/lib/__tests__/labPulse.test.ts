@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pulseParts, formatDays, type PubsPulse, type SpeedPulse, type EngagementPulse } from '../labPulse'
+import { pulseParts, formatDays, daysHero, type PubsPulse, type SpeedPulse, type EngagementPulse } from '../labPulse'
 
 const pubs = (trend: PubsPulse['pace']['trend'], per_year = 2.4): PubsPulse => ({
   mentees: [], perYear: [], pace: { per_year, last_year: 3, earlier_per_year: 2, trend },
@@ -31,6 +31,12 @@ describe('Lab pulse line', () => {
     expect(pulseParts(pubs('insufficient_data'))).toEqual([])
     expect(pulseParts(undefined, { ...speed('flat'), summary: { ...speed('flat').summary, completed: 0 } })).toEqual([])
     expect(pulseParts(undefined, undefined, eng(9, 9, 'flat'))[0].mark).toBe('')
+  })
+
+  it('the hero says "Under a day" for a fraction, never "0.4 days"', () => {
+    expect([0.4, 1, 1.5, 12.4].map(daysHero)).toEqual([
+      { value: 'Under a day', unit: '' }, { value: '1', unit: 'day' }, { value: '1.5', unit: 'days' }, { value: '12', unit: 'days' },
+    ])
   })
 
   it('formats days', () => {

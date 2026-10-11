@@ -81,6 +81,36 @@ describe('Lab pulse routes are PI-only', () => {
     expect(d.members.map((m: { slug: string }) => m.slug)).not.toContain('claude-ai')
   })
 
+  it('the denominator counts people who use the Hub: a collaborator who never acts is out, one who acts is in', async () => {
+    insertRow(db, 'team_members', { id: 'tm-fac', name: 'Faye Faculty', slug: 'faye-faculty', role: 'Professor', member_type: 'faculty', email: 'faye@umn.edu' })
+    insertRow(db, 'team_members', { id: 'tm-mentor', name: 'Sam Mentor', slug: 'sam-mentor', role: 'Professor', member_type: 'senior_mentor', email: 'sam@umn.edu' })
+    insertRow(db, 'activity_log', { id: 'al-9', type: 'comment', description: 'c', actor: 'sam-mentor', timestamp: daysAgo(100) })
+    const d = JSON.parse((await get('/api/analytics/team-engagement', PI_EMAIL)).text).data
+    const slugs = d.members.map((m: { slug: string }) => m.slug)
+    expect(slugs).not.toContain('faye-faculty')
+    expect(slugs).toContain('sam-mentor') // acted 100 days ago: inside the 180-day window
+    expect(d.of).toBe(4) // Nick, Casey, Nate, Sam
+    expect(d.active).toBe(1) // Sam's action is outside the 30 days
+  })
+
+  it('the three routes are never cached: private, no-store on a 200 and on a 403', async () => {
+    for (const route of ROUTES) {
+      for (const who of [PI_EMAIL, MEMBER_EMAIL]) {
+        const res = await worker.fetch(new Request(`https://hub.test/api/analytics/${route}`, { headers: { 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': who } }), env, CTX)
+        expect(res.headers.get('Cache-Control'), `${route} ${who}`).toBe('private, no-store')
+      }
+    }
+  })
+
+  it('days to done has one bar per month, twelve at most, even when a month a year back has rows', async () => {
+    const base = { title: 'x', assignee: 'nick-ingraham', status: 'done', completed: 1, kind: 'task', priority: 'high' }
+    insertRow(db, 'tasks', { id: 't-now', ...base, created_at: at(-5), completed_at: at(-1) })
+    insertRow(db, 'tasks', { id: 't-year', ...base, created_at: at(-370), completed_at: at(-361) })
+    const months = JSON.parse((await get('/api/analytics/response-time', PI_EMAIL)).text).data.monthly.map((m: { month: string }) => m.month.slice(5))
+    expect(new Set(months).size).toBe(months.length)
+    expect(months.length).toBeLessThanOrEqual(12)
+  })
+
   it('pi-dashboard still answers a member, with the per-person engagement list empty', async () => {
     const member = JSON.parse((await get('/api/analytics/pi-dashboard', MEMBER_EMAIL)).text).data
     expect(member.teamEngagement).toEqual([])

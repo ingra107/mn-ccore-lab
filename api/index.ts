@@ -58,6 +58,7 @@ import { handleInsightConnections, handleInsightSuggestions, handleInsightsDashb
 import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
 import { handleTrajectory } from './routes/trajectory';
 import { handleGetContributions } from './routes/contributions';
+import { pulseScope } from './lib/person-access';
 import { handleContributionsDecay } from './routes/contributions-decay';
 import { handleSimilarGrants } from './routes/grant-intelligence';
 import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleGetDecisionsNeedingReview, handleGetDecisionTags } from './routes/decisions';
@@ -713,7 +714,7 @@ defineRoute({
   path: '/api/analytics/contributions',
   auth: 'authed',
   entity: 'analytics',
-  handler: (c) => handleContributionsDecay(U(c), E(c)),
+  handler: (c) => handleContributionsDecay(U(c), E(c), c.get('viewer'), PI(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1410,7 +1411,7 @@ defineRoute({
   path: '/api/team/pulse',
   auth: 'authed',
   entity: 'team',
-  handler: (c) => handleTeamPulse(U(c), E(c)),
+  handler: (c) => handleTeamPulse(U(c), E(c), pulseScope(c.get('viewer'), PI(c))),
 });
 defineRoute({
   method: 'GET',
@@ -1718,7 +1719,7 @@ defineRoute({
   path: '/api/team/:slug/contributions',
   auth: 'authed',
   entity: 'team',
-  handler: (c) => handleGetContributions(c.req.param('slug'), U(c), E(c)),
+  handler: (c) => handleGetContributions(c.req.param('slug'), U(c), E(c), c.get('viewer'), PI(c)),
 });
 // #906 — the member's own curated Top-10. GET is public because it renders on
 // the public /team/:slug page (auth: 'public' + anonShape below). PUT is the

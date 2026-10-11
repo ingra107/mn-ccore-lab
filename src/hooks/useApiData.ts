@@ -1055,6 +1055,8 @@ export function useProjectDocuments(slug: string) {
 
 interface TeamPulseData {
   activity: { slug: string; updates: number; completions: number }[]
+  /** 'all' for the PI; 'self' for a member, whose `activity` holds only their own row. */
+  scope?: 'all' | 'self'
   active_this_week: number
   totals: { updates: number; completions: number }
 }

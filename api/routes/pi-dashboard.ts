@@ -1,6 +1,7 @@
 import type { Env } from '../helpers';
 import { json, error } from '../helpers';
 import { GRANT_BUCKET_SQL } from './grant-bucket';
+import { ctDateString } from '../lib/ct-date';
 
 // A trainee: the member types the dashboard counts as trainees, or a role that
 // names one. One definition for the dashboard and the Lab pulse routes below.
@@ -82,8 +83,9 @@ export async function handlePIDashboard(env: Env, isPi = false): Promise<Respons
 
     // Team engagement: composite score per member (last 30 days).
     // Excludes 'anonymous' bucket (CLI / system / unauthed events) — they
-    // dominate the leaderboard and leave real members at 0.
-    env.DB.prepare(`
+    // dominate the leaderboard and leave real members at 0. PI-only: a member
+    // gets an empty list below, so the query is not run for one.
+    !isPi ? Promise.resolve({ results: [] }) : env.DB.prepare(`
       SELECT actor as slug,
         COUNT(*) as total_actions,
         SUM(CASE WHEN type = 'comment' THEN 1 ELSE 0 END) as comments,
@@ -214,7 +216,13 @@ export async function handlePIDashboard(env: Env, isPi = false): Promise<Respons
 // return counts, months, priorities and member slugs/names only: never a
 // project name or slug, a task id or a task title (lab-pulse-gate.test.ts pins it).
 
-const PI_ONLY = () => error('Forbidden — PI access only', 403);
+// These bodies are computed on the unscoped handle for one caller, so no shared
+// or edge cache may keep them (precedent: insights.ts; health-unscoped.test.ts).
+const noStore = (res: Response): Response => {
+  res.headers.set('Cache-Control', 'private, no-store');
+  return res;
+};
+const PI_ONLY = () => noStore(error('Forbidden — PI access only', 403));
 
 function median(xs: number[]): number | null {
   if (xs.length === 0) return null;
@@ -281,7 +289,7 @@ export async function handleMenteeVelocity(env: Env, isPi: boolean, now = new Da
   const trend = total === 0 ? 'insufficient_data'
     : c(1) > earlier ? 'up' : c(1) < earlier ? 'down' : 'flat';
 
-  return json({ data: { mentees: menteeRows, perYear, pace: { per_year: round1(pace), last_year: c(1), earlier_per_year: round1(earlier), trend } } });
+  return noStore(json({ data: { mentees: menteeRows, perYear, pace: { per_year: round1(pace), last_year: c(1), earlier_per_year: round1(earlier), trend } } }));
 }
 
 // ── GET /api/analytics/response-time ───────────────────────
@@ -289,7 +297,7 @@ export async function handleMenteeVelocity(env: Env, isPi: boolean, now = new Da
 // tasks closed in a clean-up would drag a mean). Real tasks only: not deleted,
 // not a milestone or question. `summary` compares the last 90 days with the 90
 // before; `monthly` is the last 12 months; `byPriority` the last 6.
-export async function handleResponseTime(env: Env, isPi: boolean): Promise<Response> {
+export async function handleResponseTime(env: Env, isPi: boolean, now = new Date()): Promise<Response> {
   if (!isPi) return PI_ONLY();
   const done = await env.DB.prepare(`
     SELECT priority,
@@ -324,7 +332,13 @@ export async function handleResponseTime(env: Env, isPi: boolean): Promise<Respo
   const trend = recent.length === 0 || prior.length === 0 ? 'insufficient_data'
     : med(recent) < med(prior) ? 'faster' : med(recent) > med(prior) ? 'slower' : 'flat';
 
-  return json({
+  // `monthly` is the current month and the eleven before it, so a month label
+  // never appears twice (a 365-day window reaches into the same month a year ago).
+  const [cy, cm] = ctDateString(now).split('-').map(Number);
+  const back = cy * 12 + (cm - 1) - 11;
+  const first = `${Math.floor(back / 12)}-${String((back % 12) + 1).padStart(2, '0')}`;
+
+  return noStore(json({
     data: {
       summary: {
         median_days: med(recent),
@@ -333,13 +347,13 @@ export async function handleResponseTime(env: Env, isPi: boolean): Promise<Respo
         prior_completed: prior.length,
         trend,
       },
-      monthly: [...monthMap.entries()].sort(([a], [b]) => a.localeCompare(b))
+      monthly: [...monthMap.entries()].filter(([month]) => month >= first).sort(([a], [b]) => a.localeCompare(b))
         .map(([month, xs]) => ({ month, completed: xs.length, median_days: med(xs) })),
       byPriority: [...prioMap.entries()]
         .map(([priority, xs]) => ({ priority, count: xs.length, median_days: med(xs) }))
         .sort((a, b) => b.count - a.count),
     },
-  });
+  }));
 }
 
 // ── GET /api/analytics/team-engagement ─────────────────────
@@ -356,7 +370,7 @@ export async function handleTeamEngagement(env: Env, isPi: boolean): Promise<Res
   if (!isPi) return PI_ONLY();
   const [team, log, done] = await Promise.all([
     env.DB.prepare(`
-      SELECT slug, name FROM team_members
+      SELECT slug, name, member_type FROM team_members
       WHERE slug IS NOT NULL AND slug != 'claude-ai'
         AND email IS NOT NULL AND email != ''
         AND COALESCE(member_type, '') != 'ai'
@@ -367,7 +381,8 @@ export async function handleTeamEngagement(env: Env, isPi: boolean): Promise<Res
         SUM(CASE WHEN timestamp > datetime('now', '-30 days') THEN 1 ELSE 0 END) as total,
         SUM(CASE WHEN timestamp > datetime('now', '-30 days') AND type = 'comment' THEN 1 ELSE 0 END) as comments,
         SUM(CASE WHEN timestamp > datetime('now', '-30 days') AND type IN ('update', 'project_update') THEN 1 ELSE 0 END) as updates,
-        SUM(CASE WHEN timestamp > datetime('now', '-60 days') AND timestamp <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_total
+        SUM(CASE WHEN timestamp > datetime('now', '-60 days') AND timestamp <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_total,
+        MAX(CASE WHEN timestamp > datetime('now', '-180 days') THEN 1 ELSE 0 END) as recent
       FROM activity_log
       WHERE actor IS NOT NULL AND timestamp > datetime('now', '-365 days')
         AND COALESCE(type, '') NOT IN ('pb_session', 'sync')
@@ -392,13 +407,25 @@ export async function handleTeamEngagement(env: Env, isPi: boolean): Promise<Res
   }
 
   const byActor = new Map<string, {
-    last_active: string | null; total: number; comments: number; updates: number; prior_total: number
+    last_active: string | null; total: number; comments: number; updates: number; prior_total: number; recent: number
   }>();
-  for (const r of (log.results || []) as Array<{ slug: string; last_active: string | null; total: number; comments: number; updates: number; prior_total: number }>) {
+  for (const r of (log.results || []) as Array<{ slug: string; last_active: string | null; total: number; comments: number; updates: number; prior_total: number; recent: number }>) {
     byActor.set(r.slug, r);
   }
 
-  const members = ((team.results || []) as Array<{ slug: string; name: string }>).map((m) => {
+  // Who counts in "N of M": people who use the Hub. Faculty and senior-mentor
+  // collaborators (member_type 'faculty' / 'senior_mentor', the directory's own
+  // groups, team.ts MEMBER_TYPES) are advisers who mostly never sign in, so one
+  // counts only if the log shows an action in the last 180 days or they finished
+  // a task in the last 60 (the window the task query reads). Every other type
+  // (director, research_team, and the trainee types fellow/resident/trainee that
+  // TRAINEE_SQL names) always counts. A collaborator who never acts is left out of
+  // both the list and the denominator.
+  const byActorRecent = (slug: string) => (byActor.get(slug)?.recent ?? 0) > 0;
+  const COLLABORATOR = new Set(['faculty', 'senior_mentor']);
+  const roster = ((team.results || []) as Array<{ slug: string; name: string; member_type: string | null }>).filter((m) =>
+    !COLLABORATOR.has(m.member_type ?? '') || byActorRecent(m.slug) || doneBy.has(m.slug));
+  const members = roster.map((m) => {
     const a = byActor.get(m.slug);
     const d = doneBy.get(m.slug);
     const completions = d?.completions ?? 0;
@@ -421,7 +448,7 @@ export async function handleTeamEngagement(env: Env, isPi: boolean): Promise<Res
 
   const active = members.filter((m) => m.total > 0).length;
   const priorActive = members.filter((m) => m.prior_total > 0).length;
-  return json({
+  return noStore(json({
     data: {
       members,
       active,
@@ -429,5 +456,5 @@ export async function handleTeamEngagement(env: Env, isPi: boolean): Promise<Res
       prior_active: priorActive,
       trend: active > priorActive ? 'up' : active < priorActive ? 'down' : 'flat',
     },
-  });
+  }));
 }
