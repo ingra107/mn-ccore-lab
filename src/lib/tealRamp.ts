@@ -1,17 +1,18 @@
 // tealRamp -- the one way a data bar gets its color (color back pick 7, Nick
 // 2026-10-11: "for 7 i think you can use teal just do the dark to bright with
 // that color!"). A bar's brightness carries its order: the first stage is the
-// dim end (--sk-ramp-dim, index.css), the last is the full accent. Bars are
-// "lit" like the cards: a brighter top edge over the color.
+// dim end (--sk-ramp-dim, index.css), the last is the bright end
+// (--sk-ramp-hi), one step past the accent so adjacent stages differ visibly.
+// Bars are "lit" like the cards: a brighter top edge over the color.
 
-/** Color at position t in [0, 1]: 0 = the dim end, 1 = the full accent. */
+/** Color at position t in [0, 1]: 0 = the dim end, 1 = the bright end. */
 export function tealRamp(t: number): string {
   const clamped = Number.isFinite(t) ? Math.min(1, Math.max(0, t)) : 1
   const pct = Math.round(clamped * 100)
-  return `color-mix(in srgb, var(--sk-ac) ${pct}%, var(--sk-ramp-dim))`
+  return `color-mix(in srgb, var(--sk-ramp-hi) ${pct}%, var(--sk-ramp-dim))`
 }
 
-/** Ramp position of item i of n (one item = the full accent). */
+/** Ramp position of item i of n (one item = the bright end). */
 export function rampStep(i: number, n: number): number {
   return n <= 1 ? 1 : i / (n - 1)
 }

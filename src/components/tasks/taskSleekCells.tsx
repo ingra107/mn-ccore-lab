@@ -21,7 +21,8 @@ const PRIORITY_WORD: Record<string, string> = { urgent: 'Urgent', high: 'High', 
 
 const modified = (e: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }) => e.shiftKey || e.ctrlKey || e.metaKey
 
-/** Title, then its tags: New / n new / moved / Planned / Waiting / Nd stale.
+/** Title, then its tags: New / n new / moved / Planned / Waiting / Nd stale
+ *  (orange: going stale is orange's one job, principle 21).
  *  A plain click on the title opens the editor; a modified click (shift,
  *  ctrl, cmd) or any click while `selecting` bubbles to the row to select. */
 export function TaskTitleCell({ task, isDone, onOpen, selecting = false, planned = false, staleDays = 0, showWaiting = false, showMoved = true, hint }: {
@@ -57,7 +58,7 @@ export function TaskTitleCell({ task, isDone, onOpen, selecting = false, planned
       <CardTags task={task} isNew={isNewToViewer} activityCount={activityRow?.new_count ?? 0} showMoved={showMoved} />
       {planned && !isDone && <span className="tk-tag">Planned</span>}
       {showWaiting && !isDone && task.status === 'waiting_external' && <span className="tk-tag tk-n">Waiting</span>}
-      {staleDays > 0 && <span className="tk-tag tk-n" title="In progress with no movement">{staleDays}d stale</span>}
+      {staleDays > 0 && <span className="tk-tag tk-urgtag" title="In progress with no movement">{staleDays}d stale</span>}
     </div>
   )
 }

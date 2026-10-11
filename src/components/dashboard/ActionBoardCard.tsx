@@ -87,7 +87,7 @@ function ActionBoardCard() {
                             <div className="flex items-center gap-2 mt-0.5">
                               <DueLabel due={item.due_date} style={{ fontSize: 10 }} />
                               {item.priority && item.priority !== 'medium' && (
-                                <span style={{ fontSize: '10px', color: item.priority === 'urgent' ? 'var(--maroon)' : item.priority === 'high' ? 'var(--orange)' : 'var(--slate)', opacity: 0.85 }}>
+                                <span style={{ fontSize: '10px', color: item.priority === 'urgent' ? 'var(--job-stale, var(--sk-urg))' : 'var(--slate)', opacity: 0.85 }}>
                                   {item.priority}
                                 </span>
                               )}

@@ -101,10 +101,9 @@ function ProjectHealthCard() {
           <SegmentedToggle
             ariaLabel="Project health view"
             size="sm"
-            uppercase
             options={[
-              { value: 'list', label: 'list' },
-              { value: 'heatmap', label: 'heatmap' },
+              { value: 'list', label: 'List' },
+              { value: 'heatmap', label: 'Heatmap' },
             ]}
             value={viewMode}
             onChange={persistView}
@@ -118,7 +117,7 @@ function ProjectHealthCard() {
         >
           {[
             { status: 'Critical' as const, count: summary.critical, label: 'Critical' },
-            { status: 'At Risk' as const, count: summary.at_risk, label: 'At Risk' },
+            { status: 'At Risk' as const, count: summary.at_risk, label: 'At risk' },
             { status: 'Needs Attention' as const, count: summary.needs_attention, label: 'Attention' },
             { status: 'Healthy' as const, count: summary.healthy, label: 'Healthy' },
           ].map((s) => (
@@ -147,8 +146,7 @@ function ProjectHealthCard() {
                   fontSize: '10px',
                   color: 'var(--slate)',
                   opacity: 'var(--ink-hint)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.03em',
+                  // Sentence case, not UPPERCASE (rules-ui-design 2)
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -423,7 +421,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
             textAlign: 'center',
           }}
         >
-          {project.status === 'Needs Attention' ? 'Attention' : project.status}
+          {project.status === 'Needs Attention' ? 'Attention' : project.status === 'At Risk' ? 'At risk' : project.status}
         </span>
 
         {/* Tooltip */}

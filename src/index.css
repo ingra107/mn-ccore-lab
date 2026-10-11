@@ -2421,12 +2421,18 @@ button[aria-label="Deselect task"]::before {
 :is(.sk-mat,.detail-card,.card) :is(.sk-mat,.detail-card,.card){background:transparent;box-shadow:none}
 /* Data bars run teal dark to bright (color back pick 7, Nick 2026-10-11: "for 7
    i think you can use teal just do the dark to bright with that color!").
-   --sk-ramp-dim is the dim end; lib/tealRamp.ts mixes from it to the full
-   accent. Every bar sits on --sk-bar-track, and the floors hold the dim end
-   at 3:1 against that track (light 78% = 3.26, dark 68% = 3.19), which is
-   the background the fill is actually read against (tealRamp.test.ts). */
-:root{--sk-ramp-dim:color-mix(in srgb,var(--sk-ac) 78%,var(--sk-card));--sk-bar-track:color-mix(in srgb,var(--sk-t1) 10%,transparent)}
-.dark{--sk-ramp-dim:color-mix(in srgb,var(--sk-ac) 68%,var(--sk-card))}
+   --sk-ramp-dim is the dim end; lib/tealRamp.ts mixes from it to
+   --sk-ramp-hi, the accent pushed one step further from the card (deeper in
+   light, paler in dark). Every bar sits on --sk-bar-track, and the floors hold
+   the dim end at 3:1 against that track (light 78% = 3.26, dark 68% = 3.19),
+   which is the background the fill is actually read against. With the dim
+   end pinned at that floor, the bright end is what widens the steps: ending
+   at the plain accent left adjacent stages 1.3:1 apart and Overview's
+   In preparation and In review stubs read as one shade (prod check
+   2026-10-11); ending at --sk-ramp-hi puts each half-step about 1.5:1 apart
+   (color-back-depth.test.tsx). */
+:root{--sk-ramp-dim:color-mix(in srgb,var(--sk-ac) 78%,var(--sk-card));--sk-ramp-hi:color-mix(in srgb,var(--sk-ac) 70%,#000);--sk-bar-track:color-mix(in srgb,var(--sk-t1) 10%,transparent)}
+.dark{--sk-ramp-dim:color-mix(in srgb,var(--sk-ac) 68%,var(--sk-card));--sk-ramp-hi:color-mix(in srgb,var(--sk-ac) 70%,#fff)}
 .tk .tk-card:hover,.tk .tk-mc.tk-nowm{box-shadow:inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
 .tk .tk-tc.tk-urg{box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim),var(--sk-amb)}
 .tk .tk-tc.tk-urg:hover{box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
@@ -3020,7 +3026,11 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-row{position:relative;min-height:40px;border-radius:9px;cursor:pointer;transition:background .12s,box-shadow .12s}
 @media (min-width:768px){.sr:not(.sr-narrow) .sr-row{height:40px}}
 .sr .sr-row:hover{background:var(--sr-hov)}
-.sr .sr-row.sr-cur,.sr .sr-row.sr-exp{background:var(--sr-hov);box-shadow:inset 0 0 0 1px var(--sk-line2)}
+.sr .sr-row.sr-cur,.sr .sr-row.sr-exp{box-shadow:inset 0 0 0 1px var(--sk-line2)}
+/* The keyboard cursor is a ring only, no tint: with the tint it read as a
+   second raised row beside the hovered one (prod check 2026-10-11). An
+   expanded row keeps the tint; hovering either still lifts it like any row. */
+.sr .sr-row.sr-exp{background:var(--sr-hov)}
 .sr .sr-row.sr-urg{box-shadow:inset 2px 0 0 var(--sk-urg)}
 .sr .sr-row.sr-urg.sr-cur,.sr .sr-row.sr-urg.sr-exp{box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 0 0 1px var(--sk-line2)}
 .sr .sr-row.sr-sel{background:var(--sk-ac-soft);box-shadow:inset 2px 0 0 var(--sk-ac)}
