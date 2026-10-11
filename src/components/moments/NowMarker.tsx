@@ -5,8 +5,7 @@
 // Today's timeline and Deadlines.
 //
 // Two renderings of one object:
-//   <NowMarker>      HTML, horizontal: inline in a list, or `edge` along the
-//                    top of a cell/column (the parent must be position:relative).
+//   <NowMarker>      HTML, horizontal: inline in a list.
 //   <NowMarkerSvg>   SVG, vertical: for a chart drawn in SVG (Grants).
 // The halo on a "today" date disc is the .now-halo class.
 
@@ -14,15 +13,12 @@ import type { CSSProperties } from 'react'
 
 export function NowMarker({
   label = 'Today',
-  edge = false,
   showLabel = true,
   labelBg,
   className,
   style,
 }: {
   label?: string
-  /** Lie along the top edge of the positioned parent. */
-  edge?: boolean
   showLabel?: boolean
   /** Background behind the label, so the hairline does not run through it. */
   labelBg?: string
@@ -31,7 +27,7 @@ export function NowMarker({
 }) {
   return (
     <div
-      className={`now-mk${edge ? ' now-mk-edge' : ''}${className ? ` ${className}` : ''}`}
+      className={`now-mk${className ? ` ${className}` : ''}`}
       aria-hidden="true"
       data-testid="now-marker"
       style={labelBg ? ({ ...style, '--now-mk-bg': labelBg } as CSSProperties) : style}

@@ -31,10 +31,10 @@ export function memberHue(seed: string): number {
 
 /**
  * An activity cell at `strength` (0-1) of the heat color. The heat color is
- * teal unless the page sets --heat: a member's own page sets it to that
- * member's hue (.member-hue in index.css).
+ * the accent (--job-accent) unless the page sets --heat: a member's own page
+ * sets it to that member's hue (.member-hue in index.css).
  */
 export function heatColor(strength: number): string {
   const pct = Math.round(Math.min(1, Math.max(0, strength)) * 100)
-  return `color-mix(in srgb, var(--heat, var(--teal)) ${pct}%, transparent)`
+  return `color-mix(in srgb, var(--heat, var(--job-accent)) ${pct}%, transparent)`
 }

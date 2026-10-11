@@ -188,24 +188,24 @@ describe('pick 6: rows lift on hover', () => {
     expect(sh).not.toMatch(/30px/)
   })
 
-  it('the keyboard-cursor row keeps its gray ring while the pointer is on it', async () => {
+  it('the keyboard-cursor row keeps its accent ring while the pointer is on it', async () => {
     const host = await table()
     const a = host.querySelector<HTMLElement>('.sr-row')!
     a.classList.add('sr-cur')
     await new Promise((r) => setTimeout(r, 200)) // let the row's shadow transition settle
-    // the cursor ring's color as the browser serializes it
+    // the cursor ring's color as the browser serializes it (2px accent at 80%, clearly visible)
     const probe = document.createElement('i')
-    probe.style.color = 'var(--sk-line2)'
+    probe.style.color = 'color-mix(in srgb,var(--job-accent) 80%,transparent)'
     host.appendChild(probe)
     const gray = cs(probe).color
-    expect(cs(a).boxShadow).toContain(`${gray} 0px 0px 0px 1px inset`)
+    expect(cs(a).boxShadow).toContain(`${gray} 0px 0px 0px 2px inset`)
     // a ring only: no tint and no material, so it never reads as a second
     // raised row beside the hovered one
     expect(cs(a).backgroundImage).toBe('none')
     expect(cs(a).backgroundColor).toBe('rgba(0, 0, 0, 0)')
     await hover(a)
     // still there under the pointer, with the lift's material
-    expect(cs(a).boxShadow).toContain(`${gray} 0px 0px 0px 1px inset`)
+    expect(cs(a).boxShadow).toContain(`${gray} 0px 0px 0px 2px inset`)
     expect(cs(a).backgroundImage).toMatch(/^linear-gradient/)
   })
 

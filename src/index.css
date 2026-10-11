@@ -1302,10 +1302,6 @@ a:hover {
   --task-accent-coral:   #8a1f2e;   /* matches --maroon-solid */
   --task-accent-orange:  #a23d08;   /* matches --orange light */
   --task-accent-green:   #066e2f;   /* matches --green light */
-  /* Two-date milestone rendering (Nick 2026-09-17): the internal/slipped
-     date reads distinctly from the hard (sponsor/journal) date, which stays
-     gold. Not an existing --*-solid pin — chosen for AA contrast on #fff. */
-  --task-accent-blue:    #1f4e8c;
 }
 
 .dark {
@@ -1320,7 +1316,6 @@ a:hover {
   --task-accent-coral:   #f0737e;
   --task-accent-orange:  #f08a5b;
   --task-accent-green:   #6ee89a;
-  --task-accent-blue:    #7fb3f0;
 }
 
 /* ── Funding agency colors — brighter in dark mode ── */
@@ -2914,12 +2909,12 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    Everything here is under `.tk` or a tk- prefix, so it cannot leak. */
 
 /* Tasks List: one card per row inside the virtualized list. The cursor ring
-   shows only after the cursor was used; a selected row gets a solid accent ring
-   and a faint wash (the wash is a pseudo-element so the card keeps its depth). */
+   shows only after the cursor was used; a selected row gets a faint wash and no
+   ring (the wash is a pseudo-element so the card keeps its depth). Ring = where
+   you are, wash = what is chosen; a row can be both. */
 .tk .tk-lrow{position:relative;border-radius:var(--r-card)}
-.tk .tk-lrow[data-cursor=true]{outline:1.5px solid color-mix(in srgb,var(--job-accent) 50%,transparent);outline-offset:2px}
-.tk .tk-lrow[data-selected=true]{outline:2px solid var(--job-accent);outline-offset:2px}
-.tk .tk-lrow[data-selected=true]::after{content:"";position:absolute;inset:0;border-radius:var(--r-card);background:color-mix(in srgb, var(--job-accent) 10%, transparent);pointer-events:none}
+.tk .tk-lrow[data-cursor=true]{outline:2px solid var(--job-accent);outline-offset:2px}
+.tk .tk-lrow[data-selected=true]::after{content:"";position:absolute;inset:0;border-radius:var(--r-card);background:color-mix(in srgb, var(--job-accent) 14%, transparent);pointer-events:none}
 
 /* Tasks Board (Nick approved the mock 2026-10-10): the Today card in each column.
    Column heads are plain text with a muted count, no coloured rule; an empty
@@ -3075,15 +3070,17 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-row{position:relative;min-height:40px;border-radius:9px;cursor:pointer;transition:background .12s,box-shadow .12s}
 @media (min-width:768px){.sr:not(.sr-narrow) .sr-row{height:40px}}
 .sr .sr-row:hover{background:var(--sr-hov)}
-.sr .sr-row.sr-cur,.sr .sr-row.sr-exp{box-shadow:inset 0 0 0 1px var(--sk-line2)}
+.sr .sr-row.sr-exp{box-shadow:inset 0 0 0 1px var(--sk-line2)}
+.sr .sr-row.sr-cur{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--job-accent) 80%,transparent)}
 /* The keyboard cursor is a ring only, no tint: with the tint it read as a
    second raised row beside the hovered one (prod check 2026-10-11). An
    expanded row keeps the tint; hovering either still lifts it like any row. */
 .sr .sr-row.sr-exp{background:var(--sr-hov)}
 .sr .sr-row.sr-urg{box-shadow:inset 2px 0 0 var(--job-stale)}
-.sr .sr-row.sr-urg.sr-cur,.sr .sr-row.sr-urg.sr-exp{box-shadow:inset 2px 0 0 var(--job-stale),inset 0 0 0 1px var(--sk-line2)}
+.sr .sr-row.sr-urg.sr-exp{box-shadow:inset 2px 0 0 var(--job-stale),inset 0 0 0 1px var(--sk-line2)}
+.sr .sr-row.sr-urg.sr-cur{box-shadow:inset 2px 0 0 var(--job-stale),inset 0 0 0 2px color-mix(in srgb,var(--job-accent) 80%,transparent)}
 .sr .sr-row.sr-sel{background:color-mix(in srgb, var(--job-accent) 10%, transparent);box-shadow:inset 2px 0 0 var(--job-accent)}
-.sr .sr-row.sr-sel.sr-cur{box-shadow:inset 2px 0 0 var(--job-accent),inset 0 0 0 1px var(--sk-line2)}
+.sr .sr-row.sr-sel.sr-cur{box-shadow:inset 2px 0 0 var(--job-accent),inset 0 0 0 2px color-mix(in srgb,var(--job-accent) 80%,transparent)}
 .sr .sr-row.sr-selmode{cursor:cell}
 /* Rows lift on hover (color back pick 6, Nick 2026-10-11): the row under the
    pointer takes the card material and a faint teal rim. Nothing moves, no
@@ -3094,8 +3091,10 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .dark .sr{--sr-amb:0 1px 3px rgba(0,0,0,.4)}
 .sr .sr-row:hover:not(.sr-sel){background:var(--sk-mat-bg);box-shadow:inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-rim-ac),var(--sr-amb)}
 .sr .sr-row.sr-urg:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-rim-ac),var(--sr-amb)}
-.sr .sr-row.sr-cur:hover:not(.sr-sel),.sr .sr-row.sr-exp:hover:not(.sr-sel){box-shadow:inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-line2),var(--sr-amb)}
-.sr .sr-row.sr-urg.sr-cur:hover:not(.sr-sel),.sr .sr-row.sr-urg.sr-exp:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-line2),var(--sr-amb)}
+.sr .sr-row.sr-exp:hover:not(.sr-sel){box-shadow:inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-line2),var(--sr-amb)}
+.sr .sr-row.sr-cur:hover:not(.sr-sel){box-shadow:inset 0 1px 0 var(--sk-rim),inset 0 0 0 2px color-mix(in srgb,var(--job-accent) 80%,transparent),var(--sr-amb)}
+.sr .sr-row.sr-urg.sr-exp:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-line2),var(--sr-amb)}
+.sr .sr-row.sr-urg.sr-cur:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim),inset 0 0 0 2px color-mix(in srgb,var(--job-accent) 80%,transparent),var(--sr-amb)}
 /* One raised row at a time: while the pointer hovers ANOTHER row, the
    keyboard-cursor row drops its ring and hover actions (keeping its urgent or
    selected edge). j/k still move it; the ring returns when the pointer leaves
@@ -3230,8 +3229,6 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
 .now-mk-dot{width:6px;height:6px;border-radius:50%;background:var(--job-accent);box-shadow:0 0 0 4px color-mix(in srgb, var(--job-accent) 10%, transparent);flex-shrink:0;margin-left:-3px}
 .now-mk-line{flex:1;height:1.5px;border-radius:2px;background:var(--job-accent);min-width:8px}
 .now-mk-lbl{font-size:10px;font-weight:600;line-height:1;white-space:nowrap;padding:0 4px;background:var(--now-mk-bg,var(--sk-panel))}
-/* edge: lies along the top edge of a cell or column (Calendar), dot at the left */
-.now-mk.now-mk-edge{position:absolute;left:6px;right:6px;top:-1px;z-index:1}
 /* the "today" date disc gets the same halo */
 .now-halo{box-shadow:0 0 0 4px color-mix(in srgb, var(--job-accent) 10%, transparent)}
 

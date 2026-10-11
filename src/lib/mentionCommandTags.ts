@@ -16,8 +16,8 @@ export interface CommandTagDef {
 // a bare "@herm" prefix match (the exact pollution #891 exists to prevent).
 export const KNOWN_COMMAND_TAGS: Record<string, CommandTagDef> = {
   hermes:    { label: '⌘ Hermes AI',         color: 'var(--gold)',  bg: 'var(--gold-active)'  },
-  quickchat: { label: '⌘ Quick Chat launch', color: 'var(--teal)',  bg: 'var(--teal-active)'  },
-  workon:    { label: '⌘ Work On launch',    color: 'var(--teal)',  bg: 'var(--teal-active)'  },
+  quickchat: { label: '⌘ Quick Chat launch', color: 'var(--job-accent)',  bg: 'color-mix(in srgb, var(--job-accent) 10%, transparent)'  },
+  workon:    { label: '⌘ Work On launch',    color: 'var(--job-accent)',  bg: 'color-mix(in srgb, var(--job-accent) 10%, transparent)'  },
   backlog:   { label: '⌘ Backlog idea',      color: 'var(--slate)', bg: 'var(--hover-subtle)' },
 }
 
