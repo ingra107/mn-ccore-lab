@@ -11,9 +11,10 @@ import { useState } from 'react'
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import ProjectSleekList from '../components/project/ProjectSleekList'
-import { isPoorHealth, type ProjectHealth } from '../lib/projectListOptions'
+import { isPoorHealth, projectRowName, type ProjectHealth } from '../lib/projectListOptions'
 import type { SleekSort } from '../components/table/SleekRows'
 import type { Project } from '../data/types'
+import type { StoredLink } from '../hooks/useApiData'
 import { PATHS } from '../constants/paths'
 import { mount, cleanupMountsAfterEach } from './testMount'
 
@@ -45,19 +46,23 @@ function Where() {
   return <output data-testid="where">{loc.pathname}</output>
 }
 
-function Harness({ togglePin, onField, onSort }: { togglePin: (s: string) => void; onField: (s: string, f: Record<string, string>) => void; onSort: (s: SleekSort) => void }) {
+const link = (id: string): StoredLink => ({ id, role: 'key', type: 'google_doc', canonical_url: `https://docs.google.com/${id}`, short_title: id, sort_order: 0 })
+
+interface Opts { projects?: Project[]; links?: Record<string, StoredLink[]>; sort?: SleekSort }
+
+function Harness({ togglePin, onField, onSort, opts }: { togglePin: (s: string) => void; onField: (s: string, f: Record<string, string>) => void; onSort: (s: SleekSort) => void; opts: Opts }) {
   const [focused, setFocused] = useState(-1)
   return (
     <ProjectSleekList
-      projects={projects}
-      sort={null}
+      projects={opts.projects ?? projects}
+      sort={opts.sort ?? null}
       onSort={onSort}
       focusedIndex={focused}
       setFocusedIndex={setFocused}
       keyboardEnabled
       healthBySlug={health}
       taskCountByProject={new Map([['alpha', 3]])}
-      linksByProjectId={{}}
+      linksByProjectId={opts.links ?? {}}
       pinnedSlugs={new Set(['alpha'])}
       togglePin={togglePin}
       stageOptions={[{ value: 'analysis', label: 'Analysis' }, { value: 'writing', label: 'Writing' }]}
@@ -68,7 +73,8 @@ function Harness({ togglePin, onField, onSort }: { togglePin: (s: string) => voi
   )
 }
 
-async function render(width = 1100) {
+async function render(width = 1100, opts: Opts = {}) {
+  const n = (opts.projects ?? projects).length
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) }))
   const fns = { togglePin: vi.fn(), onField: vi.fn(), onSort: vi.fn() }
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -77,13 +83,13 @@ async function render(width = 1100) {
       <MemoryRouter initialEntries={['/list']}>
         <div style={{ width }}>
           <Routes>
-            <Route path="/list" element={<Harness {...fns} />} />
+            <Route path="/list" element={<Harness {...fns} opts={opts} />} />
             <Route path="*" element={<Where />} />
           </Routes>
         </div>
       </MemoryRouter>
     </QueryClientProvider>,
-    { ready: (h) => h.querySelectorAll('.sr-row').length === 3, label: 'ProjectSleekList' },
+    { ready: (h) => h.querySelectorAll('.sr-row').length === n, label: 'ProjectSleekList' },
   )
   const row = (slug: string) => host.querySelector(`.sr-row[data-project-slug="${slug}"]`)!
   const where = () => host.querySelector('[data-testid="where"]')?.textContent ?? null
@@ -95,6 +101,11 @@ describe('Projects list on sleek rows', () => {
     expect(isPoorHealth({ score: 49, status: 'At Risk' })).toBe(true)
     expect(isPoorHealth({ score: 50, status: 'At Risk' })).toBe(false)
     expect(isPoorHealth(undefined)).toBe(false)
+  })
+
+  it('projectRowName (the Title sort key) is the text the row shows', () => {
+    expect(projectRowName({ title: 'CQODE Backbone / UMN CLIF', short_name: 'CQODE-CLIF ETL' })).toBe('CQODE-CLIF ETL')
+    expect(projectRowName({ title: 'CLIF: Zeta study', short_name: null })).toBe('Zeta study')
   })
 
   it('leads with the short name, hides Active, keeps Waiting, shows the PI face and a poor health bar only', async () => {
@@ -149,5 +160,45 @@ describe('Projects list on sleek rows', () => {
     expect(row('alpha').querySelector('.sr-ph-trail .tk-face')).not.toBeNull()
     expect(row('alpha').querySelector('.sr-ph-l')!.textContent).not.toContain('Active')
     expect(row('bravo').querySelector('.sr-ph-l')!.textContent).toContain('Waiting')
+  })
+
+  it('every title carries its full-title tip, even with no short name', async () => {
+    const { row } = await render()
+    const name = row('charlie').querySelector('.pj-name')!
+    expect(name.classList.contains('tip')).toBe(true)
+    expect(name.getAttribute('data-tip')).toBe('Charlie the long title')
+  })
+
+  it('the phone layout keeps links, Work on, "Nd ago" and the Stage / Group / PI / Waiting editors', async () => {
+    const old = new Date(Date.now() - 20 * 86400000).toISOString()
+    const { row, where } = await render(390, {
+      projects: [project('alpha', { primary_folder: 'C:/x/alpha', lastActivity: old }), project('bravo', { status: 'waiting_external' })],
+      links: { 'id-alpha': [link('l1'), link('l2'), link('l3')] },
+    })
+    const line = row('alpha').querySelector('.sr-ph-l')!
+    expect(line.querySelectorAll('.pj-lk').length).toBe(2)
+    expect(line.querySelector('.pj-more')!.textContent).toBe('+1')
+    expect(line.querySelector('[data-col="links"] .sr-wk')).not.toBeNull()
+    expect(line.textContent).toContain('20d ago')
+    for (const col of ['stage', 'category']) expect(line.querySelector(`[data-col="${col}"] .sr-trig`)).not.toBeNull()
+    expect(row('alpha').querySelector('.sr-ph-trail .sr-trig .tk-face')).not.toBeNull()
+    expect(row('bravo').querySelector('[data-col="status"] .sr-trig')).not.toBeNull()
+    click(row('alpha').querySelector('[data-col="stage"] .sr-trig')!); await tick()
+    expect(document.querySelector('[role="listbox"]')).not.toBeNull()
+    expect(where()).toBeNull()
+  })
+
+  it('column widths follow the rows: narrow Status when nobody waits, no Links column with no links or folders', async () => {
+    const { host } = await render(1100, { projects: [project('alpha'), project('delta', { status: 'blocked' })] })
+    const cols = (host.querySelector('.sr') as HTMLElement).style.getPropertyValue('--sr-cols')
+    expect(cols.split(' ')).toContain('76px')
+    expect(cols).not.toContain('124px')
+    expect(host.querySelector('[data-col="links"]')).toBeNull()
+  })
+
+  it('an empty stage reads "No stage" in its group header, never a second "Idea"', async () => {
+    const { host } = await render(1100, { projects: [project('alpha', { stage: 'idea' }), project('echo', { stage: '' })], sort: { key: 'stage', dir: 'asc' } })
+    const heads = [...host.querySelectorAll('.pj-stage-h > span:first-child')].map((e) => e.textContent)
+    expect(heads).toEqual(['Idea', 'No stage'])
   })
 })

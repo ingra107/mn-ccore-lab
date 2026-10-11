@@ -24,7 +24,7 @@ import { AllProjectsBanner, AllProjectsSwitch } from '../components/AllProjectsC
 import { useAllProjectsOn } from '../lib/allProjects'
 import { useAuth } from '../hooks/useAuth'
 import { useProjectPins } from '../hooks/useProjectPins'
-import { stageListOptions, mutedCategoryOptions, isPoorHealth } from '../lib/projectListOptions'
+import { stageListOptions, mutedCategoryOptions, isPoorHealth, projectRowName } from '../lib/projectListOptions'
 import ProjectSleekList from '../components/project/ProjectSleekList'
 import type { SleekSort } from '../components/table/SleekRows'
 
@@ -314,7 +314,8 @@ export default function Projects() {
       if (sortKey !== 'stage' && pinCmp !== 0) return pinCmp
       let cmp = 0
       switch (sortKey) {
-        case 'title': cmp = a.title.localeCompare(b.title); break
+        // The visible name (short name, else the cleaned title), so the order follows the text.
+        case 'title': cmp = projectRowName(a).localeCompare(projectRowName(b)); break
         case 'status': cmp = (a.status || '').localeCompare(b.status || ''); break
         case 'stage': {
           // #91-class fix, now structural (Hub #361a): project.stage is

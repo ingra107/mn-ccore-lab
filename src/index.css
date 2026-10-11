@@ -2869,7 +2869,8 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .pj-health{display:inline-block;width:24px;height:4px;border-radius:2px;background:var(--sk-line2);overflow:hidden;flex-shrink:0}
 .sr .pj-health>span{display:block;height:100%;border-radius:2px}
 .sr .sr-tt .tk-tag{margin-left:0;flex-shrink:0}
-.sr .pj-slots .pj-lks{width:120px}
+/* The phone line carries status, stage, group, "Nd ago", links and Work on: it wraps rather than clip. */
+.sr.pj-list .sr-ph-l{flex-wrap:wrap;row-gap:2px}
 .sr .pj-slots .tk-wo{color:var(--sk-t3)}
 .sr .pj-slots .tk-wo:hover{color:var(--sk-t1)}
 .sr .pj-stage-h{display:flex;align-items:center;gap:8px;padding:16px 10px 6px;font-size:12.5px;font-weight:600;color:var(--sk-t2)}
@@ -2982,6 +2983,8 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-row:hover .sr-car,.sr .sr-trig:focus-visible .sr-car,.sr .sr-trig[aria-expanded="true"] .sr-car{visibility:visible}
 @media (hover:none){.sr .sr-car{visibility:visible}}
 .sr.sr-narrow .sr-car{display:none}
+/* Phone line editors sit flush: the desktop trigger's -6px pull clipped their text by its padding. */
+.sr.sr-narrow .sr-ph-l .sr-trig{margin-left:0;padding-left:0;padding-right:0}
 /* Fixed action slots: links, folder, Work on */
 .sr .sr-slots{display:inline-flex;align-items:center;justify-content:flex-end}
 .sr .sr-lks{display:inline-flex;align-items:center;justify-content:flex-end;width:72px}

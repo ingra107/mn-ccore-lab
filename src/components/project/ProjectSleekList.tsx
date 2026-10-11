@@ -31,8 +31,8 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import { stageLabel } from '../../lib/stageNormalize'
 import { parseDbUtc } from '../../lib/time'
 import { normalizeProjectStatus, isProjectFinished } from '../../lib/taskConstants'
-import { STATUS_LIST_OPTIONS, LIST_T2, isPoorHealth, type ProjectHealth } from '../../lib/projectListOptions'
-import { stripConsortiumPrefix, stripGrantTypePrefix, isGrantProjectType } from '../../lib/textUtils'
+import { STATUS_LIST_OPTIONS, LIST_T2, isPoorHealth, cleanProjectTitle, projectRowName, type ProjectHealth } from '../../lib/projectListOptions'
+import { isGrantProjectType } from '../../lib/textUtils'
 import { projectShortLabel } from '../../lib/displayNames'
 import { linkTintForType, iconForType } from '../../lib/linkIcon'
 import { classifyUrl } from '../../lib/urlClassify'
@@ -48,16 +48,8 @@ import type { StoredLink, ProjectPublicationLink } from '../../hooks/useApiData'
 // Only Critical keeps a status color on the bar; the tooltip says the word.
 const healthColor = (status: string): string => (status === 'Critical' ? 'var(--maroon)' : 'var(--sk-ac)')
 
-// Strip the consortium tag, then (for a grant-type project) the mechanism
-// prefix: the grant tag already shows it.
-function cleanProjectTitle(project: Project): string {
-  return stripGrantTypePrefix(stripConsortiumPrefix(project.title).clean, project.type)
-}
-
-/** The row's name: the curated short name, else the cleaned title. */
-function rowName(project: Project): string {
-  return project.short_name?.trim() || cleanProjectTitle(project) || projectShortLabel(project)
-}
+// A stage as a header or footer names it; an empty stage sorts last and says so.
+const stageName = (stage: string | null | undefined): string => stageLabel(stage || '') || 'No stage'
 
 // S19: directors are the canonical PI choices; a non-director current value
 // (legacy "nick", an email) is prepended so the menu names it cleanly.
@@ -88,15 +80,18 @@ function PublishedChip({ project, links, onOpen }: { project: Project; links: Pr
 // icon in the Work-on slot, so it is not repeated here. Non-http links open
 // through useProtocolLaunch (mnccore:// handler + clipboard backup).
 const LINKS_SHOWN = 4
-function ProjectLinksCell({ links: all, primaryFolder }: { links: StoredLink[]; primaryFolder?: string | null }) {
+const SLOT = 24
+const WORK_ON_SLOT = 48
+function ProjectLinksCell({ links: all, primaryFolder, shown = LINKS_SHOWN, width }: { links: StoredLink[]; primaryFolder?: string | null; shown?: number; width?: number }) {
   const { launch } = useProtocolLaunch()
   const norm = (p: string) => p.split(String.fromCharCode(92)).join('/').split('/').filter(Boolean).join('/').toLowerCase()
   const links = primaryFolder ? all.filter((l) => !(l.type === 'local_folder' && norm(l.canonical_url) === norm(primaryFolder))) : all
   const sorted = [...links].sort((a, b) => displayRank(a.type) - displayRank(b.type) || a.sort_order - b.sort_order)
-  const visible = sorted.slice(0, LINKS_SHOWN)
+  const visible = sorted.slice(0, shown)
   const overflow = links.length - visible.length
+  if (!links.length && width === undefined) return null
   return (
-    <span className="pj-lks">
+    <span className="pj-lks" style={width !== undefined ? { width } : undefined}>
       {visible.map((link) => {
         const { Icon } = iconForType(link.type)
         const { href: launchUri, isHttp } = classifyUrl(link.canonical_url)
@@ -179,6 +174,20 @@ export default function ProjectSleekList({
 
   const indexOf = useMemo(() => new Map(projects.map((p, i) => [p.slug, i])), [projects])
 
+  // Column widths follow the rows on screen, so the title gets every pixel the
+  // other columns do not use (evaluation item 7): Status is narrow unless a row
+  // says "Waiting (External)"; the link slots are as many as the busiest row
+  // needs (+N past four); the Work-on slot only when some row has a folder; no
+  // column at all when no row has a link or a folder.
+  const widths = useMemo(() => {
+    const statuses = new Set(projects.map((p) => normalizeProjectStatus(p.status)))
+    const status = statuses.has('waiting_external') ? 124 : statuses.has('blocked') || statuses.has('done') ? 76 : 52
+    const maxLinks = projects.reduce((m, p) => Math.max(m, linksByProjectId[p.id ?? '']?.length ?? 0), 0)
+    const linkSlots = maxLinks > LINKS_SHOWN ? LINKS_SHOWN + 1 : maxLinks
+    const workOn = projects.some((p) => p.primary_folder) ? WORK_ON_SLOT : 0
+    return { status, links: linkSlots * SLOT, workOn }
+  }, [projects, linksByProjectId])
+
   const columns = useMemo<SleekColumn<Project>[]>(() => [
     {
       key: 'pin', width: '20px', interactive: true, phone: 'lead',
@@ -201,16 +210,16 @@ export default function ProjectSleekList({
     {
       key: 'title', label: 'Title', width: 'minmax(0,1fr)', sortable: true, interactive: true, phone: 'title',
       render: (p) => {
-        const name = rowName(p)
-        const full = cleanProjectTitle(p)
+        const name = projectRowName(p)
+        const full = cleanProjectTitle(p) || name
         const tc = taskCountByProject.get(p.slug) || 0
         const health = healthBySlug.get(p.slug)
         return (
           <div className="sr-tt">
             <Link
               to={PATHS.project(p.slug)}
-              className={`sr-x sr-open pj-name${full && full !== name ? ' tip' : ''}`}
-              data-tip={full && full !== name ? full : undefined}
+              className="sr-x sr-open pj-name tip"
+              data-tip={full}
               onClick={() => setFocusedIndex(indexOf.get(p.slug) ?? -1)}
             >
               {name}
@@ -228,7 +237,7 @@ export default function ProjectSleekList({
       },
     },
     {
-      key: 'status', label: 'Status', width: '124px', sortable: true, interactive: true, phone: 'line',
+      key: 'status', label: 'Status', width: `${widths.status}px`, sortable: true, interactive: true, phone: 'line',
       render: (p) => (
         <InlineSelect
           value={normalizeProjectStatus(p.status)}
@@ -237,20 +246,27 @@ export default function ProjectSleekList({
           display={<StatusText status={p.status} />}
         />
       ),
-      // The phone line stays quiet for Active; edit it on the project page.
-      renderPhone: (p) => (normalizeProjectStatus(p.status) === 'active' ? null : <StatusText status={p.status} />),
+      // The phone line prints nothing for Active (and leaves no empty tap
+      // target); Waiting / Blocked / Done stay editable there.
+      renderPhone: (p) => (normalizeProjectStatus(p.status) === 'active' ? null : (
+        <InlineSelect
+          value={normalizeProjectStatus(p.status)}
+          options={STATUS_LIST_OPTIONS}
+          onChange={(val) => onFieldChange(p.slug, { status: val })}
+          display={<StatusText status={p.status} />}
+        />
+      )),
     },
     {
       key: 'stage', label: 'Stage', width: '112px', sortable: true, interactive: true, phone: 'line',
       render: (p) => (
         <InlineSelect
-          value={p.stage || 'idea'}
+          value={p.stage || ''}
           options={stageOptions}
           onChange={(val) => onStageChange(p.slug, val, p.stage)}
-          display={<span className="sr-m sr-hi">{stageLabel(p.stage || 'idea')}</span>}
+          display={<span className="sr-m sr-hi">{stageLabel(p.stage || '') || '—'}</span>}
         />
       ),
-      renderPhone: (p) => <span className="sr-m">{stageLabel(p.stage || 'idea')}</span>,
     },
     {
       key: 'category', label: 'Group', width: '104px', sortable: true, interactive: true, minTableWidth: 880, phone: 'line',
@@ -259,10 +275,9 @@ export default function ProjectSleekList({
           value={p.category || ''}
           options={categoryOptions}
           onChange={(val) => onFieldChange(p.slug, { category: val })}
-          display={<span className="tk-cs">{categoryOptions.find((o) => o.value === p.category)?.label ?? p.category ?? '—'}</span>}
+          display={<span className="tk-cs">{categoryOptions.find((o) => o.value === p.category)?.label || p.category || '—'}</span>}
         />
       ),
-      renderPhone: (p) => <span className="tk-cs">{categoryOptions.find((o) => o.value === p.category)?.label ?? p.category ?? ''}</span>,
     },
     {
       key: 'pi', label: 'PI', width: '40px', sortable: true, interactive: true, phone: 'trail',
@@ -274,11 +289,18 @@ export default function ProjectSleekList({
           display={p.pi ? <Face slug={p.pi} /> : <span className="sr-m">—</span>}
         />
       ),
-      renderPhone: (p) => (p.pi ? <Face slug={p.pi} lg /> : null),
+      renderPhone: (p) => (
+        <InlineSelect
+          value={p.pi || ''}
+          options={piOptions(p.pi)}
+          onChange={(val) => onFieldChange(p.slug, { pi: val })}
+          display={p.pi ? <Face slug={p.pi} lg /> : <span className="sr-m">—</span>}
+        />
+      ),
     },
     {
       // A fixed slot, empty when recent, so the column lines up (rules-ui-design 14).
-      key: 'moved', width: '52px', align: 'end', minTableWidth: 760,
+      key: 'moved', width: '52px', align: 'end', minTableWidth: 760, phone: 'line',
       render: (p) => {
         const days = daysSinceActivity(p)
         return days >= 7
@@ -286,18 +308,33 @@ export default function ProjectSleekList({
           : null
       },
     },
-    {
-      key: 'links', label: 'Links', width: '172px', interactive: true, minTableWidth: 700,
-      render: (p) => (
+    // No minTableWidth: links, folder and Work on stay at every desktop width,
+    // and the phone line carries them below that.
+    ...(widths.links + widths.workOn > 0 ? [{
+      key: 'links', label: 'Links', width: `${Math.max(widths.links + widths.workOn, 40)}px`, interactive: true, phone: 'line' as const,
+      render: (p: Project) => (
         <span className="sr-slots pj-slots">
-          <ProjectLinksCell links={linksByProjectId[p.id ?? ''] ?? []} primaryFolder={p.primary_folder} />
-          <span className="sr-wk sr-hv">
-            {p.primary_folder && <WorkOnActions primaryFolder={p.primary_folder} projectLabel={projectShortLabel(p)} variant="slot" />}
-          </span>
+          {widths.links > 0 && <ProjectLinksCell links={linksByProjectId[p.id ?? ''] ?? []} primaryFolder={p.primary_folder} width={widths.links} />}
+          {widths.workOn > 0 && (
+            <span className="sr-wk sr-hv">
+              {p.primary_folder && <WorkOnActions primaryFolder={p.primary_folder} projectLabel={projectShortLabel(p)} variant="slot" />}
+            </span>
+          )}
         </span>
       ),
-    },
-  ], [pinnedSlugs, togglePin, taskCountByProject, healthBySlug, publicationsBySlug, navigate, setFocusedIndex, indexOf, stageOptions, categoryOptions, onFieldChange, onStageChange, linksByProjectId])
+      // Phone: two link slots then +N, then the folder + Work on when there is one.
+      renderPhone: (p: Project) => {
+        const links = linksByProjectId[p.id ?? ''] ?? []
+        if (!links.length && !p.primary_folder) return null
+        return (
+          <span className="sr-slots pj-slots">
+            <ProjectLinksCell links={links} primaryFolder={p.primary_folder} shown={2} />
+            {p.primary_folder && <span className="sr-wk"><WorkOnActions primaryFolder={p.primary_folder} projectLabel={projectShortLabel(p)} variant="slot" /></span>}
+          </span>
+        )
+      },
+    }] : []),
+  ], [pinnedSlugs, togglePin, taskCountByProject, healthBySlug, publicationsBySlug, navigate, setFocusedIndex, indexOf, stageOptions, categoryOptions, onFieldChange, onStageChange, linksByProjectId, widths])
 
   const onRowClick = useCallback((index: number, slug: string, e: React.MouseEvent) => {
     const path = PATHS.project(slug)
@@ -331,7 +368,7 @@ export default function ProjectSleekList({
                 <motion.div key={p.slug} variants={staggerItem} ref={(el: HTMLDivElement | null) => { rowRefs.current[index] = el }}>
                   {header && (
                     <div className="pj-stage-h">
-                      <span>{stageLabel(stage || 'idea')}</span>
+                      <span>{stageName(stage)}</span>
                       <span className="sr-m">{stageCounts.get(stage) ?? 0}</span>
                       <i aria-hidden="true" />
                     </div>
@@ -352,7 +389,7 @@ export default function ProjectSleekList({
         <div className="pj-foot">
           {[
             { label: 'Count', value: projects.length },
-            ...Array.from(stageCounts.entries()).map(([stage, count]) => ({ label: stageLabel(stage || 'Unknown'), value: count })),
+            ...Array.from(stageCounts.entries()).map(([stage, count]) => ({ label: stageName(stage), value: count })),
           ].map((s) => (
             <span key={s.label}>{s.label} <b>{s.value}</b></span>
           ))}
