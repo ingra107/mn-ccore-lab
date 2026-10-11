@@ -63,6 +63,7 @@ import { isMilestone } from '../../../shared/taskKinds'
 import { Brain, Diamond, MessageSquare, Settings } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
+import { projectShortLabel, taskShortLabel } from '../../lib/displayNames'
 
 const SHOW_MILESTONES_KEY = 'hub-today-show-milestones'
 
@@ -163,7 +164,7 @@ export default function TodayPage() {
       // Short name everywhere on Today (Nick: display short names): short_name,
       // then the full title, then the slug. This map feeds every project link
       // on a card, so it was the biggest of the five long-name leaks.
-      const entry = { name: p.short_name || p.title || p.slug, slug: p.slug, category: p.category ?? null, lastActivity: p.lastActivity ?? null, primary_folder: p.primary_folder ?? null }
+      const entry = { name: projectShortLabel(p), slug: p.slug, category: p.category ?? null, lastActivity: p.lastActivity ?? null, primary_folder: p.primary_folder ?? null }
       m.set(p.slug, entry)
     }
     return m
@@ -266,7 +267,7 @@ export default function TodayPage() {
       // isStalledProject is the SAME predicate the Projects page's
       // ?filter=stalled list uses, so this count and the list it links to agree.
       .filter((p) => isStalledProject(p, prefs.projectStaleDays))
-      .map((p) => ({ name: p.short_name || p.title || p.slug, slug: p.slug, days: daysSince(projectMovedAt(p)) }))
+      .map((p) => ({ name: projectShortLabel(p), slug: p.slug, days: daysSince(projectMovedAt(p)) }))
       .sort((a, b) => b.days - a.days)
   }, [projectsQuery.data, prefs.projectStaleDays])
 
@@ -290,7 +291,7 @@ export default function TodayPage() {
       const aDue = t.due_date ?? '9999-12-31'
       const eDue = existing?.due ?? '9999-12-31'
       // Short title: the next-action cue on the rail shows short names too.
-      if (!existing || aDue < eDue) nextByProject.set(t.project_id, { title: t.short_title || t.title, due: t.due_date ?? null })
+      if (!existing || aDue < eDue) nextByProject.set(t.project_id, { title: taskShortLabel(t), due: t.due_date ?? null })
       // Relevance signal A: due today OR overdue.
       if (t.due_date && t.due_date.slice(0, 10) <= today) relevantSlugs.add(t.project_id)
       // Relevance signal B: planned-today (covers strip and between-N slots).
@@ -307,7 +308,7 @@ export default function TodayPage() {
         }
         return {
           slug: p.slug,
-          name: p.short_name || p.title || p.slug,
+          name: projectShortLabel(p),
           nextAction: next ? next.title.slice(0, 80) : null,
           relevantToday: relevantSlugs.has(p.slug),
         }
@@ -767,7 +768,7 @@ export default function TodayPage() {
               {doneTodayDetail.map((t) => (
                 <div key={t.id} className="tk-crow">
                   <CardCheck done onToggle={() => state.uncheck(t.id)} />
-                  <span>{t.short_title || t.title}</span>
+                  <span>{taskShortLabel(t)}</span>
                 </div>
               ))}
               {localDoneIds.map((id) => {
@@ -776,7 +777,7 @@ export default function TodayPage() {
                 return (
                   <div key={id} className="tk-crow">
                     <CardCheck done onToggle={() => state.uncheck(id)} />
-                    <span>{t.short_title || t.title}</span>
+                    <span>{taskShortLabel(t)}</span>
                   </div>
                 )
               })}

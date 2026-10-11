@@ -14,6 +14,7 @@ import { collapseToggleProps } from '../collapseToggleProps'
 import { PATHS } from '../../../constants/paths'
 import type { TaskRow } from '../../../lib/api'
 import TaskTitle from '../../tasks/TaskTitle'
+import { taskShortLabel } from '../../../lib/displayNames'
 
 export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueTasks: TaskRow[]; stalledProjects: Array<{ name: string; days: number; slug?: string }> }) {
   // Session-only collapse — starts expanded on every load (no localStorage).
@@ -43,7 +44,7 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
             return (
               <div key={t.id} className="tk-rli">
                 {/* C13 TaskTitle — surfaces [Carried forward] chip */}
-                <TaskTitle title={t.short_title || t.title} className="tk-t" style={{ display: 'block' }} />
+                <TaskTitle title={taskShortLabel(t)} className="tk-t" style={{ display: 'block' }} />
                 <span className="tk-d tk-o">{Number.isFinite(days) ? `${days}d` : '—'}</span>
               </div>
             )

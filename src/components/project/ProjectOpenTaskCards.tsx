@@ -11,6 +11,7 @@ import { TaskRow as CardTaskRow } from '../today/TaskRow'
 import { useTodayState } from '../../hooks/useTodayState'
 import { isTaskDone } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
+import { projectShortLabel } from '../../lib/displayNames'
 
 type CardProject = { name: string; slug: string; category?: string | null; primary_folder?: string | null }
 
@@ -24,7 +25,7 @@ export function ProjectOpenTaskCards({ tasks, project, onOpenEditor }: {
   const onExpand = useCallback((id: string) => setExpandedId((cur) => (cur === id ? null : id)), [])
   // Short name, same rule as Today (Nick: display short names everywhere).
   const cardProject: CardProject = {
-    name: project.short_name || project.title || project.slug,
+    name: projectShortLabel(project),
     slug: project.slug,
     category: project.category ?? null,
     primary_folder: project.primary_folder ?? null,

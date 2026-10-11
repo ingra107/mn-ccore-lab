@@ -11,6 +11,7 @@ import { usePublications, useMeetingLinkedTasks } from '../hooks/useApiData'
 import TaskTitle from './tasks/TaskTitle'
 import { ICON_PROPS } from '../lib/iconProps'
 import { isTaskDone } from '../lib/taskGrouping'
+import { taskShortLabel } from '../lib/displayNames'
 
 interface Props {
   slug: string
@@ -76,7 +77,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
                         description as a fallback, lifts a [Carried forward]
                         prefix into a chip, and is null-safe by construction. */}
                     <TaskTitle
-                      title={item.short_title || item.title}
+                      title={taskShortLabel(item)}
                       fallback={item.description}
                       maxChars={60}
                       style={{ fontSize: '11px', color: 'var(--ink)', lineHeight: 1.3 }}

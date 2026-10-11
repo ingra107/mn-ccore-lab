@@ -1,3 +1,4 @@
+import { projectShortLabel } from './displayNames'
 // sidebarProjects — the sidebar's "My projects" list (nav redesign, 2026-10-09).
 //
 // Nick's rule: pinned projects first, then projects active in the last two
@@ -48,7 +49,7 @@ export function projectsForSidebar(
   nowMs: number,
 ): SidebarProject[] {
   const bySlug = new Map(projects.map((p) => [p.slug, p]))
-  const name = (p: SidebarProjectInput) => p.short_name || p.title || p.slug
+  const name = (p: SidebarProjectInput) => projectShortLabel(p)
   const pinned: SidebarProject[] = []
   const seen = new Set<string>()
   for (const slug of pinnedSlugs) {

@@ -28,6 +28,7 @@ import type { MilestoneEntry } from '../../lib/taskGrouping'
 import { Face, Faces, CheckGlyph } from '../today/skin'
 import TaskTitle from './TaskTitle'
 import type { CardTaskRowProps } from './TaskRow'
+import { taskShortLabel } from '../../lib/displayNames'
 
 // The complete control on a card (.tk-ck). Same contract as DoneBox: the square
 // is COMPLETE, everywhere. `done-box` keeps the invisible 24px+ hit area.
@@ -87,7 +88,7 @@ function CardDuePill({ due, status }: { due: string; status?: string }) {
   )
 }
 
-function CardProjectLine({ project }: { project: { name: string; slug: string } | null }) {
+function CardProjectLine({ project }: { project: { name: string; slug: string; fullTitle?: string } | null }) {
   if (!project) return <span className="tk-cs">No project</span>
   return (
     <span className="tk-cs">
@@ -95,6 +96,7 @@ function CardProjectLine({ project }: { project: { name: string; slug: string } 
         to={PATHS.project(project.slug)}
         onClick={(e) => e.stopPropagation()}
         aria-label={`Open ${project.name}`}
+        title={project.fullTitle}
       >
         {project.name}
       </Link>
@@ -116,7 +118,7 @@ export function CardRow(props: CardTaskRowProps) {
   const activityRow = !isDone && !isNewToViewer ? unseen?.tasks.get(task.id) : undefined
 
   const urgent = !isDone && task.priority === 'urgent'
-  const displayTitle = task.short_title || task.title
+  const displayTitle = taskShortLabel(task)
   const others = [task.assigned_by, ...(task.watchers ? task.watchers.split(',').map((w) => w.trim()) : [])]
     // assigned_by is often stored as an email, assignee as a slug: compare slugs.
     .map((s) => (s && s.includes('@') ? slugForEmail(s) : s))
@@ -281,13 +283,14 @@ export function MilestoneCardRow(props: CardTaskRowProps) {
       >
         <span aria-hidden="true" className="tk-dia">{isInternal ? '◇' : '◆'}</span>
         <span className="sr-only">Milestone</span>
-        <span className="tk-mt2" style={{ textDecoration: isDone ? 'line-through' : 'none' }}>{task.short_title || task.title}</span>
+        <span className="tk-mt2" style={{ textDecoration: isDone ? 'line-through' : 'none' }}>{taskShortLabel(task)}</span>
         <span aria-hidden="true" className="tk-lead" />
         {project && (
           <Link
             to={PATHS.project(project.slug)}
             onClick={(e) => e.stopPropagation()}
             aria-label={`Open ${project.name}`}
+            title={project.fullTitle}
             className="tk-cs"
             style={{ margin: 0, flexShrink: 0, maxWidth: 160 }}
           >

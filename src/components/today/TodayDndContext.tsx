@@ -46,6 +46,7 @@ import type { PlannedSlot } from './constants'
 import type { TaskRow } from '../../lib/api'
 import { ACCENT_GOLD, INK, withAlpha } from './constants'
 import { pxToMin, TIMELINE_TASK_BLOCKS } from './timelineModel'
+import { taskShortLabel } from '../../lib/displayNames'
 
 // ── Data types carried on active.data.current ──────────────────────────────
 
@@ -65,7 +66,7 @@ function TaskDragGhost({ active }: { active: Active | null }) {
   if (!active) return null
   const data = active.data.current as TaskDragData | undefined
   if (!data) return null
-  const label = data.task.short_title || data.task.title
+  const label = taskShortLabel(data.task)
   return (
     <div
       style={{

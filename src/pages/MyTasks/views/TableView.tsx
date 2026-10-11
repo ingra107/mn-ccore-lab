@@ -42,6 +42,7 @@ import WorkOnActions from '../../../components/WorkOnActions'
 import type { TaskRow } from '../../../lib/api'
 import { isMilestone } from '../../../../shared/taskKinds'
 import { getPersonInfo } from '../../../data/team'
+import { taskShortLabel } from '../../../lib/displayNames'
 
 type SortKey = 'title' | 'project' | 'due' | 'priority' | 'status' | 'owner'
 type SortDir = 'asc' | 'desc'
@@ -80,7 +81,7 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
         case 'owner': return t.assignee ? getPersonInfo(t.assignee).name.toLowerCase() : null
         case 'due': return t.due_date ? t.due_date.slice(0, 10) : null
         case 'project': return t.project_id ? (projectsByPid.get(t.project_id)?.name ?? t.project_id).toLowerCase() : null
-        default: return (t.short_title || t.title || '').toLowerCase()
+        default: return taskShortLabel(t).toLowerCase()
       }
     }
     return [...unsorted].sort((a, b) => {
@@ -356,7 +357,7 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
             e.stopPropagation(); onDouble()
           }}
           style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }}
-        >{isMilestone(task) && <span aria-hidden="true" style={{ color: 'var(--task-accent-gold)', marginRight: 2 }}>◆</span>}{task.short_title || task.title}</span>
+        >{isMilestone(task) && <span aria-hidden="true" style={{ color: 'var(--task-accent-gold)', marginRight: 2 }}>◆</span>}{taskShortLabel(task)}</span>
         {isNew && <AttentionChip kind="new" />}
         {!isNew && newActivity > 0 && <AttentionChip kind="activity" count={newActivity} />}
         {task.group_override && <span title={`Moved manually (${task.group_override})`} style={{ display: 'inline-flex', alignItems: 'center', color: ACCENT_TEAL, flexShrink: 0 }}><MapPin {...ICON_PROPS} size={11} /></span>}

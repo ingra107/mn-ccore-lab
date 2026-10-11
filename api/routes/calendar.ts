@@ -28,13 +28,16 @@ export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: strin
     // possible).
     env.DB.prepare('SELECT DISTINCT id, date, title, type, (owner_slug IS ?) AS mine FROM meetings WHERE date >= ? AND date <= ? ORDER BY date, mine DESC, id')
       .bind(viewerSlug, startDate, endDate).all<{ id: string; date: string; title: string; type: string }>(),
-    env.DB.prepare(`SELECT t.id, t.title, t.description, t.due_date, t.assignee, t.status, t.priority FROM tasks t WHERE t.due_date IS NOT NULL AND t.due_date >= ? AND t.due_date <= ? AND t.completed = 0 AND t.deleted_at IS NULL AND t.assignee = ? ORDER BY t.due_date`)
-      .bind(startDate, endDate, viewerSlug).all<{ id: string; title: string; description: string; due_date: string; assignee: string; status: string; priority: string }>(),
+    env.DB.prepare(`SELECT t.id, t.title, t.short_title, t.description, t.due_date, t.assignee, t.status, t.priority FROM tasks t WHERE t.due_date IS NOT NULL AND t.due_date >= ? AND t.due_date <= ? AND t.completed = 0 AND t.deleted_at IS NULL AND t.assignee = ? ORDER BY t.due_date`)
+      .bind(startDate, endDate, viewerSlug).all<{ id: string; title: string; short_title: string | null; description: string; due_date: string; assignee: string; status: string; priority: string }>(),
     env.DB.prepare('SELECT m.id, m.title, m.target_date, m.status, g.mechanism, g.title as grant_title FROM milestones m LEFT JOIN grants g ON m.grant_id = g.id WHERE m.target_date >= ? AND m.target_date <= ? ORDER BY m.target_date')
       .bind(startDate, endDate).all<{ id: string; title: string; target_date: string; status: string; mechanism: string | null; grant_title: string | null }>(),
   ]);
 
-  const events: { id: string; date: string; title: string; type: string; category: string; meta?: Record<string, unknown> }[] = [];
+  // `title` stays the FULL title (the dedup key below and the client's
+  // production-visibility filter read it); `short_title` is what the page
+  // shows, through src/lib/displayNames.ts taskShortLabel (eval item 34).
+  const events: { id: string; date: string; title: string; short_title?: string | null; type: string; category: string; meta?: Record<string, unknown> }[] = [];
 
   // Meetings
   for (const m of meetings.results || []) {
@@ -47,6 +50,7 @@ export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: strin
       id: t.id,
       date: t.due_date,
       title: t.title || t.description,
+      short_title: t.short_title || null,
       type: 'task',
       category: t.priority,
       meta: { assignee: t.assignee, status: t.status },

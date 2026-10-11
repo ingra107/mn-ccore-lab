@@ -642,7 +642,10 @@ export function voteIdea(id: string) {
 export interface CalendarEvent {
   id: string
   date: string
+  /** Full title. Display goes through displayNames.taskShortLabel. */
   title: string
+  /** Task rows only: the curated short title (api/routes/calendar.ts). */
+  short_title?: string | null
   type: string // meeting, task, milestone
   category: string
   meta?: Record<string, unknown>

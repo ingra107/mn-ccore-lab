@@ -40,6 +40,7 @@ import { useAllProjectsOn } from '../lib/allProjects'
 import { useAuth } from '../hooks/useAuth'
 import { useProjectPins } from '../hooks/useProjectPins'
 import { STATUS_LIST_OPTIONS, stageListOptions, mutedCategoryOptions, LIST_T2, LIST_T3 } from '../lib/projectListOptions'
+import { projectShortLabel } from '../lib/displayNames'
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
@@ -1038,7 +1039,7 @@ export default function Projects() {
                               className="pj-wk"
                             >
                               {project.primary_folder && (
-                                <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.short_name || project.title} variant="slot" />
+                                <WorkOnActions primaryFolder={project.primary_folder} projectLabel={projectShortLabel(project)} variant="slot" />
                               )}
                             </div>
                           </div>
@@ -1146,7 +1147,7 @@ export default function Projects() {
                                     onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
                                     onMouseDown={(e) => e.stopPropagation()}
                                   >
-                                    <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.short_name || project.title} variant="slot" />
+                                    <WorkOnActions primaryFolder={project.primary_folder} projectLabel={projectShortLabel(project)} variant="slot" />
                                   </div>
                                 )}
                               </div>

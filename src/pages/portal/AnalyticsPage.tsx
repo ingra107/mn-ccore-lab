@@ -19,6 +19,7 @@ import { PRIORITY_COLORS, isProjectActive } from '../../lib/taskConstants'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import DueLabel from '../../components/DueLabel'
+import { taskShortLabel } from '../../lib/displayNames'
 
 // D1 lowercase stage value → display label.
 const STAGE_DISPLAY: Record<string, string> = {
@@ -471,7 +472,7 @@ export default function AnalyticsPage() {
             {tasks.filter(t => !isTaskDone(t) && t.due_date && isOverdue(t.due_date, t.status)).slice(0, 5).map(t => (
               <div key={t.id} className="flex items-center gap-2 text-xs" style={{ color: 'var(--ink)' }}>
                 <Circle {...ICON_PROPS} size={10} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
-                <span className="truncate">{t.short_title || t.title}</span>
+                <span className="truncate">{taskShortLabel(t)}</span>
                 {t.due_date && <DueLabel due={t.due_date} status={t.status} style={{ fontSize: '10px', flexShrink: 0 }} />}
               </div>
             ))}

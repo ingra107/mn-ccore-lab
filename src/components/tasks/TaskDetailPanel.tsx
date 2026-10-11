@@ -61,6 +61,7 @@ import { askHermesOnTask, hermesOutcomeToast } from '../../lib/askHermes'
 import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
 import { Brain } from 'lucide-react'
+import { taskShortLabel } from '../../lib/displayNames'
 
 type Tab = 'overview' | 'intelligence' | 'activity' | 'files' | 'details'
 
@@ -287,7 +288,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   // the pending server call — nothing ever hits D1.
   const handleDeleteTask = () => {
     const id = task.id
-    const label = task.short_title || task.title || task.description || 'task'
+    const label = taskShortLabel(task) || 'task'
 
     // Snapshot every ['tasks'] cache so undo is exact.
     const snapshots = qc.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
