@@ -64,6 +64,14 @@ function dueWords(due: string, overdue: boolean): string {
   return `${WEEKDAYS[target.getDay()]} ${formatShortDate(due)}`
 }
 
+// Box widths of the title-tail controls (.tk-hov: 2px margin + 3px padding
+// each side + 12px icon; .tk-grip: 3px padding each side + 12px icon).
+const TAIL_PLAN_W = 20
+const TAIL_GRIP_W = 18
+// Empty room right of the title column that the tail may overhang into: the
+// .tk-tch gap (10px) + .tk-tr-r margin-left (4px). Only the excess is reserved.
+const TAIL_GUTTER = 14
+
 function CardDuePill({ due, status }: { due: string; status?: string }) {
   const dueDay = due.slice(0, 10)
   const overdue = isOverdue(due, status)
@@ -168,6 +176,18 @@ export function CardRow(props: CardTaskRowProps) {
     </span>
   ) : null
 
+  // The plan pin and grip sit right after the title text but are hidden until
+  // hover (always shown on touch). In the text flow they wrapped onto a line of
+  // their own whenever the title nearly filled its last line, so an invisible
+  // pin left an empty second line in the card (site audit 2026-10-10, "CLIF 3.0
+  // baseline + acute dists"). Now they live in a zero-width tail that overhangs
+  // into a strip reserved on the title's right edge: they take no line room, so
+  // they can never push the text onto another line, and where they appear is
+  // room nothing else uses: first the gutter beside the title column, then
+  // padding for whatever does not fit there.
+  const tailW = (planBtn ? TAIL_PLAN_W : 0) + (grip ? TAIL_GRIP_W : 0)
+  const tailReserve = Math.max(0, tailW - TAIL_GUTTER)
+
   const plannedName = plannedLabel ? plannedLabel.charAt(0).toUpperCase() + plannedLabel.slice(1) : 'Planned'
   const plannedPill = isPlanned && !isDone ? (
     onTogglePlan ? (
@@ -213,7 +233,7 @@ export function CardRow(props: CardTaskRowProps) {
       >
         <CardCheck done={isDone} onToggle={onToggleDone} />
         <div className="tk-hdr">
-          <div className="tk-ct">
+          <div className="tk-ct" style={tailReserve > 0 ? { paddingRight: tailReserve } : undefined}>
             {urgent && <span className="sr-only">Urgent: </span>}
             {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
             {titleNode}
@@ -229,8 +249,7 @@ export function CardRow(props: CardTaskRowProps) {
               </span>
             )}
             {urgent && <span className="tk-tag tk-urgtag" aria-hidden="true">Urgent</span>}
-            {planBtn}
-            {grip}
+            {tailW > 0 && <span className="tk-tail">{planBtn}{grip}</span>}
           </div>
           <div className="tk-ctx">
             <CardProjectLine project={project} />

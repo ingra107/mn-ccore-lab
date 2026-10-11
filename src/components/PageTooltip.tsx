@@ -9,7 +9,9 @@ interface PageTooltipProps {
   id: string
   /** Tooltip text */
   text: string
-  /** Delay before showing (ms) */
+  /** Delay before showing (ms). 0 by default: the hint takes room in the page
+   *  flow, so showing it late would shove the content under the reader's
+   *  pointer down a line after they started reading. */
   delay?: number
 }
 
@@ -29,7 +31,7 @@ export function dismissPageTooltip(id: string): void {
   }
 }
 
-export default function PageTooltip({ id, text, delay = 1500 }: PageTooltipProps) {
+export default function PageTooltip({ id, text, delay = 0 }: PageTooltipProps) {
   const [visible, setVisible] = useState(false)
   const storageKey = STORAGE_PREFIX + id
 
@@ -68,15 +70,23 @@ export default function PageTooltip({ id, text, delay = 1500 }: PageTooltipProps
   return (
     <AnimatePresence>
       {visible && (
-        // Scale + y transform only — keep opacity at 1 throughout so axe
-        // doesn't catch the tooltip mid-animation (false-positive contrast
-        // fail: partially-transparent --ink bg over page bg). r7 2026-04-22.
+        // The hint is a line IN the page flow, on the content band: it sits
+        // where the caller places it, inside the band's edges, and takes its
+        // own room, so it can never cover content. It used to fall wherever
+        // the caller's flow ended, which on Meetings was outside the band and
+        // over the bottom of the meeting list (site audit 2026-10-10). Render
+        // it as a direct child of a full-width page column, not inside
+        // another band container (the margins would apply twice).
+        <div className="band-anchored-wide" style={{ flexShrink: 0, paddingBottom: 8 }}>
+        {/* Scale + y transform only — keep opacity at 1 throughout so axe
+            doesn't catch the tooltip mid-animation (false-positive contrast
+            fail: partially-transparent --ink bg over page bg). r7 2026-04-22. */}
         <motion.div
           initial={{ y: 4, scale: 0.97 }}
           animate={{ y: 0, scale: 1 }}
           exit={{ y: 4, scale: 0.97 }}
           transition={spring.snappy}
-          className="flex items-center gap-2 page-tooltip"
+          className="inline-flex items-center gap-2 page-tooltip"
           style={{
             padding: '6px 12px',
             borderRadius: 'var(--radius-lg)',
@@ -97,6 +107,7 @@ export default function PageTooltip({ id, text, delay = 1500 }: PageTooltipProps
             <X {...ICON_PROPS} size={14} />
           </button>
         </motion.div>
+        </div>
       )}
     </AnimatePresence>
   )

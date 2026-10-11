@@ -124,8 +124,15 @@ function DueChip({ due, status }: { due: string; status?: string }) {
 // editor, both inline drawers, and now TaskRowActions. Corrected rather than
 // left in place: a comment naming a control that does not exist is what a
 // future reader would design against.
-function ProjectTag({ project }: { project: { name: string; slug: string; fullTitle?: string } | null }) {
+function ProjectTag({ project, shrink = false }: { project: { name: string; slug: string; fullTitle?: string } | null; shrink?: boolean }) {
   if (!project) return null
+  // shrink: the narrow-rail line, where the name gives way to the due label.
+  // A Link is inline, and an inline box ignores max-width/ellipsis outside a
+  // flex parent, so it is a block here; minWidth 0 lets it shrink below its
+  // text so the ellipsis shows instead of a hard cut at the column edge.
+  const size = shrink
+    ? { flex: '0 1 auto', minWidth: 0, display: 'block' }
+    : { flexShrink: 0, maxWidth: 180 }
   return (
     // Teal color + hover-underline (.link-affordance) make the link self-evident —
     // no "Jump to X" tooltip needed (Nick 2026-07-09). aria-label keeps the
@@ -134,9 +141,10 @@ function ProjectTag({ project }: { project: { name: string; slug: string; fullTi
       to={PATHS.project(project.slug)}
       onClick={(e) => e.stopPropagation()}
       aria-label={`Open ${project.name}`}
-      title={project.fullTitle}
+      // A shrunk name is often cut, so its hover tip always carries the name.
+      title={project.fullTitle ?? (shrink ? project.name : undefined)}
       className="link-affordance"
-      style={{ fontSize: 11, color: 'var(--sk-t3)', flexShrink: 0, whiteSpace: 'nowrap', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}
+      style={{ fontSize: 11, color: 'var(--sk-t3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', ...size }}
     >
       {project.name}
     </Link>
@@ -605,6 +613,15 @@ function StandardRow(props: SharedTaskRowProps) {
       {rowActions}
     </>
   )
+  // Stacked rows split rightMeta: project + due get their own fixed line, the
+  // rest (planned chip, surface chips, row actions) wrap on the line below.
+  const stackChips = (isPlanned && !isDone) || extraMeta || rowActions ? (
+    <>
+      {isPlanned && !isDone && <PlannedChip label={plannedLabel} onUnplan={onTogglePlan} />}
+      {extraMeta}
+      {rowActions}
+    </>
+  ) : null
 
   return (
     <div
@@ -660,9 +677,26 @@ function StandardRow(props: SharedTaskRowProps) {
               {planBtn && <span style={{ marginLeft: 4, whiteSpace: 'nowrap' }}>{planBtn}</span>}
               <DragHandle show={hover && !isDone} draggable={draggable} onDragStart={onDragStart} />
             </span>
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-              {rightMeta}
-            </div>
+            {/* Narrow-rail context line: project left, due label pinned right.
+                It never wraps, so the due label holds one place on every card
+                and only the project name gives way (ellipsis). Wrapping let a
+                long project push the due label onto a line of its own, at a
+                different spot per card (site audit 2026-10-10, 196px Columns). */}
+            {(project || (task.due_date && !isDone)) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                <ProjectTag project={project} shrink />
+                {task.due_date && !isDone && (
+                  <span style={{ marginLeft: 'auto', flexShrink: 0, display: 'inline-flex' }}>
+                    <DueChip due={task.due_date} status={task.status} />
+                  </span>
+                )}
+              </div>
+            )}
+            {stackChips && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+                {stackChips}
+              </div>
+            )}
             {belowTitle}
           </div>
         ) : (

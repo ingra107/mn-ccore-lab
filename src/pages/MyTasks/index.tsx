@@ -36,7 +36,7 @@ import { useSelection } from './hooks/useSelection'
 import { useOpenParam } from '../../hooks/useOpenParam'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import {
-  readPlannedToday, isTaskDone,
+  readPlannedToday, isTaskDone, parseViewMode,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from './constants'
 import { localDateKey } from '../../lib/dateUtils'
@@ -59,12 +59,7 @@ export default function UnifiedMyTasks() {
   // persisted choice can't override the cold-load default.
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const initialView: ViewMode = (() => {
-    const fromUrl = searchParams.get('view') as ViewMode | null
-    if (fromUrl === 'columns' || fromUrl === 'lanes' || fromUrl === 'list' || fromUrl === 'table' || fromUrl === 'board') return fromUrl
-    return 'list'
-  })()
-  const [view, setView] = useState<ViewMode>(initialView)
+  const [view, setView] = useState<ViewMode>(() => parseViewMode(searchParams.get('view')))
 
   // N1.14 — Columns is desktop kanban (5 fixed-width columns = ~1360px of
   // blind horizontal panning at phone widths). Below 768 it renders as List
@@ -138,9 +133,7 @@ export default function UnifiedMyTasks() {
     const p = new URLSearchParams(q)
     setSearch(p.get('q') ?? '')
     setQuickView((p.get('filter') as QuickViewKey | null) ?? 'all')
-    const v = p.get('view') as ViewMode | null
-    if (v === 'columns' || v === 'lanes' || v === 'list' || v === 'table') setView(v)
-    else setView('list')
+    setView(parseViewMode(p.get('view')))
     setFilter({
       priority: p.get('priority'),
       project: p.get('project'),

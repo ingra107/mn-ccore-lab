@@ -884,6 +884,11 @@ export default function Meetings() {
         </div>
       </div>
 
+      {/* First-visit hint, on the band directly above the list it points at.
+          In the page column it takes its own line, so it never covers the
+          list (it used to sit after the split, outside the band). */}
+      <PageTooltip id="meetings-prep-hint" text="Click a meeting for prep and actions" />
+
       {/* M-03: 240px list, M-28: minHeight 400px, M-34: mobile-detail class.
           .band-anchored-wide puts the split on the header's band (left edge
           = the header's, capped at --page-width), so it lines up with the
@@ -1014,8 +1019,6 @@ export default function Meetings() {
           )}
         </div>
       </div>
-
-      <PageTooltip id="meetings-prep-hint" text="Click a meeting for prep and actions" />
 
       <style>{`
         .dark .action-item-card {

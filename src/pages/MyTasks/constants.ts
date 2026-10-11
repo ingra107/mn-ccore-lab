@@ -24,7 +24,15 @@ import { dueLabelCompact, isOverdue } from '../../lib/dateUtils'
 // Types
 // ──────────────────────────────────────────────────────────────────────────
 
-export type ViewMode = 'columns' | 'lanes' | 'list' | 'table' | 'board'
+export const VIEW_MODES = ['columns', 'lanes', 'list', 'table', 'board'] as const
+export type ViewMode = typeof VIEW_MODES[number]
+
+/** The one reader of a `?view=` value (cold load AND saved-view restore).
+ *  Two hand-listed copies drifted: restore omitted 'board', so a saved Board
+ *  view reopened as List. List is the default, so the URL omits it. */
+export function parseViewMode(raw: string | null | undefined): ViewMode {
+  return (VIEW_MODES as readonly string[]).includes(raw ?? '') ? raw as ViewMode : 'list'
+}
 export type QuickViewKey = 'all' | 'new' | 'today' | 'planned' | 'done-today' | 'overdue' | 'waiting' | 'stale' | 'declined'
 
 export interface GroupMeta { icon: string; label: string; color: string; desc: string }

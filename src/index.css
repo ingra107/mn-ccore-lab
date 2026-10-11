@@ -2672,6 +2672,11 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-grip{visibility:hidden;color:var(--sk-t3);cursor:grab;padding:2px 3px;vertical-align:-1px}
 .tk .tk-tch:hover .tk-hov,.tk .tk-tch:hover .tk-grip,.tk .tk-prh:hover .tk-grip,.tk .tk-prh:hover .tk-hovv{visibility:visible}
 .tk .tk-hovv{visibility:hidden}
+/* Title tail (plan pin + grip): zero width in the line, so a hidden control can
+   never wrap the title onto an empty line; its controls overhang into the
+   gutter beside the title column plus the padding-right CardRow reserves on
+   .tk-ct for the rest of their width. */
+.tk .tk-tail{display:inline-block;width:0;white-space:nowrap;vertical-align:baseline}
 .tk .tk-caret{color:var(--sk-t3);font-size:11px;width:12px;text-align:center}
 .tk .tk-x{color:var(--sk-t3);padding:0 4px;font-size:14px;line-height:1}
 .tk .tk-x:hover{color:var(--sk-t1)}
