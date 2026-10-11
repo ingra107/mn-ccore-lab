@@ -43,9 +43,16 @@ describe('v124 catalog: kinds and ladders are seeded data', () => {
     const db = prodSchemaDb()
     const ladder = (k: string) => (db.prepare('SELECT stage FROM product_stages WHERE kind = ? ORDER BY ordinal').all(k) as { stage: string }[]).map((r) => r.stage)
     expect(ladder('grant_application')).toEqual(['preparing', 'submitted', 'scored', 'funded', 'not_funded'])
-    expect(ladder('trial_ops')).toEqual(['start_up', 'enrolling', 'follow_up', 'closeout'])
+    expect(ladder('award')).toEqual(['active', 'no_cost_extension', 'closeout', 'closed'])
+    expect(ladder('trial_ops')).toEqual(['start_up', 'enrolling', 'follow_up', 'closeout', 'closed'])
     expect(ladder('infrastructure')).toEqual(['planning', 'building', 'running', 'retired'])
     expect(ladder('manuscript')).toEqual(['idea', 'data_collection', 'data_analysis', 'writing', 'submitted', 'revisions', 'accepted', 'published'])
+  })
+  it('award and trial_ops end at closed; closeout is not terminal (Nick, build rulings)', () => {
+    const db = prodSchemaDb()
+    const terminal = (k: string) => (db.prepare('SELECT stage FROM product_stages WHERE kind = ? AND is_terminal = 1 ORDER BY ordinal').all(k) as { stage: string }[]).map((r) => r.stage)
+    expect(terminal('award')).toEqual(['closed'])
+    expect(terminal('trial_ops')).toEqual(['closed'])
   })
 })
 
@@ -166,7 +173,7 @@ describe('v124 grew_from: acyclic and inside one umbrella (Level 1, rank + compo
   })
 })
 
-describe('v124 product_funding: only a fund-capable kind funds (Level 1)', () => {
+describe('v124 product_funding: only an award funds, never an application (Level 1)', () => {
   const setup = () => {
     const db = world()
     product(db, 'prd_paper', 'proj_A')
@@ -229,6 +236,14 @@ describe('v124 tasks.product_id: same project as the task (Level 2 trigger)', ()
     refuses(() => db.prepare("UPDATE tasks SET project_id = NULL WHERE id = 'task_1'").run(), /task_product_project_mismatch/)
     db.prepare("UPDATE tasks SET project_id = 'proj_B', product_id = 'prd_b' WHERE id = 'task_1'").run()
     db.prepare("UPDATE tasks SET project_id = NULL, product_id = NULL WHERE id = 'task_1'").run()
+  })
+  it('project soft-delete cascade must clear product_id with project_id (plan step 5 dependency)', () => {
+    const db = setup()
+    task(db, 'task_1', 'proj_A', 'prd_a')
+    // today's cascade statement (mutations.ts / projects.ts) is refused once a task has a product
+    refuses(() => db.prepare("UPDATE tasks SET project_id = NULL, updated_at = datetime('now') WHERE project_id = 'proj_A' AND deleted_at IS NULL").run(), /task_product_project_mismatch/)
+    db.prepare("UPDATE tasks SET project_id = NULL, product_id = NULL, updated_at = datetime('now') WHERE project_id = 'proj_A' AND deleted_at IS NULL").run()
+    expect(db.prepare("SELECT project_id, product_id FROM tasks WHERE id = 'task_1'").get()).toEqual({ project_id: null, product_id: null })
   })
   it('refuses a product id that does not exist', () => {
     refuses(() => task(setup(), 'task_1', 'proj_A', 'prd_missing'), /task_product_project_mismatch|FOREIGN KEY/)

@@ -59,10 +59,20 @@
 --     a projects rebuild (cascades project_members, meeting_project_grants,
 --     project_dependencies) and invents a "primary" Nick did not ask for.
 --
--- DEPENDENCY FOR PLAN STEP 5 (not this file): the project soft-delete cascade
--- in mutations.ts and projects.ts sets tasks.project_id = NULL. Once a task
--- carries a product_id, that statement must clear product_id in the same SET,
--- or trg_tasks_product_project_upd refuses the whole project delete.
+-- DEPENDENCIES FOR PLAN STEP 5 (not built here; each is refused by
+-- trg_tasks_product_project_upd until it is done, so it fails loud, never
+-- silently):
+--   1. Project soft-delete cascade. api/routes/mutations.ts (the projects
+--      delete batch, "UPDATE tasks SET project_id = NULL ...", ~line 1218) and
+--      api/routes/projects.ts (the DELETE cascade batch, same statement,
+--      ~line 893) must set product_id = NULL in the SAME SET as project_id.
+--      Otherwise the first task with a product refuses the whole project
+--      delete.
+--   2. Moving a task to another project. Every task patch that changes
+--      project_id (api/routes/tasks.ts PATCH, body.project_id ~line 310; the
+--      tasks update arm of mutations.ts) must clear product_id or set it to a
+--      product of the new project in the SAME patch. A move that leaves the
+--      old product_id is refused.
 --
 -- NOT HERE: the resolver view (the chain defines no view; api/lib/
 -- table-scope.test.ts pins that), mutations.ts acceptance (ALLOWED_TABLES,
@@ -297,9 +307,11 @@ END;
 --   (api/routes/conferences.ts VALID_STATUSES), so the later fold maps 1:1.
 -- grant_application: preparing -> submitted -> scored -> funded / not funded
 --   (Nick); each submission (A0, A1, new A0) is its own product.
--- award: holds the RPPRs after an award. Ladder words are a placeholder for
---   Nick to confirm (he named the kind, not its stages).
--- trial_ops: start-up -> enrolling -> follow-up -> closeout (Nick).
+-- award: holds the RPPRs after an award. Only award has can_fund = 1: an
+--   application never funds (Nick, build rulings 2026-10-11). Ladder: active ->
+--   no-cost extension -> closeout -> closed (Nick).
+-- trial_ops: start-up -> enrolling -> follow-up -> closeout -> closed (Nick;
+--   closeout is not the end, closed is).
 -- infrastructure: planning -> building -> running -> retired (Nick).
 INSERT OR IGNORE INTO product_kinds (kind, label, plural_label, has_page, can_fund, sort_order) VALUES
   ('manuscript',        'Manuscript',              'Manuscripts',        1, 0, 10),
@@ -332,14 +344,16 @@ INSERT OR IGNORE INTO product_stages (kind, stage, label, ordinal, is_terminal) 
   ('grant_application', 'funded',     'Funded',     40, 1),
   ('grant_application', 'not_funded', 'Not funded', 50, 1),
 
-  ('award', 'active',   'Active',   10, 0),
-  ('award', 'closeout', 'Closeout', 20, 0),
-  ('award', 'closed',   'Closed',   30, 1),
+  ('award', 'active',            'Active',            10, 0),
+  ('award', 'no_cost_extension', 'No-cost extension', 20, 0),
+  ('award', 'closeout',          'Closeout',          30, 0),
+  ('award', 'closed',            'Closed',            40, 1),
 
   ('trial_ops', 'start_up',  'Start-up',  10, 0),
   ('trial_ops', 'enrolling', 'Enrolling', 20, 0),
   ('trial_ops', 'follow_up', 'Follow-up', 30, 0),
   ('trial_ops', 'closeout',  'Closeout',  40, 0),
+  ('trial_ops', 'closed',    'Closed',    50, 1),
 
   ('infrastructure', 'planning', 'Planning', 10, 0),
   ('infrastructure', 'building', 'Building', 20, 0),
