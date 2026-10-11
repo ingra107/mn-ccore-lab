@@ -51,6 +51,22 @@ enabled = true
 [env.production.vars]
 HUB_RUNTIME = "worker"
 
+# --- SECRETS the Worker needs BEFORE /api is routed to it (commit 3) ---
+# Derived 2026-10-11: grep for env.[A-Z_]+ over api/, minus the bindings and vars
+# in this file (DB, DB_TEST, FILES, NOTIFICATION_HUB, HUB_RUNTIME). Set each with
+#   wrangler secret put <NAME> --env production   (feed it printf '%s', no newline)
+#   PB_API_KEY            Bearer auth for PB and Apps Script callers
+#   CF_ACCESS_TEAM_DOMAIN Cloudflare Access JWT check
+#   CF_ACCESS_AUD         Cloudflare Access JWT check
+#   TEST_MODE_KEY         guards the X-Test-Mode DB_TEST swap
+#   R2_ACCESS_KEY_ID      presigned R2 URLs
+#   R2_SECRET_ACCESS_KEY  presigned R2 URLs
+#   CF_ACCOUNT_ID         presigned R2 URLs
+#   RESEND_API_KEY        email crons (pulse, digest)
+#   DIGEST_RECIPIENTS     email crons; unset = Nick only
+# `wrangler secret list --env production` returned [] on 2026-10-11: NONE are set
+# on the Worker yet.
+
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "mnccore-lab"
@@ -70,7 +86,8 @@ database_id = "a30fe84d-0891-4035-9358-f7813b5f5807"
 #   Sent through Resend (api/lib/email.ts), same as the daily digest.
 # Daily coordinator digest: every day at 6 AM CT (11:00 UTC during DST)
 #   To activate: wrangler secret put RESEND_API_KEY --env production
-# RESEND_API_KEY and DIGEST_RECIPIENTS must be set on BOTH this Worker and the
+# RESEND_API_KEY and DIGEST_RECIPIENTS are NOT set on this Worker yet (see the secrets
+#   list above); they must be set on BOTH this Worker and the
 #   Pages project mn-ccore-lab (the task-assignment email sends from Pages).
 # All three email kinds go to Nick only until DIGEST_RECIPIENTS is set
 #   (api/lib/email.ts: comma list of addresses, or "all"). A list REPLACES the

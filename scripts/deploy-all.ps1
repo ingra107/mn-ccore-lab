@@ -28,41 +28,27 @@ Write-Host ''
 Write-Host '=== Hub deploy script ===' -ForegroundColor Cyan
 Write-Host ''
 
-# 0. Project identity gate (fail-closed — catches prod D1 slug drift before building)
-Write-Host '[0/3] Project identity gate...' -ForegroundColor Yellow
-python scripts/check-project-identity-gate.py
-if ($LASTEXITCODE -ne 0) {
-    Write-Host 'IDENTITY GATE FAILED - aborting deploy.' -ForegroundColor Red
-    exit 1
-}
-Write-Host '  Identity gate OK.' -ForegroundColor Green
-
-# 1. Build dist (required for Pages; also catches TS errors)
+# 0-1b. Deploy gate: the same `gate:deploy` that deploy:pages:gated and
+#     deploy:worker run (identity, lint:activity-reads, typecheck:api, build,
+#     member page sweep). With -SkipBuild the build step is left out and the
+#     sweep serves the existing dist/, so it sweeps what step 2 deploys.
+Write-Host '[0-1/3] Deploy gate...' -ForegroundColor Yellow
 if (-not $SkipBuild) {
-    Write-Host ''
-    Write-Host '[1/3] Building dist (tsc + vite)...' -ForegroundColor Yellow
-    npm run build
+    npm run gate:deploy
     if ($LASTEXITCODE -ne 0) {
-        Write-Host 'BUILD FAILED - aborting deploy.' -ForegroundColor Red
+        Write-Host 'DEPLOY GATE FAILED - aborting deploy.' -ForegroundColor Red
         exit 1
     }
-    Write-Host '  Build OK.' -ForegroundColor Green
 } else {
-    Write-Host ''
-    Write-Host '[1/3] Skipping build (-SkipBuild).' -ForegroundColor DarkGray
+    foreach ($step in @('predeploy:identity', 'lint:activity-reads', 'typecheck:api', 'test:journeys:sweep:gate')) {
+        npm run $step
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "DEPLOY GATE FAILED at $step - aborting deploy." -ForegroundColor Red
+            exit 1
+        }
+    }
 }
-
-# 1b. Member page sweep (same gate as deploy:pages:gated; own ports + own local D1).
-#     It serves dist/ with vite preview, so with -SkipBuild it sweeps the same
-#     dist/ that step 2 deploys, never newer source.
-Write-Host ''
-Write-Host '[1b/3] Member page sweep...' -ForegroundColor Yellow
-npm run test:journeys:sweep:gate
-if ($LASTEXITCODE -ne 0) {
-    Write-Host 'MEMBER PAGE SWEEP FAILED - aborting deploy.' -ForegroundColor Red
-    exit 1
-}
-Write-Host '  Sweep OK.' -ForegroundColor Green
+Write-Host '  Gate OK.' -ForegroundColor Green
 
 # 2. Pages deploy (frontend + bundled /api Functions Worker)
 Write-Host ''

@@ -278,7 +278,7 @@ fi
 # Worker type-check gate (backlog #966, 2026-07-30). `check-api-types.mjs`
 # (backlog #501b-class check, authored 2026-07-22 for the #98 incident: a
 # `{ slug } | { error }` union access shipped as a plain TS2339 and 500'd on
-# every request in prod) was wired ONLY into `deploy:pages:gated` -- so a
+# every request in prod) was wired ONLY into `deploy:pages:gated` (it now runs in `gate:deploy`, which every deploy path runs) -- so a
 # broken api/ type could sit on main through any number of commits, caught
 # only the next time someone runs a manual deploy. Neither pre-commit nor CI
 # (.github/workflows/vitest.yml runs test:api/lib/src, never typecheck:api)
