@@ -305,7 +305,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
               </div>
 
               {error && (
-                <div className="mt-3 text-xs px-3 py-2 rounded-md" style={{ background: 'rgba(122,0,25,0.1)', color: 'var(--maroon)' }}>
+                <div className="mt-3 text-xs px-3 py-2 rounded-md" style={{ background: 'color-mix(in srgb, var(--job-danger) 10%, transparent)', color: 'var(--job-danger)' }}>
                   {error}
                 </div>
               )}

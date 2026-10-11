@@ -67,7 +67,9 @@ export default function PulseMetric({
         className="uppercase"
         style={{
           fontFamily: 'var(--font-sans)',
-          color: 'var(--job-brand)',
+          // Gray, not brand gold: a label has no color job (Nick 2026-10-11).
+          // The wordmark and heartbeat keep the kiosk's brand gold.
+          color: 'rgba(245,239,226,0.7)',
           fontWeight: 500,
           fontSize: 'clamp(13px, 1.05vw, 16px)',
           letterSpacing: '0.18em',

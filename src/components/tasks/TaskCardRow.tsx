@@ -308,8 +308,9 @@ export function CardRow(props: CardTaskRowProps) {
   )
 }
 
-// Milestone as a card-skin rule: ◇ internal / ◆ hard in gold, title, a faint
-// leader, project short name, a gold date pill, caret. Same expand contract as
+// Milestone as a card-skin rule: ◇ internal in gray / ◆ hard in gold (Nick
+// 2026-10-11: the internal date is a gray rule, the hard sponsor date gold),
+// title, a faint leader, project short name, a date pill, caret. Same expand contract as
 // the standard milestone row; a slipped internal date dims.
 export function MilestoneCardRow(props: CardTaskRowProps) {
   const { task, project, isDone, isExpanded, onToggleExpand, hideCaret, children, milestoneRole } = props
@@ -345,7 +346,7 @@ export function MilestoneCardRow(props: CardTaskRowProps) {
         )}
         {date && (
           <span
-            className={`tk-pill ${overdue ? 'tk-o' : 'tk-g'}`}
+            className={`tk-pill${overdue ? ' tk-o' : isInternal ? '' : ' tk-g'}`}
             data-tip={`${role === 'hard' ? 'Hard date' : isInternal ? 'Internal date' : 'Date'}: ${date}`}
             aria-label={`${role ?? 'hard'}: ${date}`}
           >

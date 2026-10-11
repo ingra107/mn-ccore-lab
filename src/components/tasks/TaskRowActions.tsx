@@ -110,7 +110,7 @@ function VerbButton({
         borderRadius: 'var(--radius-md)',
         padding: 'var(--sp-xs)',
         cursor: 'pointer',
-        color: danger ? 'var(--maroon)' : 'var(--slate)',
+        color: danger ? 'var(--job-danger)' : 'var(--slate)',
         opacity: 0.85,
         lineHeight: 1,
         flexShrink: 0,

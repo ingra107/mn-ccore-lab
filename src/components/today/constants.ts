@@ -11,7 +11,7 @@ import type { MeetingRow } from '../../hooks/useApiData'
 export {
   type GroupKey,
   GROUP_ORDER,
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN, ACCENT_BLUE,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
   todayKey, daysSince, tagForTask, withAlpha, isTaskDone,
 } from '../../lib/taskGrouping'

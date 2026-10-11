@@ -157,7 +157,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
 
             {/* Situation (required) */}
             <div className="mb-3">
-              <label style={labelStyle}>Situation <span style={{ color: 'var(--maroon)' }}>*</span></label>
+              <label style={labelStyle}>Situation <span style={{ color: 'var(--job-danger)' }}>*</span></label>
               <textarea
                 value={situation}
                 onChange={(e) => setSituation(e.target.value)}

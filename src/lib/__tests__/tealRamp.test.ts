@@ -6,10 +6,10 @@ import { stageRampStep } from '../stageNormalize'
 import { GRANT_BAR_FILL, GRANT_BAR_TOP, GRANT_BAR_LIT } from '../grantBar'
 
 describe('tealRamp', () => {
-  it('runs from the dim end (0) to the full accent (1)', () => {
-    expect(tealRamp(0)).toBe('color-mix(in srgb, var(--sk-ac) 0%, var(--sk-ramp-dim))')
-    expect(tealRamp(0.5)).toBe('color-mix(in srgb, var(--sk-ac) 50%, var(--sk-ramp-dim))')
-    expect(tealRamp(1)).toBe('color-mix(in srgb, var(--sk-ac) 100%, var(--sk-ramp-dim))')
+  it('runs from the dim end (0) to the bright end (1)', () => {
+    expect(tealRamp(0)).toBe('color-mix(in srgb, var(--sk-ramp-hi) 0%, var(--sk-ramp-dim))')
+    expect(tealRamp(0.5)).toBe('color-mix(in srgb, var(--sk-ramp-hi) 50%, var(--sk-ramp-dim))')
+    expect(tealRamp(1)).toBe('color-mix(in srgb, var(--sk-ramp-hi) 100%, var(--sk-ramp-dim))')
   })
 
   it('clamps out-of-range and non-finite input instead of emitting a broken color', () => {
@@ -18,7 +18,7 @@ describe('tealRamp', () => {
     expect(tealRamp(Number.NaN)).toBe(tealRamp(1))
   })
 
-  it('spaces n stages evenly, and a lone stage is the full accent', () => {
+  it('spaces n stages evenly, and a lone stage is the bright end', () => {
     expect([0, 1, 2].map((i) => rampStep(i, 3))).toEqual([0, 0.5, 1])
     expect(rampStep(0, 1)).toBe(1)
   })

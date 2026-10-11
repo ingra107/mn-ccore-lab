@@ -53,7 +53,7 @@ import { isHermesPending } from '../hermesPendingUtil'
 import { LifecycleActivityLine } from './LifecycleActivityLine'
 import ReactionBar from '../ReactionBar'
 import type { StoredKind, UpdateType } from '../../../shared/activityKinds'
-import { ACCENT_CORAL, withAlpha } from '../../lib/taskGrouping'
+import { withAlpha } from '../../lib/taskGrouping'
 // canDeleteActivityEntry moved to ./activityPermissions.ts (2026-07-16 lint
 // burndown, #174) — this file's react-refresh contract is components-only;
 // that predicate was the sole non-component export besides UPDATE_TYPE_CONFIG
@@ -412,10 +412,10 @@ export function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
         flexShrink: 0,
         gap: 3,
         visibility: armed ? 'visible' : undefined,
-        background: armed ? withAlpha(ACCENT_CORAL, 12) : 'transparent',
-        border: armed ? `1px solid ${withAlpha(ACCENT_CORAL, 55)}` : 'none',
+        background: armed ? withAlpha('var(--job-danger)', 12) : 'transparent',
+        border: armed ? `1px solid ${withAlpha('var(--job-danger)', 55)}` : 'none',
         borderRadius: 'var(--radius-sm)',
-        color: armed ? ACCENT_CORAL : 'var(--slate)',
+        color: armed ? 'var(--job-danger)' : 'var(--slate)',
         opacity: armed ? 1 : 0.45,
         padding: armed ? '0 6px 0 4px' : 0,
         fontSize: 10,
@@ -423,7 +423,7 @@ export function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
         fontStyle: 'normal',
         lineHeight: 1,
         whiteSpace: 'nowrap',
-        '--hov-color': ACCENT_CORAL,
+        '--hov-color': 'var(--job-danger)',
       } as React.CSSProperties}
     >
       <Trash2 size={11} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />

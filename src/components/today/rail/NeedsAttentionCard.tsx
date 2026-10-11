@@ -1,7 +1,8 @@
 // NeedsAttentionCard — overdue tasks + stalled projects, top 5 of each.
 //
 // Look (Today reskin, 2026-10-09): a panel; two small sub-heads, overdue days
-// in maroon (the one color that means "late"), stalled days in the muted tier.
+// in maroon (the one color that means "late"), stalled days in orange (going
+// stale is orange's one job, principle 21).
 // A stalled project is a real link to its page and shows by short name.
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Attention).
@@ -64,7 +65,7 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
               {s.slug
                 ? <Link to={PATHS.project(s.slug)} className="tk-t" style={{ color: 'inherit', textDecoration: 'none' }}>{s.name}</Link>
                 : <span className="tk-t">{s.name}</span>}
-              <span className="tk-d">{Number.isFinite(s.days) ? `${s.days}d` : '—'}</span>
+              <span className="tk-d" style={{ color: 'var(--job-stale)' }}>{Number.isFinite(s.days) ? `${s.days}d` : '—'}</span>
             </div>
           ))}
           {stalledExtra > 0 && (

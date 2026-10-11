@@ -57,7 +57,7 @@ export default function Field({ label, required, hint, htmlFor, labelId, childre
           {required && (
             <span
               aria-hidden="true"
-              style={{ color: 'var(--maroon)', marginLeft: 'var(--sp-xs)' }}
+              style={{ color: 'var(--job-danger)', marginLeft: 'var(--sp-xs)' }}
             >
               *
             </span>

@@ -38,7 +38,7 @@ import { useUnseenActivity } from '../../hooks/useEntitySeen'
 import { AttentionChip } from './AttentionChip'
 import TaskTitle from './TaskTitle'
 import { useCompletionRing } from '../../lib/completionMoment'
-import { ACCENT_BLUE, INK, INK_MUTED, withAlpha, type MilestoneRole, type MilestoneEntry } from '../../lib/taskGrouping'
+import { INK, INK_MUTED, withAlpha, type MilestoneRole, type MilestoneEntry } from '../../lib/taskGrouping'
 import { dueLabelCompact, dueTone, isOverdue } from '../../lib/dateUtils'
 import { CardRow, MilestoneCardRow } from './TaskCardRow'
 import type { TaskRow as TaskRowData } from '../../lib/api'
@@ -350,13 +350,14 @@ export function TaskRow(props: SharedTaskRowProps | CardTaskRowProps) {
 // Two-date milestone rendering (Nick 2026-09-17). `milestoneRole` is set by
 // interleaveMilestones on date-ordered lists (Today groups): each rule this
 // milestone expanded into is its own row, positioned by its own date — an
-// 'internal' or 'slipped' role reads blue, a 'hard' role (or no role, on the
-// single-date default) reads gold, exactly like the pre-2026-09-17 row.
+// 'internal' or 'slipped' role reads gray, a 'hard' role (or no role, on the
+// single-date default) reads gold (Nick 2026-10-11: the internal date is a
+// gray rule, the hard sponsor date keeps gold).
 function MilestoneRow(props: SharedTaskRowProps) {
   const { task, project, isDone, isExpanded, onToggleExpand, hideCaret, children, milestoneRole } = props
 
-  const isBlueRole = milestoneRole === 'internal' || milestoneRole === 'slipped'
-  const diamondColor = isBlueRole ? ACCENT_BLUE : 'var(--job-milestone)'
+  const isInternalRole = milestoneRole === 'internal' || milestoneRole === 'slipped'
+  const diamondColor = isInternalRole ? 'var(--sk-t3)' : 'var(--job-milestone)'
   const dimmed = milestoneRole === 'slipped'
   const titleOpacity = dimmed ? 0.6 : 0.85
   const emphasisOpacity = dimmed ? 0.55 : 1
@@ -371,7 +372,7 @@ function MilestoneRow(props: SharedTaskRowProps) {
           <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 17, flexShrink: 0, color: diamondColor, opacity: emphasisOpacity, fontSize: 11, lineHeight: 1 }}>◆</span>
           <span className="sr-only">Milestone</span>
           {/* Title first and project on the right, like a task row (Nick
-              2026-09-16); a faint leader (gold/blue, matching the diamond)
+              2026-09-16); a faint leader (gold/gray, matching the diamond)
               runs between them so the two read as one dated line rather than
               a title and a stray chip. */}
           <span
@@ -432,13 +433,14 @@ function MilestoneChips({ task, role, status }: { task: TaskRowData; role?: Mile
 }
 
 // Milestone chip: the COLOR names the date (Nick 2026-09-17, no word prefix) —
-// gold = hard (coral once missed), blue = internal, dimmed blue = slipped. Same
+// gold = hard (red once missed), gray = internal, dimmed gray = slipped
+// (Nick 2026-10-11). Same
 // compact wording and 6ch box as DueChip. internal/slipped are NEVER coral: a
 // slipped internal date is a miss to notice, not an active overdue item (that
 // is what the paired hard-date chip is for).
 function MilestoneChip({ role, date, status }: { role: MilestoneRole; date: string; status?: string }) {
   const overdue = role === 'hard' && isOverdue(date, status)
-  const color = role === 'hard' ? (overdue ? 'var(--job-overdue)' : 'var(--job-milestone)') : ACCENT_BLUE
+  const color = role === 'hard' ? (overdue ? 'var(--job-overdue)' : 'var(--job-milestone)') : 'var(--sk-t2)'
   const dimmed = role === 'slipped'
   const tip = role === 'hard' ? 'Hard date' : dimmed ? 'Internal date slipped' : 'Internal date'
   return (

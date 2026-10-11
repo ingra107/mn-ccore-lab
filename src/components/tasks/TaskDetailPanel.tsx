@@ -598,7 +598,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               style={{
                 background: 'none',
                 border: '1px solid transparent',
-                color: 'var(--maroon)',
+                color: 'var(--job-danger)',
                 opacity: 0.85,
                 cursor: 'pointer',
                 fontSize: 'var(--text-small)',
@@ -606,8 +606,8 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 padding: '4px 8px',
                 whiteSpace: 'nowrap',
                 '--hov-opacity': '1',
-                '--hov-border': 'var(--maroon)',
-                '--hov-bg': 'color-mix(in srgb, var(--maroon) 7%, transparent)',
+                '--hov-border': 'var(--job-danger)',
+                '--hov-bg': 'color-mix(in srgb, var(--job-danger) 7%, transparent)',
               } as React.CSSProperties}
             >
               <Trash2 size={12} strokeWidth={1.5} absoluteStrokeWidth />

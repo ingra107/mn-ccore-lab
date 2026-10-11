@@ -22,7 +22,7 @@ import { Button } from '../ui/Button'
 import { PATHS } from '../../constants/paths'
 import { Link } from 'react-router-dom'
 import { stripMeetingMarker } from '../../lib/textUtils'
-import { ACCENT_BLUE, INK_DIM, INK_MUTED } from './constants'
+import { INK_DIM, INK_MUTED } from './constants'
 import type { TaskRow } from '../../lib/api'
 
 const OPEN_TASKS_CAP = 8
@@ -81,12 +81,12 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
 
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ padding: '10px 18px 16px', borderTop: '1px solid var(--border-subtle)' }}>
-      {/* Date row — internal (blue dot) + hard (gold dot) dates, both
+      {/* Date row — internal (gray dot) + hard (gold dot) dates, both
           editable (Nick 2026-09-17). Above the action row: these are the
           fields that decide what the collapsed row shows. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8, flexWrap: 'wrap' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: INK_DIM }}>
-          <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT_BLUE, flexShrink: 0 }} />
+          <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--sk-t3)', flexShrink: 0 }} />
           Internal
           <DueInlineSelect title="Internal date" value={task.due_date || ''} onChange={setDueDate} done={isDone} />
         </span>

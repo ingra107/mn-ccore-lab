@@ -99,12 +99,12 @@ export default function LaunchLogPanel() {
     }
   }
 
-  if (err) return <div className="text-sm" style={{ color: 'var(--maroon)' }}>Launches: {err}</div>
+  if (err) return <div className="text-sm" style={{ color: 'var(--job-danger)' }}>Launches: {err}</div>
 
   return (
     <div className="flex flex-col gap-1">
       {refireErr && (
-        <p style={{ fontSize: 'var(--text-label)', color: 'var(--maroon)', margin: 0 }}>
+        <p style={{ fontSize: 'var(--text-label)', color: 'var(--job-danger)', margin: 0 }}>
           Re-fire failed: {refireErr}
         </p>
       )}

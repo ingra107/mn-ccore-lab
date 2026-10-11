@@ -531,7 +531,7 @@ export default function Dashboard() {
                 </button>
               </div>
               <div className="mb-4">
-                <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.85, letterSpacing: '0.06em' }}>
+                <p className="text-[10px] tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.85, letterSpacing: '0.06em' }}>
                   Core - recommended
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -539,7 +539,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.85, letterSpacing: '0.06em' }}>
+                <p className="text-[10px] tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.85, letterSpacing: '0.06em' }}>
                   Optional - turn on as needed
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -823,7 +823,6 @@ export default function Dashboard() {
           padding: 2px 8px;
           font-size: 10px;
           letter-spacing: 0.04em;
-          text-transform: uppercase;
           color: var(--slate);
           background: transparent;
           border: 1px solid var(--border-subtle);

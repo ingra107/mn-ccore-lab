@@ -385,7 +385,7 @@ function LinkPaperModal({ linkedPaperIds, onLink, onClose }: {
           </div>
 
           {doiError && (
-            <p style={{ fontSize: '12px', color: 'var(--sk-t1)', margin: 0 }}>{doiError}</p>
+            <p style={{ fontSize: '12px', color: 'var(--job-danger)', margin: 0 }}>{doiError}</p>
           )}
 
           {doiData && (

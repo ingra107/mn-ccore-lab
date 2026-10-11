@@ -11,7 +11,10 @@
  *   Grant deadlines <60d  -5 each, max -10
  *   Team inactive 3d+     -5 flat
  *
- * Buckets: 90+ green, 70+ amber, 50+ orange, <50 red.
+ * Buckets: 90+ green, 70+ amber, 50+ orange, <50 red. The rule's color is
+ * not the bucket name: the score measures risk, never lateness, so it is never
+ * red (red = overdue only, rules-ui-design 21). Below 70 it is at risk and
+ * takes orange; otherwise the rule is gray.
  *
  * C5 Round 2 PI frontier #1 (R3-F11).
  */
@@ -85,11 +88,12 @@ function computeHealthScore(signals: {
   return { score, bucket, label, reasons }
 }
 
+const AT_RISK = 'var(--job-stale)'
 const BUCKET_COLOR: Record<HealthBucket, string> = {
-  green: 'var(--sk-t2)',
-  amber: 'var(--sk-t2)',
-  orange: 'var(--job-stale)',
-  red: 'var(--job-stale)',
+  green: 'var(--sk-t3)',
+  amber: 'var(--sk-t3)',
+  orange: AT_RISK,
+  red: AT_RISK,
 }
 
 // Rendered in Today's StatLine anatomy (a thin colored rule, a number in the

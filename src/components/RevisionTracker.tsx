@@ -335,7 +335,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
               </span>
             )}
             {isOverdue && (
-              <span className="flex items-center gap-1" style={{ fontSize: 'var(--label-size)', color: 'var(--maroon)' }}>
+              <span className="flex items-center gap-1" style={{ fontSize: 'var(--label-size)', color: 'var(--job-overdue)' }}>
                 <AlertTriangle {...ICON_PROPS} size={12} />
                 Overdue
               </span>

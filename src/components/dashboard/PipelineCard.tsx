@@ -136,10 +136,9 @@ function PipelineCard() {
                   fontSize: '10px',
                   color: 'var(--slate)',
                   opacity: 0.75,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
                 }}
               >
+                {/* Sentence case, not UPPERCASE (rules-ui-design 2) */}
                 {stage.label.split(' ').pop()}
               </div>
               {i < stages.length - 1 && (

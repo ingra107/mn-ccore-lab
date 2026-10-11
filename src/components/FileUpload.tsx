@@ -137,7 +137,7 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
             ends, after `uploading` clears. Gating on `uploading` alone hid
             every "Upload failed: ..." line the instant it was written. */}
         {uploading || uploadProgress ? (
-          <div className="flex items-center justify-center gap-2" style={{ color: uploading ? 'var(--job-accent)' : 'var(--maroon)' }}>
+          <div className="flex items-center justify-center gap-2" style={{ color: uploading ? 'var(--job-accent)' : 'var(--job-danger)' }}>
             {uploading && <Loader2 {...ICON_PROPS} size={16} className="animate-spin" />}
             <span className="text-xs" role={uploading ? undefined : 'alert'}>{uploadProgress}</span>
           </div>
@@ -191,7 +191,7 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
                     }
                   }}
                   title="Delete"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--maroon)', padding: '2px', opacity: 0.85 }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--job-danger)', padding: '2px', opacity: 0.85 }}
                 >
                   <Trash2 {...ICON_PROPS} size={13} />
                 </button>

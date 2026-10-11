@@ -325,20 +325,6 @@
   --sk-face-t: #c9d0d6;
 }
 
-/* Job tokens (principle 21, Nick 2026-10-11). Every semantic color in src/
-   goes through one of these or the gray ramp (--sk-t1/--sk-t2/--sk-t3).
-   They alias the --sk-* values, which flip under .dark on the same element,
-   so one declaration serves light and dark. --job-brand is the public site's
-   gold and is the only gold allowed on /, /team/*, /publications. */
-:root {
-  --job-overdue: var(--sk-od);
-  --job-wants: var(--sk-gold);
-  --job-milestone: var(--sk-gold);
-  --job-accent: var(--sk-ac);
-  --job-stale: var(--sk-urg);
-  --job-brand: var(--gold);
-}
-
 /* Color jobs (Nick 2026-10-11; rules-ui-design principle 21). Red = overdue,
    gold = wants you now (milestones keep it), teal = the one accent, orange =
    going stale; every other status is a neutral word. These tokens name the
@@ -346,17 +332,24 @@
    back changes one line here, not every map. Declared on :root and resolved
    against the theme's --sk-t3 (.dark sits on <html>, the same element). */
 :root {
-  /* The six color JOBS. Every hue in src/ goes through one of these or the
+  /* The color JOBS. Every hue in src/ goes through one of these or the
      gray ramp (--sk-t1/--sk-t2/--sk-t3); scripts/check-color-jobs.mjs counts
      every raw var(--gold)/var(--teal)/ACCENT_* use against a baseline that
      only goes down. Light and dark both resolve here: these alias the --sk-*
      and palette tokens, which .dark redefines on the same <html> element. */
-  --job-overdue: var(--sk-od);     /* red: overdue, nothing else */
+  --job-overdue: var(--sk-od);     /* red: overdue */
+  --job-danger: var(--sk-od);      /* red's second job, "something's wrong": errors and destructive actions (Nick 2026-10-11) */
   --job-wants: var(--sk-gold);     /* gold: wants you now (needs-you asks, due today, new/unread) */
   --job-milestone: var(--sk-gold); /* gold: milestones keep it */
   --job-accent: var(--sk-ac);      /* teal: the one accent (primary action, selection, focus, today, Saved, In Progress) */
   --job-stale: var(--sk-urg);      /* orange: going stale (urgent edge/tag, stalled/idle days, at risk) */
   --job-brand: var(--gold);        /* gold as the PUBLIC site's brand color only */
+  /* Links: the public site keeps its maroon link with a gold hover (Nick
+     2026-10-11, "public site keeps its brand"); .portal-shell below turns
+     them into the accent. Like --job-brand, a link rendered outside
+     .portal-shell (a body-level portal) reads the public color. */
+  --job-link: var(--maroon);
+  --job-link-hover: var(--gold);
   /* The accent's solid fill under white text (primary buttons). Same job as
      --job-accent, a darker step so white text holds AA in both themes. */
   --job-accent-solid: var(--teal-solid);
@@ -373,6 +366,8 @@
    shell it is the gray ramp, so brand gold cannot leak onto a portal page. */
 .portal-shell {
   --job-brand: var(--sk-t2);
+  --job-link: var(--job-accent);
+  --job-link-hover: var(--sk-t1);
   --st-blocked: var(--sk-t3);
   --st-waiting: var(--sk-t3);
   --st-done: var(--sk-t3);
@@ -876,13 +871,13 @@ h3 {
 }
 
 a {
-  color: var(--job-accent);
+  color: var(--job-link);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 a:hover {
-  color: var(--sk-t1);
+  color: var(--job-link-hover);
 }
 
 /* ── Focus States ── */
@@ -2457,12 +2452,18 @@ button[aria-label="Deselect task"]::before {
 :is(.sk-mat,.detail-card,.card) :is(.sk-mat,.detail-card,.card){background:transparent;box-shadow:none}
 /* Data bars run teal dark to bright (color back pick 7, Nick 2026-10-11: "for 7
    i think you can use teal just do the dark to bright with that color!").
-   --sk-ramp-dim is the dim end; lib/tealRamp.ts mixes from it to the full
-   accent. Every bar sits on --sk-bar-track, and the floors hold the dim end
-   at 3:1 against that track (light 78% = 3.26, dark 68% = 3.19), which is
-   the background the fill is actually read against (tealRamp.test.ts). */
-:root{--sk-ramp-dim:color-mix(in srgb,var(--job-accent) 78%,var(--sk-card));--sk-bar-track:color-mix(in srgb,var(--sk-t1) 10%,transparent)}
-.dark{--sk-ramp-dim:color-mix(in srgb,var(--job-accent) 68%,var(--sk-card))}
+   --sk-ramp-dim is the dim end; lib/tealRamp.ts mixes from it to
+   --sk-ramp-hi, the accent pushed one step further from the card (deeper in
+   light, paler in dark). Every bar sits on --sk-bar-track, and the floors hold
+   the dim end at 3:1 against that track (light 78% = 3.26, dark 68% = 3.19),
+   which is the background the fill is actually read against. With the dim
+   end pinned at that floor, the bright end is what widens the steps: ending
+   at the plain accent left adjacent stages 1.3:1 apart and Overview's
+   In preparation and In review stubs read as one shade (prod check
+   2026-10-11); ending at --sk-ramp-hi puts each half-step about 1.5:1 apart
+   (color-back-depth.test.tsx). */
+:root{--sk-ramp-dim:color-mix(in srgb,var(--job-accent) 78%,var(--sk-card));--sk-ramp-hi:color-mix(in srgb,var(--job-accent) 70%,#000);--sk-bar-track:color-mix(in srgb,var(--sk-t1) 10%,transparent)}
+.dark{--sk-ramp-dim:color-mix(in srgb,var(--job-accent) 68%,var(--sk-card));--sk-ramp-hi:color-mix(in srgb,var(--job-accent) 70%,#fff)}
 .tk .tk-card:hover,.tk .tk-mc.tk-nowm{box-shadow:inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
 .tk .tk-tc.tk-urg{box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim),var(--sk-amb)}
 .tk .tk-tc.tk-urg:hover{box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
@@ -2590,7 +2591,7 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-ms .tk-dia{width:17px;text-align:center;font-size:11px;color:var(--job-milestone)}
 .tk .tk-ms .tk-mt2{font-size:12.5px;font-weight:500;color:var(--sk-t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .tk .tk-ms .tk-lead{flex:1;min-width:24px;height:1px;background:color-mix(in srgb, var(--job-milestone) 11%, transparent)}
-.tk .tk-ms.tk-int .tk-dia,.tk .tk-ms.tk-int .tk-lead{opacity:.75}
+.tk .tk-ms.tk-int .tk-dia{color:var(--sk-t3)} .tk .tk-ms.tk-int .tk-lead{background:var(--sk-line)}
 .tk .tk-ms.tk-slip{opacity:.55}
 .tk .tk-msw{border-top:1px solid var(--sk-line);border-bottom:1px solid var(--sk-line);margin:2px 0}
 /* drawer */
@@ -3058,7 +3059,11 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-row{position:relative;min-height:40px;border-radius:9px;cursor:pointer;transition:background .12s,box-shadow .12s}
 @media (min-width:768px){.sr:not(.sr-narrow) .sr-row{height:40px}}
 .sr .sr-row:hover{background:var(--sr-hov)}
-.sr .sr-row.sr-cur,.sr .sr-row.sr-exp{background:var(--sr-hov);box-shadow:inset 0 0 0 1px var(--sk-line2)}
+.sr .sr-row.sr-cur,.sr .sr-row.sr-exp{box-shadow:inset 0 0 0 1px var(--sk-line2)}
+/* The keyboard cursor is a ring only, no tint: with the tint it read as a
+   second raised row beside the hovered one (prod check 2026-10-11). An
+   expanded row keeps the tint; hovering either still lifts it like any row. */
+.sr .sr-row.sr-exp{background:var(--sr-hov)}
 .sr .sr-row.sr-urg{box-shadow:inset 2px 0 0 var(--job-stale)}
 .sr .sr-row.sr-urg.sr-cur,.sr .sr-row.sr-urg.sr-exp{box-shadow:inset 2px 0 0 var(--job-stale),inset 0 0 0 1px var(--sk-line2)}
 .sr .sr-row.sr-sel{background:color-mix(in srgb, var(--job-accent) 10%, transparent);box-shadow:inset 2px 0 0 var(--job-accent)}

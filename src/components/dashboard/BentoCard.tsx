@@ -75,7 +75,6 @@ export default function BentoCard({
               right: 12,
               fontSize: '10px',
               fontWeight: 500,
-              textTransform: 'uppercase',
               letterSpacing: '0.05em',
               color: 'var(--slate)',
               opacity: 0.75,

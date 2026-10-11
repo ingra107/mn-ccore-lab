@@ -52,8 +52,8 @@ const VARIANT_STYLES: Record<NonNullable<ButtonProps['variant']>, CSSProperties>
   },
   danger: {
     background: 'transparent',
-    border: '1px solid var(--maroon)',
-    color: 'var(--maroon)',
+    border: '1px solid var(--job-danger)',
+    color: 'var(--job-danger)',
   },
   // gold — solid brand fill for the public site (LabPageLayout, /network).
   // --job-brand is gray inside .portal-shell, so a portal use renders neutral.

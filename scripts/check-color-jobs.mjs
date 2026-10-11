@@ -2,11 +2,13 @@
 // check-color-jobs.mjs -- color-job ratchet (2026-10-11).
 //
 // Nick's color rule (PB Context/Topics/rules-ui-design.md, principle 21): each
-// hue has ONE job. Red = overdue, gold = wants you now (and milestones), teal =
-// the one accent, orange = going stale; everything else is the gray ramp. The
-// public site keeps gold as its brand color. The jobs are tokens in
-// src/index.css: --job-overdue, --job-wants, --job-milestone, --job-accent,
-// --job-stale, --job-brand.
+// hue has ONE job. Red = overdue, and its second job "something's wrong"
+// (errors, destructive actions: --job-danger), gold = wants you now (and the
+// hard milestone date), teal = the one accent, orange = going stale;
+// everything else is the gray ramp. The public site keeps gold as its brand
+// color and maroon as its link color. The jobs are tokens in src/index.css:
+// --job-overdue, --job-danger, --job-wants, --job-milestone, --job-accent,
+// --job-stale, --job-brand, --job-link.
 //
 // The strip pass of 6451d2d1 fixed the sites someone looked at and missed the
 // rest of the class: raw var(--gold) / var(--teal) / ACCENT_GOLD sat in ~190
@@ -23,7 +25,8 @@
 //
 // Counted: raw hue tokens, ACCENT_* constants, color literals (hex, rgb(),
 // hsl(), oklch()) that carry real chroma, and var(--job-brand) outside the
-// public files (it is gold wherever .portal-shell does not reach).
+// public files (it is gold wherever .portal-shell does not reach), and
+// var(--job-link) the same way (maroon outside .portal-shell).
 // Not counted: the other var(--job-*) tokens, the gray ramp, comments, import lines, and the
 // custom-property declarations inside the theme token blocks (`:root` /
 // `.dark`) of a .css file, which is where the job tokens are defined from the
@@ -78,7 +81,7 @@ export const FAMILIES = {
   // The public brand token renders gold everywhere outside .portal-shell
   // (sign-in screen, body-level portals), so it is a raw gold outside the
   // public files: counted unless the file is allowed the 'brand' family.
-  brand: [/var\(--job-brand\)/g],
+  brand: [/var\(--job-brand\)/g, /var\(--job-link(?:-hover)?\)/g],
 }
 
 // Literal color syntaxes. Each match is classified by hue (literalFamily).
@@ -376,7 +379,8 @@ function main() {
   const { rose, fell } = compare(counts, baseline)
   if (rose.length) {
     console.error('check-color-jobs: raw hue uses ROSE. Each color has one job (rules-ui-design principle 21):')
-    console.error('  red = --job-overdue, gold = --job-wants / --job-milestone, teal = --job-accent,')
+    console.error('  red = --job-overdue / --job-danger (errors, destructive actions),')
+    console.error('  gold = --job-wants / --job-milestone, teal = --job-accent,')
     console.error('  orange = --job-stale, public-site gold = --job-brand; everything else the gray ramp')
     console.error('  (--sk-t1 / --sk-t2 / --sk-t3). Decide each site by its JOB; if it has none, it goes gray.')
     console.error('')

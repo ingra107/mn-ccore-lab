@@ -38,9 +38,6 @@ export const ACCENT_TEAL   = 'var(--task-accent-teal)'
 export const ACCENT_CORAL  = 'var(--task-accent-coral)'
 export const ACCENT_ORANGE = 'var(--task-accent-orange)'
 export const ACCENT_GREEN  = 'var(--task-accent-green)'
-// Two-date milestone rendering (Nick 2026-09-17) — the internal/slipped date
-// reads blue, distinct from the hard (sponsor/journal) date, which stays gold.
-export const ACCENT_BLUE   = 'var(--task-accent-blue)'
 export const INK           = 'var(--task-ink)'
 export const INK_MUTED     = 'var(--task-ink-muted)'
 export const INK_DIM       = 'var(--task-ink-dim)'

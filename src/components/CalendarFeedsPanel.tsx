@@ -9,7 +9,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Calendar as CalendarIcon, Info, X } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_CORAL, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 
 interface CalendarFeed {
   id: string
@@ -123,7 +123,7 @@ export default function CalendarFeedsPanel() {
           </button>
         </div>
         {submitErr && (
-          <p className="text-[11px]" style={{ color: 'var(--maroon)', lineHeight: 1.4 }}>{submitErr}</p>
+          <p className="text-[11px]" style={{ color: 'var(--job-danger)', lineHeight: 1.4 }}>{submitErr}</p>
         )}
       </div>
 
@@ -157,7 +157,7 @@ function CalendarFeedRow({ feed, onRemove }: { feed: CalendarFeed; onRemove: () 
         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
           <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{feed.label}</span>
           {feed.lastError ? (
-            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: withAlpha(ACCENT_CORAL, 12), color: 'var(--maroon)' }}>
+            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: withAlpha('var(--job-danger)', 12), color: 'var(--job-danger)' }}>
               error
             </span>
           ) : feed.lastPolledAt ? (

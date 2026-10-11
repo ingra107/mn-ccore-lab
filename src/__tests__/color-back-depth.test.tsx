@@ -199,6 +199,10 @@ describe('pick 6: rows lift on hover', () => {
     host.appendChild(probe)
     const gray = cs(probe).color
     expect(cs(a).boxShadow).toContain(`${gray} 0px 0px 0px 1px inset`)
+    // a ring only: no tint and no material, so it never reads as a second
+    // raised row beside the hovered one
+    expect(cs(a).backgroundImage).toBe('none')
+    expect(cs(a).backgroundColor).toBe('rgba(0, 0, 0, 0)')
     await hover(a)
     // still there under the pointer, with the lift's material
     expect(cs(a).boxShadow).toContain(`${gray} 0px 0px 0px 1px inset`)
@@ -266,14 +270,14 @@ describe('pick 7: teal data ramp', () => {
   const over = (fg: number[], a: number, bg: number[]) => fg.map((v, i) => v * a + bg[i] * (1 - a))
 
   for (const theme of ['light', 'dark'] as const) {
-    it(`dim end to full accent, and the dim end holds 3:1 on the bar track it sits on (${theme})`, async () => {
+    it(`dim end to bright end, the dim end holds 3:1 on the bar track it sits on, and adjacent stages differ (${theme})`, async () => {
       if (theme === 'dark') document.documentElement.classList.add('dark')
       const host = await mount(
         <div>
           <i data-k="card" style={{ background: 'var(--sk-card)' }} />
           <i data-k="track" style={{ background: BAR_TRACK }} />
           {[0, 0.5, 1].map((t) => <i key={t} data-t={t} style={{ background: tealRamp(t) }} />)}
-          <i data-k="ac" style={{ background: 'var(--sk-ac)' }} />
+          <i data-k="ac" style={{ background: 'var(--sk-ramp-hi)' }} />
         </div>,
         { ready: (h) => h.querySelector('[data-k="ac"]'), label: 'ramp' },
       )
@@ -284,6 +288,9 @@ describe('pick 7: teal data ramp', () => {
       const trackA = alpha(raw('[data-k="track"]'))
       const track = over(col('[data-k="track"]'), trackA, card)
       const dim = col('[data-t="0"]'), mid = col('[data-t="0.5"]'), full = col('[data-t="1"]')
+      // the bright end is --sk-ramp-hi (one step past the accent), not the
+      // plain accent: ending at the accent left adjacent stages 1.3:1 apart and
+      // Overview's In preparation / In review stubs read as one shade
       expect(full).toEqual(col('[data-k="ac"]'))
       // the empty track shows, and the fill holds 3:1 against the track (what a
       // bar's edge is read against) as well as against the card
@@ -294,6 +301,9 @@ describe('pick 7: teal data ramp', () => {
       // brightness carries the order: each step sits further from the track
       expect(contrast(mid, track)).toBeGreaterThan(contrast(dim, track))
       expect(contrast(full, track)).toBeGreaterThan(contrast(mid, track))
+      // and each half-step is a visible difference, not a near-twin
+      expect(contrast(dim, mid)).toBeGreaterThanOrEqual(1.4)
+      expect(contrast(mid, full)).toBeGreaterThanOrEqual(1.4)
     })
   }
 })

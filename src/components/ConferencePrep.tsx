@@ -290,7 +290,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                         opacity: 0.75,
                         padding: '2px',
                         '--hov-opacity': '1',
-                        '--hov-color': 'var(--maroon)',
+                        '--hov-color': 'var(--job-danger)',
                       } as React.CSSProperties}
                     >
                       <Trash2 {...ICON_PROPS} size={12} />

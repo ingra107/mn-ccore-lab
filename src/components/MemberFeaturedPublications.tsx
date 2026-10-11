@@ -274,7 +274,7 @@ export default function MemberFeaturedPublications({
           </div>
 
           {save.isError && (
-            <p role="alert" style={{ fontSize: 'var(--text-small)', color: 'var(--maroon)', marginTop: 'var(--sp-sm)' }}>
+            <p role="alert" style={{ fontSize: 'var(--text-small)', color: 'var(--job-danger)', marginTop: 'var(--sp-sm)' }}>
               Could not save: {save.error instanceof Error ? save.error.message : 'unknown error'}
             </p>
           )}

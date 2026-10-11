@@ -163,8 +163,8 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
                     {bt.title || bt.description}
                   </button>
                   <span className="text-[10px] px-1.5 py-0.5 rounded" style={{
-                    color: 'var(--maroon)',
-                    background: 'var(--maroon-hover)',
+                    color: 'var(--st-blocked)',
+                    background: 'color-mix(in srgb, var(--st-blocked) 10%, transparent)',
                   }}>
                     Blocked
                   </span>

@@ -190,6 +190,9 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
   const now = new Date()
   const todayYear = now.getFullYear() + now.getMonth() / 12 + now.getDate() / 365
   const todayX = yearToX(todayYear, chartWidth)
+  // Keep year labels at least ~44px apart (a 10px "2026" is ~24px wide).
+  const pxPerYear = (chartWidth - LABEL_WIDTH) / TOTAL_YEARS
+  const yearLabelStep = Math.max(1, Math.ceil(44 / Math.max(pxPerYear, 1)))
 
   const handleBarEnter = (grant: GrantTimelineItem, event: React.MouseEvent<SVGGElement>) => {
     const rect = (event.currentTarget as SVGGElement).getBoundingClientRect()
@@ -214,7 +217,8 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
         role="img"
         aria-label="Grant timeline Gantt chart showing active and proposed grants"
       >
-        {/* Year gridlines */}
+        {/* Year gridlines: a line every year, a label only every `yearLabelStep`
+            years so the axis stays readable on a phone. */}
         {Array.from({ length: TOTAL_YEARS + 1 }, (_, i) => {
           const year = CHART_MIN_YEAR + i
           const x = yearToX(year, chartWidth)
@@ -225,13 +229,13 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
                 x2={x} y2={chartHeight - CHART_PADDING_BOTTOM + 12}
                 stroke="var(--slate)" strokeOpacity={0.12} strokeDasharray="4 4"
               />
-              <text
+              {i % yearLabelStep === 0 && <text
                 x={x} y={chartHeight - CHART_PADDING_BOTTOM + 28}
                 textAnchor="middle"
                 style={{ fontSize: '10px', fill: 'var(--slate)', opacity: 0.85 }}
               >
                 {year}
-              </text>
+              </text>}
             </g>
           )
         })}
@@ -243,8 +247,6 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
             <stop offset="0.7" stopColor={GRANT_BAR_FILL} />
           </linearGradient>
         </defs>
-        {/* Today: the shared now marker (color-back pick 4) */}
-        <NowMarkerSvg x={todayX} y1={CHART_PADDING_TOP - 16} y2={chartHeight - CHART_PADDING_BOTTOM + 12} />
 
         {/* Grant bars */}
         {grants.map((grant, index) => {
@@ -335,27 +337,17 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
           )
         })}
 
-        {/* Today marker, drawn after the bars so it stays on top of the teal
-            funded bars; a card-colored halo keeps the teal line readable where
-            it crosses teal. It takes no pointer events, so bar hover still works. */}
+        {/* Today: the shared now marker (color-back pick 4), drawn after the
+            bars so it stays on top of the teal funded bars; a card-colored halo
+            keeps the line readable where it crosses teal. No pointer events, so
+            bar hover still works. */}
         <g pointerEvents="none">
           <line
             x1={todayX} y1={CHART_PADDING_TOP - 16}
             x2={todayX} y2={chartHeight - CHART_PADDING_BOTTOM + 12}
             stroke="var(--sk-card)" strokeWidth={5}
           />
-          <line
-            x1={todayX} y1={CHART_PADDING_TOP - 16}
-            x2={todayX} y2={chartHeight - CHART_PADDING_BOTTOM + 12}
-            stroke="var(--job-accent)" strokeWidth={2}
-          />
-          <text
-            x={todayX} y={CHART_PADDING_TOP - 20}
-            textAnchor="middle"
-            style={{ fontSize: '10px', fill: 'var(--job-accent)', fontWeight: 600 }}
-          >
-            Today
-          </text>
+          <NowMarkerSvg x={todayX} y1={CHART_PADDING_TOP - 16} y2={chartHeight - CHART_PADDING_BOTTOM + 12} />
         </g>
       </svg>
 

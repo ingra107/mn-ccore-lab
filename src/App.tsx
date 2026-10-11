@@ -48,8 +48,8 @@ class ErrorBoundary extends Component<
       const errorMsg = this.state.error?.message || 'Unknown error'
       return (
         <div style={{ padding: '3rem 2rem', textAlign: 'center', minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: 56, height: 56, borderRadius: 'var(--radius-circle)', backgroundColor: 'var(--sk-line)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--sk-t2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div style={{ width: 56, height: 56, borderRadius: 'var(--radius-circle)', backgroundColor: 'color-mix(in srgb, var(--job-danger) 10%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--job-danger)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>

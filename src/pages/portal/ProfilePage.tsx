@@ -189,7 +189,7 @@ export default function ProfilePage() {
           ))}
         </div>
         {save.isError && (
-          <p className="text-[11px] mt-2" style={{ color: 'var(--sk-t1)' }}>
+          <p className="text-[11px] mt-2" style={{ color: 'var(--job-danger)' }}>
             {(save.error as Error).message}
           </p>
         )}

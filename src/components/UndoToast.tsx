@@ -49,7 +49,7 @@ const TOAST_STYLES: Record<Toast['type'], {
   iconColor: string
 }> = {
   success: { testId: 'success-toast', borderColor: 'var(--job-accent)',   Icon: Check,       iconColor: 'var(--job-accent)' },
-  error:   { testId: 'error-toast',   borderColor: 'var(--maroon)', Icon: AlertCircle, iconColor: 'var(--maroon)' },
+  error:   { testId: 'error-toast',   borderColor: 'var(--job-danger)', Icon: AlertCircle, iconColor: 'var(--job-danger)' },
   info:    { testId: 'info-toast',    borderColor: 'var(--sk-t2)',   Icon: Info,        iconColor: 'var(--sk-t2)' },
   undo:    { testId: 'undo-toast',    borderColor: null,            Icon: null,        iconColor: '' },
 }

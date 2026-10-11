@@ -796,7 +796,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     className="hov-bg"
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
-                      padding: '8px 10px', fontSize: '12px', color: 'var(--sk-t1)',
+                      padding: '8px 10px', fontSize: '12px', color: 'var(--job-danger)',
                       background: 'none', border: 'none', borderRadius: 'var(--radius-md)',
                       cursor: 'pointer', textAlign: 'left',
                       '--hov-bg': 'var(--hover-subtle)',

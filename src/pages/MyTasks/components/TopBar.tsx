@@ -39,6 +39,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
   // behind a Filters pill with an active-count badge.
   const isPhone = useIsMobile(768)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [searchFocused, setSearchFocused] = useState(false)
   const activeFilterCount = [filter.group, filter.priority, filter.project, filter.mentee].filter(Boolean).length
   const showFilterChips = !isPhone || filtersOpen
   const tabs: { k: QuickViewKey; l: React.ReactNode; color?: string }[] = [
@@ -93,8 +94,14 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search tasks…"
+          aria-label="Search tasks"
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
           // N1.20 — phones: fill the row (the 260px cap left a dead gap).
-          style={{ padding: '6px 12px', background: 'var(--border-subtle)', border: '1px solid var(--border-strong)', borderRadius: 6, color: INK, fontSize: 12, flex: '1 1 200px', minWidth: 140, maxWidth: isPhone ? 'none' : 260, fontFamily: 'inherit', outline: 'none' }}
+          // An input must look like an input (rules-ui-design 20): the gray
+          // fill read as disabled in light, so it takes the field look, a
+          // well (--cream) with the --field-edge hairline, teal on focus.
+          style={{ padding: '6px 12px', background: 'var(--cream)', border: `1px solid ${searchFocused ? 'var(--job-accent)' : 'var(--field-edge)'}`, borderRadius: 6, color: INK, fontSize: 12, flex: '1 1 200px', minWidth: 140, maxWidth: isPhone ? 'none' : 260, fontFamily: 'inherit', outline: 'none' }}
         />
       </div>
       {/* N1.10 / ROW 25: swipeable-on-phones → CSS .topbar-tab-strip (@media in index.css) */}

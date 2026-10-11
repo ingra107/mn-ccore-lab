@@ -151,7 +151,7 @@ function AddMemberForm({ onClose }: { onClose: () => void }) {
           {email !== '' && !UMN_EMAIL.test(emailNorm) && (
             <p className="text-xs mt-1" style={{ color: 'var(--slate)' }}>Use their @umn.edu address.</p>
           )}
-          {error?.field === 'email' && <p role="alert" className="text-xs mt-1" style={{ color: 'var(--red, #b42318)' }}>{error.text}</p>}
+          {error?.field === 'email' && <p role="alert" className="text-xs mt-1" style={{ color: 'var(--job-danger)' }}>{error.text}</p>}
         </div>
 
         <div>
@@ -184,12 +184,12 @@ function AddMemberForm({ onClose }: { onClose: () => void }) {
               onChange={(e) => { setSlugEdit(e.target.value.toLowerCase()); if (error?.field === 'slug') setError(null) }}
               className={inputClass} style={inputStyle} aria-invalid={!MEMBER_SLUG.test(slugEdit)}
             />
-            {error?.field === 'slug' && <p role="alert" className="text-xs mt-1" style={{ color: 'var(--red, #b42318)' }}>{error.text}</p>}
+            {error?.field === 'slug' && <p role="alert" className="text-xs mt-1" style={{ color: 'var(--job-danger)' }}>{error.text}</p>}
           </div>
         )}
       </div>
 
-      {error?.field === 'form' && <p role="alert" className="text-sm mt-3" style={{ color: 'var(--red, #b42318)' }}>{error.text}</p>}
+      {error?.field === 'form' && <p role="alert" className="text-sm mt-3" style={{ color: 'var(--job-danger)' }}>{error.text}</p>}
 
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-4">
         <Button

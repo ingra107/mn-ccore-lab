@@ -205,7 +205,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange }: Prop
                     {active && (
                       <span style={{
                         marginLeft: 'auto', fontSize: '10px', fontWeight: 500,
-                        color: 'var(--sk-t2)', textTransform: 'uppercase', letterSpacing: '0.04em',
+                        color: 'var(--sk-t2)', letterSpacing: '0.04em',
                       }}>
                         Filtering
                       </span>
@@ -368,7 +368,8 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
       <span style={{ color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {journal}
       </span>
-      <span style={{ color: 'var(--muted)' }}>
+      {/* Idle is going stale: orange (principle 21). */}
+      <span style={{ color: 'var(--job-stale)' }}>
         Idle {ageDays}d
       </span>
     </>
