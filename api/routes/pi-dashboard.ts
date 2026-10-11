@@ -12,13 +12,12 @@ const TRAINEE_SQL = `(tm.member_type IN ('trainee', 'fellow', 'resident')
 // The per-person engagement rows are PI-only (Nick, 2026-10-11): a member gets
 // the dashboard with that list empty. The page's tab is hidden from them
 // already; this is the server half.
-export async function handlePIDashboard(env: Env, isPi = false): Promise<Response> {
+export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = env): Promise<Response> {
   const [
     commitmentStats,
     responseTime,
     menteeVelocity,
     grantPipeline,
-    teamEngagement,
     pubsByQuarter,
     grantsFunnel,
     projectsByStage,
@@ -80,26 +79,6 @@ export async function handlePIDashboard(env: Env, isPi = false): Promise<Respons
       FROM grants
     `).first(),
 
-    // Team engagement: composite score per member (last 30 days).
-    // Excludes 'anonymous' bucket (CLI / system / unauthed events) — they
-    // dominate the leaderboard and leave real members at 0. PI-only: a member
-    // gets an empty list below, so the query is not run for one.
-    !isPi ? Promise.resolve({ results: [] }) : env.DB.prepare(`
-      SELECT actor as slug,
-        COUNT(*) as total_actions,
-        SUM(CASE WHEN type = 'comment' THEN 1 ELSE 0 END) as comments,
-        SUM(CASE WHEN type = 'update' OR type = 'project_update' THEN 1 ELSE 0 END) as updates,
-        SUM(CASE WHEN type = 'task_completed' THEN 1 ELSE 0 END) as completions
-      FROM activity_log
-      WHERE timestamp > datetime('now', '-30 days')
-        AND actor IS NOT NULL
-        AND actor != 'anonymous'
-        AND actor != 'system'
-        AND actor != ''
-      GROUP BY actor
-      ORDER BY total_actions DESC
-    `).all(),
-
     // Publications per year (last 3 years)
     env.DB.prepare(`
       SELECT
@@ -132,26 +111,18 @@ export async function handlePIDashboard(env: Env, isPi = false): Promise<Respons
     `).all(),
   ]);
 
-  // Compute engagement scores (composite)
-  const engagementRows = (teamEngagement.results || []) as Array<{
-    slug: string;
-    total_actions: number;
-    comments: number;
-    updates: number;
-    completions: number;
-  }>;
-
-  const maxActions = Math.max(...engagementRows.map(r => r.total_actions), 1);
-  const engagementScores = engagementRows.map(row => ({
-    slug: row.slug,
-    actions: row.total_actions,
-    comments: row.comments,
-    updates: row.updates,
-    completions: row.completions,
-    score: Math.round(
-      ((row.comments * 3 + row.updates * 2 + row.completions * 1) / Math.max(maxActions * 3, 1)) * 100
-    ),
-  }));
+  // Team engagement: the Lab pulse definition (computeEngagement below), one
+  // helper for both. PI-only: a member gets an empty list and the query is not run.
+  const engagementScores = !isPi ? [] : (await computeEngagement(wideEnv)).members
+    .filter((m) => m.active)
+    .map((m) => ({
+      slug: m.slug,
+      actions: m.total,
+      comments: m.comments,
+      updates: m.updates,
+      completions: m.completions,
+      score: m.score,
+    }));
 
   // Compute mentee velocity with per-year rate
   const currentYear = new Date().getFullYear();
@@ -198,7 +169,7 @@ export async function handlePIDashboard(env: Env, isPi = false): Promise<Respons
       responseMetrics,
       menteeVelocity: velocityRows,
       grantPipeline: grantPipeline || { total: 0, pending: 0, active: 0, active_funding: 0 },
-      teamEngagement: isPi ? engagementScores : [],
+      teamEngagement: engagementScores,
       pubsByQuarter: (pubsByQuarter.results || []) as Array<{ year: number; quarter: string; count: number }>,
       grantsFunnel: grantsFunnel || { submitted: 0, active: 0 },
       projectsByStage: (projectsByStage.results || []) as Array<{ stage: string; count: number }>,
@@ -382,6 +353,12 @@ export async function handleResponseTime(env: Env, isPi: boolean, now = new Date
 // + completions; opening counts toward `active` but not `total` or `score`.
 export async function handleTeamEngagement(env: Env, isPi: boolean): Promise<Response> {
   if (!isPi) return PI_ONLY();
+  return noStore(json({ data: await computeEngagement(env) }));
+}
+
+// The one definition of "active" and "score", shared by team-engagement and
+// the pi-dashboard's per-person list so the two cannot drift.
+async function computeEngagement(env: Env) {
   const [team, authored, done, seen] = await Promise.all([
     env.DB.prepare(`
       SELECT slug, name, member_type FROM team_members
@@ -485,13 +462,11 @@ export async function handleTeamEngagement(env: Env, isPi: boolean): Promise<Res
 
   const active = members.filter((m) => m.active).length;
   const priorActive = members.filter((m) => m.prior_active).length;
-  return noStore(json({
-    data: {
-      members,
-      active,
-      of: members.length,
-      prior_active: priorActive,
-      trend: active > priorActive ? 'up' : active < priorActive ? 'down' : 'flat',
-    },
-  }));
+  return {
+    members,
+    active,
+    of: members.length,
+    prior_active: priorActive,
+    trend: active > priorActive ? 'up' as const : active < priorActive ? 'down' as const : 'flat' as const,
+  };
 }

@@ -679,7 +679,7 @@ defineRoute({
   path: '/api/analytics/pi-dashboard',
   auth: 'authed',
   entity: 'analytics',
-  handler: (c) => handlePIDashboard(E(c), PI(c)),
+  handler: (c) => handlePIDashboard(E(c), PI(c), labWideEnv(c)),
 });
 defineRoute({
   method: 'GET',

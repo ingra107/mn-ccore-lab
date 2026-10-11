@@ -180,6 +180,10 @@ describe('Lab pulse routes are PI-only', () => {
     expect(by('nick-ingraham').completions).toBe(0) // his clicks on Dan's task are not his completion
     expect(by('nate-mesfin')).toMatchObject({ comments: 1, active: true })
     expect(eng.active).toBe(4)
+    // the dashboard's per-person list is the same definition
+    const dash = JSON.parse((await get('/api/analytics/pi-dashboard', PI_EMAIL)).text).data.teamEngagement
+    expect(dash.map((m: { slug: string }) => m.slug).sort()).toEqual(eng.members.filter((m: { active: boolean }) => m.active).map((m: { slug: string }) => m.slug).sort())
+    expect(dash.find((m: { slug: string }) => m.slug === 'dan-shyu')).toMatchObject({ actions: 1, completions: 1, score: 1 })
   })
 
   it('mentee-velocity counts a paper once when two trainees are on it', async () => {
