@@ -1,5 +1,6 @@
-// ColumnsView — Kanban renderer. All 5 task groups side-by-side, horizontal
-// scroll on small viewports w/ visible thin scrollbar + right-edge fade.
+// ColumnsView — Kanban renderer. All 5 task groups side-by-side. Runs full
+// width (the one Tasks view past --page-width), so all five fit at 1440+; below
+// that the grid scrolls sideways with a thin scrollbar and an in-flow pager row.
 //
 // Rows now use the shared <TaskRow> (src/components/tasks/TaskRow.tsx) in
 // `stack` mode (narrow column → title gets full width, meta stacks beneath it
@@ -31,6 +32,10 @@ import {
 import type { TaskRow } from '../../../lib/api'
 import { isMilestone } from '../../../../shared/taskKinds'
 
+// Column floor and gap (px). See minWidth below for why 190.
+const COL_MIN = 190
+const COL_GAP = 14
+
 export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect, selectRange, anchorId, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { filtered: TaskRow[]; isEmpty: boolean; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; selectRange: (targetId: string, orderedIds: string[], anchor: string | null) => void; anchorId: string | null; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string; primary_folder?: string | null }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
   // MT-16 — when a Group filter is active, only render the matching column
   // (others would just be "nothing here" empty lanes that eat horizontal
@@ -44,17 +49,18 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
   // Track the last pointer-event modifiers in a capture-phase ref so that
   // onSelect (called by SharedTaskRow with no event arg) can read them.
   const lastModifiers = useRef({ shift: false, ctrlMeta: false })
-  // F39: show the right-edge fade whenever the grid really overflows, not at a
-  // fixed viewport breakpoint (at 1680px the 5 columns still overflow the band).
+  // Overflow is measured, not guessed from a breakpoint: the pager row below
+  // exists only while the grid is really wider than its scroller.
   const scrollerRef = useRef<HTMLDivElement | null>(null)
-  // The cue is a sibling overlay, not a ::after inside the scroller: a float after
-  // the grid lands below it and never reaches the right edge. It hides once the
-  // scroller reaches its right end, and its button pages one column right.
-  const [moreRight, setMoreRight] = useState(false)
+  const [edge, setEdge] = useState({ left: false, right: false })
   useEffect(() => {
     const el = scrollerRef.current
     if (!el) return
-    const measure = () => setMoreRight(el.scrollWidth - el.clientWidth - el.scrollLeft > 4)
+    const measure = () => {
+      const left = el.scrollLeft > 4
+      const right = el.scrollWidth - el.clientWidth - el.scrollLeft > 4
+      setEdge((prev) => (prev.left === left && prev.right === right ? prev : { left, right }))
+    }
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(el)
@@ -62,33 +68,42 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
     el.addEventListener('scroll', measure, { passive: true })
     return () => { ro.disconnect(); el.removeEventListener('scroll', measure) }
   }, [colCount, filtered.length])
-  // The button unmounts at the right end; if it held keyboard focus, hand focus
-  // to the scroller instead of letting it fall to <body>.
-  const moreBtnRef = useRef<HTMLButtonElement>(null)
-  const moreBtnFocused = useRef(false)
-  useEffect(() => {
-    if (!moreRight && moreBtnFocused.current) {
-      moreBtnFocused.current = false
-      scrollerRef.current?.focus({ preventScroll: true })
-    }
-  }, [moreRight])
+  const overflowing = edge.left || edge.right
 
   const selectionActive = selectModeActive || selected.size > 0
-  // 2026-06-10b: align the grid's intrinsic floor to the column minmax floor
-  // (260px) instead of 280px. Inside .band-anchored-wide the grid fills the
-  // fluid width and only overflows (h-scroll) when colCount*260 + gaps exceeds
-  // the available viewport — so the floor must match the minmax(260px,...) below
-  // or the grid would force a scroll a touch early.
-  const minWidth = colCount * 236
-  // Mobile scroll cue — right-edge fade gradient + visible thin scrollbar so
-  // users discover the 5 columns scroll horizontally on small viewports
-  // (eval Issue 5).
+  // One column floor, used by both the grid template and its minWidth. 5 x 190
+  // + 4 gaps = 1006px, which fits the 1,034px Columns gets at a 1440 viewport,
+  // so all five columns show there with no scroll (Nick 2026-10-10, "Columns
+  // may go full width"). Below that the grid scrolls inside its own box.
+  const minWidth = colCount * COL_MIN + (colCount - 1) * COL_GAP
+  const page = (dir: 1 | -1) => scrollerRef.current?.scrollBy({ left: dir * (COL_MIN + COL_GAP), behavior: 'smooth' })
   return (
-    // Columns uses .band-anchored-wide: left edge identical to the toolbar and
-    // data pages, right edge at --page-width (Today's main + rail, principle 17,
-    // 2026-10-10). 5 x 236px + gaps fits inside it; on a narrower viewport the
-    // grid h-scrolls inside this box, never past it.
-    <div className="band-anchored-wide" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+    // Columns is the one Tasks view allowed past --page-width (principle 17
+    // exception, Nick 2026-10-10): .band-anchored-full keeps the shared left
+    // edge of .band-anchored-wide and lifts only its right-edge cap, so the
+    // toolbar's left edge does not move when switching views.
+    <div className="band-anchored-wide band-anchored-full" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+    {/* When the grid still overflows (about 1280 and below), the pager sits in
+        its own row above the scroller. It is in flow, so it can never cover a
+        column header, the Overdue banner or a card (the old overlay button and
+        right-edge fade did, 2026-10-10 evaluation section 1). */}
+    {overflowing && (
+      <div data-testid="columns-pager" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6, paddingTop: 8 }}>
+        <span style={{ fontSize: 11, color: INK_DIM, marginRight: 4 }}>More columns</span>
+        {([[-1, 'left', '‹', edge.left], [1, 'right', '›', edge.right]] as const).map(([dir, name, glyph, enabled]) => (
+          <button
+            key={name}
+            type="button"
+            aria-label={`Scroll columns ${name}`}
+            aria-disabled={!enabled}
+            onClick={() => { if (enabled) page(dir) }}
+            style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--border-strong)', background: PAGE_BG, color: INK_MUTED, cursor: enabled ? 'pointer' : 'default', opacity: enabled ? 1 : 0.4, fontSize: 15, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {glyph}
+          </button>
+        ))}
+      </div>
+    )}
     <div
       ref={scrollerRef}
       tabIndex={-1}
@@ -107,8 +122,11 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
         .mt-columns-scroll::-webkit-scrollbar-track { background: transparent; }
         .mt-columns-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
       `}</style>
-      <OverdueBanner tasks={filtered} />
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${colCount}, minmax(236px, 1fr))`, gap: 14, minWidth }}>
+      {/* Sticky left: the banner stays in view while the columns scroll sideways. */}
+      <div style={{ position: 'sticky', left: 0 }}>
+        <OverdueBanner tasks={filtered} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${colCount}, minmax(${COL_MIN}px, 1fr))`, gap: COL_GAP, minWidth }}>
         {visibleGroups.map((gkey) => {
           const meta = GROUP_META[gkey]
           const tasks = byGroup[gkey]
@@ -153,22 +171,6 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
       </div>
       {filtered.length === 0 && (isEmpty ? <AllCaughtUp /> : <NoTasksMatch />)}
     </div>
-    {moreRight && (
-      <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 64, pointerEvents: 'none', zIndex: 3, background: `linear-gradient(to right, transparent, ${PAGE_BG} 85%)`, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingTop: 44 }}>
-        <button
-          ref={moreBtnRef}
-          type="button"
-          onFocus={() => { moreBtnFocused.current = true }}
-          onBlur={() => { moreBtnFocused.current = false }}
-          aria-label="Scroll columns right"
-          title="More columns to the right"
-          onClick={() => scrollerRef.current?.scrollBy({ left: 260, behavior: 'smooth' })}
-          style={{ pointerEvents: 'auto', width: 28, height: 28, marginRight: 4, borderRadius: '50%', border: '1px solid var(--border-strong)', background: PAGE_BG, color: INK_MUTED, cursor: 'pointer', fontSize: 16, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          ›
-        </button>
-      </div>
-    )}
     </div>
   )
 }

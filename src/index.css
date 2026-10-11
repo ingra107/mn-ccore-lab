@@ -1194,6 +1194,10 @@ a:hover {
   padding-left: 0;
   padding-right: 0;
 }
+/* The one exception to the cap (principle 17, Nick 2026-10-10: "Columns may
+   go full width"): My Tasks Columns keeps the shared left edge above and runs
+   right to the viewport minus P, so all five columns show at 1440+. */
+.band-anchored-wide.band-anchored-full { max-width: none; }
 
 /* ── Section Header accent line ── */
 .section-header-line {
