@@ -68,7 +68,7 @@ export async function injectFakeAuth(context: BrowserContext, baseUrl: string) {
  * This is NOT a new auth mechanism. It is the exact recipe already proven in
  * `scripts/hub-audit.ts`'s `newDesktopCtx`/`authHeaders` (14 PASS / 0 INFO / 0
  * FAIL reading + writing real prod task rows, commit `ed025704`, 2026-04-25)
- * and `scripts/massive-audit/lib/auth.ts`'s `browserHeaders`, extracted here
+ * and the archived massive-audit `browserHeaders` (Archive/2026-10-11-massive-audit/), extracted here
  * so `tests/*.spec.ts` specs (the `@playwright/test` suite, not the
  * standalone audit scripts) don't reinvent it. Two independent bypasses
  * stack, matching the two independent gates a real request crosses:

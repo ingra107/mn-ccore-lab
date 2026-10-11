@@ -1,13 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Brain, TrendingUp } from 'lucide-react'
 import { useProjectUpdates } from '../../../hooks/useApiData'
-import { useToast } from '../../../hooks/useToast'
-import { useAuth } from '../../../hooks/useAuth'
-import HermesMark from '../../HermesMark'
 import { parseDateOnlyOrTimestamp } from '../../../lib/dateUtils'
 import type { TaskRow } from '../../../lib/api'
 import { ICON_PROPS } from '../../../lib/iconProps'
-import { withAlpha } from '../../../lib/taskGrouping'
 
 interface TaskIntelligenceProps {
   task: TaskRow
@@ -131,33 +127,6 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
   const prior = series[series.length - 2] ?? 0
   const delta = recent - prior
 
-  const { showSuccess, showError } = useToast()
-  const isPi = useAuth().user.isPi
-  const [draftRequested, setDraftRequested] = useState(false)
-
-  const requestDraft = async () => {
-    setDraftRequested(true)
-    try {
-      const res = await fetch('/api/pb/dispatch/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          task_id: task.id,
-          task_title: task.title,
-          project_slug: task.project_id || null,
-          comment: `Draft a short note (≤3 sentences) for this task based on its current state. Cite the project context. Title: "${task.title}". Status: ${task.status ?? 'unknown'}. Priority: ${task.priority ?? 'unknown'}.`,
-          comment_type: 'pre-draft',
-        }),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      showSuccess('Hermes draft queued — reply lands in Comments')
-    } catch (err) {
-      setDraftRequested(false)
-      console.error('[TaskIntelligence] dispatch failed:', err)
-      showError('Could not queue Hermes draft — check console.')
-    }
-  }
-
   const ringColor =
     score >= 75 ? 'var(--job-stale)' :
     score >= 55 ? 'var(--sk-t2)' :
@@ -228,57 +197,6 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
         </p>
       )}
 
-      {/* Hermes-adjacent label uses HermesMark (Mercury glyph, gold) per
-          CLAUDE.md Rule 29 — never lucide <Sparkles /> for Hermes.
-          PI-only: the button POSTs /api/pb/dispatch/add, which 403s every
-          non-PI (api/index.ts PI gate), so a member's click could only fail. */}
-      {isPi && (<>
-      <label className="flex items-center gap-1.5" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-        <HermesMark size={10} />
-        Hermes draft
-      </label>
-      <div
-        style={{
-          padding: 'var(--sp-md)',
-          borderRadius: 'var(--radius-lg)',
-          background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
-          border: `1px solid ${withAlpha('var(--sk-t1)', 10)}`,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'var(--sp-sm)',
-        }}
-      >
-        <div className="flex items-center" style={{ gap: 8 }}>
-          <HermesMark size={14} variant="avatar" />
-          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--sk-t2)', letterSpacing: '0.04em' }}>
-            Pre-draft a note
-          </span>
-        </div>
-        <p style={{ margin: 0, fontSize: 12, color: 'var(--ink)', lineHeight: 1.5, opacity: 0.85 }}>
-          Hermes can draft a short note that summarizes this task's state and proposes the next move.
-          The reply lands in Comments — you review before anything ships.
-        </p>
-        <button
-          type="button"
-          onClick={requestDraft}
-          disabled={draftRequested}
-          style={{
-            alignSelf: 'flex-start',
-            padding: '6px 12px',
-            fontSize: 12,
-            fontWeight: 500,
-            color: '#1a1a1a',
-            background: 'var(--sk-t2)',
-            border: 'none',
-            borderRadius: 'var(--radius-md)',
-            cursor: draftRequested ? 'default' : 'pointer',
-            opacity: draftRequested ? 0.6 : 1,
-          }}
-        >
-          {draftRequested ? 'Queued' : 'Review draft'}
-        </button>
-      </div>
-      </>)}
     </div>
   )
 }

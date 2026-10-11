@@ -39,7 +39,7 @@ describe('SmartCompose field edge (principle 20)', () => {
     expect(style).not.toContain('#e2e8f0')
   })
 
-  it('Queue-for-Claude on state is the accent job token (a selected toggle), not light-only hex', async () => {
+  it('Hermes toggle on state is the accent job token (a selected toggle), not light-only hex', async () => {
     const host = await render(<SmartCompose taskId="t1" showHermesToggle alwaysShowToolbar />)
     const toggle = host.querySelector('button[role="switch"]') as HTMLButtonElement
     expect(toggle).toBeTruthy()

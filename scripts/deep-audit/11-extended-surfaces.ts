@@ -128,19 +128,6 @@ async function main() {
     if (heatmapResp.ok()) pass(s, '11.L /api/file-activity/heatmap responds')
     else bug(s, 'HEATMAP-FAIL', 'P2', '11.L GET /api/file-activity/heatmap', `HTTP ${heatmapResp.status()}`, '200')
 
-    // ═══════════════════ DISPATCH QUEUE ═══════════════════
-    section(s, '11.N  Dispatch queue endpoint (/api/pb/dispatch/pending)')
-    const dispatchResp = await s.api.get('/api/pb/dispatch/pending')
-    if (dispatchResp.ok()) {
-      const db = (await dispatchResp.json()) as { data?: Array<unknown> }
-      pass(s, `11.N /api/pb/dispatch/pending returns ${db.data?.length ?? 0} items`)
-    } else if (dispatchResp.status() === 403) {
-      // Expected post-2026-04-18 consultant review — /api/pb/* is PI-gated.
-      pass(s, '11.N /api/pb/dispatch/pending returns 403 to non-PI (PI gate)')
-    } else {
-      bug(s, 'DISPATCH-GET', 'P2', '11.N GET /api/pb/dispatch/pending', `HTTP ${dispatchResp.status()}`, '200 or 403 (PI gate)')
-    }
-
     // ═══════════════════ TRAJECTORY ═══════════════════
     section(s, '11.O  Trainee trajectory endpoint')
     const traj = await apiGet<unknown>(s, '/api/trajectory/nick')

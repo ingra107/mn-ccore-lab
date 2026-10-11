@@ -199,7 +199,7 @@ below; OVERLAP items are noted against existing T2/T4 entries (codex added concr
 - **IMPROVE:** wire real `/api/proactive-brief` into Today (adjacent FAKE-2); MyTasks `?open=` deep links; ProfilePage → `/api/team/me`; export `normalizeStage`; Personal root paths → `PATHS`.
 
 **CONTRADICTS — RESOLVED by Nick 2026-05-22:**
-- PI-analytics subendpoints (`/api/analytics/{mentee-velocity,response-time,team-engagement}`): **KEEP** until PAGE-5 (PI Analytics) is designed — do NOT fold into pi-dashboard yet.
+- PI-analytics subendpoints (`/api/analytics/{mentee-velocity,response-time,team-engagement}`): **KEEP**, no page calls them yet. Nick 2026-10-11: wire them into a PI Analytics page, do not archive them. (PAGE-5 below is Lab Overview T2, not that page.) Do NOT fold into pi-dashboard yet.
 - Narrative/citation tables: **drop `narrative_projects` + `research_narratives` only** (computed, not read — added to T2' DEL above); **KEEP `project_publications` / `open_science_resources` / `pubmed_sync_log`** as FAKE-1 citation substrate.
 
 **OVERLAP-WP (codex refined existing entries):** create-flow-keep-open=UX-6 · focus-traps=UX-7/8 · mobile-split-brain=UX-9 · token/compound-opacity=UX-2 · brand-primitives(CategoryIcon/EmptyStateArt)=UX-1 · Ideas kanban/opacity=PAGE-6 · Projects/Manuscripts board=T4 DnD · search try/catch (UX-5) is DIFFERENT from SEC-T0-2 (visibility).

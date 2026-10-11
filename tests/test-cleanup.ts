@@ -38,7 +38,7 @@ const TEST_PREFIXES = [
   'TEST-',
   // globalSetup / test-seed prefixes
   'test_delete_',
-  // M5 smoke
+  // M5 smoke (spec archived 2026-10-11; the prefix still sweeps old residue)
   'M5_SMOKE_DELETE',
   // Meeting-approval smoke (Phase 2 — approval_status round-trip)
   'MTGAPPROVAL_SMOKE',
@@ -208,7 +208,7 @@ export async function cleanupTestDecisions(request: APIRequestContext): Promise<
 
 /**
  * Delete all test-prefixed commitments from Hub D1.
- * Used by m5-workflow-smoke.spec.ts.
+ * Called by cleanupAllTestFixtures below.
  */
 export async function cleanupTestCommitments(request: APIRequestContext): Promise<number> {
   const res = await request.get(`${BASE}/api/commitments?limit=500`)

@@ -23,8 +23,9 @@
 // shows the raw form teaches it, so it still needs the marker.
 //
 // Escape hatch, unchanged: a line carrying `wrangler-d1-allowed` passes.
-// Exempt paths, unchanged: .github/workflows/ (CI uses a D1-scoped secret),
-// and the wrapper itself.
+// Exempt paths: .github/workflows/ (CI uses a D1-scoped secret), non-script
+// files under Archive/ (archived text is never executed; archived scripts stay
+// gated), and the wrapper itself.
 //
 // Usage: node scripts/check-raw-wrangler-d1.mjs   (reads the staged index)
 // Exit 0 = clean, 1 = raw call found, 2 = could not read the staged diff.
@@ -36,7 +37,11 @@ export const RAW_D1 = /(npx )?wrangler d1 (execute|export)/
 const WRAPPER_NAME = /wrangler-d1|wrangler_d1/
 const ALLOW_MARKER = 'wrangler-d1-allowed'
 
+const RUNNABLE = new Set(['sh', 'bash', 'py', 'mjs', 'js', 'cjs', 'ts', 'tsx', 'bat', 'cmd', 'ps1', 'vbs'])
+
 export function isExempt(path) {
+  // Archived text (docs, sql, html) is never run; archived SCRIPTS stay gated.
+  if (path.startsWith('Archive/') && !RUNNABLE.has(ext(path))) return true
   return path.startsWith('.github/workflows/') || path === 'scripts/wrangler-d1' || path === 'scripts/wrangler_d1.py'
 }
 

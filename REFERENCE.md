@@ -65,7 +65,7 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | email_drafts | RETIRING | No reader or writer since the mirror was retired 2026-09-30 (#8836); drop pending in schema-v115 |
 | file_activity_daily | dynamic | Aggregated daily file activity from brain.db (schema v37) |
 | pomodoro_sessions | dynamic | Focus sessions synced from brain.db |
-| dispatch_queue | dynamic | Claude action items from Hub |
+| dispatch_queue | dynamic | Retired: no writer since 2026-10-11 (Queue for Claude cut); table kept |
 | pb_sessions | dynamic | Claude Code session history synced from brain.db |
 | inbox | dynamic | Quick Capture entries (FAB + Ctrl+I); synced nightly to PB Inbox/*.md (Phase 32) |
 
@@ -202,7 +202,6 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | `src/lib/api.ts` | Typed D1 API client |
 | `src/hooks/useApiData.ts` | 20+ TanStack Query hooks |
 | `src/hooks/useMutations.ts` | 10+ mutation hooks with optimistic updates |
-| `src/hooks/useTaskKeyboardShortcuts.ts` | Task-specific shortcuts (J/K/Space/S/X/B/Z/A/Enter/Esc) |
 | `src/lib/dateUtils.ts` | Shared date formatters (6 exports) |
 | `src/data/team.ts` | Team members + `getPersonInfo()` |
 | `src/components/Avatar.tsx` | Photo/initials avatar |
@@ -263,9 +262,7 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | `api/schema-v45.sql` | projects.deleted_at soft-delete column (Phase 36) |
 | `api/schema-v46.sql` | 7 missing indexes — activity_log, comments, milestones, task_updates, projects.title, notifications composite, tasks composite (Phase 36c) |
 | `scripts/rename-team-slugs.sql` | Phase 36b: 19 team_members slug rename to preferred_name-last_name (~2300 row updates across 30+ tables) |
-| `scripts/phase36b-slug-cleanup.sql` | Phase 36c follow-up: 13 leftover slugs + 4 commitments display-name fix |
 | `scripts/test-residue-cleanup.sql` | Phase 36c: ~160 test_delete_* rows wiped from 6 tables that lack soft-delete |
-| `scripts/fix-nick-email-and-pi-list.sql` | Phase 36b: real UMN address (`ingra107@umn.edu`) replaces wrong guesses |
 | `src/components/QuickCaptureInbox.tsx` | Universal Quick Capture FAB + slide-up sheet (455 lines, Phase 32) |
 | `src/components/dashboard/LabHealthScore.tsx` | Composite lab health metric card (~205 lines, Phase 32) |
 | `src/hooks/useLabHealthSignals.ts` | Health signal aggregation hook (Phase 32) |
@@ -299,7 +296,6 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | `scripts/mnccore_handler.py` | mnccore:// protocol handler (verb router; runs under pythonw.exe, no cmd.exe) |
 | `scripts/register_mnccore_protocol.py` | Registers mnccore:// (HKCU) to the Python handler; `--revert-to-bat` rolls back |
 | `scripts/mnccore-handler.bat` | DEPRECATED 2026-10-09, rollback for one release |
-| `scripts/setup-mnccore-protocol.bat` / `.reg` | DEPRECATED, register the old .bat handler |
 | `tests/feature-registry.json` | 353 interactive elements mapped with test coverage |
 | `TESTING.md` | Testing guide — suites, runner, conventions |
 
@@ -446,6 +442,6 @@ A few endpoints break the `{ data: ... }` convention. Noted here so client code 
 - `/api/team-members` does **not** exist — use `/api/team`.
 - `/api/calendar` does **not** exist — use `/api/calendar/events`.
 - `/api/pomodoro` does **not** exist; `/api/pb/pomodoro/start`+`/complete` were RETIRED 2026-06-10 (Daily Plan substrate — their only caller was the PBSector timer). Pomodoro telemetry still flows via `POST /api/pb/sessions`/`/bulk` (PB push) + `GET /api/pb/sessions/stats` (TodayPage reads).
-- `/api/dispatch` does **not** exist — use `/api/pb/dispatch/pending` + `/api/pb/dispatch/add` + `/complete`.
+- `/api/dispatch` and `/api/pb/dispatch/*` do **not** exist (the Queue for Claude lane was cut 2026-10-11). The `dispatch_queue` table is kept, no writer.
 - `/api/sessions` does **not** exist — use `/api/pb/sessions`.
 - `/api/grants` is **read + status only**. POST /api/grants does not exist; grants flow in via brain.db sync.

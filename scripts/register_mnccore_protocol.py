@@ -17,7 +17,7 @@ moves or removes that interpreter (a new minor version installs to a new
 directory) breaks every mnccore:// link silently in the browser: re-run
 `--apply` after any Python upgrade, on each laptop.
 
-Supersedes scripts\\setup-mnccore-protocol.bat (which registers the .bat).
+Supersedes setup-mnccore-protocol.bat (which registered the .bat; archived 2026-10-11).
 """
 from __future__ import annotations
 

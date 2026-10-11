@@ -8,11 +8,12 @@ echo %date% %time% ARGS: %* >> "%TEMP%\mnccore-handler.log"
 :: cmd.exe, which splits a URL holding an unbalanced quote before this file runs, so
 :: no line here can stop that injection. Kept for one release as the rollback:
 ::   python scripts\register_mnccore_protocol.py --revert-to-bat
-:: Delete it, setup-mnccore-protocol.bat/.reg and mnccore-handler.test.mjs after that.
+:: Delete it and mnccore-handler.test.mjs after that (setup-mnccore-protocol.bat/.reg
+:: were archived 2026-10-11).
 ::
 :: mnccore:// protocol handler — verb router.
 ::
-:: Registered (HKCU\Software\Classes\mnccore) by scripts\setup-mnccore-protocol.bat.
+:: Registered (HKCU\Software\Classes\mnccore) by scripts\register_mnccore_protocol.py --revert-to-bat.
 :: Invoked by the browser/OS with a single arg: the full mnccore:// URL.
 ::
 :: Verbs:
