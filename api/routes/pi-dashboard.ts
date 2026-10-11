@@ -210,8 +210,9 @@ export async function handlePIDashboard(env: Env, isPi = false): Promise<Respons
 // one line on Today. Each answers 403 to a non-PI before it reads a row: the
 // route DSL's auth:'pi' is documentation, so the gate is in the handler, the
 // way /api/pb/* and /api/insights/dashboard do it (isPiRequest, resolved once
-// per request into c.get('isPi')). They read through the viewer-bound handle
-// like every other route, so a PI sees what the membership rules let a PI see.
+// per request into c.get('isPi')). They read lab-wide (index.ts labWideEnv) and
+// return counts, months, priorities and member slugs/names only: never a
+// project name or slug, a task id or a task title (lab-pulse-gate.test.ts pins it).
 
 const PI_ONLY = () => error('Forbidden — PI access only', 403);
 
@@ -345,11 +346,15 @@ export async function handleResponseTime(env: Env, isPi: boolean): Promise<Respo
 // Who did anything in the Hub in the last 30 days, against the 30 before.
 // Per-person numbers and the score are the PI's alone. A member is a
 // team_members row with an email, not the AI. `active` is members with at
-// least one logged action; PB session and sync rows are the PI's automation,
-// not activity, and are left out.
+// least one logged action or finished task; PB session and sync rows are the
+// PI's automation, not activity, and are left out. Completions come from tasks
+// (completed_by is the finisher's email on every Hub write path, matched to the
+// member by email or slug), not from activity_log: nothing writes
+// 'task_completed' there. A done task with a NULL completed_by (older or PB
+// writes) belongs to no one and is not counted. A completion adds to `total`.
 export async function handleTeamEngagement(env: Env, isPi: boolean): Promise<Response> {
   if (!isPi) return PI_ONLY();
-  const [team, log] = await Promise.all([
+  const [team, log, done] = await Promise.all([
     env.DB.prepare(`
       SELECT slug, name FROM team_members
       WHERE slug IS NOT NULL AND slug != 'claude-ai'
@@ -362,37 +367,55 @@ export async function handleTeamEngagement(env: Env, isPi: boolean): Promise<Res
         SUM(CASE WHEN timestamp > datetime('now', '-30 days') THEN 1 ELSE 0 END) as total,
         SUM(CASE WHEN timestamp > datetime('now', '-30 days') AND type = 'comment' THEN 1 ELSE 0 END) as comments,
         SUM(CASE WHEN timestamp > datetime('now', '-30 days') AND type IN ('update', 'project_update') THEN 1 ELSE 0 END) as updates,
-        SUM(CASE WHEN timestamp > datetime('now', '-30 days') AND type = 'task_completed' THEN 1 ELSE 0 END) as completions,
         SUM(CASE WHEN timestamp > datetime('now', '-60 days') AND timestamp <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_total
       FROM activity_log
       WHERE actor IS NOT NULL AND timestamp > datetime('now', '-365 days')
         AND COALESCE(type, '') NOT IN ('pb_session', 'sync')
       GROUP BY actor
     `).all(),
+    env.DB.prepare(`
+      SELECT tm.slug as slug,
+        SUM(CASE WHEN t.completed_at > datetime('now', '-30 days') THEN 1 ELSE 0 END) as completions,
+        SUM(CASE WHEN t.completed_at <= datetime('now', '-30 days') THEN 1 ELSE 0 END) as prior_completions,
+        MAX(t.completed_at) as last_done
+      FROM tasks t
+      JOIN team_members tm ON lower(t.completed_by) IN (lower(tm.email), lower(tm.slug))
+      WHERE t.completed = 1 AND t.completed_at > datetime('now', '-60 days')
+        AND t.deleted_at IS NULL AND COALESCE(t.kind, 'task') = 'task'
+      GROUP BY tm.slug
+    `).all(),
   ]);
 
+  const doneBy = new Map<string, { completions: number; prior_completions: number; last_done: string | null }>();
+  for (const r of (done.results || []) as Array<{ slug: string; completions: number; prior_completions: number; last_done: string | null }>) {
+    doneBy.set(r.slug, r);
+  }
+
   const byActor = new Map<string, {
-    last_active: string | null; total: number; comments: number; updates: number; completions: number; prior_total: number
+    last_active: string | null; total: number; comments: number; updates: number; prior_total: number
   }>();
-  for (const r of (log.results || []) as Array<{ slug: string; last_active: string | null; total: number; comments: number; updates: number; completions: number; prior_total: number }>) {
+  for (const r of (log.results || []) as Array<{ slug: string; last_active: string | null; total: number; comments: number; updates: number; prior_total: number }>) {
     byActor.set(r.slug, r);
   }
 
   const members = ((team.results || []) as Array<{ slug: string; name: string }>).map((m) => {
     const a = byActor.get(m.slug);
-    const total = a?.total ?? 0;
-    const priorTotal = a?.prior_total ?? 0;
+    const d = doneBy.get(m.slug);
+    const completions = d?.completions ?? 0;
+    const total = (a?.total ?? 0) + completions;
+    const priorTotal = (a?.prior_total ?? 0) + (d?.prior_completions ?? 0);
+    const last = [a?.last_active, d?.last_done].filter((x): x is string => !!x).sort().pop() ?? null;
     return {
       slug: m.slug,
       name: m.name,
       total,
       comments: a?.comments ?? 0,
       updates: a?.updates ?? 0,
-      completions: a?.completions ?? 0,
-      score: (a?.comments ?? 0) * 3 + (a?.updates ?? 0) * 2 + (a?.completions ?? 0),
+      completions,
+      score: (a?.comments ?? 0) * 3 + (a?.updates ?? 0) * 2 + completions,
       prior_total: priorTotal,
       trend: total > priorTotal ? 'up' : total < priorTotal ? 'down' : 'flat',
-      last_active: a?.last_active ?? null,
+      last_active: last,
     };
   }).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
 

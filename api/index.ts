@@ -491,6 +491,7 @@ const SERVICE = (c: Context<AppEnv>) => c.get('apiKeyValid') === true;
 // PI-only view, lab-wide is fine. So for a PI (or the PB key) these three
 // routes read the unscoped handle, aggregates only, no row content; everyone
 // else keeps the viewer-bound handle and the handlers answer them 403 anyway.
+// Nick, 2026-10-11: "Lab-wide totals, no project names".
 const labWideEnv = (c: Context<AppEnv>): Env => (PI(c) ? { ...E(c), DB: c.get('unscopedDb') } : E(c));
 
 // ─────────────────────────────────────────────────────────────────────────────

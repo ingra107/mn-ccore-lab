@@ -133,4 +133,31 @@ describe('Lab pulse routes are PI-only', () => {
     const dash = JSON.parse((await get('/api/analytics/pi-dashboard', PI_EMAIL)).text).data
     expect(dash.menteeVelocity.map((m: { slug: string }) => m.slug)).not.toContain('steven-arriaza')
   })
+
+  it('completions come from tasks: counted by completed_by (email or slug), not from activity_log', async () => {
+    const base = { title: 'x', assignee: 'nick-ingraham', status: 'done', completed: 1, kind: 'task', priority: 'high', created_at: at(-9) }
+    insertRow(db, 'tasks', { id: 'c-1', completed_at: at(-2), completed_by: MEMBER_EMAIL.toUpperCase(), ...base })
+    insertRow(db, 'tasks', { id: 'c-2', completed_at: at(-3), completed_by: 'casey-eddington', ...base })
+    insertRow(db, 'tasks', { id: 'c-3', completed_at: at(-4), completed_by: null, ...base }) // no finisher: counted for no one
+    insertRow(db, 'tasks', { id: 'c-4', completed_at: at(-5), completed_by: MEMBER_EMAIL, deleted_at: at(-1), ...base })
+    const d = JSON.parse((await get('/api/analytics/team-engagement', PI_EMAIL)).text).data
+    const casey = d.members.find((m: { slug: string }) => m.slug === 'casey-eddington')
+    expect(casey.completions).toBe(2)
+    expect(casey.score).toBe(2)
+    expect(d.members.reduce((n: number, m: { completions: number }) => n + m.completions, 0)).toBe(2)
+  })
+
+  it('no Lab pulse response carries a project name or slug, a task id or a task title', async () => {
+    insertRow(db, 'projects', { id: 'proj_secretx', slug: 'secret-slug-x', title: 'SECRETPROJECTNAME', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'tasks', { id: 'task_secretid', project_id: 'proj_secretx', title: 'SECRETTASKTITLE', assignee: 'casey-eddington', status: 'done', completed: 1, kind: 'task', priority: 'high', created_at: at(-9), completed_at: at(-2), completed_by: MEMBER_EMAIL })
+    insertRow(db, 'activity_log', { id: 'al-secret', type: 'project_update', description: 'SECRETDESC SECRETPROJECTNAME', actor: 'casey-eddington', related_id: 'proj_secretx', related_type: 'project', timestamp: daysAgo(1) })
+    insertRow(db, 'publications', { id: 'pub-secret', title: 'SECRETPUBTITLE', authors: '[]', year: 2024, status: 'Published', author_slugs: JSON.stringify(['nate-mesfin']) })
+    for (const route of ROUTES) {
+      for (const who of [PI_EMAIL, 'apikey']) {
+        const r = await get(`/api/analytics/${route}`, who)
+        expect(r.status).toBe(200)
+        expect(r.text, `${route} as ${who}`).not.toMatch(/SECRET|secret-slug|proj_|task_secretid/i)
+      }
+    }
+  })
 })
