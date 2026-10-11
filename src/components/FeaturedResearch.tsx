@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { usePublications } from '../hooks/useApiData'
 import { ICON_PROPS } from '../lib/iconProps'
+import { statusLabel } from '../lib/textUtils'
 
 function statusBadgeClass(status: string): string {
   switch (status) {
@@ -82,7 +83,7 @@ export default function FeaturedResearch() {
                 <span
                   className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusBadgeClass(pub.status)}`}
                 >
-                  {pub.status}
+                  {statusLabel(pub.status)}
                 </span>
               </div>
 

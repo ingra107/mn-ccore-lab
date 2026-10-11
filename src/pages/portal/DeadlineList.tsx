@@ -152,8 +152,9 @@ export function DeadlineList({ groups, projects, selected, toggleSelect, selectR
   // Bulk actions are task actions: a grant milestone never joins the selection.
   const toggleTask = useCallback((id: string) => { if (itemById.get(id)?.task) toggleSelect(id) }, [itemById, toggleSelect])
   const openById = useCallback((id: string | null) => { const t = id ? itemById.get(id)?.task : undefined; if (t) onOpenTask(t) }, [itemById, onOpenTask])
-  const { cursor, setCursor } = useListKeyboard({ filtered: flat, toggleSelect: toggleTask, setDrawer: openById, setSelected })
-  const cursorId = flat[cursor]?.id ?? null
+  const { cursor, setCursor, cursorShown } = useListKeyboard({ filtered: flat, toggleSelect: toggleTask, setDrawer: openById, setSelected })
+  // No ring until j/k or a click uses the cursor (prod check 2026-10-11).
+  const cursorId = cursorShown ? (flat[cursor]?.id ?? null) : null
   const selectModeActive = useSelectMode(true)
 
   // Touch: a long-press selects (the phone has no shift or ctrl key).

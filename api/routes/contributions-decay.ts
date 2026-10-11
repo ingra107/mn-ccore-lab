@@ -4,6 +4,7 @@
 // 5.3c audit 2026-05-05: dual-path concern verified resolved — one canonical endpoint.
 import type { Env } from '../helpers';
 import { json } from '../helpers';
+import { memberContributionEvents, CONTRIBUTION_TYPES } from '../lib/member-contributions';
 
 // Decay constant: 0.03 gives a half-life of ~23 days (ln(2)/0.03 ≈ 23.1)
 const DECAY_CONSTANT = 0.03;
@@ -50,30 +51,9 @@ export async function handleContributionsDecay(url: URL, env: Env): Promise<Resp
   const cutoff = new Date(now.getTime() - days * 86400000).toISOString();
   const halfCutoff = new Date(now.getTime() - (days / 2) * 86400000).toISOString();
 
-  const [tasks, updates, comments, decisions, meetings] = await Promise.all([
-    env.DB.prepare(
-      "SELECT completed_at FROM tasks WHERE completed_by LIKE ? AND completed = 1 AND completed_at > ?"
-    ).bind(`%${slug}%`, cutoff).all(),
-
-    // project updates → activity_entries kind='update', entity_type='project'
-    env.DB.prepare(
-      "SELECT created_at FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL AND actor_slug LIKE ? AND created_at > ?"
-    ).bind(`%${slug}%`, cutoff).all(),
-
-    // comments → activity_entries kind='comment'
-    env.DB.prepare(
-      // entity_type != 'day' — day comments are not contributions (§3.2).
-      "SELECT created_at FROM activity_entries WHERE kind='comment' AND entity_type != 'day' AND hidden_at IS NULL AND actor_slug LIKE ? AND created_at > ?"
-    ).bind(`%${slug}%`, cutoff).all(),
-
-    env.DB.prepare(
-      "SELECT created_at FROM hub_decisions WHERE decided_by LIKE ? AND created_at > ?"
-    ).bind(`%${slug}%`, cutoff).all(),
-
-    env.DB.prepare(
-      "SELECT DISTINCT m.date FROM meetings m INNER JOIN agenda_items ai ON m.id = ai.meeting_id WHERE ai.added_by LIKE ? AND m.date > ?"
-    ).bind(`%${slug}%`, cutoff.split('T')[0]).all(),
-  ]);
+  // The same contribution list the member heatmap counts (lib/member-contributions),
+  // so the score card and "N contributions" can never disagree about what counted.
+  const events = await memberContributionEvents(env, slug, cutoff);
 
   // Calculate decay-weighted scores by type
   const breakdown: Record<string, { count: number; raw_score: number; decay_score: number }> = {};
@@ -114,13 +94,11 @@ export async function handleContributionsDecay(url: URL, env: Env): Promise<Resp
   let totalRecentScore = 0;
   let totalOlderScore = 0;
 
-  const types: [string, Record<string, unknown>[], string][] = [
-    ['task', (tasks.results || []) as Record<string, unknown>[], 'completed_at'],
-    ['update', (updates.results || []) as Record<string, unknown>[], 'created_at'],
-    ['comment', (comments.results || []) as Record<string, unknown>[], 'created_at'],
-    ['decision', (decisions.results || []) as Record<string, unknown>[], 'created_at'],
-    ['meeting', (meetings.results || []) as Record<string, unknown>[], 'date'],
-  ];
+  const types: [string, Record<string, unknown>[], string][] = CONTRIBUTION_TYPES.map((t) => [
+    t,
+    events.filter((e) => e.type === t) as unknown as Record<string, unknown>[],
+    'at',
+  ]);
 
   for (const [type, items, dateField] of types) {
     const result = processItems(type, items, dateField);

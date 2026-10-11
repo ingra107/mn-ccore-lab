@@ -392,8 +392,9 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
             disabled={isUpdating}
             style={{
               ...buttonStyle(deleteConfirm),
-              color: 'var(--job-danger)',
-              borderColor: deleteConfirm ? 'var(--job-danger)' : 'var(--hover-medium)',
+              // The bar is var(--ink), dark in light mode: the page red was 3.4:1 on it.
+              color: 'var(--job-danger-inverse)',
+              borderColor: deleteConfirm ? 'var(--job-danger-inverse)' : 'var(--hover-medium)',
             }}
           >
             {deleteConfirm ? <AlertTriangle {...ICON_PROPS} size={14} /> : <Trash2 {...ICON_PROPS} size={14} />}

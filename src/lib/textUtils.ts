@@ -141,3 +141,10 @@ export function stripMeetingMarker(text: string): string {
   // Remove `. [meeting:...]` (with optional leading period+space) and trim.
   return text.replace(/\s*\[meeting:[^\]]+\]\s*\.?\s*$/i, '').trimEnd()
 }
+
+/** A status word in sentence case: "In Review" / "in_review" -> "In review".
+ *  Status badges are plain words, never UPPERCASE or Title Case (rules-ui-design 2). */
+export function statusLabel(status: string | null | undefined): string {
+  const t = (status ?? '').replace(/_/g, ' ').trim().toLowerCase()
+  return t.charAt(0).toUpperCase() + t.slice(1)
+}

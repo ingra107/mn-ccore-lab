@@ -329,7 +329,7 @@ export default function CalendarPage() {
 
 // ── Month View ───────────────────────────────────────────────
 
-function MonthView({ currentDate, events, denseWeek = false, onOpenDay }: { currentDate: Date; events: CalendarEvent[]; denseWeek?: boolean; onOpenDay: (dateStr: string) => void }) {
+export function MonthView({ currentDate, events, denseWeek = false, onOpenDay }: { currentDate: Date; events: CalendarEvent[]; denseWeek?: boolean; onOpenDay: (dateStr: string) => void }) {
   const today = localDateKey()
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -423,10 +423,11 @@ function DayCellRender({ dateStr, today, dayEvents, onOpenDay }: { dateStr: stri
   const dayNum = parseInt(dateStr.split('-')[2])
   const isToday = dateStr === today
   return (
-    // Today: the shared now marker along the cell's top edge and a halo on the
-    // date disc (color-back pick 4), in place of the tinted cell and inset ring.
-    <div className="min-h-[56px] md:min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
-      {isToday && <NowMarker edge showLabel={false} />}
+    // Today: ONE now marker, the teal date disc with its halo (color-back
+    // pick 4). The edge line over the cell was a second marker beside the
+    // disc (prod check 2026-10-11). A date grid marks today with the disc;
+    // the lists and timelines (Day, Agenda, Today) draw the NowMarker line.
+    <div className="min-h-[56px] md:min-h-[80px] p-1.5 border-b border-r relative" data-today={isToday ? 'true' : undefined} style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
       <button type="button" onClick={() => onOpenDay(dateStr)} aria-label={`Open ${formatLongDate(dateStr)}`} className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full now-halo' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--sk-card)' : 'var(--ink)', backgroundColor: isToday ? 'var(--job-accent)' : 'transparent', cursor: 'pointer', border: 'none', padding: 0 }}>
         {dayNum}
       </button>
@@ -453,7 +454,7 @@ function DayCellRender({ dateStr, today, dayEvents, onOpenDay }: { dateStr: stri
 
 // ── Week View ────────────────────────────────────────────────
 
-function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEvent[] }) {
+export function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEvent[] }) {
   const today = localDateKey()
 
   const days = useMemo(() => {
@@ -487,8 +488,7 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
 
         return (
           <div key={dateStr} className="rounded-lg border md:min-h-[300px] relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
-            {/* Today: the shared now marker along the column's top edge (pick 4) */}
-            {isToday && <NowMarker edge showLabel={false} />}
+            {/* Today: the date disc below is the one now marker (pick 4), as in Month. */}
             {/* Day header */}
             <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{dayNames[i]}</div>

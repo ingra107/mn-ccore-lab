@@ -162,7 +162,7 @@ describe('pick 6: rows lift on hover', () => {
   const hov = document.createElement('style')
   for (const sheet of Array.from(document.styleSheets)) {
     for (const r of Array.from(sheet.cssRules)) {
-      if (r instanceof CSSStyleRule && r.selectorText.includes('.sr-row') && r.selectorText.includes(':hover:not(.sr-sel)')) {
+      if (r instanceof CSSStyleRule && r.selectorText.includes('.sr-row') && (r.selectorText.includes(':hover:not(.sr-sel)') || r.selectorText.includes(':has(.sr-row:hover'))) {
         hov.textContent += r.cssText.replace(/:hover/g, '.cb-hov') + '\n'
       }
     }
@@ -207,6 +207,18 @@ describe('pick 6: rows lift on hover', () => {
     // still there under the pointer, with the lift's material
     expect(cs(a).boxShadow).toContain(`${gray} 0px 0px 0px 1px inset`)
     expect(cs(a).backgroundImage).toMatch(/^linear-gradient/)
+  })
+
+  it('while the pointer is on ANOTHER row, the cursor row drops its ring: one raised row at a time', async () => {
+    const host = await table()
+    const [a, b] = Array.from(host.querySelectorAll<HTMLElement>('.sr-row'))
+    a.classList.add('sr-cur')
+    await new Promise((r) => setTimeout(r, 200))
+    expect(cs(a).boxShadow).toMatch(/inset/)
+    await hover(b)
+    await new Promise((r) => setTimeout(r, 200))
+    expect(cs(a).boxShadow).toBe('none')
+    expect(cs(b).backgroundImage).toMatch(/^linear-gradient/)
   })
 
   it('the hovered row takes the card material and a teal rim; the others stay flat; nothing moves', async () => {

@@ -291,11 +291,22 @@
   --sk-ac: #006b66;
   --sk-ac-soft: rgba(0, 107, 102, 0.09);
   --sk-ac-fg: #ffffff;
-  --sk-gold: #6b5420;
-  --sk-gold-soft: rgba(107, 84, 32, 0.11);
-  --sk-od: #7a0019;
-  --sk-od-soft: rgba(122, 0, 25, 0.08);
-  --sk-urg: #a23d08;
+  /* Light job hues (retuned 2026-10-11, prod7 check): the old maroon, burnt
+     orange and olive gold all read as one brown at 11-12px. Each is now the
+     highest-chroma color of its hue that still holds 4.5:1 for text on its
+     own 15% tint over the page (the tag and pill case); on plain page
+     #f3f2ee / panel #f9f8f6 / card #fff it is 5.6-6.7:1, and white text on
+     the fill is 6.3:1 or more. OKLCH: red L.50 C.20 h22, orange L.50 C.14
+     h50, gold L.49 C.10 h88 (hues 28 and 38 degrees apart; OKLab deltaE
+     9.9 red-orange, 8.7 orange-gold, 18.4 red-gold). Orange cannot get
+     brighter: any lighter orange drops under 4.5:1 on these surfaces. */
+  --sk-gold: #785c00;
+  --sk-gold-soft: rgba(120, 92, 0, 0.11);
+  --sk-wants-fg: #ffffff;  /* text on a solid --job-wants fill: 6.3:1 */
+  --sk-od: #ba0329;
+  --sk-od-soft: rgba(186, 3, 41, 0.08);
+  --sk-od-inv: #f0737e;    /* red on an inverted (ink) bar: the other theme's red */
+  --sk-urg: #9c4700;
   --sk-hatch: color-mix(in srgb, var(--sk-t1) 13%, transparent);
   --sk-face: #d9dcdf;
   --sk-face-t: #3a4450;
@@ -317,8 +328,10 @@
   --sk-ac-fg: #062320;
   --sk-gold: #dcb355;
   --sk-gold-soft: rgba(220, 179, 85, 0.13);
+  --sk-wants-fg: #0f1923;  /* dark ink on the bright dark-mode gold */
   --sk-od: #f0737e;
   --sk-od-soft: color-mix(in srgb, var(--sk-od) 10%, transparent);
+  --sk-od-inv: #ba0329;
   --sk-urg: #f08a5b;
   --sk-hatch: rgba(255, 255, 255, 0.11);
   --sk-face: #2a323b;
@@ -339,7 +352,9 @@
      and palette tokens, which .dark redefines on the same <html> element. */
   --job-overdue: var(--sk-od);     /* red: overdue */
   --job-danger: var(--sk-od);      /* red's second job, "something's wrong": errors and destructive actions (Nick 2026-10-11) */
+  --job-danger-inverse: var(--sk-od-inv); /* the same job on a var(--ink) bar (bulk toolbar), which flips light/dark */
   --job-wants: var(--sk-gold);     /* gold: wants you now (needs-you asks, due today, new/unread) */
+  --job-wants-fg: var(--sk-wants-fg); /* text on a solid --job-wants fill (unread badges) */
   --job-milestone: var(--sk-gold); /* gold: milestones keep it */
   --job-accent: var(--sk-ac);      /* teal: the one accent (primary action, selection, focus, today, Saved, In Progress) */
   --job-stale: var(--sk-urg);      /* orange: going stale (urgent edge/tag, stalled/idle days, at risk) */
@@ -1058,8 +1073,6 @@ a:hover {
   border-radius: 9999px;
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
   font-family: var(--font-sans);
 }
 
@@ -3080,6 +3093,14 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-row.sr-urg:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-rim-ac),var(--sr-amb)}
 .sr .sr-row.sr-cur:hover:not(.sr-sel),.sr .sr-row.sr-exp:hover:not(.sr-sel){box-shadow:inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-line2),var(--sr-amb)}
 .sr .sr-row.sr-urg.sr-cur:hover:not(.sr-sel),.sr .sr-row.sr-urg.sr-exp:hover:not(.sr-sel){box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim),inset 0 0 0 1px var(--sk-line2),var(--sr-amb)}
+/* One raised row at a time: while the pointer hovers ANOTHER row, the
+   keyboard-cursor row drops its ring and hover actions (keeping its urgent or
+   selected edge). j/k still move it; the ring returns when the pointer leaves
+   (prod check 2026-10-11: two rows looked raised). */
+.sr:has(.sr-row:hover:not(.sr-cur)) .sr-row.sr-cur:not(.sr-exp):not(.sr-sel):not(.sr-urg){box-shadow:none}
+.sr:has(.sr-row:hover:not(.sr-cur)) .sr-row.sr-urg.sr-cur:not(.sr-exp):not(.sr-sel){box-shadow:inset 2px 0 0 var(--job-stale)}
+.sr:has(.sr-row:hover:not(.sr-cur)) .sr-row.sr-sel.sr-cur:not(.sr-exp){box-shadow:inset 2px 0 0 var(--job-accent)}
+.sr:has(.sr-row:hover:not(.sr-cur)) .sr-row.sr-cur:not(:focus-within) .sr-hv{visibility:hidden}
 @media (prefers-reduced-motion:reduce){.sr .sr-row{transition:none}}
 .sr .sr-c{display:flex;align-items:center;gap:6px;min-width:0}
 .sr .sr-c.sr-end{justify-content:flex-end}

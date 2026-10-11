@@ -10,10 +10,11 @@ import { getStatusColor, getStatusBg } from '../statusColors'
 
 describe('status colors keep each color in its one job', () => {
   it('red is spent only on overdue', () => {
-    expect(getStatusColor('overdue')).toBe('var(--maroon)')
+    expect(getStatusColor('overdue')).toBe('var(--job-overdue)')
+    expect(getStatusBg('overdue')).toContain('var(--job-overdue)')
     for (const s of ['rejected', 'wont_fix', 'revision_due', 'withdrawn', 'blocked', 'at-risk']) {
-      expect(getStatusColor(s), s).not.toBe('var(--maroon)')
-      expect(getStatusBg(s), s).not.toContain('122, 0, 25')
+      expect(getStatusColor(s), s).not.toMatch(/maroon|job-overdue|job-danger/)
+      expect(getStatusBg(s), s).not.toMatch(/122, 0, 25|job-overdue/)
     }
   })
 

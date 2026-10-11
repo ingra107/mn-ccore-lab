@@ -164,8 +164,13 @@ export default function Home() {
         style={{
           paddingTop: '80px',
           paddingBottom: '0',
+          // The hero is dark in both themes, so it always takes the bright
+          // brand gold (the dark-theme --gold). The light-theme gold is a
+          // dim olive on this band: eyebrow, wave and stat numbers went
+          // unreadable (prod check 2026-10-11).
+          '--job-brand': '#dcb355',
           background: 'linear-gradient(160deg, oklch(0.12 0.005 250) 0%, oklch(0.14 0.005 250) 35%, oklch(0.16 0.005 250) 60%, oklch(0.18 0.005 250) 100%)',
-        }}
+        } as React.CSSProperties}
       >
         {/* Network background */}
         <NetworkBackground />

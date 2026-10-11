@@ -109,8 +109,12 @@ describe('Deadlines list on sleek rows', () => {
     expect(toggleSelect).not.toHaveBeenCalled()
   })
 
-  it('j / k move the cursor; x selects a task but never a grant milestone; e opens the task; Esc clears', async () => {
+  it('no ring on load; j / k show then move the cursor; x selects a task but never a grant milestone; e opens the task; Esc clears', async () => {
     const { row, toggleSelect, onOpenTask, setSelected } = await renderList()
+    // No cursor ring before the keyboard is used (prod check 2026-10-11): the
+    // first j shows it on the first row, the next moves it.
+    expect(row('t1').className).not.toContain('sr-cur')
+    key('j'); await tick()
     expect(row('t1').className).toContain('sr-cur')
     key('j'); await tick()
     expect(row('t2').className).toContain('sr-cur')

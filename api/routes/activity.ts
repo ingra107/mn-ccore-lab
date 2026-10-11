@@ -3,6 +3,7 @@ import { json, error, isPiRequest, resolveActor } from '../helpers';
 import { idempotentDelete } from '../lib/idempotent-delete';
 import { isTestFixture } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
+import { memberContributionEvents, contributionsByDay } from '../lib/member-contributions';
 import { activityVisibilityGate, activityHiddenClause, postActivityEntry } from '../lib/activity-entry';
 
 // GET /api/activity?limit=20&actor=slug
@@ -271,35 +272,29 @@ export async function handleActivityHeatmap(url: URL, env: Env): Promise<Respons
   const days = parseInt(url.searchParams.get('days') || '90');
   const since = ctToday(-days);
 
-  let query = "SELECT DATE(timestamp) as date, COUNT(*) as count FROM activity_log WHERE timestamp >= ? ";
-  const params: string[] = [since];
-
+  // A member's heatmap counts exactly the contributions the score card scores
+  // (lib/member-contributions), never a second definition: the two sat one
+  // above the other and disagreed (prod check 2026-10-11).
   if (slug) {
-    query += "AND actor = ? ";
-    params.push(slug);
+    const events = await memberContributionEvents(env, slug, since);
+    return json({ data: contributionsByDay(events), days, slug });
   }
 
-  query += "GROUP BY DATE(timestamp) ORDER BY date";
-
-  const result = await env.DB.prepare(query).bind(...params).all();
+  // Lab-wide (no slug): every logged Hub action plus every task completion.
+  const result = await env.DB.prepare(
+    "SELECT DATE(timestamp) as date, COUNT(*) as count FROM activity_log WHERE timestamp >= ? GROUP BY DATE(timestamp) ORDER BY date"
+  ).bind(since).all();
   const data: Record<string, number> = {};
   for (const row of (result.results || []) as { date: string; count: number }[]) {
     data[row.date] = row.count;
   }
 
-  // Also count task completions
-  let taskQuery = "SELECT DATE(completed_at) as date, COUNT(*) as count FROM tasks WHERE completed_at IS NOT NULL AND completed_at >= ? ";
-  const taskParams: string[] = [since];
-  if (slug) {
-    taskQuery += "AND (assignee = ? OR completed_by LIKE ?) ";
-    taskParams.push(slug, `%${slug}%`);
-  }
-  taskQuery += "GROUP BY DATE(completed_at)";
-
-  const taskResult = await env.DB.prepare(taskQuery).bind(...taskParams).all();
+  const taskResult = await env.DB.prepare(
+    "SELECT DATE(completed_at) as date, COUNT(*) as count FROM tasks WHERE completed_at IS NOT NULL AND completed_at >= ? GROUP BY DATE(completed_at)"
+  ).bind(since).all();
   for (const row of (taskResult.results || []) as { date: string; count: number }[]) {
     data[row.date] = (data[row.date] || 0) + row.count;
   }
 
-  return json({ data, days, slug: slug || 'all' });
+  return json({ data, days, slug: 'all' });
 }

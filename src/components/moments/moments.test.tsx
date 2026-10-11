@@ -8,7 +8,7 @@ import { MemoryRouter } from 'react-router-dom'
 import HeroNumber from './HeroNumber'
 import { NowMarker, NowMarkerSvg } from './NowMarker'
 import PageHeader from '../PageHeader'
-import { AgendaView } from '../../pages/portal/CalendarPage'
+import { AgendaView, MonthView, WeekView } from '../../pages/portal/CalendarPage'
 import { civilDatePlusDays } from '../../lib/taskGrouping'
 import { localDateKey } from '../../lib/dateUtils'
 
@@ -95,5 +95,24 @@ describe('Calendar agenda now marker', () => {
     const h = await mount(<AgendaView events={[{ id: 'm1', date: localDateKey(), title: 'Lab meeting', type: 'meeting', category: 'meeting' }]} />)
     expect(h.querySelectorAll('[data-testid="now-marker"]').length).toBe(1)
     expect(h.querySelector('section [data-testid="now-marker"]')).not.toBeNull()
+  })
+})
+
+describe('Calendar month and week: one now marker', () => {
+  // Prod check 2026-10-11: Month drew the now-marker line over today's cell AND
+  // the teal date disc. A date grid marks today once, with the disc (pick 4).
+  it('month: today has the disc and no second marker', async () => {
+    const h = await mount(<MonthView currentDate={new Date()} events={[]} onOpenDay={() => {}} />)
+    const today = h.querySelector('[data-today="true"]')!
+    expect(today).not.toBeNull()
+    expect(today.querySelectorAll('.now-halo').length).toBe(1)
+    expect(h.querySelectorAll('[data-testid="now-marker"]').length).toBe(0)
+  })
+
+  it('week: today has the disc and no second marker', async () => {
+    const start = new Date(); start.setDate(start.getDate() - start.getDay())
+    const h = await mount(<WeekView weekStart={start} events={[]} />)
+    expect(h.querySelectorAll('.now-halo').length).toBe(1)
+    expect(h.querySelectorAll('[data-testid="now-marker"]').length).toBe(0)
   })
 })

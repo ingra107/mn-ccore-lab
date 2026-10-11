@@ -21,7 +21,9 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
 // align: which edge of the bell the dropdown anchors to. 'right' (default)
 // suits a top-right header (public Layout); 'left' lets the dropdown open
 // rightward when the bell lives in the portal sidebar.
-export default function NotificationBell({ align = 'right' }: { align?: 'left' | 'right' }) {
+// triggerColor: the bell icon's ink. The public bar passes a light ink while it
+// sits on the Home hero's dark band; the dropdown keeps the theme's colors.
+export default function NotificationBell({ align = 'right', triggerColor = 'var(--slate)' }: { align?: 'left' | 'right'; triggerColor?: string }) {
   const { user, isAuthenticated } = useAuth()
   const slug = user?.slug ?? ''
   const { data: notifications = [] } = useNotifications(slug)
@@ -115,7 +117,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
       <button
         onClick={() => setOpen(!open)}
         className="p-2 rounded-md cursor-pointer transition-colors duration-200 relative"
-        style={{ color: 'var(--slate)' }}
+        style={{ color: triggerColor }}
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
       >
         <Bell {...ICON_PROPS} size={18} />
@@ -126,7 +128,8 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
               top: '2px',
               right: '2px',
               background: 'var(--job-wants)',
-              color: '#0f1923',
+              // Ink that holds AA on the gold in each theme (white on light gold, dark on dark-mode gold).
+              color: 'var(--job-wants-fg)',
               fontSize: '10px',
               lineHeight: '16px',
               minWidth: '16px',

@@ -1547,7 +1547,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               left: '16px',
               right: '16px',
               height: '2px',
-              background: 'var(--ice)',
+              background: 'var(--sk-line2)',
               transform: 'translateY(-50%)',
               zIndex: 'var(--z-base)',
             }}
@@ -1600,12 +1600,14 @@ function ProjectDetailInner({ project }: InnerProps) {
                       ? '3px solid var(--job-accent)'
                       : isPast
                         ? '2px solid var(--job-accent)'
-                        : '2px solid var(--ice)',
+                        // A future stage is a hollow gray ring on the card color: the
+                        // old --ice ring on white vanished on the light page (prod7).
+                        : '2px solid var(--sk-t3)',
                     background: isCurrent
                       ? 'var(--job-accent)'
                       : isPast
                         ? 'var(--job-accent)'
-                        : 'var(--cream)',
+                        : 'var(--sk-card)',
                     transition: 'all 0.2s ease',
                     padding: 0,
                   }}

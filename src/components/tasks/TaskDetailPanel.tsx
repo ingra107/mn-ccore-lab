@@ -866,7 +866,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {/* Related Decisions */}
             {task.project_id && (
               <CollapsibleSection
-                title="Related Decisions"
+                title="Related decisions"
                 icon={<Scale size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--sk-t2)', opacity: 0.85 }} />}
                 defaultOpen={false}
                 storageKey={`task-decisions-${task.id}`}

@@ -26,14 +26,12 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
         <Sparkles {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
         <span
           style={{
-            fontSize: '10px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
+            fontSize: '12px',
             color: 'var(--sk-t2)',
             fontWeight: 600,
           }}
         >
-          Related Projects
+          Related projects
         </span>
         <span
           style={{

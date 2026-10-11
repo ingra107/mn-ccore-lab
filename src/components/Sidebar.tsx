@@ -231,7 +231,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         badge: dayUnseen,
         badgeStyle: {
           bg: 'var(--job-wants)',
-          color: 'var(--on-gold)',
+          color: 'var(--job-wants-fg)',
           title: `${dayUnseen} Hermes ${dayUnseen === 1 ? 'answer' : 'answers'} on Today`,
         },
       }
@@ -241,8 +241,8 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         badge: myUnseen,
         badgeStyle: {
           bg: 'var(--job-wants)',
-          // --on-gold flips with --gold (dark ink on the light-gold fill in dark mode, white on the dark-gold fill in light mode).
-          color: 'var(--on-gold)',
+          // --job-wants-fg flips with --job-wants (dark ink on the bright dark-mode gold, white on the light-mode gold).
+          color: 'var(--job-wants-fg)',
           title: `${myUnseen} task${myUnseen === 1 ? '' : 's'} you haven't opened yet — click to triage in My Items`,
         },
         badgeAction: {
@@ -259,7 +259,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           badge: newMeetingsCount,
           badgeStyle: {
             bg: 'var(--job-wants)',
-            color: 'var(--on-gold)',
+            color: 'var(--job-wants-fg)',
             title: `${newMeetingsCount} meeting${newMeetingsCount === 1 ? '' : 's'} with new notes`,
           },
         }

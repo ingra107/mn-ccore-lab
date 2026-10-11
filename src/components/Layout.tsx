@@ -77,6 +77,15 @@ export default function Layout() {
 
   // Homepage hero is full-bleed, so no top padding needed there
   const isHome = location.pathname === '/'
+  // The Home hero is a fixed dark band in both themes. While the bar sits on
+  // it (top of Home, not scrolled) it takes the dark-theme ink and the
+  // bright brand gold, or light mode drew a navy logo and slate links on
+  // near-black (prod check 2026-10-11). Scoped to the bar row, not the
+  // mobile menu, which keeps its own light panel.
+  const onInk = isHome && !scrolled
+  const barFg = onInk ? 'rgba(255, 255, 255, 0.78)' : 'var(--slate)'
+  const barInk = onInk ? '#ffffff' : 'var(--ink)'
+  const barBrand = onInk ? '#dcb355' : 'var(--job-brand)'
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -115,7 +124,7 @@ export default function Layout() {
           >
             {/* Desktop: full SVG logo */}
             <img
-              src={isDark ? '/logos/mnccore-logo-dark.svg' : '/logos/mnccore-logo-primary.svg'}
+              src={isDark || onInk ? '/logos/mnccore-logo-dark.svg' : '/logos/mnccore-logo-primary.svg'}
               alt="MN-CCORE"
               className="hidden sm:block transition-all duration-300"
               style={{
@@ -129,7 +138,7 @@ export default function Layout() {
               className="block sm:hidden transition-all duration-300"
               style={{
                 height: scrolled ? '32px' : '36px',
-                filter: isDark ? 'invert(1) brightness(1.5)' : 'none',
+                filter: isDark || onInk ? 'invert(1) brightness(1.5)' : 'none',
               }}
             />
           </Link>
@@ -141,8 +150,8 @@ export default function Layout() {
               to="/"
               className="cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap"
               style={{
-                color: location.pathname === '/' ? 'var(--job-brand)' : 'var(--slate)',
-                borderBottom: location.pathname === '/' ? '2px solid var(--job-brand)' : '2px solid transparent',
+                color: location.pathname === '/' ? barBrand : barFg,
+                borderBottom: location.pathname === '/' ? `2px solid ${barBrand}` : '2px solid transparent',
               }}
             >
               Home
@@ -151,8 +160,8 @@ export default function Layout() {
             {/* Remaining top-level links, Member Hub before Contact */}
             {navLinks.filter((link) => link.to !== '/').map((link) => {
               const style = (active: boolean) => ({
-                color: active ? 'var(--job-brand)' : 'var(--slate)',
-                borderBottom: active ? '2px solid var(--job-brand)' : '2px solid transparent',
+                color: active ? barBrand : barFg,
+                borderBottom: active ? `2px solid ${barBrand}` : '2px solid transparent',
               })
               const cls = 'cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap'
               return (
@@ -168,11 +177,11 @@ export default function Layout() {
                 </span>
               )
             })}
-            <NotificationBell />
+            <NotificationBell triggerColor={barFg} />
             <button
               onClick={toggle}
               className="ml-2 p-2 rounded-md cursor-pointer transition-colors duration-200"
-              style={{ color: 'var(--slate)' }}
+              style={{ color: barFg }}
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {isDark ? <Sun {...ICON_PROPS} size={18} /> : <Moon {...ICON_PROPS} size={18} />}
@@ -181,11 +190,11 @@ export default function Layout() {
 
           {/* Mobile menu button */}
           <div className="flex lg:hidden items-center gap-2">
-            <NotificationBell />
+            <NotificationBell triggerColor={barFg} />
             <button
               onClick={toggle}
               className="p-2 rounded-md cursor-pointer"
-              style={{ color: 'var(--slate)' }}
+              style={{ color: barFg }}
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {isDark ? <Sun {...ICON_PROPS} size={18} /> : <Moon {...ICON_PROPS} size={18} />}
@@ -193,7 +202,7 @@ export default function Layout() {
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="p-2 rounded-md cursor-pointer"
-              style={{ color: 'var(--ink)' }}
+              style={{ color: barInk }}
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}

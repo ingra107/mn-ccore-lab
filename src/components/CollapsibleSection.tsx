@@ -88,8 +88,6 @@ export default function CollapsibleSection({
             fontWeight: 'var(--label-weight)',
             color: 'var(--slate)',
             opacity: 'var(--ink-label)',
-            textTransform: 'uppercase' as const,
-            letterSpacing: '0.04em',
           }}
         >
           {title}

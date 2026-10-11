@@ -25,7 +25,7 @@ const STATUS_COLOR: Record<string, string> = {
   done: 'var(--st-done)',
   blocked: 'var(--st-blocked)',
   waiting_external: 'var(--st-waiting)',
-  overdue: 'var(--maroon)',
+  overdue: 'var(--job-overdue)',
 
   // Submission / revision statuses
   pending: 'var(--slate)',
@@ -65,7 +65,7 @@ export const STATUS_BG_EXTENDED: Record<string, string> = {
   done: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
   blocked: 'color-mix(in srgb, var(--st-blocked) 14%, transparent)',
   waiting_external: 'color-mix(in srgb, var(--st-waiting) 14%, transparent)',
-  overdue: 'rgba(122, 0, 25, 0.15)',
+  overdue: 'color-mix(in srgb, var(--job-overdue) 15%, transparent)',
 
   // Submission / revision statuses
   pending: 'rgba(148, 163, 184, 0.15)',

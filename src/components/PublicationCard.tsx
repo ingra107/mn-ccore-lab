@@ -7,6 +7,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
 import AuthorColumn from './AuthorColumn'
 import { topicLabel } from '../lib/topics'
+import { statusLabel } from '../lib/textUtils'
 
 const mnccoreMembers = [
   'Ingraham NE',
@@ -186,7 +187,7 @@ export default function PublicationCard({
                   fontSize: '10px',
                 }}
               >
-                {pub.status}
+                {statusLabel(pub.status)}
               </span>
             )}
           </div>

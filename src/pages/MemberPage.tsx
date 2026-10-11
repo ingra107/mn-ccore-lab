@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
 import MemberFeaturedPublications from '../components/MemberFeaturedPublications'
 import Breadcrumb from '../components/Breadcrumb'
-import { FlaskConical, GraduationCap, Handshake, CheckCircle2, TrendingUp, Sparkles, X, Plus, Activity } from 'lucide-react'
+import { FlaskConical, GraduationCap, Handshake, CheckCircle2, Sparkles, X, Plus, Activity } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
 import MenteeDashboard from '../components/MenteeDashboard'
 import MemberProjects from '../components/project/MemberProjects'
@@ -24,12 +24,13 @@ import { formatShortDate, isOverdue } from '../lib/dateUtils'
 import { displayName as formatTier, fullNameForSlug } from '../lib/nameUtils'
 import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
 import { memberPublications, countPublications } from '../lib/publicationCounts'
-import WatchButton from '../components/WatchButton'
+import MemberProfileActions from '../components/MemberProfileActions'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { QueryErrorNote } from '../components/QueryErrorNote'
 import { topicLabel } from '../lib/topics'
 import SectionHead from '../components/ui/SectionHead'
+import { statusLabel } from '../lib/textUtils'
 
 // isOverdue imported from dateUtils
 
@@ -324,28 +325,8 @@ export default function MemberPage() {
           : []),
       ]}
     >
-      {/* View Trajectory link */}
-      {slug && (
-        <div className="mb-6 flex flex-wrap gap-2">
-          <Link
-            to={`${teamBase}/${slug}/trajectory`}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium hov-border hov-color"
-            style={{
-              background: 'var(--sk-card)',
-              color: 'var(--slate)',
-              border: '1px solid transparent',
-              textDecoration: 'none',
-              transition: 'border-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out)',
-              '--hov-border': 'var(--job-accent)',
-              '--hov-color': 'var(--job-accent)',
-            } as React.CSSProperties}
-          >
-            <TrendingUp {...ICON_PROPS} size={12} />
-            View Trajectory
-          </Link>
-          <WatchButton id={slug} type="person" label={member.name} slug={slug} />
-        </div>
-      )}
+      {/* View Trajectory + Watch: members only, hidden for signed-out visitors */}
+      {slug && <MemberProfileActions slug={slug} teamBase={teamBase} name={member.name} />}
 
       {/* Mentee: Research Focus (interests + mentor info) */}
       {mentee && (
@@ -417,9 +398,8 @@ export default function MemberPage() {
                           : normalizeProjectStatus(project.status) === 'done' ? 'badge-published'
                           : 'badge-preparation'
                       }`}
-                      style={{ textTransform: 'capitalize' }}
                     >
-                      {normalizeProjectStatus(project.status).replace('_', ' ')}
+                      {statusLabel(normalizeProjectStatus(project.status))}
                     </span>
                   </div>
                   {project.description && (

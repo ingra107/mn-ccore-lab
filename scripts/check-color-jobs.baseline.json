@@ -10,7 +10,7 @@
   "src/lib/pbLinkIcons.generated.ts": 12,
   "src/lib/projectHealthFills.ts": 2,
   "src/lib/stageNormalize.ts": 5,
-  "src/lib/statusColors.ts": 22,
+  "src/lib/statusColors.ts": 20,
   "src/lib/taskConstants.ts": 21,
   "src/lib/taskGrouping.ts": 10,
   "src/lib/tealRamp.ts": 1,

@@ -47,20 +47,13 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
   const scrollRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const [scrollMargin, setScrollMargin] = useState(0)
-  const { cursor, setCursor } = useListKeyboard({ filtered, toggleSelect, setDrawer, setSelected })
+  // The cursor ring appears once the cursor has been used (a click or j/k), not on
+  // first paint: row 0 ringed from the start would read as "selected". The hook owns it.
+  const { cursor, setCursor, cursorShown: showCursor } = useListKeyboard({ filtered, toggleSelect, setDrawer, setSelected })
   const selectModeActive = useSelectMode(true)
   const state = useTodayState(filtered)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const onExpand = useCallback((id: string) => setExpandedId((cur) => (cur === id ? null : id)), [])
-
-  // The cursor ring appears once the cursor has been used (a click or j/k), not on
-  // first paint: row 0 ringed from the start would read as "selected".
-  const [showCursor, setShowCursor] = useState(false)
-  const [prevCursor, setPrevCursor] = useState(cursor)
-  if (cursor !== prevCursor) {
-    setPrevCursor(cursor)
-    setShowCursor(true)
-  }
 
   const filteredIds = useMemo(() => filtered.map((t) => t.id), [filtered])
   const handleRowSelect = useCallback((id: string, e: React.MouseEvent) => {
@@ -150,7 +143,6 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
                             return
                           }
                           setCursor(row.index)
-                          setShowCursor(true)
                         }}
                         onMouseDownCapture={(e) => { if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault() }}
                         onDoubleClick={(e) => {

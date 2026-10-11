@@ -81,7 +81,8 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
     })
   }, [unsorted, sort, projectsByPid])
 
-  const { cursor, setCursor } = useListKeyboard({ filtered, toggleSelect, setDrawer, setSelected })
+  // cursorShown: the ring shows only after j/k or a click moved the cursor (prod check 2026-10-11).
+  const { cursor, setCursor, cursorShown } = useListKeyboard({ filtered, toggleSelect, setDrawer, setSelected })
 
   // Phase G: Ctrl/Meta held → cursor:cell affordance on rows.
   const selectModeActive = useSelectMode(true)
@@ -107,9 +108,9 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
 
   // Scroll cursor into view across virtualized list.
   useEffect(() => {
-    if (cursor < 0 || cursor >= filtered.length) return
+    if (!cursorShown || cursor < 0 || cursor >= filtered.length) return
     virtualizer.scrollToIndex(cursor, { align: 'auto', behavior: 'auto' })
-  }, [cursor, filtered.length, virtualizer])
+  }, [cursorShown, cursor, filtered.length, virtualizer])
 
   const projectSelectOptions = useMemo(() => (
     [{ value: '', label: 'No project' }, ...projectOptions
@@ -260,7 +261,7 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
                       row={t}
                       className="list-view-row"
                       data={{ 'task-id': t.id }}
-                      cursor={row.index === cursor}
+                      cursor={cursorShown && row.index === cursor}
                       selected={selected.has(t.id)}
                       urgent={t.priority === 'urgent' && !isTaskDone(t)}
                       done={isTaskDone(t)}

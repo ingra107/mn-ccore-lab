@@ -11,6 +11,7 @@ import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
 import { memberHue } from '../lib/memberHue'
+import { statusLabel } from '../lib/textUtils'
 
 interface ProfileLink {
   label: string
@@ -189,10 +190,9 @@ export default function LabPageLayout({
               {sections && sections.length > 0 && (
                 <nav className="hidden lg:block mt-8" aria-label="On this page">
                   <p
-                    className="mb-3 uppercase"
+                    className="mb-3"
                     style={{
-                      fontSize: '10px',
-                      letterSpacing: '0.08em',
+                      fontSize: '11px',
                       color: 'var(--slate)',
                     }}
                   >
@@ -206,10 +206,9 @@ export default function LabPageLayout({
                           <button
                             type="button"
                             onClick={() => handleAnchorClick(section.id)}
-                            className="cursor-pointer w-full text-left uppercase tracking-wider transition-all duration-200"
+                            className="cursor-pointer w-full text-left transition-all duration-200"
                             style={{
-                              fontSize: '11px',
-                              letterSpacing: '0.05em',
+                              fontSize: '12px',
                               padding: '6px 12px',
                               /* Portal: the active item goes neutral so the
                                  member's personal hue stays the page's one
@@ -311,11 +310,9 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
               className="text-xs mt-4 mb-2"
               style={{
                 color: 'var(--slate)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
               }}
             >
-              Pending Review
+              Pending review
             </p>
             {pendingGrants.map((grant) => (
               <div
@@ -403,7 +400,7 @@ function ProjectCardItem({ project }: { project: ProjectCard }) {
         </h3>
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className={badgeClass(project.status)}>
-            {project.status}
+            {statusLabel(project.status)}
           </span>
           <ArrowRight {...ICON_PROPS}
             size={14}
@@ -608,15 +605,14 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
             <div className="flex items-center gap-1.5 mb-2">
               <FlaskConical {...ICON_PROPS} size={12} style={{ color: 'var(--job-brand)' }} aria-hidden="true" />
               <span
-                className="text-xs uppercase"
+                className="text-xs"
                 style={{
-                  fontSize: '10px',
-                  letterSpacing: '0.08em',
+                  fontSize: '11px',
                   color: 'var(--slate)',
                   opacity: 0.85,
                 }}
               >
-                Active Projects
+                Active projects
               </span>
             </div>
             <div className="space-y-1.5">
@@ -641,9 +637,9 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
                         : normalizeProjectStatus(project.status) === 'done' ? 'badge-published'
                         : 'badge-preparation'
                     }`}
-                    style={{ fontSize: '10px', padding: '1px 6px', textTransform: 'capitalize' }}
+                    style={{ fontSize: '10px', padding: '1px 6px' }}
                   >
-                    {normalizeProjectStatus(project.status).replace('_', ' ')}
+                    {statusLabel(normalizeProjectStatus(project.status))}
                   </span>
                 </div>
               ))}

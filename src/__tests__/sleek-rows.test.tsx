@@ -158,8 +158,11 @@ describe('My Tasks Table on sleek rows', () => {
     return { host, row, ...fns }
   }
 
-  it('j / k move the cursor ring; x selects the cursor row; e opens it; Esc clears', async () => {
-    const { row, toggleSelect, setDrawer, setSelected } = await renderTable()
+  it('no cursor ring on load; j shows it, j / k move it; x selects the cursor row; e opens it; Esc clears', async () => {
+    const { host, row, toggleSelect, setDrawer, setSelected } = await renderTable()
+    // On load nothing is ringed (prod check 2026-10-11: with a hovered row, two looked raised).
+    expect(host.querySelectorAll('.sr-cur').length).toBe(0)
+    key('j'); await tick()
     expect(row('t1').className).toContain('sr-cur')
     key('j'); await tick()
     expect(row('t2').className).toContain('sr-cur')
@@ -223,7 +226,8 @@ describe('My Tasks Table on sleek rows', () => {
     const { host, row } = await renderTable()
     click(row('t3').querySelector('[data-col="priority"] .sr-trig')!)
     await tick()
-    expect(row('t1').className).toContain('sr-cur')
+    // The cursor neither moved to t3 nor got shown.
+    expect(host.querySelectorAll('.sr-cur').length).toBe(0)
     expect(document.querySelector('[role="listbox"]')).not.toBeNull()
     expect(host.querySelector('[role="columnheader"][aria-sort]')).not.toBeNull()
   })
