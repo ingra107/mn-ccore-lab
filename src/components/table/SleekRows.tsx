@@ -193,7 +193,8 @@ export function SleekRow<T>({ row, cursor = false, selected = false, urgent = fa
   if (!layout) throw new Error('SleekRow must render inside a SleekTable')
   const { columns, narrow } = layout
   const dataAttrs = Object.fromEntries(Object.entries(data ?? {}).map(([k, v]) => [`data-${k}`, v]))
-  const cls = `sr-row${narrow ? ' sr-ph' : ' sr-g'}${cursor ? ' sr-cur' : ''}${selected ? ' sr-sel' : ''}${urgent ? ' sr-urg' : ''}${done ? ' sr-done' : ''}${expanded ? ' sr-exp' : ''}${selectMode ? ' sr-selmode' : ''}${className ? ` ${className}` : ''}`
+  const noLead = narrow && !columns.some((c) => c.phone === 'lead')
+  const cls = `sr-row${narrow ? ' sr-ph' : ' sr-g'}${noLead ? ' sr-nolead' : ''}${cursor ? ' sr-cur' : ''}${selected ? ' sr-sel' : ''}${urgent ? ' sr-urg' : ''}${done ? ' sr-done' : ''}${expanded ? ' sr-exp' : ''}${selectMode ? ' sr-selmode' : ''}${className ? ` ${className}` : ''}`
 
   const cell = (c: SleekColumn<T>, phone = false) => {
     const content = phone && c.renderPhone ? c.renderPhone(row) : c.render(row)
@@ -208,9 +209,12 @@ export function SleekRow<T>({ row, cursor = false, selected = false, urgent = fa
   let line: ReactNode
   if (narrow) {
     const at = (slot: SleekColumn<T>['phone']) => columns.filter((c) => c.phone === slot)
+    // A page with no lead column (no complete box) gets no lead track, so its
+    // titles start at the row's edge (.sr-nolead in index.css).
+    const lead = at('lead')
     line = (
       <>
-        <div className="sr-ph-lead">{at('lead').map((c) => cell(c, true))}</div>
+        {lead.length > 0 && <div className="sr-ph-lead">{lead.map((c) => cell(c, true))}</div>}
         <div className="sr-ph-mid">
           <div className="sr-ph-t">{at('title').map((c) => cell(c, true))}</div>
           {at('line').length > 0 && <div className="sr-ph-l">{at('line').map((c) => cell(c, true))}</div>}

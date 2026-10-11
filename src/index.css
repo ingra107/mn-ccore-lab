@@ -3023,6 +3023,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 /* Phone layout (the table is narrower than narrowBelow): box | title over a
    context line | face. Heights come from content (Rule 15). */
 .sr.sr-narrow .sr-row{display:grid;grid-template-columns:24px minmax(0,1fr) 26px;column-gap:10px;align-items:center;padding:8px;border-radius:10px}
+.sr.sr-narrow .sr-row.sr-nolead{grid-template-columns:minmax(0,1fr) 26px}
 .sr .sr-ph-lead,.sr .sr-ph-trail{display:flex;align-items:center;justify-content:center}
 .sr .sr-ph-mid{min-width:0}
 .sr .sr-ph-t .sr-tt{font-size:13.5px}
@@ -3052,3 +3053,11 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 /* Keyboard hints under a table */
 .sr-foot{display:flex;gap:14px;font-size:10.5px;color:var(--sk-t3)}
 .sr-foot kbd{font-family:var(--font-mono),'JetBrains Mono',monospace;font-size:9px;padding:1px 4px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--sk-line2);color:var(--sk-t2)}
+/* Grants list on the sleek row (GrantSleekList): progress stays the accent at any percent */
+.gr-list .gr-prog{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.gr-list .gr-bar{width:36px;height:3px;border-radius:999px;background:var(--sk-line2);overflow:hidden;flex-shrink:0}
+.gr-list .gr-bar i{display:block;height:100%;border-radius:999px;background:var(--sk-ac)}
+.gr-list .gr-prog .sr-m{font-variant-numeric:tabular-nums}
+.gr-list .gr-detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 24px;padding:10px 10px 16px 10px;font-size:13px;color:var(--sk-t1)}
+.gr-list .gr-dl{font-size:11px;color:var(--sk-t3);margin-bottom:3px}
+.gr-list .gr-pi{display:inline-flex;align-items:center;gap:6px}
