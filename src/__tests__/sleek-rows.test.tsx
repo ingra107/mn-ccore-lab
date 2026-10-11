@@ -31,8 +31,8 @@ type Row = { id: string; name: string }
 const rows: Row[] = [{ id: 'a', name: 'Alpha' }, { id: 'b', name: 'Bravo' }]
 const cols: SleekColumn<Row>[] = [
   { key: 'name', label: 'Name', width: 'minmax(0,1fr)', sortable: true, phone: 'title', render: (r) => <span>{r.name}</span> },
-  { key: 'edit', label: 'Edit', width: '80px', interactive: true, phone: 'line', render: (r) => <button type="button" data-edit={r.id}>edit</button> },
-  { key: 'wide', label: 'Wide', width: '80px', minTableWidth: 900, render: () => <span>wide</span> },
+  { key: 'edit', label: 'Edit', width: '80px', interactive: true, phone: 'line', render: (r) => <><button type="button" data-edit={r.id}>edit</button><span data-plain={r.id}>note</span></> },
+  { key: 'wide', label: 'Wide', width: '80px', minTableWidth: 900, phone: 'trail', render: () => <span>wide</span> },
 ]
 
 function Harness({ onRowClick, width }: { onRowClick: (id: string) => void; width: number }) {
@@ -93,6 +93,17 @@ describe('SleekTable / SleekRow', () => {
     expect(phone.querySelector('select[aria-label="Sort by"]')).not.toBeNull()
     expect(phone.querySelector('.sr-ph-t')!.textContent).toContain('Alpha')
     expect(phone.querySelector('.sr-ph-l [data-edit="a"]')).not.toBeNull()
+    // minTableWidth governs the desktop grid only: the phone slot still shows.
+    expect(phone.querySelector('.sr-ph-trail')!.textContent).toContain('wide')
+  })
+
+  it('plain text inside an interactive cell reaches the row; its controls do not', async () => {
+    const onRowClick = vi.fn()
+    const host = await mount(<Harness onRowClick={onRowClick} width={1000} />, { ready: (h) => h.querySelectorAll('.sr-row').length === 2, label: 'Harness' })
+    click(host.querySelector('[data-edit="b"]')!)
+    expect(onRowClick).not.toHaveBeenCalled()
+    click(host.querySelector('[data-plain="b"]')!)
+    expect(onRowClick).toHaveBeenCalledWith('b')
   })
 })
 
@@ -102,13 +113,13 @@ const task = (id: string, title: string, extra: Partial<TaskRow> = {}) => ({
   group_override: null, acknowledged_at: '2026-01-01', updated_at: '2026-10-01', ...extra,
 }) as unknown as TaskRow
 
-function wrap(node: React.ReactNode) {
+function wrap(node: React.ReactNode, width = 1100) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) }))
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return (
     <QueryClientProvider client={qc}>
       <MemoryRouter>
-        <div style={{ height: 600, width: 1100, display: 'flex', flexDirection: 'column' }}>{node}</div>
+        <div style={{ height: 600, width, display: 'flex', flexDirection: 'column' }}>{node}</div>
       </MemoryRouter>
     </QueryClientProvider>
   )
@@ -177,6 +188,39 @@ describe('My Tasks Table on sleek rows', () => {
     expect(document.querySelector('[role="listbox"]')).not.toBeNull()
     expect(host.querySelector('[role="columnheader"][aria-sort]')).not.toBeNull()
   })
+
+  it('a milestone row has no complete box and shows its internal and hard dates', async () => {
+    const ms = task('m1', 'Submit to sponsor', { kind: 'milestone', due_date: '2099-03-01', deadline: '2099-03-15' } as Partial<TaskRow>)
+    const host = await mount(wrap(
+      <TableView
+        filtered={[ms, tasks[0]]} isEmpty={false} selected={new Set()} anchorId={null}
+        toggleSelect={vi.fn()} selectRange={vi.fn()} setSelected={vi.fn()} setDrawer={vi.fn()}
+        projectsByPid={new Map()} projectOptions={[]} plannedSet={new Set()}
+      />,
+    ), { ready: (h) => h.querySelectorAll('.list-view-row').length === 2, label: 'TableView milestone' })
+    const row = host.querySelector('.list-view-row[data-task-id="m1"]')!
+    expect(row.querySelector('.tk-ck')).toBeNull()
+    expect(row.querySelector('[aria-label="Internal date: 2099-03-01"]')).not.toBeNull()
+    expect(row.querySelector('[aria-label="Hard date: 2099-03-15"]')).not.toBeNull()
+    expect(host.querySelector('.list-view-row[data-task-id="t1"] .tk-ck')).not.toBeNull()
+  })
+
+  it('the phone Table keeps the Urgent tag and the owner face, and its due pill still edits', async () => {
+    const phoneTasks = [task('p1', 'Upload IRB amendment', { priority: 'urgent', due_date: '2099-01-05' })]
+    const host = await mount(wrap(
+      <TableView
+        filtered={phoneTasks} isEmpty={false} selected={new Set()} anchorId={null}
+        toggleSelect={vi.fn()} selectRange={vi.fn()} setSelected={vi.fn()} setDrawer={vi.fn()}
+        projectsByPid={new Map()} projectOptions={[]} plannedSet={new Set()}
+      />, 390,
+    ), { ready: (h) => h.querySelector('.sr-narrow .list-view-row.sr-ph'), label: 'TableView phone' })
+    const row = host.querySelector('.list-view-row')!
+    expect(row.querySelector('.sr-ph-l .tk-urgtag')).not.toBeNull()
+    expect(row.querySelector('.sr-ph-trail [data-col="owner"]')!.children.length).toBeGreaterThan(0)
+    click(row.querySelector('.sr-ph-l [data-col="due"] .sr-trig')!)
+    await tick()
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+  })
 })
 
 describe('My Tasks Lanes on sleek rows', () => {
@@ -220,5 +264,32 @@ describe('My Tasks Lanes on sleek rows', () => {
     click(row('l2').querySelector('.sr-open')!)
     expect(onOpenEditor).not.toHaveBeenCalled()
     expect(setExpanded).not.toHaveBeenCalled()
+  })
+
+  it('a click on "No project" expands the row (the project cell is not a dead zone)', async () => {
+    const { row, setExpanded } = await renderLanes()
+    const noProject = row('l1').querySelector('[data-col="project"] .tk-cs')!
+    expect(noProject.textContent).toBe('No project')
+    click(noProject)
+    expect(setExpanded).toHaveBeenCalledWith('l1')
+  })
+})
+
+describe('My Tasks Lanes milestones', () => {
+  it('a milestone shows no complete box and both of its dates', async () => {
+    const ms = task('lm', 'Hand to Amy', { kind: 'milestone', due_date: '2099-04-01', deadline: '2099-04-20' } as Partial<TaskRow>)
+    const byGroup: Record<GroupKey, TaskRow[]> = { deep: [ms], priorities: [], quick: [], pb: [], etl: [] }
+    const host = await mount(wrap(
+      <LanesView
+        byGroup={byGroup} selected={new Set()} anchorId={null} expanded={null} filterGroup="deep"
+        toggleSelect={vi.fn()} selectRange={vi.fn()} setExpanded={vi.fn()}
+        onOpenEditor={vi.fn()} onToggleComplete={vi.fn()}
+        projectsByPid={new Map()} plannedSet={new Set()}
+      />,
+    ), { ready: (h) => h.querySelectorAll('.sr-row').length === 1, label: 'LanesView milestone' })
+    const row = host.querySelector('.sr-row[data-task-id="lm"]')!
+    expect(row.querySelector('.tk-ck')).toBeNull()
+    expect(row.querySelector('[aria-label="Internal date: 2099-04-01"]')).not.toBeNull()
+    expect(row.querySelector('[aria-label="Hard date: 2099-04-20"]')).not.toBeNull()
   })
 })

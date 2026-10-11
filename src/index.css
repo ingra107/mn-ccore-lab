@@ -2997,6 +2997,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-row.sr-done .sr-x{color:var(--sk-t3);text-decoration:line-through;font-weight:500}
 .sr .tk-tag{margin-left:0;flex-shrink:0;white-space:nowrap}
 .sr .sr-dia{color:var(--sk-gold);flex-shrink:0}
+.sr .sr-ms-dates{display:inline-flex;align-items:center;gap:6px;min-width:0;white-space:nowrap}
 /* Quiet text cells and status pills */
 .sr .sr-m{font-size:11.5px;color:var(--sk-t3);white-space:nowrap}
 .sr .sr-m.sr-hi{color:var(--sk-t2)}
@@ -3012,6 +3013,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-car{visibility:hidden;color:var(--sk-t3);font-size:9px;flex-shrink:0}
 .sr .sr-row:hover .sr-car,.sr .sr-trig:focus-visible .sr-car,.sr .sr-trig[aria-expanded="true"] .sr-car{visibility:visible}
 @media (hover:none){.sr .sr-car{visibility:visible}}
+.sr.sr-narrow .sr-car{display:none}
 /* Fixed action slots: links, folder, Work on */
 .sr .sr-slots{display:inline-flex;align-items:center;justify-content:flex-end}
 .sr .sr-lks{display:inline-flex;align-items:center;justify-content:flex-end;width:72px}

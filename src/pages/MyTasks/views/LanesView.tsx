@@ -10,8 +10,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SleekTable, SleekRow, SleekOverdueLine, type SleekColumn } from '../../../components/table/SleekRows'
-import { TaskTitleCell } from '../../../components/tasks/taskSleekCells'
-import { CardCheck, CardDuePill, CardProjectLine } from '../../../components/tasks/TaskCardRow'
+import { TaskTitleCell, TaskCheckCell, TaskDueCell } from '../../../components/tasks/taskSleekCells'
+import { CardProjectLine } from '../../../components/tasks/TaskCardRow'
 import { Face } from '../../../components/today/skin'
 import { InlineDetail } from '../components/InlineDetail'
 import { MilestoneDrawer } from '../../../components/today/MilestoneDrawer'
@@ -71,7 +71,7 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
     const projectOf = (t: TaskRow) => (t.project_id ? projectsByPid.get(t.project_id) ?? null : null)
     const stale = (t: TaskRow) => (t.updated_at && t.status === 'in_progress' && daysSince(t.updated_at) >= prefs.taskStaleDays ? daysSince(t.updated_at) : 0)
     return [
-      { key: 'done', width: '24px', interactive: true, phone: 'lead', render: (t) => <CardCheck done={isTaskDone(t)} onToggle={() => onToggleComplete(t)} /> },
+      { key: 'done', width: '24px', interactive: true, phone: 'lead', render: (t) => <TaskCheckCell task={t} isDone={isTaskDone(t)} onToggle={() => onToggleComplete(t)} /> },
       {
         key: 'title', width: 'minmax(0,1fr)', phone: 'title',
         render: (t) => (
@@ -87,7 +87,7 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
         ),
       },
       { key: 'project', width: '160px', interactive: true, phone: 'line', render: (t) => <CardProjectLine project={projectOf(t)} /> },
-      { key: 'due', width: '104px', phone: 'line', render: (t) => (t.due_date && !isTaskDone(t) ? <CardDuePill due={t.due_date} status={t.status} /> : null) },
+      { key: 'due', width: '104px', phone: 'line', render: (t) => <TaskDueCell task={t} isDone={isTaskDone(t)} /> },
       { key: 'owner', width: '26px', phone: 'trail', render: (t) => (t.assignee ? <Face slug={t.assignee} /> : null) },
       {
         key: 'work', width: '56px', align: 'end', interactive: true, hover: true,

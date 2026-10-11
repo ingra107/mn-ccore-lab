@@ -13,14 +13,16 @@
 //             onDoubleClick onMouseDown onMouseUp onMouseLeave className data>
 //     One 40px line (min-height 40, auto on the phone layout) with radius,
 //     hover tint, cursor ring, selected teal wash + 2px edge, urgent orange
-//     edge (selection wins). Clicks inside a cell flagged `interactive` never
-//     reach onClick. `children` render BELOW the line (inline detail).
+//     edge (selection wins). In a cell flagged `interactive`, clicks on a
+//     control (link, button, input, an open menu) never reach onClick; clicks
+//     on the cell's text or empty space do. `children` render BELOW the line.
 //   <SleekOverdueLine count note> - the quiet overdue line above a table.
 //   nextSleekSort(cur, key) (./sleekSort) - the header cycle: asc -> desc -> cleared.
 //
 // Column config (SleekColumn<T>)
 //   key, label?, width (a CSS grid track), sortable?, align 'end'?,
-//   minTableWidth? (drop below this table width), interactive? (cell owns its
+//   minTableWidth? (drop from the desktop grid below this table width; the
+//   phone layout ignores it and uses `phone`), interactive? (cell owns its
 //   clicks: an inline editor or a button), hover? (fades in on row hover, the
 //   cursor row or keyboard focus; space is kept so rows line up),
 //   phone? 'lead' | 'title' | 'line' | 'trail' (where the cell goes on the
@@ -83,9 +85,12 @@ export function SleekTable<T>({ columns, sort = null, onSort, header = true, nar
     return () => ro.disconnect()
   }, [])
   const narrow = width > 0 && width < narrowBelow
+  // The phone layout places columns by `phone` slot alone: minTableWidth
+  // governs the desktop grid only, so a column can drop off a mid-width grid
+  // and still show in its phone slot.
   const visible = useMemo(
-    () => columns.filter((c) => width === 0 || !c.minTableWidth || width >= c.minTableWidth),
-    [columns, width],
+    () => (narrow ? columns : columns.filter((c) => width === 0 || !c.minTableWidth || width >= c.minTableWidth)),
+    [columns, width, narrow],
   )
   const layout = useMemo<Layout>(() => ({ columns: visible, narrow }), [visible, narrow])
   const template = visible.map((c) => c.width).join(' ')
@@ -152,7 +157,18 @@ export function SleekTable<T>({ columns, sort = null, onSort, header = true, nar
   )
 }
 
-const stopInteractive = (e: MouseEvent) => e.stopPropagation()
+// What counts as a control inside an `interactive` cell. A click on one (or
+// anywhere in a menu the cell portals out) stays in the cell; a click on the
+// cell's plain text or empty space reaches the row, so no cell is a dead zone.
+const CONTROL = 'a,button,input,select,textarea,label,[role="button"],[role="option"],[role="listbox"],[role="dialog"],[role="menu"],[role="menuitem"],[contenteditable="true"]'
+const keepControlClicks = (e: MouseEvent<HTMLDivElement>) => {
+  const target = e.target as Element
+  const cell = e.currentTarget
+  // Portaled menus bubble through React but sit outside the cell in the DOM.
+  if (!cell.contains(target)) { e.stopPropagation(); return }
+  const control = target.closest?.(CONTROL)
+  if (control && cell.contains(control)) e.stopPropagation()
+}
 
 export function SleekRow<T>({ row, cursor = false, selected = false, urgent = false, done = false, expanded = false, selectMode = false, onClick, onDoubleClick, onMouseDown, onMouseUp, onMouseLeave, className, data, children }: {
   row: T
@@ -183,7 +199,7 @@ export function SleekRow<T>({ row, cursor = false, selected = false, urgent = fa
     const content = phone && c.renderPhone ? c.renderPhone(row) : c.render(row)
     const cellCls = `sr-c${c.align === 'end' ? ' sr-end' : ''}${c.hover ? ' sr-hv' : ''}`
     return (
-      <div key={c.key} role="cell" className={cellCls} data-col={c.key} onClick={c.interactive ? stopInteractive : undefined}>
+      <div key={c.key} role="cell" className={cellCls} data-col={c.key} onClick={c.interactive ? keepControlClicks : undefined}>
         {content}
       </div>
     )

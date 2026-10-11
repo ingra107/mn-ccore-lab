@@ -105,9 +105,12 @@ export default function InlineAssigneePicker({ value, onChange, compact, display
     <div ref={ref} style={{ position: 'relative' }}>
       {display !== undefined ? (
         <button
+          ref={hoverTriggerRef as React.RefObject<HTMLButtonElement>}
           type="button"
           className="sr-trig"
           onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
+          onMouseEnter={() => { if (!open && memberData) hoverHandlers.onMouseEnter() }}
+          onMouseLeave={() => hoverHandlers.onMouseLeave()}
           aria-label={`Owner: ${person.name || value || 'unassigned'}, change`}
           aria-haspopup="listbox"
           aria-expanded={open}

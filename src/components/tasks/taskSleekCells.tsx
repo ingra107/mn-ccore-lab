@@ -4,7 +4,8 @@
 // .tk-tag / .tk-pill, so a task reads the same on a card and on a row.
 
 import type { MouseEvent, KeyboardEvent } from 'react'
-import { CardTags, useTaskAttention } from './TaskCardRow'
+import { CardCheck, CardDuePill, CardTags, useTaskAttention } from './TaskCardRow'
+import { dueLabelCompact, isOverdue } from '../../lib/dateUtils'
 import { isMilestone } from '../../../shared/taskKinds'
 import { taskShortLabel } from '../../lib/displayNames'
 import type { TaskRow } from '../../lib/api'
@@ -56,6 +57,33 @@ export function TaskTitleCell({ task, isDone, onOpen, selecting = false, planned
       {staleDays > 0 && <span className="tk-tag tk-n" title="In progress with no movement">{staleDays}d stale</span>}
     </div>
   )
+}
+
+/** The due cell for any task. A task shows its due pill. A milestone shows
+ *  its internal date (due_date, muted) and its hard date (deadline, gold, red
+ *  once missed) side by side when they differ, else its one date in gold
+ *  (the two-date rule, Nick 2026-09-17; same wording as MilestoneCardRow). */
+export function TaskDueCell({ task, isDone }: { task: TaskRow; isDone: boolean }) {
+  const civil = (d: string | null | undefined) => (d ? d.slice(0, 10) : null)
+  if (!isMilestone(task)) return task.due_date && !isDone ? <CardDuePill due={task.due_date} status={task.status} /> : null
+  const due = civil(task.due_date)
+  const hard = civil(task.deadline) ?? due
+  if (!hard) return null
+  const missed = !isDone && isOverdue(hard, task.status)
+  return (
+    <span className="sr-ms-dates">
+      {due && due !== hard && (
+        <span className="tk-pill" data-tip={`Internal date: ${due}`} aria-label={`Internal date: ${due}`}><i />{dueLabelCompact(due, false)}</span>
+      )}
+      <span className={`tk-pill ${missed ? 'tk-o' : 'tk-g'}`} data-tip={`Hard date: ${hard}`} aria-label={`Hard date: ${hard}`}><i />{dueLabelCompact(hard, missed)}</span>
+    </span>
+  )
+}
+
+/** The complete square, or nothing for a milestone: a milestone is completed
+ *  from its drawer, never by a box (TaskRow MilestoneRow contract). */
+export function TaskCheckCell({ task, isDone, onToggle }: { task: TaskRow; isDone: boolean; onToggle: () => void }) {
+  return isMilestone(task) ? null : <CardCheck done={isDone} onToggle={onToggle} />
 }
 
 /** Status as a quiet pill: the dot carries the state, the word stays gray. */

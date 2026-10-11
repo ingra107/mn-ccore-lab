@@ -15,8 +15,8 @@
 import { useEffect, useRef, useMemo, useCallback, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { SleekTable, SleekRow, SleekOverdueLine, type SleekColumn, type SleekSort } from '../../../components/table/SleekRows'
-import { TaskTitleCell, TaskStatusPill, TaskPriorityLabel } from '../../../components/tasks/taskSleekCells'
-import { CardCheck, CardDuePill } from '../../../components/tasks/TaskCardRow'
+import { TaskTitleCell, TaskStatusPill, TaskPriorityLabel, TaskCheckCell, TaskDueCell } from '../../../components/tasks/taskSleekCells'
+import { isMilestone } from '../../../../shared/taskKinds'
 import { Face } from '../../../components/today/skin'
 import { LinkRow, type TaskLink } from '../../../components/today/primitives'
 import { useListKeyboard } from '../hooks/useListKeyboard'
@@ -55,6 +55,9 @@ interface TableViewProps {
 const rowLinks = (t: TaskRow): TaskLink[] => (
   [[t.key_link_1, t.key_link_1_desc], [t.key_link_2, t.key_link_2_desc], [t.key_link_3, t.key_link_3_desc]] as const
 ).flatMap(([url, desc]) => (url ? [{ url, desc: desc ?? undefined }] : []))
+
+/** True when TaskDueCell has something to show (a live due date, or any milestone date). */
+const hasDuePill = (t: TaskRow) => (isMilestone(t) ? !!(t.deadline || t.due_date) : !!t.due_date && !isTaskDone(t))
 
 export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect, selectRange, anchorId, setSelected, setDrawer, projectsByPid, projectOptions, plannedSet }: TableViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -130,7 +133,7 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
         key: 'done', width: '28px', interactive: true, phone: 'lead',
         // Completion on the side: the square is COMPLETE (Rule 68). Selection
         // stays on x / shift-click; undo comes from the shared status toast.
-        render: (t) => <CardCheck done={isTaskDone(t)} onToggle={() => onStatusChange(t.id, t.status, isTaskDone(t) ? 'todo' : 'done')} />,
+        render: (t) => <TaskCheckCell task={t} isDone={isTaskDone(t)} onToggle={() => onStatusChange(t.id, t.status, isTaskDone(t) ? 'todo' : 'done')} />,
       },
       {
         key: 'title', label: 'Title', width: 'minmax(0,1fr)', sortable: true, phone: 'title',
@@ -163,10 +166,18 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
             value={t.due_date ?? null}
             onChange={(next) => onDateChange(t.id, t.due_date, next)}
             done={isTaskDone(t)}
-            display={t.due_date && !isTaskDone(t) ? <CardDuePill due={t.due_date} status={t.status} /> : <span className="sr-m">{t.due_date ? t.due_date.slice(0, 10) : '—'}</span>}
+            display={hasDuePill(t) ? <TaskDueCell task={t} isDone={isTaskDone(t)} /> : <span className="sr-m">{t.due_date ? t.due_date.slice(0, 10) : '—'}</span>}
           />
         ),
-        renderPhone: (t) => (t.due_date && !isTaskDone(t) ? <CardDuePill due={t.due_date} status={t.status} /> : null),
+        // Phone: the same editor behind the plain pill (the mock's look); no pill, no editor.
+        renderPhone: (t) => (hasDuePill(t) ? (
+          <InlineDatePicker
+            value={t.due_date ?? null}
+            onChange={(next) => onDateChange(t.id, t.due_date, next)}
+            done={isTaskDone(t)}
+            display={<TaskDueCell task={t} isDone={isTaskDone(t)} />}
+          />
+        ) : null),
       },
       {
         key: 'priority', label: 'Priority', width: '84px', sortable: true, interactive: true, minTableWidth: 820, phone: 'line',
