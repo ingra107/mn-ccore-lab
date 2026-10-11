@@ -17,7 +17,11 @@
 #   python scripts/wrangler_d1.py deploy --env production
 name = "mn-ccore-lab-api-scratch"
 main = "api/index.ts"
-compatibility_date = "2024-09-23"
+# 2026-03-24 is the date the Pages project already runs /api on (read from the
+# live Pages config, 2026-10-10), so moving /api here changes the Worker, not
+# the code path. nodejs_compat stays: error-ledger.ts reads AsyncLocalStorage
+# through process.getBuiltinModule, measured under workerd on this date.
+compatibility_date = "2026-03-24"
 compatibility_flags = ["nodejs_compat"]
 
 [site]
@@ -40,6 +44,12 @@ workers_dev = false
 # its own logging setting. Syntax: developers.cloudflare.com/workers/observability/logs/workers-logs
 [env.production.observability]
 enabled = true
+
+# Stamps X-Hub-Runtime: worker on every /api response (api/index.ts
+# stampRuntime). post-deploy-probe.mjs reads it to show which runtime answered.
+# A [vars] block under an env is not inherited, so it lives only here.
+[env.production.vars]
+HUB_RUNTIME = "worker"
 
 [[env.production.d1_databases]]
 binding = "DB"

@@ -50,8 +50,9 @@
     "predeploy:identity": "python scripts/check-project-identity-gate.py",
     "postdeploy:probe": "node scripts/post-deploy-probe.mjs",
     "postdeploy:probe:artifacts": "node scripts/post-deploy-probe.mjs --artifacts-only",
-    "deploy:pages:gated": "npm run predeploy:identity && npm run lint:activity-reads && npm run typecheck:api && npm run build && npm run test:journeys:sweep:gate && wrangler pages deploy dist --project-name mn-ccore-lab --branch main && npm run postdeploy:probe",
-    "deploy:worker": "python scripts/wrangler_d1.py deploy --env production",
+    "gate:deploy": "npm run predeploy:identity && npm run lint:activity-reads && npm run typecheck:api && npm run build && npm run test:journeys:sweep:gate",
+    "deploy:pages:gated": "npm run gate:deploy && wrangler pages deploy dist --project-name mn-ccore-lab --branch main && npm run postdeploy:probe",
+    "deploy:worker": "npm run gate:deploy && python scripts/wrangler_d1.py deploy --env production",
     "deploy:artifacts": "node scripts/check-artifacts-origin-minimal.mjs && wrangler pages deploy --cwd artifacts-site --branch main && npm run postdeploy:probe:artifacts",
     "typecheck:api": "node scripts/check-api-types.mjs",
     "typecheck:api:update": "node scripts/check-api-types.mjs --update"
