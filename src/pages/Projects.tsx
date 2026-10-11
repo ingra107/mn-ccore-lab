@@ -375,6 +375,9 @@ export default function Projects() {
     <DataPage
       icon={<FolderKanban {...ICON_PROPS} size={20} />}
       title={allProjectsOn ? 'All projects' : 'My projects'}
+      // The page's one telling number (color-back pick 2): how many projects
+      // this list holds. Static: the list it counts is right below.
+      hero={projectsLoading && projects.length === 0 ? undefined : { value: totalCount, label: totalCount === 1 ? 'project' : 'projects' }}
       actions={
         <>
         <AllProjectsSwitch />
@@ -459,7 +462,7 @@ export default function Projects() {
               whiteSpace: 'nowrap',
             }}
           >
-              {totalCount} projects &middot; {mncoreCount} MN-CCORE &middot; {clifCount} CLIF{pbCount > 0 ? ` \u00b7 ${pbCount} PB` : ''}{hiddenCount > 0 ? ` · ${hiddenCount} ${hiddenLabel}` : ''}
+              {mncoreCount} MN-CCORE &middot; {clifCount} CLIF{pbCount > 0 ? ` \u00b7 ${pbCount} PB` : ''}{hiddenCount > 0 ? ` · ${hiddenCount} ${hiddenLabel}` : ''}
           </span>}
           {viewMode === 'pipeline' && (
             <button

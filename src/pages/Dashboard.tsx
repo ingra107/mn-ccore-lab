@@ -8,13 +8,15 @@ import { resetLayouts } from '../lib/dashboardLayout'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
-import { useMeetingsApi, useTasks, useExpiringRegulatory } from '../hooks/useApiData'
+import { useMeetingsApi, useTasks, useExpiringRegulatory, usePublications } from '../hooks/useApiData'
+import PageHeader from '../components/PageHeader'
+import { countPublications } from '../lib/publicationCounts'
 import { formatMediumDate, localDateKey } from '../lib/dateUtils'
 import { isProductionVisible } from '../lib/isProductionVisible'
 import { getUserRoleFromAuth, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
 import ReleaseRibbon from '../components/ReleaseRibbon'
-import { PATHS } from '../constants/paths'
+import { PATHS, PUBLIC_PATHS } from '../constants/paths'
 import PipelineCard from '../components/dashboard/PipelineCard'
 import StatsCard from '../components/dashboard/StatsCard'
 import UpcomingCard from '../components/dashboard/UpcomingCard'
@@ -287,6 +289,11 @@ export default function Dashboard() {
   // Stable slug for layout persistence per user
   const userSlug = user?.slug || undefined
 
+  // The lab's one telling number (color-back pick 2): papers published. Same
+  // count the Publication Pipeline card shows; links to that filtered list.
+  const { data: publications } = usePublications()
+  const publishedCount = publications ? countPublications(publications).published : undefined
+
   // Build GridCard arrays for DashboardGrid — per-section storage
   const cardLookup = useMemo(() => {
     const map = new Map<string, typeof CARD_REGISTRY[number]>()
@@ -339,6 +346,13 @@ export default function Dashboard() {
           maxWidth:'100%' override is gone. Since 2026-10-10 (principle 17) the
           card grid stops at --page-width like every page; no exception. */}
       <div className="content-container" style={{ paddingBottom: '4rem', minHeight: 'calc(100vh - 120px)' }}>
+        {/* Title, the hero number and the heartbeat line (color-back picks 2, 10). */}
+        <PageHeader
+          title="Lab Overview"
+          hero={publishedCount !== undefined
+            ? { value: publishedCount, label: 'published', to: `${PUBLIC_PATHS.publications}?status=Published`, dest: 'Publications filtered to published' }
+            : undefined}
+        />
         {/* DD-#3: operational status chips replace the editorial greeting. */}
         {(() => {
           return (

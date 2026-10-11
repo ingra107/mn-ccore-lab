@@ -42,6 +42,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import DueLabel from '../components/DueLabel'
 import { isTaskDone } from '../lib/taskGrouping'
 import { taskShortLabel } from '../lib/displayNames'
+import PageHeartbeat from '../components/moments/PageHeartbeat'
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -837,15 +838,9 @@ export default function MyItems() {
             {displayName ? `Welcome back, ${displayName}` : 'Your action items and notifications'}
           </p>
 
-          {/* Gold rule */}
-          <div
-            style={{
-              height: '1px',
-              background: 'linear-gradient(to right, var(--gold), transparent)',
-              opacity: 0.85,
-              marginTop: '1rem',
-            }}
-          />
+          {/* The heartbeat line under the title (color-back pick 10); it
+              replaces the gold rule (gold means "wants you now"). */}
+          <PageHeartbeat />
         </div>
 
         {/* Unauthed banner — shown when CF Access cookie is absent. Pre-launch

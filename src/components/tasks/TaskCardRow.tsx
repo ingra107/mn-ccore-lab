@@ -27,16 +27,19 @@ import { slugForEmail } from '../../lib/emailSlug'
 import type { MilestoneEntry } from '../../lib/taskGrouping'
 import { Face, Faces, CheckGlyph } from '../today/skin'
 import TaskTitle from './TaskTitle'
+import { useCompletionRing } from '../../lib/completionMoment'
 import type { CardTaskRowProps } from './TaskRow'
 import { taskShortLabel } from '../../lib/displayNames'
 
 // The complete control on a card (.tk-ck). Same contract as DoneBox: the square
 // is COMPLETE, everywhere. `done-box` keeps the invisible 24px+ hit area.
-export function CardCheck({ done, onToggle }: { done: boolean; onToggle: () => void }) {
+// `taskId` plays the completion moment's ring once the Hub accepts the write.
+export function CardCheck({ done, onToggle, taskId }: { done: boolean; onToggle: () => void; taskId?: string }) {
+  const ring = useCompletionRing(done ? taskId : undefined)
   return (
     <button
       type="button"
-      className={`done-box tip tk-ck${done ? ' tk-on' : ''}`}
+      className={`done-box tip tk-ck${done ? ' tk-on' : ''}${ring ? ' cm-ring' : ''}`}
       onClick={(e) => { e.stopPropagation(); onToggle() }}
       onMouseDown={(e) => e.stopPropagation()}
       data-tip={done ? 'Mark not done' : 'Mark done'}
@@ -263,7 +266,7 @@ export function CardRow(props: CardTaskRowProps) {
           }
         }}
       >
-        <CardCheck done={isDone} onToggle={onToggleDone} />
+        <CardCheck done={isDone} onToggle={onToggleDone} taskId={task.id} />
         <div className="tk-hdr">
           <div className="tk-ct" style={tailReserve > 0 ? { paddingRight: tailReserve } : undefined}>
             {urgent && <span className="sr-only">Urgent: </span>}

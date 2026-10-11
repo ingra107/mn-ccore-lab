@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { Fragment, useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { portalTitle } from '../../constants/pageLabels'
 import { Link } from 'react-router-dom'
 import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch, Presentation, Download } from 'lucide-react'
@@ -27,6 +27,7 @@ import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 import RegulatoryExpiringList from '../../components/RegulatoryExpiringList'
 import { projectFullTitleHint, projectShortLabel, taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
 import { DeadlineList, type DeadlineItem, type DeadlineProject } from './DeadlineList'
+import { NowMarker } from '../../components/moments/NowMarker'
 
 type ViewMode = 'list' | 'timeline'
 
@@ -844,6 +845,18 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
     return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   }, [items])
 
+  // Where "now" falls (color-back pick 4): before the first item due today or
+  // later. Past-due items sit above the marker, everything ahead below it.
+  const today = localDateKey()
+  const nowBeforeId = useMemo(() => {
+    for (const [, weekItems] of byWeek) {
+      const hit = weekItems.find((i) => i.due_date.slice(0, 10) >= today)
+      if (hit) return hit.id
+    }
+    return null
+  }, [byWeek, today])
+  const nowMarker = <NowMarker labelBg="var(--sk-page)" style={{ margin: '4px 0 10px -15px' }} />
+
   if (items.length === 0) {
     return (
       <EmptyState
@@ -868,7 +881,9 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
         weekEnd.setDate(weekEnd.getDate() + 6)
 
         return (
-          <div key={weekStart} className="mb-6 relative">
+          <Fragment key={weekStart}>
+          {weekItems[0].id === nowBeforeId && nowMarker}
+          <div className="mb-6 relative">
             {/* Week dot */}
             <div
               className="absolute -left-4 top-0.5 w-3 h-3 rounded-full border-2"
@@ -884,11 +899,15 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
 
             {/* Items */}
             <div className="flex flex-col gap-1.5">
-              {weekItems.map((item) => (
-                <DeadlineRow key={item.id} item={item} />
+              {weekItems.map((item, idx) => (
+                <Fragment key={item.id}>
+                  {idx > 0 && item.id === nowBeforeId && nowMarker}
+                  <DeadlineRow item={item} />
+                </Fragment>
               ))}
             </div>
           </div>
+          </Fragment>
         )
       })}
     </div>

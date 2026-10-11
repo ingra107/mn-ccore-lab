@@ -27,10 +27,13 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 
     // A milestone never enters `planned` (GH #131/#132) even if
     // state.planned somehow carries a stale entry for it — treat it as
     // active always.
-    const planned = tasks.filter((t) => state.planned[t.id] && !state.done[t.id] && !isMilestone(t))
-    const activeRaw = tasks.filter((t) => (!state.planned[t.id] || isMilestone(t)) && !state.done[t.id])
+    // Done = the local tick OR the cache: a task still settling after its
+    // completion (TodayPage keeps it for the completion moment) sinks too.
+    const isDoneRow = (t: TaskRowData) => !!state.done[t.id] || isTaskDone(t)
+    const planned = tasks.filter((t) => state.planned[t.id] && !isDoneRow(t) && !isMilestone(t))
+    const activeRaw = tasks.filter((t) => (!state.planned[t.id] || isMilestone(t)) && !isDoneRow(t))
     const active = interleaveMilestones(activeRaw)
-    const done = tasks.filter((t) => state.done[t.id])
+    const done = tasks.filter(isDoneRow)
     return [...planned, ...active, ...done]
   }, [tasks, state.planned, state.done])
 
@@ -94,6 +97,7 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 
                 onExpand={onExpand}
                 projectsByPid={projectsByPid}
                 milestoneRole={t.milestoneRole}
+                done={isTaskDone(t)}
               />
             ))}
           </div>

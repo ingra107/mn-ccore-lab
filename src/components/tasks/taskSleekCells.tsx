@@ -96,7 +96,7 @@ export function MilestoneDueCell({ due: dueIn, hard: hardIn, isDone }: { due?: s
 /** The complete square, or nothing for a milestone: a milestone is completed
  *  from its drawer, never by a box (TaskRow MilestoneRow contract). */
 export function TaskCheckCell({ task, isDone, onToggle }: { task: TaskRow; isDone: boolean; onToggle: () => void }) {
-  return isMilestone(task) ? null : <CardCheck done={isDone} onToggle={onToggle} />
+  return isMilestone(task) ? null : <CardCheck done={isDone} onToggle={onToggle} taskId={task.id} />
 }
 
 /** Status as a quiet pill: the dot carries the state, the word stays gray. */

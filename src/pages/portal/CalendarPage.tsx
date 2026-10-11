@@ -17,6 +17,7 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import { SleekTable, SleekRow, type SleekColumn } from '../../components/table/SleekRows'
 import { TaskPriorityLabel, TaskStatusPill } from '../../components/tasks/taskSleekCells'
 import { Face } from '../../components/today/skin'
+import { NowMarker } from '../../components/moments/NowMarker'
 
 type ViewMode = 'month' | 'week' | 'day' | 'agenda'
 
@@ -422,10 +423,14 @@ function DayCellRender({ dateStr, today, dayEvents, onOpenDay }: { dateStr: stri
   const dayNum = parseInt(dateStr.split('-')[2])
   const isToday = dateStr === today
   return (
-    <div className="min-h-[56px] md:min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: isToday ? 'var(--teal-hover)' : 'var(--cream)', boxShadow: isToday ? 'inset 0 0 0 2px rgba(45,138,138,0.2)' : 'none' }}>
-      <button type="button" onClick={() => onOpenDay(dateStr)} aria-label={`Open ${formatLongDate(dateStr)}`} className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal-solid)' : 'transparent', cursor: 'pointer', border: 'none', padding: 0 }}>
+    // Today: the shared now marker along the cell's top edge and a halo on the
+    // date disc (color-back pick 4), in place of the tinted cell and inset ring.
+    <div className="min-h-[56px] md:min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
+      {isToday && <NowMarker edge showLabel={false} />}
+      <button type="button" onClick={() => onOpenDay(dateStr)} aria-label={`Open ${formatLongDate(dateStr)}`} className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full now-halo' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal-solid)' : 'transparent', cursor: 'pointer', border: 'none', padding: 0 }}>
         {dayNum}
       </button>
+      {isToday && <span className="cal-today-lbl">Today</span>}
       <div className="flex flex-col gap-0.5 mt-0.5">
         {dayEvents.slice(0, 3).map((e) => {
           const config = eventColors[e.type] || eventColors.task
@@ -481,13 +486,16 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
         const dayEvents = eventsByDate.get(dateStr) || []
 
         return (
-          <div key={dateStr} className="rounded-lg border md:min-h-[300px]" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)', backgroundColor: isToday ? 'var(--teal-hover)' : 'var(--cream)' }}>
+          <div key={dateStr} className="rounded-lg border md:min-h-[300px] relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
+            {/* Today: the shared now marker along the column's top edge (pick 4) */}
+            {isToday && <NowMarker edge showLabel={false} />}
             {/* Day header */}
             <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{dayNames[i]}</div>
-              <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8' : ''}`} style={{ color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal-solid)' : 'transparent' }}>
+              <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8 now-halo' : ''}`} style={{ color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal-solid)' : 'transparent' }}>
                 {dayNum}
               </div>
+              {isToday && <div className="cal-today-lbl" style={{ marginLeft: 0, marginTop: 2 }}>Today</div>}
             </div>
 
             {/* Events */}
@@ -524,10 +532,12 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
 
   return (
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-subtle)' }}>
-      <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-subtle)', backgroundColor: isToday ? 'var(--teal-hover)' : 'var(--cream)' }}>
+      <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
         <h3 className="text-lg font-normal" style={{ color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
           {isToday ? 'Today' : formatLongDate(dateStr)}
         </h3>
+        {/* The shared now marker under "Today" (an edge marker would clip in this rounded box). */}
+        {isToday && <NowMarker showLabel={false} style={{ marginTop: 10, marginLeft: 3 }} />}
       </div>
 
       <div className="p-4">
@@ -652,6 +662,7 @@ export function AgendaView({ events }: { events: CalendarEvent[] }) {
         const isToday = date === today
         return (
           <section key={date} aria-label={isToday ? 'Today' : formatLongDate(date)}>
+            {isToday && <NowMarker showLabel={false} style={{ margin: '2px 10px 10px' }} />}
             <div className={`sr-grp-h sr-grp-static${isToday ? ' sr-grp-now' : ''}`}>
               <h3>{isToday ? 'Today' : formatLongDate(date)}</h3>
               <span className="sr-n">{dayEvents.length}</span>

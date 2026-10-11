@@ -3083,3 +3083,54 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .gr-list .gr-detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 24px;padding:10px 10px 16px 10px;font-size:13px;color:var(--sk-t1)}
 .gr-list .gr-dl{font-size:11px;color:var(--sk-t3);margin-bottom:3px}
 .gr-list .gr-pi{display:inline-flex;align-items:center;gap:6px}
+
+/* ══ Color back: moments (rules-ui-design 21, Nick's picks 2, 4, 5 and 10, 2026-10-11) ══
+   Mock: Scratch/mockups/2026-10-11-color-back.html ("Strict + color back").
+   Each is ONE shared primitive: PageHeartbeat + HeroNumber (components/moments),
+   NowMarker (components/moments), and the completion moment (lib/completionMoment). */
+
+/* Pick 5 -- the completion moment. The box already fills teal on the tick; once
+   the Hub accepts the write a ring fades out from it. outline, not box-shadow or
+   ::before: the box's ::before is its touch target and .tk-on owns box-shadow. */
+@keyframes cm-ring{from{outline:2px solid var(--sk-rim-ac);outline-offset:0}to{outline:2px solid transparent;outline-offset:8px}}
+.cm-ring{animation:cm-ring .45s ease-out}
+/* "done this week": its rule lights teal for a beat, then rests gray */
+.tk .tk-st .tk-rl{transition:background-color .4s}
+.tk .tk-st .tk-rl.cm-beat{background:var(--sk-ac)}
+
+/* Pick 2 -- one hero number per page, in Today's stat face, beside the title.
+   No pill, no box. A link only when it goes somewhere real. */
+.pg-hero{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap;color:inherit;text-decoration:none;min-width:0}
+.pg-hero-n{font:500 30px/1 var(--font-display);font-variant-numeric:tabular-nums;color:var(--sk-t1);letter-spacing:-.01em}
+.pg-hero-l{font-size:12px;color:var(--sk-t3)}
+a.pg-hero:hover .pg-hero-l,a.pg-hero:focus-visible .pg-hero-l{color:var(--sk-t1);text-decoration:underline;text-underline-offset:3px}
+a.pg-hero:focus-visible{outline:2px solid var(--sk-ac);outline-offset:3px;border-radius:6px}
+@media (max-width:640px){.pg-hero-n{font-size:24px}}
+
+/* Pick 10 -- the heartbeat line under a page title: the lab's ECG mark in gray,
+   drawn once on load, header only. */
+.pg-hb{display:block;width:100%;height:14px;overflow:hidden;margin-top:6px}
+.pg-hb path{fill:none;stroke:var(--sk-t3);stroke-opacity:.55;stroke-width:1.2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-dasharray:1;stroke-dashoffset:1;animation:pg-hb-draw 1.6s ease-out .15s forwards}
+@keyframes pg-hb-draw{to{stroke-dashoffset:0}}
+
+/* Pick 4 -- one "now" marker wherever time is drawn: a teal hairline, a 6px dot
+   with a soft halo, and "Today" (or the time). Teal already owns "today". */
+.now-mk{display:flex;align-items:center;gap:6px;height:0;overflow:visible;pointer-events:none;color:var(--sk-ac)}
+.now-mk-dot{width:6px;height:6px;border-radius:50%;background:var(--sk-ac);box-shadow:0 0 0 4px var(--sk-ac-soft);flex-shrink:0;margin-left:-3px}
+.now-mk-line{flex:1;height:1.5px;border-radius:2px;background:var(--sk-ac);min-width:8px}
+.now-mk-lbl{font-size:10px;font-weight:600;line-height:1;white-space:nowrap;padding:0 4px;background:var(--now-mk-bg,var(--sk-panel))}
+/* edge: lies along the top edge of a cell or column (Calendar), dot at the left */
+.now-mk.now-mk-edge{position:absolute;left:6px;right:6px;top:-1px;z-index:1}
+/* the "today" date disc gets the same halo */
+.now-halo{box-shadow:0 0 0 4px var(--sk-ac-soft)}
+
+@media (prefers-reduced-motion: reduce){
+  .cm-ring{animation:none}
+  .tk .tk-st .tk-rl{transition:none}
+  .pg-hb path{animation:none;stroke-dashoffset:0}
+}
+.pg-hb.pg-hb-tight{margin:2px 0 6px}
+.pg-hb.pg-hb-row{flex-basis:100%;order:10;margin-top:0}
+.cal-today-lbl{margin-left:6px;font-size:10px;font-weight:600;color:var(--sk-ac)}
+.pg-hero.pg-hero-zero .pg-hero-n{opacity:.45;color:var(--sk-t3)}
+.pg-hb.pg-hb-gap{margin-bottom:10px}

@@ -767,7 +767,9 @@ export default function Digest() {
           icon={<Newspaper {...ICON_PROPS} size={20} />}
           title="Research Digest"
           subtitle="Daily PubMed papers relevant to MNCCORE research"
-          count={statusCounts.all || undefined}
+          // The digest's one telling number is what is new (color-back pick 2).
+          // The total still reads in the All tab and the progress line below.
+          hero={statusCounts.all > 0 ? { value: statusCounts.new, label: 'new' } : undefined}
         >
           {progressBar}
         </PageHeader>

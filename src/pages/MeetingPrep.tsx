@@ -18,6 +18,7 @@ import { staggerContainer, staggerItem } from '../lib/animations'
 import EntityNotFound from '../components/EntityNotFound'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import PageHeartbeat from '../components/moments/PageHeartbeat'
 
 interface PrepData {
   meeting: { id: string; title: string; date: string; status: string; attendees: string | null; facilitator?: string | null }
@@ -107,6 +108,8 @@ export default function MeetingPrep() {
               Print
             </button>
           </div>
+          {/* The heartbeat line under the title (color-back pick 10). */}
+          <PageHeartbeat />
           {/* Meeting countdown */}
           {(() => {
             const meetingDate = new Date(meeting.date + 'T15:00:00') // 3pm CT

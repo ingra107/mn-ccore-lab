@@ -35,6 +35,7 @@ import {
   getGroupForTask, isTaskDone,
   type GroupKey, type TodayEvent, type DailyCounts,
 } from '../../components/today/constants'
+import { useCompletionMoments } from '../../lib/completionMoment'
 import { StatLine } from '../../components/today/StatLine'
 import { ProfileSetupPrompt } from '../../components/today/ProfileSetupPrompt'
 import { parseDbUtc } from '../../lib/time'
@@ -64,6 +65,7 @@ import { Brain, Diamond, MessageSquare, Settings } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
 import { projectShortLabel, taskShortLabel } from '../../lib/displayNames'
+import PageHeartbeat from '../../components/moments/PageHeartbeat'
 
 const SHOW_MILESTONES_KEY = 'hub-today-show-milestones'
 
@@ -149,14 +151,18 @@ export default function TodayPage() {
   // "done this week" — from the retired My Hub header (2026-10-09). Same week
   // My Hub counted (Sunday start, local time) and the same exclusions as
   // "done" above: answered approvals and questions are triage, not work.
+  // A completion still waiting on the Hub is left out (completion moment): the
+  // number moves when the write is accepted, never on the optimistic tick.
+  const { pending: pendingCompletions, settling } = useCompletionMoments()
   const doneThisWeek = useMemo(() => {
     const now = new Date()
     const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
     return (tasksQuery.data ?? []).filter(
       (t) => t.completed === 1 && !!t.completed_at && parseDbUtc(t.completed_at) >= weekStart
+        && !pendingCompletions.has(t.id)
         && !isApprovalPending(t) && !isApprovalTriaged(t) && !isQuestionTask(t),
     ).length
-  }, [tasksQuery.data])
+  }, [tasksQuery.data, pendingCompletions])
 
   const projectsByPid = useMemo(() => {
     const m = new Map<string, { name: string; slug: string; category?: string | null; lastActivity?: string | null; primary_folder?: string | null }>()
@@ -228,10 +234,19 @@ export default function TodayPage() {
     try { localStorage.setItem(SHOW_MILESTONES_KEY, showMilestones ? 'on' : 'off') } catch { /* unavailable */ }
   }, [showMilestones])
 
+  // A task completed a moment ago stays in its group (sunk, box filled) until
+  // the Hub has accepted it and the ring has played (completion moment), then
+  // leaves for Completed today. Without this the row vanished on the tick and
+  // the moment had nowhere to show.
+  const settlingTasks = useMemo(
+    () => (tasksQuery.data ?? []).filter((t) => settling.has(t.id) && isTaskDone(t)
+      && !isApprovalPending(t) && !isApprovalTriaged(t) && !isQuestionTask(t)),
+    [tasksQuery.data, settling],
+  )
   const visibleTasks = useMemo(() => {
     const days = dueWindowDays(dueWindow)
     const edge = days === null ? null : civilDatePlusDays(todayKey(), days)
-    return tasks.filter((t) => {
+    return [...tasks, ...settlingTasks].filter((t) => {
       // A milestone is the horizon itself (Nick 2026-09-16: always show) —
       // a grant date six weeks out must not vanish behind a 7d window — unless
       // the milestones toggle is off.
@@ -241,7 +256,7 @@ export default function TodayPage() {
       const due = t.due_date?.slice(0, 10)
       return !!due && due <= edge
     })
-  }, [tasks, dueWindow, state.planned, showMilestones])
+  }, [tasks, settlingTasks, dueWindow, state.planned, showMilestones])
 
   const hiddenByWindow = tasks.length - visibleTasks.length
 
@@ -560,6 +575,9 @@ export default function TodayPage() {
           )}
         </div>
 
+        {/* The heartbeat line under the title (color-back pick 10). */}
+        <PageHeartbeat className="pg-hb-gap" />
+
         {/* "Needs you" questions — a process is waiting on Nick's answer. Shown
             above PendingMeetingsCard: an unanswered question blocks something,
             a captured meeting is merely awaiting triage. Both are the warm gold
@@ -767,7 +785,7 @@ export default function TodayPage() {
             <div>
               {doneTodayDetail.map((t) => (
                 <div key={t.id} className="tk-crow">
-                  <CardCheck done onToggle={() => state.uncheck(t.id)} />
+                  <CardCheck done onToggle={() => state.uncheck(t.id)} taskId={t.id} />
                   <span>{taskShortLabel(t)}</span>
                 </div>
               ))}
@@ -776,7 +794,7 @@ export default function TodayPage() {
                 if (!t) return null
                 return (
                   <div key={id} className="tk-crow">
-                    <CardCheck done onToggle={() => state.uncheck(id)} />
+                    <CardCheck done onToggle={() => state.uncheck(id)} taskId={id} />
                     <span>{taskShortLabel(t)}</span>
                   </div>
                 )

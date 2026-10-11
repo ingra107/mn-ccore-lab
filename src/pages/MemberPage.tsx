@@ -291,6 +291,11 @@ export default function MemberPage() {
       links={memberLinks}
       photoUrl={member.photoUrl}
       portalChrome={location.pathname.startsWith('/portal/')}
+      // The member's one telling number (color-back pick 2). Plainly static:
+      // the papers are listed further down this page.
+      hero={memberPubs.length > 0
+        ? { value: memberPubs.length, label: `publications · ${publishedCount} published` }
+        : undefined}
       breadcrumb={<Breadcrumb backTo={teamBase} backLabel="Team" current={formalFullName} />}
       sections={[
         ...(mentee

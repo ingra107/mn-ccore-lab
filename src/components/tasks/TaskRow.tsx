@@ -37,8 +37,9 @@ import { useIsMobile } from '../../hooks/useIsMobile'
 import { useUnseenActivity } from '../../hooks/useEntitySeen'
 import { AttentionChip } from './AttentionChip'
 import TaskTitle from './TaskTitle'
+import { useCompletionRing } from '../../lib/completionMoment'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_GREEN, ACCENT_BLUE,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_BLUE,
   INK, INK_MUTED, withAlpha, type MilestoneRole, type MilestoneEntry,
 } from '../../lib/taskGrouping'
 import { dueLabelCompact, dueTone, isOverdue } from '../../lib/dateUtils'
@@ -60,14 +61,18 @@ const PRIORITY_COLOR: Record<string, string> = {
 }
 
 // ── DoneBox — the canonical complete control. check = DONE, same everywhere ──
-export function DoneBox({ done, onToggle, color = ACCENT_GREEN }: { done: boolean; onToggle: () => void; color?: string }) {
+// Fills teal (the accent: progress), not green: green has no job under the color
+// rule (rules-ui-design 21). `taskId` lets the box play the completion moment's
+// fading ring once the Hub accepts the write (lib/completionMoment).
+export function DoneBox({ done, onToggle, color = ACCENT_TEAL, taskId }: { done: boolean; onToggle: () => void; color?: string; taskId?: string }) {
+  const ring = useCompletionRing(done ? taskId : undefined)
   return (
     <button
       type="button"
       // N1.08: .done-box is excluded from the blanket 44px mobile min-height
       // (which stretched this 17px square into a 17×44 capsule app-wide);
       // an invisible ::before pseudo-element restores the 44px touch target.
-      className="done-box tip"
+      className={`done-box tip${ring ? ' cm-ring' : ''}`}
       onClick={(e) => { e.stopPropagation(); onToggle() }}
       onMouseDown={(e) => e.stopPropagation()}
       data-tip={done ? 'Mark not done' : 'Mark done'}
@@ -82,7 +87,7 @@ export function DoneBox({ done, onToggle, color = ACCENT_GREEN }: { done: boolea
       }}
     >
       <span style={{ opacity: done ? 1 : 0, transform: done ? 'scale(1)' : 'scale(0.6)', transition: 'all 140ms', display: 'grid' }}>
-        <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="#06210f" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+        <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="var(--sk-ac-fg)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
           <polyline points="20 6 9 17 4 12" />
         </svg>
       </span>
@@ -663,7 +668,7 @@ function StandardRow(props: SharedTaskRowProps) {
             instead — the deleted dot was aria-hidden and told a screen reader
             nothing at all. */}
         <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, paddingTop: 1 }}>
-          <DoneBox done={isDone} onToggle={onToggleDone} />
+          <DoneBox done={isDone} onToggle={onToggleDone} taskId={task.id} />
           {railColor && <span className="sr-only">{task.priority === 'urgent' ? 'Urgent' : 'High priority'}</span>}
         </div>
 

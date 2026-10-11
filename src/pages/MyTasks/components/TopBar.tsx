@@ -18,6 +18,7 @@ import {
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from '../constants'
 import { ICON_PROPS } from '../../../lib/iconProps'
+import PageHeartbeat from '../../../components/moments/PageHeartbeat'
 
 interface TopBarProps {
   view: ViewMode; setView: (v: ViewMode) => void
@@ -67,6 +68,9 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10, flexWrap: 'wrap' }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', margin: 0, color: 'var(--task-ink)' }}>My Tasks</h1>
         <span aria-live="polite" aria-atomic="true" style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{taskCount} visible</span>
+        {/* The heartbeat line under the title (color-back pick 10): its own
+            full-width line in the wrapping title row. */}
+        <PageHeartbeat className="pg-hb-row" />
         <div style={{ flex: 1, minWidth: 12 }} />
         {/* N1.20 — phones drop this button: the teal + FAB is the create
             affordance there (two create buttons crowded the layout). */}

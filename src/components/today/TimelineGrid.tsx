@@ -51,6 +51,7 @@ import { formatNowLabel } from './useNowMinutes'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import { taskShortLabel } from '../../lib/displayNames'
+import { NowMarker } from '../moments/NowMarker'
 
 // ── Time label helper ──────────────────────────────────────────────────
 function fmtMin(min: number): string {
@@ -856,10 +857,9 @@ export function TimelineGrid({
   now,
   inMeeting,
 }: TimelineGridProps) {
-  // One teal rule. The coral-while-in-a-meeting variant is dropped: the meeting
+  // One teal now marker (shared NowMarker). The coral-while-in-a-meeting variant is dropped: the meeting
   // card already says "Now", and a second color for the same fact is noise.
   void inMeeting
-  const nowColor = 'var(--sk-ac)'
   // Label from the SAME `now` minutes that place the line, never a second
   // wall-clock read (#138): the two can only disagree if one of them is stale.
   const nowLabel = formatNowLabel(now)
@@ -868,34 +868,10 @@ export function TimelineGrid({
   const model = useMemo(() => buildTimelineModel(events, { nowMin: now }), [events, now])
   const { allDayEvents, serviceBlocks, units, dayStart } = model
 
+  // The shared now marker (color-back pick 4): the same object as Calendar,
+  // Grants and Deadlines, labelled with the time here.
   const nowLineElement = (
-    <div
-      aria-hidden="true"
-      style={{
-        height: 0,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        zIndex: 10,
-        pointerEvents: 'none',
-        overflow: 'visible',
-      }}
-    >
-      <span style={{ width: 7, height: 7, borderRadius: '50%', background: nowColor, flexShrink: 0, marginLeft: -4 }} />
-      <div style={{ flex: 1, height: 1.5, background: nowColor }} />
-      <span style={{
-        padding: '0 4px',
-        fontSize: 10,
-        fontWeight: 600,
-        color: nowColor,
-        background: 'var(--sk-panel)',
-        flexShrink: 0,
-        marginRight: 8,
-        whiteSpace: 'nowrap',
-      }}>
-        {nowLabel} now
-      </span>
-    </div>
+    <NowMarker label={`${nowLabel} now`} style={{ position: 'relative', zIndex: 10, marginRight: 8 }} />
   )
 
   // Build the complete free-window list for the day — passed to every AgendaGapRow

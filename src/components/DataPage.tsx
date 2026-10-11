@@ -20,6 +20,7 @@
 
 import type { ReactNode } from 'react'
 import PageHeader from './PageHeader'
+import type { HeroNumberProps } from './moments/HeroNumber'
 import TableControls from './table/TableControls'
 import { TableSkeleton } from './LoadingSkeleton'
 import EmptyState from './EmptyState'
@@ -37,6 +38,8 @@ interface DataPageProps {
   title: string
   /** Live count badge next to the title. */
   count?: number
+  /** The page's one telling number beside the title (PageHeader `hero`). */
+  hero?: HeroNumberProps
   subtitle?: ReactNode
   /** Right-aligned header actions (e.g. a "New" button). */
   actions?: ReactNode
@@ -88,6 +91,7 @@ export default function DataPage({
   icon,
   title,
   count,
+  hero,
   subtitle,
   actions,
   views,
@@ -138,7 +142,7 @@ export default function DataPage({
         {/* Header + controls share the body's --col-main cap so their right
             edge lines up with the table (wideBody pages keep the full band). */}
         <div style={wideBody ? undefined : { maxWidth: 'var(--col-main)' }}>
-        <PageHeader icon={icon} title={title} count={count} subtitle={subtitle} actions={actions}>
+        <PageHeader icon={icon} title={title} count={count} hero={hero} subtitle={subtitle} actions={actions}>
           {showControls && (
             <TableControls
               views={views}

@@ -34,6 +34,7 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { parseDbUtc, formatDbLocal } from '../../lib/time'
 import { getPersonInfo } from '../../data/team'
 import { ICON_PROPS } from '../../lib/iconProps'
+import PageHeartbeat from '../../components/moments/PageHeartbeat'
 
 interface ArtifactVersion {
   artifact_id: string
@@ -219,6 +220,8 @@ export default function ArtifactPage() {
                 · updated {formatRelativeTime(artifact.updated_at)}
               </span>
             </div>
+            {/* The heartbeat line under the title (color-back pick 10). */}
+            <PageHeartbeat />
           </div>
         </div>
 

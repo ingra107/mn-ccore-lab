@@ -48,7 +48,7 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
         style={{ cursor: isDone ? 'default' : 'pointer', paddingTop: small ? 7 : undefined, paddingBottom: small ? 7 : undefined }}
       >
         {timeHint && <span className="tk-mt" style={{ minWidth: 58, paddingTop: 1 }}>{timeHint}</span>}
-        <CardCheck done={isDone} onToggle={() => (isDone ? state.uncheck(task.id) : state.markDone(task.id))} />
+        <CardCheck done={isDone} onToggle={() => (isDone ? state.uncheck(task.id) : state.markDone(task.id))} taskId={task.id} />
         <div className="tk-hdr">
           {/* Rule 68: planned rows show the curated short_title (full title in
               the expanded drawer), matching the unplanned cards below. */}

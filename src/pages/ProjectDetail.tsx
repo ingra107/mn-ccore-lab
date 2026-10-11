@@ -81,6 +81,7 @@ import EmptyState from '../components/EmptyState'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { projectShortLabel } from '../lib/displayNames'
+import PageHeartbeat from '../components/moments/PageHeartbeat'
 
 // P2-5: notes + comments collapsed into the single chronological `activity`
 // stream (Notes / Comments / All are filters over it, not separate tabs).
@@ -705,6 +706,8 @@ function ProjectDetailInner({ project }: InnerProps) {
                 {project.short_name || 'Add short name...'}
               </span>
             )}
+            {/* The heartbeat line under the title (color-back pick 10). */}
+            <PageHeartbeat />
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
