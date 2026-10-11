@@ -51,7 +51,8 @@ export const HUB_TABLES = [
   'lab_questions', 'lab_settings', 'launch_log', 'links', 'manuscript_revisions', 'meeting_project_grants', 'meetings',
   'member_featured_publications', 'memory_facts', 'mentee_milestones', 'milestones',
   'narrative_projects', 'nih_grants', 'notifications', 'open_science_resources', 'paper_project_links',
-  'pb_sessions', 'pomodoro_sessions', 'processed_mutations', 'project_dependencies',
+  'pb_sessions', 'pomodoro_sessions', 'processed_mutations', 'product_funding', 'product_kinds',
+  'product_stages', 'products', 'project_dependencies',
   'project_documents', 'project_members', 'project_publications', 'project_state_log', 'projects',
   'publications', 'pubmed_sync_log', 'reactions', 'regulatory_items', 'research_digest',
   'research_narratives', 'reviewer_comments', 'schema_migrations', 'sessions', 'submission_events',
@@ -360,6 +361,15 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
 
   // By project.
   conference_submissions: byProject('conference_submissions', 'project_id'),
+  // schema-v124: a product is visible with its project. A funded-by edge is
+  // visible only when BOTH ends are: funding confers no access (codex tiebreak).
+  products: byProject('products', 'project_id', 'id', false),
+  product_funding: {
+    kind: 'scoped', key: 'id', dependsOn: ['products'],
+    where: (v) => (projectsScoped(v)
+      ? '(product_funding.product_id IN (SELECT id FROM products) AND product_funding.funder_id IN (SELECT id FROM products))'
+      : null),
+  },
   manuscript_revisions: byProject('manuscript_revisions', 'project_id', 'id', false),
   regulatory_items: byProject('regulatory_items', 'project_id', 'id', false),
   submission_events: byProject('submission_events', 'project_id', 'id', false),
@@ -433,7 +443,8 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   grants: LAB, inbox_events: LAB, kg_entities: LAB, kg_relation_type_registry: LAB, kg_relations: LAB,
   lab_settings: LAB, launch_log: LAB, member_featured_publications: LAB, memory_facts: LAB,
   mentee_milestones: LAB, nih_grants: LAB, notifications: LAB, open_science_resources: LAB,
-  pb_sessions: LAB, pomodoro_sessions: LAB, processed_mutations: LAB, publications: LAB,
+  pb_sessions: LAB, pomodoro_sessions: LAB, processed_mutations: LAB, product_kinds: LAB,
+  product_stages: LAB, publications: LAB,
   pubmed_sync_log: LAB, research_digest: LAB, research_narratives: LAB, schema_migrations: LAB,
   sessions: LAB, team_members: LAB, trainee_milestones: LAB, trajectories: LAB, user_calendar_events: LAB,
   user_calendar_feeds: LAB, workflow_templates: LAB,

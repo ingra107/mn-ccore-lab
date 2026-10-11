@@ -51,7 +51,7 @@ export const SLUG_REF_COLUMNS: ReadonlyArray<readonly [table: string, column: st
   ['conference_submissions', 'project_id'], ['manuscript_revisions', 'project_id'], ['regulatory_items', 'project_id'],
   ['submission_events', 'project_id'], ['project_documents', 'project_id'], ['project_publications', 'project_id'],
   ['project_state_log', 'project_id'], ['file_activity_daily', 'project_id'], ['milestones', 'project_id'],
-  ['ideas', 'project_id'], ['inbox', 'project_id'], ['project_members', 'project_id'],
+  ['ideas', 'project_id'], ['inbox', 'project_id'], ['project_members', 'project_id'], ['products', 'project_id'],
   ['project_dependencies', 'from_project_id'], ['project_dependencies', 'to_project_id'],
   ['contributions', 'project_slug'], ['lab_questions', 'project_slug'], ['paper_project_links', 'project_slug'],
   ['narrative_projects', 'project_slug'], ['hub_decisions', 'project_slug'], ['ai_requests', 'project_slug'],
