@@ -384,7 +384,7 @@ export default function UnifiedMyTasks() {
               {/* F38: Board owns no scroller; give it the same one the other views have. */}
               <div className="fab-clear" style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
                 <div className="mt-band">
-                  <TaskBoardView tasks={filtered} onStatusChange={onBoardStatusChange} onSelect={(t) => setDrawer(t.id)} />
+                  <TaskBoardView tasks={filtered} onStatusChange={onBoardStatusChange} onSelect={(t) => setDrawer(t.id)} projectsByPid={projectsByPid} />
                 </div>
               </div>
             </Suspense>

@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect } from 'react'
+import { useMemo, useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -12,39 +12,58 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Circle, Clock, CheckCircle2, AlertTriangle, ChevronDown, ChevronRight, Layers } from 'lucide-react'
-import TaskCard from './TaskCard'
-import Avatar from '../Avatar'
+import { AlertTriangle, ChevronDown, ChevronRight, Layers, ThumbsUp } from 'lucide-react'
+import { TaskRow as CardTaskRow } from '../today/TaskRow'
+import { Face } from '../today/skin'
 import { getPersonInfo } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { InputSafeKeyboardSensor, InputSafePointerSensor, InputSafeTouchSensor } from '../../lib/dndSensors'
+import { useTodayState, type TodayStateApi } from '../../hooks/useTodayState'
+import { useUpdateTask } from '../../hooks/mutations'
+import { useUndoToast } from '../UndoToast'
+import { isTaskDone } from '../../lib/taskGrouping'
+import { PRIORITY_OPTIONS } from '../../lib/taskConstants'
+
+// Board cards are the Today card (today/TaskRow over tasks/TaskCardRow), the same
+// one List renders: bold title, the project as a muted line, due pill + priority
+// on one context line, the owner's photo face top right, folder + Work on under
+// it. Board-only: a click opens the task panel (no inline drawer in a narrow
+// column), and the priority word cycles on click. Column heads are plain text;
+// the one colour left on the board is urgent's orange edge (Nick approved the
+// mock 2026-10-10, Scratch/mockups/2026-10-10-tasks-table-rows.html).
+
+type ProjectInfo = { name: string; slug: string; category?: string | null; primary_folder?: string | null }
 
 interface TaskBoardViewProps {
   tasks: TaskRow[]
   onStatusChange: (id: string, status: string) => void
   onSelect?: (task: TaskRow) => void
+  projectsByPid?: Map<string, ProjectInfo>
 }
+
+const NO_PROJECTS = new Map<string, ProjectInfo>()
 
 type GroupByField = 'status' | 'priority' | 'assignee'
 
 const columns = [
-  { key: 'todo', label: 'To Do', icon: Circle, color: 'var(--slate)', bg: 'rgba(100,116,139,0.06)' },
-  { key: 'in_progress', label: 'In Progress', icon: Clock, color: 'var(--teal)', bg: 'var(--teal-hover)' },
-  { key: 'blocked', label: 'Blocked', icon: AlertTriangle, color: 'var(--maroon)', bg: 'var(--maroon-hover)' },
-  { key: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--green)', bg: 'var(--green-hover)' },
+  { key: 'todo', label: 'To Do' },
+  { key: 'in_progress', label: 'In Progress' },
+  { key: 'blocked', label: 'Blocked' },
+  { key: 'done', label: 'Done' },
 ]
 
-const priorityConfig: Record<string, { label: string; color: string; bg: string }> = {
-  urgent: { label: 'Urgent', color: 'var(--maroon)', bg: 'var(--maroon-hover)' },
-  high: { label: 'High', color: 'var(--slate)', bg: 'rgba(100,116,139,0.06)' },
-  medium: { label: 'Medium', color: 'var(--slate)', bg: 'rgba(100,116,139,0.06)' },
-  low: { label: 'Low', color: 'var(--slate)', bg: 'rgba(100,116,139,0.06)' },
-}
+const priorityLabel: Record<string, string> = Object.fromEntries(PRIORITY_OPTIONS.map((o) => [o.value, o.label]))
+const PRIORITY_CYCLE = ['low', 'medium', 'high', 'urgent'] as const
 
 const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
 
-const COLLAPSED_KEY = 'mnccore-board-collapsed-v1'
+// Enter on a card opens it, so only Space picks one up (SortableTaskCard).
+const BOARD_DRAG_INSTRUCTIONS = {
+  draggable: 'Enter opens the task. Space picks the card up; the arrow keys move it to another column, Space drops it, Escape cancels.',
+}
+
+const COLLAPSED_KEY ='mnccore-board-collapsed-v1'
 const SWIMLANE_COLLAPSED_KEY = 'mnccore-swimlane-collapsed-v1'
 
 function loadCollapsed(): Record<string, boolean> {
@@ -69,8 +88,10 @@ function saveSwimlaneCollapsed(state: Record<string, boolean>) {
   localStorage.setItem(SWIMLANE_COLLAPSED_KEY, JSON.stringify(state))
 }
 
-export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskBoardViewProps) {
+export default function TaskBoardView({ tasks, onStatusChange, onSelect, projectsByPid = NO_PROJECTS }: TaskBoardViewProps) {
   const [activeTask, setActiveTask] = useState<TaskRow | null>(null)
+  const state = useTodayState(tasks)
+  const cardProps: CardProps = { state, projectsByPid, onSelect }
   const [overColumnId, setOverColumnId] = useState<string | null>(null)
   const [groupBy, setGroupBy] = useState<GroupByField>('status')
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(loadCollapsed)
@@ -204,26 +225,18 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
 
   const renderLaneLabel = (key: string) => {
     if (groupBy === 'priority') {
-      const cfg = priorityConfig[key] || priorityConfig.medium
-      return (
-        <span className="flex items-center gap-2" style={{ color: cfg.color, fontSize: 'var(--value-size)', fontWeight: 'var(--label-weight)' }}>
-          <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: cfg.color, opacity: 0.85 }} />
-          {cfg.label}
-        </span>
-      )
+      return <span className={`tk-bd-lane${key === 'urgent' ? ' tk-bd-urg' : ''}`}>{priorityLabel[key] ?? priorityLabel.medium}</span>
     }
     if (groupBy === 'assignee') {
       const person = getPersonInfo(key)
       return (
-        <span className="flex items-center gap-2" style={{ fontSize: 'var(--value-size)', fontWeight: 'var(--label-weight)', color: 'var(--ink)' }}>
-          <div style={{ width: 20, height: 20 }}>
-            <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
-          </div>
+        <span className="tk-bd-lane">
+          {key !== 'unassigned' && <Face slug={key} />}
           {person.name}
         </span>
       )
     }
-    return <span style={{ fontSize: 'var(--value-size)', fontWeight: 'var(--label-weight)', color: 'var(--ink)' }}>{key}</span>
+    return <span className="tk-bd-lane">{key}</span>
   }
 
   return (
@@ -233,224 +246,137 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      accessibility={{ screenReaderInstructions: BOARD_DRAG_INSTRUCTIONS }}
     >
-      {/* Group By selector */}
-      <div className="flex items-center gap-2 mb-3">
-        <Layers {...ICON_PROPS} size={13} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-          Group by:
-        </span>
-        {(['status', 'priority', 'assignee'] as const).map((field) => (
-          <button
-            key={field}
-            onClick={() => setGroupBy(field)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              padding: '3px 10px',
-              borderRadius: 'var(--radius-md)',
-              border: groupBy === field ? '1px solid var(--teal)' : '1px solid transparent',
-              background: groupBy === field ? 'var(--teal-active)' : 'none',
-              color: groupBy === field ? 'var(--teal)' : 'var(--slate)',
-              fontSize: 'var(--label-size)',
-              fontWeight: groupBy === field ? 'var(--label-weight)' : 400,
-              cursor: 'pointer',
-              textTransform: 'capitalize',
-            }}
-          >
-            {field === 'assignee' ? 'Assignee' : field === 'priority' ? 'Priority' : 'Status'}
-          </button>
-        ))}
-      </div>
+      <div className="tk tk-board">
+        {/* Group By selector */}
+        <div className="tk-bd-group">
+          <Layers {...ICON_PROPS} size={13} aria-hidden />
+          <span>Group by</span>
+          {(['status', 'priority', 'assignee'] as const).map((field) => (
+            <button
+              key={field}
+              type="button"
+              onClick={() => setGroupBy(field)}
+              className={groupBy === field ? 'tk-on' : undefined}
+              aria-pressed={groupBy === field}
+            >
+              {field === 'assignee' ? 'Assignee' : field === 'priority' ? 'Priority' : 'Status'}
+            </button>
+          ))}
+        </div>
 
-      {/* Standard status board (no swimlanes) */}
-      {groupBy === 'status' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {columns.map((col) => {
-            const Icon = col.icon
-            const columnTasks = tasksByStatus[col.key] || []
-            const taskIds = columnTasks.map((t) => t.id)
-            const isCollapsed = !!collapsed[col.key]
+        {/* Standard status board (no swimlanes) */}
+        {groupBy === 'status' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {columns.map((col) => {
+              const columnTasks = tasksByStatus[col.key] || []
+              const taskIds = columnTasks.map((t) => t.id)
+              const isCollapsed = !!collapsed[col.key]
 
-            if (isCollapsed) {
+              if (isCollapsed) {
+                return (
+                  <CollapsedColumn
+                    key={col.key}
+                    id={col.key}
+                    label={col.label}
+                    count={columnTasks.length}
+                    isOver={overColumnId === col.key}
+                    onExpand={() => toggleCollapse(col.key)}
+                  />
+                )
+              }
+
               return (
-                <CollapsedColumn
-                  key={col.key}
-                  id={col.key}
-                  label={col.label}
-                  icon={Icon}
-                  color={col.color}
-                  bg={col.bg}
-                  count={columnTasks.length}
-                  isOver={overColumnId === col.key}
-                  onExpand={() => toggleCollapse(col.key)}
-                />
-              )
-            }
-
-            return (
-              <DroppableColumn key={col.key} id={col.key} isOver={overColumnId === col.key}>
-                {/* Column header */}
-                <div
-                  className="flex items-center justify-between px-3 py-2 rounded-t-lg border-b-2 mb-2"
-                  style={{ backgroundColor: col.bg, borderColor: col.color }}
-                >
-                  <div className="flex items-center gap-2">
+                <DroppableColumn key={col.key} id={col.key} isOver={overColumnId === col.key}>
+                  {/* Column head: plain text and a muted count, no coloured rule. */}
+                  <h4 className="tk-bd-h">
                     <button
+                      type="button"
+                      className="tk-bd-col"
                       onClick={() => toggleCollapse(col.key)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', color: col.color }}
                       title="Collapse column"
+                      aria-label={`Collapse ${col.label}`}
                     >
                       <ChevronDown {...ICON_PROPS} size={12} />
                     </button>
-                    <Icon {...ICON_PROPS} size={14} style={{ color: col.color }} />
-                    <span className="text-sm font-medium" style={{ color: col.color }}>
-                      {col.label}
-                    </span>
-                  </div>
-                  <span
-                    className="text-xs px-1.5 py-0.5 rounded-full"
-                    style={{ backgroundColor: col.bg, color: col.color, fontWeight: 600 }}
-                  >
-                    {columnTasks.length}
-                  </span>
-                </div>
+                    {col.label}
+                    <span className="tk-bd-n">{columnTasks.length}</span>
+                  </h4>
 
-                {/* Cards */}
-                <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-                  <div className="flex flex-col gap-2 min-h-[200px]">
-                    {columnTasks.map((task) => (
-                      <SortableTaskCard
-                        key={task.id}
-                        task={task}
-                        onStatusChange={onStatusChange}
-                        onSelect={onSelect}
-                      />
-                    ))}
-                    {columnTasks.length === 0 && (
-                      <div
-                        className="flex items-center justify-center py-8 rounded-lg border border-dashed"
-                        style={{
-                          borderColor: 'var(--border-subtle)',
-                          color: 'var(--slate)',
-                          opacity: 'var(--ink-hint)',
-                          fontSize: '12px',
-                        }}
-                      >
-                        Drop here
-                      </div>
-                    )}
-                  </div>
-                </SortableContext>
-              </DroppableColumn>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Swimlane view (groupBy = priority or assignee) */}
-      {swimlaneData && (
-        <div className="flex flex-col gap-4">
-          {swimlaneData.map((lane) => {
-            const isLaneCollapsed = !!swimlaneCollapsed[lane.key]
-
-            return (
-              <div key={lane.key}>
-                {/* Swimlane header */}
-                <button
-                  onClick={() => toggleSwimlaneCollapse(lane.key)}
-                  className="flex items-center gap-2 w-full mb-2 pb-1.5"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    borderBottom: '1px solid var(--border-subtle)',
-                    cursor: 'pointer',
-                    padding: 'var(--sp-xs) 0',
-                  }}
-                >
-                  {isLaneCollapsed ? (
-                    <ChevronRight {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
-                  ) : (
-                    <ChevronDown {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
-                  )}
-                  {renderLaneLabel(lane.key)}
-                  <span
-                    className="text-xs px-1.5 py-0.5 rounded-full ml-1"
-                    style={{ background: 'var(--ice)', color: 'var(--slate)', fontWeight: 'var(--label-weight)' }}
-                  >
-                    {lane.tasks.length}
-                  </span>
-                </button>
-
-                {/* Swimlane columns */}
-                {!isLaneCollapsed && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pl-4">
-                    {columns.map((col) => {
-                      const Icon = col.icon
-                      const columnTasks = lane.tasksByCol[col.key] || []
-                      const taskIds = columnTasks.map((t) => t.id)
-
-                      return (
-                        <DroppableColumn key={`${lane.key}-${col.key}`} id={col.key} isOver={overColumnId === col.key}>
-                          <div
-                            className="flex items-center justify-between px-2 py-1.5 rounded-t-lg border-b mb-1.5"
-                            style={{ backgroundColor: col.bg, borderColor: `color-mix(in srgb, ${col.color} 30%, transparent)` }}
-                          >
-                            <div className="flex items-center gap-1.5">
-                              <Icon {...ICON_PROPS} size={12} style={{ color: col.color, opacity: 0.85 }} />
-                              <span className="text-xs" style={{ color: col.color, opacity: 0.8 }}>
-                                {col.label}
-                              </span>
-                            </div>
-                            <span className="text-[10px]" style={{ color: col.color, opacity: 0.85 }}>
-                              {columnTasks.length}
-                            </span>
-                          </div>
-                          <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-                            <div className="flex flex-col gap-1.5 min-h-[80px]">
-                              {columnTasks.map((task) => (
-                                <SortableTaskCard
-                                  key={task.id}
-                                  task={task}
-                                  onStatusChange={onStatusChange}
-                                  onSelect={onSelect}
-                                />
-                              ))}
-                              {columnTasks.length === 0 && (
-                                <div
-                                  className="flex items-center justify-center py-4 rounded border border-dashed"
-                                  style={{
-                                    borderColor: 'var(--border-subtle)',
-                                    color: 'var(--slate)',
-                                    opacity: 0.75,
-                                    fontSize: '10px',
-                                  }}
-                                >
-                                  --
-                                </div>
-                              )}
-                            </div>
-                          </SortableContext>
-                        </DroppableColumn>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Drag overlay */}
-      <DragOverlay>
-        {activeTask && (
-          <div style={{ opacity: 0.85, transform: 'rotate(3deg)', boxShadow: 'var(--shadow-card-hover)' }}>
-            <TaskCard task={activeTask} onStatusChange={() => {}} compact />
+                  <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+                    <div className="tk-bd-list">
+                      {columnTasks.map((task) => (
+                        <SortableTaskCard key={task.id} task={task} {...cardProps} />
+                      ))}
+                      {columnTasks.length === 0 && <div className="tk-bd-empty">Nothing here</div>}
+                    </div>
+                  </SortableContext>
+                </DroppableColumn>
+              )
+            })}
           </div>
         )}
-      </DragOverlay>
+
+        {/* Swimlane view (groupBy = priority or assignee) */}
+        {swimlaneData && (
+          <div className="flex flex-col gap-4">
+            {swimlaneData.map((lane) => {
+              const isLaneCollapsed = !!swimlaneCollapsed[lane.key]
+
+              return (
+                <div key={lane.key}>
+                  <button
+                    type="button"
+                    onClick={() => toggleSwimlaneCollapse(lane.key)}
+                    className="tk-bd-lh"
+                    aria-expanded={!isLaneCollapsed}
+                  >
+                    {isLaneCollapsed ? <ChevronRight {...ICON_PROPS} size={14} /> : <ChevronDown {...ICON_PROPS} size={14} />}
+                    {renderLaneLabel(lane.key)}
+                    <span className="tk-bd-n">{lane.tasks.length}</span>
+                  </button>
+
+                  {!isLaneCollapsed && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pl-4">
+                      {columns.map((col) => {
+                        const columnTasks = lane.tasksByCol[col.key] || []
+                        const taskIds = columnTasks.map((t) => t.id)
+
+                        return (
+                          <DroppableColumn key={`${lane.key}-${col.key}`} id={col.key} isOver={overColumnId === col.key}>
+                            <h4 className="tk-bd-h tk-bd-sm">
+                              {col.label}
+                              <span className="tk-bd-n">{columnTasks.length}</span>
+                            </h4>
+                            <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+                              <div className="tk-bd-list tk-bd-sm">
+                                {columnTasks.map((task) => (
+                                  <SortableTaskCard key={task.id} task={task} {...cardProps} />
+                                ))}
+                                {columnTasks.length === 0 && <div className="tk-bd-empty tk-bd-sm">Nothing here</div>}
+                              </div>
+                            </SortableContext>
+                          </DroppableColumn>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Drag overlay: the same card, lifted. */}
+        <DragOverlay>
+          {activeTask && (
+            <div className="tk-bd-lift">
+              <BoardCard task={activeTask} {...cardProps} />
+            </div>
+          )}
+        </DragOverlay>
+      </div>
     </DndContext>
   )
 }
@@ -458,13 +384,10 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
 // ── Collapsed Column ────────────────────────────────────────
 
 function CollapsedColumn({
-  id, label, icon: Icon, color, bg, count, isOver, onExpand,
+  id, label, count, isOver, onExpand,
 }: {
   id: string
   label: string
-  icon: typeof Circle
-  color: string
-  bg: string
   count: number
   isOver: boolean
   onExpand: () => void
@@ -472,65 +395,12 @@ function CollapsedColumn({
   const { setNodeRef } = useDroppable({ id, data: { type: 'column' } })
 
   return (
-    <div
-      ref={setNodeRef}
-      onClick={onExpand}
-      style={{
-        transition: 'all 150ms ease',
-        backgroundColor: isOver ? 'var(--teal-hover)' : bg,
-        border: isOver ? '2px dashed var(--gold)' : '2px solid transparent',
-        borderRadius: 'var(--radius-lg)',
-        padding: 'var(--sp-sm) var(--sp-xs)',
-        cursor: 'pointer',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 'var(--sp-sm)',
-        minHeight: '200px',
-      }}
-    >
-      <button
-        style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: '2px',
-          display: 'flex',
-          alignItems: 'center',
-          color,
-        }}
-        title="Expand column"
-      >
+    <div ref={setNodeRef} onClick={onExpand} className={`tk-bd-collapsed${isOver ? ' tk-bd-over' : ''}`}>
+      <button type="button" className="tk-bd-col" title="Expand column" aria-label={`Expand ${label}`}>
         <ChevronRight {...ICON_PROPS} size={12} />
       </button>
-
-      {/* Vertical label */}
-      <div
-        style={{
-          writingMode: 'vertical-rl',
-          textOrientation: 'mixed',
-          fontSize: '12px',
-          fontWeight: 'var(--label-weight)',
-          color,
-          letterSpacing: '0.04em',
-        }}
-      >
-        {label}
-      </div>
-
-      <Icon {...ICON_PROPS} size={14} style={{ color, opacity: 0.85 }} />
-
-      {/* Count badge */}
-      <span
-        className="rounded-full px-1.5 py-0.5 text-[10px]"
-        style={{
-          fontWeight: 600,
-          color,
-          background: `color-mix(in srgb, ${color} 12%, transparent)`,
-        }}
-      >
-        {count}
-      </span>
+      <div className="tk-bd-vert">{label}</div>
+      <span className="tk-bd-n">{count}</span>
     </div>
   )
 }
@@ -541,36 +411,111 @@ function DroppableColumn({ id, children, isOver }: { id: string; children: React
   const { setNodeRef } = useDroppable({ id, data: { type: 'column' } })
 
   return (
-    <div
-      ref={setNodeRef}
-      style={{
-        transition: 'all 150ms ease',
-        backgroundColor: isOver ? 'var(--teal-hover)' : 'transparent',
-        border: isOver ? '2px dashed var(--gold)' : '2px solid transparent',
-        borderRadius: 'var(--radius-lg)',
-        padding: 'var(--sp-xs)',
-      }}
-    >
+    <div ref={setNodeRef} className={`tk-bd-colw${isOver ? ' tk-bd-over' : ''}`}>
       {children}
     </div>
   )
 }
 
+// ── Board card ───────────────────────────────────────────────
+
+type CardProps = {
+  state: TodayStateApi
+  projectsByPid: Map<string, ProjectInfo>
+  onSelect?: (task: TaskRow) => void
+}
+
+const noop = () => {}
+
+/** The Today card with the Board's extras on its context line: the priority
+ *  word (a click cycles low -> medium -> high -> urgent -> low, as the old
+ *  card's flag button did), Blocked, and Re-accept on a declined meeting task.
+ *  Urgent's word is the orange Urgent tag (the mock's context line), so the
+ *  title row drops its own copy on the board (index.css) and urgent can still
+ *  step back down. Re-accept shows on done cards too: declining a meeting task
+ *  marks it done (PendingMeetingsCard), so the Done column is the only place
+ *  it can appear. */
+export function BoardCard({ task, state, projectsByPid, onSelect }: { task: TaskRow } & CardProps) {
+  const { mutate: mutateTask } = useUpdateTask()
+  const { showUndo } = useUndoToast()
+  const done = isTaskDone(task)
+  const blocked = !done && !!task.blocked_by && task.blocked_by.split(',').some((s) => s.trim())
+  const pri = task.priority || 'medium'
+  const urgent = pri === 'urgent'
+
+  const cyclePriority = () => {
+    const idx = PRIORITY_CYCLE.indexOf(pri as typeof PRIORITY_CYCLE[number])
+    const next = PRIORITY_CYCLE[(idx + 1) % PRIORITY_CYCLE.length]
+    mutateTask({ id: task.id, fields: { priority: next } })
+    showUndo(`Priority set to ${priorityLabel[next]}`, () => mutateTask({ id: task.id, fields: { priority: pri } }))
+  }
+
+  const extraPills = (
+    <>
+      {!done && (
+        <button
+          type="button"
+          className={`tk-prio tip${urgent ? ' tk-tag tk-urgtag' : pri === 'high' ? ' tk-hi' : ''}`}
+          onClick={(e) => { e.stopPropagation(); cyclePriority() }}
+          onMouseDown={(e) => e.stopPropagation()}
+          data-tip="Priority: click to change"
+          aria-label={`Priority ${priorityLabel[pri] ?? pri}. Click to change`}
+        >
+          {priorityLabel[pri] ?? pri}
+        </button>
+      )}
+      {blocked && (
+        <span className="tk-pill" title={`Blocked by ${task.blocked_by}`}>
+          <AlertTriangle {...ICON_PROPS} size={12} aria-hidden />Blocked
+        </span>
+      )}
+      {task.approval_status === 'declined' && (
+        <button
+          type="button"
+          className="tk-pill tk-btnp tip"
+          data-testid="approval-reaccept"
+          onClick={(e) => {
+            e.stopPropagation()
+            mutateTask({ id: task.id, fields: { approval_status: 'accepted' } })
+            showUndo('Meeting re-accepted', () => mutateTask({ id: task.id, fields: { approval_status: 'declined' } }))
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          data-tip="Re-accept meeting"
+          aria-label="Re-accept meeting"
+        >
+          <ThumbsUp {...ICON_PROPS} size={11} aria-hidden />Re-accept
+        </button>
+      )}
+    </>
+  )
+
+  const open = onSelect ? () => onSelect(task) : undefined
+  return (
+    <CardTaskRow
+      task={task}
+      project={task.project_id ? projectsByPid.get(task.project_id) ?? null : null}
+      state={state}
+      expandedId={null}
+      onExpand={noop}
+      projectsByPid={projectsByPid}
+      done={done}
+      noDrag
+      // No onOpenEditor: the title would be its own role=button focus stop,
+      // and on the board a title click already opens through the header.
+      onOpen={open ?? noop}
+      extraPills={extraPills}
+    />
+  )
+}
+
 // ── Sortable Task Card ───────────────────────────────────────
 
-function SortableTaskCard({
-  task,
-  onStatusChange,
-  onSelect,
-}: {
-  task: TaskRow
-  onStatusChange: (id: string, status: string) => void
-  onSelect?: (task: TaskRow) => void
-}) {
+function SortableTaskCard({ task, ...cardProps }: { task: TaskRow } & CardProps) {
   const {
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -578,22 +523,48 @@ function SortableTaskCard({
     id: task.id,
     data: { type: 'task', status: task.status },
   })
+  const wrapRef = useRef<HTMLDivElement | null>(null)
+  const describedBy = attributes['aria-describedby']
+
+  // The card header (.tk-tch) is the card's ONE focus stop: Enter opens the
+  // task, Space picks the card up (arrows move it, Space drops, Esc cancels).
+  // The wrapper used to carry dnd-kit's role=button + tabIndex too, a second
+  // nested focus stop on every card. Making the header the activator node also
+  // means a Space or Enter from an inner control (the done box, the priority
+  // word) can never pick the card up: dnd-kit only activates when the key's
+  // target IS the activator. Focus returns to the header after a drop.
+  useLayoutEffect(() => {
+    const header = wrapRef.current?.querySelector<HTMLElement>('.tk-tch') ?? null
+    setActivatorNodeRef(header)
+    header?.setAttribute('aria-describedby', describedBy)
+  }, [setActivatorNodeRef, describedBy])
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.85 : 1,
+    opacity: isDragging ? 0.5 : 1,
     cursor: 'grab' as const,
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <TaskCard
-        task={task}
-        onStatusChange={onStatusChange}
-        compact
-        onClick={onSelect ? () => onSelect(task) : undefined}
-      />
+    <div
+      ref={(el) => { wrapRef.current = el; setNodeRef(el) }}
+      style={style}
+      className="tk-bd-card"
+      {...listeners}
+      // The header handles its own Space (it expands on Today) and stops it,
+      // so on the board Space is handed to dnd-kit here, before the header
+      // sees it, and marked handled (preventDefault) so the header skips it.
+      // No stopPropagation: React's would also stop the native event, and
+      // the drop Space must reach dnd-kit's window listener. Enter still
+      // reaches the header and opens the task.
+      onKeyDownCapture={(e) => {
+        if (e.key !== ' ' || !(e.target as HTMLElement).classList.contains('tk-tch')) return
+        listeners?.onKeyDown?.(e)
+        e.preventDefault()
+      }}
+    >
+      <BoardCard task={task} {...cardProps} />
     </div>
   )
 }

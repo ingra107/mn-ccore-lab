@@ -1442,15 +1442,6 @@ a:hover {
   }
 }
 
-/* ── TaskCard hover lift (CSS, not JS) ── */
-.group.relative.rounded-lg {
-  transition: transform var(--transition-fast) cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow var(--transition-fast) ease;
-}
-.group.relative.rounded-lg:hover {
-  transform: translateY(-1px);
-}
-
 /* ── Artifacts gallery cards — subtle -1px hover lift (design-system bar). ── */
 .artifact-card {
   transition: transform var(--transition-fast) ease, box-shadow var(--transition-fast) ease;
@@ -2010,6 +2001,7 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 .tk button.tk-wo,
 .tk button.tk-si,
 .tk button.tk-rmore,
+.tk button.tk-prio,
 .tk-seg button,
 button[aria-label="Select task"],
 button[aria-label="Deselect task"] {
@@ -2028,6 +2020,7 @@ button[aria-label="Deselect task"] {
 .tk button.tk-wo::before,
 .tk button.tk-si::before,
 .tk button.tk-rmore::before,
+.tk button.tk-prio::before,
 .tk-seg button::before,
 button[aria-label="Select task"]::before,
 button[aria-label="Deselect task"]::before {
@@ -2895,6 +2888,65 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk .tk-lrow[data-cursor=true]{outline:1.5px solid color-mix(in srgb,var(--sk-ac) 50%,transparent);outline-offset:2px}
 .tk .tk-lrow[data-selected=true]{outline:2px solid var(--sk-ac);outline-offset:2px}
 .tk .tk-lrow[data-selected=true]::after{content:"";position:absolute;inset:0;border-radius:var(--r-card);background:var(--sk-ac-soft);pointer-events:none}
+
+/* Tasks Board (Nick approved the mock 2026-10-10): the Today card in each column.
+   Column heads are plain text with a muted count, no coloured rule; an empty
+   column is a quiet panel; a drop target gets the accent wash. On the card the
+   project takes its own muted line under the title, due + priority share the
+   context line, and folder + Work on fade in on hover (always shown on touch). */
+.tk.tk-board .tk-bd-group{display:flex;align-items:center;gap:6px;margin-bottom:12px;font-size:11.5px;color:var(--sk-t3)}
+.tk.tk-board .tk-bd-group>span{margin-right:2px}
+.tk.tk-board .tk-bd-group button{padding:3px 10px;border-radius:7px;font-size:12px;color:var(--sk-t2);background:none}
+.tk.tk-board .tk-bd-group button:hover{color:var(--sk-t1)}
+.tk.tk-board .tk-bd-group button.tk-on{background:var(--sk-card);color:var(--sk-t1);font-weight:500;box-shadow:inset 0 0 0 1px var(--sk-line2),var(--sk-amb)}
+.tk .tk-bd-colw{padding:4px;border-radius:var(--r-card);transition:background .15s,box-shadow .15s}
+.tk .tk-bd-over{background:var(--sk-ac-soft);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sk-ac) 45%,transparent)}
+.tk .tk-bd-h{display:flex;align-items:center;gap:6px;margin:0 0 10px;padding:0 4px 8px 0;font-size:13px;font-weight:600;color:var(--sk-t1)}
+.tk .tk-bd-h.tk-bd-sm{font-size:12px;font-weight:500;color:var(--sk-t2);margin-bottom:6px;padding:0 4px 4px}
+.tk .tk-bd-n{font-size:11.5px;font-weight:500;color:var(--sk-t3);font-variant-numeric:tabular-nums}
+.tk .tk-bd-col{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:5px;color:var(--sk-t3);background:none}
+.tk .tk-bd-col:hover{color:var(--sk-t1);background:var(--sk-line)}
+.tk .tk-bd-list{display:flex;flex-direction:column;gap:8px;min-height:200px}
+.tk .tk-bd-list.tk-bd-sm{min-height:80px}
+.tk .tk-bd-empty{height:64px;display:grid;place-items:center;border-radius:var(--r-card);background:var(--sk-panel);box-shadow:inset 0 0 0 1px var(--sk-line);color:var(--sk-t3);font-size:12px}
+.tk .tk-bd-empty.tk-bd-sm{height:44px;font-size:11.5px}
+.tk .tk-bd-collapsed{display:flex;flex-direction:column;align-items:center;gap:8px;min-height:200px;padding:8px 4px;border-radius:var(--r-card);background:var(--sk-panel);box-shadow:inset 0 0 0 1px var(--sk-line);cursor:pointer;transition:background .15s}
+.tk .tk-bd-collapsed.tk-bd-over{background:var(--sk-ac-soft)}
+.tk .tk-bd-vert{writing-mode:vertical-rl;font-size:12px;font-weight:600;color:var(--sk-t2);letter-spacing:.02em}
+.tk .tk-bd-lh{display:flex;align-items:center;gap:8px;width:100%;margin-bottom:8px;padding:4px 0 8px;background:none;color:var(--sk-t3);box-shadow:0 1px 0 var(--sk-line);text-align:left}
+.tk .tk-bd-lane{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--sk-t1)}
+.tk .tk-bd-lane.tk-bd-urg{color:var(--sk-urg)}
+.tk .tk-bd-card{border-radius:var(--r-card);touch-action:manipulation}
+.tk .tk-bd-lift{transform:rotate(2deg);opacity:.92;border-radius:var(--r-card);box-shadow:var(--sk-amb)}
+/* Board card grid, the mock's .kc: box | title | face on the first row, then
+   the context line spans the title AND face columns (grid-column 2/-1), so a
+   due pill and the priority word fit on one line in a ~240px column. The
+   header's inner wrappers (.tk-hdr, .tk-tr-r) dissolve into this grid; the
+   face column is 30px (26px face + the 4px the plan pin's tail overhangs,
+   TaskCardRow TAIL_GUTTER). Folder + Work on sit at the right end of the last
+   context line, as in the mock, with a spacer on that line reserving room. */
+.tk.tk-board .tk-tch{display:grid;grid-template-columns:16px minmax(0,1fr) 30px;column-gap:10px;row-gap:2px}
+.tk.tk-board .tk-tch>.tk-hdr,.tk.tk-board .tk-tch>.tk-tr-r{display:contents}
+.tk.tk-board .tk-tch>.tk-ck{grid-column:1;grid-row:1}
+.tk.tk-board .tk-ct{grid-column:2;grid-row:1}
+.tk.tk-board .tk-av{grid-column:3;grid-row:1;justify-self:end}
+.tk.tk-board .tk-ctx{grid-column:2/-1;grid-row:2;flex-wrap:wrap;column-gap:8px}
+.tk.tk-board .tk-wk{grid-column:2/-1;grid-row:2;justify-self:end;align-self:end;width:auto}
+.tk.tk-board .tk-tc:has(.tk-wk:not(:empty)) .tk-ctx::after{content:"";flex:0 0 52px;height:24px}
+.tk.tk-board .tk-ctx>.tk-cs{flex-basis:100%;max-width:none}
+/* Urgent's tag moves to the context line, as the priority control. */
+.tk.tk-board .tk-ct .tk-urgtag{display:none}
+.tk.tk-board .tk-prio.tk-urgtag{margin:0;padding:1px 6px;font-size:10px;font-weight:600;border-radius:999px;color:var(--sk-urg)}
+/* A board column is ~240px: an empty links/meeting slot would wrap onto a blank
+   line of its own, so on the board a slot takes room only when it holds something. */
+.tk.tk-board .tk-lks{min-width:0}
+.tk.tk-board .tk-lks:empty,.tk.tk-board .tk-mks:empty{display:none}
+.tk.tk-board .tk-wk{opacity:0;transition:opacity .12s}
+.tk.tk-board .tk-tc:hover .tk-wk,.tk.tk-board .tk-tc:focus-within .tk-wk{opacity:1}
+@media (hover:none){.tk.tk-board .tk-wk{opacity:1}}
+.tk .tk-prio{font-size:11.5px;color:var(--sk-t3);background:none;padding:0 2px;margin:0 -2px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+.tk .tk-prio.tk-hi{color:var(--sk-t2)}
+.tk .tk-prio:hover{color:var(--sk-t1)}
 
 /* Projects list ("reskinned table", Nick 2026-10-09): the same grid and editors,
    in the card family. Sentence-case headers in t3, link icons in five fixed 24px

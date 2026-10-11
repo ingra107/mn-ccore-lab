@@ -126,10 +126,18 @@ export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = NO
     })
   }, [updateStatus, undoToast, plan, planned, tasks])
 
+  // Reopen gets the same 5s undo as completing (principle #8: an undo on every
+  // state change). It had none, so a mis-click on a done box was a silent
+  // reopen with no way back but a second click.
   const uncheck = useCallback((id: string) => {
+    const wasFlagged = !!done[id]
     setDone((p) => { const n = { ...p }; delete n[id]; return n })
     updateStatus.mutate({ id, status: 'todo' })
-  }, [updateStatus])
+    undoToast.showUndo('Task reopened', () => {
+      if (wasFlagged) setDone((p) => ({ ...p, [id]: true }))
+      updateStatus.mutate({ id, status: 'done' })
+    })
+  }, [updateStatus, undoToast, done])
 
   const planAt = useCallback((
     id: string,
