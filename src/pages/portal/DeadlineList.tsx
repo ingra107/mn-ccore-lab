@@ -65,22 +65,22 @@ export type DeadlineProject = { name: string; slug: string; fullTitle?: string }
 const TASK_STATUS_OPTIONS = [
   { value: 'todo', label: 'To Do', color: 'var(--slate)' },
   { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
-  { value: 'waiting_external', label: 'Waiting External', color: 'var(--orange)' },
-  { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
-  { value: 'done', label: 'Done', color: 'var(--green)' },
+  { value: 'waiting_external', label: 'Waiting External', color: 'var(--st-waiting)' },
+  { value: 'blocked', label: 'Blocked', color: 'var(--st-blocked)' },
+  { value: 'done', label: 'Done', color: 'var(--st-done)' },
 ]
 
 // S12: grant-milestone status vocab (mirrors GrantsPage MILESTONE_STATUS_OPTIONS).
 const GRANT_MILESTONE_STATUS_OPTIONS = [
   { value: 'upcoming', label: 'Upcoming', color: 'var(--slate)' },
   { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
-  { value: 'completed', label: 'Completed', color: 'var(--green)' },
+  { value: 'completed', label: 'Completed', color: 'var(--st-done)' },
   { value: 'overdue', label: 'Overdue', color: 'var(--maroon)' },
 ]
 const GRANT_MILESTONE_PILL: Record<string, { word: string; dot: string }> = {
   in_progress: { word: 'In Progress', dot: 'sr-ip' },
   completed: { word: 'Completed', dot: '' },
-  overdue: { word: 'Overdue', dot: 'sr-bl' },
+  overdue: { word: 'Overdue', dot: 'sr-od' },
 }
 const GRANT_MILESTONE_ORDER: Record<string, number> = { overdue: 0, in_progress: 2, upcoming: 3, completed: 4 }
 

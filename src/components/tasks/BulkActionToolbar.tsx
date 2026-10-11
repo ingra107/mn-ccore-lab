@@ -22,9 +22,9 @@ const priorityOptions = [
 const statusOptions = [
   { value: 'todo', label: 'To Do', color: 'var(--slate)' },
   { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
-  { value: 'waiting_external', label: 'Waiting External', color: 'var(--orange)' },
-  { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
-  { value: 'done', label: 'Done', color: 'var(--green)' },
+  { value: 'waiting_external', label: 'Waiting External', color: 'var(--st-waiting)' },
+  { value: 'blocked', label: 'Blocked', color: 'var(--st-blocked)' },
+  { value: 'done', label: 'Done', color: 'var(--st-done)' },
 ]
 
 export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear, onBulkAction, isUpdating }: BulkActionToolbarProps) {

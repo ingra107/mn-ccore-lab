@@ -5,8 +5,9 @@ import { ACCENT_GOLD, withAlpha } from './taskGrouping'
  * Palette:
  *   teal   = active / in-progress / on-track
  *   gold   = review / warning / at-risk
- *   maroon = overdue / blocked / rejected / error
- *   green  = done / completed / accepted
+ *   maroon = overdue / rejected / error
+ *   --st-* = done / completed / accepted, blocked, waiting: neutral words
+ *            (color jobs, Nick 2026-10-11; one token each in index.css)
  *   slate  = default / pending / unknown
  *
  * Usage:
@@ -20,16 +21,16 @@ const STATUS_COLOR: Record<string, string> = {
   // Core task statuses
   todo: 'var(--slate)',
   in_progress: 'var(--teal)',
-  done: 'var(--green)',
-  blocked: 'var(--maroon)',
-  waiting_external: 'var(--orange)',
+  done: 'var(--st-done)',
+  blocked: 'var(--st-blocked)',
+  waiting_external: 'var(--st-waiting)',
   overdue: 'var(--maroon)',
 
   // Submission / revision statuses
   pending: 'var(--slate)',
   submitted: 'var(--teal)',
   resubmitted: 'var(--teal)',
-  accepted: 'var(--green)',
+  accepted: 'var(--st-done)',
   rejected: 'var(--maroon)',
   wont_fix: 'var(--maroon)',
   draft: 'var(--slate)',
@@ -37,12 +38,12 @@ const STATUS_COLOR: Record<string, string> = {
   review_received: 'var(--gold)',
   revision_due: 'var(--maroon)',
   withdrawn: 'var(--slate)',
-  completed: 'var(--green)',
+  completed: 'var(--st-done)',
 
   // Conference-specific
   planning: 'var(--slate)',
   preparing: 'var(--gold)',
-  presented: 'var(--green)',
+  presented: 'var(--st-done)',
 
   // Cascade-specific
   'on-track': 'var(--teal)',
@@ -51,7 +52,7 @@ const STATUS_COLOR: Record<string, string> = {
   // Materials
   not_started: 'var(--slate)',
   drafting: 'var(--gold)',
-  final: 'var(--green)',
+  final: 'var(--st-done)',
 }
 
 // ── Background tint (rgba) ──────────────────────────────────────────────────
@@ -60,16 +61,16 @@ export const STATUS_BG_EXTENDED: Record<string, string> = {
   // Core task statuses
   todo: 'rgba(148, 163, 184, 0.15)',
   in_progress: 'rgba(60, 130, 130, 0.12)',
-  done: 'rgba(22, 163, 74, 0.15)',
-  blocked: 'rgba(122, 0, 25, 0.15)',
-  waiting_external: 'rgba(194, 65, 12, 0.14)',
+  done: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
+  blocked: 'color-mix(in srgb, var(--st-blocked) 14%, transparent)',
+  waiting_external: 'color-mix(in srgb, var(--st-waiting) 14%, transparent)',
   overdue: 'rgba(122, 0, 25, 0.15)',
 
   // Submission / revision statuses
   pending: 'rgba(148, 163, 184, 0.15)',
   submitted: 'rgba(60, 130, 130, 0.12)',
   resubmitted: 'rgba(60, 130, 130, 0.12)',
-  accepted: 'rgba(22, 163, 74, 0.15)',
+  accepted: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
   rejected: 'rgba(122, 0, 25, 0.15)',
   wont_fix: 'rgba(122, 0, 25, 0.15)',
   draft: 'rgba(148, 163, 184, 0.15)',
@@ -77,12 +78,12 @@ export const STATUS_BG_EXTENDED: Record<string, string> = {
   review_received: withAlpha(ACCENT_GOLD, 15),
   revision_due: 'rgba(122, 0, 25, 0.15)',
   withdrawn: 'rgba(100, 116, 139, 0.15)',
-  completed: 'rgba(22, 163, 74, 0.15)',
+  completed: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
 
   // Conference-specific
   planning: 'rgba(148, 163, 184, 0.15)',
   preparing: withAlpha(ACCENT_GOLD, 15),
-  presented: 'rgba(22, 163, 74, 0.15)',
+  presented: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
 
   // Cascade-specific
   'on-track': 'rgba(60, 130, 130, 0.12)',
@@ -91,7 +92,7 @@ export const STATUS_BG_EXTENDED: Record<string, string> = {
   // Materials
   not_started: 'rgba(148, 163, 184, 0.15)',
   drafting: withAlpha(ACCENT_GOLD, 15),
-  final: 'rgba(22, 163, 74, 0.15)',
+  final: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
 }
 
 const FALLBACK_COLOR = 'var(--slate)'

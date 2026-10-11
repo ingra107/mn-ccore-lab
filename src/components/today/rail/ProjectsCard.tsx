@@ -6,7 +6,9 @@
 // active list. Toggle state persists in localStorage.today_projects_show_all.
 //
 // Look (Today reskin, 2026-10-09): a panel; projects by SHORT name, the next
-// action as a muted line under it (also short), a teal dot for "active today".
+// action as a muted line under it (also short). The teal "active today" dot is
+// gone (color jobs, 2026-10-11): the default list holds only today's projects,
+// so it sat on every row and said nothing.
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Projects).
 
@@ -78,9 +80,6 @@ export function ProjectsCard({ projects }: { projects: ProjectEntry[] }) {
           <Link key={p.slug} to={PATHS.project(p.slug)} className="tk-proj">
             <div className="tk-n">
               <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
-              {p.relevantToday && !useAll && (
-                <span title="Active today" aria-hidden="true" className="tk-dotg" />
-              )}
             </div>
             {p.nextAction && (
               <div className="tk-a">→ {p.nextAction}</div>

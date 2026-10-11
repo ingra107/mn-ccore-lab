@@ -916,7 +916,7 @@ const MILESTONE_TYPE_LABELS: Record<string, string> = {
 const MILESTONE_STATUS_COLORS: Record<string, string> = {
   upcoming: 'var(--slate)',
   in_progress: 'var(--teal)',
-  completed: 'var(--green)',
+  completed: 'var(--st-done)',
   overdue: 'var(--maroon)',
 }
 

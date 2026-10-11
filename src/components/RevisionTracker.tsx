@@ -51,7 +51,7 @@ const REVISION_STATUS_OPTIONS = [
 const COMMENT_STATUS_OPTIONS = [
   { value: 'pending', label: 'Pending', color: 'var(--slate)' },
   { value: 'in_progress', label: 'Working', color: 'var(--teal)' },
-  { value: 'done', label: 'Done', color: 'var(--green)' },
+  { value: 'done', label: 'Done', color: 'var(--st-done)' },
   { value: 'wont_fix', label: "Won't Fix", color: 'var(--maroon)' },
 ]
 

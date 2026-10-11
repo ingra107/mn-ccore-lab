@@ -66,9 +66,9 @@ const STAGE_LABELS: Record<typeof STAGES[number], string> = {
 // The edit menu keeps its colored swatches; the row shows the quiet pill.
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active', color: 'var(--green)' },
-  { value: 'waiting_external', label: 'Waiting', color: 'var(--gold)' },
-  { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
-  { value: 'done', label: 'Done', color: 'var(--slate)' },
+  { value: 'waiting_external', label: 'Waiting', color: 'var(--st-waiting)' },
+  { value: 'blocked', label: 'Blocked', color: 'var(--st-blocked)' },
+  { value: 'done', label: 'Done', color: 'var(--st-done)' },
 ]
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 

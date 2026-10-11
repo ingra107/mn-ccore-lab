@@ -93,11 +93,9 @@ function parseJsonArray(s: string | null): string[] {
 // Section headings: Today's treatment (15px / 600 / --sk-t1, TodayPage's h2).
 const SECTION_HEADING: React.CSSProperties = { fontWeight: 600, fontSize: '15px', color: 'var(--sk-t1)', margin: 0 }
 
-const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  upcoming: { bg: 'var(--teal-emphasis)', text: 'var(--teal)' },
-  'in-progress': { bg: 'var(--gold-emphasis)', text: 'var(--gold)' },
-  completed: { bg: 'rgba(34, 197, 94, 0.12)', text: 'var(--green-light)' },
-}
+// The status chip is a neutral word (color jobs, Nick 2026-10-11): upcoming,
+// in progress and completed are facts about the meeting, not asks of him.
+const STATUS_CHIP = { bg: 'var(--hover-subtle)', text: 'var(--sk-t2)' }
 
 const AGENDA_TYPE_ICONS: Record<string, typeof Lightbulb> = {
   discussion: MessageSquarePlus,
@@ -266,7 +264,6 @@ export default function MeetingDetail() {
   const autoAgenda = parseJsonArray(meeting.agenda)
   const decisions = parseJsonArray(meeting.decisions)
   const status = meetingStatus(meeting)
-  const statusStyle = STATUS_COLORS[status] || STATUS_COLORS.completed
   const actionItems = dedupedActionItems
   const rawTeamAgendaItems = meeting.agenda_items || []
   // S9: apply the local drag order so a reordered agenda stays put (mirrors
@@ -485,7 +482,7 @@ export default function MeetingDetail() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs"
-              style={{ fontSize: 'var(--label-size)', background: statusStyle.bg, color: statusStyle.text }}>
+              style={{ fontSize: 'var(--label-size)', background: STATUS_CHIP.bg, color: STATUS_CHIP.text }}>
               <Calendar {...ICON_PROPS} size={12} /> {status}
             </span>
             <select
@@ -509,9 +506,9 @@ export default function MeetingDetail() {
               className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs transition-colors"
               style={{
                 fontSize: 'var(--label-size)',
-                color: 'var(--teal)', textDecoration: 'none',
-                border: '1px solid rgba(45,138,138,0.2)',
-                background: 'var(--teal-hover)',
+                color: 'var(--slate)', textDecoration: 'none',
+                border: '1px solid var(--border-subtle)',
+                opacity: 0.85,
               }}
             >
               <ListChecks {...ICON_PROPS} size={11} /> Prep view
@@ -564,9 +561,11 @@ export default function MeetingDetail() {
               className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors"
               style={{
                 fontSize: 'var(--label-size)',
-                color: agendaCopied ? 'var(--green)' : 'var(--gold)',
-                border: `1px solid ${agendaCopied ? 'var(--green)' : '${withAlpha(ACCENT_GOLD, 25)}'}`,
-                background: agendaCopied ? 'var(--green-hover)' : 'var(--gold-hover)',
+                // The page's one primary action: the teal accent (color jobs, 2026-10-11).
+                color: '#fff',
+                border: '1px solid transparent',
+                background: 'var(--teal-solid)',
+                fontWeight: 600,
                 cursor: generatingAgenda ? 'wait' : 'pointer',
                 opacity: generatingAgenda ? 0.85 : 1,
               }}
@@ -634,7 +633,7 @@ export default function MeetingDetail() {
               attendee can read the meeting; the server checks it again) */}
           <AttendanceSection attendees={attendees} updateMeta={updateMeta} canEdit={meeting.can_manage_access === true} />
 
-          <div style={{ height: '1px', background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.85, marginTop: '1.5rem' }} />
+          <div style={{ height: '1px', background: 'var(--sk-line)', marginTop: '1.5rem' }} />
         </motion.div>
 
         {/* Projects (schema-v122): the projects this meeting DISCUSSED (tags,
@@ -888,7 +887,7 @@ export default function MeetingDetail() {
                 style={{
                   marginLeft: 'auto', background: 'none', border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-md)', padding: '4px 10px', cursor: 'pointer',
-                  fontSize: 'var(--label-size)', color: 'var(--gold)',
+                  fontSize: 'var(--label-size)', color: 'var(--slate)',
                   display: 'flex', alignItems: 'center', gap: '4px',
                 }}
               >
@@ -922,7 +921,7 @@ export default function MeetingDetail() {
                       },
                     })
                   }}
-                  style={{ marginBottom: decisions.length > 0 ? '12px' : 0, paddingBottom: decisions.length > 0 ? '12px' : 0, borderBottom: decisions.length > 0 ? `1px solid ${withAlpha(ACCENT_GOLD, 10)}` : 'none' }}
+                  style={{ marginBottom: decisions.length > 0 ? '12px' : 0, paddingBottom: decisions.length > 0 ? '12px' : 0, borderBottom: decisions.length > 0 ? '1px solid var(--border-subtle)' : 'none' }}
                 >
                   <input
                     type="text"
@@ -932,11 +931,11 @@ export default function MeetingDetail() {
                     ref={decisionTitleRef}
                     style={{
                       width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
-                      background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 'var(--radius-lg)',
+                      background: 'var(--cream)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)',
                       padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
                     }}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--gold-emphasis)')}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
                   />
                   <input
                     type="text"
@@ -945,14 +944,14 @@ export default function MeetingDetail() {
                     placeholder="Why? (optional rationale)"
                     style={{
                       width: '100%', fontSize: '12px', color: 'var(--ink)',
-                      background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`, borderRadius: 'var(--radius-lg)',
+                      background: 'var(--cream)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)',
                       padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
                     }}
                   />
                   <div className="flex gap-2">
                     <button
                       type="submit"
-                      style={{ background: 'var(--gold)', color: '#0f1923', border: 'none', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                      style={{ background: 'var(--teal-solid)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
                     >
                       Save
                     </button>
@@ -972,7 +971,7 @@ export default function MeetingDetail() {
               <div className="tk">
                 <ul className="tk-decs tk-flat">
                   {decisions.map((d, i) => (
-                    <li key={i} className="tk-dec"><span className="tk-dia" aria-hidden="true">&#9670;</span><span>{d}</span></li>
+                    <li key={i} className="tk-dec"><span className="tk-dia" aria-hidden="true">&#8226;</span><span>{d}</span></li>
                   ))}
                 </ul>
               </div>

@@ -474,8 +474,9 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   aria-current={active ? 'page' : undefined}
                   style={{ color: active ? 'var(--teal)' : 'var(--ink)', fontWeight: active ? 500 : 400 }}
                 >
+                  {/* Pinned star is neutral (color jobs, 2026-10-11): gold means "wants you now". */}
                   {p.pinned
-                    ? <Star size={11} {...ICON_PROPS} fill="var(--gold)" style={{ color: 'var(--gold)', flexShrink: 0 }} aria-label="Pinned" />
+                    ? <Star size={11} {...ICON_PROPS} fill="var(--muted)" style={{ color: 'var(--muted)', flexShrink: 0 }} aria-label="Pinned" />
                     : <span aria-hidden="true" style={{ width: 11, flexShrink: 0, display: 'inline-flex', justifyContent: 'center' }}><span style={{ width: 4, height: 4, borderRadius: 999, background: 'var(--slate)', opacity: 0.6 }} /></span>}
                   <span className="truncate flex-1">{p.name}</span>
                   {unread > 0 && (

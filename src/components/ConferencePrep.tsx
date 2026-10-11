@@ -16,7 +16,7 @@ const STATUS_OPTIONS: { value: ConferenceStatus; label: string; color: string }[
   { value: 'submitted', label: 'Submitted', color: 'var(--gold)' },
   { value: 'accepted', label: 'Accepted', color: 'var(--teal)' },
   { value: 'preparing', label: 'Preparing', color: 'var(--blue, #5b9bd5)' },
-  { value: 'presented', label: 'Presented', color: 'var(--green)' },
+  { value: 'presented', label: 'Presented', color: 'var(--st-done)' },
   { value: 'rejected', label: 'Rejected', color: 'var(--maroon)' },
 ]
 
@@ -24,7 +24,7 @@ const MATERIALS_OPTIONS: { value: MaterialsStatus; label: string; color: string 
   { value: 'not_started', label: 'Not Started', color: 'var(--slate)' },
   { value: 'drafting', label: 'Drafting', color: 'var(--gold)' },
   { value: 'review', label: 'In Review', color: 'var(--teal)' },
-  { value: 'final', label: 'Final', color: 'var(--green)' },
+  { value: 'final', label: 'Final', color: 'var(--st-done)' },
 ]
 
 const TYPE_OPTIONS: { value: ConferenceSubmissionType; label: string }[] = [

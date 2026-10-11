@@ -39,7 +39,7 @@ const MILESTONE_TYPES = [
 const STATUS_OPTIONS = [
   { value: 'upcoming', label: 'Upcoming', color: 'var(--slate)' },
   { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
-  { value: 'completed', label: 'Completed', color: 'var(--green)' },
+  { value: 'completed', label: 'Completed', color: 'var(--st-done)' },
   { value: 'overdue', label: 'Overdue', color: 'var(--maroon)' },
 ]
 

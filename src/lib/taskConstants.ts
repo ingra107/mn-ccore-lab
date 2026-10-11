@@ -8,23 +8,24 @@ import { ACCENT_GOLD, withAlpha, daysSince } from './taskGrouping'
 // (Lanes/Columns/Today dots), so a status or priority reads as the same color
 // on every surface and in every view. Tokens are the AA-pinned pair in
 // index.css (:root / .dark). Neutral todo/low stay --slate (no accent
-// equivalent — the shared row renders them transparent/dim). "Blocked" maps
-// to coral per Rule 59 (coral = warnings).
+// equivalent — the shared row renders them transparent/dim). Done, Blocked
+// and Waiting are neutral words (color jobs, Nick 2026-10-11): the --st-*
+// tokens in index.css decide their color in one place.
 
 export const STATUS_CONFIG = {
   todo: { label: 'To Do', color: 'var(--slate)', icon: 'Circle' },
   in_progress: { label: 'In Progress', color: 'var(--task-accent-teal)', icon: 'Clock' },
-  done: { label: 'Done', color: 'var(--task-accent-green)', icon: 'CheckCircle2' },
-  blocked: { label: 'Blocked', color: 'var(--task-accent-coral)', icon: 'AlertTriangle' },
-  waiting_external: { label: 'Waiting (External)', color: 'var(--task-accent-orange)', icon: 'Hourglass' },
+  done: { label: 'Done', color: 'var(--st-done)', icon: 'CheckCircle2' },
+  blocked: { label: 'Blocked', color: 'var(--st-blocked)', icon: 'AlertTriangle' },
+  waiting_external: { label: 'Waiting (External)', color: 'var(--st-waiting)', icon: 'Hourglass' },
 } as const
 
 export const STATUS_OPTIONS = [
   { value: 'todo', label: 'To Do', icon: Circle, color: 'var(--slate)' },
   { value: 'in_progress', label: 'In Progress', icon: Clock, color: 'var(--task-accent-teal)' },
-  { value: 'waiting_external', label: 'Waiting (External)', icon: Hourglass, color: 'var(--task-accent-orange)' },
-  { value: 'blocked', label: 'Blocked', icon: AlertTriangle, color: 'var(--task-accent-coral)' },
-  { value: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--task-accent-green)' },
+  { value: 'waiting_external', label: 'Waiting (External)', icon: Hourglass, color: 'var(--st-waiting)' },
+  { value: 'blocked', label: 'Blocked', icon: AlertTriangle, color: 'var(--st-blocked)' },
+  { value: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--st-done)' },
 ]
 
 /** Delegates to the shared STATUS_BG_EXTENDED map from statusColors.ts */
@@ -74,9 +75,9 @@ export const PRIORITY_COLORS: Record<string, string> = {
 
 export const PROJECT_STATUS_OPTIONS = [
   { value: 'active', label: 'Active', color: 'var(--task-accent-teal)' },
-  { value: 'waiting_external', label: 'Waiting (External)', color: 'var(--task-accent-orange)' },
-  { value: 'blocked', label: 'Blocked', color: 'var(--task-accent-coral)' },
-  { value: 'done', label: 'Done', color: 'var(--slate)' },
+  { value: 'waiting_external', label: 'Waiting (External)', color: 'var(--st-waiting)' },
+  { value: 'blocked', label: 'Blocked', color: 'var(--st-blocked)' },
+  { value: 'done', label: 'Done', color: 'var(--st-done)' },
 ]
 
 /** Map any legacy project status value to the canonical lowercase token. */

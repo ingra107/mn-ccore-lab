@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { RefreshCw, Pencil, Check, X, MessageCircle } from 'lucide-react'
 import { ROUND_PROMPTS, CATEGORY_LABELS, hashMeetingId } from '../data/roundPrompts'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 const LS_KEY = (id: string) => `roundprompt:${id}`
 
@@ -74,18 +73,20 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: 0.08 }}
       style={{
-        borderLeft: '3px solid var(--gold)',
-        background: 'var(--gold-hover)',
-        borderRadius: '0 var(--radius-xl) var(--radius-xl) 0',
+        // Neutral card (color jobs, 2026-10-11): gold means "wants you now",
+        // and an icebreaker does not.
+        border: '1px solid var(--sk-line)',
+        background: 'var(--sk-card)',
+        borderRadius: 'var(--radius-xl)',
         padding: '14px 18px',
         marginTop: '1.5rem',
       }}
     >
       {/* Label row */}
       <div className="flex items-center gap-1.5 mb-2">
-        <MessageCircle {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+        <MessageCircle {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
         <span style={{
-          fontSize: '10px', color: 'var(--gold)',
+          fontSize: '10px', color: 'var(--sk-t2)',
           fontWeight: 600,
         }}>
           Opening round
@@ -109,7 +110,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             }}
             style={{
               flex: 1, fontSize: '15px', color: 'var(--ink)',
-              background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 25)}`,
+              background: 'var(--cream)', border: '1px solid var(--border-subtle)',
               borderRadius: 'var(--radius-lg)', padding: 'var(--sp-sm) var(--sp-md)', outline: 'none',
               resize: 'vertical', lineHeight: 1.5,
             }}
@@ -120,8 +121,8 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               onClick={commitEdit}
               title="Save"
               style={{
-                background: 'var(--gold)', border: 'none', borderRadius: 'var(--radius-md)',
-                padding: '7px', cursor: 'pointer', color: '#0f1923',
+                background: 'var(--teal-solid)', border: 'none', borderRadius: 'var(--radius-md)',
+                padding: '7px', cursor: 'pointer', color: '#fff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
@@ -132,7 +133,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               onClick={cancelEdit}
               title="Cancel"
               style={{
-                background: 'transparent', border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
+                background: 'transparent', border: '1px solid var(--border-subtle)',
                 borderRadius: 'var(--radius-md)', padding: '7px', cursor: 'pointer', color: 'var(--slate)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
@@ -167,10 +168,10 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             type="button"
             onClick={shuffle}
             title="Try a different prompt"
-            className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[var(--gold-active)]"
+            className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[var(--hover-subtle)]"
             style={{
               color: 'var(--slate)',
-              background: 'transparent', borderColor: withAlpha(ACCENT_GOLD, 20), cursor: 'pointer',
+              background: 'transparent', borderColor: 'var(--border-subtle)', cursor: 'pointer',
             }}
           >
             <RefreshCw {...ICON_PROPS} size={11} /> Shuffle
@@ -180,10 +181,10 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             type="button"
             onClick={isCustom ? startEdit : startEdit}
             title={isCustom ? 'Edit custom prompt' : 'Write a custom prompt'}
-            className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[var(--gold-active)]"
+            className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[var(--hover-subtle)]"
             style={{
               color: 'var(--slate)',
-              background: 'transparent', borderColor: withAlpha(ACCENT_GOLD, 20), cursor: 'pointer',
+              background: 'transparent', borderColor: 'var(--border-subtle)', cursor: 'pointer',
             }}
           >
             <Pencil {...ICON_PROPS} size={11} /> {isCustom ? 'Edit' : 'Customize'}
@@ -194,10 +195,10 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               type="button"
               onClick={() => update({ custom: '' })}
               title="Restore generated prompt"
-              className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[var(--gold-active)]"
+              className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[var(--hover-subtle)]"
               style={{
                 color: 'var(--slate)', opacity: 0.75,
-                background: 'transparent', borderColor: 'var(--gold-emphasis)', cursor: 'pointer',
+                background: 'transparent', borderColor: 'var(--border-subtle)', cursor: 'pointer',
               }}
             >
               <X {...ICON_PROPS} size={11} /> Reset

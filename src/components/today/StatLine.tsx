@@ -11,8 +11,9 @@
 // The divider under the line fills teal with done / (done + still planned),
 // the day's progress, with no extra element (.tk-stats::after reads --prog).
 //
-// Colors: maroon = overdue only, gold = stalled, teal = the day's own numbers,
-// no color for planned.
+// Colors: maroon = overdue only, orange = stalled (going stale, the color
+// Manuscripts uses for stalled days; color jobs, Nick 2026-10-11), teal = the
+// day's own numbers, no color for planned.
 //
 // "done this week" (2026-10-09) came over from the retired My Hub header. It
 // is plainly NOT a link: My Tasks has no "done this week" view, and a stat
@@ -24,7 +25,7 @@ import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import type { DailyCounts } from './constants'
 
-type Rule = 'o' | 'g' | 'n' | 't'
+type Rule = 'o' | 'u' | 'n' | 't'
 
 interface Stat {
   key: string
@@ -40,7 +41,7 @@ interface Stat {
 export function StatLine({ counts, doneThisWeek }: { counts: DailyCounts; doneThisWeek?: number }) {
   const stats: Stat[] = [
     { key: 'overdue', value: counts.overdue, label: 'overdue', rule: 'o', to: `${PATHS.myTasks}?filter=overdue`, dest: 'Tasks filtered to overdue' },
-    { key: 'stalled', value: counts.stalled, label: 'stalled', rule: 'g', to: `${PATHS.projects}?filter=stalled`, dest: 'Projects filtered to stalled (no movement in the stale window)' },
+    { key: 'stalled', value: counts.stalled, label: 'stalled', rule: 'u', to: `${PATHS.projects}?filter=stalled`, dest: 'Projects filtered to stalled (no movement in the stale window)' },
     { key: 'planned', value: counts.planned, label: 'planned', rule: 'n', to: `${PATHS.myTasks}?filter=planned`, dest: 'Tasks planned for today' },
     { key: 'meetings', value: counts.meetings, label: counts.meetings === 1 ? 'meeting' : 'meetings', rule: 't', to: `${PATHS.meetings}?filter=today`, dest: "Today's meeting records" },
     { key: 'done', value: counts.doneToday, label: 'done', rule: 't', to: `${PATHS.myTasks}?filter=done-today`, dest: 'Tasks done today' },

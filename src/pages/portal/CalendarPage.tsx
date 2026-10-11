@@ -20,10 +20,21 @@ import { Face } from '../../components/today/skin'
 
 type ViewMode = 'month' | 'week' | 'day' | 'agenda'
 
-const eventColors: Record<string, { color: string; bg: string }> = {
-  meeting: { color: 'var(--teal)', bg: 'color-mix(in srgb, var(--teal) 12%, transparent)' },
+// Color jobs (Nick 2026-10-11): an event's TYPE is not a color job. Meeting
+// and milestone chips are neutral (maroon read as overdue; teal is the accent,
+// kept for today). A meeting reads brighter than a task due date and carries a
+// hairline edge; a milestone keeps its gold diamond (`mark`), the one color
+// here, matching Deadlines, Agenda and Today.
+const eventColors: Record<string, { color: string; bg: string; border?: string; mark?: string }> = {
+  meeting: { color: 'var(--ink)', bg: 'var(--hover-subtle)', border: 'var(--border-subtle)' },
   task: { color: 'var(--slate)', bg: 'var(--hover-subtle)' },
-  milestone: { color: 'var(--maroon)', bg: 'color-mix(in srgb, var(--maroon) 12%, transparent)' },
+  milestone: { color: 'var(--ink)', bg: 'var(--hover-subtle)', border: 'var(--border-subtle)', mark: 'var(--sk-gold)' },
+}
+
+/** The gold diamond before a milestone's title; nothing for other types. */
+function EventMark({ e }: { e: CalendarEvent }) {
+  const mark = eventColors[e.type]?.mark
+  return mark ? <span aria-hidden="true" style={{ color: mark, marginRight: 3 }}>◆</span> : null
 }
 
 const eventIcons: Record<string, typeof Calendar> = {
@@ -299,7 +310,9 @@ export default function CalendarPage() {
           </>
         ) : Object.entries(eventColors).map(([type, config]) => (
           <div key={type} className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: config.color }} />
+            {config.mark
+              ? <span aria-hidden="true" className="text-[10px]" style={{ color: config.mark }}>◆</span>
+              : <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: config.color, opacity: config.border ? 0.85 : 0.4 }} />}
             <span className="text-[10px] first-letter:uppercase" style={{ color: 'var(--slate)', opacity: 0.75 }}>
               {type === 'task' ? 'Task due dates' : `${type}s`}
             </span>
@@ -417,8 +430,8 @@ function DayCellRender({ dateStr, today, dayEvents, onOpenDay }: { dateStr: stri
           const Wrapper: ElementType = to ? Link : 'div'
           const wrapperProps = to ? { to } : {}
           return (
-            <Wrapper key={e.id} {...wrapperProps} className="text-[10px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
-              {eventLabel(e)}
+            <Wrapper key={e.id} {...wrapperProps} className="text-[10px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, boxShadow: config.border ? `inset 0 0 0 1px ${config.border}` : undefined, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
+              <EventMark e={e} />{eventLabel(e)}
             </Wrapper>
           )
         })}
@@ -480,8 +493,8 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
                 const config = eventColors[e.type] || eventColors.task
                 const Icon = eventIcons[e.type] || Calendar
                 return (
-                  <div key={e.id} className="flex items-start gap-1 p-1.5 rounded" style={{ backgroundColor: config.bg }}>
-                    <Icon {...ICON_PROPS} size={10} style={{ color: config.color, marginTop: 2, flexShrink: 0 }} />
+                  <div key={e.id} className="flex items-start gap-1 p-1.5 rounded" style={{ backgroundColor: config.bg, boxShadow: config.border ? `inset 0 0 0 1px ${config.border}` : undefined }}>
+                    <Icon {...ICON_PROPS} size={10} style={{ color: config.mark ?? 'var(--slate)', marginTop: 2, flexShrink: 0 }} />
                     <span className="text-[10px] leading-tight" style={{ color: config.color }} title={formatBrandName(e.title)}>
                       {(() => { const t = eventLabel(e); return t.length > 32 ? t.slice(0, 32) + '...' : t })()}
                     </span>
@@ -528,12 +541,12 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
                 <motion.div key={e.id} variants={staggerItem}>
                   <Wrapper {...wrapperProps} className="flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm" style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none', cursor: to ? 'pointer' : 'default' }}>
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
-                      <Icon {...ICON_PROPS} size={18} style={{ color: config.color }} />
+                      <Icon {...ICON_PROPS} size={18} style={{ color: config.mark ?? 'var(--slate)' }} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium" style={{ color: 'var(--ink)' }} title={eventFullTitleHint(e)}>{eventLabel(e)}</p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: config.color, backgroundColor: config.bg }}>{e.type}</span>
+                        <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: 'var(--slate)', backgroundColor: config.bg }}>{e.type}</span>
                       </div>
                     </div>
                   </Wrapper>

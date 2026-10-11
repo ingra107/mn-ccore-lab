@@ -62,9 +62,9 @@ export const STATUS_LABEL: Record<string, string> = { todo: 'Todo', in_progress:
 export const STATUS_COLOR: Record<string, string> = {
   todo:             'var(--task-ink-muted)',
   in_progress:      'var(--task-accent-teal)',
-  waiting_external: 'var(--task-accent-orange)',
-  blocked:          'var(--task-accent-coral)',
-  done:             'var(--task-accent-green)',
+  waiting_external: 'var(--st-waiting)',
+  blocked:          'var(--st-blocked)',
+  done:             'var(--st-done)',
 }
 export const PRIORITY_COLOR: Record<string, string> = {
   urgent: 'var(--task-accent-coral)',

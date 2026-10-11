@@ -348,7 +348,7 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
           <ul className="tk-card tk-decs">
             {meeting.decisions.map((decision, i) => (
               <li key={i} className="tk-dec">
-                <span className="tk-dia" aria-hidden="true">&#9670;</span>
+                <span className="tk-dia" aria-hidden="true">&#8226;</span>
                 <span>{decision}</span>
               </li>
             ))}
