@@ -420,7 +420,11 @@ interface ActivityEntry {
 }
 
 export function useActivity(limit: number = 20, actor?: string) {
+  // The feed is members-only (Nick 2026-10-11): logged-out visitors never call
+  // it, so public pages (/team, /pulse) just see an empty list.
+  const { user } = useAuth()
   return useQuery({
+    enabled: user.isAuthenticated,
     queryKey: ['activity', limit, actor],
     queryFn: async () => {
       const params = new URLSearchParams({ limit: String(limit) })

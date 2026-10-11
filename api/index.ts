@@ -1428,13 +1428,10 @@ defineRoute({
 defineRoute({
   method: 'GET',
   path: '/api/activity',
-  auth: 'public',
-  anonShape: {
-    // /team marks members active this week from actor + timestamp. The
-    // free-text description (internal progress notes) stays private.
-    data: [{ id: true, type: true, actor: true, timestamp: true }],
-    count: true,
-  },
+  // Members only (Nick 2026-10-11). Was public with an actor/timestamp anonShape
+  // for the /team "active this week" dots; those now hide when logged out.
+  auth: 'authed',
+  entity: 'activity',
   handler: (c) => handleGetActivity(U(c), E(c)),
 });
 defineRoute({

@@ -114,7 +114,6 @@ const PUBLIC_GETS: Record<string, string> = {
   '/api/publications': '/api/publications',
   '/api/team': '/api/team',
   '/api/stats': '/api/stats',
-  '/api/activity': '/api/activity?limit=50',
   '/api/team/:slug/featured-publications': '/api/team/nick-ingraham/featured-publications',
 }
 
@@ -128,6 +127,7 @@ const NOW_SIGNED_IN_ONLY = [
   '/api/team/slugs',
   '/api/team/pulse',
   '/api/citations',
+  '/api/activity?limit=50',
   '/api/digest/dates',
   '/api/digest/comment-counts',
   '/api/digest/digest-1/comments',
@@ -153,9 +153,6 @@ describe('anonymous reads (REQUIRE_AUTH=1)', () => {
   it('the public shapes keep what the website renders', async () => {
     const projects = JSON.parse((await get('/api/projects')).text)
     expect(projects.data).toEqual([{ status: 'active' }])
-    const activity = JSON.parse((await get('/api/activity?limit=50')).text)
-    expect(activity.data[0]).toMatchObject({ actor: 'nick-ingraham', type: 'project_update' })
-    expect(activity.data[0]).not.toHaveProperty('description')
     const team = JSON.parse((await get('/api/team')).text)
     expect(team.data).toEqual([{ slug: 'nate-mesfin', name: 'Nate Mesfin' }, { slug: 'nick-ingraham', name: 'Nick Ingraham' }])
     const pubs = JSON.parse((await get('/api/publications')).text)
