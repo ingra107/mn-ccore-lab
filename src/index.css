@@ -2335,82 +2335,6 @@ button[aria-label="Deselect task"]::before {
   }
 }
 
-/* P6 — MyTasks ListView mobile grid (P6-LIST-MOBILE, 2026-06-05)
-   The full 9-col desktop power grid is preserved; below 768px it collapses
-   to 4 visible columns [cursor | done-box | title | status] so the list is
-   usable on phones. Inline edit controls are hidden (tap a row → double-tap
-   opens TaskDetailPanel drawer via the existing j/k/e handler). Rule 60
-   desktop grid is completely untouched — overrides apply only at < 768px. */
-@media (max-width: 767px) {
-  .list-view-header,
-  .list-view-row {
-    /* done-box(26) | title(1fr) | due(70) — N1.01: the keyboard-cursor arrow
-       column is dead UI on touch and the status text was redundant beside the
-       DoneBox; title gets the freed width. */
-    grid-template-columns: 26px 1fr 70px !important;
-    height: auto !important;
-    min-height: 44px;
-  }
-  /* Hide non-essential columns — grid items set to none don't consume a column track */
-  .list-view-col-cursor,
-  .list-view-col-project,
-  .list-view-col-priority,
-  .list-view-col-status,
-  .list-view-col-owner,
-  .list-view-col-links,
-  .list-view-col-work {
-    display: none !important;
-  }
-}
-
-/* 1024-1279: sidebar + band leave ~690px, less than the full grid needs. Drop
-   cursor, Priority, Owner, Links and Work, like the 768 tier. */
-@media (min-width: 1024px) and (max-width: 1279px) {
-  .list-view-header,
-  .list-view-row {
-    grid-template-columns: 26px 1fr 130px 124px 110px !important;
-  }
-  .list-view-col-cursor,
-  .list-view-col-priority,
-  .list-view-col-links,
-  .list-view-col-owner,
-  .list-view-col-work {
-    display: none !important;
-  }
-}
-
-/* 1280-1439: band is 880-1040px; the full grid leaves the Title ~90px. Drop
-   Owner and Work only. */
-@media (min-width: 1280px) and (max-width: 1439px) {
-  .list-view-header,
-  .list-view-row {
-    grid-template-columns: 32px 26px 1fr 140px 124px 80px 110px 70px !important;
-  }
-  .list-view-col-owner,
-  .list-view-col-work {
-    display: none !important;
-  }
-}
-
-/* N1.01 — the 768-1023 band runs mobile-nav chrome (useIsMobile = 1024) but
-   previously fell through to the desktop tracks (678px fixed + 1fr), crushing
-   the Title column to ZERO width at 768. Mid collapse for the tablet band:
-   keep project/due/status, drop cursor/priority/owner/links. */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .list-view-header,
-  .list-view-row {
-    /* done(26) | title(1fr) | project(130) | due(90) | status(110) */
-    grid-template-columns: 26px 1fr 130px 90px 110px !important;
-  }
-  .list-view-col-cursor,
-  .list-view-col-priority,
-  .list-view-col-owner,
-  .list-view-col-links,
-  .list-view-col-work {
-    display: none !important;
-  }
-}
-
 /* ── TaskDetailPanel (4c: moved from inline <style> block 2026-06-14) ────────
    Static rules extracted from TaskDetailPanel.tsx <style>{`…`}</style>.
    Namespaced to .task-detail-panel so they can't bleed elsewhere.          */
@@ -2500,26 +2424,6 @@ button[aria-label="Deselect task"]::before {
     font-size: 15px;
     cursor: pointer;
   }
-}
-
-/* ROW 85 — ListView shift-click affordance (desktop only).
-   The footer already says "⇧click select" but that hint is off-screen until
-   you scroll. On hover, show a faint ⇧ glyph in the cursor cell so the
-   interaction is discoverable inline. Suppressed on the active cursor row
-   (which already shows ▶) and on mobile (cursor col is display:none there). */
-.list-view-row:hover .list-view-col-cursor::after {
-  content: '⇧';
-  font-size: 9px;
-  opacity: 0.28;
-  display: block;
-  text-align: center;
-  line-height: 1;
-  pointer-events: none;
-  color: var(--slate);
-}
-/* Don't double-render on the active cursor row (▶ already fills the cell). */
-.list-view-row:hover .list-view-col-cursor[data-cursor="true"]::after {
-  content: none;
 }
 
 /* ── ROW 25: CSS @media replacements for JS isPhone branches ────────────────
@@ -3054,3 +2958,95 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    reachable. Scoped, so TaskRow's other surfaces keep the reserved space. */
 .md-actions [data-task-id]{position:relative}
 .md-actions .task-row-verbs{position:absolute;top:4px;right:30px;background:var(--ice);border-radius:6px}
+
+/* ══ Sleek rows (.sr) — src/components/table/SleekRows.tsx ══
+   The sleek single-line row (Nick 2026-10-10 mock "Tasks: sleek rows",
+   rules-ui-design 19): no gridlines, 40px rows with a radius, a soft hover
+   tint, a cursor ring, selected = teal wash + 2px edge (wins over the urgent
+   orange edge), actions that fade in on hover, a sticky blurred header with
+   one hairline. The table also carries .tk, so Today's chips render as-is. */
+.sr{--sr-hov:color-mix(in srgb,var(--sk-t1) 3.5%,transparent)}
+.sr .sr-g{display:grid;grid-template-columns:var(--sr-cols);align-items:center;column-gap:8px;padding:0 10px}
+.sr .sr-hd{position:sticky;top:0;z-index:2;height:32px;margin-bottom:6px;font-size:11px;font-weight:500;color:var(--sk-t3);background:color-mix(in srgb,var(--sk-page) 88%,transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 1px 0 var(--sk-line)}
+.sr .sr-hd button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:3px;border-radius:4px}
+.sr .sr-hd button:hover,.sr .sr-hd button.sr-on{color:var(--sk-t1)}
+.sr .sr-hd button:focus-visible{outline:2px solid var(--sk-ac);outline-offset:2px}
+.sr .sr-arr{font-size:9px}
+.sr .sr-hd .sr-end{text-align:right}
+.sr .sr-row{position:relative;min-height:40px;border-radius:9px;cursor:pointer;transition:background .12s}
+@media (min-width:768px){.sr:not(.sr-narrow) .sr-row{height:40px}}
+.sr .sr-row:hover{background:var(--sr-hov)}
+.sr .sr-row.sr-cur,.sr .sr-row.sr-exp{background:var(--sr-hov);box-shadow:inset 0 0 0 1px var(--sk-line2)}
+.sr .sr-row.sr-urg{box-shadow:inset 2px 0 0 var(--sk-urg)}
+.sr .sr-row.sr-urg.sr-cur,.sr .sr-row.sr-urg.sr-exp{box-shadow:inset 2px 0 0 var(--sk-urg),inset 0 0 0 1px var(--sk-line2)}
+.sr .sr-row.sr-sel{background:var(--sk-ac-soft);box-shadow:inset 2px 0 0 var(--sk-ac)}
+.sr .sr-row.sr-sel.sr-cur{box-shadow:inset 2px 0 0 var(--sk-ac),inset 0 0 0 1px var(--sk-line2)}
+.sr .sr-row.sr-selmode{cursor:cell}
+.sr .sr-c{display:flex;align-items:center;gap:6px;min-width:0}
+.sr .sr-c.sr-end{justify-content:flex-end}
+/* Hover actions keep their slot (rows line up) and leave the a11y tree while hidden (Rule 27). */
+.sr .sr-hv{visibility:hidden}
+.sr .sr-row:hover .sr-hv,.sr .sr-row.sr-cur .sr-hv,.sr .sr-row:focus-within .sr-hv{visibility:visible}
+@media (hover:none){.sr .sr-hv{visibility:visible}}
+/* Title cell */
+.sr .sr-tt{display:flex;align-items:center;gap:6px;min-width:0;font-size:13px;font-weight:600;color:var(--sk-t1)}
+.sr .sr-x{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.sr .sr-open{cursor:pointer;border-radius:3px}
+.sr .sr-open:hover{text-decoration:underline dotted;text-underline-offset:3px}
+.sr .sr-open:focus-visible{outline:2px solid var(--sk-ac);outline-offset:1px}
+.sr .sr-row.sr-done .sr-x{color:var(--sk-t3);text-decoration:line-through;font-weight:500}
+.sr .tk-tag{margin-left:0;flex-shrink:0;white-space:nowrap}
+.sr .sr-dia{color:var(--sk-gold);flex-shrink:0}
+/* Quiet text cells and status pills */
+.sr .sr-m{font-size:11.5px;color:var(--sk-t3);white-space:nowrap}
+.sr .sr-m.sr-hi{color:var(--sk-t2)}
+.tk .tk-pill.sr-td i{background:transparent;box-shadow:inset 0 0 0 1.2px var(--sk-t3)}
+.tk .tk-pill.sr-ip i{background:var(--sk-ac)}
+.tk .tk-pill.sr-wt i{background:var(--sk-gold)}
+.tk .tk-pill.sr-bl i{background:var(--sk-od)}
+/* Inline-edit trigger: the value as it reads elsewhere, a caret on row hover */
+.sr .sr-trig{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:4px;min-width:0;max-width:100%;min-height:24px;padding:2px 6px;margin-left:-6px;border-radius:6px;cursor:pointer}
+.sr .sr-trig:hover,.sr .sr-trig[aria-expanded="true"]{background:var(--sr-hov);box-shadow:inset 0 0 0 1px var(--sk-line)}
+.sr .sr-trig:focus-visible{outline:2px solid var(--sk-ac);outline-offset:1px}
+.sr .sr-trig .tk-cs{margin:0;min-width:0}
+.sr .sr-car{visibility:hidden;color:var(--sk-t3);font-size:9px;flex-shrink:0}
+.sr .sr-row:hover .sr-car,.sr .sr-trig:focus-visible .sr-car,.sr .sr-trig[aria-expanded="true"] .sr-car{visibility:visible}
+@media (hover:none){.sr .sr-car{visibility:visible}}
+/* Fixed action slots: links, folder, Work on */
+.sr .sr-slots{display:inline-flex;align-items:center;justify-content:flex-end}
+.sr .sr-lks{display:inline-flex;align-items:center;justify-content:flex-end;width:72px}
+.sr .sr-wk{display:inline-flex;align-items:center;width:48px;justify-content:flex-end}
+.sr .tk-wo{color:var(--sk-t3);border-radius:6px}
+.sr .tk-wo:hover{color:var(--sk-t1);background:var(--sr-hov)}
+/* Phone layout (the table is narrower than narrowBelow): box | title over a
+   context line | face. Heights come from content (Rule 15). */
+.sr.sr-narrow .sr-row{display:grid;grid-template-columns:24px minmax(0,1fr) 26px;column-gap:10px;align-items:center;padding:8px;border-radius:10px}
+.sr .sr-ph-lead,.sr .sr-ph-trail{display:flex;align-items:center;justify-content:center}
+.sr .sr-ph-mid{min-width:0}
+.sr .sr-ph-t .sr-tt{font-size:13.5px}
+.sr .sr-ph-l{display:flex;align-items:center;gap:8px;min-width:0;margin-top:2px}
+.sr .sr-ph-l>.sr-c{flex-shrink:0}
+.sr .sr-ph-l>.sr-c:first-child{flex:0 1 auto}
+.sr .sr-sorter{display:flex;justify-content:space-between;font-size:11px;color:var(--sk-t3);padding:0 8px 6px}
+.sr .sr-sorter select{background:none;border:none;color:var(--sk-t2);font:inherit;font-size:12px;margin-left:6px;cursor:pointer;padding:2px 0}
+/* Quiet overdue line above a table */
+.sr-ovl{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--sk-t2);padding:2px 10px 12px}
+.sr-ovl i{width:6px;height:6px;border-radius:50%;background:var(--sk-od);flex-shrink:0}
+.sr-ovl b{color:var(--sk-od);font-weight:600}
+/* Grouped tables (Lanes): a quiet heading, then one panel holding the rows */
+.sr-grp-h{all:unset;box-sizing:border-box;width:100%;display:flex;gap:10px;align-items:baseline;padding:4px 10px 8px;cursor:pointer;color:var(--sk-t1);min-width:0}
+.sr-grp-h:focus-visible{outline:2px solid var(--sk-ac);outline-offset:2px;border-radius:6px}
+.sr-grp-h h3{font-size:14px;font-weight:600;margin:0;white-space:nowrap}
+.sr-grp-h .sr-chev{color:var(--sk-t3);font-size:13px;width:10px;display:inline-block;transition:transform .2s}
+.sr-grp-h .sr-n{font-size:11.5px;color:var(--sk-t3);font-variant-numeric:tabular-nums}
+.sr-grp-h .sr-desc{font-size:11.5px;color:var(--sk-t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex-shrink:1}
+.sr-grp-h .sr-sp{flex:1}
+.sr-grp-h .sr-od{font-size:11.5px;color:var(--sk-od);white-space:nowrap}
+.sr-grp-h .sr-pl{font-size:11.5px;color:var(--sk-gold);white-space:nowrap}
+.sr.sr-panel{background:var(--sk-panel);border-radius:12px;box-shadow:inset 0 0 0 1px var(--sk-line);padding:6px;margin-bottom:16px}
+.sr .sr-more{all:unset;cursor:pointer;font-size:11.5px;color:var(--sk-t3);padding:6px 10px 4px;border-radius:6px}
+.sr .sr-more:hover{color:var(--sk-t1)}
+.sr .sr-more:focus-visible{outline:2px solid var(--sk-ac)}
+/* Keyboard hints under a table */
+.sr-foot{display:flex;gap:14px;font-size:10.5px;color:var(--sk-t3)}
+.sr-foot kbd{font-family:var(--font-mono),'JetBrains Mono',monospace;font-size:9px;padding:1px 4px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--sk-line2);color:var(--sk-t2)}

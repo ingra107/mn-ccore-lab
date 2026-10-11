@@ -12,6 +12,9 @@ interface InlineAssigneePickerProps {
   value: string
   onChange: (slug: string) => void
   compact?: boolean
+  /** Sleek rows: render the owner as it reads on the row (the face) inside a
+   *  bare `.sr-trig` button with a hover caret. The menu is unchanged. */
+  display?: React.ReactNode
 }
 
 // Build member list from team data
@@ -31,7 +34,7 @@ function getAssignableMembers() {
   })
 }
 
-export default function InlineAssigneePicker({ value, onChange, compact }: InlineAssigneePickerProps) {
+export default function InlineAssigneePicker({ value, onChange, compact, display }: InlineAssigneePickerProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [focusedIdx, setFocusedIdx] = useState(-1)
@@ -100,6 +103,19 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
+      {display !== undefined ? (
+        <button
+          type="button"
+          className="sr-trig"
+          onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
+          aria-label={`Owner: ${person.name || value || 'unassigned'}, change`}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+        >
+          {display}
+          <span className="sr-car" aria-hidden="true">▾</span>
+        </button>
+      ) : (
       <button
         ref={hoverTriggerRef as React.RefObject<HTMLButtonElement>}
         onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
@@ -148,6 +164,7 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
         )}
         <ChevronDown {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
       </button>
+      )}
 
       {memberData && !open && (
         <HoverCard

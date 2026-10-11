@@ -13,6 +13,9 @@ interface InlineDatePickerProps {
   tableCell?: boolean
   /** The item is done/completed: its date reads neutrally, never as overdue. */
   done?: boolean
+  /** Sleek rows: render the date as it reads on the row (the card due pill)
+   *  inside a bare `.sr-trig` button with a hover caret. The popover is unchanged. */
+  display?: React.ReactNode
 }
 
 // ── date helpers (local, no UTC drift) ──────────────────────────────────────
@@ -33,7 +36,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 // { value, onChange } contract is unchanged, so every consumer (ListView,
 // Deadlines, Today drawer via DateInput/DueInlineSelect, Insights, grid)
 // keeps working without edits.
-export default function InlineDatePicker({ value, onChange, tableCell, done }: InlineDatePickerProps) {
+export default function InlineDatePicker({ value, onChange, tableCell, done, display }: InlineDatePickerProps) {
   const [open, setOpen] = useState(false)
 
   const now = new Date()
@@ -150,7 +153,20 @@ export default function InlineDatePicker({ value, onChange, tableCell, done }: I
   }
 
   return (
-    <div ref={triggerRef} style={{ position: 'relative' }}>
+    <div ref={triggerRef} style={{ position: 'relative', minWidth: display !== undefined ? 0 : undefined }}>
+      {display !== undefined ? (
+        <button
+          type="button"
+          className="sr-trig"
+          onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}
+          aria-label={value ? `Due ${value}, change date` : 'Set a due date'}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+        >
+          {display}
+          <span className="sr-car" aria-hidden="true">▾</span>
+        </button>
+      ) : (
       <button
         onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}
         aria-label={tableCell && value && isOverdue ? `Due ${dueLabelText(value, true)}` : undefined}
@@ -184,6 +200,7 @@ export default function InlineDatePicker({ value, onChange, tableCell, done }: I
         }</span>
         <ChevronDown {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
       </button>
+      )}
 
       {open && createPortal(
         <div

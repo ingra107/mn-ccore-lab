@@ -17,9 +17,13 @@ interface InlineSelectProps {
   /** Forwarded to the trigger button so a Field's htmlFor resolves to it
    *  (label.control). Without it the nine Field-wrapped selects had inert labels (#8240 residue). */
   id?: string
+  /** Sleek rows (components/table/SleekRows): render the value as it reads on
+   *  the row (a pill, a tag, a muted name) inside a bare `.sr-trig` button, with
+   *  a caret that shows on row hover. The menu is unchanged. */
+  display?: React.ReactNode
 }
 
-export default function InlineSelect({ value, options, onChange, size = 'sm', alwaysShowChevron = false, id }: InlineSelectProps) {
+export default function InlineSelect({ value, options, onChange, size = 'sm', alwaysShowChevron = false, id, display }: InlineSelectProps) {
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
   const [focusedIdx, setFocusedIdx] = useState(-1)
@@ -89,6 +93,20 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
 
   return (
     <>
+      {display !== undefined ? (
+        <button
+          ref={triggerRef}
+          id={id}
+          type="button"
+          className="sr-trig"
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(!open) }}
+        >
+          {display}
+          <span className="sr-car" aria-hidden="true">▾</span>
+        </button>
+      ) : (
       <button
         ref={triggerRef}
         id={id}
@@ -138,6 +156,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
           className={alwaysShowChevron ? 'inline-select-chevron-always' : 'inline-select-chevron'}
         />
       </button>
+      )}
 
       {open && createPortal(
         <div

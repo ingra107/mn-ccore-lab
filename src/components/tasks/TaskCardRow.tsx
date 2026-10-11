@@ -72,7 +72,8 @@ const TAIL_GRIP_W = 18
 // .tk-tch gap (10px) + .tk-tr-r margin-left (4px). Only the excess is reserved.
 const TAIL_GUTTER = 14
 
-function CardDuePill({ due, status }: { due: string; status?: string }) {
+/** The due pill on a card (and on a sleek row): worded label, gold today, red overdue. */
+export function CardDuePill({ due, status }: { due: string; status?: string }) {
   const dueDay = due.slice(0, 10)
   const overdue = isOverdue(due, status)
   const tone = dueTone(due, overdue)
@@ -98,7 +99,8 @@ function CardDuePill({ due, status }: { due: string; status?: string }) {
   )
 }
 
-function CardProjectLine({ project }: { project: { name: string; slug: string; fullTitle?: string } | null }) {
+/** The project as a muted short name that links to the project. */
+export function CardProjectLine({ project }: { project: { name: string; slug: string; fullTitle?: string } | null }) {
   if (!project) return <span className="tk-cs">No project</span>
   return (
     <span className="tk-cs">
@@ -114,6 +116,37 @@ function CardProjectLine({ project }: { project: { name: string; slug: string; f
   )
 }
 
+/** The two attention signals for one task: assigned to the viewer and never
+ *  opened (New), or new activity by others since the viewer's last look. New
+ *  wins; a done task has neither. */
+// eslint-disable-next-line react-refresh/only-export-components -- a hook shared by the card and sleek rows
+export function useTaskAttention(task: { id: string; assignee?: string | null; acknowledged_at?: string | null }, isDone: boolean) {
+  const { user } = useAuth()
+  const isNewToViewer = !isDone && !!task.assignee && task.assignee === (user?.slug ?? '') && !task.acknowledged_at
+  const { data: unseen } = useUnseenActivity()
+  const activityRow = !isDone && !isNewToViewer ? unseen?.tasks.get(task.id) : undefined
+  return { isNewToViewer, activityRow }
+}
+
+/** The title-line tags: New, "n new" activity, and the moved-manually pin. */
+export function CardTags({ task, isNew, activityCount = 0, showMoved = false }: { task: { group_override?: string | null }; isNew: boolean; activityCount?: number; showMoved?: boolean }) {
+  return (
+    <>
+      {isNew && <span className="tk-tag" title="New to you: you have not opened this yet">New</span>}
+      {!isNew && activityCount > 0 && (
+        <span className="tk-tag tk-ac" title={`${activityCount} new ${activityCount === 1 ? 'entry' : 'entries'} since you last opened this`}>
+          {activityCount} new
+        </span>
+      )}
+      {showMoved && task.group_override && (
+        <span className="tk-tag tk-n tip" data-tip={`Moved manually (${task.group_override})`} aria-label={`Moved manually (${task.group_override})`}>
+          <MapPin {...ICON_PROPS} size={10} aria-hidden /> moved
+        </span>
+      )}
+    </>
+  )
+}
+
 export function CardRow(props: CardTaskRowProps) {
   const {
     task, project, isDone, onToggleDone, isExpanded, onToggleExpand,
@@ -122,10 +155,7 @@ export function CardRow(props: CardTaskRowProps) {
     leadingTag, extraMeta, belowTitle, footPills, linksSlot, meetingSlot, workSlot, children,
   } = props
 
-  const { user } = useAuth()
-  const isNewToViewer = !isDone && !!task.assignee && task.assignee === (user?.slug ?? '') && !task.acknowledged_at
-  const { data: unseen } = useUnseenActivity()
-  const activityRow = !isDone && !isNewToViewer ? unseen?.tasks.get(task.id) : undefined
+  const { isNewToViewer, activityRow } = useTaskAttention(task, isDone)
 
   const urgent = !isDone && task.priority === 'urgent'
   const displayTitle = taskShortLabel(task)
@@ -237,17 +267,7 @@ export function CardRow(props: CardTaskRowProps) {
             {urgent && <span className="sr-only">Urgent: </span>}
             {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
             {titleNode}
-            {isNewToViewer && <span className="tk-tag" title="New to you: you have not opened this yet">New</span>}
-            {activityRow && (
-              <span className="tk-tag tk-ac" title={`${activityRow.new_count} new ${activityRow.new_count === 1 ? 'entry' : 'entries'} since you last opened this`}>
-                {activityRow.new_count} new
-              </span>
-            )}
-            {showGroupOverridePin && task.group_override && (
-              <span className="tk-tag tk-n tip" data-tip={`Moved manually (${task.group_override})`} aria-label={`Moved manually (${task.group_override})`}>
-                <MapPin {...ICON_PROPS} size={10} aria-hidden /> moved
-              </span>
-            )}
+            <CardTags task={task} isNew={isNewToViewer} activityCount={activityRow?.new_count ?? 0} showMoved={showGroupOverridePin} />
             {urgent && <span className="tk-tag tk-urgtag" aria-hidden="true">Urgent</span>}
             {tailW > 0 && <span className="tk-tail">{planBtn}{grip}</span>}
           </div>
