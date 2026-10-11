@@ -104,6 +104,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   clif: 'CLIF',
   lab: 'Lab',
   nate: 'Mesfin',
+  'nate-mesfin': 'Mesfin',
   mentee: 'Mentee',
 }
 

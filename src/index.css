@@ -729,10 +729,6 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
 .density-compact .table-container .col-header {
   font-size: 10px;
 }
-.density-compact .manuscript-list-row {
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
-}
 
 /* ── Base Styles ── */
 /* Note: margin/padding/box-sizing reset is handled by Tailwind's @layer base preflight */
@@ -829,9 +825,8 @@ a:hover {
    (R4-02). A full-strength 2px outline on a row already bounded by
    top/bottom hairlines reads as three horizontal rules. Instead: dimmed
    inset outline + bg tint, matching the J/K `.task-row-focused` pattern.
-   Applied to Projects / Manuscripts / Deadlines / Ideas / Decisions rows. */
+   Applied to Projects / Deadlines / Ideas / Decisions rows. */
 .project-list-row:focus-visible,
-.manuscript-list-row:focus-visible,
 .deadline-row:focus-visible,
 .idea-row:focus-visible,
 .decision-list-row:focus-visible {
@@ -841,7 +836,6 @@ a:hover {
   border-radius: var(--radius-sm);
 }
 .dark .project-list-row:focus-visible,
-.dark .manuscript-list-row:focus-visible,
 .dark .deadline-row:focus-visible,
 .dark .idea-row:focus-visible,
 .dark .decision-list-row:focus-visible {
@@ -944,7 +938,6 @@ a:hover {
 @media (min-width: 768px) {
   .table-container [role="row"]:not([aria-rowindex="1"]),
   .project-list-row,
-  .manuscript-list-row,
   .deadline-list-row {
     height: var(--row-height);
     box-sizing: border-box;
@@ -956,7 +949,6 @@ a:hover {
 @media (max-width: 767px) {
   .table-container [role="row"]:not([aria-rowindex="1"]),
   .project-list-row,
-  .manuscript-list-row,
   .deadline-list-row {
     height: auto;
     min-height: var(--row-height);
@@ -1612,8 +1604,6 @@ a:hover {
 .project-list-row:hover .inline-select-chevron,
 .project-list-row:focus-within .inline-select-chevron,
 .project-row-focused .inline-select-chevron,
-.manuscript-list-row:hover .inline-select-chevron,
-.manuscript-list-row:focus-within .inline-select-chevron,
 .deadline-row:hover .inline-select-chevron,
 .deadline-row:focus-within .inline-select-chevron,
 tr:hover .inline-select-chevron,
@@ -1801,7 +1791,6 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
      on the remaining table rows that stay grid-based. */
   .task-grid-row,
   .project-list-row,
-  .manuscript-list-row,
   .deadline-row,
   .idea-row {
     min-height: 44px;

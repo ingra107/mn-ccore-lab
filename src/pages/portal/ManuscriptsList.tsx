@@ -60,7 +60,8 @@ export function ManuscriptsList({
     focusedIndex,
     setFocusedIndex,
     onEnter: () => { const p = manuscripts[focusedIndex]; if (p) open(p.slug) },
-    onEscape: () => setFocusedIndex(-1),
+    // Only claim Escape while a row holds the cursor; otherwise it belongs to others.
+    onEscape: focusedIndex >= 0 ? () => setFocusedIndex(-1) : undefined,
     disabled: keyboardDisabled,
   })
 
@@ -96,7 +97,8 @@ export function ManuscriptsList({
         },
       },
       {
-        key: 'status', label: 'Status', width: '104px', sortable: true, interactive: true,
+        // Phone keeps status on the line: it is the field most often edited from the list.
+        key: 'status', label: 'Status', width: '104px', sortable: true, interactive: true, phone: 'line',
         render: (p) => {
           const v = p.status || 'active'
           return (

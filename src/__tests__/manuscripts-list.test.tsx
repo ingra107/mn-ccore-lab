@@ -1,7 +1,8 @@
 // The Manuscripts List on the shared sleek row (evaluation item 39): stage
 // headers in stage order, j/k cursor, Enter opens, Esc clears, a row click
 // opens the project, an inline-edit click does not, a null PI reads
-// "Unassigned", and the phone layout drops the empty lead slot.
+// "Unassigned", the phone layout drops the empty lead slot and keeps status,
+// and Esc is only claimed while a row holds the cursor.
 //
 // Real Chromium (vitest.config.ts browser mode), react-dom directly.
 
@@ -113,5 +114,19 @@ describe('ManuscriptsList (sleek row)', () => {
     expect(h.querySelector('.sr-ph-lead')).toBeNull()
     expect(row(h, 'a').classList.contains('sr-nolead')).toBe(true)
     expect(row(h, 'a').querySelector('.sr-ph-trail .tk-face')).not.toBeNull()
+    // Status stays editable on the phone line, ahead of stage.
+    const phoneCols = [...row(h, 'a').querySelectorAll('.sr-ph-l [data-col]')].map((e) => e.getAttribute('data-col'))
+    expect(phoneCols.slice(0, 2)).toEqual(['status', 'stage'])
+    expect(row(h, 'a').querySelector('.sr-ph-l [data-col="status"] .sr-trig')).not.toBeNull()
+  })
+
+  it('Escape is left alone when no row holds the cursor', async () => {
+    await mount(<Harness />, { ready: (x) => x.querySelector('.sr-row'), label: 'list' })
+    const esc = () => { const e = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }); document.dispatchEvent(e); return e.defaultPrevented }
+    expect(esc()).toBe(false)
+    key('j'); await tick()
+    expect(esc()).toBe(true)
+    await tick()
+    expect(esc()).toBe(false)
   })
 })
