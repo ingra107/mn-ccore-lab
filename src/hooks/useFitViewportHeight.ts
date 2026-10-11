@@ -1,5 +1,20 @@
 import { useLayoutEffect, type RefObject } from 'react'
 
+interface FitViewportOptions {
+  /** Floor for the page height in px. Default 320. */
+  minHeight?: number
+  /**
+   * Also floor the height at (first child's height + this). For a page whose
+   * first child is a fixed header and whose body needs at least this many px:
+   * a tall header then scrolls the document instead of pushing the body over
+   * the status bar. The first child must be flexShrink:0 so its height does
+   * not depend on the page height.
+   */
+  headerFloor?: number
+  /** True: do not fit. The element gets height auto and min-height 100vh. */
+  fill?: boolean
+}
+
 /**
  * Size a full-height page to the space the portal shell actually leaves it.
  *
@@ -8,13 +23,28 @@ import { useLayoutEffect, type RefObject } from 'react'
  * element's bottom sits past the viewport, so a scroller inside it ends
  * off-screen and the last row of a j/k list can never come into view. The
  * height is MEASURED (no calc(100vh - N) guess that drifts when the chrome
- * changes) and written straight onto the element, like Meetings does.
+ * changes) and written straight onto the element (an external-system update,
+ * not React state).
+ *
+ * It refits on window resize, on a resize of the first child, <body> or
+ * #portal-main (record forms, focus mode collapsing the top bar, the shell
+ * reflowing), and once after the page transition has settled. fit() reads but
+ * never changes those sizes, so it cannot feed back into the observer.
  */
-export function useFitViewportHeight(ref: RefObject<HTMLElement | null>) {
+export function useFitViewportHeight(
+  ref: RefObject<HTMLElement | null>,
+  { minHeight = 320, headerFloor, fill = false }: FitViewportOptions = {},
+) {
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
+    if (fill) {
+      el.style.height = ''
+      el.style.minHeight = '100vh'
+      return
+    }
     const fit = () => {
+      el.style.minHeight = '0px'
       const top = el.getBoundingClientRect().top + window.scrollY
       let below = 0
       const main = el.closest('#portal-main') as HTMLElement | null
@@ -25,17 +55,28 @@ export function useFitViewportHeight(ref: RefObject<HTMLElement | null>) {
           if (pos !== 'fixed' && pos !== 'absolute') below += sib.offsetHeight
         }
       }
-      el.style.height = `${Math.max(320, Math.round(window.innerHeight - top - below))}px`
+      const headerH = headerFloor == null ? 0 : (el.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0
+      const floor = headerFloor == null ? minHeight : Math.max(minHeight, headerH + headerFloor)
+      el.style.height = `${Math.max(floor, Math.round(window.innerHeight - top - below))}px`
     }
     fit()
-    // The page transition moves the element while it mounts; measure again once settled.
-    const raf = requestAnimationFrame(() => requestAnimationFrame(fit))
-    const settle = window.setTimeout(fit, 400)
     window.addEventListener('resize', fit)
+    let raf = 0
+    const refit = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit) }
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(refit) : null
+    if (ro) {
+      if (headerFloor != null && el.firstElementChild) ro.observe(el.firstElementChild)
+      ro.observe(document.body)
+      const main = el.closest('#portal-main')
+      if (main) ro.observe(main)
+    }
+    // PageTransition animates the page in; re-measure once it has settled.
+    const settle = window.setTimeout(fit, 450)
     return () => {
+      window.removeEventListener('resize', fit)
+      ro?.disconnect()
       cancelAnimationFrame(raf)
       window.clearTimeout(settle)
-      window.removeEventListener('resize', fit)
     }
-  }, [ref])
+  }, [ref, minHeight, headerFloor, fill])
 }

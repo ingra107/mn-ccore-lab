@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, useLayoutEffect, type ReactNode } from 'react'
+import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 import { Activity, Calendar, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale, Video } from 'lucide-react'
@@ -31,6 +31,7 @@ import { PATHS } from '../constants/paths'
 import { projectShortLabel } from '../lib/displayNames'
 import { SegmentedToggle } from '../components/ui/SegmentedToggle'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { useFitViewportHeight } from '../hooks/useFitViewportHeight'
 import { useOpenParam } from '../hooks/useOpenParam'
 import { useUnseenActivity, useMarkSeen } from '../hooks/useEntitySeen'
 import MarkdownView from '../components/MarkdownView'
@@ -404,60 +405,10 @@ export default function Meetings() {
 
   const headerRef = useScrollReveal<HTMLDivElement>()
   // Desktop page height = viewport minus everything the shell puts above and
-  // below this page (top bar, host tabs, main padding, status bar), MEASURED
-  // so no calc(100vh - N) guess can drift when the chrome changes. Written
-  // straight onto the element (an external-system update, not React state).
+  // below this page (top bar, host tabs, main padding, status bar); see the hook.
   const pageRef = useRef<HTMLDivElement>(null)
   const isPhone = useIsMobile(768)
-  useLayoutEffect(() => {
-    const el = pageRef.current
-    if (!el) return
-    const fit = () => {
-      if (isPhone) { el.style.height = ''; el.style.minHeight = '100vh'; return }
-      el.style.minHeight = '0px'
-      const top = el.getBoundingClientRect().top + window.scrollY
-      // The header is flexShrink:0, so its height does not depend on the page
-      // height. (Measuring the page's own offsetHeight would not work: the page
-      // is an auto-height flex column and the split is flex:1, so it reports
-      // full content height.) The page grows to header + the split's 360px
-      // floor, so a tall header scrolls the document instead of pushing the
-      // split over the status bar.
-      const headerH = (el.firstElementChild as HTMLElement | null)?.offsetHeight ?? 0
-      let below = 0
-      const main = el.closest('#portal-main') as HTMLElement | null
-      if (main) {
-        below += parseFloat(getComputedStyle(main).paddingBottom) || 0
-        for (let sib = main.nextElementSibling as HTMLElement | null; sib; sib = sib.nextElementSibling as HTMLElement | null) {
-          const pos = getComputedStyle(sib).position
-          if (pos !== 'fixed' && pos !== 'absolute') below += sib.offsetHeight
-        }
-      }
-      el.style.height = `${Math.max(480, headerH + 360, Math.round(window.innerHeight - top - below))}px`
-    }
-    fit()
-    window.addEventListener('resize', fit)
-    // Layout changes with no window resize: the header growing (record form,
-    // cadence details), focus mode collapsing the top bar, the shell reflowing.
-    // fit() only reads the header's height, which the page height does not
-    // change, so it cannot feed back into the observer; the rAF coalesces bursts.
-    let raf = 0
-    const refit = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit) }
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(refit) : null
-    if (ro) {
-      if (el.firstElementChild) ro.observe(el.firstElementChild)
-      ro.observe(document.body)
-      const main = el.closest('#portal-main')
-      if (main) ro.observe(main)
-    }
-    // PageTransition animates the page in; re-measure once it has settled.
-    const settle = window.setTimeout(fit, 450)
-    return () => {
-      window.removeEventListener('resize', fit)
-      ro?.disconnect()
-      cancelAnimationFrame(raf)
-      window.clearTimeout(settle)
-    }
-  }, [isPhone])
+  useFitViewportHeight(pageRef, { minHeight: 480, headerFloor: 360, fill: isPhone })
   // `?filter=today` is the Today page's "meetings" stat line link: this page's
   // list narrowed to today's meeting records.
   const [searchParams, setSearchParams] = useSearchParams()

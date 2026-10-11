@@ -1,6 +1,6 @@
 // useListKeyboard — j/k navigation, e/Enter open drawer, x/Space toggle
-// select, Escape clears selection. The My Tasks Table and the Deadlines list;
-// Columns/Lanes use the mouse.
+// select, Escape clears selection. Used by the My Tasks List and Table views and
+// the Deadlines list; Columns/Lanes use the mouse.
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx (the ListView's
 // inline useEffect). Skips when an input/select/textarea has focus so
