@@ -2883,7 +2883,8 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    keeps red TEXT only; Plan turns teal while the task is planned. */
 .tk .tk-segc{display:inline-flex;align-items:center;flex-wrap:wrap;max-width:100%;padding:2px;margin-bottom:10px;border-radius:var(--r-ctl);box-shadow:inset 0 0 0 1px var(--sk-line2)}
 .tk .tk-segc>*{position:relative;display:inline-flex;align-items:center}
-.tk .tk-segc>*+*::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:1px;background:var(--sk-line2);pointer-events:none}
+/* ::after, not ::before: a direct .tk-si button's ::before is its touch hit area (inset:-8px), which stretched this divider */
+.tk .tk-segc>*+*::after{content:"";position:absolute;left:0;top:6px;bottom:6px;width:1px;background:var(--sk-line2);pointer-events:none}
 .tk .tk-segc .tk-si,.tk .tk-segc [data-ghost-pill] button{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px !important;border:0 !important;border-radius:6px;background:none;font:500 12px var(--font-body) !important;color:var(--sk-t2) !important;opacity:1 !important;cursor:pointer;white-space:nowrap}
 .tk .tk-segc .tk-si:hover,.tk .tk-segc [data-ghost-pill] button:hover{background:color-mix(in srgb, var(--job-accent) 10%, transparent) !important;color:var(--sk-t1) !important}
 .tk .tk-segc .tk-si.tk-open{background:color-mix(in srgb, var(--job-accent) 10%, transparent);color:var(--sk-t1) !important}
