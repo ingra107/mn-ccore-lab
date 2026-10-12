@@ -3,6 +3,10 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-10-12 — Manuscripts page: manuscripts and abstracts only
+
+Nick kept grants on their own page ("we can keep grants separate ... manuscripts page will have the abstract and such"), so the Manuscripts page's tabs are Manuscripts, Abstracts and All, and All covers those two kinds only. Grant applications, awards, honors, trial ops and infrastructure never list here (`manuscriptsPageTabs` / `kindsForManuscriptsTab` in `src/lib/products.ts`, unit-tested). A `?kind=` with no tab here is dropped from the address. On a phone the product rows stack (project over product, stage on the right). The Projects pipeline note now names each reason a project has no column: another ladder, no stage yet, or a stage with no column (`src/lib/pipelinePlace.ts`).
+
 ## 2026-10-12 — Manuscripts page: kind tabs
 
 The Manuscripts page has a tab per product kind (Nick: "to have the option to just see abstracts and grants ... would be a simple view thing"): Manuscripts, the default, keeps today's rows; Abstracts, Grant applications, Awards and Honors list PRODUCTS of that kind, so a project's A0 and A1 are two rows, each with its own ladder; All groups every product by kind. A kind gets a tab when `product_kinds.has_page` is set and someone can see one of its products; tabs follow the kinds' `sort_order` and `plural_label`. Every row names the project (short name, linked to its page), the product and its stage, and the stage select writes the product through the member route. `?kind=` links a tab. The Grants page (`/portal/grants`, the legacy `grants` table) is unchanged.

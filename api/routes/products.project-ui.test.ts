@@ -219,7 +219,7 @@ describe('GET /api/projects/products (the list views\' bulk read)', () => {
 
 describe('a product write leaves a line on its project\'s timeline (cold review s61 B1)', () => {
   const lines = () => rows(
-    "SELECT body FROM activity_entries WHERE entity_type = 'project' AND entity_id = ? AND source_table = 'lifecycle' ORDER BY created_at, id",
+    "SELECT body FROM activity_entries WHERE entity_type = 'project' AND entity_id = ? AND source_table = 'lifecycle' ORDER BY rowid",
     PROJECT,
   ).map((r) => r.body)
 
@@ -237,7 +237,9 @@ describe('a product write leaves a line on its project\'s timeline (cold review 
     await addProduct('r03', { kind: 'grant_application', stage: 'preparing', name: 'A1' })
     const added = rows("SELECT id FROM products WHERE kind = 'grant_application'")[0].id as string
     await setProductHome('r03', added)
-    expect(lines()).toEqual(expect.arrayContaining(['Product added: A1', 'Home → A1']))
+    // Exactly one line each: the home product's own birth wrote none, and the
+    // hand-off's demotion of the old home is not a second "Home" line.
+    expect(lines()).toEqual(['Product added: A1', 'Home → A1'])
   })
 
   it('a product with no name is named by its kind', async () => {

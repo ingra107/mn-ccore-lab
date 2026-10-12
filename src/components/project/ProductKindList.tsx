@@ -73,4 +73,12 @@ const CSS = `
 .pkl-prod { color: var(--sk-t2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pkl-home { margin-left: 6px; font-size: 10px; color: var(--sk-t3); border: 1px solid var(--sk-line2); border-radius: var(--radius-full); padding: 0 5px; }
 .pkl-empty { color: var(--sk-t3); font-size: 13px; padding: var(--sp-lg) 0; }
+/* Phone: project over product on the left, the stage on the right. */
+@media (max-width: 640px) {
+  .pkl-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; column-gap: 8px; }
+  .pkl-head { display: none; }
+  .pkl-proj { grid-column: 1; grid-row: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pkl-prod { grid-column: 1; grid-row: 2; font-size: 12px; }
+  .pkl-row > [role="cell"]:nth-child(3) { grid-column: 2; grid-row: 1 / span 2; }
+}
 `

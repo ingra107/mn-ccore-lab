@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { portalTitle } from '../../constants/pageLabels'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -39,7 +39,7 @@ import { useScrollReveal } from '../../hooks/useScrollReveal'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { toApiStage } from '../../lib/stageNormalize'
 import { useAllProjectProducts, useSetProductStage } from '../../hooks/useProjectProducts'
-import { homeOf, ladderFor, MANUSCRIPT_LADDER_FALLBACK, productLabel, productsOfKinds, type ProductRow } from '../../lib/products'
+import { homeOf, kindsForManuscriptsTab, ladderFor, manuscriptsPageTabs, MANUSCRIPT_LADDER_FALLBACK, productLabel, productsOfKinds, type ProductRow } from '../../lib/products'
 import { PATHS } from '../../constants/paths'
 import { parseDbUtc } from '../../lib/time'
 import { parseDateOnlyOrTimestamp } from '../../lib/dateUtils'
@@ -192,25 +192,34 @@ export default function ManuscriptsPage() {
     }
     return { rows: out, homeBySlug: homes }
   }, [projects, productData])
-  // A tab per kind that has its own page (product_kinds.has_page) and at
-  // least one product on a project this person can see, in the kinds'
-  // sort_order, with product_kinds' plural label; then All, grouped by kind.
+  // This page's kinds are the writing ones (Nick 2026-10-12: "we can keep
+  // grants separate ... manuscripts page will have the abstract and such"):
+  // grant applications, awards and honors live on /portal/grants. A tab per
+  // page kind with at least one visible product, in the kinds' sort_order,
+  // with product_kinds' plural label; then All over those kinds, grouped.
   // Manuscripts always shows: it is the page's default.
-  const kindTabs = useMemo(() => {
-    const kinds = productData?.kinds ?? []
-    const present = new Set<string>()
-    for (const list of Object.values(productData?.byProject ?? {})) for (const pr of list) present.add(pr.kind)
-    const tabs = kinds
-      .filter((k) => k.kind === 'manuscript' || (k.has_page === 1 && present.has(k.kind)))
-      .map((k) => ({ value: k.kind, label: k.plural_label }))
-    if (tabs.length > 1) tabs.push({ value: 'all', label: 'All' })
-    return tabs
-  }, [productData])
+  const kindTabs = useMemo(
+    () => manuscriptsPageTabs(productData?.kinds ?? [], productData?.byProject ?? {}),
+    [productData],
+  )
   const kindTab = kindTabs.some((t) => t.value === kindParam) ? kindParam : 'manuscript'
+  // A ?kind= this page has no tab for (a grant kind, a typo, a kind with no
+  // products) is rewritten to the default once the kinds are known, so the
+  // address bar says what the page shows.
+  const kindParamRaw = searchParams.get('kind')
+  useEffect(() => {
+    if (!productData || kindParamRaw === null) return
+    if (!kindTabs.some((t) => t.value === kindParamRaw) || kindParamRaw === 'manuscript') {
+      setSearchParams((prev) => {
+        const out = new URLSearchParams(prev)
+        out.delete('kind')
+        return out
+      }, { replace: true })
+    }
+  }, [productData, kindParamRaw, kindTabs, setSearchParams])
   const kindRows = useMemo(() => {
     if (kindTab === 'manuscript' || !productData) return []
-    const kinds = kindTab === 'all' ? productData.kinds.map((k) => k.kind) : [kindTab]
-    return productsOfKinds(productData.byProject, projects, kinds)
+    return productsOfKinds(productData.byProject, projects, kindsForManuscriptsTab(kindTab, productData.kinds))
   }, [kindTab, productData, projects])
   const kindLabel = kindTabs.find((t) => t.value === kindTab)?.label ?? ''
   const isManuscriptRow = useCallback(

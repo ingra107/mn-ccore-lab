@@ -234,3 +234,30 @@ export function productsOfKinds(
     || (a.product.lineage_rank ?? 0) - (b.product.lineage_rank ?? 0)
     || productLabel(a.product).localeCompare(productLabel(b.product)))
 }
+
+/** The product kinds the Manuscripts page shows (Nick 2026-10-12: "we can keep
+ *  grants separate ... manuscripts page will have the abstract and such").
+ *  Grant applications, awards and honors live on /portal/grants; trial ops
+ *  and infrastructure have no list page. */
+export const MANUSCRIPTS_PAGE_KINDS: readonly string[] = ['manuscript', 'abstract']
+
+/** The Manuscripts page's tabs: manuscript always (the default), each other
+ *  page kind that has a visible product, in the kinds' sort_order with their
+ *  plural label, then All when there is more than one. */
+export function manuscriptsPageTabs(
+  kinds: readonly ProductKind[], byProject: ProductsByProject['byProject'],
+): { value: string; label: string }[] {
+  const present = new Set<string>()
+  for (const list of Object.values(byProject)) for (const pr of list) present.add(pr.kind)
+  const tabs = kinds
+    .filter((k) => k.kind === 'manuscript' || (MANUSCRIPTS_PAGE_KINDS.includes(k.kind) && present.has(k.kind)))
+    .map((k) => ({ value: k.kind, label: k.plural_label }))
+  if (tabs.length > 1) tabs.push({ value: 'all', label: 'All' })
+  return tabs
+}
+
+/** The kinds a Manuscripts-page tab lists: All is the page kinds, never more. */
+export function kindsForManuscriptsTab(tab: string, kinds: readonly ProductKind[]): string[] {
+  if (tab === 'all') return kinds.map((k) => k.kind).filter((k) => MANUSCRIPTS_PAGE_KINDS.includes(k))
+  return MANUSCRIPTS_PAGE_KINDS.includes(tab) ? [tab] : []
+}
