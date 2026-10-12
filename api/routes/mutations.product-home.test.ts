@@ -280,6 +280,10 @@ describe('the talk kind (Nick, 2026-10-12)', () => {
     ])
   })
 
+  it('the abstract kind is labelled Abstract (v132 rename)', () => {
+    expect(row("SELECT label, plural_label FROM product_kinds WHERE kind = 'abstract'")).toEqual({ label: 'Abstract', plural_label: 'Abstracts' })
+  })
+
   it('lists beside abstracts, before grant applications', () => {
     expect(rows('SELECT kind FROM product_kinds ORDER BY sort_order').map((r) => r.kind).slice(0, 4))
       .toEqual(['manuscript', 'abstract', 'talk', 'grant_application'])

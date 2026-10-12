@@ -15,9 +15,14 @@
 -- it after abstract (20) and before grant_application (30), so pickers and
 -- rollups list it beside abstracts.
 --
+-- The abstract kind's label drops "/ presentation" (Nick 2026-10-12, "rename
+-- the abstract kind to 'Abstract'"): a presentation you are invited to give
+-- is a talk now, and the picker showed both side by side.
+--
 -- Rollback (no live product of kind talk first; the composite FK refuses):
 --   DELETE FROM product_stages WHERE kind = 'talk';
 --   DELETE FROM product_kinds WHERE kind = 'talk';
+--   UPDATE product_kinds SET label = 'Abstract / presentation' WHERE kind = 'abstract';
 --   DELETE FROM schema_migrations WHERE version = 132;
 
 INSERT OR IGNORE INTO product_kinds (kind, label, plural_label, has_page, can_fund, sort_order) VALUES
@@ -27,5 +32,8 @@ INSERT OR IGNORE INTO product_stages (kind, stage, label, ordinal, is_terminal) 
   ('talk', 'preparing', 'Preparing', 20, 0),
   ('talk', 'delivered', 'Delivered', 30, 1),
   ('talk', 'declined',  'Declined',  40, 1);
+
+UPDATE product_kinds SET label = 'Abstract', plural_label = 'Abstracts'
+ WHERE kind = 'abstract' AND (label <> 'Abstract' OR plural_label <> 'Abstracts');
 
 INSERT OR IGNORE INTO schema_migrations (version, filename) VALUES (132, 'schema-v132-product-kind-talk.sql');

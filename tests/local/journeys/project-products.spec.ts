@@ -87,7 +87,8 @@ test.describe('Project products', () => {
     await section.screenshot({ path: `${SHOTS}/01-single-product-ladder.png` })
 
     // 2. Set a stage on the ladder: writes products.stage through the project's
-    //    own route; schema-v126 carries it onto projects.stage (one stage truth).
+    //    own route. The project's stage IS its home product's: the project read
+    //    carries it as home_stage (schema-v130 dropped the v126 projects.stage copy).
     const target = first.stage === 'writing' ? 'data_analysis' : 'writing'
     const write = page.waitForResponse((r) => r.url().endsWith(`/api/projects/${slug}/products`) && r.request().method() === 'POST')
     await page.getByTestId(`stage-dot-${target}`).click()
@@ -96,9 +97,9 @@ test.describe('Project products', () => {
     expect((await resp.json()).product.stage).toBe(target)
     await expect.poll(async () => (await productsOf(page, slug)).products[0].stage).toBe(target)
     await expect(page.getByTestId(`stage-dot-${target}`)).toHaveAttribute('aria-current', 'step')
-    const proj = await page.request.get(`/api/projects/${slug}`, { headers: PI })
-    const projStage = ((await proj.json()) as { data?: { stage?: string }; stage?: string })
-    expect(projStage.data?.stage ?? projStage.stage).toBe(target)
+    const list = await page.request.get('/api/projects', { headers: PI })
+    const listed = ((await list.json()) as { data: { slug: string; home_stage: string | null }[] }).data
+    expect(listed.find((r) => r.slug === slug)!.home_stage).toBe(target)
     // The undo toast appears once the write landed.
     await expect(page.getByRole('button', { name: /undo/i }).first()).toBeVisible()
 
@@ -121,7 +122,9 @@ test.describe('Project products', () => {
     expect(added.grew_from_id).toBe(first.id)
 
     // 4. Two products: two chips on the row; the stats stay beside them.
-    await expect(section.locator('[data-testid^="product-chip-"]')).toHaveCount(2)
+    // 2+ products also get an All chip first (9089860b, chips filter the page).
+    await expect(section.locator('[data-testid^="product-chip-"]:not([data-testid="product-chip-all"])')).toHaveCount(2)
+    await expect(section.getByTestId('product-chip-all')).toBeVisible()
     await expect(section.getByTestId('project-stats')).toBeVisible()
     await section.screenshot({ path: `${SHOTS}/03-two-chips.png` })
 

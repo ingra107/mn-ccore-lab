@@ -60,10 +60,12 @@ test('Projects list: one product is a ladder you can set; the write is the produ
   await page.getByRole('option', { name: target === 'writing' ? 'Writing' : 'Submitted' }).click()
   expect((await write).status()).toBe(200)
   await expect.poll(async () => (await productsOf(page))[0].stage).toBe(target)
-  // One stage truth: the project row follows (schema-v126).
-  const proj = await page.request.get(`/api/projects/${SLUG}`, { headers: PI })
-  const body = (await proj.json()) as { data?: { stage?: string }; stage?: string }
-  expect(body.data?.stage ?? body.stage).toBe(target)
+  // One stage truth: the project's stage IS its home product's. The project
+  // read carries it as home_stage (contract phase step 1); projects.stage is
+  // no longer copied (schema-v130 dropped the v126 mirror).
+  const list = await page.request.get('/api/projects', { headers: PI })
+  const rows = ((await list.json()) as { data: { slug: string; home_stage: string | null }[] }).data
+  expect(rows.find((r) => r.slug === SLUG)!.home_stage).toBe(target)
 })
 
 test('Projects list: two products are chips that open the project', async ({ page }) => {

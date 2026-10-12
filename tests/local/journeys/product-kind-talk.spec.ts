@@ -89,7 +89,7 @@ test('the add-product "+" offers Talk on its own ladder', async ({ page }) => {
   await page.getByTestId('product-add-toggle').click()
   const kinds = await page.getByTestId('product-add-kind').locator('option').allTextContents()
   expect(kinds).toContain('Talk')
-  expect(kinds.indexOf('Talk')).toBe(kinds.indexOf('Abstract / presentation') + 1)
+  expect(kinds.indexOf('Talk')).toBe(kinds.indexOf('Abstract') + 1)
   await page.getByTestId('product-add-kind').selectOption('talk')
   expect(await page.getByTestId('product-add-stage').locator('option').allTextContents()).toEqual(LADDER)
   await page.getByTestId('product-add-form').screenshot({ path: `${SHOTS}/05-add-product-talk.png` })
