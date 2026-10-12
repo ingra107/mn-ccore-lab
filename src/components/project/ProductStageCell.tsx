@@ -23,10 +23,15 @@ export default function ProductStageCell({
   const view = listStageView(products)
   if (view === 'none') return <span className="sr-m">—</span>
   if (view === 'chips') return <ProductChips slug={slug} products={sortProducts(products!)} />
-  return <OneLadder slug={slug} product={products![0]} kinds={kinds} />
+  return <ProductLadder slug={slug} product={products![0]} kinds={kinds} testId={`list-stage-ladder-${slug}`} />
 }
 
-function OneLadder({ slug, product, kinds }: { slug: string; product: ProductRow; kinds: ProductKind[] }) {
+/** One product's ladder: dots plus the stage word, a select that writes the
+ *  product's stage through its project's route (compare-and-swap). Used by the
+ *  Projects list cell and the Manuscripts page's kind tabs. */
+export function ProductLadder({ slug, product, kinds, testId }: {
+  slug: string; product: ProductRow; kinds: ProductKind[]; testId: string
+}) {
   const ladder = ladderFor(kinds, product.kind)
   const setStage = useSetProductStage()
   const idx = ladder.findIndex((s) => s.stage === product.stage)
@@ -43,7 +48,7 @@ function OneLadder({ slug, product, kinds }: { slug: string; product: ProductRow
     </span>
   )
   return (
-    <span data-testid={`list-stage-ladder-${slug}`}>
+    <span data-testid={testId}>
       <InlineSelect
         value={product.stage}
         options={ladder.map((s) => ({ value: s.stage, label: s.label }))}

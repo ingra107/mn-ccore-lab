@@ -31,13 +31,15 @@ import type { SleekSort } from '../../components/table/SleekRows'
 import { ManuscriptsList } from './ManuscriptsList'
 import EmptyState from '../../components/EmptyState'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
+import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
+import ProductKindList from '../../components/project/ProductKindList'
 
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { toApiStage } from '../../lib/stageNormalize'
 import { useAllProjectProducts, useSetProductStage } from '../../hooks/useProjectProducts'
-import { homeOf, ladderFor, MANUSCRIPT_LADDER_FALLBACK, productLabel, type ProductRow } from '../../lib/products'
+import { homeOf, ladderFor, MANUSCRIPT_LADDER_FALLBACK, productLabel, productsOfKinds, type ProductRow } from '../../lib/products'
 import { PATHS } from '../../constants/paths'
 import { parseDbUtc } from '../../lib/time'
 import { parseDateOnlyOrTimestamp } from '../../lib/dateUtils'
@@ -121,6 +123,18 @@ export default function ManuscriptsPage() {
       return out
     }, { replace: true })
   }
+  // Kind tabs (Nick 2026-10-12: "to have the option to just see abstracts and
+  // grants ... would be a simple view thing"). ?kind= so a tab can be linked;
+  // absent = manuscript, the page's natural default.
+  const kindParam = searchParams.get('kind') ?? 'manuscript'
+  const setKindTab = (next: string) => {
+    setSearchParams((prev) => {
+      const out = new URLSearchParams(prev)
+      if (next && next !== 'manuscript') out.set('kind', next)
+      else out.delete('kind')
+      return out
+    }, { replace: true })
+  }
   const [filterStalled, setFilterStalled] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   // null = stage order (with stage headers); a header click cycles asc -> desc -> cleared.
@@ -178,6 +192,27 @@ export default function ManuscriptsPage() {
     }
     return { rows: out, homeBySlug: homes }
   }, [projects, productData])
+  // A tab per kind that has its own page (product_kinds.has_page) and at
+  // least one product on a project this person can see, in the kinds'
+  // sort_order, with product_kinds' plural label; then All, grouped by kind.
+  // Manuscripts always shows: it is the page's default.
+  const kindTabs = useMemo(() => {
+    const kinds = productData?.kinds ?? []
+    const present = new Set<string>()
+    for (const list of Object.values(productData?.byProject ?? {})) for (const pr of list) present.add(pr.kind)
+    const tabs = kinds
+      .filter((k) => k.kind === 'manuscript' || (k.has_page === 1 && present.has(k.kind)))
+      .map((k) => ({ value: k.kind, label: k.plural_label }))
+    if (tabs.length > 1) tabs.push({ value: 'all', label: 'All' })
+    return tabs
+  }, [productData])
+  const kindTab = kindTabs.some((t) => t.value === kindParam) ? kindParam : 'manuscript'
+  const kindRows = useMemo(() => {
+    if (kindTab === 'manuscript' || !productData) return []
+    const kinds = kindTab === 'all' ? productData.kinds.map((k) => k.kind) : [kindTab]
+    return productsOfKinds(productData.byProject, projects, kinds)
+  }, [kindTab, productData, projects])
+  const kindLabel = kindTabs.find((t) => t.value === kindTab)?.label ?? ''
   const isManuscriptRow = useCallback(
     (p: Project) => (STAGE_ORDER[p.stage ?? ''] ?? -1) >= writingOrdinal,
     [STAGE_ORDER, writingOrdinal],
@@ -374,14 +409,14 @@ export default function ManuscriptsPage() {
             New Manuscript
           </button>
         }
-        views={[
+        views={kindTab !== 'manuscript' ? undefined : [
           { key: 'list', icon: <List {...ICON_PROPS} size={14} />, label: 'List' },
           { key: 'pipeline', icon: <GitBranch {...ICON_PROPS} size={14} />, label: 'Pipeline' },
           { key: 'trophy', icon: <BookOpen {...ICON_PROPS} size={14} />, label: 'Trophy' },
         ]}
         activeView={view}
         onViewChange={(v) => setView(v as 'list' | 'pipeline' | 'trophy')}
-        filters={
+        filters={kindTab !== 'manuscript' ? undefined : (
           <>
             <InlineSelect
               value={filterPI}
@@ -435,34 +470,43 @@ export default function ManuscriptsPage() {
               )}
             </button>
           </>
-        }
+        )}
         // The rows on screen, published included, so the header and the
         // footer's Total read one number (prod check 2026-10-10: 28 vs 31).
         // Trophy shows only the published ones, so it counts those.
-        controlsCount={view === 'trophy' ? manuscripts.length - activeCount : manuscripts.length}
-        controlsCountLabel={view === 'trophy' ? 'published' : 'manuscripts'}
+        controlsCount={kindTab !== 'manuscript' ? kindRows.length : view === 'trophy' ? manuscripts.length - activeCount : manuscripts.length}
+        controlsCountLabel={kindTab === 'all' ? 'products' : kindTab !== 'manuscript' ? kindLabel.toLowerCase() : view === 'trophy' ? 'published' : 'manuscripts'}
         isLoading={isLoading || productsLoading}
         skeletonRows={6}
         skeletonCols={5}
         beforeBody={
           <>
+            {kindTabs.length > 1 && (
+              <div className="tk" style={{ marginBottom: 'var(--sp-md)' }} data-testid="product-kind-tabs">
+                <SegmentedToggle skin="tk" ariaLabel="Product kind" options={kindTabs} value={kindTab} onChange={setKindTab} />
+              </div>
+            )}
             {/* T-29: Needs your attention — three-subgroup triage. */}
-            {!isLoading && (
+            {!isLoading && kindTab === 'manuscript' && (
               <NeedsAttentionDashboard filter={attentionFilter} onFilterChange={setAttentionFilter} />
             )}
             {/* M-12 (D25): Active submissions — list view only. */}
-            {!isLoading && view === 'list' && <ActiveSubmissionsWidget />}
+            {!isLoading && kindTab === 'manuscript' && view === 'list' && <ActiveSubmissionsWidget />}
             {productsFailed && (
               <div role="alert" data-testid="manuscripts-products-error">
                 <QueryErrorNote label="product stages (each project shows its own stage, read-only)" onRetry={() => { void refetchProducts() }} />
               </div>
             )}
-            {manuscriptCategoryPills}
+            {kindTab === 'manuscript' && manuscriptCategoryPills}
           </>
         }
       >
+        {/* ─── KIND TABS ─── one row per product of the kind (or every kind, grouped) */}
+        {kindTab !== 'manuscript' && (
+          <ProductKindList rows={kindRows} kinds={productData?.kinds ?? []} grouped={kindTab === 'all'} />
+        )}
         {/* ─── LIST VIEW ─── the shared sleek row (evaluation item 39) */}
-        {view === 'list' && (
+        {kindTab === 'manuscript' && view === 'list' && (
           <div id="manuscripts-table">
             {manuscripts.length > 0 ? (
               <ManuscriptsList
@@ -529,7 +573,7 @@ export default function ManuscriptsPage() {
         )}
 
         {/* ─── PIPELINE VIEW ─── M-13: drag-and-drop between stages */}
-        {view === 'pipeline' && (
+        {kindTab === 'manuscript' && view === 'pipeline' && (
           <PipelineBoard
             stages={STAGES}
             stageLabels={STAGE_LABELS}
@@ -539,7 +583,7 @@ export default function ManuscriptsPage() {
         )}
 
         {/* ─── TROPHY VIEW (P3-03) ─── cover-style cards for Published manuscripts */}
-        {view === 'trophy' && (() => {
+        {kindTab === 'manuscript' && view === 'trophy' && (() => {
           const published = manuscripts.filter((p) => p.stage === 'published')
           if (published.length === 0) {
             return (

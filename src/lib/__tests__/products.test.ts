@@ -4,6 +4,7 @@ import {
   groupByKind,
   ladderFor,
   productLabel,
+  productsOfKinds,
   productViewMode,
   setProductHome,
   setProductStage,
@@ -101,5 +102,37 @@ describe('product writes go to the project\'s own route', () => {
       json: async () => ({ error: 'product_home_live: mark another product home first' }),
     } as Response)
     await expect(setProductStage('r03', 'prd_abc', 'idea')).rejects.toThrow('product_home_live')
+  })
+})
+
+describe('productsOfKinds (the Manuscripts page\'s kind tabs)', () => {
+  const projects = [
+    { id: 'proj_B', slug: 'b', title: 'Beta study', short_name: 'Beta', category: 'CLIF', status: 'active' },
+    { id: 'proj_A', slug: 'a', title: 'Alpha R03', short_name: 'R03', category: 'MNCCORE', status: 'active' },
+  ] as never[]
+  const byProject = {
+    proj_A: [
+      row('a-home', { project_id: 'proj_A', kind: 'manuscript', is_home: 1 }),
+      row('a-a1', { project_id: 'proj_A', kind: 'grant_application', short_name: 'A1', lineage_rank: 1 }),
+      row('a-a0', { project_id: 'proj_A', kind: 'grant_application', short_name: 'A0', lineage_rank: 0 }),
+    ],
+    proj_B: [row('b-g', { project_id: 'proj_B', kind: 'grant_application', short_name: 'K23' })],
+    proj_hidden: [row('h-g', { project_id: 'proj_hidden', kind: 'grant_application' })],
+  }
+
+  it('lists products, not projects: R03\'s A0 and A1 are both rows, in lineage order', () => {
+    const rows = productsOfKinds(byProject, projects, ['grant_application'])
+    expect(rows.map((r) => r.product.id)).toEqual(['b-g', 'a-a0', 'a-a1'])
+    expect(rows.map((r) => r.project.slug)).toEqual(['b', 'a', 'a'])
+  })
+
+  it('All: every asked kind, in the kinds\' order, then project name', () => {
+    const rows = productsOfKinds(byProject, projects, ['manuscript', 'grant_application'])
+    expect(rows.map((r) => r.product.id)).toEqual(['a-home', 'b-g', 'a-a0', 'a-a1'])
+  })
+
+  it('leaves out products of projects this screen does not hold', () => {
+    const rows = productsOfKinds(byProject, projects, ['grant_application'])
+    expect(rows.some((r) => r.product.id === 'h-g')).toBe(false)
   })
 })

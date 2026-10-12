@@ -8,7 +8,9 @@
 //
 // Decision: PB Context/Decisions/2026-10-11-projects-hold-products.md.
 
+import type { Project } from '../data/types'
 import { fetchApi } from './api'
+import { projectShortLabel } from './displayNames'
 
 export interface ProductStage {
   stage: string
@@ -202,4 +204,33 @@ export function homeOf(products: readonly ProductRow[] | undefined): ProductRow 
 export function listStageView(products: readonly ProductRow[] | undefined): 'none' | 'ladder' | 'chips' {
   const n = products?.length ?? 0
   return n === 0 ? 'none' : productViewMode(n)
+}
+
+// ── the Manuscripts page's kind tabs ───────────────────────
+
+/** A row of the Manuscripts page's kind tabs: one product and its project. */
+export interface KindRow {
+  product: ProductRow
+  project: Project
+}
+
+/** Every product of the given kinds whose project is on screen, in kind order
+ *  (the Worker sends kinds by sort_order), then project name, then lineage. */
+export function productsOfKinds(
+  byProject: ProductsByProject['byProject'], projects: readonly Project[], kinds: readonly string[],
+): KindRow[] {
+  const want = new Set(kinds)
+  const order = new Map(kinds.map((k, i) => [k, i]))
+  const out: KindRow[] = []
+  for (const project of projects) {
+    for (const product of byProject[project.id ?? ''] ?? []) {
+      if (want.has(product.kind)) out.push({ product, project })
+    }
+  }
+  const name = (p: Project) => projectShortLabel(p).toLowerCase()
+  return out.sort((a, b) =>
+    (order.get(a.product.kind)! - order.get(b.product.kind)!)
+    || name(a.project).localeCompare(name(b.project))
+    || (a.product.lineage_rank ?? 0) - (b.product.lineage_rank ?? 0)
+    || productLabel(a.product).localeCompare(productLabel(b.product)))
 }
