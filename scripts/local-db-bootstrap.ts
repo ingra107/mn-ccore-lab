@@ -98,6 +98,7 @@ function wranglerEnv(): NodeJS.ProcessEnv {
 // invocation instead of one execSync spawn per file.
 const BUNDLE_PATH = join(REPO_ROOT, '.wrangler', '_bootstrap-bundle.sql')
 const bundleParts: string[] = []
+const BUNDLE_CHUNK_BYTES = 200_000
 
 function queueSqlFile(absPath: string, label: string) {
   if (!existsSync(absPath)) {
@@ -111,24 +112,40 @@ function queueSqlFile(absPath: string, label: string) {
 function applyBundle() {
   if (bundleParts.length === 0) return
   mkdirSync(dirname(BUNDLE_PATH), { recursive: true })
-  writeFileSync(BUNDLE_PATH, bundleParts.join('\n\n'), 'utf8')
-  const forwardPath = BUNDLE_PATH.replace(/\\/g, '/')
-  const cmd = `npx wrangler d1 execute ${DB_NAME} --local --config="${WRANGLER_CONFIG.replace(/\\/g, '/')}" --file="${forwardPath}"${PERSIST_FLAG}` // wrangler-d1-allowed: --local Miniflare, no cloud auth
-  process.stdout.write(`[local-db-bootstrap] applying bundle (${bundleParts.length} files, one invocation) ... `)
-  try {
-    execSync(cmd, { stdio: ['ignore', 'pipe', 'pipe'], env: wranglerEnv() })
-    process.stdout.write('ok\n')
-  } catch (e: any) {
-    process.stdout.write('FAIL\n')
-    const stderr = e?.stderr?.toString() ?? ''
-    const stdout = e?.stdout?.toString() ?? ''
-    console.error(
-      `[local-db-bootstrap] bundle apply failed.\ncmd: ${cmd}\nstdout:\n${stdout}\nstderr:\n${stderr}\n` +
-      `Bundle kept at: ${BUNDLE_PATH} — find the last "-- === <file> ===" marker before the reported ` +
-      `error/line to identify the source file.`
-    )
-    throw e
+  // Local Miniflare refuses one --file over ~300 KB (SQLITE_TOOBIG; the full
+  // bundle reached 307 KB at schema-v125), so whole files are packed into
+  // chunks under BUNDLE_CHUNK_BYTES: still a handful of spawns, not one per file.
+  const chunks: string[][] = [[]]
+  let size = 0
+  for (const part of bundleParts) {
+    if (size + part.length > BUNDLE_CHUNK_BYTES && chunks[chunks.length - 1].length) {
+      chunks.push([])
+      size = 0
+    }
+    chunks[chunks.length - 1].push(part)
+    size += part.length
   }
+  chunks.forEach((parts, i) => {
+    const path = chunks.length === 1 ? BUNDLE_PATH : BUNDLE_PATH.replace(/\.sql$/, `-${i + 1}.sql`)
+    writeFileSync(path, parts.join('\n\n'), 'utf8')
+    const forwardPath = path.replace(/\\/g, '/')
+    const cmd = `npx wrangler d1 execute ${DB_NAME} --local --config="${WRANGLER_CONFIG.replace(/\\/g, '/')}" --file="${forwardPath}"${PERSIST_FLAG}` // wrangler-d1-allowed: --local Miniflare, no cloud auth
+    process.stdout.write(`[local-db-bootstrap] applying bundle ${i + 1}/${chunks.length} (${parts.length} files) ... `)
+    try {
+      execSync(cmd, { stdio: ['ignore', 'pipe', 'pipe'], env: wranglerEnv() })
+      process.stdout.write('ok\n')
+    } catch (e: any) {
+      process.stdout.write('FAIL\n')
+      const stderr = e?.stderr?.toString() ?? ''
+      const stdout = e?.stdout?.toString() ?? ''
+      console.error(
+        `[local-db-bootstrap] bundle apply failed.\ncmd: ${cmd}\nstdout:\n${stdout}\nstderr:\n${stderr}\n` +
+        `Bundle kept at: ${path} — find the last "-- === <file> ===" marker before the reported ` +
+        `error/line to identify the source file.`
+      )
+      throw e
+    }
+  })
 }
 
 function run() {
