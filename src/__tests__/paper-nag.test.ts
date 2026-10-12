@@ -16,7 +16,7 @@ describe('publishedAPaper (the useSetProductStage condition)', () => {
     expect(publishedAPaper({ kind: 'manuscript', stage_is_terminal: 0 })).toBe(false)
   })
   it('never fires for another kind, terminal or not', () => {
-    for (const kind of ['abstract', 'grant_application', 'award', 'honor', 'trial_ops', 'infrastructure']) {
+    for (const kind of ['abstract', 'talk', 'grant_application', 'award', 'honor', 'trial_ops', 'infrastructure']) {
       expect(publishedAPaper({ kind, stage_is_terminal: 1 }), kind).toBe(false)
       expect(publishedAPaper({ kind, stage_is_terminal: 0 }), kind).toBe(false)
     }

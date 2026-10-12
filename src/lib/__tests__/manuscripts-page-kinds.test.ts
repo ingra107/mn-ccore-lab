@@ -5,7 +5,7 @@ import { pipelineOffNote, pipelinePlaceOf } from '../pipelinePlace'
 const kind = (k: string, plural: string, sort: number, has_page = 1): ProductKind =>
   ({ kind: k, label: k, plural_label: plural, has_page, can_fund: 0, sort_order: sort, stages: [] })
 const KINDS: ProductKind[] = [
-  kind('manuscript', 'Manuscripts', 10), kind('abstract', 'Abstracts', 20), kind('grant_application', 'Grant applications', 30),
+  kind('manuscript', 'Manuscripts', 10), kind('abstract', 'Abstracts', 20), kind('talk', 'Talks', 25), kind('grant_application', 'Grant applications', 30),
   kind('award', 'Awards', 40), kind('honor', 'Honors', 45), kind('trial_ops', 'Trial ops', 50, 0), kind('infrastructure', 'Infrastructure', 60, 0),
 ]
 const row = (id: string, k: string, extra: Partial<ProductRow> = {}): ProductRow => ({
@@ -16,13 +16,14 @@ const row = (id: string, k: string, extra: Partial<ProductRow> = {}): ProductRow
 })
 const EVERY_KIND = { proj_X: KINDS.map((k, i) => row(`p${i}`, k.kind)) }
 
-describe('the Manuscripts page shows manuscripts and abstracts only (Nick 2026-10-12)', () => {
-  it('tabs: Manuscripts, Abstracts, All, even when every kind has products', () => {
-    expect(manuscriptsPageTabs(KINDS, EVERY_KIND).map((t) => t.label)).toEqual(['Manuscripts', 'Abstracts', 'All'])
+describe('the Manuscripts page shows manuscripts, abstracts and talks only (Nick 2026-10-12)', () => {
+  it('tabs: Manuscripts, Abstracts, Talks, All, even when every kind has products', () => {
+    expect(manuscriptsPageTabs(KINDS, EVERY_KIND).map((t) => t.label)).toEqual(['Manuscripts', 'Abstracts', 'Talks', 'All'])
   })
 
-  it('All lists manuscript and abstract only: never a grant kind, trial ops or infrastructure', () => {
-    expect(kindsForManuscriptsTab('all', KINDS)).toEqual(['manuscript', 'abstract'])
+  it('All lists manuscript, abstract and talk only: never a grant kind, trial ops or infrastructure', () => {
+    expect(kindsForManuscriptsTab('all', KINDS)).toEqual(['manuscript', 'abstract', 'talk'])
+    expect(kindsForManuscriptsTab('talk', KINDS)).toEqual(['talk'])
   })
 
   it('a grant, trial-ops or infrastructure ?kind= lists nothing here', () => {

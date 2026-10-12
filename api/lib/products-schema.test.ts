@@ -34,11 +34,11 @@ const refuses = (fn: () => unknown, msg: RegExp) => expect(fn).toThrow(msg)
 const FK = /FOREIGN KEY constraint failed/
 
 describe('v124 catalog: kinds and ladders are seeded data', () => {
-  it('seeds the kinds (v124 six, v125 honor) and only award can fund', () => {
+  it('seeds the kinds (v124 six, v125 honor, v132 talk) and only award can fund', () => {
     const db = prodSchemaDb()
     const kinds = db.prepare('SELECT kind, can_fund FROM product_kinds ORDER BY sort_order').all()
     expect(kinds).toEqual([
-      { kind: 'manuscript', can_fund: 0 }, { kind: 'abstract', can_fund: 0 },
+      { kind: 'manuscript', can_fund: 0 }, { kind: 'abstract', can_fund: 0 }, { kind: 'talk', can_fund: 0 },
       { kind: 'grant_application', can_fund: 0 }, { kind: 'award', can_fund: 1 },
       { kind: 'honor', can_fund: 0 }, { kind: 'trial_ops', can_fund: 0 }, { kind: 'infrastructure', can_fund: 0 },
     ])

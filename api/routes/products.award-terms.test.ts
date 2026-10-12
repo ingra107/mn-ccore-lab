@@ -35,7 +35,7 @@ describe('schema-v128 award terms', () => {
       { amount_usd: 100 })).toThrow(/products_amount_usd_kind/)
   })
 
-  it.each(['manuscript', 'abstract', 'honor', 'trial_ops', 'infrastructure'])('a %s holds none of them', (kind) => {
+  it.each(['manuscript', 'abstract', 'talk', 'honor', 'trial_ops', 'infrastructure'])('a %s holds none of them', (kind) => {
     const stage = (db.prepare('SELECT stage FROM product_stages WHERE kind = ? ORDER BY ordinal LIMIT 1').get(kind) as { stage: string }).stage
     expect(() => product('prd_01KXH4E23G0DTFGFBYS2C8RCCC', kind, stage, { period_start: '2027-01-01' }))
       .toThrow(/products_period_start_kind/)

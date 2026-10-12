@@ -271,6 +271,35 @@ describe('the honor kind (Nick, 2026-10-11)', () => {
   })
 })
 
+describe('the talk kind (Nick, 2026-10-12)', () => {
+  it('has its ladder (Invited > Preparing > Delivered, Declined), and cannot fund', () => {
+    expect(row("SELECT label, plural_label, can_fund FROM product_kinds WHERE kind = 'talk'")).toEqual({ label: 'Talk', plural_label: 'Talks', can_fund: 0 })
+    expect(rows("SELECT stage, label, is_terminal FROM product_stages WHERE kind = 'talk' ORDER BY ordinal")).toEqual([
+      { stage: 'invited', label: 'Invited', is_terminal: 0 }, { stage: 'preparing', label: 'Preparing', is_terminal: 0 },
+      { stage: 'delivered', label: 'Delivered', is_terminal: 1 }, { stage: 'declined', label: 'Declined', is_terminal: 1 },
+    ])
+  })
+
+  it('lists beside abstracts, before grant applications', () => {
+    expect(rows('SELECT kind FROM product_kinds ORDER BY sort_order').map((r) => r.kind).slice(0, 4))
+      .toEqual(['manuscript', 'abstract', 'talk', 'grant_application'])
+  })
+
+  it('an abstract re-files as a delivered talk in place: kind and stage in one update, tasks stay on it', async () => {
+    await pb('projects', `proj_${ULID}`, 'insert', { title: 'Grand Rounds', slug: 'gr', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    await pb('tasks', 'task_1', 'insert', { title: 'T', project_id: `proj_${ULID}`, assignee: 'nick-ingraham', status: 'todo', priority: 'medium' })
+    expect((await pb('products', `prd_${ULID}`, 'update', { kind: 'abstract', stage: 'presented' })).status).toBe('accepted')
+    const r = await pb('products', `prd_${ULID}`, 'update', { kind: 'talk', stage: 'delivered' })
+    expect(r.status, r.reason).toBe('accepted')
+    expect(row('SELECT kind, stage, is_home, deleted_at FROM products WHERE id = ?', `prd_${ULID}`))
+      .toEqual({ kind: 'talk', stage: 'delivered', is_home: 1, deleted_at: null })
+    expect(productOf('task_1')).toBe(`prd_${ULID}`)
+    // A talk has no "presented" rung: the composite FK refuses the off-ladder pair.
+    const bad = await pb('products', `prd_${ULID}`, 'update', { stage: 'presented' })
+    expect(bad.status).not.toBe('accepted')
+  })
+})
+
 describe('read routes', () => {
   beforeEach(async () => {
     // The PB-key create makes its author the first member (#145 Lane B).

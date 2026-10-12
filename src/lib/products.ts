@@ -300,9 +300,10 @@ export function productsOfKinds(
 
 /** The product kinds the Manuscripts page shows (Nick 2026-10-12: "we can keep
  *  grants separate ... manuscripts page will have the abstract and such").
- *  Grant applications, awards and honors live on /portal/grants; trial ops
- *  and infrastructure have no list page. */
-export const MANUSCRIPTS_PAGE_KINDS: readonly string[] = ['manuscript', 'abstract']
+ *  A talk (schema-v132) sits beside abstracts, its own tab: both are things
+ *  you present. Grant applications, awards and honors live on /portal/grants;
+ *  trial ops and infrastructure have no list page. */
+export const MANUSCRIPTS_PAGE_KINDS: readonly string[] = ['manuscript', 'abstract', 'talk']
 
 /** The Manuscripts page's tabs: manuscript always (the default), each other
  *  page kind that has a visible product, in the kinds' sort_order with their

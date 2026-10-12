@@ -64,6 +64,8 @@ describe('a project is born with the product its creator named (schema-v129)', (
   it('a kind with no stage starts on that kind\'s first rung', async () => {
     const { body } = await create({ title: 'Prize', kind: 'honor' })
     expect(homeOf(body.data!.id as string)).toEqual([{ kind: 'honor', stage: 'preparing', is_home: 1 }])
+    const talk = await create({ title: 'CRIKEY talk', kind: 'talk' })
+    expect(homeOf(talk.body.data!.id as string)).toEqual([{ kind: 'talk', stage: 'invited', is_home: 1 }])
   })
 
   it('an off-ladder pair is refused in words and no project lands', async () => {

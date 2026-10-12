@@ -5,7 +5,8 @@
  * and such").
  *   Manuscripts (default) keeps today's rows; Abstracts lists PRODUCTS of
  *   that kind (a project's two abstracts are two rows); All groups the
- *   manuscripts and abstracts by kind. Grant applications, awards and honors
+ *   manuscripts, abstracts and talks by kind (a talk, schema-v132, is its own
+ *   tab beside Abstracts). Grant applications, awards and honors
  *   are not here (they live on /portal/grants). ?kind= links a tab.
  *
  *   node scripts/run-journey-spec.mjs --gate tests/local/journeys/product-kind-tabs.spec.ts
@@ -47,6 +48,7 @@ test.beforeEach(async ({ page }) => {
   await resolve(page)
   await ensure(page, 'abstract', 'planning', 'ATS poster')
   await ensure(page, 'abstract', 'planning', 'SCCM talk')
+  await ensure(page, 'talk', 'invited', 'UofC Grand Rounds')
   // Grant kinds on the same project: they must NOT show on this page.
   await ensure(page, 'grant_application', 'preparing', 'A0')
   await ensure(page, 'award', 'active', 'K23')
@@ -57,7 +59,7 @@ test('Manuscripts is the default tab and keeps its rows; only the writing kinds 
   await page.goto('/portal/manuscripts', { waitUntil: 'load' })
   const tabs = page.getByTestId('product-kind-tabs').getByRole('tab')
   await expect(tabs.first()).toBeVisible({ timeout: 20_000 })
-  await expect(tabs).toHaveText(['Manuscripts', 'Abstracts', 'All'])
+  await expect(tabs).toHaveText(['Manuscripts', 'Abstracts', 'Talks', 'All'])
   await expect(page.getByTestId('product-kind-tabs').getByRole('tab', { name: 'Manuscripts' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByText('List', { exact: true }).first()).toBeVisible()
   await page.screenshot({ path: `${SHOTS}/50-kind-tab-manuscripts.png` })
@@ -115,14 +117,28 @@ test('phone width, light and dark: the tabs and the abstract rows fit, nothing s
   }
 })
 
-test('All: the manuscripts and abstracts, grouped by kind; no grant kinds', async ({ page }) => {
+test('Talks: the invited talk is a row on its own tab, on its own ladder', async ({ page }) => {
+  await page.goto('/portal/manuscripts', { waitUntil: 'load' })
+  await page.getByTestId('product-kind-tabs').getByRole('tab', { name: 'Talks' }).click()
+  await expect(page).toHaveURL(/[?&]kind=talk/)
+  const talk = (await productsOf(page)).find((p) => p.kind === 'talk')!
+  const r = page.getByTestId(`kind-row-${talk.id}`)
+  await expect(r).toBeVisible({ timeout: 20_000 })
+  await expect(r).toContainText('UofC Grand Rounds')
+  for (const p of (await productsOf(page)).filter((x) => x.kind !== 'talk')) {
+    await expect(page.getByTestId(`kind-row-${p.id}`)).toHaveCount(0)
+  }
+  await page.screenshot({ path: 'review/s74/02-manuscripts-talks-tab.png' })
+})
+
+test('All: the manuscripts, abstracts and talks, grouped by kind; no grant kinds', async ({ page }) => {
   await page.goto('/portal/manuscripts?kind=all', { waitUntil: 'load' })
   const list = page.getByTestId('product-kind-list')
   await expect(list).toBeVisible({ timeout: 20_000 })
-  await expect(list.getByRole('heading')).toHaveText([/^Manuscripts/, /^Abstracts/])
+  await expect(list.getByRole('heading')).toHaveText([/^Manuscripts/, /^Abstracts/, /^Talks/])
   for (const p of await productsOf(page)) {
     const r = page.getByTestId(`kind-row-${p.id}`)
-    if (p.kind === 'manuscript' || p.kind === 'abstract') await expect(r).toBeVisible()
+    if (p.kind === 'manuscript' || p.kind === 'abstract' || p.kind === 'talk') await expect(r).toBeVisible()
     else await expect(r).toHaveCount(0)
   }
   await page.screenshot({ path: `${SHOTS}/55-kind-tab-all.png`, fullPage: true })
