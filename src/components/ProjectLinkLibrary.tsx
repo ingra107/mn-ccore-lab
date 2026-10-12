@@ -41,7 +41,7 @@ import { stripLinkKindSuffix } from '../lib/linkIcon'
 import { ICON_PROPS } from '../lib/iconProps'
 import type { StoredLink } from '../hooks/useApiData'
 
-import { LABEL_STYLE, LABEL_ICON_COLOR } from './ui/labelStyle'
+import SectionHead from './ui/SectionHead'
 
 type Role = 'key' | 'archive'
 
@@ -108,10 +108,7 @@ export default function ProjectLinkLibrary({ links, isLoading, slotUrls = [], pi
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2">
-        <Link2 {...ICON_PROPS} size={13} style={{ color: LABEL_ICON_COLOR }} />
-        <span style={LABEL_STYLE}>Links</span>
-      </div>
+      <SectionHead as="h3" icon={<Link2 {...ICON_PROPS} size={13} />} title="Links" />
 
       {pinnedEditor}
 

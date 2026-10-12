@@ -24,7 +24,7 @@ import { useLinkProjectPublication, useUnlinkProjectPublication } from '../hooks
 import { PUBLIC_PATHS } from '../constants/paths'
 import { PUBLICATION_ROLES, type PublicationRole } from '../../shared/publicationRoles'
 
-import { LABEL_STYLE, LABEL_ICON_COLOR } from './ui/labelStyle'
+import SectionHead from './ui/SectionHead'
 
 const ROLE_OPTIONS: GhostSelectOption[] = PUBLICATION_ROLES.map((r) => ({ value: r, label: r[0].toUpperCase() + r.slice(1) }))
 
@@ -63,15 +63,12 @@ export default function ProjectPublications({ projectSlug, projectTitle, isPi, v
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2">
-        <BookOpenText {...ICON_PROPS} size={13} style={{ color: LABEL_ICON_COLOR }} />
-        <span style={LABEL_STYLE}>{isCard ? 'Published' : 'Published from this project'}</span>
-        {links.length > 0 && (
-          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
-            {links.length}
-          </span>
-        )}
-      </div>
+      <SectionHead
+        as="h3"
+        icon={<BookOpenText {...ICON_PROPS} size={13} />}
+        title={isCard ? 'Published' : 'Published from this project'}
+        count={links.length > 0 ? links.length : undefined}
+      />
 
       <div className="flex flex-col gap-2.5">
         {links.map((pub) => (

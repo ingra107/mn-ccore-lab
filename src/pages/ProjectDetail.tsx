@@ -54,6 +54,7 @@ import ProjectMembers from '../components/project/ProjectMembers'
 import { AllProjectsBanner } from '../components/AllProjectsControls'
 import ProjectPublications from '../components/ProjectPublications'
 import MyProjectFolder from '../components/project/MyProjectFolder'
+import ProjectFolderActions from '../components/project/ProjectFolderActions'
 import LinkifiedText from '../components/LinkifiedText'
 import FileUpload from '../components/FileUpload'
 import PresenceAvatars from '../components/PresenceAvatars'
@@ -568,20 +569,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   }
 
 
-  return (
-    <>
-      <Breadcrumb backTo="/projects" backLabel="Projects" current={project.title} />
-      <AllProjectsBanner />
-
-      {/* ── Compact Header ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        style={{ marginBottom: 'var(--sp-lg)' }}
-      >
-        {/* Title row */}
-        <div className="flex items-start justify-between gap-4 mb-3">
+  const titleLegacyEl = (
           <div style={{ flex: 1, minWidth: 0 }}>
             {editingTitle ? (
               <input
@@ -684,6 +672,9 @@ function ProjectDetailInner({ project }: InnerProps) {
             {/* The heartbeat line under the title (color-back pick 10). */}
             <PageHeartbeat />
           </div>
+  )
+
+  const iconsEl = (
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={handleCopyLink}
@@ -785,9 +776,9 @@ function ProjectDetailInner({ project }: InnerProps) {
             </div>
             <PresenceAvatars slugs={viewerSlugs} peerIntents={projectPeerIntents} />
           </div>
-        </div>
+  )
 
-        {/* Meta row: category, PI, status, agenda button — all inline-editable */}
+  const metaEl = (
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5">
             <CategoryIcon category={project.category || 'MNCCORE'} size={14} color={LIST_T3} />
@@ -836,39 +827,9 @@ function ProjectDetailInner({ project }: InnerProps) {
           )}
 
         </div>
+  )
 
-        {/* Header counts in Today's stat anatomy (.tk-stats / .tk-st: display-face
-            number, muted label, 2px rule). Plain numbers, not links: Tasks has no
-            per-project filter to land on, and a count that looks clickable and
-            goes nowhere is the thing Nick asked us not to build. Last activity
-            lives once, in the Details card. Zeros are not rendered. */}
-        {(() => {
-          const overdueCount = pendingTasks.filter(t => t.due_date && t.due_date < localDateKey()).length
-          const stats = [
-            { key: 'active', value: pendingTasks.length, label: 'active', rule: 't' },
-            { key: 'overdue', value: overdueCount, label: 'overdue', rule: 'o' },
-            { key: 'done', value: completedTasks.length, label: 'done', rule: 'n' },
-          ].filter((s) => s.value > 0)
-          if (stats.length === 0) return null
-          return (
-            <div className="tk">
-              <div className="tk-stats" style={{ margin: '10px 0 0', paddingBottom: 12 }}>
-                {stats.map((s) => (
-                  <div key={s.key} className="tk-st" aria-label={`${s.value} ${s.label}`}>
-                    <span className={`tk-rl tk-${s.rule}`} aria-hidden="true" />
-                    <span>
-                      <span className="tk-v" style={{ display: 'block' }}>{s.value}</span>
-                      <span className="tk-l">{s.label}</span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )
-        })()}
-      </motion.div>
-
-      {/* Inline agenda form */}
+  const agendaFormEl = (
       <AnimatePresence>
         {showAgendaForm && agendaMeeting && (
           <motion.div
@@ -979,8 +940,9 @@ function ProjectDetailInner({ project }: InnerProps) {
             </motion.div>
           )}
         </AnimatePresence>
+  )
 
-      {/* Tab navigation — M-31 + PD-11 (role/keyboard) + PD-12 (counts) + PD-16 (overflow fade) */}
+  const tabsEl = (
       <div style={{ position: 'relative', marginBottom: 'var(--sp-xl)' }} className="project-tab-strip-wrap">
       {tabStripHasOverflow && <div aria-hidden="true" className="project-tab-strip-fade" />}
       <div
@@ -1045,29 +1007,9 @@ function ProjectDetailInner({ project }: InnerProps) {
         })()}
       </div>
       </div>
+  )
 
-      {/* ── OVERVIEW TAB ── */}
-      {activeTab === 'overview' && (<div role="tabpanel" id="projectdetail-tabpanel-overview" aria-labelledby="projectdetail-tab-overview">
-
-      {/* ── Landing Card: 2-col action panel (GH #27, #29, #33 + 2026-04-23 feedback) ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        style={{
-          background: 'var(--surface-1)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '16px 20px',
-          marginBottom: '1.5rem',
-        }}
-      >
-        {/* N1.18 — lg: not md:. The 768-1023 band runs mobile chrome
-            (useIsMobile=1024); a 3-col grid there crammed three ~230px
-            columns inside a phone-style layout. */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-          {/* Left column (2/3): Open Tasks — always visible, + Add task CTA */}
-          <div className="lg:col-span-2">
+  const openHeadEl = (
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <CheckCircle2 {...ICON_PROPS} size={13} style={{ color: LABEL_ICON_COLOR }} />
@@ -1099,7 +1041,10 @@ function ProjectDetailInner({ project }: InnerProps) {
                 )}
               </div>
             </div>
-            {pendingTasks.length === 0 ? (
+  )
+
+  const openListEl = (
+pendingTasks.length === 0 ? (
               <div style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85, padding: '12px 0' }}>
                 No open tasks.{' '}
                 <button
@@ -1120,29 +1065,16 @@ function ProjectDetailInner({ project }: InnerProps) {
                 project={project}
                 onOpenEditor={setSelectedTask}
               />
-            )}
-          </div>
+            )
+  )
 
-          {/* Right column (1/3): Links (top) + Recent Activity (bottom) */}
-          <div className="lg:col-span-1 flex flex-col gap-4">
-            {/* My folder (schema-v127): each member's own local path, private to
-                them. Copy path for everyone; Open folder + Work on in Claude only
-                where Settings says this computer has the launcher. A PI with no
-                folder of their own sees projects.primary_folder (PB's Box path)
-                when it is a local path; a web link (a Box URL) shows nothing. */}
-            {(project.slug ?? project.id) && (
-              <MyProjectFolder
-                projectRef={(project.slug ?? project.id) as string}
-                projectLabel={projectShortLabel(project)}
-                piFallbackFolder={isPi && isLocalFolder(project.primary_folder) ? project.primary_folder : null}
-              />
-            )}
-            {/* Members (#145) -- projects work like channels: you see one only if you are on it. */}
-            {isAuthenticated && (project.slug ?? project.id) && (
+  const membersEl = (
+isAuthenticated && (project.slug ?? project.id) && (
               <ProjectMembers projectRef={(project.slug ?? project.id) as string} projectTitle={project.title} />
-            )}
-            {/* Links — ONE card (#2091): the three pinned key-link slots on top,
-                every other stored link below, archived collapsed. */}
+            )
+  )
+
+  const linksEl = (
             <ProjectLinkLibrary
               links={storedLinks}
               isLoading={linksLoading}
@@ -1170,17 +1102,18 @@ function ProjectDetailInner({ project }: InnerProps) {
                 />
               }
             />
+  )
 
-            {/* Published output — the project's own papers (project_publications) */}
+  const pubsEl = (
             <ProjectPublications
               projectSlug={project.slug}
               projectTitle={project.title}
               isPi={isPi}
               variant="card"
             />
+  )
 
-            {/* Recent Activity */}
-            <div>
+  const recentHeadEl = (
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Clock {...ICON_PROPS} size={13} style={{ color: LABEL_ICON_COLOR }} />
@@ -1198,7 +1131,10 @@ function ProjectDetailInner({ project }: InnerProps) {
                   </button>
                 )}
               </div>
-              {recentActivity.length === 0 ? (
+  )
+
+  const recentListEl = (
+recentActivity.length === 0 ? (
                 <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85, margin: 0, padding: '4px 0' }}>
                   No activity yet.
                 </p>
@@ -1244,15 +1180,11 @@ function ProjectDetailInner({ project }: InnerProps) {
                     )
                   })}
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
+              )
+  )
 
-        {/* Full-width Quick compose at bottom. On mobile, the inline compose
-            is replaced by a compact trigger; the actual form mounts in a
-            BottomSheet-style fixed overlay above the keyboard. Same state,
-            same refs — only the positioning/z-index changes when open. */}
+  const composeEl = (
+<>
         {isMobile && (
           <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
             <button
@@ -1371,17 +1303,11 @@ function ProjectDetailInner({ project }: InnerProps) {
           </div>
           <TypingIndicator slugs={projectTypingPeers} className="mt-1" />
         </div>
-      </motion.div>
+</>
+  )
 
-      {/* Project Timeline removed 2026-04-23 — vertical wall of non-interactive
-          visuals took up screen real estate without supporting any "doing"
-          action. The Products section below carries each product's stage. */}
-
-      {/* Strategic Context — Why This Matters Now.
-          N1b — de-boxed: the gold band violated the box budget (composer is
-          the one boxed element); the gold Compass + label carry the section
-          identity, whitespace carries the separation. */}
-      {(project.strategic_context || isPi) && (
+  const strategicEl = (
+(project.strategic_context || isPi) && (
         <div
           className="mt-6"
           style={{
@@ -1493,9 +1419,10 @@ function ProjectDetailInner({ project }: InnerProps) {
             </p>
           ) : null}
         </div>
-      )}
+      )
+  )
 
-      {/* Products: each carries its own kind and stage (replaces the project stage strip) */}
+  const productsLegacyEl = (
       <motion.div
         id="overview"
         initial={{ opacity: 0, y: 8 }}
@@ -1505,8 +1432,9 @@ function ProjectDetailInner({ project }: InnerProps) {
       >
         {project.id ? <ProjectProducts projectId={project.id} slug={project.slug} /> : null}
       </motion.div>
+  )
 
-      {/* Details section */}
+  const detailsEl = (
       <div
         style={{ marginBottom: '2.5rem' }}
       >
@@ -1705,17 +1633,20 @@ function ProjectDetailInner({ project }: InnerProps) {
         </motion.div>
 
       </div>
+  )
 
-      {/* Related Projects (AI Insights) */}
+  const insightEl = (
       <InsightPanel projectSlug={project.slug} />
+  )
 
-      {/* Conference Prep Tracking */}
+  const confEl = (
       <div style={{ marginTop: '1.5rem' }}>
         <ConferencePrep projectId={project.slug} />
       </div>
+  )
 
-      </div>)}
-
+  const otherTabsEl = (
+<>
       {/* ── FILES TAB ── */}
       {activeTab === 'files' && (
         <div role="tabpanel" id="projectdetail-tabpanel-files" aria-labelledby="projectdetail-tab-files" style={{ marginBottom: '2rem' }}>
@@ -1969,7 +1900,11 @@ function ProjectDetailInner({ project }: InnerProps) {
           <ProjectLiterature projectSlug={project.slug} projectTitle={project.title} isPi={isPi} />
         </div>
       )}
+</>
+  )
 
+  const projectOverlays = (
+<>
       {/* Task Detail Panel */}
       {selectedTask && (
         <TaskDetailPanel
@@ -2024,9 +1959,320 @@ function ProjectDetailInner({ project }: InnerProps) {
            last tabs. var(--cream) in the base rule is a bg token that flips
            with the theme, so no dark override is needed. */
       `}</style>
+</>
+  )
+
+  // ── Layout experiment (Nick 2026-10-12): ?layout=a|b puts the project page
+  // in a main column + a sticky right rail, like Today. No flag = the page as
+  // it was. A: products first in the main column, the stat line under them.
+  // B: products as a compact card under the title, the numbers in the rail.
+  const layoutParam = searchParams.get('layout')
+  const layout: 'a' | 'b' | null = layoutParam === 'a' || layoutParam === 'b' ? layoutParam : null
+
+  const overdueCount = pendingTasks.filter((t) => t.due_date && t.due_date < localDateKey()).length
+  const statList = [
+    { key: 'active', value: pendingTasks.length, label: 'active', rule: 't' },
+    { key: 'overdue', value: overdueCount, label: 'overdue', rule: 'o' },
+    { key: 'done', value: completedTasks.length, label: 'done', rule: 'n' },
+  ].filter((s) => s.value > 0)
+  // Header counts in Today's stat anatomy (.tk-stats / .tk-st). Plain numbers,
+  // not links: Tasks has no per-project filter to land on. Zeros are not shown.
+  const renderStats = (style: React.CSSProperties) =>
+    statList.length === 0 ? null : (
+      <div className="tk" data-testid="project-stats">
+        <div className="tk-stats" style={style}>
+          {statList.map((s) => (
+            <div key={s.key} className="tk-st" aria-label={`${s.value} ${s.label}`}>
+              <span className={`tk-rl tk-${s.rule}`} aria-hidden="true" />
+              <span>
+                <span className="tk-v" style={{ display: 'block' }}>{s.value}</span>
+                <span className="tk-l">{s.label}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+
+  // Compact title: the short name sits on the title's line, not under it.
+  const titleCompactEl = (
+    <div className="pj-title">
+      {editingTitle ? (
+        <input
+          value={titleDraft}
+          onChange={(e) => setTitleDraft(e.target.value)}
+          onBlur={handleTitleSave}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') { e.preventDefault(); handleTitleSave() }
+            if (e.key === 'Escape') { setTitleDraft(project.title); setEditingTitle(false) }
+          }}
+          ref={titleInputRef}
+          aria-label="Edit project title"
+          className="pj-title-input"
+        />
+      ) : (
+        <h1
+          onClick={() => { setTitleDraft(project.title); setEditingTitle(true) }}
+          title="Click to edit title"
+          className="pj-h1"
+        >
+          {project.title}
+        </h1>
+      )}
+      {editingShortName ? (
+        <input
+          value={shortNameDraft}
+          onChange={(e) => setShortNameDraft(e.target.value)}
+          onBlur={handleShortNameSave}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleShortNameSave()
+            if (e.key === 'Escape') { setShortNameDraft(project.short_name ?? ''); setEditingShortName(false) }
+          }}
+          ref={shortNameInputRef}
+          placeholder="Add short name..."
+          className="pj-short-input"
+        />
+      ) : project.short_name ? (
+        <span
+          onClick={() => { setEditingShortName(true); setShortNameDraft(project.short_name ?? '') }}
+          className="pj-short"
+        >
+          {project.short_name}
+        </span>
+      ) : null}
+    </div>
+  )
+
+  const openTasksSection = (
+    <section className="pj-sec" data-testid="project-open-tasks">
+      <SectionHead
+        icon={<CheckCircle2 {...ICON_PROPS} size={13} />}
+        title="Open tasks"
+        count={pendingTasks.length > 0 ? pendingTasks.length : undefined}
+        right={
+          <span className="pj-head-links">
+            <button type="button" onClick={() => setShowCreateTask(true)} className="pj-link">+ Add task</button>
+            {pendingTasks.length > 3 && (
+              <button type="button" onClick={() => setActiveTab('tasks')} className="pj-link">View all →</button>
+            )}
+          </span>
+        }
+      />
+      {openListEl}
+    </section>
+  )
+
+  const recentSection = (
+    <section className="pj-sec" data-testid="project-recent">
+      <SectionHead
+        icon={<Clock {...ICON_PROPS} size={13} />}
+        title="Recent"
+        right={recentActivity.length > 0 ? (
+          <button type="button" onClick={() => goToStream('all')} className="pj-link">All →</button>
+        ) : undefined}
+      />
+      {recentListEl}
+    </section>
+  )
+
+  const folderEl = (project.slug ?? project.id) ? (
+    <ProjectFolderActions
+      projectRef={(project.slug ?? project.id) as string}
+      projectLabel={projectShortLabel(project)}
+      piFallbackFolder={isPi && isLocalFolder(project.primary_folder) ? project.primary_folder : null}
+    />
+  ) : null
+
+  const overviewVariantEl = (
+    <div role="tabpanel" id="projectdetail-tabpanel-overview" aria-labelledby="projectdetail-tab-overview">
+      {layout === 'a' && project.id ? (
+        <div id="overview" style={{ scrollMarginTop: '60px' }}>
+          <ProjectProducts projectId={project.id} slug={project.slug} />
+        </div>
+      ) : null}
+      {layout === 'a' && renderStats({ margin: '0 0 18px', paddingBottom: 12 })}
+      {openTasksSection}
+      {strategicEl}
+      {detailsEl}
+      {insightEl}
+      {confEl}
+    </div>
+  )
+
+  if (layout) {
+    return (
+      <>
+        <Breadcrumb backTo="/projects" backLabel="Projects" current={project.title} />
+        <AllProjectsBanner />
+        <div className="pj-grid" data-testid="project-grid" data-layout={layout}>
+          <div className="pj-main">
+            <header className="pj-head">
+              <div className="pj-headrow">
+                {titleCompactEl}
+                {iconsEl}
+              </div>
+              <div className="pj-metarow">
+                {metaEl}
+                {!project.short_name && !editingShortName && (
+                  <button
+                    type="button"
+                    className="pj-short-empty"
+                    onClick={() => { setEditingShortName(true); setShortNameDraft('') }}
+                  >
+                    + Short name
+                  </button>
+                )}
+              </div>
+              <PageHeartbeat />
+            </header>
+            {agendaFormEl}
+            {layout === 'b' && project.id ? <ProjectProducts projectId={project.id} slug={project.slug} compact /> : null}
+            {tabsEl}
+            {activeTab === 'overview' && overviewVariantEl}
+            {otherTabsEl}
+          </div>
+          <aside className="pj-rail" aria-label="Project side panel" data-testid="project-rail">
+            {folderEl}
+            {layout === 'b' && renderStats({ margin: 0, paddingBottom: 12 })}
+            {membersEl}
+            {linksEl}
+            {pubsEl}
+            {recentSection}
+            <div className="pj-compose">{composeEl}</div>
+          </aside>
+        </div>
+        {projectOverlays}
+        <style>{PJ_CSS}</style>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <Breadcrumb backTo="/projects" backLabel="Projects" current={project.title} />
+      <AllProjectsBanner />
+
+      {/* ── Compact Header ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        style={{ marginBottom: 'var(--sp-lg)' }}
+      >
+        <div className="flex items-start justify-between gap-4 mb-3">
+          {titleLegacyEl}
+          {iconsEl}
+        </div>
+        {metaEl}
+        {renderStats({ margin: '10px 0 0', paddingBottom: 12 })}
+      </motion.div>
+
+      {agendaFormEl}
+      {tabsEl}
+
+      {activeTab === 'overview' && (
+        <div role="tabpanel" id="projectdetail-tabpanel-overview" aria-labelledby="projectdetail-tab-overview">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              background: 'var(--surface-1)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-xl)',
+              padding: '16px 20px',
+              marginBottom: '1.5rem',
+            }}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+              <div className="lg:col-span-2">
+                {openHeadEl}
+                {openListEl}
+              </div>
+              <div className="lg:col-span-1 flex flex-col gap-4">
+                {(project.slug ?? project.id) && (
+                  <MyProjectFolder
+                    projectRef={(project.slug ?? project.id) as string}
+                    projectLabel={projectShortLabel(project)}
+                    piFallbackFolder={isPi && isLocalFolder(project.primary_folder) ? project.primary_folder : null}
+                  />
+                )}
+                {membersEl}
+                {linksEl}
+                {pubsEl}
+                <div>
+                  {recentHeadEl}
+                  {recentListEl}
+                </div>
+              </div>
+            </div>
+            {composeEl}
+          </motion.div>
+          {strategicEl}
+          {productsLegacyEl}
+          {detailsEl}
+          {insightEl}
+          {confEl}
+        </div>
+      )}
+
+      {otherTabsEl}
+      {projectOverlays}
+      <style>{PJ_CSS}</style>
     </>
   )
 }
+
+// Layout experiment styles (?layout=a|b). Tokens only; same band as Today:
+// main fills 1fr, the rail is --col-rail, the grid sits inside the page band.
+const PJ_CSS = `
+.pj-grid { display: grid; grid-template-columns: minmax(0, 1fr) var(--col-rail); align-items: start; }
+.pj-main { min-width: 0; padding: 0 28px 24px 0; }
+.pj-rail {
+  min-width: 0; padding: 0 0 24px 22px; border-left: 1px solid var(--sk-line);
+  display: flex; flex-direction: column; gap: 20px;
+  position: sticky; top: calc(var(--portal-header-h, 56px) + 12px);
+  max-height: calc(100dvh - var(--portal-header-h, 56px) - 24px);
+  overflow-y: auto; scrollbar-width: thin;
+}
+.pj-head { margin-bottom: 12px; }
+.pj-head .pg-hb { margin-top: 2px; height: 10px; }
+.pj-headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.pj-metarow { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+.pj-title { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 2px 12px; }
+.pj-h1 { margin: 0; min-width: 0; font-weight: 700; font-size: clamp(1.25rem, 2.6vw, 1.6rem); line-height: 1.2; color: var(--ink); cursor: pointer; }
+.pj-short { flex: none; font-size: var(--value-size); color: var(--sk-t3); cursor: pointer; white-space: nowrap; }
+.pj-short-empty {
+  background: none; border: 0; padding: 0; font-size: 11px; color: var(--sk-t3); cursor: pointer;
+  opacity: 0; transition: opacity 0.15s; white-space: nowrap;
+}
+.pj-head:hover .pj-short-empty, .pj-short-empty:focus-visible { opacity: 1; }
+@media (hover: none) { .pj-short-empty { opacity: 1; } }
+.pj-title-input {
+  font-weight: 700; font-size: clamp(1.25rem, 2.6vw, 1.6rem); color: var(--ink); background: none; border: 0;
+  border-bottom: 2px solid var(--job-accent); outline: none; padding: 2px 0; width: 100%; font-family: inherit; line-height: 1.2;
+}
+.pj-short-input {
+  font-size: var(--value-size); color: var(--ink); background: none; border: 0; border-bottom: 1px solid var(--job-accent);
+  outline: none; padding: 2px 0; max-width: 240px; font-family: inherit;
+}
+.pj-sec { margin-bottom: 22px; }
+.pj-rail .pj-sec { margin-bottom: 0; }
+.pj-head-links { display: inline-flex; align-items: center; gap: 14px; }
+.pj-link { background: none; border: 0; padding: 0; font-size: 11px; color: var(--job-accent); cursor: pointer; }
+.pj-main .pp:not(.pp-compact) { margin-bottom: 18px; }
+.pj-main .project-tab-strip-wrap { margin-bottom: var(--sp-lg) !important; }
+.pj-compose [data-compose-slot] { border-top: 0 !important; padding-top: 0 !important; }
+@media (max-width: 1024px) {
+  .pj-grid { grid-template-columns: minmax(0, 1fr); }
+  .pj-main { padding-right: 0; }
+  .pj-rail {
+    position: static; max-height: none; overflow: visible; padding: 16px 0 32px; border-left: 0;
+    border-top: 1px solid var(--sk-line);
+  }
+}
+`
+
 
 
 // ProjectKeyLinks (read-only) — superseded by KeyLinksEditor imported from

@@ -32,9 +32,11 @@ interface Props {
   /** proj_* PK. */
   projectId: string
   slug: string
+  /** A card that sits directly under the title (project page, layout B). */
+  compact?: boolean
 }
 
-export default function ProjectProducts({ slug }: Props) {
+export default function ProjectProducts({ slug, compact = false }: Props) {
   const { data, isLoading, isError } = useProjectProducts(slug)
   // The read answered: the caller is a member of this project (or the PI).
   const canEdit = !!data
@@ -49,7 +51,7 @@ export default function ProjectProducts({ slug }: Props) {
     mode === 'ladder' ? products[0] ?? null : products.find((p) => p.id === picked) ?? null
 
   return (
-    <div className="pp" data-testid="project-products">
+    <div className={`pp${compact ? ' pp-compact' : ''}`} data-testid="project-products">
       <SectionHead
         title="Products"
         count={products.length > 0 ? products.length : undefined}
@@ -468,6 +470,15 @@ span.pp-dot { cursor: default; }
   padding: 6px 14px; font-size: 13px; cursor: pointer;
 }
 .pp-go:disabled { opacity: 0.45; cursor: default; }
+/* compact: one card straight under the title, title inside it (rule 9), tighter ladder. */
+.pp-compact {
+  margin-bottom: 14px; padding: 10px 16px 12px; border: 1px solid var(--sk-line); border-radius: var(--radius-xl);
+  background: var(--sk-card);
+}
+.pp-compact .pp-tabs { padding-bottom: 6px; }
+.pp-compact .pp-dh { margin-bottom: 8px; }
+.pp-compact .pp-facts { margin-top: 8px; }
+.pp-compact .pp-step .project-stage-label { margin-top: 4px; }
 /* Phones show only the current stage's full label (N1.16; moved here from
    ProjectDetail with the stage strip it belonged to). */
 @media (max-width: 480px) {
