@@ -224,6 +224,7 @@ const TASK_CREATE_BUCKETS: Record<string, CreateBucket> = {
   created_at: 'route_excluded',
   acknowledged_at: 'route_excluded',
   acknowledged_by: 'route_excluded',
+  product_id: 'route_excluded',   // not in create payload; set via /api/mutations (schema-v124)
   blocked_by: 'route_excluded',
   deadline_type: 'route_excluded',
   description_json: 'route_excluded',

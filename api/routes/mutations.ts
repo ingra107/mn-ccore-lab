@@ -293,7 +293,7 @@ export interface Mutation {
  * products, or its one product's kind has no such stage. PB-FOLLOWUP: map it
  * to refuse_loud in HUB_REFUSAL_CODES.
  */
-export const PENDING_REFUSAL_CODES = ['project_stage_unforwardable'] as const;
+export const PENDING_REFUSAL_CODES = [] as const;
 type HubRefusalCode = RefusalCode | (typeof PENDING_REFUSAL_CODES)[number];
 
 interface MutationResult {

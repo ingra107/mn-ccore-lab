@@ -157,7 +157,8 @@
   "hub_only_fields": {
     "tasks": [
       "acknowledged_at",
-      "acknowledged_by"
+      "acknowledged_by",
+      "product_id"
     ],
     "projects": [
       "category",
