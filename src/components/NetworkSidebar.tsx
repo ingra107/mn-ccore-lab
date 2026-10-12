@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, BookOpen, Users, ArrowRight } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import Avatar from './Avatar'
+import { FaceDisc } from './today/skin'
 import type { NetworkNode, NetworkEdge } from './CollaborationGraph'
 import { directors, getAllMembers } from '../data/team'
 import type { TeamMember, Director } from '../data/types'
@@ -214,13 +214,7 @@ function NodeDetail({
     >
       {/* Avatar and name */}
       <div className="flex items-start gap-4 mb-6">
-        <Avatar
-          name={node.displayName}
-          initials={initials}
-          photoUrl={photoUrl}
-          size="sm"
-          variant="gold"
-        />
+        <FaceDisc label={node.displayName} initials={initials} photo={photoUrl} px={64} pxSm={56} variant="brand" />
         <div className="min-w-0">
           <h3
             className="text-lg leading-tight"
@@ -408,13 +402,7 @@ function EdgeDetail({
     >
       {/* Two-person header */}
       <div className="flex items-center gap-3 mb-6">
-        <Avatar
-          name={sourceNode.displayName}
-          initials={getInitials(sourceNode.id)}
-          photoUrl={getPhotoUrl(sourceNode.id)}
-          size="sm"
-          variant="gold"
-        />
+        <FaceDisc label={sourceNode.displayName} initials={getInitials(sourceNode.id)} photo={getPhotoUrl(sourceNode.id)} px={64} pxSm={56} variant="brand" />
         <div className="flex flex-col items-center">
           <div
             className="w-8 h-px"
@@ -430,13 +418,7 @@ function EdgeDetail({
             {uniquePapers.length}
           </span>
         </div>
-        <Avatar
-          name={targetNode.displayName}
-          initials={getInitials(targetNode.id)}
-          photoUrl={getPhotoUrl(targetNode.id)}
-          size="sm"
-          variant="gold"
-        />
+        <FaceDisc label={targetNode.displayName} initials={getInitials(targetNode.id)} photo={getPhotoUrl(targetNode.id)} px={64} pxSm={56} variant="brand" />
       </div>
 
       <h3

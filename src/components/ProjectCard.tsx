@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import Avatar from './Avatar'
+import { FaceDisc } from './today/skin'
 import CategoryIcon from './CategoryIcon'
 import { getPersonInfo } from '../data/team'
 import { displayName } from '../lib/nameUtils'
@@ -57,13 +57,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         style={{ marginTop: '8px', marginLeft: '16px' }}
       >
         <div style={{ width: 18, height: 18, flexShrink: 0 }}>
-          <Avatar
-            name={pi.name}
-            initials={pi.initials}
-            photoUrl={pi.photoUrl}
-            variant="ice"
-            size="sm-icon"
-          />
+          <FaceDisc label={pi.name} initials={pi.initials} photo={pi.photoUrl} px={18} />
         </div>
         <span
           style={{

@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import InlineSelect from './InlineSelect'
 import Field from './ui/Field'
-import Avatar from './Avatar'
+import { FaceDisc } from './today/skin'
 import { useUndoToast } from './UndoToast'
 import { useRevisions, useRevisionComments } from '../hooks/useApiData'
 import type { RevisionRow, ReviewerCommentRow } from '../hooks/useApiData'
@@ -188,7 +188,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                   </Field>
                 </div>
                 <div style={{ minWidth: '160px' }}>
-                  <Field label="Response Due" htmlFor="revision-response-due" noContainer>
+                  <Field label="Response due" htmlFor="revision-response-due" noContainer>
                     <input
                       id="revision-response-due"
                       type="date"
@@ -659,13 +659,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                           {/* Right side: assignee + status */}
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <div style={{ width: 20, height: 20 }}>
-                              <Avatar
-                                name={assignee.name}
-                                initials={assignee.initials}
-                                photoUrl={assignee.photoUrl}
-                                variant="ice"
-                                size="xs"
-                              />
+                              <FaceDisc label={assignee.name} initials={assignee.initials} photo={assignee.photoUrl} px={20} />
                             </div>
                             <InlineSelect
                               value={comment.status}
@@ -726,7 +720,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
           >
             <div className="flex gap-3 mb-2">
               <div>
-                <Field label="Reviewer #" htmlFor="revision-reviewer-num" size="micro" noContainer>
+                <Field label="Reviewer #" htmlFor="revision-reviewer-num" noContainer>
                   <input
                     id="revision-reviewer-num"
                     type="number"
@@ -747,7 +741,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                 </Field>
               </div>
               <div>
-                <Field label="Assigned To" htmlFor="revision-assigned-to" size="micro" noContainer>
+                <Field label="Assigned to" htmlFor="revision-assigned-to" noContainer>
                   <input
                     id="revision-assigned-to"
                     type="text"

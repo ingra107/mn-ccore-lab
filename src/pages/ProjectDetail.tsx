@@ -35,7 +35,7 @@ import TypingIndicator from '../components/TypingIndicator'
 import { formatShortDate, formatMediumDate, localDateKey } from '../lib/dateUtils'
 import { meetingsForProject } from '../lib/projectMeetings'
 import { formatDbLocal } from '../lib/time'
-import Avatar from '../components/Avatar'
+import { FaceDisc } from '../components/today/skin'
 import InlineSelect from '../components/InlineSelect'
 import InlineAssigneePicker from '../components/InlineAssigneePicker'
 import CategoryIcon from '../components/CategoryIcon'
@@ -1632,13 +1632,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     return (
                       <div key={memberSlug} className="flex items-center gap-2">
                         <div style={{ width: 28, height: 28 }}>
-                          <Avatar
-                            name={info.name}
-                            initials={info.initials}
-                            photoUrl={info.photoUrl}
-                            variant="ice"
-                            size="base-sm"
-                          />
+                          <FaceDisc label={info.name} initials={info.initials} photo={info.photoUrl} px={28} />
                         </div>
                         <span
                           style={{

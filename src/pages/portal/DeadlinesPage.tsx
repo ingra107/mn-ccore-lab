@@ -6,7 +6,7 @@ import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import QueryState from '../../components/QueryState'
 import ToggleButton from '../../components/ToggleButton'
-import Avatar from '../../components/Avatar'
+import { FaceDisc } from '../../components/today/skin'
 import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
@@ -206,7 +206,7 @@ export default function DeadlinesPage() {
     const status = (tasksErr as (Error & { status?: number }) | null)?.status
     return (
       <div className="content-container">
-        <PageHeader icon={<Clock {...ICON_PROPS} size={20} />} title="Deadlines & Milestones" subtitle="" />
+        <PageHeader title="Deadlines & Milestones" subtitle="" />
         <QueryState isLoading={false} isError={true} errorStatus={status}>
           {null}
         </QueryState>
@@ -217,7 +217,6 @@ export default function DeadlinesPage() {
   return (
     <div className="content-container">
       <PageHeader
-        icon={<Clock {...ICON_PROPS} size={20} />}
         title="Deadlines & Milestones"
         subtitle={overdue.length > 0
           ? `${overdue.length} overdue, ${thisWeek.length + nextWeek.length + later.length} upcoming`
@@ -274,8 +273,7 @@ export default function DeadlinesPage() {
               a.click()
               URL.revokeObjectURL(url)
             }}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs transition-colors border"
-            style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
+            className="tk-btn tk-sm"
             title="Export deadlines as .ics calendar file"
             aria-label="Export to .ics"
           >
@@ -524,7 +522,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
         {/* Assignee */}
         {person && (
           <div style={{ width: 22, height: 22 }}>
-            <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-plus" variant="ice" />
+            <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={22} />
           </div>
         )}
 

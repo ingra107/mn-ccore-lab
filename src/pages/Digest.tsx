@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
 import {
-  Newspaper,
   Bookmark,
   BookmarkCheck,
   X,
@@ -10,7 +9,6 @@ import {
   Search,
   FolderPlus,
   Check,
-  User,
   Copy,
   MessageCircle,
   Send,
@@ -23,7 +21,8 @@ import { useUpdateDigestStatus, useLinkPaper, useCreateDigestComment } from '../
 import { Button } from '../components/ui/Button'
 import { getPersonInfo } from '../data/team'
 import { formatMediumDate, formatPublicationDate } from '../lib/dateUtils'
-import Avatar from '../components/Avatar'
+import { FaceDisc } from '../components/today/skin'
+import FilterLinks from '../components/ui/FilterLinks'
 import PageHeader from '../components/PageHeader'
 import HeartbeatLine from '../components/HeartbeatLine'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -261,13 +260,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                   const p = getPersonInfo(slug)
                   return (
                     <div key={slug} title={p.name} style={{ width: 20, height: 20 }}>
-                      <Avatar
-                        name={p.name}
-                        initials={p.initials}
-                        photoUrl={p.photoUrl}
-                        variant="ice"
-                        size="xs"
-                      />
+                      <FaceDisc label={p.name} initials={p.initials} photo={p.photoUrl} px={20} />
                     </div>
                   )
                 })}
@@ -513,12 +506,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                 const info = getPersonInfo(c.author_slug)
                 return (
                   <div key={c.id} className="flex items-start gap-2">
-                    <Avatar
-                      name={info.name}
-                      initials={info.initials}
-                      photoUrl={info.photoUrl}
-                      size="2xs"
-                    />
+                    <FaceDisc label={info.name} initials={info.initials} photo={info.photoUrl} px={16} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
                         <span
@@ -767,7 +755,6 @@ export default function Digest() {
       {/* Header — compact PageHeader replaces oversized hero (H-02, H-03) */}
       <section className="content-container">
         <PageHeader
-          icon={<Newspaper {...ICON_PROPS} size={20} />}
           title="Research Digest"
           subtitle="Daily PubMed papers relevant to MNCCORE research"
           // The digest's one telling number is what is new (color-back pick 2).
@@ -848,82 +835,32 @@ export default function Digest() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by title, author, or journal..."
-              className="w-full max-w-md rounded-full border px-3 py-2 pl-9 text-xs outline-none"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream, white)' }}
+              className="w-full max-w-md rounded-md border px-3 py-2 pl-9 text-xs outline-none"
+              style={{ color: 'var(--ink)', borderColor: 'var(--field-edge)', backgroundColor: 'var(--cream, white)' }}
             />
           </div>
 
           {/* Status filter tabs — minHeight prevents reflow as counts load */}
           <div className="flex flex-wrap items-center gap-4 mb-4" style={{ minHeight: '40px' }}>
-            <div className="flex gap-1 rounded-lg p-1" style={{ background: 'var(--ice)' }}>
-              {(
-                [
-                  { key: 'all' as StatusFilter, label: 'All', count: statusCounts.all },
-                  { key: 'new' as StatusFilter, label: 'New', count: statusCounts.new },
-                  { key: 'saved' as StatusFilter, label: 'Saved', count: statusCounts.saved },
-                ] as const
-              ).map((tab) => {
-                const isActive = statusFilter === tab.key
-                return (
-                  <button
-                    key={tab.key}
-                    onClick={() => setStatusFilter(tab.key)}
-                    className="cursor-pointer rounded-md px-3 py-1.5 text-sm"
-                    style={{
-                      fontWeight: isActive ? 600 : 400,
-                      background: isActive ? 'var(--cream)' : 'transparent',
-                      color: isActive ? 'var(--ink)' : 'var(--slate)',
-                      border: 'none',
-                      boxShadow: isActive ? 'var(--shadow-card)' : 'none',
-                      transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out)',
-                    }}
-                  >
-                    {tab.label}
-                    {tab.count > 0 && (
-                      <span
-                        className="ml-1"
-                        style={{
-                          fontSize: '10px',
-                          opacity: 0.85,
-                        }}
-                      >
-                        {tab.count}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
+            <FilterLinks
+              ariaLabel="Paper status"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { value: 'all' as StatusFilter, label: 'All', count: statusCounts.all },
+                { value: 'new' as StatusFilter, label: 'New', count: statusCounts.new },
+                { value: 'saved' as StatusFilter, label: 'Saved', count: statusCounts.saved },
+              ]}
+            />
 
             {/* "For You" filter */}
             {userSlug && forYouCount > 0 && (
-              <button
-                onClick={() => setForYouFilter(!forYouFilter)}
-                className="cursor-pointer rounded-full px-3 py-1.5 text-sm flex items-center gap-1.5"
-                style={{
-                  // N1b de-box: filter toggle = teal TINT when active, never a
-                  // solid --teal-solid fill (those are reserved for action buttons).
-                  // Converges on the TableControls/ViewPicker pill anatomy.
-                  fontWeight: forYouFilter ? 600 : 400,
-                  background: forYouFilter ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                  color: 'var(--job-accent)',
-                  border: forYouFilter
-                    ? '1px solid var(--job-accent)'
-                    : '1px solid var(--border-subtle)',
-                  transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
-                }}
-              >
-                <User {...ICON_PROPS} size={12} />
-                For You
-                <span
-                  style={{
-                    fontSize: '10px',
-                    opacity: 0.85,
-                  }}
-                >
-                  ({forYouCount})
-                </span>
-              </button>
+              <div className="tk-flt">
+                <button type="button" aria-pressed={forYouFilter} onClick={() => setForYouFilter(!forYouFilter)}>
+                  For you
+                  <span className="tk-cnt">{forYouCount}</span>
+                </button>
+              </div>
             )}
 
             {/* Paper count */}

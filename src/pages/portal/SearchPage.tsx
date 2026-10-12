@@ -8,12 +8,15 @@ import {
   ScrollText, Scale, Paperclip, BookOpen, Banknote,
   AlertTriangle, Calendar, FileText,
 } from 'lucide-react'
+import SegmentedToggle from '../../components/ui/SegmentedToggle'
+import FilterLinks from '../../components/ui/FilterLinks'
+import { FILTER_ALL } from '../../components/ui/filterAll'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { formatBrandName } from '../../components/BrandName'
-import Avatar from '../../components/Avatar'
+import { FaceDisc } from '../../components/today/skin'
 import CategoryIcon from '../../components/CategoryIcon'
 import HermesMark from '../../components/HermesMark'
 import { staggerContainer, staggerItem } from '../../lib/animations'
@@ -152,14 +155,7 @@ function TypeBadge({ result }: { result: SearchResult }) {
   if (result.type === 'task' && d.assignee) {
     const person = getPersonInfo(d.assignee)
     return (
-      <Avatar
-        name={person.name}
-        initials={person.initials}
-        photoUrl={person.photoUrl}
-        slug={d.assignee}
-        size="2xs"
-        variant="ice"
-      />
+      <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} hermes={d.assignee === 'claude-ai'} />
     )
   }
   if (result.type === 'meeting' && d.date) {
@@ -479,7 +475,7 @@ export default function SearchPage() {
 
   return (
     <PageContainer>
-      <PageHeader icon={<Search {...ICON_PROPS} size={20} />} title="Search" subtitle="Find anything across the lab" />
+      <PageHeader title="Search" subtitle="Find anything across the lab" />
 
       {/* S-04: sticky search input + chips so input stays visible during scroll. */}
       <div
@@ -531,39 +527,17 @@ export default function SearchPage() {
         {/* Type chips (S-10: multi-select default, with Clear filter when any active). */}
         {results.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap mt-2">
-            <button
-              onClick={() => setTypeFilter([])}
-              className="rounded-full px-3 py-1 text-xs border transition-colors"
-              style={{
-                borderColor: typeFilter.length === 0 ? 'var(--job-accent)' : 'var(--border-subtle)',
-                color: typeFilter.length === 0 ? 'var(--job-accent)' : 'var(--slate)',
-                background: typeFilter.length === 0 ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
-                cursor: 'pointer',
-              }}
-            >
-              All ({results.length})
-            </button>
-            {typeOrder.map((t) => {
-              const count = countByType[t] || 0
-              if (count === 0) return null
-              const active = typeFilter.includes(t)
-              const cfg = typeConfig[t] || typeConfig.activity
-              return (
-                <button
-                  key={t}
-                  onClick={() => toggleType(t)}
-                  className="rounded-full px-3 py-1 text-xs border transition-colors"
-                  style={{
-                    borderColor: active ? cfg.color : 'var(--border-subtle)',
-                    color: active ? cfg.color : 'var(--slate)',
-                    background: active ? `${cfg.color}14` : 'transparent',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {cfg.label}s ({count})
-                </button>
-              )
-            })}
+            <FilterLinks
+              ariaLabel="Result type"
+              value={typeFilter.length === 0 ? [FILTER_ALL] : typeFilter}
+              onChange={(v) => (v === FILTER_ALL ? setTypeFilter([]) : toggleType(v))}
+              options={[
+                { value: FILTER_ALL, label: 'All', count: results.length },
+                ...typeOrder
+                  .filter((t) => (countByType[t] || 0) > 0)
+                  .map((t) => ({ value: t, label: `${(typeConfig[t] || typeConfig.activity).label}s`, count: countByType[t] || 0 })),
+              ]}
+            />
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
@@ -636,24 +610,17 @@ export default function SearchPage() {
             </label>
 
             {/* S-02: view picker — Mixed / By type / Timeline. */}
-            <div className="ml-auto flex items-center gap-1 rounded-full border px-1 py-0.5" style={{ borderColor: 'var(--border-subtle)' }}>
-              {(['mixed', 'by-type', 'timeline'] as const).map(v => (
-                <button
-                  key={v}
-                  onClick={() => onPersistView(v)}
-                  className="rounded-full px-2 py-0.5"
-                  style={{
-                    background: view === v ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
-                    color: view === v ? 'var(--job-accent)' : 'var(--slate)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 11,
-                  }}
-                  aria-pressed={view === v}
-                >
-                  {v === 'mixed' ? 'Mixed' : v === 'by-type' ? 'By type' : 'Timeline'}
-                </button>
-              ))}
+            <div className="ml-auto">
+              <SegmentedToggle
+                ariaLabel="Result layout"
+                value={view}
+                onChange={onPersistView}
+                options={[
+                  { value: 'mixed' as const, label: 'Mixed' },
+                  { value: 'by-type' as const, label: 'By type' },
+                  { value: 'timeline' as const, label: 'Timeline' },
+                ]}
+              />
             </div>
           </div>
         )}

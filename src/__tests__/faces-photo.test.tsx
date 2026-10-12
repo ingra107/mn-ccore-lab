@@ -5,8 +5,7 @@
 
 import { describe, it, expect } from 'vitest'
 import type { ReactElement } from 'react'
-import { Face, NameFace, Faces } from '../components/today/skin'
-import Avatar from '../components/Avatar'
+import { Face, FaceDisc, NameFace, Faces } from '../components/today/skin'
 import { resolveAttendeeViews } from '../lib/attendeeViews'
 import { photoFor } from '../lib/personLabel'
 import css from '../index.css?raw'
@@ -64,9 +63,9 @@ describe('meeting attendees', () => {
   })
 })
 
-describe('Avatar fallback (#8969)', () => {
+describe('Face fallback (#8969)', () => {
   it('draws initials only, no silhouette under them', async () => {
-    const host = await mount(<Avatar name="Casey Eddington" initials="CE" />, { ready: (h) => h.textContent?.includes('CE'), label: 'avatar' })
+    const host = await mount(<FaceDisc label="Casey Eddington" initials="CE" px={96} />, { ready: (h) => h.textContent?.includes('CE'), label: 'avatar' })
     expect(host.querySelector('svg')).toBeNull()
     expect(host.querySelector('img')).toBeNull()
   })

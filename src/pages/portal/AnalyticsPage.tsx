@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3, Download, Copy } from 'lucide-react'
+import SegmentedToggle from '../../components/ui/SegmentedToggle'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import MetricCard from '../../components/MetricCard'
@@ -14,7 +15,7 @@ import { localDateKey, isOverdue } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
-import Avatar from '../../components/Avatar'
+import { FaceDisc } from '../../components/today/skin'
 import { PRIORITY_COLORS, isProjectActive } from '../../lib/taskConstants'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { isTaskDone } from '../../lib/taskGrouping'
@@ -325,7 +326,6 @@ export default function AnalyticsPage() {
     return (
       <PageContainer>
         <PageHeader
-          icon={<BarChart3 {...ICON_PROPS} size={20} />}
           title="Lab Analytics"
           subtitle="Track lab performance and trends"
         />
@@ -348,7 +348,6 @@ export default function AnalyticsPage() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<BarChart3 {...ICON_PROPS} size={20} />}
         title="Lab Analytics"
         subtitle={pageSubtitle}
         actions={isPi ? (
@@ -411,30 +410,20 @@ export default function AnalyticsPage() {
         {!isCurrentWeek && (
           <button
             onClick={() => setWeekOffset(0)}
-            className="px-3 py-1 rounded-lg text-xs font-medium border transition-colors"
-            style={{ color: 'var(--job-accent)', borderColor: 'var(--job-accent)', background: 'none', cursor: 'pointer' }}
+            className="tk-btn tk-sm tk-sel"
           >
-            This Week
+            This week
           </button>
         )}
 
         {/* Range selector pills */}
-        <div className="flex items-center gap-1 ml-auto rounded-lg border p-0.5" style={{ borderColor: 'var(--border-subtle)' }}>
-          {(['7d', '4w', '3m', 'all'] as const).map((r) => (
-            <button
-              key={r}
-              onClick={() => setRange(r)}
-              className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors"
-              style={{
-                background: range === r ? 'var(--job-accent)' : 'transparent',
-                color: range === r ? 'var(--sk-card)' : 'var(--slate)',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              {r === 'all' ? 'All' : r.toUpperCase()}
-            </button>
-          ))}
+        <div className="ml-auto">
+          <SegmentedToggle
+            ariaLabel="Range"
+            value={range}
+            onChange={setRange}
+            options={(['7d', '4w', '3m', 'all'] as const).map((r) => ({ value: r, label: r === 'all' ? 'All' : r.toUpperCase() }))}
+          />
         </div>
       </div>
 
@@ -547,7 +536,7 @@ export default function AnalyticsPage() {
                 return (
                   <div key={slug} className="flex items-center gap-3">
                     <div style={{ width: 28, height: 28 }}>
-                      <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="base-sm" variant="ice" />
+                      <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={28} />
                     </div>
                     <span className="text-sm w-28 truncate" style={{ color: 'var(--ink)' }}>
                       {person.name}
@@ -690,7 +679,7 @@ export default function AnalyticsPage() {
                   return (
                     <div key={slug} className="flex items-center gap-2">
                       <div style={{ width: 22, height: 22 }}>
-                        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-plus" variant="ice" />
+                        <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={22} />
                       </div>
                       <span className="text-[11px] w-20 truncate" style={{ color: 'var(--ink)' }}>{person.name.split(' ')[0]}</span>
                       <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
@@ -733,7 +722,7 @@ export default function AnalyticsPage() {
               return (
                 <div key={slug} style={{ display: 'contents' }}>
                   <div className="flex items-center gap-2 pr-2" style={{ height: 36 }}>
-                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-plus" variant="ice" />
+                    <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={22} />
                     <span className="text-[11px] truncate" style={{ color: 'var(--ink)' }}>{person.name.split(' ')[0]}</span>
                   </div>
                   {counts.map((count, wi) => {

@@ -342,7 +342,7 @@ export default function QuickCaptureInbox() {
         </div>
 
         {/* Project selector */}
-        <Field label="Project (optional)" htmlFor="qci-project" size="micro" noContainer>
+        <Field label="Project (optional)" htmlFor="qci-project" noContainer>
           {/* flex column keeps the trigger stretched to the row width, as the pre-Field wrapper did */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <InlineSelect id="qci-project"

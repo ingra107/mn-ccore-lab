@@ -5,7 +5,7 @@ import { Plus, ThumbsUp, X, Lightbulb, Pencil, Archive, Rocket } from 'lucide-re
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
-import Avatar from '../../components/Avatar'
+import { FaceDisc } from '../../components/today/skin'
 import InlineSelect from '../../components/InlineSelect'
 import Field from '../../components/ui/Field'
 import CreateProjectModal from '../../components/CreateProjectModal'
@@ -213,7 +213,6 @@ export default function IdeasPage() {
   return (
     <div className="content-container flex flex-col gap-4">
       <PageHeader
-        icon={<Lightbulb {...ICON_PROPS} size={20} />}
         title="Ideas Board"
         subtitle={`${activeCount} active ideas`}
         count={activeCount}
@@ -662,7 +661,7 @@ function IdeaRowView({
         {/* Submitter (recedes) */}
         <div className="flex items-center gap-2" style={{ minWidth: 0 }}>
           <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-            <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
+            <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} />
           </div>
           <span
             style={{
@@ -935,7 +934,7 @@ function IdeaRowView({
               <Archive {...ICON_PROPS} size={12} />
             </button>
             <div style={{ width: 18, height: 18, flexShrink: 0 }}>
-              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
+              <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
             </div>
           </div>
         </div>
@@ -977,7 +976,7 @@ function IdeaRowView({
               }}
               style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-md)' }}
             >
-              <Field label="Title" htmlFor="idea-edit-title" size="micro" noContainer>
+              <Field label="Title" htmlFor="idea-edit-title" noContainer>
                 <input
                   id="idea-edit-title"
                   type="text"
@@ -988,7 +987,7 @@ function IdeaRowView({
                   style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-base)', boxSizing: 'border-box' }}
                 />
               </Field>
-              <Field label="Description" htmlFor="idea-edit-description" size="micro" noContainer>
+              <Field label="Description" htmlFor="idea-edit-description" noContainer>
                 <textarea
                   id="idea-edit-description"
                   value={editDescription}
@@ -997,7 +996,7 @@ function IdeaRowView({
                   style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-small)', resize: 'vertical', boxSizing: 'border-box' }}
                 />
               </Field>
-              <Field label="Research Area" htmlFor="idea-edit-area" size="micro" noContainer>
+              <Field label="Research area" htmlFor="idea-edit-area" noContainer>
                 <select
                   id="idea-edit-area"
                   value={editArea}
@@ -1186,7 +1185,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
             />
           </Field>
 
-          <Field label="Research Area" htmlFor="idea-area" noContainer>
+          <Field label="Research area" htmlFor="idea-area" noContainer>
             <InlineSelect id="idea-area"
               value={researchArea}
               options={[{ value: '', label: 'Select area (optional)' }, ...researchAreas.map((a) => ({ value: a, label: a }))]}

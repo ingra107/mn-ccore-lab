@@ -1,4 +1,4 @@
-import Avatar from './Avatar'
+import { FaceDisc } from './today/skin'
 import { getPersonInfo } from '../data/team'
 import type { Intent } from '../hooks/usePresence'
 
@@ -88,7 +88,7 @@ export default function PresenceAvatars({ slugs, size = '2xs', limit = 4, peerIn
                 height: size === 'xs' ? 18 : 16,
               }}
             >
-              <Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} size={size} variant="ice" />
+              <FaceDisc label={info.name} initials={info.initials} photo={info.photoUrl} px={size === 'xs' ? 18 : 16} />
             </div>
           )
         })}

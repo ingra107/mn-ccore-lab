@@ -40,9 +40,7 @@ import {
 import { motion } from 'framer-motion'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { parseDbUtc, formatDbLocal } from '../../lib/time'
-import { getPersonInfo } from '../../data/team'
-import Avatar from '../Avatar'
-import { Face } from '../today/skin'
+import { Face, FaceDisc } from '../today/skin'
 import { firstNameFor } from '../../lib/personLabel'
 import LinkifiedText, { ImageChip } from '../LinkifiedText'
 import HermesMark from '../HermesMark'
@@ -274,10 +272,6 @@ export interface ActivityEntryItemProps {
    * Slack-thread anatomy.  Callers may pass 'xs' (20 px) for a compact peek.
    */
   avatarSize?: 'xs' | 'base-sm'
-
-  /** Today skin: name people as an initials badge + FIRST name (the Face the cards
-   *  use) instead of the photo Avatar + full name. Only valid under a .tk ancestor. */
-  badgePeople?: boolean
 
   /**
    * Font-size token for the author name + body.  Defaults to '--text-small'
@@ -679,7 +673,6 @@ function ActivityEntryWrapper({
 export function ActivityEntryItem({
   entry,
   avatarSize = AVATAR_SIZE,
-  badgePeople = false,
   textSize = BODY_FONT_SIZE,
   avatarGap = AVATAR_GAP,
   showCommentBadge = false,
@@ -698,7 +691,6 @@ export function ActivityEntryItem({
 }: ActivityEntryItemProps) {
   const isTask = entry.entity_type === 'task'
   const isHermes = entry.actor_slug === 'claude-ai'
-  const person = getPersonInfo(entry.actor_slug)
   const [editing, setEditing] = useState(false)
   // "(edited)" marker — set by handleEditActivityEntry in metadata_json.edited.
   const wasEdited = (() => {
@@ -772,7 +764,7 @@ export function ActivityEntryItem({
     ...taskOriginStyle,
   }
 
-  // ── Avatar dimension (matches sizeConfig in Avatar.tsx) ──────────────────
+  // ── Face dimension ──────────────────
   const avatarDim = avatarSize === 'xs' ? 20 : 28
 
   // ── Name-line badge slot ──────────────────────────────────────────────────
@@ -807,18 +799,9 @@ export function ActivityEntryItem({
         )}
         {/* Name line */}
         <div className={`flex items-center ${AVATAR_GAP} mb-1.5`} style={{ minWidth: 0 }}>
-          {/* Avatar slot — HermesMark via Avatar's slug prop */}
+          {/* Face slot — the Hermes mark */}
           <div className="flex-shrink-0" style={{ width: avatarDim, height: avatarDim }}>
-            {badgePeople ? (
-              <span className="tk-face tk-herm" title="Hermes" aria-label="Hermes">H</span>
-            ) : (
-              <Avatar
-                name="Hermes"
-                initials="H"
-                size={avatarSize}
-                slug="claude-ai"
-              />
-            )}
+            <FaceDisc label="Hermes" initials="H" px={avatarDim} hermes />
           </div>
           <div className="flex items-center gap-1.5 flex-wrap min-w-0" style={{ flex: 1 }}>
             <span
@@ -882,17 +865,7 @@ export function ActivityEntryItem({
           className="flex-shrink-0 mt-0.5"
           style={{ width: avatarDim, height: avatarDim }}
         >
-          {badgePeople ? (
-            <Face slug={entry.actor_slug} />
-          ) : (
-            <Avatar
-              name={person.name}
-              initials={person.initials}
-              photoUrl={person.photoUrl}
-              size={avatarSize}
-              variant="ice"
-            />
-          )}
+          <Face slug={entry.actor_slug} px={avatarDim} />
         </div>
 
         {/* Text column */}
@@ -910,7 +883,7 @@ export function ActivityEntryItem({
                 flexShrink: 0,
               }}
             >
-              {badgePeople ? firstNameFor(entry.actor_slug) : person.name}
+              {firstNameFor(entry.actor_slug)}
             </span>
             {nameBadge}
             {entry.visibility === 'author' && <AuthorOnlyBadge />}

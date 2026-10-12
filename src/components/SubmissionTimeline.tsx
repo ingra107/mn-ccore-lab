@@ -149,7 +149,7 @@ function AddEventForm({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         {/* Event type */}
         <div>
-          <Field label="Event Type" noContainer>
+          <Field label="Event type" noContainer>
             <InlineSelect
               value={eventType}
               options={EVENT_TYPES.map((t) => ({ value: t, label: EVENT_CONFIG[t].label }))}

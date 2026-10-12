@@ -289,7 +289,7 @@ export default function SettingsPage() {
 
   return (
     <div className="content-container">
-      <PageHeader icon={<Settings {...ICON_PROPS} size={20} />} title="Settings" subtitle="Changes are saved automatically" />
+      <PageHeader title="Settings" subtitle="Changes are saved automatically" />
 
       {/* Team Directory shortcut */}
       <Link
@@ -360,7 +360,7 @@ export default function SettingsPage() {
         {/* Basic Information */}
         {activeTab === 'profile' && (
         <SettingsSection title="Basic Information" subtitle="These appear in the sidebar header and dashboard" icon={Type}>
-          <SettingsField label="Lab Name" hint="Shown in the sidebar and page titles">
+          <SettingsField label="Lab name" hint="Shown in the sidebar and page titles">
             <SettingsInput
               value={settings.lab_name || ''}
               onSave={(v) => updateSettings.mutate({ lab_name: v })}
@@ -375,13 +375,13 @@ export default function SettingsPage() {
               multiline
             />
           </SettingsField>
-          <SettingsField label="Lab Icon" hint="Displayed next to your lab name">
+          <SettingsField label="Lab icon" hint="Displayed next to your lab name">
             <LabIconPicker
               value={settings.lab_icon || ''}
               onChange={(v) => updateSettings.mutate({ lab_icon: v })}
             />
           </SettingsField>
-          <SettingsField label="Lab Type">
+          <SettingsField label="Lab type">
             <InlineSelect
               value={settings.lab_type || 'clinical_research'}
               options={[

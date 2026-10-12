@@ -393,7 +393,6 @@ export default function Dashboard() {
                   <SegmentedToggle
                     className="dashboard-tabs"
                     ariaLabel="Filter cards"
-                    skin="tk"
                     options={TAB_CONFIG.map(tab => ({ value: tab.id, label: tab.label }))}
                     value={activeTab}
                     onChange={handleTabChange}
@@ -471,14 +470,7 @@ export default function Dashboard() {
             <div key={card.id} className="flex items-center gap-1">
               <button
                 onClick={() => toggleCard(card.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border"
-                style={{
-                  color: visibleCards.has(card.id) ? 'var(--job-accent)' : 'var(--slate)',
-                  backgroundColor: visibleCards.has(card.id) ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                  borderColor: visibleCards.has(card.id) ? 'var(--job-accent)' : 'var(--border-subtle)',
-                  cursor: 'pointer',
-                  opacity: visibleCards.has(card.id) ? 1 : 0.85,
-                }}
+                className={`tk-btn tk-sm${visibleCards.has(card.id) ? ' tk-sel' : ''}`}
               >
                 {visibleCards.has(card.id) ? '\u2713' : '+'} {card.label}
               </button>

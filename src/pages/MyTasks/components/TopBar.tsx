@@ -5,16 +5,17 @@
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx.
 
 import { useState } from 'react'
-import { AlertTriangle, CheckCircle2, Clock, Plus, Sparkles, Pin, SlidersHorizontal, Timer, ThumbsDown } from 'lucide-react'
+import { Plus, SlidersHorizontal } from 'lucide-react'
 import { researchTeam } from '../../../data/team'
 import SavedViewsMenu from '../../../components/SavedViewsMenu'
 import { ViewPicker } from './ViewPicker'
 import { FilterChip } from './FilterChip'
+import FilterLinks from '../../../components/ui/FilterLinks'
 import { useIsMobile } from '../../../hooks/useIsMobile'
 import {
   GROUP_META, GROUP_ORDER,
-  JOB_ACCENT, JOB_OVERDUE,
-  INK, INK_MUTED, INK_DIM, withAlpha,
+  JOB_ACCENT,
+  INK,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from '../constants'
 import { ICON_PROPS } from '../../../lib/iconProps'
@@ -42,18 +43,18 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
   const [searchFocused, setSearchFocused] = useState(false)
   const activeFilterCount = [filter.group, filter.priority, filter.project, filter.mentee].filter(Boolean).length
   const showFilterChips = !isPhone || filtersOpen
-  const tabs: { k: QuickViewKey; l: React.ReactNode; color?: string }[] = [
-    { k: 'all', l: 'All' },
-    // 'New' = your tasks you haven't opened yet (Slack-style seen; matches the
-    // sidebar badge count + the gold NEW chip on rows). Drains on open.
-    { k: 'new', l: <><Sparkles {...ICON_PROPS} size={11} /> New</> },
-    { k: 'today', l: <><Pin {...ICON_PROPS} size={11} /> Today</> },
-    { k: 'planned', l: <><Pin {...ICON_PROPS} size={11} /> Planned</> },
-    { k: 'done-today', l: <><CheckCircle2 {...ICON_PROPS} size={11} /> Done today</> },
-    { k: 'overdue', l: <><AlertTriangle {...ICON_PROPS} size={11} /> Overdue</>, color: JOB_OVERDUE },
-    { k: 'waiting', l: <><Clock {...ICON_PROPS} size={11} /> Waiting on</> },
-    { k: 'stale', l: <><Timer {...ICON_PROPS} size={11} /> Stale</> },
-    { k: 'declined', l: <><ThumbsDown {...ICON_PROPS} size={11} /> Declined</> },
+  // 'New' = your tasks you haven't opened yet (Slack-style seen; matches the
+  // sidebar badge count + the gold NEW chip on rows). Drains on open.
+  const tabs: { value: QuickViewKey; label: string; tone?: 'overdue' }[] = [
+    { value: 'all', label: 'All' },
+    { value: 'new', label: 'New' },
+    { value: 'today', label: 'Today' },
+    { value: 'planned', label: 'Planned' },
+    { value: 'done-today', label: 'Done today' },
+    { value: 'overdue', label: 'Overdue', tone: 'overdue' },
+    { value: 'waiting', label: 'Waiting on' },
+    { value: 'stale', label: 'Stale' },
+    { value: 'declined', label: 'Declined' },
   ]
   const hasFilters = filter.priority || filter.project || filter.mentee || filter.group || search || quickView !== 'all'
   return (
@@ -67,8 +68,10 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           second line on narrow widths instead of clipping the fixed-260 search
           and overlapping the title. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10, flexWrap: 'wrap' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', margin: 0, color: 'var(--task-ink)' }}>My Tasks</h1>
-        <span aria-live="polite" aria-atomic="true" style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{taskCount} visible</span>
+        <div className="tk-titlerow">
+          <h1 className="tk-h1" style={{ color: 'var(--sk-t1)' }}>My Tasks</h1>
+          <span className="tk-date" aria-live="polite" aria-atomic="true" style={{ fontVariantNumeric: 'tabular-nums' }}>{taskCount} visible</span>
+        </div>
         {/* The heartbeat line under the title (color-back pick 10): its own
             full-width line in the wrapping title row. */}
         <PageHeartbeat className="pg-hb-row" />
@@ -106,38 +109,23 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
       </div>
       {/* N1.10 / ROW 25: swipeable-on-phones → CSS .topbar-tab-strip (@media in index.css) */}
       <div className="topbar-tab-strip">
-        {tabs.map((tab) => {
-          const active = quickView === tab.k
-          const c = tab.color || JOB_ACCENT
-          return (
-            <button
-              key={tab.k}
-              className="pill-btn"
-              onClick={() => setQuickView(tab.k)}
-              // withAlpha, NOT hex-suffix concat: the accents are var() strings,
-              // so the old `color + hexAlpha` pattern produced invalid CSS (active pill border/bg never
-              // rendered). /simplify catch, 2026-06-11.
-              style={{ padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${active ? withAlpha(c, 44) : 'var(--border-strong)'}`, background: active ? withAlpha(c, 8) : 'transparent', color: active ? c : INK_MUTED, flexShrink: 0, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-            >{tab.l}</button>
-          )
-        })}
+        <FilterLinks className="tk-flt-scroll" ariaLabel="Quick view" options={tabs} value={quickView} onChange={setQuickView} />
       </div>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div className="tk-tools">
         <ViewPicker view={view} setView={setView} isPhone={isPhone} />
         <SavedViewsMenu page="my-tasks" currentQuery={currentQuery} onApply={onApplyView} />
-        {/* N1.20 — divider only when the chips render beside it (it stranded
-            itself at wrapped line ends on phones). */}
-        {showFilterChips && !isPhone && <div style={{ width: 1, height: 18, background: 'var(--border-strong)', margin: '0 4px' }} />}
         {isPhone && (
-          <button
-            className="pill-btn"
-            onClick={() => setFiltersOpen((o) => !o)}
-            aria-expanded={filtersOpen}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${filtersOpen || activeFilterCount > 0 ? withAlpha(JOB_ACCENT, 44) : 'var(--border-strong)'}`, background: filtersOpen || activeFilterCount > 0 ? withAlpha(JOB_ACCENT, 8) : 'transparent', color: filtersOpen || activeFilterCount > 0 ? JOB_ACCENT : INK_MUTED }}
-          >
-            <SlidersHorizontal size={11} strokeWidth={1.5} absoluteStrokeWidth />
-            Filters{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ''}
-          </button>
+          <div className="tk-fsel">
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((o) => !o)}
+              aria-expanded={filtersOpen}
+              data-set={activeFilterCount > 0 ? 'true' : undefined}
+            >
+              <SlidersHorizontal size={11} strokeWidth={1.5} absoluteStrokeWidth />
+              Filters{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ''}
+            </button>
+          </div>
         )}
         {showFilterChips && <>
         <FilterChip
@@ -168,15 +156,20 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           ]}
           onChange={(v) => setFilter((f) => ({ ...f, mentee: v }))}
         />
-        <button
-          onClick={() => setFilter((f) => ({ ...f, hideCompleted: !f.hideCompleted }))}
-          style={{ padding: '4px 10px', fontSize: 11, border: '1px solid var(--border-strong)', borderRadius: 999, background: 'transparent', color: INK_MUTED, fontFamily: 'inherit', cursor: 'pointer' }}
-        >{filter.hideCompleted ? 'Show completed' : 'Hide completed'}</button>
-        {hasFilters && (
+        <div className="tk-fsel">
           <button
-            onClick={() => { setFilter((f) => ({ priority: null, project: null, mentee: null, group: null, hideCompleted: f.hideCompleted })); setSearch(''); setQuickView('all') }}
-            style={{ padding: '4px 10px', fontSize: 11, border: 'none', background: 'transparent', color: 'var(--sk-t2)', fontFamily: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}
-          >clear all</button>
+            type="button"
+            onClick={() => setFilter((f) => ({ ...f, hideCompleted: !f.hideCompleted }))}
+          >{filter.hideCompleted ? 'Show completed' : 'Hide completed'}</button>
+        </div>
+        {hasFilters && (
+          <div className="tk-fsel">
+            <button
+              type="button"
+              onClick={() => { setFilter((f) => ({ priority: null, project: null, mentee: null, group: null, hideCompleted: f.hideCompleted })); setSearch(''); setQuickView('all') }}
+              style={{ color: 'var(--sk-t3)', textDecoration: 'underline', textUnderlineOffset: 2 }}
+            >Clear all</button>
+          </div>
         )}
         </>}
       </div>

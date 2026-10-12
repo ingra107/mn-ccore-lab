@@ -25,7 +25,7 @@ const page = (hueSeed?: string) => (
   </LabPageLayout>
 )
 
-const avatarOf = (host: HTMLElement) => host.querySelector<HTMLElement>('.rounded-full')!
+const avatarOf = (host: HTMLElement) => host.querySelector<HTMLElement>('.tk-face')!
 
 describe('member hue', () => {
   it('slices the token CSS out of index.css', () => {

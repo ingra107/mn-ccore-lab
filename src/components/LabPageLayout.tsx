@@ -1,6 +1,6 @@
 import { type CSSProperties, type ReactNode, useEffect, useState } from 'react'
 import { ArrowRight, ExternalLink, GraduationCap, FlaskConical } from 'lucide-react'
-import Avatar from './Avatar'
+import { FaceDisc } from './today/skin'
 import PublicationCard from './PublicationCard'
 import PageHeartbeat from './moments/PageHeartbeat'
 import HeroNumber, { type HeroNumberProps } from './moments/HeroNumber'
@@ -108,13 +108,7 @@ export default function LabPageLayout({
           <div className="lg:sticky lg:top-28">
             {/* Avatar */}
             <div className="flex justify-center lg:justify-start mb-6">
-              <Avatar
-                name={credentials ? `${name}, ${credentials}` : name}
-                initials={initials}
-                photoUrl={photoUrl}
-                size="lg"
-                variant={hueSeed ? 'hue' : 'gold'}
-              />
+              <FaceDisc label={credentials ? `${name}, ${credentials}` : name} initials={initials} photo={photoUrl} px={128} variant={hueSeed ? 'hue' : 'brand'} />
             </div>
 
             <div className="text-center lg:text-left">
@@ -532,13 +526,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
       <div className="p-5 sm:p-6">
         {/* Header: Photo + Name + Role */}
         <div className="flex items-start gap-4 mb-4">
-          <Avatar
-            name={mentee.name}
-            initials={mentee.name.split(' ').map((n) => n[0]).join('')}
-            photoUrl={member?.photoUrl}
-            size="sm"
-            variant="gold"
-          />
+          <FaceDisc label={mentee.name} initials={mentee.name.split(' ').map((n) => n[0]).join('')} photo={member?.photoUrl} px={64} pxSm={56} variant="brand" />
           <div className="flex-1 min-w-0">
             <h3
               className="text-base font-normal leading-tight"

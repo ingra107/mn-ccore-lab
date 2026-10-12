@@ -55,7 +55,6 @@ export default function NarrativesPage() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<BookOpen {...ICON_PROPS} size={20} />}
         title="Research Narratives"
         subtitle={`${filteredNarratives.length}${searchTerm ? ` of ${narratives.length}` : ''} research arcs`}
         count={filteredNarratives.length}

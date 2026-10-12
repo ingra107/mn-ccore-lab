@@ -12,6 +12,8 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FileText, ArrowRight, Sparkles, Search } from 'lucide-react'
 import PageContainer from '../../components/PageContainer'
+import FilterLinks from '../../components/ui/FilterLinks'
+import { FILTER_ALL } from '../../components/ui/filterAll'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import HermesMark from '../../components/HermesMark'
@@ -64,7 +66,6 @@ export default function ArtifactsGalleryPage() {
         {/* ── Header ── the shared PageHeader, same anatomy and top spacing as
             the Digest tab beside it (site audit F22). */}
         <PageHeader
-          icon={<FileText {...ICON_PROPS} size={20} />}
           title="Artifacts"
           subtitle="Curated, reusable reference artifacts. Tag an artifact to shelve it here."
         />
@@ -88,8 +89,8 @@ export default function ArtifactsGalleryPage() {
               width: '100%',
               fontSize: 13,
               padding: '7px 11px 7px 32px',
-              borderRadius: 'var(--radius-full)',
-              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--r-ctl)',
+              border: '1px solid var(--field-edge)',
               background: 'var(--sk-card)',
               color: 'var(--ink)',
             }}
@@ -98,32 +99,16 @@ export default function ArtifactsGalleryPage() {
 
         {/* ── Tag-chip filter bar (multi-select; "All" default) ── */}
         {tagCounts.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap" role="group" aria-label="Filter by tag" style={{ marginBottom: '1.25rem' }}>
-            <button
-              type="button"
-              onClick={() => setSelected(new Set())}
-              aria-pressed={selected.size === 0 ? 'true' : 'false'}
-              className="cursor-pointer"
-              style={chipButtonStyle(selected.size === 0)}
-            >
-              All
-            </button>
-            {tagCounts.map(({ tag, count }) => {
-              const on = selected.has(tag)
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggle(tag)}
-                  aria-pressed={on ? 'true' : 'false'}
-                  className="cursor-pointer"
-                  style={chipButtonStyle(on)}
-                >
-                  {tag}
-                  <span style={{ opacity: 0.6, marginLeft: 4 }}>{count}</span>
-                </button>
-              )
-            })}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <FilterLinks
+              ariaLabel="Filter by tag"
+              value={selected.size === 0 ? [FILTER_ALL] : [...selected]}
+              onChange={(v) => (v === FILTER_ALL ? setSelected(new Set()) : toggle(v))}
+              options={[
+                { value: FILTER_ALL, label: 'All' },
+                ...tagCounts.map(({ tag, count }) => ({ value: tag, label: tag, count })),
+              ]}
+            />
           </div>
         )}
 
@@ -231,17 +216,3 @@ const cardStyle: React.CSSProperties = {
   minHeight: 120,
 }
 
-/** Filter-chip button appearance — active = teal fill, inactive = subtle border. */
-function chipButtonStyle(active: boolean): React.CSSProperties {
-  return {
-    display: 'inline-flex',
-    alignItems: 'center',
-    fontSize: 12,
-    fontWeight: 500,
-    padding: '4px 12px',
-    borderRadius: 'var(--radius-full)',
-    background: active ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-    color: active ? 'var(--job-accent)' : 'var(--slate)',
-    border: `1px solid ${active ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
-  }
-}

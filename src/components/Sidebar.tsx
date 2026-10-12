@@ -44,7 +44,7 @@ import { projectsForSidebar } from '../lib/sidebarProjects'
 import { todayKey } from '../lib/taskGrouping'
 import { PATHS } from '../constants/paths'
 import { PORTAL_PAGE_LABELS } from '../constants/pageLabels'
-import Avatar from './Avatar'
+import { FaceDisc } from './today/skin'
 import { getPersonInfo } from '../data/team'
 import { ICON_PROPS } from '../lib/iconProps'
 
@@ -564,7 +564,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           >
             <div style={{ width: 24, height: 24, flexShrink: 0 }}>
               {person
-                ? <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="tight" />
+                ? <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={24} />
                 : <User size={18} {...ICON_PROPS} />}
             </div>
             {!collapsed && (

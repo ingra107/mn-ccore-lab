@@ -2,7 +2,6 @@ import { useMemo, useState, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Wallet,
-  DollarSign,
   Banknote,
   Diamond,
   List,
@@ -14,6 +13,7 @@ import {
   Check,
   AlertTriangle,
 } from 'lucide-react'
+import FilterLinks from '../../components/ui/FilterLinks'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
@@ -442,34 +442,21 @@ export default function GrantsPage() {
   }, [active])
 
   const filterPills = (
-    <>
-      {(['all', 'active', 'proposed'] as FilterMode[]).map((f) => {
-        const labels: Record<FilterMode, string> = { all: 'All', active: 'Active', proposed: 'Proposed' }
-        const isActive = filter === f
-        return (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className="px-3 py-1.5 rounded-full text-xs transition-colors border"
-            style={{
-              fontWeight: isActive ? 500 : 400,
-              borderColor: isActive ? 'var(--job-accent)' : 'var(--border-subtle)',
-              backgroundColor: isActive ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-              color: isActive ? 'var(--job-accent)' : 'var(--slate)',
-              cursor: 'pointer',
-            }}
-          >
-            {labels[f]}
-          </button>
-        )
-      })}
-    </>
+    <FilterLinks
+      ariaLabel="Grant status"
+      value={filter}
+      onChange={setFilter}
+      options={[
+        { value: 'all', label: 'All' },
+        { value: 'active', label: 'Active' },
+        { value: 'proposed', label: 'Proposed' },
+      ] satisfies { value: FilterMode; label: string }[]}
+    />
   )
 
   return (
     <div className="content-container">
       <PageHeader
-        icon={<DollarSign {...ICON_PROPS} size={20} />}
         title="Grants & Funding"
         subtitle={`${active.length} active, ${proposed.length} proposed${endedCount > 0 ? `, ${endedCount} ended` : ''}`}
       >
@@ -957,7 +944,7 @@ function AddGrantMilestoneModal({
             />
           </Field>
 
-          <Field label="Milestone Type" htmlFor="grant-milestone-type" noContainer>
+          <Field label="Milestone type" htmlFor="grant-milestone-type" noContainer>
             <InlineSelect id="grant-milestone-type"
               value={milestoneType}
               options={MILESTONE_TYPES}
@@ -979,7 +966,7 @@ function AddGrantMilestoneModal({
             />
           </Field>
 
-          <Field label="Due Date" htmlFor="grant-milestone-due" noContainer>
+          <Field label="Due date" htmlFor="grant-milestone-due" noContainer>
             <input
               id="grant-milestone-due"
               type="date"

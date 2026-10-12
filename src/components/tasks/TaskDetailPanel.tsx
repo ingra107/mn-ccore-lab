@@ -37,7 +37,7 @@ import { getPersonInfo, getAllMembers, directors } from '../../data/team'
 import { shortLabelForUrl, gmailKind } from '../../lib/urlClassify'
 import { useLaunchCommands, taskLaunchContext } from '../../hooks/useLaunchCommands'
 import LinkChip from '../LinkChip'
-import Avatar from '../Avatar'
+import { FaceDisc } from '../today/skin'
 import InlineSelect from '../InlineSelect'
 import PresenceAvatars from '../PresenceAvatars'
 import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../../hooks/usePresence'
@@ -1083,7 +1083,7 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
             className="flex items-center gap-1 pl-1 pr-2 py-0.5 rounded-full text-[10px]"
             style={{ backgroundColor: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)', color: 'var(--sk-t2)' }}
           >
-            <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="2xs" />
+            <FaceDisc label={p.name} initials={p.initials} photo={p.photoUrl} px={16} />
             {p.name.split(' ')[0]}
             <button
               onClick={() => removeWatcher(slug)}
@@ -1128,7 +1128,7 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
                 onMouseOver={e => (e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--job-accent) 6%, transparent)')}
                 onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
-                <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="xs" />
+                <FaceDisc label={p.name} initials={p.initials} photo={p.photoUrl} px={20} />
                 {p.name}
               </button>
             )
@@ -2006,7 +2006,7 @@ function CompactAssigneeRow({ value, onChange }: { value?: string | null; onChan
       >
         {person ? (
           <>
-            <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" />
+            <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
             <span style={{ fontWeight: 500 }}>{person.name.split(' ')[0]}</span>
           </>
         ) : (
@@ -2057,7 +2057,7 @@ function CompactAssigneeRow({ value, onChange }: { value?: string | null; onChan
                 onMouseOver={e => (e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--job-accent) 6%, transparent)')}
                 onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
-                <Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} size="xs" />
+                <FaceDisc label={info.name} initials={info.initials} photo={info.photoUrl} px={20} />
                 {info.name}
               </button>
             )

@@ -1,4 +1,4 @@
-// FilterChip — pill with built-in dropdown, replaces guarded raw <select>.
+// FilterChip — a label and a value with a built-in dropdown (.tk-fsel), replaces guarded raw <select>.
 // Outside-click + selection close. Used by TopBar for Group / Priority /
 // Project / Mentee filters.
 //
@@ -71,15 +71,15 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
 
   const active = options.find((o) => o.v === value)
   return (
-    <div ref={triggerRef} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', border: '1px solid var(--border-strong)', borderRadius: 999, background: 'transparent', fontSize: 11, minHeight: 26 }}>
-      <span style={{ color: INK_DIM, paddingLeft: 10, paddingRight: 6, letterSpacing: '0.02em' }}>{label}</span>
+    <div ref={triggerRef} className="tk-fsel">
+      <span>{label}</span>
       <button
+        type="button"
         onClick={() => setOpen(!open)}
         aria-haspopup="listbox"
         aria-expanded={open ? 'true' : 'false'}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, paddingRight: 22, paddingLeft: 2, fontSize: 11, color: value ? JOB_ACCENT : INK, background: 'transparent', border: 'none', fontFamily: 'inherit', cursor: 'pointer' }}
-      >{active?.l ?? options[0]?.l}</button>
-      <span style={{ position: 'absolute', right: 8, pointerEvents: 'none', color: INK_DIM, fontSize: 9 }}>▾</span>
+        data-set={value ? 'true' : undefined}
+      >{active?.l ?? options[0]?.l}<span className="tk-caret" aria-hidden="true">▾</span></button>
       {open && createPortal(
         <div
           ref={menuRef}

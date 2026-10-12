@@ -100,7 +100,6 @@ function ProjectHealthCard() {
         <div className="flex justify-end mb-2 -mt-1">
           <SegmentedToggle
             ariaLabel="Project health view"
-            size="sm"
             options={[
               { value: 'list', label: 'List' },
               { value: 'heatmap', label: 'Heatmap' },

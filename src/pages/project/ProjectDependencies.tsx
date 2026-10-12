@@ -126,7 +126,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
             >
               <div className="flex flex-wrap gap-2 items-end mb-3">
                 {/* Direction */}
-                <Field label="Direction" size="micro" noContainer>
+                <Field label="Direction" noContainer>
                   <InlineSelect
                     value={newDirection}
                     options={[
@@ -139,7 +139,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 </Field>
 
                 {/* Relationship type */}
-                <Field label="Relationship" size="micro" noContainer>
+                <Field label="Relationship" noContainer>
                   <InlineSelect
                     value={newRelType}
                     options={REL_OPTIONS}
@@ -150,7 +150,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
 
                 {/* Target project */}
                 <div style={{ flex: 1, minWidth: '160px' }}>
-                  <Field label="Project" size="micro" noContainer>
+                  <Field label="Project" noContainer>
                     <InlineSelect
                       value={newTarget}
                       options={[{ value: '', label: 'Select a project...' }, ...availableTargets.map((p) => ({ value: p.slug, label: p.title }))]}

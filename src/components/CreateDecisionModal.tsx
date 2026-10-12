@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Scale, History, Search } from 'lucide-react'
+import { History, Search } from 'lucide-react'
 import { useSimilarDecisions } from '../hooks/useApiData'
 import { useCreateDecision } from '../hooks/useMutations'
 import { useToast } from '../hooks/useToast'
@@ -136,7 +136,6 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
       maxWidth="md"
       variant="modal"
       animated
-      icon={<Scale {...ICON_PROPS} size={18} style={{ color: 'var(--sk-t2)' }} />}
       onExtraKeyDown={handleExtraKeyDown}
       footer={
         <>
@@ -161,7 +160,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
     >
       <div className="flex flex-col gap-4">
         <div>
-          <Field label="Decision Title" htmlFor="decision-title" size="micro" noContainer>
+          <Field label="Decision title" htmlFor="decision-title" noContainer>
             <input
               id="decision-title"
               type="text"
@@ -206,7 +205,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
         </div>
 
         <div>
-          <Field label="Rationale" size="micro" noContainer>
+          <Field label="Rationale" noContainer>
             <textarea
               value={rationale}
               onChange={(e) => setRationale(e.target.value)}
@@ -218,7 +217,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
         </div>
 
         <div>
-          <Field label="Context" size="micro" noContainer>
+          <Field label="Context" noContainer>
             <textarea
               value={context}
               onChange={(e) => setContext(e.target.value)}
@@ -231,7 +230,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
 
         <div className="flex gap-4">
           <div style={{ flex: 1 }}>
-            <Field label="Primary Project (optional)" size="micro" noContainer>
+            <Field label="Primary project (optional)" noContainer>
               <InlineSelect
                 value={projectSlug}
                 options={[{ value: '', label: 'No project' }, ...projects.map(p => ({ value: p.slug, label: p.title }))]}
@@ -240,7 +239,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
             </Field>
           </div>
           <div style={{ flex: 1 }}>
-            <Field label="Tags (comma-separated)" size="micro" noContainer>
+            <Field label="Tags (comma-separated)" noContainer>
               <input
                 type="text"
                 value={tags}
@@ -252,7 +251,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
             {/* Tag auto-suggestions */}
             {newSuggestions.length > 0 && (
               <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', }}>
                   Suggested:
                 </span>
                 {newSuggestions.map((tag) => (
@@ -278,7 +277,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
 
         {/* Linked Projects */}
         <div>
-          <Field label="Linked Projects (optional)" size="micro" noContainer>
+          <Field label="Linked projects (optional)" noContainer>
             <div className="relative">
             <div className="flex items-center gap-1" style={{ ...inputStyle, padding: 'var(--sp-xs) var(--sp-sm)', flexWrap: 'wrap' }}>
               {linkedProjectSlugs.map((slug) => {

@@ -8,7 +8,7 @@ import {
 import { usePageMeta } from '../hooks/usePageMeta'
 import { TableSkeleton } from '../components/LoadingSkeleton'
 import Breadcrumb from '../components/Breadcrumb'
-import Avatar from '../components/Avatar'
+import { FaceDisc } from '../components/today/skin'
 import { getPersonInfo } from '../data/team'
 import { slugForEmail } from '../lib/emailSlug'
 import { formatLongDate, formatShortDate, isOverdue as isItemOverdue } from '../lib/dateUtils'
@@ -200,7 +200,7 @@ export default function MeetingPrep() {
                         <Flag {...ICON_PROPS} size={10} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)', flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
-                          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
+                          <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
                         </div>
                       </div>
                     )
@@ -236,7 +236,7 @@ export default function MeetingPrep() {
                         <Circle {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{item.description}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
-                          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
+                          <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
                         </div>
                       </div>
                     )
@@ -265,7 +265,7 @@ export default function MeetingPrep() {
                       <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
                       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.85 }}>{formatShortDate(task.due_date)}</span>
                       <div style={{ width: 16, height: 16, flexShrink: 0 }}>
-                        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
+                        <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
                       </div>
                     </div>
                   )
@@ -286,7 +286,7 @@ export default function MeetingPrep() {
                   return (
                     <div key={i} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < Math.min(recentActivity.length, 10) - 1 ? `1px solid var(--sk-line)` : 'none' }}>
                       <div style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }}>
-                        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
+                        <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
                       </div>
                       <span style={{ fontSize: 11, color: 'var(--ink)', flex: 1, lineHeight: 1.4 }}>{act.description}</span>
                     </div>
@@ -362,7 +362,7 @@ function ActionRow({ item }: { item: { id: string; description: string; assignee
         {item.description}
       </span>
       <div style={{ width: 16, height: 16, flexShrink: 0 }}>
-        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
+        <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
       </div>
     </div>
   )

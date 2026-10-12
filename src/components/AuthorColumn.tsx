@@ -6,7 +6,7 @@ import { getAllMembers } from '../data/team'
 import { resolveBylineAuthors, type BylineAuthor } from '../lib/authorAvatars'
 import { PUBLIC_PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
-import Avatar from './Avatar'
+import { FaceDisc } from './today/skin'
 
 /**
  * The byline as a list of people rather than a run of text (#133, Nick
@@ -59,13 +59,7 @@ function AuthorFace({ author }: { author: BylineAuthor }) {
   if (!author.member) return <BlankFace />
   return (
     <span style={{ width: BLANK_PX, height: BLANK_PX, flexShrink: 0, display: 'inline-flex' }}>
-      <Avatar
-        name={author.member.name}
-        initials={author.member.initials}
-        photoUrl={author.member.photoUrl}
-        size="xs"
-        variant="ice"
-      />
+      <FaceDisc label={author.member.name} initials={author.member.initials} photo={author.member.photoUrl} px={20} />
     </span>
   )
 }

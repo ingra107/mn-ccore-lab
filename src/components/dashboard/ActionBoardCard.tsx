@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { CheckCircle2, ClipboardList, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
-import Avatar from '../Avatar'
+import { FaceDisc } from '../today/skin'
 import { useTasks } from '../../hooks/useApiData'
 import { formatBrandName } from '../BrandName'
 import { useUpdateTaskStatus } from '../../hooks/useMutations'
@@ -54,7 +54,7 @@ function ActionBoardCard() {
                   <div key={assignee}>
                     <div className="flex items-center gap-2 mb-1.5">
                       <div style={{ width: 20, height: 20 }}>
-                        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
+                        <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} />
                       </div>
                       <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)' }}>
                         {person.name}

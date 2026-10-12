@@ -192,7 +192,6 @@ export default function CalendarPage() {
     // the data pages and every other operating surface.
     <div className="content-container">
       <PageHeader
-        icon={<Calendar {...ICON_PROPS} size={20} />}
         title="Lab Calendar"
         subtitle={(() => {
           const todayStr = localDateKey()

@@ -2,13 +2,13 @@ import { useState, useMemo, useCallback } from 'react'
 import { portalTitle } from '../constants/pageLabels'
 import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FolderKanban, GitBranch, Plus, List, LayoutGrid } from 'lucide-react'
+import { GitBranch, Plus, List, LayoutGrid } from 'lucide-react'
 import { stageLabel } from '../lib/stageNormalize'
 import { pipelineOffNote, pipelinePlaceOf } from '../lib/pipelinePlace'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useDependencies, useProjectHealth, useTasks, useAllProjectLinks, useAllProjectPublications } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
-import { PANEL_BG, daysSince, withAlpha } from '../lib/taskGrouping'
+import { daysSince } from '../lib/taskGrouping'
 import { parseDbUtc } from '../lib/time'
 import { useCreateProject, useUpdateProjectFields } from '../hooks/useMutations'
 import { isProjectActive, isProjectDone, isProjectFinished, isStalledProject } from '../lib/taskConstants'
@@ -98,27 +98,11 @@ function listStageOf(p: Project, products: ProductRow[] | undefined): { key: str
   return { key: `_project:${p.stage ?? ''}`, label: stageLabel(p.stage || '') || 'No stage', order: 950_000 + (STAGE_ORDER[p.stage || ''] ?? 99) }
 }
 
-// N1b — locked-canon ghost pill: active = teal tint + teal text, never a solid
-// fill block in a toolbar. One definition serves both filter axes (#123) so the
-// second group cannot drift from the first.
+// One definition serves both filter axes (#123): a .tk-flt link, so the second
+// group cannot drift from the first. Render inside a .tk-flt wrapper.
 function FilterPill({ label, active, onClick, title }: { label: string; active: boolean; onClick: () => void; title?: string }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      aria-pressed={active}
-      className="cursor-pointer inline-flex items-center px-2.5 py-1 text-xs filter-pill"
-      style={{
-        fontWeight: active ? 600 : ('var(--label-weight)' as React.CSSProperties['fontWeight']),
-        fontSize: 'var(--label-size)',
-        borderRadius: 'var(--radius-full)',
-        background: active ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-        color: active ? 'var(--job-accent)' : 'var(--slate)',
-        border: '1px solid transparent',
-        transition: 'all 0.15s',
-      }}
-    >
+    <button type="button" onClick={onClick} title={title} aria-pressed={active}>
       {label}
     </button>
   )
@@ -371,7 +355,6 @@ export default function Projects() {
   return (
     <>
     <DataPage
-      icon={<FolderKanban {...ICON_PROPS} size={20} />}
       title={allProjectsOn ? 'All projects' : 'My projects'}
       // The page's one telling number (color-back pick 2): how many projects
       // this list holds. Static: the list it counts is right below.
@@ -414,11 +397,10 @@ export default function Projects() {
           {/* S21: removed the "Try Pipeline view" promo coach-mark — it rendered
               inline in the toolbar and occluded the Pipeline toggle mid-word.
               The Pipeline view toggle (above) is already visible chrome. */}
-          {/* Phone: one nowrap row that scrolls sideways, so the status axis
-              never splits across wrapped lines. From md up the wrapper is
-              display:contents and the pills wrap as before. TableControls
-              (shared) is untouched. */}
-          <div className="flex items-center gap-1.5 overflow-x-auto md:contents" style={{ maxWidth: '100%', scrollbarWidth: 'none' }}>
+          {/* Phone: one nowrap row that scrolls sideways (.tk-flt-scroll), so the
+              status axis never splits across wrapped lines. From md up the
+              links wrap as before. TableControls (shared) is untouched. */}
+          <div className="tk-flt tk-flt-scroll">
           {categoryFilters.map((f) => (
             <FilterPill
               key={f.key}
@@ -708,10 +690,6 @@ export default function Projects() {
 
         .new-project-btn:hover {
           background: color-mix(in srgb, var(--job-accent) 6%, transparent) !important;
-        }
-
-        .filter-pill:hover {
-          background: ${withAlpha(PANEL_BG, 4)};
         }
 
         /* Dark mode overrides */

@@ -9,8 +9,8 @@
 
 import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Users, X } from 'lucide-react'
-import Avatar from '../../components/Avatar'
+import { X } from 'lucide-react'
+import { FaceDisc } from '../../components/today/skin'
 import PageHeader from '../../components/PageHeader'
 import QueryState from '../../components/QueryState'
 import { useTeam, useExpertise } from '../../hooks/useApiData'
@@ -37,7 +37,6 @@ export default function TeamDirectoryPage() {
   return (
     <div className="content-container">
       <PageHeader
-        icon={<Users {...ICON_PROPS} size={20} />}
         title="Team"
         subtitle="Everyone on the MN-CCORE team"
         count={members.length || undefined}
@@ -47,13 +46,8 @@ export default function TeamDirectoryPage() {
           <button
             type="button"
             onClick={() => setParams({})}
-            className="inline-flex items-center gap-1 cursor-pointer"
+            className="tk-btn tk-sm tk-sel"
             aria-label={`Clear expertise filter: ${expertise}`}
-            style={{
-              fontSize: 11, padding: '4px 10px', borderRadius: 'var(--radius-full)',
-              background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)', color: 'var(--job-accent)',
-              border: '1px solid var(--job-accent)',
-            }}
           >
             {expertise}
             <X {...ICON_PROPS} size={10} />
@@ -76,7 +70,7 @@ export default function TeamDirectoryPage() {
           {members.map((m) => {
             const body = (
               <>
-                <Avatar name={m.name} initials={m.initials} photoUrl={m.photoUrl} size="base-lg" slug={m.slug} />
+                <FaceDisc label={m.name} initials={m.initials} photo={m.photoUrl} px={36} hermes={m.slug === 'claude-ai'} />
                 <span style={{ minWidth: 0 }}>
                   <span style={{ display: 'block', fontSize: 14, fontWeight: 500, color: 'var(--ink)' }}>
                     {m.name}{m.credentials ? `, ${m.credentials}` : ''}

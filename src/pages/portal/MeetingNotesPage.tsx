@@ -130,7 +130,6 @@ export default function MeetingNotesPage() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<FileText {...ICON_PROPS} size={20} />}
         title="Meeting Transcripts"
         subtitle="Transcription, summaries, and action items"
         count={processedCount}
@@ -301,7 +300,7 @@ function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: 
             it as the meeting's notes — the honest, useful action. */}
 
         {/* Link to meeting — required, since this is the save target */}
-        <Field label="Link to Meeting" htmlFor="meeting-notes-link" noContainer>
+        <Field label="Link to meeting" htmlFor="meeting-notes-link" noContainer>
           <InlineSelect id="meeting-notes-link"
             value={meetingId}
             options={[
@@ -315,7 +314,7 @@ function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: 
         </Field>
 
         {/* Input area */}
-        <Field label="Paste Transcript" htmlFor="meeting-notes-transcript" noContainer>
+        <Field label="Paste transcript" htmlFor="meeting-notes-transcript" noContainer>
           <textarea
             id="meeting-notes-transcript"
             value={transcript}

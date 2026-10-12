@@ -3,7 +3,7 @@ import { ArrowLeft, ExternalLink, FolderOpen } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { usePublications, useLinkedProjects } from '../hooks/useApiData'
 import { usePageMeta } from '../hooks/usePageMeta'
-import Avatar from '../components/Avatar'
+import { FaceDisc } from '../components/today/skin'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -167,13 +167,7 @@ export default function PublicationDetail() {
                   style={{ textDecoration: 'none' }}
                 >
                   <div style={{ width: 28, height: 28 }}>
-                    <Avatar
-                      name={person.name}
-                      initials={person.initials}
-                      photoUrl={person.photoUrl}
-                      variant="ice"
-                      size="base-sm"
-                    />
+                    <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={28} />
                   </div>
                 </Link>
               ))}

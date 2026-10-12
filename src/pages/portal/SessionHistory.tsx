@@ -272,7 +272,6 @@ export default function SessionHistory() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<History {...ICON_PROPS} size={20} />}
         title="Session History"
         subtitle={stats ? `${filteredSessions.length}${searchTerm ? ` of ${stats.total_sessions}` : ''} sessions` : undefined}
       >

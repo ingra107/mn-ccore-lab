@@ -406,6 +406,8 @@
 .dark .member-hue {
   --id: oklch(0.74 0.07 var(--mh-h));
 }
+/* The member's own ring on a face (FaceDisc variant="hue"). */
+.tk-face.tk-hue{background:var(--mh-face);box-shadow:var(--mh-ring)}
 
 /* ── Z-Index Hierarchy ── */
 /* Predictable stacking: every z-index in the codebase references a token */
@@ -657,7 +659,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
 
 /* Field container — bordered home for every editable value */
 .field-container {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--field-edge);
   border-radius: var(--radius-lg);
   padding: var(--sp-sm) var(--sp-md);
   min-height: var(--el-input);
@@ -669,7 +671,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   width: 100%;
 }
 .field-container:hover {
-  border-color: var(--border-light);
+  border-color: var(--field-edge);
   background: var(--field-bg-hover);
 }
 .field-container:focus-within {
@@ -1769,13 +1771,6 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 
 /* ── Mobile UX improvements ── */
 @media (max-width: 640px) {
-  /* Filter pills — larger tap targets for touch. R4-P2-06: raise to
-     44px (WCAG 2.5.5 touch-target floor) from the prior 36px. */
-  .filter-pill {
-    min-height: 44px;
-    padding: 10px 12px;
-  }
-
   /* Data-table rows on mobile hit the same 44px floor so rows are
      tappable without zoom. Tasks, Projects, Manuscripts, Deadlines
      already have mobile stacked-card variants; this sets the height
@@ -1979,9 +1974,8 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 .done-box,
 .stage-dot,
 .pill-btn,
-.seg-btn,
 .tk .tk-hov,
-.tk button.tk-btn,
+button.tk-btn,
 .tk button.tk-pill,
 .tk button.tk-join,
 .tk button.tk-joinq,
@@ -1998,9 +1992,8 @@ button[aria-label="Deselect task"] {
 .done-box::before,
 .stage-dot::before,
 .pill-btn::before,
-.seg-btn::before,
 .tk .tk-hov::before,
-.tk button.tk-btn::before,
+button.tk-btn::before,
 .tk button.tk-pill::before,
 .tk button.tk-join::before,
 .tk button.tk-joinq::before,
@@ -2016,14 +2009,13 @@ button[aria-label="Deselect task"]::before {
   position: absolute;
   inset: -8px;
 }
-.tk-seg button::before,
-.seg-btn::before { inset: -12px 0; } /* segments touch side by side: extend vertically only */
+.tk-seg button::before { inset: -12px 0; } /* segments touch side by side: extend vertically only */
 @media (hover: none) {
   .done-box::before,
   .stage-dot::before,
   .pill-btn::before,
   .tk .tk-hov::before,
-  .tk button.tk-btn::before,
+  button.tk-btn::before,
   .tk button.tk-pill::before,
   .tk button.tk-join::before,
   .tk button.tk-joinq::before,
@@ -2230,6 +2222,8 @@ button[aria-label="Deselect task"]::before {
     /* Stronger borders in light mode (ink base — see --border-subtle) */
     --border-subtle: color-mix(in srgb, var(--task-ink) 20%, transparent);
     --border-default: color-mix(in srgb, var(--task-ink) 35%, transparent);
+    /* Text-field edge: 15% -> 40% of --ink (.dark redefines --ink, so one line). */
+    --field-edge: color-mix(in srgb, var(--ink) 40%, transparent);
   }
 
   .dark {
@@ -2445,8 +2439,11 @@ button[aria-label="Deselect task"]::before {
 }
 
 /* ══ Today skin (.tk) — ported from the approved reskin mockup ══
-   Every class is tk-prefixed so nothing here can leak onto other pages.
-   Modifiers are tk-prefixed too (tk-btn tk-ac). */
+   Every class is tk-prefixed. Most are scoped under `.tk` so they cannot leak
+   onto other pages; the shared pieces any page may draw (.tk-h1, .tk-titlerow,
+   .tk-date, .tk-seg, .tk-flt, .tk-fsel, .tk-btn, .tk-face, .tk-faces, .tk-pn)
+   are NOT scoped, and ui/ components rely on that. Modifiers are tk-prefixed
+   too (tk-btn tk-ac). */
 :root{--sk-rim:rgba(255,255,255,.9);--sk-amb:0 1px 2px color-mix(in srgb,var(--sk-t1) 5%,transparent);--sk-rim-ac:color-mix(in srgb,var(--job-accent) 25%,transparent);--sk-top:color-mix(in srgb,var(--sk-card) 97%,#000)}
 .dark{--sk-rim:rgba(255,255,255,.06);--sk-amb:0 10px 30px rgba(0,0,0,.35);--sk-top:color-mix(in srgb,var(--sk-card) 94%,#fff)}
 /* Card material (color back pick 1, Nick 2026-10-11): lit top edge, top-to-bottom
@@ -2478,20 +2475,20 @@ button[aria-label="Deselect task"]::before {
 .tk .tk-card:hover,.tk .tk-mc.tk-nowm{box-shadow:inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
 .tk .tk-tc.tk-urg{box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim),var(--sk-amb)}
 .tk .tk-tc.tk-urg:hover{box-shadow:inset 2px 0 0 var(--job-stale),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
-.tk .tk-btn.tk-pri,.tk .tk-btn.tk-ac,.tk .tk-join,.tk .tk-ck.tk-on{background:linear-gradient(180deg,color-mix(in srgb,var(--job-accent) 82%,#fff) 0%,var(--job-accent) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 2px rgba(0,0,0,.18)}
-.tk .tk-face{background:linear-gradient(180deg,color-mix(in srgb,var(--sk-face) 82%,#fff) 0%,var(--sk-face) 100%)}
+.tk-btn.tk-pri,.tk-btn.tk-ac,.tk .tk-join,.tk .tk-ck.tk-on{background:linear-gradient(180deg,color-mix(in srgb,var(--job-accent) 82%,#fff) 0%,var(--job-accent) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 2px rgba(0,0,0,.18)}
+.tk-face{background:linear-gradient(180deg,color-mix(in srgb,var(--sk-face) 82%,#fff) 0%,var(--sk-face) 100%)}
 .tk{color:var(--sk-t1);font-size:13px}
 .tk aside{border-left:1px solid var(--sk-line)}
-.tk .tk-titlerow{display:flex;align-items:flex-end;gap:10px 14px;flex-wrap:wrap}
-.tk h1{font:600 28px var(--font-display);letter-spacing:-.02em;margin:0}
-.tk .tk-date{font-size:13px;color:var(--sk-t3);white-space:nowrap;padding-bottom:4px}
-.tk .tk-btn{display:inline-flex;align-items:center;gap:6px;border-radius:var(--r-ctl);padding:6px 11px;font-size:12.5px;font-weight:500;color:var(--sk-t1);background:var(--sk-card);box-shadow:inset 0 0 0 1px var(--sk-line2);flex-shrink:0}
-.tk .tk-btn:hover{box-shadow:inset 0 0 0 1px var(--sk-t3)}
-.tk .tk-btn.tk-ac{background:var(--job-accent);color:var(--sk-ac-fg);box-shadow:none;font-variant-numeric:tabular-nums}
-.tk .tk-btn.tk-off{color:var(--sk-t3);cursor:not-allowed;background:transparent}
-.tk .tk-btn.tk-sm{padding:4px 9px;font-size:12px}
-.tk .tk-btn.tk-pri{background:var(--job-accent);color:var(--sk-ac-fg);box-shadow:none}
-.tk .tk-btn.tk-sel{box-shadow:inset 0 0 0 1.5px var(--job-accent);color:var(--job-accent)}
+.tk-titlerow{display:flex;align-items:flex-end;gap:10px 14px;flex-wrap:wrap}
+.tk-h1,.tk h1{font:600 28px var(--font-display);letter-spacing:-.02em;margin:0}
+.tk-date{font-size:13px;color:var(--sk-t3);white-space:nowrap;padding-bottom:4px}
+.tk-btn{display:inline-flex;align-items:center;gap:6px;border-radius:var(--r-ctl);padding:6px 11px;font-size:12.5px;font-weight:500;color:var(--sk-t1);background:var(--sk-card);box-shadow:inset 0 0 0 1px var(--sk-line2);flex-shrink:0}
+.tk-btn:hover{box-shadow:inset 0 0 0 1px var(--sk-t3)}
+.tk-btn.tk-ac{background:var(--job-accent);color:var(--sk-ac-fg);box-shadow:none;font-variant-numeric:tabular-nums}
+.tk-btn.tk-off{color:var(--sk-t3);cursor:not-allowed;background:transparent}
+.tk-btn.tk-sm{padding:4px 9px;font-size:12px}
+.tk-btn.tk-pri{background:var(--job-accent);color:var(--sk-ac-fg);box-shadow:none}
+.tk-btn.tk-sel{box-shadow:inset 0 0 0 1.5px var(--job-accent);color:var(--job-accent)}
 /* stat line */
 .tk .tk-stats{position:relative;display:flex;flex-wrap:wrap;gap:10px 22px;margin:14px 0 18px;padding-bottom:14px;border-bottom:1px solid var(--sk-line)}
 /* day progress: the divider under the stat line fills teal with done / (done + still planned) */
@@ -2538,9 +2535,27 @@ button[aria-label="Deselect task"]::before {
 .tk .tk-thread b{color:var(--sk-t1);font-weight:500}
 .tk .tk-err{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--sk-t3);margin:0 0 10px}
 .tk .tk-err button{color:var(--job-accent);text-decoration:underline;text-underline-offset:2px}
-.tk .tk-seg{display:inline-flex;background:var(--sk-panel);box-shadow:inset 0 0 0 1px var(--sk-line2);border-radius:var(--r-ctl);padding:2px}
-.tk .tk-seg button{padding:2px 9px;font-size:11.5px;color:var(--sk-t3);border-radius:6px}
-.tk .tk-seg button.tk-on{background:var(--sk-card);color:var(--sk-t1);font-weight:500;box-shadow:inset 0 0 0 1px var(--sk-line2)}
+.tk-seg{display:inline-flex;background:var(--sk-panel);box-shadow:inset 0 0 0 1px var(--sk-line2);border-radius:var(--r-ctl);padding:2px}
+.tk-seg button{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:2px 9px;font-size:11.5px;color:var(--sk-t3);border-radius:6px}
+.tk-seg.tk-seg-scroll{max-width:100%;min-width:0;overflow-x:auto;scrollbar-width:none}
+.tk-seg.tk-seg-scroll button{flex-shrink:0}
+.tk-seg button.tk-on{background:var(--sk-card);color:var(--sk-t1);font-weight:500;box-shadow:inset 0 0 0 1px var(--sk-line2)}
+/* Filter links (ui/FilterLinks): sentence-case text, active = ink + teal underline. */
+.tk-flt{display:flex;flex-wrap:wrap;align-items:center;gap:2px 16px;min-width:0}
+.tk-flt button{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:3px 0;font-size:12.5px;color:var(--sk-t3);border-bottom:1.5px solid transparent;background:none;cursor:pointer}
+@media (max-width:767px){.tk-flt.tk-flt-scroll{flex-wrap:nowrap;max-width:100%;overflow-x:auto;scrollbar-width:none}.tk-flt.tk-flt-scroll::-webkit-scrollbar{display:none}.tk-flt.tk-flt-scroll button{flex-shrink:0}}
+.tk-flt button:hover{color:var(--sk-t1)}
+.tk-flt button[aria-pressed=true]{color:var(--sk-t1);font-weight:500;border-bottom-color:var(--job-accent)}
+.tk-flt button[data-tone=overdue]{color:var(--job-overdue)}
+.tk-flt button[data-tone=stale] .tk-cnt{color:var(--job-stale);font-weight:600}
+.tk-flt button:focus-visible,.tk-fsel button:focus-visible{outline:2px solid var(--job-accent);outline-offset:2px;border-radius:3px}
+.tk-flt .tk-cnt{font-size:11.5px}
+/* Dropdown filter trigger (Group: All v): a label and a value, no box. */
+.tk-fsel{position:relative;display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--sk-t3)}
+.tk-fsel button{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--sk-t1);background:none;cursor:pointer;padding:3px 0}
+.tk-fsel button[data-set=true]{color:var(--job-accent);font-weight:500}
+.tk-fsel .tk-caret{color:var(--sk-t3);font-size:9px}
+.tk-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px}
 .tk section.tk-blk{margin-bottom:18px}
 .tk .tk-stack{display:flex;flex-direction:column;gap:8px}
 /* task card */
@@ -2556,13 +2571,17 @@ html[data-density="compact"] .tk .tk-tch{padding:7px 12px 7px}
 .tk .tk-cs{font-size:11.5px;color:var(--sk-t3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tk .tk-cs a{color:inherit;text-decoration:none} .tk .tk-cs a:hover{color:var(--sk-t1);text-decoration:underline;text-underline-offset:2px}
 .tk .tk-tr-r{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.tk .tk-face{width:22px;height:22px;border-radius:50%;background:var(--sk-face);color:var(--sk-face-t);font-size:8.5px;font-weight:600;display:inline-grid;place-items:center;box-shadow:0 0 0 2px var(--sk-card);flex-shrink:0}
-.tk .tk-face.tk-lg{width:26px;height:26px;font-size:9.5px}
-.tk .tk-faces{display:inline-flex}
-.tk .tk-faces .tk-face+.tk-face{margin-left:-5px}
+.tk-face{width:22px;height:22px;border-radius:50%;background:var(--sk-face);color:var(--sk-face-t);font-size:8.5px;font-weight:600;display:inline-grid;place-items:center;box-shadow:0 0 0 2px var(--sk-card);flex-shrink:0}
+.tk-face.tk-lg{width:26px;height:26px;font-size:9.5px}
+.tk-faces{display:inline-flex}
+.tk-faces .tk-face+.tk-face{margin-left:-5px}
 /* A face with a profile photo (rules-ui-design 18): same circle and ring, the photo fills it. */
-.tk .tk-face.tk-photo{overflow:hidden;padding:0}
-.tk .tk-face.tk-photo img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+.tk-face.tk-fd{width:var(--fd);height:var(--fd);font-size:calc(var(--fd)*.36)}
+@media (max-width:639px){.tk-face.tk-fd{width:var(--fdm);height:var(--fdm);font-size:calc(var(--fdm)*.36)}}
+.tk-face.tk-brand{background:color-mix(in srgb,var(--job-brand) 8%,var(--sk-card));color:var(--job-brand);box-shadow:inset 0 0 0 2px var(--job-brand)}
+.tk-face.tk-brand.tk-photo{box-shadow:0 0 0 2px var(--job-brand)}
+.tk-face.tk-photo{overflow:hidden;padding:0}
+.tk-face.tk-photo img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
 .tk .tk-ft{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;padding:0 12px 10px 39px}
 html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-ft .tk-sp{flex:1}
@@ -2713,8 +2732,8 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-pill.tk-duepill{flex-shrink:0}
 .tk .tk-due-short{display:none}
 @media (max-width: 640px){.tk .tk-due-full{display:none}.tk .tk-due-short{display:inline}}
-.tk .tk-btn:disabled{cursor:not-allowed}
-.tk .tk-btn svg,.tk .tk-pill svg{vertical-align:-2px}
+.tk-btn:disabled{cursor:not-allowed}
+.tk-btn svg,.tk .tk-pill svg{vertical-align:-2px}
 .tk .tk-compose > div{min-width:0}
 .tk .tk-stack > div{min-width:0}
 .tk .tk-ph .tk-hintx{margin-left:2px}
@@ -2727,10 +2746,10 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-jump::placeholder{color:var(--sk-t3)}
 .tk .tk-qrow{display:block}
 .tk .tk-attn .tk-btn.tk-off{opacity:.7}
-.tk .tk-seg{align-items:center}
+.tk-seg{align-items:center}
 .tk .tk-balbar{align-items:stretch}
 @media (max-width:768px){
-  .tk .tk-titlerow{gap:8px 10px}
+  .tk-titlerow{gap:8px 10px}
   .tk .tk-stats{gap:10px 18px}
 }
 /* Today compose = one visible field (principle 20): its own edge and a
@@ -2771,9 +2790,9 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-mcr .tk-sp{flex:1;min-width:0}
 .tk .tk-tlab{width:52px;padding-right:6px;font-size:9.5px;box-sizing:border-box}
 /* people pattern: initials badge + first name */
-.tk .tk-face.tk-sm{width:16px;height:16px;font-size:7px;box-shadow:none}
-.tk .tk-face.tk-herm{background:color-mix(in srgb, var(--job-accent) 10%, transparent);color:var(--job-accent)}
-.tk .tk-pn{color:inherit}
+.tk-face.tk-sm{width:16px;height:16px;font-size:7px;box-shadow:none}
+.tk-face.tk-herm{background:color-mix(in srgb, var(--job-accent) 10%, transparent);color:var(--job-accent)}
+.tk-pn{color:inherit}
 .tk .tk-pill .tk-face{margin:0 1px 0 -1px}
 .tk .tk-pill .tk-pn{margin-left:2px}
 .tk .tk-feedl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sk-t2);padding:4px 0;min-width:0}
@@ -3026,7 +3045,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk .tk-dec{display:flex;align-items:flex-start;gap:10px;padding:9px 0;font-size:13.5px;line-height:1.5;color:var(--sk-t1)}
 .tk .tk-dec+.tk-dec{border-top:1px solid var(--sk-line)}
 .tk .tk-dec .tk-dia{color:var(--sk-t3);font-size:12px;line-height:1.5;margin-top:-1px;flex-shrink:0}
-.tk .tk-pn.tk-dim{color:var(--sk-t3)}
+.tk-pn.tk-dim{color:var(--sk-t3)}
 /* On the full meeting page the Decisions panel is already the card: one surface, rows only. */
 .tk .tk-decs.tk-flat{padding:0}
 
@@ -3250,3 +3269,12 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
 .cal-today-lbl{margin-left:6px;font-size:10px;font-weight:600;color:var(--job-accent)}
 .pg-hero.pg-hero-zero .pg-hero-n{opacity:.45;color:var(--sk-t3)}
 .pg-hb.pg-hb-gap{margin-bottom:10px}
+
+/* Touch: filter links, dropdown triggers and scrolling toggles reach 44px under the
+   same condition as .touch-tall. min-height, not a ::before overhang: the scrolling
+   strips (overflow-x:auto) clip anything that hangs outside them. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) and (min-width: 769px) {
+  .tk-flt button,
+  .tk-fsel button,
+  .tk-seg.tk-seg-scroll button { min-height: 44px; }
+}

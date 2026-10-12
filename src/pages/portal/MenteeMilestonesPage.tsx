@@ -1,13 +1,13 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { GraduationCap, Plus, ChevronDown, ChevronRight, X, Check, AlertTriangle } from 'lucide-react'
+import { Plus, ChevronDown, ChevronRight, X, Check, AlertTriangle } from 'lucide-react'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import EmptyStateArt from '../../components/EmptyStateArt'
-import Avatar from '../../components/Avatar'
+import { FaceDisc } from '../../components/today/skin'
 import InlineSelect from '../../components/InlineSelect'
 import Field from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
@@ -191,7 +191,6 @@ export default function MenteeMilestonesPage() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<GraduationCap {...ICON_PROPS} size={20} />}
         title="Mentee Milestones"
         subtitle={(() => {
           // R4-P2-05: reconcile subtitle with the table. When a filter is
@@ -289,13 +288,7 @@ export default function MenteeMilestonesPage() {
                 whileHover={{ scale: 1.01 }}
               >
                 <div style={{ width: 40, height: 40, flexShrink: 0 }}>
-                  <Avatar
-                    name={person.name}
-                    initials={person.initials}
-                    photoUrl={person.photoUrl}
-                    variant="ice"
-                    size="base-xl"
-                  />
+                  <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={40} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -531,13 +524,7 @@ function MenteeGroup({
           <ChevronRight {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         )}
         <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-          <Avatar
-            name={person.name}
-            initials={person.initials}
-            photoUrl={person.photoUrl}
-            variant="ice"
-            size="xs"
-          />
+          <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} />
         </div>
         <span
           style={{
@@ -648,13 +635,7 @@ function MilestoneRow({
         {/* Mentee */}
         <div className="flex items-center gap-1.5">
           <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-            <Avatar
-              name={person.name}
-              initials={person.initials}
-              photoUrl={person.photoUrl}
-              variant="ice"
-              size="xs"
-            />
+            <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} />
           </div>
           <span style={{ fontSize: '12px', color: 'var(--slate)' }}>
             {person.name.split(' ')[1] || person.name}
@@ -760,13 +741,7 @@ function MilestoneRow({
             {getTypeLabel(item.milestone_type)}
           </span>
           <div style={{ width: 18, height: 18, flexShrink: 0 }}>
-            <Avatar
-              name={person.name}
-              initials={person.initials}
-              photoUrl={person.photoUrl}
-              variant="ice"
-              size="sm-icon"
-            />
+            <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={18} />
           </div>
           {/* P3-5: status edit works on touch — same shared editor as desktop.
               stopPropagation so tapping the control doesn't toggle row expand. */}
@@ -947,7 +922,7 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
           </Field>
 
           {/* Type */}
-          <Field label="Milestone Type" htmlFor="mentee-milestone-type" noContainer>
+          <Field label="Milestone type" htmlFor="mentee-milestone-type" noContainer>
             <InlineSelect id="mentee-milestone-type"
               value={milestoneType}
               options={MILESTONE_TYPES}
@@ -981,7 +956,7 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
           </Field>
 
           {/* Due Date */}
-          <Field label="Due Date" htmlFor="mentee-milestone-due" noContainer>
+          <Field label="Due date" htmlFor="mentee-milestone-due" noContainer>
             <input
               id="mentee-milestone-due"
               type="date"

@@ -34,9 +34,8 @@ interface ViewOption {
 
 interface DataPageProps {
   // ── Header ──
-  icon?: ReactNode
   title: string
-  /** Live count badge next to the title. */
+  /** Live count, muted, next to the title. */
   count?: number
   /** The page's one telling number beside the title (PageHeader `hero`). */
   hero?: HeroNumberProps
@@ -88,7 +87,6 @@ interface DataPageProps {
 }
 
 export default function DataPage({
-  icon,
   title,
   count,
   hero,
@@ -142,7 +140,7 @@ export default function DataPage({
         {/* Header + controls share the body's --col-main cap so their right
             edge lines up with the table (wideBody pages keep the full band). */}
         <div style={wideBody ? undefined : { maxWidth: 'var(--col-main)' }}>
-        <PageHeader icon={icon} title={title} count={count} hero={hero} subtitle={subtitle} actions={actions}>
+        <PageHeader title={title} count={count} hero={hero} subtitle={subtitle} actions={actions}>
           {showControls && (
             <TableControls
               views={views}

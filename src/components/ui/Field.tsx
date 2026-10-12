@@ -11,31 +11,21 @@ export interface FieldProps {
   labelId?: string
   children: React.ReactNode
   noContainer?: boolean
-  /**
-   * Label scale. Modal forms split into two intentional sizes:
-   *   'label' (default) → --text-label (11px), the standard form-field label.
-   *   'micro'           → --text-micro (10px) + 0.06em tracking + 0.85 opacity,
-   *                       the denser label used by surfaces like the Decision
-   *                       modal. Keeping it a variant (not a hard-coded 10px in
-   *                       each modal) lets those surfaces adopt Field without a
-   *                       visual shift.
-   */
-  size?: 'label' | 'micro'
 }
 
 /**
  * Shared labeled-field wrapper.
  *
  * Codifies the dominant form-field pattern across modal forms:
- *   - uppercase label (--slate / --weight-ui) with optional required '*'
+ *   - sentence-case label (12px, 500, --sk-t2: Today's small-label voice) with
+ *     optional required '*'. There is no uppercase or micro variant.
  *   - children wrapped in a div.field-container (reuses existing CSS class) OR bare (noContainer)
  *   - optional hint line below
  *
  * Design tokens are baked in — never literal px.
  * Both light + dark themes work via theme-aware CSS custom properties.
  */
-export default function Field({ label, required, hint, htmlFor, labelId, children, noContainer, size = 'label' }: FieldProps) {
-  const micro = size === 'micro'
+export default function Field({ label, required, hint, htmlFor, labelId, children, noContainer }: FieldProps) {
   return (
     <div>
       {label && (
@@ -44,13 +34,10 @@ export default function Field({ label, required, hint, htmlFor, labelId, childre
           id={labelId}
           style={{
             display: 'block',
-            fontSize: micro ? 'var(--text-micro)' : 'var(--text-label)',
-            fontWeight: 'var(--weight-ui)',
-            color: 'var(--slate)',
-            opacity: micro ? 0.85 : undefined,
+            fontSize: 12,
+            fontWeight: 500,
+            color: 'var(--sk-t2)',
             marginBottom: 'var(--sp-xs)',
-            textTransform: 'uppercase',
-            letterSpacing: micro ? '0.06em' : '0.04em',
           }}
         >
           {label}

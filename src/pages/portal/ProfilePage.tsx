@@ -9,11 +9,11 @@ import { Navigate, Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTeamRaw } from '../../hooks/useTeamRaw'
-import { User, Save, Calendar as CalendarIcon, Settings as SettingsIcon, ExternalLink } from 'lucide-react'
+import { Save, Calendar as CalendarIcon, Settings as SettingsIcon, ExternalLink } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTeam } from '../../hooks/useApiData'
 import PageHeader from '../../components/PageHeader'
-import Avatar from '../../components/Avatar'
+import { FaceDisc } from '../../components/today/skin'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -108,7 +108,7 @@ export default function ProfilePage() {
   if (!slug) {
     return (
       <div className="content-container">
-        <PageHeader icon={<User {...ICON_PROPS} size={20} />} title="Profile" subtitle="Sign in to view your profile" />
+        <PageHeader title="Profile" subtitle="Sign in to view your profile" />
       </div>
     )
   }
@@ -116,7 +116,7 @@ export default function ProfilePage() {
   if (!member || !rawRow) {
     return (
       <div className="content-container">
-        <PageHeader icon={<User {...ICON_PROPS} size={20} />} title="Profile" subtitle="No profile yet" />
+        <PageHeader title="Profile" subtitle="No profile yet" />
         <p className="text-sm" style={{ color: 'var(--muted)' }}>
           Your team_members row hasn't been provisioned yet. Visit any portal page to trigger auto-create,
           then return here.
@@ -131,20 +131,14 @@ export default function ProfilePage() {
 
   return (
     <div className="content-container">
-      <PageHeader icon={<User {...ICON_PROPS} size={20} />} title="My Profile" subtitle="Update your profile and connect your calendar." />
+      <PageHeader title="My Profile" subtitle="Update your profile and connect your calendar." />
 
       {/* Identity card — read-only avatar + name + email */}
       <div
         className="flex items-start gap-4 mb-6 p-4 rounded-lg border"
         style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}
       >
-        <Avatar
-          name={m.name}
-          initials={m.initials}
-          photoUrl={m.photoUrl}
-          size="lg"
-          variant="ice"
-        />
+        <FaceDisc label={m.name} initials={m.initials} photo={m.photoUrl} px={128} />
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>{m.name}</h2>
           <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>{user?.email}</p>

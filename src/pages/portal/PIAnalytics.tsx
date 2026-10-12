@@ -12,7 +12,6 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import {
-  Shield,
   Target,
   Users,
   BookOpen,
@@ -38,7 +37,7 @@ import { CardSkeleton } from '../../components/LoadingSkeleton'
 import QueryState from '../../components/QueryState'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { getPersonInfo } from '../../data/team'
-import Avatar from '../../components/Avatar'
+import { FaceDisc } from '../../components/today/skin'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
 import LabPulseSection from '../../components/labpulse/LabPulseSection'
@@ -354,7 +353,6 @@ export default function PIAnalytics() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<Shield {...ICON_PROPS} size={20} />}
         title="PI Dashboard"
         subtitle="Evidence-based leadership metrics"
       >
@@ -615,13 +613,7 @@ export default function PIAnalytics() {
                       style={{ textDecoration: 'none' }}
                     >
                       <div style={{ width: 24, height: 24, flexShrink: 0 }}>
-                        <Avatar
-                          name={person.name}
-                          initials={person.initials}
-                          photoUrl={person.photoUrl}
-                          variant="ice"
-                          size="tight"
-                        />
+                        <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={24} />
                       </div>
                       <span
                         className="text-xs w-28 truncate"
@@ -715,13 +707,7 @@ export default function PIAnalytics() {
                         <td className="py-2.5">
                           <div className="flex items-center gap-2">
                             <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-                              <Avatar
-                                name={person.name}
-                                initials={person.initials}
-                                photoUrl={person.photoUrl}
-                                variant="gold"
-                                size="xs"
-                              />
+                              <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} variant="brand" />
                             </div>
                             <span className="text-sm" style={{ color: 'var(--ink)' }}>
                               {mentee.name}

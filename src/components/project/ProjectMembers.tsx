@@ -13,7 +13,7 @@
 import { useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Users, X } from 'lucide-react'
-import Avatar from '../Avatar'
+import { FaceDisc } from '../today/skin'
 import GhostSelect, { type GhostSelectOption } from '../ui/GhostSelect'
 import { LABEL_STYLE, LABEL_ICON_COLOR } from '../ui/labelStyle'
 import { useUndoToast } from '../UndoToast'
@@ -111,7 +111,7 @@ export default function ProjectMembers({ projectRef, projectTitle }: ProjectMemb
                 className="inline-flex items-center gap-1.5 rounded-full pl-1 pr-2 py-1"
                 style={{ border: '1px solid var(--border-subtle)', fontSize: 'var(--value-size)', color: 'var(--ink)' }}
               >
-                <Avatar name={label} initials={memberInitials(label)} photoUrl={m.photo_url ?? undefined} slug={m.slug} size="tight" variant="ice" />
+                <FaceDisc label={label} initials={memberInitials(label)} photo={m.photo_url ?? undefined} px={24} hermes={m.slug === 'claude-ai'} />
                 <span>{label}</span>
                 {canRemoveMember(user, m.slug) && (
                   <button

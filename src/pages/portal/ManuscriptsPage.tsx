@@ -15,12 +15,13 @@ import {
 } from '@dnd-kit/core'
 import { InputSafeKeyboardSensor, InputSafePointerSensor } from '../../lib/dndSensors'
 import DataPage from '../../components/DataPage'
-import Avatar from '../../components/Avatar'
+import { FaceDisc } from '../../components/today/skin'
 import CreateProjectModal from '../../components/CreateProjectModal'
 import { useProjects, useTasks, useManuscriptsAttention, useAllProjectPublications } from '../../hooks/useApiData'
 import { useCreateProject, useUpdateProjectFields } from '../../hooks/useMutations'
 import InlineSelect from '../../components/InlineSelect'
 import CategoryIcon from '../../components/CategoryIcon'
+import FilterLinks from '../../components/ui/FilterLinks'
 import { useUndoToast } from '../../components/UndoToast'
 import { getPersonInfo } from '../../data/team'
 import { displayName } from '../../lib/nameUtils'
@@ -348,57 +349,21 @@ export default function ManuscriptsPage() {
   )
 
   const manuscriptCategoryPills = (
-    /* GH #39: category quick-filter pills. URL-synced so saved views capture state. */
-    <div
-      role="tablist"
-      aria-label="Filter manuscripts by category"
-      className="flex flex-wrap items-center"
-      style={{ gap: '6px', padding: 'var(--sp-sm) 0 var(--sp-md)' }}
-    >
-      {[
-        { value: '', label: 'All' },
-        ...CATEGORY_OPTIONS,
-      ].map((opt) => {
-        const active = filterCategory === opt.value
-        return (
-          <button
-            key={opt.value || 'all'}
-            role="tab"
-            aria-selected={active}
-            aria-controls="manuscripts-table"
-            onClick={() => setFilterCategory(opt.value)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '4px 12px',
-              borderRadius: 'var(--radius-full)',
-              // N1b de-box: resting hairline -> transparent (borderless until
-              // active); 1px kept transparent so the active border adds no shift.
-              border: active ? '1px solid var(--job-accent)' : '1px solid transparent',
-              background: active ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-              color: active ? 'var(--job-accent)' : 'var(--slate)',
-              fontSize: '12px',
-              fontWeight: active ? 600 : 400,
-              cursor: 'pointer',
-              transition: 'all var(--duration-fast) ease-out',
-              opacity: active ? 1 : 0.85,
-            }}
-          >
-            {opt.value && (
-              <CategoryIcon category={opt.value} size={12} />
-            )}
-            {opt.label}
-          </button>
-        )
-      })}
+    /* GH #39: category quick-filter links. URL-synced so saved views capture state. */
+    <div style={{ padding: 'var(--sp-sm) 0 var(--sp-md)' }}>
+      <FilterLinks
+        ariaLabel="Filter manuscripts by category"
+        controls="manuscripts-table"
+        value={filterCategory}
+        onChange={setFilterCategory}
+        options={[{ value: '', label: 'All' }, ...CATEGORY_OPTIONS.map((o) => ({ value: o.value, label: o.label }))]}
+      />
     </div>
   )
 
   return (
     <>
       <DataPage
-        icon={<FileText {...ICON_PROPS} size={20} />}
         title="Manuscripts"
         actions={
           <button
@@ -436,48 +401,19 @@ export default function ManuscriptsPage() {
               onChange={setFilterPI}
               alwaysShowChevron
             />
-            {/* Stalled filter pill */}
-            <button
-              onClick={() => setFilterStalled(!filterStalled)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-full)',
-                // N1b de-box: resting hairline -> transparent (borderless until active).
-                border: filterStalled ? '1px solid var(--job-stale)' : '1px solid transparent',
-                background: filterStalled ? 'color-mix(in srgb, var(--job-stale) 6%, transparent)' : 'transparent',
-                color: filterStalled ? 'var(--job-stale)' : 'var(--slate)',
-                fontSize: '12px',
-                fontWeight: filterStalled ? 600 : 400,
-                cursor: 'pointer',
-                transition: 'all var(--duration-fast) ease-out',
-                opacity: filterStalled ? 1 : 0.85,
-              }}
-              title={`Manuscripts stalled in stage for more than ${stalledThresholdDays} days`}
-            >
-              Stalled
-              {stalledCount > 0 && (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minWidth: '16px',
-                    height: '16px',
-                    borderRadius: 'var(--radius-full)',
-                    background: 'var(--job-stale)',
-                    color: 'white',
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    padding: '0 4px',
-                  }}
-                >
-                  {stalledCount}
-                </span>
-              )}
-            </button>
+            {/* Stalled filter */}
+            <div className="tk-flt">
+              <button
+                type="button"
+                aria-pressed={filterStalled}
+                data-tone="stale"
+                onClick={() => setFilterStalled(!filterStalled)}
+                title={`Manuscripts stalled in stage for more than ${stalledThresholdDays} days`}
+              >
+                Stalled
+                {stalledCount > 0 && <span className="tk-cnt">{stalledCount}</span>}
+              </button>
+            </div>
           </>
         )}
         // The rows on screen, published included, so the header and the
@@ -492,7 +428,7 @@ export default function ManuscriptsPage() {
           <>
             {kindTabs.length > 1 && (
               <div className="tk" style={{ marginBottom: 'var(--sp-md)' }} data-testid="product-kind-tabs">
-                <SegmentedToggle skin="tk" ariaLabel="Product kind" options={kindTabs} value={kindTab} onChange={setKindTab} />
+                <SegmentedToggle scrollable ariaLabel="Product kind" options={kindTabs} value={kindTab} onChange={setKindTab} />
               </div>
             )}
             {/* T-29: Needs your attention — three-subgroup triage. */}
@@ -742,7 +678,7 @@ function PipelineCard({ project, dragging }: { project: Project; dragging?: bool
       </div>
       <div className="flex items-center gap-1.5" style={{ marginTop: '6px', marginLeft: '14px' }}>
         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
-          <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="2xs" variant="ice" />
+          <FaceDisc label={pi.name} initials={pi.initials} photo={pi.photoUrl} px={16} />
         </div>
         <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
           {project.pi ? displayName(project.pi, 'short') : pi.name}

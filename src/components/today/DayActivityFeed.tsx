@@ -60,14 +60,12 @@ export function DayActivityFeed({ dateKey }: { dateKey: string }) {
           <ActivityEntryItem
             key={entry.id}
             entry={entry}
-            badgePeople
             onDelete={canDeleteActivityEntry(user, entry.actor_slug) ? () => deleteEntry.mutate({ id: entry.id, dayKey: dateKey }) : undefined}
           />
         ) : (
           <ActivityThread
             key={entry.id}
             root={entry}
-            itemProps={{ badgePeople: true }}
             invalidateKeys={[['day-activity', dateKey]]}
             onDelete={(e) => deleteEntry.mutate({ id: e.id, dayKey: dateKey })}
             onDismiss={(e) => dismissThread.mutate({ id: e.id, hidden: !e.hidden_at, dayKey: dateKey })}

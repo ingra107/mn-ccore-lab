@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { GitBranch, Filter, RotateCcw } from 'lucide-react'
+import { Filter, RotateCcw } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
@@ -80,7 +80,6 @@ export default function DeadlineCascadePage() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<GitBranch {...ICON_PROPS} size={20} />}
         // P2-R2-07: page name was "Deadline Cascade" but until dependency
         // graph ships the actual content is grouped deadlines by project.
         // Renamed to match what's on screen.

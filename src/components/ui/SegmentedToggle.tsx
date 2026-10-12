@@ -1,15 +1,12 @@
 import type { ReactNode } from 'react'
 
 /**
- * SegmentedToggle — the ONE hairline-pill segmented control (locked de-box
- * canon, design-system.md "THE LOCKED PANEL STYLE" pt 3-4 + the N1b one-pill-
- * language convergence). Active = accent TINT + accent text, never a solid
- * fill or a --surface-* tray. Use this everywhere a 2-4 option view/mode
- * toggle is needed; do NOT re-mint the inline pill-group block (that divergence
- * is exactly what wave 5 + this extraction killed).
- *
- * Replaced the inline duplicates in TableControls, ProjectHealthCard,
- * IdeasPage, and the Dashboard view tabs (2026-06-13 session-close /simplify).
+ * SegmentedToggle — the ONE segmented control: Today's tray (.tk-seg), the
+ * active segment one surface step brighter. Use it wherever a 2-5 option
+ * view/mode toggle is needed. There is no second skin: the bordered-pill
+ * variants (accent tint, uppercase, tall) were deleted 2026-10-12 so a page
+ * cannot draw the pre-redesign toggle. .tk-seg works on any page, not only
+ * under .tk (src/index.css).
  */
 export interface SegmentedOption<T extends string> {
   value: T
@@ -21,111 +18,36 @@ interface SegmentedToggleProps<T extends string> {
   options: SegmentedOption<T>[]
   value: T
   onChange: (value: T) => void
-  /** teal = interactive default; gold = the Lab Overview identity. */
-  accent?: 'teal' | 'gold'
-  size?: 'sm' | 'md'
-  uppercase?: boolean
-  /** horizontal-scroll when options overflow (Dashboard tabs on mobile). */
+  /** horizontal-scroll when options overflow (a narrow pane, a phone). */
   scrollable?: boolean
-  /** stand-alone page-level tab row: give each tab a 44px touch floor */
-  tall?: boolean
   className?: string
   ariaLabel?: string
-  /** 'tk' = the Today skin's tray (.tk-seg: the active segment is the brighter
-   *  card step). Only valid under a .tk ancestor; default keeps the canon pill. */
-  skin?: 'tk'
 }
-
-const ACCENT = {
-  teal: { active: 'color-mix(in srgb, var(--job-accent) 10%, transparent)', text: 'var(--job-accent)' },
-  // gold text on the gold tint uses --gold-on-emphasis for AA (Rule 42).
-  gold: { active: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)', text: 'var(--sk-t2)' },
-} as const
-
-const SIZE = {
-  sm: { padding: '2px 8px', fontSize: 10 },
-  md: { padding: '4px 12px', fontSize: 12 },
-} as const
 
 export function SegmentedToggle<T extends string>({
   options,
   value,
   onChange,
-  accent = 'teal',
-  size = 'md',
-  uppercase = false,
   scrollable = false,
-  tall = false,
   className,
   ariaLabel,
-  skin,
 }: SegmentedToggleProps<T>) {
-  const a = ACCENT[accent]
-  const s = SIZE[size]
-  if (skin === 'tk') {
-    return (
-      <div role="tablist" aria-label={ariaLabel} className={`tk-seg${className ? ` ${className}` : ''}`}>
-        {options.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            role="tab"
-            aria-selected={value === opt.value}
-            onClick={() => onChange(opt.value)}
-            title={opt.label}
-            className={value === opt.value ? 'tk-on' : undefined}
-          >
-            {opt.icon}{opt.label}
-          </button>
-        ))}
-      </div>
-    )
-  }
+  const cls = ['tk-seg', scrollable ? 'tk-seg-scroll' : '', className ?? ''].filter(Boolean).join(' ')
   return (
-    <div
-      role="tablist"
-      aria-label={ariaLabel}
-      className={`flex items-center${className ? ` ${className}` : ''}`}
-      style={{
-        border: '1px solid var(--border-subtle)',
-        borderRadius: 999,
-        // A scrollable pill must be allowed to shrink to its container, or it
-        // never overflows itself and pushes the whole page sideways instead.
-        ...(scrollable ? { flexShrink: 1, minWidth: 0, maxWidth: '100%' } : { flexShrink: 0 }),
-        overflow: scrollable ? 'auto hidden' : 'hidden',
-      }}
-    >
-      {options.map((opt) => {
-        const active = value === opt.value
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(opt.value)}
-            title={opt.label}
-            className={`flex items-center gap-1.5 cursor-pointer${tall ? ' touch-tall' : ''}`}
-            style={{
-              padding: s.padding,
-              fontSize: s.fontSize,
-              fontWeight: active ? 600 : 500,
-              background: active ? a.active : 'transparent',
-              color: active ? a.text : 'var(--slate)',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-              transition: 'all var(--duration-fast)',
-              ...(uppercase ? { textTransform: 'uppercase' as const, letterSpacing: '0.05em' } : {}),
-            }}
-          >
-            {opt.icon && (
-              <span style={{ display: 'flex', alignItems: 'center', color: 'inherit' }}>{opt.icon}</span>
-            )}
-            {opt.label}
-          </button>
-        )
-      })}
+    <div role="tablist" aria-label={ariaLabel} className={cls}>
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          role="tab"
+          aria-selected={value === opt.value}
+          onClick={() => onChange(opt.value)}
+          title={opt.label}
+          className={value === opt.value ? 'tk-on' : undefined}
+        >
+          {opt.icon}{opt.label}
+        </button>
+      ))}
     </div>
   )
 }

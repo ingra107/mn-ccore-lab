@@ -32,10 +32,6 @@ export interface ModalProps {
    */
   animated?: boolean
   /**
-   * Optional icon rendered to the left of the title in the modal header.
-   */
-  icon?: ReactNode
-  /**
    * Called on every keydown inside the panel. Use for caller-owned shortcuts
    * like Ctrl+Enter submit. Fires after escape/tab are handled internally.
    */
@@ -51,7 +47,6 @@ export default function Modal({
   footer,
   variant = 'responsive',
   animated = false,
-  icon,
   onExtraKeyDown,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
@@ -183,8 +178,10 @@ export default function Modal({
         aria-label={title}
         tabIndex={-1}
         style={{
-          background: 'var(--cream)',
-          border: '1px solid var(--border-subtle)',
+          // Stepped surface: the card step, one brighter than the page, with
+          // Today's hairline (--sk-line2) instead of a gray box edge.
+          background: 'var(--sk-card)',
+          border: '1px solid var(--sk-line2)',
           boxShadow: 'var(--shadow-elevated)',
           zIndex: 'var(--z-modal)' as unknown as number,
           display: 'flex',
@@ -201,17 +198,16 @@ export default function Modal({
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: 'var(--sp-md) var(--sp-lg)',
-            borderBottom: '1px solid var(--border-subtle)',
+            borderBottom: '1px solid var(--sk-line)',
             flexShrink: 0,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
-            {icon && <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>}
             <h2
               style={{
-                fontSize: 'var(--text-body)',
-                fontWeight: 'var(--weight-heading)' as unknown as number,
-                color: 'var(--ink)',
+                fontSize: 15,
+                fontWeight: 600,
+                color: 'var(--sk-t1)',
                 margin: 0,
               }}
             >
@@ -255,7 +251,7 @@ export default function Modal({
               justifyContent: 'flex-end',
               gap: 'var(--sp-sm)',
               padding: 'var(--sp-md) var(--sp-lg)',
-              borderTop: '1px solid var(--border-subtle)',
+              borderTop: '1px solid var(--sk-line)',
               flexShrink: 0,
             }}
           >

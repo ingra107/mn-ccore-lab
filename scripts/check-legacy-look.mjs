@@ -1,0 +1,187 @@
+#!/usr/bin/env node
+// check-legacy-look.mjs -- legacy-look ratchet (2026-10-12).
+//
+// Nick, 2026-10-12: "there are still parts of the hub that look like the prior
+// version before the modern redesign the other day." The redesign (Today's
+// skin: sentence-case section heads, the stepped --sk-* surfaces, hairline
+// panels, faces as photo-or-initials) reached the pages someone looked at and
+// missed the rest of the class. This gate counts the marks of the OLD look per
+// file against a committed baseline, the way check-color-jobs.mjs does for
+// color:
+//
+//   - a file whose count rises, or a new file with any count, FAILS, printing
+//     each file:line so the author sees what they added;
+//   - a count that falls passes, with a note to run --update and lock it in;
+//   - --update rewrites the baseline but REFUSES to raise any count. The
+//     baseline only goes down;
+//   - --init writes the first baseline and refuses when one exists.
+//
+// Counted, per file (each is its own metric, so a drop in one cannot pay for a
+// rise in another):
+//   uppercase   the word `uppercase` in code or CSS: an uppercase label
+//               (textTransform, the Tailwind class, text-transform). Section
+//               heads and field labels are sentence case.
+//   surface     var(--surface-N) / --surface-N: the pre-redesign gray tray
+//               ramp. Panels step through --sk-panel / --sk-card.
+//   metricCard  the MetricCard component (the stat tile): Today's stat line
+//               and HeroNumber replace it.
+//
+// Reported, never failing (a heuristic, so it cannot be a hard count):
+//   boxInBox    inline hairline borders (`1px solid var(--border-*)`): the
+//               box-in-box panel look. The top files print as a warning.
+//
+// The old PageHeader `icon` prop, the `Avatar` component, the bordered-pill
+// SegmentedToggle skins and the uppercase `Field` label are not counted:
+// they were deleted, so the old anatomy cannot be built (tsc fails first).
+
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { codeOnly } from './check-raw-wrangler-d1.mjs'
+import { walk } from './check-color-jobs.mjs'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const ROOT = path.resolve(__dirname, '..')
+export const BASELINE_PATH = path.join(__dirname, 'check-legacy-look.baseline.json')
+
+export const METRICS = {
+  uppercase: [/(?<![\w-])uppercase(?![\w-])/g],
+  surface: [/--surface-\d/g],
+  metricCard: [/\bMetricCard\b/g],
+}
+const WARN = { boxInBox: [/1px solid var\(--border-(?:subtle|strong|light)\)/g] }
+
+function stripCssComments(text) {
+  return text.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+}
+
+/** Every legacy-look mark in one file: { metric: [{ line, text }] }. */
+export function findMarks(relPath, text, table = METRICS) {
+  const isCss = relPath.endsWith('.css')
+  let code = isCss ? stripCssComments(text) : codeOnly(relPath, text)
+  // An import or re-export line names a component; it is not a use.
+  code = code.replace(/^\s*(?:import|export)\s[^;]*?from\s*['"][^'"]+['"];?/gms, (m) => m.replace(/[^\n]/g, ' '))
+  const lines = text.split('\n')
+  const out = {}
+  for (const [metric, patterns] of Object.entries(table)) {
+    for (const re of patterns) {
+      re.lastIndex = 0
+      let m
+      while ((m = re.exec(code)) !== null) {
+        const line = code.slice(0, m.index).split('\n').length
+        ;(out[metric] ??= []).push({ line, text: m[0], src: lines[line - 1]?.trim().slice(0, 140) ?? '' })
+      }
+    }
+  }
+  return out
+}
+
+/** Count marks per file for every scanned file under src/. */
+export function scan(root = ROOT, table = METRICS) {
+  const counts = {}
+  const marks = {}
+  for (const fp of walk(path.join(root, 'src'))) {
+    const rel = path.relative(root, fp).replace(/\\/g, '/')
+    const found = findMarks(rel, fs.readFileSync(fp, 'utf8'), table)
+    const c = Object.fromEntries(Object.entries(found).map(([k, v]) => [k, v.length]))
+    if (Object.keys(c).length) {
+      counts[rel] = c
+      marks[rel] = found
+    }
+  }
+  return { counts, marks }
+}
+
+/** Compare counts to a baseline, per file and per metric. */
+export function compare(counts, baseline) {
+  const rose = []
+  const fell = []
+  const files = new Set([...Object.keys(counts), ...Object.keys(baseline)])
+  for (const file of files) {
+    for (const metric of Object.keys(METRICS)) {
+      const now = counts[file]?.[metric] ?? 0
+      const was = baseline[file]?.[metric] ?? 0
+      if (now > was) rose.push({ file, metric, was, now })
+      else if (now < was) fell.push({ file, metric, was, now })
+    }
+  }
+  return { rose, fell }
+}
+
+/** The baseline only goes down: a lowered copy, or an error naming the rises. */
+export function lowerBaseline(counts, baseline) {
+  const { rose } = compare(counts, baseline)
+  if (rose.length) return { error: rose.map((r) => `${r.file} [${r.metric}]: ${r.was} -> ${r.now}`) }
+  const next = {}
+  for (const file of Object.keys(counts).sort()) next[file] = counts[file]
+  return { baseline: next }
+}
+
+function totals(counts) {
+  const t = Object.fromEntries(Object.keys(METRICS).map((m) => [m, 0]))
+  for (const c of Object.values(counts)) for (const [m, n] of Object.entries(c)) t[m] += n
+  return t
+}
+const fmt = (t) => Object.entries(t).map(([m, n]) => `${n} ${m}`).join(', ')
+
+function warnBoxes() {
+  const { counts } = scan(ROOT, WARN)
+  const rows = Object.entries(counts).map(([f, c]) => [f, c.boxInBox]).sort((a, b) => b[1] - a[1])
+  const total = rows.reduce((a, [, n]) => a + n, 0)
+  console.log(`check-legacy-look: WARN ${total} inline hairline border(s) (box-in-box heuristic) in ${rows.length} file(s); top:`)
+  for (const [f, n] of rows.slice(0, 8)) console.log(`  ${n}  ${f}`)
+}
+
+function main() {
+  const args = process.argv.slice(2)
+  const update = args.includes('--update')
+  const init = args.includes('--init')
+  const { counts, marks } = scan()
+  const total = totals(counts)
+
+  if (init || !fs.existsSync(BASELINE_PATH)) {
+    if (!init) {
+      console.error('check-legacy-look: no baseline at scripts/check-legacy-look.baseline.json; run with --init once.')
+      process.exit(1)
+    }
+    if (fs.existsSync(BASELINE_PATH)) {
+      console.error('check-legacy-look: --init refuses: a baseline already exists. Use --update (it only lowers).')
+      process.exit(1)
+    }
+    const sorted = Object.fromEntries(Object.keys(counts).sort().map((f) => [f, counts[f]]))
+    fs.writeFileSync(BASELINE_PATH, JSON.stringify(sorted, null, 2) + '\n')
+    console.log(`check-legacy-look: baseline written, ${fmt(total)} in ${Object.keys(counts).length} file(s).`)
+    return
+  }
+
+  const baseline = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'))
+
+  if (update) {
+    const r = lowerBaseline(counts, baseline)
+    if (r.error) {
+      console.error('check-legacy-look: --update refuses to RAISE the baseline. These counts rose:')
+      for (const e of r.error) console.error(`  ${e}`)
+      process.exit(1)
+    }
+    fs.writeFileSync(BASELINE_PATH, JSON.stringify(r.baseline, null, 2) + '\n')
+    console.log(`check-legacy-look: baseline lowered to ${fmt(total)} in ${Object.keys(counts).length} file(s).`)
+    return
+  }
+
+  const { rose, fell } = compare(counts, baseline)
+  if (rose.length) {
+    console.error('check-legacy-look: legacy-look marks ROSE. The redesign look is: sentence-case labels,')
+    console.error('  --sk-panel / --sk-card steps (not --surface-N), no MetricCard (use the stat line / HeroNumber).')
+    console.error('')
+    for (const r of rose) {
+      console.error(`  ${r.file} [${r.metric}]: ${r.was} -> ${r.now}`)
+      for (const l of marks[r.file][r.metric]) console.error(`    ${r.file}:${l.line}  ${l.src}`)
+    }
+    process.exit(1)
+  }
+  const note = fell.length ? `; ${fell.length} count(s) went down, run \`node scripts/check-legacy-look.mjs --update\` to lock it in` : ''
+  console.log(`check-legacy-look: ${fmt(total)}, none new${note}.`)
+  warnBoxes()
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) main()

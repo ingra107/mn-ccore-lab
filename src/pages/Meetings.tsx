@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
-import { Activity, Calendar, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale, Video } from 'lucide-react'
+import { Activity, Calendar, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
@@ -15,7 +15,7 @@ import { useToast } from '../hooks/useToast'
 import { directors, getAllMembers, getPersonInfo } from '../data/team'
 import { projects as projectOptions } from '../data/projects'
 import QuickAddForm, { QuickAddTrigger } from '../components/QuickAddForm'
-import Avatar from '../components/Avatar'
+import { FaceDisc } from '../components/today/skin'
 import { AttendeePeople } from '../components/meetings/Attendees'
 import MeetingListCard from '../components/meetings/MeetingListCard'
 import PageHeader from '../components/PageHeader'
@@ -670,24 +670,24 @@ export default function Meetings() {
       className={showAddAction ? 'basis-full' : ''}
     >
       <div className="space-y-3">
-        <Field label="Description" htmlFor="meeting-action-desc" size="micro" noContainer>
+        <Field label="Description" htmlFor="meeting-action-desc" noContainer>
           <input id="meeting-action-desc" type="text" value={newActionDesc} onChange={(e) => setNewActionDesc(e.target.value)} placeholder="What needs to be done?" style={inputStyle}
             onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--job-accent)' }}
             onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--sk-line2)' }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAddActionItem() }} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Assignee" size="micro" noContainer>
+          <Field label="Assignee" noContainer>
             <InlineAssigneePicker
               value={newActionAssignee}
               onChange={setNewActionAssignee}
             />
           </Field>
-          <Field label="Due Date (optional)" htmlFor="meeting-action-due" size="micro" noContainer>
+          <Field label="Due date (optional)" htmlFor="meeting-action-due" noContainer>
             <input id="meeting-action-due" type="date" value={newActionDueDate} onChange={(e) => setNewActionDueDate(e.target.value)} style={inputStyle} />
           </Field>
         </div>
-        <Field label="Project (optional)" size="micro" noContainer>
+        <Field label="Project (optional)" noContainer>
           <InlineSelect
             value={newActionProject}
             options={[{ value: '', label: 'No project link' }, ...projectOptions.map((p) => ({ value: p.title, label: p.title }))]}
@@ -712,7 +712,6 @@ export default function Meetings() {
       <div className="content-container" style={{ paddingTop: '1.5rem', paddingBottom: '1rem', flexShrink: 0, width: '100%' }}>
         <div ref={headerRef} className="fade-in-up">
           <PageHeader
-            icon={<Video {...ICON_PROPS} size={18} />}
             title="Meeting Hub"
             subtitle={pageSubtitle || undefined}
             count={meetings.length}
@@ -748,16 +747,16 @@ export default function Meetings() {
                 >
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
-                      <Field label="Date" htmlFor="new-meeting-date" size="micro" noContainer>
+                      <Field label="Date" htmlFor="new-meeting-date" noContainer>
                         <input id="new-meeting-date" type="date" value={newMeetingDate} onChange={(e) => setNewMeetingDate(e.target.value)} style={inputStyle} />
                       </Field>
-                      <Field label="Title" htmlFor="new-meeting-title" size="micro" noContainer>
+                      <Field label="Title" htmlFor="new-meeting-title" noContainer>
                         <input id="new-meeting-title" type="text" value={newMeetingTitle} onChange={(e) => setNewMeetingTitle(e.target.value)} placeholder="Meeting title" style={inputStyle}
                           onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--job-accent)' }}
                           onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--sk-line2)' }} />
                       </Field>
                     </div>
-                    <Field label="Attendees" size="micro" noContainer>
+                    <Field label="Attendees" noContainer>
                       <div className="flex flex-wrap gap-2">
                         {TEAM_OPTIONS.slice(0, 10).map((m) => {
                           const selected = newMeetingAttendees.includes(m.slug)
@@ -765,14 +764,14 @@ export default function Meetings() {
                             <button key={m.slug} type="button" onClick={() => toggleAttendee(m.slug)}
                               className="pill-btn cursor-pointer inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs"
                               style={{ fontSize: 'var(--label-size)', background: selected ? 'color-mix(in srgb, var(--job-accent) 12%, transparent)' : 'var(--ice)', color: selected ? 'var(--ink)' : 'var(--slate)', border: selected ? '1px solid var(--job-accent)' : '1px solid var(--sk-line2)', transition: 'all 0.15s ease' }}>
-                              <div style={{ width: 16, height: 16 }}><Avatar name={m.name} initials={m.initials} photoUrl={m.photoUrl} variant="ice" size="2xs" /></div>
+                              <div style={{ width: 16, height: 16 }}><FaceDisc label={m.name} initials={m.initials} photo={m.photoUrl} px={16} /></div>
                               {m.name.split(' ')[0]}
                             </button>
                           )
                         })}
                       </div>
                     </Field>
-                    <Field label="Agenda" size="micro" noContainer>
+                    <Field label="Agenda" noContainer>
                       <div className="space-y-2">
                         {newMeetingAgenda.map((item, i) => (
                           <div key={i} className="flex items-center gap-2">
@@ -854,8 +853,6 @@ export default function Meetings() {
               options={FILTER_OPTIONS.map((f) => ({ value: f.key, label: f.label }))}
               value={filter}
               onChange={setFilter}
-              accent="teal"
-              size="sm"
               ariaLabel="Filter meetings"
               scrollable
             />

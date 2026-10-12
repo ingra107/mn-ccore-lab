@@ -36,6 +36,22 @@ Nick's explicit OK.
 10. **Group related things by proximity.** Place related elements close together (action row near
     the title; expand control near its block).
 
+### Shared pieces of the redesign look (2026-10-12)
+
+One component per job, no second variant. The old forms are deleted, not deprecated.
+
+| Job | Use | Gone |
+|-----|-----|------|
+| Page title | `PageHeader`: 28px/600 display title (`.tk-h1`), muted count or note beside it (`.tk-date`), no icon, no count pill | the `icon` prop |
+| View switch (2-5 options) | `ui/SegmentedToggle`: Today's tray (`.tk-seg`) | the bordered-pill skins (`accent`, `size`, `uppercase`, `tall`, `skin`) |
+| Filter row | `ui/FilterLinks`: sentence-case links, active = ink + teal underline (`.tk-flt`); dropdown triggers `.tk-fsel` | per-page bordered `rounded-full` pills |
+| Small action button | `.tk-btn` (`.tk-sm`, `.tk-sel`) | inline-styled pill buttons |
+| Modal + form field | `ui/Modal` (card step, `--sk-line2` hairline), `ui/Field` (12px sentence-case label, `.field-container` on `--field-edge`) | uppercase and `size="micro"` labels, the Modal `icon` prop |
+| A person | `FaceDisc` / `Face` / `Person` in `components/today/skin.tsx`: photo, else initials; with the first name, never a slug. `px` for profile sizes | the `Avatar` component |
+
+The ratchet `scripts/check-legacy-look.mjs` (`npm run lint:legacy-look`, in `gate:deploy`) counts uppercase labels,
+`--surface-N` and `MetricCard` per file; counts only go down. Inline hairline borders (box-in-box) print as a warning.
+
 ---
 
 ## Animation Timing (5 durations + 2 easings)

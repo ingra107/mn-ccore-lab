@@ -15,9 +15,10 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
+import FilterLinks from '../../components/ui/FilterLinks'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
-import Avatar from '../../components/Avatar'
+import { FaceDisc } from '../../components/today/skin'
 import InlineSelect from '../../components/InlineSelect'
 import { Button } from '../../components/ui/Button'
 import { useDecisions, useDecisionsForReview, useDecisionTags } from '../../hooks/useApiData'
@@ -300,13 +301,7 @@ function ReviewCard({
         <div className="flex items-center gap-3 mt-2">
           {person && (
             <span className="flex items-center gap-1.5">
-              <Avatar
-                name={person.name}
-                initials={person.initials}
-                photoUrl={person.photoUrl}
-                size="xs"
-                variant="gold"
-              />
+              <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} variant="brand" />
               <span style={{ fontSize: 'var(--text-label)', color: 'var(--slate)' }}>
                 {person.name.split(' ')[0]}
               </span>
@@ -571,13 +566,7 @@ function DecisionRowItem({
         >
           {person ? (
             <>
-              <Avatar
-                name={person.name}
-                initials={person.initials}
-                photoUrl={person.photoUrl}
-                size="xs"
-                variant="gold"
-              />
+              <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} variant="brand" />
               <span
                 style={{
                   fontSize: 'var(--text-small)',
@@ -958,7 +947,6 @@ export default function DecisionsPage() {
   return (
     <div className="content-container">
       <PageHeader
-        icon={<Scale {...ICON_PROPS} size={20} />}
         title="Decision Log"
         subtitle={`${pendingCount} pending review, ${recordedCount} with outcomes`}
         count={allDecisions.length}
@@ -1038,36 +1026,17 @@ export default function DecisionsPage() {
       >
         {/* Filter bar: stable minHeight prevents reflow as tagCounts load */}
         <div className="flex items-center gap-3 flex-wrap" style={{ minHeight: '36px' }}>
-          <div className="flex items-center gap-2 flex-wrap">
-            {[
-              { key: '', label: 'All' },
-              { key: 'pending', label: 'Pending' },
-              { key: 'recorded', label: 'Recorded' },
-              { key: 'revisited', label: 'Revisited' },
-            ].map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setFilterStatus(f.key)}
-                className="px-3 py-1.5"
-                style={{
-                  fontSize: 'var(--text-small)',
-                  fontWeight: 500,
-                  color: filterStatus === f.key ? 'var(--job-accent)' : 'var(--slate)',
-                  backgroundColor:
-                    filterStatus === f.key ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                  border: `1px solid ${
-                    filterStatus === f.key
-                      ? 'color-mix(in srgb, var(--job-accent) 15%, transparent)'
-                      : 'var(--border-subtle)'
-                  }`,
-                  borderRadius: 'var(--radius-full)',
-                  cursor: 'pointer',
-                }}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+          <FilterLinks
+            ariaLabel="Decision status"
+            value={filterStatus}
+            onChange={setFilterStatus}
+            options={[
+              { value: '', label: 'All' },
+              { value: 'pending', label: 'Pending' },
+              { value: 'recorded', label: 'Recorded' },
+              { value: 'revisited', label: 'Revisited' },
+            ]}
+          />
           <input
             type="text"
             value={searchQuery}
@@ -1077,59 +1046,29 @@ export default function DecisionsPage() {
             style={{
               fontSize: 'var(--text-small)',
               color: 'var(--ink)',
-              border: '1px solid var(--border-subtle)',
+              border: '1px solid var(--field-edge)',
               borderRadius: 'var(--radius-lg)',
-              background: 'var(--surface-1)',
+              background: 'var(--sk-card)',
               minWidth: 220,
               flex: '0 1 260px',
             }}
           />
         </div>
         {tagCounts.length > 0 && allDecisions.length >= 15 && (
-          <div className="flex items-center gap-2 flex-wrap mt-2">
-            <Tag {...ICON_PROPS}
-              size={12}
-              style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
+          <div className="mt-2 flex items-center gap-3 flex-wrap">
+            <FilterLinks
+              ariaLabel="Decision tag"
+              value={filterTag}
+              onChange={(v) => setFilterTag(filterTag === v ? '' : v)}
+              options={tagCounts.slice(0, 12).map((tc) => ({ value: tc.tag, label: tc.tag, count: tc.count }))}
             />
             {filterTag && (
-              <button
-                onClick={() => setFilterTag('')}
-                className="px-2 py-0.5"
-                style={{
-                  fontSize: 'var(--text-micro)',
-                  fontWeight: 500,
-                  color: 'var(--sk-t2)',
-                  backgroundColor: 'transparent',
-                  border: '1px solid var(--sk-line2)',
-                  borderRadius: 'var(--radius-full)',
-                  cursor: 'pointer',
-                }}
-              >
-                Clear filter
-              </button>
+              <div className="tk-fsel">
+                <button type="button" onClick={() => setFilterTag('')} style={{ color: 'var(--sk-t3)', textDecoration: 'underline', textUnderlineOffset: 2 }}>
+                  Clear filter
+                </button>
+              </div>
             )}
-            {tagCounts.slice(0, 12).map((tc) => (
-              <button
-                key={tc.tag}
-                onClick={() => setFilterTag(filterTag === tc.tag ? '' : tc.tag)}
-                className="px-2 py-0.5"
-                style={{
-                  fontSize: 'var(--text-micro)',
-                  fontWeight: 500,
-                  color:
-                    filterTag === tc.tag ? 'var(--sk-card)' : 'var(--sk-t2)',
-                  backgroundColor:
-                    filterTag === tc.tag ? 'var(--job-accent)' : 'transparent',
-                  border: `1px solid ${
-                    filterTag === tc.tag ? 'var(--job-accent)' : 'var(--sk-line2)'
-                  }`,
-                  borderRadius: 'var(--radius-full)',
-                  cursor: 'pointer',
-                }}
-              >
-                {tc.tag} ({tc.count})
-              </button>
-            ))}
           </div>
         )}
       </PageHeader>

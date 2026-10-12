@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { HelpCircle, Plus, MessageSquare, Check, ChevronDown, ChevronUp, Search } from 'lucide-react'
+import { Plus, MessageSquare, Check, ChevronDown, ChevronUp, Search } from 'lucide-react'
 import SmartCompose from '../../components/SmartCompose'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CardSkeleton, TextSkeleton } from '../../components/LoadingSkeleton'
@@ -11,7 +11,7 @@ import EmptyStateArt from '../../components/EmptyStateArt'
 import Modal from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import ToggleButton from '../../components/ToggleButton'
-import Avatar from '../../components/Avatar'
+import { FaceDisc } from '../../components/today/skin'
 import InlineSelect from '../../components/InlineSelect'
 import Field from '../../components/ui/Field'
 import { ActivityEntryItem } from '../../components/activity/activityRender'
@@ -74,7 +74,6 @@ export default function AskTheLab() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<HelpCircle {...ICON_PROPS} size={20} />}
         title="Ask the Lab"
         subtitle={`${openCount} open question${openCount !== 1 ? 's' : ''}`}
         count={openCount}
@@ -195,7 +194,7 @@ function QuestionCard({
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <div className="flex items-center gap-1.5">
               <div style={{ width: 20, height: 20 }}>
-                <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
+                <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} />
               </div>
               <span className="text-[11px]" style={{ color: 'var(--slate)' }}>
                 {person.name}
@@ -502,7 +501,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
           />
         </Field>
 
-        <Field label="Related Project" htmlFor="ask-lab-related-project" noContainer>
+        <Field label="Related project" htmlFor="ask-lab-related-project" noContainer>
           <InlineSelect id="ask-lab-related-project"
             value={projectSlug}
             options={[

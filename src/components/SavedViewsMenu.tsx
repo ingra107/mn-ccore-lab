@@ -52,20 +52,12 @@ export default function SavedViewsMenu({ page, currentQuery, onApply }: Props) {
         onClick={() => setOpen((o) => !o)}
         aria-label="Saved views"
         aria-expanded={open ? 'true' : 'false'}
-        className="pill-btn inline-flex items-center gap-1.5 rounded-full"
-        style={{
-          fontSize: '11px',
-          fontWeight: 500,
-          padding: '3px 10px',
-          border: '1px solid var(--border-subtle)',
-          background: activeId ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'var(--surface-2)',
-          color: activeId ? 'var(--job-accent)' : 'var(--slate)',
-          cursor: 'pointer',
-        }}
+        className="tk-btn tk-sm"
+        style={activeId ? { color: 'var(--job-accent)' } : undefined}
       >
         <Bookmark {...ICON_PROPS} size={11} />
         {activeId ? views.find((v) => v.id === activeId)!.name : 'Views'}
-        {views.length > 0 && <span style={{ opacity: 0.7 }}>· {views.length}</span>}
+        {views.length > 0 && <span className="tk-cnt">{views.length}</span>}
       </button>
       {open && (
         <div

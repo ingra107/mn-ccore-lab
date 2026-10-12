@@ -4,18 +4,15 @@
 // /api/launch-log refuses anyone else), so a member sees a short note instead
 // of a list that could only ever be empty.
 
-import { Zap } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import LaunchLogPanel from '../../components/launches/LaunchLogPanel'
 import { useAuth } from '../../hooks/useAuth'
-import { ICON_PROPS } from '../../lib/iconProps'
 
 export default function LaunchesPage() {
   const { user } = useAuth()
   return (
     <div className="content-container">
       <PageHeader
-        icon={<Zap {...ICON_PROPS} size={20} />}
         title="My Launches"
         subtitle="Claude sessions you started from the Hub. Re-fire one that did not start."
       />

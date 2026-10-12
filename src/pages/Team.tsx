@@ -3,7 +3,7 @@ import { ArrowRight, X } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import SectionDivider from '../components/SectionDivider'
-import Avatar from '../components/Avatar'
+import { FaceDisc } from '../components/today/skin'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { directors, seniorMentors, facultyCollaborators, researchTeam } from '../data/team'
 import { grants } from '../data/grants'
@@ -214,13 +214,7 @@ export default function Team() {
                 <div className="flex items-start gap-4 sm:gap-5">
                   {/* Fixed-size wrapper reserves space before image loads — prevents avatar CLS */}
                   <div style={{ width: '80px', height: '80px', flexShrink: 0 }}>
-                    <Avatar
-                      name={director.name}
-                      initials={director.initials}
-                      photoUrl={director.photoUrl}
-                      size="md"
-                      variant="gold"
-                    />
+                    <FaceDisc label={director.name} initials={director.initials} photo={director.photoUrl} px={96} pxSm={80} variant="brand" />
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -340,13 +334,7 @@ export default function Team() {
                 <div className="flex items-center gap-4">
                   {/* Fixed-size wrapper prevents avatar CLS */}
                   <div style={{ width: '56px', height: '56px', flexShrink: 0 }}>
-                    <Avatar
-                      name={member.name}
-                      initials={member.initials}
-                      photoUrl={member.photoUrl}
-                      size="sm"
-                      variant="gold"
-                    />
+                    <FaceDisc label={member.name} initials={member.initials} photo={member.photoUrl} px={64} pxSm={56} variant="brand" />
                   </div>
                   <div>
                     <h3
@@ -431,13 +419,7 @@ export default function Team() {
               >
                 {/* Fixed-size wrapper prevents avatar CLS */}
                 <div style={{ width: '56px', height: '56px', margin: '0 auto var(--sp-sm)' }}>
-                  <Avatar
-                    name={member.name}
-                    initials={member.initials}
-                    photoUrl={member.photoUrl}
-                    size="sm"
-                    variant="ice"
-                  />
+                  <FaceDisc label={member.name} initials={member.initials} photo={member.photoUrl} px={64} pxSm={56} />
                 </div>
                 <h3
                   className="text-xs sm:text-sm font-normal mb-0.5 group-hover:text-[var(--job-brand)] transition-colors duration-200"
@@ -518,13 +500,7 @@ export default function Team() {
               >
                 {/* Fixed-size wrapper prevents avatar CLS */}
                 <div style={{ width: '56px', height: '56px', margin: '0 auto var(--sp-sm)' }}>
-                  <Avatar
-                    name={member.name}
-                    initials={member.initials}
-                    photoUrl={member.photoUrl}
-                    size="sm"
-                    variant="ice"
-                  />
+                  <FaceDisc label={member.name} initials={member.initials} photo={member.photoUrl} px={64} pxSm={56} />
                 </div>
                 <h3
                   className="text-xs sm:text-sm font-normal mb-0.5 group-hover:text-[var(--job-brand)] transition-colors duration-200"

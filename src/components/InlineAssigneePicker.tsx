@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react'
-import Avatar from './Avatar'
+import { FaceDisc } from './today/skin'
 import HoverCard from './HoverCard'
 import type { HoverCardData } from './HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
@@ -144,13 +144,7 @@ export default function InlineAssigneePicker({ value, onChange, compact, display
         }}
       >
         <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-          <Avatar
-            name={person.name}
-            initials={person.initials}
-            photoUrl={person.photoUrl}
-            variant="ice"
-            size="xs"
-          />
+          <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} />
         </div>
         {!compact && (
           <span style={{
@@ -239,13 +233,7 @@ export default function InlineAssigneePicker({ value, onChange, compact, display
                   }}
                 >
                   <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-                    <Avatar
-                      name={m.name}
-                      initials={m.initials}
-                      photoUrl={m.photoUrl}
-                      variant="ice"
-                      size="xs"
-                    />
+                    <FaceDisc label={m.name} initials={m.initials} photo={m.photoUrl} px={20} />
                   </div>
                   <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {m.name}

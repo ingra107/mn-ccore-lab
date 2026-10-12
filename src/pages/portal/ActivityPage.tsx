@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Activity as ActivityIcon } from 'lucide-react'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { useActivity } from '../../hooks/useApiData'
-import Avatar from '../../components/Avatar'
+import { Face } from '../../components/today/skin'
 import HoverCard from '../../components/HoverCard'
 import type { HoverCardData } from '../../components/HoverCard'
 import { useHoverCard } from '../../hooks/useHoverCard'
@@ -11,13 +11,15 @@ import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { getPersonInfo, getMemberBySlug, directors } from '../../data/team'
 import { formatRelativeTime, formatMediumDate, localDateKey } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
+import FilterLinks from '../../components/ui/FilterLinks'
+import { FILTER_ALL } from '../../components/ui/filterAll'
+import { fullNameReadable, firstNameFor } from '../../lib/personLabel'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import InlineSelect from '../../components/InlineSelect'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { isProductionVisibleActivity } from '../../lib/isProductionVisible'
-import { ICON_PROPS } from '../../lib/iconProps'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 const typeOptions = [
@@ -60,7 +62,7 @@ export default function ActivityPage() {
   // Unique actors for person filter
   const actors = useMemo(() => {
     const slugs = [...new Set(allActivity.map(a => a.actor).filter(isRealActor))]
-    return slugs.map(slug => ({ slug, name: getPersonInfo(slug).name })).sort((a, b) => a.name.localeCompare(b.name))
+    return slugs.map(slug => ({ slug, name: fullNameReadable(slug) })).sort((a, b) => a.name.localeCompare(b.name))
   }, [allActivity])
 
   // Most active person
@@ -74,7 +76,7 @@ export default function ActivityPage() {
     for (const [slug, count] of counts) {
       if (count > max) { best = slug; max = count }
     }
-    return best ? getPersonInfo(best).name.split(' ')[0] : null
+    return best ? firstNameFor(best) : null
   }, [allActivity])
 
   const filteredAll = useMemo(() => {
@@ -126,7 +128,6 @@ export default function ActivityPage() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<ActivityIcon {...ICON_PROPS} size={20} />}
         title="Activity"
         subtitle={`${filteredAll.length}${filterTypes.length > 0 || filterPerson ? ` of ${allActivity.length}` : ''} recent actions${mostActive ? ` · Most active: ${mostActive}` : ''}`}
         count={allActivity.length}
@@ -143,40 +144,18 @@ export default function ActivityPage() {
       />
 
       {/* T-23 per-type chip strip. Plain click = single; shift-click = multi. */}
-      <div className="mt-4 flex items-center gap-2 flex-wrap">
-        <button
-          onClick={() => setFilterTypes([])}
-          className="rounded-full px-3 py-1 text-xs border transition-colors"
-          style={{
-            borderColor: filterTypes.length === 0 ? 'var(--job-accent)' : 'var(--border-subtle)',
-            color: filterTypes.length === 0 ? 'var(--job-accent)' : 'var(--slate)',
-            background: filterTypes.length === 0 ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
-            cursor: 'pointer',
-          }}
-        >
-          All ({allActivity.length})
-        </button>
-        {typeOptions.filter(o => o.value !== '').map((o) => {
-          const count = countByType[o.value] || 0
-          if (count === 0) return null
-          const active = filterTypes.includes(o.value)
-          return (
-            <button
-              key={o.value}
-              onClick={(e) => toggleType(o.value, e.shiftKey)}
-              className="rounded-full px-3 py-1 text-xs border transition-colors"
-              style={{
-                borderColor: active ? 'var(--job-accent)' : 'var(--border-subtle)',
-                color: active ? 'var(--job-accent)' : 'var(--slate)',
-                background: active ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
-                cursor: 'pointer',
-              }}
-              title="Shift-click for multi-select"
-            >
-              {o.label} ({count})
-            </button>
-          )
-        })}
+      <div className="mt-4">
+        <FilterLinks
+          ariaLabel="Activity type"
+          value={filterTypes.length === 0 ? [FILTER_ALL] : filterTypes}
+          onChange={(v, e) => (v === FILTER_ALL ? setFilterTypes([]) : toggleType(v, e.shiftKey))}
+          options={[
+            { value: FILTER_ALL, label: 'All', count: allActivity.length, title: 'Shift-click a type for multi-select' },
+            ...typeOptions
+              .filter((o) => o.value !== '' && (countByType[o.value] || 0) > 0)
+              .map((o) => ({ value: o.value, label: o.label, count: countByType[o.value] || 0, title: 'Shift-click for multi-select' })),
+          ]}
+        />
       </div>
 
       {/* H-05: compressed activity feed — single row per entry. CLS fix (C8): reserve viewport height */}
@@ -254,7 +233,7 @@ export default function ActivityPage() {
                           </div>
                         )}
                         <p className="text-xs flex-1 min-w-0 truncate" style={{ color: 'var(--ink)', lineHeight: 1.35 }}>
-                          {person && <span style={{ fontWeight: 500 }}>{person.name} </span>}
+                          {person && <span style={{ fontWeight: 500 }}>{firstNameFor(item.actor!)} </span>}
                           {item.description}
                         </p>
                         {/* S5: drop the redundant type pill when a type filter is active. */}
@@ -293,8 +272,7 @@ export default function ActivityPage() {
           <div className="flex justify-center pt-1">
             <button
               onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-              className="rounded-full px-4 py-1.5 text-xs border transition-colors"
-              style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', background: 'transparent', cursor: 'pointer' }}
+              className="tk-btn"
             >
               Load more ({filteredAll.length - filtered.length} more)
             </button>
@@ -310,7 +288,7 @@ function ActivityAvatar({ slug }: { slug: string }) {
   const { triggerRef, isVisible, position, cardRef, cardHandlers, handlers } = useHoverCard()
   const dir = directors.find(d => d.slug === slug)
   const member = getMemberBySlug(slug)
-  const data: HoverCardData = { type: 'member', name: p.name, role: dir?.role || member?.role, photoUrl: p.photoUrl, initials: p.initials }
+  const data: HoverCardData = { type: 'member', name: fullNameReadable(slug), role: dir?.role || member?.role, photoUrl: p.photoUrl, initials: p.initials }
 
   return (
     <div
@@ -319,7 +297,7 @@ function ActivityAvatar({ slug }: { slug: string }) {
       onMouseEnter={handlers.onMouseEnter}
       onMouseLeave={handlers.onMouseLeave}
     >
-      <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="tight" variant="ice" />
+      <Face slug={slug} px={24} />
       <HoverCard data={data} isVisible={isVisible} position={position} cardRef={cardRef} cardHandlers={cardHandlers} />
     </div>
   )

@@ -46,7 +46,7 @@ import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { useAuth } from '../hooks/useAuth'
 import { useToast } from '../hooks/useToast'
 import { useUndoToast } from '../components/UndoToast'
-import Avatar from '../components/Avatar'
+import { FaceDisc } from '../components/today/skin'
 import WatchButton from '../components/WatchButton'
 import PresenceAvatars from '../components/PresenceAvatars'
 import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../hooks/usePresence'
@@ -621,7 +621,7 @@ export default function MeetingDetail() {
                 </span>
                 <div className="flex items-center gap-1.5">
                   <div style={{ width: 20, height: 20 }}>
-                    <Avatar name={facilitatorInfo.name} initials={facilitatorInfo.initials} photoUrl={facilitatorInfo.photoUrl} size="xs" variant="ice" />
+                    <FaceDisc label={facilitatorInfo.name} initials={facilitatorInfo.initials} photo={facilitatorInfo.photoUrl} px={20} />
                   </div>
                   <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)' }}>
                     {facilitatorInfo.name}
@@ -1187,7 +1187,7 @@ function AssigneeMeta({ slug }: { slug: string }) {
       style={{ flexShrink: 0 }}
     >
       <div style={{ width: 16, height: 16 }}>
-        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
+        <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
       </div>
       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.75 }}>{person.name.split(' ')[0]}</span>
       <HoverCard
@@ -1479,7 +1479,7 @@ function AttendanceSection({ attendees, updateMeta, canEdit }: { attendees: stri
                   opacity: present ? 1 : 0.85,
                 }}
               >
-                <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm-icon" />
+                <FaceDisc label={p.name} initials={p.initials} photo={p.photoUrl} px={18} />
                 {p.name.split(' ')[0]}
                 {present && <UserCheck {...ICON_PROPS} size={10} style={{ marginLeft: 'auto' }} />}
               </button>

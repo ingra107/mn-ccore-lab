@@ -1,43 +1,21 @@
-// ViewPicker — segmented pill that switches List / Lanes / Columns view.
-// Lives far-left of the filter row (CLAUDE.md Rule 60). Order + List-first
-// default per Nick (2026-06-10): "List | Lanes | Columns with List as default
-// when I come to the page."
-//
-// Extracted from src/pages/portal/UnifiedMyTasks.tsx.
+// ViewPicker — the view switch (List / Table / Lanes / Columns / Board).
+// Lives far-left of the filter row (CLAUDE.md Rule 60). List is the default
+// (Nick 2026-06-10). It is the shared SegmentedToggle, Today's tray.
 
-import { JOB_ACCENT, INK_MUTED, withAlpha, type ViewMode } from '../constants'
+import SegmentedToggle from '../../../components/ui/SegmentedToggle'
+import type { ViewMode } from '../constants'
+
+const ALL_VIEWS: { value: ViewMode; label: string }[] = [
+  { value: 'list', label: 'List' },
+  { value: 'table', label: 'Table' },
+  { value: 'lanes', label: 'Lanes' },
+  { value: 'columns', label: 'Columns' },
+  { value: 'board', label: 'Board' },
+]
 
 export function ViewPicker({ view, setView, isPhone = false }: { view: ViewMode; setView: (v: ViewMode) => void; isPhone?: boolean }) {
-  const allViews: { k: ViewMode; l: string; icon: string; desc: string }[] = [
-    { k: 'list',    l: 'List',    icon: '≡', desc: 'Task cards, the same as Today · keyboard-first' },
-    { k: 'table',   l: 'Table',   icon: '▤', desc: 'Dense table · click a header to sort' },
-    { k: 'lanes',   l: 'Lanes',   icon: '☰', desc: 'Stacked lanes · collapse and peek' },
-    { k: 'columns', l: 'Columns', icon: '⊞', desc: 'Kanban board · all groups side-by-side' },
-    { k: 'board',   l: 'Board',   icon: '▦', desc: 'Status board · drag to change status' },
-  ]
   // Columns and Board cannot render on a phone (index.tsx falls back to List for
   // deep links); do not offer choices that never show.
-  const views = isPhone ? allViews.filter((v) => v.k !== 'columns' && v.k !== 'board') : allViews
-  return (
-    // P2-6: pill height is content-driven (minHeight, not fixed) so the touch
-    // 44px button floor can grow the segments on coarse-pointer devices without
-    // clipping the labels inside a fixed 26px box. Desktop stays compact.
-    <div style={{ display: 'inline-flex', alignItems: 'stretch', border: '1px solid var(--border-strong)', borderRadius: 999, background: 'transparent', overflow: 'hidden', minHeight: 26 }}>
-      {views.map((v, i) => {
-        const active = view === v.k
-        return (
-          <button
-            key={v.k}
-            className="seg-btn"
-            onClick={() => setView(v.k)}
-            title={v.desc}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0 11px', fontSize: 11, fontFamily: 'inherit', cursor: 'pointer', border: 'none', background: active ? withAlpha(JOB_ACCENT, 15) : 'transparent', color: active ? JOB_ACCENT : INK_MUTED, fontWeight: active ? 600 : 500, borderRight: i < views.length - 1 ? '1px solid var(--border-subtle)' : 'none', whiteSpace: 'nowrap' }}
-          >
-            <span style={{ fontSize: 12 }}>{v.icon}</span>
-            {v.l}
-          </button>
-        )
-      })}
-    </div>
-  )
+  const options = isPhone ? ALL_VIEWS.filter((v) => v.value !== 'columns' && v.value !== 'board') : ALL_VIEWS
+  return <SegmentedToggle ariaLabel="View" options={options} value={view} onChange={setView} />
 }

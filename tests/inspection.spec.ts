@@ -212,7 +212,7 @@ test.describe('PAGE — Portal pages render without errors', () => {
     [P.meetingNotes, 'Meeting Transcripts', ['Meeting Transcripts', 'Upload Audio']],
     [P.activity, 'Activity', ['Activity']],
     [P.analytics, 'Analytics', ['Lab Analytics', 'Completed']],
-    [P.settings, 'Settings', ['Settings', 'Lab Name']],
+    [P.settings, 'Settings', ['Settings', 'Lab name']],
     [P.narratives, 'Narratives', ['Research Narratives']],
     [P.sessions, 'Session History', ['Session History']],
     [P.menteeMilestones, 'Mentee Milestones', ['Mentee Milestones']],

@@ -415,7 +415,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               alwaysShowChevron
             />
           </Field>
-          <Field label="Due Date" htmlFor="task-due-date" noContainer>
+          <Field label="Due date" htmlFor="task-due-date" noContainer>
             <input
               id="task-due-date"
               type="date"

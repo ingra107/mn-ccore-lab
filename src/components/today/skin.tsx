@@ -5,12 +5,20 @@
 
 import { initialsFor, firstNameFor, firstOf, initialsOfName, fullNameReadable, photoFor, slugForName } from '../../lib/personLabel'
 import { fullNameForSlug } from '../../lib/nameUtils'
+import HermesMark from '../HermesMark'
+import type React from 'react'
 
 /** THE face circle: the photo when there is one, else the initials
- *  (rules-ui-design 18). Same size and ring either way. Every face on Today,
- *  the drawers, rails, threads and meeting attendees renders through this, so
- *  no surface can show initials for someone who has a photo. */
-export function FaceDisc({ initials, photo, label, title, lg = false, sm = false, decorative = false }: {
+ *  (rules-ui-design 18). Same size and ring either way. Every face in the Hub
+ *  (Today, drawers, rails, threads, attendees, profile and directory) renders
+ *  through this, so no surface can show initials for someone who has a photo.
+ *  The old `Avatar` component was deleted into it (2026-10-12).
+ *
+ *  Sizes: `sm` 16px, default 22px, `lg` 26px, or any `px` (profile photos),
+ *  with `pxSm` the phone size. `variant="hue"` is the member's own hue (only
+ *  inside a `.member-hue` scope); `"brand"` is the public site's ring.
+ *  `hermes` draws the Hermes mark in place of a photo or initials. */
+export function FaceDisc({ initials, photo, label, title, lg = false, sm = false, decorative = false, px, pxSm, variant, hermes = false }: {
   initials: string
   photo?: string
   label: string
@@ -19,19 +27,26 @@ export function FaceDisc({ initials, photo, label, title, lg = false, sm = false
   sm?: boolean
   /** Hidden from screen readers (the name is printed beside it). */
   decorative?: boolean
+  px?: number
+  pxSm?: number
+  variant?: 'hue' | 'brand'
+  hermes?: boolean
 }) {
-  const cls = `tk-face${lg ? ' tk-lg' : ''}${sm ? ' tk-sm' : ''}${photo ? ' tk-photo' : ''}`
+  const cls = `tk-face${lg ? ' tk-lg' : ''}${sm ? ' tk-sm' : ''}${photo && !hermes ? ' tk-photo' : ''}${px ? ' tk-fd' : ''}${variant ? ` tk-${variant}` : ''}${hermes ? ' tk-herm' : ''}`
   const a11y = decorative ? { 'aria-hidden': true as const } : { role: 'img', 'aria-label': label }
+  const style = px ? ({ '--fd': `${px}px`, '--fdm': `${pxSm ?? px}px` } as React.CSSProperties) : undefined
   return (
-    <span className={cls} title={title ?? label} {...a11y}>
-      {photo ? <img src={photo} alt="" loading="lazy" decoding="async" /> : initials}
+    <span className={cls} style={style} title={title ?? label} {...a11y}>
+      {hermes
+        ? <HermesMark variant="icon" size={px ? Math.round(px * 0.7) : 14} pulse />
+        : photo ? <img src={photo} alt="" loading="lazy" decoding="async" /> : initials}
     </span>
   )
 }
 
 /** One person as a face. `lg` is the 26px corner face on a card; `sm` 16px. */
-export function Face({ slug, lg = false, sm = false }: { slug: string; lg?: boolean; sm?: boolean }) {
-  return <FaceDisc initials={initialsFor(slug)} photo={photoFor(slug)} label={fullNameReadable(slug)} lg={lg} sm={sm} />
+export function Face({ slug, lg = false, sm = false, px }: { slug: string; lg?: boolean; sm?: boolean; px?: number }) {
+  return <FaceDisc initials={initialsFor(slug)} photo={photoFor(slug)} label={fullNameReadable(slug)} lg={lg} sm={sm} px={px} hermes={slug === 'claude-ai'} />
 }
 
 /** A face from a bare display name (mentees and waiting-on arrive as names).

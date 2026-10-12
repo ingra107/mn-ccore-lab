@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   ArrowRightLeft, Check,
 } from 'lucide-react'
-import Avatar from '../../Avatar'
+import { FaceDisc } from '../../today/skin'
 import { getPersonInfo } from '../../../data/team'
 import { useTeam, useHandoffs } from '../../../hooks/useApiData'
 import { useCreateHandoff, useAcknowledgeHandoff } from '../../../hooks/useMutations'
@@ -38,7 +38,7 @@ function HandoffRecipientSelect({ value, onChange, members }: { value: string; o
         {person ? (
           <>
             <div style={{ width: 24, height: 24 }}>
-              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="tight" variant="ice" />
+              <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={24} />
             </div>
             <span className="text-sm" style={{ color: 'var(--ink)' }}>{person.name}</span>
           </>
@@ -62,7 +62,7 @@ function HandoffRecipientSelect({ value, onChange, members }: { value: string; o
                 style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
               >
                 <div style={{ width: 22, height: 22 }}>
-                  <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="sm-plus" variant="ice" />
+                  <FaceDisc label={mp.name} initials={mp.initials} photo={mp.photoUrl} px={22} />
                 </div>
                 <span className="flex-1">{m.name}</span>
                 {selected && <Check {...ICON_PROPS} size={14} style={{ color: 'var(--job-accent)' }} />}
@@ -268,14 +268,14 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                     <div className="flex items-center gap-1">
                       <div style={{ width: 20, height: 20 }}>
-                        <Avatar name={from.name} initials={from.initials} photoUrl={from.photoUrl} size="xs" variant="ice" />
+                        <FaceDisc label={from.name} initials={from.initials} photo={from.photoUrl} px={20} />
                       </div>
                       <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{from.name}</span>
                     </div>
                     <ArrowRightLeft {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t2)', opacity: 'var(--ink-label)' }} />
                     <div className="flex items-center gap-1">
                       <div style={{ width: 20, height: 20 }}>
-                        <Avatar name={to.name} initials={to.initials} photoUrl={to.photoUrl} size="xs" variant="ice" />
+                        <FaceDisc label={to.name} initials={to.initials} photo={to.photoUrl} px={20} />
                       </div>
                       <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{to.name}</span>
                     </div>
