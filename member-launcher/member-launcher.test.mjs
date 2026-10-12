@@ -56,7 +56,7 @@ function env(extra = {}) {
 function fire(url, extra = {}) {
   const line = tail.replace('%1', () => url)
   const e = env(extra)
-  const r = spawnSync(exe, [line], { windowsVerbatimArguments: true, argv0: `"${exe}"`, encoding: 'utf8', env: e, timeout: 30_000 })
+  const r = spawnSync(exe, [line], { windowsVerbatimArguments: true, argv0: `"${exe}"`, encoding: 'utf8', env: e, cwd: work, timeout: 30_000 })
   return { code: r.status, out: (r.stdout || '') + (r.stderr || '') }
 }
 
@@ -67,7 +67,7 @@ const HARNESS = join(HERE, 'test-harness.ps1')
 function fireHarness(url, { answer = 'no', claude = stubClaude, extra = {} } = {}) {
   const launcher = join(local, 'MNCCORE', 'Launcher', 'mnccore-launcher.ps1')
   const line = `-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "${HARNESS}" -Launcher "${launcher}" -Answer ${answer} -Claude "${claude}" "${url}"`
-  const r = spawnSync(exe, [line], { windowsVerbatimArguments: true, argv0: `"${exe}"`, encoding: 'utf8', env: env(extra), timeout: 30_000 })
+  const r = spawnSync(exe, [line], { windowsVerbatimArguments: true, argv0: `"${exe}"`, encoding: 'utf8', env: env(extra), cwd: work, timeout: 30_000 })
   return { code: r.status, out: (r.stdout || '') + (r.stderr || ''), timedOut: r.error?.code === 'ETIMEDOUT' }
 }
 
@@ -118,12 +118,13 @@ describe('the member launcher through the registered command line (DRYRUN)', { s
     mkdirSync(dirname(target), { recursive: true })
     copyFileSync(join(WIN, 'mnccore-launcher.ps1'), target)
   })
-  after(() => rmSync(work, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 }))
+  // Every PowerShell here runs with cwd = work (so nothing it writes by a relative
+  // path, a payload or PowerShell's own module cache, lands in the repo): the
+  // relative-path payload would land in work. Checked before work is removed.
   after(() => {
-    const rel = join(process.cwd(), 'mnccore-member-pwned.txt')
-    const relHit = existsSync(rel)
-    rmSync(rel, { force: true })
-    assert.equal(relHit, false, 'a URL ran as PowerShell')
+    const hits = [join(work, 'mnccore-member-pwned.txt'), join(process.cwd(), 'mnccore-member-pwned.txt')].filter((f) => existsSync(f))
+    rmSync(work, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 })
+    assert.deepEqual(hits, [], 'a URL ran as PowerShell')
   })
   after(() => {
     const hit = existsSync(MARK)
@@ -145,7 +146,7 @@ describe('the member launcher through the registered command line (DRYRUN)', { s
       // Read the flag by dot-sourcing (defines functions, runs nothing): a real run
       // would open a window or a dialog on this desktop.
       const read = (v) => spawnSync(POWERSHELL, ['-NoProfile', '-Command', `. '${join(WIN, 'mnccore-launcher.ps1')}'; [Console]::Out.Write($LauncherDryRun)`],
-        { encoding: 'utf8', env: withVars(process.env, { MNCCORE_LAUNCHER_DRYRUN: v }), timeout: 30_000 }).stdout.trim()
+        { encoding: 'utf8', env: withVars(process.env, { MNCCORE_LAUNCHER_DRYRUN: v, LOCALAPPDATA: local }), cwd: work, timeout: 30_000 }).stdout.trim()
       assert.equal(read('0'), 'False', 'DRYRUN=0 must not be read as dry-run')
       assert.equal(read('true'), 'False')
       assert.equal(read('1'), 'True')
