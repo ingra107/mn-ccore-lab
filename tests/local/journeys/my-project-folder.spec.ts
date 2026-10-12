@@ -1,16 +1,21 @@
 import { test, expect, type Page } from '@playwright/test'
 import { localD1 } from './localD1'
 
-// My folder (schema-v127) + the member launcher switch, on the real local stack
-// (wrangler dev + vite, local D1). Nick, 2026-10-12: "if other folks have local
-// folders they want to put in they should be able to do that maybe?", then
-// "Also install the launcher", then "they might have a mac too".
+// The project page's folder panel (schema-v127 My folder, redesigned 2026-10-12)
+// on the real local stack (wrangler dev + vite, local D1). Nick: "if other folks
+// have local folders they want to put in they should be able to do that maybe?",
+// "Also install the launcher", "they might have a mac too", then "Why do I need
+// to see where the folder goes? Also, why would I need to copy the path? ... I
+// should just have open folder, work on this in Claude, and maybe ... a pencil
+// sign ... that says edit location."
 //
 // Nate (a member, not a PI) keeps his own folder on a project he is on: a bad
-// paste is refused with a reason, a Windows "Copy as path" paste is saved,
-// Copy path works, and Open folder / Work on in Claude appear only after he
-// turns on "I have the launcher installed" in Settings, where both downloads
-// are real zips. Nick, a member of the same project, never sees Nate's path.
+// paste is refused with a reason, a Windows "Copy as path" paste is saved, and
+// the path never shows on the page. Open folder / Work on this in Claude appear
+// only after he turns on "I have the launcher installed" in Settings, where both
+// downloads are real zips; until then one link, "Set up the launcher", stands in
+// their place. The pencil edits or removes the location. Nick, a member of the
+// same project, never sees Nate's path.
 // Screenshots: review/s62/ (gitignored).
 const HEADERS = { 'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod' }
 const PI = 'ingra107@umn.edu'
@@ -35,25 +40,23 @@ async function as(page: Page, email: string) {
 
 async function openProject(page: Page) {
   await page.goto(`/portal/projects/${PROJECT}`)
-  const panel = page.getByTestId('my-project-folder')
+  const panel = page.getByTestId('project-folder')
   await expect(panel).toBeVisible({ timeout: 20_000 })
   return panel
 }
 
-test('a member adds their own folder; a bad paste is refused with a reason', async ({ page, context }) => {
-  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+test('a member adds their own folder; a bad paste is refused with a reason', async ({ page }) => {
   await as(page, NATE)
   const panel = await openProject(page)
-  await expect(panel).toContainText('My folder')
-  await expect(panel).toContainText('Only you see this')
+  await expect(panel).not.toContainText('Only you see this')
   await panel.scrollIntoViewIfNeeded()
-  await page.screenshot({ path: `${SHOTS}/01-member-no-folder.png`, fullPage: false })
+  await page.screenshot({ path: `${SHOTS}/01-member-no-folder.png` })
 
-  await panel.getByTestId('my-folder-add').click()
-  const input = panel.getByTestId('my-folder-input')
+  await panel.getByTestId('project-folder-add').click()
+  const input = panel.getByTestId('project-folder-input')
   await input.fill('https://umn.app.box.com/folder/123')
-  await panel.getByTestId('my-folder-save').click()
-  await expect(panel.getByTestId('my-folder-help')).toContainText('That is a link, not a folder on your computer')
+  await panel.getByTestId('project-folder-save').click()
+  await expect(panel.getByTestId('project-folder-help')).toContainText('That is a link, not a folder on your computer')
   await expect(input).toHaveAttribute('aria-invalid', 'true')
   await page.screenshot({ path: `${SHOTS}/02-member-bad-paste-refused.png` })
   expect(folderRows()).toEqual([])
@@ -61,19 +64,20 @@ test('a member adds their own folder; a bad paste is refused with a reason', asy
   // Windows Explorer's "Copy as path" wraps the path in quotes; they are stripped.
   await input.fill(`"${NATE_PATH}"`)
   await input.press('Enter')
-  await expect(panel.getByTestId('my-folder-path')).toHaveText(NATE_PATH)
-  expect(folderRows()).toEqual([{ member_slug: 'nate-mesfin', folder_path: NATE_PATH }])
+  await expect(panel.getByTestId('project-folder-edit')).toBeAttached()
+  await expect.poll(folderRows).toEqual([{ member_slug: 'nate-mesfin', folder_path: NATE_PATH }])
 
-  // Without the launcher: Copy path only, and a pointer to install it.
+  // The path is never drawn, and there is no Copy path.
+  await expect(page.getByText(NATE_PATH)).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Copy path/ })).toHaveCount(0)
+  // Without the launcher: one link in place of the two actions.
   await expect(panel.getByRole('button', { name: /Open folder/ })).toHaveCount(0)
   await expect(panel.getByRole('button', { name: /Work on this in Claude/ })).toHaveCount(0)
-  await expect(panel.getByTestId('my-folder-launcher-hint')).toContainText('install the launcher')
-  await panel.getByTestId('my-folder-copy').click()
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(NATE_PATH)
-  await page.screenshot({ path: `${SHOTS}/03-member-folder-saved-copy-only.png` })
+  await expect(panel.getByTestId('project-folder-setup')).toHaveText(/Set up the launcher/)
+  await page.screenshot({ path: `${SHOTS}/03-member-folder-saved-no-launcher.png` })
 })
 
-test('Settings: both launcher downloads are real zips; the switch shows the launch buttons', async ({ page }) => {
+test('Settings: both launcher downloads are real zips; the switch shows the two actions', async ({ page }) => {
   await as(page, NATE)
   await page.goto('/portal/settings#integrations')
   const section = page.getByTestId('launcher-settings')
@@ -100,8 +104,13 @@ test('Settings: both launcher downloads are real zips; the switch shows the laun
   const panel = await openProject(page)
   await expect(panel.getByRole('button', { name: /Open folder/ })).toBeVisible()
   await expect(panel.getByRole('button', { name: /Work on this in Claude/ })).toBeVisible()
-  await expect(panel.getByTestId('my-folder-copy')).toBeVisible()
-  await expect(panel.getByTestId('my-folder-launcher-hint')).toHaveCount(0)
+  await expect(panel.getByTestId('project-folder-setup')).toHaveCount(0)
+  await expect(page.getByText(NATE_PATH)).toHaveCount(0)
+  // The pencil appears on hover, at the far right of the group.
+  const pencil = panel.getByRole('button', { name: 'Edit location' })
+  await expect(pencil).toHaveCSS('opacity', '0')
+  await panel.getByRole('button', { name: /Open folder/ }).hover()
+  await expect(pencil).toHaveCSS('opacity', '1')
   await panel.scrollIntoViewIfNeeded()
   await page.screenshot({ path: `${SHOTS}/06-member-folder-with-launcher.png` })
 })
@@ -109,26 +118,27 @@ test('Settings: both launcher downloads are real zips; the switch shows the laun
 test("the PI on the same project never sees the member's folder", async ({ page }) => {
   await as(page, PI)
   const panel = await openProject(page)
-  await expect(panel).not.toContainText('nate')
-  await expect(panel.getByTestId('my-folder-add')).toBeVisible()
+  await expect(panel).not.toContainText(NATE_PATH)
+  await expect(page.getByText(NATE_PATH)).toHaveCount(0)
   const api = await page.request.get(`/api/projects/${PROJECT}/my-folder`, { headers: { ...HEADERS, 'X-Test-User': PI } })
   expect(await api.json()).toMatchObject({ data: null, can_set: true })
   await page.screenshot({ path: `${SHOTS}/07-pi-sees-only-own.png` })
 })
 
-test('the member edits and then removes their folder', async ({ page }) => {
+test('the member edits the location and then removes it', async ({ page }) => {
   await as(page, NATE)
   const panel = await openProject(page)
-  await panel.getByRole('button', { name: 'Edit my folder' }).click()
-  const input = panel.getByTestId('my-folder-input')
+  await panel.getByRole('button', { name: 'Edit location' }).click()
+  const input = panel.getByTestId('project-folder-input')
   await expect(input).toHaveValue(NATE_PATH)
   await input.fill('/Users/nate/Library/CloudStorage/Box-Box/Sepsis')
-  await panel.getByTestId('my-folder-save').click()
-  await expect(panel.getByTestId('my-folder-path')).toHaveText('/Users/nate/Library/CloudStorage/Box-Box/Sepsis')
-  expect(folderRows()).toEqual([{ member_slug: 'nate-mesfin', folder_path: '/Users/nate/Library/CloudStorage/Box-Box/Sepsis' }])
+  await panel.getByTestId('project-folder-save').click()
+  await expect(panel.getByTestId('project-folder-input')).toHaveCount(0)
+  await expect.poll(folderRows).toEqual([{ member_slug: 'nate-mesfin', folder_path: '/Users/nate/Library/CloudStorage/Box-Box/Sepsis' }])
 
-  await panel.getByRole('button', { name: 'Remove my folder' }).click()
-  await expect(panel.getByTestId('my-folder-add')).toBeVisible()
-  expect(folderRows()).toEqual([])
+  await panel.getByRole('button', { name: 'Edit location' }).click()
+  await panel.getByTestId('project-folder-remove').click()
+  await expect(panel.getByTestId('project-folder-add')).toBeVisible()
+  await expect.poll(folderRows).toEqual([])
   await page.screenshot({ path: `${SHOTS}/08-member-folder-removed.png` })
 })

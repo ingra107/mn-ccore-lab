@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { GitBranch, Plus, ArrowRight, Trash2 } from 'lucide-react'
+import { Plus, ArrowRight, Trash2 } from 'lucide-react'
 import { useProjects, useProjectDependencies } from '../../hooks/useApiData'
 import { useCreateDependency, useDeleteDependency } from '../../hooks/useMutations'
 import type { Project } from '../../data/types'
@@ -84,7 +84,6 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
       style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
     >
       <SectionHead
-        icon={<GitBranch {...ICON_PROPS} size={16} />}
         title="Dependencies"
         right={<>
           {isPi && !showAddForm && (

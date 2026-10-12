@@ -31,7 +31,7 @@
  */
 
 import type { ReactNode } from 'react'
-import { Archive, ArchiveRestore, Link2 } from 'lucide-react'
+import { Archive, ArchiveRestore } from 'lucide-react'
 import StoredLinkChip from './StoredLinkChip'
 import CollapsibleSection from './CollapsibleSection'
 import { Button } from './ui/Button'
@@ -97,18 +97,21 @@ interface Props {
   /** The project's document rows (project_documents), rendered in this card below the library. A separate store, merged in the RENDER only (Nick 2026-07-21). */
   documents?: ReactNode
   onSetRole?: (link: StoredLink, role: Role) => void
+  /** Leave out the derived "Project folder" chip: the host shows the folder actions itself. */
+  hideFolder?: boolean
 }
 
-export default function ProjectLinkLibrary({ links, isLoading, slotUrls = [], pinnedEditor, documents, onSetRole }: Props) {
+export default function ProjectLinkLibrary({ links, isLoading, slotUrls = [], pinnedEditor, documents, onSetRole, hideFolder = false }: Props) {
+  const shown = hideFolder ? (links ?? []).filter((l) => !(l.role === 'derived' && l.type === 'local_folder')) : (links ?? [])
   const { current, archived } = isLoading
     ? { current: [], archived: [] }
-    : partitionForProjectPage(links ?? [], slotUrls)
+    : partitionForProjectPage(shown, slotUrls)
   // With no pinned row to host, an empty library renders nothing at all.
   if (!pinnedEditor && !documents && current.length === 0 && archived.length === 0) return null
 
   return (
     <div>
-      <SectionHead as="h3" icon={<Link2 {...ICON_PROPS} size={13} />} title="Links" />
+      <SectionHead as="h3" title="Links" />
 
       {pinnedEditor}
 

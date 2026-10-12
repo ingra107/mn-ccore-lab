@@ -74,12 +74,16 @@ test.describe('Project products', () => {
     expect(start.kinds.every((k) => k.stages.length > 0)).toBe(true)
     const first = start.products[0]
 
-    // 1. One product: the ladder is expanded, no tabs.
+    // 1. One product: one chip (name + stage) on the same row as the stats; its
+    //    ladder opens inline on a click and closes on a second.
     const section = page.getByTestId('project-products')
     await expect(section).toBeVisible()
-    await expect(section.getByRole('tablist')).toHaveCount(0)
+    await expect(section.getByTestId(`product-chip-${first.id}`)).toHaveAttribute('aria-expanded', 'false')
+    await expect(page.getByTestId(`product-detail-${first.id}`)).toHaveCount(0)
+    await expect(section.getByTestId('project-stats')).toBeVisible()
+    await section.screenshot({ path: `${SHOTS}/01-single-product-chip.png` })
+    await section.getByTestId(`product-chip-${first.id}`).click()
     await expect(page.getByTestId(`product-detail-${first.id}`)).toBeVisible()
-    await section.scrollIntoViewIfNeeded()
     await section.screenshot({ path: `${SHOTS}/01-single-product-ladder.png` })
 
     // 2. Set a stage on the ladder: writes products.stage through the project's
@@ -108,7 +112,7 @@ test.describe('Project products', () => {
     await page.getByTestId('product-add-parent').selectOption(first.id)
     await page.getByTestId('product-add-form').screenshot({ path: `${SHOTS}/02-add-product-form.png` })
     await page.getByTestId('product-add-submit').click()
-    await expect(page.getByTestId('product-tab-all')).toBeVisible()
+    await expect(section.getByRole('button', { expanded: false, name: /A1 resubmission/ })).toBeVisible()
 
     const two = await productsOf(page, slug)
     expect(two.products.length).toBe(2)
@@ -116,26 +120,15 @@ test.describe('Project products', () => {
     expect(added.stage).toBe('preparing')
     expect(added.grew_from_id).toBe(first.id)
 
-    // 4. Two products: chips; "All" is the grouped list with one section per kind.
-    await expect(section.getByRole('tab')).toHaveCount(3)
-    await expect(page.getByTestId('product-all-list')).toBeVisible()
-    await expect(page.getByTestId(`product-row-${added.id}`)).toContainText('A1 resubmission')
-    await expect(page.getByTestId(`product-row-${added.id}`)).toContainText('from')
-    await section.screenshot({ path: `${SHOTS}/03-chips-all-grouped.png` })
-
-    // 4b. The tabs are a WAI-ARIA tablist: one tab stop, arrows move, the panel is labelled.
-    await page.getByTestId('product-tab-all').focus()
-    await page.keyboard.press('ArrowRight')
-    const firstTab = section.getByRole('tab').nth(1)
-    await expect(firstTab).toHaveAttribute('aria-selected', 'true')
-    await expect(firstTab).toBeFocused()
-    await expect(section.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', (await firstTab.getAttribute('id'))!)
-    await page.keyboard.press('Home')
-    await expect(page.getByTestId('product-tab-all')).toHaveAttribute('aria-selected', 'true')
+    // 4. Two products: two chips on the row; the stats stay beside them.
+    await expect(section.locator('[data-testid^="product-chip-"]')).toHaveCount(2)
+    await expect(section.getByTestId('project-stats')).toBeVisible()
+    await section.screenshot({ path: `${SHOTS}/03-two-chips.png` })
 
     // 5. A chip opens that product's ladder; Make home hands the marker over.
-    await page.getByTestId(`product-tab-${added.id}`).click()
+    await page.getByTestId(`product-chip-${added.id}`).click()
     await expect(page.getByTestId(`product-detail-${added.id}`)).toBeVisible()
+    await expect(page.getByTestId(`product-chip-${added.id}`)).toHaveAttribute('aria-expanded', 'true')
     await section.screenshot({ path: `${SHOTS}/04-chip-selected-detail.png` })
     await page.getByTestId(`product-make-home-${added.id}`).click()
     await expect.poll(async () => {
@@ -150,9 +143,8 @@ test.describe('Project products', () => {
       await go(page, URL_OF)
       await page.getByTestId('project-products').scrollIntoViewIfNeeded()
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(376)
-      await page.getByTestId('product-tab-all').click()
-      await page.getByTestId('project-products').screenshot({ path: `${SHOTS}/05-phone-all-${theme}.png` })
-      await page.getByTestId(`product-tab-${added.id}`).click()
+      await page.getByTestId('project-products').screenshot({ path: `${SHOTS}/05-phone-row-${theme}.png` })
+      await page.getByTestId(`product-chip-${added.id}`).click()
       await page.getByTestId('project-products').screenshot({ path: `${SHOTS}/06-phone-detail-${theme}.png` })
     }
   })
@@ -203,9 +195,8 @@ test.describe('Who sees and who writes', () => {
     await page.setExtraHTTPHeaders(MEMBER)
     await go(page, URL_OF)
     await expect(page.getByTestId('product-add-toggle')).toBeVisible()
-    await page.getByTestId('product-tab-all').click()
     const home = (await productsOf(page, SLUG)).products.find((p) => p.is_home === 1)!
-    await page.getByTestId(`product-tab-${home.id}`).click()
+    await page.getByTestId(`product-chip-${home.id}`).click()
     const next = home.stage === 'preparing' ? 'submitted' : 'preparing'
     const dot = page.getByTestId(`stage-dot-${next}`)
     await expect(dot).toBeVisible()

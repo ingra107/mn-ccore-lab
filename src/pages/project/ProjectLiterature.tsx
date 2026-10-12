@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { BookOpen, Link2, X, Plus, Search, Loader2, CheckCircle2 } from 'lucide-react'
+import { Link2, X, Plus, Search, Loader2, CheckCircle2 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useProjectPapers, usePublications } from '../../hooks/useApiData'
 import { useUnlinkPaper, useLinkPaper } from '../../hooks/useMutations'
@@ -29,7 +29,6 @@ export default function ProjectLiterature({ projectSlug, projectTitle, isPi }: P
       </div>
       <div style={{ marginBottom: '2.5rem' }}>
       <SectionHead
-        icon={<BookOpen {...ICON_PROPS} size={16} />}
         title="Related Literature"
         count={papers.length}
         right={<>

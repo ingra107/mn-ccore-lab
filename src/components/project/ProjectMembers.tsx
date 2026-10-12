@@ -12,7 +12,7 @@
  */
 import { useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { FaceDisc } from '../today/skin'
 import GhostSelect, { type GhostSelectOption } from '../ui/GhostSelect'
 import SectionHead from '../ui/SectionHead'
@@ -89,7 +89,6 @@ export default function ProjectMembers({ projectRef, projectTitle }: ProjectMemb
     <section aria-label="Project members" data-testid="project-members">
       <SectionHead
         as="h3"
-        icon={<Users {...ICON_PROPS} size={13} />}
         title={<span ref={headingRef} tabIndex={-1} style={{ outline: 'none' }}>Members</span>}
         count={members.length > 0 ? members.length : undefined}
       />

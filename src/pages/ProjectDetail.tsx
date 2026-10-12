@@ -53,7 +53,6 @@ import ProjectLinkLibrary from '../components/ProjectLinkLibrary'
 import ProjectMembers from '../components/project/ProjectMembers'
 import { AllProjectsBanner } from '../components/AllProjectsControls'
 import ProjectPublications from '../components/ProjectPublications'
-import MyProjectFolder from '../components/project/MyProjectFolder'
 import ProjectFolderActions from '../components/project/ProjectFolderActions'
 import LinkifiedText from '../components/LinkifiedText'
 import FileUpload from '../components/FileUpload'
@@ -72,7 +71,7 @@ import SmartCompose from '../components/SmartCompose'
 import ProjectDocuments from './project/ProjectDocuments'
 import { PATHS } from '../constants/paths'
 import { CATEGORY_OPTIONS } from '../constants/categories'
-import { LABEL_STYLE, LABEL_ICON_COLOR } from '../components/ui/labelStyle'
+import { LABEL_STYLE } from '../components/ui/labelStyle'
 import { STATUS_LIST_OPTIONS, mutedCategoryOptions, LIST_T3 } from '../lib/projectListOptions'
 import { useOpenParam } from '../hooks/useOpenParam'
 import EmptyStateArt from '../components/EmptyStateArt'
@@ -569,111 +568,6 @@ function ProjectDetailInner({ project }: InnerProps) {
   }
 
 
-  const titleLegacyEl = (
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {editingTitle ? (
-              <input
-                value={titleDraft}
-                onChange={(e) => setTitleDraft(e.target.value)}
-                onBlur={handleTitleSave}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    handleTitleSave()
-                  }
-                  if (e.key === 'Escape') {
-                    setTitleDraft(project.title)
-                    setEditingTitle(false)
-                  }
-                }}
-                ref={titleInputRef}
-                aria-label="Edit project title"
-                style={{
-                  fontWeight: 700,
-                  fontSize: 'clamp(1.25rem, 3vw, 1.75rem)',
-                  color: 'var(--ink)',
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: '2px solid var(--job-accent)',
-                  outline: 'none',
-                  padding: '2px 0',
-                  width: '100%',
-                  fontFamily: 'inherit',
-                  lineHeight: 1.2,
-                }}
-              />
-            ) : (
-              <h1
-                onClick={() => {
-                  setTitleDraft(project.title)
-                  setEditingTitle(true)
-                }}
-                title="Click to edit title"
-                style={{
-                  fontWeight: 700,
-                  fontSize: 'clamp(1.25rem, 3vw, 1.75rem)',
-                  color: 'var(--ink)',
-                  margin: 0,
-                  lineHeight: 1.2,
-                  cursor: 'pointer',
-                }}
-              >
-                {project.title}
-              </h1>
-            )}
-            {editingShortName ? (
-              <input
-                value={shortNameDraft}
-                onChange={(e) => setShortNameDraft(e.target.value)}
-                onBlur={handleShortNameSave}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleShortNameSave()
-                  if (e.key === 'Escape') {
-                    setShortNameDraft(project.short_name ?? '')
-                    setEditingShortName(false)
-                  }
-                }}
-                ref={shortNameInputRef}
-                placeholder="Add short name..."
-                style={{
-                  fontSize: 'var(--value-size)',
-                  color: 'var(--ink)',
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: '1px solid var(--job-accent)',
-                  outline: 'none',
-                  padding: '2px 0',
-                  marginTop: '2px',
-                  width: '100%',
-                  maxWidth: '280px',
-                  fontFamily: 'inherit',
-                }}
-              />
-            ) : (
-              <span
-                onClick={() => {
-                  setEditingShortName(true)
-                  setShortNameDraft(project.short_name ?? '')
-                }}
-                style={{
-                  fontSize: 'var(--value-size)',
-                  color: 'var(--slate)',
-                  opacity: project.short_name ? 0.85 : 0.85,
-                  fontStyle: project.short_name ? 'normal' : 'italic',
-                  cursor: 'pointer',
-                  padding: '2px 0',
-                  marginTop: '2px',
-                  display: 'block',
-                }}
-              >
-                {project.short_name || 'Add short name...'}
-              </span>
-            )}
-            {/* The heartbeat line under the title (color-back pick 10). */}
-            <PageHeartbeat />
-          </div>
-  )
-
   const iconsEl = (
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
@@ -1009,40 +903,6 @@ function ProjectDetailInner({ project }: InnerProps) {
       </div>
   )
 
-  const openHeadEl = (
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 {...ICON_PROPS} size={13} style={{ color: LABEL_ICON_COLOR }} />
-                <span style={LABEL_STYLE}>
-                  Open tasks
-                </span>
-                {pendingTasks.length > 0 && (
-                  <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
-                    {pendingTasks.length}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateTask(true)}
-                  style={{ fontSize: '11px', color: 'var(--job-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}
-                >
-                  + Add task
-                </button>
-                {pendingTasks.length > 3 && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('tasks')}
-                    style={{ fontSize: '11px', color: 'var(--job-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                  >
-                    View all →
-                  </button>
-                )}
-              </div>
-            </div>
-  )
-
   const openListEl = (
 pendingTasks.length === 0 ? (
               <div style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85, padding: '12px 0' }}>
@@ -1076,6 +936,7 @@ isAuthenticated && (project.slug ?? project.id) && (
 
   const linksEl = (
             <ProjectLinkLibrary
+              hideFolder
               links={storedLinks}
               isLoading={linksLoading}
               slotUrls={[project.key_link_1, project.key_link_2, project.key_link_3]}
@@ -1111,26 +972,6 @@ isAuthenticated && (project.slug ?? project.id) && (
               isPi={isPi}
               variant="card"
             />
-  )
-
-  const recentHeadEl = (
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Clock {...ICON_PROPS} size={13} style={{ color: LABEL_ICON_COLOR }} />
-                  <span style={LABEL_STYLE}>
-                    Recent
-                  </span>
-                </div>
-                {recentActivity.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => goToStream('all')}
-                    style={{ fontSize: '11px', color: 'var(--job-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                  >
-                    All →
-                  </button>
-                )}
-              </div>
   )
 
   const recentListEl = (
@@ -1420,18 +1261,6 @@ recentActivity.length === 0 ? (
           ) : null}
         </div>
       )
-  )
-
-  const productsLegacyEl = (
-      <motion.div
-        id="overview"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, delay: 0.1 }}
-        style={{ scrollMarginTop: '60px' }}
-      >
-        {project.id ? <ProjectProducts projectId={project.id} slug={project.slug} /> : null}
-      </motion.div>
   )
 
   const detailsEl = (
@@ -1962,13 +1791,10 @@ recentActivity.length === 0 ? (
 </>
   )
 
-  // ── Layout experiment (Nick 2026-10-12): ?layout=a|b puts the project page
-  // in a main column + a sticky right rail, like Today. No flag = the page as
-  // it was. A: products first in the main column, the stat line under them.
-  // B: products as a compact card under the title, the numbers in the rail.
-  const layoutParam = searchParams.get('layout')
-  const layout: 'a' | 'b' | null = layoutParam === 'a' || layoutParam === 'b' ? layoutParam : null
-
+  // Layout (Nick 2026-10-12, 'C'): header, then ONE row holding the products
+  // and the stats line (above the tabs, so every tab shows it), then the tabs and
+  // the main column. A sticky right rail holds the folder actions, members,
+  // links, published work and recent activity, like Today's rail.
   const overdueCount = pendingTasks.filter((t) => t.due_date && t.due_date < localDateKey()).length
   const statList = [
     { key: 'active', value: pendingTasks.length, label: 'active', rule: 't' },
@@ -2046,7 +1872,6 @@ recentActivity.length === 0 ? (
   const openTasksSection = (
     <section className="pj-sec" data-testid="project-open-tasks">
       <SectionHead
-        icon={<CheckCircle2 {...ICON_PROPS} size={13} />}
         title="Open tasks"
         count={pendingTasks.length > 0 ? pendingTasks.length : undefined}
         right={
@@ -2065,7 +1890,6 @@ recentActivity.length === 0 ? (
   const recentSection = (
     <section className="pj-sec" data-testid="project-recent">
       <SectionHead
-        icon={<Clock {...ICON_PROPS} size={13} />}
         title="Recent"
         right={recentActivity.length > 0 ? (
           <button type="button" onClick={() => goToStream('all')} className="pj-link">All →</button>
@@ -2083,14 +1907,8 @@ recentActivity.length === 0 ? (
     />
   ) : null
 
-  const overviewVariantEl = (
+  const overviewEl = (
     <div role="tabpanel" id="projectdetail-tabpanel-overview" aria-labelledby="projectdetail-tab-overview">
-      {layout === 'a' && project.id ? (
-        <div id="overview" style={{ scrollMarginTop: '60px' }}>
-          <ProjectProducts projectId={project.id} slug={project.slug} />
-        </div>
-      ) : null}
-      {layout === 'a' && renderStats({ margin: '0 0 18px', paddingBottom: 12 })}
       {openTasksSection}
       {strategicEl}
       {detailsEl}
@@ -2099,131 +1917,57 @@ recentActivity.length === 0 ? (
     </div>
   )
 
-  if (layout) {
-    return (
-      <>
-        <Breadcrumb backTo="/projects" backLabel="Projects" current={project.title} />
-        <AllProjectsBanner />
-        <div className="pj-grid" data-testid="project-grid" data-layout={layout}>
-          <div className="pj-main">
-            <header className="pj-head">
-              <div className="pj-headrow">
-                {titleCompactEl}
-                {iconsEl}
-              </div>
-              <div className="pj-metarow">
-                {metaEl}
-                {!project.short_name && !editingShortName && (
-                  <button
-                    type="button"
-                    className="pj-short-empty"
-                    onClick={() => { setEditingShortName(true); setShortNameDraft('') }}
-                  >
-                    + Short name
-                  </button>
-                )}
-              </div>
-              <PageHeartbeat />
-            </header>
-            {agendaFormEl}
-            {layout === 'b' && project.id ? <ProjectProducts projectId={project.id} slug={project.slug} compact /> : null}
-            {tabsEl}
-            {activeTab === 'overview' && overviewVariantEl}
-            {otherTabsEl}
-          </div>
-          <aside className="pj-rail" aria-label="Project side panel" data-testid="project-rail">
-            {folderEl}
-            {layout === 'b' && renderStats({ margin: 0, paddingBottom: 12 })}
-            {membersEl}
-            {linksEl}
-            {pubsEl}
-            {recentSection}
-            <div className="pj-compose">{composeEl}</div>
-          </aside>
-        </div>
-        {projectOverlays}
-        <style>{PJ_CSS}</style>
-      </>
-    )
-  }
+  const statsInline = renderStats({ margin: 0, padding: 0, border: 0 })
 
   return (
     <>
       <Breadcrumb backTo="/projects" backLabel="Projects" current={project.title} />
       <AllProjectsBanner />
-
-      {/* ── Compact Header ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        style={{ marginBottom: 'var(--sp-lg)' }}
-      >
-        <div className="flex items-start justify-between gap-4 mb-3">
-          {titleLegacyEl}
-          {iconsEl}
-        </div>
-        {metaEl}
-        {renderStats({ margin: '10px 0 0', paddingBottom: 12 })}
-      </motion.div>
-
-      {agendaFormEl}
-      {tabsEl}
-
-      {activeTab === 'overview' && (
-        <div role="tabpanel" id="projectdetail-tabpanel-overview" aria-labelledby="projectdetail-tab-overview">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            style={{
-              background: 'var(--surface-1)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-xl)',
-              padding: '16px 20px',
-              marginBottom: '1.5rem',
-            }}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-              <div className="lg:col-span-2">
-                {openHeadEl}
-                {openListEl}
-              </div>
-              <div className="lg:col-span-1 flex flex-col gap-4">
-                {(project.slug ?? project.id) && (
-                  <MyProjectFolder
-                    projectRef={(project.slug ?? project.id) as string}
-                    projectLabel={projectShortLabel(project)}
-                    piFallbackFolder={isPi && isLocalFolder(project.primary_folder) ? project.primary_folder : null}
-                  />
-                )}
-                {membersEl}
-                {linksEl}
-                {pubsEl}
-                <div>
-                  {recentHeadEl}
-                  {recentListEl}
-                </div>
-              </div>
+      <div className="pj-grid" data-testid="project-grid">
+        <div className="pj-main">
+          <header className="pj-head">
+            <div className="pj-headrow">
+              {titleCompactEl}
+              {iconsEl}
             </div>
-            {composeEl}
-          </motion.div>
-          {strategicEl}
-          {productsLegacyEl}
-          {detailsEl}
-          {insightEl}
-          {confEl}
+            <div className="pj-metarow">
+              {metaEl}
+              {!project.short_name && !editingShortName && (
+                <button
+                  type="button"
+                  className="pj-short-empty"
+                  onClick={() => { setEditingShortName(true); setShortNameDraft('') }}
+                >
+                  + Short name
+                </button>
+              )}
+            </div>
+            <PageHeartbeat />
+          </header>
+          {agendaFormEl}
+          {project.id ? (
+            <ProjectProducts projectId={project.id} slug={project.slug} stats={statsInline} />
+          ) : statsInline}
+          {tabsEl}
+          {activeTab === 'overview' && overviewEl}
+          {otherTabsEl}
         </div>
-      )}
-
-      {otherTabsEl}
+        <aside className="pj-rail" aria-label="Project side panel" data-testid="project-rail">
+          {folderEl}
+          {membersEl}
+          {linksEl}
+          {pubsEl}
+          {recentSection}
+          <div className="pj-compose">{composeEl}</div>
+        </aside>
+      </div>
       {projectOverlays}
       <style>{PJ_CSS}</style>
     </>
   )
 }
 
-// Layout experiment styles (?layout=a|b). Tokens only; same band as Today:
+// Project page layout styles. Tokens only; same band as Today:
 // main fills 1fr, the rail is --col-rail, the grid sits inside the page band.
 const PJ_CSS = `
 .pj-grid { display: grid; grid-template-columns: minmax(0, 1fr) var(--col-rail); align-items: start; }
@@ -2260,7 +2004,6 @@ const PJ_CSS = `
 .pj-rail .pj-sec { margin-bottom: 0; }
 .pj-head-links { display: inline-flex; align-items: center; gap: 14px; }
 .pj-link { background: none; border: 0; padding: 0; font-size: 11px; color: var(--job-accent); cursor: pointer; }
-.pj-main .pp:not(.pp-compact) { margin-bottom: 18px; }
 .pj-main .project-tab-strip-wrap { margin-bottom: var(--sp-lg) !important; }
 .pj-compose [data-compose-slot] { border-top: 0 !important; padding-top: 0 !important; }
 @media (max-width: 1024px) {

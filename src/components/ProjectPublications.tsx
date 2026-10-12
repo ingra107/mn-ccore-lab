@@ -14,7 +14,7 @@
 
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpenText, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
 import AuthorColumn from './AuthorColumn'
 import { Chip } from './ui/Chip'
@@ -65,7 +65,6 @@ export default function ProjectPublications({ projectSlug, projectTitle, isPi, v
     <div>
       <SectionHead
         as="h3"
-        icon={<BookOpenText {...ICON_PROPS} size={13} />}
         title={isCard ? 'Published' : 'Published from this project'}
         count={links.length > 0 ? links.length : undefined}
       />

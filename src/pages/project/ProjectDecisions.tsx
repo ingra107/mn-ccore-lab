@@ -31,7 +31,6 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
       style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
     >
       <SectionHead
-        icon={<Scale {...ICON_PROPS} size={16} />}
         title="Decisions"
         right={<>
           <Link

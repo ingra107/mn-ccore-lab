@@ -1,6 +1,5 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus, Home as HomeIcon } from 'lucide-react'
-import SectionHead from '../ui/SectionHead'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { formatShortDate } from '../../lib/dateUtils'
 import {
@@ -13,92 +12,117 @@ import {
   groupByKind,
   ladderFor,
   productLabel,
-  productViewMode,
   sortProducts,
   type ProductKind,
   type ProductRow,
 } from '../../lib/products'
 
-// The project page's products (plan step 8, Nick's brackets 2026-10-11):
-//   one product   -> its stage ladder, expanded
-//   2+ products   -> tabs that are chips (name + stage); "All" is the grouped list
-// A product's stage is set on its ladder here; this replaces the project-level
-// stage control. Writes go to POST /api/projects/:slug/products, open to the
-// project's members (Nick, 2026-10-12: "Yes, members of that project"). The
-// read behind this view passes the same membership gate, so anyone who sees
-// the products may edit them.
+// The project page's products, one row under the header (Nick, 2026-10-12:
+// "Why can't it be on the same line as the stats?"). Each product is a chip
+// (name + stage); a click opens that product's stage ladder inline below the
+// row, a second click closes it. The stats line sits beside the chips and
+// wraps under them on a narrow screen. Past MAX_CHIPS the rest fold into "+N
+// more", which opens the grouped list. A product's stage is set on its ladder;
+// writes go to POST /api/projects/:slug/products, open to the project's
+// members (Nick, 2026-10-12: "Yes, members of that project"). The read behind
+// this view passes the same membership gate, so anyone who sees the products
+// may edit them.
 
 interface Props {
   /** proj_* PK. */
   projectId: string
   slug: string
-  /** A card that sits directly under the title (project page, layout B). */
-  compact?: boolean
+  /** The stats line, drawn beside the chips. */
+  stats?: React.ReactNode
 }
 
-export default function ProjectProducts({ slug, compact = false }: Props) {
+/** Chips shown before the rest fold into "+N more". */
+const MAX_CHIPS = 4
+const PANEL_ID = 'pp-panel'
+
+export default function ProjectProducts({ slug, stats }: Props) {
   const { data, isLoading, isError } = useProjectProducts(slug)
   // The read answered: the caller is a member of this project (or the PI).
   const canEdit = !!data
-  const [picked, setPicked] = useState<string | null>(null)
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [more, setMore] = useState(false)
   const [adding, setAdding] = useState(false)
 
   const products = useMemo(() => sortProducts(data?.products ?? []), [data])
   const kinds = data?.kinds ?? []
-  const mode = productViewMode(products.length)
-  // A single product has no tabs; with 2+ the tab is "all" until one is picked.
-  const selected =
-    mode === 'ladder' ? products[0] ?? null : products.find((p) => p.id === picked) ?? null
+  const selected = products.find((p) => p.id === openId) ?? null
+  // The open product always has its chip, even when it is past the cap.
+  let shown = products.slice(0, MAX_CHIPS)
+  if (selected && !shown.some((p) => p.id === selected.id)) shown = [...shown.slice(0, MAX_CHIPS - 1), selected]
+  const hidden = products.length - shown.length
 
   return (
-    <div className={`pp${compact ? ' pp-compact' : ''}`} data-testid="project-products">
-      <SectionHead
-        title="Products"
-        count={products.length > 0 ? products.length : undefined}
-        right={
-          canEdit && kinds.length > 0 ? (
+    <div className="pp" data-testid="project-products">
+      <div className="pp-bar">
+        <div className="pp-chips" role="group" aria-label="Products">
+          {isLoading && <span className="pp-dim" role="status">Loading products…</span>}
+          {isError && <span className="pp-dim" role="alert">Could not load products.</span>}
+          {data && products.length === 0 && (
+            <span className="pp-dim" data-testid="product-empty">No products yet</span>
+          )}
+          {shown.map((p) => {
+            const on = p.id === openId
+            return (
+              <button
+                key={p.id}
+                type="button"
+                className={`pp-chip${on ? ' is-on' : ''}`}
+                aria-expanded={on}
+                aria-controls={on ? PANEL_ID : undefined}
+                onClick={() => { setOpenId(on ? null : p.id); setMore(false) }}
+                data-testid={`product-chip-${p.id}`}
+              >
+                <span className="pp-chip-n">{productLabel(p)}</span>
+                <span className="pp-chip-s">{p.stage_label}</span>
+              </button>
+            )
+          })}
+          {hidden > 0 && (
+            <button
+              type="button"
+              className={`pp-chip pp-chip-more${more ? ' is-on' : ''}`}
+              aria-expanded={more}
+              onClick={() => { setMore((v) => !v); setOpenId(null) }}
+              data-testid="product-more"
+            >
+              +{hidden} more
+            </button>
+          )}
+          {canEdit && kinds.length > 0 && (
             <button
               type="button"
               className="pp-add"
               onClick={() => setAdding((v) => !v)}
               aria-expanded={adding}
+              aria-label="Add product"
               data-testid="product-add-toggle"
             >
-              <Plus {...ICON_PROPS} size={12} /> Add product
+              <Plus {...ICON_PROPS} size={12} /> {products.length === 0 ? 'Add product' : ''}
             </button>
-          ) : undefined
-        }
-      />
-
-      {isLoading && <div className="pp-dim" role="status">Loading products…</div>}
-      {isError && <div className="pp-dim" role="alert">Could not load products.</div>}
+          )}
+        </div>
+        {stats ? <div className="pp-stats">{stats}</div> : null}
+      </div>
 
       {adding && canEdit && (
         <AddProductForm slug={slug} kinds={kinds} products={products} onDone={() => setAdding(false)} />
       )}
 
-      {data && products.length === 0 && (
-        <div className="pp-dim pp-empty" data-testid="product-empty">
-          No products yet.{kinds.length > 0 ? ' Add one to give this project a stage.' : ''}
-        </div>
-      )}
-
-      {mode === 'chips' && (
-        <ProductTabs products={products} selectedId={selected?.id ?? null} onPick={setPicked} />
-      )}
-
-      {mode === 'chips' && selected === null && (
-        <div role="tabpanel" id={PANEL_ID} aria-labelledby={tabId(null)} tabIndex={0}>
-          <GroupedList products={products} kinds={kinds} onPick={setPicked} />
-        </div>
+      {more && (
+        <GroupedList
+          products={products}
+          kinds={kinds}
+          onPick={(id) => { setOpenId(id); setMore(false) }}
+        />
       )}
 
       {selected && (
-        <div
-          {...(mode === 'chips'
-            ? { role: 'tabpanel', id: PANEL_ID, 'aria-labelledby': tabId(selected.id), tabIndex: 0 }
-            : {})}
-        >
+        <div className="pp-panel" id={PANEL_ID} role="region" aria-label={`${productLabel(selected)} stage`}>
           <ProductDetail
             key={selected.id}
             product={selected}
@@ -112,69 +136,6 @@ export default function ProjectProducts({ slug, compact = false }: Props) {
       )}
 
       <style>{PRODUCT_CSS}</style>
-    </div>
-  )
-}
-
-// ── the tabs: WAI-ARIA tabs pattern ──────────────────────────
-// One tab stop (roving tabindex); Left/Right move and select, Home/End jump.
-
-const PANEL_ID = 'pp-panel'
-const tabId = (id: string | null) => `pp-tab-${id ?? 'all'}`
-
-function ProductTabs({
-  products, selectedId, onPick,
-}: { products: ProductRow[]; selectedId: string | null; onPick: (id: string | null) => void }) {
-  const ids: (string | null)[] = [null, ...products.map((p) => p.id)]
-  const refs = useRef(new Map<string, HTMLButtonElement>())
-  function onKey(e: React.KeyboardEvent) {
-    const at = ids.indexOf(selectedId)
-    let next: number
-    if (e.key === 'ArrowRight') next = (at + 1) % ids.length
-    else if (e.key === 'ArrowLeft') next = (at - 1 + ids.length) % ids.length
-    else if (e.key === 'Home') next = 0
-    else if (e.key === 'End') next = ids.length - 1
-    else return
-    e.preventDefault()
-    onPick(ids[next])
-    refs.current.get(tabId(ids[next]))?.focus()
-  }
-  const tab = (id: string | null, children: React.ReactNode, testid: string) => {
-    const on = selectedId === id
-    return (
-      <button
-        key={tabId(id)}
-        ref={(el) => {
-          if (el) refs.current.set(tabId(id), el)
-          else refs.current.delete(tabId(id))
-        }}
-        type="button"
-        role="tab"
-        id={tabId(id)}
-        aria-selected={on}
-        aria-controls={PANEL_ID}
-        tabIndex={on ? 0 : -1}
-        className={`pp-tab${on ? ' is-on' : ''}`}
-        onClick={() => onPick(id)}
-        data-testid={testid}
-      >
-        {children}
-      </button>
-    )
-  }
-  return (
-    <div className="pp-tabs" role="tablist" aria-label="Products" onKeyDown={onKey}>
-      {tab(null, 'All', 'product-tab-all')}
-      {products.map((p) =>
-        tab(
-          p.id,
-          <>
-            <span className="pp-tab-n">{productLabel(p)}</span>
-            <span className="pp-tab-s">{p.stage_label}</span>
-          </>,
-          `product-tab-${p.id}`,
-        ),
-      )}
     </div>
   )
 }
@@ -405,28 +366,33 @@ function AddProductForm({
 // Scoped styles. Tokens only: the accent carries "selected / current", every
 // other surface is the gray ramp (rules-ui-design 1, 2, 9).
 const PRODUCT_CSS = `
-.pp { margin-bottom: 2.5rem; scroll-margin-top: 60px; }
+.pp { margin-bottom: 14px; scroll-margin-top: 60px; }
 .pp-dim { color: var(--sk-t3); font-size: 12px; }
+.pp-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px;
+  padding: 8px 0 12px; border-bottom: 1px solid var(--sk-line);
+}
+.pp-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 260px; min-width: 0; }
+.pp-stats { flex: 0 0 auto; margin-left: auto; }
 .pp-add, .pp-link {
   display: inline-flex; align-items: center; gap: 4px; background: none; border: 0;
-  padding: 2px 4px; font-size: 12px; color: var(--sk-t2); cursor: pointer;
+  padding: 4px 6px; font-size: 12px; color: var(--sk-t2); cursor: pointer; border-radius: var(--radius-md);
 }
-.pp-add:hover, .pp-link:hover { color: var(--sk-t1); }
+.pp-add:hover, .pp-link:hover { color: var(--sk-t1); background: var(--hover-subtle); }
 .pp-link:disabled { opacity: 0.5; cursor: default; }
-.pp-tabs {
-  display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 10px; scrollbar-width: none;
-}
-.pp-tabs::-webkit-scrollbar { display: none; }
-.pp-tab {
-  flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 6px; max-width: 70vw;
+.pp-chip {
+  flex: 0 1 auto; display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%;
   padding: 5px 11px; border-radius: var(--radius-full); border: 1px solid var(--sk-line2);
   background: transparent; color: var(--sk-t2); font-size: 12px; cursor: pointer;
 }
-.pp-tab:hover { color: var(--sk-t1); }
-.pp-tab.is-on { background: var(--hover-subtle); border-color: var(--job-accent); color: var(--sk-t1); }
-.pp-tab-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pp-tab-s { color: var(--sk-t3); font-size: 11px; white-space: nowrap; }
-.pp-tab.is-on .pp-tab-s { color: var(--job-accent); }
+.pp-chip:hover { color: var(--sk-t1); }
+.pp-chip.is-on { background: var(--hover-subtle); border-color: var(--job-accent); color: var(--sk-t1); }
+.pp-chip-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.pp-chip-s { color: var(--sk-t3); font-size: 11px; white-space: nowrap; }
+.pp-chip.is-on .pp-chip-s { color: var(--job-accent); }
+.pp-chip-more { color: var(--sk-t3); }
+.pp-panel { padding: 14px 0 10px; border-bottom: 1px solid var(--sk-line); }
+.pp-groups { margin-top: 10px; }
 .pp-groups { display: flex; flex-direction: column; gap: 14px; }
 .pp-gh { color: var(--sk-t3); font-size: 11px; padding: 0 2px 4px; }
 .pp-row {
@@ -470,15 +436,6 @@ span.pp-dot { cursor: default; }
   padding: 6px 14px; font-size: 13px; cursor: pointer;
 }
 .pp-go:disabled { opacity: 0.45; cursor: default; }
-/* compact: one card straight under the title, title inside it (rule 9), tighter ladder. */
-.pp-compact {
-  margin-bottom: 14px; padding: 10px 16px 12px; border: 1px solid var(--sk-line); border-radius: var(--radius-xl);
-  background: var(--sk-card);
-}
-.pp-compact .pp-tabs { padding-bottom: 6px; }
-.pp-compact .pp-dh { margin-bottom: 8px; }
-.pp-compact .pp-facts { margin-top: 8px; }
-.pp-compact .pp-step .project-stage-label { margin-top: 4px; }
 /* Phones show only the current stage's full label (N1.16; moved here from
    ProjectDetail with the stage strip it belonged to). */
 @media (max-width: 480px) {
@@ -486,5 +443,6 @@ span.pp-dot { cursor: default; }
   .pp-step .project-stage-label.is-current { display: block; max-width: none; }
   .pp-form { flex-direction: column; align-items: stretch; }
   .pp-row-from { display: none; }
+  .pp-stats { margin-left: 0; }
 }
 `
