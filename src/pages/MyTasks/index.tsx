@@ -378,7 +378,7 @@ export default function UnifiedMyTasks() {
           {isLoading ? (
             <div className="mt-band" style={{ paddingTop: 24, paddingBottom: 24 }}><div style={{ maxWidth: 'var(--col-main)' }}><TableSkeleton /></div></div>
           ) : effectiveView === 'columns' ? (
-            <ColumnsView filtered={filtered} isEmpty={isEmpty} byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
+            <ColumnsView filtered={filtered} isEmpty={isEmpty} byGroup={byGroup} onOpenEditor={setDrawer} projectsByPid={projectsByPid} filterGroup={filter.group} />
           ) : effectiveView === 'lanes' ? (
             <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
           ) : effectiveView === 'table' ? (

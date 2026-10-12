@@ -4,7 +4,6 @@ import { ICON_PROPS } from '../lib/iconProps'
 
 interface CollapsibleSectionProps {
   title: string
-  icon?: React.ReactNode
   badge?: string | number | null
   defaultOpen?: boolean
   storageKey?: string
@@ -17,7 +16,6 @@ interface CollapsibleSectionProps {
  */
 export default function CollapsibleSection({
   title,
-  icon,
   badge,
   defaultOpen = false,
   storageKey,
@@ -61,49 +59,30 @@ export default function CollapsibleSection({
   return (
     <div>
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 w-full group"
+        aria-expanded={open}
+        className="sk-hd group w-full"
         style={{
           background: 'none',
           border: 'none',
           cursor: 'pointer',
           padding: 'var(--sp-xs) 0',
+          margin: 0,
           textAlign: 'left',
         }}
       >
         <ChevronRight {...ICON_PROPS}
           size={12}
           style={{
-            color: 'var(--slate)',
-            opacity: 'var(--ink-label)',
+            color: 'var(--sk-t3)',
             transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
             transition: 'transform 150ms ease',
             flexShrink: 0,
           }}
         />
-        {icon}
-        <span
-          style={{
-            fontSize: 'var(--label-size)',
-            fontWeight: 'var(--label-weight)',
-            color: 'var(--slate)',
-            opacity: 'var(--ink-label)',
-          }}
-        >
-          {title}
-        </span>
-        {badge != null && badge !== '' && badge !== 0 && (
-          <span
-            style={{
-              fontSize: '10px',
-              color: 'var(--sk-t3)',
-              opacity: 0.85,
-              marginLeft: '2px',
-            }}
-          >
-            ({badge})
-          </span>
-        )}
+        <span className="sk-hd-t">{title}</span>
+        {badge != null && badge !== '' && badge !== 0 && <span className="sk-hd-c">{badge}</span>}
       </button>
       <div
         ref={contentRef}

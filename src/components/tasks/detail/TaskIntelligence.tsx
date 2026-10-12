@@ -1,9 +1,8 @@
 import { useMemo } from 'react'
-import { Brain, TrendingUp } from 'lucide-react'
 import { useProjectUpdates } from '../../../hooks/useApiData'
 import { parseDateOnlyOrTimestamp } from '../../../lib/dateUtils'
 import type { TaskRow } from '../../../lib/api'
-import { ICON_PROPS } from '../../../lib/iconProps'
+import SectionHead from '../../ui/SectionHead'
 
 interface TaskIntelligenceProps {
   task: TaskRow
@@ -134,20 +133,14 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
 
   return (
     <div className="flex flex-col" style={{ gap: 'var(--sp-lg)' }}>
-      <SectionHeader icon={Brain} label="Relevance" />
+      <SectionHead as="h3" title="Relevance" />
       <div
         className="flex items-center"
-        style={{
-          gap: 'var(--sp-md)',
-          padding: 'var(--sp-md)',
-          borderRadius: 'var(--radius-lg)',
-          background: 'var(--surface-1)',
-          border: '1px solid var(--border-subtle)',
-        }}
+        style={{ gap: 'var(--sp-md)' }}
       >
         <ScoreRing value={score} color={ringColor} />
         <div className="flex-1 min-w-0">
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--slate)', opacity: 0.85 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--sk-t2)' }}>
             Relevance score
           </div>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--ink)', lineHeight: 1.4 }}>
@@ -156,16 +149,9 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
         </div>
       </div>
 
-      <SectionHeader icon={TrendingUp} label="Project velocity" />
+      <SectionHead as="h3" title="Project velocity" />
       {projectSlug ? (
-        <div
-          style={{
-            padding: 'var(--sp-md)',
-            borderRadius: 'var(--radius-lg)',
-            background: 'var(--surface-1)',
-            border: '1px solid var(--border-subtle)',
-          }}
-        >
+        <div>
           <div className="flex items-center" style={{ gap: 'var(--sp-md)' }}>
             <Sparkline values={series} />
             <div className="flex flex-col" style={{ gap: 2 }}>
@@ -198,15 +184,6 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
       )}
 
     </div>
-  )
-}
-
-function SectionHeader({ icon: Icon, label }: { icon: typeof Brain; label: string }) {
-  return (
-    <label className="flex items-center gap-1.5" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-      <Icon {...ICON_PROPS} size={10} />
-      {label}
-    </label>
   )
 }
 

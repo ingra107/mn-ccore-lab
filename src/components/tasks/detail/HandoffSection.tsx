@@ -8,6 +8,7 @@ import { useTeam, useHandoffs } from '../../../hooks/useApiData'
 import { useCreateHandoff, useAcknowledgeHandoff } from '../../../hooks/useMutations'
 import { useToast } from '../../../hooks/useToast'
 import { formatRelativeTime } from '../../../lib/dateUtils'
+import SectionHead from '../../ui/SectionHead'
 import { ICON_PROPS } from '../../../lib/iconProps'
 import { withAlpha } from '../../../lib/taskGrouping'
 
@@ -123,16 +124,15 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
 
   const inputStyle = {
     color: 'var(--ink)',
-    borderColor: 'var(--border-subtle)',
+    borderColor: 'var(--field-edge)',
     backgroundColor: 'var(--cream)',
     fontSize: 'var(--value-size)',
   }
 
   const labelStyle = {
-    fontSize: 'var(--label-size)',
-    fontWeight: 'var(--label-weight)',
-    color: 'var(--slate)',
-    opacity: 'var(--ink-label)',
+    fontSize: 12,
+    fontWeight: 500,
+    color: 'var(--sk-t2)',
     marginBottom: '4px',
     display: 'block',
   } as React.CSSProperties
@@ -141,13 +141,8 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
     <div>
       {showForm ? (
         <form onSubmit={handleSubmit}>
-          <div className="p-4 rounded-xl" style={{ background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)', border: '1px solid var(--border-subtle)' }}>
-            <div className="flex items-center gap-2 mb-3">
-              <ArrowRightLeft {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
-              <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--sk-t2)' }}>
-                Handoff to...
-              </span>
-            </div>
+          <div>
+            <SectionHead as="h3" title="Hand off to" />
 
             {/* To: team member dropdown */}
             <div className="mb-3">
@@ -242,7 +237,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
           style={{
             color: 'var(--sk-t2)',
             background: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',
-            border: '1px solid var(--border-subtle)',
+            border: 'none',
             cursor: 'pointer',
             fontWeight: 'var(--label-weight)',
           }}
@@ -255,10 +250,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
       {/* Handoff History Timeline */}
       {handoffs.length > 0 && (
         <div className="mt-3">
-          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-            <ArrowRightLeft {...ICON_PROPS} size={10} />
-            Handoff History ({handoffs.length})
-          </label>
+          <SectionHead as="h3" title="Handoff history" count={handoffs.length} />
           <div className="flex flex-col gap-2">
             {handoffs.map((h) => {
               const from = getPersonInfo(h.from_slug)

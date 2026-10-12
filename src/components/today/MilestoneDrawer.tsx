@@ -11,7 +11,8 @@ import { useState } from 'react'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { useProjects, useProjectLinks, useTasks } from '../../hooks/useApiData'
 import { useUpdateTask } from '../../hooks/useMutations'
-import { TaskRow as SharedTaskRow } from '../tasks/TaskRow'
+import { ProjectOpenTaskCards } from '../project/ProjectOpenTaskCards'
+import SectionHead from '../ui/SectionHead'
 import TaskDetailPanel from '../tasks/TaskDetailPanel'
 import { DueInlineSelect } from '../tasks/detail/FieldControls'
 import StoredLinkChip from '../StoredLinkChip'
@@ -80,7 +81,7 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
   )
 
   return (
-    <div onClick={(e) => e.stopPropagation()} style={{ padding: '10px 18px 16px', borderTop: '1px solid var(--border-subtle)' }}>
+    <div onClick={(e) => e.stopPropagation()} style={{ padding: '10px 18px 16px' }}>
       {/* Date row — internal (gray dot) + hard (gold dot) dates, both
           editable (Nick 2026-09-17). Above the action row: these are the
           fields that decide what the collapsed row shows. */}
@@ -145,7 +146,7 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
               the key_link_* denormalized slots' render path). */}
           {keyLinks.length > 0 && (
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 10, color: INK_DIM, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Project links</div>
+              <SectionHead as="h3" title="Project links" />
               <div className="flex flex-wrap gap-2" style={{ marginBottom: 8 }}>
                 {keyLinks.map((link) => <StoredLinkChip key={link.id} link={link} />)}
               </div>
@@ -173,27 +174,12 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
           {/* Open tasks on this project — compact non-interactive-expand rows. */}
           {visibleOpenTasks.length > 0 && (
             <div style={{ marginTop: 14 }}>
-              <div style={{ fontSize: 10, color: INK_DIM, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Open tasks on this project</div>
-              <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 6, overflow: 'hidden' }}>
-                {visibleOpenTasks.map((t) => (
-                  <SharedTaskRow
-                    key={t.id}
-                    task={t}
-                    project={null}
-                    variant="task"
-                    dense
-                    hideCaret
-                    isDone={isTaskDone(t)}
-                    onToggleDone={() => onToggleComplete(t)}
-                    isExpanded={false}
-                    // Row body or title → the full editor for THAT task (Nick
-                    // 2026-09-16: "click on the open tasks here and edit them").
-                    // Same TaskDetailPanel the milestone's own Full editor uses.
-                    onToggleExpand={() => setFullEditorTask(t)}
-                    onOpenEditor={() => setFullEditorTask(t)}
-                  />
-                ))}
-              </div>
+              <SectionHead as="h3" title="Open tasks on this project" count={openTasks.length} />
+              {/* The Today card, as on the project page. Title or body click
+                  opens that task's full editor. */}
+              {fullProject && (
+                <ProjectOpenTaskCards tasks={visibleOpenTasks} project={fullProject} onOpenEditor={(t) => setFullEditorTask(t)} />
+              )}
               {hiddenOpenCount > 0 && (
                 <Link to={`${PATHS.project(project.slug)}?tab=tasks`} style={{ display: 'inline-block', marginTop: 6, fontSize: 11, color: 'var(--job-accent)', textDecoration: 'none' }}>
                   {hiddenOpenCount} more →

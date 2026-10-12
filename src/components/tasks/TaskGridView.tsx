@@ -1124,7 +1124,7 @@ function TaskGridRow({
                           transform: 'translateY(-50%)',
                         }}
                       >
-                        <span className="text-[10px] uppercase tracking-wider block mb-1.5" style={{ color: 'var(--sk-t2)', fontWeight: 600 }}>Blocked by</span>
+                        <span className="text-[11px] block mb-1.5" style={{ color: 'var(--sk-t2)', fontWeight: 500 }}>Blocked by</span>
                         {blockerIds.map(id => {
                           const bt = allTasks.find(t => t.id === id)
                           if (!bt) return null

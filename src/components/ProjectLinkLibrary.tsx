@@ -131,7 +131,6 @@ export default function ProjectLinkLibrary({ links, isLoading, slotUrls = [], pi
         <div style={{ marginTop: pinnedEditor || current.length > 0 || documents ? '10px' : 0 }}>
           <CollapsibleSection
             title="Archived"
-            icon={<Archive {...ICON_PROPS} size={11} style={{ color: 'var(--slate)' }} />}
             badge={archived.length}
             storageKey="project-links-archived"
           >

@@ -30,9 +30,7 @@ async function render(width: number): Promise<HTMLElement> {
         <div style={{ height: 600, display: 'flex', flexDirection: 'column' }}>
           <ColumnsView
             filtered={[overdue]} isEmpty={false} byGroup={byGroup}
-            selected={new Set()} toggleSelect={() => {}} selectRange={() => {}} anchorId={null}
-            onToggleComplete={() => {}} onOpenEditor={() => {}} expanded={null} setExpanded={() => {}}
-            projectsByPid={new Map()} plannedSet={new Set()}
+            onOpenEditor={() => {}} projectsByPid={new Map()}
           />
         </div>
       </MemoryRouter>

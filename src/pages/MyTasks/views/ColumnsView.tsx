@@ -2,53 +2,38 @@
 // width (the one Tasks view past --page-width), so all five fit at 1440+; below
 // that the grid scrolls sideways with a thin scrollbar and an in-flow pager row.
 //
-// Rows now use the shared <TaskRow> (src/components/tasks/TaskRow.tsx) in
-// `stack` mode (narrow column → title gets full width, meta stacks beneath it
-// per handoff rule #5). Square = complete; shift-click / long-press = select
-// (the old persistent select-checkbox is gone, handoff §0 rule 2-3); body
-// click = inline expand within the column. Surface-specific chips (waiting /
-// stale) ride in via `extraMeta`; the InlineDetail action panel is the
-// expanded `children`.
+// Cards are the Today card (today/TaskRow over tasks/TaskCardRow), the same one
+// List and Board render. A narrow column has no room for the inline drawer, so a
+// click opens the full task panel (as on Board). Square = complete.
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx (ColumnsView + Card).
 
 import { useEffect, useRef, useState } from 'react'
-import { TaskRow as SharedTaskRow } from '../../../components/tasks/TaskRow'
-import { useLabPrefs } from '../../../hooks/useLabPrefs'
-import { useDensity } from '../../../components/DensityToggle'
-import { useSelectMode } from '../../../hooks/useSelectMode'
-import { Chip } from '../primitives'
-import { InlineDetail } from '../components/InlineDetail'
-import { MilestoneDrawer } from '../../../components/today/MilestoneDrawer'
+import { TaskRow as CardTaskRow } from '../../../components/today/TaskRow'
+import { useTodayState } from '../../../hooks/useTodayState'
 import { OverdueBanner } from './OverdueBanner'
 import { NoTasksMatch, AllCaughtUp, LaneEmpty } from './MyTasksEmpty'
 import {
   GROUP_META, GROUP_ORDER,
-  JOB_STALE, STATUS_COLOR,
   INK_DIM, INK_MUTED, PAGE_BG,
-  daysSince, isTaskDone,
+  isTaskDone,
   type GroupKey,
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
-import { isMilestone } from '../../../../shared/taskKinds'
 
 // Column floor and gap (px). See minWidth below for why 190.
 const COL_MIN = 190
 const COL_GAP = 14
 
-export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect, selectRange, anchorId, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { filtered: TaskRow[]; isEmpty: boolean; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; selectRange: (targetId: string, orderedIds: string[], anchor: string | null) => void; anchorId: string | null; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string; primary_folder?: string | null }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
+export function ColumnsView({ filtered, isEmpty, byGroup, onOpenEditor, projectsByPid, filterGroup }: { filtered: TaskRow[]; isEmpty: boolean; byGroup: Record<GroupKey, TaskRow[]>; onOpenEditor: (id: string) => void; projectsByPid: Map<string, { name: string; slug: string; primary_folder?: string | null }>; filterGroup?: GroupKey | null }) {
   // MT-16 — when a Group filter is active, only render the matching column
   // (others would just be "nothing here" empty lanes that eat horizontal
   // space and obscure the filter result).
   const visibleGroups = filterGroup ? GROUP_ORDER.filter(g => g === filterGroup) : GROUP_ORDER
   const colCount = visibleGroups.length
 
-  // Phase G: Ctrl/Meta held → select-mode affordance on rows.
-  const selectModeActive = useSelectMode(true)
+  const state = useTodayState(filtered)
 
-  // Track the last pointer-event modifiers in a capture-phase ref so that
-  // onSelect (called by SharedTaskRow with no event arg) can read them.
-  const lastModifiers = useRef({ shift: false, ctrlMeta: false })
   // Overflow is measured, not guessed from a breakpoint: the pager row below
   // exists only while the grid is really wider than its scroller.
   const scrollerRef = useRef<HTMLDivElement | null>(null)
@@ -70,7 +55,6 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
   }, [colCount, filtered.length])
   const overflowing = edge.left || edge.right
 
-  const selectionActive = selectModeActive || selected.size > 0
   // One column floor, used by both the grid template and its minWidth. 5 x 190
   // + 4 gaps = 1006px, which fits the 1,034px Columns gets at a 1440 viewport,
   // so all five columns show there with no scroll (Nick 2026-10-10, "Columns
@@ -109,12 +93,6 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
       tabIndex={-1}
       className="mt-columns-scroll fab-clear"
       style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 20, position: 'relative', width: '100%' }}
-      onClickCapture={(e) => {
-        lastModifiers.current = { shift: e.shiftKey, ctrlMeta: e.ctrlKey || e.metaKey }
-      }}
-      // Issue 2: prevent text-selection on modifier+mousedown across ALL rows
-      // in the columns container. Capture phase fires before any child handler.
-      onMouseDownCapture={(e) => { if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault() }}
     >
       <style>{`
         .mt-columns-scroll { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
@@ -133,35 +111,28 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
           const incomplete = tasks.filter((t) => !isTaskDone(t)).length
           return (
             <div key={gkey} style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 4px 8px', borderBottom: '1px solid var(--border-subtle)', marginBottom: 8, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
-                <h3 style={{ fontSize: 13, fontWeight: 500, color: INK_MUTED, margin: 0 }}>{meta.label}</h3>
-                <span style={{ fontSize: 11, color: INK_DIM, marginLeft: 'auto' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '8px 4px', marginBottom: 4, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--sk-t1)', margin: 0 }}>{meta.label}</h3>
+                <span style={{ fontSize: 12, color: INK_DIM, marginLeft: 'auto' }}>
                   {incomplete}{tasks.length > incomplete && <span> · {tasks.length - incomplete}✓</span>}
                 </span>
               </div>
-              <div style={{ overflow: 'hidden' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {tasks.length === 0 && <LaneEmpty compact />}
                 {tasks.map((t) => (
-                  <MyTasksRow
+                  <CardTaskRow
                     key={t.id}
                     task={t}
                     project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
-                    selected={selected.has(t.id)}
-                    selectionActive={selectionActive}
-                    onSelect={() => {
-                      if (lastModifiers.current.shift) {
-                        // Range-select from anchor to this task in column order
-                        selectRange(t.id, tasks.map(r => r.id), anchorId)
-                      } else {
-                        toggleSelect(t.id)
-                      }
-                    }}
-                    onToggleComplete={onToggleComplete}
-                    onOpenEditor={() => onOpenEditor(t.id)}
-                    expanded={expanded === t.id}
-                    onExpand={() => setExpanded(expanded === t.id ? null : t.id)}
-                    planned={plannedSet.has(t.id)}
-                    stack
+                    state={state}
+                    expandedId={null}
+                    onExpand={noop}
+                    projectsByPid={projectsByPid}
+                    done={isTaskDone(t)}
+                    noDrag
+                    // No onOpenEditor: the card header owns focus, and a click
+                    // already opens the panel through onOpen.
+                    onOpen={() => onOpenEditor(t.id)}
                   />
                 ))}
               </div>
@@ -175,51 +146,4 @@ export function ColumnsView({ filtered, isEmpty, byGroup, selected, toggleSelect
   )
 }
 
-// Surface-specific chips (waiting / stale) that aren't part of the canonical
-// row meta. planned / due / project / override-pin are all handled by the
-// shared row itself.
-function rowExtraMeta(task: TaskRow, staleDays: number) {
-  const stale = task.updated_at && daysSince(task.updated_at) >= staleDays && task.status === 'in_progress' ? daysSince(task.updated_at) : 0
-  if (task.status !== 'waiting_external' && stale <= 0) return null
-  return (
-    <>
-      {task.status === 'waiting_external' && <Chip color={STATUS_COLOR.waiting_external} filled>⏳ waiting</Chip>}
-      {stale > 0 && <Chip color={JOB_STALE}>{stale}d stale</Chip>}
-    </>
-  )
-}
-
-export function MyTasksRow({ task, project, selected, selectionActive, onSelect, onToggleComplete, onOpenEditor, expanded, onExpand, planned, stack }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; selected: boolean; selectionActive: boolean; onSelect: () => void; onToggleComplete: (t: TaskRow) => void; onOpenEditor?: () => void; expanded: boolean; onExpand: () => void; planned: boolean; stack?: boolean }) {
-  const isDone = isTaskDone(task)
-  const { prefs } = useLabPrefs()
-  const [density] = useDensity()
-  return (
-    <SharedTaskRow
-      task={task}
-      project={project}
-      dense={density === 'compact'}
-      stack={stack}
-      isDone={isDone}
-      onToggleDone={() => onToggleComplete(task)}
-      onOpenEditor={onOpenEditor}
-      isExpanded={expanded}
-      onToggleExpand={onExpand}
-      isSelected={selected}
-      selectionActive={selectionActive}
-      onToggleSelect={onSelect}
-      isPlanned={planned}
-      plannedLabel="today"
-      showGroupOverridePin
-      leadingTag={isMilestone(task) ? undefined : ((task as TaskRow & { _tag?: string })._tag ?? undefined)}
-      extraMeta={rowExtraMeta(task, prefs.taskStaleDays)}
-    >
-      {isMilestone(task) ? (
-        // Same drawer Today uses (Nick 2026-09-16): Mark complete, project
-        // links + documents, the project's open tasks, notes.
-        <MilestoneDrawer task={task} project={project} onToggleComplete={onToggleComplete} />
-      ) : (
-        <InlineDetail task={task} projectName={project?.name} primaryFolder={project?.primary_folder} onOpenEditor={onOpenEditor} />
-      )}
-    </SharedTaskRow>
-  )
-}
+function noop() {}

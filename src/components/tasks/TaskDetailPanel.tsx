@@ -2,11 +2,8 @@ import { TASK_KIND_OPTIONS, isQuestion, statusOptionsFor } from '../../../shared
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { lazyRoute } from '../../lib/lazyRoute'
 import {
-  X, Circle, Clock, User, Flag, Scale,
-  ArrowRightLeft,
-  FileText, MessageSquare, Upload, Eye, ScrollText,
-  Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
-  ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Type, Loader2,
+  X, Clock, User, Scale, Upload, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
+  ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Loader2,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
@@ -38,6 +35,8 @@ import { shortLabelForUrl, gmailKind } from '../../lib/urlClassify'
 import { useLaunchCommands, taskLaunchContext } from '../../hooks/useLaunchCommands'
 import LinkChip from '../LinkChip'
 import { FaceDisc } from '../today/skin'
+import SectionHead from '../ui/SectionHead'
+import { SegmentedToggle } from '../ui/SegmentedToggle'
 import InlineSelect from '../InlineSelect'
 import PresenceAvatars from '../PresenceAvatars'
 import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../../hooks/usePresence'
@@ -59,17 +58,16 @@ import { isHermesPrefix, isBacklogPrefix, stripBacklogPrefix } from '../../lib/h
 import { askHermesOnTask, hermesOutcomeToast } from '../../lib/askHermes'
 import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
-import { Brain } from 'lucide-react'
 import { taskShortLabel } from '../../lib/displayNames'
 
 type Tab = 'overview' | 'intelligence' | 'activity' | 'files' | 'details'
 
-const TABS: { key: Tab; label: string; icon: typeof Circle }[] = [
-  { key: 'overview', label: 'Overview', icon: Eye },
-  { key: 'intelligence', label: 'Intelligence', icon: Brain },
-  { key: 'activity', label: 'Activity', icon: Clock },
-  { key: 'files', label: 'Files', icon: Upload },
-  { key: 'details', label: 'Details', icon: Flag },
+const TABS: { value: Tab; label: string }[] = [
+  { value: 'overview', label: 'Overview' },
+  { value: 'intelligence', label: 'Intelligence' },
+  { value: 'activity', label: 'Activity' },
+  { value: 'files', label: 'Files' },
+  { value: 'details', label: 'Details' },
 ]
 
 // Deep-link backward compat: ?tab=notes and ?tab=comments from old links
@@ -389,10 +387,10 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             Mobile uses the root motion.div overflow directly (no wrapping needed). */}
         <div style={isMobilePanel ? {} : { height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
         {/* Header — flat: same surface as panel, single hairline bottom only */}
-        <div className="task-detail-sticky task-detail-header sticky top-0 z-10 flex items-center justify-between px-5 py-3" style={{ backgroundColor: 'var(--cream)', borderBottom: '1px solid var(--border-subtle)' }}>
+        <div className="task-detail-sticky task-detail-header sticky top-0 z-10 flex items-center justify-between px-5 py-3" style={{ backgroundColor: 'var(--cream)', borderBottom: '1px solid var(--sk-line2)' }}>
           <div className="flex items-center gap-2">
-            <span className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-              Task Detail
+            <span className="text-xs font-medium" style={{ color: 'var(--sk-t2)' }}>
+              Task detail
             </span>
             {viewerSlugs.length > 0 && <PresenceAvatars slugs={viewerSlugs} peerIntents={taskPeerIntents} />}
           </div>
@@ -465,9 +463,8 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             <div className="flex items-center" style={{ gap: 'var(--sp-xs)', marginTop: 'var(--sp-xs)', minWidth: 0 }}>
               <label
                 className="flex items-center flex-shrink-0"
-                style={{ gap: 'var(--sp-xs)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}
+                style={{ gap: 'var(--sp-xs)', fontSize: 12, color: 'var(--sk-t2)', fontWeight: 500 }}
               >
-                <Type size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ opacity: 0.85 }} />
                 Short title
               </label>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -616,66 +613,27 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
         </div>
 
-        {/* Composer zone — ONE elevated element on the flat panel surface.
-            Desktop: inset card (--surface-2 bg + --border-subtle border + radius).
-            Mobile: OverviewQuickAdd handles its own sticky positioning + bg;
-            skip the card wrapper so the component's negative-margin breakout works. */}
+        {/* Composer: sits on the panel's own surface, no card around it. */}
         <div className="px-5" style={{ paddingTop: 'var(--sp-xs)', paddingBottom: 'var(--sp-md)' }}>
-          {isMobilePanel ? (
-            <OverviewQuickAdd
-              taskId={task.id}
-              projectSlug={task.project_id}
-              primaryFolder={taskProject?.primary_folder}
-              onJumpToTab={(tab) => setActiveTab(tab)}
-              onContentChange={setQuickAddHasContent}
-            />
-          ) : (
-            <div
-              style={{
-                background: 'var(--surface-2)',
-                borderRadius: 'var(--radius-lg)',
-                padding: 'var(--sp-sm) var(--sp-md)',
-              }}
-            >
-              <OverviewQuickAdd
-                taskId={task.id}
-                projectSlug={task.project_id}
-                primaryFolder={taskProject?.primary_folder}
-                onJumpToTab={(tab) => setActiveTab(tab)}
-                onContentChange={setQuickAddHasContent}
-              />
-            </div>
-          )}
+          <OverviewQuickAdd
+            taskId={task.id}
+            projectSlug={task.project_id}
+            primaryFolder={taskProject?.primary_folder}
+            onJumpToTab={(tab) => setActiveTab(tab)}
+            onContentChange={setQuickAddHasContent}
+          />
         </div>
 
-        {/* Tab Bar — sits below the composer card with its own border-b. */}
-        {/* N1.04: scrollable when narrow — without overflow-x the strip clips
-            Files/Details on phones AND tablets with no way to reach them. */}
-        <div className="flex px-5" style={{ borderBottom: '1px solid var(--border-subtle)', overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {TABS.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className="flex items-center gap-1.5 px-3 py-2.5 text-[12px] font-medium transition-colors"
-              style={{
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-                color: activeTab === key ? 'var(--job-accent)' : 'var(--slate)',
-                opacity: activeTab === key ? 1 : 0.85,
-                borderBottom: activeTab === key ? '2px solid var(--job-accent)' : '2px solid transparent',
-                background: 'none',
-                border: 'none',
-                borderBottomWidth: '2px',
-                borderBottomStyle: 'solid',
-                borderBottomColor: activeTab === key ? 'var(--job-accent)' : 'transparent',
-                cursor: 'pointer',
-                marginBottom: '-1px',
-              }}
-            >
-              <Icon size={13} strokeWidth={1.5} absoluteStrokeWidth />
-              {label}
-            </button>
-          ))}
+        {/* Tabs: Today's tray. Scrolls sideways when the pane is narrow so
+            Files/Details stay reachable on a phone (N1.04). */}
+        <div className="px-5 pb-1">
+          <SegmentedToggle
+            ariaLabel="Task sections"
+            scrollable
+            options={TABS}
+            value={activeTab}
+            onChange={setActiveTab}
+          />
         </div>
 
         {/* Tab Content — all rendered, display:none for inactive to preserve state */}
@@ -760,7 +718,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-xl)', alignItems: 'start' }}>
               <SubtaskSection taskId={task.id} />
               <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
-                <div style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Workflow</div>
+                <SectionHead as="h3" title="Workflow" />
                 <WorkflowSection
                   fields={{
                     waiting_on: task.waiting_on ?? null,
@@ -792,10 +750,10 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
             {/* Row: Watchers + Reminder */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
-              <FieldBlock label="Watchers" icon={Users} noContainer>
+              <FieldBlock label="Watchers" noContainer>
                 <WatchersPicker value={task.watchers || ''} onChange={(v) => handleFieldUpdate('watchers', v || null)} />
               </FieldBlock>
-              <FieldBlock label="Reminder" icon={Bell}>
+              <FieldBlock label="Reminder">
                 <input
                   type="number"
                   min={0}
@@ -811,7 +769,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
             {/* Row: Recurrence (single field) */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
-              <FieldBlock label="Recurrence" icon={RefreshCw}>
+              <FieldBlock label="Recurrence">
                 <InlineSelect
                   value={task.recurrence || 'none'}
                   options={[
@@ -835,10 +793,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
             {/* Instructions */}
             <div>
-              <label className="flex items-center gap-1.5 mb-1.5" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', fontSize: 'var(--label-size)' }}>
-                <ClipboardList size={11} strokeWidth={1.5} absoluteStrokeWidth />
-                Instructions
-              </label>
+              <SectionHead as="h3" title="Instructions" />
               <EditableTextarea
                 value={task.instructions || ''}
                 onSave={(v) => handleFieldUpdate('instructions', v || null)}
@@ -853,7 +808,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {/* Handoffs */}
             <CollapsibleSection
               title="Handoffs"
-              icon={<ArrowRightLeft size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />}
               defaultOpen={false}
               storageKey={`task-handoffs-${task.id}`}
             >
@@ -864,7 +818,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {task.project_id && (
               <CollapsibleSection
                 title="Related decisions"
-                icon={<Scale size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--sk-t2)', opacity: 0.85 }} />}
                 defaultOpen={false}
                 storageKey={`task-decisions-${task.id}`}
               >
@@ -875,12 +828,11 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {/* Files */}
             <CollapsibleSection
               title="Files"
-              icon={<FileText size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />}
               defaultOpen={false}
               storageKey={`task-files-${task.id}`}
             >
               <FileUpload entityType="task" entityId={task.id} />
-              <div style={{ marginTop: 'var(--sp-md)', borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--sp-md)' }}>
+              <div style={{ marginTop: 'var(--sp-md)' }}>
                 <TaskFilesSection taskId={task.id} />
               </div>
             </CollapsibleSection>
@@ -888,7 +840,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {/* Meta info. #108: meeting origin is stated in words, not as the raw
                 `meeting_extraction` enum, and links to the meeting when — and only
                 when — that meeting actually resolves (see lib/meetingOrigin). */}
-            <div className="flex items-center gap-3 text-[10px] pt-2 border-t" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+            <div className="flex items-center gap-3 text-[10px] pt-2" style={{ color: 'var(--sk-t3)' }}>
               {isFromMeeting(task) ? (
                 <MeetingOriginTag task={task} iconSize={11} style={{ gap: 4 }} />
               ) : (
@@ -981,12 +933,7 @@ function DescriptionField({
 
   return (
     <div>
-      <label
-        className="flex items-center"
-        style={{ gap: 'var(--sp-xs)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', marginBottom: 'var(--sp-xs)' }}
-      >
-        Description
-      </label>
+      <SectionHead as="h3" title="Description" />
 
       {/* Ghost empty line — shown only when empty AND not editing */}
       {isEmpty && !isEditing && (
@@ -1155,18 +1102,19 @@ function OverviewActivityPeek({
 }) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-          Recent activity
-        </span>
-        <button
-          type="button"
-          onClick={onViewAll}
-          style={{ fontSize: 'var(--label-size)', color: 'var(--job-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}
-        >
-          view all →
-        </button>
-      </div>
+      <SectionHead
+        as="h3"
+        title="Recent activity"
+        right={
+          <button
+            type="button"
+            onClick={onViewAll}
+            style={{ fontSize: 12, color: 'var(--job-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}
+          >
+            View all
+          </button>
+        }
+      />
       {/* N4 — xs avatars (20px): Nick wants the Overview peek tighter. */}
       <TaskActivityFeed taskId={taskId} peekCount={3} hidePills avatarSize="xs" />
     </div>
@@ -1317,9 +1265,7 @@ function DetailKeyLinks({
       {/* Inherited project links — read-only, visually separated. */}
       {projectLinks.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            Project links
-          </span>
+          <SectionHead as="h3" title="Project links" />
           <div className="flex flex-wrap gap-2">
             {projectLinks.map((link) => (
               <StoredLinkChip key={link.id} link={link} />
@@ -1347,9 +1293,7 @@ function DetailKeyLinks({
           task with >3 typed links can never silently hide one. */}
       {overflowLinks.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            More links
-          </span>
+          <SectionHead as="h3" title="More links" />
           <div className="flex flex-wrap gap-2">
             {overflowLinks.map((link) => (
               <StoredLinkChip key={link.id} link={link} />
@@ -1406,36 +1350,34 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
-        <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', fontSize: 'var(--label-size)' }}>
-          Attachments ({files.length})
-        </span>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg"
-          style={{ background: 'none', border: '1px solid var(--border-subtle)', color: 'var(--sk-t2)', cursor: 'pointer', opacity: 0.8 }}
-        >
-          <Plus size={11} strokeWidth={1.5} absoluteStrokeWidth />
-          Add Link
-        </button>
-      </div>
+      <SectionHead
+        as="h3"
+        title="Attachments"
+        count={files.length}
+        right={
+          <button onClick={() => setShowAdd(true)} className="tk-btn tk-sm">
+            <Plus size={11} strokeWidth={1.5} absoluteStrokeWidth />
+            Add link
+          </button>
+        }
+      />
 
       {showAdd && (
-        <div className="flex flex-col gap-2 p-3 rounded-lg mb-3" style={{ backgroundColor: 'var(--ice)', border: '1px solid var(--border-subtle)' }}>
+        <div className="flex flex-col gap-2 mb-3">
           <input
             autoFocus
             value={filename}
             onChange={e => setFilename(e.target.value)}
             placeholder="File name (e.g. Protocol v2.docx)"
-            className="text-xs px-2 py-1.5 rounded border bg-transparent"
-            style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)' }}
+            className="field-container text-xs px-2 py-1.5 bg-transparent"
+            style={{ color: 'var(--ink)' }}
           />
           <input
             value={url}
             onChange={e => setUrl(e.target.value)}
             placeholder="URL (paste link to document)"
-            className="text-xs px-2 py-1.5 rounded border bg-transparent"
-            style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)' }}
+            className="field-container text-xs px-2 py-1.5 bg-transparent"
+            style={{ color: 'var(--ink)' }}
           />
           <div className="flex gap-2">
             <button
@@ -1448,8 +1390,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
             </button>
             <button
               onClick={() => { setShowAdd(false); setFilename(''); setUrl('') }}
-              className="text-[11px] px-3 py-1 rounded-lg"
-              style={{ background: 'none', border: '1px solid var(--border-subtle)', color: 'var(--slate)', cursor: 'pointer' }}
+              className="tk-btn tk-sm"
             >
               Cancel
             </button>
@@ -1713,43 +1654,16 @@ export function OverviewQuickAdd({
             borderRadius: 'var(--radius-lg)',
           }}
         >
-          {/* Segmented mode pills */}
-          <div
-            className="inline-flex rounded-full overflow-hidden flex-shrink-0"
-            style={{ background: 'var(--hover-subtle)' }}
-            role="tablist"
-            aria-label="Quick add mode"
-          >
-            {(['comment', 'note'] as const).map((m) => {
-              const isActive = mode === m
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive ? "true" : "false"}
-                  onClick={() => setMode(m)}
-                  data-tip={TOOLTIPS[m]}
-                  className="cursor-pointer inline-flex items-center gap-1 transition-all tip"
-                  style={{
-                    fontSize: '10px',
-                    fontWeight: isActive ? 600 : 400,
-                    padding: '3px 10px',
-                    borderRadius: 'var(--radius-full)',
-                    background: isActive ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                    color: isActive ? 'var(--job-accent)' : 'var(--slate)',
-                    border: 'none',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {m === 'comment' ? <MessageSquare size={9} strokeWidth={1.5} absoluteStrokeWidth /> : <ScrollText size={9} strokeWidth={1.5} absoluteStrokeWidth />}
-                  {m}
-                </button>
-              )
-            })}
-          </div>
+          <SegmentedToggle
+            ariaLabel="Quick add mode"
+            className="flex-shrink-0"
+            options={[
+              { value: 'comment', label: 'Comment', title: TOOLTIPS.comment },
+              { value: 'note', label: 'Note', title: TOOLTIPS.note },
+            ]}
+            value={mode}
+            onChange={setMode}
+          />
 
           {/* Full-width input — no icons left of it */}
           <input
@@ -1804,7 +1718,7 @@ export function OverviewQuickAdd({
               fontSize: 'var(--value-size)',
               color: 'var(--ink)',
               background: 'var(--cream)',
-              border: '1px solid var(--border-subtle)',
+              border: '1px solid var(--field-edge)',
               borderRadius: 'var(--radius-md)',
               padding: composing ? '7px 10px' : '4px 10px',
               lineHeight: 1.5,

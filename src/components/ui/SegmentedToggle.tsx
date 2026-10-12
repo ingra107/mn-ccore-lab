@@ -12,6 +12,8 @@ export interface SegmentedOption<T extends string> {
   value: T
   label: string
   icon?: ReactNode
+  /** Tooltip; defaults to the label. */
+  title?: string
 }
 
 interface SegmentedToggleProps<T extends string> {
@@ -42,7 +44,7 @@ export function SegmentedToggle<T extends string>({
           role="tab"
           aria-selected={value === opt.value}
           onClick={() => onChange(opt.value)}
-          title={opt.label}
+          title={opt.title ?? opt.label}
           className={value === opt.value ? 'tk-on' : undefined}
         >
           {opt.icon}{opt.label}

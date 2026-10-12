@@ -124,7 +124,6 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
   return (
     <CollapsibleSection
       title="Conferences"
-      icon={<Presentation {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)', opacity: 0.85 }} />}
       badge={activeConfs.length || null}
       storageKey={`conf-${projectId}`}
     >

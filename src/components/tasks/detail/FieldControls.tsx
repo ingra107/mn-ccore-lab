@@ -2,30 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { useProjectPickerList } from '../../../hooks/useProjectPickerList'
 import { TASK_KIND_OPTIONS, statusOptionsFor } from '../../../../shared/taskKinds'
 import GhostSelect from '../../ui/GhostSelect'
-import {
-  Circle, Clock, Handshake,
-} from 'lucide-react'
+import Field from '../../ui/Field'
 import InlineDatePicker from '../../InlineDatePicker'
 import { isDoneStatus } from '../../../lib/dateUtils'
-import { ICON_PROPS } from '../../../lib/iconProps'
 import { projectShortLabel } from '../../../lib/displayNames'
 
 // ── Field Block Wrapper ──────────────────────────────────────
 
-export function FieldBlock({ label, icon: Icon, children, noContainer }: { label: string; icon: typeof Circle; children: React.ReactNode; noContainer?: boolean }) {
-  return (
-    <div className="flex flex-col" style={{ gap: 'var(--sp-xs)' }}>
-      <label className="flex items-center" style={{ gap: 'var(--sp-xs)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-        <Icon {...ICON_PROPS} size={11} style={{ opacity: 0.85 }} />
-        {label}
-      </label>
-      {noContainer ? (
-        <div className="min-w-0">{children}</div>
-      ) : (
-        <div className="field-container">{children}</div>
-      )}
-    </div>
-  )
+export function FieldBlock({ label, children, noContainer }: { label: string; children: React.ReactNode; noContainer?: boolean }) {
+  return <Field label={label} noContainer={noContainer}>{noContainer ? <div className="min-w-0">{children}</div> : children}</Field>
 }
 
 // ── Editable Title ───────────────────────────────────────────
@@ -234,15 +219,14 @@ function WorkflowDateInput({ value, onSave }: { value: string; onSave: (v: strin
 
 export function WorkflowSection({ fields, onChange, compact }: { fields: WorkflowFields; onChange: (patch: Partial<WorkflowFields>) => void; compact?: boolean }) {
   // compact=true (Today drawer): smaller label font + tighter row gap.
-  const labelSize = compact ? '10px' : 'var(--label-size)'
+  const labelSize = compact ? '11px' : 12
   const rowGap = compact ? 4 : undefined  // undefined → falls back to CSS var
   return (
     <div className="flex flex-col" style={{ gap: compact ? 8 : 'var(--sp-sm, 10px)' }}>
       <div className="grid grid-cols-2" style={{ gap: compact ? 8 : 'var(--sp-sm, 10px)' }}>
         {/* Waiting on */}
         <div className="flex flex-col" style={{ gap: rowGap ?? 'var(--sp-xs, 6px)' }}>
-          <label className="flex items-center" style={{ gap: 4, fontSize: labelSize, color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            <Clock {...ICON_PROPS} size={10} style={{ opacity: 0.75 }} />
+          <label className="flex items-center" style={{ gap: 4, fontSize: labelSize, color: 'var(--sk-t2)', fontWeight: 500 }}>
             Waiting on
           </label>
           <WorkflowTextInput
@@ -254,16 +238,14 @@ export function WorkflowSection({ fields, onChange, compact }: { fields: Workflo
         </div>
         {/* Next check-in */}
         <div className="flex flex-col" style={{ gap: rowGap ?? 'var(--sp-xs, 6px)' }}>
-          <label className="flex items-center" style={{ gap: 4, fontSize: labelSize, color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            <Clock {...ICON_PROPS} size={10} style={{ opacity: 0.75 }} />
+          <label className="flex items-center" style={{ gap: 4, fontSize: labelSize, color: 'var(--sk-t2)', fontWeight: 500 }}>
             Next check-in
           </label>
           <WorkflowDateInput value={fields.next_checkin_date ?? ''} onSave={(v) => onChange({ next_checkin_date: v })} />
         </div>
         {/* Promised to */}
         <div className="flex flex-col" style={{ gap: rowGap ?? 'var(--sp-xs, 6px)' }}>
-          <label className="flex items-center" style={{ gap: 4, fontSize: labelSize, color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            <Handshake {...ICON_PROPS} size={10} style={{ opacity: 0.75 }} />
+          <label className="flex items-center" style={{ gap: 4, fontSize: labelSize, color: 'var(--sk-t2)', fontWeight: 500 }}>
             Promised to
           </label>
           <WorkflowTextInput
@@ -275,8 +257,7 @@ export function WorkflowSection({ fields, onChange, compact }: { fields: Workflo
         </div>
         {/* Promise date */}
         <div className="flex flex-col" style={{ gap: rowGap ?? 'var(--sp-xs, 6px)' }}>
-          <label className="flex items-center" style={{ gap: 4, fontSize: labelSize, color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            <Handshake {...ICON_PROPS} size={10} style={{ opacity: 0.75 }} />
+          <label className="flex items-center" style={{ gap: 4, fontSize: labelSize, color: 'var(--sk-t2)', fontWeight: 500 }}>
             By when
           </label>
           <WorkflowDateInput value={fields.promise_date ?? ''} onSave={(v) => onChange({ promise_date: v })} />

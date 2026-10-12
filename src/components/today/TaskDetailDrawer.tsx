@@ -355,7 +355,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
             ))}
             {blocks.length > 0 && (
               <div style={{ marginTop: 10 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--sk-t2)', marginBottom: 4 }}>Blocks</div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--sk-t2)', marginBottom: 4 }}>Blocks</div>
                 {blocks.map((b) => (
                   <div key={b.id} style={{ fontSize: 11, color: INK, padding: '2px 0' }}>↳ {b.title}</div>
                 ))}

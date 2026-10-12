@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import {
-  X, AlertTriangle, Plus, Ban, Link2, Search,
-} from 'lucide-react'
+  X, Plus, Link2, Search} from 'lucide-react'
+import SectionHead from '../../ui/SectionHead'
 import CollapsibleSection from '../../CollapsibleSection'
 import { useTasks } from '../../../hooks/useApiData'
 import type { TaskRow } from '../../../lib/api'
@@ -67,7 +67,6 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
   return (
     <CollapsibleSection
       title="Dependencies"
-      icon={<Link2 {...ICON_PROPS} size={11} style={{ color: hasBlockers ? 'var(--sk-t2)' : 'var(--slate)', opacity: hasBlockers ? 1 : 0.85 }} />}
       badge={hasBlockers ? `${blockerTasks.length} blocker${blockerTasks.length > 1 ? 's' : ''}` : null}
       defaultOpen={hasBlockers || hasBlocking}
       storageKey={`task-deps-${task.id}`}
@@ -75,10 +74,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
       <div className="flex flex-col gap-3">
         {/* Blocked by section */}
         <div>
-          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ color: 'var(--sk-t2)', opacity: 0.85 }}>
-            <AlertTriangle {...ICON_PROPS} size={10} />
-            Blocked by
-          </label>
+          <SectionHead as="h3" title="Blocked by" />
 
           {blockerTasks.length > 0 ? (
             <div className="flex flex-col gap-1 mb-2">
@@ -147,10 +143,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
         {/* Blocks section (reverse lookup) */}
         {hasBlocking && (
           <div>
-            <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ color: 'var(--sk-t2)', opacity: 0.85 }}>
-              <Ban {...ICON_PROPS} size={10} />
-              Blocks
-            </label>
+            <SectionHead as="h3" title="Blocks" />
             <div className="flex flex-col gap-1">
               {blockingTasks.map(bt => (
                 <div key={bt.id} className="flex items-center gap-2 py-1.5 px-2 -mx-1 rounded hover:bg-black/[0.02] dark:hover:bg-white/[0.04] transition-colors">

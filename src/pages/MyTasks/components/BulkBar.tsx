@@ -90,7 +90,7 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
       {/* Picker popover — replaces window.prompt() (CD spec: dark-first picker, not native modal). Esc / outside-click close. */}
       {picker && (
         <div className="mt-band" style={{ position: 'absolute', top: '100%', left: 0, right: 0, paddingTop: 10, paddingBottom: 10, background: PANEL_BG, borderBottom: '1px solid var(--border-default)', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', zIndex: 20, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginRight: 6 }}>
+          <span style={{ fontSize: 12, fontWeight: 500, color: INK_DIM, marginRight: 6 }}>
             {picker === 'reassign' ? 'Reassign to' : picker === 'priority' ? 'Set priority' : 'Set status'}
           </span>
           {picker === 'priority' && PRIORITY_OPTS.map((p) => (

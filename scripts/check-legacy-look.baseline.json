@@ -117,29 +117,8 @@
   "src/components/pulse/PulseScene.tsx": {
     "uppercase": 1
   },
-  "src/components/tasks/TaskDetailPanel.tsx": {
-    "uppercase": 3,
-    "surface": 1
-  },
   "src/components/tasks/TaskGridView.tsx": {
-    "uppercase": 1,
     "surface": 6
-  },
-  "src/components/tasks/detail/HandoffSection.tsx": {
-    "uppercase": 1
-  },
-  "src/components/tasks/detail/TaskDependencies.tsx": {
-    "uppercase": 2
-  },
-  "src/components/tasks/detail/TaskIntelligence.tsx": {
-    "uppercase": 2,
-    "surface": 2
-  },
-  "src/components/today/MilestoneDrawer.tsx": {
-    "uppercase": 2
-  },
-  "src/components/today/TaskDetailDrawer.tsx": {
-    "uppercase": 1
   },
   "src/index.css": {
     "uppercase": 1,
@@ -159,9 +138,6 @@
     "surface": 9
   },
   "src/pages/MyItems.tsx": {
-    "uppercase": 1
-  },
-  "src/pages/MyTasks/components/BulkBar.tsx": {
     "uppercase": 1
   },
   "src/pages/ProjectDetail.tsx": {
