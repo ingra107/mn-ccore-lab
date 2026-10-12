@@ -1837,12 +1837,15 @@ recentActivity.length === 0 ? (
           className="pj-title-input"
         />
       ) : (
-        <h1
-          onClick={() => { setTitleDraft(project.title); setEditingTitle(true) }}
-          title="Click to edit title"
-          className="pj-h1"
-        >
-          {project.title}
+        <h1 className="pj-h1">
+          <button
+            type="button"
+            className="pj-edit-btn"
+            onClick={() => { setTitleDraft(project.title); setEditingTitle(true) }}
+            title="Edit title"
+          >
+            {project.title}
+          </button>
         </h1>
       )}
       {editingShortName ? (
@@ -1859,12 +1862,14 @@ recentActivity.length === 0 ? (
           className="pj-short-input"
         />
       ) : project.short_name ? (
-        <span
+        <button
+          type="button"
+          className="pj-short pj-edit-btn"
           onClick={() => { setEditingShortName(true); setShortNameDraft(project.short_name ?? '') }}
-          className="pj-short"
+          title="Edit short name"
         >
           {project.short_name}
-        </span>
+        </button>
       ) : null}
     </div>
   )
@@ -1924,26 +1929,30 @@ recentActivity.length === 0 ? (
       <Breadcrumb backTo="/projects" backLabel="Projects" current={project.title} />
       <AllProjectsBanner />
       <div className="pj-grid" data-testid="project-grid">
+        <header className="pj-head">
+          <div className="pj-headrow">
+            {titleCompactEl}
+            {iconsEl}
+          </div>
+          <div className="pj-metarow">
+            {metaEl}
+            {!project.short_name && !editingShortName && (
+              <button
+                type="button"
+                className="pj-short-empty"
+                onClick={() => { setEditingShortName(true); setShortNameDraft('') }}
+              >
+                + Short name
+              </button>
+            )}
+          </div>
+          <PageHeartbeat />
+        </header>
+        {/* The folder actions come right after the header in the DOM, so Tab
+            reaches them early and the phone shows them under the header. The
+            grid puts them at the top of the rail on a wide screen. */}
+        <div className="pj-folder">{folderEl}</div>
         <div className="pj-main">
-          <header className="pj-head">
-            <div className="pj-headrow">
-              {titleCompactEl}
-              {iconsEl}
-            </div>
-            <div className="pj-metarow">
-              {metaEl}
-              {!project.short_name && !editingShortName && (
-                <button
-                  type="button"
-                  className="pj-short-empty"
-                  onClick={() => { setEditingShortName(true); setShortNameDraft('') }}
-                >
-                  + Short name
-                </button>
-              )}
-            </div>
-            <PageHeartbeat />
-          </header>
           {agendaFormEl}
           {project.id ? (
             <ProjectProducts projectId={project.id} slug={project.slug} stats={statsInline} />
@@ -1953,7 +1962,6 @@ recentActivity.length === 0 ? (
           {otherTabsEl}
         </div>
         <aside className="pj-rail" aria-label="Project side panel" data-testid="project-rail">
-          {folderEl}
           {membersEl}
           {linksEl}
           {pubsEl}
@@ -1970,28 +1978,31 @@ recentActivity.length === 0 ? (
 // Project page layout styles. Tokens only; same band as Today:
 // main fills 1fr, the rail is --col-rail, the grid sits inside the page band.
 const PJ_CSS = `
-.pj-grid { display: grid; grid-template-columns: minmax(0, 1fr) var(--col-rail); align-items: start; }
-.pj-main { min-width: 0; padding: 0 28px 24px 0; }
+.pj-grid {
+  display: grid; grid-template-columns: minmax(0, 1fr) var(--col-rail); align-items: start;
+  grid-template-areas: "head folder" "main rail";
+}
+.pj-head { grid-area: head; min-width: 0; padding-right: 28px; margin-bottom: 12px; }
+.pj-folder { grid-area: folder; min-width: 0; padding: 0 0 16px 22px; border-left: 1px solid var(--sk-line); align-self: stretch; }
+.pj-folder:empty { padding: 0; }
+.pj-main { grid-area: main; min-width: 0; padding: 0 28px 24px 0; }
 .pj-rail {
-  min-width: 0; padding: 0 0 24px 22px; border-left: 1px solid var(--sk-line);
+  grid-area: rail; min-width: 0; padding: 0 0 24px 22px; border-left: 1px solid var(--sk-line);
   display: flex; flex-direction: column; gap: 20px;
   position: sticky; top: calc(var(--portal-header-h, 56px) + 12px);
   max-height: calc(100dvh - var(--portal-header-h, 56px) - 24px);
   overflow-y: auto; scrollbar-width: thin;
 }
-.pj-head { margin-bottom: 12px; }
 .pj-head .pg-hb { margin-top: 2px; height: 10px; }
 .pj-headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .pj-metarow { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
 .pj-title { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 2px 12px; }
-.pj-h1 { margin: 0; min-width: 0; font-weight: 700; font-size: clamp(1.25rem, 2.6vw, 1.6rem); line-height: 1.2; color: var(--ink); cursor: pointer; }
-.pj-short { flex: none; font-size: var(--value-size); color: var(--sk-t3); cursor: pointer; white-space: nowrap; }
-.pj-short-empty {
-  background: none; border: 0; padding: 0; font-size: 11px; color: var(--sk-t3); cursor: pointer;
-  opacity: 0; transition: opacity 0.15s; white-space: nowrap;
-}
-.pj-head:hover .pj-short-empty, .pj-short-empty:focus-visible { opacity: 1; }
-@media (hover: none) { .pj-short-empty { opacity: 1; } }
+.pj-h1 { margin: 0; min-width: 0; font-weight: 700; font-size: clamp(1.25rem, 2.6vw, 1.6rem); line-height: 1.2; color: var(--ink); }
+.pj-edit-btn { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.pj-edit-btn:focus-visible { outline: 2px solid var(--job-accent); outline-offset: 2px; border-radius: var(--radius-sm); }
+.pj-short { flex: none; font-size: var(--value-size); color: var(--sk-t3); white-space: nowrap; }
+.pj-short-empty { background: none; border: 0; padding: 0; font-size: 11px; color: var(--sk-t3); cursor: pointer; white-space: nowrap; }
+.pj-short-empty:hover { color: var(--sk-t1); }
 .pj-title-input {
   font-weight: 700; font-size: clamp(1.25rem, 2.6vw, 1.6rem); color: var(--ink); background: none; border: 0;
   border-bottom: 2px solid var(--job-accent); outline: none; padding: 2px 0; width: 100%; font-family: inherit; line-height: 1.2;
@@ -2005,10 +2016,15 @@ const PJ_CSS = `
 .pj-head-links { display: inline-flex; align-items: center; gap: 14px; }
 .pj-link { background: none; border: 0; padding: 0; font-size: 11px; color: var(--job-accent); cursor: pointer; }
 .pj-main .project-tab-strip-wrap { margin-bottom: var(--sp-lg) !important; }
+.pj-main .project-tab-strip button { padding-left: 10px; padding-right: 10px; }
 .pj-compose [data-compose-slot] { border-top: 0 !important; padding-top: 0 !important; }
-@media (max-width: 1024px) {
-  .pj-grid { grid-template-columns: minmax(0, 1fr); }
-  .pj-main { padding-right: 0; }
+/* One column below 1200px: with the sidebar and the 320px rail the main column
+   is under 480px there, and the title and tabs do not fit. Order is head,
+   folder, main, rail. */
+@media (max-width: 1200px) {
+  .pj-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "folder" "main" "rail"; }
+  .pj-head, .pj-main { padding-right: 0; }
+  .pj-folder { padding: 0 0 14px; border-left: 0; align-self: auto; }
   .pj-rail {
     position: static; max-height: none; overflow: visible; padding: 16px 0 32px; border-left: 0;
     border-top: 1px solid var(--sk-line);

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import { Plus, Home as HomeIcon } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { formatShortDate } from '../../lib/dateUtils'
@@ -39,6 +39,7 @@ interface Props {
 /** Chips shown before the rest fold into "+N more". */
 const MAX_CHIPS = 4
 const PANEL_ID = 'pp-panel'
+const MORE_ID = 'pp-more-list'
 
 export default function ProjectProducts({ slug, stats }: Props) {
   const { data, isLoading, isError } = useProjectProducts(slug)
@@ -55,6 +56,7 @@ export default function ProjectProducts({ slug, stats }: Props) {
   let shown = products.slice(0, MAX_CHIPS)
   if (selected && !shown.some((p) => p.id === selected.id)) shown = [...shown.slice(0, MAX_CHIPS - 1), selected]
   const hidden = products.length - shown.length
+  const wide = useWide()
 
   return (
     <div className="pp" data-testid="project-products">
@@ -67,6 +69,19 @@ export default function ProjectProducts({ slug, stats }: Props) {
           )}
           {shown.map((p) => {
             const on = p.id === openId
+            if (products.length === 1 && wide && ladderFor(kinds, p.kind).some((st) => st.stage === p.stage)) {
+              return (
+                <InlineLadder
+                  key={p.id}
+                  product={p}
+                  kinds={kinds}
+                  slug={slug}
+                  canEdit={canEdit}
+                  open={on}
+                  onToggle={() => { setOpenId(on ? null : p.id); setMore(false) }}
+                />
+              )
+            }
             return (
               <button
                 key={p.id}
@@ -87,6 +102,7 @@ export default function ProjectProducts({ slug, stats }: Props) {
               type="button"
               className={`pp-chip pp-chip-more${more ? ' is-on' : ''}`}
               aria-expanded={more}
+              aria-controls={more ? MORE_ID : undefined}
               onClick={() => { setMore((v) => !v); setOpenId(null) }}
               data-testid="product-more"
             >
@@ -148,7 +164,7 @@ function GroupedList({
   const groups = groupByKind(products, kinds)
   const byId = new Map(products.map((p) => [p.id, p]))
   return (
-    <div className="pp-groups" data-testid="product-all-list">
+    <div className="pp-groups" id={MORE_ID} data-testid="product-all-list">
       {groups.map((g) => (
         <div key={g.kind_key} className="pp-group">
           <div className="pp-gh">{g.label}</div>
@@ -177,6 +193,88 @@ function GroupedList({
 
 // ── one product: ladder + facts + controls ───────────────────
 
+/** The write behind every stage dot: a compare-and-swap on the seq and stage the
+ *  screen shows. The undo toast is shown by the hook once the write lands. */
+function useStageMover(product: ProductRow, ladder: { stage: string; label: string }[], slug: string) {
+  const setStage = useSetProductStage()
+  return (stage: string) => {
+    if (stage === product.stage) return
+    const next = ladder.find((s) => s.stage === stage)
+    if (!next) return
+    setStage.mutate({
+      slug, productId: product.id, stage, label: next.label, productName: productLabel(product),
+      seen: { seq: product.seq, stage: product.stage, label: product.stage_label },
+    })
+  }
+}
+
+// The inline dot ladder wants a pointer and room; a phone or a touch screen gets
+// the chip alone (its ladder opens below, and the chip is a 44px target).
+const WIDE_QUERY = '(min-width: 641px) and (pointer: fine)'
+function useWide(): boolean {
+  return useSyncExternalStore(
+    (cb) => {
+      const m = window.matchMedia(WIDE_QUERY)
+      m.addEventListener('change', cb)
+      return () => m.removeEventListener('change', cb)
+    },
+    () => window.matchMedia(WIDE_QUERY).matches,
+    () => true,
+  )
+}
+
+/** One product on the stats row: its name (opens the detail), a dot per stage
+ *  (click to set the stage), and the current stage's label. */
+function InlineLadder({
+  product, kinds, slug, canEdit, open, onToggle,
+}: {
+  product: ProductRow
+  kinds: ProductKind[]
+  slug: string
+  canEdit: boolean
+  open: boolean
+  onToggle: () => void
+}) {
+  const ladder = ladderFor(kinds, product.kind)
+  const move = useStageMover(product, ladder, slug)
+  const idx = ladder.findIndex((s) => s.stage === product.stage)
+  return (
+    <span className="pp-one">
+      <button
+        type="button"
+        className={`pp-chip pp-chip-name${open ? ' is-on' : ''}`}
+        aria-expanded={open}
+        aria-controls={open ? PANEL_ID : undefined}
+        onClick={onToggle}
+        data-testid={`product-chip-${product.id}`}
+      >
+        <span className="pp-chip-n">{productLabel(product)}</span>
+      </button>
+      <span className="pp-dots" role="group" aria-label={`Stage of ${productLabel(product)}`}>
+        {ladder.map((st, i) => {
+          const cur = i === idx
+          const past = i < idx
+          const cls = `pp-idot${cur ? ' is-cur' : past ? ' is-past' : ''}`
+          return canEdit ? (
+            <button
+              key={st.stage}
+              type="button"
+              className={cls}
+              aria-label={`Move to ${st.label}`}
+              aria-current={cur ? 'step' : undefined}
+              onClick={() => move(st.stage)}
+              data-testid={`inline-dot-${st.stage}`}
+            />
+          ) : (
+            <span key={st.stage} className={cls} role="img" aria-label={cur ? `${st.label} (current)` : st.label} />
+          )
+        })}
+      </span>
+      <span className="pp-chip-s pp-one-stage" data-testid="inline-stage">{product.stage_label}</span>
+    </span>
+  )
+}
+
 function ProductDetail({
   product, products, kinds, slug, canEdit, showHomeControl,
 }: {
@@ -188,22 +286,11 @@ function ProductDetail({
   showHomeControl: boolean
 }) {
   const ladder = ladderFor(kinds, product.kind)
-  const setStage = useSetProductStage()
   const setHome = useSetProductHome(slug)
   const idx = ladder.findIndex((s) => s.stage === product.stage)
   const parent = product.grew_from_id ? products.find((p) => p.id === product.grew_from_id) : undefined
 
-  function move(stage: string) {
-    if (stage === product.stage) return
-    const next = ladder.find((s) => s.stage === stage)
-    if (!next) return
-    // The undo toast is shown by the hook once this write lands; the write is
-    // a compare-and-swap on the seq and stage this screen shows.
-    setStage.mutate({
-      slug, productId: product.id, stage, label: next.label, productName: productLabel(product),
-      seen: { seq: product.seq, stage: product.stage, label: product.stage_label },
-    })
-  }
+  const move = useStageMover(product, ladder, slug)
 
   const facts: string[] = []
   if (product.waiting_on) facts.push(`Waiting on ${product.waiting_on}`)
@@ -391,6 +478,27 @@ const PRODUCT_CSS = `
 .pp-chip-s { color: var(--sk-t3); font-size: 11px; white-space: nowrap; }
 .pp-chip.is-on .pp-chip-s { color: var(--job-accent); }
 .pp-chip-more { color: var(--sk-t3); }
+.pp-one { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.pp-chip-name { padding-right: 11px; }
+.pp-dots { display: inline-flex; align-items: center; }
+.pp-idot {
+  position: relative; display: inline-block; width: 18px; height: 22px; padding: 0; border: 0; background: none; cursor: pointer;
+}
+.pp-idot::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; transform: translate(-50%, -50%);
+  border-radius: var(--radius-circle); box-sizing: border-box; border: 2px solid var(--sk-t3); background: var(--sk-card);
+}
+.pp-idot.is-past::before { border-color: var(--job-accent); background: var(--job-accent); }
+.pp-idot.is-cur::before { width: 14px; height: 14px; border: 3px solid var(--job-accent); background: var(--job-accent); }
+span.pp-idot { cursor: default; }
+button.pp-idot:hover::before { border-color: var(--job-accent); }
+.pp-one-stage { color: var(--job-accent); font-weight: 600; font-size: 12px; }
+/* 44px touch targets on a touch screen or a phone */
+@media (pointer: coarse), (max-width: 640px) {
+  .pp-chip { min-height: 44px; align-items: center; padding: 0 14px; }
+  .pp-add { min-width: 44px; min-height: 44px; justify-content: center; }
+  .pp-link { min-height: 44px; }
+}
 .pp-panel { padding: 14px 0 10px; border-bottom: 1px solid var(--sk-line); }
 .pp-groups { margin-top: 10px; }
 .pp-groups { display: flex; flex-direction: column; gap: 14px; }

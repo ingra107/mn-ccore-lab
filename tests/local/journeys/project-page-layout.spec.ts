@@ -78,7 +78,7 @@ test('the rail sits right of the main column and stays on screen while the page 
   await page.setViewportSize({ width: 1440, height: 700 })
   await go(page, ONE)
   const rail = page.getByTestId('project-rail')
-  await expect(rail.getByTestId('project-folder')).toBeVisible()
+  const folderBox = await box(page, 'project-folder')
   await expect(rail.getByTestId('project-members')).toBeVisible()
   await expect(rail.getByTestId('project-recent')).toBeVisible()
   await expect(page.getByTestId('project-open-tasks')).toBeVisible()
@@ -86,6 +86,9 @@ test('the rail sits right of the main column and stays on screen while the page 
   const main = await box(page, 'project-open-tasks')
   const r0 = (await rail.boundingBox())!
   expect(r0.x).toBeGreaterThan(main.x + main.width - 1)
+  // The folder actions top the rail's column, level with the header.
+  expect(folderBox.x).toBeGreaterThan(main.x + main.width - 1)
+  expect(folderBox.y).toBeLessThan(r0.y)
   // The rail's width is Today's rail.
   expect(Math.round(r0.width)).toBeLessThanOrEqual(322)
 
@@ -124,8 +127,145 @@ test('375px: nothing scrolls sideways, the row wraps, the rail stacks under the 
     const rail = (await page.getByTestId('project-rail').boundingBox())!
     const tasks = await box(page, 'project-open-tasks')
     expect(rail.y).toBeGreaterThan(tasks.y)
+    // The folder actions follow the header, ahead of the tabs.
+    const tabs = (await page.getByRole('tablist', { name: 'Project sections' }).boundingBox())!
+    const folder = await page.getByTestId('project-folder').boundingBox()
+    if (folder) expect(folder.y).toBeLessThan(tabs.y)
     await page.screenshot({ path: `${SHOTS}/c-375-${theme}.png` })
   }
+})
+
+test('one column below 1200px, two from 1280px; the title and tabs fit', async ({ page }) => {
+  for (const w of [1100, 1200]) {
+    await page.setViewportSize({ width: w, height: 900 })
+    await go(page, ONE)
+    const tasks = await box(page, 'project-open-tasks')
+    const rail = (await page.getByTestId('project-rail').boundingBox())!
+    expect(rail.y, `${w}px stacked`).toBeGreaterThan(tasks.y)
+    await page.screenshot({ path: `${SHOTS}/c-${w}.png` })
+  }
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await go(page, ONE)
+  const tasks = await box(page, 'project-open-tasks')
+  const rail = (await page.getByTestId('project-rail').boundingBox())!
+  expect(rail.x).toBeGreaterThan(tasks.x + tasks.width - 1)
+  // The title takes at most two lines and the tab strip does not clip.
+  const h1 = (await page.locator('h1.pj-h1').boundingBox())!
+  expect(h1.height).toBeLessThan(75)
+  // The tab strip may scroll sideways at 1280 (it has a right-edge fade that says so),
+  // but only by a few tabs' worth: the title and the first tabs are never cut off.
+  const strip = await page.getByRole('tablist', { name: 'Project sections' }).evaluate((el) => el.scrollWidth - el.clientWidth)
+  expect(strip).toBeLessThanOrEqual(60)
+  await page.screenshot({ path: `${SHOTS}/c-1280.png` })
+})
+
+test('keyboard: the folder actions come before the tabs; title and short name edit from the keyboard', async ({ page }) => {
+  localD1(`UPDATE projects SET primary_folder = 'C:/Users/ingra107/Box/Research/Sepsis' WHERE slug = '${ONE}'`)
+  try {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await go(page, ONE)
+    await page.locator('h1.pj-h1 button').focus()
+    let folderAt = -1
+    let tabsAt = -1
+    for (let i = 0; i < 25 && (folderAt < 0 || tabsAt < 0); i++) {
+      await page.keyboard.press('Tab')
+      const where = await page.evaluate(() => {
+        const a = document.activeElement
+        if (a?.closest('[data-testid="project-folder"]')) return 'folder'
+        if (a?.closest('[role="tablist"]')) return 'tabs'
+        return ''
+      })
+      if (where === 'folder' && folderAt < 0) folderAt = i
+      if (where === 'tabs' && tabsAt < 0) tabsAt = i
+    }
+    expect(folderAt, 'Tab reaches the folder actions').toBeGreaterThanOrEqual(0)
+    expect(folderAt).toBeLessThan(tabsAt)
+    await page.locator('h1.pj-h1 button').focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByLabel('Edit project title')).toBeFocused()
+    await page.keyboard.press('Escape')
+    await page.getByRole('button', { name: '+ Short name' }).focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByPlaceholder('Add short name...')).toBeFocused()
+    await page.keyboard.press('Escape')
+  } finally {
+    localD1(`UPDATE projects SET primary_folder = NULL WHERE slug = '${ONE}'`)
+  }
+})
+
+test('a single product shows its stage ladder inline, and a dot sets the stage', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await go(page, ONE)
+  const prods = (await (await page.request.get(`/api/projects/${ONE}/products`, { headers: PI })).json()) as { products: { stage: string }[] }
+  const dots = page.locator('[data-testid^="inline-dot-"]')
+  expect(await dots.count()).toBeGreaterThanOrEqual(4)
+  await expect(page.getByTestId('inline-stage')).toBeVisible()
+  // On the stats row at 1280: dots and stats overlap vertically.
+  const d = (await dots.first().boundingBox())!
+  const st = await box(page, 'project-stats')
+  expect(st.y).toBeLessThan(d.y + d.height + 20)
+  expect(st.y + st.height).toBeGreaterThan(d.y - 20)
+  await page.screenshot({ path: `${SHOTS}/c-single-1280.png` })
+  const target = prods.products[0].stage === 'writing' ? 'data_analysis' : 'writing'
+  const write = page.waitForResponse((r) => r.url().endsWith(`/api/projects/${ONE}/products`) && r.request().method() === 'POST')
+  await page.getByTestId(`inline-dot-${target}`).click()
+  expect((await write).status()).toBe(200)
+  await expect(page.getByTestId(`inline-dot-${target}`)).toHaveAttribute('aria-current', 'step')
+})
+
+test('a PI whose own folder differs while Peripheral Brain has none sees a message that says so', async ({ page }) => {
+  const mine = await page.request.post(`/api/projects/${ONE}/my-folder`, { headers: PI, data: { folder_path: 'C:/Users/ingra107/Box/Other' } })
+  expect(mine.ok(), await mine.text()).toBe(true)
+  try {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await go(page, ONE)
+    await expect(page.getByTestId('project-folder-pi-hint')).toContainText('none is set for this project yet')
+  } finally {
+    await page.request.delete(`/api/projects/${ONE}/my-folder`, { headers: PI })
+  }
+})
+
+test('the composer popovers are not clipped by the rail', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await go(page, ONE)
+  const rail = page.getByTestId('project-rail')
+  await rail.getByRole('button', { name: 'Add emoji' }).click()
+  const emoji = rail.locator('button', { hasText: /^[^\w\s]$/u }).first()
+  await expect(emoji).toBeVisible()
+  const rb = (await rail.boundingBox())!
+  const eb = (await emoji.boundingBox())!
+  expect(eb.y).toBeGreaterThanOrEqual(rb.y)
+  expect(eb.x + eb.width).toBeLessThanOrEqual(rb.x + rb.width + 1)
+  await rail.getByRole('button', { name: 'Add emoji' }).click()
+  await rail.getByRole('textbox').first().fill('')
+  await rail.getByRole('textbox').first().pressSequentially('@w')
+  const opt = page.getByRole('button', { name: /workon/i }).first()
+  await expect(opt).toBeVisible()
+  const ob = (await opt.boundingBox())!
+  expect(ob.y).toBeGreaterThanOrEqual(rb.y)
+  expect(ob.y + ob.height).toBeLessThanOrEqual(rb.y + rb.height + 1)
+})
+
+test.describe('touch targets', () => {
+  test.use({ hasTouch: true, isMobile: true, viewport: { width: 375, height: 812 } })
+  test('the pencil, the add button and the chips are 44px on a phone', async ({ page }) => {
+    localD1(`UPDATE projects SET primary_folder = 'C:/Users/ingra107/Box/Research/Sepsis' WHERE slug = '${ONE}'`)
+    try {
+      await go(page, ONE)
+      const checks: [string, ReturnType<Page['locator']>][] = [
+        ['pencil', page.getByTestId('project-folder-edit')],
+        ['add product', page.getByTestId('product-add-toggle')],
+        ['chip', page.locator('[data-testid^="product-chip-"]').first()],
+      ]
+      for (const [name, loc] of checks) {
+        const b = (await loc.boundingBox())!
+        expect(b.width, `${name} width`).toBeGreaterThanOrEqual(43.5)
+        expect(b.height, `${name} height`).toBeGreaterThanOrEqual(43.5)
+      }
+    } finally {
+      localD1(`UPDATE projects SET primary_folder = NULL WHERE slug = '${ONE}'`)
+    }
+  })
 })
 
 test.describe('many products', () => {
@@ -152,6 +292,8 @@ test.describe('many products', () => {
     await expect(more).toHaveText(/\+\d+ more/)
     await more.click()
     await expect(section.getByTestId('product-all-list')).toBeVisible()
+    await expect(more).toHaveAttribute('aria-controls', 'pp-more-list')
+    await expect(section.locator('#pp-more-list')).toBeVisible()
     await page.screenshot({ path: `${SHOTS}/c-more-1440.png` })
     // Picking a folded product opens it and gives it a chip.
     await section.locator('[data-testid^="product-row-"]').last().click()

@@ -27,14 +27,14 @@ interface Props {
   projectLabel?: string
   /** 'slot' = the Today card's fixed action slot: two 24x24 grid-centered boxes,
    *  14px glyphs, colors from the .tk-wk CSS (no inline color/padding). */
-  variant?: 'buttons' | 'compact' | 'slot' | 'rail'
+  variant?: 'compact' | 'slot' | 'rail'
   /** The folder is the viewer's own (My folder, schema-v127). Its links are
    *  percent-encoded per segment (both launchers decode once), and the member
    *  launcher runs `claude` itself; only the PB launcher needs "Start Claude.bat". */
   memberLauncher?: boolean
 }
 
-export default function WorkOnActions({ primaryFolder, projectLabel, variant = 'buttons', memberLauncher = false }: Props) {
+export default function WorkOnActions({ primaryFolder, projectLabel, variant = 'rail', memberLauncher = false }: Props) {
   const { launch } = useProtocolLaunch()
   const [launcherInstalled] = useLauncherInstalled()
   const { user } = useAuth()
@@ -99,7 +99,7 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
       display: 'flex', alignItems: 'center', gap: 8, width: '100%',
       fontSize: 'var(--text-small)', fontWeight: 500,
       borderRadius: 'var(--radius-md)', padding: '8px 12px', cursor: 'pointer',
-      border: '1px solid var(--border-subtle)',
+      border: '1px solid var(--sk-line2)',
     }
     return (
       <div className="flex flex-col gap-1.5" style={{ minWidth: 0, flex: 1 }}>
@@ -116,33 +116,4 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
       </div>
     )
   }
-
-  const btn: React.CSSProperties = {
-    display: 'inline-flex', alignItems: 'center', gap: 6,
-    fontSize: 'var(--text-small)', fontWeight: 500,
-    borderRadius: 'var(--radius-md)', padding: '7px 12px', cursor: 'pointer',
-    border: '1px solid var(--border-subtle)',
-  }
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <button
-        type="button"
-        onClick={openFolder}
-        className="tip"
-        data-tip="Open in Explorer"
-        style={{ ...btn, background: 'var(--ice)', color: 'var(--slate)' }}
-      >
-        <FolderOpen {...ICON_PROPS} size={14} /> Open folder
-      </button>
-      <button
-        type="button"
-        onClick={workOn}
-        className="tip"
-        data-tip="Launch here"
-        style={{ ...btn, background: 'var(--job-accent-solid)', color: 'var(--ink-bright)', border: '1px solid var(--job-accent-solid)' }}
-      >
-        <Play {...ICON_PROPS} size={14} /> Work on this in Claude
-      </button>
-    </div>
-  )
 }

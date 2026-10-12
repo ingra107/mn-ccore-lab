@@ -140,7 +140,9 @@ export default function ProjectFolderActions({ projectRef, projectLabel, piFallb
             />
           ) : launcher && piLaunchesOther ? (
             <p className="pf-hint" data-testid="project-folder-pi-hint">
-              Your launcher opens the folder Peripheral Brain has for this project, not this one. Remove yours to use it.
+              {piFallbackFolder
+                ? 'Your launcher opens the folder Peripheral Brain has for this project, not this one. Remove yours to use it.'
+                : 'Your launcher opens only the folder set in Peripheral Brain, and none is set for this project yet, so Open folder and Work on this are off.'}
             </p>
           ) : (
             <Link to={`${PATHS.settings}#integrations`} className="pf-setup tip" data-tip="Install it to open this folder and work on it in Claude" data-testid="project-folder-setup">
@@ -176,6 +178,11 @@ const FOLDER_CSS = `
 .pf-group:hover .pf-pencil, .pf-group:focus-within .pf-pencil, .pf-pencil:focus-visible { opacity: 1; }
 .pf-pencil:hover { color: var(--sk-t1); background: var(--hover-subtle); }
 @media (hover: none) { .pf-pencil { opacity: 1; } }
+/* 44px touch targets on a touch screen or a phone */
+@media (pointer: coarse), (max-width: 640px) {
+  .pf-pencil { width: 44px; height: 44px; margin: -10px -10px -10px 0; }
+  .pf-save, .pf-ghost, .pf-setup, .pf-add { min-height: 44px; }
+}
 .pf-setup, .pf-add {
   flex: 1; display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 12px;
   font-size: var(--text-small); font-weight: 500; color: var(--job-accent); text-decoration: none; cursor: pointer;
