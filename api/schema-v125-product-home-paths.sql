@@ -36,9 +36,11 @@
 --      Backfill A insert, a new home marked, a tombstoned home replaced), its
 --      live product-less tasks join it in the same statement. Backfill A is
 --      therefore 105 product inserts; the 1,305 task attaches ride along.
---   4. trg_products_tombstone_repoint: a product's live tasks never point at
---      it after it is tombstoned; they move to the project's home (or clear
---      to NULL when the project has no home and 2+ live products).
+--   4. trg_products_tombstone_repoint + trg_tasks_dead_product_ins/_upd: a
+--      live task never points at a tombstoned product. Tombstoning a product
+--      moves its live tasks to the project's home (or NULL when the project
+--      has no home and 2+ live products); a task restored onto, moved with,
+--      or inserted naming a tombstoned product is moved the same way.
 --   5. Seed: a 7th kind, honor (Nick, 2026-10-11), data like v124's six.
 --
 -- THE HOME RULE, written identically in every trigger below (the contract
@@ -92,6 +94,9 @@
 --   DROP TRIGGER IF EXISTS trg_projects_home_product_restore;
 --   DROP TRIGGER IF EXISTS trg_products_home_handoff;
 --   DROP TRIGGER IF EXISTS trg_products_home_keep_live;
+--   DROP TRIGGER IF EXISTS trg_products_home_keep_live_del;
+--   DROP TRIGGER IF EXISTS trg_tasks_dead_product_ins;
+--   DROP TRIGGER IF EXISTS trg_tasks_dead_product_upd;
 --   DROP TRIGGER IF EXISTS trg_tasks_home_product_ins;
 --   DROP TRIGGER IF EXISTS trg_tasks_home_product_upd;
 --   DROP TRIGGER IF EXISTS trg_products_home_attach_ins;
@@ -109,9 +114,11 @@ FOR EACH ROW
 WHEN NEW.deleted_at IS NULL
  AND NOT EXISTS (SELECT 1 FROM products p WHERE p.project_id = NEW.id AND p.deleted_at IS NULL)
 BEGIN
+  -- Derived id only while no row holds it (see the restore trigger below).
   INSERT INTO products (id, project_id, kind, stage, is_home, stage_entered_at)
   SELECT
     CASE WHEN length(NEW.id) = 31 AND NEW.id LIKE 'proj\_%' ESCAPE '\' AND substr(NEW.id, 6) NOT GLOB '*[^0-9A-HJKMNP-TV-Z]*'
+              AND NOT EXISTS (SELECT 1 FROM products x WHERE x.id = 'prd_' || substr(NEW.id, 6))
          THEN 'prd_' || substr(NEW.id, 6) ELSE 'prd_' || lower(hex(randomblob(16))) END,
     NEW.id,
     'manuscript',
@@ -137,13 +144,17 @@ WHEN OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NULL
 BEGIN
   UPDATE products SET deleted_at = NULL, updated_at = datetime('now')
    WHERE id = (SELECT h.id FROM products h WHERE h.project_id = NEW.id AND h.is_home = 1
-                ORDER BY h.deleted_at DESC, h.id DESC LIMIT 1);
+                ORDER BY julianday(h.deleted_at) DESC, h.id DESC LIMIT 1);
   UPDATE products SET deleted_at = NULL, is_home = 1, updated_at = datetime('now')
    WHERE id = 'prd_' || substr(NEW.id, 6) AND project_id = NEW.id
      AND NOT EXISTS (SELECT 1 FROM products p WHERE p.project_id = NEW.id AND p.deleted_at IS NULL);
+  -- The derived id is used only while no row holds it (a client may have
+  -- minted that id for another project's product); otherwise a fresh
+  -- prd_<32 hex>, so this step can never leave the project with nothing.
   INSERT INTO products (id, project_id, kind, stage, is_home, stage_entered_at)
   SELECT
     CASE WHEN length(NEW.id) = 31 AND NEW.id LIKE 'proj\_%' ESCAPE '\' AND substr(NEW.id, 6) NOT GLOB '*[^0-9A-HJKMNP-TV-Z]*'
+              AND NOT EXISTS (SELECT 1 FROM products x WHERE x.id = 'prd_' || substr(NEW.id, 6))
          THEN 'prd_' || substr(NEW.id, 6) ELSE 'prd_' || lower(hex(randomblob(16))) END,
     NEW.id,
     'manuscript',
@@ -152,17 +163,18 @@ BEGIN
     CASE WHEN s.stage IS NOT NULL THEN COALESCE(NEW.stage_entered_at, datetime('now')) ELSE datetime('now') END
   FROM (SELECT (SELECT st.stage FROM product_stages st
                  WHERE st.kind = 'manuscript' AND st.stage = NEW.stage AND st.deleted_at IS NULL) AS stage) s
-  WHERE NOT EXISTS (SELECT 1 FROM products p WHERE p.project_id = NEW.id AND p.deleted_at IS NULL)
-    AND NOT EXISTS (SELECT 1 FROM products x WHERE x.id = 'prd_' || substr(NEW.id, 6));
+  WHERE NOT EXISTS (SELECT 1 FROM products p WHERE p.project_id = NEW.id AND p.deleted_at IS NULL);
 END;
 
 -- ── 1b. a live project's home is never tombstoned out from under it ────────
 -- Marking another product home hands the marker over (the old home is
 -- demoted in the same statement, before the unique index sees two); a live
 -- home can then be tombstoned only once it is no longer the home. So a live
--- project with 2+ products cannot become homeless by a tombstone. (Clearing
--- is_home directly, 1 -> 0, is still writable; PB invariant I68 reports a
--- live project with no live home.)
+-- project with 2+ products cannot become homeless by a tombstone or a hard
+-- delete. (Clearing is_home directly, 1 -> 0, is still writable; PB
+-- invariant I68 reports a live project with no live home.)
+-- ORDER MATTERS in a batch: hand the home over first, then tombstone the old
+-- home. The reverse order refuses the delete with product_home_live.
 DROP TRIGGER IF EXISTS trg_products_home_handoff;
 CREATE TRIGGER trg_products_home_handoff BEFORE UPDATE OF is_home ON products
 FOR EACH ROW
@@ -180,6 +192,16 @@ WHEN OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL AND OLD.is_home = 1
  AND EXISTS (SELECT 1 FROM products p WHERE p.project_id = OLD.project_id AND p.id <> OLD.id AND p.deleted_at IS NULL)
 BEGIN
   SELECT RAISE(ABORT, 'product_home_live: mark another product home before tombstoning this one');
+END;
+
+DROP TRIGGER IF EXISTS trg_products_home_keep_live_del;
+CREATE TRIGGER trg_products_home_keep_live_del BEFORE DELETE ON products
+FOR EACH ROW
+WHEN OLD.deleted_at IS NULL AND OLD.is_home = 1
+ AND EXISTS (SELECT 1 FROM projects pr WHERE pr.id = OLD.project_id AND pr.deleted_at IS NULL)
+ AND EXISTS (SELECT 1 FROM products p WHERE p.project_id = OLD.project_id AND p.id <> OLD.id AND p.deleted_at IS NULL)
+BEGIN
+  SELECT RAISE(ABORT, 'product_home_live: mark another product home before deleting this one');
 END;
 
 -- ── 2. a live task on a project carries the project's home product ─────────
@@ -242,6 +264,32 @@ BEGIN
   UPDATE tasks
      SET product_id = COALESCE((SELECT h.id FROM products h WHERE h.project_id = NEW.project_id AND h.is_home = 1 AND h.deleted_at IS NULL), (SELECT MIN(o.id) FROM products o WHERE o.project_id = NEW.project_id AND o.deleted_at IS NULL HAVING COUNT(*) = 1))
    WHERE product_id = NEW.id AND deleted_at IS NULL;
+END;
+
+-- A live task never points at a tombstoned product, by any path: a task
+-- tombstoned on X, then X tombstoned (trigger 4 skips tombstoned tasks), then
+-- the task restored; or a writer naming a tombstoned product. Either way it
+-- moves to the project's home rule result, NULL included.
+DROP TRIGGER IF EXISTS trg_tasks_dead_product_ins;
+CREATE TRIGGER trg_tasks_dead_product_ins AFTER INSERT ON tasks
+FOR EACH ROW
+WHEN NEW.product_id IS NOT NULL AND NEW.deleted_at IS NULL
+ AND EXISTS (SELECT 1 FROM products d WHERE d.id = NEW.product_id AND d.deleted_at IS NOT NULL)
+BEGIN
+  UPDATE tasks
+     SET product_id = COALESCE((SELECT h.id FROM products h WHERE h.project_id = NEW.project_id AND h.is_home = 1 AND h.deleted_at IS NULL), (SELECT MIN(o.id) FROM products o WHERE o.project_id = NEW.project_id AND o.deleted_at IS NULL HAVING COUNT(*) = 1))
+   WHERE id = NEW.id;
+END;
+
+DROP TRIGGER IF EXISTS trg_tasks_dead_product_upd;
+CREATE TRIGGER trg_tasks_dead_product_upd AFTER UPDATE OF project_id, product_id, deleted_at ON tasks
+FOR EACH ROW
+WHEN NEW.product_id IS NOT NULL AND NEW.deleted_at IS NULL
+ AND EXISTS (SELECT 1 FROM products d WHERE d.id = NEW.product_id AND d.deleted_at IS NOT NULL)
+BEGIN
+  UPDATE tasks
+     SET product_id = COALESCE((SELECT h.id FROM products h WHERE h.project_id = NEW.project_id AND h.is_home = 1 AND h.deleted_at IS NULL), (SELECT MIN(o.id) FROM products o WHERE o.project_id = NEW.project_id AND o.deleted_at IS NULL HAVING COUNT(*) = 1))
+   WHERE id = NEW.id;
 END;
 
 -- ── 5. a 7th kind: honor (Nick, 2026-10-11) ────────────────────────────────

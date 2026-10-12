@@ -345,7 +345,82 @@ describe('the rule is the arbiter\'s, not a route\'s', () => {
   it('every copy of the home rule in schema-v125 is the same text', () => {
     const sql = readFileSync(new URL('../schema-v125-product-home-paths.sql', import.meta.url), 'utf8')
     const copies = sql.match(/COALESCE\(\(SELECT h\.id FROM products h[^\n]*?HAVING COUNT\(\*\) = 1\)\)/g) ?? []
-    expect(copies.length).toBe(9)
+    expect(copies.length).toBe(11)
     expect(new Set(copies).size).toBe(1)
+  })
+})
+
+// Cases from the 2026-10-12 cold review (its probe_v125.py), as tests.
+describe('v125 edge cases (cold review)', () => {
+  const P = `proj_${ULID}`
+  const H = `prd_${ULID}`
+  const proj = (id: string, extra: Record<string, unknown> = {}) =>
+    db.prepare('INSERT INTO projects (id, slug, title, category, status, stage, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(id, id.slice(-8).toLowerCase(), id, 'MNCCORE', extra.deleted_at ? 'deleted' : 'active', 'idea', extra.deleted_at ?? null)
+  const homes = (pid: string) => (row('SELECT COUNT(*) n FROM products WHERE project_id = ? AND is_home = 1 AND deleted_at IS NULL', pid)!.n as number)
+
+  it('restore: when the derived id belongs to another project, the project still gets a home (fresh hex id)', () => {
+    const Q = 'proj_01J9YYYYYYYYYYYYYYYYYYYYYY'
+    proj(Q)
+    insertRow(db, 'products', { id: H, project_id: Q, kind: 'trial_ops', stage: 'start_up' })
+    proj(P, { deleted_at: '2026-10-11 00:00:00' })
+    db.prepare("UPDATE projects SET deleted_at = NULL, status = 'active' WHERE id = ?").run(P)
+    const [p, ...rest] = liveProducts(P)
+    expect(rest).toHaveLength(0)
+    expect(String(p.id)).toMatch(/^prd_[0-9a-f]{32}$/)
+    expect(p.is_home).toBe(1)
+  })
+
+  it('insert: when the derived id belongs to another project, the new project still lands with a hex-id home', () => {
+    const Q = 'proj_01J9YYYYYYYYYYYYYYYYYYYYYY'
+    proj(Q)
+    insertRow(db, 'products', { id: H, project_id: Q, kind: 'trial_ops', stage: 'start_up' })
+    proj(P)
+    expect(String(liveProducts(P)[0].id)).toMatch(/^prd_[0-9a-f]{32}$/)
+  })
+
+  it('restore: the newest tombstoned home wins even when deleted_at formats differ', () => {
+    proj(P)
+    insertRow(db, 'products', { id: 'prd_B', project_id: P, kind: 'trial_ops', stage: 'start_up' })
+    db.prepare("UPDATE projects SET deleted_at = datetime('now'), status = 'deleted' WHERE id = ?").run(P)
+    db.prepare("UPDATE products SET is_home = 1, deleted_at = '2026-10-11 23:00:00' WHERE id = 'prd_B'").run()
+    db.prepare("UPDATE products SET is_home = 1, deleted_at = '2026-10-11T08:00:00Z' WHERE id = ?").run(H)
+    db.prepare("UPDATE projects SET deleted_at = NULL, status = 'active' WHERE id = ?").run(P)
+    expect(liveProducts(P).map((x) => x.id)).toEqual(['prd_B'])
+  })
+
+  it('a hard DELETE of a live home while others are live is refused', () => {
+    proj(P)
+    insertRow(db, 'products', { id: 'prd_B', project_id: P, kind: 'trial_ops', stage: 'start_up' })
+    expect(() => db.prepare('DELETE FROM products WHERE id = ?').run(H)).toThrow(/product_home_live/)
+    expect(homes(P)).toBe(1)
+  })
+
+  it('a task tombstoned on X, X tombstoned, task restored -> the task leaves X for the home', () => {
+    proj(P)
+    insertRow(db, 'products', { id: 'prd_B', project_id: P, kind: 'trial_ops', stage: 'start_up' })
+    insertRow(db, 'tasks', { id: 't1', title: 't', project_id: P, product_id: 'prd_B', assignee: 'nick-ingraham', status: 'todo' })
+    db.prepare("UPDATE tasks SET deleted_at = datetime('now'), status = 'deleted' WHERE id = 't1'").run()
+    db.prepare("UPDATE products SET deleted_at = datetime('now') WHERE id = 'prd_B'").run()
+    expect(productOf('t1')).toBe('prd_B')
+    db.prepare("UPDATE tasks SET deleted_at = NULL, status = 'todo' WHERE id = 't1'").run()
+    expect(productOf('t1')).toBe(H)
+  })
+
+  it('a task inserted naming a tombstoned product lands on the home instead', () => {
+    proj(P)
+    insertRow(db, 'products', { id: 'prd_B', project_id: P, kind: 'trial_ops', stage: 'start_up' })
+    db.prepare("UPDATE products SET deleted_at = datetime('now') WHERE id = 'prd_B'").run()
+    insertRow(db, 'tasks', { id: 't2', title: 't', project_id: P, product_id: 'prd_B', assignee: 'nick-ingraham', status: 'todo' })
+    expect(productOf('t2')).toBe(H)
+  })
+
+  it('a batch that hands the home over first, then tombstones the old home, lands; the reverse order refuses', async () => {
+    await pb('projects', P, 'insert', { title: 'P', slug: 'pp', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    await pb('products', 'prd_next', 'insert', { project_id: P, kind: 'trial_ops', stage: 'start_up' })
+    expect((await pb('products', H, 'delete')).status).toBe('error')
+    expect((await pb('products', 'prd_next', 'update', { is_home: 1 })).status).toBe('accepted')
+    expect((await pb('products', H, 'delete')).status).toBe('accepted')
+    expect(homes(P)).toBe(1)
   })
 })
