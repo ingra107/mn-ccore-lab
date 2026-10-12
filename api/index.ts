@@ -30,6 +30,7 @@ import { handleMarkSeen, handleGetUnseenActivity, handleGetThreadSeen, handleMar
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
 import { handleGetProjectMembers, handleAddProjectMember, handleRemoveProjectMember, handleGetMemberProjects } from './routes/project-members';
+import { handleGetMyFolder, handleSetMyFolder, handleClearMyFolder } from './routes/project-member-folders';
 import { handleGetPins, handleCreatePin, handleDeletePin } from './routes/pins';
 import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleUpdateMeetingMeta, handleMeetingPrep, handleGenerateAgenda, handlePrepMeetingFromEvent, handleGrantMeetingProject, handleRevokeMeetingProject, handleMeetingAccess } from './routes/meetings';
@@ -950,6 +951,29 @@ defineRoute({
   auth: 'authed',
   entity: 'projects',
   handler: (c) => handleRemoveProjectMember(c.req.param('id'), c.req.param('slug'), USER(c), c.get('viewer'), E(c)),
+});
+// schema-v127: my folder for this project. One local path per (person,
+// project), private to that person; any member may set their own.
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:id/my-folder',
+  auth: 'authed',
+  entity: 'projects',
+  handler: (c) => handleGetMyFolder(c.req.param('id'), c.get('viewer'), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/projects/:id/my-folder',
+  auth: 'authed',
+  entity: 'projects',
+  handler: (c) => handleSetMyFolder(c.req.param('id'), R(c), c.get('viewer'), E(c)),
+});
+defineRoute({
+  method: 'DELETE',
+  path: '/api/projects/:id/my-folder',
+  auth: 'authed',
+  entity: 'projects',
+  handler: (c) => handleClearMyFolder(c.req.param('id'), c.get('viewer'), E(c)),
 });
 defineRoute({
   method: 'GET',

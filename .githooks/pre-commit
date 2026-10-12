@@ -228,6 +228,20 @@ if git diff --cached --name-only --diff-filter=ACMR \
     fi
     rm -f /tmp/mnccore-pyhandler-test.$$
 fi
+# The member launcher (member-launcher/, 2026-10-12): the mnccore:// handler Casey and
+# Steven install. Fires the REAL launcher through its registered powershell.exe command
+# line under DRYRUN, with marker-file injection payloads. Windows only; skips elsewhere.
+if git diff --cached --name-only --diff-filter=ACMR \
+        | grep -qE "^member-launcher/(windows/|member-launcher\.test\.mjs$)"; then
+    if ! node member-launcher/member-launcher.test.mjs >/tmp/mnccore-member-launcher-test.$$ 2>&1; then
+        grep -E "^\s*not ok|error:" /tmp/mnccore-member-launcher-test.$$ | head -20
+        rm -f /tmp/mnccore-member-launcher-test.$$
+        echo ""
+        echo "BLOCKED: member-launcher/member-launcher.test.mjs failed (run it with node to see why)."
+        exit 1
+    fi
+    rm -f /tmp/mnccore-member-launcher-test.$$
+fi
 
 # ---------------------------------------------------------------------------
 # Ledger-registry gate (2026-06-18, bounded-ledger primitive).

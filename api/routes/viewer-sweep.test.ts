@@ -59,7 +59,7 @@ const NATE_ONLY = 'proj_nateonly'
 const NICK_ONLY = 'proj_nickonly'
 const CASEY_PROJ = 'proj_caseyown'
 const LOOSE = 'task_sweeploose' // Nick's own project-less task
-const FILLS = [HIDDEN, AGENDA, DECISION, ENTRY, FILE_ID, PROJ, PROJ_SLUG, TASK, TASK_ENTRY, PROJ_ENTRY, PROJ_FILE, REVISION, QUESTION, ARTIFACT, LOOSE, 'cm-sweep', 'sweep-none']
+const FILLS = [HIDDEN, AGENDA, DECISION, ENTRY, FILE_ID, PROJ, PROJ_SLUG, TASK, TASK_ENTRY, PROJ_ENTRY, PROJ_FILE, REVISION, QUESTION, ARTIFACT, LOOSE, CASEY_PROJ, 'cm-sweep', 'sweep-none']
 
 let db: InstanceType<typeof Database>
 let env: Env
@@ -159,6 +159,11 @@ function seedLaneB() {
   // Nick's pin on the hidden project (GET/POST/DELETE /api/pins): Casey may
   // neither read nor remove it.
   insertRow(db, 'watchlist', { id: 'w-sweep-pin', member_slug: 'nick-ingraham', entity_type: 'project', entity_id: PROJ })
+  // schema-v127 folders are private to their owner: Nate's on the hidden
+  // project, and Nick's on Casey's OWN project, which she can see but whose
+  // other members' folders she may neither read nor change.
+  insertRow(db, 'project_member_folders', { project_id: PROJ, member_slug: 'nate-mesfin', folder_path: `C:/${MARK}/nate` })
+  insertRow(db, 'project_member_folders', { project_id: CASEY_PROJ, member_slug: 'nick-ingraham', folder_path: `/Users/${MARK}/nick` })
 }
 
 async function call(method: string, path: string, who: 'apikey' | string, body?: unknown, extra: Record<string, string> = {}) {
@@ -184,6 +189,7 @@ const QUERY = (id: string) => `?id=${id}&meeting_id=${id}&entity_type=${entityTy
   + `&limit=500&days=3650&start=2000-01-01&end=2999-12-31&date=${TODAY}&include_hidden=1&include_fixtures=1&include_deleted=1&status=all`
 
 const hiddenRows = () => JSON.stringify([
+  db.prepare("SELECT * FROM project_member_folders WHERE project_id = ? AND member_slug <> 'casey-eddington'").all(CASEY_PROJ),
   // The hidden row, plus any same-titled row that is not Casey's own: her POST
   // with the hidden meeting's title rightly makes HER meeting; a write into
   // anyone else's is the leak.
@@ -210,7 +216,7 @@ const hiddenRows = () => JSON.stringify([
     ['reviewer_comments', 'revision_id', REVISION], ['lab_answers', 'question_id', QUESTION], ['reactions', 'target_id', TASK_ENTRY],
     ['links', 'owner_id', TASK], ['links', 'owner_id', PROJ], ['file_attachments', 'entity_id', PROJ], ['file_attachments', 'entity_id', TASK],
     ['project_state_log', 'project_id', PROJ], ['file_activity_daily', 'project_id', PROJ], ['ai_requests', 'project_slug', PROJ_SLUG],
-    ['watchlist', 'entity_id', PROJ],
+    ['watchlist', 'entity_id', PROJ], ['project_member_folders', 'project_id', PROJ],
   ] as const).map(([t, col, v]) => db.prepare(`SELECT * FROM ${t} WHERE ${col} = ? ORDER BY 1`).all(v)),
 ])
 

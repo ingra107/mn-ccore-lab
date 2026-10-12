@@ -17,6 +17,7 @@ import InlineSelect from '../../components/InlineSelect'
 import DensityToggle, { useDensity } from '../../components/DensityToggle'
 import { useTodayView, type TodayView } from '../../hooks/useTodayView'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
+import LauncherSettingsPanel from '../../components/LauncherSettingsPanel'
 import RangeSlider from '../../components/RangeSlider'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -765,7 +766,12 @@ function LabPrefsPanel() {
 // Settings → Integrations tab thin wrapper. The real UI lives in
 // src/components/CalendarFeedsPanel so it can also embed in the Profile page.
 function IntegrationsPanel() {
-  return <CalendarFeedsPanel />
+  return (
+    <>
+      <CalendarFeedsPanel />
+      <LauncherSettingsPanel />
+    </>
+  )
 }
 
 

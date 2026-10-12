@@ -53,7 +53,7 @@ import ProjectLinkLibrary from '../components/ProjectLinkLibrary'
 import ProjectMembers from '../components/project/ProjectMembers'
 import { AllProjectsBanner } from '../components/AllProjectsControls'
 import ProjectPublications from '../components/ProjectPublications'
-import WorkOnActions from '../components/WorkOnActions'
+import MyProjectFolder from '../components/project/MyProjectFolder'
 import LinkifiedText from '../components/LinkifiedText'
 import FileUpload from '../components/FileUpload'
 import PresenceAvatars from '../components/PresenceAvatars'
@@ -1125,11 +1125,17 @@ function ProjectDetailInner({ project }: InnerProps) {
 
           {/* Right column (1/3): Links (top) + Recent Activity (bottom) */}
           <div className="lg:col-span-1 flex flex-col gap-4">
-            {/* Local launch — Open folder + Work on this in Claude (mnccore://).
-                The launcher lives only on the PI's laptops and opens only a local
-                path, so a web link (a Box URL) or a member's view shows nothing. */}
-            {isPi && isLocalFolder(project.primary_folder) && (
-              <WorkOnActions primaryFolder={project.primary_folder} projectLabel={projectShortLabel(project)} />
+            {/* My folder (schema-v127): each member's own local path, private to
+                them. Copy path for everyone; Open folder + Work on in Claude only
+                where Settings says this computer has the launcher. A PI with no
+                folder of their own sees projects.primary_folder (PB's Box path)
+                when it is a local path; a web link (a Box URL) shows nothing. */}
+            {(project.slug ?? project.id) && (
+              <MyProjectFolder
+                projectRef={(project.slug ?? project.id) as string}
+                projectLabel={projectShortLabel(project)}
+                piFallbackFolder={isPi && isLocalFolder(project.primary_folder) ? project.primary_folder : null}
+              />
             )}
             {/* Members (#145) -- projects work like channels: you see one only if you are on it. */}
             {isAuthenticated && (project.slug ?? project.id) && (

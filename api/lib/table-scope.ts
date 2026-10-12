@@ -53,7 +53,7 @@ export const HUB_TABLES = [
   'narrative_projects', 'nih_grants', 'notifications', 'open_science_resources', 'paper_project_links',
   'pb_sessions', 'pomodoro_sessions', 'processed_mutations', 'product_funding', 'product_kinds',
   'product_stages', 'products', 'project_dependencies',
-  'project_documents', 'project_members', 'project_publications', 'project_state_log', 'projects',
+  'project_documents', 'project_member_folders', 'project_members', 'project_publications', 'project_state_log', 'projects',
   'publications', 'pubmed_sync_log', 'reactions', 'regulatory_items', 'research_digest',
   'research_narratives', 'reviewer_comments', 'schema_migrations', 'sessions', 'submission_events',
   'task_files', 'task_handoffs', 'task_subtasks', 'tasks', 'team_members', 'trainee_milestones',
@@ -272,6 +272,17 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
     where: (v) => (projectsScoped(v) ? 'project_members.project_id IN (SELECT id FROM projects)' : null),
   },
   tasks: { kind: 'scoped', key: 'id', dependsOn: ['projects'], where: taskRule },
+  // A person's own folder for a project (schema-v127): only their own rows,
+  // on a project they can see. No PI arm and no "show all projects" arm: a
+  // member's local path is nobody else's, Nick's included. Nobody reads none.
+  project_member_folders: {
+    kind: 'scoped', key: ['project_id', 'member_slug'], dependsOn: ['projects'],
+    where: (v) => {
+      if (v.kind !== 'person') return '0'
+      const own = `project_member_folders.member_slug = ${sqlList([v.slug])}`
+      return projectsScoped(v) ? `(${own} AND project_member_folders.project_id IN (SELECT id FROM projects))` : own
+    },
+  },
 
   // Quoted: scripts/check-activity-reads.mjs counts every bare mention of this
   // table outside a string literal as SQL its lexer missed. A comment or

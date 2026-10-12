@@ -28,3 +28,11 @@ src/lib/__tests__/milestone_vectors.json text eol=lf
 # Stylesheets too: tests import src/index.css with `?raw` and match on LF line
 # breaks, so a CRLF checkout (a merge under core.autocrlf=true) breaks them.
 *.css text eol=lf
+
+# Member launcher sources (member-launcher/). The download zips set their own
+# line endings (scripts/member-launcher-zip.ts); these pins keep the checked-out
+# files runnable in place too: Windows scripts CRLF, Mac scripts LF.
+member-launcher/windows/*.cmd text eol=crlf
+member-launcher/windows/*.ps1 text eol=crlf
+member-launcher/macos/*.sh text eol=lf
+member-launcher/macos/*.applescript text eol=lf

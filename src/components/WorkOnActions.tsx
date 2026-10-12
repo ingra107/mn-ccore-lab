@@ -20,9 +20,12 @@ interface Props {
   /** 'slot' = the Today card's fixed action slot: two 24x24 grid-centered boxes,
    *  14px glyphs, colors from the .tk-wk CSS (no inline color/padding). */
   variant?: 'buttons' | 'compact' | 'slot'
+  /** The member launcher (member-launcher/) runs `claude` in the folder itself;
+   *  only the PB launcher needs the folder's "Start Claude.bat". */
+  memberLauncher?: boolean
 }
 
-export default function WorkOnActions({ primaryFolder, projectLabel, variant = 'buttons' }: Props) {
+export default function WorkOnActions({ primaryFolder, projectLabel, variant = 'buttons', memberLauncher = false }: Props) {
   const { launch } = useProtocolLaunch()
   const label = projectLabel ? ` for ${projectLabel}` : ''
 
@@ -37,7 +40,9 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
     launch(buildWorkOnUri(primaryFolder), {
       copyText: primaryFolder,
       successMessage: `Launching Claude${label} on this machine…`,
-      copyMessage: `Launching Claude${label}… (path copied as backup — run "Start Claude.bat" if it doesn't open)`,
+      copyMessage: memberLauncher
+        ? `Launching Claude${label}… (path copied as backup)`
+        : `Launching Claude${label}… (path copied as backup — run "Start Claude.bat" if it doesn't open)`,
     })
 
   if (variant === 'slot') {
