@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Filter, X } from 'lucide-react'
 import type { Publication } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
-import { PANEL_BG, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
 import { topicLabel } from '../lib/topics'
 import { isPublished } from '../lib/publicationCounts'
 
@@ -100,9 +100,8 @@ export default function NetworkFilters({
     <div
       className="flex flex-wrap items-center gap-3 px-4 py-3 rounded-lg"
       style={{
-        background: withAlpha(PANEL_BG, 60),
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        // The graph panel is dark in both themes; PANEL_BG flips light and washed this gray.
+        background: 'rgba(255, 255, 255, 0.06)',
         border: `1px solid ${withAlpha('var(--job-brand)', 12)}`,
       }}
     >

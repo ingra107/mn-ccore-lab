@@ -9,6 +9,7 @@ import { useAuth } from '../hooks/useAuth'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { PATHS } from '../constants/paths'
 import JoinSteps from '../components/JoinSteps'
+import { PublicHead } from '../components/public/PublicParts'
 
 export default function JoinPage() {
   usePageMeta('Join MN-CCORE · MN-CCORE', 'How to join the MN-CCORE lab and its Member Hub.')
@@ -18,20 +19,24 @@ export default function JoinPage() {
   const isMember = isAuthenticated && user?.isMember
 
   return (
-    <div className="content-container" style={{ paddingTop: '3rem', paddingBottom: '4rem', maxWidth: 720 }}>
-      <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: '2rem', color: 'var(--ink)', margin: 0 }}>
-        Join the lab
-      </h1>
-      <p style={{ marginTop: 12, fontSize: 15, lineHeight: 1.6, color: 'var(--slate)', maxWidth: 560 }}>
-        The Member Hub is where MN-CCORE members run their projects, meetings and tasks.
-        {isAuthenticated && !isMember && email
-          ? <> You are signed in as <strong style={{ color: 'var(--ink)', fontWeight: 500 }}>{email}</strong>, which is not on a lab project yet. Here is how to join.</>
-          : <> Here is how to join.</>}
-      </p>
+    <div className="content-container pub-foot" style={{ maxWidth: 760 }}>
+      <PublicHead
+        kicker="Join the lab"
+        title={<>How to <em>join</em>.</>}
+        small
+        lede={
+          <>
+            The Member Hub is where MN-CCORE members run their projects, meetings and tasks.
+            {isAuthenticated && !isMember && email
+              ? <> You are signed in as <strong style={{ color: 'var(--sk-t1)', fontWeight: 500 }}>{email}</strong>, which is not on a lab project yet. Here is how to join.</>
+              : <> Here is how to join.</>}
+          </>
+        }
+      />
 
       {isMember && (
         <p style={{ marginTop: 16, fontSize: 14 }}>
-          You are already a member. <Link to={PATHS.dashboard} style={{ color: 'var(--job-accent)' }}>Go to Today</Link>
+          You are already a member. <Link to={PATHS.dashboard} className="pub-link">Go to Today</Link>
         </p>
       )}
 

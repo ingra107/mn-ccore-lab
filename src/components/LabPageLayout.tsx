@@ -1,5 +1,6 @@
 import { type CSSProperties, type ReactNode, useEffect, useState } from 'react'
-import { ArrowRight, ExternalLink, GraduationCap, FlaskConical } from 'lucide-react'
+import { ArrowRight, ExternalLink, FlaskConical } from 'lucide-react'
+import { SecHead } from './public/PublicParts'
 import { FaceDisc } from './today/skin'
 import PublicationCard from './PublicationCard'
 import PageHeartbeat from './moments/PageHeartbeat'
@@ -113,10 +114,10 @@ export default function LabPageLayout({
 
             <div className="text-center lg:text-left">
               <h1
-                className={portalChrome ? 'text-2xl mb-1' : 'text-2xl sm:text-3xl mb-1'}
+                className={portalChrome ? 'text-2xl mb-1' : 'text-3xl sm:text-4xl mb-1'}
                 style={{
                   fontFamily: portalChrome ? 'var(--font-sans)' : 'var(--font-display)',
-                  fontWeight: 600,
+                  fontWeight: portalChrome ? 600 : 500,
                   color: 'var(--ink)',
                   letterSpacing: portalChrome ? '-0.01em' : undefined,
                 }}
@@ -258,16 +259,7 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
 
   return (
     <section className="mb-16" id={id}>
-      <h2
-        className="text-xl sm:text-2xl mb-6"
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontWeight: 500,
-          color: 'var(--ink)',
-        }}
-      >
-        {title}
-      </h2>
+      <SecHead title={title} />
       <div className="space-y-3">
         {activeGrants.map((grant) => (
           <div
@@ -430,16 +422,7 @@ export function ProjectsSection({
 }) {
   return (
     <section className="mb-16" id={id}>
-      <h2
-        className="text-xl sm:text-2xl mb-6"
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontWeight: 500,
-          color: 'var(--ink)',
-        }}
-      >
-        {title}
-      </h2>
+      <SecHead title={title} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {projects.map((project) => (
           <ProjectCardItem key={project.title} project={project} />
@@ -473,16 +456,7 @@ export function PublicationsSection({
 
   return (
     <section className="mb-16" id={id}>
-      <h2
-        className="text-xl sm:text-2xl mb-6"
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontWeight: 500,
-          color: 'var(--ink)',
-        }}
-      >
-        {title}
-      </h2>
+      <SecHead title={title} />
       <div className="space-y-4">
         {visible.map((pub) => (
           <PublicationCard key={pub.id} pub={pub} />
@@ -642,20 +616,8 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
 export function MenteesSection({ mentees, id, title = 'MNCCORE Trainees' }: { mentees: Mentee[]; id?: string; title?: string }) {
   return (
     <section className="mb-16" id={id}>
-      <div className="flex items-center gap-3 mb-2">
-        <GraduationCap size={22} style={{ color: 'var(--job-brand)' }} aria-hidden="true" />
-        <h2
-          className="text-xl sm:text-2xl"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 500,
-            color: 'var(--ink)',
-          }}
-        >
-          {title}
-        </h2>
-      </div>
-      <p className="text-sm mb-6" style={{ color: 'var(--slate)' }}>
+      <SecHead title={title} />
+      <p className="text-sm mb-6" style={{ color: 'var(--slate)', marginTop: 4 }}>
         Trainees are shared across MNCCORE — we mentor as a team.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

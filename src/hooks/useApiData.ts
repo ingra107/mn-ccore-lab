@@ -68,6 +68,7 @@ import type {
 } from '../lib/api'
 import { localDateKey } from '../lib/dateUtils'
 import { normalizeStage } from '../lib/stageNormalize'
+import { isPlaceholderPublication } from '../lib/publicationCounts'
 
 // Re-export lib/api row types that consumers import via this module.
 // Narrow surface: only the types actually consumed by components. Other
@@ -223,7 +224,7 @@ export function usePublications(params?: {
     queryKey: ['publications', params],
     queryFn: async () => {
       const res = await fetchPublications(params)
-      return res.data.map(rowToPublication)
+      return res.data.map(rowToPublication).filter((p) => !isPlaceholderPublication(p))
     },
     initialData: (import.meta.env.DEV && !params) ? () => _devPublications : undefined,
     staleTime: STALE_TIME,

@@ -4,7 +4,6 @@ import LabPageLayout, {
   PublicationsSection,
   MenteesSection,
 } from '../components/LabPageLayout'
-import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { usePublications } from '../hooks/useApiData'
 import { memberPublications } from '../lib/publicationCounts'
@@ -79,14 +78,8 @@ export default function NateLab() {
       ]}
     >
       <GrantsSection grants={grants} id="grants" title="Grants & Proposals" />
-      <SectionDivider />
-      <div className="py-4" />
       <ProjectsSection title="Research Projects" projects={projects} id="research-projects" />
-      <SectionDivider />
-      <div className="py-4" />
       <MenteesSection mentees={mentees} id="trainees" title="MN-CCORE Trainees" />
-      <SectionDivider />
-      <div className="py-4" />
       <PublicationsSection
         publications={memberPublications(publications, getMemberBySlug('nate-mesfin'))}
         id="publications"

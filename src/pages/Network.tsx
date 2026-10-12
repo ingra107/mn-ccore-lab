@@ -1,13 +1,11 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Link } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { usePublications } from '../hooks/useApiData'
+import { PublicHead } from '../components/public/PublicParts'
 import CollaborationGraph from '../components/CollaborationGraph'
 import NetworkSidebar from '../components/NetworkSidebar'
 import NetworkFilters, { type NetworkFilterState } from '../components/NetworkFilters'
 import type { NetworkNode, NetworkEdge } from '../components/CollaborationGraph'
-import { ICON_PROPS } from '../lib/iconProps'
 import { PANEL_BG, withAlpha } from '../lib/taskGrouping'
 import { isPublished } from '../lib/publicationCounts'
 
@@ -96,114 +94,60 @@ export default function Network() {
   }, [])
 
   return (
-    <div
-      className="flex flex-col"
-      style={{
-        // height (not minHeight) so flex-1 child has a determined parent
-        // height to stretch into. With minHeight alone the GraphCanvas
-        // fell back to its intrinsic 300x150 canvas size. GH #16.
-        // r7 2026-04-23.
-        height: '100vh',
-        background: 'linear-gradient(135deg, oklch(0.12 0.005 250) 0%, oklch(0.16 0.005 250) 40%, oklch(0.25 0.01 230) 100%)',
-      }}
-    >
-      {/* Header bar */}
-      <div
-        className="flex-shrink-0 px-4 sm:px-6 pt-4 pb-3"
-        style={{ zIndex: 'var(--z-dropdown)' }}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/"
-              className="flex items-center gap-1.5 text-sm transition-colors duration-200 hover:!text-[var(--job-brand)]"
-              style={{
-                color: 'rgba(255, 255, 255, 0.5)',
-                textDecoration: 'none',
-              }}
-            >
-              <ArrowLeft {...ICON_PROPS} size={14} />
-              Home
-            </Link>
-            <span style={{ color: 'color-mix(in srgb, var(--job-brand) 20%, transparent)' }}>/</span>
-            <h1
-              className="text-lg sm:text-xl"
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 600,
-                color: '#ffffff',
-              }}
-            >
-              Collaboration Network
-            </h1>
-          </div>
-          <div className="hidden sm:flex items-center gap-4">
-            {networkStats && (
-              <div className="flex items-center gap-3 text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                <span><strong style={{ color: 'var(--job-accent)' }}>{networkStats.nodes}</strong> authors</span>
+    <div className="content-container pub-foot">
+      <PublicHead
+        kicker="The network"
+        title={<>Who we write <em>with</em>.</>}
+        lede="Each dot is an author and each line a paper two authors share. The lab sits at the center of the CLIF Consortium's co-authorship."
+        small
+      />
+
+      {/* The graph stays on a dark canvas in both themes: it draws on <canvas>. */}
+      <div className="pub-net">
+        <div className="flex-shrink-0 px-4 sm:px-6 pt-4 pb-3" style={{ zIndex: 'var(--z-dropdown)' }}>
+          <div className="flex items-center justify-between mb-3" style={{ minHeight: 20 }}>
+            {networkStats ? (
+              <div className="flex items-center gap-3 text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                <span><strong style={{ color: '#eef1f4' }}>{networkStats.nodes}</strong> authors</span>
                 <span>&middot;</span>
-                <span><strong style={{ color: 'color-mix(in srgb, var(--job-brand) 80%, transparent)' }}>{networkStats.edges}</strong> connections</span>
-                <span>&middot;</span>
-                <span>{networkStats.avgConnections} avg</span>
+                <span><strong style={{ color: '#eef1f4' }}>{networkStats.edges}</strong> connections</span>
                 {networkStats.hub && (
                   <>
-                    <span>&middot;</span>
-                    <span>Hub: <strong style={{ color: 'rgba(255,255,255,0.5)' }}>{networkStats.hub}</strong></span>
+                    <span className="hidden sm:inline">&middot;</span>
+                    <span className="hidden sm:inline">Most connected: <strong style={{ color: '#eef1f4' }}>{networkStats.hub}</strong></span>
                   </>
                 )}
               </div>
-            )}
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em' }}>
-              {filteredPublications.length} papers
-            </p>
+            ) : <span />}
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{filteredPublications.length} papers</p>
           </div>
+          <NetworkFilters publications={publications} filters={filters} onChange={setFilters} />
         </div>
 
-        {/* Filters */}
-        <NetworkFilters
-          publications={publications}
-          filters={filters}
-          onChange={setFilters}
-        />
-      </div>
-
-      {/* Graph area (fills remaining space) */}
-      <div className="flex-1 relative min-h-0">
-        <CollaborationGraph
-          publications={filteredPublications}
-          fullPage
-          onNodeClick={handleNodeClick}
-          onEdgeClick={handleEdgeClick}
-          onGraphData={handleGraphData}
-          selectedNodeId={selectedNode?.id ?? null}
-          selectedEdge={selectedEdge}
-          showExternal={!filters.mnccoreOnly}
-        />
-
-        {/* Sidebar */}
-        <NetworkSidebar
-          selectedNode={selectedNode}
-          selectedEdge={selectedEdge}
-          allNodes={graphNodes}
-          allEdges={graphEdges}
-          onClose={handleClose}
-        />
-
-        {/* Mobile hint */}
-        <div
-          className="sm:hidden absolute top-2 left-0 right-0 text-center"
-          style={{ zIndex: 'var(--z-sticky)' }}
-        >
-          <span
-            className="text-xs px-3 py-1 rounded-full"
-            style={{
-              color: 'rgba(255, 255, 255, 0.4)',
-              background: withAlpha(PANEL_BG, 60),
-              fontSize: '10px',
-            }}
-          >
-            Pinch to zoom &middot; Tap nodes to explore
-          </span>
+        {/* Graph area (fills remaining space) */}
+        <div className="flex-1 relative min-h-0">
+          <CollaborationGraph
+            publications={filteredPublications}
+            fullPage
+            onNodeClick={handleNodeClick}
+            onEdgeClick={handleEdgeClick}
+            onGraphData={handleGraphData}
+            selectedNodeId={selectedNode?.id ?? null}
+            selectedEdge={selectedEdge}
+            showExternal={!filters.mnccoreOnly}
+          />
+          <NetworkSidebar
+            selectedNode={selectedNode}
+            selectedEdge={selectedEdge}
+            allNodes={graphNodes}
+            allEdges={graphEdges}
+            onClose={handleClose}
+          />
+          <div className="sm:hidden absolute top-2 left-0 right-0 text-center" style={{ zIndex: 'var(--z-sticky)' }}>
+            <span className="text-xs px-3 py-1 rounded-full" style={{ color: 'rgba(255, 255, 255, 0.6)', background: withAlpha(PANEL_BG, 60), fontSize: '11px' }}>
+              Pinch to zoom &middot; Tap nodes to explore
+            </span>
+          </div>
         </div>
       </div>
     </div>

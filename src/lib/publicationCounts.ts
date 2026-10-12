@@ -48,6 +48,13 @@ export function isPublished(p: Pick<Publication, 'status'>): boolean {
   return p.status === 'Published'
 }
 
+/** Rows that are not papers: test fixtures (`test_delete_ ...`) and the
+ *  `[Table]` / `[Figure]` pieces of a 2004 report that were imported as
+ *  papers. usePublications drops them, so no count or list sees them. */
+export function isPlaceholderPublication(p: Pick<Publication, 'title'>): boolean {
+  return /^\s*(test_|\[(table|figure)\b)/i.test(p.title)
+}
+
 export function isInReview(p: Pick<Publication, 'status'>): boolean {
   return p.status === 'In Review'
 }

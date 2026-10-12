@@ -196,6 +196,8 @@ export const ALLOW = {
   'src/components/PublicationCard.tsx': { families: ['brand'], why: 'public publication card; gray in .portal-shell' },
   'src/components/MemberFeaturedPublications.tsx': { families: ['brand'], why: 'public member page Featured head; gray in .portal-shell' },
   'src/components/ui/Button.tsx': { families: ['brand'], why: "the 'gold' variant: public brand button, gray in .portal-shell" },
+  // The public site's one stylesheet (s68): every rule in it is a public page's gold.
+  'src/styles/public.css': { families: PUB, why: PUBLIC_BRAND },
   // The .portal-shell rule that turns --job-brand gray, and the public-site rules that read it.
   'src/index.css': { families: ['brand'], why: 'defines .portal-shell --job-brand and the public classes that read it' },
   // Color-back pick (Nick 2026-10-11): the heartbeat line under page titles.

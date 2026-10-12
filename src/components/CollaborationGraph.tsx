@@ -65,7 +65,9 @@ const EXTERNAL_GRAY = '#64748b'
 const mnccoreTheme: Theme = {
   ...darkTheme,
   canvas: {
-    background: 'transparent',
+    // Opaque and dark in both themes: a transparent WebGL canvas composites white
+    // over a light page and the nodes and edges lose their contrast.
+    background: '#0f151c',
     fog: null,
   },
   node: {
@@ -87,7 +89,9 @@ const mnccoreTheme: Theme = {
   },
   edge: {
     ...darkTheme.edge,
-    fill: withAlpha('var(--job-brand)', 25),
+    // three.js cannot read a CSS color-mix()/var() string (it drew the edges in its
+    // fallback color, invisible on the canvas): a solid hex, gold dimmed toward the canvas.
+    fill: '#6d5d2e',
     activeFill: GOLD,
     opacity: 1,
     selectedOpacity: 1,

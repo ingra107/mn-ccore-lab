@@ -1,282 +1,79 @@
-import {
-  MapPin,
-  Mail,
-  ExternalLink,
-  Users,
-} from 'lucide-react'
-import { useScrollRevealGroup } from '../hooks/useScrollReveal'
-import SectionDivider from '../components/SectionDivider'
+import { Link } from 'react-router-dom'
+import { ExternalLink } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { ICON_PROPS } from '../lib/iconProps'
+import { PublicHead, SecHead } from '../components/public/PublicParts'
+import { RESEARCH_AREAS } from '../lib/researchAreas'
 
 const affiliateLinks = [
   { label: 'CLIF Consortium', href: 'https://clif-icu.com/' },
-  {
-    label: 'CLIF GitHub',
-    href: 'https://github.com/Common-Longitudinal-ICU-data-Format',
-  },
+  { label: 'CLIF GitHub', href: 'https://github.com/Common-Longitudinal-ICU-data-Format' },
   { label: 'UMN Department of Medicine', href: 'https://med.umn.edu/dom' },
-  {
-    label: 'Parker Healthcare Allocation Lab',
-    href: 'https://healthcare-allocation-lab.github.io/',
-  },
+  { label: 'Parker Healthcare Allocation Lab', href: 'https://healthcare-allocation-lab.github.io/' },
 ]
 
 export default function Contact() {
   usePageMeta(
     'Contact | MN-CCORE Lab',
-    'Contact the MN-CCORE Lab at the University of Minnesota. Learn about research opportunities, collaborations, and how to join our team.'
+    'Contact the MN-CCORE Lab at the University of Minnesota: where we are, how to write to us, and who we work with.'
   )
-  const contentRef = useScrollRevealGroup('.fade-in-up', 100)
 
   return (
-    <>
-      {/* Header */}
-      <section className="pt-4 pb-6 sm:pb-8 content-container">
-        <h1
-          className="text-3xl sm:text-4xl lg:text-5xl mb-3 sm:mb-4"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 800,
-            color: 'var(--ink)',
-          }}
-        >
-          Contact
-        </h1>
-        <p
-          className="text-base sm:text-lg max-w-2xl"
-          style={{ color: 'var(--slate)' }}
-        >
-          Interested in collaborating or learning more about our research?
-          We would love to hear from you.
-        </p>
-      </section>
+    <div className="content-container pub-foot">
+      <PublicHead
+        kicker="Contact"
+        title={<>Find us, <em>write</em> to us.</>}
+        lede="For a collaboration, a question about our research, or a press inquiry, email us. We read every message."
+        small
+      />
 
-      <SectionDivider />
-
-      <section
-        className="py-8 sm:py-12 lg:py-16 content-container"
-        ref={contentRef}
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Left: Contact Info */}
-          <div>
-            <div className="fade-in-up card p-4 sm:p-6 mb-6">
-              <div className="flex items-start gap-4 mb-6">
-                <MapPin {...ICON_PROPS}
-                  size={20}
-                  className="flex-shrink-0 mt-0.5"
-                  style={{ color: 'var(--job-brand)' }}
-                  aria-hidden="true"
-                />
-                <div>
-                  <h3
-                    className="text-base font-normal mb-2"
-                    style={{
-                      color: 'var(--ink)',
-                    }}
-                  >
-                    Location
-                  </h3>
-                  <p
-                    className="text-sm leading-relaxed"
-                    style={{ color: 'var(--slate)' }}
-                  >
-                    University of Minnesota
-                    <br />
-                    Department of Medicine
-                    <br />
-                    Division of Pulmonary, Allergy, Critical Care & Sleep Medicine
-                    <br />
-                    Mayo Memorial Building
-                    <br />
-                    420 Delaware St SE
-                    <br />
-                    Minneapolis, MN 55455
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <Mail {...ICON_PROPS}
-                  size={20}
-                  className="flex-shrink-0 mt-0.5"
-                  style={{ color: 'var(--job-brand)' }}
-                  aria-hidden="true"
-                />
-                <div>
-                  <h3
-                    className="text-base font-normal mb-2"
-                    style={{
-                      color: 'var(--ink)',
-                    }}
-                  >
-                    Email
-                  </h3>
-                  <a
-                    href="mailto:mnccore@umn.edu"
-                    className="cursor-pointer text-sm transition-colors duration-200"
-                    style={{
-                      color: 'var(--job-accent)',
-                    }}
-                  >
-                    mnccore@umn.edu
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Google Maps Embed */}
-            <div className="fade-in-up mb-6 rounded-lg overflow-hidden relative" style={{ border: `1px solid color-mix(in srgb, var(--job-brand) 15%, transparent)`, paddingBottom: '56.25%', height: 0 }}>
-              <iframe
-                title="MN-CCORE Lab Location - Mayo Memorial Building, University of Minnesota"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2822.764!2d-93.2315!3d44.9720!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x52b32d600f4e4541%3A0x6c4e4e1e4e4e4e4e!2sMayo+Memorial+Building%2C+University+of+Minnesota!5e0!3m2!1sen!2sus!4v1"
-                className="absolute inset-0 w-full h-full"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
-
-            {/* Affiliate Links */}
-            <div className="fade-in-up">
-              <h3
-                className="text-lg mb-4"
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 400,
-                  color: 'var(--ink)',
-                }}
-              >
-                Affiliated Organizations
-              </h3>
-              <div className="space-y-2">
-                {affiliateLinks.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="cursor-pointer flex items-center justify-between p-3 rounded-lg group hov-border hov-bg"
-                    style={{
-                      background: 'var(--ice)',
-                      border: '1px solid transparent',
-                      minHeight: '44px',
-                      transition: 'background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
-                      '--hov-border': 'var(--job-brand)',
-                      '--hov-bg': 'color-mix(in srgb, var(--job-brand) 6%, transparent)',
-                    } as React.CSSProperties}
-                  >
-                    <span
-                      className="text-sm font-medium"
-                      style={{ color: 'var(--ink)' }}
-                    >
-                      {link.label}
-                    </span>
-                    <ExternalLink {...ICON_PROPS}
-                      size={14}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                      style={{ color: 'var(--job-brand)' }}
-                      aria-hidden="true"
-                    />
-                  </a>
-                ))}
-              </div>
-            </div>
+      <div className="pub-cols">
+        <div>
+          <SecHead title="Where we are" />
+          <div className="pub-card" style={{ padding: 'clamp(16px, 3vw, 24px)', marginTop: 14 }}>
+            <p className="pub-addr">
+              University of Minnesota<br />
+              Department of Medicine<br />
+              Division of Pulmonary, Allergy, Critical Care &amp; Sleep Medicine<br />
+              Mayo Memorial Building<br />
+              420 Delaware St SE<br />
+              Minneapolis, MN 55455
+            </p>
+            <p style={{ margin: '16px 0 0', fontSize: 15 }}>
+              <a href="mailto:mnccore@umn.edu" className="pub-link">mnccore@umn.edu</a>
+            </p>
           </div>
-
-          {/* Right: Research Focus Areas */}
-          <div className="fade-in-up">
-            <div
-              className="p-4 sm:p-6 rounded-lg"
-              style={{
-                background:
-                  `linear-gradient(135deg, color-mix(in srgb, var(--job-brand) 8%, transparent) 0%, transparent 100%)`,
-                border: `1px solid color-mix(in srgb, var(--job-brand) 15%, transparent)`,
-              }}
-            >
-              <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                <Users
-                  size={24}
-                  style={{ color: 'var(--job-brand)' }}
-                  aria-hidden="true"
-                />
-                <h2
-                  className="text-xl sm:text-2xl"
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: 500,
-                    color: 'var(--ink)',
-                  }}
-                >
-                  Research Focus Areas
-                </h2>
-              </div>
-
-              <p
-                className="text-sm sm:text-base leading-relaxed mb-4 sm:mb-6"
-                style={{ color: 'var(--slate)' }}
-              >
-                MN-CCORE conducts multi-center critical care outcomes research across several key domains:
-              </p>
-
-              <ul className="space-y-2.5 sm:space-y-3 mb-6 sm:mb-8">
-                {[
-                  'Multi-center observational studies using the CLIF dataset',
-                  'Clinical decision-making and provider variation in the ICU',
-                  'ICU quality measurement and improvement',
-                  'Health services research and data science methods',
-                  'Lung-protective ventilation and respiratory support',
-                ].map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-start gap-3 text-sm"
-                    style={{ color: 'var(--ink)' }}
-                  >
-                    <span
-                      className="flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full"
-                      style={{ background: 'var(--job-brand)' }}
-                    />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-
-              <div
-                className="p-3 sm:p-4 rounded-lg"
-                style={{
-                  background: 'color-mix(in srgb, var(--job-brand) 10%, transparent)',
-                  border: `1px solid color-mix(in srgb, var(--job-brand) 12%, transparent)`,
-                }}
-              >
-                <p
-                  className="text-sm font-medium mb-2"
-                  style={{ color: 'var(--ink)' }}
-                >
-                  Interested in collaborating?
-                </p>
-                <p
-                  className="text-sm"
-                  style={{ color: 'var(--slate)' }}
-                >
-                  For collaboration inquiries or research opportunities, email{' '}
-                  <a
-                    href="mailto:mnccore@umn.edu"
-                    className="cursor-pointer font-medium transition-colors duration-200"
-                    style={{
-                      color: 'var(--job-accent)',
-                      fontSize: '13px',
-                    }}
-                  >
-                    mnccore@umn.edu
-                  </a>
-                </p>
-              </div>
-            </div>
+          <div className="pub-map">
+            <iframe
+              title="MN-CCORE Lab Location - Mayo Memorial Building, University of Minnesota"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2822.764!2d-93.2315!3d44.9720!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x52b32d600f4e4541%3A0x6c4e4e1e4e4e4e4e!2sMayo+Memorial+Building%2C+University+of+Minnesota!5e0!3m2!1sen!2sus!4v1"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
           </div>
         </div>
-      </section>
-    </>
+
+        <div>
+          <SecHead title="What we work on" />
+          <div className="pub-card" style={{ padding: 8, marginTop: 14 }}>
+            {RESEARCH_AREAS.map((a) => (
+              <Link key={a.id} to={`/publications?area=${a.id}`} className="pub-row" style={{ alignItems: 'center' }}>
+                <span className="pub-rt" style={{ fontSize: 16 }}>{a.label}</span>
+              </Link>
+            ))}
+          </div>
+
+          <SecHead title="Who we work with" />
+          <div className="pub-card" style={{ padding: 8, marginTop: 14 }}>
+            {affiliateLinks.map((link) => (
+              <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="pub-row" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 15 }}>{link.label}</span>
+                <ExternalLink size={14} aria-hidden="true" style={{ color: 'var(--sk-t3)' }} />
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

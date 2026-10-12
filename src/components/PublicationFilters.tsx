@@ -166,10 +166,9 @@ function FilterRow({
   return (
     <div className="mb-2 last:mb-0 flex flex-wrap items-center gap-2">
       <span
-        className="text-xs uppercase flex-shrink-0"
+        className="text-xs flex-shrink-0"
         style={{
-          fontSize: '11px',
-          letterSpacing: '0.05em',
+          fontSize: '12px',
           color: 'var(--slate)',
           minWidth: '50px',
         }}

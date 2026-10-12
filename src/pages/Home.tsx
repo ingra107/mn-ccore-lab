@@ -1,145 +1,50 @@
-import { useEffect, useState, useMemo, Suspense } from 'react'
-import { lazyRoute } from '../lib/lazyRoute'
-// Link removed — hero cards use <a> for reliable full-page navigation
-import {
-  Stethoscope,
-  BarChart3,
-  Brain,
-  Database,
-  ExternalLink,
-  ArrowRight,
-} from 'lucide-react'
-import { useScrollRevealGroup } from '../hooks/useScrollReveal'
-import { useCountUp } from '../hooks/useCountUp'
-import { usePublications, useProjects, useTeam } from '../hooks/useApiData'
-import { isProjectActive } from '../lib/taskConstants'
-import { countPublications } from '../lib/publicationCounts'
-import NetworkBackground from '../components/NetworkBackground'
-import FeaturedResearch from '../components/FeaturedResearch'
-import CollaborationNetwork from '../components/CollaborationNetwork'
-import RecentActivity from '../components/RecentActivity'
-import CLIFMap from '../components/CLIFMap'
-import UpcomingMeetingBanner from '../components/UpcomingMeetingBanner'
-import LatestDigest from '../components/LatestDigest'
+import { useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useAuth } from '../hooks/useAuth'
-import { PATHS } from '../constants/paths'
-import { ICON_PROPS } from '../lib/iconProps'
+import { useLabFacts } from '../hooks/useLabFacts'
+import { PublicHead, SecHead, PersonLink } from '../components/public/PublicParts'
+import { rosterPeople } from '../lib/roster'
+import type { Publication } from '../data/types'
 
-// Lazy-loaded: pulls recharts (PublicationTimeline) — deferred until scrolled into view
-const ResearchImpact = lazyRoute(() => import('../components/ResearchImpact'))
+const SELECTED = 5
+const RECENT = 6
+const dash = '—'
 
-// The public site keeps gold as its brand color (Nick 2026-10-11): all four
-// pillars wear the one brand gold, not four hues.
-const PILLAR_ACCENT = 'var(--job-brand)'
-
-const pillars = [
-  {
-    icon: Stethoscope,
-    title: 'Provider Variation',
-    description:
-      'Characterizing how individual clinician practice patterns shape ICU outcomes across diverse hospital settings.',
-    stat: '6 active studies',
-  },
-  {
-    icon: BarChart3,
-    title: 'ICU Quality Metrics',
-    description:
-      'Developing and validating evidence-based quality measures for critical care using multi-center data.',
-    stat: '13 consortium sites',
-  },
-  {
-    icon: Brain,
-    title: 'Clinical Decision-Making',
-    description:
-      'Understanding how cognitive styles and heuristics influence provider behavior at the bedside.',
-    stat: '2 NIH-funded',
-  },
-  {
-    icon: Database,
-    title: 'Multi-Center Data Science',
-    description:
-      'Building open data infrastructure through the CLIF Consortium to enable reproducible ICU research.',
-    stat: 'Open source',
-  },
-]
-
-const affiliates = [
-  {
-    name: 'CLIF Consortium',
-    description: 'Common Longitudinal ICU Format -- founding member',
-    href: 'https://clif-icu.com/',
-  },
-  {
-    name: 'CLIF GitHub',
-    description: 'Open-source data tools and specifications',
-    href: 'https://github.com/Common-Longitudinal-ICU-data-Format',
-  },
-  {
-    name: 'UMN Department of Medicine',
-    description: 'University of Minnesota institutional home',
-    href: 'https://med.umn.edu/dom',
-  },
-  {
-    name: 'Parker Healthcare Allocation Lab',
-    description: 'CLIF collaborator at University of Colorado',
-    href: 'https://healthcare-allocation-lab.github.io/',
-  },
-]
-
-function ImpactNumber({ value, suffix }: { value: number; suffix: string }) {
-  const { count, ref } = useCountUp(value, 2000)
-  // 0 means the live list has not arrived yet: show a dash, never a made-up
-  // number (the old `|| 63` / `|| 6` / `|| 12` fallbacks disagreed with the
-  // live counts further down the page).
+function PaperRow({ p, to }: { p: Publication; to: string }) {
   return (
-    <span ref={ref}>
-      {value === 0 ? '\u2014' : `${count}${suffix}`}
-    </span>
+    <Link to={to} className="pub-row">
+      <span className="pub-yr">{p.year}</span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span className="pub-rt">{p.title}</span>
+        {p.journal && <span className="pub-rj">{p.journal}</span>}
+      </span>
+    </Link>
   )
 }
 
 export default function Home() {
   usePageMeta(
     'MN-CCORE | Minnesota Critical Care Outcomes & Research Effort',
-    'MN-CCORE Lab at the University of Minnesota. Advancing critical care through data-driven discovery, provider variation research, and the CLIF Consortium.'
+    'MN-CCORE Lab at the University of Minnesota. We study how ICU care is delivered, measured and improved: provider variation, quality metrics and the CLIF Consortium.'
   )
-  const [heroVisible, setHeroVisible] = useState(false)
-  const { data: publications = [] } = usePublications()
-  const { data: projects = [] } = useProjects()
-  const { data: team = [] } = useTeam()
-  const { isAuthenticated } = useAuth()
-  const pillarsRef = useScrollRevealGroup('.fade-in-up', 150)
-  const affiliatesRef = useScrollRevealGroup('.fade-in-up', 100)
+  const facts = useLabFacts()
 
-  const impactMetrics = useMemo(() => {
-    // Published papers: the same count Research Output, the "View all" link,
-    // /publications and Pulse show (lib/publicationCounts).
-    const pubCount = countPublications(publications).published
-    const activeProjects = projects.filter(p => isProjectActive(p.status)).length
-    const teamCount = team.length
-    return { pubCount, activeProjects, teamCount }
-  }, [publications, projects, team])
-
-  // JSON-LD structured data for organization
+  // JSON-LD structured data for the organization
   useEffect(() => {
     const jsonLd = {
       '@context': 'https://schema.org',
       '@type': 'ResearchOrganization',
-      'name': 'MN-CCORE',
-      'alternateName': 'Minnesota Critical Care Outcomes & Research Effort',
-      'url': 'https://mn-ccore-lab.pages.dev',
-      'description': 'Multi-center ICU research lab at the University of Minnesota',
-      'parentOrganization': {
-        '@type': 'Organization',
-        'name': 'University of Minnesota',
-      },
-      'address': {
+      name: 'MN-CCORE',
+      alternateName: 'Minnesota Critical Care Outcomes & Research Effort',
+      url: 'https://mn-ccore-lab.pages.dev',
+      description: 'Multi-center ICU research lab at the University of Minnesota',
+      parentOrganization: { '@type': 'Organization', name: 'University of Minnesota' },
+      address: {
         '@type': 'PostalAddress',
-        'streetAddress': '420 Delaware St SE',
-        'addressLocality': 'Minneapolis',
-        'addressRegion': 'MN',
-        'postalCode': '55455',
+        streetAddress: '420 Delaware St SE',
+        addressLocality: 'Minneapolis',
+        addressRegion: 'MN',
+        postalCode: '55455',
       },
     }
     const script = document.createElement('script')
@@ -151,551 +56,87 @@ export default function Home() {
     }
   }, [])
 
-  useEffect(() => {
-    const timer = setTimeout(() => setHeroVisible(true), 100)
-    return () => clearTimeout(timer)
-  }, [])
+  const selected = (facts.featured.length >= 3 ? facts.featured : facts.recent).slice(0, SELECTED)
+  const selectedIds = new Set(selected.map((p) => p.id))
+  const recent = facts.recent.filter((p) => !selectedIds.has(p.id)).slice(0, RECENT)
+  const maxYear = Math.max(1, ...facts.byYear.map((y) => y.n))
+  const thisYear = facts.byYear[facts.byYear.length - 1]
+  const firstYear = facts.byYear[0]
 
   return (
-    <>
-      {/* ─── Hero ─── */}
-      <section
-        className="relative overflow-hidden"
-        style={{
-          paddingTop: '80px',
-          paddingBottom: '0',
-          // The hero is dark in both themes, so it always takes the bright
-          // brand gold (the dark-theme --gold). The light-theme gold is a
-          // dim olive on this band: eyebrow, wave and stat numbers went
-          // unreadable (prod check 2026-10-11).
-          '--job-brand': '#dcb355',
-          background: 'linear-gradient(160deg, oklch(0.12 0.005 250) 0%, oklch(0.14 0.005 250) 35%, oklch(0.16 0.005 250) 60%, oklch(0.18 0.005 250) 100%)',
-        } as React.CSSProperties}
+    <div className="content-container pub-foot">
+      <PublicHead
+        kicker="MN-CCORE · University of Minnesota"
+        title={<>We study how intensive care is <em>delivered</em>, measured and improved.</>}
+        lede={`MN-CCORE is a research group in the University of Minnesota Department of Medicine. Our physicians and scientists study how clinicians' decisions shape ICU outcomes, and build open data tools with ${facts.sites} hospitals to measure it.`}
       >
-        {/* Network background */}
-        <NetworkBackground />
-
-        {/* Golden glow overlay */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              `radial-gradient(ellipse at 20% 40%, color-mix(in srgb, var(--job-brand) 12%, transparent) 0%, transparent 55%), radial-gradient(ellipse at 80% 60%, color-mix(in srgb, var(--job-accent) 8%, transparent) 0%, transparent 50%)`,
-            animation: 'gradientShift 20s ease-in-out infinite alternate',
-          }}
-        />
-
-        <style>{`
-          @keyframes gradientShift {
-            0% { opacity: 0.85; transform: translate(0, 0); }
-            100% { opacity: 0.9; transform: translate(3%, 2%); }
-          }
-        `}</style>
-
-        <div className="relative z-10 content-container" style={{ paddingBottom: 'clamp(40px, 5vw, 64px)' }}>
-          {/* Eyebrow */}
-          <p
-            className="mb-3"
-            style={{
-              fontSize: 'var(--text-small, 12px)',
-              color: 'var(--job-brand)',
-              letterSpacing: '0.15em',
-              textTransform: 'uppercase',
-              fontWeight: 'var(--weight-ui, 500)',
-              opacity: heroVisible ? 0.9 : 0,
-              transform: heroVisible ? 'translateY(0)' : 'translateY(16px)',
-              transition: 'opacity var(--duration-slow, 300ms) var(--ease-out), transform var(--duration-slow, 300ms) var(--ease-out)',
-            }}
-          >
-            University of Minnesota
-          </p>
-
-          {/* Title */}
-          <h1
-            className="inline-flex items-baseline gap-1"
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 800,
-              fontSize: 'clamp(2.8rem, 7vw, 5.5rem)',
-              lineHeight: 0.95,
-              letterSpacing: '-0.03em',
-              color: 'var(--ink-bright, #fff)',
-              opacity: heroVisible ? 1 : 0,
-              transform: heroVisible ? 'translateY(0)' : 'translateY(24px)',
-              transition: 'opacity var(--duration-slow, 300ms) var(--ease-out), transform var(--duration-slow, 300ms) var(--ease-out)',
-              transitionDelay: '100ms',
-            }}
-          >
-            MN
-            <svg viewBox="0 0 44 22" style={{ width: 'clamp(2rem, 5vw, 4rem)', height: 'auto', display: 'inline-block', verticalAlign: 'baseline', marginBottom: '0.08em' }}>
-              <path
-                d="M 2 11 L 8 11 L 12 3 L 17 19 L 22 7 L 27 13 L 32 9 L 42 9"
-                stroke="var(--job-brand)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-            </svg>
-            CCORE
-          </h1>
-
-          {/* Tagline — the single value proposition */}
-          <p
-            className="mt-3 mb-6"
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 300,
-              fontSize: 'clamp(1.15rem, 2.2vw, 1.65rem)',
-              lineHeight: 1.35,
-              letterSpacing: '-0.02em',
-              color: 'rgba(255, 255, 255, 0.75)',
-              maxWidth: '600px',
-              opacity: heroVisible ? 1 : 0,
-              transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-              transition: 'opacity var(--duration-slow, 300ms) var(--ease-out), transform var(--duration-slow, 300ms) var(--ease-out)',
-              transitionDelay: '200ms',
-            }}
-          >
-            Advancing critical care through collaborative, data-driven research.
-          </p>
-
-          {/* CTA buttons */}
-          <div
-            className="flex flex-wrap gap-3 mb-0"
-            style={{
-              opacity: heroVisible ? 1 : 0,
-              transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-              transition: 'opacity var(--duration-slow, 300ms) var(--ease-out), transform var(--duration-slow, 300ms) var(--ease-out)',
-              transitionDelay: '300ms',
-            }}
-          >
-            <a
-              href={PATHS.dashboard}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm"
-              style={{
-                // Use literal #dcb355 (= dark-mode --gold) + fixed dark text:
-                // var(--job-brand) flips light↔dark across themes so any fixed text
-                // color fails in one theme. Gold button bg should stay LIGHT
-                // in both modes; pair with dark literal text for 6+:1 AA.
-                background: '#dcb355',
-                color: '#1a1a1a',
-                fontWeight: 500,
-                textDecoration: 'none',
-                letterSpacing: '0.01em',
-                transition: 'opacity var(--duration-normal, 150ms) var(--ease-out), transform var(--duration-normal, 150ms) var(--ease-out)',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)' }}
-            >
-              Open Hub
-              <ArrowRight {...ICON_PROPS} size={15} aria-hidden="true" />
-            </a>
-            <a
-              href="/publications"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm hov-bg hov-border"
-              style={{
-                background: 'var(--hover-light)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                color: 'rgba(255, 255, 255, 0.85)',
-                fontWeight: 400,
-                textDecoration: 'none',
-                transition: 'background-color var(--duration-normal, 150ms) var(--ease-out), border-color var(--duration-normal, 150ms) var(--ease-out)',
-                '--hov-bg': 'var(--hover-medium)',
-                '--hov-border': 'rgba(255, 255, 255, 0.2)',
-              } as React.CSSProperties}
-            >
-              Our Research
-            </a>
-          </div>
+        <div className="pub-acts">
+          <Link to="/publications" className="pub-btn pub-gold">Read the work</Link>
+          <Link to="/team" className="pub-btn">Meet the team</Link>
         </div>
+      </PublicHead>
 
-        {/* ─── Impact Strip ─── */}
-        <div
-          className="relative z-10"
-          style={{
-            borderTop: `1px solid color-mix(in srgb, var(--job-brand) 25%, transparent)`,
-            background: 'rgba(0, 0, 0, 0.2)',
-            backdropFilter: 'blur(12px)',
-            opacity: heroVisible ? 1 : 0,
-            transform: heroVisible ? 'translateY(0)' : 'translateY(12px)',
-            transition: 'opacity var(--duration-slow, 300ms) var(--ease-out), transform var(--duration-slow, 300ms) var(--ease-out)',
-            transitionDelay: '400ms',
-          }}
-        >
-          <div className="content-container">
-            <div
-              className="grid grid-cols-2 sm:grid-cols-4 py-5 sm:py-6"
-              style={{ gap: 0 }}
-            >
-              {[
-                { value: impactMetrics.pubCount, suffix: '', label: 'Publications' },
-                { value: impactMetrics.activeProjects, suffix: '', label: 'Active Projects' },
-                { value: 13, suffix: '+', label: 'Consortium Sites' },
-                { value: impactMetrics.teamCount, suffix: '', label: 'Team Members' },
-              ].map((metric, i) => (
-                <div
-                  key={metric.label}
-                  className="text-center px-2"
-                  style={{
-                    borderRight: i < 3 ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
-                    // On 2-col mobile, remove border on 2nd and 4th items
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontWeight: 700,
-                      fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
-                      letterSpacing: '-0.03em',
-                      color: 'var(--job-brand)',
-                      lineHeight: 1,
-                    }}
-                  >
-                    <ImpactNumber value={metric.value} suffix={metric.suffix} />
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.75)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.1em',
-                      marginTop: '8px',
-                      fontWeight: 500,
-                    }}
-                  >
-                    {metric.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Hero → Content Gradient Bridge ─── */}
-      <div style={{
-        height: 80,
-        background: 'linear-gradient(to bottom, oklch(0.12 0 0), var(--page-bg))',
-        marginTop: -1,
-      }} />
-
-      {/* ─── Research Pillars ─── */}
-      <div className="section-cream">
-        <section
-          id="research-pillars"
-          className="py-10 sm:py-14 lg:py-18 content-container"
-          ref={pillarsRef}
-        >
-          <div className="mb-8 sm:mb-10 max-w-2xl">
-            <p
-              className="fade-in-up text-xs mb-2"
-              style={{
-                color: 'var(--job-brand)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.15em',
-              }}
-            >
-              What We Study
-            </p>
-            <h2
-              className="fade-in-up mb-3"
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 500,
-                fontSize: 'clamp(1.8rem, 4vw, 3rem)',
-                color: 'var(--ink)',
-                lineHeight: 1.1,
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Four pillars of critical care research
-            </h2>
-            <p
-              className="fade-in-up text-base leading-relaxed"
-              style={{ color: 'var(--slate)' }}
-            >
-              Our work investigates how ICU care is delivered, measured, and improved — from individual provider decisions to consortium-wide data infrastructure.
-            </p>
-          </div>
-
-          {/* P3-11: 4-col iconographic grid. Each pillar: numeral + icon
-              + title + 2-line description + stat chip. */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-            {pillars.map((pillar, i) => {
-              const Icon = pillar.icon
-              return (
-                <div
-                  key={pillar.title}
-                  className="fade-in-up card p-5 sm:p-6 cursor-default flex flex-col"
-                  style={{
-                    borderTop: `3px solid ${PILLAR_ACCENT}`,
-                    borderRadius: 'var(--radius-xl)',
-                    minHeight: '260px',
-                  }}
-                >
-                  <div className="flex items-baseline justify-between mb-4">
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-display)',
-                        fontStyle: 'italic',
-                        fontSize: '32px',
-                        fontWeight: 400,
-                        color: PILLAR_ACCENT,
-                        // 0.75 — large-text 3:1 AA (prev 0.6 = 2.84:1 fail).
-                        // r7 2026-04-22.
-                        opacity: 0.75,
-                        lineHeight: 1,
-                      }}
-                    >
-                      0{i + 1}
-                    </span>
-                    <Icon size={22} strokeWidth={1.4} style={{ color: PILLAR_ACCENT, opacity: 0.85 }} aria-hidden="true" />
-                  </div>
-                  <h3
-                    className="mb-2"
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontWeight: 500,
-                      fontSize: '18px',
-                      color: 'var(--ink)',
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    {pillar.title}
-                  </h3>
-                  <p
-                    className="text-sm leading-snug mb-4 flex-1"
-                    style={{ color: 'var(--slate)' }}
-                  >
-                    {pillar.description}
-                  </p>
-                  <span
-                    className="inline-block text-xs px-2.5 py-1 rounded-full self-start"
-                    style={{
-                      fontSize: '10px',
-                      letterSpacing: '0.04em',
-                      background: `color-mix(in srgb, ${PILLAR_ACCENT} 7%, transparent)`,
-                      color: PILLAR_ACCENT,
-                      border: `1px solid color-mix(in srgb, ${PILLAR_ACCENT} 13%, transparent)`,
-                    }}
-                  >
-                    {pillar.stat}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        </section>
-      </div>
-
-      {/* Lab meetings are signed-in only (/api/meetings is auth: 'authed');
-          the banner links into the portal, so a visitor never sees it. */}
-      {isAuthenticated && <UpcomingMeetingBanner />}
-
-      <FeaturedResearch />
-
-      {/* ─── CLIF Consortium — Map + Context ─── */}
-      <div className="section-ink">
-        <section className="py-10 sm:py-14 content-container">
-          <div className="mb-6 sm:mb-8 max-w-2xl">
-            <p
-              className="text-xs mb-2"
-              style={{
-                // section-ink is fixed dark bg in both themes, so gold text
-                // needs the LIGHT gold (#dcb355) for AA. var(--job-brand) flips
-                // dark↔light with theme and fails in light mode (2.46:1).
-                color: '#dcb355',
-                textTransform: 'uppercase',
-                letterSpacing: '0.15em',
-              }}
-            >
-              Multi-Center Network
-            </p>
-            <h2
-              className="mb-3"
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 500,
-                fontSize: 'clamp(1.6rem, 3.5vw, 2.5rem)',
-                color: 'var(--ink-bright, #fff)',
-                lineHeight: 1.15,
-                letterSpacing: '-0.02em',
-              }}
-            >
-              The CLIF Consortium
-            </h2>
-            <p
-              className="text-sm sm:text-base leading-relaxed"
-              style={{ color: 'rgba(255, 255, 255, 0.6)' }}
-            >
-              13 academic medical centers contributing harmonized ICU data through the Common Longitudinal ICU Format. Together, we are building the open infrastructure that makes reproducible critical care research possible.
-            </p>
-          </div>
-        </section>
-      </div>
-      <CLIFMap />
-
-      <Suspense fallback={<div style={{ height: '16rem' }} aria-hidden="true" />}>
-        <ResearchImpact />
-      </Suspense>
-
-      <CollaborationNetwork />
-
-      <RecentActivity />
-
-      <LatestDigest />
-
-      {/* ─── Funding ─── */}
-      <div className="section-cream">
-        <section className="py-8 sm:py-10 content-container">
-          <div className="text-center mb-6">
-            <p
-              className="text-xs sm:text-sm mb-4"
-              style={{
-                color: 'var(--slate)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.15em',
-                opacity: 0.85,
-              }}
-            >
-              Research funded by
-            </p>
-            <div className="flex flex-wrap justify-center items-center gap-6 sm:gap-10 lg:gap-14">
-              {[
-                {
-                  abbr: 'NIH',
-                  name: 'National Institutes of Health',
-                  href: 'https://www.nih.gov/',
-                  colorClass: 'funding-nih',
-                },
-                {
-                  abbr: 'NHLBI',
-                  name: 'National Heart, Lung, and Blood Institute',
-                  href: 'https://www.nhlbi.nih.gov/',
-                  colorClass: 'funding-nhlbi',
-                },
-                {
-                  abbr: 'NLM',
-                  name: 'National Library of Medicine',
-                  href: 'https://www.nlm.nih.gov/',
-                  colorClass: 'funding-nlm',
-                },
-              ].map((agency) => (
-                <a
-                  key={agency.abbr}
-                  href={agency.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group text-center hover:scale-105"
-                  style={{
-                    textDecoration: 'none',
-                    transition: 'transform var(--duration-normal, 150ms) var(--ease-out)',
-                  }}
-                >
-                  <div
-                    className={`text-2xl sm:text-3xl lg:text-4xl font-bold mb-1 ${agency.colorClass}`}
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontWeight: 800,
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1,
-                      opacity: 0.85,
-                    }}
-                  >
-                    {agency.abbr}
-                  </div>
-                  <div
-                    className="text-xs"
-                    style={{
-                      color: 'var(--slate)',
-                      maxWidth: '140px',
-                      lineHeight: 1.3,
-                      opacity: 0.85,
-                    }}
-                  >
-                    {agency.name}
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
-
-          {/* Subtle divider */}
-          <div
-            style={{
-              height: '1px',
-              background: 'linear-gradient(to right, transparent, var(--job-brand), transparent)',
-              opacity: 0.85,
-            }}
-          />
-        </section>
-      </div>
-
-      {/* ─── Consortium & Affiliations ─── */}
-      <div style={{ background: 'var(--ice)' }}>
-        <section
-          className="py-8 sm:py-10 content-container"
-          ref={affiliatesRef}
-        >
-          <div className="mb-6 sm:mb-8 max-w-2xl">
-            <h2
-              className="fade-in-up text-2xl sm:text-3xl mb-2"
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 500,
-                color: 'var(--ink)',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Consortium & Affiliations
-            </h2>
-            <p
-              className="fade-in-up text-sm sm:text-base"
-              style={{ color: 'var(--slate)' }}
-            >
-              We are part of a growing network of institutions committed to
-              improving critical care through collaboration and open science.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {affiliates.map((affiliate) => (
-              <a
-                key={affiliate.name}
-                href={affiliate.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="fade-in-up card p-5 cursor-pointer group"
-                style={{ textDecoration: 'none' }}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <h3
-                    className="text-sm font-normal"
-                    style={{
-                      color: 'var(--ink)',
-                    }}
-                  >
-                    {affiliate.name}
-                  </h3>
-                  <ExternalLink {...ICON_PROPS}
-                    size={14}
-                    className="flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    style={{ color: 'var(--job-brand)' }}
-                    aria-hidden="true"
-                  />
-                </div>
-                <p
-                  className="text-xs leading-relaxed"
-                  style={{ color: 'var(--slate)' }}
-                >
-                  {affiliate.description}
-                </p>
-              </a>
+      {/* The proof: live counts, fixed dark in both themes */}
+      <section className="pub-band" aria-label="The lab in numbers">
+        <div className="pub-band-papers">
+          <b>{facts.papers ?? dash}</b>
+          <small>Published papers, {firstYear.year} to {thisYear.year}</small>
+          <div className="pub-bars" role="img" aria-label={`Papers per year: ${facts.byYear.map((y) => `${y.year} ${y.n}`).join(', ')}`}>
+            {facts.byYear.map((y, i) => (
+              <div key={y.year} className={i === facts.byYear.length - 1 ? 'pub-cur' : undefined} title={`${y.year}: ${y.n} papers${i === facts.byYear.length - 1 ? ' so far' : ''}`}>
+                <span className="pub-bar-n">{y.n}</span>
+                <i style={{ height: `${Math.max(4, (y.n / maxYear) * 100)}%` }} />
+                <span className="pub-bar-y">{String(y.year).slice(2)}</span>
+              </div>
             ))}
           </div>
-        </section>
+        </div>
+        <div><b>{facts.activeProjects ?? dash}</b><small>Active projects</small></div>
+        <div><b>{facts.sites}</b><small>Hospitals sharing ICU data</small></div>
+        <div><b>{facts.people}</b><small>People on the team</small></div>
+        <p className="pub-band-note" style={{ margin: 0 }}>
+          {facts.activeGrants
+            ? <>Funded by {facts.funders.join(' and ')} through {facts.activeGrants} active {facts.activeGrants === 1 ? 'grant' : 'grants'}{facts.mechanisms.length > 0 ? ` (${facts.mechanisms.join(', ')})` : ''}. </>
+            : null}
+          Founding member of the CLIF Consortium. <Link to="/network">See the network</Link>
+        </p>
+      </section>
+
+      <SecHead title="What we study" />
+      <div className="pub-areas">
+        {facts.areas.map(({ area, papers }) => (
+          <Link key={area.id} to={`/publications?area=${area.id}`} className="pub-area">
+            <span className="pub-n">{papers > 0 ? `${papers} ${papers === 1 ? 'paper' : 'papers'}` : dash}</span>
+            <span className="pub-rt" style={{ margin: '4px 0 0' }}>{area.label}</span>
+            <p>{area.blurb}</p>
+          </Link>
+        ))}
       </div>
-    </>
+
+      <SecHead title="Selected work" right={<Link to="/publications">All publications</Link>} />
+      <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
+        {selected.map((p) => <PaperRow key={p.id} p={p} to={`/publications/${p.id}`} />)}
+      </div>
+
+      {recent.length > 0 && (
+        <>
+          <SecHead title="Recent" count={`newest of ${facts.papers ?? ''} papers`} />
+          <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
+            {recent.map((p) => (
+              <Link key={p.id} to={`/publications/${p.id}`} className="pub-row pub-rrow">
+                <span className="pub-yr" style={{ width: 40 }}>{p.year}</span>
+                <span className="pub-rt">{p.title}</span>
+                <span className="pub-meta">{p.journal}</span>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+
+      <SecHead title="The people" count={facts.people} right={<Link to="/team">Meet the team</Link>} />
+      <div className="pub-faces">
+        {rosterPeople.map((m) => <PersonLink key={m.slug ?? m.name} m={m} />)}
+      </div>
+    </div>
   )
 }

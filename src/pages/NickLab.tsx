@@ -4,7 +4,6 @@ import LabPageLayout, {
   MenteesSection,
   PublicationsSection,
 } from '../components/LabPageLayout'
-import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { usePublications } from '../hooks/useApiData'
 import { memberPublications } from '../lib/publicationCounts'
@@ -90,17 +89,9 @@ export default function NickLab() {
       ]}
     >
       <GrantsSection grants={grants} id="grants" title="Active Funding" />
-      <SectionDivider />
-      <div className="py-4" />
       <ProjectsSection title="Lab Projects" projects={labProjects} id="lab-projects" />
-      <SectionDivider />
-      <div className="py-4" />
       <ProjectsSection title="CLIF Projects" projects={clifProjects} id="clif-projects" />
-      <SectionDivider />
-      <div className="py-4" />
       <MenteesSection mentees={mentees} id="mentees" title="Trainees & Mentees" />
-      <SectionDivider />
-      <div className="py-4" />
       <PublicationsSection
         publications={memberPublications(publications, getMemberBySlug('nick-ingraham'))}
         id="publications"

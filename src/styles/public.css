@@ -1,0 +1,151 @@
+/* The public site's one look (s68, Nick's bracket 2026-10-12: Editorial with the
+   lab's live proof). A serif voice, the portal's material for panels and rows,
+   one gold accent (--job-brand: gold here, gray inside .portal-shell). Every
+   public page is wrapped in .pub by the public Layout; nothing here applies
+   inside the portal. Section heads and labels are sentence case. */
+
+.pub { background: color-mix(in srgb, var(--sk-page) 70%, var(--sk-panel)); color: var(--sk-t1); }
+.pub a { text-decoration: none; }
+
+/* page head */
+.pub-top { padding-top: clamp(20px, 4vw, 44px); padding-bottom: 8px; }
+.pub-kick { font: italic 400 15px var(--font-display); color: var(--job-brand); margin: 0; }
+.pub-h1 { font: 500 clamp(38px, 6.4vw, 72px)/1.04 var(--font-display); letter-spacing: -.03em; margin: 10px 0 16px; max-width: 16em; color: var(--sk-t1); }
+.pub-h1.pub-h1-sm { font-size: clamp(34px, 4.8vw, 56px); max-width: 20em; }
+.pub-h1 em { font-style: italic; color: var(--job-brand); }
+.pub-lede { font: 300 clamp(18px, 2vw, 22px)/1.45 var(--font-display); color: var(--sk-t2); max-width: 40rem; margin: 0; }
+.pub-acts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+
+/* buttons */
+.pub-btn { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 18px; border-radius: 10px; font-size: 14px; font-weight: 500; border: 1px solid var(--sk-line2); background: var(--sk-card); color: var(--sk-t1); cursor: pointer; transition: border-color .15s, background .15s; }
+.pub-btn:hover { border-color: var(--job-brand); }
+.pub-btn.pub-gold { background: #dcb355; border-color: #dcb355; color: #1a1a1a; }
+.pub-btn.pub-gold:hover { background: #e4c067; }
+.pub-btn.pub-sm { min-height: 32px; padding: 0 12px; font-size: 13px; border-radius: 8px; }
+
+/* section head: serif title, count, a rule that fades */
+.pub-sec { display: flex; align-items: baseline; gap: 14px; margin: clamp(36px, 5vw, 56px) 0 6px; }
+.pub-sec h2 { font: 500 clamp(22px, 2.6vw, 28px)/1.15 var(--font-display); letter-spacing: -.02em; margin: 0; color: var(--sk-t1); }
+.pub-sec .pub-sec-c { font-size: 13px; color: var(--sk-t3); }
+.pub-sec::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--sk-line2), transparent); min-width: 24px; }
+.pub-sec .pub-sec-r { order: 3; font-size: 13px; color: var(--sk-t2); white-space: nowrap; }
+.pub-sec .pub-sec-r:hover { color: var(--sk-t1); }
+.pub-sec-note { font-size: 14px; color: var(--sk-t2); max-width: 44rem; line-height: 1.55; margin: 4px 0 0; }
+
+/* panel: the portal's material */
+.pub-card { background: var(--sk-mat-bg); border: 1px solid var(--sk-line); border-radius: 12px; box-shadow: inset 0 1px 0 var(--sk-rim), var(--sk-amb); }
+a.pub-card:hover, .pub-card.pub-hov:hover { border-color: var(--sk-line2); box-shadow: inset 0 1px 0 var(--sk-rim-ac), var(--sk-amb); }
+
+/* rows */
+.pub-row { display: flex; align-items: baseline; gap: 14px; padding: 13px 14px; border-radius: 9px; color: var(--sk-t1); transition: background .12s; }
+.pub-row:hover { background: color-mix(in srgb, var(--sk-t1) 4%, transparent); }
+.pub-row + .pub-row { margin-top: 1px; }
+.pub-yr { font: italic 400 15px var(--font-display); color: var(--job-brand); width: 44px; flex: none; }
+.pub-rt { font: 500 17px/1.3 var(--font-display); display: block; color: var(--sk-t1); }
+.pub-rj { font: italic 400 13px var(--font-display); color: var(--sk-t3); display: block; margin-top: 2px; }
+.pub-meta { font-size: 13px; color: var(--sk-t3); }
+
+/* compact recent row: title and journal on one line when there is room */
+.pub-rrow { align-items: center; }
+.pub-rrow .pub-rt { flex: 1; min-width: 0; font-size: 15px; }
+.pub-rrow .pub-meta { max-width: 24%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pub-sec-r a { color: inherit; }
+@media (min-width: 641px) { .pub-rrow .pub-rt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } }
+@media (max-width: 640px) { .pub-rrow .pub-meta { display: none; } }
+
+/* the dark proof band: fixed dark in both themes, so its colors are literal */
+.pub-band { background: #0e1319; color: #eef1f4; border-radius: 14px; padding: clamp(20px, 3vw, 30px); display: grid; grid-template-columns: minmax(0, 2.2fr) repeat(3, minmax(0, 1fr)); gap: 22px clamp(20px, 3vw, 44px); align-items: end; margin-top: clamp(28px, 4vw, 44px); }
+.pub-band b { display: block; font: 500 clamp(34px, 4vw, 48px)/1 var(--font-display); color: #dcb355; letter-spacing: -.03em; }
+.pub-band small { display: block; font-size: 13px; color: #b4bcc4; margin-top: 7px; }
+.pub-band-note { grid-column: 1 / -1; border-top: 1px solid rgba(220, 179, 85, .22); padding-top: 14px; font-size: 13px; color: #b4bcc4; }
+.pub-band-note a { color: #dcb355; }
+.pub-bars { display: flex; align-items: flex-end; gap: clamp(4px, 1vw, 9px); height: 84px; margin-top: 16px; }
+.pub-bars > div { flex: 1; min-width: 0; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+.pub-bars i { display: block; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, #dcb355, #a98534); min-height: 3px; }
+.pub-bars .pub-bar-n { font-size: 10px; color: #b4bcc4; margin-bottom: 3px; line-height: 1; }
+.pub-bars .pub-bar-y { font-size: 10px; color: #b4bcc4; margin-top: 5px; line-height: 1; }
+.pub-bars .pub-cur i { background: repeating-linear-gradient(135deg, #dcb355 0 4px, #a98534 4px 8px); }
+
+/* research areas */
+.pub-areas { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px 28px; margin-top: 16px; }
+.pub-area { display: block; border-top: 1px solid var(--sk-line2); padding-top: 12px; color: inherit; }
+.pub-area:hover .pub-rt { color: var(--job-brand); }
+.pub-area .pub-n { font: italic 400 15px var(--font-display); color: var(--job-brand); }
+.pub-area p { margin: 6px 0 0; font-size: 13px; line-height: 1.55; color: var(--sk-t2); }
+
+/* people */
+.pub-faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px 18px; margin-top: 16px; }
+.pub-person { display: flex; align-items: center; gap: 12px; min-width: 0; color: inherit; }
+.pub-person:hover .pub-pn { color: var(--job-brand); }
+.pub-pn { font: 500 15px/1.25 var(--font-display); display: block; }
+.pub-pr { font-size: 12px; color: var(--sk-t3); display: block; line-height: 1.3; margin-top: 1px; }
+.pub-grid { display: grid; gap: 16px; }
+
+/* chips and filter links */
+.pub-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 3px 10px; border-radius: 99px; background: color-mix(in srgb, var(--sk-t1) 6%, transparent); color: var(--sk-t2); border: 0; cursor: pointer; }
+.pub-chip:hover { background: color-mix(in srgb, var(--sk-t1) 11%, transparent); color: var(--sk-t1); }
+.pub-chip.pub-on { background: color-mix(in srgb, var(--job-brand) 22%, transparent); color: var(--sk-t1); }
+
+/* prose pages (join, contact copy) */
+.pub-prose { font-size: 15px; line-height: 1.65; color: var(--sk-t2); max-width: 40rem; }
+.pub-prose strong { color: var(--sk-t1); font-weight: 500; }
+.pub-foot { padding-bottom: clamp(40px, 6vw, 72px); }
+
+@media (max-width: 860px) {
+  .pub-band { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .pub-band > .pub-band-papers { grid-column: 1 / -1; }
+}
+@media (max-width: 520px) {
+  .pub-row { gap: 10px; padding: 12px 8px; }
+  .pub-yr { width: 38px; }
+  .pub-rt { font-size: 16px; }
+  .pub-faces { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
+  .pub-band small { font-size: 12px; }
+}
+
+/* team */
+.pub-dir { display: block; overflow: hidden; color: inherit; }
+.pub-dir-hd { background: #0e1319; padding: 20px 22px; display: flex; align-items: center; gap: 16px; }
+.pub-dir-name { font: 500 clamp(21px, 2.4vw, 25px)/1.15 var(--font-display); color: #eef1f4; letter-spacing: -.02em; }
+.pub-dir-role { font-size: 13px; color: #dcb355; margin-top: 4px; }
+.pub-dir-bd { padding: 16px 22px 20px; }
+.pub-dir-bd p { margin: 8px 0 0; font-size: 14px; line-height: 1.6; color: var(--sk-t1); }
+.pub-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(172px, 1fr)); gap: 14px; margin-top: 14px; }
+.pub-pcard { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 18px 12px 16px; color: inherit; }
+.pub-pcard .pub-pn { font-size: 15px; }
+@media (max-width: 520px) {
+  .pub-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .pub-pcard { padding: 14px 8px; }
+  .pub-dir-hd { padding: 16px; }
+  .pub-dir-bd { padding: 14px 16px 18px; }
+}
+
+/* publications page */
+.pub-ybars { display: flex; align-items: flex-end; gap: 6px; margin-top: 22px; }
+.pub-ybars button { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: 0; padding: 0 2px; cursor: pointer; color: var(--sk-t3); font-size: 10px; }
+.pub-ybars i { display: block; width: clamp(14px, 3vw, 24px); border-radius: 3px 3px 0 0; background: color-mix(in srgb, var(--job-brand) 45%, transparent); transition: background .12s; }
+.pub-ybars button:hover i, .pub-ybars button.pub-on i { background: var(--job-brand); }
+.pub-ybars button.pub-on { color: var(--sk-t1); }
+.pub-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 26px; margin-top: 14px; font-size: 13px; color: var(--sk-t2); }
+.pub-stats b { font: 500 22px var(--font-display); color: var(--sk-t1); margin-right: 5px; }
+.pub-seg { display: inline-flex; flex: none; border: 1px solid var(--sk-line2); border-radius: 9px; overflow: hidden; background: var(--sk-card); }
+.pub-seg button { display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; font-size: 13px; color: var(--sk-t2); background: none; border: 0; cursor: pointer; }
+.pub-seg button.pub-on { background: color-mix(in srgb, var(--job-brand) 18%, transparent); color: var(--sk-t1); font-weight: 600; }
+.pub-yhd { display: flex; align-items: baseline; gap: 12px; padding: 8px 0; position: sticky; top: 56px; z-index: 5; background: color-mix(in srgb, var(--sk-page) 70%, var(--sk-panel)); }
+.pub-yrule { flex: 1; height: 1px; background: linear-gradient(90deg, var(--sk-line2), transparent); }
+
+/* detail pages */
+.pub-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--sk-t2); }
+.pub-back:hover { color: var(--sk-t1); }
+.pub-abstract { font-size: 15px; line-height: 1.75; color: var(--sk-t1); margin: 0; max-width: 46rem; }
+.pub-link { color: var(--sk-t1); text-decoration: underline; text-decoration-color: var(--job-brand); text-underline-offset: 3px; }
+
+/* contact */
+.pub-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 clamp(24px, 4vw, 56px); align-items: start; }
+.pub-addr { margin: 0; font-size: 15px; line-height: 1.7; color: var(--sk-t1); }
+.pub-map { position: relative; margin-top: 16px; border-radius: 12px; overflow: hidden; border: 1px solid var(--sk-line); padding-bottom: 56.25%; height: 0; }
+.pub-map iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+@media (max-width: 860px) { .pub-cols { grid-template-columns: 1fr; } }
+
+/* network: the graph canvas is dark in both themes */
+.pub-net { display: flex; flex-direction: column; margin-top: 26px; height: clamp(560px, 78vh, 860px); border-radius: 14px; overflow: hidden; border: 1px solid var(--sk-line); background: linear-gradient(135deg, #0e1319 0%, #141a22 55%, #1c2733 100%); }

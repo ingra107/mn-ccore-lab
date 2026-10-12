@@ -1,17 +1,15 @@
 import { useState, useMemo, useCallback } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Award, List, BookOpen, Copy, Star } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { List, BookOpen, Copy, X } from 'lucide-react'
 import { usePublications } from '../hooks/useApiData'
 import type { Publication } from '../data/types'
 import PublicationFilters from '../components/PublicationFilters'
 import PublicationSearch from '../components/PublicationSearch'
 import PublicationCard from '../components/PublicationCard'
 import PublicationLibrary from '../components/PublicationLibrary'
-import SectionDivider from '../components/SectionDivider'
-import PageLayout from '../components/PageLayout'
+import { PublicHead, SecHead } from '../components/public/PublicParts'
+import { areaById, inArea } from '../lib/researchAreas'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useScrollRevealGroup } from '../hooks/useScrollReveal'
-import { ICON_PROPS } from '../lib/iconProps'
 import { getAllMembers } from '../data/team'
 import { resolveBylineAuthors } from '../lib/authorAvatars'
 import { countPublications, isPublished } from '../lib/publicationCounts'
@@ -70,6 +68,9 @@ export default function Publications() {
     () => parseList(searchParams.get('topic')),
     [searchParams]
   )
+
+  const activeArea = areaById(searchParams.get('area'))
+  const [showAllKey, setShowAllKey] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -142,6 +143,10 @@ export default function Publications() {
       )
     }
 
+    if (activeArea) {
+      result = result.filter((p) => inArea(p, activeArea))
+    }
+
     if (searchTerm) {
       const q = searchTerm.toLowerCase()
       result = result.filter(
@@ -154,12 +159,13 @@ export default function Publications() {
     }
 
     return result
-  }, [publications, activeYears, activeStatuses, activeTopics, searchTerm])
+  }, [publications, activeYears, activeStatuses, activeTopics, activeArea, searchTerm])
 
   const hasFilters =
     activeYears.length > 0 ||
     activeStatuses.length > 0 ||
-    activeTopics.length > 0
+    activeTopics.length > 0 ||
+    !!activeArea
 
   // Group by year for default view
   const years = useMemo(
@@ -168,11 +174,13 @@ export default function Publications() {
     [filtered]
   )
 
+  // Not the featured ones: each paper shows once on the page (principle #2).
   const keyPubs = useMemo(
     () =>
       publications.filter(
         (p) =>
           isPublished(p) &&
+          !p.featured &&
           KEY_JOURNALS.some((j) => p.journal.includes(j))
       ),
     [publications]
@@ -198,264 +206,130 @@ export default function Publications() {
     [filtered]
   )
 
-  const pubsRef = useScrollRevealGroup('.fade-in-up', 80)
   const counts = useMemo(() => countPublications(publications), [publications])
   const pipelineCount = counts.inReview + counts.inPreparation
   const labMembers = useMemo(() => getAllMembers(), [])
 
+
+
+  const journalCount = new Set(filtered.map((p) => p.journal).filter(Boolean)).size
+  // Lab-wide: a paper counts when its first author resolves to ANY lab member
+  // (same byline match the author column uses).
+  const firstAuthorCount = filtered.filter((p) => !!resolveBylineAuthors(p, labMembers)[0]?.member).length
+  const thisYear = new Date().getFullYear()
+  const thisYearCount = filtered.filter((p) => p.year === thisYear).length
+  const KEY_SHOWN = 8
+  const keyShown = showAllKey ? keyPubs : keyPubs.slice(0, KEY_SHOWN)
+  const yearMax = Math.max(1, ...years.map((y) => filtered.filter((p) => p.year === y).length))
+
   return (
-    <PageLayout>
-      {/* Header — min-height reserves space to prevent CLS (H-15) */}
-      <section className="pt-4 pb-6 sm:pb-8 content-container w-full" style={{ minHeight: '140px', contain: 'layout' }}>
-        <h1
-          className="text-3xl sm:text-4xl lg:text-5xl mb-3 sm:mb-4"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 600,
-            color: 'var(--ink)',
-          }}
-        >
-          Publications
-        </h1>
-        <p
-          className="text-base sm:text-lg max-w-2xl"
-          style={{ color: 'var(--slate)', minHeight: '1.5em' }}
-        >
-          {counts.published} published papers from MN-CCORE lab members
-          {pipelineCount > 0 ? `, plus ${pipelineCount} in review or in preparation` : ''}.
-          Click any paper to view its abstract and links.
-        </p>
+    <div className="content-container pub-foot">
+      <PublicHead
+        kicker="Publications"
+        title={<>The <em>published</em> work.</>}
+        lede={`Papers from MN-CCORE lab members${pipelineCount > 0 ? `, with ${pipelineCount} more in review or in preparation` : ''}. Open any paper for its abstract and links.`}
+        small
+      />
 
-        {/* Year distribution mini-chart — fixed-height slot prevents CLS when chart appears (H-15) */}
-        <div style={{ height: 48, display: 'flex', alignItems: 'flex-end' }}>
-          {years.length > 1 && (
-            <div className="flex items-end gap-1" style={{ height: 32 }}>
-              {years.slice(0, 8).reverse().map(year => {
-                const count = filtered.filter(p => p.year === year).length
-                const max = Math.max(...years.map(y => filtered.filter(p => p.year === y).length), 1)
-                return (
-                  <button
-                    key={year}
-                    onClick={() => handleYearToggle(year)}
-                    className="flex flex-col items-center gap-0.5"
-                    style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-                    title={`${year}: ${count} papers`}
-                  >
-                    <div
-                      className="rounded-sm transition-all"
-                      style={{
-                        width: 20,
-                        height: `${Math.max((count / max) * 24, 2)}px`,
-                        backgroundColor: activeYears.includes(year) ? 'var(--job-brand)' : 'color-mix(in srgb, var(--job-brand) 30%, transparent)',
-                      }}
-                    />
-                    <span className="text-[10px]" style={{ color: activeYears.includes(year) ? 'var(--job-brand)' : 'var(--slate)', opacity: activeYears.includes(year) ? 1 : 0.85 }}>
-                      {String(year).slice(2)}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* P2-12: at-a-glance summary bar */}
-        {filtered.length > 0 && (
-          <div
-            className="flex flex-wrap gap-x-8 gap-y-3 mt-4 pt-4"
-            style={{ borderTop: '1px solid var(--border-subtle)' }}
-          >
-            {(() => {
-              const journalCount = new Set(filtered.map(p => p.journal).filter(Boolean)).size
-              // Lab-wide: a paper counts when its first author resolves to ANY
-              // lab member (same byline match the author column uses).
-              const firstAuthorCount = filtered.filter(
-                p => !!resolveBylineAuthors(p, labMembers)[0]?.member,
-              ).length
-              const thisYear = new Date().getFullYear()
-              const thisYearCount = filtered.filter(p => p.year === thisYear).length
-              const stats = [
-                { value: filtered.length, label: 'papers' },
-                { value: journalCount, label: 'journals' },
-                { value: firstAuthorCount, label: 'lab first-author' },
-                { value: thisYearCount, label: String(thisYear) },
-              ]
-              return stats.map(s => (
-                <div key={s.label}>
-                  <span
-                    className="font-serif tabular-nums"
-                    style={{ fontSize: '1.75rem', color: 'var(--ink)', fontWeight: 600, lineHeight: 1 }}
-                  >
-                    {s.value}
-                  </span>
-                  <span
-                    className="ml-2"
-                    style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.08em' }}
-                  >
-                    {s.label}
-                  </span>
-                </div>
-              ))
-            })()}
-          </div>
-        )}
-
-        {/* Export bibliography */}
-        {filtered.length > 0 && (
-          <button
-            onClick={() => {
-              const bib = filtered.map(p => `${p.authors}. ${p.title}. ${p.journal} (${p.year}).${p.doi ? ` doi:${p.doi}` : ''}`).join('\n\n')
-              navigator.clipboard.writeText(bib)
-            }}
-            className="inline-flex items-center gap-1 mt-3 text-[11px] px-2.5 py-1 rounded transition-colors"
-            style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', opacity: 0.85 }}
-          >
-            <Copy {...ICON_PROPS} size={10} />
-            Copy bibliography ({filtered.length})
-          </button>
-        )}
-      </section>
-
-      {/* Featured Publications (#906, Nick 2026-07-23) — lab-wide picks via
-          Publication.featured, the same field + curation convention the
-          homepage's FeaturedResearch section already uses. Reuses
-          PublicationCard so the affordance is identical wherever it renders
-          (design principle #4), with the author-avatar-stack opted in. */}
-      {featuredPubs.length > 0 && (
-        <>
-          <section className="py-6 sm:py-8 content-container">
-            <div className="flex items-center gap-2 mb-4">
-              <Star {...ICON_PROPS} size={16} style={{ color: 'var(--job-brand)' }} aria-hidden="true" />
-              <h2
-                className="text-sm"
-                style={{
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                  color: 'var(--job-brand)',
-                  fontSize: '12px',
-                }}
-              >
-                Featured Publications
-              </h2>
-            </div>
-            <div className="space-y-3 sm:space-y-4">
-              {featuredPubs.map((pub) => (
-                <PublicationCard key={pub.id} pub={pub} showAuthorColumn />
-              ))}
-            </div>
-          </section>
-          <SectionDivider />
-        </>
-      )}
-
-      {/* Key Publications — theme-aware surface tokens. CLS R7: always rendered w/ minHeight slot */}
-      <div style={{ minHeight: '200px' }}>
-      {keyPubs.length > 0 && (
-        <div style={{ background: 'var(--surface-1)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', minHeight: '200px', contain: 'layout' }}>
-          <section className="py-6 sm:py-8 content-container">
-            <div className="flex items-center gap-2 mb-4">
-              <Award {...ICON_PROPS} size={16} style={{ color: 'var(--job-brand)' }} aria-hidden="true" />
-              <h2
-                className="text-sm"
-                style={{
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                  color: 'var(--job-brand)',
-                  fontSize: '12px',
-                }}
-              >
-                Key Publications in High-Impact Journals
-              </h2>
-            </div>
-            <div className="space-y-2">
-              {keyPubs.map((pub) => (
-                <div
-                  key={pub.id}
-                  className="flex items-start gap-3 py-2 px-3 rounded-lg transition-colors duration-200"
-                  style={{ background: 'color-mix(in srgb, var(--job-brand) 6%, transparent)' }}
-                >
-                  <span
-                    className="flex-shrink-0 text-xs mt-0.5 px-1.5 py-0.5 rounded"
-                    style={{
-                      background: 'color-mix(in srgb, var(--job-brand) 15%, transparent)',
-                      color: 'var(--job-brand)',
-                      fontSize: '10px',
-                    }}
-                  >
-                    {pub.year}
-                  </span>
-                  <div className="min-w-0">
-                    <p
-                      className="text-sm font-medium leading-snug"
-                      style={{ color: 'var(--ink)' }}
-                    >
-                      {pub.title}
-                    </p>
-                    <p
-                      className="text-xs mt-0.5"
-                      style={{ color: 'var(--slate)', fontStyle: 'italic' }}
-                    >
-                      {pub.journal}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-      )}
+      {/* Year distribution: a bar is a filter. Fixed-height slot prevents CLS (H-15). */}
+      <div className="pub-ybars" style={{ height: 70 }}>
+        {years.length > 1 && years.slice(0, 12).reverse().map((year) => {
+          const count = filtered.filter((p) => p.year === year).length
+          const on = activeYears.includes(year)
+          return (
+            <button key={year} type="button" onClick={() => handleYearToggle(year)} className={on ? 'pub-on' : undefined} title={`${year}: ${count} papers`} aria-pressed={on}>
+              <i style={{ height: `${Math.max((count / yearMax) * 44, 3)}px` }} />
+              <span>{String(year).slice(2)}</span>
+            </button>
+          )
+        })}
       </div>
 
-      <SectionDivider />
+      {filtered.length > 0 && (
+        <div className="pub-stats">
+          <span><b>{filtered.length}</b> papers</span>
+          <span><b>{journalCount}</b> journals</span>
+          <span><b>{firstAuthorCount}</b> with a lab first author</span>
+          <span><b>{thisYearCount}</b> in {thisYear}</span>
+          <button
+            type="button"
+            className="pub-btn pub-sm"
+            onClick={() => {
+              const bib = filtered.map((p) => `${p.authors}. ${p.title}. ${p.journal} (${p.year}).${p.doi ? ` doi:${p.doi}` : ''}`).join('\n\n')
+              navigator.clipboard.writeText(bib)
+            }}
+          >
+            <Copy size={13} aria-hidden="true" />
+            Copy bibliography ({filtered.length})
+          </button>
+        </div>
+      )}
 
-      {/* Search + Filters + List — minHeight reserves space for full list during cold load (CLS fix) */}
-      <section
-        className="py-8 sm:py-12 lg:py-16 content-container"
-        ref={pubsRef}
-        style={{ minHeight: '800px' }}
-      >
-        {/* Search + View Toggle */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1">
-            <PublicationSearch
-              value={searchTerm}
-              onChange={setSearchTerm}
-              resultCount={filtered.length}
-            />
+      {/* Featured: lab-wide picks via Publication.featured (#906), the same
+          field Home's Selected work reads. PublicationCard keeps the
+          affordance identical wherever it renders. */}
+      {featuredPubs.length > 0 && (
+        <section>
+          <SecHead title="Featured" count={featuredPubs.length} />
+          <div className="space-y-3 sm:space-y-4" style={{ marginTop: 14 }}>
+            {featuredPubs.map((pub) => (
+              <PublicationCard key={pub.id} pub={pub} showAuthorColumn />
+            ))}
           </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <button
-              onClick={() => setViewMode('list')}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-              style={{
-                backgroundColor: viewMode === 'list' ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                color: viewMode === 'list' ? 'var(--job-accent)' : 'var(--slate)',
-                border: `1px solid ${viewMode === 'list' ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
-                cursor: 'pointer',
-                opacity: viewMode === 'list' ? 1 : 0.85,
-              }}
-            >
-              <List {...ICON_PROPS} size={12} />
-              List
+        </section>
+      )}
+
+      {/* In high-impact journals: the first few, the rest in place. */}
+      {keyPubs.length > 0 && (
+        <section>
+          <SecHead
+            title="In high-impact journals"
+            count={keyPubs.length}
+            right={keyPubs.length > KEY_SHOWN ? (
+              <button type="button" onClick={() => setShowAllKey((v) => !v)} style={{ background: 'none', border: 0, color: 'inherit', cursor: 'pointer', font: 'inherit' }}>
+                {showAllKey ? 'Show fewer' : `Show all ${keyPubs.length}`}
+              </button>
+            ) : undefined}
+          />
+          <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
+            {keyShown.map((pub) => (
+              <Link key={pub.id} to={`/publications/${pub.id}`} className="pub-row">
+                <span className="pub-yr">{pub.year}</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span className="pub-rt" style={{ fontSize: 16 }}>{pub.title}</span>
+                  <span className="pub-rj">{pub.journal}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Search + filters + list */}
+      <section style={{ minHeight: '800px' }}>
+        <SecHead title="All papers" count={filtered.length === publications.length ? publications.length : `${filtered.length} of ${publications.length}`} />
+        <div className="flex items-center gap-3 mb-4" style={{ marginTop: 14 }}>
+          <div className="flex-1">
+            <PublicationSearch value={searchTerm} onChange={setSearchTerm} resultCount={filtered.length} />
+          </div>
+          <div className="pub-seg" role="group" aria-label="View">
+            <button type="button" className={viewMode === 'list' ? 'pub-on' : undefined} onClick={() => setViewMode('list')} aria-pressed={viewMode === 'list'}>
+              <List size={13} aria-hidden="true" /> List
             </button>
-            <button
-              onClick={() => setViewMode('library')}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-              style={{
-                backgroundColor: viewMode === 'library' ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                color: viewMode === 'library' ? 'var(--job-accent)' : 'var(--slate)',
-                border: `1px solid ${viewMode === 'library' ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
-                cursor: 'pointer',
-                opacity: viewMode === 'library' ? 1 : 0.85,
-              }}
-            >
-              <BookOpen {...ICON_PROPS} size={12} />
-              Library
+            <button type="button" className={viewMode === 'library' ? 'pub-on' : undefined} onClick={() => setViewMode('library')} aria-pressed={viewMode === 'library'}>
+              <BookOpen size={13} aria-hidden="true" /> Library
             </button>
           </div>
         </div>
 
-        {/* Filters */}
+        {activeArea && (
+          <div style={{ marginBottom: 12 }}>
+            <button type="button" className="pub-chip pub-on" onClick={() => updateParams('area', [])} aria-label={`Clear area filter: ${activeArea.label}`}>
+              Area: {activeArea.label}<X size={12} aria-hidden="true" />
+            </button>
+          </div>
+        )}
+
         <div className="mb-8">
           <PublicationFilters
             publications={publications}
@@ -471,67 +345,31 @@ export default function Publications() {
           />
         </div>
 
-        {/* All Publications heading (#906) — only while browsing the
-            curated default view; a search/filter turns this into results,
-            not "all pubs", so the label steps aside for it. */}
-        {viewMode === 'list' && !hasFilters && !searchTerm && filtered.length > 0 && (
-          <h2
-            className="text-sm mb-4"
-            style={{
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              color: 'var(--slate)',
-              fontSize: '12px',
-            }}
-          >
-            All Publications
-          </h2>
-        )}
-
-        {/* Publication list / library — minHeight prevents page collapse to 0 during cold load (CLS fix) */}
         {viewMode === 'library' ? (
           <PublicationLibrary publications={filtered} />
         ) : filtered.length === 0 ? (
-          <div
-            className="text-center py-12"
-            style={{ color: 'var(--slate)' }}
-          >
-            <p className="text-lg mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              No publications match your filters.
-            </p>
-            <p className="text-sm">
-              Try adjusting your search or filter criteria.
-            </p>
+          <div className="text-center py-12" style={{ color: 'var(--sk-t2)' }}>
+            <p className="text-lg mb-2" style={{ fontFamily: 'var(--font-display)' }}>No publications match your filters.</p>
+            <p className="text-sm">Try adjusting your search or filter criteria.</p>
           </div>
         ) : hasFilters || searchTerm ? (
-          /* Flat list when filters/search active */
           <div className="space-y-3 sm:space-y-4">
             {filtered.map((pub) => (
-              <div key={pub.id} className="fade-in-up">
-                <PublicationCard pub={pub} showAuthorColumn />
-              </div>
+              <PublicationCard key={pub.id} pub={pub} showAuthorColumn />
             ))}
           </div>
         ) : !showAllPubs ? (
-          /* #906 — 10 most-recent, sorted by year, collapsed by default;
-             "View all" reveals the full grouped-by-year browse view in
-             place (design principle #3), same list either way. */
+          /* #906 — 10 most-recent by default; "View all" reveals the full
+             grouped-by-year view in place (design principle #3). */
           <>
             <div className="space-y-3 sm:space-y-4">
               {recentPubs.map((pub) => (
-                <div key={pub.id} className="fade-in-up">
-                  <PublicationCard pub={pub} showAuthorColumn />
-                </div>
+                <PublicationCard key={pub.id} pub={pub} showAuthorColumn />
               ))}
             </div>
             {filtered.length > RECENT_COUNT && (
               <div className="mt-6 text-center">
-                <button
-                  type="button"
-                  onClick={() => setShowAllPubs(true)}
-                  className="text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
-                  style={{ color: 'var(--job-brand)', background: 'none', border: 'none' }}
-                >
+                <button type="button" className="pub-btn" onClick={() => setShowAllPubs(true)}>
                   View all {filtered.length} papers
                 </button>
               </div>
@@ -540,73 +378,30 @@ export default function Publications() {
         ) : (
           <>
             <div className="mb-6 text-center">
-              <button
-                type="button"
-                onClick={() => setShowAllPubs(false)}
-                className="text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
-                style={{ color: 'var(--job-brand)', background: 'none', border: 'none' }}
-              >
+              <button type="button" className="pub-btn" onClick={() => setShowAllPubs(false)}>
                 Show recent only
               </button>
             </div>
-            {/* Grouped by year (default) — sticky year headers (P2-12). M-10 quiet label style preserved. */}
-            {years.map((year) => (
-            <div key={year} className="mb-8 sm:mb-12">
-              <div
-                className="fade-in-up flex items-center gap-3 mb-4 sm:mb-6 py-2"
-                style={{
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 'var(--z-sticky)',
-                  background: 'var(--page-bg)',
-                  backdropFilter: 'blur(6px)',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 'var(--text-label)',
-                    fontWeight: 'var(--weight-ui)',
-                    color: 'var(--ink)',
-                    opacity: 'var(--ink-label)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                  }}
-                >
-                  {year}
-                </span>
-                <span
-                  className="flex-1 h-px"
-                  style={{ background: 'var(--border-subtle)' }}
-                />
-                <span
-                  style={{
-                    fontSize: 'var(--text-label)',
-                    fontWeight: 'var(--weight-ui)',
-                    color: 'var(--slate)',
-                    opacity: 'var(--ink-label)',
-                    letterSpacing: '0.03em',
-                  }}
-                >
-                  {filtered.filter((p) => p.year === year).length} paper
-                  {filtered.filter((p) => p.year === year).length !== 1
-                    ? 's'
-                    : ''}
-                </span>
-              </div>
-              <div className="space-y-3 sm:space-y-4">
-                {filtered
-                  .filter((p) => p.year === year)
-                  .map((pub) => (
-                    <div key={pub.id} className="fade-in-up">
-                      <PublicationCard pub={pub} showAuthorColumn />
-                    </div>
-                  ))}
-              </div>
-            </div>
-            ))}
+            {years.map((year) => {
+              const n = filtered.filter((p) => p.year === year).length
+              return (
+                <div key={year} className="mb-8 sm:mb-12">
+                  <div className="pub-yhd">
+                    <span className="pub-yr" style={{ width: 'auto' }}>{year}</span>
+                    <span className="pub-yrule" />
+                    <span className="pub-meta">{n} {n === 1 ? 'paper' : 'papers'}</span>
+                  </div>
+                  <div className="space-y-3 sm:space-y-4">
+                    {filtered.filter((p) => p.year === year).map((pub) => (
+                      <PublicationCard key={pub.id} pub={pub} showAuthorColumn />
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
           </>
         )}
       </section>
-    </PageLayout>
+    </div>
   )
 }
