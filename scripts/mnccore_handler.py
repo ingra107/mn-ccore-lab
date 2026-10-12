@@ -44,9 +44,14 @@ Verbs (parity with mnccore-handler.bat, which stays one release as rollback):
                                `lnch_<alnum>` passes; no decode.
   mnccore://desk/<slug>/<desk> working-desk session -> resolve_launch.py desk mode.
                                Identifier only, no decode; a resolver refusal is loud.
-  mnccore://workon/<folder>    run .\\Start Claude.bat with <folder> as cwd. Local
-                               drive only, under the PB repo or ~/Box; the
-                               basename is the executable allowlist.
+  mnccore://workon/<folder>    run .\\Start Claude.bat with <folder> as cwd, after
+                               a Yes/No dialog that names the folder (default No).
+                               Local drive only, and only a folder under the PB
+                               repo or one that is the primary_folder of a
+                               non-deleted project in brain.db (read-only; an
+                               unreadable brain.db refuses). Every bat runs with
+                               NoDefaultCurrentDirectoryInExePath=1. See
+                               verb_workon for why (2026-10-12 security review).
   mnccore://file/<path>        open one .docx/.pdf/.xlsx under %USERPROFILE%\\Box\\.
   mnccore://process            %USERPROFILE%\\Peripheral-Brain\\Quick_Process.bat
   mnccore://quickchat          %USERPROFILE%\\Peripheral-Brain\\Quick_Chat_seeded.bat
@@ -75,6 +80,7 @@ import ctypes
 import json
 import os
 import re
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -98,6 +104,12 @@ CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 FILE_EXTS = (".docx", ".pdf", ".xlsx")
 START_CLAUDE = "Start Claude.bat"
 DRIVE_REMOTE = 4
+MB_YESNO = 0x4
+MB_ICONQUESTION = 0x20
+MB_DEFBUTTON2 = 0x100
+MB_SETFOREGROUND = 0x10000
+MB_TOPMOST = 0x40000
+IDYES = 6
 DRIVE_PATH_RE = re.compile(r"[A-Za-z]:\\", re.ASCII)
 
 # UNC hosts open/ may stat and hand to Explorer, lower-case, compared as text BEFORE
@@ -265,7 +277,10 @@ def _start_bat(folder: str, name: str, label: str) -> int:
     argv = _bat_argv(name)
 
     def run() -> int:
-        subprocess.Popen(argv, cwd=folder, close_fds=True, creationflags=CREATE_NEW_CONSOLE)
+        # No bare command name the bat runs (`claude`, `node`) may resolve to a
+        # file in <folder>: cmd.exe searches the current folder first without this.
+        env = dict(os.environ, NoDefaultCurrentDirectoryInExePath="1")
+        subprocess.Popen(argv, cwd=folder, close_fds=True, creationflags=CREATE_NEW_CONSOLE, env=env)
         return 0
     return _act(label, {"argv": argv, "cwd": folder}, run)
 
@@ -422,25 +437,91 @@ def verb_desk(arg: str) -> int:
     return _act("desk", {"argv": argv}, run)
 
 
-def _workon_roots() -> "list[str]":
-    """The roots PB's resolve_launch.resolve_workon_folder allows: the PB repo and
-    ~/Box, junctions resolved (home's C:\\Users\\ingra107 -> C:\\Users\\ingra)."""
-    home = _home()
-    return [os.path.realpath(os.path.join(home, d)) for d in ("Peripheral-Brain", "Box")]
+def _pb_root() -> str:
+    """The PB repo, junctions resolved (home's C:\\Users\\ingra107 -> C:\\Users\\ingra)."""
+    return os.path.realpath(os.path.join(_home(), "Peripheral-Brain"))
+
+
+def _brain_db() -> str:
+    return os.path.join(_home(), "Peripheral-Brain", "data", "brain.db")
+
+
+def _stored_folder(raw: str) -> "str | None":
+    """A projects.primary_folder value as a local drive path, or None. The column
+    holds file:/// URLs, forward-slash and backslash forms (urlClassify.ts)."""
+    p = raw.strip()
+    if p[:8].lower() == "file:///":
+        p = p[8:]
+    p = unquote(p).replace("/", "\\").rstrip("\\")
+    if '"' in p or CONTROL_RE.search(p) or not DRIVE_PATH_RE.match(p + "\\"):
+        return None
+    return p
+
+
+def _project_folders() -> "set[str]":
+    """normcase(realpath) of every non-deleted project's primary_folder, read from
+    brain.db READ-ONLY. A brain.db that is missing or cannot be read refuses the
+    whole workon: an unknown list must not fall back to "anything under Box"."""
+    path = _brain_db()
+    if not _is_file(path):
+        raise Refused(f"workon: refused, cannot read the project list (no {path})")
+    try:
+        con = sqlite3.connect(Path(path).as_uri() + "?mode=ro", uri=True, timeout=5)
+        try:
+            rows = con.execute(
+                "SELECT primary_folder FROM projects WHERE primary_folder IS NOT NULL "
+                "AND primary_folder <> '' AND COALESCE(status, '') <> 'deleted'").fetchall()
+        finally:
+            con.close()
+    except sqlite3.Error as e:
+        raise Refused(f"workon: refused, cannot read the project list ({e})") from e
+    out = set()
+    for (raw,) in rows:
+        p = _stored_folder(str(raw))
+        if p and not _drive_is_remote(p):
+            out.add(os.path.normcase(os.path.realpath(p)))
+    return out
+
+
+def _confirm_workon(folder: str) -> bool:
+    """A native Yes/No box naming the folder, default No, on top. True only on Yes."""
+    if os.name != "nt":
+        return False
+    text = (f"Start Claude Code in this folder?\r\n\r\n{folder}\r\n\r\n"
+            "Continue only if you just clicked \"Work on this in Claude\" in the MN-CCORE Hub. "
+            "This runs the folder's \"Start Claude.bat\", and Claude Code reads the files here, "
+            "including any CLAUDE.md or .claude settings.")
+    flags = MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2 | MB_TOPMOST | MB_SETFOREGROUND
+    fn = ctypes.windll.user32.MessageBoxW
+    fn.argtypes = [ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint]
+    fn.restype = ctypes.c_int
+    return fn(None, text, "MN-CCORE Launcher", flags) == IDYES
 
 
 def verb_workon(arg: str) -> int:
+    """Security review 2026-10-12 (HIGH, live on Nick's laptops before this): any web
+    page can fire mnccore://workon/<folder>, and anyone who can write into a Box
+    folder Nick syncs (CLIF and consortium shares) can put a "Start Claude.bat" (or a
+    claude.cmd the bat would find) there. So:
+      - the folder must be under the PB repo (git-controlled) or be EXACTLY the
+        primary_folder of a live project PB knows; "anywhere under ~/Box" is gone;
+      - a dialog naming the folder asks first, default No (DRYRUN skips it);
+      - the bat and everything it starts run with NoDefaultCurrentDirectoryInExePath=1
+        (_start_bat), so a bare `claude` or `node` never resolves to the folder."""
     folder = _decode(arg).rstrip("\\")
     # Network and non-drive paths are refused as TEXT, before any stat (an SMB or
     # WebDAV stat authenticates to the attacker's host).
     _local_drive_path(folder, "workon")
     real = os.path.realpath(folder)
-    if not any(_under(real, root) for root in _workon_roots()):
-        raise Refused(f"workon: refused, outside Peripheral-Brain and Box: {folder}")
+    if not _under(real, _pb_root()) and os.path.normcase(real) not in _project_folders():
+        raise Refused(f"workon: refused, not the Peripheral-Brain repo or a project's folder: {folder}")
     if not _is_dir(folder) or not _exists(folder + "\\"):
         raise Refused(f"workon: not a directory: {folder}")
     if not _is_file(folder + "\\" + START_CLAUDE):
         raise Refused(f"workon: no '{START_CLAUDE}' in {folder}")
+    if not _dryrun() and not _confirm_workon(real):
+        _log(f"DECLINED workon: {_safe(real)}")
+        return 3
     return _start_bat(folder, START_CLAUDE, "workon")
 
 

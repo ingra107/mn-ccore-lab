@@ -20,7 +20,7 @@
 
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { spawnSync } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
@@ -36,6 +36,69 @@ const CONTROL_MARK = join(tmpdir(), 'mnccore-pyhandler-control-marker.txt')
 
 let home, resolver, pythonw, pythonExe, tail, registered
 const sysRoot = process.env.SystemRoot || 'C:\\Windows'
+
+// The brain.db projects rows workon reads (status, primary_folder).
+let PROJECT_ROWS = []
+function writeProjects(rows) {
+  if (rows !== PROJECT_ROWS && PROJECT_ROWS.length === 0) PROJECT_ROWS = rows
+  const db = join(home, 'Peripheral-Brain', 'data', 'brain.db')
+  mkdirSync(dirname(db), { recursive: true })
+  rmSync(db, { force: true })
+  const r = spawnSync(pythonExe, ['-c', [
+    'import sqlite3, sys',
+    'c = sqlite3.connect(sys.argv[1])',
+    'c.execute("CREATE TABLE projects (id TEXT, status TEXT, primary_folder TEXT)")',
+    'a = sys.argv[2:]',
+    'c.executemany("INSERT INTO projects VALUES (?, ?, ?)", [(str(i), a[2 * i], a[2 * i + 1]) for i in range(len(a) // 2)])',
+    'c.commit()',
+  ].join('\n'), db, ...rows.flat()], { encoding: 'utf8' })
+  assert.equal(r.status, 0, r.stderr)
+}
+
+// A real (NOT dry-run) run through the registered command line, not waited on,
+// with a PATH that holds no real `claude` (so nothing real can start).
+function fireReal(url) {
+  const line = tail.replace('%1', () => url)
+  const env = { ...handlerEnv() }
+  for (const k of Object.keys(env)) {
+    if (/^(MNCCORE_HANDLER_DRYRUN|NoDefaultCurrentDirectoryInExePath|path)$/i.test(k)) delete env[k]
+  }
+  env.Path = `${join(sysRoot, 'System32')};${sysRoot}`
+  const child = spawn(pythonExe, [line], { windowsVerbatimArguments: true, argv0: `"${pythonExe}"`, env, stdio: 'ignore' })
+  return new Promise((res) => child.on('exit', (code) => res(code)))
+}
+
+// Find the handler's "MN-CCORE Launcher" dialog, return its text, click a button.
+function clickDialog(button) {
+  const ps = [
+    'Add-Type @"',
+    'using System; using System.Text; using System.Runtime.InteropServices;',
+    'public static class D32 {',
+    '  public delegate bool P(IntPtr h, IntPtr l);',
+    '  [DllImport("user32.dll")] public static extern bool EnumChildWindows(IntPtr p, P f, IntPtr l);',
+    '  [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, StringBuilder s, int n);',
+    '  [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern IntPtr FindWindow(string c, string t);',
+    '  [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern IntPtr FindWindowEx(IntPtr p, IntPtr a, string c, string t);',
+    '  [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr h, uint m, IntPtr w, IntPtr l);',
+    '  public static string Texts(IntPtr d) { var all = new StringBuilder(); EnumChildWindows(d, (h, l) => { var t = new StringBuilder(4096); GetWindowText(h, t, 4096); all.Append(t.ToString()).Append(" | "); return true; }, IntPtr.Zero); return all.ToString(); }',
+    '}',
+    '"@',
+    '$d = [IntPtr]::Zero',
+    'for ($i = 0; $i -lt 80 -and $d -eq [IntPtr]::Zero; $i++) { Start-Sleep -Milliseconds 250; $d = [D32]::FindWindow("#32770", "MN-CCORE Launcher") }',
+    'if ($d -eq [IntPtr]::Zero) { "NO DIALOG"; exit 1 }',
+    'Start-Sleep -Milliseconds 300',
+    '"DEFID=" + ([D32]::SendMessage($d, 0x400, [IntPtr]::Zero, [IntPtr]::Zero).ToInt64() -band 0xFFFF)',
+    '"TEXT=" + [D32]::Texts($d)',
+    `$b = [D32]::FindWindowEx($d, [IntPtr]::Zero, "Button", "${button}")`,
+    '[void][D32]::SendMessage($b, 0x00F5, [IntPtr]::Zero, [IntPtr]::Zero)',
+  ].join('\n')
+  const enc = Buffer.from(ps, 'utf16le').toString('base64')
+  const r = spawnSync(join(sysRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
+    ['-NoProfile', '-NonInteractive', '-EncodedCommand', enc], { encoding: 'utf8', timeout: 60000 })
+  return (r.stdout || '') + (r.stderr || '')
+}
+
+const pause = (ms) => new Promise((r) => setTimeout(r, ms))
 
 function handlerEnv() {
   return {
@@ -431,6 +494,15 @@ describe('mnccore_handler.py through the registered command line (DRYRUN)', { sk
       for (const d of [proj, ampProj, bare, join(fake, 'Start Claude.bat')]) mkdirSync(d, { recursive: true })
       writeFileSync(join(proj, 'Start Claude.bat'), '@exit /b 0\n')
       writeFileSync(join(ampProj, 'Start Claude.bat'), '@exit /b 0\n')
+      // Every folder workon may open outside the PB repo is a live project's
+      // primary_folder in brain.db, in the three stored shapes urlClassify.ts names.
+      writeProjects([
+        ['active', `file:///${proj.replace(/\\/g, '/').replace(/ /g, '%20')}/`],
+        ['active', ampProj],
+        ['waiting_external', bare.replace(/\\/g, '/')],
+        ['done', fake],
+        ['active', join(proj, 'Start Claude.bat')],
+      ])
     })
     const url = (p) => `mnccore://workon/${p.replace(/\\/g, '/').replace(/ /g, '%20')}`
     const cmd = join(sysRoot, 'System32', 'cmd.exe')
@@ -467,6 +539,56 @@ describe('mnccore_handler.py through the registered command line (DRYRUN)', { sk
       assert.equal(r.code, 1, r.out)
       assert.ok(r.out.includes('workon: not a directory'), r.out)
     })
+    it('refuses a Box folder with Start Claude.bat that is no project\'s folder', () => {
+      const planted = join(home, 'Box', 'Consortium Share')
+      mkdirSync(planted, { recursive: true })
+      writeFileSync(join(planted, 'Start Claude.bat'), '@exit /b 0\n')
+      const r = fire(url(planted))
+      assert.equal(r.code, 1, r.out)
+      assert.ok(r.out.includes("workon: refused, not the Peripheral-Brain repo or a project's folder"), r.out)
+      assert.ok(!r.out.includes('DRYRUN'), r.out)
+    })
+    it('refuses a subfolder of a project folder (exact match only)', () => {
+      const sub = join(proj, 'sub')
+      mkdirSync(sub, { recursive: true })
+      writeFileSync(join(sub, 'Start Claude.bat'), '@exit /b 0\n')
+      const r = fire(url(sub))
+      assert.equal(r.code, 1, r.out)
+      assert.ok(r.out.includes("not the Peripheral-Brain repo or a project's folder"), r.out)
+    })
+    it("refuses a deleted project's folder", () => {
+      const gone = join(home, 'Box', 'Deleted Proj')
+      mkdirSync(gone, { recursive: true })
+      writeFileSync(join(gone, 'Start Claude.bat'), '@exit /b 0\n')
+      writeProjects([['active', proj], ['deleted', gone]])
+      try {
+        const r = fire(url(gone))
+        assert.equal(r.code, 1, r.out)
+        assert.ok(r.out.includes("not the Peripheral-Brain repo or a project's folder"), r.out)
+      } finally {
+        writeProjects(PROJECT_ROWS)
+      }
+    })
+    it('refuses when brain.db cannot be read (never falls back to "anywhere under Box")', () => {
+      const db = join(home, 'Peripheral-Brain', 'data', 'brain.db')
+      const aside = db + '.aside'
+      rmSync(aside, { force: true })
+      writeFileSync(aside, readFileSync(db))
+      rmSync(db)
+      try {
+        const r = fire(url(proj))
+        assert.equal(r.code, 1, r.out)
+        assert.ok(r.out.includes('cannot read the project list'), r.out)
+        writeFileSync(db, 'not a database')
+        const r2 = fire(url(proj))
+        assert.equal(r2.code, 1, r2.out)
+        assert.ok(r2.out.includes('cannot read the project list'), r2.out)
+      } finally {
+        rmSync(db, { force: true })
+        writeFileSync(db, readFileSync(aside))
+        rmSync(aside, { force: true })
+      }
+    })
 
     // Review 2026-10-09: a share root `\\host\share` made ntpath.dirname keep a
     // trailing backslash, the dirname/cwd compare missed, and the handler fell back
@@ -497,12 +619,12 @@ describe('mnccore_handler.py through the registered command line (DRYRUN)', { sk
       writeFileSync(join(out, 'Start Claude.bat'), '@exit /b 0\n')
       const r = fire(url(out))
       assert.equal(r.code, 1, r.out)
-      assert.ok(r.out.includes('workon: refused, outside Peripheral-Brain and Box'), r.out)
+      assert.ok(r.out.includes("workon: refused, not the Peripheral-Brain repo or a project's folder"), r.out)
     })
     it('refuses a .. walk out of Box', () => {
       const r = fire(url(join(home, 'Box')) + '/../Elsewhere')
       assert.equal(r.code, 1, r.out)
-      assert.ok(r.out.includes('outside Peripheral-Brain and Box'), r.out)
+      assert.ok(r.out.includes("not the Peripheral-Brain repo or a project's folder"), r.out)
     })
     it('accepts a folder under the PB repo', () => {
       const pbProj = join(home, 'Peripheral-Brain', 'Projects', 'p1')
@@ -511,6 +633,61 @@ describe('mnccore_handler.py through the registered command line (DRYRUN)', { sk
       const r = fire(url(pbProj))
       assert.equal(r.code, 0, r.out)
       assert.deepEqual(plan(r.out, 'workon'), { argv: [cmd, '/c', '.\\Start Claude.bat'], cwd: pbProj })
+    })
+
+    // Real runs (NOT dry-run), 2026-10-12 security review: a Start Claude.bat or
+    // claude.cmd planted in a synced folder must never run unasked.
+    describe('real runs: the dialog, and nothing planted runs', () => {
+      let listed, good, evil
+      before(() => {
+        listed = join(home, 'Box', 'Listed Proj')
+        mkdirSync(listed, { recursive: true })
+        good = join(home, 'GOOD-bat-ran.txt')
+        evil = join(home, 'EVIL-ran.txt')
+        // The project's own bat calls a bare `claude`, as the real ones do.
+        writeFileSync(join(listed, 'Start Claude.bat'), `@echo ran> "${good}"\r\n@call claude 2>nul\r\n@call node --version >nul 2>&1\r\n@exit\r\n`)
+        for (const name of ['claude.cmd', 'claude.bat', 'node.cmd', 'node.bat']) {
+          writeFileSync(join(listed, name), `@echo ${name}>> "${evil}"\r\n`)
+        }
+        writeProjects([...PROJECT_ROWS, ['active', listed]])
+      })
+      after(() => writeProjects(PROJECT_ROWS))
+      const reset = () => { rmSync(good, { force: true }); rmSync(evil, { force: true }) }
+
+      it('a planted Start Claude.bat in a Box folder that is no project never runs', async () => {
+        reset()
+        const planted = join(home, 'Box', 'Planted Share')
+        mkdirSync(planted, { recursive: true })
+        writeFileSync(join(planted, 'Start Claude.bat'), `@echo planted-bat>> "${evil}"\r\n@exit\r\n`)
+        const code = await fireReal(url(planted))
+        assert.equal(code, 1)
+        await pause(2000)
+        assert.equal(existsSync(evil), false, 'the planted bat ran')
+      })
+
+      it('the dialog names the folder, defaults to No; No starts nothing (exit 3)', async () => {
+        reset()
+        const done = fireReal(url(listed))
+        const out = clickDialog('&No')
+        assert.ok(out.includes('DEFID=7'), `No is not the default button:\n${out}`)
+        assert.ok(out.includes(listed), `the dialog does not name the folder:\n${out}`)
+        assert.equal(await done, 3)
+        await pause(1500)
+        assert.equal(existsSync(good), false, 'the bat ran after No')
+        assert.equal(existsSync(evil), false)
+      })
+
+      it("Yes runs the project's bat, and its bare claude/node never resolve to the folder", async () => {
+        reset()
+        const done = fireReal(url(listed))
+        const out = clickDialog('&Yes')
+        assert.ok(out.includes('TEXT='), out)
+        assert.equal(await done, 0)
+        for (let i = 0; i < 60 && !existsSync(good); i++) await pause(250)
+        assert.equal(existsSync(good), true, "the project's bat never ran")
+        await pause(1500)
+        assert.equal(existsSync(evil), false, existsSync(evil) ? readFileSync(evil, 'utf8') : '')
+      })
     })
   })
 
