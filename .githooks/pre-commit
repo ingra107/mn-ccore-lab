@@ -217,8 +217,10 @@ if git diff --cached --name-only --diff-filter=ACMR \
 fi
 # The Python handler that replaced it (2026-10-09). Fires through the registered
 # command line with DRYRUN; raw-quote and marker-file cases, never a GUI program.
+# The real (non-dry-run) workon cases answer the dialog through
+# mnccore_handler.testharness.py: no test puts a dialog on the desktop.
 if git diff --cached --name-only --diff-filter=ACMR \
-        | grep -qE "^scripts/(mnccore_handler\.(py|test\.mjs)|register_mnccore_protocol\.py)$"; then
+        | grep -qE "^scripts/(mnccore_handler\.(py|test\.mjs|testharness\.py)|register_mnccore_protocol\.py)$"; then
     if ! node scripts/mnccore_handler.test.mjs >/tmp/mnccore-pyhandler-test.$$ 2>&1; then
         grep -E "^\s*not ok|error:" /tmp/mnccore-pyhandler-test.$$ | head -20
         rm -f /tmp/mnccore-pyhandler-test.$$

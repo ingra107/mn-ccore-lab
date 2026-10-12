@@ -483,19 +483,27 @@ def _project_folders() -> "set[str]":
     return out
 
 
-def _confirm_workon(folder: str) -> bool:
-    """A native Yes/No box naming the folder, default No, on top. True only on Yes."""
-    if os.name != "nt":
-        return False
-    text = (f"Start Claude Code in this folder?\r\n\r\n{folder}\r\n\r\n"
+WORKON_TITLE = "MN-CCORE Launcher"
+# Yes/No, No is the default (MB_DEFBUTTON2), on top. Pinned by the test.
+WORKON_FLAGS = MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2 | MB_TOPMOST | MB_SETFOREGROUND
+
+
+def _workon_prompt(folder: str) -> str:
+    return (f"Start Claude Code in this folder?\r\n\r\n{folder}\r\n\r\n"
             "Continue only if you just clicked \"Work on this in Claude\" in the MN-CCORE Hub. "
             "This runs the folder's \"Start Claude.bat\", and Claude Code reads the files here, "
             "including any CLAUDE.md or .claude settings.")
-    flags = MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2 | MB_TOPMOST | MB_SETFOREGROUND
+
+
+def _confirm_workon(folder: str) -> bool:
+    """A native Yes/No box naming the folder, default No, on top. True only on Yes.
+    Tests replace this (mnccore_handler.testharness.py); they never show it."""
+    if os.name != "nt":
+        return False
     fn = ctypes.windll.user32.MessageBoxW
     fn.argtypes = [ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint]
     fn.restype = ctypes.c_int
-    return fn(None, text, "MN-CCORE Launcher", flags) == IDYES
+    return fn(None, _workon_prompt(folder), WORKON_TITLE, WORKON_FLAGS) == IDYES
 
 
 def verb_workon(arg: str) -> int:
