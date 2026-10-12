@@ -3,7 +3,7 @@
  *
  * Papers, years and areas come from /api/publications; the active-project
  * count from /api/projects (anonymous callers get the status only, never a
- * title); funding from /api/grants (venue and bucket: usePublicGrants). People and sites are the roster and the
+ * title); funding from /api/grants (usePublicGrants: funded awards for everyone). People and sites are the roster and the
  * site list, counted once each (lib/roster, data/clifSites). A count whose
  * list has not loaded yet is null, so the page shows a dash, never a guess.
  */

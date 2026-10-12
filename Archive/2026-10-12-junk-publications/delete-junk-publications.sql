@@ -1,4 +1,4 @@
--- Delete the placeholder rows from publications (s68, 2026-10-12). NOT RUN. Nick's go first.
+-- Delete the placeholder rows from publications (s68, 2026-10-12). RUN on prod 2026-10-12 with Nick's go: 704 -> 626.
 -- Exact ids, 78 rows: test_ fixtures, [Table]/[Figure] report pieces, Supplementary Materials / Data from deposits.
 -- Full row export (restore source): Archive/2026-10-12-junk-publications/publications.json
 -- Dry run first:  SELECT COUNT(*) FROM publications WHERE id IN (...same list...);  expect 78, and publications total 704 -> 626.

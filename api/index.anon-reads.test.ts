@@ -66,6 +66,17 @@ beforeAll(() => {
     title: `${S} proposal title`, short_name: `${S} A0`, venue: 'NIH R01', stage_notes: `${S} stage notes`,
     period_start: '2027-07-01', is_home: 0,
   })
+  // A funded award on a project with a public title (Nick 2026-10-12: funded
+  // awards only): the one grant row an anonymous caller may read.
+  insertRow(db, 'projects', {
+    id: 'proj_award', title: 'K23: Provider variation', slug: 'award-project', status: 'active', stage: 'analysis',
+    category: 'MNCCORE', pi: 'nick-ingraham', description: `${S} award project description`,
+  })
+  insertRow(db, 'products', {
+    id: 'prd_01KXANON0AWARD00000000000A1', project_id: 'proj_award', kind: 'award', stage: 'active',
+    title: `${S} award title`, short_name: `${S} K23`, venue: 'NHLBI K23', stage_notes: `${S} award notes`,
+    period_start: '2024-07-01', period_end: '2029-06-30', amount_usd: 123456, is_home: 0,
+  })
   insertRow(db, 'publications', {
     id: 'pub1', title: 'A published paper', authors: 'Ingraham N', journal: 'CHEST', year: 2025,
     status: 'Published', author_slugs: '["nick-ingraham"]',
@@ -156,7 +167,7 @@ describe('anonymous reads (REQUIRE_AUTH=1)', () => {
 
   it('the public shapes keep what the website renders', async () => {
     const projects = JSON.parse((await get('/api/projects')).text)
-    expect(projects.data).toEqual([{ status: 'active' }])
+    expect(projects.data).toEqual([{ status: 'active' }, { status: 'active' }])
     const team = JSON.parse((await get('/api/team')).text)
     expect(team.data).toEqual([{ slug: 'nate-mesfin', name: 'Nate Mesfin' }, { slug: 'nick-ingraham', name: 'Nick Ingraham' }])
     const pubs = JSON.parse((await get('/api/publications')).text)
@@ -175,13 +186,23 @@ describe('anonymous reads (REQUIRE_AUTH=1)', () => {
     expect(Object.keys(health).sort()).toEqual(['failures', 'ok', 'timestamp'])
     const me = JSON.parse((await get('/api/auth/me')).text)
     expect(me).toEqual({ authenticated: false })
-    // Grants: the stage, names, project and dates are private; the derived
-    // bucket and venue are public (an application under review -> proposed).
-    // No anonymous screen draws a date (Pulse shows venue + bucket).
+    // Grants: FUNDED AWARDS ONLY for an anonymous caller (Nick 2026-10-12). The
+    // application under review is invisible, rows and all; the live award shows
+    // exactly these keys: no stage, dates, money, notes or product title.
     for (const path of ['/api/grants', '/api/grants/timeline']) {
       const grants = JSON.parse((await get(path)).text)
-      expect(grants.data).toEqual([{ id: 'prd_01KXANON0GRANT0000000000G1', venue: 'NIH R01', bucket: 'proposed' }])
+      expect(grants.data).toEqual([{
+        id: 'prd_01KXANON0AWARD00000000000A1', venue: 'NHLBI K23', bucket: 'active',
+        project_title: 'K23: Provider variation', pi: 'nick-ingraham', pi_name: 'Nick Ingraham',
+      }])
+      expect(Object.keys(grants.data[0]).sort()).toEqual(['bucket', 'id', 'pi', 'pi_name', 'project_title', 'venue'])
+      expect(JSON.stringify(grants)).not.toContain('prd_01KXANON0GRANT0000000000G1')
     }
+    // A member reads the rows of the projects they are on, with the private fields
+    // (Nate is on proj_anon1: the application, titled, with its stage).
+    const member = JSON.parse((await get('/api/grants', 'session')).text)
+    expect(member.data).toHaveLength(1)
+    expect(member.data[0]).toMatchObject({ id: 'prd_01KXANON0GRANT0000000000G1', title: `${S} proposal title`, stage: 'submitted', bucket: 'proposed' })
   })
 
   for (const path of NOW_SIGNED_IN_ONLY) {

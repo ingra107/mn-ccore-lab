@@ -1,19 +1,22 @@
 /**
  * publicGrants -- the live grant rows as the public pages see them.
  *
- * GET /api/grants gives an anonymous visitor only { id, venue, bucket } (venue is
- * agency + mechanism: "NHLBI K23"); a signed-in member also gets the title, the
- * PI and the rest (api/index.ts, defineRoute /api/grants). So:
- *  - the Home funding line needs only venue and bucket and works for everyone;
- *  - a lab member's own grants (/nick, /nate) need the PI, so they appear only
- *    when the response carries it. For an anonymous visitor the list is empty,
- *    never a guess and never a hard-coded one.
+ * GET /api/grants gives an anonymous visitor FUNDED AWARDS ONLY (Nick
+ * 2026-10-12), each as { id, venue, bucket, project_title, pi, pi_name }: venue
+ * is agency + mechanism ("NHLBI K23"). Applications and proposals are not in an
+ * anonymous response at all; a signed-in member also gets those, with titles,
+ * stages and dates (api/index.ts, FUNDED_AWARDS_ONLY). So the same code serves
+ * both: the Home funding line counts active rows, and /nick and /nate list a
+ * member's own rows by PI.
  */
 import type { GrantProduct } from './grants'
 import { mechanismOf } from './grants'
 import { displayName, fullNameForSlug } from './nameUtils'
 
-export type PublicGrant = Pick<GrantProduct, 'id' | 'bucket'> & Partial<Omit<GrantProduct, 'id' | 'bucket'>>
+export type PublicGrant = Pick<GrantProduct, 'id' | 'bucket'> & Partial<Omit<GrantProduct, 'id' | 'bucket'>> & {
+  /** The PI's display name; an anonymous funded-award row carries it with the slug in `pi`. */
+  pi_name?: string | null
+}
 
 /** "NHLBI K23" -> "NHLBI"; a venue with no mechanism is the agency alone. */
 export function agencyOf(venue: string | null | undefined): string {
@@ -37,13 +40,13 @@ export interface PersonGrantRow {
 }
 
 /** One member's grants for the funding section: active, then proposed. Ended
- *  grants are not listed. A row with no title shows its venue. */
+ *  grants are not listed. A row with no product title shows the project title, then the venue. */
 export function grantsForPi(rows: ReadonlyArray<PublicGrant>, slug: string): PersonGrantRow[] {
   return rows
     .filter((g) => isPiOf(g.pi, slug) && (g.bucket === 'active' || g.bucket === 'proposed'))
     .map((g) => ({
       mechanism: mechanismOf(g.venue) ?? '',
-      title: g.short_name?.trim() || g.title?.trim() || g.venue?.trim() || '',
+      title: g.short_name?.trim() || g.title?.trim() || g.project_title?.trim() || g.venue?.trim() || '',
       agency: agencyOf(g.venue),
       bucket: g.bucket,
     }))

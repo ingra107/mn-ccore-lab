@@ -8,10 +8,13 @@
 // GET /api/grants            the rows + the grant kinds' ladders
 // GET /api/grants/timeline   the same rows, each with its milestones (Gantt)
 //
-// Both are public GETs: the /pulse kiosk and the public home read them through
-// the anonShape (id, venue, bucket; no dates, no names). Which rows come back is the
-// caller's handle (table-scope byProject on products): a member gets the
-// projects they are on, an anonymous reader the non-PB projects.
+// Both are public GETs. An anonymous reader gets FUNDED AWARDS ONLY (Nick
+// 2026-10-12: kind award, live stage), each as id, venue, bucket, project title
+// and PI (slug + display name): the public home and the /nick and /nate funding
+// lists read them. Applications and proposals are invisible to anonymous callers
+// (anonRows + anonShape in api/index.ts). Which rows come back is the caller's
+// handle (table-scope byProject on products): a member gets the projects they
+// are on, an anonymous reader the non-PB projects.
 //
 // The legacy `grants` table (a 2026-03-24 display seed for the dashboard card)
 // is no longer read; it retires in phase 2 with Nick's go.
@@ -39,7 +42,8 @@ export const GRANT_BUCKET_SQL = `CASE
 const GRANT_ROWS_SQL = `${PRODUCT_LIST_SQL.replace(
   'FROM products p',
   `, ${GRANT_BUCKET_SQL} AS bucket,
-            pr.slug AS project_slug, pr.title AS project_title, pr.short_name AS project_short_name, pr.pi AS pi
+            pr.slug AS project_slug, pr.title AS project_title, pr.short_name AS project_short_name, pr.pi AS pi,
+            (SELECT tm.name FROM team_members tm WHERE tm.slug = pr.pi) AS pi_name
        FROM products p`,
 )}
        JOIN projects pr ON pr.id = p.project_id AND pr.deleted_at IS NULL

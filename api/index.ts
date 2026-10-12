@@ -182,6 +182,17 @@ const PUBLIC_PUBLICATION: AnonShape = {
 // 'In Review' rows (title, authors, abstract) stay with signed-in members.
 // 'Published' is the only finished value in prod and the POST default.
 const PUBLISHED_ONLY: AnonRowFilter = (row) => row.status === 'Published';
+// Funded awards only (Nick 2026-10-12): an anonymous reader sees an award that
+// is live (bucket 'active' = kind award, non-terminal stage). Applications,
+// proposals, honors and ended awards stay private, rows and all.
+const FUNDED_AWARDS_ONLY: AnonRowFilter = (row) => row.kind === 'award' && row.bucket === 'active';
+// What a funded award shows: id, venue (agency + mechanism, "NHLBI K23"), the
+// derived bucket, the project's title and the PI (slug + display name). No dates,
+// money, stage notes or milestones.
+const PUBLIC_FUNDED_AWARD_SHAPE = {
+  data: [{ id: true, venue: true, bucket: true, project_title: true, pi: true, pi_name: true }],
+  count: true,
+} as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Global error handler — matches old top-level try/catch behavior.
@@ -1149,23 +1160,16 @@ defineRoute({
   method: 'GET',
   path: '/api/grants/timeline',
   auth: 'public',
-  anonShape: {
-    // /pulse grant scene. Titles stay private: proposals in preparation are listed here too.
-    // `bucket` is the server-derived active/proposed/ended label every page reads;
-    // venue carries agency + mechanism ("NHLBI K23"). Rows are grant products (routes/grants.ts).
-    data: [{ id: true, venue: true, bucket: true }],
-  },
+  anonShape: PUBLIC_FUNDED_AWARD_SHAPE,
+  anonRows: FUNDED_AWARDS_ONLY,
   handler: (c) => handleGrantsTimeline(E(c)),
 });
 defineRoute({
   method: 'GET',
   path: '/api/grants',
   auth: 'public',
-  anonShape: {
-    // Home counts active grants from `bucket`.
-    data: [{ id: true, venue: true, bucket: true }],
-    count: true,
-  },
+  anonShape: PUBLIC_FUNDED_AWARD_SHAPE,
+  anonRows: FUNDED_AWARDS_ONLY,
   handler: (c) => handleGetGrants(E(c)),
 });
 

@@ -43,7 +43,7 @@ const mentees = allMentees.filter(
 
 export default function NickLab() {
   const { data: publications = [] } = usePublications()
-  // Live grants; empty for an anonymous visitor (the API gives no PI), so no section then.
+  // Live funded awards (public) plus, for a member, their applications; none, no section.
   const { data: liveGrants = [] } = usePublicGrants()
   const grants = grantsForPi(liveGrants, 'nick-ingraham')
   usePageMeta(

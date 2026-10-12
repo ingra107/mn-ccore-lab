@@ -16,6 +16,25 @@ describe('roster: one definition of people', () => {
     expect(groups.flatMap((g) => g.members).map((x) => x.slug)).toEqual(['a', 'b', 'c', 'd', 'e'])
   })
 
+  it('a person in two groups (Emma Bromley: staff and mentee) is counted once', () => {
+    const groups = buildRoster(
+      { directors: [m('a', 'Co-Director')], seniorMentors: [], facultyCollaborators: [], researchTeam: [m('emma', 'Research Coordinator'), m('casey', 'Data Analyst')] },
+      new Set(['emma']),
+    )
+    const slugs = (id: string) => groups.find((g) => g.id === id)?.members.map((x) => x.slug) ?? []
+    expect(slugs('staff')).toEqual(['emma', 'casey'])
+    expect(slugs('trainees')).toEqual(['emma'])
+  })
+
+  it('on the real roster Emma is in staff AND trainees, once in the people total', () => {
+    const slugs = (id: string) => ROSTER.find((g) => g.id === id)?.members.map((x) => x.slug) ?? []
+    expect(slugs('staff')).toContain('emma-bromley')
+    expect(slugs('trainees')).toContain('emma-bromley')
+    expect(rosterPeople.filter((p) => p.slug === 'emma-bromley')).toHaveLength(1)
+    expect(rosterCount).toBe(19)
+    expect(ROSTER.flatMap((g) => g.members).length).toBe(rosterCount + 1)
+  })
+
   it('splits fellows and students from staff, and drops an empty group', () => {
     expect(isTraineeRole('Critical Care Fellow')).toBe(true)
     expect(isTraineeRole('Medical Student Researcher')).toBe(true)
@@ -28,7 +47,8 @@ describe('roster: one definition of people', () => {
     const slugs = new Set(rosterPeople.map((p) => p.slug))
     for (const mentee of mentees) expect(slugs.has(mentee.slug)).toBe(true)
     expect(rosterCount).toBe(new Set(rosterPeople.map((p) => p.slug)).size)
-    expect(rosterCount).toBe(ROSTER.reduce((n, g) => n + g.members.length, 0))
+    // Emma is in two groups, so the group sizes add to one more than the people.
+    expect(rosterCount).toBe(ROSTER.reduce((n, g) => n + g.members.length, 0) - 1)
   })
 
   it('Casey Eddington and Steven Arriaza are staff, never mentees (Nick, standing rule)', () => {

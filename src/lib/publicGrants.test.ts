@@ -15,9 +15,14 @@ describe('publicGrants', () => {
     expect(isPiOf(null, 'nick-ingraham')).toBe(false)
   })
 
-  it('an anonymous row (id, venue, bucket only) belongs to nobody, so no list is invented', () => {
-    const anon: PublicGrant[] = [{ id: 'a', venue: 'NHLBI K23', bucket: 'active' }]
-    expect(grantsForPi(anon, 'nick-ingraham')).toEqual([])
+  it('an anonymous funded-award row (id, venue, bucket, project title, PI) lists under its PI', () => {
+    const anon: PublicGrant[] = [{
+      id: 'a', venue: 'NHLBI K23', bucket: 'active', project_title: 'K23: Provider variation', pi: 'nick-ingraham', pi_name: 'Nick Ingraham',
+    }]
+    expect(grantsForPi(anon, 'nick-ingraham')).toEqual([
+      { mechanism: 'K23', title: 'K23: Provider variation', agency: 'NHLBI', bucket: 'active' },
+    ])
+    expect(grantsForPi(anon, 'nate-mesfin')).toEqual([])
   })
 
   it('a member sees their own active then proposed grants, never an ended one or a peer\'s', () => {

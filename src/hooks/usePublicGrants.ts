@@ -1,5 +1,5 @@
 // The live grant rows for the public pages (GET /api/grants). Anonymous callers
-// get { id, venue, bucket } only; see lib/publicGrants.ts.
+// get funded awards only; see lib/publicGrants.ts.
 import { useQuery } from '@tanstack/react-query'
 import { fetchApi } from '../lib/api'
 import type { PublicGrant } from '../lib/publicGrants'

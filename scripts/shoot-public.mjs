@@ -1,12 +1,16 @@
 // shoot-public.mjs -- screenshot every public page, light/dark x 1440/375,
 // against the built dist/ with /api proxied to prod (live data, no auth).
-//   npx vite build && node scripts/shoot-public.mjs [outDir] [pageFilter]
+//   npx vite build && node scripts/shoot-public.mjs [outDir] [pageFilter] [--mock-grants]
+// --mock-grants answers /api/grants with the funded-award shape the Worker serves
+// anonymous callers after s68 (the prod proxy still serves the old one until deploy).
 import { preview } from 'vite'
 import { chromium } from '@playwright/test'
 import fs from 'node:fs'
 
-const out = process.argv[2] || 'review/s68'
-const only = process.argv[3]
+const argv = process.argv.slice(2).filter((a) => !a.startsWith('--'))
+const mockGrants = process.argv.includes('--mock-grants')
+const out = argv[0] || 'review/s68'
+const only = argv[1]
 fs.mkdirSync(out, { recursive: true })
 const server = await preview({
   preview: { port: 5231, strictPort: true, proxy: { '/api': { target: 'https://mn-ccore-lab.pages.dev', changeOrigin: true, secure: true } } },
@@ -27,6 +31,12 @@ for (const [name, url] of Object.entries(pages)) {
     const ctx = await browser.newContext({ viewport: { width: w, height: w === 1440 ? 900 : 812 }, reducedMotion: 'reduce' })
     await ctx.addInitScript(t => localStorage.setItem('mn-ccore-theme', t), theme)
     const p = await ctx.newPage()
+    if (mockGrants) {
+      await p.route('**/api/grants', (r) => r.fulfill({ json: { data: [{
+        id: 'prd_mock_award', venue: 'NHLBI K23', bucket: 'active', pi: 'nick-ingraham', pi_name: 'Nick Ingraham',
+        project_title: 'K23: Identifying Areas to Improve ICU Outcomes through Provider Variation',
+      }], count: 1 } }))
+    }
     p.on('pageerror', e => console.log('PAGEERROR', name, e.message.slice(0, 200)))
     await p.goto(base + url, { waitUntil: 'load', timeout: 60000 }).catch(e => console.log('goto', name, e.message.slice(0, 80)))
     // a canvas page never goes idle: wait for the API calls, but only so long

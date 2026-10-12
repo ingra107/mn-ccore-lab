@@ -16,9 +16,6 @@
     "surface": 4,
     "box": 5
   },
-  "src/components/CLIFMap.tsx": {
-    "uppercase": 1
-  },
   "src/components/CalendarFeedsPanel.tsx": {
     "surface": 4,
     "box": 5
@@ -72,9 +69,6 @@
   "src/components/InsightPanel.tsx": {
     "box": 2
   },
-  "src/components/JoinSteps.tsx": {
-    "surface": 1
-  },
   "src/components/KeyLinksEditor.tsx": {
     "box": 3
   },
@@ -127,9 +121,6 @@
   "src/components/PublicationCard.tsx": {
     "box": 1
   },
-  "src/components/PublicationFilters.tsx": {
-    "uppercase": 1
-  },
   "src/components/PublicationLibrary.tsx": {
     "uppercase": 1,
     "box": 1
@@ -154,9 +145,6 @@
   },
   "src/components/RequireAuth.tsx": {
     "uppercase": 1
-  },
-  "src/components/ResearchImpact.tsx": {
-    "uppercase": 2
   },
   "src/components/RevisionTracker.tsx": {
     "uppercase": 1,
@@ -186,9 +174,6 @@
   },
   "src/components/SubmissionTimeline.tsx": {
     "box": 4
-  },
-  "src/components/UpcomingMeetingBanner.tsx": {
-    "uppercase": 1
   },
   "src/components/WelcomeBanner.tsx": {
     "surface": 1
@@ -253,9 +238,6 @@
     "uppercase": 1,
     "surface": 19
   },
-  "src/pages/Contact.tsx": {
-    "box": 1
-  },
   "src/pages/Dashboard.tsx": {
     "surface": 2,
     "box": 4
@@ -264,10 +246,6 @@
     "uppercase": 2,
     "surface": 1,
     "box": 6
-  },
-  "src/pages/Home.tsx": {
-    "uppercase": 5,
-    "box": 1
   },
   "src/pages/MeetingPrep.tsx": {
     "box": 1
@@ -296,11 +274,6 @@
   },
   "src/pages/Projects.tsx": {
     "surface": 6,
-    "box": 1
-  },
-  "src/pages/Publications.tsx": {
-    "uppercase": 5,
-    "surface": 1,
     "box": 1
   },
   "src/pages/Pulse.tsx": {

@@ -7,8 +7,16 @@
  * person is one row of directors, seniorMentors, facultyCollaborators or
  * researchTeam, counted once by slug. Home, /team and the page meta all read
  * `rosterCount`.
+ *
+ * A person can stand in two GROUPS and still be one person. Emma Bromley is
+ * research staff (a research coordinator) and a mentee (she is applying to PhD
+ * programs): Nick, 2026-10-12, "it's okay to put her as a mentee as well". She
+ * is listed under Research staff by role and under Fellows and students because
+ * she is in data/mentees.ts. `rosterPeople` and `rosterCount` count her once.
+ * Staff who are NOT mentees (Casey Eddington, Steven Arriaza) stay staff only.
  */
 import { directors, seniorMentors, facultyCollaborators, researchTeam } from '../data/team'
+import { mentees } from '../data/mentees'
 import type { TeamMember } from '../data/types'
 
 export type RosterGroupId = 'directors' | 'mentors' | 'faculty' | 'trainees' | 'staff'
@@ -41,6 +49,7 @@ export interface RosterSource {
 
 export function buildRoster(
   src: RosterSource = { directors, seniorMentors, facultyCollaborators, researchTeam },
+  menteeSlugs: ReadonlySet<string> = new Set(mentees.map((m) => m.slug)),
 ): RosterGroup[] {
   const seen = new Set<string>()
   const once = (list: TeamMember[]) =>
@@ -58,12 +67,13 @@ export function buildRoster(
     { id: 'directors', label: LABELS.directors, members: dirs },
     { id: 'mentors', label: LABELS.mentors, members: mentors },
     { id: 'faculty', label: LABELS.faculty, members: faculty },
-    { id: 'trainees', label: LABELS.trainees, members: rest.filter((m) => isTraineeRole(m.role)) },
+    { id: 'trainees', label: LABELS.trainees, members: rest.filter((m) => isTraineeRole(m.role) || (!!m.slug && menteeSlugs.has(m.slug))) },
     { id: 'staff', label: LABELS.staff, members: rest.filter((m) => !isTraineeRole(m.role)) },
   ]
   return groups.filter((g) => g.members.length > 0)
 }
 
 export const ROSTER: RosterGroup[] = buildRoster()
-export const rosterPeople: TeamMember[] = ROSTER.flatMap((g) => g.members)
+/** Every person once, however many groups they stand in. */
+export const rosterPeople: TeamMember[] = [...new Map(ROSTER.flatMap((g) => g.members).map((m) => [m.slug ?? m.name, m])).values()]
 export const rosterCount: number = rosterPeople.length
