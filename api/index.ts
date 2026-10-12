@@ -1153,7 +1153,7 @@ defineRoute({
     // /pulse grant scene. Titles stay private: proposals in preparation are listed here too.
     // `bucket` is the server-derived active/proposed/ended label every page reads;
     // venue carries agency + mechanism ("NHLBI K23"). Rows are grant products (routes/grants.ts).
-    data: [{ id: true, venue: true, bucket: true, period_start: true, period_end: true }],
+    data: [{ id: true, venue: true, bucket: true }],
   },
   handler: (c) => handleGrantsTimeline(E(c)),
 });
@@ -1163,7 +1163,7 @@ defineRoute({
   auth: 'public',
   anonShape: {
     // Home counts active grants from `bucket`.
-    data: [{ id: true, venue: true, bucket: true, period_start: true, period_end: true }],
+    data: [{ id: true, venue: true, bucket: true }],
     count: true,
   },
   handler: (c) => handleGetGrants(E(c)),

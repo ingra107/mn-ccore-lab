@@ -144,6 +144,23 @@ describe("POST /api/projects/:slug/products action 'terms'", () => {
   })
 })
 
+describe('dates on the calendar, milestones on grant kinds (cold review minors 2 and 4)', () => {
+  const post = (body: Record<string, unknown>) => call('/api/projects/k23/products', PI, body)
+
+  it('a date that is not on the calendar is a 400 in words, nothing written', async () => {
+    const r = await post({ action: 'terms', product_id: AWARD, fields: { period_end: '2026-02-30' } })
+    expect(r).toMatchObject({ status: 400, body: { error: '2026-02-30 is not a date on the calendar.' } })
+    expect(rows('SELECT period_end FROM products WHERE id = ?', AWARD)[0].period_end).toBe('2027-11-30')
+    expect((await post({ action: 'milestone', product_id: AWARD, title: 'x', due_date: '2026-13-01' })).status).toBe(400)
+  })
+
+  it('a post-award milestone goes on a grant kind only', async () => {
+    const home = rows("SELECT id FROM products WHERE project_id = ? AND kind = 'manuscript'", K23P)[0].id as string
+    const r = await post({ action: 'milestone', product_id: home, title: 'x', due_date: '2026-09-15' })
+    expect(r).toMatchObject({ status: 400, body: { error: 'A post-award milestone goes on a grant application, award or honor.' } })
+  })
+})
+
 describe('termsRefusal says what the v128 CHECKs refuse, and nothing stricter', () => {
   it.each([
     ['manuscript', { period_start: '2027-01-01' }, 'Only a grant application or an award has a start date.'],

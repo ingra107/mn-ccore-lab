@@ -241,8 +241,8 @@ below; OVERLAP items are noted against existing T2/T4 entries (codex added concr
 
 ## T1 — Design-handoff leftovers
 
-- **DH-1** ⏳ seed TEMPLATE shipped (`scripts/seed-grant-milestones.sql`, `7c222e65`); table + UI
-  already exist. Remaining: Nick supplies real grant IDs/dates, then apply the SQL to prod D1.
+- **DH-1** superseded 2026-10-12: grant milestones are milestone tasks on a grant product (Grants
+  page, Post-Award tab); the `grant_milestones` seed template is archived in `Archive/2026-10-12-legacy-grants/`.
 - **DH-2** ✅ DROPPED 2026-05-22 — verified generic `public/manifest.webmanifest` exists; no Pulse-
   specific kiosk manifest needed.
 

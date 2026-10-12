@@ -175,14 +175,12 @@ describe('anonymous reads (REQUIRE_AUTH=1)', () => {
     expect(Object.keys(health).sort()).toEqual(['failures', 'ok', 'timestamp'])
     const me = JSON.parse((await get('/api/auth/me')).text)
     expect(me).toEqual({ authenticated: false })
-    // Grants: the stage, names and project are private; the derived bucket,
-    // venue and dates are public (an application under review -> proposed).
+    // Grants: the stage, names, project and dates are private; the derived
+    // bucket and venue are public (an application under review -> proposed).
+    // No anonymous screen draws a date (Pulse shows venue + bucket).
     for (const path of ['/api/grants', '/api/grants/timeline']) {
       const grants = JSON.parse((await get(path)).text)
-      expect(grants.data).toEqual([{
-        id: 'prd_01KXANON0GRANT0000000000G1', venue: 'NIH R01', bucket: 'proposed',
-        period_start: '2027-07-01', period_end: null,
-      }])
+      expect(grants.data).toEqual([{ id: 'prd_01KXANON0GRANT0000000000G1', venue: 'NIH R01', bucket: 'proposed' }])
     }
   })
 

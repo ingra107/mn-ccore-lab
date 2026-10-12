@@ -81,7 +81,7 @@ export default function GrantGantt({ rows, today, onMove }: {
         <span><i className="gg-key gg-key-award" /> Award</span>
         <span><i className="gg-key gg-key-hyp" /> Proposed (hypothetical length)</span>
         <span><i className="gg-key-ms">◆</i> Milestone</span>
-        <span className="gg-hint">Drag a bar, or focus it and use the arrow keys, to move its dates.</span>
+        <span className="gg-hint">Drag a bar to move its dates, or focus it and use the arrow keys; Enter or Tab saves, Escape cancels.</span>
       </div>
       {unplotted > 0 && <p className="gg-note">{unplotted} {unplotted === 1 ? 'grant has' : 'grants have'} no start date yet and {unplotted === 1 ? 'is' : 'are'} not plotted.</p>}
       <style>{CSS}</style>
@@ -120,7 +120,7 @@ function GanttRow({ row, bar, pct, dayPerPx, today, onMove }: {
           className={`gg-bar${bar.hypothetical ? ' is-hyp' : ''}${offset ? ' is-moving' : ''}`}
           data-testid={`gantt-bar-${row.id}`}
           style={{ left: pct(start), width: `calc(${pct(end)} - ${pct(start)})` }}
-          aria-label={`${describe}. Arrow keys move it a week, Shift with an arrow a month, Enter saves, Escape cancels.`}
+          aria-label={`${describe}. Arrow keys move it a week, Shift with an arrow a month, Enter or Tab saves, Escape cancels.`}
           title={describe}
           onPointerDown={(e) => {
             if (e.button !== 0) return

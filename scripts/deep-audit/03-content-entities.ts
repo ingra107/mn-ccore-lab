@@ -68,8 +68,10 @@ async function main() {
     }
 
     // ═══════════════════ GRANTS (read-only on Hub) ═══════════════════
-    section(s, '3.C  Grant endpoint responds (no POST /api/grants by design)')
-    const existingGrants = await apiGet<Array<{ id: string; status: string }>>(s, '/api/grants')
+    // Grants are products since 2026-10-12 (api/routes/grants.ts); writes go
+    // through POST /api/projects/:slug/products, so /api/grants stays read-only.
+    section(s, '3.C  Grant endpoint responds (grant products; no POST /api/grants by design)')
+    const existingGrants = await apiGet<Array<{ id: string; bucket: string }>>(s, '/api/grants')
     if (!existingGrants) {
       bug(s, 'GRANT-READ-FAIL', 'P1', '3.C GET /api/grants', 'null', 'array (possibly empty)')
     } else {

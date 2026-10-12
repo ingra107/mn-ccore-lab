@@ -9,7 +9,7 @@
 // GET /api/grants/timeline   the same rows, each with its milestones (Gantt)
 //
 // Both are public GETs: the /pulse kiosk and the public home read them through
-// the anonShape (id, venue, bucket, dates). Which rows come back is the
+// the anonShape (id, venue, bucket; no dates, no names). Which rows come back is the
 // caller's handle (table-scope byProject on products): a member gets the
 // projects they are on, an anonymous reader the non-PB projects.
 //
@@ -19,10 +19,9 @@
 
 import type { Env } from '../types';
 import { json } from '../helpers';
-import { PRODUCT_LIST_SQL, kindsWithLadders } from './products';
+import { PRODUCT_LIST_SQL, kindsWithLadders, GRANT_KINDS } from './products';
 
-/** The product kinds the Grants page lists. */
-export const GRANT_KINDS = ['grant_application', 'award', 'honor'] as const;
+export { GRANT_KINDS };
 const KIND_IN = `(${GRANT_KINDS.map((k) => `'${k}'`).join(', ')})`;
 
 /**

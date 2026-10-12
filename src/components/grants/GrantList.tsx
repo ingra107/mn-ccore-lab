@@ -4,6 +4,7 @@ import { PATHS } from '../../constants/paths'
 import { ProductLadder } from '../project/ProductStageCell'
 import type { ProductKind, ProductRow } from '../../lib/products'
 import { formatUsd, grantName, type GrantProduct } from '../../lib/grants'
+import { displayName } from '../../lib/nameUtils'
 import type { GrantTermFields } from '../../hooks/useGrantProducts'
 
 // The Grants page's list: one row per grant product (an R03's A0 and A1 are
@@ -38,7 +39,7 @@ export default function GrantList({ rows, kinds, onEdit }: {
         <div role="row" className="gl-row" key={g.id} data-testid={`grant-row-${g.id}`} data-bucket={g.bucket}>
           <span role="cell" className="gl-name">
             <Link to={PATHS.project(g.project_slug)}>{grantName(g)}</Link>
-            <span className="gl-sub">{g.kind_label}{g.pi ? ` · ${g.pi}` : ''}</span>
+            <span className="gl-sub">{g.kind_label}{g.pi ? ` · ${displayName(g.pi, 'short')}` : ''}</span>
           </span>
           <span role="cell">
             <TextCell
@@ -120,16 +121,28 @@ function TextCell({ label, value, display, placeholder, testId, inputMode, onSav
   )
 }
 
+/** A date saves when you leave the field or press Enter, never per keystroke:
+ *  a native date input fires change for each typed year digit (0002, 0020...),
+ *  and each of those would be a write and an undo toast. Escape puts it back. */
 function DateCell({ label, value, hint, testId, onSave }: {
   label: string; value: string | null; hint?: string; testId: string; onSave: (v: string | null) => void
 }) {
+  const [draft, setDraft] = useState(value ?? '')
+  const [shown, setShown] = useState(value)
+  if (shown !== value) { setShown(value); setDraft(value ?? '') }
+  const commit = () => {
+    const v = draft || null
+    if (v !== value) onSave(v)
+  }
   return (
     <span className="gl-date">
       <input
-        type="date" className="gl-input gl-date-input" aria-label={label} value={value ?? ''} data-testid={testId}
-        onChange={(e) => {
-          const v = e.target.value || null
-          if (v !== value) onSave(v)
+        type="date" className="gl-input gl-date-input" aria-label={label} value={draft} data-testid={testId}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); commit() }
+          else if (e.key === 'Escape') setDraft(value ?? '')
         }}
       />
       {hint && value && <span className="gl-hint">{hint}</span>}

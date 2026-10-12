@@ -241,6 +241,7 @@ export async function handleProjectProductWrite(
         patch[k] = String(v).trim().slice(0, 120) || null;
       } else {
         if (typeof v !== 'string' || !ISO_DATE.test(v)) return error('Dates are YYYY-MM-DD.', 400);
+        if (!isCalendarDate(v)) return error(`${v} is not a date on the calendar.`, 400);
         patch[k] = v;
       }
     }
@@ -268,12 +269,16 @@ export async function handleProjectProductWrite(
     // hard one. v124's trigger refuses a product from another project.
     const product = await ownProduct(body.product_id);
     if (!product) return error('Product not found in this project', 404);
+    if (!(GRANT_KINDS as readonly string[]).includes(product.kind)) {
+      return error('A post-award milestone goes on a grant application, award or honor.', 400);
+    }
     const title = typeof body.title === 'string' ? body.title.trim().slice(0, 200) : '';
     if (!title) return error('A milestone needs a title.', 400);
     const due = body.due_date ?? null;
     const hard = body.deadline ?? null;
     for (const d of [due, hard]) {
       if (d !== null && (typeof d !== 'string' || !ISO_DATE.test(d))) return error('Dates are YYYY-MM-DD.', 400);
+      if (d !== null && !isCalendarDate(d)) return error(`${d} is not a date on the calendar.`, 400);
     }
     if (!due && !hard) return error('A milestone needs a date.', 400);
     recordId = generateId('task');
@@ -340,6 +345,20 @@ export async function handleProjectProductWrite(
 /** What the Grants page may set through the member route. */
 const TERM_FIELDS = new Set(['venue', 'due_date', 'deadline', 'period_start', 'period_end', 'amount_usd']);
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** A real calendar day in YYYY-MM-DD: 2026-02-30 and 2026-13-01 are not.
+ *  schema-v128's CHECK refuses them too (date(x) = x); this says so in words. */
+export function isCalendarDate(v: unknown): v is string {
+  if (typeof v !== 'string' || !ISO_DATE.test(v)) return false
+  const [y, m, d] = v.split('-').map(Number)
+  const t = new Date(Date.UTC(y, m - 1, d))
+  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d
+}
+
+/** The product kinds the Grants page lists, and the only ones a post-award
+ *  milestone may sit on: a milestone of a manuscript or an abstract is a
+ *  plain task with a date, not this page's milestone. */
+export const GRANT_KINDS = ['grant_application', 'award', 'honor'] as const;
 
 /**
  * The words for a term the schema would refuse (schema-v128's CHECKs). The

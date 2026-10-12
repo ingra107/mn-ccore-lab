@@ -240,7 +240,10 @@ async function main() {
       try {
         const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as Array<{ name: string }>
         const tableNames = new Set(tables.map((t) => t.name))
-        for (const t of ['ideas', 'decisions', 'hub_decisions', 'grants', 'lab_questions']) {
+        // 'grants' left this list 2026-10-12: a grant is a product now, and
+        // products DO sync to brain.db (mig 144/146). The legacy grants table
+        // retires in phase 2.
+        for (const t of ['ideas', 'decisions', 'hub_decisions', 'lab_questions']) {
           if (tableNames.has(t)) log(s, `  15.G brain.db has table '${t}'`)
           else log(s, `  15.G brain.db missing table '${t}' (Hub-only feature)`)
         }
