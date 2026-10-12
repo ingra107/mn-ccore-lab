@@ -4,6 +4,7 @@ import { useUndoToast } from '../components/UndoToast'
 import { suggestPaperLink } from './mutations/useProjectMutations'
 import {
   addProduct,
+  publishedAPaper,
   setProductHome,
   setProductStage,
   type NewProductInput,
@@ -115,7 +116,7 @@ export function useSetProductStage() {
       if (v.undo) return
       // #129: a manuscript reaching its terminal rung (Published) is the paper
       // coming out, so offer to link the matching publication.
-      if (written.kind === 'manuscript' && written.stage_is_terminal === 1) suggestPaperLink(qc, showInfo, v.slug)
+      if (publishedAPaper(written)) suggestPaperLink(qc, showInfo, v.slug)
       showUndo(`${v.productName} → ${written.stage_label}`, () =>
         m.mutate({
           slug: v.slug, productId: v.productId, stage: v.seen.stage, label: v.seen.label, productName: v.productName,

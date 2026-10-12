@@ -8,6 +8,20 @@
 import { describe, it, expect, vi } from 'vitest'
 import { QueryClient } from '@tanstack/react-query'
 import { suggestPaperLink } from '../hooks/mutations/useProjectMutations'
+import { publishedAPaper } from '../lib/products'
+
+describe('publishedAPaper (the useSetProductStage condition)', () => {
+  it('fires for a manuscript on its terminal rung only', () => {
+    expect(publishedAPaper({ kind: 'manuscript', stage_is_terminal: 1 })).toBe(true)
+    expect(publishedAPaper({ kind: 'manuscript', stage_is_terminal: 0 })).toBe(false)
+  })
+  it('never fires for another kind, terminal or not', () => {
+    for (const kind of ['abstract', 'grant_application', 'award', 'honor', 'trial_ops', 'infrastructure']) {
+      expect(publishedAPaper({ kind, stage_is_terminal: 1 }), kind).toBe(false)
+      expect(publishedAPaper({ kind, stage_is_terminal: 0 }), kind).toBe(false)
+    }
+  })
+})
 
 function client(linked: boolean) {
   const qc = new QueryClient()

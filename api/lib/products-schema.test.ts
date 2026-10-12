@@ -1,7 +1,7 @@
 // schema-v124 (projects hold products): every wrong state the migration claims
 // to refuse, attempted against the schema replayed from the real migration
 // chain (prodSchemaDb, FKs on as D1). The wrangler-local twin of these checks,
-// plus the tasks-rebuild cascade probe, is scripts/probe-v124-products.ts.
+// plus the tasks-rebuild cascade probe, is Archive/2026-10-12-v130-retired-seedless-scripts/probe-v124-products.ts (archived 2026-10-12: v130 refuses its seedless project insert).
 //
 // Decision: PB Context/Decisions/2026-10-11-projects-hold-products.md.
 

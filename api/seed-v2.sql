@@ -2,8 +2,8 @@
 -- Run: bash scripts/wrangler-d1 d1 execute mnccore-lab --remote --file=api/seed-v2.sql
 --
 -- DEPRECATES (backlog #742, 2026-07-16): this file is NOT wired to any
--- package.json script (the live seed path is `npm run seed` ->
--- scripts/seed-d1.ts / `npm run db:seed` -> scripts/seed.sql). It is
+-- package.json script (the old seed path, `npm run seed` ->
+-- scripts/seed-d1.ts / `npm run db:seed` -> scripts/seed.sql, was deleted 2026-10-12). It is
 -- referenced only in comments of api/schema-v6.sql, api/schema-v97-
 -- completed-at-repair.sql, and api/schema-v99-drop-action-items.sql as
 -- historical context, never as an executable dependency. Recommend full

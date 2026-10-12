@@ -144,6 +144,14 @@ export interface WrittenProduct {
   is_home: number
 }
 
+/** #129: a stage write that published a paper -- a MANUSCRIPT product landing
+ *  on its ladder's terminal rung. The one condition useSetProductStage uses to
+ *  offer "Is this the paper?"; any other kind's last rung (Funded, Presented,
+ *  Closed) is not a paper. */
+export function publishedAPaper(w: Pick<WrittenProduct, 'kind' | 'stage_is_terminal'>): boolean {
+  return w.kind === 'manuscript' && w.stage_is_terminal === 1
+}
+
 async function write(slug: string, body: Record<string, unknown>): Promise<WrittenProduct> {
   const resp = (await fetchApi<unknown>(`/api/projects/${encodeURIComponent(slug)}/products`, {
     method: 'POST',

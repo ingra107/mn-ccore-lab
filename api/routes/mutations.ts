@@ -1236,7 +1236,7 @@ async function decideAndCommitUpdate(
  * belongs to one project (schema-v124 trg_tasks_product_project_upd refuses a
  * task whose product is not in its project, which would abort the whole
  * delete batch). Bind: the project id. Exported for
- * scripts/probe-v124-products.ts, which runs this exact text on local D1.
+ * Archive/2026-10-12-v130-retired-seedless-scripts/probe-v124-products.ts (archived 2026-10-12), which ran this exact text on local D1.
  */
 export function orphanProjectTasksSql(): string {
   return "UPDATE tasks SET project_id = NULL, product_id = NULL, updated_at = datetime('now') WHERE project_id = ? AND deleted_at IS NULL";
