@@ -45,6 +45,9 @@ function project(id: string) {
   insertRow(db, 'projects', { id, slug: id.replace('proj_', ''), title: id, category: 'MNCCORE', status: 'active', stage: 'writing' })
   // Visibility is membership (api/lib/viewer-db.ts), the PI's included.
   insertRow(db, 'project_members', { project_id: id, member_slug: 'nick-ingraham', added_by: 'nick-ingraham' })
+  // A short test id is not a ULID, so v125 gave the home a random prd_<hex>;
+  // name it after the project so the cases below read plainly.
+  db.prepare('UPDATE products SET id = ? WHERE project_id = ?').run(id.replace('proj_', 'prd_'), id)
 }
 
 /** A project inserted before schema-v125 existed: no home product. */
@@ -157,7 +160,12 @@ describe('step 5.2: moving a task to another project moves or clears its product
     expect(task('task_on_one')).toMatchObject({ project_id: 'proj_two', product_id: null })
   })
 
-  it('PB: a tombstoned home does not count; with one live product left, the task takes it', async () => {
+  it('PB: a home handed over and then tombstoned does not count; the task takes the new home', async () => {
+    // v125: a live home cannot be tombstoned while other products are live;
+    // marking another home first demotes it, then it can go.
+    expect(() => db.prepare("UPDATE products SET deleted_at = datetime('now') WHERE id = 'prd_umb'").run())
+      .toThrow(/product_home_live/)
+    db.prepare("UPDATE products SET is_home = 1 WHERE id = 'prd_umb_paper'").run()
     db.prepare("UPDATE products SET deleted_at = datetime('now') WHERE id = 'prd_umb'").run()
     const r = await pb('tasks', 'task_on_one', 'update', { project_id: 'proj_umb' })
     expect(r.status, r.reason).toBe('accepted')

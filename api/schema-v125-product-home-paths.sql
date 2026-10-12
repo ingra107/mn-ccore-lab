@@ -20,6 +20,13 @@
 --      products" (Nick, 2026-10-11) is then true at insert, and v124's
 --      keep_one_live triggers keep it true on delete. Level 1 at the arbiter:
 --      no INSERT INTO projects completes without it.
+--      trg_projects_home_product_restore does the same when a deleted project
+--      is restored with no live product.
+--   1b. trg_products_home_handoff / trg_products_home_keep_live: marking a
+--      product home demotes the old home in the same statement, and a live
+--      home of a live project cannot be tombstoned while other products are
+--      live. Clearing is_home 1 -> 0 directly stays writable (Level 2: PB
+--      invariant I68 reports a live project with no live home).
 --   2. trg_tasks_home_product_ins / _upd: a live task on a project that has a
 --      home product carries it whenever it is inserted, moved, restored, or
 --      has its product cleared -- unless the writer named a product of that
@@ -41,11 +48,14 @@
 -- product-less (Nick, 2026-10-11: "Leave them blank").
 --
 -- THE NEW PROJECT'S HOME PRODUCT
---   id    = 'prd_' + the project's ULID (proj_<ULID> -> prd_<ULID>). One
---           project has at most one auto-made home, so the id is unique, is a
---           valid prd_<26-char ULID> (PB ids.PK_PREFIXES / invariant I1), and
---           is computable by any writer without a round trip: PB or the Hub UI
---           can patch its kind/stage in the same batch as the project insert.
+--   id    = for a proj_<26-char Crockford ULID> project (every live prod project
+--           on 2026-10-11, and every id PB and Hub generateId('project') mint):
+--           'prd_' + that ULID, so any writer can compute it without a round
+--           trip and patch its kind/stage in the same batch as the project
+--           insert. For any other project id (the PUT upsert accepts a legacy
+--           32-char id; tests use short ids) a fresh 'prd_' + 32 lowercase
+--           hex, the Hub's own generateId() form. Both forms pass PB invariant
+--           I1, so no id this trigger makes can be non-canonical.
 --   kind  = manuscript, stage = the project's stage when it is on the
 --           manuscript ladder (projects.stage is that ladder today, PB
 --           PROJECT_STAGE), else 'idea'. This is exactly today's behaviour
@@ -79,6 +89,9 @@
 --   scripts/wrangler-d1 d1 execute mnccore-lab      --remote --file=api/schema-v125-product-home-paths.sql
 -- ROLLBACK (no data change; products made by trigger 1 stay, they are valid rows):
 --   DROP TRIGGER IF EXISTS trg_projects_home_product_ins;
+--   DROP TRIGGER IF EXISTS trg_projects_home_product_restore;
+--   DROP TRIGGER IF EXISTS trg_products_home_handoff;
+--   DROP TRIGGER IF EXISTS trg_products_home_keep_live;
 --   DROP TRIGGER IF EXISTS trg_tasks_home_product_ins;
 --   DROP TRIGGER IF EXISTS trg_tasks_home_product_upd;
 --   DROP TRIGGER IF EXISTS trg_products_home_attach_ins;
@@ -98,7 +111,8 @@ WHEN NEW.deleted_at IS NULL
 BEGIN
   INSERT INTO products (id, project_id, kind, stage, is_home, stage_entered_at)
   SELECT
-    'prd_' || CASE WHEN NEW.id LIKE 'proj\_%' ESCAPE '\' THEN substr(NEW.id, 6) ELSE NEW.id END,
+    CASE WHEN length(NEW.id) = 31 AND NEW.id LIKE 'proj\_%' ESCAPE '\' AND substr(NEW.id, 6) NOT GLOB '*[^0-9A-HJKMNP-TV-Z]*'
+         THEN 'prd_' || substr(NEW.id, 6) ELSE 'prd_' || lower(hex(randomblob(16))) END,
     NEW.id,
     'manuscript',
     CASE WHEN s.stage IS NOT NULL THEN s.stage ELSE 'idea' END,
@@ -106,6 +120,66 @@ BEGIN
     CASE WHEN s.stage IS NOT NULL THEN COALESCE(NEW.stage_entered_at, datetime('now')) ELSE datetime('now') END
   FROM (SELECT (SELECT st.stage FROM product_stages st
                  WHERE st.kind = 'manuscript' AND st.stage = NEW.stage AND st.deleted_at IS NULL) AS stage) s;
+END;
+
+-- A project restored from deleted gets its home back: its most recent
+-- tombstoned home is un-tombstoned; else its derived prd_<ULID> row (made by
+-- this trigger or trigger 1 earlier) is restored as the home; else a new home
+-- is made exactly as trigger 1 makes one. Each step runs only while the
+-- project still has no live product (statements see the earlier ones' rows).
+-- The un-tombstone fires trg_products_home_attach_upd, so the project's
+-- product-less live tasks attach in the same statement.
+DROP TRIGGER IF EXISTS trg_projects_home_product_restore;
+CREATE TRIGGER trg_projects_home_product_restore AFTER UPDATE OF deleted_at ON projects
+FOR EACH ROW
+WHEN OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NULL
+ AND NOT EXISTS (SELECT 1 FROM products p WHERE p.project_id = NEW.id AND p.deleted_at IS NULL)
+BEGIN
+  UPDATE products SET deleted_at = NULL, updated_at = datetime('now')
+   WHERE id = (SELECT h.id FROM products h WHERE h.project_id = NEW.id AND h.is_home = 1
+                ORDER BY h.deleted_at DESC, h.id DESC LIMIT 1);
+  UPDATE products SET deleted_at = NULL, is_home = 1, updated_at = datetime('now')
+   WHERE id = 'prd_' || substr(NEW.id, 6) AND project_id = NEW.id
+     AND NOT EXISTS (SELECT 1 FROM products p WHERE p.project_id = NEW.id AND p.deleted_at IS NULL);
+  INSERT INTO products (id, project_id, kind, stage, is_home, stage_entered_at)
+  SELECT
+    CASE WHEN length(NEW.id) = 31 AND NEW.id LIKE 'proj\_%' ESCAPE '\' AND substr(NEW.id, 6) NOT GLOB '*[^0-9A-HJKMNP-TV-Z]*'
+         THEN 'prd_' || substr(NEW.id, 6) ELSE 'prd_' || lower(hex(randomblob(16))) END,
+    NEW.id,
+    'manuscript',
+    CASE WHEN s.stage IS NOT NULL THEN s.stage ELSE 'idea' END,
+    1,
+    CASE WHEN s.stage IS NOT NULL THEN COALESCE(NEW.stage_entered_at, datetime('now')) ELSE datetime('now') END
+  FROM (SELECT (SELECT st.stage FROM product_stages st
+                 WHERE st.kind = 'manuscript' AND st.stage = NEW.stage AND st.deleted_at IS NULL) AS stage) s
+  WHERE NOT EXISTS (SELECT 1 FROM products p WHERE p.project_id = NEW.id AND p.deleted_at IS NULL)
+    AND NOT EXISTS (SELECT 1 FROM products x WHERE x.id = 'prd_' || substr(NEW.id, 6));
+END;
+
+-- ── 1b. a live project's home is never tombstoned out from under it ────────
+-- Marking another product home hands the marker over (the old home is
+-- demoted in the same statement, before the unique index sees two); a live
+-- home can then be tombstoned only once it is no longer the home. So a live
+-- project with 2+ products cannot become homeless by a tombstone. (Clearing
+-- is_home directly, 1 -> 0, is still writable; PB invariant I68 reports a
+-- live project with no live home.)
+DROP TRIGGER IF EXISTS trg_products_home_handoff;
+CREATE TRIGGER trg_products_home_handoff BEFORE UPDATE OF is_home ON products
+FOR EACH ROW
+WHEN NEW.is_home = 1 AND OLD.is_home = 0 AND NEW.deleted_at IS NULL
+BEGIN
+  UPDATE products SET is_home = 0, updated_at = datetime('now')
+   WHERE project_id = NEW.project_id AND id <> NEW.id AND is_home = 1 AND deleted_at IS NULL;
+END;
+
+DROP TRIGGER IF EXISTS trg_products_home_keep_live;
+CREATE TRIGGER trg_products_home_keep_live BEFORE UPDATE OF deleted_at ON products
+FOR EACH ROW
+WHEN OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL AND OLD.is_home = 1
+ AND EXISTS (SELECT 1 FROM projects pr WHERE pr.id = OLD.project_id AND pr.deleted_at IS NULL)
+ AND EXISTS (SELECT 1 FROM products p WHERE p.project_id = OLD.project_id AND p.id <> OLD.id AND p.deleted_at IS NULL)
+BEGIN
+  SELECT RAISE(ABORT, 'product_home_live: mark another product home before tombstoning this one');
 END;
 
 -- ── 2. a live task on a project carries the project's home product ─────────

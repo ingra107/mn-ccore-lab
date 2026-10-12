@@ -140,12 +140,13 @@ describe('v124 products: at most one live home product per project (Level 1, par
   it('defaults to not home', () => {
     expect(product(world(), 'prd_1', 'proj_A').is_home).toBe(0)
   })
-  it('refuses a second live home in one project, by insert and by update', () => {
+  it('refuses a second live home by insert; marking another home hands the marker over (v125)', () => {
     const db = world()
     product(db, 'prd_1', 'proj_A', 'trial_ops', 'start_up', { is_home: 1 })
     refuses(() => product(db, 'prd_2', 'proj_A', 'manuscript', 'writing', { is_home: 1 }), /UNIQUE constraint failed/)
     product(db, 'prd_3', 'proj_A')
-    refuses(() => db.prepare("UPDATE products SET is_home = 1 WHERE id = 'prd_3'").run(), /UNIQUE constraint failed/)
+    db.prepare("UPDATE products SET is_home = 1 WHERE id = 'prd_3'").run()
+    expect(db.prepare('SELECT id FROM products WHERE is_home = 1').all()).toEqual([{ id: 'prd_3' }])
   })
   it('a home in another project is fine', () => {
     const db = world()
@@ -153,10 +154,13 @@ describe('v124 products: at most one live home product per project (Level 1, par
     product(db, 'prd_2', 'proj_B', 'trial_ops', 'start_up', { is_home: 1 })
     expect(db.prepare('SELECT COUNT(*) AS n FROM products WHERE is_home = 1').get()).toEqual({ n: 2 })
   })
-  it('a tombstoned home does not block naming a new one', () => {
+  it('a live project\'s home cannot be tombstoned while others are live (v125); a tombstoned home does not block naming a new one', () => {
     const db = world()
     product(db, 'prd_1', 'proj_A', 'trial_ops', 'start_up', { is_home: 1 })
     product(db, 'prd_2', 'proj_A')
+    refuses(() => db.prepare("UPDATE products SET deleted_at = datetime('now') WHERE id = 'prd_1'").run(), /product_home_live/)
+    // Once the project is deleted the guard steps aside, as keep_one_live does.
+    db.prepare("UPDATE projects SET deleted_at = datetime('now'), status = 'deleted' WHERE id = 'proj_A'").run()
     db.prepare("UPDATE products SET deleted_at = datetime('now') WHERE id = 'prd_1'").run()
     db.prepare("UPDATE products SET is_home = 1 WHERE id = 'prd_2'").run()
     expect(db.prepare("SELECT is_home FROM products WHERE id = 'prd_2'").get()).toEqual({ is_home: 1 })

@@ -297,10 +297,49 @@ describe('read routes', () => {
 
 describe('the rule is the arbiter\'s, not a route\'s', () => {
   it('raw SQL (a wrangler --file repair) gets the same home product and task attach', () => {
-    db.prepare("INSERT INTO projects (id, slug, title, category, status, stage) VALUES ('proj_raw', 'raw', 'Raw', 'MNCCORE', 'active', 'submitted')").run()
-    db.prepare("INSERT INTO tasks (id, title, project_id, assignee, status) VALUES ('task_raw', 'Raw', 'proj_raw', 'nick-ingraham', 'todo')").run()
-    expect(liveProducts('proj_raw')).toMatchObject([{ id: 'prd_raw', stage: 'submitted', is_home: 1 }])
-    expect(productOf('task_raw')).toBe('prd_raw')
+    db.prepare(`INSERT INTO projects (id, slug, title, category, status, stage) VALUES ('proj_${ULID}', 'raw', 'Raw', 'MNCCORE', 'active', 'submitted')`).run()
+    db.prepare(`INSERT INTO tasks (id, title, project_id, assignee, status) VALUES ('task_raw', 'Raw', 'proj_${ULID}', 'nick-ingraham', 'todo')`).run()
+    expect(liveProducts(`proj_${ULID}`)).toMatchObject([{ id: `prd_${ULID}`, stage: 'submitted', is_home: 1 }])
+    expect(productOf('task_raw')).toBe(`prd_${ULID}`)
+  })
+
+  it('a project id that is not proj_<ULID> (the PUT upsert keeps a legacy 32-char id) gets prd_<32 hex>, never a non-canonical id', () => {
+    const legacy = 'a'.repeat(31) + 'b'
+    db.prepare(`INSERT INTO projects (id, slug, title, category, status, stage) VALUES ('${legacy}', 'leg', 'Leg', 'MNCCORE', 'active', 'idea')`).run()
+    const [p] = liveProducts(legacy)
+    expect(String(p.id)).toMatch(/^prd_[0-9a-f]{32}$/)
+  })
+
+  it('a restored project gets its home back: the tombstoned home returns and the restored tasks attach', () => {
+    db.prepare(`INSERT INTO projects (id, slug, title, category, status, stage) VALUES ('proj_${ULID}', 'r', 'R', 'MNCCORE', 'active', 'idea')`).run()
+    db.prepare(`UPDATE projects SET deleted_at = datetime('now'), status = 'deleted' WHERE id = 'proj_${ULID}'`).run()
+    db.prepare(`UPDATE products SET deleted_at = datetime('now') WHERE project_id = 'proj_${ULID}'`).run()
+    expect(liveProducts(`proj_${ULID}`)).toHaveLength(0)
+    db.prepare(`UPDATE projects SET deleted_at = NULL, status = 'active' WHERE id = 'proj_${ULID}'`).run()
+    expect(liveProducts(`proj_${ULID}`)).toMatchObject([{ id: `prd_${ULID}`, is_home: 1 }])
+  })
+
+  it('a restored project whose products were removed outright gets a new home', () => {
+    db.prepare(`INSERT INTO projects (id, slug, title, category, status, stage) VALUES ('proj_${ULID}', 'r', 'R', 'MNCCORE', 'active', 'writing')`).run()
+    db.prepare(`UPDATE projects SET deleted_at = datetime('now'), status = 'deleted' WHERE id = 'proj_${ULID}'`).run()
+    db.prepare(`DELETE FROM products WHERE project_id = 'proj_${ULID}'`).run()
+    db.prepare(`UPDATE projects SET deleted_at = NULL, status = 'active' WHERE id = 'proj_${ULID}'`).run()
+    expect(liveProducts(`proj_${ULID}`)).toMatchObject([{ id: `prd_${ULID}`, stage: 'writing', is_home: 1 }])
+  })
+
+  it('a live home cannot be tombstoned while other products are live; handing the home over first works, and its tasks follow', async () => {
+    await pb('projects', `proj_${ULID}`, 'insert', { title: 'P', slug: 'p', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    await pb('tasks', 'task_h', 'insert', { title: 'T', project_id: `proj_${ULID}`, assignee: 'nick-ingraham', status: 'todo', priority: 'medium' })
+    await pb('products', 'prd_next', 'insert', { project_id: `proj_${ULID}`, kind: 'trial_ops', stage: 'start_up' })
+    const refused = await pb('products', `prd_${ULID}`, 'delete')
+    expect(refused.status).toBe('error')
+    expect(refused.reason).toContain('product_home_live')
+    const hand = await pb('products', 'prd_next', 'update', { is_home: 1 })
+    expect(hand.status, hand.reason).toBe('accepted')
+    expect(row(`SELECT is_home FROM products WHERE id = 'prd_${ULID}'`)!.is_home).toBe(0)
+    const gone = await pb('products', `prd_${ULID}`, 'delete')
+    expect(gone.status, gone.reason).toBe('accepted')
+    expect(productOf('task_h')).toBe('prd_next')
   })
 
   it('every copy of the home rule in schema-v125 is the same text', () => {
