@@ -19,6 +19,7 @@
 // field on TodayPage supplies the box; .tk-compose textarea strips SmartCompose's
 // own. Every control (tools, command badge, Capture, send to home) sits in its
 // own row below the text, never over it.
+// "send to home" is a toggle chip in that row; Capture appears at its right.
 
 import { useCallback, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -235,21 +236,31 @@ export function MorningThoughtCompose() {
         // because the Today bar has no task/project context). Opting out keeps
         // SmartCompose's shared interception from stealing them first.
         ownLaunchRouting
+        hideKbdHint
+        // "send to home" queues @quickchat on Nick's home machine -- a control
+        // for the PI's own machines. A member has no home machine to send to.
+        // A chip in the toolbar row: nothing moves when Capture appears.
+        toolbarExtra={user.isPi ? (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={forceHome}
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => setForceHome(h => !h)}
+            title="Send this capture to your home machine"
+            data-testid="send-home"
+            style={{
+              display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 8px', fontSize: 10,
+              whiteSpace: 'nowrap', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', cursor: 'pointer',
+              border: forceHome ? '1px solid color-mix(in srgb, var(--job-accent) 45%, transparent)' : '1px solid var(--border-subtle)',
+              background: forceHome ? 'color-mix(in srgb, var(--job-accent) 12%, transparent)' : 'transparent',
+              color: forceHome ? 'var(--job-accent)' : 'var(--slate)',
+              fontWeight: forceHome ? 600 : 400,
+            }}
+          >send to home</button>
+        ) : undefined}
         uploadContext={{ type: 'daily_thought', id: todayKey(), entityType: 'task' }}
       />
-      {/* "send to home" queues @quickchat on Nick's home machine -- a control
-          for the PI's own machines. A member has no home machine to send to. */}
-      {user.isPi && (
-      <label className="flex items-center gap-1.5 justify-end text-xs cursor-pointer select-none mt-1" style={{ color: 'var(--sk-t3)' }}>
-        <input
-          type="checkbox"
-          checked={forceHome}
-          onChange={e => setForceHome(e.target.checked)}
-          style={{ accentColor: 'var(--job-accent)' }}
-        />
-        send to home
-      </label>
-      )}
     </>
   )
 }

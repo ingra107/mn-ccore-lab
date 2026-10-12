@@ -108,6 +108,9 @@ interface BaseProps {
    *  a new composer now fails LOUD (a launch with no project folder toasts
    *  "No project folder set") instead of silently posting a command as prose. */
   ownLaunchRouting?: boolean
+  /** Extra controls in the toolbar row, right after the built-in chips and
+   *  before the Post button (Today's "send to home" toggle). */
+  toolbarExtra?: React.ReactNode
 }
 
 interface TaskModeProps extends BaseProps {
@@ -149,6 +152,7 @@ export default function SmartCompose(props: SmartComposeProps) {
     showHermesToggle = false,
     launchContext,
     ownLaunchRouting = false,
+    toolbarExtra,
   } = props
 
   const [meLocked, setMeLocked] = useState(false)
@@ -475,7 +479,7 @@ export default function SmartCompose(props: SmartComposeProps) {
       )}
       {/* Slack-style action row — below the textarea, left = quiet icon-buttons, right = Post */}
       {showToolbar && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, position: 'relative', minHeight: 22 }}>
           {/* Attach */}
           {uploadContext && (
             <ToolbarBtn label="Attach file" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
@@ -564,6 +568,7 @@ export default function SmartCompose(props: SmartComposeProps) {
               ))}
             </div>
           )}
+          {toolbarExtra}
           {/* Spacer */}
           <span style={{ flex: 1 }} />
           {/* "Command recognized" badge (e.g. Quick Chat launch) */}
@@ -590,7 +595,9 @@ export default function SmartCompose(props: SmartComposeProps) {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 3,
-                padding: '4px 12px',
+                // Fixed 22px, the chip height: the row does not grow when Post appears.
+                height: 22,
+                padding: '0 12px',
                 fontSize: 11,
                 background: 'var(--job-accent-solid)',
                 color: 'var(--ink-bright, #fff)',
