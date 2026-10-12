@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { portalTitle } from '../../constants/pageLabels'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -30,39 +30,30 @@ import ActiveSubmissionsWidget from '../../components/ActiveSubmissionsWidget'
 import type { SleekSort } from '../../components/table/SleekRows'
 import { ManuscriptsList } from './ManuscriptsList'
 import EmptyState from '../../components/EmptyState'
+import { QueryErrorNote } from '../../components/QueryErrorNote'
+import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
+import ProductKindList from '../../components/project/ProductKindList'
 
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
-import { toApiStage, stageIndex } from '../../lib/stageNormalize'
+import { toApiStage } from '../../lib/stageNormalize'
+import { useAllProjectProducts, useSetProductStage } from '../../hooks/useProjectProducts'
+import { homeOf, kindsForManuscriptsTab, ladderFor, manuscriptsPageTabs, MANUSCRIPT_LADDER_FALLBACK, productLabel, productsOfKinds, type ProductRow } from '../../lib/products'
 import { PATHS } from '../../constants/paths'
 import { parseDbUtc } from '../../lib/time'
 import { parseDateOnlyOrTimestamp } from '../../lib/dateUtils'
 import { ICON_PROPS } from '../../lib/iconProps'
 
-// S4 (Nick, 2026-06-09): a manuscript = a project whose canonical stage is
-// >= writing (writing / submitted / revisions / accepted / published). The
-// old filter `p.status !== 'published' || p.stage === 'published'` was a
-// tautology — `status` is active/waiting_external/blocked/done, never
-// 'published' — so it admitted ALL projects. stageIndex() normalizes legacy
-// + API stage strings; writing is index 3 on the canonical ladder.
-const WRITING_STAGE_INDEX = stageIndex('writing')
-function isManuscriptStage(stage: string | null | undefined): boolean {
-  const idx = stageIndex(stage)
-  return idx >= 0 && idx >= WRITING_STAGE_INDEX
-}
-
-// Values are D1 lowercase canonical; labels are sentence case for display.
-const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
-const STAGE_LABELS: Record<typeof STAGES[number], string> = {
-  idea: 'Idea',
-  data_collection: 'Data collection',
-  analysis: 'Analysis',
-  writing: 'Writing',
-  review: 'Review',
-  revisions: 'Revisions',
-  published: 'Published',
-}
+// A manuscript row is a project whose HOME product (the live home, else its
+// only product) is a manuscript at stage writing or later (S4, Nick
+// 2026-06-09: writing / submitted / revisions / accepted / published). Its
+// stage, its days-in-stage and its edits are that product's (plan step 8):
+// the stage cell and the pipeline drag write the product through
+// POST /api/projects/:slug/products. The stage words and their order are the
+// manuscript ladder the Worker sends (GET /api/projects/products), so the page
+// holds no copy of them. A project with no product yet (before Backfill A)
+// shows its own project stage and cannot be edited here.
 // Status and group are words, not meanings: the edit menus list them in plain
 // ink (rules-ui-design 21, Nick 2026-10-11 -- green has no job, gold is "wants
 // you now", red is overdue).
@@ -72,8 +63,6 @@ const STATUS_OPTIONS = [
   { value: 'blocked', label: 'Blocked', color: 'var(--st-blocked)' },
   { value: 'done', label: 'Done', color: 'var(--st-done)' },
 ]
-const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
-
 
 function daysInStage(project: Project): number {
   const dateStr = project.stage_entered_at || project.updated_at || project.lastActivity
@@ -134,6 +123,18 @@ export default function ManuscriptsPage() {
       return out
     }, { replace: true })
   }
+  // Kind tabs (Nick 2026-10-12: "to have the option to just see abstracts and
+  // grants ... would be a simple view thing"). ?kind= so a tab can be linked;
+  // absent = manuscript, the page's natural default.
+  const kindParam = searchParams.get('kind') ?? 'manuscript'
+  const setKindTab = (next: string) => {
+    setSearchParams((prev) => {
+      const out = new URLSearchParams(prev)
+      if (next && next !== 'manuscript') out.set('kind', next)
+      else out.delete('kind')
+      return out
+    }, { replace: true })
+  }
   const [filterStalled, setFilterStalled] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   // null = stage order (with stage headers); a header click cycles asc -> desc -> cleared.
@@ -151,32 +152,109 @@ export default function ManuscriptsPage() {
   const { prefs: labPrefs } = useLabPrefs()
   const stalledThresholdDays = labPrefs.manuscriptsStaleDays
   const createProject = useCreateProject()
-  const { showUndo } = useUndoToast()
+  const { showUndo, showError } = useUndoToast()
   const inlineUpdate = useUpdateProjectFields()
+  const setProductStage = useSetProductStage()
+  const { data: productData, isLoading: productsLoading, isError: productsFailed, refetch: refetchProducts } = useAllProjectProducts()
+
+  // The manuscript ladder, from the Worker's kind data. If the product read
+  // failed, the fallback ladder keeps every project's own stage on screen.
+  const ladder = useMemo(() => {
+    const fromKinds = ladderFor(productData?.kinds ?? [], 'manuscript')
+    return fromKinds.length > 0 ? fromKinds : [...MANUSCRIPT_LADDER_FALLBACK]
+  }, [productData])
+  const STAGES = useMemo(() => ladder.map((s) => s.stage), [ladder])
+  const STAGE_LABELS = useMemo<Record<string, string>>(() => Object.fromEntries(ladder.map((s) => [s.stage, s.label])), [ladder])
+  const STAGE_ORDER = useMemo<Record<string, number>>(() => Object.fromEntries(ladder.map((s) => [s.stage, s.ordinal])), [ladder])
+  const writingOrdinal = ladder.find((s) => s.stage === 'writing')?.ordinal ?? Number.POSITIVE_INFINITY
+
+  // Each project as its manuscript row: the home product's stage and clock.
+  const { rows: msCandidates, homeBySlug } = useMemo(() => {
+    const homes = new Map<string, ProductRow>()
+    const out: Project[] = []
+    for (const p of projects) {
+      if (!productData) {
+        // Product read failed (or not back yet): each project's own stage.
+        out.push({ ...p, stage: p.stage ? toApiStage(p.stage) : p.stage })
+        continue
+      }
+      const products = productData.byProject[p.id ?? '']
+      const home = homeOf(products)
+      if (home) {
+        if (home.kind !== 'manuscript') continue
+        homes.set(p.slug, home)
+        out.push({ ...p, stage: home.stage, stage_entered_at: home.stage_entered_at ?? p.stage_entered_at })
+      } else if (!products || products.length === 0) {
+        // No product yet: the project's own stage, canonical, read-only here.
+        out.push({ ...p, stage: p.stage ? toApiStage(p.stage) : p.stage })
+      }
+      // 2+ products and no home: no single manuscript stage to show.
+    }
+    return { rows: out, homeBySlug: homes }
+  }, [projects, productData])
+  // This page's kinds are the writing ones (Nick 2026-10-12: "we can keep
+  // grants separate ... manuscripts page will have the abstract and such"):
+  // grant applications, awards and honors live on /portal/grants. A tab per
+  // page kind with at least one visible product, in the kinds' sort_order,
+  // with product_kinds' plural label; then All over those kinds, grouped.
+  // Manuscripts always shows: it is the page's default.
+  const kindTabs = useMemo(
+    () => manuscriptsPageTabs(productData?.kinds ?? [], productData?.byProject ?? {}),
+    [productData],
+  )
+  const kindTab = kindTabs.some((t) => t.value === kindParam) ? kindParam : 'manuscript'
+  // A ?kind= this page has no tab for (a grant kind, a typo, a kind with no
+  // products) is rewritten to the default once the kinds are known, so the
+  // address bar says what the page shows.
+  const kindParamRaw = searchParams.get('kind')
+  useEffect(() => {
+    if (!productData || kindParamRaw === null) return
+    if (!kindTabs.some((t) => t.value === kindParamRaw) || kindParamRaw === 'manuscript') {
+      setSearchParams((prev) => {
+        const out = new URLSearchParams(prev)
+        out.delete('kind')
+        return out
+      }, { replace: true })
+    }
+  }, [productData, kindParamRaw, kindTabs, setSearchParams])
+  const kindRows = useMemo(() => {
+    if (kindTab === 'manuscript' || !productData) return []
+    return productsOfKinds(productData.byProject, projects, kindsForManuscriptsTab(kindTab, productData.kinds))
+  }, [kindTab, productData, projects])
+  const kindLabel = kindTabs.find((t) => t.value === kindTab)?.label ?? ''
+  const isManuscriptRow = useCallback(
+    (p: Project) => (STAGE_ORDER[p.stage ?? ''] ?? -1) >= writingOrdinal,
+    [STAGE_ORDER, writingOrdinal],
+  )
 
   const handleFieldChange = (slug: string, field: string, value: unknown, prev: unknown) => {
     inlineUpdate.mutate({ slug, fields: { [field]: value } })
     showUndo(`${field} → ${value}`, () => inlineUpdate.mutate({ slug, fields: { [field]: prev } }))
   }
 
-  // S17: stage editing is instant + undo, identical to Projects.tsx and the
-  // pipeline drag path below. The UI 6-stage value MUST map through toApiStage()
-  // to the 7-value API canonical (Rule 35) — handleFieldChange passed the raw UI
-  // value, which the API 400s, surfacing as a silent optimistic revert. This
-  // single chokepoint removes that drift for the list views.
+  // One stage write for the list cell and the pipeline drag: the home
+  // product's stage, a compare-and-swap on what this screen shows; the undo
+  // toast appears once it lands (useSetProductStage).
   const handleStageChange = (slug: string, nextStage: string, prevStage: string | null | undefined) => {
     if (nextStage === prevStage) return
-    inlineUpdate.mutate({ slug, fields: { stage: toApiStage(nextStage) } })
-    showUndo(
-      `Stage → ${STAGE_LABELS[nextStage as typeof STAGES[number]] ?? nextStage}`,
-      () => inlineUpdate.mutate({ slug, fields: { stage: toApiStage(prevStage || 'idea') } }),
-    )
+    const home = homeBySlug.get(slug)
+    if (!home) {
+      showError(productsFailed
+        ? 'Stages are read-only until the products load; use retry above.'
+        : 'This project has no product yet; open the project to add one.')
+      return
+    }
+    setProductStage.mutate({
+      slug, productId: home.id, stage: nextStage, label: STAGE_LABELS[nextStage] ?? nextStage,
+      productName: productLabel(home),
+      seen: { seq: home.seq, stage: home.stage, label: home.stage_label },
+    })
   }
 
   const manuscripts = useMemo(() => {
     // S4: a manuscript is a project at stage >= writing. Earlier-stage
     // projects (idea / data collection / analysis) live only on Projects.
-    let filtered = projects.filter((p) => isManuscriptStage(p.stage))
+    let filtered = msCandidates.filter(isManuscriptRow)
     if (filterPI) filtered = filtered.filter((p) => p.pi === filterPI)
     if (filterCategory) filtered = filtered.filter((p) => p.category === filterCategory)
     if (filterStalled) filtered = filtered.filter((p) => p.stage !== 'published' && daysInStage(p) > stalledThresholdDays)
@@ -216,7 +294,7 @@ export default function ManuscriptsPage() {
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
     })
-  }, [projects, filterPI, filterCategory, filterStalled, sort, attentionFilter, attentionData, stalledThresholdDays])
+  }, [msCandidates, isManuscriptRow, STAGE_ORDER, filterPI, filterCategory, filterStalled, sort, attentionFilter, attentionData, stalledThresholdDays])
 
 
   const taskCounts = useMemo(() => {
@@ -235,10 +313,10 @@ export default function ManuscriptsPage() {
     for (const p of manuscripts) {
       const stage = p.stage || 'idea'
       if (map[stage]) map[stage].push(p)
-      else map['idea'].push(p)
+      else (map['idea'] ??= []).push(p)
     }
     return map
-  }, [manuscripts])
+  }, [manuscripts, STAGES])
 
   const activeCount = manuscripts.filter((p) => p.stage !== 'published').length
   const writingCount = manuscripts.filter((p) => p.stage === 'writing').length
@@ -246,8 +324,8 @@ export default function ManuscriptsPage() {
   // S4: stalled count scoped to the manuscript subset (stage >= writing, not
   // yet published), so the pill count matches the page's own taxonomy.
   const stalledCount = useMemo(() =>
-    projects.filter(p => isManuscriptStage(p.stage) && p.stage !== 'published' && daysInStage(p) > stalledThresholdDays).length
-  , [projects, stalledThresholdDays])
+    msCandidates.filter(p => isManuscriptRow(p) && p.stage !== 'published' && daysInStage(p) > stalledThresholdDays).length
+  , [msCandidates, isManuscriptRow, stalledThresholdDays])
 
   // M-14: derive PI options from data instead of hardcoding nick + nate.
   // New PIs (mentees taking over a manuscript, visiting faculty) auto-appear.
@@ -340,14 +418,14 @@ export default function ManuscriptsPage() {
             New Manuscript
           </button>
         }
-        views={[
+        views={kindTab !== 'manuscript' ? undefined : [
           { key: 'list', icon: <List {...ICON_PROPS} size={14} />, label: 'List' },
           { key: 'pipeline', icon: <GitBranch {...ICON_PROPS} size={14} />, label: 'Pipeline' },
           { key: 'trophy', icon: <BookOpen {...ICON_PROPS} size={14} />, label: 'Trophy' },
         ]}
         activeView={view}
         onViewChange={(v) => setView(v as 'list' | 'pipeline' | 'trophy')}
-        filters={
+        filters={kindTab !== 'manuscript' ? undefined : (
           <>
             <InlineSelect
               value={filterPI}
@@ -401,29 +479,43 @@ export default function ManuscriptsPage() {
               )}
             </button>
           </>
-        }
+        )}
         // The rows on screen, published included, so the header and the
         // footer's Total read one number (prod check 2026-10-10: 28 vs 31).
         // Trophy shows only the published ones, so it counts those.
-        controlsCount={view === 'trophy' ? manuscripts.length - activeCount : manuscripts.length}
-        controlsCountLabel={view === 'trophy' ? 'published' : 'manuscripts'}
-        isLoading={isLoading}
+        controlsCount={kindTab !== 'manuscript' ? kindRows.length : view === 'trophy' ? manuscripts.length - activeCount : manuscripts.length}
+        controlsCountLabel={kindTab === 'all' ? 'products' : kindTab !== 'manuscript' ? kindLabel.toLowerCase() : view === 'trophy' ? 'published' : 'manuscripts'}
+        isLoading={isLoading || productsLoading}
         skeletonRows={6}
         skeletonCols={5}
         beforeBody={
           <>
+            {kindTabs.length > 1 && (
+              <div className="tk" style={{ marginBottom: 'var(--sp-md)' }} data-testid="product-kind-tabs">
+                <SegmentedToggle skin="tk" ariaLabel="Product kind" options={kindTabs} value={kindTab} onChange={setKindTab} />
+              </div>
+            )}
             {/* T-29: Needs your attention — three-subgroup triage. */}
-            {!isLoading && (
+            {!isLoading && kindTab === 'manuscript' && (
               <NeedsAttentionDashboard filter={attentionFilter} onFilterChange={setAttentionFilter} />
             )}
             {/* M-12 (D25): Active submissions — list view only. */}
-            {!isLoading && view === 'list' && <ActiveSubmissionsWidget />}
-            {manuscriptCategoryPills}
+            {!isLoading && kindTab === 'manuscript' && view === 'list' && <ActiveSubmissionsWidget />}
+            {productsFailed && (
+              <div role="alert" data-testid="manuscripts-products-error">
+                <QueryErrorNote label="product stages (each project shows its own stage, read-only)" onRetry={() => { void refetchProducts() }} />
+              </div>
+            )}
+            {kindTab === 'manuscript' && manuscriptCategoryPills}
           </>
         }
       >
+        {/* ─── KIND TABS ─── one row per product of the kind (or every kind, grouped) */}
+        {kindTab !== 'manuscript' && (
+          <ProductKindList rows={kindRows} kinds={productData?.kinds ?? []} grouped={kindTab === 'all'} />
+        )}
         {/* ─── LIST VIEW ─── the shared sleek row (evaluation item 39) */}
-        {view === 'list' && (
+        {kindTab === 'manuscript' && view === 'list' && (
           <div id="manuscripts-table">
             {manuscripts.length > 0 ? (
               <ManuscriptsList
@@ -490,21 +582,17 @@ export default function ManuscriptsPage() {
         )}
 
         {/* ─── PIPELINE VIEW ─── M-13: drag-and-drop between stages */}
-        {view === 'pipeline' && (
+        {kindTab === 'manuscript' && view === 'pipeline' && (
           <PipelineBoard
+            stages={STAGES}
+            stageLabels={STAGE_LABELS}
             byStage={byStage}
-            onStageChange={(slug, prevStage, nextStage) => {
-              const apiStage = toApiStage(nextStage)
-              inlineUpdate.mutate({ slug, fields: { stage: apiStage } })
-              showUndo(`stage → ${nextStage}`, () =>
-                inlineUpdate.mutate({ slug, fields: { stage: prevStage } })
-              )
-            }}
+            onStageChange={(slug, prevStage, nextStage) => handleStageChange(slug, nextStage, prevStage)}
           />
         )}
 
         {/* ─── TROPHY VIEW (P3-03) ─── cover-style cards for Published manuscripts */}
-        {view === 'trophy' && (() => {
+        {kindTab === 'manuscript' && view === 'trophy' && (() => {
           const published = manuscripts.filter((p) => p.stage === 'published')
           if (published.length === 0) {
             return (
@@ -623,10 +711,10 @@ export default function ManuscriptsPage() {
 // M-13: Pipeline drag-and-drop. PipelineBoard wraps the kanban in
 // DndContext + per-column droppable + per-card draggable. Drag a card
 // onto a different stage column → fires onStageChange. Optimistic update
-// + 5s undo handled in parent.
+// + undo handled in parent (the home product's stage).
 // ───────────────────────────────────────────────────────────────────────
 
-type StageKey = typeof STAGES[number]
+type StageKey = string
 
 function PipelineCard({ project, dragging }: { project: Project; dragging?: boolean }) {
   const pi = piDisplay(project.pi)
@@ -723,9 +811,13 @@ function DroppableColumn({
 }
 
 function PipelineBoard({
+  stages: STAGES,
+  stageLabels: STAGE_LABELS,
   byStage,
   onStageChange,
 }: {
+  stages: string[]
+  stageLabels: Record<string, string>
   byStage: Record<string, Project[]>
   onStageChange: (slug: string, prevStage: string, nextStage: StageKey) => void
 }) {
@@ -739,7 +831,7 @@ function PipelineBoard({
     const out: Project[] = []
     for (const s of STAGES) for (const p of byStage[s] || []) out.push(p)
     return out
-  }, [byStage])
+  }, [byStage, STAGES])
 
   const activeProject = activeId ? allProjects.find((p) => p.slug === activeId) ?? null : null
 

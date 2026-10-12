@@ -267,9 +267,10 @@ function ulid(): string {
   return timePart + randPart;
 }
 
-export function generateId(kind?: 'task' | 'project' | 'inbox_event' | 'mut'): string {
+export function generateId(kind?: 'task' | 'project' | 'product' | 'inbox_event' | 'mut'): string {
   if (kind === 'task') return `task_${ulid()}`;
   if (kind === 'project') return `proj_${ulid()}`;
+  if (kind === 'product') return `prd_${ulid()}`;
   if (kind === 'inbox_event') return `evt_${ulid()}`;
   if (kind === 'mut') return `mut_${ulid()}`;
   // Default: legacy 32-char hex for activities/notifications/comments/etc.

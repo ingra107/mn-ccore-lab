@@ -100,7 +100,7 @@ import { authEnforced } from './lib/auth-mode';
 import { handleClientErrors, handleHubErrorsWeekly } from './routes/hub-errors';
 import { projectResponseFor } from './lib/pi-only-project-fields';
 import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleSetLinkRole } from './routes/links';
-import { handleGetProductsSync, handleGetProjectProducts } from './routes/products';
+import { handleGetProductsSync, handleGetProjectProducts, handleGetAllProjectProducts, handleProjectProductWrite } from './routes/products';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2125,13 +2125,31 @@ defineRoute({
   entity: 'products',
   handler: (c) => handleGetProductsSync('product_funding', new URL(R(c).url), R(c), E(c)),
 });
+// The list views' bulk read: every visible project's live products, grouped
+// by project (the caller's handle decides which projects).
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/products',
+  auth: 'authed',
+  entity: 'products',
+  handler: (c) => handleGetAllProjectProducts(E(c)),
+});
 // A visible project's live products, with kind and stage labels.
 defineRoute({
   method: 'GET',
   path: '/api/projects/:slug/products',
   auth: 'authed',
   entity: 'products',
-  handler: (c) => handleGetProjectProducts(c.req.param('slug'), R(c), E(c)),
+  handler: (c) => handleGetProjectProducts(c.req.param('slug'), E(c)),
+});
+// A project member changes stage, adds a product, or moves home on THAT
+// project's products (Nick 2026-10-12). Same gate as POST /api/projects/:slug.
+defineRoute({
+  method: 'POST',
+  path: '/api/projects/:slug/products',
+  auth: 'authed',
+  entity: 'products',
+  handler: (c) => handleProjectProductWrite(c.req.param('slug'), R(c), USER(c), E(c)),
 });
 
 // Frontend-accessible stored-links sub-resources (B3 Task 8, 2026-06-21).
