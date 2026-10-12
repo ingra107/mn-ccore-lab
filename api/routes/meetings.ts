@@ -1,6 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical } from '../helpers';
-import { postedActivityRows, TEAM_POSTS_ONLY } from '../lib/posted-activity';
+import { postedActivityRows, TEAM_POSTS_ONLY, legacyEchoExclude } from '../lib/posted-activity';
 import { validateApiKey } from '../middleware/api-key-auth';
 import { TASK_SELECT_COLS } from '../lib/task-cols';
 import { normalizeAttendees, attendeesColumnValue, type NormalizedAttendees } from '../lib/meeting-write';
@@ -500,7 +500,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     env.DB.prepare(
       `SELECT a.type, a.description, a.actor, a.related_id as entity_id, a.related_type as entity_type, a.timestamp as created_at
        FROM activity_log a
-       WHERE a.timestamp > ?
+       WHERE a.timestamp > ? AND ${legacyEchoExclude('a')}
        ORDER BY a.timestamp DESC LIMIT 30`
     ).bind(twoWeeksAgo).all(),
     // Upcoming deadlines (next 14 days)

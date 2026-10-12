@@ -7,7 +7,7 @@ import { memberContributionEvents, contributionsByDay } from '../lib/member-cont
 import { mayReadPerson } from '../lib/person-access';
 import type { Viewer } from '../lib/viewer-db';
 import { activityVisibilityGate, activityHiddenClause, postActivityEntry } from '../lib/activity-entry';
-import { postedActivityRows, postedCountsByDay } from '../lib/posted-activity';
+import { postedActivityRows, postedCountsByDay, legacyEchoExclude } from '../lib/posted-activity';
 
 // GET /api/activity?limit=20&actor=slug
 // Public (the /pulse kiosk reads it signed out). Which rows a caller sees is
@@ -22,7 +22,7 @@ export async function handleGetActivity(url: URL, env: Env, request: Request): P
   const includeFixtures = url.searchParams.get('include_fixtures') === '1';
   let query = 'SELECT * FROM activity_log';
   const params: (string | number)[] = [];
-  const where: string[] = [];
+  const where: string[] = [legacyEchoExclude()];
   if (actor) {
     where.push('actor = ?');
     params.push(actor);
@@ -295,7 +295,7 @@ export async function handleActivityHeatmap(url: URL, env: Env, viewer: Viewer, 
   // Lab-wide (no slug): every logged Hub action, every comment or note posted,
   // plus every task completion.
   const result = await env.DB.prepare(
-    "SELECT DATE(timestamp) as date, COUNT(*) as count FROM activity_log WHERE timestamp >= ? GROUP BY DATE(timestamp) ORDER BY date"
+    `SELECT DATE(timestamp) as date, COUNT(*) as count FROM activity_log WHERE timestamp >= ? AND ${legacyEchoExclude()} GROUP BY DATE(timestamp) ORDER BY date`
   ).bind(since).all();
   const data: Record<string, number> = {};
   for (const row of (result.results || []) as { date: string; count: number }[]) {

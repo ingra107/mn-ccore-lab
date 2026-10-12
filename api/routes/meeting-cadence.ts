@@ -1,7 +1,7 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
 import { ctToday } from '../lib/ct-date';
-import { postedCountSince } from '../lib/posted-activity';
+import { postedCountSince, legacyEchoExclude } from '../lib/posted-activity';
 
 // GET /api/meetings/cadence-check — analyze if next meeting is needed
 export async function handleCadenceCheck(env: Env): Promise<Response> {
@@ -24,7 +24,7 @@ export async function handleCadenceCheck(env: Env): Promise<Response> {
   // Analyze activity since last meeting
   const [activityCount, postedCount, pendingActions, newUpdates, agendaItems, blockedTasks] = await Promise.all([
     env.DB.prepare(
-      "SELECT COUNT(*) as c FROM activity_log WHERE timestamp > ? AND type != 'system'"
+      `SELECT COUNT(*) as c FROM activity_log WHERE timestamp > ? AND type != 'system' AND ${legacyEchoExclude()}`
     ).bind(sinceDate).first<{ c: number }>(),
 
     // Comments and notes people posted live in activity_entries, not activity_log.

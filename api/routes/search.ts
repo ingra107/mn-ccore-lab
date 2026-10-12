@@ -1,6 +1,7 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
 import { activityVisibilityGate } from '../lib/activity-entry';
+import { legacyEchoExclude } from '../lib/posted-activity';
 
 // --- Scoring constants ---
 
@@ -187,7 +188,7 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
       `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_id, ae.created_at, p.title as project_title, p.slug as project_slug FROM activity_entries ae JOIN projects p ON ae.project_id = p.id WHERE ae.entity_type='project' AND ae.kind='comment' AND ae.hidden_at IS NULL AND ae.body LIKE ? AND ${vis.clause} LIMIT ?`
     ).bind(like, ...vis.binds, limit).all(),
     env.DB.prepare(
-      'SELECT id, type, description, actor, timestamp FROM activity_log WHERE description LIKE ? ORDER BY timestamp DESC LIMIT ?'
+      `SELECT id, type, description, actor, timestamp FROM activity_log WHERE description LIKE ? AND ${legacyEchoExclude()} ORDER BY timestamp DESC LIMIT ?`
     ).bind(like, limit).all(),
     // Project notes (activity_entries kind='update', entity_type='project')
     env.DB.prepare(

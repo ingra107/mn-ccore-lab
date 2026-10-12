@@ -14,6 +14,7 @@ import worker from './index'
 import type { Env } from './types'
 import { prodSchemaDb, d1Adapter, insertRow } from './test-support/prod-schema-db'
 import { _resetPiEmailsCacheForTests } from './helpers'
+import { nowInstant } from './lib/time'
 
 const CTX = { waitUntil: () => {}, passThroughOnException: () => {} } as unknown as ExecutionContext
 const TEST_KEY = 'local-test-key-do-not-use-in-prod'
@@ -128,6 +129,34 @@ describe('a comment or note is stored once', () => {
     expect(r.status).toBe(200)
     expect(r.text.split('task comment ONESTORE').length - 1).toBe(1)
     expect(r.text).not.toContain('Commented on task')
+  })
+
+  // Posts made before 2026-10-11 left an activity_log echo that nothing deleted.
+  // Seed a real audit row plus, for one post of each shape, the post and its echo.
+  function seedLegacy() {
+    const ts = nowInstant().replace('T', ' ').slice(0, 19)
+    insertRow(db, 'activity_entries', { id: 'ae-leg-note', kind: 'update', entity_type: 'task', entity_id: TASK, actor_slug: 'nick-ingraham', body: 'LEGACYNOTE', visibility: 'team', created_at: ts })
+    insertRow(db, 'activity_entries', { id: 'ae-leg-com', kind: 'comment', entity_type: 'task', entity_id: TASK, actor_slug: 'nick-ingraham', body: 'LEGACYCOM', visibility: 'team', created_at: ts })
+    insertRow(db, 'activity_entries', { id: 'ae-leg-proj', kind: 'update', entity_type: 'project', entity_id: PROJ, project_id: PROJ, actor_slug: 'nick-ingraham', body: 'LEGACYPROJ', visibility: 'team', created_at: ts })
+    insertRow(db, 'activity_log', { id: 'al-leg-note', type: 'task_update', description: 'Posted note on "One store task": "LEGACYNOTE"', actor: 'nick-ingraham', related_id: TASK, related_type: 'task', timestamp: ts })
+    insertRow(db, 'activity_log', { id: 'al-leg-com', type: 'comment', description: 'Commented on task', actor: 'nick-ingraham', related_id: TASK, related_type: 'task', timestamp: ts })
+    insertRow(db, 'activity_log', { id: 'al-leg-proj', type: 'project_update', description: `Posted update on ${SLUG}: "LEGACYPROJ"`, actor: PI_EMAIL, related_id: SLUG, related_type: 'project', timestamp: ts })
+    insertRow(db, 'activity_log', { id: 'al-audit', type: 'project_update', description: 'Updated project fields: status', actor: 'nick-ingraham', related_id: PROJ, related_type: 'project', timestamp: ts })
+  }
+
+  it('a legacy echo row does not repeat its post in the feed, heatmap, prep, cadence or search', async () => {
+    seedLegacy()
+    const feed = (await call('GET', '/api/activity?limit=50', PI_EMAIL)).json.data as Array<{ id: string }>
+    expect(feed.map((x) => x.id).sort()).toEqual(['ae-leg-com', 'ae-leg-note', 'ae-leg-proj', 'al-audit'])
+    const heat = (await call('GET', '/api/activity/heatmap?days=3', PI_EMAIL)).json.data as Record<string, number>
+    expect(Object.values(heat).reduce((a, b) => a + b, 0)).toBe(4)
+    insertRow(db, 'meetings', { id: 'mtg-leg', title: 'M', date: '2099-01-01', type: 'lab', audience: 'lab' })
+    const prep = (await call('GET', '/api/meetings/mtg-leg/prep', PI_EMAIL)).json.data.recentActivity as Array<{ description: string }>
+    expect(prep.length).toBe(4)
+    const search = await call('GET', '/api/search?q=LEGACYPROJ', PI_EMAIL)
+    expect(search.text).not.toContain('al-leg-proj')
+    const cad = await call('GET', '/api/meetings/cadence-check', PI_EMAIL)
+    expect(cad.status).toBe(200)
   })
 
   it('meeting prep lists the posts once', async () => {

@@ -33,6 +33,20 @@ const POSTED_WHERE =
   `ae.kind IN ('comment', 'update') AND ae.entity_type IN ('task', 'project')
    AND ae.parent_id IS NULL AND ae.actor_slug != 'claude-ai'`;
 
+/**
+ * SQL for the activity_log side of a reader that also merges postedActivityRows:
+ * leave out the old echo rows. Until 2026-10-11 every comment or note was written
+ * to activity_log as well ("Commented on task", "Posted note on ...", "Posted
+ * update on ..."), and nothing deleted them, so a pre-cutover post would come
+ * back from both stores. project_update is also the type of real audit rows
+ * ("Updated project fields: ..."), so only the "Posted update on" shape goes.
+ */
+export function legacyEchoExclude(col = ''): string {
+  const t = col ? `${col}.type` : 'type';
+  const d = col ? `${col}.description` : 'description';
+  return `${t} NOT IN ('comment', 'task_update') AND NOT (${t} = 'project_update' AND ${d} LIKE 'Posted update on %')`;
+}
+
 /** Same rule as the gate used by the feeds, for a count nobody reads rows from. */
 const TEAM_ONLY: ActivityVisibilityGate = { clause: `ae.visibility = 'team'`, binds: [] };
 
