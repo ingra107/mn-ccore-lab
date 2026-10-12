@@ -1,6 +1,6 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
-import { canonicalizeValue, enumFieldsFor } from '../lib/enum-domains';
+import { compactStageLabel, homeProductCols, homeProductJoin, PRODUCT_STAGE_COUNTS_SQL, type ProductStageCount } from '../lib/project-home';
 
 const CATEGORY_LABELS: Record<string, string> = {
   clif: 'CLIF Consortium Research',
@@ -13,9 +13,14 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 // GET /api/narratives — auto-detected research arcs
 export async function handleGetNarratives(env: Env): Promise<Response> {
-  const [projects, deps, pubs] = await Promise.all([
+  // A project's stage is its products' (contract phase step 1): each listed
+  // project carries its home product's kind and stage, and an arc's
+  // distribution counts PRODUCTS by kind and stage.
+  const [projects, deps, pubs, productCounts] = await Promise.all([
     env.DB.prepare(
-      "SELECT id, title, slug, category, stage, status, description, pi FROM projects WHERE status = 'active' ORDER BY category, title"
+      `SELECT pr.id, pr.title, pr.slug, pr.category, pr.status, pr.description, pr.pi, ${homeProductCols('pr')}
+         FROM projects pr ${homeProductJoin('pr')}
+        WHERE pr.status = 'active' ORDER BY pr.category, pr.title`
     ).all(),
     // Slice D (2026-06-09): project_dependencies is now keyed on proj_* PKs
     // (from_project_id / to_project_id). Resolve back to slugs via JOIN so the
@@ -29,33 +34,19 @@ export async function handleGetNarratives(env: Env): Promise<Response> {
     env.DB.prepare(
       "SELECT id, title, topics, author_slugs, year FROM publications WHERE year >= (CAST(strftime('%Y', 'now') AS INTEGER) - 3) ORDER BY year DESC"
     ).all(),
+    env.DB.prepare(PRODUCT_STAGE_COUNTS_SQL("pr.status = 'active'", "COALESCE(pr.category, 'other')"))
+      .all<ProductStageCount & { grp: string }>(),
   ]);
+  const countsByCategory = new Map<string, ProductStageCount[]>();
+  for (const { grp, ...row } of productCounts.results ?? []) {
+    const list = countsByCategory.get(grp) ?? [];
+    list.push(row);
+    countsByCategory.set(grp, list);
+  }
 
   const projectList = (projects.results || []) as Record<string, unknown>[];
   const depList = (deps.results || []) as Record<string, unknown>[];
   const pubList = (pubs.results || []) as Record<string, unknown>[];
-
-  const stageOrder = ['idea', 'data_collection', 'data_analysis', 'writing', 'submitted', 'revisions', 'published'];
-  const projectStageDomain = enumFieldsFor('projects')?.stage;
-
-  // Bucket a raw D1 `stage` value onto one of the 7 stageOrder buckets above.
-  // Two failure modes this closes (#384): (1) a legacy Title-Case row (e.g.
-  // "Idea") previously never matched any lowercase stageOrder key and was
-  // silently excluded from every count; (2) the canonical enum domain
-  // (enum-domains.generated.json) has an 8th value, 'accepted', that
-  // stageOrder has no bucket for — those rows were excluded too. Canonicalize
-  // via the SSOT domain (same table mutations.ts validates against), then
-  // fold 'accepted' into 'published' to match the frontend's own display
-  // collapse (src/lib/stageNormalize.ts STAGE_ALIASES: accepted -> published)
-  // so no bucket here silently loses a row. An unmappable/unknown raw value
-  // falls through unchanged, preserving prior behavior for anything stranger
-  // than the known aliases (won't appear in stageDistribution, same as before).
-  function bucketedStage(raw: unknown): string {
-    if (typeof raw !== 'string' || !raw) return typeof raw === 'string' ? raw : '';
-    const canonical = projectStageDomain ? canonicalizeValue(raw, projectStageDomain) : null;
-    const resolved = canonical ?? raw;
-    return resolved === 'accepted' ? 'published' : resolved;
-  }
 
   // Group by category
   const byCategory = new Map<string, Record<string, unknown>[]>();
@@ -100,13 +91,6 @@ export async function handleGetNarratives(env: Env): Promise<Response> {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8);
 
-    // Stage distribution
-    const stageCounts = new Map<string, number>();
-    for (const p of categoryProjects) {
-      const s = bucketedStage(p.stage);
-      stageCounts.set(s, (stageCounts.get(s) || 0) + 1);
-    }
-
     // Related publications
     const relatedPubs = pubList
       .filter((p) => {
@@ -125,11 +109,13 @@ export async function handleGetNarratives(env: Env): Promise<Response> {
       category,
       projectCount: categoryProjects.length,
       projects: categoryProjects.map((p) => ({
-        slug: p.slug, title: p.title, stage: p.stage, pi: p.pi, description: p.description,
+        slug: p.slug, title: p.title, pi: p.pi, description: p.description,
+        home_kind: p.home_kind ?? null, home_stage: p.home_stage ?? null,
+        stage_label: compactStageLabel(p as Parameters<typeof compactStageLabel>[0]),
       })),
       connectedCount: connected.size,
       sharedTopics: sharedTopics.map(([topic, count]) => ({ topic, count })),
-      stageDistribution: stageOrder.map((s) => ({ stage: s, count: stageCounts.get(s) || 0 })),
+      stageDistribution: countsByCategory.get(String(category)) ?? [],
       relatedPubs: relatedPubs.map((p) => ({ id: p.id, title: p.title, year: p.year })),
     });
   }

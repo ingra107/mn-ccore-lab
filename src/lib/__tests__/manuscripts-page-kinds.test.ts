@@ -39,21 +39,22 @@ describe('the Manuscripts page shows manuscripts and abstracts only (Nick 2026-1
 describe('pipeline board places', () => {
   const COLS = ['idea', 'writing', 'review']
   it('a home manuscript files under its stage; another kind is on another ladder', () => {
-    expect(pipelinePlaceOf({ stage: 'idea' }, [row('m', 'manuscript', { is_home: 1, stage: 'writing' })], COLS)).toEqual({ stage: 'writing' })
-    expect(pipelinePlaceOf({ stage: 'writing' }, [row('g', 'grant_application', { is_home: 1 })], COLS)).toEqual({ off: 'other_ladder' })
+    expect(pipelinePlaceOf([row('m', 'manuscript', { is_home: 1, stage: 'writing' })], COLS)).toEqual({ stage: 'writing' })
+    expect(pipelinePlaceOf([row('g', 'grant_application', { is_home: 1 })], COLS)).toEqual({ off: 'other_ladder' })
   })
 
-  it('no product and no stage is "no stage", not another ladder', () => {
-    expect(pipelinePlaceOf({ stage: undefined }, [], COLS)).toEqual({ off: 'no_stage' })
+  it('no product is "no stage": projects.stage is never read (contract phase step 1)', () => {
+    expect(pipelinePlaceOf([], COLS)).toEqual({ off: 'no_stage' })
+    expect(pipelinePlaceOf(undefined, COLS)).toEqual({ off: 'no_stage' })
   })
 
-  it('a project stage the board has no column for is counted, not dropped', () => {
-    expect(pipelinePlaceOf({ stage: 'enrolling' }, undefined, COLS)).toEqual({ off: 'off_board' })
+  it('a manuscript rung the board has no column for is counted, not dropped', () => {
+    expect(pipelinePlaceOf([row('m', 'manuscript', { is_home: 1, stage: 'accepted' })], COLS)).toEqual({ off: 'off_board' })
   })
 
   it('the note names each reason it has', () => {
     expect(pipelineOffNote({ other_ladder: 2, no_stage: 1, off_board: 0 }))
-      .toBe('2 projects are on another ladder (a grant, an award, several products); 1 project has no stage yet. The list view shows them.')
+      .toBe('2 projects are on another ladder (a grant, an award, several products); 1 project has no product yet. The list view shows them.')
     expect(pipelineOffNote({ other_ladder: 0, no_stage: 0, off_board: 0 })).toBeNull()
   })
 })

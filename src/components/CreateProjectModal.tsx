@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { useAllProjectProducts } from '../hooks/useProjectProducts'
 import { createCategoryOptions } from '../constants/categories'
+import { MANUSCRIPT_LADDER_FALLBACK, ladderFor } from '../lib/products'
 import InlineSelect from './InlineSelect'
 import InlineAssigneePicker from './InlineAssigneePicker'
 import Field from './ui/Field'
@@ -20,6 +22,9 @@ interface CreateProjectModalProps {
   onCreate: (project: {
     title: string
     category?: string
+    /** The first product's kind (the project's home product). */
+    kind?: string
+    /** A stage on that kind's ladder. */
     stage?: string
     description?: string
     pi?: string
@@ -31,17 +36,12 @@ interface CreateProjectModalProps {
 // Legacy 4-bucket values (clif/lab/nate-mesfin/mentee) may still exist on
 // soft-deleted rows; CategoryIcon keeps fallback arms for those.
 
-// 7-stage UI ladder including Revisions (added 2026-04-23, GH #26).
-// Values are D1 lowercase canonical; labels are Title Case for display.
-const STAGES = [
-  { value: 'idea', label: 'Idea' },
-  { value: 'data_collection', label: 'Data Collection' },
-  { value: 'analysis', label: 'Analysis' },
-  { value: 'writing', label: 'Writing' },
-  { value: 'review', label: 'Review' },
-  { value: 'revisions', label: 'Revisions' },
-  { value: 'published', label: 'Published' },
-]
+// "Ask the kind" (Nick, 2026-10-12): a project is born with its first product,
+// so the form asks what that product is (default a manuscript) and offers that
+// kind's own ladder. Both lists come from the Worker's kind table (the same
+// read the list views use); the form holds no copy of kind data, and the
+// Worker seeds the home product from the pair (schema-v129).
+const DEFAULT_KIND = 'manuscript'
 
 
 export default function CreateProjectModal({ open, onClose, prefill, onCreate }: CreateProjectModalProps) {
@@ -51,8 +51,24 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
 
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('MNCCORE')
-  const [stage, setStage] = useState('idea')
+  const [kind, setKind] = useState(DEFAULT_KIND)
+  const [stage, setStage] = useState('')
   const [pi, setPi] = useState(user.slug)
+
+  const { data: productData } = useAllProjectProducts()
+  const kinds = useMemo(() => productData?.kinds ?? [], [productData])
+  const kindOptions = useMemo(
+    () => (kinds.length > 0 ? kinds.map((k) => ({ value: k.kind, label: k.label })) : [{ value: DEFAULT_KIND, label: 'Manuscript' }]),
+    [kinds],
+  )
+  const ladder = useMemo(() => {
+    const own = ladderFor(kinds, kind)
+    return own.length > 0 ? own : kind === DEFAULT_KIND ? [...MANUSCRIPT_LADDER_FALLBACK] : []
+  }, [kinds, kind])
+  const stageOptions = useMemo(() => ladder.map((s) => ({ value: s.stage, label: s.label })), [ladder])
+  // The stage always sits on the chosen kind's ladder: a kind change (or the
+  // ladder arriving) resets it to the first rung.
+  const effectiveStage = stageOptions.some((o) => o.value === stage) ? stage : (stageOptions[0]?.value ?? '')
   const [description, setDescription] = useState('')
 
   // S15: seed the form from prefill whenever the modal opens (e.g. promoting
@@ -63,7 +79,8 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
     setDescription(prefill?.description ?? '')
     setPi(prefill?.pi ?? user.slug)
     setCategory('MNCCORE')
-    setStage('idea')
+    setKind(DEFAULT_KIND)
+    setStage('')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
@@ -74,7 +91,8 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
     onCreate({
       title: title.trim(),
       category,
-      stage,
+      kind,
+      stage: effectiveStage || undefined,
       description: description.trim() || undefined,
       pi: pi.trim() || undefined,
     })
@@ -82,7 +100,8 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
     // Reset form
     setTitle('')
     setCategory('MNCCORE')
-    setStage('idea')
+    setKind(DEFAULT_KIND)
+    setStage('')
     setPi(user.slug)
     setDescription('')
     onClose()
@@ -159,13 +178,18 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
           />
         </Field>
 
-        {/* Category + Stage row */}
+        {/* Category */}
+        <Field label="Category" htmlFor="create-project-category" noContainer>
+          <InlineSelect value={category} options={categories} onChange={setCategory} />
+        </Field>
+
+        {/* The first product: what it is, and where it stands on its ladder */}
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Category" htmlFor="create-project-category" noContainer>
-            <InlineSelect value={category} options={categories} onChange={setCategory} />
+          <Field label="First product" htmlFor="create-project-kind" hint="What this project makes first" noContainer>
+            <InlineSelect value={kind} options={kindOptions} onChange={setKind} />
           </Field>
           <Field label="Stage" htmlFor="create-project-stage" noContainer>
-            <InlineSelect value={stage} options={STAGES} onChange={setStage} />
+            <InlineSelect value={effectiveStage} options={stageOptions} onChange={setStage} />
           </Field>
         </div>
 

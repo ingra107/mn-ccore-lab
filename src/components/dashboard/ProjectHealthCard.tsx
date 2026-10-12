@@ -305,7 +305,8 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
   const projectData: HoverCardData = {
     type: 'project',
     title: project.title,
-    stage: project.stage,
+    stage: project.stage_label ?? undefined,
+    stageColorKey: project.home_kind === 'manuscript' ? (project.home_stage ?? undefined) : undefined,
     status: project.status,
   }
 

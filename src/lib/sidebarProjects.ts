@@ -16,7 +16,9 @@ export interface SidebarProjectInput {
   title: string
   short_name?: string
   status?: string | null
-  stage?: string | null
+  /** Live products, and those still on a non-terminal rung (GET /api/projects). */
+  product_count?: number | null
+  product_open_count?: number | null
   lastActivity?: string
 }
 
@@ -34,7 +36,10 @@ const DAY_MS = 86_400_000
 
 function finished(p: SidebarProjectInput): boolean {
   const s = (p.status ?? '').toLowerCase()
-  return s === 'done' || s === 'completed' || s === 'archived' || s === 'deleted' || p.stage === 'published'
+  // Finished = a closed status, or every live product on a terminal rung
+  // (contract phase step 1; was projects.stage === 'published').
+  if (s === 'done' || s === 'completed' || s === 'archived' || s === 'deleted') return true
+  return Number(p.product_count ?? 0) > 0 && Number(p.product_open_count ?? 0) === 0
 }
 
 /**

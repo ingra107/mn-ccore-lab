@@ -26,16 +26,26 @@ import { parseDbUtc } from '../lib/time'
 import { ICON_PROPS } from '../lib/iconProps'
 import SectionHead from '../components/ui/SectionHead'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
+import { compactStageLabel } from '../lib/projectStage'
 
 // ── Stage colors ───────────────────────────────────────────
 
+// Keyed by the manuscript rung (the home product's stage, contract phase step
+// 1). Until then the keys were Title Case while D1 holds lowercase words, so
+// no badge ever took a color. Another kind's home reads slate.
 const STAGE_COLORS: Record<string, string> = {
-  Idea: 'var(--sk-t3)',
-  'Data Collection': 'color-mix(in srgb, var(--job-accent) 25%, var(--sk-t3))',
-  Analysis: 'color-mix(in srgb, var(--job-accent) 50%, var(--sk-t3))',
-  Writing: 'color-mix(in srgb, var(--job-accent) 70%, var(--sk-t3))',
-  Review: 'color-mix(in srgb, var(--job-accent) 85%, var(--sk-t3))',
-  Published: 'var(--job-accent)',
+  idea: 'var(--sk-t3)',
+  data_collection: 'color-mix(in srgb, var(--job-accent) 25%, var(--sk-t3))',
+  data_analysis: 'color-mix(in srgb, var(--job-accent) 50%, var(--sk-t3))',
+  writing: 'color-mix(in srgb, var(--job-accent) 70%, var(--sk-t3))',
+  submitted: 'color-mix(in srgb, var(--job-accent) 85%, var(--sk-t3))',
+  revisions: 'color-mix(in srgb, var(--job-accent) 85%, var(--sk-t3))',
+  accepted: 'var(--job-accent)',
+  published: 'var(--job-accent)',
+}
+
+function homeStageColor(p: { home_kind: string | null; home_stage: string | null }): string {
+  return (p.home_kind === 'manuscript' && p.home_stage && STAGE_COLORS[p.home_stage]) || 'var(--slate)'
 }
 
 // ── Cumulative Publication Curve ──────────────────────────
@@ -197,7 +207,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
 
       <div className="flex flex-col gap-3">
         {projectStages.map((project, i) => {
-          const stageColor = STAGE_COLORS[project.stage] || 'var(--slate)'
+          const stageColor = homeStageColor(project)
           const totalWidth = (project.total_days / maxDays) * 100
           const stageWidth = project.total_days > 0
             ? (project.days_in_stage / project.total_days) * 100
@@ -240,7 +250,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                     flexShrink: 0,
                   }}
                 >
-                  {project.stage}
+                  {compactStageLabel(project) || 'No product'}
                 </span>
               </div>
 
@@ -675,7 +685,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
       style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
     >
       {projects.map((project, i) => {
-        const stageColor = STAGE_COLORS[project.stage] || 'var(--slate)'
+        const stageColor = homeStageColor(project)
         return (
           <motion.div
             key={project.id}
@@ -717,7 +727,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
                     background: `${stageColor}15`,
                   }}
                 >
-                  {project.stage}
+                  {compactStageLabel(project) || 'No product'}
                 </span>
                 {project.category && (
                   <span

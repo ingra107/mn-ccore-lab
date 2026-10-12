@@ -34,6 +34,7 @@ import { FaceDisc } from '../../components/today/skin'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
 import LabPulseSection from '../../components/labpulse/LabPulseSection'
+import { stageCountLabel, type ProductStageCount } from '../../lib/projectStage'
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -81,10 +82,8 @@ interface PIDashboardData {
     // P6-B8: 'active' replaces 'funded'. proposed=0 means awarded/active, not funded.
     active: number
   }
-  projectsByStage: Array<{
-    stage: string
-    count: number
-  }>
+  /** Products of active projects by kind and stage (contract phase step 1). */
+  productsByStage: ProductStageCount[]
 }
 
 // ── Data hook ──────────────────────────────────────────────
@@ -332,15 +331,18 @@ export default function PIAnalytics() {
   // Stage color mapping — theme-agnostic fills so #fff text passes AA in
   // BOTH modes. --slate/--teal/--gold flip to LIGHT dark-mode variants
   // where white text fails 2:1. r7 2026-04-22.
+  // Keyed by the manuscript rung (D1's lowercase words; the Title Case keys
+  // before 2026-10-12 never matched, so every segment read slate). Another
+  // kind's segments read slate.
   const stageColors: Record<string, string> = {
-    'Idea': 'var(--stage-fill-idea)',
-    'Data Collection': 'var(--stage-fill-data-collection)',
-    'Analysis': 'var(--stage-fill-analysis)',
-    'Writing': 'var(--stage-fill-writing)',
-    'Review': 'var(--stage-fill-review)',
-    'Revisions': 'var(--stage-fill-revisions)',
-    'Published': 'var(--stage-fill-published)',
-    'Submitted': 'var(--stage-fill-submitted)',
+    idea: 'var(--stage-fill-idea)',
+    data_collection: 'var(--stage-fill-data-collection)',
+    data_analysis: 'var(--stage-fill-analysis)',
+    writing: 'var(--stage-fill-writing)',
+    submitted: 'var(--stage-fill-submitted)',
+    revisions: 'var(--stage-fill-revisions)',
+    accepted: 'var(--stage-fill-review)',
+    published: 'var(--stage-fill-published)',
   }
 
   return (
@@ -723,15 +725,15 @@ export default function PIAnalytics() {
               />
             </div>
 
-            {/* Projects by stage */}
-            {data && data.projectsByStage.length > 0 && (
+            {/* Products by kind and stage */}
+            {data && (data.productsByStage ?? []).length > 0 && (
               <div>
-                <h4 style={FIELD_LABEL_STYLE}>Active projects by stage</h4>
+                <h4 style={FIELD_LABEL_STYLE}>Products of active projects, by stage</h4>
                 <StackedBar
-                  segments={data.projectsByStage.map(s => ({
-                    label: s.stage,
+                  segments={data.productsByStage.map(s => ({
+                    label: stageCountLabel(s),
                     value: s.count,
-                    color: stageColors[s.stage] || 'var(--slate)',
+                    color: (s.kind === 'manuscript' && stageColors[s.stage]) || 'var(--slate)',
                   }))}
                 />
               </div>

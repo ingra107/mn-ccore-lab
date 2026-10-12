@@ -1,4 +1,5 @@
 import type { Env } from '../helpers';
+import { homeProductCols, homeProductJoin, projectDoneSql } from '../lib/project-home';
 import { json } from '../helpers';
 import { mayReadPerson } from '../lib/person-access';
 import type { Viewer } from '../lib/viewer-db';
@@ -39,9 +40,10 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
     `).bind(`%${slug}%`).all(),
 
     // Projects this person is involved in (as assignee on tasks)
+    // Each with its home product's kind and stage (contract phase step 1).
     env.DB.prepare(`
-      SELECT DISTINCT p.id, p.title, p.slug, p.stage, p.status, p.category
-      FROM projects p
+      SELECT DISTINCT p.id, p.title, p.slug, p.status, p.category, ${homeProductCols('p')}
+      FROM projects p ${homeProductJoin('p')}
       INNER JOIN tasks t ON t.project_id = p.id
       WHERE t.assignee LIKE ?
     `).bind(`%${slug}%`).all(),
@@ -69,14 +71,17 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
       FROM tasks WHERE assignee LIKE ?
     `).bind(`%${slug}%`).all(),
 
-    // Project velocity: each project with days in current stage
+    // Project velocity: each unfinished project with days on its home
+    // product's current rung (the product's own stage clock). Finished =
+    // status done, or every live product terminal (contract phase step 1;
+    // was status != 'Published', a status no project carries).
     env.DB.prepare(`
-      SELECT DISTINCT p.id, p.title, p.slug, p.stage, p.status,
-        CAST(julianday('now') - julianday(p.updated_at) AS INTEGER) as days_in_stage,
+      SELECT DISTINCT p.id, p.title, p.slug, p.status, ${homeProductCols('p')},
+        CAST(julianday('now') - julianday(COALESCE(h.stage_entered_at, p.updated_at)) AS INTEGER) as days_in_stage,
         CAST(julianday('now') - julianday(p.created_at) AS INTEGER) as total_days
-      FROM projects p
+      FROM projects p ${homeProductJoin('p')}
       INNER JOIN tasks t ON t.project_id = p.id
-      WHERE t.assignee LIKE ? AND p.status != 'Published'
+      WHERE t.assignee LIKE ? AND NOT ${projectDoneSql('p')}
       ORDER BY days_in_stage DESC
     `).bind(`%${slug}%`).all(),
   ]);

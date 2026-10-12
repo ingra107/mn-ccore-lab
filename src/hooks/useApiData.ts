@@ -67,7 +67,6 @@ import type {
   ProjectPublicationLink,
 } from '../lib/api'
 import { localDateKey } from '../lib/dateUtils'
-import { normalizeStage } from '../lib/stageNormalize'
 import { isPlaceholderPublication, dedupePublications } from '../lib/publicationCounts'
 
 // Re-export lib/api row types that consumers import via this module.
@@ -137,6 +136,10 @@ function rowToTeamMember(row: TeamMemberRow): TeamMember {
 }
 
 export function rowToProject(row: ProjectRow): Project {
+  // projects.stage is being retired (contract phase step 1): it stops here, so
+  // no browser reader can reach it, typed or not. A project's stage is its
+  // products' (home_* below, or the products read).
+  const { stage: _retiredStage, ...rest } = row
   return {
     // Spread FIRST (Level-1 fix, 2026-07-21): any ProjectRow field that
     // shares its name+shape with `Project` (id, title, created_at,
@@ -148,18 +151,12 @@ export function rowToProject(row: ProjectRow): Project {
     // enum normalize/cast) get an explicit override below — object-literal
     // semantics mean a later key always wins over the spread, at both the
     // type level and the runtime value.
-    ...row,
+    ...rest,
     status: row.status as Project['status'],
     description: row.description || undefined,
     category: row.category || '',
     pi: row.pi || '',
     slug: row.slug || '',
-    // Ingress chokepoint (Hub #361a): fold legacy Title-Case / granular API
-    // sub-stages ("Idea", "data_analysis", "submitted") onto the UI's 7-stage
-    // canonical ladder ONCE here, so every downstream component reads an
-    // already-canonical value and never needs to call normalizeStage() itself.
-    // Falls back to the raw value if unrecognized (same as stageLabel/stageColor).
-    stage: (normalizeStage(row.stage) || row.stage) as Project['stage'],
     strategic_context: row.strategic_context || undefined,
     updated_at: row.updated_at || undefined,
     stage_entered_at: row.stage_entered_at || undefined,
@@ -482,6 +479,7 @@ export interface MeetingDetail extends MeetingRow {
 
 // Static meeting data for dev fallback
 import { meetings as staticMeetings } from '../data/meetings'
+import type { ProductStageCount } from '../lib/projectStage'
 
 function staticToMeetingRows(): MeetingRow[] {
   return staticMeetings.map((m) => ({
@@ -804,7 +802,11 @@ export interface HealthFactors {
 export interface ProjectHealth {
   slug: string
   title: string
-  stage: string
+  /** The home product (contract phase step 1): kind, raw rung, and the
+   *  compact words ("Writing", "Grant application · Submitted +1"). */
+  home_kind: string | null
+  home_stage: string | null
+  stage_label: string | null
   score: number
   status: 'Healthy' | 'Needs Attention' | 'At Risk' | 'Critical'
   factors: HealthFactors
@@ -1169,10 +1171,16 @@ export function useProjectDependencies(slug: string) {
 export interface TrajectoryData {
   publications: { id: string; title: string; journal: string; pub_date: string; doi: string }[]
   taskStats: { month: string; completed: number }[]
-  projects: { id: string; title: string; slug: string; stage: string; status: string; category: string }[]
+  // Each project carries its home product's kind and stage (contract phase step 1).
+  projects: ({ id: string; title: string; slug: string; status: string; category: string } & TrajectoryHome)[]
   milestones: { id: string; title: string; due_date: string; status: string; project_id: string; project_title: string }[]
   taskMetrics: { total: number; completed: number; overdue: number; avg_days: number | null }
-  projectStages: { id: string; title: string; slug: string; stage: string; status: string; days_in_stage: number; total_days: number }[]
+  projectStages: ({ id: string; title: string; slug: string; status: string; days_in_stage: number; total_days: number } & TrajectoryHome)[]
+}
+
+type TrajectoryHome = {
+  home_kind: string | null; home_kind_label: string | null; home_stage: string | null
+  home_stage_label: string | null; product_count: number | null
 }
 
 export function useTrajectory(slug: string) {
@@ -1364,10 +1372,13 @@ interface NarrativeArc {
   title: string
   category: string
   projectCount: number
-  projects: { slug: string; title: string; stage: string; pi: string; description?: string }[]
+  /** Each with its home product's kind and stage, and the compact words
+   *  (contract phase step 1; no projects.stage). */
+  projects: { slug: string; title: string; home_kind: string | null; home_stage: string | null; stage_label: string; pi: string; description?: string }[]
   connectedCount: number
   sharedTopics: { topic: string; count: number }[]
-  stageDistribution: { stage: string; count: number }[]
+  /** The arc's PRODUCTS by kind and stage, only rungs that hold one. */
+  stageDistribution: ProductStageCount[]
   // API emits `year` (publications.year); not a full pub_date. See api/routes/narratives.ts.
   relatedPubs: { id: string; title: string; year: number | null }[]
 }
@@ -1377,19 +1388,9 @@ export function useNarratives() {
     queryKey: ['narratives'],
     queryFn: async () => {
       const data = await fetchJson<{ data?: NarrativeArc[] }>('/api/narratives')
-      const arcs = data.data || []
-      // Ingress chokepoint (Hub #361a): /api/narratives is a separate data
-      // shape from rowToProject (aggregated distribution + project stubs),
-      // so it needs its own normalization pass. stageOrder on the API side
-      // is a fixed 7-value set (idea/data_collection/data_analysis/writing/
-      // submitted/revisions/published) — normalizeStage() maps each 1:1 onto
-      // the UI ladder with no collisions, so a plain re-key (no re-aggregation)
-      // is safe here.
-      return arcs.map((arc) => ({
-        ...arc,
-        stageDistribution: arc.stageDistribution.map((s) => ({ ...s, stage: normalizeStage(s.stage) || s.stage })),
-        projects: arc.projects.map((p) => ({ ...p, stage: normalizeStage(p.stage) || p.stage })),
-      }))
+      // The Worker sends ladder words and product counts (contract phase
+      // step 1); nothing here re-keys a stage.
+      return data.data || []
     },
     staleTime: 10 * 60 * 1000,
   })
@@ -1754,7 +1755,12 @@ interface LinkedProject {
   title: string
   status: string
   category: string | null
-  stage: string | null
+  /** The home product's kind and stage (contract phase step 1). */
+  home_kind: string | null
+  home_kind_label: string | null
+  home_stage: string | null
+  home_stage_label: string | null
+  product_count: number | null
   pi: string | null
 }
 

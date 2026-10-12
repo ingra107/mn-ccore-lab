@@ -106,11 +106,13 @@ export function isProjectDone(value: string | null | undefined): boolean {
   return normalizeProjectStatus(value) === 'done'
 }
 
-/** Finished work: status done OR stage published (Nick 2026-09-16, the
- *  Projects "Done" pill, the Done-row publication chip, and the "Is this the
- *  paper?" trigger all mean this). One predicate so the three cannot drift. */
-export function isProjectFinished(p: { status?: string | null; stage?: string | null }): boolean {
-  return isProjectDone(p.status) || p.stage === 'published'
+/** Finished work: status done, or every live product on a terminal rung
+ *  (Nick 2026-09-16 "done or published"; contract phase step 1 reads it from
+ *  the products: a published manuscript, a decided grant, a received honor).
+ *  The Projects "Done" pill and the Done-row publication chip share it. */
+export function isProjectFinished(p: { status?: string | null; product_count?: number | null; product_open_count?: number | null }): boolean {
+  if (isProjectDone(p.status)) return true
+  return Number(p.product_count ?? 0) > 0 && Number(p.product_open_count ?? 0) === 0
 }
 
 // ── Stages ──

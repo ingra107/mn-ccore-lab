@@ -10,6 +10,7 @@ import { Chip } from '../ui/Chip'
 import { useMemberProjects } from '../../hooks/useProjectMembers'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { PATHS } from '../../constants/paths'
+import { compactStageLabel } from '../../lib/projectStage'
 
 export default function MemberProjects({ slug }: { slug: string }) {
   const { data: projects = [], isLoading, isError } = useMemberProjects(slug)
@@ -34,7 +35,7 @@ export default function MemberProjects({ slug }: { slug: string }) {
               <Link to={PATHS.project(p.slug ?? p.id)} style={{ color: 'var(--ink)', fontSize: 'var(--value-size)' }}>
                 {p.title}
               </Link>
-              {p.stage && <Chip color="var(--slate)" bordered>{p.stage.replace(/_/g, ' ')}</Chip>}
+              {compactStageLabel(p) && <Chip color="var(--slate)" bordered>{compactStageLabel(p)}</Chip>}
               {p.status && p.status !== 'active' && <Chip color="var(--slate)">{p.status.replace(/_/g, ' ')}</Chip>}
             </li>
           ))}

@@ -12,6 +12,7 @@ import type { Publication } from '../data/types'
 import { topicLabel } from '../lib/topics'
 import { RESEARCH_AREAS, inArea } from '../lib/researchAreas'
 import { isPublished } from '../lib/publicationCounts'
+import { compactStageLabel } from '../lib/projectStage'
 
 function BackLink() {
   return (
@@ -178,7 +179,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
                 {project.link_type && project.link_type !== 'output' && (
                   <span className="pub-meta">{LINK_TYPE_LABEL[project.link_type] ?? project.link_type}</span>
                 )}
-                {project.stage && <span className="pub-meta">{project.stage}</span>}
+                {compactStageLabel(project) && <span className="pub-meta">{compactStageLabel(project)}</span>}
               </Link>
             ))}
           </div>

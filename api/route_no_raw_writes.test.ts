@@ -111,8 +111,8 @@ const EXECUTORS: Record<string, { runs: number; tables: string[]; reason: string
   },
   applyInsert: {
     runs: 2,
-    tables: ['*'],
-    reason: 'LEDGER. INSERT path: a new row has no prior version for a CAS term; ON CONFLICT DO NOTHING or idempotent upsert, receipt written after. Plus, when the payload carries key_link slots, one D1 batch of [insert, the slot\'s links rows (lib/key-link.ts), their read-back] (#8842 R7); a slot-less insert stays the single .run(). A projects INSERT puts its creator\'s project_members row in that same batch (#145 Lane B, lib/project-membership.ts)',
+    tables: ['*', 'project_home_seed'],
+    reason: 'LEDGER. INSERT path: a new row has no prior version for a CAS term; ON CONFLICT DO NOTHING or idempotent upsert, receipt written after. Plus, when the payload carries key_link slots, one D1 batch of [insert, the slot\'s links rows (lib/key-link.ts), their read-back] (#8842 R7); a slot-less insert stays the single .run(). A projects INSERT puts its creator\'s project_members row in that same batch (#145 Lane B, lib/project-membership.ts). A projects INSERT that names its first product (Mutation.home_product) writes its project_home_seed row before the insert and deletes it after, in that same batch: schema-v129\'s home trigger reads it, and the table is empty at rest (contract phase step 1)',
   },
   meetingDedupAccepted: {
     runs: 1,

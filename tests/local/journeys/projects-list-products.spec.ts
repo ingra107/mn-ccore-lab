@@ -127,12 +127,13 @@ test('Manuscripts: the row is the home product; its stage cell and the drag writ
   expect(PROJECT_ID).not.toBe('')
 })
 
-test('Manuscripts: when the product read fails, the page says so and keeps the rows (cold review s61 M3)', async ({ page }) => {
+test('Manuscripts: when the product read fails, the page says so and lists no stale stage (cold review s61 M3; contract phase step 1)', async ({ page }) => {
   await page.route('**/api/projects/products', (r) => r.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"boom"}' }))
   await page.goto('/portal/manuscripts', { waitUntil: 'load' })
   await expect(page.getByTestId('manuscripts-products-error')).toBeVisible({ timeout: 30_000 })
   await expect(page.getByTestId('manuscripts-products-error')).toContainText('product stages')
-  // The shelf is not empty: each project's own stage carries the rows.
-  await expect(page.locator('main').getByText('Sepsis Outcomes Registry').first()).toBeVisible()
+  // projects.stage is never read (contract phase step 1): without the
+  // products there is no manuscript stage to show, so no row claims one.
+  await expect(page.locator('main a.sr-open')).toHaveCount(0)
   await page.screenshot({ path: `${SHOTS}/40-manuscripts-products-error.png` })
 })

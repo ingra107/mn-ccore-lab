@@ -1,4 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
+import { homeProductCols, homeProductJoin } from '../lib/project-home';
 import { json, error, generateId, logActivity, projectRefToCanonical } from '../helpers';
 import { idempotentDelete } from '../lib/idempotent-delete';
 
@@ -83,18 +84,22 @@ export async function handlePapersByPublication(url: URL, env: Env): Promise<Res
   // role rides as link_type) with the reading-list links; join projects on the
   // typed id OR the slug, because paper_project_links has stored the typed id
   // since Z3.2 while this join only ever matched the slug (dead read).
+  // Each project carries its home product's kind and stage (contract phase
+  // step 1; was pr.stage).
   const result = await env.DB.prepare(
     `SELECT ppl.id AS link_id, ppl.link_type, ppl.note, ppl.created_at AS linked_at,
-            pr.slug, pr.title, pr.status, pr.category, pr.stage, pr.pi
+            pr.slug, pr.title, pr.status, pr.category, pr.pi, ${homeProductCols('pr')}
      FROM paper_project_links ppl
      JOIN projects pr ON pr.id = ppl.project_slug OR pr.slug = ppl.project_slug
+     ${homeProductJoin('pr')}
      WHERE ppl.paper_id = ?
      UNION ALL
      SELECT pp.project_id || ':' || pp.publication_id AS link_id, pp.role AS link_type, NULL AS note,
             pp.created_at AS linked_at,
-            pr.slug, pr.title, pr.status, pr.category, pr.stage, pr.pi
+            pr.slug, pr.title, pr.status, pr.category, pr.pi, ${homeProductCols('pr')}
      FROM project_publications pp
      JOIN projects pr ON pr.id = pp.project_id
+     ${homeProductJoin('pr')}
      WHERE pp.publication_id = ?
      ORDER BY linked_at DESC`
   ).bind(publicationId, publicationId).all();

@@ -4,20 +4,20 @@
  * Signals sourced from existing API hooks so we piggyback on queries the
  * Dashboard already issues (no extra network round-trips in practice).
  *
- * Manuscripts live on the `projects` table with a non-Published `stage`; a
- * "stalled" manuscript is one whose `stage_updated_at` / `updated_at` is
- * older than 30 days (matches the Manuscripts page definition).
+ * A manuscript is a PRODUCT (kind manuscript, schema-v124), not a project
+ * stage (contract phase step 1: rollups count products). A "stalled"
+ * manuscript is one still before submission whose rung was entered more than
+ * 30 days ago (its own stage_entered_at; matches the Manuscripts page).
  */
 import { useMemo } from 'react'
 import {
   useTasks,
-  useProjects,
   useExpiringRegulatory,
   useMenteeMilestones,
 } from './useApiData'
 import { isOverdue } from '../lib/dateUtils'
 import type { TaskRow, MenteeMilestoneRow } from '../lib/api'
-import type { Project } from '../data/types'
+import { useAllProjectProducts } from './useProjectProducts'
 import { useGrantProducts } from './useGrantProducts'
 import type { GrantProduct } from '../lib/grants'
 
@@ -45,7 +45,7 @@ export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthS
   const enabled = options?.enabled ?? true
 
   const { data: tasks, isLoading: tasksLoading } = useTasks(undefined, { enabled })
-  const { data: projects, isLoading: projectsLoading } = useProjects(undefined, { enabled })
+  const { data: productData, isLoading: productsLoading } = useAllProjectProducts()
   const { data: grantData, isLoading: grantsLoading } = useGrantProducts()
   const grants = grantData?.data
   const { data: regulatory, isLoading: regLoading } = useExpiringRegulatory(60)
@@ -60,13 +60,14 @@ export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthS
 
     const overdueCount = (tasks ?? []).filter((t: TaskRow) => !t.completed && isOverdue(t.due_date, t.status)).length
 
-    const stalledManuscriptCount = (projects ?? []).filter((p: Project) => {
-      if (!p.stage || p.stage === 'published') return false
-      // Only count research-output stages, not all projects
-      const manuscriptStages = ['idea', 'data_collection', 'analysis', 'data_analysis', 'writing', 'submitted', 'review']
-      if (!manuscriptStages.includes(p.stage)) return false
-      return daysInStage(p) > STALLED_THRESHOLD_DAYS
-    }).length
+    // Manuscript products of the viewer's live projects (the bulk read's
+    // scope), on a rung the team still drives (revisions and accepted wait on
+    // a journal and never counted).
+    const workingRungs = new Set(['idea', 'data_collection', 'data_analysis', 'writing', 'submitted'])
+    const stalledManuscriptCount = Object.values(productData?.byProject ?? {})
+      .flatMap((rows) => rows ?? [])
+      .filter((r) => r.kind === 'manuscript' && workingRungs.has(r.stage) && daysInStage(r) > STALLED_THRESHOLD_DAYS)
+      .length
 
     const stalledMenteeCount = (mentees ?? []).filter((m: MenteeMilestoneRow) => {
       if (!m.due_date) return false
@@ -100,7 +101,7 @@ export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthS
     })
     const inactive = (tasks?.length ?? 0) > 0 && !recentTaskUpdate
 
-    const loading = tasksLoading || projectsLoading || grantsLoading || regLoading || menteesLoading
+    const loading = tasksLoading || productsLoading || grantsLoading || regLoading || menteesLoading
 
     return {
       overdueCount,
@@ -111,5 +112,5 @@ export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthS
       inactive,
       loading,
     }
-  }, [tasks, projects, grants, regulatory, mentees, tasksLoading, projectsLoading, grantsLoading, regLoading, menteesLoading])
+  }, [tasks, productData, grants, regulatory, mentees, tasksLoading, productsLoading, grantsLoading, regLoading, menteesLoading])
 }

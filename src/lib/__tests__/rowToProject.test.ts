@@ -67,7 +67,20 @@ describe('rowToProject — every ProjectRow field the API can return survives th
     expect(project.created_at).toBe('2026-07-21T10:00:00Z')
   })
 
-  it('still applies real transforms: stage normalization, empty-string coalescing', () => {
+  it('drops projects.stage and carries the home product (contract phase step 1)', () => {
+    const project = rowToProject(makeRow({
+      stage: 'writing', home_kind: 'grant_application', home_kind_label: 'Grant application',
+      home_stage: 'submitted', home_stage_label: 'Submitted', product_count: 2, product_open_count: 1,
+    }))
+    expect('stage' in project).toBe(false)
+    expect(project.home_kind).toBe('grant_application')
+    expect(project.home_stage).toBe('submitted')
+    expect(project.home_stage_label).toBe('Submitted')
+    expect(project.product_count).toBe(2)
+    expect(project.product_open_count).toBe(1)
+  })
+
+  it('still applies real transforms: empty-string coalescing', () => {
     const project = rowToProject(makeRow({ category: null, pi: null, slug: null, description: null }))
     expect(project.category).toBe('')
     expect(project.pi).toBe('')

@@ -1,4 +1,5 @@
 import type { Env } from '../helpers';
+import { PRODUCT_STAGE_COUNTS_SQL, type ProductStageCount } from '../lib/project-home';
 import { json, error } from '../helpers';
 import { GRANT_BUCKET_SQL } from './grants';
 
@@ -21,7 +22,7 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
     grantPipeline,
     pubsByQuarter,
     grantsFunnel,
-    projectsByStage,
+    productsByStage,
   ] = await Promise.all([
     isPi ? computeEngagement(wideEnv) : Promise.resolve(null),
     isPi ? computeResponseTime(wideEnv, new Date()) : Promise.resolve(null),
@@ -86,15 +87,9 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
       WHERE p.deleted_at IS NULL AND p.kind IN ('grant_application', 'award', 'honor')
     `).first(),
 
-    // Projects by stage. R10 standardized projects.status to lowercase
-    // ('active'); pre-fix this was 'Active' and silently returned 0 rows.
-    env.DB.prepare(`
-      SELECT stage, COUNT(*) as count
-      FROM projects
-      WHERE status = 'active'
-      GROUP BY stage
-      ORDER BY count DESC
-    `).all(),
+    // Products of active projects by kind and stage (contract phase step 1:
+    // a rollup counts products, never projects.stage).
+    env.DB.prepare(PRODUCT_STAGE_COUNTS_SQL("pr.status = 'active'")).all<ProductStageCount>(),
   ]);
 
   // Engagement and response time are the Lab pulse definitions (computeEngagement /
@@ -152,7 +147,7 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
       teamEngagement: engagementScores,
       pubsByQuarter: (pubsByQuarter.results || []) as Array<{ year: number; quarter: string; count: number }>,
       grantsFunnel: grantsFunnel || { submitted: 0, active: 0 },
-      projectsByStage: (projectsByStage.results || []) as Array<{ stage: string; count: number }>,
+      productsByStage: productsByStage.results || [],
     },
   });
   // Lab-wide numbers for the PI: no shared or edge cache may keep them.

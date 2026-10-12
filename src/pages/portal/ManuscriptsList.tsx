@@ -21,9 +21,14 @@ import type { Project } from '../../data/types'
 
 type Opt = { value: string; label: string; color?: string }
 
+/** A project as a manuscript row: `stage` and `stage_entered_at` are its HOME
+ *  MANUSCRIPT PRODUCT's (ManuscriptsPage builds them from the products read).
+ *  A Project carries no stage of its own (contract phase step 1). */
+export type ManuscriptRow = Project & { stage: string }
+
 export interface ManuscriptsListProps {
   /** Already filtered and sorted by the page. */
-  manuscripts: Project[]
+  manuscripts: ManuscriptRow[]
   sort: SleekSort
   onSort: (next: SleekSort) => void
   stages: readonly string[]
@@ -33,7 +38,7 @@ export interface ManuscriptsListProps {
   categoryOptions: Opt[]
   categoryLabel: Record<string, string>
   taskCounts: Map<string, number>
-  daysInStage: (p: Project) => number
+  daysInStage: (p: ManuscriptRow) => number
   stalledThresholdDays: number
   onFieldChange: (slug: string, field: string, value: unknown, prev: unknown) => void
   onStageChange: (slug: string, next: string, prev: string | null | undefined) => void
@@ -75,8 +80,8 @@ export function ManuscriptsList({
   const stageOptions = useMemo(() => stages.map((s) => ({ value: s, label: stageLabels[s] ?? s })), [stages, stageLabels])
   const statusLabel = useMemo(() => Object.fromEntries(statusOptions.map((o) => [o.value, o.label])), [statusOptions])
 
-  const columns = useMemo<SleekColumn<Project>[]>(() => {
-    const stalledDays = (p: Project) => {
+  const columns = useMemo<SleekColumn<ManuscriptRow>[]>(() => {
+    const stalledDays = (p: ManuscriptRow) => {
       const d = daysInStage(p)
       return p.stage !== 'published' && d > stalledThresholdDays ? d : 0
     }
@@ -172,7 +177,7 @@ export function ManuscriptsList({
   // Stage headers while the list is in stage order (the default, or a Stage sort).
   const grouped = !sort || sort.key === 'stage'
   const groups = useMemo(() => {
-    const out: { stage: string; rows: { p: Project; i: number }[] }[] = []
+    const out: { stage: string; rows: { p: ManuscriptRow; i: number }[] }[] = []
     manuscripts.forEach((p, i) => {
       const stage = grouped ? (p.stage ?? '') : ''
       const last = out[out.length - 1]
@@ -182,7 +187,7 @@ export function ManuscriptsList({
     return out
   }, [manuscripts, grouped])
 
-  const row = ({ p, i }: { p: Project; i: number }) => (
+  const row = ({ p, i }: { p: ManuscriptRow; i: number }) => (
     <SleekRow
       key={p.slug}
       row={p}

@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "1411fc895097e5b3661e686d854d0654fa48ef1443b9063aa86d023ca6d3f4ce",
-  "file_count": 132,
+  "hash": "7bbe510987cfa9152198f44348668aea348e2cacaa0e71f68c416d71fa7ed8bc",
+  "file_count": 133,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -134,11 +134,12 @@
     "schema-v125-product-home-paths.sql",
     "schema-v126-product-stage-mirror.sql",
     "schema-v127-project-member-folders.sql",
-    "schema-v128-product-award-terms.sql"
+    "schema-v128-product-award-terms.sql",
+    "schema-v129-project-home-seed.sql"
   ],
   "version_range": [
     2,
-    128
+    129
   ],
   "gaps": [
     35,

@@ -19,6 +19,7 @@
 // There is no self-join from a directory in this issue: you are added.
 
 import type { AuthUser, Env } from '../helpers'
+import { homeProductCols, homeProductJoin } from '../lib/project-home'
 import { json, error, logActivity } from '../helpers'
 import type { Viewer } from '../lib/viewer-db'
 
@@ -38,7 +39,13 @@ export interface MemberProjectRow {
   slug: string | null
   title: string
   status: string | null
-  stage: string | null
+  /** The home product's kind and stage (contract phase step 1; was projects.stage). */
+  home_kind: string | null
+  home_kind_label: string | null
+  home_stage: string | null
+  home_stage_label: string | null
+  product_count: number | null
+  product_open_count: number | null
   category: string | null
   added_by: string
   joined_at: string
@@ -112,9 +119,10 @@ export async function handleRemoveProjectMember(
 export async function handleGetMemberProjects(memberSlug: string, env: Env): Promise<Response> {
   const slug = (memberSlug ?? '').trim().toLowerCase()
   const { results } = await env.DB.prepare(
-    `SELECT p.id AS id, p.slug AS slug, p.title AS title, p.status AS status, p.stage AS stage, p.category AS category,
+    `SELECT p.id AS id, p.slug AS slug, p.title AS title, p.status AS status, ${homeProductCols('p')}, p.category AS category,
             pm.added_by AS added_by, pm.created_at AS joined_at
        FROM project_members pm JOIN projects p ON p.id = pm.project_id
+       ${homeProductJoin('p')}
       WHERE pm.member_slug = ? AND p.deleted_at IS NULL
       ORDER BY p.title COLLATE NOCASE`,
   ).bind(slug).all<MemberProjectRow>()

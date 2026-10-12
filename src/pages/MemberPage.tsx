@@ -20,7 +20,7 @@ import type { CommitmentRow } from '../hooks/useCommitments'
 import { getMemberBySlug, getPersonInfo } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
 import { projects } from '../data/projects'
-import { stageLabel } from '../lib/stageNormalize'
+import { compactStageLabel } from '../lib/projectStage'
 import { formatShortDate, isOverdue } from '../lib/dateUtils'
 import { displayName as formatTier, fullNameForSlug } from '../lib/nameUtils'
 import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
@@ -426,12 +426,12 @@ export default function MemberPage() {
                       {project.description}
                     </p>
                   )}
-                  {project.stage && (
+                  {compactStageLabel(project) && (
                     <p
                       className="text-xs mt-2"
                       style={{ color: 'var(--muted)' }}
                     >
-                      Stage: {stageLabel(project.stage)}
+                      Stage: {compactStageLabel(project)}
                     </p>
                   )}
                 </div>

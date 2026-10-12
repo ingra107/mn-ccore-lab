@@ -17,7 +17,13 @@ export interface MemberProject {
   slug: string | null
   title: string
   status: string | null
-  stage: string | null
+  /** The home product's kind and stage (contract phase step 1; no projects.stage). */
+  home_kind: string | null
+  home_kind_label: string | null
+  home_stage: string | null
+  home_stage_label: string | null
+  product_count: number | null
+  product_open_count: number | null
   category: string | null
   added_by: string
   joined_at: string

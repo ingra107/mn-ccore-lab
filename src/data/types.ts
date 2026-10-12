@@ -101,10 +101,21 @@ export interface Project {
   slug: string
   short_name?: string
   visibility?: 'public' | 'internal'
-  // Pipeline board fields. D1 stores lowercase canonical values.
-  // `normalizeStage` maps to 7-step UI ladder; `toApiStage` handles
-  // analysis→data_analysis and review→submitted translation on write.
-  stage?: 'idea' | 'data_collection' | 'analysis' | 'data_analysis' | 'writing' | 'review' | 'submitted' | 'revisions' | 'accepted' | 'published' | string
+  // A project's stage is its products' stages (contract phase step 1, PB
+  // Scratch/plans/2026-10-12-contract-phase-retire-project-stage.md). There is
+  // deliberately no `stage` here: projects.stage is being retired, and
+  // rowToProject drops it so no reader can reach it. The browser read
+  // (GET /api/projects) carries the HOME product's kind and stage plus the
+  // counts below; compact displays read them through src/lib/projectStage.ts,
+  // full views and rollups read the products themselves (useAllProjectProducts).
+  home_kind?: string | null
+  home_kind_label?: string | null
+  home_stage?: string | null
+  home_stage_label?: string | null
+  /** Live products in the project (the "+N" is this minus one). */
+  product_count?: number | null
+  /** Live products on a non-terminal rung; 0 with product_count > 0 = finished. */
+  product_open_count?: number | null
   team?: string[]  // slugs of team members working on this
   googleDocUrl?: string
   startDate?: string

@@ -3,7 +3,6 @@ import { portalTitle } from '../constants/pageLabels'
 import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { GitBranch, Plus, List, LayoutGrid } from 'lucide-react'
-import { stageLabel } from '../lib/stageNormalize'
 import { pipelineOffNote, pipelinePlaceOf } from '../lib/pipelinePlace'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useDependencies, useProjectHealth, useTasks, useAllProjectLinks, useAllProjectPublications } from '../hooks/useApiData'
@@ -78,14 +77,14 @@ function statusScope(status: string, projects: Project[]): Project[] {
   return projects.filter((p) => !isProjectDone(p.status))
 }
 
-const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
 /** The stage a list row is sorted, grouped and counted under: its home
  *  product's (or only product's) stage. A project with 2+ products and no home
- *  groups as "Several products"; one with no product (before Backfill A)
- *  keeps its own project stage. Keys are kind-qualified, so a manuscript's
- *  "Submitted" and a grant application's "Submitted" are separate groups. */
-function listStageOf(p: Project, products: ProductRow[] | undefined): { key: string; label: string; order: number } {
+ *  groups as "Several products"; one with no product groups as "No product"
+ *  (projects.stage is never read, contract phase step 1). Keys are
+ *  kind-qualified, so a manuscript's "Submitted" and a grant application's
+ *  "Submitted" are separate groups. */
+function listStageOf(products: ProductRow[] | undefined): { key: string; label: string; order: number } {
   const home = homeOf(products)
   if (home) {
     return {
@@ -95,7 +94,7 @@ function listStageOf(p: Project, products: ProductRow[] | undefined): { key: str
     }
   }
   if (products && products.length > 1) return { key: '_several', label: 'Several products', order: 900_000 }
-  return { key: `_project:${p.stage ?? ''}`, label: stageLabel(p.stage || '') || 'No stage', order: 950_000 + (STAGE_ORDER[p.stage || ''] ?? 99) }
+  return { key: '_none', label: 'No product', order: 950_000 }
 }
 
 // One definition serves both filter axes (#123): a .tk-flt link, so the second
@@ -110,7 +109,7 @@ function FilterPill({ label, active, onClick, title }: { label: string; active: 
 
 function getStageProjects(stage: Stage, filtered: Project[], productsByProject: ProductsByProject['byProject']): Project[] {
   return filtered.filter((p) => {
-    const place = pipelinePlaceOf(p, productsByProject[p.id ?? ''], STAGES)
+    const place = pipelinePlaceOf(productsByProject[p.id ?? ''], STAGES)
     return 'stage' in place && place.stage === stage
   })
 }
@@ -205,7 +204,7 @@ export default function Projects() {
   const productsByProject = useMemo(() => productData?.byProject ?? {}, [productData])
   const productKinds = useMemo(() => productData?.kinds ?? [], [productData])
   const stageOf = useCallback(
-    (p: Project) => listStageOf(p, productsByProject[p.id ?? '']),
+    (p: Project) => listStageOf(productsByProject[p.id ?? '']),
     [productsByProject],
   )
 
@@ -302,10 +301,9 @@ export default function Projects() {
         case 'title': cmp = projectRowName(a).localeCompare(projectRowName(b)); break
         case 'status': cmp = (a.status || '').localeCompare(b.status || ''); break
         case 'stage': {
-          // #91-class fix, now structural (Hub #361a): project.stage is
-          // normalized at ingress (rowToProject), so raw legacy Title-Case
-          // values can no longer reach this comparison — no per-read
-          // normalize() call needed to avoid the "multiple idea sections" bug.
+          // The home product's kind-qualified place (listStageOf): one group
+          // per kind and rung, so the "multiple idea sections" bug (#91)
+          // cannot recur from a legacy spelling.
           cmp = stageOf(a).order - stageOf(b).order
           if (cmp === 0) cmp = pinCmp
           break
@@ -552,7 +550,7 @@ export default function Projects() {
             {(() => {
               const counts = { other_ladder: 0, no_stage: 0, off_board: 0 }
               for (const p of filtered) {
-                const place = pipelinePlaceOf(p, productsByProject[p.id ?? ''], STAGES)
+                const place = pipelinePlaceOf(productsByProject[p.id ?? ''], STAGES)
                 if ('off' in place) counts[place.off] += 1
               }
               const note = pipelineOffNote(counts)

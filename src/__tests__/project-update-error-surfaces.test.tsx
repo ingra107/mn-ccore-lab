@@ -31,7 +31,9 @@ async function until(pred: () => boolean, what: string): Promise<void> {
   throw new Error(`timed out waiting for ${what}`)
 }
 
-const seed = [{ slug: 'p1', stage: 'idea', title: 'P1' } as unknown as Project]
+// A project's stage lives on its products now (contract phase step 1), so
+// the field written here is status.
+const seed = [{ slug: 'p1', status: 'active', title: 'P1' } as unknown as Project]
 
 function Harness({ fields }: { fields: Record<string, unknown> }) {
   const update = useUpdateProjectFields()
@@ -63,30 +65,30 @@ describe('useUpdateProjectFields: a rejected write is never silent (#128)', () =
       ok: false,
       status: 400,
       statusText: 'Bad Request',
-      json: async () => ({ error: 'Invalid stage: "nope". Must be one of: idea, writing' }),
+      json: async () => ({ error: 'Invalid status: "nope". Must be one of: active, done' }),
     }))
-    const { host, queryClient } = await mountWith({ stage: 'nope' })
+    const { host, queryClient } = await mountWith({ status: 'nope' })
 
-    await until(() => /Could not save stage/.test(host.textContent ?? ''), 'error toast')
-    expect(host.textContent).toContain('Invalid stage: "nope"')
-    expect(queryClient.getQueryData<Project[]>(['projects'])?.[0].stage).toBe('idea')
+    await until(() => /Could not save status/.test(host.textContent ?? ''), 'error toast')
+    expect(host.textContent).toContain('Invalid status: "nope"')
+    expect(queryClient.getQueryData<Project[]>(['projects'])?.[0].status).toBe('active')
   })
 
   it('an accepted write shows no error and keeps the optimistic value', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ data: { slug: 'p1', stage: 'writing' } }),
+      json: async () => ({ data: { slug: 'p1', status: 'blocked' } }),
     })
     vi.stubGlobal('fetch', fetchMock)
-    const { host, queryClient } = await mountWith({ stage: 'writing' })
+    const { host, queryClient } = await mountWith({ status: 'blocked' })
 
     await until(() => fetchMock.mock.calls.length > 0, 'POST')
     await new Promise((r) => setTimeout(r, 50))
     await expect.poll(() => host.textContent ?? '').not.toMatch(/Could not save/)
-    expect(queryClient.getQueryData<Project[]>(['projects'])?.[0].stage).toBe('writing')
+    expect(queryClient.getQueryData<Project[]>(['projects'])?.[0].status).toBe('blocked')
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/projects/p1')
-    expect(JSON.parse(init.body as string)).toEqual({ stage: 'writing' })
+    expect(JSON.parse(init.body as string)).toEqual({ status: 'blocked' })
   })
 })

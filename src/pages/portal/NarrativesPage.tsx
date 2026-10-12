@@ -9,17 +9,15 @@ import { useNarratives } from '../../hooks/useApiData'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
-import { stageColor, stageLabel } from '../../lib/stageNormalize'
+import { normalizeStage, stageColor } from '../../lib/stageNormalize'
+import { stageCountLabel } from '../../lib/projectStage'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 
-// useNarratives() (Hub #361a) is the ingress chokepoint for this shape: it
-// normalizes every stageDistribution/projects `.stage` value onto the UI's
-// 7-stage canonical ladder before this component ever sees it, so `stage`
-// here is always one of the STAGE_ABBREV keys below — no per-read
-// normalizeStage() call needed. stageColor()/stageLabel() (shared,
-// WCAG-AA-pinned) drive the dots + text so colors and labels stay consistent
-// with ProjectDetail / Trajectory / etc.
+// An arc's pipeline is its PRODUCTS by kind and stage, and each project shows
+// its home product's stage (contract phase step 1; the Worker sends the ladder
+// words). stageColor() (shared, WCAG-AA-pinned) colors manuscript rungs, so
+// dots match ProjectDetail / Trajectory; any other kind reads slate.
 const STAGE_ABBREV: Record<string, string> = {
   idea: 'Idea',
   data_collection: 'Data',
@@ -30,8 +28,13 @@ const STAGE_ABBREV: Record<string, string> = {
   published: 'Pub',
 }
 
-function stageAbbrev(stage: string): string {
-  return STAGE_ABBREV[stage] || stageLabel(stage) || stage
+function rungColor(kind: string | null, stage: string | null): string {
+  return kind === 'manuscript' && stage ? stageColor(stage) : 'var(--slate)'
+}
+
+function rungAbbrev(r: { kind: string; kind_label: string; stage: string; stage_label: string }): string {
+  if (r.kind === 'manuscript') return STAGE_ABBREV[normalizeStage(r.stage)] || r.stage_label
+  return `${r.kind_label} · ${r.stage_label}`
 }
 
 export default function NarrativesPage() {
@@ -119,19 +122,19 @@ export default function NarrativesPage() {
                   Pipeline
                 </span>
                 {arc.stageDistribution.map((s, i) => (
-                  <div key={s.stage} className="flex items-center gap-1">
+                  <div key={`${s.kind}:${s.stage}`} className="flex items-center gap-1">
                     {i > 0 && <div style={{ width: 8, height: 1, background: 'var(--sk-line2)' }} />}
                     <div className="flex flex-col items-center" style={{ gap: 2 }}>
                       <div style={{
                         width: s.count > 0 ? 10 + s.count * 4 : 8,
                         height: s.count > 0 ? 10 + s.count * 4 : 8,
                         borderRadius: 'var(--radius-circle)',
-                        background: stageColor(s.stage),
+                        background: rungColor(s.kind, s.stage),
                         opacity: s.count > 0 ? 1 : 0.25,
                         transition: 'all 0.2s',
-                      }} title={`${stageLabel(s.stage)}: ${s.count}`} />
+                      }} title={`${stageCountLabel(s)}: ${s.count}`} />
                       <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, lineHeight: 1 }}>
-                        {stageAbbrev(s.stage)}{s.count > 0 ? ` ${s.count}` : ''}
+                        {rungAbbrev(s)}{s.count > 0 ? ` ${s.count}` : ''}
                       </span>
                     </div>
                   </div>
@@ -147,12 +150,12 @@ export default function NarrativesPage() {
                     className="flex items-center gap-2 p-2 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                     style={{ textDecoration: 'none' }}
                   >
-                    <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: stageColor(p.stage), flexShrink: 0 }} />
+                    <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: rungColor(p.home_kind, p.home_stage), flexShrink: 0 }} />
                     <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', flex: 1 }}>
                       {p.title}
                     </span>
-                    <span style={{ fontSize: '10px', color: stageColor(p.stage) }}>
-                      {stageLabel(p.stage)}
+                    <span style={{ fontSize: '10px', color: rungColor(p.home_kind, p.home_stage) }}>
+                      {p.stage_label}
                     </span>
                   </Link>
                 ))}

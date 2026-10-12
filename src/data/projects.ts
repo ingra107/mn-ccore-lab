@@ -9,7 +9,6 @@ export const projects: Project[] = [
     category: 'clif',
     pi: 'nick-ingraham',
     description: 'Examining whether gender influences the delivery of lung-protective ventilation across CLIF consortium sites.',
-    stage: 'analysis',
     team: ['nick-ingraham', 'casey-eddington'],
   },
   {
@@ -19,7 +18,6 @@ export const projects: Project[] = [
     category: 'clif',
     pi: 'nick-ingraham',
     description: 'Developing and validating standardized quality metrics for ICU care using multi-center CLIF data.',
-    stage: 'data_collection',
     team: ['nick-ingraham', 'casey-eddington'],
   },
   {
@@ -29,7 +27,6 @@ export const projects: Project[] = [
     category: 'clif',
     pi: 'nick-ingraham',
     description: 'Evaluating the impact of the 2024 IV fluid shortage on ICU fluid resuscitation practices and patient outcomes.',
-    stage: 'analysis',
     team: ['nick-ingraham'],
   },
   {
@@ -39,7 +36,6 @@ export const projects: Project[] = [
     category: 'clif',
     pi: 'nick-ingraham',
     description: 'Comparing PaO2/FiO2 and SpO2/FiO2 ratios for classifying oxygenation severity in mechanically ventilated patients.',
-    stage: 'review',
     team: ['nick-ingraham'],
   },
   {
@@ -49,7 +45,6 @@ export const projects: Project[] = [
     category: 'clif',
     pi: 'nick-ingraham',
     description: 'Characterizing ventilation mode transitions and their association with outcomes in mechanically ventilated ICU patients.',
-    stage: 'review',
     team: ['nick-ingraham'],
   },
   {
@@ -59,7 +54,6 @@ export const projects: Project[] = [
     category: 'clif',
     pi: 'nick-ingraham',
     description: 'Multi-center comparison of volume-controlled vs pressure-controlled ventilation on ICU mortality.',
-    stage: 'analysis',
     team: ['nick-ingraham', 'casey-eddington'],
   },
   {
@@ -68,7 +62,6 @@ export const projects: Project[] = [
     status: 'active',
     category: 'clif',
     pi: 'nick-ingraham',
-    stage: 'data_collection',
     team: ['nick-ingraham'],
   },
   {
@@ -77,7 +70,6 @@ export const projects: Project[] = [
     status: 'active',
     category: 'clif',
     pi: 'nick-ingraham',
-    stage: 'data_collection',
     team: ['nick-ingraham'],
   },
   {
@@ -86,7 +78,6 @@ export const projects: Project[] = [
     status: 'active',
     category: 'clif',
     pi: 'nick-ingraham',
-    stage: 'data_collection',
     team: ['nick-ingraham'],
   },
   {
@@ -95,7 +86,6 @@ export const projects: Project[] = [
     status: 'active',
     category: 'clif',
     pi: 'nick-ingraham',
-    stage: 'data_collection',
     team: ['nick-ingraham'],
   },
   {
@@ -105,7 +95,6 @@ export const projects: Project[] = [
     category: 'clif',
     pi: 'nick-ingraham',
     description: 'Quantifying prone positioning utilization rates across CLIF sites in patients with severe acute respiratory failure.',
-    stage: 'analysis',
     team: ['nick-ingraham'],
   },
 
@@ -117,7 +106,6 @@ export const projects: Project[] = [
     category: 'lab',
     pi: 'nick-ingraham',
     description: 'Quantifying provider-level variation in lung-protective ventilation adherence using multi-center CLIF data.',
-    stage: 'review',
     team: ['nick-ingraham', 'casey-eddington'],
   },
   {
@@ -127,7 +115,6 @@ export const projects: Project[] = [
     category: 'lab',
     pi: 'nick-ingraham',
     description: 'Surveying ICU providers on general decision-making styles and correlating with ventilator management choices.',
-    stage: 'data_collection',
     team: ['nick-ingraham', 'emma-bromley'],
   },
   {
@@ -137,7 +124,6 @@ export const projects: Project[] = [
     category: 'lab',
     pi: 'nick-ingraham',
     description: 'Building a research program studying how provider characteristics influence evidence-based practice adoption in the ICU.',
-    stage: 'writing',
     team: ['nick-ingraham'],
   },
   {
@@ -146,7 +132,6 @@ export const projects: Project[] = [
     status: 'active',
     category: 'lab',
     pi: 'nick-ingraham',
-    stage: 'writing',
     team: ['nick-ingraham'],
   },
   {
@@ -156,7 +141,6 @@ export const projects: Project[] = [
     category: 'lab',
     pi: 'nick-ingraham',
     description: 'Investigating whether SGLT2 inhibitors and metformin reduce 30-day readmission risk in COPD patients.',
-    stage: 'analysis',
     team: ['nick-ingraham'],
   },
 
@@ -168,7 +152,6 @@ export const projects: Project[] = [
     category: 'nate-mesfin',
     pi: 'nate-mesfin',
     description: 'Analyzing how individual providers vary in DNR order timing, documentation, and goals-of-care communication patterns.',
-    stage: 'writing',
     team: ['nate-mesfin'],
   },
   {
@@ -178,7 +161,6 @@ export const projects: Project[] = [
     category: 'nate-mesfin',
     pi: 'nate-mesfin',
     description: 'Characterizing chronic critical illness trajectories in patients with acute respiratory distress syndrome. Shared project with Nick Ingraham.',
-    stage: 'analysis',
     team: ['nate-mesfin', 'nick-ingraham'],
   },
 
@@ -190,7 +172,6 @@ export const projects: Project[] = [
     category: 'mentee',
     pi: 'nick-ingraham',
     description: 'Dan Shyu\'s fellowship project examining how ICU handoff quality varies by provider experience, shift timing, and patient acuity using structured observation and EHR data.',
-    stage: 'data_collection',
     team: ['dan-shyu', 'nick-ingraham'],
   },
   {
@@ -200,7 +181,6 @@ export const projects: Project[] = [
     category: 'mentee',
     pi: 'nate-mesfin',
     description: 'Beret Fitzgerald\'s fellowship project investigating optimal timing of goals-of-care conversations in patients with prolonged ICU stays, using CLIF data to identify actionable triggers.',
-    stage: 'analysis',
     team: ['beret-fitzgerald', 'nate-mesfin'],
   },
   {
@@ -210,7 +190,6 @@ export const projects: Project[] = [
     category: 'mentee',
     pi: 'nick-ingraham',
     description: 'Claire Collins\' medical student project exploring how anchoring and availability biases influence ICU admission decisions through a survey-based experimental design.',
-    stage: 'data_collection',
     team: ['claire-collins', 'nick-ingraham'],
   },
 
@@ -222,7 +201,6 @@ export const projects: Project[] = [
     category: 'lab',
     pi: 'nick-ingraham',
     description: 'R01 proposal for precision lung-protective ventilation assistance using real-time clinical decision support.',
-    stage: 'idea',
   },
   {
     title: 'R01: Provider Confounding in Observational Causal Inference',
@@ -231,7 +209,6 @@ export const projects: Project[] = [
     category: 'lab',
     pi: 'nick-ingraham',
     description: 'R01 proposal addressing provider-level confounding in observational ICU studies using causal inference methods.',
-    stage: 'idea',
   },
   {
     title: 'R01: Provider Variation Across CLIF',
@@ -240,7 +217,6 @@ export const projects: Project[] = [
     category: 'lab',
     pi: 'nick-ingraham',
     description: 'R01 proposal characterizing and explaining provider-level variation in ICU care across the CLIF consortium.',
-    stage: 'idea',
   },
   {
     title: 'R03: Decision-Making Styles of Medical Trainees',
@@ -249,6 +225,5 @@ export const projects: Project[] = [
     category: 'lab',
     pi: 'nick-ingraham',
     description: 'R03 proposal investigating how cognitive decision-making styles develop during medical training and influence clinical practice.',
-    stage: 'data_collection',
   },
 ]

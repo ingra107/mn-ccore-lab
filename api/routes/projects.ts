@@ -5,6 +5,7 @@ import { validateApiKey } from '../middleware/api-key-auth';
 import { isValidProjectSlug, type SlugClaimCheck } from '../lib/project-slug';
 import { nowInstant } from '../lib/time';
 import { lastWorkedIso } from '../lib/project-recency';
+import { compactStageLabel, homeProductCols, homeProductJoin } from '../lib/project-home';
 import { applyMutation } from './mutations';
 import { replySummaryColumns, activityVisibilityGate, activityHiddenClause, postActivityEntry, sourceKeyFrom } from '../lib/activity-entry';
 import { enumFieldsFor } from '../lib/enum-domains';
@@ -118,6 +119,9 @@ export async function handleCreateProject(
     title: string
     slug?: string
     category?: string
+    /** The first product's kind (product_kinds), default manuscript. */
+    kind?: string
+    /** The first product's stage, on that kind's ladder; default its first rung. */
     stage?: string
     description?: string
     pi?: string
@@ -127,6 +131,21 @@ export async function handleCreateProject(
 
   if (!body.title?.trim()) {
     return error('title required', 400);
+  }
+
+  // A project is born with the product its creator named (contract phase,
+  // ruling 2; schema-v129 seeds the home from it). The pair is checked here so
+  // an off-ladder kind/stage answers 400 in words, before the seed's FK would.
+  const homeKind = typeof body.kind === 'string' && body.kind.trim() ? body.kind.trim() : 'manuscript';
+  const ladder = await env.DB.prepare(
+    `SELECT s.stage FROM product_stages s JOIN product_kinds k ON k.kind = s.kind
+      WHERE s.kind = ? AND s.deleted_at IS NULL AND k.deleted_at IS NULL ORDER BY s.ordinal`,
+  ).bind(homeKind).all<{ stage: string }>();
+  const rungs = (ladder.results ?? []).map((r) => r.stage);
+  if (rungs.length === 0) return error(`unknown product kind "${homeKind}"`, 400);
+  const homeStage = typeof body.stage === 'string' && body.stage.trim() ? body.stage.trim() : rungs[0];
+  if (!rungs.includes(homeStage)) {
+    return error(`stage "${homeStage}" is not on the ${homeKind} ladder (${rungs.join(', ')})`, 400);
   }
 
   // Sanitize: `[a-z0-9-]` only. A client-supplied body.slug of e.g.
@@ -185,7 +204,10 @@ export async function handleCreateProject(
       title: body.title.trim(),
       slug,
       category: body.category || 'MNCCORE',
-      stage: body.stage || 'idea',
+      // projects.stage is still written until the contract phase's step 3:
+      // the manuscript ladder word for a manuscript home, else 'idea'. No Hub
+      // reader uses it; PB's readers move off it in step 2.
+      stage: homeKind === 'manuscript' ? homeStage : 'idea',
       stage_entered_at: nowInstant(),
       description: body.description || '',
       pi: piActor.slug,
@@ -196,6 +218,7 @@ export async function handleCreateProject(
     },
     route: 'handleCreateProject',
     user,
+    home_product: { kind: homeKind, stage: homeStage },
   });
   if (createProjMut.status === 'accepted' || !isSlugTaken(createProjMut.reason)) break;
   slug = `${baseSlug}-${attempt}`;
@@ -208,8 +231,18 @@ export async function handleCreateProject(
 
   await logActivity(env, 'project', `Created project: ${body.title.trim()}`, user.email, id, null);
 
-  const created = await env.DB.prepare('SELECT * FROM projects WHERE id = ?').bind(id).first();
+  const created = await readProjectWithHome(env, id);
   return json({ data: created }, 201);
+}
+
+/** One project row as the browser reads it: the stored row plus its home
+ *  product's kind and stage (api/lib/project-home.ts). Not the PB wire. */
+async function readProjectWithHome(env: Env, idOrSlug: string): Promise<Record<string, unknown> | null> {
+  return env.DB.prepare(
+    `SELECT pr.*, ${homeProductCols('pr')}
+       FROM projects pr ${homeProductJoin('pr')}
+      WHERE pr.id = ? OR pr.slug = ? LIMIT 1`,
+  ).bind(idOrSlug, idOrSlug).first<Record<string, unknown>>();
 }
 
 // GET /api/projects?status=&category=&include_deleted=1[&seq_after=N&limit=N]
@@ -245,15 +278,25 @@ export async function handleGetProjects(url: URL, env: Env): Promise<Response> {
     params.push(seqAfter);
   }
 
+  // The browser read also carries each project's home product (kind, stage,
+  // labels, product counts): every Hub reader of a project's stage reads it
+  // from there (contract phase step 1). The seq_after sync wire stays the
+  // raw stored row.
+  let browserQuery = `SELECT pr.*, ${homeProductCols('pr')} FROM projects pr ${homeProductJoin('pr')}
+    WHERE ${includeDeleted ? '1=1' : 'pr.deleted_at IS NULL'}`;
+
   if (status) {
     query += ' AND status = ?';
+    browserQuery += ' AND pr.status = ?';
     params.push(status);
   }
 
   if (category) {
     query += ' AND category = ?';
+    browserQuery += ' AND pr.category = ?';
     params.push(category);
   }
+  browserQuery += ' ORDER BY pr.title ASC';
 
   if (seqAfterRaw !== null) {
     const limit = limitRaw ? Math.min(Math.max(Number.parseInt(limitRaw, 10) || 2000, 1), 5000) : 2000;
@@ -294,7 +337,7 @@ export async function handleGetProjects(url: URL, env: Env): Promise<Response> {
   // rollup is only issued at all on the browser read.
   const isBrowserRead = seqAfterRaw === null;
   const [result, agg] = await Promise.all([
-    env.DB.prepare(query).bind(...params).all(),
+    env.DB.prepare(isBrowserRead ? browserQuery : query).bind(...params).all(),
     isBrowserRead
       ? env.DB.prepare(
           `SELECT project_id, MAX(created_at) AS latest
@@ -438,9 +481,13 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
   // New approach: one aggregation query per data source, keyed by project_id,
   // merged in memory. Total query count is now constant (6 regardless of
   // project count). Benchmarked ~80ms for 68 projects.
+  // Each with its home product's kind and stage (contract phase step 1).
   const projects = await env.DB.prepare(
-    `SELECT id, slug, title, stage, status, updated_at FROM projects WHERE status = 'active'`
-  ).all<{ id: string; slug: string; title: string; stage: string; status: string; updated_at: string }>();
+    `SELECT pr.id, pr.slug, pr.title, pr.status, pr.updated_at, ${homeProductCols('pr')}
+       FROM projects pr ${homeProductJoin('pr')} WHERE pr.status = 'active'`
+  ).all<{ id: string; slug: string; title: string; status: string; updated_at: string
+          home_kind: string | null; home_kind_label: string | null; home_stage: string | null
+          home_stage_label: string | null; product_count: number | null }>();
 
   const now = new Date();
   // AM-7: CT calendar "today" for the overdue comparison below (was UTC, which
@@ -534,7 +581,9 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
     healthData.push({
       slug: p.slug,
       title: p.title,
-      stage: p.stage,
+      home_kind: p.home_kind,
+      home_stage: p.home_stage,
+      stage_label: compactStageLabel(p) || null,
       score,
       status,
       factors: { activity: activityScore, velocity: velocityScore, overdue: overdueScore, milestones: milestoneScore },
@@ -790,7 +839,7 @@ export async function handleUpdateProject(
 
   await logActivity(env, 'project_update', `Updated project fields: ${Object.keys(body).join(', ')}`, user.email, id, 'project');
 
-  const updated = await env.DB.prepare('SELECT * FROM projects WHERE id = ? OR slug = ?').bind(id, id).first();
+  const updated = await readProjectWithHome(env, id);
   return json({ data: updated });
 }
 

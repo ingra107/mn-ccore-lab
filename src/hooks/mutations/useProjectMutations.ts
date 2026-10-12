@@ -14,9 +14,8 @@ import type { Comment, ProjectDocumentRow, StoredLink } from '../useApiData'
 import { nowInstant } from '../../lib/time'
 import { useUndoToast } from '../../components/UndoToast'
 import { PATHS } from '../../constants/paths'
-import { normalizeStage } from '../../lib/stageNormalize'
 import { bestPublicationMatch } from '../../lib/titleMatch'
-import { isProjectFinished } from '../../lib/taskConstants'
+import { isProjectDone } from '../../lib/taskConstants'
 
 // ── Project mutations ───────────────────────────────────────
 
@@ -32,6 +31,8 @@ export function useCreateProject() {
     mutationFn: (input: {
       title: string
       category?: string
+      /** The first product (the project's home): kind and a stage on its ladder. */
+      kind?: string
       stage?: string
       description?: string
       pi?: string
@@ -78,15 +79,10 @@ export function useUpdateProjectFields() {
       const previousProjects = queryClient.getQueryData<Project[]>(['projects'])
 
       if (previousProjects) {
-        // Ingress chokepoint (Hub #361a): this optimistic merge feeds the
-        // SAME `['projects']` cache Projects.tsx/ManuscriptsPage.tsx read
-        // (both normalize-free downstream of rowToProject). `fields.stage`
-        // is toApiStage() wire-shape output when the caller is a stage
-        // change — needed as-is for the mutationFn PATCH body, but the local
-        // cache write must hold the UI canonical value.
-        const optimisticFields = 'stage' in fields && fields.stage != null
-          ? { ...fields, stage: (normalizeStage(fields.stage as string) || fields.stage) as Project['stage'] }
-          : fields
+        // A project's stage lives on its products (contract phase step 1):
+        // a stage change goes through POST /api/projects/:slug/products, so a
+        // `stage` key never reaches the cached Project (it has no such field).
+        const { stage: _retiredStage, ...optimisticFields } = fields as Record<string, unknown>
         queryClient.setQueryData<Project[]>(
           ['projects'],
           previousProjects.map((p) =>
@@ -114,7 +110,9 @@ export function useUpdateProjectFields() {
     },
 
     onSuccess: (_resp, { slug, fields }) => {
-      if (!isProjectFinished(fields as { status?: string | null; stage?: string | null }) || suggestedPublicationMatchSlugs.has(slug)) return
+      // The patch finished the project when it set status done. (A manuscript
+      // reaching Published is a PRODUCT write, not this mutation.)
+      if (!isProjectDone((fields as { status?: string | null }).status) || suggestedPublicationMatchSlugs.has(slug)) return
 
       // Already linked? The per-slug cache exists only once ProjectDetail has
       // mounted; the Projects/Manuscripts tables hold the all-links rows

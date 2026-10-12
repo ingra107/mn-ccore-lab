@@ -53,7 +53,17 @@ export interface ProjectRow {
   category: string | null
   pi: string | null
   slug: string | null
+  /** The stored projects.stage (retiring; still on the PB wire). The browser
+   *  never reads it: rowToProject drops it. Read the home_* fields. */
   stage: string
+  // The home product, joined by GET /api/projects (browser read only) and the
+  // create/update responses (api/lib/project-home.ts). Absent on the sync wire.
+  home_kind?: string | null
+  home_kind_label?: string | null
+  home_stage?: string | null
+  home_stage_label?: string | null
+  product_count?: number | null
+  product_open_count?: number | null
   pi_context: string | null
   strategic_context: string | null
   short_name: string | null
@@ -135,6 +145,7 @@ export const PROJECT_ROW_KEYS = [
   'next_artifact', 'citation', 'doi', 'pubmed_id', 'publication_date',
   'journal', 'author_role', 'manuscript_path', 'analysis_path', 'key_files',
   'github_url', 'box_url', 'context_links',
+  'home_kind', 'home_kind_label', 'home_stage', 'home_stage_label', 'product_count', 'product_open_count',
 ] as const satisfies readonly (keyof ProjectRow)[]
 
 type MissingProjectRowKey = Exclude<keyof ProjectRow, (typeof PROJECT_ROW_KEYS)[number]>
@@ -480,6 +491,8 @@ export function fetchCitations() {
 export function createProject(input: {
   title: string
   category?: string
+  /** The first product's kind and stage (the project's home product). */
+  kind?: string
   stage?: string
   description?: string
   pi?: string

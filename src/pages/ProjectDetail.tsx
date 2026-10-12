@@ -363,7 +363,9 @@ function ProjectDetailInner({ project }: InnerProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: newTitle,
-          stage: project.stage,
+          // The copy is born with the same first product: the home's kind and stage.
+          kind: project.home_kind ?? undefined,
+          stage: project.home_stage ?? undefined,
           category: project.category,
           pi: project.pi,
           status: 'active',

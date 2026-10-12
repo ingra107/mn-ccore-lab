@@ -1,4 +1,5 @@
 import type { Env } from '../helpers';
+import { compactStageLabel, homeProductCols, homeProductJoin } from '../lib/project-home';
 import { json } from '../helpers';
 import { activityVisibilityGate } from '../lib/activity-entry';
 import { legacyEchoExclude } from '../lib/posted-activity';
@@ -175,7 +176,9 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
       `SELECT id, title, description, assignee, status, priority, due_date, project_id, created_at FROM tasks WHERE (title LIKE ? OR description LIKE ?) AND deleted_at IS NULL LIMIT ?`
     ).bind(like, like, limit).all(),
     env.DB.prepare(
-      `SELECT slug, title, category, stage, pi, description, updated_at FROM projects WHERE (title LIKE ? OR category LIKE ? OR description LIKE ?) AND deleted_at IS NULL LIMIT ?`
+      `SELECT pr.slug, pr.title, pr.category, pr.pi, pr.description, pr.updated_at, ${homeProductCols('pr')}
+         FROM projects pr ${homeProductJoin('pr')}
+        WHERE (pr.title LIKE ? OR pr.category LIKE ? OR pr.description LIKE ?) AND pr.deleted_at IS NULL LIMIT ?`
     ).bind(like, like, like, limit).all(),
     env.DB.prepare(
       'SELECT id, title, date, type, notes FROM meetings WHERE (title LIKE ? OR notes LIKE ?) LIMIT ?'
@@ -297,7 +300,8 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
       id: p.slug,
       type: 'project',
       title: p.title,
-      subtitle: `${p.stage} · ${p.category}`,
+      // The home product's stage in words, "+N" for the rest (contract phase step 1).
+      subtitle: [compactStageLabel(p as Parameters<typeof compactStageLabel>[0]), p.category].filter(Boolean).join(' · '),
       url: `/portal/projects/${p.slug}`,
       score,
       timestamp,
@@ -305,7 +309,7 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
       matchedField: match.matchedField,
       details: {
         category: p.category,
-        stage: p.stage,
+        stage: compactStageLabel(p as Parameters<typeof compactStageLabel>[0]) || null,
         pi: p.pi,
       },
     });

@@ -29,7 +29,7 @@ import type { Project } from '../../data/types'
 import NeedsAttentionDashboard, { type AttentionFilter } from '../../components/NeedsAttentionDashboard'
 import ActiveSubmissionsWidget from '../../components/ActiveSubmissionsWidget'
 import type { SleekSort } from '../../components/table/SleekRows'
-import { ManuscriptsList } from './ManuscriptsList'
+import { ManuscriptsList, type ManuscriptRow } from './ManuscriptsList'
 import EmptyState from '../../components/EmptyState'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
@@ -38,7 +38,6 @@ import ProductKindList from '../../components/project/ProductKindList'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
-import { toApiStage } from '../../lib/stageNormalize'
 import { useAllProjectProducts, useSetProductStage } from '../../hooks/useProjectProducts'
 import { homeOf, kindsForManuscriptsTab, ladderFor, manuscriptsPageTabs, MANUSCRIPT_LADDER_FALLBACK, productLabel, productsOfKinds, type ProductRow } from '../../lib/products'
 import { PATHS } from '../../constants/paths'
@@ -53,8 +52,8 @@ import { ICON_PROPS } from '../../lib/iconProps'
 // the stage cell and the pipeline drag write the product through
 // POST /api/projects/:slug/products. The stage words and their order are the
 // manuscript ladder the Worker sends (GET /api/projects/products), so the page
-// holds no copy of them. A project with no product yet (before Backfill A)
-// shows its own project stage and cannot be edited here.
+// holds no copy of them. A project with no product has no row here:
+// projects.stage is not read (contract phase step 1).
 // Status and group are words, not meanings: the edit menus list them in plain
 // ink (rules-ui-design 21, Nick 2026-10-11 -- green has no job, gold is "wants
 // you now", red is overdue).
@@ -170,26 +169,18 @@ export default function ManuscriptsPage() {
   const writingOrdinal = ladder.find((s) => s.stage === 'writing')?.ordinal ?? Number.POSITIVE_INFINITY
 
   // Each project as its manuscript row: the home product's stage and clock.
+  // projects.stage is never read (contract phase step 1): a project with no
+  // product, or whose home is another kind, has no manuscript row, and until
+  // the products read answers there are no rows (the retry note says why).
   const { rows: msCandidates, homeBySlug } = useMemo(() => {
     const homes = new Map<string, ProductRow>()
-    const out: Project[] = []
+    const out: ManuscriptRow[] = []
+    if (!productData) return { rows: out, homeBySlug: homes }
     for (const p of projects) {
-      if (!productData) {
-        // Product read failed (or not back yet): each project's own stage.
-        out.push({ ...p, stage: p.stage ? toApiStage(p.stage) : p.stage })
-        continue
-      }
-      const products = productData.byProject[p.id ?? '']
-      const home = homeOf(products)
-      if (home) {
-        if (home.kind !== 'manuscript') continue
-        homes.set(p.slug, home)
-        out.push({ ...p, stage: home.stage, stage_entered_at: home.stage_entered_at ?? p.stage_entered_at })
-      } else if (!products || products.length === 0) {
-        // No product yet: the project's own stage, canonical, read-only here.
-        out.push({ ...p, stage: p.stage ? toApiStage(p.stage) : p.stage })
-      }
-      // 2+ products and no home: no single manuscript stage to show.
+      const home = homeOf(productData.byProject[p.id ?? ''])
+      if (!home || home.kind !== 'manuscript') continue
+      homes.set(p.slug, home)
+      out.push({ ...p, stage: home.stage, stage_entered_at: home.stage_entered_at ?? undefined })
     }
     return { rows: out, homeBySlug: homes }
   }, [projects, productData])
@@ -224,7 +215,7 @@ export default function ManuscriptsPage() {
   }, [kindTab, productData, projects])
   const kindLabel = kindTabs.find((t) => t.value === kindTab)?.label ?? ''
   const isManuscriptRow = useCallback(
-    (p: Project) => (STAGE_ORDER[p.stage ?? ''] ?? -1) >= writingOrdinal,
+    (p: ManuscriptRow) => (STAGE_ORDER[p.stage] ?? -1) >= writingOrdinal,
     [STAGE_ORDER, writingOrdinal],
   )
 
@@ -309,7 +300,7 @@ export default function ManuscriptsPage() {
   }, [tasks])
 
   const byStage = useMemo(() => {
-    const map: Record<string, Project[]> = {}
+    const map: Record<string, ManuscriptRow[]> = {}
     for (const s of STAGES) map[s] = []
     for (const p of manuscripts) {
       const stage = p.stage || 'idea'
@@ -439,7 +430,7 @@ export default function ManuscriptsPage() {
             {!isLoading && kindTab === 'manuscript' && view === 'list' && <ActiveSubmissionsWidget />}
             {productsFailed && (
               <div role="alert" data-testid="manuscripts-products-error">
-                <QueryErrorNote label="product stages (each project shows its own stage, read-only)" onRetry={() => { void refetchProducts() }} />
+                <QueryErrorNote label="product stages, which list the manuscripts" onRetry={() => { void refetchProducts() }} />
               </div>
             )}
             {kindTab === 'manuscript' && manuscriptCategoryPills}
@@ -652,7 +643,7 @@ export default function ManuscriptsPage() {
 
 type StageKey = string
 
-function PipelineCard({ project, dragging }: { project: Project; dragging?: boolean }) {
+function PipelineCard({ project, dragging }: { project: ManuscriptRow; dragging?: boolean }) {
   const pi = piDisplay(project.pi)
   return (
     <div
@@ -690,7 +681,7 @@ function PipelineCard({ project, dragging }: { project: Project; dragging?: bool
   )
 }
 
-function DraggableCard({ project, isAnyDragging }: { project: Project; isAnyDragging: boolean }) {
+function DraggableCard({ project, isAnyDragging }: { project: ManuscriptRow; isAnyDragging: boolean }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: project.slug,
     data: { stage: project.stage },
@@ -754,7 +745,7 @@ function PipelineBoard({
 }: {
   stages: string[]
   stageLabels: Record<string, string>
-  byStage: Record<string, Project[]>
+  byStage: Record<string, ManuscriptRow[]>
   onStageChange: (slug: string, prevStage: string, nextStage: StageKey) => void
 }) {
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -764,7 +755,7 @@ function PipelineBoard({
   )
 
   const allProjects = useMemo(() => {
-    const out: Project[] = []
+    const out: ManuscriptRow[] = []
     for (const s of STAGES) for (const p of byStage[s] || []) out.push(p)
     return out
   }, [byStage, STAGES])

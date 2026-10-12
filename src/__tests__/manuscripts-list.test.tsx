@@ -9,9 +9,8 @@
 import { describe, it, expect } from 'vitest'
 import { useState } from 'react'
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
-import { ManuscriptsList } from '../pages/portal/ManuscriptsList'
+import { ManuscriptsList, type ManuscriptRow } from '../pages/portal/ManuscriptsList'
 import type { SleekSort } from '../components/table/SleekRows'
-import type { Project } from '../data/types'
 import { mount, cleanupMountsAfterEach } from './testMount'
 
 cleanupMountsAfterEach()
@@ -21,8 +20,8 @@ const click = (el: Element) => el.dispatchEvent(new MouseEvent('click', { bubble
 // useListKeyboardNav listens on document.
 const key = (k: string) => document.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }))
 
-const P = (slug: string, stage: string, pi: string | null = 'nick-ingraham'): Project =>
-  ({ slug, title: `Paper ${slug}`, stage, status: 'active', category: 'MNCCORE', pi } as unknown as Project)
+const P = (slug: string, stage: string, pi: string | null = 'nick-ingraham'): ManuscriptRow =>
+  ({ slug, title: `Paper ${slug}`, stage, status: 'active', category: 'MNCCORE', pi } as unknown as ManuscriptRow)
 const ROWS = [P('a', 'writing'), P('b', 'writing', null), P('c', 'review')]
 const STAGES = ['writing', 'review'] as const
 const LABELS = { writing: 'Writing', review: 'Review' }

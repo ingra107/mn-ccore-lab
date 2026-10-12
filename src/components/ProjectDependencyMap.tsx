@@ -9,6 +9,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Project } from '../data/types'
 import type { DependencyRow } from '../hooks/useApiData'
+import { compactStageLabel } from '../lib/projectStage'
 
 // ── Stage colors ───────────────────────────────────────────
 
@@ -24,6 +25,8 @@ const STAGE_COLORS: Record<string, string> = {
   accepted: 'var(--sk-t2)',
   published: 'var(--sk-t2)',
 }
+/** A node whose home product is not a manuscript (a grant, an award, ...). */
+const OTHER_KIND_COLOR = 'var(--slate)'
 
 // ── Relationship arrow colors ──────────────────────────────
 
@@ -48,7 +51,10 @@ interface NodeLayout {
   x: number
   y: number
   title: string
+  /** The home product's manuscript rung (colors the node), or '' for another kind. */
   stage: string
+  /** The compact stage words: the home product's kind and stage, "+N". */
+  stageText: string
   abbrev: string
 }
 
@@ -75,7 +81,10 @@ function layoutNodes(projects: Project[], width: number, height: number): NodeLa
     x: cx + r * Math.cos((2 * Math.PI * i) / n - Math.PI / 2),
     y: cy + r * Math.sin((2 * Math.PI * i) / n - Math.PI / 2),
     title: p.title,
-    stage: p.stage || 'idea',
+    // A project's stage is its home product's (contract phase step 1): a
+    // manuscript home takes its rung's color, any other kind the neutral one.
+    stage: p.home_kind === 'manuscript' ? (p.home_stage ?? '') : '',
+    stageText: compactStageLabel(p) || 'No product',
     abbrev: getAbbrev(p.title),
   }))
 }
@@ -291,7 +300,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
 
         {/* Nodes */}
         {nodes.map((node) => {
-          const fill = STAGE_COLORS[node.stage] || STAGE_COLORS.Idea
+          const fill = STAGE_COLORS[node.stage] || OTHER_KIND_COLOR
           const opacity = getNodeOpacity(node.slug)
 
           return (
@@ -421,7 +430,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
             >
               <div style={{ fontWeight: 600, marginBottom: '2px' }}>{node.title}</div>
               <div style={{ opacity: 0.85, fontSize: '10px' }}>
-                {node.stage} &middot; {incoming.length} incoming &middot; {outgoing.length} outgoing
+                {node.stageText} &middot; {incoming.length} incoming &middot; {outgoing.length} outgoing
               </div>
             </motion.div>
           )
@@ -463,7 +472,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
             {label}
           </span>
         ))}
-        <span style={{ marginLeft: '8px', fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <span style={{ marginLeft: 'var(--sp-sm)', fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           Stages:
         </span>
         {Object.entries(STAGE_COLORS).map(([stage, color]) => (
@@ -484,6 +493,10 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
             {stage}
           </span>
         ))}
+        <span className="inline-flex items-center gap-1" style={{ fontSize: '10px', color: 'var(--slate)' }}>
+          <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: 'var(--radius-circle)', background: OTHER_KIND_COLOR }} />
+          other products
+        </span>
       </div>
     </div>
   )

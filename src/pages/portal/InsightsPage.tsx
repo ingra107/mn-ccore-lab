@@ -15,7 +15,8 @@ import { useToast } from '../../hooks/useToast'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import { PATHS } from '../../constants/paths'
-import { stageLabel, toApiStage, stageRampStep } from '../../lib/stageNormalize'
+import { MANUSCRIPTS_PAGE_KINDS } from '../../lib/products'
+import { stageCountLabel, type ProductStageCount } from '../../lib/projectStage'
 import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -33,7 +34,9 @@ interface DashboardData {
     grantsInPipeline: { count: number; daysToNextDeadline: number | null; sparkline?: number[] }
   }
   workloadHeatmap: { slug: string; days: { mon: number; tue: number; wed: number; thu: number; fri: number } }[]
-  pipelineFunnel: { stage: string; count: number }[]
+  /** Live products of active projects, by kind and stage (contract phase
+   *  step 1: the funnel counts products, never projects). */
+  pipelineFunnel: ProductStageCount[]
   velocityScatter: { slug: string; title: string; daysSinceUpdate: number; openTasks: number; isOutlier: boolean }[]
   stalledRegistry: { slug: string; title: string; daysIdle: number; openTasks: number }[]
 }
@@ -567,53 +570,58 @@ function ConnectionsPanel() {
   )
 }
 
+/** Where a funnel bar opens: the page that lists that kind of product. */
+function funnelHref(kind: string): string {
+  if (kind === 'manuscript') return PATHS.manuscripts
+  if (MANUSCRIPTS_PAGE_KINDS.includes(kind)) return `${PATHS.manuscripts}?kind=${encodeURIComponent(kind)}`
+  if (kind === 'grant_application' || kind === 'award' || kind === 'honor') return PATHS.grants
+  return PATHS.projects
+}
+
 function PipelineFunnel({ rows }: { rows: DashboardData['pipelineFunnel'] }) {
-  // S21: the API funnel can emit two buckets that both display as the same
-  // canonical stage (e.g. raw "idea" + legacy "Idea", or "submitted"+"Review").
-  // Canonicalize each row's stage through stageLabel() and merge same-label
-  // buckets so a stage never appears twice. Order preserved by first appearance.
-  const mergedRows = useMemo(() => {
-    const order: string[] = []
-    const byLabel = new Map<string, number>()
-    for (const r of rows) {
-      const label = stageLabel(r.stage) || r.stage
-      if (!byLabel.has(label)) order.push(label)
-      byLabel.set(label, (byLabel.get(label) ?? 0) + r.count)
-    }
-    return order.map((label) => ({ stage: label, count: byLabel.get(label) ?? 0 }))
+  // One bar per kind and rung, in the kind table's then the ladder's order
+  // (the Worker sends that order). A manuscript's "Submitted" and a grant's
+  // "Submitted" are different bars. The ramp step is the rung's place on its
+  // own kind's ladder, so brightness carries order for every kind.
+  const lastOrdinal = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const r of rows) m.set(r.kind, Math.max(m.get(r.kind) ?? 0, r.ordinal))
+    return m
   }, [rows])
-  const max = Math.max(1, ...mergedRows.map((r) => r.count))
+  const max = Math.max(1, ...rows.map((r) => r.count))
   return (
     <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
       <SectionHeader label="Pipeline funnel" />
+      {rows.length === 0 && (
+        <p style={{ fontSize: 11, color: 'var(--slate)', margin: 0 }}>No products on active projects yet.</p>
+      )}
       <div className="flex flex-col" style={{ gap: 6 }}>
-        {mergedRows.map((r) => {
+        {rows.map((r) => {
           const pct = (r.count / max) * 100
-          // INS-08: bars deeplink to /portal/projects?stage=:stage. The label is
-          // canonical; send the API stage value so the Projects filter matches.
-          const href = `${PATHS.projects}?stage=${encodeURIComponent(toApiStage(r.stage))}`
+          const label = stageCountLabel(r)
+          const step = r.is_terminal ? 1 : Math.min(1, r.ordinal / Math.max(1, lastOrdinal.get(r.kind) ?? r.ordinal))
           return (
             <Link
-              key={r.stage}
-              to={href}
+              key={`${r.kind}:${r.stage}`}
+              to={funnelHref(r.kind)}
               role="img"
-              aria-label={`${r.stage}: ${r.count} projects — open Projects filtered to this stage`}
+              aria-label={`${label}: ${r.count} ${r.count === 1 ? 'product' : 'products'}`}
               className="flex items-center"
               style={{ gap: 8, color: 'inherit', textDecoration: 'none' }}
-              title={`Open Projects · stage: ${r.stage}`}
+              title={`${label}: ${r.count}`}
             >
-              <span style={{ flex: '0 0 110px', fontSize: 11, color: 'var(--slate)', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                {r.stage}
+              <span style={{ flex: '0 0 170px', fontSize: 11, color: 'var(--slate)', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {label}
               </span>
-              {/* Teal data ramp: Idea dim to Published bright (tealRamp.ts); the
-                  count sits beside the bar. */}
+              {/* Teal data ramp: the rung's place on its ladder, first dim to
+                  last bright (tealRamp.ts); the count sits beside the bar. */}
               <div style={{ flex: 1, height: 22, position: 'relative', background: BAR_TRACK, borderRadius: 'var(--radius-sm)' }}>
                 <div
                   style={{
                     width: `${pct}%`,
                     height: '100%',
                     borderRadius: 'var(--radius-sm)',
-                    ...rampBar(stageRampStep(r.stage)),
+                    ...rampBar(step),
                   }}
                 />
               </div>

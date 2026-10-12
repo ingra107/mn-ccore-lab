@@ -62,71 +62,14 @@ export function normalizeStage(stage: string | null | undefined): CanonicalStage
   return ''
 }
 
-export function stageIndex(stage: string | null | undefined): number {
-  const normalized = normalizeStage(stage)
-  if (!normalized) return -1
-  return CANONICAL_STAGES.indexOf(normalized)
-}
-
-// Where a stage sits on the teal data ramp (lib/tealRamp.ts): 0 = Idea (the
-// dim end) to 1 = Published (the full accent), so a stage bar's brightness
-// carries the order of the pipeline. An unknown stage takes the dim end.
-export function stageRampStep(stage: string | null | undefined): number {
-  const i = stageIndex(stage)
-  return i < 0 ? 0 : i / (CANONICAL_STAGES.length - 1)
-}
-
-// UI → API stage value. The API (api/routes/projects.ts PROJECT_STAGE_VALUES)
-// only accepts brain.db's canonical 7-stage vocabulary, which uses
-// "Data Analysis" / "Submitted" / "Accepted" where the UI strip shows
-// "Analysis" / "Review". Without this map, clicking "Analysis" or "Review"
-// in any stage picker sends an invalid value, the API returns 400, and the
-// optimistic update reverts silently (issue #19 reported 2026-04-21).
-const UI_TO_API_STAGE: Record<string, string> = {
-  // Title Case UI values (legacy, pre 2026-05-14)
-  Analysis: 'data_analysis',
-  Review: 'submitted',
-  Idea: 'idea',
-  'Data Collection': 'data_collection',
-  Writing: 'writing',
-  Revisions: 'revisions',
-  Published: 'published',
-  Accepted: 'accepted',
-  // Lowercase canonical UI values (post 2026-05-14, D1 parity)
-  analysis: 'data_analysis',
-  review: 'submitted',
-}
-
-type ApiStage = 'idea' | 'data_collection' | 'data_analysis' | 'writing' | 'submitted' | 'revisions' | 'accepted' | 'published'
-
-export function toApiStage(uiStage: string): ApiStage {
-  return (UI_TO_API_STAGE[uiStage] ?? uiStage) as ApiStage
-}
-
-// ── Canonical display: label + color, keyed by the canonical lowercase stage ──
-// Hub #361a (2026-07-02): normalizeStage() is called ONLY at the data-ingress
-// chokepoints — rowToProject() + useNarratives() in useApiData.ts, and the
-// optimistic mutation-cache merges in Projects.tsx / ManuscriptsPage.tsx /
-// useProjectMutations.ts (which bypass rowToProject and need their own
-// normalization before the local cache write). Every component downstream of
-// those reads an already-canonical `stage`, so component code should NOT call
-// normalizeStage() itself — that scattered-guard pattern is what let #91
-// recur across 4 read sites in one page. stageLabel()/stageColor()/
-// stageIndex() below still normalize internally (defense-in-depth for any
-// value that reaches them from outside the ingress, e.g. a literal string),
-// so they remain safe to call directly with any raw or canonical stage.
+// ── Canonical display color, keyed by the canonical lowercase stage ──
+// A project's stage is its products' (contract phase step 1, 2026-10-12): the
+// manuscript-ladder readers that remain (Narratives, Trajectory, the pipeline
+// board) normalize a manuscript PRODUCT's rung through here. The project-stage
+// half (stageLabel, stageIndex, stageRampStep, toApiStage) went with the
+// project stage; product labels come from product_stages.
 // Colors reuse the WCAG-AA-pinned set from taskConstants.ts STAGE_COLORS
 // (audited 2026-04-18) — keep them in sync.
-const CANONICAL_STAGE_LABELS: Record<CanonicalStage, string> = {
-  idea: 'Idea',
-  data_collection: 'Data Collection',
-  analysis: 'Analysis',
-  writing: 'Writing',
-  review: 'Review',
-  revisions: 'Revisions',
-  published: 'Published',
-}
-
 const CANONICAL_STAGE_COLORS: Record<CanonicalStage, string> = {
   idea: '#8591a0',
   data_collection: 'var(--stage-data-collection)',
@@ -135,14 +78,6 @@ const CANONICAL_STAGE_COLORS: Record<CanonicalStage, string> = {
   review: '#d65c66',
   revisions: '#d65c66',
   published: '#4ecd77',
-}
-
-// Human-readable stage label for any raw stage value (API lowercase or legacy
-// Title Case). Falls back to the raw string if it can't be normalized.
-export function stageLabel(stage: string | null | undefined): string {
-  const normalized = normalizeStage(stage)
-  if (!normalized) return stage ?? ''
-  return CANONICAL_STAGE_LABELS[normalized]
 }
 
 // WCAG-AA-pinned stage color for any raw stage value. Falls back to --slate.

@@ -285,6 +285,11 @@ export interface Mutation {
   depends_on?: string | null;
   client_ts: string;
   issued_at: string;
+  /** A project insert only: the first product's kind and stage. Written to
+   *  project_home_seed in the insert's batch, where schema-v129's
+   *  trg_projects_home_product_ins builds the home from it (never a
+   *  hard-coded manuscript). Not a projects column and not hashed. */
+  home_product?: { kind: string; stage: string } | null;
 }
 
 /**
@@ -896,16 +901,36 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
   const creatorJoins = mut.table === 'projects'
     ? creatorMembershipStatement(env.DB, mut.record_id, user?.slug)
     : null;
+  // schema-v129: a project create that names its first product writes the
+  // seed the home-insert trigger reads, in the same batch (one transaction):
+  // an off-ladder pair fails the seed's FK and the project never lands. The
+  // trailing DELETE leaves no seed behind when ON CONFLICT skipped the insert.
+  let homeSeed: D1PreparedStatement[] = [];
+  if (mut.table === 'projects' && mut.home_product != null) {
+    const hp = mut.home_product as { kind?: unknown; stage?: unknown };
+    if (typeof hp.kind !== 'string' || !hp.kind || typeof hp.stage !== 'string' || !hp.stage) {
+      return mutErr(mut.mutation_id, 'envelope_invalid', 'home_product needs a kind and a stage');
+    }
+    homeSeed = [
+      env.DB.prepare('INSERT OR REPLACE INTO project_home_seed (project_id, kind, stage) VALUES (?, ?, ?)')
+        .bind(mut.record_id, hp.kind, hp.stage),
+    ];
+  }
+  const seedCleanup = homeSeed.length
+    ? [env.DB.prepare('DELETE FROM project_home_seed WHERE project_id = ?').bind(mut.record_id)]
+    : [];
 
   try {
-    if (mirrorSlots || creatorJoins) {
+    if (mirrorSlots || creatorJoins || homeSeed.length) {
       const pk = pkWhere(mut.table, mut.record_id);
       const landed: SqlFragment = {
         sql: `EXISTS (SELECT 1 FROM ${mut.table} WHERE ${pk.sql} AND last_mutation_id = ?)`,
         vals: [...pk.vals, mut.mutation_id],
       };
       const res = await env.DB.batch<Record<string, unknown>>([
+        ...homeSeed,
         env.DB.prepare(sql).bind(...vals),
+        ...seedCleanup,
         ...(mirrorSlots
           ? slotLinkStatements(
             env.DB, mut.table as 'tasks' | 'projects', mut.record_id,
@@ -1354,6 +1379,8 @@ export async function applyMutation(
      *  being overwritten by a stale tab. Absent = authoritative Hub write. */
     base_seq?: number | null;
     base_row_hash?: string | null;
+    /** A project insert: the home product to be born with (Mutation.home_product). */
+    home_product?: { kind: string; stage: string } | null;
   },
 ): Promise<MutationResult> {
   const mutation_id = generateId('mut');
@@ -1371,6 +1398,7 @@ export async function applyMutation(
     depends_on: null,
     client_ts: nowInstant(),
     issued_at: nowInstant(),
+    ...(args.home_product ? { home_product: args.home_product } : {}),
   };
   // Route through processOne so idempotency + processed_mutations recording fires.
   // Hub-UI internal writes read the same validation flags; the V2 conflict

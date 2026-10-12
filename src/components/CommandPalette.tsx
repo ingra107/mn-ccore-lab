@@ -21,6 +21,7 @@ import { openGlobalQuickAdd } from './GlobalQuickAddModal'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import { compactStageLabel } from '../lib/projectStage'
 
 interface CommandItem {
   id: string
@@ -479,7 +480,7 @@ export default function CommandPalette() {
       items.push({
         id: `project-${project.slug}`,
         label: project.title,
-        sublabel: `${project.stage || 'idea'} · ${project.category}`,
+        sublabel: [compactStageLabel(project), project.category].filter(Boolean).join(' · '),
         icon: FolderKanban,
         action: () => { navigate(PATHS.project(project.slug)); setOpen(false) },
         category: 'project',
@@ -537,7 +538,7 @@ export default function CommandPalette() {
     return projects.map((project) => {
       const count = taskCounts[project.slug] || 0
       const next = nextActions[project.slug] || ''
-      const stagePart = project.stage ? `${project.stage}` : ''
+      const stagePart = compactStageLabel(project)
       const countPart = `${count} task${count !== 1 ? 's' : ''}`
       const nextPart = next ? ` · ${next.length > 40 ? next.slice(0, 40) + '...' : next}` : ''
 
@@ -549,8 +550,7 @@ export default function CommandPalette() {
         action: () => { navigate(PATHS.project(project.slug)); setOpen(false) },
         category: 'project' as const,
         _taskCount: count,
-        _stage: project.stage || '',
-      } as CommandItem & { _taskCount: number; _stage: string }
+      } as CommandItem & { _taskCount: number }
     }).sort((a, b) => {
       // Sort by task count descending (most active first), then alphabetically
       const ac = (a as CommandItem & { _taskCount: number })._taskCount || 0

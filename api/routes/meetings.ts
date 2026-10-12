@@ -1,4 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
+import { compactStageLabel, homeProductCols, homeProductJoin } from '../lib/project-home';
 import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical } from '../helpers';
 import { postedActivityRows, TEAM_POSTS_ONLY, legacyEchoExclude } from '../lib/posted-activity';
 import { validateApiKey } from '../middleware/api-key-auth';
@@ -595,14 +596,15 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
        LIMIT 15`
     ).bind(today, weekOut).all<{ id: string; title: string; assignee: string; due_date: string; priority: string; status: string }>(),
     // 3. Stalled manuscripts / projects (in active status but not updated in 30+ days)
+    // The stage shown is the home product's, in words (contract phase step 1).
     env.DB.prepare(
-      `SELECT id, title, stage, category, updated_at
-       FROM projects
-       WHERE status IN ('active','In Review','In Preparation')
-         AND julianday('now') - julianday(updated_at) > 30
-       ORDER BY updated_at ASC
+      `SELECT pr.id, pr.title, pr.category, pr.updated_at, ${homeProductCols('pr')}
+       FROM projects pr ${homeProductJoin('pr')}
+       WHERE pr.status IN ('active','In Review','In Preparation')
+         AND julianday('now') - julianday(pr.updated_at) > 30
+       ORDER BY pr.updated_at ASC
        LIMIT 8`
-    ).all<{ id: string; title: string; stage: string; category: string; updated_at: string }>(),
+    ).all<{ id: string; title: string; category: string; updated_at: string; home_kind: string | null; home_kind_label: string | null; home_stage: string | null; home_stage_label: string | null; product_count: number | null }>(),
     // 4. Regulatory items expiring within 60 days
     env.DB.prepare(
       `SELECT r.id, r.title, r.item_type, r.expiration_date, r.status
@@ -653,7 +655,7 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
         items: stalledProjects.results.map(r => ({
           id: r.id,
           label: r.title,
-          stage: r.stage,
+          stage: compactStageLabel(r) || null,
           category: r.category,
           last_updated: r.updated_at,
         })),

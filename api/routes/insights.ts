@@ -1,4 +1,5 @@
 import type { Env } from '../helpers';
+import { homeProductCols, homeProductJoin, homeStageWords, PRODUCT_STAGE_COUNTS_SQL, type ProductStageCount } from '../lib/project-home'
 import { json } from '../helpers';
 
 // UTC-safe YYYY-MM-DD from a Date object (pure UTC integer arithmetic).
@@ -55,33 +56,30 @@ function findMatchingKeywords(text: string): string[] {
   return matches
 }
 
-// Raw stage enum -> reader label ("data_collection" -> "Data Collection").
-// Mirrors CANONICAL_STAGE_LABELS in src/lib/stageNormalize.ts, which the Worker
-// does not import; an unknown value still reads as words, never a slug.
-function humanizeStage(stage: string): string {
-  return stage
-    .split('_')
-    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
-    .join(' ')
-}
-
 // GET /api/insights/connections — full cross-project analysis
 export async function handleInsightConnections(env: Env): Promise<Response> {
   // Fetch all active projects with their details
   // Note: team_members column does not exist in projects table; team membership
   // is inferred from `pi` field and from shared task assignees.
+  // A project's stage is its home product's kind and stage (contract phase
+  // step 1, api/lib/project-home.ts): "same stage" means the same rung of the
+  // same ladder, so a grant's Submitted never matches a manuscript's.
   const projects = await env.DB.prepare(
-    `SELECT slug, title, description, category, pi, stage
-     FROM projects
-     WHERE status != 'Archived'
-     ORDER BY title ASC`
+    `SELECT pr.slug, pr.title, pr.description, pr.category, pr.pi, ${homeProductCols('pr')}
+     FROM projects pr ${homeProductJoin('pr')}
+     WHERE pr.status != 'Archived'
+     ORDER BY pr.title ASC`
   ).all<{
     slug: string
     title: string
     description: string | null
     category: string | null
     pi: string | null
-    stage: string | null
+    home_kind: string | null
+    home_kind_label: string | null
+    home_stage: string | null
+    home_stage_label: string | null
+    product_count: number | null
   }>()
 
   const rows = projects.results || []
@@ -147,10 +145,10 @@ export async function handleInsightConnections(env: Env): Promise<Response> {
       for (let j = i + 1; j < group.length; j++) {
         const a = group[i]
         const b = group[j]
-        if (a.stage && b.stage && a.stage === b.stage) {
+        if (a.home_kind && a.home_stage && a.home_kind === b.home_kind && a.home_stage === b.home_stage) {
           addEdge(
             a.slug, b.slug, a.title, b.title,
-            `Same category & stage (${humanizeStage(a.stage)})`,
+            `Same category & stage (${homeStageWords(a)})`,
             0.4
           )
         }
@@ -285,7 +283,9 @@ interface DashboardResponse {
   week: string
   metrics: DashboardMetrics
   workloadHeatmap: { slug: string; days: { mon: number; tue: number; wed: number; thu: number; fri: number } }[]
-  pipelineFunnel: { stage: string; count: number }[]
+  /** Live products of active projects, by kind and stage (contract phase
+   *  step 1: a funnel counts products, never projects). */
+  pipelineFunnel: ProductStageCount[]
   velocityScatter: { slug: string; title: string; daysSinceUpdate: number; openTasks: number; isOutlier: boolean }[]
   stalledRegistry: { slug: string; title: string; daysIdle: number; openTasks: number }[]
 }
@@ -365,16 +365,23 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
   ).all<{ assignee: string; c: number }>()
   const distribution = (taskDistRes.results ?? []).map((r) => ({ slug: r.assignee, count: r.c }))
   const totalOpen = distribution.reduce((s, r) => s + r.count, 0)
+  // team_members has no `active` column (not in the schema chain, not on prod
+  // or TEST D1, 2026-10-12): `WHERE active = 1` threw "no such column" and
+  // failed this whole dashboard since #37. People = named members, AI members
+  // excluded (the same exclusion pi-dashboard.ts uses for response time).
   const memberCountRes = await env.DB.prepare(
-    `SELECT COUNT(*) as c FROM team_members WHERE active = 1`
+    `SELECT COUNT(*) as c FROM team_members WHERE slug IS NOT NULL AND COALESCE(member_type, '') != 'ai'`
   ).first<{ c: number }>()
   const memberCount = Math.max(1, memberCountRes?.c ?? 1)
   const avg = Math.round((totalOpen / memberCount) * 10) / 10
 
-  // 3. Manuscripts in revision (projects whose stage = 'Revisions' or has a manuscript_revisions row open)
+  // 3. Manuscripts in revision: live manuscript PRODUCTS on the revisions
+  // rung, in live projects (was projects.stage IN ('revisions', 'review');
+  // 'review' is not a manuscript rung, contract phase step 1).
   const msRevRes = await env.DB.prepare(
-    `SELECT COUNT(*) as c FROM projects
-     WHERE deleted_at IS NULL AND stage IN ('revisions', 'review')`
+    `SELECT COUNT(*) as c FROM products p
+       JOIN projects pr ON pr.id = p.project_id AND pr.deleted_at IS NULL
+     WHERE p.deleted_at IS NULL AND p.kind = 'manuscript' AND p.stage = 'revisions'`
   ).first<{ c: number }>()
   const msAwaitingRes = await env.DB.prepare(
     `SELECT COUNT(*) as c FROM manuscript_revisions
@@ -450,15 +457,11 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
   }
   const workloadHeatmap = Array.from(heatmapMap.entries()).map(([slug, days]) => ({ slug, days }))
 
-  // 6. Pipeline funnel
-  const funnelRes = await env.DB.prepare(
-    `SELECT stage, COUNT(*) as c FROM projects
-     WHERE deleted_at IS NULL AND status = 'active' AND stage IS NOT NULL
-     GROUP BY stage`
-  ).all<{ stage: string; c: number }>()
-  const STAGE_ORDER = ['idea', 'data_collection', 'data_analysis', 'writing', 'review', 'submitted', 'published']
-  const funnelMap = new Map((funnelRes.results ?? []).map((r) => [r.stage, r.c]))
-  const pipelineFunnel = STAGE_ORDER.map((stage) => ({ stage, count: funnelMap.get(stage) ?? 0 }))
+  // 6. Pipeline funnel: products of active projects, by kind and stage, in
+  // kind-table then ladder order. Only rungs that hold a product appear.
+  const funnelRes = await env.DB.prepare(PRODUCT_STAGE_COUNTS_SQL("pr.status = 'active'"))
+    .all<ProductStageCount>()
+  const pipelineFunnel = funnelRes.results ?? []
 
   // 7. Velocity scatter + 8. stalled registry (single combined query)
   const scatterRes = await env.DB.prepare(

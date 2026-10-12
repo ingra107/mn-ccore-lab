@@ -19,22 +19,9 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import { isTaskDone } from '../../lib/taskGrouping'
 import DueLabel from '../../components/DueLabel'
 import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
-import { stageRampStep } from '../../lib/stageNormalize'
+import { useAllProjectProducts } from '../../hooks/useProjectProducts'
+import { ladderRampStep, productStageCounts, stageCountLabel } from '../../lib/projectStage'
 import { taskShortLabel } from '../../lib/displayNames'
-
-// D1 lowercase stage value → display label.
-const STAGE_DISPLAY: Record<string, string> = {
-  idea: 'Idea',
-  data_collection: 'Data Collection',
-  data_analysis: 'Analysis',
-  analysis: 'Analysis',
-  writing: 'Writing',
-  review: 'Review',
-  submitted: 'Review',
-  revisions: 'Revisions',
-  accepted: 'Published',
-  published: 'Published',
-}
 
 // Get Monday of the week containing the given date
 function getWeekStart(d: Date): Date {
@@ -129,15 +116,11 @@ export default function AnalyticsPage() {
       .sort((a, b) => b.total - a.total)
   }, [tasks, isPi])
 
-  // Projects by stage
-  const projectsByStage = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const p of projects) {
-      const stage = p.stage || 'idea'
-      map.set(stage, (map.get(stage) || 0) + 1)
-    }
-    return [...map.entries()].sort((a, b) => b[1] - a[1])
-  }, [projects])
+  // Products by kind and stage (contract phase step 1: a rollup counts
+  // PRODUCTS, never projects). The bulk read is already the viewer's live
+  // projects, the same set GET /api/projects lists.
+  const { data: productData } = useAllProjectProducts()
+  const productsByStage = useMemo(() => productStageCounts(productData?.byProject ?? {}), [productData])
 
   // Task priority distribution
   const tasksByPriority = useMemo(() => {
@@ -591,19 +574,23 @@ export default function AnalyticsPage() {
         {/* Projects by stage */}
         <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
           <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>
-            Project Pipeline Distribution
+            Product Pipeline Distribution
           </h3>
+          {productsByStage.length === 0 && (
+            <p className="text-xs" style={{ color: 'var(--slate)' }}>No products yet.</p>
+          )}
           <div className="flex flex-col gap-2">
-            {projectsByStage.map(([stage, count]) => {
-              const maxCount = Math.max(...projectsByStage.map(([, c]) => c))
-              const width = (count / maxCount) * 100
+            {productsByStage.map((r) => {
+              const maxCount = Math.max(...productsByStage.map((x) => x.count))
+              const width = (r.count / maxCount) * 100
+              const count = r.count
               return (
-                <div key={stage} className="flex items-center gap-3">
-                  <span className="text-xs w-28" style={{ color: 'var(--ink)' }}>{STAGE_DISPLAY[stage] ?? stage}</span>
-                  {/* Teal data ramp: brightness carries the stage order, Idea dim to
-                      Published bright (tealRamp.ts). The count sits beside the bar. */}
+                <div key={`${r.kind}:${r.stage}`} className="flex items-center gap-3">
+                  <span className="text-xs w-40" style={{ color: 'var(--ink)' }}>{stageCountLabel(r)}</span>
+                  {/* Teal data ramp: brightness carries the rung's place on its own
+                      kind's ladder, first dim to last bright (tealRamp.ts). */}
                   <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: BAR_TRACK }}>
-                    <div className="h-full rounded transition-all" style={{ width: `${width}%`, minWidth: 4, ...rampBar(stageRampStep(stage)) }} />
+                    <div className="h-full rounded transition-all" style={{ width: `${width}%`, minWidth: 4, ...rampBar(ladderRampStep(productData?.kinds ?? [], r.kind, r.stage)) }} />
                   </div>
                   <span className="text-[11px] font-semibold w-6 text-right" style={{ color: 'var(--sk-t2)', fontVariantNumeric: 'tabular-nums' }}>{count}</span>
                 </div>

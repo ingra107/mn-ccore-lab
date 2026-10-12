@@ -31,10 +31,19 @@ describe('projectsForSidebar', () => {
   it('leaves out finished projects, projects with no activity, and a pin the viewer no longer has', () => {
     const out = projectsForSidebar([
       p('done', { status: 'done', lastActivity: daysAgo(0) }),
-      p('published', { stage: 'published', lastActivity: daysAgo(0) }),
+      // Finished by its products: every live product on a terminal rung.
+      p('published', { product_count: 1, product_open_count: 0, lastActivity: daysAgo(0) }),
       p('quiet'),
     ], ['gone'], NOW)
     expect(out).toEqual([])
+  })
+
+  it('projects.stage no longer finishes a project; an open product keeps it listed', () => {
+    const out = projectsForSidebar([
+      p('stale-stage', { stage: 'published', product_count: 2, product_open_count: 1, lastActivity: daysAgo(0) }),
+      p('no-products', { product_count: 0, product_open_count: 0, lastActivity: daysAgo(0) }),
+    ], [], NOW)
+    expect(out.map((x) => x.slug).sort()).toEqual(['no-products', 'stale-stage'])
   })
 
   it('a pinned project is listed once, even when it is also recent', () => {

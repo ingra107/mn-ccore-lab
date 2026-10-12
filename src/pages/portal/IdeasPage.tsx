@@ -193,7 +193,7 @@ export default function IdeasPage() {
   // useCreateProject) then archive the source idea so the board doesn't keep a
   // duplicate. The new project's title carries the idea text forward as the link.
   const handlePromoteCreate = (idea: IdeaRow) => (project: {
-    title: string; category?: string; stage?: string; description?: string; pi?: string
+    title: string; category?: string; kind?: string; stage?: string; description?: string; pi?: string
   }) => {
     createProject.mutate(project)
     // Archive the source idea, noting the promotion in its description.

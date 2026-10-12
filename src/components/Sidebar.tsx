@@ -213,7 +213,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   const { pins } = useProjectPins()
   const myProjects = useMemo(
     () => projectsForSidebar(
-      projects.map((p) => ({ id: p.id, slug: p.slug ?? '', title: p.title, short_name: p.short_name, status: p.status, stage: p.stage, lastActivity: p.lastActivity })).filter((p) => p.slug),
+      projects.map((p) => ({ id: p.id, slug: p.slug ?? '', title: p.title, short_name: p.short_name, status: p.status, product_count: p.product_count, product_open_count: p.product_open_count, lastActivity: p.lastActivity })).filter((p) => p.slug),
       pins.map((p) => p.slug).filter((s): s is string => !!s),
       // eslint-disable-next-line react-hooks/purity -- the 14-day window is a snapshot at memoize time; it recomputes when projects or pins change
       Date.now(),

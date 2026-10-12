@@ -12,7 +12,10 @@ import { withAlpha } from '../lib/taskGrouping'
 interface ProjectCardData {
   type: 'project'
   title: string
+  /** The stage in words (the home product's, "+N"; src/lib/projectStage.ts). */
   stage?: string
+  /** A manuscript rung, for the badge color; absent for another kind. */
+  stageColorKey?: string
   status?: string
   pi?: string
   category?: string
@@ -99,8 +102,8 @@ function MiniAvatar({ slug }: { slug: string }) {
 
 // ── Stage badge ─────────────────────────────────────────────
 
-function StageBadge({ stage }: { stage: string }) {
-  const color = STAGE_COLORS[stage] || 'var(--slate)'
+function StageBadge({ stage, colorKey }: { stage: string; colorKey?: string }) {
+  const color = (colorKey && STAGE_COLORS[colorKey]) || 'var(--slate)'
   return (
     <span
       className="inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase tracking-wider"
@@ -168,7 +171,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
 
       {/* Stage + category row */}
       <div className="flex items-center gap-2 flex-wrap">
-        {data.stage && <StageBadge stage={data.stage} />}
+        {data.stage && <StageBadge stage={data.stage} colorKey={data.stageColorKey} />}
         {data.category && (
           <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
             {data.category}

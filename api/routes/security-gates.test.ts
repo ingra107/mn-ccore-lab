@@ -125,10 +125,11 @@ describe('handleGetSearch — UX-5 source isolation on partial failure', () => {
         prepare: (sql: string) => ({
           bind: (..._args: unknown[]) => ({
             all: async () => {
-              // The projects query is the one that carries "FROM projects WHERE
-              // (title LIKE" — make it throw to simulate a D1 timeout on that
-              // table while every other source succeeds.
-              if (/FROM projects/i.test(sql) && /WHERE \(title LIKE/i.test(sql)) {
+              // The projects query is the one that carries "FROM projects pr"
+              // and "(pr.title LIKE" (it joins the home product, contract phase
+              // step 1) — make it throw to simulate a D1 timeout on that table
+              // while every other source succeeds.
+              if (/FROM projects pr/i.test(sql) && /\(pr\.title LIKE/i.test(sql)) {
                 throw new Error('simulated D1 timeout on projects')
               }
               // tasks query — return one hit so we can verify it comes through

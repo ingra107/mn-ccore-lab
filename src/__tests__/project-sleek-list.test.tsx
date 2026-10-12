@@ -31,7 +31,7 @@ const key = (k: string) =>
 
 const project = (slug: string, extra: Partial<Project> = {}) => ({
   id: `id-${slug}`, slug, title: `Full title of ${slug}`, short_name: slug.toUpperCase(), status: 'active',
-  stage: 'analysis', pi: 'nick-ingraham', category: 'MNCCORE', type: null, lastActivity: null, primary_folder: null,
+  home_kind: 'manuscript', home_stage: 'analysis', pi: 'nick-ingraham', category: 'MNCCORE', type: null, lastActivity: null, primary_folder: null,
   ...extra,
 }) as unknown as Project
 
@@ -70,7 +70,7 @@ const PRODUCTS: Record<string, ProductRow[]> = {
   'id-bravo': [prd('prd_b', 'id-bravo')],
   'id-charlie': [prd('prd_c1', 'id-charlie', { short_name: 'Paper' }), prd('prd_c2', 'id-charlie', { is_home: 0, short_name: 'Poster', stage: 'writing', stage_label: 'Writing' })],
 }
-const stageOf = (p: Project) => ({ key: p.stage || '', label: p.stage ? p.stage[0].toUpperCase() + p.stage.slice(1) : 'No stage' })
+const stageOf = (p: Project) => ({ key: p.home_stage || '', label: p.home_stage ? p.home_stage[0].toUpperCase() + p.home_stage.slice(1) : 'No stage' })
 
 function Harness({ togglePin, onField, onSort, opts }: { togglePin: (s: string) => void; onField: (s: string, f: Record<string, string>) => void; onSort: (s: SleekSort) => void; opts: Opts }) {
   const [focused, setFocused] = useState(-1)
@@ -235,7 +235,7 @@ describe('Projects list on sleek rows', () => {
   })
 
   it('stage group headers come from the page\'s stageOf (one header per run)', async () => {
-    const { host } = await render(1100, { projects: [project('alpha', { stage: 'idea' }), project('echo', { stage: '' })], sort: { key: 'stage', dir: 'asc' } })
+    const { host } = await render(1100, { projects: [project('alpha', { home_stage: 'idea' }), project('echo', { home_stage: '' })], sort: { key: 'stage', dir: 'asc' } })
     const heads = [...host.querySelectorAll('.pj-stage-h > span:first-child')].map((e) => e.textContent)
     expect(heads).toEqual(['Idea', 'No stage'])
   })
