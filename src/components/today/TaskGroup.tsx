@@ -12,14 +12,12 @@ import { interleaveMilestones, type MilestoneEntry } from '../../lib/taskGroupin
 import { isMilestone } from '../../../shared/taskKinds'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
-import { useCompletionMoments } from '../../lib/completionMoment'
 
 // expandedId/onExpand no longer come from TodayPage — TaskGroup owns its own
 // expand state so clicking a row here never expands the same task in Timeline
 // or PlannedTodaySection (Item 2 fix, 2026-06-22).
 export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 }: { gkey: GroupKey; tasks: TaskRowData[]; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>; state: TodayStateApi; previewLimit?: number }) {
   const meta = GROUP_META[gkey]
-  const { settling } = useCompletionMoments()
   const doneCount = tasks.filter((t) => state.done[t.id] || isTaskDone(t)).length
   // Return type is MilestoneEntry[] (a TaskRow + optional milestoneRole/
   // milestoneDate) — interleaveMilestones stamps those fields on the rows it
@@ -34,13 +32,14 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 
     // instead of sinking: sunk past the preview cut it would sit behind
     // "Show N more" and the ring would play on a row nobody can see. Once the
     // moment ends it leaves the group for Completed today.
-    const isDoneRow = (t: TaskRowData) => (!!state.done[t.id] || isTaskDone(t)) && !settling.has(t.id)
+    // Nick 2026-10-12: a ticked row sinks at once; no settling hold.
+    const isDoneRow = (t: TaskRowData) => !!state.done[t.id] || isTaskDone(t)
     const planned = tasks.filter((t) => state.planned[t.id] && !isDoneRow(t) && !isMilestone(t))
     const activeRaw = tasks.filter((t) => (!state.planned[t.id] || isMilestone(t)) && !isDoneRow(t))
     const active = interleaveMilestones(activeRaw)
     const done = tasks.filter(isDoneRow)
     return [...planned, ...active, ...done]
-  }, [tasks, state.planned, state.done, settling])
+  }, [tasks, state.planned, state.done])
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])

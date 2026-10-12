@@ -213,7 +213,9 @@ describe('completion moment on Today groups', () => {
     id: `g${i}`, name: `Task ${i}`, status: 'todo', completed: 0, priority: 'medium',
   } as unknown as TaskRowData)
 
-  it('keeps a settling task in its slot inside the preview so the ring is seen', async () => {
+  // Nick 2026-10-12: a ticked task leaves its slot at once and sinks to the
+  // bottom, struck through; no hold while the Hub answers.
+  it('sinks a ticked task to the bottom at once, before the Hub answers', async () => {
     const tasks = Array.from({ length: 8 }, (_, i) => task(i))
     // g0 was just ticked: the cache says done and the Hub has not answered.
     tasks[0] = { ...tasks[0], status: 'done', completed: 1 } as TaskRowData
@@ -224,11 +226,11 @@ describe('completion moment on Today groups', () => {
     } as unknown as TodayStateApi
     const h = await mountUi(<TaskGroup gkey="deep" tasks={tasks} projectsByPid={new Map()} state={state} previewLimit={5} />)
     const ids = () => [...h.querySelectorAll('[data-task-id]')].map((e) => e.getAttribute('data-task-id'))
-    expect(ids()[0]).toBe('g0')
+    expect(ids()[0]).not.toBe('g0')
+    expect(ids()).not.toContain('g0') // sunk past the 5-row preview cut
 
     settleCompletion(['g0'], true)
     await tick(60)
-    expect(ids()).toContain('g0')
-    expect(h.querySelector('[data-task-id="g0"] button.tk-ck')!.classList.contains('cm-ring')).toBe(true)
+    expect(ids()[0]).toBe('g1')
   })
 })

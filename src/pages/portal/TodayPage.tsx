@@ -241,11 +241,12 @@ export default function TodayPage() {
   // vanished on the tick and the moment had nowhere to show. One pass over the
   // cache in its own order, so the settling row keeps the place it had (an
   // appended copy landed last, past the group's preview cut).
+  // Nick 2026-10-12 overrides the hold above: a ticked task leaves its group at
+  // once for Completed today (struck through there), with no beat in place.
   const listedTasks = useMemo(() => {
     const open = new Set(tasks.map((t) => t.id))
-    return (tasksQuery.data ?? []).filter((t) => open.has(t.id) || (settling.has(t.id) && isTaskDone(t)
-      && !isApprovalPending(t) && !isApprovalTriaged(t) && !isQuestionTask(t)))
-  }, [tasks, tasksQuery.data, settling])
+    return (tasksQuery.data ?? []).filter((t) => open.has(t.id))
+  }, [tasks, tasksQuery.data])
   const visibleTasks = useMemo(() => {
     const days = dueWindowDays(dueWindow)
     const edge = days === null ? null : civilDatePlusDays(todayKey(), days)
