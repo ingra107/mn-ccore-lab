@@ -178,9 +178,6 @@
   "src/components/WelcomeBanner.tsx": {
     "surface": 1
   },
-  "src/components/WorkOnActions.tsx": {
-    "box": 1
-  },
   "src/components/activity/activityRender.tsx": {
     "surface": 1,
     "box": 1
@@ -192,9 +189,6 @@
     "surface": 1
   },
   "src/components/meetings/MeetingProjectsSection.tsx": {
-    "box": 1
-  },
-  "src/components/project/MyProjectFolder.tsx": {
     "box": 1
   },
   "src/components/project/ProjectMembers.tsx": {
@@ -269,8 +263,8 @@
     "box": 1
   },
   "src/pages/ProjectDetail.tsx": {
-    "surface": 4,
-    "box": 7
+    "surface": 3,
+    "box": 6
   },
   "src/pages/Projects.tsx": {
     "surface": 6,

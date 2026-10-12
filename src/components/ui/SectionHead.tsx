@@ -10,8 +10,6 @@ interface SectionHeadProps {
   title: ReactNode
   /** Dim count or short fact after the title ("3", "2 of 5", "4 upcoming"). */
   count?: ReactNode
-  /** DEPRECATED: only the Project detail files still pass it; the project redesign lane removes it and this prop. */
-  icon?: ReactNode
   /** Controls pinned right, after the fade (a link, a "+ Add" button). */
   right?: ReactNode
   as?: 'h2' | 'h3'
@@ -21,10 +19,9 @@ interface SectionHeadProps {
   className?: string
 }
 
-export default function SectionHead({ title, count, icon, right, as: Tag = 'h2', id, titleRef, className }: SectionHeadProps) {
+export default function SectionHead({ title, count, right, as: Tag = 'h2', id, titleRef, className }: SectionHeadProps) {
   return (
     <div className={`sk-hd${className ? ` ${className}` : ''}`}>
-      {icon != null && <span className="sk-hd-ic" aria-hidden="true">{icon}</span>}
       <Tag id={id} ref={titleRef} tabIndex={titleRef ? -1 : undefined} style={titleRef ? { outline: 'none' } : undefined} className="sk-hd-t">{title}</Tag>
       {count != null && count !== '' && <span className="sk-hd-c">{count}</span>}
       {right != null && <div className="sk-hd-r">{right}</div>}

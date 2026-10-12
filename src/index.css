@@ -1208,7 +1208,6 @@ a:hover {
 .sk-hd{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 12px}
 .sk-hd-t{font:600 15px/1.3 var(--font-body);color:var(--sk-t1);margin:0;white-space:nowrap}
 .sk-hd-c{font-size:12.5px;font-weight:400;color:var(--sk-t3);font-variant-numeric:tabular-nums;white-space:nowrap}
-.sk-hd-ic{color:var(--sk-t3);flex-shrink:0;display:inline-flex}
 .sk-hd-r{margin-left:auto;display:flex;align-items:center;gap:6px}
 /* Controls in a head (a link, a + button) go in SectionHead's `right` slot:
    after the fade, pinned to the right edge. */

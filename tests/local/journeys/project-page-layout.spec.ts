@@ -194,23 +194,34 @@ test('keyboard: the folder actions come before the tabs; title and short name ed
 })
 
 test('a single product shows its stage ladder inline, and a dot sets the stage', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 900 })
-  await go(page, ONE)
-  const prods = (await (await page.request.get(`/api/projects/${ONE}/products`, { headers: PI })).json()) as { products: { stage: string }[] }
-  const dots = page.locator('[data-testid^="inline-dot-"]')
-  expect(await dots.count()).toBeGreaterThanOrEqual(4)
-  await expect(page.getByTestId('inline-stage')).toBeVisible()
-  // On the stats row at 1280: dots and stats overlap vertically.
-  const d = (await dots.first().boundingBox())!
-  const st = await box(page, 'project-stats')
-  expect(st.y).toBeLessThan(d.y + d.height + 20)
-  expect(st.y + st.height).toBeGreaterThan(d.y - 20)
-  await page.screenshot({ path: `${SHOTS}/c-single-1280.png` })
-  const target = prods.products[0].stage === 'writing' ? 'data_analysis' : 'writing'
-  const write = page.waitForResponse((r) => r.url().endsWith(`/api/projects/${ONE}/products`) && r.request().method() === 'POST')
-  await page.getByTestId(`inline-dot-${target}`).click()
-  expect((await write).status()).toBe(200)
-  await expect(page.getByTestId(`inline-dot-${target}`)).toHaveAttribute('aria-current', 'step')
+  // A new project starts with one product; other specs add products to the seeded one.
+  const made = await page.request.post('/api/projects', { headers: PI, data: { title: 'Layout one product', slug: 'layout-one-product', category: 'lab' } })
+  expect(made.ok(), await made.text()).toBe(true)
+  const slug = ((await made.json()) as { data: { slug: string } }).data.slug
+  try {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await go(page, slug)
+    const dots = page.locator('[data-testid^="inline-dot-"]')
+    await expect(dots.first()).toBeVisible()
+    expect(await dots.count()).toBeGreaterThanOrEqual(4)
+    await expect(page.getByTestId('inline-stage')).toHaveText('Idea')
+    // On the stats row at 1280: dots and stats overlap vertically.
+    const d = (await dots.first().boundingBox())!
+    // (A new project has no tasks, hence no stats; the stats row is checked in the first test.)
+    const st = (await page.getByTestId('project-stats').count()) > 0 ? await box(page, 'project-stats') : null
+    if (st) {
+      expect(st.y).toBeLessThan(d.y + d.height + 20)
+      expect(st.y + st.height).toBeGreaterThan(d.y - 20)
+    }
+    await page.screenshot({ path: `${SHOTS}/c-single-1280.png` })
+    const write = page.waitForResponse((r) => r.url().endsWith(`/api/projects/${slug}/products`) && r.request().method() === 'POST')
+    await page.getByTestId('inline-dot-writing').click()
+    expect((await write).status()).toBe(200)
+    await expect(page.getByTestId('inline-dot-writing')).toHaveAttribute('aria-current', 'step')
+    await expect(page.getByTestId('inline-stage')).toHaveText('Writing')
+  } finally {
+    localD1(`UPDATE projects SET deleted_at = datetime('now') WHERE slug LIKE 'layout-one-product%'`)
+  }
 })
 
 test('a PI whose own folder differs while Peripheral Brain has none sees a message that says so', async ({ page }) => {
