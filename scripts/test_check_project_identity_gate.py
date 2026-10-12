@@ -113,3 +113,60 @@ def test_d1_query_and_wrangler_d1_error_share_one_message_shape(monkeypatch):
     assert "no stderr or stdout captured" in str(
         wrangler_d1.WranglerD1Error(1, "", ["wrangler"])
     )
+
+
+_COLD = "Authentication error [code: 10000]"
+
+
+def test_d1_query_retries_once_on_cold_token_then_succeeds(monkeypatch, capsys):
+    """Every first deploy of the day failed here on a cold OAuth token (code
+    10000); the next process passed. One retry, logged, on that text only."""
+    monkeypatch.setattr(gate, "_wrangler_cmd", lambda: ["wrangler.cmd"])
+    monkeypatch.setattr(gate, "_d1_env", lambda: {})
+    monkeypatch.setattr(gate.time, "sleep", lambda s: None)
+    results = [
+        _fake_completed(1, stdout=f'{{"error":"{_COLD}"}}', stderr=""),
+        _fake_completed(0, stdout='[{"results":[{"n":1}]}]', stderr=""),
+    ]
+    calls = []
+
+    def fake_run(*a, **k):
+        calls.append(a)
+        return results.pop(0)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert gate.d1_query("SELECT 1") == [{"n": 1}]
+    assert len(calls) == 2
+    assert "retrying once" in capsys.readouterr().err
+
+
+def test_d1_query_cold_token_twice_fails_after_one_retry(monkeypatch):
+    monkeypatch.setattr(gate, "_wrangler_cmd", lambda: ["wrangler.cmd"])
+    monkeypatch.setattr(gate, "_d1_env", lambda: {})
+    monkeypatch.setattr(gate.time, "sleep", lambda s: None)
+    calls = []
+
+    def fake_run(*a, **k):
+        calls.append(a)
+        return _fake_completed(1, stdout="", stderr=_COLD)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    with pytest.raises(RuntimeError) as exc_info:
+        gate.d1_query("SELECT 1")
+    assert len(calls) == 2
+    assert _COLD in str(exc_info.value)
+
+
+def test_d1_query_other_error_is_not_retried(monkeypatch):
+    monkeypatch.setattr(gate, "_wrangler_cmd", lambda: ["wrangler.cmd"])
+    monkeypatch.setattr(gate, "_d1_env", lambda: {})
+    calls = []
+
+    def fake_run(*a, **k):
+        calls.append(a)
+        return _fake_completed(1, stdout="", stderr="D1_ERROR: boom")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    with pytest.raises(RuntimeError):
+        gate.d1_query("SELECT 1")
+    assert len(calls) == 1
