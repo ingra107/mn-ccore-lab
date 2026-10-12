@@ -176,7 +176,9 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   dispatch skill, is archived (Archive/2026-10-11-pb-dispatch-drain/).
     // 263 as of 2026-10-11 — Queue for Claude lane cut (-2): POST /api/pb/dispatch/add,
     //   GET /api/pb/dispatch/pending. The dispatch_queue table stays, no DDL.
-    expect(ROUTE_REGISTRY).toHaveLength(263)
+    // 266 as of 2026-10-11 — products reads (+3): GET /api/products and
+    //   GET /api/product-funding (PB pull lane), GET /api/projects/:slug/products.
+    expect(ROUTE_REGISTRY).toHaveLength(266)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

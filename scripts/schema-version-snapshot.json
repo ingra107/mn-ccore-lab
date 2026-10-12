@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "8c3f227f6f9858a403a1d145cefb0ca3560025dbc5421bf17f2168d09142f120",
-  "file_count": 128,
+  "hash": "d29e7a7ed53cdd36fc7e21b1d51ac158748aaabae43baa191584564e0ad0bebf",
+  "file_count": 129,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -130,11 +130,12 @@
     "schema-v121-project-slug-and-file-key-guards.sql",
     "schema-v122-meeting-access.sql",
     "schema-v123-hub-errors.sql",
-    "schema-v124-products.sql"
+    "schema-v124-products.sql",
+    "schema-v125-product-home-paths.sql"
   ],
   "version_range": [
     2,
-    124
+    125
   ],
   "gaps": [
     35,

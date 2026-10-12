@@ -131,6 +131,9 @@ export const FK_SLUG_FIELDS: Record<string, string[]> = {
   regulatory_items: ['project_id'],
   manuscript_revisions: ['project_id'],
   project_documents: ['project_id'],
+  // products (schema-v124): a slug project ref canonicalizes like tasks; an
+  // unresolvable one becomes NULL and the NOT NULL column refuses the insert.
+  products: ['project_id'],
   // deadline_dependencies intentionally absent: no project_id column (straddles
   // upstream_id + downstream_id); Z4.3 exempts it from FK_SLUG_FIELDS handling.
 };

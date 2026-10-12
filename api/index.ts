@@ -100,6 +100,7 @@ import { authEnforced } from './lib/auth-mode';
 import { handleClientErrors, handleHubErrorsWeekly } from './routes/hub-errors';
 import { projectResponseFor } from './lib/pi-only-project-fields';
 import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleSetLinkRole } from './routes/links';
+import { handleGetProductsSync, handleGetProjectProducts } from './routes/products';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2106,6 +2107,31 @@ defineRoute({
   auth: 'authed',
   entity: 'links',
   handler: (c) => handleGetLinks(new URL(R(c).url), R(c), E(c)),
+});
+
+// Products pull (schema-v124/v125, 2026-10-11) — PI/API-key gated (PB sync
+// lane). Writes go through POST /api/mutations only.
+defineRoute({
+  method: 'GET',
+  path: '/api/products',
+  auth: 'authed',
+  entity: 'products',
+  handler: (c) => handleGetProductsSync('products', new URL(R(c).url), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/product-funding',
+  auth: 'authed',
+  entity: 'products',
+  handler: (c) => handleGetProductsSync('product_funding', new URL(R(c).url), R(c), E(c)),
+});
+// A visible project's live products, with kind and stage labels.
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:slug/products',
+  auth: 'authed',
+  entity: 'products',
+  handler: (c) => handleGetProjectProducts(c.req.param('slug'), R(c), E(c)),
 });
 
 // Frontend-accessible stored-links sub-resources (B3 Task 8, 2026-06-21).

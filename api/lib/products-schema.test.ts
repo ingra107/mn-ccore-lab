@@ -12,6 +12,10 @@ type Db = ReturnType<typeof prodSchemaDb>
 
 function world(): Db {
   const db = prodSchemaDb()
+  // These are v124's constraints, tested on projects as they were before
+  // schema-v125 (no auto-made home product). v125's create paths:
+  // api/routes/mutations.product-home.test.ts.
+  db.exec('DROP TRIGGER trg_projects_home_product_ins')
   for (const [id, slug] of [['proj_A', 'a'], ['proj_B', 'b']]) {
     insertRow(db, 'projects', { id, slug, title: slug.toUpperCase(), category: 'MNCCORE', status: 'active', stage: 'idea' })
   }
@@ -30,13 +34,13 @@ const refuses = (fn: () => unknown, msg: RegExp) => expect(fn).toThrow(msg)
 const FK = /FOREIGN KEY constraint failed/
 
 describe('v124 catalog: kinds and ladders are seeded data', () => {
-  it('seeds the six kinds and only award can fund', () => {
+  it('seeds the kinds (v124 six, v125 honor) and only award can fund', () => {
     const db = prodSchemaDb()
     const kinds = db.prepare('SELECT kind, can_fund FROM product_kinds ORDER BY sort_order').all()
     expect(kinds).toEqual([
       { kind: 'manuscript', can_fund: 0 }, { kind: 'abstract', can_fund: 0 },
       { kind: 'grant_application', can_fund: 0 }, { kind: 'award', can_fund: 1 },
-      { kind: 'trial_ops', can_fund: 0 }, { kind: 'infrastructure', can_fund: 0 },
+      { kind: 'honor', can_fund: 0 }, { kind: 'trial_ops', can_fund: 0 }, { kind: 'infrastructure', can_fund: 0 },
     ])
   })
   it('seeds the ladders Nick named', () => {
@@ -248,10 +252,10 @@ describe('v124 tasks.product_id: same project as the task (Level 2 trigger)', ()
     product(db, 'prd_b', 'proj_B')
     return db
   }
-  it('a task on its own project product lands; a task with no product is untouched', () => {
+  it('a task on its own project product lands; one with no product takes the only product (v125)', () => {
     const db = setup()
     expect(task(db, 'task_1', 'proj_A', 'prd_a').product_id).toBe('prd_a')
-    expect(task(db, 'task_2', 'proj_A', null).product_id).toBeNull()
+    expect(task(db, 'task_2', 'proj_A', null).product_id).toBe('prd_a')
   })
   it('refuses a product from another project on insert, and a product with no project', () => {
     const db = setup()

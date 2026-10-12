@@ -182,6 +182,11 @@ describe('Slice D — project_dependencies re-key (Level 1: stranding unrepresen
     await handleCreateDependency(req({ from_slug: 'beta', to_slug: 'gamma' }), FAKE_USER, env);
     expect(ourEdges()).toBe(2);
     // Hard delete project B (NOT a soft delete) — both edges touching B must vanish.
+    // schema-v125 gave proj_B its home product, whose FK (NO ACTION) blocks a
+    // hard delete of the parent; a live project's last product cannot go
+    // first (v124 keep_one_live), so the project is retired, then emptied.
+    db.prepare("UPDATE projects SET deleted_at = datetime('now') WHERE id = ?").run('proj_B');
+    db.prepare('DELETE FROM products WHERE project_id = ?').run('proj_B');
     db.prepare('DELETE FROM projects WHERE id = ?').run('proj_B');
     expect(ourEdges()).toBe(0);
   });

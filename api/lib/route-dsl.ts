@@ -25,6 +25,7 @@ export type AuthLevel = 'public' | 'authed' | 'pi'
 export type EntityName =
   | 'tasks'
   | 'projects'
+  | 'products'
   | 'artifacts'
   | 'submissions'
   | 'conferences'

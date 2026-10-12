@@ -73,13 +73,12 @@
 --   1. Project soft-delete: orphanProjectTasksSql() clears product_id in the
 --      SAME SET as project_id, inside the delete's own batch (projects.ts
 --      handleDeleteProject has no separate cascade since 2026-10-11).
---   2. Task moved to another project: applyPatch sets product_id to the new
---      project's home product (homeProductId: the live is_home = 1 product,
---      else the project's only live product, else NULL) in the same patch;
---      every task patch, Hub UI and PB, passes there.
+--   2. Task moved to another project: SUPERSEDED by schema-v125 (the home
+--      rule moved into triggers; applyPatch only clears the old product_id).
 --   3. projects.stage during the expand phase: projectStageDependents forwards
---      it to a single product in the same batch, and refuses it
---      (project_stage_unforwardable) on 2+ products or an off-ladder stage.
+--      it to a single product in the same batch and refuses it
+--      (project_stage_unforwardable) on 2+ products. Since 2026-10-11 (with
+--      v125) an off-ladder stage lands on the project unforwarded instead.
 -- The code that names product_id must deploy AFTER this DDL is on prod.
 --
 -- NOT HERE: the resolver view (the chain defines no view; api/lib/

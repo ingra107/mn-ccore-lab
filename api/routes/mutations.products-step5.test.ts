@@ -47,6 +47,14 @@ function project(id: string) {
   insertRow(db, 'project_members', { project_id: id, member_slug: 'nick-ingraham', added_by: 'nick-ingraham' })
 }
 
+/** A project inserted before schema-v125 existed: no home product. */
+function legacyProject(id: string) {
+  const trigger = row("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_projects_home_product_ins'").sql as string
+  db.exec('DROP TRIGGER trg_projects_home_product_ins')
+  project(id)
+  db.exec(trigger)
+}
+
 beforeEach(() => {
   db = prodSchemaDb()
   n = 0
@@ -54,18 +62,21 @@ beforeEach(() => {
   _resetPiEmailsCacheForTests()
   _resetValidationFlagsCache()
   insertRow(db, 'team_members', { id: 'tm-nick', name: 'Nick Ingraham', slug: 'nick-ingraham', role: 'PI', member_type: 'director', email: PI_EMAIL })
-  // proj_one: one product (a manuscript), not marked home. proj_two: two
-  // products, no home; one is untitled, which is NOT a home (Nick 2026-10-11:
-  // the home is an explicit marker, never guessed). proj_umb: an umbrella
-  // whose titled trial-ops product is marked is_home = 1.
-  // proj_none: no products yet (every project before Backfill A).
-  for (const id of ['proj_one', 'proj_two', 'proj_umb', 'proj_none', 'proj_ops']) project(id)
-  insertRow(db, 'products', { id: 'prd_one', project_id: 'proj_one', kind: 'manuscript', stage: 'writing' })
-  insertRow(db, 'products', { id: 'prd_two_a', project_id: 'proj_two', kind: 'manuscript', stage: 'writing' })
+  // schema-v125: every project is born with its home product, prd_<suffix>
+  // (manuscript, the project's stage, is_home = 1). The seeds below reshape
+  // those homes rather than insert a first product.
+  // proj_one: one product (a manuscript). proj_two: two products, no home;
+  // one is untitled, which is NOT a home (Nick 2026-10-11: the home is an
+  // explicit marker, never guessed). proj_umb: an umbrella whose titled
+  // trial-ops product is the home. proj_none: no products (a project from
+  // before v125, which every prod project is until Backfill A).
+  for (const id of ['proj_one', 'proj_two', 'proj_umb', 'proj_ops']) project(id)
+  legacyProject('proj_none')
+  db.prepare("UPDATE products SET is_home = 0 WHERE id = 'prd_two'").run()
   insertRow(db, 'products', { id: 'prd_two_b', project_id: 'proj_two', kind: 'abstract', stage: 'planning', title: 'Abstract B' })
-  insertRow(db, 'products', { id: 'prd_umb_admin', project_id: 'proj_umb', kind: 'trial_ops', stage: 'enrolling', title: 'Trial ops', is_home: 1 })
+  db.prepare("UPDATE products SET kind = 'trial_ops', stage = 'enrolling', title = 'Trial ops' WHERE id = 'prd_umb'").run()
   insertRow(db, 'products', { id: 'prd_umb_paper', project_id: 'proj_umb', kind: 'manuscript', stage: 'idea', title: 'Primary paper' })
-  insertRow(db, 'products', { id: 'prd_ops', project_id: 'proj_ops', kind: 'trial_ops', stage: 'start_up' })
+  db.prepare("UPDATE products SET kind = 'trial_ops', stage = 'start_up' WHERE id = 'prd_ops'").run()
   insertRow(db, 'tasks', { id: 'task_on_one', project_id: 'proj_one', product_id: 'prd_one', title: 'Draft methods', assignee: 'nick-ingraham' })
   insertRow(db, 'tasks', { id: 'task_on_paper', project_id: 'proj_umb', product_id: 'prd_umb_paper', title: 'Figure 1', assignee: 'nick-ingraham' })
   env = { DB: d1Adapter(db), TEST_MODE_KEY: TEST_KEY, PB_API_KEY: API_KEY, REQUIRE_AUTH: '1' } as unknown as Env
@@ -131,13 +142,13 @@ describe('step 5.2: moving a task to another project moves or clears its product
   it('Hub UI: into an umbrella, the task takes the product marked is_home', async () => {
     const r = await ui('/api/tasks/task_on_one', { project_id: 'proj_umb' })
     expect(r.status, r.text).toBe(200)
-    expect(task('task_on_one')).toMatchObject({ project_id: 'proj_umb', product_id: 'prd_umb_admin' })
+    expect(task('task_on_one')).toMatchObject({ project_id: 'proj_umb', product_id: 'prd_umb' })
   })
 
   it('PB: into an umbrella, the same home product', async () => {
     const r = await pb('tasks', 'task_on_one', 'update', { project_id: 'proj_umb' })
     expect(r.status, r.reason).toBe('accepted')
-    expect(task('task_on_one')).toMatchObject({ project_id: 'proj_umb', product_id: 'prd_umb_admin' })
+    expect(task('task_on_one')).toMatchObject({ project_id: 'proj_umb', product_id: 'prd_umb' })
   })
 
   it('Hub UI: into a 2-product project with no home, the product clears even though one is untitled', async () => {
@@ -147,7 +158,7 @@ describe('step 5.2: moving a task to another project moves or clears its product
   })
 
   it('PB: a tombstoned home does not count; with one live product left, the task takes it', async () => {
-    db.prepare("UPDATE products SET deleted_at = datetime('now') WHERE id = 'prd_umb_admin'").run()
+    db.prepare("UPDATE products SET deleted_at = datetime('now') WHERE id = 'prd_umb'").run()
     const r = await pb('tasks', 'task_on_one', 'update', { project_id: 'proj_umb' })
     expect(r.status, r.reason).toBe('accepted')
     expect(task('task_on_one')).toMatchObject({ project_id: 'proj_umb', product_id: 'prd_umb_paper' })
@@ -210,7 +221,7 @@ describe('step 5.3: a projects.stage write is forwarded to a single product, ref
     expect(r.reason).toContain('holds 2 products')
     expect(projectStage('proj_two')).toBe('writing')
     expect(seq('projects', 'proj_two')).toBe(before)
-    expect(product('prd_two_a').stage).toBe('writing')
+    expect(product('prd_two').stage).toBe('writing')
   })
 
   it('Hub UI: two products, one of them home -> still 409 (the home is not a stage tiebreak), project stage unchanged', async () => {
@@ -220,11 +231,18 @@ describe('step 5.3: a projects.stage write is forwarded to a single product, ref
     expect(projectStage('proj_umb')).toBe('writing')
   })
 
-  it('PB: one product whose kind has no such stage -> refused, not a raw FK failure', async () => {
+  it('PB: one product whose kind has no such stage -> the project stage lands, the product keeps its own, the reason says so', async () => {
     const r = await pb('projects', 'proj_ops', 'update', { stage: 'submitted' })
-    expect(r.status).toBe('error')
-    expect(r.code).toBe('project_stage_unforwardable')
+    expect(r.status, r.reason).toBe('accepted')
+    expect(r.code).toBeUndefined()
     expect(r.reason).toContain('not on the trial_ops ladder')
+    expect(projectStage('proj_ops')).toBe('submitted')
+    expect(product('prd_ops').stage).toBe('start_up')
+  })
+
+  it('Hub UI: the same off-ladder edit is a 200, not a 409 (the editor is the only stage control before step 8)', async () => {
+    const r = await ui('/api/projects/proj_ops', { stage: 'writing' })
+    expect(r.status, r.text).toBe(200)
     expect(product('prd_ops').stage).toBe('start_up')
   })
 

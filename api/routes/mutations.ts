@@ -48,6 +48,10 @@ const ALLOWED_TABLES = new Set([
   // Phase 2 typed-links (2026-06-20): polymorphic link ownership per task/project.
   // schema-v88-links-table.sql + pb-schema 0.7.0 field-authority.
   'links',
+  // Projects hold products (schema-v124/v125, 2026-10-11). Field whitelist:
+  // pb-schema TABLE_FIELDS (0.12.0+). Structure is enforced by the schema
+  // (composite FKs, keep_one_live, home triggers), not here.
+  'products', 'product_funding',
 ]);
 
 const ALLOWED_OPS = new Set(['insert', 'update', 'delete', 'append']);
@@ -78,6 +82,9 @@ const DELETE_CAPABLE_TABLES = new Set([
   'day_capacity', 'submission_events',
   // links: full soft-delete (deleted_at + updated_at both present; schema-v88).
   'links',
+  // products / product_funding: deleted_at + updated_at (schema-v124). A
+  // live project's last live product refuses (trg_products_keep_one_live_upd).
+  'products', 'product_funding',
 ]);
 
 // Subset of DELETE_CAPABLE_TABLES that also carry updated_at.
@@ -88,6 +95,7 @@ const TABLES_WITH_UPDATED_AT = new Set([
   'kg_entities', 'kg_relations', 'kg_relation_type_registry', 'trajectories',
   // links carries updated_at (schema-v88); stamp it on delete.
   'links',
+  'products', 'product_funding',
 ]);
 
 // Tables that carry a `status` column and must have status='deleted' co-set
@@ -801,6 +809,25 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     }
   }
 
+  // A product is born with its stage clock. PB cannot send stage_entered_at
+  // (pb-schema TABLE_FIELDS omits it). A HOME product continues its project's
+  // clock (schema-v125 trg_projects_home_product_ins does the same for a new
+  // project; Backfill A rides this, Nick 2026-10-11 A25 "copy
+  // stage_entered_at"); any other product starts now.
+  if (mut.table === 'products') {
+    const p = mut.payload as Record<string, unknown>;
+    if (p.stage_entered_at == null) {
+      let clock: string | null = null;
+      if (p.is_home === 1 || p.is_home === true) {
+        const pr = await env.DB.prepare('SELECT stage_entered_at FROM projects WHERE id = ?')
+          .bind((p.project_id as string | null | undefined) ?? null)
+          .first<{ stage_entered_at: string | null }>();
+        clock = pr?.stage_entered_at ?? null;
+      }
+      p.stage_entered_at = clock ?? nowInstant().replace('T', ' ').replace(/\.\d+Z$/, '');
+    }
+  }
+
   const idCol = pkColumn(mut.table);
   let pkCols: string[];
   let pkVals: unknown[];
@@ -1132,10 +1159,11 @@ async function decideAndCommitUpdate(
   const mirrorSlots =
     (mut.table === 'tasks' || mut.table === 'projects') && touchesKeyLinkSlots(mut.patch);
   // schema-v124: a projects.stage write reaches the project's product in the
-  // same batch, or is refused (projectStageDependents).
+  // same batch, lands unforwarded with a reason, or is refused
+  // (projectStageDependents).
   const stageForward = await projectStageDependents(env, mut, current);
-  if (typeof stageForward === 'string') {
-    return mutErr(mut.mutation_id, 'project_stage_unforwardable', stageForward);
+  if (stageForward && 'refuse' in stageForward) {
+    return mutErr(mut.mutation_id, 'project_stage_unforwardable', stageForward.refuse);
   }
   const dependents: Dependents[] = [];
   if (mirrorSlots) {
@@ -1144,12 +1172,13 @@ async function decideAndCommitUpdate(
       current, { ...current, ...mut.patch }, mut.mutation_id, landed,
     ));
   }
-  if (stageForward) dependents.push(stageForward);
+  if (stageForward && 'forward' in stageForward) dependents.push(stageForward.forward);
   const committed = await commitRowWrite(
     env, mut, current, await applyPatch(env, mut, current, flags), outcome,
     {
       ...(dependents.length ? { dependents: (landed: SqlFragment) => dependents.flatMap((d) => d(landed)) } : {}),
       ...(mirrorSlots ? { dependentLinksRead: touchedLinksRead(env.DB, mut.mutation_id) } : {}),
+      ...(stageForward && 'note' in stageForward ? { reason: stageForward.note } : {}),
     },
   );
   if (committed === CAS_MISS) return CAS_MISS;
@@ -1534,13 +1563,23 @@ type Dependents = (landed: SqlFragment) => D1PreparedStatement[];
  * the product. A writer that still patches projects.stage (PB update_project,
  * the Hub project editor, Apps Script) must not write a value no product page
  * reads, so this is the one chokepoint for it (plan step 5):
- *   - 0 live products (every project until Backfill A): nothing to forward;
- *   - 1 live product: its stage moves in the same batch, stage_entered_at
- *     stamped, gated on the project write landing;
- *   - 2+ live products, or one whose kind has no such stage: a reason string,
- *     which the caller returns as project_stage_unforwardable. Which product
- *     the writer meant is not knowable, and products(kind, stage) refuses an
- *     off-ladder stage anyway; refusing names it instead of a raw FK failure.
+ *   - 0 live products (a project from before Backfill A; schema-v125 makes
+ *     every new project with one): nothing to forward;
+ *   - 1 live product whose ladder has the stage: its stage moves in the same
+ *     batch, stage_entered_at stamped, gated on the project write landing;
+ *   - 1 live product whose ladder does NOT have the stage (award, trial ops,
+ *     infrastructure; projects.stage is the manuscript ladder): the project
+ *     write lands, the product keeps its stage, and the result's `reason`
+ *     says so. The word cannot be put on that product (products(kind, stage)
+ *     refuses it), so refusing would only block the project editor -- the one
+ *     stage control before the product UI (plan step 8) -- and page PB.
+ *     Re-judged 2026-10-11: the first cut refused here; of prod's 19 stage
+ *     edits in the last 120 days, 3 (R01 LPV, K23, CLHSS Talks) would have
+ *     been refused after Backfill A, each a word with no meaning on the
+ *     product's ladder.
+ *   - 2+ live products: { refuse }, which the caller returns as
+ *     project_stage_unforwardable. Which product the writer meant is not
+ *     knowable.
  * Only a real change forwards: an echo of the current project stage (PB
  * re-sending a whole row) is accepted on any project.
  * The home product (products.is_home) is deliberately NOT a tiebreak here: it
@@ -1549,9 +1588,11 @@ type Dependents = (landed: SqlFragment) => D1PreparedStatement[];
  * manuscript-ladder stage onto the wrong product. 2+ products still refuse.
  * Deleted with projects.stage at the contract phase.
  */
+type StageForward = { forward: Dependents } | { refuse: string } | { note: string } | null;
+
 async function projectStageDependents(
   env: Env, mut: Mutation, current: Record<string, unknown>,
-): Promise<Dependents | string | null> {
+): Promise<StageForward> {
   if (mut.table !== 'projects') return null;
   const stage = (mut.patch as Record<string, unknown> | undefined)?.stage;
   if (typeof stage !== 'string' || stage === current.stage) return null;
@@ -1563,36 +1604,21 @@ async function projectStageDependents(
   const live = results ?? [];
   if (live.length === 0) return null;
   if (live.length > 1) {
-    return `project_stage_unforwardable: project ${mut.record_id} holds ${live.length} products (${live.map((p) => p.id).join(', ')}); write the stage on the product, not projects.stage`;
+    return { refuse: `project_stage_unforwardable: project ${mut.record_id} holds ${live.length} products (${live.map((p) => p.id).join(', ')}); write the stage on the product, not projects.stage` };
   }
   const [product] = live;
   if (!product.on_ladder) {
-    return `project_stage_unforwardable: stage '${stage}' is not on the ${product.kind} ladder of product ${product.id}`;
+    return { note: `projects.stage not forwarded: '${stage}' is not on the ${product.kind} ladder of product ${product.id}, which keeps stage '${product.stage}'` };
   }
   if (product.stage === stage) return null;
-  return (landed) => [
-    env.DB.prepare(
-      `UPDATE products SET stage = ?, stage_entered_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ?
-        WHERE id = ? AND deleted_at IS NULL AND ${landed.sql}`,
-    ).bind(stage, mut.mutation_id, product.id, ...landed.vals),
-  ];
-}
-
-/**
- * The product a task joins when it moves into `projectId` without naming one:
- * the umbrella's own work lives on its home product (decision 2026-10-11;
- * Nick: an explicit marker, never a guess). That is the live products.is_home
- * = 1 row (schema-v124 allows at most one per project), else the project's
- * only live product, else NULL, which v124 reads as "not yet allocated".
- */
-async function homeProductId(env: Env, projectId: string): Promise<string | null> {
-  const { results } = await env.DB.prepare(
-    'SELECT id, is_home FROM products WHERE project_id = ? AND deleted_at IS NULL',
-  ).bind(projectId).all<{ id: string; is_home: number }>();
-  const live = results ?? [];
-  const home = live.find((p) => p.is_home === 1);
-  if (home) return home.id;
-  return live.length === 1 ? live[0].id : null;
+  return {
+    forward: (landed) => [
+      env.DB.prepare(
+        `UPDATE products SET stage = ?, stage_entered_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ?
+          WHERE id = ? AND deleted_at IS NULL AND ${landed.sql}`,
+      ).bind(stage, mut.mutation_id, product.id, ...landed.vals),
+    ],
+  };
 }
 
 /**
@@ -1672,18 +1698,20 @@ async function applyPatch(
   // schema-v124: a task's product must sit in the task's project
   // (trg_tasks_product_project_upd refuses anything else). A patch that moves
   // a task to another project, or out of every project, and does not name a
-  // product takes the new project's home product (homeProductId) or none, in
-  // the same write. Every task patch passes here: the Hub task editor
-  // (handleUpdateTask), bulk edits and PB's outbox.
+  // product lets go of the old one here; schema-v125 trg_tasks_home_product_upd
+  // then gives it the new project's home product in the same statement (or
+  // leaves NULL: no project, or no home and 2+ live products). The home rule
+  // lives only in the schema, so this write and every other writer agree.
+  // Every task patch passes here: the Hub task editor (handleUpdateTask), bulk
+  // edits and PB's outbox.
   if (
     mut.table === 'tasks' &&
     Object.prototype.hasOwnProperty.call(effectivePatch, 'project_id') &&
     !Object.prototype.hasOwnProperty.call(effectivePatch, 'product_id') &&
-    (effectivePatch.project_id ?? null) !== (current.project_id ?? null)
+    (effectivePatch.project_id ?? null) !== (current.project_id ?? null) &&
+    current.product_id != null
   ) {
-    const target = effectivePatch.project_id;
-    const home = typeof target === 'string' && target ? await homeProductId(env, target) : null;
-    if (home !== (current.product_id ?? null)) effectivePatch = { ...effectivePatch, product_id: home };
+    effectivePatch = { ...effectivePatch, product_id: null };
   }
 
   // Reassignment resets the NEW signal (2026-06-11): acknowledged_at means
@@ -1814,9 +1842,11 @@ async function applyPatch(
   // same approach as the deleted_at co-flips above. Only fires on a real
   // transition (patch.stage differs from current.stage), so editing other fields
   // never resets the counter — this is the fix for the Manuscripts daysInStage bug.
+  // Products carry the same clock (schema-v124); PB never sends it (pb-schema
+  // TABLE_FIELDS omits products.stage_entered_at), so the Hub stamps it here.
   const patchedStage = effectivePatch?.stage;
   const isProjectStageChange =
-    mut.table === 'projects' &&
+    (mut.table === 'projects' || mut.table === 'products') &&
     typeof patchedStage === 'string' &&
     patchedStage !== current.stage;
   if (isProjectStageChange) {
