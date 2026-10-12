@@ -215,6 +215,30 @@ export function buildOpenFolderUri(folderPath: string): string {
 }
 
 /**
+ * A person's own folder (My folder, schema-v127) as the path part of a
+ * mnccore:// link: normalized, then each segment percent-encoded, so a `#`,
+ * `?`, `%`, comma or non-ASCII name survives the browser intact. A drive
+ * segment (`C:`) stays as is. Both launchers decode exactly once
+ * (member-launcher/, scripts/mnccore_handler.py `_decode`).
+ */
+export function encodeLocalFolderPath(folderPath: string): string {
+  return normalizeLocalFolderPath(folderPath)
+    .split('/')
+    .map((seg) => (/^[A-Za-z]:$/.test(seg) ? seg : encodeURIComponent(seg)))
+    .join('/')
+}
+
+/** `mnccore://open/<encoded folder>` for a person's own folder. */
+export function buildMemberOpenFolderUri(folderPath: string): string {
+  return `mnccore://open/${encodeLocalFolderPath(folderPath)}`
+}
+
+/** `mnccore://workon/<encoded folder>` for a person's own folder. */
+export function buildMemberWorkOnUri(folderPath: string): string {
+  return `mnccore://workon/${encodeLocalFolderPath(folderPath)}`
+}
+
+/**
  * The verb-only `mnccore://process` URI — runs Quick_Process.bat on the local
  * machine. No path segment (the handler matches the bare verb).
  */

@@ -242,6 +242,19 @@ if git diff --cached --name-only --diff-filter=ACMR \
     fi
     rm -f /tmp/mnccore-member-launcher-test.$$
 fi
+# The Mac half: what can be checked without a Mac (the Terminal command extracted from
+# the AppleScript and run under bash with planted files; installer dry-runs).
+if git diff --cached --name-only --diff-filter=ACMR \
+        | grep -qE "^member-launcher/(macos/|macos\.test\.mjs$)"; then
+    if ! node member-launcher/macos.test.mjs >/tmp/mnccore-mac-launcher-test.$$ 2>&1; then
+        grep -E "^\s*not ok|error:" /tmp/mnccore-mac-launcher-test.$$ | head -20
+        rm -f /tmp/mnccore-mac-launcher-test.$$
+        echo ""
+        echo "BLOCKED: member-launcher/macos.test.mjs failed (run it with node to see why)."
+        exit 1
+    fi
+    rm -f /tmp/mnccore-mac-launcher-test.$$
+fi
 
 # ---------------------------------------------------------------------------
 # Ledger-registry gate (2026-06-18, bounded-ledger primitive).

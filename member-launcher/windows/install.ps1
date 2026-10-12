@@ -42,6 +42,7 @@ if ($PrintCommand) {
 
 $KeyPath = "Software\Classes\$Scheme"
 $CommandPath = "$KeyPath\shell\open\command"
+$SavedKeyPath = 'Software\MNCCORE\Launcher'
 $hkcu = [Microsoft.Win32.Registry]::CurrentUser
 
 function Read-Registered {
@@ -76,6 +77,16 @@ if (Test-Path -LiteralPath $uninstall -PathType Leaf) {
 }
 # A downloaded file carries a "came from the internet" mark; the copies should not.
 Get-ChildItem -LiteralPath $InstallDir -File | ForEach-Object { Unblock-File -LiteralPath $_.FullName -ErrorAction SilentlyContinue }
+
+# -Force over another handler: keep its command so uninstall.ps1 can put it back.
+# Saved once; reinstalling over our own registration keeps the first saved value.
+if ($existing -and -not $ours) {
+    $saved = $hkcu.CreateSubKey($SavedKeyPath)
+    $saved.SetValue("Previous-$Scheme", $existing)
+    $saved.Close()
+    Write-Host "Saved the previous ${Scheme}:// handler; uninstall.ps1 restores it:"
+    Write-Host "  $existing"
+}
 
 $k = $hkcu.CreateSubKey($KeyPath)
 $k.SetValue('', 'URL:MN-CCORE Launcher')

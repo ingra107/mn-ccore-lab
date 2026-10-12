@@ -317,6 +317,23 @@ describe('mnccore_handler.py through the registered command line (DRYRUN)', { sk
       assert.equal(r.code, 0, r.out)
       assert.equal(plan(r.out, 'open').cmdline, `${explorer()} "${spaced}"`)
     })
+    it('decodes a per-segment-encoded My folder link exactly once (schema-v127)', () => {
+      const enc = fwd(amp).split('/').map((s) => (/^[A-Za-z]:$/.test(s) ? s : encodeURIComponent(s))).join('/')
+      const r = fire(`mnccore://open/${enc}`)
+      assert.equal(r.code, 0, r.out)
+      assert.equal(plan(r.out, 'open').cmdline, `${explorer()} "${amp}"`)
+    })
+    for (const [name, tail, why] of [
+      ['an encoded quote', '%22%26echo%20x', 'may not contain a double quote'],
+      ['an encoded line break', '%0Acalc', 'may not contain a control character'],
+    ]) {
+      it(`refuses ${name} that appears only after decoding`, () => {
+        const r = fire(`mnccore://open/${fwd(dir)}${tail}`)
+        assert.equal(r.code, 1, r.out)
+        assert.ok(r.out.includes(why), r.out)
+        assert.ok(!r.out.includes('DRYRUN'), r.out)
+      })
+    }
     it('a folder name with & and a comma stays inside one quoted argument', () => {
       const r = fire(`mnccore://open/${fwd(amp)}`)
       assert.equal(r.code, 0, r.out)

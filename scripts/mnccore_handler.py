@@ -55,8 +55,9 @@ Verbs (parity with mnccore-handler.bat, which stays one release as rollback):
   mnccore://obsidian/<note>    Obsidian CLI when Obsidian runs and the CLI shim
                                exists, else the obsidian:// protocol.
 
-Path decode (open/file/workon only): strip a leading file:/// or file://, %20 ->
-space, / -> \\. Nothing else is decoded, as in the .bat.
+Path decode (open/file/workon only): strip a leading file:/// or file://,
+percent-decode once (since 2026-10-12; it was %20 only), / -> \\. A quote or
+control character produced by the decode is refused.
 
 MNCCORE_HANDLER_DRYRUN=1 prints (and logs) the resolved action instead of running
 it; every existence and security check still runs. Log: %TEMP%\\mnccore-handler.log.
@@ -80,6 +81,7 @@ import tempfile
 import traceback
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import unquote
 
 HERE = Path(__file__).resolve().parent
 
@@ -278,12 +280,24 @@ def _startfile(target: str, label: str) -> int:
 # ── verbs ────────────────────────────────────────────────────────────────────
 
 def _decode(arg: str) -> str:
-    """file:/// or file:// prefix off, %20 -> space, / -> \\ (the .bat's :decode)."""
+    """file:/// or file:// prefix off, percent-decoded ONCE, / -> \\.
+
+    2026-10-12 (schema-v127): a person's own folder link is percent-encoded per
+    segment by the Hub (urlClassify.encodeLocalFolderPath), so a `#`, `,` or
+    non-ASCII name survives the browser; one full decode reads both that and the
+    older raw links (whose only escape was %20). A quote or control character
+    that only appears AFTER decoding (%22, %0A) is refused here: the router's
+    raw-URL check cannot see it."""
     if arg[:8].lower() == "file:///":
         arg = arg[8:]
     elif arg[:7].lower() == "file://":
         arg = arg[7:]
-    return arg.replace("%20", " ").replace("/", "\\")
+    path = unquote(arg)
+    if '"' in path:
+        raise Refused("Refused: a folder path may not contain a double quote.")
+    if CONTROL_RE.search(path):
+        raise Refused("Refused: a folder path may not contain a control character.")
+    return path.replace("/", "\\")
 
 
 def _strip_trailing(path: str) -> str:

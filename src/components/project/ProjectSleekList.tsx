@@ -40,6 +40,7 @@ import { linkTintForType, iconForType } from '../../lib/linkIcon'
 import { classifyUrl } from '../../lib/urlClassify'
 import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
+import { useLauncherInstalled } from '../../hooks/useLauncherInstalled'
 import { useProjectKeyboardNav } from '../../hooks/useProjectKeyboardNav'
 import { directors } from '../../data/team'
 import { displayName } from '../../lib/nameUtils'
@@ -182,6 +183,8 @@ export default function ProjectSleekList({
   // says "Waiting (External)"; the link slots are as many as the busiest row
   // needs (+N past four); the Work-on slot only when some row has a folder; no
   // column at all when no row has a link or a folder.
+  // WorkOnActions renders nothing without the launcher switch, so the slot is reserved only with it on.
+  const [launcherInstalled] = useLauncherInstalled()
   const widths = useMemo(() => {
     const statuses = new Set(projects.map((p) => normalizeProjectStatus(p.status)))
     // Active is the default and prints nothing, so a list where every row is
@@ -191,9 +194,9 @@ export default function ProjectSleekList({
       : statuses.has('waiting_external') ? 124 : statuses.has('blocked') || statuses.has('done') ? 76 : 52
     const maxLinks = projects.reduce((m, p) => Math.max(m, linksByProjectId[p.id ?? '']?.length ?? 0), 0)
     const linkSlots = maxLinks > LINKS_SHOWN ? LINKS_SHOWN + 1 : maxLinks
-    const workOn = projects.some((p) => p.primary_folder) ? WORK_ON_SLOT : 0
+    const workOn = launcherInstalled && projects.some((p) => p.primary_folder) ? WORK_ON_SLOT : 0
     return { status, links: linkSlots * SLOT, workOn }
-  }, [projects, linksByProjectId])
+  }, [projects, linksByProjectId, launcherInstalled])
 
   const columns = useMemo<SleekColumn<Project>[]>(() => [
     {

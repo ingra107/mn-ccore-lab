@@ -8,7 +8,24 @@ import {
   buildObsidianUri,
   shortLabelForUrl,
   gmailKind,
+  encodeLocalFolderPath,
+  buildMemberOpenFolderUri,
+  buildMemberWorkOnUri,
 } from './urlClassify'
+
+// My folder links (schema-v127): each segment percent-encoded once; the
+// launchers decode exactly once, so these characters survive the browser.
+describe('encodeLocalFolderPath / member links', () => {
+  it('encodes each segment and keeps the drive and the separators', () => {
+    expect(encodeLocalFolderPath('C:\\Users\\casey\\Box\\R&D #2, 100% (v2)')).toBe('C:/Users/casey/Box/R%26D%20%232%2C%20100%25%20(v2)')
+    expect(buildMemberOpenFolderUri('/Users/casey/Box-Box/Café?x')).toBe('mnccore://open//Users/casey/Box-Box/Caf%C3%A9%3Fx')
+    expect(buildMemberWorkOnUri('C:/Users/casey/Box/Sepsis')).toBe('mnccore://workon/C:/Users/casey/Box/Sepsis')
+  })
+  it('round-trips through one decode per segment', () => {
+    const raw = '/Users/steven/Library/CloudStorage/Box-Box/a b#c?d&e'
+    expect(encodeLocalFolderPath(raw).split('/').map(decodeURIComponent).join('/')).toBe(raw)
+  })
+})
 
 // The three real `projects.primary_folder` shapes seen in live /api/projects data.
 // normalizeLocalFolderPath must collapse all three to the SAME canonical

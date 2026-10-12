@@ -33,17 +33,44 @@ const POWERSHELL = join(sysRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'power
 
 const MARK = join(tmpdir(), 'mnccore-member-launcher-injection-marker.txt')
 
-let local, work, spaced, registered, exe, tail
+let local, work, spaced, stubClaude, registered, exe, tail
 
-function env() {
-  return { ...process.env, MNCCORE_LAUNCHER_DRYRUN: '1', LOCALAPPDATA: local }
+// Every run: dry-run, a temp LOCALAPPDATA, and a stub claude OUTSIDE the target
+// folders (so the plan is the same on a machine without Claude Code).
+// Windows variable names are case-insensitive, and a hook's env (git, bash) can
+// carry another casing than ours: set and drop names without regard to case.
+function withVars(base, vars) {
+  const out = {}
+  const drop = new Set(Object.keys(vars).map((k) => k.toLowerCase()))
+  for (const [k, v] of Object.entries(base)) if (!drop.has(k.toLowerCase())) out[k] = v
+  for (const [k, v] of Object.entries(vars)) if (v !== undefined) out[k] = v
+  return out
+}
+
+function env(extra = {}) {
+  return withVars(process.env, { MNCCORE_LAUNCHER_DRYRUN: '1', LOCALAPPDATA: local, MNCCORE_LAUNCHER_TEST_CLAUDE: stubClaude, ...extra })
 }
 
 // The registered command line with %1 replaced by the URL, run verbatim.
-function fire(url) {
+// An `extra` value of undefined removes that variable.
+function fire(url, extra = {}) {
   const line = tail.replace('%1', () => url)
-  const r = spawnSync(exe, [line], { windowsVerbatimArguments: true, argv0: `"${exe}"`, encoding: 'utf8', env: env() })
+  const e = env(extra)
+  const r = spawnSync(exe, [line], { windowsVerbatimArguments: true, argv0: `"${exe}"`, encoding: 'utf8', env: e })
   return { code: r.status, out: (r.stdout || '') + (r.stderr || '') }
+}
+
+function sleep(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
+}
+
+function waitFor(path, ms) {
+  const end = Date.now() + ms
+  while (Date.now() < end) {
+    if (existsSync(path)) return true
+    sleep(200)
+  }
+  return existsSync(path)
 }
 
 function plan(out) {
@@ -63,6 +90,9 @@ describe('the member launcher through the registered command line (DRYRUN)', { s
     spaced = join(work, 'Sepsis Outcomes, 2026 (v2)')
     mkdirSync(spaced)
     writeFileSync(join(work, 'a-file.txt'), 'x')
+    mkdirSync(join(work, 'bin'))
+    stubClaude = join(work, 'bin', 'claude.cmd')
+    writeFileSync(stubClaude, '@exit /b 0\r\n')
     rmSync(MARK, { force: true })
 
     const r = spawnSync(POWERSHELL, ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', join(WIN, 'install.ps1'), '-PrintCommand'],
@@ -77,7 +107,7 @@ describe('the member launcher through the registered command line (DRYRUN)', { s
     mkdirSync(dirname(target), { recursive: true })
     copyFileSync(join(WIN, 'mnccore-launcher.ps1'), target)
   })
-  after(() => rmSync(work, { recursive: true, force: true }))
+  after(() => rmSync(work, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 }))
   after(() => {
     const rel = join(process.cwd(), 'mnccore-member-pwned.txt')
     const relHit = existsSync(rel)
@@ -118,14 +148,33 @@ describe('the member launcher through the registered command line (DRYRUN)', { s
         assert.equal(plan(r.out).arguments, `"${spaced}"`)
       }
     })
-    it('workon: cmd.exe /k claude with the folder as the WORKING DIRECTORY, never as command text', () => {
+    it('workon: cmd.exe /d /k "<ABSOLUTE claude>", the folder only as the WORKING DIRECTORY', () => {
       const r = fire(`mnccore://workon/${fwd(spaced)}`)
       assert.equal(r.code, 0, r.out)
       const p = plan(r.out)
       assert.equal(p.verb, 'workon')
       assert.equal(p.file.toLowerCase(), join(sysRoot, 'System32', 'cmd.exe').toLowerCase())
-      assert.equal(p.arguments, '/k claude')
+      assert.equal(p.arguments, `/d /k ""${stubClaude}""`)
+      assert.equal(p.claude, stubClaude)
       assert.equal(p.cwd, spaced)
+    })
+    it('workon refuses a claude that resolves inside the folder being opened', () => {
+      const inside = join(spaced, 'claude.cmd')
+      writeFileSync(inside, '@exit /b 0\r\n')
+      try {
+        const r = fire(`mnccore://workon/${fwd(spaced)}`, { MNCCORE_LAUNCHER_TEST_CLAUDE: inside })
+        assert.equal(r.code, 1, r.out)
+        assert.ok(r.out.includes('inside the folder being opened'), r.out)
+        assert.equal(plan(r.out), null)
+      } finally {
+        rmSync(inside, { force: true })
+      }
+    })
+    it('a link encoded per segment the way the Hub builds it decodes exactly once', () => {
+      const enc = fwd(spaced).split('/').map((x) => (/^[A-Za-z]:$/.test(x) ? x : encodeURIComponent(x))).join('/')
+      const r = fire(`mnccore://open/${enc}`)
+      assert.equal(r.code, 0, r.out)
+      assert.equal(plan(r.out).arguments, `"${spaced}"`)
     })
     it('a trailing slash and a ./.. segment resolve to the folder', () => {
       const r = fire(`mnccore://open/${fwd(spaced)}/../${encodeURIComponent('Sepsis Outcomes, 2026 (v2)')}/`)
@@ -170,5 +219,57 @@ describe('the member launcher through the registered command line (DRYRUN)', { s
         assert.equal(plan(r.out), null, r.out)
       })
     }
+  })
+
+  // B1 (security review 2026-10-12): files planted in a synced project folder
+  // must never run. These cases are NOT dry-run: they start a real cmd.exe (a
+  // console window flashes) running a stub claude that writes GOOD and exits.
+  describe('real workon runs: nothing planted in the folder runs', () => {
+    // Not dry-run, and without the NoDefaultCurrentDirectoryInExePath this test
+    // process may itself inherit (Claude Code sets it): a browser does not, so
+    // the launcher must set it on its own.
+    const REAL_RUN = { MNCCORE_LAUNCHER_DRYRUN: undefined, NoDefaultCurrentDirectoryInExePath: undefined }
+    let evil, evilMark, good
+    before(() => {
+      evil = join(work, 'Shared Box Project')
+      mkdirSync(evil)
+      evilMark = join(work, 'EVIL-ran.txt')
+      good = join(work, 'GOOD-ran.txt')
+      for (const name of ['claude.cmd', 'claude.bat', 'node.cmd', 'node.bat']) {
+        writeFileSync(join(evil, name), `@echo ${name}>> "${evilMark}"\r\n`)
+      }
+      // The stub stands in for the npm claude.cmd shim: it looks node up by bare name.
+      writeFileSync(stubClaude, `@echo ran> "${good}"\r\n@node --version >nul 2>&1\r\n@exit\r\n`)
+    })
+    // No after() rewriting the stub: the cmd.exe it started can still hold it
+    // open (EBUSY under a loaded pre-commit), and nothing runs after this block.
+
+    it('control: a bare `node` run in that folder DOES pick up the planted node.cmd', () => {
+      rmSync(evilMark, { force: true })
+      const e = withVars(process.env, { NoDefaultCurrentDirectoryInExePath: undefined })
+      spawnSync(join(sysRoot, 'System32', 'cmd.exe'), ['/d', '/c', 'node --version'], { cwd: evil, env: e })
+      const live = existsSync(evilMark)
+      rmSync(evilMark, { force: true })
+      assert.equal(live, true, 'the planted file did not run in the control, so the case below proves nothing')
+    })
+
+    it('confirmed workon runs the absolute claude; no planted claude/node file runs', () => {
+      rmSync(evilMark, { force: true })
+      rmSync(good, { force: true })
+      const r = fire(`mnccore://workon/${fwd(evil)}`, { ...REAL_RUN, MNCCORE_LAUNCHER_TEST_CONFIRM: 'yes' })
+      assert.equal(r.code, 0, r.out)
+      assert.equal(waitFor(good, 15000), true, 'the stub claude never ran')
+      sleep(1500)
+      assert.equal(existsSync(evilMark), false, existsSync(evilMark) ? readFileSync(evilMark, 'utf8') : '')
+    })
+
+    it('declined workon starts nothing (exit 3)', () => {
+      rmSync(good, { force: true })
+      const r = fire(`mnccore://workon/${fwd(evil)}`, { ...REAL_RUN, MNCCORE_LAUNCHER_TEST_CONFIRM: 'no' })
+      assert.equal(r.code, 3, r.out)
+      sleep(2000)
+      assert.equal(existsSync(good), false)
+      assert.equal(existsSync(evilMark), false)
+    })
   })
 })

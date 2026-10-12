@@ -4,10 +4,12 @@
 #   uninstall.ps1                       remove the mnccore:// registration and the files
 #   uninstall.ps1 -Scheme mnccore-selftest
 #
-# Removes HKCU\Software\Classes\<scheme> ONLY when it points at this launcher:
+# Touches HKCU\Software\Classes\<scheme> ONLY when it points at this launcher:
 # it never removes another program's handler (on Nick's laptops, the Peripheral
-# Brain launcher). The files in %LOCALAPPDATA%\MNCCORE\Launcher are removed once
-# no scheme points at them any more.
+# Brain launcher). If install.ps1 -Force replaced a handler, the saved command
+# (HKCU\Software\MNCCORE\Launcher, Previous-<scheme>) is put back instead of
+# deleting the key. The files in %LOCALAPPDATA%\MNCCORE\Launcher are removed
+# once no scheme points at them any more.
 #
 # ASCII only: Windows PowerShell 5.1 reads a .ps1 without a BOM as ANSI.
 
@@ -22,6 +24,7 @@ Set-StrictMode -Version 2.0
 $LauncherName = 'mnccore-launcher.ps1'
 $InstallDir = Join-Path $env:LOCALAPPDATA 'MNCCORE\Launcher'
 $Marker = ('\MNCCORE\Launcher\' + $LauncherName).ToLowerInvariant()
+$SavedKeyPath = 'Software\MNCCORE\Launcher'
 $hkcu = [Microsoft.Win32.Registry]::CurrentUser
 
 function Read-Registered([string]$S) {
@@ -40,8 +43,33 @@ if ($null -eq $existing) {
     Write-Host 'Left it as it is.'
     $status = 2
 } else {
-    $hkcu.DeleteSubKeyTree("Software\Classes\$Scheme")
-    Write-Host "Removed the ${Scheme}:// registration."
+    # install.ps1 -Force saved the handler it replaced: put it back.
+    $savedKey = $hkcu.OpenSubKey($SavedKeyPath, $true)
+    $previous = if ($savedKey) { [string]$savedKey.GetValue("Previous-$Scheme") } else { '' }
+    if ($previous) {
+        $c = $hkcu.CreateSubKey("Software\Classes\$Scheme\shell\open\command")
+        $c.SetValue('', $previous)
+        $c.Close()
+        $savedKey.DeleteValue("Previous-$Scheme")
+        if ((Read-Registered $Scheme) -ne $previous) {
+            Write-Host "Could not restore the previous ${Scheme}:// handler. Set it back by hand to:`n  $previous"
+            $status = 1
+        } else {
+            Write-Host "Restored the ${Scheme}:// handler this launcher replaced:"
+            Write-Host "  $previous"
+        }
+    } else {
+        $hkcu.DeleteSubKeyTree("Software\Classes\$Scheme")
+        Write-Host "Removed the ${Scheme}:// registration."
+    }
+    if ($savedKey) { $savedKey.Close() }
+}
+# Drop HKCU\Software\MNCCORE once nothing is saved under it.
+$sk = $hkcu.OpenSubKey($SavedKeyPath)
+if ($sk) {
+    $empty = ($sk.ValueCount -eq 0 -and $sk.SubKeyCount -eq 0)
+    $sk.Close()
+    if ($empty) { $hkcu.DeleteSubKeyTree('Software\MNCCORE') }
 }
 
 $stillUsed = @('mnccore', 'mnccore-selftest') | Where-Object {

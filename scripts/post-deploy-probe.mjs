@@ -157,6 +157,24 @@ async function probeLegacyRedirect(baseUrl) {
   return { ok: true };
 }
 
+// schema-v127: the member launcher downloads live under /portal/ so Cloudflare
+// Access gates them. An anonymous GET must be a 302 to the Access login, never
+// the zip (a 200 means /portal/downloads/ is public). This proves the gate, not
+// that the zips exist: reading them needs a session (the journey spec does that).
+const LAUNCHER_ZIP_PATHS = ['/portal/downloads/mnccore-launcher-mac.zip', '/portal/downloads/mnccore-launcher-windows.zip'];
+async function probeLauncherZipsGated(baseUrl) {
+  for (const path of LAUNCHER_ZIP_PATHS) {
+    const url = `${baseUrl}${path}`;
+    const res = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(10_000) });
+    await res.body?.cancel();
+    const loc = res.headers.get('Location') ?? '';
+    if (res.status !== 302 || !/^https:\/\/[^/]+\.cloudflareaccess\.com\//.test(loc)) {
+      return { ok: false, reason: `HTTP ${res.status} at ${url} (expected 302 to *.cloudflareaccess.com, got Location ${JSON.stringify(loc)}) — the launcher download is not behind Access` };
+    }
+  }
+  return { ok: true };
+}
+
 async function main() {
   const baseUrl = parseArgs().replace(/\/$/, '');
   const commit = headCommit();
@@ -213,6 +231,14 @@ async function main() {
           if (attempt < MAX_RETRIES) { console.log(`  Waiting ${RETRY_DELAY_MS}ms before retry...`); await sleep(RETRY_DELAY_MS); }
           continue;
         }
+
+        const zips = await probeLauncherZipsGated(baseUrl);
+        if (!zips.ok) {
+          lastErr = zips.reason;
+          console.error(`  Attempt ${attempt}/${MAX_RETRIES}: FAIL — launcher downloads gated — ${lastErr}`);
+          if (attempt < MAX_RETRIES) { console.log(`  Waiting ${RETRY_DELAY_MS}ms before retry...`); await sleep(RETRY_DELAY_MS); }
+          continue;
+        }
       }
 
       const csp = await probeArtifactCsp(ARTIFACTS_URL);
@@ -223,7 +249,7 @@ async function main() {
         continue;
       }
 
-      console.log(`  Attempt ${attempt}/${MAX_RETRIES}: OK (${ARTIFACTS_ONLY ? 'artifact CSP' : 'health + anonymous 401 + legacy 301 + artifact CSP'})`);
+      console.log(`  Attempt ${attempt}/${MAX_RETRIES}: OK (${ARTIFACTS_ONLY ? 'artifact CSP' : 'health + anonymous 401 + legacy 301 + launcher zips gated + artifact CSP'})`);
       console.log('');
       console.log(`[post-deploy-probe] PASS — prod is live and healthy.`);
       if (body) {

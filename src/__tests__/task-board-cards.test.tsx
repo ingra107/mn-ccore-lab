@@ -24,6 +24,8 @@ import { Who } from '../components/today/skin'
 import type { TaskRow } from '../lib/api'
 import css from '../index.css?raw'
 import { mount, cleanupMountsAfterEach } from './testMount'
+import { AuthContext, type AuthUser } from '../hooks/useAuth'
+import { LAUNCHER_STORAGE_KEY } from '../hooks/useLauncherInstalled'
 
 cleanupMountsAfterEach()
 let fetchMock: ReturnType<typeof vi.fn>
@@ -55,16 +57,26 @@ const TASKS = [
   task('c', 'Upgrade CLIFpy 3.0', { status: 'in_progress', priority: 'high' }),
 ]
 
-async function board(onSelect: (t: TaskRow) => void = () => {}) {
+// The folder buttons render only for the PI with the launcher switch on
+// (WorkOnActions' one gate, schema-v127 review M7). The board renders as Nick.
+const PI_USER: AuthUser = {
+  email: 'ingra107@umn.edu', slug: 'nick-ingraham', isAuthenticated: true, isPi: true,
+  isMember: true, canShowAllProjects: true, piResolved: true,
+}
+
+async function board(onSelect: (t: TaskRow) => void = () => {}, user: AuthUser = PI_USER, launcher = true) {
   localStorage.removeItem('mnccore-board-collapsed-v1')
+  localStorage.setItem(LAUNCHER_STORAGE_KEY, launcher ? 'yes' : 'no')
   return mount(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <MemoryRouter>
-        <div style={{ width: 1200 }}>
-          <TaskBoardView tasks={TASKS} onStatusChange={() => {}} onSelect={onSelect} projectsByPid={projects} />
-        </div>
-      </MemoryRouter>
-    </QueryClientProvider>,
+    <AuthContext.Provider value={{ user, isAuthenticated: user.isAuthenticated, isLoading: false }}>
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter>
+          <div style={{ width: 1200 }}>
+            <TaskBoardView tasks={TASKS} onStatusChange={() => {}} onSelect={onSelect} projectsByPid={projects} />
+          </div>
+        </MemoryRouter>
+      </QueryClientProvider>
+    </AuthContext.Provider>,
     { ready: (h) => h.querySelectorAll('.tk-tc').length === 3, label: 'board cards' },
   )
 }
@@ -168,6 +180,14 @@ describe('Tasks Board cards', () => {
     const ctxW = a.querySelector<HTMLElement>('.tk-ctx')!.getBoundingClientRect().width
     const titleW = a.querySelector<HTMLElement>('.tk-ct')!.getBoundingClientRect().width
     expect(ctxW).toBeGreaterThan(titleW)
+  })
+
+  it("no folder buttons with the launcher switch off, or for a non-PI (primary_folder is the PI's path)", async () => {
+    const off = await board(() => {}, PI_USER, false)
+    expect(card(off, 'a').querySelector('.tk-wk button')).toBeNull()
+    const member = await board(() => {}, { ...PI_USER, email: 'eddin022@umn.edu', slug: 'casey-eddington', isPi: false, canShowAllProjects: false }, true)
+    expect(card(member, 'a').querySelector('.tk-wk button')).toBeNull()
+    localStorage.removeItem(LAUNCHER_STORAGE_KEY)
   })
 })
 

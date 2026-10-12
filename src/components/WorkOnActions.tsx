@@ -1,6 +1,8 @@
 import { FolderOpen, Play } from 'lucide-react'
-import { buildOpenFolderUri, buildWorkOnUri } from '../lib/urlClassify'
+import { buildOpenFolderUri, buildWorkOnUri, buildMemberOpenFolderUri, buildMemberWorkOnUri } from '../lib/urlClassify'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
+import { useLauncherInstalled } from '../hooks/useLauncherInstalled'
+import { useAuth } from '../hooks/useAuth'
 import { ICON_PROPS } from '../lib/iconProps'
 
 // Shared "Open folder" + "Work on this in Claude" action pair for a project
@@ -11,6 +13,12 @@ import { ICON_PROPS } from '../lib/iconProps'
 // Used by ProjectDetail Overview (prominent buttons) and TaskDetailPanel (compact
 // icon affordances). `variant` switches between the two presentations; the
 // behavior is identical.
+//
+// THE ONE GATE (schema-v127 review, M7): this component renders nothing unless
+// Settings says this browser's computer has a launcher, AND the folder is the
+// viewer's own (`memberLauncher`, My folder) or the viewer is the PI (the
+// shared projects.primary_folder, which the API sends only to the PI). Every
+// caller (Today rows, drawers, task panel, project list) inherits it.
 
 interface Props {
   /** The project's local working-folder path (projects.primary_folder). */
@@ -20,30 +28,37 @@ interface Props {
   /** 'slot' = the Today card's fixed action slot: two 24x24 grid-centered boxes,
    *  14px glyphs, colors from the .tk-wk CSS (no inline color/padding). */
   variant?: 'buttons' | 'compact' | 'slot'
-  /** The member launcher (member-launcher/) runs `claude` in the folder itself;
-   *  only the PB launcher needs the folder's "Start Claude.bat". */
+  /** The folder is the viewer's own (My folder, schema-v127). Its links are
+   *  percent-encoded per segment (both launchers decode once), and the member
+   *  launcher runs `claude` itself; only the PB launcher needs "Start Claude.bat". */
   memberLauncher?: boolean
 }
 
 export default function WorkOnActions({ primaryFolder, projectLabel, variant = 'buttons', memberLauncher = false }: Props) {
   const { launch } = useProtocolLaunch()
+  const [launcherInstalled] = useLauncherInstalled()
+  const { user } = useAuth()
   const label = projectLabel ? ` for ${projectLabel}` : ''
+  const openUri = memberLauncher ? buildMemberOpenFolderUri : buildOpenFolderUri
+  const workOnUri = memberLauncher ? buildMemberWorkOnUri : buildWorkOnUri
 
   const openFolder = () =>
-    launch(buildOpenFolderUri(primaryFolder), {
+    launch(openUri(primaryFolder), {
       copyText: primaryFolder,
       successMessage: 'Opening folder…',
       copyMessage: 'Opening folder… (path copied as backup)',
     })
 
   const workOn = () =>
-    launch(buildWorkOnUri(primaryFolder), {
+    launch(workOnUri(primaryFolder), {
       copyText: primaryFolder,
       successMessage: `Launching Claude${label} on this machine…`,
       copyMessage: memberLauncher
         ? `Launching Claude${label}… (path copied as backup)`
         : `Launching Claude${label}… (path copied as backup — run "Start Claude.bat" if it doesn't open)`,
     })
+
+  if (!launcherInstalled || (!memberLauncher && !user?.isPi)) return null
 
   if (variant === 'slot') {
     const box: React.CSSProperties = { display: 'inline-grid', placeItems: 'center', width: 24, height: 24, background: 'none', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }

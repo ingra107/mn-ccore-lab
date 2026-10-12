@@ -5,85 +5,162 @@
 -- it with Launch Services. The Hub's buttons then reach `on open location`.
 --
 -- Handles two kinds of Hub link and nothing else:
---   mnccore://open/<folder>     open the folder in Finder
---   mnccore://workon/<folder>   open Terminal in the folder running `claude`
+--   mnccore://open/<folder>     show the folder in a Finder window
+--   mnccore://workon/<folder>   ask first, then open Terminal in the folder and
+--                               start Claude Code
 --
--- Rules for <folder> (any failure = a message, nothing opened):
---   1. No control character, raw or %-encoded.
---   2. Only the open and workon verbs; anything else is refused.
---   3. %-decoded once, it must be an absolute path (/...). A //host path is refused.
---   4. Resolved through `cd` + `pwd -P` (symlinks and .. resolved), it must be an
---      existing folder inside your home folder (Box Drive lives at
---      ~/Library/CloudStorage/Box-Box). Network volumes under /Volumes are outside.
--- The folder only ever reaches a shell through AppleScript's `quoted form of`,
--- which single-quotes it, so no character in it can become a command.
+-- Any web page can fire a mnccore:// link, so every rule below assumes the link
+-- is hostile. Checks, in order (any failure = a short fixed message; the reason
+-- goes to ~/Library/Logs/mnccore-launcher.log; nothing is opened):
+--   1. No control character in the link.
+--   2. Only the open and workon verbs.
+--   3. The path is %-decoded exactly once (the Hub encodes each segment once),
+--      and checked as TEXT before the file system is touched: no control
+--      character, absolute (/...), no empty, . or .. segment, and inside your
+--      home folder. Nothing outside home is looked at, so a link cannot make the
+--      Mac mount a network share (/net/<host>, the automounter).
+--   4. Resolved through `cd` + `pwd -P` (symlinks resolved), it must still be
+--      inside your home folder (Box Drive: ~/Library/CloudStorage/Box-Box).
+--   5. It must not be a file package (an .app or any other bundle): Finder would
+--      LAUNCH it instead of showing it. Checked with NSWorkspace
+--      isFilePackageAtPath, then opened with `open -a Finder`.
+--   6. workon asks in a dialog that names the folder, defaulting to Cancel: the
+--      folder may hold someone else's CLAUDE.md or .claude settings.
+-- The folder reaches a shell only through AppleScript's `quoted form of`
+-- (single quotes), so no character in it can become a command. In Terminal,
+-- `claude` is looked up from / (never from the project folder) and must resolve
+-- to an absolute path, so an executable planted in the folder cannot run even
+-- if PATH has an empty or "." entry.
 --
--- UNTESTED ON A MAC as of 2026-10-12: written and reviewed on Windows.
+-- UNTESTED ON A MAC as of 2026-10-12: written on Windows and reviewed line by
+-- line. Tell Nick what you see if it misbehaves.
 
 use AppleScript version "2.4"
 use framework "Foundation"
+use framework "AppKit"
 use scripting additions
 
 property launcherTitle : "MNCCORE Launcher"
+property logRelPath : "Library/Logs/mnccore-launcher.log"
 
 on run
+	activate
 	display dialog "The MNCCORE Launcher is installed. It opens project folders from the MN-CCORE Hub (the Open folder and Work on in Claude buttons). There is nothing to do here." buttons {"OK"} default button 1 with title launcherTitle
 end run
 
 on open location theURL
 	try
-		handleLink(theURL as text)
+		my handleLink(theURL as text)
 	on error errMsg number errNum
-		if errNum is not -128 then
-			display alert launcherTitle message ("The link was not opened: " & errMsg) as warning
+		if errNum is -128 then
+			my writeLog("DECLINED by the user")
+		else
+			my writeLog("FAIL " & errNum & ": " & errMsg)
+			activate
+			display alert launcherTitle message ("The MN-CCORE Launcher did not open this link. The reason is in ~/" & logRelPath) as warning
 		end if
 	end try
 end open location
 
+-- Append one line to the log. Never raises: a failed log write must not hide
+-- the dialog that follows it.
+on writeLog(msg)
+	try
+		set homeDir to POSIX path of (path to home folder)
+		set stamp to do shell script "/bin/date '+%Y-%m-%d %H:%M:%S'"
+		do shell script "/bin/mkdir -p " & quoted form of (homeDir & "Library/Logs") & " && /usr/bin/printf '%s\\n' " & quoted form of (stamp & " " & my printable(msg)) & " >> " & quoted form of (homeDir & logRelPath)
+	end try
+end writeLog
+
+-- Control characters as \x{N}, so one log entry stays one line.
+on printable(t)
+	set out to ""
+	repeat with c in (characters of t)
+		set n to id of (contents of c)
+		if n < 32 or n = 127 then
+			set out to out & "\\x{" & n & "}"
+		else
+			set out to out & (contents of c)
+		end if
+	end repeat
+	return out
+end printable
+
 on refuseControl(t, what)
 	repeat with c in (characters of t)
 		set n to id of (contents of c)
-		if n < 32 or n = 127 then error (what & " may not contain a control character.") number 1001
+		if n < 32 or n = 127 then error (what & " contains a control character.") number 1001
 	end repeat
 end refuseControl
 
+-- True when thePath is homePath itself or inside it (text; no trailing slashes).
+on isUnder(thePath, homePath)
+	if thePath is homePath then return true
+	return (thePath starts with (homePath & "/"))
+end isUnder
+
 on handleLink(u)
-	my refuseControl(u, "A link")
-	set lowered to (current application's NSString's stringWithString:u)'s lowercaseString() as text
+	my writeLog("LINK " & u)
+	my refuseControl(u, "The link")
+
+	-- Verb: case-insensitive on scheme and verb; the path keeps its case.
+	set lowered to ((current application's NSString's stringWithString:u)'s lowercaseString()) as text
 	set verb to missing value
+	set rawPath to ""
 	repeat with candidate in {"open", "workon"}
 		set prefix to "mnccore://" & (contents of candidate) & "/"
-		if lowered starts with prefix and (length of u) > (length of prefix) then
-			set verb to contents of candidate
+		if (lowered starts with prefix) and (length of u) > (length of prefix) then
+			set verb to (contents of candidate)
 			set rawPath to text ((length of prefix) + 1) thru -1 of u
 			exit repeat
 		end if
 	end repeat
-	if verb is missing value then error "this launcher only opens folders; it does not handle this link: " & u number 1002
+	if verb is missing value then error "not an open or workon link: " & u number 1002
 
+	-- Exactly one decode.
 	set decoded to (current application's NSString's stringWithString:rawPath)'s stringByRemovingPercentEncoding()
-	if decoded is missing value then error "the folder path in the link is not valid: " & rawPath number 1003
+	if decoded is missing value then error "the path is not valid percent-encoding: " & rawPath number 1003
 	set p to decoded as text
-	my refuseControl(p, "A folder path")
-	if p does not start with "/" or p starts with "//" then error "only a folder on this Mac can be opened from a link: " & p number 1004
+	my refuseControl(p, "The folder path")
 
+	-- Text checks, before any file-system call.
+	if p does not start with "/" then error "not an absolute path: " & p number 1004
+	if p contains "//" then error "the path has an empty segment: " & p number 1004
+	if (p ends with "/") and (length of p) > 1 then set p to text 1 thru -2 of p
+	if (p contains "/../") or (p ends with "/..") or (p contains "/./") or (p ends with "/.") then
+		error "the path has a . or .. segment: " & p number 1004
+	end if
+	set homePath to POSIX path of (path to home folder)
+	if homePath ends with "/" then set homePath to text 1 thru -2 of homePath
+	if not my isUnder(p, homePath) then error "not inside the home folder (" & homePath & "): " & p number 1006
+
+	-- Resolve symlinks; the result must still be inside home.
 	try
 		set realPath to do shell script "cd " & (quoted form of p) & " && /bin/pwd -P"
 	on error
-		error "folder not found: " & p & ". Check the path under My folder on the project page." number 1005
+		error "folder not found: " & p number 1005
 	end try
-	set homePath to POSIX path of (path to home folder)
-	if homePath ends with "/" then set homePath to text 1 thru -2 of homePath
-	if not (realPath is homePath or realPath starts with (homePath & "/")) then
-		error "only folders inside your home folder (" & homePath & ") open from a link: " & realPath number 1006
-	end if
+	if not my isUnder(realPath, homePath) then error "resolves outside the home folder: " & realPath number 1006
+
+	-- A bundle (.app and friends) would be launched, not shown.
+	set ws to current application's NSWorkspace's sharedWorkspace()
+	if ((ws's isFilePackageAtPath:realPath) as boolean) then error "is an application or other package, not a plain folder: " & realPath number 1007
 
 	if verb is "open" then
-		do shell script "/usr/bin/open " & (quoted form of realPath)
+		my writeLog("OPEN " & realPath)
+		do shell script "/usr/bin/open -a Finder " & (quoted form of realPath)
 	else
+		activate
+		display dialog ("Start Claude Code in this folder?" & return & return & realPath & return & return & "Continue only if you just clicked \"Work on this in Claude\" in the MN-CCORE Hub. Claude Code will read the files in this folder, including any CLAUDE.md or .claude settings in it.") buttons {"Cancel", "Start Claude Code"} default button "Cancel" cancel button "Cancel" with title launcherTitle with icon caution
+		my writeLog("WORKON " & realPath)
+		-- Shell text typed into Terminal. `claude` is looked up with / as the
+		-- working directory and must be an absolute path; only then does the shell
+		-- cd into the project folder and run that exact file.
+		set q to quoted form of realPath
+		set cmd to "cd / && __mnccore_claude=\"$(command -v claude)\"; case \"$__mnccore_claude\" in /*) cd " & q & " && \"$__mnccore_claude\" ;; *) echo 'MNCCORE Launcher: Claude Code (claude) was not found on your PATH. Install it from https://docs.claude.com/en/docs/claude-code/setup and try again.' ;; esac"
 		tell application "Terminal"
 			activate
-			do script "cd " & (quoted form of realPath) & " && claude"
+			do script cmd
 		end tell
 	end if
 end handleLink

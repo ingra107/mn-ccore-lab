@@ -31,17 +31,21 @@ export default function LauncherSettingsPanel() {
         The launcher lets the Hub open your project folder and start Claude Code in it, on this computer.
         Install it once, then add your folder on each project page under <strong>My folder</strong>.
       </p>
+      <p style={p} data-testid="launcher-new-note">
+        <strong>New.</strong> The Mac version has not been tried on a Mac yet. If it misbehaves, tell Nick what you saw.
+      </p>
       <div className="flex flex-wrap gap-2">
-        <a href={MEMBER_LAUNCHER_DOWNLOADS.windows} download data-testid="launcher-download-windows" style={linkBtn}>
-          <Download {...ICON_PROPS} size={14} aria-hidden="true" /> Windows
-        </a>
         <a href={MEMBER_LAUNCHER_DOWNLOADS.mac} download data-testid="launcher-download-mac" style={linkBtn}>
           <Download {...ICON_PROPS} size={14} aria-hidden="true" /> Mac
         </a>
+        <a href={MEMBER_LAUNCHER_DOWNLOADS.windows} download data-testid="launcher-download-windows" style={linkBtn}>
+          <Download {...ICON_PROPS} size={14} aria-hidden="true" /> Windows
+        </a>
       </div>
       <ol style={{ ...p, paddingLeft: 18 }}>
+        <li><strong>Mac:</strong> unzip, open Terminal, type <code>bash </code> (with a space), drag <code>install.sh</code> into the window, press Return. Then restart your browser.</li>
         <li><strong>Windows:</strong> unzip, double-click <code>Install.cmd</code>, then restart your browser.</li>
-        <li><strong>Mac:</strong> unzip, open Terminal, type <code>bash </code> (with a space), drag <code>install.sh</code> into the window, press Return.</li>
+        <li>Work on in Claude always asks you to confirm the folder first, because any website can try to open these links.</li>
         <li>The README in the download has the details, and how to remove it.</li>
       </ol>
 
