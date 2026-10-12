@@ -835,10 +835,9 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
 // ── Section Header ─────────────────────────────────────────
 
 // The shared section head (ui/SectionHead): bold title, dim count, gray fade.
-function SectionHeader({ icon: Icon, title, count }: { icon: typeof BookOpen; title: string; count?: number }) {
+function SectionHeader({ title, count }: { title: string; count?: number }) {
   return (
     <SectionHead
-      icon={<Icon {...ICON_PROPS} size={14} />}
       title={title}
       count={count !== undefined && count > 0 ? count : undefined}
     />
@@ -1277,7 +1276,7 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
 
       {/* Contribution timeline */}
       <section id="contribution-timeline">
-        <SectionHeader icon={ClipboardList} title="Contribution Timeline" count={timeline.length} />
+        <SectionHeader title="Contribution Timeline" count={timeline.length} />
         <ContributionTimeline entries={timeline} />
       </section>
     </div>
@@ -1499,7 +1498,7 @@ export default function TrajectoryPage() {
                 {trajectory.taskMetrics && trajectory.taskMetrics.total > 0 && (
                   <>
                     <section id="task-metrics">
-                      <SectionHeader icon={CheckCircle2} title="Task Metrics" />
+                      <SectionHeader title="Task Metrics" />
                       <TaskMetricsRow metrics={trajectory.taskMetrics} />
                     </section>
                     <Divider />
@@ -1508,7 +1507,7 @@ export default function TrajectoryPage() {
 
                 {/* Section 1: Publication Curve */}
                 <section id="publication-curve">
-                  <SectionHeader icon={TrendingUp} title="Publication Curve" count={trajectory.publications.length} />
+                  <SectionHeader title="Publication Curve" count={trajectory.publications.length} />
                   <PublicationCurve publications={trajectory.publications} />
                 </section>
 
@@ -1518,7 +1517,7 @@ export default function TrajectoryPage() {
                 {trajectory.projectStages && trajectory.projectStages.length > 0 && (
                   <>
                     <section id="project-velocity">
-                      <SectionHeader icon={FolderKanban} title="Project Velocity" count={trajectory.projectStages.length} />
+                      <SectionHeader title="Project Velocity" count={trajectory.projectStages.length} />
                       <ProjectVelocity projectStages={trajectory.projectStages} />
                     </section>
                     <Divider />
@@ -1527,7 +1526,7 @@ export default function TrajectoryPage() {
 
                 {/* Section 3: Task Velocity */}
                 <section id="task-velocity">
-                  <SectionHeader icon={BarChart3} title="Task Velocity" />
+                  <SectionHeader title="Task Velocity" />
                   <TaskVelocity taskStats={trajectory.taskStats} />
                 </section>
 
@@ -1537,7 +1536,7 @@ export default function TrajectoryPage() {
                 {slug && (
                   <>
                     <section id="activity-heatmap">
-                      <SectionHeader icon={BarChart3} title="Activity" />
+                      <SectionHeader title="Activity" />
                       <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
                         <ActivityHeatmap slug={slug} days={180} />
                       </div>
@@ -1548,7 +1547,7 @@ export default function TrajectoryPage() {
 
                 {/* Section 5: Active Projects */}
                 <section id="active-projects">
-                  <SectionHeader icon={FolderKanban} title="Active Projects" count={trajectory.projects.length} />
+                  <SectionHeader title="Active Projects" count={trajectory.projects.length} />
                   <ActiveProjects projects={trajectory.projects} />
                 </section>
 
@@ -1556,7 +1555,7 @@ export default function TrajectoryPage() {
 
                 {/* Section 6: Publication Timeline */}
                 <section id="publication-timeline">
-                  <SectionHeader icon={BookOpen} title="Publication Timeline" count={trajectory.publications.length} />
+                  <SectionHeader title="Publication Timeline" count={trajectory.publications.length} />
                   <PublicationTimeline publications={trajectory.publications} />
                 </section>
 
@@ -1564,7 +1563,7 @@ export default function TrajectoryPage() {
 
                 {/* Section 7: Milestones */}
                 <section id="milestones">
-                  <SectionHeader icon={Flag} title="Milestones" count={trajectory.milestones.length} />
+                  <SectionHeader title="Milestones" count={trajectory.milestones.length} />
                   <UpcomingMilestones milestones={trajectory.milestones} />
                 </section>
               </>

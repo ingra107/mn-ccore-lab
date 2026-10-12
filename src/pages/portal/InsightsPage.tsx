@@ -2,14 +2,14 @@ import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { localDateKey } from '../../lib/dateUtils'
-import { TrendingUp, Activity, AlertTriangle, FlaskConical, AlertCircle, Users, BookOpen, Award, RefreshCw, ChevronLeft, ChevronRight, Link2, CalendarPlus } from 'lucide-react'
+import { AlertTriangle, RefreshCw, ChevronLeft, ChevronRight, CalendarPlus         } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import EmptyStateArt from '../../components/EmptyStateArt'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { TableContainer } from '../../components/table'
 import InlineDatePicker from '../../components/InlineDatePicker'
-import MetricCard from '../../components/MetricCard'
+import StatRow from '../../components/ui/StatRow'
 import { useInsightConnections } from '../../hooks/useApiData'
 import { useToast } from '../../hooks/useToast'
 import { useAuth } from '../../hooks/useAuth'
@@ -239,62 +239,44 @@ export default function InsightsPage() {
           actions={headerActions}
         />
 
-        {/* Metric hero row — INS-06: shared MetricCard primitive. */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: 'var(--sp-md)',
-            marginBottom: 'var(--sp-2xl)',
-          }}
-        >
-          <MetricCard
-            icon={AlertCircle}
-            label="Stalled projects (14d+)"
-            value={data.metrics.stalledProjects.count}
-            color={data.metrics.stalledProjects.count > 0 ? 'var(--job-stale)' : 'var(--sk-t3)'}
-            // Stalled = going stale = orange (principle 21).
-            previous={data.metrics.stalledProjects.count - data.metrics.stalledProjects.deltaWoW}
-            previousLabel="vs last week"
-            sparklineData={data.metrics.stalledProjects.sparkline}
-          />
-          <MetricCard
-            icon={Users}
-            label="Open tasks per person"
-            value={data.metrics.tasksPerPerson.avg}
-            color="var(--sk-t3)"
-            subtitle={`${data.metrics.tasksPerPerson.total} total`}
-            sparklineData={data.metrics.tasksPerPerson.sparkline}
-          />
-          <MetricCard
-            icon={BookOpen}
-            label="Manuscripts in revision"
-            value={data.metrics.manuscriptsInRevision.count}
-            // INS-18: dropped gold accent. Use neutral slate; reserve gold for AI.
-            color="var(--slate)"
-            subtitle={
-              data.metrics.manuscriptsInRevision.awaitingReplyOver7d > 0
-                ? `${data.metrics.manuscriptsInRevision.awaitingReplyOver7d} awaiting reply >7d`
-                : undefined
-            }
-            sparklineData={data.metrics.manuscriptsInRevision.sparkline}
-          />
-          <MetricCard
-            icon={Award}
-            label="Grants in pipeline"
-            value={data.metrics.grantsInPipeline.count}
-            // INS-18: dropped gold accent. Orange (at risk) when the deadline is tight, gray otherwise.
-            color={
-              data.metrics.grantsInPipeline.daysToNextDeadline !== null && data.metrics.grantsInPipeline.daysToNextDeadline < 14
-                ? 'var(--job-stale)'
-                : 'var(--slate)'
-            }
-            subtitle={
-              data.metrics.grantsInPipeline.daysToNextDeadline !== null
-                ? `Next deadline in ${data.metrics.grantsInPipeline.daysToNextDeadline}d`
-                : undefined
-            }
-            sparklineData={data.metrics.grantsInPipeline.sparkline}
+        {/* Headline numbers. */}
+        <div style={{ marginBottom: 'var(--sp-2xl)' }}>
+          <StatRow
+            stats={[
+              {
+                label: 'Stalled projects (14d+)',
+                value: data.metrics.stalledProjects.count,
+                // Stalled = going stale = orange (principle 21).
+                rule: 'u',
+                previous: data.metrics.stalledProjects.count - data.metrics.stalledProjects.deltaWoW,
+                previousLabel: 'vs last week',
+                spark: data.metrics.stalledProjects.sparkline,
+              },
+              {
+                label: 'Open tasks per person',
+                value: data.metrics.tasksPerPerson.avg,
+                sub: `${data.metrics.tasksPerPerson.total} total`,
+                spark: data.metrics.tasksPerPerson.sparkline,
+              },
+              {
+                label: 'Manuscripts in revision',
+                value: data.metrics.manuscriptsInRevision.count,
+                sub: data.metrics.manuscriptsInRevision.awaitingReplyOver7d > 0
+                  ? `${data.metrics.manuscriptsInRevision.awaitingReplyOver7d} awaiting reply >7d`
+                  : undefined,
+                spark: data.metrics.manuscriptsInRevision.sparkline,
+              },
+              {
+                label: 'Grants in pipeline',
+                value: data.metrics.grantsInPipeline.count,
+                // Orange (at risk) when the deadline is tight, gray otherwise.
+                rule: data.metrics.grantsInPipeline.daysToNextDeadline !== null && data.metrics.grantsInPipeline.daysToNextDeadline < 14 ? 'u' : undefined,
+                sub: data.metrics.grantsInPipeline.daysToNextDeadline !== null
+                  ? `Next deadline in ${data.metrics.grantsInPipeline.daysToNextDeadline}d`
+                  : undefined,
+                spark: data.metrics.grantsInPipeline.sparkline,
+              },
+            ]}
           />
         </div>
 
@@ -327,7 +309,7 @@ export default function InsightsPage() {
 
         {/* Stalled registry */}
         <div style={{ marginTop: 'var(--sp-2xl)' }}>
-          <SectionHeader icon={<AlertTriangle {...ICON_PROPS} size={14} />} label="Critical stalled project registry" count={data.stalledRegistry.length} />
+          <SectionHeader label="Critical stalled project registry" count={data.stalledRegistry.length} />
           <StalledRegistry rows={data.stalledRegistry} />
         </div>
       </div>
@@ -336,8 +318,8 @@ export default function InsightsPage() {
 }
 
 // The shared section head (ui/SectionHead): bold label, dim count, gray fade.
-function SectionHeader({ icon, label, count }: { icon: React.ReactNode; label: string; count?: number }) {
-  return <SectionHead icon={icon} title={label} count={count !== undefined && count > 0 ? count : undefined} />
+function SectionHeader({ label, count }: { label: string; count?: number }) {
+  return <SectionHead title={label} count={count !== undefined && count > 0 ? count : undefined} />
 }
 
 function WorkloadHeatmap({ rows }: { rows: DashboardData['workloadHeatmap'] }) {
@@ -358,7 +340,7 @@ function WorkloadHeatmap({ rows }: { rows: DashboardData['workloadHeatmap'] }) {
 
   return (
     <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader icon={<Activity {...ICON_PROPS} size={14} />} label="Workload heatmap" count={sorted.length} />
+      <SectionHeader label="Workload heatmap" count={sorted.length} />
       {sorted.length === 0 ? (
         <EmptyState compact icon={<EmptyStateArt variant="tasks" title="No tasks" />} title="No tasks scheduled for the current week" />
       ) : (
@@ -442,7 +424,7 @@ function TasksPerPersonBars({ distribution }: { distribution: { slug: string; co
   const max = Math.max(1, ...sorted.map((r) => r.count))
   return (
     <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader icon={<Users {...ICON_PROPS} size={14} />} label="Open tasks per person" count={sorted.length} />
+      <SectionHeader label="Open tasks per person" count={sorted.length} />
       <div className="flex flex-col" style={{ gap: 4, marginTop: 6 }}>
         {sorted.map((r) => {
           const person = getPersonInfo(r.slug)
@@ -505,7 +487,7 @@ function ConnectionsPanel() {
 
   return (
     <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader icon={<Link2 {...ICON_PROPS} size={14} />} label="Cross-project connections" count={connections.length} />
+      <SectionHeader label="Cross-project connections" count={connections.length} />
       {isLoading ? (
         <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.85, margin: 0 }}>Analyzing connections…</p>
       ) : top5.length === 0 ? (
@@ -603,7 +585,7 @@ function PipelineFunnel({ rows }: { rows: DashboardData['pipelineFunnel'] }) {
   const max = Math.max(1, ...mergedRows.map((r) => r.count))
   return (
     <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader icon={<FlaskConical {...ICON_PROPS} size={14} />} label="Pipeline funnel" />
+      <SectionHeader label="Pipeline funnel" />
       <div className="flex flex-col" style={{ gap: 6 }}>
         {mergedRows.map((r) => {
           const pct = (r.count / max) * 100
@@ -657,7 +639,7 @@ function VelocityScatter({ rows }: { rows: DashboardData['velocityScatter'] }) {
 
   return (
     <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader icon={<TrendingUp {...ICON_PROPS} size={14} />} label="Project velocity outliers" count={rows.filter(r => r.isOutlier).length} />
+      <SectionHeader label="Project velocity outliers" count={rows.filter(r => r.isOutlier).length} />
       <p style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85, margin: '0 0 12px' }}>
         x = days since last update · y = open task count · maroon = outlier (&gt;30d OR &gt;10 tasks)
       </p>

@@ -23,15 +23,17 @@
 //               heads and field labels are sentence case.
 //   surface     var(--surface-N) / --surface-N: the pre-redesign gray tray
 //               ramp. Panels step through --sk-panel / --sk-card.
-//   metricCard  the MetricCard component (the stat tile): Today's stat line
-//               and HeroNumber replace it.
+//   box         a drawn box: an inline `border: '1px solid var(--border-*)'`
+//               shorthand, or a rounded element carrying the bare Tailwind
+//               `border` class. Panels are one material (.sk-mat, .detail-card,
+//               .tk-card, ui/Modal); a box inside a box is the old look. Inputs
+//               use --field-edge, dividers use --sk-line, and neither counts.
+//               Counted from 2026-10-12 (wave 2); the baseline still holds
+//               every pre-redesign box, including a few field outlines.
 //
-// Reported, never failing (a heuristic, so it cannot be a hard count):
-//   boxInBox    inline hairline borders (`1px solid var(--border-*)`): the
-//               box-in-box panel look. The top files print as a warning.
-//
-// The old PageHeader `icon` prop, the `Avatar` component, the bordered-pill
-// SegmentedToggle skins and the uppercase `Field` label are not counted:
+// The old PageHeader `icon` prop, the `Avatar` component, `MetricCard`, the
+// SectionHead `icon` prop, the bordered-pill SegmentedToggle skins and the
+// uppercase `Field` label are not counted:
 // they were deleted, so the old anatomy cannot be built (tsc fails first).
 
 import fs from 'node:fs'
@@ -47,9 +49,11 @@ export const BASELINE_PATH = path.join(__dirname, 'check-legacy-look.baseline.js
 export const METRICS = {
   uppercase: [/(?<![\w-])uppercase(?![\w-])/g],
   surface: [/--surface-\d/g],
-  metricCard: [/\bMetricCard\b/g],
+  box: [
+    /(?<!\w)border:\s*['"`]1px solid var\(--border-(?:subtle|strong|light|default)\)/g,
+    /className=["'`][^"'`]*\brounded(?:-(?:md|lg|xl|2xl))?\b[^"'`]*\bborder\b(?![-\w])[^"'`]*["'`]/g,
+  ],
 }
-const WARN = { boxInBox: [/1px solid var\(--border-(?:subtle|strong|light)\)/g] }
 
 function stripCssComments(text) {
   return text.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
@@ -124,14 +128,6 @@ function totals(counts) {
 }
 const fmt = (t) => Object.entries(t).map(([m, n]) => `${n} ${m}`).join(', ')
 
-function warnBoxes() {
-  const { counts } = scan(ROOT, WARN)
-  const rows = Object.entries(counts).map(([f, c]) => [f, c.boxInBox]).sort((a, b) => b[1] - a[1])
-  const total = rows.reduce((a, [, n]) => a + n, 0)
-  console.log(`check-legacy-look: WARN ${total} inline hairline border(s) (box-in-box heuristic) in ${rows.length} file(s); top:`)
-  for (const [f, n] of rows.slice(0, 8)) console.log(`  ${n}  ${f}`)
-}
-
 function main() {
   const args = process.argv.slice(2)
   const update = args.includes('--update')
@@ -171,7 +167,7 @@ function main() {
   const { rose, fell } = compare(counts, baseline)
   if (rose.length) {
     console.error('check-legacy-look: legacy-look marks ROSE. The redesign look is: sentence-case labels,')
-    console.error('  --sk-panel / --sk-card steps (not --surface-N), no MetricCard (use the stat line / HeroNumber).')
+    console.error('  --sk-panel / --sk-card steps (not --surface-N), one material per panel (no box inside a box).')
     console.error('')
     for (const r of rose) {
       console.error(`  ${r.file} [${r.metric}]: ${r.was} -> ${r.now}`)
@@ -181,7 +177,6 @@ function main() {
   }
   const note = fell.length ? `; ${fell.length} count(s) went down, run \`node scripts/check-legacy-look.mjs --update\` to lock it in` : ''
   console.log(`check-legacy-look: ${fmt(total)}, none new${note}.`)
-  warnBoxes()
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) main()

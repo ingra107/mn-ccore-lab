@@ -1480,13 +1480,13 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
     await page.screenshot({ path: 'review/phase30-recharts-svg.png' })
   })
 
-  // ── MetricCard sparklines ─────────────────────────────────────────
-  test('FEATURE: MetricCard sparkline polyline elements on /analytics', async ({ page }) => {
+  // ── StatRow sparklines ─────────────────────────────────────────
+  test('FEATURE: StatRow sparkline polyline elements on /analytics', async ({ page }) => {
     await loadPage(page, P.analytics)
-    // MetricCard sparklines render as <svg> with <polyline>
+    // StatRow sparklines render as <svg> with <polyline>
     const polylines = page.locator('svg polyline')
     const count = await polylines.count()
-    expect(count, 'Sparkline polyline elements should exist on analytics MetricCards').toBeGreaterThan(0)
+    expect(count, 'Sparkline polyline elements should exist on analytics StatRows').toBeGreaterThan(0)
     await page.screenshot({ path: 'review/phase30-sparklines.png' })
   })
 

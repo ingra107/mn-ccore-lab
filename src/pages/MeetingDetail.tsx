@@ -16,14 +16,11 @@ import {
   ExternalLink,
   GripVertical,
   UserCheck,
-  Scale,
   Copy,
   Check,
   X,
   Sparkles,
-  Upload as UploadIcon,
-  Pencil,
-} from 'lucide-react'
+  Pencil} from 'lucide-react'
 import { DndContext, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
@@ -507,7 +504,7 @@ export default function MeetingDetail() {
               style={{
                 fontSize: 'var(--label-size)',
                 color: 'var(--slate)', textDecoration: 'none',
-                border: '1px solid var(--border-subtle)',
+                border: '1px solid var(--sk-line2)',
                 opacity: 0.85,
               }}
             >
@@ -546,7 +543,7 @@ export default function MeetingDetail() {
               style={{
                 fontSize: 'var(--label-size)',
                 color: 'var(--slate)',
-                border: '1px solid var(--border-subtle)',
+                border: '1px solid var(--sk-line2)',
                 background: 'none',
                 cursor: 'pointer',
                 opacity: copiedSummary ? 1 : 0.85,
@@ -654,7 +651,7 @@ export default function MeetingDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
           {/* Left: Agenda (order-2 on mobile so actions show first) */}
           <motion.div className="order-2 lg:order-1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.1 }}>
-            <SectionHead icon={<ListChecks {...ICON_PROPS} size={14} />} title="Agenda" />
+            <SectionHead title="Agenda" />
 
             {/* Opening Round icebreaker prompt */}
             <RoundPrompt meetingId={meeting.id} />
@@ -699,7 +696,7 @@ export default function MeetingDetail() {
 
           {/* Right: Action Items (order-1 on mobile so actions show first) */}
           <motion.div className="order-1 lg:order-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.15 }}>
-            <SectionHead icon={<CheckCircle2 {...ICON_PROPS} size={14} />} title="Action items" count={<>{completedActions.length}/{actionItems.length}</>} />
+            <SectionHead title="Action items" count={<>{completedActions.length}/{actionItems.length}</>} />
 
             <div style={{ borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
               {/* Inline add action item */}
@@ -741,7 +738,7 @@ export default function MeetingDetail() {
                       <button
                         onClick={() => setSelectedActionIds(new Set())}
                         className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] transition-colors"
-                        style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}
+                        style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--sk-line2)', cursor: 'pointer' }}
                       >
                         <X {...ICON_PROPS} size={11} />
                         Clear
@@ -866,14 +863,14 @@ export default function MeetingDetail() {
         {/* Decisions */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.2 }} className="mt-8">
           <SectionHead
-            icon={<Scale {...ICON_PROPS} size={14} />}
+           
             title="Decisions"
             right={<>
               {isAuthenticated && (
                 <button
                   onClick={() => setShowDecisionForm(!showDecisionForm)}
                   style={{
-                    background: 'none', border: '1px solid var(--border-subtle)',
+                    background: 'none', border: '1px solid var(--sk-line2)',
                     borderRadius: 'var(--radius-md)', padding: '4px 10px', cursor: 'pointer',
                     fontSize: 'var(--label-size)', color: 'var(--slate)',
                     display: 'flex', alignItems: 'center', gap: '4px',
@@ -910,7 +907,7 @@ export default function MeetingDetail() {
                       },
                     })
                   }}
-                  style={{ marginBottom: decisions.length > 0 ? '12px' : 0, paddingBottom: decisions.length > 0 ? '12px' : 0, borderBottom: decisions.length > 0 ? '1px solid var(--border-subtle)' : 'none' }}
+                  style={{ marginBottom: decisions.length > 0 ? '12px' : 0, paddingBottom: decisions.length > 0 ? '12px' : 0, borderBottom: decisions.length > 0 ? '1px solid var(--sk-line)' : 'none' }}
                 >
                   <input
                     type="text"
@@ -920,11 +917,11 @@ export default function MeetingDetail() {
                     ref={decisionTitleRef}
                     style={{
                       width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
-                      background: 'var(--cream)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)',
+                      background: 'var(--cream)', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-lg)',
                       padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
                     }}
                     onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--job-accent)')}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--field-edge)')}
                   />
                   <input
                     type="text"
@@ -933,7 +930,7 @@ export default function MeetingDetail() {
                     placeholder="Why? (optional rationale)"
                     style={{
                       width: '100%', fontSize: '12px', color: 'var(--ink)',
-                      background: 'var(--cream)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)',
+                      background: 'var(--cream)', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-lg)',
                       padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
                     }}
                   />
@@ -947,7 +944,7 @@ export default function MeetingDetail() {
                     <button
                       type="button"
                       onClick={() => { setShowDecisionForm(false); setDecisionTitle(''); setDecisionRationale('') }}
-                      style={{ background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}
+                      style={{ background: 'none', border: '1px solid var(--sk-line2)', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}
                     >
                       Cancel
                     </button>
@@ -977,7 +974,7 @@ export default function MeetingDetail() {
         {/* T-50 Files section — files attached to this meeting. */}
         {meeting.id && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.22 }} className="mt-8">
-            <SectionHead as="h3" icon={<UploadIcon {...ICON_PROPS} size={14} />} title="Files" />
+            <SectionHead as="h3" title="Files" />
             <div style={{ borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
               <FileUpload entityType="meeting" entityId={meeting.id} />
             </div>
@@ -988,7 +985,7 @@ export default function MeetingDetail() {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.25 }} className="mt-8">
           <SectionHead
             as="h3"
-            icon={<FileText {...ICON_PROPS} size={14} />}
+           
             title="Meeting notes"
             right={<>
               {/* #96 — one-click copy of the notes body so Nick can paste them
@@ -1010,7 +1007,7 @@ export default function MeetingDetail() {
                   style={{
                     fontSize: 'var(--label-size)',
                     color: 'var(--slate)',
-                    border: '1px solid var(--border-subtle)',
+                    border: '1px solid var(--sk-line2)',
                     background: 'none',
                     cursor: 'pointer',
                     opacity: copiedNotes ? 1 : 0.85,
@@ -1055,7 +1052,7 @@ export default function MeetingDetail() {
                 <div className="flex items-center gap-2 mt-2">
                   <button
                     onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(false) }}
-                    style={{ background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '6px 16px', fontSize: 'var(--value-size)', cursor: 'pointer', color: 'var(--slate)' }}
+                    style={{ background: 'none', border: '1px solid var(--sk-line2)', borderRadius: 'var(--radius-md)', padding: '6px 16px', fontSize: 'var(--value-size)', cursor: 'pointer', color: 'var(--slate)' }}
                   >
                     Cancel
                   </button>
@@ -1077,7 +1074,7 @@ export default function MeetingDetail() {
                 <button
                   onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
                   className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'var(--cream)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: 'var(--sp-xs) var(--sp-sm)', cursor: 'pointer', color: 'var(--slate)', fontSize: 'var(--label-size)' }}
+                  style={{ background: 'var(--cream)', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-md)', padding: 'var(--sp-xs) var(--sp-sm)', cursor: 'pointer', color: 'var(--slate)', fontSize: 'var(--label-size)' }}
                 >
                   Edit
                 </button>
@@ -1090,7 +1087,7 @@ export default function MeetingDetail() {
             purpose: you read what happened, then you ask about it. */}
         {meeting?.id && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.3 }} className="mt-8">
-            <SectionHead as="h3" icon={<MessageSquarePlus {...ICON_PROPS} size={14} />} title="Discussion" />
+            <SectionHead as="h3" title="Discussion" />
             {/* A flat panel: each comment is its own material card, so the
                 wrapper stays plain (no box-in-box, color back pick 1). */}
             <div>
@@ -1289,7 +1286,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentCha
           className="flex flex-wrap items-center gap-1.5 mt-1.5 ml-6"
         >
           {parsed.assigneeName && (
-            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'var(--hover-subtle)', border: '1px solid var(--border-subtle)', color: 'var(--slate)' }}>
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'var(--hover-subtle)', color: 'var(--slate)' }}>
               @{parsed.assigneeName}
             </span>
           )}
@@ -1350,11 +1347,11 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
             disabled={!isAuthenticated && import.meta.env.PROD}
             style={{
               width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
-              background: 'var(--cream)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)',
+              background: 'var(--cream)', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-lg)',
               padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', transition: 'border-color 0.2s',
             }}
             onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--job-accent)')}
-            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--field-edge)')}
           />
         </div>
         {!isAuthenticated && import.meta.env.PROD && !text.trim() && (
@@ -1367,7 +1364,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
             <motion.button type="button" onClick={() => setShowDocInput(!showDocInput)}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
-              style={{ background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--slate)' }}
+              style={{ background: 'transparent', border: '1px solid var(--sk-line2)', color: 'var(--slate)' }}
               title="Attach document link">
               <FileText {...ICON_PROPS} size={14} />
             </motion.button>
@@ -1387,7 +1384,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
               placeholder="Document URL (Google Doc, PDF, etc.)"
               style={{
                 width: '100%', fontSize: '12px', color: 'var(--ink)',
-                background: 'var(--cream)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)',
+                background: 'var(--cream)', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-lg)',
                 padding: '6px 10px', outline: 'none', marginTop: '6px',
               }}
             />
@@ -1461,7 +1458,7 @@ function AttendanceSection({ attendees, updateMeta, canEdit }: { attendees: stri
         )}
       </div>
       {canEdit && expanded && (
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 mt-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)', border: '1px solid var(--border-subtle)' }}>
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 mt-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)' }}>
           {uniquePeople.map(person => {
             const slug = person.slug!
             const p = getPersonInfo(slug)
@@ -1473,7 +1470,7 @@ function AttendanceSection({ attendees, updateMeta, canEdit }: { attendees: stri
                 className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] transition-colors"
                 style={{
                   background: present ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'none',
-                  border: `1px solid ${present ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
+                  border: `1px solid ${present ? 'var(--job-accent)' : 'var(--sk-line2)'}`,
                   color: present ? 'var(--job-accent)' : 'var(--slate)',
                   cursor: 'pointer',
                   opacity: present ? 1 : 0.85,
@@ -1505,11 +1502,11 @@ function LabToggle({ meeting, updateMeta }: { meeting: MeetingDetailData; update
     fontSize: 'var(--label-size)', padding: '1px 8px', borderRadius: '999px', fontFamily: 'inherit',
     background: isLab ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'none',
     color: isLab ? 'var(--job-accent)' : 'var(--slate)',
-    border: `1px solid ${isLab ? 'transparent' : 'var(--border-subtle)'}`,
+    border: `1px solid ${isLab ? 'transparent' : 'var(--sk-line2)'}`,
   }
   // Teal marks a SELECTED toggle only (the color-jobs rule). Someone who cannot
   // flip it sees a plain label, so it gets no accent.
-  if (!canFlip) return <span title="Every member can see this meeting" style={{ ...style, background: 'none', color: 'var(--slate)', border: '1px solid var(--border-subtle)' }}>{label}</span>
+  if (!canFlip) return <span title="Every member can see this meeting" style={{ ...style, background: 'none', color: 'var(--slate)', border: '1px solid var(--sk-line2)' }}>{label}</span>
   return (
     <button
       type="button"

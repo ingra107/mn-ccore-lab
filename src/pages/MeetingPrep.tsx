@@ -1,10 +1,10 @@
+import StatRow from '../components/ui/StatRow'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
-  CheckCircle2, Circle, Clock, AlertTriangle,
-  Calendar, ListChecks, Activity, Flag, Printer,
-} from 'lucide-react'
+  CheckCircle2, Circle, Clock,
+  Calendar, ListChecks, Flag, Printer} from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { TableSkeleton } from '../components/LoadingSkeleton'
 import Breadcrumb from '../components/Breadcrumb'
@@ -14,7 +14,6 @@ import { slugForEmail } from '../lib/emailSlug'
 import { formatLongDate, formatShortDate, isOverdue as isItemOverdue } from '../lib/dateUtils'
 import { PRIORITY_COLORS } from '../lib/taskConstants'
 import { PATHS } from '../constants/paths'
-import { staggerContainer, staggerItem } from '../lib/animations'
 import EntityNotFound from '../components/EntityNotFound'
 import { ICON_PROPS } from '../lib/iconProps'
 import SectionHead from '../components/ui/SectionHead'
@@ -136,24 +135,21 @@ export default function MeetingPrep() {
         </motion.div>
 
         {/* Stats row */}
-        <motion.div
-          className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-        >
-          <StatCard icon={<AlertTriangle {...ICON_PROPS} size={14} />} label="Overdue" value={overdueTasks.length} color="var(--job-overdue)" />
-          <StatCard icon={<Clock {...ICON_PROPS} size={14} />} label="Pending from last" value={pendingPrev.length} color="var(--sk-t3)" />
-          <StatCard icon={<Calendar {...ICON_PROPS} size={14} />} label="Deadlines (14d)" value={upcomingDeadlines.length} color="var(--sk-t3)" />
-          <StatCard icon={<Activity {...ICON_PROPS} size={14} />} label="Recent activity" value={recentActivity.length} color="var(--sk-t3)" />
-        </motion.div>
+        <StatRow
+          stats={[
+            { label: 'Overdue', value: overdueTasks.length, rule: 'o' },
+            { label: 'Pending from last', value: pendingPrev.length },
+            { label: 'Deadlines (14d)', value: upcomingDeadlines.length },
+            { label: 'Recent activity', value: recentActivity.length },
+          ]}
+        />
 
         {/* Three-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Left: Previous Action Items */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <SectionHeader icon={<CheckCircle2 {...ICON_PROPS} size={14} />} title="Previous Action Items" subtitle={previousMeeting ? `From ${formatShortDate(previousMeeting.date)}` : undefined} />
+            <SectionHead title="Previous action items" count={previousMeeting ? `From ${formatShortDate(previousMeeting.date)}` : undefined} />
             <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {pendingPrev.length > 0 && (
                 <div className="mb-3">
@@ -185,7 +181,7 @@ export default function MeetingPrep() {
 
           {/* Center: Suggested Agenda */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <SectionHeader icon={<ListChecks {...ICON_PROPS} size={14} />} title="Suggested Agenda" />
+            <SectionHead title="Suggested agenda" />
             <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {/* Overdue items first */}
               {overdueTasks.length > 0 && (
@@ -254,7 +250,7 @@ export default function MeetingPrep() {
 
           {/* Right: Upcoming Deadlines + Activity */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <SectionHeader icon={<Calendar {...ICON_PROPS} size={14} />} title="Upcoming Deadlines" subtitle="Next 14 days" />
+            <SectionHead title="Upcoming deadlines" count="Next 14 days" />
             <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)', marginBottom: 'var(--sp-lg)' }}>
               {upcomingDeadlines.length > 0 ? (
                 upcomingDeadlines.slice(0, 8).map(task => {
@@ -277,7 +273,7 @@ export default function MeetingPrep() {
               )}
             </div>
 
-            <SectionHeader icon={<Activity {...ICON_PROPS} size={14} />} title="Recent Activity" subtitle="Last 14 days" />
+            <SectionHead title="Recent activity" count="Last 14 days" />
             <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {recentActivity.length > 0 ? (
                 recentActivity.slice(0, 10).map((act, i) => {
@@ -317,31 +313,6 @@ export default function MeetingPrep() {
 }
 
 // ── Sub-components ──────────────────
-
-function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
-  return (
-    <motion.div
-      variants={staggerItem}
-      className="detail-card"
-      style={{ borderRadius: 'var(--radius-xl)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}
-    >
-      <div style={{ color, opacity: 0.85 }}>{icon}</div>
-      <div>
-        <div style={{ fontSize: 18, fontWeight: 600, color: value > 0 ? color : 'var(--slate)', lineHeight: 1 }}>
-          {value}
-        </div>
-        <div style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.85, marginTop: 2 }}>
-          {label}
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-// The shared section head (ui/SectionHead): bold title, dim subtitle, gray fade.
-function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle?: string }) {
-  return <SectionHead icon={icon} title={title} count={subtitle} />
-}
 
 function ActionRow({ item }: { item: { id: string; description: string; assignee: string; completed: number; due_date: string | null } }) {
   const person = getPersonInfo(item.assignee)

@@ -3019,11 +3019,11 @@
     },
     {
       "id": "metriccard-sparklines",
-      "component": "src/components/MetricCard.tsx",
+      "component": "src/components/ui/StatRow.tsx",
       "type": "ui",
-      "description": "MetricCard sparkline polyline SVG elements",
+      "description": "StatRow sparkline polyline SVG elements",
       "test_file": "tests/inspection.spec.ts",
-      "test_name": "FEATURE: MetricCard sparkline polyline elements on /analytics",
+      "test_name": "FEATURE: StatRow sparkline polyline elements on /analytics",
       "covered": true
     },
     {

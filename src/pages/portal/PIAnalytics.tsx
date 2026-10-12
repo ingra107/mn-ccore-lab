@@ -1,5 +1,6 @@
+import SectionHead from '../../components/ui/SectionHead'
+import { FIELD_LABEL_STYLE } from '../../components/ui/labelStyle'
 import { useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -12,30 +13,22 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import {
-  Target,
-  Users,
-  BookOpen,
-  DollarSign,
   Lightbulb,
   AlertTriangle,
   CheckCircle2,
   TrendingUp,
   TrendingDown,
-  Clock,
   ArrowUp,
   ArrowDown,
   Minus,
-  BarChart3,
   LineChart,
   Printer,
-  Copy,
-} from 'lucide-react'
+  Copy} from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
-import MetricCard from '../../components/MetricCard'
+import StatRow from '../../components/ui/StatRow'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import QueryState from '../../components/QueryState'
-import { staggerContainer, staggerItem } from '../../lib/animations'
 import { getPersonInfo } from '../../data/team'
 import { FaceDisc } from '../../components/today/skin'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -377,16 +370,14 @@ export default function PIAnalytics() {
               setCopied(true)
               setTimeout(() => setCopied(false), 2000)
             }}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-            style={{ color: 'var(--slate)', border: '1px solid var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
+            className="tk-btn"
           >
             <Copy {...ICON_PROPS} size={11} />
-            {copied ? 'Copied' : 'Copy Report'}
+            {copied ? 'Copied' : 'Copy report'}
           </button>
           <button
             onClick={() => window.print()}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-            style={{ color: 'var(--slate)', border: '1px solid var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
+            className="tk-btn"
           >
             <Printer {...ICON_PROPS} size={11} />
             Print
@@ -408,55 +399,21 @@ export default function PIAnalytics() {
       >
 
       {/* Top-line hero stats — DD-6 display variant (Fraunces 60px + gold label) */}
-      <motion.div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" variants={staggerContainer} initial="hidden" animate="visible">
-        <motion.div variants={staggerItem}><MetricCard
-          variant="display"
-          icon={Target}
-          label="Commitments Kept"
-          value={`${commitRate}%`}
-          color={'var(--sk-t3)'}
-          subtitle={`${data?.commitments.completed || 0} of ${data?.commitments.total || 0}`}
-        /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard
-          variant="display"
-          icon={Clock}
-          label="Days to done, team tasks"
-          value={`${data?.responseMetrics.median_days || 0}d`}
-          color="var(--sk-t3)"
-          subtitle={data?.responseMetrics.trend === 'improving' ? 'Getting faster' : data?.responseMetrics.trend === 'slowing' ? 'Getting slower' : 'Stable'}
-        /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard
-          variant="display"
-          icon={DollarSign}
-          label="Active Funding"
-          value={data?.grantPipeline.active_funding ? formatCurrency(data.grantPipeline.active_funding) : '$0'}
-          color="var(--sk-t3)"
-          subtitle={`${data?.grantPipeline.active || 0} active grants`}
-        /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard
-          variant="display"
-          icon={BookOpen}
-          label="Trainee Pubs"
-          value={data?.menteeVelocity.reduce((s, m) => s + m.pub_count, 0) || 0}
-          color="var(--sk-t3)"
-          subtitle={`${data?.menteeVelocity.length || 0} trainees`}
-        /></motion.div>
-      </motion.div>
+      <StatRow
+        stats={[
+          { label: 'Commitments kept', value: `${commitRate}%`, sub: `${data?.commitments.completed || 0} of ${data?.commitments.total || 0}` },
+          { label: 'Days to done, team tasks', value: `${data?.responseMetrics.median_days || 0}d`, sub: data?.responseMetrics.trend === 'improving' ? 'Getting faster' : data?.responseMetrics.trend === 'slowing' ? 'Getting slower' : 'Stable' },
+          { label: 'Active funding', value: data?.grantPipeline.active_funding ? formatCurrency(data.grantPipeline.active_funding) : '$0', sub: `${data?.grantPipeline.active || 0} active grants` },
+          { label: 'Trainee pubs', value: data?.menteeVelocity.reduce((s, m) => s + m.pub_count, 0) || 0, sub: `${data?.menteeVelocity.length || 0} trainees` },
+        ]}
+      />
 
       {/* Two-column: Commitment Scorecard + Response Time */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Commitment Scorecard */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Target {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
-            <h3
-              className="text-xs font-normal uppercase tracking-wider"
-              style={{ color: 'var(--slate)' }}
-            >
-              Commitment Scorecard
-            </h3>
-          </div>
-          <div className="rounded-xl border p-6" style={{ borderColor: 'var(--border-subtle)' }}>
+          <SectionHead title="Commitment scorecard" />
+          <div className="sk-mat rounded-xl p-6">
             <div className="flex items-center gap-8 flex-wrap">
               <div className="relative flex-shrink-0">
                 <CompletionRing rate={commitRate} size={120} />
@@ -484,11 +441,13 @@ export default function PIAnalytics() {
                   <strong style={{ color: 'var(--sk-t1)' }}>{data?.commitments.completed || 0}</strong>{' '}
                   of <strong>{data?.commitments.total || 0}</strong> promises to your team.
                 </p>
-                <div className="grid grid-cols-3 gap-3">
-                  <MetricCard icon={CheckCircle2} label="Completed" value={data?.commitments.completed || 0} color="var(--sk-t3)" />
-                  <MetricCard icon={Target} label="Total" value={data?.commitments.total || 0} color="var(--sk-t3)" />
-                  <MetricCard icon={AlertTriangle} label="Overdue" value={data?.commitments.overdue || 0} color="var(--job-overdue)" />
-                </div>
+                <StatRow
+                  stats={[
+                    { label: 'Completed', value: data?.commitments.completed || 0 },
+                    { label: 'Total', value: data?.commitments.total || 0 },
+                    { label: 'Overdue', value: data?.commitments.overdue || 0, rule: 'o' },
+                  ]}
+                />
               </div>
             </div>
           </div>
@@ -496,19 +455,8 @@ export default function PIAnalytics() {
 
         {/* Response Time Metrics */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Clock {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
-            <h3
-              className="text-xs font-normal uppercase tracking-wider"
-              style={{ color: 'var(--slate)' }}
-            >
-              Days to done, team tasks
-            </h3>
-            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-              Task creation to completion
-            </span>
-          </div>
-          <div className="rounded-xl border p-6" style={{ borderColor: 'var(--border-subtle)' }}>
+          <SectionHead title="Days to done, team tasks" count="Task creation to completion" />
+          <div className="sk-mat rounded-xl p-6">
             <div className="flex items-center gap-6 mb-4">
               <div>
                 <div className="flex items-center gap-2">
@@ -549,7 +497,7 @@ export default function PIAnalytics() {
               </div>
               <div className="flex-1 grid grid-cols-2 gap-3">
                 <div className="rounded-lg p-3" style={{ backgroundColor: 'color-mix(in srgb, var(--sk-t1) 4%, transparent)' }}>
-                  <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)' }}>
+                  <span className="text-[11px]" style={{ color: 'var(--sk-t3)' }}>
                     Last 90 days
                   </span>
                   <div
@@ -560,7 +508,7 @@ export default function PIAnalytics() {
                   </div>
                 </div>
                 <div className="rounded-lg p-3" style={{ backgroundColor: 'rgba(100, 116, 139, 0.04)' }}>
-                  <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)' }}>
+                  <span className="text-[11px]" style={{ color: 'var(--sk-t3)' }}>
                     Prior 90 days
                   </span>
                   <div
@@ -586,19 +534,8 @@ export default function PIAnalytics() {
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Team Engagement Score */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Users {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
-            <h3
-              className="text-xs font-normal uppercase tracking-wider"
-              style={{ color: 'var(--slate)' }}
-            >
-              Team Engagement
-            </h3>
-            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-              Last 30 days
-            </span>
-          </div>
-          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
+          <SectionHead title="Team engagement" count="Last 30 days" />
+          <div className="sk-mat rounded-xl p-5">
             {data && data.teamEngagement.length > 0 ? (
               <div className="flex flex-col gap-2.5">
                 {data.teamEngagement.map((member) => {
@@ -671,30 +608,22 @@ export default function PIAnalytics() {
 
         {/* Mentee Publication Velocity */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <BookOpen {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
-            <h3
-              className="text-xs font-normal uppercase tracking-wider"
-              style={{ color: 'var(--slate)' }}
-            >
-              Trainee Publication Velocity
-            </h3>
-          </div>
-          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
+          <SectionHead title="Trainee publication velocity" />
+          <div className="sk-mat rounded-xl p-5">
             {data && data.menteeVelocity.length > 0 ? (
               <table className="w-full">
                 <thead>
                   <tr>
-                    <th className="text-left text-[10px] uppercase tracking-wider pb-2" style={{ color: 'var(--slate)' }}>
+                    <th className="text-left text-[11px] font-medium pb-2" style={{ color: 'var(--sk-t3)' }}>
                       Trainee
                     </th>
-                    <th className="text-right text-[10px] uppercase tracking-wider pb-2" style={{ color: 'var(--slate)' }}>
+                    <th className="text-right text-[11px] font-medium pb-2" style={{ color: 'var(--sk-t3)' }}>
                       Papers
                     </th>
-                    <th className="text-right text-[10px] uppercase tracking-wider pb-2" style={{ color: 'var(--slate)' }}>
+                    <th className="text-right text-[11px] font-medium pb-2" style={{ color: 'var(--sk-t3)' }}>
                       Rate
                     </th>
-                    <th className="text-right text-[10px] uppercase tracking-wider pb-2" style={{ color: 'var(--slate)' }}>
+                    <th className="text-right text-[11px] font-medium pb-2" style={{ color: 'var(--sk-t3)' }}>
                       Status
                     </th>
                   </tr>
@@ -762,16 +691,8 @@ export default function PIAnalytics() {
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Publications per Year */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <BarChart3 {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
-            <h3
-              className="text-xs font-normal uppercase tracking-wider"
-              style={{ color: 'var(--slate)' }}
-            >
-              Publications per Year
-            </h3>
-          </div>
-          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
+          <SectionHead title="Publications per year" />
+          <div className="sk-mat rounded-xl p-5">
             {data && data.pubsByQuarter.length > 0 ? (
               <PubsBarChart
                 data={data.pubsByQuarter.map(q => ({
@@ -789,33 +710,23 @@ export default function PIAnalytics() {
 
         {/* Grant Pipeline + Projects by Stage */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <DollarSign {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
-            <h3
-              className="text-xs font-normal uppercase tracking-wider"
-              style={{ color: 'var(--slate)' }}
-            >
-              Grant Pipeline & Projects
-            </h3>
-          </div>
-          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
+          <SectionHead title="Grant pipeline & projects" />
+          <div className="sk-mat rounded-xl p-5">
             {/* Grants: pending (proposed) vs active (awarded) — P6-B8 */}
             <div className="mb-5">
-              <h4 className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)' }}>
-                Grants: Pending vs Active
-              </h4>
-              <div className="grid grid-cols-2 gap-3">
-                <MetricCard icon={Target} label="Pending" value={data?.grantsFunnel.submitted || 0} color="var(--sk-t3)" />
-                <MetricCard icon={CheckCircle2} label="Active" value={data?.grantsFunnel.active || 0} color="var(--sk-t3)" />
-              </div>
+              <h4 style={FIELD_LABEL_STYLE}>Grants: pending vs active</h4>
+              <StatRow
+                stats={[
+                  { label: 'Pending', value: data?.grantsFunnel.submitted || 0 },
+                  { label: 'Active', value: data?.grantsFunnel.active || 0 },
+                ]}
+              />
             </div>
 
             {/* Projects by stage */}
             {data && data.projectsByStage.length > 0 && (
               <div>
-                <h4 className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)' }}>
-                  Active Projects by Stage
-                </h4>
+                <h4 style={FIELD_LABEL_STYLE}>Active projects by stage</h4>
                 <StackedBar
                   segments={data.projectsByStage.map(s => ({
                     label: s.stage,
@@ -831,16 +742,8 @@ export default function PIAnalytics() {
 
       {/* Leadership Insights */}
       <div className="mt-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Lightbulb {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
-          <h3
-            className="text-xs font-normal uppercase tracking-wider"
-            style={{ color: 'var(--slate)' }}
-          >
-            Leadership Insights
-          </h3>
-        </div>
-        <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
+        <SectionHead title="Leadership insights" />
+        <div className="sk-mat rounded-xl p-5">
           {insights.length > 0 ? (
             <div className="flex flex-col gap-3">
               {insights.map((insight, i) => {

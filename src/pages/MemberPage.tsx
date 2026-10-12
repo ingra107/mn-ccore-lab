@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
 import MemberFeaturedPublications from '../components/MemberFeaturedPublications'
 import Breadcrumb from '../components/Breadcrumb'
-import { FlaskConical, GraduationCap, Handshake, CheckCircle2, Sparkles, X, Plus, Activity } from 'lucide-react'
+import { Handshake, CheckCircle2, X, Plus } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
 import MenteeDashboard from '../components/MenteeDashboard'
 import MemberProjects from '../components/project/MemberProjects'
@@ -336,7 +336,7 @@ export default function MemberPage() {
       {mentee && (
         <>
           <section className="mb-8" id="research-focus">
-            <SectionHead icon={<GraduationCap {...ICON_PROPS} size={16} />} title="Research Focus" />
+            <SectionHead title="Research focus" />
             {mentee.researchInterests && mentee.researchInterests.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
                 {mentee.researchInterests.map((interest) => (
@@ -378,7 +378,7 @@ export default function MemberPage() {
       {menteeProjects.length > 0 && (
         <>
           <section className="mb-8" id="active-projects">
-            <SectionHead icon={<FlaskConical {...ICON_PROPS} size={16} />} title="Active Projects" />
+            <SectionHead title="Active projects" />
             <div className="space-y-3">
               {menteeProjects.map((project) => project && (
                 <div
@@ -432,7 +432,7 @@ export default function MemberPage() {
       {(expertiseTags.length > 0 || isAuthenticated) && (
         <>
           <section className="mb-8" id="expertise">
-            <SectionHead icon={<Sparkles {...ICON_PROPS} size={16} />} title="Expertise" />
+            <SectionHead title="Expertise" />
 
             <div className="flex flex-wrap gap-1.5 mb-4">
               <AnimatePresence mode="popLayout">
@@ -588,7 +588,7 @@ export default function MemberPage() {
       {slug && (
         <>
           <section className="mb-8" id="activity">
-            <SectionHead icon={<Activity {...ICON_PROPS} size={16} />} title="Activity" />
+            <SectionHead title="Activity" />
             {canSeeScore && (
               <>
                 <ContributionScoreCard slug={slug} />
@@ -665,7 +665,7 @@ export default function MemberPage() {
           <SectionDivider />
           <div className="py-4" />
           <section className="mb-8" id="commitments">
-            <SectionHead icon={<Handshake {...ICON_PROPS} size={16} />} title="Commitments" count={openCommitments.length > 0 ? <>{openCommitments.length} open</> : undefined} />
+            <SectionHead title="Commitments" count={openCommitments.length > 0 ? <>{openCommitments.length} open</> : undefined} />
 
             <AnimatePresence mode="popLayout">
               {openCommitments.map((c) => (
@@ -861,7 +861,7 @@ function MemberMilestones({ slug }: { slug: string }) {
       <div className="py-4" />
       <section className="mb-8" id="milestones">
         <SectionHead
-          icon={<GraduationCap {...ICON_PROPS} size={16} />}
+         
           title="Milestones"
           count={open.length > 0 ? <>{open.length} upcoming</> : undefined}
           right={<>

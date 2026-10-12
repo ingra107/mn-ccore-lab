@@ -316,7 +316,7 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
                   Save
                 </button>
                 <button type="button" onClick={() => { setShowDecisionForm(false); setDecisionTitle(''); setDecisionRationale('') }}
-                  style={{ background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}>
+                  style={{ background: 'none', border: '1px solid var(--sk-line2)', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}>
                   Cancel
                 </button>
               </div>
@@ -847,8 +847,8 @@ export default function Meetings() {
         style={{ display: 'grid', gridTemplateColumns: '290px 1fr', gridTemplateRows: 'minmax(0, 1fr)', gap: 0, flex: 1, minHeight: 360, overflow: 'hidden' }}>
 
         {/* Left panel — M-28: minHeight, M-34: hidden when mobile-detail active */}
-        <div className="meetings-list-panel" style={{ borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ padding: '12px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="meetings-list-panel" style={{ borderRight: '1px solid var(--sk-line)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ padding: '12px', borderBottom: '1px solid var(--sk-line)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <SegmentedToggle
               options={FILTER_OPTIONS.map((f) => ({ value: f.key, label: f.label }))}
               value={filter}
@@ -860,9 +860,9 @@ export default function Meetings() {
               <Search {...ICON_PROPS} size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
               <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-7 pr-3 py-1.5 rounded-lg text-xs"
-                style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)', color: 'var(--ink)', outline: 'none' }}
+                style={{ background: 'var(--ice)', border: '1px solid var(--field-edge)', color: 'var(--ink)', outline: 'none' }}
                 onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--job-accent)' }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)' }} />
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--field-edge)' }} />
             </div>
           </div>
 
@@ -876,15 +876,15 @@ export default function Meetings() {
                   style={{
                     display: 'block',
                     padding: '10px 12px',
-                    borderBottom: '1px solid var(--border-subtle)',
+                    borderBottom: '1px solid var(--sk-line)',
                     opacity: 0.85,
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                    <div style={{ width: 46, height: 10, background: 'var(--surface-2)', borderRadius: 'var(--radius-sm)' }} />
-                    <div style={{ width: 36, height: 10, background: 'var(--surface-2)', borderRadius: 'var(--radius-full)' }} />
+                    <div style={{ width: 46, height: 10, background: 'var(--hover-subtle)', borderRadius: 'var(--radius-sm)' }} />
+                    <div style={{ width: 36, height: 10, background: 'var(--hover-subtle)', borderRadius: 'var(--radius-full)' }} />
                   </div>
-                  <div style={{ width: '85%', height: 12, background: 'var(--surface-2)', borderRadius: 'var(--radius-sm)' }} />
+                  <div style={{ width: '85%', height: 12, background: 'var(--hover-subtle)', borderRadius: 'var(--radius-sm)' }} />
                 </div>
               ))
             ) : filteredMeetings.length > 0 ? (
@@ -971,16 +971,16 @@ export default function Meetings() {
       <style>{`
         .dark .action-item-card {
           background-color: var(--cream) !important;
-          background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+          background-image: linear-gradient(var(--hover-subtle), var(--hover-subtle)) !important;
           border-color: var(--border-subtle) !important;
         }
         .dark .quick-add-form-container {
           background-color: var(--cream) !important;
-          background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+          background-image: linear-gradient(var(--hover-subtle), var(--hover-subtle)) !important;
         }
         .dark .quick-add-trigger {
           background-color: var(--cream) !important;
-          background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+          background-image: linear-gradient(var(--hover-subtle), var(--hover-subtle)) !important;
         }
         .dark select, .dark input[type="date"] { color-scheme: dark; }
         .mtg-section-label {

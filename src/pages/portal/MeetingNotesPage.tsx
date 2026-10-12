@@ -2,9 +2,8 @@ import { useState, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Brain, Upload, FileText, CheckCircle2, Clock, ArrowRight,
-  Sparkles, Users, Search,
-} from 'lucide-react'
+  Brain, Upload, FileText, CheckCircle2, ArrowRight,
+  Sparkles, Search} from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import PageHeader from '../../components/PageHeader'
@@ -12,7 +11,7 @@ import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import Modal from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
-import MetricCard from '../../components/MetricCard'
+import StatRow from '../../components/ui/StatRow'
 import InlineSelect from '../../components/InlineSelect'
 import Field from '../../components/ui/Field'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
@@ -142,12 +141,13 @@ export default function MeetingNotesPage() {
       />
 
       {/* Stats */}
-      <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <MetricCard icon={Sparkles} label="Processed Meetings" value={processedCount} color="var(--sk-t3)" />
-        <MetricCard icon={CheckCircle2} label="With Notes" value={processedCount} color="var(--sk-t3)" />
-        <MetricCard icon={Clock} label="Pending" value={totalCount - processedCount} color="var(--slate)" />
-        <MetricCard icon={Users} label="Total Meetings" value={totalCount} color="var(--sk-t3)" />
-      </div>
+      <StatRow
+        stats={[
+          { label: 'Processed meetings', value: processedCount },
+          { label: 'Pending', value: totalCount - processedCount },
+          { label: 'Total meetings', value: totalCount },
+        ]}
+      />
 
       {/* How it works — auto-collapsed after 3+ transcripts exist */}
       <HowTranscriptsWorkPanel collapsedByDefault={processedCount >= 3} />
@@ -240,7 +240,7 @@ export default function MeetingNotesPage() {
   )
 }
 
-// MiniStat removed — uses shared MetricCard component
+// MiniStat removed — the stat row is ui/StatRow
 
 // ── Transcript Modal ─────────────────────────────────────────
 

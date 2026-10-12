@@ -1,15 +1,13 @@
 import { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3, Download, Copy } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3, Download, Copy       } from 'lucide-react'
 import SegmentedToggle from '../../components/ui/SegmentedToggle'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
-import MetricCard from '../../components/MetricCard'
+import StatRow from '../../components/ui/StatRow'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import QueryState from '../../components/QueryState'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
-import { staggerContainer, staggerItem } from '../../lib/animations'
 import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
 import { localDateKey, isOverdue } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
@@ -428,12 +426,14 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Weekly Summary Cards */}
-      <motion.div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3" variants={staggerContainer} initial="hidden" animate="visible">
-        <motion.div variants={staggerItem}><MetricCard icon={CheckCircle2} label="Completed" value={weekStats.completed} previous={weekStats.completedPrior} previousLabel="vs last week" color="var(--sk-t3)" sparklineData={sparkCompleted} /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard icon={Plus} label="Created" value={weekStats.created} previous={weekStats.createdPrior} previousLabel="vs last week" color="var(--sk-t3)" sparklineData={sparkCreated} /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard icon={AlertTriangle} label="Overdue" value={weekStats.overdue} previous={weekStats.overduePrior} previousLabel="vs last week" color="var(--job-overdue)" sparklineData={sparkOverdue} /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard icon={TrendingUp} label="Activity" value={weekStats.activityCount} previous={weekStats.activityPrior} previousLabel="vs last week" color="var(--sk-t3)" sparklineData={sparkActivity} /></motion.div>
-      </motion.div>
+      <StatRow
+        stats={[
+          { label: 'Completed', value: weekStats.completed, previous: weekStats.completedPrior, previousLabel: 'vs last week', spark: sparkCompleted },
+          { label: 'Created', value: weekStats.created, previous: weekStats.createdPrior, previousLabel: 'vs last week', spark: sparkCreated },
+          { label: 'Overdue', value: weekStats.overdue, rule: 'o', previous: weekStats.overduePrior, previousLabel: 'vs last week', spark: sparkOverdue },
+          { label: 'Activity', value: weekStats.activityCount, previous: weekStats.activityPrior, previousLabel: 'vs last week', spark: sparkActivity },
+        ]}
+      />
 
       {/* Lab health summary */}
       {health && (
@@ -486,12 +486,14 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Second row: summary hero stats — DD-6 display variant */}
-      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard variant="display" icon={FolderKanban} label="Active Projects" value={projects.filter((p) => isProjectActive(p.status)).length} color="var(--sk-t3)" subtitle={`${projects.length} total`} />
-        <MetricCard variant="display" icon={Lightbulb} label="Research Ideas" value={activeIdeas} color="var(--sk-t3)" subtitle={`${ideas.length} total`} />
-        <MetricCard variant="display" icon={FileText} label="Pending Tasks" value={pendingTasks} color="var(--ink)" subtitle={`${tasks.length} total`} />
-        <MetricCard variant="display" icon={Users} label="Project Health" value={health?.healthy || 0} color="var(--sk-t3)" subtitle={`${health?.needs_attention || 0} attention · ${(health?.at_risk || 0) + (health?.critical || 0)} at risk`} />
-      </div>
+      <StatRow
+        stats={[
+          { label: 'Active projects', value: projects.filter((p) => isProjectActive(p.status)).length, sub: `${projects.length} total` },
+          { label: 'Research ideas', value: activeIdeas, sub: `${ideas.length} total` },
+          { label: 'Pending tasks', value: pendingTasks, sub: `${tasks.length} total` },
+          { label: 'Project health', value: health?.healthy || 0, sub: `${health?.needs_attention || 0} attention · ${(health?.at_risk || 0) + (health?.critical || 0)} at risk` },
+        ]}
+      />
 
       {/* Task Velocity — completions per week, last 8 weeks */}
       <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>

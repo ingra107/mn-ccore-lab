@@ -48,9 +48,17 @@ One component per job, no second variant. The old forms are deleted, not depreca
 | Small action button | `.tk-btn` (`.tk-sm`, `.tk-sel`) | inline-styled pill buttons |
 | Modal + form field | `ui/Modal` (card step, `--sk-line2` hairline), `ui/Field` (12px sentence-case label, `.field-container` on `--field-edge`) | uppercase and `size="micro"` labels, the Modal `icon` prop |
 | A person | `FaceDisc` / `Face` / `Person` in `components/today/skin.tsx`: photo, else initials; with the first name, never a slug. `px` for profile sizes | the `Avatar` component |
+| Section head | `ui/SectionHead` (`.sk-hd`, the `.tk-ph` anatomy): bold sentence-case title, dim count, fading hairline, controls right. `CollapsibleSection` draws the same head with a chevron. Field or sub-section label inside a panel: `ui/labelStyle` `FIELD_LABEL_STYLE` (12px, 500) | icon heads (the `icon` prop stays only until the Project detail redesign lands), uppercase section labels |
+| Headline numbers | `ui/StatRow` (`.tk-stats`): display-face number, 2px rule (gray; `o` overdue, `u` stalled), muted label, optional sub line, delta and sparkline | `MetricCard`, stat tiles |
+| Panel tabs (task panel, project, calendar view) | `ui/SegmentedToggle` (add `idPrefix` when the tabs own panels: ids, `aria-controls`, arrow keys) | underlined and tinted tab strips |
+| A task in a list | the Today card (`today/TaskRow`) or the sleek row (`table/SleekRows`) |  |
 
-The ratchet `scripts/check-legacy-look.mjs` (`npm run lint:legacy-look`, in `gate:deploy`) counts uppercase labels,
-`--surface-N` and `MetricCard` per file; counts only go down. Inline hairline borders (box-in-box) print as a warning.
+A panel is one material (`.sk-mat`, `.detail-card`, `.tk-card`). Inside it: inputs use `--field-edge`, dividers use `--sk-line`, and
+nothing draws a second bordered box.
+
+The ratchet `scripts/check-legacy-look.mjs` (`npm run lint:legacy-look`, in `gate:deploy`) counts, per file, uppercase labels,
+`--surface-N` and drawn boxes (an inline `border: '1px solid var(--border-*)'` shorthand, or a rounded element with the bare
+`border` class); counts only go down.
 
 ---
 

@@ -1,17 +1,16 @@
 import { useState, useMemo, useEffect, type ElementType } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Calendar, ChevronLeft, ChevronRight, Users, SquareCheck, Diamond, Download } from 'lucide-react'
+import { Calendar, ChevronLeft, ChevronRight, Users, Download } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
-import ToggleButton from '../../components/ToggleButton'
+import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
+import { FilterLinks } from '../../components/ui/FilterLinks'
 import { formatBrandName } from '../../components/BrandName'
 import { useCalendarEvents } from '../../hooks/useApiData'
 import { isProductionVisible } from '../../lib/isProductionVisible'
 import { taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
 import { formatLongDate, formatShortDate, localDateKey } from '../../lib/dateUtils'
 import type { CalendarEvent } from '../../lib/api'
-import { staggerContainer, staggerItem } from '../../lib/animations'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { SleekTable, SleekRow, type SleekColumn } from '../../components/table/SleekRows'
@@ -26,10 +25,10 @@ type ViewMode = 'month' | 'week' | 'day' | 'agenda'
 // kept for today). A meeting reads brighter than a task due date and carries a
 // hairline edge; a milestone keeps its gold diamond (`mark`), the one color
 // here, matching Deadlines, Agenda and Today.
-const eventColors: Record<string, { color: string; bg: string; border?: string; mark?: string }> = {
-  meeting: { color: 'var(--ink)', bg: 'var(--hover-subtle)', border: 'var(--border-subtle)' },
-  task: { color: 'var(--slate)', bg: 'var(--hover-subtle)' },
-  milestone: { color: 'var(--ink)', bg: 'var(--hover-subtle)', border: 'var(--border-subtle)', mark: 'var(--job-milestone)' },
+const eventColors: Record<string, { color: string; bg: string; mark?: string }> = {
+  meeting: { color: 'var(--ink)', bg: 'var(--hover-subtle)' },
+  task: { color: 'var(--slate)', bg: 'transparent' },
+  milestone: { color: 'var(--ink)', bg: 'transparent', mark: 'var(--job-milestone)' },
 }
 
 /** The gold diamond before a milestone's title; nothing for other types. */
@@ -38,11 +37,6 @@ function EventMark({ e }: { e: CalendarEvent }) {
   return mark ? <span aria-hidden="true" style={{ color: mark, marginRight: 3 }}>◆</span> : null
 }
 
-const eventIcons: Record<string, typeof Calendar> = {
-  meeting: Users,
-  task: SquareCheck,
-  milestone: Diamond,
-}
 
 // Rows, chips and Agenda show the SHORT task title as Today does (eval item
 // 34); the full title is the hover tip. Meetings and milestones carry no
@@ -201,11 +195,7 @@ export default function CalendarPage() {
             : `${visibleCount} ${visibleLabel}`
         })()}
         actions={
-          <button
-            onClick={exportICal}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border transition-colors hover:bg-black/5"
-            style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', cursor: 'pointer', background: 'none' }}
-          >
+          <button onClick={exportICal} className="tk-btn">
             <Download {...ICON_PROPS} size={14} />
             Export
           </button>
@@ -213,29 +203,20 @@ export default function CalendarPage() {
       >
         {/* Controls */}
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              {(['month', 'week', 'day', 'agenda'] as ViewMode[]).map((v) => {
-                const active = view === v
-                return (
-                  <ToggleButton
-                    key={v}
-                    active={active}
-                    onClick={() => setView(v)}
-                    className="capitalize"
-                  >
-                    {v}
-                  </ToggleButton>
-                )
-              })}
-            </div>
+          <div className="flex items-center gap-3">
+            <SegmentedToggle
+              ariaLabel="Calendar view"
+              options={(['month', 'week', 'day', 'agenda'] as ViewMode[]).map((v) => ({ value: v, label: v.charAt(0).toUpperCase() + v.slice(1) }))}
+              value={view}
+              onChange={setView}
+            />
             {view === 'month' && (
-              <ToggleButton
-                active={denseWeek}
-                onClick={() => setDenseWeek((v) => !v)}
-              >
-                Dense
-              </ToggleButton>
+              <FilterLinks
+                ariaLabel="Month density"
+                options={[{ value: 'dense', label: 'Dense' }]}
+                value={denseWeek ? ['dense'] : []}
+                onChange={() => setDenseWeek((v) => !v)}
+              />
             )}
           </div>
 
@@ -243,14 +224,13 @@ export default function CalendarPage() {
             <button
               onClick={goToPrev}
               aria-label="Previous month"
-              className="rounded-md border transition-colors hover:bg-black/5 flex items-center justify-center"
-              style={{ minHeight: 44, minWidth: 44, borderColor: 'var(--border-subtle)', cursor: 'pointer', background: 'none' }}
+              className="tk-btn"
             >
-              <ChevronLeft {...ICON_PROPS} size={18} style={{ color: 'var(--ink)' }} />
+              <ChevronLeft {...ICON_PROPS} size={16} />
             </button>
             <button
               onClick={goToToday}
-              className="rounded-md text-sm font-medium min-w-[180px] text-center flex items-center justify-center"
+              className="text-sm font-medium min-w-[180px] text-center flex items-center justify-center"
               style={{ minHeight: 44, padding: '0 12px', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
             >
               {headerLabel}
@@ -258,17 +238,16 @@ export default function CalendarPage() {
             <button
               onClick={goToNext}
               aria-label="Next month"
-              className="rounded-md border transition-colors hover:bg-black/5 flex items-center justify-center"
-              style={{ minHeight: 44, minWidth: 44, borderColor: 'var(--border-subtle)', cursor: 'pointer', background: 'none' }}
+              className="tk-btn"
             >
-              <ChevronRight {...ICON_PROPS} size={18} style={{ color: 'var(--ink)' }} />
+              <ChevronRight {...ICON_PROPS} size={16} />
             </button>
 
             {currentDate.toDateString() !== new Date().toDateString() && (
               <button
                 onClick={goToToday}
-                className="px-3 py-1.5 rounded-md text-xs font-medium border transition-colors"
-                style={{ color: 'var(--job-accent)', borderColor: 'var(--job-accent)', cursor: 'pointer', background: 'none' }}
+                className="tk-btn"
+                style={{ color: 'var(--job-accent)' }}
               >
                 Today
               </button>
@@ -282,13 +261,8 @@ export default function CalendarPage() {
         {isLoading ? (
           <div
             aria-hidden="true"
-            style={{
-              minHeight: 600,
-              borderRadius: 'var(--radius-xl)',
-              border: '1px solid var(--border-subtle)',
-              background: 'var(--surface-1)',
-              opacity: 0.85,
-            }}
+            className="sk-mat"
+            style={{ minHeight: 600, borderRadius: 'var(--radius-xl)', opacity: 0.85 }}
           />
         ) : (
           <>
@@ -301,7 +275,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Legend. Agenda rows carry no type color, so its key names the glyphs instead. */}
-      <div className="flex items-center gap-4 mt-4 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+      <div className="flex items-center gap-4 mt-4 pt-3">
         {view === 'agenda' ? (
           <>
             <span className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}><Users {...ICON_PROPS} size={11} aria-hidden="true" />Meetings</span>
@@ -312,10 +286,7 @@ export default function CalendarPage() {
           <div key={type} className="flex items-center gap-1.5">
             {config.mark
               ? <span aria-hidden="true" className="text-[10px]" style={{ color: config.mark }}>◆</span>
-              : config.border
-                // An edged chip (meeting) gets an edged swatch, so the key looks like the grid.
-                ? <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: config.bg, border: `1px solid ${config.border}` }} />
-                : <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: config.color, opacity: 0.4 }} />}
+              : <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: type === 'meeting' ? 'var(--sk-t3)' : 'transparent', boxShadow: type === 'meeting' ? undefined : 'inset 0 0 0 1px var(--sk-t3)' }} />}
             <span className="text-[10px] first-letter:uppercase" style={{ color: 'var(--slate)', opacity: 0.75 }}>
               {type === 'task' ? 'Task due dates' : `${type}s`}
             </span>
@@ -373,10 +344,10 @@ export function MonthView({ currentDate, events, denseWeek = false, onOpenDay }:
   }, [days, startOffset])
 
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-subtle)' }}>
+    <div className="sk-mat rounded-xl overflow-hidden">
       <div className="grid grid-cols-7">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-          <div key={d} className="px-2 py-2 text-center text-[11px] font-semibold border-b" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
+          <div key={d} className="px-2 py-2 text-center text-[12px] font-medium border-b" style={{ color: 'var(--sk-t3)', borderColor: 'var(--sk-line)' }}>
             {d}
           </div>
         ))}
@@ -390,7 +361,7 @@ export function MonthView({ currentDate, events, denseWeek = false, onOpenDay }:
             <div
               key={`week-${wi}`}
               className="border-b px-3 py-1.5 text-[11px]"
-              style={{ color: 'var(--slate)', opacity: 0.85, borderColor: 'var(--border-subtle)', background: 'var(--hover-subtle)' }}
+              style={{ color: 'var(--sk-t3)', borderColor: 'var(--sk-line)', background: 'var(--hover-subtle)' }}
             >
               {label} · no events
             </div>
@@ -401,7 +372,7 @@ export function MonthView({ currentDate, events, denseWeek = false, onOpenDay }:
             {week.map((cell, ci) => {
               if (cell.kind === 'fill') {
                 return (
-                  <div key={`fill-${wi}-${ci}`} className="min-h-[56px] md:min-h-[80px] border-b border-r" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--hover-subtle)' }} />
+                  <div key={`fill-${wi}-${ci}`} className="min-h-[56px] md:min-h-[80px] border-b border-r" style={{ borderColor: 'var(--sk-line)', backgroundColor: 'var(--hover-subtle)' }} />
                 )
               }
               const dateStr = cell.dateStr
@@ -426,7 +397,7 @@ function DayCellRender({ dateStr, today, dayEvents, onOpenDay }: { dateStr: stri
     // pick 4). The edge line over the cell was a second marker beside the
     // disc (prod check 2026-10-11). A date grid marks today with the disc;
     // the lists and timelines (Day, Agenda, Today) draw the NowMarker line.
-    <div className="min-h-[56px] md:min-h-[80px] p-1.5 border-b border-r relative" data-today={isToday ? 'true' : undefined} style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
+    <div className="min-h-[56px] md:min-h-[80px] p-1.5 border-b border-r relative" data-today={isToday ? 'true' : undefined} style={{ borderColor: 'var(--sk-line)' }}>
       <button type="button" onClick={() => onOpenDay(dateStr)} aria-label={`Open ${formatLongDate(dateStr)}`} className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full now-halo' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--sk-card)' : 'var(--ink)', backgroundColor: isToday ? 'var(--job-accent)' : 'transparent', cursor: 'pointer', border: 'none', padding: 0 }}>
         {dayNum}
       </button>
@@ -438,13 +409,13 @@ function DayCellRender({ dateStr, today, dayEvents, onOpenDay }: { dateStr: stri
           const Wrapper: ElementType = to ? Link : 'div'
           const wrapperProps = to ? { to } : {}
           return (
-            <Wrapper key={e.id} {...wrapperProps} className="text-[10px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, boxShadow: config.border ? `inset 0 0 0 1px ${config.border}` : undefined, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
+            <Wrapper key={e.id} {...wrapperProps} className="text-[11px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
               <EventMark e={e} />{eventLabel(e)}
             </Wrapper>
           )
         })}
         {dayEvents.length > 3 && (
-          <button type="button" onClick={() => onOpenDay(dateStr)} className="text-[10px] px-1 text-left hover:underline" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', background: 'none', border: 'none', cursor: 'pointer' }}>+{dayEvents.length - 3} more</button>
+          <button type="button" onClick={() => onOpenDay(dateStr)} className="text-[11px] px-1 text-left hover:underline" style={{ color: 'var(--sk-t3)', background: 'none', border: 'none', cursor: 'pointer' }}>+{dayEvents.length - 3} more</button>
         )}
       </div>
     </div>
@@ -479,40 +450,37 @@ export function WeekView({ weekStart, events }: { weekStart: Date; events: Calen
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
   return (
-    <div className="grid grid-cols-7 gap-3">
+    <div className="sk-mat rounded-xl overflow-hidden grid grid-cols-7">
       {days.map((dateStr, i) => {
         const isToday = dateStr === today
         const dayNum = parseInt(dateStr.split('-')[2])
         const dayEvents = eventsByDate.get(dateStr) || []
 
         return (
-          <div key={dateStr} className="rounded-lg border md:min-h-[300px] relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
+          <div key={dateStr} className="md:min-h-[300px] relative border-r last:border-r-0" style={{ borderColor: 'var(--sk-line)' }}>
             {/* Today: the date disc below is the one now marker (pick 4), as in Month. */}
-            {/* Day header */}
-            <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-subtle)' }}>
-              <div className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{dayNames[i]}</div>
+            <div className="px-2 py-2 text-center">
+              <div className="text-[12px]" style={{ color: 'var(--sk-t3)' }}>{dayNames[i]}</div>
               <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8 now-halo' : ''}`} style={{ color: isToday ? 'var(--sk-card)' : 'var(--ink)', backgroundColor: isToday ? 'var(--job-accent)' : 'transparent' }}>
                 {dayNum}
               </div>
               {isToday && <div className="cal-today-lbl" style={{ marginLeft: 0, marginTop: 2 }}>Today</div>}
             </div>
 
-            {/* Events */}
-            <div className="p-1.5 flex flex-col gap-1">
+            <div className="p-1.5 flex flex-col gap-0.5">
               {dayEvents.map((e) => {
                 const config = eventColors[e.type] || eventColors.task
-                const Icon = eventIcons[e.type] || Calendar
+                const to = eventLinkTo(e)
+                const Wrapper: ElementType = to ? Link : 'div'
+                const wrapperProps = to ? { to } : {}
                 return (
-                  <div key={e.id} className="flex items-start gap-1 p-1.5 rounded" style={{ backgroundColor: config.bg, boxShadow: config.border ? `inset 0 0 0 1px ${config.border}` : undefined }}>
-                    <Icon {...ICON_PROPS} size={10} style={{ color: config.mark ?? 'var(--slate)', marginTop: 2, flexShrink: 0 }} />
-                    <span className="text-[10px] leading-tight" style={{ color: config.color }} title={formatBrandName(e.title)}>
-                      {(() => { const t = eventLabel(e); return t.length > 32 ? t.slice(0, 32) + '...' : t })()}
-                    </span>
-                  </div>
+                  <Wrapper key={e.id} {...wrapperProps} className="text-[11px] leading-tight px-1 py-1 rounded block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
+                    <EventMark e={e} />{(() => { const t = eventLabel(e); return t.length > 32 ? t.slice(0, 32) + '...' : t })()}
+                  </Wrapper>
                 )
               })}
               {dayEvents.length === 0 && (
-                <div className="text-center py-4 text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>—</div>
+                <div className="text-center py-4 text-[11px]" style={{ color: 'var(--sk-t3)' }}>—</div>
               )}
             </div>
           </div>
@@ -528,52 +496,39 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
   const dateStr = localDateKey(date)
   const dayEvents = events.filter((e) => e.date === dateStr)
   const isToday = dateStr === localDateKey()
+  const navigate = useNavigate()
 
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-subtle)' }}>
-      <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
-        <h3 className="text-lg font-normal" style={{ color: isToday ? 'var(--job-accent)' : 'var(--ink)' }}>
-          {isToday ? 'Today' : formatLongDate(dateStr)}
-        </h3>
-        {/* The shared now marker under "Today" (an edge marker would clip in this rounded box). */}
-        {isToday && <NowMarker showLabel={false} style={{ marginTop: 10, marginLeft: 3 }} />}
+    <div>
+      <div className={`sr-grp-h sr-grp-static${isToday ? ' sr-grp-now' : ''}`}>
+        <h3>{isToday ? 'Today' : formatLongDate(dateStr)}</h3>
+        {dayEvents.length > 0 && <span className="sr-n">{dayEvents.length}</span>}
       </div>
-
-      <div className="p-4">
-        {dayEvents.length > 0 ? (
-          <motion.div className="flex flex-col gap-3" variants={staggerContainer} initial="hidden" animate="visible">
-            {dayEvents.map((e) => {
-              const config = eventColors[e.type] || eventColors.task
-              const Icon = eventIcons[e.type] || Calendar
-              const to = eventLinkTo(e)
-              const Wrapper: ElementType = to ? Link : 'div'
-              const wrapperProps = to ? { to } : {}
-
-              return (
-                <motion.div key={e.id} variants={staggerItem}>
-                  <Wrapper {...wrapperProps} className="flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm" style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none', cursor: to ? 'pointer' : 'default' }}>
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
-                      <Icon {...ICON_PROPS} size={18} style={{ color: config.mark ?? 'var(--slate)' }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium" style={{ color: 'var(--ink)' }} title={eventFullTitleHint(e)}>{eventLabel(e)}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: 'var(--slate)', backgroundColor: config.bg }}>{e.type}</span>
-                      </div>
-                    </div>
-                  </Wrapper>
-                </motion.div>
-              )
-            })}
-          </motion.div>
-        ) : (
-          <EmptyState
-            icon={<Calendar size={40} />}
-            title="A quiet day"
-            subtitle="Meetings, task due dates, and milestones land here automatically as they're scheduled."
-          />
-        )}
-      </div>
+      {/* The shared now marker under "Today". */}
+      {isToday && <NowMarker showLabel={false} style={{ margin: '2px 10px 10px' }} />}
+      {dayEvents.length > 0 ? (
+        <SleekTable columns={dayEvents.some(hasGlyph) ? agendaColumnsWithKind : agendaColumnsNoKind} header={false} className="sr-panel">
+          {dayEvents.map((e) => {
+            const to = eventLinkTo(e)
+            return (
+              <SleekRow
+                key={`${e.type}:${e.id}`}
+                row={e}
+                data={{ 'event-id': e.id, 'event-type': e.type }}
+                urgent={e.type === 'task' && e.category === 'urgent'}
+                className={to ? undefined : 'sr-static'}
+                onClick={to ? () => navigate(to) : undefined}
+              />
+            )
+          })}
+        </SleekTable>
+      ) : (
+        <EmptyState
+          icon={<Calendar size={40} />}
+          title="A quiet day"
+          subtitle="Meetings, task due dates, and milestones land here automatically as they're scheduled."
+        />
+      )}
     </div>
   )
 }
