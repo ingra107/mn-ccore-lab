@@ -85,9 +85,24 @@ describe('the Terminal command the Mac applet types for workon', { skip }, () =>
     assert.equal(existsSync(evil), true, 'the planted claude did not run in the control, so the next case proves nothing')
   })
 
-  it('the applet command runs the PATH claude, never the planted one, and the name stays text', () => {
+  for (const [name, path] of [
+    ['an empty entry', () => pathWithEmpty()],
+    ['a "." entry', () => `${bashPath(bin)}:.:/usr/bin:/bin`],
+    ['a relative entry', () => `${bashPath(bin)}:bin:/usr/bin:/bin`],
+    ['a trailing empty entry', () => `${bashPath(bin)}:/usr/bin:/bin:`],
+  ]) {
+    it(`a PATH with ${name} is refused before anything runs`, () => {
+      reset()
+      const r = sh(workonCommand(quotedForm(bashPath(proj))), path())
+      assert.ok(r.out.includes('your PATH has an empty'), r.out)
+      assert.equal(existsSync(good), false, 'claude ran despite the PATH refusal')
+      assert.equal(existsSync(evil), false, 'the planted claude ran')
+    })
+  }
+
+  it('with a clean PATH the applet command runs the PATH claude, never the planted one, and the name stays text', () => {
     reset()
-    const r = sh(workonCommand(quotedForm(bashPath(proj))), pathWithEmpty())
+    const r = sh(workonCommand(quotedForm(bashPath(proj))), `${bashPath(bin)}:/usr/bin:/bin`)
     assert.equal(existsSync(good), true, `the real claude did not run: ${r.out}`)
     assert.equal(existsSync(evil), false, 'the planted claude ran')
     for (const f of injected) assert.equal(existsSync(f), false, `the folder name ran as a command: ${f}`)
@@ -95,7 +110,7 @@ describe('the Terminal command the Mac applet types for workon', { skip }, () =>
 
   it('with no claude on PATH it prints the install hint and runs nothing', () => {
     reset()
-    const r = sh(workonCommand(quotedForm(bashPath(proj))), ':/usr/bin:/bin')
+    const r = sh(workonCommand(quotedForm(bashPath(proj))), '/usr/bin:/bin')
     assert.ok(r.out.includes('Claude Code (claude) was not found on your PATH'), r.out)
     assert.equal(existsSync(evil), false, 'the planted claude ran')
   })
@@ -154,6 +169,18 @@ describe('the AppleScript keeps the reviewed safety properties (source checks)',
     assert.ok(src.includes('isFilePackageAtPath:realPath'))
     assert.ok(src.includes('"/usr/bin/open -a Finder " & (quoted form of realPath)'))
     assert.ok(!/do shell script "\/usr\/bin\/open " &/.test(src))
+  })
+  it('resolves claude with whence -p / type -P (aliases and functions ignored), never command -v', () => {
+    assert.ok(src.includes('whence -p claude') && src.includes('type -P claude'))
+    assert.ok(!src.includes('command -v'))
+  })
+  it('a link launch never shows the "installed" dialog: on run shows nothing', () => {
+    const run = src.slice(src.indexOf('on run'), src.indexOf('end run'))
+    assert.ok(!/display (dialog|alert)/.test(run), run)
+  })
+  it('control characters are found by code point (id of t as list), not characters of t', () => {
+    assert.ok(src.includes('return (id of t) as list'))
+    assert.ok(!src.includes('in (characters of'))
   })
   it('workon asks first, defaulting to Cancel', () => {
     const ask = src.indexOf('Start Claude Code in this folder?')

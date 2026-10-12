@@ -40,15 +40,11 @@
 #     project folder would run instead (cmd.exe searches the current folder
 #     first). A claude found inside the target folder is refused.
 #
-# Environment (none of these can come from a link):
-#   MNCCORE_LAUNCHER_DRYRUN=1        print the planned action, run nothing; every
-#                                    check still runs, no dialog is shown
-#   MNCCORE_LAUNCHER_TEST_CONFIRM    yes|no: answer the workon dialog without
-#                                    showing it (member-launcher.test.mjs)
-#   MNCCORE_LAUNCHER_TEST_CLAUDE     absolute path used instead of the PATH
-#                                    lookup (the test's stub; still must be an
-#                                    existing file outside the target folder)
-# Log: %TEMP%\mnccore-launcher.log.
+# MNCCORE_LAUNCHER_DRYRUN=1 (exactly "1") prints the planned action and runs
+# nothing; every check still runs and no dialog is shown. There is no other
+# switch: tests answer the dialog and point at a stub claude through
+# member-launcher/test-harness.ps1, which dot-sources this file and replaces
+# Confirm-LauncherWorkOn and Resolve-LauncherClaudePath. Log: %TEMP%\mnccore-launcher.log.
 #
 # ASCII only: Windows PowerShell 5.1 reads a .ps1 without a BOM as ANSI.
 
@@ -56,7 +52,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
 $LauncherSchemes = @('mnccore', 'mnccore-selftest')
-$LauncherDryRun = [bool]$env:MNCCORE_LAUNCHER_DRYRUN
+$LauncherDryRun = ([string]$env:MNCCORE_LAUNCHER_DRYRUN -eq '1')
 $LauncherLog = Join-Path ([System.IO.Path]::GetTempPath()) 'mnccore-launcher.log'
 $LauncherTitle = 'MN-CCORE Launcher'
 $Refused = 'REFUSED: '
@@ -110,8 +106,6 @@ function Show-LauncherRefusal([string]$Detail) {
 
 # The workon confirmation. True only on an explicit Yes.
 function Confirm-LauncherWorkOn([string]$Folder) {
-    $answer = [string]$env:MNCCORE_LAUNCHER_TEST_CONFIRM
-    if ($answer) { return ($answer -eq 'yes') }
     $text = "Start Claude Code in this folder?`r`n`r`n$Folder`r`n`r`n" +
         'Continue only if you just clicked "Work on this in Claude" in the MN-CCORE Hub. ' +
         'Claude Code will read the files in this folder, including any CLAUDE.md or .claude settings in it.'
@@ -180,16 +174,20 @@ function Resolve-LauncherRequest([object[]]$Arguments) {
 # The absolute path of Claude Code, from the PATH stored in the registry (a
 # browser started before Claude Code was installed still carries the old PATH).
 # Never the bare name: that is what lets a planted claude.cmd run.
+function Resolve-LauncherClaudePath {
+    $machine = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+    $user = [Environment]::GetEnvironmentVariable('Path', 'User')
+    $dirs = @(@($machine, $user) -join ';' -split ';' | Where-Object { $_ -and [System.IO.Path]::IsPathRooted($_) })
+    $env:Path = $dirs -join ';'
+    $cmd = Get-Command -Name 'claude' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($cmd) { return [string]$cmd.Source }
+    return $null
+}
+
+# Validates whatever Resolve-LauncherClaudePath found: an existing file, absolute,
+# and NOT inside the folder being opened.
 function Find-LauncherClaude([string]$Folder) {
-    $claude = [string]$env:MNCCORE_LAUNCHER_TEST_CLAUDE
-    if (-not $claude) {
-        $machine = [Environment]::GetEnvironmentVariable('Path', 'Machine')
-        $user = [Environment]::GetEnvironmentVariable('Path', 'User')
-        $dirs = @(@($machine, $user) -join ';' -split ';' | Where-Object { $_ -and [System.IO.Path]::IsPathRooted($_) })
-        $env:Path = $dirs -join ';'
-        $cmd = Get-Command -Name 'claude' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($cmd) { $claude = [string]$cmd.Source }
-    }
+    $claude = [string](Resolve-LauncherClaudePath)
     if (-not $claude) {
         throw ($Refused + 'Claude Code was not found on this computer. Install it (https://docs.claude.com/en/docs/claude-code/setup), then try again.')
     }

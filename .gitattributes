@@ -34,5 +34,6 @@ src/lib/__tests__/milestone_vectors.json text eol=lf
 # files runnable in place too: Windows scripts CRLF, Mac scripts LF.
 member-launcher/windows/*.cmd text eol=crlf
 member-launcher/windows/*.ps1 text eol=crlf
+member-launcher/*.ps1 text eol=crlf
 member-launcher/macos/*.sh text eol=lf
 member-launcher/macos/*.applescript text eol=lf

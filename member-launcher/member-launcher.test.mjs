@@ -48,7 +48,7 @@ function withVars(base, vars) {
 }
 
 function env(extra = {}) {
-  return withVars(process.env, { MNCCORE_LAUNCHER_DRYRUN: '1', LOCALAPPDATA: local, MNCCORE_LAUNCHER_TEST_CLAUDE: stubClaude, ...extra })
+  return withVars(process.env, { MNCCORE_LAUNCHER_DRYRUN: '1', LOCALAPPDATA: local, ...extra })
 }
 
 // The registered command line with %1 replaced by the URL, run verbatim.
@@ -56,8 +56,19 @@ function env(extra = {}) {
 function fire(url, extra = {}) {
   const line = tail.replace('%1', () => url)
   const e = env(extra)
-  const r = spawnSync(exe, [line], { windowsVerbatimArguments: true, argv0: `"${exe}"`, encoding: 'utf8', env: e })
+  const r = spawnSync(exe, [line], { windowsVerbatimArguments: true, argv0: `"${exe}"`, encoding: 'utf8', env: e, timeout: 30_000 })
   return { code: r.status, out: (r.stdout || '') + (r.stderr || '') }
+}
+
+// workon through test-harness.ps1: the shipped launcher, dot-sourced, with the
+// dialog answered (it never appears on this desktop) and a stub for Claude Code.
+// Same powershell.exe -File command-line shape as the registration, URL last.
+const HARNESS = join(HERE, 'test-harness.ps1')
+function fireHarness(url, { answer = 'no', claude = stubClaude, extra = {} } = {}) {
+  const launcher = join(local, 'MNCCORE', 'Launcher', 'mnccore-launcher.ps1')
+  const line = `-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "${HARNESS}" -Launcher "${launcher}" -Answer ${answer} -Claude "${claude}" "${url}"`
+  const r = spawnSync(exe, [line], { windowsVerbatimArguments: true, argv0: `"${exe}"`, encoding: 'utf8', env: env(extra), timeout: 30_000 })
+  return { code: r.status, out: (r.stdout || '') + (r.stderr || ''), timedOut: r.error?.code === 'ETIMEDOUT' }
 }
 
 function sleep(ms) {
@@ -127,6 +138,18 @@ describe('the member launcher through the registered command line (DRYRUN)', { s
       assert.ok(!/cmd(\.exe)?\b/i.test(registered), registered)
       assert.ok(!/\.(bat|cmd)\b/i.test(registered), registered)
     })
+    it('the shipped launcher reads no test-only switch; DRYRUN must be exactly "1"', () => {
+      const src = readFileSync(join(WIN, 'mnccore-launcher.ps1'), 'utf8')
+      assert.ok(!/MNCCORE_LAUNCHER_TEST_/.test(src), 'a test-only environment switch is in the shipped launcher')
+      assert.ok(src.includes("$LauncherDryRun = ([string]$env:MNCCORE_LAUNCHER_DRYRUN -eq '1')"))
+      // Read the flag by dot-sourcing (defines functions, runs nothing): a real run
+      // would open a window or a dialog on this desktop.
+      const read = (v) => spawnSync(POWERSHELL, ['-NoProfile', '-Command', `. '${join(WIN, 'mnccore-launcher.ps1')}'; [Console]::Out.Write($LauncherDryRun)`],
+        { encoding: 'utf8', env: withVars(process.env, { MNCCORE_LAUNCHER_DRYRUN: v }), timeout: 30_000 }).stdout.trim()
+      assert.equal(read('0'), 'False', 'DRYRUN=0 must not be read as dry-run')
+      assert.equal(read('true'), 'False')
+      assert.equal(read('1'), 'True')
+    })
     it('the launcher and installers are ASCII (PowerShell 5.1 reads a BOM-less .ps1 as ANSI)', () => {
       for (const f of ['mnccore-launcher.ps1', 'install.ps1', 'uninstall.ps1']) {
         const bytes = readFileSync(join(WIN, f))
@@ -149,7 +172,7 @@ describe('the member launcher through the registered command line (DRYRUN)', { s
       }
     })
     it('workon: cmd.exe /d /k "<ABSOLUTE claude>", the folder only as the WORKING DIRECTORY', () => {
-      const r = fire(`mnccore://workon/${fwd(spaced)}`)
+      const r = fireHarness(`mnccore://workon/${fwd(spaced)}`)
       assert.equal(r.code, 0, r.out)
       const p = plan(r.out)
       assert.equal(p.verb, 'workon')
@@ -162,7 +185,7 @@ describe('the member launcher through the registered command line (DRYRUN)', { s
       const inside = join(spaced, 'claude.cmd')
       writeFileSync(inside, '@exit /b 0\r\n')
       try {
-        const r = fire(`mnccore://workon/${fwd(spaced)}`, { MNCCORE_LAUNCHER_TEST_CLAUDE: inside })
+        const r = fireHarness(`mnccore://workon/${fwd(spaced)}`, { claude: inside })
         assert.equal(r.code, 1, r.out)
         assert.ok(r.out.includes('inside the folder being opened'), r.out)
         assert.equal(plan(r.out), null)
@@ -256,8 +279,10 @@ describe('the member launcher through the registered command line (DRYRUN)', { s
     it('confirmed workon runs the absolute claude; no planted claude/node file runs', () => {
       rmSync(evilMark, { force: true })
       rmSync(good, { force: true })
-      const r = fire(`mnccore://workon/${fwd(evil)}`, { ...REAL_RUN, MNCCORE_LAUNCHER_TEST_CONFIRM: 'yes' })
+      const r = fireHarness(`mnccore://workon/${fwd(evil)}`, { answer: 'yes', extra: REAL_RUN })
+      assert.equal(r.timedOut, false, 'the launcher hung (a real dialog?)')
       assert.equal(r.code, 0, r.out)
+      assert.ok(r.out.includes(`ASKED ${evil} -> yes`), r.out)
       assert.equal(waitFor(good, 15000), true, 'the stub claude never ran')
       sleep(1500)
       assert.equal(existsSync(evilMark), false, existsSync(evilMark) ? readFileSync(evilMark, 'utf8') : '')
@@ -265,8 +290,10 @@ describe('the member launcher through the registered command line (DRYRUN)', { s
 
     it('declined workon starts nothing (exit 3)', () => {
       rmSync(good, { force: true })
-      const r = fire(`mnccore://workon/${fwd(evil)}`, { ...REAL_RUN, MNCCORE_LAUNCHER_TEST_CONFIRM: 'no' })
+      const r = fireHarness(`mnccore://workon/${fwd(evil)}`, { answer: 'no', extra: REAL_RUN })
+      assert.equal(r.timedOut, false, 'the launcher hung (a real dialog?)')
       assert.equal(r.code, 3, r.out)
+      assert.ok(r.out.includes(`ASKED ${evil} -> no`), r.out)
       sleep(2000)
       assert.equal(existsSync(good), false)
       assert.equal(existsSync(evilMark), false)

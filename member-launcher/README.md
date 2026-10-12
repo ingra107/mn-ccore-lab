@@ -39,8 +39,33 @@ Launcher may control Terminal. Click **OK**.
 If install.sh says another app already opens mnccore:// links, nothing was changed.
 
 **To remove it:** in Terminal, type `bash `, drag **uninstall.sh** in, press Return. It removes
-the app, its Terminal permission and its log, then checks that each is gone. Then turn the
+the app's Terminal permission, the app and its log, then checks that each is gone. Then turn the
 Settings switch off.
+
+Work on in Claude expects Terminal to use zsh or bash (the macOS default). If your PATH has an
+empty, `.` or relative entry, it refuses to start Claude Code and says why.
+
+### First run on a Mac: please report
+
+The Mac version is new. The first person to install it (Casey), please go through these steps and
+send Nick a note on each: what you did, and what you saw (a screenshot is best).
+
+1. In Terminal, run the installer with ` --dry-run` added at the end first, and read what it would
+   do. Then run it for real. Copy the whole Terminal window into your note.
+2. Quit the browser completely (Cmd+Q), then open it again.
+3. In the Hub, Settings > Integrations: turn on **I have the launcher installed on this computer**.
+4. On a project page, set **My folder** to a folder whose name has a space and an accented letter
+   (make one if you need to, for example `Test Café` inside your Box folder).
+5. Click **Open folder**. Note whether the browser asked first, and whether Finder showed the folder.
+6. Click **Work on this in Claude**. The dialog should name the folder with **Cancel** as the
+   default. Press Return (Cancel) once and check nothing started; then click it again and choose
+   **Start Claude Code**. Note what Terminal shows.
+7. A hostile link: paste this into the browser's address bar, with your Mac user name in place of
+   YOU, and press Return: `mnccore://open//Users/YOU/Applications/MNCCORE%20Launcher.app`
+   It must NOT start anything; you should get a short "did not open this link" message.
+8. Send Nick the log: `~/Library/Logs/mnccore-launcher.log`.
+9. Run uninstall.sh and copy its output into your note. Then open System Settings > Privacy &
+   Security > Automation and check that MNCCORE Launcher is no longer listed.
 
 ## Windows
 

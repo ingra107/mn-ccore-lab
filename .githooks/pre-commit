@@ -234,7 +234,7 @@ fi
 # Steven install. Fires the REAL launcher through its registered powershell.exe command
 # line under DRYRUN, with marker-file injection payloads. Windows only; skips elsewhere.
 if git diff --cached --name-only --diff-filter=ACMR \
-        | grep -qE "^member-launcher/(windows/|member-launcher\.test\.mjs$)"; then
+        | grep -qE "^member-launcher/(windows/|member-launcher\.test\.mjs$|test-harness\.ps1$)"; then
     if ! node member-launcher/member-launcher.test.mjs >/tmp/mnccore-member-launcher-test.$$ 2>&1; then
         grep -E "^\s*not ok|error:" /tmp/mnccore-member-launcher-test.$$ | head -20
         rm -f /tmp/mnccore-member-launcher-test.$$

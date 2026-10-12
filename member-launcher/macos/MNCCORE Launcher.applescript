@@ -27,10 +27,15 @@
 --   6. workon asks in a dialog that names the folder, defaulting to Cancel: the
 --      folder may hold someone else's CLAUDE.md or .claude settings.
 -- The folder reaches a shell only through AppleScript's `quoted form of`
--- (single quotes), so no character in it can become a command. In Terminal,
--- `claude` is looked up from / (never from the project folder) and must resolve
--- to an absolute path, so an executable planted in the folder cannot run even
--- if PATH has an empty or "." entry.
+-- (single quotes), so no character in it can become a command.
+--
+-- The Terminal command (zsh or bash, the macOS default shells) first refuses a
+-- PATH with an empty, "." or relative entry: such an entry means "the current
+-- folder", so once inside the project folder a planted `node` (which the
+-- claude shim runs) or `claude` could run. Then it resolves claude with
+-- `whence -p` (zsh) or `type -P` (bash), which ignore aliases and functions,
+-- from / rather than the project folder, requires an absolute path, and only
+-- then changes into the folder and runs that exact file.
 --
 -- UNTESTED ON A MAC as of 2026-10-12: written on Windows and reviewed line by
 -- line. Tell Nick what you see if it misbehaves.
@@ -43,9 +48,10 @@ use scripting additions
 property launcherTitle : "MNCCORE Launcher"
 property logRelPath : "Library/Logs/mnccore-launcher.log"
 
+-- Launched by a link, macOS sends `open location`; nothing here may show a
+-- dialog first. Opened by hand, there is nothing to do: log it and quit.
 on run
-	activate
-	display dialog "The MNCCORE Launcher is installed. It opens project folders from the MN-CCORE Hub (the Open folder and Work on in Claude buttons). There is nothing to do here." buttons {"OK"} default button 1 with title launcherTitle
+	my writeLog("RUN (opened by hand; nothing to do)")
 end run
 
 on open location theURL
@@ -72,23 +78,31 @@ on writeLog(msg)
 	end try
 end writeLog
 
+-- The code points of t as a list. `id of t` is a number for one character and a
+-- list otherwise; `as list` makes both a list. Works for decomposed accents and
+-- emoji, which `characters of t` + `id of` may not.
+on codePoints(t)
+	if t is "" then return {}
+	return (id of t) as list
+end codePoints
+
 -- Control characters as \x{N}, so one log entry stays one line.
 on printable(t)
 	set out to ""
-	repeat with c in (characters of t)
-		set n to id of (contents of c)
+	repeat with n in my codePoints(t)
+		set n to contents of n
 		if n < 32 or n = 127 then
 			set out to out & "\\x{" & n & "}"
 		else
-			set out to out & (contents of c)
+			set out to out & (character id n)
 		end if
 	end repeat
 	return out
 end printable
 
 on refuseControl(t, what)
-	repeat with c in (characters of t)
-		set n to id of (contents of c)
+	repeat with n in my codePoints(t)
+		set n to contents of n
 		if n < 32 or n = 127 then error (what & " contains a control character.") number 1001
 	end repeat
 end refuseControl
@@ -153,11 +167,9 @@ on handleLink(u)
 		activate
 		display dialog ("Start Claude Code in this folder?" & return & return & realPath & return & return & "Continue only if you just clicked \"Work on this in Claude\" in the MN-CCORE Hub. Claude Code will read the files in this folder, including any CLAUDE.md or .claude settings in it.") buttons {"Cancel", "Start Claude Code"} default button "Cancel" cancel button "Cancel" with title launcherTitle with icon caution
 		my writeLog("WORKON " & realPath)
-		-- Shell text typed into Terminal. `claude` is looked up with / as the
-		-- working directory and must be an absolute path; only then does the shell
-		-- cd into the project folder and run that exact file.
+		-- Shell text typed into Terminal (zsh or bash). See the header.
 		set q to quoted form of realPath
-		set cmd to "cd / && __mnccore_claude=\"$(command -v claude)\"; case \"$__mnccore_claude\" in /*) cd " & q & " && \"$__mnccore_claude\" ;; *) echo 'MNCCORE Launcher: Claude Code (claude) was not found on your PATH. Install it from https://docs.claude.com/en/docs/claude-code/setup and try again.' ;; esac"
+		set cmd to "cd / && case \":$PATH:\" in *::*|*:[!/]*) echo 'MNCCORE Launcher: your PATH has an empty, \".\" or relative entry, so Claude Code was not started (a program in the project folder could run instead). Fix PATH in your shell settings, then try again.' ;; *) __mnccore_claude=\"$(whence -p claude 2>/dev/null || type -P claude 2>/dev/null)\"; case \"$__mnccore_claude\" in /*) cd " & q & " && \"$__mnccore_claude\" ;; *) echo 'MNCCORE Launcher: Claude Code (claude) was not found on your PATH. Install it from https://docs.claude.com/en/docs/claude-code/setup and try again.' ;; esac ;; esac"
 		tell application "Terminal"
 			activate
 			do script cmd

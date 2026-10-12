@@ -57,15 +57,24 @@ if [ -d "$APP" ] || [ "$DRY_RUN" = 1 ]; then
       exit 1
     fi
   fi
-  say "1/4 Unregistering from macOS"
+fi
+# The Terminal permission first, while macOS can still tie the bundle id to the
+# app it belongs to.
+say "1/4 Removing its permission to control Terminal"
+tcc_status=0
+if [ "$DRY_RUN" = 1 ]; then
+  run /usr/bin/tccutil reset AppleEvents "$BUNDLE_ID"
+else
+  /usr/bin/tccutil reset AppleEvents "$BUNDLE_ID" >/dev/null 2>&1 || tcc_status=$?
+fi
+if [ -d "$APP" ] || [ "$DRY_RUN" = 1 ]; then
+  say "2/4 Unregistering from macOS"
   run "$LSREGISTER" -u "$APP"
-  say "2/4 Removing $APP"
+  say "3/4 Removing $APP"
   run rm -rf "$APP"
 else
-  say "1/4 and 2/4: $APP is not there; nothing to remove."
+  say "2/4 and 3/4: $APP is not there; nothing to remove."
 fi
-say "3/4 Removing its permission to control Terminal"
-run /usr/bin/tccutil reset AppleEvents "$BUNDLE_ID"
 say "4/4 Removing its log"
 run rm -f "$LOG"
 
@@ -80,6 +89,13 @@ say "Checking:"
 left=0
 if [ -e "$APP" ]; then say "  STILL THERE: $APP"; left=1; else say "  gone: the app"; fi
 if [ -e "$LOG" ]; then say "  STILL THERE: $LOG"; left=1; else say "  gone: the log"; fi
+if [ "$tcc_status" = 0 ]; then
+  say "  reset: the permission to control Terminal (System Settings > Privacy & Security > Automation no longer lists it)"
+else
+  say "  NOT RESET: the permission to control Terminal (tccutil exit $tcc_status). Remove MNCCORE Launcher under"
+  say "  System Settings > Privacy & Security > Automation by hand."
+  left=1
+fi
 handler="$(current_handler)"
 if [ "$handler" = "$APP" ]; then
   say "  macOS still lists the app for mnccore:// links (Launch Services can lag; it clears at next login)."
