@@ -30,6 +30,50 @@ function tsxPrint(expr, env) {
   return r.stdout.trim().split(/\r?\n/).pop()
 }
 
+describe('journey-watchdog.mjs', () => {
+  const sleeper = 'setTimeout(() => {}, 60000)'
+  const alive = (pid) => { try { process.kill(pid, 0); return true } catch (e) { return e.code === 'EPERM' } }
+  const waitFor = async (pred, ms) => {
+    for (const end = Date.now() + ms; Date.now() < end; await new Promise((r) => setTimeout(r, 200))) if (pred()) return true
+    return pred()
+  }
+
+  it('kills the target tree once the owner is terminated (the orphaned-stack leak)', async () => {
+    const { spawn } = await import('node:child_process')
+    const owner = spawn(process.execPath, ['-e', sleeper], { stdio: 'ignore' })
+    // A shell with a grandchild, like concurrently's cmd.exe -> wrangler -> workerd.
+    const target = spawn(process.execPath, ['-e',
+      `const c=require('child_process').spawn(process.execPath,['-e',${JSON.stringify(sleeper)}],{stdio:'ignore'});` +
+      `console.log(c.pid);${sleeper}`], { stdio: ['ignore', 'pipe', 'ignore'] })
+    const grandchild = Number(await new Promise((r) => target.stdout.once('data', (d) => r(String(d).trim()))))
+    const dog = spawn(process.execPath, ['scripts/journey-watchdog.mjs', String(owner.pid), String(target.pid)],
+      { cwd: ROOT, stdio: 'ignore' })
+    try {
+      await new Promise((r) => setTimeout(r, 1500))
+      assert.ok(alive(target.pid) && alive(grandchild), 'the watchdog killed a stack whose owner is alive')
+      owner.kill('SIGKILL') // TerminateProcess on Windows: no handler in the owner runs
+      assert.ok(await waitFor(() => !alive(target.pid) && !alive(grandchild), 8000), 'stack outlived its owner')
+      assert.ok(await waitFor(() => dog.exitCode !== null, 4000), 'watchdog did not exit')
+    } finally {
+      for (const p of [owner.pid, target.pid, grandchild, dog.pid]) { try { process.kill(p) } catch { /* gone */ } }
+    }
+  })
+
+  it('exits on its own when the target finishes first (a normal run)', async () => {
+    const { spawn } = await import('node:child_process')
+    const owner = spawn(process.execPath, ['-e', sleeper], { stdio: 'ignore' })
+    const target = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 500)'], { stdio: 'ignore' })
+    const dog = spawn(process.execPath, ['scripts/journey-watchdog.mjs', String(owner.pid), String(target.pid)],
+      { cwd: ROOT, stdio: 'ignore' })
+    try {
+      assert.ok(await waitFor(() => dog.exitCode !== null, 5000), 'watchdog outlived a finished target')
+      assert.ok(alive(owner.pid), 'watchdog touched the owner')
+    } finally {
+      for (const p of [owner.pid, dog.pid]) { try { process.kill(p) } catch { /* gone */ } }
+    }
+  })
+})
+
 describe('run-journey-spec.mjs --gate', () => {
   it('runs its own wrangler, vite preview and Playwright on two distinct free ports', () => {
     const p = dryRun('--gate')

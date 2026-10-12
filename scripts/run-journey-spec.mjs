@@ -34,6 +34,7 @@ import { spawn, spawnSync } from 'node:child_process'
 import { createServer } from 'node:net'
 import { existsSync, readdirSync, rmSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const args = process.argv.slice(2)
 const gate = args.includes('--gate')
@@ -126,5 +127,14 @@ const child = spawn(
   ['concurrently', '-k', '-s', 'first', `"${wranglerCmd}"`, `"${viteCmd}"`, `"${playwrightCmd}"`],
   { stdio: 'inherit', shell: true, env },
 )
+
+// concurrently -k only cleans up when this runner finishes normally. If the
+// runner is terminated from outside, Windows leaves the whole stack running
+// (the 2026-10-11 :5173/:8787 leak). A detached watchdog kills the stack's tree
+// once this process is gone; it exits on its own after a normal finish.
+const watchdog = fileURLToPath(new URL('./journey-watchdog.mjs', import.meta.url))
+spawn(process.execPath, [watchdog, String(process.pid), String(child.pid)], {
+  detached: true, stdio: 'ignore', windowsHide: true,
+}).unref()
 
 child.on('exit', (code) => process.exit(code ?? 1))
