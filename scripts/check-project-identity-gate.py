@@ -48,15 +48,17 @@ import re
 import sqlite3
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
 if str(_HERE) not in sys.path:  # run as a file, sys.path[0] is already scripts/
     sys.path.insert(0, str(_HERE))
-from wrangler_d1 import format_wrangler_error  # noqa: E402 -- stdlib-only sibling
+from wrangler_d1 import format_wrangler_error, is_cold_token_failure  # noqa: E402 -- stdlib-only sibling
 SURFACES_JSON = _HERE / "project-identity-surfaces.json"
 STORE_KEY = "hub_d1"
 DB = "mnccore-lab"
+_COLD_TOKEN_RETRY_DELAY_S = 2.0
 
 _PROJECT_ID_COL = re.compile(r"project.*id", re.IGNORECASE)
 _TYPED_PREFIX = "proj_"
@@ -133,6 +135,17 @@ def d1_query(sql: str) -> list[dict]:
                              "--command", sql]
     proc = subprocess.run(cmd, capture_output=True, text=True,
                           cwd=str(_HERE.parent), env=_d1_env())
+    # Cold OAuth token (PB #1293): a wrangler that starts on an expired access
+    # token refreshes it, then its first D1 call is answered "Authentication
+    # error [code: 10000]"; the next process passes. Every first deploy of the
+    # day hit this in this gate (2026-10-11). Retry ONCE, only on that exact
+    # text, and say so; a second failure or any other error fails as before.
+    if is_cold_token_failure(proc.returncode, proc.stdout, proc.stderr):
+        print("[identity-gate] wrangler hit 'Authentication error [code: 10000]' "
+              "on a cold OAuth token; retrying once", file=sys.stderr)
+        time.sleep(_COLD_TOKEN_RETRY_DELAY_S)
+        proc = subprocess.run(cmd, capture_output=True, text=True,
+                              cwd=str(_HERE.parent), env=_d1_env())
     if proc.returncode != 0:
         # The message shape (stdout payload included, explicit when both
         # streams are empty) is shared with scripts/wrangler_d1.py -- PB

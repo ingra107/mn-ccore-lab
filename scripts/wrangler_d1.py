@@ -128,6 +128,16 @@ def _stripped_env() -> dict[str, str]:
 _COLD_TOKEN_ERROR = "Authentication error [code: 10000]"
 
 
+def is_cold_token_failure(returncode: int, stdout: str | None, stderr: str | None) -> bool:
+    """True for the one failure worth a rerun: the cold-OAuth-token 401.
+
+    Looked for on BOTH streams -- `--json` commands print the error payload on
+    stdout. Shared with scripts/check-project-identity-gate.py so the gate and
+    run_wrangler cannot drift on what counts as cold (PB #1293).
+    """
+    return returncode != 0 and _COLD_TOKEN_ERROR in ((stderr or "") + (stdout or ""))
+
+
 def _run_once(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
     return subprocess.run(
         cmd,
@@ -168,9 +178,7 @@ def run_wrangler(argv: Sequence[str], *, timeout: int = 120) -> WranglerResult:
     # stderr (the #416 shape) -- so the cold-token text is looked for on both.
     # Measured on the first deploy after the retry shipped: the predeploy
     # identity gate hit code 10000 on stdout and the stderr-only test missed it.
-    if proc.returncode != 0 and _COLD_TOKEN_ERROR in (
-        (proc.stderr or "") + (proc.stdout or "")
-    ):
+    if is_cold_token_failure(proc.returncode, proc.stdout, proc.stderr):
         first = proc
         proc = _run_once(cmd, timeout)
         if proc.returncode != 0:
