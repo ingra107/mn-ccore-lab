@@ -3,7 +3,6 @@ import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import { Button } from '../components/ui/Button'
-import { stageIndex, toApiStage } from '../lib/stageNormalize'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft,
@@ -74,31 +73,19 @@ import ProjectDocuments from './project/ProjectDocuments'
 import { PATHS } from '../constants/paths'
 import { CATEGORY_OPTIONS } from '../constants/categories'
 import { LABEL_STYLE, LABEL_ICON_COLOR } from '../components/ui/labelStyle'
-import { STATUS_LIST_OPTIONS, stageListOptions, mutedCategoryOptions, LIST_T3 } from '../lib/projectListOptions'
+import { STATUS_LIST_OPTIONS, mutedCategoryOptions, LIST_T3 } from '../lib/projectListOptions'
 import { useOpenParam } from '../hooks/useOpenParam'
 import EmptyStateArt from '../components/EmptyStateArt'
 import EmptyState from '../components/EmptyState'
 import { ICON_PROPS } from '../lib/iconProps'
 import { projectShortLabel } from '../lib/displayNames'
 import SectionHead from '../components/ui/SectionHead'
+import ProjectProducts from '../components/project/ProjectProducts'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
 
 // P2-5: notes + comments collapsed into the single chronological `activity`
 // stream (Notes / Comments / All are filters over it, not separate tabs).
 type Tab = 'overview' | 'tasks' | 'meetings' | 'files' | 'activity' | 'revisions' | 'literature'
-
-// Values are D1 lowercase canonical; labels are Title Case for display.
-const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
-type Stage = (typeof STAGES)[number]
-const STAGE_LABELS: Record<Stage, string> = {
-  idea: 'Idea',
-  data_collection: 'Data Collection',
-  analysis: 'Analysis',
-  writing: 'Writing',
-  review: 'Review',
-  revisions: 'Revisions',
-  published: 'Published',
-}
 
 export default function ProjectDetail() {
   const { slug } = useParams<{ slug: string }>()
@@ -396,10 +383,6 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [strategicDraft, setStrategicDraft] = useState(project.strategic_context ?? '')
   const { data: apiMeetings = [] } = useMeetingsApi()
 
-  // Brain.db's granular stages map onto the 6 canonical strip stages
-  // (lib/stageNormalize). P2-R2-14.
-  const currentStageIndex = stageIndex(project.stage)
-
   // Inline editing
   const [editingDescription, setEditingDescription] = useState(false)
   const [descExpanded, setDescExpanded] = useState(false)
@@ -556,18 +539,6 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [agendaMeetingPick, setAgendaMeetingPick] = useState<string | null>(null)
   const agendaMeeting = projectMeetings.upcoming.find((m) => m.id === agendaMeetingPick) ?? projectMeetings.upcoming[0] ?? null
   const addAgenda = useAddAgendaItem(agendaMeeting?.id ?? '')
-
-  // S17 (2026-06-09): instant write + 5s undo, matching Projects/Manuscripts.
-  // Stage writes go through toApiStage() (Rule 35) — the API 400s on
-  // non-canonical values and silently reverts the optimistic update.
-  function handleStageChange(stage: Stage) {
-    if (stage === project.stage) return
-    const prevStage = project.stage ?? 'idea'
-    d1Update.mutate({ stage: toApiStage(stage) })
-    showUndo(`Stage → ${STAGE_LABELS[stage]}`, () =>
-      d1Update.mutate({ stage: toApiStage(prevStage) }),
-    )
-  }
 
   function handleDescSave() {
     setEditingDescription(false)
@@ -812,7 +783,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           </div>
         </div>
 
-        {/* Meta row: category, PI, status, stage, agenda button — all inline-editable */}
+        {/* Meta row: category, PI, status, agenda button — all inline-editable */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5">
             <CategoryIcon category={project.category || 'MNCCORE'} size={14} color={LIST_T3} />
@@ -831,24 +802,16 @@ function ProjectDetailInner({ project }: InnerProps) {
             onChange={(slug) => d1Update.mutate({ pi: slug } as Partial<Project>)}
           />
 
-          {/* Divider only where status + stage share the line with group + PI. */}
+          {/* Divider only where status shares the line with group + PI. */}
           <div className="hidden md:block" style={{ width: '1px', height: '16px', background: 'var(--border-subtle)' }} />
 
-          {/* Status and stage stay together (nowrap) so a narrow screen breaks
-              between the two pairs and never leaves stage alone on a line. */}
-          <div className="flex items-center gap-3 flex-nowrap" style={{ flexShrink: 0 }}>
-            <InlineSelect
-              value={project.status || 'active'}
-              options={STATUS_LIST_OPTIONS}
-              onChange={(val) => d1Update.mutate({ status: val } as Partial<Project>)}
-            />
-
-            <InlineSelect
-              value={project.stage || 'idea'}
-              options={stageListOptions(STAGES, STAGE_LABELS)}
-              onChange={(val) => handleStageChange(val as Stage)}
-            />
-          </div>
+          {/* The project has no stage of its own: each product carries its stage
+              (Products section below). */}
+          <InlineSelect
+            value={project.status || 'active'}
+            options={STATUS_LIST_OPTIONS}
+            onChange={(val) => d1Update.mutate({ status: val } as Partial<Project>)}
+          />
 
           {isAuthenticated && agendaMeeting && (
             <button
@@ -1409,7 +1372,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
       {/* Project Timeline removed 2026-04-23 — vertical wall of non-interactive
           visuals took up screen real estate without supporting any "doing"
-          action. Stage indicator below is the canonical interactive stage UI. */}
+          action. The Products section below carries each product's stage. */}
 
       {/* Strategic Context — Why This Matters Now.
           N1b — de-boxed: the gold band violated the box budget (composer is
@@ -1529,116 +1492,15 @@ function ProjectDetailInner({ project }: InnerProps) {
         </div>
       )}
 
-      {/* Stage indicator */}
+      {/* Products: each carries its own kind and stage (replaces the project stage strip) */}
       <motion.div
         id="overview"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, delay: 0.1 }}
-        style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
+        style={{ scrollMarginTop: '60px' }}
       >
-        <SectionHead title="Stage" />
-        <div className="flex items-center gap-0" style={{ position: 'relative' }}>
-          {/* Connecting line */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '16px',
-              right: '16px',
-              height: '2px',
-              background: 'var(--sk-line2)',
-              transform: 'translateY(-50%)',
-              zIndex: 'var(--z-base)',
-            }}
-          />
-          {/* Progress fill */}
-          {currentStageIndex >= 0 && (
-            <motion.div
-              layout
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '16px',
-                width: `${(currentStageIndex / (STAGES.length - 1)) * (100 - 6)}%`,
-                height: '2px',
-                background: 'var(--job-accent)',
-                transform: 'translateY(-50%)',
-                zIndex: 'var(--z-base)',
-              }}
-              transition={{ duration: 0.25, ease: 'easeInOut' }}
-            />
-          )}
-          {STAGES.map((stage, i) => {
-            const isCurrent = i === currentStageIndex
-            const isPast = i < currentStageIndex
-            const isFuture = i > currentStageIndex
-            return (
-              <div
-                key={stage}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  position: 'relative',
-                  zIndex: 'var(--z-sticky)',
-                }}
-              >
-                <motion.button
-                  type="button"
-                  onClick={() => handleStageChange(stage)}
-                  // N1.16: .stage-dot exempts this from the blanket 44px mobile
-                  // button min-height (which stretched the dots into tall
-                  // ellipses); a ::before pseudo restores the touch target.
-                  className="cursor-pointer stage-dot tip"
-                  style={{
-                    width: isCurrent ? '20px' : '14px',
-                    height: isCurrent ? '20px' : '14px',
-                    borderRadius: 'var(--radius-circle)',
-                    border: isCurrent
-                      ? '3px solid var(--job-accent)'
-                      : isPast
-                        ? '2px solid var(--job-accent)'
-                        // A future stage is a hollow gray ring on the card color: the
-                        // old --ice ring on white vanished on the light page (prod7).
-                        : '2px solid var(--sk-t3)',
-                    background: isCurrent
-                      ? 'var(--job-accent)'
-                      : isPast
-                        ? 'var(--job-accent)'
-                        : 'var(--sk-card)',
-                    transition: 'all 0.2s ease',
-                    padding: 0,
-                  }}
-                  whileHover={{ scale: 1.3 }}
-                  whileTap={{ scale: 0.9 }}
-                  data-tip={`Move to ${STAGE_LABELS[stage]}`}
-                  aria-label={`Move to ${STAGE_LABELS[stage]}`}
-                />
-                <span
-                  className={`project-stage-label${isCurrent ? ' is-current' : ''} tip`}
-                  data-tip={STAGE_LABELS[stage]}
-                  style={{
-                    fontSize: '10px',
-                    color: isCurrent ? 'var(--job-accent)' : isFuture ? 'var(--slate)' : 'var(--ink)',
-                    opacity: isCurrent ? 1 : isFuture ? 0.85 : 0.85,
-                    fontWeight: isCurrent ? 700 : 400,
-                    marginTop: 'var(--sp-sm)',
-                    textAlign: 'center',
-                    lineHeight: 1.2,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {STAGE_LABELS[stage]}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* S17: confirmation banner removed — stage change is now instant +
-            5s undo (handleStageChange), matching Projects/Manuscripts. */}
+        {project.id ? <ProjectProducts projectId={project.id} slug={project.slug} /> : null}
       </motion.div>
 
       {/* Details section */}
@@ -2164,18 +2026,6 @@ function ProjectDetailInner({ project }: InnerProps) {
            dark mode), rendering the fade as an opaque white smear over the
            last tabs. var(--cream) in the base rule is a bg token that flips
            with the theme, so no dark override is needed. */
-        /* N1.16 — PD-15's 44px ellipsis made every label an ambiguous
-           fragment ("Data C…", "Revisio…"). Phones now show ONLY the current
-           stage's full label; the other dots keep their title tooltips. */
-        @media (max-width: 480px) {
-          .project-stage-label {
-            display: none;
-          }
-          .project-stage-label.is-current {
-            display: block;
-            max-width: none;
-          }
-        }
       `}</style>
     </>
   )

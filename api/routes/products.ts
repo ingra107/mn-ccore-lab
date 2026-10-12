@@ -10,8 +10,10 @@
 // GET /api/projects/:slug/products
 //   Team-facing: the live products of one project the caller can see
 //   (assertProjectVisible, membership), with each stage's label and the
-//   kind's labels, ordered home first then sort_order. What the product UI
-//   (plan step 8) reads.
+//   kind's labels, ordered home first then sort_order, plus `kinds`: every
+//   live kind with its ladder, so the UI draws a ladder and offers "add a
+//   product" without a copy of the kind data. What the product UI (plan
+//   step 8) reads.
 //
 // Decision: PB Context/Decisions/2026-10-11-projects-hold-products.md.
 
@@ -81,12 +83,29 @@ export async function handleGetProjectProducts(
             s.ordinal AS stage_ordinal, s.is_terminal AS stage_is_terminal,
             p.title, p.short_name, p.waiting_on, p.venue, p.due_date, p.deadline,
             p.folder, p.repo_url, p.stage_entered_at, p.stage_notes, p.sort_order,
-            p.is_home, p.grew_from_id, p.created_at, p.updated_at
+            p.is_home, p.lineage_rank, p.grew_from_id, p.created_at, p.updated_at
        FROM products p
        JOIN product_kinds k ON k.kind = p.kind
        JOIN product_stages s ON s.kind = p.kind AND s.stage = p.stage
       WHERE p.project_id = ? AND p.deleted_at IS NULL
       ORDER BY p.is_home DESC, p.sort_order, p.id`,
   ).bind(project.id).all<Record<string, unknown>>();
-  return json({ products: results ?? [] });
+  const kinds = await env.DB.prepare(
+    `SELECT kind, label, plural_label, has_page, can_fund, sort_order
+       FROM product_kinds WHERE deleted_at IS NULL ORDER BY sort_order, kind`,
+  ).all<Record<string, unknown>>();
+  const stages = await env.DB.prepare(
+    `SELECT kind, stage, label, ordinal, is_terminal
+       FROM product_stages WHERE deleted_at IS NULL ORDER BY kind, ordinal`,
+  ).all<Record<string, unknown>>();
+  const ladders = new Map<string, Record<string, unknown>[]>();
+  for (const s of stages.results ?? []) {
+    const list = ladders.get(s.kind as string) ?? [];
+    list.push({ stage: s.stage, label: s.label, ordinal: s.ordinal, is_terminal: s.is_terminal });
+    ladders.set(s.kind as string, list);
+  }
+  return json({
+    products: results ?? [],
+    kinds: (kinds.results ?? []).map((k) => ({ ...k, stages: ladders.get(k.kind as string) ?? [] })),
+  });
 }

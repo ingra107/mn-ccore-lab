@@ -3,6 +3,10 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-10-12 — Products on the project page
+
+The project page has a Products section where the Stage strip was. One product shows its stage ladder; two or more show chips (name and stage), and "All" is the list grouped by kind. The PI sets a product's stage on its ladder, adds a product (kind, then a stage from that kind's ladder, optional "grew from" inside the project) and hands the home marker to another product; every write is a `products` mutation through `/api/mutations`. Team members see the products but no controls, because `/api/mutations` is PI-only. `GET /api/projects/:slug/products` now also returns `lineage_rank` and every kind with its ladder (`kinds`). The project page's own stage select and strip are gone; the Projects and Manuscripts stage controls remain and still forward to a single product.
+
 ## 2026-10-10 — review/ out of the tree; publications out of the prod bundle
 
 `review/` is no longer tracked: 3,815 audit captures (screenshots, videos, reports) left the index and `.gitignore` now ignores the whole folder in one line instead of 29 sub-patterns. History keeps every file at 133a8e74 (`git show 133a8e74:review/<path>`), and the docs that cite one now say `@133a8e74`. Anything under `review/` that was never committed (the Design System exports, `edge-fix-0610`, the handoff folders) lives only on the machine that made it. The prod `useApiData` chunk dropped from 94.5 KB to 7.6 KB gzip: the dev-only publications fallback was a static import, and `data/publications.ts` calls `mergePublications()` at module top level over the 358 KB generated list, so the bundler kept it. It is now a dynamic import inside `if (import.meta.env.DEV)`.
