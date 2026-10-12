@@ -19,7 +19,6 @@ import {
   X,
   Check,
   Link2,
-  FolderOpen,
   MoreVertical,
   Archive,
   Trash2,
@@ -191,6 +190,11 @@ export default function ProjectDetail() {
 
 interface InnerProps {
   project: Project
+}
+
+/** A path the mnccore:// launcher can open: a drive path, ~ path or file:// URL. */
+function isLocalFolder(folder: string | null | undefined): folder is string {
+  return !!folder && /^(file:\/\/|[A-Za-z]:[\\/]|~[\\/])/.test(folder.trim())
 }
 
 function ProjectDetailInner({ project }: InnerProps) {
@@ -1159,17 +1163,10 @@ function ProjectDetailInner({ project }: InnerProps) {
           {/* Right column (1/3): Links (top) + Recent Activity (bottom) */}
           <div className="lg:col-span-1 flex flex-col gap-4">
             {/* Local launch — Open folder + Work on this in Claude (mnccore://).
-                Only when the project has a working folder. */}
-            {project.primary_folder && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <FolderOpen {...ICON_PROPS} size={13} style={{ color: LABEL_ICON_COLOR }} />
-                  <span style={LABEL_STYLE}>
-                    On this machine
-                  </span>
-                </div>
-                <WorkOnActions primaryFolder={project.primary_folder} projectLabel={projectShortLabel(project)} />
-              </div>
+                The launcher lives only on the PI's laptops and opens only a local
+                path, so a web link (a Box URL) or a member's view shows nothing. */}
+            {isPi && isLocalFolder(project.primary_folder) && (
+              <WorkOnActions primaryFolder={project.primary_folder} projectLabel={projectShortLabel(project)} />
             )}
             {/* Members (#145) -- projects work like channels: you see one only if you are on it. */}
             {isAuthenticated && (project.slug ?? project.id) && (
