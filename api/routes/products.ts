@@ -22,15 +22,16 @@ import type { Env } from '../types';
 import { json, error, isPiRequest, generateId } from '../helpers';
 import type { AuthUser } from '../helpers';
 import { applyMutation, hashTouched } from './mutations';
+import { activityVisibilityGate } from '../lib/activity-entry';
 
-/** Columns PB's cache holds (PB scripts/db/migrations/144_products.sql + 146). */
+/** Columns PB's cache holds (PB scripts/db/migrations/144_products.sql + 146 + 147). */
 const SYNC_COLS: Record<'products' | 'product_funding', string> = {
   products: [
     'id', 'project_id', 'kind', 'stage', 'title', 'short_name', 'waiting_on',
     'venue', 'due_date', 'deadline', 'folder', 'repo_url', 'stage_entered_at',
     'stage_notes', 'sort_order', 'is_home', 'lineage_rank', 'grew_from_id',
     'grew_from_rank', 'deleted_at', 'seq', 'last_mutation_id', 'created_at', 'updated_at',
-    'period_start', 'period_end', 'amount_usd',
+    'period_start', 'period_end', 'amount_usd', 'description',
   ].join(', '),
   product_funding: [
     'id', 'product_id', 'funder_id', 'funder_kind', 'deleted_at', 'seq',
@@ -78,7 +79,7 @@ export const PRODUCT_LIST_SQL = `SELECT p.id, p.project_id, p.kind, k.label AS k
             p.title, p.short_name, p.waiting_on, p.venue, p.due_date, p.deadline,
             p.folder, p.repo_url, p.stage_entered_at, p.stage_notes, p.sort_order,
             p.is_home, p.lineage_rank, p.grew_from_id, p.seq, p.created_at, p.updated_at,
-            p.period_start, p.period_end, p.amount_usd
+            p.period_start, p.period_end, p.amount_usd, p.description
        FROM products p
        JOIN product_kinds k ON k.kind = p.kind
        JOIN product_stages s ON s.kind = p.kind AND s.stage = p.stage`;
@@ -158,6 +159,13 @@ export async function handleGetAllProjectProducts(env: Env): Promise<Response> {
 //       CHECKs each term against the kind.
 //   { action: 'milestone', product_id, title, due_date?, deadline? }
 //       A post-award milestone: a kind='milestone' task on the product.
+//   { action: 'describe', product_id, description }
+//       The product's own text, under the project description (schema-v131).
+//       Empty clears it.
+//   { action: 'tag', item: 'file'|'revision'|'activity', id, product_id|null }
+//       Re-tag a project item with one of the project's products, or null for
+//       project-wide (schema-v131). A file, a revision or a project-entity
+//       activity entry of THIS project only.
 //   { action: 'add', kind, stage, name?, grew_from_id? }
 //       grew_from_id must be a live product of the same project; the lineage
 //       ranks are derived here, never taken from the client.
@@ -300,6 +308,55 @@ export async function handleProjectProductWrite(
         status: row.status, completed: row.completed, product_id: row.product_id, seq: row.seq,
       } });
     }
+  } else if (body.action === 'describe') {
+    const product = await ownProduct(body.product_id);
+    if (!product) return error('Product not found in this project', 404);
+    const raw = body.description;
+    if (raw !== null && raw !== undefined && typeof raw !== 'string') return error('description must be text', 400);
+    const text = typeof raw === 'string' ? raw.trim() : '';
+    if (text.length > 4000) return error('A product description is 4000 characters or fewer.', 400);
+    recordId = product.id;
+    result = await applyMutation(env, {
+      table: 'products', record_id: product.id, op: 'update', patch: { description: text || null },
+      route: PRODUCT_WRITE_ROUTE, user,
+    });
+  } else if (body.action === 'tag') {
+    const product = body.product_id === null || body.product_id === undefined || body.product_id === ''
+      ? null : await ownProduct(body.product_id);
+    if (body.product_id && !product) return error('Product not found in this project', 404);
+    if (typeof body.id !== 'string' || !body.id) return error('id required', 400);
+    const pid = product?.id ?? null;
+    const slugRow = await env.DB.prepare('SELECT slug FROM projects WHERE id = ?').bind(project.id).first<{ slug: string | null }>();
+    const slug = slugRow?.slug ?? project.id;
+    let changed = 0;
+    if (body.item === 'file') {
+      const r = await env.DB.prepare(
+        `UPDATE file_attachments SET product_id = ?
+          WHERE id = ? AND entity_type = 'project' AND (entity_id = ? OR entity_id = ?)`
+      ).bind(pid, body.id, project.id, slug).run();
+      changed = r.meta?.changes ?? 0;
+    } else if (body.item === 'revision') {
+      const r = await env.DB.prepare(
+        'UPDATE manuscript_revisions SET product_id = ? WHERE id = ? AND (project_id = ? OR project_id = ?)'
+      ).bind(pid, body.id, project.id, slug).run();
+      changed = r.meta?.changes ?? 0;
+    } else if (body.item === 'activity') {
+      // Only an entry the caller may see (an author-only note is not theirs to move).
+      const vis = await activityVisibilityGate(request, env, 'ae');
+      // activity-hidden-exempt: re-tag target lookup; a dismissed entry may still be re-tagged.
+      const visible = await env.DB.prepare(
+        `SELECT ae.id FROM activity_entries ae
+          WHERE ae.id = ? AND ae.entity_type = 'project' AND ae.project_id = ? AND ${vis.clause}`
+      ).bind(body.id, project.id, ...vis.binds).first<{ id: string }>();
+      if (visible) {
+        const r = await env.DB.prepare('UPDATE activity_entries SET product_id = ? WHERE id = ?').bind(pid, body.id).run();
+        changed = r.meta?.changes ?? 0;
+      }
+    } else {
+      return error("item must be 'file', 'revision' or 'activity'", 400);
+    }
+    if (changed === 0) return error('That item is not in this project.', 404);
+    return json({ tagged: { item: body.item, id: body.id, product_id: pid } });
   } else if (body.action === 'add') {
     if (typeof body.kind !== 'string' || typeof body.stage !== 'string') return error('kind and stage required', 400);
     if (!(await onLadder(body.kind, body.stage))) return error('That kind and stage do not go together.', 400);
@@ -319,7 +376,7 @@ export async function handleProjectProductWrite(
       route: PRODUCT_WRITE_ROUTE, user,
     });
   } else {
-    return error("action must be 'stage', 'home', 'terms', 'milestone' or 'add'", 400);
+    return error("action must be 'stage', 'home', 'terms', 'milestone', 'describe', 'tag' or 'add'", 400);
   }
 
   if (result.status !== 'accepted' && result.status !== 'merged_clean') {
@@ -339,6 +396,7 @@ export async function handleProjectProductWrite(
       stage_entered_at: row.stage_entered_at, lineage_rank: row.lineage_rank, grew_from_id: row.grew_from_id,
       venue: row.venue ?? null, due_date: row.due_date ?? null, deadline: row.deadline ?? null,
       period_start: row.period_start ?? null, period_end: row.period_end ?? null, amount_usd: row.amount_usd ?? null,
+      description: row.description ?? null,
     },
   });
 }

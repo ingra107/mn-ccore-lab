@@ -510,7 +510,7 @@ export function updateProject(id: string, fields: Record<string, unknown>) {
   })
 }
 
-export function addProjectComment(id: string, comment: { content: string; author: string }) {
+export function addProjectComment(id: string, comment: { content: string; author: string; product_id?: string | null }) {
   return fetchApi<{ id: string }>(`/api/projects/${id}/comments`, {
     method: 'POST',
     body: JSON.stringify(comment),
@@ -796,6 +796,8 @@ export interface RevisionRow {
   status: string
   journal: string | null
   notes: string | null
+  /** schema-v131: the product this round belongs to; null = project-wide. */
+  product_id?: string | null
   created_at: string
   // Aggregated from JOIN
   comment_count?: number
@@ -878,6 +880,7 @@ export function createRevision(input: {
   status?: string
   journal?: string
   notes?: string
+  product_id?: string | null
 }) {
   return fetchApi<RevisionRow>('/api/revisions', {
     method: 'POST',

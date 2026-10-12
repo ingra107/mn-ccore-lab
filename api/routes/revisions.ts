@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, assertProjectVisible } from '../helpers';
+import { json, error, generateId, logActivity, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { withProjectWrite, withExistingRowProject } from '../lib/route-guards';
 import { hiddenResource } from '../lib/hidden-resource';
 
@@ -16,16 +16,19 @@ export async function handleGetRevisions(url: URL, request: Request, env: Env): 
   const block = await assertProjectVisible(request, env, projectId);
   if (block) return block;
 
+  // The page asks by slug; rounds are stored under the typed PK. Match either.
+  const canonicalId = (await projectRefToCanonical(env, projectId)) ?? projectId;
+
   const revisions = await env.DB.prepare(`
     SELECT r.*,
       COUNT(c.id) as comment_count,
       SUM(CASE WHEN c.status IN ('done', 'wont_fix') THEN 1 ELSE 0 END) as resolved_count
     FROM manuscript_revisions r
     LEFT JOIN reviewer_comments c ON c.revision_id = r.id
-    WHERE r.project_id = ?
+    WHERE r.project_id IN (?, ?)
     GROUP BY r.id
     ORDER BY r.round ASC
-  `).bind(projectId).all();
+  `).bind(canonicalId, projectId).all();
 
   return json({ data: revisions.results || [], count: revisions.results?.length || 0 });
 }
@@ -47,6 +50,8 @@ export async function handleCreateRevision(request: Request, user: AuthUser, env
     journal?: string;
     notes?: string;
     reviewer_comments?: string;
+    /** schema-v131: the product this round belongs to; omit for project-wide. */
+    product_id?: string | null;
   };
 
   const rawBody = await request.json() as CreateBody;
@@ -78,10 +83,19 @@ export async function handleCreateRevision(request: Request, user: AuthUser, env
     // + UI create form both send this name).
     const notes = b.notes ?? b.reviewer_comments ?? null;
 
+    let productId: string | null = null;
+    if (b.product_id) {
+      const prod = await e.DB.prepare(
+        'SELECT id FROM products WHERE id = ? AND project_id = ? AND deleted_at IS NULL'
+      ).bind(b.product_id, projectId).first<{ id: string }>();
+      if (!prod) return error('That product is not in this project.', 400);
+      productId = prod.id;
+    }
+
     const id = generateId();
     await e.DB.prepare(`
-      INSERT INTO manuscript_revisions (id, project_id, round, submitted_at, response_due, status, journal, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO manuscript_revisions (id, project_id, round, submitted_at, response_due, status, journal, notes, product_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       id,
       projectId,
@@ -91,6 +105,7 @@ export async function handleCreateRevision(request: Request, user: AuthUser, env
       status,
       b.journal || null,
       notes,
+      productId,
     ).run();
 
     const actor = user.slug;

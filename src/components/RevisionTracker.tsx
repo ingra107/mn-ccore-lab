@@ -38,6 +38,9 @@ import EmptyState from './EmptyState'
 import { getStatusBg, getStatusColor } from '../lib/statusColors'
 import { ICON_PROPS } from '../lib/iconProps'
 import { Button } from './ui/Button'
+import { scopeByProduct, type ProductRow } from '../lib/products'
+import { useTagItem } from '../hooks/useProjectProducts'
+import ProductTag from './project/ProductTag'
 
 // ── Constants ──
 
@@ -71,12 +74,20 @@ const COMMENT_STATUS_ICON: Record<string, typeof Circle> = {
 
 interface RevisionTrackerProps {
   projectId: string
+  /** The project's live products and the chip selected: under a chip, that
+   *  product's rounds come first, then project-wide ones; a new round is tagged
+   *  with the chip. A member (canTag) re-tags a round with its select. */
+  products?: ProductRow[]
+  productId?: string | null
+  canTag?: boolean
 }
 
 // ── Main Component ──
 
-export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
-  const { data: revisions = [], isLoading } = useRevisions(projectId)
+export default function RevisionTracker({ projectId, products = [], productId = null, canTag = false }: RevisionTrackerProps) {
+  const { data: allRevisions = [], isLoading } = useRevisions(projectId)
+  const revisions = scopeByProduct(allRevisions, productId, products)
+  const tagItem = useTagItem(projectId)
   const createRevision = useCreateRevision(projectId)
   const updateRevision = useUpdateRevision(projectId)
   const { showUndo } = useUndoToast()
@@ -91,6 +102,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
   function handleAddRound() {
     createRevision.mutate({
       project_id: projectId,
+      ...(productId ? { product_id: productId } : {}),
       journal: newJournal || undefined,
       response_due: newResponseDue || undefined,
     })
@@ -247,6 +259,15 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.15, delay: idx * 0.03 }}
               >
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <ProductTag
+                    productId={rev.product_id}
+                    products={products}
+                    itemLabel={`round ${rev.round}`}
+                    onChange={canTag ? (pid) => tagItem.mutate({ item: 'revision', id: rev.id, productId: pid }) : undefined}
+                    testId={`revision-product-${rev.id}`}
+                  />
+                </div>
                 <RevisionRound
                   revision={rev}
                   projectId={projectId}

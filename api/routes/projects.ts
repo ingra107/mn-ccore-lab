@@ -463,6 +463,7 @@ export async function handleGetProjectActivity(idOrSlug: string, request: Reques
   // reply genuinely means the project was worked on.
   const result = await env.DB.prepare(
     `SELECT ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.kind, ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type, ae.metadata_json, ae.parent_id, ae.hidden_at, ae.created_at,
+            CASE WHEN ae.entity_type = 'task' THEN t.product_id ELSE ae.product_id END AS product_id,
             CASE WHEN ae.entity_type = 'task' THEN COALESCE(t.short_title, t.title) END AS task_title,
             ${rs.sql}
      FROM activity_entries ae
@@ -1013,7 +1014,7 @@ export async function handleAddComment(
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
-  const body = await request.json() as { content?: string; author_slug?: string };
+  const body = await request.json() as { content?: string; author_slug?: string; product_id?: string | null };
 
   if (!body.content || body.content.trim().length === 0) {
     return error('Comment content is required', 400);
@@ -1052,6 +1053,7 @@ export async function handleAddComment(
     body: body.content,
     actorSlug: actor.slug,
     projectSlug: project.slug ?? null,
+    productId: body.product_id ?? null,
   });
   if (!posted.ok) return error(posted.error, posted.status);
 
@@ -1061,7 +1063,7 @@ export async function handleAddComment(
 
 // POST /api/projects/:slug/updates — post project update
 export async function handlePostProjectUpdate(slug: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { content: string; update_type?: string; author?: string; source_table?: string | null; source_id?: string | null };
+  const body = await request.json() as { content: string; update_type?: string; author?: string; source_table?: string | null; source_id?: string | null; product_id?: string | null };
   if (!body.content) return error('content required', 400);
 
   // A project the caller is not on is a 403 (assertProjectVisible).
@@ -1099,6 +1101,7 @@ export async function handlePostProjectUpdate(slug: string, request: Request, us
     projectSlug: slug,
     sourceTable: srcKey.sourceTable,
     sourceId: srcKey.sourceId,
+    productId: body.product_id ?? null,
   });
   if (!posted.ok) return error(posted.error, posted.status);
 

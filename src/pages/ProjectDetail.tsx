@@ -80,7 +80,9 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { projectShortLabel } from '../lib/displayNames'
 import SectionHead from '../components/ui/SectionHead'
 import ProjectProducts from '../components/project/ProjectProducts'
+import ProductDescription from '../components/project/ProductDescription'
 import { pairFields } from '../lib/projectPairs'
+import { scopeByProduct } from '../lib/products'
 import { useProjectProducts } from '../hooks/useProjectProducts'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
 
@@ -270,7 +272,12 @@ function ProjectDetailInner({ project }: InnerProps) {
     else next.delete('product')
     setSearchParams(next, { replace: true })
   }, [searchParams, setSearchParams])
-  const scopedTasks = productFilter ? projectTasks.filter((t) => t.product_id === productFilter) : projectTasks
+  const productList = productData?.products ?? []
+  const selectedProduct = productFilter ? productList.find((p) => p.id === productFilter) ?? null : null
+  // The product read answered: the caller is a member of this project (or the PI).
+  const canTagItems = !!productData
+  // Tasks with no product (or one that is no longer live) are project-wide: they follow the product's own.
+  const scopedTasks = productFilter ? scopeByProduct(projectTasks, productFilter, productList) : projectTasks
   const pendingTasks = scopedTasks.filter((t) => !t.completed)
   const completedTasks = scopedTasks.filter((t) => t.completed)
 
@@ -1305,6 +1312,8 @@ recentActivity.length === 0 ? (
             }}
             className="detail-card"
           >
+            {/* The selected product's own description sits above the project's. */}
+            {selectedProduct && <ProductDescription slug={project.slug} product={selectedProduct} canEdit={canTagItems} />}
             {/* Description — inline editable */}
             <div style={{ marginBottom: 'var(--sp-lg)' }}>
               <label
@@ -1315,6 +1324,7 @@ recentActivity.length === 0 ? (
                 }}
               >
                 Description
+                {selectedProduct && <span data-testid="project-description-marker" style={{ marginLeft: 8, fontSize: 11, color: 'var(--sk-t3)' }}>project</span>}
               </label>
               {editingDescription ? (
                 <textarea
@@ -1509,7 +1519,7 @@ recentActivity.length === 0 ? (
             </span>
           </div>
           <div style={{ borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
-            <FileUpload entityType="project" entityId={project.slug} />
+            <FileUpload entityType="project" entityId={project.slug} products={productList} productId={productFilter} canTag={canTagItems} />
           </div>
           <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: 'var(--sp-sm)' }}>
             Drop a file or click to upload. Attachments are stored on R2 and searchable via the Search page.
@@ -1659,7 +1669,7 @@ recentActivity.length === 0 ? (
 
           {/* Existing revision tracker (reviewer comments) */}
           <div className="table-container" style={{ padding: '16px 20px', marginBottom: '2rem' }}>
-            <RevisionTracker projectId={project.slug} />
+            <RevisionTracker projectId={project.slug} products={productList} productId={productFilter} canTag={canTagItems} />
           </div>
         </div>
       )}
@@ -1733,7 +1743,7 @@ recentActivity.length === 0 ? (
             ))}
           </div>
 
-          <ActivityStream project={project} filter={streamFilter} onOpenTask={openTaskInPlace} />
+          <ActivityStream project={project} filter={streamFilter} onOpenTask={openTaskInPlace} products={productList} productId={productFilter} canTag={canTagItems} />
 
           {/* Project decisions + dependencies management surfaces — shown only in
               the unfiltered ('all') view; their items already appear inline in

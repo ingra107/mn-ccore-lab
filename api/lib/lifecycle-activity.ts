@@ -363,6 +363,8 @@ export async function emitLifecycleActivity(
         sourceId: `${mut.mutation_id}:${ev.event}`,
         metadata: { event: ev.event, lifecycle: true },
         ...(taskProjectId !== undefined ? { taskProjectId } : {}),
+        // schema-v131: a product's stage / added / home line belongs to that product.
+        ...(mut.table === 'products' ? { productId: mut.record_id } : {}),
       });
       if (!r.ok) console.error('emitLifecycleActivity: postActivityEntry failed:', r.error);
     }

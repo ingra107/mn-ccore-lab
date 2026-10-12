@@ -156,6 +156,8 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
     sizeBytes: number;
     entityType: string;
     entityId: string;
+    /** schema-v131: tag a project file with one of the project's products; omit for project-wide. */
+    productId?: string | null;
   };
 
   if (!body.key || !body.entityType || !body.entityId) {
@@ -187,16 +189,31 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
   // to a canonical team slug (no caller override on this path).
   const uploadedBy = user.slug;
 
+  // A product tag only means something on a project file, and the product must
+  // be one of that project's (entityId is a slug or a proj_ id; v131's trigger
+  // refuses a stranger either way, this answers it in words).
+  let productId: string | null = null;
+  if (body.productId) {
+    if (body.entityType !== 'project') return error('Only a project file can carry a product.', 400);
+    const prod = await env.DB.prepare(
+      `SELECT p.id FROM products p
+        WHERE p.id = ? AND p.deleted_at IS NULL
+          AND (p.project_id = ? OR p.project_id = (SELECT pr.id FROM projects pr WHERE pr.slug = ?))`
+    ).bind(body.productId, body.entityId, body.entityId).first<{ id: string }>();
+    if (!prod) return error('That product is not in this project.', 400);
+    productId = prod.id;
+  }
+
   const id = crypto.randomUUID().slice(0, 16);
   try {
     await env.DB.prepare(
-      `INSERT INTO file_attachments (id, entity_type, entity_id, filename, content_type, size_bytes, r2_key, uploaded_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO file_attachments (id, entity_type, entity_id, filename, content_type, size_bytes, r2_key, uploaded_by, product_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       id, body.entityType, body.entityId,
       body.filename, body.contentType || null,
       body.sizeBytes || null, body.key,
-      uploadedBy
+      uploadedBy, productId
     ).run();
   } catch (e) {
     // idx_file_attachments_r2_key_unique (schema-v121): this object already

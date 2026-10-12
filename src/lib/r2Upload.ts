@@ -17,6 +17,8 @@ export interface R2UploadContext {
   id: string
   /** Overrides the entityType used at /api/upload/done. Defaults to `type`. */
   entityType?: string
+  /** schema-v131: tag a project file with one of the project's products; omit for project-wide. */
+  productId?: string | null
 }
 
 /**
@@ -55,6 +57,7 @@ export async function uploadFileToR2(file: File, ctx: R2UploadContext): Promise<
       sizeBytes: file.size,
       entityType: ctx.entityType ?? ctx.type,
       entityId: ctx.id,
+      ...(ctx.productId ? { productId: ctx.productId } : {}),
     }),
   })
   if (!doneRes.ok) throw new Error(`Recording attachment failed (${doneRes.status})`)

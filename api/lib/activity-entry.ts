@@ -116,6 +116,13 @@ export interface PostActivityEntryInput {
    */
   parentId?: string | null;
   /**
+   * schema-v131: tag a PROJECT-entity row with one of the project's products.
+   * NULL (the default) is project-wide: it shows under every product. Ignored
+   * for other entities: a task row takes its product from the task. A product
+   * outside the project is a 400 here, before v131's trigger would refuse it.
+   */
+  productId?: string | null;
+  /**
    * When false, suppress the @mention notification + Hermes dispatch side
    * effects (used by the Hermes placeholder/response writes themselves so an
    * AI reply that quotes @someone doesn't re-fire notifications/AI loops).
@@ -335,6 +342,21 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     projectId = null;
   }
 
+  // ── product tag (project-entity rows only) ──────────────────────────────────
+  let productId: string | null = null;
+  if (entityType === 'project' && input.productId) {
+    // A person's write needs a LIVE product. A lifecycle line (sourceTable
+    // 'lifecycle') narrates a change to a product that may be tombstoned by the
+    // time it is written, and a lifecycle row must never be lost: it checks the
+    // project only (v131's trigger and FK still guard the row).
+    const liveOnly = sourceTable === 'lifecycle' ? '' : ' AND deleted_at IS NULL';
+    const prod = await env.DB.prepare(
+      `SELECT id FROM products WHERE id = ? AND project_id = ?${liveOnly}`
+    ).bind(input.productId, projectId).first<{ id: string }>();
+    if (!prod) return { ok: false, error: 'That product is not in this project.', status: 400 };
+    productId = prod.id;
+  }
+
   // ── mentions (store on the row regardless of side-effect dispatch) ──────────
   const mentions = parseMentions(body).filter((slug) => slug !== actorSlug);
   const mentionsJson = mentions.length > 0 ? JSON.stringify(mentions) : null;
@@ -345,8 +367,8 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
   // 0-13 are unchanged — phase4-correctness.test.ts's positional asserts (ph[1],
   // ph[2], ph[4], ph[6]) and the INSERT↔column-list contract stay green (§2.3
   // bind-order landmine). NULL for a root; inherited from the parent for a reply.
-  const cols = `(id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, parent_id, hidden_at, created_at)`;
-  const vals = `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
+  const cols = `(id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, parent_id, hidden_at, product_id, created_at)`;
+  const vals = `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
   const binds = [
     id,
     entityType,
@@ -363,6 +385,7 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     sourceId,
     parentId,
     parentHiddenAt,
+    productId,
   ] as const;
 
   let row: Record<string, unknown> | null;

@@ -225,6 +225,8 @@ export interface ActivityEntryItemRow {
   entity_type: string
   entity_id: string
   project_id: string | null
+  /** schema-v131: the product a project-entity entry is tagged to (a task row takes its task's); null = project-wide. */
+  product_id?: string | null
   kind: StoredKind
   visibility: 'team' | 'author'
   actor_slug: string

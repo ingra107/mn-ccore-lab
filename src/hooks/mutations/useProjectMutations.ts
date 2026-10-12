@@ -174,11 +174,13 @@ interface CommentInput {
   author: string
 }
 
-export function useAddComment(projectId: string) {
+/** `productId` is the chip the page validated against the project's live
+ *  products (ProjectDetail); null posts project-wide. */
+export function useAddComment(projectId: string, productId: string | null = null) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: CommentInput) => addProjectComment(projectId, input),
+    mutationFn: (input: CommentInput) => addProjectComment(projectId, { ...input, product_id: productId }),
 
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: ['comments', projectId] })
@@ -220,14 +222,15 @@ export function useAddComment(projectId: string) {
 
 // ── Project Update mutations ────────────────────────────────
 
-export function usePostProjectUpdate(projectSlug: string) {
+export function usePostProjectUpdate(projectSlug: string, productId: string | null = null) {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (input: { content: string; update_type?: string }) =>
       fetchApi(`/api/projects/${projectSlug}/updates`, {
         method: 'POST',
-        body: JSON.stringify(input),
+        // A note written while a product chip is selected belongs to that product.
+        body: JSON.stringify({ ...input, product_id: productId }),
       }),
 
     onSettled: () => {

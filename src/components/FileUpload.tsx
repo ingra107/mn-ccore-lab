@@ -6,8 +6,13 @@ import { formatRelativeTime } from '../lib/dateUtils'
 import { ICON_PROPS } from '../lib/iconProps'
 import { uploadFileToR2 } from '../lib/r2Upload'
 import { useUploadQueue } from '../lib/useUploadQueue'
+import { scopeByProduct, type ProductRow } from '../lib/products'
+import { useTagItem } from '../hooks/useProjectProducts'
+import ProductTag from './project/ProductTag'
 
 interface FileAttachment {
+  /** schema-v131: the product a project file is tagged to; null = project-wide. */
+  product_id?: string | null
   id: string
   entity_type: string
   entity_id: string
@@ -22,6 +27,12 @@ interface FileAttachment {
 interface FileUploadProps {
   entityType: string
   entityId: string
+  /** A project's live products and the chip selected: under a chip, that
+   *  product's files come first, then project-wide ones; an upload is tagged
+   *  with the chip. A member (canTag) re-tags a file with the row's select. */
+  products?: ProductRow[]
+  productId?: string | null
+  canTag?: boolean
 }
 
 function formatBytes(bytes: number | null): string {
@@ -31,8 +42,9 @@ function formatBytes(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export default function FileUpload({ entityType, entityId }: FileUploadProps) {
+export default function FileUpload({ entityType, entityId, products = [], productId = null, canTag = false }: FileUploadProps) {
   const queryClient = useQueryClient()
+  const tagItem = useTagItem(entityId)
   const [dragOver, setDragOver] = useState(false)
   const [uploadProgress, setUploadProgress] = useState('')
 
@@ -71,7 +83,7 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
     cancelClearMsg()
     setUploadProgress(`Uploading ${file.name}... (${formatBytes(file.size)})`)
     try {
-      await uploadFileToR2(file, { type: entityType, id: entityId })
+      await uploadFileToR2(file, { type: entityType, id: entityId, ...(productId ? { productId } : {}) })
       queryClient.invalidateQueries({ queryKey: ['attachments', entityType, entityId] })
       setUploadProgress('')
     } catch (err) {
@@ -82,7 +94,7 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
         setUploadProgress('')
       }, 3000)
     }
-  }, [entityType, entityId, queryClient])
+  }, [entityType, entityId, productId, queryClient])
   const { enqueue, uploading } = useUploadQueue(uploadFile)
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -152,7 +164,7 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
       {/* File list */}
       {files.length > 0 && (
         <div style={{ marginTop: '8px' }}>
-          {files.map((f) => {
+          {scopeByProduct(files, productId, products).map((f) => {
             const uploaderInfo = f.uploaded_by ? getPersonInfo(f.uploaded_by) : null
             const uploaderName = uploaderInfo && uploaderInfo.name !== 'Unknown' ? uploaderInfo.name : null
             return (
@@ -172,6 +184,13 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
                     </div>
                   )}
                 </div>
+                <ProductTag
+                  productId={f.product_id}
+                  products={products}
+                  itemLabel={f.filename}
+                  onChange={canTag && entityType === 'project' ? (pid) => tagItem.mutate({ item: 'file', id: f.id, productId: pid }) : undefined}
+                  testId={`file-product-${f.id}`}
+                />
                 {f.size_bytes && (
                   <span style={{ color: 'var(--muted)', fontSize: '10px', flexShrink: 0 }}>
                     {formatBytes(f.size_bytes)}

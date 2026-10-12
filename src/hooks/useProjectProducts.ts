@@ -5,7 +5,10 @@ import { suggestPaperLink } from './mutations/useProjectMutations'
 import {
   addProduct,
   publishedAPaper,
+  describeProduct,
   setProductHome,
+  tagItem,
+  type TaggableItem,
   setProductStage,
   type NewProductInput,
   type ProductRow,
@@ -153,5 +156,32 @@ export function useAddProduct(slug: string) {
     onSuccess: () => showSuccess('Product added'),
     onError: (err) => showError(`Could not add the product — ${reason(err)}`),
     onSettled: () => refresh(qc, slug),
+  })
+}
+
+/** Save a product's own description (under the project description). */
+export function useDescribeProduct(slug: string) {
+  const qc = useQueryClient()
+  const { showError } = useUndoToast()
+  return useMutation({
+    mutationFn: (v: { productId: string; description: string }) => describeProduct(slug, v.productId, v.description),
+    onError: (err) => showError(`Could not save the description — ${reason(err)}`),
+    onSettled: () => refresh(qc, slug),
+  })
+}
+
+/** Re-tag a file, revision or activity entry with a product, or null for
+ *  project-wide. The row changes in place on the next read of its tab. */
+export function useTagItem(slug: string) {
+  const qc = useQueryClient()
+  const { showError } = useUndoToast()
+  return useMutation({
+    mutationFn: (v: { item: TaggableItem; id: string; productId: string | null }) => tagItem(slug, v.item, v.id, v.productId),
+    onError: (err) => showError(`Could not change the product — ${reason(err)}`),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['attachments', 'project'] })
+      qc.invalidateQueries({ queryKey: ['revisions'] })
+      qc.invalidateQueries({ queryKey: ['project-activity', slug] })
+    },
   })
 }

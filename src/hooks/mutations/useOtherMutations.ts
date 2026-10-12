@@ -444,6 +444,7 @@ export function useCreateRevision(projectId: string) {
       status?: string
       journal?: string
       notes?: string
+      product_id?: string | null
     }) => createRevision(input),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['revisions', projectId] })

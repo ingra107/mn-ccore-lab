@@ -54,6 +54,8 @@ export interface ProductRow {
   is_home: number
   lineage_rank: number
   grew_from_id: string | null
+  /** The product's own text, under the project description (schema-v131). */
+  description?: string | null
   /** The row version the Worker uses for compare-and-swap. */
   seq: number
   created_at: string
@@ -193,6 +195,56 @@ export function addProduct(slug: string, input: NewProductInput): Promise<Writte
     action: 'add', kind: input.kind, stage: input.stage, name: input.name.trim(),
     ...(input.growsFromId ? { grew_from_id: input.growsFromId } : {}),
   })
+}
+
+// ── product-scoped items: files, revisions, activity (schema-v131) ───────
+
+/** Project-wide items carry no product_id. Nick, 2026-10-12: "Project-wide,
+ *  shown everywhere": an untagged item shows under All AND under every product
+ *  (marked "project"); a tagged item shows under its product and under All. */
+export interface ProductTagged { product_id?: string | null }
+
+/** Under a product chip: that product's own items first, then the project-wide
+ *  ones ("if there's anything that are product specific, they should be at the
+ *  top"); items of other products drop out. Each group keeps the tab's order.
+ *  Under All (no product): every item, in the tab's own order. */
+export function scopeByProduct<T extends ProductTagged>(
+  items: readonly T[], productId: string | null, liveProducts?: readonly ProductRow[],
+): T[] {
+  if (!productId) return [...items]
+  // A tag on a product that is no longer live (tombstoned) reads as project-wide,
+  // so its items never vanish under every chip.
+  const live = liveProducts ? new Set(liveProducts.map((p) => p.id)) : null
+  const wideItem = (i: T) => !i.product_id || (live !== null && !live.has(i.product_id))
+  const own = items.filter((i) => i.product_id === productId && !wideItem(i))
+  const wide = items.filter(wideItem)
+  return [...own, ...wide]
+}
+
+/** What the marker on an item says: the product's name, or "project" for a
+ *  project-wide item. A project with fewer than 2 products has nothing to tell apart. */
+export function itemMarker(
+  productId: string | null | undefined, products: readonly ProductRow[],
+): string | null {
+  if (products.length < 2) return null
+  if (!productId) return 'project'
+  const p = products.find((x) => x.id === productId)
+  return p ? productLabel(p) : 'project'
+}
+
+// ── re-tag and describe: POST /api/projects/:slug/products ────
+
+export type TaggableItem = 'file' | 'revision' | 'activity'
+
+export async function tagItem(slug: string, item: TaggableItem, id: string, productId: string | null): Promise<void> {
+  await fetchApi<unknown>(`/api/projects/${encodeURIComponent(slug)}/products`, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'tag', item, id, product_id: productId }),
+  })
+}
+
+export function describeProduct(slug: string, productId: string, description: string): Promise<WrittenProduct> {
+  return write(slug, { action: 'describe', product_id: productId, description })
 }
 
 // ── the list views (Projects, Manuscripts) ──────────────────

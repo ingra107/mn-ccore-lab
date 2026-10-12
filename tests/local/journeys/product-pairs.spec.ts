@@ -47,6 +47,9 @@ test.beforeEach(async ({ page }) => {
 test('seed an ADHERE-style project with three products and tasks on each', async ({ page }) => {
   const made = await page.request.post('/api/projects', { headers: PI, data: { title: 'ADHERE-LPV Trial', slug: SLUG, category: 'lab' } })
   expect(made.ok(), await made.text()).toBe(true)
+  // The rule is short names everywhere: the pair label uses the short name, not the title.
+  const named = await page.request.post(`/api/projects/${SLUG}`, { headers: PI, data: { short_name: 'ADHERE-LPV' } })
+  expect(named.ok(), await named.text()).toBe(true)
   for (const [kind, stage, name] of [['trial_ops', 'active', 'Trial ops'], ['manuscript', 'idea', 'Protocol paper']]) {
     const k = await page.request.get(`/api/projects/${SLUG}/products`, { headers: PI })
     const stages = ((await k.json()) as { kinds: { kind: string; stages: { stage: string }[] }[] }).kinds.find((x) => x.kind === kind)!.stages
@@ -106,7 +109,8 @@ test('a product chip filters open tasks, the Tasks tab and the stats; the URL ke
   const panel = page.locator('#projectdetail-tabpanel-tasks')
   await expect(panel).toContainText('PAIR ops overdue')
   await expect(panel).not.toContainText('PAIR paper edits')
-  await expect(panel).toContainText('~ Trial ops')
+  await expect(panel).toContainText('ADHERE-LPV ~ Trial ops')
+  await expect(panel).not.toContainText('ADHERE-LPV Trial ~')
 
   // All clears it.
   await page.getByTestId('product-chip-all').click()
@@ -122,26 +126,27 @@ test('+ Add task while filtered lands on that product; the picker moves a task t
   await page.getByRole('button', { name: '+ Add task' }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
-  await expect(dialog).toContainText('ADHERE-LPV Trial ~ Protocol paper')
+  await expect(dialog).toContainText('ADHERE-LPV ~ Protocol paper')
   await dialog.screenshot({ path: `${SHOTS}/03-add-task-preselected-pair.png` })
   await dialog.getByRole('textbox').first().fill('PAIR made while filtered')
   await dialog.getByRole('button', { name: /^(Create|Add)/ }).last().click()
   await expect.poll(async () => (await tasksOf(page)).find((t) => t.title === 'PAIR made while filtered')?.product_id).toBe(paper.id)
 
-  // Move 'PAIR home draft' (home product) to the Trial ops pair through the picker.
+  // Move 'PAIR ops overdue' (always first in the list) from Trial ops to the Protocol paper pair
+  // through the picker: a same-project pair move, so both ids are written.
   await page.getByTestId('product-chip-all').click()
-  const row = page.getByTestId('project-open-tasks').getByText('PAIR home draft').first()
+  const row = page.getByTestId('project-open-tasks').getByText('PAIR ops overdue').first()
   await row.click()
   await page.screenshot({ path: `${SHOTS}/03b-row-opened.png` })
   await page.locator('[aria-label="Project"]').first().click()
-  const option = page.getByRole('option', { name: 'ADHERE-LPV Trial ~ Trial ops' })
+  const option = page.getByRole('option', { name: 'ADHERE-LPV ~ Protocol paper' })
   await expect(option).toBeVisible()
   await page.screenshot({ path: `${SHOTS}/04-pair-picker-light-1440.png` })
   await option.click()
   await expect.poll(async () => {
-    const t = (await tasksOf(page)).find((x) => x.title === 'PAIR home draft')
+    const t = (await tasksOf(page)).find((x) => x.title === 'PAIR ops overdue')
     return t ? `${t.project_id}|${t.product_id}` : ''
-  }).toBe(`${SLUG}|${ops.id}`)
+  }).toBe(`${SLUG}|${paper.id}`)
 })
 
 for (const theme of ['light', 'dark'] as const) {

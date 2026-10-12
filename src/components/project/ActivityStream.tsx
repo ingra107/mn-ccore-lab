@@ -40,6 +40,9 @@ import { ShowHiddenToggle } from '../activity/ShowHiddenToggle'
 import { canDeleteActivityEntry } from '../activity/activityPermissions'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { withAlpha } from '../../lib/taskGrouping'
+import { scopeByProduct, type ProductRow } from '../../lib/products'
+import { useTagItem } from '../../hooks/useProjectProducts'
+import ProductTag from './ProductTag'
 
 // ── Unified feed row shape (activity_entries) ─────────────────────────────────
 
@@ -56,6 +59,12 @@ interface Props {
   /** #111 — open a task named in the feed WHERE THE VIEWER IS. Returns true when
    *  the surface actually opened it; false lets the link's href navigate. */
   onOpenTask?: (taskId: string) => boolean
+  /** The project's live products and the chip selected (?product=). Under a
+   *  chip, that product's entries come first, then project-wide ones. */
+  products?: ProductRow[]
+  productId?: string | null
+  /** A member may re-tag a project entry. */
+  canTag?: boolean
 }
 
 // Note-type pills (mirrors ProjectUpdateFeed TYPE_CONFIG).
@@ -83,7 +92,7 @@ const NOTE_TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string;
 // With the 'action' arm gone every event is a unified entry, so this is a plain
 // row type rather than a one-member discriminated union — the tag would be a
 // constant that no branch can read.
-interface StreamEvent { ts: string; id: string; row: UnifiedEntryRow }
+interface StreamEvent { ts: string; id: string; row: UnifiedEntryRow; product_id: string | null }
 
 // motion props shared across all animated stream items.
 const itemMotion = {
@@ -94,8 +103,9 @@ const itemMotion = {
   transition: { duration: 0.2 },
 }
 
-export default function ActivityStream({ project, filter, onOpenTask }: Props) {
+export default function ActivityStream({ project, filter, onOpenTask, products = [], productId = null, canTag = false }: Props) {
   const slug = project.slug
+  const tagItem = useTagItem(slug)
 
   // ── Unified feed (Design C, v77) — whole-picture project activity ────────────
   // Includes project-level activity_entries AND task rows rolled up by project_id.
@@ -124,8 +134,9 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
 
   const { isAuthenticated, user } = useAuth()
   const { showSuccess } = useToast()
-  const postUpdate = usePostProjectUpdate(slug)
-  const addComment = useAddComment(slug)
+  // The chip ProjectDetail validated (a stale or tombstoned ?product= arrives as null).
+  const postUpdate = usePostProjectUpdate(slug, productId)
+  const addComment = useAddComment(slug, productId)
   // #112: the action-item card's own complete/reopen toggle went with the card.
   // Completing lives where the task does — the row's name now opens the task's
   // detail panel in place (#111), which is the canonical place to do it.
@@ -152,16 +163,17 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
   const events = useMemo(() => {
     const out: StreamEvent[] = []
     for (const e of unifiedEntries) {
-      out.push({ ts: e.created_at, id: `ue-${e.id}`, row: e })
+      out.push({ ts: e.created_at, id: `ue-${e.id}`, row: e, product_id: e.product_id ?? null })
     }
     return out.sort((a, b) => (a.ts > b.ts ? -1 : a.ts < b.ts ? 1 : 0))
   }, [unifiedEntries])
 
   // Apply the active filter via filterMatchesKind (shared/activityKinds.ts).
   const visible = useMemo(() => {
-    if (filter === 'all') return events
-    return events.filter((e) => filterMatchesKind(filter, e.row.entity_type, e.row.kind))
-  }, [events, filter])
+    const byKind = filter === 'all' ? events : events.filter((e) => filterMatchesKind(filter, e.row.entity_type, e.row.kind))
+    // Under a product chip: its own entries first, then project-wide ones.
+    return scopeByProduct(byKind, productId, products)
+  }, [events, filter, productId, products])
 
   const handlePostNote = (content: string) =>
     new Promise<void>((resolve) => {
@@ -331,6 +343,10 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
               <StreamItem
                 key={event.id}
                 event={event}
+                products={products}
+                onRetag={canTag && event.row.entity_type === 'project'
+                  ? (pid) => tagItem.mutate({ item: 'activity', id: event.row.id, productId: pid })
+                  : undefined}
                 onOpenTask={onOpenTask}
                 onDeleteEntry={
                   canDeleteActivityEntry(user, event.row.actor_slug)
@@ -379,7 +395,7 @@ export default function ActivityStream({ project, filter, onOpenTask }: Props) {
 
 // ── Per-event renderers ──────────────────────────────────────────────────
 
-function StreamItem({ event, onOpenTask, onDeleteEntry, onEditEntry, onDismissEntry }: { event: StreamEvent; onOpenTask?: (taskId: string) => boolean; onDeleteEntry?: () => void; onEditEntry?: (body: string) => void; onDismissEntry?: () => void }) {
+function StreamItem({ event, products, onRetag, onOpenTask, onDeleteEntry, onEditEntry, onDismissEntry }: { event: StreamEvent; products: ProductRow[]; onRetag?: (productId: string | null) => void; onOpenTask?: (taskId: string) => boolean; onDeleteEntry?: () => void; onEditEntry?: (body: string) => void; onDismissEntry?: () => void }) {
   // Project-stream anatomy: task-origin chip + reactions + animation.
   const itemProps = {
     showReactions: true,
@@ -393,22 +409,36 @@ function StreamItem({ event, onOpenTask, onDeleteEntry, onEditEntry, onDismissEn
   // feed so the two surfaces cannot drift apart. This is also what keeps the
   // synthetic action-item rows (kind 'system', no activity_entries row behind
   // them) out of the reply path — a reply to one would have nothing to attach to.
+  const tag = (
+    <div className="as-ptag" style={{ display: 'flex', justifyContent: 'flex-end', minHeight: 0 }}>
+      <ProductTag
+        productId={event.product_id}
+        products={products}
+        itemLabel="this entry"
+        onChange={onRetag}
+        testId={`entry-product-${event.row.id}`}
+      />
+    </div>
+  )
   if (!isRepliableKind(event.row.kind)) {
-    return <ActivityEntryItem {...itemProps} entry={event.row} onDelete={onDeleteEntry} />
+    return <div>{tag}<ActivityEntryItem {...itemProps} entry={event.row} onDelete={onDeleteEntry} /></div>
   }
   // #98: a reply posted from the PROJECT feed still threads onto the entry's
   // own root — the reply endpoint takes only the parent id and inherits
   // entity identity from it, so replying to a task-origin row lands on that
   // TASK, not on the project. That is why no entity is passed here.
   return (
-    <ActivityThread
-      root={event.row}
-      itemProps={itemProps}
-      invalidateKeys={[['project-activity']]}
-      onDelete={onDeleteEntry ? () => onDeleteEntry() : undefined}
-      onEdit={onEditEntry ? (_e, body) => onEditEntry(body) : undefined}
-      onDismiss={onDismissEntry ? () => onDismissEntry() : undefined}
-    />
+    <div>
+      {tag}
+      <ActivityThread
+        root={event.row}
+        itemProps={itemProps}
+        invalidateKeys={[['project-activity']]}
+        onDelete={onDeleteEntry ? () => onDeleteEntry() : undefined}
+        onEdit={onEditEntry ? (_e, body) => onEditEntry(body) : undefined}
+        onDismiss={onDismissEntry ? () => onDismissEntry() : undefined}
+      />
+    </div>
   )
 }
 
