@@ -2,9 +2,12 @@
  * projects.cascade.test.ts — B-CRIT-05 + B7 (SEC-T0-7) regression guard
  *
  * handleDeleteProject's cascade-clean runs every child-table statement in ONE
- * env.DB.batch(), so a failure on any statement rolls back the whole cascade.
+ * batch, so a failure on any statement rolls back the whole cascade.
  * Pre-fix (projects.ts:609-611) it was separate prepare().run() calls, and a
  * failure mid-cascade left orphaned rows pointing at a deleted project.
+ * Since 2026-10-11 that batch is the soft-delete's own (mutations.ts
+ * decideAndCommitDelete): the handler's separate pre-cascade is gone, so the
+ * children and the project's deleted_at commit or roll back together.
  *
  * B7 (SEC-T0-7, 2026-05-22) expanded the cascade; schema-v78 (2026-06-10)
  * dropped comments + project_updates. R3 (Slice D, 2026-06-09): a cascade
@@ -93,20 +96,20 @@ describe('handleDeleteProject — cascade-clean is one atomic batch (B-CRIT-05)'
     expect(children()).toEqual(ALL_PRESENT)
   })
 
-  it('FAILS LOUD on a cascade statement error: 500, the whole cascade rolls back, no soft-delete (R3, Slice D 2026-06-09)', async () => {
+  it('FAILS LOUD on a cascade statement error: the delete is refused, the whole cascade rolls back, no soft-delete (R3, Slice D 2026-06-09)', async () => {
     // R3 re-judgment (2026-06-09): the prior contract SWALLOWED a batch() failure
-    // and continued the soft-delete. batch() is ATOMIC, so one broken statement
-    // (e.g. the pre-Slice-D from_slug reference) rolls back the WHOLE cascade;
-    // stamping the project deleted anyway leaves dangling children. Here the
-    // regulatory_items statement fails AFTER project_documents and milestones
-    // already ran inside the same batch: both must be back.
+    // and continued the soft-delete. The batch is ATOMIC, so one broken statement
+    // (e.g. the pre-Slice-D from_slug reference) rolls back the WHOLE cascade
+    // and, since 2026-10-11, the soft-delete with it. Here the regulatory_items
+    // statement fails AFTER project_documents and milestones already ran inside
+    // the same batch: both must be back, and the project must still be live.
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     const env = { DB: d1Adapter(db, { failSql: /DELETE FROM regulatory_items/, failTimes: 1 }) } as unknown as Env
 
     const response = await handleDeleteProject(PID, user, env, makeRequest())
 
-    expect(response.status).toBe(500)
-    expect(consoleSpy).toHaveBeenCalledWith('project cascade-clean failed:', expect.any(Error))
+    expect(response.status).toBe(409)
+    expect(await response.text()).toContain('simulated D1 failure')
     expect(children()).toEqual(ALL_PRESENT)
     expect(deletedAt(PID)).toBeNull()
     expect(receipts()).toBe(0)

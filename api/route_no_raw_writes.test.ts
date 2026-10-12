@@ -6,11 +6,10 @@
 // a direct SQL write to the domain tables, closing the class of bugs that
 // Phase 3.1 was designed to eliminate (conflict-semantics bypass).
 //
-// Exemptions built in:
-//  - Lines starting with // or * (comments)
-//  - Strings containing 'applyMutation' (the approved path)
-//  - handleBatchUpdateTasks body (hub-internal multi-row IN-clause batch path;
-//    not routable through single-row applyMutation)
+// Exemptions built in: lines starting with // or * (comments). Nothing else:
+// handleBatchUpdateTasks routes every row through applyMutation, and the
+// project-delete task cascade moved into mutations.ts, so their exemptions
+// were removed 2026-10-11.
 //
 // Maintenance: if you add a new route file that writes tasks/projects, add it
 // to routeFiles below AND route through applyMutation().
@@ -45,50 +44,12 @@ describe('Phase 3.1 invariant: no raw writes outside mutations.ts', () => {
       const content = readFileSync(file, 'utf-8')
       const lines = content.split('\n')
 
-      // Track whether we're inside a batch/bulk function body that is
-      // explicitly exempted from the invariant:
-      //   - handleBatchUpdateTasks: multi-row IN-clause batch path; per-row
-      //     applyMutation conversion deferred (post-Phase-3.1 task).
-      // (handleSyncBulkTasks deleted 2026-05-12; exemption removed.
-      //  handleAcknowledgeTask exemption removed 2026-06-14 — HUB-7 routed it
-      //  through applyMutation, so the invariant guards it now.)
-      let insideBulkHandler = false
-      let braceDepth = 0
-
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i]
         const trimmed = line.trim()
 
-        // Detect entry into exempted bulk/batch handlers
-        if (
-          trimmed.includes('async function handleBatchUpdateTasks')
-        ) {
-          insideBulkHandler = true
-          braceDepth = 0
-        }
-
-        if (insideBulkHandler) {
-          // Track brace depth to know when the function ends.
-          for (const ch of line) {
-            if (ch === '{') braceDepth++
-            else if (ch === '}') {
-              braceDepth--
-              if (braceDepth <= 0) {
-                insideBulkHandler = false
-                break
-              }
-            }
-          }
-          if (insideBulkHandler) continue // skip lines inside bulk handler
-        }
-
         // Skip comment lines
         if (trimmed.startsWith('//') || trimmed.startsWith('*')) continue
-
-        // Exempt: cascade FK-nullification (project cascade-clean NULLs tasks.project_id).
-        // This is a multi-row dereference, not a content mutation — not routable
-        // through single-row applyMutation. Documented in handleDeleteProject.
-        if (trimmed.includes('project_id = NULL')) continue
 
         // Check each banned pattern
         for (const re of BANNED_PATTERNS) {
@@ -179,6 +140,8 @@ const EXECUTORS: Record<string, { runs: number; tables: string[]; reason: string
 const BUILDERS: Record<string, string> = {
   applyPatch: 'builds the `UPDATE <table> SET ...` (no WHERE) that commitRowWrite completes and runs',
   decideAndCommitDelete: 'builds the soft-delete SET clause and the gated child-cascade dependents for commitRowWrite',
+  orphanProjectTasksSql: 'builds the project-delete task statement (project_id and product_id cleared together) that decideAndCommitDelete gates into its batch; scripts/probe-v124-products.ts runs the same text on local D1',
+  projectStageDependents: 'builds the products stage UPDATE a projects.stage write forwards in the same batch (schema-v124 expand phase), gated on the project write landing',
 }
 
 const WRITE_SQL = /\b(?:INSERT\s+(?:OR\s+\w+\s+)?INTO|REPLACE\s+INTO|UPDATE\s+\S+\s+SET|DELETE\s+FROM)\b/i

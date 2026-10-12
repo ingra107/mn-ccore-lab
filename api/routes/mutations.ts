@@ -279,6 +279,23 @@ export interface Mutation {
   issued_at: string;
 }
 
+/**
+ * Refusal codes this build emits that the pb-schema REFUSAL_CODES artifact does
+ * not list yet. PB owns the vocabulary (scripts/db/schema_dsl.py section 7) and
+ * the Hub cannot regenerate the artifact, so a new code is declared here until
+ * the pb-schema bump lands; mutations.products-step5.test.ts fails the day
+ * REFUSAL_CODES lists a code still named here, so this list only empties.
+ * Until PB maps it, PB reads the code as UNCODED: retried to max_attempts, then
+ * dead-lettered with the code named in last_error (outbox.py flush loop).
+ *
+ * project_stage_unforwardable (schema-v124, 2026-10-11): a projects.stage
+ * write that cannot reach the project's products -- the project holds 2+ live
+ * products, or its one product's kind has no such stage. PB-FOLLOWUP: map it
+ * to refuse_loud in HUB_REFUSAL_CODES.
+ */
+export const PENDING_REFUSAL_CODES = ['project_stage_unforwardable'] as const;
+type HubRefusalCode = RefusalCode | (typeof PENDING_REFUSAL_CODES)[number];
+
 interface MutationResult {
   mutation_id: string;
   status: 'accepted' | 'merged_clean' | 'conflict' | 'dependency_failed' | 'error';
@@ -289,7 +306,7 @@ interface MutationResult {
   // L-Q23 (2026-10-08): set on every status='error' result this build makes
   // (mutErr requires it). Absent on a stored receipt from before codes, which
   // replays verbatim; PB treats a code-less error as UNCODED, never as a class.
-  code?: RefusalCode;
+  code?: HubRefusalCode;
   // Phase A1 (V3 dedup): when an insert is deduped onto an existing canonical
   // row (serial path OR race-loser path), Hub returns the WINNER's PK here so
   // the PB outbox ack handler can adopt it via a hub_slug alias instead of
@@ -1114,17 +1131,26 @@ async function decideAndCommitUpdate(
   // unchanged, so current + patch is the row the write produces.
   const mirrorSlots =
     (mut.table === 'tasks' || mut.table === 'projects') && touchesKeyLinkSlots(mut.patch);
+  // schema-v124: a projects.stage write reaches the project's product in the
+  // same batch, or is refused (projectStageDependents).
+  const stageForward = await projectStageDependents(env, mut, current);
+  if (typeof stageForward === 'string') {
+    return mutErr(mut.mutation_id, 'project_stage_unforwardable', stageForward);
+  }
+  const dependents: Dependents[] = [];
+  if (mirrorSlots) {
+    dependents.push((landed) => slotLinkStatements(
+      env.DB, mut.table as 'tasks' | 'projects', mut.record_id,
+      current, { ...current, ...mut.patch }, mut.mutation_id, landed,
+    ));
+  }
+  if (stageForward) dependents.push(stageForward);
   const committed = await commitRowWrite(
     env, mut, current, await applyPatch(env, mut, current, flags), outcome,
-    mirrorSlots
-      ? {
-          dependents: (landed) => slotLinkStatements(
-            env.DB, mut.table as 'tasks' | 'projects', mut.record_id,
-            current, { ...current, ...mut.patch }, mut.mutation_id, landed,
-          ),
-          dependentLinksRead: touchedLinksRead(env.DB, mut.mutation_id),
-        }
-      : {},
+    {
+      ...(dependents.length ? { dependents: (landed: SqlFragment) => dependents.flatMap((d) => d(landed)) } : {}),
+      ...(mirrorSlots ? { dependentLinksRead: touchedLinksRead(env.DB, mut.mutation_id) } : {}),
+    },
   );
   if (committed === CAS_MISS) return CAS_MISS;
 
@@ -1143,6 +1169,18 @@ async function decideAndCommitUpdate(
   // pre-patch before-image. Non-fatal.
   await emitLifecycleActivity(env, mut, user, current);
   return committed;
+}
+
+/**
+ * A project soft-delete's task statement: its live tasks keep their work and
+ * lose the project. product_id clears in the SAME SET, because a product
+ * belongs to one project (schema-v124 trg_tasks_product_project_upd refuses a
+ * task whose product is not in its project, which would abort the whole
+ * delete batch). Bind: the project id. Exported for
+ * scripts/probe-v124-products.ts, which runs this exact text on local D1.
+ */
+export function orphanProjectTasksSql(): string {
+  return "UPDATE tasks SET project_id = NULL, product_id = NULL, updated_at = datetime('now') WHERE project_id = ? AND deleted_at IS NULL";
 }
 
 export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
@@ -1173,8 +1211,10 @@ async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): P
 
   // Cascade cleanup for tasks and projects (codex Fixes 2+3, 2026-05-11).
   // PB-origin deletes route through applyDelete directly, so the cascade
-  // lives here for both callers. (handleDeleteTask relies on it alone since
-  // #8875; handleDeleteProject still runs its own pre-cascade batch.)
+  // lives here for both callers. handleDeleteTask relies on it alone since
+  // #8875, and handleDeleteProject since 2026-10-11 (its own pre-cascade
+  // batch ran first, outside this transaction, and only added a slug arm
+  // that matched 0 prod rows).
   // #8842 R1: it now runs INSIDE the soft-delete's batch, each statement
   // gated on the parent's delete having landed. It used to run in a separate
   // batch BEFORE the soft-delete with its failure
@@ -1215,7 +1255,7 @@ async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): P
         // Design C (v77): clear the project's own unified-timeline rows. Task
         // rows survive (the tasks are soft-orphaned to project_id=NULL below).
         gated("DELETE FROM activity_entries WHERE entity_type = 'project' AND entity_id = ?", mut.record_id),
-        gated("UPDATE tasks SET project_id = NULL, updated_at = datetime('now') WHERE project_id = ? AND deleted_at IS NULL", mut.record_id),
+        gated(orphanProjectTasksSql(), mut.record_id),
         gated('DELETE FROM project_dependencies WHERE (from_project_id = ? OR to_project_id = ?)', mut.record_id, mut.record_id),
       ];
       return stmts;
@@ -1485,6 +1525,72 @@ async function advanceProjectOwnMovement(
   });
 }
 
+/** Statements that commit or roll back with a row write (commitRowWrite opts.dependents). */
+type Dependents = (landed: SqlFragment) => D1PreparedStatement[];
+
+/**
+ * schema-v124 expand phase: projects.stage and products.stage both exist until
+ * the contract phase drops the project column, and every reader is moving to
+ * the product. A writer that still patches projects.stage (PB update_project,
+ * the Hub project editor, Apps Script) must not write a value no product page
+ * reads, so this is the one chokepoint for it (plan step 5):
+ *   - 0 live products (every project until Backfill A): nothing to forward;
+ *   - 1 live product: its stage moves in the same batch, stage_entered_at
+ *     stamped, gated on the project write landing;
+ *   - 2+ live products, or one whose kind has no such stage: a reason string,
+ *     which the caller returns as project_stage_unforwardable. Which product
+ *     the writer meant is not knowable, and products(kind, stage) refuses an
+ *     off-ladder stage anyway; refusing names it instead of a raw FK failure.
+ * Only a real change forwards: an echo of the current project stage (PB
+ * re-sending a whole row) is accepted on any project.
+ * Deleted with projects.stage at the contract phase.
+ */
+async function projectStageDependents(
+  env: Env, mut: Mutation, current: Record<string, unknown>,
+): Promise<Dependents | string | null> {
+  if (mut.table !== 'projects') return null;
+  const stage = (mut.patch as Record<string, unknown> | undefined)?.stage;
+  if (typeof stage !== 'string' || stage === current.stage) return null;
+  const { results } = await env.DB.prepare(
+    `SELECT p.id, p.kind, p.stage,
+            EXISTS (SELECT 1 FROM product_stages s WHERE s.kind = p.kind AND s.stage = ? AND s.deleted_at IS NULL) AS on_ladder
+       FROM products p WHERE p.project_id = ? AND p.deleted_at IS NULL ORDER BY p.id`,
+  ).bind(stage, mut.record_id).all<{ id: string; kind: string; stage: string; on_ladder: number }>();
+  const live = results ?? [];
+  if (live.length === 0) return null;
+  if (live.length > 1) {
+    return `project_stage_unforwardable: project ${mut.record_id} holds ${live.length} products (${live.map((p) => p.id).join(', ')}); write the stage on the product, not projects.stage`;
+  }
+  const [product] = live;
+  if (!product.on_ladder) {
+    return `project_stage_unforwardable: stage '${stage}' is not on the ${product.kind} ladder of product ${product.id}`;
+  }
+  if (product.stage === stage) return null;
+  return (landed) => [
+    env.DB.prepare(
+      `UPDATE products SET stage = ?, stage_entered_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ?
+        WHERE id = ? AND deleted_at IS NULL AND ${landed.sql}`,
+    ).bind(stage, mut.mutation_id, product.id, ...landed.vals),
+  ];
+}
+
+/**
+ * The product a task joins when it moves into `projectId` without naming one:
+ * the umbrella's own work lives on its admin product (decision 2026-10-11).
+ * That is the only live product, else the one live product with no title
+ * (schema-v124: title NULL = "the project itself"). Anything else is
+ * ambiguous and answers NULL, which v124 reads as "not yet allocated".
+ */
+async function homeProductId(env: Env, projectId: string): Promise<string | null> {
+  const { results } = await env.DB.prepare(
+    'SELECT id, title FROM products WHERE project_id = ? AND deleted_at IS NULL',
+  ).bind(projectId).all<{ id: string; title: string | null }>();
+  const live = results ?? [];
+  if (live.length === 1) return live[0].id;
+  const untitled = live.filter((p) => p.title === null);
+  return untitled.length === 1 ? untitled[0].id : null;
+}
+
 /**
  * Build (not run) the `UPDATE <table> SET ...` for a patch against the row it
  * was decided on. Every derived clause below reads `current`, which is why the
@@ -1557,6 +1663,23 @@ async function applyPatch(
         }
       }
     }
+  }
+
+  // schema-v124: a task's product must sit in the task's project
+  // (trg_tasks_product_project_upd refuses anything else). A patch that moves
+  // a task to another project, or out of every project, and does not name a
+  // product takes the new project's home product (homeProductId) or none, in
+  // the same write. Every task patch passes here: the Hub task editor
+  // (handleUpdateTask), bulk edits and PB's outbox.
+  if (
+    mut.table === 'tasks' &&
+    Object.prototype.hasOwnProperty.call(effectivePatch, 'project_id') &&
+    !Object.prototype.hasOwnProperty.call(effectivePatch, 'product_id') &&
+    (effectivePatch.project_id ?? null) !== (current.project_id ?? null)
+  ) {
+    const target = effectivePatch.project_id;
+    const home = typeof target === 'string' && target ? await homeProductId(env, target) : null;
+    if (home !== (current.product_id ?? null)) effectivePatch = { ...effectivePatch, product_id: home };
   }
 
   // Reassignment resets the NEW signal (2026-06-11): acknowledged_at means
@@ -1771,7 +1894,7 @@ function mkResult(
  * alert / stay quiet from `code` alone; `reason` is for people and the Hub UI
  * toasts, and keeps the exact text it always had (an older PB still reads it).
  */
-function mutErr(mutation_id: string, code: RefusalCode, reason: string): MutationResult {
+function mutErr(mutation_id: string, code: HubRefusalCode, reason: string): MutationResult {
   return { mutation_id, status: 'error', code, reason };
 }
 
@@ -1781,7 +1904,7 @@ function mutErr(mutation_id: string, code: RefusalCode, reason: string): Mutatio
  * text, unchanged, so `apply error: <message>` reads as it always did.
  */
 export class RefusalError extends Error {
-  constructor(readonly code: RefusalCode, message: string) {
+  constructor(readonly code: HubRefusalCode, message: string) {
     super(message);
   }
 }

@@ -59,20 +59,19 @@
 --     a projects rebuild (cascades project_members, meeting_project_grants,
 --     project_dependencies) and invents a "primary" Nick did not ask for.
 --
--- DEPENDENCIES FOR PLAN STEP 5 (not built here; each is refused by
--- trg_tasks_product_project_upd until it is done, so it fails loud, never
--- silently):
---   1. Project soft-delete cascade. api/routes/mutations.ts (the projects
---      delete batch, "UPDATE tasks SET project_id = NULL ...", ~line 1218) and
---      api/routes/projects.ts (the DELETE cascade batch, same statement,
---      ~line 893) must set product_id = NULL in the SAME SET as project_id.
---      Otherwise the first task with a product refuses the whole project
---      delete.
---   2. Moving a task to another project. Every task patch that changes
---      project_id (api/routes/tasks.ts PATCH, body.project_id ~line 310; the
---      tasks update arm of mutations.ts) must clear product_id or set it to a
---      product of the new project in the SAME patch. A move that leaves the
---      old product_id is refused.
+-- WORKER WRITES THIS SCHEMA NEEDS (plan step 5, api/routes/mutations.ts; a
+-- writer that skips them is refused by trg_tasks_product_project_upd, so it
+-- fails loud, never silently):
+--   1. Project soft-delete: orphanProjectTasksSql() clears product_id in the
+--      SAME SET as project_id, inside the delete's own batch (projects.ts
+--      handleDeleteProject has no separate cascade since 2026-10-11).
+--   2. Task moved to another project: applyPatch sets product_id to the new
+--      project's home product (homeProductId) or NULL in the same patch;
+--      every task patch, Hub UI and PB, passes there.
+--   3. projects.stage during the expand phase: projectStageDependents forwards
+--      it to a single product in the same batch, and refuses it
+--      (project_stage_unforwardable) on 2+ products or an off-ladder stage.
+-- The code that names product_id must deploy AFTER this DDL is on prod.
 --
 -- NOT HERE: the resolver view (the chain defines no view; api/lib/
 -- table-scope.test.ts pins that), mutations.ts acceptance (ALLOWED_TABLES,

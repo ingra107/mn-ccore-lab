@@ -28,6 +28,7 @@ import { execSync } from 'node:child_process'
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { orphanProjectTasksSql } from '../api/routes/mutations'
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const PERSIST = '.wrangler/probe-v124'
@@ -120,7 +121,10 @@ const cases: Case[] = [
   { name: 'CONTROL: award moves to no-cost extension (Nick, build rulings)', control: true, sql: "UPDATE products SET stage = 'no_cost_extension' WHERE id = 'prd_PB1'", absent: "SELECT 1 - COUNT(*) AS n FROM products WHERE id = 'prd_PB1' AND stage = 'no_cost_extension'" },
   { name: 'CONTROL: trial ops reaches closed past closeout', control: true, sql: "UPDATE products SET stage = 'closeout' WHERE id = 'prd_PC1'; UPDATE products SET stage = 'closed' WHERE id = 'prd_PC1'", absent: "SELECT 1 - COUNT(*) AS n FROM products WHERE id = 'prd_PC1' AND stage = 'closed'" },
   { name: 'CONTROL: award and trial_ops are terminal only at closed (read)', control: true, sql: "SELECT 1", absent: "SELECT COUNT(*) AS n FROM product_stages WHERE kind IN ('award', 'trial_ops') AND ((is_terminal = 1) <> (stage = 'closed'))" },
-  { name: 'project soft-delete cascade without clearing product_id', sql: "UPDATE tasks SET project_id = NULL, updated_at = datetime('now') WHERE project_id = 'proj_PA' AND deleted_at IS NULL", absent: "SELECT COUNT(*) AS n FROM tasks WHERE id = 'task_P1' AND project_id IS NULL" },
+  { name: 'project soft-delete cascade without clearing product_id (the pre-step-5 statement)', sql: "UPDATE tasks SET project_id = NULL, updated_at = datetime('now') WHERE project_id = 'proj_PA' AND deleted_at IS NULL", absent: "SELECT COUNT(*) AS n FROM tasks WHERE id = 'task_P1' AND project_id IS NULL" },
+  // The statement the Worker ships (api/routes/mutations.ts orphanProjectTasksSql,
+  // gated into the project soft-delete batch), bound to proj_PA.
+  { name: 'CONTROL: the shipped cascade statement clears product_id with project_id', control: true, sql: orphanProjectTasksSql().replace('?', "'proj_PA'"), absent: "SELECT COUNT(*) AS n FROM tasks WHERE id = 'task_P1' AND (project_id IS NOT NULL OR product_id IS NOT NULL)" },
   { name: 'CONTROL: second product, then delete one of two', control: true, sql: "INSERT INTO products (id, project_id, kind, stage) VALUES ('prd_PC2', 'proj_PC', 'infrastructure', 'running'); UPDATE products SET deleted_at = datetime('now') WHERE id = 'prd_PC1'", absent: "SELECT COUNT(*) AS n FROM products WHERE id = 'prd_PC1' AND deleted_at IS NULL" },
 ]
 

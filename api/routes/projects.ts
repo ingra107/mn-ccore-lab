@@ -2,7 +2,7 @@ import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, isPiRequest, resolveActor, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { validateApiKey } from '../middleware/api-key-auth';
-import { isValidProjectSlug, looksLikeProjectId, type SlugClaimCheck } from '../lib/project-slug';
+import { isValidProjectSlug, type SlugClaimCheck } from '../lib/project-slug';
 import { nowInstant } from '../lib/time';
 import { lastWorkedIso } from '../lib/project-recency';
 import { applyMutation } from './mutations';
@@ -838,67 +838,14 @@ export async function handleDeleteProject(
     return json({ data: { deleted: existing.id, slug: existing.slug, title: existing.title, idempotent: true } });
   }
 
-  // Cascade-clean related rows to avoid FK-like errors or orphaned refs.
-  // `comments` and `project_updates` hold a free-form project_id (not an
-  // enforced FK), but leaving them behind means stale joins forever.
-  // `tasks.project_id` is soft-orphaned to NULL (keep the task, clear the ref)
-  // so users don't lose work — dangling refs found by deep-audit Suite 8.
-  // B-CRIT-05 fix (2026-05-09): wrap in env.DB.batch() so all 3 cascade
-  // statements execute in a single implicit D1 transaction. Pre-fix, 3 separate
-  // prepare().run() calls meant a failure mid-cascade (e.g. D1 timeout on the
-  // UPDATE) left orphaned rows in comments/project_updates pointing at the now-
-  // deleted project. With batch() D1 rolls back all 3 on any error.
-  // B7 (SEC-T0-7): cascade-clean ALL child tables that carry a project FK.
-  // Verified against schema: project_documents (project_id), milestones
-  // (project_id), conference_submissions (project_id), submission_events
-  // (project_id), regulatory_items (project_id), project_dependencies
-  // (Slice D 2026-06-09: now keyed on from_project_id/to_project_id, proj_* PKs —
-  // see scripts/migrations/slice-d-dep-rekey.sql). Pre-fix only
-  // comments/project_updates/tasks were handled, leaving the rest orphaned.
-  // All wrapped in one batch() so D1 rolls back the whole cascade on any error
-  // (B-CRIT-05 atomicity). project_id columns store either the canonical id OR
-  // the slug, so every match is `= id OR = slug`.
-  //
-  // R3 (codex catch + builder verify, 2026-06-09): this is a SOFT delete (the
-  // applyMutation below stamps deleted_at; the row persists), so the FK
-  // ON DELETE CASCADE on project_dependencies does NOT fire here — only a HARD
-  // project delete cascades. This manual statement is what clears edges for a
-  // soft-deleted project, and it MUST key on the proj_* PK now (the old
-  // from_slug/to_slug columns no longer exist post-Slice-D). Pre-fix the broken
-  // slug statement would throw "no such column: from_slug" and — because batch()
-  // is atomic — POISON the ENTIRE cascade (silently, via the swallowing catch),
-  // leaving comments/docs/milestones/tasks orphaned too. The catch now FAILS
-  // LOUD: a cascade failure aborts the delete with a 500 instead of leaving the
-  // DB half-cleaned. The edge match keys on existing.id (the canonical proj_*);
-  // a belt-and-suspenders OR existing.slug arm is omitted because edges store
-  // only proj_* PKs after Slice D.
-  // The slug arm reaches slug-keyed legacy rows. A slug shaped like a project
-  // id is never a reference to this project (api/lib/project-slug.ts), so it
-  // falls back to the id and cannot reach another project's rows.
-  const slugRef = existing.slug && !looksLikeProjectId(existing.slug) ? existing.slug : existing.id;
-  try {
-    await env.DB.batch([
-      // comments/project_updates dropped (schema-v78, 2026-06-10).
-      env.DB.prepare('DELETE FROM project_documents WHERE project_id = ? OR project_id = ?').bind(existing.id, slugRef),
-      env.DB.prepare('DELETE FROM milestones WHERE project_id = ? OR project_id = ?').bind(existing.id, slugRef),
-      env.DB.prepare('DELETE FROM conference_submissions WHERE project_id = ? OR project_id = ?').bind(existing.id, slugRef),
-      env.DB.prepare('DELETE FROM submission_events WHERE project_id = ? OR project_id = ?').bind(existing.id, slugRef),
-      env.DB.prepare('DELETE FROM regulatory_items WHERE project_id = ? OR project_id = ?').bind(existing.id, slugRef),
-      env.DB.prepare('DELETE FROM project_dependencies WHERE from_project_id = ? OR to_project_id = ?').bind(existing.id, existing.id),
-      // Design C (v77): clear the project's own unified-timeline rows. Task rows
-      // (entity_type='task') are intentionally NOT removed here — the cascade
-      // below soft-orphans those tasks (project_id=NULL) rather than deleting
-      // them, so their activity history survives with the task.
-      env.DB.prepare("DELETE FROM activity_entries WHERE entity_type = 'project' AND (entity_id = ? OR entity_id = ?)").bind(existing.id, slugRef),
-      env.DB.prepare('UPDATE tasks SET project_id = NULL, updated_at = datetime(\'now\') WHERE (project_id = ? OR project_id = ?) AND deleted_at IS NULL').bind(existing.id, slugRef),
-    ]);
-  } catch (e) {
-    // R3: fail loud — a swallowed cascade failure leaves orphaned child rows.
-    // Abort the delete so the caller sees it instead of a silently half-deleted project.
-    console.error('project cascade-clean failed:', e);
-    return error(`project cascade-clean failed: ${(e as Error).message}`, 500);
-  }
-
+  // The child cascade (documents, milestones, conference/submission/regulatory
+  // rows, manuscript revisions, dependency edges, the project's own timeline
+  // rows, and the soft-orphaning of its tasks) runs inside the soft-delete's
+  // own batch in mutations.ts decideAndCommitDelete, gated on the delete
+  // landing: one transaction, so a failed delete leaves every child in place.
+  // This handler ran a second copy of it first, in a separate batch, until
+  // 2026-10-11; its only difference was a slug arm that matched 0 prod rows
+  // (every child writer resolves a canonical project id).
   // Soft-delete via applyMutation — stamps last_mutation_id + records in processed_mutations.
   const deleteProjMut = await applyMutation(env, {
     table: 'projects',
