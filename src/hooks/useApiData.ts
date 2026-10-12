@@ -68,7 +68,7 @@ import type {
 } from '../lib/api'
 import { localDateKey } from '../lib/dateUtils'
 import { normalizeStage } from '../lib/stageNormalize'
-import { isPlaceholderPublication } from '../lib/publicationCounts'
+import { isPlaceholderPublication, dedupePublications } from '../lib/publicationCounts'
 
 // Re-export lib/api row types that consumers import via this module.
 // Narrow surface: only the types actually consumed by components. Other
@@ -224,7 +224,7 @@ export function usePublications(params?: {
     queryKey: ['publications', params],
     queryFn: async () => {
       const res = await fetchPublications(params)
-      return res.data.map(rowToPublication).filter((p) => !isPlaceholderPublication(p))
+      return dedupePublications(res.data.map(rowToPublication).filter((p) => !isPlaceholderPublication(p)))
     },
     initialData: (import.meta.env.DEV && !params) ? () => _devPublications : undefined,
     staleTime: STALE_TIME,
@@ -1786,7 +1786,8 @@ export function useFileActivityHeatmap(days = 90) {
 
 // ── Paper-to-Project linking (enriched) cont'd ──────────────
 
-export function useLinkedProjects(publicationId: string) {
+/** Members only (/api/papers/by-publication is authed): pass `enabled: false` for a visitor. */
+export function useLinkedProjects(publicationId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['linked-projects', publicationId],
     queryFn: async () => {
@@ -1794,6 +1795,6 @@ export function useLinkedProjects(publicationId: string) {
       return data.data || []
     },
     staleTime: 60 * 1000,
-    enabled: !!publicationId,
+    enabled: !!publicationId && (options?.enabled ?? true),
   })
 }

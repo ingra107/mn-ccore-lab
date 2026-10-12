@@ -1,6 +1,8 @@
 import type { Mentee } from './types'
 
-// Trainees shared across MNCCORE — mentored as a team.
+// Trainees shared across MNCCORE — mentored as a team. Staff are not trainees:
+// Casey Eddington (Data Analyst) and Steven Arriaza (Research Coordinator) are
+// team staff (Nick, standing rule) and live in team.ts only.
 // slug links to team.ts for photos/member pages; projectSlugs link to projects.ts
 export const mentees: Mentee[] = [
   {
@@ -36,16 +38,6 @@ export const mentees: Mentee[] = [
     projectSlugs: ['decision-making-survey-gdms', 'provider-ebp-research-program'],
   },
   {
-    name: 'Casey Eddington',
-    slug: 'casey-eddington',
-    role: 'Data Analyst',
-    mentor: 'nick-ingraham',
-    yearStarted: 2023,
-    bio: 'Data analyst supporting CLIF consortium analytics, including gender disparities research and ICU quality metric development.',
-    researchInterests: ['CLIF analytics', 'ICU quality metrics', 'Multi-center data'],
-    projectSlugs: ['p1-gender-disparities-low-tidal-volume', 'p4-icu-quality-metrics', 'lpv-adherence-paper'],
-  },
-  {
     name: 'Claire Collins',
     slug: 'claire-collins',
     role: 'Medical Student Researcher',
@@ -54,16 +46,6 @@ export const mentees: Mentee[] = [
     bio: 'Medical student exploring the intersection of provider cognitive styles and ICU treatment decisions.',
     researchInterests: ['Cognitive science', 'Clinical decision-making', 'Medical education'],
     projectSlugs: ['student-cognitive-biases-icu-triage', 'decision-making-survey-gdms'],
-  },
-  {
-    name: 'Steven Arriaza',
-    slug: 'steven-arriaza',
-    role: 'Research Coordinator',
-    mentor: 'shared',
-    yearStarted: 2024,
-    bio: 'Research coordinator supporting data collection and study operations across MNCCORE projects.',
-    researchInterests: ['Clinical research operations', 'Data management'],
-    projectSlugs: [],
   },
 ]
 

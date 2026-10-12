@@ -81,14 +81,14 @@ export const researchTeam: TeamMember[] = [
   // Applications" affiliation. Wiring it would publish another person's papers on the
   // public site under his name -- the exact failure #905's design exists to prevent.
   // A works_count with no institution is not evidence of a thin record; read the works.
-  { name: 'Steven Arriaza', initials: 'SA', role: 'Research Coordinator', slug: 'steven-arriaza' },
+  { name: 'Steven Arriaza', initials: 'SA', role: 'Research Coordinator', slug: 'steven-arriaza', bio: 'Research coordinator supporting data collection and study operations across MNCCORE projects.' },
   // openalexId corroborated 2026-07-30 on two independent axes before it went public:
   // the record's only affiliation is Minneapolis VA Health Care System, and its one
   // work is "Comparison of six natural language processing approaches to assessing
   // firearm access" (2024) -- right institution, and squarely in the lab's own
   // firearm-access line. Backlog #905.
   { name: 'Emma Bromley', initials: 'EB', role: 'Research Coordinator', slug: 'emma-bromley', openalexId: 'A5114603216', authorName: 'Bromley E' },
-  { name: 'Casey Eddington', initials: 'CE', role: 'Data Analyst', slug: 'casey-eddington', openalexId: 'A5048819960', authorName: 'Eddington C' },
+  { name: 'Casey Eddington', initials: 'CE', role: 'Data Analyst', slug: 'casey-eddington', openalexId: 'A5048819960', authorName: 'Eddington C', bio: 'Data analyst supporting CLIF consortium analytics, including gender disparities research and ICU quality metric development.' },
   { name: 'Dan Shyu', initials: 'DS', role: 'Critical Care Fellow', credentials: 'MD', slug: 'dan-shyu', openalexId: 'A5111762982', authorName: 'Shyu D', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/shyu-daniel.png' },
   { name: 'Beret Fitzgerald', initials: 'BF', role: 'Critical Care Fellow', credentials: 'MD', slug: 'beret-fitzgerald', authorName: 'Fitzgerald B', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/fitzgerald-beret-001.png' },
   { name: 'Claire Collins', initials: 'CC', role: 'Medical Student Researcher', slug: 'claire-collins', authorName: 'Collins C' },

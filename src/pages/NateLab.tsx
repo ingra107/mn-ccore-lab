@@ -6,18 +6,11 @@ import LabPageLayout, {
 } from '../components/LabPageLayout'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { usePublications } from '../hooks/useApiData'
+import { usePublicGrants } from '../hooks/usePublicGrants'
+import { grantsForPi } from '../lib/publicGrants'
 import { memberPublications } from '../lib/publicationCounts'
 import { getMemberBySlug } from '../data/team'
 import { mentees as allMentees } from '../data/mentees'
-
-const grants = [
-  {
-    mechanism: 'K23',
-    title: 'IHCA Survivability Calculator',
-    agency: 'NHLBI',
-    bucket: 'proposed' as const,
-  },
-]
 
 const projects = [
   {
@@ -53,6 +46,9 @@ const mentees = allMentees.filter(
 
 export default function NateLab() {
   const { data: publications = [] } = usePublications()
+  // Live grants; empty for an anonymous visitor (the API gives no PI), so no section then.
+  const { data: liveGrants = [] } = usePublicGrants()
+  const grants = grantsForPi(liveGrants, 'nate-mesfin')
   usePageMeta(
     'Nathan Mesfin Lab | MN-CCORE',
     'Nathan Mesfin, MD — Assistant Professor of Critical Care Medicine at the University of Minnesota. Research in cardiac arrest survivability, DNR order variation, and chronic critical illness.'
@@ -71,13 +67,13 @@ export default function NateLab() {
       ]}
       photoUrl="https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/images/dom-faculty-_0135_layer-164_0.png?itok=YWiCOKFA"
       sections={[
-        { id: 'grants', label: 'Grants & Proposals' },
+        ...(grants.length > 0 ? [{ id: 'grants', label: 'Funding' }] : []),
         { id: 'research-projects', label: 'Research Projects' },
         { id: 'trainees', label: 'MNCCORE Trainees' },
         { id: 'publications', label: 'Papers' },
       ]}
     >
-      <GrantsSection grants={grants} id="grants" title="Grants & Proposals" />
+      <GrantsSection grants={grants} id="grants" title="Funding" />
       <ProjectsSection title="Research Projects" projects={projects} id="research-projects" />
       <MenteesSection mentees={mentees} id="trainees" title="MN-CCORE Trainees" />
       <PublicationsSection

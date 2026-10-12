@@ -256,6 +256,8 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
     g.mechanism.trim() !== '---'
   const activeGrants = grants.filter((g) => g.bucket === 'active' && isRealGrant(g))
   const pendingGrants = grants.filter((g) => g.bucket === 'proposed' && isRealGrant(g))
+  // No live row to show (an anonymous visitor gets none): no empty section head.
+  if (activeGrants.length === 0 && pendingGrants.length === 0) return null
 
   return (
     <section className="mb-16" id={id}>
@@ -456,7 +458,16 @@ export function PublicationsSection({
 
   return (
     <section className="mb-16" id={id}>
-      <SecHead title={title} />
+      {portalChrome ? (
+        <h2
+          className="text-xl sm:text-2xl mb-6"
+          style={{ fontFamily: 'var(--font-display)', fontWeight: 500, color: 'var(--ink)' }}
+        >
+          {title}
+        </h2>
+      ) : (
+        <SecHead title={title} />
+      )}
       <div className="space-y-4">
         {visible.map((pub) => (
           <PublicationCard key={pub.id} pub={pub} />

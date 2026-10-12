@@ -167,18 +167,11 @@ export const ALLOW = {
   // components rendered only by the public pages above (importers checked 2026-10-11)
   'src/components/Layout.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/components/LabPageLayout.tsx': { families: PUB, why: PUBLIC_BRAND },
-  'src/components/FeaturedResearch.tsx': { families: PUB, why: PUBLIC_BRAND },
-  'src/components/LatestDigest.tsx': { families: PUB, why: PUBLIC_BRAND },
-  'src/components/RecentActivity.tsx': { families: PUB, why: PUBLIC_BRAND },
-  'src/components/ResearchImpact.tsx': { families: PUB, why: PUBLIC_BRAND },
-  'src/components/UpcomingMeetingBanner.tsx': { families: PUB, why: PUBLIC_BRAND + ' (Home only)' },
   'src/components/PublicationLibrary.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/components/PublicationSearch.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/components/PublicationFilters.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/components/PublicationTimeline.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/components/NetworkFilters.tsx': { families: PUB, why: PUBLIC_BRAND },
-  'src/components/NetworkBackground.tsx': { families: PUB, why: PUBLIC_BRAND },
-  'src/components/CLIFMap.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/components/pulse/PulseMetric.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/components/pulse/PulseScene.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/components/pulse/PulseSparkline.tsx': { families: PUB, why: PUBLIC_BRAND },
@@ -186,7 +179,6 @@ export const ALLOW = {
   // categories (MN-CCORE gold, CLIF teal/blue) and the sidebar dots that match
   // them stay literal.
   'src/components/CollaborationGraph.tsx': { families: [...PUB, 'teal', 'blue'], why: 'public /network canvas graph categories' },
-  'src/components/CollaborationNetwork.tsx': { families: [...PUB, 'teal', 'blue'], why: 'public Home canvas graph categories' },
   'src/components/NetworkSidebar.tsx': { families: [...PUB, 'teal', 'blue'], why: 'public /network legend dots matching the canvas graph' },
   // The sign-in splash renders on a FIXED dark surface whatever the theme, so
   // its brand palette is literal on purpose; JoinSteps renders inside it.

@@ -30,4 +30,14 @@ describe('roster: one definition of people', () => {
     expect(rosterCount).toBe(new Set(rosterPeople.map((p) => p.slug)).size)
     expect(rosterCount).toBe(ROSTER.reduce((n, g) => n + g.members.length, 0))
   })
+
+  it('Casey Eddington and Steven Arriaza are staff, never mentees (Nick, standing rule)', () => {
+    const staff = ROSTER.find((g) => g.id === 'staff')?.members.map((x) => x.slug) ?? []
+    const trainees = ROSTER.find((g) => g.id === 'trainees')?.members.map((x) => x.slug) ?? []
+    for (const slug of ['casey-eddington', 'steven-arriaza']) {
+      expect(staff).toContain(slug)
+      expect(trainees).not.toContain(slug)
+      expect(mentees.map((x) => x.slug)).not.toContain(slug)
+    }
+  })
 })

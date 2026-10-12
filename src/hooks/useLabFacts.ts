@@ -3,12 +3,15 @@
  *
  * Papers, years and areas come from /api/publications; the active-project
  * count from /api/projects (anonymous callers get the status only, never a
- * title); funding from /api/grants. People and sites are the roster and the
+ * title); funding from /api/grants (venue and bucket: usePublicGrants). People and sites are the roster and the
  * site list, counted once each (lib/roster, data/clifSites). A count whose
  * list has not loaded yet is null, so the page shows a dash, never a guess.
  */
 import { useMemo } from 'react'
-import { usePublications, useProjects, useGrants } from './useApiData'
+import { usePublications, useProjects } from './useApiData'
+import { usePublicGrants } from './usePublicGrants'
+import { agencyOf } from '../lib/publicGrants'
+import { mechanismOf } from '../lib/grants'
 import { isProjectActive } from '../lib/taskConstants'
 import { countPublications, isPublished } from '../lib/publicationCounts'
 import { areaCounts } from '../lib/researchAreas'
@@ -20,7 +23,7 @@ const YEARS_SHOWN = 10
 export function useLabFacts() {
   const pubs = usePublications()
   const projects = useProjects()
-  const grants = useGrants()
+  const grants = usePublicGrants()
   const publications = pubs.data
   const projectRows = projects.data
   const grantRows = grants.data
@@ -47,8 +50,8 @@ export function useLabFacts() {
       activeProjects: projectRows ? projectRows.filter((p) => isProjectActive(p.status)).length : null,
       sites: CLIF_SITES.length,
       people: rosterCount,
-      funders: [...new Set(activeGrants.map((g) => g.agency).filter(Boolean))],
-      mechanisms: [...new Set(activeGrants.map((g) => g.mechanism).filter(Boolean))],
+      funders: [...new Set(activeGrants.map((g) => agencyOf(g.venue)).filter(Boolean))],
+      mechanisms: [...new Set(activeGrants.map((g) => mechanismOf(g.venue)).filter((m): m is string => !!m))],
       activeGrants: grantRows ? activeGrants.length : null,
     }
   }, [publications, projectRows, grantRows])

@@ -48,11 +48,46 @@ export function isPublished(p: Pick<Publication, 'status'>): boolean {
   return p.status === 'Published'
 }
 
-/** Rows that are not papers: test fixtures (`test_delete_ ...`) and the
- *  `[Table]` / `[Figure]` pieces of a 2004 report that were imported as
- *  papers. usePublications drops them, so no count or list sees them. */
+/** Rows that are not papers: test fixtures (`test_delete_ ...`), the
+ *  `[Table]` / `[Figure]` pieces of a 2004 report, and the `Supplementary
+ *  Materials N from ...` / `Data from ...` deposits that came in beside a paper.
+ *  usePublications drops them, so no count or list sees them. */
 export function isPlaceholderPublication(p: Pick<Publication, 'title'>): boolean {
-  return /^\s*(test_|\[(table|figure)\b)/i.test(p.title)
+  return /^\s*(test_|\[(table|figure)\b|supplementary materials?\b|data from\b)/i.test(p.title)
+}
+
+const doiKey = (doi: string | undefined) =>
+  doi ? doi.trim().toLowerCase().replace(/^https?:\/\/(dx\.)?doi\.org\//, '') : ''
+const titleKey = (title: string) => title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+
+type Dedupable = Pick<Publication, 'title' | 'doi' | 'year' | 'featured'>
+
+/** True when `b` should replace `a` as a group's survivor: a featured row wins,
+ *  then the newest year. */
+function replaces(a: Dedupable, b: Dedupable): boolean {
+  if (!!b.featured !== !!a.featured) return !!b.featured
+  return b.year > a.year
+}
+
+function collapse<T extends Dedupable>(list: T[], key: (p: T) => string): T[] {
+  const slot = new Map<string, number>()
+  const out: T[] = []
+  for (const p of list) {
+    const k = key(p)
+    if (!k) { out.push(p); continue }
+    const at = slot.get(k)
+    if (at === undefined) { slot.set(k, out.length); out.push(p) }
+    else if (replaces(out[at], p)) out[at] = p
+  }
+  return out
+}
+
+/** One row per paper: collapse rows that share a DOI, then rows that share a
+ *  normalized title (a preprint and its published version carry different DOIs
+ *  and the same title). Of a group the survivor is a featured row, else the
+ *  newest year, else the first; it keeps the position of the group's first row. */
+export function dedupePublications<T extends Dedupable>(pubs: ReadonlyArray<T>): T[] {
+  return collapse(collapse([...pubs], (p) => doiKey(p.doi)), (p) => titleKey(p.title))
 }
 
 export function isInReview(p: Pick<Publication, 'status'>): boolean {

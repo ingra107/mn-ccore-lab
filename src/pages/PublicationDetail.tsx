@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { usePublications, useLinkedProjects } from '../hooks/useApiData'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { useAuth } from '../hooks/useAuth'
 import { FaceDisc } from '../components/today/skin'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
@@ -154,7 +155,9 @@ const CATEGORY_LABEL: Record<string, string> = { clif: 'CLIF', lab: 'Lab', nate:
 const LINK_TYPE_LABEL: Record<string, string> = { primary: 'Published from this project' }
 
 function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
-  const { data: linkedProjects = [], isError, refetch } = useLinkedProjects(publicationId)
+  // The linked-projects read is for members; a visitor would get a 401 and an error note.
+  const { user } = useAuth()
+  const { data: linkedProjects = [], isError, refetch } = useLinkedProjects(publicationId, { enabled: !!user?.isMember })
 
   // #507 follow-up: a bare `.length === 0` return-null used to silently vanish
   // this section on a thrown fetch failure too.

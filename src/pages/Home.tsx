@@ -4,6 +4,7 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useLabFacts } from '../hooks/useLabFacts'
 import { PublicHead, SecHead, PersonLink } from '../components/public/PublicParts'
 import { rosterPeople } from '../lib/roster'
+import { areaHref } from '../lib/researchAreas'
 import type { Publication } from '../data/types'
 
 const SELECTED = 5
@@ -105,8 +106,8 @@ export default function Home() {
       <SecHead title="What we study" />
       <div className="pub-areas">
         {facts.areas.map(({ area, papers }) => (
-          <Link key={area.id} to={`/publications?area=${area.id}`} className="pub-area">
-            <span className="pub-n">{papers > 0 ? `${papers} ${papers === 1 ? 'paper' : 'papers'}` : dash}</span>
+          <Link key={area.id} to={areaHref(area)} className="pub-area">
+            {papers != null && <span className="pub-n">{papers} {papers === 1 ? 'paper' : 'papers'}</span>}
             <span className="pub-rt" style={{ margin: '4px 0 0' }}>{area.label}</span>
             <p>{area.blurb}</p>
           </Link>

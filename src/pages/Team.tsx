@@ -4,8 +4,6 @@ import { X } from 'lucide-react'
 import { FaceDisc } from '../components/today/skin'
 import { PublicHead, SecHead } from '../components/public/PublicParts'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { grants } from '../data/grants'
-import { mentees } from '../data/mentees'
 import type { TeamMember } from '../data/types'
 import { usePublications, useExpertise } from '../hooks/useApiData'
 import type { ExpertiseTag } from '../hooks/useApiData'
@@ -55,6 +53,8 @@ export default function Team() {
     `Meet the ${rosterCount} people of MN-CCORE: co-directors Nick Ingraham and Nathan Mesfin, senior mentors, faculty collaborators, fellows, students and research staff.`
   )
 
+  // Trainees are the roster's own group (fellows and students), never the mentee list.
+  const traineeCount = ROSTER.find((g) => g.id === 'trainees')?.members.length ?? 0
   const nameOf = (m: TeamMember) => (m.slug ? displayName(m.slug, 'formal') : m.name)
 
   return (
@@ -94,9 +94,8 @@ export default function Team() {
                   const slug = m.slug ?? ''
                   const tags = expertiseByMember.get(slug) ?? []
                   const stats = statLine([
-                    [grants.filter((g) => g.pi === slug && g.bucket === 'active').length, 'grant', 'grants'],
                     [memberPublications(publications, m).filter(isPublished).length, 'paper', 'papers'],
-                    [mentees.filter((x) => x.mentor === 'shared' || x.mentor === slug).length, 'trainee', 'trainees'],
+                    [traineeCount, 'trainee', 'trainees'],
                   ])
                   return (
                     <Link key={slug} to={`/team/${slug}`} className="pub-card pub-hov pub-dir">

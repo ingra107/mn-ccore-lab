@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { PublicHead, SecHead } from '../components/public/PublicParts'
-import { RESEARCH_AREAS } from '../lib/researchAreas'
+import { RESEARCH_AREAS, areaHref } from '../lib/researchAreas'
 
 const affiliateLinks = [
   { label: 'CLIF Consortium', href: 'https://clif-icu.com/' },
@@ -57,7 +57,7 @@ export default function Contact() {
           <SecHead title="What we work on" />
           <div className="pub-card" style={{ padding: 8, marginTop: 14 }}>
             {RESEARCH_AREAS.map((a) => (
-              <Link key={a.id} to={`/publications?area=${a.id}`} className="pub-row" style={{ alignItems: 'center' }}>
+              <Link key={a.id} to={areaHref(a)} className="pub-row" style={{ alignItems: 'center' }}>
                 <span className="pub-rt" style={{ fontSize: 16 }}>{a.label}</span>
               </Link>
             ))}

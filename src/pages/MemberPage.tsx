@@ -31,10 +31,25 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { QueryErrorNote } from '../components/QueryErrorNote'
 import { topicLabel } from '../lib/topics'
 import SectionHead from '../components/ui/SectionHead'
+import { SecHead } from '../components/public/PublicParts'
 import { statusLabel } from '../lib/textUtils'
 import { formatContributionScore } from '../lib/contributionScore'
 
 // isOverdue imported from dateUtils
+
+/** The same page serves the public site and the portal: the public gets the
+ *  serif section head, the portal keeps its own (ui/SectionHead). */
+function MemberHead(props: React.ComponentProps<typeof SectionHead>) {
+  const { pathname } = useLocation()
+  if (pathname.startsWith('/portal/')) return <SectionHead {...props} />
+  return <SecHead title={props.title} count={props.count} right={props.right} id={props.id} />
+}
+
+/** The public look draws its own rule under each head; only the portal keeps dividers. */
+function MemberDivider() {
+  const { pathname } = useLocation()
+  return pathname.startsWith('/portal/') ? <SectionDivider /> : null
+}
 
 function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
   const isDone = item.status === 'done'
@@ -336,7 +351,7 @@ export default function MemberPage() {
       {mentee && (
         <>
           <section className="mb-8" id="research-focus">
-            <SectionHead title="Research focus" />
+            <MemberHead title="Research focus" />
             {mentee.researchInterests && mentee.researchInterests.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
                 {mentee.researchInterests.map((interest) => (
@@ -369,7 +384,7 @@ export default function MemberPage() {
               </span>
             </div>
           </section>
-          <SectionDivider />
+          <MemberDivider />
           <div className="py-4" />
         </>
       )}
@@ -378,7 +393,7 @@ export default function MemberPage() {
       {menteeProjects.length > 0 && (
         <>
           <section className="mb-8" id="active-projects">
-            <SectionHead title="Active projects" />
+            <MemberHead title="Active projects" />
             <div className="space-y-3">
               {menteeProjects.map((project) => project && (
                 <div
@@ -423,7 +438,7 @@ export default function MemberPage() {
               ))}
             </div>
           </section>
-          <SectionDivider />
+          <MemberDivider />
           <div className="py-4" />
         </>
       )}
@@ -432,7 +447,7 @@ export default function MemberPage() {
       {(expertiseTags.length > 0 || isAuthenticated) && (
         <>
           <section className="mb-8" id="expertise">
-            <SectionHead title="Expertise" />
+            <MemberHead title="Expertise" />
 
             <div className="flex flex-wrap gap-1.5 mb-4">
               <AnimatePresence mode="popLayout">
@@ -579,7 +594,7 @@ export default function MemberPage() {
               </p>
             )}
           </section>
-          <SectionDivider />
+          <MemberDivider />
           <div className="py-4" />
         </>
       )}
@@ -588,7 +603,7 @@ export default function MemberPage() {
       {slug && (
         <>
           <section className="mb-8" id="activity">
-            <SectionHead title="Activity" />
+            <MemberHead title="Activity" />
             {canSeeScore && (
               <>
                 <ContributionScoreCard slug={slug} />
@@ -598,7 +613,7 @@ export default function MemberPage() {
             {/* The heatmap counts the same events as the score: theirs and the PI's alone. */}
             {canSeeScore && <ActivityHeatmap slug={slug} days={90} />}
           </section>
-          <SectionDivider />
+          <MemberDivider />
           <div className="py-4" />
         </>
       )}
@@ -607,7 +622,7 @@ export default function MemberPage() {
       {topicCounts.length > 0 && (
         <>
           <section className="mb-8" id="research-areas">
-            <SectionHead title="Research Areas" />
+            <MemberHead title="Research Areas" />
             <div className="flex flex-wrap gap-2 mb-4">
               {topicCounts.map(([topic, count]) => (
                 <span
@@ -641,7 +656,7 @@ export default function MemberPage() {
               </p>
             )}
           </section>
-          <SectionDivider />
+          <MemberDivider />
           <div className="py-4" />
         </>
       )}
@@ -662,10 +677,10 @@ export default function MemberPage() {
       {/* Commitments to this person */}
       {hasCommitments && (
         <>
-          <SectionDivider />
+          <MemberDivider />
           <div className="py-4" />
           <section className="mb-8" id="commitments">
-            <SectionHead title="Commitments" count={openCommitments.length > 0 ? <>{openCommitments.length} open</> : undefined} />
+            <MemberHead title="Commitments" count={openCommitments.length > 0 ? <>{openCommitments.length} open</> : undefined} />
 
             <AnimatePresence mode="popLayout">
               {openCommitments.map((c) => (
@@ -857,10 +872,10 @@ function MemberMilestones({ slug }: { slug: string }) {
 
   return (
     <>
-      <SectionDivider />
+      <MemberDivider />
       <div className="py-4" />
       <section className="mb-8" id="milestones">
-        <SectionHead
+        <MemberHead
          
           title="Milestones"
           count={open.length > 0 ? <>{open.length} upcoming</> : undefined}

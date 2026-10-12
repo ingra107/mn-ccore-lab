@@ -6,30 +6,11 @@ import LabPageLayout, {
 } from '../components/LabPageLayout'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { usePublications } from '../hooks/useApiData'
+import { usePublicGrants } from '../hooks/usePublicGrants'
+import { grantsForPi } from '../lib/publicGrants'
 import { memberPublications } from '../lib/publicationCounts'
 import { getMemberBySlug } from '../data/team'
 import { mentees as allMentees } from '../data/mentees'
-
-const grants = [
-  {
-    mechanism: 'R01',
-    title: 'LPV Precision Practice Assistance',
-    agency: 'NHLBI',
-    bucket: 'active' as const,
-  },
-  {
-    mechanism: 'R01',
-    title: 'Provider Variation Across CLIF',
-    agency: 'NHLBI',
-    bucket: 'active' as const,
-  },
-  {
-    mechanism: 'R03',
-    title: 'Decision-Making Styles of Medical Trainees',
-    agency: 'NHLBI',
-    bucket: 'active' as const,
-  },
-]
 
 const clifProjects = [
   { title: 'P1: Gender Disparities & Low Tidal Volume', status: 'Active' as const, description: 'Examining whether gender influences the delivery of lung-protective ventilation across CLIF consortium sites.' },
@@ -62,6 +43,9 @@ const mentees = allMentees.filter(
 
 export default function NickLab() {
   const { data: publications = [] } = usePublications()
+  // Live grants; empty for an anonymous visitor (the API gives no PI), so no section then.
+  const { data: liveGrants = [] } = usePublicGrants()
+  const grants = grantsForPi(liveGrants, 'nick-ingraham')
   usePageMeta(
     'Nick Ingraham Lab | MN-CCORE',
     'Nick Ingraham, MD -- Assistant Professor of Pulmonary & Critical Care Medicine at the University of Minnesota. Research in provider variation, lung-protective ventilation, and CLIF Consortium data science.'
@@ -81,14 +65,14 @@ export default function NickLab() {
       ]}
       photoUrl="https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-06/Nick%20Picture_2022.jpg?itok=VEDKgpUN"
       sections={[
-        { id: 'grants', label: 'Active Funding' },
+        ...(grants.length > 0 ? [{ id: 'grants', label: 'Funding' }] : []),
         { id: 'lab-projects', label: 'Lab Projects' },
         { id: 'clif-projects', label: 'CLIF Projects' },
         { id: 'mentees', label: 'Trainees' },
         { id: 'publications', label: 'Papers' },
       ]}
     >
-      <GrantsSection grants={grants} id="grants" title="Active Funding" />
+      <GrantsSection grants={grants} id="grants" title="Funding" />
       <ProjectsSection title="Lab Projects" projects={labProjects} id="lab-projects" />
       <ProjectsSection title="CLIF Projects" projects={clifProjects} id="clif-projects" />
       <MenteesSection mentees={mentees} id="mentees" title="Trainees & Mentees" />

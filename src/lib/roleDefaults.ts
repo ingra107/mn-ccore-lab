@@ -2,7 +2,8 @@
 export type UserRole = 'pi' | 'fellow' | 'coordinator' | 'default'
 
 // Mentee/trainee slugs (from mentees.ts). Phase 36b renamed to preferred-last.
-const FELLOW_SLUGS = ['dan-shyu', 'beret-fitzgerald', 'emma-bromley', 'casey-eddington', 'claire-collins', 'steven-arriaza']
+// Casey Eddington and Steven Arriaza are staff, not trainees: they get the coordinator view.
+const FELLOW_SLUGS = ['dan-shyu', 'beret-fitzgerald', 'emma-bromley', 'claire-collins']
 
 // Coordinator/staff slugs (research team members who are not mentees — currently same set,
 // but coordinators are identified by role, not slug. We check mentees data first.)
