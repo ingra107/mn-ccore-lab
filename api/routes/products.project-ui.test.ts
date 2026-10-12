@@ -191,3 +191,27 @@ describe('the writes the page sends (POST /api/projects/:slug/products)', () => 
     expect(res.status).toBe(403)
   })
 })
+
+describe('GET /api/projects/products (the list views\' bulk read)', () => {
+  async function bulk(email: string) {
+    const res = await worker.fetch(new Request('https://hub.test/api/projects/products', {
+      headers: { 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': email },
+    }), env, CTX)
+    return { status: res.status, body: (await res.json()) as { byProject: Record<string, Record<string, unknown>[]>; kinds: unknown[] } }
+  }
+
+  it('groups each visible project\'s live products, with seq and kinds', async () => {
+    const { status, body } = await bulk(PI_EMAIL)
+    expect(status).toBe(200)
+    expect(body.byProject[PROJECT].map((p) => p.id)).toEqual([HOME])
+    expect(typeof body.byProject[PROJECT][0].seq).toBe('number')
+    expect(body.kinds.length).toBeGreaterThanOrEqual(7)
+  })
+
+  it('a member gets only the projects they are on', async () => {
+    insertRow(db, 'projects', { id: 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ', slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'project_members', { project_id: 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ', member_slug: 'nick-ingraham', added_by: 'nick-ingraham' })
+    const { body } = await bulk(MEMBER_EMAIL)
+    expect(Object.keys(body.byProject)).toEqual([PROJECT])
+  })
+})

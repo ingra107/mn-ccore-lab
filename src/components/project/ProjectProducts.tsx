@@ -225,7 +225,7 @@ function ProductDetail({
   showHomeControl: boolean
 }) {
   const ladder = ladderFor(kinds, product.kind)
-  const setStage = useSetProductStage(slug)
+  const setStage = useSetProductStage()
   const setHome = useSetProductHome(slug)
   const idx = ladder.findIndex((s) => s.stage === product.stage)
   const parent = product.grew_from_id ? products.find((p) => p.id === product.grew_from_id) : undefined
@@ -237,7 +237,7 @@ function ProductDetail({
     // The undo toast is shown by the hook once this write lands; the write is
     // a compare-and-swap on the seq and stage this screen shows.
     setStage.mutate({
-      productId: product.id, stage, label: next.label, productName: productLabel(product),
+      slug, productId: product.id, stage, label: next.label, productName: productLabel(product),
       seen: { seq: product.seq, stage: product.stage, label: product.stage_label },
     })
   }

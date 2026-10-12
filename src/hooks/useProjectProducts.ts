@@ -7,11 +7,27 @@ import {
   setProductStage,
   type NewProductInput,
   type ProductRow,
+  type ProductsByProject,
   type ProjectProducts,
   type WrittenProduct,
 } from '../lib/products'
 
 const key = (slug: string) => ['project-products', slug] as const
+const BULK_KEY = ['projects-products'] as const
+
+/** Every visible project's products, for the list views (Projects stage cell,
+ *  Manuscripts stage and drag). One request; the Worker scopes it to the
+ *  caller's projects. */
+export function useAllProjectProducts() {
+  return useQuery({
+    queryKey: BULK_KEY,
+    queryFn: async (): Promise<ProductsByProject> => {
+      const data = (await fetchApi<unknown>('/api/projects/products')) as unknown as Partial<ProductsByProject>
+      return { byProject: data.byProject ?? {}, kinds: data.kinds ?? [] }
+    },
+    staleTime: 30 * 1000,
+  })
+}
 
 /** The live products of one project, with every kind's ladder. Visible to the
  *  project's members (the Worker applies the membership gate). */
@@ -37,24 +53,30 @@ function reason(err: unknown): string {
 function refresh(qc: ReturnType<typeof useQueryClient>, slug: string) {
   qc.invalidateQueries({ queryKey: key(slug) })
   qc.invalidateQueries({ queryKey: ['projects'] })
-  qc.invalidateQueries({ queryKey: ['projects-products'] })
+  qc.invalidateQueries({ queryKey: BULK_KEY })
   qc.invalidateQueries({ queryKey: ['activity'] })
 }
 
-/** Patch one product in the cached list (never a whole-list snapshot: two
- *  quick moves must not restore each other's stale copy). */
+/** Patch one product in the cached lists, the project's and the bulk one
+ *  (never a whole-list snapshot: two quick moves must not restore each
+ *  other's stale copy). */
 function patchCached(
   qc: ReturnType<typeof useQueryClient>, slug: string, productId: string, patch: Partial<ProductRow>,
 ) {
+  const one = (p: ProductRow): ProductRow => (p.id === productId ? { ...p, ...patch } : p)
   const cur = qc.getQueryData<ProjectProducts>(key(slug))
-  if (!cur) return
-  qc.setQueryData<ProjectProducts>(key(slug), {
-    ...cur,
-    products: cur.products.map((p): ProductRow => (p.id === productId ? { ...p, ...patch } : p)),
-  })
+  if (cur) qc.setQueryData<ProjectProducts>(key(slug), { ...cur, products: cur.products.map(one) })
+  const bulk = qc.getQueryData<ProductsByProject>(BULK_KEY)
+  if (bulk) {
+    const byProject: Record<string, ProductRow[]> = {}
+    for (const [pid, list] of Object.entries(bulk.byProject)) byProject[pid] = list.map(one)
+    qc.setQueryData<ProductsByProject>(BULK_KEY, { ...bulk, byProject })
+  }
 }
 
 interface StageVars {
+  /** The project's slug: the write goes to POST /api/projects/:slug/products. */
+  slug: string
   productId: string
   stage: string
   label: string
@@ -69,31 +91,33 @@ interface StageVars {
  *  refusal refetches the truth and shows the Worker's reason. The undo toast
  *  appears only once the write has landed, and its undo is itself a
  *  compare-and-swap against the seq the move produced. */
-export function useSetProductStage(slug: string) {
+export function useSetProductStage() {
   const qc = useQueryClient()
   const { showError, showUndo } = useUndoToast()
   const m = useMutation({
     mutationFn: (v: StageVars): Promise<WrittenProduct> =>
-      setProductStage(slug, v.productId, v.stage, { seq: v.seen.seq, stage: v.seen.stage }),
+      setProductStage(v.slug, v.productId, v.stage, { seq: v.seen.seq, stage: v.seen.stage }),
     onMutate: async (v) => {
-      await qc.cancelQueries({ queryKey: key(slug) })
-      patchCached(qc, slug, v.productId, { stage: v.stage, stage_label: v.label })
+      await qc.cancelQueries({ queryKey: key(v.slug) })
+      await qc.cancelQueries({ queryKey: BULK_KEY })
+      patchCached(qc, v.slug, v.productId, { stage: v.stage, stage_label: v.label })
     },
     onSuccess: (written, v) => {
-      patchCached(qc, slug, v.productId, { stage: written.stage, stage_label: written.stage_label, seq: written.seq })
+      patchCached(qc, v.slug, v.productId, { stage: written.stage, stage_label: written.stage_label, seq: written.seq })
       if (v.undo) return
       showUndo(`${v.productName} → ${written.stage_label}`, () =>
         m.mutate({
-          productId: v.productId, stage: v.seen.stage, label: v.seen.label, productName: v.productName,
+          slug: v.slug, productId: v.productId, stage: v.seen.stage, label: v.seen.label, productName: v.productName,
           seen: { seq: written.seq, stage: written.stage, label: written.stage_label }, undo: true,
         }),
       )
     },
-    onError: (err) => {
-      qc.invalidateQueries({ queryKey: key(slug) })
+    onError: (err, v) => {
+      qc.invalidateQueries({ queryKey: key(v.slug) })
+      qc.invalidateQueries({ queryKey: BULK_KEY })
       showError(`Could not save stage — ${reason(err)}`)
     },
-    onSettled: () => refresh(qc, slug),
+    onSettled: (_d, _e, v) => refresh(qc, v.slug),
   })
   return m
 }

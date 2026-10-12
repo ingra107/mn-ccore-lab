@@ -70,6 +70,35 @@ export async function handleGetProductsSync(
   return json({ data: rows, count: rows.length });
 }
 
+/** One product row as the team-facing reads send it (labels joined in). */
+const PRODUCT_LIST_SQL = `SELECT p.id, p.project_id, p.kind, k.label AS kind_label, k.sort_order AS kind_sort,
+            p.stage, s.label AS stage_label, s.ordinal AS stage_ordinal, s.is_terminal AS stage_is_terminal,
+            p.title, p.short_name, p.waiting_on, p.venue, p.due_date, p.deadline,
+            p.folder, p.repo_url, p.stage_entered_at, p.stage_notes, p.sort_order,
+            p.is_home, p.lineage_rank, p.grew_from_id, p.seq, p.created_at, p.updated_at
+       FROM products p
+       JOIN product_kinds k ON k.kind = p.kind
+       JOIN product_stages s ON s.kind = p.kind AND s.stage = p.stage`;
+
+/** Every live kind with its live ladder: the UI holds no copy of kind data. */
+async function kindsWithLadders(env: Env): Promise<Record<string, unknown>[]> {
+  const kinds = await env.DB.prepare(
+    `SELECT kind, label, plural_label, has_page, can_fund, sort_order
+       FROM product_kinds WHERE deleted_at IS NULL ORDER BY sort_order, kind`,
+  ).all<Record<string, unknown>>();
+  const stages = await env.DB.prepare(
+    `SELECT kind, stage, label, ordinal, is_terminal
+       FROM product_stages WHERE deleted_at IS NULL ORDER BY kind, ordinal`,
+  ).all<Record<string, unknown>>();
+  const ladders = new Map<string, Record<string, unknown>[]>();
+  for (const st of stages.results ?? []) {
+    const list = ladders.get(st.kind as string) ?? [];
+    list.push({ stage: st.stage, label: st.label, ordinal: st.ordinal, is_terminal: st.is_terminal });
+    ladders.set(st.kind as string, list);
+  }
+  return (kinds.results ?? []).map((k) => ({ ...k, stages: ladders.get(k.kind as string) ?? [] }));
+}
+
 export async function handleGetProjectProducts(
   slugOrId: string, request: Request, env: Env,
 ): Promise<Response> {
@@ -81,35 +110,28 @@ export async function handleGetProjectProducts(
   const block = await assertProjectVisible(request, env, project.id);
   if (block) return block;
   const { results } = await env.DB.prepare(
-    `SELECT p.id, p.project_id, p.kind, k.label AS kind_label, p.stage, s.label AS stage_label,
-            s.ordinal AS stage_ordinal, s.is_terminal AS stage_is_terminal,
-            p.title, p.short_name, p.waiting_on, p.venue, p.due_date, p.deadline,
-            p.folder, p.repo_url, p.stage_entered_at, p.stage_notes, p.sort_order,
-            p.is_home, p.lineage_rank, p.grew_from_id, p.seq, p.created_at, p.updated_at
-       FROM products p
-       JOIN product_kinds k ON k.kind = p.kind
-       JOIN product_stages s ON s.kind = p.kind AND s.stage = p.stage
+    `${PRODUCT_LIST_SQL}
       WHERE p.project_id = ? AND p.deleted_at IS NULL
       ORDER BY p.is_home DESC, p.sort_order, p.id`,
   ).bind(project.id).all<Record<string, unknown>>();
-  const kinds = await env.DB.prepare(
-    `SELECT kind, label, plural_label, has_page, can_fund, sort_order
-       FROM product_kinds WHERE deleted_at IS NULL ORDER BY sort_order, kind`,
+  return json({ products: results ?? [], kinds: await kindsWithLadders(env) });
+}
+
+// GET /api/projects/products -- the list views' bulk read (Projects list
+// stage cell, Manuscripts stage and drag). The live products of every live
+// project the caller can see, grouped by project id, plus the kinds. Which
+// projects come back is the caller's handle (table-scope byProject on
+// products): a member gets the projects they are on, the PI theirs.
+export async function handleGetAllProjectProducts(env: Env): Promise<Response> {
+  const { results } = await env.DB.prepare(
+    `${PRODUCT_LIST_SQL}
+       JOIN projects pr ON pr.id = p.project_id AND pr.deleted_at IS NULL
+      WHERE p.deleted_at IS NULL
+      ORDER BY p.project_id, p.is_home DESC, p.sort_order, p.id`,
   ).all<Record<string, unknown>>();
-  const stages = await env.DB.prepare(
-    `SELECT kind, stage, label, ordinal, is_terminal
-       FROM product_stages WHERE deleted_at IS NULL ORDER BY kind, ordinal`,
-  ).all<Record<string, unknown>>();
-  const ladders = new Map<string, Record<string, unknown>[]>();
-  for (const s of stages.results ?? []) {
-    const list = ladders.get(s.kind as string) ?? [];
-    list.push({ stage: s.stage, label: s.label, ordinal: s.ordinal, is_terminal: s.is_terminal });
-    ladders.set(s.kind as string, list);
-  }
-  return json({
-    products: results ?? [],
-    kinds: (kinds.results ?? []).map((k) => ({ ...k, stages: ladders.get(k.kind as string) ?? [] })),
-  });
+  const byProject: Record<string, Record<string, unknown>[]> = {};
+  for (const r of results ?? []) (byProject[r.project_id as string] ??= []).push(r);
+  return json({ byProject, kinds: await kindsWithLadders(env) });
 }
 
 // ── POST /api/projects/:slug/products ───────────────────────────────────────

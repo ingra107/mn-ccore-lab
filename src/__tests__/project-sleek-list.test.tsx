@@ -11,6 +11,7 @@ import { useState } from 'react'
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import ProjectSleekList from '../components/project/ProjectSleekList'
+import type { ProductKind, ProductRow } from '../lib/products'
 import { isPoorHealth, projectRowName, type ProjectHealth } from '../lib/projectListOptions'
 import type { SleekSort } from '../components/table/SleekRows'
 import type { Project } from '../data/types'
@@ -50,6 +51,27 @@ const link = (id: string): StoredLink => ({ id, role: 'key', type: 'google_doc',
 
 interface Opts { projects?: Project[]; links?: Record<string, StoredLink[]>; sort?: SleekSort }
 
+// Products: alpha and bravo hold one manuscript each (a ladder), charlie two (chips).
+const KINDS: ProductKind[] = [{
+  kind: 'manuscript', label: 'Manuscript', plural_label: 'Manuscripts', has_page: 1, can_fund: 0, sort_order: 10,
+  stages: [
+    { stage: 'data_analysis', label: 'Data analysis', ordinal: 30, is_terminal: 0 },
+    { stage: 'writing', label: 'Writing', ordinal: 40, is_terminal: 0 },
+  ],
+}]
+const prd = (id: string, project_id: string, extra: Partial<ProductRow> = {}): ProductRow => ({
+  id, project_id, kind: 'manuscript', kind_label: 'Manuscript', stage: 'data_analysis', stage_label: 'Data analysis',
+  stage_ordinal: 30, stage_is_terminal: 0, title: null, short_name: null, waiting_on: null, venue: null,
+  due_date: null, deadline: null, folder: null, repo_url: null, stage_entered_at: null, stage_notes: null,
+  sort_order: 0, is_home: 1, lineage_rank: 0, grew_from_id: null, seq: 1, created_at: '', updated_at: '', ...extra,
+})
+const PRODUCTS: Record<string, ProductRow[]> = {
+  'id-alpha': [prd('prd_a', 'id-alpha')],
+  'id-bravo': [prd('prd_b', 'id-bravo')],
+  'id-charlie': [prd('prd_c1', 'id-charlie', { short_name: 'Paper' }), prd('prd_c2', 'id-charlie', { is_home: 0, short_name: 'Poster', stage: 'writing', stage_label: 'Writing' })],
+}
+const stageOf = (p: Project) => ({ key: p.stage || '', label: p.stage ? p.stage[0].toUpperCase() + p.stage.slice(1) : 'No stage' })
+
 function Harness({ togglePin, onField, onSort, opts }: { togglePin: (s: string) => void; onField: (s: string, f: Record<string, string>) => void; onSort: (s: SleekSort) => void; opts: Opts }) {
   const [focused, setFocused] = useState(-1)
   return (
@@ -65,10 +87,11 @@ function Harness({ togglePin, onField, onSort, opts }: { togglePin: (s: string) 
       linksByProjectId={opts.links ?? {}}
       pinnedSlugs={new Set(['alpha'])}
       togglePin={togglePin}
-      stageOptions={[{ value: 'analysis', label: 'Analysis' }, { value: 'writing', label: 'Writing' }]}
       categoryOptions={[{ value: 'MNCCORE', label: 'MN-CCORE' }, { value: 'CLIF', label: 'CLIF' }]}
       onFieldChange={onField}
-      onStageChange={() => {}}
+      productsByProject={PRODUCTS}
+      kinds={KINDS}
+      stageOf={stageOf}
     />
   )
 }
@@ -120,7 +143,11 @@ describe('Projects list on sleek rows', () => {
     expect(row('alpha').querySelector('[data-col="pi"] .tk-face')).not.toBeNull()
     expect(row('alpha').querySelector('.pj-health')).toBeNull()
     expect(row('bravo').querySelector('.pj-health')).not.toBeNull()
-    expect(row('alpha').querySelector('[aria-label^="Stage:"]')).toBeNull()
+    // Stage is the products (Nick 2026-10-11): one product -> a small ladder, 2+ -> chips.
+    expect(row('alpha').querySelector('[aria-label="Stage: Data analysis"] .psc-d.is-on')).not.toBeNull()
+    expect(row('charlie').querySelector('.psc-chips')!.textContent).toContain('Paper')
+    expect(row('charlie').querySelector('.psc-chips')!.textContent).toContain('+1')
+    expect(row('charlie').querySelector('.psc-chips')!.getAttribute('data-tip')).toContain('Poster: Writing')
     expect(row('alpha').querySelector('[data-col="title"]')!.textContent).toContain('3')
   })
 
@@ -204,7 +231,7 @@ describe('Projects list on sleek rows', () => {
     expect(row('alpha').querySelector('[data-col="title"] .sr-only')!.textContent).toBe('Active')
   })
 
-  it('an empty stage reads "No stage" in its group header, never a second "Idea"', async () => {
+  it('stage group headers come from the page\'s stageOf (one header per run)', async () => {
     const { host } = await render(1100, { projects: [project('alpha', { stage: 'idea' }), project('echo', { stage: '' })], sort: { key: 'stage', dir: 'asc' } })
     const heads = [...host.querySelectorAll('.pj-stage-h > span:first-child')].map((e) => e.textContent)
     expect(heads).toEqual(['Idea', 'No stage'])

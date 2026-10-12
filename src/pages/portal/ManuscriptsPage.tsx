@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { portalTitle } from '../../constants/pageLabels'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -34,35 +34,23 @@ import EmptyState from '../../components/EmptyState'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
-import { toApiStage, stageIndex } from '../../lib/stageNormalize'
+import { toApiStage } from '../../lib/stageNormalize'
+import { useAllProjectProducts, useSetProductStage } from '../../hooks/useProjectProducts'
+import { homeOf, ladderFor, productLabel, type ProductRow } from '../../lib/products'
 import { PATHS } from '../../constants/paths'
 import { parseDbUtc } from '../../lib/time'
 import { parseDateOnlyOrTimestamp } from '../../lib/dateUtils'
 import { ICON_PROPS } from '../../lib/iconProps'
 
-// S4 (Nick, 2026-06-09): a manuscript = a project whose canonical stage is
-// >= writing (writing / submitted / revisions / accepted / published). The
-// old filter `p.status !== 'published' || p.stage === 'published'` was a
-// tautology — `status` is active/waiting_external/blocked/done, never
-// 'published' — so it admitted ALL projects. stageIndex() normalizes legacy
-// + API stage strings; writing is index 3 on the canonical ladder.
-const WRITING_STAGE_INDEX = stageIndex('writing')
-function isManuscriptStage(stage: string | null | undefined): boolean {
-  const idx = stageIndex(stage)
-  return idx >= 0 && idx >= WRITING_STAGE_INDEX
-}
-
-// Values are D1 lowercase canonical; labels are sentence case for display.
-const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
-const STAGE_LABELS: Record<typeof STAGES[number], string> = {
-  idea: 'Idea',
-  data_collection: 'Data collection',
-  analysis: 'Analysis',
-  writing: 'Writing',
-  review: 'Review',
-  revisions: 'Revisions',
-  published: 'Published',
-}
+// A manuscript row is a project whose HOME product (the live home, else its
+// only product) is a manuscript at stage writing or later (S4, Nick
+// 2026-06-09: writing / submitted / revisions / accepted / published). Its
+// stage, its days-in-stage and its edits are that product's (plan step 8):
+// the stage cell and the pipeline drag write the product through
+// POST /api/projects/:slug/products. The stage words and their order are the
+// manuscript ladder the Worker sends (GET /api/projects/products), so the page
+// holds no copy of them. A project with no product yet (before Backfill A)
+// shows its own project stage and cannot be edited here.
 // Status and group are words, not meanings: the edit menus list them in plain
 // ink (rules-ui-design 21, Nick 2026-10-11 -- green has no job, gold is "wants
 // you now", red is overdue).
@@ -72,8 +60,6 @@ const STATUS_OPTIONS = [
   { value: 'blocked', label: 'Blocked', color: 'var(--st-blocked)' },
   { value: 'done', label: 'Done', color: 'var(--st-done)' },
 ]
-const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
-
 
 function daysInStage(project: Project): number {
   const dateStr = project.stage_entered_at || project.updated_at || project.lastActivity
@@ -151,32 +137,68 @@ export default function ManuscriptsPage() {
   const { prefs: labPrefs } = useLabPrefs()
   const stalledThresholdDays = labPrefs.manuscriptsStaleDays
   const createProject = useCreateProject()
-  const { showUndo } = useUndoToast()
+  const { showUndo, showError } = useUndoToast()
   const inlineUpdate = useUpdateProjectFields()
+  const setProductStage = useSetProductStage()
+  const { data: productData, isLoading: productsLoading } = useAllProjectProducts()
+
+  // The manuscript ladder, from the Worker's kind data.
+  const ladder = useMemo(() => ladderFor(productData?.kinds ?? [], 'manuscript'), [productData])
+  const STAGES = useMemo(() => ladder.map((s) => s.stage), [ladder])
+  const STAGE_LABELS = useMemo<Record<string, string>>(() => Object.fromEntries(ladder.map((s) => [s.stage, s.label])), [ladder])
+  const STAGE_ORDER = useMemo<Record<string, number>>(() => Object.fromEntries(ladder.map((s) => [s.stage, s.ordinal])), [ladder])
+  const writingOrdinal = ladder.find((s) => s.stage === 'writing')?.ordinal ?? Number.POSITIVE_INFINITY
+
+  // Each project as its manuscript row: the home product's stage and clock.
+  const { rows: msCandidates, homeBySlug } = useMemo(() => {
+    const homes = new Map<string, ProductRow>()
+    const out: Project[] = []
+    for (const p of projects) {
+      const products = productData?.byProject[p.id ?? '']
+      const home = homeOf(products)
+      if (home) {
+        if (home.kind !== 'manuscript') continue
+        homes.set(p.slug, home)
+        out.push({ ...p, stage: home.stage, stage_entered_at: home.stage_entered_at ?? p.stage_entered_at })
+      } else if (!products || products.length === 0) {
+        // No product yet: the project's own stage, canonical, read-only here.
+        out.push({ ...p, stage: p.stage ? toApiStage(p.stage) : p.stage })
+      }
+      // 2+ products and no home: no single manuscript stage to show.
+    }
+    return { rows: out, homeBySlug: homes }
+  }, [projects, productData])
+  const isManuscriptRow = useCallback(
+    (p: Project) => (STAGE_ORDER[p.stage ?? ''] ?? -1) >= writingOrdinal,
+    [STAGE_ORDER, writingOrdinal],
+  )
 
   const handleFieldChange = (slug: string, field: string, value: unknown, prev: unknown) => {
     inlineUpdate.mutate({ slug, fields: { [field]: value } })
     showUndo(`${field} → ${value}`, () => inlineUpdate.mutate({ slug, fields: { [field]: prev } }))
   }
 
-  // S17: stage editing is instant + undo, identical to Projects.tsx and the
-  // pipeline drag path below. The UI 6-stage value MUST map through toApiStage()
-  // to the 7-value API canonical (Rule 35) — handleFieldChange passed the raw UI
-  // value, which the API 400s, surfacing as a silent optimistic revert. This
-  // single chokepoint removes that drift for the list views.
+  // One stage write for the list cell and the pipeline drag: the home
+  // product's stage, a compare-and-swap on what this screen shows; the undo
+  // toast appears once it lands (useSetProductStage).
   const handleStageChange = (slug: string, nextStage: string, prevStage: string | null | undefined) => {
     if (nextStage === prevStage) return
-    inlineUpdate.mutate({ slug, fields: { stage: toApiStage(nextStage) } })
-    showUndo(
-      `Stage → ${STAGE_LABELS[nextStage as typeof STAGES[number]] ?? nextStage}`,
-      () => inlineUpdate.mutate({ slug, fields: { stage: toApiStage(prevStage || 'idea') } }),
-    )
+    const home = homeBySlug.get(slug)
+    if (!home) {
+      showError('This project has no product yet; open the project to add one.')
+      return
+    }
+    setProductStage.mutate({
+      slug, productId: home.id, stage: nextStage, label: STAGE_LABELS[nextStage] ?? nextStage,
+      productName: productLabel(home),
+      seen: { seq: home.seq, stage: home.stage, label: home.stage_label },
+    })
   }
 
   const manuscripts = useMemo(() => {
     // S4: a manuscript is a project at stage >= writing. Earlier-stage
     // projects (idea / data collection / analysis) live only on Projects.
-    let filtered = projects.filter((p) => isManuscriptStage(p.stage))
+    let filtered = msCandidates.filter(isManuscriptRow)
     if (filterPI) filtered = filtered.filter((p) => p.pi === filterPI)
     if (filterCategory) filtered = filtered.filter((p) => p.category === filterCategory)
     if (filterStalled) filtered = filtered.filter((p) => p.stage !== 'published' && daysInStage(p) > stalledThresholdDays)
@@ -216,7 +238,7 @@ export default function ManuscriptsPage() {
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
     })
-  }, [projects, filterPI, filterCategory, filterStalled, sort, attentionFilter, attentionData, stalledThresholdDays])
+  }, [msCandidates, isManuscriptRow, STAGE_ORDER, filterPI, filterCategory, filterStalled, sort, attentionFilter, attentionData, stalledThresholdDays])
 
 
   const taskCounts = useMemo(() => {
@@ -235,10 +257,10 @@ export default function ManuscriptsPage() {
     for (const p of manuscripts) {
       const stage = p.stage || 'idea'
       if (map[stage]) map[stage].push(p)
-      else map['idea'].push(p)
+      else (map['idea'] ??= []).push(p)
     }
     return map
-  }, [manuscripts])
+  }, [manuscripts, STAGES])
 
   const activeCount = manuscripts.filter((p) => p.stage !== 'published').length
   const writingCount = manuscripts.filter((p) => p.stage === 'writing').length
@@ -246,8 +268,8 @@ export default function ManuscriptsPage() {
   // S4: stalled count scoped to the manuscript subset (stage >= writing, not
   // yet published), so the pill count matches the page's own taxonomy.
   const stalledCount = useMemo(() =>
-    projects.filter(p => isManuscriptStage(p.stage) && p.stage !== 'published' && daysInStage(p) > stalledThresholdDays).length
-  , [projects, stalledThresholdDays])
+    msCandidates.filter(p => isManuscriptRow(p) && p.stage !== 'published' && daysInStage(p) > stalledThresholdDays).length
+  , [msCandidates, isManuscriptRow, stalledThresholdDays])
 
   // M-14: derive PI options from data instead of hardcoding nick + nate.
   // New PIs (mentees taking over a manuscript, visiting faculty) auto-appear.
@@ -407,7 +429,7 @@ export default function ManuscriptsPage() {
         // Trophy shows only the published ones, so it counts those.
         controlsCount={view === 'trophy' ? manuscripts.length - activeCount : manuscripts.length}
         controlsCountLabel={view === 'trophy' ? 'published' : 'manuscripts'}
-        isLoading={isLoading}
+        isLoading={isLoading || productsLoading}
         skeletonRows={6}
         skeletonCols={5}
         beforeBody={
@@ -492,14 +514,10 @@ export default function ManuscriptsPage() {
         {/* ─── PIPELINE VIEW ─── M-13: drag-and-drop between stages */}
         {view === 'pipeline' && (
           <PipelineBoard
+            stages={STAGES}
+            stageLabels={STAGE_LABELS}
             byStage={byStage}
-            onStageChange={(slug, prevStage, nextStage) => {
-              const apiStage = toApiStage(nextStage)
-              inlineUpdate.mutate({ slug, fields: { stage: apiStage } })
-              showUndo(`stage → ${nextStage}`, () =>
-                inlineUpdate.mutate({ slug, fields: { stage: prevStage } })
-              )
-            }}
+            onStageChange={(slug, prevStage, nextStage) => handleStageChange(slug, nextStage, prevStage)}
           />
         )}
 
@@ -623,10 +641,10 @@ export default function ManuscriptsPage() {
 // M-13: Pipeline drag-and-drop. PipelineBoard wraps the kanban in
 // DndContext + per-column droppable + per-card draggable. Drag a card
 // onto a different stage column → fires onStageChange. Optimistic update
-// + 5s undo handled in parent.
+// + undo handled in parent (the home product's stage).
 // ───────────────────────────────────────────────────────────────────────
 
-type StageKey = typeof STAGES[number]
+type StageKey = string
 
 function PipelineCard({ project, dragging }: { project: Project; dragging?: boolean }) {
   const pi = piDisplay(project.pi)
@@ -723,9 +741,13 @@ function DroppableColumn({
 }
 
 function PipelineBoard({
+  stages: STAGES,
+  stageLabels: STAGE_LABELS,
   byStage,
   onStageChange,
 }: {
+  stages: string[]
+  stageLabels: Record<string, string>
   byStage: Record<string, Project[]>
   onStageChange: (slug: string, prevStage: string, nextStage: StageKey) => void
 }) {
@@ -739,7 +761,7 @@ function PipelineBoard({
     const out: Project[] = []
     for (const s of STAGES) for (const p of byStage[s] || []) out.push(p)
     return out
-  }, [byStage])
+  }, [byStage, STAGES])
 
   const activeProject = activeId ? allProjects.find((p) => p.slug === activeId) ?? null : null
 

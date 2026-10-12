@@ -7,7 +7,8 @@
 // What changed from the ruled 7-column grid (every-page evaluation items 6, 7,
 // 22, 24): no gridlines and no outer box; "Active" is not printed (the default
 // says nothing, Waiting / Blocked / Done keep their words and colors); the PI
-// is a photo face in a fixed slot; the stage dots are gone (Stage says it);
+// is a photo face in a fixed slot; Stage is the project's products
+// (ProductStageCell: a small ladder for one product, chips for 2+);
 // the health bar shows only when health is poor (the same score the "Needs
 // Attention" filter uses, isPoorHealth). The short name leads, one line (Nick
 // 2026-07-21: the title cell is ONE line); the full title is the hover tip.
@@ -28,7 +29,8 @@ import WorkOnActions from '../WorkOnActions'
 import { Face } from '../today/skin'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { stageLabel } from '../../lib/stageNormalize'
+import ProductStageCell from './ProductStageCell'
+import type { ProductKind, ProductRow } from '../../lib/products'
 import { parseDbUtc } from '../../lib/time'
 import { normalizeProjectStatus, isProjectFinished } from '../../lib/taskConstants'
 import { STATUS_LIST_OPTIONS, LIST_T2, isPoorHealth, cleanProjectTitle, projectRowName, type ProjectHealth } from '../../lib/projectListOptions'
@@ -47,9 +49,6 @@ import type { StoredLink, ProjectPublicationLink } from '../../hooks/useApiData'
 
 // Only Critical keeps a status color on the bar; the tooltip says the word.
 const healthColor = (status: string): string => (status === 'Critical' ? 'var(--job-stale)' : 'var(--sk-t2)')
-
-// A stage as a header or footer names it; an empty stage sorts last and says so.
-const stageName = (stage: string | null | undefined): string => stageLabel(stage || '') || 'No stage'
 
 // S19: directors are the canonical PI choices; a non-director current value
 // (legacy "nick", an email) is prepended so the menu names it cleanly.
@@ -149,17 +148,21 @@ export interface ProjectSleekListProps {
   publicationsBySlug?: Map<string, ProjectPublicationLink[]>
   pinnedSlugs: Set<string>
   togglePin: (slug: string) => void
-  stageOptions: { value: string; label: string; color?: string }[]
   categoryOptions: { value: string; label: string; color?: string }[]
   onFieldChange: (slug: string, fields: Record<string, string>) => void
-  onStageChange: (slug: string, next: string, prev: string | null | undefined) => void
+  /** Each project's live products (GET /api/projects/products), keyed by id. */
+  productsByProject: Record<string, ProductRow[]>
+  kinds: ProductKind[]
+  /** The stage a row is grouped and counted under (headers, footer); the
+   *  page decides it (its home product's stage). */
+  stageOf: (p: Project) => { key: string; label: string }
   emptyLabel?: string
 }
 
 export default function ProjectSleekList({
   projects, sort, onSort, focusedIndex, setFocusedIndex, keyboardEnabled, healthBySlug, taskCountByProject,
-  linksByProjectId, publicationsBySlug, pinnedSlugs, togglePin, stageOptions, categoryOptions, onFieldChange,
-  onStageChange, emptyLabel = 'No projects in this category',
+  linksByProjectId, publicationsBySlug, pinnedSlugs, togglePin, categoryOptions, onFieldChange,
+  productsByProject, kinds, stageOf, emptyLabel = 'No projects in this category',
 }: ProjectSleekListProps) {
   const navigate = useNavigate()
   const slugs = useMemo(() => projects.map((p) => p.slug), [projects])
@@ -264,14 +267,9 @@ export default function ProjectSleekList({
       )),
     }] : []),
     {
-      key: 'stage', label: 'Stage', width: '112px', sortable: true, interactive: true, phone: 'line',
+      key: 'stage', label: 'Stage', width: '168px', sortable: true, interactive: true, phone: 'line',
       render: (p) => (
-        <InlineSelect
-          value={p.stage || ''}
-          options={stageOptions}
-          onChange={(val) => onStageChange(p.slug, val, p.stage)}
-          display={<span className="sr-m sr-hi">{stageLabel(p.stage || '') || '—'}</span>}
-        />
+        <ProductStageCell slug={p.slug} products={productsByProject[p.id ?? '']} kinds={kinds} />
       ),
     },
     {
@@ -340,7 +338,7 @@ export default function ProjectSleekList({
         )
       },
     }] : []),
-  ], [pinnedSlugs, togglePin, taskCountByProject, healthBySlug, publicationsBySlug, navigate, setFocusedIndex, indexOf, stageOptions, categoryOptions, onFieldChange, onStageChange, linksByProjectId, widths])
+  ], [pinnedSlugs, togglePin, taskCountByProject, healthBySlug, publicationsBySlug, navigate, setFocusedIndex, indexOf, categoryOptions, onFieldChange, productsByProject, kinds, linksByProjectId, widths])
 
   const onRowClick = useCallback((index: number, slug: string, e: React.MouseEvent) => {
     const path = PATHS.project(slug)
@@ -351,14 +349,18 @@ export default function ProjectSleekList({
 
   const byStage = sort?.key === 'stage'
   const stageCounts = useMemo(() => {
-    const acc = new Map<string, number>()
-    for (const p of projects) acc.set(p.stage || '', (acc.get(p.stage || '') ?? 0) + 1)
+    const acc = new Map<string, { label: string; count: number }>()
+    for (const p of projects) {
+      const st = stageOf(p)
+      const cur = acc.get(st.key)
+      acc.set(st.key, { label: st.label, count: (cur?.count ?? 0) + 1 })
+    }
     return acc
-  }, [projects])
+  }, [projects, stageOf])
   // A stage header opens each run of one stage, only when sorted by stage.
   const startsStage = useMemo(
-    () => projects.map((p, i) => byStage && (i === 0 || (projects[i - 1].stage || '') !== (p.stage || ''))),
-    [projects, byStage],
+    () => projects.map((p, i) => byStage && (i === 0 || stageOf(projects[i - 1]).key !== stageOf(p).key)),
+    [projects, byStage, stageOf],
   )
 
   return (
@@ -368,14 +370,14 @@ export default function ProjectSleekList({
         {projects.length > 0 && (
           <motion.div variants={staggerContainer} initial="hidden" animate="visible">
             {projects.map((p, index) => {
-              const stage = p.stage || ''
+              const stage = stageOf(p)
               const header = startsStage[index]
               return (
                 <motion.div key={p.slug} variants={staggerItem} ref={(el: HTMLDivElement | null) => { rowRefs.current[index] = el }}>
                   {header && (
                     <div className="pj-stage-h">
-                      <span>{stageName(stage)}</span>
-                      <span className="sr-m">{stageCounts.get(stage) ?? 0}</span>
+                      <span>{stage.label}</span>
+                      <span className="sr-m">{stageCounts.get(stage.key)?.count ?? 0}</span>
                       <i className="sk-fade" aria-hidden="true" />
                     </div>
                   )}
@@ -395,7 +397,7 @@ export default function ProjectSleekList({
         <div className="pj-foot">
           {[
             { label: 'Count', value: projects.length },
-            ...Array.from(stageCounts.entries()).map(([stage, count]) => ({ label: stageName(stage), value: count })),
+            ...Array.from(stageCounts.values()).map(({ label, count }) => ({ label, value: count })),
           ].map((s) => (
             <span key={s.label}>{s.label} <b>{s.value}</b></span>
           ))}

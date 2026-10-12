@@ -3,14 +3,13 @@ import { portalTitle } from '../constants/pageLabels'
 import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid } from 'lucide-react'
-import { toApiStage } from '../lib/stageNormalize'
+import { stageLabel } from '../lib/stageNormalize'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useDependencies, useProjectHealth, useTasks, useAllProjectLinks, useAllProjectPublications } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
 import { PANEL_BG, daysSince, withAlpha } from '../lib/taskGrouping'
 import { parseDbUtc } from '../lib/time'
 import { useCreateProject, useUpdateProjectFields } from '../hooks/useMutations'
-import { useUndoToast } from '../components/UndoToast'
 import { isProjectActive, isProjectDone, isProjectFinished, isStalledProject } from '../lib/taskConstants'
 import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
@@ -24,22 +23,15 @@ import { AllProjectsBanner, AllProjectsSwitch } from '../components/AllProjectsC
 import { useAllProjectsOn } from '../lib/allProjects'
 import { useAuth } from '../hooks/useAuth'
 import { useProjectPins } from '../hooks/useProjectPins'
-import { stageListOptions, mutedCategoryOptions, isPoorHealth, projectRowName } from '../lib/projectListOptions'
+import { mutedCategoryOptions, isPoorHealth, projectRowName } from '../lib/projectListOptions'
+import { useAllProjectProducts } from '../hooks/useProjectProducts'
+import { homeOf, type ProductRow } from '../lib/products'
 import ProjectSleekList from '../components/project/ProjectSleekList'
 import type { SleekSort } from '../components/table/SleekRows'
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
 type Stage = (typeof STAGES)[number]
-const STAGE_LABELS: Record<Stage, string> = {
-  idea: 'Idea',
-  data_collection: 'Data Collection',
-  analysis: 'Analysis',
-  writing: 'Writing',
-  review: 'Review',
-  revisions: 'Revisions',
-  published: 'Published',
-}
 
 // Stage 4 #12-followup (2026-05-08): 3-bucket canonical categories.
 // 'stale' is a pseudo-filter (P2-9: stale-by-shared-threshold OR health < 50),
@@ -85,11 +77,25 @@ function statusScope(status: string, projects: Project[]): Project[] {
   return projects.filter((p) => !isProjectDone(p.status))
 }
 
-// Option sets for the list's inline editors live in lib/projectListOptions
-// (shared with the project detail meta row).
-const STAGE_LIST_OPTIONS = stageListOptions(STAGES, STAGE_LABELS)
-
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
+
+/** The stage a list row is sorted, grouped and counted under: its home
+ *  product's (or only product's) stage. A project with 2+ products and no home
+ *  groups as "Several products"; one with no product (before Backfill A)
+ *  keeps its own project stage. Keys are kind-qualified, so a manuscript's
+ *  "Submitted" and a grant application's "Submitted" are separate groups. */
+function listStageOf(p: Project, products: ProductRow[] | undefined): { key: string; label: string; order: number } {
+  const home = homeOf(products)
+  if (home) {
+    return {
+      key: `${home.kind}:${home.stage}`,
+      label: home.kind === 'manuscript' ? home.stage_label : `${home.kind_label} · ${home.stage_label}`,
+      order: (home.kind_sort ?? 0) * 1000 + home.stage_ordinal,
+    }
+  }
+  if (products && products.length > 1) return { key: '_several', label: 'Several products', order: 900_000 }
+  return { key: `_project:${p.stage ?? ''}`, label: stageLabel(p.stage || '') || 'No stage', order: 950_000 + (STAGE_ORDER[p.stage || ''] ?? 99) }
+}
 
 // N1b — locked-canon ghost pill: active = teal tint + teal text, never a solid
 // fill block in a toolbar. One definition serves both filter axes (#123) so the
@@ -209,21 +215,15 @@ export default function Projects() {
   const onFieldChange = useCallback((slug: string, fields: Record<string, string>) => {
     inlineUpdate.mutate({ slug, fields })
   }, [inlineUpdate])
-  const { showUndo } = useUndoToast()
-
-  // S17: stage editing is one grammar everywhere — instant + undo (design Rule 8),
-  // matching ManuscriptsPage's handleFieldChange. Captures the prior stage so the
-  // toast can restore it; the UI 6-stage value is mapped to the 7-value API
-  // canonical via toApiStage() (Rule 35 — the API 400s a non-canonical value,
-  // which surfaces as a silent revert).
-  const handleStageChange = useCallback((slug: string, nextStage: string, prevStage: string | null | undefined) => {
-    if (nextStage === prevStage) return
-    inlineUpdate.mutate({ slug, fields: { stage: toApiStage(nextStage) } })
-    showUndo(
-      `Stage → ${STAGE_LABELS[nextStage as Stage] ?? nextStage}`,
-      () => inlineUpdate.mutate({ slug, fields: { stage: toApiStage(prevStage || 'idea') } }),
-    )
-  }, [inlineUpdate, showUndo])
+  // The Stage column is the project's products (one: a ladder, 2+: chips);
+  // a stage is set on a product, never on the project (plan step 8).
+  const { data: productData } = useAllProjectProducts()
+  const productsByProject = useMemo(() => productData?.byProject ?? {}, [productData])
+  const productKinds = useMemo(() => productData?.kinds ?? [], [productData])
+  const stageOf = useCallback(
+    (p: Project) => listStageOf(p, productsByProject[p.id ?? '']),
+    [productsByProject],
+  )
 
   // S10: category is URL-backed so ⌘K "Filter CLIF Projects" (which navigates
   // to PATHS.projects + '?category=CLIF') lands pre-filtered, and saved/shared
@@ -322,9 +322,7 @@ export default function Projects() {
           // normalized at ingress (rowToProject), so raw legacy Title-Case
           // values can no longer reach this comparison — no per-read
           // normalize() call needed to avoid the "multiple idea sections" bug.
-          const stageA = STAGE_ORDER[a.stage || ''] ?? 99
-          const stageB = STAGE_ORDER[b.stage || ''] ?? 99
-          cmp = stageA - stageB
+          cmp = stageOf(a).order - stageOf(b).order
           if (cmp === 0) cmp = pinCmp
           break
         }
@@ -343,7 +341,7 @@ export default function Projects() {
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
     })
-  }, [activeCategory, statusScoped, sortKey, sortAsc, pinnedSlugs, healthBySlug, prefs.projectStaleDays, stalledOnly])
+  }, [activeCategory, statusScoped, sortKey, sortAsc, pinnedSlugs, healthBySlug, prefs.projectStaleDays, stalledOnly, stageOf])
 
   // Reset focus when filter/view changes. Adjusted during render (React's
   // "adjusting state based on a prop change" pattern:
@@ -525,10 +523,11 @@ export default function Projects() {
             publicationsBySlug={publicationsBySlug}
             pinnedSlugs={pinnedSlugs}
             togglePin={togglePin}
-            stageOptions={STAGE_LIST_OPTIONS}
             categoryOptions={categoryListOptions}
             onFieldChange={onFieldChange}
-            onStageChange={handleStageChange}
+            productsByProject={productsByProject}
+            kinds={productKinds}
+            stageOf={stageOf}
           />
         )}
 

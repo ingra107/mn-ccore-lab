@@ -32,6 +32,8 @@ export interface ProductRow {
   project_id: string
   kind: string
   kind_label: string
+  /** The kind's place in the kind table (list sort); the reads send it. */
+  kind_sort?: number
   stage: string
   stage_label: string
   stage_ordinal: number
@@ -162,4 +164,26 @@ export function addProduct(slug: string, input: NewProductInput): Promise<Writte
     action: 'add', kind: input.kind, stage: input.stage, name: input.name.trim(),
     ...(input.growsFromId ? { grew_from_id: input.growsFromId } : {}),
   })
+}
+
+// ── the list views (Projects, Manuscripts) ──────────────────
+
+/** GET /api/projects/products: every visible project's products. */
+export interface ProductsByProject {
+  byProject: Record<string, ProductRow[]>
+  kinds: ProductKind[]
+}
+
+/** The product a list row speaks for: the live home, else the only product,
+ *  else none (the same rule the v125 triggers use for a task's product). */
+export function homeOf(products: readonly ProductRow[] | undefined): ProductRow | null {
+  if (!products || products.length === 0) return null
+  return products.find((p) => p.is_home === 1) ?? (products.length === 1 ? products[0] : null)
+}
+
+/** The Projects list stage cell: chips for 2+ products, a ladder for one
+ *  (Nick, bracket 2026-10-11), nothing when the project has none. */
+export function listStageView(products: readonly ProductRow[] | undefined): 'none' | 'ladder' | 'chips' {
+  const n = products?.length ?? 0
+  return n === 0 ? 'none' : productViewMode(n)
 }

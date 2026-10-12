@@ -180,7 +180,8 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   GET /api/product-funding (PB pull lane), GET /api/projects/:slug/products.
     // 267 as of 2026-10-12 -- POST /api/projects/:slug/products (+1): a project
     //   member changes stage, adds a product, or moves home (Nick: members).
-    expect(ROUTE_REGISTRY).toHaveLength(267)
+    // 268 as of 2026-10-12 -- GET /api/projects/products (+1): the list views' bulk read.
+    expect(ROUTE_REGISTRY).toHaveLength(268)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user
