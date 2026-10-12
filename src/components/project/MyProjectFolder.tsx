@@ -17,6 +17,8 @@ import WorkOnActions from '../WorkOnActions'
 import { useUndoToast } from '../UndoToast'
 import { useMyProjectFolder, useSetMyProjectFolder, useClearMyProjectFolder } from '../../hooks/useMyProjectFolder'
 import { useLauncherInstalled } from '../../hooks/useLauncherInstalled'
+import { useAuth } from '../../hooks/useAuth'
+import { normalizeLocalFolderPath } from '../../lib/urlClassify'
 import { checkLocalFolderPath } from '../../../shared/localFolderPath'
 import { LABEL_STYLE, LABEL_ICON_COLOR } from '../ui/labelStyle'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -45,11 +47,19 @@ const iconBtn: React.CSSProperties = {
 }
 const hint: React.CSSProperties = { fontSize: 'var(--label-size)', color: 'var(--muted)', margin: 0 }
 
+/** Same folder, whatever the slashes, file:// form or case (Windows paths). */
+function sameFolder(a: string, b: string | null): boolean {
+  if (!b) return false
+  const n = (s: string) => normalizeLocalFolderPath(s).toLowerCase()
+  return n(a) === n(b)
+}
+
 export default function MyProjectFolder({ projectRef, projectLabel, piFallbackFolder }: Props) {
   const { data, isLoading, isError } = useMyProjectFolder(projectRef)
   const setFolder = useSetMyProjectFolder(projectRef)
   const clearFolder = useClearMyProjectFolder(projectRef)
   const [launcher] = useLauncherInstalled()
+  const isPi = Boolean(useAuth().user?.isPi)
   const { showSuccess, showError } = useUndoToast()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
@@ -63,6 +73,11 @@ export default function MyProjectFolder({ projectRef, projectLabel, piFallbackFo
   const folder = mine ?? piFallbackFolder
   const canSet = data.can_set
   if (!folder && !canSet) return null
+  // The PI's launcher is the PB handler, whose workon opens only a project's
+  // primary_folder from brain.db (PB never sees Hub My-folder rows). So for the
+  // PI the buttons always target primary_folder; a My folder that is some other
+  // path gets Copy path and a note instead of buttons that would be refused.
+  const piLaunchesOther = isPi && Boolean(mine) && !sameFolder(mine as string, piFallbackFolder)
 
   const check = checkLocalFolderPath(draft)
   const startEdit = () => { setDraft(mine ?? ''); setTouched(false); setEditing(true) }
@@ -157,13 +172,23 @@ export default function MyProjectFolder({ projectRef, projectLabel, piFallbackFo
           </div>
           {!mine && <p style={hint}>From Peripheral Brain. Set your own to replace it on this page.</p>}
           <div className="flex flex-wrap items-center gap-2">
-            {launcher && (
-              <WorkOnActions primaryFolder={folder} projectLabel={projectLabel} memberLauncher={Boolean(mine)} />
+            {launcher && piLaunchesOther === false && (
+              <WorkOnActions
+                primaryFolder={isPi && piFallbackFolder ? piFallbackFolder : folder}
+                projectLabel={projectLabel}
+                memberLauncher={!isPi}
+              />
             )}
             <button type="button" onClick={() => void copy(folder)} data-testid="my-folder-copy" style={smallBtn}>
               <Copy {...ICON_PROPS} size={14} aria-hidden="true" /> Copy path
             </button>
           </div>
+          {launcher && piLaunchesOther && (
+            <p style={hint} data-testid="my-folder-pi-hint">
+              Your laptops&rsquo; launcher opens only the folder Peripheral Brain has for this project
+              {piFallbackFolder ? <> ({piFallbackFolder})</> : <> (none set)</>}. Remove My folder to use it, or copy this path.
+            </p>
+          )}
           {!launcher && (
             <p style={hint} data-testid="my-folder-launcher-hint">
               To open it from here, <Link to={`${PATHS.settings}#integrations`} style={{ color: 'var(--job-accent)' }}>install the launcher</Link>.

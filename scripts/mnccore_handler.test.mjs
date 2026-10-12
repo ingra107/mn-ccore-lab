@@ -55,19 +55,18 @@ function writeProjects(rows) {
   assert.equal(r.status, 0, r.stderr)
 }
 
-// A real (NOT dry-run) run of the shipped handler through
-// mnccore_handler.testharness.py, which answers the workon dialog without showing
-// it. Same C-runtime argv split (the URL is argv), PATH holding no real `claude`
-// (nothing real can start), and a hard timeout so a regression that reached a real
-// dialog would be killed and fail, never sit on the screen.
-const HARNESS = join(HERE, 'mnccore_handler.testharness.py')
-function fireAnswered(answer, url) {
+// A real (NOT dry-run) run through the registered command line (python.exe in
+// place of pythonw.exe, same C-runtime argv split). workon shows no dialog (Nick,
+// 2026-10-12: "No dialog"), so nothing here can sit on the desktop; PATH holds no
+// real `claude` (nothing real can start), and a hard timeout fails a hang.
+function fireReal(url) {
+  const line = tail.replace('%1', () => url)
   const env = { ...handlerEnv() }
   for (const k of Object.keys(env)) {
     if (/^(MNCCORE_HANDLER_DRYRUN|NoDefaultCurrentDirectoryInExePath|path)$/i.test(k)) delete env[k]
   }
   env.Path = `${join(sysRoot, 'System32')};${sysRoot}`
-  const r = spawnSync(pythonExe, ['-I', HARNESS, answer, url], { encoding: 'utf8', env, timeout: 30_000 })
+  const r = spawnSync(pythonExe, [line], { windowsVerbatimArguments: true, argv0: `"${pythonExe}"`, encoding: 'utf8', env, cwd: home, timeout: 30_000 })
   return { code: r.status, out: (r.stdout || '') + (r.stderr || ''), timedOut: r.error?.code === 'ETIMEDOUT' }
 }
 
@@ -93,6 +92,7 @@ function fire(url, { gui = false } = {}) {
     argv0: `"${exe}"`,
     encoding: 'utf8',
     env: handlerEnv(),
+    cwd: home, // anything the handler or its toast writes by a relative path lands in the temp home, never the repo
     timeout: 30_000,
   })
   return { code: r.status, out: (r.stdout || '') + (r.stderr || '') }
@@ -610,10 +610,9 @@ describe('mnccore_handler.py through the registered command line (DRYRUN)', { sk
     })
 
     // Real runs (NOT dry-run), 2026-10-12 security review: a Start Claude.bat or
-    // claude.cmd planted in a synced folder must never run unasked. The dialog is
-    // answered by the harness; nothing appears on the desktop except the bat's own
-    // console, which exits at once.
-    describe('real runs: the answer, and nothing planted runs', () => {
+    // claude.cmd planted in a synced folder must never run. The only thing that
+    // appears on the desktop is the project bat's own console, which exits at once.
+    describe('real runs: nothing planted runs', () => {
       let listed, good, evil
       before(() => {
         listed = join(home, 'Box', 'Listed Proj')
@@ -630,55 +629,35 @@ describe('mnccore_handler.py through the registered command line (DRYRUN)', { sk
       after(() => writeProjects(PROJECT_ROWS))
       const reset = () => { rmSync(good, { force: true }); rmSync(evil, { force: true }) }
 
-      it('the dialog the handler would show: Yes/No, No the default, on top, naming the folder', () => {
-        const r = spawnSync(pythonExe, ['-I', '-c', [
-          'import importlib.util, sys',
-          'spec = importlib.util.spec_from_file_location("h", sys.argv[1]); h = importlib.util.module_from_spec(spec); spec.loader.exec_module(h)',
-          'print(h.WORKON_TITLE); print(hex(h.WORKON_FLAGS)); print(h._workon_prompt(sys.argv[2]))',
-        ].join('\n'), HANDLER, 'C:\\Users\\x\\Box\\Proj'], { encoding: 'utf8', timeout: 30_000 })
-        assert.equal(r.status, 0, r.stderr)
-        const [title, flags] = r.stdout.split(/\r?\n/)
-        assert.equal(title, 'MN-CCORE Launcher')
-        const f = parseInt(flags, 16)
-        assert.equal(f & 0xF, 0x4, 'MB_YESNO')
-        assert.equal(f & 0xF00, 0x100, 'MB_DEFBUTTON2: No is the default')
-        assert.ok(f & 0x40000, 'MB_TOPMOST')
-        assert.ok(r.stdout.includes('C:\\Users\\x\\Box\\Proj'), r.stdout)
-      })
-
-      it('a planted Start Claude.bat in a Box folder that is no project never runs, even answered Yes', () => {
+      it('a planted Start Claude.bat in a Box folder that is no project never runs', () => {
         reset()
         const planted = join(home, 'Box', 'Planted Share')
         mkdirSync(planted, { recursive: true })
         writeFileSync(join(planted, 'Start Claude.bat'), `@echo planted-bat>> "${evil}"\r\n@exit\r\n`)
-        const r = fireAnswered('yes', url(planted))
-        assert.equal(r.timedOut, false, 'the handler hung (a real dialog?)')
+        // Dry-run: the refusal is the same code before anything launches, and a
+        // real refusal would pop the handler's Windows balloon on this desktop.
+        const r = fire(url(planted))
         assert.equal(r.code, 1, r.out)
-        assert.ok(!r.out.includes('ASKED'), `refused before asking: ${r.out}`)
+        assert.ok(r.out.includes("workon: refused, not the Peripheral-Brain repo or a project's folder"), r.out)
+        assert.ok(!r.out.includes('DRYRUN'), `a launch was planned: ${r.out}`)
         sleepSync(1500)
         assert.equal(existsSync(evil), false, 'the planted bat ran')
       })
 
-      it('answered No: asked with the folder, starts nothing (exit 3)', () => {
+      it("a project's folder: its bat runs at once, and its bare claude/node never resolve to the folder", () => {
         reset()
-        const r = fireAnswered('no', url(listed))
-        assert.equal(r.timedOut, false, 'the handler hung (a real dialog?)')
-        assert.equal(r.code, 3, r.out)
-        assert.ok(r.out.includes(`ASKED ${listed} -> no`), r.out)
-        sleepSync(1500)
-        assert.equal(existsSync(good), false, 'the bat ran after No')
-        assert.equal(existsSync(evil), false)
-      })
-
-      it("answered Yes: the project's bat runs, and its bare claude/node never resolve to the folder", () => {
-        reset()
-        const r = fireAnswered('yes', url(listed))
-        assert.equal(r.timedOut, false, 'the handler hung (a real dialog?)')
+        const r = fireReal(url(listed))
+        assert.equal(r.timedOut, false, 'the handler hung')
         assert.equal(r.code, 0, r.out)
         for (let i = 0; i < 60 && !existsSync(good); i++) sleepSync(250)
         assert.equal(existsSync(good), true, "the project's bat never ran")
         sleepSync(1500)
         assert.equal(existsSync(evil), false, existsSync(evil) ? readFileSync(evil, 'utf8') : '')
+      })
+
+      it('shows no dialog (Nick 2026-10-12): the handler has no MessageBox call', () => {
+        const src = readFileSync(HANDLER, 'utf8')
+        assert.ok(!/MessageBoxW|_confirm_workon/.test(src), 'a dialog is back in the PB handler')
       })
     })
   })

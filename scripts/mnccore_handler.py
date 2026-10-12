@@ -44,8 +44,8 @@ Verbs (parity with mnccore-handler.bat, which stays one release as rollback):
                                `lnch_<alnum>` passes; no decode.
   mnccore://desk/<slug>/<desk> working-desk session -> resolve_launch.py desk mode.
                                Identifier only, no decode; a resolver refusal is loud.
-  mnccore://workon/<folder>    run .\\Start Claude.bat with <folder> as cwd, after
-                               a Yes/No dialog that names the folder (default No).
+  mnccore://workon/<folder>    run .\\Start Claude.bat with <folder> as cwd (no
+                               dialog, Nick 2026-10-12).
                                Local drive only, and only a folder under the PB
                                repo or one that is the primary_folder of a
                                non-deleted project in brain.db (read-only; an
@@ -104,12 +104,6 @@ CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 FILE_EXTS = (".docx", ".pdf", ".xlsx")
 START_CLAUDE = "Start Claude.bat"
 DRIVE_REMOTE = 4
-MB_YESNO = 0x4
-MB_ICONQUESTION = 0x20
-MB_DEFBUTTON2 = 0x100
-MB_SETFOREGROUND = 0x10000
-MB_TOPMOST = 0x40000
-IDYES = 6
 DRIVE_PATH_RE = re.compile(r"[A-Za-z]:\\", re.ASCII)
 
 # UNC hosts open/ may stat and hand to Explorer, lower-case, compared as text BEFORE
@@ -483,29 +477,6 @@ def _project_folders() -> "set[str]":
     return out
 
 
-WORKON_TITLE = "MN-CCORE Launcher"
-# Yes/No, No is the default (MB_DEFBUTTON2), on top. Pinned by the test.
-WORKON_FLAGS = MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2 | MB_TOPMOST | MB_SETFOREGROUND
-
-
-def _workon_prompt(folder: str) -> str:
-    return (f"Start Claude Code in this folder?\r\n\r\n{folder}\r\n\r\n"
-            "Continue only if you just clicked \"Work on this in Claude\" in the MN-CCORE Hub. "
-            "This runs the folder's \"Start Claude.bat\", and Claude Code reads the files here, "
-            "including any CLAUDE.md or .claude settings.")
-
-
-def _confirm_workon(folder: str) -> bool:
-    """A native Yes/No box naming the folder, default No, on top. True only on Yes.
-    Tests replace this (mnccore_handler.testharness.py); they never show it."""
-    if os.name != "nt":
-        return False
-    fn = ctypes.windll.user32.MessageBoxW
-    fn.argtypes = [ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint]
-    fn.restype = ctypes.c_int
-    return fn(None, _workon_prompt(folder), WORKON_TITLE, WORKON_FLAGS) == IDYES
-
-
 def verb_workon(arg: str) -> int:
     """Security review 2026-10-12 (HIGH, live on Nick's laptops before this): any web
     page can fire mnccore://workon/<folder>, and anyone who can write into a Box
@@ -513,9 +484,10 @@ def verb_workon(arg: str) -> int:
     claude.cmd the bat would find) there. So:
       - the folder must be under the PB repo (git-controlled) or be EXACTLY the
         primary_folder of a live project PB knows; "anywhere under ~/Box" is gone;
-      - a dialog naming the folder asks first, default No (DRYRUN skips it);
       - the bat and everything it starts run with NoDefaultCurrentDirectoryInExePath=1
-        (_start_bat), so a bare `claude` or `node` never resolves to the folder."""
+        (_start_bat), so a bare `claude` or `node` never resolves to the folder.
+    No confirmation dialog: Nick, 2026-10-12, "No dialog" (his own handler only;
+    the member launcher keeps its dialog, the review's B3)."""
     folder = _decode(arg).rstrip("\\")
     # Network and non-drive paths are refused as TEXT, before any stat (an SMB or
     # WebDAV stat authenticates to the attacker's host).
@@ -527,9 +499,6 @@ def verb_workon(arg: str) -> int:
         raise Refused(f"workon: not a directory: {folder}")
     if not _is_file(folder + "\\" + START_CLAUDE):
         raise Refused(f"workon: no '{START_CLAUDE}' in {folder}")
-    if not _dryrun() and not _confirm_workon(real):
-        _log(f"DECLINED workon: {_safe(real)}")
-        return 3
     return _start_bat(folder, START_CLAUDE, "workon")
 
 
