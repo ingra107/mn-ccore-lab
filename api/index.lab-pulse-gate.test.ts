@@ -29,8 +29,7 @@ let env: Env
 // SQLite's own clock, in the format the tables store (datetime('now')).
 const at = (days: number) => (db.prepare("SELECT datetime('now', ?) AS t").get(`${days} days`) as { t: string }).t
 const daysAgo = (n: number) => at(-n)
-// A comment or update as the Hub stores it (activity_entries; the composer also
-// writes an activity_log twin, which the engagement count must NOT add again).
+// A comment or update as the Hub stores it (activity_entries only).
 const entry = (id: string, kind: 'comment' | 'update', actor: string, daysBack: number) =>
   insertRow(db, 'activity_entries', { id, entity_type: 'task', entity_id: 'e-target', kind, actor_slug: actor, body: 'b', created_at: daysAgo(daysBack) })
 
@@ -213,8 +212,9 @@ describe('Lab pulse routes are PI-only', () => {
     expect(c.status, c.text).toBeLessThan(300)
     const u = await post('/api/projects/real/updates', { content: 'progress' })
     expect(u.status, u.text).toBeLessThan(300)
-    // the route really writes both stores; the count must read one
-    expect((db.prepare("SELECT COUNT(*) AS n FROM activity_log WHERE actor = 'casey-eddington' AND type IN ('comment','project_update')").get() as { n: number }).n).toBe(2)
+    // the route writes one store: activity_entries, no activity_log echo
+    expect((db.prepare("SELECT COUNT(*) AS n FROM activity_log WHERE actor = 'casey-eddington' AND type IN ('comment','project_update')").get() as { n: number }).n).toBe(0)
+    expect((db.prepare("SELECT COUNT(*) AS n FROM activity_entries WHERE actor_slug = 'casey-eddington' AND kind IN ('comment','update') AND entity_id IN ('task_real', 'proj_real')").get() as { n: number }).n).toBe(2)
     const eng = JSON.parse((await get('/api/analytics/team-engagement', PI_EMAIL)).text).data
     const casey = eng.members.find((m: { slug: string }) => m.slug === 'casey-eddington')
     expect(casey.comments).toBe(1)

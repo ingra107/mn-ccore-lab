@@ -1432,7 +1432,7 @@ defineRoute({
   // for the /team "active this week" dots; those now hide when logged out.
   auth: 'authed',
   entity: 'activity',
-  handler: (c) => handleGetActivity(U(c), E(c)),
+  handler: (c) => handleGetActivity(U(c), E(c), R(c)),
 });
 defineRoute({
   method: 'GET',

@@ -1034,8 +1034,6 @@ export async function handleAddComment(
   });
   if (!posted.ok) return error(posted.error, posted.status);
 
-  await logActivity(env, 'comment', `Commented on "${project.title}"`, user.email, project.id, 'project');
-
   // Byte-preserved legacy response shape (project_id echoes the URL param).
   return json({ data: { id: posted.row.id, project_id: projectId, content: String(posted.row.body ?? ''), author: user.email } }, 201);
 }
@@ -1082,8 +1080,6 @@ export async function handlePostProjectUpdate(slug: string, request: Request, us
     sourceId: srcKey.sourceId,
   });
   if (!posted.ok) return error(posted.error, posted.status);
-
-  await logActivity(env, 'project_update', `Posted update on ${slug}: "${body.content.slice(0, 100)}"`, user.email, slug, 'project');
 
   // Byte-preserved legacy project_updates row shape (project_id = slug).
   return json({

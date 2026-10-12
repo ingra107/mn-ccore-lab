@@ -1,6 +1,7 @@
 import type { Env } from '../helpers';
 import { json, resolveSlug } from '../helpers';
 import type { PulseScope } from '../lib/person-access';
+import { postedAuthorsSince } from '../lib/posted-activity';
 
 // GET /api/team/pulse?hours=48
 // The per-member activity breakdown (who did what) is team-internal. The
@@ -13,7 +14,7 @@ export async function handleTeamPulse(url: URL, env: Env, scope: PulseScope = { 
   const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
   // Get activity per person in the time window
-  const [updates, completions, activeMembers] = await Promise.all([
+  const [updates, completions, activeMembers, postedAuthors] = await Promise.all([
     // Project updates by author (activity_entries since P2-C; legacy project_updates is frozen)
     env.DB.prepare(
       "SELECT actor_slug as slug, COUNT(*) as count FROM activity_entries WHERE entity_type = 'project' AND kind = 'update' AND hidden_at IS NULL AND created_at > ? GROUP BY actor_slug"
@@ -24,10 +25,11 @@ export async function handleTeamPulse(url: URL, env: Env, scope: PulseScope = { 
       'SELECT completed_by as slug, COUNT(*) as count FROM tasks WHERE completed = 1 AND completed_at > ? AND completed_by IS NOT NULL GROUP BY completed_by'
     ).bind(cutoff).all<{ slug: string; count: number }>(),
 
-    // Distinct active members (any activity_log entry)
+    // Distinct active members (any activity_log entry, or a comment or note posted)
     env.DB.prepare(
       'SELECT DISTINCT actor as slug FROM activity_log WHERE timestamp > ? AND actor IS NOT NULL'
     ).bind(cutoff).all<{ slug: string }>(),
+    postedAuthorsSince(env, cutoff),
   ]);
 
   // Rows carry slugs and, on older writes, emails (tasks.completed_by holds
@@ -56,7 +58,7 @@ export async function handleTeamPulse(url: URL, env: Env, scope: PulseScope = { 
     personActivity.set(slug, entry);
   }
 
-  for (const row of activeMembers.results || []) {
+  for (const row of [...(activeMembers.results || []), ...postedAuthors.map((slug) => ({ slug }))]) {
     const slug = await slugFor(row.slug);
     if (!personActivity.has(slug)) {
       personActivity.set(slug, { slug, updates: 0, completions: 0 });

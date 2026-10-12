@@ -326,9 +326,9 @@ async function computeResponseTime(env: Env, now: Date) {
 // nearly every close), they authored a comment or update, or they opened
 // something in the Hub. Comments and updates come from activity_entries only
 // (kind comment/update, source_table NULL = typed by a person, not a PB progress
-// note, gardener or meeting row; hidden rows left out). Every comment and
-// project update is ALSO written to activity_log (tasks.ts, projects.ts), so
-// reading both counted each twice. The 30/60-day counts never reach before the
+// note, gardener or meeting row; hidden rows left out). Comments and
+// updates are stored only in activity_entries (no activity_log echo since
+// 2026-10-11; older echo rows remain, so never read both). The 30/60-day counts never reach before the
 // P2-A cutover (2026-06-10), but the 180-day collaborator gate and the 365-day
 // last_active DO, and the P2-A backfill rows carry source_table='activity_log'
 // (so the NULL filter skips them): a collaborator active only Apr-Jun 2026 drops

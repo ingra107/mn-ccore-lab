@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical } from '../helpers';
+import { postedActivityRows, TEAM_POSTS_ONLY } from '../lib/posted-activity';
 import { validateApiKey } from '../middleware/api-key-auth';
 import { TASK_SELECT_COLS } from '../lib/task-cols';
 import { normalizeAttendees, attendeesColumnValue, type NormalizedAttendees } from '../lib/meeting-write';
@@ -522,7 +523,13 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     ).bind(today).all(),
   ]);
   const prevActionItems = prevActionItemsRes.results;
-  const recentActivity = recentActivityRes.results;
+  // Comments and notes live in activity_entries; merge the team-visible ones
+  // into the audit rows (same shape) and keep the newest 30.
+  const posted = await postedActivityRows(env, { gate: TEAM_POSTS_ONLY, limit: 30, since: twoWeeksAgo });
+  const recentActivity = [
+    ...(recentActivityRes.results as Array<{ created_at: string }>),
+    ...posted.map((p) => ({ type: p.type, description: p.description, actor: p.actor, entity_id: p.related_id, entity_type: p.related_type, created_at: p.timestamp })),
+  ].sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0)).slice(0, 30);
   const upcomingDeadlines = upcomingDeadlinesRes.results;
   const agendaItems = agendaItemsRes.results;
   const overdueTasks = overdueTasksRes.results;

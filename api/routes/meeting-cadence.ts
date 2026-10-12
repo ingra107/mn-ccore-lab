@@ -1,6 +1,7 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
 import { ctToday } from '../lib/ct-date';
+import { postedCountSince } from '../lib/posted-activity';
 
 // GET /api/meetings/cadence-check — analyze if next meeting is needed
 export async function handleCadenceCheck(env: Env): Promise<Response> {
@@ -21,10 +22,13 @@ export async function handleCadenceCheck(env: Env): Promise<Response> {
   const sinceDate = prevMeeting?.date || ctToday(-14);
 
   // Analyze activity since last meeting
-  const [activityCount, pendingActions, newUpdates, agendaItems, blockedTasks] = await Promise.all([
+  const [activityCount, postedCount, pendingActions, newUpdates, agendaItems, blockedTasks] = await Promise.all([
     env.DB.prepare(
       "SELECT COUNT(*) as c FROM activity_log WHERE timestamp > ? AND type != 'system'"
     ).bind(sinceDate).first<{ c: number }>(),
+
+    // Comments and notes people posted live in activity_entries, not activity_log.
+    postedCountSince(env, sinceDate),
 
     env.DB.prepare(
       "SELECT COUNT(*) as c FROM tasks WHERE completed = 0 AND status != 'done'"
@@ -43,7 +47,7 @@ export async function handleCadenceCheck(env: Env): Promise<Response> {
     ).first<{ c: number }>(),
   ]);
 
-  const activity = activityCount?.c || 0;
+  const activity = (activityCount?.c || 0) + postedCount;
   const pending = pendingActions?.c || 0;
   const updates = newUpdates?.c || 0;
   const agenda = agendaItems?.c || 0;

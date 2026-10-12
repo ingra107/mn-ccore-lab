@@ -634,7 +634,8 @@ export async function handleGetTaskComments(taskId: string, request: Request, en
 // Writes through the unified postActivityEntry() primitive (kind='comment').
 // That primitive owns @me/visibility, @mention notifications (preserving
 // source_type='task_comment'), and the @hermes dispatch + placeholder — so this
-// handler is now just actor resolution + the activity_log echo + response shaping.
+// handler is now just actor resolution + response shaping. Nothing is written to
+// activity_log: a post lives only in activity_entries (api/lib/posted-activity.ts).
 export async function handleAddTaskComment(taskId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { content: string; author_slug?: string; visibility?: string };
   if (!body.content?.trim()) return error('content required', 400);
@@ -664,8 +665,6 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
     taskProjectId,
   });
   if (!posted.ok) return error(posted.error, posted.status);
-
-  await logActivity(env, 'comment', `Commented on task`, authorSlug, taskId, 'task');
 
   // Preserve the legacy task_comments response shape for existing callers.
   const r = posted.row;
@@ -780,16 +779,12 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
     text: u.content,
     kind: 'note' as const,
   }));
-  // De-dupe the "Posted note on X: Y" echo. handlePostTaskUpdate writes the
-  // note into task_updates AND logs a `task_update` activity row quoting the
-  // same content. Both sources merge into this one drawer feed, so the note
-  // rendered twice (once as kind:'note', once as kind:'event'). The activity
-  // echo stays a legitimate ENTRY on the global ActivityPage timeline and the
-  // task-scoped /activity feed (TaskActivityFeed) — it's only redundant HERE,
-  // where the real note already appears. Filtering at read also retroactively
-  // suppresses legacy echo rows already persisted in activity_log.
+  // Old echo rows. Until 2026-10-11 a comment or note was also written to
+  // activity_log ("Commented on task", "Posted note on X: Y") and the real post
+  // renders from activity_entries above, so the echo showed it twice. New posts
+  // write no echo; this filter hides the ones already stored.
   const eventUpdates = (activityRes.results as ActivityRow[])
-    .filter((a) => a.description && a.type !== 'task_update')
+    .filter((a) => a.description && a.type !== 'task_update' && a.type !== 'comment')
     .map((a) => ({
       id: a.id,
       when: a.timestamp,
@@ -1357,7 +1352,7 @@ export async function handleGetRecentTaskComments(url: URL, env: Env, isPi = fal
 // Writes through postActivityEntry() (kind='update'). The primitive owns @me/
 // visibility + @mention notifications (preserving source_type='task' for
 // updates) + @hermes dispatch; this handler keeps actor resolution + the
-// activity_log echo + response shaping.
+// response shaping. Nothing is written to activity_log (api/lib/posted-activity.ts).
 export async function handlePostTaskUpdate(taskId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { content: string; update_type?: string; author_slug?: string; visibility?: string; source_table?: string | null; source_id?: string | null };
   if (!body.content?.trim()) return error('content required', 400);
@@ -1394,11 +1389,6 @@ export async function handlePostTaskUpdate(taskId: string, request: Request, use
     sourceId: srcKey.sourceId,
   });
   if (!posted.ok) return error(posted.error, posted.status);
-
-  // Look up task title for the activity_log echo (legacy global timeline row;
-  // postActivityEntry does NOT touch activity_log).
-  const task = await env.DB.prepare('SELECT title FROM tasks WHERE id = ?').bind(taskId).first<{ title: string }>();
-  await logActivity(env, 'task_update', `Posted note on "${task?.title || taskId}": "${body.content.trim().slice(0, 100)}"`, authorSlug, taskId, 'task');
 
   // Preserve the legacy task_updates response shape for existing callers.
   const r = posted.row;

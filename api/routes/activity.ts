@@ -7,12 +7,16 @@ import { memberContributionEvents, contributionsByDay } from '../lib/member-cont
 import { mayReadPerson } from '../lib/person-access';
 import type { Viewer } from '../lib/viewer-db';
 import { activityVisibilityGate, activityHiddenClause, postActivityEntry } from '../lib/activity-entry';
+import { postedActivityRows, postedCountsByDay } from '../lib/posted-activity';
 
 // GET /api/activity?limit=20&actor=slug
 // Public (the /pulse kiosk reads it signed out). Which rows a caller sees is
 // the activity_log rule in api/lib/table-scope.ts: a project's or task's rows
-// follow it, so a project the caller is not on adds nothing here.
-export async function handleGetActivity(url: URL, env: Env): Promise<Response> {
+// follow it, so a project the caller is not on adds nothing here. The audit
+// trail comes from activity_log; the comments and notes people posted come from
+// activity_entries (their one store), shaped like activity_log rows and gated by
+// the caller's visibility, so an @me note reaches no one else.
+export async function handleGetActivity(url: URL, env: Env, request: Request): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
   const actor = url.searchParams.get('actor');
   const includeFixtures = url.searchParams.get('include_fixtures') === '1';
@@ -30,8 +34,12 @@ export async function handleGetActivity(url: URL, env: Env): Promise<Response> {
   const fetchLimit = includeFixtures ? limit : Math.min(limit * 3, 500);
   query += ' ORDER BY timestamp DESC LIMIT ?';
   params.push(fetchLimit);
-  const result = await env.DB.prepare(query).bind(...params).all();
-  let rows = result.results as Array<{ description: string | null }>;
+  const [result, posted] = await Promise.all([
+    env.DB.prepare(query).bind(...params).all(),
+    postedActivityRows(env, { gate: await activityVisibilityGate(request, env, 'ae'), limit: fetchLimit, actor }),
+  ]);
+  let rows = [...(result.results as Array<{ description: string | null; timestamp: string }>), ...posted]
+    .sort((a, b) => (a.timestamp < b.timestamp ? 1 : a.timestamp > b.timestamp ? -1 : 0));
   if (!includeFixtures) {
     rows = rows.filter((r) => !isTestFixture(r.description));
   }
@@ -284,13 +292,18 @@ export async function handleActivityHeatmap(url: URL, env: Env, viewer: Viewer, 
     return json({ data: contributionsByDay(events), days, slug });
   }
 
-  // Lab-wide (no slug): every logged Hub action plus every task completion.
+  // Lab-wide (no slug): every logged Hub action, every comment or note posted,
+  // plus every task completion.
   const result = await env.DB.prepare(
     "SELECT DATE(timestamp) as date, COUNT(*) as count FROM activity_log WHERE timestamp >= ? GROUP BY DATE(timestamp) ORDER BY date"
   ).bind(since).all();
   const data: Record<string, number> = {};
   for (const row of (result.results || []) as { date: string; count: number }[]) {
     data[row.date] = row.count;
+  }
+
+  for (const [date, count] of Object.entries(await postedCountsByDay(env, since))) {
+    data[date] = (data[date] || 0) + count;
   }
 
   const taskResult = await env.DB.prepare(

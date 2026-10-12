@@ -16,8 +16,10 @@
 //     an activity_entries row), with author-only visibility inheritance
 //
 // Design ref: docs/superpowers/specs/2026-06-10-activity-entries-unified-timeline-design.md
-// It deliberately does NOT write the legacy activity_log — existing logActivity()
-// call sites stay as-is and are not duplicated here.
+// It deliberately does NOT write the legacy activity_log, and neither do the
+// route handlers that call it: a comment or update lives here and nowhere else.
+// activity_log keeps the audit trail (creates, status changes, deletes, meetings);
+// readers that want the posts too go through api/lib/posted-activity.ts.
 
 import type { AuthUser, Env } from '../helpers';
 import { generateId, parseMentions, actorSlugFromRequest, isPiRequest, resolveSlug } from '../helpers';
