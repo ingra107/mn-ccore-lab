@@ -39,6 +39,7 @@
       {"table": "comments", "column": "project_id", "kind": "fk", "policy": "typed_required"},
       {"table": "project_members", "column": "project_id", "kind": "fk", "policy": "typed_required", "note": "v120 (#145): FK to projects(id); Hub-only, not on the PB wire"},
       {"table": "project_member_folders", "column": "project_id", "kind": "fk", "policy": "typed_required", "note": "v127: composite FK to project_members(project_id, member_slug); a member's own local folder; Hub-only, not on the PB wire"},
+      {"table": "project_home_seed", "column": "project_id", "kind": "fk", "policy": "typed_required", "note": "v129: the first product's {kind, stage} for a project being created; written and consumed in one batch, empty at rest; Hub-only, not on the PB wire"},
       {"table": "meeting_project_grants", "column": "project_id", "kind": "fk", "policy": "typed_required", "note": "v122: FK to projects(id); the meeting \"belongs to\" grant; Hub-only, not on the PB wire"},
       {"table": "products", "column": "project_id", "kind": "fk", "policy": "typed_required", "note": "v124 (projects hold products, 2026-10-11): NOT NULL FK to projects(id) ON UPDATE CASCADE; immutable by trigger"},
       {"table": "project_updates", "column": "project_id", "kind": "fk", "policy": "typed_required"},
