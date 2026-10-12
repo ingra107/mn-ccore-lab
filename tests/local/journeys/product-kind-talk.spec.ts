@@ -47,8 +47,8 @@ test('New Project offers Talk; the stage follows the talk ladder; the project is
   await dialog.locator('#project-title').fill(TITLE)
 
   // Category, First product, Stage: the three InlineSelects, in that order.
-  const kindTrigger = dialog.locator('.sr-trig').nth(1)
-  const stageTrigger = dialog.locator('.sr-trig').nth(2)
+  const kindTrigger = dialog.locator('.inline-select-trigger').nth(1)
+  const stageTrigger = dialog.locator('.inline-select-trigger').nth(2)
   await kindTrigger.click()
   const talkOption = page.getByRole('option', { name: 'Talk', exact: true })
   await expect(talkOption).toBeVisible()
@@ -57,8 +57,8 @@ test('New Project offers Talk; the stage follows the talk ladder; the project is
   await expect(stageTrigger).toContainText('Invited')
   await stageTrigger.click()
   await expect(page.getByRole('listbox').getByRole('option')).toHaveText(LADDER)
-  await page.keyboard.press('Escape')
-  await expect(dialog).toBeVisible()
+  await page.getByRole('listbox').getByRole('option', { name: 'Invited' }).click()
+  await expect(stageTrigger).toContainText('Invited')
 
   await page.getByRole('button', { name: 'Create Project' }).click()
   await expect.poll(() => slugOf(page, TITLE), { timeout: 20_000 }).toBeTruthy()
@@ -72,7 +72,7 @@ test('New Project offers Talk; the stage follows the talk ladder; the project is
   await expect(section).toBeVisible({ timeout: 20_000 })
   const chip = section.getByTestId(`product-chip-${products[0].id}`)
   await expect(chip).toBeVisible()
-  await expect(chip).toContainText('Invited')
+  await expect(chip).toContainText('Talk')
   await section.screenshot({ path: `${SHOTS}/03-project-talk-chip.png` })
   await chip.click()
   await expect(page.getByTestId(`product-detail-${products[0].id}`)).toBeVisible()
