@@ -1,6 +1,6 @@
 # MN-CCORE Lab Hub
 
-**Live:** [mn-ccore-lab.pages.dev](https://mn-ccore-lab.pages.dev)
+**Live:** [mnccore.org](https://mnccore.org) (alias: [mn-ccore-lab.pages.dev](https://mn-ccore-lab.pages.dev))
 
 Lab management platform for the MN-CCORE research group at UMN. Runs meetings,
 tracks projects/tasks/grants/manuscripts, hosts the team directory, publishes
@@ -106,7 +106,7 @@ docs/
 
 ## Launch status
 
-**LIVE 2026-04-21.** CF Access gates `mn-ccore-lab.pages.dev/portal/*`
+**LIVE 2026-04-21.** CF Access gates `mnccore.org/portal/*` (and `www.mnccore.org`, `mn-ccore-lab.pages.dev`)
 via @umn.edu policy. All 4 server secrets + client-side
 `VITE_REQUIRE_AUTH=1` set. GitHub Actions secrets for schema-drift CI
 set. Remaining optional: `RESEND_API_KEY` for daily digest email

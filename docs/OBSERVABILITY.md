@@ -64,7 +64,7 @@ HTTP/1.1 503 Service Unavailable
 ### Option 1: UptimeRobot / StatusCake / Pingdom (free tier)
 
 Add a new HTTP monitor:
-- URL: `https://mn-ccore-lab.pages.dev/api/health`
+- URL: `https://mnccore.org/api/health` (alias: `https://mn-ccore-lab.pages.dev/api/health`)
 - Method: `GET`
 - Interval: 5 min (free tier); 1 min (paid)
 - Expected status: 200

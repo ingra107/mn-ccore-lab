@@ -37,7 +37,7 @@ export default function Home() {
       '@type': 'ResearchOrganization',
       name: 'MN-CCORE',
       alternateName: 'Minnesota Critical Care Outcomes & Research Effort',
-      url: 'https://mn-ccore-lab.pages.dev',
+      url: 'https://mnccore.org',
       description: 'Multi-center ICU research lab at the University of Minnesota',
       parentOrganization: { '@type': 'Organization', name: 'University of Minnesota' },
       address: {

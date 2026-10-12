@@ -2,7 +2,7 @@
   "rules": [
     {
       "allowed": {
-        "origins": ["https://mn-ccore-lab.pages.dev", "http://localhost:5173"],
+        "origins": ["https://mnccore.org", "https://www.mnccore.org", "https://mn-ccore-lab.pages.dev", "http://localhost:5173"],
         "methods": ["GET", "PUT"],
         "headers": ["Content-Type"]
       },

@@ -46,9 +46,15 @@ describe('Brief-7 — PB API-key actor identity', () => {
 describe('HUB-4 / Brief-8 — corsHeadersFor behavior', () => {
   // ── Known origins: reflected exactly ──────────────────────────────────────────
 
-  it('reflects the portal origin exactly', () => {
+  it('reflects the pages.dev alias origin exactly', () => {
     const h = corsHeadersFor('https://mn-ccore-lab.pages.dev');
     expect(h['Access-Control-Allow-Origin']).toBe('https://mn-ccore-lab.pages.dev');
+  });
+
+  it('reflects the canonical mnccore.org apex and www origins exactly', () => {
+    for (const o of ['https://mnccore.org', 'https://www.mnccore.org']) {
+      expect(corsHeadersFor(o)['Access-Control-Allow-Origin']).toBe(o);
+    }
   });
 
   it('reflects localhost:5173 exactly', () => {

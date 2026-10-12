@@ -16,6 +16,8 @@ export type { Env };
 // Cloudflare Access already gates browser access to @umn.edu accounts;
 // this is a defence-in-depth origin allowlist for browser CORS.
 const ALLOWED_ORIGINS = new Set([
+  'https://mnccore.org',
+  'https://www.mnccore.org',
   'https://mn-ccore-lab.pages.dev',
   // localhost variants for wrangler dev / Vite dev server
   'http://localhost:5173',

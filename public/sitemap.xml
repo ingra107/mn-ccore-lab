@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://mn-ccore-lab.pages.dev/</loc>
+    <loc>https://mnccore.org/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://mn-ccore-lab.pages.dev/team</loc>
+    <loc>https://mnccore.org/team</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://mn-ccore-lab.pages.dev/nick</loc>
+    <loc>https://mnccore.org/nick</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://mn-ccore-lab.pages.dev/nate</loc>
+    <loc>https://mnccore.org/nate</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://mn-ccore-lab.pages.dev/publications</loc>
+    <loc>https://mnccore.org/publications</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://mn-ccore-lab.pages.dev/contact</loc>
+    <loc>https://mnccore.org/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>

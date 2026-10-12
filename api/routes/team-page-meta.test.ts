@@ -19,7 +19,7 @@ function metaContent(html: string, attr: string, key: string): string | undefine
 }
 
 async function serve(slug: string, upstream?: Response): Promise<{ status: number; html: string }> {
-  const request = new Request(`https://mn-ccore-lab.pages.dev/team/${slug}`)
+  const request = new Request(`https://mnccore.org/team/${slug}`)
   const next = async () =>
     upstream ?? new Response(INDEX_HTML, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,18 +29,18 @@ async function serve(slug: string, upstream?: Response): Promise<{ status: numbe
 
 describe('GET /team/:slug link-preview tags', () => {
   it('the static index.html alone carries only the generic site card (the old behavior)', () => {
-    expect(metaContent(INDEX_HTML, 'property', 'og:image')).toBe('https://mn-ccore-lab.pages.dev/og-image.svg')
+    expect(metaContent(INDEX_HTML, 'property', 'og:image')).toBe('https://mnccore.org/og-image.svg')
   })
 
   it('a known member gets og:title, og:image = /og/team/<slug>, and twitter tags in the HTML', async () => {
     const { status, html } = await serve('nick-ingraham')
     expect(status).toBe(200)
-    expect(metaContent(html, 'property', 'og:image')).toBe('https://mn-ccore-lab.pages.dev/og/team/nick-ingraham')
-    expect(metaContent(html, 'name', 'twitter:image')).toBe('https://mn-ccore-lab.pages.dev/og/team/nick-ingraham')
+    expect(metaContent(html, 'property', 'og:image')).toBe('https://mnccore.org/og/team/nick-ingraham')
+    expect(metaContent(html, 'name', 'twitter:image')).toBe('https://mnccore.org/og/team/nick-ingraham')
     expect(metaContent(html, 'property', 'og:title')).toMatch(/^Nick.* \| MN-CCORE Lab$/)
     expect(metaContent(html, 'name', 'twitter:title')).toBe(metaContent(html, 'property', 'og:title'))
     expect(metaContent(html, 'property', 'og:type')).toBe('profile')
-    expect(metaContent(html, 'property', 'og:url')).toBe('https://mn-ccore-lab.pages.dev/team/nick-ingraham')
+    expect(metaContent(html, 'property', 'og:url')).toBe('https://mnccore.org/team/nick-ingraham')
     expect(metaContent(html, 'property', 'og:description')).toMatch(/at MN-CCORE Lab, University of Minnesota\.$/)
     expect(html).toMatch(/<title>Nick.* \| MN-CCORE Lab<\/title>/)
     // One tag per key: replaced, not duplicated.
