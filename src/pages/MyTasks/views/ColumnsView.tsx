@@ -104,7 +104,7 @@ export function ColumnsView({ filtered, isEmpty, byGroup, onOpenEditor, projects
       <div style={{ position: 'sticky', left: 0 }}>
         <OverdueBanner tasks={filtered} />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${colCount}, minmax(${COL_MIN}px, 1fr))`, gap: COL_GAP, minWidth }}>
+      <div className="tk" style={{ display: 'grid', gridTemplateColumns: `repeat(${colCount}, minmax(${COL_MIN}px, 1fr))`, gap: COL_GAP, minWidth }}>
         {visibleGroups.map((gkey) => {
           const meta = GROUP_META[gkey]
           const tasks = byGroup[gkey]

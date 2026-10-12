@@ -209,9 +209,6 @@
   "src/components/dashboard/StatusLine.tsx": {
     "surface": 1
   },
-  "src/components/labpulse/LabPulseSection.tsx": {
-    "uppercase": 3
-  },
   "src/components/meetings/MeetingProjectsSection.tsx": {
     "box": 1
   },

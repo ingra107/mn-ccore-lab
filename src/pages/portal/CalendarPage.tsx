@@ -457,7 +457,7 @@ export function WeekView({ weekStart, events }: { weekStart: Date; events: Calen
         const dayEvents = eventsByDate.get(dateStr) || []
 
         return (
-          <div key={dateStr} className="md:min-h-[300px] relative border-r last:border-r-0" style={{ borderColor: 'var(--sk-line)' }}>
+          <div key={dateStr} className="md:min-h-[300px] relative border-r last:border-r-0 min-w-0" style={{ borderColor: 'var(--sk-line)' }}>
             {/* Today: the date disc below is the one now marker (pick 4), as in Month. */}
             <div className="px-2 py-2 text-center">
               <div className="text-[12px]" style={{ color: 'var(--sk-t3)' }}>{dayNames[i]}</div>
@@ -474,7 +474,7 @@ export function WeekView({ weekStart, events }: { weekStart: Date; events: Calen
                 const Wrapper: ElementType = to ? Link : 'div'
                 const wrapperProps = to ? { to } : {}
                 return (
-                  <Wrapper key={e.id} {...wrapperProps} className="text-[11px] leading-tight px-1 py-1 rounded block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
+                  <Wrapper key={e.id} {...wrapperProps} className="text-[11px] leading-tight px-1 py-1 rounded block min-w-0 break-words"  style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
                     <EventMark e={e} />{(() => { const t = eventLabel(e); return t.length > 32 ? t.slice(0, 32) + '...' : t })()}
                   </Wrapper>
                 )

@@ -13,11 +13,10 @@
 // (.sk-mat). Every number here comes from a PI-only route; the per-person list
 // and the score never reach a member (api/routes/pi-dashboard.ts).
 
+import SectionHead from '../ui/SectionHead'
 import { useId } from 'react'
-import { Activity } from 'lucide-react'
 import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
 import { todayCivil } from '../../lib/time'
-import { ICON_PROPS } from '../../lib/iconProps'
 import { getPersonInfo } from '../../data/team'
 import { usePubsPulse, useSpeedPulse, useEngagementPulse } from '../../hooks/useLabPulse'
 import { ARROW, formatDays, daysHero, pubsBetter, speedBetter, activeBetter, type Better } from '../../lib/labPulse'
@@ -57,7 +56,7 @@ function Tile({ title, note, children }: { title: string; note?: string; childre
   return (
     <div className="sk-mat rounded-xl p-5 flex flex-col gap-4" style={{ minWidth: 0 }}>
       <div>
-        <h4 className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--slate)' }}>{title}</h4>
+        <h4 className="text-[13px] font-semibold" style={{ color: 'var(--sk-t1)' }}>{title}</h4>
         {note && <p className="text-[11px] mt-0.5" style={{ color: 'var(--sk-t3)' }}>{note}</p>}
       </div>
       {children}
@@ -173,7 +172,7 @@ function SpeedTile() {
           }))} />
           {prio.length > 0 && (
             <div className="flex flex-col gap-1.5 pt-3" style={{ borderTop: '1px solid var(--sk-line)' }}>
-              <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--sk-t3)' }}>By priority, last 6 months</span>
+              <span className="text-[11px]" style={{ color: 'var(--sk-t3)' }}>By priority, last 6 months</span>
               {prio.map((p) => (
                 <RowBar neutral key={p.priority} label={p.priority} value={p.median_days} max={maxPrio} text={p.median_days < 1 ? '<1d' : formatDays(p.median_days).replace(' days', 'd').replace(' day', 'd')} title={`${p.count} done`} />
               ))}
@@ -226,11 +225,7 @@ export default function LabPulseSection() {
   const headId = useId()
   return (
     <section id="lab-pulse" aria-labelledby={headId} className="mt-6" data-testid="lab-pulse">
-      <div className="flex items-center gap-2 mb-3">
-        <Activity {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
-        <h3 id={headId} className="text-xs font-normal uppercase tracking-wider" style={{ color: 'var(--slate)' }}>Lab pulse</h3>
-        <span className="text-[10px]" style={{ color: 'var(--sk-t3)' }}>Only you see this</span>
-      </div>
+      <SectionHead id={headId} title="Lab pulse" count="Only you see this" />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
         <PubsTile />
         <SpeedTile />

@@ -1638,9 +1638,9 @@ export function OverviewQuickAdd({
       }}
     >
       <form onSubmit={handleSubmit}>
-        {/* ── Idle row: [COMMENT|NOTE pills] [textarea] ── */}
+        {/* ── Idle row: [Comment|Note tray] [textarea]; stacked on a phone ── */}
         <div
-          className="flex items-center gap-2"
+          className={isMobile ? 'flex flex-col items-stretch gap-2' : 'flex items-center gap-2'}
           onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => {
@@ -1656,7 +1656,8 @@ export function OverviewQuickAdd({
         >
           <SegmentedToggle
             ariaLabel="Quick add mode"
-            className="flex-shrink-0"
+            scrollable
+            className="flex-shrink-0 self-start"
             options={[
               { value: 'comment', label: 'Comment', title: TOOLTIPS.comment },
               { value: 'note', label: 'Note', title: TOOLTIPS.note },
