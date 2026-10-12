@@ -12,7 +12,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import FileUpload from '../components/FileUpload'
-import { mount, cleanupMountsAfterEach } from './testMount'
+import { mount, cleanupMountsAfterEach, waitFor } from './testMount'
 import { uploadFileToR2 } from '../lib/r2Upload'
 
 vi.mock('../lib/r2Upload', () => ({
@@ -22,14 +22,6 @@ vi.mock('../lib/r2Upload', () => ({
 const mockedUpload = vi.mocked(uploadFileToR2)
 
 cleanupMountsAfterEach()
-
-async function waitFor(predicate: () => boolean, label: string): Promise<void> {
-  for (let i = 0; i < 100; i++) {
-    if (predicate()) return
-    await new Promise((r) => setTimeout(r, 10))
-  }
-  throw new Error(`waitFor timed out: ${label}`)
-}
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -88,8 +80,8 @@ describe('FileUpload (#1031)', () => {
 
     choose(host, new File(['b'], 'second.pdf', { type: 'application/pdf' }))
     await waitFor(() => mockedUpload.mock.calls.length === 2, 'second upload started')
-    await new Promise((r) => setTimeout(r, 3300)) // past the old timer
-    expect(host.textContent || '').toContain('Uploading second.pdf')
+    // past the old timer
+    await expect.poll(() => host.textContent || '').toContain('Uploading second.pdf')
     finishSecond({ url: '/api/files/k/raw', key: 'k' })
     await waitFor(() => (host.textContent || '').includes('Drop a file or click to upload'), 'back to idle')
   }, 10000)

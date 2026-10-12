@@ -14,7 +14,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest'
 import type { ReactElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OverviewQuickAdd } from '../components/tasks/TaskDetailPanel'
-import { mount as mountShared, cleanupMountsAfterEach } from './testMount'
+import { mount as mountShared, cleanupMountsAfterEach, waitFor } from './testMount'
 import { uploadFileToR2 } from '../lib/r2Upload'
 
 vi.mock('../lib/r2Upload', () => ({
@@ -24,14 +24,6 @@ vi.mock('../lib/r2Upload', () => ({
 const mockedUpload = vi.mocked(uploadFileToR2)
 
 cleanupMountsAfterEach()
-
-async function waitFor(predicate: () => boolean, label: string): Promise<void> {
-  for (let i = 0; i < 100; i++) {
-    if (predicate()) return
-    await new Promise((r) => setTimeout(r, 10))
-  }
-  throw new Error(`waitFor timed out: ${label}`)
-}
 
 function deferred<T>() {
   let resolve!: (v: T) => void

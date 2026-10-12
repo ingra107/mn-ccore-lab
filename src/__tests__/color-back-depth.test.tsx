@@ -183,41 +183,38 @@ describe('pick 6: rows lift on hover', () => {
     const host = await table()
     const a = host.querySelector<HTMLElement>('.sr-row')!
     await hover(a)
-    const sh = cs(a).boxShadow
-    expect(sh).toMatch(/0px 1px 3px/)
-    expect(sh).not.toMatch(/30px/)
+    await expect.poll(() => cs(a).boxShadow).toMatch(/0px 1px 3px/)
+    expect(cs(a).boxShadow).not.toMatch(/30px/)
   })
 
   it('the keyboard-cursor row keeps its accent ring while the pointer is on it', async () => {
     const host = await table()
     const a = host.querySelector<HTMLElement>('.sr-row')!
     a.classList.add('sr-cur')
-    await new Promise((r) => setTimeout(r, 200)) // let the row's shadow transition settle
     // the cursor ring's color as the browser serializes it (2px accent at 80%, clearly visible)
     const probe = document.createElement('i')
     probe.style.color = 'color-mix(in srgb,var(--job-accent) 80%,transparent)'
     host.appendChild(probe)
     const gray = cs(probe).color
-    expect(cs(a).boxShadow).toContain(`${gray} 0px 0px 0px 2px inset`)
+    // wait out the row's shadow transition on the value itself, not a fixed sleep
+    await expect.poll(() => cs(a).boxShadow).toContain(`${gray} 0px 0px 0px 2px inset`)
     // a ring only: no tint and no material, so it never reads as a second
     // raised row beside the hovered one
     expect(cs(a).backgroundImage).toBe('none')
     expect(cs(a).backgroundColor).toBe('rgba(0, 0, 0, 0)')
     await hover(a)
     // still there under the pointer, with the lift's material
-    expect(cs(a).boxShadow).toContain(`${gray} 0px 0px 0px 2px inset`)
-    expect(cs(a).backgroundImage).toMatch(/^linear-gradient/)
+    await expect.poll(() => cs(a).boxShadow).toContain(`${gray} 0px 0px 0px 2px inset`)
+    await expect.poll(() => cs(a).backgroundImage).toMatch(/^linear-gradient/)
   })
 
   it('while the pointer is on ANOTHER row, the cursor row drops its ring: one raised row at a time', async () => {
     const host = await table()
     const [a, b] = Array.from(host.querySelectorAll<HTMLElement>('.sr-row'))
     a.classList.add('sr-cur')
-    await new Promise((r) => setTimeout(r, 200))
-    expect(cs(a).boxShadow).toMatch(/inset/)
+    await expect.poll(() => cs(a).boxShadow).toMatch(/inset/)
     await hover(b)
-    await new Promise((r) => setTimeout(r, 200))
-    expect(cs(a).boxShadow).toBe('none')
+    await expect.poll(() => cs(a).boxShadow).toBe('none')
     expect(cs(b).backgroundImage).toMatch(/^linear-gradient/)
   })
 
@@ -227,7 +224,7 @@ describe('pick 6: rows lift on hover', () => {
     const before = a.getBoundingClientRect()
     expect(cs(a).backgroundImage).toBe('none')
     await hover(a)
-    expect(cs(a).backgroundImage).toMatch(/^linear-gradient/)
+    await expect.poll(() => cs(a).backgroundImage).toMatch(/^linear-gradient/)
     expect(cs(a).boxShadow).toMatch(/inset/)
     expect(cs(b).backgroundImage).toBe('none')
     const after = a.getBoundingClientRect()
@@ -241,8 +238,8 @@ describe('pick 6: rows lift on hover', () => {
     const a = host.querySelector<HTMLElement>('.sr-row.sr-urg')!
     await hover(a)
     // the orange edge AND the lift's rim layers
-    expect(cs(a).boxShadow).toMatch(/2px 0px 0px 0px inset/)
-    expect(cs(a).boxShadow.match(/inset/g)!.length).toBeGreaterThanOrEqual(3)
+    await expect.poll(() => cs(a).boxShadow).toMatch(/2px 0px 0px 0px inset/)
+    await expect.poll(() => cs(a).boxShadow.match(/inset/g)?.length ?? 0).toBeGreaterThanOrEqual(3)
   })
 
   it('reduced motion: the lift is instant (the stylesheet drops the row transition)', () => {

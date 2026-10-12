@@ -25,7 +25,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest'
 import { useState, type ReactElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import SmartCompose from '../components/SmartCompose'
-import { mount as mountShared, cleanupMountsAfterEach } from './testMount'
+import { mount as mountShared, cleanupMountsAfterEach, waitFor } from './testMount'
 import { uploadFileToR2 } from '../lib/r2Upload'
 
 vi.mock('../lib/r2Upload', () => ({
@@ -38,14 +38,6 @@ cleanupMountsAfterEach()
 
 function mount(node: ReactElement): Promise<HTMLElement> {
   return mountShared(node, { ready: (h) => h.querySelector('textarea'), label: 'SmartCompose' })
-}
-
-async function waitFor(predicate: () => boolean, label: string): Promise<void> {
-  for (let i = 0; i < 100; i++) {
-    if (predicate()) return
-    await new Promise((r) => setTimeout(r, 10))
-  }
-  throw new Error(`waitFor timed out: ${label}`)
 }
 
 afterEach(() => {
@@ -308,8 +300,7 @@ describe('SmartCompose drop-to-attach (#1358)', () => {
 
     // Paste while the dropped file is still in flight: it queues behind it.
     pasteFiles(textarea, [new File(['b'], 'pasted.txt', { type: 'text/plain' })])
-    await new Promise((r) => setTimeout(r, 30))
-    expect(mockedUpload).toHaveBeenCalledTimes(1)
+    await expect.poll(() => mockedUpload).toHaveBeenCalledTimes(1)
 
     dDrop.resolve({ url: '/files/dropped', key: 'k1' })
     await waitFor(() => mockedUpload.mock.calls.length >= 2, 'pasted file upload requested')
@@ -330,7 +321,7 @@ describe('SmartCompose drop-to-attach (#1358)', () => {
     const ev = new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt })
     textarea.dispatchEvent(ev)
     await new Promise((r) => setTimeout(r, 30))
-    expect(mockedUpload).not.toHaveBeenCalled()
+    await expect.poll(() => mockedUpload).not.toHaveBeenCalled()
   })
 
   it('without an uploadContext a file drop is not claimed', async () => {

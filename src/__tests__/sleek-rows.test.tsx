@@ -75,12 +75,12 @@ describe('SleekTable / SleekRow', () => {
     const head = () => host.querySelector('[role="columnheader"]')!
     const btn = () => head().querySelector('button')!
     expect(head().getAttribute('aria-sort')).toBe('none')
-    click(btn()); await tick()
-    expect(head().getAttribute('aria-sort')).toBe('ascending')
-    click(btn()); await tick()
-    expect(head().getAttribute('aria-sort')).toBe('descending')
-    click(btn()); await tick()
-    expect(head().getAttribute('aria-sort')).toBe('none')
+    click(btn())
+    await expect.poll(() => head().getAttribute('aria-sort')).toBe('ascending')
+    click(btn())
+    await expect.poll(() => head().getAttribute('aria-sort')).toBe('descending')
+    click(btn())
+    await expect.poll(() => head().getAttribute('aria-sort')).toBe('none')
   })
 
   it('measures its own width: drops a column below its minTableWidth and turns to the phone layout below 640', async () => {
@@ -162,17 +162,17 @@ describe('My Tasks Table on sleek rows', () => {
     const { host, row, toggleSelect, setDrawer, setSelected } = await renderTable()
     // On load nothing is ringed (prod check 2026-10-11: with a hovered row, two looked raised).
     expect(host.querySelectorAll('.sr-cur').length).toBe(0)
-    key('j'); await tick()
-    expect(row('t1').className).toContain('sr-cur')
-    key('j'); await tick()
-    expect(row('t2').className).toContain('sr-cur')
+    key('j')
+    await expect.poll(() => row('t1').className).toContain('sr-cur')
+    key('j')
+    await expect.poll(() => row('t2').className).toContain('sr-cur')
     expect(row('t1').className).not.toContain('sr-cur')
     key('x')
     expect(toggleSelect).toHaveBeenCalledWith('t2')
     key('e')
     expect(setDrawer).toHaveBeenCalledWith('t2')
-    key('k'); await tick()
-    expect(row('t1').className).toContain('sr-cur')
+    key('k')
+    await expect.poll(() => row('t1').className).toContain('sr-cur')
     key('Escape')
     expect(setSelected).toHaveBeenCalled()
   })
@@ -186,8 +186,7 @@ describe('My Tasks Table on sleek rows', () => {
     click(row('t2'), { ctrlKey: true })
     expect(toggleSelect).toHaveBeenCalledWith('t2')
     click(row('t3').querySelector('[data-col="title"]')!)
-    await tick()
-    expect(row('t3').className).toContain('sr-cur')
+    await expect.poll(() => row('t3').className).toContain('sr-cur')
   })
 
   it('after a header click, Enter opens the cursor row instead of sorting again', async () => {
@@ -196,8 +195,8 @@ describe('My Tasks Table on sleek rows', () => {
     const head = btn.closest('[role="columnheader"]')!
     // A mouse click focuses the button first, then fires click with detail 1.
     btn.focus()
-    click(btn, { detail: 1 }); await tick()
-    expect(head.getAttribute('aria-sort')).toBe('ascending')
+    click(btn, { detail: 1 })
+    await expect.poll(() => head.getAttribute('aria-sort')).toBe('ascending')
     expect(document.activeElement).toBe(host.querySelector('.sr'))
     key('Enter')
     expect(setDrawer).toHaveBeenCalledTimes(1)
@@ -208,8 +207,8 @@ describe('My Tasks Table on sleek rows', () => {
     const { host } = await renderTable()
     const btn = host.querySelector<HTMLButtonElement>('[role="columnheader"] button')!
     btn.focus()
-    click(btn, { detail: 0 }); await tick()
-    expect(document.activeElement).toBe(btn)
+    click(btn, { detail: 0 })
+    await expect.poll(() => document.activeElement).toBe(btn)
   })
 
   it('a title click opens the drawer; a modified title click selects instead', async () => {
@@ -227,7 +226,7 @@ describe('My Tasks Table on sleek rows', () => {
     click(row('t3').querySelector('[data-col="priority"] .sr-trig')!)
     await tick()
     // The cursor neither moved to t3 nor got shown.
-    expect(host.querySelectorAll('.sr-cur').length).toBe(0)
+    await expect.poll(() => host.querySelectorAll('.sr-cur').length).toBe(0)
     expect(document.querySelector('[role="listbox"]')).not.toBeNull()
     expect(host.querySelector('[role="columnheader"][aria-sort]')).not.toBeNull()
   })
@@ -261,8 +260,7 @@ describe('My Tasks Table on sleek rows', () => {
     expect(row.querySelector('.sr-ph-l .tk-urgtag')).not.toBeNull()
     expect(row.querySelector('.sr-ph-trail [data-col="owner"]')!.children.length).toBeGreaterThan(0)
     click(row.querySelector('.sr-ph-l [data-col="due"] .sr-trig')!)
-    await tick()
-    expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+    await expect.poll(() => document.querySelector('[role="dialog"]')).not.toBeNull()
   })
 })
 

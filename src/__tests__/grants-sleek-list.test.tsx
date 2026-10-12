@@ -106,33 +106,34 @@ describe('GrantSleekList', () => {
   it('header click sorts by title', async () => {
     const host = await mount(<Harness />, { ready, label: 'grants' })
     expect(titles(host)[0]).toBe('Lung protective ventilation')
-    click(host.querySelector('[role="columnheader"] button')!); await tick()
-    expect(titles(host)).toEqual(['Decision-maker signature', 'Lung protective ventilation', 'Provider variation'])
+    click(host.querySelector('[role="columnheader"] button')!)
+    await expect.poll(() => titles(host)).toEqual(['Decision-maker signature', 'Lung protective ventilation', 'Provider variation'])
   })
 
   it('j/k move the cursor, Enter opens the detail, Esc closes it then clears the cursor', async () => {
     const host = await mount(<Harness />, { ready, label: 'grants' })
     const rows = () => [...host.querySelectorAll('.sr-row')]
     expect(rows().some((r) => r.className.includes('sr-cur'))).toBe(false)
-    key('j'); await tick()
-    expect(rows()[0].className).toContain('sr-cur')
-    key('j'); await tick()
-    expect(rows()[1].className).toContain('sr-cur')
-    key('k'); await tick()
-    expect(rows()[0].className).toContain('sr-cur')
-    key('Enter'); await tick()
-    expect(rows()[0].className).toContain('sr-exp')
+    key('j')
+    await expect.poll(() => rows()[0].className).toContain('sr-cur')
+    key('j')
+    await expect.poll(() => rows()[1].className).toContain('sr-cur')
+    key('k')
+    await expect.poll(() => rows()[0].className).toContain('sr-cur')
+    key('Enter')
+    await expect.poll(() => rows()[0].className).toContain('sr-exp')
     expect(host.querySelector('.gr-detail')!.textContent).toContain('Lung protective ventilation')
     key('Escape'); await tick()
-    expect(host.querySelector('.gr-detail')).toBeNull()
+    await expect.poll(() => host.querySelector('.gr-detail')).toBeNull()
     expect(rows()[0].className).toContain('sr-cur')
     key('Escape'); await tick()
-    expect(rows().some((r) => r.className.includes('sr-cur'))).toBe(false)
+    await expect.poll(() => rows().some((r) => r.className.includes('sr-cur'))).toBe(false)
   })
 
   it('Enter on a focused button runs the button, not the row detail', async () => {
     const host = await mount(<Harness />, { ready, label: 'grants' })
-    key('j'); await tick()
+    key('j')
+    await expect.poll(() => host.querySelector('.sr-row')!.className).toContain('sr-cur')
     // A real Enter on a focused control: the browser turns an unprevented Enter
     // on a button into a click, so the hook must leave it unprevented.
     const press = (el: HTMLElement) => {
@@ -143,12 +144,12 @@ describe('GrantSleekList', () => {
       return ev
     }
     const sortBtn = host.querySelector('[role="columnheader"] button') as HTMLElement
-    expect(press(sortBtn).defaultPrevented).toBe(false); await tick()
-    expect(host.querySelector('[role="columnheader"]')!.getAttribute('aria-sort')).toBe('ascending')
+    expect(press(sortBtn).defaultPrevented).toBe(false); await tick() // floor for the no-detail check
+    await expect.poll(() => host.querySelector('[role="columnheader"]')!.getAttribute('aria-sort')).toBe('ascending')
     expect(host.querySelector('.gr-detail')).toBeNull()
     const trigger = host.querySelector('[data-grant-id="r01"] [data-col="status"] button') as HTMLElement
-    expect(press(trigger).defaultPrevented).toBe(false); await tick()
-    expect(document.querySelector('[role="listbox"]')).not.toBeNull()
+    expect(press(trigger).defaultPrevented).toBe(false); await tick() // floor for the no-detail check
+    await expect.poll(() => document.querySelector('[role="listbox"]')).not.toBeNull()
     expect(host.querySelector('.gr-detail')).toBeNull()
   })
 
@@ -157,14 +158,14 @@ describe('GrantSleekList', () => {
     const host = await mount(<Harness onStatus={onStatus} />, { ready, label: 'grants' })
     const row = () => host.querySelector('[data-grant-id="r01"]')!
     click(row().querySelector('[data-col="status"] button')!); await tick()
-    expect(host.querySelector('.gr-detail')).toBeNull()
+    await expect.poll(() => host.querySelector('.gr-detail')).toBeNull()
     // Close the menu the click opened before clicking the row.
     key('Escape'); await tick()
-    click(row().querySelector('[data-col="period"]')!); await tick()
-    expect(row().className).toContain('sr-cur')
+    click(row().querySelector('[data-col="period"]')!)
+    await expect.poll(() => row().className).toContain('sr-cur')
     expect(host.querySelector('.gr-detail')).not.toBeNull()
     click(row().querySelector('[data-col="period"]')!); await tick()
-    expect(host.querySelector('.gr-detail')).toBeNull()
+    await expect.poll(() => host.querySelector('.gr-detail')).toBeNull()
   })
 
   it('phone: one muted award line, the face trailing, and no empty lead track', async () => {

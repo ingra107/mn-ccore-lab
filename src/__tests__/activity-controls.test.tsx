@@ -67,8 +67,8 @@ describe('activity controls survive the badge + first-name restyle', () => {
 
     const del = [...host.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === 'Delete entry')!
     del.click()
-    await new Promise((r) => setTimeout(r, 30))
-    expect(labels(host)).toContain('Click again to delete permanently')
+    await new Promise((r) => setTimeout(r, 30)) // floor for the no-delete-yet check below
+    await expect.poll(() => labels(host)).toContain('Click again to delete permanently')
     expect(f.mock.calls.some((c) => String(c[0]).includes('/delete'))).toBe(false)
     ;[...host.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === 'Click again to delete permanently')!.click()
     for (let i = 0; i < 50 && !f.mock.calls.some((c) => String(c[0]).includes('/delete')); i++) await new Promise((r) => setTimeout(r, 10))

@@ -83,7 +83,7 @@ describe('useUpdateProjectFields: a rejected write is never silent (#128)', () =
 
     await until(() => fetchMock.mock.calls.length > 0, 'POST')
     await new Promise((r) => setTimeout(r, 50))
-    expect(host.textContent ?? '').not.toMatch(/Could not save/)
+    await expect.poll(() => host.textContent ?? '').not.toMatch(/Could not save/)
     expect(queryClient.getQueryData<Project[]>(['projects'])?.[0].stage).toBe('writing')
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/projects/p1')

@@ -112,10 +112,9 @@ describe('Tasks Board cards', () => {
     expect(prio.textContent).toBe('High')
     prio.click()
     expect(opened).toEqual([])
-    await new Promise((r) => setTimeout(r, 50))
-    const bodies = fetchMock.mock.calls.map(([, init]) => String((init as RequestInit | undefined)?.body ?? ''))
-    expect(bodies.some((b) => b.includes('"priority":"urgent"'))).toBe(true)
-    expect(bodies.some((b) => b.includes('"status":"done"'))).toBe(true)
+    const bodies = () => fetchMock.mock.calls.map(([, init]) => String((init as RequestInit | undefined)?.body ?? ''))
+    await expect.poll(() => bodies().some((b) => b.includes('"priority":"urgent"'))).toBe(true)
+    await expect.poll(() => bodies().some((b) => b.includes('"status":"done"'))).toBe(true)
   })
 
   it('the header is the one focus stop; Space on it picks the card up, Space from an inner control does not', async () => {
@@ -138,17 +137,20 @@ describe('Tasks Board cards', () => {
     // Space on the done box: no pick-up.
     card(host, 'a').querySelector<HTMLElement>('button.tk-ck')!.dispatchEvent(new KeyboardEvent('keydown', space))
     await new Promise((r) => setTimeout(r, 30))
-    expect(host.querySelector('.tk-bd-lift')).toBeNull()
+    await expect.poll(() => host.querySelector('.tk-bd-lift')).toBeNull()
     // Space on the header: the card lifts into the drag overlay.
     const header = card(host, 'a').querySelector<HTMLElement>('.tk-tch')!
     header.focus()
     header.dispatchEvent(new KeyboardEvent('keydown', space))
-    await new Promise((r) => setTimeout(r, 30))
-    expect(document.querySelector('.tk-bd-lift')).not.toBeNull()
+    await expect.poll(() => document.querySelector('.tk-bd-lift')).not.toBeNull()
+    // dnd-kit's KeyboardSensor adds its keydown listener in a setTimeout(0)
+    // after it activates (@dnd-kit/core KeyboardSensor.attach): yield one task
+    // so it is listening before the Escape. Ordering, not a race: same queue.
+    await new Promise((r) => setTimeout(r, 0))
     // Escape cancels (the overlay then plays its drop animation out).
     header.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true }))
     await new Promise((r) => setTimeout(r, 600))
-    expect(document.querySelector('.tk-bd-lift')).toBeNull()
+    await expect.poll(() => document.querySelector('.tk-bd-lift')).toBeNull()
   })
 
   it('urgent keeps the orange edge and its tag is the priority control, which steps back to low', async () => {
@@ -160,10 +162,9 @@ describe('Tasks Board cards', () => {
     const prio = urgent.querySelector<HTMLButtonElement>('.tk-ctx button.tk-prio')!
     expect(prio.textContent).toBe('Urgent')
     prio.click()
-    await new Promise((r) => setTimeout(r, 50))
-    const bodies = fetchMock.mock.calls.map(([, init]) => String((init as RequestInit | undefined)?.body ?? ''))
-    expect(bodies.some((b) => b.includes('"priority":"low"'))).toBe(true)
-    expect(card(host, 'a').classList.contains('tk-urg')).toBe(false)
+    const bodies = () => fetchMock.mock.calls.map(([, init]) => String((init as RequestInit | undefined)?.body ?? ''))
+    await expect.poll(() => bodies().some((b) => b.includes('"priority":"low"'))).toBe(true)
+    await expect.poll(() => card(host, 'a').classList.contains('tk-urg')).toBe(false)
   })
 
   it('folder + Work on wait for hover, and due + priority share one line in the column', async () => {
@@ -255,10 +256,9 @@ describe('Tasks Board Done column', () => {
     expect(card(host, 'd').querySelector('button.tk-prio')).toBeNull()
     // Reopening from the Done column writes todo and offers an undo.
     card(host, 'e').querySelector<HTMLElement>('button.tk-ck')!.click()
-    await new Promise((r) => setTimeout(r, 50))
-    const bodies = fetchMock.mock.calls.map(([, init]) => String((init as RequestInit | undefined)?.body ?? ''))
-    expect(bodies.some((b) => b.includes('"status":"todo"'))).toBe(true)
-    expect(document.body.textContent).toContain('Task reopened')
+    const bodies = () => fetchMock.mock.calls.map(([, init]) => String((init as RequestInit | undefined)?.body ?? ''))
+    await expect.poll(() => bodies().some((b) => b.includes('"status":"todo"'))).toBe(true)
+    await expect.poll(() => document.body.textContent).toContain('Task reopened')
     expect([...document.querySelectorAll('button')].some((b) => /Undo/i.test(b.textContent ?? '') || /Undo/i.test(b.getAttribute('aria-label') ?? ''))).toBe(true)
   })
 })

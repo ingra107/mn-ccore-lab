@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import DeskBrokerFrame from '../components/DeskBrokerFrame'
-import { mount as mountShared, cleanupMountsAfterEach } from './testMount'
+import { mount as mountShared, cleanupMountsAfterEach, waitFor } from './testMount'
 
 const HTML =
   '<div class="card" data-id="c1"><div class="ctitle">Card one</div></div>' +
@@ -99,14 +99,6 @@ describe('DeskBrokerFrame — seed round-trip', () => {
 })
 
 /** Waits up to ~2s for `check()` to become truthy; throws `label` if not. */
-async function waitFor(check: () => unknown, label: string) {
-  for (let i = 0; i < 200; i++) {
-    if (check()) return
-    await new Promise((r) => setTimeout(r, 10))
-  }
-  throw new Error(`${label} never became true`)
-}
-
 describe('DeskBrokerFrame — save bridge (postMessage)', () => {
   // The real shape: buildSeedShim's <script> (component-internal, always
   // first) defines window.__deskStorage; THIS html is rendered as its own,
@@ -148,7 +140,7 @@ describe('DeskBrokerFrame — save bridge (postMessage)', () => {
       new MessageEvent('message', { data: { type: 'desk-save', value: '{"evil":"1"}' }, source: window }),
     )
     await new Promise((r) => setTimeout(r, 100))
-    expect(localStorage.getItem('desk:art_foreign')).toBeNull()
+    await expect.poll(() => localStorage.getItem('desk:art_foreign')).toBeNull()
   })
 
   it('refuses an oversized save', async () => {
@@ -160,6 +152,6 @@ describe('DeskBrokerFrame — save bridge (postMessage)', () => {
       '*',
     )
     await new Promise((r) => setTimeout(r, 100))
-    expect(localStorage.getItem('desk:art_big')).toBeNull()
+    await expect.poll(() => localStorage.getItem('desk:art_big')).toBeNull()
   })
 })

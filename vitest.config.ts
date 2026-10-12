@@ -25,6 +25,12 @@ export default defineConfig({
       'src/lib/__tests__/**',
     ],
     globals: true,
+    // Browser tests wait on a condition after an interaction
+    // (`await expect.poll(...)`, testMount's `waitFor`), never a fixed sleep:
+    // a 30ms `tick()` before an assertion lost the race on loaded CI runners
+    // (8 red Vitest Gate runs, 2026-10-11/12). Poll often so a passing wait
+    // costs little; give a slow runner seconds, not the default 1s.
+    expect: { poll: { interval: 10, timeout: 3000 } },
   },
   resolve: {
     alias: {

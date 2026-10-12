@@ -12,7 +12,7 @@ import { UndoToastProvider } from '../components/UndoToast'
 import { DayActivityFeed } from '../components/today/DayActivityFeed'
 import { ActivityThread } from '../components/activity/ActivityThread'
 import { threadParticipants } from '../components/activity/threadParticipants'
-import { mount, cleanupMountsAfterEach } from './testMount'
+import { mount, cleanupMountsAfterEach, waitFor } from './testMount'
 
 cleanupMountsAfterEach()
 beforeEach(() => { localStorage.clear(); replies = [...ALL_REPLIES]; threadMarks = [] })
@@ -109,7 +109,7 @@ describe('Slack-style threads', () => {
     expect(host.querySelector('.tk-thr')!.textContent).not.toContain('New')
     ;(host.querySelector('.tk-thr') as HTMLButtonElement).click()
     await wait(30)
-    expect(host.textContent).not.toContain('first answer')
+    await expect.poll(() => host.textContent).not.toContain('first answer')
     vi.unstubAllGlobals()
   })
 
@@ -133,7 +133,7 @@ describe('Slack-style threads', () => {
     const mine = { ...roots[1], last_reply_actor: 'nick-ingraham', participants: 'nick-ingraham' }
     const host = await mount(wrap(<ActivityThread root={mine as never} invalidateKeys={[]} />), { ready, label: 'ActivityThread' })
     await wait(50)
-    expect(host.querySelector('.tk-thr')!.textContent).not.toContain('New')
+    await expect.poll(() => host.querySelector('.tk-thr')!.textContent).not.toContain('New')
     vi.unstubAllGlobals()
   })
 
@@ -141,7 +141,7 @@ describe('Slack-style threads', () => {
     const f = stub()
     const host = await mount(wrap(<DayActivityFeed dateKey="2026-10-09" />), { ready, label: 'DayActivityFeed' })
     await wait(80)
-    expect(f.mock.calls.some((c) => String(c[0]).includes('/replies'))).toBe(false)
+    await expect.poll(() => f.mock.calls.some((c) => String(c[0]).includes('/replies'))).toBe(false)
     ;(host.querySelector('.tk-thr') as HTMLButtonElement).click()
     for (let i = 0; i < 50 && !f.mock.calls.some((c) => String(c[0]).includes('/replies')); i++) await wait(10)
     expect(f.mock.calls.some((c) => String(c[0]).includes('/api/activity/old/replies'))).toBe(true)
@@ -151,8 +151,7 @@ describe('Slack-style threads', () => {
   it('Reply opens the thread and reads it: New clears after a collapse', async () => {
     stub()
     const host = await mount(wrap(<DayActivityFeed dateKey="2026-10-09" />), { ready, label: 'DayActivityFeed' })
-    await wait(50)
-    expect(host.querySelector('.tk-thr')!.textContent).toContain('New')
+    await expect.poll(() => host.querySelector('.tk-thr')!.textContent).toContain('New')
     const replyBtn = [...host.querySelectorAll('button')].filter((b) => b.textContent === 'Reply')[1] as HTMLButtonElement
     replyBtn.click()
     for (let i = 0; i < 50 && !(host.textContent ?? '').includes('second answer'); i++) await wait(10)
@@ -162,7 +161,7 @@ describe('Slack-style threads', () => {
     expect(localStorage.getItem('thread-seen:old')).toBeNull()
     ;(host.querySelector('.tk-thr') as HTMLButtonElement).click() // collapse
     await wait(30)
-    expect(host.querySelector('.tk-thr')!.textContent).not.toContain('New')
+    await expect.poll(() => host.querySelector('.tk-thr')!.textContent).not.toContain('New')
     vi.unstubAllGlobals()
   })
 
@@ -170,8 +169,8 @@ describe('Slack-style threads', () => {
     threadMarks = [{ root_id: 'old', read_up_to: '2026-10-09 12:20:00' }]
     stub()
     const host = await mount(wrap(<DayActivityFeed dateKey="2026-10-09" />), { ready, label: 'DayActivityFeed' })
-    await wait(80)
-    expect(host.querySelector('.tk-thr')!.textContent).toContain('2 replies')
+    await wait(80) // floor for the no-New check below
+    await expect.poll(() => host.querySelector('.tk-thr')!.textContent).toContain('2 replies')
     expect(host.querySelector('.tk-thr')!.textContent).not.toContain('New')
     vi.unstubAllGlobals()
   })
@@ -180,8 +179,7 @@ describe('Slack-style threads', () => {
     threadMarks = [{ root_id: 'old', read_up_to: '2026-10-09 12:10:00' }]
     stub()
     const host = await mount(wrap(<DayActivityFeed dateKey="2026-10-09" />), { ready, label: 'DayActivityFeed' })
-    await wait(80)
-    expect(host.querySelector('.tk-thr')!.textContent).toContain('New')
+    await expect.poll(() => host.querySelector('.tk-thr')!.textContent).toContain('New')
     vi.unstubAllGlobals()
   })
 
@@ -192,8 +190,8 @@ describe('Slack-style threads', () => {
     for (let i = 0; i < 50 && !(host.textContent ?? '').includes('second answer'); i++) await wait(10)
     const replyRow = [...host.querySelectorAll('.detail-card')].find((c) => (c.textContent ?? '').includes('first answer'))!
     ;(replyRow.querySelector('button[aria-label="Delete entry"]') as HTMLButtonElement).click()
-    await wait(30)
-    ;(replyRow.querySelector('button[aria-label="Click again to delete permanently"]') as HTMLButtonElement).click()
+    const armed = await waitFor(() => replyRow.querySelector<HTMLButtonElement>('button[aria-label="Click again to delete permanently"]'), 'the delete button armed')
+    armed.click()
     for (let i = 0; i < 80 && (host.textContent ?? '').includes('first answer'); i++) await wait(10)
     expect(f.mock.calls.some((c) => String(c[0]).includes('/api/activity/a/delete'))).toBe(true)
     expect(host.textContent).not.toContain('first answer')

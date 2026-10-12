@@ -78,25 +78,26 @@ describe('ManuscriptsList (sleek row)', () => {
 
   it('j/k move the cursor, Enter opens the project, Esc clears', async () => {
     const h = await mount(<Harness />, { ready: (x) => x.querySelector('.sr-row'), label: 'list' })
-    key('j'); await tick()
-    expect(row(h, 'a').classList.contains('sr-cur')).toBe(true)
-    key('j'); await tick()
-    expect(row(h, 'b').classList.contains('sr-cur')).toBe(true)
-    key('k'); await tick()
-    expect(row(h, 'a').classList.contains('sr-cur')).toBe(true)
+    key('j')
+    await expect.poll(() => row(h, 'a').classList.contains('sr-cur')).toBe(true)
+    key('j')
+    await expect.poll(() => row(h, 'b').classList.contains('sr-cur')).toBe(true)
+    key('k')
+    await expect.poll(() => row(h, 'a').classList.contains('sr-cur')).toBe(true)
     key('Escape'); await tick()
-    expect(h.querySelector('.sr-cur')).toBeNull()
-    key('j'); key('j'); await tick()
-    key('Enter'); await tick()
-    expect(where(h)).toBe('/portal/projects/b')
+    await expect.poll(() => h.querySelector('.sr-cur')).toBeNull()
+    key('j'); key('j')
+    await expect.poll(() => row(h, 'b').classList.contains('sr-cur')).toBe(true)
+    key('Enter')
+    await expect.poll(() => where(h)).toBe('/portal/projects/b')
   })
 
   it('a row click opens the project; an inline-edit click does not', async () => {
     const h = await mount(<Harness />, { ready: (x) => x.querySelector('.sr-row'), label: 'list' })
     click(row(h, 'c').querySelector('[data-col="status"] .sr-trig')!); await tick()
     expect(where(h)).toBe('/portal/manuscripts')
-    click(row(h, 'c').querySelector('[data-col="days_in_stage"]')!); await tick()
-    expect(where(h)).toBe('/portal/projects/c')
+    click(row(h, 'c').querySelector('[data-col="days_in_stage"]')!)
+    await expect.poll(() => where(h)).toBe('/portal/projects/c')
   })
 
   it('a null PI reads Unassigned with no face; a stalled count is orange', async () => {
@@ -121,12 +122,13 @@ describe('ManuscriptsList (sleek row)', () => {
   })
 
   it('Escape is left alone when no row holds the cursor', async () => {
-    await mount(<Harness />, { ready: (x) => x.querySelector('.sr-row'), label: 'list' })
+    const h = await mount(<Harness />, { ready: (x) => x.querySelector('.sr-row'), label: 'list' })
     const esc = () => { const e = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }); document.dispatchEvent(e); return e.defaultPrevented }
     expect(esc()).toBe(false)
-    key('j'); await tick()
+    key('j')
+    await expect.poll(() => h.querySelector('.sr-cur')).not.toBeNull()
     expect(esc()).toBe(true)
-    await tick()
+    await expect.poll(() => h.querySelector('.sr-cur')).toBeNull()
     expect(esc()).toBe(false)
   })
 })

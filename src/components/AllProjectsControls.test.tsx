@@ -90,15 +90,14 @@ describe('AllProjectsSwitch visibility', () => {
     const host = await mount(me({ isPi: true, canShowAllProjects: true }))
     const sw = host.querySelector('[data-testid="all-projects-switch"]') as HTMLButtonElement
     sw.click()
-    await tick()
-    expect(getAllProjectsOn()).toBe(true)
+    await expect.poll(() => getAllProjectsOn()).toBe(true)
     expect(sw.getAttribute('aria-checked')).toBe('true')
     const banner = host.querySelector('[data-testid="all-projects-banner"]') as HTMLElement
     expect(banner.textContent).toContain('unfiltered')
     const off = Array.from(banner.querySelectorAll('button')).find((b) => b.textContent === 'Turn off') as HTMLButtonElement
     off.click()
     await tick()
-    expect(getAllProjectsOn()).toBe(false)
+    await expect.poll(() => getAllProjectsOn()).toBe(false)
     expect(host.querySelector('[data-testid="all-projects-banner"]')).toBeNull()
   })
 
@@ -113,14 +112,12 @@ describe('AllProjectsRouteGuard', () => {
   it('keeps the switch on across the list and a project page, and turns it off elsewhere', async () => {
     const host = await mount(me({ isPi: true, canShowAllProjects: true }))
     ;(host.querySelector('[data-testid="all-projects-switch"]') as HTMLButtonElement).click()
-    await tick()
-    expect(getAllProjectsOn()).toBe(true)
+    await expect.poll(() => getAllProjectsOn()).toBe(true)
     navigateTo('/portal/projects/some-hidden-project')
-    await tick()
-    expect(getAllProjectsOn()).toBe(true)
+    await expect.poll(() => getAllProjectsOn()).toBe(true)
     navigateTo('/portal/team/nick-ingraham')
     await tick()
-    expect(getAllProjectsOn()).toBe(false)
+    await expect.poll(() => getAllProjectsOn()).toBe(false)
     expect(host.querySelector('[data-testid="all-projects-banner"]')).toBeNull()
   })
 })

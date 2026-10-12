@@ -22,8 +22,24 @@ export interface MountOptions {
   width?: string
 }
 
+/** Resolve once `check()` is truthy, polled every 5ms; throw naming `label`
+ *  after `timeoutMs`. The one condition wait for browser-mode tests: a fixed
+ *  sleep before an assertion races the browser under CI load (CI 2026-10-11/12:
+ *  8 red Vitest Gate runs, every one a 30ms `tick()` before an assertion).
+ *  Inside a test, `await expect.poll(() => x).toBe(y)` is the same wait in
+ *  assertion form; use this one in helpers and for preconditions. */
+export async function waitFor<T>(check: () => T, label: string, timeoutMs = 3000): Promise<NonNullable<T>> {
+  const end = performance.now() + timeoutMs
+  for (;;) {
+    const value = check()
+    if (value) return value as NonNullable<T>
+    if (performance.now() > end) throw new Error(`waitFor timed out after ${timeoutMs}ms: ${label}`)
+    await new Promise((r) => setTimeout(r, 5))
+  }
+}
+
 /** Mount `node` into a fresh host under document.body and resolve with the host
- *  once `ready(host)` is truthy. Polls up to ~1s; throws naming `label` after that. */
+ *  once `ready(host)` is truthy; throws naming `label` if it never is. */
 export async function mount(node: ReactElement, opts: MountOptions): Promise<HTMLElement> {
   const host = document.createElement('div')
   if (opts.width) host.style.width = opts.width
@@ -32,11 +48,8 @@ export async function mount(node: ReactElement, opts: MountOptions): Promise<HTM
   root.render(node)
   mounted.push({ host, root })
   // React 19 commits asynchronously; poll rather than assume one tick is enough.
-  for (let i = 0; i < 100; i++) {
-    if (opts.ready(host)) return host
-    await new Promise((r) => setTimeout(r, 10))
-  }
-  throw new Error(`${opts.label} never rendered`)
+  await waitFor(() => opts.ready(host), `${opts.label} never rendered`)
+  return host
 }
 
 /** Unmount + remove every host this module mounted. */

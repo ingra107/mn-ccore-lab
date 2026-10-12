@@ -98,15 +98,13 @@ describe('Calendar Agenda: sleek rows', () => {
     const host = await mountAgenda()
     const where = () => host.querySelector('[data-where]')?.textContent
     click(host.querySelector('[data-event-id="m1"] [data-col="context"]') as Element)
-    await tick()
-    expect(where()).toBe('/portal/meetings/m1')
+    await expect.poll(() => where()).toBe('/portal/meetings/m1')
     const link = host.querySelector('[data-event-id="t1"] a.sr-lk') as HTMLAnchorElement
     expect(link.getAttribute('href')).toContain('open=t1')
     const navs = () => Number(host.querySelector('[data-where]')?.getAttribute('data-navs'))
     const before = navs()
     click(link)
-    await tick()
-    expect(where()).toContain('open=t1')
+    await expect.poll(() => where()).toContain('open=t1')
     expect(navs()).toBe(before + 1)
   })
 

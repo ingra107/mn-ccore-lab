@@ -15,6 +15,7 @@ import type { TaskRow as TaskRowData } from './api'
 import { CardCheck } from '../components/tasks/TaskCardRow'
 import { StatLine } from '../components/today/StatLine'
 import { useCompletionMoments, __resetCompletionMoments, beginCompletion, settleCompletion } from './completionMoment'
+import { waitFor } from '../__tests__/testMount'
 
 const tick = (ms = 30) => new Promise((r) => setTimeout(r, ms))
 
@@ -22,15 +23,21 @@ let mounted: { host: HTMLElement; root: Root }[] = []
 const realFetch = globalThis.fetch
 const realMatchMedia = window.matchMedia
 
-/** fetch that hangs until the test answers it. */
+/** fetch that hangs until the test answers it. `asked()` is true once the
+ *  mutation has called fetch: wait on it before answering, or the answer lands
+ *  on no request. */
 function stubFetch() {
-  let answer: (ok: boolean) => void = () => {}
+  let answer: ((ok: boolean) => void) | null = null
   globalThis.fetch = (() => new Promise<Response>((resolve) => {
     answer = (ok) => resolve(new Response(JSON.stringify(ok ? { data: { id: 't1', status: 'done' } } : { error: 'nope' }), {
       status: ok ? 200 : 500, headers: { 'Content-Type': 'application/json' },
     }))
   })) as typeof fetch
-  return { accept: () => answer(true), reject: () => answer(false) }
+  return {
+    asked: () => answer !== null,
+    accept: () => answer!(true),
+    reject: () => answer!(false),
+  }
 }
 
 function reducedMotion(on: boolean) {
@@ -76,7 +83,7 @@ async function mount(): Promise<HTMLElement> {
     </QueryClientProvider>,
   )
   mounted.push({ host, root })
-  await tick()
+  await waitFor(() => host.querySelector('button.tk-ck'), 'completion Harness')
   return host
 }
 
@@ -98,25 +105,24 @@ describe('completion moment', () => {
     const hub = stubFetch()
     const h = await mount()
     box(h).click()
-    await tick()
 
     // Optimistic: the box is filled, but nothing celebrates yet.
+    await waitFor(hub.asked, 'the completion write reached fetch')
     expect(box(h).classList.contains('tk-on')).toBe(true)
     expect(box(h).classList.contains('cm-ring')).toBe(false)
     expect(weekValue(h)).toBe(String(BASE))
     expect(weekRuleLit(h)).toBe(false)
 
     hub.accept()
-    await tick(60)
-    expect(box(h).classList.contains('cm-ring')).toBe(true)
+    await expect.poll(() => box(h).classList.contains('cm-ring')).toBe(true)
     expect(weekRuleLit(h)).toBe(true)
 
-    await tick(500) // the count-up has run
-    expect(weekValue(h)).toBe(String(BASE + 1))
+    // the count-up has run
+    await expect.poll(() => weekValue(h)).toBe(String(BASE + 1))
 
     await tick(600) // the beat is over: everything rests
-    expect(box(h).classList.contains('cm-ring')).toBe(false)
-    expect(weekRuleLit(h)).toBe(false)
+    await expect.poll(() => box(h).classList.contains('cm-ring')).toBe(false)
+    await expect.poll(() => weekRuleLit(h)).toBe(false)
     expect(weekValue(h)).toBe(String(BASE + 1))
   })
 
@@ -124,11 +130,10 @@ describe('completion moment', () => {
     const hub = stubFetch()
     const h = await mount()
     box(h).click()
-    await tick()
+    await waitFor(hub.asked, 'the completion write reached fetch')
     hub.reject()
-    await tick(80)
 
-    expect(box(h).classList.contains('tk-on')).toBe(false)
+    await expect.poll(() => box(h).classList.contains('tk-on')).toBe(false)
     expect(box(h).classList.contains('cm-ring')).toBe(false)
     expect(weekRuleLit(h)).toBe(false)
     expect(weekValue(h)).toBe(String(BASE))
@@ -139,15 +144,14 @@ describe('completion moment', () => {
     const hub = stubFetch()
     const h = await mount()
     box(h).click()
-    await tick()
+    await waitFor(hub.asked, 'the completion write reached fetch')
     expect(weekValue(h)).toBe(String(BASE))
 
     hub.accept()
-    await tick(60)
+    await expect.poll(() => weekValue(h)).toBe(String(BASE + 1))
     expect(box(h).classList.contains('tk-on')).toBe(true)
     expect(box(h).classList.contains('cm-ring')).toBe(false)
     expect(weekRuleLit(h)).toBe(false)
-    expect(weekValue(h)).toBe(String(BASE + 1))
   })
 })
 
@@ -177,7 +181,7 @@ async function mountUi(ui: ReactElement): Promise<HTMLElement> {
     </QueryClientProvider>,
   )
   mounted.push({ host, root })
-  await tick()
+  await waitFor(() => host.firstElementChild, 'completion UI')
   return host
 }
 
@@ -188,9 +192,8 @@ describe('completion moment, bulk path', () => {
     }), { status: 200, headers: { 'Content-Type': 'application/json' } }))) as typeof fetch
     const h = await mountUi(<BulkHarness />)
     ;(h.querySelector('[data-testid="bulk"]') as HTMLButtonElement).click()
-    await tick(60)
     const ring = (id: string) => h.querySelector(`[data-box="${id}"] button.tk-ck`)!.classList.contains('cm-ring')
-    expect(ring('t2')).toBe(true)
+    await expect.poll(() => ring('t2')).toBe(true)
     expect(ring('t1')).toBe(false)
     // One accepted completion = one beat on the week rule.
     expect(weekRuleLit(h)).toBe(true)
@@ -203,7 +206,7 @@ describe('completion moment, bulk path', () => {
     const h = await mountUi(<BulkHarness />)
     ;(h.querySelector('[data-testid="bulk"]') as HTMLButtonElement).click()
     await tick(60)
-    expect(h.querySelectorAll('button.cm-ring').length).toBe(0)
+    await expect.poll(() => h.querySelectorAll('button.cm-ring').length).toBe(0)
     expect(weekRuleLit(h)).toBe(false)
   })
 })
@@ -230,7 +233,6 @@ describe('completion moment on Today groups', () => {
     expect(ids()).not.toContain('g0') // sunk past the 5-row preview cut
 
     settleCompletion(['g0'], true)
-    await tick(60)
-    expect(ids()[0]).toBe('g1')
+    await expect.poll(() => ids()[0]).toBe('g1')
   })
 })

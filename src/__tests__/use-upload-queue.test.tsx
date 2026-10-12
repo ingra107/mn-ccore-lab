@@ -9,7 +9,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { useEffect } from 'react'
 import { useUploadQueue } from '../lib/useUploadQueue'
-import { mount, unmountAll, cleanupMountsAfterEach } from './testMount'
+import { mount, unmountAll, cleanupMountsAfterEach, waitFor } from './testMount'
 
 cleanupMountsAfterEach()
 
@@ -17,14 +17,6 @@ function deferred() {
   let resolve!: () => void
   const promise = new Promise<void>((res) => { resolve = res })
   return { promise, resolve }
-}
-
-async function waitFor(predicate: () => boolean, label: string): Promise<void> {
-  for (let i = 0; i < 100; i++) {
-    if (predicate()) return
-    await new Promise((r) => setTimeout(r, 10))
-  }
-  throw new Error(`waitFor timed out: ${label}`)
 }
 
 function Harness({ worker, files }: { worker: (f: File) => Promise<void>; files: File[] }) {
@@ -43,8 +35,7 @@ describe('useUploadQueue', () => {
 
     unmountAll()
     first.resolve()
-    await new Promise((r) => setTimeout(r, 50))
-    expect(worker).toHaveBeenCalledTimes(1)
+    await expect.poll(() => worker).toHaveBeenCalledTimes(1)
   })
 
   it('drains every file in order while mounted and clears uploading at the end', async () => {

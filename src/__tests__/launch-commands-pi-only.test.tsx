@@ -93,8 +93,7 @@ describe('launch tags: three viewer states (useLaunchCommands)', () => {
     const { routed, urls } = await run(user(false, false), '@quickchat my private seed')
     expect(routed).toBe(true)
     expect(launchPosts(urls)).toEqual([])
-    await new Promise((r) => setTimeout(r, 50))
-    expect(document.body.textContent).toContain(LAUNCH_AUTH_UNRESOLVED_MSG)
+    await expect.poll(() => document.body.textContent).toContain(LAUNCH_AUTH_UNRESOLVED_MSG)
   })
 })
 
