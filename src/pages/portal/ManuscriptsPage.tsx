@@ -30,13 +30,14 @@ import ActiveSubmissionsWidget from '../../components/ActiveSubmissionsWidget'
 import type { SleekSort } from '../../components/table/SleekRows'
 import { ManuscriptsList } from './ManuscriptsList'
 import EmptyState from '../../components/EmptyState'
+import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { toApiStage } from '../../lib/stageNormalize'
 import { useAllProjectProducts, useSetProductStage } from '../../hooks/useProjectProducts'
-import { homeOf, ladderFor, productLabel, type ProductRow } from '../../lib/products'
+import { homeOf, ladderFor, MANUSCRIPT_LADDER_FALLBACK, productLabel, type ProductRow } from '../../lib/products'
 import { PATHS } from '../../constants/paths'
 import { parseDbUtc } from '../../lib/time'
 import { parseDateOnlyOrTimestamp } from '../../lib/dateUtils'
@@ -140,10 +141,14 @@ export default function ManuscriptsPage() {
   const { showUndo, showError } = useUndoToast()
   const inlineUpdate = useUpdateProjectFields()
   const setProductStage = useSetProductStage()
-  const { data: productData, isLoading: productsLoading } = useAllProjectProducts()
+  const { data: productData, isLoading: productsLoading, isError: productsFailed, refetch: refetchProducts } = useAllProjectProducts()
 
-  // The manuscript ladder, from the Worker's kind data.
-  const ladder = useMemo(() => ladderFor(productData?.kinds ?? [], 'manuscript'), [productData])
+  // The manuscript ladder, from the Worker's kind data. If the product read
+  // failed, the fallback ladder keeps every project's own stage on screen.
+  const ladder = useMemo(() => {
+    const fromKinds = ladderFor(productData?.kinds ?? [], 'manuscript')
+    return fromKinds.length > 0 ? fromKinds : [...MANUSCRIPT_LADDER_FALLBACK]
+  }, [productData])
   const STAGES = useMemo(() => ladder.map((s) => s.stage), [ladder])
   const STAGE_LABELS = useMemo<Record<string, string>>(() => Object.fromEntries(ladder.map((s) => [s.stage, s.label])), [ladder])
   const STAGE_ORDER = useMemo<Record<string, number>>(() => Object.fromEntries(ladder.map((s) => [s.stage, s.ordinal])), [ladder])
@@ -154,7 +159,12 @@ export default function ManuscriptsPage() {
     const homes = new Map<string, ProductRow>()
     const out: Project[] = []
     for (const p of projects) {
-      const products = productData?.byProject[p.id ?? '']
+      if (!productData) {
+        // Product read failed (or not back yet): each project's own stage.
+        out.push({ ...p, stage: p.stage ? toApiStage(p.stage) : p.stage })
+        continue
+      }
+      const products = productData.byProject[p.id ?? '']
       const home = homeOf(products)
       if (home) {
         if (home.kind !== 'manuscript') continue
@@ -185,7 +195,9 @@ export default function ManuscriptsPage() {
     if (nextStage === prevStage) return
     const home = homeBySlug.get(slug)
     if (!home) {
-      showError('This project has no product yet; open the project to add one.')
+      showError(productsFailed
+        ? 'Stages are read-only until the products load; use retry above.'
+        : 'This project has no product yet; open the project to add one.')
       return
     }
     setProductStage.mutate({
@@ -440,6 +452,11 @@ export default function ManuscriptsPage() {
             )}
             {/* M-12 (D25): Active submissions — list view only. */}
             {!isLoading && view === 'list' && <ActiveSubmissionsWidget />}
+            {productsFailed && (
+              <div role="alert" data-testid="manuscripts-products-error">
+                <QueryErrorNote label="product stages (each project shows its own stage, read-only)" onRetry={() => { void refetchProducts() }} />
+              </div>
+            )}
             {manuscriptCategoryPills}
           </>
         }

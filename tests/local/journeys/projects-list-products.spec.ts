@@ -103,7 +103,8 @@ test('Manuscripts: the row is the home product; its stage cell and the drag writ
 
   // Pipeline: drag the card from Writing to Submitted.
   await page.getByText('Pipeline', { exact: true }).first().click()
-  const card = page.locator(`a[href$="/projects/${SLUG}"]`).first()
+  // Inside the page body: the sidebar's "My projects" list links the same project.
+  const card = page.locator(`main a[href$="/projects/${SLUG}"]`).first()
   await expect(card).toBeVisible()
   const target = page.getByRole('heading', { name: 'Submitted', exact: true }).first()
   const from = await card.boundingBox()
@@ -124,4 +125,14 @@ test('Manuscripts: the row is the home product; its stage cell and the drag writ
   await page.screenshot({ path: `${SHOTS}/14-manuscripts-pipeline-after-drag.png` })
   expect(mrow).toBeTruthy()
   expect(PROJECT_ID).not.toBe('')
+})
+
+test('Manuscripts: when the product read fails, the page says so and keeps the rows (cold review s61 M3)', async ({ page }) => {
+  await page.route('**/api/projects/products', (r) => r.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"boom"}' }))
+  await page.goto('/portal/manuscripts', { waitUntil: 'load' })
+  await expect(page.getByTestId('manuscripts-products-error')).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByTestId('manuscripts-products-error')).toContainText('product stages')
+  // The shelf is not empty: each project's own stage carries the rows.
+  await expect(page.locator('main').getByText('Sepsis Outcomes Registry').first()).toBeVisible()
+  await page.screenshot({ path: `${SHOTS}/40-manuscripts-products-error.png` })
 })

@@ -18,6 +18,7 @@ import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-
 import { _resetPiEmailsCacheForTests, _resetValidationFlagsCache } from '../helpers'
 import { addProduct, setProductHome, setProductStage } from '../../src/lib/products'
 import { PROJECT_STAGE_VALUES } from './projects'
+import { plainRefusal } from './products'
 
 const CTX = { waitUntil: () => {}, passThroughOnException: () => {} } as unknown as ExecutionContext
 const TEST_KEY = 'local-test-key-do-not-use-in-prod'
@@ -213,5 +214,96 @@ describe('GET /api/projects/products (the list views\' bulk read)', () => {
     insertRow(db, 'project_members', { project_id: 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ', member_slug: 'nick-ingraham', added_by: 'nick-ingraham' })
     const { body } = await bulk(MEMBER_EMAIL)
     expect(Object.keys(body.byProject)).toEqual([PROJECT])
+  })
+})
+
+describe('a product write leaves a line on its project\'s timeline (cold review s61 B1)', () => {
+  const lines = () => rows(
+    "SELECT body FROM activity_entries WHERE entity_type = 'project' AND entity_id = ? AND source_table = 'lifecycle' ORDER BY created_at, id",
+    PROJECT,
+  ).map((r) => r.body)
+
+  it('the project\'s own home product (made with the project) writes no "Product added"', () => {
+    expect(lines().filter((b) => String(b).startsWith('Product added'))).toEqual([])
+  })
+
+  it('a stage move: "Stage (<product>): A → B", in ladder words', async () => {
+    db.prepare("UPDATE products SET short_name = 'R03 paper' WHERE id = ?").run(HOME)
+    await setProductStage('r03', HOME, 'data_analysis')
+    expect(lines()).toContain('Stage (R03 paper): Writing → Data analysis')
+  })
+
+  it('an added product, and a home hand-off', async () => {
+    await addProduct('r03', { kind: 'grant_application', stage: 'preparing', name: 'A1' })
+    const added = rows("SELECT id FROM products WHERE kind = 'grant_application'")[0].id as string
+    await setProductHome('r03', added)
+    expect(lines()).toEqual(expect.arrayContaining(['Product added: A1', 'Home → A1']))
+  })
+
+  it('a product with no name is named by its kind', async () => {
+    await setProductStage('r03', HOME, 'submitted')
+    expect(lines()).toContain('Stage (Manuscript): Writing → Submitted')
+  })
+})
+
+describe('the v126 mirror copies a manuscript\'s stage only (cold review s61 M1)', () => {
+  const projectStage = () => rows('SELECT stage FROM projects WHERE id = ?', PROJECT)[0].stage
+
+  it.each([['grant_application', 'preparing'], ['abstract', 'planning'], ['honor', 'preparing']])(
+    'a sole %s product reaching "submitted" leaves projects.stage alone',
+    async (kind, start) => {
+      const ok = rows('SELECT 1 FROM product_stages WHERE kind = ? AND stage = ?', kind, start).length
+      expect(ok).toBe(1)
+      db.prepare('UPDATE products SET kind = ?, stage = ? WHERE id = ?').run(kind, start, HOME)
+      await setProductStage('r03', HOME, 'submitted')
+      expect(rows('SELECT stage FROM products WHERE id = ?', HOME)[0].stage).toBe('submitted')
+      expect(projectStage()).toBe('writing')
+    },
+  )
+})
+
+describe('refusals answer in plain words (cold review s61 M5) and the seq comes from the write (M6)', () => {
+  async function post(body: Record<string, unknown>) {
+    const res = await worker.fetch(new Request('https://hub.test/api/projects/r03/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': PI_EMAIL },
+      body: JSON.stringify(body),
+    }), env, CTX)
+    return { status: res.status, body: (await res.json()) as Record<string, any> }
+  }
+
+  it('a stage off the product\'s ladder is a 400 with a sentence', async () => {
+    const r = await post({ action: 'stage', product_id: HOME, stage: 'enrolling' })
+    expect(r.status).toBe(400)
+    expect(r.body.error).toBe("That stage is not on this product's ladder.")
+  })
+
+  it('a kind/stage pair that does not go together is a 400', async () => {
+    const r = await post({ action: 'add', kind: 'grant_application', stage: 'writing' })
+    expect(r.status).toBe(400)
+    expect(r.body.error).toBe('That kind and stage do not go together.')
+  })
+
+  it('a stale tab gets a 409 that names no seq, hash or constraint', async () => {
+    const seq = rows('SELECT seq FROM products WHERE id = ?', HOME)[0].seq as number
+    await post({ action: 'stage', product_id: HOME, stage: 'submitted', base_seq: seq, from_stage: 'writing' })
+    const r = await post({ action: 'stage', product_id: HOME, stage: 'idea', base_seq: seq, from_stage: 'writing' })
+    expect(r.status).toBe(409)
+    expect(r.body.error).toMatch(/Someone changed this a moment ago/)
+    expect(r.body.error).not.toMatch(/seq|hash|constraint|FOREIGN/i)
+  })
+
+  it('a trigger refusal (home or last live product) becomes a sentence, never the trigger text', () => {
+    const home = plainRefusal({ status: 'error', code: 'constraint', reason: 'product_home_live: mark another product home before tombstoning this one' }, 'stage')
+    expect(home).toEqual({ status: 409, message: 'Mark another product home first.' })
+    const last = plainRefusal({ status: 'error', code: 'apply_error', reason: 'product_last_live: a live project keeps at least one live product' }, 'stage')
+    expect(last).toEqual({ status: 409, message: 'A project keeps at least one product.' })
+    expect(plainRefusal({ status: 'error', code: 'infra', reason: 'D1_ERROR: seq 41' }, 'stage').message).not.toMatch(/seq|D1/)
+  })
+
+  it('the written product, seq included, is the row the write produced', async () => {
+    const r = await post({ action: 'stage', product_id: HOME, stage: 'revisions' })
+    const [p] = rows('SELECT seq, stage FROM products WHERE id = ?', HOME)
+    expect(r.body.product).toMatchObject({ id: HOME, stage: 'revisions', stage_label: 'Revisions', seq: p.seq, project_id: PROJECT })
   })
 })

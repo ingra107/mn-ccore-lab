@@ -43,13 +43,18 @@ export function useProjectProducts(slug: string | null) {
   })
 }
 
-function reason(err: unknown): string {
-  return err instanceof Error && err.message ? err.message : 'request failed'
+/** The words a refusal toast shows. The product route answers a 4xx in plain
+ *  words (api/routes/products.ts plainRefusal); anything else (a 5xx, a
+ *  dropped connection) has no sentence for a person, so it gets one. */
+export function reason(err: unknown): string {
+  const status = (err as { status?: unknown } | null)?.status
+  if (err instanceof Error && err.message && typeof status === 'number' && status < 500) return err.message
+  return 'the Hub did not answer; try again.'
 }
 
 /** Refresh everything a product edit can change: its own list, the project
- *  rows (schema-v126 copies a single product's stage onto projects.stage when
- *  it is a project stage), the bulk product read the lists use, and activity. */
+ *  rows (schema-v126 copies a sole manuscript product's stage onto
+ *  projects.stage), the bulk product read the lists use, and activity. */
 function refresh(qc: ReturnType<typeof useQueryClient>, slug: string) {
   qc.invalidateQueries({ queryKey: key(slug) })
   qc.invalidateQueries({ queryKey: ['projects'] })
@@ -88,7 +93,7 @@ interface StageVars {
 }
 
 /** Set a product's stage from its ladder. Optimistic on that one product; a
- *  refusal refetches the truth and shows the Worker's reason. The undo toast
+ *  refusal refetches the truth and says why in plain words. The undo toast
  *  appears only once the write has landed, and its undo is itself a
  *  compare-and-swap against the seq the move produced. */
 export function useSetProductStage() {

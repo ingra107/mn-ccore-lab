@@ -222,9 +222,70 @@ async function resolveProjectLabels(
   }
 }
 
+// ── products (schema-v124/v125) ─────────────────────────────────────────────
+// A product's lifecycle lines land on its PROJECT's timeline, where the team
+// reads the project's story: the stage words and the product's name, never an
+// id. Before the product UI, a stage edit was a projects.stage write and wrote
+// "Stage: A → B"; a product edit must not be quieter than that.
+
+/** The labels a product line needs: kind and stage words from the ladder data. */
+export interface ProductLabels {
+  kindLabel: (kind: unknown) => string
+  stageLabel: (kind: unknown, stage: unknown) => string
+}
+
+/** A product's name as people read it: short name, title, else its kind. */
+export function productName(row: Record<string, unknown>, labels: ProductLabels): string {
+  return str(row.short_name) ?? str(row.title) ?? labels.kindLabel(row.kind)
+}
+
+/** Lines for a product insert (before=null) or update (before=row). A HOME
+ *  product insert writes nothing: it is the project's own product (made with
+ *  the project by schema-v125, or by Backfill A), not one being added. */
+export function productChangeEvents(
+  before: Record<string, unknown> | null,
+  patch: Record<string, unknown>,
+  labels: ProductLabels,
+): LifecycleEvent[] {
+  if (!before) {
+    if (patch.is_home === 1 || patch.is_home === true) return []
+    return [{ event: 'product_added', kind: 'system', body: `Product added: ${productName(patch, labels)}` }]
+  }
+  const after = { ...before, ...patch }
+  const name = productName(after, labels)
+  const out: LifecycleEvent[] = []
+  const kindChanged = 'kind' in patch && patch.kind !== before.kind
+  const stageChanged = 'stage' in patch && patch.stage !== before.stage
+  if (kindChanged || stageChanged) {
+    out.push({
+      event: 'product_stage',
+      kind: 'system',
+      body: `Stage (${name}): ${labels.stageLabel(before.kind, before.stage)} → ${labels.stageLabel(after.kind, after.stage)}`,
+    })
+  }
+  if ('is_home' in patch && (patch.is_home === 1 || patch.is_home === true) && before.is_home !== 1) {
+    out.push({ event: 'product_home', kind: 'system', body: `Home → ${name}` })
+  }
+  return out
+}
+
+/** One read of the kind and stage words, for productChangeEvents. */
+async function loadProductLabels(env: Env): Promise<ProductLabels> {
+  const kinds = new Map<string, string>()
+  const stages = new Map<string, string>()
+  const k = await env.DB.prepare('SELECT kind, label FROM product_kinds').all<{ kind: string; label: string }>()
+  for (const r of k.results ?? []) kinds.set(r.kind, r.label)
+  const st = await env.DB.prepare('SELECT kind, stage, label FROM product_stages').all<{ kind: string; stage: string; label: string }>()
+  for (const r of st.results ?? []) stages.set(`${r.kind}:${r.stage}`, r.label)
+  return {
+    kindLabel: (kind) => kinds.get(String(kind)) ?? human(kind),
+    stageLabel: (kind, stage) => stages.get(`${String(kind)}:${String(stage)}`) ?? human(stage),
+  }
+}
+
 /**
  * Fire lifecycle activity for a create (before=null) or update (before=row) on a
- * tasks/projects mutation. Writes each derived event as an activity_entries
+ * tasks/projects/products mutation (a product's lines go on its project). Writes each derived event as an activity_entries
  * system/completion row via postActivityEntry, team-visible, side-effects off,
  * idempotent per `${mutation_id}:${event}`.
  *
@@ -239,12 +300,26 @@ export async function emitLifecycleActivity(
   before: Record<string, unknown> | null,
 ): Promise<void> {
   try {
-    if (mut.table !== 'tasks' && mut.table !== 'projects') return;
+    if (mut.table !== 'tasks' && mut.table !== 'projects' && mut.table !== 'products') return;
     const entityType: 'task' | 'project' = mut.table === 'tasks' ? 'task' : 'project';
     const actor = user?.slug || 'nick-ingraham';
 
     let events: LifecycleEvent[] = [];
-    if (mut.op === 'insert' && before === null) {
+    let entityId = mut.record_id;
+    if (mut.table === 'products') {
+      const row = (before ?? mut.payload ?? {}) as Record<string, unknown>;
+      const projectId = str(row.project_id);
+      if (!projectId) return;
+      entityId = projectId;
+      const isInsert = mut.op === 'insert' && before === null;
+      const isUpdate = (mut.op === 'update' || mut.op === 'append') && before;
+      if (!isInsert && !isUpdate) return;
+      events = productChangeEvents(
+        isInsert ? null : before,
+        (isInsert ? mut.payload : mut.patch) as Record<string, unknown> ?? {},
+        await loadProductLabels(env),
+      );
+    } else if (mut.op === 'insert' && before === null) {
       events = [createEvent(mut.table, (mut.payload ?? {}) as Record<string, unknown>)];
     } else if ((mut.op === 'update' || mut.op === 'append') && before) {
       const patch = (mut.patch ?? {}) as Record<string, unknown>;
@@ -280,7 +355,7 @@ export async function emitLifecycleActivity(
         env,
         user,
         entityType,
-        entityId: mut.record_id,
+        entityId,
         kind: ev.kind,
         body: ev.body,
         actorSlug: actor,

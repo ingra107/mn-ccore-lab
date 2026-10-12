@@ -112,6 +112,22 @@ export function ladderFor(kinds: readonly ProductKind[], kind: string): ProductS
   return kinds.find((k) => k.kind === kind)?.stages ?? []
 }
 
+/** The manuscript ladder for when the product read fails, so the Manuscripts
+ *  page can still show each project's own stage (read-only) instead of an
+ *  empty shelf. It is projects.stage's value set: schema-v124 seeds the
+ *  manuscript product_stages from it, and products.project-ui.test.ts pins
+ *  the two equal on the Worker side. */
+export const MANUSCRIPT_LADDER_FALLBACK: readonly ProductStage[] = [
+  { stage: 'idea', label: 'Idea', ordinal: 10, is_terminal: 0 },
+  { stage: 'data_collection', label: 'Data collection', ordinal: 20, is_terminal: 0 },
+  { stage: 'data_analysis', label: 'Data analysis', ordinal: 30, is_terminal: 0 },
+  { stage: 'writing', label: 'Writing', ordinal: 40, is_terminal: 0 },
+  { stage: 'submitted', label: 'Submitted', ordinal: 50, is_terminal: 0 },
+  { stage: 'revisions', label: 'Revisions', ordinal: 60, is_terminal: 0 },
+  { stage: 'accepted', label: 'Accepted', ordinal: 70, is_terminal: 0 },
+  { stage: 'published', label: 'Published', ordinal: 80, is_terminal: 1 },
+]
+
 // ── writes: POST /api/projects/:slug/products ───────────────
 
 /** What the Worker answers for a write: the product as it now stands. */

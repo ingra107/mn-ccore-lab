@@ -3,7 +3,7 @@ import { portalTitle } from '../constants/pageLabels'
 import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid } from 'lucide-react'
-import { stageLabel } from '../lib/stageNormalize'
+import { normalizeStage, stageLabel } from '../lib/stageNormalize'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useDependencies, useProjectHealth, useTasks, useAllProjectLinks, useAllProjectPublications } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
@@ -25,7 +25,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useProjectPins } from '../hooks/useProjectPins'
 import { mutedCategoryOptions, isPoorHealth, projectRowName } from '../lib/projectListOptions'
 import { useAllProjectProducts } from '../hooks/useProjectProducts'
-import { homeOf, type ProductRow } from '../lib/products'
+import { homeOf, type ProductRow, type ProductsByProject } from '../lib/products'
 import ProjectSleekList from '../components/project/ProjectSleekList'
 import type { SleekSort } from '../components/table/SleekRows'
 
@@ -123,12 +123,22 @@ function FilterPill({ label, active, onClick, title }: { label: string; active: 
   )
 }
 
-function getStageProjects(stage: Stage, filtered: Project[]): Project[] {
-  // #91-class fix, now structural (Hub #361a): rowToProject() normalizes
-  // stage at ingress, so every project.stage here is already canonical —
-  // a legacy-cased raw value ("Idea"/"Submitted") can no longer reach this
-  // comparison at all, so no per-read normalize() call is needed.
-  return filtered.filter((p) => p.stage === stage)
+/** The manuscript-ladder stage a project sits under on the pipeline board,
+ *  the same value its list cell shows (listStageOf): the home product's stage
+ *  when the home is a manuscript, the project's own stage when it has no
+ *  product yet. A project whose home is another kind (a grant, an award), or
+ *  that has 2+ products and no home, is not on this ladder: null, and the
+ *  board counts it apart instead of filing it under a stale projects.stage. */
+function pipelineStageOf(p: Project, products: ProductRow[] | undefined): string | null {
+  const home = homeOf(products)
+  if (home) return home.kind === 'manuscript' ? normalizeStage(home.stage) || null : null
+  if (products && products.length > 1) return null
+  // rowToProject() normalizes project.stage at ingress (Hub #361a).
+  return p.stage || null
+}
+
+function getStageProjects(stage: Stage, filtered: Project[], productsByProject: ProductsByProject['byProject']): Project[] {
+  return filtered.filter((p) => pipelineStageOf(p, productsByProject[p.id ?? '']) === stage)
 }
 
 // "Most recent activity" sort key. lastActivity already IS the newer of the
@@ -567,6 +577,15 @@ export default function Projects() {
               ))}
             </div>
 
+            {(() => {
+              const offLadder = filtered.filter((p) => pipelineStageOf(p, productsByProject[p.id ?? '']) === null).length
+              return offLadder > 0 ? (
+                <p data-testid="pipeline-off-ladder" style={{ fontSize: 12, color: 'var(--task-ink-muted)', margin: '0 0 var(--sp-md)' }}>
+                  {offLadder} {offLadder === 1 ? 'project is' : 'projects are'} on another ladder (a grant, an award, several products) and {offLadder === 1 ? 'shows' : 'show'} in the list view.
+                </p>
+              ) : null
+            })()}
+
             {/* Pipeline columns */}
             <div
               className="pipeline-board"
@@ -580,7 +599,7 @@ export default function Projects() {
               }}
             >
               {STAGES.map((stage) => {
-                const stageProjects = getStageProjects(stage, filtered)
+                const stageProjects = getStageProjects(stage, filtered, productsByProject)
                 return (
                   <div
                     key={stage}

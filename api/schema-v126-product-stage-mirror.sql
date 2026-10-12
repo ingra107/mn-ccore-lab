@@ -8,12 +8,14 @@
 -- Manuscripts page, Insights, PB brain.db -- showed the old stage. Cold review
 -- of s61 4a77d405, B1.
 --
--- trg_products_stage_mirror: when a live product's stage changes and it is
--- its project's ONLY live product, the project's stage (and its clock) follow
--- it in the same statement, if the new stage is a project stage. The project
--- stage set is the manuscript ladder (v124 seeded it from PB PROJECT_STAGE;
+-- trg_products_stage_mirror: when a live MANUSCRIPT product's stage changes
+-- and it is its project's ONLY live product, the project's stage (and its
+-- clock) follow it in the same statement. projects.stage is the manuscript
+-- ladder (v124 seeded that ladder from PB PROJECT_STAGE;
 -- api/routes/projects.ts PROJECT_STAGE_VALUES, pinned equal by
--- api/routes/products.stage-mirror.test.ts).
+-- api/routes/products.project-ui.test.ts). The kind, not the word, decides:
+-- an abstract or a grant application also has a 'submitted', which is not the
+-- project stage of the same name.
 --
 -- Why only a single-product project: projects.stage describes ONE deliverable.
 -- With 2+ products it has no single meaning, which is exactly why the forward
@@ -24,13 +26,14 @@
 -- an admin product's stage as "the project's stage". So on a 2+ project the
 -- mirror does nothing, and the list view reads products instead (chips).
 --
--- Why only a project stage: a single infrastructure or award product's stage
--- ('running', 'active') is not a value projects.stage may hold; the project
--- keeps its last project stage, and the list view reads the product.
+-- Why only a manuscript: projects.stage holds manuscript-ladder words. A
+-- single infrastructure, award, grant, honor or abstract product's stage is
+-- another ladder's word, even when it is spelled like one ('submitted'); the
+-- project keeps its last project stage, and the list views read the product.
 --
 -- No loop: the forward rule is Worker code that writes products with the
--- project's own new value, so the mirror's WHEN (NEW.stage IS NOT pr.stage)
--- is false for it; and nothing fires on a projects UPDATE.
+-- project's own new value, so the mirror's UPDATE guard (stage IS NOT NEW.stage)
+-- matches no row for it; and no trigger writes products on a projects.stage UPDATE.
 --
 -- APPLY (test first, then prod, before the Worker that writes stage through
 -- POST /api/projects/:slug/products deploys):
@@ -46,8 +49,8 @@ DROP TRIGGER IF EXISTS trg_products_stage_mirror;
 CREATE TRIGGER trg_products_stage_mirror AFTER UPDATE OF stage ON products
 FOR EACH ROW
 WHEN NEW.deleted_at IS NULL
+ AND NEW.kind = 'manuscript'
  AND NEW.stage IS NOT OLD.stage
- AND NEW.stage IN (SELECT st.stage FROM product_stages st WHERE st.kind = 'manuscript' AND st.deleted_at IS NULL)
  AND NOT EXISTS (SELECT 1 FROM products o WHERE o.project_id = NEW.project_id AND o.id <> NEW.id AND o.deleted_at IS NULL)
 BEGIN
   UPDATE projects

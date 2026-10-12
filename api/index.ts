@@ -2140,7 +2140,7 @@ defineRoute({
   path: '/api/projects/:slug/products',
   auth: 'authed',
   entity: 'products',
-  handler: (c) => handleGetProjectProducts(c.req.param('slug'), R(c), E(c)),
+  handler: (c) => handleGetProjectProducts(c.req.param('slug'), E(c)),
 });
 // A project member changes stage, adds a product, or moves home on THAT
 // project's products (Nick 2026-10-12). Same gate as POST /api/projects/:slug.
