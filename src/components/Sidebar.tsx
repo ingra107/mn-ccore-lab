@@ -105,10 +105,11 @@ const MAIN_NAV: NavItem[] = [
   // SquareCheck (check contained INSIDE the square) over the old
   // CheckSquare whose check overflowed the frame — reads cleaner at 18px.
   { to: PATHS.myTasks, label: PORTAL_PAGE_LABELS[PATHS.myTasks], icon: SquareCheck },
+  // Nick 2026-10-12: Today, Tasks, Projects, then Calendar and the rest.
+  { to: PATHS.projects, label: PORTAL_PAGE_LABELS[PATHS.projects], icon: FolderKanban },
   { to: PATHS.calendar, label: PORTAL_PAGE_LABELS[PATHS.calendar], icon: Calendar },
   { to: PATHS.deadlines, label: PORTAL_PAGE_LABELS[PATHS.deadlines], icon: Clock },
   { to: PATHS.meetings, label: PORTAL_PAGE_LABELS[PATHS.meetings], icon: Video },
-  { to: PATHS.projects, label: PORTAL_PAGE_LABELS[PATHS.projects], icon: FolderKanban },
   { to: PATHS.manuscripts, label: PORTAL_PAGE_LABELS[PATHS.manuscripts], icon: FileText },
   { to: PATHS.grants, label: PORTAL_PAGE_LABELS[PATHS.grants], icon: DollarSign },
   { to: PATHS.library, label: PORTAL_PAGE_LABELS[PATHS.library], icon: Library },

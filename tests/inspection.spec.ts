@@ -649,7 +649,7 @@ test.describe('UX — Sidebar navigation', () => {
     await loadPage(page, P.dashboard)
     // Nav redesign (2026-10-09): Search on top, then ten main items. Ideas,
     // Research Digest and Transcripts became tabs; My Hub merged into Today.
-    const navItems = ['Search', 'Today', 'Tasks', 'Calendar', 'Deadlines', 'Meetings', 'Projects', 'Manuscripts', 'Grants', 'Library', 'Team']
+    const navItems = ['Search', 'Today', 'Tasks', 'Projects', 'Calendar', 'Deadlines', 'Meetings', 'Manuscripts', 'Grants', 'Library', 'Team']
     for (const item of navItems) {
       const link = page.locator(`nav >> text=${item}`).first()
       const visible = await link.isVisible().catch(() => false)
