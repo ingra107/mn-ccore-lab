@@ -34,6 +34,14 @@
 --     order, so a backfilled manuscript minted before its abstract can still
 --     record it. A parent's rank cannot change while a child points at it
 --     (the FK is NO ACTION), which is also what refuses a cycle-closing edit.
+--   - two live home products in one project: products.is_home (0/1, CHECK)
+--     with the partial unique index idx_products_one_live_home on
+--     (project_id) WHERE is_home = 1 AND deleted_at IS NULL. Nick, 2026-10-11:
+--     the home product (admin / trial ops, where umbrella tasks land) is an
+--     explicit marker, at most one per project. "At least one" is NOT
+--     enforced: a project may have no home (then a moved task takes the
+--     project's only live product, else none). Backfill A (one product per
+--     project) writes that product with is_home = 1.
 --
 -- WHAT STAYS LEVEL 2 (one trigger each; why Level 1 is unreachable):
 --   - task/product same project (trg_tasks_product_project_*). Level 1 is a
@@ -66,7 +74,8 @@
 --      SAME SET as project_id, inside the delete's own batch (projects.ts
 --      handleDeleteProject has no separate cascade since 2026-10-11).
 --   2. Task moved to another project: applyPatch sets product_id to the new
---      project's home product (homeProductId) or NULL in the same patch;
+--      project's home product (homeProductId: the live is_home = 1 product,
+--      else the project's only live product, else NULL) in the same patch;
 --      every task patch, Hub UI and PB, passes there.
 --   3. projects.stage during the expand phase: projectStageDependents forwards
 --      it to a single product in the same batch, and refuses it
@@ -144,6 +153,10 @@ CREATE TABLE IF NOT EXISTS products (
   stage_entered_at TEXT,
   stage_notes  TEXT,
   sort_order   INTEGER NOT NULL DEFAULT 0,
+  -- 1 = the project's home product: the admin / trial-ops product where the
+  -- umbrella's own tasks land (Nick, 2026-10-11: an explicit marker, never a
+  -- guess). At most one live home per project (idx_products_one_live_home).
+  is_home      INTEGER NOT NULL DEFAULT 0 CONSTRAINT products_is_home_bool CHECK (is_home IN (0, 1)),
   -- lineage: grew_from_id is "grew from" (abstract -> manuscript) and
   -- "resubmission of" (A0 -> A1). See the header for why rank, not id order.
   lineage_rank   INTEGER NOT NULL DEFAULT 0,
@@ -169,6 +182,10 @@ CREATE INDEX IF NOT EXISTS idx_products_project ON products(project_id);
 CREATE INDEX IF NOT EXISTS idx_products_kind_stage ON products(kind, stage);
 CREATE INDEX IF NOT EXISTS idx_products_grew_from ON products(grew_from_id);
 CREATE INDEX IF NOT EXISTS idx_products_seq ON products(seq);
+-- At most one LIVE home product per project; a tombstoned home does not block
+-- naming a new one (same deleted_at scoping as idx_product_funding_live_pair).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_products_one_live_home
+  ON products(project_id) WHERE is_home = 1 AND deleted_at IS NULL;
 
 -- ── product_funding: "funded by" ────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS product_funding (

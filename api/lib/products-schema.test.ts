@@ -132,6 +132,36 @@ describe('v124 products: a live project keeps one live product (Level 2 trigger)
   })
 })
 
+describe('v124 products: at most one live home product per project (Level 1, partial unique index)', () => {
+  it('defaults to not home', () => {
+    expect(product(world(), 'prd_1', 'proj_A').is_home).toBe(0)
+  })
+  it('refuses a second live home in one project, by insert and by update', () => {
+    const db = world()
+    product(db, 'prd_1', 'proj_A', 'trial_ops', 'start_up', { is_home: 1 })
+    refuses(() => product(db, 'prd_2', 'proj_A', 'manuscript', 'writing', { is_home: 1 }), /UNIQUE constraint failed/)
+    product(db, 'prd_3', 'proj_A')
+    refuses(() => db.prepare("UPDATE products SET is_home = 1 WHERE id = 'prd_3'").run(), /UNIQUE constraint failed/)
+  })
+  it('a home in another project is fine', () => {
+    const db = world()
+    product(db, 'prd_1', 'proj_A', 'trial_ops', 'start_up', { is_home: 1 })
+    product(db, 'prd_2', 'proj_B', 'trial_ops', 'start_up', { is_home: 1 })
+    expect(db.prepare('SELECT COUNT(*) AS n FROM products WHERE is_home = 1').get()).toEqual({ n: 2 })
+  })
+  it('a tombstoned home does not block naming a new one', () => {
+    const db = world()
+    product(db, 'prd_1', 'proj_A', 'trial_ops', 'start_up', { is_home: 1 })
+    product(db, 'prd_2', 'proj_A')
+    db.prepare("UPDATE products SET deleted_at = datetime('now') WHERE id = 'prd_1'").run()
+    db.prepare("UPDATE products SET is_home = 1 WHERE id = 'prd_2'").run()
+    expect(db.prepare("SELECT is_home FROM products WHERE id = 'prd_2'").get()).toEqual({ is_home: 1 })
+  })
+  it('refuses a value other than 0 or 1', () => {
+    refuses(() => product(world(), 'prd_1', 'proj_A', 'manuscript', 'writing', { is_home: 2 }), /products_is_home_bool/)
+  })
+})
+
 describe('v124 grew_from: acyclic and inside one umbrella (Level 1, rank + composite FK)', () => {
   it('an A1 records "resubmission of" its A0', () => {
     const db = world()

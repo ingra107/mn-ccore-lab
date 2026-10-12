@@ -86,8 +86,9 @@ INSERT INTO projects (id, slug, title, category, status, stage) VALUES
   ('proj_PA', 'pa', 'PA', 'MNCCORE', 'active', 'idea'),
   ('proj_PB', 'pb', 'PB', 'MNCCORE', 'active', 'idea'),
   ('proj_PC', 'pc', 'PC', 'MNCCORE', 'active', 'idea');
+INSERT INTO products (id, project_id, kind, stage, is_home) VALUES
+  ('prd_PA1', 'proj_PA', 'manuscript', 'writing', 1);
 INSERT INTO products (id, project_id, kind, stage) VALUES
-  ('prd_PA1', 'proj_PA', 'manuscript', 'writing'),
   ('prd_PB1', 'proj_PB', 'award', 'active'),
   ('prd_PB2', 'proj_PB', 'grant_application', 'funded'),
   ('prd_PC1', 'proj_PC', 'trial_ops', 'enrolling');
@@ -126,6 +127,12 @@ const cases: Case[] = [
   // gated into the project soft-delete batch), bound to proj_PA.
   { name: 'CONTROL: the shipped cascade statement clears product_id with project_id', control: true, sql: orphanProjectTasksSql().replace('?', "'proj_PA'"), absent: "SELECT COUNT(*) AS n FROM tasks WHERE id = 'task_P1' AND (project_id IS NOT NULL OR product_id IS NOT NULL)" },
   { name: 'CONTROL: second product, then delete one of two', control: true, sql: "INSERT INTO products (id, project_id, kind, stage) VALUES ('prd_PC2', 'proj_PC', 'infrastructure', 'running'); UPDATE products SET deleted_at = datetime('now') WHERE id = 'prd_PC1'", absent: "SELECT COUNT(*) AS n FROM products WHERE id = 'prd_PC1' AND deleted_at IS NULL" },
+  // Home product (Nick 2026-10-11): explicit marker, at most one live per project.
+  { name: 'second live home product in one project (update)', sql: "UPDATE products SET is_home = 1 WHERE id = 'prd_PA2'", absent: "SELECT COUNT(*) AS n FROM products WHERE id = 'prd_PA2' AND is_home = 1" },
+  { name: 'second live home product in one project (insert)', sql: "INSERT INTO products (id, project_id, kind, stage, is_home) VALUES ('prd_X4', 'proj_PA', 'abstract', 'planning', 1)", absent: "SELECT COUNT(*) AS n FROM products WHERE id = 'prd_X4'" },
+  { name: 'is_home outside 0/1', sql: "UPDATE products SET is_home = 2 WHERE id = 'prd_PB2'", absent: "SELECT COUNT(*) AS n FROM products WHERE id = 'prd_PB2' AND is_home = 2" },
+  { name: 'CONTROL: a home in another project', control: true, sql: "UPDATE products SET is_home = 1 WHERE id = 'prd_PB1'", absent: "SELECT 1 - COUNT(*) AS n FROM products WHERE id = 'prd_PB1' AND is_home = 1" },
+  { name: 'CONTROL: tombstoned home, then a new home in the same project', control: true, sql: "UPDATE products SET deleted_at = datetime('now') WHERE id = 'prd_PA1'; UPDATE products SET is_home = 1 WHERE id = 'prd_PA2'", absent: "SELECT 1 - COUNT(*) AS n FROM products WHERE id = 'prd_PA2' AND is_home = 1 AND deleted_at IS NULL" },
 ]
 
 let failures = 0

@@ -1543,6 +1543,10 @@ type Dependents = (landed: SqlFragment) => D1PreparedStatement[];
  *     off-ladder stage anyway; refusing names it instead of a raw FK failure.
  * Only a real change forwards: an echo of the current project stage (PB
  * re-sending a whole row) is accepted on any project.
+ * The home product (products.is_home) is deliberately NOT a tiebreak here: it
+ * is where umbrella tasks land (admin / trial ops), not the deliverable whose
+ * progress projects.stage described, so forwarding to it would write a
+ * manuscript-ladder stage onto the wrong product. 2+ products still refuse.
  * Deleted with projects.stage at the contract phase.
  */
 async function projectStageDependents(
@@ -1576,19 +1580,19 @@ async function projectStageDependents(
 
 /**
  * The product a task joins when it moves into `projectId` without naming one:
- * the umbrella's own work lives on its admin product (decision 2026-10-11).
- * That is the only live product, else the one live product with no title
- * (schema-v124: title NULL = "the project itself"). Anything else is
- * ambiguous and answers NULL, which v124 reads as "not yet allocated".
+ * the umbrella's own work lives on its home product (decision 2026-10-11;
+ * Nick: an explicit marker, never a guess). That is the live products.is_home
+ * = 1 row (schema-v124 allows at most one per project), else the project's
+ * only live product, else NULL, which v124 reads as "not yet allocated".
  */
 async function homeProductId(env: Env, projectId: string): Promise<string | null> {
   const { results } = await env.DB.prepare(
-    'SELECT id, title FROM products WHERE project_id = ? AND deleted_at IS NULL',
-  ).bind(projectId).all<{ id: string; title: string | null }>();
+    'SELECT id, is_home FROM products WHERE project_id = ? AND deleted_at IS NULL',
+  ).bind(projectId).all<{ id: string; is_home: number }>();
   const live = results ?? [];
-  if (live.length === 1) return live[0].id;
-  const untitled = live.filter((p) => p.title === null);
-  return untitled.length === 1 ? untitled[0].id : null;
+  const home = live.find((p) => p.is_home === 1);
+  if (home) return home.id;
+  return live.length === 1 ? live[0].id : null;
 }
 
 /**
