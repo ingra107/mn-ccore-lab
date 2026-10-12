@@ -39,7 +39,7 @@ const smallBtn: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6,
   fontSize: 'var(--text-small)', fontWeight: 500,
   borderRadius: 'var(--radius-md)', padding: '7px 12px', cursor: 'pointer',
-  border: '1px solid var(--sk-line2)', background: 'transparent', color: 'var(--slate)',
+  border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--slate)',
 }
 const iconBtn: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
