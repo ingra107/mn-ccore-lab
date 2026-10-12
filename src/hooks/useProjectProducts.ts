@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchApi } from '../lib/api'
 import { useUndoToast } from '../components/UndoToast'
+import { suggestPaperLink } from './mutations/useProjectMutations'
 import {
   addProduct,
   setProductHome,
@@ -53,9 +54,8 @@ export function reason(err: unknown): string {
 }
 
 /** Refresh everything a product edit can change: its own list, the project
- *  rows (schema-v126 copies a sole manuscript product's stage onto
- *  projects.stage), the bulk product read the lists use, the Grants page,
- *  and activity. */
+ *  rows (their home_* stage fields are joined from the home product), the
+ *  bulk product read the lists use, the Grants page, and activity. */
 function refresh(qc: ReturnType<typeof useQueryClient>, slug: string) {
   qc.invalidateQueries({ queryKey: key(slug) })
   qc.invalidateQueries({ queryKey: ['projects'] })
@@ -101,7 +101,7 @@ interface StageVars {
  *  compare-and-swap against the seq the move produced. */
 export function useSetProductStage() {
   const qc = useQueryClient()
-  const { showError, showUndo } = useUndoToast()
+  const { showError, showUndo, showInfo } = useUndoToast()
   const m = useMutation({
     mutationFn: (v: StageVars): Promise<WrittenProduct> =>
       setProductStage(v.slug, v.productId, v.stage, { seq: v.seen.seq, stage: v.seen.stage }),
@@ -113,6 +113,9 @@ export function useSetProductStage() {
     onSuccess: (written, v) => {
       patchCached(qc, v.slug, v.productId, { stage: written.stage, stage_label: written.stage_label, seq: written.seq })
       if (v.undo) return
+      // #129: a manuscript reaching its terminal rung (Published) is the paper
+      // coming out, so offer to link the matching publication.
+      if (written.kind === 'manuscript' && written.stage_is_terminal === 1) suggestPaperLink(qc, showInfo, v.slug)
       showUndo(`${v.productName} → ${written.stage_label}`, () =>
         m.mutate({
           slug: v.slug, productId: v.productId, stage: v.seen.stage, label: v.seen.label, productName: v.productName,

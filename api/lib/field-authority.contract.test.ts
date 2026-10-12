@@ -258,13 +258,11 @@ const TASK_CREATE_BUCKETS: Record<string, CreateBucket> = {
 const PROJECT_CREATE_BUCKETS: Record<string, CreateBucket> = {
   title: 'direct',                 // body.title.trim()
   category: 'defaulted',           // body.category || 'MNCCORE'
-  stage: 'defaulted',              // body.stage || 'idea'
   description: 'defaulted',        // body.description || ''
   status: 'defaulted',            // literal 'active' at create
   pi: 'derived',                   // resolveActor(...).slug
   slug: 'derived',                 // sanitize(body.slug || body.title) + collision suffix
   created_at: 'server_owned',      // nowInstant()
-  stage_entered_at: 'server_owned',// nowInstant()
   // route_excluded — not in the create payload; DB default or /api/mutations-only
   analysis_path: 'route_excluded',
   author_role: 'route_excluded',

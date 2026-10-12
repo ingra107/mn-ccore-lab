@@ -9,7 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import type { AuthUser, Env } from '../helpers';
 import { handleSetLinkRole } from './links';
-import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db';
+import { prodSchemaDb, d1Adapter, seedProjectHome } from '../test-support/prod-schema-db';
 
 const USER: AuthUser = { email: 'x@umn.edu', slug: 'x', isPi: false };
 
@@ -19,6 +19,7 @@ function setup() {
   const vals: Record<string, unknown> = { id: 'proj_A', slug: 'a', title: 'A', category: 'CLIF' };
   for (const c of cols) if (c.notnull && c.dflt_value == null && !c.pk && !(c.name in vals)) vals[c.name] = 'x';
   const keys = Object.keys(vals);
+  seedProjectHome(db, vals);
   db.prepare(`INSERT INTO projects (${keys.join(',')}) VALUES (${keys.map(() => '?').join(',')})`).run(...keys.map((k) => vals[k]));
   const add = (id: string, role: string, url: string) =>
     db.prepare("INSERT INTO links (id, owner_table, owner_id, role, type, canonical_url, short_title) VALUES (?, 'projects', 'proj_A', ?, 'web', ?, 't')").run(id, role, url);

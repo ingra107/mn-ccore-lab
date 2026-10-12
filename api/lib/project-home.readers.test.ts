@@ -11,7 +11,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import type Database from 'better-sqlite3'
 import type { Env } from '../helpers'
 import { _resetValidationFlagsCache } from '../helpers'
-import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db'
+import { prodSchemaDb, d1Adapter, seedProjectHome } from '../test-support/prod-schema-db'
 import { handleInsightConnections, handleInsightsDashboard } from '../routes/insights'
 import { handlePIDashboard } from '../routes/pi-dashboard'
 import { handleGetNarratives } from '../routes/narratives'
@@ -28,6 +28,7 @@ let env: Env
 
 function project(id: string, slug: string, title: string, category = 'MNCCORE') {
   // projects.stage = 'published' everywhere: no product says so.
+  seedProjectHome(db, { id, stage: 'idea' })
   db.prepare(`INSERT INTO projects (id, title, slug, stage, status, category, pi, updated_at)
               VALUES (?, ?, ?, 'published', 'active', ?, 'nick-ingraham', '2026-01-01 00:00:00')`).run(id, title, slug, category)
 }

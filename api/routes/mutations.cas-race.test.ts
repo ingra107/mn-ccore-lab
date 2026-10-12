@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type Database from 'better-sqlite3';
 import { applyUpdate, applyDelete, hashTouched, handleMutations, CAS_CONTENTION_REASON_PREFIX } from './mutations';
-import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db';
+import { prodSchemaDb, d1Adapter, seedProjectHome } from '../test-support/prod-schema-db';
 
 // The schema is the migration chain itself (api/test-support/prod-schema-db.ts):
 // processed_mutations.original_response_json is TEXT NOT NULL, the v53 seq
@@ -243,6 +243,7 @@ describe('R1 project delete: every child table is cleared in the same commit', (
   };
 
   beforeEach(() => {
+    for (const id of ['proj_x', 'proj_keep', 'proj_other']) seedProjectHome(db, { id });
     db.prepare("INSERT INTO projects (id, slug, title, status, seq) VALUES ('proj_x', 'proj-x', 'X', 'active', 3)").run();
     db.prepare("INSERT INTO projects (id, slug, title, status, seq) VALUES ('proj_keep', 'keep', 'Keep', 'active', 4)").run();
     db.prepare("INSERT INTO projects (id, slug, title, status, seq) VALUES ('proj_other', 'other', 'Other', 'active', 6)").run();

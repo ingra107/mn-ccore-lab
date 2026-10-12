@@ -104,6 +104,31 @@ export async function handleUpdateMilestoneNote(
 }
 
 // POST /api/projects — create new project
+/**
+ * A new project's first product, checked against its kind's ladder so an
+ * off-ladder kind/stage answers 400 in words, before the project_home_seed FK
+ * would. A missing stage takes the ladder's first rung. Every project create
+ * route sends the result as Mutation.home_product (contract phase step 3:
+ * /api/mutations refuses a project insert without one).
+ */
+async function resolveHomeProduct(
+  env: Env, kind: unknown, stage: unknown,
+): Promise<{ kind: string; stage: string } | { error: string }> {
+  const homeKind = typeof kind === 'string' ? kind.trim() : '';
+  if (!homeKind) return { error: 'kind required: the project\'s first product (manuscript, grant_application, ...)' };
+  const ladder = await env.DB.prepare(
+    `SELECT s.stage FROM product_stages s JOIN product_kinds k ON k.kind = s.kind
+      WHERE s.kind = ? AND s.deleted_at IS NULL AND k.deleted_at IS NULL ORDER BY s.ordinal`,
+  ).bind(homeKind).all<{ stage: string }>();
+  const rungs = (ladder.results ?? []).map((r) => r.stage);
+  if (rungs.length === 0) return { error: `unknown product kind "${homeKind}"` };
+  const homeStage = typeof stage === 'string' && stage.trim() ? stage.trim() : rungs[0];
+  if (!rungs.includes(homeStage)) {
+    return { error: `stage "${homeStage}" is not on the ${homeKind} ladder (${rungs.join(', ')})` };
+  }
+  return { kind: homeKind, stage: homeStage };
+}
+
 /** A project INSERT refused because a live project already holds the slug. */
 function isSlugTaken(reason: string | undefined): boolean {
   return /UNIQUE constraint failed: projects\.slug|idx_projects_slug_active/.test(reason ?? '');
@@ -134,19 +159,12 @@ export async function handleCreateProject(
   }
 
   // A project is born with the product its creator named (contract phase,
-  // ruling 2; schema-v129 seeds the home from it). The pair is checked here so
-  // an off-ladder kind/stage answers 400 in words, before the seed's FK would.
-  const homeKind = typeof body.kind === 'string' && body.kind.trim() ? body.kind.trim() : 'manuscript';
-  const ladder = await env.DB.prepare(
-    `SELECT s.stage FROM product_stages s JOIN product_kinds k ON k.kind = s.kind
-      WHERE s.kind = ? AND s.deleted_at IS NULL AND k.deleted_at IS NULL ORDER BY s.ordinal`,
-  ).bind(homeKind).all<{ stage: string }>();
-  const rungs = (ladder.results ?? []).map((r) => r.stage);
-  if (rungs.length === 0) return error(`unknown product kind "${homeKind}"`, 400);
-  const homeStage = typeof body.stage === 'string' && body.stage.trim() ? body.stage.trim() : rungs[0];
-  if (!rungs.includes(homeStage)) {
-    return error(`stage "${homeStage}" is not on the ${homeKind} ladder (${rungs.join(', ')})`, 400);
-  }
+  // ruling 2; schema-v129 seeds the home from it). The form asks the kind
+  // (Nick 2026-10-12, "Ask the kind"); manuscript stays the form's default.
+  const home = await resolveHomeProduct(
+    env, typeof body.kind === 'string' && body.kind.trim() ? body.kind : 'manuscript', body.stage,
+  );
+  if ('error' in home) return error(home.error, 400);
 
   // Sanitize: `[a-z0-9-]` only. A client-supplied body.slug of e.g.
   // `(mceachron)-project` would otherwise break react-router path matching
@@ -204,11 +222,6 @@ export async function handleCreateProject(
       title: body.title.trim(),
       slug,
       category: body.category || 'MNCCORE',
-      // projects.stage is still written until the contract phase's step 3:
-      // the manuscript ladder word for a manuscript home, else 'idea'. No Hub
-      // reader uses it; PB's readers move off it in step 2.
-      stage: homeKind === 'manuscript' ? homeStage : 'idea',
-      stage_entered_at: nowInstant(),
       description: body.description || '',
       pi: piActor.slug,
       status: 'active',
@@ -218,7 +231,7 @@ export async function handleCreateProject(
     },
     route: 'handleCreateProject',
     user,
-    home_product: { kind: homeKind, stage: homeStage },
+    home_product: home,
   });
   if (createProjMut.status === 'accepted' || !isSlugTaken(createProjMut.reason)) break;
   slug = `${baseSlug}-${attempt}`;
@@ -651,7 +664,14 @@ export async function handleRecentUpdates(url: URL, env: Env, isPi = false, view
 // Generated from schema_dsl §6 — see pb-schema/pb_schema/generated/route-field-lists.generated.ts / backlog #225 A1.
 // (created_at, type excluded — insert-only / PB-owned; see contract test section C.)
 export { PROJECT_ALLOWED_FIELDS };
-const PROJECT_REQUIRED_FIELDS = new Set(['status', 'stage', 'category']);
+const PROJECT_REQUIRED_FIELDS = new Set(['status', 'category']);
+// Fields this route no longer takes, refused in words rather than skipped like
+// any other key outside PROJECT_ALLOWED_FIELDS: a stale writer must learn the
+// stage moved, not see a 200 that wrote nothing (contract phase step 3).
+const PROJECT_RETIRED_FIELDS: Record<string, string> = {
+  stage: "projects.stage is retired: a project's stage is its home product's (POST /api/projects/:slug/products, action 'stage')",
+  stage_entered_at: 'projects.stage_entered_at is retired: the stage clock is the product\'s',
+};
 
 // Canonical enum guards — reject arbitrary string storage. Sourced from
 // api/enum-domains.generated.json (SSOT via pb-schema submodule) so the set
@@ -663,7 +683,6 @@ const PROJECT_REQUIRED_FIELDS = new Set(['status', 'stage', 'category']);
 const PROJECT_STATUS_VALUES = new Set(
   enumFieldsFor('projects')?.status?.canonical ?? ['active', 'waiting_external', 'blocked', 'done'],
 );
-export const PROJECT_STAGE_VALUES = new Set(['idea', 'data_collection', 'data_analysis', 'writing', 'submitted', 'revisions', 'accepted', 'published']);
 // Stage 4 #12-followup (2026-05-09): three-bucket two-views model.
 // MNCCORE = team-visible lab work (Ingraham/Mesfin/Grant/Friends/Mentees)
 // CLIF = consortium, team-visible
@@ -676,7 +695,6 @@ const PROJECT_CATEGORY_VALUES = new Set(['MNCCORE', 'CLIF', 'Peripheral Brain'])
 const PROJECT_STATE_VALUES = new Set(['active', 'waiting', 'delegated', 'incubating', 'parked', 'closing', 'dead']);
 const PROJECT_ENUM_GUARDS: Record<string, Set<string>> = {
   status: PROJECT_STATUS_VALUES,
-  stage: PROJECT_STAGE_VALUES,
   category: PROJECT_CATEGORY_VALUES,
   state: PROJECT_STATE_VALUES,
 };
@@ -695,6 +713,11 @@ export async function handleUpdateProject(
   // always authoritative from Hub). Strip it from the patch so it doesn't
   // end up in the field-whitelist check.
   delete body.client_updated_at;
+
+  const retired = Object.keys(body).filter((k) => k in PROJECT_RETIRED_FIELDS);
+  if (retired.length > 0) {
+    return error(retired.map((k) => PROJECT_RETIRED_FIELDS[k]).join('; '), 400);
+  }
 
   const updates: string[] = [];
   const values: (string | number | null)[] = [];
@@ -730,11 +753,11 @@ export async function handleUpdateProject(
   }
 
   // Check row existence to distinguish "row not found" (fallback INSERT)
-  // from "row found" (UPDATE). Fetch stage/pi/title for typed activity events (D22)
+  // from "row found" (UPDATE). Fetch pi/title for typed activity events (D22)
   // and category for the PB visibility gate below.
   const existingCheck = await env.DB.prepare(
-    'SELECT id, slug, stage, pi, title, category FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-  ).bind(id, id).first<{ id: string; slug: string | null; stage: string | null; pi: string | null; title: string | null; category: string | null }>();
+    'SELECT id, slug, pi, title, category FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+  ).bind(id, id).first<{ id: string; slug: string | null; pi: string | null; title: string | null; category: string | null }>();
 
   if (!existingCheck) {
     // existingCheck reads through the caller's handle, so for a person "not
@@ -747,11 +770,16 @@ export async function handleUpdateProject(
     if (validateApiKey(request, env) !== true) return error('Project not found', 404);
     // Project doesn't exist — create it (upsert; preserves legacy behavior).
     // Run enum guards on the incoming values before INSERT so non-canonical
-    // status/stage/category are rejected with 400 (mirrors the UPDATE branch).
+    // status/category are rejected with 400 (mirrors the UPDATE branch).
     const upsertStatus = (body.status as string) || 'active';
-    const upsertStage = (body.stage as string) || 'idea';
     const upsertCategory = (body.category as string) || 'MNCCORE';
-    for (const [key, val] of [['status', upsertStatus], ['stage', upsertStage], ['category', upsertCategory]] as [string, string][]) {
+    // The project is born with its first product, named by the caller as on
+    // POST /api/projects (no default kind: a seedless create made every
+    // project a manuscript, contract phase ruling 2).
+    const hp = (body.home_product ?? {}) as { kind?: unknown; stage?: unknown };
+    const home = await resolveHomeProduct(env, hp.kind, hp.stage);
+    if ('error' in home) return error(`home_product: ${home.error}`, 400);
+    for (const [key, val] of [['status', upsertStatus], ['category', upsertCategory]] as [string, string][]) {
       const guard = PROJECT_ENUM_GUARDS[key];
       if (guard && !guard.has(val)) {
         return error(`Invalid ${key}: "${val}". Must be one of: ${[...guard].join(', ')}`, 400);
@@ -771,12 +799,12 @@ export async function handleUpdateProject(
         status: upsertStatus,
         description: (body.description as string) || '',
         category: upsertCategory,
-        stage: upsertStage,
         pi: (body.pi as string) || 'nick',
         slug: upsertSlug,
       },
       route: 'handleUpdateProject',
       user,
+      home_product: home,
     });
     if (upsertMut.status !== 'accepted') {
       return error(`mutation rejected: ${upsertMut.status} — ${upsertMut.reason ?? ''}`, 409);
@@ -826,9 +854,6 @@ export async function handleUpdateProject(
     // Only emit when the field is present in the request body AND the new value
     // differs from the pre-mutation snapshot. Never emitted on the upsert-insert
     // (row-absent) branch above.
-    if (typeof body.stage === 'string' && body.stage !== existingCheck.stage) {
-      await logActivity(env, 'stage_change', `Stage: ${existingCheck.stage ?? '—'} → ${body.stage}`, user.email, id, 'project');
-    }
     if (typeof body.pi === 'string' && body.pi !== existingCheck.pi) {
       await logActivity(env, 'pi_change', `PI: ${existingCheck.pi ?? '—'} → ${body.pi}`, user.email, id, 'project');
     }
@@ -952,15 +977,15 @@ export async function handleGetDeletedProjectsSince(
       return error('seq_after must be a non-negative integer', 400);
     }
     rows = await env.DB.prepare(
-      'SELECT id, title, slug, category, stage, status, deleted_at, updated_at, seq FROM projects WHERE deleted_at IS NOT NULL AND seq > ? ORDER BY seq ASC LIMIT ?'
+      'SELECT id, title, slug, category, status, deleted_at, updated_at, seq FROM projects WHERE deleted_at IS NOT NULL AND seq > ? ORDER BY seq ASC LIMIT ?'
     ).bind(seqAfter, limit).all();
   } else if (since) {
     rows = await env.DB.prepare(
-      'SELECT id, title, slug, category, stage, status, deleted_at, updated_at, seq FROM projects WHERE deleted_at IS NOT NULL AND deleted_at > ? ORDER BY deleted_at DESC LIMIT ?'
+      'SELECT id, title, slug, category, status, deleted_at, updated_at, seq FROM projects WHERE deleted_at IS NOT NULL AND deleted_at > ? ORDER BY deleted_at DESC LIMIT ?'
     ).bind(since, limit).all();
   } else {
     rows = await env.DB.prepare(
-      'SELECT id, title, slug, category, stage, status, deleted_at, updated_at, seq FROM projects WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC LIMIT ?'
+      'SELECT id, title, slug, category, status, deleted_at, updated_at, seq FROM projects WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC LIMIT ?'
     ).bind(limit).all();
   }
 

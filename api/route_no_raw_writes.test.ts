@@ -141,7 +141,6 @@ const BUILDERS: Record<string, string> = {
   applyPatch: 'builds the `UPDATE <table> SET ...` (no WHERE) that commitRowWrite completes and runs',
   decideAndCommitDelete: 'builds the soft-delete SET clause and the gated child-cascade dependents for commitRowWrite',
   orphanProjectTasksSql: 'builds the project-delete task statement (project_id and product_id cleared together) that decideAndCommitDelete gates into its batch; scripts/probe-v124-products.ts runs the same text on local D1',
-  projectStageDependents: 'builds the products stage UPDATE a projects.stage write forwards in the same batch (schema-v124 expand phase), gated on the project write landing',
 }
 
 const WRITE_SQL = /\b(?:INSERT\s+(?:OR\s+\w+\s+)?INTO|REPLACE\s+INTO|UPDATE\s+\S+\s+SET|DELETE\s+FROM)\b/i

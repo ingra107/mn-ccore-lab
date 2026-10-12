@@ -132,10 +132,19 @@ function run() {
     const slug = stripPrefix(p.slug)!
     const description = stripPrefix(p.description)
     projectIdBySlug.set(p.slug, id)
+    // A project is born with its first product (schema-v130 refuses a project
+    // insert with no project_home_seed row): a manuscript at the fixture's
+    // stage when that word is on the manuscript ladder, else its first rung.
+    // projects.stage itself is retired (contract phase step 3) and not written.
     d1Execute(
-      `INSERT INTO projects (id, title, slug, category, stage, status, pi, description) VALUES (` +
+      `INSERT OR REPLACE INTO project_home_seed (project_id, kind, stage) SELECT ${sqlEscape(id)}, 'manuscript', ` +
+      `COALESCE((SELECT stage FROM product_stages WHERE kind = 'manuscript' AND stage = ${sqlEscape(p.stage)} AND deleted_at IS NULL), ` +
+      `(SELECT stage FROM product_stages WHERE kind = 'manuscript' AND deleted_at IS NULL ORDER BY ordinal LIMIT 1))`
+    )
+    d1Execute(
+      `INSERT INTO projects (id, title, slug, category, status, pi, description) VALUES (` +
       `${sqlEscape(id)}, ${sqlEscape(title)}, ${sqlEscape(slug)}, ${sqlEscape(p.category)}, ` +
-      `${sqlEscape(p.stage)}, 'active', ${sqlEscape(p.pi)}, ${sqlEscape(description)})`
+      `'active', ${sqlEscape(p.pi)}, ${sqlEscape(description)})`
     )
   }
   d1Flush('projects')

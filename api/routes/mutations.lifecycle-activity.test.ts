@@ -186,10 +186,8 @@ describe('taskChangeEvents', () => {
 });
 
 describe('projectChangeEvents', () => {
-  it('stage change', () => {
-    expect(projectChangeEvents({ stage: 'data_analysis' }, { stage: 'writing' })).toEqual([
-      { event: 'stage', kind: 'system', body: 'Stage: data analysis → writing' },
-    ]);
+  it('a stage key writes no project line (a stage is a product\'s, contract phase step 3)', () => {
+    expect(projectChangeEvents({ stage: 'data_analysis' }, { stage: 'writing' })).toEqual([]);
   });
   it('status → done is a completion', () => {
     expect(projectChangeEvents({ status: 'active' }, { status: 'done' })).toEqual([

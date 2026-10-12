@@ -41,7 +41,7 @@ beforeEach(() => {
 })
 
 const stored = (id: string) =>
-  db.prepare('SELECT domain, tier, category, stage FROM projects WHERE id = ?').get(id) as Record<string, unknown> | undefined
+  db.prepare('SELECT domain, tier, category FROM projects WHERE id = ?').get(id) as Record<string, unknown> | undefined
 const receiptFor = (id: string) =>
   db.prepare('SELECT outcome, table_name FROM processed_mutations WHERE record_id = ?').get(id) as { outcome: string; table_name: string } | undefined
 
@@ -56,8 +56,9 @@ describe('#614 handleCreateProject — domain/tier defaults', () => {
     const body = await res.json() as { data: Record<string, unknown> }
     expect(body.data.domain).toBe('Research')
     expect(body.data.tier).toBe('2-Biweekly')
-    // Existing default behavior (category/stage) must stay intact — on the stored row too.
-    expect(stored(body.data.id as string)).toEqual({ domain: 'Research', tier: '2-Biweekly', category: 'MNCCORE', stage: 'idea' })
+    // Existing default behavior (category) must stay intact — on the stored row
+    // too. The stage is the home product's (contract phase step 3).
+    expect(stored(body.data.id as string)).toEqual({ domain: 'Research', tier: '2-Biweekly', category: 'MNCCORE' })
     expect(receiptFor(body.data.id as string)).toEqual({ outcome: 'accepted', table_name: 'projects' })
   })
 

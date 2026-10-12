@@ -155,22 +155,24 @@ describe('Fix 2 — handleUpdateProject upsert-on-miss enum guards', () => {
 
   it('a person, the PI included, gets 404 on a miss and nothing is created', async () => {
     const before = projectCount();
-    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', status: 'active', stage: 'idea', category: 'MNCCORE' }), NICK, env, slugClaimCheck(env.DB));
+    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', status: 'active', category: 'MNCCORE', home_product: { kind: 'manuscript', stage: 'idea' } }), NICK, env, slugClaimCheck(env.DB));
     expect(res.status).toBe(404);
     expect(projectCount()).toBe(before);
   });
 
   it('the PB key cannot upsert a slug shaped like a project id', async () => {
     const before = projectCount();
-    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'X', slug: 'proj_01HIDDEN', status: 'active', stage: 'idea', category: 'MNCCORE' }, PB_KEY), NICK, env, slugClaimCheck(env.DB));
+    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'X', slug: 'proj_01HIDDEN', status: 'active', category: 'MNCCORE', home_product: { kind: 'manuscript', stage: 'idea' } }, PB_KEY), NICK, env, slugClaimCheck(env.DB));
     expect(res.status).toBe(400);
     expect(projectCount()).toBe(before);
   });
 
   it.each([
-    ['stage', { status: 'active', stage: 'not_a_real_stage', category: 'MNCCORE' }, /Invalid stage/i],
-    ['status', { status: 'flying', stage: 'idea', category: 'MNCCORE' }, /Invalid status/i],
-    ['category', { status: 'active', stage: 'idea', category: 'lab' }, /Invalid category/i],
+    ['stage', { status: 'active', stage: 'idea', category: 'MNCCORE', home_product: { kind: 'manuscript', stage: 'idea' } }, /projects\.stage is retired/i],
+    ['status', { status: 'flying', category: 'MNCCORE', home_product: { kind: 'manuscript', stage: 'idea' } }, /Invalid status/i],
+    ['category', { status: 'active', category: 'lab', home_product: { kind: 'manuscript', stage: 'idea' } }, /Invalid category/i],
+    ['home product', { status: 'active', category: 'MNCCORE' }, /home_product: kind required/i],
+    ['home product stage', { status: 'active', category: 'MNCCORE', home_product: { kind: 'manuscript', stage: 'funded' } }, /not on the manuscript ladder/i],
   ])('returns 400 for invalid %s on upsert-on-miss branch, and creates nothing', async (_f, fields, msg) => {
     const before = projectCount();
     const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', ...fields }, PB_KEY), NICK, env, slugClaimCheck(env.DB));
@@ -180,12 +182,14 @@ describe('Fix 2 — handleUpdateProject upsert-on-miss enum guards', () => {
     expect(projectCount()).toBe(before);
   });
 
-  it('accepts canonical values and inserts the project on upsert-on-miss branch', async () => {
-    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', status: 'active', stage: 'idea', category: 'MNCCORE' }, PB_KEY), NICK, env, slugClaimCheck(env.DB));
+  it('accepts canonical values and inserts the project, born with the home product it names', async () => {
+    const res = await handleUpdateProject('new-project-id', makeRequest({ title: 'New Project', status: 'active', category: 'MNCCORE', home_product: { kind: 'grant_application', stage: 'submitted' } }, PB_KEY), NICK, env, slugClaimCheck(env.DB));
     expect(res.status).toBe(200);
-    const stored = rows("SELECT id, status, stage, category FROM projects WHERE slug = 'new-project-id'");
+    const stored = rows("SELECT id, status, category FROM projects WHERE slug = 'new-project-id'");
     expect(stored).toHaveLength(1);
-    expect(stored[0]).toMatchObject({ status: 'active', stage: 'idea', category: 'MNCCORE' });
+    expect(stored[0]).toMatchObject({ status: 'active', category: 'MNCCORE' });
+    expect(rows('SELECT kind, stage, is_home FROM products WHERE project_id = ? AND deleted_at IS NULL', stored[0].id))
+      .toEqual([{ kind: 'grant_application', stage: 'submitted', is_home: 1 }]);
     expect(rows('SELECT outcome FROM processed_mutations WHERE record_id = ?', stored[0].id)).toEqual([{ outcome: 'accepted' }]);
   });
 });
@@ -239,7 +243,7 @@ describe('Fix 4 — handleUpdateProject: a refused mutation → HTTP 409', () =>
     // applyUpdate), so on the real path the non-accepted outcome this route
     // can see is a failed write. Fail the projects UPDATE in the engine.
     env = { ...env, DB: d1Adapter(db, { failSql: /^\s*UPDATE projects SET/i, failTimes: 100 }) } as Env;
-    const res = await handleUpdateProject(PROJ_ID, makeRequest({ title: 'Updated Title', status: 'active', stage: 'idea', category: 'MNCCORE' }), NICK, env, slugClaimCheck(env.DB));
+    const res = await handleUpdateProject(PROJ_ID, makeRequest({ title: 'Updated Title', status: 'active', category: 'MNCCORE' }), NICK, env, slugClaimCheck(env.DB));
     expect(res.status).toBe(409);
     const body = await res.json() as { rejected: string; data: { id: string; title: string } };
     expect(body.rejected).not.toBe('accepted');
@@ -248,7 +252,7 @@ describe('Fix 4 — handleUpdateProject: a refused mutation → HTTP 409', () =>
   });
 
   it('returns 200 on successful update and stores it (no regression)', async () => {
-    const res = await handleUpdateProject(PROJ_ID, makeRequest({ title: 'Updated Title', status: 'active', stage: 'idea', category: 'MNCCORE' }), NICK, env, slugClaimCheck(env.DB));
+    const res = await handleUpdateProject(PROJ_ID, makeRequest({ title: 'Updated Title', status: 'active', category: 'MNCCORE' }), NICK, env, slugClaimCheck(env.DB));
     expect(res.status).toBe(200);
     expect(rows('SELECT title FROM projects WHERE id = ?', PROJ_ID)).toEqual([{ title: 'Updated Title' }]);
   });

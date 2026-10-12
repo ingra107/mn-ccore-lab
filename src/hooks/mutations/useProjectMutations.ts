@@ -15,7 +15,6 @@ import { nowInstant } from '../../lib/time'
 import { useUndoToast } from '../../components/UndoToast'
 import { PATHS } from '../../constants/paths'
 import { bestPublicationMatch } from '../../lib/titleMatch'
-import { isProjectDone } from '../../lib/taskConstants'
 
 // ── Project mutations ───────────────────────────────────────
 
@@ -62,12 +61,60 @@ export function useCreateProject() {
 // rejected write surfaces the server's message (Rule 35 400s, mutation 409s,
 // auth 401s) so the next report carries the cause instead of "it didn't change".
 // #129 "Is this the paper?" — surfaced at most once per project per session,
-// so re-editing other fields on a just-published project doesn't re-nag.
+// so moving a just-published manuscript again doesn't re-nag.
 const suggestedPublicationMatchSlugs = new Set<string>()
+
+/**
+ * #129 "Is this the paper?": offer to link the publication whose title best
+ * matches the project's, when a MANUSCRIPT product reaches its ladder's
+ * terminal rung (Published). The caller is the product stage write
+ * (useSetProductStage); a project's own status going done is not a paper being
+ * published, and a project's stage lives on its products (contract phase).
+ * Skipped when the project already has a linked publication.
+ */
+export function suggestPaperLink(
+  queryClient: ReturnType<typeof useQueryClient>,
+  showInfo: ReturnType<typeof useUndoToast>['showInfo'],
+  slug: string,
+): void {
+  if (suggestedPublicationMatchSlugs.has(slug)) return
+
+  // Already linked? The per-slug cache exists only once ProjectDetail has
+  // mounted; the Projects/Manuscripts tables hold the all-links rows
+  // instead, keyed by project_slug — check both or the nag re-fires there.
+  const existing = queryClient.getQueryData<{ id: string }[]>(['project-publications', slug])
+  if (existing && existing.length > 0) return
+  const allLinks = queryClient.getQueryData<{ project_slug: string | null }[]>(['project-publications', 'all'])
+  if (allLinks?.some((l) => l.project_slug === slug)) return
+
+  const projects = queryClient.getQueryData<Project[]>(['projects'])
+  const project = projects?.find((p) => p.slug === slug)
+  const title = project?.title
+  if (!title) return
+
+  const candidates = queryClient.getQueryData<Publication[]>(['publications', undefined])
+  if (!candidates || candidates.length === 0) return
+
+  const match = bestPublicationMatch(title, candidates)
+  if (!match) return
+
+  suggestedPublicationMatchSlugs.add(slug)
+  const { pub } = match
+  const detail = [pub.journal, pub.year].filter(Boolean).join(' ')
+  showInfo(`Is this the paper? ${pub.title}${detail ? ` (${detail})` : ''}`, {
+    label: 'Link',
+    onClick: () => {
+      linkProjectPublication(slug, { publication_id: pub.id, role: 'primary' }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['project-publications', slug] })
+        queryClient.invalidateQueries({ queryKey: ['project-publications', 'all'] })
+      })
+    },
+  })
+}
 
 export function useUpdateProjectFields() {
   const queryClient = useQueryClient()
-  const { showError, showInfo } = useUndoToast()
+  const { showError } = useUndoToast()
 
   return useMutation({
     mutationFn: ({ slug, fields }: { slug: string; fields: Record<string, unknown> }) =>
@@ -107,44 +154,6 @@ export function useUpdateProjectFields() {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
       queryClient.invalidateQueries({ queryKey: ['stats'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
-    },
-
-    onSuccess: (_resp, { slug, fields }) => {
-      // The patch finished the project when it set status done. (A manuscript
-      // reaching Published is a PRODUCT write, not this mutation.)
-      if (!isProjectDone((fields as { status?: string | null }).status) || suggestedPublicationMatchSlugs.has(slug)) return
-
-      // Already linked? The per-slug cache exists only once ProjectDetail has
-      // mounted; the Projects/Manuscripts tables hold the all-links rows
-      // instead, keyed by project_slug — check both or the nag re-fires there.
-      const existing = queryClient.getQueryData<{ id: string }[]>(['project-publications', slug])
-      if (existing && existing.length > 0) return
-      const allLinks = queryClient.getQueryData<{ project_slug: string | null }[]>(['project-publications', 'all'])
-      if (allLinks?.some((l) => l.project_slug === slug)) return
-
-      const projects = queryClient.getQueryData<Project[]>(['projects'])
-      const project = projects?.find((p) => p.slug === slug)
-      const title = project?.title
-      if (!title) return
-
-      const candidates = queryClient.getQueryData<Publication[]>(['publications', undefined])
-      if (!candidates || candidates.length === 0) return
-
-      const match = bestPublicationMatch(title, candidates)
-      if (!match) return
-
-      suggestedPublicationMatchSlugs.add(slug)
-      const { pub } = match
-      const detail = [pub.journal, pub.year].filter(Boolean).join(' ')
-      showInfo(`Is this the paper? ${pub.title}${detail ? ` (${detail})` : ''}`, {
-        label: 'Link',
-        onClick: () => {
-          linkProjectPublication(slug, { publication_id: pub.id, role: 'primary' }).then(() => {
-            queryClient.invalidateQueries({ queryKey: ['project-publications', slug] })
-            queryClient.invalidateQueries({ queryKey: ['project-publications', 'all'] })
-          })
-        },
-      })
     },
   })
 }

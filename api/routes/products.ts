@@ -327,14 +327,15 @@ export async function handleProjectProductWrite(
     return json({ error: refusal.message, code: result.code ?? result.status }, refusal.status);
   }
   // The row the write produced is on the result (commitRowWrite / applyInsert
-  // read it inside the same request); only the stage's label is looked up.
+  // read it inside the same request); only the stage's rung is looked up.
   const row = result.canonical_payload ?? {};
-  const label = await env.DB.prepare('SELECT label FROM product_stages WHERE kind = ? AND stage = ?')
-    .bind(row.kind ?? null, row.stage ?? null).first<{ label: string }>();
+  const label = await env.DB.prepare('SELECT label, is_terminal FROM product_stages WHERE kind = ? AND stage = ?')
+    .bind(row.kind ?? null, row.stage ?? null).first<{ label: string; is_terminal: number }>();
   return json({
     product: {
       id: row.id ?? recordId, project_id: row.project_id, kind: row.kind, stage: row.stage,
-      stage_label: label?.label ?? row.stage, is_home: row.is_home, seq: row.seq,
+      stage_label: label?.label ?? row.stage, stage_is_terminal: label?.is_terminal ?? 0,
+      is_home: row.is_home, seq: row.seq,
       stage_entered_at: row.stage_entered_at, lineage_rank: row.lineage_rank, grew_from_id: row.grew_from_id,
       venue: row.venue ?? null, due_date: row.due_date ?? null, deadline: row.deadline ?? null,
       period_start: row.period_start ?? null, period_end: row.period_end ?? null, amount_usd: row.amount_usd ?? null,

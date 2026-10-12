@@ -17,7 +17,6 @@ import type { Env } from '../types'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 import { _resetPiEmailsCacheForTests, _resetValidationFlagsCache } from '../helpers'
 import { addProduct, setProductHome, setProductStage } from '../../src/lib/products'
-import { PROJECT_STAGE_VALUES } from './projects'
 import { plainRefusal } from './products'
 
 const CTX = { waitUntil: () => {}, passThroughOnException: () => {} } as unknown as ExecutionContext
@@ -97,29 +96,20 @@ describe('the writes the page sends (POST /api/projects/:slug/products)', () => 
     expect(out.seq).toBe(p.seq)
   })
 
-  it('B1: a ladder write on a single-product project moves projects.stage with it (schema-v126)', async () => {
+  it('a product stage write never touches projects.stage (schema-v130 dropped the v126 mirror)', async () => {
+    const before = projectStage()
     await setProductStage('r03', HOME, 'revisions')
-    expect(projectStage()).toBe('revisions')
-    // and back: re-picking the old stage on the project list (forward rule) agrees
-    await setProductStage('r03', HOME, 'writing')
-    expect(projectStage()).toBe('writing')
-  })
-
-  it('B1: with 2+ products the project stage does not follow any product, the home included', async () => {
+    expect(projectStage()).toBe(before)
     await addProduct('r03', { kind: 'trial_ops', stage: 'start_up', name: 'Ops' })
     await setProductStage('r03', HOME, 'submitted')
-    expect(projectStage()).toBe('writing')
+    expect(projectStage()).toBe(before)
   })
 
-  it('B1: a stage that is not a project stage is not copied onto the project', async () => {
-    db.prepare("UPDATE products SET kind = 'infrastructure', stage = 'planning' WHERE id = ?").run(HOME)
-    await setProductStage('r03', HOME, 'running')
-    expect(projectStage()).not.toBe('running')
-  })
-
-  it('the project stage set is the manuscript ladder (the v126 mirror reads the ladder)', () => {
-    const ladder = rows("SELECT stage FROM product_stages WHERE kind = 'manuscript' AND deleted_at IS NULL").map((r) => r.stage)
-    expect(new Set(ladder)).toEqual(PROJECT_STAGE_VALUES)
+  it('the write answers with the kind and whether the stage is its ladder\'s last rung (the paper nag reads it)', async () => {
+    const mid = await setProductStage('r03', HOME, 'accepted')
+    expect(mid).toMatchObject({ kind: 'manuscript', stage: 'accepted', stage_is_terminal: 0 })
+    const done = await setProductStage('r03', HOME, 'published')
+    expect(done).toMatchObject({ kind: 'manuscript', stage: 'published', stage_is_terminal: 1 })
   })
 
   it('a stale tab cannot overwrite a newer stage (compare-and-swap on seq + stage)', async () => {

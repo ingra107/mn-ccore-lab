@@ -300,13 +300,22 @@ export interface Mutation {
  * REFUSAL_CODES lists a code still named here, so this list only empties.
  * Until PB maps it, PB reads the code as UNCODED: retried to max_attempts, then
  * dead-lettered with the code named in last_error (outbox.py flush loop).
- *
- * project_stage_unforwardable (schema-v124, 2026-10-11): a projects.stage
- * write that cannot reach the project's products -- the project holds 2+ live
- * products, or its one product's kind has no such stage. PB-FOLLOWUP: map it
- * to refuse_loud in HUB_REFUSAL_CODES.
  */
 export const PENDING_REFUSAL_CODES = [] as const;
+
+/**
+ * Fields a table no longer accepts, each with the words an unknown_field
+ * refusal adds so a stale writer learns where the value went (contract phase
+ * step 3, PB Scratch/plans/2026-10-12-contract-phase-retire-project-stage.md).
+ * The refusal itself is the TABLE_FIELDS whitelist (pb-schema 0.15.0); this
+ * only names the new home. Delete an entry once no writer can still send it.
+ */
+const RETIRED_FIELDS: Record<string, Record<string, string>> = {
+  projects: {
+    stage: "projects.stage is retired: a project's stage is its home product's; write products.stage",
+    stage_entered_at: 'projects.stage_entered_at is retired: the stage clock is products.stage_entered_at',
+  },
+};
 type HubRefusalCode = RefusalCode | (typeof PENDING_REFUSAL_CODES)[number];
 
 interface MutationResult {
@@ -489,6 +498,17 @@ async function processOne(
     }
   }
 
+  // A project is born with the product its creator named (contract phase
+  // step 3): every create lane sends home_product, and schema-v130's home
+  // trigger refuses a project insert with no seed, so a seedless create is
+  // refused here in words before D1 would refuse it.
+  if (mut.table === 'projects' && mut.op === 'insert' && mut.home_product == null) {
+    const r = mutErr(mut.mutation_id, 'envelope_invalid',
+      'a project insert names its first product: home_product {kind, stage}');
+    const idem = await recordProcessedAtomic(env, mut, r);
+    return idem ?? r;
+  }
+
   // Validate fields against table whitelist
   const fields = mut.op === 'insert' ? mut.payload : mut.patch;
   if (fields) {
@@ -496,7 +516,9 @@ async function processOne(
     if (allowed) {
       const unknown = Object.keys(fields).filter(k => !allowed.has(k));
       if (unknown.length > 0) {
-        const r = mutErr(mut.mutation_id, 'unknown_field', `unknown fields for ${mut.table}: ${unknown.join(',')}`);
+        const retired = unknown.map((k) => RETIRED_FIELDS[mut.table]?.[k]).filter(Boolean);
+        const r = mutErr(mut.mutation_id, 'unknown_field',
+          `unknown fields for ${mut.table}: ${unknown.join(',')}${retired.length ? ` (${retired.join('; ')})` : ''}`);
         const idem = await recordProcessedAtomic(env, mut, r);
         return idem ?? r;
       }
@@ -505,7 +527,7 @@ async function processOne(
     // insert payloads and update patches (fields is payload|patch above).
     // applyInsert (:434) and applyPatch (:785) both spread values with no
     // guard, so this is the single gate that prevents a protected column
-    // (tasks.status/priority/assignee, projects.status/stage/category) from
+    // (tasks.status/priority/assignee, projects.status/category) from
     // being silently nulled via the A3 write path.
     const protectedErr = assertProtectedNotNull(mut.table, fields);
     if (protectedErr) {
@@ -815,21 +837,13 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
   }
 
   // A product is born with its stage clock. PB cannot send stage_entered_at
-  // (pb-schema TABLE_FIELDS omits it). A HOME product continues its project's
-  // clock (schema-v125 trg_projects_home_product_ins does the same for a new
-  // project; Backfill A rides this, Nick 2026-10-11 A25 "copy
-  // stage_entered_at"); any other product starts now.
+  // (pb-schema TABLE_FIELDS omits it), so it starts now. (A home product used
+  // to continue projects.stage_entered_at for Backfill A; that clock retired
+  // with projects.stage, contract phase step 3.)
   if (mut.table === 'products') {
     const p = mut.payload as Record<string, unknown>;
     if (p.stage_entered_at == null) {
-      let clock: string | null = null;
-      if (p.is_home === 1 || p.is_home === true) {
-        const pr = await env.DB.prepare('SELECT stage_entered_at FROM projects WHERE id = ?')
-          .bind((p.project_id as string | null | undefined) ?? null)
-          .first<{ stage_entered_at: string | null }>();
-        clock = pr?.stage_entered_at ?? null;
-      }
-      p.stage_entered_at = clock ?? nowInstant().replace('T', ' ').replace(/\.\d+Z$/, '');
+      p.stage_entered_at = nowInstant().replace('T', ' ').replace(/\.\d+Z$/, '');
     }
   }
 
@@ -1183,13 +1197,6 @@ async function decideAndCommitUpdate(
   // unchanged, so current + patch is the row the write produces.
   const mirrorSlots =
     (mut.table === 'tasks' || mut.table === 'projects') && touchesKeyLinkSlots(mut.patch);
-  // schema-v124: a projects.stage write reaches the project's product in the
-  // same batch, lands unforwarded with a reason, or is refused
-  // (projectStageDependents).
-  const stageForward = await projectStageDependents(env, mut, current);
-  if (stageForward && 'refuse' in stageForward) {
-    return mutErr(mut.mutation_id, 'project_stage_unforwardable', stageForward.refuse);
-  }
   const dependents: Dependents[] = [];
   if (mirrorSlots) {
     dependents.push((landed) => slotLinkStatements(
@@ -1197,13 +1204,11 @@ async function decideAndCommitUpdate(
       current, { ...current, ...mut.patch }, mut.mutation_id, landed,
     ));
   }
-  if (stageForward && 'forward' in stageForward) dependents.push(stageForward.forward);
   const committed = await commitRowWrite(
     env, mut, current, await applyPatch(env, mut, current, flags), outcome,
     {
       ...(dependents.length ? { dependents: (landed: SqlFragment) => dependents.flatMap((d) => d(landed)) } : {}),
       ...(mirrorSlots ? { dependentLinksRead: touchedLinksRead(env.DB, mut.mutation_id) } : {}),
-      ...(stageForward && 'note' in stageForward ? { reason: stageForward.note } : {}),
     },
   );
   if (committed === CAS_MISS) return CAS_MISS;
@@ -1519,7 +1524,6 @@ async function advanceProjectMovement(
 const PROJECT_MOVEMENT_EXCLUDED_FIELDS = new Set([
   'last_meaningful_movement',
   'stale_active_since',
-  'stage_entered_at',
   'created_at',
   'updated_at',
   'slug',
@@ -1590,70 +1594,6 @@ async function advanceProjectOwnMovement(
 
 /** Statements that commit or roll back with a row write (commitRowWrite opts.dependents). */
 type Dependents = (landed: SqlFragment) => D1PreparedStatement[];
-
-/**
- * schema-v124 expand phase: projects.stage and products.stage both exist until
- * the contract phase drops the project column, and every reader is moving to
- * the product. A writer that still patches projects.stage (PB update_project,
- * the Hub project editor, Apps Script) must not write a value no product page
- * reads, so this is the one chokepoint for it (plan step 5):
- *   - 0 live products (a project from before Backfill A; schema-v125 makes
- *     every new project with one): nothing to forward;
- *   - 1 live product whose ladder has the stage: its stage moves in the same
- *     batch, stage_entered_at stamped, gated on the project write landing;
- *   - 1 live product whose ladder does NOT have the stage (award, trial ops,
- *     infrastructure; projects.stage is the manuscript ladder): the project
- *     write lands, the product keeps its stage, and the result's `reason`
- *     says so. The word cannot be put on that product (products(kind, stage)
- *     refuses it), so refusing would only block the project editor -- the one
- *     stage control before the product UI (plan step 8) -- and page PB.
- *     Re-judged 2026-10-11: the first cut refused here; of prod's 19 stage
- *     edits in the last 120 days, 3 (R01 LPV, K23, CLHSS Talks) would have
- *     been refused after Backfill A, each a word with no meaning on the
- *     product's ladder.
- *   - 2+ live products: { refuse }, which the caller returns as
- *     project_stage_unforwardable. Which product the writer meant is not
- *     knowable.
- * Only a real change forwards: an echo of the current project stage (PB
- * re-sending a whole row) is accepted on any project.
- * The home product (products.is_home) is deliberately NOT a tiebreak here: it
- * is where umbrella tasks land (admin / trial ops), not the deliverable whose
- * progress projects.stage described, so forwarding to it would write a
- * manuscript-ladder stage onto the wrong product. 2+ products still refuse.
- * Deleted with projects.stage at the contract phase.
- */
-type StageForward = { forward: Dependents } | { refuse: string } | { note: string } | null;
-
-async function projectStageDependents(
-  env: Env, mut: Mutation, current: Record<string, unknown>,
-): Promise<StageForward> {
-  if (mut.table !== 'projects') return null;
-  const stage = (mut.patch as Record<string, unknown> | undefined)?.stage;
-  if (typeof stage !== 'string' || stage === current.stage) return null;
-  const { results } = await env.DB.prepare(
-    `SELECT p.id, p.kind, p.stage,
-            EXISTS (SELECT 1 FROM product_stages s WHERE s.kind = p.kind AND s.stage = ? AND s.deleted_at IS NULL) AS on_ladder
-       FROM products p WHERE p.project_id = ? AND p.deleted_at IS NULL ORDER BY p.id`,
-  ).bind(stage, mut.record_id).all<{ id: string; kind: string; stage: string; on_ladder: number }>();
-  const live = results ?? [];
-  if (live.length === 0) return null;
-  if (live.length > 1) {
-    return { refuse: `project_stage_unforwardable: project ${mut.record_id} holds ${live.length} products (${live.map((p) => p.id).join(', ')}); write the stage on the product, not projects.stage` };
-  }
-  const [product] = live;
-  if (!product.on_ladder) {
-    return { note: `projects.stage not forwarded: '${stage}' is not on the ${product.kind} ladder of product ${product.id}, which keeps stage '${product.stage}'` };
-  }
-  if (product.stage === stage) return null;
-  return {
-    forward: (landed) => [
-      env.DB.prepare(
-        `UPDATE products SET stage = ?, stage_entered_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ?
-          WHERE id = ? AND deleted_at IS NULL AND ${landed.sql}`,
-      ).bind(stage, mut.mutation_id, product.id, ...landed.vals),
-    ],
-  };
-}
 
 /**
  * Build (not run) the `UPDATE <table> SET ...` for a patch against the row it
@@ -1870,20 +1810,20 @@ async function applyPatch(
     setClauses.push("deleted_at = NULL");
   }
 
-  // D7 (2026-05-22): stamp stage_entered_at whenever a project's stage genuinely
-  // changes, regardless of write path (Hub UI, PB sync push, batch — all route
-  // through applyPatch). Literal SET clause keeps the ? binding indices intact,
-  // same approach as the deleted_at co-flips above. Only fires on a real
-  // transition (patch.stage differs from current.stage), so editing other fields
-  // never resets the counter — this is the fix for the Manuscripts daysInStage bug.
-  // Products carry the same clock (schema-v124); PB never sends it (pb-schema
-  // TABLE_FIELDS omits products.stage_entered_at), so the Hub stamps it here.
+  // A product's stage clock (schema-v124): stamp stage_entered_at whenever its
+  // stage genuinely changes, regardless of write path (Hub UI, PB push, batch
+  // all route through applyPatch). PB never sends it (pb-schema TABLE_FIELDS
+  // omits products.stage_entered_at). Literal SET clause keeps the ? binding
+  // indices intact, same approach as the deleted_at co-flips above. Only a
+  // real transition stamps it, so editing other fields never resets the
+  // counter. (The D7 project clock retired with projects.stage, contract
+  // phase step 3.)
   const patchedStage = effectivePatch?.stage;
-  const isProjectStageChange =
-    (mut.table === 'projects' || mut.table === 'products') &&
+  const isProductStageChange =
+    mut.table === 'products' &&
     typeof patchedStage === 'string' &&
     patchedStage !== current.stage;
-  if (isProjectStageChange) {
+  if (isProductStageChange) {
     setClauses.push("stage_entered_at = datetime('now')");
   }
 

@@ -1,8 +1,7 @@
 /**
  * api/routes/mutations.products-step5.test.ts -- schema-v124 plan step 5, the
- * writes that must keep a task's product inside its project and keep
- * projects.stage from drifting away from the product stage during the
- * expand phase.
+ * writes that must keep a task's product inside its project. (Its projects.stage
+ * forwarding cases became the contract phase step 3 refusal cases below.)
  *
  * Drives the REAL worker (worker.fetch: auth, routing, viewer handle) on the
  * migration-chain database (prodSchemaDb, v124 included, FKs and triggers on).
@@ -55,6 +54,7 @@ function legacyProject(id: string) {
   const trigger = row("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_projects_home_product_ins'").sql as string
   db.exec('DROP TRIGGER trg_projects_home_product_ins')
   project(id)
+  db.prepare('DELETE FROM project_home_seed WHERE project_id = ?').run(id)
   db.exec(trigger)
 }
 
@@ -204,65 +204,63 @@ describe('step 5.2: moving a task to another project moves or clears its product
   })
 })
 
-describe('step 5.3: a projects.stage write is forwarded to a single product, refused on several', () => {
-  it('Hub UI: one product -> its stage moves in the same write, stage_entered_at stamped', async () => {
-    const r = await ui('/api/projects/proj_one', { stage: 'submitted' })
-    expect(r.status, r.text).toBe(200)
-    expect(projectStage('proj_one')).toBe('submitted')
-    const p = product('prd_one')
-    expect(p.stage).toBe('submitted')
-    expect(p.stage_entered_at).not.toBeNull()
-    expect(String(p.last_mutation_id)).toBe(String(row('SELECT last_mutation_id FROM projects WHERE id = ?', 'proj_one').last_mutation_id))
-  })
-
-  it('PB: one product -> forwarded the same way', async () => {
-    const r = await pb('projects', 'proj_one', 'update', { stage: 'revisions' })
-    expect(r.status, r.reason).toBe('accepted')
-    expect(product('prd_one').stage).toBe('revisions')
-  })
-
-  it('PB: two products -> project_stage_unforwardable, nothing written', async () => {
-    const before = seq('projects', 'proj_two')
-    const r = await pb('projects', 'proj_two', 'update', { stage: 'submitted' })
+describe('contract phase step 3: projects.stage is refused, loud, on every write path', () => {
+  it('PB: a projects.stage patch is unknown_field, names where the stage went, and writes nothing', async () => {
+    const before = seq('projects', 'proj_one')
+    const r = await pb('projects', 'proj_one', 'update', { stage: 'submitted' })
     expect(r.status).toBe('error')
-    expect(r.code).toBe('project_stage_unforwardable')
-    expect(r.reason).toContain('holds 2 products')
-    expect(projectStage('proj_two')).toBe('writing')
-    expect(seq('projects', 'proj_two')).toBe(before)
-    expect(product('prd_two').stage).toBe('writing')
+    expect(r.code).toBe('unknown_field')
+    expect(r.reason).toContain("projects.stage is retired: a project's stage is its home product's")
+    expect(seq('projects', 'proj_one')).toBe(before)
+    expect(product('prd_one').stage).toBe('writing')
   })
 
-  it('Hub UI: two products, one of them home -> still 409 (the home is not a stage tiebreak), project stage unchanged', async () => {
-    const r = await ui('/api/projects/proj_umb', { stage: 'submitted' })
-    expect(r.status).toBe(409)
-    expect(r.text).toContain('project_stage_unforwardable')
-    expect(projectStage('proj_umb')).toBe('writing')
-  })
-
-  it('PB: one product whose kind has no such stage -> the project stage lands, the product keeps its own, the reason says so', async () => {
-    const r = await pb('projects', 'proj_ops', 'update', { stage: 'submitted' })
-    expect(r.status, r.reason).toBe('accepted')
-    expect(r.code).toBeUndefined()
-    expect(r.reason).toContain('not on the trial_ops ladder')
-    expect(projectStage('proj_ops')).toBe('submitted')
-    expect(product('prd_ops').stage).toBe('start_up')
-  })
-
-  it('Hub UI: the same off-ladder edit is a 200, not a 409 (the editor is the only stage control before step 8)', async () => {
-    const r = await ui('/api/projects/proj_ops', { stage: 'writing' })
-    expect(r.status, r.text).toBe(200)
-    expect(product('prd_ops').stage).toBe('start_up')
-  })
-
-  it('PB: no products yet -> the project stage writes as it always did', async () => {
-    const r = await pb('projects', 'proj_none', 'update', { stage: 'submitted' })
-    expect(r.status, r.reason).toBe('accepted')
-    expect(projectStage('proj_none')).toBe('submitted')
-  })
-
-  it('PB: an echo of the current stage on a multi-product project is accepted (whole-row re-sends keep working)', async () => {
+  it('PB: a whole-row re-send that still carries stage is refused too, never half-applied', async () => {
     const r = await pb('projects', 'proj_two', 'update', { stage: 'writing', description: 'edited' })
-    expect(r.status, r.reason).toBe('accepted')
+    expect(r.code).toBe('unknown_field')
+    expect(row('SELECT description FROM projects WHERE id = ?', 'proj_two').description).not.toBe('edited')
+  })
+
+  it('PB: projects.stage_entered_at is refused the same way', async () => {
+    const r = await pb('projects', 'proj_one', 'update', { stage_entered_at: '2020-01-01 00:00:00' })
+    expect(r.code).toBe('unknown_field')
+    expect(r.reason).toContain('products.stage_entered_at')
+  })
+
+  it('Hub UI: POST /api/projects/:slug with stage is a 400 in words, nothing written', async () => {
+    const before = seq('projects', 'proj_one')
+    const r = await ui('/api/projects/proj_one', { stage: 'submitted', title: 'renamed' })
+    expect(r.status).toBe(400)
+    expect(r.text).toContain('projects.stage is retired')
+    expect(seq('projects', 'proj_one')).toBe(before)
+    expect(product('prd_one').stage).toBe('writing')
+  })
+
+  it('PB: a project insert with no home_product is envelope_invalid; with one it lands with that home', async () => {
+    const insert = async (record_id: string, extra: Record<string, unknown>) => {
+      n += 1
+      const now = nowInstant()
+      const mutation = {
+        mutation_id: `mut_step5_ins_${n}`, origin_machine: 'home', table: 'projects', record_id, op: 'insert',
+        base_seq: null, base_row_hash: null, depends_on: null, client_ts: now, issued_at: now,
+        payload: { title: record_id, slug: record_id.replace('proj_', ''), status: 'active', category: 'MNCCORE' },
+        ...extra,
+      }
+      const res = await worker.fetch(new Request('https://hub.test/api/mutations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${API_KEY}` },
+        body: JSON.stringify({ mutations: [mutation] }),
+      }), env, CTX)
+      return ((await res.json()) as { results: Result[] }).results[0]
+    }
+    const bare = await insert('proj_bare', {})
+    expect(bare.status).toBe('error')
+    expect(bare.code).toBe('envelope_invalid')
+    expect(row('SELECT COUNT(*) AS n FROM projects WHERE id = ?', 'proj_bare').n).toBe(0)
+    const named = await insert('proj_named', { home_product: { kind: 'abstract', stage: 'planning' } })
+    expect(named.status, named.reason).toBe('accepted')
+    expect(row('SELECT kind, stage, is_home FROM products WHERE project_id = ?', 'proj_named'))
+      .toEqual({ kind: 'abstract', stage: 'planning', is_home: 1 })
   })
 })
 

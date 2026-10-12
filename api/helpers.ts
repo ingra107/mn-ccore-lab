@@ -437,7 +437,8 @@ export async function isPiRequest(request: Request, env: Env): Promise<boolean> 
  *
  * These columns carry the API field-protection contract documented in
  * CLAUDE.md ("Tasks: status/priority/assignee — can never be null;
- * Projects: status/stage/category — can never be null"). Pre-fix, three
+ * Projects: status/category — can never be null"; projects.stage left the
+ * contract 2026-10-12, contract phase step 3). Pre-fix, three
  * write paths silently SKIPPED a null/empty protected value
  * (`continue`/no guard), which on the client manifested as an optimistic
  * update that silently reverted. We now hard-reject so the caller sees a
@@ -445,7 +446,7 @@ export async function isPiRequest(request: Request, env: Env): Promise<boolean> 
  */
 const PROTECTED_NON_NULL: Record<string, readonly string[]> = {
   tasks: ['status', 'priority', 'assignee'],
-  projects: ['status', 'stage', 'category'],
+  projects: ['status', 'category'],
 };
 
 /**

@@ -19,7 +19,7 @@ import type Database from 'better-sqlite3'
 import { nowInstant } from '../lib/time'
 import { applyDelete } from './mutations'
 import type { Mutation } from './mutations'
-import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db'
+import { prodSchemaDb, d1Adapter, seedProjectHome } from '../test-support/prod-schema-db'
 
 const fakeUser = { email: 'test@example.com', role: 'admin' } as import('../helpers').AuthUser
 
@@ -72,6 +72,7 @@ describe('M33 forward guard — applyDelete (Site 1: mutations.ts)', () => {
 
   it('stamps status=deleted AND deleted_at on a projects row, with a receipt', async () => {
     const projId = 'proj_01hw_m33_test_000000000001'
+    seedProjectHome(db, { id: projId })
     db.prepare("INSERT INTO projects (id, title, slug, status) VALUES (?, 'M33 test project', 'm33-test-project', 'active')").run(projId)
 
     const result = await applyDelete(env, del('projects', projId, 'mut_01hw_m33_test_000000000002', null), fakeUser)

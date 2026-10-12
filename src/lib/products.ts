@@ -135,8 +135,11 @@ export const MANUSCRIPT_LADDER_FALLBACK: readonly ProductStage[] = [
 /** What the Worker answers for a write: the product as it now stands. */
 export interface WrittenProduct {
   id: string
+  kind: string
   stage: string
   stage_label: string
+  /** 1 when the stage is its ladder's terminal rung (Published, Funded, ...). */
+  stage_is_terminal: number
   seq: number
   is_home: number
 }

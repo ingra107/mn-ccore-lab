@@ -49,8 +49,9 @@ describe('a project is born with the product its creator named (schema-v129)', (
     expect(body.data).toMatchObject({ home_kind: 'grant_application', home_stage: 'submitted', product_count: 1, product_open_count: 1 })
     // The seed is consumed: the table is empty at rest.
     expect(db.prepare('SELECT COUNT(*) AS n FROM project_home_seed').get()).toEqual({ n: 0 })
-    // projects.stage (still written until step 3) is not a grant word.
-    expect((db.prepare('SELECT stage FROM projects WHERE id = ?').get(id) as { stage: string }).stage).toBe('idea')
+    // projects.stage is not written at all since contract phase step 3: the
+    // stored row keeps the column's default until the step-6 drop.
+    expect((db.prepare('SELECT stage FROM projects WHERE id = ?').get(id) as { stage: string }).stage).not.toBe('submitted')
   })
 
   it('no kind = a manuscript at its first rung; a stage alone stays on the manuscript ladder', async () => {
@@ -81,9 +82,16 @@ describe('a project is born with the product its creator named (schema-v129)', (
     })()).toThrow(/FOREIGN KEY/)
   })
 
-  it('a create with no seed behaves as v125 did (PB creates until the PB lane lands)', () => {
-    db.prepare("INSERT INTO projects (id, title, slug, stage, status, category) VALUES ('proj_pb1', 'PB made', 'pb-made', 'submitted', 'active', 'MNCCORE')").run()
-    expect(homeOf('proj_pb1')).toEqual([{ kind: 'manuscript', stage: 'submitted', is_home: 1 }])
+  it('a raw insert with no seed is refused (schema-v130): no project is born a guessed manuscript', () => {
+    expect(() => db.prepare("INSERT INTO projects (id, title, slug, stage, status, category) VALUES ('proj_pb1', 'PB made', 'pb-made', 'submitted', 'active', 'MNCCORE')").run())
+      .toThrow(/project_home_seed_missing/)
+    expect(db.prepare("SELECT COUNT(*) AS n FROM projects WHERE id = 'proj_pb1'").get()).toEqual({ n: 0 })
+    expect(homeOf('proj_pb1')).toEqual([])
+  })
+
+  it('a tombstoned project row needs no seed (it has no home to build)', () => {
+    db.prepare("INSERT INTO projects (id, title, slug, status, category, deleted_at) VALUES ('proj_gone', 'Gone', 'gone', 'active', 'MNCCORE', '2026-01-01 00:00:00')").run()
+    expect(homeOf('proj_gone')).toEqual([])
   })
 
   it('GET /api/projects carries each project\'s home product, and the sync wire does not', async () => {

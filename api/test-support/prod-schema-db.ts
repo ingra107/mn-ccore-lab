@@ -75,15 +75,39 @@ export function prodSchemaDb(): InstanceType<typeof Database> {
 /**
  * Insert one row with the named columns and return the stored row, so a test
  * sees what the schema's defaults and triggers made of it (seq included).
+ *
+ * A live project row gets its project_home_seed first, as every create route
+ * writes one (schema-v130 refuses a seedless project insert): a manuscript,
+ * at the row's `stage` when that word is on the manuscript ladder, else the
+ * ladder's first rung. That is the home the v125 trigger used to guess, so a
+ * fixture written before the contract phase reads the same products. A test
+ * that wants another home writes its own seed row first; this leaves it alone.
  */
 export function insertRow(
   db: InstanceType<typeof Database>, table: string, row: Record<string, unknown>,
 ): Record<string, unknown> {
+  if (table === 'projects') seedProjectHome(db, row)
   const cols = Object.keys(row)
   const info = db.prepare(
     `INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
   ).run(...cols.map((c) => row[c]))
   return db.prepare(`SELECT * FROM ${table} WHERE rowid = ?`).get(info.lastInsertRowid) as Record<string, unknown>
+}
+
+/** The fixture's project_home_seed (see insertRow). Exported for tests that
+ *  insert a project with raw SQL. */
+export function seedProjectHome(db: InstanceType<typeof Database>, row: Record<string, unknown>): void {
+  if (row.deleted_at != null || typeof row.id !== 'string') return
+  const hasSeedTable = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'project_home_seed'").get()
+  if (!hasSeedTable) return
+  if (db.prepare('SELECT 1 FROM project_home_seed WHERE project_id = ?').get(row.id)) return
+  const onLadder = typeof row.stage === 'string'
+    ? db.prepare("SELECT stage FROM product_stages WHERE kind = 'manuscript' AND stage = ? AND deleted_at IS NULL").get(row.stage) as { stage: string } | undefined
+    : undefined
+  const first = db.prepare("SELECT stage FROM product_stages WHERE kind = 'manuscript' AND deleted_at IS NULL ORDER BY ordinal LIMIT 1").get() as { stage: string } | undefined
+  const stage = onLadder?.stage ?? first?.stage
+  if (!stage) return
+  db.prepare("INSERT INTO project_home_seed (project_id, kind, stage) VALUES (?, 'manuscript', ?)").run(row.id, stage)
 }
 
 /** The processed_mutations receipt for a mutation id, or undefined. */

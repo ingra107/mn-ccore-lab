@@ -17,7 +17,7 @@ import { readFileSync } from 'node:fs'
 import type Database from 'better-sqlite3'
 import worker from '../index'
 import type { Env } from '../types'
-import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
+import { prodSchemaDb, d1Adapter, insertRow, seedProjectHome } from '../test-support/prod-schema-db'
 import { _resetPiEmailsCacheForTests, _resetValidationFlagsCache } from '../helpers'
 import { nowInstant } from '../lib/time'
 
@@ -64,10 +64,19 @@ async function pb(table: string, record_id: string, op: 'insert' | 'update' | 'd
   n += 1
   const now = nowInstant()
   const seq = op === 'update' ? (row(`SELECT seq FROM ${table} WHERE id = ?`, record_id)?.seq as number) : null
+  // A project insert names its first product (contract phase step 3): a
+  // `stage` here is that product's, sent as home_product, never a column.
+  let home: Record<string, unknown> = {}
+  if (table === 'projects' && op === 'insert' && fields) {
+    const { stage, ...payload } = fields
+    fields = payload
+    home = { home_product: { kind: 'manuscript', stage: stage ?? 'idea' } }
+  }
   const mutation = {
     mutation_id: `mut_home_${n}`, origin_machine: 'home', table, record_id, op,
     base_seq: seq, base_row_hash: null, depends_on: null, client_ts: now, issued_at: now,
     ...(op === 'insert' ? { payload: fields } : fields ? { patch: fields } : {}),
+    ...home,
   }
   const res = await worker.fetch(new Request('https://hub.test/api/mutations', {
     method: 'POST',
@@ -91,11 +100,12 @@ function legacyProject(id: string, stage = 'writing') {
   db.exec('DROP TRIGGER trg_projects_home_product_ins')
   insertRow(db, 'projects', { id, slug: id.replace('proj_', ''), title: id, category: 'MNCCORE', status: 'active', stage, stage_entered_at: '2026-01-02 03:04:05' })
   insertRow(db, 'project_members', { project_id: id, member_slug: 'nick-ingraham', added_by: 'nick-ingraham' })
+  db.prepare('DELETE FROM project_home_seed WHERE project_id = ?').run(id)
   db.exec(trigger)
 }
 
 describe('a new project is born with its home product', () => {
-  it('PB insert through /api/mutations: prd_<the project ULID>, manuscript at the project stage, home, clock kept', async () => {
+  it('PB insert through /api/mutations: prd_<the project ULID>, the home_product it names, home, clock started', async () => {
     const r = await pb('projects', `proj_${ULID}`, 'insert', {
       title: 'New paper', slug: 'new-paper', category: 'MNCCORE', status: 'active', stage: 'data_analysis',
     })
@@ -184,13 +194,15 @@ describe('a project from before v125 that gains its home attaches its tasks (Bac
     insertRow(db, 'tasks', { id: 'task_tomb', project_id: 'proj_old', title: 'Gone', assignee: 'nick-ingraham', status: 'deleted', deleted_at: '2026-01-01 00:00:00' })
   })
 
-  it('one home product insert through /api/mutations attaches every live task, not the tombstone, and keeps the project clock', async () => {
+  it('one home product insert through /api/mutations attaches every live task, not the tombstone, and starts its own clock', async () => {
     const r = await pb('products', 'prd_old_home', 'insert', { project_id: 'proj_old', kind: 'award', stage: 'active', is_home: 1, venue: 'NHLBI' })
     expect(r.status, r.reason).toBe('accepted')
     expect(productOf('task_live')).toBe('prd_old_home')
     expect(productOf('task_done')).toBe('prd_old_home')
     expect(productOf('task_tomb')).toBeNull()
-    expect(row("SELECT stage_entered_at FROM products WHERE id = 'prd_old_home'")!.stage_entered_at).toBe('2026-01-02 03:04:05')
+    // projects.stage_entered_at retired with projects.stage (contract phase
+    // step 3): a new product's clock starts now, home or not.
+    expect(row("SELECT stage_entered_at FROM products WHERE id = 'prd_old_home'")!.stage_entered_at).not.toBe('2026-01-02 03:04:05')
   })
 
   it('a slug project ref resolves to the typed id', async () => {
@@ -296,7 +308,8 @@ describe('read routes', () => {
 })
 
 describe('the rule is the arbiter\'s, not a route\'s', () => {
-  it('raw SQL (a wrangler --file repair) gets the same home product and task attach', () => {
+  it('raw SQL (a wrangler --file repair) that writes its seed gets the same home product and task attach', () => {
+    db.prepare(`INSERT INTO project_home_seed (project_id, kind, stage) VALUES ('proj_${ULID}', 'manuscript', 'submitted')`).run()
     db.prepare(`INSERT INTO projects (id, slug, title, category, status, stage) VALUES ('proj_${ULID}', 'raw', 'Raw', 'MNCCORE', 'active', 'submitted')`).run()
     db.prepare(`INSERT INTO tasks (id, title, project_id, assignee, status) VALUES ('task_raw', 'Raw', 'proj_${ULID}', 'nick-ingraham', 'todo')`).run()
     expect(liveProducts(`proj_${ULID}`)).toMatchObject([{ id: `prd_${ULID}`, stage: 'submitted', is_home: 1 }])
@@ -305,12 +318,14 @@ describe('the rule is the arbiter\'s, not a route\'s', () => {
 
   it('a project id that is not proj_<ULID> (the PUT upsert keeps a legacy 32-char id) gets prd_<32 hex>, never a non-canonical id', () => {
     const legacy = 'a'.repeat(31) + 'b'
+    seedProjectHome(db, { id: legacy })
     db.prepare(`INSERT INTO projects (id, slug, title, category, status, stage) VALUES ('${legacy}', 'leg', 'Leg', 'MNCCORE', 'active', 'idea')`).run()
     const [p] = liveProducts(legacy)
     expect(String(p.id)).toMatch(/^prd_[0-9a-f]{32}$/)
   })
 
   it('a restored project gets its home back: the tombstoned home returns and the restored tasks attach', () => {
+    seedProjectHome(db, { id: `proj_${ULID}` })
     db.prepare(`INSERT INTO projects (id, slug, title, category, status, stage) VALUES ('proj_${ULID}', 'r', 'R', 'MNCCORE', 'active', 'idea')`).run()
     db.prepare(`UPDATE projects SET deleted_at = datetime('now'), status = 'deleted' WHERE id = 'proj_${ULID}'`).run()
     db.prepare(`UPDATE products SET deleted_at = datetime('now') WHERE project_id = 'proj_${ULID}'`).run()
@@ -319,12 +334,13 @@ describe('the rule is the arbiter\'s, not a route\'s', () => {
     expect(liveProducts(`proj_${ULID}`)).toMatchObject([{ id: `prd_${ULID}`, is_home: 1 }])
   })
 
-  it('a restored project whose products were removed outright gets a new home', () => {
+  it('a restored project whose products were removed outright gets a new home: a manuscript at the first rung (nothing to seed from)', () => {
+    seedProjectHome(db, { id: `proj_${ULID}`, stage: 'writing' })
     db.prepare(`INSERT INTO projects (id, slug, title, category, status, stage) VALUES ('proj_${ULID}', 'r', 'R', 'MNCCORE', 'active', 'writing')`).run()
     db.prepare(`UPDATE projects SET deleted_at = datetime('now'), status = 'deleted' WHERE id = 'proj_${ULID}'`).run()
     db.prepare(`DELETE FROM products WHERE project_id = 'proj_${ULID}'`).run()
     db.prepare(`UPDATE projects SET deleted_at = NULL, status = 'active' WHERE id = 'proj_${ULID}'`).run()
-    expect(liveProducts(`proj_${ULID}`)).toMatchObject([{ id: `prd_${ULID}`, stage: 'writing', is_home: 1 }])
+    expect(liveProducts(`proj_${ULID}`)).toMatchObject([{ id: `prd_${ULID}`, kind: 'manuscript', stage: 'idea', is_home: 1 }])
   })
 
   it('a live home cannot be tombstoned while other products are live; handing the home over first works, and its tasks follow', async () => {
@@ -355,7 +371,7 @@ describe('v125 edge cases (cold review)', () => {
   const P = `proj_${ULID}`
   const H = `prd_${ULID}`
   const proj = (id: string, extra: Record<string, unknown> = {}) =>
-    db.prepare('INSERT INTO projects (id, slug, title, category, status, stage, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    (seedProjectHome(db, { id, deleted_at: extra.deleted_at ?? null }), db).prepare('INSERT INTO projects (id, slug, title, category, status, stage, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
       .run(id, id.slice(-8).toLowerCase(), id, 'MNCCORE', extra.deleted_at ? 'deleted' : 'active', 'idea', extra.deleted_at ?? null)
   const homes = (pid: string) => (row('SELECT COUNT(*) n FROM products WHERE project_id = ? AND is_home = 1 AND deleted_at IS NULL', pid)!.n as number)
 

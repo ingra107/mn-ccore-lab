@@ -32,40 +32,6 @@
         "legacy_aliases": {},
         "nullable": true
       },
-      "stage": {
-        "canonical": [
-          "idea",
-          "data_collection",
-          "data_analysis",
-          "writing",
-          "submitted",
-          "revisions",
-          "accepted",
-          "published"
-        ],
-        "legacy_aliases": {
-          "Accepted": "accepted",
-          "Analysis": "data_analysis",
-          "Analyzing": "data_analysis",
-          "Collection": "data_collection",
-          "Data Analysis": "data_analysis",
-          "Data Collecting": "data_collection",
-          "Data Collection": "data_collection",
-          "Drafting": "writing",
-          "Idea": "idea",
-          "In Revision": "revisions",
-          "In Revisions": "revisions",
-          "Published": "published",
-          "R&R": "revisions",
-          "Review": "submitted",
-          "Revise & Resubmit": "revisions",
-          "Revise and Resubmit": "revisions",
-          "Revisions": "revisions",
-          "Submitted": "submitted",
-          "Writing": "writing"
-        },
-        "nullable": true
-      },
       "state": {
         "canonical": [
           "active",

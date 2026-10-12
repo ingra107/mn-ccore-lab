@@ -117,7 +117,8 @@ describe('assertProtectedNotNull — AM-1 (SEC-T0-5)', () => {
 
   it('rejects a null protected field on projects', () => {
     expect(assertProtectedNotNull('projects', { category: null })).toMatch(/category/)
-    expect(assertProtectedNotNull('projects', { stage: '' })).toMatch(/stage/)
+    // projects.stage left the contract 2026-10-12 (contract phase step 3).
+    expect(assertProtectedNotNull('projects', { stage: '' })).toBeNull()
     expect(assertProtectedNotNull('projects', { status: undefined })).toMatch(/status/)
   })
 

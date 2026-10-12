@@ -164,10 +164,8 @@ export function projectChangeEvents(
 ): LifecycleEvent[] {
   const out: LifecycleEvent[] = [];
 
-  // Stage.
-  if ('stage' in patch && str(patch.stage) && patch.stage !== before.stage) {
-    out.push({ event: 'stage', kind: 'system', body: `Stage: ${human(before.stage)} → ${human(patch.stage)}` });
-  }
+  // (A project has no stage of its own since contract phase step 3: a stage
+  // line is a product's, productChangeEvents below.)
 
   // Status — a transition INTO done is a completion; other transitions are system.
   if ('status' in patch && str(patch.status) && patch.status !== before.status) {

@@ -91,7 +91,7 @@ describe('enum-domains.generated.json well-formedness', () => {
     // canonical, so they now DO cross the wire and the validator covers them.
     const required: Record<string, string[]> = {
       tasks: ['status', 'priority', 'effort', 'deadline_type', 'next_artifact'],
-      projects: ['status', 'stage', 'state', 'category', 'tier', 'domain'],
+      projects: ['status', 'state', 'category', 'tier', 'domain'],
     }
     for (const [table, fields] of Object.entries(required)) {
       const domains = file.tables[table]
@@ -236,8 +236,9 @@ describe('(e) projects.category bucket domain', () => {
     const mut: Mutation = {
       mutation_id: 'mut_e1', origin_machine: 'home', table: 'projects', op: 'insert',
       record_id: 'proj_e1', base_seq: null, base_row_hash: null,
-      payload: { title: 'P', status: 'active', stage: 'idea', category: 'MNCCORE' },
+      payload: { title: 'P', status: 'active', category: 'MNCCORE' },
       client_ts: nowInstant(), issued_at: nowInstant(),
+      home_product: { kind: 'manuscript', stage: 'idea' },
     }
     const r = await runMutation(env, mut)
     expect(r.status).toBe('accepted')
