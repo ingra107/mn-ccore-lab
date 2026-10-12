@@ -546,6 +546,8 @@ export function createTask(input: {
   assignee: string
   meeting_id?: string
   project_id?: string
+  /** The product the task sits on (schema-v124); omit to take the project's home product. */
+  product_id?: string
   due_date?: string
   priority?: string
   source?: string

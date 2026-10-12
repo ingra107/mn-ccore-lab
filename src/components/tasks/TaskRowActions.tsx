@@ -67,10 +67,12 @@ export interface TaskRowActionsProps {
   isDone: boolean
   /** Project SLUG (TASK_SELECT_COLS resolves project_id to slug at the read boundary). */
   projectId: string | null
+  /** The row's product, for the "Project ~ Product" pick. */
+  productId?: string | null
   onToggleDone: () => void
   onOpenEditor: () => void
   /** next is the chosen slug, or null when "No project" is picked. */
-  onProjectChange: (next: string | null) => void
+  onProjectChange: (next: string | null, productId?: string | null) => void
   onDelete: () => void
 }
 
@@ -126,7 +128,7 @@ function VerbButton({
 }
 
 export function TaskRowActions({
-  isDone, projectId, onToggleDone, onOpenEditor, onProjectChange, onDelete,
+  isDone, projectId, productId, onToggleDone, onOpenEditor, onProjectChange, onDelete,
 }: TaskRowActionsProps) {
   // Resolved from the SAME query that labels the chip (hooks/useProjectPickerList)
   // so the arrow and the chip can never disagree about what this row is routed
@@ -147,7 +149,8 @@ export function TaskRowActions({
     >
       <ProjectInlineGhostSelect
         value={projectId ?? ''}
-        onChange={(v) => onProjectChange(v || null)}
+        productId={productId}
+        onChange={(v, prd) => onProjectChange(v || null, prd)}
       />
       {project && (
         // Navigation, kept distinct from the picker beside it: its own element,

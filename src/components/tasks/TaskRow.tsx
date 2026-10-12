@@ -43,6 +43,7 @@ import { dueLabelCompact, dueTone, isOverdue } from '../../lib/dateUtils'
 import { CardRow, MilestoneCardRow } from './TaskCardRow'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 import { taskShortLabel } from '../../lib/displayNames'
+import { usePairName } from '../../hooks/useProjectPairs'
 
 // Reserved priority-dot color. only urgent carries a colored dot; everything
 // else gets a transparent dot of the SAME width so every title starts at the
@@ -127,7 +128,9 @@ function DueChip({ due, status }: { due: string; status?: string }) {
 // editor, both inline drawers, and now TaskRowActions. Corrected rather than
 // left in place: a comment naming a control that does not exist is what a
 // future reader would design against.
-function ProjectTag({ project, shrink = false }: { project: { name: string; slug: string; fullTitle?: string } | null; shrink?: boolean }) {
+function ProjectTag({ project, task, shrink = false }: { project: { name: string; slug: string; fullTitle?: string } | null; task?: TaskRowData; shrink?: boolean }) {
+  // "Project ~ Product" when the project has 2+ products.
+  const name = usePairName(task, project?.name ?? '')
   if (!project) return null
   // shrink: the narrow-rail line, where the name gives way to the due label.
   // A Link is inline, and an inline box ignores max-width/ellipsis outside a
@@ -143,13 +146,13 @@ function ProjectTag({ project, shrink = false }: { project: { name: string; slug
     <Link
       to={PATHS.project(project.slug)}
       onClick={(e) => e.stopPropagation()}
-      aria-label={`Open ${project.name}`}
+      aria-label={`Open ${name}`}
       // A shrunk name is often cut, so its hover tip always carries the name.
-      title={project.fullTitle ?? (shrink ? project.name : undefined)}
+      title={project.fullTitle ?? (shrink ? name : undefined)}
       className="link-affordance"
       style={{ fontSize: 11, color: 'var(--sk-t3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', ...size }}
     >
-      {project.name}
+      {name}
     </Link>
   )
 }
@@ -385,7 +388,7 @@ function MilestoneRow(props: SharedTaskRowProps) {
             {taskShortLabel(task)}
           </span>
           <span aria-hidden="true" style={{ flex: 1, minWidth: 24, height: 1, background: withAlpha(diamondColor, 28), opacity: emphasisOpacity }} />
-          <ProjectTag project={project} />
+          <ProjectTag project={project} task={task} />
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, opacity: emphasisOpacity }}>
             <MilestoneChips task={task} role={milestoneRole} status={task.status} />
           </span>
@@ -613,7 +616,7 @@ function StandardRow(props: SharedTaskRowProps) {
     <>
       {isPlanned && !isDone && <PlannedChip label={plannedLabel} onUnplan={onTogglePlan} />}
       {extraMeta}
-      <ProjectTag project={project} />
+      <ProjectTag project={project} task={task} />
       {task.due_date && !isDone && <DueChip due={task.due_date} status={task.status} />}
       {rowActions}
     </>
@@ -689,7 +692,7 @@ function StandardRow(props: SharedTaskRowProps) {
                 different spot per card (site audit 2026-10-10, 196px Columns). */}
             {(project || (task.due_date && !isDone)) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                <ProjectTag project={project} shrink />
+                <ProjectTag project={project} task={task} shrink />
                 {task.due_date && !isDone && (
                   <span style={{ marginLeft: 'auto', flexShrink: 0, display: 'inline-flex' }}>
                     <DueChip due={task.due_date} status={task.status} />

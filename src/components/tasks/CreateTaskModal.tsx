@@ -5,6 +5,8 @@ import { suggestTaskFields, type AutofillSuggestions, type FieldSuggestion } fro
 import { useAuth } from '../../hooks/useAuth'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineSelect from '../InlineSelect'
+import { useProjectPairs } from '../../hooks/useProjectPairs'
+import { decodePair } from '../../lib/projectPairs'
 import { Button } from '../ui/Button'
 import Field from '../ui/Field'
 import Modal from '../ui/Modal'
@@ -19,9 +21,13 @@ interface CreateTaskModalProps {
     description: string
     assignee: string
     project_id?: string
+    product_id?: string
     due_date?: string
     priority?: string
   }) => void
+  /** Preselect a project (and product) when the modal opens, e.g. from a project page with a product chip selected. */
+  defaultProject?: string
+  defaultProductId?: string | null
 }
 
 const TASK_TEMPLATES = [
@@ -69,7 +75,8 @@ const selectStyle: React.CSSProperties = {
   borderColor: 'var(--border-subtle)',
 }
 
-export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskModalProps) {
+export default function CreateTaskModal({ open, onClose, onCreate, defaultProject, defaultProductId }: CreateTaskModalProps) {
+  const pairs = useProjectPairs()
   const { data: team = [] } = useTeam()
   const { data: projects = [] } = useProjects()
   const { user } = useAuth()
@@ -79,7 +86,16 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
   const [description, setDescription] = useState('')
   const [assignee, setAssignee] = useState(defaultAssignee)
   const [assigneeTouched, setAssigneeTouched] = useState(false)
+  // The picked project, as a Project ~ Product pair value (`slug` or `slug::prd_id`).
   const [projectId, setProjectId] = useState('')
+  const [projectTouched, setProjectTouched] = useState(false)
+  const defaultPair = defaultProject ? pairs.valueFor(defaultProject, defaultProductId) : ''
+  const projSyncKey = `${open}|${projectTouched}|${defaultPair}`
+  const [prevProjSyncKey, setPrevProjSyncKey] = useState(projSyncKey)
+  if (projSyncKey !== prevProjSyncKey) {
+    setPrevProjSyncKey(projSyncKey)
+    if (open && !projectTouched) setProjectId(defaultPair)
+  }
   // Due date defaults to today's LOCAL civil date (viewer zone). Via todayCivil()
   // — never a raw new Date().toISOString() (the R20/R21 time-discipline lint
   // hard-fails that). `dueTouched` lets a user clear/change it without the
@@ -147,7 +163,8 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
 
   const acceptSuggestion = (suggestion: FieldSuggestion) => {
     if (suggestion.field === 'project') {
-      setProjectId(suggestion.value)
+      setProjectId(pairs.valueFor(suggestion.value, null))
+      setProjectTouched(true)
     } else if (suggestion.field === 'priority') {
       setPriority(suggestion.value)
     } else if (suggestion.field === 'assignee') {
@@ -171,7 +188,8 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
       title: title.trim(),
       description: description.trim() || title.trim(),
       assignee,
-      project_id: projectId || undefined,
+      ...(projectId ? { project_id: decodePair(projectId).project_id ?? undefined } : {}),
+      ...(decodePair(projectId).product_id ? { product_id: decodePair(projectId).product_id! } : {}),
       due_date: dueDate || undefined,
       priority,
     })
@@ -182,6 +200,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
     setAssignee(defaultAssignee)
     setAssigneeTouched(false)
     setProjectId('')
+    setProjectTouched(false)
     setDueDate(todayCivil())
     setDueTouched(false)
     setPriority('medium')
@@ -408,9 +427,8 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           <Field label="Project (optional)" htmlFor="task-project" noContainer>
             <InlineSelect
               value={projectId}
-              options={[{ value: '', label: 'No Project' }, ...projects.map((p) => ({ value: p.slug, label: p.title })
-              )]}
-              onChange={setProjectId}
+              options={[{ value: '', label: 'No Project' }, ...pairs.optionsWith(projectId).map((o) => ({ value: o.value, label: o.label }))]}
+              onChange={(v) => { setProjectId(v); setProjectTouched(true) }}
               size="md"
               alwaysShowChevron
             />

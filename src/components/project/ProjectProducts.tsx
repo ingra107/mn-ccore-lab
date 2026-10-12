@@ -34,6 +34,10 @@ interface Props {
   slug: string
   /** The stats line, drawn beside the chips. */
   stats?: React.ReactNode
+  /** The product chip that filters the page (?product=), or null for All. Only
+   *  a project with 2+ products filters. */
+  selectedId?: string | null
+  onSelect?: (id: string | null) => void
 }
 
 /** Chips shown before the rest fold into "+N more". */
@@ -41,15 +45,21 @@ const MAX_CHIPS = 4
 const PANEL_ID = 'pp-panel'
 const MORE_ID = 'pp-more-list'
 
-export default function ProjectProducts({ slug, stats }: Props) {
+export default function ProjectProducts({ slug, stats, selectedId = null, onSelect }: Props) {
   const { data, isLoading, isError } = useProjectProducts(slug)
   // The read answered: the caller is a member of this project (or the PI).
   const canEdit = !!data
-  const [openId, setOpenId] = useState<string | null>(null)
+  // With 2+ products a chip is a FILTER (Nick, 2026-10-12): the selected chip
+  // narrows the page's tasks and stats, and its ladder opens below. All (the
+  // default) clears it. A lone product keeps the inline ladder and filters nothing.
+  const [localOpen, setLocalOpen] = useState<string | null>(null)
   const [more, setMore] = useState(false)
   const [adding, setAdding] = useState(false)
 
   const products = useMemo(() => sortProducts(data?.products ?? []), [data])
+  const filters = products.length > 1
+  const openId = filters ? selectedId : localOpen
+  const setOpenId = (id: string | null) => { if (filters) onSelect?.(id); else setLocalOpen(id) }
   const kinds = data?.kinds ?? []
   const selected = products.find((p) => p.id === openId) ?? null
   // The open product always has its chip, even when it is past the cap.
@@ -66,6 +76,17 @@ export default function ProjectProducts({ slug, stats }: Props) {
           {isError && <span className="pp-dim" role="alert">Could not load products.</span>}
           {data && products.length === 0 && (
             <span className="pp-dim" data-testid="product-empty">No products yet</span>
+          )}
+          {filters && (
+            <button
+              type="button"
+              className={`pp-chip pp-chip-all${openId === null ? ' is-on' : ''}`}
+              aria-pressed={openId === null}
+              onClick={() => { setOpenId(null); setMore(false) }}
+              data-testid="product-chip-all"
+            >
+              <span className="pp-chip-n">All</span>
+            </button>
           )}
           {shown.map((p) => {
             const on = p.id === openId
@@ -88,6 +109,7 @@ export default function ProjectProducts({ slug, stats }: Props) {
                 type="button"
                 className={`pp-chip${on ? ' is-on' : ''}`}
                 aria-expanded={on}
+                aria-pressed={on}
                 aria-controls={on ? PANEL_ID : undefined}
                 onClick={() => { setOpenId(on ? null : p.id); setMore(false) }}
                 data-testid={`product-chip-${p.id}`}
@@ -103,7 +125,7 @@ export default function ProjectProducts({ slug, stats }: Props) {
               className={`pp-chip pp-chip-more${more ? ' is-on' : ''}`}
               aria-expanded={more}
               aria-controls={more ? MORE_ID : undefined}
-              onClick={() => { setMore((v) => !v); setOpenId(null) }}
+              onClick={() => { setMore((v) => !v); if (!filters) setLocalOpen(null) }}
               data-testid="product-more"
             >
               +{hidden} more

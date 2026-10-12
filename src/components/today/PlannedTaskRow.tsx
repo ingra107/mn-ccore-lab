@@ -24,9 +24,11 @@ import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import { taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
+import { usePairName } from '../../hooks/useProjectPairs'
 
 export function PlannedTaskRow({ task, project, state, timeHint, small = false, onExpand, expandedId }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; timeHint?: string; small?: boolean; onExpand: (id: string) => void; expandedId: string | null; projectsByPid?: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }> }) {
   const isDone = isTaskDone(task) || !!state.done[task.id]
+  const projectName = usePairName(task, project?.name ?? '')
   const expanded = expandedId === task.id
   const links: TaskLink[] = []
   if (task.key_link_1) links.push({ url: task.key_link_1, desc: task.key_link_1_desc })
@@ -79,7 +81,7 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
           </div>
           <div className="tk-cs">
             {project ? (
-              <Link to={PATHS.project(project.slug)} onClick={(e) => e.stopPropagation()} aria-label={`Open ${project.name}`}>{project.name}</Link>
+              <Link to={PATHS.project(project.slug)} onClick={(e) => e.stopPropagation()} aria-label={`Open ${projectName}`}>{projectName}</Link>
             ) : 'No project'}
           </div>
         </div>

@@ -86,7 +86,7 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
           />
         ),
       },
-      { key: 'project', width: '160px', interactive: true, phone: 'line', render: (t) => <CardProjectLine project={projectOf(t)} /> },
+      { key: 'project', width: '160px', interactive: true, phone: 'line', render: (t) => <CardProjectLine project={projectOf(t)} task={t} /> },
       { key: 'due', width: '104px', phone: 'line', render: (t) => <TaskDueCell task={t} isDone={isTaskDone(t)} /> },
       { key: 'owner', width: '26px', phone: 'trail', render: (t) => (t.assignee ? <Face slug={t.assignee} /> : null) },
       {

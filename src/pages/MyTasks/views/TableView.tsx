@@ -33,6 +33,8 @@ import WorkOnActions from '../../../components/WorkOnActions'
 import type { TaskRow } from '../../../lib/api'
 import { getPersonInfo } from '../../../data/team'
 import { taskShortLabel } from '../../../lib/displayNames'
+import { useProjectPairs } from '../../../hooks/useProjectPairs'
+import { decodePair } from '../../../lib/projectPairs'
 
 type Project = { name: string; slug: string; fullTitle?: string; primary_folder?: string | null }
 
@@ -55,7 +57,7 @@ const rowLinks = (t: TaskRow): TaskLink[] => (
   [[t.key_link_1, t.key_link_1_desc], [t.key_link_2, t.key_link_2_desc], [t.key_link_3, t.key_link_3_desc]] as const
 ).flatMap(([url, desc]) => (url ? [{ url, desc: desc ?? undefined }] : []))
 
-export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect, selectRange, anchorId, setSelected, setDrawer, projectsByPid, projectOptions, plannedSet }: TableViewProps) {
+export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect, selectRange, anchorId, setSelected, setDrawer, projectsByPid, plannedSet }: TableViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Header sort. null = the filter hook's order (overdue first within each group).
@@ -138,11 +140,10 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
     virtualizer.scrollToIndex(cursor, { align: 'auto', behavior: 'auto' })
   }, [cursorShown, cursor, filtered.length, virtualizer])
 
-  const projectSelectOptions = useMemo(() => (
-    [{ value: '', label: 'No project' }, ...projectOptions
-      .filter((o): o is { v: string; l: string } => o.v !== null)
-      .map(o => ({ value: o.v, label: o.l }))]
-  ), [projectOptions])
+  // Project ~ Product pairs (Nick, 2026-10-12): one option per product for a
+  // project with 2+ products. projectOptions (the filter list) still feeds the TopBar.
+  const pairs = useProjectPairs()
+
   const priorityOptions = useMemo(() => PRIORITY_OPTIONS.map(p => ({ value: p.value, label: p.label })), [])
   const statusOptions = useMemo(() => STATUS_OPTIONS.map(s => ({ value: s.value, label: s.label })), [])
 
@@ -150,6 +151,7 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
 
   const columns = useMemo<SleekColumn<TaskRow>[]>(() => {
     const projectOf = (t: TaskRow) => (t.project_id ? projectsByPid.get(t.project_id) ?? null : null)
+    const nameOf = (t: TaskRow) => pairs.labelFor(projectOf(t)?.name ?? 'No project', t.project_id, t.product_id)
     const stale = (t: TaskRow) => (t.updated_at && t.status === 'in_progress' && daysSince(t.updated_at) >= prefs.taskStaleDays ? daysSince(t.updated_at) : 0)
     return [
       {
@@ -174,13 +176,13 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
         key: 'project', label: 'Project', width: '168px', sortable: true, interactive: true, phone: 'line',
         render: (t) => (
           <InlineSelect
-            value={t.project_id ?? ''}
-            options={projectSelectOptions}
-            onChange={(next) => onProjectChange(t.id, t.project_id, next)}
-            display={<span className="tk-cs" title={projectOf(t)?.fullTitle}>{projectOf(t)?.name ?? 'No project'}</span>}
+            value={pairs.valueFor(t.project_id, t.product_id)}
+            options={[{ value: '', label: 'No project' }, ...pairs.optionsWith(pairs.valueFor(t.project_id, t.product_id)).map(o => ({ value: o.value, label: o.label }))]}
+            onChange={(next) => { const d = decodePair(next); onProjectChange(t.id, t.project_id, d.project_id ?? '', d.product_id, t.product_id ?? null) }}
+            display={<span className="tk-cs" title={projectOf(t)?.fullTitle}>{nameOf(t)}</span>}
           />
         ),
-        renderPhone: (t) => <span className="tk-cs">{projectOf(t)?.name ?? 'No project'}</span>,
+        renderPhone: (t) => <span className="tk-cs">{nameOf(t)}</span>,
       },
       {
         key: 'due', label: 'Due', width: '116px', sortable: true, interactive: true, phone: 'line',
@@ -254,7 +256,7 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
         },
       },
     ]
-  }, [projectsByPid, prefs.taskStaleDays, plannedSet, setDrawer, projectSelectOptions, priorityOptions, statusOptions, onStatusChange, onProjectChange, onDateChange, onPriorityChange, onAssigneeChange])
+  }, [projectsByPid, prefs.taskStaleDays, plannedSet, setDrawer, pairs, priorityOptions, statusOptions, onStatusChange, onProjectChange, onDateChange, onPriorityChange, onAssigneeChange])
 
   const onRowClick = useCallback((index: number, id: string, e: React.MouseEvent) => {
     // Shift-click → range-select; Ctrl/Meta-click → toggle. Plain click → cursor.

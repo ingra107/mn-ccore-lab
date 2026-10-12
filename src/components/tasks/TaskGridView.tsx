@@ -38,6 +38,7 @@ import EmptyState from '../EmptyState'
 import { tealRamp, BAR_TRACK } from '../../lib/tealRamp'
 import { Chip } from '../ui/Chip'
 import { projectShortLabel, taskShortLabel } from '../../lib/displayNames'
+import { useProjectPairs } from '../../hooks/useProjectPairs'
 
 // ── Column definitions for resize + tab nav ─────────────────
 // Full column set: checkbox + DATA_COLUMNS + actions
@@ -256,10 +257,6 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     }
     return map
   }, [projects])
-  const projectOptions = useMemo(() => [
-    { value: '', label: 'None' },
-    ...projects.filter(p => p.slug).map(p => ({ value: p.slug, label: projectShortLabel(p) })),
-  ], [projects])
   const { state: contextMenuState, openMenu: openContextMenu, closeMenu: closeContextMenu } = useContextMenu()
 
   const expandedTasks = controlledExpanded ?? internalExpanded
@@ -542,7 +539,6 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
                     expanded={isExpanded}
                     onToggleExpand={() => toggleExpand(task.id)}
                     projectMap={projectMap}
-                    projectOptions={projectOptions}
                     onPinToFocus={onPinToFocus}
                     isPinnedToFocus={pinnedIds?.has(task.id)}
                     focusedCell={focusedCell}
@@ -790,7 +786,7 @@ function SortableColumnHeader({
 // ── Grid Row ─────────────────────────────────────────────────
 
 function TaskGridRow({
-  task, allTasks, index, colStyle, orderedDataCols, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, onSelectRange, anchorId, orderedTaskIds, selectModeActive, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, projectOptions, onPinToFocus, isPinnedToFocus, focusedCell, onCellTab, onCellFocus,
+  task, allTasks, index, colStyle, orderedDataCols, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, onSelectRange, anchorId, orderedTaskIds, selectModeActive, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, onPinToFocus, isPinnedToFocus, focusedCell, onCellTab, onCellFocus,
 }: {
   task: TaskRow
   allTasks: TaskRow[]
@@ -814,7 +810,6 @@ function TaskGridRow({
   expanded?: boolean
   onToggleExpand?: () => void
   projectMap: Map<string, string>
-  projectOptions: { value: string; label: string }[]
   onPinToFocus?: (id: string) => void
   isPinnedToFocus?: boolean
   focusedCell?: [number, number] | null
@@ -822,6 +817,7 @@ function TaskGridRow({
   onCellFocus?: (cell: [number, number] | null) => void
 }) {
   const isDone = task.status === 'done'
+  const pairs = useProjectPairs()
   const blockerIds = useMemo(() => parseBlockedByIds(task.blocked_by), [task.blocked_by])
   const hasBlockers = blockerIds.length > 0
   const rowRef = useRef<HTMLDivElement>(null)
@@ -1284,7 +1280,7 @@ function TaskGridRow({
                       } as React.CSSProperties}
                       title={`Work on ${task.project_id}`}
                     >
-                      {(projectMap.get(task.project_id) ?? task.project_id).slice(0, 20)}
+                      {pairs.labelFor(projectMap.get(task.project_id) ?? task.project_id, task.project_id, task.product_id).slice(0, 34)}
                     </Link>
                   )}
                   <TaskKeyLinks task={task} />
@@ -1339,11 +1335,11 @@ function TaskGridRow({
               >
                 <InlineCellSelect
                   label="Project"
-                  value={task.project_id || ''}
-                  options={projectOptions}
+                  value={pairs.valueFor(task.project_id, task.product_id)}
+                  options={[{ value: '', label: 'None' }, ...pairs.optionsWith(pairs.valueFor(task.project_id, task.product_id)).map((o) => ({ value: o.value, label: o.label }))]}
                   onChange={(val) => onFieldChange(task.id, 'project_id', val || null)}
                   renderValue={(val) => {
-                    const name = val ? projectMap.get(val) || val : null
+                    const name = val ? pairs.optionsWith(val).find((o) => o.value === val)?.label || projectMap.get(val) || val : null
                     return (
                       <span
                         style={{

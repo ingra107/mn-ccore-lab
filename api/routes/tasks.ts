@@ -454,6 +454,10 @@ export async function handleCreateTask(
   const body = await request.json() as {
     title?: string; description: string; assignee: string;
     meeting_id?: string; project_id?: string; due_date?: string;
+    // schema-v124: the product the task sits on. Optional: NULL lets the v125
+    // home rule choose. trg_tasks_product_project_ins refuses a product that is
+    // not in the task's project.
+    product_id?: string | null;
     priority?: string; source?: string; status?: string;
     key_link_1?: string | null; key_link_1_desc?: string | null;
     key_link_2?: string | null; key_link_2_desc?: string | null;
@@ -499,6 +503,18 @@ export async function handleCreateTask(
     resolvedProjectId = canonical;
   }
 
+  // schema-v124: a product must be a live product of the task's project. The
+  // trigger refuses a stranger; this answers it in words, like the other writes.
+  let productId: string | null = null;
+  if (body.product_id) {
+    if (!resolvedProjectId) return error('A product needs a project.', 400);
+    const prod = await env.DB.prepare(
+      'SELECT id FROM products WHERE id = ? AND project_id = ? AND deleted_at IS NULL'
+    ).bind(body.product_id, resolvedProjectId).first<{ id: string }>();
+    if (!prod) return error('That product is not in this project.', 400);
+    productId = prod.id;
+  }
+
   const id = generateId('task');  // A1.2: typed ULID
   const title = body.title || body.description;
   const source = body.source || (body.meeting_id ? 'meeting' : 'manual');
@@ -524,6 +540,7 @@ export async function handleCreateTask(
       assigned_by: user.email,
       meeting_id: body.meeting_id ?? null,
       project_id: resolvedProjectId,
+      ...(productId ? { product_id: productId } : {}),
       due_date: body.due_date ?? null,
       deadline: body.deadline ?? null,
       priority,

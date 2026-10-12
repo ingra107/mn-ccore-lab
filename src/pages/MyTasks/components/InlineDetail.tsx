@@ -294,6 +294,7 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
         priority={task.priority}
         kind={task.kind}
         projectId={task.project_id}
+        productId={task.product_id}
         dueDate={task.due_date}
         onUpdate={(fields) => {
           const prev = task.status

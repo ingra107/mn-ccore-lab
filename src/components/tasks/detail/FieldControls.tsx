@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { useProjectPickerList } from '../../../hooks/useProjectPickerList'
+import { useProjectPairs } from '../../../hooks/useProjectPairs'
+import { decodePair } from '../../../lib/projectPairs'
 import { TASK_KIND_OPTIONS, statusOptionsFor } from '../../../../shared/taskKinds'
 import GhostSelect from '../../ui/GhostSelect'
 import Field from '../../ui/Field'
 import InlineDatePicker from '../../InlineDatePicker'
 import { isDoneStatus } from '../../../lib/dateUtils'
-import { projectShortLabel } from '../../../lib/displayNames'
 
 // ── Field Block Wrapper ──────────────────────────────────────
 
@@ -273,22 +273,29 @@ export function WorkflowSection({ fields, onChange, compact }: { fields: Workflo
 // TaskRowActions' navigation arrow) resolve a row's project from the SAME cache
 // this chip labels itself from — see that file for the divergence it prevents.
 
-export function ProjectInlineGhostSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const { data: projectList = [] } = useProjectPickerList()
+// The picker offers Project ~ Product pairs (Nick, 2026-10-12): one option per
+// product for a project with 2+ products, the project alone otherwise.
+// `value` is the task's project slug and `productId` its product; `onChange`
+// gets the project slug ('' = none) and, for a pair, the product id.
+export function ProjectInlineGhostSelect({
+  value, productId, onChange,
+}: { value: string; productId?: string | null; onChange: (v: string, productId?: string | null) => void }) {
+  const { valueFor, optionsWith } = useProjectPairs()
+  const current = valueFor(value, productId)
 
   const options = [
     { value: '', label: 'No project' },
-    ...projectList.map((p) => ({ value: p.slug, label: projectShortLabel(p) })),
+    ...optionsWith(current).map((o) => ({ value: o.value, label: o.label })),
   ]
 
   return (
     <GhostSelect
       aria-label="Project"
-      value={value}
-      onChange={onChange}
+      value={current}
+      onChange={(v) => { const d = decodePair(v); onChange(d.project_id ?? '', d.product_id) }}
       options={options}
       triggerColor={value ? 'var(--job-accent)' : undefined}
-      maxWidth={160}
+      maxWidth={220}
       searchable
     />
   )
@@ -336,6 +343,7 @@ export function TaskInlineFieldRow({
   priority,
   kind,
   projectId,
+  productId,
   dueDate,
   hideDue,
   onUpdate,
@@ -346,6 +354,8 @@ export function TaskInlineFieldRow({
   /** schema-v109 — every caller passes task.kind. */
   kind: string | null | undefined
   projectId: string | null | undefined
+  /** The task's product: the picker shows "Project ~ Product" for 2+ products. */
+  productId?: string | null
   dueDate: string | null | undefined
   /** #143: the Today drawer renders the due-date control in its action row
    *  instead, so the same fact is not shown twice. Default false: every other
@@ -386,7 +396,8 @@ export function TaskInlineFieldRow({
       )}
       <ProjectInlineGhostSelect
         value={projectId || ''}
-        onChange={(v) => onUpdate({ project_id: v || null })}
+        productId={productId}
+        onChange={(v, prd) => onUpdate({ project_id: v || null, ...(prd ? { product_id: prd } : {}) })}
       />
       {!hideDue && (
         <DueInlineSelect

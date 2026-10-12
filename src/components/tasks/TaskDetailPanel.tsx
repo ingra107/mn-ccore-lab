@@ -557,7 +557,8 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             )}
             <ProjectInlineGhostSelect
               value={task.project_id || ''}
-              onChange={(v) => handleFieldUpdate('project_id', v || null)}
+              productId={task.product_id}
+              onChange={(v, prd) => updateTask.mutate({ id: task.id, fields: { project_id: v || null, ...(prd ? { product_id: prd } : {}) } })}
             />
             {task.kind === 'milestone' ? (
               // Two-date milestone (Nick 2026-09-17): due_date is the

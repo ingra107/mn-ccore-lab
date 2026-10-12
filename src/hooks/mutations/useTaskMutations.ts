@@ -22,6 +22,7 @@ export function useCreateTask() {
       assignee: string
       meeting_id?: string
       project_id?: string
+      product_id?: string
       due_date?: string
       priority?: string
       kind?: TaskKind

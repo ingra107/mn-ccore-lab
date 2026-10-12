@@ -80,6 +80,8 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { projectShortLabel } from '../lib/displayNames'
 import SectionHead from '../components/ui/SectionHead'
 import ProjectProducts from '../components/project/ProjectProducts'
+import { pairFields } from '../lib/projectPairs'
+import { useProjectProducts } from '../hooks/useProjectProducts'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
 
 // P2-5: notes + comments collapsed into the single chronological `activity`
@@ -253,8 +255,24 @@ function ProjectDetailInner({ project }: InnerProps) {
   const updateTaskStatus = useUpdateTaskStatus()
   const updateTask = useUpdateTask()
   const bulkUpdate = useBulkUpdateTasks()
-  const pendingTasks = projectTasks.filter((t) => !t.completed)
-  const completedTasks = projectTasks.filter((t) => t.completed)
+  // Product chip = filter (Nick, 2026-10-12): ?product=<prd_id> narrows the open
+  // tasks, the Tasks tab and the stats to that product (task.product_id). Only
+  // a project with 2+ products filters; an unknown id reads as All.
+  const { data: productData } = useProjectProducts(project.slug)
+  const productFilter = (() => {
+    const id = searchParams.get('product')
+    const list = productData?.products ?? []
+    return id && list.length > 1 && list.some((p) => p.id === id) ? id : null
+  })()
+  const setProductFilter = useCallback((id: string | null) => {
+    const next = new URLSearchParams(searchParams)
+    if (id) next.set('product', id)
+    else next.delete('product')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
+  const scopedTasks = productFilter ? projectTasks.filter((t) => t.product_id === productFilter) : projectTasks
+  const pendingTasks = scopedTasks.filter((t) => !t.completed)
+  const completedTasks = scopedTasks.filter((t) => t.completed)
 
   // Multi-select for tasks tab
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -284,7 +302,11 @@ function ProjectDetailInner({ project }: InnerProps) {
   }, [toggleSelect])
 
   const handleFieldChange = (id: string, field: string, value: unknown) => {
-    updateTask.mutate({ id, fields: { [field]: value } })
+    // The grid's project cell hands a Project ~ Product pair as `slug::prd_id`.
+    const fields = field === 'project_id' && typeof value === 'string' && value.includes('::')
+      ? pairFields(value)
+      : { [field]: value }
+    updateTask.mutate({ id, fields })
   }
 
   const handleBulkAction = (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze' | 'status', value?: string) => {
@@ -1539,13 +1561,13 @@ recentActivity.length === 0 ? (
 
       {/* ── TASKS TAB ── (PD-5: TaskGridView per Rule 17 / Decision D23) */}
       {activeTab === 'tasks' && (() => {
-        const filtered = taskFilter === 'all' ? projectTasks : taskFilter === 'active' ? pendingTasks : taskFilter === 'done' ? completedTasks : projectTasks.filter(t => t.status === 'blocked')
+        const filtered = taskFilter === 'all' ? scopedTasks : taskFilter === 'active' ? pendingTasks : taskFilter === 'done' ? completedTasks : scopedTasks.filter(t => t.status === 'blocked')
         return (
           <div role="tabpanel" id="projectdetail-tabpanel-tasks" aria-labelledby="projectdetail-tab-tasks" style={{ marginBottom: '2rem' }}>
             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 {(['all', 'active', 'done', 'blocked'] as const).map(f => {
-                  const count = f === 'all' ? projectTasks.length : f === 'active' ? pendingTasks.length : f === 'done' ? completedTasks.length : projectTasks.filter(t => t.status === 'blocked').length
+                  const count = f === 'all' ? scopedTasks.length : f === 'active' ? pendingTasks.length : f === 'done' ? completedTasks.length : scopedTasks.filter(t => t.status === 'blocked').length
                   if (f !== 'all' && count === 0) return null
                   return (
                     <button
@@ -1748,8 +1770,12 @@ recentActivity.length === 0 ? (
       <CreateTaskModal
         open={showCreateTask}
         onClose={() => setShowCreateTask(false)}
+        defaultProject={project.slug}
+        defaultProductId={productFilter}
         onCreate={(task) => {
-          createTask.mutate({ ...task, project_id: project.slug }, {
+          // A task made while a product chip is selected lands on that product
+          // (the modal preselects the pair); the picker may still move it.
+          createTask.mutate({ ...task, project_id: task.project_id ?? project.slug }, {
             // S16: confirm the create + offer a working "Open →" into the new
             // task's detail panel instead of dead-ending in silence.
             onSuccess: (resp) => {
@@ -1957,7 +1983,7 @@ recentActivity.length === 0 ? (
         <div className="pj-main">
           {agendaFormEl}
           {project.id ? (
-            <ProjectProducts projectId={project.id} slug={project.slug} stats={statsInline} />
+            <ProjectProducts projectId={project.id} slug={project.slug} stats={statsInline} selectedId={productFilter} onSelect={setProductFilter} />
           ) : statsInline}
           {tabsEl}
           {activeTab === 'overview' && overviewEl}

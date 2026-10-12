@@ -30,6 +30,7 @@ import TaskTitle from './TaskTitle'
 import { useCompletionRing } from '../../lib/completionMoment'
 import type { CardTaskRowProps } from './TaskRow'
 import { taskShortLabel } from '../../lib/displayNames'
+import { usePairName } from '../../hooks/useProjectPairs'
 
 // The complete control on a card (.tk-ck). Same contract as DoneBox: the square
 // is COMPLETE, everywhere. `done-box` keeps the invisible 24px+ hit area.
@@ -103,17 +104,19 @@ export function CardDuePill({ due, status }: { due: string; status?: string }) {
 }
 
 /** The project as a muted short name that links to the project. */
-export function CardProjectLine({ project }: { project: { name: string; slug: string; fullTitle?: string } | null }) {
+export function CardProjectLine({ project, task }: { project: { name: string; slug: string; fullTitle?: string } | null; task?: { project_id?: string | null; product_id?: string | null } }) {
+  // "Project ~ Product" when the project has 2+ products.
+  const name = usePairName(task, project?.name ?? '')
   if (!project) return <span className="tk-cs">No project</span>
   return (
     <span className="tk-cs">
       <Link
         to={PATHS.project(project.slug)}
         onClick={(e) => e.stopPropagation()}
-        aria-label={`Open ${project.name}`}
+        aria-label={`Open ${name}`}
         title={project.fullTitle}
       >
-        {project.name}
+        {name}
       </Link>
     </span>
   )
@@ -277,7 +280,7 @@ export function CardRow(props: CardTaskRowProps) {
             {tailW > 0 && <span className="tk-tail">{planBtn}{grip}</span>}
           </div>
           <div className="tk-ctx">
-            <CardProjectLine project={project} />
+            <CardProjectLine project={project} task={task} />
             {task.due_date && !isDone && <CardDuePill due={task.due_date} status={task.status} />}
             {!isDone && footPills}
             {plannedPill}

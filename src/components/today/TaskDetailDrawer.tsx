@@ -302,6 +302,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
             priority={task.priority}
             kind={task.kind}
             projectId={task.project_id}
+            productId={task.product_id}
             dueDate={task.due_date}
             hideDue
             onUpdate={(fields) => {

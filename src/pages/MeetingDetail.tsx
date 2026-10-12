@@ -394,21 +394,22 @@ export default function MeetingDetail() {
   // but it only patches ['tasks'], so on this page the chip would not move until
   // a refetch. Same reason handleToggleActionDone writes its own patch. The undo
   // re-applies through the identical path, so both directions behave the same.
-  function handleReassignAction(item: TaskRow, next: string | null) {
+  function handleReassignAction(item: TaskRow, next: string | null, nextProduct: string | null = null) {
     const prev = item.project_id ?? null
-    if (prev === next) return
-    const apply = (value: string | null) => {
+    const prevProduct = item.product_id ?? null
+    if (prev === next && (nextProduct == null || nextProduct === prevProduct)) return
+    const apply = (value: string | null, product: string | null) => {
       const { revert, settle } = patchActionItems((items) => items.map((a) =>
-        a.id === item.id ? { ...a, project_id: value } : a
+        a.id === item.id ? { ...a, project_id: value, product_id: product } : a
       ))
-      updateTask.mutate({ id: item.id, fields: { project_id: value } }, {
+      updateTask.mutate({ id: item.id, fields: { project_id: value, product_id: product } }, {
         onError: () => { revert(); showError('Could not change project') },
         onSuccess: settle,
       })
     }
-    apply(next)
+    apply(next, nextProduct)
     const nextName = next ? (projectsBySlug.get(next)?.name ?? next) : null
-    showUndo(nextName ? `Moved to ${nextName}` : 'Project cleared', () => apply(prev))
+    showUndo(nextName ? `Moved to ${nextName}` : 'Project cleared', () => apply(prev, prevProduct))
   }
 
   function handleBatchComplete() {
@@ -780,9 +781,10 @@ export default function MeetingDetail() {
                           <TaskRowActions
                             isDone={false}
                             projectId={item.project_id ?? null}
+                            productId={item.product_id ?? null}
                             onToggleDone={() => handleToggleActionDone(item)}
                             onOpenEditor={() => setFullEditorTask(item)}
-                            onProjectChange={(next) => handleReassignAction(item, next)}
+                            onProjectChange={(next, prd) => handleReassignAction(item, next, prd)}
                             onDelete={() => handleDeleteAction(item)}
                           />
                         }
@@ -828,9 +830,10 @@ export default function MeetingDetail() {
                           <TaskRowActions
                             isDone={true}
                             projectId={item.project_id ?? null}
+                            productId={item.product_id ?? null}
                             onToggleDone={() => handleToggleActionDone(item)}
                             onOpenEditor={() => setFullEditorTask(item)}
-                            onProjectChange={(next) => handleReassignAction(item, next)}
+                            onProjectChange={(next, prd) => handleReassignAction(item, next, prd)}
                             onDelete={() => handleDeleteAction(item)}
                           />
                         }

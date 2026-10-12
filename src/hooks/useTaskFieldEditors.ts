@@ -25,7 +25,8 @@ export interface TaskFieldEditors {
   onPriorityChange: (id: string, prev: string, next: string) => void
   onAssigneeChange: (id: string, prev: string, next: string) => void
   onDateChange: (id: string, prev: string | null, next: string | null) => void
-  onProjectChange: (id: string, prev: string | null, next: string) => void
+  /** next is a project slug; nextProduct names the product of a Project ~ Product pick. */
+  onProjectChange: (id: string, prev: string | null, next: string, nextProduct?: string | null, prevProduct?: string | null) => void
 }
 
 export function useTaskFieldEditors(): TaskFieldEditors {
@@ -61,11 +62,13 @@ export function useTaskFieldEditors(): TaskFieldEditors {
     showUndo(next ? `Due → ${next}` : 'Due cleared', () => updateTask.mutate({ id, fields: { due_date: prev } }))
   }, [updateTask, showUndo])
 
-  const onProjectChange = useCallback((id: string, prev: string | null, next: string) => {
+  const onProjectChange = useCallback((id: string, prev: string | null, next: string, nextProduct: string | null = null, prevProduct: string | null = null) => {
     const newVal = next || null
-    if (prev === newVal) return
-    updateTask.mutate({ id, fields: { project_id: newVal } })
-    showUndo(newVal ? 'Project set' : 'Project cleared', () => updateTask.mutate({ id, fields: { project_id: prev } }))
+    if (prev === newVal && (!nextProduct || nextProduct === prevProduct)) return
+    updateTask.mutate({ id, fields: { project_id: newVal, ...(nextProduct ? { product_id: nextProduct } : {}) } })
+    showUndo(newVal ? 'Project set' : 'Project cleared', () => updateTask.mutate({
+      id, fields: { project_id: prev, product_id: prevProduct },
+    }))
   }, [updateTask, showUndo])
 
   return { onStatusChange, onPriorityChange, onAssigneeChange, onDateChange, onProjectChange }
