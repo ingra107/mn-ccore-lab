@@ -2,7 +2,8 @@ import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, AlertCircle, ArrowRight, ListChecks, CalendarOff, UserCheck } from 'lucide-react'
 import { useMeetingsApi, useMeetingLinkedTasks, useMeetingCadence, useTasks } from '../../hooks/useApiData'
-import { useGrantTimeline } from '../../hooks/useGrantTimeline'
+import { useGrantProducts } from '../../hooks/useGrantProducts'
+import { grantName } from '../../lib/grants'
 import { localDateKey } from '../../lib/dateUtils'
 import { countActionsByMeetingId } from '../../lib/meetingTaskCounts'
 import { isTaskDone } from '../../lib/taskGrouping'
@@ -31,7 +32,8 @@ function UpcomingCard() {
   const { data: allMeetingTasks = [] } = useMeetingLinkedTasks()
   const { data: cadence } = useMeetingCadence()
   const { data: tasks = [] } = useTasks()
-  const { data: grants = [] } = useGrantTimeline()
+  const { data: grantData } = useGrantProducts()
+  const grants = useMemo(() => grantData?.data ?? [], [grantData])
 
   // Aggregate real deadlines from open tasks (with due_date) + grant milestones.
   // Cap to 5 most-urgent: overdue first (most-overdue first), then ascending by days-until-due.
@@ -52,32 +54,17 @@ function UpcomingCard() {
       })
     }
 
-    // Grant milestones (target_date)
-    for (const g of grants) {
-      for (const m of g.milestones || []) {
-        if (!m.target_date) continue
-        if (m.status === 'completed') continue
-        const due = new Date(m.target_date + 'T23:59:59')
-        const daysUntil = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-        items.push({
-          date: formatDateShort(due),
-          label: `${g.mechanism}: ${m.title}`,
-          type: 'milestone',
-          daysUntil,
-        })
-      }
-    }
+    // A grant's post-award milestones are milestone tasks, so the task loop
+    // above already carries them (grant_milestones retired 2026-10-12).
 
-    // Grant submission targets (end_date) for grants in submission lifecycle
+    // Grant submission dates: an application still in play with a due date.
     for (const g of grants) {
-      if (!g.end_date) continue
-      // Only surface grants that haven't yet been funded/closed/declined
-      if (g.status === 'funded' || g.status === 'closed' || g.status === 'declined') continue
-      const due = new Date(g.end_date + 'T23:59:59')
+      if (g.kind !== 'grant_application' || g.bucket === 'ended' || !g.deadline) continue
+      const due = new Date(g.deadline + 'T23:59:59')
       const daysUntil = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       items.push({
         date: formatDateShort(due),
-        label: `${g.mechanism} ${g.pi || ''} — ${g.title}`.trim(),
+        label: `${grantName(g)}${g.venue ? ` (${g.venue})` : ''}`,
         type: 'grant',
         daysUntil,
       })

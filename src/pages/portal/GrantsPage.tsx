@@ -1,446 +1,81 @@
-import { useMemo, useState, useCallback, useRef } from 'react'
+import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Wallet,
-  Banknote,
-  Diamond,
-  List,
-  GanttChartSquare,
-  Telescope,
-  Plus,
-  ClipboardList,
-  X,
-  Check,
-  AlertTriangle,
-} from 'lucide-react'
+import { Banknote, Diamond, List, GanttChartSquare, Telescope, Plus, ClipboardList, X, Check, Wallet } from 'lucide-react'
 import FilterLinks from '../../components/ui/FilterLinks'
+import { Link } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import InlineSelect from '../../components/InlineSelect'
 import Field from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
-import { useUndoToast } from '../../components/UndoToast'
 import { TableControls } from '../../components/table'
-import type { SleekSort } from '../../components/table/SleekRows'
-import { GrantSleekList } from '../../components/grants/GrantSleekList'
-import { sortGrants } from '../../lib/grantRows'
-import { useGrantTimeline, GRANT_STATUS_OPTIONS } from '../../hooks/useGrantTimeline'
-import type { GrantTimelineItem, GrantMilestone, GrantStatus } from '../../hooks/useGrantTimeline'
-import { useSimilarGrants, useUpcomingGrantMilestones } from '../../hooks/useApiData'
-import { useCreateGrantMilestone, useUpdateGrantMilestone, useCompleteGrantMilestone, useUpdateGrant } from '../../hooks/useMutations'
-import { getPersonInfo } from '../../data/team'
-import { displayName } from '../../lib/nameUtils'
-import { formatMediumDate, isOverdue } from '../../lib/dateUtils'
-import { ICON_PROPS } from '../../lib/iconProps'
-import { GRANT_BAR_FILL, GRANT_BAR_TOP, GRANT_BAR_STROKE } from '../../lib/grantBar'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
-import { NowMarkerSvg } from '../../components/moments/NowMarker'
+import GrantList, { type TermEdit } from '../../components/grants/GrantList'
+import GrantGantt, { type GanttMove } from '../../components/grants/GrantGantt'
+import { useGrantProducts, useSetGrantTerms, useAddGrantMilestone, GRANTS_KEY } from '../../hooks/useGrantProducts'
+import { useSimilarGrants } from '../../hooks/useApiData'
+import { useUpdateTaskStatus } from '../../hooks/useMutations'
+import { PATHS } from '../../constants/paths'
+import { ICON_PROPS } from '../../lib/iconProps'
+import { localDateKey } from '../../lib/dateUtils'
+import { formatUsd, grantName, mechanismOf, milestoneDate, type GrantProduct } from '../../lib/grants'
 
-// ── Gantt chart constants ──────────────────────────────────────
-const CHART_MIN_YEAR = 2023
-const CHART_MAX_YEAR = 2033
-const TOTAL_YEARS = CHART_MAX_YEAR - CHART_MIN_YEAR
-const BAR_HEIGHT = 32
-const BAR_GAP = 10
-const LABEL_WIDTH = 140
-const CHART_PADDING_TOP = 32
-const CHART_PADDING_BOTTOM = 40
-
-// ── Grant Milestone Constants ──────────────────────────────────
-
-const MILESTONE_TYPES = [
-  { value: 'progress_report', label: 'Progress Report' },
-  { value: 'continuing_review', label: 'Continuing Review' },
-  { value: 'nce_deadline', label: 'NCE Deadline' },
-  { value: 'budget_period', label: 'Budget Period' },
-  { value: 'irb_renewal', label: 'IRB Renewal' },
-  { value: 'subcontract', label: 'Subcontract' },
-  { value: 'other', label: 'Other' },
-]
-
-const MILESTONE_STATUS_OPTIONS = [
-  { value: 'upcoming', label: 'Upcoming', color: 'var(--slate)' },
-  { value: 'in_progress', label: 'In Progress', color: 'var(--job-accent)' },
-  { value: 'completed', label: 'Completed', color: 'var(--st-done)' },
-  { value: 'overdue', label: 'Overdue', color: 'var(--job-overdue)' },
-]
-
-function getMilestoneTypeLabel(type: string): string {
-  return MILESTONE_TYPES.find((t) => t.value === type)?.label || type
-}
-
-function formatFunding(amount: number): string {
-  if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`
-  if (amount >= 1_000) return `$${(amount / 1_000).toFixed(0)}K`
-  return `$${amount.toLocaleString()}`
-}
-
-// F83: the mechanism is a label, not a status. Neutral hairline chip so colour
-// stays reserved for meaning (the gantt keeps the family accents as chart marks).
-const MECHANISM_CHIP = { bg: 'transparent', color: 'var(--ink)' }
-
-// ── Gantt helpers ──────────────────────────────────────────────
-
-function parseYear(dateStr: string | null): number | null {
-  if (!dateStr) return null
-  const d = new Date(dateStr + 'T12:00:00')
-  return d.getFullYear() + d.getMonth() / 12 + d.getDate() / 365
-}
-
-function yearToX(year: number, chartWidth: number): number {
-  return LABEL_WIDTH + ((year - CHART_MIN_YEAR) / TOTAL_YEARS) * (chartWidth - LABEL_WIDTH)
-}
-
-function piDisplayName(pi: string): string {
-  return displayName(pi, 'short')
-}
-
-// ── Gantt tooltip ──────────────────────────────────────────────
-
-interface TooltipData {
-  grant: GrantTimelineItem
-  x: number
-  y: number
-}
-
-function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: number }) {
-  const { grant, x, y } = data
-  const info = getPersonInfo(grant.pi)
-  const flipLeft = x > chartWidth - 260
-  const tooltipStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: y - 8,
-    ...(flipLeft ? { right: chartWidth - x + 8 } : { left: x + 8 }),
-    width: 240,
-    zIndex: 'var(--z-dropdown)',
-    pointerEvents: 'none',
-  }
-  const mc = MECHANISM_CHIP
-  return (
-    <div style={tooltipStyle}>
-      <div
-        className="rounded-lg p-3"
-        style={{
-          background: 'var(--cream)',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-card-hover)',
-        }}
-      >
-        <div className="flex items-center gap-2 mb-1.5">
-          <span
-            className="px-1.5 py-0.5 rounded text-xs font-bold"
-            style={{ background: mc.bg, color: mc.color, fontSize: '11px', border: '1px solid var(--border-subtle)' }}
-          >
-            {grant.mechanism}
-          </span>
-          <span style={{ fontSize: '10px', color: 'var(--slate)' }}>{grant.agency}</span>
-          {grant.bucket === 'proposed' && (
-            <span style={{ fontSize: '10px', color: 'var(--slate)', fontWeight: 500 }}>
-              Proposed
-            </span>
-          )}
-        </div>
-        <p style={{ fontSize: '12px', fontWeight: 500, color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
-          {grant.title}
-        </p>
-        <p style={{ fontSize: '11px', color: 'var(--slate)', margin: '4px 0 0' }}>
-          {info.name}
-        </p>
-        {(grant.start_date || grant.end_date) && (
-          <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85, margin: '2px 0 0' }}>
-            {grant.start_date ? formatMediumDate(grant.start_date) : '?'}
-            {' – '}
-            {grant.end_date ? formatMediumDate(grant.end_date) : '?'}
-          </p>
-        )}
-        {grant.total_funding ? (
-          <p style={{ fontSize: '11px', color: 'var(--ink)', fontWeight: 600, margin: '4px 0 0' }}>
-            {formatFunding(grant.total_funding)}
-          </p>
-        ) : null}
-      </div>
-    </div>
-  )
-}
-
-// ── Gantt Chart ────────────────────────────────────────────────
-
-function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [tooltip, setTooltip] = useState<TooltipData | null>(null)
-  const [containerWidth, setContainerWidth] = useState(900)
-
-  const measuredRef = useCallback((node: HTMLDivElement | null) => {
-    if (node) {
-      const observer = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          setContainerWidth(entry.contentRect.width)
-        }
-      })
-      observer.observe(node)
-      setContainerWidth(node.getBoundingClientRect().width)
-      ;(containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node
-      return () => observer.disconnect()
-    }
-  }, [])
-
-  const chartWidth = containerWidth
-  const chartHeight = CHART_PADDING_TOP + grants.length * (BAR_HEIGHT + BAR_GAP) + CHART_PADDING_BOTTOM
-  const now = new Date()
-  const todayYear = now.getFullYear() + now.getMonth() / 12 + now.getDate() / 365
-  const todayX = yearToX(todayYear, chartWidth)
-  // Keep year labels at least ~44px apart (a 10px "2026" is ~24px wide).
-  const pxPerYear = (chartWidth - LABEL_WIDTH) / TOTAL_YEARS
-  const yearLabelStep = Math.max(1, Math.ceil(44 / Math.max(pxPerYear, 1)))
-
-  const handleBarEnter = (grant: GrantTimelineItem, event: React.MouseEvent<SVGGElement>) => {
-    const rect = (event.currentTarget as SVGGElement).getBoundingClientRect()
-    const containerRect = containerRef.current?.getBoundingClientRect()
-    if (!containerRect) return
-    setTooltip({
-      grant,
-      x: rect.left + rect.width / 2 - containerRect.left,
-      y: rect.bottom - containerRect.top + 4,
-    })
-  }
-
-  const handleBarLeave = () => setTooltip(null)
-
-  return (
-    <div ref={measuredRef} className="relative" style={{ width: '100%' }}>
-      <svg
-        width="100%"
-        height={chartHeight}
-        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-        style={{ overflow: 'visible' }}
-        role="img"
-        aria-label="Grant timeline Gantt chart showing active and proposed grants"
-      >
-        {/* Year gridlines: a line every year, a label only every `yearLabelStep`
-            years so the axis stays readable on a phone. */}
-        {Array.from({ length: TOTAL_YEARS + 1 }, (_, i) => {
-          const year = CHART_MIN_YEAR + i
-          const x = yearToX(year, chartWidth)
-          return (
-            <g key={`grid-${year}`}>
-              <line
-                x1={x} y1={CHART_PADDING_TOP - 16}
-                x2={x} y2={chartHeight - CHART_PADDING_BOTTOM + 12}
-                stroke="var(--slate)" strokeOpacity={0.12} strokeDasharray="4 4"
-              />
-              {i % yearLabelStep === 0 && <text
-                x={x} y={chartHeight - CHART_PADDING_BOTTOM + 28}
-                textAnchor="middle"
-                style={{ fontSize: '10px', fill: 'var(--slate)', opacity: 0.85 }}
-              >
-                {year}
-              </text>}
-            </g>
-          )
-        })}
-
-        {/* Funded bars are teal-lit: a lighter top edge into the teal (grantBar.ts). */}
-        <defs>
-          <linearGradient id="grant-bar-lit" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor={GRANT_BAR_TOP} />
-            <stop offset="0.7" stopColor={GRANT_BAR_FILL} />
-          </linearGradient>
-        </defs>
-
-        {/* Grant bars */}
-        {grants.map((grant, index) => {
-          const startYear = parseYear(grant.start_date)
-          const endYear = parseYear(grant.end_date)
-          if (!startYear || !endYear) return null
-
-          const barX = yearToX(startYear, chartWidth)
-          const barWidth = yearToX(endYear, chartWidth) - barX
-          const barY = CHART_PADDING_TOP + index * (BAR_HEIGHT + BAR_GAP)
-          const isProposed = grant.bucket === 'proposed'
-
-          return (
-            <g
-              key={grant.id}
-              onMouseEnter={(e) => handleBarEnter(grant, e)}
-              onMouseLeave={handleBarLeave}
-              style={{ cursor: 'pointer' }}
-            >
-              {/* Mechanism badge */}
-              <rect
-                x={0} y={barY + 4} width={42} height={BAR_HEIGHT - 8} rx={4}
-                fill="var(--surface-2)"
-              />
-              <text
-                x={21} y={barY + BAR_HEIGHT / 2 + 1}
-                textAnchor="middle" dominantBaseline="middle"
-                style={{ fontSize: '10px', fontWeight: 700, fill: 'var(--ink)' }}
-              >
-                {grant.mechanism}
-              </text>
-
-              {/* PI label */}
-              <text
-                x={50} y={barY + BAR_HEIGHT / 2 + 1}
-                dominantBaseline="middle"
-                style={{ fontSize: '11px', fill: 'var(--slate)' }}
-              >
-                {piDisplayName(grant.pi)}
-              </text>
-
-              {/* Bar: funded teal-lit, proposed dashed outline (grantBar.ts) */}
-              <rect
-                x={barX} y={barY + 2} width={Math.max(barWidth, 4)} height={BAR_HEIGHT - 4} rx={6}
-                {...(isProposed
-                  ? { fill: 'none', stroke: GRANT_BAR_STROKE, strokeWidth: 1.5, strokeDasharray: '6 4', opacity: 0.7, className: 'transition-opacity duration-200 hover:opacity-100' }
-                  : { fill: 'url(#grant-bar-lit)' })}
-              />
-              {!isProposed && barWidth > 12 && (
-                <line
-                  x1={barX + 6} y1={barY + 2.6} x2={barX + Math.max(barWidth, 4) - 6} y2={barY + 2.6}
-                  stroke="#fff" strokeOpacity={0.3}
-                />
-              )}
-
-              {/* Inline bar label */}
-              {barWidth > 120 && (
-                <text
-                  x={barX + 10} y={barY + BAR_HEIGHT / 2 + 1}
-                  dominantBaseline="middle"
-                  style={{
-                    fontSize: '10px',
-                    fill: isProposed ? GRANT_BAR_STROKE : '#fff',
-                    opacity: isProposed ? 0.8 : 1,
-                  }}
-                >
-                  {grant.title.length > 35 ? grant.title.slice(0, 35) + '\u2026' : grant.title}
-                </text>
-              )}
-
-              {/* Milestone diamonds */}
-              {grant.milestones.map((m: GrantMilestone) => {
-                const mYear = parseYear(m.target_date)
-                if (!mYear) return null
-                const mx = yearToX(mYear, chartWidth)
-                if (mx < barX || mx > barX + barWidth) return null
-                const my = barY + BAR_HEIGHT / 2
-                return (
-                  <g key={m.id}>
-                    <polygon
-                      points={`${mx},${my - 5} ${mx + 5},${my} ${mx},${my + 5} ${mx - 5},${my}`}
-                      fill="var(--job-milestone)" stroke="var(--cream)" strokeWidth={1}
-                    />
-                  </g>
-                )
-              })}
-            </g>
-          )
-        })}
-
-        {/* Today: the shared now marker (color-back pick 4), drawn after the
-            bars so it stays on top of the teal funded bars; a card-colored halo
-            keeps the line readable where it crosses teal. No pointer events, so
-            bar hover still works. */}
-        <g pointerEvents="none">
-          <line
-            x1={todayX} y1={CHART_PADDING_TOP - 16}
-            x2={todayX} y2={chartHeight - CHART_PADDING_BOTTOM + 12}
-            stroke="var(--sk-card)" strokeWidth={5}
-          />
-          <NowMarkerSvg x={todayX} y1={CHART_PADDING_TOP - 16} y2={chartHeight - CHART_PADDING_BOTTOM + 12} />
-        </g>
-      </svg>
-
-      {tooltip && <GanttTooltip data={tooltip} chartWidth={chartWidth} />}
-    </div>
-  )
-}
-
-// ── Main page ──────────────────────────────────────────────────
+// The Grants page reads products (Nick 2026-10-12: "we can keep grants
+// separate so use the current grants page to build out and make sure it reads
+// the right stuff"). A row is a grant_application, award or honor product
+// (api/routes/grants.ts); its stage is its kind's ladder, its dates and money
+// are schema-v128's award terms, its post-award milestones are milestone
+// tasks. The NIH RePORTER search is unchanged (it calls RePORTER live).
 
 type ViewMode = 'list' | 'timeline'
-type FilterMode = 'all' | 'active' | 'proposed'
+type FilterMode = 'all' | 'active' | 'proposed' | 'ended'
+type Tab = 'grants' | 'post-award' | 'landscape'
 
 export default function GrantsPage() {
-  const { data: grants = [], isLoading } = useGrantTimeline()
+  const { data, isLoading, isError, refetch } = useGrantProducts()
+  const rows = useMemo(() => data?.data ?? [], [data])
+  const kinds = useMemo(() => data?.kinds ?? [], [data])
   const [view, setView] = useState<ViewMode>('list')
   const [filter, setFilter] = useState<FilterMode>('all')
-  const [sort, setSort] = useState<SleekSort>(null)
+  const [activeTab, setActiveTab] = useState<Tab>('grants')
   const [searchKeywords, setSearchKeywords] = useState('')
   const [activeSearch, setActiveSearch] = useState('')
-  const [focusedIndex, setFocusedIndex] = useState(-1)
   const [showAddMilestone, setShowAddMilestone] = useState(false)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
-  // P3-04: top-level tab strip. RePORTER lifted from footer to a peer tab.
-  const [activeTab, setActiveTab] = useState<'grants' | 'post-award' | 'landscape'>('grants')
   const similarGrants = useSimilarGrants(activeSearch)
+  const setTerms = useSetGrantTerms()
+  const today = localDateKey(new Date())
 
-  const { data: upcomingMilestonesData = [], isLoading: milestonesLoading } = useUpcomingGrantMilestones(90)
-  const updateMilestone = useUpdateGrantMilestone()
-  const completeMilestone = useCompleteGrantMilestone()
-  const updateGrant = useUpdateGrant()
-  const { showUndo } = useUndoToast()
+  const counts = useMemo(() => ({
+    active: rows.filter((g) => g.bucket === 'active').length,
+    proposed: rows.filter((g) => g.bucket === 'proposed').length,
+    ended: rows.filter((g) => g.bucket === 'ended').length,
+  }), [rows])
+  const shown = useMemo(() => (filter === 'all' ? rows : rows.filter((g) => g.bucket === filter)), [rows, filter])
+  // The timeline plots what is live; an ended grant stays in the list.
+  const plotted = useMemo(() => shown.filter((g) => g.bucket !== 'ended'), [shown])
+  const activeFunding = useMemo(
+    () => rows.filter((g) => g.bucket === 'active').reduce((s, g) => s + (g.amount_usd ?? 0), 0),
+    [rows],
+  )
+  const mechanisms = useMemo(
+    () => [...new Set(rows.filter((g) => g.bucket === 'active').map((g) => mechanismOf(g.venue)).filter(Boolean))].sort(),
+    [rows],
+  )
 
-  const handleGrantStatusChange = useCallback((grantId: string, prevStatus: GrantStatus | null, next: string) => {
-    updateGrant.mutate({ id: grantId, fields: { status: next } })
-    showUndo(
-      `Status → ${GRANT_STATUS_OPTIONS.find(o => o.value === next)?.label ?? next}`,
-      () => { updateGrant.mutate({ id: grantId, fields: { status: prevStatus ?? 'planning' } }) },
-    )
-  }, [updateGrant, showUndo])
-
-  const enrichedPostAward = useMemo(() => {
-    return upcomingMilestonesData.map((m) => ({
-      ...m,
-      _isOverdue: isOverdue(m.due_date, m.status) || m.status === 'overdue',
-    }))
-  }, [upcomingMilestonesData])
-
-  const handleMilestoneStatusChange = useCallback((id: string, newStatus: string, prevStatus: string) => {
-    if (newStatus === 'completed') {
-      completeMilestone.mutate(id)
-    } else {
-      updateMilestone.mutate({ id, fields: { status: newStatus } })
-    }
-    const labels: Record<string, string> = { upcoming: 'Upcoming', in_progress: 'In Progress', completed: 'Completed', overdue: 'Overdue' }
-    showUndo(`Status changed to ${labels[newStatus] || newStatus}`, () => {
-      updateMilestone.mutate({ id, fields: { status: prevStatus } })
+  const write = (row: GrantProduct, fields: TermEdit['fields'], label: string) => {
+    const keys = Object.keys(fields) as (keyof TermEdit['fields'])[]
+    setTerms.mutate({
+      slug: row.project_slug, productId: row.id, fields, label,
+      seen: { seq: row.seq, values: Object.fromEntries(keys.map((k) => [k, row[k] ?? null])) },
     })
-  }, [updateMilestone, completeMilestone, showUndo])
+  }
+  const onEdit = (e: TermEdit) => write(e.row, e.fields, e.label)
+  const onMove = (m: GanttMove) => write(m.row, m.fields,
+    `${grantName(m.row)} ${m.row.kind === 'award' ? 'now runs' : 'proposed start'} ${m.fields.period_start}${m.fields.period_end ? ` to ${m.fields.period_end}` : ''}`)
 
-  const active = useMemo(() => grants.filter((g) => g.bucket === 'active'), [grants])
-  const proposed = useMemo(() => grants.filter((g) => g.bucket === 'proposed'), [grants])
-  const endedCount = grants.length - active.length - proposed.length
-
-  const totalFunding = useMemo(
-    () => grants.reduce((sum, g) => sum + (g.total_funding || 0), 0),
-    [grants]
-  )
-
-  // Filtered + sorted list
-  const filteredGrants = useMemo(() => {
-    let list = grants
-    if (filter === 'active') list = active
-    else if (filter === 'proposed') list = proposed
-
-    return sortGrants(list, sort)
-  }, [grants, active, proposed, filter, sort])
-
-  // What the Timeline plots: the same filter, minus ended grants (they never plot).
-  // The count and the empty state read this same list, so they cannot disagree with the bars.
-  const timelineGrants = useMemo(
-    () => (filter === 'active' ? active : filter === 'proposed' ? proposed : [...active, ...proposed]),
-    [filter, active, proposed]
-  )
-  const shownCount = view === 'timeline' ? timelineGrants.length : filteredGrants.length
-
-  // Unique mechanisms for the calc row
-  const mechanisms = useMemo(() => {
-    const seen = new Set<string>()
-    for (const g of active) if (g.mechanism) seen.add(g.mechanism)
-    return [...seen].sort()
-  }, [active])
-
+  // The redesign's filter links (main fda4d934, wave 1), not bordered pills.
   const filterPills = (
     <FilterLinks
       ariaLabel="Grant status"
@@ -450,15 +85,18 @@ export default function GrantsPage() {
         { value: 'all', label: 'All' },
         { value: 'active', label: 'Active' },
         { value: 'proposed', label: 'Proposed' },
+        { value: 'ended', label: 'Ended' },
       ] satisfies { value: FilterMode; label: string }[]}
     />
   )
+
+  const shownCount = view === 'timeline' ? plotted.length : shown.length
 
   return (
     <div className="content-container">
       <PageHeader
         title="Grants & Funding"
-        subtitle={`${active.length} active, ${proposed.length} proposed${endedCount > 0 ? `, ${endedCount} ended` : ''}`}
+        subtitle={`${counts.active} active, ${counts.proposed} proposed${counts.ended > 0 ? `, ${counts.ended} ended` : ''}`}
       >
         <TableControls
           views={[
@@ -473,559 +111,207 @@ export default function GrantsPage() {
         />
       </PageHeader>
 
-      {/* P3-04: top-level tab strip */}
-      <div
-        className="flex gap-1 border-b mb-4"
-        style={{ borderColor: 'var(--border-subtle)' }}
-        role="tablist"
-        aria-label="Grants sections"
-      >
+      <div className="flex gap-1 border-b mb-4" style={{ borderColor: 'var(--border-subtle)' }} role="tablist" aria-label="Grants sections">
         {([
           { key: 'grants', label: 'My Grants' },
           { key: 'post-award', label: 'Post-Award' },
           { key: 'landscape', label: 'NIH RePORTER' },
         ] as const).map((tab) => {
-          const isActive = activeTab === tab.key
+          const on = activeTab === tab.key
           return (
-            <button
-              key={tab.key}
-              role="tab"
-              aria-selected={isActive ? "true" : "false"}
-              onClick={() => setActiveTab(tab.key)}
+            <button key={tab.key} role="tab" aria-selected={on ? 'true' : 'false'} onClick={() => setActiveTab(tab.key)}
               className="px-3 py-2 text-sm transition-colors touch-tall"
               style={{
-                color: isActive ? 'var(--job-accent)' : 'var(--slate)',
-                borderBottom: `2px solid ${isActive ? 'var(--job-accent)' : 'transparent'}`,
-                background: 'none',
-                cursor: 'pointer',
-                marginBottom: '-1px',
-                fontWeight: isActive ? 'var(--weight-ui, 500)' : 400,
+                color: on ? 'var(--job-accent)' : 'var(--slate)', borderBottom: `2px solid ${on ? 'var(--job-accent)' : 'transparent'}`,
+                background: 'none', cursor: 'pointer', marginBottom: '-1px', fontWeight: on ? 'var(--weight-ui, 500)' : 400,
               }}
-            >
-              {tab.label}
-            </button>
+            >{tab.label}</button>
           )
         })}
       </div>
 
-      {activeTab === 'grants' && <>
-      {/* ── LIST VIEW ── */}
-      {!isLoading && view === 'list' && (
-        <>
-          {filteredGrants.length === 0 ? (
-            <EmptyState
-              icon={<Wallet size={40} />}
-              title="No grants tracked"
-              subtitle="Active awards and proposals in flight show up here with live countdowns to the next deadline."
-            />
-          ) : (
-            <GrantSleekList
-              grants={filteredGrants}
-              sort={sort}
-              onSort={setSort}
-              cursor={focusedIndex}
-              setCursor={setFocusedIndex}
-              expandedId={expandedId}
-              setExpandedId={setExpandedId}
-              onStatusChange={handleGrantStatusChange}
-              keyboardDisabled={showAddMilestone}
-            />
-          )}
+      {isError && <QueryErrorNote label="grants" onRetry={() => { void refetch() }} />}
+      {isLoading && <TableSkeleton rows={4} cols={6} />}
 
-          {/* Calculations row */}
-          {filteredGrants.length > 0 && (
-            <div
-              className="mt-2 px-4 py-2 rounded-lg text-xs flex items-center gap-1.5 flex-wrap"
-              style={{ color: 'var(--slate)', opacity: 0.85, fontSize: '12px' }}
-            >
-              {totalFunding > 0 && (
-                <>
-                  <span className="flex items-center gap-1">
-                    <Banknote {...ICON_PROPS} size={11} />
-                    {formatFunding(totalFunding)} total funding
+      {activeTab === 'grants' && !isLoading && (
+        <>
+          {view === 'list' && (shown.length === 0 ? (
+            <EmptyState icon={<Wallet size={40} />} title="No grants here"
+              subtitle="Grant applications, awards and honors show up here: add one as a product on its project page." />
+          ) : (
+            <>
+              <GrantList rows={shown} kinds={kinds} onEdit={onEdit} />
+              <div className="mt-2 px-4 py-2 text-xs flex items-center gap-1.5 flex-wrap" style={{ color: 'var(--slate)', opacity: 0.85 }}>
+                {activeFunding > 0 && (
+                  <span className="flex items-center gap-1" data-testid="grant-funding-total">
+                    <Banknote {...ICON_PROPS} size={11} /> {formatUsd(activeFunding)} active funding
                   </span>
-                </>
-              )}
-              {mechanisms.length > 0 && (
-                <>
-                  {totalFunding > 0 && <span style={{ opacity: 0.85 }}>·</span>}
-                  <span>Active mechanisms: {mechanisms.join(', ')}</span>
-                </>
-              )}
+                )}
+                {mechanisms.length > 0 && <span>{activeFunding > 0 ? '· ' : ''}Active mechanisms: {mechanisms.join(', ')}</span>}
+              </div>
+            </>
+          ))}
+          {view === 'timeline' && (
+            <div className="mt-2 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
+              <GrantGantt rows={plotted} today={today} onMove={onMove} />
             </div>
           )}
         </>
       )}
 
-      {/* ── TIMELINE VIEW ── */}
-      {!isLoading && view === 'timeline' && (
-        <div className="mt-4 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
-          {grants.length === 0 ? (
-            <EmptyState
-              icon={<GanttChartSquare size={40} />}
-              title="Nothing to plot yet"
-              subtitle="Add a grant to see its budget period and submission cycle on the timeline."
+      {activeTab === 'post-award' && !isLoading && (
+        <PostAward rows={rows} today={today} onAdd={() => setShowAddMilestone(true)} />
+      )}
+
+      {activeTab === 'landscape' && (
+        <div className="mt-2 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <Telescope {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} />
+            <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>Grant Landscape (NIH RePORTER)</h3>
+          </div>
+          <div className="flex gap-2 mb-4">
+            <input
+              type="text" placeholder="Search keywords (e.g., critical care, mechanical ventilation, ARDS)" aria-label="RePORTER keywords"
+              value={searchKeywords} onChange={(e) => setSearchKeywords(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') setActiveSearch(searchKeywords) }}
+              style={{ flex: 1, padding: 'var(--sp-sm) var(--sp-md)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', fontSize: 'var(--value-size)', background: 'var(--cream)', color: 'var(--ink)' }}
             />
-          ) : timelineGrants.length === 0 ? (
-            <EmptyState
-              icon={<GanttChartSquare size={40} />}
-              title={filter === 'all' ? 'No current grants to plot' : `No ${filter} grants`}
-              subtitle={filter === 'all' ? 'Ended grants stay in the list view; they do not plot.' : 'Switch the filter to All to see the rest.'}
-            />
-          ) : (
-            <GanttChart grants={timelineGrants} />
+            <button type="button" onClick={() => setActiveSearch(searchKeywords)}
+              style={{ background: 'var(--job-accent)', color: 'var(--sk-card)', border: 'none', borderRadius: 'var(--radius-lg)', padding: 'var(--sp-sm) var(--sp-lg)', fontSize: 'var(--value-size)', fontWeight: 600, cursor: 'pointer' }}
+            >Search</button>
+          </div>
+          {similarGrants.isLoading && <p className="text-center py-6" style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.85 }}>Searching NIH RePORTER...</p>}
+          {similarGrants.isError && !similarGrants.isLoading && (
+            <div className="text-center py-6"><QueryErrorNote label="grant search" onRetry={() => similarGrants.refetch()} /></div>
+          )}
+          {similarGrants.data?.data?.map((grant) => (
+            <div key={grant.project_num} className="p-3 rounded-lg mb-2" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>{grant.title}</p>
+                  <span style={{ fontSize: '10px', color: 'var(--slate)' }}>
+                    {grant.project_num} &middot; {grant.pi} &middot; {grant.organization} &middot; FY{grant.fiscal_year}
+                  </span>
+                </div>
+                {grant.award_amount > 0 && (
+                  <span style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', whiteSpace: 'nowrap' }}>${(grant.award_amount / 1000).toFixed(0)}K</span>
+                )}
+              </div>
+              {grant.abstract && (
+                <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.85, marginTop: '4px', lineHeight: 1.4, marginBottom: 0 }}>{grant.abstract}...</p>
+              )}
+            </div>
+          ))}
+          {similarGrants.data && similarGrants.data.total > 0 && !similarGrants.isLoading && (
+            <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', marginTop: '8px' }}>
+              Showing {similarGrants.data.data.length} of {similarGrants.data.total.toLocaleString()} results
+            </p>
+          )}
+          {activeSearch && similarGrants.data?.data?.length === 0 && !similarGrants.isLoading && (
+            <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.85, textAlign: 'center', padding: 'var(--sp-lg) 0' }}>
+              No funded grants found for "{activeSearch}"
+            </p>
           )}
         </div>
       )}
 
-      {/* Loading state */}
-      {isLoading && <TableSkeleton rows={4} cols={6} />}
-
-      {/* Milestone tracking consolidated in Post-Award tab */}
-      {!isLoading && enrichedPostAward.length > 0 && (
-        <div className="mt-5 flex items-center gap-2 text-xs" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-          <Diamond {...ICON_PROPS} size={12} style={{ color: 'var(--job-milestone)', flexShrink: 0 }} />
-          <span>
-            {enrichedPostAward.length} upcoming milestone{enrichedPostAward.length !== 1 ? 's' : ''} —{' '}
-            <button
-              onClick={() => setActiveTab('post-award')}
-              style={{ background: 'none', border: 'none', padding: 0, color: 'var(--job-accent)', cursor: 'pointer', fontWeight: 500, fontSize: 'inherit' }}
-            >
-              view in Post-Award
-            </button>
-          </span>
-        </div>
-      )}
-
-      </>}
-
-      {activeTab === 'post-award' && <>
-      {/* Post-Award Lifecycle Milestones */}
-      <div className="mt-5 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <ClipboardList {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
-            <h3 className="text-sm font-normal" style={{ color: 'var(--ink)', margin: 0 }}>
-              Post-Award Milestones
-            </h3>
-            {enrichedPostAward.filter((m) => m._isOverdue).length > 0 && (
-              <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full"
-                style={{
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  color: 'var(--job-overdue)',
-                  background: 'color-mix(in srgb, var(--job-overdue) 12%, transparent)',
-                }}
-              >
-                <AlertTriangle {...ICON_PROPS} size={10} />
-                {enrichedPostAward.filter((m) => m._isOverdue).length} overdue
-              </span>
-            )}
-          </div>
-          <Button
-            variant="primary"
-            onClick={() => setShowAddMilestone(true)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors"
-            style={{
-              gap: '0.25rem',
-              padding: '4px 10px',
-              borderRadius: '9999px',
-              fontSize: '0.75rem',
-              fontWeight: 500,
-            }}
-          >
-            <Plus {...ICON_PROPS} size={12} />
-            Add Milestone
-          </Button>
-        </div>
-
-        {milestonesLoading ? (
-          <TableSkeleton rows={3} cols={5} />
-        ) : enrichedPostAward.length === 0 ? (
-          <div className="text-center py-4">
-            <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85 }}>
-              No upcoming post-award milestones. Add progress reports, continuing reviews, NCE deadlines, and budget periods.
-            </p>
-          </div>
-        ) : (
-          <div>
-            <div
-              className="hidden sm:grid"
-              style={{
-                gridTemplateColumns: 'minmax(140px, 1fr) 140px minmax(200px, 2fr) 100px 100px',
-                padding: '6px 12px',
-                borderBottom: '1px solid var(--border-subtle)',
-              }}
-            >
-              {['Grant', 'Type', 'Title', 'Due date', 'Status'].map((col) => (
-                <span
-                  key={col}
-                  style={{
-                    fontSize: '10px',
-                    fontWeight: 500,
-                    color: 'var(--slate)',
-                    opacity: 'var(--ink-label)' as unknown as number,
-                    letterSpacing: 0,
-                  }}
-                >
-                  {col}
-                </span>
-              ))}
-            </div>
-
-            {enrichedPostAward.map((m) => {
-              return (
-                <div
-                  key={m.id}
-                  className="sm:grid items-center transition-colors"
-                  style={{
-                    gridTemplateColumns: 'minmax(140px, 1fr) 140px minmax(200px, 2fr) 100px 100px',
-                    padding: `var(--row-padding-y, 8px) 12px`,
-                    borderBottom: '1px solid var(--border-subtle)',
-                    background: m._isOverdue ? 'color-mix(in srgb, var(--job-overdue) 6%, transparent)' : 'transparent',
-                    borderLeft: m._isOverdue ? '3px solid var(--job-overdue)' : '3px solid transparent',
-                  }}
-                >
-                  <span className="text-xs truncate" style={{ color: 'var(--ink)', fontWeight: 500 }}>
-                    {m.grant_mechanism && (
-                      <span
-                        className="inline-block mr-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold"
-                        style={{ color: 'var(--slate)', background: 'var(--ice)' }}
-                      >
-                        {m.grant_mechanism}
-                      </span>
-                    )}
-                    {m.grant_title || m.grant_id}
-                  </span>
-                  <span
-                    className="text-[11px] px-1.5 py-0.5 rounded-full inline-block w-fit"
-                    style={{ color: 'var(--slate)', background: 'rgba(100,116,139,0.06)' }}
-                  >
-                    {getMilestoneTypeLabel(m.milestone_type)}
-                  </span>
-                  <span className="text-xs truncate" style={{ color: 'var(--ink)' }}>
-                    {m.title}
-                  </span>
-                  <span className="text-[11px]" style={{
-                    // Red is overdue only; a near date is a date, not a color job.
-                    color: m._isOverdue ? 'var(--job-overdue)' : 'var(--slate)',
-                    opacity: m._isOverdue ? 1 : 0.85,
-                    fontWeight: m._isOverdue ? 600 : 400,
-                  }}>
-                    {m.due_date ? formatMediumDate(m.due_date) : '--'}
-                  </span>
-                  <InlineSelect
-                    value={m.status}
-                    options={MILESTONE_STATUS_OPTIONS}
-                    onChange={(newVal) => handleMilestoneStatusChange(m.id, newVal, m.status)}
-                  />
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-
-      </>}
-
-      {/* Add Milestone Modal — modal stays mounted regardless of active tab */}
       <AnimatePresence>
-        {showAddMilestone && (
-          <AddGrantMilestoneModal
-            grants={grants}
-            onClose={() => setShowAddMilestone(false)}
-          />
-        )}
+        {showAddMilestone && <AddMilestoneModal rows={rows} onClose={() => setShowAddMilestone(false)} />}
       </AnimatePresence>
-
-      {activeTab === 'landscape' && <>
-      {/* Grant Landscape — NIH RePORTER (P3-04: lifted to top tab) */}
-      <div className="mt-6 mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Telescope {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} />
-          <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
-            Grant Landscape (NIH RePORTER)
-          </h3>
-        </div>
-        <div className="flex gap-2 mb-4">
-          <input
-            type="text"
-            placeholder="Search keywords (e.g., critical care, mechanical ventilation, ARDS)"
-            value={searchKeywords}
-            onChange={(e) => setSearchKeywords(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') setActiveSearch(searchKeywords) }}
-            style={{
-              flex: 1,
-              padding: 'var(--sp-sm) var(--sp-md)',
-              borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--border-subtle)',
-              fontSize: 'var(--value-size)',
-              background: 'var(--cream)',
-              color: 'var(--ink)',
-            }}
-          />
-          <button
-            onClick={() => setActiveSearch(searchKeywords)}
-            style={{
-              // Primary action = the accent fill with card-colored text,
-              // AA in both themes (dark text on the bright dark-mode teal).
-              background: 'var(--job-accent)',
-              color: 'var(--sk-card)',
-              border: 'none',
-              borderRadius: 'var(--radius-lg)',
-              padding: 'var(--sp-sm) var(--sp-lg)',
-              fontSize: 'var(--value-size)',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Search
-          </button>
-        </div>
-
-        {similarGrants.isLoading && (
-          <div className="text-center py-6">
-            <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.85 }}>
-              Searching NIH RePORTER...
-            </p>
-          </div>
-        )}
-
-        {/* #507 follow-up: without this, a thrown fetch failure rendered as
-            total blank space here -- no loading message, no results, and the
-            "no results" check below (`data?.data?.length === 0`) never
-            matches `undefined`, so nothing told the user the search failed. */}
-        {similarGrants.isError && !similarGrants.isLoading && (
-          <div className="text-center py-6">
-            <QueryErrorNote label="grant search" onRetry={() => similarGrants.refetch()} />
-          </div>
-        )}
-
-        {similarGrants.data?.data?.map((grant) => (
-          <div
-            key={grant.project_num}
-            className="p-3 rounded-lg mb-2"
-            style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
-                  {grant.title}
-                </p>
-                <span style={{ fontSize: '10px', color: 'var(--slate)' }}>
-                  {grant.project_num} &middot; {grant.pi} &middot; {grant.organization} &middot; FY{grant.fiscal_year}
-                </span>
-              </div>
-              {grant.award_amount > 0 && (
-                <span style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', whiteSpace: 'nowrap' }}>
-                  ${(grant.award_amount / 1000).toFixed(0)}K
-                </span>
-              )}
-            </div>
-            {grant.abstract && (
-              <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.85, marginTop: '4px', lineHeight: 1.4, marginBottom: 0 }}>
-                {grant.abstract}...
-              </p>
-            )}
-          </div>
-        ))}
-
-        {similarGrants.data && similarGrants.data.total > 0 && !similarGrants.isLoading && (
-          <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', marginTop: '8px' }}>
-            Showing {similarGrants.data.data.length} of {similarGrants.data.total.toLocaleString()} results
-          </p>
-        )}
-
-        {activeSearch && similarGrants.data?.data?.length === 0 && !similarGrants.isLoading && (
-          <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.85, textAlign: 'center', padding: 'var(--sp-lg) 0' }}>
-            No funded grants found for "{activeSearch}"
-          </p>
-        )}
-      </div>
-      </>}
     </div>
   )
 }
 
-// ── Add Grant Milestone Modal ──────────────────────────────────
+// ── Post-award milestones: milestone tasks on grant products ────────────────
 
-function AddGrantMilestoneModal({
-  grants,
-  onClose,
-}: {
-  grants: GrantTimelineItem[]
-  onClose: () => void
-}) {
-  const createMilestone = useCreateGrantMilestone()
-  const [grantId, setGrantId] = useState(grants[0]?.id || '')
-  const [milestoneType, setMilestoneType] = useState('progress_report')
-  const [title, setTitle] = useState('')
-  const [dueDate, setDueDate] = useState('')
-  const [notes, setNotes] = useState('')
-
-  const handleSubmit = () => {
-    if (!grantId || !title.trim()) return
-    createMilestone.mutate(
-      {
-        grant_id: grantId,
-        milestone_type: milestoneType,
-        title: title.trim(),
-        due_date: dueDate || undefined,
-        notes: notes.trim() || undefined,
-      },
-      { onSuccess: () => onClose() },
-    )
-  }
-
-  const inputStyle = {
-    width: '100%',
-    padding: 'var(--sp-sm) var(--sp-md)',
-    borderRadius: 'var(--radius-lg)',
-    border: '1px solid var(--border-subtle)',
-    fontSize: 'var(--value-size)',
-    background: 'var(--cream)',
-    color: 'var(--ink)',
-  }
+function PostAward({ rows, today, onAdd }: { rows: GrantProduct[]; today: string; onAdd: () => void }) {
+  const qc = useQueryClient()
+  const setStatus = useUpdateTaskStatus()
+  const items = useMemo(() => rows
+    .flatMap((g) => g.milestones.map((m) => ({ m, g, date: milestoneDate(m) })))
+    .sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999')), [rows])
+  const overdue = items.filter((x) => !x.m.completed && x.date && x.date < today).length
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'var(--overlay-medium)',
-        zIndex: 'var(--z-sidebar)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'var(--sp-lg)',
-      }}
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 8 }}
+    <div className="mt-2 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }} data-testid="post-award">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <ClipboardList {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
+          <h3 className="text-sm font-normal" style={{ color: 'var(--ink)', margin: 0 }}>Post-Award Milestones</h3>
+          {overdue > 0 && <span style={{ fontSize: 11, color: 'var(--job-overdue)' }}>{overdue} overdue</span>}
+        </div>
+        <Button variant="primary" onClick={onAdd} style={{ gap: '0.25rem', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 500 }}
+          className="flex items-center" data-testid="add-milestone">
+          <Plus {...ICON_PROPS} size={12} /> Add Milestone
+        </Button>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-center py-4" style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.85 }}>
+          No post-award milestones. Add progress reports, continuing reviews, NCE deadlines and budget periods.
+        </p>
+      ) : items.map(({ m, g, date }) => (
+        <div key={m.id} className="flex items-center gap-3 py-2" style={{ borderBottom: '1px solid var(--border-subtle)', fontSize: 13, opacity: m.completed ? 0.6 : 1 }}
+          data-testid={`milestone-${m.id}`}>
+          <input type="checkbox" aria-label={`${m.title} done`} checked={!!m.completed}
+            onChange={(e) => setStatus.mutate({ id: m.id, status: e.target.checked ? 'done' : 'todo' }, {
+              onSettled: () => qc.invalidateQueries({ queryKey: GRANTS_KEY }),
+            })} />
+          <Diamond {...ICON_PROPS} size={12} style={{ color: 'var(--job-milestone)', flexShrink: 0 }} />
+          <span style={{ flex: 1, minWidth: 0, color: 'var(--ink)' }}>{m.title}</span>
+          <Link to={PATHS.project(g.project_slug)} style={{ color: 'var(--slate)', fontSize: 12 }}>{grantName(g)}</Link>
+          <span style={{ width: 96, textAlign: 'right', color: !m.completed && date && date < today ? 'var(--job-overdue)' : 'var(--slate)', fontSize: 12 }}>
+            {date ?? '—'}{m.deadline && m.due_date && m.deadline !== m.due_date ? ` (hard ${m.deadline})` : ''}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function AddMilestoneModal({ rows, onClose }: { rows: GrantProduct[]; onClose: () => void }) {
+  const add = useAddGrantMilestone()
+  const options = rows.filter((g) => g.bucket !== 'ended')
+  const [productId, setProductId] = useState(options.find((g) => g.kind === 'award')?.id ?? options[0]?.id ?? '')
+  const [title, setTitle] = useState('')
+  const [due, setDue] = useState('')
+  const [hard, setHard] = useState('')
+  const row = options.find((g) => g.id === productId)
+  const ready = !!row && title.trim() !== '' && (due !== '' || hard !== '')
+  const input = { width: '100%', padding: 'var(--sp-sm) var(--sp-md)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', fontSize: 'var(--value-size)', background: 'var(--cream)', color: 'var(--ink)' }
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}
+      style={{ position: 'fixed', inset: 0, background: 'var(--overlay-medium)', zIndex: 'var(--z-sidebar)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--sp-lg)' }}>
+      <motion.div role="dialog" aria-label="Add milestone" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'var(--cream)',
-          borderRadius: 'var(--radius-2xl)',
-          border: '1px solid var(--border-subtle)',
-          padding: 'var(--sp-xl)',
-          width: '100%',
-          maxWidth: '480px',
-          boxShadow: 'var(--shadow-card-hover)',
-        }}
-      >
+        style={{ background: 'var(--cream)', borderRadius: 'var(--radius-2xl)', border: '1px solid var(--border-subtle)', padding: 'var(--sp-xl)', width: '100%', maxWidth: 480, boxShadow: 'var(--shadow-card-hover)' }}>
         <div className="flex items-center justify-between mb-4">
-          <h3 style={{ fontSize: '16px', fontWeight: 500, color: 'var(--ink)', margin: 0 }}>
-            Add Grant Milestone
-          </h3>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)' as unknown as number }}
-          >
+          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--ink)', margin: 0 }}>Add a milestone</h3>
+          <button type="button" onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}>
             <X {...ICON_PROPS} size={18} />
           </button>
         </div>
-
         <div className="flex flex-col gap-3">
-          <Field label="Grant" htmlFor="grant-milestone-grant" noContainer>
-            <InlineSelect id="grant-milestone-grant"
-              value={grantId}
-              options={grants.map((g) => ({ value: g.id, label: `${g.mechanism} - ${g.title}` }))}
-              onChange={setGrantId}
-              size="md"
-              alwaysShowChevron
-            />
+          <Field label="Grant" htmlFor="ms-grant" noContainer>
+            <InlineSelect id="ms-grant" value={productId} onChange={setProductId} size="md" alwaysShowChevron
+              options={options.map((g) => ({ value: g.id, label: `${grantName(g)}${g.venue ? ` (${g.venue})` : ''}` }))} />
           </Field>
-
-          <Field label="Milestone type" htmlFor="grant-milestone-type" noContainer>
-            <InlineSelect id="grant-milestone-type"
-              value={milestoneType}
-              options={MILESTONE_TYPES}
-              onChange={setMilestoneType}
-              size="md"
-              alwaysShowChevron
-            />
+          <Field label="Title" htmlFor="ms-title" noContainer>
+            <input id="ms-title" type="text" placeholder="e.g., Year 2 RPPR" value={title} onChange={(e) => setTitle(e.target.value)} style={input} autoFocus />
           </Field>
-
-          <Field label="Title" htmlFor="grant-milestone-title" noContainer>
-            <input
-              id="grant-milestone-title"
-              type="text"
-              placeholder="e.g., Year 2 RPPR"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              style={inputStyle}
-              autoFocus
-            />
+          <Field label="Our date" htmlFor="ms-due" noContainer>
+            <input id="ms-due" type="date" value={due} onChange={(e) => setDue(e.target.value)} style={input} />
           </Field>
-
-          <Field label="Due date" htmlFor="grant-milestone-due" noContainer>
-            <input
-              id="grant-milestone-due"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              style={inputStyle}
-            />
-          </Field>
-
-          <Field label="Notes (optional)" htmlFor="grant-milestone-notes" noContainer>
-            <textarea
-              id="grant-milestone-notes"
-              placeholder="Any additional notes..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              style={{ ...inputStyle, resize: 'vertical' as const }}
-            />
+          <Field label="Hard date (the sponsor's)" htmlFor="ms-hard" noContainer>
+            <input id="ms-hard" type="date" value={hard} onChange={(e) => setHard(e.target.value)} style={input} />
           </Field>
         </div>
-
         <div className="flex justify-end gap-2 mt-4">
-          <button
-            onClick={onClose}
-            style={{
-              padding: 'var(--sp-sm) var(--sp-lg)',
-              borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--border-subtle)',
-              background: 'none',
-              fontSize: 'var(--value-size)',
-              color: 'var(--slate)',
-              cursor: 'pointer',
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={!grantId || !title.trim() || createMilestone.isPending}
+          <button type="button" onClick={onClose} style={{ padding: 'var(--sp-sm) var(--sp-lg)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', background: 'none', fontSize: 'var(--value-size)', color: 'var(--slate)', cursor: 'pointer' }}>Cancel</button>
+          <button type="button" disabled={!ready || add.isPending} data-testid="milestone-save"
+            onClick={() => row && add.mutate({ slug: row.project_slug, productId: row.id, title: title.trim(), due_date: due || null, deadline: hard || null }, { onSuccess: onClose })}
             className="flex items-center gap-1.5"
-            style={{
-              padding: 'var(--sp-sm) var(--sp-lg)',
-              borderRadius: 'var(--radius-lg)',
-              border: 'none',
-              background: !grantId || !title.trim() ? 'var(--border-subtle)' : 'var(--job-accent)',
-              color: !grantId || !title.trim() ? 'var(--slate)' : 'var(--sk-card)',
-              fontSize: 'var(--value-size)',
-              fontWeight: 600,
-              cursor: !grantId || !title.trim() ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {createMilestone.isPending ? (
-              <span>Saving…</span>
-            ) : (
-              <>
-                <Check {...ICON_PROPS} size={14} />
-                Add Milestone
-              </>
-            )}
+            style={{ padding: 'var(--sp-sm) var(--sp-lg)', borderRadius: 'var(--radius-lg)', border: 'none', background: ready ? 'var(--job-accent)' : 'var(--border-subtle)', color: ready ? 'var(--sk-card)' : 'var(--slate)', fontSize: 'var(--value-size)', fontWeight: 600, cursor: ready ? 'pointer' : 'not-allowed' }}>
+            {add.isPending ? 'Saving…' : <><Check {...ICON_PROPS} size={14} /> Add milestone</>}
           </button>
         </div>
       </motion.div>

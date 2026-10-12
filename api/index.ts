@@ -34,7 +34,8 @@ import { handleGetMyFolder, handleSetMyFolder, handleClearMyFolder } from './rou
 import { handleGetPins, handleCreatePin, handleDeletePin } from './routes/pins';
 import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleUpdateMeetingMeta, handleMeetingPrep, handleGenerateAgenda, handlePrepMeetingFromEvent, handleGrantMeetingProject, handleRevokeMeetingProject, handleMeetingAccess } from './routes/meetings';
-import { handleGetPublications, handleGetGrants, handleGetStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
+import { handleGetPublications, handleGetStats } from './routes/publications';
+import { handleGetGrants, handleGrantsTimeline } from './routes/grants';
 import { handleGetCitations } from './routes/citations';
 import { handleGetTeam, handleTeamSlugs, handleUpdateTeamMember, handleCreateTeamMember } from './routes/team';
 import { handleGetMemberFeaturedPublications, handlePutMemberFeaturedPublications } from './routes/member-featured-publications';
@@ -88,7 +89,6 @@ import { handleGetMenteeMilestones, handleMenteeMilestoneOverview, handleCreateM
 import { handleGetCascade, handleGetImpact, handleGetAllCascades } from './routes/deadline-cascade';
 import { handleGetSubmissions, handleCreateSubmission, handleUpdateSubmission, handleDeleteSubmission, handleGetActiveSubmissions } from './routes/submissions';
 import { handleGetRegulatoryItems, handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRegulatoryIcs } from './routes/regulatory';
-import { handleGetGrantMilestones, handleUpcomingGrantMilestones, handleCreateGrantMilestone, handleUpdateGrantMilestone, handleCompleteGrantMilestone } from './routes/grant-milestones';
 import { handleGetConferences, handleGetUpcomingConferences, handleCreateConference, handleUpdateConference, handleDeleteConference } from './routes/conferences';
 import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeleteProjectDocument } from './routes/project-documents';
 import { handleProactiveBrief } from './routes/proactive-brief';
@@ -1151,8 +1151,9 @@ defineRoute({
   auth: 'public',
   anonShape: {
     // /pulse grant scene. Titles stay private: proposals in preparation are listed here too.
-    // `bucket` is the server-derived active/proposed/ended label every page reads.
-    data: [{ id: true, mechanism: true, agency: true, proposed: true, bucket: true }],
+    // `bucket` is the server-derived active/proposed/ended label every page reads;
+    // venue carries agency + mechanism ("NHLBI K23"). Rows are grant products (routes/grants.ts).
+    data: [{ id: true, venue: true, bucket: true, period_start: true, period_end: true }],
   },
   handler: (c) => handleGrantsTimeline(E(c)),
 });
@@ -1162,7 +1163,7 @@ defineRoute({
   auth: 'public',
   anonShape: {
     // Home counts active grants from `bucket`.
-    data: [{ id: true, mechanism: true, agency: true, proposed: true, bucket: true }],
+    data: [{ id: true, venue: true, bucket: true, period_start: true, period_end: true }],
     count: true,
   },
   handler: (c) => handleGetGrants(E(c)),
@@ -1811,23 +1812,9 @@ defineRoute({
   handler: (c) => handleGetMilestones(U(c), E(c)),
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Grant post-award milestones
-// ─────────────────────────────────────────────────────────────────────────────
-defineRoute({
-  method: 'GET',
-  path: '/api/grant-milestones/upcoming',
-  auth: 'authed',
-  entity: 'grant-milestones',
-  handler: (c) => handleUpcomingGrantMilestones(U(c), E(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/grant-milestones',
-  auth: 'authed',
-  entity: 'grant-milestones',
-  handler: (c) => handleGetGrantMilestones(U(c), E(c)),
-});
+// Grant post-award milestones are kind='milestone' tasks on a grant product
+// (GET /api/grants/timeline; created by POST /api/projects/:slug/products
+// action 'milestone'). The grant_milestones routes were retired 2026-10-12.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Regulatory
@@ -2902,37 +2889,10 @@ defineRoute({
   handler: (c) => handleUpdateMenteeMilestone(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
-// Grant post-award milestones
-defineRoute({
-  method: 'POST',
-  path: '/api/grant-milestones',
-  auth: 'authed',
-  entity: 'grant-milestones',
-  handler: (c) => handleCreateGrantMilestone(R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/grant-milestones/:id/complete',
-  auth: 'authed',
-  entity: 'grant-milestones',
-  handler: (c) => handleCompleteGrantMilestone(c.req.param('id'), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/grant-milestones/:id',
-  auth: 'authed',
-  entity: 'grant-milestones',
-  handler: (c) => handleUpdateGrantMilestone(c.req.param('id'), R(c), USER(c), E(c)),
-});
-
-// Grants (PATCH only — R10 inline editing)
-defineRoute({
-  method: 'POST',
-  path: '/api/grants/:id',
-  auth: 'authed',
-  entity: 'grants',
-  handler: (c) => handleUpdateGrant(c.req.param('id'), R(c), E(c)),
-});
+// A grant product's venue, dates and amount are edited through the member
+// route, POST /api/projects/:slug/products (action 'terms'). The legacy
+// POST /api/grants/:id and /api/grant-milestones writers were retired
+// 2026-10-12 with the grants table's readers.
 
 // Regulatory
 defineRoute({
@@ -3188,14 +3148,13 @@ export default withErrorLedger<Env>({
 
           // Get milestones with Future Me notes due within 3 days
           const futureNotes = await recipientDb.prepare(
-            `SELECT m.title, m.target_date, m.future_note, m.future_note_author, g.mechanism
+            `SELECT m.title, m.target_date, m.future_note, m.future_note_author
              FROM milestones m
-             LEFT JOIN grants g ON m.grant_id = g.id
              WHERE m.future_note IS NOT NULL
                AND m.status != 'completed'
                AND m.target_date BETWEEN date('now') AND date('now', '+3 days')
              ORDER BY m.target_date ASC`
-          ).all<{ title: string; target_date: string; future_note: string; future_note_author: string; mechanism: string | null }>();
+          ).all<{ title: string; target_date: string; future_note: string; future_note_author: string }>();
           const futureNoteItems = futureNotes.results || [];
 
           // Only send if there's something to report
@@ -3226,7 +3185,7 @@ export default withErrorLedger<Env>({
           if (futureNoteItems.length > 0) {
             itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;border-left:3px solid #c9a84c;padding-left:8px;">Notes From Past You</h3>';
             for (const fn of futureNoteItems) {
-              const label = fn.mechanism ? `${escapeHtml(fn.mechanism)}: ${escapeHtml(fn.title)}` : escapeHtml(fn.title);
+              const label = escapeHtml(fn.title);
               itemsHtml += `<div style="margin:12px 0;padding:12px 14px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-left:3px solid #c9a84c;border-radius:8px;">`;
               itemsHtml += `<p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#0f1923;">${label} <span style="font-size:11px;font-weight:400;color:#64748b;">— due ${escapeHtml(fn.target_date)}</span></p>`;
               itemsHtml += `<p style="margin:0;font-size:13px;color:#0f1923;font-style:italic;line-height:1.5;">${escapeHtml(fn.future_note)}</p>`;

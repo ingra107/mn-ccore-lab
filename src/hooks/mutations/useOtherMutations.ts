@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchApi, createDependency, deleteDependency, addExpertise, removeExpertise, setMemberFeaturedPublications, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, createSubmissionEvent, deleteSubmissionEvent, createGrantMilestone, updateGrantMilestone, completeGrantMilestone, createConference, updateConference, deleteConference } from '../../lib/api'
+import { fetchApi, createDependency, deleteDependency, addExpertise, removeExpertise, setMemberFeaturedPublications, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, createSubmissionEvent, deleteSubmissionEvent, createConference, updateConference, deleteConference } from '../../lib/api'
 import { MEMBER_FEATURED_QUERY_KEY, rowToPublication } from '../useApiData'
 import { rollbackSnapshots } from './utils'
 import { nowInstant } from '../../lib/time'
 import { meetingActivityQueryKey } from '../../lib/askHermes'
-import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, GrantMilestoneRow, ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus, PresentationType } from '../../lib/api'
+import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus, PresentationType } from '../../lib/api'
 
 // ── Digest Status mutation ───────────────────────────────────
 
@@ -622,101 +622,8 @@ export function useDeleteSubmissionEvent(projectId: string) {
   })
 }
 
-// ── Grant Post-Award Milestone mutations ─────────────────────────
 
-export function useCreateGrantMilestone() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: {
-      grant_id: string
-      milestone_type: string
-      title: string
-      due_date?: string
-      notes?: string
-      status?: string
-    }) => createGrantMilestone(input),
-    onSettled: (_data, _err, input) => {
-      queryClient.invalidateQueries({ queryKey: ['grant-milestones', input.grant_id] })
-      queryClient.invalidateQueries({ queryKey: ['grant-milestones-upcoming'] })
-      queryClient.invalidateQueries({ queryKey: ['activity'] })
-    },
-  })
-}
 
-export function useUpdateGrantMilestone() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, fields }: { id: string; fields: Partial<{ title: string; due_date: string; notes: string; status: string; milestone_type: string; grant_id: string }> }) =>
-      updateGrantMilestone(id, fields),
-    onMutate: async ({ id, fields }) => {
-      await queryClient.cancelQueries({ queryKey: ['grant-milestones-upcoming'] })
-      const previous = queryClient.getQueryData<GrantMilestoneRow[]>(['grant-milestones-upcoming'])
-      if (previous) {
-        queryClient.setQueryData<GrantMilestoneRow[]>(
-          ['grant-milestones-upcoming'],
-          previous.map((m) => m.id === id ? { ...m, ...fields } : m),
-        )
-      }
-      return { previous }
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) queryClient.setQueryData(['grant-milestones-upcoming'], context.previous)
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['grant-milestones'] })
-      queryClient.invalidateQueries({ queryKey: ['grant-milestones-upcoming'] })
-    },
-  })
-}
-
-// R10: partial-update for grants (status, title, dates, agency, etc.)
-export function useUpdateGrant() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ id, fields }: { id: string; fields: Record<string, unknown> }) => {
-      const res = await fetch(`/api/grants/${id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fields),
-      })
-      if (!res.ok) throw new Error(`Failed to update grant: ${res.status}`)
-      return res.json()
-    },
-    onMutate: async ({ id, fields }) => {
-      await queryClient.cancelQueries({ queryKey: ['grants-timeline'] })
-      const previous = queryClient.getQueryData<unknown[]>(['grants-timeline'])
-      if (previous) {
-        queryClient.setQueryData<unknown[]>(
-          ['grants-timeline'],
-          previous.map((g) => {
-            const grant = g as { id: string }
-            return grant.id === id ? { ...grant, ...fields } : g
-          }),
-        )
-      }
-      return { previous }
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) queryClient.setQueryData(['grants-timeline'], context.previous)
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['grants-timeline'] })
-      queryClient.invalidateQueries({ queryKey: ['grants'] })
-    },
-  })
-}
-
-export function useCompleteGrantMilestone() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => completeGrantMilestone(id),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['grant-milestones'] })
-      queryClient.invalidateQueries({ queryKey: ['grant-milestones-upcoming'] })
-      queryClient.invalidateQueries({ queryKey: ['activity'] })
-    },
-  })
-}
 
 // ── Conference submission mutations ─────────────────────────
 

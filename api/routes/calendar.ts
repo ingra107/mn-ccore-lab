@@ -30,8 +30,10 @@ export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: strin
       .bind(viewerSlug, startDate, endDate).all<{ id: string; date: string; title: string; type: string }>(),
     env.DB.prepare(`SELECT t.id, t.title, t.short_title, t.description, t.due_date, t.assignee, t.status, t.priority FROM tasks t WHERE t.due_date IS NOT NULL AND t.due_date >= ? AND t.due_date <= ? AND t.completed = 0 AND t.deleted_at IS NULL AND t.assignee = ? ORDER BY t.due_date`)
       .bind(startDate, endDate, viewerSlug).all<{ id: string; title: string; short_title: string | null; description: string; due_date: string; assignee: string; status: string; priority: string }>(),
-    env.DB.prepare('SELECT m.id, m.title, m.target_date, m.status, g.mechanism, g.title as grant_title FROM milestones m LEFT JOIN grants g ON m.grant_id = g.id WHERE m.target_date >= ? AND m.target_date <= ? ORDER BY m.target_date')
-      .bind(startDate, endDate).all<{ id: string; title: string; target_date: string; status: string; mechanism: string | null; grant_title: string | null }>(),
+    // The legacy grants join is gone (2026-10-12): a grant's dates are its
+    // product's now; a grant milestone is a milestone task.
+    env.DB.prepare('SELECT m.id, m.title, m.target_date, m.status FROM milestones m WHERE m.target_date >= ? AND m.target_date <= ? ORDER BY m.target_date')
+      .bind(startDate, endDate).all<{ id: string; title: string; target_date: string; status: string }>(),
   ]);
 
   // `title` stays the FULL title (the dedup key below and the client's
@@ -57,15 +59,14 @@ export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: strin
     });
   }
 
-  // Grant milestones
+  // Legacy milestones rows (the Airtable-era table)
   for (const m of milestones.results || []) {
     events.push({
       id: m.id,
       date: m.target_date,
-      title: m.mechanism ? `${m.mechanism}: ${m.title}` : m.title,
+      title: m.title,
       type: 'milestone',
       category: 'grant',
-      meta: { grant_title: m.grant_title },
     });
   }
 

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-24T09:20:26.724910+00:00",
+  "generated_at": "2026-10-12T13:41:58.249837+00:00",
   "note": "Checked-in schema snapshot for Hub CI test (mutations.schema-drift.test.ts). Update when brain.db schema changes. hub-schema-sync specialist owns updates. Regenerate: python scripts/db/generate_hub_schema_snapshot.py --out <mn-ccore-lab>/api/brain-db-schema-snapshot.json",
   "hub_to_local": {
     "tasks": {
@@ -48,6 +48,7 @@
       "plan_start_min",
       "planned_for",
       "priority",
+      "product_id",
       "project_id",
       "promise_date",
       "promised_to",
@@ -152,13 +153,44 @@
       "sort_order",
       "source_raw",
       "type"
+    ],
+    "products": [
+      "amount_usd",
+      "created_at",
+      "deadline",
+      "deleted_at",
+      "due_date",
+      "folder",
+      "grew_from_id",
+      "grew_from_rank",
+      "is_home",
+      "kind",
+      "lineage_rank",
+      "period_end",
+      "period_start",
+      "project_id",
+      "repo_url",
+      "short_name",
+      "sort_order",
+      "stage",
+      "stage_entered_at",
+      "stage_notes",
+      "title",
+      "venue",
+      "waiting_on"
+    ],
+    "product_funding": [
+      "created_at",
+      "deleted_at",
+      "funder_id",
+      "funder_kind",
+      "product_id"
     ]
   },
   "hub_only_fields": {
     "tasks": [
       "acknowledged_at",
-      "acknowledged_by",
-      "product_id"
+      "acknowledged_by"
     ],
     "projects": [
       "category",
@@ -169,6 +201,8 @@
     "inbox_events": [],
     "day_capacity": [],
     "project_state_log": [],
-    "links": []
+    "links": [],
+    "products": [],
+    "product_funding": []
   }
 }

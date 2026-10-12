@@ -138,7 +138,6 @@ test.describe('API — Missing GET endpoints', () => {
     ['/api/submissions/active', 'Active conference submissions'],
     ['/api/conferences/upcoming', 'Upcoming conferences'],
     ['/api/regulatory/expiring', 'Expiring regulatory items'],
-    ['/api/grant-milestones/upcoming', 'Upcoming grant milestones'],
     ['/api/mentee-milestones', 'Mentee milestones'],
     ['/api/mentee-milestones/overview', 'Mentee milestones overview'],
     ['/api/analytics/contributions?slug=nick', 'Contribution analytics'],

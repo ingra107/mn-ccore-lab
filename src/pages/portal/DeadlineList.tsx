@@ -118,7 +118,7 @@ export function sortDeadlines(items: DeadlineItem[], sort: SleekSort, projects: 
   })
 }
 
-export function DeadlineList({ groups, projects, selected, toggleSelect, selectRange, anchorId, setSelected, onOpenTask, onStatusChange, onMilestoneStatusChange, onDueDateChange }: {
+export function DeadlineList({ groups, projects, selected, toggleSelect, selectRange, anchorId, setSelected, onOpenTask, onStatusChange, onDueDateChange }: {
   groups: DeadlineGroup[]
   /** Projects by slug, short names. */
   projects: Map<string, DeadlineProject>
@@ -129,7 +129,6 @@ export function DeadlineList({ groups, projects, selected, toggleSelect, selectR
   setSelected: React.Dispatch<React.SetStateAction<Set<string>>>
   onOpenTask: (task: TaskRow) => void
   onStatusChange: (id: string, newStatus: string, prevStatus: string) => void
-  onMilestoneStatusChange: (id: string, newStatus: string, prevStatus: string) => void
   onDueDateChange: (id: string, newDate: string | null) => void
 }) {
   const [sort, setSort] = useState<SleekSort>(null)
@@ -181,7 +180,7 @@ export function DeadlineList({ groups, projects, selected, toggleSelect, selectR
       <InlineSelect
         value={d.status}
         options={d.task ? TASK_STATUS_OPTIONS : GRANT_MILESTONE_STATUS_OPTIONS}
-        onChange={(next) => (d.task ? onStatusChange : onMilestoneStatusChange)(d.id, next, d.status)}
+        onChange={(next) => onStatusChange(d.id, next, d.status)}
         display={<StatusDisplay item={d} />}
       />
     )
@@ -227,7 +226,7 @@ export function DeadlineList({ groups, projects, selected, toggleSelect, selectR
         renderPhone: (d) => (d.assignee ? <Face slug={d.assignee} lg /> : null),
       },
     ]
-  }, [projects, onOpenTask, onStatusChange, onMilestoneStatusChange, onDueDateChange])
+  }, [projects, onOpenTask, onStatusChange, onDueDateChange])
 
   const onRowClick = useCallback((d: DeadlineItem, e: MouseEvent) => {
     // Shift-click ranges over the tasks on screen; ctrl/cmd-click toggles; a plain click moves the cursor.

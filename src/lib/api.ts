@@ -1,6 +1,5 @@
 import type { TaskKind } from '../../shared/taskKinds'
 import type { PublicationRole } from '../../shared/publicationRoles'
-import type { GrantBucket } from '../data/types'
 /**
  * Typed API client for MN-CCORE D1 backend.
  *
@@ -142,21 +141,6 @@ type MissingProjectRowKey = Exclude<keyof ProjectRow, (typeof PROJECT_ROW_KEYS)[
 export const PROJECT_ROW_KEYS_COMPLETE: [MissingProjectRowKey] extends [never]
   ? true
   : { 'PROJECT_ROW_KEYS is missing': MissingProjectRowKey } = true
-
-export interface GrantRow {
-  id: string
-  mechanism: string | null
-  title: string
-  agency: string | null
-  pi: string | null
-  start_date: string | null
-  end_date: string | null
-  proposed: number
-  status?: string | null
-  bucket: GrantBucket
-  total_funding: number | null
-  created_at: string
-}
 
 interface Stats {
   publicationCount: number
@@ -481,10 +465,6 @@ export function fetchProjects(params?: { status?: string; category?: string }) {
   if (params?.category) qs.set('category', params.category)
   const query = qs.toString()
   return fetchApi<ProjectRow[]>(`/api/projects${query ? `?${query}` : ''}`)
-}
-
-export function fetchGrants() {
-  return fetchApi<GrantRow[]>('/api/grants')
 }
 
 export function fetchStats() {
@@ -1143,63 +1123,6 @@ export interface TodayMenteeRow {
 
 export function fetchTodayMentees() {
   return fetchApi<TodayMenteeRow[]>('/api/today/mentees')
-}
-
-// ── Grant Post-Award Milestones ──────────────────────────────
-
-export interface GrantMilestoneRow {
-  id: string
-  grant_id: string
-  milestone_type: string
-  title: string
-  due_date: string | null
-  completed_at: string | null
-  status: string
-  notes: string | null
-  created_at: string
-}
-
-interface UpcomingGrantMilestoneRow extends GrantMilestoneRow {
-  grant_title: string | null
-  grant_mechanism: string | null
-}
-
-export function fetchUpcomingGrantMilestones(days: number = 90) {
-  return fetchApi<UpcomingGrantMilestoneRow[]>(`/api/grant-milestones/upcoming?days=${days}`)
-}
-
-export function createGrantMilestone(input: {
-  grant_id: string
-  milestone_type: string
-  title: string
-  due_date?: string
-  notes?: string
-  status?: string
-}) {
-  return fetchApi<GrantMilestoneRow>('/api/grant-milestones', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  })
-}
-
-export function updateGrantMilestone(id: string, fields: Partial<{
-  title: string
-  due_date: string
-  notes: string
-  status: string
-  milestone_type: string
-  grant_id: string
-}>) {
-  return fetchApi<GrantMilestoneRow>(`/api/grant-milestones/${id}`, {
-    method: 'POST',
-    body: JSON.stringify(fields),
-  })
-}
-
-export function completeGrantMilestone(id: string) {
-  return fetchApi<GrantMilestoneRow>(`/api/grant-milestones/${id}/complete`, {
-    method: 'POST',
-  })
 }
 
 // ── Conference Submissions ──────────────────────────────────

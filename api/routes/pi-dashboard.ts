@@ -1,6 +1,6 @@
 import type { Env } from '../helpers';
 import { json, error } from '../helpers';
-import { GRANT_BUCKET_SQL } from './grant-bucket';
+import { GRANT_BUCKET_SQL } from './grants';
 
 // A trainee: the member types the dashboard counts as trainees, or a role that
 // names one. One definition for the dashboard and the Lab pulse routes below.
@@ -48,14 +48,18 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
       GROUP BY tm.slug
     `).all(),
 
-    // Grant pipeline status
+    // Grant pipeline status: the grant products (routes/grants.ts), the same
+    // bucket the Grants page shows; funding is the awards' amount_usd.
     env.DB.prepare(`
       SELECT
         COUNT(*) as total,
         SUM(CASE WHEN ${GRANT_BUCKET_SQL} = 'proposed' THEN 1 ELSE 0 END) as pending,
         SUM(CASE WHEN ${GRANT_BUCKET_SQL} = 'active' THEN 1 ELSE 0 END) as active,
-        SUM(CASE WHEN ${GRANT_BUCKET_SQL} = 'active' THEN total_funding ELSE 0 END) as active_funding
-      FROM grants
+        SUM(CASE WHEN ${GRANT_BUCKET_SQL} = 'active' THEN COALESCE(p.amount_usd, 0) ELSE 0 END) as active_funding
+      FROM products p
+      JOIN product_stages s ON s.kind = p.kind AND s.stage = p.stage
+      JOIN projects pr ON pr.id = p.project_id AND pr.deleted_at IS NULL
+      WHERE p.deleted_at IS NULL AND p.kind IN ('grant_application', 'award', 'honor')
     `).first(),
 
     // Publications per year (last 3 years)
@@ -70,13 +74,16 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
       ORDER BY year
     `).all(),
 
-    // Counts come from the status-derived bucket (GRANT_BUCKET_SQL, grant-bucket.ts),
-    // not the `proposed` flag: 'submitted' = bucket 'proposed', 'active' = bucket 'active'.
+    // Counts come from the data-derived bucket (GRANT_BUCKET_SQL, routes/grants.ts):
+    // 'submitted' = bucket 'proposed', 'active' = bucket 'active'.
     env.DB.prepare(`
       SELECT
         SUM(CASE WHEN ${GRANT_BUCKET_SQL} = 'proposed' THEN 1 ELSE 0 END) as submitted,
         SUM(CASE WHEN ${GRANT_BUCKET_SQL} = 'active' THEN 1 ELSE 0 END) as active
-      FROM grants
+      FROM products p
+      JOIN product_stages s ON s.kind = p.kind AND s.stage = p.stage
+      JOIN projects pr ON pr.id = p.project_id AND pr.deleted_at IS NULL
+      WHERE p.deleted_at IS NULL AND p.kind IN ('grant_application', 'award', 'honor')
     `).first(),
 
     // Projects by stage. R10 standardized projects.status to lowercase

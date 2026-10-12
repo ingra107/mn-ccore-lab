@@ -2,7 +2,6 @@
   "src/constants/categories.ts": 2,
   "src/data/onboarding.ts": 3,
   "src/hooks/useFavicon.ts": 1,
-  "src/hooks/useGrantTimeline.ts": 4,
   "src/index.css": 6,
   "src/lib/grantBar.ts": 1,
   "src/lib/mentionCommandTags.ts": 2,

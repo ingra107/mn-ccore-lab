@@ -44,7 +44,7 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | projects | 64 | Research projects with stages + `deleted_at` (schema v45) + indexed `title` (v46). |
 | publications | 100+ | PubMed-sourced publications |
 | member_featured_publications | 0+ | Per-member curated Top-10 (schema **v106**, 2026-08-01, PB #906): (member_slug, publication_id, sort_order) with a composite PK. The MEMBER-scoped featuring axis; `publications.featured` stays the separate LAB-WIDE flag behind the Publications page + homepage sections. sort_order is the member's own order, written from the submitted array index by the ordered replace-set PUT. Hub-only, no PB lockstep. |
-| grants | 10+ | Active and pending grants |
+| grants | 5 | LEGACY (retiring): a 2026-03 display seed. Nothing reads it since 2026-10-12; the Grants page reads grant products (`products` kinds grant_application/award/honor, schema-v128 award terms). Drop is phase 2, with Nick's go |
 | milestones | 30+ | Project milestones + deadlines |
 | meetings | 20+ | Biweekly meetings + agendas |
 | agenda_items | dynamic | Per-meeting agenda items |
@@ -400,7 +400,7 @@ Discovered during the 2026-04-17/18 deep-audit. Canonical, non-obvious patterns 
 - **POST `/api/digest/:id/status`** toggles save/dismiss. Not `POST /api/digest/:id` directly.
 
 ### Read-only on the Hub
-- Grants — no POST. Grants flow in via `scripts/db/sync_d1_*.py` from brain.db. Hub only updates status via `POST /api/grants/:id`.
+- Grants — a grant is a product (grant_application, award, honor). GET `/api/grants` and `/api/grants/timeline` (api/routes/grants.ts) read them with their project, PI, award terms (period_start, period_end, amount_usd: schema-v128) and data-derived bucket (terminal stage = ended, live award = active, else proposed); the timeline adds each product's milestone tasks. Writes go through `POST /api/projects/:slug/products` (members of the project): action `terms` (venue, due_date, deadline, period_start, period_end, amount_usd; `base_seq` + `from` make it a compare-and-swap) and action `milestone` (a kind='milestone' task on the product). `POST /api/grants/:id` and the `/api/grant-milestones` routes were retired 2026-10-12.
 - Publications — read-only. Sourced from PubMed.
 - Milestones — writable, but typically authored via the grant timeline UI which uses a dedicated endpoint set.
 
@@ -445,4 +445,4 @@ A few endpoints break the `{ data: ... }` convention. Noted here so client code 
 - `/api/pomodoro` does **not** exist; `/api/pb/pomodoro/start`+`/complete` were RETIRED 2026-06-10 (Daily Plan substrate — their only caller was the PBSector timer). Pomodoro telemetry still flows via `POST /api/pb/sessions`/`/bulk` (PB push) + `GET /api/pb/sessions/stats` (TodayPage reads).
 - `/api/dispatch` and `/api/pb/dispatch/*` do **not** exist (the Queue for Claude lane was cut 2026-10-11). The `dispatch_queue` table is kept, no writer.
 - `/api/sessions` does **not** exist — use `/api/pb/sessions`.
-- `/api/grants` is **read + status only**. POST /api/grants does not exist; grants flow in via brain.db sync.
+- `/api/grants` is **read only**; grant products are written through `POST /api/projects/:slug/products`.

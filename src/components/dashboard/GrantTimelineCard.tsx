@@ -1,7 +1,8 @@
 import { memo, useMemo } from 'react'
 import { Banknote } from 'lucide-react'
 import BentoCard from './BentoCard'
-import { useGrantTimeline, type GrantTimelineItem } from '../../hooks/useGrantTimeline'
+import { useGrantProducts } from '../../hooks/useGrantProducts'
+import { barOf, grantName, mechanismOf, type GrantProduct } from '../../lib/grants'
 import { GRANT_BAR_FILL, GRANT_BAR_LIT, GRANT_BAR_STROKE } from '../../lib/grantBar'
 import { LIT_EDGE } from '../../lib/tealRamp'
 
@@ -14,15 +15,8 @@ interface GrantBar {
   title: string
   startYear: number
   endYear: number
-  /** Render as a dashed outline (in-prep / proposed / submitted) vs solid (funded). */
+  /** Render as a dashed outline (an application's hypothetical bar) vs solid (an award). */
   proposed: boolean
-}
-
-/** Pull a 4-digit year from `YYYY-MM-DD` (or YYYY) — null if missing/unparseable. */
-function yearFrom(dateStr: string | null | undefined): number | null {
-  if (!dateStr) return null
-  const m = /^(\d{4})/.exec(dateStr)
-  return m ? parseInt(m[1], 10) : null
 }
 
 /** Last name from "First Last" or slug-style "first-last". */
@@ -37,35 +31,34 @@ function shortPi(pi: string | null | undefined): string {
   return parts.length > 1 ? parts[parts.length - 1] : parts[0]
 }
 
-function toBar(g: GrantTimelineItem): GrantBar | null {
-  const start = yearFrom(g.start_date)
-  const end = yearFrom(g.end_date)
-  if (start == null && end == null) return null
-  // Fill missing endpoints sensibly so a single-date grant still shows a bar.
-  const startYear = start ?? (end ?? CURRENT_YEAR)
-  const endYear = end ?? Math.max(startYear, CURRENT_YEAR)
-  const proposed = g.bucket === 'proposed'
+/** A grant product's bar in whole years (lib/grants barOf: an award start to
+ *  end, an application its proposed start plus the mechanism's usual term). */
+function toBar(g: GrantProduct): GrantBar | null {
+  const bar = barOf(g)
+  if (!bar) return null
   return {
     id: g.id,
-    mechanism: g.mechanism || '—',
+    mechanism: mechanismOf(g.venue) ?? g.venue ?? '—',
     pi: shortPi(g.pi),
-    title: g.title,
-    startYear,
-    endYear,
-    proposed,
+    title: grantName(g),
+    startYear: Number(bar.start.slice(0, 4)),
+    endYear: Number(bar.end.slice(0, 4)),
+    proposed: bar.hypothetical,
   }
 }
 
 function GrantTimelineCard() {
-  const { data: grants = [] } = useGrantTimeline()
+  const { data } = useGrantProducts()
 
   const { bars, minYear, totalYears, fundedCount, inPrepCount } = useMemo(() => {
+    const grants = data?.data ?? []
     const allBars: GrantBar[] = []
     let funded = 0
     let inPrep = 0
     for (const g of grants) {
-      if (g.status === 'funded') funded++
-      if (g.status === 'in_preparation') inPrep++
+      if (g.bucket === 'ended') continue
+      if (g.bucket === 'active') funded++
+      if (g.bucket === 'proposed') inPrep++
       const bar = toBar(g)
       if (!bar) continue
       // Don't render speculation past 5 years from current year.
@@ -86,7 +79,7 @@ function GrantTimelineCard() {
       fundedCount: funded,
       inPrepCount: inPrep,
     }
-  }, [grants])
+  }, [data])
 
   return (
     <BentoCard title="Grant Portfolio" subtitle={`${fundedCount} funded, ${inPrepCount} in prep`} size="span-2" icon={Banknote}>
@@ -210,7 +203,7 @@ function GrantTimelineCard() {
               </div>
               <div className="flex items-center gap-1.5">
                 <div style={{ width: 14, height: 6, borderRadius: 'var(--radius-sm)', border: `1.5px dashed ${GRANT_BAR_STROKE}`, opacity: 0.85 }} />
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>In prep / Submitted</span>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>Proposed (hypothetical length)</span>
               </div>
             </div>
           </>

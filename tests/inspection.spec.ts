@@ -81,7 +81,6 @@ test.describe('API — Read Endpoints', () => {
     ['/api/mentee-milestones/overview', 200, 'Mentee overview'],
     ['/api/conferences/upcoming', 200, 'Upcoming conferences'],
     ['/api/regulatory/expiring', 200, 'Expiring regulatory items'],
-    ['/api/grant-milestones/upcoming', 200, 'Upcoming grant milestones'],
     ['/api/deadline-cascade/all', 200, 'Deadline cascades'],
     ['/api/analytics/pi-dashboard', 200, 'PI dashboard analytics'],
     ['/api/analytics/mentee-velocity', 200, 'Mentee velocity'],

@@ -183,7 +183,11 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 268 as of 2026-10-12 -- GET /api/projects/products (+1): the list views' bulk read.
     // 271 as of 2026-10-12 — my folder for this project, schema-v127 (+3):
     //   GET, POST, DELETE /api/projects/:id/my-folder (api/routes/project-member-folders.ts).
-    expect(ROUTE_REGISTRY).toHaveLength(271)
+    // 265 as of 2026-10-12 -- the Grants page reads products (-6): the five
+    // /api/grant-milestones routes (GET upcoming, GET list, POST create,
+    // POST :id/complete, POST :id) and POST /api/grants/:id retired; grant
+    // terms and milestones write through POST /api/projects/:slug/products.
+    expect(ROUTE_REGISTRY).toHaveLength(265)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

@@ -43,7 +43,6 @@ export type EntityName =
   | 'ideas'
   | 'mentee-milestones'
   | 'grants'
-  | 'grant-milestones'
   | 'team'
   | 'comments'
   | 'reactions'

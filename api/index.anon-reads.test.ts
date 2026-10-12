@@ -59,8 +59,12 @@ beforeAll(() => {
     // #145: a member reads the meetings that name them; the session user is Nate.
     attendees: JSON.stringify(['nate-mesfin']), owner_slug: 'nick-ingraham',
   })
-  insertRow(db, 'grants', {
-    id: 'g1', mechanism: 'R01', title: `${S} proposal title`, agency: 'NIH', pi: 'nick-ingraham', proposed: 1, status: 'submitted',
+  // A grant is a grant product now (routes/grants.ts): an application under
+  // review on the project above.
+  insertRow(db, 'products', {
+    id: 'prd_01KXANON0GRANT0000000000G1', project_id: 'proj_anon1', kind: 'grant_application', stage: 'submitted',
+    title: `${S} proposal title`, short_name: `${S} A0`, venue: 'NIH R01', stage_notes: `${S} stage notes`,
+    period_start: '2027-07-01', is_home: 0,
   })
   insertRow(db, 'publications', {
     id: 'pub1', title: 'A published paper', authors: 'Ingraham N', journal: 'CHEST', year: 2025,
@@ -171,11 +175,14 @@ describe('anonymous reads (REQUIRE_AUTH=1)', () => {
     expect(Object.keys(health).sort()).toEqual(['failures', 'ok', 'timestamp'])
     const me = JSON.parse((await get('/api/auth/me')).text)
     expect(me).toEqual({ authenticated: false })
-    // Grants: status is private, the derived bucket is public (g1 is submitted -> proposed).
+    // Grants: the stage, names and project are private; the derived bucket,
+    // venue and dates are public (an application under review -> proposed).
     for (const path of ['/api/grants', '/api/grants/timeline']) {
       const grants = JSON.parse((await get(path)).text)
-      expect(grants.data[0]).toMatchObject({ id: 'g1', bucket: 'proposed' })
-      expect(grants.data[0]).not.toHaveProperty('status')
+      expect(grants.data).toEqual([{
+        id: 'prd_01KXANON0GRANT0000000000G1', venue: 'NIH R01', bucket: 'proposed',
+        period_start: '2027-07-01', period_end: null,
+      }])
     }
   })
 

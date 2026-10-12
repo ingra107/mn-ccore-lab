@@ -11,9 +11,8 @@ import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import { useTasks, useUpcomingConferences, useProjects } from '../../hooks/useApiData'
-import { useUpdateTask, useBulkUpdateTasks, useUpdateGrantMilestone } from '../../hooks/useMutations'
+import { useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useTaskFieldEditors } from '../../hooks/useTaskFieldEditors'
-import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, localDateKey, isOverdue, dueLabelText, isDoneStatus } from '../../lib/dateUtils'
 import DueLabel from '../../components/DueLabel'
@@ -35,7 +34,6 @@ export default function DeadlinesPage() {
   const [filterType, setFilterType] = useState<string>('')
 
   const { data: tasks = [], isLoading: tasksLoading, isError: tasksError, error: tasksErr } = useTasks()
-  const { data: grants = [], isLoading: grantsLoading } = useGrantTimeline()
   const { data: projectsList = [] } = useProjects()
   // Short names (wave 0), the long title on hover.
   const projectsBySlug = useMemo(() => {
@@ -45,17 +43,15 @@ export default function DeadlinesPage() {
   }, [projectsList])
   const updateTask = useUpdateTask()
   const bulkUpdate = useBulkUpdateTasks()
-  const updateMilestone = useUpdateGrantMilestone()
-  const queryClient = useQueryClient()
   const { showUndo } = useUndoToast()
   // P2-3: shared task field editors (status + due here) — one optimistic + undo
-  // implementation across ListView and Deadlines. Milestone status stays local
-  // (grant-milestone mutation + grants-timeline invalidation are Deadlines-specific).
+  // implementation across ListView and Deadlines. A milestone is a task too
+  // (kind='milestone'; a grant's post-award milestones since 2026-10-12).
   const taskEditors = useTaskFieldEditors()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   // Same selection as the Tasks Table: x, shift-click range, ctrl-click toggle.
   const { selected: selectedIds, setSelected: setSelectedIds, toggleSelect, selectRange, anchorId } = useSelection()
-  const isLoading = tasksLoading || grantsLoading
+  const isLoading = tasksLoading
 
   const handleFieldChange = useCallback((id: string, field: string, value: unknown) => {
     updateTask.mutate({ id, fields: { [field]: value } })
@@ -96,18 +92,6 @@ export default function DeadlinesPage() {
     taskEditors.onStatusChange(id, prevStatus, newStatus)
   }, [taskEditors])
 
-  // S12: grant-milestone status is now editable from Deadlines via the existing
-  // mutation. The mutation invalidates grant-milestones* but NOT this page's
-  // grants-timeline query, so refresh it explicitly on settle.
-  const handleMilestoneStatusChange = useCallback((id: string, newStatus: string, prevStatus: string) => {
-    const invalidate = { onSettled: () => queryClient.invalidateQueries({ queryKey: ['grants-timeline'] }) }
-    updateMilestone.mutate({ id, fields: { status: newStatus } }, invalidate)
-    const labels: Record<string, string> = { upcoming: 'Upcoming', in_progress: 'In Progress', completed: 'Completed', overdue: 'Overdue' }
-    showUndo(`Milestone → ${labels[newStatus] || newStatus}`, () =>
-      updateMilestone.mutate({ id, fields: { status: prevStatus } }, invalidate),
-    )
-  }, [updateMilestone, queryClient, showUndo])
-
   // P2-3: delegate task due-date edits to the shared editor (resolves prev from
   // the row here, since the row callback is (id, newDate) only).
   const handleDueDateChange = useCallback((id: string, newDate: string | null) => {
@@ -120,46 +104,27 @@ export default function DeadlinesPage() {
     const now = new Date()
     const items: DeadlineItem[] = []
 
-    // Tasks with due dates
+    // Tasks with a date. A milestone (kind='milestone', a grant's post-award
+    // milestones included) may carry only its hard date.
     for (const task of tasks) {
-      if (!task.due_date) continue
-      const dueDate = new Date(task.due_date + 'T23:59:59')
+      const date = task.due_date ?? (task.kind === 'milestone' ? task.deadline : null)
+      if (!date) continue
+      const dueDate = new Date(date + 'T23:59:59')
       const daysUntil = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       items.push({
         id: task.id,
         title: taskShortLabel(task),
         fullTitle: taskFullTitleHint(task),
-        due_date: task.due_date,
-        type: 'task',
+        due_date: date,
+        type: task.kind === 'milestone' ? 'milestone' : 'task',
         assignee: task.assignee,
         project: task.project_id || undefined,
         status: task.status,
         priority: task.priority,
-        isOverdue: isOverdue(task.due_date, task.status),
+        isOverdue: isOverdue(date, task.status),
         daysUntil,
         task,
       })
-    }
-
-    // Grant milestones
-    for (const grant of grants) {
-      for (const milestone of grant.milestones || []) {
-        if (!milestone.target_date) continue
-        const dueDate = new Date(milestone.target_date + 'T23:59:59')
-        const daysUntil = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-        items.push({
-          id: milestone.id,
-          title: `${grant.mechanism}: ${milestone.title}`,
-          due_date: milestone.target_date,
-          type: 'milestone',
-          project: grant.title,
-          status: milestone.status,
-          isOverdue: milestone.status !== 'completed' && isOverdue(milestone.target_date),
-          daysUntil,
-          future_note: milestone.future_note,
-          future_note_author: milestone.future_note_author,
-        })
-      }
     }
 
     // Filter
@@ -169,7 +134,7 @@ export default function DeadlinesPage() {
 
     // Sort by date
     return filtered.sort((a, b) => a.due_date.localeCompare(b.due_date))
-  }, [tasks, grants, filterType])
+  }, [tasks, filterType])
 
   // Group by time period. Each item lands in exactly one group: a done task
   // or a completed grant milestone is Completed only (a completed milestone
@@ -289,7 +254,7 @@ export default function DeadlinesPage() {
             options={[
               { value: '', label: 'All Types' },
               { value: 'task', label: 'Tasks' },
-              { value: 'milestone', label: 'Grant Milestones' },
+              { value: 'milestone', label: 'Milestones' },
             ]}
             onChange={setFilterType}
             alwaysShowChevron
@@ -369,7 +334,6 @@ export default function DeadlinesPage() {
                 setSelected={setSelectedIds}
                 onOpenTask={openTask}
                 onStatusChange={handleStatusChange}
-                onMilestoneStatusChange={handleMilestoneStatusChange}
                 onDueDateChange={handleDueDateChange}
               />
             )}

@@ -12,13 +12,14 @@ import { useMemo } from 'react'
 import {
   useTasks,
   useProjects,
-  useGrants,
   useExpiringRegulatory,
   useMenteeMilestones,
 } from './useApiData'
 import { isOverdue } from '../lib/dateUtils'
 import type { TaskRow, MenteeMilestoneRow } from '../lib/api'
-import type { Project, Grant } from '../data/types'
+import type { Project } from '../data/types'
+import { useGrantProducts } from './useGrantProducts'
+import type { GrantProduct } from '../lib/grants'
 
 const STALLED_THRESHOLD_DAYS = 30
 
@@ -45,7 +46,8 @@ export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthS
 
   const { data: tasks, isLoading: tasksLoading } = useTasks(undefined, { enabled })
   const { data: projects, isLoading: projectsLoading } = useProjects(undefined, { enabled })
-  const { data: grants, isLoading: grantsLoading } = useGrants()
+  const { data: grantData, isLoading: grantsLoading } = useGrantProducts()
+  const grants = grantData?.data
   const { data: regulatory, isLoading: regLoading } = useExpiringRegulatory(60)
   const { data: mentees, isLoading: menteesLoading } = useMenteeMilestones()
 
@@ -73,9 +75,11 @@ export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthS
       return !isNaN(d) && d < now
     }).length
 
-    // Grants whose period end lands within the next 60 days.
-    const grantDeadlineCount = (grants ?? []).filter((g: Grant) => {
-      const deadline = g.end_date
+    // Grants with a date inside the next 60 days: an award's period end, an
+    // application's submission due date.
+    const grantDeadlineCount = (grants ?? []).filter((g: GrantProduct) => {
+      if (g.bucket === 'ended') return false
+      const deadline = g.kind === 'award' ? g.period_end : g.deadline
       if (!deadline) return false
       const d = new Date(deadline).getTime()
       if (isNaN(d)) return false

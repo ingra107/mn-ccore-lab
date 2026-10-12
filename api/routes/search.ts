@@ -214,10 +214,18 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
     env.DB.prepare(
       'SELECT id, title, journal, year, authors, status, created_at FROM publications WHERE (title LIKE ? OR journal LIKE ? OR authors LIKE ? OR abstract LIKE ?) LIMIT ?'
     ).bind(like, like, like, like, limit).all(),
-    // NIH grants
+    // Grants: the grant products (applications, awards, honors) of the
+    // projects the caller can see (the nih_grants cache was retired 2026-10-12).
     env.DB.prepare(
-      'SELECT project_number, title, pi_name, fiscal_year, total_cost, last_synced FROM nih_grants WHERE (title LIKE ? OR pi_name LIKE ? OR abstract LIKE ?) LIMIT ?'
-    ).bind(like, like, like, limit).all(),
+      `SELECT p.id, COALESCE(p.short_name, p.title, k.label) AS name, p.venue, p.updated_at,
+              pr.title AS project_title, pr.short_name AS project_short_name, pr.slug AS project_slug, pr.pi AS pi
+         FROM products p
+         JOIN product_kinds k ON k.kind = p.kind
+         JOIN projects pr ON pr.id = p.project_id AND pr.deleted_at IS NULL
+        WHERE p.deleted_at IS NULL AND p.kind IN ('grant_application', 'award', 'honor')
+          AND (pr.title LIKE ? OR pr.short_name LIKE ? OR p.title LIKE ? OR p.short_name LIKE ? OR p.venue LIKE ?)
+        LIMIT ?`
+    ).bind(like, like, like, like, like, limit).all(),
     // Artifacts (Hermes deliverables) — title + body markdown.
     env.DB.prepare(
       'SELECT id, title, body_md, version, created_by, updated_at FROM artifacts WHERE (title LIKE ? OR body_md LIKE ?) LIMIT ?'
@@ -541,31 +549,29 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
     });
   }
 
-  // NIH grants
+  // Grants (grant products)
   for (const g of (grants.results || []) as Record<string, unknown>[]) {
-    const timestamp = g.last_synced;
+    const timestamp = g.updated_at;
+    const projectName = (g.project_short_name as string | null) || (g.project_title as string | null) || ''
+    const title = `${projectName}${g.name ? ` · ${g.name}` : ''}`
     const score = TYPE_PRIORITY.grant
       + recencyBoost(timestamp)
-      + titleMatchBonus(g.title, q);
+      + titleMatchBonus(title, q);
     const match = pickMatch(q, [
-      { name: 'title', value: g.title },
-      { name: 'pi_name', value: g.pi_name },
+      { name: 'title', value: title },
+      { name: 'venue', value: g.venue },
     ]);
     results.push({
-      id: g.project_number,
+      id: g.id,
       type: 'grant',
-      title: g.title || g.project_number,
-      subtitle: [g.pi_name, g.fiscal_year && `FY${g.fiscal_year}`].filter(Boolean).join(' · '),
+      title,
+      subtitle: [g.venue, g.pi].filter(Boolean).join(' · '),
       url: '/portal/grants',
       score,
       timestamp,
       snippet: match.snippet,
       matchedField: match.matchedField,
-      details: {
-        pi_name: g.pi_name,
-        fiscal_year: g.fiscal_year,
-        total_cost: g.total_cost,
-      },
+      details: { venue: g.venue, pi: g.pi, project_slug: g.project_slug },
     });
   }
 

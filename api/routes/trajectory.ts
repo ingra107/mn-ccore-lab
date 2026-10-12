@@ -46,16 +46,17 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
       WHERE t.assignee LIKE ?
     `).bind(`%${slug}%`).all(),
 
-    // Milestones on their projects
+    // Milestones on their projects: milestone tasks on a project they have a
+    // task on (grant_milestones, keyed by a grant id that was never a project
+    // id, retired 2026-10-12).
     env.DB.prepare(`
-      SELECT m.id, m.title, m.due_date, m.status, m.grant_id as project_id, p.title as project_title
-      FROM grant_milestones m
-      LEFT JOIN projects p ON p.id = m.grant_id
-      LEFT JOIN tasks t ON t.project_id = p.id
-      WHERE t.assignee LIKE ?
-      GROUP BY m.id
-      ORDER BY m.due_date
-    `).bind(`%${slug}%`).all().catch(() => ({ results: [] })),
+      SELECT m.id, m.title, COALESCE(m.due_date, m.deadline) AS due_date, m.status, m.project_id, p.title as project_title
+      FROM tasks m
+      JOIN projects p ON p.id = m.project_id
+      WHERE m.kind = 'milestone' AND m.deleted_at IS NULL
+        AND EXISTS (SELECT 1 FROM tasks t WHERE t.project_id = p.id AND t.assignee LIKE ?)
+      ORDER BY COALESCE(m.due_date, m.deadline)
+    `).bind(`%${slug}%`).all(),
 
     // Task metrics: total, completed, overdue, avg days to complete
     env.DB.prepare(`

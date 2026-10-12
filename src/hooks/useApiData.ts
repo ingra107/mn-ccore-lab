@@ -18,7 +18,6 @@ import {
   fetchMemberFeaturedPublications,
   fetchTeam,
   fetchProjects,
-  fetchGrants,
   fetchStats,
   fetchCitations,
   fetchTasks,
@@ -40,7 +39,6 @@ import {
   fetchActiveSubmissions,
   fetchExpiringRegulatory,
   fetchTodayMentees,
-  fetchUpcomingGrantMilestones,
   fetchConferences,
   fetchUpcomingConferences,
   fetchPBSessions,
@@ -52,7 +50,6 @@ import type {
   PublicationRow,
   TeamMemberRow,
   ProjectRow,
-  GrantRow,
   TaskRow,
   IdeaRow,
   CalendarEvent,
@@ -77,7 +74,7 @@ import { normalizeStage } from '../lib/stageNormalize'
 // lib/api types are imported directly from lib/api where needed.
 export type { DependencyRow, ExpertiseTag, MenteeMilestoneRow, PBSessionRow, RevisionRow, ReviewerCommentRow, ProjectPublicationLink }
 
-import type { Publication, TeamMember, Project, Grant } from '../data/types'
+import type { Publication, TeamMember, Project } from '../data/types'
 
 // Static data fallbacks — dev only.
 // Publications load through a DEV-gated dynamic import. A static import was NOT tree-shaken:
@@ -98,7 +95,6 @@ if (import.meta.env.DEV) {
 // No static import of data/publications anywhere in src/: src/lib/__tests__/publicationsBundle.test.ts.
 import { getAllMembers as _devGetAllMembers } from '../data/team'
 import { projects as _devProjects } from '../data/projects'
-import { grants as _devGrants } from '../data/grants'
 
 // ── Transform D1 rows → frontend types ──────────────────────
 
@@ -186,16 +182,6 @@ export function rowToProject(row: ProjectRow): Project {
   }
 }
 
-function rowToGrant(row: GrantRow): Grant {
-  return {
-    mechanism: row.mechanism || '',
-    title: row.title,
-    agency: row.agency || '',
-    pi: row.pi || '',
-    bucket: row.bucket,
-    end_date: row.end_date || undefined,
-  }
-}
 
 // ── Query hooks ─────────────────────────────────────────────
 //
@@ -336,19 +322,6 @@ export function useProjects(params?: { status?: string; category?: string }, opt
     staleTime: STALE_TIME,
     retry: false,
     enabled: options?.enabled ?? true,
-  })
-}
-
-export function useGrants() {
-  return useQuery({
-    queryKey: ['grants'],
-    queryFn: async () => {
-      const res = await fetchGrants()
-      return res.data.map(rowToGrant)
-    },
-    initialData: import.meta.env.DEV ? () => _devGrants : undefined,
-    staleTime: STALE_TIME,
-    retry: false,
   })
 }
 
@@ -1606,16 +1579,6 @@ export function useExpiringRegulatory(days: number = 60) {
     queryKey: ['regulatory-expiring', days],
     queryFn: () => fetchExpiringRegulatory(days).then((r) => r.data),
     staleTime: 5 * 60 * 1000,
-  })
-}
-
-// ── Grant Post-Award Milestones ───────────────────────────────
-
-export function useUpcomingGrantMilestones(days: number = 90) {
-  return useQuery({
-    queryKey: ['grant-milestones-upcoming', days],
-    queryFn: () => fetchUpcomingGrantMilestones(days).then((r) => r.data),
-    staleTime: 60 * 1000,
   })
 }
 

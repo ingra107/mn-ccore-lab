@@ -54,11 +54,14 @@ export function reason(err: unknown): string {
 
 /** Refresh everything a product edit can change: its own list, the project
  *  rows (schema-v126 copies a sole manuscript product's stage onto
- *  projects.stage), the bulk product read the lists use, and activity. */
+ *  projects.stage), the bulk product read the lists use, the Grants page,
+ *  and activity. */
 function refresh(qc: ReturnType<typeof useQueryClient>, slug: string) {
   qc.invalidateQueries({ queryKey: key(slug) })
   qc.invalidateQueries({ queryKey: ['projects'] })
   qc.invalidateQueries({ queryKey: BULK_KEY })
+  // The Grants page lists grant products (useGrantProducts' key).
+  qc.invalidateQueries({ queryKey: ['grants-timeline'] })
   qc.invalidateQueries({ queryKey: ['activity'] })
 }
 

@@ -23,13 +23,14 @@ import { json, error, isPiRequest, generateId } from '../helpers';
 import type { AuthUser } from '../helpers';
 import { applyMutation, hashTouched } from './mutations';
 
-/** Columns PB's cache holds (PB scripts/db/migrations/144_products.sql). */
+/** Columns PB's cache holds (PB scripts/db/migrations/144_products.sql + 146). */
 const SYNC_COLS: Record<'products' | 'product_funding', string> = {
   products: [
     'id', 'project_id', 'kind', 'stage', 'title', 'short_name', 'waiting_on',
     'venue', 'due_date', 'deadline', 'folder', 'repo_url', 'stage_entered_at',
     'stage_notes', 'sort_order', 'is_home', 'lineage_rank', 'grew_from_id',
     'grew_from_rank', 'deleted_at', 'seq', 'last_mutation_id', 'created_at', 'updated_at',
+    'period_start', 'period_end', 'amount_usd',
   ].join(', '),
   product_funding: [
     'id', 'product_id', 'funder_id', 'funder_kind', 'deleted_at', 'seq',
@@ -72,17 +73,18 @@ export async function handleGetProductsSync(
 }
 
 /** One product row as the team-facing reads send it (labels joined in). */
-const PRODUCT_LIST_SQL = `SELECT p.id, p.project_id, p.kind, k.label AS kind_label, k.sort_order AS kind_sort,
+export const PRODUCT_LIST_SQL = `SELECT p.id, p.project_id, p.kind, k.label AS kind_label, k.sort_order AS kind_sort,
             p.stage, s.label AS stage_label, s.ordinal AS stage_ordinal, s.is_terminal AS stage_is_terminal,
             p.title, p.short_name, p.waiting_on, p.venue, p.due_date, p.deadline,
             p.folder, p.repo_url, p.stage_entered_at, p.stage_notes, p.sort_order,
-            p.is_home, p.lineage_rank, p.grew_from_id, p.seq, p.created_at, p.updated_at
+            p.is_home, p.lineage_rank, p.grew_from_id, p.seq, p.created_at, p.updated_at,
+            p.period_start, p.period_end, p.amount_usd
        FROM products p
        JOIN product_kinds k ON k.kind = p.kind
        JOIN product_stages s ON s.kind = p.kind AND s.stage = p.stage`;
 
 /** Every live kind with its live ladder: the UI holds no copy of kind data. */
-async function kindsWithLadders(env: Env): Promise<Record<string, unknown>[]> {
+export async function kindsWithLadders(env: Env): Promise<Record<string, unknown>[]> {
   const kinds = await env.DB.prepare(
     `SELECT kind, label, plural_label, has_page, can_fund, sort_order
        FROM product_kinds WHERE deleted_at IS NULL ORDER BY sort_order, kind`,
@@ -149,6 +151,13 @@ export async function handleGetAllProjectProducts(env: Env): Promise<Response> {
 //       base_seq + from_stage make it a compare-and-swap: a stale tab whose
 //       product moved since gets 409 instead of overwriting the newer stage.
 //   { action: 'home', product_id }        (v125 hands the marker over)
+//   { action: 'terms', product_id, fields: {venue?, due_date?, deadline?,
+//       period_start?, period_end?, amount_usd?}, base_seq?, from? }
+//       The Grants page's inline edits and Gantt drag; base_seq + from (the
+//       values the screen showed) make it a compare-and-swap. schema-v128
+//       CHECKs each term against the kind.
+//   { action: 'milestone', product_id, title, due_date?, deadline? }
+//       A post-award milestone: a kind='milestone' task on the product.
 //   { action: 'add', kind, stage, name?, grew_from_id? }
 //       grew_from_id must be a live product of the same project; the lineage
 //       ranks are derived here, never taken from the client.
@@ -175,8 +184,12 @@ export async function handleProjectProductWrite(
   const ownProduct = async (id: unknown) => {
     if (typeof id !== 'string' || !id) return null;
     return env.DB.prepare(
-      'SELECT id, kind, stage, lineage_rank FROM products WHERE id = ? AND project_id = ? AND deleted_at IS NULL',
-    ).bind(id, project.id).first<{ id: string; kind: string; stage: string; lineage_rank: number }>();
+      `SELECT id, kind, stage, lineage_rank, period_start, period_end, amount_usd
+         FROM products WHERE id = ? AND project_id = ? AND deleted_at IS NULL`,
+    ).bind(id, project.id).first<{
+      id: string; kind: string; stage: string; lineage_rank: number
+      period_start: string | null; period_end: string | null; amount_usd: number | null
+    }>();
   };
   // A kind/stage pair off the ladder is the caller's input: answer 400 here,
   // in words, before the write's FK refusal turns it into a 409.
@@ -209,6 +222,79 @@ export async function handleProjectProductWrite(
       table: 'products', record_id: product.id, op: 'update', patch: { is_home: 1 },
       route: PRODUCT_WRITE_ROUTE, user,
     });
+  } else if (body.action === 'terms') {
+    // The Grants page's inline edits and Gantt drag: venue, the two-date pair
+    // and the award terms. schema-v128 CHECKs each term against the kind, so
+    // a wrong-kind value is refused by the arbiter, not by a copy of the rule.
+    const product = await ownProduct(body.product_id);
+    if (!product) return error('Product not found in this project', 404);
+    const fields = (body.fields ?? {}) as Record<string, unknown>;
+    const patch: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(fields)) {
+      if (!TERM_FIELDS.has(k)) return error(`${k} cannot be set here`, 400);
+      if (v === '' || v === null || v === undefined) { patch[k] = null; continue; }
+      if (k === 'amount_usd') {
+        const n = typeof v === 'number' ? v : Number(String(v).replace(/[$,\s]/g, ''));
+        if (!Number.isInteger(n) || n < 0) return error('The amount is whole dollars, 0 or more.', 400);
+        patch[k] = n;
+      } else if (k === 'venue') {
+        patch[k] = String(v).trim().slice(0, 120) || null;
+      } else {
+        if (typeof v !== 'string' || !ISO_DATE.test(v)) return error('Dates are YYYY-MM-DD.', 400);
+        patch[k] = v;
+      }
+    }
+    if (Object.keys(patch).length === 0) return error('fields required', 400);
+    const termError = termsRefusal(product.kind, { ...product, ...patch });
+    if (termError) return error(termError, 400);
+    recordId = product.id;
+    // Compare-and-swap when the screen says what it saw: a stale tab (or a
+    // drag over a bar someone just moved) is refused, never overwrites.
+    const from = body.from as Record<string, unknown> | undefined;
+    const cas = typeof body.base_seq === 'number' && from && typeof from === 'object';
+    const keys = Object.keys(patch);
+    result = await applyMutation(env, {
+      table: 'products', record_id: product.id, op: 'update', patch,
+      route: PRODUCT_WRITE_ROUTE, user,
+      ...(cas ? {
+        base_seq: body.base_seq as number,
+        base_row_hash: await hashTouched(Object.fromEntries(keys.map((k) => [k, from![k] ?? null])), keys),
+      } : {}),
+    });
+  } else if (body.action === 'milestone') {
+    // A post-award milestone (progress report, NCE, closeout) is a task with
+    // kind='milestone' on this product (schema-v109 + tasks.product_id, v124).
+    // The two-date rule holds: due_date is the internal date, deadline the
+    // hard one. v124's trigger refuses a product from another project.
+    const product = await ownProduct(body.product_id);
+    if (!product) return error('Product not found in this project', 404);
+    const title = typeof body.title === 'string' ? body.title.trim().slice(0, 200) : '';
+    if (!title) return error('A milestone needs a title.', 400);
+    const due = body.due_date ?? null;
+    const hard = body.deadline ?? null;
+    for (const d of [due, hard]) {
+      if (d !== null && (typeof d !== 'string' || !ISO_DATE.test(d))) return error('Dates are YYYY-MM-DD.', 400);
+    }
+    if (!due && !hard) return error('A milestone needs a date.', 400);
+    recordId = generateId('task');
+    result = await applyMutation(env, {
+      table: 'tasks', record_id: recordId, op: 'insert',
+      payload: {
+        title, description: title, kind: 'milestone', status: 'todo', priority: 'medium',
+        completed: 0, completed_at: null, completed_by: null,
+        project_id: project.id, product_id: product.id,
+        due_date: due, deadline: hard,
+        assignee: user.slug, assigned_by: user.email, source: 'manual',
+      },
+      route: PRODUCT_WRITE_ROUTE, user,
+    });
+    if (result.status === 'accepted' || result.status === 'merged_clean') {
+      const row = result.canonical_payload ?? {};
+      return json({ milestone: {
+        id: row.id ?? recordId, title: row.title, due_date: row.due_date ?? null, deadline: row.deadline ?? null,
+        status: row.status, completed: row.completed, product_id: row.product_id, seq: row.seq,
+      } });
+    }
   } else if (body.action === 'add') {
     if (typeof body.kind !== 'string' || typeof body.stage !== 'string') return error('kind and stage required', 400);
     if (!(await onLadder(body.kind, body.stage))) return error('That kind and stage do not go together.', 400);
@@ -228,7 +314,7 @@ export async function handleProjectProductWrite(
       route: PRODUCT_WRITE_ROUTE, user,
     });
   } else {
-    return error("action must be 'stage', 'home' or 'add'", 400);
+    return error("action must be 'stage', 'home', 'terms', 'milestone' or 'add'", 400);
   }
 
   if (result.status !== 'accepted' && result.status !== 'merged_clean') {
@@ -245,8 +331,35 @@ export async function handleProjectProductWrite(
       id: row.id ?? recordId, project_id: row.project_id, kind: row.kind, stage: row.stage,
       stage_label: label?.label ?? row.stage, is_home: row.is_home, seq: row.seq,
       stage_entered_at: row.stage_entered_at, lineage_rank: row.lineage_rank, grew_from_id: row.grew_from_id,
+      venue: row.venue ?? null, due_date: row.due_date ?? null, deadline: row.deadline ?? null,
+      period_start: row.period_start ?? null, period_end: row.period_end ?? null, amount_usd: row.amount_usd ?? null,
     },
   });
+}
+
+/** What the Grants page may set through the member route. */
+const TERM_FIELDS = new Set(['venue', 'due_date', 'deadline', 'period_start', 'period_end', 'amount_usd']);
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * The words for a term the schema would refuse (schema-v128's CHECKs). The
+ * CHECK is the rule; this only says it before the write, in a sentence,
+ * so the toast is not a constraint name. A rule here that the CHECK lacks
+ * would be a second, stricter copy -- keep the two the same.
+ */
+export function termsRefusal(
+  kind: string,
+  row: { period_start?: unknown; period_end?: unknown; amount_usd?: unknown },
+): string | null {
+  const has = (v: unknown) => v !== null && v !== undefined
+  if (has(row.period_start) && kind !== 'award' && kind !== 'grant_application') {
+    return 'Only a grant application or an award has a start date.'
+  }
+  if (has(row.period_end) && kind !== 'award') return 'Only an award has an end date; an application has a proposed start.'
+  if (has(row.amount_usd) && kind !== 'award') return 'Only an award carries an amount.'
+  if (has(row.period_end) && !has(row.period_start)) return 'Set the start date first.'
+  if (has(row.period_end) && String(row.period_end) <= String(row.period_start)) return 'The end date comes after the start.'
+  return null
 }
 
 /**

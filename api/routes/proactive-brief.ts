@@ -39,12 +39,14 @@ export async function handleProactiveBrief(request: Request, env: Env): Promise<
          ORDER BY last_activity ASC`
       ).bind(fourteenDaysAgo).all(),
 
-      // Upcoming milestones (next 7 days) — check grant_milestones table
+      // Upcoming milestones (next 7 days): milestone tasks, the grant
+      // post-award ones included (grant_milestones retired 2026-10-12).
       env.DB.prepare(
-        `SELECT * FROM grant_milestones
-         WHERE due_date >= ? AND due_date <= ? AND completed_at IS NULL
-         ORDER BY due_date ASC`
-      ).bind(today, sevenDaysFromNow).all().catch(() => ({ results: [] })),
+        `SELECT id, title, due_date, deadline, product_id, project_id FROM tasks
+         WHERE kind = 'milestone' AND deleted_at IS NULL AND completed = 0
+           AND COALESCE(due_date, deadline) >= ? AND COALESCE(due_date, deadline) <= ?
+         ORDER BY COALESCE(due_date, deadline) ASC`
+      ).bind(today, sevenDaysFromNow).all(),
     ]);
 
     const overdue = overdueResult.results || [];

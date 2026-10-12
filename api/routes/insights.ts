@@ -382,16 +382,22 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
        AND received_at < datetime('now', '-7 days')`
   ).first<{ c: number }>().catch(() => ({ c: 0 } as { c: number }))
 
-  // 4. Grants pipeline + days to next deadline
+  // 4. Grants pipeline + days to next deadline: grant applications still in
+  // play (not at a terminal stage). Until 2026-10-12 this read nih_grants,
+  // which has no status or deadline column, so both always fell to the catch.
   const grantsRes = await env.DB.prepare(
-    `SELECT COUNT(*) as c FROM nih_grants
-     WHERE status NOT IN ('funded', 'withdrawn', 'rejected')`
-  ).first<{ c: number }>().catch(() => ({ c: 0 } as { c: number }))
+    `SELECT COUNT(*) as c FROM products p
+       JOIN product_stages s ON s.kind = p.kind AND s.stage = p.stage
+       JOIN projects pr ON pr.id = p.project_id AND pr.deleted_at IS NULL
+     WHERE p.deleted_at IS NULL AND p.kind = 'grant_application' AND s.is_terminal = 0`
+  ).first<{ c: number }>()
   const nextDeadlineRes = await env.DB.prepare(
-    `SELECT julianday(deadline) - julianday('now') as d FROM nih_grants
-     WHERE deadline IS NOT NULL AND deadline > date('now')
-     ORDER BY deadline ASC LIMIT 1`
-  ).first<{ d: number }>().catch(() => null)
+    `SELECT julianday(p.deadline) - julianday('now') as d FROM products p
+       JOIN projects pr ON pr.id = p.project_id AND pr.deleted_at IS NULL
+     WHERE p.deleted_at IS NULL AND p.kind = 'grant_application'
+       AND p.deadline IS NOT NULL AND p.deadline > date('now')
+     ORDER BY p.deadline ASC LIMIT 1`
+  ).first<{ d: number }>()
   const daysToNextDeadline = nextDeadlineRes ? Math.max(0, Math.round(nextDeadlineRes.d)) : null
 
   // 5. Workload heatmap — tasks due this week (Sun-Sat), grouped by assignee × weekday.

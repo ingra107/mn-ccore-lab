@@ -3205,7 +3205,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 /* Keyboard hints under a table */
 .sr-foot{display:flex;gap:14px;font-size:10.5px;color:var(--sk-t3)}
 .sr-foot kbd{font-family:var(--font-mono),'JetBrains Mono',monospace;font-size:9px;padding:1px 4px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--sk-line2);color:var(--sk-t2)}
-/* Grants list on the sleek row (GrantSleekList): progress stays the accent at any percent */
+/* Grants list on the sleek row (the GrantSleekList, archived 2026-10-12; rules kept for any sleek-row progress bar): progress stays the accent at any percent */
 .gr-list .gr-prog{display:inline-flex;align-items:center;gap:6px;min-width:0}
 .gr-list .gr-bar{width:36px;height:3px;border-radius:999px;background:var(--sk-bar-track);overflow:hidden;flex-shrink:0}
 .gr-list .gr-bar i{display:block;height:100%;border-radius:999px;background:var(--job-accent)}

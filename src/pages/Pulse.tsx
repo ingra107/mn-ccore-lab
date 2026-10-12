@@ -9,7 +9,8 @@ import {
   usePublications,
   useTeam,
 } from '../hooks/useApiData'
-import { useGrantTimeline } from '../hooks/useGrantTimeline'
+import { useGrantProducts } from '../hooks/useGrantProducts'
+import { grantName, mechanismOf } from '../lib/grants'
 import { isProjectActive } from '../lib/taskConstants'
 import { countPublications, isPublished } from '../lib/publicationCounts'
 import { isOverdue } from '../lib/dateUtils'
@@ -70,7 +71,8 @@ export default function Pulse() {
   const { data: projects = [] } = useProjects()
   const { data: activity = [] } = useActivity(8)
   const { data: healthData } = useProjectHealth()
-  const { data: grants = [] } = useGrantTimeline()
+  const { data: grantData } = useGrantProducts()
+  const grants = useMemo(() => grantData?.data ?? [], [grantData])
   const { data: publications = [] } = usePublications()
   const { data: team = [] } = useTeam()
 
@@ -252,7 +254,7 @@ export default function Pulse() {
                       lineHeight: 1,
                     }}
                   >
-                    {g.mechanism}
+                    {mechanismOf(g.venue) ?? '—'}
                   </span>
                   <div className="flex flex-col">
                     <span
@@ -264,8 +266,8 @@ export default function Pulse() {
                         lineHeight: 1.2,
                       }}
                     >
-                      {/* A signed-out kiosk gets no grant titles (anonShape). */}
-                      {g.title ? formatBrandName(g.title) : null}
+                      {/* A signed-out kiosk gets no grant names (anonShape: id, venue, bucket, dates). */}
+                      {g.project_slug ? formatBrandName(grantName(g)) : null}
                     </span>
                     <span
                       className="uppercase mt-1"
@@ -277,7 +279,7 @@ export default function Pulse() {
                         fontWeight: 500,
                       }}
                     >
-                      {g.bucket === 'proposed' ? 'In preparation' : 'Active'} · {g.agency}
+                      {g.bucket === 'proposed' ? 'In preparation' : 'Active'}{g.venue ? ` · ${g.venue}` : ''}
                     </span>
                   </div>
                 </div>
