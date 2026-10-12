@@ -15,7 +15,7 @@ const linkBtn: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6,
   fontSize: 'var(--text-small)', fontWeight: 500, textDecoration: 'none',
   borderRadius: 'var(--radius-md)', padding: '7px 12px',
-  border: '1px solid var(--border-subtle)', color: 'var(--slate)',
+  border: '1px solid var(--sk-line2)', color: 'var(--slate)',
 }
 const p: React.CSSProperties = { fontSize: 'var(--text-small)', color: 'var(--slate)', margin: 0, lineHeight: 1.5 }
 

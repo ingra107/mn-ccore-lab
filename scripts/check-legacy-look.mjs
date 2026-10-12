@@ -51,7 +51,8 @@ export const METRICS = {
   surface: [/--surface-\d/g],
   box: [
     /(?<!\w)border:\s*['"`]1px solid var\(--border-(?:subtle|strong|light|default)\)/g,
-    /className=["'`][^"'`]*\brounded(?:-(?:md|lg|xl|2xl))?\b[^"'`]*\bborder\b(?![-\w])[^"'`]*["'`]/g,
+    // Any string literal (className, cn(...), a ternary arm) holding a rounded-* and a bare `border`, either order.
+    /(["'`])(?:(?!\1)[^\n])*?(?:\brounded(?:-\w+)*\b(?:(?!\1)[^\n])*?\bborder\b(?![-\w])|\bborder\b(?![-\w])(?:(?!\1)[^\n])*?\brounded(?:-\w+)*\b)(?:(?!\1)[^\n])*?\1/g,
   ],
 }
 

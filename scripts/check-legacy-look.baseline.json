@@ -81,9 +81,6 @@
   "src/components/LabPageLayout.tsx": {
     "box": 1
   },
-  "src/components/LauncherSettingsPanel.tsx": {
-    "box": 1
-  },
   "src/components/LinkifiedText.tsx": {
     "box": 1
   },
@@ -212,9 +209,6 @@
   "src/components/meetings/MeetingProjectsSection.tsx": {
     "box": 1
   },
-  "src/components/project/MyProjectFolder.tsx": {
-    "box": 1
-  },
   "src/components/project/ProjectMembers.tsx": {
     "box": 1
   },
@@ -236,9 +230,6 @@
   "src/components/tasks/TaskGridView.tsx": {
     "surface": 6,
     "box": 5
-  },
-  "src/components/tasks/detail/FieldControls.tsx": {
-    "box": 1
   },
   "src/components/tasks/detail/HandoffSection.tsx": {
     "box": 7

@@ -144,8 +144,8 @@ export function EditableTextarea({ value, onSave, placeholder }: { value: string
         onBlur={save}
         onKeyDown={(e) => { if (e.key === 'Escape') { setDraft(value); setEditing(false) } }}
         rows={3}
-        className="w-full text-sm outline-none border rounded-md px-3 py-2 resize-none"
-        style={{ color: 'var(--ink)', borderColor: 'var(--job-accent)', background: 'none' }}
+        className="w-full text-sm outline-none rounded-md px-3 py-2 resize-none"
+        style={{ color: 'var(--ink)', boxShadow: '0 0 0 1px var(--job-accent)', background: 'none' }}
       />
     )
   }
@@ -204,7 +204,7 @@ function WorkflowTextInput({ value, placeholder, onSave, compact }: { value: str
       className={`w-full outline-none rounded-md ${sizeClass}${compact ? ' hov-bg' : ''}`}
       style={compact
         ? ({ color: 'var(--ink)', background: 'transparent', border: `1px solid ${focused ? 'var(--job-accent)' : 'transparent'}`, '--hov-bg': 'var(--hover-subtle)' } as React.CSSProperties)
-        : { color: 'var(--ink)', background: 'var(--field-bg, rgba(0,0,0,0.04))', border: '1px solid var(--border-subtle)' }}
+        : { color: 'var(--ink)', background: 'var(--field-bg, rgba(0,0,0,0.04))', border: '1px solid var(--field-edge)' }}
     />
   )
 }

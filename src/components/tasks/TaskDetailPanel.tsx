@@ -874,7 +874,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             "Done" reads as "complete the task", so his tap completed nothing.
             Now: ✓ Complete actually completes (with undo, then closes);
             Close is labeled as what it is. Swipe-right-to-dismiss still works. */}
-        <div className="task-detail-done-bar" style={{ display: 'flex', gap: 8 }}>
+        <div className="task-detail-done-bar">
           <button
             type="button"
             onClick={() => {

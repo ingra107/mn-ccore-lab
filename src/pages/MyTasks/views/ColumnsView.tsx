@@ -11,12 +11,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { TaskRow as CardTaskRow } from '../../../components/today/TaskRow'
 import { useTodayState } from '../../../hooks/useTodayState'
+import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import { OverdueBanner } from './OverdueBanner'
 import { NoTasksMatch, AllCaughtUp, LaneEmpty } from './MyTasksEmpty'
 import {
   GROUP_META, GROUP_ORDER,
   INK_DIM, INK_MUTED, PAGE_BG,
-  isTaskDone,
+  isTaskDone, daysSince,
   type GroupKey,
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
@@ -33,6 +34,7 @@ export function ColumnsView({ filtered, isEmpty, byGroup, onOpenEditor, projects
   const colCount = visibleGroups.length
 
   const state = useTodayState(filtered)
+  const { prefs } = useLabPrefs()
 
   // Overflow is measured, not guessed from a breakpoint: the pager row below
   // exists only while the grid is really wider than its scroller.
@@ -95,6 +97,8 @@ export function ColumnsView({ filtered, isEmpty, byGroup, onOpenEditor, projects
       style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 20, position: 'relative', width: '100%' }}
     >
       <style>{`
+        /* A narrow column: the project name wraps instead of cutting to "No …". */
+        .mt-columns-scroll .tk .tk-ctx .tk-cs { max-width: 100%; white-space: normal; overflow: visible; }
         .mt-columns-scroll { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
         .mt-columns-scroll::-webkit-scrollbar { height: 8px; }
         .mt-columns-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -133,6 +137,7 @@ export function ColumnsView({ filtered, isEmpty, byGroup, onOpenEditor, projects
                     // No onOpenEditor: the card header owns focus, and a click
                     // already opens the panel through onOpen.
                     onOpen={() => onOpenEditor(t.id)}
+                    extraPills={cardPills(t, prefs.taskStaleDays)}
                   />
                 ))}
               </div>
@@ -147,3 +152,18 @@ export function ColumnsView({ filtered, isEmpty, byGroup, onOpenEditor, projects
 }
 
 function noop() {}
+
+// What the old Columns row carried and the card does not: waiting, stale and the
+// leading tag. They ride on the card's context line.
+function cardPills(task: TaskRow, staleDays: number) {
+  const stale = task.updated_at && task.status === 'in_progress' && daysSince(task.updated_at) >= staleDays ? daysSince(task.updated_at) : 0
+  const tag = (task as TaskRow & { _tag?: string })._tag
+  if (task.status !== 'waiting_external' && stale <= 0 && !tag) return null
+  return (
+    <>
+      {tag && <span className="tk-pill">{tag}</span>}
+      {task.status === 'waiting_external' && <span className="tk-pill">Waiting</span>}
+      {stale > 0 && <span className="tk-pill" style={{ color: 'var(--job-stale)' }}>{stale}d stale</span>}
+    </>
+  )
+}

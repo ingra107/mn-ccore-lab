@@ -272,7 +272,7 @@ export default function KeyLinksEditor({ links, onSave, hideLabel = false, maxSl
           }}
         >
           <Link2 {...ICON_PROPS} size={11} />
-          Key Links
+          Key links
         </label>
       )}
 
