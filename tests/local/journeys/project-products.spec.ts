@@ -1,9 +1,11 @@
 /**
  * Projects hold products (plan step 8): the project page's Products section.
  * One product -> its ladder, expanded. 2+ -> chips, "All" = grouped list.
- * The PI sets a stage on the ladder, adds a product (kind, then a stage from
- * that kind's ladder, optional grew-from inside the project), and hands the
- * home marker to another product. Every write goes through /api/mutations.
+ * A project member (the PI included) sets a stage on the ladder, adds a
+ * product (kind, then a stage from that kind's ladder, optional grew-from
+ * inside the project), and hands the home marker to another product. Every
+ * write goes through POST /api/projects/:slug/products (membership-gated);
+ * /api/mutations stays PI-only.
  *
  * Runs against the local D1: `npm run test:local:setup`, then
  * `node scripts/run-journey-spec.mjs tests/local/journeys/project-products.spec.ts`.
@@ -80,15 +82,21 @@ test.describe('Project products', () => {
     await section.scrollIntoViewIfNeeded()
     await section.screenshot({ path: `${SHOTS}/01-single-product-ladder.png` })
 
-    // 2. Set a stage on the ladder: writes products.stage through /api/mutations.
+    // 2. Set a stage on the ladder: writes products.stage through the project's
+    //    own route; schema-v126 carries it onto projects.stage (one stage truth).
     const target = first.stage === 'writing' ? 'data_analysis' : 'writing'
-    const mutation = page.waitForResponse((r) => r.url().endsWith('/api/mutations') && r.request().method() === 'POST')
+    const write = page.waitForResponse((r) => r.url().endsWith(`/api/projects/${slug}/products`) && r.request().method() === 'POST')
     await page.getByTestId(`stage-dot-${target}`).click()
-    const resp = await mutation
-    const results = (await resp.json()).results as { status: string }[]
-    expect(results[0].status).toBe('accepted')
+    const resp = await write
+    expect(resp.status()).toBe(200)
+    expect((await resp.json()).product.stage).toBe(target)
     await expect.poll(async () => (await productsOf(page, slug)).products[0].stage).toBe(target)
     await expect(page.getByTestId(`stage-dot-${target}`)).toHaveAttribute('aria-current', 'step')
+    const proj = await page.request.get(`/api/projects/${slug}`, { headers: PI })
+    const projStage = ((await proj.json()) as { data?: { stage?: string }; stage?: string })
+    expect(projStage.data?.stage ?? projStage.stage).toBe(target)
+    // The undo toast appears once the write landed.
+    await expect(page.getByRole('button', { name: /undo/i }).first()).toBeVisible()
 
     // 3. Add a product: kind first, then a stage from THAT kind's ladder, grew-from inside the project.
     await page.getByTestId('product-add-toggle').click()
@@ -115,6 +123,16 @@ test.describe('Project products', () => {
     await expect(page.getByTestId(`product-row-${added.id}`)).toContainText('from')
     await section.screenshot({ path: `${SHOTS}/03-chips-all-grouped.png` })
 
+    // 4b. The tabs are a WAI-ARIA tablist: one tab stop, arrows move, the panel is labelled.
+    await page.getByTestId('product-tab-all').focus()
+    await page.keyboard.press('ArrowRight')
+    const firstTab = section.getByRole('tab').nth(1)
+    await expect(firstTab).toHaveAttribute('aria-selected', 'true')
+    await expect(firstTab).toBeFocused()
+    await expect(section.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', (await firstTab.getAttribute('id'))!)
+    await page.keyboard.press('Home')
+    await expect(page.getByTestId('product-tab-all')).toHaveAttribute('aria-selected', 'true')
+
     // 5. A chip opens that product's ladder; Make home hands the marker over.
     await page.getByTestId(`product-tab-${added.id}`).click()
     await expect(page.getByTestId(`product-detail-${added.id}`)).toBeVisible()
@@ -137,6 +155,16 @@ test.describe('Project products', () => {
       await page.getByTestId(`product-tab-${added.id}`).click()
       await page.getByTestId('project-products').screenshot({ path: `${SHOTS}/06-phone-detail-${theme}.png` })
     }
+  })
+
+  test('a stale tab cannot overwrite a newer stage (409, nothing written)', async ({ page }) => {
+    const slug = SLUG
+    const home = (await productsOf(page, slug)).products.find((p) => p.is_home === 1)! as ProductJson & { seq: number }
+    const res = await page.request.post(`/api/projects/${slug}/products`, {
+      headers: PI,
+      data: { action: 'stage', product_id: home.id, stage: home.stage, base_seq: home.seq - 1, from_stage: 'no_longer_this' },
+    })
+    expect(res.status()).toBe(409)
   })
 
   test('a refused write names the reason and the stage rolls back', async ({ page }) => {
@@ -171,17 +199,29 @@ test.describe('Who sees and who writes', () => {
     member(`DELETE FROM project_members WHERE member_slug = 'nate-mesfin' AND project_id IN (SELECT id FROM projects WHERE slug = '${SLUG}')`)
   })
 
-  test('a member sees the products with no controls; the write endpoint stays PI-only', async ({ page }) => {
+  test('a member of the project gets the controls and writes through the project route; /api/mutations stays PI-only', async ({ page }) => {
     await page.setExtraHTTPHeaders(MEMBER)
     await go(page, URL_OF)
-    await expect(page.getByTestId('product-add-toggle')).toHaveCount(0)
-    await expect(page.locator('[data-testid^="stage-dot-"]')).toHaveCount(0)
-    await expect(page.getByTestId('project-products')).toContainText('Products')
-    await page.getByTestId('project-products').screenshot({ path: `${SHOTS}/07-member-read-only.png` })
-    const read = await page.request.get(`/api/projects/${SLUG}/products`, { headers: MEMBER })
-    expect(read.status()).toBe(200)
-    const write = await page.request.post('/api/mutations', { headers: MEMBER, data: { mutations: [] } })
-    expect(write.status()).toBe(403)
+    await expect(page.getByTestId('product-add-toggle')).toBeVisible()
+    await page.getByTestId('product-tab-all').click()
+    const home = (await productsOf(page, SLUG)).products.find((p) => p.is_home === 1)!
+    await page.getByTestId(`product-tab-${home.id}`).click()
+    const next = home.stage === 'preparing' ? 'submitted' : 'preparing'
+    const dot = page.getByTestId(`stage-dot-${next}`)
+    await expect(dot).toBeVisible()
+    const write = page.waitForResponse((r) => r.url().endsWith(`/api/projects/${SLUG}/products`) && r.request().method() === 'POST')
+    await dot.click()
+    expect((await write).status()).toBe(200)
+    await page.getByTestId('project-products').screenshot({ path: `${SHOTS}/07-member-controls.png` })
+    const mut = await page.request.post('/api/mutations', { headers: MEMBER, data: { mutations: [] } })
+    expect(mut.status()).toBe(403)
+  })
+
+  test('a team member who is not on the project cannot write its products', async ({ page }) => {
+    const res = await page.request.post(`/api/projects/${SLUG}/products`, {
+      headers: OUTSIDER, data: { action: 'home', product_id: 'prd_x' },
+    })
+    expect([403, 404]).toContain(res.status())
   })
 
   test('a team member who is not on the project cannot read its products', async ({ page }) => {

@@ -1341,13 +1341,19 @@ async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): P
 export async function applyMutation(
   env: Env,
   args: {
-    table: 'tasks' | 'projects';
+    table: 'tasks' | 'projects' | 'products';
     record_id: string;
     op: 'insert' | 'update' | 'delete';
     patch?: Record<string, unknown>;
     payload?: Record<string, unknown>;
     route: string;
     user: AuthUser;
+    /** Optional compare-and-swap for a screen that read the row: the seq it
+     *  saw and the hash of the touched fields as it saw them (hashTouched). A
+     *  row that moved since, on those fields, answers `conflict` instead of
+     *  being overwritten by a stale tab. Absent = authoritative Hub write. */
+    base_seq?: number | null;
+    base_row_hash?: string | null;
   },
 ): Promise<MutationResult> {
   const mutation_id = generateId('mut');
@@ -1358,8 +1364,8 @@ export async function applyMutation(
     table: args.table,
     record_id: args.record_id,
     op: args.op,
-    base_seq: null,  // Hub-origin: no PB local seq
-    base_row_hash: null,
+    base_seq: args.base_seq ?? null,  // Hub-origin: null unless the screen sent what it saw
+    base_row_hash: args.base_row_hash ?? null,
     patch: args.patch,
     payload: args.payload,
     depends_on: null,

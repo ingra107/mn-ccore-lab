@@ -178,7 +178,9 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   GET /api/pb/dispatch/pending. The dispatch_queue table stays, no DDL.
     // 266 as of 2026-10-11 — products reads (+3): GET /api/products and
     //   GET /api/product-funding (PB pull lane), GET /api/projects/:slug/products.
-    expect(ROUTE_REGISTRY).toHaveLength(266)
+    // 267 as of 2026-10-12 -- POST /api/projects/:slug/products (+1): a project
+    //   member changes stage, adds a product, or moves home (Nick: members).
+    expect(ROUTE_REGISTRY).toHaveLength(267)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

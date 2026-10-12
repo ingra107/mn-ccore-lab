@@ -18,7 +18,9 @@
 // Decision: PB Context/Decisions/2026-10-11-projects-hold-products.md.
 
 import type { Env } from '../types';
-import { json, error, isPiRequest, assertProjectVisible } from '../helpers';
+import { json, error, isPiRequest, assertProjectVisible, generateId } from '../helpers';
+import type { AuthUser } from '../helpers';
+import { applyMutation, hashTouched } from './mutations';
 
 /** Columns PB's cache holds (PB scripts/db/migrations/144_products.sql). */
 const SYNC_COLS: Record<'products' | 'product_funding', string> = {
@@ -83,7 +85,7 @@ export async function handleGetProjectProducts(
             s.ordinal AS stage_ordinal, s.is_terminal AS stage_is_terminal,
             p.title, p.short_name, p.waiting_on, p.venue, p.due_date, p.deadline,
             p.folder, p.repo_url, p.stage_entered_at, p.stage_notes, p.sort_order,
-            p.is_home, p.lineage_rank, p.grew_from_id, p.created_at, p.updated_at
+            p.is_home, p.lineage_rank, p.grew_from_id, p.seq, p.created_at, p.updated_at
        FROM products p
        JOIN product_kinds k ON k.kind = p.kind
        JOIN product_stages s ON s.kind = p.kind AND s.stage = p.stage
@@ -108,4 +110,108 @@ export async function handleGetProjectProducts(
     products: results ?? [],
     kinds: (kinds.results ?? []).map((k) => ({ ...k, stages: ladders.get(k.kind as string) ?? [] })),
   });
+}
+
+// ── POST /api/projects/:slug/products ───────────────────────────────────────
+//
+// A project member changes a product's stage, adds a product, or moves the
+// home marker -- on THAT project's products only (Nick, 2026-10-12: "Yes,
+// members of that project"). The gate is the one POST /api/projects/:slug
+// uses (handleUpdateProject): the project is read through the caller's handle
+// and assertProjectVisible must pass. Every write goes through applyMutation
+// with a `hub_ui:` origin, so the ledger, the triggers and the refusal codes
+// are the ones /api/mutations has; /api/mutations itself stays PI-only.
+//
+// Body (one action):
+//   { action: 'stage', product_id, stage, base_seq?, from_stage? }
+//       base_seq + from_stage make it a compare-and-swap: a stale tab whose
+//       product moved since gets 409 instead of overwriting the newer stage.
+//   { action: 'home', product_id }        (v125 hands the marker over)
+//   { action: 'add', kind, stage, name?, grew_from_id? }
+//       grew_from_id must be a live product of the same project; the lineage
+//       ranks are derived here, never taken from the client.
+// Answers 200 { product } (the canonical row, seq included) or 4xx with the
+// Worker's own reason.
+
+const PRODUCT_WRITE_ROUTE = 'handleProjectProductWrite';
+
+export async function handleProjectProductWrite(
+  slugOrId: string, request: Request, user: AuthUser, env: Env,
+): Promise<Response> {
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json() as Record<string, unknown>;
+  } catch {
+    return error('JSON body required', 400);
+  }
+  const project = await env.DB
+    .prepare('SELECT id FROM projects WHERE (slug = ? OR id = ?) AND deleted_at IS NULL LIMIT 1')
+    .bind(slugOrId, slugOrId)
+    .first<{ id: string }>();
+  if (!project) return error('Project not found', 404);
+  const block = await assertProjectVisible(request, env, project.id);
+  if (block) return block;
+
+  const ownProduct = async (id: unknown) => {
+    if (typeof id !== 'string' || !id) return null;
+    return env.DB.prepare(
+      'SELECT id, stage, lineage_rank FROM products WHERE id = ? AND project_id = ? AND deleted_at IS NULL',
+    ).bind(id, project.id).first<{ id: string; stage: string; lineage_rank: number }>();
+  };
+
+  let result: Awaited<ReturnType<typeof applyMutation>>;
+  let recordId: string;
+  if (body.action === 'stage') {
+    const product = await ownProduct(body.product_id);
+    if (!product) return error('Product not found in this project', 404);
+    if (typeof body.stage !== 'string' || !body.stage) return error('stage required', 400);
+    recordId = product.id;
+    const cas = typeof body.base_seq === 'number' && typeof body.from_stage === 'string';
+    result = await applyMutation(env, {
+      table: 'products', record_id: product.id, op: 'update', patch: { stage: body.stage },
+      route: PRODUCT_WRITE_ROUTE, user,
+      ...(cas ? {
+        base_seq: body.base_seq as number,
+        base_row_hash: await hashTouched({ stage: body.from_stage }, ['stage']),
+      } : {}),
+    });
+  } else if (body.action === 'home') {
+    const product = await ownProduct(body.product_id);
+    if (!product) return error('Product not found in this project', 404);
+    recordId = product.id;
+    result = await applyMutation(env, {
+      table: 'products', record_id: product.id, op: 'update', patch: { is_home: 1 },
+      route: PRODUCT_WRITE_ROUTE, user,
+    });
+  } else if (body.action === 'add') {
+    if (typeof body.kind !== 'string' || typeof body.stage !== 'string') return error('kind and stage required', 400);
+    const payload: Record<string, unknown> = { project_id: project.id, kind: body.kind, stage: body.stage, is_home: 0 };
+    const name = typeof body.name === 'string' ? body.name.trim().slice(0, 80) : '';
+    if (name) { payload.title = name; payload.short_name = name; }
+    if (body.grew_from_id != null && body.grew_from_id !== '') {
+      const parent = await ownProduct(body.grew_from_id);
+      if (!parent) return error('grew_from must be a live product of this project', 400);
+      payload.grew_from_id = parent.id;
+      payload.grew_from_rank = parent.lineage_rank;
+      payload.lineage_rank = parent.lineage_rank + 1;
+    }
+    recordId = generateId('product');
+    result = await applyMutation(env, {
+      table: 'products', record_id: recordId, op: 'insert', payload,
+      route: PRODUCT_WRITE_ROUTE, user,
+    });
+  } else {
+    return error("action must be 'stage', 'home' or 'add'", 400);
+  }
+
+  if (result.status !== 'accepted' && result.status !== 'merged_clean') {
+    return json({ error: result.reason ?? result.status, status: result.status, code: result.code ?? null }, 409);
+  }
+  const product = await env.DB.prepare(
+    `SELECT p.id, p.project_id, p.kind, p.stage, s.label AS stage_label, p.is_home, p.seq,
+            p.stage_entered_at, p.lineage_rank, p.grew_from_id
+       FROM products p JOIN product_stages s ON s.kind = p.kind AND s.stage = p.stage
+      WHERE p.id = ?`,
+  ).bind(recordId).first();
+  return json({ product });
 }

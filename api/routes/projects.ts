@@ -614,7 +614,7 @@ const PROJECT_REQUIRED_FIELDS = new Set(['status', 'stage', 'category']);
 const PROJECT_STATUS_VALUES = new Set(
   enumFieldsFor('projects')?.status?.canonical ?? ['active', 'waiting_external', 'blocked', 'done'],
 );
-const PROJECT_STAGE_VALUES = new Set(['idea', 'data_collection', 'data_analysis', 'writing', 'submitted', 'revisions', 'accepted', 'published']);
+export const PROJECT_STAGE_VALUES = new Set(['idea', 'data_collection', 'data_analysis', 'writing', 'submitted', 'revisions', 'accepted', 'published']);
 // Stage 4 #12-followup (2026-05-09): three-bucket two-views model.
 // MNCCORE = team-visible lab work (Ingraham/Mesfin/Grant/Friends/Mentees)
 // CLIF = consortium, team-visible

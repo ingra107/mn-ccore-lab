@@ -2,14 +2,13 @@
 //
 // A project is the umbrella; a product is one deliverable inside it, with its
 // own kind and a stage from that kind's ladder. Reads come from
-// GET /api/projects/:slug/products (members of the project); writes go through
-// POST /api/mutations (PI only: the Worker gates that endpoint, so team members
-// see products but the controls are drawn for the PI alone).
+// GET /api/projects/:slug/products and writes go to POST
+// /api/projects/:slug/products; both are open to the project's members (Nick,
+// 2026-10-12: "Yes, members of that project") and to no one else.
 //
 // Decision: PB Context/Decisions/2026-10-11-projects-hold-products.md.
 
 import { fetchApi } from './api'
-import { nowInstant } from './time'
 
 export interface ProductStage {
   stage: string
@@ -51,6 +50,8 @@ export interface ProductRow {
   is_home: number
   lineage_rank: number
   grew_from_id: string | null
+  /** The row version the Worker uses for compare-and-swap. */
+  seq: number
   created_at: string
   updated_at: string
 }
@@ -109,118 +110,56 @@ export function ladderFor(kinds: readonly ProductKind[], kind: string): ProductS
   return kinds.find((k) => k.kind === kind)?.stages ?? []
 }
 
-// ── ids ─────────────────────────────────────────────────────
+// ── writes: POST /api/projects/:slug/products ───────────────
 
-const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
-
-/** A 26-character Crockford ULID: 10 time characters, 16 random. Product ids
- *  are `prd_<ULID>`, mutation ids `mut_<ULID>`. */
-export function ulid(now: number = Date.now()): string {
-  let time = ''
-  let t = now
-  for (let i = 0; i < 10; i++) {
-    time = CROCKFORD[t % 32] + time
-    t = Math.floor(t / 32)
-  }
-  const bytes = new Uint8Array(16)
-  crypto.getRandomValues(bytes)
-  let rand = ''
-  for (let i = 0; i < 16; i++) rand += CROCKFORD[bytes[i] % 32]
-  return time + rand
+/** What the Worker answers for a write: the product as it now stands. */
+export interface WrittenProduct {
+  id: string
+  stage: string
+  stage_label: string
+  seq: number
+  is_home: number
 }
 
-// ── writes: POST /api/mutations ─────────────────────────────
-
-interface MutationEnvelope {
-  mutation_id: string
-  origin_machine: string
-  table: 'products'
-  op: 'insert' | 'update'
-  record_id: string
-  base_seq: null
-  base_row_hash: null
-  patch?: Record<string, unknown>
-  payload?: Record<string, unknown>
-  client_ts: string
-  issued_at: string
-}
-
-// `hub_ui:` marks a write made from the Hub's own screens; the Worker skips the
-// PB-only blind-overwrite check for that prefix.
-const ORIGIN = 'hub_ui:project-products'
-
-function envelope(
-  op: 'insert' | 'update',
-  recordId: string,
-  body: { patch?: Record<string, unknown>; payload?: Record<string, unknown> },
-): MutationEnvelope {
-  const now = nowInstant()
-  return {
-    mutation_id: `mut_${ulid()}`,
-    origin_machine: ORIGIN,
-    table: 'products',
-    op,
-    record_id: recordId,
-    base_seq: null,
-    base_row_hash: null,
-    client_ts: now,
-    issued_at: now,
-    ...body,
-  }
-}
-
-interface MutationResponse {
-  results?: { status: string; reason?: string; code?: string }[]
-}
-
-/** Send one mutation and throw the Worker's own refusal text if it did not land. */
-async function send(m: MutationEnvelope): Promise<void> {
-  const resp = (await fetchApi<unknown>('/api/mutations', {
+async function write(slug: string, body: Record<string, unknown>): Promise<WrittenProduct> {
+  const resp = (await fetchApi<unknown>(`/api/projects/${encodeURIComponent(slug)}/products`, {
     method: 'POST',
-    body: JSON.stringify({ mutations: [m] }),
-  })) as unknown as MutationResponse
-  const r = resp.results?.[0]
-  if (!r || (r.status !== 'accepted' && r.status !== 'merged_clean')) {
-    throw new Error(r?.reason ?? r?.code ?? `mutation ${r?.status ?? 'not answered'}`)
-  }
+    body: JSON.stringify(body),
+  })) as unknown as { product?: WrittenProduct }
+  if (!resp?.product) throw new Error('the Worker answered without the product')
+  return resp.product
 }
 
-export function setProductStage(productId: string, stage: string): Promise<void> {
-  return send(envelope('update', productId, { patch: { stage } }))
+/** Set a product's stage. `seen` (the seq and stage this screen showed) makes
+ *  it a compare-and-swap: if the product moved since, the Worker refuses and
+ *  nothing is overwritten. */
+export function setProductStage(
+  slug: string, productId: string, stage: string, seen?: { seq: number; stage: string },
+): Promise<WrittenProduct> {
+  return write(slug, {
+    action: 'stage', product_id: productId, stage,
+    ...(seen ? { base_seq: seen.seq, from_stage: seen.stage } : {}),
+  })
 }
 
 /** Marking a product home hands the marker over: schema-v125's
  *  trg_products_home_handoff demotes the old home in the same statement. */
-export function setProductHome(productId: string): Promise<void> {
-  return send(envelope('update', productId, { patch: { is_home: 1 } }))
+export function setProductHome(slug: string, productId: string): Promise<WrittenProduct> {
+  return write(slug, { action: 'home', product_id: productId })
 }
 
 export interface NewProductInput {
-  projectId: string
   kind: string
   stage: string
   name: string
   /** Same-project parent: the new product "grew from" it (an abstract becomes
-   *  a manuscript, an A0 is resubmitted as an A1). */
-  growsFrom?: Pick<ProductRow, 'id' | 'lineage_rank'> | null
+   *  a manuscript, an A0 is resubmitted as an A1). The Worker derives ranks. */
+  growsFromId?: string | null
 }
 
-export function addProduct(input: NewProductInput): Promise<void> {
-  const name = input.name.trim()
-  const payload: Record<string, unknown> = {
-    project_id: input.projectId,
-    kind: input.kind,
-    stage: input.stage,
-    is_home: 0,
-  }
-  if (name) {
-    payload.title = name
-    payload.short_name = name
-  }
-  if (input.growsFrom) {
-    payload.grew_from_id = input.growsFrom.id
-    payload.grew_from_rank = input.growsFrom.lineage_rank
-    payload.lineage_rank = input.growsFrom.lineage_rank + 1
-  }
-  return send(envelope('insert', `prd_${ulid()}`, { payload }))
+export function addProduct(slug: string, input: NewProductInput): Promise<WrittenProduct> {
+  return write(slug, {
+    action: 'add', kind: input.kind, stage: input.stage, name: input.name.trim(),
+    ...(input.growsFromId ? { grew_from_id: input.growsFromId } : {}),
+  })
 }

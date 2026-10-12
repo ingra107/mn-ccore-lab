@@ -1,8 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Plus, Home as HomeIcon } from 'lucide-react'
 import SectionHead from '../ui/SectionHead'
-import { useUndoToast } from '../UndoToast'
-import { useAuth } from '../../hooks/useAuth'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { formatShortDate } from '../../lib/dateUtils'
 import {
@@ -25,8 +23,10 @@ import {
 //   one product   -> its stage ladder, expanded
 //   2+ products   -> tabs that are chips (name + stage); "All" is the grouped list
 // A product's stage is set on its ladder here; this replaces the project-level
-// stage control. Writes are PI-only (POST /api/mutations); a team member sees
-// the same view with no controls.
+// stage control. Writes go to POST /api/projects/:slug/products, open to the
+// project's members (Nick, 2026-10-12: "Yes, members of that project"). The
+// read behind this view passes the same membership gate, so anyone who sees
+// the products may edit them.
 
 interface Props {
   /** proj_* PK. */
@@ -34,10 +34,10 @@ interface Props {
   slug: string
 }
 
-export default function ProjectProducts({ projectId, slug }: Props) {
+export default function ProjectProducts({ slug }: Props) {
   const { data, isLoading, isError } = useProjectProducts(slug)
-  const { user } = useAuth()
-  const canEdit = user?.isPi ?? false
+  // The read answered: the caller is a member of this project (or the PI).
+  const canEdit = !!data
   const [picked, setPicked] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
 
@@ -46,7 +46,7 @@ export default function ProjectProducts({ projectId, slug }: Props) {
   const mode = productViewMode(products.length)
   // A single product has no tabs; with 2+ the tab is "all" until one is picked.
   const selected =
-    mode === 'ladder' ? products[0] : products.find((p) => p.id === picked) ?? null
+    mode === 'ladder' ? products[0] ?? null : products.find((p) => p.id === picked) ?? null
 
   return (
     <div className="pp" data-testid="project-products">
@@ -72,61 +72,107 @@ export default function ProjectProducts({ projectId, slug }: Props) {
       {isError && <div className="pp-dim" role="alert">Could not load products.</div>}
 
       {adding && canEdit && (
-        <AddProductForm
-          projectId={projectId}
-          slug={slug}
-          kinds={kinds}
-          products={products}
-          onDone={() => setAdding(false)}
-        />
+        <AddProductForm slug={slug} kinds={kinds} products={products} onDone={() => setAdding(false)} />
       )}
 
-      {mode === 'chips' && (
-        <div className="pp-tabs" role="tablist" aria-label="Products">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={selected === null}
-            className={`pp-tab${selected === null ? ' is-on' : ''}`}
-            onClick={() => setPicked(null)}
-            data-testid="product-tab-all"
-          >
-            All
-          </button>
-          {products.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              role="tab"
-              aria-selected={selected?.id === p.id}
-              className={`pp-tab${selected?.id === p.id ? ' is-on' : ''}`}
-              onClick={() => setPicked(p.id)}
-              data-testid={`product-tab-${p.id}`}
-            >
-              <span className="pp-tab-n">{productLabel(p)}</span>
-              <span className="pp-tab-s">{p.stage_label}</span>
-            </button>
-          ))}
+      {data && products.length === 0 && (
+        <div className="pp-dim pp-empty" data-testid="product-empty">
+          No products yet.{kinds.length > 0 ? ' Add one to give this project a stage.' : ''}
         </div>
       )}
 
+      {mode === 'chips' && (
+        <ProductTabs products={products} selectedId={selected?.id ?? null} onPick={setPicked} />
+      )}
+
       {mode === 'chips' && selected === null && (
-        <GroupedList products={products} kinds={kinds} onPick={setPicked} />
+        <div role="tabpanel" id={PANEL_ID} aria-labelledby={tabId(null)} tabIndex={0}>
+          <GroupedList products={products} kinds={kinds} onPick={setPicked} />
+        </div>
       )}
 
       {selected && (
-        <ProductDetail
-          key={selected.id}
-          product={selected}
-          products={products}
-          kinds={kinds}
-          slug={slug}
-          canEdit={canEdit}
-          showHomeControl={products.length > 1}
-        />
+        <div
+          {...(mode === 'chips'
+            ? { role: 'tabpanel', id: PANEL_ID, 'aria-labelledby': tabId(selected.id), tabIndex: 0 }
+            : {})}
+        >
+          <ProductDetail
+            key={selected.id}
+            product={selected}
+            products={products}
+            kinds={kinds}
+            slug={slug}
+            canEdit={canEdit}
+            showHomeControl={products.length > 1}
+          />
+        </div>
       )}
 
       <style>{PRODUCT_CSS}</style>
+    </div>
+  )
+}
+
+// ── the tabs: WAI-ARIA tabs pattern ──────────────────────────
+// One tab stop (roving tabindex); Left/Right move and select, Home/End jump.
+
+const PANEL_ID = 'pp-panel'
+const tabId = (id: string | null) => `pp-tab-${id ?? 'all'}`
+
+function ProductTabs({
+  products, selectedId, onPick,
+}: { products: ProductRow[]; selectedId: string | null; onPick: (id: string | null) => void }) {
+  const ids: (string | null)[] = [null, ...products.map((p) => p.id)]
+  const refs = useRef(new Map<string, HTMLButtonElement>())
+  function onKey(e: React.KeyboardEvent) {
+    const at = ids.indexOf(selectedId)
+    let next: number
+    if (e.key === 'ArrowRight') next = (at + 1) % ids.length
+    else if (e.key === 'ArrowLeft') next = (at - 1 + ids.length) % ids.length
+    else if (e.key === 'Home') next = 0
+    else if (e.key === 'End') next = ids.length - 1
+    else return
+    e.preventDefault()
+    onPick(ids[next])
+    refs.current.get(tabId(ids[next]))?.focus()
+  }
+  const tab = (id: string | null, children: React.ReactNode, testid: string) => {
+    const on = selectedId === id
+    return (
+      <button
+        key={tabId(id)}
+        ref={(el) => {
+          if (el) refs.current.set(tabId(id), el)
+          else refs.current.delete(tabId(id))
+        }}
+        type="button"
+        role="tab"
+        id={tabId(id)}
+        aria-selected={on}
+        aria-controls={PANEL_ID}
+        tabIndex={on ? 0 : -1}
+        className={`pp-tab${on ? ' is-on' : ''}`}
+        onClick={() => onPick(id)}
+        data-testid={testid}
+      >
+        {children}
+      </button>
+    )
+  }
+  return (
+    <div className="pp-tabs" role="tablist" aria-label="Products" onKeyDown={onKey}>
+      {tab(null, 'All', 'product-tab-all')}
+      {products.map((p) =>
+        tab(
+          p.id,
+          <>
+            <span className="pp-tab-n">{productLabel(p)}</span>
+            <span className="pp-tab-s">{p.stage_label}</span>
+          </>,
+          `product-tab-${p.id}`,
+        ),
+      )}
     </div>
   )
 }
@@ -181,7 +227,6 @@ function ProductDetail({
   const ladder = ladderFor(kinds, product.kind)
   const setStage = useSetProductStage(slug)
   const setHome = useSetProductHome(slug)
-  const { showUndo } = useUndoToast()
   const idx = ladder.findIndex((s) => s.stage === product.stage)
   const parent = product.grew_from_id ? products.find((p) => p.id === product.grew_from_id) : undefined
 
@@ -189,11 +234,12 @@ function ProductDetail({
     if (stage === product.stage) return
     const next = ladder.find((s) => s.stage === stage)
     if (!next) return
-    const prev = { stage: product.stage, label: product.stage_label }
-    setStage.mutate({ productId: product.id, stage, label: next.label })
-    showUndo(`${productLabel(product)} → ${next.label}`, () =>
-      setStage.mutate({ productId: product.id, stage: prev.stage, label: prev.label }),
-    )
+    // The undo toast is shown by the hook once this write lands; the write is
+    // a compare-and-swap on the seq and stage this screen shows.
+    setStage.mutate({
+      productId: product.id, stage, label: next.label, productName: productLabel(product),
+      seen: { seq: product.seq, stage: product.stage, label: product.stage_label },
+    })
   }
 
   const facts: string[] = []
@@ -271,6 +317,12 @@ function ProductDetail({
         })}
       </div>
 
+      {idx < 0 && (
+        // The stage, or its kind, is no longer on a live ladder: say what it is.
+        <div className="pp-dim pp-facts" data-testid="product-stage-offladder">
+          Stage: {product.stage_label}
+        </div>
+      )}
       {facts.length > 0 && <div className="pp-dim pp-facts">{facts.join(' · ')}</div>}
     </div>
   )
@@ -279,9 +331,8 @@ function ProductDetail({
 // ── add a product ────────────────────────────────────────────
 
 function AddProductForm({
-  projectId, slug, kinds, products, onDone,
+  slug, kinds, products, onDone,
 }: {
-  projectId: string
   slug: string
   kinds: ProductKind[]
   products: ProductRow[]
@@ -299,16 +350,12 @@ function AddProductForm({
     setStage(ladderFor(kinds, k)[0]?.stage ?? '')
   }
 
-  const parent = products.find((p) => p.id === parentId) ?? null
   const ready = name.trim().length > 0 && kind !== '' && stage !== ''
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!ready) return
-    add.mutate(
-      { projectId, kind, stage, name, growsFrom: parent },
-      { onSuccess: onDone },
-    )
+    add.mutate({ kind, stage, name, growsFromId: parentId || null }, { onSuccess: onDone })
   }
 
   return (
@@ -403,6 +450,7 @@ span.pp-dot { cursor: default; }
 .pp-step .project-stage-label { margin-top: 8px; font-size: 10px; line-height: 1.2; text-align: center; color: var(--sk-t3); }
 .pp-step .project-stage-label.is-current { color: var(--job-accent); font-weight: 700; }
 .pp-facts { margin-top: 12px; }
+.pp-empty { padding: 4px 2px 8px; }
 .pp-form {
   display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 14px;
   padding: 10px 0 12px; border-bottom: 1px solid var(--sk-line);

@@ -17,6 +17,7 @@ import type { Env } from '../types'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 import { _resetPiEmailsCacheForTests, _resetValidationFlagsCache } from '../helpers'
 import { addProduct, setProductHome, setProductStage } from '../../src/lib/products'
+import { PROJECT_STAGE_VALUES } from './projects'
 
 const CTX = { waitUntil: () => {}, passThroughOnException: () => {} } as unknown as ExecutionContext
 const TEST_KEY = 'local-test-key-do-not-use-in-prod'
@@ -68,6 +69,7 @@ describe('GET /api/projects/:slug/products', () => {
     expect(status).toBe(200)
     expect(body.products).toHaveLength(1)
     expect(body.products[0]).toMatchObject({ id: HOME, kind: 'manuscript', stage: 'writing', is_home: 1, lineage_rank: 0 })
+    expect(typeof body.products[0].seq).toBe('number')
     const kinds = body.kinds as { kind: string; stages: { stage: string; ordinal: number }[] }[]
     expect(kinds.map((k) => k.kind)).toEqual(
       ['manuscript', 'abstract', 'grant_application', 'award', 'honor', 'trial_ops', 'infrastructure'],
@@ -83,50 +85,109 @@ describe('GET /api/projects/:slug/products', () => {
   })
 })
 
-describe('the writes the page sends', () => {
-  it('setProductStage: a stage on the product\'s own ladder lands, and the Worker stamps the clock', async () => {
-    await setProductStage(HOME, 'revisions')
-    const [p] = rows('SELECT stage, stage_entered_at FROM products WHERE id = ?', HOME)
+describe('the writes the page sends (POST /api/projects/:slug/products)', () => {
+  const projectStage = () => rows('SELECT stage FROM projects WHERE id = ?', PROJECT)[0].stage
+
+  it('setProductStage: a stage on the product\'s own ladder lands, the clock is stamped, seq comes back', async () => {
+    const out = await setProductStage('r03', HOME, 'revisions')
+    const [p] = rows('SELECT stage, stage_entered_at, seq FROM products WHERE id = ?', HOME)
     expect(p.stage).toBe('revisions')
     expect(p.stage_entered_at).not.toBeNull()
+    expect(out.seq).toBe(p.seq)
+  })
+
+  it('B1: a ladder write on a single-product project moves projects.stage with it (schema-v126)', async () => {
+    await setProductStage('r03', HOME, 'revisions')
+    expect(projectStage()).toBe('revisions')
+    // and back: re-picking the old stage on the project list (forward rule) agrees
+    await setProductStage('r03', HOME, 'writing')
+    expect(projectStage()).toBe('writing')
+  })
+
+  it('B1: with 2+ products the project stage does not follow any product, the home included', async () => {
+    await addProduct('r03', { kind: 'trial_ops', stage: 'start_up', name: 'Ops' })
+    await setProductStage('r03', HOME, 'submitted')
+    expect(projectStage()).toBe('writing')
+  })
+
+  it('B1: a stage that is not a project stage is not copied onto the project', async () => {
+    db.prepare("UPDATE products SET kind = 'infrastructure', stage = 'planning' WHERE id = ?").run(HOME)
+    await setProductStage('r03', HOME, 'running')
+    expect(projectStage()).not.toBe('running')
+  })
+
+  it('the project stage set is the manuscript ladder (the v126 mirror reads the ladder)', () => {
+    const ladder = rows("SELECT stage FROM product_stages WHERE kind = 'manuscript' AND deleted_at IS NULL").map((r) => r.stage)
+    expect(new Set(ladder)).toEqual(PROJECT_STAGE_VALUES)
+  })
+
+  it('a stale tab cannot overwrite a newer stage (compare-and-swap on seq + stage)', async () => {
+    const before = rows('SELECT seq FROM products WHERE id = ?', HOME)[0].seq as number
+    await setProductStage('r03', HOME, 'submitted', { seq: before, stage: 'writing' })
+    await expect(setProductStage('r03', HOME, 'idea', { seq: before, stage: 'writing' })).rejects.toThrow()
+    expect(rows('SELECT stage FROM products WHERE id = ?', HOME)[0].stage).toBe('submitted')
   })
 
   it('setProductStage: a stage that is not on the kind\'s ladder is refused with the Worker\'s reason', async () => {
-    await expect(setProductStage(HOME, 'enrolling')).rejects.toThrow()
+    await expect(setProductStage('r03', HOME, 'enrolling')).rejects.toThrow()
     expect(rows('SELECT stage FROM products WHERE id = ?', HOME)[0].stage).toBe('writing')
   })
 
-  it('addProduct: a grant application that grew from the manuscript, same project, rank one above', async () => {
-    await addProduct({ projectId: PROJECT, kind: 'grant_application', stage: 'preparing', name: 'A1', growsFrom: { id: HOME, lineage_rank: 0 } })
+  it('addProduct: a grant application that grew from the manuscript; the Worker derives the ranks', async () => {
+    await addProduct('r03', { kind: 'grant_application', stage: 'preparing', name: 'A1', growsFromId: HOME })
     const [p] = rows("SELECT * FROM products WHERE kind = 'grant_application'")
     expect(p).toMatchObject({ project_id: PROJECT, stage: 'preparing', short_name: 'A1', is_home: 0, grew_from_id: HOME, grew_from_rank: 0, lineage_rank: 1 })
     expect(String(p.id)).toMatch(/^prd_[0-9A-HJKMNP-TV-Z]{26}$/)
   })
 
   it('addProduct: a stage from another kind\'s ladder is refused, nothing written', async () => {
-    await expect(addProduct({ projectId: PROJECT, kind: 'grant_application', stage: 'writing', name: 'X' })).rejects.toThrow()
-    expect(rows("SELECT id FROM products WHERE project_id = ?", PROJECT)).toHaveLength(1)
+    await expect(addProduct('r03', { kind: 'grant_application', stage: 'writing', name: 'X' })).rejects.toThrow()
+    expect(rows('SELECT id FROM products WHERE project_id = ?', PROJECT)).toHaveLength(1)
   })
 
-  it('addProduct: grew-from cannot cross projects (the lineage FK is composite on project_id)', async () => {
+  it('addProduct: grew-from must be a product of this project', async () => {
     insertRow(db, 'projects', { id: 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ', slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active', stage: 'idea' })
     const otherHome = rows("SELECT id FROM products WHERE project_id = 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ'")[0].id as string
-    await expect(
-      addProduct({ projectId: PROJECT, kind: 'manuscript', stage: 'idea', name: 'Cross', growsFrom: { id: otherHome, lineage_rank: 0 } }),
-    ).rejects.toThrow()
+    await expect(addProduct('r03', { kind: 'manuscript', stage: 'idea', name: 'Cross', growsFromId: otherHome })).rejects.toThrow()
   })
 
-  it('setProductHome: is_home=1 on the new home demotes the old one in the same write', async () => {
-    await addProduct({ projectId: PROJECT, kind: 'trial_ops', stage: 'start_up', name: 'Ops' })
+  it('setProductHome: the home action demotes the old home in the same write', async () => {
+    await addProduct('r03', { kind: 'trial_ops', stage: 'start_up', name: 'Ops' })
     const added = rows("SELECT id FROM products WHERE kind = 'trial_ops'")[0].id as string
-    await setProductHome(added)
+    await setProductHome('r03', added)
     const homes = rows('SELECT id FROM products WHERE project_id = ? AND is_home = 1 AND deleted_at IS NULL', PROJECT)
     expect(homes.map((h) => h.id)).toEqual([added])
   })
 
-  it('a team member who is not the PI cannot write (the mutations endpoint is PI-only)', async () => {
+  it('B2: a member of the project may change stage, add, and move home (Nick 2026-10-12)', async () => {
     as = MEMBER_EMAIL
-    await expect(setProductStage(HOME, 'idea')).rejects.toThrow(/PI/)
+    await setProductStage('r03', HOME, 'idea')
+    await addProduct('r03', { kind: 'abstract', stage: 'planning', name: 'Poster' })
+    const added = rows("SELECT id FROM products WHERE kind = 'abstract'")[0].id as string
+    await setProductHome('r03', added)
+    expect(rows('SELECT stage FROM products WHERE id = ?', HOME)[0].stage).toBe('idea')
+    expect(rows('SELECT is_home FROM products WHERE id = ?', added)[0].is_home).toBe(1)
+    const [r] = rows("SELECT origin_machine FROM processed_mutations WHERE record_id = ? ORDER BY processed_at DESC LIMIT 1", added)
+    expect(String(r.origin_machine)).toMatch(/^hub_ui:/)
+  })
+
+  it('B2: someone who is not on the project cannot write, and cannot reach another project\'s product through this one', async () => {
+    db.prepare("DELETE FROM project_members WHERE member_slug = 'nate-mesfin'").run()
+    as = MEMBER_EMAIL
+    await expect(setProductStage('r03', HOME, 'idea')).rejects.toThrow()
+    as = PI_EMAIL
+    insertRow(db, 'projects', { id: 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ', slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    const otherHome = rows("SELECT id FROM products WHERE project_id = 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ'")[0].id as string
+    await expect(setProductStage('r03', otherHome, 'writing')).rejects.toThrow(/not found in this project/)
     expect(rows('SELECT stage FROM products WHERE id = ?', HOME)[0].stage).toBe('writing')
+  })
+
+  it('/api/mutations stays PI-only: a member posting there is refused', async () => {
+    const res = await worker.fetch(new Request('https://hub.test/api/mutations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': MEMBER_EMAIL },
+      body: JSON.stringify({ mutations: [] }),
+    }), env, CTX)
+    expect(res.status).toBe(403)
   })
 })

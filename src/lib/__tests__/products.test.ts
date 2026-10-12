@@ -8,7 +8,6 @@ import {
   setProductHome,
   setProductStage,
   sortProducts,
-  ulid,
   type ProductKind,
   type ProductRow,
 } from '../products'
@@ -24,7 +23,7 @@ const row = (id: string, extra: Partial<ProductRow>): ProductRow => ({
   id, project_id: 'proj_X', kind: 'manuscript', kind_label: 'Manuscript', stage: 'idea', stage_label: 'Idea',
   stage_ordinal: 10, stage_is_terminal: 0, title: null, short_name: null, waiting_on: null, venue: null,
   due_date: null, deadline: null, folder: null, repo_url: null, stage_entered_at: null, stage_notes: null,
-  sort_order: 0, is_home: 0, lineage_rank: 0, grew_from_id: null, created_at: '', updated_at: '', ...extra,
+  sort_order: 0, is_home: 0, lineage_rank: 0, grew_from_id: null, seq: 1, created_at: '', updated_at: '', ...extra,
 })
 
 describe('product display helpers', () => {
@@ -64,68 +63,43 @@ describe('product display helpers', () => {
   })
 })
 
-describe('ulid', () => {
-  it('is 26 Crockford characters and sorts by time', () => {
-    const a = ulid(1_700_000_000_000)
-    const b = ulid(1_700_000_001_000)
-    expect(a).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/)
-    expect(a.slice(0, 10) < b.slice(0, 10)).toBe(true)
-  })
-})
-
-describe('product writes go through /api/mutations', () => {
+describe('product writes go to the project\'s own route', () => {
   const realFetch = global.fetch
   afterEach(() => { global.fetch = realFetch })
 
-  function mockResults(results: object[]) {
-    const fn = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ results }) } as Response)
+  const product = { id: 'prd_abc', stage: 'writing', stage_label: 'Writing', seq: 7, is_home: 1 }
+  function mockOk() {
+    const fn = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ product }) } as Response)
     global.fetch = fn
     return fn
   }
-  const sent = (fn: ReturnType<typeof vi.fn>) => JSON.parse(fn.mock.calls[0][1].body).mutations[0]
+  const sent = (fn: ReturnType<typeof vi.fn>) => JSON.parse(fn.mock.calls[0][1].body)
 
-  it('sets a stage with an update patch on products', async () => {
-    const fn = mockResults([{ status: 'accepted' }])
-    await setProductStage('prd_abc', 'writing')
-    expect(fn.mock.calls[0][0]).toBe('/api/mutations')
-    const m = sent(fn)
-    expect(m).toMatchObject({ table: 'products', op: 'update', record_id: 'prd_abc', patch: { stage: 'writing' }, base_seq: null })
-    expect(m.mutation_id).toMatch(/^mut_[0-9A-HJKMNP-TV-Z]{26}$/)
-    expect(m.origin_machine).toMatch(/^hub_ui:/)
+  it('sets a stage as a compare-and-swap on what the screen showed', async () => {
+    const fn = mockOk()
+    const out = await setProductStage('r03', 'prd_abc', 'writing', { seq: 6, stage: 'idea' })
+    expect(fn.mock.calls[0][0]).toBe('/api/projects/r03/products')
+    expect(sent(fn)).toEqual({ action: 'stage', product_id: 'prd_abc', stage: 'writing', base_seq: 6, from_stage: 'idea' })
+    expect(out.seq).toBe(7)
   })
 
-  it('makes a home by setting is_home=1 on the new home only', async () => {
-    const fn = mockResults([{ status: 'accepted' }])
-    await setProductHome('prd_new')
-    expect(sent(fn).patch).toEqual({ is_home: 1 })
+  it('makes a home with the home action', async () => {
+    const fn = mockOk()
+    await setProductHome('r03', 'prd_new')
+    expect(sent(fn)).toEqual({ action: 'home', product_id: 'prd_new' })
   })
 
-  it('adds a product with a same-project lineage rank above its parent', async () => {
-    const fn = mockResults([{ status: 'accepted' }])
-    await addProduct({ projectId: 'proj_X', kind: 'grant_application', stage: 'preparing', name: ' A1 ', growsFrom: { id: 'prd_a0', lineage_rank: 2 } })
-    const m = sent(fn)
-    expect(m.op).toBe('insert')
-    expect(m.record_id).toMatch(/^prd_[0-9A-HJKMNP-TV-Z]{26}$/)
-    expect(m.payload).toMatchObject({
-      project_id: 'proj_X', kind: 'grant_application', stage: 'preparing', title: 'A1', short_name: 'A1',
-      is_home: 0, grew_from_id: 'prd_a0', grew_from_rank: 2, lineage_rank: 3,
-    })
+  it('adds a product by name and parent id; the Worker derives the ranks', async () => {
+    const fn = mockOk()
+    await addProduct('r03', { kind: 'grant_application', stage: 'preparing', name: ' A1 ', growsFromId: 'prd_a0' })
+    expect(sent(fn)).toEqual({ action: 'add', kind: 'grant_application', stage: 'preparing', name: 'A1', grew_from_id: 'prd_a0' })
   })
 
-  it('adds a product with no parent as a root', async () => {
-    const fn = mockResults([{ status: 'accepted' }])
-    await addProduct({ projectId: 'proj_X', kind: 'manuscript', stage: 'idea', name: 'Aim 2' })
-    expect(sent(fn).payload).not.toHaveProperty('grew_from_id')
-    expect(sent(fn).payload).not.toHaveProperty('lineage_rank')
-  })
-
-  it('throws the Worker\'s own refusal when a write is not accepted', async () => {
-    mockResults([{ status: 'error', reason: 'product_home_live: mark another product home first', code: 'x' }])
-    await expect(setProductStage('prd_abc', 'idea')).rejects.toThrow('product_home_live')
-  })
-
-  it('throws when the Worker answers nothing for the mutation', async () => {
-    mockResults([])
-    await expect(setProductHome('prd_abc')).rejects.toThrow()
+  it('throws the Worker\'s own refusal text', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false, status: 409, statusText: 'Conflict',
+      json: async () => ({ error: 'product_home_live: mark another product home first' }),
+    } as Response)
+    await expect(setProductStage('r03', 'prd_abc', 'idea')).rejects.toThrow('product_home_live')
   })
 })
