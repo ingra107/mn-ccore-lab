@@ -9,6 +9,7 @@ import type { ReactNode } from 'react'
  * Slots, in DOM order (so Tab and the phone stack both read head, railTop,
  * main, rail): `head`, `railTop`, `children` (main), `rail`.
  *   - `side="end"` (default) puts the rail right of main; `"start"` puts it left.
+ *   - `railFirst`: the rail leads main when stacked (and in the DOM). Member profile only.
  *   - `railHidden`, or no `rail`, gives one column with main at --col-main.
  *   - The grid stacks on a container query on the page band (see index.css
  *     `.pwr`), not on the viewport: the sidebar eats a different width per state.
@@ -24,6 +25,7 @@ export default function PageWithRail({
   railLabel,
   side = 'end',
   railHidden = false,
+  railFirst = false,
   testId,
   railTestId,
   railTopTestId,
@@ -36,23 +38,27 @@ export default function PageWithRail({
   railLabel: string
   side?: 'end' | 'start'
   railHidden?: boolean
+  /** Stacked, the rail comes before main (a profile that leads its page). DOM order follows. */
+  railFirst?: boolean
   testId?: string
   railTestId?: string
   railTopTestId?: string
   children: ReactNode
 }) {
   const hasRail = !!rail && !railHidden
+  const railEl = hasRail && (
+    <aside className="pwr-rail" aria-label={railLabel} data-testid={railTestId}>
+      {rail}
+    </aside>
+  )
   return (
     <div className="pwr-band">
-      <div className={`pwr${side === 'start' ? ' pwr-start' : ''}${hasRail ? '' : ' pwr-norail'}`} data-testid={testId}>
+      <div className={`pwr${side === 'start' ? ' pwr-start' : ''}${hasRail ? '' : ' pwr-norail'}${railFirst ? ' pwr-rf' : ''}`} data-testid={testId}>
         {head && <header className="pwr-head">{head}</header>}
         {hasRail && <div className="pwr-top" data-testid={railTopTestId}>{railTop}</div>}
+        {railFirst && railEl}
         <div className="pwr-main">{children}</div>
-        {hasRail && (
-          <aside className="pwr-rail" aria-label={railLabel} data-testid={railTestId}>
-            {rail}
-          </aside>
-        )}
+        {!railFirst && railEl}
       </div>
     </div>
   )

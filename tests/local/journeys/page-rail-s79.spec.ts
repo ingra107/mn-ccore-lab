@@ -95,3 +95,27 @@ for (const theme of THEMES) {
     })
   }
 }
+
+test('member: profile rail on the left at 320px, "On this page" kept', async ({ page }) => {
+  await visit(page, '/portal/team/nick-ingraham', 'light', 1440, 'member-grid')
+  const m = await bandAndColumns(page)
+  expect(m.railW!).toBeLessThanOrEqual(322)
+  expect(m.railX!).toBeLessThan(m.mainX!)
+  await expect(page.getByRole('navigation', { name: 'On this page' })).toBeVisible()
+  // Stacked, the profile still leads and the nav is gone.
+  await visit(page, '/portal/team/nick-ingraham', 'light', 1100, 'member-grid')
+  const s = await bandAndColumns(page)
+  expect(s.railY!).toBeLessThan(s.mainY!)
+  await expect(page.getByRole('navigation', { name: 'On this page' })).toBeHidden()
+})
+
+for (const theme of THEMES) {
+  for (const w of WIDTHS) {
+    test(`shots: member ${w} ${theme}`, async ({ page }) => {
+      await visit(page, '/portal/team/nick-ingraham', theme, w, 'member-grid')
+      const m = await bandAndColumns(page)
+      expect(m.sw, 'no sideways scroll').toBeLessThanOrEqual(w + 1)
+      await page.screenshot({ path: `${SHOTS}/member-${w}-${theme}.png` })
+    })
+  }
+}

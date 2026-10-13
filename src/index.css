@@ -1216,6 +1216,9 @@ a:hover {
     position: static; max-height: none; overflow: visible; padding: 16px 0 32px; border: 0;
     border-top: 1px solid var(--sk-line);
   }
+  .pwr-rf, .pwr-rf.pwr-start { grid-template-areas: "head" "top" "rail" "main"; }
+  .pwr-rf > .pwr-rail { padding: 0 0 24px; border-top: 0; }
+  .pwr-wide-only { display: none; }
 }
 
 /* ── My Tasks band (P1-1, Nick 2026-06-10) ──

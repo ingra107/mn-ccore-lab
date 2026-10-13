@@ -4,6 +4,7 @@ import { SecHead } from './public/PublicParts'
 import { FaceDisc } from './today/skin'
 import PublicationCard from './PublicationCard'
 import PageHeartbeat from './moments/PageHeartbeat'
+import PageWithRail from './PageWithRail'
 import HeroNumber, { type HeroNumberProps } from './moments/HeroNumber'
 import type { Publication, Mentee, GrantBucket } from '../data/types'
 import { getMemberBySlug } from '../data/team'
@@ -103,10 +104,8 @@ export default function LabPageLayout({
       style={hueSeed ? ({ '--mh-h': memberHue(hueSeed) } as CSSProperties) : undefined}
     >
       {breadcrumb}
-      <div className="lg:grid lg:grid-cols-12 lg:gap-12">
-        {/* Left Column (Sticky) */}
-        <aside className="lg:col-span-4 xl:col-span-3 mb-12 lg:mb-0">
-          <div className="lg:sticky lg:top-28">
+      <PageWithRail side="start" railFirst railLabel="Profile" testId="member-grid" railTestId="member-rail" rail={
+          <div>
             {/* Avatar */}
             <div className="flex justify-center lg:justify-start mb-6">
               <FaceDisc label={credentials ? `${name}, ${credentials}` : name} initials={initials} photo={photoUrl} px={128} variant={hueSeed ? 'hue' : 'brand'} />
@@ -183,7 +182,7 @@ export default function LabPageLayout({
 
               {/* On this page — anchor nav */}
               {sections && sections.length > 0 && (
-                <nav className="hidden lg:block mt-8" aria-label="On this page">
+                <nav className="pwr-wide-only mt-8" aria-label="On this page">
                   <p
                     className="mb-3"
                     style={{
@@ -225,13 +224,9 @@ export default function LabPageLayout({
               )}
             </div>
           </div>
-        </aside>
-
-        {/* Right Column (Scrolling) */}
-        <div className="lg:col-span-8 xl:col-span-9">
-          {children}
-        </div>
-      </div>
+      }>
+        {children}
+      </PageWithRail>
     </div>
   )
 }
