@@ -134,29 +134,13 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
 
   const footer = !result ? (
     <>
-      <button
-        onClick={onClose}
-        className="cursor-pointer px-4 py-2 rounded-md text-sm"
-        style={{
-          background: 'none',
-          border: '1px solid var(--border-subtle)',
-          color: 'var(--slate)',
-          cursor: 'pointer',
-        }}
-      >
+      <button onClick={onClose} className="tk-btn">
         Cancel
       </button>
       <button
         onClick={handleSubmit}
         disabled={!description.trim() || submitting}
-        className="cursor-pointer px-4 py-2 rounded-md text-sm flex items-center gap-2"
-        style={{
-          background: description.trim() && !submitting ? 'var(--job-accent-solid)' : 'var(--surface-2)',
-          color: description.trim() && !submitting ? 'var(--cream)' : 'var(--slate)',
-          border: 'none',
-          cursor: description.trim() && !submitting ? 'pointer' : 'default',
-          opacity: description.trim() && !submitting ? 1 : 0.85,
-        }}
+        className={`tk-btn ${description.trim() && !submitting ? 'tk-pri' : 'tk-off'}`}
       >
         {submitting ? <Loader2 {...ICON_PROPS} size={14} className="animate-spin" /> : <Send {...ICON_PROPS} size={14} />}
         {submitting ? 'Submitting...' : 'Submit'}
@@ -190,13 +174,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
               <div className="mt-4">
                 <button
                   onClick={onClose}
-                  className="cursor-pointer px-4 py-2 rounded-md text-sm"
-                  style={{
-                    background: 'var(--surface-2)',
-                    border: '1px solid var(--border-subtle)',
-                    color: 'var(--ink)',
-                    cursor: 'pointer',
-                  }}
+                  className="tk-btn"
                 >
                   Close
                 </button>
@@ -217,8 +195,8 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                   rows={4}
                   style={{
                     width: '100%',
-                    background: 'var(--surface-1)',
-                    border: '1px solid var(--border-subtle)',
+                    background: 'var(--field-bg)',
+                    border: '1px solid var(--field-edge)',
                     borderRadius: 'var(--radius-md)',
                     padding: 'var(--sp-sm) var(--sp-md)',
                     color: 'var(--ink)',
@@ -232,11 +210,11 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
 
               {/* Screenshot preview */}
               {screenshot && (
-                <div className="mt-3 relative" style={{ maxHeight: '200px', overflow: 'hidden', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                <div className="mt-3 relative" style={{ maxHeight: '200px', overflow: 'hidden', borderRadius: 'var(--radius-md)', border: '1px solid var(--sk-line)' }}>
                   <img
                     src={screenshot}
                     alt="Bug screenshot"
-                    style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '200px', objectFit: 'contain', background: 'var(--surface-0)' }}
+                    style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '200px', objectFit: 'contain', background: 'var(--sk-panel)' }}
                   />
                   <button
                     onClick={() => setScreenshot(null)}
@@ -269,15 +247,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-1.5 text-xs"
-                    style={{
-                      background: 'none',
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '4px 10px',
-                      color: 'var(--slate)',
-                      cursor: 'pointer',
-                    }}
+                    className="tk-btn tk-sm"
                   >
                     <Image {...ICON_PROPS} size={12} />
                     Attach photo

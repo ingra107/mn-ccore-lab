@@ -9,6 +9,8 @@ import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import InlineSelect from '../../components/InlineSelect'
+import FilterLinks from '../../components/ui/FilterLinks'
+import StatRow from '../../components/ui/StatRow'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { ICON_PROPS } from '../../lib/iconProps'
 
@@ -59,7 +61,7 @@ function ActivityChart({ data }: { data: { day: string; count: number; total_min
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--slate)', opacity: 0.75, marginBottom: 'var(--sp-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--slate)', opacity: 0.75, marginBottom: 'var(--sp-sm)' }}>
         Sessions per day (last 30 days)
       </div>
       <div style={{ position: 'relative' }}>
@@ -155,43 +157,13 @@ function ActivityChart({ data }: { data: { day: string; count: number; total_min
   )
 }
 
-// ── Stat Card ──────────────────────────────────────────────────
-
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-  return (
-    <div
-      style={{
-        flex: '1 1 140px',
-        padding: '14px 16px',
-        borderRadius: 'var(--radius-xl)',
-        backgroundColor: 'var(--surface)',
-        border: '1px solid var(--border-subtle)',
-      }}
-    >
-      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--sp-xs)' }}>
-        {label}
-      </div>
-      {/* S21: portal stats use DM Sans, not Fraunces. --font-display is public-
-          pages-only (Rule 7); the sanctioned portal metric look is fontWeight
-          700 (--weight-metric) in the body font. */}
-      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2 }}>
-        {value}
-      </div>
-      {sub && (
-        <div style={{ fontSize: 11, color: 'var(--slate)', opacity: 'var(--ink-label)', marginTop: 2 }}>
-          {sub}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Main Page ──────────────────────────────────────────────────
 
 export default function SessionHistory() {
   const [projectFilter, setProjectFilter] = useState('')
   const [sinceFilter, setSinceFilter] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [activePreset, setActivePreset] = useState('all')
 
   const { data: sessions = [], isLoading: sessionsLoading } = usePBSessions({
     limit: 100,
@@ -249,6 +221,7 @@ export default function SessionHistory() {
 
   // Date filter presets
   const setDatePreset = useCallback((preset: string) => {
+    setActivePreset(preset)
     const now = new Date()
     switch (preset) {
       case '7d':
@@ -291,8 +264,8 @@ export default function SessionHistory() {
                 fontSize: 12,
                 padding: '5px 10px 5px 26px',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
-                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--field-edge)',
+                backgroundColor: 'var(--field-bg)',
                 color: 'var(--ink)',
                 width: '100%',
                 outline: 'none',
@@ -309,73 +282,32 @@ export default function SessionHistory() {
           />
 
           {/* Date range presets */}
-          {['7d', '30d', '90d', 'all'].map(preset => {
-            // Active if 'all' with no filter, OR if matching days back window.
-            let isActive = false
-            if (preset === 'all' && !sinceFilter) {
-              isActive = true
-            } else if (sinceFilter && preset !== 'all') {
-              const now = new Date()
-              const sinceDate = new Date(sinceFilter)
-              const diffDays = Math.round((now.getTime() - sinceDate.getTime()) / 86400000)
-              if (preset === '7d' && Math.abs(diffDays - 7) < 2) isActive = true
-              else if (preset === '30d' && Math.abs(diffDays - 30) < 2) isActive = true
-              else if (preset === '90d' && Math.abs(diffDays - 90) < 2) isActive = true
-            }
-            return (
-              <button
-                key={preset}
-                onClick={() => setDatePreset(preset)}
-                aria-pressed={isActive}
-                style={{
-                  fontSize: 11,
-                  fontWeight: 500,
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-subtle)',
-                  // Teal-solid + white = 5.4:1 AA both themes. Prev code
-                  // used undefined var(--surface) + white text → 1.09:1
-                  // (white on inherited page bg). r7 2026-04-22.
-                  backgroundColor: isActive ? 'var(--job-accent)' : 'transparent',
-                  color: isActive ? 'var(--sk-card)' : 'var(--slate)',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {preset === 'all' ? 'All time' : preset}
-              </button>
-            )
-          })}
+          <FilterLinks
+            ariaLabel="Date range"
+            value={activePreset}
+            onChange={(v) => setDatePreset(v)}
+            options={[
+              { value: '7d', label: '7d' },
+              { value: '30d', label: '30d' },
+              { value: '90d', label: '90d' },
+              { value: 'all', label: 'All time' },
+            ]}
+          />
         </div>
       </PageHeader>
 
       {/* Stats bar */}
       {stats && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-          style={{ display: 'flex', gap: 'var(--sp-md)', flexWrap: 'wrap', marginBottom: 'var(--sp-xl)' }}
-        >
-          <StatCard
-            label="Total Sessions"
-            value={stats.total_sessions}
+        <div style={{ marginBottom: 'var(--sp-xl)' }}>
+          <StatRow
+            stats={[
+              { label: 'Total sessions', value: stats.total_sessions },
+              { label: 'Total hours', value: stats.total_hours, sub: `${stats.total_commits} commits` },
+              { label: 'Avg session', value: formatDuration(stats.avg_minutes) },
+              { label: 'This week', value: stats.sessions_this_week, sub: `${stats.total_actions} actions total` },
+            ]}
           />
-          <StatCard
-            label="Total Hours"
-            value={stats.total_hours}
-            sub={`${stats.total_commits} commits`}
-          />
-          <StatCard
-            label="Avg Session"
-            value={formatDuration(stats.avg_minutes)}
-          />
-          <StatCard
-            label="This Week"
-            value={stats.sessions_this_week}
-            sub={`${stats.total_actions} actions total`}
-          />
-        </motion.div>
+        </div>
       )}
 
       {/* Activity chart */}
@@ -411,9 +343,7 @@ export default function SessionHistory() {
               fontWeight: 500,
               color: 'var(--slate)',
               opacity: 'var(--ink-label)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              borderBottom: '1px solid var(--border-subtle)',
+              borderBottom: '1px solid var(--sk-line)',
             }}
           >
             <div>Time</div>
@@ -443,7 +373,7 @@ export default function SessionHistory() {
                     fontWeight: 500,
                     color: 'var(--sk-t2)',
                     opacity: 0.85,
-                    borderBottom: '1px solid var(--border-subtle)',
+                    borderBottom: '1px solid var(--sk-line)',
                     backgroundColor: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
                   }}
                 >
@@ -470,7 +400,7 @@ export default function SessionHistory() {
                         padding: '6px 12px',
                         fontSize: 13,
                         color: 'var(--ink)',
-                        borderBottom: '1px solid var(--border-subtle)',
+                        borderBottom: '1px solid var(--sk-line)',
                         backgroundColor: isFocused ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
                         outline: isFocused ? '1px solid color-mix(in srgb, var(--job-accent) 30%, transparent)' : 'none',
                         outlineOffset: -1,
@@ -562,7 +492,7 @@ export default function SessionHistory() {
 
       {/* Machine legend */}
       {sessions.length > 0 && (
-        <div style={{ marginTop: 20, padding: 'var(--sp-md) var(--sp-lg)', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--surface)', border: '1px solid var(--border-subtle)', display: 'flex', gap: 'var(--sp-lg)', alignItems: 'center', fontSize: 11, color: 'var(--slate)', opacity: 0.75 }}>
+        <div style={{ marginTop: 20, padding: 'var(--sp-md) var(--sp-sm)', display: 'flex', gap: 'var(--sp-lg)', alignItems: 'center', fontSize: 11, color: 'var(--slate)', opacity: 0.75 }}>
           <Monitor {...ICON_PROPS} size={12} />
           <span>
             Machines: {[...new Set(sessions.filter(s => s.machine).map(s => s.machine))].join(', ') || 'none recorded'}

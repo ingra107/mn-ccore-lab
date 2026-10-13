@@ -5,11 +5,13 @@
 
 import { useState, useEffect, useId } from 'react'
 import Field from '../../components/ui/Field'
+import SectionHead from '../../components/ui/SectionHead'
 import { Navigate, Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
+import { photoFor } from '../../lib/personLabel'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTeamRaw } from '../../hooks/useTeamRaw'
-import { Save, Calendar as CalendarIcon, Settings as SettingsIcon, ExternalLink } from 'lucide-react'
+import { Save, Settings as SettingsIcon, ExternalLink } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTeam } from '../../hooks/useApiData'
 import PageHeader from '../../components/PageHeader'
@@ -134,11 +136,8 @@ export default function ProfilePage() {
       <PageHeader title="My Profile" subtitle="Update your profile and connect your calendar." />
 
       {/* Identity card — read-only avatar + name + email */}
-      <div
-        className="flex items-start gap-4 mb-6 p-4 rounded-lg border"
-        style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}
-      >
-        <FaceDisc label={m.name} initials={m.initials} photo={m.photoUrl} px={128} />
+      <div className="flex items-start gap-4 mb-6">
+        <FaceDisc label={m.name} initials={m.initials} photo={m.photoUrl ?? photoFor(slug)} px={128} />
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>{m.name}</h2>
           <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>{user?.email}</p>
@@ -166,7 +165,7 @@ export default function ProfilePage() {
 
       {/* Editable fields */}
       <section className="mb-6">
-        <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--ink)' }}>About you</h3>
+        <SectionHead title="About you" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(Object.keys(FIELD_LABELS) as Array<keyof ProfileForm>).map((field) => (
             <ProfileField
@@ -196,10 +195,7 @@ export default function ProfilePage() {
 
       {/* Calendar feeds */}
       <section className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <CalendarIcon {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t3)' }} />
-          <h3 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Calendar feeds</h3>
-        </div>
+        <SectionHead title="Calendar feeds" />
         <p className="text-[11px] mb-3" style={{ color: 'var(--muted)', lineHeight: 1.5 }}>
           Connect your personal calendar so events appear on the Today timeline alongside team meetings.
           Read-only — Hub never writes back to your calendar.
@@ -235,8 +231,8 @@ function ProfileField({ label, value, onChange, onBlur, multiline }: {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}
-          className="w-full rounded-md border px-2 py-1.5 text-sm outline-none"
-          style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-0)', color: 'var(--ink)', resize: 'vertical' }}
+          className="w-full rounded-md px-2 py-1.5 text-sm outline-none"
+          style={{ border: '1px solid var(--field-edge)', background: 'var(--field-bg)', color: 'var(--ink)', resize: 'vertical' }}
         />
       ) : (
         <input
@@ -245,8 +241,8 @@ function ProfileField({ label, value, onChange, onBlur, multiline }: {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}
-          className="w-full rounded-md border px-2 py-1.5 text-sm outline-none"
-          style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-0)', color: 'var(--ink)' }}
+          className="w-full rounded-md px-2 py-1.5 text-sm outline-none"
+          style={{ border: '1px solid var(--field-edge)', background: 'var(--field-bg)', color: 'var(--ink)' }}
         />
       )}
       </Field>

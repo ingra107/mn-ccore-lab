@@ -140,7 +140,6 @@ const LibraryPage = lazyRoute(() => import('./pages/portal/hosts/LibraryPage'))
 const LaunchesPage = lazyRoute(() => import('./pages/portal/LaunchesPage'))
 
 const TrajectoryPage = lazyRoute(() => import('./pages/TrajectoryPage'))
-const MyItems = lazyRoute(() => import('./pages/MyItems'))
 
 // New portal pages (Phase H1 — placeholders, built out in later phases)
 const UnifiedMyTasks = lazyRoute(() => import('./pages/MyTasks'))
@@ -335,7 +334,7 @@ export default function App() {
                       below, kept indefinitely as Lab Overview. */}
                   <Route path="/portal/dashboard" element={<ErrorBoundary><PageErrorBoundary pageName="Today"><TodayPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/overview" element={<ErrorBoundary><LabOverviewHost /></ErrorBoundary>} />
-                  <Route path="/portal/my-items" element={<ErrorBoundary><MyItems /></ErrorBoundary>} />
+                  <Route path="/portal/my-items" element={<Navigate to={PATHS.dashboard} replace />} />
                   {/* MyTasks Round 2 — unified 3-view page (List / Lanes / Columns,
                       List default on bare arrival; ?view= deep-links win). */}
                   <Route path="/portal/my-tasks" element={<ErrorBoundary><PageErrorBoundary pageName="MyTasks"><UnifiedMyTasks /></PageErrorBoundary></ErrorBoundary>} />

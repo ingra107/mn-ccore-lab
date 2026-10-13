@@ -97,7 +97,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
     return (
       <div
         className="py-10 px-6 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
+        style={{ background: 'var(--ice)' }}
       >
         <TrendingUp size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 500, marginBottom: 6 }}>
@@ -149,7 +149,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
           <Tooltip
             contentStyle={{
               background: 'var(--cream)',
-              border: '1px solid var(--border-subtle)',
+              border: '1px solid var(--sk-line)',
               borderRadius: 'var(--radius-md)',
               fontSize: 12,
               color: 'var(--ink)',
@@ -182,7 +182,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
     return (
       <div
         className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
+        style={{ background: 'var(--ice)' }}
       >
         <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -197,7 +197,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>
           Time in Pipeline
         </span>
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
@@ -395,8 +395,6 @@ function TaskMetricsRow({ metrics }: { metrics: TrajectoryData['taskMetrics'] })
               style={{
                 fontSize: '10px',
                 color: 'var(--slate)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
                 marginTop: '0.35rem',
               }}
             >
@@ -428,7 +426,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
     return (
       <div
         className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
+        style={{ background: 'var(--ice)' }}
       >
         <BookOpen size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -584,7 +582,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
     return (
       <div
         className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
+        style={{ background: 'var(--ice)' }}
       >
         <BarChart3 size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -608,8 +606,6 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
           style={{
             fontSize: 'var(--label-size)',
             color: 'var(--slate)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
           }}
         >
           Tasks Completed / Month -- Last 12 Months
@@ -639,7 +635,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
           <Tooltip
             contentStyle={{
               background: 'var(--cream)',
-              border: '1px solid var(--border-subtle)',
+              border: '1px solid var(--sk-line)',
               borderRadius: 'var(--radius-md)',
               fontSize: 12,
               color: 'var(--ink)',
@@ -669,7 +665,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
     return (
       <div
         className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
+        style={{ background: 'var(--ice)' }}
       >
         <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -756,7 +752,7 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
     return (
       <div
         className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
+        style={{ background: 'var(--ice)' }}
       >
         <Flag size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -949,8 +945,6 @@ function ContribMetricCard({
         style={{
           fontSize: '10px',
           color: 'var(--slate)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.06em',
           marginTop: '0.35rem',
         }}
       >
@@ -1052,7 +1046,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
     return (
       <div
         className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
+        style={{ background: 'var(--ice)' }}
       >
         <ClipboardList size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -1139,8 +1133,6 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                       style={{
                         fontSize: '10px',
                         color: config.color,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
                         fontWeight: 600,
                       }}
                     >
@@ -1472,8 +1464,6 @@ export default function TrajectoryPage() {
                 marginBottom: '-2px',
                 cursor: 'pointer',
                 transition: 'color 0.15s, border-color 0.15s',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
               }}
             >
               <Icon {...ICON_PROPS} size={14} />
@@ -1547,7 +1537,7 @@ export default function TrajectoryPage() {
                   <>
                     <section id="activity-heatmap">
                       <SectionHeader title="Activity" />
-                      <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
+                      <div className="sk-mat rounded-xl p-5">
                         <ActivityHeatmap slug={slug} days={180} />
                       </div>
                     </section>

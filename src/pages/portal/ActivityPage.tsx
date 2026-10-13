@@ -11,6 +11,7 @@ import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { getPersonInfo, getMemberBySlug, directors } from '../../data/team'
 import { formatRelativeTime, formatMediumDate, localDateKey } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
+import SectionHead from '../../components/ui/SectionHead'
 import FilterLinks from '../../components/ui/FilterLinks'
 import { FILTER_ALL } from '../../components/ui/filterAll'
 import { fullNameReadable, firstNameFor } from '../../lib/personLabel'
@@ -168,7 +169,7 @@ export default function ActivityPage() {
                   <TextSkeleton lines={1} widths={['120px']} />
                 </div>
                 {/* Skeleton rows match actual 36px activity row (avatar + text) */}
-                <div style={{ borderLeft: '2px solid var(--border-subtle)', paddingLeft: 'var(--sp-md)' }}>
+                <div>
                   {Array.from({ length: 8 }).map((_, rowIdx) => (
                     <div
                       key={rowIdx}
@@ -185,10 +186,10 @@ export default function ActivityPage() {
                         opacity: 0.85,
                       }}
                     >
-                      <div style={{ width: 24, height: 24, borderRadius: 'var(--radius-full)', background: 'var(--surface-2)', flexShrink: 0 }} />
-                      <div style={{ flex: 1, height: 10, background: 'var(--surface-2)', borderRadius: 'var(--radius-sm)' }} />
-                      <div style={{ width: 60, height: 10, background: 'var(--surface-2)', borderRadius: 'var(--radius-full)' }} />
-                      <div style={{ width: 40, height: 10, background: 'var(--surface-2)', borderRadius: 'var(--radius-sm)' }} />
+                      <div style={{ width: 24, height: 24, borderRadius: 'var(--radius-full)', background: 'var(--sk-line)', flexShrink: 0 }} />
+                      <div style={{ flex: 1, height: 10, background: 'var(--sk-line)', borderRadius: 'var(--radius-sm)' }} />
+                      <div style={{ width: 60, height: 10, background: 'var(--sk-line)', borderRadius: 'var(--radius-full)' }} />
+                      <div style={{ width: 40, height: 10, background: 'var(--sk-line)', borderRadius: 'var(--radius-sm)' }} />
                     </div>
                   ))}
                 </div>
@@ -206,13 +207,10 @@ export default function ActivityPage() {
             const label = isToday ? 'Today' : isYesterday ? 'Yesterday' : formatMediumDate(date)
             return (
               <div key={date}>
-                <h3
-                  className="text-sm font-normal mb-2 sticky top-0 z-10 py-1"
-                  style={{ color: isToday ? 'var(--job-accent)' : 'var(--ink)', background: 'var(--page-bg)' }}
-                >
-                  {label}
-                </h3>
-                <motion.div className="flex flex-col border-l-2" style={{ borderColor: isToday ? 'var(--job-accent)' : 'var(--border-subtle)', paddingLeft: 'var(--sp-md)' }} variants={staggerContainer} initial="hidden" animate="visible">
+                <div className="sticky top-0 z-10 pt-1" style={{ background: 'var(--page-bg)' }}>
+                  <SectionHead as="h3" title={label} />
+                </div>
+                <motion.div className="flex flex-col" variants={staggerContainer} initial="hidden" animate="visible">
                   {items.map((item) => {
                     const person = isRealActor(item.actor) ? getPersonInfo(item.actor) : null
                     const isFocused = focusedIndex === flatIndex

@@ -25,7 +25,7 @@ const MEMBER_TYPES: Array<{ value: string; label: string }> = [
   { value: 'director', label: 'Co-director' },
 ]
 
-const inputStyle = { boxShadow: 'inset 0 0 0 1px var(--field-edge)', background: 'var(--surface-0)', color: 'var(--ink)' } as const
+const inputStyle = { boxShadow: 'inset 0 0 0 1px var(--field-edge)', background: 'var(--field-bg)', color: 'var(--ink)' } as const
 // 16px text keeps iOS Safari from zooming into a focused field; 44px tall
 // meets the touch-target floor.
 const inputClass = 'w-full rounded-md px-3 text-base sm:text-sm outline-none min-h-[44px] sm:min-h-[36px]'

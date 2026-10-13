@@ -13,19 +13,7 @@ export default function MemberProfileActions({ slug, teamBase, name }: { slug: s
   if (!isAuthenticated) return null
   return (
     <div className="mb-6 flex flex-wrap gap-2" data-testid="member-profile-actions">
-      <Link
-        to={`${teamBase}/${slug}/trajectory`}
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium hov-border hov-color"
-        style={{
-          background: 'var(--sk-card)',
-          color: 'var(--slate)',
-          border: '1px solid transparent',
-          textDecoration: 'none',
-          transition: 'border-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out)',
-          '--hov-border': 'var(--job-accent)',
-          '--hov-color': 'var(--job-accent)',
-        } as React.CSSProperties}
-      >
+      <Link to={`${teamBase}/${slug}/trajectory`} className="tk-btn" style={{ textDecoration: 'none' }}>
         <TrendingUp {...ICON_PROPS} size={12} />
         View Trajectory
       </Link>

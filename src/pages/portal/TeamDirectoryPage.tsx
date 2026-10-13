@@ -16,6 +16,7 @@ import QueryState from '../../components/QueryState'
 import { useTeam, useExpertise } from '../../hooks/useApiData'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { PATHS } from '../../constants/paths'
+import { photoFor } from '../../lib/personLabel'
 import { ICON_PROPS } from '../../lib/iconProps'
 
 export default function TeamDirectoryPage() {
@@ -70,7 +71,7 @@ export default function TeamDirectoryPage() {
           {members.map((m) => {
             const body = (
               <>
-                <FaceDisc label={m.name} initials={m.initials} photo={m.photoUrl} px={36} hermes={m.slug === 'claude-ai'} />
+                <FaceDisc label={m.name} initials={m.initials} photo={m.photoUrl ?? (m.slug ? photoFor(m.slug) : undefined)} px={36} hermes={m.slug === 'claude-ai'} />
                 <span style={{ minWidth: 0 }}>
                   <span style={{ display: 'block', fontSize: 14, fontWeight: 500, color: 'var(--ink)' }}>
                     {m.name}{m.credentials ? `, ${m.credentials}` : ''}
@@ -83,14 +84,13 @@ export default function TeamDirectoryPage() {
             )
             const rowStyle = {
               display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
-              borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)',
-              background: 'var(--surface-1)', textDecoration: 'none',
+              borderRadius: 'var(--radius-md)', textDecoration: 'none',
             } as const
             return (
               <li key={m.slug ?? m.name}>
                 {m.slug
-                  ? <Link to={PATHS.teamMember(m.slug)} style={rowStyle}>{body}</Link>
-                  : <div style={rowStyle}>{body}</div>}
+                  ? <Link to={PATHS.teamMember(m.slug)} className="sk-mat" style={rowStyle}>{body}</Link>
+                  : <div className="sk-mat" style={rowStyle}>{body}</div>}
               </li>
             )
           })}

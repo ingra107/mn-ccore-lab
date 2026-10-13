@@ -10,7 +10,7 @@ import EmptyStateComponent from '../../components/EmptyState'
 import EmptyStateArt from '../../components/EmptyStateArt'
 import Modal from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
-import ToggleButton from '../../components/ToggleButton'
+import FilterLinks from '../../components/ui/FilterLinks'
 import { FaceDisc } from '../../components/today/skin'
 import InlineSelect from '../../components/InlineSelect'
 import Field from '../../components/ui/Field'
@@ -86,18 +86,16 @@ export default function AskTheLab() {
       >
         {/* Filter controls */}
         <div className="flex items-center gap-3 flex-wrap">
-          {(['', 'open', 'resolved'] as const).map((s) => {
-            const label = s === '' ? 'All' : s === 'open' ? 'Open' : 'Resolved'
-            return (
-              <ToggleButton
-                key={s}
-                active={filterStatus === s}
-                onClick={() => setFilterStatus(s)}
-              >
-                {label}
-              </ToggleButton>
-            )
-          })}
+          <FilterLinks
+            ariaLabel="Question status"
+            value={filterStatus}
+            onChange={(v) => setFilterStatus(v)}
+            options={[
+              { value: '', label: 'All' },
+              { value: 'open', label: 'Open' },
+              { value: 'resolved', label: 'Resolved' },
+            ]}
+          />
           <div className="relative flex-1 max-w-xs">
             <Search {...ICON_PROPS} size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
             <input
@@ -105,8 +103,8 @@ export default function AskTheLab() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search questions..."
-              className="w-full rounded-lg border pl-8 pr-3 py-1.5 text-xs outline-none"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', background: 'var(--cream)' }}
+              className="w-full rounded-lg pl-8 pr-3 py-1.5 text-xs outline-none"
+              style={{ color: 'var(--ink)', border: '1px solid var(--field-edge)', background: 'var(--field-bg)' }}
             />
           </div>
         </div>
@@ -158,12 +156,8 @@ function QuestionCard({
 
   return (
     <div
-      className="rounded-xl border overflow-hidden transition-shadow"
-      style={{
-        borderColor: expanded ? 'var(--job-accent)' : 'var(--border-subtle)',
-        backgroundColor: 'var(--cream)',
-        boxShadow: expanded ? '0 0 0 1px var(--job-accent)' : 'none',
-      }}
+      className="sk-mat rounded-xl overflow-hidden transition-shadow"
+      style={expanded ? { borderColor: 'var(--job-accent)' } : undefined}
     >
       {/* Clickable header */}
       <button
@@ -278,17 +272,17 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
 
   if (isLoading || !detail) {
     return (
-      <div className="px-5 py-6 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+      <div className="px-5 py-6 border-t" style={{ borderColor: 'var(--sk-line)' }}>
         <TextSkeleton lines={2} widths={['75%', '50%']} />
       </div>
     )
   }
 
   return (
-    <div className="px-5 pb-5 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+    <div className="px-5 pb-5 border-t" style={{ borderColor: 'var(--sk-line)' }}>
       {/* Full context */}
       {detail.context && (
-        <div className="mt-4 px-3 py-2.5 rounded-lg" style={{ backgroundColor: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
+        <div className="mt-4 px-3 py-2.5 rounded-lg" style={{ backgroundColor: 'var(--sk-panel)' }}>
           <p className="text-[11px] mb-1" style={{ color: 'var(--muted)', fontWeight: 500 }}>
             Context
           </p>
@@ -439,7 +433,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
       maxWidth="md"
       footer={
         <>
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
+          <button type="button" onClick={onClose} className="tk-btn">
             Cancel
           </button>
           <button
@@ -496,8 +490,8 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
             onChange={(e) => setContext(e.target.value)}
             placeholder="Help others understand your question"
             rows={2}
-            className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-            style={{ borderColor: 'var(--border-subtle)' }}
+            className="w-full rounded-md px-3 py-2 text-sm outline-none resize-none"
+            style={{ border: '1px solid var(--field-edge)', background: 'var(--field-bg)' }}
           />
         </Field>
 

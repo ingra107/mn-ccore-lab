@@ -505,8 +505,8 @@ function InlineCommentEditor({ initial, onSave, onCancel }: { initial: string; o
         rows={rows}
         className="w-full"
         style={{
-          fontSize: BODY_FONT_SIZE, color: 'var(--ink)', background: 'var(--surface-1)',
-          border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)',
+          fontSize: BODY_FONT_SIZE, color: 'var(--ink)', background: 'var(--field-bg)',
+          border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-sm)',
           padding: '6px 8px', lineHeight: 1.5, resize: 'vertical', fontFamily: 'inherit',
         }}
         onKeyDown={(e) => {

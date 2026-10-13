@@ -4,13 +4,15 @@ import { PATHS } from '../../constants/paths'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
-  Settings, Type, Layers, Plus, X, GripVertical, Check, Palette, RotateCcw, Sun, Moon, Users, ArrowRight,
-  FlaskConical, Microscope, Brain, Heart, Activity, Stethoscope, Dna, Atom, BookOpen, Beaker, Link2,
+  Layers, Plus, X, GripVertical, Check, RotateCcw, Sun, Moon, ArrowRight,
+  FlaskConical, Microscope, Brain, Heart, Activity, Stethoscope, Dna, Atom, BookOpen, Beaker,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import { Button } from '../../components/ui/Button'
 import Field from '../../components/ui/Field'
+import SectionHead from '../../components/ui/SectionHead'
+import SegmentedToggle from '../../components/ui/SegmentedToggle'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import InlineSelect from '../../components/InlineSelect'
@@ -50,7 +52,7 @@ const LAB_ICON_OPTIONS = [
 function DensityControl() {
   const [density, setDensity] = useDensity()
   return (
-    <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+    <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--sk-line)' }}>
       <div className="flex items-center justify-between gap-4">
         <div>
           <div className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>Table density</div>
@@ -74,7 +76,7 @@ function TodayDefaultViewControl() {
     { key: 'agenda', label: 'Agenda', desc: 'Scan a line of meetings + tasks' },
   ]
   return (
-    <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+    <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--sk-line)' }}>
       <div className="flex items-center justify-between gap-4">
         <div>
           <div className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>Today default view</div>
@@ -82,41 +84,12 @@ function TodayDefaultViewControl() {
             Which view opens when you load the Today page. In-session toggles are ephemeral. Default: Timeline.
           </div>
         </div>
-        <div
-          role="group"
-          aria-label="Today default view"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 6,
-            overflow: 'hidden',
-            flexShrink: 0,
-          }}
-        >
-          {views.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setDefault(key)}
-              aria-pressed={defaultView === key}
-              title={views.find((v) => v.key === key)?.desc}
-              style={{
-                background: defaultView === key ? 'color-mix(in srgb, var(--job-accent) 12%, transparent)' : 'none',
-                border: 'none',
-                color: defaultView === key ? 'var(--job-accent)' : 'var(--slate)',
-                fontSize: 11,
-                fontWeight: defaultView === key ? 600 : 400,
-                cursor: 'pointer',
-                padding: '3px 10px',
-                letterSpacing: '0.02em',
-                transition: 'all 120ms',
-                lineHeight: 1.5,
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <SegmentedToggle
+          ariaLabel="Today default view"
+          options={views.map((v) => ({ value: v.key, label: v.label, title: v.desc }))}
+          value={defaultView}
+          onChange={setDefault}
+        />
       </div>
     </div>
   )
@@ -136,19 +109,8 @@ function LabIconPicker({ value, onChange }: { value: string; onChange: (next: st
             onClick={() => onChange(name)}
             aria-label={name}
             aria-pressed={isSelected}
-            className="transition-colors"
-            style={{
-              width: 40,
-              height: 40,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: 'var(--radius-md)',
-              border: `1px solid ${isSelected ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
-              background: isSelected ? 'color-mix(in oklch, var(--job-accent) 12%, transparent)' : 'transparent',
-              color: isSelected ? 'var(--job-accent)' : 'var(--slate)',
-              cursor: 'pointer',
-            }}
+            className={`tk-btn${isSelected ? ' tk-sel' : ''}`}
+            style={{ width: 40, height: 40, justifyContent: 'center', padding: 0 }}
           >
             <Icon {...ICON_PROPS} size={18} />
           </button>
@@ -292,75 +254,43 @@ export default function SettingsPage() {
     <div className="content-container">
       <PageHeader title="Settings" subtitle="Changes are saved automatically" />
 
-      {/* Team Directory shortcut */}
+      {/* Team Directory shortcut: a plain link, no card. */}
       <Link
         to={PATHS.team}
-        className="inline-flex items-center gap-2 mb-4 px-4 py-2.5 rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-        style={{
-          borderColor: 'var(--border-subtle)',
-          textDecoration: 'none',
-          color: 'var(--ink)',
-          backgroundColor: 'var(--surface-1)',
-        }}
+        className="inline-flex items-center gap-1.5 mb-4 text-[13px] hover:underline"
+        style={{ color: 'var(--sk-t2)', textDecoration: 'none' }}
       >
-        <div className="flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0" style={{ backgroundColor: 'var(--sk-line)' }}>
-          <Users {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Team Directory</span>
-          <span className="ml-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>Everyone on the team</span>
-        </div>
-        <ArrowRight {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+        Team directory
+        <ArrowRight {...ICON_PROPS} size={13} />
       </Link>
 
-      {/* Tab strip — P2-05. overflow-x:auto + flex-shrink-0 on buttons so
-          the 5-tab strip scrolls horizontally at <400px instead of pushing
-          the page and causing horizontal body overflow (audit 2026-04-22). */}
-      <div
-        className="flex gap-1 border-b mb-4 overflow-x-auto"
-        style={{ borderColor: 'var(--border-subtle)', WebkitOverflowScrolling: 'touch' }}
-        role="tablist"
-        aria-label="Settings sections"
-      >
-        {TABS.map((tab) => {
-          const isActive = activeTab === tab.key
-          return (
-            <button
-              key={tab.key}
-              role="tab"
-              aria-selected={isActive ? "true" : "false"}
-              onClick={() => setActiveTab(tab.key)}
-              className="px-3 py-2 text-sm transition-colors flex-shrink-0 whitespace-nowrap touch-tall"
-              style={{
-                color: isActive ? 'var(--job-accent)' : 'var(--slate)',
-                borderBottom: `2px solid ${isActive ? 'var(--job-accent)' : 'transparent'}`,
-                background: 'none',
-                cursor: 'pointer',
-                marginBottom: '-1px',
-                fontWeight: isActive ? 'var(--weight-ui, 500)' : 400,
-              }}
-            >
-              {tab.label}
-              {dirtyTabs.has(tab.key) && (
-                <span
-                  aria-label="Edited this session"
-                  style={{
-                    display: 'inline-block',
-                    width: 6, height: 6, borderRadius: '50%',
-                    marginLeft: 6, verticalAlign: 'middle',
-                    background: 'var(--job-accent)',
-                  }}
-                />
-              )}
-            </button>
-          )
-        })}
+      {/* Tab strip: the one segmented control. The dot marks a tab edited this
+          session; it rides the option's icon slot. scrollable keeps the strip
+          from pushing the page wide on a phone. */}
+      <div className="mb-4">
+        <SegmentedToggle
+          scrollable
+          ariaLabel="Settings sections"
+          idPrefix="settings"
+          value={activeTab}
+          onChange={setActiveTab}
+          options={TABS.map((tab) => ({
+            value: tab.key,
+            label: tab.label,
+            icon: dirtyTabs.has(tab.key) ? (
+              <span
+                aria-label="Edited this session"
+                style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--job-accent)' }}
+              />
+            ) : undefined,
+          }))}
+        />
       </div>
 
-      <div className="flex flex-col max-w-2xl" style={{ marginTop: 'var(--sp-xl)' }}>
+      <div className="flex flex-col max-w-2xl" role="tabpanel" id={`settings-tabpanel-${activeTab}`} aria-labelledby={`settings-tab-${activeTab}`} style={{ marginTop: 'var(--sp-xl)' }}>
         {/* Basic Information */}
         {activeTab === 'profile' && (
-        <SettingsSection title="Basic Information" subtitle="These appear in the sidebar header and dashboard" icon={Type}>
+        <SettingsSection title="Basic Information" subtitle="These appear in the sidebar header and dashboard">
           <SettingsField label="Lab name" hint="Shown in the sidebar and page titles">
             <SettingsInput
               value={settings.lab_name || ''}
@@ -402,7 +332,7 @@ export default function SettingsPage() {
 
         {/* Workflow Templates */}
         {activeTab === 'templates' && (
-        <SettingsSection title="Workflow Templates" subtitle="Define the stages your projects move through (e.g., Idea → Analysis → Writing → Published)" icon={Layers}>
+        <SettingsSection title="Workflow Templates" subtitle="Define the stages your projects move through (e.g., Idea → Analysis → Writing → Published)">
           {templates.length === 0 && (
             <EmptyState
               icon={<Layers size={32} />}
@@ -410,11 +340,11 @@ export default function SettingsPage() {
               subtitle="Create a template to define custom project stages."
             />
           )}
-          <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-4" variants={staggerContainer} initial="hidden" animate="visible">
+          <motion.div className="flex flex-col gap-3" variants={staggerContainer} initial="hidden" animate="visible">
             {templates.map((template) => {
               const stages: string[] = JSON.parse(template.stages)
               return (
-                <motion.div key={template.id} variants={staggerItem} className="rounded-lg border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
+                <motion.div key={template.id} variants={staggerItem} className="sk-mat" style={{ borderRadius: 'var(--radius-lg)', padding: 'var(--sp-lg)' }}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
                       {template.name}
@@ -430,17 +360,16 @@ export default function SettingsPage() {
                       // One neutral chip for every stage: a stage is not a color
                       // job (rules-ui-design principle 21).
                       const colors = [
-                        { bg: 'var(--sk-line)', text: 'var(--sk-t2)', border: 'var(--sk-line2)' },
+                        { bg: 'var(--sk-line)', text: 'var(--sk-t2)' },
                       ]
                       const c = colors[i % colors.length]
                       return (
                         <span
                           key={i}
-                          className="text-[11px] px-2.5 py-1 rounded-full border font-medium"
+                          className="text-[11px] px-2.5 py-1 rounded-full font-medium"
                           style={{
                             color: c.text,
                             backgroundColor: c.bg,
-                            borderColor: c.border,
                           }}
                         >
                           {stage}
@@ -462,21 +391,21 @@ export default function SettingsPage() {
 
         {/* Lab preferences — T-29 attention thresholds */}
         {activeTab === 'lab' && (
-        <SettingsSection title="Lab Preferences" subtitle="Staleness & attention thresholds — one definition (days since meaningful movement), per-domain defaults" icon={FlaskConical}>
+        <SettingsSection title="Lab Preferences" subtitle="Staleness & attention thresholds — one definition (days since meaningful movement), per-domain defaults">
           <LabPrefsPanel />
         </SettingsSection>
         )}
 
         {/* Integrations — issue #45 */}
         {activeTab === 'integrations' && (
-        <SettingsSection title="Integrations" subtitle="Connect external services to surface their data inside the Hub" icon={Link2}>
+        <SettingsSection title="Integrations" subtitle="Connect external services to surface their data inside the Hub">
           <IntegrationsPanel />
         </SettingsSection>
         )}
 
         {/* Appearance */}
         {activeTab === 'appearance' && (
-        <SettingsSection title="Appearance" subtitle="Theme and layout preferences" icon={Palette}>
+        <SettingsSection title="Appearance" subtitle="Theme and layout preferences">
           <div className="flex gap-4">
             {/* Light theme preview — hardcoded hex intentional (showing what themes look like) */}
             <button
@@ -529,7 +458,7 @@ export default function SettingsPage() {
 
         {/* Danger Zone — Reset + debug toggle */}
         {activeTab === 'danger' && (
-        <SettingsSection title="Danger Zone" subtitle="Clear cached preferences and surface QA fixtures" icon={RotateCcw}>
+        <SettingsSection title="Danger Zone" subtitle="Clear cached preferences and surface QA fixtures">
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div>
@@ -547,8 +476,7 @@ export default function SettingsPage() {
                   setSaved(true)
                   setTimeout(() => setSaved(false), 2000)
                 }}
-                className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
-                style={{ color: 'var(--sk-t2)', border: '1px solid var(--sk-line2)', background: 'none', cursor: 'pointer' }}
+                className="tk-btn tk-sm"
               >
                 Reset
               </button>
@@ -566,8 +494,7 @@ export default function SettingsPage() {
                   setSaved(true)
                   setTimeout(() => setSaved(false), 2000)
                 }}
-                className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
-                style={{ color: 'var(--sk-t2)', border: '1px solid var(--sk-line2)', background: 'none', cursor: 'pointer' }}
+                className="tk-btn tk-sm"
               >
                 Clear
               </button>
@@ -587,8 +514,7 @@ export default function SettingsPage() {
                   setSaved(true)
                   setTimeout(() => setSaved(false), 2000)
                 }}
-                className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
-                style={{ color: 'var(--job-accent)', border: '1px solid color-mix(in srgb, var(--job-accent) 25%, transparent)', background: 'none', cursor: 'pointer' }}
+                className="tk-btn tk-sm"
               >
                 Restore
               </button>
@@ -614,13 +540,7 @@ export default function SettingsPage() {
                   setSaved(true)
                   setTimeout(() => setSaved(false), 2000)
                 }}
-                className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
-                style={{
-                  color: showDebugItems ? 'var(--job-accent)' : 'var(--slate)',
-                  border: `1px solid ${showDebugItems ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
-                  background: showDebugItems ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'none',
-                  cursor: 'pointer',
-                }}
+                className={`tk-btn tk-sm${showDebugItems ? ' tk-sel' : ''}`}
               >
                 {showDebugItems ? 'On' : 'Off'}
               </button>
@@ -631,7 +551,7 @@ export default function SettingsPage() {
 
         {/* Save indicator */}
         {saved && (
-          <div className="fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg border" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--job-accent)' }}>
+          <div className="sk-mat fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2" style={{ borderRadius: 'var(--radius-lg)' }}>
             <Check {...ICON_PROPS} size={14} style={{ color: 'var(--job-accent)' }} />
             <span className="text-sm" style={{ color: 'var(--job-accent)' }}>Saved</span>
           </div>
@@ -642,40 +562,19 @@ export default function SettingsPage() {
 }
 
 // ── Settings Section ─────────────────────────────────────────
-// All 4 layout zones (Basic Info / Workflow Templates / AI Meeting Context / Appearance + Reset)
-// share this single container for consistent rhythm:
-//   - marginBottom: var(--sp-2xl) (32px inter-zone gap)
-//   - border: var(--border-subtle) + radius: var(--radius-lg)
-//   - padding: var(--sp-xl) (24px)
-//   - backgroundColor: var(--surface-card) (white working card in light mode)
-//   - h3: var(--text-md) / var(--weight-ui) (16px / 500)
-//   - subtitle: var(--text-small) (12px)
+// One flat section per tab: a SectionHead, a muted line under it, then the
+// fields on the page. Leaf cards (a template, the new-template form) carry the
+// card material; the section itself is not a box.
 
-function SettingsSection({ title, subtitle, icon: Icon, children }: { title: string; subtitle: string; icon: typeof Settings; children: React.ReactNode }) {
+function SettingsSection({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
-    <div style={{
-      marginBottom: 'var(--sp-2xl)',
-      border: '1px solid var(--border-subtle)',
-      borderRadius: 'var(--radius-lg)',
-      padding: 'var(--sp-xl)',
-      // Working card: white in light mode (the 2026-06-17 audit read the old
-      // --surface-1 grey tint as a disabled surface); --surface-card and
-      // --surface-1 share the same dark value, so dark mode is unchanged.
-      backgroundColor: 'var(--surface-card)',
-    }}>
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--sk-line)' }}>
-          <Icon {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t3)' }} />
-        </div>
-        <div>
-          <h3 style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--weight-ui)', color: 'var(--ink)', margin: 0 }}>{title}</h3>
-          <p style={{ fontSize: 'var(--text-small)', color: 'var(--slate)', opacity: 0.75, margin: 0 }}>{subtitle}</p>
-        </div>
-      </div>
+    <section style={{ marginBottom: 'var(--sp-2xl)' }}>
+      <SectionHead title={title} />
+      <p style={{ fontSize: 'var(--text-small)', color: 'var(--sk-t3)', margin: '0 0 var(--sp-lg)' }}>{subtitle}</p>
       <div className="flex flex-col gap-4">
         {children}
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -748,12 +647,7 @@ function LabPrefsPanel() {
         <button
           type="button"
           onClick={reset}
-          className="inline-flex items-center gap-1.5 rounded"
-          style={{
-            fontSize: '11px', fontWeight: 500, padding: '6px 12px',
-            background: 'transparent', border: '1px solid var(--border-subtle)',
-            color: 'var(--slate)', cursor: 'pointer',
-          }}
+          className="tk-btn tk-sm"
         >
           <RotateCcw {...ICON_PROPS} size={11} />
           Reset to defaults
@@ -801,8 +695,8 @@ function SettingsInput({ value, onSave, placeholder, multiline }: { value: strin
   const inputStyle = {
     fontSize: '14px',
     color: 'var(--ink)',
-    borderColor: 'var(--border-subtle)',
-    backgroundColor: 'var(--cream)',
+    border: '1px solid var(--field-edge)',
+    backgroundColor: 'var(--field-bg)',
   }
 
   if (multiline) {
@@ -813,7 +707,7 @@ function SettingsInput({ value, onSave, placeholder, multiline }: { value: strin
         onBlur={handleBlur}
         placeholder={placeholder}
         rows={2}
-        className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
+        className="w-full rounded-md px-3 py-2 text-sm outline-none resize-none"
         style={inputStyle}
       />
     )
@@ -826,7 +720,7 @@ function SettingsInput({ value, onSave, placeholder, multiline }: { value: strin
       onChange={(e) => setDraft(e.target.value)}
       onBlur={handleBlur}
       placeholder={placeholder}
-      className="w-full rounded-md border px-3 py-2 text-sm outline-none"
+      className="w-full rounded-md px-3 py-2 text-sm outline-none"
       style={inputStyle}
     />
   )
@@ -860,8 +754,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors hover:bg-black/5 mt-2"
-        style={{ borderColor: 'var(--border-subtle)', color: 'var(--job-accent)', cursor: 'pointer', background: 'none' }}
+        className="tk-btn self-start mt-2"
       >
         <Plus {...ICON_PROPS} size={14} />
         Create Custom Template
@@ -870,7 +763,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
   }
 
   return (
-    <div className="mt-2 rounded-lg border p-4" style={{ borderColor: 'var(--job-accent)', backgroundColor: 'color-mix(in srgb, var(--job-accent) 6%, transparent)' }}>
+    <div className="sk-mat mt-2" style={{ borderRadius: 'var(--radius-lg)', padding: 'var(--sp-lg)' }}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>New Workflow Template</span>
         <button onClick={() => setOpen(false)} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}>
@@ -885,8 +778,8 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Template name (e.g., Clinical Trial)"
-          className="w-full rounded-md border px-3 py-2 text-sm outline-none"
-          style={{ borderColor: 'var(--border-subtle)' }}
+          className="w-full rounded-md px-3 py-2 text-sm outline-none"
+          style={{ border: '1px solid var(--field-edge)', backgroundColor: 'var(--field-bg)' }}
         />
 
         <div className="flex flex-col gap-2">
@@ -899,8 +792,8 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
                 value={stage}
                 onChange={(e) => updateStage(i, e.target.value)}
                 placeholder={`Stage ${i + 1}`}
-                className="flex-1 rounded-md border px-3 py-1.5 text-sm outline-none"
-                style={{ borderColor: 'var(--border-subtle)' }}
+                className="flex-1 rounded-md px-3 py-1.5 text-sm outline-none"
+                style={{ border: '1px solid var(--field-edge)', backgroundColor: 'var(--field-bg)' }}
               />
               {stages.length > 1 && (
                 <button onClick={() => removeStage(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
@@ -919,7 +812,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
         </div>
 
         <div className="flex justify-end gap-2 mt-1">
-          <button onClick={() => setOpen(false)} className="px-3 py-1.5 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
+          <button onClick={() => setOpen(false)} className="tk-btn">
             Cancel
           </button>
           <Button

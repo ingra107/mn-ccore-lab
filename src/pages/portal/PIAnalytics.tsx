@@ -187,7 +187,7 @@ function PubsBarChart({ data }: {
         <Tooltip
           contentStyle={{
             background: 'var(--cream)',
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid var(--sk-line)',
             borderRadius: 'var(--radius-md)',
             fontSize: 12,
             color: 'var(--ink)',

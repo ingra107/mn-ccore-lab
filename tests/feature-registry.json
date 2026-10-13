@@ -1012,9 +1012,9 @@
     },
     {
       "id": "page-render-my-items",
-      "component": "src/pages/MyItems.tsx",
+      "component": "src/App.tsx",
       "type": "render",
-      "description": "My Items page renders",
+      "description": "My Items route redirects to Today",
       "test_file": "tests/inspection-workflows.spec.ts",
       "test_name": "ROUTE: My Items (/my-items) renders",
       "covered": true

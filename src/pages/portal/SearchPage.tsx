@@ -9,6 +9,7 @@ import {
   AlertTriangle, Calendar, FileText,
 } from 'lucide-react'
 import SegmentedToggle from '../../components/ui/SegmentedToggle'
+import SectionHead from '../../components/ui/SectionHead'
 import FilterLinks from '../../components/ui/FilterLinks'
 import { FILTER_ALL } from '../../components/ui/filterAll'
 import PageHeader from '../../components/PageHeader'
@@ -165,7 +166,6 @@ function TypeBadge({ result }: { result: SearchResult }) {
         style={{
           background: 'var(--sk-line)',
           color: 'var(--sk-t2)',
-          border: '1px solid var(--border-subtle)',
           flexShrink: 0,
         }}
       >
@@ -507,8 +507,8 @@ export default function SearchPage() {
               }
             }}
             placeholder="Search tasks, projects, meetings, ideas..."
-            className="w-full rounded-xl border px-4 py-3 pl-11 text-sm"
-            style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--ice)', outline: 'none' }}
+            className="w-full rounded-xl px-4 py-3 pl-11 text-sm"
+            style={{ color: 'var(--ink)', border: '1px solid var(--field-edge)', backgroundColor: 'var(--field-bg)', outline: 'none' }}
             onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 2px var(--focus-ring)' }}
             onBlur={e => { e.currentTarget.style.boxShadow = 'none' }}
           />
@@ -559,10 +559,10 @@ export default function SearchPage() {
                 value={personFilter}
                 onChange={(e) => setPersonFilter(e.target.value)}
                 aria-label="Filter results by person"
-                className="rounded-md border px-2 py-1"
+                className="rounded-md px-2 py-1"
                 style={{
-                  borderColor: 'var(--border-subtle)',
-                  background: 'var(--ice)',
+                  border: '1px solid var(--field-edge)',
+                  background: 'var(--field-bg)',
                   color: 'var(--ink)',
                 }}
               >
@@ -578,10 +578,10 @@ export default function SearchPage() {
                 value={timeFilter}
                 onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
                 aria-label="Filter results by time"
-                className="rounded-md border px-2 py-1"
+                className="rounded-md px-2 py-1"
                 style={{
-                  borderColor: 'var(--border-subtle)',
-                  background: 'var(--ice)',
+                  border: '1px solid var(--field-edge)',
+                  background: 'var(--field-bg)',
                   color: 'var(--ink)',
                 }}
               >
@@ -596,10 +596,10 @@ export default function SearchPage() {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
                 aria-label="Filter task results by status"
-                className="rounded-md border px-2 py-1"
+                className="rounded-md px-2 py-1"
                 style={{
-                  borderColor: 'var(--border-subtle)',
-                  background: 'var(--ice)',
+                  border: '1px solid var(--field-edge)',
+                  background: 'var(--field-bg)',
                   color: 'var(--ink)',
                 }}
               >
@@ -632,7 +632,7 @@ export default function SearchPage() {
       {!query && (
         <div className="grid gap-6 sm:grid-cols-2 mt-6">
           <div>
-            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+            <span className="text-[12px] font-medium" style={{ color: 'var(--sk-t3)' }}>
               Jump to
             </span>
             <div className="flex flex-col gap-1 mt-2">
@@ -659,8 +659,8 @@ export default function SearchPage() {
       {showRecents && filteredRecents.length > 0 && (
         <div className="mt-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-              Recent Searches
+            <span className="text-[12px] font-medium" style={{ color: 'var(--sk-t3)' }}>
+              Recent searches
             </span>
             <button
               onClick={() => { clearRecentSearches(); setRecentSearches([]) }}
@@ -674,8 +674,8 @@ export default function SearchPage() {
             {filteredRecents.map(s => (
               <span
                 key={s}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs transition-colors hover:border-[var(--sk-t3)]"
-                style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none' }}
+                className="tk-btn tk-sm"
+                style={{ color: 'var(--slate)' }}
               >
                 <button
                   onClick={() => { setQuery(s); inputRef.current?.focus() }}
@@ -753,16 +753,10 @@ export default function SearchPage() {
               const items = grouped[type]
               if (!items?.length) return null
               const config = typeConfig[type] || typeConfig.activity
-              const Icon = config.icon
 
               return (
                 <div key={type}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Icon {...ICON_PROPS} size={14} style={{ color: config.color }} />
-                    <span className="text-xs uppercase tracking-wider font-semibold" style={{ color: config.color }}>
-                      {config.label}s ({items.length})
-                    </span>
-                  </div>
+                  <SectionHead as="h3" title={`${config.label}s`} count={items.length} />
                   <motion.div className="flex flex-col gap-1" variants={staggerContainer} initial="hidden" animate="visible">
                     {items.map((item) => (
                       <ResultRow key={`${item.type}:${item.id}`} item={item} tokens={tokens} />
@@ -793,8 +787,8 @@ function ResultRow({ item, tokens }: { item: SearchResult; tokens: string[] }) {
     <motion.div variants={staggerItem}>
       <Link
         to={item.url || '#'}
-        className="flex items-start gap-3 px-4 py-2.5 rounded-lg border transition-colors hover:shadow-sm"
-        style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
+        className="flex items-start gap-3 px-4 py-2.5 rounded-lg transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+        style={{ textDecoration: 'none' }}
       >
         <div
           className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0"
