@@ -3338,6 +3338,11 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
 .pg-hb.pg-hb-tight{margin:2px 0 6px}
 .pg-hb.pg-hb-row{flex-basis:100%;order:10;margin-top:0}
 .cal-today-lbl{margin-left:6px;font-size:10px;font-weight:600;color:var(--job-accent)}
+/* Month grid (Wave 3 item 6, option A): hairline row rules only, soft hover,
+   no tray fill on out-of-month cells. */
+.cal-cell{border-top:1px solid var(--sk-line);transition:background-color .12s}
+.cal-cell:not(.cal-cell-out):hover{background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.cal-cell-out{opacity:.35}
 .pg-hero.pg-hero-zero .pg-hero-n{opacity:.45;color:var(--sk-t3)}
 .pg-hb.pg-hb-gap{margin-bottom:10px}
 
