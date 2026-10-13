@@ -109,7 +109,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             }}
             style={{
               flex: 1, fontSize: '15px', color: 'var(--ink)',
-              background: 'var(--cream)', border: '1px solid var(--border-subtle)',
+              background: 'var(--field-bg)', border: '1px solid var(--field-edge)',
               borderRadius: 'var(--radius-lg)', padding: 'var(--sp-sm) var(--sp-md)', outline: 'none',
               resize: 'vertical', lineHeight: 1.5,
             }}
@@ -131,11 +131,8 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               type="button"
               onClick={cancelEdit}
               title="Cancel"
-              style={{
-                background: 'transparent', border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-md)', padding: '7px', cursor: 'pointer', color: 'var(--slate)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
+              className="tk-btn"
+              style={{ padding: '7px', justifyContent: 'center', color: 'var(--slate)' }}
             >
               <X {...ICON_PROPS} size={13} />
             </button>
@@ -167,11 +164,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             type="button"
             onClick={shuffle}
             title="Try a different prompt"
-            className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[var(--hover-subtle)]"
-            style={{
-              color: 'var(--slate)',
-              background: 'transparent', borderColor: 'var(--border-subtle)', cursor: 'pointer',
-            }}
+            className="tk-btn tk-sm"
           >
             <RefreshCw {...ICON_PROPS} size={11} /> Shuffle
           </button>
@@ -180,11 +173,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             type="button"
             onClick={isCustom ? startEdit : startEdit}
             title={isCustom ? 'Edit custom prompt' : 'Write a custom prompt'}
-            className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[var(--hover-subtle)]"
-            style={{
-              color: 'var(--slate)',
-              background: 'transparent', borderColor: 'var(--border-subtle)', cursor: 'pointer',
-            }}
+            className="tk-btn tk-sm"
           >
             <Pencil {...ICON_PROPS} size={11} /> {isCustom ? 'Edit' : 'Customize'}
           </button>
@@ -194,11 +183,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               type="button"
               onClick={() => update({ custom: '' })}
               title="Restore generated prompt"
-              className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[var(--hover-subtle)]"
-              style={{
-                color: 'var(--slate)', opacity: 0.75,
-                background: 'transparent', borderColor: 'var(--border-subtle)', cursor: 'pointer',
-              }}
+              className="tk-btn tk-sm" style={{ opacity: 0.75 }}
             >
               <X {...ICON_PROPS} size={11} /> Reset
             </button>

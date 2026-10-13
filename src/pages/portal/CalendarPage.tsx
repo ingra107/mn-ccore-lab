@@ -287,8 +287,8 @@ export default function CalendarPage() {
             {config.mark
               ? <span aria-hidden="true" className="text-[10px]" style={{ color: config.mark }}>◆</span>
               : <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: type === 'meeting' ? 'var(--sk-t3)' : 'transparent', boxShadow: type === 'meeting' ? undefined : 'inset 0 0 0 1px var(--sk-t3)' }} />}
-            <span className="text-[10px] first-letter:uppercase" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-              {type === 'task' ? 'Task due dates' : `${type}s`}
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+              {type === 'task' ? 'Task due dates' : `${type.charAt(0).toUpperCase()}${type.slice(1)}s`}
             </span>
           </div>
         ))}

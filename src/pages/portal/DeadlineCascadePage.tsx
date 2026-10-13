@@ -100,13 +100,7 @@ export default function DeadlineCascadePage() {
           {(impactId !== null) && (
             <button
               onClick={() => { setImpactId(null); setImpactType(null); setImpactDate(null) }}
-              className="inline-flex items-center gap-1.5 rounded-md border text-sm transition-colors px-3 py-1.5"
-              style={{
-                borderColor: 'var(--border-subtle)',
-                color: 'var(--slate)',
-                background: 'none',
-                cursor: 'pointer',
-              }}
+              className="tk-btn"
               title="Clear impact simulation"
               aria-label="Reset impact simulation"
             >

@@ -10,6 +10,7 @@ import EmptyStateArt from '../../components/EmptyStateArt'
 import { FaceDisc } from '../../components/today/skin'
 import InlineSelect from '../../components/InlineSelect'
 import Field from '../../components/ui/Field'
+import Modal from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import { useUndoToast } from '../../components/UndoToast'
 import { useMenteeMilestones, useMenteeOverview, useActivity } from '../../hooks/useApiData'
@@ -278,11 +279,10 @@ export default function MenteeMilestonesPage() {
                 onClick={() => setFilterMentee(slug)}
                 className="card flex items-center gap-3 p-4 text-left transition-all"
                 style={{
-                  border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-xl)',
                   cursor: 'pointer',
                   // NO inline background: .card supplies the dark-mode gradient
-                  // lift (linear-gradient(--surface-2)); an inline `background`
+                  // lift (the card material gradient); an inline `background`
                   // shorthand resets background-image and DEFEATS that lift.
                 }}
                 whileHover={{ scale: 1.01 }}
@@ -389,16 +389,14 @@ export default function MenteeMilestonesPage() {
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
-              {['MENTEE', 'TITLE', 'TYPE', 'DUE DATE', 'STATUS'].map((col) => (
+              {['Mentee', 'Title', 'Type', 'Due date', 'Status'].map((col) => (
                 <span
                   key={col}
                   style={{
-                    fontSize: '10px',
+                    fontSize: '11px',
                     fontWeight: 500,
                     color: 'var(--slate)',
                     opacity: 'var(--ink-label)',
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: '0.06em',
                   }}
                 >
                   {col}
@@ -470,9 +468,7 @@ export default function MenteeMilestonesPage() {
       </div>
 
       {/* Add Milestone Modal */}
-      <AnimatePresence>
-        {showAddModal && <AddMilestoneModal menteeSlugs={menteeSlugsDerived} onClose={() => setShowAddModal(false)} />}
-      </AnimatePresence>
+      {showAddModal && <AddMilestoneModal menteeSlugs={menteeSlugsDerived} onClose={() => setShowAddModal(false)} />}
     </PageContainer>
   )
 }
@@ -794,7 +790,6 @@ function MilestoneRow({
                     padding: 'var(--sp-sm) var(--sp-md)',
                     borderRadius: 'var(--radius-md)',
                     background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
-                    border: '1px solid var(--border-subtle)',
                   }}
                 >
                   <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--sk-t3)', display: 'block', marginBottom: '4px' }}>
@@ -869,174 +864,91 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
     )
   }
 
+  const inputStyle = {
+    width: '100%',
+    padding: 'var(--sp-sm) var(--sp-md)',
+    borderRadius: 'var(--radius-lg)',
+    border: '1px solid var(--field-edge)',
+    background: 'var(--field-bg)',
+    color: 'var(--ink)',
+    fontSize: 'var(--value-size)',
+    outline: 'none',
+  } as const
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'var(--overlay-medium)' }}
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ duration: 0.15 }}
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'var(--cream)',
-          borderRadius: 'var(--radius-2xl)',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-elevated)',
-          width: '100%',
-          maxWidth: '480px',
-          padding: 'var(--sp-xl)',
-        }}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
-            Add Milestone
-          </h3>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}
-          >
-            <X {...ICON_PROPS} size={18} />
-          </button>
-        </div>
-
-        {/* Form */}
-        <div className="flex flex-col gap-4">
-          {/* Mentee */}
-          <Field label="Mentee" htmlFor="mentee-milestone-mentee" noContainer>
-            <InlineSelect id="mentee-milestone-mentee"
-              value={menteeSlug}
-              options={menteeSlugs.map((s) => ({ value: s, label: getPersonInfo(s).name || s }))}
-              onChange={setMenteeSlug}
-              size="md"
-              alwaysShowChevron
-            />
-          </Field>
-
-          {/* Type */}
-          <Field label="Milestone type" htmlFor="mentee-milestone-type" noContainer>
-            <InlineSelect id="mentee-milestone-type"
-              value={milestoneType}
-              options={MILESTONE_TYPES}
-              onChange={setMilestoneType}
-              size="md"
-              alwaysShowChevron
-            />
-          </Field>
-
-          {/* Title */}
-          <Field label="Title" htmlFor="mentee-milestone-title" noContainer>
-            <input
-              id="mentee-milestone-title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Annual Committee Meeting"
-              autoFocus
-              style={{
-                width: '100%',
-                padding: 'var(--sp-sm) var(--sp-md)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--cream)',
-                color: 'var(--ink)',
-                fontSize: 'var(--value-size)',
-                outline: 'none',
-              }}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
-            />
-          </Field>
-
-          {/* Due Date */}
-          <Field label="Due date" htmlFor="mentee-milestone-due" noContainer>
-            <input
-              id="mentee-milestone-due"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              style={{
-                width: '100%',
-                padding: 'var(--sp-sm) var(--sp-md)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--cream)',
-                color: 'var(--ink)',
-                fontSize: 'var(--value-size)',
-                outline: 'none',
-              }}
-            />
-          </Field>
-
-          {/* Description */}
-          <Field label="Description (optional)" htmlFor="mentee-milestone-description" noContainer>
-            <textarea
-              id="mentee-milestone-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Additional context or requirements..."
-              rows={3}
-              style={{
-                width: '100%',
-                padding: 'var(--sp-sm) var(--sp-md)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--cream)',
-                color: 'var(--ink)',
-                fontSize: 'var(--value-size)',
-                outline: 'none',
-                resize: 'vertical',
-                lineHeight: 1.5,
-              }}
-            />
-          </Field>
-        </div>
-
-        {/* Actions */}
-        <div className="flex justify-end gap-2 mt-5">
-          <button
-            onClick={onClose}
-            style={{
-              padding: 'var(--sp-sm) var(--sp-lg)',
-              borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--border-subtle)',
-              background: 'transparent',
-              color: 'var(--slate)',
-              fontSize: 'var(--value-size)',
-              cursor: 'pointer',
-            }}
-          >
-            Cancel
-          </button>
+    <Modal
+      open
+      onClose={onClose}
+      title="Add milestone"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button
             variant="primary"
             onClick={handleSubmit}
             disabled={!title.trim() || createMilestone.isPending}
-            className="flex items-center gap-1.5"
-            style={{
-              gap: '0.375rem',
-              padding: 'var(--sp-sm) var(--sp-lg)',
-              borderRadius: 'var(--radius-lg)',
-              background: title.trim() ? 'var(--job-accent)' : 'var(--border-subtle)',
-              color: title.trim() ? 'var(--sk-card)' : 'var(--slate)',
-              fontSize: 'var(--value-size)',
-              fontWeight: 500,
-              cursor: title.trim() ? 'pointer' : 'not-allowed',
-              opacity: createMilestone.isPending ? 0.85 : 1,
-            }}
           >
             <Check {...ICON_PROPS} size={14} />
-            {createMilestone.isPending ? 'Creating...' : 'Create Milestone'}
+            {createMilestone.isPending ? 'Creating...' : 'Create milestone'}
           </Button>
-        </div>
-      </motion.div>
-    </motion.div>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <Field label="Mentee" htmlFor="mentee-milestone-mentee" noContainer>
+          <InlineSelect id="mentee-milestone-mentee"
+            value={menteeSlug}
+            options={menteeSlugs.map((s) => ({ value: s, label: getPersonInfo(s).name || s }))}
+            onChange={setMenteeSlug}
+            size="md"
+            alwaysShowChevron
+          />
+        </Field>
+
+        <Field label="Milestone type" htmlFor="mentee-milestone-type" noContainer>
+          <InlineSelect id="mentee-milestone-type"
+            value={milestoneType}
+            options={MILESTONE_TYPES}
+            onChange={setMilestoneType}
+            size="md"
+            alwaysShowChevron
+          />
+        </Field>
+
+        <Field label="Title" htmlFor="mentee-milestone-title" noContainer>
+          <input
+            id="mentee-milestone-title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Annual Committee Meeting"
+            autoFocus
+            style={inputStyle}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
+          />
+        </Field>
+
+        <Field label="Due date" htmlFor="mentee-milestone-due" noContainer>
+          <input
+            id="mentee-milestone-due"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            style={inputStyle}
+          />
+        </Field>
+
+        <Field label="Description (optional)" htmlFor="mentee-milestone-description" noContainer>
+          <textarea
+            id="mentee-milestone-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Additional context or requirements..."
+            rows={3}
+            style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }}
+          />
+        </Field>
+      </div>
+    </Modal>
   )
 }

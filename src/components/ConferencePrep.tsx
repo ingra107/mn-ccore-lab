@@ -43,6 +43,17 @@ interface ConferencePrepProps {
   projectId: string
 }
 
+// Input edge: --field-edge, the one input outline.
+const CONF_INPUT_STYLE = {
+  fontSize: '12px',
+  padding: '6px 10px',
+  borderRadius: 'var(--radius-md)',
+  border: '1px solid var(--field-edge)',
+  background: 'var(--field-bg)',
+  color: 'var(--ink)',
+  outline: 'none',
+} as const
+
 export default function ConferencePrep({ projectId }: ConferencePrepProps) {
   const { data: conferences = [], isLoading } = useConferences(projectId)
   const createMutation = useCreateConference(projectId)
@@ -142,18 +153,16 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                   borderBottom: '1px solid var(--border-subtle)',
                 }}
               >
-                {['Conference', 'Type', 'Abstract Due', 'Status', 'Materials', 'Travel', ''].map((h) => (
+                {['Conference', 'Type', 'Abstract due', 'Status', 'Materials', 'Travel', ''].map((h) => (
                   <th
                     key={h}
                     style={{
                       textAlign: 'left',
                       padding: '6px 8px',
-                      fontSize: '10px',
+                      fontSize: '11px',
                       fontWeight: 500,
                       color: 'var(--slate)',
                       opacity: 0.75,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
                       whiteSpace: 'nowrap',
                     }}
                   >
@@ -305,12 +314,11 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
       {/* Add form */}
       {showForm ? (
         <div
+          className="sk-mat"
           style={{
             marginTop: activeConfs.length > 0 ? '12px' : '0',
             padding: 'var(--sp-md)',
             borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-subtle)',
-            background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
           }}
         >
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
@@ -319,29 +327,13 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
               value={form.conference}
               onChange={(e) => setForm({ ...form, conference: e.target.value })}
               autoFocus
-              style={{
-                fontSize: '12px',
-                padding: '6px 10px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--cream)',
-                color: 'var(--ink)',
-                outline: 'none',
-              }}
+              style={CONF_INPUT_STYLE}
             />
             <input
               placeholder="Submission title"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              style={{
-                fontSize: '12px',
-                padding: '6px 10px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--cream)',
-                color: 'var(--ink)',
-                outline: 'none',
-              }}
+              style={CONF_INPUT_STYLE}
             />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '8px' }}>
@@ -356,14 +348,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
               placeholder="Abstract due"
               value={form.abstract_due}
               onChange={(e) => setForm({ ...form, abstract_due: e.target.value })}
-              style={{
-                fontSize: '12px',
-                padding: '6px 10px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--cream)',
-                color: 'var(--ink)',
-              }}
+              style={CONF_INPUT_STYLE}
               title="Abstract due date"
             />
             <input
@@ -371,14 +356,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
               placeholder="Conference date"
               value={form.conference_date}
               onChange={(e) => setForm({ ...form, conference_date: e.target.value })}
-              style={{
-                fontSize: '12px',
-                padding: '6px 10px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--cream)',
-                color: 'var(--ink)',
-              }}
+              style={CONF_INPUT_STYLE}
               title="Conference date"
             />
           </div>

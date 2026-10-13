@@ -55,7 +55,7 @@ function HowTranscriptsWorkPanel({ collapsedByDefault }: { collapsedByDefault: b
     try { localStorage.setItem(HOWTO_STORAGE_KEY, next ? '1' : '0') } catch { /* noop */ }
   }
   return (
-    <div className="mt-6 rounded-xl border" style={{ borderColor: 'var(--border-subtle)' }}>
+    <div className="sk-mat mt-6 rounded-xl">
       <button
         onClick={toggle}
         className="w-full flex items-center justify-between p-4 text-left"
@@ -64,7 +64,7 @@ function HowTranscriptsWorkPanel({ collapsedByDefault }: { collapsedByDefault: b
       >
         <h3 className="text-sm font-normal flex items-center gap-2" style={{ color: 'var(--ink)' }}>
           <Brain {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t3)' }} />
-          How Meeting Transcripts Work
+          How meeting transcripts work
         </h3>
         <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.75 }}>
           {expanded ? 'Hide' : 'What is this?'}
@@ -156,7 +156,7 @@ export default function MeetingNotesPage() {
       <div className="mt-6">
         <div className="flex items-center gap-3 mb-3">
           <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>
-            Recent Meetings
+            Recent meetings
           </h3>
           <div className="relative flex-1 max-w-xs">
             <Search {...ICON_PROPS} size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
@@ -165,8 +165,8 @@ export default function MeetingNotesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search meetings..."
-              className="w-full rounded-lg border pl-8 pr-3 py-1.5 text-xs outline-none"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', background: 'var(--cream)' }}
+              className="w-full rounded-lg pl-8 pr-3 py-1.5 text-xs outline-none"
+              style={{ color: 'var(--ink)', border: '1px solid var(--field-edge)', background: 'var(--field-bg)' }}
             />
           </div>
         </div>
@@ -175,8 +175,8 @@ export default function MeetingNotesPage() {
             <motion.div key={m.id} variants={staggerItem}>
               <Link
                 to={PATHS.meeting(m.id)}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm"
-                style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
+                className="sk-mat flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:shadow-sm"
+                style={{ textDecoration: 'none' }}
               >
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--sk-line)' }}>
                   {m.notes ? <CheckCircle2 {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t2)' }} /> : <FileText {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />}
@@ -216,7 +216,7 @@ export default function MeetingNotesPage() {
                     {isMeetingNew(m) ? 'New notes' : 'Notes available'}
                   </span>
                 ) : (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.06)' }}>
+                  <span className="text-[10px]" style={{ color: 'var(--sk-t3)' }}>
                     No notes
                   </span>
                 )}
@@ -321,8 +321,8 @@ function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: 
             onChange={(e) => setTranscript(e.target.value)}
             placeholder="Paste your meeting transcript here..."
             rows={8}
-            className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-            style={{ borderColor: 'var(--border-subtle)' }}
+            className="w-full rounded-md px-3 py-2 text-sm outline-none resize-none"
+            style={{ border: '1px solid var(--field-edge)', background: 'var(--field-bg)', color: 'var(--ink)' }}
           />
         </Field>
       </div>

@@ -20,6 +20,13 @@ interface CalendarFeed {
   createdAt: string
 }
 
+// Input edge: --field-edge, the one input outline (design-system "Modal + form field").
+const FEED_INPUT_STYLE = {
+  border: '1px solid var(--field-edge)',
+  color: 'var(--ink)',
+  background: 'var(--field-bg)',
+} as const
+
 export default function CalendarFeedsPanel() {
   const queryClient = useQueryClient()
   const { data: feeds = [] } = useQuery({
@@ -77,8 +84,7 @@ export default function CalendarFeedsPanel() {
       )}
 
       <div
-        className="flex flex-col gap-2 p-3 rounded-lg border"
-        style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}
+        className="sk-mat flex flex-col gap-2 p-3 rounded-lg"
       >
         <div className="flex items-center gap-2">
           <CalendarIcon {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
@@ -96,25 +102,23 @@ export default function CalendarFeedsPanel() {
             placeholder="https://calendar.google.com/calendar/ical/..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="flex-1 rounded-md border px-2 py-1.5 text-xs outline-none"
-            style={{ borderColor: 'var(--border-subtle)', color: 'var(--ink)', background: 'var(--surface-0)' }}
+            className="flex-1 rounded-md px-2 py-1.5 text-xs outline-none"
+            style={FEED_INPUT_STYLE}
           />
           <input
             type="text"
             placeholder="Label (optional)"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            className="w-32 rounded-md border px-2 py-1.5 text-xs outline-none"
-            style={{ borderColor: 'var(--border-subtle)', color: 'var(--ink)', background: 'var(--surface-0)' }}
+            className="w-32 rounded-md px-2 py-1.5 text-xs outline-none"
+            style={FEED_INPUT_STYLE}
           />
           <button
             type="button"
             onClick={() => { if (url.trim()) addFeed.mutate({ url, label }) }}
             disabled={addFeed.isPending || !url.trim()}
-            className="inline-flex items-center justify-center gap-1.5 rounded"
+            className="tk-btn tk-pri justify-center"
             style={{
-              fontSize: 11, fontWeight: 500, padding: '6px 14px',
-              background: 'var(--job-accent)', border: 'none', color: '#fff',
               cursor: addFeed.isPending || !url.trim() ? 'not-allowed' : 'pointer',
               opacity: addFeed.isPending || !url.trim() ? 0.5 : 1,
             }}
@@ -144,8 +148,7 @@ function CalendarFeedRow({ feed, onRemove }: { feed: CalendarFeed; onRemove: () 
     : 'never'
   return (
     <div
-      className="flex items-start gap-3 p-3 rounded-lg border"
-      style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}
+      className="sk-mat flex items-start gap-3 p-3 rounded-lg"
     >
       <div
         className="flex items-center justify-center w-9 h-9 rounded-md flex-shrink-0"
@@ -181,12 +184,7 @@ function CalendarFeedRow({ feed, onRemove }: { feed: CalendarFeed; onRemove: () 
         type="button"
         onClick={onRemove}
         aria-label="Remove feed"
-        className="inline-flex items-center gap-1 rounded flex-shrink-0"
-        style={{
-          fontSize: 11, fontWeight: 500, padding: '6px 10px',
-          background: 'transparent', border: '1px solid var(--border-subtle)',
-          color: 'var(--slate)', cursor: 'pointer',
-        }}
+        className="tk-btn tk-sm"
       >
         <X {...ICON_PROPS} size={12} /> Remove
       </button>

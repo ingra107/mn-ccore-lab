@@ -276,10 +276,10 @@ export default function DeadlinesPage() {
         const daysText = dueLabelText(nextUrgent.due_date, isOver)
         return (
           <div
-            className="flex items-center gap-3 px-4 py-3 rounded-lg border"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg"
             style={{
               background: isOver ? 'color-mix(in srgb, var(--job-overdue) 6%, transparent)' : 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
-              borderColor: isOver ? 'color-mix(in srgb, var(--job-overdue) 20%, transparent)' : 'var(--sk-line2)',
+              boxShadow: `inset 0 0 0 1px ${isOver ? 'color-mix(in srgb, var(--job-overdue) 20%, transparent)' : 'var(--sk-line2)'}`,
             }}
           >
             <AlertTriangle {...ICON_PROPS} size={16} style={{ color: isOver ? 'var(--job-overdue)' : 'var(--sk-t3)', flexShrink: 0 }} />
@@ -308,10 +308,10 @@ export default function DeadlinesPage() {
           <div aria-hidden="true" style={{ padding: '38px 10px 0' }}>
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={`skel-${i}`} style={{ height: 40, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 16, height: 16, borderRadius: 5, background: 'var(--surface-2)' }} />
-                <div style={{ flex: 1, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
-                <div style={{ width: 80, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
-                <div style={{ width: 60, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
+                <div style={{ width: 16, height: 16, borderRadius: 5, background: 'var(--sk-line)' }} />
+                <div style={{ flex: 1, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--sk-line)' }} />
+                <div style={{ width: 80, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--sk-line)' }} />
+                <div style={{ width: 60, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--sk-line)' }} />
               </div>
             ))}
           </div>
@@ -668,8 +668,6 @@ function UpcomingConferencesSection() {
                   fontWeight: 'var(--label-weight)',
                   color: 'var(--slate)',
                   opacity: 'var(--ink-label)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -847,8 +845,8 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
           <div className="mb-6 relative">
             {/* Week dot */}
             <div
-              className="absolute -left-4 top-0.5 w-3 h-3 rounded-full border-2"
-              style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--sk-line2)' }}
+              className="absolute -left-4 top-0.5 w-3 h-3 rounded-full"
+              style={{ backgroundColor: 'var(--cream)', boxShadow: 'inset 0 0 0 2px var(--sk-line2)' }}
             />
 
             {/* Week label */}

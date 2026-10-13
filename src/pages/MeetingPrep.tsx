@@ -99,8 +99,7 @@ export default function MeetingPrep() {
             </p>
             <button
               onClick={() => window.print()}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors"
-              style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
+              className="tk-btn tk-sm"
               title="Print prep sheet"
             >
               <Printer {...ICON_PROPS} size={12} />
