@@ -101,6 +101,16 @@ interface RouteMetadataBase {
    * project_id (or null if not project-linked).
    */
   parentLookup?: (id: string) => Promise<{ project_id: string | null }>
+  /**
+   * A non-GET route that changes nothing another client renders (a read
+   * receipt, an error report). api/index.ts bumps _meta.version after every
+   * successful write, which makes every open tab of every member refetch every
+   * active query; a route that sets this skips the bump and the realtime
+   * broadcast. Declared here, on the route, so the exemption cannot drift from
+   * the path the way a separate path list did. Only the writer's own client
+   * invalidates what it needs.
+   */
+  noVersionBump?: true
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handler: (...args: any[]) => Promise<Response> | Response
 }
@@ -151,6 +161,9 @@ export function defineRoute(meta: RouteMetadata): RouteMetadata {
     throw new Error(
       `public GET ${raw.path} has no anonShape: name the fields an anonymous caller may see, or make it auth: 'authed'`,
     )
+  }
+  if ((raw as { noVersionBump?: unknown }).noVersionBump !== undefined && raw.method === 'GET') {
+    throw new Error(`GET ${raw.path} has noVersionBump; a GET never bumps the version, so the flag means nothing there`)
   }
   if (raw.anonShape && !publicGet) {
     throw new Error(
@@ -293,8 +306,11 @@ export function bindRegistryToHono(app: Hono<any>, gate: RouteGate): void {
     // papers). Applied on BOTH projection paths below.
     const anonRows = route.method === 'GET' && route.auth === 'public' ? route.anonRows : undefined
     const servesNonMembers = route.method === 'GET' && route.auth === 'public' && route.servesNonMembers === true
+    const noVersionBump = route.noVersionBump === true
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     app[method](route.path, async (c: any) => {
+      // Read by the version-bump middleware in api/index.ts after the handler runs.
+      if (noVersionBump) c.set('noVersionBump', true)
       const kind = gate.callerKind(c)
       switch (kind) {
         case 'member':

@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '../hooks/useAuth'
 import {
   useStats,
   useTasks,
@@ -50,6 +52,13 @@ import type { SparkPoint } from '../components/pulse/PulseSparkline'
 
 const ROTATE_INTERVAL = 8000
 
+// The wall display sits outside PortalLayout, so useRealtimeSync (the /api/version
+// poll) never runs here, and the app default is refetchOnWindowFocus: false. Without
+// this the TV shows the numbers from the moment it was opened. Marking every query
+// stale refetches the ones Pulse has mounted (inactive ones just go stale). 5 min:
+// the counts move slowly, and a full reload would blank the wall.
+const REFRESH_INTERVAL = 5 * 60 * 1000
+
 // #507 follow-up opt-out (whole file): this is an unattended kiosk display
 // (lab TV wall signage) with no chrome, no nav, no click targets -- a retry
 // affordance has nobody to click it. Every data-driven scene already
@@ -66,8 +75,23 @@ export default function Pulse() {
     return window.localStorage.getItem('pulse-paused') === 'true'
   })
 
+  const queryClient = useQueryClient()
+  // Task counts are members-only (/api/tasks is 'authed'): a logged-out wall
+  // never requests them and shows no task tile, rather than a '0' that reads as real.
+  const { user } = useAuth()
+  const isAuthenticated = user.isAuthenticated
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      // /api/tasks answers 401 to an anonymous viewer; do not refetch it.
+      void queryClient.invalidateQueries(
+        isAuthenticated ? undefined : { predicate: (q) => q.queryKey[0] !== 'tasks' },
+      )
+    }, REFRESH_INTERVAL)
+    return () => window.clearInterval(id)
+  }, [queryClient, isAuthenticated])
+
   const { data: stats } = useStats()
-  const { data: tasks = [] } = useTasks()
+  const { data: tasks = [] } = useTasks(undefined, { enabled: isAuthenticated })
   const { data: projects = [] } = useProjects()
   const { data: activity = [] } = useActivity(8)
   const { data: healthData } = useProjectHealth()
@@ -125,13 +149,15 @@ export default function Pulse() {
         <PulseScene
           eyebrow={`${formatBrandName('MN-CCORE')} · Live`}
           title="The lab, right now."
-          subtitle={`${pendingTasks.length} active tasks, ${activeProjects} active projects, ${team.length || stats?.teamSize || 18} people moving the work.`}
+          subtitle={isAuthenticated
+            ? `${pendingTasks.length} active tasks, ${activeProjects} active projects, ${team.length || stats?.teamSize || 18} people moving the work.`
+            : `${activeProjects} active projects, ${team.length || stats?.teamSize || 18} people moving the work.`}
         >
           {/* R4-P2-07: on 375px the prior gap-x-20 (80px) collided with
               the three metrics. Grid now wraps to 2+1 below 420px via
               the kiosk-metrics-grid class; desktop sizing unchanged. */}
-          <div className="kiosk-metrics-grid grid grid-cols-3 gap-x-20 gap-y-12">
-            <PulseMetric value={pendingTasks.length} label="Active tasks" />
+          <div className={`kiosk-metrics-grid grid ${isAuthenticated ? 'grid-cols-3' : 'grid-cols-2'} gap-x-20 gap-y-12`}>
+            {isAuthenticated && <PulseMetric value={pendingTasks.length} label="Active tasks" />}
             <PulseMetric value={activeProjects} label="Active projects" />
             <PulseMetric
               value={team.length || stats?.teamSize || 18}
@@ -175,8 +201,8 @@ export default function Pulse() {
       })
     }
 
-    // Scene 3 — Throughput: this week's velocity.
-    list.push({
+    // Scene 3 — Throughput: this week's velocity. Members-only data.
+    if (isAuthenticated) list.push({
       key: 'throughput',
       render: () => (
         <PulseScene
@@ -339,6 +365,7 @@ export default function Pulse() {
 
     return list
   }, [
+    isAuthenticated,
     stats,
     pendingTasks.length,
     overdueTasks.length,

@@ -150,6 +150,9 @@ type AppEnv = {
     /** This request runs on DB_TEST (api/lib/test-mode.ts). Error-ledger
      *  entries written for it go to DB_TEST's hub_errors, not prod's. */
     testDb: boolean;
+    /** The matched route declared `noVersionBump` (route-dsl.ts); the version
+     *  middleware skips the bump and the broadcast. Set by bindRegistryToHono. */
+    noVersionBump?: boolean;
   };
 };
 
@@ -467,16 +470,17 @@ app.use('/api/*', async (c, next) => {
 // Any successful non-GET response triggers a fire-and-forget version bump
 // (React Query uses /api/version to invalidate) and a DO broadcast to
 // PartySocket clients. Matches the original withVersionBump wrapper.
-// POST /api/client-errors changes no data a client renders; bumping on it
-// would make every open tab refetch, and a render-loop crash would then feed
-// itself (each report -> refetch -> crash -> report).
+// A route that changes no data a client renders declares `noVersionBump: true`
+// in its defineRoute() (route-dsl.ts) and is skipped here. POST /api/client-errors:
+// bumping on it would make every open tab refetch, and a render-loop crash would
+// then feed itself (each report -> refetch -> crash -> report). POST /api/seen and
+// /api/thread-seen: a read receipt would refetch every query in every member's tab.
 // ─────────────────────────────────────────────────────────────────────────────
-const NO_VERSION_BUMP_PATHS: ReadonlySet<string> = new Set(['/api/client-errors']);
 app.use('*', async (c, next) => {
   await next();
   const method = c.req.method;
   if (method === 'GET' || method === 'OPTIONS' || method === 'HEAD') return;
-  if (NO_VERSION_BUMP_PATHS.has(c.req.path)) return;
+  if (c.get('noVersionBump') === true) return;
   const res = c.res;
   if (!res || res.status < 200 || res.status >= 300) return;
   const env = c.get('env');
@@ -1527,6 +1531,7 @@ defineRoute({
   path: '/api/seen',
   auth: 'authed',
   entity: 'tasks',
+  noVersionBump: true,
   handler: (c) => handleMarkSeen(R(c), E(c)),
 });
 defineRoute({
@@ -1549,6 +1554,7 @@ defineRoute({
   path: '/api/thread-seen',
   auth: 'authed',
   entity: 'tasks',
+  noVersionBump: true,
   handler: (c) => handleMarkThreadSeen(R(c), E(c)),
 });
 defineRoute({
@@ -2973,6 +2979,7 @@ defineRoute({
   path: '/api/client-errors',
   auth: 'authed',
   entity: 'health',
+  noVersionBump: true,
   handler: (c) => handleClientErrors(R(c), USER(c), c.get('testDb') === true),
 });
 // Errors per 7-day window, PB API key only (`auth: 'pi'` documents the class;
