@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   useStats,
   useTasks,
@@ -50,6 +51,13 @@ import type { SparkPoint } from '../components/pulse/PulseSparkline'
 
 const ROTATE_INTERVAL = 8000
 
+// The wall display sits outside PortalLayout, so useRealtimeSync (the /api/version
+// poll) never runs here, and the app default is refetchOnWindowFocus: false. Without
+// this the TV shows the numbers from the moment it was opened. Marking every query
+// stale refetches the ones Pulse has mounted (inactive ones just go stale). 5 min:
+// the counts move slowly, and a full reload would blank the wall.
+const REFRESH_INTERVAL = 5 * 60 * 1000
+
 // #507 follow-up opt-out (whole file): this is an unattended kiosk display
 // (lab TV wall signage) with no chrome, no nav, no click targets -- a retry
 // affordance has nobody to click it. Every data-driven scene already
@@ -65,6 +73,14 @@ export default function Pulse() {
     if (typeof window === 'undefined') return false
     return window.localStorage.getItem('pulse-paused') === 'true'
   })
+
+  const queryClient = useQueryClient()
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      void queryClient.invalidateQueries()
+    }, REFRESH_INTERVAL)
+    return () => window.clearInterval(id)
+  }, [queryClient])
 
   const { data: stats } = useStats()
   const { data: tasks = [] } = useTasks()

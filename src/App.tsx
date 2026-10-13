@@ -5,7 +5,6 @@ import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from '
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MotionConfig } from 'framer-motion'
 import Layout from './components/Layout'
-import PortalLayout from './components/PortalLayout'
 import ViewTransitionWrapper from './components/ViewTransitionWrapper'
 import PageErrorBoundary from './components/PageErrorBoundary'
 import RequireAuth from './components/RequireAuth'
@@ -13,6 +12,8 @@ import HeartbeatLine from './components/HeartbeatLine'
 import { Button } from './components/ui/Button'
 import { TooltipLayer } from './components/TooltipLayer'
 const Home = lazyRoute(() => import('./pages/Home'))
+// Member-only shell, behind RequireAuth: an anonymous visitor never downloads it.
+const PortalLayout = lazyRoute(() => import('./components/PortalLayout'))
 import { AuthProvider } from './context/AuthContext'
 import { AllProjectsRouteGuard } from './components/AllProjectsControls'
 import { PATHS, PUBLIC_PATHS } from './constants/paths'
