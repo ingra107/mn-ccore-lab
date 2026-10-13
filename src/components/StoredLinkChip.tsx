@@ -58,7 +58,7 @@ export default function StoredLinkChip({ link }: Props) {
         padding: '4px 7px 4px 9px',
         borderRadius: 'var(--radius-md)',
         background: 'var(--ice)',
-        border: '1px solid var(--border-subtle)',
+        border: '1px solid var(--sk-line2)',
         maxWidth: 240,
         fontSize: 12,
         fontWeight: 500,

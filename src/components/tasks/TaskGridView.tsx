@@ -482,10 +482,10 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
                 }}
                 aria-hidden="true"
               >
-                <div style={{ width: 16, height: 16, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
-                <div style={{ flex: 1, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
-                <div style={{ width: 80, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
-                <div style={{ width: 60, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
+                <div style={{ width: 16, height: 16, borderRadius: 'var(--radius-sm)', background: 'var(--sk-line2)' }} />
+                <div style={{ flex: 1, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--sk-line2)' }} />
+                <div style={{ width: 80, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--sk-line2)' }} />
+                <div style={{ width: 60, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--sk-line2)' }} />
               </div>
             ))}
           </div>
@@ -1110,10 +1110,10 @@ function TaskGridRow({
                     <span className="relative group" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
                       <Link2 {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)', opacity: 0.85 }} />
                       <span
-                        className="absolute left-full ml-2 hidden group-hover:block z-30 rounded-lg shadow-lg border py-2 px-3"
+                        className="absolute left-full ml-2 hidden group-hover:block z-30 rounded-lg shadow-lg py-2 px-3"
                         style={{
                           backgroundColor: 'var(--cream)',
-                          borderColor: 'var(--border-subtle)',
+                          border: '1px solid var(--sk-line2)',
                           minWidth: '180px',
                           maxWidth: '260px',
                           top: '50%',
@@ -1264,7 +1264,7 @@ function TaskGridRow({
                         fontSize: '10px',
                         padding: '1px 5px',
                         borderRadius: 'var(--radius-sm)',
-                        backgroundColor: 'var(--surface-3)',
+                        backgroundColor: 'var(--sk-line2)',
                         borderLeft: '2px solid var(--sk-t3)',
                         color: 'var(--slate)',
                         flexShrink: 0,
@@ -1556,8 +1556,8 @@ function TaskGridRow({
               }}
               onBlur={() => { if (!commentDraft.trim()) { setQuickComment(false); setCommentDraft('') } }}
               placeholder="Add a quick note..."
-              className="flex-1 text-[12px] px-2.5 py-1.5 rounded-lg border bg-transparent"
-              style={{ color: 'var(--ink)', borderColor: 'var(--job-accent)', outline: 'none' }}
+              className="flex-1 text-[12px] px-2.5 py-1.5 rounded-lg bg-transparent"
+              style={{ color: 'var(--ink)', border: '1px solid var(--job-accent)', outline: 'none' }}
             />
           </div>
         </div>
@@ -1906,16 +1906,15 @@ function InlineCellSelect({
         aria-controls={open ? listboxId : undefined}
         aria-activedescendant={activeDescendant}
         onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
-        className="inline-flex items-center gap-1 rounded-md transition-colors hov-bg hov-border"
+        className="inline-flex items-center gap-1 rounded-md transition-colors hov-bg"
         style={{
           padding: '3px 8px',
-          border: '1px solid transparent',
+          border: 'none',
           background: 'none',
           cursor: 'pointer',
           fontSize: '12px',
           fontWeight: 400,
           '--hov-bg': open ? 'none' : 'color-mix(in srgb, var(--job-accent) 6%, transparent)',
-          '--hov-border': open ? 'transparent' : 'var(--border-subtle)',
         } as React.CSSProperties}
       >
         {renderValue(value)}
@@ -1942,7 +1941,7 @@ function InlineCellSelect({
               minWidth: pos.minWidth,
               zIndex: 'var(--z-modal)',
               background: 'var(--cream)',
-              border: '1px solid var(--border-subtle)',
+              border: '1px solid var(--sk-line2)',
               borderRadius: 'var(--radius-lg)',
               boxShadow: 'var(--shadow-menu)',
               overflow: 'hidden',
@@ -1960,7 +1959,7 @@ function InlineCellSelect({
                   placeholder="Filter..."
                   style={{
                     width: '100%', fontSize: 'var(--text-small)', color: 'var(--ink)',
-                    background: 'var(--field-bg)', border: '1px solid var(--border-subtle)',
+                    background: 'var(--field-bg)', border: '1px solid var(--field-edge)',
                     borderRadius: 'var(--radius-sm)', padding: 'var(--sp-xs) var(--sp-sm)', outline: 'none',
                   }}
                 />
@@ -2029,7 +2028,7 @@ function CalculationsRow({ tasks }: { tasks: TaskRow[] }) {
         gap: 'var(--sp-xl)',
         padding: 'var(--sp-sm) var(--sp-lg)',
         borderTop: '1px solid var(--border-subtle)',
-        background: 'var(--surface-1)',
+        background: 'var(--sk-panel)',
       }}
     >
       {stats.map(s => (

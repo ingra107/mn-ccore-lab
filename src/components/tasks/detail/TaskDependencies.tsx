@@ -207,7 +207,7 @@ function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onSelect, 
 
   return (
     <div ref={ref} className="relative">
-      <div className="flex items-center gap-2 rounded-md border px-2.5 py-1.5" style={{ borderColor: 'var(--job-accent)', background: 'color-mix(in srgb, var(--job-accent) 6%, transparent)' }}>
+      <div className="flex items-center gap-2 rounded-md px-2.5 py-1.5" style={{ border: '1px solid var(--job-accent)', background: 'color-mix(in srgb, var(--job-accent) 6%, transparent)' }}>
         <Search {...ICON_PROPS} size={13} style={{ color: 'var(--job-accent)', opacity: 'var(--ink-label)', flexShrink: 0 }} />
         <input
           ref={inputRef}
@@ -231,8 +231,8 @@ function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onSelect, 
 
       {candidates.length > 0 && (
         <div
-          className="absolute left-0 right-0 mt-1 z-50 rounded-lg shadow-lg border py-1 max-h-[200px] overflow-y-auto"
-          style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}
+          className="absolute left-0 right-0 mt-1 z-50 rounded-lg shadow-lg py-1 max-h-[200px] overflow-y-auto"
+          style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--sk-line2)' }}
         >
           {candidates.map(t => (
             <button

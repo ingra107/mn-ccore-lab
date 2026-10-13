@@ -75,7 +75,8 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
         <span style={{ color: INK_DIM }}>·</span>
         <button
           onClick={onPlanToday}
-          style={{ padding: '3px 9px', fontSize: 11, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+          className="tk-btn"
+          style={{ padding: '3px 9px', fontSize: 11, color: INK, gap: 4 }}
         ><Pin {...ICON_PROPS} size={11} /> Plan today</button>
         {btn('Snooze +1d', onSnoozeDay)}
         {btn('Status →', () => setPicker(picker === 'status' ? null : 'status'), undefined, picker === 'status')}
@@ -111,7 +112,8 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
             <button
               key={a.slug}
               onClick={() => { onReassign(a.slug); setPicker(null) }}
-              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-strong)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}
+              className="tk-btn"
+              style={{ padding: '4px 10px', fontSize: 11, color: INK }}
             >{a.name}</button>
           ))}
           <span style={{ flex: 1 }} />

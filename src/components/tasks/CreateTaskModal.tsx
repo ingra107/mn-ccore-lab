@@ -72,7 +72,7 @@ const selectStyle: React.CSSProperties = {
   fontSize: 'var(--value-size)',
   color: 'var(--ink)',
   backgroundColor: 'var(--cream)',
-  borderColor: 'var(--border-subtle)',
+  border: '1px solid var(--field-edge)',
 }
 
 export default function CreateTaskModal({ open, onClose, onCreate, defaultProject, defaultProductId }: CreateTaskModalProps) {
@@ -259,11 +259,11 @@ export default function CreateTaskModal({ open, onClose, onCreate, defaultProjec
               Create Task
             </Button>
             <kbd
-              className="text-[10px] px-1.5 py-0.5 rounded border select-none"
+              className="text-[10px] px-1.5 py-0.5 rounded select-none"
               style={{
                 fontFamily: 'var(--font-mono)',
                 color: 'var(--slate)',
-                borderColor: 'var(--border-subtle)',
+                border: '1px solid var(--sk-line2)',
                 backgroundColor: 'var(--cream)',
                 opacity: 0.75,
                 whiteSpace: 'nowrap',
@@ -301,7 +301,7 @@ export default function CreateTaskModal({ open, onClose, onCreate, defaultProjec
               className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium flex-shrink-0 transition-colors"
               style={{
                 background: 'none',
-                border: '1px solid var(--border-subtle)',
+                border: '1px solid var(--sk-line2)',
                 cursor: 'pointer',
                 color: 'var(--slate)',
                 opacity: 0.85,
@@ -439,7 +439,7 @@ export default function CreateTaskModal({ open, onClose, onCreate, defaultProjec
               type="date"
               value={dueDate}
               onChange={(e) => { setDueDate(e.target.value); setDueTouched(true) }}
-              className="w-full rounded-md border px-2.5 py-2 text-sm"
+              className="w-full rounded-md px-2.5 py-2 text-sm"
               style={selectStyle}
             />
           </Field>

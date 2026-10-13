@@ -192,6 +192,11 @@ export const ALLOW = {
   'src/styles/public.css': { families: PUB, why: PUBLIC_BRAND },
   // The .portal-shell rule that turns --job-brand gray, and the public-site rules that read it.
   'src/index.css': { families: ['brand'], why: 'defines .portal-shell --job-brand and the public classes that read it' },
+  // Link-type icons keep their own brand colors (Nick 2026-10-11: "use the colors we are
+  // already using for those... i like the red green blue etc"). The file is GENERATED from
+  // PB's link-type table by gen_links.py; linkIcon.ts dims every glyph (dimLinkColor), so
+  // these hexes are data, not paint. No teal: the accent is never a link-type tint.
+  'src/lib/pbLinkIcons.generated.ts': { families: ['gold', 'red', 'green', 'orange', 'blue', 'purple'], why: 'link-type brand tints (generated; dimmed at the call site)' },
   // Color-back pick (Nick 2026-10-11): the heartbeat line under page titles.
   'src/components/HeartbeatLine.tsx': { families: ['gold'], why: 'color-back pick: the heartbeat line' },
 }

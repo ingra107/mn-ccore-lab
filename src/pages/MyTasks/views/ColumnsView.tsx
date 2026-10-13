@@ -83,7 +83,7 @@ export function ColumnsView({ filtered, isEmpty, byGroup, onOpenEditor, projects
             aria-label={`Scroll columns ${name}`}
             aria-disabled={!enabled}
             onClick={() => { if (enabled) page(dir) }}
-            style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--border-strong)', background: PAGE_BG, color: INK_MUTED, cursor: enabled ? 'pointer' : 'default', opacity: enabled ? 1 : 0.4, fontSize: 15, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 26, height: 26, borderRadius: '50%', border: 'none', boxShadow: 'inset 0 0 0 1px var(--sk-line2)', background: PAGE_BG, color: INK_MUTED, cursor: enabled ? 'pointer' : 'default', opacity: enabled ? 1 : 0.4, fontSize: 15, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             {glyph}
           </button>

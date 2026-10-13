@@ -61,7 +61,7 @@ export function ImageChip({ src, alt }: { src: string; alt: string }) {
           maxWidth: '100%',
           maxHeight: 240,
           borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-subtle)',
+          border: '1px solid var(--sk-line2)',
         }}
       />
     </a>

@@ -249,7 +249,7 @@ export default function GhostSelect({
             maxHeight: pos.maxHeight,
             overflowY: 'auto',
             backgroundColor: 'var(--cream)',
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid var(--sk-line2)',
             borderRadius: 'var(--radius-lg)',
             boxShadow: 'var(--shadow-menu)',
             zIndex: 9999,
@@ -271,7 +271,7 @@ export default function GhostSelect({
                 aria-label={`Search ${ariaLabel} options`}
                 style={{
                   width: '100%',
-                  border: '1px solid var(--border-subtle)',
+                  border: '1px solid var(--field-edge)',
                   borderRadius: 'var(--radius-md)',
                   padding: '4px 8px',
                   fontSize: 'var(--label-size)',

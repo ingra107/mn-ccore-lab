@@ -29,15 +29,15 @@ const STATUS_COLOR: Record<string, string> = {
 
   // Submission / revision statuses
   pending: 'var(--slate)',
-  submitted: 'var(--teal)',
-  resubmitted: 'var(--teal)',
+  submitted: 'var(--job-accent)',
+  resubmitted: 'var(--job-accent)',
   accepted: 'var(--st-done)',
   rejected: 'var(--slate)',
   wont_fix: 'var(--slate)',
   draft: 'var(--slate)',
-  review: 'var(--gold)',
-  review_received: 'var(--gold)',
-  revision_due: 'var(--gold)',
+  review: 'var(--job-wants)',
+  review_received: 'var(--job-wants)',
+  revision_due: 'var(--job-wants)',
   withdrawn: 'var(--slate)',
   completed: 'var(--st-done)',
 
@@ -47,8 +47,8 @@ const STATUS_COLOR: Record<string, string> = {
   presented: 'var(--st-done)',
 
   // Cascade-specific
-  'on-track': 'var(--teal)',
-  'at-risk': 'var(--orange)',
+  'on-track': 'var(--job-accent)',
+  'at-risk': 'var(--job-stale)',
 
   // Materials
   not_started: 'var(--slate)',
@@ -61,7 +61,7 @@ const STATUS_COLOR: Record<string, string> = {
 export const STATUS_BG_EXTENDED: Record<string, string> = {
   // Core task statuses
   todo: 'rgba(148, 163, 184, 0.15)',
-  in_progress: 'rgba(60, 130, 130, 0.12)',
+  in_progress: 'color-mix(in srgb, var(--job-accent) 12%, transparent)',
   done: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
   blocked: 'color-mix(in srgb, var(--st-blocked) 14%, transparent)',
   waiting_external: 'color-mix(in srgb, var(--st-waiting) 14%, transparent)',
@@ -69,15 +69,15 @@ export const STATUS_BG_EXTENDED: Record<string, string> = {
 
   // Submission / revision statuses
   pending: 'rgba(148, 163, 184, 0.15)',
-  submitted: 'rgba(60, 130, 130, 0.12)',
-  resubmitted: 'rgba(60, 130, 130, 0.12)',
+  submitted: 'color-mix(in srgb, var(--job-accent) 12%, transparent)',
+  resubmitted: 'color-mix(in srgb, var(--job-accent) 12%, transparent)',
   accepted: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
   rejected: 'rgba(100, 116, 139, 0.15)',
   wont_fix: 'rgba(100, 116, 139, 0.15)',
   draft: 'rgba(148, 163, 184, 0.15)',
-  review: withAlpha(ACCENT_GOLD, 15),
-  review_received: withAlpha(ACCENT_GOLD, 15),
-  revision_due: withAlpha(ACCENT_GOLD, 15),
+  review: 'color-mix(in srgb, var(--job-wants) 15%, transparent)',
+  review_received: 'color-mix(in srgb, var(--job-wants) 15%, transparent)',
+  revision_due: 'color-mix(in srgb, var(--job-wants) 15%, transparent)',
   withdrawn: 'rgba(100, 116, 139, 0.15)',
   completed: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
 
@@ -87,8 +87,8 @@ export const STATUS_BG_EXTENDED: Record<string, string> = {
   presented: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
 
   // Cascade-specific
-  'on-track': 'rgba(60, 130, 130, 0.12)',
-  'at-risk': 'color-mix(in srgb, var(--orange) 14%, transparent)',
+  'on-track': 'color-mix(in srgb, var(--job-accent) 12%, transparent)',
+  'at-risk': 'color-mix(in srgb, var(--job-stale) 14%, transparent)',
 
   // Materials
   not_started: 'rgba(148, 163, 184, 0.15)',

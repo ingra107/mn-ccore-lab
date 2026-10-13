@@ -56,7 +56,7 @@ const menuStyles = {
   zIndex: 'var(--z-toast)',
   minWidth: '200px',
   background: 'var(--ice)',
-  border: '1px solid var(--border-subtle)',
+  border: '1px solid var(--sk-line2)',
   borderRadius: 'var(--radius-lg)',
   boxShadow: 'var(--shadow-menu)',
   padding: 'var(--sp-xs) 0',

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { AlignJustify, List, StretchHorizontal } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
+import SegmentedToggle from './ui/SegmentedToggle'
 
 type Density = 'compact' | 'default' | 'relaxed'
 
@@ -78,35 +79,15 @@ export default function DensityToggle({
   onChange: (d: Density) => void
 }) {
   return (
-    <div
-      className="inline-flex items-center rounded-md overflow-hidden"
-      style={{
-        border: '1px solid var(--border-subtle)',
-        background: 'var(--field-bg)',
-      }}
-    >
-      {modes.map(({ key, icon: Icon, title }) => (
-        <button
-          key={key}
-          onClick={() => onChange(key)}
-          title={title}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '28px',
-            height: '24px',
-            border: 'none',
-            cursor: 'pointer',
-            background: value === key ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'none',
-            color: value === key ? 'var(--job-accent)' : 'var(--slate)',
-            opacity: value === key ? 1 : 0.85,
-            transition: `background var(--duration-fast), opacity var(--duration-fast)`,
-          }}
-        >
-          <Icon {...ICON_PROPS} size={12} />
-        </button>
-      ))}
-    </div>
+    <SegmentedToggle
+      ariaLabel="Row density"
+      value={value}
+      onChange={onChange}
+      options={modes.map(({ key, icon: Icon, title }) => ({
+        value: key,
+        label: title,
+        icon: <Icon {...ICON_PROPS} size={12} />,
+      }))}
+    />
   )
 }

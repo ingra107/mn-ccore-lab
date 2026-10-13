@@ -84,7 +84,7 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
         <div
           ref={menuRef}
           role="listbox"
-          style={{ position: 'fixed', top: pos.top, left: pos.left, minWidth: Math.max(pos.minWidth, 200), maxHeight: pos.maxHeight, overflowY: 'auto', background: PANEL_BG, border: '1px solid var(--border-strong)', borderRadius: 6, zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}
+          style={{ position: 'fixed', top: pos.top, left: pos.left, minWidth: Math.max(pos.minWidth, 200), maxHeight: pos.maxHeight, overflowY: 'auto', background: PANEL_BG, border: '1px solid var(--sk-line2)', borderRadius: 6, zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}
         >
           {showTypeahead && (
             <div style={{ position: 'sticky', top: 0, background: PANEL_BG, padding: '6px 8px 4px', borderBottom: '1px solid var(--border-subtle)' }}>
@@ -95,7 +95,7 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
                 onKeyDown={onKey}
                 placeholder={`Filter ${label.toLowerCase()}…`}
                 aria-label={`Filter ${label} options`}
-                style={{ width: '100%', padding: '4px 8px', fontSize: 11, background: 'var(--border-subtle)', border: '1px solid var(--border-strong)', borderRadius: 4, color: INK, outline: 'none', fontFamily: 'inherit' }}
+                style={{ width: '100%', padding: '4px 8px', fontSize: 11, background: 'var(--border-subtle)', border: '1px solid var(--field-edge)', borderRadius: 4, color: INK, outline: 'none', fontFamily: 'inherit' }}
               />
             </div>
           )}

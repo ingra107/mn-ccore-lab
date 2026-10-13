@@ -207,12 +207,10 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                     fontSize: '10px',
                     color: 'var(--slate)',
                     opacity: 'var(--ink-label)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.07em',
                     fontWeight: 600,
                   }}
                 >
-                  Quick Add Task
+                  Quick add task
                 </span>
                 <div style={{ flex: 1 }} />
                 <kbd

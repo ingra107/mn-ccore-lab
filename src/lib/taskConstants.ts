@@ -74,7 +74,7 @@ export const PRIORITY_COLORS: Record<string, string> = {
 // orthogonal axis answers "is the project moving?".
 
 export const PROJECT_STATUS_OPTIONS = [
-  { value: 'active', label: 'Active', color: 'var(--task-accent-teal)' },
+  { value: 'active', label: 'Active', color: 'var(--job-accent)' },
   { value: 'waiting_external', label: 'Waiting (External)', color: 'var(--st-waiting)' },
   { value: 'blocked', label: 'Blocked', color: 'var(--st-blocked)' },
   { value: 'done', label: 'Done', color: 'var(--st-done)' },

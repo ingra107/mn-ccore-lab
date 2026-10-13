@@ -33,8 +33,8 @@ function HandoffRecipientSelect({ value, onChange, members }: { value: string; o
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-full border px-2 py-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
-        style={{ borderColor: 'var(--border-subtle)', cursor: 'pointer', background: 'none' }}
+        className="flex items-center gap-2 rounded-full px-2 py-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
+        style={{ border: '1px solid var(--sk-line2)', cursor: 'pointer', background: 'none' }}
       >
         {person ? (
           <>
@@ -49,7 +49,7 @@ function HandoffRecipientSelect({ value, onChange, members }: { value: string; o
         <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--sk-t3)', opacity: 0.85 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[200px] max-h-[200px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}>
+        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg py-1 min-w-[200px] max-h-[200px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--sk-line2)' }}>
           {members.map((m) => {
             const slug = m.slug!
             const mp = getPersonInfo(slug)
@@ -124,7 +124,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
 
   const inputStyle = {
     color: 'var(--ink)',
-    borderColor: 'var(--field-edge)',
+    border: '1px solid var(--field-edge)',
     backgroundColor: 'var(--cream)',
     fontSize: 'var(--value-size)',
   }
@@ -159,7 +159,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                 placeholder="What is the current state of this task?"
                 required
                 rows={2}
-                className="w-full rounded-md border px-3 py-2 resize-none outline-none"
+                className="w-full rounded-md px-3 py-2 resize-none outline-none"
                 style={inputStyle}
               />
             </div>
@@ -172,7 +172,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                 onChange={(e) => setBackground(e.target.value)}
                 placeholder="What context does the next person need?"
                 rows={2}
-                className="w-full rounded-md border px-3 py-2 resize-none outline-none"
+                className="w-full rounded-md px-3 py-2 resize-none outline-none"
                 style={inputStyle}
               />
             </div>
@@ -185,7 +185,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                 onChange={(e) => setAssessment(e.target.value)}
                 placeholder="What's your assessment of where things stand?"
                 rows={2}
-                className="w-full rounded-md border px-3 py-2 resize-none outline-none"
+                className="w-full rounded-md px-3 py-2 resize-none outline-none"
                 style={inputStyle}
               />
             </div>
@@ -198,7 +198,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                 onChange={(e) => setRecommendation(e.target.value)}
                 placeholder="What do you recommend as next steps?"
                 rows={2}
-                className="w-full rounded-md border px-3 py-2 resize-none outline-none"
+                className="w-full rounded-md px-3 py-2 resize-none outline-none"
                 style={inputStyle}
               />
             </div>
@@ -223,7 +223,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                 type="button"
                 onClick={() => setShowForm(false)}
                 className="px-3 py-1.5 rounded-md text-xs"
-                style={{ background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', color: 'var(--slate)' }}
+                style={{ background: 'none', border: '1px solid var(--sk-line2)', cursor: 'pointer', color: 'var(--slate)' }}
               >
                 Cancel
               </button>

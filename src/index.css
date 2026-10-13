@@ -2613,7 +2613,7 @@ button[aria-label="Deselect task"]::before {
 .tk .tk-err{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--sk-t3);margin:0 0 10px}
 .tk .tk-err button{color:var(--job-accent);text-decoration:underline;text-underline-offset:2px}
 .tk-seg{display:inline-flex;background:var(--sk-panel);box-shadow:inset 0 0 0 1px var(--sk-line2);border-radius:var(--r-ctl);padding:2px}
-.tk-seg button{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:2px 9px;font-size:11.5px;color:var(--sk-t3);border-radius:6px}
+.tk-seg button{cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:2px 9px;font-size:11.5px;color:var(--sk-t3);border-radius:6px}
 .tk-seg.tk-seg-scroll{max-width:100%;min-width:0;overflow-x:auto;scrollbar-width:none}
 .tk-seg.tk-seg-scroll button{flex-shrink:0}
 .tk-seg button.tk-on{background:var(--sk-card);color:var(--sk-t1);font-weight:500;box-shadow:inset 0 0 0 1px var(--sk-line2)}

@@ -23,7 +23,7 @@ export default function QuickCaptureBar({ noMargin }: { noMargin?: boolean }) {
           height: 40,
           padding: '0 var(--sp-md)',
           borderRadius: 'var(--radius-xl)',
-          border: '1px solid var(--border-default)',
+          border: '1px solid var(--field-edge)',
           background: 'var(--cream)',
           boxShadow: '0 0 0 1px var(--border-subtle)',
           cursor: 'pointer',

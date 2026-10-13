@@ -106,7 +106,7 @@ function StageBadge({ stage, colorKey }: { stage: string; colorKey?: string }) {
   const color = (colorKey && STAGE_COLORS[colorKey]) || 'var(--slate)'
   return (
     <span
-      className="inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase tracking-wider"
+      className="inline-flex items-center px-2 py-0.5 rounded text-[10px]"
       style={{
         color,
         background: `color-mix(in srgb, ${color} 12%, transparent)`,
@@ -270,7 +270,7 @@ function MemberContent({ data }: { data: MemberCardData }) {
                 style={{
                   color: 'var(--sk-t2)',
                   background: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)',
-                  border: '1px solid var(--border-subtle)',
+                  border: '1px solid var(--sk-line2)',
                   fontWeight: 400,
                 }}
               >
@@ -355,7 +355,7 @@ export default function HoverCard({ data, isVisible, position, cardRef, cardHand
             minWidth: 240,
             padding: 'var(--sp-md) var(--sp-lg)',
             backgroundColor: 'color-mix(in oklch, var(--cream), white 3%)',
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid var(--sk-line2)',
             borderRadius: 'var(--radius-lg)',
             boxShadow: 'var(--shadow-elevated), 0 8px 32px rgba(0, 0, 0, 0.3)',
             pointerEvents: 'auto',

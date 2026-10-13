@@ -26,12 +26,12 @@ describe('status colors keep each color in its one job', () => {
   })
 
   it('at-risk is going stale: orange', () => {
-    expect(getStatusColor('at-risk')).toBe('var(--orange)')
-    expect(getStatusBg('at-risk')).toContain('var(--orange)')
+    expect(getStatusColor('at-risk')).toBe('var(--job-stale)')
+    expect(getStatusBg('at-risk')).toContain('var(--job-stale)')
   })
 
   it('a revision due date wants you: gold (its overdue case is red in SubmissionTimeline)', () => {
-    expect(getStatusColor('revision_due')).toBe('var(--gold)')
+    expect(getStatusColor('revision_due')).toBe('var(--job-wants)')
     expect(getStatusBg('revision_due')).toBe(getStatusBg('review'))
   })
 })

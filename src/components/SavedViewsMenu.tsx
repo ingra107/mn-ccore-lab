@@ -66,7 +66,7 @@ export default function SavedViewsMenu({ page, currentQuery, onApply }: Props) {
             position: 'absolute', top: 'calc(100% + 6px)', right: 0,
             minWidth: 220, maxWidth: 320,
             background: 'var(--cream)',
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid var(--sk-line2)',
             borderRadius: 'var(--radius-lg)',
             boxShadow: 'var(--shadow-menu)',
             zIndex: 'var(--z-dropdown)' as unknown as number,
@@ -117,8 +117,8 @@ export default function SavedViewsMenu({ page, currentQuery, onApply }: Props) {
                 aria-label="View name"
                 style={{
                   flex: 1, fontSize: '12px', padding: '4px 8px',
-                  border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)',
-                  background: 'var(--surface-2)', color: 'var(--ink)', outline: 'none',
+                  border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-md)',
+                  background: 'var(--field-bg)', color: 'var(--ink)', outline: 'none',
                 }}
               />
               <button

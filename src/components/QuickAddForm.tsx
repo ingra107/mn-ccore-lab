@@ -37,15 +37,8 @@ export function QuickAddTrigger({
       type="button"
       onClick={onClick}
       aria-expanded={ariaExpanded}
-      className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium quick-add-trigger hov-border hov-color"
-      style={{
-        background: 'var(--ice)',
-        color: active ? 'var(--job-accent)' : 'var(--slate)',
-        border: `1px dashed ${withAlpha('var(--sk-t1)', 15)}`,
-        transition: 'all 0.2s ease',
-        '--hov-border': 'var(--job-accent)',
-        '--hov-color': 'var(--ink)',
-      } as React.CSSProperties}
+      className="cursor-pointer tk-btn quick-add-trigger"
+      style={{ color: active ? 'var(--job-accent)' : 'var(--sk-t2)' }}
     >
       {icon ?? <Plus {...ICON_PROPS} size={14} />}
       {label}
@@ -94,8 +87,8 @@ export default function QuickAddForm({
             <div
               className="quick-add-form-container p-4 rounded-xl mt-2"
               style={{
-                // Recipe A: lift above the dark page bg (gold border + shadow = edge).
-                background: 'var(--surface-2)',
+                // Lift above the page: one card step, hairline edge, soft shadow.
+                background: 'var(--sk-card)',
                 border: `1px solid ${withAlpha('var(--sk-t1)', 10)}`,
                 boxShadow: 'var(--shadow-card)',
               }}

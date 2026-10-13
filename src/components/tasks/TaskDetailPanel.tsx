@@ -591,10 +591,10 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               onClick={handleDeleteTask}
               title="Delete this task"
               aria-label="Delete task"
-              className="flex items-center gap-1 flex-shrink-0 rounded-lg transition-colors ml-auto hov-opacity hov-border hov-bg"
+              className="flex items-center gap-1 flex-shrink-0 rounded-lg transition-colors ml-auto hov-opacity hov-bg"
               style={{
                 background: 'none',
-                border: '1px solid transparent',
+                border: 'none',
                 color: 'var(--job-danger)',
                 opacity: 0.85,
                 cursor: 'pointer',
@@ -603,7 +603,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 padding: '4px 8px',
                 whiteSpace: 'nowrap',
                 '--hov-opacity': '1',
-                '--hov-border': 'var(--job-danger)',
                 '--hov-bg': 'color-mix(in srgb, var(--job-danger) 7%, transparent)',
               } as React.CSSProperties}
             >
@@ -1052,13 +1051,13 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
 
       {open && available.length > 0 && (
         <div
-          className="absolute z-20 rounded-lg shadow-lg border"
+          className="absolute z-20 rounded-lg shadow-lg"
           style={{
             top: '100%',
             left: 0,
             marginTop: '4px',
             backgroundColor: 'var(--cream)',
-            borderColor: 'var(--border-subtle)',
+            border: '1px solid var(--sk-line2)',
             maxHeight: '200px',
             overflowY: 'auto',
             minWidth: '180px',
@@ -1739,7 +1738,7 @@ export function OverviewQuickAdd({
               <div
                 key={p.id}
                 className="relative flex-shrink-0"
-                style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}
+                style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--sk-line2)' }}
               >
                 <img src={p.dataUrl} alt={p.filename} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 <div
@@ -1937,13 +1936,13 @@ function CompactAssigneeRow({ value, onChange }: { value?: string | null; onChan
         <div
           role="listbox"
           aria-label="Select assignee"
-          className="absolute z-20 rounded-lg shadow-lg border"
+          className="absolute z-20 rounded-lg shadow-lg"
           style={{
             top: '100%',
             left: 0,
             marginTop: 4,
             backgroundColor: 'var(--cream)',
-            borderColor: 'var(--border-subtle)',
+            border: '1px solid var(--sk-line2)',
             maxHeight: 220,
             overflowY: 'auto',
             minWidth: 180,

@@ -168,7 +168,7 @@ export default function InlineAssigneePicker({ value, onChange, compact, display
               left: 0,
               minWidth: '220px',
               background: 'var(--cream)',
-              border: '1px solid var(--border-subtle)',
+              border: '1px solid var(--sk-line2)',
               boxShadow: 'var(--shadow-card-hover)',
               overflow: 'hidden',
             }}

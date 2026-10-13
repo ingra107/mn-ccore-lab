@@ -463,7 +463,7 @@ export default function SmartCompose(props: SmartComposeProps) {
           {pendingUploads.map((p) => (
             <div
               key={p.id}
-              style={{ position: 'relative', flexShrink: 0, width: 40, height: 40, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}
+              style={{ position: 'relative', flexShrink: 0, width: 40, height: 40, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--sk-line2)' }}
             >
               <img src={p.dataUrl} alt={p.filename} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               <div
@@ -548,7 +548,7 @@ export default function SmartCompose(props: SmartComposeProps) {
               marginBottom: 6,
               padding: 6,
               background: 'var(--cream)',
-              border: '1px solid var(--border-subtle)',
+              border: '1px solid var(--sk-line2)',
               borderRadius: 'var(--radius-md)',
               display: 'flex',
               gap: 2,
@@ -579,7 +579,7 @@ export default function SmartCompose(props: SmartComposeProps) {
               fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
               fontSize: 9,
               padding: '1px 4px',
-              border: '1px solid var(--border-subtle)',
+              border: '1px solid var(--sk-line2)',
               borderRadius: 2,
               color: 'var(--muted)',
             }}>⌘⏎</kbd>
