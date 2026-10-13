@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
+import PageWithRail from '../components/PageWithRail'
 import RoundPrompt from '../components/RoundPrompt'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -288,182 +289,325 @@ export default function MeetingDetail() {
         {/* Back link */}
         <Breadcrumb backTo="/meetings" backLabel="Meetings" current={meeting?.title} />
 
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs"
-              style={{ fontSize: 'var(--label-size)', background: STATUS_CHIP.bg, color: STATUS_CHIP.text }}>
-              <Calendar {...ICON_PROPS} size={12} /> {status}
-            </span>
-            <select
-              aria-label="Meeting type"
-              value={meeting.type}
-              onChange={(e) => updateMeta.mutate({ type: e.target.value })}
-              style={{
-                fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)',
-                background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0,
-              }}
-            >
-              {MEETING_TYPE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-            <LabToggle meeting={meeting} updateMeta={updateMeta} />
-            <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
-            {viewerSlugs.length > 0 && <PresenceAvatars slugs={viewerSlugs} peerIntents={meetingPeerIntents} />}
-            <Link
-              to={PATHS.meetingPrep(meeting.id)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs transition-colors"
-              style={{
-                fontSize: 'var(--label-size)',
-                color: 'var(--slate)', textDecoration: 'none',
-                border: '1px solid var(--sk-line2)',
-                opacity: 0.85,
-              }}
-            >
-              <ListChecks {...ICON_PROPS} size={11} /> Prep view
-            </Link>
-            <button
-              onClick={() => {
-                if (!meeting) return
-                const lines = [
-                  `# ${meeting.title}`,
-                  `Date: ${meeting.date}`,
-                  '',
-                ]
-                const decisions = parseJsonArray(meeting.decisions)
-                if (decisions.length > 0) {
-                  lines.push('## Decisions')
-                  decisions.forEach(d => lines.push(`- ${d}`))
-                  lines.push('')
-                }
-                const actions = (meeting.action_items || []).filter((a) => !a.completed)
-                if (actions.length > 0) {
-                  lines.push('## Open Action Items')
-                  actions.forEach((a) => lines.push(`- [ ] ${a.title || a.description} (@${a.assignee})`))
-                  lines.push('')
-                }
-                if (meeting.notes) {
-                  lines.push('## Notes')
-                  lines.push(meeting.notes)
-                }
-                navigator.clipboard.writeText(lines.join('\n')).then(() => {
-                  setCopiedSummary(true)
-                  setTimeout(() => setCopiedSummary(false), 2000)
-                })
-              }}
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors"
-              style={{
-                fontSize: 'var(--label-size)',
-                color: 'var(--slate)',
-                border: '1px solid var(--sk-line2)',
-                background: 'none',
-                cursor: 'pointer',
-                opacity: copiedSummary ? 1 : 0.85,
-              }}
-            >
-              {copiedSummary ? <Check {...ICON_PROPS} size={11} /> : <Copy {...ICON_PROPS} size={11} />}
-              {copiedSummary ? 'Copied!' : 'Copy summary'}
-            </button>
-            <button
-              onClick={handleGenerateAgenda}
-              disabled={generatingAgenda}
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors"
-              style={{
-                fontSize: 'var(--label-size)',
-                // The page's one primary action: the teal accent (color jobs, 2026-10-11).
-                color: 'var(--sk-card)',
-                border: '1px solid transparent',
-                background: 'var(--job-accent)',
-                fontWeight: 600,
-                cursor: generatingAgenda ? 'wait' : 'pointer',
-                opacity: generatingAgenda ? 0.85 : 1,
-              }}
-            >
-              {agendaCopied ? <Check {...ICON_PROPS} size={11} /> : <Sparkles {...ICON_PROPS} size={11} />}
-              {agendaCopied ? 'Copied!' : generatingAgenda ? 'Generating…' : 'Generate agenda'}
-            </button>
-          </div>
-
-          {editingTitle ? (
-            <input
-              value={titleDraft}
-              onChange={(e) => setTitleDraft(e.target.value)}
-              onBlur={handleTitleSave}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') { e.preventDefault(); handleTitleSave() }
-                if (e.key === 'Escape') { setTitleDraft(meeting.title); setEditingTitle(false) }
-              }}
-              ref={titleInputRef}
-              aria-label="Edit meeting title"
-              style={{
-                fontWeight: 600, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)',
-                background: 'none', border: 'none', borderBottom: '2px solid var(--job-accent)', outline: 'none',
-                padding: '2px 0', width: '100%', fontFamily: 'inherit', lineHeight: 1.15,
-              }}
-            />
-          ) : (
-            <h1
-              className="group/title"
-              onClick={() => { setTitleDraft(meeting.title); setEditingTitle(true) }}
-              title="Click to edit title"
-              style={{ fontWeight: 600, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}
-            >
-              {emDashifyTitle(meeting.title)}
-              <Pencil {...ICON_PROPS} size={14} className="opacity-0 group-hover/title:opacity-60 transition-opacity" style={{ color: 'var(--slate)', flexShrink: 0 }} />
-            </h1>
-          )}
-          <p style={{ fontSize: '15px', color: 'var(--slate)', marginTop: '6px' }}>
-            {formatLongDate(meeting.date)}
-          </p>
-          {/* The heartbeat line under the title (color-back pick 10). */}
-          <PageHeartbeat />
-
-          {/* Facilitator badge — the RECORDED facilitator only. Blank when the
-              meeting doesn't carry one (#102). */}
-          {(() => {
-            const facilitatorInfo = meeting.facilitator ? getPersonInfo(meeting.facilitator) : null
-            return facilitatorInfo ? (
-              <div className="flex items-center gap-2 mt-2">
-                <UserCheck {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-                <span style={{ fontSize: 'var(--label-size)', color: 'var(--sk-t3)' }}>
-                  Facilitator:
+        <PageWithRail
+          testId="meeting-grid"
+          railLabel="Meeting details"
+          railTestId="meeting-rail"
+          head={
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+            {editingTitle ? (
+              <input
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={handleTitleSave}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); handleTitleSave() }
+                  if (e.key === 'Escape') { setTitleDraft(meeting.title); setEditingTitle(false) }
+                }}
+                ref={titleInputRef}
+                aria-label="Edit meeting title"
+                style={{
+                  fontWeight: 600, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)',
+                  background: 'none', border: 'none', borderBottom: '2px solid var(--job-accent)', outline: 'none',
+                  padding: '2px 0', width: '100%', fontFamily: 'inherit', lineHeight: 1.15,
+                }}
+              />
+            ) : (
+              <h1
+                className="group/title"
+                onClick={() => { setTitleDraft(meeting.title); setEditingTitle(true) }}
+                title="Click to edit title"
+                style={{ fontWeight: 600, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+              >
+                {emDashifyTitle(meeting.title)}
+                <Pencil {...ICON_PROPS} size={14} className="opacity-0 group-hover/title:opacity-60 transition-opacity" style={{ color: 'var(--slate)', flexShrink: 0 }} />
+              </h1>
+            )}
+            {/* The heartbeat line under the title (color-back pick 10). */}
+            <PageHeartbeat />
+            </motion.div>
+          }
+          /* Status, type, share, watch and the three buttons: top of the rail, level with the title. */
+          railTop={
+            <div data-testid="meeting-controls">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs"
+                  style={{ fontSize: 'var(--label-size)', background: STATUS_CHIP.bg, color: STATUS_CHIP.text }}>
+                  <Calendar {...ICON_PROPS} size={12} /> {status}
                 </span>
-                <div className="flex items-center gap-1.5">
-                  <div style={{ width: 20, height: 20 }}>
-                    <FaceDisc label={facilitatorInfo.name} initials={facilitatorInfo.initials} photo={facilitatorInfo.photoUrl} px={20} />
-                  </div>
-                  <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)' }}>
-                    {facilitatorInfo.name}
+                <select
+                  aria-label="Meeting type"
+                  value={meeting.type}
+                  onChange={(e) => updateMeta.mutate({ type: e.target.value })}
+                  style={{
+                    fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)',
+                    background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0,
+                  }}
+                >
+                  {MEETING_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <LabToggle meeting={meeting} updateMeta={updateMeta} />
+                <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
+                {viewerSlugs.length > 0 && <PresenceAvatars slugs={viewerSlugs} peerIntents={meetingPeerIntents} />}
+                <Link
+                  to={PATHS.meetingPrep(meeting.id)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs transition-colors"
+                  style={{
+                    fontSize: 'var(--label-size)',
+                    color: 'var(--slate)', textDecoration: 'none',
+                    border: '1px solid var(--sk-line2)',
+                    opacity: 0.85,
+                  }}
+                >
+                  <ListChecks {...ICON_PROPS} size={11} /> Prep view
+                </Link>
+                <button
+                  onClick={() => {
+                    if (!meeting) return
+                    const lines = [
+                      `# ${meeting.title}`,
+                      `Date: ${meeting.date}`,
+                      '',
+                    ]
+                    const decisions = parseJsonArray(meeting.decisions)
+                    if (decisions.length > 0) {
+                      lines.push('## Decisions')
+                      decisions.forEach(d => lines.push(`- ${d}`))
+                      lines.push('')
+                    }
+                    const actions = (meeting.action_items || []).filter((a) => !a.completed)
+                    if (actions.length > 0) {
+                      lines.push('## Open Action Items')
+                      actions.forEach((a) => lines.push(`- [ ] ${a.title || a.description} (@${a.assignee})`))
+                      lines.push('')
+                    }
+                    if (meeting.notes) {
+                      lines.push('## Notes')
+                      lines.push(meeting.notes)
+                    }
+                    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+                      setCopiedSummary(true)
+                      setTimeout(() => setCopiedSummary(false), 2000)
+                    })
+                  }}
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors"
+                  style={{
+                    fontSize: 'var(--label-size)',
+                    color: 'var(--slate)',
+                    border: '1px solid var(--sk-line2)',
+                    background: 'none',
+                    cursor: 'pointer',
+                    opacity: copiedSummary ? 1 : 0.85,
+                  }}
+                >
+                  {copiedSummary ? <Check {...ICON_PROPS} size={11} /> : <Copy {...ICON_PROPS} size={11} />}
+                  {copiedSummary ? 'Copied!' : 'Copy summary'}
+                </button>
+                <button
+                  onClick={handleGenerateAgenda}
+                  disabled={generatingAgenda}
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors"
+                  style={{
+                    fontSize: 'var(--label-size)',
+                    // The page's one primary action: the teal accent (color jobs, 2026-10-11).
+                    color: 'var(--sk-card)',
+                    border: '1px solid transparent',
+                    background: 'var(--job-accent)',
+                    fontWeight: 600,
+                    cursor: generatingAgenda ? 'wait' : 'pointer',
+                    opacity: generatingAgenda ? 0.85 : 1,
+                  }}
+                >
+                  {agendaCopied ? <Check {...ICON_PROPS} size={11} /> : <Sparkles {...ICON_PROPS} size={11} />}
+                  {agendaCopied ? 'Copied!' : generatingAgenda ? 'Generating…' : 'Generate agenda'}
+                </button>
+              </div>
+            </div>
+          }
+          rail={
+            <div className="md-rail">
+            <div data-testid="meeting-when">
+              <span style={{ fontSize: '12px', color: 'var(--sk-t3)', fontWeight: 500 }}>When</span>
+              <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: '2px 0 0' }}>{formatLongDate(meeting.date)}</p>
+            </div>
+                {/* Facilitator badge — the RECORDED facilitator only. Blank when the
+                    meeting doesn't carry one (#102). */}
+                {(() => {
+                  const facilitatorInfo = meeting.facilitator ? getPersonInfo(meeting.facilitator) : null
+                  return facilitatorInfo ? (
+                    <div className="flex items-center gap-2">
+                      <UserCheck {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
+                      <span style={{ fontSize: 'var(--label-size)', color: 'var(--sk-t3)' }}>
+                        Facilitator:
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <div style={{ width: 20, height: 20 }}>
+                          <FaceDisc label={facilitatorInfo.name} initials={facilitatorInfo.initials} photo={facilitatorInfo.photoUrl} px={20} />
+                        </div>
+                        <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)' }}>
+                          {facilitatorInfo.name}
+                        </span>
+                      </div>
+                    </div>
+                  ) : null
+                })()}
+              {/* Attendees — clickable toggle, for the owner or Nick only (an
+                  attendee can read the meeting; the server checks it again) */}
+              <AttendanceSection attendees={attendees} updateMeta={updateMeta} canEdit={meeting.can_manage_access === true} />
+            {/* Projects (schema-v122): the projects this meeting DISCUSSED (tags,
+                set by the PB push; else the action items' projects) as faded
+                pills, the projects it is GRANTED to at full contrast. The owner
+                or Nick clicks a pill to give or take that project's access. It
+                sits here, beside the action items Nick reviews. */}
+            <MeetingProjectsSection
+              meeting={meeting}
+              derivedTags={[...new Set(actionItems.filter((a) => a.project_id).map((a) => a.project_id!))]}
+              allProjects={allProjects.filter((p): p is typeof p & { id: string } => !!p.id)}
+              updateMeta={updateMeta}
+            />
+            {/* T-50 Files section — files attached to this meeting. */}
+            {meeting.id && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.22 }}>
+                <span style={{ display: 'block', fontSize: '12px', color: 'var(--sk-t3)', fontWeight: 500, marginBottom: 6 }}>Files</span>
+                <div style={{ borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
+                  <FileUpload entityType="meeting" entityId={meeting.id} />
+                </div>
+              </motion.div>
+            )}
+            </div>
+          }
+        >
+          {/* Right: Action Items (order-1 on mobile so actions show first) */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.15 }}>
+            <SectionHead title="Action items" count={<>{completedCount}/{actionItems.length}</>} />
+
+            <div style={{ borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
+              {/* Inline add action item */}
+              <AddActionItemForm
+                meetingId={meeting.id}
+                isAuthenticated={isAuthenticated}
+                onContentChange={setMeetingHasCompose}
+                onSuccess={() => showSuccess('Action item added')}
+              />
+
+              {/* Rows, selection bar and full editor: the same component the
+                  meeting's Today card renders. */}
+              <MeetingActionList meetingId={meeting.id} items={actionItems} />
+
+              {actionItems.length === 0 && (
+                <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
+                  No action items yet — type above to add one
+                </p>
+              )}
+            </div>
+          </motion.div>
+
+        {/* Notes */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.25 }} className="mt-8">
+          <SectionHead
+            as="h3"
+           
+            title="Meeting notes"
+            right={<>
+              {/* #96 — one-click copy of the notes body so Nick can paste them
+                  straight to the team. Copies the raw markdown source (what
+                  pastes cleanly into mail/Slack), not the rendered DOM. Sits in
+                  the section header rather than the hover layer: "copy quick"
+                  means always visible, unlike the Edit affordance below. */}
+              {!editingNotes && meeting?.notes && (
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(meeting.notes || '').then(() => {
+                      setCopiedNotes(true)
+                      setTimeout(() => setCopiedNotes(false), 2000)
+                    }).catch(() => showError('Could not copy notes'))
+                  }}
+                  data-tip={copiedNotes ? 'Copied' : 'Copy notes as text'}
+                  aria-label="Copy meeting notes"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors"
+                  style={{
+                    fontSize: 'var(--label-size)',
+                    color: 'var(--slate)',
+                    border: '1px solid var(--sk-line2)',
+                    background: 'none',
+                    cursor: 'pointer',
+                    opacity: copiedNotes ? 1 : 0.85,
+                  }}
+                >
+                  {copiedNotes ? <Check {...ICON_PROPS} size={11} /> : <Copy {...ICON_PROPS} size={11} />}
+                  {copiedNotes ? 'Copied!' : 'Copy'}
+                </button>
+              )}
+            </>}
+          />
+          <div style={{ borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
+            {editingNotes ? (
+              <div onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.preventDefault()
+                  setNotesDraft(meeting?.notes || '')
+                  setEditingNotes(false)
+                }
+              }}>
+                {/* SmartCompose (D14) — replaces bare textarea. @-mention,
+                    emoji, R2 paperclip via uploadContext={type:'meeting'},
+                    Cmd+Enter triggers Save Notes via onSubmit. */}
+                <SmartCompose
+                  value={notesDraft}
+                  onChange={setNotesDraft}
+                  onSubmit={async (content) => {
+                    await new Promise<void>((resolve) => {
+                      updateNotes.mutate(content, { onSuccess: () => resolve(), onError: () => resolve() })
+                    })
+                    setEditingNotes(false)
+                  }}
+                  submitting={updateNotes.isPending}
+                  uploadContext={meeting ? { type: 'meeting', id: meeting.id } : undefined}
+                  placeholder="Meeting notes…"
+                  rows={12}
+                  alwaysShowToolbar
+                  autoFocus
+                  submitLabel="Save Notes"
+                  submittingLabel="Saving…"
+                />
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(false) }}
+                    style={{ background: 'none', border: '1px solid var(--sk-line2)', borderRadius: 'var(--radius-md)', padding: '6px 16px', fontSize: 'var(--value-size)', cursor: 'pointer', color: 'var(--slate)' }}
+                  >
+                    Cancel
+                  </button>
+                  <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+                    Ctrl+Enter to save · Esc to cancel
                   </span>
                 </div>
               </div>
-            ) : null
-          })()}
-
-          {/* Attendees — clickable toggle, for the owner or Nick only (an
-              attendee can read the meeting; the server checks it again) */}
-          <AttendanceSection attendees={attendees} updateMeta={updateMeta} canEdit={meeting.can_manage_access === true} />
-
-          <div style={{ height: '1px', background: 'var(--sk-line)', marginTop: '1.5rem' }} />
+            ) : (
+              <div className="relative group tk">
+                {meeting?.notes ? (
+                  <MarkdownView source={meeting.notes} className="tk-msum" />
+                ) : (
+                  <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontStyle: 'italic', margin: 0, cursor: 'pointer' }}
+                    onClick={() => { setNotesDraft(''); setEditingNotes(true) }}>
+                    No notes yet. Click to add.
+                  </p>
+                )}
+                <button
+                  onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
+                  className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ background: 'var(--cream)', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-md)', padding: 'var(--sp-xs) var(--sp-sm)', cursor: 'pointer', color: 'var(--slate)', fontSize: 'var(--label-size)' }}
+                >
+                  Edit
+                </button>
+              </div>
+            )}
+          </div>
         </motion.div>
 
-        {/* Projects (schema-v122): the projects this meeting DISCUSSED (tags,
-            set by the PB push; else the action items' projects) as faded
-            pills, the projects it is GRANTED to at full contrast. The owner
-            or Nick clicks a pill to give or take that project's access. It
-            sits here, beside the action items Nick reviews. */}
-        <MeetingProjectsSection
-          meeting={meeting}
-          derivedTags={[...new Set(actionItems.filter((a) => a.project_id).map((a) => a.project_id!))]}
-          allProjects={allProjects.filter((p): p is typeof p & { id: string } => !!p.id)}
-          updateMeta={updateMeta}
-        />
-
-        {/* Two-column: Agenda + Action Items (action items first on mobile) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
           {/* Left: Agenda (order-2 on mobile so actions show first) */}
-          <motion.div className="order-2 lg:order-1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.1 }}>
+          <motion.div className="mt-8" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.1 }}>
             <SectionHead title="Agenda" />
 
             {/* Opening Round icebreaker prompt */}
@@ -506,32 +650,6 @@ export default function MeetingDetail() {
               <AddAgendaForm isAuthenticated={isAuthenticated} onAdd={(input) => addAgenda.mutate(input, { onSuccess: () => showSuccess('Added to agenda') })} />
             </div>
           </motion.div>
-
-          {/* Right: Action Items (order-1 on mobile so actions show first) */}
-          <motion.div className="order-1 lg:order-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.15 }}>
-            <SectionHead title="Action items" count={<>{completedCount}/{actionItems.length}</>} />
-
-            <div style={{ borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
-              {/* Inline add action item */}
-              <AddActionItemForm
-                meetingId={meeting.id}
-                isAuthenticated={isAuthenticated}
-                onContentChange={setMeetingHasCompose}
-                onSuccess={() => showSuccess('Action item added')}
-              />
-
-              {/* Rows, selection bar and full editor: the same component the
-                  meeting's Today card renders. */}
-              <MeetingActionList meetingId={meeting.id} items={actionItems} />
-
-              {actionItems.length === 0 && (
-                <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
-                  No action items yet — type above to add one
-                </p>
-              )}
-            </div>
-          </motion.div>
-        </div>
 
         {/* Decisions */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.2 }} className="mt-8">
@@ -644,118 +762,6 @@ export default function MeetingDetail() {
           </div>
         </motion.div>
 
-        {/* T-50 Files section — files attached to this meeting. */}
-        {meeting.id && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.22 }} className="mt-8">
-            <SectionHead as="h3" title="Files" />
-            <div style={{ borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
-              <FileUpload entityType="meeting" entityId={meeting.id} />
-            </div>
-          </motion.div>
-        )}
-
-        {/* Notes */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.25 }} className="mt-8">
-          <SectionHead
-            as="h3"
-           
-            title="Meeting notes"
-            right={<>
-              {/* #96 — one-click copy of the notes body so Nick can paste them
-                  straight to the team. Copies the raw markdown source (what
-                  pastes cleanly into mail/Slack), not the rendered DOM. Sits in
-                  the section header rather than the hover layer: "copy quick"
-                  means always visible, unlike the Edit affordance below. */}
-              {!editingNotes && meeting?.notes && (
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(meeting.notes || '').then(() => {
-                      setCopiedNotes(true)
-                      setTimeout(() => setCopiedNotes(false), 2000)
-                    }).catch(() => showError('Could not copy notes'))
-                  }}
-                  data-tip={copiedNotes ? 'Copied' : 'Copy notes as text'}
-                  aria-label="Copy meeting notes"
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors"
-                  style={{
-                    fontSize: 'var(--label-size)',
-                    color: 'var(--slate)',
-                    border: '1px solid var(--sk-line2)',
-                    background: 'none',
-                    cursor: 'pointer',
-                    opacity: copiedNotes ? 1 : 0.85,
-                  }}
-                >
-                  {copiedNotes ? <Check {...ICON_PROPS} size={11} /> : <Copy {...ICON_PROPS} size={11} />}
-                  {copiedNotes ? 'Copied!' : 'Copy'}
-                </button>
-              )}
-            </>}
-          />
-          <div style={{ borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
-            {editingNotes ? (
-              <div onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  e.preventDefault()
-                  setNotesDraft(meeting?.notes || '')
-                  setEditingNotes(false)
-                }
-              }}>
-                {/* SmartCompose (D14) — replaces bare textarea. @-mention,
-                    emoji, R2 paperclip via uploadContext={type:'meeting'},
-                    Cmd+Enter triggers Save Notes via onSubmit. */}
-                <SmartCompose
-                  value={notesDraft}
-                  onChange={setNotesDraft}
-                  onSubmit={async (content) => {
-                    await new Promise<void>((resolve) => {
-                      updateNotes.mutate(content, { onSuccess: () => resolve(), onError: () => resolve() })
-                    })
-                    setEditingNotes(false)
-                  }}
-                  submitting={updateNotes.isPending}
-                  uploadContext={meeting ? { type: 'meeting', id: meeting.id } : undefined}
-                  placeholder="Meeting notes…"
-                  rows={12}
-                  alwaysShowToolbar
-                  autoFocus
-                  submitLabel="Save Notes"
-                  submittingLabel="Saving…"
-                />
-                <div className="flex items-center gap-2 mt-2">
-                  <button
-                    onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(false) }}
-                    style={{ background: 'none', border: '1px solid var(--sk-line2)', borderRadius: 'var(--radius-md)', padding: '6px 16px', fontSize: 'var(--value-size)', cursor: 'pointer', color: 'var(--slate)' }}
-                  >
-                    Cancel
-                  </button>
-                  <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-                    Ctrl+Enter to save · Esc to cancel
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="relative group tk">
-                {meeting?.notes ? (
-                  <MarkdownView source={meeting.notes} className="tk-msum" />
-                ) : (
-                  <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontStyle: 'italic', margin: 0, cursor: 'pointer' }}
-                    onClick={() => { setNotesDraft(''); setEditingNotes(true) }}>
-                    No notes yet. Click to add.
-                  </p>
-                )}
-                <button
-                  onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
-                  className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'var(--cream)', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-md)', padding: 'var(--sp-xs) var(--sp-sm)', cursor: 'pointer', color: 'var(--slate)', fontSize: 'var(--label-size)' }}
-                >
-                  Edit
-                </button>
-              </div>
-            )}
-          </div>
-        </motion.div>
-
         {/* Discussion (#124) — the meeting's own conversation. Last section on
             purpose: you read what happened, then you ask about it. */}
         {meeting?.id && (
@@ -768,9 +774,12 @@ export default function MeetingDetail() {
             </div>
           </motion.div>
         )}
+        </PageWithRail>
       </div>
 
       <style>{`
+        .md-rail { display: flex; flex-direction: column; gap: 20px; }
+        .md-rail .mt-4 { margin-top: 0; }
         .action-item-row:active, .action-item-row:hover { background: var(--hover-subtle); }
         .attendee-scroll { scrollbar-width: none; -ms-overflow-style: none; }
         .attendee-scroll::-webkit-scrollbar { display: none; }
@@ -1101,7 +1110,7 @@ function AttendanceSection({ attendees, updateMeta, canEdit }: { attendees: stri
         )}
       </div>
       {canEdit && expanded && (
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 mt-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)' }}>
+        <div className="grid grid-cols-2 gap-1.5 mt-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)' }}>
           {uniquePeople.map(person => {
             const slug = person.slug!
             const p = getPersonInfo(slug)
