@@ -296,13 +296,20 @@ export default function PortalLayout() {
 
       {/* Focus mode indicator */}
       {focusMode && (
-        <button
-          onClick={() => setFocusMode(false)}
-          className="tk-btn tk-sel fixed top-3 right-3 z-50 transition-opacity opacity-30 hover:opacity-100"
-          style={{ cursor: 'pointer' }}
+        // .tk-btn sets position:relative, which beats Tailwind's .fixed on the
+        // same element; the wrapper carries the viewport pin.
+        <div
+          data-testid="focus-exit-pill"
+          className="fixed top-3 right-3 z-50 transition-opacity opacity-30 hover:opacity-100"
         >
-          Focus · F to exit
-        </button>
+          <button
+            onClick={() => setFocusMode(false)}
+            className="tk-btn tk-sel"
+            style={{ cursor: 'pointer' }}
+          >
+            Focus · F to exit
+          </button>
+        </div>
       )}
 
       {/* Global Quick Add */}
