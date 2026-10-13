@@ -523,8 +523,14 @@ export function fetchTasks(params?: {
   meeting?: string
   source?: string
   completed?: string
+  /** YYYY-MM-DD: every open task plus those completed on or after it. */
+  completed_since?: string
+  /** Only these task ids (server cap 50). */
+  ids?: string[]
 }) {
   const qs = new URLSearchParams()
+  if (params?.completed_since) qs.set('completed_since', params.completed_since)
+  if (params?.ids) qs.set('ids', params.ids.join(','))
   if (params?.assignee) qs.set('assignee', params.assignee)
   if (params?.status) qs.set('status', params.status)
   if (params?.priority) qs.set('priority', params.priority)
@@ -534,6 +540,11 @@ export function fetchTasks(params?: {
   if (params?.completed) qs.set('completed', params.completed)
   const query = qs.toString()
   return fetchApi<TaskRow[]>(`/api/tasks${query ? `?${query}` : ''}`)
+}
+
+/** The tasks that list `id` in their blocked_by (GET /api/tasks/:id/blocking). */
+export function fetchBlockingTasks(id: string) {
+  return fetchApi<TaskRow[]>(`/api/tasks/${encodeURIComponent(id)}/blocking`)
 }
 
 export function createTask(input: {

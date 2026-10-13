@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { TrendingUp } from 'lucide-react'
-import { useTasks } from '../../hooks/useApiData'
+import { useRecentTasks } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { isTaskDone } from '../../lib/taskGrouping'
@@ -101,7 +101,7 @@ function MiniBarChart({ bars }: { bars: BarDatum[] }) {
 }
 
 export default function WeeklyProgressCard() {
-  const { data: tasks = [] } = useTasks()
+  const { data: tasks = [] } = useRecentTasks()
 
   const { bars, totalCompleted, trend } = useMemo(() => {
     const now = new Date()

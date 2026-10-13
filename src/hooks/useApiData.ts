@@ -21,6 +21,7 @@ import {
   fetchStats,
   fetchCitations,
   fetchTasks,
+  fetchBlockingTasks,
   fetchIdeas,
   fetchCalendarEvents,
   fetchDependencies,
@@ -691,6 +692,7 @@ export function useTasks(filters?: {
   meeting?: string
   source?: string
   completed?: string
+  completed_since?: string
 }, options?: { enabled?: boolean; retry?: boolean | number }) {
   return useQuery({
     queryKey: ['tasks', filters],
@@ -701,6 +703,52 @@ export function useTasks(filters?: {
     staleTime: 60 * 1000,
     enabled: options?.enabled ?? true,
     ...(options?.retry !== undefined ? { retry: options.retry } : {}),
+  })
+}
+
+// How far back "recently completed" reaches. 7 days is the widest window any
+// reader needs (the weekly-progress bars, "done this week"); the extra day
+// absorbs the gap between a viewer's local date and the UTC date stored in
+// completed_at.
+const RECENT_COMPLETION_DAYS = 8
+
+/** YYYY-MM-DD, RECENT_COMPLETION_DAYS ago, in the viewer's local calendar. */
+export function recentCompletionCutoff(now: Date = new Date()): string {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - RECENT_COMPLETION_DAYS)
+  return localDateKey(d)
+}
+
+/**
+ * Every open task plus the tasks completed in the last week, so a surface that
+ * reads open work and "done this week" does not download the whole history.
+ * Callers with no shared `extra` filter share one cache entry. A surface that
+ * needs older completions (analytics, a project's full task list, the
+ * Completed group on Deadlines) keeps using useTasks() unsliced.
+ */
+export function useRecentTasks(
+  extra?: { assignee?: string },
+  options?: { enabled?: boolean; retry?: boolean | number },
+) {
+  return useTasks({ ...extra, completed_since: recentCompletionCutoff() }, options)
+}
+
+/** Tasks that list `taskId` in blocked_by. Under ['tasks'] so every task write invalidates it. */
+export function useBlockingTasks(taskId: string) {
+  return useQuery({
+    queryKey: ['tasks', 'blocking', taskId],
+    queryFn: async () => (await fetchBlockingTasks(taskId)).data as TaskRow[],
+    staleTime: 60 * 1000,
+  })
+}
+
+/** Exactly these tasks (a task's blockers). Not deduped: each id is its own row. */
+export function useTasksByIds(ids: string[]) {
+  const key = [...ids].sort().join(',')
+  return useQuery({
+    queryKey: ['tasks', 'by-ids', key],
+    queryFn: async () => (await fetchTasks({ ids })).data as TaskRow[],
+    staleTime: 60 * 1000,
+    enabled: ids.length > 0,
   })
 }
 

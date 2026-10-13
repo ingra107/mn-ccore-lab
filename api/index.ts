@@ -25,7 +25,7 @@ import { REALTIME_TICKET_PATH } from '../shared/realtime';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleGetTasks, handleGetTask, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleRestoreTask, handleMobileTasksToHub } from './routes/tasks';
+import { handleGetTasks, handleGetTask, handleGetBlockingTasks, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleRestoreTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleMarkSeen, handleGetUnseenActivity, handleGetThreadSeen, handleMarkThreadSeen } from './routes/seen';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
@@ -1913,6 +1913,13 @@ defineRoute({
 // ─────────────────────────────────────────────────────────────────────────────
 // Task sub-resource GETs
 // ─────────────────────────────────────────────────────────────────────────────
+defineRoute({
+  method: 'GET',
+  path: '/api/tasks/:id/blocking',
+  auth: 'authed',
+  entity: 'tasks',
+  handler: (c) => handleGetBlockingTasks(c.req.param('id'), E(c)),
+});
 defineRoute({
   method: 'GET',
   path: '/api/tasks/:id/comments',

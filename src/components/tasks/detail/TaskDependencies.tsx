@@ -3,43 +3,33 @@ import {
   X, Plus, Link2, Search} from 'lucide-react'
 import SectionHead from '../../ui/SectionHead'
 import CollapsibleSection from '../../CollapsibleSection'
-import { useTasks } from '../../../hooks/useApiData'
+import { useTasks, useBlockingTasks, useTasksByIds } from '../../../hooks/useApiData'
 import type { TaskRow } from '../../../lib/api'
 import { ICON_PROPS } from '../../../lib/iconProps'
+import { parseBlockedBy, serializeBlockedBy } from '../../../../shared/blockedBy'
 
 // ── Helpers ─────────────────────────────────────────────────
 
-function parseBlockedByIds(blockedBy: string | null): string[] {
-  if (!blockedBy) return []
-  return blockedBy.split(',').map(s => s.trim()).filter(Boolean)
-}
-
-function serializeBlockedByIds(ids: string[]): string | null {
-  if (ids.length === 0) return null
-  return ids.join(',')
-}
+const parseBlockedByIds = parseBlockedBy
+const serializeBlockedByIds = serializeBlockedBy
 
 // ── Task Dependencies Section ────────────────────────────────
 
 export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { task: TaskRow; onFieldUpdate: (field: string, value: unknown) => void; onOpenTask: (task: TaskRow) => void }) {
-  const { data: allTasks = [] } = useTasks()
   const [showSearch, setShowSearch] = useState(false)
 
   const blockerIds = useMemo(() => parseBlockedByIds(task.blocked_by), [task.blocked_by])
 
-  // Tasks that THIS task blocks (reverse lookup)
-  const blockingTasks = useMemo(() => {
-    return allTasks.filter(t => {
-      if (t.id === task.id) return false
-      const ids = parseBlockedByIds(t.blocked_by)
-      return ids.includes(task.id)
-    })
-  }, [allTasks, task.id])
+  // Tasks that THIS task blocks (reverse lookup), asked of the server so the
+  // panel does not download every task in the lab to find them.
+  const { data: blockingTasks = [] } = useBlockingTasks(task.id)
 
-  // Resolved blocker task objects
+  // Resolved blocker task objects, in blocked_by order
+  const { data: blockerRows } = useTasksByIds(blockerIds)
   const blockerTasks = useMemo(() => {
-    return blockerIds.map(id => allTasks.find(t => t.id === id)).filter(Boolean) as TaskRow[]
-  }, [blockerIds, allTasks])
+    const byId = new Map((blockerRows ?? []).map(t => [t.id, t]))
+    return blockerIds.map(id => byId.get(id)).filter(Boolean) as TaskRow[]
+  }, [blockerIds, blockerRows])
 
   const hasBlockers = blockerTasks.length > 0
   const hasBlocking = blockingTasks.length > 0
@@ -116,7 +106,6 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
             <BlockerSearchDropdown
               currentTaskId={task.id}
               excludeIds={blockerIds}
-              allTasks={allTasks}
               onSelect={addBlocker}
               onClose={() => setShowSearch(false)}
             />
@@ -173,13 +162,15 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
 
 // ── Blocker Search Dropdown ──────────────────────────────────
 
-function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onSelect, onClose }: {
+function BlockerSearchDropdown({ currentTaskId, excludeIds, onSelect, onClose }: {
   currentTaskId: string
   excludeIds: string[]
-  allTasks: TaskRow[]
   onSelect: (id: string) => void
   onClose: () => void
 }) {
+  // Only open tasks can be picked as a blocker, and the list loads only when
+  // the search box opens, not with every detail panel.
+  const { data: allTasks = [] } = useTasks({ completed: 'false' })
   const [query, setQuery] = useState('')
   const ref = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)

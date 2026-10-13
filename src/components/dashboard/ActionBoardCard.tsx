@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Video } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { FaceDisc } from '../today/skin'
-import { useTasks } from '../../hooks/useApiData'
+import { useRecentTasks } from '../../hooks/useApiData'
 import { useUpdateTaskStatus } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
@@ -19,7 +19,7 @@ import type { TaskRow as TaskRowData } from '../../lib/api'
 import { taskShortLabel } from '../../lib/displayNames'
 
 function ActionBoardCard() {
-  const { data: items = [] } = useTasks() // Already deduped by useTasks hook
+  const { data: items = [] } = useRecentTasks() // Already deduped by useRecentTasks hook
   const updateStatus = useUpdateTaskStatus()
   const { showUndo } = useUndoToast()
   // #114: clicking a row opens the editor. It used to CYCLE THE STATUS
@@ -43,7 +43,7 @@ function ActionBoardCard() {
   return (
     <BentoCard
       title="Tasks"
-      hero={{ value: pending.length, label: `pending · ${completed.length} done`, rule: 'accent', to: PATHS.myTasks }}
+      hero={{ value: pending.length, label: `pending · ${completed.length} recently done`, rule: 'accent', to: PATHS.myTasks }}
       size="span-2"
       uniform
       noLift

@@ -11,7 +11,7 @@ import {
 import { spring } from '../lib/animations'
 import { localDateKey, isOverdue } from '../lib/dateUtils'
 import { isTaskDone } from '../lib/taskGrouping'
-import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
+import { useRecentTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
 import { useAuth } from '../hooks/useAuth'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import { useToast } from '../hooks/useToast'
@@ -65,7 +65,7 @@ export default function CommandPalette() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const { data: tasks = [] } = useTasks(undefined, { enabled: open })
+  const { data: tasks = [] } = useRecentTasks(undefined, { enabled: open })
   const { data: projects = [] } = useProjects(undefined, { enabled: open })
   const { data: team = [] } = useTeam({ enabled: open })
   const { data: meetings = [] } = useMeetingsApi({ enabled: open })
@@ -348,7 +348,7 @@ export default function CommandPalette() {
     items.push({
       id: 'filter-completed',
       label: 'Completed Tasks',
-      sublabel: `${tasks.filter(t => isTaskDone(t)).length} tasks done`,
+      sublabel: `${tasks.filter(t => isTaskDone(t)).length} recently done`,
       icon: CheckCircle2,
       action: () => { navigate(`${PATHS.myTasks}?status=done`); setOpen(false) },
       category: 'filter',

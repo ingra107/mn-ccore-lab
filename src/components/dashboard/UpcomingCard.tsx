@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
-import { useMeetingsApi, useMeetingLinkedTasks, useMeetingCadence, useTasks } from '../../hooks/useApiData'
+import { useMeetingsApi, useMeetingLinkedTasks, useMeetingCadence, useRecentTasks } from '../../hooks/useApiData'
 import { useGrantProducts } from '../../hooks/useGrantProducts'
 import { grantName } from '../../lib/grants'
 import { localDateKey } from '../../lib/dateUtils'
@@ -31,7 +31,7 @@ function UpcomingCard() {
   // Deadlines (from tasks/grants) and the meeting banner are unaffected.
   const { data: allMeetingTasks = [] } = useMeetingLinkedTasks()
   const { data: cadence } = useMeetingCadence()
-  const { data: tasks = [] } = useTasks()
+  const { data: tasks = [] } = useRecentTasks()
   const { data: grantData } = useGrantProducts()
   const grants = useMemo(() => grantData?.data ?? [], [grantData])
 

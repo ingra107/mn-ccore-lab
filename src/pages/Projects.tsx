@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { GitBranch, Plus, List, LayoutGrid } from 'lucide-react'
 import { pipelineOffNote, pipelinePlaceOf } from '../lib/pipelinePlace'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useProjects, useDependencies, useProjectHealth, useTasks, useAllProjectLinks, useAllProjectPublications } from '../hooks/useApiData'
+import { useProjects, useDependencies, useProjectHealth, useRecentTasks, useAllProjectLinks, useAllProjectPublications } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
 import { daysSince } from '../lib/taskGrouping'
 import { parseDbUtc } from '../lib/time'
@@ -158,7 +158,7 @@ export default function Projects() {
   // CATEGORY_OPTIONS stay for any surface that wants them.
   const categoryListOptions = useMemo(() => mutedCategoryOptions(categoryOptions), [categoryOptions])
 
-  const { data: allTasks = [] } = useTasks()
+  const { data: allTasks = [] } = useRecentTasks()
   // #507 follow-up opt-out: dependencies/healthData/allProjectLinks are all
   // per-row OPTIONAL enrichments (dependency map inside a collapsible toggle,
   // health progress bar, link icons) layered onto the page's real query

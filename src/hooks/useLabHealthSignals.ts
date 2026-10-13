@@ -11,7 +11,7 @@
  */
 import { useMemo } from 'react'
 import {
-  useTasks,
+  useRecentTasks,
   useExpiringRegulatory,
   useMenteeMilestones,
 } from './useApiData'
@@ -44,7 +44,7 @@ interface LabHealthSignals {
 export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthSignals {
   const enabled = options?.enabled ?? true
 
-  const { data: tasks, isLoading: tasksLoading } = useTasks(undefined, { enabled })
+  const { data: tasks, isLoading: tasksLoading } = useRecentTasks(undefined, { enabled })
   const { data: productData, isLoading: productsLoading } = useAllProjectProducts()
   const { data: grantData, isLoading: grantsLoading } = useGrantProducts()
   const grants = grantData?.data

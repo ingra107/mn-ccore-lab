@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Zap } from 'lucide-react'
-import { useTasks } from '../../hooks/useApiData'
+import { useRecentTasks } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import BentoCard from './BentoCard'
 import DueLabel from '../DueLabel'
@@ -14,7 +14,7 @@ import { isTaskDone } from '../../lib/taskGrouping'
 export default function QuickWinsCard() {
   const { user } = useAuth()
   const slug = user?.slug ?? ''
-  const { data: tasks = [] } = useTasks()
+  const { data: tasks = [] } = useRecentTasks()
 
   const quickWins = useMemo(() => {
     const now = new Date()

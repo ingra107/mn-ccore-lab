@@ -24,6 +24,7 @@ import { useUpdateTask } from '../../hooks/mutations'
 import { useUndoToast } from '../UndoToast'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { PRIORITY_OPTIONS } from '../../lib/taskConstants'
+import { hasBlockers } from '../../../shared/blockedBy'
 
 // Board cards are the Today card (today/TaskRow over tasks/TaskCardRow), the same
 // one List renders: bold title, the project as a muted line, due pill + priority
@@ -439,7 +440,7 @@ export function BoardCard({ task, state, projectsByPid, onSelect }: { task: Task
   const { mutate: mutateTask } = useUpdateTask()
   const { showUndo } = useUndoToast()
   const done = isTaskDone(task)
-  const blocked = !done && !!task.blocked_by && task.blocked_by.split(',').some((s) => s.trim())
+  const blocked = !done && hasBlockers(task.blocked_by)
   const pri = task.priority || 'medium'
   const urgent = pri === 'urgent'
 

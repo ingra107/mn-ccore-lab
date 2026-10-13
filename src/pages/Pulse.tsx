@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
 import {
   useStats,
-  useTasks,
+  useRecentTasks,
   useProjects,
   useActivity,
   useProjectHealth,
@@ -91,7 +91,7 @@ export default function Pulse() {
   }, [queryClient, isAuthenticated])
 
   const { data: stats } = useStats()
-  const { data: tasks = [] } = useTasks(undefined, { enabled: isAuthenticated })
+  const { data: tasks = [] } = useRecentTasks(undefined, { enabled: isAuthenticated })
   const { data: projects = [] } = useProjects()
   const { data: activity = [] } = useActivity(8)
   const { data: healthData } = useProjectHealth()
