@@ -48,15 +48,17 @@ async function openToday(page: Page, email: string): Promise<{ body: string; men
   return { body: await page.locator('body').innerText(), mentees }
 }
 
-// The Pulse card renders "MENTEES" then name / next pairs, one per line.
+// The Pulse card renders "Mentees" then one row per mentee: the face's initials,
+// the first name, the next due date, each on its own line (<Person> draws the
+// face and the first name). Match "Mentees" without case in case CSS changes it.
 function menteeRows(body: string): Array<{ name: string; next: string }> {
   const lines = body.split('\n').map((l) => l.trim()).filter(Boolean)
-  const i = lines.indexOf('MENTEES')
+  const i = lines.findIndex((l) => l.toLowerCase() === 'mentees')
   if (i < 0) return []
   const rows: Array<{ name: string; next: string }> = []
-  for (let k = i + 1; k + 1 < lines.length && rows.length < 4; k += 2) {
-    if (!(NEXT.test(lines[k + 1]) || lines[k + 1] === '—')) break
-    rows.push({ name: lines[k], next: lines[k + 1] })
+  for (let k = i + 1; k + 2 < lines.length && rows.length < 4; k += 3) {
+    if (!(NEXT.test(lines[k + 2]) || lines[k + 2] === '—')) break
+    rows.push({ name: lines[k + 1], next: lines[k + 2] })
   }
   return rows
 }
@@ -64,7 +66,7 @@ function menteeRows(body: string): Array<{ name: string; next: string }> {
 test("a director's Today shows each mentee's next due date, not a dash", async ({ page }) => {
   const { body, mentees } = await openToday(page, PI)
   const rows = menteeRows(body)
-  const nate = rows.find((m) => m.name === 'Nate Mesfin')
+  const nate = rows.find((m) => m.name === 'Nate')
   expect(nate, `Nate (research_team, open dated tasks) is in the MENTEES row; rendered: ${JSON.stringify(rows)}`).toBeTruthy()
   expect(nate!.next, "Nate's soonest open task date, not —").toMatch(NEXT)
   expect(mentees, 'Today read /api/today/mentees').not.toBeNull()
@@ -74,6 +76,6 @@ for (const email of ['nate@umn.edu', 'eddin022@umn.edu']) {
   test(`a member who mentors no one (${email}) gets no MENTEES row`, async ({ page }) => {
     const { body, mentees } = await openToday(page, email)
     expect(mentees, 'the route returns nothing for a non-director').toEqual([])
-    expect(body.split('\n').map((l) => l.trim())).not.toContain('MENTEES')
+    expect(body.split('\n').map((l) => l.trim().toLowerCase())).not.toContain('mentees')
   })
 }

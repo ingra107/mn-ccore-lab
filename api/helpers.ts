@@ -15,7 +15,9 @@ export type { Env };
 // PB Python scripts are server-side (no Origin header → no CORS restriction).
 // Cloudflare Access already gates browser access to @umn.edu accounts;
 // this is a defence-in-depth origin allowlist for browser CORS.
-const ALLOWED_ORIGINS = new Set([
+// cors.json (the R2 bucket CORS rules) repeats this list minus the wrangler-dev
+// origin; api/cors-origins.test.ts fails when the two drift.
+export const ALLOWED_ORIGINS = new Set([
   'https://mnccore.org',
   'https://www.mnccore.org',
   'https://mn-ccore-lab.pages.dev',

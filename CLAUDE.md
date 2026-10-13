@@ -19,7 +19,7 @@ Every page passes the 5-second test: a newcomer knows what to do next without as
 
 | Thing | Value |
 |-------|-------|
-| Live site | mn-ccore-lab.pages.dev (LIVE — CF Access gated via @umn.edu policy on `/portal/*`) |
+| Live site | mnccore.org (LIVE — CF Access gated via @umn.edu policy on `/portal/*`; `mn-ccore-lab.pages.dev` is the alias, `www.mnccore.org` 301s to the apex) |
 | Repo | github.com/ingra107/mn-ccore-lab (720+ commits) |
 | Today landing | `/portal/dashboard` → `src/pages/portal/TodayPage.tsx` |
 | Lab Overview | `/portal/overview` → `src/pages/Dashboard.tsx` |
@@ -137,7 +137,7 @@ Nick's CLI         Team's Hub
 (Airtable retired 2026-04-21. `entity_aliases.alias_kind='airtable_legacy'` rows resolve forever for historical lookups.)
 
 - **API:** Cloudflare Worker, Hono v4.12 (`api/index.ts`); route count is pinned by `route-contract.generated.test.ts` (267 on 2026-09-08 — read the pin, not this sentence). Middleware chain: OPTIONS preflight → test-mode DB swap → API-key auth → authed-user resolve → PI gate for `/api/pb/*` GETs → write-auth gate (fail-closed, `api/lib/auth-mode.ts`) → version-bump-on-success. Do NOT add routes with raw `url.pathname === ...` comparisons — use `app.get/post('/api/...', handler)`.
-- **Auth:** CF Access gates `mn-ccore-lab.pages.dev/portal/*` (single destination). JWT via JWKS in `api/jwt-verify.ts`. `/api/*` is NOT gated by CF Access (auth via X-API-Key + JWT server-side). Server auth fails closed: `authEnforced()` in `api/lib/auth-mode.ts` is the only reader, a missing flag enforces sign-in, and only `HUB_LOCAL_DEV=1` (in `wrangler.local.toml`, never prod) opens it. `VITE_REQUIRE_AUTH=1` gates the client. `getAuthUser()` and `isPiRequest()` are `async` — callers must `await`.
+- **Auth:** CF Access gates `/portal/*` on `mn-ccore-lab.pages.dev`, `mnccore.org` and `www.mnccore.org` (www 301s to the apex). JWT via JWKS in `api/jwt-verify.ts`. `/api/*` is NOT gated by CF Access (auth via X-API-Key + JWT server-side). Server auth fails closed: `authEnforced()` in `api/lib/auth-mode.ts` is the only reader, a missing flag enforces sign-in, and only `HUB_LOCAL_DEV=1` (in `wrangler.local.toml`, never prod) opens it. `VITE_REQUIRE_AUTH=1` gates the client. `getAuthUser()` and `isPiRequest()` are `async` — callers must `await`.
 - **Email:** Resend (`api/lib/email.ts`) + daily digest (`api/routes/digest-email.ts`). Preview: `/api/digest-preview?member=nick`
 - **Sync:** `scripts/db/sync/` module in PB, invoked via `python scripts/db/sync.py {pull|push|sync|status}`. Scheduled + /process-triggered.
 
@@ -174,7 +174,7 @@ Any change to a shared field (schema.sql DEFAULTs, D1 migration SQL, taxonomy re
 **Registered shared fields:**
 - `projects.status`: `active / waiting_external / blocked / done`
 - `tasks.status`: `todo / in_progress / done / blocked / waiting_external`
-- `projects.stage`: `idea / data_collection / data_analysis / writing / submitted / revisions / accepted / published` (lowercase canonical; map via `enums.canonicalize_project_stage()`)
+- Stage: `projects.stage` is retired (contract phase, schema-v130). A project's stage is its home product's (`products.kind` + `products.stage`, rungs in `product_stages`); the API refuses a `stage` write on a project (RETIRED_FIELDS).
 - `projects.category`: `MNCCORE / CLIF / Peripheral Brain` (Hub-authoritative; 3-bucket design per 2026-05-08 decision)
 - `tasks.priority`: `low / medium / high / urgent`
 
@@ -344,7 +344,7 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 
 **API field protection:**
 - Tasks: `status`, `priority`, `assignee` — can never be null
-- Projects: `status`, `stage`, `category` — can never be null
+- Projects: `status`, `category` — can never be null
 
 ## Peripheral Brain Connection
 

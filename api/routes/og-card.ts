@@ -93,7 +93,7 @@ function svg(content: { eyebrow: string; title: string; subtitle?: string; accen
 
   <!-- Footer URL -->
   <text x="72" y="${H - 56}" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
-        font-size="20" font-weight="400" fill="#5cbcb4" letter-spacing="0.04em">mn-ccore-lab.pages.dev</text>
+        font-size="20" font-weight="400" fill="#5cbcb4" letter-spacing="0.04em">mnccore.org</text>
 
   <!-- Bottom accent bar -->
   <rect x="0" y="${H - 3}" width="${W}" height="3" fill="url(#accentBar)"/>
