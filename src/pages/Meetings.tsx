@@ -974,14 +974,6 @@ export default function Meetings() {
           background-image: linear-gradient(var(--hover-subtle), var(--hover-subtle)) !important;
           border-color: var(--border-subtle) !important;
         }
-        .dark .quick-add-form-container {
-          background-color: var(--cream) !important;
-          background-image: linear-gradient(var(--hover-subtle), var(--hover-subtle)) !important;
-        }
-        .dark .quick-add-trigger {
-          background-color: var(--cream) !important;
-          background-image: linear-gradient(var(--hover-subtle), var(--hover-subtle)) !important;
-        }
         .dark select, .dark input[type="date"] { color-scheme: dark; }
         .mtg-section-label {
           font-size: 12px; font-weight: 500; color: var(--sk-t3);
