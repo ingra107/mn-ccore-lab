@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { projectFullTitleHint, projectShortLabel } from '../../lib/displayNames'
-import { productLabel, type KindRow, type ProductKind } from '../../lib/products'
+import { formatPublicationDate, formatShortDate } from '../../lib/dateUtils'
+import { nickRoleLabel, productDateFacts, productLabel, type KindRow, type ProductKind, type ProductRoles } from '../../lib/products'
 import { ProductLadder } from './ProductStageCell'
 
 // The Manuscripts page's non-manuscript tabs (Nick 2026-10-12: "to have the
@@ -10,12 +11,16 @@ import { ProductLadder } from './ProductStageCell'
 // application shows both under Grants, each with its own stage. Every row
 // names its project (short name), the product, and the product's ladder,
 // which writes through the project's member route like every other ladder.
+// Two columns carry schema-v135: the date (when a talk was given or an abstract
+// presented, at the precision the source gave; never "Due" once it happened)
+// and Nick's part ("First author, presenter"). The page sorts the rows newest
+// first and filters them by Nick's role.
 
 export default function ProductKindList({
-  rows, kinds, grouped,
-}: { rows: KindRow[]; kinds: ProductKind[]; grouped: boolean }) {
+  rows, kinds, roles, grouped,
+}: { rows: KindRow[]; kinds: ProductKind[]; roles: ProductRoles; grouped: boolean }) {
   if (rows.length === 0) {
-    return <p className="pkl-empty">No products of this kind on the projects you can see.</p>
+    return <p className="pkl-empty" id="product-kind-list">No products of this kind and role on the projects you can see.</p>
   }
   const groups: { kind: string; label: string; rows: KindRow[] }[] = []
   for (const r of rows) {
@@ -24,7 +29,7 @@ export default function ProductKindList({
     else groups.push({ kind: r.product.kind, label: kinds.find((k) => k.kind === r.product.kind)?.plural_label ?? r.product.kind_label, rows: [r] })
   }
   return (
-    <div className="pkl" data-testid="product-kind-list">
+    <div className="pkl" id="product-kind-list" data-testid="product-kind-list">
       {groups.map((g) => (
         <section key={g.kind} aria-label={g.label}>
           {grouped && (
@@ -34,6 +39,8 @@ export default function ProductKindList({
             <div role="row" className="pkl-row pkl-head">
               <span role="columnheader">Project</span>
               <span role="columnheader">Product</span>
+              <span role="columnheader">Date</span>
+              <span role="columnheader">Nick</span>
               <span role="columnheader">Stage</span>
             </div>
             {g.rows.map(({ product, project }) => (
@@ -44,6 +51,12 @@ export default function ProductKindList({
                 <span role="cell" className="pkl-prod">
                   {productLabel(product)}
                   {product.is_home === 1 && <span className="pkl-home" title="Home product">home</span>}
+                </span>
+                <span role="cell" className="pkl-date" data-testid={`kind-date-${product.id}`}>
+                  {productDateFacts(product, formatPublicationDate, formatShortDate)[0] ?? ''}
+                </span>
+                <span role="cell" className="pkl-role" data-testid={`kind-role-${product.id}`}>
+                  {nickRoleLabel(product, roles) ?? ''}
                 </span>
                 <span role="cell">
                   <ProductLadder slug={project.slug} product={product} kinds={kinds} testId={`kind-stage-${product.id}`} />
@@ -64,13 +77,14 @@ const CSS = `
 .pkl-h { font-size: 13px; font-weight: 500; color: var(--sk-t1); margin: 0 0 6px; }
 .pkl-n { color: var(--sk-t3); font-weight: 400; margin-left: 4px; }
 .pkl-row {
-  display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr) 200px; gap: 12px;
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) 92px minmax(0, 0.9fr) 200px; gap: 12px;
   align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--sk-line2); font-size: 13px;
 }
 .pkl-head { font-size: 11px; color: var(--sk-t3); padding-top: 0; }
 .pkl-proj a { color: var(--sk-t1); text-decoration: none; font-weight: 500; }
 .pkl-proj a:hover { text-decoration: underline; text-underline-offset: 2px; }
 .pkl-prod { color: var(--sk-t2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pkl-date, .pkl-role { color: var(--sk-t3); font-size: 12px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pkl-home { margin-left: 6px; font-size: 10px; color: var(--sk-t3); border: 1px solid var(--sk-line2); border-radius: var(--radius-full); padding: 0 5px; }
 .pkl-empty { color: var(--sk-t3); font-size: 13px; padding: var(--sp-lg) 0; }
 /* Phone: project over product on the left, the stage on the right. */
@@ -79,6 +93,8 @@ const CSS = `
   .pkl-head { display: none; }
   .pkl-proj { grid-column: 1; grid-row: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pkl-prod { grid-column: 1; grid-row: 2; font-size: 12px; }
-  .pkl-row > [role="cell"]:nth-child(3) { grid-column: 2; grid-row: 1 / span 2; }
+  .pkl-date { grid-column: 1; grid-row: 3; }
+  .pkl-role { grid-column: 1; grid-row: 4; }
+  .pkl-row > [role="cell"]:nth-child(5) { grid-column: 2; grid-row: 1 / span 4; }
 }
 `

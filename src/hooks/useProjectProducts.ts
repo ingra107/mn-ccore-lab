@@ -6,10 +6,13 @@ import {
   addProduct,
   publishedAPaper,
   describeProduct,
+  NO_ROLES,
+  setProductEvent,
   setProductHome,
   tagItem,
   type TaggableItem,
   setProductStage,
+  type EventFields,
   type NewProductInput,
   type ProductRow,
   type ProductsByProject,
@@ -28,7 +31,7 @@ export function useAllProjectProducts() {
     queryKey: BULK_KEY,
     queryFn: async (): Promise<ProductsByProject> => {
       const data = (await fetchApi<unknown>('/api/projects/products')) as unknown as Partial<ProductsByProject>
-      return { byProject: data.byProject ?? {}, kinds: data.kinds ?? [] }
+      return { byProject: data.byProject ?? {}, kinds: data.kinds ?? [], roles: data.roles ?? NO_ROLES }
     },
     staleTime: 30 * 1000,
   })
@@ -41,7 +44,7 @@ export function useProjectProducts(slug: string | null) {
     queryKey: key(slug ?? ''),
     queryFn: async (): Promise<ProjectProducts> => {
       const data = (await fetchApi<unknown>(`/api/projects/${encodeURIComponent(slug ?? '')}/products`)) as unknown as Partial<ProjectProducts>
-      return { products: data.products ?? [], kinds: data.kinds ?? [] }
+      return { products: data.products ?? [], kinds: data.kinds ?? [], roles: data.roles ?? NO_ROLES }
     },
     staleTime: 30 * 1000,
     enabled: !!slug,
@@ -166,6 +169,37 @@ export function useDescribeProduct(slug: string) {
   return useMutation({
     mutationFn: (v: { productId: string; description: string }) => describeProduct(slug, v.productId, v.description),
     onError: (err) => showError(`Could not save the description — ${reason(err)}`),
+    onSettled: () => refresh(qc, slug),
+  })
+}
+
+/** Save a product's event date and Nick's role (schema-v135). Optimistic on
+ *  that product; a refusal refetches the truth and says why in plain words. */
+export function useSetProductEvent(slug: string) {
+  const qc = useQueryClient()
+  const { showError, showSuccess } = useUndoToast()
+  return useMutation({
+    mutationFn: (v: { productId: string; fields: Partial<EventFields>; seen: { seq: number; values: Partial<EventFields> } }) =>
+      setProductEvent(slug, v.productId, v.fields, v.seen),
+    onMutate: async (v) => {
+      await qc.cancelQueries({ queryKey: key(slug) })
+      await qc.cancelQueries({ queryKey: BULK_KEY })
+      patchCached(qc, slug, v.productId, v.fields)
+    },
+    onSuccess: (written, v) => {
+      patchCached(qc, slug, v.productId, {
+        seq: written.seq,
+        event_date: written.event_date ?? null,
+        nick_author_position: written.nick_author_position ?? null,
+        nick_event_role: written.nick_event_role ?? null,
+      })
+      showSuccess('Saved')
+    },
+    onError: (err) => {
+      qc.invalidateQueries({ queryKey: key(slug) })
+      qc.invalidateQueries({ queryKey: BULK_KEY })
+      showError(`Could not save — ${reason(err)}`)
+    },
     onSettled: () => refresh(qc, slug),
   })
 }

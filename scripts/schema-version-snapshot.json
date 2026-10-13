@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "31b234760d1fae0e02bfca24c2b64fcf9829dd203f616f2e7a781a9b43f48056",
-  "file_count": 138,
+  "hash": "6ca8a1da403eba0fdd6a91d6aeb69bedecbe226764734f5e5aec5366e3f3234b",
+  "file_count": 139,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -140,11 +140,12 @@
     "schema-v131-product-scoped-items.sql",
     "schema-v132-product-kind-talk.sql",
     "schema-v133-drop-project-stage.sql",
-    "schema-v134-drop-legacy-grants.sql"
+    "schema-v134-drop-legacy-grants.sql",
+    "schema-v135-product-event-date-and-nick-role.sql"
   ],
   "version_range": [
     2,
-    134
+    135
   ],
   "gaps": [
     35,

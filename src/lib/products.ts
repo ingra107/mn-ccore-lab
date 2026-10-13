@@ -56,15 +56,135 @@ export interface ProductRow {
   grew_from_id: string | null
   /** The product's own text, under the project description (schema-v131). */
   description?: string | null
+  /** When it happened or will: 'YYYY', 'YYYY-MM' or 'YYYY-MM-DD' (schema-v135). */
+  event_date?: string | null
+  /** Nick's place on the byline (schema-v135): first, co_first, middle, senior, investigator. */
+  nick_author_position?: string | null
+  /** What Nick did at the event (schema-v135): presenter, moderator. */
+  nick_event_role?: string | null
   /** The row version the Worker uses for compare-and-swap. */
   seq: number
   created_at: string
   updated_at: string
 }
 
+/** The two vocabularies for Nick's part in a product (schema-v135 tables);
+ *  the Worker sends them with every product read. */
+export interface ProductRoles {
+  author_positions: { position: string; label: string; sort_order: number }[]
+  event_roles: { role: string; label: string; sort_order: number }[]
+}
+
+export const NO_ROLES: ProductRoles = { author_positions: [], event_roles: [] }
+
 export interface ProjectProducts {
   products: ProductRow[]
   kinds: ProductKind[]
+  roles?: ProductRoles
+}
+
+// ── when it happened, and Nick's part (schema-v135) ────────
+
+/** The kinds whose date is when they HAPPENED: a talk given, an abstract
+ *  presented. Their card shows that date, never "Due" (Nick 2026-10-12: a
+ *  delivered talk should not read "Due Feb 11"). */
+export const EVENT_KINDS: readonly string[] = ['talk', 'abstract']
+
+/** The date facts a product card shows. An event date is shown as written
+ *  (`formatEvent` keeps a month a month); due and deadline dates go through
+ *  `formatDue`, as they always have. For a talk or an
+ *  abstract, "Due" shows only while it is still ahead (not on a terminal
+ *  rung); a delivered one with a day left in due_date (a row the v135
+ *  backfill has not reached) shows that day as its date, without "Due". */
+export function productDateFacts(
+  p: Pick<ProductRow, 'kind' | 'stage_is_terminal' | 'due_date' | 'deadline' | 'event_date'>,
+  formatEvent: (iso: string) => string,
+  formatDue: (iso: string) => string,
+): string[] {
+  const out: string[] = []
+  const eventKind = EVENT_KINDS.includes(p.kind)
+  const happened = eventKind && p.stage_is_terminal === 1
+  const when = p.event_date || (happened ? p.due_date : null)
+  if (when) out.push(formatEvent(when))
+  if (p.due_date && !happened) out.push(`Due ${formatDue(p.due_date)}`)
+  if (p.deadline && !happened) out.push(`Deadline ${formatDue(p.deadline)}`)
+  return out
+}
+
+/** "First author, presenter", "Presenter", "Senior author", or null. */
+export function nickRoleLabel(
+  p: Pick<ProductRow, 'nick_author_position' | 'nick_event_role'>, roles: ProductRoles,
+): string | null {
+  const pos = p.nick_author_position
+    ? roles.author_positions.find((r) => r.position === p.nick_author_position)?.label ?? p.nick_author_position
+    : null
+  const role = p.nick_event_role
+    ? roles.event_roles.find((r) => r.role === p.nick_event_role)?.label ?? p.nick_event_role
+    : null
+  if (pos && role) return `${pos}, ${role.toLowerCase()}`
+  return pos ?? role
+}
+
+/** The Manuscripts page's role filter (Nick 2026-10-12: presenter, first,
+ *  senior, middle). "First" includes co-first. */
+export const ROLE_FILTERS: readonly { value: string; label: string }[] = [
+  { value: 'presenter', label: 'Presenter' },
+  { value: 'first', label: 'First' },
+  { value: 'senior', label: 'Senior' },
+  { value: 'middle', label: 'Middle' },
+]
+
+export function matchesRoleFilter(
+  p: Pick<ProductRow, 'nick_author_position' | 'nick_event_role'>, filter: string,
+): boolean {
+  switch (filter) {
+    case '': return true
+    case 'presenter': return p.nick_event_role === 'presenter'
+    case 'first': return p.nick_author_position === 'first' || p.nick_author_position === 'co_first'
+    default: return p.nick_author_position === filter
+  }
+}
+
+/** The Manuscripts page's kind-tab order: the kinds stay in the order they
+ *  came (the grouped All list draws one section per run of a kind), and
+ *  inside a kind the newest event comes first. A product with no event date
+ *  keeps its place after the dated ones, in the order it came (Array.sort is
+ *  stable). An ISO prefix sorts as text: '2019' < '2019-05' < '2019-05-03'. */
+export function byEventDateDesc<T extends { product: Pick<ProductRow, 'kind' | 'event_date'> }>(rows: readonly T[]): T[] {
+  const kindOrder = new Map<string, number>()
+  for (const r of rows) if (!kindOrder.has(r.product.kind)) kindOrder.set(r.product.kind, kindOrder.size)
+  return [...rows].sort((a, b) => {
+    const k = kindOrder.get(a.product.kind)! - kindOrder.get(b.product.kind)!
+    if (k !== 0) return k
+    const x = a.product.event_date ?? ''
+    const y = b.product.event_date ?? ''
+    if (x === y) return 0
+    if (!x) return 1
+    if (!y) return -1
+    return x < y ? 1 : -1
+  })
+}
+
+/** Why a typed event date would be refused, or null: 'YYYY', 'YYYY-MM' or
+ *  'YYYY-MM-DD' with a real month and day. The Worker (eventDateRefusal) and
+ *  schema-v135's CHECK are the rule; this only says it before the write.
+ *  Empty is allowed: it clears the date. */
+export function eventDateInputError(v: string): string | null {
+  if (v === '') return null
+  if (/^\d{4}$/.test(v)) return null
+  const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(v)
+  if (!m) return 'Use YYYY, YYYY-MM or YYYY-MM-DD.'
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), m[3] ? Number(m[3]) : 1]
+  const t = new Date(Date.UTC(y, mo - 1, d))
+  return t.getUTCMonth() === mo - 1 && t.getUTCDate() === d ? null : 'That is not a date on the calendar.'
+}
+
+/** The fields the product detail edits through the member route's 'terms'
+ *  action. Empty clears. */
+export interface EventFields {
+  event_date: string | null
+  nick_author_position: string | null
+  nick_event_role: string | null
 }
 
 /** The name shown for a product: short name, else title, else its kind
@@ -247,12 +367,28 @@ export function describeProduct(slug: string, productId: string, description: st
   return write(slug, { action: 'describe', product_id: productId, description })
 }
 
+/** Set a product's event date and Nick's role (schema-v135) through the
+ *  'terms' action. `seen` (the seq and the values this screen showed) makes
+ *  it a compare-and-swap: a stale tab is refused, never overwrites. */
+export async function setProductEvent(
+  slug: string, productId: string, fields: Partial<EventFields>,
+  seen: { seq: number; values: Partial<EventFields> },
+): Promise<WrittenProduct & Partial<EventFields>> {
+  const resp = (await fetchApi<unknown>(`/api/projects/${encodeURIComponent(slug)}/products`, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'terms', product_id: productId, fields, base_seq: seen.seq, from: seen.values }),
+  })) as unknown as { product?: WrittenProduct & Partial<EventFields> }
+  if (!resp?.product) throw new Error('the Worker answered without the product')
+  return resp.product
+}
+
 // ── the list views (Projects, Manuscripts) ──────────────────
 
 /** GET /api/projects/products: every visible project's products. */
 export interface ProductsByProject {
   byProject: Record<string, ProductRow[]>
   kinds: ProductKind[]
+  roles?: ProductRoles
 }
 
 /** The product a list row speaks for: the live home, else the only product,

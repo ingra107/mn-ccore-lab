@@ -1,19 +1,26 @@
 import { useMemo, useState, useSyncExternalStore } from 'react'
 import { Plus, Home as HomeIcon } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { formatShortDate } from '../../lib/dateUtils'
+import { formatPublicationDate, formatShortDate } from '../../lib/dateUtils'
 import {
   useAddProduct,
   useProjectProducts,
+  useSetProductEvent,
   useSetProductHome,
   useSetProductStage,
 } from '../../hooks/useProjectProducts'
 import {
+  eventDateInputError,
   groupByKind,
   ladderFor,
+  NO_ROLES,
+  nickRoleLabel,
+  productDateFacts,
   productLabel,
   sortProducts,
+  type EventFields,
   type ProductKind,
+  type ProductRoles,
   type ProductRow,
 } from '../../lib/products'
 
@@ -61,6 +68,7 @@ export default function ProjectProducts({ slug, stats, selectedId = null, onSele
   const openId = filters ? selectedId : localOpen
   const setOpenId = (id: string | null) => { if (filters) onSelect?.(id); else setLocalOpen(id) }
   const kinds = data?.kinds ?? []
+  const roles = data?.roles ?? NO_ROLES
   const selected = products.find((p) => p.id === openId) ?? null
   // The open product always has its chip, even when it is past the cap.
   let shown = products.slice(0, MAX_CHIPS)
@@ -166,6 +174,7 @@ export default function ProjectProducts({ slug, stats, selectedId = null, onSele
             product={selected}
             products={products}
             kinds={kinds}
+            roles={roles}
             slug={slug}
             canEdit={canEdit}
             showHomeControl={products.length > 1}
@@ -298,11 +307,12 @@ function InlineLadder({
 }
 
 function ProductDetail({
-  product, products, kinds, slug, canEdit, showHomeControl,
+  product, products, kinds, roles, slug, canEdit, showHomeControl,
 }: {
   product: ProductRow
   products: ProductRow[]
   kinds: ProductKind[]
+  roles: ProductRoles
   slug: string
   canEdit: boolean
   showHomeControl: boolean
@@ -313,13 +323,17 @@ function ProductDetail({
   const parent = product.grew_from_id ? products.find((p) => p.id === product.grew_from_id) : undefined
 
   const move = useStageMover(product, ladder, slug)
+  const [editingEvent, setEditingEvent] = useState(false)
 
   const facts: string[] = []
   if (product.waiting_on) facts.push(`Waiting on ${product.waiting_on}`)
   if (product.venue) facts.push(product.venue)
   if (parent) facts.push(`Grew from ${productLabel(parent)}`)
-  if (product.due_date) facts.push(`Due ${formatShortDate(product.due_date)}`)
-  if (product.deadline) facts.push(`Deadline ${formatShortDate(product.deadline)}`)
+  // A talk or an abstract shows when it happened, never "Due" once given
+  // (schema-v135); every other kind keeps its due date and deadline.
+  facts.push(...productDateFacts(product, formatPublicationDate, formatShortDate))
+  const role = nickRoleLabel(product, roles)
+  if (role) facts.push(`Nick: ${role}`)
 
   return (
     <div className="pp-detail" data-testid={`product-detail-${product.id}`}>
@@ -395,8 +409,96 @@ function ProductDetail({
           Stage: {product.stage_label}
         </div>
       )}
-      {facts.length > 0 && <div className="pp-dim pp-facts">{facts.join(' · ')}</div>}
+      {facts.length > 0 && (
+        <div className="pp-dim pp-facts" data-testid={`product-facts-${product.id}`}>{facts.join(' · ')}</div>
+      )}
+      {canEdit && !editingEvent && (
+        <button
+          type="button"
+          className="pp-link pp-event-edit"
+          onClick={() => setEditingEvent(true)}
+          data-testid={`product-event-edit-${product.id}`}
+        >
+          {product.event_date || product.nick_author_position || product.nick_event_role ? 'Edit date and role' : 'Add date and role'}
+        </button>
+      )}
+      {canEdit && editingEvent && (
+        <EventForm product={product} roles={roles} slug={slug} onDone={() => setEditingEvent(false)} />
+      )}
     </div>
+  )
+}
+
+// ── the event date and Nick's role (schema-v135) ─────────────
+
+function EventForm({
+  product, roles, slug, onDone,
+}: { product: ProductRow; roles: ProductRoles; slug: string; onDone: () => void }) {
+  const save = useSetProductEvent(slug)
+  const seenValues: EventFields = {
+    event_date: product.event_date ?? null,
+    nick_author_position: product.nick_author_position ?? null,
+    nick_event_role: product.nick_event_role ?? null,
+  }
+  const [date, setDate] = useState(seenValues.event_date ?? '')
+  const [position, setPosition] = useState(seenValues.nick_author_position ?? '')
+  const [role, setRole] = useState(seenValues.nick_event_role ?? '')
+  const dateError = eventDateInputError(date.trim())
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (dateError) return
+    const next: EventFields = {
+      event_date: date.trim() || null,
+      nick_author_position: position || null,
+      nick_event_role: role || null,
+    }
+    // Send only what changed; the compare-and-swap names exactly those fields.
+    const keys = (Object.keys(next) as (keyof EventFields)[]).filter((k) => next[k] !== seenValues[k])
+    if (keys.length === 0) { onDone(); return }
+    save.mutate({
+      productId: product.id,
+      fields: Object.fromEntries(keys.map((k) => [k, next[k]])),
+      seen: { seq: product.seq, values: Object.fromEntries(keys.map((k) => [k, seenValues[k]])) },
+    }, { onSuccess: onDone })
+  }
+
+  return (
+    <form className="pp-form pp-event-form" onSubmit={submit} data-testid={`product-event-form-${product.id}`}>
+      <label className="pp-f">
+        <span>Date</span>
+        <input
+          type="text"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          placeholder="2019-05 or 2019-05-21"
+          maxLength={10}
+          aria-invalid={!!dateError}
+          data-testid="product-event-date"
+        />
+      </label>
+      <label className="pp-f">
+        <span>Nick on the byline</span>
+        <select value={position} onChange={(e) => setPosition(e.target.value)} data-testid="product-event-position">
+          <option value="">Not an author</option>
+          {roles.author_positions.map((r) => <option key={r.position} value={r.position}>{r.label}</option>)}
+        </select>
+      </label>
+      <label className="pp-f">
+        <span>Nick at the event</span>
+        <select value={role} onChange={(e) => setRole(e.target.value)} data-testid="product-event-role">
+          <option value="">No role</option>
+          {roles.event_roles.map((r) => <option key={r.role} value={r.role}>{r.label}</option>)}
+        </select>
+      </label>
+      <div className="pp-form-actions">
+        <button type="submit" className="pp-go" disabled={!!dateError || save.isPending} data-testid="product-event-save">
+          Save
+        </button>
+        <button type="button" className="pp-link" onClick={onDone}>Cancel</button>
+      </div>
+      {dateError && <div className="pp-dim pp-event-err" role="alert">{dateError}</div>}
+    </form>
   )
 }
 
@@ -548,6 +650,9 @@ span.pp-dot { cursor: default; }
 .pp-step .project-stage-label { margin-top: 8px; font-size: 10px; line-height: 1.2; text-align: center; color: var(--sk-t3); }
 .pp-step .project-stage-label.is-current { color: var(--job-accent); font-weight: 700; }
 .pp-facts { margin-top: 12px; }
+.pp-event-edit { margin-top: 6px; margin-left: -6px; }
+.pp-event-form { margin: 10px 0 0; border-bottom: 0; padding-bottom: 0; }
+.pp-event-err { flex-basis: 100%; }
 .pp-empty { padding: 4px 2px 8px; }
 .pp-form {
   display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 14px;

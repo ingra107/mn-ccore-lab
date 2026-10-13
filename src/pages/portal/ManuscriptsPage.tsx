@@ -39,7 +39,7 @@ import { usePageMeta } from '../../hooks/usePageMeta'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { useAllProjectProducts, useSetProductStage } from '../../hooks/useProjectProducts'
-import { homeOf, kindsForManuscriptsTab, ladderFor, manuscriptsPageTabs, MANUSCRIPT_LADDER_FALLBACK, productLabel, productsOfKinds, type ProductRow } from '../../lib/products'
+import { byEventDateDesc, homeOf, kindsForManuscriptsTab, ladderFor, manuscriptsPageTabs, MANUSCRIPT_LADDER_FALLBACK, matchesRoleFilter, NO_ROLES, productLabel, productsOfKinds, ROLE_FILTERS, type ProductRow } from '../../lib/products'
 import { PATHS } from '../../constants/paths'
 import { parseDbUtc } from '../../lib/time'
 import { parseDateOnlyOrTimestamp } from '../../lib/dateUtils'
@@ -135,6 +135,17 @@ export default function ManuscriptsPage() {
       return out
     }, { replace: true })
   }
+  // Nick's role on a talk or an abstract (schema-v135; Nick 2026-10-12:
+  // presenter, first, senior, middle). ?role= so a filtered tab can be linked.
+  const roleParam = searchParams.get('role') ?? ''
+  const setRoleFilter = (next: string) => {
+    setSearchParams((prev) => {
+      const out = new URLSearchParams(prev)
+      if (next) out.set('role', next)
+      else out.delete('role')
+      return out
+    }, { replace: true })
+  }
   const [filterStalled, setFilterStalled] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   // null = stage order (with stage headers); a header click cycles asc -> desc -> cleared.
@@ -209,10 +220,22 @@ export default function ManuscriptsPage() {
       }, { replace: true })
     }
   }, [productData, kindParamRaw, kindTabs, setSearchParams])
-  const kindRows = useMemo(() => {
+  // The kind tabs list newest event first (a talk given, an abstract
+  // presented), then narrow to Nick's role. The counts on the role links are
+  // over the whole tab, so a link says how many it would show.
+  const kindTabRows = useMemo(() => {
     if (kindTab === 'manuscript' || !productData) return []
-    return productsOfKinds(productData.byProject, projects, kindsForManuscriptsTab(kindTab, productData.kinds))
+    return byEventDateDesc(productsOfKinds(productData.byProject, projects, kindsForManuscriptsTab(kindTab, productData.kinds)))
   }, [kindTab, productData, projects])
+  const roleFilter = ROLE_FILTERS.some((f) => f.value === roleParam) ? roleParam : ''
+  const kindRows = useMemo(
+    () => kindTabRows.filter((r) => matchesRoleFilter(r.product, roleFilter)),
+    [kindTabRows, roleFilter],
+  )
+  const roleOptions = useMemo(() => [
+    { value: '', label: 'Any role' },
+    ...ROLE_FILTERS.map((f) => ({ ...f, count: kindTabRows.filter((r) => matchesRoleFilter(r.product, f.value)).length })),
+  ], [kindTabRows])
   const kindLabel = kindTabs.find((t) => t.value === kindTab)?.label ?? ''
   const isManuscriptRow = useCallback(
     (p: ManuscriptRow) => (STAGE_ORDER[p.stage] ?? -1) >= writingOrdinal,
@@ -434,12 +457,23 @@ export default function ManuscriptsPage() {
               </div>
             )}
             {kindTab === 'manuscript' && manuscriptCategoryPills}
+            {kindTab !== 'manuscript' && (
+              <div style={{ padding: '0 0 var(--sp-md)' }} data-testid="product-role-filter">
+                <FilterLinks
+                  ariaLabel="Filter by Nick's role"
+                  controls="product-kind-list"
+                  value={roleFilter}
+                  onChange={setRoleFilter}
+                  options={roleOptions}
+                />
+              </div>
+            )}
           </>
         }
       >
         {/* ─── KIND TABS ─── one row per product of the kind (or every kind, grouped) */}
         {kindTab !== 'manuscript' && (
-          <ProductKindList rows={kindRows} kinds={productData?.kinds ?? []} grouped={kindTab === 'all'} />
+          <ProductKindList rows={kindRows} kinds={productData?.kinds ?? []} roles={productData?.roles ?? NO_ROLES} grouped={kindTab === 'all'} />
         )}
         {/* ─── LIST VIEW ─── the shared sleek row (evaluation item 39) */}
         {kindTab === 'manuscript' && view === 'list' && (

@@ -24,7 +24,7 @@ import type { AuthUser } from '../helpers';
 import { applyMutation, hashTouched } from './mutations';
 import { activityVisibilityGate } from '../lib/activity-entry';
 
-/** Columns PB's cache holds (PB scripts/db/migrations/144_products.sql + 146 + 147). */
+/** Columns PB's cache holds (PB scripts/db/migrations/144_products.sql + 146 + 147 + 149). */
 const SYNC_COLS: Record<'products' | 'product_funding', string> = {
   products: [
     'id', 'project_id', 'kind', 'stage', 'title', 'short_name', 'waiting_on',
@@ -32,6 +32,7 @@ const SYNC_COLS: Record<'products' | 'product_funding', string> = {
     'stage_notes', 'sort_order', 'is_home', 'lineage_rank', 'grew_from_id',
     'grew_from_rank', 'deleted_at', 'seq', 'last_mutation_id', 'created_at', 'updated_at',
     'period_start', 'period_end', 'amount_usd', 'description',
+    'event_date', 'nick_author_position', 'nick_event_role',
   ].join(', '),
   product_funding: [
     'id', 'product_id', 'funder_id', 'funder_kind', 'deleted_at', 'seq',
@@ -79,7 +80,8 @@ export const PRODUCT_LIST_SQL = `SELECT p.id, p.project_id, p.kind, k.label AS k
             p.title, p.short_name, p.waiting_on, p.venue, p.due_date, p.deadline,
             p.folder, p.repo_url, p.stage_entered_at, p.stage_notes, p.sort_order,
             p.is_home, p.lineage_rank, p.grew_from_id, p.seq, p.created_at, p.updated_at,
-            p.period_start, p.period_end, p.amount_usd, p.description
+            p.period_start, p.period_end, p.amount_usd, p.description,
+            p.event_date, p.nick_author_position, p.nick_event_role
        FROM products p
        JOIN product_kinds k ON k.kind = p.kind
        JOIN product_stages s ON s.kind = p.kind AND s.stage = p.stage`;
@@ -103,6 +105,20 @@ export async function kindsWithLadders(env: Env): Promise<Record<string, unknown
   return (kinds.results ?? []).map((k) => ({ ...k, stages: ladders.get(k.kind as string) ?? [] }));
 }
 
+/** Nick's author positions and event roles (schema-v135): the vocabularies are
+ *  data, like the kinds, so the UI draws its filter and its pickers from here. */
+export async function productRoles(env: Env): Promise<{
+  author_positions: Record<string, unknown>[]; event_roles: Record<string, unknown>[]
+}> {
+  const [positions, roles] = await Promise.all([
+    env.DB.prepare('SELECT position, label, sort_order FROM product_author_positions ORDER BY sort_order, position')
+      .all<Record<string, unknown>>(),
+    env.DB.prepare('SELECT role, label, sort_order FROM product_event_roles ORDER BY sort_order, role')
+      .all<Record<string, unknown>>(),
+  ]);
+  return { author_positions: positions.results ?? [], event_roles: roles.results ?? [] };
+}
+
 export async function handleGetProjectProducts(
   slugOrId: string, env: Env,
 ): Promise<Response> {
@@ -117,7 +133,7 @@ export async function handleGetProjectProducts(
       WHERE p.project_id = ? AND p.deleted_at IS NULL
       ORDER BY p.is_home DESC, p.sort_order, p.id`,
   ).bind(project.id).all<Record<string, unknown>>();
-  return json({ products: results ?? [], kinds: await kindsWithLadders(env) });
+  return json({ products: results ?? [], kinds: await kindsWithLadders(env), roles: await productRoles(env) });
 }
 
 // GET /api/projects/products -- the list views' bulk read (Projects list
@@ -134,7 +150,7 @@ export async function handleGetAllProjectProducts(env: Env): Promise<Response> {
   ).all<Record<string, unknown>>();
   const byProject: Record<string, Record<string, unknown>[]> = {};
   for (const r of results ?? []) (byProject[r.project_id as string] ??= []).push(r);
-  return json({ byProject, kinds: await kindsWithLadders(env) });
+  return json({ byProject, kinds: await kindsWithLadders(env), roles: await productRoles(env) });
 }
 
 // ── POST /api/projects/:slug/products ───────────────────────────────────────
@@ -156,7 +172,9 @@ export async function handleGetAllProjectProducts(env: Env): Promise<Response> {
 //       period_start?, period_end?, amount_usd?}, base_seq?, from? }
 //       The Grants page's inline edits and Gantt drag; base_seq + from (the
 //       values the screen showed) make it a compare-and-swap. schema-v128
-//       CHECKs each term against the kind.
+//       CHECKs each term against the kind. Also event_date ('YYYY', 'YYYY-MM'
+//       or 'YYYY-MM-DD'), nick_author_position and nick_event_role
+//       (schema-v135), which the project page's product detail edits.
 //   { action: 'milestone', product_id, title, due_date?, deadline? }
 //       A post-award milestone: a kind='milestone' task on the product.
 //   { action: 'describe', product_id, description }
@@ -241,6 +259,25 @@ export async function handleProjectProductWrite(
     for (const [k, v] of Object.entries(fields)) {
       if (!TERM_FIELDS.has(k)) return error(`${k} cannot be set here`, 400);
       if (v === '' || v === null || v === undefined) { patch[k] = null; continue; }
+      if (k === 'event_date') {
+        const why = eventDateRefusal(v);
+        if (why) return error(why, 400);
+        patch[k] = v;
+        continue;
+      }
+      if (k === 'nick_author_position' || k === 'nick_event_role') {
+        // The vocabulary is a table (schema-v135's FK); say so in words before
+        // the FK refusal would answer with a constraint name.
+        const [table, col] = k === 'nick_author_position'
+          ? ['product_author_positions', 'position'] : ['product_event_roles', 'role'];
+        const known = typeof v === 'string'
+          && !!(await env.DB.prepare(`SELECT 1 FROM ${table} WHERE ${col} = ?`).bind(v).first());
+        if (!known) {
+          return error(`${String(v)} is not a ${k === 'nick_author_position' ? 'byline position' : 'role at the event'}.`, 400);
+        }
+        patch[k] = v;
+        continue;
+      }
       if (k === 'amount_usd') {
         const n = typeof v === 'number' ? v : Number(String(v).replace(/[$,\s]/g, ''));
         if (!Number.isInteger(n) || n < 0) return error('The amount is whole dollars, 0 or more.', 400);
@@ -397,13 +434,33 @@ export async function handleProjectProductWrite(
       venue: row.venue ?? null, due_date: row.due_date ?? null, deadline: row.deadline ?? null,
       period_start: row.period_start ?? null, period_end: row.period_end ?? null, amount_usd: row.amount_usd ?? null,
       description: row.description ?? null,
+      event_date: row.event_date ?? null,
+      nick_author_position: row.nick_author_position ?? null, nick_event_role: row.nick_event_role ?? null,
     },
   });
 }
 
-/** What the Grants page may set through the member route. */
-const TERM_FIELDS = new Set(['venue', 'due_date', 'deadline', 'period_start', 'period_end', 'amount_usd']);
+/** What the Grants page and the product detail may set through the member route. */
+const TERM_FIELDS = new Set([
+  'venue', 'due_date', 'deadline', 'period_start', 'period_end', 'amount_usd',
+  'event_date', 'nick_author_position', 'nick_event_role',
+]);
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Why an event date would be refused, in words, or null. schema-v135's CHECK
+ * is the rule (a year, a month or a calendar day); this only says it first.
+ */
+export function eventDateRefusal(v: unknown): string | null {
+  if (typeof v !== 'string') return 'The date is YYYY, YYYY-MM or YYYY-MM-DD.'
+  if (/^\d{4}$/.test(v)) return null
+  if (/^\d{4}-\d{2}$/.test(v)) {
+    const m = Number(v.slice(5))
+    return m >= 1 && m <= 12 ? null : `${v} is not a month.`
+  }
+  if (ISO_DATE.test(v)) return isCalendarDate(v) ? null : `${v} is not a date on the calendar.`
+  return 'The date is YYYY, YYYY-MM or YYYY-MM-DD.'
+}
 
 /** A real calendar day in YYYY-MM-DD: 2026-02-30 and 2026-13-01 are not.
  *  schema-v128's CHECK refuses them too (date(x) = x); this says so in words. */
