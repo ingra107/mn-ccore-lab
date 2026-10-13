@@ -108,7 +108,8 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
 
   // Compute mentee velocity with per-year rate
   const currentYear = new Date().getFullYear();
-  const velocityRows = ((menteeVelocity.results || []) as Array<{
+  // PI-only like the engagement list: each row names a trainee.
+  const velocityRows = !isPi ? [] : ((menteeVelocity.results || []) as Array<{
     slug: string;
     name: string;
     pub_count: number;
@@ -150,8 +151,9 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
       productsByStage: productsByStage.results || [],
     },
   });
-  // Lab-wide numbers for the PI: no shared or edge cache may keep them.
-  return isPi ? noStore(res) : res;
+  // The PI's body is lab-wide; a member's is scoped to the projects they belong
+  // to. Both differ per viewer, so no shared or edge cache may keep either.
+  return noStore(res);
 }
 
 // ── Lab pulse (Nick, 2026-10-11) ───────────────────────────

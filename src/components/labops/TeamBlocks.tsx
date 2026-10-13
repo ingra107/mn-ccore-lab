@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, CheckCircle2, Lightbulb } from 'lucide-react'
 import ChartCard from '../ui/ChartCard'
@@ -121,7 +121,7 @@ export function WorkloadBlock({ isPi, tasks, insights }: { isPi: boolean; tasks:
               <div style={{ width: 22, height: 22, flexShrink: 0 }}>
                 <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={22} decorative />
               </div>
-              <span className="text-[12px] w-28 truncate" style={{ color: 'var(--ink)' }}>{isPi ? person.name : person.name.split(' ')[0]}</span>
+              <span className="text-[12px] w-28 truncate" style={{ color: 'var(--ink)' }}>{person.name.split(' ')[0]}</span>
               <div className="flex-1 h-3.5 rounded overflow-hidden" style={{ backgroundColor: BAR_TRACK }}>
                 <div className="h-full rounded" style={{ width: `${Math.max((r.open / max) * 100, r.open > 0 ? 4 : 0)}%`, transition: 'width 300ms ease', ...rampBar(1) }} />
               </div>
@@ -159,7 +159,7 @@ export function WorkloadBlock({ isPi, tasks, insights }: { isPi: boolean; tasks:
 // ── Forecast (PI) ──────────────────────────────────────────
 
 /** Tasks due per person for this week and the three after, Monday weeks; the selected week's weekdays sit under it. */
-export function ForecastBlock({ tasks, insights }: { tasks: TaskRow[]; insights?: InsightsDashboardData }) {
+export function ForecastBlock({ tasks, insights, unavailable }: { tasks: TaskRow[]; insights?: InsightsDashboardData; unavailable?: ReactNode }) {
   const [byDay, setByDay] = useState(false)
   const { members, weeks } = useMemo(() => {
     const thisMonday = mondayOf(new Date())
@@ -223,6 +223,7 @@ export function ForecastBlock({ tasks, insights }: { tasks: TaskRow[]; insights?
           })}
         </div>
       )}
+      {!insights && unavailable && <div className="mt-4">{unavailable}</div>}
       {insights && (
         <div className="mt-4">
           <button type="button" className="tk-btn tk-sm" aria-expanded={byDay ? 'true' : 'false'} onClick={() => setByDay((v) => !v)}>
@@ -268,7 +269,7 @@ function WeekdayGrid({ rows }: { rows: InsightsDashboardData['workloadHeatmap'] 
                 style={{ color: 'var(--ink)', textDecoration: 'none' }}
                 title={`Open ${person.name}'s profile`}
               >
-                {person.name}
+                {person.name.split(' ')[0]}
               </Link>
               {keys.map((d) => (
                 <div

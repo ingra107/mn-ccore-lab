@@ -2,7 +2,6 @@ import { BarChart3 } from 'lucide-react'
 import PageHeader from '../../../components/PageHeader'
 import PageContainer from '../../../components/PageContainer'
 import QueryState from '../../../components/QueryState'
-import ChartCard from '../../../components/ui/ChartCard'
 import CollapsibleSection from '../../../components/CollapsibleSection'
 import { CardSkeleton } from '../../../components/LoadingSkeleton'
 import { ActiveTile } from '../../../components/labpulse/LabPulseTiles'
@@ -78,10 +77,11 @@ export default function TeamTab() {
                   <WorkloadBlock isPi tasks={w.tasks} insights={ins.data} />
                   <ActiveTile />
                 </div>
-                {ins.isError && (
-                  <ChartCard title="Forecast" count="PI only"><BlockUnavailable forbidden={isForbidden(ins.error)} what="The weekday forecast" /></ChartCard>
-                )}
-                <ForecastBlock tasks={w.tasks} insights={ins.data} />
+                <ForecastBlock
+                  tasks={w.tasks}
+                  insights={ins.data}
+                  unavailable={ins.isError ? <BlockUnavailable forbidden={isForbidden(ins.error)} what="The weekday forecast" /> : undefined}
+                />
                 <CollapsibleSection title="Commitments and lab activity" storageKey="lab-team-more">
                   <div className="flex flex-col gap-4">
                     <CommitmentsBlock data={pi.data} />

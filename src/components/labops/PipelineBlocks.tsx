@@ -191,7 +191,6 @@ export function ProductsByStageBlock({ rows }: { rows: ProductStageCount[] | und
               <Link
                 key={`${r.kind}:${r.stage}`}
                 to={funnelHref(r.kind)}
-                role="img"
                 aria-label={`${label}: ${r.count} ${r.count === 1 ? 'product' : 'products'}`}
                 className="flex items-center gap-2"
                 style={{ color: 'inherit', textDecoration: 'none' }}

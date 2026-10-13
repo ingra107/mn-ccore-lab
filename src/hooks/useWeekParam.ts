@@ -33,8 +33,12 @@ export function useWeekParam() {
     week,
     monday,
     isCurrent,
-    /** The `?week=` to send the API: undefined for the current week. */
-    apiWeek: isCurrent ? undefined : week,
+    /**
+     * The `?week=` to send the API: always explicit. The label is the viewer's
+     * local ISO week; the server's own "current week" is UTC, so leaving it off
+     * could show one week's label over another week's data near Sunday night.
+     */
+    apiWeek: week as string | undefined,
     prev: () => setWeek(shiftIsoWeek(week, -1)),
     next: () => setWeek(shiftIsoWeek(week, 1)),
     reset: () => setWeek(thisWeek),
