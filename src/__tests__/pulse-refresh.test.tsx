@@ -47,4 +47,25 @@ describe('Pulse kiosk refresh', () => {
     vi.advanceTimersByTime(5 * 60 * 1000)
     expect(spy).toHaveBeenCalledTimes(2)
   })
+
+  it('logged out: requests no members-only API and shows no task tile', async () => {
+    const fetchMock = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ data: [] }) }))
+    vi.stubGlobal('fetch', fetchMock)
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const anon = { email: '', slug: '', isAuthenticated: false, isPi: false, isMember: false, canShowAllProjects: false, piResolved: true } as AuthUser
+    const host = await mount(
+      <QueryClientProvider client={queryClient}>
+        <AuthContext.Provider value={{ user: anon, isAuthenticated: false, isLoading: false }}>
+          <Pulse />
+        </AuthContext.Provider>
+      </QueryClientProvider>,
+      { ready: (h) => h.textContent?.includes('active projects'), label: 'Pulse hero' },
+    )
+    await new Promise((r) => setTimeout(r, 100))
+    const urls = (fetchMock.mock.calls as unknown as unknown[][]).map((c) => String(c[0]))
+    expect(urls.some((u) => u.includes('/api/tasks'))).toBe(false)
+    expect(urls.some((u) => u.includes('/api/activity'))).toBe(false)
+    expect(host.textContent).not.toContain('Active tasks')
+    expect(host.textContent).not.toMatch(/[0-9]+ active tasks/)
+  })
 })
