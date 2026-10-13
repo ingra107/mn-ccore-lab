@@ -58,17 +58,17 @@
 -- are Hub-only, like product_kinds.
 --
 -- DEPENDENCY: numbered after v134 (schema-v134-drop-legacy-grants, live on
--- TEST, not on prod as of 2026-10-12). Neither touches the other's tables, so
--- either may reach prod first; the schema_migrations ledger records each.
+-- prod since 2026-10-12). Neither touches the other's tables.
 --
 -- APPLY (TEST first; prod waits for Nick's go; BEFORE the Worker whose
 -- SYNC_COLS / PRODUCT_LIST_SQL name the columns, or every product read 500s):
 --   scripts/wrangler-d1 d1 execute mnccore-lab-test --remote --file=api/schema-v135-product-event-date-and-nick-role.sql
 --   scripts/wrangler-d1 d1 execute mnccore-lab      --remote --file=api/schema-v135-product-event-date-and-nick-role.sql
 -- Not re-runnable (ADD COLUMN); the schema_migrations row says it landed.
--- ROLLBACK (columns first: their FKs name the tables):
+-- ROLLBACK (columns first: their FKs name the tables; the index before its column):
 --   ALTER TABLE products DROP COLUMN nick_event_role;
 --   ALTER TABLE products DROP COLUMN nick_author_position;
+--   DROP INDEX IF EXISTS idx_products_event_date;
 --   ALTER TABLE products DROP COLUMN event_date;
 --   DROP TABLE IF EXISTS product_event_roles;
 --   DROP TABLE IF EXISTS product_author_positions;
