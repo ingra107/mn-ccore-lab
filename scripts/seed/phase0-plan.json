@@ -105,15 +105,11 @@
     {"task_description": "test_delete_Finalize figure 1", "emoji": "fire"}
   ],
   "_direct_sql_notes": {
-    "grants": "no POST route — use wrangler d1 execute with INSERT INTO grants. See Task 2 Step 2.",
     "milestones": "no POST route — deadlines page reads milestones table. project_id → projects.slug. See Task 2 Step 2.",
     "manuscript_revisions": "no POST route — child of projects. See Task 2 Step 2.",
     "research_digest": "no POST route — backend sync table. See Task 2 Step 2."
   },
   "direct_sql_rows": {
-    "grants": [
-      {"title": "test_delete_K99 Fake Exploratory Award", "mechanism": "K99", "pi": "nate-mesfin", "agency": "NHLBI", "start_date": "2027-01-01", "end_date": "2032-12-31", "proposed": 1, "status": "in_preparation"}
-    ],
     "milestones": [
       {"title": "test_delete_ARDS Biomarker pilot data freeze", "project_slug": "test_delete_ards_biomarker_pilot", "target_days": 14, "status": "pending"},
       {"title": "test_delete_Mentee F31 application due", "project_slug": "test_delete_mentee_grant_prep", "target_days": 30, "status": "pending"}

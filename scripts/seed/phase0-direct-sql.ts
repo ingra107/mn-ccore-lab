@@ -2,7 +2,8 @@
 /**
  * Phase 0 direct-SQL runner.
  * Inserts test_delete_ rows into tables that have no POST route:
- *   grants, milestones, manuscript_revisions, research_digest.
+ *   milestones, manuscript_revisions, research_digest (the legacy grants
+ *   table was dropped, schema-v134).
  *
  * Uses `wrangler d1 execute mnccore-lab --remote --command "..."` per row.
  * Reads project ids from the API (to resolve project_slug → proj_id for FKs).
@@ -96,20 +97,6 @@ async function run() {
 
   // Buffer rows to add to the manifest only after d1Flush() succeeds.
   const pending: Array<{ table: string; id: string; label: string }> = []
-
-  // grants
-  for (const g of direct.grants) {
-    assertPrefix('grant.title', g.title)
-    if (wasSeeded('grants', g.title)) { console.log(`  grants =${g.title} (skip)`); continue }
-    const id = `grant_${randomUUID().replace(/-/g, '').slice(0, 16)}`
-    d1Execute(
-      `INSERT INTO grants (id, mechanism, title, agency, pi, start_date, end_date, proposed, status) VALUES (` +
-      `${sqlEscape(id)}, ${sqlEscape(g.mechanism)}, ${sqlEscape(g.title)}, ${sqlEscape(g.agency)}, ` +
-      `${sqlEscape(g.pi)}, ${sqlEscape(g.start_date)}, ${sqlEscape(g.end_date)}, ${g.proposed}, ${sqlEscape(g.status)})`
-    )
-    pending.push({ table: 'grants', id, label: g.title })
-    console.log(`  grants +${g.title} (buffered)`)
-  }
 
   // milestones (deadlines page reads from here)
   // Schema: milestones.project_id REFERENCES projects(id) — must resolve slug→id.

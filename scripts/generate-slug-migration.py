@@ -53,7 +53,6 @@ SLUG_COLUMNS = [
     ("digest_comments", "author_slug"),
     ("expertise_tags", "member_slug"),
     ("file_attachments", "uploaded_by"),
-    ("grants", "pi"),
     ("ideas", "submitted_by"),
     ("inbox", "author"),
     ("lab_answers", "author_slug"),

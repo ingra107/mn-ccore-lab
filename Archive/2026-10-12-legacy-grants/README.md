@@ -4,4 +4,4 @@ Why: the Grants page reads grant products now (Nick 2026-10-12: "we can keep gra
 
 Proof nothing reads these: after this commit `grep -rn "grant-bucket\|grant-milestones" api src` finds only this folder. The bucket rule lives in api/routes/grants.ts (GRANT_BUCKET_SQL, from stage data).
 
-Still standing (phase 2, with Nick's go): the `grants`, `grant_milestones` and `nih_grants` tables. `milestones.grant_id REFERENCES grants(id)` must be dropped or rebuilt before `grants` can be.
+Phase 2: api/schema-v134-drop-legacy-grants.sql drops `milestones.grant_id` (the one FK into `grants`), then the `grant_milestones`, `nih_grants` and `grants` tables. The rows are backed up first by scripts/d1_table_backup.py to ~/PB-State/data/shared/backups/legacy-grants-2026-10-12.json.

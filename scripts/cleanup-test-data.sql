@@ -29,10 +29,6 @@ DELETE FROM meetings WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%'
 DELETE FROM activity_entries WHERE entity_type = 'project' AND entity_id IN (SELECT id FROM projects WHERE slug LIKE 'test_delete_%' OR title LIKE 'test_delete_%');
 DELETE FROM projects WHERE slug LIKE 'test_delete_%' OR title LIKE 'test_delete_%';
 
--- Grants + milestones
-DELETE FROM grant_milestones WHERE grant_id IN (SELECT id FROM grants WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%');
-DELETE FROM grants WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%';
-
 -- Mentee milestones
 DELETE FROM mentee_milestones WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%';
 

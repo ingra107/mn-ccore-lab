@@ -16,10 +16,9 @@ import { PROJECT_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/rout
 // dispatch + the placeholder. questions.ts keeps its own Ask-the-Lab copy
 // until that surface converges.)
 
-// GET /api/milestones?project_id=&grant_id=
+// GET /api/milestones?project_id=  (milestones.grant_id dropped, schema-v134)
 export async function handleGetMilestones(url: URL, env: Env): Promise<Response> {
   const projectId = url.searchParams.get('project_id');
-  const grantId = url.searchParams.get('grant_id');
 
   let query = 'SELECT * FROM milestones WHERE 1=1';
   const params: string[] = [];
@@ -27,11 +26,6 @@ export async function handleGetMilestones(url: URL, env: Env): Promise<Response>
   if (projectId) {
     query += ' AND project_id = ?';
     params.push(projectId);
-  }
-
-  if (grantId) {
-    query += ' AND grant_id = ?';
-    params.push(grantId);
   }
 
   query += ' ORDER BY target_date ASC';

@@ -40,9 +40,6 @@ DELETE FROM research_digest WHERE title LIKE 'test_delete_%';
 -- Publications (standalone)
 DELETE FROM publications WHERE title LIKE 'test_delete_%';
 
--- Grants (standalone)
-DELETE FROM grants WHERE title LIKE 'test_delete_%';
-
 -- Meetings (action items referencing meetings already cleaned via tasks delete below)
 DELETE FROM meetings WHERE title LIKE 'test_delete_%';
 

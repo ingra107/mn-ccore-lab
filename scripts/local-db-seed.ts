@@ -259,19 +259,9 @@ function run() {
   }
   d1Flush('reactions')
 
-  // ---- direct_sql_rows: grants, milestones, manuscript_revisions, research_digest ----
+  // ---- direct_sql_rows: milestones, manuscript_revisions, research_digest ----
+  // (the legacy grants table was dropped, schema-v134; a grant is a product)
   const direct = plan.direct_sql_rows ?? {}
-
-  for (const g of direct.grants ?? []) {
-    const id = mintId('grant')
-    d1Execute(
-      `INSERT INTO grants (id, mechanism, title, agency, pi, start_date, end_date, proposed) VALUES (` +
-      `${sqlEscape(id)}, ${sqlEscape(g.mechanism)}, ${sqlEscape(stripPrefix(g.title))}, ` +
-      `${sqlEscape(g.agency)}, ${sqlEscape(g.pi)}, ${sqlEscape(g.start_date)}, ` +
-      `${sqlEscape(g.end_date)}, ${g.proposed})`
-    )
-  }
-  d1Flush('grants')
 
   for (const m of direct.milestones ?? []) {
     const projectId = projectIdBySlug.get(m.project_slug)

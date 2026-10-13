@@ -16,8 +16,8 @@
 // handle (table-scope byProject on products): a member gets the projects they
 // are on, an anonymous reader the non-PB projects.
 //
-// The legacy `grants` table (a 2026-03-24 display seed for the dashboard card)
-// is no longer read; it retires in phase 2 with Nick's go.
+// The legacy `grants` table (a 2026-03-24 display seed for the dashboard card),
+// grant_milestones and nih_grants are dropped by schema-v134.
 // Decision: PB Context/Decisions/2026-10-12-product-award-terms.md.
 
 import type { Env } from '../types';

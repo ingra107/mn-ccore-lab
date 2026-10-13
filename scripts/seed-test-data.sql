@@ -57,20 +57,6 @@ INSERT INTO regulatory_items (id, project_id, item_type, title, protocol_number,
   ('test_delete_reg_cci_dua', 'iv-fluids-shortage', 'DUA', 'test_delete_CCI-ARDS Data Use Agreement', 'DUA-CCI-2025', '2025-05-15', '2026-05-15', '2026-03-15', 'action_needed', 'Renewal paperwork started, pending legal review', datetime('now','-250 days'));
 
 -- ============================================================================
--- 2 GRANTS + 5 GRANT MILESTONES
--- ============================================================================
-INSERT INTO grants (id, mechanism, title, agency, pi, start_date, end_date, proposed, total_funding, created_at) VALUES
-  ('test_delete_grant_r01_ml_icu', 'R01', 'test_delete_R01 — Machine Learning for ICU Outcome Prediction', 'NHLBI', 'Nick Ingraham', '2027-04-01', '2032-03-31', 1, 2400000, datetime('now','-60 days')),
-  ('test_delete_grant_k23_ihca', 'K23', 'test_delete_K23 — IHCA Survivability Calculator Development', 'NHLBI', 'Kendall McEachron', '2026-12-01', '2031-11-30', 1, 750000, datetime('now','-90 days'));
-
-INSERT INTO grant_milestones (id, grant_id, milestone_type, title, due_date, status, notes, created_at) VALUES
-  ('test_delete_gm_r01_loi', 'test_delete_grant_r01_ml_icu', 'letter_of_intent', 'test_delete_Submit Letter of Intent', '2026-06-15', 'upcoming', 'LOI to program officer', datetime('now','-60 days')),
-  ('test_delete_gm_r01_aims', 'test_delete_grant_r01_ml_icu', 'specific_aims', 'test_delete_Draft Specific Aims', '2026-07-30', 'upcoming', 'Internal review before external feedback', datetime('now','-60 days')),
-  ('test_delete_gm_r01_submit', 'test_delete_grant_r01_ml_icu', 'submission', 'test_delete_Full submission due', '2026-10-05', 'upcoming', 'NIH standard receipt date', datetime('now','-60 days')),
-  ('test_delete_gm_k23_letters', 'test_delete_grant_k23_ihca', 'mentor_letters', 'test_delete_Secure 3 mentor letters', '2026-09-01', 'upcoming', 'Nick primary + 2 secondary', datetime('now','-90 days')),
-  ('test_delete_gm_k23_biosketch', 'test_delete_grant_k23_ihca', 'biosketch', 'test_delete_Update biosketch', '2026-08-15', 'completed', 'Updated with 2025 publications', datetime('now','-90 days'));
-
--- ============================================================================
 -- 6 TASKS (assigned to non-Nick team members, linked to real projects)
 -- ============================================================================
 INSERT INTO tasks (id, title, description, assignee, priority, status, due_date, project_id, created_at, updated_at) VALUES

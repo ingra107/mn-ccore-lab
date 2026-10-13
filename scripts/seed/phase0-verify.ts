@@ -22,7 +22,6 @@ const CHECKS: Check[] = [
   { table: 'ideas',                 where: "title LIKE 'test_delete_%'" },
   { table: 'hub_decisions',          where: "title LIKE 'test_delete_%'" },
   { table: 'meetings',              where: "title LIKE 'test_delete_%'" },
-  { table: 'grants',                where: "title LIKE 'test_delete_%'" },
   { table: 'milestones',            where: "title LIKE 'test_delete_%'" },
   { table: 'manuscript_revisions',  where: "notes LIKE 'test_delete_%'" },
   { table: 'research_digest',       where: "title LIKE 'test_delete_%'" },
