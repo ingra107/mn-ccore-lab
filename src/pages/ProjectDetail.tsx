@@ -85,6 +85,7 @@ import { pairFields } from '../lib/projectPairs'
 import { scopeByProduct } from '../lib/products'
 import { useProjectProducts } from '../hooks/useProjectProducts'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
+import PageWithRail from '../components/PageWithRail'
 
 // P2-5: notes + comments collapsed into the single chronological `activity`
 // stream (Notes / Comments / All are filters over it, not separate tabs).
@@ -1966,30 +1967,45 @@ recentActivity.length === 0 ? (
     <>
       <Breadcrumb backTo="/projects" backLabel="Projects" current={project.title} />
       <AllProjectsBanner />
-      <div className="pj-grid" data-testid="project-grid">
-        <header className="pj-head">
-          <div className="pj-headrow">
-            {titleCompactEl}
-            {iconsEl}
+      <PageWithRail
+        testId="project-grid"
+        railLabel="Project side panel"
+        railTestId="project-rail"
+        head={
+          <div className="pj-head">
+            <div className="pj-headrow">
+              {titleCompactEl}
+              {iconsEl}
+            </div>
+            <div className="pj-metarow">
+              {metaEl}
+              {!project.short_name && !editingShortName && (
+                <button
+                  type="button"
+                  className="pj-short-empty"
+                  onClick={() => { setEditingShortName(true); setShortNameDraft('') }}
+                >
+                  + Short name
+                </button>
+              )}
+            </div>
+            <PageHeartbeat />
           </div>
-          <div className="pj-metarow">
-            {metaEl}
-            {!project.short_name && !editingShortName && (
-              <button
-                type="button"
-                className="pj-short-empty"
-                onClick={() => { setEditingShortName(true); setShortNameDraft('') }}
-              >
-                + Short name
-              </button>
-            )}
-          </div>
-          <PageHeartbeat />
-        </header>
-        {/* The folder actions come right after the header in the DOM, so Tab
-            reaches them early and the phone shows them under the header. The
-            grid puts them at the top of the rail on a wide screen. */}
-        <div className="pj-folder">{folderEl}</div>
+        }
+        /* The folder actions come right after the header in the DOM, so Tab
+           reaches them early and the phone shows them under the header. The
+           grid puts them at the top of the rail on a wide screen. */
+        railTop={folderEl}
+        rail={
+          <>
+            {membersEl}
+            {linksEl}
+            {pubsEl}
+            {recentSection}
+            <div className="pj-compose">{composeEl}</div>
+          </>
+        }
+      >
         <div className="pj-main">
           {agendaFormEl}
           {project.id ? (
@@ -1999,38 +2015,16 @@ recentActivity.length === 0 ? (
           {activeTab === 'overview' && overviewEl}
           {otherTabsEl}
         </div>
-        <aside className="pj-rail" aria-label="Project side panel" data-testid="project-rail">
-          {membersEl}
-          {linksEl}
-          {pubsEl}
-          {recentSection}
-          <div className="pj-compose">{composeEl}</div>
-        </aside>
-      </div>
+      </PageWithRail>
       {projectOverlays}
       <style>{PJ_CSS}</style>
     </>
   )
 }
 
-// Project page layout styles. Tokens only; same band as Today:
-// main fills 1fr, the rail is --col-rail, the grid sits inside the page band.
+// Project page styles. The grid, rail and stack rules live in PageWithRail
+// (index.css "PageWithRail"); this keeps the title, link and tab rules.
 const PJ_CSS = `
-.pj-grid {
-  display: grid; grid-template-columns: minmax(0, 1fr) var(--col-rail); align-items: start;
-  grid-template-areas: "head folder" "main rail";
-}
-.pj-head { grid-area: head; min-width: 0; padding-right: 28px; margin-bottom: 12px; }
-.pj-folder { grid-area: folder; min-width: 0; padding: 0 0 16px 22px; border-left: 1px solid var(--sk-line); align-self: stretch; }
-.pj-folder:empty { padding: 0; }
-.pj-main { grid-area: main; min-width: 0; padding: 0 28px 24px 0; }
-.pj-rail {
-  grid-area: rail; min-width: 0; padding: 0 0 24px 22px; border-left: 1px solid var(--sk-line);
-  display: flex; flex-direction: column; gap: 20px;
-  position: sticky; top: calc(var(--portal-header-h, 56px) + 12px);
-  max-height: calc(100dvh - var(--portal-header-h, 56px) - 24px);
-  overflow-y: auto; scrollbar-width: thin;
-}
 .pj-head .pg-hb { margin-top: 2px; height: 10px; }
 .pj-headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .pj-metarow { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
@@ -2050,24 +2044,12 @@ const PJ_CSS = `
   outline: none; padding: 2px 0; max-width: 240px; font-family: inherit;
 }
 .pj-sec { margin-bottom: 22px; }
-.pj-rail .pj-sec { margin-bottom: 0; }
+.pwr-rail .pj-sec { margin-bottom: 0; }
 .pj-head-links { display: inline-flex; align-items: center; gap: 14px; }
 .pj-link { background: none; border: 0; padding: 0; font-size: 11px; color: var(--job-accent); cursor: pointer; }
 .pj-main .project-tab-strip-wrap { margin-bottom: var(--sp-lg) !important; }
 .pj-main .project-tab-strip button { padding-left: 10px; padding-right: 10px; }
 .pj-compose [data-compose-slot] { border-top: 0 !important; padding-top: 0 !important; }
-/* One column below 1200px: with the sidebar and the 320px rail the main column
-   is under 480px there, and the title and tabs do not fit. Order is head,
-   folder, main, rail. */
-@media (max-width: 1200px) {
-  .pj-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "folder" "main" "rail"; }
-  .pj-head, .pj-main { padding-right: 0; }
-  .pj-folder { padding: 0 0 14px; border-left: 0; align-self: auto; }
-  .pj-rail {
-    position: static; max-height: none; overflow: visible; padding: 16px 0 32px; border-left: 0;
-    border-top: 1px solid var(--sk-line);
-  }
-}
 `
 
 

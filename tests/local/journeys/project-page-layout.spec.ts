@@ -135,7 +135,7 @@ test('375px: nothing scrolls sideways, the row wraps, the rail stacks under the 
   }
 })
 
-test('one column below 1200px, two from 1280px; the title and tabs fit', async ({ page }) => {
+test('one column at 1100 and 1200px, two from 1280px (stack point: PageWithRail band 860px); the title and tabs fit', async ({ page }) => {
   for (const w of [1100, 1200]) {
     await page.setViewportSize({ width: w, height: 900 })
     await go(page, ONE)

@@ -1,0 +1,59 @@
+import type { ReactNode } from 'react'
+
+/**
+ * The one main-column + rail page layout (s79, Nick 2026-10-12).
+ *
+ * Today, Project and Member each hand-built this grid with a different stack
+ * point. This is the chokepoint: a page passes slots, never a grid.
+ *
+ * Slots, in DOM order (so Tab and the phone stack both read head, railTop,
+ * main, rail): `head`, `railTop`, `children` (main), `rail`.
+ *   - `side="end"` (default) puts the rail right of main; `"start"` puts it left.
+ *   - `railHidden`, or no `rail`, gives one column with main at --col-main.
+ *   - The grid stacks on a container query on the page band (see index.css
+ *     `.pwr`), not on the viewport: the sidebar eats a different width per state.
+ *   - The rail is sticky while two columns show.
+ *
+ * Styles: index.css "PageWithRail". A new hand-rolled `var(--col-rail)` grid
+ * outside this file and index.css fails `npm run lint:page-rail`.
+ */
+export default function PageWithRail({
+  head,
+  railTop,
+  rail,
+  railLabel,
+  side = 'end',
+  railHidden = false,
+  testId,
+  railTestId,
+  railTopTestId,
+  children,
+}: {
+  head?: ReactNode
+  railTop?: ReactNode
+  rail?: ReactNode
+  /** aria-label of the rail landmark. */
+  railLabel: string
+  side?: 'end' | 'start'
+  railHidden?: boolean
+  testId?: string
+  railTestId?: string
+  railTopTestId?: string
+  children: ReactNode
+}) {
+  const hasRail = !!rail && !railHidden
+  return (
+    <div className="pwr-band">
+      <div className={`pwr${side === 'start' ? ' pwr-start' : ''}${hasRail ? '' : ' pwr-norail'}`} data-testid={testId}>
+        {head && <header className="pwr-head">{head}</header>}
+        {hasRail && <div className="pwr-top" data-testid={railTopTestId}>{railTop}</div>}
+        <div className="pwr-main">{children}</div>
+        {hasRail && (
+          <aside className="pwr-rail" aria-label={railLabel} data-testid={railTestId}>
+            {rail}
+          </aside>
+        )}
+      </div>
+    </div>
+  )
+}
