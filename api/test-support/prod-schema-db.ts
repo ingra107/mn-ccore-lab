@@ -77,16 +77,17 @@ export function prodSchemaDb(): InstanceType<typeof Database> {
  * sees what the schema's defaults and triggers made of it (seq included).
  *
  * A live project row gets its project_home_seed first, as every create route
- * writes one (schema-v130 refuses a seedless project insert): a manuscript,
- * at the row's `stage` when that word is on the manuscript ladder, else the
- * ladder's first rung. That is the home the v125 trigger used to guess, so a
- * fixture written before the contract phase reads the same products. A test
- * that wants another home writes its own seed row first; this leaves it alone.
+ * writes one (schema-v130 refuses a seedless project insert): `home` names the
+ * first product (default a manuscript at its ladder's first rung). A project
+ * row has no stage of its own (schema-v133 dropped projects.stage): a test
+ * that wants the home at another rung says so here. A test that writes its
+ * own seed row first is left alone.
  */
 export function insertRow(
   db: InstanceType<typeof Database>, table: string, row: Record<string, unknown>,
+  home?: ProjectHome,
 ): Record<string, unknown> {
-  if (table === 'projects') seedProjectHome(db, row)
+  if (table === 'projects') seedProjectHome(db, row, home)
   const cols = Object.keys(row)
   const info = db.prepare(
     `INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
@@ -94,20 +95,28 @@ export function insertRow(
   return db.prepare(`SELECT * FROM ${table} WHERE rowid = ?`).get(info.lastInsertRowid) as Record<string, unknown>
 }
 
-/** The fixture's project_home_seed (see insertRow). Exported for tests that
- *  insert a project with raw SQL. */
-export function seedProjectHome(db: InstanceType<typeof Database>, row: Record<string, unknown>): void {
+/** The first product a fixture project is born with. */
+export type ProjectHome = { kind?: string; stage?: string }
+
+/** The fixture's project_home_seed (see insertRow): `home.kind` (default
+ *  manuscript) at `home.stage` when that word is on the kind's ladder, else
+ *  the ladder's first rung. Exported for tests that insert a project with raw
+ *  SQL. */
+export function seedProjectHome(
+  db: InstanceType<typeof Database>, row: Record<string, unknown>, home: ProjectHome = {},
+): void {
   if (row.deleted_at != null || typeof row.id !== 'string') return
   const hasSeedTable = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'project_home_seed'").get()
   if (!hasSeedTable) return
   if (db.prepare('SELECT 1 FROM project_home_seed WHERE project_id = ?').get(row.id)) return
-  const onLadder = typeof row.stage === 'string'
-    ? db.prepare("SELECT stage FROM product_stages WHERE kind = 'manuscript' AND stage = ? AND deleted_at IS NULL").get(row.stage) as { stage: string } | undefined
+  const kind = home.kind ?? 'manuscript'
+  const onLadder = typeof home.stage === 'string'
+    ? db.prepare('SELECT stage FROM product_stages WHERE kind = ? AND stage = ? AND deleted_at IS NULL').get(kind, home.stage) as { stage: string } | undefined
     : undefined
-  const first = db.prepare("SELECT stage FROM product_stages WHERE kind = 'manuscript' AND deleted_at IS NULL ORDER BY ordinal LIMIT 1").get() as { stage: string } | undefined
+  const first = db.prepare('SELECT stage FROM product_stages WHERE kind = ? AND deleted_at IS NULL ORDER BY ordinal LIMIT 1').get(kind) as { stage: string } | undefined
   const stage = onLadder?.stage ?? first?.stage
   if (!stage) return
-  db.prepare("INSERT INTO project_home_seed (project_id, kind, stage) VALUES (?, 'manuscript', ?)").run(row.id, stage)
+  db.prepare('INSERT INTO project_home_seed (project_id, kind, stage) VALUES (?, ?, ?)').run(row.id, kind, stage)
 }
 
 /** The processed_mutations receipt for a mutation id, or undefined. */

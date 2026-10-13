@@ -67,7 +67,8 @@ function gitFacts() {
 function d1Facts() {
   // 3 statements, ONE spawn.
   const [projRows, taskRows, tableRows] = d1batch([
-    `SELECT status, stage, next_action, updated_at FROM projects WHERE slug='${SLUG}' LIMIT 1`,
+    // The stage is the home product's (schema-v133 dropped projects.stage).
+    `SELECT p.status, h.stage, p.next_action, p.updated_at FROM projects p LEFT JOIN products h ON h.project_id=p.id AND h.is_home=1 AND h.deleted_at IS NULL WHERE p.slug='${SLUG}' LIMIT 1`,
     `SELECT t.status, COUNT(*) n FROM tasks t JOIN projects p ON p.id=t.project_id WHERE p.slug='${SLUG}' AND t.deleted_at IS NULL GROUP BY t.status`,
     `SELECT COUNT(*) n FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'`,
   ]);

@@ -1269,37 +1269,9 @@ class TestFullRoundTripWorkflows:
             print(f"  Description edit synced: {has_update}")
         print(f"  ✓ Description edit pull test complete")
 
-    def test_45_change_project_stage_in_hub_pull_to_braindb(self):
-        """Change project stage in Hub → pull → brain.db reflects new stage."""
-        # Get a real project
-        d1_projects = d1_get("/projects")
-        if not d1_projects.get("data"):
-            print(f"  ✓ Skipped --no projects in D1")
-            return
-        project = d1_projects["data"][0]
-        slug = project.get("slug", "")
-        original_stage = project.get("stage", "")
-        print(f"  D1 project: {slug}, stage={original_stage}")
-
-        # Change stage in Hub
-        new_stage = "Writing" if original_stage != "Writing" else "Analysis"
-        d1_post(f"/projects/{project['id']}", {"stage": new_stage})
-        print(f"  Hub stage changed to {new_stage}")
-
-        run_pull()
-
-        # Check brain.db
-        rows = brain_query("SELECT stage FROM projects WHERE name LIKE ? OR id LIKE ?",
-                          (f"%{slug.replace('-', '%')}%", f"%{slug}%"))
-        if rows:
-            brain_stage = rows[0].get("stage", "")
-            print(f"  brain.db stage: {brain_stage}")
-        else:
-            print(f"  Project not found in brain.db by slug pattern")
-
-        # Restore original
-        d1_post(f"/projects/{project['id']}", {"stage": original_stage})
-        print(f"  ✓ Project stage pull test complete")
+    # test_45 (Hub project stage -> brain.db pull) deleted 2026-10-12: a
+    # project has no stage column on either side after schema-v133 / PB
+    # migration 148; its stage is its home product's.
 
     def test_46_meeting_action_item_creates_linked_task(self):
         """Create action item in meeting → verify it creates a linked task."""

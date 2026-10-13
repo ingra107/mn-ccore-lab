@@ -126,14 +126,10 @@ export function useUpdateProjectFields() {
       const previousProjects = queryClient.getQueryData<Project[]>(['projects'])
 
       if (previousProjects) {
-        // A project's stage lives on its products (contract phase step 1):
-        // a stage change goes through POST /api/projects/:slug/products, so a
-        // `stage` key never reaches the cached Project (it has no such field).
-        const { stage: _retiredStage, ...optimisticFields } = fields as Record<string, unknown>
         queryClient.setQueryData<Project[]>(
           ['projects'],
           previousProjects.map((p) =>
-            p.slug === slug ? { ...p, ...optimisticFields } : p
+            p.slug === slug ? { ...p, ...fields } : p
           )
         )
       }

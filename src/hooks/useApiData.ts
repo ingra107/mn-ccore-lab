@@ -136,12 +136,10 @@ function rowToTeamMember(row: TeamMemberRow): TeamMember {
 }
 
 export function rowToProject(row: ProjectRow): Project {
-  // projects.stage is being retired (contract phase step 1): it stops here, so
-  // no browser reader can reach it, typed or not. A project's stage is its
-  // products' (home_* below, or the products read). Its clock went with it
-  // (contract phase step 3: nothing stamps projects.stage_entered_at), so a
-  // Project carries a stage_entered_at only where a page sets the product's.
-  const { stage: _retiredStage, stage_entered_at: _retiredClock, ...rest } = row
+  // A project has no stage of its own (schema-v133 dropped projects.stage and
+  // projects.stage_entered_at): its stage is its products' (home_* below, or
+  // the products read), and a Project carries a stage_entered_at only where a
+  // page sets the product's.
   return {
     // Spread FIRST (Level-1 fix, 2026-07-21): any ProjectRow field that
     // shares its name+shape with `Project` (id, title, created_at,
@@ -153,7 +151,7 @@ export function rowToProject(row: ProjectRow): Project {
     // enum normalize/cast) get an explicit override below — object-literal
     // semantics mean a later key always wins over the spread, at both the
     // type level and the runtime value.
-    ...rest,
+    ...row,
     status: row.status as Project['status'],
     description: row.description || undefined,
     category: row.category || '',

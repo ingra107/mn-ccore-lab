@@ -17,7 +17,7 @@ function world(): Db {
   // api/routes/mutations.product-home.test.ts.
   db.exec('DROP TRIGGER trg_projects_home_product_ins')
   for (const [id, slug] of [['proj_A', 'a'], ['proj_B', 'b']]) {
-    insertRow(db, 'projects', { id, slug, title: slug.toUpperCase(), category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id, slug, title: slug.toUpperCase(), category: 'MNCCORE', status: 'active' })
   }
   return db
 }

@@ -21,7 +21,7 @@ function world(): Env {
   db.prepare("UPDATE lab_settings SET value = ? WHERE key = 'pi_emails'").run(JSON.stringify(['ingra107@umn.edu']))
   _resetPiEmailsCacheForTests()
   for (let i = 0; i < 6; i++) insertRow(db, 'team_members', { id: `tm${i}`, name: `M ${i}`, slug: `m-${i}`, email: `m${i}@umn.edu` })
-  insertRow(db, 'projects', { id: 'proj_h', slug: 'h', title: 'H', category: 'MNCCORE', status: 'active', stage: 'idea' })
+  insertRow(db, 'projects', { id: 'proj_h', slug: 'h', title: 'H', category: 'MNCCORE', status: 'active' })
   insertRow(db, 'tasks', { id: 't_h', project_id: 'proj_h', title: 'h', assignee: 'm-1' })
   insertRow(db, 'activity_log', { id: 'a_h', type: 'task', description: 'x', related_id: 't_h', related_type: 'task' })
   return { DB: d1Adapter(db), REQUIRE_AUTH: '1', TEST_MODE_KEY: TEST_KEY } as unknown as Env

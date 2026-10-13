@@ -103,7 +103,7 @@ const member = (project_id: string, member_slug: string) =>
 
 function seedLaneB() {
   const proj = (id: string, slug: string, title: string, extra: Record<string, unknown> = {}) =>
-    insertRow(db, 'projects', { id, slug, title, description: title, category: 'MNCCORE', status: 'active', stage: 'writing', ...extra })
+    insertRow(db, 'projects', { id, slug, title, description: title, category: 'MNCCORE', status: 'active', ...extra }, { stage: 'writing' })
   proj(PROJ, PROJ_SLUG, `${MARK} project`, { next_action: `${MARK} next`, stage_notes: `${MARK}` })
   member(PROJ, 'nick-ingraham')
   member(PROJ, 'nate-mesfin')
@@ -382,7 +382,7 @@ describe('slug claims: a person cannot take a slug a deleted project used or a c
   const GONE = 'gone-proj'
   const GHOST = 'ghost-ref'
   const claims = () => {
-    insertRow(db, 'projects', { id: 'proj_gone', slug: GONE, title: `${MARK} gone`, category: 'MNCCORE', status: 'active', stage: 'idea', deleted_at: '2026-09-01 00:00:00' })
+    insertRow(db, 'projects', { id: 'proj_gone', slug: GONE, title: `${MARK} gone`, category: 'MNCCORE', status: 'active', deleted_at: '2026-09-01 00:00:00' })
     insertRow(db, 'contributions', { id: 'contrib-gone', member_slug: 'nate-mesfin', type: 'analysis', description: `${MARK} gone contrib`, project_slug: GONE })
     insertRow(db, 'activity_log', { id: 'log-ghost', type: 'project', description: `${MARK} ghost`, actor: 'nick-ingraham', related_id: GHOST, related_type: 'project' })
   }
@@ -513,7 +513,7 @@ describe('Lane B: projects are channels, membership is the one default rule', ()
   })
 
   it('a task in a Peripheral Brain project does not join its assignee', async () => {
-    insertRow(db, 'projects', { id: 'proj_pbx', slug: 'pbx', title: 'PB', category: 'Peripheral Brain', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id: 'proj_pbx', slug: 'pbx', title: 'PB', category: 'Peripheral Brain', status: 'active' })
     insertRow(db, 'tasks', { id: 'task_pbx', project_id: 'proj_pbx', title: 'pb task', assignee: 'casey-eddington' })
     expect(db.prepare("SELECT COUNT(*) AS n FROM project_members WHERE project_id = 'proj_pbx'").get()).toEqual({ n: 0 })
   })
@@ -612,8 +612,8 @@ describe('Email recipient switch: with DIGEST_RECIPIENTS unset, only Nick is mai
 
 describe('Pulse cron: each email is built on its recipient\'s handle', () => {
   it("a member's email carries no Peripheral Brain project update; the PI's does", async () => {
-    insertRow(db, 'projects', { id: 'proj_pb', slug: 'pb-proj', title: 'PB', category: 'Peripheral Brain', status: 'active', stage: 'writing' })
-    insertRow(db, 'projects', { id: 'proj_team', slug: 'team-proj', title: 'Team', category: 'MNCCORE', status: 'active', stage: 'writing' })
+    insertRow(db, 'projects', { id: 'proj_pb', slug: 'pb-proj', title: 'PB', category: 'Peripheral Brain', status: 'active' }, { stage: 'writing' })
+    insertRow(db, 'projects', { id: 'proj_team', slug: 'team-proj', title: 'Team', category: 'MNCCORE', status: 'active' }, { stage: 'writing' })
     member('proj_pb', 'nick-ingraham')
     member('proj_team', 'nick-ingraham')
     member('proj_team', 'casey-eddington')

@@ -95,10 +95,10 @@ async function pbGet(path: string) {
 }
 
 /** A project row from before v125: no home product (every prod project until Backfill A). */
-function legacyProject(id: string, stage = 'writing') {
+function legacyProject(id: string) {
   const trigger = row("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_projects_home_product_ins'")!.sql as string
   db.exec('DROP TRIGGER trg_projects_home_product_ins')
-  insertRow(db, 'projects', { id, slug: id.replace('proj_', ''), title: id, category: 'MNCCORE', status: 'active', stage, stage_entered_at: '2026-01-02 03:04:05' })
+  insertRow(db, 'projects', { id, slug: id.replace('proj_', ''), title: id, category: 'MNCCORE', status: 'active' })
   insertRow(db, 'project_members', { project_id: id, member_slug: 'nick-ingraham', added_by: 'nick-ingraham' })
   db.prepare('DELETE FROM project_home_seed WHERE project_id = ?').run(id)
   db.exec(trigger)
@@ -125,7 +125,7 @@ describe('a new project is born with its home product', () => {
   })
 
   it('a project inserted already deleted gets none', () => {
-    insertRow(db, 'projects', { id: 'proj_dead', slug: 'dead', title: 'x', category: 'MNCCORE', status: 'deleted', stage: 'idea', deleted_at: '2026-01-01 00:00:00' })
+    insertRow(db, 'projects', { id: 'proj_dead', slug: 'dead', title: 'x', category: 'MNCCORE', status: 'deleted', deleted_at: '2026-01-01 00:00:00' })
     expect(liveProducts('proj_dead')).toHaveLength(0)
   })
 
@@ -200,9 +200,9 @@ describe('a project from before v125 that gains its home attaches its tasks (Bac
     expect(productOf('task_live')).toBe('prd_old_home')
     expect(productOf('task_done')).toBe('prd_old_home')
     expect(productOf('task_tomb')).toBeNull()
-    // projects.stage_entered_at retired with projects.stage (contract phase
-    // step 3): a new product's clock starts now, home or not.
-    expect(row("SELECT stage_entered_at FROM products WHERE id = 'prd_old_home'")!.stage_entered_at).not.toBe('2026-01-02 03:04:05')
+    // A new product's clock starts now, home or not (projects had no clock to
+    // inherit after contract phase step 3; schema-v133 dropped the column).
+    expect(row("SELECT stage_entered_at FROM products WHERE id = 'prd_old_home'")!.stage_entered_at).not.toBeNull()
   })
 
   it('a slug project ref resolves to the typed id', async () => {
@@ -220,7 +220,7 @@ describe('a project from before v125 that gains its home attaches its tasks (Bac
     expect(m.status, m.reason).toBe('accepted')
     expect(productOf('task_live')).toBe('prd_a1')
     // A non-home product starts its own clock.
-    expect(row("SELECT stage_entered_at FROM products WHERE id = 'prd_a1'")!.stage_entered_at).not.toBe('2026-01-02 03:04:05')
+    expect(row("SELECT stage_entered_at FROM products WHERE id = 'prd_a1'")!.stage_entered_at).not.toBeNull()
   })
 
   it('an off-ladder kind/stage pair is refused by the schema, with a code', async () => {
@@ -343,7 +343,7 @@ describe('read routes', () => {
 describe('the rule is the arbiter\'s, not a route\'s', () => {
   it('raw SQL (a wrangler --file repair) that writes its seed gets the same home product and task attach', () => {
     db.prepare(`INSERT INTO project_home_seed (project_id, kind, stage) VALUES ('proj_${ULID}', 'manuscript', 'submitted')`).run()
-    db.prepare(`INSERT INTO projects (id, slug, title, category, status, stage) VALUES ('proj_${ULID}', 'raw', 'Raw', 'MNCCORE', 'active', 'submitted')`).run()
+    db.prepare(`INSERT INTO projects (id, slug, title, category, status) VALUES ('proj_${ULID}', 'raw', 'Raw', 'MNCCORE', 'active')`).run()
     db.prepare(`INSERT INTO tasks (id, title, project_id, assignee, status) VALUES ('task_raw', 'Raw', 'proj_${ULID}', 'nick-ingraham', 'todo')`).run()
     expect(liveProducts(`proj_${ULID}`)).toMatchObject([{ id: `prd_${ULID}`, stage: 'submitted', is_home: 1 }])
     expect(productOf('task_raw')).toBe(`prd_${ULID}`)
@@ -352,14 +352,14 @@ describe('the rule is the arbiter\'s, not a route\'s', () => {
   it('a project id that is not proj_<ULID> (the PUT upsert keeps a legacy 32-char id) gets prd_<32 hex>, never a non-canonical id', () => {
     const legacy = 'a'.repeat(31) + 'b'
     seedProjectHome(db, { id: legacy })
-    db.prepare(`INSERT INTO projects (id, slug, title, category, status, stage) VALUES ('${legacy}', 'leg', 'Leg', 'MNCCORE', 'active', 'idea')`).run()
+    db.prepare(`INSERT INTO projects (id, slug, title, category, status) VALUES ('${legacy}', 'leg', 'Leg', 'MNCCORE', 'active')`).run()
     const [p] = liveProducts(legacy)
     expect(String(p.id)).toMatch(/^prd_[0-9a-f]{32}$/)
   })
 
   it('a restored project gets its home back: the tombstoned home returns and the restored tasks attach', () => {
     seedProjectHome(db, { id: `proj_${ULID}` })
-    db.prepare(`INSERT INTO projects (id, slug, title, category, status, stage) VALUES ('proj_${ULID}', 'r', 'R', 'MNCCORE', 'active', 'idea')`).run()
+    db.prepare(`INSERT INTO projects (id, slug, title, category, status) VALUES ('proj_${ULID}', 'r', 'R', 'MNCCORE', 'active')`).run()
     db.prepare(`UPDATE projects SET deleted_at = datetime('now'), status = 'deleted' WHERE id = 'proj_${ULID}'`).run()
     db.prepare(`UPDATE products SET deleted_at = datetime('now') WHERE project_id = 'proj_${ULID}'`).run()
     expect(liveProducts(`proj_${ULID}`)).toHaveLength(0)
@@ -368,8 +368,8 @@ describe('the rule is the arbiter\'s, not a route\'s', () => {
   })
 
   it('a restored project whose products were removed outright gets a new home: a manuscript at the first rung (nothing to seed from)', () => {
-    seedProjectHome(db, { id: `proj_${ULID}`, stage: 'writing' })
-    db.prepare(`INSERT INTO projects (id, slug, title, category, status, stage) VALUES ('proj_${ULID}', 'r', 'R', 'MNCCORE', 'active', 'writing')`).run()
+    seedProjectHome(db, { id: `proj_${ULID}` }, { stage: 'writing' })
+    db.prepare(`INSERT INTO projects (id, slug, title, category, status) VALUES ('proj_${ULID}', 'r', 'R', 'MNCCORE', 'active')`).run()
     db.prepare(`UPDATE projects SET deleted_at = datetime('now'), status = 'deleted' WHERE id = 'proj_${ULID}'`).run()
     db.prepare(`DELETE FROM products WHERE project_id = 'proj_${ULID}'`).run()
     db.prepare(`UPDATE projects SET deleted_at = NULL, status = 'active' WHERE id = 'proj_${ULID}'`).run()
@@ -404,8 +404,8 @@ describe('v125 edge cases (cold review)', () => {
   const P = `proj_${ULID}`
   const H = `prd_${ULID}`
   const proj = (id: string, extra: Record<string, unknown> = {}) =>
-    (seedProjectHome(db, { id, deleted_at: extra.deleted_at ?? null }), db).prepare('INSERT INTO projects (id, slug, title, category, status, stage, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run(id, id.slice(-8).toLowerCase(), id, 'MNCCORE', extra.deleted_at ? 'deleted' : 'active', 'idea', extra.deleted_at ?? null)
+    (seedProjectHome(db, { id, deleted_at: extra.deleted_at ?? null }), db).prepare('INSERT INTO projects (id, slug, title, category, status, deleted_at) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(id, id.slice(-8).toLowerCase(), id, 'MNCCORE', extra.deleted_at ? 'deleted' : 'active', extra.deleted_at ?? null)
   const homes = (pid: string) => (row('SELECT COUNT(*) n FROM products WHERE project_id = ? AND is_home = 1 AND deleted_at IS NULL', pid)!.n as number)
 
   it('restore: when the derived id belongs to another project, the project still gets a home (fresh hex id)', () => {

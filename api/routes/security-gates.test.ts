@@ -69,7 +69,7 @@ function membershipEnvs() {
   const db = prodSchemaDb()
   insertRow(db, 'team_members', { id: 'tm-collab', name: 'Collab', slug: 'collaborator', email: 'collab@umn.edu' })
   insertRow(db, 'team_members', { id: 'tm-casey', name: 'Casey', slug: 'casey-eddington', email: 'eddin022@umn.edu' })
-  insertRow(db, 'projects', { id: 'proj_secret', slug: 'pb-secret', title: 'PB Secret Project', category: 'Peripheral Brain', status: 'active', stage: 'idea' })
+  insertRow(db, 'projects', { id: 'proj_secret', slug: 'pb-secret', title: 'PB Secret Project', category: 'Peripheral Brain', status: 'active' })
   db.prepare("INSERT INTO project_members (project_id, member_slug, added_by) VALUES ('proj_secret', 'collaborator', 'test')").run()
   insertRow(db, 'file_attachments', { id: 'f1', entity_type: 'project', entity_id: 'pb-secret', filename: 'secret.pdf', r2_key: 'project/pb-secret/secret.pdf', uploaded_by: 'collaborator' })
   const raw = d1Adapter(db)

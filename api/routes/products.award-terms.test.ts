@@ -16,7 +16,7 @@ function product(id: string, kind: string, stage: string, extra: Record<string, 
 
 beforeEach(() => {
   db = prodSchemaDb()
-  insertRow(db, 'projects', { id: PROJECT, slug: 'k23', title: 'K23', category: 'MNCCORE', status: 'active', stage: 'idea' })
+  insertRow(db, 'projects', { id: PROJECT, slug: 'k23', title: 'K23', category: 'MNCCORE', status: 'active' })
 })
 
 describe('schema-v128 award terms', () => {

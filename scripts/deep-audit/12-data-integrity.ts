@@ -7,7 +7,8 @@
  *   - Tasks with assignee slug not in team_members
  *   - Tasks with invalid status / priority enum values
  *   - Projects with duplicate slugs
- *   - Projects with invalid status / stage / category enum values
+ *   - Projects with invalid status / category enum values (a project's stage
+ *     is its products', on the product_stages ladder; schema-v133)
  *   - activity_entries (project) with entity_id pointing at missing projects
  *   - activity_entries (task) with entity_id pointing at missing tasks
  *   - subtasks with parent task_id missing
@@ -93,13 +94,6 @@ async function main() {
     )
     if (badProjStatus.length === 0) pass(s, '12.F All project status values canonical')
     else bug(s, 'PROJ-BAD-STATUS', 'P1', '12.F Projects with invalid status', JSON.stringify(badProjStatus).slice(0, 200), "all in ['active','waiting_external','blocked','done','deleted']")
-
-    section(s, '12.G  Projects with invalid stage enum')
-    const badProjStage = d1Query<{ stage: string; n: number }>(
-      "SELECT stage, COUNT(*) as n FROM projects WHERE stage IS NOT NULL AND stage NOT IN ('Idea','Data Collection','Data Analysis','Writing','Submitted','Revisions','Accepted','Published') GROUP BY stage"
-    )
-    if (badProjStage.length === 0) pass(s, '12.G All project stage values canonical')
-    else bug(s, 'PROJ-BAD-STAGE', 'P1', '12.G Projects with invalid stage', JSON.stringify(badProjStage).slice(0, 300), 'all in canonical stage enum')
 
     section(s, '12.H  Projects with invalid category enum')
     const badProjCat = d1Query<{ category: string; n: number }>(

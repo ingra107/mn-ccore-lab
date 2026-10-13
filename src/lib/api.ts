@@ -53,9 +53,6 @@ export interface ProjectRow {
   category: string | null
   pi: string | null
   slug: string | null
-  /** The stored projects.stage (retiring; still on the PB wire). The browser
-   *  never reads it: rowToProject drops it. Read the home_* fields. */
-  stage: string
   // The home product, joined by GET /api/projects (browser read only) and the
   // create/update responses (api/lib/project-home.ts). Absent on the sync wire.
   home_kind?: string | null
@@ -69,7 +66,6 @@ export interface ProjectRow {
   short_name: string | null
   created_at: string
   updated_at: string
-  stage_entered_at: string | null
   // W1 (schema-v55) pipeline-movement metadata. The GET handler returns these
   // (SELECT *), so the frontend can read days-since-meaningful-movement for the
   // unified P2-9 staleness basis without re-deriving it from updated_at.
@@ -135,9 +131,9 @@ export interface ProjectRow {
 // pb-schema wire contract is a subset of this list, closing the class where a
 // synced D1 column reaches the browser but stays unreadable to TypeScript.
 export const PROJECT_ROW_KEYS = [
-  'id', 'title', 'status', 'description', 'category', 'pi', 'slug', 'stage',
+  'id', 'title', 'status', 'description', 'category', 'pi', 'slug',
   'pi_context', 'strategic_context', 'short_name', 'created_at', 'updated_at',
-  'stage_entered_at', 'last_meaningful_movement', 'stale_active_since',
+  'last_meaningful_movement', 'stale_active_since',
   'last_activity', 'primary_folder', 'type',
   'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc',
   'key_link_3', 'key_link_3_desc',

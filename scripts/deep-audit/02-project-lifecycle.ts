@@ -30,7 +30,6 @@ async function main() {
         title,
         category: 'lab',
         status: 'active',
-        stage: 'Idea',
         description: `${title} description`,
         pi: 'nick',
       },
@@ -40,7 +39,7 @@ async function main() {
       await closeSession(s)
       return
     }
-    const pj = (await createResp.json()) as { data?: { slug: string; title: string; status: string; stage: string; category: string; pi: string; description: string } }
+    const pj = (await createResp.json()) as { data?: { slug: string; title: string; status: string; category: string; pi: string; description: string } }
     if (!pj?.data?.slug) {
       bug(s, 'PROJ-CREATE-NO-SLUG', 'P0', '2.A response has slug', JSON.stringify(pj).slice(0, 120), 'object with slug')
       await closeSession(s)
@@ -55,13 +54,11 @@ async function main() {
     else bug(s, 'PROJ-TITLE-ECHO', 'P1', '2.A title echo', p.title, title)
     if (p.status === 'active') pass(s, '2.A response echoes status=active')
     else bug(s, 'PROJ-STATUS-ECHO', 'P1', '2.A status echo', p.status, 'active')
-    if (p.stage === 'Idea') pass(s, '2.A response echoes stage=Idea')
-    else bug(s, 'PROJ-STAGE-ECHO', 'P1', '2.A stage echo', p.stage, 'Idea')
     if (p.category === 'lab') pass(s, '2.A response echoes category=lab')
     else bug(s, 'PROJ-CATEGORY-ECHO', 'P1', '2.A category echo', p.category, 'lab')
 
     section(s, '2.B  Readback via /api/projects list (no single GET endpoint)')
-    const rb = await apiGetProjectFromList<{ slug: string; title: string; status: string; stage: string; category: string; pi: string; description: string }>(s, p.slug)
+    const rb = await apiGetProjectFromList<{ slug: string; title: string; status: string; category: string; pi: string; description: string }>(s, p.slug)
     if (!rb) {
       bug(s, 'PROJ-LIST-MISSING-NEW', 'P0', '2.B Newly created project appears in /api/projects list', 'not found in list', 'project in list right after create')
     } else {
@@ -86,15 +83,14 @@ async function main() {
     else bug(s, 'PROJ-DETAIL-NO-TITLE', 'P1', '2.D detail page has title in heading', 'h1/h2 text missing', `heading with "${title}"`)
 
     section(s, '2.E  Edit project fields via POST /api/projects/:slug')
-    const newStage = 'Data Collection'
+    // No stage here: a project's stage is its home product's (schema-v133
+    // dropped projects.stage); the products route owns stage writes.
     const newStatus = 'active'
     const newDescription = `${title} updated description`
-    const updResp = await apiPatchProject(s, p.slug, { stage: newStage, status: newStatus, description: newDescription })
+    const updResp = await apiPatchProject(s, p.slug, { status: newStatus, description: newDescription })
     if (!updResp.ok) bug(s, 'PROJ-UPDATE-FAIL', 'P0', '2.E POST /api/projects/:slug', `HTTP ${updResp.status}`, '200')
     else pass(s, '2.E Project update accepted')
-    const rb2 = await apiGetProjectFromList<{ slug: string; stage: string; status: string; description: string }>(s, p.slug)
-    if (rb2?.stage === newStage) pass(s, '2.E Stage persisted')
-    else bug(s, 'PROJ-STAGE-NOT-PERSISTED', 'P0', '2.E stage persisted', String(rb2?.stage), newStage)
+    const rb2 = await apiGetProjectFromList<{ slug: string; status: string; description: string }>(s, p.slug)
     if (rb2?.description === newDescription) pass(s, '2.E Description persisted')
     else bug(s, 'PROJ-DESC-NOT-PERSISTED', 'P1', '2.E description persisted', String(rb2?.description), newDescription)
 

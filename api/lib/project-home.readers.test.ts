@@ -4,8 +4,8 @@
 // (compact displays) or counts products by kind and stage (rollups). This
 // runs each moved read on the migration-chain database, so a join alias, an
 // ambiguous column or a GROUP BY the real schema refuses fails here rather
-// than in prod. The fixture makes projects.stage disagree with the products
-// on purpose: a reader still reading the column would show 'published'.
+// than in prod. Since schema-v133 the column is gone from the chain, so a
+// reader still naming projects.stage fails here with "no such column".
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import type Database from 'better-sqlite3'
@@ -27,25 +27,22 @@ let db: InstanceType<typeof Database>
 let env: Env
 
 function project(id: string, slug: string, title: string, category = 'MNCCORE') {
-  // projects.stage = 'published' everywhere: no product says so.
-  seedProjectHome(db, { id, stage: 'idea' })
-  db.prepare(`INSERT INTO projects (id, title, slug, stage, status, category, pi, updated_at)
-              VALUES (?, ?, ?, 'published', 'active', ?, 'nick-ingraham', '2026-01-01 00:00:00')`).run(id, title, slug, category)
+  seedProjectHome(db, { id })
+  db.prepare(`INSERT INTO projects (id, title, slug, status, category, pi, updated_at)
+              VALUES (?, ?, ?, 'active', ?, 'nick-ingraham', '2026-01-01 00:00:00')`).run(id, title, slug, category)
 }
 
 beforeEach(() => {
   _resetValidationFlagsCache()
   db = prodSchemaDb()
   env = { DB: d1Adapter(db) } as unknown as Env
-  // v125/v129: each insert makes its home product; set the homes to the
-  // shapes under test, then put projects.stage back to 'published' (the v126
-  // mirror copied a single manuscript's stage onto it).
+  // v129/v130: each insert makes its home product; set the homes to the
+  // shapes under test.
   project('proj_A', 'alpha', 'Alpha sepsis study')
   project('proj_B', 'bravo', 'Bravo sepsis grant')
   db.prepare("UPDATE products SET stage = 'writing' WHERE project_id = 'proj_A'").run()
   db.prepare("UPDATE products SET kind = 'grant_application', stage = 'submitted' WHERE project_id = 'proj_B'").run()
   db.prepare(`INSERT INTO products (id, project_id, kind, stage, is_home) VALUES ('prd_extra', 'proj_A', 'abstract', 'submitted', 0)`).run()
-  db.prepare("UPDATE projects SET stage = 'published'").run()
   db.prepare("INSERT OR IGNORE INTO team_members (id, slug, name, role) VALUES ('m1', 'casey-eddington', 'Casey Eddington', 'member')").run()
   db.prepare("INSERT OR IGNORE INTO team_members (id, slug, name, role) VALUES ('m2', 'nick-ingraham', 'Nick Ingraham', 'pi')").run()
   db.prepare("INSERT INTO project_members (project_id, member_slug, added_by) VALUES ('proj_A', 'casey-eddington', 'nick-ingraham')").run()

@@ -194,8 +194,8 @@ interface World { db: InstanceType<typeof Database>; env: Env }
 function seedSide(db: InstanceType<typeof Database>, r: Ref, category: string): void {
   const today = ctToday()
   insertRow(db, 'projects', {
-    id: r.id, slug: r.slug, title: `${r.mark} project`, category, status: 'active', stage: 'writing',
-  })
+    id: r.id, slug: r.slug, title: `${r.mark} project`, category, status: 'active',
+  }, { stage: 'writing' })
   // Stored FKs carry the typed proj_* PK, as prod does (CLAUDE.md "Sync Architecture").
   insertRow(db, 'tasks', {
     id: r.task, project_id: r.id, title: `${r.mark} task`, description: `${r.mark} task desc`,

@@ -75,9 +75,9 @@ describe('the seed plan', () => {
   it('applies on the migrated schema, is idempotent, covers a project created after the export, and its rollback removes exactly its rows', () => {
     const db = prodSchemaDb()
     for (const t of team) insertRow(db, 'team_members', { id: `tm-${t.slug}`, name: t.name, slug: t.slug, email: t.email })
-    for (const p of projects) insertRow(db, 'projects', { ...p, status: 'active', stage: 'idea' })
+    for (const p of projects) insertRow(db, 'projects', { ...p, status: 'active' })
     // Created after the export: not in the plan's pairs, but Nick's statement covers it.
-    insertRow(db, 'projects', { id: 'proj_late', slug: 'late', title: 'Late', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id: 'proj_late', slug: 'late', title: 'Late', category: 'MNCCORE', status: 'active' })
     // A trigger-made row (the pi trigger adds nate on proj_a) must survive the rollback.
     const before = db.prepare('SELECT project_id, member_slug, added_by FROM project_members ORDER BY 1, 2').all()
     expect(before).toEqual([{ project_id: 'proj_a', member_slug: 'nate-mesfin', added_by: 'pi' }])
@@ -96,8 +96,8 @@ describe('the window sweep', () => {
   it("joins each creator from the 'Created project' log row since the DDL, and Nick; rollback removes only its rows", () => {
     const db = prodSchemaDb()
     for (const t of team) insertRow(db, 'team_members', { id: `tm-${t.slug}`, name: t.name, slug: t.slug, email: t.email })
-    insertRow(db, 'projects', { id: 'proj_w', slug: 'w', title: 'W', category: 'MNCCORE', status: 'active', stage: 'idea' })
-    insertRow(db, 'projects', { id: 'proj_old', slug: 'old', title: 'Old', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id: 'proj_w', slug: 'w', title: 'W', category: 'MNCCORE', status: 'active' })
+    insertRow(db, 'projects', { id: 'proj_old', slug: 'old', title: 'Old', category: 'MNCCORE', status: 'active' })
     insertRow(db, 'activity_log', { id: 'al1', type: 'project', description: 'Created project: W', actor: 'mesfin@umn.edu', related_id: 'proj_w', timestamp: '2026-10-09 06:00:00' })
     insertRow(db, 'activity_log', { id: 'al2', type: 'project', description: 'Created project: Old', actor: 'eddin022@umn.edu', related_id: 'proj_old', timestamp: '2026-10-01 00:00:00' })
     const w = windowSweep('2026-10-09 05:00:00')
@@ -118,7 +118,7 @@ describe('the v120 triggers', () => {
   function base() {
     const db = prodSchemaDb()
     for (const t of team) insertRow(db, 'team_members', { id: `tm-${t.slug}`, name: t.name, slug: t.slug, email: t.email })
-    insertRow(db, 'projects', { id: 'proj_x', slug: 'x', title: 'X', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id: 'proj_x', slug: 'x', title: 'X', category: 'MNCCORE', status: 'active' })
     return db
   }
   const members = (db: ReturnType<typeof base>) =>
@@ -152,7 +152,7 @@ describe('the v120 triggers', () => {
     const db = base()
     db.prepare("UPDATE projects SET pi = 'nate-mesfin' WHERE id = 'proj_x'").run()
     expect(members(db)).toEqual([{ member_slug: 'nate-mesfin', added_by: 'pi' }])
-    insertRow(db, 'projects', { id: 'proj_pb', slug: 'pb', title: 'PB', category: 'Peripheral Brain', pi: 'nate-mesfin', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id: 'proj_pb', slug: 'pb', title: 'PB', category: 'Peripheral Brain', pi: 'nate-mesfin', status: 'active' })
     insertRow(db, 'tasks', { id: 't6', project_id: 'proj_pb', title: 't6', assignee: 'casey-eddington' })
     expect(db.prepare("SELECT COUNT(*) AS n FROM project_members WHERE project_id = 'proj_pb'").get()).toEqual({ n: 0 })
   })

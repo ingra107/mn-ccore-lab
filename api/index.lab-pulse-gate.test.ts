@@ -124,7 +124,7 @@ describe('Lab pulse routes are PI-only', () => {
   })
 
   it('the PI reads lab-wide: a task and an action on a project the PI is not a member of still count', async () => {
-    insertRow(db, 'projects', { id: 'proj_other', slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id: 'proj_other', slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active' })
     insertRow(db, 'project_members', { project_id: 'proj_other', member_slug: 'casey-eddington', added_by: 'casey-eddington' })
     insertRow(db, 'tasks', { id: 'task_other', project_id: 'proj_other', title: 'x', assignee: 'casey-eddington', status: 'done', completed: 1, kind: 'task', priority: 'high', created_at: at(-12), completed_at: at(-2) })
     entry('en-6', 'update', 'casey-eddington', 1)
@@ -197,7 +197,7 @@ describe('Lab pulse routes are PI-only', () => {
   })
 
   it('real path: a member comment and a project update posted through the worker count ONCE each', async () => {
-    insertRow(db, 'projects', { id: 'proj_real', slug: 'real', title: 'Real', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id: 'proj_real', slug: 'real', title: 'Real', category: 'MNCCORE', status: 'active' })
     insertRow(db, 'project_members', { project_id: 'proj_real', member_slug: 'casey-eddington', added_by: 'casey-eddington' })
     insertRow(db, 'tasks', { id: 'task_real', project_id: 'proj_real', title: 'x', assignee: 'casey-eddington', status: 'open', completed: 0, kind: 'task', priority: 'high', created_at: at(-3) })
     const post = async (path: string, body: object) => {
@@ -266,7 +266,7 @@ describe('Lab pulse routes are PI-only', () => {
   })
 
   it('no Lab pulse response carries a project name or slug, a task id or a task title', async () => {
-    insertRow(db, 'projects', { id: 'proj_secretx', slug: 'secret-slug-x', title: 'SECRETPROJECTNAME', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id: 'proj_secretx', slug: 'secret-slug-x', title: 'SECRETPROJECTNAME', category: 'MNCCORE', status: 'active' })
     insertRow(db, 'tasks', { id: 'task_secretid', project_id: 'proj_secretx', title: 'SECRETTASKTITLE', assignee: 'casey-eddington', status: 'done', completed: 1, kind: 'task', priority: 'high', created_at: at(-9), completed_at: at(-2), completed_by: MEMBER_EMAIL })
     insertRow(db, 'activity_log', { id: 'al-secret', type: 'project_update', description: 'SECRETDESC SECRETPROJECTNAME', actor: 'casey-eddington', related_id: 'proj_secretx', related_type: 'project', timestamp: daysAgo(1) })
     insertRow(db, 'publications', { id: 'pub-secret', title: 'SECRETPUBTITLE', authors: '[]', year: 2024, status: 'Published', author_slugs: JSON.stringify(['nate-mesfin']) })

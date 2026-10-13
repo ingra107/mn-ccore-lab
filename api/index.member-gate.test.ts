@@ -45,7 +45,7 @@ function seed(requireAuth: boolean) {
   insertRow(db, 'team_members', { id: 'tm-casey', name: 'Casey Eddington', slug: 'casey-eddington', role: 'Data Analyst', member_type: 'research_team', email: MEMBER_EMAIL, bio: `${S} bio` })
   insertRow(db, 'team_members', { id: 'tm-jdoe', name: 'Jane Doe', slug: 'jdoe', role: 'Research Coordinator', member_type: 'research_team', email: 'jane.doe.sentinel@umn.edu' })
   insertRow(db, 'projects', {
-    id: 'proj_gate1', title: `${S} project title`, slug: 'gate-project', status: 'active', stage: 'analysis',
+    id: 'proj_gate1', title: `${S} project title`, slug: 'gate-project', status: 'active',
     category: 'MNCCORE', pi: 'nick-ingraham', description: `${S} description`, next_action: `${S} next action`,
   })
   insertRow(db, 'tasks', {

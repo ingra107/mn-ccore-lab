@@ -27,8 +27,8 @@ describe('project-slug helpers', () => {
 describe('the mutation chokepoint refuses an id-shaped slug from any caller', () => {
   const world = () => {
     const db = prodSchemaDb()
-    insertRow(db, 'projects', { id: 'proj_mine', slug: 'mine', title: 'Mine', category: 'MNCCORE', status: 'active', stage: 'idea' })
-    insertRow(db, 'projects', { id: 'proj_hidden', slug: 'hidden', title: 'Hidden', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id: 'proj_mine', slug: 'mine', title: 'Mine', category: 'MNCCORE', status: 'active' })
+    insertRow(db, 'projects', { id: 'proj_hidden', slug: 'hidden', title: 'Hidden', category: 'MNCCORE', status: 'active' })
     return { db, env: { DB: d1Adapter(db) } as unknown as Env }
   }
   const user = { email: 'service@api', name: 'PB', slug: 'nick-ingraham' }
@@ -61,19 +61,19 @@ describe('the mutation chokepoint refuses an id-shaped slug from any caller', ()
 describe('schema-v121 triggers (D1 itself)', () => {
   const db = () => {
     const d = prodSchemaDb()
-    insertRow(d, 'projects', { id: 'proj_a', slug: 'a', title: 'A', category: 'MNCCORE', status: 'active', stage: 'idea' })
-    insertRow(d, 'projects', { id: 'legacyid', slug: 'b', title: 'B', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(d, 'projects', { id: 'proj_a', slug: 'a', title: 'A', category: 'MNCCORE', status: 'active' })
+    insertRow(d, 'projects', { id: 'legacyid', slug: 'b', title: 'B', category: 'MNCCORE', status: 'active' })
     return d
   }
   it('refuses a slug that starts with proj_ or equals any project id, on insert and update', () => {
     const d = db()
     expect(() => d.prepare("UPDATE projects SET slug = 'proj_x' WHERE id = 'proj_a'").run()).toThrow(/may not be a project id/)
     expect(() => d.prepare("UPDATE projects SET slug = 'legacyid' WHERE id = 'proj_a'").run()).toThrow(/may not be a project id/)
-    expect(() => insertRow(d, 'projects', { id: 'proj_c', slug: 'Proj_y', title: 'C', category: 'MNCCORE', status: 'active', stage: 'idea' })).toThrow(/may not be a project id/)
+    expect(() => insertRow(d, 'projects', { id: 'proj_c', slug: 'Proj_y', title: 'C', category: 'MNCCORE', status: 'active' })).toThrow(/may not be a project id/)
   })
   it('refuses a new id equal to an existing slug, and leaves ordinary writes alone', () => {
     const d = db()
-    expect(() => insertRow(d, 'projects', { id: 'a', slug: 'zzz', title: 'Z', category: 'MNCCORE', status: 'active', stage: 'idea' })).toThrow(/may not be a project id/)
+    expect(() => insertRow(d, 'projects', { id: 'a', slug: 'zzz', title: 'Z', category: 'MNCCORE', status: 'active' })).toThrow(/may not be a project id/)
     d.prepare("UPDATE projects SET slug = 'a-renamed', title = 'A2' WHERE id = 'proj_a'").run()
     d.prepare("UPDATE projects SET slug = 'a-renamed' WHERE id = 'proj_a'").run()
   })
@@ -106,7 +106,7 @@ describe('SLUG_REF_COLUMNS covers every project reference the visibility rule re
 
   it('the oracle answers on the whole table: a deleted project\'s slug and a child-only reference are claimed', async () => {
     const d = prodSchemaDb()
-    insertRow(d, 'projects', { id: 'proj_gone', slug: 'gone', title: 'G', category: 'MNCCORE', status: 'active', stage: 'idea', deleted_at: '2026-09-01 00:00:00' })
+    insertRow(d, 'projects', { id: 'proj_gone', slug: 'gone', title: 'G', category: 'MNCCORE', status: 'active', deleted_at: '2026-09-01 00:00:00' })
     insertRow(d, 'activity_log', { id: 'l1', type: 'project', description: 'x', related_id: 'ghost', related_type: 'project' })
     const claimed = slugClaimCheck(d1Adapter(d))
     expect(await claimed('gone')).toBe(true)

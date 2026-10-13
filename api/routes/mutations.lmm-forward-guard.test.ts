@@ -35,7 +35,7 @@ function setup(lmm: string | null = null) {
   db = prodSchemaDb()
   env = { DB: d1Adapter(db) } as unknown as import('../helpers').Env
   insertRow(db, 'projects', {
-    id: PROJECT_ID, title: 'Test project', status: 'active', stage: 'Writing', category: 'R01',
+    id: PROJECT_ID, title: 'Test project', status: 'active', category: 'R01',
     last_mutation_id: 'mut_prior', last_meaningful_movement: lmm,
   })
 }

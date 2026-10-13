@@ -39,9 +39,9 @@ beforeEach(() => {
   insertRow(db, 'team_members', { id: 'tm-casey', name: 'Casey Eddington', slug: 'casey-eddington', role: 'Analyst', member_type: 'member', email: OUTSIDER_EMAIL })
   env = { DB: d1Adapter(db), TEST_MODE_KEY: TEST_KEY, REQUIRE_AUTH: '1' } as unknown as Env
   as = PI_EMAIL
-  insertRow(db, 'projects', { id: PROJECT, slug: 'r03', title: 'R03', category: 'MNCCORE', status: 'active', stage: 'writing' })
+  insertRow(db, 'projects', { id: PROJECT, slug: 'r03', title: 'R03', category: 'MNCCORE', status: 'active' }, { stage: 'writing' })
   insertRow(db, 'project_members', { project_id: PROJECT, member_slug: 'nick-ingraham', added_by: 'nick-ingraham' })
-  insertRow(db, 'projects', { id: OTHER_PROJECT, slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active', stage: 'writing' })
+  insertRow(db, 'projects', { id: OTHER_PROJECT, slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active' }, { stage: 'writing' })
   insertRow(db, 'project_members', { project_id: OTHER_PROJECT, member_slug: 'nick-ingraham', added_by: 'nick-ingraham' })
   global.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
     worker.fetch(new Request(`https://hub.test${String(input)}`, {

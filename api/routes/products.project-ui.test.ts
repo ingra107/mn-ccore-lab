@@ -43,7 +43,7 @@ beforeEach(() => {
   env = { DB: d1Adapter(db), TEST_MODE_KEY: TEST_KEY, REQUIRE_AUTH: '1' } as unknown as Env
   as = PI_EMAIL
   // The project, born with its home product by schema-v125.
-  insertRow(db, 'projects', { id: PROJECT, slug: 'r03', title: 'R03', category: 'MNCCORE', status: 'active', stage: 'writing' })
+  insertRow(db, 'projects', { id: PROJECT, slug: 'r03', title: 'R03', category: 'MNCCORE', status: 'active' }, { stage: 'writing' })
   insertRow(db, 'project_members', { project_id: PROJECT, member_slug: 'nick-ingraham', added_by: 'nick-ingraham' })
   insertRow(db, 'project_members', { project_id: PROJECT, member_slug: 'nate-mesfin', added_by: 'nick-ingraham' })
   // The browser's relative fetch goes to the worker as the signed-in user.
@@ -86,8 +86,6 @@ describe('GET /api/projects/:slug/products', () => {
 })
 
 describe('the writes the page sends (POST /api/projects/:slug/products)', () => {
-  const projectStage = () => rows('SELECT stage FROM projects WHERE id = ?', PROJECT)[0].stage
-
   it('setProductStage: a stage on the product\'s own ladder lands, the clock is stamped, seq comes back', async () => {
     const out = await setProductStage('r03', HOME, 'revisions')
     const [p] = rows('SELECT stage, stage_entered_at, seq FROM products WHERE id = ?', HOME)
@@ -96,13 +94,10 @@ describe('the writes the page sends (POST /api/projects/:slug/products)', () => 
     expect(out.seq).toBe(p.seq)
   })
 
-  it('a product stage write never touches projects.stage (schema-v130 dropped the v126 mirror)', async () => {
-    const before = projectStage()
-    await setProductStage('r03', HOME, 'revisions')
-    expect(projectStage()).toBe(before)
-    await addProduct('r03', { kind: 'trial_ops', stage: 'start_up', name: 'Ops' })
-    await setProductStage('r03', HOME, 'submitted')
-    expect(projectStage()).toBe(before)
+  it('a project has no stage of its own to drift from its products (schema-v133 dropped the columns)', () => {
+    const cols = rows("SELECT name FROM pragma_table_info('projects')").map((c) => c.name)
+    expect(cols).not.toContain('stage')
+    expect(cols).not.toContain('stage_entered_at')
   })
 
   it('the write answers with the kind and whether the stage is its ladder\'s last rung (the paper nag reads it)', async () => {
@@ -137,7 +132,7 @@ describe('the writes the page sends (POST /api/projects/:slug/products)', () => 
   })
 
   it('addProduct: grew-from must be a product of this project', async () => {
-    insertRow(db, 'projects', { id: 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ', slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id: 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ', slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active' })
     const otherHome = rows("SELECT id FROM products WHERE project_id = 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ'")[0].id as string
     await expect(addProduct('r03', { kind: 'manuscript', stage: 'idea', name: 'Cross', growsFromId: otherHome })).rejects.toThrow()
   })
@@ -167,7 +162,7 @@ describe('the writes the page sends (POST /api/projects/:slug/products)', () => 
     as = MEMBER_EMAIL
     await expect(setProductStage('r03', HOME, 'idea')).rejects.toThrow()
     as = PI_EMAIL
-    insertRow(db, 'projects', { id: 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ', slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id: 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ', slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active' })
     const otherHome = rows("SELECT id FROM products WHERE project_id = 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ'")[0].id as string
     await expect(setProductStage('r03', otherHome, 'writing')).rejects.toThrow(/not found in this project/)
     expect(rows('SELECT stage FROM products WHERE id = ?', HOME)[0].stage).toBe('writing')
@@ -200,7 +195,7 @@ describe('GET /api/projects/products (the list views\' bulk read)', () => {
   })
 
   it('a member gets only the projects they are on', async () => {
-    insertRow(db, 'projects', { id: 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ', slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    insertRow(db, 'projects', { id: 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ', slug: 'other', title: 'Other', category: 'MNCCORE', status: 'active' })
     insertRow(db, 'project_members', { project_id: 'proj_01KXH4E23G0DTFGFBYS2C8RGTJ', member_slug: 'nick-ingraham', added_by: 'nick-ingraham' })
     const { body } = await bulk(MEMBER_EMAIL)
     expect(Object.keys(body.byProject)).toEqual([PROJECT])
@@ -236,22 +231,6 @@ describe('a product write leaves a line on its project\'s timeline (cold review 
     await setProductStage('r03', HOME, 'submitted')
     expect(lines()).toContain('Stage (Manuscript): Writing → Submitted')
   })
-})
-
-describe('the v126 mirror copies a manuscript\'s stage only (cold review s61 M1)', () => {
-  const projectStage = () => rows('SELECT stage FROM projects WHERE id = ?', PROJECT)[0].stage
-
-  it.each([['grant_application', 'preparing'], ['abstract', 'planning'], ['honor', 'preparing']])(
-    'a sole %s product reaching "submitted" leaves projects.stage alone',
-    async (kind, start) => {
-      const ok = rows('SELECT 1 FROM product_stages WHERE kind = ? AND stage = ?', kind, start).length
-      expect(ok).toBe(1)
-      db.prepare('UPDATE products SET kind = ?, stage = ? WHERE id = ?').run(kind, start, HOME)
-      await setProductStage('r03', HOME, 'submitted')
-      expect(rows('SELECT stage FROM products WHERE id = ?', HOME)[0].stage).toBe('submitted')
-      expect(projectStage()).toBe('writing')
-    },
-  )
 })
 
 describe('refusals answer in plain words (cold review s61 M5) and the seq comes from the write (M6)', () => {

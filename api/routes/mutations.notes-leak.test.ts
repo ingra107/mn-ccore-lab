@@ -169,7 +169,6 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
       slug: 'test-project',
       title: 'Test Project',
       status: 'active',
-      stage: 'data_analysis',
       category: 'MNCCORE',
     }]])
 

@@ -49,9 +49,6 @@ describe('a project is born with the product its creator named (schema-v129)', (
     expect(body.data).toMatchObject({ home_kind: 'grant_application', home_stage: 'submitted', product_count: 1, product_open_count: 1 })
     // The seed is consumed: the table is empty at rest.
     expect(db.prepare('SELECT COUNT(*) AS n FROM project_home_seed').get()).toEqual({ n: 0 })
-    // projects.stage is not written at all since contract phase step 3: the
-    // stored row keeps the column's default until the step-6 drop.
-    expect((db.prepare('SELECT stage FROM projects WHERE id = ?').get(id) as { stage: string }).stage).not.toBe('submitted')
   })
 
   it('no kind = a manuscript at its first rung; a stage alone stays on the manuscript ladder', async () => {
@@ -85,7 +82,7 @@ describe('a project is born with the product its creator named (schema-v129)', (
   })
 
   it('a raw insert with no seed is refused (schema-v130): no project is born a guessed manuscript', () => {
-    expect(() => db.prepare("INSERT INTO projects (id, title, slug, stage, status, category) VALUES ('proj_pb1', 'PB made', 'pb-made', 'submitted', 'active', 'MNCCORE')").run())
+    expect(() => db.prepare("INSERT INTO projects (id, title, slug, status, category) VALUES ('proj_pb1', 'PB made', 'pb-made', 'active', 'MNCCORE')").run())
       .toThrow(/project_home_seed_missing/)
     expect(db.prepare("SELECT COUNT(*) AS n FROM projects WHERE id = 'proj_pb1'").get()).toEqual({ n: 0 })
     expect(homeOf('proj_pb1')).toEqual([])
@@ -104,6 +101,7 @@ describe('a project is born with the product its creator named (schema-v129)', (
     const wire = await (await handleGetProjects(new URL('https://x/api/projects?seq_after=0'), env)).json() as { data: Record<string, unknown>[] }
     const row = wire.data.find((r) => r.id === id)!
     expect('home_kind' in row).toBe(false)
-    expect('stage' in row).toBe(true)
+    // The wire is the stored row, and the row has no stage (schema-v133).
+    expect('stage' in row).toBe(false)
   })
 })

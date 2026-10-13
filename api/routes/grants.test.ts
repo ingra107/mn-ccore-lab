@@ -34,8 +34,8 @@ beforeEach(() => {
   insertRow(db, 'team_members', { id: 'tm-nick', name: 'Nick Ingraham', slug: 'nick-ingraham', role: 'PI', member_type: 'director', email: PI })
   insertRow(db, 'team_members', { id: 'tm-nate', name: 'Nate Mesfin', slug: 'nate-mesfin', role: 'Fellow', member_type: 'member', email: MEMBER })
   env = { DB: d1Adapter(db), TEST_MODE_KEY: KEY, REQUIRE_AUTH: '1' } as unknown as Env
-  insertRow(db, 'projects', { id: K23P, slug: 'k23', title: 'K23: Provider Variation', short_name: 'K23', category: 'MNCCORE', status: 'active', stage: 'idea', pi: 'nick-ingraham' })
-  insertRow(db, 'projects', { id: R01P, slug: 'r01', title: 'R01: LPV', category: 'MNCCORE', status: 'active', stage: 'idea', pi: 'nick-ingraham' })
+  insertRow(db, 'projects', { id: K23P, slug: 'k23', title: 'K23: Provider Variation', short_name: 'K23', category: 'MNCCORE', status: 'active', pi: 'nick-ingraham' })
+  insertRow(db, 'projects', { id: R01P, slug: 'r01', title: 'R01: LPV', category: 'MNCCORE', status: 'active', pi: 'nick-ingraham' })
   insertRow(db, 'project_members', { project_id: R01P, member_slug: 'nate-mesfin', added_by: 'test' })
   insertRow(db, 'products', {
     id: AWARD, project_id: K23P, kind: 'award', stage: 'active', venue: 'NHLBI K23', is_home: 0,

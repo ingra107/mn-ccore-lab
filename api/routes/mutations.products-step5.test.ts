@@ -37,11 +37,10 @@ let n = 0
 const row = (sql: string, ...v: unknown[]) => db.prepare(sql).get(...v) as Record<string, unknown>
 const task = (id: string) => row('SELECT project_id, product_id, deleted_at FROM tasks WHERE id = ?', id)
 const product = (id: string) => row('SELECT stage, stage_entered_at, last_mutation_id FROM products WHERE id = ?', id)
-const projectStage = (id: string) => (row('SELECT stage FROM projects WHERE id = ?', id)).stage
 const seq = (table: string, id: string) => (row(`SELECT seq FROM ${table} WHERE id = ?`, id)).seq as number
 
 function project(id: string) {
-  insertRow(db, 'projects', { id, slug: id.replace('proj_', ''), title: id, category: 'MNCCORE', status: 'active', stage: 'writing' })
+  insertRow(db, 'projects', { id, slug: id.replace('proj_', ''), title: id, category: 'MNCCORE', status: 'active' }, { stage: 'writing' })
   // Visibility is membership (api/lib/viewer-db.ts), the PI's included.
   insertRow(db, 'project_members', { project_id: id, member_slug: 'nick-ingraham', added_by: 'nick-ingraham' })
   // A short test id is not a ULID, so v125 gave the home a random prd_<hex>;

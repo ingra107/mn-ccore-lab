@@ -39,7 +39,7 @@ beforeAll(() => {
   // a signed-in email with no row is a non-member and reads the anon shape).
   insertRow(db, 'team_members', { id: 'tm-nate', name: 'Nate Mesfin', slug: 'nate-mesfin', email: 'nate@umn.edu' })
   insertRow(db, 'projects', {
-    id: 'proj_anon1', title: `${S} project title`, slug: 'anon-project', status: 'active', stage: 'analysis',
+    id: 'proj_anon1', title: `${S} project title`, slug: 'anon-project', status: 'active',
     category: 'MNCCORE', pi: 'nick-ingraham', description: `${S} description`,
     next_action: `${S} next action`, strategic_context: `${S} strategy`, stage_notes: `${S} stage notes`,
     pi_context: `${S} pi context`, key_link_1: `https://docs.google.com/${S}`, key_link_1_desc: `${S} doc`,
@@ -69,7 +69,7 @@ beforeAll(() => {
   // A funded award on a project with a public title (Nick 2026-10-12: funded
   // awards only): the one grant row an anonymous caller may read.
   insertRow(db, 'projects', {
-    id: 'proj_award', title: 'K23: Provider variation', slug: 'award-project', status: 'active', stage: 'analysis',
+    id: 'proj_award', title: 'K23: Provider variation', slug: 'award-project', status: 'active',
     category: 'MNCCORE', pi: 'nick-ingraham', description: `${S} award project description`,
   })
   insertRow(db, 'products', {

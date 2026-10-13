@@ -105,8 +105,8 @@ async function main() {
 
     // ═══════════════════ REVISIONS ═══════════════════
     section(s, '3.H  Paper revision tracking — POST /api/revisions (not /api/projects/:slug/revisions)')
-    const projects = await apiGet<Array<{ slug: string; title: string; stage?: string }>>(s, '/api/projects')
-    const writingProj = projects?.find((p) => p.stage === 'Writing') || projects?.[0]
+    const projects = await apiGet<Array<{ slug: string; title: string; home_stage?: string | null }>>(s, '/api/projects')
+    const writingProj = projects?.find((p) => p.home_stage === 'writing') || projects?.[0]
     if (!writingProj) {
       log(s, '  3.H SKIP — no project available to test revisions against')
     } else {

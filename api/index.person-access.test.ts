@@ -35,7 +35,7 @@ beforeEach(() => {
   insertRow(db, 'activity_log', { id: 'al-1', type: 'comment', description: 'c', actor: 'nate-mesfin', timestamp: daysAgo(0) })
   insertRow(db, 'activity_log', { id: 'al-2', type: 'comment', description: 'c', actor: 'casey-eddington', timestamp: daysAgo(0) })
   // One shared project, so the viewer-bound handle shows every member the task.
-  insertRow(db, 'projects', { id: 'proj_shared', slug: 'shared', title: 'Shared', category: 'MNCCORE', status: 'active', stage: 'idea' })
+  insertRow(db, 'projects', { id: 'proj_shared', slug: 'shared', title: 'Shared', category: 'MNCCORE', status: 'active' })
   for (const slug of ['nick-ingraham', 'casey-eddington', 'nate-mesfin']) insertRow(db, 'project_members', { project_id: 'proj_shared', member_slug: slug, added_by: slug })
   insertRow(db, 'tasks', { id: 'task-n', project_id: 'proj_shared', title: 'Nate finished this', assignee: 'nate-mesfin', status: 'done', completed: 1, kind: 'task', completed_by: 'nate-mesfin', created_at: daysAgo(5), completed_at: daysAgo(0) })
   env = { DB: d1Adapter(db), TEST_MODE_KEY: TEST_KEY, PB_API_KEY: API_KEY, REQUIRE_AUTH: '1' } as unknown as Env

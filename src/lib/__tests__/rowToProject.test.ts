@@ -30,13 +30,11 @@ function makeRow(overrides: Partial<ProjectRow> = {}): ProjectRow {
     category: 'CLIF',
     pi: 'nick-ingraham',
     slug: 'test-project',
-    stage: 'writing',
     pi_context: 'Why this matters',
     strategic_context: 'Strategic context',
     short_name: 'TestProj',
     created_at: '2026-07-21T10:00:00Z',
     updated_at: '2026-07-21T10:53:00Z',
-    stage_entered_at: '2026-07-01T00:00:00Z',
     last_meaningful_movement: '2026-07-20T00:00:00Z',
     stale_active_since: null,
     primary_folder: 'C:/Box/test-project',
@@ -67,9 +65,9 @@ describe('rowToProject — every ProjectRow field the API can return survives th
     expect(project.created_at).toBe('2026-07-21T10:00:00Z')
   })
 
-  it('drops projects.stage and carries the home product (contract phase step 1)', () => {
+  it('carries the home product; a project has no stage of its own (schema-v133)', () => {
     const project = rowToProject(makeRow({
-      stage: 'writing', home_kind: 'grant_application', home_kind_label: 'Grant application',
+      home_kind: 'grant_application', home_kind_label: 'Grant application',
       home_stage: 'submitted', home_stage_label: 'Submitted', product_count: 2, product_open_count: 1,
     }))
     expect('stage' in project).toBe(false)
