@@ -18,9 +18,12 @@ import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-
 import { _resetPiEmailsCacheForTests, _resetValidationFlagsCache } from '../helpers'
 import { setProductEvent } from '../../src/lib/products'
 import { eventDateRefusal } from './products'
+import { hashTouched } from './mutations'
+import { nowInstant } from '../lib/time'
 
 const CTX = { waitUntil: () => {}, passThroughOnException: () => {} } as unknown as ExecutionContext
 const TEST_KEY = 'local-test-key-do-not-use-in-prod'
+const API_KEY = 'event-role-test-api-key'
 const PI_EMAIL = 'ingra107@umn.edu'
 const OUTSIDER_EMAIL = 'eddin022@umn.edu'
 const PROJECT = 'proj_01KXH4E23G0DTFGFBYS2C8RGTH'
@@ -41,7 +44,7 @@ beforeEach(() => {
   _resetValidationFlagsCache()
   insertRow(db, 'team_members', { id: 'tm-nick', name: 'Nick Ingraham', slug: 'nick-ingraham', role: 'PI', member_type: 'director', email: PI_EMAIL })
   insertRow(db, 'team_members', { id: 'tm-casey', name: 'Casey Eddington', slug: 'casey-eddington', role: 'Analyst', member_type: 'member', email: OUTSIDER_EMAIL })
-  env = { DB: d1Adapter(db), TEST_MODE_KEY: TEST_KEY, REQUIRE_AUTH: '1' } as unknown as Env
+  env = { DB: d1Adapter(db), TEST_MODE_KEY: TEST_KEY, PB_API_KEY: API_KEY, REQUIRE_AUTH: '1' } as unknown as Env
   as = PI_EMAIL
   insertRow(db, 'projects', { id: PROJECT, slug: 'cci-talks', title: 'CCI talks', category: 'MNCCORE', status: 'active' }, { stage: 'writing' })
   insertRow(db, 'project_members', { project_id: PROJECT, member_slug: 'nick-ingraham', added_by: 'nick-ingraham' })
@@ -163,6 +166,56 @@ describe('the member route and the reads', () => {
     const sync = await (await fetch('/api/products?seq_after=0')).json() as { data: Record<string, unknown>[] }
     expect(sync.data.find((p) => p.id === TALK)).toMatchObject({ event_date: '2019-05', nick_author_position: 'first', nick_event_role: 'presenter' })
     expect(sync.data.find((p) => p.id === HOME)).toMatchObject({ event_date: null })
+  })
+})
+
+// The backfill's path (PB Scratch/product_event_role_backfill_2026_10_12.py):
+// /api/mutations with the PB key, compare-and-swap on the touched fields. The
+// whitelist is pb-schema 0.18.0's TABLE_FIELDS; the arbiter is v135.
+describe('/api/mutations takes the fields (the backfill path)', () => {
+  let n = 0
+  const HEAD = ['Nick: presenter', 'Date: Feb 11, 2024', 'Authors: Ingraham N'].join('\n')
+  async function update(patch: Record<string, unknown>, before: Record<string, unknown>, seqBack = 0) {
+    n += 1
+    const now = nowInstant()
+    const keys = Object.keys(patch)
+    const mutation = {
+      mutation_id: `mut_evr_${n}`, origin_machine: 'product-event-role-test', table: 'products', record_id: TALK, op: 'update',
+      patch, base_seq: seqOf(TALK) - seqBack, base_row_hash: await hashTouched(before, keys), depends_on: null, client_ts: now, issued_at: now,
+    }
+    const res = await worker.fetch(new Request('https://hub.test/api/mutations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${API_KEY}` },
+      body: JSON.stringify({ mutations: [mutation] }),
+    }), env, CTX)
+    expect(res.status).toBe(200)
+    return ((await res.json()) as { results: { status: string; code?: string }[] }).results[0]
+  }
+
+  it('moves the day out of due_date, sets the roles and strips the head lines in one write', async () => {
+    db.prepare('UPDATE products SET description = ? WHERE id = ?').run(HEAD, TALK)
+    const r = await update(
+      { event_date: '2024-02-11', nick_event_role: 'presenter', nick_author_position: null, due_date: null, description: 'Authors: Ingraham N' },
+      { event_date: null, nick_event_role: null, nick_author_position: null, due_date: '2024-02-11', description: HEAD },
+    )
+    expect(r.status).toBe('accepted')
+    expect(row('SELECT due_date, event_date, nick_event_role, description FROM products WHERE id = ?', TALK))
+      .toEqual({ due_date: null, event_date: '2024-02-11', nick_event_role: 'presenter', description: 'Authors: Ingraham N' })
+  })
+
+  it('a stale base is not applied, and a bad date or role is refused by the arbiter', async () => {
+    // A row someone moved since the read: an older seq AND touched values that
+    // no longer match what the backfill saw.
+    db.prepare("UPDATE products SET event_date = '2018' WHERE id = ?").run(TALK)
+    const stale = await update({ event_date: '2019-05' }, { event_date: null }, 1)
+    expect(stale.status).not.toMatch(/^(accepted|merged_clean)$/)
+    expect(row('SELECT event_date FROM products WHERE id = ?', TALK)!.event_date).toBe('2018')
+    db.prepare('UPDATE products SET event_date = NULL WHERE id = ?').run(TALK)
+    const bad = await update({ event_date: '2019-13' }, { event_date: null })
+    expect(bad.status).not.toMatch(/^(accepted|merged_clean)$/)
+    const role = await update({ nick_event_role: 'first' }, { nick_event_role: null })
+    expect(role.status).not.toMatch(/^(accepted|merged_clean)$/)
+    expect(row('SELECT event_date, nick_event_role FROM products WHERE id = ?', TALK)).toEqual({ event_date: null, nick_event_role: null })
   })
 })
 
