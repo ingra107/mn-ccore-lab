@@ -17,7 +17,7 @@ import { InputSafeKeyboardSensor, InputSafePointerSensor } from '../../lib/dndSe
 import DataPage from '../../components/DataPage'
 import { FaceDisc } from '../../components/today/skin'
 import CreateProjectModal from '../../components/CreateProjectModal'
-import { useProjects, useTasks, useManuscriptsAttention, useAllProjectPublications } from '../../hooks/useApiData'
+import { useProjects, useRecentTasks, useManuscriptsAttention, useAllProjectPublications } from '../../hooks/useApiData'
 import { useCreateProject, useUpdateProjectFields } from '../../hooks/useMutations'
 import InlineSelect from '../../components/InlineSelect'
 import CategoryIcon from '../../components/CategoryIcon'
@@ -154,7 +154,7 @@ export default function ManuscriptsPage() {
   useScrollReveal<HTMLDivElement>()
 
   const { data: projects = [], isLoading } = useProjects()
-  const { data: tasks = [] } = useTasks()
+  const { data: tasks = [] } = useRecentTasks()
   const { data: publicationsBySlug } = useAllProjectPublications()
   const { data: attentionData } = useManuscriptsAttention()
   // M-04: stalled threshold now flows from useLabPrefs (same source as

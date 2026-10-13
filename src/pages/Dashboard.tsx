@@ -7,7 +7,7 @@ import { resetLayouts } from '../lib/dashboardLayout'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
-import { useMeetingsApi, useTasks, useExpiringRegulatory, usePublications } from '../hooks/useApiData'
+import { useMeetingsApi, useRecentTasks, useExpiringRegulatory, usePublications } from '../hooks/useApiData'
 import PageHeader from '../components/PageHeader'
 import { countPublications } from '../lib/publicationCounts'
 import { formatMediumDate, localDateKey } from '../lib/dateUtils'
@@ -170,7 +170,7 @@ export default function Dashboard() {
   useEffect(() => { setMounted(true) }, [])
 
   const { data: meetings = [] } = useMeetingsApi({ enabled: mounted })
-  const { data: allTasks = [] } = useTasks(undefined, { enabled: mounted })
+  const { data: allTasks = [] } = useRecentTasks(undefined, { enabled: mounted })
 
   // Find next upcoming meeting (today or tomorrow). Date.now() is an
   // intentional snapshot at memoize time (recomputes when `meetings`

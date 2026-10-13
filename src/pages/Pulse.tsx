@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   useStats,
-  useTasks,
+  useRecentTasks,
   useProjects,
   useActivity,
   useProjectHealth,
@@ -67,7 +67,7 @@ export default function Pulse() {
   })
 
   const { data: stats } = useStats()
-  const { data: tasks = [] } = useTasks()
+  const { data: tasks = [] } = useRecentTasks()
   const { data: projects = [] } = useProjects()
   const { data: activity = [] } = useActivity(8)
   const { data: healthData } = useProjectHealth()

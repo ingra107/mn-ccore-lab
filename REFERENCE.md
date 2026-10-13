@@ -119,7 +119,8 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 - ⚠️ There is **no** `/api/meetings/:id/action-items` and **no** `/api/meetings/:id/decisions` — both were documented here but neither has ever been registered (`api/index.ts`), and the first 404s on prod. A meeting's action items are **tasks** (`tasks.meeting_id`) since #547/#552, so create one with `POST /api/tasks`; decisions live on their own `/api/decisions*` family, not under a meeting.
 
 ### Task System
-- GET /api/tasks (7 filters, `include_deleted=1` surfaces soft-deletes for sync)
+- GET /api/tasks (7 filters, `include_deleted=1` surfaces soft-deletes for sync; `completed_since=YYYY-MM-DD` = every open task plus those completed on or after the date; `ids=a,b` = those tasks only, max 50)
+- GET /api/tasks/:id/blocking — the tasks that list `:id` in their `blocked_by`
 - POST /api/tasks (accepts `key_link_1/_desc/2/3` + `status`), POST /api/tasks/:id, POST /api/tasks/:id/status
 - POST /api/tasks/:id/acknowledge (accepts `body.slug` override for server-side / API-key callers)
 - GET /api/tasks/:id/comments, POST /api/tasks/:id/comments — **projection over activity_entries since v77** (shape byte-preserved; writes via postActivityEntry)

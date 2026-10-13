@@ -187,7 +187,9 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // /api/grant-milestones routes (GET upcoming, GET list, POST create,
     // POST :id/complete, POST :id) and POST /api/grants/:id retired; grant
     // terms and milestones write through POST /api/projects/:slug/products.
-    expect(ROUTE_REGISTRY).toHaveLength(265)
+    // 266 as of 2026-10-13 -- GET /api/tasks/:id/blocking (+1): the tasks a task
+    // blocks, so the detail panel stops downloading every task for it.
+    expect(ROUTE_REGISTRY).toHaveLength(266)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

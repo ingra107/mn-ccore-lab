@@ -61,6 +61,8 @@ export async function handleOverdueCount(url: URL, env: Env): Promise<Response> 
   return json({ data: { count: result?.count ?? 0, unseen: result?.unseen ?? 0 } })
 }
 
+const MAX_IDS_FILTER = 50;
+
 // GET /api/tasks?assignee=&status=&priority=&project=&meeting=&completed=&source=&kind=
 //
 // 2026-04-28 (schema-v51): when ?seq_after=N is present, switches to
@@ -87,6 +89,20 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
   }
   const updatedSince = url.searchParams.get('updated_since');
   const createdSince = url.searchParams.get('created_since');
+  // ?completed_since=YYYY-MM-DD: every OPEN task plus the tasks completed on or
+  // after that date. The slice the Today, Dashboard and Pulse surfaces want;
+  // the unfiltered list is mostly finished tasks they never read.
+  const completedSince = url.searchParams.get('completed_since');
+  if (completedSince !== null && !/^\d{4}-\d{2}-\d{2}/.test(completedSince)) {
+    return error('completed_since must be a date (YYYY-MM-DD)', 400);
+  }
+  // ?ids=a,b,c: those tasks only (the blockers of one task). Capped so the
+  // IN list stays far below D1's bound-parameter limit.
+  const idsRaw = url.searchParams.get('ids');
+  const ids = idsRaw ? idsRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  if (ids.length > MAX_IDS_FILTER) {
+    return error(`ids accepts at most ${MAX_IDS_FILTER} task ids`, 400);
+  }
   const seqAfterRaw = url.searchParams.get('seq_after');
   const limitRaw = url.searchParams.get('limit');
   // Sync pipelines need to see soft-deletes to mirror them into brain.db.
@@ -138,6 +154,12 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
     query += ' AND t.completed = ?';
     params.push(completed === 'true' ? 1 : 0);
   }
+  if (completedSince) { query += ' AND (t.completed = 0 OR t.completed_at >= ?)'; params.push(completedSince); }
+  if (idsRaw !== null) {
+    // `ids=` present but empty matches nothing, never everything.
+    query += ids.length ? ` AND t.id IN (${ids.map(() => '?').join(',')})` : ' AND 0';
+    params.push(...ids);
+  }
   if (updatedSince) { query += ' AND t.updated_at > ?'; params.push(updatedSince); }
   if (createdSince) { query += ' AND t.created_at > ?'; params.push(createdSince); }
 
@@ -151,6 +173,24 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
 
   const result = await env.DB.prepare(query).bind(...params).all();
   const rows = filterFixtures(result.results, 'title', includeFixtures);
+  return json({ data: await decorateMeetingRefs(env, rows), count: rows.length });
+}
+
+// GET /api/tasks/:id/blocking — the tasks that list :id in their blocked_by
+// (the "Blocks" half of the detail panel's Dependencies section). blocked_by is
+// a comma-separated id list, so the match is an exact-token test on
+// ',' || ids || ',' with instr(): LIKE would treat the '_' in a task id as a
+// wildcard. Goes through env.DB like the list read, so the viewer's scope
+// applies. Soft-deleted rows are left out.
+export async function handleGetBlockingTasks(id: string, env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date
+     FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id
+     WHERE t.deleted_at IS NULL AND t.id != ? AND t.blocked_by IS NOT NULL
+       AND instr(',' || REPLACE(t.blocked_by, ' ', '') || ',', ',' || ? || ',') > 0
+     ORDER BY t.completed ASC, t.due_date ASC, t.created_at DESC`
+  ).bind(id, id).all();
+  const rows = filterFixtures(result.results, 'title', false);
   return json({ data: await decorateMeetingRefs(env, rows), count: rows.length });
 }
 
