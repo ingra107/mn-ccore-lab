@@ -77,11 +77,11 @@ export default function NotificationBell({ align = 'right', triggerColor = 'var(
     return () => document.removeEventListener('keydown', handleEscape)
   }, [open])
 
-  // Show up to 20 most recent notifications, grouped by day. Memoized so its
-  // reference stays stable across renders — .slice() otherwise creates a new
-  // array every render, defeating the groupedByDay memo below.
+  // Every notification the API returns (its LIMIT 50), grouped by day in the
+  // scrolling list. The bell is the only list now that My Items folded into
+  // Today, so it no longer caps at 20.
   const displayNotifications = useMemo(
-    () => (isAuthenticated ? notifications.slice(0, 20) : []),
+    () => (isAuthenticated ? notifications : []),
     [isAuthenticated, notifications],
   )
 
