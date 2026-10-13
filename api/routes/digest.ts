@@ -79,6 +79,14 @@ export async function handleGetDigest(url: URL, env: Env, viewerSlug: string | n
     params.push(date);
   }
 
+  // The All-done banner counts what is left in OTHER digests: this date's papers
+  // (including ones a topic or search filter hides) never belong in that number.
+  const excludeDate = url.searchParams.get('exclude_date');
+  if (excludeDate) {
+    query += ' AND (rd.digest_date IS NULL OR rd.digest_date != ?)';
+    params.push(excludeDate);
+  }
+
   if (status === 'new') {
     query += ' AND s.status IS NULL';
   } else if (status) {

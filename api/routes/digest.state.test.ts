@@ -109,6 +109,11 @@ describe('per-person reading state', () => {
     // The count honors the same filters as the list.
     expect((await count(NICK, 'status=new&date=2026-10-13')).count).toBe(1)
     expect((await count(NICK, 'status=new&topic=sepsis')).count).toBe(1)
+    // exclude_date: what is left in OTHER digests (the All-done banner). It does
+    // not move when a paper on the excluded date is processed.
+    expect((await count(NICK, 'status=new&exclude_date=2026-10-13')).count).toBe(1)
+    expect((await count(CASEY, 'status=new&exclude_date=2026-10-13')).count).toBe(1)
+    expect(await ids(NICK, 'status=new&exclude_date=2026-09-01')).toEqual(['p-mid'])
     // Paging: one per page, nothing skipped or repeated.
     const a = await ids(NICK, 'status=new&limit=1&offset=0')
     const b = await ids(NICK, 'status=new&limit=1&offset=1')

@@ -864,12 +864,17 @@ export function useDigestUnprocessed(enabled: boolean) {
   })
 }
 
-/** How many papers the caller has not processed, across every digest date. */
-export function useDigestUnprocessedCount() {
+/**
+ * How many papers the caller has not processed, across every digest date, or
+ * (with `excludeDate`) across every OTHER date: the All-done banner's "N more",
+ * which a paper processed on the excluded date cannot make stale.
+ */
+export function useDigestUnprocessedCount(excludeDate?: string) {
   return useQuery({
-    queryKey: ['digest', { status: 'new', count_only: true }],
+    queryKey: ['digest', { status: 'new', count_only: true, exclude_date: excludeDate ?? null }],
     queryFn: async () => {
       const qs = new URLSearchParams({ status: 'new', count_only: 'true' })
+      if (excludeDate) qs.set('exclude_date', excludeDate)
       return (await fetchJson<{ count?: number }>(`/api/digest?${qs}`)).count ?? 0
     },
     staleTime: STALE_TIME,

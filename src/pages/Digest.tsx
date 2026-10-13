@@ -161,10 +161,12 @@ function PaperCard({ paper, projects, compactWhenProcessed }: { paper: DigestPap
   const isProcessed = paper.status !== 'new'
   const compact = compactWhenProcessed && isProcessed && !reopened
 
-  // When this paper became processed (or was first shown processed). Null while new.
+  // When THIS card last processed the paper (a click, a swipe). Null otherwise:
+  // a paper that arrives already processed, or is first shown, is not guarded, so
+  // a real Restore or Unsave right after load works.
   const processedAt = useRef<number | null>(null)
   useEffect(() => {
-    processedAt.current = paper.status === 'new' ? null : Date.now()
+    if (paper.status === 'new') processedAt.current = null
   }, [paper.status])
   const justProcessed = () => processedAt.current !== null && Date.now() - processedAt.current < REPEAT_GUARD_MS
 
@@ -180,6 +182,7 @@ function PaperCard({ paper, projects, compactWhenProcessed }: { paper: DigestPap
   const swipeTo = (next: DigestStatus, label: string) => {
     const prev = paper.status
     if (prev === next) return
+    processedAt.current = Date.now()
     const settled = updateStatus.mutateAsync({ id: paper.id, status: next }).then(() => undefined, () => undefined)
     showUndo(label, () => {
       void settled.then(() => updateStatus.mutate({ id: paper.id, status: prev }))
@@ -843,6 +846,10 @@ export default function Digest() {
   const unprocessedQuery = useDigestUnprocessed(isUnprocessedView)
   const unprocessedCountQuery = useDigestUnprocessedCount()
   const unprocessedCount = unprocessedCountQuery.data
+  // The banner's "N more" counts OTHER digests only, asked of the server with this
+  // date excluded: this date's own papers (even ones a topic or search filter hides)
+  // never count, and processing one here cannot leave the number stale.
+  const unprocessedElsewhereQuery = useDigestUnprocessedCount(activeDate)
   // A paper processed here leaves the list at once (the server list catches up
   // on the refetch), so the next one to do is always on top.
   const unprocessedAll = useMemo(
@@ -918,7 +925,7 @@ export default function Digest() {
   const allDone = !isCrossDate && !isLoading && filteredPapers.length > 0 && filteredPapers.every((p) => p.status !== 'new')
   const doneSaved = filteredPapers.filter((p) => p.status === 'saved').length
   const doneDismissed = filteredPapers.length - doneSaved
-  const unprocessedElsewhere = unprocessedCount ?? 0
+  const unprocessedElsewhere = unprocessedElsewhereQuery.data ?? 0
 
   const recentDates = dates.slice(0, RECENT_DATES)
   const activeIsRecent = recentDates.some((d) => d.date === activeDate)
@@ -1148,7 +1155,7 @@ export default function Digest() {
               {allDone && (
                 <AllDone
                   headline="All done"
-                  detail={`Every paper here is processed: ${doneSaved} saved, ${doneDismissed} dismissed.${unprocessedElsewhere > 0 ? '' : ' Nothing is waiting in any other digest either.'}`}
+                  detail={`Every paper here is processed: ${doneSaved} saved, ${doneDismissed} dismissed.${unprocessedElsewhereQuery.data === 0 ? ' Nothing is waiting in any other digest either.' : ''}`}
                   action={unprocessedElsewhere > 0
                     ? { label: `${unprocessedElsewhere} more unprocessed in other digests. See them`, onClick: () => { setStatusFilter('unprocessed'); setTopicFilter(null) } }
                     : undefined}

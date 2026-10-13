@@ -11,8 +11,10 @@
 // refresh. It gives up after POLL_CEILING_MS of waiting on the same placeholder(s).
 // Without a ceiling, a dead listener leaves an ai_requests row pending forever and
 // an open tab polls forever. A NEW placeholder (a fresh ask) starts a fresh wait, so
-// giving up on a dead one never silences the next ask; the next window focus or
-// navigation refetches as usual.
+// giving up on a dead one never silences the next ask. Once it has given up, the
+// feed refreshes on the next version-bump broadcast (useRealtimeSync polls
+// /api/version and invalidates queries when it moves) or a remount. Window focus
+// does NOT refetch: App.tsx sets refetchOnWindowFocus: false.
 
 import { useCallback, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -53,7 +55,6 @@ export function nextPollDecision(
 export function useBoundedPendingPoll(): (entries: ReadonlyArray<{ id: string; body: string }>) => number | false {
   const wait = useRef<PendingWait | null>(null)
   return useCallback((entries) => {
-    // eslint-disable-next-line local/time-discipline -- elapsed-time bound on a poll, not a stored or displayed instant
     const next = nextPollDecision(entries, wait.current, Date.now())
     wait.current = next.wait
     return next.interval

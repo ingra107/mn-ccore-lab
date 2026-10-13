@@ -39,11 +39,11 @@ const OLD_TODO = paper({ id: 'p-todo', title: 'Older unprocessed paper', digest_
 
 type Call = { url: string; method: string; body: unknown }
 
-function stubApi() {
+function stubApi(initial: Record<string, string> = {}) {
   const calls: Call[] = []
   // What the server holds for this viewer, so a refetch after a status write
   // reads back what was written.
-  const state: Record<string, string> = {}
+  const state: Record<string, string> = { ...initial }
   const withState = (p: Record<string, unknown>) => ({ ...p, status: state[p.id as string] ?? p.status })
   vi.stubGlobal('fetch', vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
     const method = init?.method ?? 'GET'
@@ -60,7 +60,9 @@ function stubApi() {
       const qs = new URLSearchParams(url.split('?')[1])
       if (qs.get('status') === 'saved' && !qs.get('date')) return ok([OLD_SAVED])
       if (qs.get('status') === 'new' && !qs.get('date')) {
-        const todo = [NEW, OLD_TODO].map(withState).filter((p) => p.status === 'new')
+        const excluded = qs.get('exclude_date')
+        const todo = [NEW, OLD_TODO].map(withState)
+          .filter((p) => p.status === 'new' && (!excluded || (p as Record<string, unknown>).digest_date !== excluded))
         if (qs.get('count_only') === 'true') return { ok: true, status: 200, json: async () => ({ data: [], count: todo.length }) }
         return ok(todo)
       }
@@ -175,6 +177,22 @@ describe('Research Digest card', () => {
     await new Promise((res) => setTimeout(res, 900))
     button(card(host, 'p-new')!, 'Restore')!.click()
     await expect.poll(posts).toEqual([{ status: 'dismissed' }, { status: 'new' }])
+  })
+
+  it('a paper that loads already processed can be restored at once: the guard starts at a processing action, not at mount', async () => {
+    const calls = stubApi({ 'p-new': 'dismissed' })
+    const host = await mount(wrap(<Digest />), { ready: (h) => card(h, 'p-new')?.getAttribute('data-processed') ? true : null, label: 'compact card' })
+    button(card(host, 'p-new')!, 'Restore')!.click()
+    await expect.poll(() => calls.filter((x) => x.method === 'POST' && x.url.endsWith('/status')).map((x) => x.body)).toEqual([{ status: 'new' }])
+  })
+
+  it('the All done banner never claims more elsewhere when nothing is: it says nothing waits', async () => {
+    stubApi({ 'p-todo': 'dismissed' })
+    const host = await mount(wrap(<Digest />), { ready: (h) => card(h, 'p-new'), label: 'digest card' })
+    button(card(host, 'p-new')!, 'Dismiss')!.click()
+    const done = await waitFor(() => host.querySelector('[data-testid="digest-all-done"]'), 'all done banner')
+    await waitFor(() => (done.textContent?.includes('Nothing is waiting in any other digest') ? true : null), 'no-more sentence')
+    expect(done.textContent).not.toContain('more unprocessed')
   })
 
   it('Unprocessed lists every paper not yet processed across dates, and says All done when none is left', async () => {
