@@ -300,7 +300,6 @@
   --sk-wants-fg: #ffffff;  /* text on a solid --job-wants fill: 6.3:1 */
   --sk-od: #ba003a;
   --sk-od-soft: rgba(186, 0, 58, 0.08);
-  --sk-od-inv: #f0737e;    /* red on an inverted (ink) bar: the other theme's red */
   --sk-urg: #a34003;
   --sk-hatch: color-mix(in srgb, var(--sk-t1) 13%, transparent);
   --sk-face: #d9dcdf;
@@ -326,7 +325,6 @@
   --sk-wants-fg: #0f1923;  /* dark ink on the bright dark-mode gold */
   --sk-od: #f0737e;
   --sk-od-soft: color-mix(in srgb, var(--sk-od) 10%, transparent);
-  --sk-od-inv: #ba003a;
   --sk-urg: #f08a5b;
   --sk-hatch: rgba(255, 255, 255, 0.11);
   --sk-face: #2a323b;
@@ -347,7 +345,6 @@
      and palette tokens, which .dark redefines on the same <html> element. */
   --job-overdue: var(--sk-od);     /* red: overdue */
   --job-danger: var(--sk-od);      /* red's second job, "something's wrong": errors and destructive actions (Nick 2026-10-11) */
-  --job-danger-inverse: var(--sk-od-inv); /* the same job on a var(--ink) bar (bulk toolbar), which flips light/dark */
   --job-wants: var(--sk-gold);     /* gold: wants you now (needs-you asks, due today, new/unread) */
   --job-wants-fg: var(--sk-wants-fg); /* text on a solid --job-wants fill (unread badges) */
   --job-milestone: var(--sk-gold); /* gold: milestones keep it */

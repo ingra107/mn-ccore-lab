@@ -210,13 +210,17 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
               gap: '12px',
               padding: 'var(--sp-md) var(--sp-lg)',
               borderRadius: 'var(--radius-lg)',
-              background: 'var(--ink)',
-              color: 'var(--cream)',
+              // A raised card on theme-aware tokens. The old var(--ink) pill is
+              // light in dark mode, where the accent Undo and the white-alpha
+              // close glyph were close to invisible on it (#146 class).
+              background: 'var(--sk-card)',
+              color: 'var(--sk-t1)',
+              border: '1px solid var(--sk-line2)',
               fontSize: '13px',
               fontWeight: toast.type === 'undo' ? 500 : 400,
               boxShadow: 'var(--shadow-card-hover)',
               minWidth: '240px',
-              borderLeft: presentation.borderColor ? `3px solid ${presentation.borderColor}` : 'none',
+              borderLeft: presentation.borderColor ? `3px solid ${presentation.borderColor}` : '1px solid var(--sk-line2)',
             }}
           >
             {presentation.Icon && (
@@ -234,7 +238,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
                   padding: 'var(--sp-xs) var(--sp-sm)',
                   borderRadius: 'var(--radius-md)',
                   border: 'none',
-                  background: 'rgba(255,255,255,0.15)',
+                  background: 'var(--hover-medium)',
                   color: 'var(--job-accent)',
                   fontSize: '12px',
                   fontWeight: 600,
@@ -255,7 +259,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
                   padding: 'var(--sp-xs) var(--sp-sm)',
                   borderRadius: 'var(--radius-md)',
                   border: 'none',
-                  background: 'rgba(255,255,255,0.15)',
+                  background: 'var(--hover-medium)',
                   color: 'var(--job-accent)',
                   fontSize: '12px',
                   fontWeight: 600,
@@ -272,7 +276,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'rgba(255,255,255,0.4)',
+                color: 'var(--sk-t2)',
                 cursor: 'pointer',
                 padding: 'var(--sp-xs)',
                 minHeight: 44,

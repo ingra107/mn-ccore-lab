@@ -798,8 +798,8 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                 style={{
                   fontSize: '12px',
                   fontWeight: 500,
-                  color: 'var(--ink-bright, #fff)',
-                  background: newCommentText.trim() ? 'var(--job-accent-solid)' : 'var(--slate)',
+                  color: newCommentText.trim() ? 'var(--ink-bright, #fff)' : 'var(--slate)',
+                  background: newCommentText.trim() ? 'var(--job-accent-solid)' : 'var(--border-subtle)',
                   padding: '4px 12px',
                   borderRadius: 'var(--radius-md)',
                   cursor: newCommentText.trim() ? 'pointer' : 'not-allowed',
