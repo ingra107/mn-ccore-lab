@@ -12,6 +12,7 @@ import { TASK_SELECT_COLS, TASK_SELECT_COLS_TYPED } from '../lib/task-cols';
 import { resolveMeetingRef, type MeetingLike } from '../lib/meeting-ref';
 import { postActivityEntry, replySummaryColumns, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
+import { blockedByContainsSql } from '../../shared/blockedBy';
 import { DEFAULT_TASK_KIND, TASK_KINDS, isTaskKind, type TaskKind } from '../../shared/taskKinds';
 
 // guardTaskProject: reads the live task through the caller's handle. A task
@@ -93,7 +94,7 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
   // after that date. The slice the Today, Dashboard and Pulse surfaces want;
   // the unfiltered list is mostly finished tasks they never read.
   const completedSince = url.searchParams.get('completed_since');
-  if (completedSince !== null && !/^\d{4}-\d{2}-\d{2}/.test(completedSince)) {
+  if (completedSince !== null && !/^\d{4}-\d{2}-\d{2}$/.test(completedSince)) {
     return error('completed_since must be a date (YYYY-MM-DD)', 400);
   }
   // ?ids=a,b,c: those tasks only (the blockers of one task). Capped so the
@@ -177,17 +178,16 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
 }
 
 // GET /api/tasks/:id/blocking — the tasks that list :id in their blocked_by
-// (the "Blocks" half of the detail panel's Dependencies section). blocked_by is
-// a comma-separated id list, so the match is an exact-token test on
-// ',' || ids || ',' with instr(): LIKE would treat the '_' in a task id as a
-// wildcard. Goes through env.DB like the list read, so the viewer's scope
+// (the "Blocks" half of the detail panel's Dependencies section). blocked_by
+// holds a comma list or a JSON array; shared/blockedBy.ts owns the exact-token
+// predicate for both shapes (LIKE would treat the '_' in a task id as a
+// wildcard), and the task detail's `blocks` list uses the same one. Goes through env.DB like the list read, so the viewer's scope
 // applies. Soft-deleted rows are left out.
 export async function handleGetBlockingTasks(id: string, env: Env): Promise<Response> {
   const result = await env.DB.prepare(
     `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date
      FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id
-     WHERE t.deleted_at IS NULL AND t.id != ? AND t.blocked_by IS NOT NULL
-       AND instr(',' || REPLACE(t.blocked_by, ' ', '') || ',', ',' || ? || ',') > 0
+     WHERE t.deleted_at IS NULL AND t.id != ? AND ${blockedByContainsSql('t.blocked_by')}
      ORDER BY t.completed ASC, t.due_date ASC, t.created_at DESC`
   ).bind(id, id).all();
   const rows = filterFixtures(result.results, 'title', false);
@@ -818,12 +818,11 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
     env.DB.prepare(
       'SELECT id, title, completed FROM task_subtasks WHERE task_id = ? ORDER BY sort_order ASC, created_at ASC'
     ).bind(taskId).all().catch(() => ({ results: [] as Array<Record<string, unknown>> })),
-    // "blocks" = other tasks whose blocked_by mentions this id. blocked_by is
-    // a free-text column (sometimes single id, sometimes comma-list); LIKE
-    // matches both shapes safely.
+    // "blocks" = other tasks whose blocked_by lists this id; the same predicate
+    // as GET /api/tasks/:id/blocking, so the drawer and the panel agree.
     env.DB.prepare(
-      "SELECT id, title FROM tasks WHERE deleted_at IS NULL AND blocked_by LIKE ? AND id != ? LIMIT 10"
-    ).bind(`%${taskId}%`, taskId).all(),
+      `SELECT id, title FROM tasks WHERE deleted_at IS NULL AND id != ? AND ${blockedByContainsSql('blocked_by')} LIMIT 10`
+    ).bind(taskId, taskId).all(),
   ]);
 
   type UpdateRow = { id: string; content: string; author_slug: string | null; update_type: string | null; created_at: string };

@@ -39,6 +39,7 @@ import { tealRamp, BAR_TRACK } from '../../lib/tealRamp'
 import { Chip } from '../ui/Chip'
 import { projectShortLabel, taskShortLabel } from '../../lib/displayNames'
 import { useProjectPairs } from '../../hooks/useProjectPairs'
+import { parseBlockedBy } from '../../../shared/blockedBy'
 
 // ── Column definitions for resize + tab nav ─────────────────
 // Full column set: checkbox + DATA_COLUMNS + actions
@@ -132,10 +133,7 @@ interface TaskGridViewProps {
   isLoading?: boolean
 }
 
-function parseBlockedByIds(blockedBy: string | null): string[] {
-  if (!blockedBy) return []
-  return blockedBy.split(',').map(s => s.trim()).filter(Boolean)
-}
+const parseBlockedByIds = parseBlockedBy
 
 type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title' | 'project'
 

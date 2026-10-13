@@ -6,18 +6,12 @@ import CollapsibleSection from '../../CollapsibleSection'
 import { useTasks, useBlockingTasks, useTasksByIds } from '../../../hooks/useApiData'
 import type { TaskRow } from '../../../lib/api'
 import { ICON_PROPS } from '../../../lib/iconProps'
+import { parseBlockedBy, serializeBlockedBy } from '../../../../shared/blockedBy'
 
 // ── Helpers ─────────────────────────────────────────────────
 
-function parseBlockedByIds(blockedBy: string | null): string[] {
-  if (!blockedBy) return []
-  return blockedBy.split(',').map(s => s.trim()).filter(Boolean)
-}
-
-function serializeBlockedByIds(ids: string[]): string | null {
-  if (ids.length === 0) return null
-  return ids.join(',')
-}
+const parseBlockedByIds = parseBlockedBy
+const serializeBlockedByIds = serializeBlockedBy
 
 // ── Task Dependencies Section ────────────────────────────────
 

@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import type Database from 'better-sqlite3'
 import { handleGetTasks, handleGetBlockingTasks } from './tasks'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
+import { viewerDb, personViewer } from '../lib/viewer-db'
 
 let db: InstanceType<typeof Database>
 let env: any
@@ -54,6 +55,11 @@ describe('GET /api/tasks?completed_since=', () => {
   it('without the param still returns the whole list', async () => {
     const { ids } = await listIds('')
     expect(ids).toHaveLength(5)
+  })
+
+  it('rejects trailing junk after a date', async () => {
+    const { status } = await listIds('?completed_since=2026-10-06junk')
+    expect(status).toBe(400)
   })
 
   it('rejects a value that is not a date', async () => {
@@ -112,7 +118,29 @@ describe('GET /api/tasks/:id/blocking', () => {
     expect(await blocking('t_self')).toEqual([])
   })
 
+  it('finds a blocker stored as a JSON array', async () => {
+    task('t_json', { blocked_by: '["t_open"]' })
+    task('t_json_long', { blocked_by: '["t_open_longer"]' })
+    expect(await blocking('t_open')).toEqual(['t_json', 't_open_blocked'])
+  })
+
   it('returns an empty list for a task nothing waits on', async () => {
     expect(await blocking('t_done_old')).toEqual([])
+  })
+})
+
+describe('GET /api/tasks/:id/blocking is scoped to the viewer', () => {
+  it('leaves out a task the viewer cannot see, even when it lists the id', async () => {
+    task('t_mine', { assignee: 'casey-eddington', blocked_by: 't_open' })
+    task('t_theirs', { assignee: 'nate-mesfin', blocked_by: 't_open' })
+    const casey = personViewer({ slug: 'casey-eddington', email: 'eddin022@umn.edu', pi: false })
+    const scoped = { DB: viewerDb(d1Adapter(db) as unknown as D1Database, casey) } as any
+    const res = await handleGetBlockingTasks('t_open', scoped)
+    const ids = ((await res.json()) as { data: { id: string }[] }).data.map((r) => r.id)
+    expect(ids).toContain('t_mine')
+    expect(ids).not.toContain('t_theirs')
+    // The unscoped handle sees both, so the filter above is the scope's doing.
+    const all = ((await (await handleGetBlockingTasks('t_open', env)).json()) as { data: { id: string }[] }).data.map((r) => r.id)
+    expect(all).toContain('t_theirs')
   })
 })
