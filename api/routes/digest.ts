@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, logActivity, isPiRequest, resolveActor } from '../helpers';
 import { handleCreateTask } from './tasks';
+import { taskTitleTakenCheck, type TaskTitleTakenCheck } from '../lib/task-dedup-sql';
 
 // Reading state is PER PERSON (schema-v136, Nick 2026-10-13): a member's Save
 // or Dismiss lives in digest_paper_state, keyed by their slug, and 'new' is
@@ -49,7 +50,7 @@ function shapePaper(row: PaperRow): PaperRow {
 
 const READING_STATUSES: readonly string[] = ['new', 'saved', 'dismissed'];
 
-// GET /api/digest?date=&status=&topic=&limit=&with_relevance=true
+// GET /api/digest?date=&status=&topic=&limit=&offset=&with_relevance=true
 //
 // `viewerSlug` is the calling member (null for anyone else: every paper reads
 // 'new' for them). `status=saved` with no `date` is the Saved list across every
@@ -60,6 +61,8 @@ export async function handleGetDigest(url: URL, env: Env, viewerSlug: string | n
   const topic = url.searchParams.get('topic');
   const withRelevance = url.searchParams.get('with_relevance') === 'true';
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 300);
+  // A page past the 300 cap: the Saved list pages through every save with it.
+  const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0', 10) || 0);
 
   if (status && !READING_STATUSES.includes(status)) {
     return error('Invalid status. Must be: new, saved, or dismissed', 400);
@@ -85,10 +88,11 @@ export async function handleGetDigest(url: URL, env: Env, viewerSlug: string | n
     params.push(`%"${topic}"%`);
   }
 
+  // rd.id last: a total order, so pages neither skip nor repeat a paper.
   query += status === 'saved' && !date
-    ? ' ORDER BY s.updated_at DESC, rd.relevance_score DESC LIMIT ?'
-    : ' ORDER BY rd.relevance_score DESC, rd.pub_date DESC LIMIT ?';
-  params.push(limit);
+    ? ' ORDER BY s.updated_at DESC, rd.relevance_score DESC, rd.id LIMIT ? OFFSET ?'
+    : ' ORDER BY rd.relevance_score DESC, rd.pub_date DESC, rd.id LIMIT ? OFFSET ?';
+  params.push(limit, offset);
 
   const result = await env.DB.prepare(query).bind(...params).all();
   const papers = (result.results as PaperRow[]).map(shapePaper);
@@ -227,10 +231,33 @@ export async function handleCreateDigestComment(
   return json({ data: comment }, 201);
 }
 
-/** A task title from a note: its first line, at most 120 characters. */
-export function noteTaskTitle(note: string): string {
+/**
+ * A task title from a note: its first line plus a tag, at most 120 characters.
+ * The tag names the paper ("PMID 222"), so the same short note on two papers
+ * gives two titles; with no tag the title is the line alone. The line is cut
+ * to fit, never the tag.
+ */
+export function noteTaskTitle(note: string, tag?: string): string {
   const line = note.trim().split(/\r?\n/)[0].trim();
-  return line.length > 120 ? `${line.slice(0, 119).trimEnd()}…` : line;
+  const suffix = tag ? ` (${tag})` : '';
+  const room = 120 - suffix.length;
+  const head = line.length > room ? `${line.slice(0, room - 1).trimEnd()}…` : line;
+  return `${head}${suffix}`;
+}
+
+/** The paper's short tag: its PMID, else its DOI, else its title, each capped. */
+export function paperTag(p: { pmid: string | null; doi: string | null; title: string }): string {
+  const cap = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
+  if (p.pmid) return `PMID ${p.pmid}`;
+  if (p.doi) return `doi ${cap(p.doi, 40)}`;
+  return cap(p.title, 40);
+}
+
+/** The note's own tag: the paper tag plus the first 6 characters of its id.
+ *  No other note can produce it, so a title carrying it is free unless this
+ *  very note already made a task. */
+export function noteTag(noteId: string, paper: string): string {
+  return `${paper} · note ${noteId.replace(/-/g, '').slice(0, 6)}`;
 }
 
 // POST /api/digest/comments/:id/task — turn a note into a Hub task.
@@ -242,11 +269,22 @@ export function noteTaskTitle(note: string): string {
 // task the caller can see AND that was deleted frees the note for a new one;
 // a task the caller cannot see still blocks a duplicate (it reads as absent
 // through the viewer handle, and absent counts as "still there").
+//
+// Title identity. The task-create path adopts any open project-less task with
+// the same title (I18), whoever owns it. Two guards keep a note from being
+// stamped with somebody else's task:
+//   1. The title carries the paper tag, and if that title is taken anywhere in
+//      the lab (the route hands in the oracle over the UNSCOPED handle, so a
+//      task the caller cannot see counts too) it carries the note's own tag instead.
+//   2. The create runs with adopt:false, so an adoption that still happens (a
+//      race) answers 409 'title_taken' and never hands back the other task's
+//      id. The stamp below only ever sees an id this call minted.
 export async function handleMakeTaskFromNote(
   commentId: string,
   user: AuthUser,
   env: Env,
   waitUntil?: (promise: Promise<unknown>) => void,
+  titleTaken: TaskTitleTakenCheck = taskTitleTakenCheck(env.DB),
 ): Promise<Response> {
   if (!user.slug || user.slug === 'anonymous') return error('Sign in as a lab member to make a task', 403);
 
@@ -272,12 +310,17 @@ export async function handleMakeTaskFromNote(
   const cite = [note.journal, note.pub_date?.slice(0, 4)].filter(Boolean).join(', ');
   const paperTitle = note.title.length > 80 ? `${note.title.slice(0, 79).trimEnd()}…` : note.title;
 
+  // Guard 1: pick a title no open project-less task holds, seen lab-wide.
+  const tag = paperTag(note);
+  let title = noteTaskTitle(note.content, tag);
+  if (await titleTaken(title, null)) title = noteTaskTitle(note.content, noteTag(note.id, tag));
+
   const res = await handleCreateTask(
     new Request('https://internal/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title: noteTaskTitle(note.content),
+        title,
         description: `${note.content.trim()}\n\nFrom the Research Digest: ${note.title}${cite ? ` (${cite})` : ''}`,
         assignee: user.slug,
         source: 'digest',
@@ -288,13 +331,14 @@ export async function handleMakeTaskFromNote(
     user,
     env,
     waitUntil,
+    { adopt: false },  // Guard 2: an adopted row never comes back as ours.
   );
   if (res.status !== 201) return res;
   const created = await res.json() as { data?: { id?: string } | null };
   const taskId = created.data?.id;
-  // I18 can adopt an existing task with the same title; when that task is one
-  // the caller cannot see, there is no id to link and nothing new was made.
-  if (!taskId) return error('A task with this title already exists', 409);
+  // A 201 with adopt:false is a row this call minted; the caller made it, so
+  // the viewer handle reads it back. No id here means the read failed.
+  if (!taskId) return error('The task was made but could not be read back', 500);
 
   const stamped = await env.DB.prepare(
     'UPDATE digest_comments SET task_id = ? WHERE id = ? AND (task_id IS NULL OR task_id = ?)'

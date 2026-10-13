@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
-import { useDigest, useDigestDates, useProjects, useDigestComments } from '../hooks/useApiData'
+import { useDigest, useDigestSaved, useDigestDates, useProjects, useDigestComments } from '../hooks/useApiData'
 import type { DigestPaper, DigestComment, DigestStatus } from '../hooks/useApiData'
 import { useUpdateDigestStatus, useLinkPaper, useCreateDigestComment, useMakeTaskFromNote } from '../hooks/useMutations'
 import { useSwipeAction } from '../hooks/useSwipeAction'
@@ -162,12 +162,20 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
 
   // Phone swipe (Nick 2026-10-13): right saves, left dismisses, each with an
   // Undo. A swipe SETS the status rather than toggling it, so a stray swipe on
-  // a paper already saved does not unsave it. The hook only drags below 768px.
+  // a paper already saved does not unsave it. The hook drags only for a touch
+  // or pen pointer below 768px; a desktop mouse never swipes.
+  //
+  // Undo waits for the swipe's own write to settle. Two POSTs in flight are
+  // not ordered on the server, so a fast Undo could land first and leave the
+  // paper saved; and the first write's rollback would restore a snapshot from
+  // before the Undo. Settled first, the Undo is the last word either way.
   const swipeTo = (next: DigestStatus, label: string) => {
     const prev = paper.status
     if (prev === next) return
-    updateStatus.mutate({ id: paper.id, status: next })
-    showUndo(label, () => updateStatus.mutate({ id: paper.id, status: prev }))
+    const settled = updateStatus.mutateAsync({ id: paper.id, status: next }).then(() => undefined, () => undefined)
+    showUndo(label, () => {
+      void settled.then(() => updateStatus.mutate({ id: paper.id, status: prev }))
+    })
   }
   const swipe = useSwipeAction({
     onSwipeRight: () => swipeTo('saved', 'Saved'),
@@ -729,7 +737,8 @@ export default function Digest() {
 
   // Every paper this person saved, newest save first, across all dates. It
   // also feeds the Saved count and Copy reading list.
-  const savedQuery = useDigest({ status: 'saved', limit: 300, with_relevance: true })
+  // useDigestSaved pages past the server's 300-row cap, so nothing truncates.
+  const savedQuery = useDigestSaved()
   const savedAll = useMemo(() => savedQuery.data ?? [], [savedQuery.data])
 
   const papers = useMemo(() => {

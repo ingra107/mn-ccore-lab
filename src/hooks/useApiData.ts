@@ -765,6 +765,31 @@ export function useDigest(params?: { date?: string; status?: string; topic?: str
   })
 }
 
+/** The page size the server caps GET /api/digest at. */
+export const DIGEST_PAGE = 300
+
+/**
+ * The caller's Saved list across every digest date, newest save first, ALL
+ * of it: pages of DIGEST_PAGE until a short page, so the count and the Copy
+ * reading list never stop at the server's cap. Same ['digest', ...] key
+ * family, so the status mutation's optimistic update and refetch reach it.
+ */
+export function useDigestSaved() {
+  return useQuery({
+    queryKey: ['digest', { status: 'saved', with_relevance: true, all: true }],
+    queryFn: async () => {
+      const all: DigestPaper[] = []
+      for (let offset = 0; ; offset += DIGEST_PAGE) {
+        const qs = new URLSearchParams({ status: 'saved', limit: String(DIGEST_PAGE), offset: String(offset), with_relevance: 'true' })
+        const page = (await fetchJson<{ data?: DigestPaper[] }>(`/api/digest?${qs}`)).data || []
+        all.push(...page)
+        if (page.length < DIGEST_PAGE) return all
+      }
+    },
+    staleTime: STALE_TIME,
+  })
+}
+
 export function useDigestDates() {
   return useQuery({
     queryKey: ['digest-dates'],

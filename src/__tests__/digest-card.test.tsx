@@ -132,4 +132,67 @@ describe('Research Digest card', () => {
     await expect.poll(() => calls.filter((x) => x.method === 'POST' && x.url === '/api/digest/p-new/status').map((x) => x.body))
       .toEqual([{ status: 'saved' }, { status: 'new' }])
   })
+
+  // A full right drag across the card, with the given pointer type.
+  async function drag(el: HTMLElement, pointerType: string) {
+    const r = el.getBoundingClientRect()
+    const y = r.top + 20
+    const x0 = r.left + 40
+    const pe = (type: string, x: number) =>
+      new PointerEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, pointerId: 1, isPrimary: true, button: 0, buttons: type === 'pointerup' ? 0 : 1, pointerType })
+    el.dispatchEvent(pe('pointerdown', x0))
+    const dist = window.innerWidth * 0.6
+    for (let i = 1; i <= 12; i++) {
+      window.dispatchEvent(pe('pointermove', x0 + (dist * i) / 12))
+      await new Promise((res) => requestAnimationFrame(() => res(null)))
+    }
+    window.dispatchEvent(pe('pointerup', x0 + dist))
+    // Give a drag end, had one started, time to fire its action.
+    for (let i = 0; i < 6; i++) await new Promise((res) => requestAnimationFrame(() => res(null)))
+  }
+
+  it('a mouse drag at 1280px is not a swipe: no status POST', async () => {
+    await page.viewport(1280, 900)
+    expect(window.innerWidth).toBeGreaterThanOrEqual(768)
+    const calls = stubApi()
+    const host = await mount(wrap(<Digest />), { ready: (h) => card(h, 'p-new'), label: 'digest card' })
+    await drag(card(host, 'p-new')!, 'mouse')
+    await new Promise((res) => setTimeout(res, 300))
+    expect(calls.filter((x) => x.method === 'POST' && x.url.endsWith('/status'))).toEqual([])
+    expect(document.body.textContent).not.toContain('Undo')
+  })
+
+  it('a mouse drag on a phone-width window is not a swipe either', async () => {
+    await page.viewport(390, 844)
+    const calls = stubApi()
+    const host = await mount(wrap(<Digest />), { ready: (h) => card(h, 'p-new'), label: 'digest card' })
+    await drag(card(host, 'p-new')!, 'mouse')
+    await new Promise((res) => setTimeout(res, 300))
+    expect(calls.filter((x) => x.method === 'POST' && x.url.endsWith('/status'))).toEqual([])
+  })
+
+  it('Undo waits for the swipe write to settle before it posts', async () => {
+    await page.viewport(390, 844)
+    const calls = stubApi()
+    // Hold the first status POST open until the test releases it.
+    let release!: () => void
+    const held = new Promise<void>((res) => { release = res })
+    const inner = (globalThis.fetch as unknown as { getMockImplementation: () => (u: string, i?: RequestInit) => Promise<unknown> }).getMockImplementation()
+    let first = true
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+      const out = inner(url, init)
+      if (first && init?.method === 'POST' && url.endsWith('/status')) { first = false; await held }
+      return out
+    }))
+    const host = await mount(wrap(<Digest />), { ready: (h) => card(h, 'p-new'), label: 'digest card' })
+    await drag(card(host, 'p-new')!, 'touch')
+    const undo = await waitFor(() => button(document.body, 'Undo'), 'undo toast')
+    undo.click()
+    await new Promise((res) => setTimeout(res, 200))
+    // The save is still in flight, so the Undo has not posted.
+    expect(calls.filter((x) => x.method === 'POST' && x.url.endsWith('/status')).map((x) => x.body)).toEqual([{ status: 'saved' }])
+    release()
+    await expect.poll(() => calls.filter((x) => x.method === 'POST' && x.url.endsWith('/status')).map((x) => x.body))
+      .toEqual([{ status: 'saved' }, { status: 'new' }])
+  })
 })

@@ -22,7 +22,7 @@ import worker from '../index'
 import type { Env } from '../types'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 import { _resetPiEmailsCacheForTests } from '../helpers'
-import { noteTaskTitle } from './digest'
+import { noteTaskTitle, paperTag, noteTag, handleMakeTaskFromNote } from './digest'
 import { viewerDb, personViewer, nobodyViewer, serviceViewer } from '../lib/viewer-db'
 
 const CTX = { waitUntil: () => {}, passThroughOnException: () => {} } as unknown as ExecutionContext
@@ -135,6 +135,10 @@ describe('per-person reading state', () => {
     const saved = (await call('GET', '/api/digest?status=saved&limit=300', NICK)).json.data as Array<{ id: string; status: string }>
     expect(saved.map((p) => p.id)).toEqual(['p-mid', 'p-old'])
     expect(saved.every((p) => p.status === 'saved')).toBe(true)
+    // offset pages past the cap: one per page, in the same order.
+    const page = async (offset: number) =>
+      ((await call('GET', `/api/digest?status=saved&limit=1&offset=${offset}`, NICK)).json.data as Array<{ id: string }>).map((p) => p.id)
+    expect([...(await page(0)), ...(await page(1)), ...(await page(2))]).toEqual(['p-mid', 'p-old'])
   })
 
   it('a re-push of a paper leaves every reader state alone', async () => {
@@ -187,7 +191,7 @@ describe('Make task from a note', () => {
     expect(taskId).toMatch(/^task_/)
     const task = db.prepare('SELECT title, description, assignee, source, key_link_1, key_link_1_desc FROM tasks WHERE id = ?').get(taskId)
     expect(task).toMatchObject({
-      title: 'Get the full text: did the pooled analysis have data?',
+      title: 'Get the full text: did the pooled analysis have data? (PMID 222)',
       assignee: 'casey-eddington',
       source: 'digest',
       key_link_1: 'https://pubmed.ncbi.nlm.nih.gov/222/',
@@ -223,16 +227,93 @@ describe('Make task from a note', () => {
     expect(second.json.data.task_id).not.toBe(first)
   })
 
+  it('a hard delete of the task (a fixture purge) goes through and frees the note', async () => {
+    const id = await noteId()
+    const taskId = (await call('POST', `/api/digest/comments/${id}/task`, CASEY)).json.data.task_id as string
+    db.pragma('foreign_keys = ON')
+    expect(() => db.prepare('DELETE FROM tasks WHERE id = ?').run(taskId)).not.toThrow()
+    expect(db.prepare('SELECT task_id FROM digest_comments WHERE id = ?').get(id)).toEqual({ task_id: null })
+  })
+
   it('an unknown note is a 404 and makes nothing', async () => {
     expect((await call('POST', '/api/digest/comments/nope/task', CASEY)).status).toBe(404)
     expect(db.prepare("SELECT COUNT(*) AS n FROM tasks WHERE source = 'digest'").get()).toEqual({ n: 0 })
   })
 
-  it('the title is the first line, at most 120 characters', () => {
+  it('the title is the first line plus the tag, at most 120 characters, the tag never cut', () => {
     expect(noteTaskTitle('  one\ntwo')).toBe('one')
+    expect(noteTaskTitle('  one\ntwo', 'PMID 9')).toBe('one (PMID 9)')
     const long = noteTaskTitle('x'.repeat(200))
     expect(long.length).toBe(120)
     expect(long.endsWith('…')).toBe(true)
+    const tagged = noteTaskTitle('x'.repeat(200), 'PMID 12345678')
+    expect(tagged.length).toBe(120)
+    expect(tagged.endsWith('… (PMID 12345678)')).toBe(true)
+    expect(paperTag({ pmid: null, doi: '10.1/mid', title: 'T' })).toBe('doi 10.1/mid')
+    expect(paperTag({ pmid: null, doi: null, title: 'A paper' })).toBe('A paper')
+    expect(noteTag('ab-cd-ef-12-34', 'PMID 1')).toBe('PMID 1 · note abcdef')
+  })
+
+  const make = (who: string, id: string) => call('POST', `/api/digest/comments/${id}/task`, who)
+  const stamp = (id: string) => (db.prepare('SELECT task_id FROM digest_comments WHERE id = ?').get(id) as { task_id: string | null }).task_id
+  const titleOf = (id: string) => (db.prepare('SELECT title FROM tasks WHERE id = ?').get(id) as { title: string }).title
+  const note = async (who: string, paper: string, content: string) =>
+    (await call('POST', `/api/digest/${paper}/comments`, who, { content })).json.data.id as string
+
+  it('the same note text on two papers makes two tasks, each note stamped with its own', async () => {
+    const a = await note(CASEY, 'p-new', 'Get full text')
+    const b = await note(CASEY, 'p-old', 'Get full text')
+    const ra = await make(CASEY, a)
+    const rb = await make(CASEY, b)
+    expect([ra.status, rb.status], rb.text).toEqual([201, 201])
+    expect(ra.json.data.task_id).not.toBe(rb.json.data.task_id)
+    expect(stamp(a)).toBe(ra.json.data.task_id)
+    expect(stamp(b)).toBe(rb.json.data.task_id)
+    expect(titleOf(stamp(a)!)).toBe('Get full text (PMID 222)')
+    expect(titleOf(stamp(b)!)).toBe('Get full text (PMID 111)')
+    expect(db.prepare('SELECT key_link_1 FROM tasks WHERE id = ?').get(stamp(b))).toEqual({ key_link_1: 'https://pubmed.ncbi.nlm.nih.gov/111/' })
+  })
+
+  it('the same note text on the same paper from two people makes two tasks', async () => {
+    const a = await note(CASEY, 'p-new', 'Get full text')
+    const b = await note(NICK, 'p-new', 'Get full text')
+    const ra = await make(CASEY, a)
+    const rb = await make(NICK, b)
+    expect([ra.status, rb.status], rb.text).toEqual([201, 201])
+    expect(stamp(a)).toBe(ra.json.data.task_id)
+    expect(stamp(b)).toBe(rb.json.data.task_id)
+    expect(stamp(a)).not.toBe(stamp(b))
+    expect(titleOf(stamp(b)!)).toBe(`Get full text (${noteTag(b, 'PMID 222')})`)
+    expect(db.prepare('SELECT assignee FROM tasks WHERE id = ?').get(stamp(a))).toEqual({ assignee: 'casey-eddington' })
+    expect(db.prepare('SELECT assignee FROM tasks WHERE id = ?').get(stamp(b))).toEqual({ assignee: 'nick-ingraham' })
+  })
+
+  it('a colliding task the caller cannot see is never adopted or stamped; the note gets its own task', async () => {
+    // Nick's own project-less task: invisible to Casey through her viewer handle.
+    insertRow(db, 'tasks', { id: 'task_nicks', title: 'Get full text (PMID 222)', assignee: 'nick-ingraham', assigned_by: NICK, status: 'todo' })
+    expect((await call('GET', '/api/tasks/task_nicks', CASEY)).status).not.toBe(200)
+    const a = await note(CASEY, 'p-new', 'Get full text')
+    const r = await make(CASEY, a)
+    expect(r.status, r.text).toBe(201)
+    expect(r.json.data.task_id).not.toBe('task_nicks')
+    expect(stamp(a)).toBe(r.json.data.task_id)
+    expect(titleOf(stamp(a)!)).toBe(`Get full text (${noteTag(a, 'PMID 222')})`)
+    expect(db.prepare("SELECT assignee, title FROM tasks WHERE id = 'task_nicks'").get())
+      .toEqual({ assignee: 'nick-ingraham', title: 'Get full text (PMID 222)' })
+  })
+
+  it('an adoption that gets past the title pick is a 409 and stamps nothing', async () => {
+    // A visible colliding task, and a title oracle that misses it (the race
+    // window between the pick and the insert): the create adopts, and with
+    // adopt:false the route never sees the adopted id.
+    insertRow(db, 'tasks', { id: 'task_caseys', title: 'Get full text (PMID 222)', assignee: 'casey-eddington', status: 'todo' })
+    const a = await note(CASEY, 'p-new', 'Get full text')
+    const viewerEnv = { ...env, DB: viewerDb(d1Adapter(db), personViewer({ slug: 'casey-eddington', email: CASEY, pi: false })) } as Env
+    const res = await handleMakeTaskFromNote(a, { email: CASEY, slug: 'casey-eddington', name: 'Casey' } as never, viewerEnv, undefined, async () => false)
+    expect(res.status).toBe(409)
+    expect(await res.json()).toMatchObject({ code: 'title_taken' })
+    expect(stamp(a)).toBeNull()
+    expect(db.prepare("SELECT COUNT(*) AS n FROM tasks WHERE source = 'digest'").get()).toEqual({ n: 0 })
   })
 })
 

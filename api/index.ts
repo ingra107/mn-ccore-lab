@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { Env } from './types';
 import { slugClaimCheck } from './lib/project-slug';
+import { taskTitleTakenCheck } from './lib/task-dedup-sql';
 import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, isTeamMember, actorSlugFromRequest, logActivity } from './helpers';
 import { viewerDb, personViewer, serviceViewer, nobodyViewer, isSiteAdmin, ALL_PROJECTS_HEADER, type Viewer } from './lib/viewer-db';
 
@@ -2647,7 +2648,9 @@ defineRoute({
     // Same ctx handling as POST /api/tasks: a test supplies no executionCtx.
     let ctx: ExecutionContext | undefined;
     try { ctx = c.executionCtx; } catch { ctx = undefined; }
-    return handleMakeTaskFromNote(c.req.param('id'), USER(c), E(c), ctx ? (p) => ctx.waitUntil(p) : undefined);
+    // The title pick must see tasks the caller cannot (I18 adopts across
+    // every viewer): a yes/no oracle over the unscoped handle, never the handle.
+    return handleMakeTaskFromNote(c.req.param('id'), USER(c), E(c), ctx ? (p) => ctx.waitUntil(p) : undefined, taskTitleTakenCheck(c.get('unscopedDb')));
   },
 });
 

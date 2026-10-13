@@ -61,8 +61,10 @@ FROM research_digest rd
 WHERE rd.status IN ('saved', 'dismissed');
 
 -- A note that became a task points at it, so the card shows the task instead
--- of offering "Make task" again. Tasks soft-delete (deleted_at), so no cascade.
-ALTER TABLE digest_comments ADD COLUMN task_id TEXT REFERENCES tasks(id);
+-- of offering "Make task" again. The Hub soft-deletes tasks (deleted_at), but
+-- the test-DB fixture purges hard-delete them: ON DELETE SET NULL lets such a
+-- purge through and frees the note, where a bare REFERENCES would refuse it.
+ALTER TABLE digest_comments ADD COLUMN task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL;
 
 -- The card's newest-note lookup.
 CREATE INDEX IF NOT EXISTS idx_digest_comments_paper_created

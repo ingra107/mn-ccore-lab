@@ -450,6 +450,10 @@ export async function handleCreateTask(
   user: AuthUser,
   env: Env,
   waitUntil?: (promise: Promise<unknown>) => void,
+  /** adopt (default true): an I18 title-dedup hit answers 201 with the EXISTING
+   *  row. adopt:false answers 409 code 'title_taken' instead, so the caller
+   *  only ever sees an id this call minted. */
+  opts?: { adopt?: boolean },
 ): Promise<Response> {
   const body = await request.json() as {
     title?: string; description: string; assignee: string;
@@ -583,6 +587,12 @@ export async function handleCreateTask(
   // its own (unlike handleMobileTasksToHub) — every direct-route/Gmail create
   // relies on this to be correct.
   const resultId = (createMutResult.canonical_payload?.id as string | undefined) ?? id;
+  // A caller that will write the new id somewhere else (a digest note's
+  // task_id) cannot use an adopted row: it is someone else's task. With
+  // adopt:false it never receives one; it gets 409 + code 'title_taken'.
+  if (opts?.adopt === false && resultId !== id) {
+    return json({ error: 'An open task already has this title', code: 'title_taken' }, 409);
+  }
 
   await logActivity(env, 'task', `Created task: "${title}" → ${body.assignee}`, user.email, resultId, 'task');
 
