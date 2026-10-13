@@ -14,6 +14,12 @@ import { TooltipLayer } from './components/TooltipLayer'
 const Home = lazyRoute(() => import('./pages/Home'))
 // Member-only shell, behind RequireAuth: an anonymous visitor never downloads it.
 const PortalLayout = lazyRoute(() => import('./components/PortalLayout'))
+// A member landing on /portal/* needs the shell AND the page chunk; the page
+// chunk is only requested once the shell renders. Start the shell now so the
+// two loads overlap. The module cache makes lazyRoute's later import free.
+if (typeof window !== 'undefined' && window.location.pathname.startsWith('/portal')) {
+  void import('./components/PortalLayout').catch(() => { /* lazyRoute reports a failed load */ })
+}
 import { AuthProvider } from './context/AuthContext'
 import { AllProjectsRouteGuard } from './components/AllProjectsControls'
 import { PATHS, PUBLIC_PATHS } from './constants/paths'

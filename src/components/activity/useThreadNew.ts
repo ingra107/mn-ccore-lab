@@ -31,6 +31,9 @@ export function useThreadSeenMap() {
       return new Map((json.data ?? []).map((r) => [r.root_id, r.read_up_to]))
     },
     staleTime: 60 * 1000,
+    // thread-seen no longer bumps the version, so an open tab learns about a
+    // read on another device only by refetching on focus.
+    refetchOnWindowFocus: true,
     retry: false,
   })
 }

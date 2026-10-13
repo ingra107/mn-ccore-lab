@@ -26,7 +26,7 @@ describe('Pulse kiosk refresh', () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const spy = vi.spyOn(queryClient, 'invalidateQueries')
-    const anon = { email: '', slug: '', isAuthenticated: false, isPi: false, isMember: true, canShowAllProjects: false, piResolved: true } as AuthUser
+    const anon = { email: '', slug: '', isAuthenticated: false, isPi: false, isMember: false, canShowAllProjects: false, piResolved: true } as AuthUser
     await mount(
       <QueryClientProvider client={queryClient}>
         <AuthContext.Provider value={{ user: anon, isAuthenticated: false, isLoading: false }}>
@@ -40,6 +40,10 @@ describe('Pulse kiosk refresh', () => {
     expect(spy).not.toHaveBeenCalled()
     vi.advanceTimersByTime(60 * 1000)
     expect(spy).toHaveBeenCalledTimes(1)
+    // Anonymous viewers must not refetch the 401 /api/tasks query.
+    const pred = (spy.mock.calls[0][0] as unknown as { predicate: (q: { queryKey: unknown[] }) => boolean }).predicate
+    expect(pred({ queryKey: ['tasks', undefined] })).toBe(false)
+    expect(pred({ queryKey: ['projects'] })).toBe(true)
     vi.advanceTimersByTime(5 * 60 * 1000)
     expect(spy).toHaveBeenCalledTimes(2)
   })

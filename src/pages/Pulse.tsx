@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '../hooks/useAuth'
 import {
   useStats,
   useTasks,
@@ -75,15 +76,19 @@ export default function Pulse() {
   })
 
   const queryClient = useQueryClient()
+  const { isAuthenticated } = useAuth()
   useEffect(() => {
     const id = window.setInterval(() => {
-      void queryClient.invalidateQueries()
+      // /api/tasks answers 401 to an anonymous viewer; do not refetch it.
+      void queryClient.invalidateQueries(
+        isAuthenticated ? undefined : { predicate: (q) => q.queryKey[0] !== 'tasks' },
+      )
     }, REFRESH_INTERVAL)
     return () => window.clearInterval(id)
-  }, [queryClient])
+  }, [queryClient, isAuthenticated])
 
   const { data: stats } = useStats()
-  const { data: tasks = [] } = useTasks()
+  const { data: tasks = [] } = useTasks(undefined, { retry: isAuthenticated ? undefined : false })
   const { data: projects = [] } = useProjects()
   const { data: activity = [] } = useActivity(8)
   const { data: healthData } = useProjectHealth()
