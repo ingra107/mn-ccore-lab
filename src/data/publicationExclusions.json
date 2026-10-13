@@ -82,6 +82,47 @@
     {
       "id": "88bbf111",
       "reason": "duplicate (hand-entered copy) -- DELETE with backup; keep ingraham-2024-ehr-primary-provider"
+    },
+    {
+      "id": "gen-10-1016-j-ajog-2025-04-051",
+      "reason": "different author (Roise Dudley, UCL), not R. Adams Dudley",
+      "doi": "10.1016/j.ajog.2025.04.051"
+    },
+    {
+      "id": "gen-adams-dudley-2004-figure-c12-scenario-3-hypothetical",
+      "reason": "not a lab paper (AHRQ report figure)"
+    },
+    {
+      "id": "gen-adams-dudley-2004-figure-c15-scenario-3-three",
+      "reason": "not a lab paper (AHRQ report figure)"
+    },
+    {
+      "id": "gen-adams-dudley-2004-figure-c3-scenario-1-percentage",
+      "reason": "not a lab paper (AHRQ report figure)"
+    },
+    {
+      "id": "gen-adams-dudley-2004-figure-c18-scenario-3-in",
+      "reason": "not a lab paper (AHRQ report figure)"
+    },
+    {
+      "id": "gen-adams-dudley-2004-figure-c9-scenario-2-proportion",
+      "reason": "not a lab paper (AHRQ report figure)"
+    },
+    {
+      "id": "gen-adams-dudley-2004-figure-c4-scenario-1-expected",
+      "reason": "not a lab paper (AHRQ report figure)"
+    },
+    {
+      "id": "gen-adams-dudley-2004-figure-c16-scenario-3-expected",
+      "reason": "not a lab paper (AHRQ report figure)"
+    },
+    {
+      "id": "gen-adams-dudley-2004-figure-c13-scenario-3-proportion",
+      "reason": "not a lab paper (AHRQ report figure)"
+    },
+    {
+      "id": "gen-adams-dudley-2004-figure-c27-scenario-6-three",
+      "reason": "not a lab paper (AHRQ report figure)"
     }
   ]
 }
