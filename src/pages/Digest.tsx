@@ -1,16 +1,10 @@
 import { useState, useMemo, useCallback } from 'react'
 import {
-  Bookmark,
-  BookmarkCheck,
-  X,
   ChevronDown,
   ChevronUp,
   Link2,
   Search,
-  FolderPlus,
-  Check,
   Copy,
-  MessageCircle,
   Send,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
@@ -76,6 +70,9 @@ interface ProjectOption {
   title: string
 }
 
+// Text actions share one slot and one hit size (principle 14).
+const ACTION_CLASS = 'cursor-pointer px-2 py-2 rounded-md hover:underline'
+
 function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; projects: ProjectOption[]; commentCount?: number }) {
   const [expanded, setExpanded] = useState(false)
   const [showLinkPicker, setShowLinkPicker] = useState(false)
@@ -113,18 +110,14 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
     <div
       className="card p-4 sm:p-5"
       style={{
-        minHeight: '120px',
-        // Filed state rides a left rail, not a dimmed card: a parent opacity
-        // multiplies with every coloured child and fails AA (CLAUDE.md rule
-        // 43). The rail is one channel carrying one signal -- processed or
-        // not -- and the chip below is its text equivalent (rule 76).
-        borderLeft: `3px solid ${isSaved ? 'var(--job-accent)' : isDismissed ? 'var(--border-subtle)' : 'transparent'}`,
-        transition: 'transform var(--duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--duration-slow) var(--ease-out), background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
+        // Option A (wave 3): same anatomy as the other cards. Filed state is
+        // the status chip in the footer, not a left-edge rail.
+        transition: 'box-shadow var(--duration-slow) var(--ease-out), background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
       }}
     >
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4">
+      <div>
         {/* Main content */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0">
           {/* Title */}
           <h3
             className="text-sm sm:text-base leading-snug mb-1"
@@ -160,20 +153,6 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
 
           {/* Journal + date */}
           <div className="flex flex-wrap items-center gap-2 mb-2">
-            {(isSaved || isDismissed) && (
-              <span
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
-                style={{
-                  fontSize: '10px',
-                  fontWeight: 500,
-                  background: isSaved ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'var(--ice)',
-                  color: isSaved ? 'var(--job-accent)' : 'var(--slate)',
-                }}
-              >
-                <Check {...ICON_PROPS} size={10} />
-                {isSaved ? 'Saved' : 'Dismissed'}
-              </span>
-            )}
             {paper.journal && (
               <span
                 className="text-xs"
@@ -298,187 +277,133 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
             </p>
           )}
 
-          {/* Abstract (collapsible) */}
+          {/* Abstract: two clamped lines, full text on demand (progressive
+              disclosure). Shown only when the PubMed record stored one. */}
           {paper.abstract && (
             <div>
+              <p
+                className={`text-xs leading-relaxed mt-1 ${expanded ? '' : 'line-clamp-2'}`}
+                style={{ color: 'var(--slate)', maxWidth: '70ch' }}
+              >
+                {paper.abstract}
+              </p>
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="cursor-pointer flex items-center gap-1 text-xs mb-1"
-                style={{
-                  color: 'var(--slate)',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                }}
+                aria-expanded={expanded}
+                className="cursor-pointer flex items-center gap-1 text-xs mt-1"
+                style={{ color: 'var(--slate)', background: 'none', border: 'none', padding: 0 }}
               >
                 {expanded ? <ChevronUp {...ICON_PROPS} size={12} /> : <ChevronDown {...ICON_PROPS} size={12} />}
                 {expanded ? 'Hide abstract' : 'Show abstract'}
               </button>
-              {expanded && (
-                <p
-                  className="text-xs sm:text-sm leading-relaxed mt-1 pl-3"
-                  style={{
-                    color: 'var(--slate)',
-                    borderLeft: `2px solid var(--border-subtle)`,
-                  }}
-                >
-                  {paper.abstract}
-                </p>
-              )}
             </div>
           )}
         </div>
 
-        {/* Action buttons */}
-        <div className="flex flex-row sm:flex-col gap-2 flex-shrink-0">
-          <button
-            onClick={handleSave}
-            className="cursor-pointer p-2 rounded-md transition-colors duration-200"
-            style={{
-              background: isSaved ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-              color: isSaved ? 'var(--job-accent)' : 'var(--slate)',
-              border: 'none',
-              minWidth: '36px',
-              minHeight: '36px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title={isSaved ? 'Unsave' : 'Save paper'}
-            aria-label={isSaved ? 'Unsave paper' : 'Save paper'}
-          >
-            {isSaved ? <BookmarkCheck {...ICON_PROPS} size={18} /> : <Bookmark {...ICON_PROPS} size={18} />}
-          </button>
-          <button
-            onClick={handleDismiss}
-            className="cursor-pointer p-2 rounded-md transition-colors duration-200"
-            style={{
-              background: isDismissed ? 'var(--ice)' : 'transparent',
-              color: isDismissed ? 'var(--ink)' : 'var(--slate)',
-              border: 'none',
-              minWidth: '36px',
-              minHeight: '36px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title={isDismissed ? 'Restore' : 'Dismiss paper'}
-            aria-label={isDismissed ? 'Restore paper' : 'Dismiss paper'}
-          >
-            <X {...ICON_PROPS} size={18} />
-          </button>
-          <button
-            onClick={() => setShowComments(!showComments)}
-            className="cursor-pointer p-2 rounded-md transition-colors duration-200"
-            style={{
-              background: showComments ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'transparent',
-              color: showComments ? 'var(--job-accent)' : 'var(--slate)',
-              border: 'none',
-              minWidth: '36px',
-              minHeight: '36px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'relative',
-            }}
-            title="Comments"
-            aria-label={`${commentCount || 0} comments`}
-          >
-            <MessageCircle {...ICON_PROPS} size={18} />
-            {(commentCount ?? 0) > 0 && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '2px',
-                  right: '2px',
-                  fontSize: '9px',
-                  fontWeight: 700,
-                  color: 'var(--sk-card)',
-                  background: 'var(--job-accent)',
-                  borderRadius: '50%',
-                  width: '14px',
-                  height: '14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  lineHeight: 1,
-                }}
-              >
-                {commentCount}
-              </span>
-            )}
-          </button>
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowLinkPicker(!showLinkPicker) }}
-              className="cursor-pointer p-2 rounded-md transition-colors duration-200"
+        {/* Footer: status left, actions in the fixed bottom-right slot */}
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 mt-3">
+          <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: isSaved ? 'var(--job-accent)' : 'var(--slate)' }}>
+            <span
+              aria-hidden="true"
               style={{
-                background: showLinkPicker ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                color: linkSuccess || showLinkPicker ? 'var(--job-accent)' : 'var(--slate)',
-                border: 'none',
-                minWidth: '36px',
-                minHeight: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: isSaved ? 'var(--job-accent)' : isDismissed ? 'var(--border-subtle)' : 'var(--ink)',
               }}
-              title="Link to project"
-              aria-label="Link paper to a project"
+            />
+            {isSaved ? 'Saved' : isDismissed ? 'Dismissed' : 'Unread'}
+          </span>
+          <div className="flex flex-wrap items-center gap-x-1 text-xs">
+            <button
+              onClick={handleDismiss}
+              className={ACTION_CLASS}
+              style={{ color: 'var(--slate)' }}
+              aria-label={isDismissed ? 'Restore paper' : 'Dismiss paper'}
             >
-              {linkSuccess ? <Check {...ICON_PROPS} size={18} /> : <FolderPlus {...ICON_PROPS} size={18} />}
+              {isDismissed ? 'Restore' : 'Dismiss'}
             </button>
-            {showLinkPicker && projects.length > 0 && (
-              <div
-                style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: '100%',
-                  marginTop: '4px',
-                  background: 'var(--cream)',
-                  border: '1px solid var(--sk-line2)',
-                  borderRadius: 'var(--radius-lg)',
-                  boxShadow: 'var(--shadow-menu)',
-                  minWidth: '220px',
-                  maxHeight: '240px',
-                  overflowY: 'auto',
-                  zIndex: 'var(--z-dropdown)',
-                }}
-                onClick={(e) => e.stopPropagation()}
+            <button
+              onClick={() => setShowComments(!showComments)}
+              className={ACTION_CLASS}
+              style={{ color: showComments ? 'var(--job-accent)' : 'var(--slate)' }}
+              aria-label={`${commentCount || 0} comments`}
+              aria-expanded={showComments}
+            >
+              Discuss{(commentCount ?? 0) > 0 ? ` ${commentCount}` : ''}
+            </button>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowLinkPicker(!showLinkPicker) }}
+                className={ACTION_CLASS}
+                style={{ color: linkSuccess || showLinkPicker ? 'var(--job-accent)' : 'var(--slate)' }}
+                aria-label="Link paper to a project"
+                aria-expanded={showLinkPicker}
               >
+                {linkSuccess ? 'Linked' : 'To project'}
+              </button>
+              {showLinkPicker && projects.length > 0 && (
                 <div
                   style={{
-                    padding: 'var(--sp-sm) var(--sp-md) var(--sp-xs)',
-                    fontSize: '11px',
-                    color: 'var(--slate)',
-                    opacity: 'var(--ink-label)',
+                    position: 'absolute',
+                    right: 0,
+                    bottom: '100%',
+                    marginBottom: '4px',
+                    background: 'var(--cream)',
+                    border: '1px solid var(--sk-line2)',
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: 'var(--shadow-menu)',
+                    minWidth: '220px',
+                    maxHeight: '240px',
+                    overflowY: 'auto',
+                    zIndex: 'var(--z-dropdown)',
                   }}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  Link to project
-                </div>
-                {projects.map((proj) => (
-                  <button
-                    key={proj.slug}
-                    onClick={() => {
-                      linkPaper.mutate({ paper_id: paper.id, project_slug: proj.slug })
-                      setShowLinkPicker(false)
-                      setLinkSuccess(proj.title)
-                      setTimeout(() => setLinkSuccess(null), 2000)
-                    }}
-                    className="cursor-pointer w-full text-left px-3 py-2 text-sm transition-colors duration-150 hover:bg-[color-mix(in_srgb,var(--job-accent)_6%,transparent)]"
+                  <div
                     style={{
-                      fontSize: '12px',
-                      color: 'var(--ink)',
-                      background: 'none',
-                      border: 'none',
-                      borderTop: '1px solid var(--border-subtle)',
-                      display: 'block',
+                      padding: 'var(--sp-sm) var(--sp-md) var(--sp-xs)',
+                      fontSize: '11px',
+                      color: 'var(--slate)',
+                      opacity: 'var(--ink-label)',
                     }}
                   >
-                    {proj.title}
-                  </button>
-                ))}
-              </div>
-            )}
+                    Link to project
+                  </div>
+                  {projects.map((proj) => (
+                    <button
+                      key={proj.slug}
+                      onClick={() => {
+                        linkPaper.mutate({ paper_id: paper.id, project_slug: proj.slug })
+                        setShowLinkPicker(false)
+                        setLinkSuccess(proj.title)
+                        setTimeout(() => setLinkSuccess(null), 2000)
+                      }}
+                      className="cursor-pointer w-full text-left px-3 py-2 text-sm transition-colors duration-150 hover:bg-[color-mix(in_srgb,var(--job-accent)_6%,transparent)]"
+                      style={{
+                        fontSize: '12px',
+                        color: 'var(--ink)',
+                        background: 'none',
+                        border: 'none',
+                        borderTop: '1px solid var(--border-subtle)',
+                        display: 'block',
+                      }}
+                    >
+                      {proj.title}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={handleSave}
+              className={ACTION_CLASS}
+              style={{ color: isSaved ? 'var(--job-accent)' : 'var(--ink)', fontWeight: 500 }}
+              aria-label={isSaved ? 'Unsave paper' : 'Save paper'}
+              aria-pressed={isSaved}
+            >
+              {isSaved ? 'Saved' : 'Save'}
+            </button>
           </div>
         </div>
       </div>
