@@ -10,8 +10,8 @@
 //
 // Both are public GETs. An anonymous reader gets FUNDED AWARDS ONLY (Nick
 // 2026-10-12: kind award, live stage), each as id, venue, bucket, project title
-// and PI (slug + display name): the public home and the /nick and /nate funding
-// lists read them. Applications and proposals are invisible to anonymous callers
+// and PI (slug + display name): the public home and the director member pages'
+// (/team/nick-ingraham, /team/nate-mesfin) funding lists read them. Applications and proposals are invisible to anonymous callers
 // (anonRows + anonShape in api/index.ts). Which rows come back is the caller's
 // handle (table-scope byProject on products): a member gets the projects they
 // are on, an anonymous reader the non-PB projects.

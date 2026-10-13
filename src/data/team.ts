@@ -11,6 +11,11 @@ export const directors: Director[] = [
     slug: 'nick-ingraham',
     path: '/nick-ingraham',
     bio: 'Physician-scientist focused on provider variation, lung-protective ventilation, and clinical decision-making in the ICU. Founding member of the CLIF Consortium.',
+    fullBio: 'Physician-scientist at the University of Minnesota studying how provider-level variation in clinical practice impacts ICU outcomes. Founding member of the CLIF Consortium. Research interests include lung-protective ventilation adherence, clinical decision-making styles, and multi-center ICU data science.',
+    links: [
+      { label: 'ORCID', href: 'https://orcid.org/0000-0002-0292-0594' },
+      { label: 'GitHub', href: 'https://github.com/ingra107' },
+    ],
     photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-06/Nick%20Picture_2022.jpg?itok=VEDKgpUN',
     scholarId: 'ZKMVVHkAAAAJ', // Scholar stats (2026-03-24): citations 2626, h-index 24, i10-index 39
     orcidId: '0000-0002-0292-0594', // #357 — ORCID primary source for publications
@@ -26,6 +31,11 @@ export const directors: Director[] = [
     orcidId: '0000-0001-8419-0339', // #905 OpenAlex backfill (Nathan Mesfin, UMN+MPLS VA)
     path: '/nate-mesfin',
     bio: 'Critical care physician investigating in-hospital cardiac arrest survivability, DNR order variation, and chronic critical illness outcomes.',
+    fullBio: 'Critical care physician at the University of Minnesota investigating how provider decision-making shapes outcomes for the most vulnerable ICU patients. His research program centers on three interconnected questions: How do providers vary in their approach to goals-of-care conversations? Can we predict survivability after in-hospital cardiac arrest to inform these conversations? And what defines the trajectory of patients who develop chronic critical illness? He uses multi-center CLIF data and electronic health record analytics to answer these questions at scale.',
+    links: [
+      { label: 'ORCID', href: 'https://orcid.org/0000-0001-8419-0339' },
+      { label: 'UMN Bio', href: 'https://med.umn.edu/bio/nathan-mesfin' },
+    ],
     photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/images/dom-faculty-_0135_layer-164_0.png?itok=YWiCOKFA',
     authorName: 'Mesfin N', // #906 — see Nick's authorName note above
   },
@@ -104,11 +114,15 @@ export function getAllMembers(): TeamMember[] {
     name: d.name,
     initials: d.initials,
     role: d.role,
+    title: d.title,
     credentials: d.credentials,
     slug: d.slug,
     photoUrl: d.photoUrl,
     bio: d.bio,
+    fullBio: d.fullBio,
+    links: d.links,
     scholarId: d.scholarId,
+    orcidId: d.orcidId,
     authorName: d.authorName,
   }))
   return [...directorMembers, ...seniorMentors, ...facultyCollaborators, ...researchTeam]

@@ -1,4 +1,5 @@
 import type { Mentee } from './types'
+import { directors } from './team'
 
 // Trainees shared across MNCCORE — mentored as a team. Staff are not trainees:
 // Casey Eddington (Data Analyst) and Steven Arriaza (Research Coordinator) are
@@ -54,3 +55,10 @@ export function getMenteeBySlug(slug: string): Mentee | undefined {
   return mentees.find((m) => m.slug === slug)
 }
 
+
+/** A director's trainees: the ones they mentor plus the 'shared' ones, named rows only
+ *  (a stub row belongs on the internal Team page). Empty for anyone who is not a director. */
+export function menteesForDirector(slug: string): Mentee[] {
+  if (!directors.some((d) => d.slug === slug)) return []
+  return mentees.filter((m) => (m.mentor === slug || m.mentor === 'shared') && m.name?.trim())
+}

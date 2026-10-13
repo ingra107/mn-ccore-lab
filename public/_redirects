@@ -1,0 +1,4 @@
+# /nick and /nate were lab pages; the director member pages replaced them.
+# Static-asset paths, not in the Functions routes, so Pages applies these before the SPA fallback.
+/nick  /team/nick-ingraham  301
+/nate  /team/nate-mesfin    301

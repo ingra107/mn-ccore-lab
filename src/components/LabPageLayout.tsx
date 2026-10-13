@@ -1,5 +1,5 @@
 import { type CSSProperties, type ReactNode, useEffect, useState } from 'react'
-import { ArrowRight, ExternalLink, FlaskConical } from 'lucide-react'
+import { ExternalLink, FlaskConical } from 'lucide-react'
 import { SecHead } from './public/PublicParts'
 import { FaceDisc } from './today/skin'
 import PublicationCard from './PublicationCard'
@@ -14,6 +14,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
 import { memberHue } from '../lib/memberHue'
 import { statusLabel } from '../lib/textUtils'
+import { realGrants } from '../lib/publicGrants'
 
 // The public site has no portal band: cap the grid at the portal's width so main
 // does not run past it, and keep the rail's stick offset (7rem, what the old
@@ -246,14 +247,8 @@ interface GrantRow {
 export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants: GrantRow[]; id?: string; title?: string }) {
   // Filter stub/placeholder rows from the public-facing list. Lead with real
   // mechanism-bearing grants so visitors don't see "---" first. P2-R2-11.
-  const isRealGrant = (g: GrantRow) =>
-    g.title?.trim() &&
-    g.title.trim() !== '---' &&
-    g.title.trim() !== 'Departmental Operational Support' &&
-    g.mechanism?.trim() &&
-    g.mechanism.trim() !== '---'
-  const activeGrants = grants.filter((g) => g.bucket === 'active' && isRealGrant(g))
-  const pendingGrants = grants.filter((g) => g.bucket === 'proposed' && isRealGrant(g))
+  const activeGrants = realGrants(grants).filter((g) => g.bucket === 'active')
+  const pendingGrants = realGrants(grants).filter((g) => g.bucket === 'proposed')
   // No live row to show (an anonymous visitor gets none): no empty section head.
   if (activeGrants.length === 0 && pendingGrants.length === 0) return null
 
@@ -332,101 +327,6 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
             ))}
           </>
         )}
-      </div>
-    </section>
-  )
-}
-
-interface ProjectCard {
-  title: string
-  status: 'Active' | 'In Review' | 'Published' | 'In Preparation'
-  description?: string
-}
-
-function ProjectCardItem({ project }: { project: ProjectCard }) {
-  const [hovered, setHovered] = useState(false)
-
-  const badgeClass = (status: string) => {
-    switch (status) {
-      case 'Active':
-        return 'badge badge-active'
-      case 'In Review':
-        return 'badge badge-review'
-      case 'Published':
-        return 'badge badge-published'
-      case 'In Preparation':
-        return 'badge badge-preparation'
-      default:
-        return 'badge badge-active'
-    }
-  }
-
-  return (
-    <div
-      className="card p-5 sm:p-6 pl-6 sm:pl-8 cursor-pointer relative"
-      style={{
-        borderLeft: hovered ? '5px solid var(--job-brand)' : '3px solid var(--job-brand)',
-        outline: 'none',
-        transition: 'border-left-width var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out)',
-      }}
-      tabIndex={0}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onFocus={() => setHovered(true)}
-      onBlur={() => setHovered(false)}
-    >
-      <div className="flex items-center justify-between gap-3 mb-2">
-        <h3
-          className="text-sm sm:text-base font-normal leading-snug"
-          style={{
-            color: 'var(--ink)',
-          }}
-        >
-          {project.title}
-        </h3>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className={badgeClass(project.status)}>
-            {statusLabel(project.status)}
-          </span>
-          <ArrowRight {...ICON_PROPS}
-            size={14}
-            aria-hidden="true"
-            className="transition-opacity duration-200"
-            style={{
-              color: 'var(--job-brand)',
-              opacity: hovered ? 1 : 0,
-            }}
-          />
-        </div>
-      </div>
-      {project.description && (
-        <p
-          className="text-sm leading-relaxed"
-          style={{ color: 'var(--slate)' }}
-        >
-          {project.description}
-        </p>
-      )}
-    </div>
-  )
-}
-
-export function ProjectsSection({
-  title,
-  projects,
-  id,
-}: {
-  title: string
-  projects: ProjectCard[]
-  id?: string
-}) {
-  return (
-    <section className="mb-16" id={id}>
-      <SecHead title={title} />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {projects.map((project) => (
-          <ProjectCardItem key={project.title} project={project} />
-        ))}
       </div>
     </section>
   )

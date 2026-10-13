@@ -143,7 +143,7 @@ export function literalFamily(text) {
 }
 
 // Per-file exceptions: the families whose raw use in that file IS its job.
-// The public site (/, /team, /publications, /nick, /nate, /network, /contact,
+// The public site (/, /team, /publications, /network, /contact,
 // /join, /pulse, the public Layout and LabPageLayout, and the components only
 // those pages render) keeps gold as its BRAND color: 'gold' (raw) and 'brand'
 // (var(--job-brand)). Prefer --job-brand there: inside .portal-shell it
@@ -154,8 +154,6 @@ export const ALLOW = {
   // public pages
   'src/pages/Home.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/pages/Team.tsx': { families: PUB, why: PUBLIC_BRAND },
-  'src/pages/NickLab.tsx': { families: PUB, why: PUBLIC_BRAND },
-  'src/pages/NateLab.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/pages/Publications.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/pages/PublicationDetail.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/pages/Network.tsx': { families: PUB, why: PUBLIC_BRAND },

@@ -36,8 +36,8 @@ const footerHubLinks = [
 const footerQuickLinks = [
   { to: '/', label: 'Home' },
   { to: '/team', label: 'Team' },
-  { to: '/nick', label: 'Ingraham Lab' },
-  { to: '/nate', label: 'Mesfin Lab' },
+  { to: '/team/nick-ingraham', label: 'Nick Ingraham' },
+  { to: '/team/nate-mesfin', label: 'Nathan Mesfin' },
   { to: '/publications', label: 'Publications' },
   { to: '/network', label: 'Network' },
   { to: '/contact', label: 'Contact' },
