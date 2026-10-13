@@ -119,3 +119,53 @@ for (const theme of THEMES) {
     })
   }
 }
+
+test('manuscripts: List view rail holds attention, submissions and the stage tally; Pipeline is full width', async ({ page }) => {
+  await visit(page, '/portal/manuscripts', 'light', 1440, 'data-page-grid')
+  const rail = page.getByTestId('data-page-rail')
+  const m = await bandAndColumns(page)
+  expect(m.railX!).toBeGreaterThan(m.mainX! + m.main - 1)
+  expect(m.railW!).toBeLessThanOrEqual(322)
+  await expect(rail.getByText(/needs your attention/i)).toBeVisible()
+  await expect(rail.getByTestId('manuscripts-stage-tally')).toBeVisible()
+  await expect(page.locator('#manuscripts-table')).toBeVisible()
+  await page.getByRole('tab', { name: 'Pipeline' }).click()
+  await expect(page.getByTestId('data-page-rail')).toHaveCount(0)
+  await expect(page.getByText(/needs your attention/i).first()).toBeVisible()
+})
+
+for (const theme of THEMES) {
+  for (const w of WIDTHS) {
+    test(`shots: manuscripts ${w} ${theme}`, async ({ page }) => {
+      await visit(page, '/portal/manuscripts', theme, w, 'data-page-grid')
+      const m = await bandAndColumns(page)
+      expect(m.sw, 'no sideways scroll').toBeLessThanOrEqual(w + 1)
+      await page.screenshot({ path: `${SHOTS}/manuscripts-${w}-${theme}.png` })
+    })
+  }
+}
+
+test('grants: no rail; the stat row and the segmented toggle replace the hand-drawn tabs', async ({ page }) => {
+  await visit(page, '/portal/grants', 'light', 1440, 'grant-stats')
+  await expect(page.locator('.pwr-rail')).toHaveCount(0)
+  await expect(page.getByTestId('grant-stats')).toContainText('Active')
+  const toggle = page.getByRole('tablist', { name: 'Grants sections' })
+  await expect(toggle).toHaveClass(/tk-seg/)
+  // 44px targets on the toggle at phone width.
+  await visit(page, '/portal/grants', 'light', 375, 'grant-stats')
+  for (const name of ['My Grants', 'Post-Award', 'NIH RePORTER']) {
+    const b = (await page.getByRole('tab', { name }).boundingBox())!
+    expect(b.height, `${name} tap height`).toBeGreaterThanOrEqual(44)
+  }
+})
+
+for (const theme of THEMES) {
+  for (const w of WIDTHS) {
+    test(`shots: grants ${w} ${theme}`, async ({ page }) => {
+      await visit(page, '/portal/grants', theme, w, 'grant-stats')
+      const m = await bandAndColumns(page)
+      expect(m.sw, 'no sideways scroll').toBeLessThanOrEqual(w + 1)
+      await page.screenshot({ path: `${SHOTS}/grants-${w}-${theme}.png` })
+    })
+  }
+}

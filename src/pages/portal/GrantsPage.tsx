@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Banknote, Diamond, List, GanttChartSquare, Telescope, Plus, ClipboardList, X, Check, Wallet } from 'lucide-react'
+import { Diamond, List, GanttChartSquare, Telescope, Plus, ClipboardList, X, Check, Wallet } from 'lucide-react'
 import FilterLinks from '../../components/ui/FilterLinks'
 import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -10,6 +10,8 @@ import { TableSkeleton } from '../../components/LoadingSkeleton'
 import InlineSelect from '../../components/InlineSelect'
 import Field from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
+import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
+import StatRow, { type StatRowItem } from '../../components/ui/StatRow'
 import { TableControls } from '../../components/table'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import GrantList, { type TermEdit } from '../../components/grants/GrantList'
@@ -19,7 +21,7 @@ import { useSimilarGrants } from '../../hooks/useApiData'
 import { useUpdateTaskStatus } from '../../hooks/useMutations'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { localDateKey } from '../../lib/dateUtils'
+import { localDateKey, formatShortDate } from '../../lib/dateUtils'
 import { formatUsd, grantName, mechanismOf, milestoneDate, type GrantProduct } from '../../lib/grants'
 
 // The Grants page reads products (Nick 2026-10-12: "we can keep grants
@@ -64,6 +66,24 @@ export default function GrantsPage() {
     [rows],
   )
 
+  // The soonest open milestone from today on: its date is the page's deadline number.
+  const nextDeadline = useMemo(() => {
+    const open = rows
+      .flatMap((g) => g.milestones.filter((m) => !m.completed).map((m) => ({ g, m, date: milestoneDate(m) })))
+      .filter((x): x is typeof x & { date: string } => !!x.date && x.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date))
+    return open[0] ?? null
+  }, [rows, today])
+  const stats: StatRowItem[] = [
+    ...(activeFunding > 0 ? [{ label: 'Active funding', value: formatUsd(activeFunding) }] : []),
+    { label: 'Active', value: counts.active },
+    { label: 'Proposed', value: counts.proposed },
+    ...(counts.ended > 0 ? [{ label: 'Ended', value: counts.ended }] : []),
+    ...(nextDeadline
+      ? [{ label: 'Next deadline', value: formatShortDate(nextDeadline.date), sub: nextDeadline.m.title, rule: 'u' as const }]
+      : []),
+  ]
+
   const write = (row: GrantProduct, fields: TermEdit['fields'], label: string) => {
     const keys = Object.keys(fields) as (keyof TermEdit['fields'])[]
     setTerms.mutate({
@@ -94,10 +114,7 @@ export default function GrantsPage() {
 
   return (
     <div className="content-container">
-      <PageHeader
-        title="Grants & Funding"
-        subtitle={`${counts.active} active, ${counts.proposed} proposed${counts.ended > 0 ? `, ${counts.ended} ended` : ''}`}
-      >
+      <PageHeader title="Grants & Funding">
         <TableControls
           views={[
             { key: 'list', icon: <List {...ICON_PROPS} size={14} />, label: 'List' },
@@ -111,23 +128,20 @@ export default function GrantsPage() {
         />
       </PageHeader>
 
-      <div className="flex gap-1 border-b mb-4" style={{ borderColor: 'var(--border-subtle)' }} role="tablist" aria-label="Grants sections">
-        {([
-          { key: 'grants', label: 'My Grants' },
-          { key: 'post-award', label: 'Post-Award' },
-          { key: 'landscape', label: 'NIH RePORTER' },
-        ] as const).map((tab) => {
-          const on = activeTab === tab.key
-          return (
-            <button key={tab.key} role="tab" aria-selected={on ? 'true' : 'false'} onClick={() => setActiveTab(tab.key)}
-              className="px-3 py-2 text-sm transition-colors touch-tall"
-              style={{
-                color: on ? 'var(--job-accent)' : 'var(--slate)', borderBottom: `2px solid ${on ? 'var(--job-accent)' : 'transparent'}`,
-                background: 'none', cursor: 'pointer', marginBottom: '-1px', fontWeight: on ? 'var(--weight-ui, 500)' : 400,
-              }}
-            >{tab.label}</button>
-          )
-        })}
+      {/* The headline numbers, then the section toggle (s79, Grants B: no rail). */}
+      {!isLoading && <div data-testid="grant-stats"><StatRow stats={stats} /></div>}
+      <div className="tk" style={{ margin: '14px 0 16px' }}>
+        <SegmentedToggle
+          ariaLabel="Grants sections"
+          scrollable
+          options={[
+            { value: 'grants', label: 'My Grants' },
+            { value: 'post-award', label: 'Post-Award' },
+            { value: 'landscape', label: 'NIH RePORTER' },
+          ] satisfies { value: Tab; label: string }[]}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
       </div>
 
       {isError && <QueryErrorNote label="grants" onRetry={() => { void refetch() }} />}
@@ -142,12 +156,7 @@ export default function GrantsPage() {
             <>
               <GrantList rows={shown} kinds={kinds} onEdit={onEdit} />
               <div className="mt-2 px-4 py-2 text-xs flex items-center gap-1.5 flex-wrap" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-                {activeFunding > 0 && (
-                  <span className="flex items-center gap-1" data-testid="grant-funding-total">
-                    <Banknote {...ICON_PROPS} size={11} /> {formatUsd(activeFunding)} active funding
-                  </span>
-                )}
-                {mechanisms.length > 0 && <span>{activeFunding > 0 ? '· ' : ''}Active mechanisms: {mechanisms.join(', ')}</span>}
+                {mechanisms.length > 0 && <span>Active mechanisms: {mechanisms.join(', ')}</span>}
               </div>
             </>
           ))}

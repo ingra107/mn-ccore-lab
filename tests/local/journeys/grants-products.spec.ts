@@ -70,7 +70,7 @@ test('List: each grant product is a row with its project, ladder and terms; edit
   await expect(page.getByTestId(`grant-row-${ids.A0}`)).toContainText('NHLBI R01')
   // An application offers no amount (only an award funds).
   await expect(page.getByTestId(`grant-amount-${ids.A0}`)).toHaveCount(0)
-  await expect(page.getByTestId('grant-funding-total')).toContainText('active funding')
+  await expect(page.getByTestId('grant-stats')).toContainText('Active funding')
   await page.screenshot({ path: `${SHOTS}/01-grants-list-1440-light.png` })
 
   // Inline venue edit -> the product's venue.
