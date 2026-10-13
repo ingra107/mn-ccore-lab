@@ -85,8 +85,7 @@
   },
   "src/pages/portal/GrantsPage.tsx": {
     "surface": 1,
-    "box": 8,
-    "tabstrip": 1
+    "box": 8
   },
   "src/pages/portal/IdeasPage.tsx": {
     "surface": 1,
