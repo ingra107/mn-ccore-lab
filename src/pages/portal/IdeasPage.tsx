@@ -92,6 +92,8 @@ export default function IdeasPage() {
   const { showUndo } = useUndoToast()
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [editingId, setEditingId] = useState<string | null>(null)
+  // Board column currently under a dragged card (drop-target highlight).
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null)
   // S15: the approved idea currently being promoted into a project.
   const [promotingIdea, setPromotingIdea] = useState<IdeaRow | null>(null)
 
@@ -228,39 +230,6 @@ export default function IdeasPage() {
         {/* Controls - hidden when empty per M-04 */}
         {!isEmpty && (
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Status flow legend */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {['new', 'under_review', 'approved', 'parked'].map((s, i) => {
-                const cfg = statusConfig[s]
-                return (
-                  <span key={s} className="flex items-center gap-1">
-                    <span
-                      className="rounded-full"
-                      style={{
-                        color: cfg.color,
-                        backgroundColor: cfg.bg,
-                        fontSize: 'var(--text-micro)',
-                        padding: '2px var(--sp-sm)',
-                      }}
-                    >
-                      {cfg.label}
-                    </span>
-                    {i < 3 && (
-                      <span
-                        style={{
-                          fontSize: 'var(--text-micro)',
-                          color: 'var(--slate)',
-                          opacity: 0.75,
-                        }}
-                      >
-                        &#8594;
-                      </span>
-                    )}
-                  </span>
-                )
-              })}
-            </div>
-
             <InlineSelect
               value={filterStatus}
               options={[
@@ -302,116 +271,64 @@ export default function IdeasPage() {
           />
         ) : viewMode === 'kanban' ? (
           /* P2-10: kanban-first board view */
-          <>
-          {(() => {
-            // P2-R2-12: when one column holds >80% of ideas the board reads
-            // as broken. Suggest List view via dismissible banner.
-            const dismissed = (() => {
-              try { return localStorage.getItem('ideas-kanban-lopsided-dismissed') === '1' } catch { return false }
-            })()
-            const total = sortedIdeas.length
-            const newCount = sortedIdeas.filter(i => i.status === 'new').length
-            const lopsided = total >= 5 && newCount / total > 0.8
-            if (!lopsided || dismissed) return null
-            return (
-              <div className="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg"
-                style={{ background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)', border: `1px solid var(--sk-line)`, fontSize: '12px', color: 'var(--slate)' }}>
-                <span>Most ideas are still in <strong>New</strong>.</span>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('list')}
-                  style={{ background: 'none', border: 'none', color: 'var(--job-accent)', cursor: 'pointer', textDecoration: 'underline', padding: 0, fontSize: '12px' }}
-                >
-                  Switch to List view →
-                </button>
-                <button
-                  type="button"
-                  aria-label="Dismiss"
-                  onClick={() => {
-                    try { localStorage.setItem('ideas-kanban-lopsided-dismissed', '1') } catch { /* ok */ }
-                    // Force re-render via no-op state nudge.
-                    setViewMode((v) => v)
-                  }}
-                  style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.6, padding: 4 }}
-                >
-                  ✕
-                </button>
-              </div>
-            )
-          })()}
-          <div className="grid gap-4 overflow-x-auto" style={{ gridTemplateColumns: 'repeat(4, minmax(220px, 1fr))' }}>
+          <div className="grid grid-cols-1 gap-4 overflow-x-auto sm:grid-cols-[repeat(4,minmax(220px,1fr))]">
             {(['new', 'under_review', 'approved', 'parked'] as const).map((col) => {
               const colIdeas = sortedIdeas.filter((i) => i.status === col)
               const cfg = statusConfig[col]
+              const isOver = dragOverCol === col
               return (
-                <div key={col} className="flex flex-col" style={{ minHeight: '200px' }}>
-                  <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: `2px solid ${cfg.color}` }}>
-                    <span style={{ color: cfg.color, fontSize: '13px', fontWeight: 'var(--weight-ui)' }}>
+                <div
+                  key={col}
+                  className={`${colIdeas.length === 0 ? 'hidden sm:flex' : 'flex'} flex-col`}
+                  data-testid={`ideas-col-${col}`}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dragOverCol !== col) setDragOverCol(col) }}
+                  onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragOverCol(null) }}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    setDragOverCol(null)
+                    const id = e.dataTransfer.getData('text/plain')
+                    const dropped = ideas.find((i) => i.id === id)
+                    if (dropped && dropped.status !== col) handleIdeaStatusChange(dropped.id, col, dropped.status)
+                  }}
+                >
+                  <div className="flex items-baseline gap-2 mb-3">
+                    <span style={{ color: cfg.color, fontSize: 'var(--text-small)', fontWeight: 'var(--weight-ui)' }}>
                       {cfg.label}
                     </span>
-                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>
+                    <span style={{ fontSize: 'var(--text-label)', color: 'var(--sk-t3)', fontVariantNumeric: 'tabular-nums' }}>
                       {colIdeas.length}
                     </span>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    {colIdeas.map((idea) => {
-                      const person = getPersonInfo(idea.submitted_by)
-                      return (
-                        <div
-                          key={idea.id}
-                          className="rounded-lg border p-3 cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
-                          style={{ borderColor: 'var(--border-subtle)', background: 'var(--sk-panel)' }}
-                          onClick={() => setExpandedId(expandedId === idea.id ? null : idea.id)}
-                        >
-                          <div style={{ fontSize: '13px', color: 'var(--ink)', fontWeight: 500, lineHeight: 1.35 }}>
-                            {idea.title}
-                          </div>
-                          <div className="flex items-center justify-between mt-2">
-                            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85 }}>
-                              {person.name.split(' ')[0]}
-                            </span>
-                            {idea.votes > 0 && (
-                              <span style={{ fontSize: '10px', color: 'var(--sk-t2)' }}>
-                                ▲ {idea.votes}
-                              </span>
-                            )}
-                          </div>
-                          <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-                            <InlineSelect
-                              value={idea.status}
-                              options={[
-                                { value: 'new', label: 'New' },
-                                { value: 'under_review', label: 'Under Review' },
-                                { value: 'approved', label: 'Approved' },
-                                { value: 'parked', label: 'Parked' },
-                                { value: 'archived', label: 'Archived' },
-                              ]}
-                              onChange={(v) => handleIdeaStatusChange(idea.id, v, idea.status)}
-                            />
-                          </div>
-                          {/* S15: approved ideas can promote straight to a project */}
-                          {idea.status === 'approved' && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setPromotingIdea(idea) }}
-                              className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md text-xs font-medium"
-                              style={{
-                                background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
-                                color: 'var(--job-accent)',
-                                border: '1px solid color-mix(in srgb, var(--job-accent) 20%, transparent)',
-                                cursor: 'pointer',
-                                padding: '5px 8px',
-                              }}
-                            >
-                              <Rocket {...ICON_PROPS} size={12} />
-                              Promote to project
-                            </button>
-                          )}
-                        </div>
-                      )
-                    })}
+                  <div
+                    className="flex flex-col gap-2 flex-1"
+                    style={{
+                      borderRadius: 'var(--radius-lg)',
+                      outline: isOver ? '2px dashed var(--job-accent)' : 'none',
+                      outlineOffset: 4,
+                      minHeight: 72,
+                    }}
+                  >
+                    {colIdeas.map((idea) => (
+                      <IdeaBoardCard
+                        key={idea.id}
+                        idea={idea}
+                        onStatusChange={(status) => handleIdeaStatusChange(idea.id, status, idea.status)}
+                        onPromote={() => setPromotingIdea(idea)}
+                      />
+                    ))}
                     {colIdeas.length === 0 && (
-                      <div style={{ fontSize: '11px', color: 'var(--muted)', padding: '12px', textAlign: 'center' }}>
-                        Empty
+                      <div
+                        className="hidden sm:block"
+                        style={{
+                          fontSize: 'var(--text-label)',
+                          color: 'var(--sk-t3)',
+                          padding: '20px 4px',
+                          border: '1px dashed var(--sk-line2)',
+                          borderRadius: 'var(--radius-lg)',
+                          textAlign: 'center',
+                        }}
+                      >
+                        Drag an idea here
                       </div>
                     )}
                   </div>
@@ -419,7 +336,6 @@ export default function IdeasPage() {
               )
             })}
           </div>
-          </>
         ) : (
           <TableContainer ariaLabel="Ideas">
             {/* Column headers - hidden on mobile.
@@ -545,6 +461,85 @@ export default function IdeasPage() {
         } : undefined}
         onCreate={promotingIdea ? handlePromoteCreate(promotingIdea) : () => {}}
       />
+    </div>
+  )
+}
+
+const IDEA_STATUS_OPTIONS = [
+  { value: 'new', label: 'New' },
+  { value: 'under_review', label: 'Under review' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'parked', label: 'Parked' },
+  { value: 'archived', label: 'Archived' },
+]
+
+// IdeaBoardCard: Today-card anatomy (title, quiet context line, age on the
+// left, face on the right). Draggable between columns; the status select lives
+// in the corner menu for keyboard and touch, where drag does not work.
+function IdeaBoardCard({
+  idea,
+  onStatusChange,
+  onPromote,
+}: {
+  idea: IdeaRow
+  onStatusChange: (status: string) => void
+  onPromote: () => void
+}) {
+  const person = getPersonInfo(idea.submitted_by)
+  const [dragging, setDragging] = useState(false)
+  return (
+    <div
+      className="card"
+      draggable
+      data-testid="idea-board-card"
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', idea.id)
+        e.dataTransfer.effectAllowed = 'move'
+        setDragging(true)
+      }}
+      onDragEnd={() => setDragging(false)}
+      style={{ padding: '11px 12px', cursor: 'grab', opacity: dragging ? 0.5 : 1 }}
+    >
+      <div className="flex items-start gap-2">
+        <div style={{ flex: 1, minWidth: 0, fontSize: 'var(--text-small)', color: 'var(--ink)', fontWeight: 600, lineHeight: 1.35 }}>
+          {idea.title}
+        </div>
+        <div
+          className="sr"
+          style={{ '--sr-hov': 'var(--hover-subtle)', flexShrink: 0 } as React.CSSProperties}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <InlineSelect
+            value={idea.status}
+            options={IDEA_STATUS_OPTIONS}
+            onChange={onStatusChange}
+            display={<span aria-label="Move idea" style={{ color: 'var(--sk-t3)', fontSize: 'var(--text-small)', lineHeight: 1 }}>&#8943;</span>}
+          />
+        </div>
+      </div>
+      {idea.research_area && (
+        <div style={{ fontSize: 'var(--text-label)', color: 'var(--sk-t3)', marginTop: 2 }}>{idea.research_area}</div>
+      )}
+      <div className="flex items-center justify-between" style={{ marginTop: 'var(--sp-sm)' }}>
+        <span style={{ fontSize: 'var(--text-label)', color: 'var(--sk-t3)', fontVariantNumeric: 'tabular-nums' }}>
+          {formatRelativeTime(idea.created_at)}
+          {idea.votes > 0 && <> &middot; {idea.votes} {idea.votes === 1 ? 'vote' : 'votes'}</>}
+        </span>
+        <div style={{ width: 20, height: 20, flexShrink: 0 }}>
+          <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} />
+        </div>
+      </div>
+      {idea.status === 'approved' && (
+        <button
+          type="button"
+          onClick={onPromote}
+          className="inline-flex items-center gap-1.5"
+          style={{ marginTop: 'var(--sp-sm)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--job-accent)', fontSize: 'var(--text-label)', fontWeight: 500 }}
+        >
+          <Rocket {...ICON_PROPS} size={12} />
+          Promote to project
+        </button>
+      )}
     </div>
   )
 }
