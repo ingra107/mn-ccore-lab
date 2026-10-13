@@ -363,7 +363,7 @@ export default function Projects() {
         <button
           type="button"
           onClick={() => setShowCreate(true)}
-          className="tk-btn tk-sm"
+          className="tk-btn tk-sm new-project-btn"
           style={{ color: 'var(--job-accent)', fontWeight: 600 }}
         >
           <Plus {...ICON_PROPS} size={14} />

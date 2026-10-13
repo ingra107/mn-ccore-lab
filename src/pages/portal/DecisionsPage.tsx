@@ -518,6 +518,7 @@ function DecisionsList({
     {
       key: 'decided_by', label: 'Decided by', width: '120px', sortable: true, minTableWidth: 720, phone: 'line',
       render: (d) => (d.decided_by ? <span className="sr-m sr-hi" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, minWidth: 0 }}><Who value={d.decided_by} /></span> : <span className="sr-m">—</span>),
+      renderPhone: (d) => (d.decided_by ? <span className="sr-m sr-hi" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, minWidth: 0 }}><Who value={d.decided_by} /></span> : null),
     },
     {
       key: 'project', label: 'Project', width: '170px', sortable: true, interactive: true, minTableWidth: 900, phone: 'line',
