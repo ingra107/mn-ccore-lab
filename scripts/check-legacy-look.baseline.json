@@ -15,18 +15,6 @@
     "uppercase": 1,
     "box": 1
   },
-  "src/components/StatusBar.tsx": {
-    "surface": 1
-  },
-  "src/components/WelcomeBanner.tsx": {
-    "surface": 1
-  },
-  "src/components/dashboard/ProjectHealthCard.tsx": {
-    "surface": 2
-  },
-  "src/components/dashboard/StatusLine.tsx": {
-    "surface": 1
-  },
   "src/components/dashboard/TeamPulseCard.tsx": {
     "initials": 1
   },
@@ -43,11 +31,9 @@
     "box": 1
   },
   "src/index.css": {
-    "uppercase": 1,
-    "surface": 14
+    "uppercase": 1
   },
   "src/pages/Dashboard.tsx": {
-    "surface": 2,
     "box": 4
   },
   "src/pages/MemberPage.tsx": {
@@ -69,12 +55,10 @@
     "box": 16
   },
   "src/pages/portal/IdeasPage.tsx": {
-    "surface": 1,
     "box": 1
   },
   "src/pages/portal/InsightsPage.tsx": {
     "uppercase": 2,
-    "surface": 5,
     "box": 7
   }
 }
