@@ -1,0 +1,87 @@
+{
+  "_comment": "Publications deliberately removed from prod. fetch-publications.ts, insert-generated-pubs.ts and src/data/publications.ts all skip these, so a deleted row is never re-created. Matched on id, and on DOI where given. Seeded from the 2026-10-13 integrity audit (PB Scratch/publications-integrity-2026-10-13.md): every HIGH row plus the duplicate MEDIUM rows.",
+  "excluded": [
+    {
+      "id": "ingraham-2024-immunomod-update",
+      "reason": "fabricated (AI seed) -- DELETE with backup"
+    },
+    {
+      "id": "gen-10-1101-2025-09-05-25334955",
+      "doi": "10.1101/2025.09.05.25334955",
+      "reason": "duplicate (medRxiv preprint) -- DELETE with backup; keep olson-2026-pccm-job-offers"
+    },
+    {
+      "id": "gen-10-1101-2023-01-19-23284796",
+      "doi": "10.1101/2023.01.19.23284796",
+      "reason": "duplicate (medRxiv preprint) -- DELETE with backup; keep ingraham-2023-laps2-medcare"
+    },
+    {
+      "id": "gen-10-52768-2833-2725-1155",
+      "doi": "10.52768/2833-2725/1155",
+      "reason": "DOI points to a different paper -- UPDATE doi (find the right one) or DELETE with backup"
+    },
+    {
+      "id": "gen-10-17615-kcfx-6s16",
+      "doi": "10.17615/kcfx-6s16",
+      "reason": "repository copy of a real paper (wrong year/venue) -- DELETE with backup; journal-of-record row karam-2021-mtor-covid stays"
+    },
+    {
+      "id": "gen-10-17615-nvt1-gd84",
+      "doi": "10.17615/nvt1-gd84",
+      "reason": "repository copy of a real paper (wrong year/venue) -- DELETE with backup; journal-of-record row ingraham-2022-disparities-covid stays"
+    },
+    {
+      "id": "gen-10-1001-jama-2025-6681",
+      "doi": "10.1001/jama.2025.6681",
+      "reason": "misattributed (not a lab paper) -- DELETE with backup"
+    },
+    {
+      "id": "gen-10-1093-bjs-znab307",
+      "doi": "10.1093/bjs/znab307",
+      "reason": "probable misattribution (1,295-author commission) -- DELETE with backup unless Dudley confirms"
+    },
+    {
+      "id": "gen-10-17615-adjc-hr61",
+      "doi": "10.17615/adjc-hr61",
+      "reason": "repository copy of a real paper (wrong year/venue) -- DELETE with backup; journal-of-record row gen-10-1161-01-cir-0000441966-31451-3f stays"
+    },
+    {
+      "id": "gen-10-1212-01-wnl-0000086808-56096-da",
+      "doi": "10.1212/01.wnl.0000086808.56096.da",
+      "reason": "garbage record (wrong DOI, placeholder title) -- DELETE with backup"
+    },
+    {
+      "id": "gen-adams-dudley-2020-northeastern-section-of-the-aua",
+      "reason": "misattributed (whole abstract book) -- DELETE with backup"
+    },
+    {
+      "id": "gen-10-17615-m4sm-kk61",
+      "doi": "10.17615/m4sm-kk61",
+      "reason": "repository copy of a real paper (wrong year/venue) -- DELETE with backup; journal-of-record row gen-10-1038-ni-3543 stays"
+    },
+    {
+      "id": "gen-10-1016-j-jamcollsurg-2008-06-234",
+      "doi": "10.1016/j.jamcollsurg.2008.06.234",
+      "reason": "duplicate (meeting abstract) -- DELETE with backup; keep gen-10-1016-j-jsurg-2009-09-002"
+    },
+    {
+      "id": "gen-10-1016-j-jcct-2020-06-098",
+      "doi": "10.1016/j.jcct.2020.06.098",
+      "reason": "duplicate (meeting abstract) -- DELETE with backup; keep gen-10-1007-s10554-021-02241-z"
+    },
+    {
+      "id": "gen-10-21956-hrbopenres-15091-r39808",
+      "doi": "10.21956/hrbopenres.15091.r39808",
+      "reason": "referee report listed as a publication -- DELETE with backup"
+    },
+    {
+      "id": "gen-10-1093-ndt-gft107",
+      "doi": "10.1093/ndt/gft107",
+      "reason": "probable misattribution (abstract supplement) -- DELETE with backup unless Wacker confirms"
+    },
+    {
+      "id": "88bbf111",
+      "reason": "duplicate (hand-entered copy) -- DELETE with backup; keep ingraham-2024-ehr-primary-provider"
+    }
+  ]
+}

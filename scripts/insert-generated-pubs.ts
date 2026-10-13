@@ -25,12 +25,19 @@
  * Prod rows inserted before the fix keep whatever single-author-slug value
  * they were given at insert time. See scripts/backfill-author-slugs-report.ts
  * for a read-only report on what those existing rows would gain.
+ *
+ * Dedup against prod alone let a deleted row come straight back: the scrape
+ * re-mints the same id and prod no longer has it. So a generated pub is also
+ * skipped when it is in src/data/publicationExclusions.json, or when
+ * isAcceptableWork refuses it (repository DOI, non-paper title, or a preprint /
+ * meeting abstract whose published twin is in curated, prod or this set).
  */
 import { readFileSync } from 'node:fs'
 import type { Publication } from '../src/data/types'
 import { curatedPublications } from '../src/data/publications'
 import { generatedPublications } from '../src/data/publications.generated'
 import { dedupKeys } from '../src/data/mergePublications'
+import { buildTitleIndex, excludedPublication, isAcceptableWork } from '../src/lib/publicationFilter'
 
 function esc(v: string | null | undefined): string {
   if (v == null) return 'NULL'
@@ -63,8 +70,23 @@ function main() {
   for (const p of curatedPublications) addKeys(p)
   for (const r of prodRows) addKeys({ doi: r.doi, pubmed: r.pubmed, title: r.title, year: r.year })
 
+  const titles = buildTitleIndex([
+    ...curatedPublications,
+    ...prodRows.map((r) => ({ title: r.title ?? '', doi: r.doi, pubmed: r.pubmed })),
+    ...generatedPublications,
+  ])
+  const refused: string[] = []
   const toInsert: Publication[] = []
   for (const g of generatedPublications) {
+    if (excludedPublication(g)) {
+      refused.push(`excluded ${g.id}`)
+      continue
+    }
+    const verdict = isAcceptableWork({ title: g.title, doi: g.doi, pubmed: g.pubmed, sourceName: g.journal }, [], titles)
+    if (!verdict.ok) {
+      refused.push(`${verdict.reason} ${g.id}`)
+      continue
+    }
     const keys = dedupKeys(g)
     if (keys.some((k) => seen.has(k))) continue
     for (const k of keys) seen.add(k)
@@ -76,6 +98,8 @@ function main() {
   const lines: string[] = [
     '-- #357 non-destructive INSERT of auto-fetched publications absent from prod.',
     `-- generated=${generatedPublications.length} curated=${curatedPublications.length} prod=${prodRows.length} -> to-insert=${toInsert.length}`,
+    `-- refused=${refused.length}`,
+    ...refused.map((r) => `--   ${r}`),
   ]
   for (const p of toInsert) {
     lines.push(

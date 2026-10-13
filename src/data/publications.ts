@@ -1,6 +1,7 @@
 import type { Publication } from './types'
 import { mergePublications } from './mergePublications'
 import { generatedPublications } from './publications.generated'
+import { excludedPublication } from '../lib/publicationFilter'
 
 /** Hand-maintained, authoritative publications. Curation (authorSlugs, topics,
  *  featured) lives here and is never overwritten by the #357 auto-fetch. */
@@ -289,18 +290,6 @@ export const curatedPublications: Publication[] = [
     doi: 'https://doi.org/10.1097/CCE.0000000000001189',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/39700341/',
     topics: ['quality', 'decision-making'],
-    authorSlugs: ['nick-ingraham'],
-  },
-
-  {
-    id: 'ingraham-2024-immunomod-update',
-    authors: 'Ingraham NE, Lotfi-Emran S, Engstrom A, Morelli KA, Murray TA, Vakil A, Benson B, Pendleton KM, Lusczek ER, Tignanelli CJ.',
-    title: 'Immunomodulation in COVID-19: A Systematic Review and Meta-Analysis Update',
-    journal: 'Lancet Respiratory Medicine',
-    year: 2024,
-    status: 'In Review',
-    abstract: 'Updated systematic review and meta-analysis evaluating immunomodulatory therapies in COVID-19 patients.',
-    topics: ['covid'],
     authorSlugs: ['nick-ingraham'],
   },
 
@@ -850,10 +839,12 @@ export const curatedPublications: Publication[] = [
 // #357: the exported dataset = curated (authoritative) + auto-fetched pubs that
 // fill gaps. mergePublications never drops a curated entry, and with an empty
 // generatedPublications this equals `curatedPublications` exactly — a no-op
-// until `npm run fetch:publications` populates the generated file. Both the
-// dev-fallback render (useApiData) and the D1 seed (scripts/seed-d1.ts) import
-// `publications`, so both inherit the merge with no other change.
+// until `npm run fetch:publications` populates the generated file. The
+// dev-fallback render (useApiData) imports `publications`; seed-d1.ts, the
+// other old consumer, was retired in 88cea60f. Rows in
+// publicationExclusions.json were deliberately deleted from prod and stay out
+// of the static set too, so no path can bring one back from here.
 export const publications: Publication[] = mergePublications(
-  curatedPublications,
-  generatedPublications,
+  curatedPublications.filter((p) => !excludedPublication(p)),
+  generatedPublications.filter((p) => !excludedPublication(p)),
 )
