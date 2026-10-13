@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, AlertCircle, ArrowRight, ListChecks, CalendarOff, UserCheck } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { useMeetingsApi, useMeetingLinkedTasks, useMeetingCadence, useTasks } from '../../hooks/useApiData'
 import { useGrantProducts } from '../../hooks/useGrantProducts'
 import { grantName } from '../../lib/grants'
@@ -36,7 +36,7 @@ function UpcomingCard() {
   const grants = useMemo(() => grantData?.data ?? [], [grantData])
 
   // Aggregate real deadlines from open tasks (with due_date) + grant milestones.
-  // Cap to 5 most-urgent: overdue first (most-overdue first), then ascending by days-until-due.
+  // Full list here; the card shows the first rows. Overdue first (most-overdue first), then ascending by days-until-due.
   const deadlines = useMemo<Deadline[]>(() => {
     const now = new Date()
     const items: Deadline[] = []
@@ -80,8 +80,10 @@ function UpcomingCard() {
       return a.daysUntil - b.daysUntil  // ascending future
     })
 
-    return items.slice(0, 5)
+    return items
   }, [tasks, grants])
+  const next7 = useMemo(() => deadlines.filter((d) => d.daysUntil >= 0 && d.daysUntil <= 7).length, [deadlines])
+  const overdueN = useMemo(() => deadlines.filter((d) => d.daysUntil < 0).length, [deadlines])
 
   // Find the next upcoming meeting — closest future date wins, regardless of status
   const nextMeeting = useMemo(() => {
@@ -101,222 +103,70 @@ function UpcomingCard() {
     return { pending: counts?.pendingCount ?? 0, total: counts?.actionCount ?? 0 }
   }, [nextMeeting, allMeetingTasks])
 
-  return (
-    <BentoCard title="Upcoming" subtitle="Deadlines & milestones" size="span-1" icon={Calendar} drillDown>
-      {/* Next Meeting banner */}
-      {nextMeeting ? (
-        <div
-          className="mb-3"
-          style={{
-            // N1b de-box: was a bg+border sub-box inside the card. Flattened to
-            // a left-accent section — identity via the accent + whitespace, not a box.
-            borderLeft: '2px solid var(--border-subtle)',
-            paddingLeft: '10px',
-          }}
-        >
-          <div className="flex items-start justify-between gap-2 mb-1.5">
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)', margin: 0, lineHeight: 1.3 }}>
-                Next Meeting
-              </p>
-              <p style={{ fontSize: '12px', color: 'var(--ink)', margin: '2px 0 0 0', lineHeight: 1.3 }}>
-                {nextMeeting.title.split(':')[0]}
-              </p>
-              <p style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, margin: '2px 0 0 0' }}>
-                {new Date(nextMeeting.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-              </p>
-              {(() => {
-                // #102: recorded facilitator only — never derived from the date.
-                const fInfo = nextMeeting.facilitator ? getPersonInfo(nextMeeting.facilitator) : null
-                return fInfo ? (
-                  <p className="flex items-center gap-1" style={{ fontSize: '10px', color: 'var(--sk-t2)', margin: '2px 0 0 0' }}>
-                    <UserCheck {...ICON_PROPS} size={10} />
-                    {fInfo.name.split(' ')[0]}
-                  </p>
-                ) : null
-              })()}
-            </div>
-          </div>
-          {/* Cadence pill */}
-          {cadence && cadence.recommendation !== 'no_upcoming' && (
-            <div
-              className="flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-full"
-              style={{
-                background: cadence.score >= 40
-                  ? 'color-mix(in srgb, var(--sk-t1) 3%, transparent)'
-                  : cadence.score >= 20
-                    ? 'color-mix(in srgb, var(--job-stale) 6%, transparent)'
-                    : cadence.score >= 0
-                      ? 'color-mix(in srgb, var(--job-stale) 8%, transparent)'
-                      : 'color-mix(in srgb, var(--job-stale) 12%, transparent)',
-                border: `1px solid ${
-                  cadence.score >= 40
-                    ? 'var(--border-subtle)'
-                    : cadence.score >= 20
-                      ? 'color-mix(in srgb, var(--job-stale) 15%, transparent)'
-                      : cadence.score >= 0
-                        ? 'color-mix(in srgb, var(--job-stale) 25%, transparent)'
-                        : 'color-mix(in srgb, var(--job-stale) 35%, transparent)'
-                }`,
-                width: 'fit-content',
-              }}
-            >
-              <span style={{ fontSize: '10px', lineHeight: 1 }}>{cadence.emoji}</span>
-              <span style={{
-                fontSize: '10px',
-                color: 'var(--slate)',
-                opacity: 0.8,
-              }}>
-                {cadence.recommendation}
-              </span>
-            </div>
-          )}
+  // Wave 3 (Lab Overview option A): hero = deadlines in the next 7 days, then
+  // three one-line rows. The next meeting is the first row when there is one, so
+  // the card keeps its height; the cadence note, facilitator and action count
+  // ride on that row's second fact and tooltip.
+  const rows = deadlines.slice(0, nextMeeting ? 2 : 3)
+  const facilitator = nextMeeting?.facilitator ? getPersonInfo(nextMeeting.facilitator) : null
+  const meetingFacts = [
+    facilitator ? facilitator.name.split(' ')[0] : null,
+    meetingActionCounts.total > 0 ? `${meetingActionCounts.pending}/${meetingActionCounts.total} pending` : null,
+  ].filter(Boolean).join(' · ')
+  const cadenceNote = cadence && cadence.recommendation !== 'no_upcoming' ? cadence.recommendation : null
 
-          <div className="flex items-center justify-between mt-2">
-            {meetingActionCounts.total > 0 && (
-              <div className="flex items-center gap-1.5">
-                <ListChecks {...ICON_PROPS} size={11} style={{ color: 'var(--sk-t2)', opacity: 0.8 }} />
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, fontVariantNumeric: 'tabular-nums' }}>
-                  {meetingActionCounts.pending}/{meetingActionCounts.total} pending
-                </span>
-              </div>
-            )}
+  return (
+    <BentoCard
+      title="Upcoming"
+      hero={{
+        value: next7,
+        label: overdueN > 0 ? `next 7 days · ${overdueN} overdue` : 'next 7 days',
+        rule: overdueN > 0 ? 'overdue' : next7 > 0 ? 'urgent' : 'none',
+      }}
+      size="span-1"
+      uniform
+    >
+      <div className="flex flex-col h-full">
+        <div>
+          {nextMeeting && (
             <Link
               to={PATHS.meeting(nextMeeting.id)}
-              className="inline-flex items-center gap-1"
-              style={{
-                fontSize: '10px',
-                color: 'var(--slate)',
-                textDecoration: 'none',
-                fontWeight: 'var(--label-weight)',
-                marginLeft: 'auto',
-              }}
+              className="bento-row"
+              title={[nextMeeting.title, cadenceNote, meetingFacts].filter(Boolean).join(' · ')}
             >
-              View Meeting <ArrowRight {...ICON_PROPS} size={10} />
+              <span className="bento-row-f" style={{ width: 40, color: 'var(--sk-t2)' }}>
+                {formatDateShort(new Date(nextMeeting.date + 'T12:00:00'))}
+              </span>
+              <span className="bento-row-t">{nextMeeting.title.split(':')[0]}</span>
+              <span className="bento-row-f">{meetingFacts || 'meeting'}</span>
             </Link>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 mb-3 px-1 py-2">
-          {/* N1b de-box: empty state is one quiet line, not a bordered block (canon). */}
-          <CalendarOff {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-            No meeting scheduled
-          </span>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-1">
-        {deadlines.length === 0 && (
-          <div className="py-3 text-center" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-            No upcoming deadlines
-          </div>
-        )}
-        {deadlines.map((d, i) => {
-          const isUrgent = d.daysUntil >= 0 && d.daysUntil <= 30
-          const isOverdue = d.daysUntil < 0
-
-          return (
-            <div
-              key={i}
-              className="flex items-start gap-2.5 py-2"
-              style={{
-                borderBottom: i < deadlines.length - 1
-                  ? '1px solid color-mix(in srgb, var(--sk-t1) 3%, transparent)'
-                  : 'none',
-              }}
-            >
-              {/* Date badge */}
-              <div
-                className="flex-shrink-0 text-center"
-                style={{
-                  minWidth: '46px',
-                  padding: '3px 6px',
-                  borderRadius: 'var(--radius-md)',
-                  background: isOverdue
-                    ? 'color-mix(in srgb, var(--job-overdue) 10%, transparent)'
-                    : isUrgent
-                      ? 'color-mix(in srgb, var(--job-stale) 15%, transparent)'
-                      : 'rgba(100, 116, 139, 0.06)',
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  color: isOverdue
-                    ? 'var(--job-overdue)'
-                    : isUrgent
-                      ? 'var(--job-stale)'
-                      : 'var(--slate)',
-                  lineHeight: 1.3,
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {d.date}
-              </div>
-
-              {/* Description */}
-              <div className="flex-1 min-w-0">
-                <p
-                  className="flex items-start gap-1"
-                  style={{
-                    fontSize: '12px',
-                    color: 'var(--ink)',
-                    margin: 0,
-                    lineHeight: 1.3,
-                  }}
-                >
-                  {isOverdue && (
-                    <AlertCircle {...ICON_PROPS}
-                      size={11}
-                      style={{
-                        color: 'var(--job-overdue)',
-                        flexShrink: 0,
-                        animation: 'overdue-pulse 2s ease-in-out infinite',
-                      }}
-                    />
-                  )}
-                  {/* A bare text node in this flex row cannot shrink below its longest
-                      token (snake_case names), so it overflowed the card. */}
-                  <span
-                    title={d.label}
-                    style={{ minWidth: 0, overflowWrap: 'anywhere', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3, overflow: 'hidden' }}
-                  >
-                    {d.label}
-                  </span>
-                </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <div
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 'var(--radius-circle)',
-                      // A type is not a color job (rules-ui-design 21); the label names it.
-                      background: 'var(--slate)',
-                      opacity: 0.85,
-                    }}
-                  />
-                  <span
-                    style={{
-                      fontSize: '10px',
-                      color: 'var(--slate)',
-                      opacity: 'var(--ink-hint)',
-                      textTransform: 'capitalize',
-                    }}
-                  >
-                    {d.type}
-                  </span>
-                </div>
-              </div>
+          )}
+          {!nextMeeting && deadlines.length === 0 && (
+            <div className="py-3" style={{ fontSize: 'var(--label-size)', color: 'var(--sk-t3)' }}>
+              No meeting scheduled. No upcoming deadlines.
             </div>
-          )
-        })}
+          )}
+          {rows.map((d, i) => {
+            const isOverdue = d.daysUntil < 0
+            const isUrgent = d.daysUntil >= 0 && d.daysUntil <= 7
+            return (
+              <div key={i} className="bento-row" title={`${d.label} (${d.type})`}>
+                <span className="bento-row-f" style={{ width: 40, color: isOverdue ? 'var(--job-overdue)' : isUrgent ? 'var(--job-stale)' : 'var(--sk-t2)', fontWeight: isOverdue ? 600 : 400 }}>
+                  {d.date}
+                </span>
+                <span className="bento-row-t">{d.label}</span>
+                <span className="bento-row-f" style={{ textTransform: 'capitalize' }}>{d.type}</span>
+              </div>
+            )
+          })}
+        </div>
+        <div className="bento-foot">
+          <Link to={PATHS.deadlines} className="flex items-center gap-1 portal-footer-link"
+            style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textDecoration: 'none' }}>
+            All deadlines <ArrowRight {...ICON_PROPS} size={11} />
+          </Link>
+        </div>
       </div>
-
-      {/* Overdue pulse animation */}
-      <style>{`
-        @keyframes overdue-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.85; }
-        }
-      `}</style>
     </BentoCard>
   )
 }

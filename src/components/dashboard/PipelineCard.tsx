@@ -1,165 +1,54 @@
-import { memo, useMemo, useState, useEffect, useRef } from 'react'
+import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { GitBranch } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { usePublications } from '../../hooks/useApiData'
 import { useDashboardMounted } from './dashboardMounted'
 import { countPublications } from '../../lib/publicationCounts'
-import { rampStep, rampBar, BAR_TRACK } from '../../lib/tealRamp'
+import { PUBLIC_PATHS } from '../../constants/paths'
 
 interface Stage {
   label: string
   status: 'In Preparation' | 'In Review' | 'Published'
   count: number
+  to: string
 }
 
 function PipelineCard() {
   const mounted = useDashboardMounted()
   const { data: publications = [] } = usePublications(undefined, { enabled: mounted })
-  const [animated, setAnimated] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setAnimated(true)
-          observer.disconnect()
-        }
-      },
-      { threshold: 0.85 }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
 
   const stages = useMemo<Stage[]>(() => {
     const { inPreparation: prep, inReview: review, published } = countPublications(publications)
     return [
-      // Theme tokens, not hex: the old white and near-black fills each vanished
-      // against the track in one theme. The darker end is a mix toward ink.
-      // Color jobs (rules-ui-design 21): the funnel is ONE series, so every
-      // stage draws in teal, dim to bright by stage (color back pick 7).
-      { label: 'In Preparation', status: 'In Preparation', count: prep },
-      { label: 'In Review', status: 'In Review', count: review },
-      { label: 'Published', status: 'Published', count: published },
+      { label: 'In preparation', status: 'In Preparation', count: prep, to: PUBLIC_PATHS.publications },
+      { label: 'In review', status: 'In Review', count: review, to: PUBLIC_PATHS.publications },
+      { label: 'Published', status: 'Published', count: published, to: `${PUBLIC_PATHS.publications}?status=Published` },
     ]
   }, [publications])
 
-  const maxCount = Math.max(...stages.map((s) => s.count), 1)
-
+  // Wave 3 (Lab Overview option A): hero = manuscripts tracked, then the three
+  // stages as plain count rows. The funnel bars, flow arrows and the repeated
+  // total are gone; each stage still links to the filtered Publications list.
   return (
-    <BentoCard title="Publication Pipeline" subtitle="From bench to print" size="span-2x2" icon={GitBranch} noLift>
-      <div ref={containerRef} className="flex flex-col h-full gap-4 pt-1">
-        {/* Funnel visualization */}
-        <div className="flex flex-col gap-5">
-          {stages.map((stage, i) => {
-            const widthPct = Math.max((stage.count / maxCount) * 100, 12)
-            return (
-              <Link
-                key={stage.status}
-                to={`/publications`}
-                className="group block"
-                style={{ textDecoration: 'none' }}
-              >
-                {/* Stage label + count */}
-                <div className="flex items-baseline justify-between mb-1.5">
-                  <span
-                    style={{
-                      fontSize: 'var(--value-size)',
-                      fontWeight: 'var(--label-weight)',
-                      color: 'var(--ink)',
-                    }}
-                  >
-                    {stage.label}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '22px',
-                      fontWeight: 700,
-                      color: 'var(--ink)',
-                      lineHeight: 1,
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
-                    {stage.count}
-                  </span>
-                </div>
-
-                {/* Bar */}
-                <div
-                  style={{
-                    height: '32px',
-                    borderRadius: 'var(--radius-lg)',
-                    // The shared bar track: visible in both themes, and the
-                    // ramp's dim end holds 3:1 against it (tealRamp.ts).
-                    background: BAR_TRACK,
-                    overflow: 'hidden',
-                    position: 'relative',
-                  }}
-                >
-                  <div
-                    style={{
-                      height: '100%',
-                      width: animated ? `${widthPct}%` : '0%',
-                      borderRadius: 'var(--radius-lg)',
-                      ...rampBar(rampStep(i, stages.length)),
-                      transition: `width 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${i * 150}ms`,
-                      position: 'relative',
-                    }}
-                  >
-                    {/* Shimmer on hover */}
-                    <div
-                      className="opacity-0 group-hover:opacity-100"
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)',
-                        transition: 'opacity 0.3s ease',
-                      }}
-                    />
-                  </div>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
-
-        {/* Flow arrows between stages */}
-        <div className="flex items-center justify-center gap-2 mt-1">
-          {stages.map((stage, i) => (
-            <div key={stage.label} className="flex items-center gap-2">
-              <div
-                style={{
-                  fontSize: '10px',
-                  color: 'var(--slate)',
-                  opacity: 0.75,
-                }}
-              >
-                {/* Sentence case, not UPPERCASE (rules-ui-design 2) */}
-                {stage.label.split(' ').pop()}
-              </div>
-              {i < stages.length - 1 && (
-                <svg width="16" height="8" viewBox="0 0 16 8" style={{ opacity: 0.85 }}>
-                  <path d="M0 4 L12 4 M10 1 L14 4 L10 7" fill="none" stroke="var(--slate)" strokeWidth="1.5" />
-                </svg>
-              )}
-            </div>
+    <BentoCard
+      title="Publications"
+      hero={{ value: publications.length, label: 'manuscripts tracked', rule: 'none' }}
+      size="span-2x2"
+      uniform
+      noLift
+    >
+      <div className="flex flex-col h-full">
+        <div>
+          {stages.map((stage) => (
+            <Link
+              key={stage.status}
+              to={stage.to}
+              className="bento-row"
+            >
+              <span className="bento-row-t" style={{ color: 'var(--sk-t2)' }}>{stage.label}</span>
+              <b style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{stage.count}</b>
+            </Link>
           ))}
-        </div>
-
-        {/* Total count */}
-        <div
-          className="text-center"
-          style={{
-            fontSize: 'var(--label-size)',
-            color: 'var(--slate)',
-            opacity: 'var(--ink-label)',
-          }}
-        >
-          {publications.length} total manuscripts tracked
         </div>
       </div>
     </BentoCard>

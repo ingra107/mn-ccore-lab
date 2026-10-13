@@ -1,6 +1,6 @@
 import { memo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { HeartPulse, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react'
+import { ChevronDown, ChevronUp, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
 import HoverCard from '../HoverCard'
 import type { HoverCardData } from '../HoverCard'
@@ -9,7 +9,6 @@ import { useProjectHealth } from '../../hooks/useApiData'
 import type { ProjectHealth, HealthFactors } from '../../hooks/useApiData'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
-import SegmentedToggle from '../ui/SegmentedToggle'
 import { QueryErrorNote } from '../QueryErrorNote'
 import { STATUS_FILLS } from '../../lib/projectHealthFills'
 
@@ -66,7 +65,7 @@ function FactorTooltip({ factors, score }: { factors: HealthFactors; score: numb
 
 function ProjectHealthCard() {
   const { data, isError, refetch } = useProjectHealth()
-  const [showHealthy, setShowHealthy] = useState(false)
+  const [showAll, setShowAll] = useState(false)
   // P3-02: heatmap view as alt to the truncated list. localStorage persists.
   const [viewMode, setViewMode] = useState<'list' | 'heatmap'>(() => {
     if (typeof window === 'undefined') return 'list'
@@ -88,83 +87,50 @@ function ProjectHealthCard() {
     if (typeof window !== 'undefined') window.localStorage.setItem('project-health-view', next)
   }
 
+  // Wave 3 (Lab Overview option A): hero = healthy count with the at-risk count
+  // beside it, then the three projects that most need a look (worst first). The
+  // four-way breakdown moves to the hero's tooltip; "Show all" opens the rest.
+  const ordered = [...needsWork, ...healthyProjects]
+  const visible = showAll ? ordered : ordered.slice(0, 3)
+  const atRisk = summary.at_risk + summary.critical
+  const heroLabel = `healthy · ${atRisk} at risk${summary.needs_attention > 0 ? ` · ${summary.needs_attention} attention` : ''}`
+
   return (
     <BentoCard
       title="Project Health"
-      subtitle={isError ? undefined : `${summary.total} projects tracked`}
-      size="span-2"
-      icon={HeartPulse}
-    >
-      <div className="flex flex-col h-full">
-        {/* View toggle (P3-02) — shared SegmentedToggle */}
-        <div className="flex justify-end mb-2 -mt-1">
-          <SegmentedToggle
-            ariaLabel="Project health view"
-            options={[
-              { value: 'list', label: 'List' },
-              { value: 'heatmap', label: 'Heatmap' },
-            ]}
-            value={viewMode}
-            onChange={persistView}
-          />
-        </div>
-
-        {/* Summary counts */}
-        <div
-          className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3 pb-3"
-          style={{ borderBottom: '1px solid var(--border-subtle)' }}
-        >
-          {[
-            { status: 'Critical' as const, count: summary.critical, label: 'Critical' },
-            { status: 'At Risk' as const, count: summary.at_risk, label: 'At risk' },
-            { status: 'Needs Attention' as const, count: summary.needs_attention, label: 'Attention' },
-            { status: 'Healthy' as const, count: summary.healthy, label: 'Healthy' },
-          ].map((s) => (
-            <div key={s.status} className="flex items-center gap-1.5">
-              <div
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 'var(--radius-circle)',
-                  background: STATUS_FILLS[s.status],
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 'var(--value-size)',
-                  fontWeight: 700,
-                  color: 'var(--ink)',
-                  lineHeight: 1,
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {s.count}
-              </span>
-              <span
-                style={{
-                  fontSize: '10px',
-                  color: 'var(--slate)',
-                  opacity: 'var(--ink-hint)',
-                  // Sentence case, not UPPERCASE (rules-ui-design 2)
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {s.label}
-              </span>
-            </div>
+      hero={isError ? undefined : {
+        value: summary.healthy,
+        label: heroLabel,
+        rule: atRisk > 0 ? 'urgent' : 'accent',
+        title: `${summary.total} projects: ${summary.critical} critical, ${summary.at_risk} at risk, ${summary.needs_attention} attention, ${summary.healthy} healthy`,
+      }}
+      headRight={
+        <div role="tablist" aria-label="Project health view" className="bento-flt">
+          {(['list', 'heatmap'] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              role="tab"
+              aria-selected={viewMode === v}
+              className={viewMode === v ? 'bento-flt-on' : undefined}
+              onClick={() => persistView(v)}
+            >
+              {v === 'list' ? 'List' : 'Heatmap'}
+            </button>
           ))}
         </div>
-
+      }
+      size="span-2"
+      uniform
+    >
+      <div className="flex flex-col h-full">
         {viewMode === 'heatmap' && projects.length > 0 ? (
           /* P3-02: every project as a colored cell. Hover for tooltip. */
           <div
-            className="flex-1 overflow-y-auto -mx-1 px-1"
+            className="overflow-y-auto -mx-1 px-1"
             tabIndex={0}
             role="region"
             aria-label="Project health heatmap"
-            // minHeight: one row of cells plus the caption. Without it the
-            // flex-1 scroller collapses to 0 inside the fixed-height card and the
-            // grid's grow-to-fit (which reads the outer card's scrollHeight) never fires.
             style={{ maxHeight: '320px', minHeight: '84px' }}
           >
             <div
@@ -200,87 +166,48 @@ function ProjectHealthCard() {
             </p>
           </div>
         ) : (
-        /* Scrollable project list */
-        <div
-          className="flex-1 overflow-y-auto -mx-1 px-1"
-          tabIndex={0}
-          role="region"
-          aria-label="Project health"
-          style={{ maxHeight: '280px', minHeight: '96px', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}
-        >
-          {/* Projects needing attention (sorted worst first) */}
-          {needsWork.map((p) => (
+        <div role="region" aria-label="Project health">
+          {visible.map((p) => (
             <ProjectHealthRow key={p.slug} project={p} />
           ))}
-
-          {/* Healthy projects (collapsible) */}
-          {healthyProjects.length > 0 && (
-            <>
-              <button
-                type="button"
-                onClick={() => setShowHealthy(!showHealthy)}
-                className="cursor-pointer flex items-center gap-2 w-full py-2 mt-1 hover:!opacity-100 transition-opacity"
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: '10px 0',
-                  minHeight: '44px',
-                  fontSize: 'var(--label-size)',
-                  color: 'var(--slate)',
-                  opacity: 'var(--ink-label)',
-                }}
-              >
-                {showHealthy ? <ChevronUp {...ICON_PROPS} size={12} /> : <ChevronDown {...ICON_PROPS} size={12} />}
-                {showHealthy ? 'Hide' : 'Show'} {healthyProjects.length} healthy project{healthyProjects.length !== 1 ? 's' : ''}
-              </button>
-              {showHealthy &&
-                healthyProjects.map((p) => (
-                  <ProjectHealthRow key={p.slug} project={p} />
-                ))}
-            </>
-          )}
 
           {/* Empty state -- #507 follow-up: distinguish a thrown fetch
               failure (isError) from a genuinely empty project set. */}
           {projects.length === 0 && (
             isError ? (
-              <div className="flex flex-col items-center justify-center py-8" style={{ opacity: 0.85 }}>
+              <div className="py-4">
                 <QueryErrorNote label="project health" onRetry={() => refetch()} />
               </div>
             ) : (
-              <div
-                className="flex flex-col items-center justify-center py-8"
-                style={{ opacity: 0.85 }}
-              >
-                <HeartPulse size={24} style={{ color: 'var(--slate)', marginBottom: '8px' }} />
-                <p
-                  style={{
-                    fontSize: '12px',
-                    color: 'var(--slate)',
-                    margin: 0,
-                  }}
-                >
-                  No project data available
-                </p>
+              <div className="py-4" style={{ fontSize: '12px', color: 'var(--sk-t3)' }}>
+                No project data available
               </div>
             )
           )}
         </div>
         )}
 
-        {/* Footer link */}
-        <Link
-          to={PATHS.projects}
-          className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
-          style={{
-            fontSize: 'var(--label-size)',
-            color: 'var(--slate)',
-            textDecoration: 'none',
-            borderTop: '1px solid var(--border-subtle)',
-          }}
-        >
-          View all projects <ArrowRight {...ICON_PROPS} size={11} />
-        </Link>
+        {/* Footer: the link, and "show all" for the rest of the list. */}
+        <div className="bento-foot">
+          <Link
+            to={PATHS.projects}
+            className="flex items-center gap-1 portal-footer-link"
+            style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textDecoration: 'none' }}
+          >
+            All projects <ArrowRight {...ICON_PROPS} size={11} />
+          </Link>
+          {viewMode === 'list' && ordered.length > 3 && (
+            <button
+              type="button"
+              onClick={() => setShowAll(!showAll)}
+              className="cursor-pointer flex items-center gap-1"
+              style={{ background: 'none', border: 'none', padding: 0, fontSize: 'var(--label-size)', color: 'var(--sk-t3)' }}
+            >
+              {showAll ? <ChevronUp {...ICON_PROPS} size={12} /> : <ChevronDown {...ICON_PROPS} size={12} />}
+              {showAll ? 'Show fewer' : `Show all ${ordered.length}`}
+            </button>
+          )}
+        </div>
       </div>
     </BentoCard>
   )
@@ -313,15 +240,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
   return (
     <Link
       to={PATHS.project(project.slug)}
-      className="flex items-center flex-wrap gap-x-2.5 gap-y-1 py-2 group transition-colors hover:bg-[var(--hover-subtle)]"
-      style={{
-        textDecoration: 'none',
-        borderBottom: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius-sm)',
-        padding: 'var(--sp-sm) var(--sp-xs)',
-        margin: '0 -4px',
-        minHeight: '44px',
-      }}
+      className="bento-row"
     >
       {/* Health dot */}
       <div
@@ -344,9 +263,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
           fontSize: '12px',
           color: 'var(--ink)',
           fontWeight: isBad ? 600 : 400,
-          // Basis 110px: in a narrow card the bar/score/status cluster wraps to a
-          // second line instead of squeezing the name down to "Prim...".
-          flex: '1 1 110px',
+          flex: '1 1 0',
           minWidth: 0,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -364,67 +281,18 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
         cardHandlers={hoverCardHandlers}
       />
 
-      {/* Health bar + score */}
+      {/* Status word; hover shows the score and its four factors */}
       <div
-        className="flex items-center gap-2"
-        style={{ flexShrink: 0, position: 'relative', marginLeft: 'auto' }}
+        style={{ flexShrink: 0, position: 'relative', marginLeft: 'auto', lineHeight: 1.3 }}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
-        {/* Health bar */}
-        <div
-          style={{
-            width: '48px',
-            height: '4px',
-            borderRadius: 'var(--radius-sm)',
-            background: 'var(--sk-line2)',
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              width: `${project.score}%`,
-              height: '100%',
-              borderRadius: 'var(--radius-sm)',
-              background: fill,
-              transition: 'width 0.3s ease-out, background 0.15s',
-            }}
-          />
-        </div>
-
-        {/* Score number */}
         <span
-          style={{
-            fontSize: '10px',
-            fontWeight: 500,
-            color: isBad ? color : 'var(--slate)',
-            opacity: isBad ? 1 : 0.85,
-            minWidth: '20px',
-            textAlign: 'right',
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {project.score}
-        </span>
-
-        {/* Status label */}
-        <span
-          style={{
-            fontSize: '10px',
-            padding: '1px 5px',
-            borderRadius: 'var(--radius-sm)',
-            background: isBad ? 'color-mix(in srgb, var(--job-stale) 6%, transparent)' : 'transparent',
-            color,
-            flexShrink: 0,
-            letterSpacing: '0.02em',
-            minWidth: '44px',
-            textAlign: 'center',
-          }}
+          className="bento-row-f"
+          style={{ color: isBad ? color : undefined, fontWeight: isBad ? 600 : 400 }}
         >
           {project.status === 'Needs Attention' ? 'Attention' : project.status === 'At Risk' ? 'At risk' : project.status}
         </span>
-
-        {/* Tooltip */}
         {showTooltip && <FactorTooltip factors={project.factors} score={project.score} />}
       </div>
     </Link>

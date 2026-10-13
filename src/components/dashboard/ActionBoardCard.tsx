@@ -1,11 +1,10 @@
 import { memo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import { CheckCircle2, ClipboardList, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { FaceDisc } from '../today/skin'
 import { useTasks } from '../../hooks/useApiData'
-import { formatBrandName } from '../BrandName'
 import { useUpdateTaskStatus } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
@@ -15,7 +14,7 @@ import TaskDetailPanel from '../tasks/TaskDetailPanel'
 import TaskTitle from '../tasks/TaskTitle'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { isTaskDone, withAlpha } from '../../lib/taskGrouping'
+import { isTaskDone } from '../../lib/taskGrouping'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 import { taskShortLabel } from '../../lib/displayNames'
 
@@ -34,93 +33,65 @@ function ActionBoardCard() {
   const pending = items.filter((i) => !isTaskDone(i))
   const completed = items.filter((i) => isTaskDone(i))
 
-  // Group pending by assignee
-  const byAssignee = new Map<string, typeof pending>()
-  for (const item of pending) {
-    const list = byAssignee.get(item.assignee) || []
-    list.push(item)
-    byAssignee.set(item.assignee, list)
-  }
+  // Wave 3 (Lab Overview option A): the card is one hero number and the three
+  // tasks to look at first (soonest due, undated last). The full list is one
+  // link away, so the card never scrolls inside itself.
+  const lead = [...pending]
+    .sort((x, y) => (x.due_date ?? '9999').localeCompare(y.due_date ?? '9999'))
+    .slice(0, 3)
 
   return (
-    <BentoCard title="Tasks" subtitle={`${pending.length} pending · ${completed.length} done`} size="span-2" icon={ClipboardList} drillDown noLift>
+    <BentoCard
+      title="Tasks"
+      hero={{ value: pending.length, label: `pending · ${completed.length} done`, rule: 'accent', to: PATHS.myTasks }}
+      size="span-2"
+      uniform
+      noLift
+    >
       <div className="flex flex-col h-full">
-        <div className="flex-1 overflow-y-auto -mx-1 px-1" tabIndex={0} role="region" aria-label="Action items" style={{ maxHeight: '300px', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}>
-          {pending.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              {Array.from(byAssignee.entries()).map(([assignee, assigneeItems]) => {
-                const person = getPersonInfo(assignee)
-                return (
-                  <div key={assignee}>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div style={{ width: 20, height: 20 }}>
-                        <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} />
-                      </div>
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)' }}>
-                        {person.name}
-                      </span>
-                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)', fontVariantNumeric: 'tabular-nums' }}>
-                        {assigneeItems.length}
-                      </span>
-                    </div>
-                    {assigneeItems.map((item) => {
-                      return (
-                        <div key={item.id} className="flex items-start gap-2 py-1.5 pl-7 action-board-row"
-                          style={{ borderBottom: `1px solid ${withAlpha('var(--sk-t1)', 3)}`, cursor: 'pointer', borderRadius: 'var(--radius-sm)', margin: '0 -4px', padding: '6px 4px 6px 28px', transition: 'background 0.15s' }}
-                          onClick={() => setDetailTask(item)}>
-                          {/* C15 DoneBox — canonical square = complete */}
-                          <DoneBox
-                            taskId={item.id}
-                            done={isTaskDone(item)}
-                            onToggle={() => {
-                              const prev = item.status
-                              const next = isTaskDone(item) ? 'todo' : 'done'
-                              updateStatus.mutate({ id: item.id, status: next })
-                              showUndo(next === 'done' ? 'Completed task' : 'Reopened task', () => updateStatus.mutate({ id: item.id, status: prev }))
-                            }}
-                          />
-                          <div style={{ flex: 1 }}>
-                            <p style={{ fontSize: '11.5px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
-                              {/* C2 short_title · C13 TaskTitle ([Carried forward] chip) */}
-                              <TaskTitle title={taskShortLabel(item)} fallback={item.description} />
-                            </p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <DueLabel due={item.due_date} style={{ fontSize: 10 }} />
-                              {item.priority && item.priority !== 'medium' && (
-                                <span style={{ fontSize: '10px', color: item.priority === 'urgent' ? 'var(--job-stale)' : 'var(--slate)', opacity: 0.85 }}>
-                                  {item.priority}
-                                </span>
-                              )}
-                              {item.meeting_id && item.meeting_title && (
-                                <Link to={PATHS.meeting(item.meeting_id)}
-                                  style={{ fontSize: '10px', color: 'var(--slate)', textDecoration: 'none', opacity: 0.85 }}
-                                  onClick={(e) => e.stopPropagation()}>
-                                  {formatBrandName(item.meeting_title?.split(':')[0] || '')}
-                                </Link>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })}
-            </div>
+        <div role="region" aria-label="Action items">
+          {lead.length > 0 ? (
+            lead.map((item) => {
+              const person = getPersonInfo(item.assignee)
+              return (
+                <div key={item.id} className="bento-row action-board-row" style={{ cursor: 'pointer' }} onClick={() => setDetailTask(item)}>
+                  {/* C15 DoneBox: the canonical square = complete */}
+                  <DoneBox
+                    taskId={item.id}
+                    done={isTaskDone(item)}
+                    onToggle={() => {
+                      const prev = item.status
+                      const next = isTaskDone(item) ? 'todo' : 'done'
+                      updateStatus.mutate({ id: item.id, status: next })
+                      showUndo(next === 'done' ? 'Completed task' : 'Reopened task', () => updateStatus.mutate({ id: item.id, status: prev }))
+                    }}
+                  />
+                  <span className="bento-row-t">
+                    {/* C2 short_title, C13 TaskTitle ([Carried forward] chip) */}
+                    <TaskTitle title={taskShortLabel(item)} fallback={item.description} />
+                  </span>
+                  {item.due_date ? (
+                    <DueLabel due={item.due_date} style={{ fontSize: 11 }} />
+                  ) : item.priority && item.priority !== 'medium' ? (
+                    <span className={`bento-row-f${item.priority === 'urgent' ? ' bento-urgent' : ''}`}>{item.priority}</span>
+                  ) : null}
+                  <span style={{ width: 18, height: 18, flexShrink: 0 }} title={person.name}>
+                    <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={18} />
+                  </span>
+                </div>
+              )
+            })
           ) : (
-            <div className="flex flex-col items-center justify-center py-8" style={{ opacity: 0.85 }}>
-              <CheckCircle2 size={24} style={{ color: 'var(--sk-t2)', marginBottom: '8px' }} />
-              <p style={{ fontSize: '12px', color: 'var(--slate)', margin: 0 }}>
-                All caught up
-              </p>
-            </div>
+            <div className="py-4" style={{ fontSize: '12px', color: 'var(--sk-t3)' }}>All caught up</div>
           )}
         </div>
 
-        <Link to={PATHS.myTasks} className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
-          style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textDecoration: 'none', borderTop: '1px solid var(--border-subtle)' }}>
-          View all tasks <ArrowRight {...ICON_PROPS} size={11} />
-        </Link>
+        <div className="bento-foot">
+          <Link to={PATHS.myTasks} className="flex items-center gap-1 portal-footer-link"
+            style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textDecoration: 'none' }}>
+            View all tasks <ArrowRight {...ICON_PROPS} size={11} />
+          </Link>
+        </div>
       </div>
       {/* Portalled to <body> on purpose: DashboardGrid renders every widget
           inside a react-grid-layout item that carries a CSS transform
@@ -131,10 +102,6 @@ function ActionBoardCard() {
         <TaskDetailPanel task={detailTask} onClose={() => setDetailTask(null)} />,
         document.body,
       )}
-      <style>{`
-        .action-board-row:active { background: color-mix(in srgb, var(--sk-t1) 3%, transparent); }
-        .action-board-row:hover { background: color-mix(in srgb, var(--sk-t1) 3%, transparent); }
-      `}</style>
     </BentoCard>
   )
 }

@@ -2,7 +2,6 @@ import { useState, useCallback, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock, AlertTriangle } from 'lucide-react'
 import DashboardGrid from '../components/dashboard/DashboardGrid'
-import SegmentedToggle from '../components/ui/SegmentedToggle'
 import { Button } from '../components/ui/Button'
 import { resetLayouts } from '../lib/dashboardLayout'
 import { useScrollReveal } from '../hooks/useScrollReveal'
@@ -369,34 +368,29 @@ export default function Dashboard() {
                   flexWrap: 'wrap',
                 }}
               >
-                {/* Static dot, hidden on phones where it wrapped onto a line of
-                    its own (site audit F24/F97: color is spent, not pulsed). */}
-                <div
-                  className="max-[640px]:hidden"
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: 'var(--radius-circle)',
-                    background: 'var(--job-accent)',
-                    flexShrink: 0,
-                  }}
-                  aria-label="Live"
-                />
                 <div className="dash-stats-wrap" style={{ minWidth: 0 }}>
                   <StatusLine tasks={allTasks} loading={!mounted} />
                 </div>
                 <LabHealthScore />
 
-                {/* Card filter in Today's light segmented style. `.tk` scopes
-                    the skin; `dashboard-tabs` keeps the phone scroll CSS. */}
-                <div className="tk dashboard-tabs-wrap">
-                  <SegmentedToggle
-                    className="dashboard-tabs"
-                    ariaLabel="Filter cards"
-                    options={TAB_CONFIG.map(tab => ({ value: tab.id, label: tab.label }))}
-                    value={activeTab}
-                    onChange={handleTabChange}
-                  />
+                {/* Card filter (Wave 3): flat text, the chosen one underlined in
+                    the accent. Still one tablist, so the keyboard and the saved
+                    choice work as before. */}
+                <div className="dashboard-tabs-wrap">
+                  <div role="tablist" aria-label="Filter cards" className="bento-flt">
+                    {TAB_CONFIG.map(tab => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={activeTab === tab.id}
+                        className={activeTab === tab.id ? 'bento-flt-on' : undefined}
+                        onClick={() => handleTabChange(tab.id)}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Right: adaptive indicator + customize + tooltip */}
@@ -454,8 +448,12 @@ export default function Dashboard() {
             Self-dismisses 7 days after first view; bumped CURRENT_RELEASE in
             ReleaseRibbon.tsx intentionally re-raises it. Sits above the
             WelcomeBanner (onboarding fallback for day-1 users only). */}
-        <ReleaseRibbon />
-        <WelcomeBanner />
+        {/* One banner at a time (Wave 3): the first one that renders wins. The
+            welcome note is first so a day-1 user sees it, then the ribbon. */}
+        <div className="dash-banners">
+          <WelcomeBanner />
+          <ReleaseRibbon />
+        </div>
 
         {/* Customize panel \u2014 R4-P3-01: pills split into Always-on vs
             Optional so 20 toggles don't present as a flat wall of
@@ -751,6 +749,9 @@ export default function Dashboard() {
 
       {/* Inline styles for cards + animations (grid layout is owned by DashboardGrid) */}
       <style>{`
+        /* Show only the first banner that rendered (the banners set their own display inline). */
+        .dash-banners > * ~ * { display: none !important; }
+
         /* Mobile header: stats fill their own row as 2 x 2 (no lone 4th stat),
            lab health and Customize share the next row, the filter sits last. */
         @media (max-width: 640px) {

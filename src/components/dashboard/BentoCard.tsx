@@ -1,19 +1,54 @@
 import { motion } from 'framer-motion'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import type { LucideIcon } from 'lucide-react'
-import { ICON_PROPS } from '../../lib/iconProps'
 
 type BentoSize = 'span-1' | 'span-2' | 'span-2x2' | 'span-1x2'
+
+/** The card's one hero number, in Today's stat anatomy (rule, number, label). */
+export interface BentoHero {
+  value: number | string
+  label: string
+  /** Rule color job: accent = on track, urgent = going stale, overdue = late. */
+  rule?: 'accent' | 'urgent' | 'overdue' | 'none'
+  to?: string
+  /** Tooltip with the breakdown the label leaves out. */
+  title?: string
+}
+
+function HeroInner({ hero }: { hero: BentoHero }) {
+  const rule = hero.rule ?? 'none'
+  const cls = rule === 'accent' ? ' tk-t' : rule === 'urgent' ? ' tk-u' : rule === 'overdue' ? ' tk-o' : ''
+  return (
+    <>
+      <span className={`tk-rl${cls}`} aria-hidden="true" />
+      <span>
+        <span className="tk-v" style={{ display: 'block' }}>{hero.value}</span>
+        <span className="tk-l">{hero.label}</span>
+      </span>
+    </>
+  )
+}
 
 interface BentoCardProps {
   title: string
   subtitle?: string
+  /** Muted count after the title ("29"). */
+  count?: string | number
+  /** Right end of the head, after the hairline (a view switch). */
+  headRight?: ReactNode
+  /** The one hero number under the head. */
+  hero?: BentoHero
+  /** Same height on every card in the row (the four lead cards). */
+  uniform?: boolean
   size?: BentoSize
+  /** Accepted for old callers; the head no longer draws an icon. */
   icon?: LucideIcon
   badge?: string
   className?: string
   glass?: boolean
+  /** Accepted for old callers; the decorative chevron is gone. */
   drillDown?: boolean
   noLift?: boolean
   children: ReactNode
@@ -29,12 +64,14 @@ const sizeClasses: Record<BentoSize, string> = {
 export default function BentoCard({
   title,
   subtitle,
+  count,
+  hero,
+  headRight,
+  uniform = false,
   size = 'span-1',
-  icon: Icon,
   badge,
   className = '',
   glass = false,
-  drillDown = false,
   noLift = false,
   children,
 }: BentoCardProps) {
@@ -46,10 +83,10 @@ export default function BentoCard({
         layoutId={`bento-${title.replace(/\s+/g, '-').toLowerCase()}`}
         // Leaf card: the shared card material (color back pick 1, 2026-10-11)
         // gives the surface, edge, lit top and ambient shadow; glass overrides.
-        className={`bento-card h-full${glass ? '' : ' sk-mat'}`}
+        className={`bento-card h-full${glass ? '' : ' sk-mat'}${uniform ? ' bento-uniform' : ''}`}
         style={{
-          borderRadius: 'var(--radius-2xl)',
-          padding: 'var(--density-card-padding, 1.5rem)',
+          borderRadius: 'var(--radius-xl)',
+          padding: 'var(--density-card-padding, 1rem)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -86,55 +123,30 @@ export default function BentoCard({
           </span>
         )}
 
-        {/* Header */}
-        <div className="flex items-start gap-2.5 mb-3">
-          {Icon && (
-            <div
-              className="flex-shrink-0 mt-0.5"
-              style={{
-                // N1b de-box: was an icon well (2nd box layer on every
-                // card). Dropped bg+radius — icon floats on the card surface; the
-                // fixed 28px slot keeps title alignment consistent across cards.
-                width: 28,
-                height: 28,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Icon {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.85 }} />
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <h3
-              style={{
-                fontWeight: 500,
-                fontSize: '15px',
-                lineHeight: 1.3,
-                color: 'var(--ink)',
-                margin: 0,
-              }}
-            >
-              {title}
-            </h3>
-            {subtitle && (
-              <p
-                style={{
-                  fontSize: '12px',
-                  color: 'var(--muted)',
-                  margin: '2px 0 0 0',
-                }}
-              >
-                {subtitle}
-              </p>
+        {/* Header (Wave 3 Lab Overview, option A): the title, an optional muted
+            count, a hairline that runs to the edge. No icon well and no subtitle
+            line; the count and the one hero number carry the facts once. */}
+        <div className="bento-hd">
+          <h3 className="bento-hd-t">{title}</h3>
+          {count !== undefined && <span className="bento-hd-n">{count}</span>}
+          {!hero && subtitle && <span className="bento-hd-n">{subtitle}</span>}
+          <span className="bento-hd-rule" aria-hidden="true" />
+          {headRight}
+        </div>
+
+        {hero && (
+          <div className="tk bento-hero">
+            {hero.to ? (
+              <Link to={hero.to} className="tk-st" aria-label={`${hero.value} ${hero.label}`} title={hero.title}>
+                <HeroInner hero={hero} />
+              </Link>
+            ) : (
+              <div className="tk-st" title={hero.title}>
+                <HeroInner hero={hero} />
+              </div>
             )}
           </div>
-          {drillDown && (
-            <svg width="16" height="16" viewBox="0 0 16 16" className="flex-shrink-0 mt-1 opacity-20" style={{ color: 'var(--slate)' }}>
-              <path d="M6 4l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          )}
-        </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 min-h-0">{children}</div>
