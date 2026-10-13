@@ -252,9 +252,9 @@ describe('handleBatchUpdateTasks — applyMutation routing (B-CRIT-04)', () => {
   })
 
   it('due_date: rejects a non-date or an impossible day before any write', async () => {
-    for (const value of ['next week', '2026-02-31', '10/14/2026']) {
+    for (const value of ['next week', '2026-02-31', '10/14/2026', '2026-10-14T09:00:00Z', ' 2026-10-14', 20261014, ['2026-10-14'], {}]) {
       const res = await handleBatchUpdateTasks(makeRequest({ action: 'due_date', ids, value }), makeUser(), makeEnv())
-      expect(res.status, value).toBe(400)
+      expect(res.status, String(value)).toBe(400)
     }
     expect(mockApplyMutation).not.toHaveBeenCalled()
   })

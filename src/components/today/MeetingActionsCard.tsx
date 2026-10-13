@@ -6,8 +6,8 @@
 // and "Project ~ Product" in place; two or more selected shows a bar at the foot
 // of THIS card that can only reach this card's rows.
 //
-// The card folds to "N of N handled" once every row is handled (done, or dated
-// and routed to a project), and reopens from its header. Open is derived, not
+// The card folds to "N of N handled" once every row is handled (done, or handed
+// to someone else; the viewer's own open rows keep it open), and reopens from its header. Open is derived, not
 // stored, until the user clicks: unhandled rows keep it open, and handling the
 // last row closes it, even if the user had opened it by hand.
 //
@@ -21,6 +21,7 @@ import { useIsMobile } from '../../hooks/useIsMobile'
 import { MeetingActionList } from '../meetings/MeetingActionList'
 import { countHandled, prepareActionItems } from '../../lib/meetingActionItems'
 import { MeetingCardRowsContext } from './meetingCardRows'
+import { useAuth } from '../../hooks/useAuth'
 
 /** Phone: at most this many rows show, then "Show N more" (inside the card). */
 const PHONE_ROW_CAP = 4
@@ -33,9 +34,10 @@ export function MeetingActionsCard({ meetingId, placeholder }: {
   const { data: meeting } = useMeetingDetail(meetingId)
   const register = useContext(MeetingCardRowsContext)
   const isPhone = useIsMobile(768)
+  const viewer = useAuth().user?.slug ?? ''
   const items = useMemo(() => prepareActionItems(meeting?.action_items), [meeting?.action_items])
   const total = items.length
-  const handled = countHandled(items)
+  const handled = countHandled(items, viewer)
   const allHandled = total > 0 && handled === total
 
   const [userOpen, setUserOpen] = useState<boolean | null>(null)

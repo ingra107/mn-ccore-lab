@@ -37,18 +37,24 @@ describe('sortActionItems', () => {
 })
 
 describe('isActionHandled', () => {
-  it('is true for a done row', () => { expect(isActionHandled(task({ status: 'done' }))).toBe(true) })
-  it('needs both a date and a project when open', () => {
-    expect(isActionHandled(task({ due_date: '2026-10-14' }))).toBe(false)
-    expect(isActionHandled(task({ project_id: 'clif' }))).toBe(false)
-    expect(isActionHandled(task({ due_date: '2026-10-14', project_id: 'clif' }))).toBe(true)
+  const ME = 'nick-ingraham'
+  it('is true for a done row', () => { expect(isActionHandled(task({ status: 'done' }), ME)).toBe(true) })
+  it('is true for an open row handed to someone else', () => {
+    expect(isActionHandled(task({ assignee: 'casey-eddington' }), ME)).toBe(true)
+  })
+  it("is false for the viewer's own open row, however complete its date and project", () => {
+    expect(isActionHandled(task({ assignee: ME }), ME)).toBe(false)
+    expect(isActionHandled(task({ assignee: ME, due_date: '2026-10-14', project_id: 'clif' }), ME)).toBe(false)
+  })
+  it('is false for an open row when the viewer is not known yet', () => {
+    expect(isActionHandled(task({ assignee: 'casey-eddington' }), '')).toBe(false)
   })
   it('counts handled rows', () => {
     const items = prepareActionItems([
       task({ id: 'a', title: 'a', status: 'done' }),
-      task({ id: 'b', title: 'b', due_date: '2026-10-14', project_id: 'clif' }),
+      task({ id: 'b', title: 'b', assignee: 'casey-eddington' }),
       task({ id: 'c', title: 'c' }),
     ])
-    expect(countHandled(items)).toBe(2)
+    expect(countHandled(items, ME)).toBe(2)
   })
 })

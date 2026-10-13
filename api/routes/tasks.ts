@@ -1006,7 +1006,10 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
       // One date for every id (the meeting card's "Date" bulk action). value is
       // a civil YYYY-MM-DD, or null/'' to clear the date. Validated as a real
       // calendar day so "2026-02-31" cannot reach the write.
-      const due = body.value ? String(body.value).slice(0, 10) : null
+      if (body.value != null && typeof body.value !== 'string') {
+        return error('value must be a YYYY-MM-DD date, or empty to clear', 400)
+      }
+      const due = body.value ? body.value : null
       if (due !== null) {
         const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(due)
         const [y, mo, da] = m ? [Number(m[1]), Number(m[2]), Number(m[3])] : [0, 0, 0]

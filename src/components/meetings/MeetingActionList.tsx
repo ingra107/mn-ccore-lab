@@ -113,13 +113,8 @@ export function MeetingActionList({ meetingId, items, maxVisible, onSelectionCha
         },
       })
     } else {
-      bulkUpdateTasks.mutate({ ids: [item.id], action: 'complete' }, {
-        onError: revert,
-        onSuccess: () => {
-          settle()
-          showUndo('Completed', () => updateTask.mutate({ id: item.id, fields: { status: 'todo', completed: 0 } }, { onSuccess: settle }))
-        },
-      })
+      runBatch({ ids: [item.id], action: 'complete' }, { revert, settle }, 'complete', () =>
+        showUndo('Completed', () => updateTask.mutate({ id: item.id, fields: { status: 'todo', completed: 0 } }, { onSuccess: settle })))
     }
   }
 
@@ -132,18 +127,13 @@ export function MeetingActionList({ meetingId, items, maxVisible, onSelectionCha
     const shortLabel = label.length > 40 ? `${label.slice(0, 40)}…` : label
     const prevStatus = item.status && item.status !== 'deleted' ? item.status : 'todo'
     const { revert, settle } = patchActionItems((rows) => rows.filter((a) => a.id !== item.id))
-    bulkUpdateTasks.mutate({ ids: [item.id], action: 'delete' }, {
-      onError: () => { revert(); showError(`Could not delete "${shortLabel}"`) },
-      onSuccess: () => {
-        settle()
-        showUndo(`Deleted "${shortLabel}"`, () => {
-          restoreTask.mutate({ id: item.id, prevStatus }, {
-            onSuccess: settle,
-            onError: () => showError(`Could not restore "${shortLabel}"`),
-          })
+    runBatch({ ids: [item.id], action: 'delete' }, { revert, settle }, 'delete', () =>
+      showUndo(`Deleted "${shortLabel}"`, () => {
+        restoreTask.mutate({ id: item.id, prevStatus }, {
+          onSuccess: settle,
+          onError: () => showError(`Could not restore "${shortLabel}"`),
         })
-      },
-    })
+      }))
   }
 
   // Re-route a row to a project (and product, for a "Project ~ Product" pick).
@@ -179,7 +169,36 @@ export function MeetingActionList({ meetingId, items, maxVisible, onSelectionCha
   }
 
   // ── the selection ────────────────────────────────────────────────────────
+  // Always read the selection through the CURRENT rows: an id whose row was
+  // deleted, or moved off this meeting, is not selected any more.
   const selectedRows = items.filter((r) => selected.has(r.id))
+  const selectedIds = new Set(selectedRows.map((r) => r.id))
+
+  type BatchInput = Parameters<typeof bulkUpdateTasks.mutate>[0]
+  // POST /api/tasks/batch answers 200 even when it refuses some ids
+  // (`{data:{ok, applied, failed}}`), so success is read from the body. A refusal
+  // rolls the whole patch back, re-reads the truth, and names the rows.
+  function runBatch(input: BatchInput, undoable: { revert: () => void; settle: () => void }, verb: string, onOk: () => void) {
+    bulkUpdateTasks.mutate(input, {
+      onError: () => { undoable.revert(); showError(`Could not ${verb}`) },
+      onSuccess: (res) => {
+        const data = (res as { data?: { ok?: boolean; failed?: { id: string; reason?: string }[] } } | null)?.data
+        const failed = data?.failed ?? []
+        if (failed.length > 0 || data?.ok === false) {
+          undoable.revert()
+          undoable.settle()
+          const names = failed.slice(0, 3).map((f) => {
+            const row = items.find((r) => r.id === f.id)
+            return `"${(row && taskShortLabel(row)) || f.id}"`
+          }).join(', ')
+          showError(`Could not ${verb} ${failed.length || input.ids.length} of ${input.ids.length}${names ? `: ${names}` : ''}`)
+          return
+        }
+        undoable.settle()
+        onOk()
+      },
+    })
+  }
 
   // Restore each id's previous value of `field` (the undo of a bulk assign/date).
   function undoField(rows: TaskRow[], field: 'assignee' | 'due_date') {
@@ -191,24 +210,18 @@ export function MeetingActionList({ meetingId, items, maxVisible, onSelectionCha
   }
 
   function bulkAssign(slug: string) {
-    const ids = [...selected]
     const rows = selectedRows
-    const { revert, settle } = patchRows(ids, { assignee: slug })
-    bulkUpdateTasks.mutate({ ids, action: 'assign', value: slug }, {
-      onError: () => { revert(); showError('Could not assign') },
-      onSuccess: () => { settle(); showUndo(`Assigned ${ids.length} action items`, () => undoField(rows, 'assignee')) },
-    })
+    const ids = rows.map((r) => r.id)
+    runBatch({ ids, action: 'assign', value: slug }, patchRows(ids, { assignee: slug }), 'assign',
+      () => showUndo(`Assigned ${ids.length} action items`, () => undoField(rows, 'assignee')))
     clearSelection()
   }
 
   function bulkDate(date: string | null) {
-    const ids = [...selected]
     const rows = selectedRows
-    const { revert, settle } = patchRows(ids, { due_date: date })
-    bulkUpdateTasks.mutate({ ids, action: 'due_date', value: date }, {
-      onError: () => { revert(); showError('Could not set the date') },
-      onSuccess: () => { settle(); showUndo(`Dated ${ids.length} action items`, () => undoField(rows, 'due_date')) },
-    })
+    const ids = rows.map((r) => r.id)
+    runBatch({ ids, action: 'due_date', value: date }, patchRows(ids, { due_date: date }), date ? 'set the date on' : 'clear the date on',
+      () => showUndo(date ? `Dated ${ids.length} action items` : `Cleared the date on ${ids.length} action items`, () => undoField(rows, 'due_date')))
     clearSelection()
   }
 
@@ -233,32 +246,23 @@ export function MeetingActionList({ meetingId, items, maxVisible, onSelectionCha
   }
 
   function bulkComplete() {
-    const ids = [...selected]
-    const { revert, settle } = patchRows(ids, { status: 'done', completed: 1 })
-    bulkUpdateTasks.mutate({ ids, action: 'complete' }, {
-      onError: () => { revert(); showError('Could not complete') },
-      onSuccess: settle,
-    })
-    showUndo(`Completed ${ids.length} action items`, () => {
-      for (const id of ids) updateTask.mutate({ id, fields: { status: 'todo', completed: 0 } })
-      settle()
-    })
+    const ids = selectedRows.map((r) => r.id)
+    runBatch({ ids, action: 'complete' }, patchRows(ids, { status: 'done', completed: 1 }), 'complete', () =>
+      showUndo(`Completed ${ids.length} action items`, () => {
+        const { settle } = patchRows(ids, { status: 'todo', completed: 0 })
+        for (const id of ids) updateTask.mutate({ id, fields: { status: 'todo', completed: 0 } }, { onSuccess: settle })
+      }))
     clearSelection()
   }
 
   function bulkDelete() {
     const rows = selectedRows
     const ids = rows.map((r) => r.id)
-    const { revert, settle } = patchActionItems((all) => all.filter((a) => !ids.includes(a.id)))
-    bulkUpdateTasks.mutate({ ids, action: 'delete' }, {
-      onError: () => { revert(); showError('Could not delete') },
-      onSuccess: () => {
-        settle()
-        showUndo(`Deleted ${ids.length} action items`, () => {
-          for (const r of rows) restoreTask.mutate({ id: r.id, prevStatus: r.status && r.status !== 'deleted' ? r.status : 'todo' }, { onSuccess: settle })
-        })
-      },
-    })
+    const patch = patchActionItems((all) => all.filter((a) => !ids.includes(a.id)))
+    runBatch({ ids, action: 'delete' }, patch, 'delete', () =>
+      showUndo(`Deleted ${ids.length} action items`, () => {
+        for (const r of rows) restoreTask.mutate({ id: r.id, prevStatus: r.status && r.status !== 'deleted' ? r.status : 'todo' }, { onSuccess: patch.settle })
+      }))
     clearSelection()
   }
 
@@ -287,8 +291,8 @@ export function MeetingActionList({ meetingId, items, maxVisible, onSelectionCha
         isExpanded={expandedId === item.id}
         onToggleExpand={() => setExpandedId(expandedId === item.id ? null : item.id)}
         onOpenEditor={() => setFullEditorTask(item)}
-        isSelected={selected.has(item.id)}
-        selectionActive={selected.size > 0}
+        isSelected={selectedIds.has(item.id)}
+        selectionActive={selectedIds.size > 0}
         onToggleSelect={() => toggleSelect(item.id)}
         selectBox
         // The date is an editable picker in rowActions; the static chip stays off.
@@ -354,9 +358,9 @@ export function MeetingActionList({ meetingId, items, maxVisible, onSelectionCha
 
       {/* Bottom of the list, pinned while it scrolls: one bar per list, so it
           can only reach this list's rows. */}
-      {selected.size >= 2 && (
+      {selectedIds.size >= 2 && (
         <MeetingActionBar
-          count={selected.size}
+          count={selectedIds.size}
           onAssign={bulkAssign}
           onDate={bulkDate}
           onProject={bulkProject}
@@ -415,13 +419,16 @@ function MeetingActionBar({ count, onAssign, onDate, onProject, onComplete, onDe
         triggerStyle={BAR_TRIGGER}
       />
       {/* The date picker's trigger is the label "Date"; picking a day applies it. */}
-      <span className="sr">
+      <span className="meeting-action-bar-date-host">
         <InlineDatePicker
           value={null}
           onChange={onDate}
           display={<span className="meeting-action-bar-date">Date</span>}
         />
       </span>
+      <button type="button" className="tk-btn tk-sm" onClick={() => onDate(null)}>
+        Clear date
+      </button>
       <GhostSelect
         aria-label="Move selected to project"
         value=""

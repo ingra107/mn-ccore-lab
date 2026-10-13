@@ -5,14 +5,17 @@
  *
  *   node scripts/run-journey-spec.mjs --gate tests/local/journeys/today-meeting-actions.spec.ts
  *
- * One meeting dated today, four action items for Nick due today, none routed to
- * a project. The journey proves, on the real stack:
+ * One meeting dated today, four action items for Nick, each due today and
+ * already on a project, which is how the debrief writer mints them. The journey
+ * proves, on the real stack:
  *   - the rows show on the card, and each task shows ONCE on Today (the card
  *     holds them while open, the groups below get them back when it folds);
  *   - a row checks off in place;
  *   - two rows selected raise the bar; Date writes the same date to both through
  *     the batch route (asserted through the API), Assign and Project the same;
- *   - the card folds to "4 of 4 handled" once every row is handled.
+ *   - a card of freshly minted rows (dated, routed, Nick's) is NOT folded: only
+ *     done, or handed to someone else, counts as handled;
+ *   - the card folds to "4 of 4 handled" once every row is done or delegated.
  * Screenshots (light/dark x 1440/375) land in review/s76/ when S76_SHOTS=1.
  */
 import { test, expect, type Page, type Locator } from '@playwright/test'
@@ -34,6 +37,7 @@ let meetingId = ''
 let meetingTitle = ''
 let projectSlug = ''
 let projectLabel = ''
+let mintSlug = ''
 const tasks: { id: string; title: string }[] = []
 
 async function apiRows(page: Page): Promise<Record<string, Row>> {
@@ -66,7 +70,8 @@ async function seed(page: Page, count = 4) {
   meetingId = ((await m.json()) as { data: { id: string } }).data.id
 
   const projects = ((await (await page.request.get('/api/projects', { headers: PI })).json()) as { data: { slug: string; title: string; short_name?: string | null }[] }).data
-  const proj = projects[0]
+  mintSlug = projects[0].slug
+  const proj = projects[1] ?? projects[0]
   projectSlug = proj.slug
   projectLabel = proj.short_name?.trim() || proj.title
 
@@ -76,7 +81,7 @@ async function seed(page: Page, count = 4) {
     const title = `${t} ${stamp}`
     const r = await page.request.post('/api/tasks', {
       headers: PI,
-      data: { title, description: title, assignee: 'nick-ingraham', meeting_id: meetingId, priority: 'medium', due_date: TODAY },
+      data: { title, description: title, assignee: 'nick-ingraham', meeting_id: meetingId, priority: 'medium', due_date: TODAY, project_id: mintSlug },
     })
     expect(r.status()).toBeLessThan(300)
     tasks.push({ id: ((await r.json()) as { data: { id: string } }).data.id, title })
@@ -137,7 +142,7 @@ test('rows on the card, once each, then triage them to a folded card', async ({ 
   const bar = card(page).getByTestId('meeting-action-bar')
   await expect(bar).toBeVisible()
   await expect(bar).toContainText('2 selected')
-  for (const name of ['Assign', 'Project', 'Complete', 'Delete', 'Clear']) {
+  for (const name of ['Assign', 'Project', 'Complete', 'Delete', 'Clear', 'Clear date']) {
     await expect(bar.getByText(name, { exact: true }).first()).toBeVisible()
   }
   await bar.getByRole('button', { name: 'Set a due date' }).click()
@@ -148,7 +153,27 @@ test('rows on the card, once each, then triage them to a folded card', async ({ 
   }, { timeout: 10_000 }).toEqual([TOMORROW, TOMORROW, TODAY])
   await expect(bar).toHaveCount(0)
 
-  // 5. Assign the same two to Casey.
+  //    Clear date takes the date off both.
+  await select(page, 1, 2)
+  await bar.getByRole('button', { name: 'Clear date' }).click()
+  await expect.poll(async () => {
+    const r = await apiRows(page)
+    return [r[tasks[1].id].due_date, r[tasks[2].id].due_date, r[tasks[3].id].due_date?.slice(0, 10)]
+  }, { timeout: 10_000 }).toEqual([null, null, TODAY])
+  await expect(bar).toHaveCount(0)
+
+  // 5. Route the same two to another project.
+  await select(page, 1, 2)
+  await bar.getByRole('combobox', { name: 'Move selected to project' }).click()
+  await page.getByRole('option', { name: projectLabel, exact: true }).first().click()
+  await expect.poll(async () => {
+    const r = await apiRows(page)
+    return [r[tasks[1].id].project_id, r[tasks[2].id].project_id, r[tasks[3].id].project_id]
+  }, { timeout: 10_000 }).toEqual([projectSlug, projectSlug, mintSlug])
+  // Dated, routed, Nick's: still his to do, so still not handled.
+  await expect(header).toHaveAttribute('aria-label', 'Action items, 1 of 4 handled')
+
+  // 6. Hand the same two to Casey: delegated rows are handled.
   await select(page, 1, 2)
   await bar.getByRole('combobox', { name: 'Assign selected to' }).click()
   await page.getByRole('option', { name: /Casey/ }).first().click()
@@ -157,26 +182,18 @@ test('rows on the card, once each, then triage them to a folded card', async ({ 
     return [r[tasks[1].id].assignee, r[tasks[2].id].assignee, r[tasks[3].id].assignee]
   }, { timeout: 10_000 }).toEqual(['casey-eddington', 'casey-eddington', 'nick-ingraham'])
   await expect(bar).toHaveCount(0)
-
-  // 6. Route the same two to a project: dated + routed = handled.
-  await select(page, 1, 2)
-  await bar.getByRole('combobox', { name: 'Move selected to project' }).click()
-  await page.getByRole('option', { name: projectLabel, exact: true }).first().click()
-  await expect.poll(async () => {
-    const r = await apiRows(page)
-    return [r[tasks[1].id].project_id, r[tasks[2].id].project_id, r[tasks[3].id].project_id]
-  }, { timeout: 10_000 }).toEqual([projectSlug, projectSlug, null])
   await expect(header).toHaveAttribute('aria-label', 'Action items, 3 of 4 handled')
 
-  // 7. The last row is routed from its own project chip; every row is handled,
-  //    so the card folds to its count, and that task goes back to the groups.
-  await row(page, 3).getByRole('combobox', { name: 'Project' }).click()
-  await page.getByRole('option', { name: projectLabel, exact: true }).first().click()
+  // 7. The last row goes to Casey from its own owner picker. Every row is done or
+  //    delegated, so the card folds to its count, even though it was opened by hand.
+  await row(page, 3).getByRole('button', { name: /^Assignee:/ }).click()
+  await page.getByRole('option', { name: /Casey/ }).first().click()
   await expect(header).toHaveAttribute('aria-label', 'Action items, 4 of 4 handled', { timeout: 10_000 })
   await expect(card(page).getByTestId('meeting-actions-card')).toHaveAttribute('data-open', 'false')
   await expect(card(page).locator('[data-task-id]')).toHaveCount(0)
   await expect(card(page).getByText('4 of 4 handled')).toBeVisible()
-  await expect(page.getByText(tasks[3].title, { exact: true })).toHaveCount(1)
+  // None of it is Nick's any more: no task title shows more than once on Today.
+  for (const t of tasks) expect(await page.getByText(t.title, { exact: true }).count()).toBeLessThanOrEqual(1)
   expect(errors).toEqual([])
 })
 

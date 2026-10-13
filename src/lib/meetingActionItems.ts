@@ -49,16 +49,20 @@ export function prepareActionItems(items: readonly TaskRow[] | null | undefined)
 }
 
 /**
- * An action item is HANDLED once it is done, or triaged: it has a due date and
- * a project. (Every task has an owner, so "assigned" cannot be missing.) The
- * Today card counts handled rows and folds itself away when all are.
+ * An action item is HANDLED once it is done, or handed to someone else (Nick,
+ * 2026-10-12: "done, or handed to someone else"). The viewer's own open rows
+ * are not handled: they are the viewer's to do. Date and project are NOT part
+ * of the rule: the debrief writer fills both at mint (due today, the
+ * extractor's project), so a rule on them folds every card on arrival.
+ * The Today card counts handled rows and folds itself when all are.
  */
-export function isActionHandled(t: TaskRow): boolean {
-  return isTaskDone(t) || (Boolean(t.due_date) && Boolean(t.project_id))
+export function isActionHandled(t: TaskRow, viewer: string | null | undefined): boolean {
+  if (isTaskDone(t)) return true
+  return Boolean(viewer) && Boolean(t.assignee) && t.assignee !== viewer
 }
 
-export function countHandled(items: readonly TaskRow[]): number {
+export function countHandled(items: readonly TaskRow[], viewer: string | null | undefined): number {
   let n = 0
-  for (const t of items) if (isActionHandled(t)) n += 1
+  for (const t of items) if (isActionHandled(t, viewer)) n += 1
   return n
 }

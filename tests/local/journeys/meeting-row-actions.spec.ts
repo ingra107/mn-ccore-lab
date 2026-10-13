@@ -15,7 +15,8 @@ import { test, expect, go } from './fixtures'
 import { P } from '../../helpers/paths'
 import type { Locator } from '@playwright/test'
 
-const API = 'http://localhost:8787'
+// Relative: the request fixture resolves it against the config's baseURL (vite, which proxies /api), so the spec runs on any port, including --gate.
+const API = ''
 const AUTH = {
   'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
   'X-Test-User': 'ingra107@umn.edu',
