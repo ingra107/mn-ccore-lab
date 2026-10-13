@@ -8,13 +8,6 @@
   "src/components/InsightPanel.tsx": {
     "box": 2
   },
-  "src/components/LabPageLayout.tsx": {
-    "box": 1
-  },
-  "src/components/NeedsAttentionDashboard.tsx": {
-    "surface": 4,
-    "box": 1
-  },
   "src/components/NetworkSidebar.tsx": {
     "box": 2
   },
@@ -37,9 +30,6 @@
   "src/components/dashboard/TeamPulseCard.tsx": {
     "initials": 1
   },
-  "src/components/meetings/MeetingProjectsSection.tsx": {
-    "box": 1
-  },
   "src/components/pulse/PulseMetric.tsx": {
     "uppercase": 1
   },
@@ -54,23 +44,18 @@
   },
   "src/index.css": {
     "uppercase": 1,
-    "surface": 19
+    "surface": 14
   },
   "src/pages/Dashboard.tsx": {
     "surface": 2,
     "box": 4
   },
   "src/pages/MemberPage.tsx": {
-    "box": 6,
     "initials": 1
   },
   "src/pages/MyItems.tsx": {
     "uppercase": 1,
     "initials": 2
-  },
-  "src/pages/ProjectDetail.tsx": {
-    "surface": 3,
-    "box": 6
   },
   "src/pages/Pulse.tsx": {
     "uppercase": 5
@@ -83,10 +68,6 @@
     "uppercase": 1,
     "box": 16
   },
-  "src/pages/portal/GrantsPage.tsx": {
-    "surface": 1,
-    "box": 8
-  },
   "src/pages/portal/IdeasPage.tsx": {
     "surface": 1,
     "box": 1
@@ -95,9 +76,5 @@
     "uppercase": 2,
     "surface": 5,
     "box": 7
-  },
-  "src/pages/portal/ManuscriptsPage.tsx": {
-    "surface": 2,
-    "box": 2
   }
 }
