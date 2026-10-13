@@ -430,12 +430,13 @@ export default function ManuscriptsPage() {
             </div>
           </>
         )}
-        // The rows on screen, published included, so the header and the
-        // footer's Total read one number (prod check 2026-10-10: 28 vs 31).
+        // The rows on screen, published included, so the header count and the
+        // rail's By stage Total read one number (prod check 2026-10-10: 28 vs 31).
         // Trophy shows only the published ones, so it counts those.
         controlsCount={kindTab !== 'manuscript' ? kindRows.length : view === 'trophy' ? manuscripts.length - activeCount : manuscripts.length}
         controlsCountLabel={kindTab === 'all' ? 'products' : kindTab !== 'manuscript' ? kindLabel.toLowerCase() : view === 'trophy' ? 'published' : 'manuscripts'}
         railLabel="Manuscripts side panel"
+        railFirst
         rail={!isLoading && kindTab === 'manuscript' && view === 'list' ? (
           <>
             {/* T-29: Needs your attention. M-12 (D25): Active submissions. */}

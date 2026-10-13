@@ -1187,13 +1187,13 @@ a:hover {
 .pwr > * { min-width: 0; }
 .pwr-head { grid-area: head; padding-right: 28px; margin-bottom: 12px; }
 .pwr-top { grid-area: top; padding: 0 0 16px 22px; border-left: 1px solid var(--sk-line); align-self: stretch; }
-.pwr-top:empty { padding: 0; }
 .pwr-main { grid-area: main; padding: 0 28px 24px 0; }
 .pwr-rail {
   grid-area: rail; padding: 0 0 24px 22px; border-left: 1px solid var(--sk-line);
   display: flex; flex-direction: column; gap: 20px;
-  position: sticky; top: calc(var(--portal-header-h, 56px) + 12px);
-  max-height: calc(100dvh - var(--portal-header-h, 56px) - 24px);
+  /* --pwr-top: a page's own sticky offset (the public site's fixed nav is not the portal's 56px bar). */
+  position: sticky; top: var(--pwr-top, calc(var(--portal-header-h, 56px) + 12px));
+  max-height: calc(100dvh - var(--pwr-top, calc(var(--portal-header-h, 56px) + 12px)) - 12px);
   overflow-y: auto; scrollbar-width: thin;
 }
 .pwr-start {
@@ -1204,6 +1204,9 @@ a:hover {
 .pwr-start > .pwr-main { padding: 0 0 24px 28px; }
 .pwr-start > .pwr-top { padding: 0 22px 16px 0; border-left: 0; border-right: 1px solid var(--sk-line); }
 .pwr-start > .pwr-rail { padding: 0 22px 24px 0; border-left: 0; border-right: 1px solid var(--sk-line); }
+/* An empty railTop is no cell: no padding, no border, at any width (beats the side rules above). */
+.pwr > .pwr-top:empty { padding: 0; border-width: 0; }
+.pwr-stack-only { display: none; }
 .pwr-norail { grid-template-columns: minmax(0, var(--col-main)); grid-template-areas: "head" "main"; }
 .pwr-norail > .pwr-head, .pwr-norail > .pwr-main { padding-left: 0; padding-right: 0; }
 @container pwr (max-width: 860px) {
@@ -1219,6 +1222,7 @@ a:hover {
   .pwr-rf, .pwr-rf.pwr-start { grid-template-areas: "head" "top" "rail" "main"; }
   .pwr-rf > .pwr-rail { padding: 0 0 24px; border-top: 0; }
   .pwr-wide-only { display: none; }
+  .pwr-stack-only { display: block; }
 }
 
 /* ── My Tasks band (P1-1, Nick 2026-06-10) ──

@@ -169,3 +169,53 @@ for (const theme of THEMES) {
     })
   }
 }
+
+test('meeting on a phone: date and attendees lead in the head; at 1440 they stay in the rail', async ({ page }) => {
+  await visit(page, `/portal/meetings/${meetingId}`, 'light', 1100, 'meeting-grid')
+  const compact = page.getByTestId('meeting-meta-compact')
+  await expect(compact).toBeVisible()
+  const c = (await compact.boundingBox())!
+  const a = (await page.getByRole('heading', { name: 'Action items', exact: true }).first().boundingBox())!
+  expect(c.y).toBeLessThan(a.y)
+  await expect(page.getByRole('heading', { name: 'When', exact: true })).toBeVisible()
+  await visit(page, `/portal/meetings/${meetingId}`, 'light', 1440, 'meeting-grid')
+  await expect(page.getByTestId('meeting-meta-compact')).toBeHidden()
+})
+
+test('manuscripts stacked: the rail (Needs your attention) comes before the rows', async ({ page }) => {
+  await visit(page, '/portal/manuscripts', 'light', 1100, 'data-page-grid')
+  const rail = (await page.getByTestId('data-page-rail').boundingBox())!
+  const rows = (await page.locator('#manuscripts-table').boundingBox())!
+  expect(rail.y).toBeLessThan(rows.y)
+})
+
+const PUBLIC_ROUTES = ['/team/nick-ingraham', '/nick', '/nate'] as const
+
+test('public profile pages: rail 320px on the left, capped band, sticky rail clears the fixed nav', async ({ page }) => {
+  for (const route of PUBLIC_ROUTES) {
+    await visit(page, route, 'light', 1440, 'member-grid')
+    const m = await bandAndColumns(page)
+    expect(m.railW!, `${route} rail width`).toBeLessThanOrEqual(322)
+    expect(m.railX!, `${route} rail left`).toBeLessThan(m.mainX!)
+    expect(m.band, `${route} band capped at --page-width`).toBeLessThanOrEqual(1280)
+    await page.mouse.wheel(0, 700)
+    await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(300)
+    const navBottom = await page.evaluate(() => document.querySelector('nav[aria-label="Main navigation"]')!.getBoundingClientRect().bottom)
+    const railTop = (await page.getByTestId('member-rail').boundingBox())!.y
+    // A rail taller than the page is not stuck; only a stuck one is measured.
+    if (railTop > 0) expect(railTop, `${route} rail top vs nav bottom ${navBottom}`).toBeGreaterThanOrEqual(navBottom)
+  }
+})
+
+for (const route of PUBLIC_ROUTES) {
+  for (const theme of THEMES) {
+    for (const w of WIDTHS) {
+      test(`shots: public ${route} ${w} ${theme}`, async ({ page }) => {
+        await visit(page, route, theme, w, 'member-grid')
+        const m = await bandAndColumns(page)
+        expect(m.sw, 'no sideways scroll').toBeLessThanOrEqual(w + 1)
+        await page.screenshot({ path: `${SHOTS}/public-${route.replace(/\//g, '_').slice(1)}-${w}-${theme}.png` })
+      })
+    }
+  }
+}

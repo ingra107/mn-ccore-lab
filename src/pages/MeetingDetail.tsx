@@ -325,6 +325,27 @@ export default function MeetingDetail() {
             )}
             {/* The heartbeat line under the title (color-back pick 10). */}
             <PageHeartbeat />
+            {/* Stacked (a phone), the rail's date and attendees fall below the
+                discussion; this line keeps them at the top. Hidden when the
+                rail sits beside the work. */}
+            <div className="pwr-stack-only" data-testid="meeting-meta-compact" style={{ marginTop: 10 }}>
+              <p style={{ margin: 0, fontSize: 'var(--value-size)', color: 'var(--ink)' }}>{formatLongDate(meeting.date)}</p>
+              {attendees.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap" style={{ marginTop: 6 }} aria-label={`${attendees.length} attendees`}>
+                  {attendees.slice(0, 6).map((slug) => {
+                    const p = getPersonInfo(slug)
+                    return (
+                      <span key={slug} title={p.name} style={{ width: 22, height: 22, display: 'inline-block' }}>
+                        <FaceDisc label={p.name} initials={p.initials} photo={p.photoUrl} px={22} />
+                      </span>
+                    )
+                  })}
+                  <span style={{ fontSize: 'var(--label-size)', color: 'var(--sk-t3)' }}>
+                    {attendees.length} attendee{attendees.length === 1 ? '' : 's'}
+                  </span>
+                </div>
+              )}
+            </div>
             </motion.div>
           }
           /* Status, type, share, watch and the three buttons: top of the rail, level with the title. */
@@ -429,7 +450,7 @@ export default function MeetingDetail() {
           rail={
             <div className="md-rail">
             <div data-testid="meeting-when">
-              <span style={{ fontSize: '12px', color: 'var(--sk-t3)', fontWeight: 500 }}>When</span>
+              <h3 style={{ margin: 0, fontSize: '12px', color: 'var(--sk-t3)', fontWeight: 500 }}>When</h3>
               <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: '2px 0 0' }}>{formatLongDate(meeting.date)}</p>
             </div>
                 {/* Facilitator badge — the RECORDED facilitator only. Blank when the
@@ -470,7 +491,7 @@ export default function MeetingDetail() {
             {/* T-50 Files section — files attached to this meeting. */}
             {meeting.id && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.22 }}>
-                <span style={{ display: 'block', fontSize: '12px', color: 'var(--sk-t3)', fontWeight: 500, marginBottom: 6 }}>Files</span>
+                <h3 style={{ margin: '0 0 6px', fontSize: '12px', color: 'var(--sk-t3)', fontWeight: 500 }}>Files</h3>
                 <div style={{ borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
                   <FileUpload entityType="meeting" entityId={meeting.id} />
                 </div>
@@ -479,7 +500,7 @@ export default function MeetingDetail() {
             </div>
           }
         >
-          {/* Right: Action Items (order-1 on mobile so actions show first) */}
+          {/* Action items lead the main column */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.15 }}>
             <SectionHead title="Action items" count={<>{completedCount}/{actionItems.length}</>} />
 
@@ -606,7 +627,7 @@ export default function MeetingDetail() {
           </div>
         </motion.div>
 
-          {/* Left: Agenda (order-2 on mobile so actions show first) */}
+          {/* Agenda */}
           <motion.div className="mt-8" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.1 }}>
             <SectionHead title="Agenda" />
 

@@ -69,6 +69,7 @@ export default function GrantsPage() {
   // The soonest open milestone from today on: its date is the page's deadline number.
   const nextDeadline = useMemo(() => {
     const open = rows
+      .filter((g) => g.bucket !== 'ended')
       .flatMap((g) => g.milestones.filter((m) => !m.completed).map((m) => ({ g, m, date: milestoneDate(m) })))
       .filter((x): x is typeof x & { date: string } => !!x.date && x.date >= today)
       .sort((a, b) => a.date.localeCompare(b.date))
@@ -129,7 +130,7 @@ export default function GrantsPage() {
       </PageHeader>
 
       {/* The headline numbers, then the section toggle (s79, Grants B: no rail). */}
-      {!isLoading && <div data-testid="grant-stats"><StatRow stats={stats} /></div>}
+      {!isLoading && activeTab !== 'landscape' && <div data-testid="grant-stats"><StatRow stats={stats} /></div>}
       <div className="tk" style={{ margin: '14px 0 16px' }}>
         <SegmentedToggle
           ariaLabel="Grants sections"

@@ -15,6 +15,12 @@ import { withAlpha } from '../lib/taskGrouping'
 import { memberHue } from '../lib/memberHue'
 import { statusLabel } from '../lib/textUtils'
 
+// The public site has no portal band: cap the grid at the portal's width so main
+// does not run past it, and keep the rail's stick offset (7rem, what the old
+// aside used) clear of the fixed public nav, since --portal-header-h is only set
+// inside the portal.
+const PUBLIC_BAND = { maxWidth: 'var(--page-width)', margin: '0 auto', '--pwr-top': '7rem' } as CSSProperties
+
 interface ProfileLink {
   label: string
   href: string
@@ -104,7 +110,7 @@ export default function LabPageLayout({
       style={hueSeed ? ({ '--mh-h': memberHue(hueSeed) } as CSSProperties) : undefined}
     >
       {breadcrumb}
-      <PageWithRail side="start" railFirst railLabel="Profile" testId="member-grid" railTestId="member-rail" rail={
+      <PageWithRail side="start" railFirst railLabel="Profile" testId="member-grid" railTestId="member-rail" bandStyle={portalChrome ? undefined : PUBLIC_BAND} rail={
           <div>
             {/* Avatar */}
             <div className="flex justify-center lg:justify-start mb-6">

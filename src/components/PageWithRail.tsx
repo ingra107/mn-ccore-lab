@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
 /**
  * The one main-column + rail page layout (s79, Nick 2026-10-12).
@@ -29,6 +29,7 @@ export default function PageWithRail({
   testId,
   railTestId,
   railTopTestId,
+  bandStyle,
   children,
 }: {
   head?: ReactNode
@@ -43,6 +44,8 @@ export default function PageWithRail({
   testId?: string
   railTestId?: string
   railTopTestId?: string
+  /** Style on the band wrapper: a width cap, or `--pwr-top` (the rail's sticky offset when a page's fixed bar is not the portal's 56px one). */
+  bandStyle?: CSSProperties
   children: ReactNode
 }) {
   const hasRail = !!rail && !railHidden
@@ -52,10 +55,19 @@ export default function PageWithRail({
     </aside>
   )
   return (
-    <div className="pwr-band">
+    <div className="pwr-band" style={bandStyle}>
       <div className={`pwr${side === 'start' ? ' pwr-start' : ''}${hasRail ? '' : ' pwr-norail'}${railFirst ? ' pwr-rf' : ''}`} data-testid={testId}>
         {head && <header className="pwr-head">{head}</header>}
-        {hasRail && <div className="pwr-top" data-testid={railTopTestId}>{railTop}</div>}
+        {hasRail && (
+          <div
+            className="pwr-top"
+            data-testid={railTopTestId}
+            role={railTop ? 'region' : undefined}
+            aria-label={railTop ? `${railLabel} actions` : undefined}
+          >
+            {railTop}
+          </div>
+        )}
         {railFirst && railEl}
         <div className="pwr-main">{children}</div>
         {!railFirst && railEl}

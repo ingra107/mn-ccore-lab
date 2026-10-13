@@ -86,6 +86,8 @@ interface DataPageProps {
   /** A right rail beside the body (PageWithRail). Absent = the body alone at --col-main. */
   rail?: ReactNode
   railLabel?: string
+  /** Stacked, the rail leads the body (a page whose rail holds what needs you first). */
+  railFirst?: boolean
 
   /** The page's rendered table/board/grid. */
   children?: ReactNode
@@ -114,6 +116,7 @@ export default function DataPage({
   empty,
   rail,
   railLabel = 'Side panel',
+  railFirst,
   children,
 }: DataPageProps) {
   const showControls =
@@ -139,38 +142,48 @@ export default function DataPage({
     </>
   )
 
+  const headerEl = (
+    <PageHeader title={title} count={count} hero={hero} subtitle={subtitle} actions={actions}>
+      {showControls && (
+        <TableControls
+          views={views}
+          activeView={activeView}
+          onViewChange={onViewChange}
+          filters={filters}
+          rightExtra={rightExtra}
+          count={controlsCount}
+          countLabel={controlsCountLabel}
+        />
+      )}
+    </PageHeader>
+  )
+
   return (
     <div style={{ minHeight: '100vh', overflowX: 'hidden' }}>
       {/* Centered band (P1-1). PortalLayout's <main> owns bottom clearance
           (pb-[calc(3rem+56px+safe-area)]) — no rogue page-level paddingBottom. */}
       <div className="content-container">
-        {/* Header + controls share the body's --col-main cap so their right
-            edge lines up with the table (wideBody pages keep the full band). */}
-        <div style={wideBody ? undefined : { maxWidth: rail ? 'calc(var(--col-main) - 28px)' : 'var(--col-main)' }}>
-        <PageHeader title={title} count={count} hero={hero} subtitle={subtitle} actions={actions}>
-          {showControls && (
-            <TableControls
-              views={views}
-              activeView={activeView}
-              onViewChange={onViewChange}
-              filters={filters}
-              rightExtra={rightExtra}
-              count={controlsCount}
-              countLabel={controlsCountLabel}
-            />
-          )}
-        </PageHeader>
-        </div>
+        {rail && !wideBody ? (
+          // With a rail the header is the head slot: it spans exactly the main
+          // column, so its right edge is the body's, at any band width.
+          <PageWithRail head={headerEl} railLabel={railLabel} rail={rail} railFirst={railFirst} testId="data-page-grid" railTestId="data-page-rail">
+            {body}
+          </PageWithRail>
+        ) : (
+          <>
+            {/* Header + controls share the body's --col-main cap so their right
+                edge lines up with the table (wideBody pages keep the full band). */}
+            <div style={wideBody ? undefined : { maxWidth: 'var(--col-main)' }}>{headerEl}</div>
 
-        {/* Anchored primary column (P1-1): left edge + width identical on
-            every data page. Pages with no rail leave the space beside it
-            empty rather than re-centering. When wideBody, the body renders in
-            a sibling full-width wrapper below (it can't be both inside the
-            --content-band AND fluid past it), so only the non-wide body sits
-            here. */}
-        {!wideBody && (rail
-          ? <PageWithRail railLabel={railLabel} rail={rail} testId="data-page-grid" railTestId="data-page-rail">{body}</PageWithRail>
-          : <div style={{ maxWidth: 'var(--col-main)' }}>{body}</div>)}
+            {/* Anchored primary column (P1-1): left edge + width identical on
+                every data page. Pages with no rail leave the space beside it
+                empty rather than re-centering. When wideBody, the body renders
+                in a sibling full-width wrapper below (it can't be both inside
+                the --content-band AND fluid past it), so only the non-wide body
+                sits here. */}
+            {!wideBody && <div style={{ maxWidth: 'var(--col-main)' }}>{body}</div>}
+          </>
+        )}
       </div>
 
       {/* Anchored-wide body: .band-anchored-wide shares .content-container's
