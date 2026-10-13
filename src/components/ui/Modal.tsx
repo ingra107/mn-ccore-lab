@@ -76,7 +76,9 @@ export default function Modal({
 
   // Focus panel on open
   useEffect(() => {
-    if (open && panelRef.current) {
+    // A child's autoFocus runs before this effect; do not pull focus back
+    // to the panel when focus is already inside it.
+    if (open && panelRef.current && !panelRef.current.contains(document.activeElement)) {
       panelRef.current.focus()
     }
   }, [open])
@@ -87,6 +89,9 @@ export default function Modal({
 
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // An open child listbox (InlineSelect) consumed this Escape to close
+        // itself; the modal stays open.
+        if (e.defaultPrevented) return
         onClose()
         return
       }
@@ -112,6 +117,10 @@ export default function Modal({
       const first = focusable[0]
       const last = focusable[focusable.length - 1]
       const active = document.activeElement as HTMLElement | null
+
+      // Focus inside a portalled listbox (InlineSelect's filter input) is
+      // legitimately outside the panel; leave Tab alone there.
+      if (active && active.closest('[role="listbox"]')) return
 
       if (active && !panelRef.current!.contains(active)) {
         e.preventDefault()

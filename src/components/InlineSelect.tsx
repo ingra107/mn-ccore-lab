@@ -83,6 +83,9 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
       onChange(filtered[focusedIdx].value)
       setOpen(false)
     } else if (e.key === 'Escape') {
+      // Close the listbox only; a parent Modal must not also close.
+      e.preventDefault()
+      e.stopPropagation()
       setOpen(false)
     }
   }
