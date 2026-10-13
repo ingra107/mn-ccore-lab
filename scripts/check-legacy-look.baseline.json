@@ -1,187 +1,32 @@
 {
-  "src/components/ActiveSubmissionsWidget.tsx": {
-    "surface": 3,
-    "box": 1
-  },
-  "src/components/AddMemberPanel.tsx": {
-    "surface": 1
-  },
-  "src/components/AllProjectsControls.tsx": {
-    "box": 1
-  },
-  "src/components/AuthorColumn.tsx": {
-    "box": 1
-  },
-  "src/components/BugReportModal.tsx": {
-    "surface": 4,
-    "box": 5
-  },
-  "src/components/CalendarFeedsPanel.tsx": {
-    "surface": 4,
-    "box": 5
-  },
-  "src/components/CommandPalette.tsx": {
-    "uppercase": 1,
-    "box": 3
-  },
-  "src/components/ConferencePrep.tsx": {
-    "uppercase": 1,
-    "box": 5
-  },
-  "src/components/CreateDecisionModal.tsx": {
-    "box": 1
-  },
-  "src/components/CreateProjectModal.tsx": {
-    "box": 1
-  },
-  "src/components/DensityToggle.tsx": {
-    "box": 1
-  },
-  "src/components/DeskBrokerFrame.tsx": {
-    "box": 1
-  },
-  "src/components/EmptyState.tsx": {
-    "box": 1
-  },
-  "src/components/GlobalQuickAddModal.tsx": {
-    "uppercase": 1
-  },
-  "src/components/HermesResponse.tsx": {
-    "uppercase": 2,
-    "box": 1
-  },
   "src/components/HoverCard.tsx": {
-    "uppercase": 1,
-    "box": 2,
     "initials": 2
-  },
-  "src/components/HtmlArtifactFrame.tsx": {
-    "box": 1
-  },
-  "src/components/InlineAssigneePicker.tsx": {
-    "box": 1
   },
   "src/components/InlineDatePicker.tsx": {
     "box": 1
   },
-  "src/components/InlineSelect.tsx": {
-    "box": 2
-  },
   "src/components/InsightPanel.tsx": {
     "box": 2
   },
-  "src/components/KeyLinksEditor.tsx": {
-    "box": 3
-  },
   "src/components/LabPageLayout.tsx": {
-    "box": 1
-  },
-  "src/components/LinkifiedText.tsx": {
-    "box": 1
-  },
-  "src/components/LoadingSkeleton.tsx": {
-    "box": 2
-  },
-  "src/components/MarkdownView.tsx": {
-    "surface": 2
-  },
-  "src/components/MemberFeaturedPublications.tsx": {
-    "box": 2
-  },
-  "src/components/MemberProfileActions.tsx": {
     "box": 1
   },
   "src/components/NeedsAttentionDashboard.tsx": {
     "surface": 4,
     "box": 1
   },
-  "src/components/NetworkFilters.tsx": {
-    "uppercase": 1
-  },
   "src/components/NetworkSidebar.tsx": {
-    "uppercase": 3,
     "box": 2
-  },
-  "src/components/NotificationBell.tsx": {
-    "uppercase": 1
   },
   "src/components/PhaseReleaseBanner.tsx": {
     "uppercase": 1,
     "box": 1
   },
-  "src/components/PortalLayout.tsx": {
-    "surface": 2,
-    "box": 6
-  },
-  "src/components/ProjectCard.tsx": {
-    "surface": 1
-  },
-  "src/components/ProjectDependencyMap.tsx": {
-    "uppercase": 2
-  },
-  "src/components/PublicationCard.tsx": {
-    "box": 1
-  },
-  "src/components/PublicationLibrary.tsx": {
-    "uppercase": 1,
-    "box": 1
-  },
-  "src/components/PublicationTimeline.tsx": {
-    "box": 1
-  },
-  "src/components/QuickAddForm.tsx": {
-    "surface": 1,
-    "box": 1
-  },
-  "src/components/QuickCaptureBar.tsx": {
-    "box": 1
-  },
-  "src/components/QuickCaptureInbox.tsx": {
-    "surface": 1,
-    "box": 1
-  },
-  "src/components/RegulatoryExpiringList.tsx": {
-    "surface": 1,
-    "box": 1
-  },
-  "src/components/RequireAuth.tsx": {
-    "uppercase": 1
-  },
-  "src/components/RevisionTracker.tsx": {
-    "uppercase": 1,
-    "box": 9
-  },
-  "src/components/RoundPrompt.tsx": {
-    "box": 5
-  },
-  "src/components/SavedViewsMenu.tsx": {
-    "surface": 1,
-    "box": 2
-  },
-  "src/components/ShortcutHelp.tsx": {
-    "box": 2
-  },
-  "src/components/Sidebar.tsx": {
-    "box": 3
-  },
-  "src/components/SmartCompose.tsx": {
-    "box": 3
-  },
   "src/components/StatusBar.tsx": {
     "surface": 1
   },
-  "src/components/StoredLinkChip.tsx": {
-    "box": 1
-  },
-  "src/components/SubmissionTimeline.tsx": {
-    "box": 4
-  },
   "src/components/WelcomeBanner.tsx": {
     "surface": 1
-  },
-  "src/components/activity/activityRender.tsx": {
-    "surface": 1,
-    "box": 1
   },
   "src/components/dashboard/ProjectHealthCard.tsx": {
     "surface": 2
@@ -195,9 +40,6 @@
   "src/components/meetings/MeetingProjectsSection.tsx": {
     "box": 1
   },
-  "src/components/project/ProjectMembers.tsx": {
-    "box": 1
-  },
   "src/components/pulse/PulseMetric.tsx": {
     "uppercase": 1
   },
@@ -207,33 +49,8 @@
   "src/components/tasks/BulkActionToolbar.tsx": {
     "initials": 1
   },
-  "src/components/tasks/CreateTaskModal.tsx": {
-    "box": 3
-  },
-  "src/components/tasks/TaskContextMenu.tsx": {
-    "box": 1
-  },
-  "src/components/tasks/TaskDetailPanel.tsx": {
-    "box": 4
-  },
-  "src/components/tasks/TaskGridView.tsx": {
-    "surface": 6,
-    "box": 5
-  },
-  "src/components/tasks/detail/HandoffSection.tsx": {
-    "box": 7
-  },
-  "src/components/tasks/detail/TaskDependencies.tsx": {
-    "box": 2
-  },
   "src/components/today/TaskDetailDrawer.tsx": {
     "box": 1
-  },
-  "src/components/ui/Button.tsx": {
-    "box": 1
-  },
-  "src/components/ui/GhostSelect.tsx": {
-    "box": 2
   },
   "src/index.css": {
     "uppercase": 1,
@@ -243,14 +60,6 @@
     "surface": 2,
     "box": 4
   },
-  "src/pages/Digest.tsx": {
-    "uppercase": 2,
-    "surface": 1,
-    "box": 6
-  },
-  "src/pages/MeetingPrep.tsx": {
-    "box": 1
-  },
   "src/pages/MemberPage.tsx": {
     "box": 6,
     "initials": 1
@@ -259,69 +68,20 @@
     "uppercase": 1,
     "initials": 2
   },
-  "src/pages/MyTasks/components/BulkBar.tsx": {
-    "box": 2
-  },
-  "src/pages/MyTasks/components/FilterChip.tsx": {
-    "box": 2
-  },
-  "src/pages/MyTasks/components/InlineDetail.tsx": {
-    "box": 1
-  },
-  "src/pages/MyTasks/views/ColumnsView.tsx": {
-    "box": 1
-  },
   "src/pages/ProjectDetail.tsx": {
     "surface": 3,
     "box": 6
-  },
-  "src/pages/Projects.tsx": {
-    "surface": 6,
-    "box": 1
   },
   "src/pages/Pulse.tsx": {
     "uppercase": 5
   },
   "src/pages/TrajectoryPage.tsx": {
-    "uppercase": 6,
-    "box": 10,
     "tabstrip": 1,
     "initials": 1
-  },
-  "src/pages/portal/ActivityPage.tsx": {
-    "surface": 4
   },
   "src/pages/portal/AnalyticsPage.tsx": {
     "uppercase": 1,
     "box": 16
-  },
-  "src/pages/portal/ArtifactPage.tsx": {
-    "uppercase": 1,
-    "surface": 5,
-    "box": 7
-  },
-  "src/pages/portal/ArtifactsGalleryPage.tsx": {
-    "surface": 1
-  },
-  "src/pages/portal/AskTheLab.tsx": {
-    "surface": 1,
-    "box": 5
-  },
-  "src/pages/portal/CalendarPage.tsx": {
-    "uppercase": 1
-  },
-  "src/pages/portal/DeadlineCascadePage.tsx": {
-    "box": 1
-  },
-  "src/pages/portal/DeadlinesPage.tsx": {
-    "uppercase": 1,
-    "surface": 4,
-    "box": 1
-  },
-  "src/pages/portal/DecisionsPage.tsx": {
-    "uppercase": 1,
-    "surface": 6,
-    "box": 6
   },
   "src/pages/portal/GrantsPage.tsx": {
     "surface": 1,
@@ -329,9 +89,8 @@
     "tabstrip": 1
   },
   "src/pages/portal/IdeasPage.tsx": {
-    "uppercase": 7,
     "surface": 1,
-    "box": 12
+    "box": 1
   },
   "src/pages/portal/InsightsPage.tsx": {
     "uppercase": 2,
@@ -341,52 +100,5 @@
   "src/pages/portal/ManuscriptsPage.tsx": {
     "surface": 2,
     "box": 2
-  },
-  "src/pages/portal/MeetingNotesPage.tsx": {
-    "box": 4
-  },
-  "src/pages/portal/MenteeMilestonesPage.tsx": {
-    "uppercase": 1,
-    "box": 7
-  },
-  "src/pages/portal/NarrativesPage.tsx": {
-    "uppercase": 1,
-    "surface": 1,
-    "box": 2
-  },
-  "src/pages/portal/PIAnalytics.tsx": {
-    "box": 1
-  },
-  "src/pages/portal/ProfilePage.tsx": {
-    "surface": 3,
-    "box": 3
-  },
-  "src/pages/portal/SearchPage.tsx": {
-    "uppercase": 3,
-    "box": 7
-  },
-  "src/pages/portal/SessionHistory.tsx": {
-    "uppercase": 3,
-    "box": 4
-  },
-  "src/pages/portal/SettingsPage.tsx": {
-    "surface": 1,
-    "box": 14,
-    "tabstrip": 1
-  },
-  "src/pages/portal/TeamDirectoryPage.tsx": {
-    "surface": 1,
-    "box": 1
-  },
-  "src/pages/project/ProjectDependencies.tsx": {
-    "uppercase": 2,
-    "box": 1
-  },
-  "src/pages/project/ProjectDocuments.tsx": {
-    "box": 3
-  },
-  "src/pages/project/ProjectLiterature.tsx": {
-    "box": 3,
-    "tabstrip": 2
   }
 }
