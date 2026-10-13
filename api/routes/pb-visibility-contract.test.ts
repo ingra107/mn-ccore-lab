@@ -28,6 +28,7 @@ import {
   handleUpdateProject,
   handleDeleteProject,
 } from './projects'
+import { handleGetProjectBlurb, handleSetProjectBlurb } from './project-join'
 import {
   handleGetProjectDocuments,
   handleCreateProjectDocument,
@@ -288,6 +289,12 @@ interface PatternACase {
 
 const patternACases: PatternACase[] = [
   {
+    // schema-v139: the one-line description. A non-member reads it only through
+    // the directory; this route answers them as an unknown project (404).
+    label: 'GET /api/projects/:id/blurb (handleGetProjectBlurb)',
+    call: (_c, r, env) => handleGetProjectBlurb(r.slug, env),
+  },
+  {
     label: 'GET /api/projects/:slug/comments (handleGetComments)',
     call: (c, r, env) => handleGetComments(r.slug, c.get(), env),
   },
@@ -443,6 +450,15 @@ const receiptCount = (db: InstanceType<typeof Database>) =>
   (db.prepare('SELECT COUNT(*) AS n FROM processed_mutations').get() as { n: number }).n
 
 const patternWriteCases: PatternWriteCase[] = [
+  {
+    // schema-v139: a member (or Nick, or the PB key) sets the one-line
+    // description; a non-member gets the unknown-project 404.
+    label: 'PUT /api/projects/:id/blurb (handleSetProjectBlurb)',
+    blockedStatus: 404,
+    touches: ['project_blurbs'],
+    call: (c, r, env) => handleSetProjectBlurb(r.slug, c.post({ blurb: 'One line' }), c.user as never, env),
+    landed: (db, r) => expect(db.prepare('SELECT blurb FROM project_blurbs WHERE project_id = ?').get(r.id)).toEqual({ blurb: 'One line' }),
+  },
   // Project subresource writes
   {
     label: 'POST /api/projects/:slug/comments (handleAddComment)',

@@ -57,6 +57,7 @@ export const QUESTION_ERROR_CODES = {
   question_field_on_non_question: 'question_rule',
   question_spec_immutable: 'question_rule',
   question_choice_unknown: 'question_rule',
+  question_answer_frozen: 'question_rule',
   question_spec_missing: 'question_shape',
   question_spec_invalid: 'question_shape',
   question_answer_invalid: 'question_shape',
@@ -265,6 +266,27 @@ export function questionPatchError(
     }
   }
   return null;
+}
+
+/**
+ * A project_join answer IS the decision (schema-v139): the database turned it
+ * into a membership in the same transaction, so it cannot be undone or
+ * re-answered. applyPatch checks this FIRST, so a late Telegram tap after Nate
+ * decided on Today, or the card's Undo, is refused with the quiet
+ * question_rule code rather than whichever loud rule the cleared answer would
+ * break next. The schema-v139 trigger is the backstop for any writer that
+ * bypasses applyPatch.                                -> question_answer_frozen
+ */
+export function questionAnswerFrozenError(
+  current: Record<string, unknown>,
+  patch: Record<string, unknown>,
+): QuestionError | null {
+  if (!Object.prototype.hasOwnProperty.call(patch, 'question_answer_json')) return null;
+  if (current.source !== 'project_join') return null;
+  const stored = current.question_answer_json;
+  if (stored === null || stored === undefined) return null;
+  if (patch.question_answer_json === stored) return null;
+  return 'question_answer_frozen: this join request was already decided; its answer cannot change';
 }
 
 /** Origin prefix applyMutation stamps on every Hub-UI write (mutations.ts). */

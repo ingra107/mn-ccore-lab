@@ -31,6 +31,8 @@ import { handleMarkSeen, handleGetUnseenActivity, handleGetThreadSeen, handleMar
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
 import { handleGetProjectMembers, handleAddProjectMember, handleRemoveProjectMember, handleGetMemberProjects } from './routes/project-members';
+import { handleGetProjectDirectory, handleRequestToJoin, handleGetJoinRequests, handleDecideJoinRequest, handleGetProjectBlurb, handleSetProjectBlurb } from './routes/project-join';
+import { joinQuestionMinter } from './lib/project-join';
 import { handleGetMyFolder, handleSetMyFolder, handleClearMyFolder } from './routes/project-member-folders';
 import { handleGetPins, handleCreatePin, handleDeletePin } from './routes/pins';
 import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
@@ -967,6 +969,53 @@ defineRoute({
   auth: 'authed',
   entity: 'projects',
   handler: (c) => handleRemoveProjectMember(c.req.param('id'), c.req.param('slug'), USER(c), c.get('viewer'), E(c)),
+});
+// schema-v139: the project directory and requests to join (Nick, 2026-10-13:
+// "kind of like slack where it's a channel ... but Nate and I need to
+// approve that"). A non-member reads only the directory's five columns.
+defineRoute({
+  method: 'GET',
+  path: '/api/project-directory',
+  auth: 'authed',
+  entity: 'projects',
+  handler: (c) => handleGetProjectDirectory(c.get('viewer'), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/projects/:id/join-request',
+  auth: 'authed',
+  entity: 'projects',
+  // The minter is the one capability on the raw handle here: it mints only
+  // Nick's Telegram question for this request (api/lib/project-join.ts).
+  handler: (c) => handleRequestToJoin(c.req.param('id'), R(c), USER(c), c.get('viewer'), E(c), joinQuestionMinter(E(c), c.get('unscopedDb'))),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/join-requests',
+  auth: 'authed',
+  entity: 'projects',
+  handler: (c) => handleGetJoinRequests(c.get('viewer'), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/join-requests/:id/decision',
+  auth: 'authed',
+  entity: 'projects',
+  handler: (c) => handleDecideJoinRequest(c.req.param('id'), R(c), c.get('viewer'), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:id/blurb',
+  auth: 'authed',
+  entity: 'projects',
+  handler: (c) => handleGetProjectBlurb(c.req.param('id'), E(c)),
+});
+defineRoute({
+  method: 'PUT',
+  path: '/api/projects/:id/blurb',
+  auth: 'authed',
+  entity: 'projects',
+  handler: (c) => handleSetProjectBlurb(c.req.param('id'), R(c), USER(c), E(c)),
 });
 // schema-v127: my folder for this project. One local path per (person,
 // project), private to that person; any member may set their own.

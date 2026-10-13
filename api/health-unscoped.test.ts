@@ -94,7 +94,21 @@ describe('GET /api/health is about the database, not the caller', () => {
       expect(block).toContain("method: 'POST'")
       expect(block).toContain("path: '/api/digest/comments/:id/task',")
     }
-    const uses = lines.filter((l) => !l.includes(ORACLE) && !l.includes(TITLE_ORACLE))
+    // Plus the join-question minter (api/lib/project-join.ts, schema-v139): it
+    // mints only Nick's Telegram question for one request to join, on Ask to
+    // join only. The requester cannot read the row it writes, so the mint
+    // cannot run on their handle.
+    const JOIN_MINTER = "joinQuestionMinter(E(c), c.get('unscopedDb'))"
+    const joinMinter = lines.filter((l) => l.includes(JOIN_MINTER))
+    expect(joinMinter).toHaveLength(1)
+    expect(joinMinter[0].split("get('unscopedDb')").length - 1).toBe(1)
+    {
+      const at = src.indexOf(joinMinter[0])
+      const block = src.slice(src.lastIndexOf('defineRoute(', at), at)
+      expect(block).toContain("method: 'POST'")
+      expect(block).toContain("path: '/api/projects/:id/join-request',")
+    }
+    const uses = lines.filter((l) => !l.includes(ORACLE) && !l.includes(TITLE_ORACLE) && !l.includes(JOIN_MINTER))
     expect(uses).toHaveLength(3)
     // The third: labWideEnv hands the unscoped handle to a PI only. The three Lab
     // pulse routes and the pi-dashboard call it (the pulse routes also answer a

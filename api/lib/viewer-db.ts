@@ -27,8 +27,11 @@
 //     write route at a hidden sentinel to catch the one that does not.
 //   - `main.<table>` names the real table. scopeSql refuses SQL that does
 //     (and temp., sqlite_master, pragma, attach): a loud 500, never a pass.
-//   - A view body reads the real tables. The migration chain defines no view
-//     (table-scope.test.ts pins that); the first view must be classified.
+//   - A view body reads the real tables. Every view is listed, with its exact
+//     columns, in table-scope.ts HUB_VIEWS (table-scope.test.ts pins that).
+//     The one view, project_directory (schema-v139), is the deliberate opening
+//     for "what a non-member may know about a project": five columns, read
+//     only by api/lib/project-join.ts for signed-in members.
 //   - exec / dump / withSession run SQL this module cannot rewrite. They throw.
 //
 // WHO IS SCOPED. Three viewer kinds, built only by the constructors below:
