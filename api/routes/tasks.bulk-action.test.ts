@@ -220,6 +220,55 @@ describe('handleBatchUpdateTasks — applyMutation routing (B-CRIT-04)', () => {
     expect(mockApplyMutation).not.toHaveBeenCalled()
   })
 
+  it('due_date: one applyMutation per id carrying the same due_date patch', async () => {
+    const req = makeRequest({ action: 'due_date', ids, value: '2026-10-14' })
+    const res = await handleBatchUpdateTasks(req, makeUser(), makeEnv())
+
+    expect(res.status).toBe(200)
+    expect(mockApplyMutation).toHaveBeenCalledTimes(ids.length)
+    for (const id of ids) {
+      expect(mockApplyMutation).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          table: 'tasks',
+          record_id: id,
+          op: 'update',
+          patch: { due_date: '2026-10-14' },
+          route: 'handleBatchUpdateTasks/due_date',
+        }),
+      )
+    }
+  })
+
+  it('due_date: an empty value clears the date', async () => {
+    const req = makeRequest({ action: 'due_date', ids, value: '' })
+    const res = await handleBatchUpdateTasks(req, makeUser(), makeEnv())
+
+    expect(res.status).toBe(200)
+    expect(mockApplyMutation).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ patch: { due_date: null } }),
+    )
+  })
+
+  it('due_date: rejects a non-date or an impossible day before any write', async () => {
+    for (const value of ['next week', '2026-02-31', '10/14/2026']) {
+      const res = await handleBatchUpdateTasks(makeRequest({ action: 'due_date', ids, value }), makeUser(), makeEnv())
+      expect(res.status, value).toBe(400)
+    }
+    expect(mockApplyMutation).not.toHaveBeenCalled()
+  })
+
+  it('due_date: a refused write lands in failed, not applied', async () => {
+    mockApplyMutation.mockResolvedValueOnce({ mutation_id: 'm', status: 'rejected' as const, reason: 'nope' } as never)
+    const res = await handleBatchUpdateTasks(makeRequest({ action: 'due_date', ids, value: '2026-10-14' }), makeUser(), makeEnv())
+    const body = await res.json() as { data: { ok: boolean; count: number; failed: { id: string }[] } }
+
+    expect(body.data.ok).toBe(false)
+    expect(body.data.failed).toHaveLength(1)
+    expect(body.data.count).toBe(ids.length - 1)
+  })
+
   it('delete: calls applyMutation with op=delete once per id', async () => {
     const req = makeRequest({ action: 'delete', ids })
     const res = await handleBatchUpdateTasks(req, makeUser(), makeEnv())

@@ -2,11 +2,9 @@ import { useState, useRef, useMemo, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import RoundPrompt from '../components/RoundPrompt'
-import { Button } from '../components/ui/Button'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar,
-  CheckCircle2,
   ListChecks,
   MessageSquarePlus,
   FileText,
@@ -18,7 +16,6 @@ import {
   UserCheck,
   Copy,
   Check,
-  X,
   Sparkles,
   Pencil} from 'lucide-react'
 import { DndContext, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
@@ -31,9 +28,8 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useMeetingDetail, useProjects, useTeam } from '../hooks/useApiData'
 import { buildAttendeeLookup, resolveAttendeeList } from '../../shared/attendees'
 import type { AgendaItemRow, MeetingDetail as MeetingDetailData } from '../hooks/useApiData'
-import type { TaskRow } from '../lib/api'
 import { useQueryClient } from '@tanstack/react-query'
-import { useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask, useUpdateMeetingMeta, useUpdateTask, useBulkUpdateTasks, useRestoreTask } from '../hooks/useMutations'
+import { useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask, useUpdateMeetingMeta } from '../hooks/useMutations'
 import { useMarkSeen } from '../hooks/useEntitySeen'
 import FileUpload from '../components/FileUpload'
 import TypingIndicator from '../components/TypingIndicator'
@@ -58,16 +54,13 @@ import HeartbeatLine from '../components/HeartbeatLine'
 import EntityNotFound from '../components/EntityNotFound'
 import { ICON_PROPS } from '../lib/iconProps'
 import { isTaskDone } from '../lib/taskGrouping'
-import { TaskRow as SharedTaskRow } from '../components/tasks/TaskRow'
-import { TaskRowActions } from '../components/tasks/TaskRowActions'
-import { InlineDetail } from './MyTasks/components/InlineDetail'
-import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
+import { MeetingActionList } from '../components/meetings/MeetingActionList'
+import { prepareActionItems } from '../lib/meetingActionItems'
 import MeetingActivityFeed from '../components/meetings/MeetingActivityFeed'
 import MeetingProjectsSection from '../components/meetings/MeetingProjectsSection'
 import { isLabSeriesTitle } from '../../shared/meetingAudience'
 import { AttendeeBadge } from '../components/meetings/Attendees'
 import { meetingStatus } from '../lib/meetingStatus'
-import { taskShortLabel } from '../lib/displayNames'
 import SectionHead from '../components/ui/SectionHead'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
 
@@ -118,27 +111,11 @@ export default function MeetingDetail() {
   const [generatingAgenda, setGeneratingAgenda] = useState(false)
   const [agendaCopied, setAgendaCopied] = useState(false)
   // Hooks must be called unconditionally (before any conditional returns)
-  const { showUndo } = useUndoToast()
-  const queryClient = useQueryClient()
-  // T7: action items are real task rows — toggle/complete through the same
-  // mutations MyTasks uses, not the legacy /api/action-items endpoint.
-  const updateTask = useUpdateTask()
-  const bulkUpdateTasks = useBulkUpdateTasks()
-  // Real un-delete (POST /api/tasks/:id/restore), so the delete below can be a
-  // genuine tombstone with a genuine undo rather than a deferred commit.
-  const restoreTask = useRestoreTask()
   const addAgenda = useAddAgendaItem(meeting?.id || '')
   const updateNotes = useUpdateMeetingNotes(meeting?.id || '')
   // T6: single mutation for all metadata edits (title/type/attendees/tags).
   const updateMeta = useUpdateMeetingMeta(meeting?.id || '')
   const { data: allProjects = [] } = useProjects()
-  // T7: project lookup for the real-task action item rows (name + primary_folder
-  // for TaskRow/InlineDetail's project chip + WorkOnActions launch button).
-  const projectsBySlug = useMemo(() => {
-    const m = new Map<string, { name: string; slug: string; primary_folder?: string | null }>()
-    for (const p of allProjects) m.set(p.slug, { name: p.title, slug: p.slug, primary_folder: p.primary_folder })
-    return m
-  }, [allProjects])
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const titleInputRef = useRef<HTMLInputElement>(null)
@@ -164,48 +141,14 @@ export default function MeetingDetail() {
     if (meeting?.id) markSeen('meeting', meeting.id)
   }, [meeting?.id, markSeen])
 
-  // Multi-select for action items
-  const [selectedActionIds, setSelectedActionIds] = useState<Set<string>>(new Set())
-  const toggleActionSelect = (id: string) => setSelectedActionIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
-  // T7: inline-expand + full-editor state for the real-task action item rows.
-  const [expandedActionId, setExpandedActionId] = useState<string | null>(null)
-  const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
-
   // S9: agenda drag order — same local-order pattern as before. Without this
   // the agenda drag computed arrayMove + POSTed but never wrote the new order,
   // so the item visually snapped back until a refetch.
   const [agendaOrder, setAgendaOrder] = useState<string[]>([])
-  // Dedupe Cartesian duplicates from join (mirrors MyItems.tsx:678).
-  // Key: normalized title + assignee + due. Newest updated_at wins.
-  const dedupedActionItems = useMemo(() => {
-    const seen = new Map<string, TaskRow>()
-    for (const item of meeting?.action_items || []) {
-      const text = (item.title || item.description || '').replace(/^\[Carried forward\]\s*/i, '').toLowerCase().trim()
-      const key = `${text}::${item.assignee ?? ''}::${item.due_date ?? ''}`
-      const existing = seen.get(key)
-      const itemTs = item.updated_at ?? item.created_at ?? ''
-      const existingTs = existing ? (existing.updated_at ?? existing.created_at ?? '') : ''
-      if (!existing || itemTs > existingTs) {
-        seen.set(key, item)
-      }
-    }
-    return [...seen.values()]
-  }, [meeting?.action_items])
-  // T7: single sort replaces per-user drag-reorder (dnd-kit wiring removed) —
-  // incomplete first, then due date (nulls last), then created_at.
-  const sortedActionItems = useMemo(() => {
-    return [...dedupedActionItems].sort((a, b) => {
-      const aDone = isTaskDone(a) ? 1 : 0
-      const bDone = isTaskDone(b) ? 1 : 0
-      if (aDone !== bDone) return aDone - bDone
-      const aDue = a.due_date ?? '9999-99-99'
-      const bDue = b.due_date ?? '9999-99-99'
-      if (aDue !== bDue) return aDue < bDue ? -1 : 1
-      return (a.created_at ?? '') < (b.created_at ?? '') ? -1 : 1
-    })
-  }, [dedupedActionItems])
-  const pendingActions = useMemo(() => sortedActionItems.filter((a) => !isTaskDone(a)), [sortedActionItems])
-  const completedActions = useMemo(() => sortedActionItems.filter((a) => isTaskDone(a)), [sortedActionItems])
+  // The list both this page and the meeting's Today card show: deduped, open
+  // first, then by due date (lib/meetingActionItems).
+  const actionItems = useMemo(() => prepareActionItems(meeting?.action_items), [meeting?.action_items])
+  const completedCount = useMemo(() => actionItems.filter((a) => isTaskDone(a)).length, [actionItems])
 
   // "n" still focuses the add-item compose box — independent of the removed
   // drag/focus-index nav, kept as its own small effect.
@@ -261,7 +204,6 @@ export default function MeetingDetail() {
   const autoAgenda = parseJsonArray(meeting.agenda)
   const decisions = parseJsonArray(meeting.decisions)
   const status = meetingStatus(meeting)
-  const actionItems = dedupedActionItems
   const rawTeamAgendaItems = meeting.agenda_items || []
   // S9: apply the local drag order so a reordered agenda stays put (mirrors
   // orderedPendingActions). Items with no recorded order sink to the bottom in
@@ -298,136 +240,6 @@ export default function MeetingDetail() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: reordered.map(i => i.id) }),
     })
-  }
-
-  // T7: single-row done toggle for action items. Optimistically patches this
-  // page's own `['meeting', id]` cache (the shared TaskRow's DoneBox must feel
-  // instant — Design Principle #8), then a real task mutation. Uncomplete
-  // writes status directly (mirrors MyTasks' onToggleComplete); complete
-  // routes through the batch 'complete' action so completed_at is server-set.
-  const meetingQueryKey = ['meeting', meeting.id] as const
-
-  // Optimistically rewrite THIS page's own ['meeting', id] cache and hand back
-  // the revert/settle pair. The shared task mutation hooks only patch the
-  // ['tasks'] caches (mutations/utils optimisticListUpdate) — they cannot see
-  // MeetingDetailData's `action_items` shape, so every row action on this page
-  // has to patch it here or the row does not move until a refetch lands. This
-  // was already open-coded in handleToggleActionDone; the delete + reassign
-  // actions are the 2nd and 3rd caller, so it is extracted rather than forked.
-  function patchActionItems(mutate: (items: TaskRow[]) => TaskRow[]) {
-    const prevData = queryClient.getQueryData<MeetingDetailData>(meetingQueryKey)
-    queryClient.setQueryData<MeetingDetailData>(meetingQueryKey, (data) => data && {
-      ...data,
-      action_items: mutate(data.action_items || []),
-    })
-    return {
-      revert: () => queryClient.setQueryData(meetingQueryKey, prevData),
-      settle: () => queryClient.invalidateQueries({ queryKey: meetingQueryKey }),
-    }
-  }
-
-  function handleToggleActionDone(item: TaskRow) {
-    const wasDone = isTaskDone(item)
-    const { revert, settle } = patchActionItems((items) => items.map((a) =>
-      a.id === item.id ? { ...a, status: wasDone ? 'todo' : 'done', completed: wasDone ? 0 : 1 } : a
-    ))
-    if (wasDone) {
-      updateTask.mutate({ id: item.id, fields: { status: 'todo', completed: 0 } }, {
-        onError: revert,
-        onSuccess: () => {
-          settle()
-          showUndo('Marked not done', () => updateTask.mutate({ id: item.id, fields: { status: 'done', completed: 1 } }, { onSuccess: settle }))
-        },
-      })
-    } else {
-      bulkUpdateTasks.mutate({ ids: [item.id], action: 'complete' }, {
-        onError: revert,
-        onSuccess: () => {
-          settle()
-          showUndo('Completed', () => updateTask.mutate({ id: item.id, fields: { status: 'todo', completed: 0 } }, { onSuccess: settle }))
-        },
-      })
-    }
-  }
-
-  // Quick delete with a REAL 5s undo (Nick 2026-07-21: "we over produce action
-  // items (which is OK) but ... i want to quick delete"). One click, no confirm
-  // dialog — a modal on every delete is friction on exactly the high-volume case.
-  //
-  // The delete lands on the server IMMEDIATELY (a real tombstone via the same
-  // bulk 'delete' action every other surface uses); undo calls the real restore
-  // endpoint. This is deliberately NOT TaskDetailPanel's delayed-commit pattern
-  // (TaskDetailPanel.tsx:280 — snapshot the cache, fire the delete only after
-  // the 5s window): that pattern predates the restore route and loses the
-  // delete outright if the tab is closed or navigated inside the window, and
-  // sweeping 20 items would leave 20 pending timers whose work evaporates on
-  // the first navigation. See DEPRECATES note in the session report.
-  //
-  // `prevStatus` is carried into the restore because D1 cannot recover it —
-  // applyDelete overwrites `status` with 'deleted' (mutations.ts:1056-1061).
-  function handleDeleteAction(item: TaskRow) {
-    const label = taskShortLabel(item) || 'action item'
-    const shortLabel = label.length > 40 ? `${label.slice(0, 40)}…` : label
-    const prevStatus = item.status && item.status !== 'deleted' ? item.status : 'todo'
-
-    const { revert, settle } = patchActionItems((items) => items.filter((a) => a.id !== item.id))
-    bulkUpdateTasks.mutate({ ids: [item.id], action: 'delete' }, {
-      onError: () => { revert(); showError(`Could not delete "${shortLabel}"`) },
-      onSuccess: () => {
-        settle()
-        showUndo(`Deleted "${shortLabel}"`, () => {
-          restoreTask.mutate({ id: item.id, prevStatus }, {
-            onSuccess: settle,
-            onError: () => showError(`Could not restore "${shortLabel}"`),
-          })
-        })
-      },
-    })
-  }
-
-  // Quick project re-route from the row. This is the fix for the failure that
-  // triggered the whole request: a meeting's action items landed on the wrong
-  // project and there was no fast way to move them.
-  //
-  // Not routed through useTaskFieldEditors().onProjectChange — that shared hook
-  // is the right primitive everywhere its optimistic write reaches the surface,
-  // but it only patches ['tasks'], so on this page the chip would not move until
-  // a refetch. Same reason handleToggleActionDone writes its own patch. The undo
-  // re-applies through the identical path, so both directions behave the same.
-  function handleReassignAction(item: TaskRow, next: string | null, nextProduct: string | null = null) {
-    const prev = item.project_id ?? null
-    const prevProduct = item.product_id ?? null
-    if (prev === next && (nextProduct == null || nextProduct === prevProduct)) return
-    const apply = (value: string | null, product: string | null) => {
-      const { revert, settle } = patchActionItems((items) => items.map((a) =>
-        a.id === item.id ? { ...a, project_id: value, product_id: product } : a
-      ))
-      updateTask.mutate({ id: item.id, fields: { project_id: value, product_id: product } }, {
-        onError: () => { revert(); showError('Could not change project') },
-        onSuccess: settle,
-      })
-    }
-    apply(next, nextProduct)
-    const nextName = next ? (projectsBySlug.get(next)?.name ?? next) : null
-    showUndo(nextName ? `Moved to ${nextName}` : 'Project cleared', () => apply(prev, prevProduct))
-  }
-
-  function handleBatchComplete() {
-    const ids = [...selectedActionIds]
-    const prevData = queryClient.getQueryData<MeetingDetailData>(meetingQueryKey)
-    queryClient.setQueryData<MeetingDetailData>(meetingQueryKey, (data) => data && {
-      ...data,
-      action_items: (data.action_items || []).map((a) => ids.includes(a.id) ? { ...a, status: 'done', completed: 1 } : a),
-    })
-    bulkUpdateTasks.mutate({ ids, action: 'complete' }, {
-      onError: () => queryClient.setQueryData(meetingQueryKey, prevData),
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: meetingQueryKey }),
-    })
-    showUndo(`Completed ${ids.length} action item(s)`, () => {
-      for (const id of ids) updateTask.mutate({ id, fields: { status: 'todo', completed: 0 } })
-      queryClient.invalidateQueries({ queryKey: meetingQueryKey })
-    })
-    setSelectedActionIds(new Set())
   }
 
   async function handleGenerateAgenda() {
@@ -697,7 +509,7 @@ export default function MeetingDetail() {
 
           {/* Right: Action Items (order-1 on mobile so actions show first) */}
           <motion.div className="order-1 lg:order-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.15 }}>
-            <SectionHead title="Action items" count={<>{completedActions.length}/{actionItems.length}</>} />
+            <SectionHead title="Action items" count={<>{completedCount}/{actionItems.length}</>} />
 
             <div style={{ borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
               {/* Inline add action item */}
@@ -708,151 +520,9 @@ export default function MeetingDetail() {
                 onSuccess={() => showSuccess('Action item added')}
               />
 
-              {/* Batch action bar */}
-              <AnimatePresence>
-                {selectedActionIds.size >= 2 && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                    style={{ overflow: 'hidden' }}
-                  >
-                    <div
-                      className="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg"
-                      style={{
-                        background: 'color-mix(in srgb, var(--job-accent) 6%, transparent)',
-                        border: '1px solid color-mix(in srgb, var(--job-accent) 15%, transparent)',
-                      }}
-                    >
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--job-accent)' }}>
-                        {selectedActionIds.size} selected
-                      </span>
-                      <Button
-                        variant="primary"
-                        onClick={handleBatchComplete}
-                        style={{ gap: '6px', padding: '4px 10px', borderRadius: 'var(--radius-md)', fontSize: '11px', fontWeight: 500 }}
-                      >
-                        <CheckCircle2 {...ICON_PROPS} size={12} />
-                        Complete All
-                      </Button>
-                      <button
-                        onClick={() => setSelectedActionIds(new Set())}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] transition-colors"
-                        style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--sk-line2)', cursor: 'pointer' }}
-                      >
-                        <X {...ICON_PROPS} size={11} />
-                        Clear
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Pending items — real task rows via the shared TaskRow */}
-              {pendingActions.length > 0 && (
-                <div className="mb-3 md-actions">
-                  {pendingActions.map((item) => {
-                    const project = item.project_id ? projectsBySlug.get(item.project_id) ?? null : null
-                    return (
-                      <SharedTaskRow
-                        key={item.id}
-                        task={item}
-                        // project={null}: TaskRowActions owns BOTH project
-                        // affordances (picker chip + navigation arrow), so the
-                        // row must not also render ProjectTag — that would
-                        // print the project name twice on the same line.
-                        project={null}
-                        // stack: title on its own full-width line, the meta
-                        // (owner, due, project) wraps beneath it. The inline
-                        // layout pins the meta at flex-shrink:0 and squeezed the
-                        // title to ~120px in this half-width column.
-                        stack
-                        isDone={false}
-                        onToggleDone={() => handleToggleActionDone(item)}
-                        isExpanded={expandedActionId === item.id}
-                        onToggleExpand={() => setExpandedActionId(expandedActionId === item.id ? null : item.id)}
-                        onOpenEditor={() => setFullEditorTask(item)}
-                        isSelected={selectedActionIds.has(item.id)}
-                        selectionActive={selectedActionIds.size > 0}
-                        onToggleSelect={() => toggleActionSelect(item.id)}
-                        extraMeta={<AssigneeMeta slug={item.assignee} />}
-                        rowActions={
-                          <TaskRowActions
-                            isDone={false}
-                            projectId={item.project_id ?? null}
-                            productId={item.product_id ?? null}
-                            onToggleDone={() => handleToggleActionDone(item)}
-                            onOpenEditor={() => setFullEditorTask(item)}
-                            onProjectChange={(next, prd) => handleReassignAction(item, next, prd)}
-                            onDelete={() => handleDeleteAction(item)}
-                          />
-                        }
-                      >
-                        <InlineDetail
-                          task={item}
-                          projectName={project?.name}
-                          primaryFolder={project?.primary_folder}
-                          onOpenEditor={() => setFullEditorTask(item)}
-                        />
-                      </SharedTaskRow>
-                    )
-                  })}
-                </div>
-              )}
-
-              {/* Completed items */}
-              {completedActions.length > 0 && (
-                <div className="md-actions">
-                  <p style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', marginBottom: '6px' }}>
-                    Completed
-                  </p>
-                  {completedActions.map((item) => {
-                    const project = item.project_id ? projectsBySlug.get(item.project_id) ?? null : null
-                    return (
-                      <SharedTaskRow
-                        key={item.id}
-                        task={item}
-                        // See the pending list above — TaskRowActions owns both
-                        // project affordances on this page.
-                        project={null}
-                        stack
-                        isDone={true}
-                        onToggleDone={() => handleToggleActionDone(item)}
-                        isExpanded={expandedActionId === item.id}
-                        onToggleExpand={() => setExpandedActionId(expandedActionId === item.id ? null : item.id)}
-                        onOpenEditor={() => setFullEditorTask(item)}
-                        isSelected={selectedActionIds.has(item.id)}
-                        selectionActive={selectedActionIds.size > 0}
-                        onToggleSelect={() => toggleActionSelect(item.id)}
-                        extraMeta={<AssigneeMeta slug={item.assignee} />}
-                        rowActions={
-                          <TaskRowActions
-                            isDone={true}
-                            projectId={item.project_id ?? null}
-                            productId={item.product_id ?? null}
-                            onToggleDone={() => handleToggleActionDone(item)}
-                            onOpenEditor={() => setFullEditorTask(item)}
-                            onProjectChange={(next, prd) => handleReassignAction(item, next, prd)}
-                            onDelete={() => handleDeleteAction(item)}
-                          />
-                        }
-                      >
-                        <InlineDetail
-                          task={item}
-                          projectName={project?.name}
-                          primaryFolder={project?.primary_folder}
-                          onOpenEditor={() => setFullEditorTask(item)}
-                        />
-                      </SharedTaskRow>
-                    )
-                  })}
-                </div>
-              )}
-
-              {fullEditorTask && (
-                <TaskDetailPanel task={fullEditorTask} onClose={() => setFullEditorTask(null)} />
-              )}
+              {/* Rows, selection bar and full editor: the same component the
+                  meeting's Today card renders. */}
+              <MeetingActionList meetingId={meeting.id} items={actionItems} />
 
               {actionItems.length === 0 && (
                 <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
@@ -1160,36 +830,6 @@ function AttendeeChip({ slug }: { slug: string }) {
       <span className="tk inline-flex items-center gap-1.5" style={{ fontSize: '12.5px', color: 'var(--sk-t1)', whiteSpace: 'nowrap' }}>
         <AttendeeBadge value={slug} />
       </span>
-      <HoverCard
-        data={memberData}
-        isVisible={isVisible}
-        position={position}
-        cardRef={cardRef}
-        cardHandlers={cardHandlers}
-      />
-    </div>
-  )
-}
-
-// Assignee avatar chip — action items span multiple attendees (unlike
-// MyTasks, which never shows assignee since every row is already "mine"),
-// so the shared TaskRow's `extraMeta` slot carries who owns each item.
-function AssigneeMeta({ slug }: { slug: string }) {
-  const person = getPersonInfo(slug)
-  const { triggerRef, isVisible, position, cardRef, cardHandlers, handlers } = useHoverCard()
-  const memberData = buildMemberHoverData(slug)
-  return (
-    <div
-      ref={triggerRef as React.RefObject<HTMLDivElement>}
-      className="flex items-center gap-1"
-      onMouseEnter={handlers.onMouseEnter}
-      onMouseLeave={handlers.onMouseLeave}
-      style={{ flexShrink: 0 }}
-    >
-      <div style={{ width: 16, height: 16 }}>
-        <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
-      </div>
-      <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.75 }}>{person.name.split(' ')[0]}</span>
       <HoverCard
         data={memberData}
         isVisible={isVisible}

@@ -129,7 +129,7 @@ export function useBulkUpdateTasks() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { ids: string[]; action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'status'; value?: string }) =>
+    mutationFn: (input: { ids: string[]; action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'status' | 'due_date'; value?: string | null }) =>
       fetchApi('/api/tasks/batch', {
         method: 'POST',
         body: JSON.stringify(input),
@@ -147,6 +147,7 @@ export function useBulkUpdateTasks() {
           if (action === 'status' && value) return { ...t, status: value, completed: value === TASK_STATUS.DONE ? 1 : 0, completed_at: value === TASK_STATUS.DONE ? nowInstant() : null }
           if (action === 'priority' && value) return { ...t, priority: value }
           if (action === 'assign' && value) return { ...t, assignee: value }
+          if (action === 'due_date') return { ...t, due_date: value || null }
           if (action === 'delete') return { ...t, deleted_at: nowInstant() }
           return t
         }),

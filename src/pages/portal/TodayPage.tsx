@@ -44,6 +44,7 @@ import { Timeline } from '../../components/today/Timeline'
 import { CollapseChevron } from '../../components/today/SectionCollapseToggle'
 import { collapseToggleProps } from '../../components/today/collapseToggleProps'
 import { TodayDndContext } from '../../components/today/TodayDndContext'
+import { MeetingCardRowsContext } from '../../components/today/meetingCardRows'
 import { PlannedTodaySection } from '../../components/today/PlannedTodaySection'
 import { TaskGroup } from '../../components/today/TaskGroup'
 import { MorningThoughtCompose } from '../../components/today/MorningThoughtCompose'
@@ -270,15 +271,34 @@ export default function TodayPage() {
 
   const hiddenByWindow = tasks.length - visibleTasks.length
 
+  // A meeting card that shows its action rows tells us which tasks it holds
+  // (MeetingActionsCard). Each task shows once on Today, so the groups below
+  // leave those out while the card is open; a folded card gives them back.
+  // Only the groups lose them: the day plan, the overdue rail and the counts
+  // keep reading the full open set (see the note on `visibleTasks`).
+  const [cardRows, setCardRows] = useState<Record<string, string[]>>({})
+  const registerCardRows = useCallback((meetingId: string, taskIds: string[]) => {
+    setCardRows((prev) => {
+      const old = prev[meetingId] ?? []
+      if (old.length === taskIds.length && old.every((id, i) => id === taskIds[i])) return prev
+      const next = { ...prev }
+      if (taskIds.length === 0) delete next[meetingId]
+      else next[meetingId] = taskIds
+      return next
+    })
+  }, [])
+  const cardRowIds = useMemo(() => new Set(Object.values(cardRows).flat()), [cardRows])
+
   // Group bucketing.
   const grouped = useMemo(() => {
     const g: Record<GroupKey, TaskRow[]> = { deep: [], priorities: [], quick: [], pb: [], etl: [] }
     for (const t of visibleTasks) {
+      if (cardRowIds.has(t.id)) continue
       const key = getGroupForTask(t, projectsByPid)
       g[key].push(t)
     }
     return g
-  }, [visibleTasks, projectsByPid])
+  }, [visibleTasks, projectsByPid, cardRowIds])
 
   // Derived counts.
   const overdueTasks = useMemo(() => {
@@ -661,6 +681,7 @@ export default function TodayPage() {
         {/* TodayDndContext: single DndContext spanning Timeline (droppables = gaps)
             + PlannedTodaySection + TaskGroup (draggables = task rows).
             GH#150: replaces both HTML5 DnD (list→gap) and raw pointer events (block move). */}
+        <MeetingCardRowsContext.Provider value={registerCardRows}>
         <TodayDndContext state={state} tasks={tasks}>
 
         {/* Planned-for-today sits ABOVE the day view (Nick 2026-08-03).
@@ -783,6 +804,7 @@ export default function TodayPage() {
         )}
 
         </TodayDndContext>
+        </MeetingCardRowsContext.Provider>
 
         <section data-b2-completed className="tk-panel tk-blk">
           <div {...collapseToggleProps(completedOpen, () => setCompletedOpen(!completedOpen), 'Completed today')} className="tk-ph tk-clk">

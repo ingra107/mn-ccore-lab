@@ -32,6 +32,7 @@ import { useUnseenActivity, useMarkSeen } from '../../hooks/useEntitySeen'
 import { usePrepMeetingFromEvent } from '../../hooks/mutations/useMeetingMutations'
 import { useToast } from '../../hooks/useToast'
 import { Faces } from './skin'
+import { MeetingActionsCard } from './MeetingActionsCard'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved'
 
@@ -122,6 +123,12 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
       <CheckSquare {...ICON_PROPS} size={13} aria-hidden />{open}
     </span>
   )
+  // The meeting's action rows live in the card (MeetingActionsCard). A native
+  // row is its own meeting; a calendar row shows them only once it IS the
+  // meeting's row (notes merged, e.meetingId): a matched meeting without notes
+  // keeps its native row elsewhere on Today, which carries them. Never both.
+  const actionRowsMeetingId = total > 0 && (!isCalEvent || e.meetingId) ? rowMeetingId : null
+  const actionRowsEl = actionRowsMeetingId ? <MeetingActionsCard meetingId={actionRowsMeetingId} placeholder={actionsEl} /> : null
   const projectEl = e.project && (
     <Link to={PATHS.project(e.project.slug)} onClick={(ev) => ev.stopPropagation()} aria-label={`Open ${e.project.name}`}>
       {e.project.name}
@@ -252,7 +259,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
           {isNow && <span className="tk-pill tk-box"><i />Now</span>}
           {isNeverSeenMeeting && <span className="tk-tag" title="New notes since your last visit">New notes</span>}
           <span className="tk-sp" />
-          {facesEl}{actionsEl}{notesEl}{agendaEl}{prepEl}{joinEl}
+          {facesEl}{!actionRowsEl && actionsEl}{notesEl}{agendaEl}{prepEl}{joinEl}
           {hasUpdateSinceSeenMeeting && <span aria-hidden="true" title="Updated since you last looked" className="tk-dotg" />}
           <span className="tk-caret">{expanded ? '▾' : '▸'}</span>
           <button
@@ -263,6 +270,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
             className="tk-x"
           >×</button>
         </div>
+        {actionRowsEl}
         {expanded && notesPanel}
       </div>
     )
@@ -308,9 +316,10 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
           {isNow && <span className="tk-pill tk-box"><i />Now</span>}
           {isNeverSeenMeeting && <span className="tk-tag" title="New notes since your last visit">New notes</span>}
           <span className="tk-sp" />
-          {actionsEl}{notesEl}{agendaEl}{prepEl}{joinEl}
+          {!actionRowsEl && actionsEl}{notesEl}{agendaEl}{prepEl}{joinEl}
         </div>
       </div>
+      {actionRowsEl}
       {expanded && notesPanel}
     </div>
   )

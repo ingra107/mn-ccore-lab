@@ -93,6 +93,28 @@ export function DoneBox({ done, onToggle, color = 'var(--job-accent)', taskId }:
   )
 }
 
+// ── SelectBox — the visible multi-select control (opt-in via `selectBox`). A
+// small accent square at the row's left edge; the DoneBox beside it stays the
+// complete control. Selection is the accent's job, so it fills teal.
+export function SelectBox({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={on}
+      aria-label="Select action item"
+      className="task-selbox"
+      data-on={on ? 'true' : undefined}
+      onClick={(e) => { e.stopPropagation(); onToggle() }}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <svg width={9} height={9} viewBox="0 0 24 24" fill="none" stroke="var(--sk-ac-fg)" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </button>
+  )
+}
+
 // Due-date chip — compact (<= 6 chars, right-aligned in a 6ch box so a column
 // of chips lines up; Nick 2026-09-17); coral overdue, gold today, subtle gold
 // tomorrow, muted otherwise. The absolute date is the tooltip. Wording comes
@@ -277,6 +299,13 @@ export interface SharedTaskRowProps {
    * accessibility bug.
    */
   rowActions?: ReactNode
+  /** The surface's `rowActions` already carries an editable due date, so the
+   *  static due chip is left off and the date prints once. */
+  hideDue?: boolean
+  /** A visible select box at the row's left edge (shown on hover, focus and
+   *  touch, and always while a selection is open). Needs `onToggleSelect`. The
+   *  shift-click / long-press gestures keep working beside it. */
+  selectBox?: boolean
 
   // Card anatomy is opt-in through CardTaskRowProps below (card: true).
   card?: false
@@ -291,9 +320,11 @@ export interface SharedTaskRowProps {
 // The card does not implement multi-select, the trailing verb strip or the
 // stacked layout, so those props are `never` here: passing one is a TYPE ERROR
 // instead of a silently ignored prop.
-export type CardTaskRowProps = Omit<SharedTaskRowProps, 'card' | 'rowActions' | 'isSelected' | 'selectionActive' | 'onToggleSelect' | 'stack'> & {
+export type CardTaskRowProps = Omit<SharedTaskRowProps, 'card' | 'rowActions' | 'hideDue' | 'selectBox' | 'isSelected' | 'selectionActive' | 'onToggleSelect' | 'stack'> & {
   card: true
   rowActions?: never
+  hideDue?: never
+  selectBox?: never
   isSelected?: never
   selectionActive?: never
   onToggleSelect?: never
@@ -466,7 +497,7 @@ function StandardRow(props: SharedTaskRowProps) {
     draggable = false, onDragStart, onTogglePlan,
     isPlanned = false, plannedLabel, showGroupOverridePin = false,
     dense = false, stack: stackProp,
-    leadingTag, extraMeta, belowTitle, children, rowActions,
+    leadingTag, extraMeta, belowTitle, children, rowActions, hideDue = false, selectBox = false,
   } = props
 
   // N1.02 — phone viewports stack by default (the audit found Today/Lanes
@@ -617,7 +648,7 @@ function StandardRow(props: SharedTaskRowProps) {
       {isPlanned && !isDone && <PlannedChip label={plannedLabel} onUnplan={onTogglePlan} />}
       {extraMeta}
       <ProjectTag project={project} task={task} />
-      {task.due_date && !isDone && <DueChip due={task.due_date} status={task.status} />}
+      {task.due_date && !isDone && !hideDue && <DueChip due={task.due_date} status={task.status} />}
       {rowActions}
     </>
   )
@@ -634,6 +665,7 @@ function StandardRow(props: SharedTaskRowProps) {
   return (
     <div
       data-task-id={task.id}
+      data-selecting={selectionActive || isSelected ? 'true' : undefined}
       style={{
         borderBottom: `1px solid ${withAlpha(INK, isDone ? 4 : 6)}`,
         // In select mode (selectionActive || isSelected) suppress the
@@ -671,6 +703,9 @@ function StandardRow(props: SharedTaskRowProps) {
             instead — the deleted dot was aria-hidden and told a screen reader
             nothing at all. */}
         <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, paddingTop: 1 }}>
+          {selectBox && onToggleSelect && (
+            <SelectBox on={isSelected} onToggle={onToggleSelect} />
+          )}
           <DoneBox done={isDone} onToggle={onToggleDone} taskId={task.id} />
           {railColor && <span className="sr-only">{task.priority === 'urgent' ? 'Urgent' : 'High priority'}</span>}
         </div>
@@ -690,10 +725,10 @@ function StandardRow(props: SharedTaskRowProps) {
                 and only the project name gives way (ellipsis). Wrapping let a
                 long project push the due label onto a line of its own, at a
                 different spot per card (site audit 2026-10-10, 196px Columns). */}
-            {(project || (task.due_date && !isDone)) && (
+            {(project || (task.due_date && !isDone && !hideDue)) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <ProjectTag project={project} task={task} shrink />
-                {task.due_date && !isDone && (
+                {task.due_date && !isDone && !hideDue && (
                   <span style={{ marginLeft: 'auto', flexShrink: 0, display: 'inline-flex' }}>
                     <DueChip due={task.due_date} status={task.status} />
                   </span>

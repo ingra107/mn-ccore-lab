@@ -161,4 +161,26 @@ describe('Today meeting card fields', () => {
     }
     vi.unstubAllGlobals()
   })
+  it('action rows ride on exactly one card per meeting: the native row, never a matched calendar row without notes', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const base = { time: '—', title: 'MNCCORE', actionCount: 5, openActionCount: 3 }
+    const cases = [
+      { e: { ...base, id: 'mtg-9' }, isCal: false, card: true },
+      // a calendar row matched to a meeting that has no notes yet: its native row carries the rows
+      { e: { ...base, id: 'cal-1', matchedMeetingId: 'mtg-9' }, isCal: true, card: false },
+      // a calendar row merged with its meeting (notes exist): this IS the meeting's row
+      { e: { ...base, id: 'cal-2', meetingId: 'mtg-9', meetingNotes: 'n' }, isCal: true, card: true },
+    ]
+    for (const c of cases) {
+      const host = await mount(
+        <QueryClientProvider client={qc}><ToastProvider><MemoryRouter><div className="tk"><EventRow e={c.e} isCalEvent={c.isCal} onDismiss={() => {}} onNote={() => {}} /></div></MemoryRouter></ToastProvider></QueryClientProvider>,
+        { ready: (h) => !!h.querySelector('.tk-mc'), label: `EventRow ${c.e.id}` },
+      )
+      expect(!!host.querySelector('.tk-mact'), c.e.id).toBe(c.card)
+      // The open-count chip shows once either way: in the card header, or in the footer.
+      expect(host.querySelectorAll('[aria-label="3 open action items"]').length, c.e.id).toBe(1)
+    }
+    vi.unstubAllGlobals()
+  })
 })

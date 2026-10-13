@@ -4,7 +4,8 @@ import { FaceDisc } from './today/skin'
 import HoverCard from './HoverCard'
 import type { HoverCardData } from './HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
-import { getPersonInfo, getMemberBySlug, directors, seniorMentors, facultyCollaborators, researchTeam } from '../data/team'
+import { getPersonInfo, getMemberBySlug, directors } from '../data/team'
+import { getAssignableMembers } from '../lib/assignableMembers'
 import { displayName } from '../lib/nameUtils'
 import { ICON_PROPS } from '../lib/iconProps'
 
@@ -15,23 +16,6 @@ interface InlineAssigneePickerProps {
   /** Sleek rows: render the owner as it reads on the row (the face) inside a
    *  bare `.sr-trig` button with a hover caret. The menu is unchanged. */
   display?: React.ReactNode
-}
-
-// Build member list from team data
-function getAssignableMembers() {
-  const all = [
-    ...directors.map((d) => ({ slug: d.slug, name: d.name, initials: d.initials, photoUrl: d.photoUrl })),
-    ...seniorMentors.filter((m) => m.slug).map((m) => ({ slug: m.slug!, name: m.name, initials: m.initials, photoUrl: m.photoUrl })),
-    ...facultyCollaborators.filter((m) => m.slug).map((m) => ({ slug: m.slug!, name: m.name, initials: m.initials, photoUrl: m.photoUrl })),
-    ...researchTeam.filter((m) => m.slug).map((m) => ({ slug: m.slug!, name: m.name, initials: m.initials, photoUrl: m.photoUrl })),
-  ]
-  // Deduplicate by slug
-  const seen = new Set<string>()
-  return all.filter((m) => {
-    if (seen.has(m.slug)) return false
-    seen.add(m.slug)
-    return true
-  })
 }
 
 export default function InlineAssigneePicker({ value, onChange, compact, display }: InlineAssigneePickerProps) {

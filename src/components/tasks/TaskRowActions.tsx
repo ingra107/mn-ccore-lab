@@ -60,7 +60,8 @@ import { ArrowUpRight, Check, Pencil, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { PATHS } from '../../constants/paths'
-import { ProjectInlineGhostSelect } from './detail/FieldControls'
+import { ProjectInlineGhostSelect, DueInlineSelect } from './detail/FieldControls'
+import InlineAssigneePicker from '../InlineAssigneePicker'
 import { useProjectPickerList } from '../../hooks/useProjectPickerList'
 
 export interface TaskRowActionsProps {
@@ -74,6 +75,13 @@ export interface TaskRowActionsProps {
   /** next is the chosen slug, or null when "No project" is picked. */
   onProjectChange: (next: string | null, productId?: string | null) => void
   onDelete: () => void
+  /** Owner picker, in place on the row. Shown only when both are given. */
+  assignee?: string
+  onAssigneeChange?: (slug: string) => void
+  /** Due-date picker, in place on the row. Shown only when `onDueChange` is given
+   *  (pair it with `hideDue` on the row so the date prints once). */
+  due?: string | null
+  onDueChange?: (date: string | null) => void
 }
 
 function VerbButton({
@@ -129,6 +137,7 @@ function VerbButton({
 
 export function TaskRowActions({
   isDone, projectId, productId, onToggleDone, onOpenEditor, onProjectChange, onDelete,
+  assignee, onAssigneeChange, due, onDueChange,
 }: TaskRowActionsProps) {
   // Resolved from the SAME query that labels the chip (hooks/useProjectPickerList)
   // so the arrow and the chip can never disagree about what this row is routed
@@ -145,8 +154,14 @@ export function TaskRowActions({
       // press would also toggle the row's expand/select.
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 2, flexShrink: 0 }}
+      style={{ display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', gap: 2, minWidth: 0, maxWidth: '100%' }}
     >
+      {assignee && onAssigneeChange && (
+        <InlineAssigneePicker value={assignee} onChange={onAssigneeChange} />
+      )}
+      {onDueChange && (
+        <DueInlineSelect value={due ?? ''} onChange={(v) => onDueChange(v || null)} done={isDone} />
+      )}
       <ProjectInlineGhostSelect
         value={projectId ?? ''}
         productId={productId}

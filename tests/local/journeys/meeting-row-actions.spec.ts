@@ -48,6 +48,13 @@ async function accessibleNames(row: Locator): Promise<string[]> {
 }
 
 test.describe('Meeting action items — quick row actions', () => {
+  // The browser signs in as the same user the API calls below use; without this
+  // it loads the page as the stack's default viewer, who cannot open the first
+  // meeting, and the row never renders (failed on origin/main 2026-10-12).
+  test.beforeEach(async ({ journeyPage }) => {
+    await journeyPage.setExtraHTTPHeaders({ 'X-Test-Mode-Key': AUTH['X-Test-Mode-Key'], 'X-Test-User': AUTH['X-Test-User'] })
+  })
+
   test('delete is one click + undoable, and every verb is in the a11y tree', async ({ journeyPage: page, request }) => {
     // Seed a disposable action item on the first meeting.
     const meetingsRes = await request.get(`${API}/api/meetings`, { headers: AUTH })

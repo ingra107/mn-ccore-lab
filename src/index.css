@@ -2036,6 +2036,26 @@ button[aria-label="Deselect task"]::before {
     visibility: visible !important;
   }
 }
+/* MeetingActionList selection bar (meeting page + the Today meeting card): an
+   accent strip at the foot of the list, scoped to its rows. */
+.meeting-action-bar{position:sticky;bottom:0;z-index:2;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 14px;background:color-mix(in srgb,var(--job-accent) 9%,var(--sk-card));border-top:1px solid color-mix(in srgb,var(--job-accent) 30%,transparent)}
+.meeting-action-bar .tk-btn{background:transparent}
+@media (max-width:1023px){.meeting-action-bar{bottom:calc(64px + env(safe-area-inset-bottom))}}
+.meeting-action-bar-n{margin-right:4px;font-size:12px;font-weight:600;color:var(--job-accent)}
+.meeting-action-bar-danger{color:var(--job-danger)}
+.meeting-action-bar-date{display:inline-flex;align-items:center;padding:4px 9px;border-radius:var(--r-ctl);font-size:12px;font-weight:500;color:var(--sk-t1);background:var(--sk-card);box-shadow:inset 0 0 0 1px var(--sk-line2)}
+/* SelectBox (TaskRow `selectBox`): a 14px accent square, out of sight until the
+   row is hovered or focused, or a selection is open; always there on touch.
+   `opacity`, not `visibility`, so it stays in the tab order. It keeps its width
+   at rest so every title holds one left edge. The ::before is the 24px+ hit area. */
+.task-selbox{position:relative;width:14px;height:14px;margin-right:8px;padding:0;flex-shrink:0;display:grid;place-items:center;border-radius:4px;border:0;background:transparent;box-shadow:inset 0 0 0 1.5px var(--sk-line2);cursor:pointer;opacity:0;transition:opacity 140ms}
+.task-selbox::before{content:'';position:absolute;inset:-9px}
+.task-selbox svg{opacity:0}
+.task-selbox[data-on="true"]{background:var(--job-accent);box-shadow:none}
+.task-selbox[data-on="true"] svg{opacity:1}
+[data-task-id]:hover .task-selbox,.task-selbox:focus-visible,[data-selecting="true"] .task-selbox{opacity:1}
+.task-selbox:focus-visible{outline:2px solid var(--job-accent);outline-offset:2px}
+@media (hover:none){.task-selbox{opacity:1}}
 /* TaskRowActions verb strip (done / edit / delete) — revealed on row hover.
    `opacity`, NOT `visibility: hidden` / `display: none`: those remove the
    buttons from the tab order, which would make the strip a mouse-only
@@ -2662,6 +2682,14 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-joinq:hover{text-decoration:underline}
 .tk .tk-mexp{padding:10px 12px 12px;border-top:1px solid var(--sk-line)}
 .tk .tk-mexp textarea{width:100%;min-height:72px;background:var(--sk-panel);border:1px solid var(--sk-line);border-radius:var(--r-ctl);padding:8px 10px;color:var(--sk-t1);font-size:12.5px;resize:vertical}
+/* A meeting's action rows, inside its Today card (MeetingActionsCard). */
+.tk-mact{border-top:1px solid var(--sk-line)}
+.tk-mact-hd{display:flex;align-items:center;gap:8px;width:100%;padding:8px 14px;border:0;background:transparent;font:inherit;font-size:12px;font-weight:600;color:var(--sk-t2);text-align:left}
+button.tk-mact-hd{cursor:pointer}
+button.tk-mact-hd:hover{color:var(--sk-t1)}
+.tk-mact-n{margin-right:auto;font-weight:400;color:var(--sk-t3)}
+.tk-mact-hd .tk-mt{margin-left:auto}
+.tk-mact .md-actions [data-task-id]{padding-left:0}
 .tk .tk-nd{outline:1px dashed var(--job-wants);outline-offset:1px;border-radius:4px}
 .tk-nonew .tk .tk-nd{display:none!important}
 .tk .tk-tlw{display:flex;gap:8px;align-items:flex-start}
@@ -3067,6 +3095,8 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    reachable. Scoped, so TaskRow's other surfaces keep the reserved space. */
 .md-actions [data-task-id]{position:relative}
 .md-actions .task-row-verbs{position:absolute;top:4px;right:30px;background:var(--ice);border-radius:6px}
+/* Phone: the strip cannot float over a wrapped title, and on touch it never hides. It joins the meta line. */
+@media (max-width:767px){.md-actions .task-row-verbs{position:static;background:none}}
 
 /* ══ Sleek rows (.sr) — src/components/table/SleekRows.tsx ══
    The sleek single-line row (Nick 2026-10-10 mock "Tasks: sleek rows",

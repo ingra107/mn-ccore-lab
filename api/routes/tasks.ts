@@ -827,8 +827,8 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
 export async function handleBatchUpdateTasks(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
     ids: string[]
-    action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'status'
-    value?: string
+    action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'status' | 'due_date'
+    value?: string | null
   }
 
   if (!body.ids?.length || !body.action) {
@@ -996,6 +996,45 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
         } catch (e) {
           const reason = e instanceof Error ? e.message : String(e)
           console.error(`bulkAction priority threw for ${id}: ${reason}`)
+          failed.push({ id, reason })
+        }
+      }
+      break
+    }
+
+    case 'due_date': {
+      // One date for every id (the meeting card's "Date" bulk action). value is
+      // a civil YYYY-MM-DD, or null/'' to clear the date. Validated as a real
+      // calendar day so "2026-02-31" cannot reach the write.
+      const due = body.value ? String(body.value).slice(0, 10) : null
+      if (due !== null) {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(due)
+        const [y, mo, da] = m ? [Number(m[1]), Number(m[2]), Number(m[3])] : [0, 0, 0]
+        const d = new Date(Date.UTC(y, mo - 1, da))
+        if (!m || d.getUTCFullYear() !== y || d.getUTCMonth() !== mo - 1 || d.getUTCDate() !== da) {
+          return error('value must be a YYYY-MM-DD date, or empty to clear', 400)
+        }
+      }
+      for (const id of body.ids) {
+        try {
+          const mutResult = await applyMutation(env, {
+            table: 'tasks',
+            record_id: id,
+            op: 'update',
+            patch: { due_date: due },
+            route: 'handleBatchUpdateTasks/due_date',
+            user,
+          })
+          if (mutResult.status === 'accepted' || mutResult.status === 'merged_clean') {
+            applied.push(id)
+          } else {
+            const reason = `${mutResult.status} — ${mutResult.reason ?? ''}`
+            console.error(`bulkAction due_date failed for ${id}: ${reason}`)
+            failed.push({ id, reason })
+          }
+        } catch (e) {
+          const reason = e instanceof Error ? e.message : String(e)
+          console.error(`bulkAction due_date threw for ${id}: ${reason}`)
           failed.push({ id, reason })
         }
       }
