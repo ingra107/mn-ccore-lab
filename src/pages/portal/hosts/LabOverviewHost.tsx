@@ -1,41 +1,44 @@
-// Lab Overview + its tabs (nav redesign, 2026-10-09): Overview, PI Analytics,
-// Mentee Milestones, Deadline Cascade. The old /portal/pi/analytics,
-// /portal/mentee-milestones and /portal/deadline-cascade redirect here.
+// Lab overview + its tabs (analytics fold, 2026-10-13): Overview, Team,
+// Pipeline, Mentees, Cascade. Analytics, Insights and PI analytics became the
+// Team and Pipeline tabs (and the trainee blocks on Mentees); their routes
+// redirect here (App.tsx) and the old tab keys stay as aliases:
+//   pi-analytics -> team, mentee-milestones -> mentees, deadline-cascade -> cascade.
 //
-// Lab Overview sits in the sidebar for a PI only (Nick's nav), but the page
-// stays open to everyone: a member still reaches Mentee Milestones from a
-// member page's "View all" and Deadline Cascade from the Deadlines page, as
-// before. PI Analytics was PI-only in the sidebar and the palette, so its tab
-// is too.
+// The page is open to everyone, though the sidebar lists it for a PI only (a
+// member reaches it from the avatar menu). Tabs hide per SECTION, not per tab:
+// every individual metric (a person's engagement, completion, trainee pace) is
+// drawn only for a PI, so a member sees the lab's totals and the shared pages.
+//
+// `?week=` (ISO Monday week) and `?range=` belong to the page and survive a tab
+// switch; every other param belonged to the tab you left.
 
 import { Suspense } from 'react'
 import { lazyRoute } from '../../../lib/lazyRoute'
 import PageTabs from '../../../components/PageTabs'
 import PageErrorBoundary from '../../../components/PageErrorBoundary'
-import { useAuth } from '../../../hooks/useAuth'
 import { TabFallback } from './TabFallback'
 
 const Dashboard = lazyRoute(() => import('../../Dashboard'))
-const PIAnalytics = lazyRoute(() => import('../PIAnalytics'))
-const MenteeMilestonesPage = lazyRoute(() => import('../MenteeMilestonesPage'))
+const TeamTab = lazyRoute(() => import('../labops/TeamTab'))
+const PipelineTab = lazyRoute(() => import('../labops/PipelineTab'))
+const MenteesTab = lazyRoute(() => import('../labops/MenteesTab'))
 const DeadlineCascadePage = lazyRoute(() => import('../DeadlineCascadePage'))
 
+const tab = (name: string, node: React.ReactNode) => (
+  <PageErrorBoundary pageName={name}><Suspense fallback={<TabFallback />}>{node}</Suspense></PageErrorBoundary>
+)
+
 export default function LabOverviewHost() {
-  const { user } = useAuth()
   return (
     <PageTabs
-      ariaLabel="Lab Overview"
+      ariaLabel="Lab overview"
+      keepParams={['week', 'range']}
       tabs={[
-        {
-          key: 'overview', label: 'Overview',
-          render: () => <PageErrorBoundary pageName="LabOverview"><Suspense fallback={<TabFallback />}><Dashboard /></Suspense></PageErrorBoundary>,
-        },
-        {
-          key: 'pi-analytics', label: 'PI Analytics', hidden: !user?.isPi,
-          render: () => <PageErrorBoundary pageName="PIAnalytics"><Suspense fallback={<TabFallback />}><PIAnalytics /></Suspense></PageErrorBoundary>,
-        },
-        { key: 'mentee-milestones', label: 'Mentee Milestones', render: () => <Suspense fallback={<TabFallback />}><MenteeMilestonesPage /></Suspense> },
-        { key: 'deadline-cascade', label: 'Deadline Cascade', render: () => <Suspense fallback={<TabFallback />}><DeadlineCascadePage /></Suspense> },
+        { key: 'overview', label: 'Overview', render: () => tab('LabOverview', <Dashboard />) },
+        { key: 'team', label: 'Team', aliases: ['pi-analytics'], render: () => tab('LabTeam', <TeamTab />) },
+        { key: 'pipeline', label: 'Pipeline', render: () => tab('LabPipeline', <PipelineTab />) },
+        { key: 'mentees', label: 'Mentees', aliases: ['mentee-milestones'], render: () => tab('LabMentees', <MenteesTab />) },
+        { key: 'cascade', label: 'Cascade', aliases: ['deadline-cascade'], render: () => <Suspense fallback={<TabFallback />}><DeadlineCascadePage /></Suspense> },
       ]}
     />
   )

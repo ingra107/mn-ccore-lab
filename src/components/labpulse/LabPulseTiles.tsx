@@ -1,11 +1,19 @@
-// LabPulseSection -- "Lab pulse" on PI Analytics (Nick, 2026-10-11): three
-// tiles, each one hero number with the trend behind it.
+// Lab pulse tiles (Nick, 2026-10-11): three tiles, each one hero number with the
+// trend behind it. Since the Lab overview fold (2026-10-13) each tile sits where
+// it is used, not in one section:
 //
-//   Trainee pubs a year     mean of the last three full years; a bar per year
-//   Days to done            median task age at completion; a bar per month,
-//                           and by priority
-//   Active this month       members with any action in 30 days, against the
-//                           30 before; who they are
+//   PubsTile     Trainee pubs a year       Mentees tab. Mean of the last three
+//                                          full years; a bar per year.
+//   SpeedTile    Days to done, team tasks  Pipeline tab > Velocity. Median task
+//                                          age at completion; a bar per month,
+//                                          and by priority. THE one "days to
+//                                          done" figure: its note names the
+//                                          exclusions (Nick-assigned tasks, and
+//                                          tasks closed within a day).
+//   ActiveTile   Active members            Team tab > Engagement. Members with
+//                                          any action in 30 days, against the 30
+//                                          before; who they are, with a link to
+//                                          each trajectory.
 //
 // Colors follow principle 21 (rules-ui-design.md): data bars run the teal ramp
 // (more = brighter, lib/tealRamp.ts), orange only for something slipping or
@@ -13,10 +21,10 @@
 // (.sk-mat). Every number here comes from a PI-only route; the per-person list
 // and the score never reach a member (api/routes/pi-dashboard.ts).
 
-import SectionHead from '../ui/SectionHead'
-import { useId } from 'react'
+import { Link } from 'react-router-dom'
 import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
 import { todayCivil } from '../../lib/time'
+import { PATHS } from '../../constants/paths'
 import { getPersonInfo } from '../../data/team'
 import { usePubsPulse, useSpeedPulse, useEngagementPulse } from '../../hooks/useLabPulse'
 import { ARROW, formatDays, daysHero, pubsBetter, speedBetter, activeBetter, type Better } from '../../lib/labPulse'
@@ -103,24 +111,28 @@ function Bars({ items, height = 56, neutral = false }: { items: Array<{ label: s
   )
 }
 
-/** One labeled horizontal bar with its number beside it. */
-function RowBar({ label, value, max, text, title, stale, neutral = false }: { label: string; value: number; max: number; text: string; title?: string; stale?: boolean; neutral?: boolean }) {
+/** One labeled horizontal bar with its number beside it. `to` makes the row a link; `score` adds a dim second figure. */
+function RowBar({ label, value, max, text, title, stale, neutral = false, to, score }: { label: string; value: number; max: number; text: string; title?: string; stale?: boolean; neutral?: boolean; to?: string; score?: number }) {
   const t = max > 0 ? value / max : 0
-  return (
-    <div className="flex items-center gap-2.5" title={title}>
+  const body = (
+    <>
       <span className="text-xs w-24 truncate" style={{ color: stale ? 'var(--job-stale)' : 'var(--sk-t1)' }}>{label}</span>
       <div className="flex-1 h-3.5 rounded overflow-hidden" style={{ backgroundColor: BAR_TRACK }}>
         {value > 0 && <div className="h-full rounded" style={{ width: `${Math.max(t * 100, 4)}%`, transition: 'width 0.6s ease', ...(neutral ? NEUTRAL_BAR : rampBar(t)) }} />}
       </div>
       <span className="text-[11px] w-14 text-right tabular-nums" style={{ color: stale ? 'var(--job-stale)' : 'var(--sk-t2)' }}>{text}</span>
-    </div>
+      {score !== undefined && <span className="text-[10px] w-8 text-right tabular-nums" style={{ color: 'var(--sk-t3)' }} title={`Score ${score}`}>{score}</span>}
+    </>
   )
+  return to
+    ? <Link to={to} className="flex items-center gap-2.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.03]" style={{ textDecoration: 'none' }} title={title}>{body}</Link>
+    : <div className="flex items-center gap-2.5" title={title}>{body}</div>
 }
 
 const Unavailable = () => <p className="text-sm" style={{ color: 'var(--sk-t3)' }}>Not available right now.</p>
 const Loading = () => <p className="text-sm" style={{ color: 'var(--sk-t3)' }}>Loading</p>
 
-function PubsTile() {
+export function PubsTile() {
   const q = usePubsPulse()
   const d = q.data
   return (
@@ -144,7 +156,7 @@ function PubsTile() {
   )
 }
 
-function SpeedTile() {
+export function SpeedTile() {
   const q = useSpeedPulse()
   const d = q.data
   const prio = d ? d.byPriority.filter((p) => p.count > 0) : []
@@ -184,7 +196,7 @@ function SpeedTile() {
   )
 }
 
-function ActiveTile() {
+export function ActiveTile() {
   const q = useEngagementPulse()
   const d = q.data
   const maxTotal = d ? Math.max(...d.members.map((m) => m.total), 1) : 1
@@ -200,6 +212,7 @@ function ActiveTile() {
             caption={`${d.prior_active} were active in the 30 days before`}
           />
           <div className="flex flex-col gap-1.5 pt-3" style={{ borderTop: '1px solid var(--sk-line)' }} data-testid="lab-pulse-people">
+            <span className="text-[11px]" style={{ color: 'var(--sk-t3)' }}>Actions in 30 days, with score (comments x3 + updates x2 + completions x1)</span>
             {d.members.map((m) => {
               const quiet = !m.active && m.prior_active
               return (
@@ -210,7 +223,9 @@ function ActiveTile() {
                   max={maxTotal}
                   text={quiet ? 'quiet' : m.total === 0 && m.opened ? 'opened' : String(m.total)}
                   stale={quiet}
-                  title={`${m.total} actions in 30 days (${m.prior_total} before) · score ${m.score}`}
+                  to={PATHS.teamTrajectory(m.slug)}
+                  score={m.score}
+                  title={`Open ${nameOf(m)}'s trajectory · ${m.total} actions in 30 days (${m.prior_total} before) · score ${m.score}`}
                 />
               )
             })}
@@ -218,19 +233,5 @@ function ActiveTile() {
         </>
       )}
     </Tile>
-  )
-}
-
-export default function LabPulseSection() {
-  const headId = useId()
-  return (
-    <section id="lab-pulse" aria-labelledby={headId} className="mt-6" data-testid="lab-pulse">
-      <SectionHead id={headId} title="Lab pulse" count="Only you see this" />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-        <PubsTile />
-        <SpeedTile />
-        <ActiveTile />
-      </div>
-    </section>
   )
 }

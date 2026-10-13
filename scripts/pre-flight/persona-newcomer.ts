@@ -29,7 +29,7 @@ const TOUR_PAGES = [
   { path: '/portal/narratives', role: 'Research arcs' },
   { path: '/portal/search', role: 'Cross-surface search' },
   { path: '/team', role: 'Team directory' },
-  { path: '/portal/analytics', role: 'Lab analytics' },
+  { path: '/portal/overview?tab=pipeline', role: 'Lab analytics' },
   { path: '/portal/library', role: 'Library: artifacts and the research digest' },
   { path: '/portal/calendar', role: 'Calendar view' },
   { path: '/portal/activity', role: 'Activity feed' },

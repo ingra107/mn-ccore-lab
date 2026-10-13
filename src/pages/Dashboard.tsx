@@ -28,7 +28,6 @@ import YourWeekCard from '../components/dashboard/YourWeekCard'
 import ProjectHealthCard from '../components/dashboard/ProjectHealthCard'
 import MyItemsCard from '../components/dashboard/MyItemsCard'
 import TeamPulseCard from '../components/dashboard/TeamPulseCard'
-import InsightsCard from '../components/dashboard/InsightsCard'
 import WeeklyProgressCard from '../components/dashboard/WeeklyProgressCard'
 import QuickWinsCard from '../components/dashboard/QuickWinsCard'
 import PomodoroStatsCard from '../components/dashboard/PomodoroStatsCard'
@@ -66,7 +65,6 @@ const CARD_TABS: Record<string, DashboardTab[]> = {
   'my-items': ['overview', 'deadlines'],
   'clif': ['overview', 'projects'],
   'topics': ['overview', 'projects'],
-  'insights': ['overview', 'projects'],
   'weekly-progress': ['overview', 'deadlines'],
   'quick-wins': ['overview', 'deadlines'],
   'pomodoro-stats': ['overview'],
@@ -89,7 +87,6 @@ const CARD_REGISTRY = [
   { id: 'my-items', label: 'My Items', component: MyItemsCard, defaultVisible: false },
   { id: 'clif', label: 'CLIF Network', component: CLIFMiniCard, defaultVisible: false },
   { id: 'topics', label: 'Research Topics', component: TopicBubblesCard, defaultVisible: false },
-  { id: 'insights', label: 'Cross-Project Insights', component: InsightsCard, defaultVisible: false },
   { id: 'weekly-progress', label: 'Weekly Progress', component: WeeklyProgressCard, defaultVisible: true },
   { id: 'quick-wins', label: 'Quick Wins', component: QuickWinsCard, defaultVisible: true },
   { id: 'pomodoro-stats', label: 'Focus Time', component: PomodoroStatsCard, defaultVisible: false },
@@ -104,6 +101,11 @@ const DEFAULTS_VERSION_KEY = 'mnccore-dashboard-version'
 const CLICKS_KEY = 'mnccore-dashboard-clicks'
 const TAB_KEY = 'mnccore-dashboard-tab'
 const CURRENT_DEFAULTS_VERSION = 4 // bump to reset localStorage to new defaults
+// Do NOT bump it to retire a card: that wipes every viewer's saved layout and
+// pins. The Cross-Project Insights card (id 'insights') left the registry on
+// 2026-10-13 (its content is Lab overview > Pipeline > Connections); a stored
+// set or layout that still names it is ignored: the card lists filter on the
+// registry and reconcileLayouts() drops layout entries for unknown cards.
 
 // ── Adaptive sorting helpers ──────────────────────────────
 

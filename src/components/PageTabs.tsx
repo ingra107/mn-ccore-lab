@@ -1,7 +1,7 @@
 // PageTabs — one portal page that hosts several former pages as tabs
 // (nav redesign, 2026-10-09): Library = Artifacts + Research Digest,
 // Projects = Projects + Ideas, Meetings = Meetings + Transcripts, Lab Overview
-// = Overview + PI Analytics + Mentee Milestones + Deadline Cascade.
+// = Overview + Team + Pipeline + Mentees + Cascade.
 //
 // The active tab lives in the URL (`?tab=<key>`), so every tab is a real,
 // shareable address and the old routes redirect straight to one. The first
@@ -11,14 +11,20 @@
 //
 // Each tab renders the page component it replaced, unchanged, so nothing the
 // old page did is lost. Switching tabs drops the other query params: they
-// belonged to the tab you left (its filters, its ?create=true).
+// belonged to the tab you left (its filters, its ?create=true), except the
+// ones the page lists in keepParams.
 
 import { useSearchParams } from 'react-router-dom'
 import { SegmentedToggle } from './ui/SegmentedToggle'
 import { resolveTab } from '../lib/pageTabs'
 import type { PageTab } from '../lib/pageTabs'
 
-export default function PageTabs({ tabs, ariaLabel }: { tabs: PageTab[]; ariaLabel: string }) {
+export default function PageTabs({ tabs, ariaLabel, keepParams = [] }: {
+  tabs: PageTab[]
+  ariaLabel: string
+  /** Query params that belong to the page, not to a tab, and survive a tab switch (the Lab overview's `?week=`). */
+  keepParams?: string[]
+}) {
   const [params, setParams] = useSearchParams()
   const visible = tabs.filter((t) => !t.hidden)
   const active = resolveTab(tabs, params.get('tab'))
@@ -26,6 +32,10 @@ export default function PageTabs({ tabs, ariaLabel }: { tabs: PageTab[]; ariaLab
   const select = (key: string) => {
     if (key === active.key) return
     const next = new URLSearchParams()
+    for (const k of keepParams) {
+      const v = params.get(k)
+      if (v !== null) next.set(k, v)
+    }
     if (key !== visible[0].key) next.set('tab', key)
     setParams(next)
   }

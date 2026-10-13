@@ -209,7 +209,7 @@ export default function DeadlinesPage() {
             })}
           </div>
           <Link
-            to={PATHS.deadlineCascadeTab}
+            to={PATHS.labCascadeTab}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
             style={{
               fontSize: '12px',

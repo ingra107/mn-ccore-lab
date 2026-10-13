@@ -775,11 +775,13 @@ test.describe('FEATURE — Copy/Export buttons', () => {
     console.log(`Copy as Text on CV: ${visible}`)
   })
 
-  test('FEATURE: Print button on PI Analytics', async ({ page }) => {
-    await loadPage(page, P.piAnalytics)
-    const printBtn = page.locator('button:has-text("Print")')
+  test('FEATURE: Print action in the Report menu on Lab overview Team', async ({ page }) => {
+    await loadPage(page, P.labTeam)
+    const report = page.getByRole('button', { name: 'Report' })
+    if (await report.isVisible().catch(() => false)) await report.click()
+    const printBtn = page.getByRole('menuitem', { name: 'Print' })
     const visible = await printBtn.isVisible().catch(() => false)
-    console.log(`Print on PI Analytics: ${visible}`)
+    console.log(`Print in Report menu on Lab overview Team: ${visible}`)
   })
 })
 
@@ -1029,21 +1031,20 @@ test.describe('JOURNEY — Manuscript pipeline view', () => {
   })
 })
 
-test.describe('JOURNEY — Analytics deep dive', () => {
-  test('JOURNEY: Analytics → read metrics → scroll charts → copy report', async ({ page }) => {
-    await loadPage(page, P.analytics)
+test.describe('JOURNEY — Pipeline deep dive', () => {
+  test('JOURNEY: Pipeline → read metrics → step the week → scroll charts', async ({ page }) => {
+    await loadPage(page, P.labPipeline)
 
     // 1. Read metric cards
     const metricCards = page.locator('[class*="metric"], [class*="card"]').filter({ hasText: /\d+/ })
     const metricCount = await metricCards.count()
     console.log(`Analytics metric cards: ${metricCount}`)
 
-    // 2. Check weekly date selector
-    const weekSelector = page.locator('button:has-text("This Week"), button:has-text("Last Week")')
-    if (await weekSelector.first().isVisible().catch(() => false)) {
-      await weekSelector.first().click()
-      await page.waitForTimeout(500)
-    }
+    // 2. The one week control: Previous week writes ?week=YYYY-Www, This week clears it
+    await page.getByRole('button', { name: 'Previous week' }).click()
+    await expect(page).toHaveURL(/week=\d{4}-W\d{2}/)
+    await page.getByRole('button', { name: 'This week' }).click()
+    await expect(page).not.toHaveURL(/week=/)
 
     // 3. Scroll to see all charts
     await page.evaluate(() => window.scrollBy(0, 800))

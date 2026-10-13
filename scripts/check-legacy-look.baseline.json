@@ -49,13 +49,5 @@
   "src/pages/TrajectoryPage.tsx": {
     "tabstrip": 1,
     "initials": 1
-  },
-  "src/pages/portal/AnalyticsPage.tsx": {
-    "uppercase": 1,
-    "box": 8
-  },
-  "src/pages/portal/InsightsPage.tsx": {
-    "uppercase": 2,
-    "box": 2
   }
 }

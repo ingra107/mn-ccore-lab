@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { TrendingUp } from 'lucide-react'
+import { PATHS } from '../../constants/paths'
 import { useTasks } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -137,6 +139,9 @@ export default function WeeklyProgressCard() {
           </span>
         </div>
       )}
+      <Link to={`${PATHS.labPipelineTab}`} className="block mt-2 text-[10px]" style={{ color: 'var(--sk-t3)', textDecoration: 'none' }} title="Task velocity on the Pipeline tab">
+        Task velocity &rarr;
+      </Link>
     </BentoCard>
   )
 }

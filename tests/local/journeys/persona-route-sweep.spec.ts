@@ -24,6 +24,11 @@ const ROUTES = [
   'projects', 'library', 'manuscripts', 'ask', 'decisions', 'narratives',
   'search', 'grants', 'meetings', 'activity', 'analytics', 'insights',
   'sessions', 'launches', 'settings', 'profile', 'team',
+  // Lab overview's tabs (analytics fold, 2026-10-13). A member opens each; the
+  // PI-only reads (/api/insights/dashboard, the lab-pulse routes) must not fire
+  // for them, so no 403 is expected. 'analytics' and 'insights' above now
+  // redirect to the Pipeline tab: visiting them checks the redirect too.
+  'overview?tab=team', 'overview?tab=pipeline', 'overview?tab=mentees', 'overview?tab=cascade',
 ].map((r) => `/portal/${r}`)
 
 // Known, deliberate non-2xx answers, keyed by the route that may see them.
@@ -31,12 +36,11 @@ const ROUTES = [
 //    hub-realtime Durable Object is not bound in the local worker. The journey
 //    fixtures' WebSocket stub does not cover the ticket fetch, so allow this one
 //    exact status, method and path.
-//  - /api/insights/dashboard 403, only on /portal/insights: the route is PI-only
-//    and InsightsPage turns the 403 into its 'PI-only' state on purpose.
 const EXPECTED_ANYWHERE = new Set(['503 GET /api/realtime/ticket'])
-const EXPECTED_BY_ROUTE: Record<string, Set<string>> = {
-  '/portal/insights': new Set(['403 GET /api/insights/dashboard']),
-}
+// None by route: since the analytics fold (2026-10-13) the PI-only Insights read
+// does not fire for a member (useInsightsDashboard is disabled unless isPi), so
+// the old /portal/insights 403 allowance is gone.
+const EXPECTED_BY_ROUTE: Record<string, Set<string>> = {}
 
 const PERSONAS = [
   { name: 'member with data', email: 'sweepdata@umn.edu', slug: 'sweep-data', tasks: true },

@@ -210,12 +210,12 @@ test.describe('PAGE — Portal pages render without errors', () => {
     [P.meetings, 'Meetings', ['Meeting', 'Record Meeting']],
     [P.meetingNotes, 'Meeting Transcripts', ['Meeting Transcripts', 'Upload Audio']],
     [P.activity, 'Activity', ['Activity']],
-    [P.analytics, 'Analytics', ['Analytics', 'Completed']],
+    [P.labPipeline, 'Lab overview Pipeline', ['Lab overview', 'Completed']],
     [P.settings, 'Settings', ['Settings', 'Lab name']],
     [P.narratives, 'Narratives', ['Research Narratives']],
     [P.sessions, 'Session History', ['Session History']],
     [P.menteeMilestones, 'Mentee Milestones', ['Mentee Milestones']],
-    [P.piAnalytics, 'PI Analytics', ['PI Access Only|PI analytics']],
+    [P.labTeam, 'Lab overview Team', ['Leadership insights|Lab progress this week']],
   ]
 
   for (const [route, name, mustHave] of portalPages) {
@@ -583,11 +583,17 @@ test.describe('UX — Copy/Export buttons', () => {
     await expect(btn).toBeVisible()
   })
 
-  test('UX: Copy Report button exists on Analytics', async ({ page }) => {
-    await loadPage(page, P.analytics)
-    const btn = page.locator('button:has-text("Copy Report")')
-    const visible = await btn.isVisible({ timeout: 3000 }).catch(() => false)
-    console.log(`Copy Report on Analytics: ${visible}`)
+  test('UX: Report menu on Lab overview Team lists the report actions (PI)', async ({ page }) => {
+    await loadPage(page, P.labTeam)
+    const report = page.getByRole('button', { name: 'Report' })
+    const visible = await report.isVisible({ timeout: 3000 }).catch(() => false)
+    console.log(`Report menu on Lab overview Team: ${visible}`)
+    if (visible) {
+      await report.click()
+      for (const name of ['Copy lab report', 'Copy PI report', 'Export tasks CSV', 'Print', 'Refresh data']) {
+        await expect(page.getByRole('menuitem', { name }), `Report menu item "${name}"`).toBeVisible()
+      }
+    }
   })
 })
 
@@ -919,8 +925,8 @@ test.describe('VISUAL — Dropdown and modal states', () => {
     }
   })
 
-  test('VISUAL: Analytics charts render', async ({ page }) => {
-    await loadPage(page, P.analytics)
+  test('VISUAL: Lab overview Pipeline charts render', async ({ page }) => {
+    await loadPage(page, P.labPipeline)
     await page.screenshot({ path: 'review/visual-analytics-top.png' })
     // Scroll down to see charts
     await page.evaluate(() => window.scrollBy(0, 600))
@@ -1460,19 +1466,19 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
   })
 
   // ── Analytics time-range buttons ──────────────────────────────────
-  test('FEATURE: Analytics time-range buttons (7d/4w/3m/All)', async ({ page }) => {
-    await loadPage(page, P.analytics)
+  test('FEATURE: Pipeline time-range buttons (7d/4w/3m/All)', async ({ page }) => {
+    await loadPage(page, P.labPipeline)
     for (const range of ['7D', '4W', '3M', 'All']) {
       const btn = page.locator(`button:has-text("${range}")`).first()
       const visible = await btn.isVisible({ timeout: 3000 }).catch(() => false)
-      expect(visible, `Analytics time-range button "${range}" should be visible`).toBe(true)
+      expect(visible, `Pipeline time-range button "${range}" should be visible`).toBe(true)
     }
     await page.screenshot({ path: 'review/phase30-analytics-time-range.png' })
   })
 
   // ── Recharts SVG elements on analytics ────────────────────────────
-  test('FEATURE: Recharts SVG chart elements on /analytics', async ({ page }) => {
-    await loadPage(page, P.analytics)
+  test('FEATURE: Recharts SVG chart elements on Lab overview Pipeline', async ({ page }) => {
+    await loadPage(page, P.labPipeline)
     // Recharts renders inside ResponsiveContainer → <svg> with class "recharts-surface"
     const rechartsWrapper = page.locator('.recharts-wrapper, .recharts-surface, .recharts-responsive-container')
     const count = await rechartsWrapper.count()
@@ -1481,8 +1487,8 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
   })
 
   // ── StatRow sparklines ─────────────────────────────────────────
-  test('FEATURE: StatRow sparkline polyline elements on /analytics', async ({ page }) => {
-    await loadPage(page, P.analytics)
+  test('FEATURE: StatRow sparkline polyline elements on Lab overview Pipeline', async ({ page }) => {
+    await loadPage(page, P.labPipeline)
     // StatRow sparklines render as <svg> with <polyline>
     const polylines = page.locator('svg polyline')
     const count = await polylines.count()
@@ -1538,7 +1544,7 @@ test.describe('VISUAL — Full page screenshots for visual regression', () => {
   const allPortalPaths = [
     'dashboard', 'my-tasks', 'tasks', 'projects', 'manuscripts',
     'calendar', 'deadlines', 'decisions', 'meetings',
-    'analytics', 'search', 'grants', 'settings', 'activity',
+    'search', 'grants', 'settings', 'activity',
     'library', 'overview', 'ask',
   ]
 

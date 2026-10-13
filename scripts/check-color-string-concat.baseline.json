@@ -1524,30 +1524,6 @@
     "sample": "rgba(201, 168, 76, 0.08)"
   },
   {
-    "file": "src/pages/portal/AnalyticsPage.tsx",
-    "line": 569,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201,168,76,0.15)"
-  },
-  {
-    "file": "src/pages/portal/AnalyticsPage.tsx",
-    "line": 735,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201, 168, 76, 0.25)"
-  },
-  {
-    "file": "src/pages/portal/AnalyticsPage.tsx",
-    "line": 763,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201,168,76,0.15)"
-  },
-  {
-    "file": "src/pages/portal/AnalyticsPage.tsx",
-    "line": 769,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201, 168, 76, 0.25)"
-  },
-  {
     "file": "src/pages/portal/AskTheLab.tsx",
     "line": 319,
     "kind": "token-rgba-literal",

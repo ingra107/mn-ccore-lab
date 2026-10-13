@@ -7,14 +7,14 @@
 //     show the HOME product's kind and stage, plus "+N" for the others;
 //   - full project views show product chips, or one ladder for one product
 //     (Projects.tsx / ProjectDetail already do, from the products read);
-//   - rollups count PRODUCTS by kind and stage (productStageCounts);
+//   - rollups count PRODUCTS by kind and stage (the Worker's PRODUCT_STAGE_COUNTS_SQL;
+//     the UI draws them from the rows it returns, never from a client recount);
 //   - "finished" is status done, or every live product on a terminal rung.
 // The Worker joins the home product onto every browser project read
 // (api/lib/project-home.ts); this file is the one place the UI turns that
 // into words, so the compact surfaces cannot drift apart.
 
 import type { Project } from '../data/types'
-import type { ProductKind, ProductRow } from './products'
 
 type HomeFields = Pick<Project, 'home_kind' | 'home_kind_label' | 'home_stage' | 'home_stage_label' | 'product_count'>
 
@@ -54,40 +54,7 @@ export interface ProductStageCount {
   count: number
 }
 
-/** Products counted by kind and stage, in kind-table then ladder order.
- *  `include` narrows by the owning project (e.g. active projects only). */
-export function productStageCounts(
-  byProject: Record<string, ProductRow[] | undefined>,
-  include: (projectId: string) => boolean = () => true,
-): ProductStageCount[] {
-  const map = new Map<string, ProductStageCount & { kind_sort: number }>()
-  for (const [projectId, products] of Object.entries(byProject)) {
-    if (!include(projectId)) continue
-    for (const r of products ?? []) {
-      const key = `${r.kind}:${r.stage}`
-      const cur = map.get(key)
-      if (cur) cur.count += 1
-      else map.set(key, {
-        kind: r.kind, kind_label: r.kind_label, stage: r.stage, stage_label: r.stage_label,
-        ordinal: r.stage_ordinal, is_terminal: r.stage_is_terminal, count: 1, kind_sort: r.kind_sort ?? 0,
-      })
-    }
-  }
-  return [...map.values()]
-    .sort((a, b) => a.kind_sort - b.kind_sort || a.kind.localeCompare(b.kind) || a.ordinal - b.ordinal)
-    .map(({ kind_sort: _ks, ...row }) => { void _ks; return row })
-}
-
 /** "Grant application · Submitted" / "Writing" for a rollup row. */
 export function stageCountLabel(r: Pick<ProductStageCount, 'kind' | 'kind_label' | 'stage_label'>): string {
   return r.kind === 'manuscript' ? r.stage_label : `${r.kind_label} · ${r.stage_label}`
-}
-
-/** Where a rung sits on its own kind's ladder, 0 (first) to 1 (last): the
- *  teal ramp's step for a rollup bar, so brightness carries ladder order for
- *  every kind, not only the manuscript words. */
-export function ladderRampStep(kinds: readonly ProductKind[], kind: string, stage: string): number {
-  const ladder = kinds.find((k) => k.kind === kind)?.stages ?? []
-  const i = ladder.findIndex((s) => s.stage === stage)
-  return i < 0 || ladder.length < 2 ? 0 : i / (ladder.length - 1)
 }

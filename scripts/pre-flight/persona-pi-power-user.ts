@@ -43,8 +43,8 @@ async function main() {
     await snap(s, 'cmdk-analytics')
     await s.page.keyboard.press('Enter')
     await s.page.waitForTimeout(1200)
-    if (s.page.url().includes('/analytics')) pass(s, 'Ctrl+K → type "analytics" → Enter navigates to /analytics')
-    else record(s, { id: 'CMDK-NAV', severity: 'P1', scenario: 'Ctrl+K Enter navigation', observed: s.page.url(), expected: 'URL includes /analytics' })
+    if (s.page.url().includes('tab=pipeline')) pass(s, 'Ctrl+K → type "analytics" → Enter navigates to Lab overview Pipeline')
+    else record(s, { id: 'CMDK-NAV', severity: 'P1', scenario: 'Ctrl+K Enter navigation', observed: s.page.url(), expected: 'URL includes tab=pipeline' })
 
     section(s, '3  Chord navigation — g+p (go projects)')
     await goto(s, '/portal/dashboard')
@@ -87,14 +87,14 @@ async function main() {
     }
 
     section(s, '7  Analytics — charts render without errors')
-    await goto(s, '/portal/analytics')
+    await goto(s, '/portal/overview?tab=pipeline')
     await snap(s, 'analytics', 1500)
     const charts = await s.page.locator('svg, canvas').count().catch(() => 0)
     if (charts >= 3) pass(s, `Analytics page renders ${charts} chart elements`)
     else record(s, { id: 'ANALYTICS-EMPTY', severity: 'P2', scenario: 'Analytics has charts', observed: `${charts} svg/canvas`, expected: '≥3 charts' })
 
     section(s, '8  PI Analytics — personal scorecards')
-    await goto(s, '/portal/overview?tab=pi-analytics')
+    await goto(s, '/portal/overview?tab=team')
     await snap(s, 'pi-analytics', 1500)
     const piCards = await s.page.locator('.bento-card, [class*="card"], [class*="Card"]').count().catch(() => 0)
     if (piCards > 0) pass(s, `PI Analytics renders ${piCards} card-like panels`)
