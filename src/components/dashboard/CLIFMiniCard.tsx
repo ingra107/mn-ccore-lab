@@ -135,7 +135,7 @@ function CLIFMiniCard() {
             sites across the US
           </div>
           <Link
-            to="/nick"
+            to="/team/nick-ingraham"
             className="inline-flex items-center gap-1 mt-3"
             style={{
               fontSize: '10px',

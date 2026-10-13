@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { useParams, Navigate, Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
+import LabPageLayout, { GrantsSection, PublicationsSection } from '../components/LabPageLayout'
 import MemberFeaturedPublications from '../components/MemberFeaturedPublications'
 import Breadcrumb from '../components/Breadcrumb'
 import { Handshake, CheckCircle2, X, Plus } from 'lucide-react'
@@ -13,6 +13,8 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { usePublications, useExpertise, useMenteeMilestones, useContributionScore } from '../hooks/useApiData'
 import type { MenteeMilestoneRow } from '../hooks/useApiData'
 import { useCommitments } from '../hooks/useCommitments'
+import { usePublicGrants } from '../hooks/usePublicGrants'
+import { grantsForPi } from '../lib/publicGrants'
 import { useAddExpertise, useRemoveExpertise } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import { useCanSeePerson } from '../hooks/useCanSeePerson'
@@ -203,6 +205,10 @@ export default function MemberPage() {
     && Boolean(slug)
     && (user.slug === slug || user.isPi)
   const { data: allCommitments = [] } = useCommitments(slug)
+  // Live funded awards (public) plus, for a signed-in member, their applications.
+  // Rows are matched by PI, so only a PI's page ever shows a Funding section.
+  const { data: liveGrants = [] } = usePublicGrants()
+  const grants = slug && !isPortalRoute ? grantsForPi(liveGrants, slug) : []
 
   // Commitments to this person (slug does partial match on to_whom)
   const { openCommitments, doneCommitments } = useMemo(() => {
@@ -320,6 +326,7 @@ export default function MemberPage() {
       hueSeed={member.slug ?? member.name}
       breadcrumb={<Breadcrumb backTo={teamBase} backLabel="Team" current={formalFullName} />}
       sections={[
+        ...(grants.length > 0 ? [{ id: 'grants', label: 'Funding' }] : []),
         ...(mentee
           ? [{ id: 'research-focus', label: 'Research Focus' }]
           : []),
@@ -345,6 +352,8 @@ export default function MemberPage() {
     >
       {/* View Trajectory + Watch: members only, hidden for signed-out visitors */}
       {slug && <MemberProfileActions slug={slug} teamBase={teamBase} name={member.name} />}
+
+      <GrantsSection grants={grants} id="grants" title="Funding" />
 
       {/* Mentee: Research Focus (interests + mentor info) */}
       {mentee && (

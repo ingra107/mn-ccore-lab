@@ -78,8 +78,6 @@ export const PUBLIC_PATHS = {
   publicTeam: '/team',
   publicMember: (slug: string) => `/team/${slug}`,
   publicTrajectory: (slug: string) => `/team/${slug}/trajectory`,
-  nick: '/nick',
-  nate: '/nate',
   publications: '/publications',
   publication: (id: string | number) => `/publications/${id}`,
   network: '/network',

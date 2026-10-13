@@ -18,7 +18,7 @@ const server = await preview({
 const base = 'http://localhost:5231'
 const pages = {
   home: '/', team: '/team', publications: '/publications', pubdetail: null,
-  nick: '/nick', nate: '/nate', network: '/network', contact: '/contact', join: '/join', member: '/team/nick-ingraham',
+  nick: '/team/nick-ingraham', nate: '/team/nate-mesfin', network: '/network', contact: '/contact', join: '/join', member: '/team/nick-ingraham',
 }
 const browser = await chromium.launch()
 // resolve one real publication id for the detail page

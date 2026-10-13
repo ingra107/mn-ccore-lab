@@ -58,8 +58,6 @@ const HERO_PAGES: PageCapture[] = [
   { slug: '23-network',               path: P.network },
   { slug: '24-pulse-kiosk',           path: P.pulse },
   // Round 2 additions — surfaces Claude Design didn't see last pass.
-  { slug: '25-nick-lab',              path: P.nickLab },
-  { slug: '26-nate-lab',              path: P.nateLab },
   { slug: '27-my-items',              path: P.myItems },
   { slug: '28-deadline-cascade',      path: P.deadlineCascade },
   { slug: '29-ask-the-lab',           path: P.ask },

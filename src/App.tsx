@@ -114,8 +114,6 @@ const queryClient = new QueryClient({
 
 // Public pages — lazy-loaded
 const Team = lazyRoute(() => import('./pages/Team'))
-const NickLab = lazyRoute(() => import('./pages/NickLab'))
-const NateLab = lazyRoute(() => import('./pages/NateLab'))
 const MemberPage = lazyRoute(() => import('./pages/MemberPage'))
 const Publications = lazyRoute(() => import('./pages/Publications'))
 const PublicationDetail = lazyRoute(() => import('./pages/PublicationDetail'))
@@ -245,8 +243,9 @@ export default function App() {
                       other public routes below. */}
                   <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
                   <Route path="/team" element={<ErrorBoundary><Team /></ErrorBoundary>} />
-                  <Route path="/nick" element={<ErrorBoundary><NickLab /></ErrorBoundary>} />
-                  <Route path="/nate" element={<ErrorBoundary><NateLab /></ErrorBoundary>} />
+                  {/* /nick and /nate were hand-typed lab pages; the director member pages replaced them. */}
+                  <Route path="/nick" element={<NavigateKeepSearch to="/team/nick-ingraham" />} />
+                  <Route path="/nate" element={<NavigateKeepSearch to="/team/nate-mesfin" />} />
                   <Route path="/team/:slug" element={<ErrorBoundary><MemberPage /></ErrorBoundary>} />
                   {/* CV page removed — not needed */}
                   <Route path="/team/:slug/trajectory" element={<ErrorBoundary><TrajectoryPage /></ErrorBoundary>} />

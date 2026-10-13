@@ -189,7 +189,7 @@ test('manuscripts stacked: the rail (Needs your attention) comes before the rows
   expect(rail.y).toBeLessThan(rows.y)
 })
 
-const PUBLIC_ROUTES = ['/team/nick-ingraham', '/nick', '/nate'] as const
+const PUBLIC_ROUTES = ['/team/nick-ingraham', '/team/nate-mesfin'] as const
 
 test('public profile pages: rail 320px on the left, capped band, sticky rail clears the fixed nav', async ({ page }) => {
   for (const route of PUBLIC_ROUTES) {

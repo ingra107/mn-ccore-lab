@@ -1,19 +1,14 @@
 import { type CSSProperties, type ReactNode, useEffect, useState } from 'react'
-import { ArrowRight, ExternalLink, FlaskConical } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { SecHead } from './public/PublicParts'
 import { FaceDisc } from './today/skin'
 import PublicationCard from './PublicationCard'
 import PageHeartbeat from './moments/PageHeartbeat'
 import PageWithRail from './PageWithRail'
 import HeroNumber, { type HeroNumberProps } from './moments/HeroNumber'
-import type { Publication, Mentee, GrantBucket } from '../data/types'
-import { getMemberBySlug } from '../data/team'
-import { projects } from '../data/projects'
-import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
+import type { Publication, GrantBucket } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
-import { withAlpha } from '../lib/taskGrouping'
 import { memberHue } from '../lib/memberHue'
-import { statusLabel } from '../lib/textUtils'
 
 // The public site has no portal band: cap the grid at the portal's width so main
 // does not run past it, and keep the rail's stick offset (7rem, what the old
@@ -337,101 +332,6 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
   )
 }
 
-interface ProjectCard {
-  title: string
-  status: 'Active' | 'In Review' | 'Published' | 'In Preparation'
-  description?: string
-}
-
-function ProjectCardItem({ project }: { project: ProjectCard }) {
-  const [hovered, setHovered] = useState(false)
-
-  const badgeClass = (status: string) => {
-    switch (status) {
-      case 'Active':
-        return 'badge badge-active'
-      case 'In Review':
-        return 'badge badge-review'
-      case 'Published':
-        return 'badge badge-published'
-      case 'In Preparation':
-        return 'badge badge-preparation'
-      default:
-        return 'badge badge-active'
-    }
-  }
-
-  return (
-    <div
-      className="card p-5 sm:p-6 pl-6 sm:pl-8 cursor-pointer relative"
-      style={{
-        borderLeft: hovered ? '5px solid var(--job-brand)' : '3px solid var(--job-brand)',
-        outline: 'none',
-        transition: 'border-left-width var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out)',
-      }}
-      tabIndex={0}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onFocus={() => setHovered(true)}
-      onBlur={() => setHovered(false)}
-    >
-      <div className="flex items-center justify-between gap-3 mb-2">
-        <h3
-          className="text-sm sm:text-base font-normal leading-snug"
-          style={{
-            color: 'var(--ink)',
-          }}
-        >
-          {project.title}
-        </h3>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className={badgeClass(project.status)}>
-            {statusLabel(project.status)}
-          </span>
-          <ArrowRight {...ICON_PROPS}
-            size={14}
-            aria-hidden="true"
-            className="transition-opacity duration-200"
-            style={{
-              color: 'var(--job-brand)',
-              opacity: hovered ? 1 : 0,
-            }}
-          />
-        </div>
-      </div>
-      {project.description && (
-        <p
-          className="text-sm leading-relaxed"
-          style={{ color: 'var(--slate)' }}
-        >
-          {project.description}
-        </p>
-      )}
-    </div>
-  )
-}
-
-export function ProjectsSection({
-  title,
-  projects,
-  id,
-}: {
-  title: string
-  projects: ProjectCard[]
-  id?: string
-}) {
-  return (
-    <section className="mb-16" id={id}>
-      <SecHead title={title} />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {projects.map((project) => (
-          <ProjectCardItem key={project.title} project={project} />
-        ))}
-      </div>
-    </section>
-  )
-}
-
 export function PublicationsSection({
   publications,
   id,
@@ -483,157 +383,6 @@ export function PublicationsSection({
           </button>
         </div>
       )}
-    </section>
-  )
-}
-
-function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
-  const [hovered, setHovered] = useState(false)
-  const member = getMemberBySlug(mentee.slug)
-  const menteeProjects = mentee.projectSlugs
-    ?.map((slug) => projects.find((p) => p.slug === slug))
-    .filter(Boolean) ?? []
-
-  return (
-    <a
-      href={mentee.slug ? `/team/${mentee.slug}` : undefined}
-      className="card p-0 overflow-hidden cursor-pointer block"
-      style={{
-        textDecoration: 'none',
-        borderLeft: hovered ? '4px solid var(--job-brand)' : '4px solid transparent',
-        transition: 'border-color var(--duration-slow) var(--ease-out)',
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <div className="p-5 sm:p-6">
-        {/* Header: Photo + Name + Role */}
-        <div className="flex items-start gap-4 mb-4">
-          <FaceDisc label={mentee.name} initials={mentee.name.split(' ').map((n) => n[0]).join('')} photo={member?.photoUrl} px={64} pxSm={56} variant="brand" />
-          <div className="flex-1 min-w-0">
-            <h3
-              className="text-base font-normal leading-tight"
-              style={{
-                color: 'var(--ink)',
-              }}
-            >
-              {mentee.name}{mentee.credentials ? `, ${mentee.credentials}` : ''}
-            </h3>
-            <p
-              className="text-xs mt-0.5"
-              style={{
-                color: 'var(--job-brand)',
-                letterSpacing: '0.02em',
-              }}
-            >
-              {mentee.role}
-            </p>
-            {mentee.mentor !== 'shared' && (
-              <p className="text-xs mt-0.5" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-                Mentor: {mentee.mentor === 'nick-ingraham' ? 'Nick Ingraham' : 'Nathan Mesfin'}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Bio */}
-        {mentee.bio && (
-          <p
-            className="text-sm leading-relaxed mb-4"
-            style={{ color: 'var(--slate)' }}
-          >
-            {mentee.bio}
-          </p>
-        )}
-
-        {/* Research Interests */}
-        {mentee.researchInterests && mentee.researchInterests.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {mentee.researchInterests.map((interest) => (
-              <span
-                key={interest}
-                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs"
-                style={{
-                  fontSize: '10px',
-                  letterSpacing: '0.02em',
-                  background: 'var(--sk-panel)',
-                  color: 'var(--slate)',
-                  border: `1px solid ${withAlpha('var(--job-brand)', 12)}`,
-                }}
-              >
-                {interest}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Linked Projects */}
-        {menteeProjects.length > 0 && (
-          <div
-            className="pt-3"
-            style={{ borderTop: `1px solid ${withAlpha('var(--job-brand)', 10)}` }}
-          >
-            <div className="flex items-center gap-1.5 mb-2">
-              <FlaskConical {...ICON_PROPS} size={12} style={{ color: 'var(--job-brand)' }} aria-hidden="true" />
-              <span
-                className="text-xs"
-                style={{
-                  fontSize: '11px',
-                  color: 'var(--slate)',
-                  opacity: 0.85,
-                }}
-              >
-                Active projects
-              </span>
-            </div>
-            <div className="space-y-1.5">
-              {menteeProjects.map((project) => project && (
-                <div
-                  key={project.slug}
-                  className="flex items-center justify-between gap-2"
-                >
-                  <span
-                    className="text-xs truncate"
-                    style={{
-                      color: 'var(--ink)',
-                      fontWeight: 500,
-                    }}
-                  >
-                    {project.title}
-                  </span>
-                  <span
-                    className={`badge ${
-                      isProjectActive(project.status) ? 'badge-active'
-                        : normalizeProjectStatus(project.status) === 'waiting_external' ? 'badge-review'
-                        : normalizeProjectStatus(project.status) === 'done' ? 'badge-published'
-                        : 'badge-preparation'
-                    }`}
-                    style={{ fontSize: '10px', padding: '1px 6px' }}
-                  >
-                    {statusLabel(normalizeProjectStatus(project.status))}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </a>
-  )
-}
-
-export function MenteesSection({ mentees, id, title = 'MNCCORE Trainees' }: { mentees: Mentee[]; id?: string; title?: string }) {
-  return (
-    <section className="mb-16" id={id}>
-      <SecHead title={title} />
-      <p className="text-sm mb-6" style={{ color: 'var(--slate)', marginTop: 4 }}>
-        Trainees are shared across MNCCORE — we mentor as a team.
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {mentees.map((mentee) => (
-          <MenteeProfileCard key={mentee.name} mentee={mentee} />
-        ))}
-      </div>
     </section>
   )
 }
