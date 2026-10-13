@@ -11,16 +11,15 @@
 // your own day threads (+ any you shared), the PI sees all.
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { ActivityThread } from '../activity/ActivityThread'
-import { ActivityEntryItem, type ActivityEntryItemRow } from '../activity/activityRender'
+import { ActivityEntryItem } from '../activity/activityRender'
 import { ShowHiddenToggle } from '../activity/ShowHiddenToggle'
 import { isRepliableKind } from '../../../shared/activityKinds'
 import { canDeleteActivityEntry } from '../activity/activityPermissions'
 import { useAuth } from '../../hooks/useAuth'
+import { useActivityFeedQuery } from '../../hooks/useActivityFeedQuery'
 import { useDeleteActivityEntry, useDismissThread } from '../../hooks/useMutations'
-
-const isPending = (body: string) => /Thinking about this/.test(body)
+import { activityQueryKey } from '../../lib/askHermes'
 
 export function DayActivityFeed({ dateKey }: { dateKey: string }) {
   const [showHidden, setShowHidden] = useState(false)
@@ -28,22 +27,8 @@ export function DayActivityFeed({ dateKey }: { dateKey: string }) {
   const deleteEntry = useDeleteActivityEntry()
   const { user } = useAuth()
 
-  const { data: feed } = useQuery<{ entries: ActivityEntryItemRow[]; hiddenCount: number }>({
-    queryKey: ['day-activity', dateKey, showHidden],
-    queryFn: async () => {
-      const res = await fetch(`/api/days/${dateKey}/activity${showHidden ? '?include_hidden=1' : ''}`)
-      if (!res.ok) return { entries: [], hiddenCount: 0 }
-      const data = await res.json() as { data?: ActivityEntryItemRow[]; hidden_count?: number }
-      return { entries: data.data || [], hiddenCount: data.hidden_count || 0 }
-    },
-    // Poll every 10s while any thread is still "Thinking…" so Hermes's answer
-    // resolves without a manual refresh (mirrors the old daily_thought poller);
-    // otherwise idle.
-    refetchInterval: (q) =>
-      ((q.state.data as { entries?: ActivityEntryItemRow[] } | undefined)?.entries ?? []).some((r) => isPending(r.body))
-        ? 10_000
-        : false,
-    staleTime: 5_000,
+  const { data: feed } = useActivityFeedQuery({
+    lane: 'day', id: dateKey, url: `/api/days/${dateKey}/activity`, showHidden,
   })
 
   const entries = feed?.entries ?? []
@@ -66,7 +51,7 @@ export function DayActivityFeed({ dateKey }: { dateKey: string }) {
           <ActivityThread
             key={entry.id}
             root={entry}
-            invalidateKeys={[['day-activity', dateKey]]}
+            invalidateKeys={[activityQueryKey('day', dateKey)]}
             onDelete={(e) => deleteEntry.mutate({ id: e.id, dayKey: dateKey })}
             onDismiss={(e) => dismissThread.mutate({ id: e.id, hidden: !e.hidden_at, dayKey: dateKey })}
           />

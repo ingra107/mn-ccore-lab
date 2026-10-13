@@ -26,6 +26,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { ActivityEntryItem, type ActivityEntryItemRow } from './activityRender'
 import { canDeleteActivityEntry } from './activityPermissions'
 import { useAuth } from '../../hooks/useAuth'
+import { useBoundedPendingPoll } from '../../hooks/useActivityFeedQuery'
 import SmartCompose from '../SmartCompose'
 import { ThreadSummary } from './ThreadSummary'
 import { useThreadNew } from './useThreadNew'
@@ -69,6 +70,7 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
   const replyDraft = draft ?? (isHermesThread ? '@hermes ' : '')
   const setReplyDraft = (v: string) => setDraft(v)
 
+  const pendingPoll = useBoundedPendingPoll()
   const { data: replies = [] } = useQuery<ActivityEntryItemRow[]>({
     queryKey: ['activity-replies', root.id, !!root.hidden_at],
     queryFn: async () => {
@@ -84,11 +86,10 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
     // Poll every 10s while a reply is still "Thinking…" so a Hermes answer fills
     // in without a manual refresh. A typed @hermes ask lands a pending placeholder
     // reply that _postHermesResponse rewrites asynchronously; the placeholder is a
-    // REPLY, so the poll lives here (the roots feed never sees it). Idle otherwise.
-    refetchInterval: (q) =>
-      ((q.state.data as ActivityEntryItemRow[] | undefined) ?? []).some((r) => /Thinking about this/.test(r.body))
-        ? 10_000
-        : false,
+    // REPLY, so the poll lives here (the roots feed never sees it). Idle otherwise,
+    // and it gives up after POLL_CEILING_MS so a dead listener cannot keep an open
+    // tab polling forever (#125; the rule lives in useActivityFeedQuery.ts).
+    refetchInterval: (q) => pendingPoll((q.state.data as ActivityEntryItemRow[] | undefined) ?? []),
     staleTime: 30 * 1000,
   })
 

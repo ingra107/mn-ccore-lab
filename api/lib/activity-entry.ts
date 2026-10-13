@@ -68,6 +68,142 @@ import { mirrorArtifactLink } from './artifact-link-mirror';
 
 export type EntityType = 'task' | 'project' | 'artifact' | 'day' | 'meeting';
 
+// ── One entry per entity type (#125) ──────────────────────────────────────────
+//
+// Four things used to branch on entityType in four separate ternary ladders: the
+// existence check, dispatchHermes's source_type, fireMentionNotifications's
+// source_type and its link. Adding `meeting` (#124) extended three of the four and
+// shipped a dead notification link. They all consult ENTITY_CONFIG now, and it is
+// typed `Record<EntityType, ...>`, so a new entity type that has no entry here
+// does not compile. One entry, one place; nothing to remember.
+
+/** The meeting row the existence check reads once and Hermes's context block reuses (#125 item 6). */
+export interface MeetingRow {
+  id: string; date: string; title: string; type: string | null; status: string | null;
+  attendees: string | null; agenda: string | null; notes: string | null;
+  decisions: string | null; tags: string | null; source_id: string | null;
+}
+
+type TaskMeta = { assignee: string | null; title: string | null };
+
+type EntityResolution =
+  | { ok: true; projectId: string | null; taskMeta?: TaskMeta; meeting?: MeetingRow }
+  | { ok: false; error: string; status: number };
+
+interface EntityConfig {
+  /**
+   * Does the entity exist, and which project does an entry on it belong to?
+   * (A caller that already knows both skips this: PostActivityEntryInput.entityProjectId.)
+   */
+  resolve(env: Env, entityId: string): Promise<EntityResolution>;
+  /** ai_requests.source_type of an @hermes ask on this entity (the listener routes on it). */
+  hermesSource: string;
+  /** notifications.source_type of an @mention here. Task notifications keep the per-kind split their consumers key on. */
+  mentionSource(kind: StoredKind): string;
+  /** Where an @mention notification opens: always the actionable entity (Rule 73). */
+  mentionLink(entityId: string, projectSlug: string | null | undefined): string;
+}
+
+const MEETING_COLS = 'id, date, title, type, status, attendees, agenda, notes, decisions, tags, source_id';
+
+const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
+  task: {
+    async resolve(env, entityId) {
+      const task = await env.DB.prepare(
+        'SELECT project_id, assignee, title FROM tasks WHERE id = ? AND deleted_at IS NULL'
+      ).bind(entityId).first<{ project_id: string | null; assignee: string | null; title: string | null }>();
+      if (!task) return { ok: false, error: 'Task not found', status: 404 };
+      // Cached so the owner-notification side effect needs no second SELECT on this row.
+      return { ok: true, projectId: task.project_id ?? null, taskMeta: { assignee: task.assignee ?? null, title: task.title ?? null } };
+    },
+    hermesSource: 'task_comment',
+    mentionSource: (kind) => (kind === 'comment' ? 'task_comment' : 'task'),
+    // Direct portal deep-link (2026-06-11): opens the task editor without the
+    // legacy /tasks redirect hop. Old /tasks?open= links still work via the
+    // NavigateKeepSearch shim in App.tsx.
+    mentionLink: (id) => `/portal/my-tasks?open=${id}`,
+  },
+  project: {
+    async resolve(env, entityId) {
+      // project_id = entity_id; confirm the project row exists.
+      const proj = await env.DB.prepare('SELECT id FROM projects WHERE id = ? LIMIT 1').bind(entityId).first<{ id: string }>();
+      if (!proj) return { ok: false, error: 'Project not found', status: 404 };
+      return { ok: true, projectId: entityId };
+    },
+    hermesSource: 'project_comment',
+    mentionSource: () => 'project',
+    mentionLink: (id, projectSlug) =>
+      projectSlug
+        ? `/projects/${projectSlug}` // legacy project-mention link shape
+        : `/projects?open=${id}`,
+  },
+  artifact: {
+    async resolve(env, entityId) {
+      // project_id = the artifact's origin project (so artifact activity rolls up
+      // into that project's whole-picture feed when it has one).
+      const art = await env.DB.prepare('SELECT project_id FROM artifacts WHERE id = ? LIMIT 1')
+        .bind(entityId).first<{ project_id: string | null }>();
+      if (!art) return { ok: false, error: 'Artifact not found', status: 404 };
+      return { ok: true, projectId: art.project_id ?? null };
+    },
+    // 'artifact_comment' takes the listener's revision path (fetch artifact +
+    // comments, regenerate, POST /:id/revise) instead of a plain comment reply.
+    hermesSource: 'artifact_comment',
+    mentionSource: () => 'artifact_comment',
+    mentionLink: (id) => `/portal/artifacts/${id}`,
+  },
+  day: {
+    async resolve(_env, entityId) {
+      // There is NO `days` table by design: a day row would carry a PK and nothing
+      // else, so the civil-date key IS its own existence proof and the SHAPE check
+      // is the existence check. Fail closed on anything else so a client cannot
+      // mint an entity namespace by posting entity_type='day' with an arbitrary
+      // entity_id. project_id is ALWAYS NULL: a Today-bar ask must never move a
+      // project's health score (§3.2).
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(entityId)) {
+        return { ok: false, error: 'day entity_id must be a YYYY-MM-DD civil date', status: 400 };
+      }
+      return { ok: true, projectId: null };
+    },
+    // A 'day' ask reuses the pre-existing 'daily_thought' type: it takes the
+    // listener's DEFAULT path, so no cross-repo change is needed (§9.9).
+    hermesSource: 'daily_thought',
+    mentionSource: () => 'daily_thought',
+    // A day thread lives on the Today bar and entity_id is its date: the
+    // actionable surface is Today, not a per-day page (there is none).
+    mentionLink: () => '/portal/dashboard',
+  },
+  meeting: {
+    async resolve(env, entityId) {
+      // A real table, so existence is a real lookup, and it reads the whole row
+      // once: dispatchHermes builds its context block from it instead of
+      // fetching the same row again.
+      //
+      // project_id is ALWAYS NULL even though a meeting carries project `tags`.
+      // A meeting routinely spans several projects, so charging its conversation
+      // to one of them would be arbitrary, and it would move that project's health
+      // score for a discussion the project did not have. Meeting-derived work
+      // reaches a project through the TASKS the debrief creates, which carry
+      // their own project_id.
+      const meeting = await env.DB.prepare(`SELECT ${MEETING_COLS} FROM meetings WHERE id = ? LIMIT 1`)
+        .bind(entityId).first<MeetingRow>();
+      if (!meeting) return { ok: false, error: 'Meeting not found', status: 404 };
+      return { ok: true, projectId: null, meeting };
+    },
+    // 'meeting_comment' is a NEW source_type, safe with the already-deployed
+    // listener: it branches only on 'artifact_comment' and 'backlog_idea' and
+    // sends everything else down the default lane, which is what a meeting ask wants.
+    hermesSource: 'meeting_comment',
+    mentionSource: () => 'meeting_comment',
+    mentionLink: (id) => `/portal/meetings/${id}`,
+  },
+};
+
+/** The config for an entity type, or undefined for a string that is not one (an own-key check, so 'constructor' is not a type). */
+function entityConfig(entityType: string): EntityConfig | undefined {
+  return Object.prototype.hasOwnProperty.call(ENTITY_CONFIG, entityType) ? ENTITY_CONFIG[entityType as EntityType] : undefined;
+}
+
 export interface PostActivityEntryInput {
   env: Env;
   /** The authenticated caller (drives @mention notification title + Hermes requested_by). */
@@ -89,6 +225,14 @@ export interface PostActivityEntryInput {
   visibility?: Visibility;
   /** Pre-derived project_id for a task entry (saves a SELECT when the caller already has it). */
   taskProjectId?: string | null;
+  /**
+   * The caller has JUST confirmed this entity exists and knows its project_id
+   * (null for an entity with none). Skips the existence read for any entity type
+   * (#125): the Hermes placeholder write follows the ask's own existence check
+   * moments later and has no reason to repeat it. A task caller may use
+   * `taskProjectId`, which means the same thing for tasks only.
+   */
+  entityProjectId?: string | null;
   /**
    * For project entities: the project's slug, used to preserve the legacy
    * mention-notification link shape (`/projects/<slug>`). Optional — when
@@ -211,8 +355,12 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
   if (!isStoredKind(kind)) {
     return { ok: false, error: `kind must be one of ${STORED_KINDS.join('|')}`, status: 400 };
   }
-  if (entityType !== 'task' && entityType !== 'project' && entityType !== 'artifact' && entityType !== 'day' && entityType !== 'meeting') {
-    return { ok: false, error: `unknown entity_type "${entityType}" (expected 'task'|'project'|'artifact'|'day'|'meeting')`, status: 400 };
+  if (!entityConfig(entityType)) {
+    return {
+      ok: false,
+      error: `unknown entity_type "${entityType}" (expected ${Object.keys(ENTITY_CONFIG).map((k) => `'${k}'`).join('|')})`,
+      status: 400,
+    };
   }
   if (input.visibility !== undefined && !isVisibility(input.visibility)) {
     return { ok: false, error: `visibility must be one of ${VISIBILITIES.join('|')}`, status: 400 };
@@ -281,66 +429,19 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
   }
 
   // ── entity existence + project_id derivation ───────────────────────────────
-  let projectId: string | null;
+  // Re-read the config here, not at validation: a reply takes its entity from its
+  // parent (above), and the parent's entity is what gets resolved.
+  const known = input.entityProjectId !== undefined
+    ? input.entityProjectId
+    : entityType === 'task' ? input.taskProjectId : undefined;
+  const resolved: EntityResolution = known !== undefined
+    ? { ok: true, projectId: known }   // the caller already confirmed the entity
+    : await entityConfig(entityType)!.resolve(env, entityId);
+  if (!resolved.ok) return resolved;
+  const projectId = resolved.projectId;
   // Cached by the existence lookup so the owner-notification side effect below
   // doesn't need a second SELECT on the same row (simplify pass 2026-06-11).
-  let taskMeta: { assignee: string | null; title: string | null } | null = null;
-  if (entityType === 'task') {
-    if (input.taskProjectId !== undefined) {
-      // Caller already resolved the task (e.g. via guardTaskProject) — trust it.
-      projectId = input.taskProjectId;
-    } else {
-      const task = await env.DB.prepare(
-        'SELECT project_id, assignee, title FROM tasks WHERE id = ? AND deleted_at IS NULL'
-      ).bind(entityId).first<{ project_id: string | null; assignee: string | null; title: string | null }>();
-      if (!task) return { ok: false, error: 'Task not found', status: 404 };
-      projectId = task.project_id ?? null;
-      taskMeta = { assignee: task.assignee ?? null, title: task.title ?? null };
-    }
-  } else if (entityType === 'artifact') {
-    // artifact entity: project_id = the artifact's origin project_id (so artifact
-    // activity rolls up into that project's whole-picture feed when it has one).
-    // Confirm the artifact row exists.
-    const art = await env.DB.prepare(
-      'SELECT project_id FROM artifacts WHERE id = ? LIMIT 1'
-    ).bind(entityId).first<{ project_id: string | null }>();
-    if (!art) return { ok: false, error: 'Artifact not found', status: 404 };
-    projectId = art.project_id ?? null;
-  } else if (entityType === 'meeting') {
-    // meeting entity (#124): a real table, so the existence check is a real
-    // lookup — unlike 'day', which has no table and validates by shape.
-    //
-    // project_id is ALWAYS NULL even though a meeting carries project `tags`.
-    // A meeting routinely spans several projects (the row Nick reported on tags
-    // three), so charging its conversation to one of them would be arbitrary,
-    // and it would move that project's health score for a discussion the
-    // project didn't have. Same reasoning as the `day` entity. Meeting-derived
-    // work reaches a project the way it already does — through the TASKS the
-    // debrief creates, which carry their own project_id.
-    const mtg = await env.DB.prepare(
-      'SELECT id FROM meetings WHERE id = ? LIMIT 1'
-    ).bind(entityId).first<{ id: string }>();
-    if (!mtg) return { ok: false, error: 'Meeting not found', status: 404 };
-    projectId = null;
-  } else if (entityType === 'project') {
-    // project entity: project_id = entity_id; confirm the project row exists.
-    const proj = await env.DB.prepare(
-      'SELECT id FROM projects WHERE id = ? LIMIT 1'
-    ).bind(entityId).first<{ id: string }>();
-    if (!proj) return { ok: false, error: 'Project not found', status: 404 };
-    projectId = entityId;
-  } else {
-    // day entity (validated above). There is NO `days` table by design: a day row
-    // would carry a PK and nothing else, so the civil-date key IS its own
-    // existence proof — the SHAPE check is the existence check. Fail closed on
-    // anything else so a client can't mint an entity namespace by posting
-    // entity_type='day' with an arbitrary entity_id. project_id is ALWAYS NULL: a
-    // Today-bar ask must never move a project's health score (§3.2).
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(entityId)) {
-      return { ok: false, error: 'day entity_id must be a YYYY-MM-DD civil date', status: 400 };
-    }
-    projectId = null;
-  }
+  const taskMeta = resolved.taskMeta ?? null;
 
   // ── product tag (project-entity rows only) ──────────────────────────────────
   let productId: string | null = null;
@@ -535,6 +636,7 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
           body,
           visibility,
           requestedBy: user.email,
+          meeting: resolved.meeting ?? null,
           // #98: the thread this ask belongs to. A reply's root is its parent;
           // a root's own thread is itself. Hermes answers INTO that thread
           // rather than starting a new one, and gets the preceding exchange as
@@ -654,48 +756,13 @@ async function fireMentionNotifications(
   if (args.mentions.length === 0) return;
   // Preserve historical source_type so the existing delete-cascade
   // (DELETE notifications WHERE source_type IN ('task','task_comment')) and
-  // click-through consumers keep matching.
-  // ⚠️ This ladder has to name EVERY entity type. It has no meeting/day arm by
-  // accident: both fall through to the project default, which builds
-  // `/projects?open=<id>` out of an id that is not a project — a dead link, and
-  // Rule 73 says every attention click opens the actionable entity. The meeting
-  // arm came with #124; the `day` arm is the same one-line class, wrong since
-  // the day entity shipped, fixed here rather than left for whoever @mentions
-  // someone in a morning thought.
-  //
-  // Four ladders in this file branch per entity type (existence check, Hermes
-  // source_type, this source_type, this link) and #124 extended three of them.
-  // That is the shape, not the oversight — backlog #8461 proposes one
-  // per-entity config object all four consult.
-  const sourceType =
-    args.entityType === 'task'
-      ? args.kind === 'comment'
-        ? 'task_comment'
-        : 'task'
-      : args.entityType === 'artifact'
-        ? 'artifact_comment'
-        : args.entityType === 'meeting'
-          ? 'meeting_comment'
-          : args.entityType === 'day'
-            ? 'daily_thought'
-            : 'project';
-  const link =
-    args.entityType === 'task'
-      // Direct portal deep-link (2026-06-11) — opens the task editor without
-      // the legacy /tasks redirect hop. Old /tasks?open= links still work via
-      // the NavigateKeepSearch shim in App.tsx.
-      ? `/portal/my-tasks?open=${args.entityId}`
-      : args.entityType === 'artifact'
-        ? `/portal/artifacts/${args.entityId}`
-        : args.entityType === 'meeting'
-          ? `/portal/meetings/${args.entityId}`
-          // A day thread lives on the Today bar, and entity_id is its date — so
-          // the actionable surface is Today, not a per-day page (there is none).
-          : args.entityType === 'day'
-            ? '/portal/dashboard'
-            : args.projectSlug
-              ? `/projects/${args.projectSlug}` // legacy project-mention link shape
-              : `/projects?open=${args.entityId}`;
+  // click-through consumers keep matching. Both the source_type and the link
+  // come from ENTITY_CONFIG: one entry per entity type, so a new type cannot
+  // fall through to the project default and build `/projects?open=<id>` out of
+  // an id that is not a project (the dead meeting link of #124).
+  const config = entityConfig(args.entityType)!;
+  const sourceType = config.mentionSource(args.kind);
+  const link = config.mentionLink(args.entityId, args.projectSlug);
   const verb = args.kind === 'comment' ? 'mentioned you' : 'mentioned you in a task note';
   const title = `${args.actorName} ${verb}`;
   const stmt = env.DB.prepare(
@@ -727,15 +794,7 @@ async function fireMentionNotifications(
  * (Nick's ask) actually reachable. The path is a POINTER, not a promise — the
  * block says so, and says how to find the file if the slug missed.
  */
-async function buildMeetingContextBlock(env: Env, meetingId: string): Promise<string | null> {
-  const m = await env.DB.prepare(
-    'SELECT id, date, title, type, status, attendees, agenda, notes, decisions, tags, source_id FROM meetings WHERE id = ? LIMIT 1'
-  ).bind(meetingId).first<{
-    id: string; date: string; title: string; type: string | null; status: string | null;
-    attendees: string | null; agenda: string | null; notes: string | null;
-    decisions: string | null; tags: string | null; source_id: string | null;
-  }>();
-  if (!m) return null;
+async function buildMeetingContextBlock(env: Env, m: MeetingRow): Promise<string> {
 
   // A JSON-array column rendered as a plain list; falls back to the raw text so
   // a hand-edited non-JSON value still reaches the model instead of vanishing.
@@ -762,7 +821,7 @@ async function buildMeetingContextBlock(env: Env, meetingId: string): Promise<st
   const [agendaItems, tasks] = await Promise.all([
     env.DB.prepare(
       'SELECT content, added_by, type FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order ASC, created_at ASC'
-    ).bind(meetingId).all<{ content: string; added_by: string; type: string | null }>().catch(() => ({ results: [] as { content: string; added_by: string; type: string | null }[] })),
+    ).bind(m.id).all<{ content: string; added_by: string; type: string | null }>().catch(() => ({ results: [] as { content: string; added_by: string; type: string | null }[] })),
     env.DB.prepare(
       `SELECT id, title, status, assignee, due_date FROM tasks
         WHERE deleted_at IS NULL AND meeting_id IS NOT NULL AND meeting_id IN (?, ?)
@@ -829,6 +888,8 @@ async function dispatchHermes(
     requestedBy: string;
     /** #98: the thread root this ask belongs to (a root's own id, or a reply's parent). */
     threadRootId?: string;
+    /** The meeting row the existence check already read (meeting entities only). */
+    meeting?: MeetingRow | null;
   },
 ): Promise<'dispatched' | 'empty'> {
   const aiPrompt = args.body.replace(HERMES_STRIP_RE, '').trim();
@@ -837,31 +898,10 @@ async function dispatchHermes(
   // non-dispatch so the composer tells the user instead of a false success.
   if (aiPrompt.length === 0) return 'empty';
 
-  // source_type mirrors the legacy task-comment Hermes path so the listener
-  // routes the response back correctly. Project entities use 'project_comment'
-  // (the existing project Hermes convention); artifacts use 'artifact_comment'
-  // so the listener takes the revision path (fetch artifact + comments →
-  // regenerate → POST /:id/revise) instead of a plain comment reply. A 'day'
-  // ask reuses the pre-existing 'daily_thought' type — verified listener-safe
-  // (§9.9): daily_thought takes the listener's DEFAULT path, so no cross-repo
-  // change is needed for the day lane, and _postHermesResponse routes the answer
-  // back by the TRIGGERING ENTRY's entity_type, not by source_type.
-  // #124: 'meeting_comment' is a NEW source_type, and that is safe with the
-  // already-deployed listener without a lockstep — _process_one branches only on
-  // 'artifact_comment' and 'backlog_idea' and sends everything else down the
-  // default build_prompt → get_response → post_response lane, which is exactly
-  // what a meeting ask wants. Naming it (rather than reusing 'project_comment')
-  // keeps the listener's own log line honest about which lane fired.
-  const sourceType =
-    args.entityType === 'task'
-      ? 'task_comment'
-      : args.entityType === 'artifact'
-        ? 'artifact_comment'
-        : args.entityType === 'day'
-          ? 'daily_thought'
-          : args.entityType === 'meeting'
-            ? 'meeting_comment'
-            : 'project_comment';
+  // source_type comes from ENTITY_CONFIG (see each entry for why it is what it
+  // is): the listener routes the response back on it. _postHermesResponse routes
+  // the answer back by the TRIGGERING ENTRY's entity_type, not by source_type.
+  const sourceType = entityConfig(args.entityType)!.hermesSource;
   const projectSlug = args.projectId;
   const aiId = generateId();
 
@@ -908,9 +948,9 @@ async function dispatchHermes(
   // the verbatim transcript. Failing to build it must not lose the question, so
   // it degrades to a plain ask exactly like the thread-context assembly below.
   let meetingBlock: string | null = null;
-  if (args.entityType === 'meeting') {
+  if (args.entityType === 'meeting' && args.meeting) {
     try {
-      meetingBlock = await buildMeetingContextBlock(env, args.entityId);
+      meetingBlock = await buildMeetingContextBlock(env, args.meeting);
     } catch (e) {
       console.error('dispatchHermes: meeting context assembly failed:', e);
     }
@@ -1010,7 +1050,8 @@ async function dispatchHermes(
     body: HERMES_PENDING_BODY,
     actorSlug: 'claude-ai',
     visibility: args.visibility,
-    taskProjectId: args.entityType === 'task' ? args.projectId : undefined,
+    // The ask's own post confirmed the entity a moment ago: no second existence read.
+    entityProjectId: args.projectId,
     fireSideEffects: false,
     // #98: answer INSIDE the thread that asked. Without this the placeholder
     // (and the response that replaces it) landed as a new ROOT on the entity,

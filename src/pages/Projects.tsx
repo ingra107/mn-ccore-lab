@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { GitBranch, Plus, List, LayoutGrid } from 'lucide-react'
 import { pipelineOffNote, pipelinePlaceOf } from '../lib/pipelinePlace'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { useUrlEnumFilter } from '../hooks/useUrlEnumFilter'
 import { useProjects, useDependencies, useProjectHealth, useRecentTasks, useAllProjectLinks, useAllProjectPublications } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
 import { daysSince } from '../lib/taskGrouping'
@@ -213,29 +214,11 @@ export default function Projects() {
   // links round-trip. Same pattern ManuscriptsPage uses. Absent param = 'all'.
   const [searchParams, setSearchParams] = useSearchParams()
   const VALID_CATEGORY_KEYS = useMemo(() => new Set(categoryFilters.map((f) => f.key as string)), [categoryFilters])
-  const categoryParam = searchParams.get('category')
-  const activeCategory = categoryParam && VALID_CATEGORY_KEYS.has(categoryParam) ? categoryParam : 'all'
-  const setActiveCategory = useCallback((next: string) => {
-    setSearchParams((prev) => {
-      const out = new URLSearchParams(prev)
-      if (next && next !== 'all') out.set('category', next)
-      else out.delete('category')
-      return out
-    }, { replace: true })
-  }, [setSearchParams])
+  const [activeCategory, setActiveCategory] = useUrlEnumFilter('category', VALID_CATEGORY_KEYS, 'all')
   // #123: status is URL-backed for the same reason category is — a shared or
   // bookmarked link round-trips. Absent param = 'open' (done rows hidden).
   const VALID_STATUS_KEYS = useMemo(() => new Set(STATUS_FILTERS.map((f) => f.key as string)), [])
-  const statusParam = searchParams.get('status')
-  const activeStatus = statusParam && VALID_STATUS_KEYS.has(statusParam) ? statusParam : 'open'
-  const setActiveStatus = useCallback((next: string) => {
-    setSearchParams((prev) => {
-      const out = new URLSearchParams(prev)
-      if (next && next !== 'open') out.set('status', next)
-      else out.delete('status')
-      return out
-    }, { replace: true })
-  }, [setSearchParams])
+  const [activeStatus, setActiveStatus] = useUrlEnumFilter('status', VALID_STATUS_KEYS, 'open')
   // `?filter=stalled` is the Today stat line's "stalled" link (and the rail's
   // "+N more"): active projects with no movement for projectStaleDays, the same predicate Today
   // counts with (isStalledProject). URL-backed like category and status.

@@ -36,7 +36,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { usePostTaskUpdate } from '../hooks/useMutations'
 import { useLaunchCommands, taskLaunchContext, type LaunchCommandContext } from '../hooks/useLaunchCommands'
 import { isHermesPrefix } from '../lib/hermesRouting'
-import { askHermesOnTask, hermesOutcomeToast } from '../lib/askHermes'
+import { askHermesOnTask, activityQueryKey, hermesOutcomeToast } from '../lib/askHermes'
 import { useUndoToast } from './UndoToast'
 import { ICON_PROPS } from '../lib/iconProps'
 import { uploadFileToR2 } from '../lib/r2Upload'
@@ -289,7 +289,7 @@ export default function SmartCompose(props: SmartComposeProps) {
       const result = await askHermesOnTask(taskId, raw)
       if (result.ok) {
         setVal('')
-        queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
+        queryClient.invalidateQueries({ queryKey: activityQueryKey('task', taskId) })
         // Shared copy (src/lib/askHermes.ts) — the POST differs from the day feed's,
         // the outcome wording does not.
         const toast = hermesOutcomeToast(result, 'Posted')

@@ -7,7 +7,10 @@
 // in the first place.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { askHermesOnDay, askHermesOnTask, hermesOutcomeToast, dayActivityQueryKey } from '../askHermes';
+import {
+  askHermesOnDay, askHermesOnTask, askHermesOnMeeting, askHermesOnEntity, hermesOutcomeToast,
+  dayActivityQueryKey, meetingActivityQueryKey, activityQueryKey,
+} from '../askHermes';
 
 describe('hermesOutcomeToast', () => {
   it('reports a dispatched ask as success', () => {
@@ -129,5 +132,41 @@ describe('askHermesOnTask', () => {
 describe('dayActivityQueryKey', () => {
   it('matches the key the day feed reads', () => {
     expect(dayActivityQueryKey('2026-07-23')).toEqual(['day-activity', '2026-07-23']);
+  });
+});
+
+// #125: the three named asks are lanes of one function, and one key builder
+// writes every lane's key family.
+describe('askHermesOnEntity / activityQueryKey (the lane config)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('the meeting lane posts verbatim with its audience, to an encoded id', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ hermes: { dispatched: true } }) });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await askHermesOnMeeting('mtg 1/a', '@hermes reread it', 'author');
+
+    expect(res).toEqual({ ok: true, hermes: { dispatched: true } });
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/meetings/mtg%201%2Fa/activity',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ content: '@hermes reread it', visibility: 'author' }) }),
+    );
+  });
+
+  it('the meeting lane defaults TEAM, and its failure names its own route', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 502 });
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await askHermesOnEntity('meeting', 'mtg-1', 'hello');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({ content: 'hello', visibility: 'team' });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error.message).toBe('/api/meetings activity 502');
+  });
+
+  it('one key builder covers every lane, and the old per-lane builders agree with it', () => {
+    expect(activityQueryKey('task', 't1')).toEqual(['task-activity', 't1']);
+    expect(activityQueryKey('day', '2026-07-23')).toEqual(['day-activity', '2026-07-23']);
+    expect(activityQueryKey('meeting', 'm1')).toEqual(['meeting-activity', 'm1']);
+    expect(meetingActivityQueryKey('m1')).toEqual(activityQueryKey('meeting', 'm1'));
+    expect(dayActivityQueryKey('2026-07-23')).toEqual(activityQueryKey('day', '2026-07-23'));
   });
 });

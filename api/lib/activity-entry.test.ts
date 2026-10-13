@@ -42,6 +42,7 @@ import {
 import { handleGetProjectActivity, handleAddComment, handlePostProjectUpdate, handleGetComments, handleGetProjectUpdates } from '../routes/projects'
 import { handleDeleteActivityEntry, handleEditActivityEntry, handleSetActivityHidden, handleGetActivityReplies } from '../routes/activity'
 import { handleGetDayActivity, handlePostDayActivity } from '../routes/days'
+import { handleGetMeetingActivity, handlePostMeetingActivity } from '../routes/meeting-activity'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 
 const TEST_MODE_KEY = 'local-test-key-do-not-use-in-prod'
@@ -1169,11 +1170,13 @@ describe('postActivityEntry — meeting entity (#124)', () => {
   })
 
   it('a failed context build still asks the question — context is an enhancement', async () => {
-    // A meeting row that exists for the check but whose context read throws.
+    // A meeting row that exists for the check but whose context build throws
+    // (the build reads the meeting's agenda items; the meeting row itself came
+    // from the existence check, so the existence check cannot be the thing that fails).
     const { env, aiRequests } = makeEnv(MTG_FX)
     const realPrepare = env.DB.prepare.bind(env.DB)
     env.DB.prepare = ((sql: string) => {
-      if (/SELECT id, date, title, type, status/.test(sql)) throw new Error('boom')
+      if (/FROM agenda_items/.test(sql)) throw new Error('boom')
       return realPrepare(sql)
     }) as typeof env.DB.prepare
     const r = await postActivityEntry({
@@ -1185,6 +1188,56 @@ describe('postActivityEntry — meeting entity (#124)', () => {
     const prompt = aiRequests[0].prompt as string
     expect(prompt).not.toContain('<meeting_context')
     expect(prompt).toContain('summarise this')
+  })
+})
+
+// ── #125: one config entry per entity type; one meetings read per ask ─────────
+describe('postActivityEntry — per-entity config (#125)', () => {
+  it('a Hermes ask reads the meetings row ONCE: the existence check feeds the context block', async () => {
+    const { env, aiRequests } = makeEnv(MTG_FX)
+    const realPrepare = env.DB.prepare.bind(env.DB)
+    const meetingReads: string[] = []
+    env.DB.prepare = ((sql: string) => {
+      if (/FROM meetings\b/.test(sql)) meetingReads.push(sql)
+      return realPrepare(sql)
+    }) as typeof env.DB.prepare
+    const r = await postActivityEntry({
+      env, user: NATE, entityType: 'meeting', entityId: 'mtg-2026-09-08-abc',
+      kind: 'comment', body: '@hermes what was decided?', actorSlug: 'nate-mesfin',
+    })
+    expect(r.ok).toBe(true)
+    expect(meetingReads, meetingReads.join(' ||| ')).toHaveLength(1)
+    expect(aiRequests[0].prompt as string).toContain('<meeting_context version="1"')
+  })
+
+  it('an @mention notification gets the entity-specific source_type and a link that opens the entity, for every entity type', async () => {
+    const fx: Partial<Fixtures> = {
+      ...MTG_FX,
+      tasks: { 'task-m': { project_id: null, title: 'T', assignee: 'nate-mesfin' } },
+    }
+    const { env, notifications } = makeEnv(fx)
+    const post = (entityType: 'task' | 'meeting' | 'day', entityId: string) => postActivityEntry({
+      env, user: NICK, entityType, entityId, kind: 'comment', body: 'hey @nate-mesfin look', actorSlug: 'nick-ingraham',
+    })
+    expect((await post('task', 'task-m')).ok).toBe(true)
+    expect((await post('meeting', 'mtg-2026-09-08-abc')).ok).toBe(true)
+    expect((await post('day', '2026-10-13')).ok).toBe(true)
+    const mention = (sourceType: string) => notifications.find((n) => n.type === 'mention' && n.source_type === sourceType)
+    expect(mention('task_comment')?.link).toBe('/portal/my-tasks?open=task-m')
+    expect(mention('meeting_comment')?.link).toBe('/portal/meetings/mtg-2026-09-08-abc')
+    expect(mention('daily_thought')?.link).toBe('/portal/dashboard')
+  })
+
+  it('an unknown entity_type is a 400 that lists every configured type', async () => {
+    const { env } = makeEnv({})
+    const r = await postActivityEntry({
+      env, user: NICK, entityType: 'constructor' as never, entityId: 'x', kind: 'comment', body: 'x', actorSlug: 'nick-ingraham',
+    })
+    expect(r.ok).toBe(false)
+    if (!r.ok) {
+      expect(r.status).toBe(400)
+      expect(r.error).toContain("'task'|'project'|'artifact'|'day'|'meeting'")
+    }
   })
 })
 
@@ -1358,6 +1411,41 @@ describe('handleGetDayActivity — private day feed', () => {
     const res = await handleGetDayActivity('2026-07-22', piReq(), env)
     const body = await res.json() as { data: Array<{ body: string }> }
     expect(body.data.some(r => r.body.includes('natems private note'))).toBe(true)
+  })
+})
+
+// The day and meeting feeds are ONE factory (api/lib/entity-activity-routes.ts, #125),
+// so the day tests above cover the shared read and write; these pin what differs.
+describe('meeting feed — the same pair, a team audience (#125)', () => {
+  it('posts team-visible by default, private on request, and lists roots with a hidden count', async () => {
+    const { env, ae } = makeEnv(MTG_FX)
+    const open = await handlePostMeetingActivity('mtg-2026-09-08-abc', dayPostReq(NON_PI_EMAIL, { content: 'for whoever missed it' }), NATE, env)
+    expect(open.status).toBe(201)
+    const secret = await handlePostMeetingActivity('mtg-2026-09-08-abc', dayPostReq(NON_PI_EMAIL, { content: 'mine only', visibility: 'author' }), NATE, env)
+    expect(secret.status).toBe(201)
+    expect(ae.map((r) => [r.entity_type, r.body, r.visibility])).toEqual([
+      ['meeting', 'for whoever missed it', 'team'],
+      ['meeting', 'mine only', 'author'],
+    ])
+    // Nick (the PI) reads both; a different member reads only the team one.
+    const asPi = await (await handleGetMeetingActivity('mtg-2026-09-08-abc', piReq(), env)).json() as { data: Array<{ body: string }>; hidden_count: number }
+    expect(asPi.data.map((r) => r.body).sort()).toEqual(['for whoever missed it', 'mine only'])
+    expect(asPi.hidden_count).toBe(0)
+    const other = await (await handleGetMeetingActivity('mtg-2026-09-08-abc', userGetReq('someone-else@umn.edu'), env)).json() as { data: Array<{ body: string }> }
+    expect(other.data.map((r) => r.body)).toEqual(['for whoever missed it'])
+  })
+
+  it('reads only its own entity type: a day thread on the same id string never shows up', async () => {
+    const { env } = makeEnv(MTG_FX)
+    await handlePostDayActivity('2026-09-08', dayPostReq(PI_EMAIL, { content: 'day thought' }), NICK, env)
+    const feed = await (await handleGetMeetingActivity('2026-09-08', piReq(), env)).json() as { data: unknown[] }
+    expect(feed.data).toEqual([])
+  })
+
+  it('refuses a blank id (400) and an empty body (400)', async () => {
+    const { env } = makeEnv(MTG_FX)
+    expect((await handleGetMeetingActivity('  ', piReq(), env)).status).toBe(400)
+    expect((await handlePostMeetingActivity('mtg-2026-09-08-abc', dayPostReq(NON_PI_EMAIL, { content: '  ' }), NATE, env)).status).toBe(400)
   })
 })
 

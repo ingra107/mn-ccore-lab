@@ -55,7 +55,7 @@ import { TaskActivityFeed } from './detail/TaskActivityFeed'
 import TaskIntelligence from './detail/TaskIntelligence'
 import KeyLinksEditor from '../KeyLinksEditor'
 import { isHermesPrefix, isBacklogPrefix, stripBacklogPrefix } from '../../lib/hermesRouting'
-import { askHermesOnTask, hermesOutcomeToast } from '../../lib/askHermes'
+import { askHermesOnTask, activityQueryKey, hermesOutcomeToast } from '../../lib/askHermes'
 import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
 import { taskShortLabel } from '../../lib/displayNames'
@@ -1091,7 +1091,7 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
 // Shows 3 newest activity entries in the Overview tab + a "view all →"
 // button that switches to the Activity tab. Does NOT duplicate the filter
 // pills (those live in the full Activity tab only).
-// Uses the same ['task-activity', taskId] cache key as TaskActivityFeed —
+// Uses the same activityQueryKey('task', taskId) cache key as TaskActivityFeed —
 // no duplicate network request.
 
 function OverviewActivityPeek({
@@ -1548,7 +1548,7 @@ export function OverviewQuickAdd({
     })
     if (!res.ok) throw new Error('comment failed')
     queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] })
-    queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
+    queryClient.invalidateQueries({ queryKey: activityQueryKey('task', taskId) })
     queryClient.invalidateQueries({ queryKey: ['activity'] })
   }
 
@@ -1576,7 +1576,7 @@ export function OverviewQuickAdd({
         if (result.ok) {
           reset()
           queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] })
-          queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
+          queryClient.invalidateQueries({ queryKey: activityQueryKey('task', taskId) })
           queryClient.invalidateQueries({ queryKey: ['activity'] })
           const toast = hermesOutcomeToast(result, 'Posted')
           ;(toast.kind === 'info' ? showInfo : showSuccess)(toast.text)

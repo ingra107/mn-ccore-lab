@@ -29,6 +29,7 @@ import { filterMatchesKind, isRepliableKind, type TaskFeedFilter } from '../../.
 import type { StoredKind, UpdateType } from '../../../../shared/activityKinds'
 import { useAuth } from '../../../hooks/useAuth'
 import { useDeleteActivityEntry, useEditActivityEntry, useDismissThread } from '../../../hooks/useMutations'
+import { activityQueryKey } from '../../../lib/askHermes'
 
 // ── Shape ────────────────────────────────────────────────────────────────────
 
@@ -86,7 +87,7 @@ export function TaskActivityFeed({ taskId, peekCount, hidePills, avatarSize }: T
   const dismissThread = useDismissThread()
 
   const { data: feed, isLoading } = useQuery<{ entries: ActivityEntryItemRow[]; hiddenCount: number }>({
-    queryKey: ['task-activity', taskId, showHidden],
+    queryKey: [...activityQueryKey('task', taskId), showHidden],
     queryFn: async () => {
       const res = await fetch(`/api/tasks/${taskId}/activity${showHidden ? '?include_hidden=1' : ''}`)
       if (!res.ok) return { entries: [], hiddenCount: 0 }
@@ -194,7 +195,7 @@ export function TaskActivityFeed({ taskId, peekCount, hidePills, avatarSize }: T
                 key={entry.id}
                 root={entry}
                 itemProps={{ avatarSize }}
-                invalidateKeys={[['task-activity', taskId]]}
+                invalidateKeys={[activityQueryKey('task', taskId)]}
                 onDelete={(e) => deleteEntry.mutate({ id: e.id, taskId })}
                 onEdit={(e, body) => editEntry.mutate({ id: e.id, body, taskId })}
                 onDismiss={(e) => dismissThread.mutate({ id: e.id, hidden: !e.hidden_at, taskId })}

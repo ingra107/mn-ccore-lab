@@ -3,7 +3,7 @@ import { fetchApi, createDependency, deleteDependency, addExpertise, removeExper
 import { MEMBER_FEATURED_QUERY_KEY, rowToPublication } from '../useApiData'
 import { rollbackSnapshots } from './utils'
 import { nowInstant } from '../../lib/time'
-import { meetingActivityQueryKey } from '../../lib/askHermes'
+import { activityQueryKey, meetingActivityQueryKey } from '../../lib/askHermes'
 import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus, PresentationType } from '../../lib/api'
 
 // ── Digest Status mutation ───────────────────────────────────
@@ -102,7 +102,7 @@ export function usePostTaskUpdate(taskId: string) {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['task-updates', taskId] })
-      queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
+      queryClient.invalidateQueries({ queryKey: activityQueryKey('task', taskId) })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
@@ -121,7 +121,7 @@ export function useDeleteActivityEntry() {
 
     onSettled: (_data, _err, input) => {
       if (input.taskId) {
-        queryClient.invalidateQueries({ queryKey: ['task-activity', input.taskId] })
+        queryClient.invalidateQueries({ queryKey: activityQueryKey('task', input.taskId) })
         queryClient.invalidateQueries({ queryKey: ['task-comments', input.taskId] })
         queryClient.invalidateQueries({ queryKey: ['task-detail', input.taskId] })
       }
@@ -150,7 +150,7 @@ export function useEditActivityEntry() {
 
     onSettled: (_data, _err, input) => {
       if (input.taskId) {
-        queryClient.invalidateQueries({ queryKey: ['task-activity', input.taskId] })
+        queryClient.invalidateQueries({ queryKey: activityQueryKey('task', input.taskId) })
         queryClient.invalidateQueries({ queryKey: ['task-comments', input.taskId] })
         queryClient.invalidateQueries({ queryKey: ['task-detail', input.taskId] })
       }
@@ -182,7 +182,7 @@ export function useDismissThread() {
 
     onSettled: (_data, _err, input) => {
       if (input.taskId) {
-        queryClient.invalidateQueries({ queryKey: ['task-activity', input.taskId] })
+        queryClient.invalidateQueries({ queryKey: activityQueryKey('task', input.taskId) })
         queryClient.invalidateQueries({ queryKey: ['task-detail', input.taskId] })
       }
       if (input.projectSlug) {

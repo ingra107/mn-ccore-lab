@@ -33,24 +33,75 @@ export type HermesAskResult =
   | { ok: true; hermes?: HermesDispatch }
   | { ok: false; error: Error }
 
+// ── One lane config, one ask function (#125) ─────────────────────────────────
+//
+// askHermesOnDay, askHermesOnTask and askHermesOnMeeting were three copies of one
+// try/fetch/parse-`hermes`/catch body; only the URL, the body and the failure label
+// differed, and this file's own header named "3rd copy = extract" as the rule. They
+// are lane entries now, and a fourth conversation surface is one more entry. The
+// named functions below stay as one-line callers so the call sites read as before.
+
+/** A conversation surface on the unified activity store. */
+export type HermesLane = 'day' | 'task' | 'meeting'
+
+interface LaneConfig {
+  /** POST target for a new entry on this entity. */
+  url(id: string): string
+  /** JSON body; the content goes VERBATIM (the @hermes token stays). */
+  body(content: string, visibility?: 'team' | 'author'): Record<string, unknown>
+  /** Prefix of the thrown message when the server answers non-2xx. */
+  failure: string
+  /** The react-query key family the lane's feed reads (callers invalidate it). */
+  keyFamily: string
+}
+
+const LANES: Record<HermesLane, LaneConfig> = {
+  // Day threads default PRIVATE server-side; the body names no audience.
+  day: {
+    url: (dateKey) => `/api/days/${dateKey}/activity`,
+    body: (content) => ({ content }),
+    failure: '/api/days',
+    keyFamily: 'day-activity',
+  },
+  // A typed @hermes prefix defaults PRIVATE (owner decision A): the task lane
+  // always posts visibility='author'; a mid-text @hermes stays a team comment
+  // because the composers route only a typed PREFIX here.
+  task: {
+    url: (taskId) => `/api/tasks/${taskId}/comments`,
+    body: (content) => ({ content, visibility: 'author' }),
+    failure: '/api/tasks comment',
+    keyFamily: 'task-activity',
+  },
+  // A meeting page is a shared team surface, so an ordinary remark defaults
+  // TEAM-visible; only a typed @hermes PREFIX makes the thread private.
+  meeting: {
+    url: (meetingId) => `/api/meetings/${encodeURIComponent(meetingId)}/activity`,
+    body: (content, visibility = 'team') => ({ content, visibility }),
+    failure: '/api/meetings activity',
+    keyFamily: 'meeting-activity',
+  },
+}
+
 /**
- * Post `content` to the day feed as a Hermes ask.
- *
- * The body goes VERBATIM (token intact) to POST /api/days/:date/activity, which
- * stores a private (visibility='author') activity_entries row and fires the
- * in-thread Hermes answer. Never throws — callers branch on `ok`.
+ * Post `content` to an entity's conversation as a Hermes ask. The body goes
+ * VERBATIM (token intact): the stored text is what the server's HERMES_DETECT_RE
+ * fires on, and stripping the token is a silent "no Hermes". The server answers
+ * IN-THREAD. Never throws: callers branch on `ok`.
  */
-export async function askHermesOnDay(
+export async function askHermesOnEntity(
+  lane: HermesLane,
+  id: string,
   content: string,
-  dateKey: string = todayKey()
+  opts: { visibility?: 'team' | 'author' } = {},
 ): Promise<HermesAskResult> {
+  const cfg = LANES[lane]
   try {
-    const res = await fetch(`/api/days/${dateKey}/activity`, {
+    const res = await fetch(cfg.url(id), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify(cfg.body(content, opts.visibility)),
     })
-    if (!res.ok) throw new Error(`/api/days ${res.status}`)
+    if (!res.ok) throw new Error(`${cfg.failure} ${res.status}`)
     const out = (await res.json().catch(() => ({}))) as { hermes?: HermesDispatch }
     return { ok: true, hermes: out.hermes }
   } catch (err) {
@@ -58,77 +109,53 @@ export async function askHermesOnDay(
   }
 }
 
-/** The react-query key the day feed reads, so callers invalidate the right thing. */
+/**
+ * The react-query key a lane's feed reads, so callers invalidate the right thing.
+ * The one key builder: a lane's family string is written here and nowhere else.
+ */
+export function activityQueryKey(lane: HermesLane, id: string): [string, string] {
+  return [LANES[lane].keyFamily, id]
+}
+
+/**
+ * Post `content` to the day feed as a Hermes ask: a private
+ * (visibility='author') activity_entries row, answered in-thread.
+ */
+export function askHermesOnDay(content: string, dateKey: string = todayKey()): Promise<HermesAskResult> {
+  return askHermesOnEntity('day', dateKey, content)
+}
+
+/** The react-query key the day feed reads. */
 export function dayActivityQueryKey(dateKey: string = todayKey()): [string, string] {
-  return ['day-activity', dateKey]
+  return activityQueryKey('day', dateKey)
 }
 
 /**
- * Post `content` to a task's comment thread as a Hermes ask.
- *
- * The body goes VERBATIM (token intact) to POST /api/tasks/:id/comments as a
- * PRIVATE (visibility='author') activity_entries row -- owner decision A: a
- * typed @hermes prefix defaults private (a mid-text @hermes stays a team
- * comment). The server's HERMES_DETECT_RE fires on the stored token and
- * answers IN-THREAD (source_type='task_comment'); the answer inherits
- * visibility='author'. Never throws -- callers branch on `ok`.
- *
- * Task-lane analog of askHermesOnDay(): shared by SmartCompose task mode and
- * OverviewQuickAdd (TaskDetailPanel.tsx) so the two task composers cannot
- * drift on this contract again (backlog #545 -- the same block had been
- * hand-threaded through both in four separate commits).
+ * Post `content` to a task's comment thread as a Hermes ask, PRIVATE
+ * (visibility='author'); the answer inherits it. Shared by SmartCompose task mode
+ * and OverviewQuickAdd (TaskDetailPanel.tsx) so the two task composers cannot
+ * drift on this contract (backlog #545).
  */
-export async function askHermesOnTask(taskId: string, content: string): Promise<HermesAskResult> {
-  try {
-    const res = await fetch(`/api/tasks/${taskId}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, visibility: 'author' }),
-    })
-    if (!res.ok) throw new Error(`/api/tasks comment ${res.status}`)
-    const out = (await res.json().catch(() => ({}))) as { hermes?: HermesDispatch }
-    return { ok: true, hermes: out.hermes }
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err : new Error(String(err)) }
-  }
+export function askHermesOnTask(taskId: string, content: string): Promise<HermesAskResult> {
+  return askHermesOnEntity('task', taskId, content)
 }
 
 /**
- * Post `content` to a meeting's conversation (#124).
- *
- * Meeting-lane analog of askHermesOnDay / askHermesOnTask, and it exists for the
- * same reason they do: the routing contract lives in ONE place per lane so a new
- * compose surface gets the behaviour by calling a function rather than by
- * remembering to reimplement it.
- *
- * `visibility` differs from the other two lanes on purpose. A meeting page is a
- * shared team surface, so an ordinary remark defaults TEAM-visible; only a typed
- * `@hermes` PREFIX makes the thread private, matching the task lane's rule that
- * the prefix selects the default audience. The body goes VERBATIM — the stored
- * text is what the server's HERMES_DETECT_RE fires on.
+ * Post `content` to a meeting's conversation (#124). `visibility` defaults TEAM:
+ * only a typed `@hermes` PREFIX makes the thread private, matching the task
+ * lane's rule that the prefix selects the default audience.
  */
-export async function askHermesOnMeeting(
+export function askHermesOnMeeting(
   meetingId: string,
   content: string,
   visibility: 'team' | 'author' = 'team',
 ): Promise<HermesAskResult> {
-  try {
-    const res = await fetch(`/api/meetings/${encodeURIComponent(meetingId)}/activity`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, visibility }),
-    })
-    if (!res.ok) throw new Error(`/api/meetings activity ${res.status}`)
-    const out = (await res.json().catch(() => ({}))) as { hermes?: HermesDispatch }
-    return { ok: true, hermes: out.hermes }
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err : new Error(String(err)) }
-  }
+  return askHermesOnEntity('meeting', meetingId, content, { visibility })
 }
 
-/** The react-query key the meeting feed reads, so callers invalidate the right thing. */
+/** The react-query key the meeting feed reads. */
 export function meetingActivityQueryKey(meetingId: string): [string, string] {
-  return ['meeting-activity', meetingId]
+  return activityQueryKey('meeting', meetingId)
 }
 
 export type ToastKind = 'success' | 'info' | 'error'

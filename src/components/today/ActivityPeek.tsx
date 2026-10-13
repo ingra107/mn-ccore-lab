@@ -28,6 +28,7 @@ import { useDeleteActivityEntry, useDismissThread } from '../../hooks/useMutatio
 import { Face } from './skin'
 import { firstNameFor } from '../../lib/personLabel'
 import { formatRelativeTime } from '../../lib/dateUtils'
+import { activityQueryKey } from '../../lib/askHermes'
 
 /** One plain line of text from an entry body: markdown marks and newlines flattened. */
 function oneLine(body: string): string {
@@ -55,7 +56,7 @@ export function ActivityPeek({ taskId, count = 3, onViewAll }: { taskId: string;
   const dismissThread = useDismissThread()
 
   const { data: feed, isLoading } = useQuery<{ entries: ActivityEntryItemRow[]; hiddenCount: number }>({
-    queryKey: ['task-activity', taskId, showHidden],
+    queryKey: [...activityQueryKey('task', taskId), showHidden],
     queryFn: async () => {
       const res = await fetch(`/api/tasks/${taskId}/activity${showHidden ? '?include_hidden=1' : ''}`)
       if (!res.ok) return { entries: [], hiddenCount: 0 }
