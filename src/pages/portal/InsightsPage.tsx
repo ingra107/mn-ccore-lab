@@ -125,7 +125,7 @@ export default function InsightsPage() {
   if (isError) {
     return (
       <div className="content-container">
-        <PageHeader title="Operational Insights" />
+        <PageHeader title="Insights" />
         <EmptyState
           icon={<AlertTriangle size={40} />}
           title="PI access required"
@@ -238,7 +238,7 @@ export default function InsightsPage() {
       {/* PortalLayout's <main> owns bottom clearance — no rogue paddingBottom. */}
       <div className="content-container">
         <PageHeader
-          title="Operational Insights"
+          title="Insights"
           subtitle={`Hub aggregation · ${data.week}${isCurrent ? '' : ' (historical)'}`}
           actions={headerActions}
         />

@@ -348,7 +348,7 @@ export default function PIAnalytics() {
   return (
     <PageContainer>
       <PageHeader
-        title="PI Dashboard"
+        title="PI analytics"
         subtitle="Evidence-based leadership metrics"
       >
         <div className="flex items-center gap-2">

@@ -308,7 +308,7 @@ export default function AnalyticsPage() {
     return (
       <PageContainer>
         <PageHeader
-          title="Lab Analytics"
+          title="Analytics"
           subtitle="Track lab performance and trends"
         />
         <div className="mt-5">
@@ -330,7 +330,7 @@ export default function AnalyticsPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Lab Analytics"
+        title="Analytics"
         subtitle={pageSubtitle}
         actions={isPi ? (
           <div className="flex items-center gap-2">

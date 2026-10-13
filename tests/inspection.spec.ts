@@ -210,12 +210,12 @@ test.describe('PAGE — Portal pages render without errors', () => {
     [P.meetings, 'Meetings', ['Meeting', 'Record Meeting']],
     [P.meetingNotes, 'Meeting Transcripts', ['Meeting Transcripts', 'Upload Audio']],
     [P.activity, 'Activity', ['Activity']],
-    [P.analytics, 'Analytics', ['Lab Analytics', 'Completed']],
+    [P.analytics, 'Analytics', ['Analytics', 'Completed']],
     [P.settings, 'Settings', ['Settings', 'Lab name']],
     [P.narratives, 'Narratives', ['Research Narratives']],
     [P.sessions, 'Session History', ['Session History']],
     [P.menteeMilestones, 'Mentee Milestones', ['Mentee Milestones']],
-    [P.piAnalytics, 'PI Analytics', ['PI Access Only|PI Dashboard']],
+    [P.piAnalytics, 'PI Analytics', ['PI Access Only|PI analytics']],
   ]
 
   for (const [route, name, mustHave] of portalPages) {
