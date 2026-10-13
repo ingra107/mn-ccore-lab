@@ -27,7 +27,17 @@ export async function handleGetAIRequests(url: URL, env: Env, request: Request):
   const sourceType = url.searchParams.get('source_type');
   const sourceId = url.searchParams.get('source_id');
 
-  let query = 'SELECT * FROM ai_requests WHERE 1=1';
+  // #119: `landing_visibility` says where the answer will be posted: the
+  // triggering activity entry's visibility ('author' = the asker alone, 'team'
+  // = everyone who can read the thread), or NULL when source_id is not an
+  // entry (the answer lives only on this requester-scoped row). The PB listener
+  // attaches Nick's mail tools and repo access only to a private landing, and
+  // reads a missing value as "not private". Computed, never stored: the one
+  // fact lives on the entry, so it cannot drift.
+  // activity-hidden-exempt: Hermes routing — a dismissed thread still receives its answer, so its visibility still governs it.
+  let query = `SELECT ai_requests.*,
+    (SELECT ae.visibility FROM activity_entries ae WHERE ae.id = ai_requests.source_id) AS landing_visibility
+    FROM ai_requests WHERE 1=1`;
   const params: string[] = [];
 
   // Scope to the caller unless they're PI/service. `requested_by` holds the
@@ -240,7 +250,7 @@ export async function handleUpdateAIResponse(
  */
 async function _postHermesResponse(
   env: Env,
-  req: { source_type: string; source_id: string; project_slug: string | null },
+  req: { id: string; source_type: string; source_id: string; project_slug: string | null },
   responseText: string,
 ): Promise<void> {
   // Resolve the triggering entry FIRST — it is the source of truth for where the
@@ -269,38 +279,38 @@ async function _postHermesResponse(
   // itself when the ask was top-level.
   const threadRootId = trigEntry.parent_id ?? trigEntry.id;
 
-  // Look for the 'Thinking...' placeholder, SCOPED TO THIS THREAD.
+  // Find THIS request's 'Thinking...' placeholder (#119).
   //
-  // The scope matters now that threads exist: this used to take the newest
-  // claude-ai placeholder anywhere on the entity, so with two asks in flight —
-  // say one at the top level and one inside a thread — an answer could
-  // overwrite the other conversation's placeholder and appear in the wrong
-  // place. Matching parent_id keeps each answer in the thread that asked.
-  // dispatchHermes writes the placeholder with parent_id = threadRootId, which
-  // is non-null even for a TOP-LEVEL ask (a root's thread is itself) — so match
-  // on threadRootId, not on trigEntry.parent_id.
+  // dispatchHermes stamps the placeholder (source_table='ai_requests',
+  // source_id=<this request's id>), so the answer has exactly one row it may
+  // write. The lookup used to take the NEWEST claude-ai placeholder in the
+  // thread, which let two asks in one thread swap answers, and let a private
+  // (@me) answer overwrite a TEAM placeholder -- publishing it to everyone who
+  // can read the thread. No body filter: a retried response POST rewrites the
+  // same row instead of inserting a second answer.
   // activity-hidden-exempt: placeholder resolution — the 'Thinking…' row must be
   // found and updated even if the thread was dismissed, or it dangles forever.
   let placeholder = await env.DB.prepare(
     `SELECT id FROM activity_entries
-     WHERE entity_type = ? AND entity_id = ? AND actor_slug = 'claude-ai'
-       AND kind = 'comment' AND body LIKE 'Thinking about this%'
-       AND parent_id = ?
-     ORDER BY created_at DESC LIMIT 1`
-  ).bind(entityType, entityId, threadRootId).first<{ id: string }>();
+     WHERE source_table = 'ai_requests' AND source_id = ?
+     LIMIT 1`
+  ).bind(req.id).first<{ id: string }>();
 
-  // Fallback for requests already in flight when this shipped: their
-  // placeholders predate parent_id and carry NULL. Entity-scoped like the old
-  // lookup, so behaviour for those is exactly what it was.
+  // Keyless placeholders: requests already in flight when #119 deployed. Same
+  // thread (or the pre-#98 NULL-parent shape), and -- the #119 half -- only at
+  // the TRIGGER's own visibility, so the fallback can never move a private
+  // answer into a team row. On a miss the answer is inserted fresh below, at
+  // the trigger's visibility.
   if (!placeholder) {
     // activity-hidden-exempt: legacy placeholder fallback — same reason as above.
     placeholder = await env.DB.prepare(
       `SELECT id FROM activity_entries
        WHERE entity_type = ? AND entity_id = ? AND actor_slug = 'claude-ai'
          AND kind = 'comment' AND body LIKE 'Thinking about this%'
-         AND parent_id IS NULL
-       ORDER BY created_at DESC LIMIT 1`
-    ).bind(entityType, entityId).first<{ id: string }>();
+         AND source_table IS NULL AND visibility = ?
+         AND (parent_id = ? OR parent_id IS NULL)
+       ORDER BY (parent_id IS NULL), created_at DESC LIMIT 1`
+    ).bind(entityType, entityId, visibility, threadRootId).first<{ id: string }>();
   }
 
   if (placeholder) {

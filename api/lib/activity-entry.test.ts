@@ -762,6 +762,19 @@ describe('Hermes — @hermes lands a placeholder activity entry + ai_request', (
     expect(ctx.aiRequests[0].status).toBe('pending')
   })
 
+  // #119: the placeholder carries the id of the ai_request it is waiting on, so
+  // handleUpdateAIResponse writes each answer into ITS placeholder and never
+  // into another ask's (a private answer into a team placeholder was a leak).
+  it('the Hermes placeholder is bound to its ai_request by (source_table, source_id)', async () => {
+    const ctx = makeEnv(FX)
+    await handleAddTaskComment('t1', natePostReq({ content: '@hermes please summarize the task context' }), NATE, ctx.env)
+    const placeholder = ctx.ae.find(r => r.actor_slug === 'claude-ai')
+    expect(placeholder).toBeDefined()
+    expect(ctx.aiRequests.length).toBe(1)
+    expect(placeholder!.source_table).toBe('ai_requests')
+    expect(placeholder!.source_id).toBe(ctx.aiRequests[0].id)
+  })
+
   it('a Hermes placeholder for an @me question inherits author visibility', async () => {
     const ctx = makeEnv(FX)
     await handleAddTaskComment('t1', natePostReq({ content: '@me @hermes is this private analysis right' }), NATE, ctx.env)

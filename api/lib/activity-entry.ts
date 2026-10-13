@@ -1017,6 +1017,13 @@ async function dispatchHermes(
     // so asking Hermes a follow-up inside a thread pushed its answer out of
     // that thread entirely — the conversation visibly came apart.
     parentId: args.threadRootId ?? null,
+    // #119: bind the placeholder to the request it waits on. The answer is
+    // written into the row keyed (ai_requests, aiId) and nowhere else, so two
+    // asks in one thread cannot swap answers and a private answer cannot land
+    // in a team placeholder. The partial UNIQUE(source_table, source_id) index
+    // also makes a second placeholder for one request unrepresentable.
+    sourceTable: 'ai_requests',
+    sourceId: aiId,
   });
 
   return 'dispatched';

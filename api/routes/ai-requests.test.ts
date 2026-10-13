@@ -37,7 +37,7 @@ vi.mock('../lib/activity-entry', () => ({
 }));
 
 import { postActivityEntry } from '../lib/activity-entry';
-import { handleCreateAIRequest, handleUpdateAIResponse } from './ai-requests';
+import { handleCreateAIRequest, handleGetAIRequests, handleUpdateAIResponse } from './ai-requests';
 
 const mockPostActivity = vi.mocked(postActivityEntry);
 
@@ -226,6 +226,106 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
   it('returns 404 when ai_request row not found after update', async () => {
     const res = await handleUpdateAIResponse('ai-missing', makeRequest({ response: 'ok' }), env);
     expect(res.status).toBe(404);
+  });
+});
+
+// ── #119: the answer's placeholder is bound to ITS request ─────────────────────
+//
+// dispatchHermes stamps the 'Thinking...' placeholder with
+// (source_table='ai_requests', source_id=<ai request id>), and the answer is
+// written into THAT row. The old lookup took the newest claude-ai placeholder
+// in the thread, so two asks in one thread could swap answers, and a private
+// answer could overwrite a team placeholder -- publishing it to the team.
+
+describe('handleUpdateAIResponse — placeholder bound to its request (#119)', () => {
+  const PENDING = 'Thinking about this... (AI response pending)';
+  function placeholder(id: string, aiId: string | null, root: string, visibility: string, createdAt: string) {
+    entry({
+      id, entity_type: 'task', entity_id: 'task-119', visibility, actor_slug: 'claude-ai', body: PENDING,
+      parent_id: root, created_at: createdAt,
+      ...(aiId ? { source_table: 'ai_requests', source_id: aiId } : {}),
+    });
+  }
+  function reply(id: string, root: string, visibility: string) {
+    entry({ id, entity_type: 'task', entity_id: 'task-119', visibility, parent_id: root });
+  }
+
+  it('two asks in one thread: each answer lands in its own placeholder, not the newest', async () => {
+    entry({ id: 'root-1', entity_type: 'task', entity_id: 'task-119' });
+    reply('ask-a', 'root-1', 'team');
+    reply('ask-b', 'root-1', 'team');
+    aiRequest({ id: 'ai-A', source_type: 'task_comment', source_id: 'ask-a' });
+    aiRequest({ id: 'ai-B', source_type: 'task_comment', source_id: 'ask-b' });
+    placeholder('ph-a', 'ai-A', 'root-1', 'team', '2026-10-13 10:00:00');
+    placeholder('ph-b', 'ai-B', 'root-1', 'team', '2026-10-13 10:01:00');
+
+    await handleUpdateAIResponse('ai-A', makeRequest({ response: 'Answer for A.' }), env);
+
+    expect(ae('ph-a').body).toBe('Answer for A.');
+    expect(ae('ph-b').body).toBe(PENDING);
+    expect(mockPostActivity).not.toHaveBeenCalled();
+  });
+
+  it('a private answer never overwrites a team placeholder in the same thread', async () => {
+    entry({ id: 'root-2', entity_type: 'task', entity_id: 'task-119' });
+    reply('ask-private', 'root-2', 'author');
+    reply('ask-team', 'root-2', 'team');
+    aiRequest({ id: 'ai-P', source_type: 'task_comment', source_id: 'ask-private' });
+    aiRequest({ id: 'ai-T', source_type: 'task_comment', source_id: 'ask-team' });
+    placeholder('ph-private', 'ai-P', 'root-2', 'author', '2026-10-13 10:00:00');
+    placeholder('ph-team', 'ai-T', 'root-2', 'team', '2026-10-13 10:01:00');
+
+    await handleUpdateAIResponse('ai-P', makeRequest({ response: 'From your inbox: SECRET.' }), env);
+
+    expect(ae('ph-private').body).toBe('From your inbox: SECRET.');
+    expect(ae('ph-team').body).toBe(PENDING);
+  });
+
+  it('a keyless (pre-deploy) placeholder is reused only at the trigger\'s own visibility', async () => {
+    entry({ id: 'root-3', entity_type: 'task', entity_id: 'task-119' });
+    reply('ask-private-3', 'root-3', 'author');
+    aiRequest({ id: 'ai-P3', source_type: 'task_comment', source_id: 'ask-private-3' });
+    placeholder('ph-legacy-team', null, 'root-3', 'team', '2026-10-13 10:00:00');
+
+    await handleUpdateAIResponse('ai-P3', makeRequest({ response: 'Private answer.' }), env);
+
+    expect(ae('ph-legacy-team').body).toBe(PENDING);
+    expect(mockPostActivity).toHaveBeenCalledOnce();
+    expect(mockPostActivity.mock.calls[0][0]).toMatchObject({ visibility: 'author', parentId: 'root-3' });
+  });
+
+  it('a keyless placeholder at the same visibility is still answered (in-flight at deploy)', async () => {
+    entry({ id: 'root-4', entity_type: 'task', entity_id: 'task-119' });
+    reply('ask-4', 'root-4', 'team');
+    aiRequest({ id: 'ai-4k', source_type: 'task_comment', source_id: 'ask-4' });
+    placeholder('ph-legacy-4', null, 'root-4', 'team', '2026-10-13 10:00:00');
+
+    await handleUpdateAIResponse('ai-4k', makeRequest({ response: 'Legacy answer.' }), env);
+
+    expect(ae('ph-legacy-4').body).toBe('Legacy answer.');
+    expect(mockPostActivity).not.toHaveBeenCalled();
+  });
+});
+
+// ── #119: the listener is told where each answer will land ─────────────────────
+
+describe('handleGetAIRequests — landing_visibility (#119)', () => {
+  it('returns the trigger entry visibility, or null when the source is not an entry', async () => {
+    const piEnv = { DB: d1Adapter(db), PB_API_KEY: 'k' } as unknown as Env;
+    entry({ id: 'trig-author', entity_type: 'task', entity_id: 't', visibility: 'author' });
+    entry({ id: 'trig-team', entity_type: 'task', entity_id: 't', visibility: 'team' });
+    aiRequest({ id: 'lv-a', source_type: 'task_comment', source_id: 'trig-author' });
+    aiRequest({ id: 'lv-t', source_type: 'task_comment', source_id: 'trig-team' });
+    aiRequest({ id: 'lv-n', source_type: 'daily_thought', source_id: '2026-10-13' });
+
+    const req = new Request('https://example.com/api/ai-requests?status=pending', {
+      headers: { Authorization: 'Bearer k' },
+    });
+    const res = await handleGetAIRequests(new URL(req.url), piEnv, req);
+    const { data } = await res.json() as { data: Array<{ id: string; landing_visibility: string | null }> };
+    const byId = Object.fromEntries(data.map((r) => [r.id, r.landing_visibility]));
+
+    expect(byId).toEqual({ 'lv-a': 'author', 'lv-t': 'team', 'lv-n': null });
   });
 });
 
