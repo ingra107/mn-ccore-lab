@@ -117,8 +117,16 @@ describe('Lab pulse routes are PI-only', () => {
   it('pi-dashboard still answers a member, with the per-person engagement list empty', async () => {
     const member = JSON.parse((await get('/api/analytics/pi-dashboard', MEMBER_EMAIL)).text).data
     expect(member.teamEngagement).toEqual([])
+    // No per-person field reaches a member: no trainee list, no slug or name anywhere in the body.
+    expect(member.menteeVelocity).toEqual([])
+    const memberRes = await worker.fetch(new Request('https://hub.test/api/analytics/pi-dashboard', { headers: { 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': MEMBER_EMAIL } }), env, CTX)
+    expect(memberRes.headers.get('Cache-Control')).toBe('private, no-store')
+    const memberText = JSON.stringify(member)
+    expect(memberText).not.toContain('nate-mesfin')
+    expect(memberText).not.toContain('Nate')
     const pi = JSON.parse((await get('/api/analytics/pi-dashboard', PI_EMAIL)).text).data
     expect(pi.teamEngagement.map((m: { slug: string }) => m.slug)).toContain('nate-mesfin')
+    expect(pi.menteeVelocity.map((m: { slug: string }) => m.slug)).toContain('nate-mesfin')
     const piRes = await worker.fetch(new Request('https://hub.test/api/analytics/pi-dashboard', { headers: { 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': PI_EMAIL } }), env, CTX)
     expect(piRes.headers.get('Cache-Control')).toBe('private, no-store')
   })

@@ -1251,9 +1251,11 @@ test.describe('GAPS — Previously untested workflows', () => {
   })
 
   // 17. Print layout
-  test('PI Analytics: print button triggers print-ready layout', async ({ page }) => {
-    await go(page, P.piAnalytics)
-    const printBtn = page.locator('button:has-text("Print")')
+  test('Lab overview Team: Report > Print triggers print-ready layout', async ({ page }) => {
+    await go(page, P.labTeam)
+    const report = page.getByRole('button', { name: 'Report' })
+    if (await report.isVisible().catch(() => false)) await report.click()
+    const printBtn = page.getByRole('menuitem', { name: 'Print' })
     if (await printBtn.isVisible().catch(() => false)) {
       // Emulate print media
       await page.emulateMedia({ media: 'print' })

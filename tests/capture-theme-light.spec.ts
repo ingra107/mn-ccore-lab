@@ -38,7 +38,7 @@ const TARGETS: Target[] = [
   { slug: '07-project-detail',   path: P.project('pf-v-sf-oxygenation-severity') },
   { slug: '08-manuscripts',      path: P.manuscripts },
   { slug: '11-digest',           path: P.digest },
-  { slug: '14-analytics',        path: P.analytics },
+  { slug: '14-analytics',        path: P.labPipeline },
   { slug: '18-settings',         path: P.settings },
 ]
 

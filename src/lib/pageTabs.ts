@@ -9,10 +9,14 @@ export interface PageTab {
   render: () => ReactNode
   /** Not offered to this viewer (e.g. a PI-only tab for a member). */
   hidden?: boolean
+  /** Old `?tab=` keys that still open this tab (a renamed or folded tab keeps its bookmarks). */
+  aliases?: string[]
 }
 
-/** The tab a URL selects: its `?tab=` when that names a visible tab, else the first visible tab. */
+/** The tab a URL selects: its `?tab=` when that names a visible tab (by key or alias), else the first visible tab. */
 export function resolveTab(tabs: PageTab[], requested: string | null): PageTab {
   const visible = tabs.filter((t) => !t.hidden)
-  return visible.find((t) => t.key === requested) ?? visible[0]
+  return visible.find((t) => t.key === requested)
+    ?? visible.find((t) => requested !== null && t.aliases?.includes(requested))
+    ?? visible[0]
 }

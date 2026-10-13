@@ -154,8 +154,6 @@ const DeadlinesPage = lazyRoute(() => import('./pages/portal/DeadlinesPage'))
 const ManuscriptsPage = lazyRoute(() => import('./pages/portal/ManuscriptsPage'))
 const SearchPage = lazyRoute(() => import('./pages/portal/SearchPage'))
 const ActivityPage = lazyRoute(() => import('./pages/portal/ActivityPage'))
-const AnalyticsPage = lazyRoute(() => import('./pages/portal/AnalyticsPage'))
-const InsightsPage = lazyRoute(() => import('./pages/portal/InsightsPage'))
 const SettingsPage = lazyRoute(() => import('./pages/portal/SettingsPage'))
 const ProfilePage = lazyRoute(() => import('./pages/portal/ProfilePage'))
 const DecisionsPage = lazyRoute(() => import('./pages/portal/DecisionsPage'))
@@ -291,7 +289,7 @@ export default function App() {
                 <Route path="/tasks" element={<NavigateKeepSearch to="/portal/my-tasks" />} />
                 <Route path="/calendar" element={<NavigateKeepSearch to="/portal/calendar" />} />
                 <Route path="/deadlines" element={<NavigateKeepSearch to="/portal/deadlines" />} />
-                <Route path="/deadline-cascade" element={<NavigateToTab to={PATHS.deadlineCascadeTab} />} />
+                <Route path="/deadline-cascade" element={<NavigateToTab to={PATHS.labCascadeTab} />} />
                 <Route path="/projects" element={<NavigateKeepSearch to="/portal/projects" />} />
                 <Route path="/projects/:slug" element={<NavigateWithParams to="/portal/projects/:slug" />} />
                 <Route path="/manuscripts" element={<NavigateKeepSearch to="/portal/manuscripts" />} />
@@ -309,10 +307,10 @@ export default function App() {
                 <Route path="/meeting-prep" element={<NavigateKeepSearch to="/portal/meetings" />} />
                 <Route path="/meeting-notes" element={<NavigateToTab to={PATHS.transcriptsTab} />} />
                 <Route path="/activity" element={<NavigateKeepSearch to="/portal/activity" />} />
-                <Route path="/analytics" element={<NavigateKeepSearch to="/portal/analytics" />} />
-                <Route path="/pi/analytics" element={<NavigateToTab to={PATHS.piAnalyticsTab} />} />
-                <Route path="/pi-analytics" element={<NavigateToTab to={PATHS.piAnalyticsTab} />} />
-                <Route path="/mentee-milestones" element={<NavigateToTab to={PATHS.menteeMilestonesTab} />} />
+                <Route path="/analytics" element={<NavigateToTab to={PATHS.labPipelineTab} />} />
+                <Route path="/pi/analytics" element={<NavigateToTab to={PATHS.labTeamTab} />} />
+                <Route path="/pi-analytics" element={<NavigateToTab to={PATHS.labTeamTab} />} />
+                <Route path="/mentee-milestones" element={<NavigateToTab to={PATHS.labMenteesTab} />} />
                 <Route path="/sessions" element={<NavigateKeepSearch to="/portal/sessions" />} />
                 <Route path="/settings" element={<NavigateKeepSearch to="/portal/settings" />} />
                 <Route path="/artifacts" element={<NavigateToTab to={PATHS.library} />} />
@@ -327,9 +325,14 @@ export default function App() {
                 <Route path="/portal/digest" element={<NavigateToTab to={PATHS.digestTab} />} />
                 <Route path="/portal/ideas" element={<NavigateToTab to={PATHS.ideasTab} />} />
                 <Route path="/portal/meeting-notes" element={<NavigateToTab to={PATHS.transcriptsTab} />} />
-                <Route path="/portal/pi/analytics" element={<NavigateToTab to={PATHS.piAnalyticsTab} />} />
-                <Route path="/portal/mentee-milestones" element={<NavigateToTab to={PATHS.menteeMilestonesTab} />} />
-                <Route path="/portal/deadline-cascade" element={<NavigateToTab to={PATHS.deadlineCascadeTab} />} />
+                <Route path="/portal/pi/analytics" element={<NavigateToTab to={PATHS.labTeamTab} />} />
+                <Route path="/portal/mentee-milestones" element={<NavigateToTab to={PATHS.labMenteesTab} />} />
+                <Route path="/portal/deadline-cascade" element={<NavigateToTab to={PATHS.labCascadeTab} />} />
+                {/* Analytics fold (2026-10-13): Analytics and Insights are the
+                    Lab overview's Pipeline tab. ?week= (ISO week) and ?range=
+                    ride along (NavigateToTab merges the query). */}
+                <Route path="/portal/analytics" element={<NavigateToTab to={PATHS.labPipelineTab} />} />
+                <Route path="/portal/insights" element={<NavigateToTab to={PATHS.labPipelineTab} />} />
 
                 {/* Portal pages: sidebar layout — wrapped in RequireAuth so
                     flipping VITE_REQUIRE_AUTH=1 or appending ?strict=1 to
@@ -362,8 +365,6 @@ export default function App() {
                   <Route path="/portal/meetings/:id" element={<ErrorBoundary><MeetingDetail /></ErrorBoundary>} />
                   <Route path="/portal/meetings/:id/prep" element={<ErrorBoundary><MeetingPrep /></ErrorBoundary>} />
                   <Route path="/portal/activity" element={<ErrorBoundary><ActivityPage /></ErrorBoundary>} />
-                  <Route path="/portal/analytics" element={<ErrorBoundary><AnalyticsPage /></ErrorBoundary>} />
-                  <Route path="/portal/insights" element={<ErrorBoundary><InsightsPage /></ErrorBoundary>} />
                   <Route path="/portal/sessions" element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />
                   <Route path="/portal/launches" element={<ErrorBoundary><LaunchesPage /></ErrorBoundary>} />
                   <Route path="/portal/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />

@@ -13,7 +13,6 @@ import {
   FileText,
   Users,
   Activity,
-  BarChart3,
   HelpCircle,
   Award,
   BookOpen,
@@ -23,7 +22,6 @@ import {
   Bug,
   LayoutGrid,
   User,
-  TrendingUp,
   History,
   Zap,
   Video,
@@ -239,7 +237,7 @@ export default function MobileTabBar() {
               ))}
             </div>
 
-            {OVERFLOW_SECTIONS.filter((section) => !section.piOnly || isPi).map((section) => (
+            {OVERFLOW_SECTIONS.filter((section) => (!section.piOnly || isPi) && (!section.memberOnly || !isPi)).map((section) => (
               <div key={section.title} style={{ marginBottom: 12 }}>
                 <div
                   style={{
@@ -329,7 +327,7 @@ export default function MobileTabBar() {
 // then the pages reached only from the command palette on desktop (kept here
 // because a phone has no Ctrl+K). Labels come from the one page-name map.
 type OverflowRoute = { to: string; icon: typeof LayoutDashboard; label: string }
-const OVERFLOW_SECTIONS: { title: string; piOnly?: boolean; routes: OverflowRoute[] }[] = [
+const OVERFLOW_SECTIONS: { title: string; piOnly?: boolean; memberOnly?: boolean; routes: OverflowRoute[] }[] = [
   {
     title: 'Hub',
     routes: [
@@ -350,14 +348,20 @@ const OVERFLOW_SECTIONS: { title: string; piOnly?: boolean; routes: OverflowRout
     ],
   },
   {
+    // A member's way into Lab overview (a PI has it in the PI section above).
+    title: 'Lab',
+    memberOnly: true,
+    routes: [
+      { to: PATHS.overview, icon: LayoutGrid, label: PORTAL_PAGE_LABELS[PATHS.overview] },
+    ],
+  },
+  {
     title: 'You',
     routes: [
       { to: PATHS.profile, icon: User, label: PORTAL_PAGE_LABELS[PATHS.profile] },
       { to: PATHS.myItems, icon: Target, label: 'My Items' },
       { to: PATHS.settings, icon: Settings, label: PORTAL_PAGE_LABELS[PATHS.settings] },
       { to: PATHS.activity, icon: Activity, label: PORTAL_PAGE_LABELS[PATHS.activity] },
-      { to: PATHS.analytics, icon: BarChart3, label: PORTAL_PAGE_LABELS[PATHS.analytics] },
-      { to: PATHS.insights, icon: TrendingUp, label: PORTAL_PAGE_LABELS[PATHS.insights] },
     ],
   },
   {

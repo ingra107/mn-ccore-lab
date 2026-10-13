@@ -886,11 +886,11 @@
     },
     {
       "id": "page-render-analytics",
-      "component": "src/pages/portal/AnalyticsPage.tsx",
+      "component": "src/pages/portal/labops/PipelineTab.tsx",
       "type": "render",
-      "description": "Analytics page renders",
+      "description": "Lab overview Pipeline page renders",
       "test_file": "tests/inspection.spec.ts",
-      "test_name": "PAGE: Analytics (/analytics) renders",
+      "test_name": "PAGE: Lab overview Pipeline (/portal/overview?tab=pipeline) renders",
       "covered": true
     },
     {
@@ -931,11 +931,11 @@
     },
     {
       "id": "page-render-pi-analytics",
-      "component": "src/pages/portal/PIAnalytics.tsx",
+      "component": "src/pages/portal/labops/TeamTab.tsx",
       "type": "render",
-      "description": "PI Analytics page renders",
+      "description": "Lab overview Team page renders",
       "test_file": "tests/inspection.spec.ts",
-      "test_name": "PAGE: PI Analytics (/pi/analytics) renders",
+      "test_name": "PAGE: Lab overview Team (/portal/overview?tab=team) renders",
       "covered": true
     },
     {
@@ -1633,11 +1633,11 @@
     },
     {
       "id": "copy-analytics-report",
-      "component": "src/pages/portal/AnalyticsPage.tsx",
+      "component": "src/components/labops/ReportMenu.tsx",
       "type": "copy",
-      "description": "Copy Report button on Analytics page",
+      "description": "Report menu (copy lab report, copy PI report, export CSV, print, refresh) on Lab overview",
       "test_file": "tests/inspection.spec.ts",
-      "test_name": "UX: Copy Report button exists on Analytics",
+      "test_name": "UX: Report menu on Lab overview Team lists the report actions (PI)",
       "covered": true
     },
     {
@@ -1660,11 +1660,11 @@
     },
     {
       "id": "copy-pi-print",
-      "component": "src/pages/portal/PIAnalytics.tsx",
+      "component": "src/components/labops/ReportMenu.tsx",
       "type": "copy",
-      "description": "Print button on PI Analytics",
+      "description": "Print action in the Report menu",
       "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "FEATURE: Print button on PI Analytics",
+      "test_name": "FEATURE: Print action in the Report menu on Lab overview Team",
       "covered": true
     },
     {
@@ -2317,11 +2317,11 @@
     },
     {
       "id": "click-analytics-week-selector",
-      "component": "src/pages/portal/AnalyticsPage.tsx",
+      "component": "src/components/labops/WeekControl.tsx",
       "type": "click",
-      "description": "Analytics weekly date selector",
+      "description": "Lab overview week control (?week=)",
       "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "JOURNEY: Analytics → read metrics",
+      "test_name": "JOURNEY: Pipeline",
       "covered": true
     },
     {
@@ -3001,20 +3001,20 @@
     },
     {
       "id": "analytics-time-range-buttons",
-      "component": "src/pages/portal/AnalyticsPage.tsx",
+      "component": "src/components/labops/TeamBlocks.tsx",
       "type": "interaction",
-      "description": "7d/4w/3m/All time-range filter pills on Analytics",
+      "description": "7d/4w/3m/All time-range filter pills (?range=) on Lab overview",
       "test_file": "tests/inspection.spec.ts",
-      "test_name": "FEATURE: Analytics time-range buttons (7d/4w/3m/All)",
+      "test_name": "FEATURE: Pipeline time-range buttons (7d/4w/3m/All)",
       "covered": true
     },
     {
       "id": "recharts-svg-analytics",
-      "component": "src/pages/portal/AnalyticsPage.tsx",
+      "component": "src/components/labops/PipelineBlocks.tsx",
       "type": "ui",
-      "description": "Recharts SVG chart elements (BarChart, ResponsiveContainer) on Analytics",
+      "description": "Recharts SVG chart elements (BarChart, ResponsiveContainer) on Lab overview Pipeline",
       "test_file": "tests/inspection.spec.ts",
-      "test_name": "FEATURE: Recharts SVG chart elements on /analytics",
+      "test_name": "FEATURE: Recharts SVG chart elements on Lab overview Pipeline",
       "covered": true
     },
     {
@@ -3023,7 +3023,7 @@
       "type": "ui",
       "description": "StatRow sparkline polyline SVG elements",
       "test_file": "tests/inspection.spec.ts",
-      "test_name": "FEATURE: StatRow sparkline polyline elements on /analytics",
+      "test_name": "FEATURE: StatRow sparkline polyline elements on Lab overview Pipeline",
       "covered": true
     },
     {

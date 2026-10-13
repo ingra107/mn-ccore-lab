@@ -879,7 +879,7 @@ function MemberMilestones({ slug }: { slug: string }) {
           count={open.length > 0 ? <>{open.length} upcoming</> : undefined}
           right={<>
             <Link
-              to={PATHS.menteeMilestonesTab}
+              to={PATHS.labMenteesTab}
               style={{ fontSize: '11px', color: 'var(--slate)', textDecoration: 'none' }}
             >
               View all

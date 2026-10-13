@@ -24,8 +24,6 @@ export const PORTAL_PAGE_LABELS: Record<string, string> = {
   [PATHS.meetings]: 'Meetings',
   [PATHS.team]: 'Team',
   [PATHS.activity]: 'Activity',
-  [PATHS.analytics]: 'Analytics',
-  [PATHS.insights]: 'Insights',
   [PATHS.profile]: 'My Profile',
   [PATHS.settings]: 'Settings',
   [PATHS.sessions]: 'Session History',

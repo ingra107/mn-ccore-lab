@@ -2,9 +2,9 @@
 // read the home product plus "+N"; rollups count products by kind and stage;
 // "finished" is status done or every live product terminal.
 import { describe, it, expect } from 'vitest'
-import { compactStageLabel, homeStageText, ladderRampStep, productStageCounts, stageCountLabel } from '../projectStage'
+import { compactStageLabel, homeStageText, stageCountLabel } from '../projectStage'
 import { isProjectFinished } from '../taskConstants'
-import type { ProductKind, ProductRow } from '../products'
+import type { ProductRow } from '../products'
 
 const prd = (id: string, project_id: string, kind: string, stage: string, extra: Partial<ProductRow> = {}): ProductRow => ({
   id, project_id, kind, kind_label: kind === 'manuscript' ? 'Manuscript' : 'Grant application', kind_sort: kind === 'manuscript' ? 10 : 20,
@@ -36,24 +36,10 @@ describe('finished', () => {
   })
 })
 
-describe('rollups count products, by kind and stage', () => {
-  it('counts each product once, kind-qualified, in kind then ladder order, filtered by project', () => {
-    const rows = productStageCounts({
-      a: [prd('p1', 'a', 'grant_application', 'submitted'), prd('p2', 'a', 'manuscript', 'writing', { is_home: 0 })],
-      b: [prd('p3', 'b', 'manuscript', 'writing')],
-      c: [prd('p4', 'c', 'manuscript', 'idea')],
-    }, (id) => id !== 'c')
-    expect(rows.map((r) => [r.kind, r.stage, r.count])).toEqual([
-      ['manuscript', 'writing', 2],
-      ['grant_application', 'submitted', 1],
-    ])
-    expect(stageCountLabel(rows[1])).toBe('Grant application · Submitted')
-  })
-
-  it('ramps a rung by its place on its own ladder', () => {
-    const kinds = [{ kind: 'honor', stages: [{ stage: 'preparing' }, { stage: 'submitted' }, { stage: 'received' }] }] as unknown as ProductKind[]
-    expect(ladderRampStep(kinds, 'honor', 'preparing')).toBe(0)
-    expect(ladderRampStep(kinds, 'honor', 'submitted')).toBe(0.5)
-    expect(ladderRampStep(kinds, 'honor', 'nope')).toBe(0)
+describe('rollup labels', () => {
+  it('qualifies a non-manuscript stage with its kind', () => {
+    const base = { kind_label: 'Manuscript', stage_label: 'Writing' }
+    expect(stageCountLabel({ kind: 'manuscript', ...base })).toBe('Writing')
+    expect(stageCountLabel({ kind: 'grant_application', kind_label: 'Grant application', stage_label: 'Submitted' })).toBe('Grant application · Submitted')
   })
 })

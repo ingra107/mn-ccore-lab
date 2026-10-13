@@ -14,7 +14,6 @@ import {
   DollarSign,
   Users as UsersIcon,
   Activity,
-  BarChart3,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -22,7 +21,6 @@ import {
   ExternalLink,
   Bug,
   History,
-  TrendingUp,
   LayoutGrid,
   Library,
   Star,
@@ -129,8 +127,11 @@ const AVATAR_MENU: MenuLink[] = [
   { to: PATHS.myItems, label: 'My Items', icon: Target },
   { to: PATHS.settings, label: 'Settings', icon: Settings },
   { to: PATHS.activity, label: 'Activity', icon: Activity },
-  { to: PATHS.analytics, label: 'Analytics', icon: BarChart3 },
-  { to: PATHS.insights, label: 'Insights', icon: TrendingUp },
+]
+
+/** A member's way into Lab overview, which the sidebar lists for a PI only. */
+const AVATAR_MEMBER_LAB: MenuLink[] = [
+  { to: PATHS.overview, label: PORTAL_PAGE_LABELS[PATHS.overview], icon: LayoutGrid },
 ]
 
 /** The avatar menu's PI tools group. */
@@ -533,6 +534,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
               }}
             >
               {AVATAR_MENU.map(menuLink)}
+              {!isPi && AVATAR_MEMBER_LAB.map(menuLink)}
               {isPi && (
                 <>
                   <div className="sb-menu-label">PI tools</div>

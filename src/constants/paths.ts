@@ -18,12 +18,15 @@ export const PATHS = {
   // moves to /portal/overview as "Lab Overview."
   dashboard: `${PORTAL_PREFIX}/dashboard`,
   overview: `${PORTAL_PREFIX}/overview`,
-  // Lab Overview's tabs (nav redesign 2026-10-09). The old pages
-  // /portal/pi/analytics, /portal/mentee-milestones and
-  // /portal/deadline-cascade redirect here.
-  piAnalyticsTab: `${PORTAL_PREFIX}/overview?tab=pi-analytics`,
-  menteeMilestonesTab: `${PORTAL_PREFIX}/overview?tab=mentee-milestones`,
-  deadlineCascadeTab: `${PORTAL_PREFIX}/overview?tab=deadline-cascade`,
+  // Lab Overview's tabs (nav redesign 2026-10-09; analytics fold 2026-10-13).
+  // /portal/analytics, /portal/insights, /portal/pi/analytics,
+  // /portal/mentee-milestones and /portal/deadline-cascade redirect here. The
+  // old tab keys pi-analytics, mentee-milestones and deadline-cascade still
+  // open team, mentees and cascade (LabOverviewHost aliases).
+  labTeamTab: `${PORTAL_PREFIX}/overview?tab=team`,
+  labPipelineTab: `${PORTAL_PREFIX}/overview?tab=pipeline`,
+  labMenteesTab: `${PORTAL_PREFIX}/overview?tab=mentees`,
+  labCascadeTab: `${PORTAL_PREFIX}/overview?tab=cascade`,
   myItems: `${PORTAL_PREFIX}/my-items`,
 
   myTasks: `${PORTAL_PREFIX}/my-tasks`,
@@ -58,8 +61,6 @@ export const PATHS = {
   transcriptsTab: `${PORTAL_PREFIX}/meetings?tab=transcripts`,
 
   activity: `${PORTAL_PREFIX}/activity`,
-  analytics: `${PORTAL_PREFIX}/analytics`,
-  insights: `${PORTAL_PREFIX}/insights`,
   sessions: `${PORTAL_PREFIX}/sessions`,
   // My Launches (PI), moved out of the retired My Hub page (2026-10-09).
   launches: `${PORTAL_PREFIX}/launches`,

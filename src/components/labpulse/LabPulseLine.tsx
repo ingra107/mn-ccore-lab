@@ -1,6 +1,6 @@
 // LabPulseLine -- the one quiet line on Today (Nick, 2026-10-11):
 //   Lab pulse · trainees 2.4 pubs/yr ▲ · tasks done in 6 days ▲ · 9 of 14 active ▼2
-// Tapping it opens the Lab pulse section on PI Analytics. PI only: the hooks
+// Tapping it opens the Lab overview Team tab. PI only: the hooks
 // never fire for a member, and the routes would answer them 403 anyway. Gray
 // text; an arrow turns orange only when that number is slipping.
 
@@ -19,10 +19,10 @@ export default function LabPulseLine() {
   if (parts.length === 0) return null
   return (
     <Link
-      to={PATHS.piAnalyticsTab}
+      to={PATHS.labTeamTab}
       className="lab-pulse-line"
       data-testid="lab-pulse-line"
-      title="Open Lab pulse on PI Analytics"
+      title="Open the Team tab on Lab overview"
     >
       <span className="lab-pulse-line-k">Lab pulse</span>
       {parts.map((p) => (
