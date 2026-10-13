@@ -1011,15 +1011,6 @@
       "covered": true
     },
     {
-      "id": "page-render-my-items",
-      "component": "src/pages/MyItems.tsx",
-      "type": "render",
-      "description": "My Items page renders",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "ROUTE: My Items (/my-items) renders",
-      "covered": true
-    },
-    {
       "id": "page-render-pulse",
       "component": "src/pages/Pulse.tsx",
       "type": "render",

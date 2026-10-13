@@ -54,6 +54,8 @@ import { HermesSuggestsCard } from '../../components/today/rail/HermesSuggestsCa
 import { NeedsAttentionCard } from '../../components/today/rail/NeedsAttentionCard'
 import { ProjectsCard } from '../../components/today/rail/ProjectsCard'
 import { PulseCard } from '../../components/today/rail/PulseCard'
+import { NewActivityCard } from '../../components/today/rail/NewActivityCard'
+import { CommitmentsCard } from '../../components/today/rail/CommitmentsCard'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { QuestionsCard } from '../../components/tasks/QuestionsCard'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
@@ -840,6 +842,8 @@ export default function TodayPage() {
       <aside className="b2-rail">
         <HermesSuggestsCard overdueTasks={overdueTasks} stalledProjects={stalledProjects} menteesWithDue={mentees} />
         <NeedsAttentionCard overdueTasks={overdueTasks} stalledProjects={stalledProjects} />
+        <NewActivityCard />
+        <CommitmentsCard />
         <ProjectsCard projects={projectsForRail} />
         <PulseCard focusMin={focusMin} milestones={milestones} mentees={mentees} />
       </aside>

@@ -84,7 +84,7 @@ const CARD_REGISTRY = [
   { id: 'stats', label: 'Quick Stats', component: StatsCard, defaultVisible: true },
   { id: 'team-pulse', label: 'Team Pulse', component: TeamPulseCard, defaultVisible: false },
   { id: 'grants', label: 'Grant Timeline', component: GrantTimelineCard, defaultVisible: false },
-  { id: 'my-items', label: 'My Items', component: MyItemsCard, defaultVisible: false },
+  { id: 'my-items', label: 'Meeting action items', component: MyItemsCard, defaultVisible: false },
   { id: 'clif', label: 'CLIF Network', component: CLIFMiniCard, defaultVisible: false },
   { id: 'topics', label: 'Research Topics', component: TopicBubblesCard, defaultVisible: false },
   { id: 'weekly-progress', label: 'Weekly Progress', component: WeeklyProgressCard, defaultVisible: true },

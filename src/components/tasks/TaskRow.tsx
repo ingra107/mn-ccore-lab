@@ -636,7 +636,7 @@ function StandardRow(props: SharedTaskRowProps) {
 
   // Attention chip right after the title — gold ✦ NEW (assignment) wins over
   // teal ● n NEW (conversation); both render through the shared AttentionChip
-  // so the styling matches the sidebar badge, ✦ New filter, and My Items.
+  // so the styling matches the sidebar badge, ✦ New filter, and the Today New activity card.
   const newChip = isNewToViewer ? (
     <AttentionChip kind="new" style={{ marginLeft: 6 }} />
   ) : activityRow ? (

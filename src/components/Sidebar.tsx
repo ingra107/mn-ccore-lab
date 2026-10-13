@@ -25,7 +25,6 @@ import {
   Library,
   Star,
   LogOut,
-  Target,
   Zap,
   Video,
 } from 'lucide-react'
@@ -120,11 +119,9 @@ const PI_NAV: NavItem[] = [
 
 interface MenuLink { to: string; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number; absoluteStrokeWidth?: boolean }> }
 
-/** The avatar menu, everyone (Nick's list, plus My Items, which the old
- *  avatar link opened and which has no other sidebar entry). */
+/** The avatar menu, everyone (Nick's list). */
 const AVATAR_MENU: MenuLink[] = [
   { to: PATHS.profile, label: 'My Profile', icon: User },
-  { to: PATHS.myItems, label: 'My Items', icon: Target },
   { to: PATHS.settings, label: 'Settings', icon: Settings },
   { to: PATHS.activity, label: 'Activity', icon: Activity },
 ]
@@ -245,11 +242,11 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           bg: 'var(--job-wants)',
           // --job-wants-fg flips with --job-wants (dark ink on the bright dark-mode gold, white on the light-mode gold).
           color: 'var(--job-wants-fg)',
-          title: `${myUnseen} task${myUnseen === 1 ? '' : 's'} you haven't opened yet — click to triage in My Items`,
+          title: `${myUnseen} task${myUnseen === 1 ? '' : 's'} you haven't opened yet — click to triage in My Tasks`,
         },
         badgeAction: {
-          navigateTo: PATHS.myItems,
-          ariaLabel: `${myUnseen} new task${myUnseen === 1 ? '' : 's'} — open My Items`,
+          navigateTo: `${PATHS.myTasks}?filter=new`,
+          ariaLabel: `${myUnseen} new task${myUnseen === 1 ? '' : 's'} — open My Tasks`,
         },
       }
     if (item.to === PATHS.meetings) {
@@ -311,7 +308,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           <span
             className="ml-auto text-xs px-1.5 py-0.5 rounded-full"
             // The My Tasks badge is its OWN click target (Nick 2026-06-11): the
-            // count opens My Items "New for You", the row opens Tasks.
+            // count opens My Tasks with the New filter, the row opens Tasks.
             title={item.badgeStyle?.title}
             role={item.badgeAction ? 'link' : undefined}
             tabIndex={item.badgeAction ? 0 : undefined}
@@ -515,7 +512,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           <BugReportModal open={showBugReport} onClose={() => setShowBugReport(false)} />
         </Suspense>
 
-        {/* Avatar menu: My Profile, My Items, Settings, Activity, Analytics,
+        {/* Avatar menu: My Profile, Settings, Activity, Analytics,
             Insights, PI tools (Session History, My Launches), Back to website,
             Sign out. Opens upward. */}
         <div ref={menuRef} className="relative">

@@ -1245,7 +1245,7 @@ a:hover {
 
 /* ── Section heads by weight (color back pick 3, Nick 2026-10-11) ──
    Bold head, dim count, a short gray hairline that fades out. Replaces the
-   teal tick on Today and the gold rule on My Items. ONE rule draws the fade:
+   teal tick on Today and the old gold rule on the retired My Items page. ONE rule draws the fade:
    .sk-hd (ui/SectionHead.tsx) carries it as ::after, Today's collapsible
    heads (.tk-ctog) the same way, and .sk-fade is the element form for a
    head that cannot take the class. Gray only: the line has no job to color. */

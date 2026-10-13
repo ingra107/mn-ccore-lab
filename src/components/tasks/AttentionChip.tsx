@@ -1,5 +1,5 @@
 // AttentionChip — THE rendering for the two attention signals (one place to
-// style them; TaskRow, MyTasks ListView, and My Items all render through it).
+// style them; TaskRow, MyTasks ListView, and the Today New activity card all render through it).
 //
 //   kind='new'      → gold ✦ New   — assigned to you, never opened
 //                     (tasks.acknowledged_at IS NULL; auto-ack clears it).

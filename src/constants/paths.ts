@@ -27,7 +27,6 @@ export const PATHS = {
   labPipelineTab: `${PORTAL_PREFIX}/overview?tab=pipeline`,
   labMenteesTab: `${PORTAL_PREFIX}/overview?tab=mentees`,
   labCascadeTab: `${PORTAL_PREFIX}/overview?tab=cascade`,
-  myItems: `${PORTAL_PREFIX}/my-items`,
 
   myTasks: `${PORTAL_PREFIX}/my-tasks`,
   tasks: `${PORTAL_PREFIX}/tasks`,

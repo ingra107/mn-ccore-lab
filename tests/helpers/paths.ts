@@ -18,7 +18,6 @@ export const P = {
   personal: '/portal/dashboard',
   library: '/portal/library',
   launches: '/portal/launches',
-  myItems: '/portal/my-items',
   myTasks: '/portal/my-tasks',
   myTasksLegacy: '/portal/my-tasks-legacy',
   tasks: '/portal/tasks',

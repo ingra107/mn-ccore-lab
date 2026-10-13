@@ -20,7 +20,7 @@ const HEADERS = { 'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod' }
 // mentee-milestones, deadline-cascade) and routes with params (projects/:slug,
 // artifacts/:id, meetings/:id, meetings/:id/prep, team/:slug, team/:slug/trajectory).
 const ROUTES = [
-  'dashboard', 'overview', 'my-items', 'my-tasks', 'calendar', 'deadlines',
+  'dashboard', 'overview', 'my-tasks', 'calendar', 'deadlines',
   'projects', 'library', 'manuscripts', 'ask', 'decisions', 'narratives',
   'search', 'grants', 'meetings', 'activity', 'analytics', 'insights',
   'sessions', 'launches', 'settings', 'profile', 'team',
