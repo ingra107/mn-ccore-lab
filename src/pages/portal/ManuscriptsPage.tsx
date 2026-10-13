@@ -435,6 +435,15 @@ export default function ManuscriptsPage() {
         // Trophy shows only the published ones, so it counts those.
         controlsCount={kindTab !== 'manuscript' ? kindRows.length : view === 'trophy' ? manuscripts.length - activeCount : manuscripts.length}
         controlsCountLabel={kindTab === 'all' ? 'products' : kindTab !== 'manuscript' ? kindLabel.toLowerCase() : view === 'trophy' ? 'published' : 'manuscripts'}
+        railLabel="Manuscripts side panel"
+        rail={!isLoading && kindTab === 'manuscript' && view === 'list' ? (
+          <>
+            {/* T-29: Needs your attention. M-12 (D25): Active submissions. */}
+            <NeedsAttentionDashboard compact filter={attentionFilter} onFilterChange={setAttentionFilter} />
+            <ActiveSubmissionsWidget compact />
+            <StageTally manuscripts={manuscripts} stages={STAGES} stageLabels={STAGE_LABELS} stalledCount={stalledCount} />
+          </>
+        ) : undefined}
         isLoading={isLoading || productsLoading}
         skeletonRows={6}
         skeletonCols={5}
@@ -446,11 +455,10 @@ export default function ManuscriptsPage() {
               </div>
             )}
             {/* T-29: Needs your attention — three-subgroup triage. */}
-            {!isLoading && kindTab === 'manuscript' && (
+            {/* The List view carries it in the right rail (s79); Pipeline and Trophy stay full width. */}
+            {!isLoading && kindTab === 'manuscript' && view !== 'list' && (
               <NeedsAttentionDashboard filter={attentionFilter} onFilterChange={setAttentionFilter} />
             )}
-            {/* M-12 (D25): Active submissions — list view only. */}
-            {!isLoading && kindTab === 'manuscript' && view === 'list' && <ActiveSubmissionsWidget />}
             {productsFailed && (
               <div role="alert" data-testid="manuscripts-products-error">
                 <QueryErrorNote label="product stages, which list the manuscripts" onRetry={() => { void refetchProducts() }} />
@@ -506,39 +514,6 @@ export default function ManuscriptsPage() {
                 subtitle="Manuscripts in the pipeline show up here, grouped by stage — from first draft to published."
               />
             )}
-
-            {/* The stage tally under the rows */}
-            {manuscripts.length > 0 && (() => {
-              const stageCounts = manuscripts.reduce<Record<string, number>>((acc, p) => {
-                const stage = p.stage || 'idea'
-                acc[stage] = (acc[stage] || 0) + 1
-                return acc
-              }, {})
-              const publishedCount = stageCounts['published'] || 0
-              const stats = [
-                { label: 'Total', value: manuscripts.length },
-                ...STAGES.filter(s => s !== 'published' && stageCounts[s]).map(s => ({
-                  label: STAGE_LABELS[s],
-                  value: stageCounts[s],
-                })),
-                ...(publishedCount > 0 ? [{ label: 'Published', value: publishedCount }] : []),
-              ]
-              return (
-                <div className="sr-foot" style={{ flexWrap: 'wrap', padding: '10px 10px 4px', marginTop: 8, boxShadow: '0 -1px 0 var(--sk-line)' }}>
-                  {stats.map(s => (
-                    <span key={s.label}>
-                      {s.label}{' '}
-                      <b style={{ fontWeight: 600, color: 'var(--sk-t2)' }}>{s.value}</b>
-                    </span>
-                  ))}
-                  {stalledCount > 0 && (
-                    <span style={{ color: 'var(--job-stale)', marginLeft: 'auto' }}>
-                      {stalledCount} stalled
-                    </span>
-                  )}
-                </div>
-              )
-            })()}
           </div>
         )}
 
@@ -676,6 +651,45 @@ export default function ManuscriptsPage() {
 // ───────────────────────────────────────────────────────────────────────
 
 type StageKey = string
+
+// The stage tally (was a footer under the rows; s79: a block in the right rail).
+function StageTally({ manuscripts, stages, stageLabels, stalledCount }: {
+  manuscripts: ManuscriptRow[]
+  stages: string[]
+  stageLabels: Record<string, string>
+  stalledCount: number
+}) {
+  if (manuscripts.length === 0) return null
+  const counts = manuscripts.reduce<Record<string, number>>((acc, p) => {
+    const stage = p.stage || 'idea'
+    acc[stage] = (acc[stage] || 0) + 1
+    return acc
+  }, {})
+  const rows = [
+    ...stages.filter((st) => st !== 'published' && counts[st]).map((st) => ({ label: stageLabels[st], value: counts[st] })),
+    ...(counts['published'] ? [{ label: 'Published', value: counts['published'] }] : []),
+  ]
+  return (
+    <section aria-label="Stage tally" data-testid="manuscripts-stage-tally">
+      <h2 style={{ fontWeight: 600, fontSize: '14px', color: 'var(--ink)', margin: '0 0 6px' }}>By stage</h2>
+      <dl style={{ margin: 0, fontSize: 'var(--value-size)' }}>
+        {rows.map((r) => (
+          <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', color: 'var(--sk-t2)' }}>
+            <dt>{r.label}</dt>
+            <dd style={{ margin: 0, fontWeight: 600 }}>{r.value}</dd>
+          </div>
+        ))}
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0 0', marginTop: 4, boxShadow: '0 -1px 0 var(--sk-line)', color: 'var(--sk-t2)' }}>
+          <dt>Total</dt>
+          <dd style={{ margin: 0, fontWeight: 600 }}>{manuscripts.length}</dd>
+        </div>
+      </dl>
+      {stalledCount > 0 && (
+        <p style={{ margin: '6px 0 0', fontSize: 'var(--label-size)', color: 'var(--job-stale)' }}>{stalledCount} stalled</p>
+      )}
+    </section>
+  )
+}
 
 function PipelineCard({ project, dragging }: { project: ManuscriptRow; dragging?: boolean }) {
   const pi = piDisplay(project.pi)

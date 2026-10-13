@@ -29,7 +29,7 @@ const EVENT_LABEL: Record<SubmissionEventType, string> = {
   withdrawn: 'Withdrawn',
 }
 
-function MiniCard({ row }: { row: ActiveSubmissionRow }) {
+function MiniCard({ row, compact = false }: { row: ActiveSubmissionRow; compact?: boolean }) {
   const slug = row.project_slug || row.project_id
   const href = slug ? `${PATHS.project(slug)}?tab=revisions` : PATHS.manuscripts
   const status = EVENT_LABEL[row.latest_event_type] || row.latest_event_type
@@ -48,8 +48,8 @@ function MiniCard({ row }: { row: ActiveSubmissionRow }) {
       className="active-submission-card"
       style={{
         flexShrink: 0,
-        minWidth: '220px',
-        maxWidth: '260px',
+        minWidth: compact ? 0 : '220px',
+        maxWidth: compact ? 'none' : '260px',
         padding: '10px 12px',
         borderRadius: 'var(--radius-lg)',
         border: '1px solid var(--border-subtle)',
@@ -103,13 +103,14 @@ function MiniCard({ row }: { row: ActiveSubmissionRow }) {
   )
 }
 
-export default function ActiveSubmissionsWidget() {
+/** `compact`: the Manuscripts rail. Cards stack in one column instead of scrolling sideways. */
+export default function ActiveSubmissionsWidget({ compact = false }: { compact?: boolean } = {}) {
   const { data, isLoading } = useActiveSubmissions()
   if (isLoading) return null
   const rows = data ?? []
 
   return (
-    <div style={{ marginBottom: '1.25rem' }}>
+    <div style={{ marginBottom: compact ? 0 : '1.25rem' }}>
       <div className="flex items-center gap-2 mb-2">
         <Send {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
         <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
@@ -134,7 +135,7 @@ export default function ActiveSubmissionsWidget() {
       ) : (
         <div
           className="active-submissions-scroller"
-          style={{
+          style={compact ? { display: 'flex', flexDirection: 'column', gap: '8px' } : {
             display: 'flex',
             gap: '10px',
             overflowX: 'auto',
@@ -144,10 +145,10 @@ export default function ActiveSubmissionsWidget() {
         >
           {rows.map((row) => (
             <div key={row.id} style={{ scrollSnapAlign: 'start' }}>
-              <MiniCard row={row} />
+              <MiniCard row={row} compact={compact} />
             </div>
           ))}
-          {rows.length >= 4 && (
+          {!compact && rows.length >= 4 && (
             <Link
               to={PATHS.manuscripts}
               style={{

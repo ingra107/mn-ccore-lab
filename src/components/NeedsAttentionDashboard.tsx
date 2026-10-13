@@ -15,6 +15,8 @@ export type AttentionFilter = 'revisions-overdue' | 'awaiting-review' | 'stale-d
 interface Props {
   filter: AttentionFilter
   onFilterChange: (next: AttentionFilter) => void
+  /** Rail variant (298px): stacked rows, smaller head, no outer margin. */
+  compact?: boolean
 }
 
 const LS_COLLAPSED = 'manuscripts.attention.collapsed'
@@ -39,7 +41,7 @@ const SUBGROUPS: Array<{
  * empty siblings are skipped entirely (not rendered as zero-state rows).
  * Section-level collapse persists in localStorage.
  */
-export default function NeedsAttentionDashboard({ filter, onFilterChange }: Props) {
+export default function NeedsAttentionDashboard({ filter, onFilterChange, compact = false }: Props) {
   const { prefs } = useLabPrefs()
   const { data, isLoading } = useManuscriptsAttention({
     reviewDays: prefs.manuscriptsReviewDays,
@@ -88,7 +90,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange }: Prop
   if (total === 0) {
     return (
       <div
-        className="mb-4 flex items-center gap-2 px-3 py-1.5"
+        className={`${compact ? '' : 'mb-4 '}flex items-center gap-2 px-3 py-1.5`}
         style={{
           fontSize: '12px', color: 'var(--muted)',
           borderRadius: 'var(--radius-md)', background: 'var(--surface-2)',
@@ -118,11 +120,11 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange }: Prop
   }
 
   return (
-    <div style={{ marginBottom: '1.5rem' }}>
+    <div style={{ marginBottom: compact ? 0 : '1.5rem' }}>
       {/* Section header with count + section collapse */}
       <div className="flex items-center gap-2 mb-3">
         <AlertTriangle {...ICON_PROPS} size={16} style={{ color: 'var(--job-wants)' }} />
-        <h2 style={{ fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+        <h2 style={{ fontWeight: 600, fontSize: compact ? '14px' : '16px', color: 'var(--ink)', margin: 0 }}>
           Needs your attention
         </h2>
         <CountBadge n={total} />
@@ -224,7 +226,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange }: Prop
                       transition={{ duration: 0.15, ease: 'easeOut' }}
                       style={{ overflow: 'hidden' }}
                     >
-                      {rows(g.key).map((r) => renderRow(g.key, r))}
+                      {rows(g.key).map((r) => renderRow(g.key, r, compact))}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -279,7 +281,12 @@ function CountBadge({ n }: { n: number }) {
   )
 }
 
-function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
+// Compact rows (the Manuscripts rail): the title takes a full line, the rest
+// wraps under it. The wide grid templates need 600px+.
+const FULL_LINE = { flexBasis: '100%' } as const
+const COMPACT_ROW = 'flex flex-wrap gap-y-0.5 py-2 px-4'
+
+function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow, compact = false) {
   const slug = r.project_slug || r.project_id
   const href = slug
     ? (kind === 'stale-drafts' ? PATHS.project(slug) : `${PATHS.project(slug)}?tab=revisions`)
@@ -292,7 +299,7 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
       <Link
         key={r.id}
         to={href}
-        className="grid grid-cols-1 gap-y-0.5 py-2 pl-4 pr-4 sm:pl-9 sm:grid-cols-[minmax(180px,1fr)_70px_110px_130px] sm:gap-y-0"
+        className={compact ? COMPACT_ROW : 'grid grid-cols-1 gap-y-0.5 py-2 pl-4 pr-4 sm:pl-9 sm:grid-cols-[minmax(180px,1fr)_70px_110px_130px] sm:gap-y-0'}
         style={{
           borderTop: '1px solid var(--border-subtle)',
           textDecoration: 'none',
@@ -302,7 +309,7 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
           alignItems: 'center',
         }}
       >
-        <span style={{ color: 'var(--ink)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ color: 'var(--ink)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...(compact ? FULL_LINE : null) }}>
           {r.project_title || r.project_id}
         </span>
         <span style={{ color: 'var(--muted)' }}>R{r.round ?? ''}</span>
@@ -321,7 +328,7 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
       <Link
         key={r.id}
         to={href}
-        className="grid grid-cols-1 gap-y-0.5 py-2 pl-4 pr-4 sm:pl-9 sm:grid-cols-[minmax(180px,1fr)_minmax(180px,2fr)_80px] sm:gap-y-0"
+        className={compact ? COMPACT_ROW : 'grid grid-cols-1 gap-y-0.5 py-2 pl-4 pr-4 sm:pl-9 sm:grid-cols-[minmax(180px,1fr)_minmax(180px,2fr)_80px] sm:gap-y-0'}
         style={{
           borderTop: '1px solid var(--border-subtle)',
           textDecoration: 'none',
@@ -331,10 +338,10 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
           alignItems: 'center',
         }}
       >
-        <span style={{ color: 'var(--ink)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ color: 'var(--ink)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...(compact ? FULL_LINE : null) }}>
           {r.project_title || r.project_id}
         </span>
-        <span style={{ color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...(compact ? FULL_LINE : null) }}>
           {snippet}
         </span>
         <span style={{ color: 'var(--job-stale)', fontWeight: 500 }}>
@@ -351,7 +358,7 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
   // ("In preparation") says nothing, so leave it blank.
   const jl = (r.journal ?? '').trim().toLowerCase()
   const journal = jl && jl !== 'in preparation' && jl !== (r.status ?? '').trim().toLowerCase() ? (r.journal ?? '') : ''
-  const rowClass = 'grid grid-cols-1 gap-y-0.5 py-2 pl-4 pr-4 sm:pl-9 sm:grid-cols-[minmax(220px,2fr)_minmax(120px,1fr)_110px] sm:gap-y-0'
+  const rowClass = compact ? COMPACT_ROW : 'grid grid-cols-1 gap-y-0.5 py-2 pl-4 pr-4 sm:pl-9 sm:grid-cols-[minmax(220px,2fr)_minmax(120px,1fr)_110px] sm:gap-y-0'
   const rowStyle = {
     borderTop: '1px solid var(--border-subtle)',
     textDecoration: 'none',
@@ -362,7 +369,7 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
   } as const
   const cells = (
     <>
-      <span style={{ color: 'var(--ink)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span style={{ color: 'var(--ink)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...(compact ? FULL_LINE : null) }}>
         {r.title || 'Untitled'}
       </span>
       <span style={{ color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

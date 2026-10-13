@@ -23,6 +23,7 @@ import PageHeader from './PageHeader'
 import type { HeroNumberProps } from './moments/HeroNumber'
 import TableControls from './table/TableControls'
 import { TableSkeleton } from './LoadingSkeleton'
+import PageWithRail from './PageWithRail'
 import EmptyState from './EmptyState'
 import EmptyStateArt, { type EmptyArtVariant } from './EmptyStateArt'
 
@@ -82,6 +83,10 @@ interface DataPageProps {
     action?: { label: string; onClick: () => void }
   }
 
+  /** A right rail beside the body (PageWithRail). Absent = the body alone at --col-main. */
+  rail?: ReactNode
+  railLabel?: string
+
   /** The page's rendered table/board/grid. */
   children?: ReactNode
 }
@@ -107,6 +112,8 @@ export default function DataPage({
   skeletonCols = 5,
   isEmpty,
   empty,
+  rail,
+  railLabel = 'Side panel',
   children,
 }: DataPageProps) {
   const showControls =
@@ -139,7 +146,7 @@ export default function DataPage({
       <div className="content-container">
         {/* Header + controls share the body's --col-main cap so their right
             edge lines up with the table (wideBody pages keep the full band). */}
-        <div style={wideBody ? undefined : { maxWidth: 'var(--col-main)' }}>
+        <div style={wideBody ? undefined : { maxWidth: rail ? 'calc(var(--col-main) - 28px)' : 'var(--col-main)' }}>
         <PageHeader title={title} count={count} hero={hero} subtitle={subtitle} actions={actions}>
           {showControls && (
             <TableControls
@@ -161,7 +168,9 @@ export default function DataPage({
             a sibling full-width wrapper below (it can't be both inside the
             --content-band AND fluid past it), so only the non-wide body sits
             here. */}
-        {!wideBody && <div style={{ maxWidth: 'var(--col-main)' }}>{body}</div>}
+        {!wideBody && (rail
+          ? <PageWithRail railLabel={railLabel} rail={rail} testId="data-page-grid" railTestId="data-page-rail">{body}</PageWithRail>
+          : <div style={{ maxWidth: 'var(--col-main)' }}>{body}</div>)}
       </div>
 
       {/* Anchored-wide body: .band-anchored-wide shares .content-container's
