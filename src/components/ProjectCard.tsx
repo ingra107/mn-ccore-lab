@@ -21,16 +21,12 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2 }}
-      className="project-card"
+      className="project-card sk-mat"
       style={{
-        // Recipe A: .project-card has no base lift — lift cream→surface-2 so
-        // the kanban card reads above the dark page bg (shadow-card = the edge).
-        background: 'var(--surface-2)',
         borderRadius: 'var(--radius-lg)',
         padding: 'var(--sp-lg)',
         cursor: 'pointer',
-        boxShadow: 'var(--shadow-card)',
-        transition: 'box-shadow 0.2s ease, background 0.15s ease',
+        transition: 'box-shadow 0.2s ease',
       }}
     >
       {/* Title with category icon */}

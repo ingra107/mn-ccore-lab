@@ -248,12 +248,12 @@ export default function ArtifactPage() {
                 role="menu"
                 style={{
                   position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 20, minWidth: 280,
-                  background: 'var(--cream)', border: '1px solid var(--border-subtle)',
+                  background: 'var(--cream)', border: '1px solid var(--sk-line2)',
                   borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg, 0 8px 24px rgba(0,0,0,0.15))',
                   padding: '8px', maxHeight: 320, overflowY: 'auto',
                 }}
               >
-                <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--slate)', opacity: 0.7, padding: '4px 8px' }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--sk-t2)', padding: '4px 8px' }}>
                   Version history
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--ink)', padding: '6px 8px', borderRadius: 'var(--radius-md)', background: 'var(--sk-line)' }}>
@@ -297,8 +297,8 @@ export default function ArtifactPage() {
           <button
             type="button"
             onClick={copyMarkdown}
-            className="inline-flex items-center gap-1 cursor-pointer"
-            style={{ fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 'var(--radius-full)', background: 'var(--surface-2, rgba(100,116,139,0.12))', color: 'var(--slate)', border: '1px solid var(--border-subtle)', marginLeft: 'auto' }}
+            className="tk-btn tk-sm"
+            style={{ marginLeft: 'auto' }}
           >
             <Copy {...ICON_PROPS} size={11} /> Copy markdown
           </button>
@@ -315,8 +315,7 @@ export default function ArtifactPage() {
               a.click()
               URL.revokeObjectURL(a.href)
             }}
-            className="inline-flex items-center gap-1 cursor-pointer"
-            style={{ fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 'var(--radius-full)', background: 'var(--surface-2, rgba(100,116,139,0.12))', color: 'var(--slate)', border: '1px solid var(--border-subtle)' }}
+            className="tk-btn tk-sm"
           >
             <Send {...ICON_PROPS} size={11} /> Download .md
           </button>
@@ -370,7 +369,7 @@ export default function ArtifactPage() {
                     placeholder="add tag…"
                     style={{
                       fontSize: 11, width: 120, padding: '3px 8px', borderRadius: 'var(--radius-full)',
-                      border: '1px solid var(--border-subtle)', background: 'var(--cream)', color: 'var(--ink)',
+                      border: '1px solid var(--field-edge)', background: 'var(--cream)', color: 'var(--ink)',
                     }}
                   />
                   <datalist id="artifact-tag-suggestions">
@@ -381,12 +380,8 @@ export default function ArtifactPage() {
                     onClick={handleAddTag}
                     disabled={!tagInput.trim() || addTag.isPending}
                     aria-label="Add tag"
-                    className="inline-flex items-center cursor-pointer"
-                    style={{
-                      fontSize: 11, padding: '3px 8px', borderRadius: 'var(--radius-full)',
-                      background: 'var(--surface-2, rgba(100,116,139,0.12))', color: 'var(--slate)',
-                      border: '1px solid var(--border-subtle)', opacity: tagInput.trim() ? 1 : 0.5,
-                    }}
+                    className="tk-btn tk-sm"
+                    style={{ opacity: tagInput.trim() ? 1 : 0.5 }}
                   >
                     <Plus {...ICON_PROPS} size={11} />
                   </button>
@@ -450,7 +445,7 @@ export default function ArtifactPage() {
                 placeholder="Comment, or ask @hermes to revise this document based on the discussion (⌘⏎ to post)"
                 style={{
                   width: '100%', resize: 'vertical', fontSize: 13, lineHeight: 1.5,
-                  border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-md)',
                   padding: '8px 10px', background: 'var(--cream)', color: 'var(--ink)', fontFamily: 'var(--font-body)',
                 }}
               />
@@ -458,15 +453,9 @@ export default function ArtifactPage() {
                 <button
                   type="button"
                   onClick={() => setAuthorOnly((v) => !v)}
-                  className="inline-flex items-center gap-1 cursor-pointer"
+                  className={`tk-btn tk-sm${authorOnly ? ' tk-sel' : ''}`}
                   aria-pressed={authorOnly ? 'true' : 'false'}
                   title="Only you will see this comment"
-                  style={{
-                    fontSize: 10, padding: '3px 8px', borderRadius: 'var(--radius-full)',
-                    background: authorOnly ? 'var(--surface-2, rgba(100,116,139,0.15))' : 'transparent',
-                    color: 'var(--slate)', border: '1px solid var(--border-subtle)',
-                    opacity: authorOnly ? 1 : 0.7,
-                  }}
                 >
                   <Lock {...ICON_PROPS} size={9} /> {authorOnly ? 'Only you' : 'Visible to team'}
                 </button>
@@ -478,8 +467,6 @@ export default function ArtifactPage() {
                   style={{
                     marginLeft: 'auto', gap: '4px', fontSize: 12, fontWeight: 500, padding: '5px 14px',
                     borderRadius: 'var(--radius-md)',
-                    background: comment.trim() ? 'var(--job-accent)' : 'var(--surface-2, rgba(100,116,139,0.2))',
-                    color: comment.trim() ? 'var(--sk-card)' : 'var(--slate)',
                     cursor: comment.trim() ? 'pointer' : 'not-allowed', opacity: postComment.isPending ? 0.7 : 1,
                   }}
                 >

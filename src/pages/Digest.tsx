@@ -227,13 +227,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
               {topics.map((topic) => (
                 <span
                   key={topic}
-                  className="inline-block rounded-full px-2 py-0.5 text-xs"
-                  style={{
-                    fontSize: '10px',
-                    background: 'var(--ice)',
-                    color: 'var(--slate)',
-                    border: '1px solid var(--border-subtle)',
-                  }}
+                  className="tk-tag tk-n"
                 >
                   {topic}
                 </span>
@@ -246,11 +240,9 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
             <div className="flex items-center gap-1.5 mb-2">
               <span
                 style={{
-                  fontSize: '10px',
+                  fontSize: '11px',
                   color: 'var(--slate)',
                   opacity: 'var(--ink-label)',
-                  textTransform: 'uppercase' as const,
-                  letterSpacing: '0.05em',
                 }}
               >
                 Relevant for
@@ -443,7 +435,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                   top: '100%',
                   marginTop: '4px',
                   background: 'var(--cream)',
-                  border: '1px solid var(--border-subtle)',
+                  border: '1px solid var(--sk-line2)',
                   borderRadius: 'var(--radius-lg)',
                   boxShadow: 'var(--shadow-menu)',
                   minWidth: '220px',
@@ -456,9 +448,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                 <div
                   style={{
                     padding: 'var(--sp-sm) var(--sp-md) var(--sp-xs)',
-                    fontSize: '10px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
+                    fontSize: '11px',
                     color: 'var(--slate)',
                     opacity: 'var(--ink-label)',
                   }}
@@ -554,8 +544,8 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
               placeholder="Add a note..."
               className="flex-1 text-xs sm:text-sm px-3 py-1.5 rounded-md"
               style={{
-                background: 'var(--surface-1)',
-                border: '1px solid var(--border-subtle)',
+                background: 'var(--cream)',
+                border: '1px solid var(--field-edge)',
                 color: 'var(--ink)',
                 outline: 'none',
               }}
@@ -835,8 +825,8 @@ export default function Digest() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by title, author, or journal..."
-              className="w-full max-w-md rounded-md border px-3 py-2 pl-9 text-xs outline-none"
-              style={{ color: 'var(--ink)', borderColor: 'var(--field-edge)', backgroundColor: 'var(--cream, white)' }}
+              className="w-full max-w-md rounded-md px-3 py-2 pl-9 text-xs outline-none"
+              style={{ color: 'var(--ink)', border: '1px solid var(--field-edge)', backgroundColor: 'var(--cream, white)' }}
             />
           </div>
 
@@ -886,8 +876,7 @@ export default function Digest() {
                   }).join('\n\n')
                   navigator.clipboard.writeText(bib)
                 }}
-                className="flex items-center gap-1 text-[11px] px-2 py-1 rounded transition-colors"
-                style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', opacity: 0.85 }}
+                className="tk-btn tk-sm"
                 title="Copy saved papers as bibliography"
               >
                 <Copy {...ICON_PROPS} size={10} />
@@ -927,14 +916,7 @@ export default function Digest() {
               {topicFilter && (
                 <button
                   onClick={() => setTopicFilter(null)}
-                  className="cursor-pointer rounded-full px-2.5 py-1 text-xs"
-                  style={{
-                    fontSize: '10px',
-                    background: 'transparent',
-                    color: 'var(--slate)',
-                    border: '1px solid var(--border-subtle)',
-                    transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out)',
-                  }}
+                  className="tk-btn tk-sm"
                 >
                   Clear filter
                 </button>

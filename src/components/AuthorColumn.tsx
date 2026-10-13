@@ -44,7 +44,7 @@ function BlankFace() {
         alignItems: 'center',
         justifyContent: 'center',
         background: 'var(--ice)',
-        border: '1px solid var(--border-subtle)',
+        border: '1px solid var(--sk-line2)',
         color: 'var(--slate)',
         opacity: 0.55,
         flexShrink: 0,

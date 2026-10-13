@@ -115,17 +115,7 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
       maxWidth="lg"
       footer={
         <>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-md text-sm transition-colors"
-            style={{
-              color: 'var(--slate)',
-              cursor: 'pointer',
-              background: 'none',
-              border: '1px solid var(--border-subtle)',
-            }}
-          >
+          <button type="button" onClick={onClose} className="tk-btn">
             Cancel
           </button>
           <button

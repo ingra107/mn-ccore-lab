@@ -33,7 +33,6 @@ import { Star, ChevronUp, ChevronDown, X, Plus, Check } from 'lucide-react'
 import type { Publication } from '../data/types'
 import PublicationCard from './PublicationCard'
 import { ICON_PROPS } from '../lib/iconProps'
-import { withAlpha } from '../lib/taskGrouping'
 import { useMemberFeaturedPublications } from '../hooks/useApiData'
 import { useSetMemberFeaturedPublications } from '../hooks/useMutations'
 
@@ -284,18 +283,7 @@ export default function MemberFeaturedPublications({
               type="button"
               disabled={save.isPending}
               onClick={saveDraft}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                fontSize: 'var(--text-small)',
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-subtle)',
-                background: withAlpha('var(--sk-t1)', 5),
-                color: 'var(--ink)',
-                cursor: save.isPending ? 'default' : 'pointer',
-              }}
+              className="tk-btn tk-sm"
             >
               <Check {...ICON_PROPS} size={14} />
               {save.isPending ? 'Saving…' : 'Save'}
@@ -304,15 +292,7 @@ export default function MemberFeaturedPublications({
               type="button"
               disabled={save.isPending}
               onClick={() => setEditing(false)}
-              style={{
-                fontSize: 'var(--text-small)',
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-subtle)',
-                background: 'none',
-                color: 'var(--slate)',
-                cursor: save.isPending ? 'default' : 'pointer',
-              }}
+              className="tk-btn tk-sm"
             >
               Cancel
             </button>

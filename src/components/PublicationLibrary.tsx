@@ -86,7 +86,7 @@ export default function PublicationLibrary({ publications }: PublicationLibraryP
                     height: '260px',
                     scrollSnapAlign: 'start',
                     background: `linear-gradient(135deg, var(--ice) 0%, color-mix(in srgb, ${accent} 8%, var(--ice)) 100%)`,
-                    border: '1px solid var(--border-subtle)',
+                    border: '1px solid var(--sk-line)',
                     padding: '16px 14px',
                     display: 'flex',
                     flexDirection: 'column',
@@ -123,8 +123,6 @@ export default function PublicationLibrary({ publications }: PublicationLibraryP
                       fontSize: '10px',
                       fontWeight: 600,
                       color: accent,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
                       marginBottom: '8px',
                       lineHeight: 1.3,
                     }}

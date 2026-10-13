@@ -68,14 +68,15 @@ describe('CreateProjectModal category options', () => {
     expect(defaultCat).not.toBe('lab')
   })
 
-  it('MNCCORE option has teal color token', () => {
+  // A category is a label, not a meaning (rules-ui-design 21): MNCCORE and CLIF read gray.
+  it('MNCCORE option has the gray ramp token', () => {
     const cat = CATEGORIES_BASE.find((c) => c.value === 'MNCCORE')
-    expect(cat?.color).toBe('var(--teal)')
+    expect(cat?.color).toBe('var(--sk-t3)')
   })
 
-  it('CLIF option has maroon color token', () => {
+  it('CLIF option has the gray ramp token', () => {
     const cat = CATEGORIES_BASE.find((c) => c.value === 'CLIF')
-    expect(cat?.color).toBe('var(--maroon)')
+    expect(cat?.color).toBe('var(--sk-t3)')
   })
 
   it('Peripheral Brain option has slate color token', () => {

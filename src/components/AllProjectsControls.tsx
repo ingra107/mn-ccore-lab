@@ -59,7 +59,6 @@ export function AllProjectsBanner() {
       style={{
         fontSize: 'var(--value-size)',
         color: 'var(--ink)',
-        border: '1px solid var(--border-subtle)',
         background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
       }}
     >

@@ -38,8 +38,8 @@ export default function RegulatoryExpiringList() {
       id="regulatory"
       data-testid="regulatory-expiring"
       aria-label="Regulatory items expiring within 60 days"
-      className="rounded-xl border"
-      style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)', marginTop: 'var(--sp-md)', scrollMarginTop: 72 }}
+      className="rounded-xl sk-mat"
+      style={{ marginTop: 'var(--sp-md)', scrollMarginTop: 72 }}
     >
       <div className="flex items-center gap-2 px-4 pt-3 pb-2">
         <ShieldAlert {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', flexShrink: 0 }} />

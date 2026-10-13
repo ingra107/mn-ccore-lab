@@ -447,8 +447,6 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
             fontSize: '10px',
             color: 'var(--slate)',
             opacity: 'var(--ink-label)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
           }}
         >
           Arrows:
@@ -472,7 +470,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
             {label}
           </span>
         ))}
-        <span style={{ marginLeft: 'var(--sp-sm)', fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <span style={{ marginLeft: 'var(--sp-sm)', fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           Stages:
         </span>
         {Object.entries(STAGE_COLORS).map(([stage, color]) => (

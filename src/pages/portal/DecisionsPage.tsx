@@ -5,7 +5,6 @@ import { useOpenParam } from '../../hooks/useOpenParam'
 import {
   Scale,
   Plus,
-  AlertTriangle,
   FolderKanban,
   Tag,
   List,
@@ -16,9 +15,11 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import FilterLinks from '../../components/ui/FilterLinks'
+import SectionHead from '../../components/ui/SectionHead'
+import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
-import { FaceDisc } from '../../components/today/skin'
+import { FaceDisc, Who } from '../../components/today/skin'
 import InlineSelect from '../../components/InlineSelect'
 import { Button } from '../../components/ui/Button'
 import { useDecisions, useDecisionsForReview, useDecisionTags } from '../../hooks/useApiData'
@@ -36,16 +37,11 @@ import { PATHS } from '../../constants/paths'
 import SentimentBadge from '../../components/SentimentBadge'
 import SimilarDecisionsPanel from '../../components/SimilarDecisionsPanel'
 import CreateDecisionModal from '../../components/CreateDecisionModal'
-import { ColumnHeader, TableContainer } from '../../components/table'
+import { SleekTable, SleekRow, type SleekColumn, type SleekSort } from '../../components/table/SleekRows'
 import type { DecisionRow } from '../../hooks/useApiData'
 import { ICON_PROPS } from '../../lib/iconProps'
 
 // ── Constants ────────────────────────────────────────────────
-
-// P2-11: Outcome moved to right-most data column. In a decision log,
-// outcome IS the answer — it shouldn't be buried in the middle.
-const GRID_TEMPLATE =
-  'minmax(200px, 3fr) 160px 120px 140px 100px 140px 80px'
 
 const OUTCOME_OPTIONS = [
   { value: 'pending', label: 'Pending', color: 'var(--sk-t2)' },
@@ -53,12 +49,7 @@ const OUTCOME_OPTIONS = [
   { value: 'revisited', label: 'Revisited', color: 'var(--slate)' },
 ]
 
-type DecisionSortKey =
-  | 'title'
-  | 'outcome_status'
-  | 'decided_by'
-  | 'project'
-  | 'created_at'
+type DecisionSortKey = 'title' | 'outcome_status' | 'decided_by' | 'project' | 'created_at'
 
 // ── Decision Timeline ────────────────────────────────────────
 
@@ -103,8 +94,6 @@ function DecisionTimeline({
               fontWeight: 'var(--weight-ui)',
               color: 'var(--slate)',
               opacity: 'var(--ink-label)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
               marginTop: '12px',
             }}
           >
@@ -156,14 +145,7 @@ function DecisionTimeline({
             >
               {formatShortDate(decision.created_at)}
             </div>
-            <div
-              className="p-3"
-              style={{
-                background: 'var(--surface-1)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-lg)',
-              }}
-            >
+            <div className="p-3 sk-mat" style={{ borderRadius: 'var(--radius-lg)' }}>
               <div className="flex items-center gap-2 flex-wrap">
                 <span
                   style={{
@@ -266,14 +248,8 @@ function ReviewCard({
   }
 
   return (
-    <div
-      style={{
-        border: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius-xl)',
-        overflow: 'hidden',
-      }}
-    >
-      <div className="p-4" style={{ background: 'var(--surface-1)' }}>
+    <div className="sk-mat" style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>
+      <div className="p-4">
         <div className="flex items-center gap-2 mb-2">
           <Scale {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
           <span
@@ -330,7 +306,7 @@ function ReviewCard({
           className="w-full p-3 flex items-center gap-2 cursor-pointer"
           style={{
             background: 'color-mix(in srgb, var(--job-wants) 6%, transparent)',
-            borderTop: '1px solid var(--border-subtle)',
+            borderTop: '1px solid var(--sk-line)',
             borderLeft: '3px solid var(--job-wants)',
             color: 'var(--ink)',
             fontSize: 'var(--text-small)',
@@ -349,7 +325,7 @@ function ReviewCard({
         className="p-4"
         style={{
           background: 'color-mix(in srgb, var(--job-wants) 6%, transparent)',
-          borderTop: '1px solid var(--border-subtle)',
+          borderTop: '1px solid var(--sk-line)',
           borderLeft: '3px solid var(--job-wants)',
         }}
       >
@@ -373,7 +349,7 @@ function ReviewCard({
             fontSize: 'var(--text-small)',
             color: 'var(--ink)',
             background: 'var(--cream)',
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid var(--field-edge)',
             borderRadius: 'var(--radius-lg)',
             padding: 'var(--sp-sm) var(--sp-md)',
             outline: 'none',
@@ -416,355 +392,186 @@ function ReviewCard({
   )
 }
 
-// ── Decision Row (columnar) ──────────────────────────────────
+// ── Decisions list (sleek rows) ──────────────────────────────
 
-function DecisionRowItem({
-  decision,
+const OUTCOME_LABEL: Record<string, string> = Object.fromEntries(OUTCOME_OPTIONS.map((o) => [o.value, o.label]))
+
+function DecisionDetail({ decision, projects, tags }: { decision: DecisionRow; projects: { slug: string; title: string }[]; tags: string[] }) {
+  return (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      style={{ overflow: 'hidden' }}
+    >
+      <div style={{ padding: 'var(--sp-xs) var(--sp-lg) var(--sp-lg) 34px' }}>
+        {decision.rationale && (
+          <p
+            style={{
+              fontSize: 'var(--text-small)',
+              color: 'var(--slate)',
+              lineHeight: 1.5,
+              marginTop: 0,
+              marginBottom: 'var(--sp-sm)',
+            }}
+          >
+            <span style={{ fontWeight: 500, color: 'var(--ink)' }}>Rationale:{' '}</span>
+            {decision.rationale}
+          </p>
+        )}
+        {decision.context && (
+          <p
+            style={{
+              fontSize: 'var(--text-small)',
+              color: 'var(--slate)',
+              lineHeight: 1.5,
+              marginTop: 0,
+              marginBottom: 'var(--sp-sm)',
+            }}
+          >
+            <span style={{ fontWeight: 500, color: 'var(--ink)' }}>Context:{' '}</span>
+            {decision.context}
+          </p>
+        )}
+        {decision.outcome && (
+          <p
+            style={{
+              fontSize: 'var(--text-small)',
+              color: 'var(--ink)',
+              lineHeight: 1.5,
+              margin: '0 0 var(--sp-sm)',
+              paddingLeft: 'var(--sp-md)',
+              borderLeft: '2px solid var(--sk-line2)',
+            }}
+          >
+            <span style={{ fontWeight: 500 }}>Outcome:</span>{' '}
+            {decision.outcome}
+          </p>
+        )}
+        {tags.length > 2 && (
+          <div className="flex items-center gap-1.5 flex-wrap" style={{ marginBottom: 'var(--sp-sm)' }}>
+            <Tag {...ICON_PROPS} size={11} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+            {tags.map((tag) => (
+              <span key={tag} className="tk-tag tk-n">{tag}</span>
+            ))}
+          </div>
+        )}
+        <SimilarDecisionsPanel decisionId={decision.id} projects={projects} />
+      </div>
+    </motion.div>
+  )
+}
+
+function DecisionsList({
+  decisions,
   projects,
   projectMap,
-  isExpanded,
+  sort,
+  onSort,
+  expandedId,
   onToggleExpand,
   onStatusChange,
-  focused,
+  focusedIndex,
 }: {
-  decision: DecisionRow
+  decisions: DecisionRow[]
   projects: { slug: string; title: string }[]
   projectMap: Map<string, string>
-  isExpanded: boolean
-  onToggleExpand: () => void
+  sort: SleekSort
+  onSort: (next: SleekSort) => void
+  expandedId: string | null
+  onToggleExpand: (id: string) => void
   onStatusChange: (decision: DecisionRow, newStatus: string) => void
-  focused: boolean
+  focusedIndex: number
 }) {
-  const person = decision.decided_by ? getPersonInfo(decision.decided_by) : null
-  const projectTitle = decision.project_slug
-    ? projectMap.get(decision.project_slug) || null
-    : null
-  const tags = parseTagsString(decision.tags)
-  const visibleTags = tags.slice(0, 2)
-  const extraTags = tags.length - visibleTags.length
+  const columns = useMemo<SleekColumn<DecisionRow>[]>(() => [
+    {
+      key: 'title', label: 'Title', width: 'minmax(0,1fr)', sortable: true, phone: 'title',
+      render: (d) => (
+        <div className="sr-tt" title={d.rationale || d.title}>
+          <span className="sr-m" aria-hidden="true" style={{ display: 'inline-flex', flexShrink: 0 }}>
+            {expandedId === d.id ? <ChevronDown {...ICON_PROPS} size={12} /> : <ChevronRight {...ICON_PROPS} size={12} />}
+          </span>
+          <span className="sr-x">{d.title}</span>
+          {d.outcome_sentiment && d.outcome_sentiment !== 'pending' && (
+            <span style={{ flexShrink: 0 }}>
+              <SentimentBadge sentiment={d.outcome_sentiment} />
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'tags', label: 'Tags', width: '170px', minTableWidth: 800,
+      render: (d) => {
+        const tags = parseTagsString(d.tags)
+        const extra = tags.length - 2
+        return (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, minWidth: 0, overflow: 'hidden' }}>
+            {tags.slice(0, 2).map((tag) => (
+              <span key={tag} className="tk-tag tk-n" style={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 74 }}>{tag}</span>
+            ))}
+            {extra > 0 && <span className="sr-m">+{extra}</span>}
+          </span>
+        )
+      },
+    },
+    {
+      key: 'decided_by', label: 'Decided by', width: '120px', sortable: true, minTableWidth: 720, phone: 'line',
+      render: (d) => (d.decided_by ? <span className="sr-m sr-hi" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, minWidth: 0 }}><Who value={d.decided_by} /></span> : <span className="sr-m">—</span>),
+    },
+    {
+      key: 'project', label: 'Project', width: '170px', sortable: true, interactive: true, minTableWidth: 900, phone: 'line',
+      render: (d) => {
+        const title = d.project_slug ? projectMap.get(d.project_slug) : null
+        return title ? (
+          <Link to={PATHS.project(d.project_slug!)} className="sr-m sr-hi sr-x sr-open" title={title}>{title}</Link>
+        ) : <span className="sr-m">—</span>
+      },
+      renderPhone: (d) => {
+        const title = d.project_slug ? projectMap.get(d.project_slug) : null
+        return title ? <Link to={PATHS.project(d.project_slug!)} className="sr-m sr-hi sr-x sr-open">{title}</Link> : null
+      },
+    },
+    {
+      key: 'created_at', label: 'Date', width: '84px', sortable: true, align: 'end', phone: 'line',
+      render: (d) => <span className="sr-m" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatRelativeTime(d.created_at)}</span>,
+    },
+    {
+      key: 'outcome_status', label: 'Outcome', width: '112px', sortable: true, interactive: true, phone: 'line',
+      render: (d) => {
+        const v = d.outcome_status || 'pending'
+        return (
+          <InlineSelect
+            value={v}
+            options={OUTCOME_OPTIONS}
+            onChange={(val) => onStatusChange(d, val)}
+            alwaysShowChevron
+            display={<span className="tk-pill"><i />{OUTCOME_LABEL[v] ?? v}</span>}
+          />
+        )
+      },
+    },
+  ], [expandedId, projectMap, onStatusChange])
 
   return (
-    <div
-      // S1: anchor for deep-link scroll-to (?open=<id>).
-      id={`decision-${decision.id}`}
-      style={{
-        borderBottom: '1px solid var(--row-separator, var(--border-subtle))',
-        background: focused ? 'var(--hover-subtle)' : 'transparent',
-        scrollMarginTop: '96px',
-      }}
-    >
-      <div
-        className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: GRID_TEMPLATE,
-          padding: `var(--row-padding-y, 8px) var(--sp-lg)`,
-          alignItems: 'center',
-          minHeight: 'var(--row-height, 44px)',
-          boxSizing: 'border-box' as const,
-          gap: 'var(--sp-sm)',
-        }}
-      >
-        <div
-         
-          onClick={onToggleExpand}
-          className="task-title-clickable"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            cursor: 'pointer',
-            minWidth: 0,
-            borderRadius: 'var(--radius-sm)',
-            padding: '2px 4px',
-            margin: '-2px -4px',
-            transition: 'background var(--transition-fast) ease',
-          }}
-          title={decision.rationale || decision.title}
-        >
-          <span
-            style={{
-              color: 'var(--slate)',
-              opacity: 'var(--ink-label)',
-              flexShrink: 0,
-              display: 'inline-flex',
-            }}
+    <SleekTable columns={columns} sort={sort} onSort={onSort} defaultSortLabel="Newest first">
+      {decisions.map((d, i) => (
+        // S1: anchor for deep-link scroll-to (?open=<id>).
+        <div key={d.id} id={`decision-${d.id}`} style={{ scrollMarginTop: '96px' }}>
+          <SleekRow
+            row={d}
+            data={{ 'decision-id': d.id }}
+            cursor={focusedIndex === i}
+            expanded={expandedId === d.id}
+            onClick={() => onToggleExpand(d.id)}
           >
-            {isExpanded ? <ChevronDown {...ICON_PROPS} size={12} /> : <ChevronRight {...ICON_PROPS} size={12} />}
-          </span>
-          <span
-            style={{
-              fontSize: 'var(--text-base)',
-              fontWeight: 'var(--weight-heading)',
-              color: 'var(--ink)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              minWidth: 0,
-            }}
-          >
-            {decision.title}
-          </span>
-          {decision.outcome_sentiment &&
-            decision.outcome_sentiment !== 'pending' && (
-              <span style={{ flexShrink: 0 }}>
-                <SentimentBadge sentiment={decision.outcome_sentiment} />
-              </span>
-            )}
+            <AnimatePresence initial={false}>
+              {expandedId === d.id && <DecisionDetail decision={d} projects={projects} tags={parseTagsString(d.tags)} />}
+            </AnimatePresence>
+          </SleekRow>
         </div>
-        <div
-
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            flexWrap: 'nowrap',
-            overflow: 'hidden',
-            minWidth: 0,
-          }}
-        >
-          {visibleTags.map((tag) => (
-            <span
-              key={tag}
-              style={{
-                fontSize: 'var(--text-micro)',
-                fontWeight: 400,
-                color: 'var(--slate)',
-                background: 'var(--surface-2)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '1px 6px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: 70,
-              }}
-            >
-              {tag}
-            </span>
-          ))}
-          {extraTags > 0 && (
-            <span
-              style={{
-                fontSize: 'var(--text-micro)',
-                color: 'var(--slate)',
-                opacity: 'var(--ink-label)',
-              }}
-            >
-              +{extraTags}
-            </span>
-          )}
-        </div>
-        <div
-         
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            minWidth: 0,
-          }}
-        >
-          {person ? (
-            <>
-              <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} variant="brand" />
-              <span
-                style={{
-                  fontSize: 'var(--text-small)',
-                  color: 'var(--slate)',
-                  opacity: 'var(--ink-label)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {person.name.split(' ')[0]}
-              </span>
-            </>
-          ) : (
-            <span
-              style={{
-                fontSize: 'var(--text-small)',
-                color: 'var(--slate)',
-                opacity: 'var(--ink-hint)',
-              }}
-            >
-              —
-            </span>
-          )}
-        </div>
-        <div
-         
-          style={{
-            minWidth: 0,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {projectTitle ? (
-            <Link
-              to={PATHS.project(decision.project_slug!)}
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1 hover:underline"
-              style={{
-                fontSize: 'var(--text-small)',
-                // Drop --ink-label (0.55): teal at 0.55 on white = 2.1:1
-                // FAIL. Full opacity teal = 5.8:1 AA pass.
-                color: 'var(--job-accent)',
-                textDecoration: 'none',
-              }}
-            >
-              <FolderKanban {...ICON_PROPS} size={11} style={{ flexShrink: 0 }} />
-              <span
-                style={{
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {projectTitle}
-              </span>
-            </Link>
-          ) : (
-            <span
-              style={{
-                fontSize: 'var(--text-small)',
-                color: 'var(--slate)',
-                opacity: 'var(--ink-hint)',
-              }}
-            >
-              —
-            </span>
-          )}
-        </div>
-        <div
-         
-          style={{
-            fontSize: 'var(--text-small)',
-            color: 'var(--slate)',
-            opacity: 'var(--ink-label)',
-            textAlign: 'right',
-            fontVariantNumeric: 'tabular-nums',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {formatRelativeTime(decision.created_at)}
-        </div>
-        {/* Outcome — right-most pill (P2-11). Chevron always visible: this
-            is the high-signal cell and the dropdown affordance is the action. */}
-        <div onClick={(e) => e.stopPropagation()}>
-          <InlineSelect
-            value={decision.outcome_status || 'pending'}
-            options={OUTCOME_OPTIONS}
-            onChange={(val) => onStatusChange(decision, val)}
-            alwaysShowChevron
-          />
-        </div>
-        <div />
-      </div>
-      <AnimatePresence initial={false}>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            style={{ overflow: 'hidden' }}
-          >
-            <div
-              style={{
-                padding:
-                  'var(--sp-md) var(--sp-lg) var(--sp-lg) calc(var(--sp-lg) + 20px)',
-                background: 'var(--surface-1)',
-                borderTop: '1px solid var(--border-subtle)',
-              }}
-            >
-              {decision.rationale && (
-                <p
-                  style={{
-                    fontSize: 'var(--text-small)',
-                    color: 'var(--slate)',
-                    lineHeight: 1.5,
-                    marginTop: 0,
-                    marginBottom: 'var(--sp-sm)',
-                  }}
-                >
-                  <span style={{ fontWeight: 500, color: 'var(--ink)' }}>
-                    Rationale:{' '}
-                  </span>
-                  {decision.rationale}
-                </p>
-              )}
-              {decision.context && (
-                <p
-                  style={{
-                    fontSize: 'var(--text-small)',
-                    color: 'var(--slate)',
-                    lineHeight: 1.5,
-                    marginTop: 0,
-                    marginBottom: 'var(--sp-sm)',
-                  }}
-                >
-                  <span style={{ fontWeight: 500, color: 'var(--ink)' }}>
-                    Context:{' '}
-                  </span>
-                  {decision.context}
-                </p>
-              )}
-              {decision.outcome && (
-                <div
-                  className="px-3 py-2"
-                  style={{
-                    background: 'color-mix(in srgb, var(--sk-t1) 4%, transparent)',
-                    borderLeft: '3px solid var(--sk-line2)',
-                    borderRadius: 'var(--radius-md)',
-                    marginBottom: 'var(--sp-sm)',
-                  }}
-                >
-                  <p
-                    style={{
-                      fontSize: 'var(--text-small)',
-                      color: 'var(--ink)',
-                      lineHeight: 1.5,
-                      margin: 0,
-                    }}
-                  >
-                    <span style={{ fontWeight: 500 }}>Outcome:</span>{' '}
-                    {decision.outcome}
-                  </p>
-                </div>
-              )}
-              {tags.length > 2 && (
-                <div
-                  className="flex items-center gap-1.5 flex-wrap"
-                  style={{ marginBottom: 'var(--sp-sm)' }}
-                >
-                  <Tag {...ICON_PROPS}
-                    size={11}
-                    style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
-                  />
-                  {tags.map((tag) => (
-                    <span
-                      key={tag}
-                      style={{
-                        fontSize: 'var(--text-micro)',
-                        color: 'var(--slate)',
-                        background: 'var(--surface-2)',
-                        border: '1px solid var(--border-subtle)',
-                        borderRadius: 'var(--radius-sm)',
-                        padding: '1px 6px',
-                      }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <SimilarDecisionsPanel decisionId={decision.id} projects={projects} />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+      ))}
+    </SleekTable>
   )
 }
 
@@ -778,8 +585,10 @@ export default function DecisionsPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [sortKey, setSortKey] = useState<DecisionSortKey>('created_at')
-  const [sortAsc, setSortAsc] = useState(false)
+  // Newest first until a header is clicked; a header cycles asc, desc, cleared.
+  const [sort, setSort] = useState<SleekSort>(null)
+  const sortKey = (sort?.key ?? 'created_at') as DecisionSortKey
+  const sortAsc = sort ? sort.dir === 'asc' : false
 
   const { data: rawAllDecisions = [], isLoading, isError, refetch } = useDecisions(
     undefined,
@@ -828,18 +637,6 @@ export default function DecisionsPage() {
         outcome_status: prevStatus,
       })
     )
-  }
-
-  const handleSort = (key: string) => {
-    const k = key as DecisionSortKey
-    if (sortKey === k) {
-      setSortAsc((v) => !v)
-    } else {
-      setSortKey(k)
-      setSortAsc(
-        k === 'title' || k === 'decided_by' || k === 'project' ? true : false
-      )
-    }
   }
 
   const filteredDecisions = useMemo(() => {
@@ -952,60 +749,15 @@ export default function DecisionsPage() {
         count={allDecisions.length}
         actions={
           <div className="flex items-center gap-2 flex-wrap justify-end">
-            <div
-              className="flex items-center overflow-hidden"
-              style={{
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-lg)',
-              }}
-            >
-              <button
-                onClick={() => setViewMode('list')}
-                className="px-3 py-1.5"
-                style={{
-                  fontSize: 'var(--text-small)',
-                  fontWeight: 500,
-                  color: viewMode === 'list' ? 'var(--job-accent)' : 'var(--slate)',
-                  backgroundColor:
-                    viewMode === 'list' ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <List {...ICON_PROPS}
-                  size={14}
-                  style={{
-                    display: 'inline',
-                    verticalAlign: '-2px',
-                    marginRight: '4px',
-                  }}
-                />
-                List
-              </button>
-              <button
-                onClick={() => setViewMode('timeline')}
-                className="px-3 py-1.5"
-                style={{
-                  fontSize: 'var(--text-small)',
-                  fontWeight: 500,
-                  color: viewMode === 'timeline' ? 'var(--job-accent)' : 'var(--slate)',
-                  backgroundColor:
-                    viewMode === 'timeline' ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <GitCommitVertical {...ICON_PROPS}
-                  size={14}
-                  style={{
-                    display: 'inline',
-                    verticalAlign: '-2px',
-                    marginRight: '4px',
-                  }}
-                />
-                Timeline
-              </button>
-            </div>
+            <SegmentedToggle
+              ariaLabel="Decision view"
+              value={viewMode}
+              onChange={setViewMode}
+              options={[
+                { value: 'list', label: 'List', icon: <List {...ICON_PROPS} size={14} /> },
+                { value: 'timeline', label: 'Timeline', icon: <GitCommitVertical {...ICON_PROPS} size={14} /> },
+              ]}
+            />
             <Button
               variant="primary"
               onClick={() => setShowCreate(true)}
@@ -1075,30 +827,7 @@ export default function DecisionsPage() {
 
       {reviewDecisions.length > 0 && !filterStatus && !filterTag && (
         <div className="mt-8">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle {...ICON_PROPS} size={16} style={{ color: 'var(--job-wants)' }} />
-            <h2
-              style={{
-                fontWeight: 500,
-                fontSize: 'var(--text-md)',
-                color: 'var(--ink)',
-                margin: 0,
-              }}
-            >
-              Record outcome?
-            </h2>
-            <span
-              className="px-2 py-0.5"
-              style={{
-                fontSize: 'var(--text-small)',
-                backgroundColor: 'color-mix(in srgb, var(--job-wants) 15%, transparent)',
-                color: 'var(--job-wants)',
-                borderRadius: 'var(--radius-full)',
-              }}
-            >
-              {reviewDecisions.length}
-            </span>
-          </div>
+          <SectionHead title="Record outcome?" count={reviewDecisions.length} />
           <div className="flex flex-col gap-3">
             {reviewDecisions.map((decision) => (
               <ReviewCard
@@ -1114,20 +843,13 @@ export default function DecisionsPage() {
 
       {/* minHeight on outer table section prevents CLS when loading→data transition */}
       <div className="mt-8" style={{ minHeight: '400px' }}>
-        <h2
-          style={{
-            fontWeight: 500,
-            fontSize: 'var(--text-md)',
-            color: 'var(--ink)',
-            marginBottom: 'var(--sp-md)',
-          }}
-        >
-          {filterTag
+        <SectionHead
+          title={filterTag
             ? `Tagged: ${filterTag}`
             : filterStatus
-            ? `${filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)} Decisions`
-            : 'All Decisions'}
-        </h2>
+            ? `${filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)} decisions`
+            : 'All decisions'}
+        />
 
         {isLoading ? (
           <TableSkeleton rows={5} cols={6} />
@@ -1148,114 +870,17 @@ export default function DecisionsPage() {
         ) : viewMode === 'timeline' ? (
           <DecisionTimeline decisions={filteredDecisions} projects={projects} />
         ) : (
-          <TableContainer ariaLabel="Decisions">
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: GRID_TEMPLATE,
-                padding: 'var(--sp-sm) var(--sp-lg)',
-                borderBottom: '1px solid var(--border-subtle)',
-                gap: 'var(--sp-sm)',
-              }}
-            >
-              {(
-                [
-                  { label: 'Title', key: 'title', align: 'left' },
-                  { label: 'Tags', key: 'title', align: 'left', noSort: true },
-                  { label: 'Decided By', key: 'decided_by', align: 'left' },
-                  { label: 'Project', key: 'project', align: 'left' },
-                  { label: 'Date', key: 'created_at', align: 'right' },
-                  { label: 'Outcome', key: 'outcome_status', align: 'left' },
-                ] as Array<{
-                  label: string
-                  key: DecisionSortKey
-                  align: 'left' | 'right'
-                  noSort?: boolean
-                }>
-              ).map((col, i) =>
-                col.noSort ? (
-                  <div
-                    key={`${col.label}-${i}`}
-                    className="col-header"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {col.label}
-                  </div>
-                ) : (
-                  <div key={`${col.label}-${i}`}>
-                    <ColumnHeader
-                      label={col.label}
-                      sortKey={col.key}
-                      currentSort={sortKey}
-                      sortAsc={sortAsc}
-                      onSort={handleSort}
-                      align={col.align}
-                    />
-                  </div>
-                )
-              )}
-              <div />
-            </div>
-
-            <div>
-              {filteredDecisions.map((decision, i) => (
-                <DecisionRowItem
-                  key={decision.id}
-                  decision={decision}
-                  projects={projects}
-                  projectMap={projectMap}
-                  isExpanded={expandedId === decision.id}
-                  onToggleExpand={() =>
-                    setExpandedId(expandedId === decision.id ? null : decision.id)
-                  }
-                  onStatusChange={handleStatusChange}
-                  focused={focusedIndex === i}
-                />
-              ))}
-            </div>
-
-            {filteredDecisions.length > 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 'var(--sp-xl)',
-                  padding: 'var(--sp-sm) var(--sp-lg)',
-                  borderTop: '1px solid var(--border-subtle)',
-                  background: 'var(--surface-1)',
-                }}
-              >
-                {[
-                  { label: 'Total', value: filteredDecisions.length },
-                  { label: 'Pending', value: pendingCount, color: 'var(--sk-t2)' },
-                  { label: 'Recorded', value: recordedCount, color: 'var(--sk-t3)' },
-                ].map((s) => (
-                  // Parent opacity compounds with gold/teal count → fails AA.
-                  // Use --muted (no opacity). r7 2026-04-22.
-                  <span
-                    key={s.label}
-                    style={{
-                      fontSize: 'var(--text-label)',
-                      color: 'var(--muted)',
-                    }}
-                  >
-                    {s.label}{' '}
-                    <span
-                      style={{
-                        fontWeight: 600,
-                        color: (s as { color?: string }).color || 'var(--slate)',
-                      }}
-                    >
-                      {s.value}
-                    </span>
-                  </span>
-                ))}
-              </div>
-            )}
-          </TableContainer>
+          <DecisionsList
+            decisions={filteredDecisions}
+            projects={projects}
+            projectMap={projectMap}
+            sort={sort}
+            onSort={setSort}
+            expandedId={expandedId}
+            onToggleExpand={(id) => setExpandedId(expandedId === id ? null : id)}
+            onStatusChange={handleStatusChange}
+            focusedIndex={focusedIndex}
+          />
         )}
       </div>
 

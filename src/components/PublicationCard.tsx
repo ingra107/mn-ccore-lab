@@ -359,14 +359,8 @@ export default function PublicationCard({
                   <Link
                     to={`/publications/${encodeURIComponent(pub.id)}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
-                    style={{
-                      background: 'transparent',
-                      color: 'var(--sk-t2)',
-                      border: '1px solid var(--border-subtle)',
-                      textDecoration: 'none',
-                      minHeight: '32px',
-                    }}
+                    className="tk-btn tk-sm"
+                    style={{ textDecoration: 'none', minHeight: '32px' }}
                   >
                     View details <ArrowRight {...ICON_PROPS} size={10} aria-hidden="true" />
                   </Link>

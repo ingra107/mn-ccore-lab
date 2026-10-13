@@ -199,13 +199,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 <button
                   type="button"
                   onClick={() => { setShowAddForm(false); setNewTarget(''); setNewNote('') }}
-                  className="px-3 py-1.5 rounded-md text-xs"
-                  style={{
-                    color: 'var(--slate)',
-                    background: 'none',
-                    border: '1px solid var(--border-subtle)',
-                    cursor: 'pointer',
-                  }}
+                  className="tk-btn tk-sm"
                 >
                   Cancel
                 </button>
@@ -254,8 +248,6 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   style={{
                     fontSize: '10px',
                     color: REL_COLORS[dep.relationship_type] || 'var(--slate)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
                     fontWeight: 600,
                     whiteSpace: 'nowrap',
                   }}
@@ -335,8 +327,6 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   style={{
                     fontSize: '10px',
                     color: REL_COLORS[dep.relationship_type] || 'var(--slate)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
                     fontWeight: 600,
                     whiteSpace: 'nowrap',
                   }}

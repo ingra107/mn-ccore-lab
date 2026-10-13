@@ -65,7 +65,7 @@ export default function HtmlArtifactFrame({ title, html }: { title: string; html
       style={{
         width: '100%',
         minHeight: '70vh',
-        border: '1px solid var(--border-subtle)',
+        border: '1px solid var(--sk-line2)',
         borderRadius: 'var(--radius-lg)',
         background: '#fff',
       }}

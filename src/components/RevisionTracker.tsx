@@ -176,7 +176,6 @@ export default function RevisionTracker({ projectId, products = [], productId = 
               className="rounded-xl p-4"
               style={{
                 background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
-                border: '1px solid var(--border-subtle)',
               }}
             >
               <div className="flex flex-wrap gap-3 items-end">
@@ -193,7 +192,7 @@ export default function RevisionTracker({ projectId, products = [], productId = 
                         fontSize: 'var(--value-size)',
                         color: 'var(--ink)',
                         background: 'var(--ice)',
-                        border: '1px solid var(--border-subtle)',
+                        border: '1px solid var(--field-edge)',
                         outline: 'none',
                       }}
                     />
@@ -211,7 +210,7 @@ export default function RevisionTracker({ projectId, products = [], productId = 
                         fontSize: 'var(--value-size)',
                         color: 'var(--ink)',
                         background: 'var(--ice)',
-                        border: '1px solid var(--border-subtle)',
+                        border: '1px solid var(--field-edge)',
                         outline: 'none',
                       }}
                     />
@@ -305,12 +304,8 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
 
   return (
     <div
-      className="rounded-xl"
-      style={{
-        border: '1px solid var(--border-subtle)',
-        background: 'var(--ice)',
-        overflow: 'hidden',
-      }}
+      className="rounded-xl sk-mat"
+      style={{ overflow: 'hidden' }}
     >
       {/* Round header */}
       <Button
@@ -518,8 +513,6 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                     fontWeight: 'var(--label-weight)',
                     color: 'var(--slate)',
                     opacity: 0.75,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
                   }}
                 >
                   Reviewer {reviewerNum}
@@ -620,7 +613,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                     fontSize: '12px',
                                     color: 'var(--ink)',
                                     background: 'rgba(255,255,255,0.5)',
-                                    border: '1px solid var(--border-subtle)',
+                                    border: '1px solid var(--field-edge)',
                                     outline: 'none',
                                     resize: 'vertical',
                                   }}
@@ -736,7 +729,6 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
             className="rounded-lg p-3"
             style={{
               background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
-              border: '1px solid var(--border-subtle)',
             }}
           >
             <div className="flex gap-3 mb-2">
@@ -755,7 +747,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                       fontSize: '12px',
                       color: 'var(--ink)',
                       background: 'var(--ice)',
-                      border: '1px solid var(--border-subtle)',
+                      border: '1px solid var(--field-edge)',
                       outline: 'none',
                     }}
                   />
@@ -774,7 +766,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                       fontSize: '12px',
                       color: 'var(--ink)',
                       background: 'var(--ice)',
-                      border: '1px solid var(--border-subtle)',
+                      border: '1px solid var(--field-edge)',
                       outline: 'none',
                     }}
                   />
@@ -791,7 +783,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                 fontSize: 'var(--value-size)',
                 color: 'var(--ink)',
                 background: 'var(--ice)',
-                border: '1px solid var(--border-subtle)',
+                border: '1px solid var(--field-edge)',
                 outline: 'none',
                 resize: 'vertical',
               }}

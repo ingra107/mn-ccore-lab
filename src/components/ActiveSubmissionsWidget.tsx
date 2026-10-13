@@ -45,21 +45,19 @@ function MiniCard({ row, compact = false }: { row: ActiveSubmissionRow; compact?
   return (
     <Link
       to={href}
-      className="active-submission-card"
+      className="active-submission-card sk-mat"
       style={{
         flexShrink: 0,
         minWidth: compact ? 0 : '220px',
         maxWidth: compact ? 'none' : '260px',
         padding: '10px 12px',
         borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-subtle)',
-        background: 'var(--surface-1)',
         textDecoration: 'none',
         color: 'inherit',
         display: 'flex',
         flexDirection: 'column',
         gap: '6px',
-        transition: 'background 0.12s ease-out',
+        transition: 'box-shadow 0.12s ease-out',
       }}
     >
       <div className="flex items-center gap-1.5" style={{ fontSize: '11px', fontWeight: 500, color: accent, letterSpacing: '0.02em' }}>
@@ -125,7 +123,7 @@ export default function ActiveSubmissionsWidget({ compact = false }: { compact?:
           style={{
             padding: '10px 14px',
             borderRadius: 'var(--radius-md)',
-            background: 'var(--surface-2)',
+            background: 'color-mix(in srgb, var(--sk-t1) 4%, transparent)',
             fontSize: '12px',
             color: 'var(--muted)',
           }}
@@ -171,7 +169,7 @@ export default function ActiveSubmissionsWidget({ compact = false }: { compact?:
       )}
       <style>{`
         .active-submission-card:hover {
-          background: var(--surface-2) !important;
+          box-shadow: inset 0 1px 0 var(--sk-rim-ac), var(--sk-amb);
         }
       `}</style>
     </div>

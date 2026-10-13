@@ -62,27 +62,20 @@ export function normalizeStage(stage: string | null | undefined): CanonicalStage
   return ''
 }
 
-// ── Canonical display color, keyed by the canonical lowercase stage ──
+// ── Display color for a manuscript rung ──
 // A project's stage is its products' (contract phase step 1, 2026-10-12): the
 // manuscript-ladder readers that remain (Narratives, Trajectory, the pipeline
 // board) normalize a manuscript PRODUCT's rung through here. The project-stage
 // half (stageLabel, stageIndex, stageRampStep, toApiStage) went with the
 // project stage; product labels come from product_stages.
-// Colors reuse the WCAG-AA-pinned set from taskConstants.ts STAGE_COLORS
-// (audited 2026-04-18) — keep them in sync.
-const CANONICAL_STAGE_COLORS: Record<CanonicalStage, string> = {
-  idea: '#8591a0',
-  data_collection: 'var(--stage-data-collection)',
-  analysis: '#4db5b0',
-  writing: '#dcb355',
-  review: '#d65c66',
-  revisions: '#d65c66',
-  published: '#4ecd77',
-}
+// Color jobs (rules-ui-design 21, color back pick 7): a rung's order is the
+// only thing its color says, so the seven rungs step along the teal ramp,
+// idea at the dim end and published at the bright end, not seven hues. The
+// ramp is a FILL (dot, bar): put no text in it. Text about a rung stays gray.
+import { rampStep, tealRamp } from './tealRamp'
 
-// WCAG-AA-pinned stage color for any raw stage value. Falls back to --slate.
 export function stageColor(stage: string | null | undefined): string {
   const normalized = normalizeStage(stage)
   if (!normalized) return 'var(--slate)'
-  return CANONICAL_STAGE_COLORS[normalized]
+  return tealRamp(rampStep(CANONICAL_STAGES.indexOf(normalized), CANONICAL_STAGES.length))
 }

@@ -6,6 +6,7 @@
 // three-bucket decision). The legacy 4-bucket tokens (clif/lab/nate/mentee) are
 // RETIRED — writing them 400s and silently reverts the optimistic edit (S3).
 //
+// A category is a label, not a meaning, so every bucket reads gray (rules-ui-design 21).
 // Labels + colors mirror the inline options already used across Projects.tsx /
 // ManuscriptsPage / CreateProjectModal. Those sites should migrate to this
 // constant piecemeal; new consumers import from here, never re-inline.
@@ -17,8 +18,8 @@ export interface CategoryOption {
 }
 
 export const CATEGORY_OPTIONS: CategoryOption[] = [
-  { value: 'MNCCORE', label: 'MN-CCORE', color: 'var(--teal)' },
-  { value: 'CLIF', label: 'CLIF', color: 'var(--maroon)' },
+  { value: 'MNCCORE', label: 'MN-CCORE', color: 'var(--sk-t3)' },
+  { value: 'CLIF', label: 'CLIF', color: 'var(--sk-t3)' },
   { value: 'Peripheral Brain', label: 'Peripheral Brain', color: 'var(--slate)' },
 ]
 

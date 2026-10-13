@@ -319,7 +319,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
             {projectSearchQuery && filteredProjects.length > 0 && (
               <div
                 className="absolute z-10 w-full mt-1 rounded-lg shadow-lg overflow-hidden"
-                style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--border-subtle)', maxHeight: '150px', overflowY: 'auto' }}
+                style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--sk-line2)', maxHeight: '150px', overflowY: 'auto' }}
               >
                 {filteredProjects.filter((p) => !linkedProjectSlugs.includes(p.slug)).map((p) => (
                   <button

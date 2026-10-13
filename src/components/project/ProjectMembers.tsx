@@ -107,7 +107,7 @@ export default function ProjectMembers({ projectRef, projectTitle }: ProjectMemb
                 key={m.slug}
                 data-testid={`member-chip-${m.slug}`}
                 className="inline-flex items-center gap-1.5 rounded-full pl-1 pr-2 py-1"
-                style={{ border: '1px solid var(--border-subtle)', fontSize: 'var(--value-size)', color: 'var(--ink)' }}
+                style={{ border: '1px solid var(--sk-line2)', fontSize: 'var(--value-size)', color: 'var(--ink)' }}
               >
                 <FaceDisc label={label} initials={memberInitials(label)} photo={m.photo_url ?? undefined} px={24} hermes={m.slug === 'claude-ai'} />
                 <span>{label}</span>

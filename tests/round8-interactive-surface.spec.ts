@@ -333,7 +333,7 @@ test.describe('Interactive surface scan', () => {
 
   test('Decisions — Outcome status inline', async ({ page }) => {
     await goto(page, P.decisions)
-    const triggers = await page.locator('.inline-select-trigger').count()
+    const triggers = await page.locator('.inline-select-trigger, .sr-trig').count()
     push({ page: 'Decisions', element: 'outcome-inline', action: 'count', result: triggers > 0 ? 'PASS' : 'FAIL', notes: `${triggers} triggers` })
   })
 

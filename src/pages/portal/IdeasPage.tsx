@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { portalTitle } from '../../constants/pageLabels'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, ThumbsUp, X, Lightbulb, Pencil, Archive, Rocket } from 'lucide-react'
+import { Plus, ThumbsUp, Lightbulb, Pencil, Archive, Rocket } from 'lucide-react'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -13,6 +13,8 @@ import { useUndoToast } from '../../components/UndoToast'
 import { ColumnHeader, TableContainer } from '../../components/table'
 import SegmentedToggle from '../../components/ui/SegmentedToggle'
 import { Button } from '../../components/ui/Button'
+import { FIELD_LABEL_STYLE } from '../../components/ui/labelStyle'
+import Modal from '../../components/ui/Modal'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { useIdeas } from '../../hooks/useApiData'
 import { useCreateIdea, useVoteIdea, useUpdateIdea, useCreateProject } from '../../hooks/useMutations'
@@ -344,7 +346,7 @@ export default function IdeasPage() {
               return (
                 <div key={col} className="flex flex-col" style={{ minHeight: '200px' }}>
                   <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: `2px solid ${cfg.color}` }}>
-                    <span style={{ color: cfg.color, fontSize: '12px', fontWeight: 'var(--weight-ui)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    <span style={{ color: cfg.color, fontSize: '13px', fontWeight: 'var(--weight-ui)' }}>
                       {cfg.label}
                     </span>
                     <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>
@@ -774,7 +776,7 @@ function IdeaRowView({
             }}
             style={{
               background: 'none',
-              border: '1px solid var(--border-subtle)',
+              border: 'none',
               color: 'var(--slate)',
               cursor: 'pointer',
               padding: '4px',
@@ -797,7 +799,7 @@ function IdeaRowView({
             }}
             style={{
               background: 'none',
-              border: '1px solid var(--border-subtle)',
+              border: 'none',
               color: 'var(--slate)',
               cursor: 'pointer',
               padding: '4px',
@@ -901,7 +903,7 @@ function IdeaRowView({
               className="rounded-md flex items-center justify-center"
               style={{
                 background: 'none',
-                border: '1px solid var(--border-subtle)',
+                border: 'none',
                 color: 'var(--slate)',
                 cursor: 'pointer',
                 padding: '4px',
@@ -921,7 +923,7 @@ function IdeaRowView({
               className="rounded-md flex items-center justify-center"
               style={{
                 background: 'none',
-                border: '1px solid var(--border-subtle)',
+                border: 'none',
                 color: 'var(--slate)',
                 cursor: 'pointer',
                 padding: '4px',
@@ -984,7 +986,7 @@ function IdeaRowView({
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   required
-                  style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-base)', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-base)', boxSizing: 'border-box' }}
                 />
               </Field>
               <Field label="Description" htmlFor="idea-edit-description" noContainer>
@@ -993,7 +995,7 @@ function IdeaRowView({
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   rows={3}
-                  style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-small)', resize: 'vertical', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-small)', resize: 'vertical', boxSizing: 'border-box' }}
                 />
               </Field>
               <Field label="Research area" htmlFor="idea-edit-area" noContainer>
@@ -1002,7 +1004,7 @@ function IdeaRowView({
                   value={editArea}
                   onChange={(e) => setEditArea(e.target.value)}
                   aria-label="Research area"
-                  style={{ padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-small)' }}
+                  style={{ padding: '6px 8px', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-small)' }}
                 >
                   <option value="">— none —</option>
                   {researchAreas.map((a) => <option key={a} value={a}>{a}</option>)}
@@ -1021,31 +1023,31 @@ function IdeaRowView({
           /* ── Read-only detail ── */
           <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
             <div>
-              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Title</div>
+              <div style={FIELD_LABEL_STYLE}>Title</div>
               <div style={{ whiteSpace: 'normal' }}>{idea.title}</div>
             </div>
             {idea.description && (
               <div style={{ gridColumn: '1 / -1' }}>
-                <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Description</div>
+                <div style={FIELD_LABEL_STYLE}>Description</div>
                 <div style={{ whiteSpace: 'pre-wrap' }}>{idea.description}</div>
               </div>
             )}
             {idea.research_area && (
               <div>
-                <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Research area</div>
+                <div style={FIELD_LABEL_STYLE}>Research area</div>
                 <div style={{ color: 'var(--sk-t3)' }}>{idea.research_area}</div>
               </div>
             )}
             <div>
-              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Submitted by</div>
+              <div style={FIELD_LABEL_STYLE}>Submitted by</div>
               <div>{person.name || idea.submitted_by}</div>
             </div>
             <div>
-              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Submitted</div>
+              <div style={FIELD_LABEL_STYLE}>Submitted</div>
               <div>{formatRelativeTime(idea.created_at)}</div>
             </div>
             <div>
-              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Votes</div>
+              <div style={FIELD_LABEL_STYLE}>Votes</div>
               <div style={{ color: idea.votes > 0 ? 'var(--sk-t1)' : 'var(--slate)' }}>{idea.votes}</div>
             </div>
           </div>
@@ -1063,30 +1065,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
   const [researchArea, setResearchArea] = useState('')
   const createIdea = useCreateIdea()
   const { showSuccess } = useToast()
-  const modalRef = useRef<HTMLDivElement>(null)
-
-  // Focus trap + Escape
-  useEffect(() => {
-    if (!open || !modalRef.current) return
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onClose(); return }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault()
-        const form = modalRef.current?.querySelector('form')
-        if (form) form.requestSubmit()
-        return
-      }
-      if (e.key !== 'Tab') return
-      const focusable = modalRef.current!.querySelectorAll<HTMLElement>('input, select, textarea, button, [tabindex]:not([tabindex="-1"])')
-      if (focusable.length === 0) return
-      const first = focusable[0], last = focusable[focusable.length - 1]
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
-    }
-    document.addEventListener('keydown', handler)
-    modalRef.current.querySelector<HTMLElement>('input')?.focus()
-    return () => document.removeEventListener('keydown', handler)
-  }, [open, onClose])
+  const formRef = useRef<HTMLFormElement>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -1104,148 +1083,88 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
     onClose()
   }
 
-  if (!open) return null
+  const fieldStyle = {
+    border: '1px solid var(--field-edge)',
+    padding: 'var(--sp-sm) var(--sp-md)',
+    fontSize: 'var(--text-small)',
+  } as const
 
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center"
-      style={{ backgroundColor: 'var(--overlay-medium)', zIndex: 'var(--z-modal)' }}
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label="New Idea"
-        className="rounded-xl shadow-xl border w-full max-w-md mx-4"
-        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div
-          className="flex items-center justify-between border-b"
-          style={{
-            borderColor: 'var(--border-subtle)',
-            padding: 'var(--sp-md) var(--sp-xl)',
-          }}
-        >
-          <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 500, color: 'var(--ink)' }}>
-            New Idea
-          </h3>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--slate)',
-              padding: 'var(--sp-xs)',
-            }}
-          >
-            <X {...ICON_PROPS} size={18} />
-          </button>
-        </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col"
-          style={{ padding: 'var(--sp-xl)', gap: 'var(--sp-md)' }}
-        >
-          <Field label="Title" required htmlFor="idea-title" noContainer>
-            <input
-              id="idea-title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="What's the idea?"
-              className="w-full rounded-md border outline-none"
-              style={{
-                borderColor: 'var(--border-subtle)',
-                padding: 'var(--sp-sm) var(--sp-md)',
-                fontSize: 'var(--text-small)',
-              }}
-              aria-required="true"
-              autoFocus
-            />
-          </Field>
-
-          <Field label="Description" htmlFor="idea-description" noContainer>
-            <textarea
-              id="idea-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Why is this interesting? What would it involve?"
-              rows={3}
-              className="w-full rounded-md border outline-none resize-none"
-              style={{
-                borderColor: 'var(--border-subtle)',
-                padding: 'var(--sp-sm) var(--sp-md)',
-                fontSize: 'var(--text-small)',
-              }}
-            />
-          </Field>
-
-          <Field label="Research area" htmlFor="idea-area" noContainer>
-            <InlineSelect id="idea-area"
-              value={researchArea}
-              options={[{ value: '', label: 'Select area (optional)' }, ...researchAreas.map((a) => ({ value: a, label: a }))]}
-              onChange={setResearchArea}
-              size="md"
-              alwaysShowChevron
-            />
-          </Field>
-
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="New idea"
+      maxWidth="sm"
+      variant="modal"
+      onExtraKeyDown={(e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault()
+          formRef.current?.requestSubmit()
+        }
+      }}
+      footer={
+        <>
           {!title.trim() && (
-            <p
-              id="idea-submit-hint"
-              style={{
-                fontSize: 'var(--text-label)',
-                color: 'var(--slate)',
-                opacity: 0.85,
-              }}
-            >
+            <p id="idea-submit-hint" style={{ fontSize: 'var(--text-label)', color: 'var(--slate)', marginRight: 'auto' }}>
               Title is required.
             </p>
           )}
-          <div
-            className="flex justify-end"
-            style={{ gap: 'var(--sp-sm)', marginTop: 'var(--sp-sm)' }}
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button
+            type="submit"
+            form="idea-create-form"
+            variant="primary"
+            disabled={!title.trim()}
+            aria-describedby={!title.trim() ? 'idea-submit-hint' : undefined}
           >
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md"
-              style={{
-                color: 'var(--slate)',
-                cursor: 'pointer',
-                background: 'none',
-                border: '1px solid var(--border-subtle)',
-                padding: 'var(--sp-sm) var(--sp-lg)',
-                fontSize: 'var(--text-small)',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!title.trim()}
-              aria-describedby={!title.trim() ? 'idea-submit-hint' : undefined}
-              className="rounded-md"
-              style={{
-                backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--job-accent)',
-                color: !title.trim() ? 'var(--slate)' : 'var(--sk-card)',
-                cursor: !title.trim() ? 'not-allowed' : 'pointer',
-                border: 'none',
-                padding: 'var(--sp-sm) var(--sp-lg)',
-                fontSize: 'var(--text-small)',
-                fontWeight: 500,
-              }}
-            >
-              Submit Idea
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            Submit idea
+          </Button>
+        </>
+      }
+    >
+      <form
+        id="idea-create-form"
+        ref={formRef}
+        onSubmit={handleSubmit}
+        className="flex flex-col"
+        style={{ gap: 'var(--sp-md)' }}
+      >
+        <Field label="Title" required htmlFor="idea-title" noContainer>
+          <input
+            id="idea-title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="What's the idea?"
+            className="w-full rounded-md outline-none"
+            style={fieldStyle}
+            aria-required="true"
+            autoFocus
+          />
+        </Field>
+
+        <Field label="Description" htmlFor="idea-description" noContainer>
+          <textarea
+            id="idea-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Why is this interesting? What would it involve?"
+            rows={3}
+            className="w-full rounded-md outline-none resize-none"
+            style={fieldStyle}
+          />
+        </Field>
+
+        <Field label="Research area" htmlFor="idea-area" noContainer>
+          <InlineSelect id="idea-area"
+            value={researchArea}
+            options={[{ value: '', label: 'Select area (optional)' }, ...researchAreas.map((a) => ({ value: a, label: a }))]}
+            onChange={setResearchArea}
+            size="md"
+            alwaysShowChevron
+          />
+        </Field>
+      </form>
+    </Modal>
   )
 }

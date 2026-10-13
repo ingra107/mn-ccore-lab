@@ -16,8 +16,8 @@ import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 // An arc's pipeline is its PRODUCTS by kind and stage, and each project shows
 // its home product's stage (contract phase step 1; the Worker sends the ladder
-// words). stageColor() (shared, WCAG-AA-pinned) colors manuscript rungs, so
-// dots match ProjectDetail / Trajectory; any other kind reads slate.
+// words). stageColor() (shared) colors manuscript rungs along the teal ramp; any
+// other kind reads slate. Text about a rung stays gray.
 const STAGE_ABBREV: Record<string, string> = {
   idea: 'Idea',
   data_collection: 'Data',
@@ -73,8 +73,8 @@ export default function NarrativesPage() {
               fontSize: 12,
               padding: '5px 10px 5px 26px',
               borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-subtle)',
-              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--field-edge)',
+              backgroundColor: 'var(--sk-card)',
               color: 'var(--ink)',
               width: '100%',
               outline: 'none',
@@ -96,9 +96,9 @@ export default function NarrativesPage() {
           subtitle={searchTerm ? 'Try a different search term.' : 'Narratives emerge as projects and publications grow.'}
         />
       ) : (
-        <div className="table-container flex flex-col gap-5 mt-5" style={{ padding: '20px' }}>
+        <div className="flex flex-col gap-5 mt-5">
           {filteredNarratives.map((arc) => (
-            <div key={arc.id} className="p-5 rounded-xl" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-subtle)' }}>
+            <div key={arc.id} className="p-5 rounded-xl sk-mat">
               {/* Header */}
               <div className="flex items-center gap-2 mb-3">
                 <BookOpen {...ICON_PROPS} size={16} style={{ color: 'var(--sk-t3)' }} />
@@ -117,8 +117,8 @@ export default function NarrativesPage() {
               </div>
 
               {/* Stage pipeline — labeled so each dot's meaning is obvious */}
-              <div className="flex items-center gap-2 mb-4 p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)' }}>
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 4 }}>
+              <div className="flex items-center gap-2 mb-4">
+                <span style={{ fontSize: '12px', color: 'var(--slate)', marginRight: 4 }}>
                   Pipeline
                 </span>
                 {arc.stageDistribution.map((s, i) => (
@@ -154,7 +154,7 @@ export default function NarrativesPage() {
                     <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', flex: 1 }}>
                       {p.title}
                     </span>
-                    <span style={{ fontSize: '10px', color: rungColor(p.home_kind, p.home_stage) }}>
+                    <span style={{ fontSize: '10px', color: 'var(--sk-t3)' }}>
                       {p.stage_label}
                     </span>
                   </Link>

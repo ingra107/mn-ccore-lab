@@ -361,17 +361,10 @@ export default function Projects() {
         <>
         <AllProjectsSwitch />
         <button
+          type="button"
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg new-project-btn"
-          style={{
-            background: 'transparent',
-            color: 'var(--job-accent)',
-            fontSize: '13px',
-            fontWeight: 600,
-            border: '1px solid var(--border-subtle)',
-            cursor: 'pointer',
-            transition: 'background 0.15s',
-          }}
+          className="tk-btn tk-sm"
+          style={{ color: 'var(--job-accent)', fontWeight: 600 }}
         >
           <Plus {...ICON_PROPS} size={14} />
           New Project
@@ -580,7 +573,7 @@ export default function Projects() {
                     key={stage}
                     className="pipeline-column"
                     style={{
-                      background: 'var(--ice)',
+                      background: 'var(--sk-panel)',
                       borderRadius: 'var(--radius-xl)',
                       borderTop: '2px solid var(--sk-line2)',
                       padding: 'var(--sp-lg)',
@@ -684,21 +677,6 @@ export default function Projects() {
         .pipeline-board::-webkit-scrollbar-thumb {
           background: var(--sk-line2);
           border-radius: 3px;
-        }
-
-        .new-project-btn:hover {
-          background: color-mix(in srgb, var(--job-accent) 6%, transparent) !important;
-        }
-
-        /* Dark mode overrides */
-        .dark .pipeline-column {
-          background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
-        }
-        .dark .project-card {
-          background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-1), var(--surface-1)) !important;
-        }
-        .dark .project-card:hover {
-          background-image: linear-gradient(var(--surface-3), var(--surface-3)) !important;
         }
       `}</style>
     </>

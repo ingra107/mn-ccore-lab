@@ -36,7 +36,7 @@ const inputStyle: React.CSSProperties = {
   fontSize: '13px',
   color: 'var(--ink)',
   background: 'var(--cream)',
-  border: '1px solid var(--border-subtle)',
+  border: '1px solid var(--field-edge)',
   borderRadius: 'var(--radius-md)',
   padding: '8px 10px',
   outline: 'none',
@@ -87,8 +87,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
               style={{
                 padding: '4px 7px 4px 9px',
                 borderRadius: 'var(--radius-md)',
-                background: 'var(--ice)',
-                border: '1px solid var(--border-subtle)',
+                background: 'var(--sk-line)',
                 maxWidth: 240,
                 fontSize: 12,
                 fontWeight: 500,
@@ -146,7 +145,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
           onSubmit={handleSubmit}
           onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); reset() } }}
           className="flex flex-col gap-2 p-3 rounded-lg"
-          style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
+          style={{ background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)' }}
         >
           <div className="flex items-center gap-2">
             <InlineSelect

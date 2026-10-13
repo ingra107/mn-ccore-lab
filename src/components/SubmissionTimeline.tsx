@@ -137,11 +137,10 @@ function AddEventForm({
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
       onSubmit={handleSubmit}
+      className="sk-mat"
       style={{
         padding: '14px 16px',
-        background: 'var(--surface-raised)',
         borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-subtle)',
         marginBottom: '16px',
         overflow: 'hidden',
       }}
@@ -174,7 +173,7 @@ function AddEventForm({
                 padding: '6px 10px',
                 fontSize: 'var(--value-size)',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
+                border: '1px solid var(--field-edge)',
                 background: 'transparent',
                 color: 'var(--ink)',
               }}
@@ -197,7 +196,7 @@ function AddEventForm({
               padding: '6px 10px',
               fontSize: 'var(--value-size)',
               borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-subtle)',
+              border: '1px solid var(--field-edge)',
               background: 'transparent',
               color: 'var(--ink)',
             }}
@@ -219,7 +218,7 @@ function AddEventForm({
               padding: '6px 10px',
               fontSize: 'var(--value-size)',
               borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-subtle)',
+              border: '1px solid var(--field-edge)',
               background: 'transparent',
               color: 'var(--ink)',
               resize: 'vertical',

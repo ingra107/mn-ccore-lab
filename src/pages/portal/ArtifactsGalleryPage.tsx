@@ -122,29 +122,25 @@ export default function ArtifactsGalleryPage() {
             ))}
           </div>
         ) : artifacts.length === 0 ? (
-          <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)' }}>
-            <EmptyState
-              icon={<FileText size={28} />}
-              title="No shelved artifacts yet"
-              subtitle="Tag an artifact (in-Hub on its page, or with the --tag flag on publish/save) to add it to the gallery."
-            />
-          </div>
+          <EmptyState
+            icon={<FileText size={28} />}
+            title="No shelved artifacts yet"
+            subtitle="Tag an artifact (in-Hub on its page, or with the --tag flag on publish/save) to add it to the gallery."
+          />
         ) : filtered.length === 0 ? (
-          <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)' }}>
-            <EmptyState
-              icon={<FileText size={28} />}
-              title="Nothing matches"
-              subtitle={
-                query.trim()
-                  ? `No artifact matches "${query.trim()}"${selected.size ? ' under the selected tag(s)' : ''}. Titles, tags, authors, and artifact text are all searched.`
-                  : 'No artifact carries the selected tag(s). Clear the filter to see all.'
-              }
-              action={{
-                label: query.trim() ? 'Clear search and filter' : 'Clear filter',
-                onClick: () => { setQuery(''); setSelected(new Set()) },
-              }}
-            />
-          </div>
+          <EmptyState
+            icon={<FileText size={28} />}
+            title="Nothing matches"
+            subtitle={
+              query.trim()
+                ? `No artifact matches "${query.trim()}"${selected.size ? ' under the selected tag(s)' : ''}. Titles, tags, authors, and artifact text are all searched.`
+                : 'No artifact carries the selected tag(s). Clear the filter to see all.'
+            }
+            action={{
+              label: query.trim() ? 'Clear search and filter' : 'Clear filter',
+              onClick: () => { setQuery(''); setSelected(new Set()) },
+            }}
+          />
         ) : (
           <div style={gridStyle}>
             {filtered.map((a) => {
@@ -177,7 +173,7 @@ export default function ArtifactsGalleryPage() {
                   <div className="flex items-center gap-2" style={{ marginTop: 'auto', fontSize: 11, color: 'var(--slate)' }}>
                     {a.created_by === 'claude-ai' ? (
                       <span className="inline-flex items-center gap-1" style={{ fontWeight: 500 }}>
-                        <HermesMark size={12} variant="avatar" color="var(--slate)" bg="var(--surface-2)" /> Hermes
+                        <HermesMark size={12} variant="avatar" color="var(--slate)" bg="var(--sk-card)" /> Hermes
                       </span>
                     ) : (
                       <span>{creator.name}</span>

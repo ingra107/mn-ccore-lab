@@ -9,6 +9,7 @@ import { PANEL_BG, withAlpha } from '../../lib/taskGrouping'
 import { Button } from '../../components/ui/Button'
 import ProjectPublications from '../../components/ProjectPublications'
 import SectionHead from '../../components/ui/SectionHead'
+import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
 
 interface ProjectLiteratureProps {
   projectSlug: string
@@ -262,40 +263,23 @@ function LinkPaperModal({ linkedPaperIds, onLink, onClose }: {
           maxHeight: '75vh',
           backgroundColor: 'var(--cream)',
           borderRadius: 'var(--radius-xl)',
-          border: '1px solid var(--border-subtle)',
+          border: '1px solid var(--sk-line2)',
           display: 'flex',
           flexDirection: 'column',
         }}
       >
         {/* Tab header */}
-        <div className="flex items-center border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-          <button
-            onClick={() => setTab('search')}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: tab === 'search' ? 'var(--job-accent)' : 'var(--slate)',
-              borderBottom: tab === 'search' ? '2px solid var(--job-accent)' : '2px solid transparent',
-              marginBottom: '-1px',
-            }}
-          >
-            <Search {...ICON_PROPS} size={13} />
-            Search Existing
-          </button>
-          <button
-            onClick={() => setTab('doi')}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: tab === 'doi' ? 'var(--job-accent)' : 'var(--slate)',
-              borderBottom: tab === 'doi' ? '2px solid var(--job-accent)' : '2px solid transparent',
-              marginBottom: '-1px',
-            }}
-          >
-            <Link2 {...ICON_PROPS} size={13} />
-            Add by DOI
-          </button>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-sm) var(--sp-md)' }}>
+        <div className="flex items-center justify-between gap-2 px-3 py-2.5 border-b" style={{ borderColor: 'var(--sk-line)' }}>
+          <SegmentedToggle
+            ariaLabel="Add a publication"
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: 'search', label: 'Search existing', icon: <Search {...ICON_PROPS} size={13} /> },
+              { value: 'doi', label: 'Add by DOI', icon: <Link2 {...ICON_PROPS} size={13} /> },
+            ]}
+          />
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-sm) var(--sp-md)' }}>
             <X {...ICON_PROPS} size={16} />
           </button>
         </div>
@@ -361,8 +345,8 @@ function LinkPaperModal({ linkedPaperIds, onLink, onClose }: {
               onChange={e => setDoi(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') lookupDoi() }}
               placeholder="10.1234/example or https://doi.org/..."
-              className="flex-1 text-sm px-3 py-2 rounded-lg border bg-transparent"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)' }}
+              className="flex-1 text-sm px-3 py-2 rounded-lg bg-transparent"
+              style={{ color: 'var(--ink)', border: '1px solid var(--field-edge)' }}
             />
             <Button
               variant="primary"
@@ -388,7 +372,7 @@ function LinkPaperModal({ linkedPaperIds, onLink, onClose }: {
           )}
 
           {doiData && (
-            <div className="flex flex-col gap-2 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)', border: '1px solid var(--border-subtle)' }}>
+            <div className="flex flex-col gap-2 p-3 rounded-lg" style={{ backgroundColor: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)' }}>
               <div className="flex items-center gap-2 mb-1">
                 <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--job-accent)' }} />
                 <span className="text-[11px] font-medium" style={{ color: 'var(--job-accent)' }}>Citation found</span>

@@ -17,7 +17,7 @@
 // most recent activity), stage group headers when sorted by stage, j/k and
 // arrows, Enter opens, p pins, Esc clears (useProjectKeyboardNav), the pin
 // star, grant-mechanism tag, open-task count, published chip, "Nd ago", links,
-// folder, Work on, the count footer. Ctrl/cmd-click opens in a new tab.
+// folder, Work on. The count footer is gone: the total is the page's hero number and each stage's count rides its group header. Ctrl/cmd-click opens in a new tab.
 
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -396,16 +396,6 @@ export default function ProjectSleekList({
           </motion.div>
         )}
       </SleekTable>
-      {projects.length > 0 && (
-        <div className="pj-foot">
-          {[
-            { label: 'Count', value: projects.length },
-            ...Array.from(stageCounts.values()).map(({ label, count }) => ({ label, value: count })),
-          ].map((s) => (
-            <span key={s.label}>{s.label} <b>{s.value}</b></span>
-          ))}
-        </div>
-      )}
     </>
   )
 }
