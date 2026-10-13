@@ -45,7 +45,7 @@ export const HUB_TABLES = [
   '_meta', 'activity_entries', 'activity_log', 'activity_thread_seen', 'agenda_items', 'agent_knowledge', 'ai_requests',
   'artifact_tags', 'artifact_versions', 'artifacts', 'bug_reports', 'commitments',
   'conference_submissions', 'contributions', 'day_capacity', 'deadline_dependencies', 'decisions',
-  'digest_comments', 'dispatch_queue', 'entity_seen', 'expertise_tags', 'file_activity_daily',
+  'digest_comments', 'digest_paper_state', 'dispatch_queue', 'entity_seen', 'expertise_tags', 'file_activity_daily',
   'file_attachments', 'hub_decisions', 'hub_errors', 'hub_pomodoro_slots', 'ideas',
   'inbox', 'inbox_events', 'kg_entities', 'kg_relation_type_registry', 'kg_relations', 'lab_answers',
   'lab_questions', 'lab_settings', 'launch_log', 'links', 'manuscript_revisions', 'meeting_project_grants', 'meetings',
@@ -282,6 +282,16 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
       const own = `project_member_folders.member_slug = ${sqlList([v.slug])}`
       return projectsScoped(v) ? `(${own} AND project_member_folders.project_id IN (SELECT id FROM projects))` : own
     },
+  },
+
+  // A person's own Research Digest reading state (schema-v136): Save and
+  // Dismiss are per person, so a member reads only their own rows. No PI arm:
+  // what Nick saved is nobody else's state, and his is not theirs. Nobody
+  // reads none. The PB key gets the raw handle (viewer-db), so the digest
+  // read names member_slug itself.
+  digest_paper_state: {
+    kind: 'scoped', key: ['paper_id', 'member_slug'], dependsOn: [],
+    where: (v) => (v.kind !== 'person' ? '0' : `digest_paper_state.member_slug = ${sqlList([v.slug])}`),
   },
 
   // Quoted: scripts/check-activity-reads.mjs counts every bare mention of this

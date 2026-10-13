@@ -56,7 +56,27 @@ export function useCreateDigestComment() {
 
     onSettled: (_data, _err, { paperId }) => {
       queryClient.invalidateQueries({ queryKey: ['digest-comments', paperId] })
-      queryClient.invalidateQueries({ queryKey: ['digest-comment-counts'] })
+      // The card's note count and newest note ride on the paper rows.
+      queryClient.invalidateQueries({ queryKey: ['digest'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// ── Digest note -> task ─────────────────────────────────────
+
+/** Turn a digest note into a Hub task assigned to the caller (idempotent per note). */
+export function useMakeTaskFromNote() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ noteId }: { noteId: string; paperId: string }) =>
+      fetchApi<{ task_id: string; created: boolean }>(`/api/digest/comments/${noteId}/task`, { method: 'POST' }),
+
+    onSettled: (_data, _err, { paperId }) => {
+      queryClient.invalidateQueries({ queryKey: ['digest-comments', paperId] })
+      queryClient.invalidateQueries({ queryKey: ['digest'] })
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })

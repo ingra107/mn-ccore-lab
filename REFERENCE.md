@@ -51,7 +51,9 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | action_items | 8 | Legacy action items (pre-task system) — frozen since ~2026-03-30, content losslessly mirrored into `tasks`; queued for DROP (schema-v99, backlog #562), staged not yet applied as of 2026-07-16 |
 | project_updates | DROPPED 2026-06-10 | schema-v78; snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
 | project_comments | DROPPED 2026-06-10 | schema-v78 (was `comments` table); snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
-| research_digest | 1683 (2026-09-14) | Daily PubMed digest papers; `pub_date` is `YYYY` / `YYYY-MM` / `YYYY-MM-DD` at PubMed's precision (#127) |
+| research_digest | 1683 (2026-09-14) | Daily PubMed digest papers; `pub_date` is `YYYY` / `YYYY-MM` / `YYYY-MM-DD` at PubMed's precision (#127). No reading state since schema-v137 |
+| digest_paper_state | dynamic | Per-person Save / Dismiss on a digest paper (schema-v136); 'new' = no row; a member reads only their own rows (table-scope) |
+| digest_comments | dynamic | Notes on a digest paper; `task_id` = the task a note became (Make task, schema-v136) |
 | notifications | dynamic | In-app notification feed |
 | commitments | dynamic | Team commitments tracker |
 | collaboration_network | dynamic | Inter-member collaboration links |
@@ -397,7 +399,9 @@ Discovered during the 2026-04-17/18 deep-audit. Canonical, non-obvious patterns 
 - **POST `/api/questions/:id/answers`** takes `{ content, author_slug? }`. Body field is `content`, not `answer`.
 - **POST `/api/revisions`** takes `{ project_id | project_slug, round?, submitted_at?, response_due?, status?, journal?, notes | reviewer_comments? }`. Accepts either id or slug; `reviewer_comments` is an alias for `notes`. Convenience GET: `/api/projects/:slug/revisions`.
 - **POST `/api/tasks/:id/handoffs`** uses SBAR format: `{ to_slug, situation, background?, assessment?, recommendation? }`. `situation` is required.
-- **POST `/api/digest/:id/status`** toggles save/dismiss. Not `POST /api/digest/:id` directly.
+- **POST `/api/digest/:id/status`** sets the CALLER's own save/dismiss (`new` clears it); per person since schema-v136. Not `POST /api/digest/:id` directly.
+- **POST `/api/digest/comments/:id/task`** turns a digest note into a task assigned to the caller (through `handleCreateTask`); a second call returns the same task.
+- **GET `/api/digest?status=saved`** with no `date` is the caller's Saved list across every digest date, newest save first. Each paper carries `note_count` and `latest_note`.
 
 ### Read-only on the Hub
 - Grants — a grant is a product (grant_application, award, honor). GET `/api/grants` and `/api/grants/timeline` (api/routes/grants.ts) read them with their project, PI, award terms (period_start, period_end, amount_usd: schema-v128) and data-derived bucket (terminal stage = ended, live award = active, else proposed); the timeline adds each product's milestone tasks. Writes go through `POST /api/projects/:slug/products` (members of the project): action `terms` (venue, due_date, deadline, period_start, period_end, amount_usd, and schema-v135's event_date / nick_author_position / nick_event_role; `base_seq` + `from` make it a compare-and-swap) and action `milestone` (a kind='milestone' task on the product). `POST /api/grants/:id` and the `/api/grant-milestones` routes were retired 2026-10-12.
@@ -439,7 +443,7 @@ A few endpoints break the `{ data: ... }` convention. Noted here so client code 
 - `POST /api/questions/:id/answers` body field is `content`, not `answer`.
 - Questions list answers inside `GET /api/questions/:id` (as `data.answers[]`) — no dedicated `/answers` GET.
 - `POST /api/tasks/:id/handoffs` uses SBAR shape: `{ to_slug, situation, background?, assessment?, recommendation? }`. `situation` is required.
-- `POST /api/digest/:id/status` (not `/api/digest/:id`) toggles save/dismiss.
+- `POST /api/digest/:id/status` (not `/api/digest/:id`) sets the caller's own save/dismiss.
 - `/api/team-members` does **not** exist — use `/api/team`.
 - `/api/calendar` does **not** exist — use `/api/calendar/events`.
 - `/api/pomodoro` does **not** exist; `/api/pb/pomodoro/start`+`/complete` were RETIRED 2026-06-10 (Daily Plan substrate — their only caller was the PBSector timer). Pomodoro telemetry still flows via `POST /api/pb/sessions`/`/bulk` (PB push) + `GET /api/pb/sessions/stats` (TodayPage reads).

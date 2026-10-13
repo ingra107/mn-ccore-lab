@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
+import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
   ChevronDown,
   ChevronUp,
@@ -9,14 +11,19 @@ import {
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
-import { useDigest, useDigestDates, useProjects, useDigestComments, useDigestCommentCounts } from '../hooks/useApiData'
-import type { DigestPaper, DigestComment } from '../hooks/useApiData'
-import { useUpdateDigestStatus, useLinkPaper, useCreateDigestComment } from '../hooks/useMutations'
+import { useDigest, useDigestDates, useProjects, useDigestComments } from '../hooks/useApiData'
+import type { DigestPaper, DigestComment, DigestStatus } from '../hooks/useApiData'
+import { useUpdateDigestStatus, useLinkPaper, useCreateDigestComment, useMakeTaskFromNote } from '../hooks/useMutations'
+import { useSwipeAction } from '../hooks/useSwipeAction'
+import { useUndoToast } from '../components/UndoToast'
 import { Button } from '../components/ui/Button'
 import { getPersonInfo } from '../data/team'
-import { formatMediumDate, formatPublicationDate } from '../lib/dateUtils'
+import { firstNameFor } from '../lib/personLabel'
+import { formatMediumDate, formatPublicationDate, formatRelativeTime } from '../lib/dateUtils'
+import { withAlpha } from '../lib/taskGrouping'
 import { FaceDisc } from '../components/today/skin'
 import FilterLinks from '../components/ui/FilterLinks'
+import GhostSelect from '../components/ui/GhostSelect'
 import PageHeader from '../components/PageHeader'
 import HeartbeatLine from '../components/HeartbeatLine'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -25,6 +32,9 @@ import { tealRamp, BAR_TRACK } from '../lib/tealRamp'
 import SectionHead from '../components/ui/SectionHead'
 
 type StatusFilter = 'all' | 'new' | 'saved'
+
+// The newest digest dates shown as links; every older date is in the picker.
+const RECENT_DATES = 14
 
 // #136, Nick: "when i click something it should get 'filed' so i can walk
 // through the studies and don't need to click down ... at the very least, I
@@ -73,7 +83,51 @@ interface ProjectOption {
 // Text actions share one slot and one hit size (principle 14).
 const ACTION_CLASS = 'cursor-pointer px-2 py-2 rounded-md hover:underline'
 
-function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; projects: ProjectOption[]; commentCount?: number }) {
+/**
+ * "Make task" on a note (Nick 2026-10-13): the note becomes a Hub task
+ * assigned to whoever taps it, with the paper as its link. Once made, the
+ * slot shows the task instead (a link when the viewer can open it).
+ */
+function NoteTaskAction({ noteId, paperId, taskId, taskVisible }: { noteId: string; paperId: string; taskId: string | null; taskVisible: boolean }) {
+  const makeTask = useMakeTaskFromNote()
+  const { showSuccess, showError } = useUndoToast()
+  if (taskId) {
+    return taskVisible ? (
+      <Link
+        to={`/portal/my-tasks?open=${taskId}`}
+        className="text-xs hover:underline flex-shrink-0"
+        style={{ color: 'var(--job-accent)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        Task
+      </Link>
+    ) : (
+      <span className="text-xs flex-shrink-0" style={{ color: 'var(--muted)' }}>Task made</span>
+    )
+  }
+  return (
+    <button
+      type="button"
+      className="cursor-pointer text-xs hover:underline flex-shrink-0"
+      style={{ color: 'var(--slate)', background: 'none', border: 'none', padding: 0 }}
+      disabled={makeTask.isPending}
+      onClick={(e) => {
+        e.stopPropagation()
+        makeTask.mutate(
+          { noteId, paperId },
+          {
+            onSuccess: (res) => showSuccess(res.data.created ? 'Added to your tasks' : 'Already a task'),
+            onError: (err) => showError(err instanceof Error ? err.message : 'Could not make the task'),
+          },
+        )
+      }}
+    >
+      Make task
+    </button>
+  )
+}
+
+function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectOption[] }) {
   const [expanded, setExpanded] = useState(false)
   const [showLinkPicker, setShowLinkPicker] = useState(false)
   const [linkSuccess, setLinkSuccess] = useState<string | null>(null)
@@ -82,10 +136,13 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
   const updateStatus = useUpdateDigestStatus()
   const linkPaper = useLinkPaper()
   const createComment = useCreateDigestComment()
+  const { showUndo } = useUndoToast()
   const { data: comments } = useDigestComments(showComments ? paper.id : null)
   const topics = parseTopics(paper.topics)
   const isSaved = paper.status === 'saved'
   const isDismissed = paper.status === 'dismissed'
+  const noteCount = paper.note_count ?? 0
+  const latest = paper.latest_note ?? null
 
   const handleSave = useCallback(
     (e: React.MouseEvent) => {
@@ -103,16 +160,71 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
     [paper.id, isDismissed, updateStatus]
   )
 
+  // Phone swipe (Nick 2026-10-13): right saves, left dismisses, each with an
+  // Undo. A swipe SETS the status rather than toggling it, so a stray swipe on
+  // a paper already saved does not unsave it. The hook only drags below 768px.
+  const swipeTo = (next: DigestStatus, label: string) => {
+    const prev = paper.status
+    if (prev === next) return
+    updateStatus.mutate({ id: paper.id, status: next })
+    showUndo(label, () => updateStatus.mutate({ id: paper.id, status: prev }))
+  }
+  const swipe = useSwipeAction({
+    onSwipeRight: () => swipeTo('saved', 'Saved'),
+    onSwipeLeft: () => swipeTo('dismissed', 'Dismissed'),
+  })
+  // No drag while typing a note or picking a project.
+  const swipeProps = showComments || showLinkPicker ? null : swipe.motionProps
+
+  const submitNote = () => {
+    if (!commentText.trim()) return
+    createComment.mutate(
+      { paperId: paper.id, content: commentText.trim() },
+      { onSuccess: () => setCommentText('') },
+    )
+  }
+
   const pubmedUrl = paper.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${paper.pmid}/` : null
   const doiUrl = paper.doi ? `https://doi.org/${paper.doi}` : null
 
+  const revealLayer: React.CSSProperties = {
+    position: 'absolute', inset: 0,
+    borderRadius: 'var(--radius-xl)',
+    color: 'var(--sk-t2)',
+    display: 'flex', alignItems: 'center',
+    padding: '0 var(--sp-lg)',
+    fontSize: '12px', fontWeight: 600,
+    pointerEvents: 'none',
+  }
+
   return (
-    <div
+    // overflow-x clip keeps a dragged card from widening the page, and leaves
+    // the "To project" menu free to open above the card.
+    <div style={{ position: 'relative', overflowX: 'clip' }}>
+      {/* Swipe reveal layers (phones only; they stay at opacity 0 when the
+          card cannot drag). Save is the accent, Dismiss is gray. */}
+      <motion.div
+        aria-hidden
+        style={{ ...revealLayer, justifyContent: 'flex-start', background: 'color-mix(in srgb, var(--job-accent) 12%, transparent)', opacity: swipe.leftActionOpacity }}
+      >
+        Save
+      </motion.div>
+      <motion.div
+        aria-hidden
+        style={{ ...revealLayer, justifyContent: 'flex-end', background: withAlpha('var(--sk-t1)', 8), opacity: swipe.rightActionOpacity }}
+      >
+        Dismiss
+      </motion.div>
+    <motion.div
       className="card p-4 sm:p-5"
+      data-testid={`digest-paper-${paper.id}`}
+      {...(swipeProps ?? {})}
       style={{
-        // Option A (wave 3): same anatomy as the other cards. Filed state is
-        // the status chip in the footer, not a left-edge rail.
+        position: 'relative',
+        // Option A (wave 3): same anatomy as the other cards. The Save /
+        // Dismiss buttons carry the filed state; there is no status chip.
         transition: 'box-shadow var(--duration-slow) var(--ease-out), background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
+        ...(swipeProps?.style ?? {}),
       }}
     >
       <div>
@@ -123,7 +235,8 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
             className="text-sm sm:text-base leading-snug mb-1"
             style={{
               fontWeight: 500,
-              color: 'var(--ink)',
+              // A dismissed paper reads quieter; color, never opacity.
+              color: isDismissed ? 'var(--slate)' : 'var(--ink)',
             }}
           >
             {pubmedUrl ? (
@@ -300,20 +413,28 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
           )}
         </div>
 
-        {/* Footer: status left, actions in the fixed bottom-right slot */}
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 mt-3">
-          <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: isSaved ? 'var(--job-accent)' : 'var(--slate)' }}>
-            <span
-              aria-hidden="true"
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: isSaved ? 'var(--job-accent)' : isDismissed ? 'var(--border-subtle)' : 'var(--ink)',
-              }}
-            />
-            {isSaved ? 'Saved' : isDismissed ? 'Dismissed' : 'Unread'}
-          </span>
+        {/* The newest note (Nick 2026-10-13): badge, first name, the note,
+            muted time. Tapping it opens the thread, where it is listed. */}
+        {latest && !showComments && (
+          <div className="flex items-start gap-2 mt-3" data-testid="digest-latest-note">
+            <FaceDisc label={getPersonInfo(latest.author_slug).name} initials={getPersonInfo(latest.author_slug).initials} photo={getPersonInfo(latest.author_slug).photoUrl} px={16} />
+            <button
+              type="button"
+              onClick={() => setShowComments(true)}
+              className="cursor-pointer flex-1 min-w-0 text-left text-xs line-clamp-2"
+              style={{ background: 'none', border: 'none', padding: 0, lineHeight: 1.4 }}
+              aria-label={`Open ${noteCount} note${noteCount === 1 ? '' : 's'}`}
+            >
+              <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{firstNameFor(latest.author_slug)}</span>{' '}
+              <span style={{ color: 'var(--ink)' }}>{latest.content}</span>
+              <span style={{ color: 'var(--muted)' }}> · {formatRelativeTime(latest.created_at)}</span>
+            </button>
+            <NoteTaskAction noteId={latest.id} paperId={paper.id} taskId={latest.task_id} taskVisible={latest.task_visible} />
+          </div>
+        )}
+
+        {/* Footer: actions in the fixed bottom-right slot */}
+        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1 mt-3">
           <div className="flex flex-wrap items-center gap-x-1 text-xs">
             <button
               onClick={handleDismiss}
@@ -327,10 +448,10 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
               onClick={() => setShowComments(!showComments)}
               className={ACTION_CLASS}
               style={{ color: showComments ? 'var(--job-accent)' : 'var(--slate)' }}
-              aria-label={`${commentCount || 0} comments`}
+              aria-label={`${noteCount} note${noteCount === 1 ? '' : 's'}`}
               aria-expanded={showComments}
             >
-              Discuss{(commentCount ?? 0) > 0 ? ` ${commentCount}` : ''}
+              Note{noteCount > 0 ? ` ${noteCount}` : ''}
             </button>
             <div style={{ position: 'relative' }}>
               <button
@@ -408,13 +529,13 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
         </div>
       </div>
 
-      {/* Inline comments section */}
+      {/* Notes thread */}
       {showComments && (
         <div
           className="mt-3 pt-3"
           style={{ borderTop: '1px solid var(--border-subtle)' }}
         >
-          {/* Comment list */}
+          {/* Note list */}
           {comments && comments.length > 0 && (
             <div className="space-y-2 mb-3">
               {comments.map((c: DigestComment) => {
@@ -428,58 +549,66 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                           className="text-xs"
                           style={{ fontWeight: 500, color: 'var(--ink)' }}
                         >
-                          {info.name}
+                          {firstNameFor(c.author_slug)}
                         </span>
                         <span
                           className="text-xs"
-                          style={{ color: 'var(--slate)', opacity: 0.75 }}
+                          style={{ color: 'var(--muted)' }}
+                          title={formatMediumDate(c.created_at)}
                         >
-                          {formatMediumDate(c.created_at)}
+                          {formatRelativeTime(c.created_at)}
                         </span>
                       </div>
                       <p
                         className="text-xs sm:text-sm"
-                        style={{ color: 'var(--ink)', opacity: 0.85, lineHeight: 1.4 }}
+                        style={{ color: 'var(--ink)', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}
                       >
                         {c.content}
                       </p>
                     </div>
+                    <NoteTaskAction noteId={c.id} paperId={paper.id} taskId={c.task_id} taskVisible={c.task_visible === 1} />
                   </div>
                 )
               })}
             </div>
           )}
 
-          {/* Comment input */}
+          {/* Note input: a real field edge, the send button inside its row
+              (principle 20). Ctrl/Cmd+Enter sends; Enter is a new line. */}
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              if (!commentText.trim()) return
-              createComment.mutate(
-                { paperId: paper.id, content: commentText.trim() },
-                { onSuccess: () => setCommentText('') },
-              )
+              submitNote()
             }}
-            className="flex items-center gap-2"
+            className="flex items-end gap-2"
           >
-            <input
-              type="text"
+            <textarea
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Add a note..."
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault()
+                  submitNote()
+                }
+              }}
+              rows={Math.min(6, Math.max(2, commentText.split('\n').length))}
+              aria-label="Add a note"
+              placeholder="Add a note, e.g. get the full text to see if the pooled analysis had data"
               className="flex-1 text-xs sm:text-sm px-3 py-1.5 rounded-md"
               style={{
                 background: 'var(--cream)',
                 border: '1px solid var(--field-edge)',
                 color: 'var(--ink)',
                 outline: 'none',
+                resize: 'none',
+                lineHeight: 1.4,
               }}
             />
             <Button
               variant="primary"
               type="submit"
               disabled={!commentText.trim() || createComment.isPending}
-              aria-label="Submit comment"
+              aria-label="Save note"
               style={{
                 padding: '6px',
                 borderRadius: 'var(--radius-md)',
@@ -494,6 +623,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
           </form>
         </div>
       )}
+    </motion.div>
     </div>
   )
 }
@@ -532,17 +662,17 @@ function EmptyState() {
 
 // ── No Results State ─────────────────────────────────────────
 
-function NoResults() {
+function NoResults({ saved }: { saved?: boolean }) {
   return (
     <div className="text-center py-12">
       <p
         className="text-lg mb-2"
         style={{ color: 'var(--ink)' }}
       >
-        No papers match your filters.
+        {saved ? 'Nothing saved yet.' : 'No papers match your filters.'}
       </p>
       <p className="text-sm" style={{ color: 'var(--slate)' }}>
-        Try selecting a different date or adjusting your filters.
+        {saved ? 'Save a paper (or swipe it right on a phone) and it stays here.' : 'Try selecting a different date or adjusting your filters.'}
       </p>
     </div>
   )
@@ -568,8 +698,9 @@ export default function Digest() {
   // shows max 2 filter rows.
   const [topicsExpanded, setTopicsExpanded] = useState(false)
 
-  // Fetch comment counts for badge display
-  const { data: commentCounts = {} } = useDigestCommentCounts(selectedDate)
+  // Saved is one list across every digest date (Nick 2026-10-13): a save from
+  // an older digest used to sit behind a date the selector no longer showed.
+  const isSavedView = statusFilter === 'saved'
 
   // Fetch projects for the "Link to Project" picker
   const { data: allProjects = [] } = useProjects()
@@ -587,26 +718,39 @@ export default function Digest() {
   // Auto-select most recent date when dates load
   const activeDate = selectedDate ?? (dates.length > 0 ? dates[0].date : undefined)
 
-  // Fetch papers for the active date (with relevance matching)
-  const { data: papers = [], isLoading, isError: papersError, refetch: refetchPapers } = useDigest({
+  // Papers for the active date (with relevance matching)
+  const dateQuery = useDigest({
     date: activeDate,
-    status: statusFilter === 'all' ? undefined : statusFilter,
+    status: statusFilter === 'new' ? 'new' : undefined,
     topic: topicFilter ?? undefined,
     limit: 200,
     with_relevance: true,
-  })
+  }, { enabled: !isSavedView && !!activeDate })
+
+  // Every paper this person saved, newest save first, across all dates. It
+  // also feeds the Saved count and Copy reading list.
+  const savedQuery = useDigest({ status: 'saved', limit: 300, with_relevance: true })
+  const savedAll = useMemo(() => savedQuery.data ?? [], [savedQuery.data])
+
+  const papers = useMemo(() => {
+    if (!isSavedView) return dateQuery.data ?? []
+    return topicFilter ? savedAll.filter((p) => parseTopics(p.topics).includes(topicFilter)) : savedAll
+  }, [isSavedView, dateQuery.data, savedAll, topicFilter])
+  const activeQuery = isSavedView ? savedQuery : dateQuery
+  const isLoading = activeQuery.isLoading
+  const papersError = activeQuery.isError
 
   // Gather all unique topics from ALL papers for this date (not just filtered)
   // Count papers by status for the active date
-  const { data: allPapersForDate = [] } = useDigest({ date: activeDate, limit: 200, with_relevance: true })
+  const { data: allPapersForDate = [] } = useDigest({ date: activeDate, limit: 200, with_relevance: true }, { enabled: !!activeDate })
 
   const allTopics = useMemo(() => {
     const topicSet = new Set<string>()
-    allPapersForDate.forEach((p) => {
+    ;(isSavedView ? savedAll : allPapersForDate).forEach((p) => {
       parseTopics(p.topics).forEach((t) => topicSet.add(t))
     })
     return Array.from(topicSet).sort()
-  }, [allPapersForDate])
+  }, [allPapersForDate, savedAll, isSavedView])
   const statusCounts = useMemo(() => {
     const counts = { all: allPapersForDate.length, new: 0, saved: 0, dismissed: 0 }
     allPapersForDate.forEach((p) => {
@@ -617,11 +761,11 @@ export default function Digest() {
     return counts
   }, [allPapersForDate])
 
-  // "For You" count (across all papers for this date)
+  // "For You" count (across all papers in view)
   const forYouCount = useMemo(() => {
     if (!userSlug) return 0
-    return allPapersForDate.filter((p) => p.relevant_members?.includes(userSlug)).length
-  }, [allPapersForDate, userSlug])
+    return (isSavedView ? savedAll : allPapersForDate).filter((p) => p.relevant_members?.includes(userSlug)).length
+  }, [allPapersForDate, savedAll, isSavedView, userSlug])
 
   // Text search + "For You" filter within papers
   const filteredPapers = useMemo(() => {
@@ -638,11 +782,14 @@ export default function Digest() {
       )
     }
     // Processed papers sink (#136). Array.prototype.sort is stable, so within
-    // a bucket the server's relevance_score DESC order is untouched.
+    // a bucket the server's order is untouched.
     return [...result].sort((a, b) => processRank(a.status) - processRank(b.status))
   }, [papers, searchQuery, forYouFilter, userSlug])
 
   const isEmpty = dates.length === 0 && !isLoading
+
+  const recentDates = dates.slice(0, RECENT_DATES)
+  const activeIsRecent = recentDates.some((d) => d.date === activeDate)
 
   // Reading progress bar — rendered as PageHeader child
   const progressBar = statusCounts.all > 0 ? (
@@ -687,7 +834,7 @@ export default function Digest() {
       {(datesError || papersError) ? (
         <section className="content-container pb-16">
           <div className="flex items-center justify-center py-16">
-            <QueryErrorNote label="research digest" onRetry={() => { refetchDates(); refetchPapers() }} />
+            <QueryErrorNote label="research digest" onRetry={() => { refetchDates(); activeQuery.refetch() }} />
           </div>
         </section>
       ) : isEmpty ? (
@@ -696,49 +843,44 @@ export default function Digest() {
         </section>
       ) : (
         <section className="content-container pb-12">
-          {/* Date selector */}
+          {/* Date selector: the newest dates as filter links (one scrolling
+              row on phones), every older date in the picker. Saved spans all
+              dates, so it has none. */}
           {dates.length > 0 && (
             <div className="mb-6">
-              <SectionHead title="Digest date" />
-              {/* One scrolling row on phones (14 wrapped pills pushed every paper
-                  below the fold); wraps on larger screens. */}
-              <div className="flex flex-nowrap sm:flex-wrap gap-2 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0" style={{ scrollbarWidth: 'thin' }}>
-                {dates.slice(0, 14).map((d) => {
-                  const isActive = d.date === activeDate
-                  return (
-                    <button
-                      key={d.date}
-                      onClick={() => {
-                        setSelectedDate(d.date)
+              <SectionHead title={isSavedView ? 'Saved papers' : 'Digest date'} />
+              {isSavedView ? (
+                <p className="text-xs" style={{ color: 'var(--slate)' }}>
+                  Every paper you saved, from every digest, newest first.
+                </p>
+              ) : (
+                <div className="flex items-center gap-3 min-w-0">
+                  <FilterLinks
+                    ariaLabel="Digest date"
+                    className="tk-flt-scroll"
+                    value={activeDate ?? ''}
+                    onChange={(d) => {
+                      setSelectedDate(d)
+                      setTopicFilter(null)
+                    }}
+                    options={recentDates.map((d) => ({ value: d.date, label: formatDate(d.date), count: d.count }))}
+                  />
+                  {dates.length > RECENT_DATES && (
+                    <GhostSelect
+                      aria-label="Older digest dates"
+                      value={activeDate ?? ''}
+                      triggerLabel={activeIsRecent || !activeDate ? 'Older' : formatDate(activeDate)}
+                      triggerColor={activeIsRecent ? undefined : 'var(--job-accent)'}
+                      onChange={(d) => {
+                        setSelectedDate(d)
                         setTopicFilter(null)
                       }}
-                      className="cursor-pointer rounded-full px-3 py-1.5 text-sm flex-shrink-0 whitespace-nowrap"
-                      style={{
-                        fontWeight: isActive ? 600 : 400,
-                        // Neutral pills, teal selected state (site audit F107):
-                        // gold is for "wants you now", not an everyday toggle.
-                        background: isActive ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                        color: isActive ? 'var(--job-accent)' : 'var(--ink)',
-                        border: isActive
-                          ? '1px solid var(--job-accent)'
-                          : '1px solid var(--border-subtle)',
-                        transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
-                      }}
-                    >
-                      {formatDate(d.date)}
-                      <span
-                        className="ml-1.5"
-                        style={{
-                          fontSize: '10px',
-                          opacity: 0.85,
-                        }}
-                      >
-                        ({d.count})
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
+                      options={dates.map((d) => ({ value: d.date, label: `${formatDate(d.date)} (${d.count})` }))}
+                      searchable
+                    />
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -764,7 +906,7 @@ export default function Digest() {
               options={[
                 { value: 'all' as StatusFilter, label: 'All', count: statusCounts.all },
                 { value: 'new' as StatusFilter, label: 'New', count: statusCounts.new },
-                { value: 'saved' as StatusFilter, label: 'Saved', count: statusCounts.saved },
+                { value: 'saved' as StatusFilter, label: 'Saved', count: savedAll.length },
               ]}
             />
 
@@ -789,12 +931,11 @@ export default function Digest() {
               {filteredPapers.length} paper{filteredPapers.length !== 1 ? 's' : ''}
             </span>
 
-            {/* Copy reading list */}
-            {statusCounts.saved > 0 && (
+            {/* Copy reading list: every saved paper, not one date's */}
+            {savedAll.length > 0 && (
               <button
                 onClick={() => {
-                  const saved = allPapersForDate.filter(p => p.status === 'saved')
-                  const bib = saved.map(p => {
+                  const bib = savedAll.map(p => {
                     const authors = truncateAuthors(p.authors)
                     const year = p.pub_date ? p.pub_date.slice(0, 4) : ''
                     return `${authors}. ${p.title}. ${p.journal || ''}${year ? ` (${year})` : ''}${p.doi ? `. doi:${p.doi}` : ''}`
@@ -810,62 +951,30 @@ export default function Digest() {
             )}
           </div>
 
-          {/* Topic filter pills — collapsed behind a Topics toggle (P2-04).
-              Saves a 3rd filter row by default; click to expand the chip
-              cloud. Active topic count shows on the toggle so users know a
-              filter is on even when collapsed. */}
+          {/* Topic filter — collapsed behind a Topics toggle (P2-04), so the
+              default view keeps two filter rows. The toggle reads pressed
+              while a topic filter is on, even when collapsed. */}
           {allTopics.length > 0 && (
             <div className="mb-6">
-              <button
-                onClick={() => setTopicsExpanded((v) => !v)}
-                className="cursor-pointer rounded-full px-3 py-1.5 text-xs inline-flex items-center gap-1.5 mb-2"
-                style={{
-                  fontSize: '11px',
-                  background: topicFilter ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                  color: topicFilter ? 'var(--job-accent)' : 'var(--slate)',
-                  border: `1px solid ${topicFilter ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
-                  fontWeight: topicFilter ? 500 : 400,
-                }}
-                aria-expanded={topicsExpanded}
-              >
-                Topics
-                {topicFilter && (
-                  <span style={{ fontSize: '10px', background: 'var(--job-accent)', color: 'var(--sk-card)', padding: '0 5px', borderRadius: 'var(--radius-full)' }}>
-                    1
-                  </span>
-                )}
-                <span style={{ opacity: 0.6 }}>{topicsExpanded ? '▾' : '▸'}</span>
-              </button>
-              {topicsExpanded && (
-              <div className="flex flex-wrap gap-1.5">
-              {topicFilter && (
+              <div className="tk-flt mb-2">
                 <button
-                  onClick={() => setTopicFilter(null)}
-                  className="tk-btn tk-sm"
+                  type="button"
+                  aria-pressed={!!topicFilter}
+                  aria-expanded={topicsExpanded}
+                  onClick={() => setTopicsExpanded((v) => !v)}
                 >
-                  Clear filter
+                  Topics
+                  {topicFilter && <span className="tk-cnt">1</span>}
+                  {topicsExpanded ? <ChevronUp {...ICON_PROPS} size={12} /> : <ChevronDown {...ICON_PROPS} size={12} />}
                 </button>
-              )}
-              {allTopics.map((topic) => {
-                const isActive = topicFilter === topic
-                return (
-                  <button
-                    key={topic}
-                    onClick={() => setTopicFilter(isActive ? null : topic)}
-                    className="cursor-pointer rounded-full px-2.5 py-1 text-xs"
-                    style={{
-                      fontSize: '10px',
-                      background: isActive ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                      color: isActive ? 'var(--job-accent)' : 'var(--ink)',
-                      border: isActive ? '1px solid var(--job-accent)' : '1px solid var(--border-subtle)',
-                      transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
-                    }}
-                  >
-                    {topic}
-                  </button>
-                )
-              })}
               </div>
+              {topicsExpanded && (
+                <FilterLinks
+                  ariaLabel="Topic"
+                  value={topicFilter ?? ''}
+                  onChange={(t) => setTopicFilter(t === '' || t === topicFilter ? null : t)}
+                  options={[{ value: '', label: 'All topics' }, ...allTopics.map((t) => ({ value: t, label: t }))]}
+                />
               )}
             </div>
           )}
@@ -885,7 +994,7 @@ export default function Digest() {
                 </p>
               </div>
             ) : statusFilter !== 'all' || topicFilter || forYouFilter ? (
-              <NoResults />
+              <NoResults saved={isSavedView && !topicFilter && !forYouFilter} />
             ) : (
               <EmptyState />
             )
@@ -897,7 +1006,7 @@ export default function Digest() {
                 </p>
               )}
               {filteredPapers.map((paper) => (
-                <PaperCard key={paper.id} paper={paper} projects={projectOptions} commentCount={commentCounts[paper.id] || 0} />
+                <PaperCard key={paper.id} paper={paper} projects={projectOptions} />
               ))}
             </div>
           )}

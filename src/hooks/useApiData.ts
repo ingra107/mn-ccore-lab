@@ -723,13 +723,33 @@ export interface DigestPaper {
   relevance_score: number
   relevance_reason: string | null
   topics: string | null // JSON array
-  status: string
+  /** THIS viewer's reading state (schema-v136: per person, 'new' = no row). */
+  status: DigestStatus
+  /** When this viewer last saved or dismissed it (null while new). */
+  status_at?: string | null
   digest_date: string | null
   relevant_members?: string[] // slugs matched via expertise_tags
+  /** Notes on this paper, everyone's. */
+  note_count?: number
+  /** The newest note, shown on the card (null when there are none). */
+  latest_note?: DigestNotePreview | null
 }
 
-export function useDigest(params?: { date?: string; status?: string; topic?: string; limit?: number; with_relevance?: boolean }) {
+export type DigestStatus = 'new' | 'saved' | 'dismissed'
+
+export interface DigestNotePreview {
+  id: string
+  author_slug: string
+  content: string
+  created_at: string
+  task_id: string | null
+  /** The viewer can open the note's task (it reads through their scope). */
+  task_visible: boolean
+}
+
+export function useDigest(params?: { date?: string; status?: string; topic?: string; limit?: number; with_relevance?: boolean }, options?: { enabled?: boolean }) {
   return useQuery({
+    enabled: options?.enabled ?? true,
     queryKey: ['digest', params],
     queryFn: async () => {
       const qs = new URLSearchParams()
@@ -762,6 +782,10 @@ export interface DigestComment {
   author_slug: string
   content: string
   created_at: string
+  /** The task this note became (Make task), or null. */
+  task_id: string | null
+  /** 1 when the viewer can open that task. */
+  task_visible: number
 }
 
 export function useDigestComments(paperId: string | null) {
@@ -773,18 +797,6 @@ export function useDigestComments(paperId: string | null) {
       return data.data || []
     },
     enabled: !!paperId,
-    staleTime: STALE_TIME,
-  })
-}
-
-export function useDigestCommentCounts(date?: string) {
-  return useQuery({
-    queryKey: ['digest-comment-counts', date],
-    queryFn: async () => {
-      const qs = date ? `?date=${date}` : ''
-      const data = await fetchJson<{ data?: Record<string, number> }>(`/api/digest/comment-counts${qs}`)
-      return data.data || {}
-    },
     staleTime: STALE_TIME,
   })
 }

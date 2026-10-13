@@ -5,9 +5,9 @@
  * the push corrective). The upsert is the only thing standing between a
  * re-push and the reader's state, so it is pinned here rather than trusted:
  *
- *   - `status` / `saved_by` are never rewritten on conflict. They were
+ *   - the reader's state is never touched. It was a lab-wide `status` column
  *     rewritten by INSERT OR REPLACE, which reset a saved or dismissed paper
- *     to 'new'.
+ *     to 'new'; it now lives per person in digest_paper_state (schema-v136).
  *   - `digest_date` keeps the STORED value. Digest.md is a rolling document
  *     whose frontmatter is the date it was last generated; writing it through
  *     collapsed 1065 papers onto one day and flattened the date selector.
@@ -26,7 +26,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import type Database from 'better-sqlite3';
 import type { Env } from '../helpers';
 import { handleCreateDigestPaper } from './digest';
-import { prodSchemaDb, d1Adapter } from '../test-support/prod-schema-db';
+import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 
 let db: InstanceType<typeof Database>;
 let env: Env;
@@ -68,19 +68,25 @@ describe('handleCreateDigestPaper upsert', () => {
     for (const col of ['authors', 'journal', 'pub_date', 'abstract', 'summary', 'significance', 'pmid', 'doi', 'relevance_reason', 'topics', 'digest_date']) {
       expect(row[col], col).toBeNull()
     }
-    expect(row).toMatchObject({ status: 'new', relevance_score: 0 })
+    expect(row).toMatchObject({ relevance_score: 0 })
   })
 
   it('a first push lands as status new with every field in its own column', async () => {
     await push(FULL);
-    expect(paper()).toMatchObject({ ...FULL, status: 'new' });
+    expect(paper()).toMatchObject(FULL);
+    // The lab-wide columns are gone (schema-v137): reading state is per person.
+    expect(paper()).not.toHaveProperty('status');
+    expect(paper()).not.toHaveProperty('saved_by');
   });
 
   it('never rewrites the reader state on a re-push', async () => {
     await push(FULL);
-    db.prepare("UPDATE research_digest SET status = 'saved', saved_by = 'nick-ingraham' WHERE id = 'digest-1'").run();
+    insertRow(db, 'team_members', { id: 'tm-nick', slug: 'nick-ingraham', name: 'Nick Ingraham', email: 'ingra107@umn.edu' });
+    db.prepare("INSERT INTO digest_paper_state (paper_id, member_slug, status) VALUES ('digest-1', 'nick-ingraham', 'saved')").run();
+    // An older PB client still sends status: 'new'; it must not reach anyone's state.
     await push({ ...FULL, status: 'new' });
-    expect(paper()).toMatchObject({ status: 'saved', saved_by: 'nick-ingraham' });
+    expect(db.prepare('SELECT member_slug, status FROM digest_paper_state').all())
+      .toEqual([{ member_slug: 'nick-ingraham', status: 'saved' }]);
   });
 
   it('keeps the stored digest_date rather than the pushed one', async () => {

@@ -39,7 +39,7 @@ import { handleGetGrants, handleGrantsTimeline } from './routes/grants';
 import { handleGetCitations } from './routes/citations';
 import { handleGetTeam, handleTeamSlugs, handleUpdateTeamMember, handleCreateTeamMember } from './routes/team';
 import { handleGetMemberFeaturedPublications, handlePutMemberFeaturedPublications } from './routes/member-featured-publications';
-import { handleGetDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper, handleGetDigestComments, handleCreateDigestComment, handleDigestCommentCounts } from './routes/digest';
+import { handleGetDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper, handleGetDigestComments, handleCreateDigestComment, handleMakeTaskFromNote } from './routes/digest';
 import { handleGetIdeas, handleCreateIdea, handleUpdateIdea, handleVoteIdea } from './routes/ideas';
 import { handleBugReport, handleListBugReports, handleUpdateBugReportStatus } from './routes/bug-report';
 import { handleNotifications, handleNotificationCount, handleMarkNotificationRead, handleMarkAllNotificationsRead, handleCommitments, handleCreateCommitment } from './routes/notifications';
@@ -495,6 +495,13 @@ const E = (c: Context<AppEnv>) => c.get('env');
 const U = (c: Context<AppEnv>) => new URL(c.req.url);
 const R = (c: Context<AppEnv>) => c.req.raw;
 const USER = (c: Context<AppEnv>) => c.get('user');
+// The member whose Research Digest reading state a request reads or writes
+// (schema-v136): a signed-in member's own slug, the PB key's Nick, and null
+// for anyone else (anonymous, a non-member, a credential-less local caller).
+const DIGEST_MEMBER = (c: Context<AppEnv>): string | null => {
+  const slug = USER(c)?.slug;
+  return c.get('callerKind') === 'member' && slug && slug !== 'anonymous' ? slug : null;
+};
 // T2.7: the precomputed PI flag (a PI email or a valid API key).
 const PI = (c: Context<AppEnv>) => c.get('isPi') === true;
 // The PB service key: its handle is unscoped, and the file routes let it read
@@ -735,13 +742,6 @@ defineRoute({
 });
 defineRoute({
   method: 'GET',
-  path: '/api/digest/comment-counts',
-  auth: 'authed',
-  entity: 'digest',
-  handler: (c) => handleDigestCommentCounts(U(c), E(c)),
-});
-defineRoute({
-  method: 'GET',
   path: '/api/digest',
   auth: 'public',
   anonShape: {
@@ -749,7 +749,7 @@ defineRoute({
     data: [{ id: true, title: true, journal: true, topics: true, relevance_score: true }],
     count: true,
   },
-  handler: (c) => handleGetDigest(U(c), E(c)),
+  handler: (c) => handleGetDigest(U(c), E(c), DIGEST_MEMBER(c)),
 });
 defineRoute({
   method: 'GET',
@@ -2636,7 +2636,19 @@ defineRoute({
   path: '/api/digest/:id/status',
   auth: 'authed',
   entity: 'digest',
-  handler: (c) => handleUpdateDigestStatus(c.req.param('id'), R(c), USER(c), E(c)),
+  handler: (c) => handleUpdateDigestStatus(c.req.param('id'), R(c), USER(c), E(c), DIGEST_MEMBER(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/digest/comments/:id/task',
+  auth: 'authed',
+  entity: 'digest',
+  handler: (c) => {
+    // Same ctx handling as POST /api/tasks: a test supplies no executionCtx.
+    let ctx: ExecutionContext | undefined;
+    try { ctx = c.executionCtx; } catch { ctx = undefined; }
+    return handleMakeTaskFromNote(c.req.param('id'), USER(c), E(c), ctx ? (p) => ctx.waitUntil(p) : undefined);
+  },
 });
 
 // Paper links
