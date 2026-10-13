@@ -47,6 +47,8 @@ Meeting comments are team-visible by default (a meeting page is a shared surface
   mail; a draft link is posted in the thread.
 - Long answers become artifact pages only when asked in a team thread; a
   private answer always stays in its thread.
+- An `@hermes` comment on an artifact rewrites that artifact, which the team
+  can read. Even a private comment's text is folded into the new version.
 
 ## What Hermes Cannot Do
 - Access external databases or PubMed directly

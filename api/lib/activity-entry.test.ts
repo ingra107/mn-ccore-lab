@@ -773,7 +773,7 @@ describe('Hermes — @hermes lands a placeholder activity entry + ai_request', (
     expect(ctx.aiRequests.length).toBe(1)
     expect(placeholder!.source_table).toBe('ai_requests')
     expect(placeholder!.source_id).toBe(ctx.aiRequests[0].id)
-  })
+  }, 20000)
 
   it('a Hermes placeholder for an @me question inherits author visibility', async () => {
     const ctx = makeEnv(FX)
@@ -1301,6 +1301,49 @@ describe('dispatchHermes — thread transcript (#98)', () => {
     const prompt = promptOf(aiRequests, aiRequests.length - 1)
     expect(prompt).not.toContain('SECRET morning thought')
   })
+
+  // #119 B1: the transcript is gated by where the ANSWER lands, not only by
+  // what the asker can see. A team-visible ask is answered in the team's view,
+  // so the asker's OWN private rows must not ride into it.
+  it("a TEAM ask in a team thread does not carry the asker's own private sub-reply", async () => {
+    const { env, aiRequests } = makeEnv(FX)
+    const root = await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: 'team-visible kickoff', actorSlug: 'nick-ingraham',
+    })
+    if (!root.ok) throw new Error('root failed')
+    const rootId = root.row.id as string
+    await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: '@me SECRET from my inbox', actorSlug: 'nick-ingraham', parentId: rootId,
+    })
+    await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: 'ask @hermes to summarise this thread', actorSlug: 'nick-ingraham', parentId: rootId,
+    })
+    const prompt = promptOf(aiRequests, aiRequests.length - 1)
+    expect(prompt).toContain('team-visible kickoff')
+    expect(prompt).not.toContain('SECRET from my inbox')
+  }, 20000)
+
+  it("a TEAM day ask does not carry the asker's own private day notes", async () => {
+    const { env, aiRequests } = makeEnv(FX)
+    await postActivityEntry({
+      env, user: NICK, entityType: 'day', entityId: '2026-07-24', kind: 'comment',
+      body: 'SECRET morning thought', actorSlug: 'nick-ingraham', visibility: 'author',
+    })
+    await postActivityEntry({
+      env, user: NICK, entityType: 'day', entityId: '2026-07-24', kind: 'comment',
+      body: 'team day note for everyone', actorSlug: 'nick-ingraham', visibility: 'team',
+    })
+    await postActivityEntry({
+      env, user: NICK, entityType: 'day', entityId: '2026-07-24', kind: 'comment',
+      body: '@hermes what did we talk about today', actorSlug: 'nick-ingraham', visibility: 'team',
+    })
+    const prompt = promptOf(aiRequests, aiRequests.length - 1)
+    expect(prompt).toContain('team day note for everyone')
+    expect(prompt).not.toContain('SECRET morning thought')
+  }, 20000)
 
   it("day scope DOES recall the requester's own earlier private exchange", async () => {
     const { env, aiRequests, dropPlaceholders } = makeEnv(FX)

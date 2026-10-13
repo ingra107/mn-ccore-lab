@@ -942,6 +942,14 @@ async function dispatchHermes(
       // so are its children. A private sub-reply under someone else's TEAM root
       // still fails all three arms.
       //
+      // #119 B1: the gate below is what the ASKER can see; the answer LANDS at
+      // args.visibility (the ask's effective, inherited visibility). A
+      // team-visible ask is answered where the team reads, so only team rows
+      // may feed it -- the asker's own private rows (a private sub-reply under
+      // a team root, a private day note) would otherwise be quoted back into a
+      // team thread.
+      const teamOnly = args.visibility === 'team' ? `AND ae.visibility = 'team'` : '';
+      //
       // activity-hidden-exempt: Hermes transcript (thread- or day-scoped). Owner
       // requirement 9.1.5: dismiss must not mean forget — Hermes sees hidden
       // rows. Requester-scoped + visibility-gated in the WHERE regardless.
@@ -951,6 +959,7 @@ async function dispatchHermes(
             AND ae.id != ?2
             AND ae.kind = 'comment'
             AND ae.body != ?3
+            ${teamOnly}
             AND (
               ae.visibility = 'team'
               OR ae.actor_slug = ?4
