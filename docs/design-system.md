@@ -58,7 +58,8 @@ nothing draws a second bordered box.
 
 The ratchet `scripts/check-legacy-look.mjs` (`npm run lint:legacy-look`, in `gate:deploy`) counts, per file, uppercase labels,
 `--surface-N` and drawn boxes (an inline `border: '1px solid var(--border-*)'` shorthand, or a rounded element with the bare
-`border` class); counts only go down.
+`border` class), hand-rolled underline tab strips (use `SegmentedToggle`; the public nav in `Layout.tsx` is allowed) and
+hand-rolled initials discs (use `FaceDisc`); counts only go down.
 
 ---
 

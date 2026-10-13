@@ -149,9 +149,3 @@ export const DAY_LABELS: Record<number, string> = {
   30: 'Day 30 -- Full Member',
 }
 
-export const CATEGORY_META: Record<OnboardingStep['category'], { label: string; color: string }> = {
-  setup: { label: 'Setup', color: 'var(--gold)' },
-  explore: { label: 'Explore', color: 'var(--teal)' },
-  contribute: { label: 'Contribute', color: 'var(--maroon)' },
-  connect: { label: 'Connect', color: 'var(--ink)' },
-}

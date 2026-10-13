@@ -74,23 +74,11 @@ export default function EmptyState({ icon, title, subtitle, action, compact = fa
         <button
           onClick={action.onClick}
           aria-label={action.label}
-          className="hov-bg"
+          className={compact ? 'tk-btn tk-sm' : 'tk-btn'}
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
             marginTop: compact ? 'var(--sp-md)' : 'var(--sp-lg)',
-            padding: compact ? 'var(--sp-xs) var(--sp-md)' : 'var(--sp-sm) var(--sp-lg)',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-subtle)',
-            background: 'none',
-            fontSize: compact ? 12 : 13,
-            fontWeight: 500,
-            color: 'var(--ink)',
             cursor: 'pointer',
-            transition: 'background 0.15s ease',
-            '--hov-bg': 'color-mix(in srgb, var(--job-accent) 6%, transparent)',
-          } as React.CSSProperties}
+          }}
         >
           {action.label}
         </button>

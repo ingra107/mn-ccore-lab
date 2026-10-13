@@ -111,13 +111,11 @@ export default function HermesResponse({ content }: { content: string }) {
                 style={{
                   fontSize: '10px',
                   fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
                   color: 'var(--sk-t2)',
                   opacity: 0.85,
                 }}
               >
-                Operation Findings
+                Operation findings
               </span>
               <div className="flex items-baseline" style={{ gap: 8, flexWrap: 'wrap' }}>
                 <span
@@ -162,8 +160,6 @@ export default function HermesResponse({ content }: { content: string }) {
             style={{
               fontSize: 10,
               fontWeight: 500,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
               color: 'var(--slate)',
               opacity: 0.7,
               marginRight: 2,
@@ -187,7 +183,7 @@ export default function HermesResponse({ content }: { content: string }) {
               padding: '3px 10px',
               borderRadius: 'var(--radius-full)',
               fontSize: 11,
-              border: '1px solid var(--border-subtle)',
+              boxShadow: 'inset 0 0 0 1px var(--sk-line2)',
               background: 'var(--cream)',
               color: 'var(--slate)',
               textDecoration: 'none',

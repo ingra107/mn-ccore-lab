@@ -52,7 +52,8 @@
   },
   "src/components/HoverCard.tsx": {
     "uppercase": 1,
-    "box": 2
+    "box": 2,
+    "initials": 2
   },
   "src/components/HtmlArtifactFrame.tsx": {
     "box": 1
@@ -188,6 +189,9 @@
   "src/components/dashboard/StatusLine.tsx": {
     "surface": 1
   },
+  "src/components/dashboard/TeamPulseCard.tsx": {
+    "initials": 1
+  },
   "src/components/meetings/MeetingProjectsSection.tsx": {
     "box": 1
   },
@@ -199,6 +203,9 @@
   },
   "src/components/pulse/PulseScene.tsx": {
     "uppercase": 1
+  },
+  "src/components/tasks/BulkActionToolbar.tsx": {
+    "initials": 1
   },
   "src/components/tasks/CreateTaskModal.tsx": {
     "box": 3
@@ -245,10 +252,12 @@
     "box": 1
   },
   "src/pages/MemberPage.tsx": {
-    "box": 6
+    "box": 6,
+    "initials": 1
   },
   "src/pages/MyItems.tsx": {
-    "uppercase": 1
+    "uppercase": 1,
+    "initials": 2
   },
   "src/pages/MyTasks/components/BulkBar.tsx": {
     "box": 2
@@ -275,7 +284,9 @@
   },
   "src/pages/TrajectoryPage.tsx": {
     "uppercase": 6,
-    "box": 10
+    "box": 10,
+    "tabstrip": 1,
+    "initials": 1
   },
   "src/pages/portal/ActivityPage.tsx": {
     "surface": 4
@@ -314,7 +325,8 @@
   },
   "src/pages/portal/GrantsPage.tsx": {
     "surface": 1,
-    "box": 8
+    "box": 8,
+    "tabstrip": 1
   },
   "src/pages/portal/IdeasPage.tsx": {
     "uppercase": 7,
@@ -359,7 +371,8 @@
   },
   "src/pages/portal/SettingsPage.tsx": {
     "surface": 1,
-    "box": 14
+    "box": 14,
+    "tabstrip": 1
   },
   "src/pages/portal/TeamDirectoryPage.tsx": {
     "surface": 1,
@@ -373,6 +386,7 @@
     "box": 3
   },
   "src/pages/project/ProjectLiterature.tsx": {
-    "box": 3
+    "box": 3,
+    "tabstrip": 2
   }
 }

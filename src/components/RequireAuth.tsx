@@ -148,8 +148,6 @@ function SignInWall() {
             margin: 0,
             fontSize: 11,
             fontWeight: 500,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
             color: '#e2e8f0',
             opacity: 0.85,
           }}

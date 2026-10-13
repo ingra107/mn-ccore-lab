@@ -97,8 +97,8 @@ export default function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
       footer={
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 'auto', fontSize: 11, color: 'var(--slate)' }}>
           <kbd
-            className="text-[11px] px-2 py-0.5 rounded border"
-            style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}
+            className="text-[11px] px-2 py-0.5 rounded"
+            style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', backgroundColor: 'var(--sk-line)' }}
           >
             Esc
           </kbd>
@@ -122,8 +122,8 @@ export default function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
                     {item.keys.split(' ').map((key, i) => (
                       <kbd
                         key={i}
-                        className="text-[11px] px-2 py-0.5 rounded border min-w-[24px] text-center"
-                        style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}
+                        className="text-[11px] px-2 py-0.5 rounded min-w-[24px] text-center"
+                        style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', backgroundColor: 'var(--sk-line)' }}
                       >
                         {key}
                       </kbd>

@@ -412,8 +412,8 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             e.preventDefault()
             openCommandPalette()
           }}
-          className="flex items-center gap-3 px-3 py-2 mb-2 rounded-lg text-[12px] transition-colors border"
-          style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)' }}
+          className="flex items-center gap-3 px-3 py-2 mb-2 rounded-lg text-[12px] transition-colors"
+          style={{ color: 'var(--slate)', boxShadow: 'inset 0 0 0 1px var(--field-edge)' }}
           title={collapsed ? `Search (${modKeyLabel()}+K)` : undefined}
           aria-label="Search"
         >
@@ -421,8 +421,8 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           {!collapsed && <span className="flex-1">Search</span>}
           {!collapsed && (
             <kbd
-              className="text-[10px] px-1.5 py-0.5 rounded border"
-              style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-subtle)', color: 'var(--slate)' }}
+              className="text-[10px] px-1.5 py-0.5 rounded"
+              style={{ fontFamily: 'var(--font-mono)', background: 'var(--sk-line)', color: 'var(--slate)' }}
             >
               {modKeyLabel()}+K
             </kbd>
@@ -523,12 +523,11 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
               role="menu"
               aria-label="Account"
               data-testid="avatar-menu"
-              className="absolute bottom-full mb-1 rounded-lg border py-1"
+              className="absolute bottom-full mb-1 rounded-lg py-1"
               style={{
                 left: 0,
                 width: 220,
                 background: 'var(--cream)',
-                borderColor: 'var(--border-subtle)',
                 boxShadow: 'var(--shadow-menu)',
                 zIndex: 'var(--z-dropdown, 50)',
               }}

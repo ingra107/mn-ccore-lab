@@ -42,7 +42,8 @@ const VARIANT_STYLES: Record<NonNullable<ButtonProps['variant']>, CSSProperties>
   },
   secondary: {
     background: 'transparent',
-    border: '1px solid var(--border-subtle)',
+    border: 'none',
+    boxShadow: 'inset 0 0 0 1px var(--sk-line2)',
     color: 'var(--slate)',
   },
   ghost: {

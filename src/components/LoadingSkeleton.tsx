@@ -27,7 +27,7 @@ export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
   return (
     <div
       style={{
-        border: '1px solid var(--border-subtle)',
+        border: '1px solid var(--sk-line)',
         borderRadius: 'var(--radius-lg)',
         overflow: 'hidden',
       }}
@@ -91,7 +91,7 @@ export function CardSkeleton({ count = 3 }: { count?: number }) {
         <div
           key={i}
           style={{
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid var(--sk-line)',
             borderRadius: 'var(--radius-xl)',
             padding: 20,
             display: 'flex',

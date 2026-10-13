@@ -217,7 +217,7 @@ export default function DeskBrokerFrame({ id, title, html }: { id: string; title
       style={{
         width: '100%',
         minHeight: '70vh',
-        border: '1px solid var(--border-subtle)',
+        border: '1px solid var(--sk-line)',
         borderRadius: 'var(--radius-lg)',
         background: '#fff',
       }}

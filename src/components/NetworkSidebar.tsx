@@ -241,9 +241,7 @@ function NodeDetail({
               className="text-xs"
               style={{
                 color: 'rgba(255, 255, 255, 0.4)',
-                fontSize: '10px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
+                fontSize: '11px',
               }}
             >
               {typeLabel}
@@ -322,11 +320,10 @@ function NodeDetail({
       {connections.length > 0 && (
         <div className="mb-6">
           <h4
-            className="text-xs uppercase mb-3"
+            className="text-xs mb-3"
             style={{
               color: 'rgba(255, 255, 255, 0.4)',
-              letterSpacing: '0.1em',
-              fontSize: '10px',
+              fontSize: '11px',
             }}
           >
             Co-authors ({connections.length})
@@ -441,15 +438,14 @@ function EdgeDetail({
       {/* Shared papers list */}
       <div>
         <h4
-          className="text-xs uppercase mb-3"
+          className="text-xs mb-3"
           style={{
             color: 'rgba(255, 255, 255, 0.4)',
-            letterSpacing: '0.1em',
-            fontSize: '10px',
+            fontSize: '11px',
           }}
         >
           <BookOpen {...ICON_PROPS} size={12} className="inline mr-1.5" style={{ verticalAlign: '-2px' }} />
-          Shared Publications
+          Shared publications
         </h4>
         <div className="space-y-3">
           {uniquePapers.map((paper) => (

@@ -244,8 +244,6 @@ export default function NotificationBell({ align = 'right', triggerColor = 'var(
                         fontSize: '10px',
                         color: group.label === 'Today' ? 'var(--job-accent)' : 'var(--slate)',
                         opacity: group.label === 'Today' ? 1 : 'var(--ink-label)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
                         fontWeight: 600,
                       }}
                     >

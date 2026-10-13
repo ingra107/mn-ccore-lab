@@ -689,12 +689,12 @@ export default function CommandPalette() {
         aria-label="Command palette"
         aria-modal="true"
         data-testid="command-palette"
-        className="w-full max-w-lg rounded-xl shadow-2xl border overflow-hidden card-elevated"
+        className="w-full max-w-lg rounded-xl overflow-hidden"
         initial={{ opacity: 0, scale: 0.95, y: -8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97, y: -4 }}
         transition={spring.snappy}
-        style={{ backgroundColor: 'var(--cream, white)', borderColor: 'var(--border-subtle)' }}
+        style={{ backgroundColor: 'var(--cream, white)', boxShadow: 'var(--shadow-elevated), 0 0 0 1px var(--sk-line)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}
@@ -718,7 +718,7 @@ export default function CommandPalette() {
             aria-autocomplete="list"
             aria-activedescendant={selectedIndex >= 0 ? `cmd-result-${selectedIndex}` : undefined}
           />
-          <kbd className="text-[10px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-subtle)', opacity: 'var(--ink-label)' }}>
+          <kbd className="text-[10px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', background: 'var(--sk-line)', opacity: 'var(--ink-label)' }}>
             esc
           </kbd>
         </div>
@@ -729,7 +729,7 @@ export default function CommandPalette() {
             .sort(([a], [b]) => categoryRank(a) - categoryRank(b))
             .map(([category, items]) => (
               <div key={category}>
-                <div className="px-4 py-1.5 text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                <div className="px-4 py-1.5 text-[11px] font-medium" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   {categoryLabels[category] || category}
                 </div>
                 {items.map((item) => {
@@ -763,7 +763,7 @@ export default function CommandPalette() {
                         )}
                       </div>
                       {item.shortcut && (
-                        <kbd className="text-[10px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-subtle)', opacity: 'var(--ink-label)' }}>
+                        <kbd className="text-[10px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', background: 'var(--sk-line)', opacity: 'var(--ink-label)' }}>
                           {item.shortcut}
                         </kbd>
                       )}

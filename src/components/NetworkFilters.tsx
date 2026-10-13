@@ -117,8 +117,7 @@ export default function NetworkFilters({
           className="text-xs"
           style={{
             color: 'rgba(255, 255, 255, 0.4)',
-            fontSize: '10px',
-            textTransform: 'uppercase',
+            fontSize: '11px',
           }}
         >
           Years

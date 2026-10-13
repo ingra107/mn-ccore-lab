@@ -56,7 +56,7 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
         style={{
           fontFamily: 'var(--font-mono, monospace)',
           fontSize: '0.875em',
-          background: 'var(--surface-2, rgba(100,116,139,0.12))',
+          background: 'var(--sk-line)',
           borderRadius: 'var(--radius-sm)',
           padding: '1px 5px',
         }}
@@ -181,7 +181,7 @@ function parseBlocks(source: string): ReactNode[] {
         <pre
           key={`blk-${key++}`}
           style={{
-            background: 'var(--surface-2, rgba(100,116,139,0.1))',
+            background: 'var(--sk-line)',
             borderRadius: 'var(--radius-md)',
             padding: 'var(--sp-md, 12px)',
             overflowX: 'auto',

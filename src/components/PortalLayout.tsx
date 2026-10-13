@@ -197,12 +197,12 @@ export default function PortalLayout() {
           <button
             onClick={openCommandPalette}
             aria-label="Open command palette"
-            className="lg:hidden flex items-center gap-2 px-3 sm:px-5 py-2 sm:min-w-[220px] rounded-lg border text-sm transition-colors hover:bg-black/5"
-            style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', cursor: 'pointer', background: 'none' }}
+            className="lg:hidden flex items-center gap-2 px-3 sm:px-5 py-2 sm:min-w-[220px] rounded-lg text-sm transition-colors hover:bg-black/5"
+            style={{ boxShadow: 'inset 0 0 0 1px var(--field-edge)', color: 'var(--slate)', cursor: 'pointer', background: 'none' }}
           >
             <Search {...ICON_PROPS} size={14} />
             <span className="hidden sm:inline">Search...</span>
-            <kbd className="hidden sm:inline text-[10px] px-1 py-0.5 rounded border ml-2" style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-subtle)' }}>
+            <kbd className="hidden sm:inline text-[10px] px-1 py-0.5 rounded ml-2" style={{ fontFamily: 'var(--font-mono)', background: 'var(--sk-line)' }}>
               {modKeyLabel()}+K
             </kbd>
           </button>
@@ -234,8 +234,8 @@ export default function PortalLayout() {
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowThemeMenu(false)} />
                 <div
-                  className="absolute right-0 top-full mt-1 rounded-lg border shadow-lg z-50 py-1 min-w-[140px]"
-                  style={{ backgroundColor: 'var(--cream, #fff)', borderColor: 'var(--border-subtle)' }}
+                  className="absolute right-0 top-full mt-1 rounded-lg z-50 py-1 min-w-[140px]"
+                  style={{ backgroundColor: 'var(--cream, #fff)', boxShadow: 'var(--shadow-menu)' }}
                 >
                   {([
                     { key: 'light' as const, icon: Sun, label: 'Light' },
@@ -298,8 +298,8 @@ export default function PortalLayout() {
       {focusMode && (
         <button
           onClick={() => setFocusMode(false)}
-          className="fixed top-3 right-3 z-50 px-2.5 py-1 rounded-full text-[10px] font-medium border transition-opacity opacity-30 hover:opacity-100"
-          style={{ color: 'var(--job-accent)', borderColor: 'var(--job-accent)', background: 'var(--cream)', cursor: 'pointer' }}
+          className="tk-btn tk-sel fixed top-3 right-3 z-50 transition-opacity opacity-30 hover:opacity-100"
+          style={{ cursor: 'pointer' }}
         >
           Focus · F to exit
         </button>
@@ -349,8 +349,7 @@ export default function PortalLayout() {
             right: '24px',
             zIndex: 'var(--z-toast)',
             padding: '6px 12px',
-            backgroundColor: 'var(--surface-2)',
-            border: '1px solid var(--border-subtle)',
+            backgroundColor: 'var(--sk-card)',
             borderRadius: 'var(--radius-md)',
             fontSize: 'var(--text-small)',
             fontWeight: 'var(--weight-ui)',
@@ -370,8 +369,7 @@ export default function PortalLayout() {
             justifyContent: 'center',
             padding: '1px 5px',
             borderRadius: 'var(--radius-sm)',
-            border: '1px solid var(--border-default)',
-            backgroundColor: 'var(--surface-3)',
+            backgroundColor: 'var(--sk-line)',
             fontSize: 'var(--text-label)',
             fontFamily: 'var(--font-sans)',
             lineHeight: 1.4,

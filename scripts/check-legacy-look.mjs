@@ -30,6 +30,19 @@
 //               use --field-edge, dividers use --sk-line, and neither counts.
 //               Counted from 2026-10-12 (wave 2); the baseline still holds
 //               every pre-redesign box, including a few field outlines.
+//   tabstrip    a hand-rolled underline tab strip: an active/inactive tab drawn
+//               with a 2px bottom rule (`borderBottom: ... 2px solid ...
+//               transparent`, or `border-b-2` beside `border-transparent`).
+//               Tabs are SegmentedToggle (or FilterLinks); the underline strip
+//               is the pre-redesign look. The public site nav (Layout.tsx) is
+//               allowed (ALLOW below): its brand underline is deliberate. A
+//               text-input underline is not a tab and does not match.
+//               Counted from 2026-10-12 (wave 3).
+//   initials    a hand-rolled initials disc: JSX that renders an `initials`
+//               value as a child (`{x.initials}`, or the `) : ( x.initials )`
+//               fallback arm of a photo ternary). Faces are FaceDisc (photo
+//               when there is one, initials disc as the fallback).
+//               Counted from 2026-10-12 (wave 3).
 //
 // The old PageHeader `icon` prop, the `Avatar` component, `MetricCard`, the
 // SectionHead `icon` prop, the bordered-pill SegmentedToggle skins and the
@@ -54,6 +67,25 @@ export const METRICS = {
     // Any string literal (className, cn(...), a ternary arm) holding a rounded-* and a bare `border`, either order.
     /(["'`])(?:(?!\1)[^\n])*?(?:\brounded(?:-\w+)*\b(?:(?!\1)[^\n])*?\bborder\b(?![-\w])|\bborder\b(?![-\w])(?:(?!\1)[^\n])*?\brounded(?:-\w+)*\b)(?:(?!\1)[^\n])*?\1/g,
   ],
+  tabstrip: [
+    // `borderBottom: cond ? '2px solid X' : '2px solid transparent'` and the template-literal form.
+    /\bborderBottom:[^\n]*2px solid[^\n]*transparent/g,
+    // A class string pairing `border-b-2` with `border-transparent` (the Tailwind tab idiom).
+    /(["'`])(?:(?!\1)[^\n])*?\bborder-b-2\b(?:(?!\1)[^\n])*?\bborder-transparent\b(?:(?!\1)[^\n])*?\1/g,
+  ],
+  initials: [
+    // `{x.initials}` as a JSX child, inline or alone on its line.
+    />[ \t]*\{[^{}\n]*\binitials\b[^{}\n]*\}[ \t]*</g,
+    /^[ \t]*\{[^{}\n]*\binitials\b[^{}\n]*\}[ \t]*$/gm,
+    // The fallback arm of a photo ternary: `) : (` newline `info.initials` newline `)`.
+    /\)\s*:\s*\(\s*\n\s*[\w.?]+\binitials\s*\n\s*\)/g,
+  ],
+}
+
+/** Files exempt from one metric: the mark IS the deliberate look there. */
+export const ALLOW = {
+  tabstrip: new Set(['src/components/Layout.tsx']), // public site nav: brand underline
+  initials: new Set(['src/components/today/skin.tsx']), // FaceDisc itself draws the initials fallback
 }
 
 function stripCssComments(text) {
@@ -69,6 +101,7 @@ export function findMarks(relPath, text, table = METRICS) {
   const lines = text.split('\n')
   const out = {}
   for (const [metric, patterns] of Object.entries(table)) {
+    if (ALLOW[metric]?.has(relPath)) continue
     for (const re of patterns) {
       re.lastIndex = 0
       let m
