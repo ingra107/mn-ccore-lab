@@ -42,7 +42,7 @@ function MyItemsCard() {
   const overdueCount = pending.filter((i) => isOverdue(i.due_date)).length
 
   return (
-    <BentoCard title="My Items" subtitle="Your action items" icon={User}>
+    <BentoCard title="Meeting action items" subtitle="Assigned to you" icon={User}>
       <div className="flex flex-col gap-2" style={{ minHeight: '100px' }}>
         {/* Summary row */}
         <div className="flex items-center gap-4 mb-1">

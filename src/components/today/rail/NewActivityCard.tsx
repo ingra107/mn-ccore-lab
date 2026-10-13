@@ -38,7 +38,10 @@ export function NewActivityCard() {
         const inner = (
           <>
             <AttentionChip kind="activity" count={r.new_count} />
-            <span className="tk-t">{r.title ?? r.entity_id}</span>
+            <span className="tk-t">
+              {r.title ?? r.entity_id}
+              <span style={{ display: 'block', fontSize: 11, color: 'var(--sk-t3)' }}>{r.entity_type === 'task' ? 'Task' : 'Project'}</span>
+            </span>
             <span className="tk-d">{formatRelativeTime(r.latest_at)}</span>
           </>
         )

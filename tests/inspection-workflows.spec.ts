@@ -76,12 +76,12 @@ test.describe('ROUTE — Missing portal pages', () => {
     await page.screenshot({ path: 'review/route-deadline-cascade.png' })
   })
 
-  test('ROUTE: My Items (/my-items) renders', async ({ page }) => {
-    const errors = await loadPage(page, P.myItems)
+  test('ROUTE: My Items (/portal/my-items) redirects to Today', async ({ page }) => {
+    const errors = await loadPage(page, '/portal/my-items')
     expect(errors).toEqual([])
+    expect(new URL(page.url()).pathname).toBe('/portal/dashboard')
     const crashed = await page.locator('text=Something went wrong').count()
     expect(crashed).toBe(0)
-    await page.screenshot({ path: 'review/route-my-items.png' })
   })
 
   test('ROUTE: Pulse / Kiosk (/pulse) renders', async ({ page }) => {

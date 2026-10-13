@@ -1,12 +1,22 @@
-// CommitmentsCard -- your open commitments to other people, overdue first.
+// CommitmentsCard -- the PI's open commitments to other people, overdue first.
 // Moved here from the My Items page (the page is gone; Nick 2026-10-13, "Fold
-// into Today"). Done commitments fold under a "Done" row.
+// into Today"). Done commitments fold under a "Show N done" row, newest first.
+//
+// PI only. The commitments table has no owner column (api/schema-v5.sql) and
+// /api/commitments returns every row the viewer's project and task scope
+// allows, so a member would see the PI's promises to named people. The gate
+// sits here, ahead of the fetch, so a member's browser never requests them.
 
 import { useMemo, useState } from 'react'
 import { CollapseChevron } from '../SectionCollapseToggle'
 import { collapseToggleProps } from '../collapseToggleProps'
 import { useCommitments, type CommitmentRow } from '../../../hooks/useCommitments'
+import { useAuth } from '../../../hooks/useAuth'
 import { formatShortDate, isOverdue } from '../../../lib/dateUtils'
+
+function newestDone(a: CommitmentRow, b: CommitmentRow) {
+  return (b.completed_at ?? '').localeCompare(a.completed_at ?? '')
+}
 
 function byDue(a: CommitmentRow, b: CommitmentRow) {
   const ao = isOverdue(a.due_date)
@@ -20,24 +30,26 @@ function byDue(a: CommitmentRow, b: CommitmentRow) {
 
 function Row({ c, done }: { c: CommitmentRow; done?: boolean }) {
   const late = !done && isOverdue(c.due_date)
+  const source = c.source ? c.source.replace(/^meeting:[ \t]*/i, '') : ''
   return (
-    <div className="tk-rli" title={c.source ? `from ${c.source.replace(/^meeting:\s*/i, '')}` : undefined}>
+    <div className="tk-rli">
       <span className="tk-t" style={done ? { textDecoration: 'line-through', color: 'var(--sk-t3)' } : undefined}>
         {c.commitment}
         <span style={{ display: 'block', fontSize: 11, color: 'var(--sk-t3)' }}>To {c.to_whom}</span>
+        {source && <span style={{ display: 'block', fontSize: 11, color: 'var(--sk-t3)' }}>From {source}</span>}
       </span>
       {c.due_date && <span className={late ? 'tk-d tk-o' : 'tk-d'}>{formatShortDate(c.due_date)}</span>}
     </div>
   )
 }
 
-export function CommitmentsCard() {
+function CommitmentsList() {
   const [open, setOpen] = useState(true)
   const [showDone, setShowDone] = useState(false)
   const { data: all = [] } = useCommitments()
   const { openOnes, doneOnes } = useMemo(() => ({
     openOnes: all.filter((c) => c.status !== 'done').sort(byDue),
-    doneOnes: all.filter((c) => c.status === 'done'),
+    doneOnes: all.filter((c) => c.status === 'done').sort(newestDone),
   }), [all])
   if (openOnes.length + doneOnes.length === 0) return null
   return (
@@ -71,4 +83,10 @@ export function CommitmentsCard() {
       )}
     </section>
   )
+}
+
+export function CommitmentsCard() {
+  const { user } = useAuth()
+  if (!user.isPi) return null
+  return <CommitmentsList />
 }
