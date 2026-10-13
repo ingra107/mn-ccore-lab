@@ -11,7 +11,7 @@
  * into frontend types (camelCase, parsed arrays) so components don't change.
  */
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { useAuth } from './useAuth'
 import {
   fetchPublications,
@@ -833,6 +833,44 @@ export function useDigestSaved() {
         all.push(...page)
         if (page.length < DIGEST_PAGE) return all
       }
+    },
+    staleTime: STALE_TIME,
+  })
+}
+
+/** Unprocessed papers load this many at a time ("Show more" asks for the next). */
+export const DIGEST_UNPROCESSED_PAGE = 50
+
+/**
+ * Every paper the caller has not saved or dismissed, from every digest date,
+ * in relevance order, a page at a time (the history can run to thousands, each
+ * with an abstract). Same ['digest', ...] key family as the others, so the
+ * status mutation's optimistic update reaches the loaded pages.
+ */
+export function useDigestUnprocessed(enabled: boolean) {
+  return useInfiniteQuery({
+    enabled,
+    queryKey: ['digest', { status: 'new', with_relevance: true, infinite: true }],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const qs = new URLSearchParams({
+        status: 'new', limit: String(DIGEST_UNPROCESSED_PAGE), offset: String(pageParam), with_relevance: 'true',
+      })
+      return (await fetchJson<{ data?: DigestPaper[] }>(`/api/digest?${qs}`)).data || []
+    },
+    getNextPageParam: (last, _pages, lastParam) =>
+      last.length < DIGEST_UNPROCESSED_PAGE ? undefined : lastParam + DIGEST_UNPROCESSED_PAGE,
+    staleTime: STALE_TIME,
+  })
+}
+
+/** How many papers the caller has not processed, across every digest date. */
+export function useDigestUnprocessedCount() {
+  return useQuery({
+    queryKey: ['digest', { status: 'new', count_only: true }],
+    queryFn: async () => {
+      const qs = new URLSearchParams({ status: 'new', count_only: 'true' })
+      return (await fetchJson<{ count?: number }>(`/api/digest?${qs}`)).count ?? 0
     },
     staleTime: STALE_TIME,
   })

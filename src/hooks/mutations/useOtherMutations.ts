@@ -24,9 +24,15 @@ export function useUpdateDigestStatus() {
       const queries = queryClient.getQueriesData<unknown[]>({ queryKey: ['digest'] })
       const snapshots = queries.map(([key, data]) => ({ key, data }))
       // Optimistic update across all digest queries
+      const setStatus = (p: Record<string, unknown>) => p.id === id ? { ...p, status } : p
       queryClient.setQueriesData({ queryKey: ['digest'] }, (old: unknown) => {
-        if (!Array.isArray(old)) return old
-        return old.map((p: Record<string, unknown>) => p.id === id ? { ...p, status } : p)
+        if (Array.isArray(old)) return old.map(setStatus)
+        // The Unprocessed list is an infinite query: { pages: Paper[][], pageParams }.
+        const pages = (old as { pages?: unknown } | undefined)?.pages
+        if (Array.isArray(pages)) {
+          return { ...(old as object), pages: pages.map((pg) => (Array.isArray(pg) ? pg.map(setStatus) : pg)) }
+        }
+        return old
       })
       return { snapshots }
     },

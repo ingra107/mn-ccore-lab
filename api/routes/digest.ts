@@ -50,7 +50,10 @@ function shapePaper(row: PaperRow): PaperRow {
 
 const READING_STATUSES: readonly string[] = ['new', 'saved', 'dismissed'];
 
-// GET /api/digest?date=&status=&topic=&limit=&offset=&with_relevance=true
+// GET /api/digest?date=&status=&topic=&limit=&offset=&with_relevance=true&count_only=true
+//
+// `status=new` with no `date` is every paper this viewer has not processed, from
+// every digest, in relevance order (the Unprocessed tab).
 //
 // `viewerSlug` is the calling member (null for anyone else: every paper reads
 // 'new' for them). `status=saved` with no `date` is the Saved list across every
@@ -86,6 +89,17 @@ export async function handleGetDigest(url: URL, env: Env, viewerSlug: string | n
   if (topic) {
     query += ' AND rd.topics LIKE ?';
     params.push(`%"${topic}"%`);
+  }
+
+  // A tab count (the Unprocessed tab spans every date) wants the number, not
+  // a page of abstracts. Same filters, same viewer.
+  if (url.searchParams.get('count_only') === 'true') {
+    const where = query.slice(query.indexOf(' WHERE 1=1'));
+    const row = await env.DB.prepare(
+      `SELECT COUNT(*) AS n FROM research_digest rd
+       LEFT JOIN digest_paper_state s ON s.paper_id = rd.id AND s.member_slug = ?${where}`,
+    ).bind(...params).first<{ n: number }>();
+    return json({ data: [], count: row?.n ?? 0 });
   }
 
   // rd.id last: a total order, so pages neither skip nor repeat a paper.

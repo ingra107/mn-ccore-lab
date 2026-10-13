@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
-import { useDigest, useDigestSaved, useDigestDates, useProjects, useDigestComments } from '../hooks/useApiData'
+import { useDigest, useDigestSaved, useDigestUnprocessed, useDigestUnprocessedCount, useDigestDates, useProjects, useDigestComments } from '../hooks/useApiData'
 import type { DigestPaper, DigestComment, DigestStatus } from '../hooks/useApiData'
 import { useUpdateDigestStatus, useLinkPaper, useCreateDigestComment, useMakeTaskFromNote } from '../hooks/useMutations'
 import { useSwipeAction } from '../hooks/useSwipeAction'
@@ -31,7 +31,8 @@ import { QueryErrorNote } from '../components/QueryErrorNote'
 import { tealRamp, BAR_TRACK } from '../lib/tealRamp'
 import SectionHead from '../components/ui/SectionHead'
 
-type StatusFilter = 'all' | 'new' | 'saved'
+// All = one digest date; Unprocessed and Saved each span every date.
+type StatusFilter = 'all' | 'unprocessed' | 'saved'
 
 // The newest digest dates shown as links; every older date is in the picker.
 const RECENT_DATES = 14
@@ -50,6 +51,17 @@ const PROCESS_RANK: Record<string, number> = { new: 0, saved: 1, dismissed: 2 }
 function processRank(status: string): number {
   return PROCESS_RANK[status] ?? 0
 }
+
+// #147, Nick: "once I had gone through everything, even though it said
+// dismissed, it wasn't readily clear ... So I just kept clicking and I was
+// actually undoing and redoing something."
+//
+// A saved or dismissed paper shrinks to one line, and the control that undoes
+// it is a differently worded button (Restore / Unsave) in a different slot
+// than Save / Dismiss. A click on it within this window of the paper being
+// processed is ignored, so a click-through that lands on the card it just
+// processed cannot undo it. Undo stays one deliberate click away, and the toast.
+const REPEAT_GUARD_MS = 900
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00')
@@ -127,8 +139,10 @@ function NoteTaskAction({ noteId, paperId, taskId, taskVisible }: { noteId: stri
   )
 }
 
-function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectOption[] }) {
+function PaperCard({ paper, projects, compactWhenProcessed }: { paper: DigestPaper; projects: ProjectOption[]; compactWhenProcessed: boolean }) {
   const [expanded, setExpanded] = useState(false)
+  // A processed paper is one line until the reader opens it (Show).
+  const [reopened, setReopened] = useState(false)
   const [showLinkPicker, setShowLinkPicker] = useState(false)
   const [linkSuccess, setLinkSuccess] = useState<string | null>(null)
   const [showComments, setShowComments] = useState(false)
@@ -144,21 +158,15 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
   const noteCount = paper.note_count ?? 0
   const latest = paper.latest_note ?? null
 
-  const handleSave = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
-      updateStatus.mutate({ id: paper.id, status: isSaved ? 'new' : 'saved' })
-    },
-    [paper.id, isSaved, updateStatus]
-  )
+  const isProcessed = paper.status !== 'new'
+  const compact = compactWhenProcessed && isProcessed && !reopened
 
-  const handleDismiss = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
-      updateStatus.mutate({ id: paper.id, status: isDismissed ? 'new' : 'dismissed' })
-    },
-    [paper.id, isDismissed, updateStatus]
-  )
+  // When this paper became processed (or was first shown processed). Null while new.
+  const processedAt = useRef<number | null>(null)
+  useEffect(() => {
+    processedAt.current = paper.status === 'new' ? null : Date.now()
+  }, [paper.status])
+  const justProcessed = () => processedAt.current !== null && Date.now() - processedAt.current < REPEAT_GUARD_MS
 
   // Phone swipe (Nick 2026-10-13): right saves, left dismisses, each with an
   // Undo. A swipe SETS the status rather than toggling it, so a stray swipe on
@@ -181,6 +189,28 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
     onSwipeRight: () => swipeTo('saved', 'Saved'),
     onSwipeLeft: () => swipeTo('dismissed', 'Dismissed'),
   })
+  // Save / Dismiss SET the status (with an Undo toast) when the paper is new.
+  // The reverse (Unsave, Restore) is its own deliberate click and is ignored
+  // right after the paper was processed.
+  const handleSave = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!isSaved) return swipeTo('saved', 'Saved')
+    if (justProcessed()) return
+    updateStatus.mutate({ id: paper.id, status: 'new' })
+  }
+  const handleDismiss = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!isDismissed) return swipeTo('dismissed', 'Dismissed')
+    if (justProcessed()) return
+    updateStatus.mutate({ id: paper.id, status: 'new' })
+  }
+  const handleUndoProcessed = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (justProcessed()) return
+    setReopened(false)
+    updateStatus.mutate({ id: paper.id, status: 'new' })
+  }
+
   // No drag while typing a note or picking a project.
   const swipeProps = showComments || showLinkPicker ? null : swipe.motionProps
 
@@ -203,6 +233,44 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
     padding: '0 var(--sp-lg)',
     fontSize: '12px', fontWeight: 600,
     pointerEvents: 'none',
+  }
+
+  if (compact) {
+    return (
+      <div
+        className="card px-4 py-2 flex items-center gap-3"
+        data-testid={`digest-paper-${paper.id}`}
+        data-processed={paper.status}
+      >
+        <span
+          className="text-xs flex-shrink-0"
+          style={{ fontWeight: 600, color: isSaved ? 'var(--job-accent)' : 'var(--muted)', minWidth: '4.5rem' }}
+        >
+          {isSaved ? 'Saved' : 'Dismissed'}
+        </span>
+        <span className="flex-1 min-w-0 truncate text-sm" style={{ color: 'var(--slate)' }}>
+          {paper.title}
+        </span>
+        <button
+          type="button"
+          onClick={() => setReopened(true)}
+          className="cursor-pointer text-xs hover:underline flex-shrink-0"
+          style={{ color: 'var(--slate)', background: 'none', border: 'none', padding: 0 }}
+          aria-label={`Show ${paper.title}`}
+        >
+          Show
+        </button>
+        <button
+          type="button"
+          onClick={handleUndoProcessed}
+          className="cursor-pointer text-xs hover:underline flex-shrink-0"
+          style={{ color: 'var(--ink)', fontWeight: 500, background: 'none', border: 'none', padding: '4px 0 4px 12px' }}
+          aria-label={isSaved ? 'Unsave this paper' : 'Restore this dismissed paper'}
+        >
+          {isSaved ? 'Unsave' : 'Restore'}
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -686,6 +754,32 @@ function NoResults({ saved }: { saved?: boolean }) {
   )
 }
 
+// ── All done ─────────────────────────────────────────────────
+
+/**
+ * #147: every paper in the view is processed. Says so in words, then points at
+ * what is left elsewhere. Sits ABOVE the list: the click-through that got here
+ * lands on this banner, not on the first processed row.
+ */
+function AllDone({ headline, detail, action }: { headline: string; detail: string; action?: { label: string; onClick: () => void } }) {
+  return (
+    <div className="card px-5 py-4 text-center mb-3 sm:mb-4" role="status" data-testid="digest-all-done">
+      <p className="text-base" style={{ color: 'var(--ink)', fontWeight: 600 }}>{headline}</p>
+      <p className="text-sm mt-1" style={{ color: 'var(--slate)' }}>{detail}</p>
+      {action && (
+        <button
+          type="button"
+          onClick={action.onClick}
+          className="cursor-pointer text-sm mt-2 hover:underline"
+          style={{ color: 'var(--job-accent)', background: 'none', border: 'none', padding: 0, fontWeight: 500 }}
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
+  )
+}
+
 // ── Main Digest Page ─────────────────────────────────────────
 
 export default function Digest() {
@@ -709,6 +803,10 @@ export default function Digest() {
   // Saved is one list across every digest date (Nick 2026-10-13): a save from
   // an older digest used to sit behind a date the selector no longer showed.
   const isSavedView = statusFilter === 'saved'
+  // Unprocessed is the same idea (#147): every paper not yet saved or
+  // dismissed, from every digest date, not one day at a time.
+  const isUnprocessedView = statusFilter === 'unprocessed'
+  const isCrossDate = isSavedView || isUnprocessedView
 
   // Fetch projects for the "Link to Project" picker
   const { data: allProjects = [] } = useProjects()
@@ -729,11 +827,10 @@ export default function Digest() {
   // Papers for the active date (with relevance matching)
   const dateQuery = useDigest({
     date: activeDate,
-    status: statusFilter === 'new' ? 'new' : undefined,
     topic: topicFilter ?? undefined,
     limit: 200,
     with_relevance: true,
-  }, { enabled: !isSavedView && !!activeDate })
+  }, { enabled: !isCrossDate && !!activeDate })
 
   // Every paper this person saved, newest save first, across all dates. It
   // also feeds the Saved count and Copy reading list.
@@ -741,12 +838,31 @@ export default function Digest() {
   const savedQuery = useDigestSaved()
   const savedAll = useMemo(() => savedQuery.data ?? [], [savedQuery.data])
 
+  // Everything not yet processed, across dates, a page at a time. Only the
+  // Unprocessed tab loads the pages; the tab's count is its own cheap query.
+  const unprocessedQuery = useDigestUnprocessed(isUnprocessedView)
+  const unprocessedCountQuery = useDigestUnprocessedCount()
+  const unprocessedCount = unprocessedCountQuery.data
+  // A paper processed here leaves the list at once (the server list catches up
+  // on the refetch), so the next one to do is always on top.
+  const unprocessedAll = useMemo(
+    () => (unprocessedQuery.data?.pages.flat() ?? []).filter((p) => p.status === 'new'),
+    [unprocessedQuery.data],
+  )
+  const crossAll = isSavedView ? savedAll : unprocessedAll
+
   const papers = useMemo(() => {
-    if (!isSavedView) return dateQuery.data ?? []
-    return topicFilter ? savedAll.filter((p) => parseTopics(p.topics).includes(topicFilter)) : savedAll
-  }, [isSavedView, dateQuery.data, savedAll, topicFilter])
-  const activeQuery = isSavedView ? savedQuery : dateQuery
+    if (!isCrossDate) return dateQuery.data ?? []
+    return topicFilter ? crossAll.filter((p) => parseTopics(p.topics).includes(topicFilter)) : crossAll
+  }, [isCrossDate, dateQuery.data, crossAll, topicFilter])
+  const activeQuery = isSavedView ? savedQuery : isUnprocessedView ? unprocessedQuery : dateQuery
   const isLoading = activeQuery.isLoading
+  // A page of unprocessed papers that were all just processed is empty on
+  // screen while more wait on the server: fetch the next page.
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = unprocessedQuery
+  useEffect(() => {
+    if (isUnprocessedView && unprocessedAll.length === 0 && hasNextPage && !isFetchingNextPage) void fetchNextPage()
+  }, [isUnprocessedView, unprocessedAll.length, hasNextPage, isFetchingNextPage, fetchNextPage])
   const papersError = activeQuery.isError
 
   // Gather all unique topics from ALL papers for this date (not just filtered)
@@ -755,11 +871,11 @@ export default function Digest() {
 
   const allTopics = useMemo(() => {
     const topicSet = new Set<string>()
-    ;(isSavedView ? savedAll : allPapersForDate).forEach((p) => {
+    ;(isCrossDate ? crossAll : allPapersForDate).forEach((p) => {
       parseTopics(p.topics).forEach((t) => topicSet.add(t))
     })
     return Array.from(topicSet).sort()
-  }, [allPapersForDate, savedAll, isSavedView])
+  }, [allPapersForDate, crossAll, isCrossDate])
   const statusCounts = useMemo(() => {
     const counts = { all: allPapersForDate.length, new: 0, saved: 0, dismissed: 0 }
     allPapersForDate.forEach((p) => {
@@ -773,8 +889,8 @@ export default function Digest() {
   // "For You" count (across all papers in view)
   const forYouCount = useMemo(() => {
     if (!userSlug) return 0
-    return (isSavedView ? savedAll : allPapersForDate).filter((p) => p.relevant_members?.includes(userSlug)).length
-  }, [allPapersForDate, savedAll, isSavedView, userSlug])
+    return (isCrossDate ? crossAll : allPapersForDate).filter((p) => p.relevant_members?.includes(userSlug)).length
+  }, [allPapersForDate, crossAll, isCrossDate, userSlug])
 
   // Text search + "For You" filter within papers
   const filteredPapers = useMemo(() => {
@@ -796,6 +912,13 @@ export default function Digest() {
   }, [papers, searchQuery, forYouFilter, userSlug])
 
   const isEmpty = dates.length === 0 && !isLoading
+
+  // #147: every paper in the date view is processed. Counts come from what is
+  // on screen, so a topic, For you or search filter is honored.
+  const allDone = !isCrossDate && !isLoading && filteredPapers.length > 0 && filteredPapers.every((p) => p.status !== 'new')
+  const doneSaved = filteredPapers.filter((p) => p.status === 'saved').length
+  const doneDismissed = filteredPapers.length - doneSaved
+  const unprocessedElsewhere = unprocessedCount ?? 0
 
   const recentDates = dates.slice(0, RECENT_DATES)
   const activeIsRecent = recentDates.some((d) => d.date === activeDate)
@@ -857,10 +980,12 @@ export default function Digest() {
               dates, so it has none. */}
           {dates.length > 0 && (
             <div className="mb-6">
-              <SectionHead title={isSavedView ? 'Saved papers' : 'Digest date'} />
-              {isSavedView ? (
+              <SectionHead title={isSavedView ? 'Saved papers' : isUnprocessedView ? 'Unprocessed papers' : 'Digest date'} />
+              {isCrossDate ? (
                 <p className="text-xs" style={{ color: 'var(--slate)' }}>
-                  Every paper you saved, from every digest, newest first.
+                  {isSavedView
+                    ? 'Every paper you saved, from every digest, newest first.'
+                    : 'Every paper you have not saved or dismissed, from every digest, most relevant first.'}
                 </p>
               ) : (
                 <div className="flex items-center gap-3 min-w-0">
@@ -914,7 +1039,7 @@ export default function Digest() {
               onChange={setStatusFilter}
               options={[
                 { value: 'all' as StatusFilter, label: 'All', count: statusCounts.all },
-                { value: 'new' as StatusFilter, label: 'New', count: statusCounts.new },
+                { value: 'unprocessed' as StatusFilter, label: 'Unprocessed', count: unprocessedCount },
                 { value: 'saved' as StatusFilter, label: 'Saved', count: savedAll.length },
               ]}
             />
@@ -1002,6 +1127,12 @@ export default function Digest() {
                   No papers matching "{searchQuery}"
                 </p>
               </div>
+            ) : isUnprocessedView && !topicFilter && !forYouFilter && !hasNextPage ? (
+              <AllDone
+                headline="All done"
+                detail="Nothing is left to process, in any digest."
+                action={dates.length > 0 ? { label: 'Back to the latest digest', onClick: () => { setStatusFilter('all'); setSelectedDate(undefined) } } : undefined}
+              />
             ) : statusFilter !== 'all' || topicFilter || forYouFilter ? (
               <NoResults saved={isSavedView && !topicFilter && !forYouFilter} />
             ) : (
@@ -1014,9 +1145,25 @@ export default function Digest() {
                   {filteredPapers.length} of {papers.length} papers matching "{searchQuery}"
                 </p>
               )}
+              {allDone && (
+                <AllDone
+                  headline="All done"
+                  detail={`Every paper here is processed: ${doneSaved} saved, ${doneDismissed} dismissed.${unprocessedElsewhere > 0 ? '' : ' Nothing is waiting in any other digest either.'}`}
+                  action={unprocessedElsewhere > 0
+                    ? { label: `${unprocessedElsewhere} more unprocessed in other digests. See them`, onClick: () => { setStatusFilter('unprocessed'); setTopicFilter(null) } }
+                    : undefined}
+                />
+              )}
               {filteredPapers.map((paper) => (
-                <PaperCard key={paper.id} paper={paper} projects={projectOptions} />
+                <PaperCard key={paper.id} paper={paper} projects={projectOptions} compactWhenProcessed={!isSavedView} />
               ))}
+              {isUnprocessedView && hasNextPage && (
+                <div className="text-center pt-2">
+                  <Button variant="secondary" onClick={() => void fetchNextPage()} disabled={isFetchingNextPage}>
+                    {isFetchingNextPage ? 'Loading' : 'Show more'}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
           </div>

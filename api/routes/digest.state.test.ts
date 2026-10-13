@@ -96,6 +96,25 @@ describe('per-person reading state', () => {
     expect(await ids(NICK, 'date=2026-10-13&status=dismissed')).toEqual(['p-mid'])
   })
 
+  it('status=new with no date lists every unprocessed paper across dates; count_only counts them', async () => {
+    await setStatus(NICK, 'p-new', 'dismissed')
+    const ids = async (who: string, qs: string) =>
+      ((await call('GET', `/api/digest?${qs}`, who)).json.data as Array<{ id: string }>).map((p) => p.id)
+    // Nick processed p-new; p-mid (today) and p-old (an older digest) are still his to do.
+    expect((await ids(NICK, 'status=new')).sort()).toEqual(['p-mid', 'p-old'])
+    expect((await ids(CASEY, 'status=new')).sort()).toEqual(['p-mid', 'p-new', 'p-old'])
+    const count = async (who: string, qs: string) => (await call('GET', `/api/digest?${qs}&count_only=true`, who)).json
+    expect(await count(NICK, 'status=new')).toEqual({ data: [], count: 2 })
+    expect((await count(CASEY, 'status=new')).count).toBe(3)
+    // The count honors the same filters as the list.
+    expect((await count(NICK, 'status=new&date=2026-10-13')).count).toBe(1)
+    expect((await count(NICK, 'status=new&topic=sepsis')).count).toBe(1)
+    // Paging: one per page, nothing skipped or repeated.
+    const a = await ids(NICK, 'status=new&limit=1&offset=0')
+    const b = await ids(NICK, 'status=new&limit=1&offset=1')
+    expect([...a, ...b].sort()).toEqual(['p-mid', 'p-old'])
+  })
+
   it('refuses an unknown status, an unknown paper, and a caller with no member', async () => {
     expect((await setStatus(NICK, 'p-new', 'read')).status).toBe(400)
     expect((await setStatus(NICK, 'nope', 'saved')).status).toBe(404)

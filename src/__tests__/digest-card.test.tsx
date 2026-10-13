@@ -35,22 +35,36 @@ const NEW = paper({
   },
 })
 const OLD_SAVED = paper({ id: 'p-old', title: 'Old saved paper', digest_date: '2026-09-01', status: 'saved' })
+const OLD_TODO = paper({ id: 'p-todo', title: 'Older unprocessed paper', digest_date: '2026-09-01', relevance_score: 4 })
 
 type Call = { url: string; method: string; body: unknown }
 
 function stubApi() {
   const calls: Call[] = []
+  // What the server holds for this viewer, so a refetch after a status write
+  // reads back what was written.
+  const state: Record<string, string> = {}
+  const withState = (p: Record<string, unknown>) => ({ ...p, status: state[p.id as string] ?? p.status })
   vi.stubGlobal('fetch', vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
     const method = init?.method ?? 'GET'
     calls.push({ url, method, body: init?.body ? JSON.parse(String(init.body)) : undefined })
     const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => ({ data }) })
     if (method === 'POST' && url.includes('/task')) return ok({ task_id: 'task_x', created: true })
-    if (method === 'POST') return ok({})
+    if (method === 'POST') {
+      const m = url.match(/^\/api\/digest\/([^/]+)\/status$/)
+      if (m) state[m[1]] = JSON.parse(String(init?.body)).status
+      return ok({})
+    }
     if (url.startsWith('/api/digest/dates')) return ok([{ date: '2026-10-13', count: 1 }, { date: '2026-09-01', count: 1 }])
     if (url.startsWith('/api/digest?')) {
       const qs = new URLSearchParams(url.split('?')[1])
       if (qs.get('status') === 'saved' && !qs.get('date')) return ok([OLD_SAVED])
-      if (qs.get('date') === '2026-10-13') return ok([NEW])
+      if (qs.get('status') === 'new' && !qs.get('date')) {
+        const todo = [NEW, OLD_TODO].map(withState).filter((p) => p.status === 'new')
+        if (qs.get('count_only') === 'true') return { ok: true, status: 200, json: async () => ({ data: [], count: todo.length }) }
+        return ok(todo)
+      }
+      if (qs.get('date') === '2026-10-13') return ok([withState(NEW)])
       return ok([])
     }
     return ok([])
@@ -131,6 +145,54 @@ describe('Research Digest card', () => {
     undo.click()
     await expect.poll(() => calls.filter((x) => x.method === 'POST' && x.url === '/api/digest/p-new/status').map((x) => x.body))
       .toEqual([{ status: 'saved' }, { status: 'new' }])
+  })
+
+  it('a dismissed paper shrinks to one line, and clicking again does not undo it', async () => {
+    const calls = stubApi()
+    const host = await mount(wrap(<Digest />), { ready: (h) => card(h, 'p-new'), label: 'digest card' })
+    const posts = () => calls.filter((x) => x.method === 'POST' && x.url.endsWith('/status')).map((x) => x.body)
+    const fullHeight = card(host, 'p-new')!.getBoundingClientRect().height
+
+    button(card(host, 'p-new')!, 'Dismiss')!.click()
+    await waitFor(() => (card(host, 'p-new')?.getAttribute('data-processed') === 'dismissed' ? true : null), 'compact dismissed row')
+    const row = card(host, 'p-new')!
+    expect(row.textContent).toContain('Dismissed')
+    expect(row.getBoundingClientRect().height).toBeLessThan(fullHeight / 2)
+
+    // Every paper on the date is processed: the banner says so, above the row.
+    const done = await waitFor(() => host.querySelector('[data-testid="digest-all-done"]'), 'all done banner')
+    expect(done.textContent).toContain('All done')
+    expect(done.textContent).toContain('1 more unprocessed in other digests')
+    expect(done.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+    // A click right after processing (the click-through) is ignored.
+    button(row, 'Restore')!.click()
+    await new Promise((res) => setTimeout(res, 150))
+    expect(posts()).toEqual([{ status: 'dismissed' }])
+    expect(card(host, 'p-new')?.getAttribute('data-processed')).toBe('dismissed')
+
+    // A deliberate Restore, later, works.
+    await new Promise((res) => setTimeout(res, 900))
+    button(card(host, 'p-new')!, 'Restore')!.click()
+    await expect.poll(posts).toEqual([{ status: 'dismissed' }, { status: 'new' }])
+  })
+
+  it('Unprocessed lists every paper not yet processed across dates, and says All done when none is left', async () => {
+    const calls = stubApi()
+    const host = await mount(wrap(<Digest />), { ready: (h) => card(h, 'p-new'), label: 'digest card' })
+    const tab = await waitFor(() => button(host, 'Unprocessed'), 'Unprocessed filter')
+    tab.click()
+    await waitFor(() => card(host, 'p-todo'), 'unprocessed paper from an older digest')
+    expect(card(host, 'p-new')).toBeTruthy()
+    expect(host.textContent).not.toContain('Digest date')
+    expect(calls.some((x) => x.url.startsWith('/api/digest?') && x.url.includes('status=new') && !x.url.includes('date=') && !x.url.includes('count_only'))).toBe(true)
+
+    // Processing leaves the list at once.
+    button(card(host, 'p-new')!, 'Dismiss')!.click()
+    await waitFor(() => (card(host, 'p-new') ? null : true), 'dismissed paper leaves the list')
+    button(card(host, 'p-todo')!, 'Dismiss')!.click()
+    const done = await waitFor(() => host.querySelector('[data-testid="digest-all-done"]'), 'all done')
+    expect(done.textContent).toContain('Nothing is left to process')
   })
 
   // A full right drag across the card, with the given pointer type.
