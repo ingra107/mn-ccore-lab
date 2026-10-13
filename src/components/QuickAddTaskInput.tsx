@@ -141,7 +141,7 @@ export default function QuickAddTaskInput({
   const [focused, setFocused] = useState(false)
   const [active, setActive] = useState(0)
   const pending = /#([\w-]+)~([\w-]*)$/.exec(value.slice(0, caret))
-  const suggestions = focused && pending ? productSuggestions(pending[1], pending[2], ctx) : []
+  const suggestions = focused && pending && ctx ? productSuggestions(pending[1], pending[2], ctx) : []
   const open = suggestions.length > 0
   const activeIdx = Math.min(active, Math.max(0, suggestions.length - 1))
 

@@ -22,6 +22,10 @@ const ctx: QuickAddContext = {
   projects: [
     { id: 'proj_adhere', slug: 'adhere-lpv-trial', title: 'ADHERE-LPV Trial', short_name: 'ADHERE-LPV' },
     { id: 'proj_other', slug: 'other-study', title: 'Other Study', short_name: null },
+    // Live next to the ADHERE project: the static list's "adherence" paper, done.
+    { id: 'proj_lpv', slug: 'lpv-adherence-paper', title: 'LPV Adherence Paper', short_name: null },
+    { id: 'proj_clif1', slug: 'clif-alpha', title: 'CLIF: Alpha', short_name: null },
+    { id: 'proj_clif2', slug: 'clif-beta', title: 'CLIF: Beta', short_name: null },
   ],
   productsByProject: { proj_adhere: [HOME, RESULTS, POSTER], proj_other: [OTHER] },
 }
@@ -68,7 +72,7 @@ describe('parseQuickAddInput, #project~product', () => {
     const p = parseQuickAddInput('x #adhere~nonesuch', ctx)
     expect(p.projectSlug).toBe('adhere-lpv-trial')
     expect(p.productId).toBeNull()
-    expect(p.title).toBe('x')
+    expect(p.title).toBe('x ~nonesuch')
   })
 
   it('never takes a product of another project', () => {
@@ -84,11 +88,19 @@ describe('parseQuickAddInput, #project~product', () => {
     expect(p.productId).toBeNull()
   })
 
-  it('drops the ~product part but keeps the project without a live context', () => {
+  it('leaves "~product" in the title when there is no live context', () => {
     const p = parseQuickAddInput('x #adhere~results')
     expect(p.projectSlug).toBe('lpv-adherence-paper')
     expect(p.productId).toBeNull()
-    expect(p.title).toBe('x')
+    expect(p.title).toBe('x ~results')
+  })
+
+  it('treats "~x" as a product only when it resolves ("#lpv~5 min")', () => {
+    const p = parseQuickAddInput('Break #lpv~5 min', ctx)
+    expect(p.projectSlug).toBe('lpv-adherence-paper')
+    expect(p.productId).toBeNull()
+    expect(p.title).toBe('Break ~5 min')
+    expect(p.tokens.find((t) => t.type === 'project')!.text).toBe('#lpv')
   })
 
   it('does not treat a "~" outside a project token as syntax', () => {
@@ -105,14 +117,34 @@ describe('parseQuickAddInput, #project~product', () => {
     expect(p.title).toBe('Draft intro')
   })
 
-  it('drops a static hit that is not a live project, then tries the live list', () => {
-    // "adhere" hits lpv-adherence-paper in the static list, which the live
-    // list lacks: the live ADHERE project wins.
+  it('a live prefix beats a static fuzzy hit: #adhere files on ADHERE, not the done paper', () => {
+    // Static "adherence" (lpv-adherence-paper) is live too, but "adhere" is a
+    // prefix of only the ADHERE-LPV project's keys.
     expect(parseQuickAddInput('x #adhere', ctx).projectSlug).toBe('adhere-lpv-trial')
-    // A token neither list knows stays plain text.
+    expect(parseQuickAddInput('x #adhere~results', ctx).projectSlug).toBe('adhere-lpv-trial')
+  })
+
+  it('an exact live name wins, hyphens and case aside', () => {
+    expect(parseQuickAddInput('x #ADHERE-LPV', ctx).projectSlug).toBe('adhere-lpv-trial')
+    expect(parseQuickAddInput('x #lpv-adherence-paper', ctx).projectSlug).toBe('lpv-adherence-paper')
+  })
+
+  it('an ambiguous prefix names nothing and the token stays in the title', () => {
+    const p = parseQuickAddInput('x #clif', ctx)
+    expect(p.projectSlug).toBeNull()
+    expect(p.title).toBe('x #clif')
+    expect(parseQuickAddInput('x #clif-a', ctx).projectSlug).toBe('clif-alpha')
+  })
+
+  it('an unknown token stays plain text', () => {
     const p = parseQuickAddInput('x #zzzzz~results', ctx)
     expect(p.projectSlug).toBeNull()
     expect(p.title).toBe('x #zzzzz~results')
+  })
+
+  it('without the live lists (still loading, or the fetch failed) the static lookup answers', () => {
+    expect(parseQuickAddInput('x #clif', undefined).projectSlug).not.toBeNull()
+    expect(parseQuickAddInput('x #adhere', undefined).projectSlug).toBe('lpv-adherence-paper')
   })
 })
 

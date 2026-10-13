@@ -289,13 +289,13 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  disabled={!parseQuickAddInput(value).title.trim()}
+                  disabled={!parseQuickAddInput(value, quickAddCtx).title.trim()}
                   style={{
-                    background: parseQuickAddInput(value).title.trim() ? 'var(--job-accent-solid)' : withAlpha('var(--sk-t1)', 15),
-                    color: parseQuickAddInput(value).title.trim() ? 'var(--ink)' : 'var(--slate)',
+                    background: parseQuickAddInput(value, quickAddCtx).title.trim() ? 'var(--job-accent-solid)' : withAlpha('var(--sk-t1)', 15),
+                    color: parseQuickAddInput(value, quickAddCtx).title.trim() ? 'var(--ink)' : 'var(--slate)',
                     border: 'none',
                     borderRadius: 'var(--radius-lg)',
-                    cursor: parseQuickAddInput(value).title.trim() ? 'pointer' : 'default',
+                    cursor: parseQuickAddInput(value, quickAddCtx).title.trim() ? 'pointer' : 'default',
                     padding: '6px 16px',
                     fontSize: '12px',
                     fontWeight: 700,

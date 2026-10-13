@@ -99,6 +99,8 @@ test('typing the pair out in full files on the pair, no pick needed', async ({ p
   await box.pressSequentially(`Write abstract #${SLUG}~results`)
   // The list is open mid-token; a space closes it, then Enter submits.
   await box.pressSequentially(' ')
+  // The parse needs the live project list; the preview chip shows it has it.
+  await expect(page.getByText(`Quick Pair ${STAMP} ~ Results paper`).last()).toBeVisible()
   await box.press('Enter')
   await expect.poll(async () => (await tasksOf(page)).find((t) => t.title === 'Write abstract')?.product_id, { timeout: 20_000 }).toBe(results.id)
 })
@@ -107,6 +109,7 @@ test('a bare #project is unchanged: the home rule picks the product', async ({ p
   const box = await openCapture(page)
   await box.pressSequentially(`Bare capture #${SLUG}`)
   await expect(page.getByTestId('quick-add-products')).toHaveCount(0)
+  await expect(page.getByText(`Quick Pair ${STAMP}`, { exact: true }).last()).toBeVisible()
   await box.press('Enter')
   await expect.poll(async () => (await tasksOf(page)).find((t) => t.title === 'Bare capture')?.product_id, { timeout: 20_000 }).toBe(home.id)
 })

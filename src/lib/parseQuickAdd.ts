@@ -119,7 +119,7 @@ function squash(s: string): string {
 }
 
 /** The live project a token names: slug, short name or title, exact first,
- *  then a prefix of 3+ characters. */
+ *  then a prefix of 3+ characters that only one project has. */
 function resolveLiveProject(token: string, projects: readonly PairProject[]): PairProject | null {
   const t = squash(token)
   if (!t) return null
@@ -127,17 +127,21 @@ function resolveLiveProject(token: string, projects: readonly PairProject[]): Pa
   const exact = projects.find((p) => keys(p).includes(t))
   if (exact) return exact
   if (t.length < 3) return null
-  return projects.find((p) => keys(p).some((k) => k.startsWith(t))) ?? null
+  const hits = projects.filter((p) => keys(p).some((k) => k.startsWith(t)))
+  return hits.length === 1 ? hits[0] : null
 }
 
 /** The project a "#token" names. Without the live lists this is the static
- *  lookup alone, as it always was. With them, a static hit that is not a live
- *  project is dropped (a task cannot file on it) and the live list is tried. */
+ *  lookup alone, as it always was. With them the live list is the only source
+ *  (a static alias such as a category or a slug segment is not a project a task
+ *  can file on): an exact slug, short name or title first, then a prefix of 3+
+ *  characters that exactly one project has. Two or more matches name nothing,
+ *  so the token stays in the title. */
 function resolveProjectIn(token: string, ctx?: QuickAddContext): { slug: string; title: string; live: PairProject | null } | null {
-  const fromStatic = resolveProject(token)
-  if (!ctx) return fromStatic ? { ...fromStatic, live: null } : null
-  const liveStatic = fromStatic ? ctx.projects.find((p) => p.slug === fromStatic.slug) : undefined
-  if (fromStatic && liveStatic) return { ...fromStatic, live: liveStatic }
+  if (!ctx) {
+    const fromStatic = resolveProject(token)
+    return fromStatic ? { ...fromStatic, live: null } : null
+  }
   const live = resolveLiveProject(token, ctx.projects)
   return live ? { slug: live.slug, title: live.title, live } : null
 }
@@ -307,6 +311,9 @@ export function parseQuickAddInput(input: string, ctx?: QuickAddContext): Parsed
   let priority: 1 | 2 | 3 | null = null
   let dueDate: string | null = null
 
+  // A "~x" that names no product of the project is not syntax: it stays in the title.
+  const tails = new Map<TokenSpan, TokenSpan>()
+
   for (const span of spans) {
     if (span.type === 'assignee') {
       const r = resolveAssignee(span.text.slice(1))
@@ -331,6 +338,11 @@ export function parseQuickAddInput(input: string, ctx?: QuickAddContext): Parsed
         if (prod) {
           productId = prod.id
           productName = productLabel(prod)
+        } else if (productToken) {
+          const keep = span.text.indexOf('~')
+          tails.set(span, { text: span.text.slice(keep), type: 'plain', start: span.start + keep, end: span.end })
+          span.text = span.text.slice(0, keep)
+          span.end = span.start + keep
         }
       } else {
         span.type = 'plain'
@@ -347,12 +359,14 @@ export function parseQuickAddInput(input: string, ctx?: QuickAddContext): Parsed
     }
   }
 
-  const title = spans
+  const finalSpans = spans.flatMap((sp) => (tails.has(sp) ? [sp, tails.get(sp)!] : [sp]))
+
+  const title = finalSpans
     .filter((s) => s.type === 'plain')
     .map((s) => s.text)
     .join('')
     .replace(/\s+/g, ' ')
     .trim()
 
-  return { title, assigneeSlug, assigneeName, projectSlug, projectTitle, productId, productName, priority, dueDate, tokens: spans }
+  return { title, assigneeSlug, assigneeName, projectSlug, projectTitle, productId, productName, priority, dueDate, tokens: finalSpans }
 }
