@@ -37,7 +37,7 @@ export async function uploadFileToR2(file: File, ctx: R2UploadContext): Promise<
     }),
   })
   if (!urlRes.ok) throw new Error(`Failed to get upload URL (${urlRes.status}) — R2 may not be configured`)
-  const urlData = await urlRes.json() as { data?: { uploadUrl?: string; key?: string } }
+  const urlData = await urlRes.json() as { data?: { uploadUrl?: string; key?: string; ticket?: string | null } }
   if (!urlData.data?.uploadUrl || !urlData.data?.key) throw new Error('Failed to get upload URL — R2 may not be configured')
 
   const putRes = await fetch(urlData.data.uploadUrl, {
@@ -52,6 +52,8 @@ export async function uploadFileToR2(file: File, ctx: R2UploadContext): Promise<
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       key: urlData.data.key,
+      // Proves this caller minted the key; /api/upload/done refuses it without.
+      ticket: urlData.data.ticket ?? undefined,
       filename: file.name,
       contentType: file.type,
       sizeBytes: file.size,

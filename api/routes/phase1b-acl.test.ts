@@ -36,7 +36,7 @@ import { handleGetSessions } from './sessions'
 import { handleLane3List } from './lane3'
 import { handleInboxEvents, handleSyncBulkInboxEvents } from './inbox-events'
 import { handleRegulatoryIcs } from './regulatory'
-import { handleUploadUrl, handleUploadDone, handleGetFile } from './uploads'
+import { handleUploadUrl, handleUploadDone, handleGetFile, mintUploadTicket } from './uploads'
 import { handleCreateDecision } from './decisions'
 import { handleSyncFileActivity } from './file-activity'
 import { handleGetMeeting, handleGetAgendaItems, handleMeetingPrep, handleGenerateAgenda } from './meetings'
@@ -329,6 +329,22 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
     })
   }
   const attachments = () => db.prepare('SELECT entity_type, entity_id, r2_key, uploaded_by FROM file_attachments ORDER BY r2_key').all()
+  const NATE = { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }
+  const NICK = { email: PI_EMAIL, name: 'Nick', slug: 'nick-ingraham' }
+  /**
+   * upload/done as the browser calls it: the body plus the ticket upload/url
+   * would have handed THIS caller for that key (#145: done refuses a key the
+   * caller did not mint). `ticketFor` lets a test hand it somebody else's.
+   */
+  async function done(
+    body: { key: string } & Record<string, unknown>,
+    who: { email: string; name: string; slug: string },
+    env: Env,
+    ticketFor: string = who.slug,
+  ) {
+    const ticket = await mintUploadTicket(env, ticketFor, body.key)
+    return handleUploadDone(post('/api/upload/done', who.email, { ...body, ticket }), who, env)
+  }
   /** Nate's own handle: he is on no project here, so pb-secret is one he is not on. */
   const asNate = (e: Env) => ({ ...e, DB: viewerDb(e.DB, personViewer({ slug: 'nate-mesfin', email: NON_PI_EMAIL, pi: false })) }) as Env
 
@@ -355,66 +371,96 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
   })
 
   it('handleUploadDone: blocks a non-member committing a file record on a project they are not on, and stores nothing', async () => {
-    const req = post('/api/upload/done', NON_PI_EMAIL, {
+    const res = await done({
       key: 'project/pb-secret/file.pdf', filename: 'file.pdf', contentType: 'application/pdf', sizeBytes: 1024, entityType: 'project', entityId: 'pb-secret',
-    })
-    const res = await handleUploadDone(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, asNate(uploadsEnv()))
+    }, NATE, asNate(uploadsEnv()))
     expect(res.status).toBe(403)
     expect(attachments()).toEqual([])
   })
 
   it('handleUploadDone: refuses a key minted for another entity, and stores nothing', async () => {
-    const req = post('/api/upload/done', NON_PI_EMAIL, {
+    const res = await done({
       key: 'project/pb-secret/file.pdf', filename: 'file.pdf', contentType: 'application/pdf', sizeBytes: 1, entityType: 'project', entityId: 'mnccore-project',
-    })
-    const res = await handleUploadDone(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, uploadsEnv())
+    }, NATE, uploadsEnv())
     expect(res.status).toBe(403)
     expect(attachments()).toEqual([])
   })
 
+  it('handleUploadDone: refuses a key with no ticket, a forged ticket, or a ticket minted for another caller (#145), and stores nothing', async () => {
+    const env = uploadsEnv()
+    const body = { key: 'project/mnccore-project/1700000000000-f.pdf', filename: 'f.pdf', contentType: 'application/pdf', sizeBytes: 1, entityType: 'project', entityId: 'mnccore-project' }
+    // No ticket at all: the key exists and names an entity Nate can see.
+    expect((await handleUploadDone(post('/api/upload/done', NON_PI_EMAIL, body), NATE, env)).status).toBe(403)
+    // A made-up ticket.
+    expect((await handleUploadDone(post('/api/upload/done', NON_PI_EMAIL, { ...body, ticket: 'AAAA' }), NATE, env)).status).toBe(403)
+    // Nick's real ticket for this very key, presented by Nate.
+    expect((await done(body, NATE, env, NICK.slug)).status).toBe(403)
+    // A ticket for a different key, presented with this one.
+    const other = await mintUploadTicket(env, NATE.slug, 'project/mnccore-project/1700000000000-other.pdf')
+    expect((await handleUploadDone(post('/api/upload/done', NON_PI_EMAIL, { ...body, ticket: other }), NATE, env)).status).toBe(403)
+    expect(attachments()).toEqual([])
+    // Control: his own ticket for this key records it.
+    expect((await done(body, NATE, env)).status).toBe(200)
+    expect(attachments()).toHaveLength(1)
+  })
+
+  it('handleUploadDone: refuses (503) when the deployment has no secret to verify a ticket against', async () => {
+    const res = await handleUploadDone(post('/api/upload/done', NON_PI_EMAIL, {
+      key: 'project/mnccore-project/1-f.pdf', filename: 'f.pdf', contentType: 'application/pdf', sizeBytes: 1, entityType: 'project', entityId: 'mnccore-project', ticket: 'x',
+    }), NATE, uploadsEnv({ R2_SECRET_ACCESS_KEY: undefined } as unknown as Partial<Env>))
+    expect(res.status).toBe(503)
+    expect(attachments()).toEqual([])
+  })
+
+  it('handleUploadUrl hands back the ticket handleUploadDone accepts (the whole chain, no minting by the test)', async () => {
+    const env = uploadsEnv()
+    const urlRes = await handleUploadUrl(post('/api/upload/url', NON_PI_EMAIL, { filename: 'a.pdf', contentType: 'application/pdf', context: { type: 'project', id: 'mnccore-project' } }), NATE, env)
+    const { data } = await urlRes.json() as { data: { key: string; ticket: string } }
+    expect(typeof data.ticket).toBe('string')
+    const res = await handleUploadDone(post('/api/upload/done', NON_PI_EMAIL, {
+      key: data.key, ticket: data.ticket, filename: 'a.pdf', contentType: 'application/pdf', sizeBytes: 1, entityType: 'project', entityId: 'mnccore-project',
+    }), NATE, env)
+    expect(res.status).toBe(200)
+  })
+
   it('handleUploadDone: a second row for a key that already has one is a 409 (schema-v121 UNIQUE)', async () => {
     const body = { key: 'project/mnccore-project/f.pdf', filename: 'f.pdf', contentType: 'application/pdf', sizeBytes: 1, entityType: 'project', entityId: 'mnccore-project' }
-    const nate = { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }
-    expect((await handleUploadDone(post('/api/upload/done', NON_PI_EMAIL, body), nate, uploadsEnv())).status).toBe(200)
-    expect((await handleUploadDone(post('/api/upload/done', NON_PI_EMAIL, body), nate, uploadsEnv())).status).toBe(409)
+    expect((await done(body, NATE, uploadsEnv())).status).toBe(200)
+    expect((await done(body, NATE, uploadsEnv())).status).toBe(409)
     expect(attachments()).toHaveLength(1)
   })
 
   it('handleUploadDone: the composer aliases still bind (daily_thought records as task, answer as question)', async () => {
-    const nate = { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }
-    const day = await handleUploadDone(post('/api/upload/done', NON_PI_EMAIL, {
+    const day = await done({
       key: 'daily_thought/2026-10-09/1-a.png', filename: 'a.png', contentType: 'image/png', sizeBytes: 1, entityType: 'task', entityId: '2026-10-09',
-    }), nate, uploadsEnv())
+    }, NATE, uploadsEnv())
     expect(day.status).toBe(200)
-    const ans = await handleUploadDone(post('/api/upload/done', NON_PI_EMAIL, {
+    const ans = await done({
       key: 'answer/q1/1-b.png', filename: 'b.png', contentType: 'image/png', sizeBytes: 1, entityType: 'question', entityId: 'q1',
-    }), nate, uploadsEnv())
+    }, NATE, uploadsEnv())
     expect(ans.status).toBe(200)
   })
 
   it('handleUploadDone: allows PI to commit a file record on a PB project', async () => {
-    const req = post('/api/upload/done', PI_EMAIL, {
+    const res = await done({
       key: 'project/pb-secret/file.pdf', filename: 'file.pdf', contentType: 'application/pdf', sizeBytes: 1024, entityType: 'project', entityId: 'pb-secret',
-    })
-    const res = await handleUploadDone(req, { email: PI_EMAIL, name: 'Nick', slug: 'nick-ingraham' }, uploadsEnv())
+    }, NICK, uploadsEnv())
     expect(res.status).toBe(200)
     expect(attachments()).toMatchObject([{ entity_type: 'project', r2_key: 'project/pb-secret/file.pdf' }])
   })
 
   it('handleUploadDone: refuses a record whose object is not in R2 (FILES bound, head misses), and stores nothing', async () => {
-    const req = post('/api/upload/done', NON_PI_EMAIL, {
+    const res = await done({
       key: 'task/task-1/missing.png', filename: 'missing.png', contentType: 'image/png', sizeBytes: 1, entityType: 'task', entityId: 'task-1',
-    })
-    const res = await handleUploadDone(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, uploadsEnv({ FILES: { head: async () => null } } as unknown as Env))
+    }, NATE, uploadsEnv({ FILES: { head: async () => null } } as unknown as Env))
     expect(res.status).toBeGreaterThanOrEqual(400)
     expect(attachments()).toEqual([])
   })
 
   it('handleUploadDone: response carries a same-origin, non-expiring url for the composer to insert', async () => {
-    const req = post('/api/upload/done', NON_PI_EMAIL, {
+    const res = await done({
       key: 'task/task-1/1700000000000-shot.png', filename: 'shot.png', contentType: 'image/png', sizeBytes: 512, entityType: 'task', entityId: 'task-1',
-    })
-    const res = await handleUploadDone(req, { email: NON_PI_EMAIL, name: 'Nate', slug: 'nate-mesfin' }, uploadsEnv())
+    }, NATE, uploadsEnv())
     expect(res.status).toBe(200)
     const data = await res.json() as { data?: { url?: string } }
     // Same-origin path (not a presigned R2 URL — those expire in 1h, useless

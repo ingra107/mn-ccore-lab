@@ -28,7 +28,7 @@ import { FK_SLUG_FIELDS } from '../lib/task-cols';
 import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
 import { emitLifecycleActivity } from '../lib/lifecycle-activity';
-import { TASK_TITLE_DEDUP_SELECT } from '../lib/task-dedup-sql';
+import { TASK_TITLE_DEDUP_SELECT, taskOwnerKey } from '../lib/task-dedup-sql';
 import { touchesKeyLinkSlots, slotLinkStatements, touchedLinksRead } from '../lib/key-link';
 import { creatorMembershipStatement } from '../lib/project-membership';
 import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumerCloseError, questionConsumedError } from '../lib/task-question';
@@ -745,7 +745,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
   //      "Approve: MECHANIC: I3" task. The query now EXCLUDES meeting-approval
   //      rows so a meeting row is never a title-match winner for a name-keyed
   //      task (once meeting approvals have a typed identity, cross-adoption is
-  //      unsafe). project_id IS NULL matches NULL; deleted + done rows excluded.
+  //      unsafe). project_id IS NULL matches NULL (and then the assignee must match too: a project-less task is its assignee's, schema-v138); deleted + done rows excluded.
   //      A recurring-marked title ("... (recurring)", "Recurring: ...",
   //      "..._recurring") is OUTSIDE this class (#8496, schema-v113): it is
   //      never adopted, so a new instance can be created while the last is open.
@@ -759,7 +759,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
   //
   // The two SELECT predicates BYTE-MATCH their partial unique indexes
   // (idx_tasks_meeting_approval_active in schema-v92,
-  // idx_tasks_title_norm_nonrecurring_active in schema-v113); a SELECT/index
+  // idx_tasks_title_norm_owner_active in schema-v138); a SELECT/index
   // mismatch reopens the race hole through the catch. The title SQL has ONE
   // definition, api/lib/task-dedup-sql.ts, and a contract test reads the
   // migration file and asserts the index agrees with it.
@@ -792,7 +792,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
         // out of the name identity class.
         const dup = await env.DB.prepare(
           TASK_TITLE_DEDUP_SELECT,
-        ).bind(title, projectId ?? null).first<{ id: string }>();
+        ).bind(title, projectId ?? null, taskOwnerKey(projectId, p.assignee as string | undefined)).first<{ id: string }>();
         if (dup) {
           return dedupAccepted(env, mut, dup.id, flags,
             `deduped: active task with same (title, project_id) exists as ${dup.id}`);
@@ -963,7 +963,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     // Race-loser path: the serial dedup SELECT above runs BEFORE the winner's
     // INSERT commits in a true race, so it finds no row. The INSERT then fires
     // one of the two partial unique indexes (idx_tasks_meeting_approval_active
-    // for meeting-approval rows, idx_tasks_title_norm_nonrecurring_active for
+    // for meeting-approval rows, idx_tasks_title_norm_owner_active for
     // name-keyed rows) -> a UNIQUE constraint error that ON CONFLICT(id) does NOT absorb
     // (different conflict target). Pre-fix this dead-lettered an actually-
     // accepted conceptual task. Fix: dispatch by source in the SAME order as
@@ -994,13 +994,13 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
         if (title) {
           // The SAME query as the serial arm, from the same constant. The
           // loser of a case/edge-space race trips
-          // idx_tasks_title_norm_nonrecurring_active, and only a folded re-query
+          // idx_tasks_title_norm_owner_active, and only a folded re-query
           // finds the differently-spelled winner; a raw one re-throws and the
           // create dead-letters for good, because processed_mutations replays
           // that error for the same mutation_id.
           const dup = await env.DB.prepare(
             TASK_TITLE_DEDUP_SELECT,
-          ).bind(title, projectId ?? null).first<{ id: string }>();
+          ).bind(title, projectId ?? null, taskOwnerKey(projectId, p.assignee as string | undefined)).first<{ id: string }>();
           if (dup) {
             return dedupAccepted(env, mut, dup.id, flags,
               `deduped (race-loser): active task with same (title, project_id) exists as ${dup.id}`);

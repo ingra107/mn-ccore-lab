@@ -71,6 +71,44 @@ function keyBelongsTo(key: string, entityType: string, entityId: string): boolea
   return id === entityId && (KEY_PREFIX_TYPES[entityType] ?? [entityType]).includes(type);
 }
 
+// ── Upload tickets (#145 follow-up, 2026-10-13) ─────────────────────────────
+//
+// upload/done used to take any key that named the entity: a member could record
+// a key some OTHER member's upload had minted (or one an in-flight upload had
+// not finished with), because nothing tied the key to who asked for it. Now
+// upload/url returns a ticket with the key, an HMAC over (caller slug, key)
+// under a server secret, and upload/done refuses a key without the ticket the
+// same caller was given. A client cannot mint one, and one person's ticket is
+// worthless to another. Stateless on purpose: no table to migrate, and a key
+// that was never minted for this caller has no ticket to find.
+//
+// The MAC key is the R2 secret the route already needs to presign anything, so
+// a deployment that can mint an upload URL can verify its ticket, and one that
+// cannot refuses done too (503) rather than skipping the check. The message
+// carries a version prefix so the MAC cannot be confused with an R2 signature.
+// The PB service key skips the ticket, as it skips every per-caller gate here.
+async function ticketMac(env: Env, slug: string, key: string): Promise<string | null> {
+  if (!env.R2_SECRET_ACCESS_KEY || !slug) return null;
+  const enc = new TextEncoder();
+  const hmacKey = await crypto.subtle.importKey('raw', enc.encode(env.R2_SECRET_ACCESS_KEY), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', hmacKey, enc.encode(`upload-ticket-v1\n${slug}\n${key}`)));
+  let bin = '';
+  for (const b of sig) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/** The ticket upload/url hands this caller for `key`. Exported for tests that mint one. */
+export const mintUploadTicket = ticketMac;
+
+async function ticketIsValid(env: Env, slug: string, key: string, ticket: unknown): Promise<boolean> {
+  if (typeof ticket !== 'string') return false;
+  const want = await ticketMac(env, slug, key);
+  if (!want || want.length !== ticket.length) return false;
+  let diff = 0;
+  for (let i = 0; i < want.length; i++) diff |= want.charCodeAt(i) ^ ticket.charCodeAt(i);
+  return diff === 0;
+}
+
 async function canAccessEntity(
   env: Env,
   entityType: string,
@@ -144,7 +182,8 @@ export async function handleUploadUrl(request: Request, user: AuthUser, env: Env
     { aws: { signQuery: true } }
   );
 
-  return json({ uploadUrl: signed.url, key });
+  // The ticket ties this key to this caller; upload/done will not record a key without it.
+  return json({ uploadUrl: signed.url, key, ticket: await ticketMac(env, user.slug, key) });
 }
 
 /** POST /api/upload/done — record file metadata in D1 after successful upload */
@@ -158,6 +197,8 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
     entityId: string;
     /** schema-v131: tag a project file with one of the project's products; omit for project-wide. */
     productId?: string | null;
+    /** From POST /api/upload/url: proves this caller minted this key. */
+    ticket?: string;
   };
 
   if (!body.key || !body.entityType || !body.entityId) {
@@ -171,6 +212,14 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
   }
   if (!isService && !keyBelongsTo(body.key, body.entityType, body.entityId)) {
     return error('Key does not belong to this entity', 403);
+  }
+  // The key must be one upload/url minted for THIS caller. Without the secret
+  // there is nothing to verify against, so refuse rather than skip.
+  if (!isService) {
+    if (!env.R2_SECRET_ACCESS_KEY) return error('R2 not configured', 503);
+    if (!(await ticketIsValid(env, user.slug, body.key, body.ticket))) {
+      return error('This upload was not started by you. Reload the page and try again.', 403);
+    }
   }
 
   // Verify file actually landed in R2 before writing the DB record.

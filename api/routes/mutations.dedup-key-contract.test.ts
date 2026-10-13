@@ -20,6 +20,8 @@ import { join } from 'node:path'
 import {
   TASK_TITLE_KEY_SQL,
   TASK_TITLE_KEY_BIND_SQL,
+  TASK_OWNER_KEY_SQL,
+  taskOwnerKey,
   TASK_TITLE_NORM_INDEX,
   TASK_TITLE_DEDUP_SELECT,
   TASK_TITLE_RECURRING_TOKENS,
@@ -62,6 +64,14 @@ describe('task dedup key — one definition', () => {
     expect(TASK_TITLE_DEDUP_SELECT).not.toContain('project_id = ?')
   })
 
+  it('a project-less task is keyed on its assignee, a project task on the project alone (schema-v138)', () => {
+    expect(TASK_TITLE_DEDUP_SELECT).toContain(`AND ${TASK_OWNER_KEY_SQL} = ?`)
+    expect(taskOwnerKey(null, 'casey-eddington')).toBe('casey-eddington')
+    expect(taskOwnerKey(undefined, 'casey-eddington')).toBe('casey-eddington')
+    expect(taskOwnerKey(null, undefined)).toBe('')
+    expect(taskOwnerKey('proj_1', 'casey-eddington')).toBe('')
+  })
+
   it('BOTH applyInsert arms use the constant -- no raw title literal survives', () => {
     // The cutover is finished: the bridge ran the catch one deploy ahead of the
     // serial arm, and this is what closes it. A reintroduced `title = ?` would
@@ -95,17 +105,37 @@ describe('task dedup key — the migration and the code agree', () => {
     // recurring exemption). If the drop went missing, prod would keep refusing
     // the recurring pairs the code now admits -- and the race-loser re-query,
     // which exempts them, would find no winner and dead-letter the create.
-    const old = 'idx_tasks_title_norm_project_active'
+    //
+    // v138 did the same to v113's idx_tasks_title_norm_nonrecurring_active when
+    // a project-less task became keyed on its assignee. Every link of the chain
+    // is checked: each index is created by exactly one file and dropped by the
+    // file that creates the next one, so no superseded index survives to refuse
+    // a pair the code now admits.
     const ver = (f: string) => Number(/^schema-v(\d+)/.exec(f)![1])
     // Statements only: rollback recipes in the headers name both verbs in comments.
-    const code = (f: string) => readFileSync(join(API_DIR, f), 'utf8')
-      .split(/\r?\n/).filter(l => !l.trimStart().startsWith('--')).join('\n')
-    const creators = schemaFiles.filter(f => code(f).includes(`CREATE UNIQUE INDEX IF NOT EXISTS ${old}`))
-    const droppers = schemaFiles.filter(f => code(f).includes(`DROP INDEX IF EXISTS ${old};`))
-    expect(creators).toHaveLength(1)
-    expect(droppers).toHaveLength(1)
-    expect(ver(droppers[0])).toBeGreaterThan(ver(creators[0]))
-    expect(droppers[0]).toBe(declaring[0])
+    // Read each of the ~140 migration files once: the chain walks them six times.
+    const cache = new Map<string, string>()
+    const code = (f: string) => {
+      if (!cache.has(f)) {
+        cache.set(f, readFileSync(join(API_DIR, f), 'utf8')
+          .split(/\r?\n/).filter(l => !l.trimStart().startsWith('--')).join('\n'))
+      }
+      return cache.get(f)!
+    }
+    const chain: Array<[string, string]> = [
+      ['idx_tasks_title_norm_project_active', 'idx_tasks_title_norm_nonrecurring_active'],
+      ['idx_tasks_title_norm_nonrecurring_active', TASK_TITLE_NORM_INDEX],
+    ]
+    for (const [old, next] of chain) {
+      const creators = schemaFiles.filter(f => code(f).includes(`CREATE UNIQUE INDEX IF NOT EXISTS ${old}`))
+      const droppers = schemaFiles.filter(f => code(f).includes(`DROP INDEX IF EXISTS ${old};`))
+      const nextCreators = schemaFiles.filter(f => code(f).includes(`CREATE UNIQUE INDEX IF NOT EXISTS ${next}`))
+      expect(creators, old).toHaveLength(1)
+      expect(droppers, old).toHaveLength(1)
+      expect(ver(droppers[0])).toBeGreaterThan(ver(creators[0]))
+      expect(droppers[0]).toBe(nextCreators[0])
+    }
+    expect(declaring[0]).toMatch(/^schema-v138/)
   })
 
   it('exactly one migration creates the normalized index', () => {
@@ -124,6 +154,8 @@ describe('task dedup key — the migration and the code agree', () => {
     // index, so without COALESCE the index would not constrain the very rows
     // whose SELECT arm (`project_id IS ?`) claims NULL equality.
     expect(keyLine).toContain("COALESCE(project_id, '')")
+    // The owner half: the SELECT arm compares this very expression.
+    expect(keyLine).toContain(TASK_OWNER_KEY_SQL)
   })
 
   it('the index predicate matches the SELECT scope', () => {

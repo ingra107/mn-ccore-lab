@@ -28,8 +28,8 @@ beforeEach(() => {
 })
 
 const WINNER = 'task_01hwtest_dedupresp_winner0'
-function seedWinner(title: string) {
-  insertRow(db, 'tasks', { id: WINNER, title, status: 'todo', priority: 'medium', assignee: 'nick-ingraham' })
+function seedWinner(title: string, assignee = 'nick-ingraham') {
+  insertRow(db, 'tasks', { id: WINNER, title, status: 'todo', priority: 'medium', assignee })
 }
 const idsTitled = (title: string) =>
   (db.prepare('SELECT id FROM tasks WHERE title = ? ORDER BY id').all(title) as { id: string }[]).map((r) => r.id)
@@ -47,7 +47,8 @@ function mobileReq(tasks: unknown[]) {
 
 describe('handleCreateTask — response reflects the dedup-adopted row (#523)', () => {
   it('a dedup hit returns the EXISTING row, not {data: null}, and writes no second row', async () => {
-    seedWinner('Follow up')
+    // Same assignee as the create: a project-less task is keyed on (title, assignee).
+    seedWinner('Follow up', 'claude-ai')
 
     const res = await handleCreateTask(createReq({ assignee: 'claude-ai', description: 'Follow up' }), user, env)
     const body = await res.json() as { data: { id: string; title: string } | null }
@@ -56,6 +57,17 @@ describe('handleCreateTask — response reflects the dedup-adopted row (#523)', 
     expect(body.data).not.toBeNull()
     expect(body.data!.id).toBe(WINNER)
     expect(idsTitled('Follow up')).toEqual([WINNER])
+  })
+
+  it('schema-v138: a project-less task for ANOTHER assignee is a new task, not an adoption of the winner', async () => {
+    seedWinner('Follow up')
+
+    const res = await handleCreateTask(createReq({ assignee: 'claude-ai', description: 'Follow up' }), user, env)
+    const body = await res.json() as { data: { id: string } | null }
+
+    expect(res.status).toBe(201)
+    expect(body.data!.id).not.toBe(WINNER)
+    expect(idsTitled('Follow up')).toHaveLength(2)
   })
 
   it('a normal (non-dedup) insert returns the freshly-created row, stored with its receipt', async () => {
@@ -79,6 +91,17 @@ describe('handleMobileTasksToHub — id_map/counters reflect the dedup-adopted r
     expect(body.data).toMatchObject({ created: 0, deduped: 1 })
     expect(body.data.id_map['mobile_pre']).toBe(WINNER)
     expect(idsTitled('Follow up')).toEqual([WINNER])
+  })
+
+  it('schema-v138: the pre-check never maps a mobile task onto a row of another assignee', async () => {
+    seedWinner('Follow up')
+
+    const res = await handleMobileTasksToHub(mobileReq([{ id: 'mobile_other', title: 'Follow up', assignee: 'casey-eddington' }]), user, env)
+    const body = await res.json() as { data: { id_map: Record<string, string>; created: number; deduped: number } }
+
+    expect(body.data).toMatchObject({ created: 1, deduped: 0 })
+    expect(body.data.id_map['mobile_other']).not.toBe(WINNER)
+    expect(idsTitled('Follow up')).toHaveLength(2)
   })
 
   it('a peer insert landing after the pre-check: the arbiter adopts it, id_map points at it, counts as deduped', async () => {

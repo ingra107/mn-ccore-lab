@@ -284,12 +284,15 @@ export function noteTag(noteId: string, paper: string): string {
 // a task the caller cannot see still blocks a duplicate (it reads as absent
 // through the viewer handle, and absent counts as "still there").
 //
-// Title identity. The task-create path adopts any open project-less task with
-// the same title (I18), whoever owns it. Two guards keep a note from being
-// stamped with somebody else's task:
-//   1. The title carries the paper tag, and if that title is taken anywhere in
-//      the lab (the route hands in the oracle over the UNSCOPED handle, so a
-//      task the caller cannot see counts too) it carries the note's own tag instead.
+// Title identity. The task-create path adopts an open project-less task with
+// the same title AND the same assignee (I18, schema-v138): a project-less task
+// is its assignee's, so another person's same-named task is a different task.
+// This note's task is the caller's, so only the caller's own open tasks can
+// collide. Two guards keep a note from being stamped with a task it did not make:
+//   1. The title carries the paper tag, and if the caller already holds an open
+//      task of that title (the route hands in the oracle over the UNSCOPED
+//      handle; the key is the same one the index uses) it carries the note's
+//      own tag instead.
 //   2. The create runs with adopt:false, so an adoption that still happens (a
 //      race) answers 409 'title_taken' and never hands back the other task's
 //      id. The stamp below only ever sees an id this call minted.
@@ -324,10 +327,10 @@ export async function handleMakeTaskFromNote(
   const cite = [note.journal, note.pub_date?.slice(0, 4)].filter(Boolean).join(', ');
   const paperTitle = note.title.length > 80 ? `${note.title.slice(0, 79).trimEnd()}…` : note.title;
 
-  // Guard 1: pick a title no open project-less task holds, seen lab-wide.
+  // Guard 1: pick a title none of the caller's open project-less tasks holds.
   const tag = paperTag(note);
   let title = noteTaskTitle(note.content, tag);
-  if (await titleTaken(title, null)) title = noteTaskTitle(note.content, noteTag(note.id, tag));
+  if (await titleTaken(title, null, user.slug)) title = noteTaskTitle(note.content, noteTag(note.id, tag));
 
   const res = await handleCreateTask(
     new Request('https://internal/api/tasks', {

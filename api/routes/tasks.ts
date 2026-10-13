@@ -1580,19 +1580,18 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
     }
 
     // Dedup: same (normalized title, project_id) already open in Hub? Converges
-    // toward applyInsert's central I18 rule (title, project_id) — #523:
-    // assignee dropped 2026-07-07. It never actually protected anything: even
-    // when this pre-check missed (different assignee), the applyMutation call
-    // below still runs applyInsert's own (title, project_id) dedup — which
-    // does NOT consider assignee — so a cross-assignee same-title-project row
-    // would merge there anyway. Scoping by assignee here just made this
-    // pre-check miss cases the fallthrough caught regardless, with the
-    // id_map/counter bug fixed below. lower(trim()) normalization is KEPT —
-    // genuine tolerance for typed mobile input that the central rule's exact
-    // `title = ?` doesn't provide. NULL project_id matches NULL via IS.
+    // toward applyInsert's central I18 rule. #523 dropped the assignee on
+    // 2026-07-07 because the central rule ignored it. Since schema-v138 the
+    // central rule keys a PROJECT-LESS task on its assignee too (a project-less
+    // task is its assignee's, so another person's same-named task is a different
+    // task), so this pre-check does the same: it must never map a mobile task
+    // onto someone else's row. A task on a project is still keyed on the
+    // project alone. lower(trim()) normalization is KEPT — genuine tolerance for
+    // typed mobile input that the central rule's exact `title = ?` doesn't
+    // provide. NULL project_id matches NULL via IS.
     const existing = await env.DB.prepare(
-      'SELECT id FROM tasks WHERE lower(trim(title)) = lower(trim(?)) AND ((project_id IS NULL AND ? IS NULL) OR project_id = ?) AND completed = 0 AND deleted_at IS NULL LIMIT 1'
-    ).bind(title, resolvedProjectId, resolvedProjectId).first<{ id: string }>();
+      'SELECT id FROM tasks WHERE lower(trim(title)) = lower(trim(?)) AND ((project_id IS NULL AND ? IS NULL AND assignee = ?) OR project_id = ?) AND completed = 0 AND deleted_at IS NULL LIMIT 1'
+    ).bind(title, resolvedProjectId, assignee, resolvedProjectId).first<{ id: string }>();
 
     if (existing) {
       id_map[pwaTask.id] = existing.id;

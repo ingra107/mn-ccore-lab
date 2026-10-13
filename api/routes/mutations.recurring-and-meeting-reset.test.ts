@@ -116,7 +116,8 @@ describe('#8496 recurring-marked titles are outside the name-identity class', ()
   it('the migrated index is the exempting one, and the superseded one is gone', () => {
     const names = (db.prepare("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='tasks'").all() as any[])
       .map((r) => r.name);
-    expect(names).toContain('idx_tasks_title_norm_nonrecurring_active');
+    expect(names).toContain('idx_tasks_title_norm_owner_active');
+    expect(names).not.toContain('idx_tasks_title_norm_nonrecurring_active');
     expect(names).not.toContain('idx_tasks_title_norm_project_active');
   });
 
@@ -130,7 +131,7 @@ describe('#8496 recurring-marked titles are outside the name-identity class', ()
 
   it('race-loser, plain title: the index refuses and the catch adopts the winner', async () => {
     const env = { DB: racingD1('title', { after: () => {
-      db.prepare("INSERT INTO tasks (id, title, assignee) VALUES ('task_W', 'Plain task', 'nick')").run();
+      db.prepare("INSERT INTO tasks (id, title, assignee) VALUES ('task_W', 'Plain task', 'nick-ingraham')").run();
     } }) } as any;
     const r = await applyInsert(env, ins({ title: 'plain task' }), USER, FLAGS);
     expect(r.status).toBe('accepted');
@@ -140,7 +141,7 @@ describe('#8496 recurring-marked titles are outside the name-identity class', ()
 
   it('race, recurring title: nothing refuses, both rows exist', async () => {
     const env = { DB: racingD1('title', { after: () => {
-      db.prepare("INSERT INTO tasks (id, title, assignee) VALUES ('task_W', 'Weekly X (recurring)', 'nick')").run();
+      db.prepare("INSERT INTO tasks (id, title, assignee) VALUES ('task_W', 'Weekly X (recurring)', 'nick-ingraham')").run();
     } }) } as any;
     const r = await applyInsert(env, ins({ title: 'Weekly X (recurring)' }), USER, FLAGS);
     expect(r.status).toBe('accepted');
@@ -231,7 +232,7 @@ describe('#8352 Hub half: a declined meeting approval is reset in the adopting w
 
 describe('#8352: a dedup winner gone at read-back is refused, not accepted', () => {
   it('transient error, no receipt, and a retry of the same mutation_id inserts', async () => {
-    db.prepare("INSERT INTO tasks (id, title, assignee) VALUES ('task_W', 'Plain task', 'nick')").run();
+    db.prepare("INSERT INTO tasks (id, title, assignee) VALUES ('task_W', 'Plain task', 'nick-ingraham')").run();
     const env = {
       PB_API_KEY: 'k',
       DB: racingD1('title', { missFirst: false, after: () => {

@@ -56,6 +56,18 @@ describe('uploadFileToR2', () => {
     }))
   })
 
+  it('hands the ticket from /api/upload/url to /api/upload/done (#145: done refuses a key the caller did not mint)', async () => {
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ data: { uploadUrl: 'https://r2.example/put', key: 'k9', ticket: 'tkt-9' } }))
+      .mockResolvedValueOnce({ ok: true, status: 200 } as Response)
+      .mockResolvedValueOnce(jsonResponse({ data: { url: '/api/files/k9/raw' } }))
+
+    await uploadFileToR2(FILE, { type: 'task', id: 'task_1' })
+
+    const doneCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[2]
+    expect(JSON.parse(doneCall[1].body as string)).toMatchObject({ key: 'k9', ticket: 'tkt-9' })
+  })
+
   it('overrides entityType when ctx.entityType is set', async () => {
     global.fetch = vi.fn()
       .mockResolvedValueOnce(jsonResponse({ data: { uploadUrl: 'https://r2.example/put', key: 'k2' } }))

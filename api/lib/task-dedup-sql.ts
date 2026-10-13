@@ -29,13 +29,36 @@ export const TASK_TITLE_KEY_SQL = 'lower(trim(title))';
 export const TASK_TITLE_KEY_BIND_SQL = 'lower(trim(?))';
 
 /**
- * The partial UNIQUE index that backs the key (api/schema-v113-*.sql). It
- * replaced schema-v107's idx_tasks_title_norm_project_active, which had no
- * recurring exemption; the new NAME is load-bearing for the same reason v107's
+ * The partial UNIQUE index that backs the key (api/schema-v138-*.sql). The chain:
+ * v107 idx_tasks_title_norm_project_active, v113 the recurring exemption
+ * (idx_tasks_title_norm_nonrecurring_active), v138 the per-assignee scope of a
+ * project-less task. Each NAME is load-bearing for the same reason v107's
  * `_norm` was (`CREATE UNIQUE INDEX IF NOT EXISTS` matches on the name, so
- * re-declaring the old name with a new predicate is a silent no-op).
+ * re-declaring an old name with a new key is a silent no-op).
  */
-export const TASK_TITLE_NORM_INDEX = 'idx_tasks_title_norm_nonrecurring_active';
+export const TASK_TITLE_NORM_INDEX = 'idx_tasks_title_norm_owner_active';
+
+// ── Whose task is it? (#145 follow-up, schema-v138, 2026-10-13) ─────────────
+//
+// A task on a project is shared: the project is the one place, so two open
+// tasks of one name there are one task. A task with NO project is private to
+// its assignee (the #145 read rule), so "Review draft" for Casey and "Review
+// draft" for Nick are two tasks, not one. The identity key carries a third
+// part for exactly those rows: the assignee when project_id IS NULL, '' when
+// there is a project. The column expression and the bound value below are the
+// SAME rule, and schema-v138's index uses the column form byte for byte.
+//
+// Without this part the dedup SELECT could adopt another person's private task
+// (through the PB key, or any handle that can see both rows), and the lab-wide
+// index refused a second person's create outright.
+
+/** The owner half of the key, as SQLite evaluates it over the stored columns. */
+export const TASK_OWNER_KEY_SQL = "CASE WHEN project_id IS NULL THEN COALESCE(assignee, '') ELSE '' END";
+
+/** The same rule as a bound value: the assignee for a project-less task, else ''. */
+export function taskOwnerKey(projectId: string | null | undefined, assignee: string | null | undefined): string {
+  return projectId == null ? (assignee ?? '') : '';
+}
 
 // ── The recurring-name exemption (PB backlog #8496, 2026-09-24) ─────────────
 //
@@ -79,23 +102,24 @@ const TASK_DEDUP_SCOPE_SQL =
  * project matches NULL; the index gets the same behaviour from
  * COALESCE(project_id, ''), because SQLite treats NULLs as DISTINCT in a UNIQUE
  * index and would otherwise leave the race window open for exactly those rows.
+ * Binds: (title, projectId, taskOwnerKey(projectId, assignee)).
  */
 export const TASK_TITLE_DEDUP_SELECT =
   `SELECT id FROM tasks WHERE ${TASK_TITLE_KEY_SQL} = ${TASK_TITLE_KEY_BIND_SQL} ` +
-  `AND project_id IS ? ${TASK_DEDUP_SCOPE_SQL}`;
+  `AND project_id IS ? AND ${TASK_OWNER_KEY_SQL} = ? ${TASK_DEDUP_SCOPE_SQL}`;
 
-export type TaskTitleTakenCheck = (title: string, projectId: string | null) => Promise<boolean>;
+export type TaskTitleTakenCheck = (title: string, projectId: string | null, assignee: string | null) => Promise<boolean>;
 
 /**
- * The oracle: true when an open task anywhere holds this title key, so the
- * I18 dedup would adopt it. `raw` must be the UNSCOPED handle: adoption looks
+ * The oracle: true when an open task anywhere holds this title key (for a
+ * project-less title, this assignee's), so the I18 dedup would adopt it. `raw` must be the UNSCOPED handle: adoption looks
  * across every viewer, so a check through a viewer handle misses the tasks the
  * caller cannot see. Hands back one yes/no, never a row or the handle (same
  * shape as project-slug.ts::slugClaimCheck).
  */
 export function taskTitleTakenCheck(raw: D1Database): TaskTitleTakenCheck {
-  return async (title, projectId) =>
-    !!(await raw.prepare(TASK_TITLE_DEDUP_SELECT).bind(title, projectId).first<{ id: string }>());
+  return async (title, projectId, assignee) =>
+    !!(await raw.prepare(TASK_TITLE_DEDUP_SELECT).bind(title, projectId, taskOwnerKey(projectId, assignee)).first<{ id: string }>());
 }
 
 // ── Test-support: classify a `SELECT id FROM tasks` the D1 stubs must answer ──

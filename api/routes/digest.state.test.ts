@@ -302,12 +302,15 @@ describe('Make task from a note', () => {
     expect(stamp(a)).toBe(ra.json.data.task_id)
     expect(stamp(b)).toBe(rb.json.data.task_id)
     expect(stamp(a)).not.toBe(stamp(b))
-    expect(titleOf(stamp(b)!)).toBe(`Get full text (${noteTag(b, 'PMID 222')})`)
+    // A project-less task is its assignee's (schema-v138): Casey's and Nick's
+    // same-named tasks are two tasks, so neither title needs the note's own tag.
+    expect(titleOf(stamp(a)!)).toBe('Get full text (PMID 222)')
+    expect(titleOf(stamp(b)!)).toBe('Get full text (PMID 222)')
     expect(db.prepare('SELECT assignee FROM tasks WHERE id = ?').get(stamp(a))).toEqual({ assignee: 'casey-eddington' })
     expect(db.prepare('SELECT assignee FROM tasks WHERE id = ?').get(stamp(b))).toEqual({ assignee: 'nick-ingraham' })
   })
 
-  it('a colliding task the caller cannot see is never adopted or stamped; the note gets its own task', async () => {
+  it("another person's same-named task is no collision: never adopted or stamped, left untouched, the note gets its own task", async () => {
     // Nick's own project-less task: invisible to Casey through her viewer handle.
     insertRow(db, 'tasks', { id: 'task_nicks', title: 'Get full text (PMID 222)', assignee: 'nick-ingraham', assigned_by: NICK, status: 'todo' })
     expect((await call('GET', '/api/tasks/task_nicks', CASEY)).status).not.toBe(200)
@@ -316,9 +319,20 @@ describe('Make task from a note', () => {
     expect(r.status, r.text).toBe(201)
     expect(r.json.data.task_id).not.toBe('task_nicks')
     expect(stamp(a)).toBe(r.json.data.task_id)
-    expect(titleOf(stamp(a)!)).toBe(`Get full text (${noteTag(a, 'PMID 222')})`)
+    expect(titleOf(stamp(a)!)).toBe('Get full text (PMID 222)')
+    expect(db.prepare('SELECT assignee FROM tasks WHERE id = ?').get(stamp(a))).toEqual({ assignee: 'casey-eddington' })
     expect(db.prepare("SELECT assignee, title FROM tasks WHERE id = 'task_nicks'").get())
       .toEqual({ assignee: 'nick-ingraham', title: 'Get full text (PMID 222)' })
+  })
+
+  it("the caller's own open task of that title is a collision: the note takes its own tag and the old task is untouched", async () => {
+    insertRow(db, 'tasks', { id: 'task_caseys_open', title: 'Get full text (PMID 222)', assignee: 'casey-eddington', status: 'todo' })
+    const a = await note(CASEY, 'p-new', 'Get full text')
+    const r = await make(CASEY, a)
+    expect(r.status, r.text).toBe(201)
+    expect(r.json.data.task_id).not.toBe('task_caseys_open')
+    expect(titleOf(stamp(a)!)).toBe(`Get full text (${noteTag(a, 'PMID 222')})`)
+    expect(titleOf('task_caseys_open')).toBe('Get full text (PMID 222)')
   })
 
   it('an adoption that gets past the title pick is a 409 and stamps nothing', async () => {

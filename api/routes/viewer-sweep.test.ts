@@ -518,12 +518,24 @@ describe('Lane B: projects are channels, membership is the one default rule', ()
     expect(db.prepare("SELECT COUNT(*) AS n FROM project_members WHERE project_id = 'proj_pbx'").get()).toEqual({ n: 0 })
   })
 
-  it("a project-less task titled like one Casey cannot see is refused cleanly, never adopted, never a 500", async () => {
+  it("a project-less task titled like Nick's private one is Casey's own task: created, never adopted (schema-v138)", async () => {
     const before = JSON.stringify(db.prepare('SELECT * FROM tasks WHERE id = ?').get(LOOSE))
     const r = await call('POST', '/api/tasks', CASEY_EMAIL, { title: `${MARK} loose task`, description: 'mine', assignee: 'casey-eddington' })
-    // The title index is lab-wide for project-less tasks; Nick's row is hidden
-    // from Casey, so the INSERT is refused (409) instead of adopting his task
-    // (the pre-#145 dedup answered with Nick's row). See RULINGS in the lane report.
+    // A project-less task is its assignee's, so the name identity is (title,
+    // assignee): Casey's same-named task is a different task from Nick's, which
+    // she cannot see. It is created, and Nick's row is untouched.
+    expect(r.status, r.text).toBe(201)
+    const made = JSON.parse(r.text).data
+    expect(made.id).not.toBe(LOOSE)
+    expect(made.assignee).toBe('casey-eddington')
+    expect(JSON.stringify(db.prepare('SELECT * FROM tasks WHERE id = ?').get(LOOSE))).toBe(before)
+  })
+
+  it("a task Casey hands to Nick, titled like his private one she cannot see, is refused cleanly: never adopted, never a 500, nothing of his shown", async () => {
+    const before = JSON.stringify(db.prepare('SELECT * FROM tasks WHERE id = ?').get(LOOSE))
+    const r = await call('POST', '/api/tasks', CASEY_EMAIL, { title: `${MARK} loose task`, description: 'for you', assignee: 'nick-ingraham' })
+    // Same key (title, nick-ingraham) as Nick's hidden row: the viewer handle
+    // cannot see it, the index refuses the INSERT (409) instead of adopting it.
     expect(r.status, r.text).toBe(409)
     expect(r.text.toUpperCase()).not.toContain(MARK)
     expect(JSON.stringify(db.prepare('SELECT * FROM tasks WHERE id = ?').get(LOOSE))).toBe(before)
