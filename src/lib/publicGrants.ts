@@ -52,3 +52,12 @@ export function grantsForPi(rows: ReadonlyArray<PublicGrant>, slug: string): Per
     }))
     .sort((a, b) => Number(b.bucket === 'active') - Number(a.bucket === 'active'))
 }
+
+/** The rows a public page shows: drops stub rows ("---", no mechanism, the departmental line). The Funding rail entry and GrantsSection both read this, so the rail never links to a missing anchor. */
+export function realGrants<T extends { title?: string | null; mechanism?: string | null }>(grants: ReadonlyArray<T>): T[] {
+  return grants.filter((g) => {
+    const t = g.title?.trim()
+    const m = g.mechanism?.trim()
+    return Boolean(t) && t !== '---' && t !== 'Departmental Operational Support' && Boolean(m) && m !== '---'
+  })
+}

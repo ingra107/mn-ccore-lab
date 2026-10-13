@@ -27,7 +27,7 @@ const pub = probe.data.find(p => p.status === 'Published' && p.abstract) ?? prob
 pages.pubdetail = `/publications/${pub.id}`
 for (const [name, url] of Object.entries(pages)) {
   if (only && only !== name) continue
-  for (const theme of ['light', 'dark']) for (const w of [1440, 375]) {
+  for (const theme of ['light', 'dark']) for (const w of (process.env.SHOOT_WIDTHS ?? '1440,375').split(',').map(Number)) {
     const ctx = await browser.newContext({ viewport: { width: w, height: w === 1440 ? 900 : 812 }, reducedMotion: 'reduce' })
     await ctx.addInitScript(t => localStorage.setItem('mn-ccore-theme', t), theme)
     const p = await ctx.newPage()

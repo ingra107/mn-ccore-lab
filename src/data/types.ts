@@ -7,6 +7,8 @@ export interface Director {
   slug: string
   path: string
   bio: string
+  fullBio?: string // the longer bio the member page shows; the card keeps `bio`
+  links?: { label: string; href: string }[] // ORCID, GitHub, UMN Bio; Scholar comes from scholarId
   photoUrl?: string
   scholarId?: string // Google Scholar user ID (the ?user= parameter)
   orcidId?: string // ORCID iD, e.g. "0000-0002-1825-0097" — primary publications source (#357)
@@ -18,11 +20,13 @@ export interface TeamMember {
   name: string
   initials: string
   role: string
+  title?: string // faculty title, shown under the name on the member page (directors)
   credentials?: string
   slug?: string
   photoUrl?: string
   authorName?: string // PubMed-style name for matching in author strings, e.g. "Chipman JG"
   bio?: string
+  fullBio?: string // longer bio for the member page; falls back to `bio`
   links?: { label: string; href: string }[]
   scholarId?: string // Google Scholar user ID (the ?user= parameter)
   orcidId?: string // ORCID iD — primary publications source (#357)

@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { useParams, Navigate, Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import LabPageLayout, { GrantsSection, PublicationsSection } from '../components/LabPageLayout'
+import LabPageLayout, { GrantsSection, MenteesSection, PublicationsSection } from '../components/LabPageLayout'
 import MemberFeaturedPublications from '../components/MemberFeaturedPublications'
 import Breadcrumb from '../components/Breadcrumb'
 import { Handshake, CheckCircle2, X, Plus } from 'lucide-react'
@@ -14,13 +14,13 @@ import { usePublications, useExpertise, useMenteeMilestones, useContributionScor
 import type { MenteeMilestoneRow } from '../hooks/useApiData'
 import { useCommitments } from '../hooks/useCommitments'
 import { usePublicGrants } from '../hooks/usePublicGrants'
-import { grantsForPi } from '../lib/publicGrants'
+import { grantsForPi, realGrants } from '../lib/publicGrants'
 import { useAddExpertise, useRemoveExpertise } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import { useCanSeePerson } from '../hooks/useCanSeePerson'
 import type { CommitmentRow } from '../hooks/useCommitments'
 import { getMemberBySlug, getPersonInfo } from '../data/team'
-import { getMenteeBySlug } from '../data/mentees'
+import { getMenteeBySlug, menteesForDirector } from '../data/mentees'
 import { projects } from '../data/projects'
 import { formatShortDate, isOverdue } from '../lib/dateUtils'
 import { displayName as formatTier, fullNameForSlug } from '../lib/nameUtils'
@@ -208,7 +208,9 @@ export default function MemberPage() {
   // Live funded awards (public) plus, for a signed-in member, their applications.
   // Rows are matched by PI, so only a PI's page ever shows a Funding section.
   const { data: liveGrants = [] } = usePublicGrants()
-  const grants = slug && !isPortalRoute ? grantsForPi(liveGrants, slug) : []
+  const grants = slug && !isPortalRoute ? realGrants(grantsForPi(liveGrants, slug)) : []
+  // A director's page lists their trainees, built live from data/mentees.ts.
+  const trainees = slug && !isPortalRoute ? menteesForDirector(slug) : []
 
   // Commitments to this person (slug does partial match on to_whom)
   const { openCommitments, doneCommitments } = useMemo(() => {
@@ -310,10 +312,10 @@ export default function MemberPage() {
     <LabPageLayout
       name={formalFullName}
       credentials={member.credentials ?? ''}
-      title={member.role}
-      role="MN-CCORE Team Member"
+      title={member.title ?? member.role}
+      role={member.title ? member.role : 'MN-CCORE Team Member'}
       initials={member.initials}
-      bio={member.bio || mentee?.bio}
+      bio={member.fullBio || member.bio || mentee?.bio}
       links={memberLinks}
       photoUrl={member.photoUrl}
       portalChrome={location.pathname.startsWith('/portal/')}
@@ -327,6 +329,7 @@ export default function MemberPage() {
       breadcrumb={<Breadcrumb backTo={teamBase} backLabel="Team" current={formalFullName} />}
       sections={[
         ...(grants.length > 0 ? [{ id: 'grants', label: 'Funding' }] : []),
+        ...(trainees.length > 0 ? [{ id: 'trainees', label: 'Trainees' }] : []),
         ...(mentee
           ? [{ id: 'research-focus', label: 'Research Focus' }]
           : []),
@@ -336,7 +339,7 @@ export default function MemberPage() {
         ...(expertiseTags.length > 0 || isAuthenticated
           ? [{ id: 'expertise', label: `Expertise${expertiseTags.length > 0 ? ` (${expertiseTags.length})` : ''}` }]
           : []),
-        ...(slug
+        ...(slug && canSeeScore
           ? [{ id: 'activity', label: 'Activity' }]
           : []),
         ...(topicCounts.length > 0
@@ -354,6 +357,7 @@ export default function MemberPage() {
       {slug && <MemberProfileActions slug={slug} teamBase={teamBase} name={member.name} />}
 
       <GrantsSection grants={grants} id="grants" title="Funding" />
+      {trainees.length > 0 && <MenteesSection mentees={trainees} id="trainees" title="Trainees" />}
 
       {/* Mentee: Research Focus (interests + mentor info) */}
       {mentee && (
@@ -594,7 +598,7 @@ export default function MemberPage() {
       )}
 
       {/* Activity heatmap + contribution score */}
-      {slug && (
+      {slug && canSeeScore && (
         <>
           <section className="mb-8" id="activity">
             <MemberHead title="Activity" />
