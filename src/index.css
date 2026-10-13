@@ -3101,8 +3101,8 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .pj-slots .tk-wo:hover{color:var(--sk-t1)}
 .sr .pj-stage-h{display:flex;align-items:center;gap:8px;padding:16px 10px 6px;font-size:12.5px;font-weight:600;color:var(--sk-t2)}
 .sr .pj-empty{padding:48px 24px;text-align:center;font-size:13.5px;color:var(--sk-t3)}
-.pj-foot{display:flex;flex-wrap:wrap;gap:6px 20px;padding:12px 10px 4px;font-size:12px;color:var(--sk-t3)}
-.pj-foot b{font-weight:600;color:var(--sk-t2);font-variant-numeric:tabular-nums}
+.pj-tally{display:flex;flex-wrap:wrap;gap:4px 18px;padding:0 10px 8px;font-size:12px;color:var(--sk-t3)}
+.pj-tally b{font-weight:600;color:var(--sk-t2);font-variant-numeric:tabular-nums}
 
 /* Meetings (Nick 2026-10-09, "quiet decisions"): the left list as cards, the
    detail's date tile, people as badge + first name, and decisions as a plain

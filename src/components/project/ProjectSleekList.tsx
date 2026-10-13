@@ -368,6 +368,16 @@ export default function ProjectSleekList({
 
   return (
     <>
+      {/* Filtered count and per-stage tally: `projects` is the filtered list,
+          so the numbers follow every filter and search. */}
+      {projects.length > 0 && (
+        <div className="pj-tally" data-testid="pj-tally">
+          <span><b>{projects.length}</b> {projects.length === 1 ? 'project' : 'projects'}</span>
+          {Array.from(stageCounts.values()).map(({ label, count }) => (
+            <span key={label}>{label} <b>{count}</b></span>
+          ))}
+        </div>
+      )}
       <SleekTable columns={columns} sort={sort} onSort={onSort} defaultSortLabel="Recent activity" className="pj-list">
         {projects.length === 0 && <div className="pj-empty">{emptyLabel}</div>}
         {projects.length > 0 && (

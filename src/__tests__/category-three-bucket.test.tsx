@@ -79,8 +79,8 @@ describe('CreateProjectModal category options', () => {
     expect(cat?.color).toBe('var(--sk-t3)')
   })
 
-  it('Peripheral Brain option has slate color token', () => {
-    expect(createCategoryOptions(true).find((c) => c.value === 'Peripheral Brain')?.color).toBe('var(--slate)')
+  it('Peripheral Brain option has sk-t3 color token', () => {
+    expect(createCategoryOptions(true).find((c) => c.value === 'Peripheral Brain')?.color).toBe('var(--sk-t3)')
   })
 })
 

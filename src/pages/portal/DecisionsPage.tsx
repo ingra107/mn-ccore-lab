@@ -462,6 +462,20 @@ function DecisionDetail({ decision, projects, tags }: { decision: DecisionRow; p
   )
 }
 
+// First two tags and a +N; the desktop cell and the phone `line` slot share it.
+const tagsCell = (d: DecisionRow) => {
+  const tags = parseTagsString(d.tags)
+  const extra = tags.length - 2
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, minWidth: 0, overflow: 'hidden' }}>
+      {tags.slice(0, 2).map((tag) => (
+        <span key={tag} className="tk-tag tk-n" style={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 74 }}>{tag}</span>
+      ))}
+      {extra > 0 && <span className="sr-m">+{extra}</span>}
+    </span>
+  )
+}
+
 function DecisionsList({
   decisions,
   projects,
@@ -501,19 +515,9 @@ function DecisionsList({
       ),
     },
     {
-      key: 'tags', label: 'Tags', width: '170px', minTableWidth: 800,
-      render: (d) => {
-        const tags = parseTagsString(d.tags)
-        const extra = tags.length - 2
-        return (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, minWidth: 0, overflow: 'hidden' }}>
-            {tags.slice(0, 2).map((tag) => (
-              <span key={tag} className="tk-tag tk-n" style={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 74 }}>{tag}</span>
-            ))}
-            {extra > 0 && <span className="sr-m">+{extra}</span>}
-          </span>
-        )
-      },
+      key: 'tags', label: 'Tags', width: '170px', minTableWidth: 800, phone: 'line',
+      renderPhone: (d) => (parseTagsString(d.tags).length === 0 ? null : tagsCell(d)),
+      render: tagsCell,
     },
     {
       key: 'decided_by', label: 'Decided by', width: '120px', sortable: true, minTableWidth: 720, phone: 'line',
@@ -747,7 +751,7 @@ export default function DecisionsPage() {
       <PageHeader
         title="Decision Log"
         subtitle={`${pendingCount} pending review, ${recordedCount} with outcomes`}
-        count={allDecisions.length}
+        count={filteredDecisions.length}
         actions={
           <div className="flex items-center gap-2 flex-wrap justify-end">
             <SegmentedToggle

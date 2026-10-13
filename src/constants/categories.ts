@@ -20,7 +20,7 @@ export interface CategoryOption {
 export const CATEGORY_OPTIONS: CategoryOption[] = [
   { value: 'MNCCORE', label: 'MN-CCORE', color: 'var(--sk-t3)' },
   { value: 'CLIF', label: 'CLIF', color: 'var(--sk-t3)' },
-  { value: 'Peripheral Brain', label: 'Peripheral Brain', color: 'var(--slate)' },
+  { value: 'Peripheral Brain', label: 'Peripheral Brain', color: 'var(--sk-t3)' },
 ]
 
 /**

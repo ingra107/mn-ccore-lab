@@ -223,7 +223,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
 
           {/* Topic tags */}
           {topics.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-2">
+            <div className="tk flex flex-wrap gap-1.5 mb-2">
               {topics.map((topic) => (
                 <span
                   key={topic}
