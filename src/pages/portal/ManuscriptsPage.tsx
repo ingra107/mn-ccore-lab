@@ -382,16 +382,8 @@ export default function ManuscriptsPage() {
         actions={
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg new-project-btn"
-            style={{
-              background: 'transparent',
-              color: 'var(--job-accent)',
-              fontSize: '13px',
-              fontWeight: 600,
-              border: '1px solid var(--border-subtle)',
-              cursor: 'pointer',
-              transition: 'background var(--duration-fast) ease-out',
-            }}
+            className="tk-btn tk-sm new-project-btn"
+            style={{ color: 'var(--job-accent)', fontWeight: 600 }}
           >
             <Plus {...ICON_PROPS} size={14} />
             New Manuscript
@@ -564,12 +556,8 @@ export default function ManuscriptsPage() {
                 return (
                   <div
                     key={p.slug}
-                    className="rounded-lg border flex flex-col overflow-hidden"
-                    style={{
-                      borderColor: 'var(--border-subtle)',
-                      background: 'var(--surface-1)',
-                      minHeight: '220px',
-                    }}
+                    className="sk-mat rounded-lg flex flex-col overflow-hidden"
+                    style={{ minHeight: '220px' }}
                   >
                     <div
                       className="px-4 pt-4 pb-3"
@@ -699,8 +687,8 @@ function PipelineCard({ project, dragging }: { project: ManuscriptRow; dragging?
       className="project-card"
       style={{
         // Recipe A: .project-card has no base lift, so cream == the dark page
-        // bg rendered flat. --surface-2 lifts it; the shadow-card below is the edge.
-        background: 'var(--surface-2)',
+        // bg rendered flat. --sk-card lifts it; the shadow-card below is the edge.
+        background: 'var(--sk-card)',
         borderRadius: 'var(--radius-lg)',
         padding: '14px',
         boxShadow: dragging ? 'var(--shadow-elevated)' : 'var(--shadow-card)',

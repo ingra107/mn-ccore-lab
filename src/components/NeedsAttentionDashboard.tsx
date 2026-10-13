@@ -93,7 +93,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange, compac
         className={`${compact ? '' : 'mb-4 '}flex items-center gap-2 px-3 py-1.5`}
         style={{
           fontSize: '12px', color: 'var(--muted)',
-          borderRadius: 'var(--radius-md)', background: 'var(--surface-2)',
+          borderRadius: 'var(--radius-md)', background: 'var(--sk-panel)',
         }}
       >
         <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-full)', background: 'var(--muted)', opacity: 0.7 }} />
@@ -144,7 +144,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange, compac
       </div>
 
       {!sectionCollapsed && (
-        <div className="rounded-xl" style={{ border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+        <div className="sk-mat rounded-xl" style={{ overflow: 'hidden' }}>
           {SUBGROUPS.filter((g) => counts[g.key] > 0).map((g, idx) => {
             const active = filter === g.key
             const openForReal = isExpanded(g.key)
@@ -162,7 +162,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange, compac
                   className="w-full flex items-center gap-2"
                   style={{
                     padding: '10px 16px',
-                    background: active ? 'var(--surface-2)' : 'transparent',
+                    background: active ? 'var(--sk-panel)' : 'transparent',
                     color: 'var(--ink)',
                     fontSize: '13px',
                     fontWeight: 500,
@@ -240,7 +240,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange, compac
               style={{
                 padding: '8px 16px',
                 borderTop: '1px solid var(--border-subtle)',
-                background: 'var(--surface-2)',
+                background: 'var(--sk-panel)',
                 display: 'flex',
                 justifyContent: 'flex-end',
               }}
@@ -272,7 +272,7 @@ function CountBadge({ n }: { n: number }) {
         fontSize: '11px', fontWeight: 600,
         padding: '1px 8px', borderRadius: 'var(--radius-full)',
         color: high ? 'var(--job-wants)' : 'var(--slate)',
-        background: high ? 'color-mix(in srgb, var(--job-wants) 15%, transparent)' : 'var(--surface-2)',
+        background: high ? 'color-mix(in srgb, var(--job-wants) 15%, transparent)' : 'var(--sk-line)',
         letterSpacing: '0.02em', flexShrink: 0,
       }}
     >

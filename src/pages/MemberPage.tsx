@@ -129,7 +129,7 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
                   {toPersonInfo?.photoUrl ? (
                     <img src={toPersonInfo.photoUrl} alt={toPersonInfo.name} style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover' }} />
                   ) : toPersonInfo ? (
-                    <span style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--ice)', border: '1px solid var(--border-subtle)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: 'var(--slate)', flexShrink: 0 }}>{toPersonInfo.initials}</span>
+                    <span style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--sk-face)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: 'var(--sk-face-t)', flexShrink: 0 }}>{toPersonInfo.initials}</span>
                   ) : null}
                   {toPersonInfo ? toPersonInfo.name : item.to_whom}
                 </span>
@@ -358,10 +358,9 @@ export default function MemberPage() {
                     key={interest}
                     className="inline-flex items-center px-3 py-1.5 rounded-full text-sm"
                     style={{
-                      background: 'var(--ice)',
+                      background: 'var(--sk-panel)',
                       color: 'var(--ink)',
                       fontWeight: 500,
-                      border: '1px solid var(--border-subtle)',
                     }}
                   >
                     {interest}
@@ -373,7 +372,6 @@ export default function MemberPage() {
               className="inline-flex items-center gap-2 px-3 py-2 rounded-md"
               style={{
                 background: 'var(--sk-panel)',
-                border: '1px solid var(--border-subtle)',
               }}
             >
               <span className="text-xs" style={{ color: 'var(--slate)' }}>
@@ -453,9 +451,8 @@ export default function MemberPage() {
                     className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] cursor-pointer transition-opacity hover:opacity-80"
                     style={{
                       fontWeight: 400,
-                      background: 'var(--ice)',
+                      background: 'var(--sk-panel)',
                       color: 'var(--ink)',
-                      border: '1px solid var(--border-subtle)',
                     }}
                     onClick={() => navigate(`${teamBase}?expertise=${encodeURIComponent(t.tag)}`)}
                     role="link"
@@ -491,14 +488,11 @@ export default function MemberPage() {
               {isAuthenticated && !showAddTag && (
                 <button
                   onClick={() => setShowAddTag(true)}
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium hov-border hov-color"
+                  className="tk-btn tk-sm hov-color"
                   style={{
-                    background: 'transparent',
                     color: 'var(--slate)',
-                    border: '1px dashed rgba(100,116,139,0.3)',
                     cursor: 'pointer',
-                    transition: 'border-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out)',
-                    '--hov-border': 'var(--job-accent)',
+                    transition: 'color var(--duration-normal) var(--ease-out)',
                     '--hov-color': 'var(--job-accent)',
                   } as React.CSSProperties}
                 >
@@ -538,7 +532,7 @@ export default function MemberPage() {
                   style={{
                     background: 'var(--sk-card)',
                     color: 'var(--ink)',
-                    border: '1px solid var(--border-subtle)',
+                    border: '1px solid var(--field-edge)',
                     outline: 'none',
                     width: '240px',
                   }}

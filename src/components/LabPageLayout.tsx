@@ -171,12 +171,9 @@ export default function LabPageLayout({
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 hov-border hov-color"
+                    className="tk-btn tk-sm cursor-pointer hov-color"
                     style={{
-                      background: 'var(--sk-card)',
                       color: 'var(--slate)',
-                      border: '1px solid transparent',
-                      '--hov-border': 'var(--job-brand)',
                       '--hov-color': 'var(--job-brand)',
                     } as React.CSSProperties}
                   >

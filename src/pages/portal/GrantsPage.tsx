@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Diamond, List, GanttChartSquare, Telescope, Plus, ClipboardList, X, Check, Wallet } from 'lucide-react'
+import { AnimatePresence } from 'framer-motion'
+import { Diamond, List, GanttChartSquare, Telescope, Plus, ClipboardList, Check, Wallet } from 'lucide-react'
 import FilterLinks from '../../components/ui/FilterLinks'
 import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -9,6 +9,7 @@ import EmptyState from '../../components/EmptyState'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import InlineSelect from '../../components/InlineSelect'
 import Field from '../../components/ui/Field'
+import Modal from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
 import StatRow, { type StatRowItem } from '../../components/ui/StatRow'
@@ -162,7 +163,7 @@ export default function GrantsPage() {
             </>
           ))}
           {view === 'timeline' && (
-            <div className="mt-2 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
+            <div className="mt-2 sk-mat rounded-xl p-4">
               <GrantGantt rows={plotted} today={today} onMove={onMove} />
             </div>
           )}
@@ -174,7 +175,7 @@ export default function GrantsPage() {
       )}
 
       {activeTab === 'landscape' && (
-        <div className="mt-2 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className="mt-2 sk-mat rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
             <Telescope {...ICON_PROPS} size={16} style={{ color: 'var(--slate)' }} />
             <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>Grant Landscape (NIH RePORTER)</h3>
@@ -184,7 +185,7 @@ export default function GrantsPage() {
               type="text" placeholder="Search keywords (e.g., critical care, mechanical ventilation, ARDS)" aria-label="RePORTER keywords"
               value={searchKeywords} onChange={(e) => setSearchKeywords(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') setActiveSearch(searchKeywords) }}
-              style={{ flex: 1, padding: 'var(--sp-sm) var(--sp-md)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', fontSize: 'var(--value-size)', background: 'var(--cream)', color: 'var(--ink)' }}
+              style={{ flex: 1, padding: 'var(--sp-sm) var(--sp-md)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--field-edge)', fontSize: 'var(--value-size)', background: 'var(--cream)', color: 'var(--ink)' }}
             />
             <button type="button" onClick={() => setActiveSearch(searchKeywords)}
               style={{ background: 'var(--job-accent)', color: 'var(--sk-card)', border: 'none', borderRadius: 'var(--radius-lg)', padding: 'var(--sp-sm) var(--sp-lg)', fontSize: 'var(--value-size)', fontWeight: 600, cursor: 'pointer' }}
@@ -195,7 +196,7 @@ export default function GrantsPage() {
             <div className="text-center py-6"><QueryErrorNote label="grant search" onRetry={() => similarGrants.refetch()} /></div>
           )}
           {similarGrants.data?.data?.map((grant) => (
-            <div key={grant.project_num} className="p-3 rounded-lg mb-2" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
+            <div key={grant.project_num} className="p-3 rounded-lg mb-2" style={{ background: 'var(--sk-panel)', border: '1px solid var(--sk-line)' }}>
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>{grant.title}</p>
@@ -243,7 +244,7 @@ function PostAward({ rows, today, onAdd }: { rows: GrantProduct[]; today: string
   const overdue = items.filter((x) => !x.m.completed && x.date && x.date < today).length
 
   return (
-    <div className="mt-2 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }} data-testid="post-award">
+    <div className="mt-2 sk-mat rounded-xl p-4" data-testid="post-award">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <ClipboardList {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
@@ -287,44 +288,32 @@ function AddMilestoneModal({ rows, onClose }: { rows: GrantProduct[]; onClose: (
   const [hard, setHard] = useState('')
   const row = options.find((g) => g.id === productId)
   const ready = !!row && title.trim() !== '' && (due !== '' || hard !== '')
-  const input = { width: '100%', padding: 'var(--sp-sm) var(--sp-md)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', fontSize: 'var(--value-size)', background: 'var(--cream)', color: 'var(--ink)' }
+  const input = { width: '100%', padding: 'var(--sp-sm) var(--sp-md)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--field-edge)', fontSize: 'var(--value-size)', background: 'var(--cream)', color: 'var(--ink)' }
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}
-      style={{ position: 'fixed', inset: 0, background: 'var(--overlay-medium)', zIndex: 'var(--z-sidebar)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--sp-lg)' }}>
-      <motion.div role="dialog" aria-label="Add milestone" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-        onClick={(e) => e.stopPropagation()}
-        style={{ background: 'var(--cream)', borderRadius: 'var(--radius-2xl)', border: '1px solid var(--border-subtle)', padding: 'var(--sp-xl)', width: '100%', maxWidth: 480, boxShadow: 'var(--shadow-card-hover)' }}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--ink)', margin: 0 }}>Add a milestone</h3>
-          <button type="button" onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}>
-            <X {...ICON_PROPS} size={18} />
-          </button>
-        </div>
-        <div className="flex flex-col gap-3">
-          <Field label="Grant" htmlFor="ms-grant" noContainer>
-            <InlineSelect id="ms-grant" value={productId} onChange={setProductId} size="md" alwaysShowChevron
-              options={options.map((g) => ({ value: g.id, label: `${grantName(g)}${g.venue ? ` (${g.venue})` : ''}` }))} />
-          </Field>
-          <Field label="Title" htmlFor="ms-title" noContainer>
-            <input id="ms-title" type="text" placeholder="e.g., Year 2 RPPR" value={title} onChange={(e) => setTitle(e.target.value)} style={input} autoFocus />
-          </Field>
-          <Field label="Our date" htmlFor="ms-due" noContainer>
-            <input id="ms-due" type="date" value={due} onChange={(e) => setDue(e.target.value)} style={input} />
-          </Field>
-          <Field label="Hard date (the sponsor's)" htmlFor="ms-hard" noContainer>
-            <input id="ms-hard" type="date" value={hard} onChange={(e) => setHard(e.target.value)} style={input} />
-          </Field>
-        </div>
-        <div className="flex justify-end gap-2 mt-4">
-          <button type="button" onClick={onClose} style={{ padding: 'var(--sp-sm) var(--sp-lg)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', background: 'none', fontSize: 'var(--value-size)', color: 'var(--slate)', cursor: 'pointer' }}>Cancel</button>
-          <button type="button" disabled={!ready || add.isPending} data-testid="milestone-save"
-            onClick={() => row && add.mutate({ slug: row.project_slug, productId: row.id, title: title.trim(), due_date: due || null, deadline: hard || null }, { onSuccess: onClose })}
-            className="flex items-center gap-1.5"
-            style={{ padding: 'var(--sp-sm) var(--sp-lg)', borderRadius: 'var(--radius-lg)', border: 'none', background: ready ? 'var(--job-accent)' : 'var(--border-subtle)', color: ready ? 'var(--sk-card)' : 'var(--slate)', fontSize: 'var(--value-size)', fontWeight: 600, cursor: ready ? 'pointer' : 'not-allowed' }}>
-            {add.isPending ? 'Saving…' : <><Check {...ICON_PROPS} size={14} /> Add milestone</>}
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
+    <Modal open onClose={onClose} title="Add milestone" maxWidth="sm"
+      footer={<>
+        <button type="button" onClick={onClose} className="tk-btn">Cancel</button>
+        <button type="button" disabled={!ready || add.isPending} data-testid="milestone-save"
+          onClick={() => row && add.mutate({ slug: row.project_slug, productId: row.id, title: title.trim(), due_date: due || null, deadline: hard || null }, { onSuccess: onClose })}
+          className={`tk-btn ${ready ? 'tk-pri' : 'tk-off'}`}>
+          {add.isPending ? 'Saving…' : <><Check {...ICON_PROPS} size={14} /> Add milestone</>}
+        </button>
+      </>}>
+      <div className="flex flex-col gap-3">
+        <Field label="Grant" htmlFor="ms-grant" noContainer>
+          <InlineSelect id="ms-grant" value={productId} onChange={setProductId} size="md" alwaysShowChevron
+            options={options.map((g) => ({ value: g.id, label: `${grantName(g)}${g.venue ? ` (${g.venue})` : ''}` }))} />
+        </Field>
+        <Field label="Title" htmlFor="ms-title" noContainer>
+          <input id="ms-title" type="text" placeholder="e.g., Year 2 RPPR" value={title} onChange={(e) => setTitle(e.target.value)} style={input} autoFocus />
+        </Field>
+        <Field label="Our date" htmlFor="ms-due" noContainer>
+          <input id="ms-due" type="date" value={due} onChange={(e) => setDue(e.target.value)} style={input} />
+        </Field>
+        <Field label="Hard date (the sponsor's)" htmlFor="ms-hard" noContainer>
+          <input id="ms-hard" type="date" value={hard} onChange={(e) => setHard(e.target.value)} style={input} />
+        </Field>
+      </div>
+    </Modal>
   )
 }

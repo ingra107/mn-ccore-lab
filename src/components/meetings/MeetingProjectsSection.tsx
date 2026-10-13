@@ -132,7 +132,7 @@ export default function MeetingProjectsSection({ meeting, derivedTags = [], allP
         </p>
       )}
       {picking && (
-        <div className="grid grid-cols-2 gap-1.5 mt-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)', border: '1px solid var(--border-subtle)' }}>
+        <div className="grid grid-cols-2 gap-1.5 mt-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--sk-panel)' }}>
           {allProjects.map((project) => {
             const present = discussed.includes(project.slug) || discussed.includes(project.id)
             return (

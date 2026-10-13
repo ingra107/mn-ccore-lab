@@ -2315,7 +2315,7 @@ button[aria-label="Deselect task"]::before {
 /* ── 3. prefers-reduced-transparency ─────────────────────────
    iOS "Reduce Transparency" and Windows equivalent. Replace semi-
    transparent surface tokens with opaque equivalents, and remove
-   backdrop-filter blur (replaces with solid surface-1 background). */
+   backdrop-filter blur (replaces with solid --sk-panel background). */
 @media (prefers-reduced-transparency: reduce) {
   :root {
     /* Card stays the white working surface (already opaque). */
@@ -2342,7 +2342,7 @@ button[aria-label="Deselect task"]::before {
   .backdrop-blur,
   [class*="backdrop-blur"] {
     backdrop-filter: none !important;
-    background-color: var(--surface-1) !important;
+    background-color: var(--sk-panel) !important;
   }
 }
 
@@ -2403,7 +2403,7 @@ button[aria-label="Deselect task"]::before {
 
 .dark .task-detail-panel {
   background-color: var(--cream) !important;
-  background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+  background-image: linear-gradient(var(--sk-line), var(--sk-line)) !important;
   /* Desktop floating panel has no left border; mobile still uses border-left via inline style */
 }
 
@@ -2415,7 +2415,7 @@ button[aria-label="Deselect task"]::before {
 .dark .task-detail-panel .task-detail-sticky,
 .dark .task-detail-panel .task-detail-done-bar {
   background-color: var(--cream) !important;
-  background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+  background-image: linear-gradient(var(--sk-line), var(--sk-line)) !important;
 }
 
 .dark .task-detail-panel select {

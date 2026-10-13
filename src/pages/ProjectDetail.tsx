@@ -640,8 +640,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     right: 0,
                     marginTop: '4px',
                     minWidth: '180px',
-                    background: 'var(--surface-2)',
-                    border: '1px solid var(--border-default)',
+                    background: 'var(--sk-card)',
                     borderRadius: 'var(--radius-lg)',
                     boxShadow: 'var(--shadow-menu)',
                     zIndex: 'var(--z-dropdown)',
@@ -1066,8 +1065,8 @@ recentActivity.length === 0 ? (
               style={{
                 width: '100%',
                 padding: '10px 12px',
-                background: 'var(--surface-2)',
-                border: '1px solid var(--border-subtle)',
+                background: 'var(--sk-panel)',
+                border: '1px solid var(--field-edge)',
                 borderRadius: 'var(--radius-md)',
                 color: 'var(--muted)',
                 fontSize: '13px',
@@ -1203,14 +1202,7 @@ recentActivity.length === 0 ? (
             {isPi && !editingStrategic && (
               <button
                 onClick={() => { setStrategicDraft(project.strategic_context ?? ''); setEditingStrategic(true) }}
-                className="text-[10px] px-2 py-0.5 rounded"
-                style={{
-                  color: 'var(--slate)',
-                  opacity: 'var(--ink-label)',
-                  background: 'none',
-                  border: '1px solid var(--border-subtle)',
-                  cursor: 'pointer',
-                }}
+                className="tk-btn tk-sm"
               >
                 {project.strategic_context ? 'Edit' : 'Add context'}
               </button>
@@ -1257,8 +1249,7 @@ recentActivity.length === 0 ? (
                 </button>
                 <button
                   onClick={() => setEditingStrategic(false)}
-                  className="px-3 py-1 rounded-md text-xs"
-                  style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}
+                  className="tk-btn tk-sm"
                 >
                   Cancel
                 </button>
@@ -1606,8 +1597,8 @@ recentActivity.length === 0 ? (
                     setTasksCopied(true)
                     setTimeout(() => setTasksCopied(false), 2000)
                   }}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors border tip"
-                  style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: tasksCopied ? 1 : 0.85 }}
+                  className="tk-btn tk-sm tip"
+                  style={{ opacity: tasksCopied ? 1 : 0.85 }}
                   data-tip={tasksCopied ? 'Copied!' : 'Copy task list to clipboard'}
                   aria-label={tasksCopied ? 'Copied!' : 'Copy task list to clipboard'}
                 >
@@ -1686,8 +1677,8 @@ recentActivity.length === 0 ? (
                 marginBottom: '1rem',
                 padding: '12px 16px',
                 borderRadius: 'var(--radius-lg)',
-                background: 'var(--surface-1)',
-                border: '1px solid var(--border-subtle)',
+                background: 'var(--sk-panel)',
+                border: '1px solid var(--sk-line)',
                 fontSize: '12px',
                 color: 'var(--muted)',
                 lineHeight: 1.5,
