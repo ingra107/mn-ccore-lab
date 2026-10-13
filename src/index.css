@@ -3219,6 +3219,15 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk .tk-pill.sr-wt i{background:var(--st-waiting)}
 .tk .tk-pill.sr-bl i{background:var(--st-blocked)}
 .tk .tk-pill.sr-od i{background:var(--job-overdue)}
+/* StatusGlyph: one 9px shape per status (Wave 3 item 5, option A) */
+.tk .sg{width:9px;height:9px;border-radius:50%;box-sizing:border-box;display:inline-block;flex:none;border:1.5px solid var(--sk-t3);background:transparent}
+.tk .tk-pill i.sg{width:9px;height:9px;background:transparent}
+.tk .tk-pill i.sg.sg-half{border-color:var(--job-accent);background:linear-gradient(90deg,var(--job-accent) 50%,transparent 50%)}
+.tk .tk-pill i.sg.sg-wait{border-style:dashed}
+.tk .tk-pill i.sg.sg-blk{background:radial-gradient(circle,var(--sk-t3) 32%,transparent 36%)}
+.tk .tk-pill i.sg.sg-full{background:var(--sk-t3)}
+.tk .tk-pill i.sg.sg-stale{border-color:var(--job-stale);background:var(--job-stale)}
+.tk .tk-pill i.sg.sg-overdue{border-color:var(--job-overdue);background:var(--job-overdue)}
 /* Inline-edit trigger: the value as it reads elsewhere, a caret on row hover */
 .sr .sr-trig{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:4px;min-width:0;max-width:100%;min-height:24px;padding:2px 6px;margin-left:-6px;border-radius:6px;cursor:pointer}
 .sr .sr-trig:hover,.sr .sr-trig[aria-expanded="true"]{background:var(--sr-hov);box-shadow:inset 0 0 0 1px var(--sk-line)}

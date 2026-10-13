@@ -4,6 +4,7 @@
 // .tk-tag / .tk-pill, so a task reads the same on a card and on a row.
 
 import type { MouseEvent, KeyboardEvent } from 'react'
+import { StatusGlyph } from './StatusGlyph'
 import { CardCheck, CardDuePill, CardTags, useTaskAttention } from './TaskCardRow'
 import { dueLabelCompact, isOverdue } from '../../lib/dateUtils'
 import { isMilestone } from '../../../shared/taskKinds'
@@ -13,9 +14,6 @@ import type { TaskRow } from '../../lib/api'
 
 const STATUS_WORD: Record<string, string> = {
   todo: 'To Do', in_progress: 'In Progress', waiting_external: 'Waiting', blocked: 'Blocked', done: 'Done',
-}
-const STATUS_DOT: Record<string, string> = {
-  todo: 'sr-td', in_progress: 'sr-ip', waiting_external: 'sr-wt', blocked: 'sr-bl', done: '',
 }
 const PRIORITY_WORD: Record<string, string> = { urgent: 'Urgent', high: 'High', medium: 'Medium', low: 'Low' }
 
@@ -100,9 +98,9 @@ export function TaskCheckCell({ task, isDone, onToggle }: { task: TaskRow; isDon
   return isMilestone(task) ? null : <CardCheck done={isDone} onToggle={onToggle} taskId={task.id} />
 }
 
-/** Status as a quiet pill: the dot carries the state, the word stays gray. */
+/** Status as a quiet pill: the glyph's shape carries the state, the word stays gray. */
 export function TaskStatusPill({ status }: { status: string }) {
-  return <span className={`tk-pill ${STATUS_DOT[status] ?? ''}`}><i />{STATUS_WORD[status] ?? status}</span>
+  return <span className="tk-pill"><StatusGlyph status={status} />{STATUS_WORD[status] ?? status}</span>
 }
 
 /** Priority: gray words, except Urgent, which is the one orange tag. */

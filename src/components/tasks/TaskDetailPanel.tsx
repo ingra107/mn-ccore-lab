@@ -523,6 +523,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             <GhostSelect
               aria-label="Status"
               value={task.status}
+              triggerColor={task.status === 'in_progress' ? 'var(--job-accent)' : 'var(--sk-t2)'}
               onChange={handleStatusChange}
               // #8842 R4: no Done on an open question; the PB consumer closes it.
               options={statusOptionsFor([

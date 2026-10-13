@@ -56,11 +56,14 @@ const STATUS_COLOR: Record<string, string> = {
   final: 'var(--st-done)',
 }
 
-// ── Background tint (rgba) ──────────────────────────────────────────────────
+// ── Background tint ─────────────────────────────────────────────────────────
+// Chip rule (Wave 3 item 5, option B, for chips that have no glyph): a gray
+// fill with no hue; teal only for In Progress, orange stale, red overdue.
+const NEUTRAL_BG = 'color-mix(in srgb, var(--slate) 12%, transparent)'
 
 export const STATUS_BG_EXTENDED: Record<string, string> = {
   // Core task statuses
-  todo: 'rgba(148, 163, 184, 0.15)',
+  todo: NEUTRAL_BG,
   in_progress: 'color-mix(in srgb, var(--job-accent) 12%, transparent)',
   done: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
   blocked: 'color-mix(in srgb, var(--st-blocked) 14%, transparent)',
@@ -68,21 +71,21 @@ export const STATUS_BG_EXTENDED: Record<string, string> = {
   overdue: 'color-mix(in srgb, var(--job-overdue) 15%, transparent)',
 
   // Submission / revision statuses
-  pending: 'rgba(148, 163, 184, 0.15)',
+  pending: NEUTRAL_BG,
   submitted: 'color-mix(in srgb, var(--job-accent) 12%, transparent)',
   resubmitted: 'color-mix(in srgb, var(--job-accent) 12%, transparent)',
   accepted: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
-  rejected: 'rgba(100, 116, 139, 0.15)',
-  wont_fix: 'rgba(100, 116, 139, 0.15)',
-  draft: 'rgba(148, 163, 184, 0.15)',
+  rejected: NEUTRAL_BG,
+  wont_fix: NEUTRAL_BG,
+  draft: NEUTRAL_BG,
   review: 'color-mix(in srgb, var(--job-wants) 15%, transparent)',
   review_received: 'color-mix(in srgb, var(--job-wants) 15%, transparent)',
   revision_due: 'color-mix(in srgb, var(--job-wants) 15%, transparent)',
-  withdrawn: 'rgba(100, 116, 139, 0.15)',
+  withdrawn: NEUTRAL_BG,
   completed: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
 
   // Conference-specific
-  planning: 'rgba(148, 163, 184, 0.15)',
+  planning: NEUTRAL_BG,
   preparing: withAlpha(ACCENT_GOLD, 15),
   presented: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
 
@@ -91,13 +94,13 @@ export const STATUS_BG_EXTENDED: Record<string, string> = {
   'at-risk': 'color-mix(in srgb, var(--job-stale) 14%, transparent)',
 
   // Materials
-  not_started: 'rgba(148, 163, 184, 0.15)',
+  not_started: NEUTRAL_BG,
   drafting: withAlpha(ACCENT_GOLD, 15),
   final: 'color-mix(in srgb, var(--st-done) 14%, transparent)',
 }
 
 const FALLBACK_COLOR = 'var(--slate)'
-const FALLBACK_BG = 'rgba(148, 163, 184, 0.15)'
+const FALLBACK_BG = NEUTRAL_BG
 
 /**
  * Returns the foreground CSS var for a status string.
