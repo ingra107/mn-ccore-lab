@@ -771,13 +771,33 @@ export interface DigestPaper {
   relevance_score: number
   relevance_reason: string | null
   topics: string | null // JSON array
-  status: string
+  /** THIS viewer's reading state (schema-v136: per person, 'new' = no row). */
+  status: DigestStatus
+  /** When this viewer last saved or dismissed it (null while new). */
+  status_at?: string | null
   digest_date: string | null
   relevant_members?: string[] // slugs matched via expertise_tags
+  /** Notes on this paper, everyone's. */
+  note_count?: number
+  /** The newest note, shown on the card (null when there are none). */
+  latest_note?: DigestNotePreview | null
 }
 
-export function useDigest(params?: { date?: string; status?: string; topic?: string; limit?: number; with_relevance?: boolean }) {
+export type DigestStatus = 'new' | 'saved' | 'dismissed'
+
+export interface DigestNotePreview {
+  id: string
+  author_slug: string
+  content: string
+  created_at: string
+  task_id: string | null
+  /** The viewer can open the note's task (it reads through their scope). */
+  task_visible: boolean
+}
+
+export function useDigest(params?: { date?: string; status?: string; topic?: string; limit?: number; with_relevance?: boolean }, options?: { enabled?: boolean }) {
   return useQuery({
+    enabled: options?.enabled ?? true,
     queryKey: ['digest', params],
     queryFn: async () => {
       const qs = new URLSearchParams()
@@ -788,6 +808,31 @@ export function useDigest(params?: { date?: string; status?: string; topic?: str
       if (params?.with_relevance) qs.set('with_relevance', 'true')
       const data = await fetchJson<{ data?: DigestPaper[] }>(`/api/digest?${qs}`)
       return data.data || []
+    },
+    staleTime: STALE_TIME,
+  })
+}
+
+/** The page size the server caps GET /api/digest at. */
+export const DIGEST_PAGE = 300
+
+/**
+ * The caller's Saved list across every digest date, newest save first, ALL
+ * of it: pages of DIGEST_PAGE until a short page, so the count and the Copy
+ * reading list never stop at the server's cap. Same ['digest', ...] key
+ * family, so the status mutation's optimistic update and refetch reach it.
+ */
+export function useDigestSaved() {
+  return useQuery({
+    queryKey: ['digest', { status: 'saved', with_relevance: true, all: true }],
+    queryFn: async () => {
+      const all: DigestPaper[] = []
+      for (let offset = 0; ; offset += DIGEST_PAGE) {
+        const qs = new URLSearchParams({ status: 'saved', limit: String(DIGEST_PAGE), offset: String(offset), with_relevance: 'true' })
+        const page = (await fetchJson<{ data?: DigestPaper[] }>(`/api/digest?${qs}`)).data || []
+        all.push(...page)
+        if (page.length < DIGEST_PAGE) return all
+      }
     },
     staleTime: STALE_TIME,
   })
@@ -810,6 +855,10 @@ export interface DigestComment {
   author_slug: string
   content: string
   created_at: string
+  /** The task this note became (Make task), or null. */
+  task_id: string | null
+  /** 1 when the viewer can open that task. */
+  task_visible: number
 }
 
 export function useDigestComments(paperId: string | null) {
@@ -821,18 +870,6 @@ export function useDigestComments(paperId: string | null) {
       return data.data || []
     },
     enabled: !!paperId,
-    staleTime: STALE_TIME,
-  })
-}
-
-export function useDigestCommentCounts(date?: string) {
-  return useQuery({
-    queryKey: ['digest-comment-counts', date],
-    queryFn: async () => {
-      const qs = date ? `?date=${date}` : ''
-      const data = await fetchJson<{ data?: Record<string, number> }>(`/api/digest/comment-counts${qs}`)
-      return data.data || {}
-    },
     staleTime: STALE_TIME,
   })
 }

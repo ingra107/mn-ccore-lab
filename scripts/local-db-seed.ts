@@ -290,9 +290,9 @@ function run() {
   for (const rd of direct.research_digest ?? []) {
     const id = mintId('rd')
     d1Execute(
-      `INSERT INTO research_digest (id, title, authors, journal, status, digest_date) VALUES (` +
+      `INSERT INTO research_digest (id, title, authors, journal, digest_date) VALUES (` +
       `${sqlEscape(id)}, ${sqlEscape(stripPrefix(rd.title))}, ${sqlEscape(rd.authors)}, ` +
-      `${sqlEscape(rd.journal)}, ${sqlEscape(rd.status)}, ${sqlEscape(daysFromNow(0))})`
+      `${sqlEscape(rd.journal)}, ${sqlEscape(daysFromNow(0))})`
     )
   }
   d1Flush('research_digest')

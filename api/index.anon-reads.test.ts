@@ -95,7 +95,7 @@ beforeAll(() => {
   insertRow(db, 'research_digest', {
     id: 'digest-1', title: 'A digest paper', journal: 'Lancet', relevance_score: 0.9,
     relevance_reason: `${S} why it matters to Nick`, summary: `${S} summary`, topics: '["sepsis"]',
-    digest_date: '2026-10-01', status: 'new',
+    digest_date: '2026-10-01',
   })
   insertRow(db, 'expertise_tags', { id: 'e1', member_slug: 'nick-ingraham', tag: 'Sepsis', source: 'manual', confidence: 1 })
   env = {
@@ -144,7 +144,6 @@ const NOW_SIGNED_IN_ONLY = [
   '/api/citations',
   '/api/activity?limit=50',
   '/api/digest/dates',
-  '/api/digest/comment-counts',
   '/api/digest/digest-1/comments',
 ]
 

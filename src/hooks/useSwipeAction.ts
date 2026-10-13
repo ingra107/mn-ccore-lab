@@ -1,11 +1,17 @@
-import { useRef, useState } from 'react'
-import { useMotionValue, useTransform, type PanInfo } from 'framer-motion'
+import { useRef } from 'react'
+import { useDragControls, useMotionValue, useTransform, type PanInfo } from 'framer-motion'
 
 /**
  * DD-7 row-level swipe — extends the TaskDetailPanel T-49 primitive to
  * row-sized gestures. Swipe-left triggers onSwipeLeft (archive-style),
- * swipe-right triggers onSwipeRight (done-style). Only active below
- * 768px viewport; desktop returns passthrough props.
+ * swipe-right triggers onSwipeRight (done-style).
+ *
+ * WHO CAN DRAG is decided at pointerdown, per gesture: a touch or pen pointer
+ * on a viewport below 768px. framer-motion's own pointer listener is off
+ * (dragListener: false), so no other pointer can start a drag at all; a mouse
+ * on a desktop (text selection, a stray drag) is not a swipe at any width.
+ * The old gate set state in onTouchStart, which a mouse never fires, so the
+ * row stayed draggable on desktop.
  *
  * Dismiss thresholds:
  *   - distance: 40% of row width (tighter than 30% panel threshold
@@ -16,8 +22,8 @@ import { useMotionValue, useTransform, type PanInfo } from 'framer-motion'
  * action affordances (e.g. maroon "Archive" bg on left swipe, green
  * "Done" bg on right swipe) that fade in as the row translates.
  *
- * Edge guard: first-touch within 32px of viewport left blocks drag
- * activation so iOS Safari edge-swipe-back still works.
+ * Edge guard: a gesture starting within 32px of viewport left fires no
+ * action, so iOS Safari edge-swipe-back still works.
  */
 export interface UseSwipeActionOptions {
   onSwipeLeft?: () => void
@@ -26,6 +32,9 @@ export interface UseSwipeActionOptions {
   thresholdVelocity?: number
 }
 
+/** The breakpoint below which a touch or pen pointer may swipe. */
+export const SWIPE_MAX_WIDTH = 768
+
 export function useSwipeAction({
   onSwipeLeft,
   onSwipeRight,
@@ -33,7 +42,7 @@ export function useSwipeAction({
   thresholdVelocity = 500,
 }: UseSwipeActionOptions) {
   const x = useMotionValue(0)
-  const [enabled, setEnabled] = useState(true)
+  const controls = useDragControls()
   const edgeGuardRef = useRef<boolean>(false)
 
   // Background action indicators (e.g. "Archive" label fades in as user
@@ -41,16 +50,13 @@ export function useSwipeAction({
   const leftActionOpacity = useTransform(x, [0, 40, 120], [0, 0.35, 1])
   const rightActionOpacity = useTransform(x, [-120, -40, 0], [1, 0.35, 0])
 
-  const onTouchStart = (e: React.TouchEvent) => {
-    if (typeof window === 'undefined' || window.innerWidth >= 768) {
-      setEnabled(false)
-      return
-    }
-    setEnabled(true)
-    const t = e.touches[0]
-    // Capture edge-touch at the actual touch time. Consumed in onDragEnd
-    // to skip action callbacks (iOS Safari back-gesture coexistence).
-    edgeGuardRef.current = t.clientX < 32
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return
+    if (typeof window === 'undefined' || window.innerWidth >= SWIPE_MAX_WIDTH) return
+    // Captured at the gesture's start, consumed in onDragEnd to skip the
+    // row actions (iOS Safari back-gesture coexistence).
+    edgeGuardRef.current = e.clientX < 32
+    controls.start(e)
   }
 
   const onDragEnd = (_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -74,16 +80,16 @@ export function useSwipeAction({
 
   return {
     motionProps: {
-      // Drag is permitted whenever the row is on a mobile viewport. The
-      // iOS back-gesture is handled in onDragEnd (via edgeGuardRef set
-      // in onTouchStart); trying to block at this layer read the ref
-      // at render time, before the touch ever happened (dead check).
-      drag: enabled ? ('x' as const) : false,
+      // drag stays declared so the row can move, but only onPointerDown can
+      // start it (dragListener: false): the gate lives in one place.
+      drag: 'x' as const,
+      dragControls: controls,
+      dragListener: false,
       dragConstraints: { left: 0, right: 0 },
       dragElastic: 0.15,
       dragDirectionLock: true,
       style: { x, touchAction: 'pan-y' as const },
-      onTouchStart,
+      onPointerDown,
       onDragEnd,
     },
     leftActionOpacity,

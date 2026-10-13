@@ -82,7 +82,19 @@ describe('GET /api/health is about the database, not the caller', () => {
       expect(block, fn).toContain("method: 'POST'")
       expect(block, fn).toContain(path)
     }
-    const uses = lines.filter((l) => !l.includes(ORACLE))
+    // Plus the task-title oracle (api/lib/task-dedup-sql.ts): one yes/no per
+    // title, never the handle, on Make task from a digest note only.
+    const TITLE_ORACLE = "taskTitleTakenCheck(c.get('unscopedDb'))"
+    const titleOracle = lines.filter((l) => l.includes(TITLE_ORACLE))
+    expect(titleOracle).toHaveLength(1)
+    expect(titleOracle[0].split("get('unscopedDb')").length - 1).toBe(1)
+    {
+      const at = src.indexOf(titleOracle[0])
+      const block = src.slice(src.lastIndexOf('defineRoute(', at), at)
+      expect(block).toContain("method: 'POST'")
+      expect(block).toContain("path: '/api/digest/comments/:id/task',")
+    }
+    const uses = lines.filter((l) => !l.includes(ORACLE) && !l.includes(TITLE_ORACLE))
     expect(uses).toHaveLength(3)
     // The third: labWideEnv hands the unscoped handle to a PI only. The three Lab
     // pulse routes and the pi-dashboard call it (the pulse routes also answer a

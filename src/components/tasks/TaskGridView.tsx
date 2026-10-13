@@ -865,8 +865,8 @@ function TaskGridRow({
     onContextMenu?.(syntheticMouseEvent, task.id)
   })
 
-  // DD-7 row-level swipe (mobile <768px only; noop on desktop via the hook's
-  // internal gating). Right-swipe completes (or reopens if done); left-swipe
+  // DD-7 row-level swipe (a touch or pen pointer below 768px only; the hook
+  // decides at pointerdown, so a desktop mouse never drags the row). Right-swipe completes (or reopens if done); left-swipe
   // opens the same context menu long-press does. Both are recoverable: the
   // complete fires an undo toast; the context menu is explicit action.
   const swipe = useSwipeAction({
@@ -1003,7 +1003,7 @@ function TaskGridRow({
         if (e.key === 'Enter') { e.preventDefault(); onOpenDetail?.(task) }
       }}
       onContextMenu={(e) => { longPress.onContextMenu(e); onContextMenu?.(e, task.id) }}
-      onTouchStart={(e) => { longPress.onTouchStart(e); swipe.motionProps.onTouchStart(e) }}
+      onTouchStart={longPress.onTouchStart}
       onTouchMove={longPress.onTouchMove}
       onTouchEnd={longPress.onTouchEnd}
       onTouchCancel={longPress.onTouchCancel}

@@ -137,8 +137,8 @@ async function run() {
     if (wasSeeded('research_digest', rd.title)) { console.log(`  research_digest =${rd.title} (skip)`); continue }
     const id = `rd_${randomUUID().replace(/-/g, '').slice(0, 16)}`
     d1Execute(
-      `INSERT INTO research_digest (id, title, authors, journal, status, digest_date) VALUES (` +
-      `${sqlEscape(id)}, ${sqlEscape(rd.title)}, ${sqlEscape(rd.authors)}, ${sqlEscape(rd.journal)}, ${sqlEscape(rd.status)}, ${sqlEscape(daysFromNow(0))})`
+      `INSERT INTO research_digest (id, title, authors, journal, digest_date) VALUES (` +
+      `${sqlEscape(id)}, ${sqlEscape(rd.title)}, ${sqlEscape(rd.authors)}, ${sqlEscape(rd.journal)}, ${sqlEscape(daysFromNow(0))})`
     )
     pending.push({ table: 'research_digest', id, label: rd.title })
     console.log(`  research_digest +${rd.title.slice(0, 60)} (buffered)`)

@@ -68,9 +68,7 @@ SLUG_COLUMNS = [
     ("project_updates", "author"),
     ("projects", "pi"),
     ("reactions", "user_slug"),
-    ("research_digest", "saved_by"),
     ("research_narratives", "created_by"),
-    ("research_digest", "saved_by"),  # duplicate ok (SET is idempotent)
     ("tasks", "assignee"),
     ("tasks", "assigned_by"),
     ("tasks", "completed_by"),

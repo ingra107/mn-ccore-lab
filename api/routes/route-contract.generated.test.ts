@@ -189,6 +189,8 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // terms and milestones write through POST /api/projects/:slug/products.
     // 266 as of 2026-10-13 -- GET /api/tasks/:id/blocking (+1): the tasks a task
     // blocks, so the detail panel stops downloading every task for it.
+    // Research Digest notes (net 0): GET /api/digest/comment-counts retired
+    // (each paper carries note_count), POST /api/digest/comments/:id/task added.
     expect(ROUTE_REGISTRY).toHaveLength(266)
   })
 
@@ -203,6 +205,7 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
       'POST /api/deadline-dependencies/:id/delete', 'POST /api/decisions/:id/update',
       'POST /api/digest-email', 'POST /api/digest-email/send',
       'POST /api/mentee-milestones/:id/complete', 'POST /api/regulatory/:id/renew',
+      'GET /api/digest/comment-counts',
     ]
     const have = new Set(ROUTE_REGISTRY.map((r) => `${r.method} ${r.path}`))
     for (const key of gone) expect(have.has(key), `${key} is back`).toBe(false)

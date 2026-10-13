@@ -84,6 +84,20 @@ export const TASK_TITLE_DEDUP_SELECT =
   `SELECT id FROM tasks WHERE ${TASK_TITLE_KEY_SQL} = ${TASK_TITLE_KEY_BIND_SQL} ` +
   `AND project_id IS ? ${TASK_DEDUP_SCOPE_SQL}`;
 
+export type TaskTitleTakenCheck = (title: string, projectId: string | null) => Promise<boolean>;
+
+/**
+ * The oracle: true when an open task anywhere holds this title key, so the
+ * I18 dedup would adopt it. `raw` must be the UNSCOPED handle: adoption looks
+ * across every viewer, so a check through a viewer handle misses the tasks the
+ * caller cannot see. Hands back one yes/no, never a row or the handle (same
+ * shape as project-slug.ts::slugClaimCheck).
+ */
+export function taskTitleTakenCheck(raw: D1Database): TaskTitleTakenCheck {
+  return async (title, projectId) =>
+    !!(await raw.prepare(TASK_TITLE_DEDUP_SELECT).bind(title, projectId).first<{ id: string }>());
+}
+
 // ── Test-support: classify a `SELECT id FROM tasks` the D1 stubs must answer ──
 //
 // The vitest D1 stubs recognise the dedup SELECTs by matching their SQL text,
