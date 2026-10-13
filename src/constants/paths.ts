@@ -24,7 +24,6 @@ export const PATHS = {
   piAnalyticsTab: `${PORTAL_PREFIX}/overview?tab=pi-analytics`,
   menteeMilestonesTab: `${PORTAL_PREFIX}/overview?tab=mentee-milestones`,
   deadlineCascadeTab: `${PORTAL_PREFIX}/overview?tab=deadline-cascade`,
-  myItems: `${PORTAL_PREFIX}/my-items`,
 
   myTasks: `${PORTAL_PREFIX}/my-tasks`,
   tasks: `${PORTAL_PREFIX}/tasks`,

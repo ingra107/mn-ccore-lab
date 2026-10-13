@@ -2153,7 +2153,7 @@ test.describe('VISUAL — Today page loading-state resilience (backlog #1039)', 
 
 test.describe('VISUAL — Missing page screenshots', () => {
   const missingPages = [
-    P.deadlineCascade, P.myItems, P.pulse, P.network,
+    P.deadlineCascade, P.pulse, P.network,
     '/team/nick-ingraham/cv', '/team/nick-ingraham/trajectory',
   ]
 

@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
 import { formatRelativeTime, formatMediumDate, localDateKey } from '../lib/dateUtils'
-import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
 
@@ -358,23 +357,6 @@ export default function NotificationBell({ align = 'right', triggerColor = 'var(
                 ))
               )}
             </div>
-
-            {/* View all link */}
-            <Link
-              to={PATHS.myItems}
-              onClick={() => setOpen(false)}
-              style={{
-                display: 'block',
-                padding: '10px 16px',
-                textAlign: 'center',
-                fontSize: 'var(--label-size)',
-                color: 'var(--sk-t2)',
-                textDecoration: 'none',
-                borderTop: `1px solid ${withAlpha('var(--sk-t1)', 8)}`,
-              }}
-            >
-              View all items
-            </Link>
           </motion.div>
         )}
       </AnimatePresence>

@@ -39,10 +39,6 @@
   "src/pages/MemberPage.tsx": {
     "initials": 1
   },
-  "src/pages/MyItems.tsx": {
-    "uppercase": 1,
-    "initials": 2
-  },
   "src/pages/Pulse.tsx": {
     "uppercase": 5
   },

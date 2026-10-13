@@ -1074,12 +1074,6 @@
     "sample": "gap: 4px → var(--sp-xs)"
   },
   {
-    "file": "src/pages/MyItems.tsx",
-    "line": 718,
-    "kind": "spacing-px-literal",
-    "sample": "marginTop: 4px → var(--sp-xs)"
-  },
-  {
     "file": "src/pages/MyTasks/components/BulkBar.tsx",
     "line": 67,
     "kind": "spacing-px-literal",

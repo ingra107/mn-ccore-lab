@@ -9,7 +9,6 @@ const ROUTES = [
   { path: P.contact, title: 'Contact', section: 'public' },
   { path: P.dashboard, title: 'Dashboard', section: 'portal' },
   { path: P.library, title: 'Library', section: 'portal' },
-  { path: P.myItems, title: 'My Items', section: 'portal' },
   { path: P.myTasks, title: 'Tasks', section: 'portal' },
   { path: P.calendar, title: 'Calendar', section: 'portal' },
   { path: P.deadlines, title: 'Deadlines', section: 'portal' },

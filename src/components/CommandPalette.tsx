@@ -181,7 +181,6 @@ export default function CommandPalette() {
       { path: PATHS.menteeMilestonesTab, label: 'Mentee Milestones', icon: GitBranch },
       { path: PATHS.insights, label: 'Insights', icon: BarChart3 },
       { path: PATHS.profile, label: 'My Profile', icon: User },
-      { path: PATHS.myItems, label: 'My Items', icon: SquareCheck },
       { path: PATHS.settings, label: 'Settings', icon: Settings },
       { path: PATHS.team, label: 'Team', icon: Users },
       { path: PATHS.search, label: 'Search', icon: Search, shortcut: 'G S' },

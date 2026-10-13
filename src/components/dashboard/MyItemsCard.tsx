@@ -146,7 +146,7 @@ function MyItemsCard() {
 
         {/* View all link */}
         <Link
-          to={PATHS.myItems}
+          to={PATHS.myTasks}
           className="inline-flex items-center gap-1 mt-auto pt-2 portal-footer-link"
           style={{
             fontSize: '10px',
@@ -154,7 +154,7 @@ function MyItemsCard() {
             textDecoration: 'none',
           }}
         >
-          View all items <ArrowRight {...ICON_PROPS} size={10} />
+          View all tasks <ArrowRight {...ICON_PROPS} size={10} />
         </Link>
       </div>
     </BentoCard>

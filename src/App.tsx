@@ -140,7 +140,6 @@ const LibraryPage = lazyRoute(() => import('./pages/portal/hosts/LibraryPage'))
 const LaunchesPage = lazyRoute(() => import('./pages/portal/LaunchesPage'))
 
 const TrajectoryPage = lazyRoute(() => import('./pages/TrajectoryPage'))
-const MyItems = lazyRoute(() => import('./pages/MyItems'))
 
 // New portal pages (Phase H1 — placeholders, built out in later phases)
 const UnifiedMyTasks = lazyRoute(() => import('./pages/MyTasks'))
@@ -280,7 +279,7 @@ export default function App() {
                     notification links are minted as /tasks?open=<id>; a plain
                     <Navigate> drops ?open so the click landed on "just another
                     page" instead of opening the task (Nick 2026-06-11). */}
-                <Route path="/my-items" element={<NavigateKeepSearch to="/portal/my-items" />} />
+                <Route path="/my-items" element={<NavigateKeepSearch to={PATHS.dashboard} />} />
                 <Route path="/my-tasks" element={<NavigateKeepSearch to="/portal/my-tasks" />} />
                 <Route path="/tasks" element={<NavigateKeepSearch to="/portal/my-tasks" />} />
                 <Route path="/calendar" element={<NavigateKeepSearch to="/portal/calendar" />} />
@@ -335,7 +334,7 @@ export default function App() {
                       below, kept indefinitely as Lab Overview. */}
                   <Route path="/portal/dashboard" element={<ErrorBoundary><PageErrorBoundary pageName="Today"><TodayPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/overview" element={<ErrorBoundary><LabOverviewHost /></ErrorBoundary>} />
-                  <Route path="/portal/my-items" element={<ErrorBoundary><MyItems /></ErrorBoundary>} />
+                  <Route path="/portal/my-items" element={<NavigateKeepSearch to={PATHS.dashboard} />} />
                   {/* MyTasks Round 2 — unified 3-view page (List / Lanes / Columns,
                       List default on bare arrival; ?view= deep-links win). */}
                   <Route path="/portal/my-tasks" element={<ErrorBoundary><PageErrorBoundary pageName="MyTasks"><UnifiedMyTasks /></PageErrorBoundary></ErrorBoundary>} />

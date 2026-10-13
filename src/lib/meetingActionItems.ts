@@ -13,8 +13,8 @@ import type { TaskRow } from './api'
 import { isTaskDone } from './taskGrouping'
 
 /**
- * Collapse the Cartesian duplicates the join can return (mirrors
- * MyItems.tsx). Key: normalized title + assignee + due date; the newest
+ * Collapse the Cartesian duplicates the join can return (the same
+ * rule the retired My Items page used). Key: normalized title + assignee + due date; the newest
  * updated_at wins.
  */
 export function dedupeActionItems(items: readonly TaskRow[] | null | undefined): TaskRow[] {

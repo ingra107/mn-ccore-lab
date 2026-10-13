@@ -18,7 +18,6 @@ import {
   Award,
   BookOpen,
   Library,
-  Target,
   Settings,
   Bug,
   LayoutGrid,
@@ -353,7 +352,6 @@ const OVERFLOW_SECTIONS: { title: string; piOnly?: boolean; routes: OverflowRout
     title: 'You',
     routes: [
       { to: PATHS.profile, icon: User, label: PORTAL_PAGE_LABELS[PATHS.profile] },
-      { to: PATHS.myItems, icon: Target, label: 'My Items' },
       { to: PATHS.settings, icon: Settings, label: PORTAL_PAGE_LABELS[PATHS.settings] },
       { to: PATHS.activity, icon: Activity, label: PORTAL_PAGE_LABELS[PATHS.activity] },
       { to: PATHS.analytics, icon: BarChart3, label: PORTAL_PAGE_LABELS[PATHS.analytics] },

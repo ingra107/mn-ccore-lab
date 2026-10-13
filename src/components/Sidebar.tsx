@@ -27,7 +27,6 @@ import {
   Library,
   Star,
   LogOut,
-  Target,
   Zap,
   Video,
 } from 'lucide-react'
@@ -126,7 +125,6 @@ interface MenuLink { to: string; label: string; icon: React.ComponentType<{ size
  *  avatar link opened and which has no other sidebar entry). */
 const AVATAR_MENU: MenuLink[] = [
   { to: PATHS.profile, label: 'My Profile', icon: User },
-  { to: PATHS.myItems, label: 'My Items', icon: Target },
   { to: PATHS.settings, label: 'Settings', icon: Settings },
   { to: PATHS.activity, label: 'Activity', icon: Activity },
   { to: PATHS.analytics, label: 'Analytics', icon: BarChart3 },
@@ -244,11 +242,11 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           bg: 'var(--job-wants)',
           // --job-wants-fg flips with --job-wants (dark ink on the bright dark-mode gold, white on the light-mode gold).
           color: 'var(--job-wants-fg)',
-          title: `${myUnseen} task${myUnseen === 1 ? '' : 's'} you haven't opened yet — click to triage in My Items`,
+          title: `${myUnseen} task${myUnseen === 1 ? '' : 's'} you haven't opened yet — click to triage in My Tasks`,
         },
         badgeAction: {
-          navigateTo: PATHS.myItems,
-          ariaLabel: `${myUnseen} new task${myUnseen === 1 ? '' : 's'} — open My Items`,
+          navigateTo: `${PATHS.myTasks}?filter=new`,
+          ariaLabel: `${myUnseen} new task${myUnseen === 1 ? '' : 's'} — open My Tasks`,
         },
       }
     if (item.to === PATHS.meetings) {
