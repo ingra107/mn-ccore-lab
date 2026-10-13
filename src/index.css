@@ -3365,3 +3365,9 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
   /* Segments sit side by side, so their hit pad cannot grow sideways: a short word (Day, Note) gets width instead. */
   .tk-seg button { min-width: 44px; justify-content: center; }
 }
+
+/* Ideas board: the "..." move menu is the only way to change status on touch and
+   keyboard (drag is mouse only), so give it a 28px target and keep the glyph centered. */
+.sr.idea-move .sr-trig{min-width:28px;min-height:28px;margin-left:0;padding:0;justify-content:center}
+.sr.idea-move .sr-car{display:none}
+@media (hover:none){.sr.idea-move .sr-trig{min-width:36px;min-height:36px}}

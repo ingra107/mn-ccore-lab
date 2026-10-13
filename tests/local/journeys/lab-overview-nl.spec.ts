@@ -44,3 +44,11 @@ for (const theme of ['light', 'dark'] as const) {
     })
   }
 }
+
+test('project health status word is keyboard-focusable and shows its score tooltip', async ({ page }) => {
+  await visit(page, 'light', 1440)
+  const word = page.getByTestId('card-project-health').locator('.bento-row-f[tabindex="0"]').first()
+  if ((await word.count()) === 0) return // no projects in the seed
+  await word.focus()
+  await expect(page.getByRole('tooltip')).toContainText('Score:')
+})

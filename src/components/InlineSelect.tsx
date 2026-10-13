@@ -21,9 +21,11 @@ interface InlineSelectProps {
    *  the row (a pill, a tag, a muted name) inside a bare `.sr-trig` button, with
    *  a caret that shows on row hover. The menu is unchanged. */
   display?: React.ReactNode
+  /** Accessible name for the trigger when `display` is an icon or glyph with no text. */
+  ariaLabel?: string
 }
 
-export default function InlineSelect({ value, options, onChange, size = 'sm', alwaysShowChevron = false, id, display }: InlineSelectProps) {
+export default function InlineSelect({ value, options, onChange, size = 'sm', alwaysShowChevron = false, id, display, ariaLabel }: InlineSelectProps) {
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
   const [focusedIdx, setFocusedIdx] = useState(-1)
@@ -102,6 +104,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
           id={id}
           type="button"
           className="sr-trig"
+          aria-label={ariaLabel}
           aria-expanded={open}
           aria-haspopup="listbox"
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(!open) }}

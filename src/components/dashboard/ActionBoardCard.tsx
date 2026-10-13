@@ -1,7 +1,7 @@
 import { memo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Video } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { FaceDisc } from '../today/skin'
 import { useTasks } from '../../hooks/useApiData'
@@ -70,6 +70,18 @@ function ActionBoardCard() {
                     {/* C2 short_title, C13 TaskTitle ([Carried forward] chip) */}
                     <TaskTitle title={taskShortLabel(item)} fallback={item.description} />
                   </span>
+                  {item.meeting_id && item.meeting_title && (
+                    <Link
+                      to={PATHS.meeting(item.meeting_id)}
+                      title={`Meeting: ${item.meeting_title}`}
+                      aria-label={`Open meeting: ${item.meeting_title}`}
+                      className="flex-shrink-0 inline-flex items-center"
+                      style={{ color: 'var(--sk-t3)' }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Video {...ICON_PROPS} size={13} />
+                    </Link>
+                  )}
                   {item.due_date ? (
                     <DueLabel due={item.due_date} style={{ fontSize: 11 }} />
                   ) : item.priority && item.priority !== 'medium' ? (

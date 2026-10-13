@@ -52,13 +52,10 @@
   },
   "src/pages/portal/AnalyticsPage.tsx": {
     "uppercase": 1,
-    "box": 16
-  },
-  "src/pages/portal/IdeasPage.tsx": {
-    "box": 1
+    "box": 8
   },
   "src/pages/portal/InsightsPage.tsx": {
     "uppercase": 2,
-    "box": 7
+    "box": 2
   }
 }

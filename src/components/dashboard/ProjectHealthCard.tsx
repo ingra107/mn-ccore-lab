@@ -28,9 +28,11 @@ const FACTOR_LABELS: Record<keyof HealthFactors, { label: string; max: number }>
   milestones: { label: 'Milestone progress', max: 20 },
 }
 
-function FactorTooltip({ factors, score }: { factors: HealthFactors; score: number }) {
+function FactorTooltip({ factors, score, id }: { factors: HealthFactors; score: number; id: string }) {
   return (
     <div
+      id={id}
+      role="tooltip"
       style={{
         position: 'absolute',
         bottom: 'calc(100% + 8px)',
@@ -217,6 +219,7 @@ export default memo(ProjectHealthCard)
 
 function ProjectHealthRow({ project }: { project: ProjectHealth }) {
   const [showTooltip, setShowTooltip] = useState(false)
+  const tipId = `ph-tip-${project.slug}`
   const color = STATUS_COLORS[project.status] // text (AA)
   const fill = STATUS_FILLS[project.status] // swatch
   const isBad = project.status === 'Critical' || project.status === 'At Risk'
@@ -286,14 +289,21 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
         style={{ flexShrink: 0, position: 'relative', marginLeft: 'auto', lineHeight: 1.3 }}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
+        onFocus={() => setShowTooltip(true)}
+        onBlur={() => setShowTooltip(false)}
+        onKeyDown={(e) => { if (e.key === 'Escape') setShowTooltip(false) }}
       >
+        {/* Focusable so the score tooltip is reachable without a mouse. */}
         <span
           className="bento-row-f"
+          tabIndex={0}
+          aria-describedby={showTooltip ? tipId : undefined}
+          aria-label={`${project.status}, score ${project.score} of 100`}
           style={{ color: isBad ? color : undefined, fontWeight: isBad ? 600 : 400 }}
         >
           {project.status === 'Needs Attention' ? 'Attention' : project.status === 'At Risk' ? 'At risk' : project.status}
         </span>
-        {showTooltip && <FactorTooltip factors={project.factors} score={project.score} />}
+        {showTooltip && <FactorTooltip id={tipId} factors={project.factors} score={project.score} />}
       </div>
     </Link>
   )

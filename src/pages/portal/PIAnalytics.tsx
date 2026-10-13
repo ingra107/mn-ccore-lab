@@ -414,115 +414,115 @@ export default function PIAnalytics() {
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Commitment Scorecard */}
         <ChartCard title="Commitment scorecard">
-            <div className="flex items-center gap-8 flex-wrap">
-              <div className="relative flex-shrink-0">
-                <CompletionRing rate={commitRate} size={120} />
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span
-                    className="text-2xl font-bold"
-                    style={{ color: 'var(--ink)' }}
-                  >
-                    {commitRate}%
-                  </span>
-                  <span
-                    className="text-[10px]"
-                    style={{ color: 'var(--slate)' }}
-                  >
-                    kept
-                  </span>
-                </div>
-              </div>
-              <div className="flex-1 min-w-[200px]">
-                <p
-                  className="text-sm mb-3"
-                  style={{ color: 'var(--ink)', lineHeight: 1.5 }}
+          <div className="flex items-center gap-8 flex-wrap">
+            <div className="relative flex-shrink-0">
+              <CompletionRing rate={commitRate} size={120} />
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span
+                  className="text-2xl font-bold"
+                  style={{ color: 'var(--ink)' }}
                 >
-                  You kept{' '}
-                  <strong style={{ color: 'var(--sk-t1)' }}>{data?.commitments.completed || 0}</strong>{' '}
-                  of <strong>{data?.commitments.total || 0}</strong> promises to your team.
-                </p>
-                <StatRow
-                  stats={[
-                    { label: 'Completed', value: data?.commitments.completed || 0 },
-                    { label: 'Total', value: data?.commitments.total || 0 },
-                    { label: 'Overdue', value: data?.commitments.overdue || 0, rule: 'o' },
-                  ]}
-                />
+                  {commitRate}%
+                </span>
+                <span
+                  className="text-[10px]"
+                  style={{ color: 'var(--slate)' }}
+                >
+                  kept
+                </span>
               </div>
             </div>
+            <div className="flex-1 min-w-[200px]">
+              <p
+                className="text-sm mb-3"
+                style={{ color: 'var(--ink)', lineHeight: 1.5 }}
+              >
+                You kept{' '}
+                <strong style={{ color: 'var(--sk-t1)' }}>{data?.commitments.completed || 0}</strong>{' '}
+                of <strong>{data?.commitments.total || 0}</strong> promises to your team.
+              </p>
+              <StatRow
+                stats={[
+                  { label: 'Completed', value: data?.commitments.completed || 0 },
+                  { label: 'Total', value: data?.commitments.total || 0 },
+                  { label: 'Overdue', value: data?.commitments.overdue || 0, rule: 'o' },
+                ]}
+              />
+            </div>
+          </div>
         </ChartCard>
 
         {/* Response Time Metrics */}
         <ChartCard title="Days to done, team tasks" count="Task creation to completion">
-            <div className="flex items-center gap-6 mb-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className="text-3xl font-bold"
-                    style={{ color: 'var(--ink)' }}
-                  >
-                    {data?.responseMetrics.median_days || 0}
-                  </span>
-                  <span className="text-sm" style={{ color: 'var(--slate)' }}>
-                    days median
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 mt-1">
-                  {data?.responseMetrics.trend === 'improving' ? (
-                    <>
-                      <TrendingDown {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-                      <span className="text-xs" style={{ color: 'var(--sk-t2)' }}>
-                        Improving
-                      </span>
-                    </>
-                  ) : data?.responseMetrics.trend === 'slowing' ? (
-                    <>
-                      <TrendingUp {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
-                      <span className="text-xs" style={{ color: 'var(--sk-t2)' }}>
-                        Slowing
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Minus {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
-                      <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                        Stable
-                      </span>
-                    </>
-                  )}
+          <div className="flex items-center gap-6 mb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-3xl font-bold"
+                  style={{ color: 'var(--ink)' }}
+                >
+                  {data?.responseMetrics.median_days || 0}
+                </span>
+                <span className="text-sm" style={{ color: 'var(--slate)' }}>
+                  days median
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-1">
+                {data?.responseMetrics.trend === 'improving' ? (
+                  <>
+                    <TrendingDown {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
+                    <span className="text-xs" style={{ color: 'var(--sk-t2)' }}>
+                      Improving
+                    </span>
+                  </>
+                ) : data?.responseMetrics.trend === 'slowing' ? (
+                  <>
+                    <TrendingUp {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)' }} />
+                    <span className="text-xs" style={{ color: 'var(--sk-t2)' }}>
+                      Slowing
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Minus {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+                    <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                      Stable
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="flex-1 grid grid-cols-2 gap-3">
+              <div className="rounded-lg p-3" style={{ backgroundColor: 'color-mix(in srgb, var(--sk-t1) 4%, transparent)' }}>
+                <span className="text-[11px]" style={{ color: 'var(--sk-t3)' }}>
+                  Last 90 days
+                </span>
+                <div
+                  className="text-lg font-semibold"
+                  style={{ color: 'var(--sk-t1)' }}
+                >
+                  {data?.responseMetrics.median_days_recent || 0}d
                 </div>
               </div>
-              <div className="flex-1 grid grid-cols-2 gap-3">
-                <div className="rounded-lg p-3" style={{ backgroundColor: 'color-mix(in srgb, var(--sk-t1) 4%, transparent)' }}>
-                  <span className="text-[11px]" style={{ color: 'var(--sk-t3)' }}>
-                    Last 90 days
-                  </span>
-                  <div
-                    className="text-lg font-semibold"
-                    style={{ color: 'var(--sk-t1)' }}
-                  >
-                    {data?.responseMetrics.median_days_recent || 0}d
-                  </div>
-                </div>
-                <div className="rounded-lg p-3" style={{ backgroundColor: 'rgba(100, 116, 139, 0.04)' }}>
-                  <span className="text-[11px]" style={{ color: 'var(--sk-t3)' }}>
-                    Prior 90 days
-                  </span>
-                  <div
-                    className="text-lg font-semibold"
-                    style={{ color: 'var(--slate)' }}
-                  >
-                    {data?.responseMetrics.median_days_prior || 0}d
-                  </div>
+              <div className="rounded-lg p-3" style={{ backgroundColor: 'rgba(100, 116, 139, 0.04)' }}>
+                <span className="text-[11px]" style={{ color: 'var(--sk-t3)' }}>
+                  Prior 90 days
+                </span>
+                <div
+                  className="text-lg font-semibold"
+                  style={{ color: 'var(--slate)' }}
+                >
+                  {data?.responseMetrics.median_days_prior || 0}d
                 </div>
               </div>
             </div>
-            <p
-              className="text-xs"
-              style={{ color: 'var(--slate)', opacity: 0.75 }}
-            >
-              Based on {data?.responseMetrics.total_tasks || 0} completed team tasks in the last year
-            </p>
+          </div>
+          <p
+            className="text-xs"
+            style={{ color: 'var(--slate)', opacity: 0.75 }}
+          >
+            Based on {data?.responseMetrics.total_tasks || 0} completed team tasks in the last year
+          </p>
         </ChartCard>
       </div>
 
@@ -530,150 +530,150 @@ export default function PIAnalytics() {
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Team Engagement Score */}
         <ChartCard title="Team engagement" count="Last 30 days">
-            {data && data.teamEngagement.length > 0 ? (
-              <div className="flex flex-col gap-2.5">
-                {data.teamEngagement.map((member) => {
-                  const person = getPersonInfo(member.slug)
-                  const barWidth = (member.actions / maxEngagement) * 100
-                  return (
-                    <Link
-                      key={member.slug}
-                      to={`/team/${member.slug}/trajectory`}
-                      title={`Open ${person.name}'s trajectory · ${member.score} score`}
-                      className="flex items-center gap-3 rounded-md px-1 py-1 -mx-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
-                      style={{ textDecoration: 'none' }}
+          {data && data.teamEngagement.length > 0 ? (
+            <div className="flex flex-col gap-2.5">
+              {data.teamEngagement.map((member) => {
+                const person = getPersonInfo(member.slug)
+                const barWidth = (member.actions / maxEngagement) * 100
+                return (
+                  <Link
+                    key={member.slug}
+                    to={`/team/${member.slug}/trajectory`}
+                    title={`Open ${person.name}'s trajectory · ${member.score} score`}
+                    className="flex items-center gap-3 rounded-md px-1 py-1 -mx-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <div style={{ width: 24, height: 24, flexShrink: 0 }}>
+                      <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={24} />
+                    </div>
+                    <span
+                      className="text-xs w-28 truncate"
+                      style={{ color: 'var(--ink)' }}
                     >
-                      <div style={{ width: 24, height: 24, flexShrink: 0 }}>
-                        <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={24} />
-                      </div>
-                      <span
-                        className="text-xs w-28 truncate"
-                        style={{ color: 'var(--ink)' }}
-                      >
-                        {person.name}
-                      </span>
-                      {/* Teal data ramp: brighter as the count rises (tealRamp.ts).
-                          The count sits beside the bar. */}
+                      {person.name}
+                    </span>
+                    {/* Teal data ramp: brighter as the count rises (tealRamp.ts).
+                        The count sits beside the bar. */}
+                    <div
+                      className="flex-1 h-5 rounded overflow-hidden"
+                      style={{ backgroundColor: BAR_TRACK }}
+                    >
                       <div
-                        className="flex-1 h-5 rounded overflow-hidden"
-                        style={{ backgroundColor: BAR_TRACK }}
-                      >
-                        <div
-                          className="h-full rounded"
-                          style={{
-                            width: `${Math.max(barWidth, 4)}%`,
-                            transition: 'width 0.6s ease',
-                            ...rampBar(barWidth / 100),
-                          }}
-                        />
-                      </div>
-                      <span
-                        className="text-[11px] font-semibold w-6 text-right"
-                        style={{ color: 'var(--sk-t2)', fontVariantNumeric: 'tabular-nums' }}
-                      >
-                        {member.actions}
-                      </span>
-                      <span
-                        className="text-[10px] w-8 text-right"
-                        style={{ color: 'var(--slate)' }}
-                        title={`Score: ${member.score}`}
-                      >
-                        {member.score}
-                      </span>
-                    </Link>
-                  )
-                })}
-                <div className="flex items-center gap-2 mt-1 pt-2" style={{ borderTop: '1px dashed var(--border-subtle)' }}>
-                  <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                    Score = comments x3 + updates x2 + completions x1
-                  </span>
-                </div>
+                        className="h-full rounded"
+                        style={{
+                          width: `${Math.max(barWidth, 4)}%`,
+                          transition: 'width 0.6s ease',
+                          ...rampBar(barWidth / 100),
+                        }}
+                      />
+                    </div>
+                    <span
+                      className="text-[11px] font-semibold w-6 text-right"
+                      style={{ color: 'var(--sk-t2)', fontVariantNumeric: 'tabular-nums' }}
+                    >
+                      {member.actions}
+                    </span>
+                    <span
+                      className="text-[10px] w-8 text-right"
+                      style={{ color: 'var(--slate)' }}
+                      title={`Score: ${member.score}`}
+                    >
+                      {member.score}
+                    </span>
+                  </Link>
+                )
+              })}
+              <div className="flex items-center gap-2 mt-1 pt-2" style={{ borderTop: '1px dashed var(--border-subtle)' }}>
+                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                  Score = comments x3 + updates x2 + completions x1
+                </span>
               </div>
-            ) : (
-              <p
-                className="text-center py-6 text-sm"
-                style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
-              >
-                No activity data for the last 30 days
-              </p>
-            )}
+            </div>
+          ) : (
+            <p
+              className="text-center py-6 text-sm"
+              style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
+            >
+              No activity data for the last 30 days
+            </p>
+          )}
         </ChartCard>
 
         {/* Mentee Publication Velocity */}
         <ChartCard title="Trainee publication velocity">
-            {data && data.menteeVelocity.length > 0 ? (
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="text-left text-[11px] font-medium pb-2" style={{ color: 'var(--sk-t3)' }}>
-                      Trainee
-                    </th>
-                    <th className="text-right text-[11px] font-medium pb-2" style={{ color: 'var(--sk-t3)' }}>
-                      Papers
-                    </th>
-                    <th className="text-right text-[11px] font-medium pb-2" style={{ color: 'var(--sk-t3)' }}>
-                      Rate
-                    </th>
-                    <th className="text-right text-[11px] font-medium pb-2" style={{ color: 'var(--sk-t3)' }}>
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.menteeVelocity.map((mentee) => {
-                    const person = getPersonInfo(mentee.slug)
-                    return (
-                      <tr key={mentee.slug} className="border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-                        <td className="py-2.5">
-                          <div className="flex items-center gap-2">
-                            <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-                              <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} variant="brand" />
-                            </div>
-                            <span className="text-sm" style={{ color: 'var(--ink)' }}>
-                              {mentee.name}
-                            </span>
+          {data && data.menteeVelocity.length > 0 ? (
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="text-left text-[11px] font-medium pb-2" style={{ color: 'var(--sk-t3)' }}>
+                    Trainee
+                  </th>
+                  <th className="text-right text-[11px] font-medium pb-2" style={{ color: 'var(--sk-t3)' }}>
+                    Papers
+                  </th>
+                  <th className="text-right text-[11px] font-medium pb-2" style={{ color: 'var(--sk-t3)' }}>
+                    Rate
+                  </th>
+                  <th className="text-right text-[11px] font-medium pb-2" style={{ color: 'var(--sk-t3)' }}>
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.menteeVelocity.map((mentee) => {
+                  const person = getPersonInfo(mentee.slug)
+                  return (
+                    <tr key={mentee.slug} className="border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+                      <td className="py-2.5">
+                        <div className="flex items-center gap-2">
+                          <div style={{ width: 20, height: 20, flexShrink: 0 }}>
+                            <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} variant="brand" />
                           </div>
-                        </td>
-                        <td className="text-right text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                          {mentee.pub_count}
-                        </td>
-                        <td className="text-right text-sm" style={{ color: 'var(--sk-t1)' }}>
-                          {mentee.rate > 0 ? `${mentee.rate}/yr` : '--'}
-                        </td>
-                        <td className="text-right">
-                          {mentee.pub_count > 0 ? (
-                            <span
-                              className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded"
-                              style={{
-                                color: 'var(--sk-t2)',
-                                backgroundColor: 'var(--sk-line)',
-                              }}
-                            >
-                              <TrendingUp {...ICON_PROPS} size={10} />
-                              Publishing
-                            </span>
-                          ) : (
-                            <span
-                              className="text-[10px] px-1.5 py-0.5 rounded"
-                              style={{
-                                color: 'var(--slate)',
-                                backgroundColor: 'var(--border-subtle)',
-                              }}
-                            >
-                              Pre-pub
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            ) : (
-              <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                No trainees/fellows in the system
-              </p>
-            )}
+                          <span className="text-sm" style={{ color: 'var(--ink)' }}>
+                            {mentee.name}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="text-right text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+                        {mentee.pub_count}
+                      </td>
+                      <td className="text-right text-sm" style={{ color: 'var(--sk-t1)' }}>
+                        {mentee.rate > 0 ? `${mentee.rate}/yr` : '--'}
+                      </td>
+                      <td className="text-right">
+                        {mentee.pub_count > 0 ? (
+                          <span
+                            className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded"
+                            style={{
+                              color: 'var(--sk-t2)',
+                              backgroundColor: 'var(--sk-line)',
+                            }}
+                          >
+                            <TrendingUp {...ICON_PROPS} size={10} />
+                            Publishing
+                          </span>
+                        ) : (
+                          <span
+                            className="text-[10px] px-1.5 py-0.5 rounded"
+                            style={{
+                              color: 'var(--slate)',
+                              backgroundColor: 'var(--border-subtle)',
+                            }}
+                          >
+                            Pre-pub
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+              No trainees/fellows in the system
+            </p>
+          )}
         </ChartCard>
       </div>
 
@@ -681,101 +681,101 @@ export default function PIAnalytics() {
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Publications per Year */}
         <ChartCard title="Publications per year">
-            {data && data.pubsByQuarter.length > 0 ? (
-              <PubsBarChart
-                data={data.pubsByQuarter.map(q => ({
-                  label: `'${String(q.year).slice(2)}`,
-                  value: q.count,
-                }))}
-              />
-            ) : (
-              <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                No publication data
-              </p>
-            )}
+          {data && data.pubsByQuarter.length > 0 ? (
+            <PubsBarChart
+              data={data.pubsByQuarter.map(q => ({
+                label: `'${String(q.year).slice(2)}`,
+                value: q.count,
+              }))}
+            />
+          ) : (
+            <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+              No publication data
+            </p>
+          )}
         </ChartCard>
 
         {/* Grant Pipeline + Projects by Stage */}
         <ChartCard title="Grant pipeline & projects">
-            {/* Grants: pending (proposed) vs active (awarded) — P6-B8 */}
-            <div className="mb-5">
-              <h4 style={FIELD_LABEL_STYLE}>Grants: pending vs active</h4>
-              <StatRow
-                stats={[
-                  { label: 'Pending', value: data?.grantsFunnel.submitted || 0 },
-                  { label: 'Active', value: data?.grantsFunnel.active || 0 },
-                ]}
+          {/* Grants: pending (proposed) vs active (awarded) — P6-B8 */}
+          <div className="mb-5">
+            <h4 style={FIELD_LABEL_STYLE}>Grants: pending vs active</h4>
+            <StatRow
+              stats={[
+                { label: 'Pending', value: data?.grantsFunnel.submitted || 0 },
+                { label: 'Active', value: data?.grantsFunnel.active || 0 },
+              ]}
+            />
+          </div>
+
+          {/* Products by kind and stage */}
+          {data && (data.productsByStage ?? []).length > 0 && (
+            <div>
+              <h4 style={FIELD_LABEL_STYLE}>Products of active projects, by stage</h4>
+              <StackedBar
+                segments={data.productsByStage.map(s => ({
+                  label: stageCountLabel(s),
+                  value: s.count,
+                  color: (s.kind === 'manuscript' && stageColors[s.stage]) || 'var(--slate)',
+                }))}
               />
             </div>
-
-            {/* Products by kind and stage */}
-            {data && (data.productsByStage ?? []).length > 0 && (
-              <div>
-                <h4 style={FIELD_LABEL_STYLE}>Products of active projects, by stage</h4>
-                <StackedBar
-                  segments={data.productsByStage.map(s => ({
-                    label: stageCountLabel(s),
-                    value: s.count,
-                    color: (s.kind === 'manuscript' && stageColors[s.stage]) || 'var(--slate)',
-                  }))}
-                />
-              </div>
-            )}
+          )}
         </ChartCard>
       </div>
 
       {/* Leadership Insights */}
       <ChartCard title="Leadership insights" className="mt-6">
-          {insights.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              {insights.map((insight, i) => {
-                const iconMap = {
-                  good: CheckCircle2,
-                  warning: AlertTriangle,
-                  info: Lightbulb,
-                }
-                const colorMap = {
-                  good: 'var(--sk-t3)',
-                  warning: 'var(--job-stale)',
-                  info: 'var(--sk-t3)',
-                }
-                const bgMap = {
-                  good: 'var(--sk-line)',
-                  warning: 'color-mix(in srgb, var(--job-stale) 8%, transparent)',
-                  info: 'var(--sk-line)',
-                }
-                const InsightIcon = iconMap[insight.type]
-                return (
-                  <div
-                    key={i}
-                    className="flex items-start gap-3 p-3 rounded-lg"
-                    style={{ backgroundColor: bgMap[insight.type] }}
+        {insights.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {insights.map((insight, i) => {
+              const iconMap = {
+                good: CheckCircle2,
+                warning: AlertTriangle,
+                info: Lightbulb,
+              }
+              const colorMap = {
+                good: 'var(--sk-t3)',
+                warning: 'var(--job-stale)',
+                info: 'var(--sk-t3)',
+              }
+              const bgMap = {
+                good: 'var(--sk-line)',
+                warning: 'color-mix(in srgb, var(--job-stale) 8%, transparent)',
+                info: 'var(--sk-line)',
+              }
+              const InsightIcon = iconMap[insight.type]
+              return (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 p-3 rounded-lg"
+                  style={{ backgroundColor: bgMap[insight.type] }}
+                >
+                  <InsightIcon
+                    size={16}
+                    style={{ color: colorMap[insight.type], flexShrink: 0, marginTop: 1 }}
+                  />
+                  <p
+                    className="text-sm"
+                    style={{
+                      color: 'var(--ink)',
+                      lineHeight: 1.5,
+                    }}
                   >
-                    <InsightIcon
-                      size={16}
-                      style={{ color: colorMap[insight.type], flexShrink: 0, marginTop: 1 }}
-                    />
-                    <p
-                      className="text-sm"
-                      style={{
-                        color: 'var(--ink)',
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {insight.text}
-                    </p>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <p
-              className="text-center py-4 text-sm"
-              style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
-            >
-              Not enough data to generate insights yet
-            </p>
-          )}
+                    {insight.text}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <p
+            className="text-center py-4 text-sm"
+            style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
+          >
+            Not enough data to generate insights yet
+          </p>
+        )}
       </ChartCard>
 
       </QueryState>

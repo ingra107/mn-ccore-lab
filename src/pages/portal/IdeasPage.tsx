@@ -505,7 +505,7 @@ function IdeaBoardCard({
           {idea.title}
         </div>
         <div
-          className="sr"
+          className="sr idea-move"
           style={{ '--sr-hov': 'var(--hover-subtle)', flexShrink: 0 } as React.CSSProperties}
           onClick={(e) => e.stopPropagation()}
         >
@@ -513,7 +513,8 @@ function IdeaBoardCard({
             value={idea.status}
             options={IDEA_STATUS_OPTIONS}
             onChange={onStatusChange}
-            display={<span aria-label="Move idea" style={{ color: 'var(--sk-t3)', fontSize: 'var(--text-small)', lineHeight: 1 }}>&#8943;</span>}
+            ariaLabel={`Move idea: ${idea.title}`}
+            display={<span aria-hidden="true" style={{ color: 'var(--sk-t3)', fontSize: 'var(--text-small)', lineHeight: 1 }}>&#8943;</span>}
           />
         </div>
       </div>
