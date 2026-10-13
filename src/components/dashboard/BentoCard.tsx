@@ -92,7 +92,7 @@ export default function BentoCard({
             <div
               className="flex-shrink-0 mt-0.5"
               style={{
-                // N1b de-box: was a --surface-2 icon well (2nd box layer on every
+                // N1b de-box: was an icon well (2nd box layer on every
                 // card). Dropped bg+radius — icon floats on the card surface; the
                 // fixed 28px slot keeps title alignment consistent across cards.
                 width: 28,

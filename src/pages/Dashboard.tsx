@@ -773,7 +773,7 @@ export default function Dashboard() {
           border-color: var(--border-subtle) !important;
         }
         .dark .bento-card:hover {
-          background-image: linear-gradient(var(--surface-3), var(--surface-3)) !important;
+          background-image: linear-gradient(color-mix(in srgb, var(--sk-t1) 10%, transparent), color-mix(in srgb, var(--sk-t1) 10%, transparent)) !important;
         }
 
         /* Pin button (overlay on each DashboardGrid card) */

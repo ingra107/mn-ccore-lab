@@ -119,10 +119,6 @@
   --shadow-elevated: 0 4px 12px rgba(0,0,0,0.15);
 
   /* Surface elevation — luminance stepping */
-  --surface-0: var(--cream);
-  --surface-1: rgba(0, 0, 0, 0.02);
-  --surface-2: rgba(0, 0, 0, 0.04);
-  --surface-3: rgba(0, 0, 0, 0.06);
 
   --shadow-menu: 0 0 0 1px var(--border-subtle), 0 4px 16px rgba(0, 0, 0, 0.12);
 
@@ -259,10 +255,6 @@
   --shadow-card-hover: 0 6px 16px rgba(0, 0, 0, 0.6);
   --shadow-elevated: 0 4px 12px rgba(0,0,0,0.4);
 
-  --surface-0: var(--cream);
-  --surface-1: rgba(255, 255, 255, 0.03);
-  --surface-2: rgba(255, 255, 255, 0.06);
-  --surface-3: rgba(255, 255, 255, 0.10);
 
   --shadow-menu: 0 0 0 1px var(--border-default), 0 4px 16px rgba(0, 0, 0, 0.5);
 
@@ -550,9 +542,7 @@ html[data-density="comfortable"] {
   --sidebar-bg: color-mix(in oklch, var(--cream), black 12%);
 
   /* Working-card surface: white on the cream canvas (P2, 2026-09-20 — see
-     the surface-model note above --page-bg). Dark keeps its lift below.
-     Same shape as --surface-1 in dark, so a panel that moves from
-     --surface-1 to this token renders identically in dark mode. */
+     the surface-model note above --page-bg). Dark keeps its lift below. */
   --surface-card: #ffffff;
   /* --card-hairline was deleted here (P2, 2026-09-20): zero consumers since
      P1-2 minted it, and it had no .dark override. The hairline ring IS
@@ -2320,9 +2310,6 @@ button[aria-label="Deselect task"]::before {
   :root {
     /* Card stays the white working surface (already opaque). */
     --surface-card: #ffffff;
-    --surface-1: #f0f1f3;
-    --surface-2: #e7e9ec;
-    --surface-3: #dde0e4;
     --hover-subtle: rgba(0, 0, 0, 0.04);
     --border-subtle: color-mix(in srgb, var(--task-ink) 12%, transparent);
     --border-default: color-mix(in srgb, var(--task-ink) 20%, transparent);
@@ -2330,9 +2317,6 @@ button[aria-label="Deselect task"]::before {
 
   .dark {
     --surface-card: #181c21;
-    --surface-1: #13171c;
-    --surface-2: #191d23;
-    --surface-3: #20252c;
     --hover-subtle: rgba(255, 255, 255, 0.06);
     --border-subtle: rgba(255, 255, 255, 0.12);
     --border-default: rgba(255, 255, 255, 0.20);

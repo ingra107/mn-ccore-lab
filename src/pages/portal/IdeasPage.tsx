@@ -360,7 +360,7 @@ export default function IdeasPage() {
                         <div
                           key={idea.id}
                           className="rounded-lg border p-3 cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
-                          style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}
+                          style={{ borderColor: 'var(--border-subtle)', background: 'var(--sk-panel)' }}
                           onClick={() => setExpandedId(expandedId === idea.id ? null : idea.id)}
                         >
                           <div style={{ fontSize: '13px', color: 'var(--ink)', fontWeight: 500, lineHeight: 1.35 }}>

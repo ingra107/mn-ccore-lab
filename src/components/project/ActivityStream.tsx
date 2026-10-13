@@ -216,7 +216,7 @@ export default function ActivityStream({ project, filter, onOpenTask, products =
         {/* Note / Comment toggle (only in 'all'; the filtered views are fixed) */}
         {filter === 'all' && (
           <div className="flex items-center gap-2 mb-2">
-            {/* N1b: was a --surface-2 tray with solid teal/gold active fills.
+            {/* N1b: was a boxed tray with solid teal/gold active fills.
                 De-boxed to ghost pills — active = tint + semantic text color
                 (teal=note, gold=comment), resting transparent. */}
             <div style={{ display: 'inline-flex', gap: 4 }}>

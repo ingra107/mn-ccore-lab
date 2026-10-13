@@ -746,7 +746,7 @@ export function ActivityEntryItem({
 
   // ── Shared card shell ─────────────────────────────────────────────────────
   const cardStyle: React.CSSProperties = {
-    // Comment/update cards LIFT above the page (--surface-2) with a hairline edge
+    // Comment/update cards LIFT above the page with a hairline edge
     // (a 1px slate ring) so they read as distinct blocks — restoring the
     // figure/ground separation that near-black-on-near-black (--cream == page bg
     // in dark mode) had erased. This is what makes the feed scannable before

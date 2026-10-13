@@ -136,11 +136,11 @@ export default function PhaseReleaseBanner() {
               marginTop: 6,
               width: 340,
               padding: 'var(--sp-md)',
-              // Rule 45: a floating panel must be FULLY OPAQUE. --surface-2 is
+              // Rule 45: a floating panel must be FULLY OPAQUE. the old wash token was
               // a tint meant to sit on top of an opaque surface — in dark mode
               // it is rgba(255,255,255,0.06), so the page showed straight
               // through this popover and the text was unreadable (#115). The
-              // `var(--surface-2, var(--cream))` fallback never fired: the
+              // `var(--x, var(--cream))` fallback never fired: the
               // token is always defined, so --cream was dead code.
               background: 'var(--cream)',
               border: '1px solid var(--border-default)',

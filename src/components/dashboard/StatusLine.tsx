@@ -73,7 +73,7 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
       <div data-testid="dashboard-status-line" className="tk" aria-hidden>
         <div className="tk-stats dash-stats" style={ROW_STYLE}>
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} style={{ height: 30, width: 72, borderRadius: 'var(--radius-md)', background: 'var(--surface-2)', animation: 'pulse 1.6s ease-in-out infinite' }} />
+          <div key={i} style={{ height: 30, width: 72, borderRadius: 'var(--radius-md)', background: 'var(--sk-line2)', animation: 'pulse 1.6s ease-in-out infinite' }} />
         ))}
         </div>
       </div>

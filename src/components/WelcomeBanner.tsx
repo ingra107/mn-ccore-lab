@@ -23,7 +23,7 @@ export default function WelcomeBanner() {
         style={{
           minHeight: 44,
           padding: 'var(--sp-sm) var(--sp-lg)',
-          backgroundColor: 'var(--surface-1)',
+          backgroundColor: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
           borderLeft: '3px solid var(--sk-t2)',
           borderRadius: 'var(--radius-md)',
           display: 'flex',

@@ -313,7 +313,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
   return (
     <Link
       to={PATHS.project(project.slug)}
-      className="flex items-center flex-wrap gap-x-2.5 gap-y-1 py-2 group transition-colors hover:bg-[var(--surface-1)]"
+      className="flex items-center flex-wrap gap-x-2.5 gap-y-1 py-2 group transition-colors hover:bg-[var(--hover-subtle)]"
       style={{
         textDecoration: 'none',
         borderBottom: '1px solid var(--border-subtle)',
@@ -377,7 +377,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
             width: '48px',
             height: '4px',
             borderRadius: 'var(--radius-sm)',
-            background: 'var(--surface-2)',
+            background: 'var(--sk-line2)',
             overflow: 'hidden',
           }}
         >
