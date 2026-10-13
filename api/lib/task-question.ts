@@ -269,9 +269,10 @@ export function questionPatchError(
 }
 
 /**
- * A project_join answer IS the decision (schema-v139): the database turned it
- * into a membership in the same transaction, so it cannot be undone or
- * re-answered. applyPatch checks this FIRST, so a late Telegram tap after Nate
+ * A project_join Approve or Decline IS the decision (schema-v139): the database
+ * turned it into a membership or a decline in the same transaction, so it
+ * cannot be undone or re-answered, and neither can a closed question. An
+ * 'Other' is a note, not a decision; the database clears it at once. applyPatch checks this FIRST, so a late Telegram tap after Nate
  * decided on Today, or the card's Undo, is refused with the quiet
  * question_rule code rather than whichever loud rule the cleared answer would
  * break next. The schema-v139 trigger is the backstop for any writer that
@@ -286,6 +287,12 @@ export function questionAnswerFrozenError(
   const stored = current.question_answer_json;
   if (stored === null || stored === undefined) return null;
   if (patch.question_answer_json === stored) return null;
+  // Only a decision freezes (Nick 2026-10-13, "Stays pending"): an 'Other'
+  // note never stays stored on an open question, so a stored answer that is
+  // not approve/decline on an open row is not a decision.
+  const parsed = parseJsonCol(stored);
+  const choice = parsed.ok && isPlainObject(parsed.value) ? parsed.value.choice : undefined;
+  if (choice !== 'approve' && choice !== 'decline' && current.status !== 'done') return null;
   return 'question_answer_frozen: this join request was already decided; its answer cannot change';
 }
 

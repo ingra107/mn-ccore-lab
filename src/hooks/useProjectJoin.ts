@@ -3,16 +3,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   decideJoinRequest,
   fetchJoinRequests,
-  fetchProjectBlurb,
+  fetchProjectListing,
   fetchProjectDirectory,
   requestToJoin,
-  setProjectBlurb,
+  setProjectListing,
+  type JoinDecision,
 } from '../lib/projectJoinApi'
 import { isJoinApprover } from '../../shared/joinApprovers'
 
 const DIRECTORY_KEY = ['project-directory'] as const
 const REQUESTS_KEY = ['join-requests'] as const
-const blurbKey = (ref: string) => ['project-blurb', ref] as const
+const listingKey = (ref: string) => ['project-listing', ref] as const
 
 export function useProjectDirectory(enabled = true) {
   return useQuery({
@@ -46,7 +47,7 @@ export function useJoinRequests(slug: string | undefined) {
 export function useDecideJoinRequest() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, decision, note }: { id: string; decision: 'approve' | 'decline'; note: string | null }) =>
+    mutationFn: ({ id, decision, note }: { id: string; decision: JoinDecision; note: string | null }) =>
       decideJoinRequest(id, decision, note),
     // Refetch on success AND on a 409 (the other approver decided first).
     onSettled: () => {
@@ -56,22 +57,22 @@ export function useDecideJoinRequest() {
   })
 }
 
-export function useProjectBlurb(ref: string | undefined) {
+export function useProjectListing(ref: string | undefined) {
   return useQuery({
-    queryKey: blurbKey(ref ?? ''),
-    queryFn: async () => (await fetchProjectBlurb(ref as string)).data,
+    queryKey: listingKey(ref ?? ''),
+    queryFn: async () => (await fetchProjectListing(ref as string)).data,
     enabled: Boolean(ref),
     staleTime: 30_000,
     retry: false,
   })
 }
 
-export function useSetProjectBlurb(ref: string) {
+export function useSetProjectListing(ref: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (blurb: string | null) => setProjectBlurb(ref, blurb),
+    mutationFn: (change: { blurb?: string | null; hidden?: boolean }) => setProjectListing(ref, change),
     onSuccess: (res) => {
-      qc.setQueryData(blurbKey(ref), res.data)
+      qc.setQueryData(listingKey(ref), res.data)
       void qc.invalidateQueries({ queryKey: DIRECTORY_KEY })
     },
   })

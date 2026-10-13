@@ -30,8 +30,8 @@ describe('TABLE_SCOPE covers the migrated schema', () => {
 
   it('project_directory carries no column a non-member may not see', () => {
     // Nick, 2026-10-13: before joining, a member sees the project's name, a
-    // one-line description and its PI. Nothing else.
-    expect([...HUB_VIEWS.project_directory]).toEqual(['project_id', 'name', 'blurb', 'pi_slug', 'pi_name'])
+    // one-line description and its PI (with the PI's photo). Nothing else.
+    expect([...HUB_VIEWS.project_directory]).toEqual(['project_id', 'name', 'blurb', 'pi_slug', 'pi_name', 'pi_photo'])
   })
 
   it('every scoped table has the key column its DML restriction names, and its dependencies are scoped', () => {

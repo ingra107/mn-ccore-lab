@@ -31,7 +31,7 @@ import { handleMarkSeen, handleGetUnseenActivity, handleGetThreadSeen, handleMar
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
 import { handleGetProjectMembers, handleAddProjectMember, handleRemoveProjectMember, handleGetMemberProjects } from './routes/project-members';
-import { handleGetProjectDirectory, handleRequestToJoin, handleGetJoinRequests, handleDecideJoinRequest, handleGetProjectBlurb, handleSetProjectBlurb } from './routes/project-join';
+import { handleGetProjectDirectory, handleRequestToJoin, handleGetJoinRequests, handleDecideJoinRequest, handleGetProjectListing, handleSetProjectListing } from './routes/project-join';
 import { joinQuestionMinter } from './lib/project-join';
 import { handleGetMyFolder, handleSetMyFolder, handleClearMyFolder } from './routes/project-member-folders';
 import { handleGetPins, handleCreatePin, handleDeletePin } from './routes/pins';
@@ -1005,17 +1005,17 @@ defineRoute({
 });
 defineRoute({
   method: 'GET',
-  path: '/api/projects/:id/blurb',
+  path: '/api/projects/:id/listing',
   auth: 'authed',
   entity: 'projects',
-  handler: (c) => handleGetProjectBlurb(c.req.param('id'), E(c)),
+  handler: (c) => handleGetProjectListing(c.req.param('id'), c.get('viewer'), E(c)),
 });
 defineRoute({
   method: 'PUT',
-  path: '/api/projects/:id/blurb',
+  path: '/api/projects/:id/listing',
   auth: 'authed',
   entity: 'projects',
-  handler: (c) => handleSetProjectBlurb(c.req.param('id'), R(c), USER(c), E(c)),
+  handler: (c) => handleSetProjectListing(c.req.param('id'), R(c), USER(c), c.get('viewer'), E(c)),
 });
 // schema-v127: my folder for this project. One local path per (person,
 // project), private to that person; any member may set their own.

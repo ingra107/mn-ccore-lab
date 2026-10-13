@@ -282,7 +282,7 @@ describe('read sweep: a member who is not on a meeting reads nothing of it, on a
     expect(r.status).toBe(200)
     const row = (JSON.parse(r.text).data as Record<string, unknown>[]).find((e) => e.project_id === PROJ)
     expect(row, 'the hidden project is listed: that is the feature').toBeDefined()
-    expect(Object.keys(row!).sort()).toEqual(['blurb', 'decided_at', 'decided_note', 'name', 'pi_name', 'pi_slug', 'project_id', 'request_id', 'state'])
+    expect(Object.keys(row!).sort()).toEqual(['blurb', 'decided_at', 'decided_note', 'name', 'pi_name', 'pi_photo', 'pi_slug', 'project_id', 'request_id', 'retry_after', 'state'])
     expect(row!.name).toBe(`${MARK} project`)
     expect(row!.state).toBe('none')
     expect(r.text).not.toContain(`${MARK} next`)

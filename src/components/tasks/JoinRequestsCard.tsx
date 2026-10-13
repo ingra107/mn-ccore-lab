@@ -17,7 +17,7 @@ import { useDecideJoinRequest, useJoinRequests } from '../../hooks/useProjectJoi
 import { useUndoToast } from '../UndoToast'
 import { FaceDisc } from '../today/skin'
 import { memberInitials } from '../../lib/projectMembersRules'
-import type { JoinRequestForApprover } from '../../lib/projectJoinApi'
+import type { JoinDecision, JoinRequestForApprover } from '../../lib/projectJoinApi'
 
 export function JoinRequestsCard() {
   const { user } = useAuth()
@@ -48,11 +48,18 @@ function JoinRequestRow({ req }: { req: JoinRequestForApprover }) {
   const [noteOpen, setNoteOpen] = useState(false)
   const [note, setNote] = useState('')
   const who = req.requester_name ?? req.requester_slug
-  const project = req.project_name ?? 'a project no longer listed'
+  // A project that left the directory (done, blocked, hidden, Friends,
+  // deleted) can no longer be joined: the card offers Close only.
+  const listed = req.listed === 1
+  const project = req.project_name ?? ''
 
-  const send = (decision: 'approve' | 'decline') => {
+  const send = (decision: JoinDecision) => {
     decide.mutate({ id: req.id, decision, note: note.trim() || null }, {
-      onSuccess: () => showSuccess(decision === 'approve' ? `${firstName(who, who)} joined ${project}` : `Declined ${firstName(who, who)}'s request`),
+      onSuccess: () => showSuccess(
+        decision === 'approve' ? `${firstName(who, who)} joined ${project || 'the project'}`
+          : decision === 'decline' ? `Declined ${firstName(who, who)}'s request`
+            : `Closed ${firstName(who, who)}'s request`,
+      ),
       onError: (err) => showError(err instanceof Error ? err.message : 'Could not record the decision'),
     })
   }
@@ -63,15 +70,37 @@ function JoinRequestRow({ req }: { req: JoinRequestForApprover }) {
         <FaceDisc label={who} initials={memberInitials(who)} photo={req.requester_photo ?? undefined} px={22} />
         <div style={{ minWidth: 0 }}>
           <div style={{ fontWeight: 500, color: 'var(--sk-t1)' }}>
-            {firstName(who, who)} asks to join <span style={{ fontWeight: 600 }}>{project}</span>
+            {listed
+              ? <>{firstName(who, who)} asks to join <span style={{ fontWeight: 600 }}>{project}</span></>
+              : <>{firstName(who, who)} asked to join a project that is no longer open to requests</>}
           </div>
           {(req.note || req.blurb) && (
             <div style={{ fontSize: 11.5, color: 'var(--sk-t3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {req.note ? `“${req.note}”` : req.blurb}
             </div>
           )}
+          {req.director_note && (
+            // An approver's Telegram 'Other': for Nick and Nate, never the requester.
+            <div data-testid="join-director-note" style={{ fontSize: 11.5, color: 'var(--sk-t2)', marginTop: 2 }}>
+              Note from {req.director_note_by === 'nate-mesfin' ? 'Nate' : 'Nick'}: {req.director_note}
+            </div>
+          )}
         </div>
       </div>
+      {!listed ? (
+        <div className="tk-ops">
+          <button
+            type="button"
+            className="tk-btn tk-sm"
+            data-testid="join-close"
+            disabled={decide.isPending}
+            onClick={() => send('close')}
+            style={{ touchAction: 'manipulation' }}
+          >
+            Close request
+          </button>
+        </div>
+      ) : (
       <div className="tk-ops">
         <button
           type="button"
@@ -103,7 +132,8 @@ function JoinRequestRow({ req }: { req: JoinRequestForApprover }) {
           </button>
         )}
       </div>
-      {noteOpen && (
+      )}
+      {listed && noteOpen && (
         <textarea
           data-testid="join-note"
           value={note}

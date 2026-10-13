@@ -28,6 +28,16 @@ describe('the approvers are one list, in TS and in the database', () => {
   })
 })
 
+describe('the migration READ-BACK names every object the file creates', () => {
+  it('the CREATE statements and the READ-BACK list are the same set', () => {
+    const created = [...MIGRATION.matchAll(/^CREATE (?:UNIQUE )?(?:TABLE|VIEW|INDEX|TRIGGER) IF NOT EXISTS (\w+)/gm)].map((m) => m[1]).sort()
+    const block = MIGRATION.slice(MIGRATION.indexOf('-- READ-BACK'), MIGRATION.indexOf('-- ROLLBACK'))
+    const named = [...block.matchAll(/'(\w+)'/g)].map((m) => m[1]).sort()
+    expect(named).toEqual(created)
+    expect(block).toContain(`exactly these ${created.length} rows`)
+  })
+})
+
 function tsFiles(dir: string): string[] {
   const out: string[] = []
   for (const name of readdirSync(dir)) {
@@ -65,8 +75,11 @@ describe("Nick's Telegram question is a spec PB can parse", () => {
     expect(spec.kind).toMatch(/^[a-z][a-z0-9_]{0,63}$/)
     expect(spec.prompt).toBe('Casey asks to join Open: "hi"')
   })
-  it('the choices the database maps: approve approves; decline and other decline', () => {
-    expect(MIGRATION).toContain("CASE json_extract(NEW.question_answer_json, '$.choice') WHEN 'approve' THEN 'approved' ELSE 'declined' END")
+  it("the choices the database maps: approve and decline decide; 'other' never does (Nick: \"Stays pending\")", () => {
     expect(spec.choices.map((c) => c.key)).toEqual(['approve', 'decline', 'other'])
+    // The request update runs only for a decision; the note insert and the
+    // answer clear run only for anything else.
+    expect(MIGRATION).toContain("AND json_extract(NEW.question_answer_json, '$.choice') IN ('approve', 'decline');")
+    expect(MIGRATION.split("json_extract(NEW.question_answer_json, '$.choice') NOT IN ('approve', 'decline')").length - 1).toBe(2)
   })
 })

@@ -1,19 +1,19 @@
-// project-join.ts -- the project directory, requests to join, and the one-line
-// description (schema-v139; #145 follow-up, Nick 2026-10-13).
+// project-join.ts -- the project directory, requests to join, and the project's
+// Browse listing (schema-v139; #145 follow-up, Nick 2026-10-13).
 //
 //   GET  /api/project-directory               every listed project: name, blurb, PI, and MY state on it
 //   POST /api/projects/:id/join-request       { note? }  ask to join (one pending ask per project)
 //   GET  /api/join-requests                   Nick and Nate only: pending asks + the last 14 days
-//   POST /api/join-requests/:id/decision      { decision: 'approve'|'decline', note? }  Nick and Nate only
-//   GET  /api/projects/:id/blurb              a project I can see: its one-line description
-//   PUT  /api/projects/:id/blurb              { blurb: string|null }  a project I can see
+//   POST /api/join-requests/:id/decision      { decision: 'approve'|'decline'|'close', note? }  Nick and Nate only
+//   GET  /api/projects/:id/listing            a project I can see: its blurb, whether Browse hides it, whether I may change that
+//   PUT  /api/projects/:id/listing            { blurb?: string|null, hidden?: boolean }  blurb: any member; hidden: Nick or the PI
 //
 // Every handler runs on the caller's own handle (env.DB is viewer-bound). What
 // a non-member may read is api/lib/project-join.ts's DirectoryRow, nothing else.
 
 import type { AuthUser, Env } from '../helpers'
 import { json, error } from '../helpers'
-import type { Viewer } from '../lib/viewer-db'
+import { isSiteAdmin, type Viewer } from '../lib/viewer-db'
 import {
   cleanBlurb,
   cleanJoinNote,
@@ -68,7 +68,9 @@ export async function handleRequestToJoin(
   switch (out.kind) {
     case 'not_listed': return error('Project not found', 404)
     case 'member': return json({ error: 'You are already on this project', code: 'member' }, 409)
-    case 'existing': return json({ data: out.request, created: false })
+    case 'too_soon':
+      return json({ error: 'You can ask again 7 days after a decline', code: 'too_soon', retry_after: out.retry_after }, 429)
+    case 'existing': return json({ data: out.request, created: false, telegram: out.telegram })
     // No activity_log row: the lab feed is not where an ask to join belongs,
     // and its row would name a project to people who cannot see it.
     case 'created':
@@ -89,7 +91,9 @@ export async function handleDecideJoinRequest(id: string, request: Request, view
   if (!slug || !isJoinApprover(slug)) return error('Only Nick or Nate can approve a request to join', 403)
   const body = await readJson(request)
   const decision = body?.decision
-  if (decision !== 'approve' && decision !== 'decline') return error("decision must be 'approve' or 'decline'", 400)
+  if (decision !== 'approve' && decision !== 'decline' && decision !== 'close') {
+    return error("decision must be 'approve', 'decline' or 'close'", 400)
+  }
   const cleaned = cleanJoinNote(body?.note)
   if (!cleaned.ok) return error(cleaned.reason, 400)
   const out = await decideJoinRequest(env.DB, { id, deciderSlug: slug, decision, note: cleaned.note })
@@ -97,48 +101,78 @@ export async function handleDecideJoinRequest(id: string, request: Request, view
     case 'forbidden': return error(out.reason, 403)
     case 'not_found': return error('Request not found', 404)
     case 'already':
-      return json({ error: `Already ${out.request.status} by ${out.request.decided_by ?? 'someone'}`, code: 'decided', data: out.request }, 409)
+      return json({ error: `Already ${out.request.status}${out.request.decided_by ? ` by ${out.request.decided_by}` : ''}`, code: 'decided', data: out.request }, 409)
+    case 'not_listed':
+      return json({ error: 'The project is no longer open to requests; the request was closed', code: 'not_listed', data: out.request }, 409)
     case 'decided': return json({ data: out.request })
   }
 }
 
-async function visibleProjectId(env: Env, ref: string): Promise<string | null> {
+interface ListingProject { id: string; pi: string | null }
+
+async function visibleProject(env: Env, ref: string): Promise<ListingProject | null> {
   if (!ref) return null
-  const row = await env.DB.prepare(
-    'SELECT id FROM projects WHERE (id = ? OR slug = ?) AND deleted_at IS NULL LIMIT 1',
-  ).bind(ref, ref).first<{ id: string }>()
-  return row?.id ?? null
+  return (await env.DB.prepare(
+    'SELECT id, pi FROM projects WHERE (id = ? OR slug = ?) AND deleted_at IS NULL LIMIT 1',
+  ).bind(ref, ref).first<ListingProject>()) ?? null
 }
 
-/** GET /api/projects/:id/blurb */
-export async function handleGetProjectBlurb(ref: string, env: Env): Promise<Response> {
-  const id = await visibleProjectId(env, ref)
-  if (!id) return error('Project not found', 404)
-  const row = await env.DB.prepare('SELECT blurb, updated_by, updated_at FROM project_blurbs WHERE project_id = ?')
-    .bind(id).first<{ blurb: string; updated_by: string; updated_at: string }>()
-  return json({ data: { project_id: id, blurb: row?.blurb ?? null, updated_by: row?.updated_by ?? null, updated_at: row?.updated_at ?? null } })
+/** Nick (the site admin) or the project's PI may hide a project from Browse. */
+function mayHide(viewer: Viewer, project: ListingProject): boolean {
+  if (viewer.kind !== 'person') return false
+  return isSiteAdmin({ slug: viewer.slug, pi: viewer.pi }) || (project.pi ?? '') === viewer.slug
 }
 
-/** PUT /api/projects/:id/blurb  body { blurb: string | null } */
-export async function handleSetProjectBlurb(ref: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const id = await visibleProjectId(env, ref)
-  if (!id) return error('Project not found', 404)
-  const body = await readJson(request)
-  if (!body || !('blurb' in body)) return error('JSON body { blurb } required', 400)
-  const cleaned = cleanBlurb(body.blurb)
-  if (!cleaned.ok) return error(cleaned.reason, 400)
-  const who = user.slug && user.slug !== 'anonymous' ? user.slug : user.email
-  if (cleaned.blurb === null) {
-    await env.DB.prepare('DELETE FROM project_blurbs WHERE project_id = ?').bind(id).run()
-  } else {
-    // No upsert: viewer-db refuses ON CONFLICT DO UPDATE on a scoped table.
-    const upd = await env.DB.prepare(
-      "UPDATE project_blurbs SET blurb = ?, updated_by = ?, updated_at = datetime('now') WHERE project_id = ?",
-    ).bind(cleaned.blurb, who, id).run()
-    if ((upd.meta?.changes ?? 0) === 0) {
-      await env.DB.prepare('INSERT INTO project_blurbs (project_id, blurb, updated_by) VALUES (?, ?, ?)')
-        .bind(id, cleaned.blurb, who).run()
-    }
+async function listingBody(env: Env, project: ListingProject, viewer: Viewer) {
+  const row = await env.DB.prepare('SELECT blurb, hidden, updated_by, updated_at FROM project_listing WHERE project_id = ?')
+    .bind(project.id).first<{ blurb: string | null; hidden: number; updated_by: string; updated_at: string }>()
+  return {
+    project_id: project.id,
+    blurb: row?.blurb ?? null,
+    hidden: (row?.hidden ?? 0) === 1,
+    can_hide: mayHide(viewer, project),
+    updated_by: row?.updated_by ?? null,
+    updated_at: row?.updated_at ?? null,
   }
-  return handleGetProjectBlurb(id, env)
+}
+
+/** GET /api/projects/:id/listing */
+export async function handleGetProjectListing(ref: string, viewer: Viewer, env: Env): Promise<Response> {
+  const project = await visibleProject(env, ref)
+  if (!project) return error('Project not found', 404)
+  return json({ data: await listingBody(env, project, viewer) })
+}
+
+/** PUT /api/projects/:id/listing  body { blurb?: string | null, hidden?: boolean } */
+export async function handleSetProjectListing(ref: string, request: Request, user: AuthUser, viewer: Viewer, env: Env): Promise<Response> {
+  const project = await visibleProject(env, ref)
+  if (!project) return error('Project not found', 404)
+  const body = await readJson(request)
+  if (!body || (!('blurb' in body) && !('hidden' in body))) return error('JSON body { blurb } or { hidden } required', 400)
+  const sets: string[] = []
+  const vals: unknown[] = []
+  if ('blurb' in body) {
+    const cleaned = cleanBlurb(body.blurb)
+    if (!cleaned.ok) return error(cleaned.reason, 400)
+    sets.push('blurb = ?')
+    vals.push(cleaned.blurb)
+  }
+  if ('hidden' in body) {
+    if (typeof body.hidden !== 'boolean') return error('hidden must be true or false', 400)
+    if (!mayHide(viewer, project)) return error("Only Nick or the project's PI can hide a project from Browse", 403)
+    sets.push('hidden = ?', 'hidden_by = ?')
+    vals.push(body.hidden ? 1 : 0, (viewer as { slug: string }).slug)
+  }
+  const who = user.slug && user.slug !== 'anonymous' ? user.slug : user.email
+  // No upsert: viewer-db refuses ON CONFLICT DO UPDATE on a scoped table.
+  const upd = await env.DB.prepare(
+    `UPDATE project_listing SET ${sets.join(', ')}, updated_by = ?, updated_at = datetime('now') WHERE project_id = ?`,
+  ).bind(...vals, who, project.id).run()
+  if ((upd.meta?.changes ?? 0) === 0) {
+    const cols = ['project_id', 'updated_by', ...sets.map((s) => s.split(' = ')[0])]
+    await env.DB.prepare(
+      `INSERT INTO project_listing (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
+    ).bind(project.id, who, ...vals).run()
+  }
+  return json({ data: await listingBody(env, project, viewer) })
 }

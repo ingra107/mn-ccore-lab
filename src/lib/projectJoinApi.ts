@@ -11,13 +11,16 @@ export interface DirectoryEntry {
   blurb: string | null
   pi_slug: string | null
   pi_name: string | null
+  pi_photo: string | null
   state: JoinState
   request_id: string | null
   decided_note: string | null
   decided_at: string | null
+  /** When declined and a new ask must still wait: when it is allowed (7 days after the decline). Null once allowed. */
+  retry_after: string | null
 }
 
-export type JoinRequestStatus = 'pending' | 'approved' | 'declined'
+export type JoinRequestStatus = 'pending' | 'approved' | 'declined' | 'expired'
 
 export interface JoinRequest {
   id: string
@@ -34,11 +37,17 @@ export interface JoinRequest {
 
 /** A request as Nick or Nate sees it on Today. */
 export interface JoinRequestForApprover extends JoinRequest {
+  /** 1 while the project is in the directory; 0 once it left (only Close then). */
+  listed: number
   project_name: string | null
   blurb: string | null
   pi_name: string | null
   requester_name: string | null
   requester_photo: string | null
+  /** An approver's Telegram 'Other': Nick and Nate only, never the requester. */
+  director_note: string | null
+  director_note_by: string | null
+  director_note_at: string | null
 }
 
 export function fetchProjectDirectory(): Promise<{ data: DirectoryEntry[] }> {
@@ -56,28 +65,34 @@ export function fetchJoinRequests(): Promise<{ data: JoinRequestForApprover[] }>
   return fetchApi<JoinRequestForApprover[]>('/api/join-requests')
 }
 
-export function decideJoinRequest(id: string, decision: 'approve' | 'decline', note: string | null): Promise<{ data: JoinRequest }> {
+export type JoinDecision = 'approve' | 'decline' | 'close'
+
+export function decideJoinRequest(id: string, decision: JoinDecision, note: string | null): Promise<{ data: JoinRequest }> {
   return fetchApi<JoinRequest>(`/api/join-requests/${encodeURIComponent(id)}/decision`, {
     method: 'POST',
     body: JSON.stringify(note ? { decision, note } : { decision }),
   })
 }
 
-export interface ProjectBlurb {
+/** A project's Browse listing: its one-line description and whether Browse hides it. */
+export interface ProjectListing {
   project_id: string
   blurb: string | null
+  hidden: boolean
+  /** Nick or the project's PI: may hide or show it. */
+  can_hide: boolean
   updated_by: string | null
   updated_at: string | null
 }
 
-export function fetchProjectBlurb(ref: string): Promise<{ data: ProjectBlurb }> {
-  return fetchApi<ProjectBlurb>(`/api/projects/${encodeURIComponent(ref)}/blurb`)
+export function fetchProjectListing(ref: string): Promise<{ data: ProjectListing }> {
+  return fetchApi<ProjectListing>(`/api/projects/${encodeURIComponent(ref)}/listing`)
 }
 
-export function setProjectBlurb(ref: string, blurb: string | null): Promise<{ data: ProjectBlurb }> {
-  return fetchApi<ProjectBlurb>(`/api/projects/${encodeURIComponent(ref)}/blurb`, {
+export function setProjectListing(ref: string, change: { blurb?: string | null; hidden?: boolean }): Promise<{ data: ProjectListing }> {
+  return fetchApi<ProjectListing>(`/api/projects/${encodeURIComponent(ref)}/listing`, {
     method: 'PUT',
-    body: JSON.stringify({ blurb }),
+    body: JSON.stringify(change),
   })
 }
 

@@ -14,7 +14,6 @@ import { Link } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import { PATHS } from '../../constants/paths'
 import { FaceDisc } from '../today/skin'
-import { useTeam } from '../../hooks/useApiData'
 import { useProjectDirectory, useRequestToJoin } from '../../hooks/useProjectJoin'
 import { useUndoToast } from '../UndoToast'
 import { memberInitials } from '../../lib/projectMembersRules'
@@ -23,13 +22,7 @@ import type { DirectoryEntry } from '../../lib/projectJoinApi'
 
 export default function ProjectDirectory() {
   const { data: entries = [], isLoading, isError } = useProjectDirectory()
-  const { data: team = [] } = useTeam()
   const [q, setQ] = useState('')
-  const photoBySlug = useMemo(() => {
-    const m = new Map<string, string>()
-    for (const t of team) if (t.slug && t.photoUrl) m.set(t.slug, t.photoUrl)
-    return m
-  }, [team])
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase()
     if (!needle) return entries
@@ -60,7 +53,7 @@ export default function ProjectDirectory() {
         <p className="pd-empty">{q ? 'No project matches.' : 'No projects are listed yet.'}</p>
       ) : (
         <ul className="pd-list">
-          {shown.map((e) => <DirectoryRow key={e.project_id} entry={e} photo={e.pi_slug ? photoBySlug.get(e.pi_slug) : undefined} />)}
+          {shown.map((e) => <DirectoryRow key={e.project_id} entry={e} />)}
         </ul>
       )}
 
@@ -75,13 +68,13 @@ export default function ProjectDirectory() {
         .pd-row:hover{background:var(--sk-card)}
         .pd-name{font-size:13.5px;font-weight:500;color:var(--sk-t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .pd-blurb{font-size:12px;color:var(--sk-t2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .pd-blurb.pd-none{color:var(--sk-t3)}
-        .pd-pi{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sk-t3);min-width:0}
+                .pd-pi{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sk-t3);min-width:0}
         .pd-pi span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .pd-act{display:flex;justify-content:flex-end;align-items:center;gap:6px}
-        .pd-state{font-size:12px;color:var(--sk-t3)}
+        .pd-state{font-size:12px;color:var(--sk-t3);white-space:nowrap}
+        .pd-req{color:var(--job-accent);font-weight:600}
         .pd-ask{grid-column:1/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-        .pd-ask input{flex:1;min-width:180px;font-size:12.5px;padding:6px 9px;border-radius:var(--r-ctl);background:var(--sk-card);box-shadow:inset 0 0 0 1px var(--sk-line2);color:var(--sk-t1);border:0;outline:none}
+        .pd-ask input{flex:1 1 220px;min-width:0;font-size:12.5px;padding:6px 9px;border-radius:var(--r-ctl);background:var(--sk-card);box-shadow:inset 0 0 0 1px var(--sk-line2);color:var(--sk-t1);border:0;outline:none}
         .pd-ask input:focus{box-shadow:inset 0 0 0 1.5px var(--job-accent)}
         .pd-note{grid-column:1/-1;font-size:11.5px;color:var(--sk-t3)}
         @media (max-width:640px){
@@ -98,11 +91,19 @@ function firstName(name: string | null): string {
   return (name ?? '').trim().split(/\s+/)[0] ?? ''
 }
 
-function DirectoryRow({ entry, photo }: { entry: DirectoryEntry; photo?: string }) {
+function shortDate(iso: string): string {
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
+function DirectoryRow({ entry }: { entry: DirectoryEntry }) {
   const ask = useRequestToJoin()
   const { showSuccess, showError } = useUndoToast()
   const [asking, setAsking] = useState(false)
   const [note, setNote] = useState('')
+  // After a decline a new ask waits 7 days (the database refuses sooner); the
+  // API sends retry_after only while the wait is still running.
+  const waiting = entry.state === 'declined' && !!entry.retry_after
 
   const send = () => {
     ask.mutate({ projectId: entry.project_id, note: note.trim() || null }, {
@@ -119,12 +120,12 @@ function DirectoryRow({ entry, photo }: { entry: DirectoryEntry; photo?: string 
     <li className="pd-row" data-testid={`directory-row-${entry.project_id}`}>
       <div className="pd-main" style={{ minWidth: 0 }}>
         <div className="pd-name" title={entry.name}>{entry.name}</div>
-        <div className={`pd-blurb${entry.blurb ? '' : ' pd-none'}`}>{entry.blurb ?? 'No description yet'}</div>
+        {entry.blurb && <div className="pd-blurb">{entry.blurb}</div>}
       </div>
       <div className="pd-pi">
         {entry.pi_name ? (
           <>
-            <FaceDisc label={entry.pi_name} initials={memberInitials(entry.pi_name)} photo={photo} px={20} decorative />
+            <FaceDisc label={entry.pi_name} initials={memberInitials(entry.pi_name)} photo={entry.pi_photo ?? undefined} px={20} decorative />
             <span title={`PI: ${entry.pi_name}`}>{firstName(entry.pi_name)}</span>
           </>
         ) : null}
@@ -134,10 +135,14 @@ function DirectoryRow({ entry, photo }: { entry: DirectoryEntry; photo?: string 
           <Link to={PATHS.project(entry.project_id)} className="tk-btn tk-sm">Open</Link>
         ) : entry.state === 'pending' ? (
           <span className="pd-state" data-testid="directory-requested">Requested</span>
+        ) : waiting ? (
+          <span className="pd-state" data-testid="directory-wait">Ask again {shortDate(entry.retry_after!)}</span>
         ) : !asking ? (
+          // Quiet: one solid teal button per row would be color sprinkled,
+          // not spent (rules-ui-design #1). The accent is in the label.
           <button
             type="button"
-            className="tk-btn tk-sm tk-pri"
+            className="tk-btn tk-sm pd-req"
             data-testid="directory-request"
             onClick={() => setAsking(true)}
             style={{ touchAction: 'manipulation' }}
@@ -155,7 +160,7 @@ function DirectoryRow({ entry, photo }: { entry: DirectoryEntry; photo?: string 
             value={note}
             onChange={(e) => setNote(e.target.value)}
             maxLength={280}
-            placeholder="Why you want to join (optional)"
+            placeholder="Add a note (optional)"
             aria-label={`Note for your request to join ${entry.name}`}
             onKeyDown={(e) => { if (e.key === 'Enter') send() }}
             autoFocus

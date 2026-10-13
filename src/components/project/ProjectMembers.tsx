@@ -16,7 +16,7 @@ import { X } from 'lucide-react'
 import { FaceDisc } from '../today/skin'
 import GhostSelect, { type GhostSelectOption } from '../ui/GhostSelect'
 import SectionHead from '../ui/SectionHead'
-import ProjectBlurbField from './ProjectBlurbField'
+import ProjectListingField from './ProjectListingField'
 import { useUndoToast } from '../UndoToast'
 import { useAuth } from '../../hooks/useAuth'
 import { useTeam } from '../../hooks/useApiData'
@@ -146,7 +146,7 @@ export default function ProjectMembers({ projectRef, projectTitle }: ProjectMemb
         </div>
       )}
 
-      {!isError && !isLoading && <ProjectBlurbField projectRef={projectRef} />}
+      {!isError && !isLoading && <ProjectListingField projectRef={projectRef} />}
     </section>
   )
 }

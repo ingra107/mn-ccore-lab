@@ -54,8 +54,8 @@ export const HUB_TABLES = [
   'member_featured_publications', 'memory_facts', 'mentee_milestones', 'milestones',
   'narrative_projects', 'notifications', 'open_science_resources', 'paper_project_links',
   'pb_sessions', 'pomodoro_sessions', 'processed_mutations', 'product_author_positions', 'product_event_roles',
-  'product_funding', 'product_kinds', 'product_stages', 'products', 'project_blurbs', 'project_dependencies', 'project_home_seed',
-  'project_documents', 'project_join_requests', 'project_member_folders', 'project_members', 'project_publications', 'project_state_log', 'projects',
+  'product_funding', 'product_kinds', 'product_stages', 'products', 'project_dependencies', 'project_home_seed',
+  'project_documents', 'project_join_notes', 'project_join_requests', 'project_listing', 'project_member_folders', 'project_members', 'project_publications', 'project_state_log', 'projects',
   'publications', 'pubmed_sync_log', 'reactions', 'regulatory_items', 'research_digest',
   'research_narratives', 'reviewer_comments', 'schema_migrations', 'sessions', 'submission_events',
   'task_files', 'task_handoffs', 'task_subtasks', 'tasks', 'team_members', 'trainee_milestones',
@@ -295,6 +295,12 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
       ? '0'
       : isJoinApprover(v.slug) ? null : `project_join_requests.requester_slug = ${sqlList([v.slug])}`),
   },
+  // An approver's note on a request (a Telegram 'Other'): Nick and Nate only.
+  // The requester never reads it, on any route.
+  project_join_notes: {
+    kind: 'scoped', key: 'request_id', dependsOn: [],
+    where: (v) => (v.kind === 'person' && isJoinApprover(v.slug) ? null : '0'),
+  },
 
   // A person's own Research Digest reading state (schema-v136): Save and
   // Dismiss are per person, so a member reads only their own rows. No PI arm:
@@ -407,10 +413,10 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   regulatory_items: byProject('regulatory_items', 'project_id', 'id', false),
   submission_events: byProject('submission_events', 'project_id', 'id', false),
   project_documents: byProject('project_documents', 'project_id', 'id', false),
-  // The one-line description (schema-v139) follows its project for direct
-  // reads and writes. A non-member reads it only through the project_directory
-  // view (HUB_VIEWS below).
-  project_blurbs: byProject('project_blurbs', 'project_id', 'project_id', false),
+  // The Browse listing (schema-v139: one-line description, hidden switch)
+  // follows its project for direct reads and writes. A non-member reads the
+  // description only through the project_directory view (HUB_VIEWS below).
+  project_listing: byProject('project_listing', 'project_id', 'project_id', false),
   project_publications: byProject('project_publications', 'project_id', ['project_id', 'publication_id'], false),
   project_state_log: byProject('project_state_log', 'project_id', 'id', false),
   file_activity_daily: byProject('file_activity_daily', 'project_id'),
@@ -495,7 +501,8 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
 // defines that is not listed, or whose columns differ.
 //
 //   project_directory (schema-v139): what a member who is NOT on a project may
-//     know about it: its name, one-line description and PI (Nick, 2026-10-13).
+//     know about it: its name, one-line description and PI, with the PI's
+//     photo (Nick, 2026-10-13).
 //     Read only by api/lib/project-join.ts, only for signed-in members.
 export const HUB_VIEWS = {
   project_directory: DIRECTORY_COLUMNS,
