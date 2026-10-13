@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Zap, X, Diamond } from 'lucide-react'
 import QuickAddTaskInput from './QuickAddTaskInput'
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
+import { useQuickAddContext } from '../hooks/useQuickAddContext'
 import { useCreateTask } from '../hooks/useMutations'
 import { useToast } from '../hooks/useToast'
 import { useAuth } from '../hooks/useAuth'
@@ -64,6 +65,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
   const [value, setValue] = useState('')
   const [isMilestoneDraft, setIsMilestoneDraft] = useState(false)
   const createTask = useCreateTask()
+  const quickAddCtx = useQuickAddContext()
   const { showSuccess, showInfo, showError } = useToast()
   const { user } = useAuth()
   const queryClient = useQueryClient()
@@ -106,7 +108,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
       return
     }
 
-    const parsed = parseQuickAddInput(value)
+    const parsed = parseQuickAddInput(value, quickAddCtx)
     if (!parsed.title.trim()) return
 
     createTask.mutate({
@@ -115,6 +117,8 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
       assignee: parsed.assigneeSlug ?? fallbackAssignee,
       ...(parsed.dueDate ? { due_date: parsed.dueDate } : {}),
       ...(parsed.projectSlug ? { project_id: parsed.projectSlug } : {}),
+      // "#project~product" sets the pair; a bare "#project" leaves product_id to the home rule.
+      ...(parsed.productId ? { product_id: parsed.productId } : {}),
       ...(parsed.priority ? { priority: PRIORITY_MAP[parsed.priority] ?? 'medium' } : {}),
       ...(isMilestoneDraft ? { kind: 'milestone' as const } : {}),
     }, {
@@ -124,7 +128,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
     setValue('')
     setIsMilestoneDraft(false)
     onClose()
-  }, [value, createTask, onClose, showSuccess, showInfo, showError, queryClient, fallbackAssignee, isMilestoneDraft])
+  }, [value, createTask, onClose, showSuccess, showInfo, showError, queryClient, fallbackAssignee, isMilestoneDraft, quickAddCtx])
 
   useEffect(() => {
     if (!isOpen) return
@@ -263,7 +267,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                 }}
               >
                 <TokenHint prefix="@name"   desc="assignee" color="var(--sk-t2)" />
-                <TokenHint prefix="#project" desc="project"  color="var(--sk-t2)" />
+                <TokenHint prefix="#project~product" desc="project"  color="var(--sk-t2)" />
                 <TokenHint prefix="p1-p3"   desc="priority" color="var(--job-stale)" />
                 <TokenHint prefix="Apr 15"  desc="due date" color="var(--sk-t2)" />
                 <div style={{ flex: 1 }} />

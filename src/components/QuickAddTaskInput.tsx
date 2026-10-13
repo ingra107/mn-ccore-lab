@@ -6,8 +6,10 @@
  *   - A read-only mirror div positioned behind it renders colored token spans
  */
 
-import { useRef, useCallback, useEffect } from 'react'
-import { parseQuickAddInput, type TokenType } from '../lib/parseQuickAdd'
+import { useRef, useCallback, useEffect, useState } from 'react'
+import { parseQuickAddInput, productSuggestions, productToken, type TokenType } from '../lib/parseQuickAdd'
+import { productLabel } from '../lib/products'
+import { useQuickAddContext } from '../hooks/useQuickAddContext'
 import { formatShortDate } from '../lib/dateUtils'
 import type { ParsedQuickAdd } from '../lib/parseQuickAdd'
 import { withAlpha } from '../lib/taskGrouping'
@@ -90,7 +92,7 @@ function ParsedPreview({ parsed }: { parsed: ParsedQuickAdd }) {
         <Chip label="due" value={formatShortDate(parsed.dueDate)} color="var(--sk-t2)" />
       )}
       {parsed.projectTitle && (
-        <Chip label="#" value={parsed.projectTitle} color="var(--sk-t2)" />
+        <Chip label="#" value={parsed.productName ? `${parsed.projectTitle} ~ ${parsed.productName}` : parsed.projectTitle} color="var(--sk-t2)" />
       )}
     </div>
   )
@@ -131,7 +133,31 @@ export default function QuickAddTaskInput({
     return () => window.cancelAnimationFrame(id)
   }, [autoFocus])
 
-  const parsed = parseQuickAddInput(value)
+  const ctx = useQuickAddContext()
+  const parsed = parseQuickAddInput(value, ctx)
+
+  // "#project~par" with the caret at its end: offer that project's products.
+  const [caret, setCaret] = useState(0)
+  const [focused, setFocused] = useState(false)
+  const [active, setActive] = useState(0)
+  const pending = /#([\w-]+)~([\w-]*)$/.exec(value.slice(0, caret))
+  const suggestions = focused && pending ? productSuggestions(pending[1], pending[2], ctx) : []
+  const open = suggestions.length > 0
+  const activeIdx = Math.min(active, Math.max(0, suggestions.length - 1))
+
+  const pick = (i: number) => {
+    const p = suggestions[i]
+    if (!p || !pending) return
+    // Write the whole token plus a space, so the list closes behind the pick.
+    const head = value.slice(0, pending.index)
+    const tail = value.slice(caret)
+    const inserted = `#${pending[1]}~${productToken(p)} `
+    onChange(head + inserted + tail)
+    const next = head.length + inserted.length
+    setCaret(next)
+    setActive(0)
+    window.requestAnimationFrame(() => textareaRef.current?.setSelectionRange(next, next))
+  }
 
   const syncScroll = useCallback(() => {
     if (textareaRef.current && mirrorRef.current) {
@@ -152,7 +178,7 @@ export default function QuickAddTaskInput({
   }
 
   return (
-    <div>
+    <div style={{ position: 'relative' }}>
       <div
         style={{
           position: 'relative',
@@ -212,9 +238,20 @@ export default function QuickAddTaskInput({
           rows={1}
           autoFocus={autoFocus}
           spellCheck={false}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => { onChange(e.target.value); setCaret(e.target.selectionStart); setActive(0) }}
+          onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
           onScroll={syncScroll}
+          role="combobox"
+          aria-expanded={open}
+          aria-controls="quick-add-products"
+          aria-autocomplete="list"
+          aria-activedescendant={open ? `quick-add-product-${activeIdx}` : undefined}
           onKeyDown={(e) => {
+            if (open) {
+              if (e.key === 'ArrowDown') { e.preventDefault(); setActive((activeIdx + 1) % suggestions.length); return }
+              if (e.key === 'ArrowUp') { e.preventDefault(); setActive((activeIdx - 1 + suggestions.length) % suggestions.length); return }
+              if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); pick(activeIdx); return }
+            }
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault()
               onSubmit?.()
@@ -224,12 +261,14 @@ export default function QuickAddTaskInput({
             if (textareaRef.current?.parentElement) {
               textareaRef.current.parentElement.style.borderColor = withAlpha('var(--job-accent)', 50)
             }
+            setFocused(true)
             onFocusChange?.(true)
           }}
           onBlur={() => {
             if (textareaRef.current?.parentElement) {
               textareaRef.current.parentElement.style.borderColor = withAlpha('var(--sk-t1)', 10)
             }
+            setFocused(false)
             onFocusChange?.(false)
           }}
           className="quick-add-textarea"
@@ -247,6 +286,55 @@ export default function QuickAddTaskInput({
           }}
         />
       </div>
+
+      {open && (
+        <ul
+          id="quick-add-products"
+          role="listbox"
+          aria-label={`Products of ${pending![1]}`}
+          data-testid="quick-add-products"
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: '42px',
+            zIndex: 'var(--z-dropdown)',
+            margin: 0,
+            padding: '4px',
+            listStyle: 'none',
+            background: 'var(--cream)',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-menu)',
+          }}
+        >
+          {suggestions.map((p, i) => (
+            <li
+              key={p.id}
+              id={`quick-add-product-${i}`}
+              role="option"
+              aria-selected={i === activeIdx}
+              data-testid="quick-add-product"
+              // mousedown, not click: the textarea must not blur first.
+              onMouseDown={(e) => { e.preventDefault(); pick(i) }}
+              onMouseEnter={() => setActive(i)}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: '12px',
+                padding: '6px 10px',
+                fontSize: FONT_SIZE,
+                borderRadius: 'var(--radius-md)',
+                cursor: 'pointer',
+                color: 'var(--ink)',
+                background: i === activeIdx ? withAlpha('var(--sk-t1)', 8) : 'transparent',
+              }}
+            >
+              <span>{productLabel(p)}</span>
+              <span style={{ color: 'var(--slate)', opacity: 0.75 }}>{p.kind_label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <ParsedPreview parsed={parsed} />
     </div>

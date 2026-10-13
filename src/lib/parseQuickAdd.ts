@@ -4,6 +4,9 @@
  * Recognized tokens:
  *   @name     → assignee (fuzzy match against team slugs/names)
  *   #project  → project (match against project slugs/titles/categories)
+ *   #project~product → project plus one of its products ("#adhere~results").
+ *             Needs the live project and product lists (the context argument);
+ *             without them the "~product" part is read and dropped.
  *   p1/p2/p3  → priority level
  *   date expr → due date ("Apr 15", "tomorrow", "next Friday", "in 3 days")
  *
@@ -13,8 +16,17 @@
 import { directors, getAllMembers } from '../data/team'
 import { projects } from '../data/projects'
 import { localDateKey } from './dateUtils'
+import { productLabel, type ProductRow } from './products'
+import type { PairProject } from './projectPairs'
 
 // ── Types ────────────────────────────────────────────────────
+
+/** The live lists a "#project~product" token resolves against. */
+export interface QuickAddContext {
+  projects: readonly PairProject[]
+  /** Live products keyed by the project's proj_* id (the bulk product read). */
+  productsByProject: Record<string, ProductRow[]>
+}
 
 export type TokenType = 'assignee' | 'project' | 'priority' | 'date' | 'plain'
 
@@ -31,6 +43,9 @@ export interface ParsedQuickAdd {
   assigneeName: string | null
   projectSlug: string | null
   projectTitle: string | null
+  /** The product named by "#project~product"; null for a bare "#project". */
+  productId: string | null
+  productName: string | null
   priority: 1 | 2 | 3 | null
   dueDate: string | null // ISO YYYY-MM-DD
   tokens: TokenSpan[]
@@ -97,6 +112,67 @@ function resolveProject(token: string): ProjectEntry | null {
   return null
 }
 
+/** Letters and digits only, lower case: "Protocol paper" and "protocol-paper"
+ *  compare equal. */
+function squash(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+/** The live project a token names: slug, short name or title, exact first,
+ *  then a prefix of 3+ characters. */
+function resolveLiveProject(token: string, projects: readonly PairProject[]): PairProject | null {
+  const t = squash(token)
+  if (!t) return null
+  const keys = (p: PairProject) => [p.slug, p.short_name ?? '', p.title].map(squash).filter(Boolean)
+  const exact = projects.find((p) => keys(p).includes(t))
+  if (exact) return exact
+  if (t.length < 3) return null
+  return projects.find((p) => keys(p).some((k) => k.startsWith(t))) ?? null
+}
+
+/** The project a "#token" names. Without the live lists this is the static
+ *  lookup alone, as it always was. With them, a static hit that is not a live
+ *  project is dropped (a task cannot file on it) and the live list is tried. */
+function resolveProjectIn(token: string, ctx?: QuickAddContext): { slug: string; title: string; live: PairProject | null } | null {
+  const fromStatic = resolveProject(token)
+  if (!ctx) return fromStatic ? { ...fromStatic, live: null } : null
+  const liveStatic = fromStatic ? ctx.projects.find((p) => p.slug === fromStatic.slug) : undefined
+  if (fromStatic && liveStatic) return { ...fromStatic, live: liveStatic }
+  const live = resolveLiveProject(token, ctx.projects)
+  return live ? { slug: live.slug, title: live.title, live } : null
+}
+
+/** The product of a project a "~token" names: short name, title or kind
+ *  label; exact, then prefix, then 3+ characters inside. Products keep the
+ *  Worker's order (home first), so a tie goes to the earlier one. */
+export function resolveProduct(token: string, products: readonly ProductRow[]): ProductRow | null {
+  const t = squash(token)
+  if (!t) return null
+  const keys = (p: ProductRow) => [p.short_name ?? '', p.title ?? '', p.kind_label, p.kind].map(squash).filter(Boolean)
+  return (
+    products.find((p) => keys(p).includes(t)) ??
+    products.find((p) => keys(p).some((k) => k.startsWith(t))) ??
+    (t.length >= 3 ? products.find((p) => keys(p).some((k) => k.includes(t))) : undefined) ??
+    null
+  )
+}
+
+/** Products a "#project~partial" can still become, for the autocomplete. */
+export function productSuggestions(projectToken: string, partial: string, ctx: QuickAddContext): ProductRow[] {
+  const r = resolveProjectIn(projectToken, ctx)
+  if (!r?.live?.id) return []
+  const all = ctx.productsByProject[r.live.id] ?? []
+  const t = squash(partial)
+  if (!t) return [...all]
+  const keys = (p: ProductRow) => [p.short_name ?? '', p.title ?? '', p.kind_label, p.kind].map(squash).filter(Boolean)
+  return all.filter((p) => keys(p).some((k) => k.startsWith(t) || (t.length >= 3 && k.includes(t))))
+}
+
+/** The text a pick writes after the "~": the label as one token. */
+export function productToken(p: Pick<ProductRow, 'short_name' | 'title' | 'kind_label'>): string {
+  return productLabel(p).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
 // ── Date parsing ─────────────────────────────────────────────
 
 function parseDate(text: string): string | null {
@@ -149,13 +225,15 @@ function parseDate(text: string): string | null {
 
 // ── Main parser ──────────────────────────────────────────────
 
-export function parseQuickAddInput(input: string): ParsedQuickAdd {
+export function parseQuickAddInput(input: string, ctx?: QuickAddContext): ParsedQuickAdd {
   const empty: ParsedQuickAdd = {
     title: '',
     assigneeSlug: null,
     assigneeName: null,
     projectSlug: null,
     projectTitle: null,
+    productId: null,
+    productName: null,
     priority: null,
     dueDate: null,
     tokens: [],
@@ -180,7 +258,9 @@ export function parseQuickAddInput(input: string): ParsedQuickAdd {
   }
 
   scan(/@([\w]+)/g, 'assignee')
-  scan(/#([\w-]+)/g, 'project')
+  // "#project" or "#project~product". The "~" belongs to the token only when it
+  // follows a project name directly, so a "~" elsewhere stays in the title.
+  scan(/#([\w-]+)(?:~([\w-]*))?/g, 'project')
   scan(/\bp([123])\b/g, 'priority')
   scan(/\bnext\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi, 'date')
   scan(/\bin\s+\d+\s+days?\b/gi, 'date')
@@ -222,6 +302,8 @@ export function parseQuickAddInput(input: string): ParsedQuickAdd {
   let assigneeName: string | null = null
   let projectSlug: string | null = null
   let projectTitle: string | null = null
+  let productId: string | null = null
+  let productName: string | null = null
   let priority: 1 | 2 | 3 | null = null
   let dueDate: string | null = null
 
@@ -235,10 +317,21 @@ export function parseQuickAddInput(input: string): ParsedQuickAdd {
         span.type = 'plain'
       }
     } else if (span.type === 'project') {
-      const r = resolveProject(span.text.slice(1))
+      const [projectToken, productToken] = span.text.slice(1).split('~')
+      const r = resolveProjectIn(projectToken, ctx)
       if (r) {
         projectSlug = r.slug
         projectTitle = r.title
+        productId = null
+        productName = null
+        // "~product" names one of this project's live products. No match
+        // leaves the product to the project's home rule.
+        const prods = r.live?.id ? ctx?.productsByProject[r.live.id] ?? [] : []
+        const prod = productToken ? resolveProduct(productToken, prods) : null
+        if (prod) {
+          productId = prod.id
+          productName = productLabel(prod)
+        }
       } else {
         span.type = 'plain'
       }
@@ -261,5 +354,5 @@ export function parseQuickAddInput(input: string): ParsedQuickAdd {
     .replace(/\s+/g, ' ')
     .trim()
 
-  return { title, assigneeSlug, assigneeName, projectSlug, projectTitle, priority, dueDate, tokens: spans }
+  return { title, assigneeSlug, assigneeName, projectSlug, projectTitle, productId, productName, priority, dueDate, tokens: spans }
 }
