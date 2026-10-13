@@ -21,6 +21,7 @@ import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { ICON_PROPS } from '../../lib/iconProps'
 import SectionHead from '../../components/ui/SectionHead'
+import ChartCard from '../../components/ui/ChartCard'
 
 interface DashboardData {
   week: string
@@ -321,6 +322,9 @@ export default function InsightsPage() {
 }
 
 // The shared section head (ui/SectionHead): bold label, dim count, gray fade.
+// ChartCard hides a zero count, like SectionHeader does.
+function cnt(n: number): number | undefined { return n > 0 ? n : undefined }
+
 function SectionHeader({ label, count }: { label: string; count?: number }) {
   return <SectionHead title={label} count={count !== undefined && count > 0 ? count : undefined} />
 }
@@ -342,8 +346,7 @@ function WorkloadHeatmap({ rows }: { rows: DashboardData['workloadHeatmap'] }) {
   const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
   return (
-    <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--sk-panel)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader label="Workload heatmap" count={sorted.length} />
+    <ChartCard title="Workload heatmap" count={cnt(sorted.length)}>
       {sorted.length === 0 ? (
         <EmptyState compact icon={<EmptyStateArt variant="tasks" title="No tasks" />} title="No tasks scheduled for the current week" />
       ) : (
@@ -409,7 +412,7 @@ function WorkloadHeatmap({ rows }: { rows: DashboardData['workloadHeatmap'] }) {
           </div>
         </>
       )}
-    </div>
+    </ChartCard>
   )
 }
 
@@ -426,8 +429,7 @@ function TasksPerPersonBars({ distribution }: { distribution: { slug: string; co
   }
   const max = Math.max(1, ...sorted.map((r) => r.count))
   return (
-    <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--sk-panel)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader label="Open tasks per person" count={sorted.length} />
+    <ChartCard title="Open tasks per person" count={cnt(sorted.length)}>
       <div className="flex flex-col" style={{ gap: 4, marginTop: 6 }}>
         {sorted.map((r) => {
           const person = getPersonInfo(r.slug)
@@ -462,7 +464,7 @@ function TasksPerPersonBars({ distribution }: { distribution: { slug: string; co
           )
         })}
       </div>
-    </div>
+    </ChartCard>
   )
 }
 
@@ -489,8 +491,7 @@ function ConnectionsPanel() {
   }
 
   return (
-    <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--sk-panel)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader label="Cross-project connections" count={connections.length} />
+    <ChartCard title="Cross-project connections" count={cnt(connections.length)}>
       {isLoading ? (
         <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.85, margin: 0 }}>Analyzing connections…</p>
       ) : top5.length === 0 ? (
@@ -566,7 +567,7 @@ function ConnectionsPanel() {
           })}
         </div>
       )}
-    </div>
+    </ChartCard>
   )
 }
 
@@ -590,8 +591,7 @@ function PipelineFunnel({ rows }: { rows: DashboardData['pipelineFunnel'] }) {
   }, [rows])
   const max = Math.max(1, ...rows.map((r) => r.count))
   return (
-    <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--sk-panel)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader label="Pipeline funnel" />
+    <ChartCard title="Pipeline funnel">
       {rows.length === 0 && (
         <p style={{ fontSize: 11, color: 'var(--slate)', margin: 0 }}>No products on active projects yet.</p>
       )}
@@ -632,7 +632,7 @@ function PipelineFunnel({ rows }: { rows: DashboardData['pipelineFunnel'] }) {
           )
         })}
       </div>
-    </div>
+    </ChartCard>
   )
 }
 
@@ -646,8 +646,7 @@ function VelocityScatter({ rows }: { rows: DashboardData['velocityScatter'] }) {
   const padB = 28
 
   return (
-    <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--sk-panel)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader label="Project velocity outliers" count={rows.filter(r => r.isOutlier).length} />
+    <ChartCard title="Project velocity outliers" count={cnt(rows.filter(r => r.isOutlier).length)}>
       <p style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85, margin: '0 0 12px' }}>
         x = days since last update · y = open task count · maroon = outlier (&gt;30d OR &gt;10 tasks)
       </p>
@@ -706,7 +705,7 @@ function VelocityScatter({ rows }: { rows: DashboardData['velocityScatter'] }) {
           </tbody>
         </table>
       </details>
-    </div>
+    </ChartCard>
   )
 }
 

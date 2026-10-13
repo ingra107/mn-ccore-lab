@@ -1,4 +1,4 @@
-import SectionHead from '../../components/ui/SectionHead'
+import ChartCard from '../../components/ui/ChartCard'
 import { FIELD_LABEL_STYLE } from '../../components/ui/labelStyle'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -413,9 +413,7 @@ export default function PIAnalytics() {
       {/* Two-column: Commitment Scorecard + Response Time */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Commitment Scorecard */}
-        <div>
-          <SectionHead title="Commitment scorecard" />
-          <div className="sk-mat rounded-xl p-6">
+        <ChartCard title="Commitment scorecard">
             <div className="flex items-center gap-8 flex-wrap">
               <div className="relative flex-shrink-0">
                 <CompletionRing rate={commitRate} size={120} />
@@ -452,13 +450,10 @@ export default function PIAnalytics() {
                 />
               </div>
             </div>
-          </div>
-        </div>
+        </ChartCard>
 
         {/* Response Time Metrics */}
-        <div>
-          <SectionHead title="Days to done, team tasks" count="Task creation to completion" />
-          <div className="sk-mat rounded-xl p-6">
+        <ChartCard title="Days to done, team tasks" count="Task creation to completion">
             <div className="flex items-center gap-6 mb-4">
               <div>
                 <div className="flex items-center gap-2">
@@ -528,16 +523,13 @@ export default function PIAnalytics() {
             >
               Based on {data?.responseMetrics.total_tasks || 0} completed team tasks in the last year
             </p>
-          </div>
-        </div>
+        </ChartCard>
       </div>
 
       {/* Two-column: Team Engagement + Mentee Velocity */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Team Engagement Score */}
-        <div>
-          <SectionHead title="Team engagement" count="Last 30 days" />
-          <div className="sk-mat rounded-xl p-5">
+        <ChartCard title="Team engagement" count="Last 30 days">
             {data && data.teamEngagement.length > 0 ? (
               <div className="flex flex-col gap-2.5">
                 {data.teamEngagement.map((member) => {
@@ -605,13 +597,10 @@ export default function PIAnalytics() {
                 No activity data for the last 30 days
               </p>
             )}
-          </div>
-        </div>
+        </ChartCard>
 
         {/* Mentee Publication Velocity */}
-        <div>
-          <SectionHead title="Trainee publication velocity" />
-          <div className="sk-mat rounded-xl p-5">
+        <ChartCard title="Trainee publication velocity">
             {data && data.menteeVelocity.length > 0 ? (
               <table className="w-full">
                 <thead>
@@ -685,16 +674,13 @@ export default function PIAnalytics() {
                 No trainees/fellows in the system
               </p>
             )}
-          </div>
-        </div>
+        </ChartCard>
       </div>
 
       {/* Lab Output Dashboard — Two columns: Pubs per Year + Grants/Projects */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Publications per Year */}
-        <div>
-          <SectionHead title="Publications per year" />
-          <div className="sk-mat rounded-xl p-5">
+        <ChartCard title="Publications per year">
             {data && data.pubsByQuarter.length > 0 ? (
               <PubsBarChart
                 data={data.pubsByQuarter.map(q => ({
@@ -707,13 +693,10 @@ export default function PIAnalytics() {
                 No publication data
               </p>
             )}
-          </div>
-        </div>
+        </ChartCard>
 
         {/* Grant Pipeline + Projects by Stage */}
-        <div>
-          <SectionHead title="Grant pipeline & projects" />
-          <div className="sk-mat rounded-xl p-5">
+        <ChartCard title="Grant pipeline & projects">
             {/* Grants: pending (proposed) vs active (awarded) — P6-B8 */}
             <div className="mb-5">
               <h4 style={FIELD_LABEL_STYLE}>Grants: pending vs active</h4>
@@ -738,14 +721,11 @@ export default function PIAnalytics() {
                 />
               </div>
             )}
-          </div>
-        </div>
+        </ChartCard>
       </div>
 
       {/* Leadership Insights */}
-      <div className="mt-6">
-        <SectionHead title="Leadership insights" />
-        <div className="sk-mat rounded-xl p-5">
+      <ChartCard title="Leadership insights" className="mt-6">
           {insights.length > 0 ? (
             <div className="flex flex-col gap-3">
               {insights.map((insight, i) => {
@@ -796,8 +776,7 @@ export default function PIAnalytics() {
               Not enough data to generate insights yet
             </p>
           )}
-        </div>
-      </div>
+      </ChartCard>
 
       </QueryState>
     </PageContainer>

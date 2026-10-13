@@ -19,6 +19,7 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import { isTaskDone } from '../../lib/taskGrouping'
 import DueLabel from '../../components/DueLabel'
 import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
+import ChartCard from '../../components/ui/ChartCard'
 import { useAllProjectProducts } from '../../hooks/useProjectProducts'
 import { ladderRampStep, productStageCounts, stageCountLabel } from '../../lib/projectStage'
 import { taskShortLabel } from '../../lib/displayNames'
@@ -461,12 +462,9 @@ export default function AnalyticsPage() {
       )}
 
       {/* Lab-wide Activity Heatmap — above the fold */}
-      <div className="mt-4 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-        <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>
-          Lab Activity
-        </h3>
+      <ChartCard title="Lab activity" className="mt-4">
         <ActivityHeatmap days={range === '7d' ? 30 : range === '4w' ? 90 : range === '3m' ? 180 : 365} />
-      </div>
+      </ChartCard>
 
       {/* Second row: summary hero stats — DD-6 display variant */}
       <StatRow
@@ -479,8 +477,7 @@ export default function AnalyticsPage() {
       />
 
       {/* Task Velocity — completions per week, last 8 weeks */}
-      <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-        <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>Task Velocity</h3>
+      <ChartCard title="Task velocity" count="Completed / created, 8 weeks" className="mt-6" dense>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={velocityWeeks} barCategoryGap="20%">
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
@@ -500,21 +497,13 @@ export default function AnalyticsPage() {
             <Bar dataKey="created" fill="color-mix(in srgb, var(--job-accent) 45%, var(--sk-t3))" radius={[4, 4, 0, 0]} name="Created" opacity={0.6} />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </ChartCard>
 
       {/* Team Performance */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Completion by person — PI-only for psychological safety (SDT research) */}
         {isPi ? (
-          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-            <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>
-                Team Task Overview
-              </h3>
-              <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--slate)', backgroundColor: 'var(--border-subtle)' }}>
-                PI only
-              </span>
-            </div>
+          <ChartCard title="Team task overview" count="PI only">
             <div className="flex flex-col gap-3">
               {completionByPerson.map(({ slug, total, done, overdue, rate }) => {
                 const person = getPersonInfo(slug)
@@ -545,12 +534,9 @@ export default function AnalyticsPage() {
                 <p className="text-center py-6 text-sm" style={{ color: 'var(--muted)' }}>No task data yet</p>
               )}
             </div>
-          </div>
+          </ChartCard>
         ) : (
-          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-            <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>
-              Lab Progress This Week
-            </h3>
+          <ChartCard title="Lab progress this week">
             <div className="text-center py-6">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <span className="text-3xl font-bold" style={{ color: 'var(--job-accent)' }}>
@@ -568,14 +554,11 @@ export default function AnalyticsPage() {
                 Individual performance metrics are visible to PIs only
               </p>
             </div>
-          </div>
+          </ChartCard>
         )}
 
         {/* Projects by stage */}
-        <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>
-            Product Pipeline Distribution
-          </h3>
+        <ChartCard title="Product pipeline" count="By stage">
           {productsByStage.length === 0 && (
             <p className="text-xs" style={{ color: 'var(--slate)' }}>No products yet.</p>
           )}
@@ -614,14 +597,13 @@ export default function AnalyticsPage() {
               )
             })}
           </div>
-        </div>
+        </ChartCard>
       </div>
 
       {/* Task Age Distribution + Workload */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Task age histogram */}
-        <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>Task Age Distribution</h3>
+        <ChartCard title="Task age" count="Open tasks, by weeks old" dense>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={taskAgeBuckets} barCategoryGap="20%">
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
@@ -648,11 +630,10 @@ export default function AnalyticsPage() {
           <p className="text-[10px] mt-3" style={{ color: 'var(--muted)' }}>
             {tasks.filter(t => !t.completed && t.created_at && (new Date().getTime() - parseDbUtc(t.created_at).getTime()) > 28 * 86400000).length} tasks older than 4 weeks
           </p>
-        </div>
+        </ChartCard>
 
         {/* Workload distribution */}
-        <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>Workload Distribution</h3>
+        <ChartCard title="Workload" count="Open tasks per person">
           {(() => {
             const active = tasks.filter(t => !t.completed)
             const byPerson = new Map<string, number>()
@@ -685,18 +666,12 @@ export default function AnalyticsPage() {
               </div>
             )
           })()}
-        </div>
+        </ChartCard>
       </div>
 
       {/* Cross-Project Resource Heatmap — PI only */}
       {isPi && workloadHeatmap.members.length > 0 && (
-        <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-          <div className="flex items-center gap-2 mb-4">
-            <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>Team Workload Forecast</h3>
-            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--slate)', backgroundColor: 'var(--border-subtle)' }}>
-              PI only
-            </span>
-          </div>
+        <ChartCard title="Team workload forecast" count="PI only" className="mt-6">
           <div style={{ display: 'grid', gridTemplateColumns: '120px repeat(4, 1fr)', gap: 2 }}>
             {/* Header row */}
             <div />
@@ -759,7 +734,7 @@ export default function AnalyticsPage() {
               <span className="text-[10px]" style={{ color: 'var(--slate)' }}>6+ tasks</span>
             </div>
           </div>
-        </div>
+        </ChartCard>
       )}
 
       </QueryState>
