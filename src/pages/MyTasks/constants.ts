@@ -85,7 +85,6 @@ export const MENTEE_SLUGS = new Set(researchTeam.map((m) => m.slug))
 
 // Move → popover: writes tasks.group_override (schema v50). All 5 groups
 // available because the override is independent of priority/source/project.
-// Syncs to brain.db so TODAY.md generation honors it the next morning.
 export const MOVE_OPTIONS: Array<{ key: GroupKey; label: string }> = [
   { key: 'deep',       label: '🎯 Deep work' },
   { key: 'priorities', label: '✅ Priorities' },
@@ -100,8 +99,7 @@ export const MOVE_OPTIONS: Array<{ key: GroupKey; label: string }> = [
 
 export function getGroupForTask(t: TaskRow, projectsByPid: Map<string, { category?: string | null; slug: string }>): GroupKey {
   // Hub-explicit override wins (schema v50). User clicked Move → on the
-  // /portal/my-tasks page; their choice trumps auto-derivation. Syncs to
-  // brain.db so TODAY.md generation honors it the next morning.
+  // /portal/my-tasks page; their choice trumps auto-derivation.
   if (t.group_override && (['deep', 'priorities', 'quick', 'pb', 'etl'] as const).includes(t.group_override)) {
     return t.group_override
   }

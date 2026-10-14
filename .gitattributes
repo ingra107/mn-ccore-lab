@@ -5,8 +5,9 @@
 # byte-identical on disk. See PB backlog #730.
 api/routes/hash_vectors.json text eol=lf
 
-# Same pin for the milestone-placement golden vectors, emitted LF by PB
-# scripts/today/gen_milestone_vectors.py into both repos; its --check compares bytes.
+# The milestone-placement golden vectors stay LF too. PB's generator compared
+# bytes until it retired (2026-10-11); the file is Hub-owned now, kept LF so
+# its history does not churn.
 src/lib/__tests__/milestone_vectors.json text eol=lf
 
 # JS/TS modules stay LF in every working copy (#8877). Under core.autocrlf=true
