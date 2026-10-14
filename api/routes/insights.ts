@@ -286,8 +286,10 @@ interface DashboardResponse {
   /** Live products of active projects, by kind and stage (contract phase
    *  step 1: a funnel counts products, never projects). */
   pipelineFunnel: ProductStageCount[]
-  velocityScatter: { slug: string; title: string; daysSinceUpdate: number; openTasks: number; isOutlier: boolean }[]
-  stalledRegistry: { slug: string; title: string; daysIdle: number; openTasks: number }[]
+  /** daysSinceUpdate / daysIdle are null for a project that has never had an
+   *  update (it used to be a 999 sentinel, printed as "999d idle"; G8-05). */
+  velocityScatter: { slug: string; title: string; daysSinceUpdate: number | null; openTasks: number; isOutlier: boolean }[]
+  stalledRegistry: { slug: string; title: string; daysIdle: number | null; openTasks: number }[]
 }
 
 function isoWeek(d: Date): string {
@@ -478,15 +480,19 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
   const anchorMs = isHistorical ? weekEndDate!.getTime() : Date.now()
   const velocityScatter = (scatterRes.results ?? []).map((r) => {
     const ms = r.last_update ? new Date(r.last_update).getTime() : 0
-    const daysSinceUpdate = ms === 0 ? 999 : Math.max(0, Math.floor((anchorMs - ms) / 86400000))
-    const isOutlier = daysSinceUpdate > SCATTER_OUTLIER_DAYS || r.open_tasks > SCATTER_OUTLIER_TASKS
+    // Never updated = null, not a number: no consumer can print or plot it as
+    // days (the old 999 sentinel showed as "999d idle" and x=999; G8-05).
+    const daysSinceUpdate = ms === 0 ? null : Math.max(0, Math.floor((anchorMs - ms) / 86400000))
+    const isOutlier = daysSinceUpdate === null || daysSinceUpdate > SCATTER_OUTLIER_DAYS || r.open_tasks > SCATTER_OUTLIER_TASKS
     return { slug: r.slug, title: r.title, daysSinceUpdate, openTasks: r.open_tasks, isOutlier }
   })
 
   const stalledRegistry = velocityScatter
-    .filter((p) => p.daysSinceUpdate >= STALL_THRESHOLD_DAYS)
+    .filter((p) => p.daysSinceUpdate === null || p.daysSinceUpdate >= STALL_THRESHOLD_DAYS)
     .map((p) => ({ slug: p.slug, title: p.title, daysIdle: p.daysSinceUpdate, openTasks: p.openTasks }))
-    .sort((a, b) => b.daysIdle - a.daysIdle)
+    // Longest idle first; never-updated projects after them (a count of days
+    // says more than "no updates yet").
+    .sort((a, b) => (b.daysIdle ?? -1) - (a.daysIdle ?? -1))
 
   // 9. INS-05: 8-week trailing sparklines.
   // Anchor = end of requested week (or today). Compute one offset per week:
