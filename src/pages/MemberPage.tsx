@@ -207,11 +207,12 @@ export default function MemberPage() {
     showUndo(`Removed "${t.tag}"`, () => addExpertiseMut.mutate({ tag: t.tag, source: t.source, confidence: t.confidence }))
   }
   const { data: allCommitments = [] } = useCommitments(slug)
-  // Live funded awards and trainees render on the PUBLIC /team/:slug page only;
-  // the portal member page is the working view and leaves them out (both gates
-  // and this comment's earlier wording, "for a signed-in member, their
-  // applications", date from 870d6872; the gate is what shipped). Rows are
-  // matched by PI, so only a PI's page ever shows a Funding section.
+  // Funding and Trainees render on the PUBLIC /team/:slug page only; the portal
+  // member page leaves them out (the !isPortalRoute gates, 870d6872). On that
+  // public page a signed-out visitor gets live funded awards, and a signed-in
+  // member also gets the PI's applications (/api/grants answers anonymous
+  // callers with funded awards only). Rows are matched by PI, so only a PI's
+  // page ever shows a Funding section.
   const { data: liveGrants = [] } = usePublicGrants()
   const grants = slug && !isPortalRoute ? realGrants(grantsForPi(liveGrants, slug)) : []
   // A director's page lists their trainees, built live from data/mentees.ts.
