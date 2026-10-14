@@ -9,6 +9,7 @@ import type { ContextMenuState } from '../../hooks/useContextMenu'
 import { STATUS_CONFIG, PRIORITY_CONFIG } from '../../lib/taskConstants'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { viewportBottom } from '../../lib/viewportBottom'
 
 // ── Constants ──────────────────────────────────────────────────
 
@@ -223,9 +224,13 @@ export default function TaskContextMenu({
   useEffect(() => {
     if (!state.isOpen || !menuRef.current) return
 
-    const rect = menuRef.current.getBoundingClientRect()
+    // offsetWidth/Height, not getBoundingClientRect: the open animation starts
+    // at scale(0.95), so the rect read here was 5% short and the clamp let the
+    // menu run 11px off a phone screen (overnight 2026-10-14). The bottom limit
+    // is the tab bar's top on a phone, so the last item never sits under it.
+    const rect = { width: menuRef.current.offsetWidth, height: menuRef.current.offsetHeight }
     const vw = window.innerWidth
-    const vh = window.innerHeight
+    const vh = viewportBottom()
     let { x, y } = state.position
 
     if (x + rect.width > vw - 8) x = vw - rect.width - 8
