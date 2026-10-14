@@ -30,8 +30,24 @@ describe('countPublications', () => {
 describe('memberPublications', () => {
   const nick = { slug: 'nick-ingraham', authorName: 'Ingraham NE' }
 
-  it('matches by slug', () => {
-    expect(isMemberPublication(pub({ authorSlugs: ['nick-ingraham'], authors: 'X Y' }), nick)).toBe(true)
+  it('matches by slug when the byline names the surname in a form the matcher cannot parse', () => {
+    expect(isMemberPublication(pub({ authorSlugs: ['nick-ingraham'], authors: 'Doe J, Ingraham N' }), nick)).toBe(true)
+    expect(isMemberPublication(pub({ authorSlugs: ['nick-ingraham'], authors: 'Doe, J., Ingraham, N.' }), nick)).toBe(true)
+  })
+
+  it('keeps a slug credit on a group-author byline', () => {
+    expect(isMemberPublication(pub({ authorSlugs: ['nick-ingraham'], authors: 'Doe J, Roe K, COVID-OUT Study Team.' }), nick)).toBe(true)
+  })
+
+  it('drops a slug credit the byline never supports', () => {
+    // D1 credited two staff with the CCI-ARDS paper; the byline has neither.
+    const casey = { slug: 'casey-eddington', authorName: 'Eddington C' }
+    const row = pub({ authorSlugs: ['casey-eddington'], authors: 'Michael Kalinoski, Nathan Mesfin, Nicholas E Ingraham' })
+    expect(isMemberPublication(row, casey)).toBe(false)
+  })
+
+  it('keeps a slug credit when there is no byline to check', () => {
+    expect(isMemberPublication(pub({ authorSlugs: ['nick-ingraham'], authors: '' }), nick)).toBe(true)
   })
 
   it('matches a co-authored row that carries only the other author slug, by byline name', () => {
@@ -41,7 +57,7 @@ describe('memberPublications', () => {
   })
 
   it('accepts a legacy comma-string authorSlugs', () => {
-    const legacy = { ...pub({ authors: 'X Y' }), authorSlugs: 'nate-mesfin, nick-ingraham' } as unknown as Publication
+    const legacy = { ...pub({ authors: 'Mesfin N, Ingraham N' }), authorSlugs: 'nate-mesfin, nick-ingraham' } as unknown as Publication
     expect(isMemberPublication(legacy, nick)).toBe(true)
   })
 
@@ -89,6 +105,17 @@ describe('status literals live in publicationCounts only', () => {
     const literal = /(===|!==)\s*['"](Published|In Review|In Preparation)['"]/
     const offenders = Object.entries(sources)
       .filter(([, text]) => literal.test(text))
+      .map(([path]) => path)
+    expect(offenders).toEqual([])
+  })
+
+  it('renders every paper row through PubRow', () => {
+    // Nick's Wave 2 pick (2026-10-13): one card for every public paper. A
+    // hand-rolled `pub-row` link to a paper loses the faces and status PubRow
+    // carries (Home Recent and the detail page's Related list both did).
+    const handRolled = /\/publications\/\$\{[^\n]*["'`]pub-row["'` ]|["'`]pub-row["'` ][^\n]*\/publications\/\$\{/
+    const offenders = Object.entries(sources)
+      .filter(([path, text]) => !path.endsWith('/components/public/PubRow.tsx') && handRolled.test(text))
       .map(([path]) => path)
     expect(offenders).toEqual([])
   })

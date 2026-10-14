@@ -112,10 +112,19 @@ function normaliseAuthor(s: string): string {
  * two styles side by side:
  *   - PubMed "Ingraham NE": the whole name must match. A substring test lets
  *     "Collins C" match "Collins CA", a different author.
- *   - full name "Nicholas E. Ingraham": the surname ends the segment and a
- *     given name starts with the first initial. Matching only the PubMed form
- *     left most lab first authors unmatched ("19 with a lab first author" of
- *     579; G12-6, 2026-10-14).
+ *   - full name "Nicholas E. Ingraham": the surname ends the segment and the
+ *     given names' initials agree with the PubMed initials. Matching only the
+ *     PubMed form left most lab first authors unmatched ("19 with a lab first
+ *     author" of 579; G12-6, 2026-10-14).
+ *
+ * "Agree" means no initial contradicts another, so a namesake whose middle
+ * initial differs stays out ("David X. Wacker" is not "Wacker DA"). One
+ * initials run must start the other, either side may leave the middle off
+ * ("Nicholas Ingraham" for "Ingraham NE", "Kendall R. McEachron" for
+ * "McEachron K"), or the PubMed initials may follow extra leading given names
+ * ("A. Claire Collins" for "Collins C"). A stranger with the same surname and
+ * no contradicting initial cannot be told apart from the byline alone, in
+ * either form.
  */
 export function segmentNamesAuthor(segment: string, authorName: string): boolean {
   const seg = normaliseAuthor(segment)
@@ -125,12 +134,20 @@ export function segmentNamesAuthor(segment: string, authorName: string): boolean
   const parts = want.split(' ')
   if (parts.length < 2) return false
   const surname = parts.slice(0, -1).join(' ').toLowerCase()
-  const firstInitial = parts[parts.length - 1].charAt(0).toLowerCase()
+  const wantInitials = parts[parts.length - 1].toLowerCase()
   const words = seg.split(' ')
   const n = parts.length - 1
   if (words.length <= n) return false
   if (words.slice(-n).join(' ').toLowerCase() !== surname) return false
-  return words.slice(0, -n).some((w) => w.charAt(0).toLowerCase() === firstInitial)
+  const segInitials = words.slice(0, -n).map(givenInitials).join('')
+  if (!segInitials) return false
+  return segInitials.startsWith(wantInitials) || wantInitials.startsWith(segInitials) || segInitials.endsWith(wantInitials)
+}
+
+/** A given-name word's initials: "Nicholas" -> "n"; an initials run left by
+ *  the punctuation strip ("J.G." -> "JG") -> "jg". */
+function givenInitials(word: string): string {
+  return /^\p{Lu}{1,3}$/u.test(word) ? word.toLowerCase() : word.charAt(0).toLowerCase()
 }
 
 /** True when the byline lists `authorName` (either byline style). */
@@ -149,9 +166,26 @@ export function isMemberPublication(
   const slugs = Array.isArray(raw)
     ? raw.map((s) => String(s).trim().toLowerCase())
     : typeof raw === 'string' ? raw.split(',').map((s) => s.trim().toLowerCase()) : []
-  if (slug && slugs.includes(slug)) return true
   if (member.authorName && bylineHasAuthor(pub.authors, member.authorName)) return true
-  return false
+  if (!slug || !slugs.includes(slug)) return false
+  // A stored slug is a claim; the byline is the record (Rule 89). The slug
+  // still credits a byline the matcher cannot parse ("Safadi, S.", "Ingraham
+  // N") and a group author ("COVID-OUT Study Team"), but not a byline that
+  // never names the member and has no group: D1 credits two staff with a CCI
+  // paper they did not write (review of ov14/h10-public, 2026-10-14).
+  if (!member.authorName || !pub.authors?.trim()) return true
+  return bylineHasSurname(pub.authors, member.authorName) || GROUP_AUTHOR.test(pub.authors)
+}
+
+/** A consortium or study-group byline entry, whose members are not listed. */
+const GROUP_AUTHOR = /\b(study team|study group|consortium|investigators|collaborative|network|working group)\b/i
+
+/** True when the byline carries the surname of `authorName` as whole words. */
+function bylineHasSurname(authors: string, authorName: string): boolean {
+  const parts = normaliseAuthor(authorName).toLowerCase().split(' ')
+  const surname = (parts.length > 1 ? parts.slice(0, -1) : parts).join(' ')
+  const byline = ` ${normaliseAuthor(authors.replace(/[,;]/g, ' ')).toLowerCase()} `
+  return byline.includes(` ${surname} `)
 }
 
 export function memberPublications<T extends Pick<Publication, 'authors' | 'authorSlugs'>>(

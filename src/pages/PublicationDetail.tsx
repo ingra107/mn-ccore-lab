@@ -11,6 +11,7 @@ import { SkeletonBar } from '../components/LoadingSkeleton'
 import { PATHS } from '../constants/paths'
 import { QueryErrorNote } from '../components/QueryErrorNote'
 import { SecHead } from '../components/public/PublicParts'
+import PubRow from '../components/public/PubRow'
 import type { Publication } from '../data/types'
 import { topicLabel } from '../lib/topics'
 import { RESEARCH_AREAS, inArea } from '../lib/researchAreas'
@@ -186,15 +187,7 @@ function RelatedPublicationsSection({ pub, allPubs }: { pub: Publication; allPub
     <section>
       <SecHead title="Related papers" count={areas.map((a) => a.label).join(', ')} />
       <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
-        {related.map((p) => (
-          <Link key={p.id} to={`/publications/${encodeURIComponent(p.id)}`} className="pub-row">
-            <span className="pub-yr">{p.year}</span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span className="pub-rt" style={{ fontSize: 16 }}>{p.title}</span>
-              {p.journal && <span className="pub-rj">{p.journal}</span>}
-            </span>
-          </Link>
-        ))}
+        {related.map((p) => <PubRow key={p.id} pub={p} />)}
       </div>
     </section>
   )

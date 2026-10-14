@@ -70,4 +70,15 @@ describe('segmentNamesAuthor', () => {
     expect(segmentNamesAuthor('Nathan Mesfinson', 'Mesfin N')).toBe(false)
     expect(segmentNamesAuthor('Mesfin', 'Mesfin N')).toBe(false)
   })
+
+  it('keeps out a namesake whose initials contradict the PubMed ones', () => {
+    expect(segmentNamesAuthor('David X. Wacker', 'Wacker DA')).toBe(false)
+    expect(segmentNamesAuthor('Daniel E. Wacker', 'Wacker DA')).toBe(false)
+    expect(segmentNamesAuthor('David A. Wacker', 'Wacker DA')).toBe(true)
+    expect(segmentNamesAuthor('David Wacker', 'Wacker DA')).toBe(true)
+    expect(segmentNamesAuthor('J.G. Chipman', 'Chipman JG')).toBe(true)
+    expect(segmentNamesAuthor('J. Q. Chipman', 'Chipman JG')).toBe(false)
+    expect(segmentNamesAuthor('Kendall R. McEachron', 'McEachron K')).toBe(true)
+    expect(segmentNamesAuthor('A. Claire Collins', 'Collins C')).toBe(true)
+  })
 })

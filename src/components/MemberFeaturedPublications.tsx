@@ -22,8 +22,8 @@
  * `featured` flag, so showing it here would put picks on the page that the
  * member never made, and any "save" against it could not persist.
  *
- * Renders through PubRow, the one public paper card (Nick, Wave 2 2026-10-13/14:
- * "Every public paper uses the newer pub-row ... with author faces"). The
+ * Renders through PubRow, the one public paper card (Nick's Wave 2 pick on
+ * 2026-10-13, "Published by default, one card"; source cited in PubRow). The
  * faces stay on here too, the member's own included: principle 11, one card
  * looks the same on every page.
  */

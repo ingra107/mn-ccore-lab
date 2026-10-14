@@ -111,13 +111,7 @@ export default function Home() {
         <>
           <SecHead title="Recent" count={`newest of ${facts.papers ?? ''} papers`} />
           <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
-            {recent.map((p) => (
-              <Link key={p.id} to={`/publications/${p.id}`} className="pub-row pub-rrow">
-                <span className="pub-yr" style={{ width: 40 }}>{p.year}</span>
-                <span className="pub-rt">{p.title}</span>
-                <span className="pub-meta">{p.journal}</span>
-              </Link>
-            ))}
+            {recent.map((p) => <PubRow key={p.id} pub={p} />)}
           </div>
         </>
       )}
