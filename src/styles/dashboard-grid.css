@@ -281,14 +281,36 @@
   border-radius: var(--radius-md, 6px);
   color: var(--slate, #64748b);
   opacity: 0;
+  /* Hidden means untouchable: no pointer events until revealed, so an unseen
+     handle never eats a tap on the card's top-left corner (G8-01 class). */
+  pointer-events: none;
   cursor: grab;
   transition: opacity 120ms ease, background 120ms ease;
   z-index: 2;
 }
 
 .dashboard-grid-item:hover .rgl-drag-handle,
-.dashboard-grid-item:focus-within .rgl-drag-handle {
+.dashboard-grid-item:focus-within .rgl-drag-handle,
+.rgl-drag-handle:focus-visible {
   opacity: 1;
+  pointer-events: auto;
+}
+
+/* Reorder on touch: there is no hover, so Customize is the reorder mode. While
+   it is open every handle is shown and live, and the handle owns touch-drag
+   (touch-action: none) so a finger on it drags the card instead of scrolling.
+   Outside Customize a hidden handle takes no taps (G8-01 class). */
+[data-customizing] .rgl-drag-handle {
+  opacity: 1;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+@media (hover: none) {
+  [data-customizing] .rgl-drag-handle {
+    width: 32px;
+    height: 32px;
+  }
 }
 
 .rgl-drag-handle:hover {
