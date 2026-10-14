@@ -12,6 +12,9 @@ import { useAuth } from '../../hooks/useAuth'
 import type { InsightsDashboardData } from '../../hooks/useInsightsDashboard'
 
 const COLS = 'minmax(220px, 3fr) 90px 90px 140px 130px'
+// Progressive disclosure (principle 5, G8-05): the longest-idle few, the rest
+// one tap away. 68 rows inline made the Pipeline tab ~10,400px tall on a phone.
+const PREVIEW = 5
 
 /**
  * Stalled projects (no project update in 14 days), each with a follow-up date
@@ -59,6 +62,9 @@ export default function StalledRegistry({ rows }: { rows: InsightsDashboardData[
     },
   })
 
+  const [showAll, setShowAll] = useState(false)
+  const shown = showAll ? rows : rows.slice(0, PREVIEW)
+
   const dueFor = (slug: string) => pendingDates[slug] ?? defaultDueStr
   const setDueFor = (slug: string, value: string | null) => {
     if (!value) return
@@ -81,10 +87,10 @@ export default function StalledRegistry({ rows }: { rows: InsightsDashboardData[
               <span key={label} className="text-[11px] font-medium" style={{ color: 'var(--sk-t3)' }}>{label}</span>
             ))}
           </div>
-          {rows.map((r) => (
+          {shown.map((r) => (
             <div key={r.slug} className="hidden sm:grid items-center px-3 py-2 text-[13px]" style={{ gridTemplateColumns: COLS, borderBottom: '1px solid var(--sk-line)', color: 'var(--ink)' }}>
               <Link to={PATHS.project(r.slug)} className="truncate" style={{ color: 'var(--ink)', textDecoration: 'none' }}>{r.title}</Link>
-              <span className="font-semibold tabular-nums" style={{ color: 'var(--job-stale)' }}>{r.daysIdle}d</span>
+              <span className="font-semibold tabular-nums" style={{ color: 'var(--job-stale)' }}>{r.daysIdle === null ? 'no updates yet' : `${r.daysIdle}d`}</span>
               <span className="tabular-nums" style={{ color: 'var(--slate)' }}>{r.openTasks}</span>
               <InlineDatePicker value={dueFor(r.slug)} onChange={(d) => setDueFor(r.slug, d)} />
               <button
@@ -99,11 +105,11 @@ export default function StalledRegistry({ rows }: { rows: InsightsDashboardData[
             </div>
           ))}
           {/* Phone: one stacked card per project. */}
-          {rows.map((r) => (
+          {shown.map((r) => (
             <div key={`m-${r.slug}`} className="sm:hidden py-3" style={{ borderBottom: '1px solid var(--sk-line)' }}>
               <Link to={PATHS.project(r.slug)} className="text-[13px] font-medium" style={{ color: 'var(--ink)', textDecoration: 'none' }}>{r.title}</Link>
               <div className="flex items-center gap-3 mt-1 text-[11px]">
-                <span className="font-semibold" style={{ color: 'var(--job-stale)' }}>{r.daysIdle}d idle</span>
+                <span className="font-semibold" style={{ color: 'var(--job-stale)' }}>{r.daysIdle === null ? 'no updates yet' : `${r.daysIdle}d idle`}</span>
                 <span style={{ color: 'var(--slate)' }}>{r.openTasks} tasks</span>
               </div>
               <div className="flex items-center gap-2 mt-1.5">
@@ -120,6 +126,16 @@ export default function StalledRegistry({ rows }: { rows: InsightsDashboardData[
               </div>
             </div>
           ))}
+          {rows.length > PREVIEW && (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              aria-expanded={showAll}
+              className="tk-btn tk-sm mt-2"
+            >
+              {showAll ? 'Show fewer' : `Show all ${rows.length}`}
+            </button>
+          )}
         </div>
       )}
     </ChartCard>

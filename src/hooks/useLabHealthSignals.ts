@@ -15,7 +15,7 @@ import {
   useExpiringRegulatory,
   useMenteeMilestones,
 } from './useApiData'
-import { isOverdue } from '../lib/dateUtils'
+import { isOverdueWork } from '../lib/taskStats'
 import type { TaskRow, MenteeMilestoneRow } from '../lib/api'
 import { useAllProjectProducts } from './useProjectProducts'
 import { useGrantProducts } from './useGrantProducts'
@@ -58,7 +58,7 @@ export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthS
     // eslint-disable-next-line react-hooks/purity -- see comment above
     const now = Date.now()
 
-    const overdueCount = (tasks ?? []).filter((t: TaskRow) => !t.completed && isOverdue(t.due_date, t.status)).length
+    const overdueCount = (tasks ?? []).filter((t: TaskRow) => isOverdueWork(t)).length
 
     // Manuscript products of the viewer's live projects (the bulk read's
     // scope), on a rung the team still drives (revisions and accepted wait on

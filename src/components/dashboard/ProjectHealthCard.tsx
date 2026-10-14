@@ -202,7 +202,7 @@ function ProjectHealthCard() {
             <button
               type="button"
               onClick={() => setShowAll(!showAll)}
-              className="cursor-pointer flex items-center gap-1"
+              className="hit-area cursor-pointer flex items-center gap-1"
               style={{ background: 'none', border: 'none', padding: 0, fontSize: 'var(--label-size)', color: 'var(--sk-t3)' }}
             >
               {showAll ? <ChevronUp {...ICON_PROPS} size={12} /> : <ChevronDown {...ICON_PROPS} size={12} />}

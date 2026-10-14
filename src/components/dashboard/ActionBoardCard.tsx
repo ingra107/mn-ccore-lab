@@ -78,12 +78,16 @@ function ActionBoardCard() {
                     {/* C2 short_title, C13 TaskTitle ([Carried forward] chip) */}
                     <TaskTitle title={taskShortLabel(item)} fallback={item.description} />
                   </button>
+                  {/* Meeting marker (principle 14). On touch it is a cue, not a
+                      target: a 44px hit area here took taps meant for the
+                      title and the next row. The row opens the task detail,
+                      whose meeting tag links the meeting (principle 16). */}
                   {item.meeting_id && item.meeting_title && (
                     <Link
                       to={PATHS.meeting(item.meeting_id)}
                       title={`Meeting: ${item.meeting_title}`}
                       aria-label={`Open meeting: ${item.meeting_title}`}
-                      className="flex-shrink-0 inline-flex items-center"
+                      className="touch-cue flex-shrink-0 inline-flex items-center"
                       style={{ color: 'var(--sk-t3)' }}
                       onClick={(e) => e.stopPropagation()}
                     >

@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, buildUpdate } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
+import { ctToday } from '../lib/ct-date';
 
 // GET /api/mentee-milestones?mentee=&status=&type=
 export async function handleGetMenteeMilestones(url: URL, env: Env): Promise<Response> {
@@ -13,7 +14,13 @@ export async function handleGetMenteeMilestones(url: URL, env: Env): Promise<Res
   const params: string[] = [];
 
   if (mentee) { query += ' AND mentee_slug = ?'; params.push(mentee); }
-  if (status) { query += ' AND status = ?'; params.push(status); }
+  // Same overdue rule as the overview below: a still-open milestone past its
+  // due date is overdue, and it is no longer upcoming.
+  if (status === 'overdue') {
+    query += " AND (status = 'overdue' OR (status IN ('upcoming', 'in_progress') AND due_date < ?))"; params.push(ctToday());
+  } else if (status === 'upcoming') {
+    query += " AND status = 'upcoming' AND (due_date IS NULL OR due_date >= ?)"; params.push(ctToday());
+  } else if (status) { query += ' AND status = ?'; params.push(status); }
   if (type) { query += ' AND milestone_type = ?'; params.push(type); }
 
   query += ' ORDER BY CASE status WHEN \'overdue\' THEN 0 WHEN \'in_progress\' THEN 1 WHEN \'upcoming\' THEN 2 WHEN \'completed\' THEN 3 END, due_date ASC, created_at DESC';
@@ -24,19 +31,24 @@ export async function handleGetMenteeMilestones(url: URL, env: Env): Promise<Res
 }
 
 // GET /api/mentee-milestones/overview — all mentees with upcoming/overdue counts
+// A still-open milestone past its due date counts as overdue, whatever status
+// was last stored: the page shows such a row as overdue, and the counts said
+// "2 upcoming" beside two "151d overdue" rows (G8-12, 2026-10-14). Lab-local
+// (Central) today, as the rows compute it.
 export async function handleMenteeMilestoneOverview(env: Env): Promise<Response> {
+  const today = ctToday();
   const result = await env.DB.prepare(`
     SELECT
       mentee_slug,
-      COUNT(CASE WHEN status = 'upcoming' OR status = 'in_progress' THEN 1 END) as upcoming_count,
-      COUNT(CASE WHEN status = 'overdue' THEN 1 END) as overdue_count,
+      COUNT(CASE WHEN status IN ('upcoming', 'in_progress') AND (due_date IS NULL OR due_date >= ?1) THEN 1 END) as upcoming_count,
+      COUNT(CASE WHEN status = 'overdue' OR (status IN ('upcoming', 'in_progress') AND due_date < ?1) THEN 1 END) as overdue_count,
       COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_count,
       COUNT(*) as total_count,
       MIN(CASE WHEN status IN ('upcoming', 'in_progress', 'overdue') THEN due_date END) as next_due_date
     FROM mentee_milestones
     GROUP BY mentee_slug
     ORDER BY overdue_count DESC, upcoming_count DESC
-  `).all();
+  `).bind(today).all();
   return json({ data: result.results || [] });
 }
 

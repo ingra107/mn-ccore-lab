@@ -100,7 +100,7 @@ export default function ReleaseRibbon() {
         <button
           onClick={dismiss}
           aria-label="Dismiss release notes"
-          className="p-1 rounded transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
+          className="hit-area p-1 rounded transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
           style={{
             border: 'none',
             background: 'none',

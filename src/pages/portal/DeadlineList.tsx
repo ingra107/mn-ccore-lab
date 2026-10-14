@@ -106,6 +106,15 @@ function sortRank(d: DeadlineItem, key: string, projects: Map<string, DeadlinePr
   }
 }
 
+/** Completed reads newest first: when the task was finished, else its due
+ *  date (G4-4, 2026-10-14: the oldest-first order put the January 2026
+ *  completions in the 5-row preview and recent ones ~1,600 rows deep). */
+// eslint-disable-next-line react-refresh/only-export-components -- exported for the page and its unit test
+export function newestDoneFirst(items: DeadlineItem[]): DeadlineItem[] {
+  const when = (d: DeadlineItem) => d.task?.completed_at ?? d.due_date
+  return [...items].sort((a, b) => when(b).localeCompare(when(a)))
+}
+
 /** Header sort within one group. Blank project / owner sort last both ways. */
 // eslint-disable-next-line react-refresh/only-export-components -- exported for the unit test
 export function sortDeadlines(items: DeadlineItem[], sort: SleekSort, projects: Map<string, DeadlineProject>): DeadlineItem[] {

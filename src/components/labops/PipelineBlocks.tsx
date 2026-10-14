@@ -7,10 +7,9 @@ import StatRow from '../ui/StatRow'
 import DueLabel from '../DueLabel'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { PATHS } from '../../constants/paths'
-import { isOverdue } from '../../lib/dateUtils'
+import { isOverdueWork } from '../../lib/taskStats'
 import { parseDbUtc } from '../../lib/time'
 import { PRIORITY_COLORS, isProjectActive } from '../../lib/taskConstants'
-import { isTaskDone } from '../../lib/taskGrouping'
 import { taskShortLabel } from '../../lib/displayNames'
 import { MANUSCRIPTS_PAGE_KINDS } from '../../lib/products'
 import { stageCountLabel, type ProductStageCount } from '../../lib/projectStage'
@@ -48,7 +47,7 @@ export function ThisWeekBlock({ stats, sparks, tasks, health, stalled }: {
   stalled?: InsightsDashboardData['metrics']['stalledProjects']
 }) {
   const overdueTasks = useMemo(
-    () => tasks.filter((t) => !isTaskDone(t) && t.due_date && isOverdue(t.due_date, t.status)).slice(0, 5),
+    () => tasks.filter((t) => isOverdueWork(t)).slice(0, 5),
     [tasks],
   )
   const net = stats.completed - stats.created
@@ -389,8 +388,12 @@ export function ConnectionsBlock() {
 
 export function VelocityOutliersBlock({ rows }: { rows: InsightsDashboardData['velocityScatter'] }) {
   const navigate = useNavigate()
-  const maxX = Math.max(60, ...rows.map((r) => r.daysSinceUpdate))
-  const maxY = Math.max(10, ...rows.map((r) => r.openTasks))
+  // A never-updated project has no x value, so it is not plotted; the caption
+  // counts it and the table lists it (G8-05: it used to sit at x=999).
+  const plotted = rows.filter((r): r is typeof r & { daysSinceUpdate: number } => r.daysSinceUpdate !== null)
+  const unplotted = rows.length - plotted.length
+  const maxX = Math.max(60, ...plotted.map((r) => r.daysSinceUpdate))
+  const maxY = Math.max(10, ...plotted.map((r) => r.openTasks))
   const w = 700
   const h = 240
   const padL = 36
@@ -399,12 +402,13 @@ export function VelocityOutliersBlock({ rows }: { rows: InsightsDashboardData['v
     <ChartCard title="Project velocity outliers" count={cnt(rows.filter((r) => r.isOutlier).length)}>
       <p className="text-[11px] mb-3" style={dim}>
         x = days since last update · y = open task count · orange = outlier (&gt;30d OR &gt;10 tasks)
+        {unplotted > 0 && ` · ${unplotted} never updated, not plotted`}
       </p>
       <div style={{ overflow: 'auto' }}>
         <svg width={w} height={h} role="img" aria-label="Project velocity scatter chart">
           <line x1={padL} y1={h - padB} x2={w - 8} y2={h - padB} stroke="var(--border-subtle)" />
           <line x1={padL} y1={8} x2={padL} y2={h - padB} stroke="var(--border-subtle)" />
-          {rows.map((r) => {
+          {plotted.map((r) => {
             const cx = padL + (r.daysSinceUpdate / maxX) * (w - padL - 16)
             const cy = (h - padB) - (r.openTasks / maxY) * (h - padB - 16)
             return (
@@ -442,7 +446,7 @@ export function VelocityOutliersBlock({ rows }: { rows: InsightsDashboardData['v
             {rows.map((r) => (
               <tr key={r.slug} style={{ color: r.isOutlier ? 'var(--job-stale)' : 'var(--ink)' }}>
                 <td className="px-2 py-1"><Link to={PATHS.project(r.slug)} style={{ color: 'inherit', textDecoration: 'none' }}>{r.title}</Link></td>
-                <td className="px-2 py-1 tabular-nums">{r.daysSinceUpdate}</td>
+                <td className="px-2 py-1 tabular-nums">{r.daysSinceUpdate ?? 'no updates yet'}</td>
                 <td className="px-2 py-1 tabular-nums">{r.openTasks}</td>
               </tr>
             ))}

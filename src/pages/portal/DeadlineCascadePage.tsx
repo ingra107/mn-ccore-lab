@@ -1,11 +1,11 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Filter, RotateCcw } from 'lucide-react'
+import { ChevronDown, ChevronRight, Filter, RotateCcw } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
-import DeadlineCascade from '../../components/DeadlineCascade'
+import DeadlineCascade, { getNodeStatus } from '../../components/DeadlineCascade'
 import ToggleButton from '../../components/ToggleButton'
 import EmptyState from '../../components/EmptyState'
 import EmptyStateArt from '../../components/EmptyStateArt'
@@ -18,6 +18,19 @@ export default function DeadlineCascadePage() {
   const navigate = useNavigate()
   const { data: allData, isLoading } = useAllCascades()
   const [filterAtRisk, setFilterAtRisk] = useState(false)
+  // Progressive disclosure (principle 5, G4-6 2026-10-14): on a phone every
+  // card starts folded to its summary line; 427 deadlines across 42 open cards
+  // made the tab ~22,700px tall. From md up the cards start open. A tap on a
+  // card's header flips it either way. The width is read once, at mount, on
+  // purpose: rotating a tablet or resizing the window never re-folds or
+  // re-opens cards the user is reading; a reload picks up the new width.
+  const [startOpen] = useState(() => !(typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches))
+  const [flipped, setFlipped] = useState<Set<string>>(() => new Set())
+  const toggleCard = useCallback((id: string) => setFlipped((prev) => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  }), [])
 
   // Impact simulation state
   const [impactId, setImpactId] = useState<string | null>(null)
@@ -83,10 +96,12 @@ export default function DeadlineCascadePage() {
         // P2-R2-07: page name was "Deadline Cascade" but until dependency
         // graph ships the actual content is grouped deadlines by project.
         // Renamed to match what's on screen.
-        title={totalDeps > 0 ? 'Deadline Cascade' : 'Deadlines by Project'}
+        // The tab lives under Lab overview, which every tab names as its one
+        // header (principle 11); what this tab shows moves to the subtitle.
+        title="Lab overview"
         subtitle={totalDeps > 0
-          ? `${totalDeps} dependency ${totalDeps === 1 ? 'link' : 'links'} across ${chainsWithDeps} ${chainsWithDeps === 1 ? 'project' : 'projects'}`
-          : `${totalNodes} deadlines tracked across ${projectGroups.length} ${projectGroups.length === 1 ? 'project' : 'projects'}`
+          ? `Deadline cascade: ${totalDeps} dependency ${totalDeps === 1 ? 'link' : 'links'} across ${chainsWithDeps} ${chainsWithDeps === 1 ? 'project' : 'projects'}`
+          : `Deadlines by project: ${totalNodes} across ${projectGroups.length} ${projectGroups.length === 1 ? 'project' : 'projects'}`
         }
       >
         <div className="flex items-center gap-2">
@@ -131,6 +146,20 @@ export default function DeadlineCascadePage() {
             {projectGroups.map((group) => {
               // Skip projects with no dependencies if filter is off, or no at-risk if filter is on
               if (filterAtRisk && group.graph.dependencies.length === 0) return null
+              const open = startOpen !== flipped.has(group.projectId)
+              const counts = { overdue: 0, atRisk: 0, onTrack: 0 }
+              for (const n of group.graph.nodes) {
+                const st = getNodeStatus(n)
+                if (st === 'overdue') counts.overdue++
+                else if (st === 'at-risk') counts.atRisk++
+                else if (st === 'on-track') counts.onTrack++
+              }
+              const summary = [
+                counts.overdue ? `${counts.overdue} overdue` : null,
+                counts.atRisk ? `${counts.atRisk} at risk` : null,
+                counts.onTrack ? `${counts.onTrack} on track` : null,
+              ].filter(Boolean).join(' · ') || 'all done'
+              const Chev = open ? ChevronDown : ChevronRight
 
               return (
                 <motion.div
@@ -139,14 +168,28 @@ export default function DeadlineCascadePage() {
                   className="table-container"
                   style={{ overflow: 'visible' }}
                 >
-                  {/* Project header */}
-                  <div style={{
-                    padding: '10px 16px',
-                    borderBottom: '1px solid var(--border-subtle)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--sp-sm)',
-                  }}>
+                  {/* Project header: the card's fold toggle and its summary line. */}
+                  <button
+                    type="button"
+                    onClick={() => toggleCard(group.projectId)}
+                    aria-expanded={open}
+                    style={{
+                      width: '100%',
+                      minHeight: 44,
+                      padding: '10px 16px',
+                      border: 'none',
+                      borderBottom: open ? '1px solid var(--border-subtle)' : '1px solid transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      columnGap: 'var(--sp-sm)',
+                      rowGap: 2,
+                      background: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <Chev {...ICON_PROPS} size={14} aria-hidden="true" style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
                     <span style={{
                       fontSize: '13px',
                       fontWeight: 600,
@@ -155,17 +198,16 @@ export default function DeadlineCascadePage() {
                       {group.title}
                     </span>
                     <span style={{
-                      fontSize: '10px',
-                      color: 'var(--slate)',
-                      opacity: 0.75,
+                      fontSize: '11px',
+                      color: 'var(--sk-t3)',
                     }}>
-                      {group.graph.nodes.length} {group.graph.nodes.length === 1 ? 'item' : 'items'}
-                      {group.graph.dependencies.length > 0 && ` / ${group.graph.dependencies.length} ${group.graph.dependencies.length === 1 ? 'link' : 'links'}`}
+                      {summary}
+                      {group.graph.dependencies.length > 0 && ` · ${group.graph.dependencies.length} ${group.graph.dependencies.length === 1 ? 'link' : 'links'}`}
                     </span>
-                  </div>
+                  </button>
 
                   {/* Cascade view */}
-                  <div style={{ padding: 'var(--sp-sm) var(--sp-xs)' }}>
+                  {open && <div style={{ padding: 'var(--sp-sm) var(--sp-xs)' }}>
                     <DeadlineCascade
                       graph={group.graph}
                       impactResults={impactResults}
@@ -174,7 +216,7 @@ export default function DeadlineCascadePage() {
                       filterAtRisk={filterAtRisk}
                       compact={false}
                     />
-                  </div>
+                  </div>}
                 </motion.div>
               )
             })}
