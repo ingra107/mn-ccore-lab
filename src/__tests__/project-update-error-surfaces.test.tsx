@@ -33,6 +33,9 @@ async function until(pred: () => boolean, what: string): Promise<void> {
 
 // A project's stage lives on its products now (contract phase step 1), so
 // the field written here is status.
+const LIST_KEYS = [['projects', undefined], ['projects', { status: 'active' }]] as const
+const statusOf = (qc: QueryClient, key: readonly unknown[]) => qc.getQueryData<Project[]>(key)?.[0].status
+
 const seed = [{ slug: 'p1', status: 'active', title: 'P1' } as unknown as Project]
 
 function Harness({ fields }: { fields: Record<string, unknown> }) {
@@ -46,7 +49,9 @@ function Harness({ fields }: { fields: Record<string, unknown> }) {
 
 async function mountWith(fields: Record<string, unknown>): Promise<{ host: HTMLElement; queryClient: QueryClient }> {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
-  queryClient.setQueryData<Project[]>(['projects'], seed)
+  // The lists live under ['projects', params] (useProjects), one per filter.
+  // Two real ones, so the patch and the rollback are proven on every list.
+  for (const key of LIST_KEYS) queryClient.setQueryData<Project[]>(key, seed)
   // Harness renders nothing; the assertions below poll for the toast themselves.
   const host = await mount(
     <QueryClientProvider client={queryClient}>
@@ -71,7 +76,7 @@ describe('useUpdateProjectFields: a rejected write is never silent (#128)', () =
 
     await until(() => /Could not save status/.test(host.textContent ?? ''), 'error toast')
     expect(host.textContent).toContain('Invalid status: "nope"')
-    expect(queryClient.getQueryData<Project[]>(['projects'])?.[0].status).toBe('active')
+    for (const key of LIST_KEYS) expect(statusOf(queryClient, key)).toBe('active')
   })
 
   it('an accepted write shows no error and keeps the optimistic value', async () => {
@@ -86,7 +91,7 @@ describe('useUpdateProjectFields: a rejected write is never silent (#128)', () =
     await until(() => fetchMock.mock.calls.length > 0, 'POST')
     await new Promise((r) => setTimeout(r, 50))
     await expect.poll(() => host.textContent ?? '').not.toMatch(/Could not save/)
-    expect(queryClient.getQueryData<Project[]>(['projects'])?.[0].status).toBe('blocked')
+    for (const key of LIST_KEYS) expect(statusOf(queryClient, key)).toBe('blocked')
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/projects/p1')
     expect(JSON.parse(init.body as string)).toEqual({ status: 'blocked' })
