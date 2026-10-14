@@ -120,8 +120,6 @@ describe('meeting prep', () => {
     const NON_LITERAL: Record<string, string[]> = {
       // subtasks.ts: `subtask_${action}`, action is 'completed' | 'uncompleted'
       'subtasks.ts subtask_': ['subtask_completed', 'subtask_uncompleted'],
-      // pb-sector.ts: the capture type, refused unless 'task' or 'idea'
-      'pb-sector.ts type': ['task', 'idea'],
       // mutations.ts: applyDelete logs the table name ("Deleted links record
       // link_01M..."); those types are in no list on purpose, so no feed shows them
       'mutations.ts mut.table': [],
