@@ -64,6 +64,7 @@ import { AttendeeBadge } from '../components/meetings/Attendees'
 import { meetingStatus } from '../lib/meetingStatus'
 import SectionHead from '../components/ui/SectionHead'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
+import { Button } from '../components/ui/Button'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -324,7 +325,7 @@ export default function MeetingDetail() {
                 >
                   {emDashifyTitle(meeting.title)}
                 </h1>
-                <button
+                <Button size="icon"
                   type="button"
                   className="reveal-on-hover hit-area"
                   aria-label="Edit meeting title"
@@ -333,7 +334,7 @@ export default function MeetingDetail() {
                   style={{ '--reveal-opacity': 0.85, background: 'none', border: 'none', padding: 2, cursor: 'pointer', display: 'inline-flex', color: 'var(--slate)', flexShrink: 0 } as React.CSSProperties}
                 >
                   <Pencil {...ICON_PROPS} size={14} aria-hidden="true" />
-                </button>
+                </Button>
               </div>
             )}
             {/* The heartbeat line under the title (color-back pick 10). */}
@@ -849,9 +850,9 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
 
   return (
     <div ref={setNodeRef} style={style} className="flex items-start gap-2 py-2" {...attributes}>
-      <button {...listeners} aria-label="Reorder item" className="cursor-grab active:cursor-grabbing mt-1 flex-shrink-0" style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.75 }}>
+      <Button size="icon" {...listeners} aria-label="Reorder item" className="cursor-grab active:cursor-grabbing mt-1 flex-shrink-0" style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.75 }}>
         <GripVertical {...ICON_PROPS} size={14} />
-      </button>
+      </Button>
       <Icon {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)', marginTop: '2px', flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
         <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
@@ -1057,18 +1058,18 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
         )}
         {text.trim() && (
           <>
-            <motion.button type="button" onClick={() => setShowDocInput(!showDocInput)}
+            <Button as={motion.button} size="icon" aria-label="Attach document link" type="button" onClick={() => setShowDocInput(!showDocInput)}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
               style={{ background: 'transparent', border: '1px solid var(--sk-line2)', color: 'var(--slate)' }}
               title="Attach document link">
               <FileText {...ICON_PROPS} size={14} />
-            </motion.button>
-            <motion.button type="submit" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+            </Button>
+            <Button as={motion.button} size="icon" aria-label="Add" type="submit" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
               className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
               style={{ background: 'var(--job-accent)', color: 'var(--sk-card)', border: 'none' }}>
               <Plus {...ICON_PROPS} size={14} />
-            </motion.button>
+            </Button>
           </>
         )}
       </div>

@@ -260,6 +260,7 @@ export default function QuickCaptureInbox() {
           </h2>
           <Button
             variant="ghost"
+            size="icon"
             type="button"
             onClick={close}
             aria-label="Close"
@@ -448,6 +449,7 @@ export default function QuickCaptureInbox() {
           the card action column; the More drawer has a Capture entry instead. */}
       <Button
         variant="ghost"
+        size="icon"
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Quick capture to inbox (Ctrl+I)"

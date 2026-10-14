@@ -27,6 +27,7 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
 import { getPersonInfo, getAllMembers } from '../../data/team'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { Button } from '../../components/ui/Button'
 
 interface SearchResult {
   id: string
@@ -514,14 +515,14 @@ export default function SearchPage() {
             onBlur={e => { e.currentTarget.style.boxShadow = 'none' }}
           />
           {query && (
-            <button
+            <Button size="icon"
               onClick={() => { setQuery(''); inputRef.current?.focus() }}
               className="hit-area absolute right-4 top-1/2 -translate-y-1/2"
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.75 }}
               aria-label="Clear search"
             >
               <X {...ICON_PROPS} size={16} />
-            </button>
+            </Button>
           )}
         </div>
 
@@ -686,13 +687,13 @@ export default function SearchPage() {
                   <Clock {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
                   {s}
                 </button>
-                <button
+                <Button size="icon"
                   onClick={() => removeRecent(s)}
                   aria-label={`Remove "${s}" from recent searches`}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.55, padding: 7, margin: '-7px -7px -7px -5px', display: 'inline-flex' }}
                 >
                   <X {...ICON_PROPS} size={10} />
-                </button>
+                </Button>
               </span>
             ))}
           </div>

@@ -649,6 +649,7 @@ function PaperCard({ paper, projects, compactWhenProcessed }: { paper: DigestPap
             />
             <Button
               variant="primary"
+              size="icon"
               type="submit"
               disabled={!commentText.trim() || createComment.isPending}
               aria-label="Save note"

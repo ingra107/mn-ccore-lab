@@ -18,6 +18,7 @@ import { TaskPriorityLabel, TaskStatusPill } from '../../components/tasks/taskSl
 import { Face } from '../../components/today/skin'
 import { NowMarker } from '../../components/moments/NowMarker'
 import { agendaWindow, showsToday, stepDate, stepLabel, type ViewMode } from '../../lib/calendarPaging'
+import { Button } from '../../components/ui/Button'
 
 
 // Color jobs (Nick 2026-10-11): an event's TYPE is not a color job. Meeting
@@ -210,13 +211,13 @@ export default function CalendarPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            <Button size="icon"
               onClick={goToPrev}
               aria-label={stepLabel(view, -1)}
               className="tk-btn"
             >
               <ChevronLeft {...ICON_PROPS} size={16} />
-            </button>
+            </Button>
             <button
               onClick={goToToday}
               className="text-sm font-medium min-w-[180px] text-center flex items-center justify-center"
@@ -224,13 +225,13 @@ export default function CalendarPage() {
             >
               {headerLabel}
             </button>
-            <button
+            <Button size="icon"
               onClick={goToNext}
               aria-label={stepLabel(view, 1)}
               className="tk-btn"
             >
               <ChevronRight {...ICON_PROPS} size={16} />
-            </button>
+            </Button>
 
             {!showsToday(view, currentDate) && (
               <button

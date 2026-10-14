@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Bookmark, Check, Plus, Trash2, X } from 'lucide-react'
 import { useSavedViews, type SavedView } from '../hooks/useSavedViews'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 interface Props {
   /** Page scope — saved views are namespaced per page so MyTasks views don't
@@ -121,7 +122,7 @@ export default function SavedViewsMenu({ page, currentQuery, onApply }: Props) {
                   background: 'var(--field-bg)', color: 'var(--ink)', outline: 'none',
                 }}
               />
-              <button
+              <Button size="icon"
                 type="submit"
                 aria-label="Save"
                 disabled={!draftName.trim()}
@@ -132,15 +133,15 @@ export default function SavedViewsMenu({ page, currentQuery, onApply }: Props) {
                 }}
               >
                 <Check {...ICON_PROPS} size={14} />
-              </button>
-              <button
+              </Button>
+              <Button size="icon"
                 type="button"
                 onClick={() => { setNaming(false); setDraftName('') }}
                 aria-label="Cancel"
                 style={{ padding: '4px 6px', border: 'none', background: 'transparent', color: 'var(--slate)', cursor: 'pointer' }}
               >
                 <X {...ICON_PROPS} size={14} />
-              </button>
+              </Button>
             </form>
           )}
         </div>
@@ -171,7 +172,7 @@ function SavedViewRow({ view, active, onApply, onRemove }: {
         {active && <Check {...ICON_PROPS} size={10} style={{ display: 'inline-block', marginRight: 4 }} />}
         {view.name}
       </button>
-      <button
+      <Button size="icon"
         type="button"
         onClick={onRemove}
         aria-label={`Delete view ${view.name}`}
@@ -181,7 +182,7 @@ function SavedViewRow({ view, active, onApply, onRemove }: {
         }}
       >
         <Trash2 {...ICON_PROPS} size={11} />
-      </button>
+      </Button>
     </div>
   )
 }

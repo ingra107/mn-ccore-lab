@@ -30,6 +30,7 @@ import {
   memberLabel,
   removedSelfOutOfProject,
 } from '../../lib/projectMembersRules'
+import { Button } from '../ui/Button'
 
 interface ProjectMembersProps {
   /** Project slug (or id) the members routes take. */
@@ -113,7 +114,7 @@ export default function ProjectMembers({ projectRef, projectTitle }: ProjectMemb
                 <FaceDisc label={label} initials={memberInitials(label)} photo={m.photo_url ?? undefined} px={24} hermes={m.slug === 'claude-ai'} />
                 <span>{label}</span>
                 {canRemoveMember(user, m.slug) && (
-                  <button
+                  <Button size="icon"
                     type="button"
                     onClick={() => onRemove(m.slug, label)}
                     disabled={removeMutation.isPending}
@@ -123,7 +124,7 @@ export default function ProjectMembers({ projectRef, projectTitle }: ProjectMemb
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', minWidth: 24, minHeight: 24, padding: 0 }}
                   >
                     <X {...ICON_PROPS} size={12} aria-hidden="true" />
-                  </button>
+                  </Button>
                 )}
               </li>
             )

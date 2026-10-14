@@ -14,6 +14,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronRight } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 interface Release {
   id: string
@@ -161,7 +162,7 @@ export default function PhaseReleaseBanner() {
                   {release.title}
                 </div>
               </div>
-              <button
+              <Button size="icon"
                 onClick={dismiss}
                 aria-label="Dismiss release notes"
                 style={{
@@ -178,7 +179,7 @@ export default function PhaseReleaseBanner() {
                 }}
               >
                 <X {...ICON_PROPS} size={14} />
-              </button>
+              </Button>
             </div>
             <p style={{ fontSize: 12, color: 'var(--slate)', lineHeight: 1.5, margin: 0 }}>
               {release.summary}

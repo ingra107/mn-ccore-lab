@@ -25,6 +25,7 @@ import { PUBLIC_PATHS } from '../constants/paths'
 import { PUBLICATION_ROLES, type PublicationRole } from '../../shared/publicationRoles'
 
 import SectionHead from './ui/SectionHead'
+import { Button } from './ui/Button'
 
 const ROLE_OPTIONS: GhostSelectOption[] = PUBLICATION_ROLES.map((r) => ({ value: r, label: r[0].toUpperCase() + r.slice(1) }))
 
@@ -186,7 +187,7 @@ function PublicationLinkRow({
         </div>
       </div>
       {isPi && (
-        <button
+        <Button size="icon"
           onClick={onUnlink}
           aria-label="Unlink"
           className="invisible group-hover:visible"
@@ -201,7 +202,7 @@ function PublicationLinkRow({
           }}
         >
           <X {...ICON_PROPS} size={12} />
-        </button>
+        </Button>
       )}
     </div>
   )

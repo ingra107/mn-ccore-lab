@@ -35,6 +35,7 @@ import PubRow from './public/PubRow'
 import { ICON_PROPS } from '../lib/iconProps'
 import { useMemberFeaturedPublications } from '../hooks/useApiData'
 import { useSetMemberFeaturedPublications } from '../hooks/useMutations'
+import { Button } from './ui/Button'
 
 /** Mirrors MAX_FEATURED_PUBLICATIONS in api/routes/member-featured-publications
  *  .ts. The server is the enforcer — this only stops the UI from offering an
@@ -219,7 +220,7 @@ export default function MemberFeaturedPublications({
                   {i + 1}
                 </span>
                 <span style={{ flex: 1, minWidth: 0 }}>{pubLabel(pub)}</span>
-                <button
+                <Button size="icon"
                   type="button"
                   style={{ ...iconBtn, opacity: i === 0 ? 0.4 : 1 }}
                   disabled={i === 0}
@@ -228,8 +229,8 @@ export default function MemberFeaturedPublications({
                   title="Move up"
                 >
                   <ChevronUp {...ICON_PROPS} size={16} />
-                </button>
-                <button
+                </Button>
+                <Button size="icon"
                   type="button"
                   style={{ ...iconBtn, opacity: i === draftPubs.length - 1 ? 0.4 : 1 }}
                   disabled={i === draftPubs.length - 1}
@@ -238,8 +239,8 @@ export default function MemberFeaturedPublications({
                   title="Move down"
                 >
                   <ChevronDown {...ICON_PROPS} size={16} />
-                </button>
-                <button
+                </Button>
+                <Button size="icon"
                   type="button"
                   style={iconBtn}
                   onClick={() => setDraft(draft.filter((id) => id !== pub.id))}
@@ -247,7 +248,7 @@ export default function MemberFeaturedPublications({
                   title="Remove"
                 >
                   <X {...ICON_PROPS} size={16} />
-                </button>
+                </Button>
               </div>
             ))}
           </div>
@@ -260,7 +261,7 @@ export default function MemberFeaturedPublications({
             {candidates.map((pub) => (
               <div key={pub.id} style={rowStyle()}>
                 <span style={{ flex: 1, minWidth: 0, color: 'var(--slate)' }}>{pubLabel(pub)}</span>
-                <button
+                <Button size="icon"
                   type="button"
                   style={{ ...iconBtn, opacity: draft.length >= MAX_FEATURED ? 0.4 : 1 }}
                   disabled={draft.length >= MAX_FEATURED}
@@ -269,7 +270,7 @@ export default function MemberFeaturedPublications({
                   title="Add to featured"
                 >
                   <Plus {...ICON_PROPS} size={16} />
-                </button>
+                </Button>
               </div>
             ))}
           </div>

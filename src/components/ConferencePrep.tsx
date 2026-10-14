@@ -265,6 +265,8 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                   <td style={{ padding: 'var(--sp-sm)', textAlign: 'center' }}>
                     <Button
                       variant="ghost"
+                      size="icon"
+                      aria-label={conf.travel_booked ? 'Travel booked' : 'Travel not booked'}
                       onClick={() => handleTravelToggle(conf)}
                       style={{
                         padding: '2px',
@@ -291,6 +293,8 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                   <td style={{ padding: 'var(--sp-sm)' }}>
                     <Button
                       variant="ghost"
+                      size="icon"
+                      aria-label={`Delete ${conf.conference}`}
                       onClick={() => handleDelete(conf)}
                       className="hov-opacity hov-color"
                       style={{

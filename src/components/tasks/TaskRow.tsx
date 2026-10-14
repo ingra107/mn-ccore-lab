@@ -45,6 +45,7 @@ import type { TaskRow as TaskRowData } from '../../lib/api'
 import { taskShortLabel } from '../../lib/displayNames'
 import { LONG_PRESS_MS } from '../../lib/uiTiming'
 import { usePairName } from '../../hooks/useProjectPairs'
+import { Button } from '../ui/Button'
 
 // Reserved priority-dot color. only urgent carries a colored dot; everything
 // else gets a transparent dot of the SAME width so every title starts at the
@@ -99,7 +100,7 @@ export function DoneBox({ done, onToggle, color = 'var(--job-accent)', taskId }:
 // complete control. Selection is the accent's job, so it fills teal.
 export function SelectBox({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
-    <button
+    <Button size="icon"
       type="button"
       role="checkbox"
       aria-checked={on}
@@ -112,7 +113,7 @@ export function SelectBox({ on, onToggle }: { on: boolean; onToggle: () => void 
       <svg width={9} height={9} viewBox="0 0 24 24" fill="none" stroke="var(--sk-ac-fg)" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <polyline points="20 6 9 17 4 12" />
       </svg>
-    </button>
+    </Button>
   )
 }
 
@@ -619,7 +620,7 @@ function StandardRow(props: SharedTaskRowProps) {
   // (index.css). Rule 58's four affordances stay distinct: drag grip ⋮⋮ /
   // 📌 plan / body-click expand / ▶ promote.
   const planBtn = onTogglePlan && !isDone && !isPlanned ? (
-    <button
+    <Button size="icon"
       type="button"
       data-plan-btn={task.id}
       className="today-plan-btn hit-area tip"
@@ -632,7 +633,7 @@ function StandardRow(props: SharedTaskRowProps) {
       style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 5px', margin: '-4px -3px', color: 'var(--sk-t2)', lineHeight: 1, flexShrink: 0, verticalAlign: 'baseline', visibility: hover ? 'visible' : 'hidden', display: 'inline-flex', alignItems: 'center' }}
     >
       <Pin {...ICON_PROPS} size={12} />
-    </button>
+    </Button>
   ) : null
 
   // Attention chip right after the title — gold ✦ NEW (assignment) wins over

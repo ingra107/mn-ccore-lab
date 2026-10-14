@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Search, X } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
+import { Button } from './ui/Button'
 
 interface PublicationSearchProps {
   value: string
@@ -70,7 +71,7 @@ export default function PublicationSearch({
           aria-label="Search publications"
         />
         {internal && (
-          <button
+          <Button size="icon"
             type="button"
             onClick={handleClear}
             // 34px hit area (WCAG 2.5.8) around the same 14px icon in the same spot.
@@ -84,7 +85,7 @@ export default function PublicationSearch({
             aria-label="Clear search"
           >
             <X {...ICON_PROPS} size={14} />
-          </button>
+          </Button>
         )}
       </div>
       {value && (

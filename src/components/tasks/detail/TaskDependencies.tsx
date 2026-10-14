@@ -7,6 +7,7 @@ import { useTasks, useBlockingTasks, useTasksByIds } from '../../../hooks/useApi
 import type { TaskRow } from '../../../lib/api'
 import { ICON_PROPS } from '../../../lib/iconProps'
 import { parseBlockedBy, serializeBlockedBy } from '../../../../shared/blockedBy'
+import { Button } from '../../ui/Button'
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -84,14 +85,14 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
                   }}>
                     {bt.status === 'done' ? 'Done' : bt.status === 'in_progress' ? 'In Progress' : bt.status === 'blocked' ? 'Blocked' : 'To Do'}
                   </span>
-                  <button
+                  <Button size="icon" aria-label="Remove blocker"
                     onClick={() => removeBlocker(bt.id)}
                     className="reveal-on-hover"
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--slate)', flexShrink: 0 }}
                     title="Remove blocker"
                   >
                     <X {...ICON_PROPS} size={12} />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -215,9 +216,9 @@ function BlockerSearchDropdown({ currentTaskId, excludeIds, onSelect, onClose }:
           className="flex-1 text-sm outline-none bg-transparent"
           style={{ color: 'var(--ink)', border: 'none' }}
         />
-        <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)', minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Button size="icon" onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)', minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
           <X {...ICON_PROPS} size={14} />
-        </button>
+        </Button>
       </div>
 
       {candidates.length > 0 && (

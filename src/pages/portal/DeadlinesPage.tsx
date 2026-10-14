@@ -26,6 +26,7 @@ import RegulatoryExpiringList from '../../components/RegulatoryExpiringList'
 import { projectFullTitleHint, projectShortLabel, taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
 import { DeadlineList, newestDoneFirst, type DeadlineItem, type DeadlineProject } from './DeadlineList'
 import { NowMarker } from '../../components/moments/NowMarker'
+import { Button } from '../../components/ui/Button'
 
 type ViewMode = 'list' | 'timeline'
 
@@ -513,14 +514,14 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
                 Note from past you
               </span>
             </div>
-            <button
+            <Button size="icon"
               onClick={() => { setNoteText(item.future_note || ''); setEditingNote(true) }}
               aria-label="Edit future-me note"
               className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03] rounded px-1"
               style={{ background: 'none', border: 'none', cursor: 'pointer' }}
             >
               <Pencil {...ICON_PROPS} size={9} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-            </button>
+            </Button>
           </div>
           <p style={{ fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', margin: 0 }}>
             {item.future_note}
@@ -535,13 +536,13 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
           <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
             Future Me note attached
           </span>
-          <button
+          <Button size="icon" aria-label="Edit Future Me note"
             onClick={() => { setNoteText(item.future_note || ''); setEditingNote(true) }}
             className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03] rounded px-1"
             style={{ background: 'none', border: 'none', cursor: 'pointer' }}
           >
             <Pencil {...ICON_PROPS} size={8} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-          </button>
+          </Button>
         </div>
       )}
 

@@ -372,8 +372,10 @@ function TimelineEvent({
           {/* Delete button */}
           <Button
             variant="ghost"
+            size="icon"
             onClick={(e) => { e.stopPropagation(); onDelete(event.id) }}
             title="Delete event"
+            aria-label="Delete event"
             style={{
               marginLeft: 'auto',
               padding: '2px',

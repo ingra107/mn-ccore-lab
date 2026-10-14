@@ -25,6 +25,7 @@ import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import { taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
 import { usePairName } from '../../hooks/useProjectPairs'
+import { Button } from '../ui/Button'
 
 export function PlannedTaskRow({ task, project, state, timeHint, small = false, onExpand, expandedId }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; timeHint?: string; small?: boolean; onExpand: (id: string) => void; expandedId: string | null; projectsByPid?: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }> }) {
   const isDone = isTaskDone(task) || !!state.done[task.id]
@@ -105,13 +106,13 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
           )}
           <LinkRow links={links} />
           {!isDone && <span className="tk-caret">{expanded ? '▾' : '▸'}</span>}
-          <button
+          <Button size="icon"
             type="button"
             onClick={(e) => { e.stopPropagation(); state.unplan(task.id) }}
             title="Remove from plan"
             aria-label="Remove from plan"
             className="tk-x"
-          >×</button>
+          >×</Button>
         </div>
       </div>
       {expanded && !isDone && <TaskDetailDrawer task={task} project={project} state={state} />}

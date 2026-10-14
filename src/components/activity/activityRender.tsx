@@ -53,6 +53,7 @@ import ReactionBar from '../ReactionBar'
 import type { StoredKind, UpdateType } from '../../../shared/activityKinds'
 import { withAlpha } from '../../lib/taskGrouping'
 import { useArmedConfirm } from '../../hooks/useArmedConfirm'
+import { Button } from '../ui/Button'
 // canDeleteActivityEntry moved to ./activityPermissions.ts (2026-07-16 lint
 // burndown, #174) — this file's react-refresh contract is components-only;
 // that predicate was the sole non-component export besides UPDATE_TYPE_CONFIG
@@ -440,7 +441,7 @@ export function DismissEntryButton({ isHidden, onClick }: { isHidden?: boolean; 
   const label = isHidden ? 'Restore to feed' : 'Dismiss thread'
   const Icon = isHidden ? Eye : EyeOff
   return (
-    <button
+    <Button size="icon"
       type="button"
       onClick={(e) => { e.stopPropagation(); onClick() }}
       title={label}
@@ -456,14 +457,14 @@ export function DismissEntryButton({ isHidden, onClick }: { isHidden?: boolean; 
       } as React.CSSProperties}
     >
       <Icon size={11} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
-    </button>
+    </Button>
   )
 }
 
 // Hover-revealed pencil that opens the inline editor (comments/notes only).
 function EditEntryButton({ onClick }: { onClick: () => void }) {
   return (
-    <button
+    <Button size="icon"
       type="button"
       onClick={(e) => { e.stopPropagation(); onClick() }}
       title="Edit"
@@ -476,7 +477,7 @@ function EditEntryButton({ onClick }: { onClick: () => void }) {
       } as React.CSSProperties}
     >
       <Pencil size={11} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
-    </button>
+    </Button>
   )
 }
 
